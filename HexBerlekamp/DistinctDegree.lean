@@ -4,9 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBasic
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 Executable distinct-degree factorization surface for `hex-berlekamp`.
@@ -24,7 +29,9 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- One distinct-degree bucket: the product of factors of the recorded degree. -/
 structure DegreeBucket (p : Nat) [ZMod64.Bounds p] where
+  /-- The common degree of the irreducible factors in this bucket. -/
   degree : Nat
+  /-- The product of all irreducible factors of the recorded degree. -/
   factor : FpPoly p
 
 /--
@@ -33,8 +40,11 @@ explicit so downstream callers can inspect any part not separated by the
 bounded executable pass.
 -/
 structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where
+  /-- The monic square-free polynomial supplied to the algorithm. -/
   input : FpPoly p
+  /-- Products grouped by irreducible-factor degree. -/
   buckets : List (DegreeBucket p)
+  /-- The part not separated by the bounded pass. -/
   residual : FpPoly p
 
 /-- Extract the polynomial factors recorded in distinct-degree buckets. -/
@@ -181,7 +191,7 @@ def distinctDegreeFactor
     residual := result.2 }
 
 /--
-Predicate used by the SPEC-facing bucket invariant theorem: the recorded
+Predicate used by the bucket invariant theorem: the recorded
 factor divides the corresponding `X^(p^d) - X mod f`. The unnormalised
 executable `DensePoly.gcd` does not return `bucket.factor` literally on the
 left of `gcd bucket.factor (frobeniusDiffMod ...) = bucket.factor` (e.g.
@@ -216,85 +226,27 @@ theorem distinctDegreeCandidate_spec
 /-- `1 * a = a`: left identity for `FpPoly` multiplication, from commutativity
 and the right unit law. -/
 private theorem one_mul_poly
-    [ZMod64.PrimeModulus p]
     (a : FpPoly p) :
     (1 : FpPoly p) * a = a :=
   (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
 
-/-- A left factor `z` pulls out of a left-folded product: folding from `z * a`
-equals `z` times folding from `a`. -/
-private theorem foldl_mul_left_factor
-    [ZMod64.PrimeModulus p]
-    (z a : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) (z * a)
-      = z * xs.foldl (fun acc factor => acc * factor) a := by
-  induction xs generalizing a with
-  | nil => rfl
-  | cons b bs ih =>
-    have hcong : List.foldl (fun acc factor : FpPoly p => acc * factor) ((z * a) * b) bs
-        = List.foldl (fun acc factor => acc * factor) (z * (a * b)) bs := by
-      congr 1
-      exact DensePoly.mul_assoc_poly z a b
-    have hih : List.foldl (fun acc factor : FpPoly p => acc * factor) (z * (a * b)) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs := ih (a * b)
-    show List.foldl (fun acc factor => acc * factor) (z * a * b) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs
-    exact hcong.trans hih
-
-/-- A left-folded product from seed `z` factors as `z` times the same fold from
-seed `1`. -/
-private theorem foldl_mul_eq_mul_foldl
-    [ZMod64.PrimeModulus p]
-    (z : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) z
-      = z * xs.foldl (fun acc factor => acc * factor) 1 := by
-  have h1 : xs.foldl (fun acc factor => acc * factor) z
-      = xs.foldl (fun acc factor => acc * factor) (z * 1) := by
-    congr 1
-    exact (DensePoly.mul_one_right_poly z).symm
-  exact h1.trans (foldl_mul_left_factor z 1 xs)
-
-/-- `factorProduct` of a cons is the head times the `factorProduct` of the
-tail. -/
-private theorem factorProduct_cons_eq
-    [ZMod64.PrimeModulus p]
-    (x : FpPoly p) (xs : List (FpPoly p)) :
-    factorProduct (x :: xs) = x * factorProduct xs := by
-  show xs.foldl (fun acc factor => acc * factor) (1 * x)
-    = x * xs.foldl (fun acc factor => acc * factor) 1
-  rw [one_mul_poly x]
-  exact foldl_mul_eq_mul_foldl x xs
-
-/-- `factorProduct` distributes over list append. -/
-private theorem factorProduct_append
-    [ZMod64.PrimeModulus p]
-    (xs ys : List (FpPoly p)) :
-    factorProduct (xs ++ ys) = factorProduct xs * factorProduct ys := by
-  induction xs with
-  | nil =>
-      simp [factorProduct]
-  | cons x xs ih =>
-      rw [List.cons_append, factorProduct_cons_eq, factorProduct_cons_eq, ih]
-      exact (DensePoly.mul_assoc_poly x (factorProduct xs) (factorProduct ys)).symm
-
 /-- Bucket products distribute over list append in stored bucket order. -/
 theorem degreeBucketProduct_append
-    [ZMod64.PrimeModulus p]
     (buckets₁ buckets₂ : List (DegreeBucket p)) :
     degreeBucketProduct (buckets₁ ++ buckets₂) =
       degreeBucketProduct buckets₁ * degreeBucketProduct buckets₂ := by
   simp [degreeBucketProduct, degreeBucketFactors_append, factorProduct_append]
 
-/-- The product of a singleton bucket list is its recorded factor. -/
-@[simp, grind =] theorem degreeBucketProduct_singleton
-    [ZMod64.PrimeModulus p]
+/-- The product of a singleton bucket list is its recorded factor.
+Not `@[simp]`: `simp` already closes it from `degreeBucketProduct_cons`,
+`degreeBucketProduct_nil`, and `FpPoly.mul_one`. -/
+theorem degreeBucketProduct_singleton
     (bucket : DegreeBucket p) :
     degreeBucketProduct [bucket] = bucket.factor := by
   simp [degreeBucketProduct, degreeBucketFactors, factorProduct]
 
 /-- Pull the first bucket factor out of a bucket product. -/
 @[simp, grind =] theorem degreeBucketProduct_cons
-    [ZMod64.PrimeModulus p]
     (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
     degreeBucketProduct (bucket :: buckets) =
       bucket.factor * degreeBucketProduct buckets := by
@@ -310,12 +262,10 @@ private theorem degreeBucketProduct_appendBucket?_none
 /-- Appending `some bucket` multiplies the bucket product on the right by that
 bucket's recorded factor. -/
 private theorem degreeBucketProduct_appendBucket?_some
-    [ZMod64.PrimeModulus p]
     (buckets : List (DegreeBucket p)) (bucket : DegreeBucket p) :
     degreeBucketProduct (appendBucket? buckets (some bucket)) =
       degreeBucketProduct buckets * bucket.factor := by
-  rw [appendBucket?]
-  rw [degreeBucketProduct_append, degreeBucketProduct_singleton]
+  rw [appendBucket?, degreeBucketProduct_append, degreeBucketProduct_singleton]
 
 /-- The factor contributed by an optional bucket: `1` for `none`, the recorded
 factor for `some bucket`. -/
@@ -326,7 +276,6 @@ private def optionalBucketProduct : Option (DegreeBucket p) → FpPoly p
 /-- Appending an optional bucket multiplies the bucket product on the right by
 `optionalBucketProduct`, unifying the `none` and `some` cases. -/
 private theorem degreeBucketProduct_appendBucket?
-    [ZMod64.PrimeModulus p]
     (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p)) :
     degreeBucketProduct (appendBucket? buckets bucket?) =
       degreeBucketProduct buckets * optionalBucketProduct bucket? := by
@@ -356,17 +305,6 @@ private theorem gcd_mul_div_eq
       ((residual / DensePoly.gcd residual diff) *
         DensePoly.gcd residual diff)).symm.trans hspec)
 
-/-- The degree-`d` candidate divides `residual`: candidate times
-`residual / candidate` recovers `residual`. -/
-private theorem distinctDegreeCandidate_mul_div_eq
-    [ZMod64.PrimeModulus p]
-    (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (residual : FpPoly p) (d : Nat) :
-    distinctDegreeCandidate f hmonic residual d *
-        (residual / distinctDegreeCandidate f hmonic residual d) = residual := by
-  rw [distinctDegreeCandidate_spec]
-  exact gcd_mul_div_eq residual (frobeniusDiffMod f hmonic d)
-
 /-- A product with a non-unit right factor is non-unit, since any divisor of a
 unit is a unit. -/
 private theorem isUnitPolynomial_mul_eq_false_of_right
@@ -385,7 +323,6 @@ private theorem isUnitPolynomial_mul_eq_false_of_right
 /-- `finishDegreePower` preserves the running product when `acc` is non-unit:
 the emitted bucket factor times the returned residual equals `acc * residual`. -/
 private theorem finishDegreePower_product_nonunit
-    [ZMod64.PrimeModulus p]
     (d : Nat) (residual acc : FpPoly p)
     (hacc : isUnitPolynomial acc = false) :
     let result := finishDegreePower (p := p) d residual acc
@@ -393,21 +330,6 @@ private theorem finishDegreePower_product_nonunit
   unfold finishDegreePower
   rw [hacc]
   cases isUnitPolynomial residual <;> simp [optionalBucketProduct]
-
-/-- `1 ≠ 0` in `ZMod64 p` for a prime modulus, since `p ≥ 2` makes
-`1 % p = 1`. -/
-private theorem zmod_one_ne_zero_local
-    [ZMod64.PrimeModulus p] :
-    (1 : ZMod64 p) ≠ 0 := by
-  intro h
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by
-        have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
-        omega : 1 < p)] at htoNat
-  exact absurd htoNat (by omega)
 
 /-- The constant polynomial `1` is a unit (degree `0`). -/
 private theorem isUnitPolynomial_one
@@ -418,7 +340,7 @@ private theorem isUnitPolynomial_one
     | some 0 => true
     | _ => false) = true
   have hcoeffs : (DensePoly.C (1 : ZMod64 p)).coeffs = #[(1 : ZMod64 p)] :=
-    DensePoly.coeffs_C_of_ne_zero zmod_one_ne_zero_local
+    DensePoly.coeffs_C_of_ne_zero (ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)))
   simp [DensePoly.degree?, DensePoly.size, hcoeffs]
 
 /-- `finishDegreePower` from unit accumulator `1` preserves `residual`: the
@@ -614,7 +536,7 @@ private theorem distinctDegreePowerLoop_bucket_degree
               (acc * DensePoly.gcd residual diff) bucket hbucket
 
 /-!
-### Same-degree extraction divisibility
+# Same-degree extraction divisibility
 
 `finishDegreePower` and `distinctDegreePowerLoop` both emit at most one bucket
 recording the accumulated product of repeated same-degree gcds against the
@@ -625,7 +547,7 @@ invariant on `(residual, acc)` whose construction (the square-free /
 multiplicity content) is delegated to the caller.
 
 `finishDegreePower_bucket_dvd_diff` covers all three exit cases of
-`finishDegreePower` — including the scalar-unit residual case where the
+`finishDegreePower`; including the scalar-unit residual case where the
 emitted factor is `acc * residual`.
 
 `distinctDegreePowerLoop_bucket_dvd_diff` threads an abstract
@@ -736,19 +658,14 @@ private theorem unitPolynomial_dvd_any
     omega
   have hmod : target % u = 0 := by
     show (DensePoly.divMod target u).2 = 0
-    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_core
+    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel
     · exact hu_size
     · intro a
       have hpos : 0 < u.size := by omega
       have hidx : u.coeffs.size - 1 < u.coeffs.size := by
         simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
       have hlead_eq : u.leadingCoeff = u.coeff (u.size - 1) := by
-        unfold DensePoly.leadingCoeff DensePoly.coeff
-        change u.coeffs.back?.getD (0 : ZMod64 p) =
-          u.coeffs.getD (u.coeffs.size - 1) (Zero.zero : ZMod64 p)
-        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
-          Array.getElem?_eq_getElem hidx]
-        rfl
+        simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
       have hlead_ne : u.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
         rw [hlead_eq]
         exact DensePoly.coeff_last_ne_zero_of_pos_size u hpos
@@ -1028,7 +945,6 @@ private theorem distinctDegreeLoop_bucket_positive_degrees
           (appendBucket? buckets powerResult.1) (by omega) happend bucket hmem
 
 private theorem distinctDegreeFactor_bucket_positive_degrees
-    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ bucket ∈ (distinctDegreeFactor f hmonic).buckets, 0 < bucket.degree := by
   unfold distinctDegreeFactor

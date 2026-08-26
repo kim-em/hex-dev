@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Field
+module
+
+public import HexGF2.Field
+
+public section
 
 /-!
 Project-side soundness of `GF2Poly.rabinTest` against
@@ -20,7 +24,7 @@ can be discharged independently.
 namespace Hex
 namespace GF2Poly
 
-/-! ## Foundational Rabin leaves -/
+/-! # Foundational Rabin leaves -/
 
 /--
 The absolute polynomial `X^(2^k) - X` in characteristic two.
@@ -31,7 +35,7 @@ Packed `GF(2)` subtraction is addition, so this is represented as
 def xPowSubX (k : Nat) : GF2Poly :=
   monomial (2 ^ k) + monomial 1
 
-/-! ## Basic divisibility helpers -/
+/-! # Basic divisibility helpers -/
 
 private theorem mulXk_zero' (p : GF2Poly) : p.mulXk 0 = p := by
   apply ext_coeff
@@ -77,13 +81,13 @@ private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
   rcases h with ⟨r, hr⟩
   exact ⟨r, by rw [hr, mul_assoc]⟩
 
-/-! ## Frobenius helpers -/
+/-! # Frobenius helpers -/
 
 /-- Char-2 freshman's dream: `(a + b) * (a + b) = a * a + b * b`. -/
 private theorem freshman_dream (a b : GF2Poly) :
     (a + b) * (a + b) = a * a + b * b := by
-  rw [right_distrib, left_distrib, left_distrib, mul_comm b a]
-  rw [add_assoc, ← add_assoc (a * b) (a * b) (b * b), add_self, zero_add]
+  rw [right_distrib, left_distrib, left_distrib, mul_comm b a,
+    add_assoc, ← add_assoc (a * b) (a * b) (b * b), add_self, zero_add]
 
 /-- The remainder added to its dividend is divisible by the divisor in
 characteristic two. -/
@@ -167,7 +171,7 @@ private theorem dvd_xPowSubX_add_frobeniusDiffMod (f : GF2Poly) (k : Nat) :
   rw [heq] at hsum
   exact hsum
 
-/-! ## Reduced-residue helpers -/
+/-! # Reduced-residue helpers -/
 
 private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
     (hred : p.isZero = true ∨ p.degree < bound) (hbound : bound ≤ n) :
@@ -345,9 +349,8 @@ private theorem monomial_add_one_dvd_geom (k : Nat) :
       have heq :
           monomial (k * (n + 1)) + 1 =
             monomial k * (monomial (k * n) + 1) + (monomial k + 1) := by
-        rw [right_distrib, mul_one', monomial_mul_monomial]
-        rw [show k + k * n = k * (n + 1) from by rw [Nat.mul_succ]; omega]
-        rw [add_assoc]
+        rw [right_distrib, mul_one', monomial_mul_monomial,
+          show k + k * n = k * (n + 1) from by rw [Nat.mul_succ]; omega, add_assoc]
         congr 1
         rw [← add_assoc, add_self, zero_add]
       rw [heq]
@@ -531,8 +534,9 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
   have hd0 : d = 0 := by simpa [degree, hd] using hg_deg_zero
   unfold isUnitPolynomial
   rw [hd, hd0]
+  rfl
 
-/-! ## Small structural helpers -/
+/-! # Small structural helpers -/
 
 /-- Local divisibility transitivity for `GF2Poly`. -/
 private theorem dvd_trans {a b c : GF2Poly} (hab : a ∣ b) (hbc : b ∣ c) :
@@ -606,9 +610,7 @@ theorem dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X
         GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (frobeniusDiffMod g k) =
           0 := by
       unfold frobeniusDiffMod
-      rw [GF2nPoly.reducePoly_add_eq]
-      rw [GF2nPoly.reducePoly_mod_eq]
-      rw [hquot']
+      rw [GF2nPoly.reducePoly_add_eq, GF2nPoly.reducePoly_mod_eq, hquot']
       change
         GF2nPoly.reducePoly (f := g) (hirr := hg_irr)
             ((GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1)).val +
@@ -768,6 +770,7 @@ private theorem exists_irreducible_factor_of_pos_degree_aux :
         ∃ g : GF2Poly,
           GF2Poly.Irreducible g ∧ g ∣ a ∧
             0 < g.degree ∧ g.degree ≤ a.degree := by
+  classical
   intro n
   induction n using Nat.strongRecOn with
   | ind n ih =>
@@ -816,10 +819,11 @@ theorem exists_irreducible_factor_of_factor
         0 < g.degree ∧ g.degree ≤ a.degree :=
   exists_irreducible_factor_of_pos_degree_aux a.degree a rfl ha_pos
 
-/-! ## Soundness theorem -/
+/-! # Soundness theorem -/
 
 /--
-Soundness of the executable Rabin test against `GF2Poly.Irreducible`.
+Soundness of the executable Rabin test against
+{name}`Hex.GF2Poly.Irreducible`.
 
 The proof decomposes the Boolean test, picks an irreducible factor of any
 nontrivial factorization, routes its degree through a maximal proper divisor,

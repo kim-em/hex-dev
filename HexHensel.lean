@@ -4,12 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Basic
-import HexHensel.Linear
-import HexHensel.Multifactor
-import HexHensel.Quadratic
-import HexHensel.QuadraticMultifactor
-import HexHensel.CrossCheck
+module
+
+public import HexHensel.ModularPolynomial
+public import HexHensel.ModularDivision
+public import HexHensel.Linear
+public import HexHensel.Multifactor
+public import HexHensel.WordMul
+public import HexHensel.Quadratic
+public import HexHensel.QuadraticMultifactor
+
+public section
 
 /-!
 The `HexHensel` library provides the executable conversion and lifting layers

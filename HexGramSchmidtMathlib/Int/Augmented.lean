@@ -56,17 +56,13 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
               (castIntRow b ⟨i, hi⟩)) := by
-    apply Vector.ext
-    intro r hr
-    apply Vector.ext
-    intro c hc
-    let pp : Fin (j + 1) := ⟨r, hr⟩
-    let cc : Fin (j + 1) := ⟨c, hc⟩
+    apply Hex.Matrix.ext_getElem
+    intro pp cc
     change
       (castIntDetMatrix
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj))[pp][cc] =
         (Matrix.setCol _ _ _)[pp][cc]
-    rw [Matrix.setCol_getElem, castIntDetMatrix_get]
+    rw [Matrix.getElem_setCol, castIntDetMatrix_get]
     by_cases hc_eq : cc = (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
     · rw [if_pos hc_eq]
       have hc_val : cc.val = j := congrArg Fin.val hc_eq
@@ -75,7 +71,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨i, hi⟩) := by
-        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+        simp [GramSchmidt.scaledCoeffMatrix, getRow_ofFn,
           GramSchmidt.liftFinLE, hc_val]
       rw [hsc, ← dot_castIntRow_eq_cast_dot]
     · rw [if_neg hc_eq, castIntDetMatrix_get]
@@ -85,14 +81,14 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
-        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+        simp [GramSchmidt.scaledCoeffMatrix, getRow_ofFn,
           GramSchmidt.liftFinLE, hc_ne]
       have hG :
           (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc)[pp][cc] =
             Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
-        simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn,
+        simp [GramSchmidt.leadingGramMatrixInt, getRow_ofFn,
           GramSchmidt.liftFinLE]
       rw [hsc, hG]
   rw [hM_colReplace]
@@ -122,18 +118,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
           (originalProjectionCoords b i j hi hjlt))[p] = _
     unfold Matrix.mulVec Matrix.row
-    have hleft :
-        (Vector.ofFn fun i' : Fin (j + 1) =>
-            Vector.dotProduct
-              (castIntDetMatrix
-                (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[i']
-              (originalProjectionCoords b i j hi hjlt))[p] =
-          Vector.dotProduct
-            (castIntDetMatrix
-              (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p]
-            (originalProjectionCoords b i j hi hjlt) := by
-      simp [Vector.getElem_ofFn]
-    rw [hleft]
+    simp only [Vector.getElem_ofFn, Fin.getElem_fin]
     unfold Vector.dotProduct
     apply foldl_sum_congr_simple
     intro q _hq
@@ -171,9 +156,9 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [hdetG]
     -- Cancellation: origProjCoords[Fin.last j] * gramDet = gramDet * coeffs[i][j].
     have hcancel_normSq :
-        Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+        ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
-          Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+          ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
       have hH2 := dot_basis_basisPrefixProjection_eq_coeff_mul_normSq b i j hi hj
       have hH3 := dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq b i j hi hj
@@ -185,25 +170,25 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [hgd_succ]
     have hgnp_ne_or_zero :
         gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
       have h1 :
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
             gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              (((basis b).row ⟨j, hjlt⟩).normSq *
                 (originalProjectionCoords b i j hi hjlt)[Fin.last j]) := by
         grind
       have h2 :
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ =
             gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              (((basis b).row ⟨j, hjlt⟩).normSq *
                 GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩) := by
         grind
       rw [h1, h2, hcancel_normSq]
@@ -251,7 +236,7 @@ private theorem noPivotLoop_extends_singularStep
     rw [h_sing_a, h_step_a]
   exact Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) b S hDone hp_zero h_sing_step
 
-/-! ### Augmented Gram matrix for determinantal identification of
+/-! # Augmented Gram matrix for determinantal identification of
 `bareissGramCanonicalCoeff`
 
 The canonical row-coefficient vector of the initial no-pivot Bareiss trajectory
@@ -279,7 +264,7 @@ def augmentedGram (b : Matrix Int n m) (a : Fin n) :
   Matrix.ofFn fun i j : Fin (n + 1) =>
     if hi : i.val < n then
       if hj : j.val < n then
-        (Matrix.gramMatrix b)[(⟨i.val, hi⟩ : Fin n)][(⟨j.val, hj⟩ : Fin n)]
+        (Matrix.gramMatrix b)[((⟨i.val, hi⟩ : Fin n), (⟨j.val, hj⟩ : Fin n))]
       else
         if i.val = a.val then (1 : Int) else 0
     else
@@ -360,6 +345,10 @@ private theorem noPivotLoop_singularStep_none_of_succ
     rw [hpersist, hsing] at h_no_sing
     nomatch h_no_sing
 
+-- Encapsulation makes the nested entry reads and the canonical-coefficient
+-- rewrites over the recursive `noPivotLoop` term defeq-heavy here; a modest
+-- bump (down from the original 1000000) covers it.
+set_option maxHeartbeats 400000 in
 /-- Combined invariant relating the no-pivot Bareiss trajectory on the
 augmented matrix to the trajectory on `gramMatrix b`.  Under `fuel + 1 ≤ n`
 and a non-singular prefix on the Gram side, the augmented loop tracks the
@@ -427,7 +416,9 @@ theorem noPivotLoop_augmentedGram_invariant
         have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl (by
             show 0 + fuel + 1 ≤ n; omega) h_no_sing_prev
-        simpa [Matrix.noPivotInitialState] using h
+        simp only [Matrix.noPivotInitialState, Nat.zero_add] at h
+        rw [hstateG]
+        exact h
       have hDone_G : stateG.step + 1 < n := by rw [h_step_G_fuel]; omega
       have hk_G_lt : stateG.step < n := Nat.lt_of_succ_lt hDone_G
       -- Pivot non-zero on the Gram side.
@@ -439,7 +430,7 @@ theorem noPivotLoop_augmentedGram_invariant
         -- contradicting `h_no_sing`.
         have h_sing_branch : Matrix.noPivotLoop 1 stateG
             = { stateG with singularStep := some stateG.step } :=
-          Matrix.noPivotLoop_singular_branch 0 stateG hDone_G hzero
+          Matrix.noPivotLoop_of_singular 0 stateG hDone_G hzero
         have h_succ_eq :
             Matrix.noPivotLoop (fuel + 1)
               (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
@@ -490,7 +481,7 @@ theorem noPivotLoop_augmentedGram_invariant
                 rowSwaps := stateG.rowSwaps
                 singularStep := none } := by
         rw [Matrix.noPivotLoop_add fuel 1]
-        exact Matrix.noPivotLoop_regular_branch 0 stateG hDone_G h_pivot_G_ne
+        exact Matrix.noPivotLoop_of_regular 0 stateG hDone_G h_pivot_G_ne
       have h_A_succ :
           Matrix.noPivotLoop (fuel + 1)
               (Matrix.noPivotInitialState (augmentedGram b a)) =
@@ -504,7 +495,7 @@ theorem noPivotLoop_augmentedGram_invariant
                 rowSwaps := stateA.rowSwaps
                 singularStep := none } := by
         rw [Matrix.noPivotLoop_add fuel 1]
-        exact Matrix.noPivotLoop_regular_branch 0 stateA hDone_A h_pivot_A_ne
+        exact Matrix.noPivotLoop_of_regular 0 stateA hDone_A h_pivot_A_ne
       -- Both peeled states are zero-fuel, so the loop returns them unchanged.
       rw [h_G_succ, h_A_succ, Matrix.noPivotLoop_zero_fuel, Matrix.noPivotLoop_zero_fuel]
       -- Now project each component of the invariant.
@@ -834,13 +825,13 @@ theorem noPivotLoop_initial_step_eq_and_fuel_succ_le
     · by_cases hp : state'.matrix[state'.step][state'.step] = 0
       · exfalso
         rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
-            Matrix.noPivotLoop_singular_branch 0 state' hDone hp] at h_no_sing
+            Matrix.noPivotLoop_of_singular 0 state' hDone hp] at h_no_sing
         simp at h_no_sing
       · -- Regular branch: peel the last iteration.
         obtain ⟨h_step_prev, h_fuel_prev⟩ := ih h_no_sing_prev hDone
         refine ⟨?_, by omega⟩
         rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
-            Matrix.noPivotLoop_regular_branch 0 state' hDone hp,
+            Matrix.noPivotLoop_of_regular 0 state' hDone hp,
             Matrix.noPivotLoop_zero_fuel]
         show state'.step + 1 = fuel + 1
         rw [h_step_prev]
@@ -851,13 +842,13 @@ theorem noPivotLoop_initial_step_eq_and_fuel_succ_le
 
 /-- Companion to `trailing_eq_at_step_local`: rewrite
 `BareissNoPivotInvariant.prevPivot_eq` with the step value supplied externally
-so the dependent `leadingPrefix` type matches the desired `s = state.step`
+so the dependent `principalSubmatrix` type matches the desired `s = state.step`
 substitution cleanly. -/
 theorem prevPivot_eq_at_step_local
     {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (s : Nat) (hs : s ≤ n') (hstep : s = state.step) :
-    state.prevPivot = Hex.Matrix.det (Hex.Matrix.leadingPrefix M s hs) := by
+    state.prevPivot = Hex.Matrix.det (Hex.Matrix.principalSubmatrix M s hs) := by
   subst hstep
   exact hinv.prevPivot_eq
 
@@ -890,7 +881,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
       (Matrix.noPivotLoop (fuel + 1)
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
     rw [Matrix.noPivotLoop_add fuel 1, ← hstate,
-        Matrix.noPivotLoop_regular_branch 0 state hnext hp,
+        Matrix.noPivotLoop_of_regular 0 state hnext hp,
         Matrix.noPivotLoop_zero_fuel]
   have h_fuel_succ_le_i : fuel + 1 ≤ i.val := by rw [← h_step_eq_fuel]; exact hi
   refine ⟨fun a => (Hex.GramSchmidt.Int.bareissGramCanonicalCoeff b (fuel + 1) i)[a], ?_⟩
@@ -916,6 +907,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
   -- Substitute the row-invariant's coefficients by canonical via h_canon.
   rw [h_canon i, h_canon k_let]
   -- Bridge state.matrix entries to stateA entries via the upper-block bridge.
+  simp only [Hex.Matrix.getElem_pair_eq_nested]
   rw [show state.matrix[k_let][k_let] = stateA.matrix[kA][kA] from
       (h_block_A k_let k_let).symm]
   rw [show state.matrix[i][k_let] = stateA.matrix[iA][kA] from
@@ -950,7 +942,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
       ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug iA kA).det *
         ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug kA L).det =
     (bareissGramCanonicalCoeff b (fuel + 1) i)[a] *
-      ((augmentedGram b a).leadingPrefix fuel hfuel_le_naug).det
+      ((augmentedGram b a).principalSubmatrix fuel hfuel_le_naug).det
   rw [bareissGramCanonicalCoeff_eq_borderedMinor_aug b (fuel + 1) i a
         h_fuel_succ_le_i h_prefix_none_succ]
   -- Desnanot-Jacobi on the augmented matrix at level `fuel`.
@@ -1138,28 +1130,6 @@ theorem scaledCoeffs_lower_eq_det_scaledCoeffMatrix
         scaledCoeffMatrix_det_eq_zero_of_singularStep_lt b i j hji s h_sing
       rw [h_lhs, h_det]
 
-/-- Non-singular branch of the Cramer/Bareiss identity: when the no-pivot
-Bareiss pass over the Gram matrix reaches column `j` without recording a
-singular step, the executable scaled coefficient agrees with the public
-row-pivoted Bareiss determinant of the Cramer minor. Derived from the
-unconditional `scaledCoeffs_lower_eq_det_scaledCoeffMatrix` by casting back
-to `Int` and translating `Matrix.det` to `Matrix.bareiss` via the
-`det_eq` / `bareiss_eq_mathlib_det` cross-bridge. -/
-theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
-    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
-    (_h_nonsing :
-      (Matrix.noPivotLoop j.val
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
-    GramSchmidt.entry (scaledCoeffs b) i j =
-      Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) := by
-  have h_det : GramSchmidt.entry (scaledCoeffs b) i j =
-      Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) := by
-    exact_mod_cast scaledCoeffs_lower_eq_det_scaledCoeffMatrix b i j hji
-  rw [h_det]
-  exact ((HexMatrixMathlib.bareiss_eq_mathlib_det
-        (GramSchmidt.scaledCoeffMatrix b i j hji)).trans
-      (HexMatrixMathlib.det_eq (GramSchmidt.scaledCoeffMatrix b i j hji)).symm).symm
-
 /-- Cramer/Bareiss identity: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
 Cramer minor `scaledCoeffMatrix`. Derived from the unconditional
@@ -1178,28 +1148,11 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
         (GramSchmidt.scaledCoeffMatrix b i j hji)).trans
       (HexMatrixMathlib.det_eq (GramSchmidt.scaledCoeffMatrix b i j hji)).symm).symm
 
-/-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
-integer equal to `d[j+1] * μ[i,j]` below the diagonal. Derived from the
-unconditional `scaledCoeffs_lower_eq_det_scaledCoeffMatrix` and
-`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
-private theorem scaledCoeffRows_lower_eq_coeffs
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
-      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
-        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  have hjlt : j < n := Nat.lt_trans hj hi
-  have h_array :
-      getArrayEntry (scaledCoeffRows b) i j =
-        GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
-    rw [scaledCoeffs_entry_eq_getArrayEntry,
-      getArrayEntry_scaledCoeffRowsSchur_eq b (StepWitness.ofGram b)]
-  rw [h_array, scaledCoeffs_lower_eq_det_scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj]
-  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs b i j hi hj
-
 /-- Below the diagonal, the rational image of the integer scaled
 Gram-Schmidt coefficient factors as `gramDet b (j+1) * coeffs[i,j]`. Derived
-from the unconditional `scaledCoeffs_lower_eq_det_scaledCoeffMatrix` and
-`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
+from {name}`Hex.GramSchmidt.Int.scaledCoeffs_lower_eq_det_scaledCoeffMatrix`
+and
+{name}`Hex.GramSchmidt.Int.scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =

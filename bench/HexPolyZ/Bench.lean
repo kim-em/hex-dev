@@ -20,6 +20,9 @@ Scientific registrations:
 * `runCoprimeModPWitness`: finite-prefix Bezout witness checking, `O(n^2)`.
 * `runContent`: integer coefficient content, `O(n)`.
 * `runPrimitivePartChecksum`: integer primitive part, `O(n)`.
+* `runDivExactEvaluationReject`: full exact-division entry point on a pair that
+  reaches and fails the final cheap evaluation gate, `O(n)` without quotient
+  allocation.
 * `runBinom`: central-binomial multiplicative formula, `O(n^2)` under
   compiled `Nat` arithmetic. The timed loop performs `O(n)` arithmetic steps
   over an accumulator whose bit width grows linearly in `n`.
@@ -58,6 +61,12 @@ structure BezoutInput where
 /-- Prepared input for content and primitive-part benchmarks. -/
 structure ContentInput where
   poly : ZPoly
+  deriving Hashable
+
+/-- Prepared dividend/divisor pair for exact-division rejection benchmarks. -/
+structure DivisionInput where
+  dividend : ZPoly
+  divisor : ZPoly
   deriving Hashable
 
 /-- Prepared integer polynomial for Mignotte helper benchmarks. -/
@@ -144,6 +153,22 @@ def prepBezoutInput (n : Nat) : BezoutInput :=
 def prepContentInput (n : Nat) : ContentInput :=
   { poly := contentPoly n 71 }
 
+/-- Build a pair which passes degree, leading-coefficient, and content checks,
+then fails evaluation at one.
+
+The dividend is `x^(n-1) + x + 1`, with value three at one.  The divisor is
+`x^(n/2) + 1`, with value two.  Both are primitive and monic. -/
+def prepDivisionInput (n : Nat) : DivisionInput :=
+  let size := max 4 n
+  let divisorDegree := size / 2
+  let dividend : ZPoly := DensePoly.ofCoeffs <|
+    (Array.range size).map fun i =>
+      if i = 0 || i = 1 || i + 1 = size then 1 else 0
+  let divisor : ZPoly := DensePoly.ofCoeffs <|
+    (Array.range (divisorDegree + 1)).map fun i =>
+      if i = 0 || i = divisorDegree then 1 else 0
+  { dividend := dividend, divisor := divisor }
+
 /-- Per-parameter fixture for Mignotte helper benchmarks. -/
 def prepMignotteInput (n : Nat) : MignotteInput :=
   { poly := denseZPoly n 89
@@ -186,9 +211,14 @@ def runContent (input : ContentInput) : Int :=
 def runPrimitivePartChecksum (input : ContentInput) : UInt64 :=
   checksum (ZPoly.primitivePart input.poly)
 
+/-- Benchmark target: reject at the final cheap gate without constructing a
+dense quotient. -/
+def runDivExactEvaluationReject (input : DivisionInput) : Bool :=
+  (ZPoly.divExact? input.dividend input.divisor).isNone
+
 /-- Benchmark target: compute a central binomial coefficient. -/
 def runBinom (n : Nat) : Nat :=
-  ZPoly.binom (2 * n) n
+  Nat.binom (2 * n) n
 
 /-- Benchmark target: compute floor square roots over a prepared batch. -/
 def runFloorSqrtChecksum (input : SqrtInput) : UInt64 :=
@@ -254,8 +284,23 @@ setup_benchmark runPrimitivePartChecksum n => n
     signalFloorMultiplier := 1.0
   }
 
+/- Cost model: the final prefilter evaluates the two sparse degree-`O(n)`
+polynomials once at one, so it performs two linear Horner scans and returns
+before the quadratic dense-division branch. -/
+setup_benchmark runDivExactEvaluationReject n => n
+  with prep := prepDivisionInput
+  where {
+    paramFloor := 4096
+    paramCeiling := 65536
+    paramSchedule := .custom #[4096, 8192, 16384, 32768, 65536]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "rejection"]
+  }
+
 /-
-`ZPoly.binom (2*n) n` folds across `min n n = n` multiplicative terms.
+`Nat.binom (2*n) n` folds across `min n n = n` multiplicative terms.
 For this central-binomial fixture the accumulator reaches linear bit width.
 Each compiled `Nat` multiply/divide step therefore scales with the accumulator
 limb count, so the scientific declaration models bit-cost growth rather than

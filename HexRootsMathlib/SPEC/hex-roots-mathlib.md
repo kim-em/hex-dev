@@ -1,0 +1,625 @@
+# hex-roots-mathlib (depends on hex-roots + hex-poly-z-mathlib + Mathlib)
+
+Mathlib companion for [hex-roots](../../HexRoots/SPEC/hex-roots.md). Proves **soundness**
+of the certified root isolation: every `DyadicRootIsolation` witness
+implies a unique simple complex root in its certified region (the
+stored square for the Newton-Kantorovich disjunct, the circumscribed
+disc for the Pellet disjunct; the region is always contained in the
+stored square's disc); every
+`DyadicRootCluster` witness implies exactly `k` roots with
+multiplicity; refinement preserves roots; `sameRoot` decides whether
+two refined isolations isolate the same root; and `mahlerPrec` meets
+its separation contract. **Completeness** proves that the actual driver either
+uses its verified Pellet-bearing all-atoms local finisher, directly emits an
+already-ready NK-only atom array, or reaches a normalized depth where every
+retained component certifies as one atom, so
+`isolate` never returns `none` on nonzero squarefree input under any atom
+strategy. One-atom refinement is additionally total under the default mixed
+strategy whenever the selected atom has reached `mahlerPrec`; this local result
+allows repeated roots elsewhere in the ambient polynomial. The soundness
+theorems remain independently useful: they are stated conditionally on a
+`some` result and do not depend on completeness.
+
+**Scope warning.** This companion is the heaviest of the `-mathlib`
+libraries. The two theorems everything rests on, **Pellet's
+root-counting test** and the **Mahler separation bound**, do not
+exist in Mathlib: no argument principle, Rouché, or residue theorem
+is in mainline (checked against the 2026-06-18 revision), the only
+open PRs in the area are two stalled new-contributor residue drafts
+([#29588](https://github.com/leanprover-community/mathlib4/pull/29588),
+[#39232](https://github.com/leanprover-community/mathlib4/pull/39232)),
+and the winding-number infrastructure for general contours remains
+future work (Patrick Massot, Zulip
+[#maths > Multivariate complex analysis][zulip], 2025-12-28; Junyan
+Xu's étale-space programme,
+[#31925](https://github.com/leanprover-community/mathlib4/pull/31925),
+aims there but has not landed).
+
+None of that generality is needed here, and the restricted problem is
+bounded. For **polynomials** on **circles**, the hard analytic
+ingredients already exist in Mathlib: the circle integral of
+`(z − w)⁻¹` inside the disc
+(`circleIntegral.integral_sub_inv_of_mem_ball`), the vanishing of the
+circle integral of a function holomorphic on a neighbourhood of the
+closed disc (`DiffContOnCl.circleIntegral_eq_zero`), the derivative
+of a product (`Polynomial.derivative_prod`), and continuity of
+parametrised interval integrals
+(`intervalIntegral.continuous_parametric_intervalIntegral_of_continuous`).
+What remains for us is the polynomial partial-fraction identity,
+finite summation, and a homotopy argument, as itemised below.
+
+One deliberate restriction: everything is stated for `Polynomial ℂ`,
+never `MeromorphicOn`. Mathlib's `MeromorphicOn` permits the function
+value at an isolated point to differ from its analytic germ, and a
+Rouché statement phrased over it admits counterexamples through that
+decoupling. This is what made LeanEval's `rouche_zero_count_eq` false
+as stated (Zulip, Model comparisons for Lean > LeanEval, 2026-05).
+Polynomials have no such subtlety, and the polynomial statements
+remain worth contributing to Mathlib on their own.
+
+Both developments are organised as self-contained slices with no
+`HexRoots` dependence, so each can be contributed to Mathlib as a
+separate PR once it has been exercised here.
+
+**Newton-Kantorovich route for atoms.** hex-roots atoms carry the
+disjunction `atomWitness = nkWitness ∨ witness _ _ 1` (see
+hex-roots.md §Newton-Kantorovich atom witnesses). The `nkWitness`
+disjunct admits a soundness proof with no complex analysis at all:
+Mehta and Macbeth have formalised the Newton-Kantorovich theorem
+over Mathlib from `ContractingWith` (Banach fixed point) in a
+self-contained ~250-line file (see References in hex-roots.md; not
+in Mathlib mainline as of the revision above), and the
+specialisation to polynomials on ℝ² with the sup norm makes the
+witness's exact dyadic quantities literal bounds for the theorem's
+hypotheses. Porting that file plus the specialisation layer is a
+third candidate-contribution slice
+(`HexRootsMathlib/Kantorovich.lean`,
+`HexRootsMathlib/KantorovichPoly.lean`). If the dual-route
+experiment in hex-roots settles on Newton-Kantorovich atoms, the
+Rouché-on-circles development below is needed only for `k ≥ 2`
+cluster soundness and the Pellet atom disjunct, and drops off the
+critical path for `isolate` on squarefree inputs (whose soundness
+then rests on `T_0` coverage, a triangle inequality, plus
+Newton-Kantorovich and the Mahler separation bound).
+
+[zulip]: https://leanprover.zulipchat.com/#narrow/stream/116395-maths/topic/Multivariate%20complex%20analysis
+
+## What we cite from Mathlib (no work)
+
+The following Mathlib API is used as-is (all names checked against the
+Mathlib revision this repository pins):
+
+- `Complex.isAlgClosed` (`Mathlib.Analysis.Complex.Polynomial.Basic`),
+  `Polynomial.roots`, `Polynomial.Splits.natDegree_eq_card_roots`
+  (`Mathlib.Algebra.Polynomial.Splits`): fundamental theorem of
+  algebra; the root multiset of a complex polynomial.
+- `Polynomial.rootMultiplicity` and the
+  `Polynomial.derivative_rootMultiplicity_*` lemmas
+  (`Mathlib.Algebra.Polynomial.FieldDivision`): simple roots are the
+  `α` with `p.eval α = 0 ∧ p.derivative.eval α ≠ 0`.
+- `Polynomial.Squarefree`,
+  `PerfectField.separable_iff_squarefree` (`Mathlib.FieldTheory.Perfect`).
+- `Polynomial.newtonMap`,
+  `Polynomial.aeval_pow_two_pow_dvd_aeval_iterate_newtonMap`
+  (`Mathlib.Dynamics.Newton`): the algebraic side of Newton's method.
+- `ContractingWith` and the Banach fixed-point theorem
+  (`Mathlib.Topology.MetricSpace.Contracting`): the analytic side of
+  Newton convergence.
+- `circleIntegral.integral_sub_inv_of_mem_ball`
+  (`Mathlib.MeasureTheory.Integral.CircleIntegral`):
+  `∮_{|z−c|=R} (z − w)⁻¹ dz = 2πi` for `w` inside the disc.
+- `DiffContOnCl.circleIntegral_eq_zero`
+  (`Mathlib.Analysis.Complex.CauchyIntegral`): the circle integral of
+  a function holomorphic near the closed disc vanishes; applied to
+  `(z − α)⁻¹` for roots `α` outside.
+- `Polynomial.derivative_prod`
+  (`Mathlib.Algebra.Polynomial.Derivative`): for the partial-fraction
+  identity.
+- `intervalIntegral.continuous_parametric_intervalIntegral_of_continuous`
+  (`Mathlib.MeasureTheory.Integral.DominatedConvergence`): for the
+  homotopy argument in Rouché.
+- `Polynomial.cauchyBound` and `Polynomial.IsRoot.norm_lt_cauchyBound`
+  (`Mathlib.Analysis.Polynomial.CauchyBound`): cited by the `cauchy`
+  constructor's correctness theorem.
+- `Polynomial.discr` and `Polynomial.resultant_deriv`
+  (`Mathlib.RingTheory.Polynomial.Resultant.Basic`): the polynomial
+  discriminant and `resultant(f, f') = ±lc · discr`.
+- `Polynomial.resultant`, `Polynomial.resultant_eq_prod_roots_sub`
+  (same file): the Sylvester-matrix toolkit.
+- `Polynomial.mahlerMeasure` and its lemmas in
+  `Mathlib.Analysis.Polynomial.MahlerMeasure`:
+  `mahlerMeasure_mul`, `mahlerMeasure_eq_leadingCoeff_mul_prod_roots`,
+  `mahlerMeasure_le_sqrt_natDegree_add_one_mul_supNorm` (Landau).
+- `one_le_mahlerMeasure_of_ne_zero`
+  (`Mathlib.NumberTheory.MahlerMeasure`) for nonzero integer
+  polynomials.
+- `Polynomial.supNorm` (`Mathlib.Analysis.Polynomial.Norm`).
+- `Dyadic.invAtPrec_mul_le_one` and
+  `Dyadic.one_lt_invAtPrec_add_inc_mul` (Lean standard library,
+  `Init.Data.Dyadic.Inv`): the rounding-error bounds for the Newton
+  step's reciprocal.
+
+## Discriminant / separation development
+
+The smaller of the two new developments, and the one needed first:
+`mahlerPrec`'s contract rests on the Mahler separation bound.
+
+### Theorem chain
+
+1. **Discriminant nonvanishing.** A positive-degree separable polynomial
+   has nonzero discriminant, and an integer polynomial whose rational cast is
+   separable satisfies `1 ≤ |discr f|`. The rational-cast condition is the
+   roots-facing squarefreeness notion; squarefreeness in `ℤ[x]` would also
+   constrain the content. Lives in `HexPolyZMathlib/Discriminant.lean`.
+
+2. **Discriminant root-product formula:**
+   `discr f = lc(f)^{2n−2} · ∏_{i<j}(αᵢ − αⱼ)²` over the splitting
+   field. Mathlib has the resultant version
+   (`resultant_eq_prod_roots_sub`); we derive the discriminant version
+   through `resultant_deriv`. Lives in
+   `HexPolyZMathlib/Discriminant.lean`.
+
+3. **Mahler separation bound:**
+   ```
+   ∀ i ≠ j, |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
+   ```
+   first for squarefree `p ∈ ℤ[x]` of degree `n ≥ 2`. The proof bounds the
+   Vandermonde determinant of the roots two ways: its square is
+   `disc p / lc(p)^{2n−2}` by item 2, and Hadamard's inequality bounds
+   it above column-by-column, with one column rescaled to expose the
+   factor `|αᵢ − αⱼ|`. Mahler's original argument is exactly this;
+   Mignotte and Ştefănescu, ch. 4, give a self-contained version
+   suitable for direct formalisation. (A naive bound on the individual
+   factors `|αᵢ − αⱼ| ≤ 2·M(p)` does *not* reach the stated constant;
+   Hadamard is essential.) The Hex-independent column estimates and
+   discriminant/Vandermonde identity live in
+   `HexPolyZMathlib/MahlerSeparation.lean`; companion-specific executable
+   exponent arithmetic stays with the relevant roots library. The public
+   `one_le_mahlerDist` theorem applies this result to the integral radical of
+   an arbitrary nonzero polynomial. The radical has the same distinct roots,
+   no larger degree, and no larger Mahler measure, so repeated factors do not
+   weaken the executable bound.
+
+4. **`mahlerPrec` correctness:** the computational
+   `Hex.mahlerPrec p : Nat` (defined in `HexRoots/MahlerPrec.lean`)
+   satisfies the companion theorem
+   ```
+   mahlerPrec_separates
+       (hp : p ≠ 0)
+       (hr₁ : (toPolyℂ p).IsRoot z₁)
+       (hr₂ : (toPolyℂ p).IsRoot z₂)
+       (hne : z₁ ≠ z₂) :
+     2^{−mahlerPrec p} · 1449/1024 < ‖z₁ - z₂‖ / 4
+   ```
+   Thus it gives the advertised `sep(p) / 4` bound uniformly over distinct
+   roots of every nonzero polynomial. The left side bounds the circumscribed-
+   disc radius at that precision from above. Combines
+   item 3 with Landau's
+   `mahlerMeasure_le_sqrt_natDegree_add_one_mul_supNorm` to remove
+   `M(p)` in favour of the integer `‖p‖∞`. Lives in
+   `HexRootsMathlib/MahlerPrec.lean`.
+
+## Rouché-on-circles development
+
+The harder of the two developments. It supplies the semantics of the
+Pellet witnesses.
+
+### Theorem chain
+
+5. **Partial fractions for `p'/p`**: for `0 ≠ p : ℂ[X]` and `z` off
+   the roots,
+   ```
+   p'(z) / p(z) = Σ_{α ∈ p.roots} (z − α)⁻¹
+   ```
+   summing over the root multiset (so an m-fold root contributes m
+   terms). From the factorisation of `p` over ℂ and
+   `Polynomial.derivative_prod`, plus circle-integrability of each
+   summand. Lives in `HexRootsMathlib/CircleIntegralLemmas.lean`.
+
+6. **Argument principle for polynomials on circles:**
+   ```
+   (1/2πi) · ∮_{|z−c|=r} (p'(z) / p(z)) dz = (Polynomial.roots p).countP (· ∈ ball c r)
+   ```
+   for `p ≠ 0` with no zeros on `|z−c| = r`; the count is with
+   multiplicity, since `Polynomial.roots` is a multiset. By item 5
+   and linearity of the circle integral over the finite sum: each
+   root inside contributes `2πi`
+   (`circleIntegral.integral_sub_inv_of_mem_ball`), each root outside
+   contributes `0` (`DiffContOnCl.circleIntegral_eq_zero`, as
+   `(z − α)⁻¹` is then holomorphic near the closed disc). No winding
+   numbers and no meromorphic API. Lives in
+   `HexRootsMathlib/ArgumentPrinciple.lean`.
+
+7. **Rouché for polynomials on circles**, classical form (`|f − g| <
+   |g|` on the circle implies `f` and `g` have the same number of
+   zeros inside) and symmetric form (`|f − g| < |f| + |g|` likewise).
+   Proof by homotopy: `h_t := g + t·(f − g)` has no zero on the
+   circle for `t ∈ [0, 1]`, its root count is given by item 6, the
+   count varies continuously in `t`
+   (`continuous_parametric_intervalIntegral_of_continuous`), and an
+   integer-valued continuous function on `[0, 1]` is constant. Lives
+   in `HexRootsMathlib/Rouche.lean`.
+
+8. **Pellet (BSSY Theorem 1):**
+   ```
+   |c_k|·r^k > Σ_{i ≠ k} |c_i|·r^i   ⇒   p has exactly k roots in D(0, r)
+   ```
+   where `cᵢ = p.coeff i` and the count is with multiplicity. Proved
+   by applying Rouché to `p` and the monomial `c_k · z^k`. Lives in
+   `HexRootsMathlib/Pellet.lean`.
+
+The computational library never states this inequality directly: its
+witness compares dyadic bounds (`lo`, `hi`, and the rational `√2`
+bounds; see [hex-roots.md](../../HexRoots/SPEC/hex-roots.md)). The one-directional lemma
+"the dyadic-bound witness implies the exact Pellet inequality" lives
+in `HexRootsMathlib/Pellet.lean` (`pelletAt_dominates`, feeding
+`Pellet.sound`), so the analytic development above
+stays in the standard form (the form worth contributing to Mathlib)
+while the computational library stays decidable. The converse
+direction, that a sufficiently isolating disc makes the witness hold
+despite the factor-2 slack, belongs to the completeness development
+below.
+
+`HexRootsMathlib/SoftPellet.lean` supplies the bounded-precision bridge. It
+proves that every `CoeffBall` constructor encloses the corresponding complex
+coefficient, identifies `E(X)² - X O(X)²` with root squaring including
+multiplicity, transports root counts through every Graeffe level, and derives
+exact Pellet dominance from each outward-rounded comparison. Thus a soft
+success proves the same root-count and boundary statements as the exact Taylor
+witness; soft failure remains semantically inert.
+
+## Correspondence theorems
+
+These files connect the `HexRoots` data structures to the two
+developments above.
+
+- `HexRootsMathlib/Basic.lean`: exact `Dyadic → ℝ` and
+  `GaussDyadic → ℂ` casts and their algebra/order correspondence.
+- `HexRootsMathlib/Geometry.lean`: `lo(c) ≤ |c| ≤ hi(c)`, the
+  `181/128 < √2 < 1449/1024` bounds, and the Mathlib geometry of a
+  `DyadicSquare`: its complex centre, real half-width, closed sup-norm
+  square, and open/closed circumscribed discs. Simp lemmas
+  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The
+  "witness implies Pellet" correspondence itself lives downstream in
+  `HexRootsMathlib/Pellet.lean`.
+- `HexRootsMathlib/Taylor.lean`: the shared exact-coefficient bridge
+  ```lean
+  theorem taylor_coeff (p : ZPoly) (z : GaussDyadic) (k : Nat) :
+      toComplex ((taylor p z).getD k (0, 0)) =
+        ((toPolyℂ p).comp (X + C (toComplex z))).coeff k
+  ```
+  including the out-of-bounds case. Its proof consumes the executable
+  `taylor_getD` characterization rather than unfolding the in-place folds.
+- `HexRootsMathlib/HasOnlySimpleRoots.lean`:
+  for `p ≠ 0`, `Hex.HasOnlySimpleRoots p` is equivalent to separability of
+  `(toPolynomial p).map (Int.castRingHom ℚ)`. Connects
+  the executable test (the `ℚ[x]` gcd of `p` and `p'` is constant)
+  with Mathlib's rational-polynomial separability API. This is deliberately
+  not integral-polynomial `Squarefree`, which is sensitive to nonunit content.
+- `HexRootsMathlib/MahlerPrec.lean`: item 4 above.
+- `HexRootsMathlib/SimpleRoot.lean`: the semantics of root identity.
+  ```lean
+  /-- The unique root inside a refined isolation's certified region
+      (the stored square for the Newton-Kantorovich disjunct, the
+      circumscribed disc for the Pellet disjunct). The quotient
+      argument below needs only that each root lies in its own
+      isolation's disc, which both disjuncts give. -/
+  def RefinedIsolation.root (i : RefinedIsolation p) : ℂ
+
+  theorem intersects_iff_root_eq
+      (i₁ i₂ : RefinedIsolation p) :
+      Intersects i₁ i₂ ↔ i₁.root = i₂.root
+  ```
+  Each refined isolation supplies local simplicity and proves the ambient
+  polynomial nonzero; the radical-based Mahler theorem separates its selected
+  root from every distinct root even when other roots are repeated. Therefore
+  `Intersects` restricted to `RefinedIsolation p` is unconditionally an
+  equivalence relation; `Hex.rootOf` is well-defined by `Quot.lift`; and
+  `sameRoot i₁ i₂ = true ↔ SimpleRoot.mk i₁ = SimpleRoot.mk i₂`, so the
+  Boolean test used by the Mathlib-free layer decides equality in the
+  quotient. The `< sep/4` radius bound from item 4 makes the conditional
+  `intersects_iff_root_eq` theorem true.
+- `HexRootsMathlib/Cauchy.lean`: `Component.cauchy`
+  correctness. The starting closed square contains all of `Polynomial.roots p`
+  by `Polynomial.IsRoot.norm_lt_cauchyBound`: the executable maximum bounds
+  every non-leading coefficient, its ceiling division bounds Mathlib's
+  Cauchy bound, and `ceilLog2` rounds that integer bound up to the square's
+  power-of-two half-width. The degree-`n`
+  witness holds at the base, doubled, and quadrupled radii because the
+  leading-term inequality `|aₙ|·Rⁿ > Σ_{i<n}|aᵢ|·Rⁱ` only improves as
+  `R` grows past the Cauchy bound.
+- `HexRootsMathlib/RootFree.lean`: elementary `T₀` soundness. The exact
+  accumulator inequality or the coefficient-ball/Graeffe bridge implies, by
+  the finite triangle inequality and root-count transport, that a successful
+  `rootFree` test excludes
+  roots from the open disc of radius `radiusHi`. This contains both the
+  represented closed square and its true closed circumscribed disc because
+  `√2 < 1449/1024`.
+- `HexRootsMathlib/Bisection.lean`: elementary subdivision coverage. The four
+  closed children cover the parent, and every child containing a root survives
+  the `rootFree` filter. They are not pairwise disjoint, since adjacent
+  children share boundary segments. `HexRootsMathlib/Glue.lean` proves that
+  the executable union-by-insertion `glue` returns nonempty maximal
+  edge-or-corner-connected components, that distinct components have no
+  executable adjacency edge,
+  and that flattening its output permutes its input. In particular the
+  defensive singleton fallback in `glueCovered` is unreachable. Hence a
+  `T_0`-discarded child's disc
+  contains no root, so every root covered by the parent lies in some
+  retained child; when `certify?` returns a cluster, its disc
+  contains exactly `k` roots with multiplicity (Pellet, item 8); when
+  it returns an atom, the certified region contains exactly one
+  simple root (Newton-Kantorovich or Pellet at `k = 1`); and the
+  coverage guard makes an accepted speculative-Newton region contain
+  exactly the roots of the base region.
+- `HexRootsMathlib/Driver.lean` and `HexRootsMathlib/Isolate.lean`: driver
+  soundness. Retained squares cover every root, output discs are pairwise
+  disjoint, and each certificate has its asserted multiplicity count. Thus
+  the general driver's certificate counts sum to the polynomial degree; when
+  `isolate` successfully extracts only atoms, their distinct semantic roots
+  enumerate the root finset exactly.
+  ```lean
+  theorem isolateAll_count (p : ZPoly)
+      (h : 0 < p.degree?.getD 0) {target strategy result}
+      (hr : isolateAll? p target #[Component.cauchy p h] strategy = some result) :
+      ∑ i : Fin result.size, Certified.count result[i] = (toPolyℂ p).natDegree
+
+  theorem isolate_sound (p : ZPoly) (h : Hex.HasOnlySimpleRoots p)
+      (atom_prec : Int) (strategy : AtomStrategy) {atoms}
+      (ha : isolate p h atom_prec strategy = some atoms) :
+      (atoms.toList.map (·.root)).toFinset = (toPolyℂ p).roots.toFinset ∧
+      ∀ a ∈ atoms, atom_prec ≤ a.square.prec
+  ```
+  (`HasOnlySimpleRoots p` does *not* rule out `p = 0` (the
+  executable gcd of `0` and `0` is `0`, of size `0 ≤ 1`), but
+  `isolate 0 _ _ = none` by definition, so the `ha` hypothesis
+  supplies nonzeroness; a nonzero constant returns `some #[]` and
+  both sides are empty. The rational-separability correspondence in
+  `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the same reason.)
+- `HexRootsMathlib/Refinement.lean`: a successful
+  `DyadicRootIsolation.refineTo?` call preserves the raw atom's semantic root.
+  The refined-level wrapper preserves `RefinedIsolation.root` unconditionally
+  by exposing the successful underlying raw refinement call; the packaged
+  quotient equality remains available to Mathlib-free callers.
+- `HexRootsMathlib/IsolateTotal.lean`: the none-free consumption surface.
+  ```lean
+  noncomputable def isolate! (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+      (hp : p ≠ 0) (atomPrec : Int)
+      (strategy : Hex.AtomStrategy := .nkThenPellet) :
+      Array (Hex.DyadicRootIsolation p)
+  ```
+  Unlike `Hex.isolate`, this proof-facing wrapper cannot return `none`:
+  its hypotheses discharge the driver's completeness conditions and the
+  result is extracted from `isolate_exists`. It is characterized by
+  `isolate!_eq` (it is exactly the successful executable output), and
+  its behaviour is packaged by `isolate!_count` (one atom per root,
+  with multiplicity), `isolate!_roots` (the selected semantic roots are
+  exactly the root finset), `isolate!_prec` (every atom meets the
+  requested precision), and `isolate!_disjoint` (distinct atoms have
+  disjoint closed circumscribed discs).
+- `HexRootsMathlib/Examples.lean`: compiled regression examples for the
+  public surface (kernel-`decide` witness checks on committed dyadic
+  fixtures and `isolate!`-based root extraction). Deliberately excluded
+  from the umbrella and built through the release-tests target so CI
+  cannot silently lose it.
+
+## Completeness development
+
+Soundness above never claims the drivers succeed. Completeness does,
+and it is the analytically hardest part:
+
+9. **Pellet converse with margin**: if the disc is
+   `(ρ₁, ρ₂)`-isolating with a wide enough ratio, then the
+   exact dyadic-bound fallback witness holds. Its required
+   ratio is *linear in `deg p`* (each remote root contributes to the
+   higher Taylor coefficients; the relevant bound is
+   `(1 + ρ/d)^{n−1} − 1`), times a fixed factor absorbing the
+   factor-2 witness slack. This is what `separationDepth`'s
+   `ceilLog2 (deg p)` term supplies.
+   `Completeness/PelletTail.lean` supplies the Mathlib-only combinatorial
+   core: if every remote root has norm at least `d`, the positive-degree
+   elementary-symmetric tail of the normalized product is bounded by
+   `(1 + ρ/d)^n - 1`. `Completeness/PelletConverse.lean` connects this
+   estimate to the translated polynomial with root multiplicities and its
+   leading coefficient intact. In particular, with near-root offset `a`,
+   `m` remote roots, and `E = (1 + ρ/d)^m - 1`, the concrete margin
+   `|a| + (ρ + 3|a|) E < ρ` implies the exact strict `k = 1` coefficient
+   dominance consumed by Pellet's theorem. `Completeness/PelletDyadic.lean`
+   then absorbs the factor-two `lo`/`hi` coefficient loss and the distinct
+   executable radius bounds. At each of the base, doubled, and quadrupled
+   radii, writing `R = radiusHi`, `r = radiusLo`, it uses the explicit margin
+   `2|a| + (2R + 5|a|)((1 + R/d)^m - 1) < r`; the three margins imply the
+   actual executable `witness p s 1` proposition. Runtime soft Graeffe
+   certification can fire at a fixed isolation ratio before this threshold;
+   completeness deliberately retains the exact converse because bounded-
+   precision failure is inconclusive.
+10. **Newton success**: on a sufficiently refined atom the speculative
+    Newton step recertifies (via `ContractingWith` on the Newton map).
+    `Completeness/NewtonContraction.lean` supplies the analytic foundation:
+    the frozen exact-inverse Newton map at every simple root has a positive
+    sup-norm ball for every positive defect target `K`, on which its residual
+    is at most `(1 + K)` times the centre displacement. At `K = 1/2` it also
+    preserves the ball, contracts, and has the original root as its unique
+    fixed point. The following executable-recertification slice chooses a
+    smaller `K` and transfers the resulting strict margins to the dyadic
+    inverse and Taylor bounds. `Completeness/NKRecertification.lean` performs
+    that transfer: the pinned reciprocal has relative defect `< 2⁻⁸`; the
+    floored inverse is a scalar in `[0,1]` times the exact centre inverse; and
+    a continuous exact-centre majorant bounds the finite `z₂` sum while the
+    square radius tends to zero. Consequently every simple root has a natural
+    precision threshold beyond which every doubled square with centre distance
+    at most half its half-width satisfies the actual executable `nkWitness`.
+    `Completeness/NKConverse.lean` gives the complementary explicit
+    root-product estimate: if all other roots are at distance `d` and
+    `(1 + 4R/d)^m - 1 ≤ 1/32`, the exact executable witness succeeds.
+    `Completeness/NKDepth.lean` proves that the implemented
+    `separationDepth` makes this tail small around any locally simple root of a
+    nonzero polynomial, and connects the resulting witness to the actual `.nk`
+    and `.nkThenPellet` component certifiers. The separable-driver theorem is a
+    wrapper around this local result. `Completeness/RootFreeConverse.lean`
+    associates every retained square at separation depth with a nearby root;
+    glue connectivity propagates that association through a component.
+    `Completeness/SurvivorComponent.lean` consequently bounds the enclosing
+    square's precision loss by two levels. A root-bearing component at leaf
+    precision `separationDepth p + 3` therefore certifies: two levels pay for
+    `encSquare`, and one pays for the doubled NK base.
+11. **Driver completeness**: `Completeness/DriverCompleteness.lean` closes
+    the rootless-survivor-halo alternative by matching the executable driver
+    to a prefix of uniform global subdivision and regluing. At
+    `completenessDepth p target = max target (separationDepth p) + 5`, every
+    maximal component contains its associated nearby root: any halo square is
+    adjacent to the component containing that root and hence glued into it.
+    The preceding NK and Pellet converses then make every component pass
+    `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
+    Mahler separation makes their stored discs pairwise disjoint.
+    Under either Pellet-bearing strategy, an all-atom worklist may instead run
+    the local one-atom refinement loop independently on each atom and emit
+    before that depth when every refinement succeeds and the resulting discs
+    are pairwise disjoint. `Loop.lean` proves that this optional finisher
+    preserves coverage and returns only target-ready disjoint atoms. Otherwise
+    the NK-only strategy retains its direct ready/disjoint all-atoms emission,
+    and the proof carries coverage and
+    precision through the actual `refineAll`, closes the structural fuel
+    induction for `isolateLoop`/`isolateAll?`, and proves:
+
+    ```lean
+    theorem isolate_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+        (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
+        (Hex.isolate p h atomPrec strategy).isSome = true
+    ```
+
+    Nonzero constants take the executable empty-output branch. Positive-degree
+    inputs use the Cauchy component and the full normalized driver. Thus the
+    `none` branch is impossible for every nonzero squarefree input and every
+    atom strategy.
+12. **One-atom refinement completeness:**
+    `Completeness/RefinementCompleteness.lean` confines every subdivision to
+    the starting refined atom's doubled square. Mahler separation identifies
+    every sufficiently fine retained square with the represented locally
+    simple root. Global reglue then makes the last normalized round exactly one
+    component, whose NK witness succeeds; the mixed certifier returns one
+    target-ready atom. The fixed `fuelFor` budget reaches that round, proving
+    `DyadicRootIsolation.refineTo?_isSome_mixed`. Rewrapping at `mahlerPrec`
+    and the unconditional intersection theorem discharge the public refined
+    API. A separately proved bounded speculative pass may return sooner; its
+    exhaustion or rejection restarts from the original atom at this complete
+    fallback, so it does not enter the termination argument. This is
+    intentionally a `.nkThenPellet` theorem: pure Pellet
+    completeness for a locally simple root in a non-squarefree ambient
+    polynomial is not claimed.
+
+## File organisation
+
+```
+Shared discriminant / separation development (candidate Mathlib contribution):
+  HexPolyZMathlib/Squarefree.lean
+  HexPolyZMathlib/Discriminant.lean
+  HexPolyZMathlib/Hadamard.lean
+  HexPolyZMathlib/MahlerSeparation.lean
+
+Rouché-on-circles development (candidate Mathlib contribution;
+HexRoots-independent core):
+  HexRootsMathlib/CircleIntegralLemmas.lean
+  HexRootsMathlib/ArgumentTopology.lean
+  HexRootsMathlib/ArgumentPrinciple.lean
+  HexRootsMathlib/RoucheHomotopy.lean
+  HexRootsMathlib/Rouche.lean
+
+Newton-Kantorovich development (candidate Mathlib contribution;
+port of Mehta-Macbeth, see the intro):
+  HexRootsMathlib/Kantorovich.lean
+  HexRootsMathlib/KantorovichPoly.lean
+
+Correspondence theorems (depend on hex-roots data structures):
+  HexRootsMathlib/Basic.lean
+  HexRootsMathlib/Geometry.lean
+  HexRootsMathlib/Taylor.lean
+  HexRootsMathlib/SoftPellet.lean
+  HexRootsMathlib/HasOnlySimpleRoots.lean
+  HexRootsMathlib/MahlerPrec.lean
+  HexRootsMathlib/RootFree.lean
+  HexRootsMathlib/NKWitness.lean
+  HexRootsMathlib/Pellet.lean
+  HexRootsMathlib/Cauchy.lean
+  HexRootsMathlib/Bisection.lean
+  HexRootsMathlib/Component.lean
+  HexRootsMathlib/Glue.lean
+  HexRootsMathlib/Certificate.lean
+  HexRootsMathlib/Loop.lean
+  HexRootsMathlib/NKCertify.lean
+  HexRootsMathlib/NKDriver.lean
+  HexRootsMathlib/Driver.lean
+  HexRootsMathlib/Isolate.lean
+  HexRootsMathlib/SimpleRoot.lean
+  HexRootsMathlib/Refinement.lean
+  HexRootsMathlib/IsolateTotal.lean
+  HexRootsMathlib/Examples.lean  (release-tests target, not the umbrella)
+
+Completeness development:
+  HexRootsMathlib/Completeness/PelletTail.lean
+  HexRootsMathlib/Completeness/PelletConverse.lean
+  HexRootsMathlib/Completeness/PelletDyadic.lean
+  HexRootsMathlib/Completeness/NewtonContraction.lean
+  HexRootsMathlib/Completeness/NKRecertification.lean
+  HexRootsMathlib/Completeness/NKConverse.lean
+  HexRootsMathlib/Completeness/NKDepth.lean
+  HexRootsMathlib/Completeness/RootFreeConverse.lean
+  HexRootsMathlib/Completeness/SurvivorComponent.lean
+  HexRootsMathlib/Completeness/RefinementCompleteness.lean
+  HexRootsMathlib/Completeness/DriverCompleteness.lean
+```
+
+The shared separation, Rouché core, and Newton--Kantorovich candidate
+contributions have no `HexRoots` dependence and can be split out or sent to
+Mathlib. The executable correspondence and completeness layers depend on
+`HexRoots`. The library is verified by building it; conformance fixtures live
+with `hex-roots`.
+
+`Kantorovich.lean` is the attributed Mathlib-only Mehta--Macbeth core: it
+derives a quantitative contraction theorem from `ContractingWith`, proves the
+general Newton--Kantorovich result, and obtains the finite-dimensional form by
+showing the approximate inverse is surjective and hence injective in equal
+dimensions. Polynomial and executable-witness specialization belongs in
+`KantorovichPoly.lean`, not in the generic module.
+
+## Headline correctness theorem
+
+`HexRootsMathlib.isolate_sound`: a successful run of the executable
+isolator on a nonzero polynomial with only simple roots returns atoms
+whose semantic roots enumerate the root finset of the polynomial
+exactly, every atom meeting the requested precision. This is the
+end-to-end post-condition of the public API. Totality under the same
+hypotheses is `isolate_isSome` (the completeness development's
+terminal theorem), packaged for consumers as the none-free `isolate!`
+wrapper with its characterisation family (`isolate!_eq`, `_count`,
+`_roots`, `_prec`, `_disjoint`); the general-multiplicity count
+identity is `isolateAll_count`. Those are independently justified
+public API, and the correspondence and completeness theorems above are
+load-bearing clauses of the headline proof, per the intermediate-lemma
+rule in PLAN/Conventions.md §Headline correctness theorem.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `correspondence-only-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
+root-isolation algorithm; it verifies the executable isolator
+implemented elsewhere. The computational performance owner is
+hex-roots, where the isolator's bench targets and the python-flint
+comparator are measured.
+
+## References
+
+See [hex-roots.md](../../HexRoots/SPEC/hex-roots.md) for the BSSY, Pellet, Mahler, and
+Mignotte references. In addition:
+
+- Becker, Sagraloff, Sharma, Yap, JSC 2018, §2: the exact form of the
+  Pellet inequality and its derivation from Rouché.
+- Mignotte, Ştefănescu. *Polynomials: An Algorithmic Approach.*
+  Springer, 1999. Chapter 4 has a self-contained proof of the Mahler
+  separation bound (via Hadamard's inequality) suitable for direct
+  formalisation.
+- Yap. *Fundamental Problems of Algorithmic Algebra.* Oxford, 2000.
+  §6.6 derives the same bound via Liouville-style estimates, an
+  alternative if the Hadamard route stalls.

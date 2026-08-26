@@ -4,42 +4,36 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix.Bareiss
-import HexMatrix.RREF
+import HexMatrix
 
 /-!
-Core conformance checks for `hex-matrix`.
+Core conformance checks for `hex-matrix` (the dense base).
 
-Run this file through the conformance Lake target (`lake build
-HexMatrixConformance` from `conformance/`), not direct `lake env lean`: the
-Bareiss guards need the native code generated for `Matrix.exactDiv`.
+Run this file through the conformance Lake target, not direct `lake env lean`.
 
 Oracle: none
 Mode: always
 Covered operations:
-- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `leadingSubmatrix`)
-- vector and matrix arithmetic (`dotProduct`, `Hex.Vector.normSq`, `mulVec`, `mul`, `gramMatrix`)
+- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `principalSubmatrix`)
+- vector and matrix arithmetic (`dotProduct`, `normSq`, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
-- determinant APIs (`det`, `bareiss`, `bareissData`)
-- row reduction and span APIs (`rref`, `spanCoeffs`, `spanContains`)
-- nullspace basis extraction (`nullspace`)
+- Strassen-Winograd multiplication (`mulStrassen`) under the default and a custom
+  base-kernel configuration
 Covered properties:
 - transpose is involutive on committed fixtures
 - identity matrices act as left and right multiplicative identities
-- row operations satisfy the determinant laws promised by the SPEC
-- committed Bareiss fixtures match their expected executable determinant values;
-  the `bareiss = det` guards below are value-level fixture checks only, not a
-  general theorem in the Mathlib-free `hex-matrix` layer
-- `rref` returns data whose transform matrix multiplies the input to the reported echelon form
-- `spanCoeffs` witnesses row-span membership on a committed dependent-row example
-- the committed nullspace basis vectors are annihilated by the source matrix
+- `rowSwap` is involutive
+- `mulStrassen cfg A B = mul A B` (the reference product) on committed fixtures for
+  `strassenDefault`, a custom naive-kernel config (`cutoff := 4`), and a
+  deep-recursion config (`cutoff := 0`)
 Covered edge cases:
-- zero matrices and zero vectors
-- identity matrices and full-rank square systems
-- singular matrices with a zero determinant
-- a pivoting Bareiss input whose leading entry is zero
-- dependent rows producing nontrivial span and nullspace behavior
-- empty pivot-column and empty nullspace outputs
+- zero matrices and zero vectors, identity matrices, 2×2 and 6×6 dimension bands
+- Strassen fixtures spanning even, odd, and prime dimensions, distinct-`n`,`m`,`k`
+  rectangles, a zero contraction axis (empty product), 1×1, and a square past the
+  default cutoff so the recursion fires under `strassenDefault`
+
+The determinant, Bareiss, and row-reduction conformance guards live in the
+`HexDeterminant`, `HexBareiss`, and `HexRowReduce` Conformance modules.
 -/
 
 namespace Hex
@@ -52,16 +46,6 @@ private def baseInt : Matrix Int 2 2 :=
     | 0, 0 => 1
     | 0, _ => 2
     | 1, 0 => 3
-    | _, _ => 4
-
-private def zeroInt : Matrix Int 2 2 := 0
-
-private def singularInt : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, _ => 2
-    | 1, 0 => 2
     | _, _ => 4
 
 private def pivotInt : Matrix Int 3 3 :=
@@ -97,34 +81,6 @@ private def baseGramInt : Matrix Int 2 2 :=
     | 1, 0 => 11
     | _, _ => 25
 
-private def dependentRat : Matrix Rat 2 3 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, 1 => 2
-    | 0, _ => 3
-    | 1, 0 => 2
-    | 1, 1 => 4
-    | _, _ => 6
-
-private def dependentRref : Matrix Rat 2 3 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, 1 => 2
-    | 0, _ => 3
-    | _, _ => 0
-
-private def zeroRat23 : Matrix Rat 2 3 := 0
-
-private def fullRat22 : Matrix Rat 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, _ => 2
-    | 1, 0 => 3
-    | _, _ => 5
-
 private def spanVec : Vector Rat 3 :=
   Vector.ofFn fun i =>
     match i.val with
@@ -132,215 +88,145 @@ private def spanVec : Vector Rat 3 :=
     | 1 => 2
     | _ => 3
 
-private def offSpanVec : Vector Rat 3 :=
-  Vector.ofFn fun i =>
-    match i.val with
-    | 0 => 1
-    | 1 => 0
-    | _ => 0
-
-private def zeroRat3 : Vector Rat 3 := Vector.ofFn fun _ => 0
-
-private def zeroRat2 : Vector Rat 2 := Vector.ofFn fun _ => 0
-
-private def spanCoeffsWitness : Vector Rat 2 :=
-  Vector.ofFn fun i => if i.val = 0 then 1 else 0
-
-private def dependentNullspace : Vector (Vector Rat 3) 2 :=
-  Vector.ofFn fun i =>
-    match i.val with
-    | 0 => Vector.ofFn fun j =>
-        match j.val with
-        | 0 => -2
-        | 1 => 1
-        | _ => 0
-    | _ => Vector.ofFn fun j =>
-        match j.val with
-        | 0 => -3
-        | 1 => 0
-        | _ => 1
-
-private def zeroNullspace : Vector (Vector Rat 3) 3 :=
-  Vector.ofFn fun i =>
-    Vector.ofFn fun j => if i = j then 1 else 0
-
-private def emptyNullspace : Vector (Vector Rat 2) 0 :=
-  Vector.ofFn fun i => nomatch i
-
 #guard Matrix.row baseInt ⟨1, by decide⟩ = rowOneInt
 #guard Matrix.col baseInt ⟨0, by decide⟩ = colZeroInt
-#guard Matrix.leadingSubmatrix baseInt ⟨0, by decide⟩ = unitSubmatrix
-#guard Matrix.leadingSubmatrix baseInt ⟨1, by decide⟩ = baseInt
-#guard Hex.Vector.normSq vecInt = 61
-#guard Hex.Vector.normSq spanVec = 14
+#guard Matrix.principalSubmatrix baseInt 1 (by decide) = unitSubmatrix
+#guard Matrix.principalSubmatrix baseInt 2 (by decide) = baseInt
+#guard vecInt.normSq = 61
+#guard spanVec.normSq = 14
 #guard Matrix.gramMatrix baseInt = baseGramInt
-#guard (1 : Matrix Int 2 2) * baseInt = baseInt
-#guard baseInt * (1 : Matrix Int 2 2) = baseInt
+#guard (Matrix.identity (R := Int) 2) * baseInt = baseInt
+#guard baseInt * (Matrix.identity (R := Int) 2) = baseInt
 #guard Matrix.transpose (Matrix.transpose baseInt) = baseInt
 
-/-- info: { toArray := #[{ toArray := #[1, 3], size_toArray := _ }, { toArray := #[2, 4], size_toArray := _ }],
-  size_toArray := _ } -/
-#guard_msgs in #eval Matrix.transpose baseInt
+-- `#m[...]` literal notation agrees with the `ofFn` fixtures.
+#guard (#m[1, 2; 3, 4] : Matrix Int 2 2) = baseInt
+#guard (#m[0, 2, 1; 3, 0, 4; 5, 6, 0] : Matrix Int 3 3) = pivotInt
 
-/-- info: { toArray := #[17, 39], size_toArray := _ } -/
+/-- info:
+#m[1, 3;
+   2, 4]
+-/
+#guard_msgs (whitespace := normalized) in #eval Matrix.transpose baseInt
+
+/-- info: #v[17, 39] -/
 #guard_msgs in #eval Matrix.mulVec baseInt vecInt
 
-/-- info: { toArray := #[{ toArray := #[7, 10], size_toArray := _ }, { toArray := #[15, 22], size_toArray := _ }],
-  size_toArray := _ } -/
-#guard_msgs in #eval baseInt * baseInt
+/-- info:
+#m[ 7, 10;
+   15, 22]
+-/
+#guard_msgs (whitespace := normalized) in #eval baseInt * baseInt
 
-/-- info: { toArray := #[{ toArray := #[3, 4], size_toArray := _ }, { toArray := #[1, 2], size_toArray := _ }],
-  size_toArray := _ } -/
-#guard_msgs in #eval Matrix.rowSwap baseInt ⟨0, by decide⟩ ⟨1, by decide⟩
+/-- info:
+#m[3, 4;
+   1, 2]
+-/
+#guard_msgs (whitespace := normalized) in #eval Matrix.rowSwap baseInt ⟨0, by decide⟩ ⟨1, by decide⟩
 
-/-- info: { toArray := #[{ toArray := #[0, 2, 1], size_toArray := _ }, { toArray := #[-6, 0, -8], size_toArray := _ },
-               { toArray := #[5, 6, 0], size_toArray := _ }],
-  size_toArray := _ } -/
-#guard_msgs in #eval Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)
+/-- info:
+#m[ 0, 2,  1;
+   -6, 0, -8;
+    5, 6,  0]
+-/
+#guard_msgs (whitespace := normalized) in #eval Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)
 
-/-- info: { toArray := #[{ toArray := #[0, 2, 1], size_toArray := _ }, { toArray := #[3, 0, 4], size_toArray := _ },
-               { toArray := #[5, 12, 3], size_toArray := _ }],
-  size_toArray := _ } -/
-#guard_msgs in #eval Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3
+/-- info:
+#m[0,  2, 1;
+   3,  0, 4;
+   5, 12, 3]
+-/
+#guard_msgs (whitespace := normalized) in #eval Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3
 
 #guard Matrix.rowSwap (Matrix.rowSwap baseInt ⟨0, by decide⟩ ⟨1, by decide⟩)
     ⟨0, by decide⟩ ⟨1, by decide⟩ = baseInt
-#guard Matrix.det (1 : Matrix Int 2 2) = 1
-#guard Matrix.det zeroInt = 0
-#guard Matrix.det singularInt = 0
-#guard Matrix.det (Matrix.rowSwap pivotInt ⟨0, by decide⟩ ⟨1, by decide⟩) = -Matrix.det pivotInt
-#guard Matrix.det (Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)) = (-2) * Matrix.det pivotInt
-#guard Matrix.det (Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3) = Matrix.det pivotInt
-
-/- Determinant row-operation proof-mode automation examples. -/
-
-example : Matrix.det (1 : Matrix Int 2 2) = 1 := by
-  grind
-
-example (M : Matrix Int 3 3) (i j : Fin 3) (h : i ≠ j) :
-    Matrix.det (Matrix.rowSwap M i j) = -Matrix.det M := by
-  grind
-
-example (M : Matrix Int 3 3) (i : Fin 3) (c : Int) :
-    Matrix.det (Matrix.rowScale M i c) = c * Matrix.det M := by
-  grind
-
-example (M : Matrix Int 3 3) (src dst : Fin 3) (c : Int) (h : src ≠ dst) :
-    Matrix.det (Matrix.rowAdd M src dst c) = Matrix.det M := by
-  grind
-
-/- Bareiss fixture equality guards.
-
-These evaluate committed examples against `Matrix.det` to catch runtime
-regressions on representative nonsingular, singular, and pivoting inputs. They
-do not expose or imply a general Mathlib-free bridge theorem of the forbidden
-shape `Matrix.bareiss M = Matrix.det M`. -/
-
-#guard Matrix.bareiss baseInt = Matrix.det baseInt
-#guard Matrix.bareiss singularInt = 0
-#guard Matrix.bareiss pivotInt = Matrix.det pivotInt
-#guard (Matrix.bareissData singularInt).det = 0
-#guard (Matrix.bareissData pivotInt).rowSwaps = 1
-
-/- RREF, span, and nullspace executable conformance guards. -/
-
-#guard let D := Matrix.rref dependentRat; D.rank = 1
-#guard let D := Matrix.rref dependentRat; D.echelon = dependentRref
-#guard let D := Matrix.rref dependentRat; D.transform * dependentRat = D.echelon
-#guard let D := Matrix.rref zeroRat23; D.rank = 0
-#guard let D := Matrix.rref zeroRat23; D.pivotCols = Vector.ofFn (fun i => nomatch i)
-#guard let D := Matrix.rref fullRat22; D.rank = 2
-#guard let D := Matrix.rref fullRat22; D.echelon = (1 : Matrix Rat 2 2)
-
-#guard Matrix.spanCoeffs dependentRat spanVec = some spanCoeffsWitness
-#guard Matrix.rowCombination dependentRat spanCoeffsWitness = spanVec
-#guard Matrix.spanContains dependentRat spanVec
-#guard Matrix.spanCoeffs dependentRat offSpanVec = none
-#guard !(Matrix.spanContains dependentRat offSpanVec)
-#guard Matrix.spanCoeffs zeroRat23 zeroRat3 = some zeroRat2
-
-#guard (Matrix.nullspace dependentRat).toArray = dependentNullspace.toArray
-#guard (Matrix.nullspace zeroRat23).toArray = zeroNullspace.toArray
-#guard (Matrix.nullspace fullRat22).toArray = emptyNullspace.toArray
-#guard dependentRat * dependentNullspace.get ⟨0, by decide⟩ = 0
-#guard dependentRat * dependentNullspace.get ⟨1, by decide⟩ = 0
-
-/- RREF, span, and nullspace proof-mode automation examples. -/
-
-section RREFWrapperAutomation
-
-example (M : Matrix Rat n m) (v : Vector Rat m) (c : Vector Rat n) :
-    Matrix.spanCoeffs M v = some c → Matrix.rowCombination M c = v := by
-  exact Matrix.spanCoeffs_sound M v c
-
-example (M : Matrix Rat n m) (v : Vector Rat m) :
-    Matrix.spanContains M v = (Matrix.spanCoeffs M v).isSome := by
-  simp
-
-example (M : Matrix Rat n m) (v : Vector Rat m) :
-    Matrix.spanContains M v = true →
-      ∃ c : Vector Rat n, Matrix.rowCombination M c = v := by
-  exact (Matrix.spanContains_iff M v).mp
-
-example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
-    M * (Matrix.nullspace M).get k = 0 := by
-  grind
-
-example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
-    Matrix.col (Matrix.nullspaceBasisMatrix M) k = (Matrix.nullspace M).get k := by
-  grind
-
-end RREFWrapperAutomation
 
 /-!
-6×6 fixtures matching the SPEC `core` matrix-dimension band, with the
-same typical / edge / adversarial structure as the 2×2 cases above:
-
-- `bigInt` — typical full-rank Int (entries `min i j + 1`); factorises
-  as `L·U` with unit lower- and upper-triangular all-ones, so
-  `det = 1`. Dense enough that Bareiss exercises the inner update loop
-  at every step.
-- `bigZeroInt` — edge zero matrix.
-- `bigSingularInt` — adversarial singular Int with row 1 proportional
-  to row 0 (mirrors the `singularInt` 2×2 pattern at 6×6).
-- `bigPivotInt` — adversarial zero leading pivot (`M[0][0] = 0`),
-  forcing one Bareiss row swap (`bigInt` with the `(0,0)` entry
-  cleared).
+6×6 fixtures matching the SPEC `core` matrix-dimension band: `bigInt` is a
+typical full-rank Int (entries `min i j + 1`), dense enough to exercise the
+base arithmetic at the larger band.
 -/
 
 private def bigInt : Matrix Int 6 6 :=
   Matrix.ofFn fun i j => (min i.val j.val + 1 : Int)
 
-private def bigZeroInt : Matrix Int 6 6 := 0
-
-private def bigSingularInt : Matrix Int 6 6 :=
-  Matrix.ofFn fun i j =>
-    if i.val = 1 then (2 : Int)
-    else (min i.val j.val + 1 : Int)
-
-private def bigPivotInt : Matrix Int 6 6 :=
-  Matrix.ofFn fun i j =>
-    if i.val = 0 ∧ j.val = 0 then (0 : Int)
-    else (min i.val j.val + 1 : Int)
-
 #guard Matrix.transpose (Matrix.transpose bigInt) = bigInt
-#guard (1 : Matrix Int 6 6) * bigInt = bigInt
+#guard (Matrix.identity (R := Int) 6) * bigInt = bigInt
 
-/- Bareiss executable-value guards for 6×6 fixtures.
+/-!
+Strassen-Winograd (`mulStrassen`) differential guards. Each check asserts
+`mulStrassen cfg A B = A * B`, where `A * B` is the reference `mul` — the same
+product `mulStrassen_eq_mul` proves it equal to. This is a compiled-evaluator
+cross-check (`mul` is `noncomputable` with a `@[csimp]` twin, and `mulStrassen`
+is well-founded recursion), not a kernel `decide`.
 
-These compare against known fixture values rather than stating any general
-relationship between the Bareiss algorithm and Leibniz determinant. -/
+The custom configs pin an **explicit** cutoff rather than the provisional
+`strassenDefault.cutoff` of 64, so a later re-measurement of that constant cannot
+silently turn a recursion test into a base-kernel test. `cfgNaive` (`cutoff := 4`)
+forces one-or-two recursion levels on the small square/rectangular fixtures with a
+deliberately different — but valid — textbook triple-loop base kernel; `cfgDeep`
+(`cutoff := 0`) drives the recursion down to the config-independent `≤ 1` base
+condition (the 1×1 and empty fixtures exercise exactly that terminating case). The
+single `strassenDefault` recursion test derives its dimension from
+`strassenDefault.cutoff` itself, so it keeps firing the recursion whatever value a
+future re-measurement assigns to that constant.
+-/
 
-#guard Matrix.bareiss bigInt = 1
-#guard Matrix.bareiss bigZeroInt = 0
-#guard Matrix.bareiss bigSingularInt = 0
-#guard Matrix.bareiss bigPivotInt = -1
-#guard (Matrix.bareissData bigPivotInt).rowSwaps = 1
+/-- Deterministic Int fixture generator; `seed` distinguishes the two operands so
+the product is not accidentally symmetric. Entries are kept small to keep the
+cutoff-derived default-config guard in the millisecond range. -/
+private def genInt (seed n m : Nat) : Matrix Int n m :=
+  Matrix.ofFn fun i j => (((i.val + 1) * (j.val + 2) + seed * (i.val + j.val) : Int) % 13) - 6
 
-#guard Matrix.bareiss (Matrix.rowSwap bigInt ⟨0, by decide⟩ ⟨5, by decide⟩) = -1
-#guard Matrix.bareiss (Matrix.rowScale bigInt ⟨2, by decide⟩ 4) = 4
-#guard Matrix.bareiss (Matrix.rowAdd bigInt ⟨0, by decide⟩ ⟨3, by decide⟩ 7) = 1
+/-- A deliberately different — but valid — base kernel: the textbook triple-loop
+naive product, computed entrywise with `Fin.foldl`. It agrees with `mul` (both sum
+`∑ₜ X[i,t]·Y[t,j]`), so plugging it in cross-checks the recursion, the block
+assembly, and the kernel itself against the reference `mul`. -/
+private def naiveKernel {n m k : Nat} (X : Matrix Int n m) (Y : Matrix Int m k) :
+    Matrix Int n k :=
+  Matrix.ofFn fun i j => Fin.foldl m (fun acc t => acc + X[(i, t)] * Y[(t, j)]) (0 : Int)
+
+/-- Custom-kernel config with an explicit small cutoff: recursion fires on the
+small fixtures while the base leaves hit `naiveKernel`. -/
+private def cfgNaive : StrassenConfig Int := { cutoff := 4, baseMul := naiveKernel }
+
+/-- Deep-recursion config: `cutoff := 0` splits until a dimension reaches the
+config-independent `≤ 1` base condition. -/
+private def cfgDeep : StrassenConfig Int := { cutoff := 0, baseMul := naiveKernel }
+
+-- Even, odd, and prime square dimensions under both custom configs.
+#guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 6 6; let B := genInt 1 6 6; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 12 12; let B := genInt 1 12 12; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 5 5; let B := genInt 1 5 5; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 5 5; let B := genInt 1 5 5; mulStrassen cfgDeep A B = A * B
+
+-- Rectangular with distinct `n`, `m`, `k` (each ≥ 4 so `cfgNaive` recurses).
+#guard let A := genInt 0 5 7; let B := genInt 1 7 9; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 5 7; let B := genInt 1 7 9; mulStrassen cfgDeep A B = A * B
+
+-- Zero contraction axis (empty product) and a zero output axis, under `cfgDeep`
+-- (hits the `m ≤ 1` / `n ≤ 1` base immediately) and `strassenDefault`.
+#guard let A := genInt 0 3 0; let B := genInt 1 0 3
+  mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 3 0; let B := genInt 1 0 3
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
+#guard let A := genInt 0 0 3; let B := genInt 1 3 2
+  mulStrassen cfgDeep A B = A * B
+
+-- 1×1: the config-independent `≤ 1` base condition, under both `cfgDeep` and default.
+#guard let A := genInt 0 1 1; let B := genInt 1 1 1
+  mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 1 1; let B := genInt 1 1 1
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
+
+-- A square one past the default cutoff (at least 2), so `strassenDefault`
+-- actually recurses whatever the measured cutoff value is.
+#guard let d := max 2 ((strassenDefault (R := Int)).cutoff + 1)
+  let A := genInt 0 d d; let B := genInt 1 d d
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
 
 end Matrix
-
-end Hex

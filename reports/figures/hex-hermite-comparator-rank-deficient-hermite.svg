@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="460" viewBox="0 0 760 460">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380.0" y="25" text-anchor="middle" font-family="sans-serif" font-size="17">HexHermite comparator runtimes: rank-deficient-hermite</text>
+<line x1="86" y1="388.00" x2="732" y2="388.00" stroke="#dddddd"/>
+<text x="76" y="392.00" text-anchor="end" font-family="sans-serif" font-size="12">10^-1 ms</text>
+<line x1="86" y1="274.67" x2="732" y2="274.67" stroke="#dddddd"/>
+<text x="76" y="278.67" text-anchor="end" font-family="sans-serif" font-size="12">10^0 ms</text>
+<line x1="86" y1="161.33" x2="732" y2="161.33" stroke="#dddddd"/>
+<text x="76" y="165.33" text-anchor="end" font-family="sans-serif" font-size="12">10^1 ms</text>
+<line x1="86" y1="48.00" x2="732" y2="48.00" stroke="#dddddd"/>
+<text x="76" y="52.00" text-anchor="end" font-family="sans-serif" font-size="12">10^2 ms</text>
+<line x1="86" y1="48" x2="86" y2="388" stroke="#222"/>
+<line x1="86" y1="388" x2="732" y2="388" stroke="#222"/>
+<line x1="86.00" y1="388" x2="86.00" y2="393" stroke="#222"/>
+<text x="86.00" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">16</text>
+<line x1="247.50" y1="388" x2="247.50" y2="393" stroke="#222"/>
+<text x="247.50" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">24</text>
+<line x1="409.00" y1="388" x2="409.00" y2="393" stroke="#222"/>
+<text x="409.00" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">32</text>
+<line x1="570.50" y1="388" x2="570.50" y2="393" stroke="#222"/>
+<text x="570.50" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">40</text>
+<line x1="732.00" y1="388" x2="732.00" y2="393" stroke="#222"/>
+<text x="732.00" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">48</text>
+<text x="409.0" y="442" text-anchor="middle" font-family="sans-serif" font-size="13">matrix dimension n</text>
+<text x="18" y="218.0" text-anchor="middle" transform="rotate(-90 18 218.0)" font-family="sans-serif" font-size="13">median wall time per call (log scale)</text>
+<polyline points="86.00,338.83 247.50,258.52 409.00,208.44 570.50,170.84 732.00,144.53" fill="none" stroke="#2864dc" stroke-width="2.5"/>
+<circle cx="86.00" cy="338.83" r="3.5" fill="#2864dc"/>
+<circle cx="247.50" cy="258.52" r="3.5" fill="#2864dc"/>
+<circle cx="409.00" cy="208.44" r="3.5" fill="#2864dc"/>
+<circle cx="570.50" cy="170.84" r="3.5" fill="#2864dc"/>
+<circle cx="732.00" cy="144.53" r="3.5" fill="#2864dc"/>
+<polyline points="86.00,380.00 247.50,332.66 409.00,266.78 570.50,227.36 732.00,199.31" fill="none" stroke="#d62728" stroke-width="2.5"/>
+<circle cx="86.00" cy="380.00" r="3.5" fill="#d62728"/>
+<circle cx="247.50" cy="332.66" r="3.5" fill="#d62728"/>
+<circle cx="409.00" cy="266.78" r="3.5" fill="#d62728"/>
+<circle cx="570.50" cy="227.36" r="3.5" fill="#d62728"/>
+<circle cx="732.00" cy="199.31" r="3.5" fill="#d62728"/>
+<polyline points="86.00,332.71 247.50,281.27 409.00,246.63 570.50,190.35 732.00,187.07" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
+<circle cx="86.00" cy="332.71" r="3.5" fill="#2ca02c"/>
+<circle cx="247.50" cy="281.27" r="3.5" fill="#2ca02c"/>
+<circle cx="409.00" cy="246.63" r="3.5" fill="#2ca02c"/>
+<circle cx="570.50" cy="190.35" r="3.5" fill="#2ca02c"/>
+<circle cx="732.00" cy="187.07" r="3.5" fill="#2ca02c"/>
+<line x1="98" y1="62" x2="122" y2="62" stroke="#2864dc" stroke-width="3"/>
+<text x="129" y="66" font-family="sans-serif" font-size="12">Lean</text>
+<line x1="210" y1="62" x2="234" y2="62" stroke="#d62728" stroke-width="3"/>
+<text x="241" y="66" font-family="sans-serif" font-size="12">FLINT</text>
+<line x1="322" y1="62" x2="346" y2="62" stroke="#2ca02c" stroke-width="3"/>
+<text x="353" y="66" font-family="sans-serif" font-size="12">PARI</text>
+</svg>

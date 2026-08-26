@@ -156,6 +156,14 @@ Both forms accept a `where { … }` clause to override fields of the
 per-benchmark config (`maxSecondsPerCall`, `repeats`, `paramCeiling`,
 slope tolerance, etc.); CLI flags layer on top.
 
+The parametric runner hashes every result before stopping its inner-loop timer.
+That hash is the conformance signal used by `compare`, not optional harness
+overhead. A target returning a growing structure must therefore include the
+structural hash walk in its adjacent cost derivation and ensure the walk has no
+higher asymptotic order than the operation being measured. Do not replace a
+structural result hash with a parameter-only digest merely to hide its cost;
+that would discard the conformance signal.
+
 Each benchmark therefore has two settings layers:
 
 - **scientific settings** — the canonical parameter domain or fixed
@@ -225,22 +233,167 @@ record `spawn_floor_nanos` and `signal_floor_multiplier`.
 ### What we don't measure
 
 `lean-bench` measures compiled-code execution. The following are
-**out of scope** for this contract; their performance is a separate
-concern:
+**out of scope** for LeanBench's compiled timing contract:
 
 - elaboration-time `decide` and `decide +kernel`,
 - `#eval` and `#eval!`,
 - kernel reduction (proof terms, `decide` after elaboration),
 - proof-search tactics inside `Bench.lean`.
 
-If a tactic's compile time matters, it's a Lean / tactic-author
-issue and goes to a different tracker.
+These are out of scope for **LeanBench**. When a library advertises a tactic or
+proof-producing API, Phase 4 covers that surface through the build-only
+fresh-module evidence below; it must not disguise elaboration or kernel time as
+compiled benchmark time.
 
 CPU profiling of compiled benchmark binaries is **in scope** and is
 a Phase-4 deliverable; see [profiling.md](profiling.md). A bench
 verdict of "consistent with declared complexity" only checks
 asymptotics; profiling is what attributes the constant factor and
 catches dominant costs that the registered targets do not measure.
+
+## Fresh-module proof evidence
+
+Elaboration, tactic execution, emitted proof terms, and ordinary kernel
+checking are measured only by an external runner building fresh Lean modules.
+The module sources live recursively below a directory listed in the owning
+`mathlib: true` library's `libraries.yml: proof_probes`. A path may reserve a
+not-yet-created directory for a stacked change, but when present it must be a
+directory below `bench/<Owner>/`, must resolve physically inside `bench/`, and
+must contain no symlinks. Reservations are staging-only: before a library may
+claim `done_through: 4`, each declared root must exist and contain at least one
+Lean source.
+Names such as `HexFooMathlib` and a library's `mathlib: true` flag grant no
+implicit directory-wide exception.
+
+For a mixed library, a proof-probe subtree may coexist with an ordinary
+Mathlib-free `bench/<Owner>/Bench.lean` executable. The exception is exact and
+component-aware: a declaration of `bench/HexFoo/ProofProbe` admits neither
+`bench/HexFoo/Bench.lean` nor `bench/HexFoo/ProofProbeExtra`. Every undeclared
+bench source whose transitive import closure reaches Mathlib is rejected.
+
+Neither a proof probe nor any repository-local source in its transitive import
+closure may import `LeanBench`, register a benchmark, define `main`, read an
+in-process clock, or contain a timing loop. A probe also cannot root any
+`lean_exe`. Their external runner must:
+
+- before each sample, remove only the measured module's generated artefacts
+  and run `lake build +<module>:olean`, keeping imported dependency artefacts
+  warm; build each matched reference/candidate pair adjacently, rotate pair
+  order, and alternate pair orientation over an even preregistered number of
+  rounds;
+- retain every raw wall-time sample and paired delta, and identify the exact
+  source hashes, repository commit, dirty-state decision, toolchain, command,
+  host/CPU/OS, load state, and timeout/cleanup policy;
+- record emitted artefact sizes and the axiom set of the accepted theorem;
+- refuse a release-quality verdict on a dirty tree, an uncontrolled or
+  saturated host, a timed-out build, or a provenance mismatch.
+
+The default release protocol uses a quiescent host and rejects concurrent
+Lake/Lean processes. A named shared machine is also admissible through the
+explicit designated-shared-host protocol: the command preregisters the expected
+hostname and logical CPU, pins itself before warmup, and verifies its own
+affinity after every arm; every timed descendant inherits that affinity, and
+the timed Lean processes use one worker thread. The
+manifest's `config.order` begins with at least two same-module null controls at
+distinct cheap and expensive build magnitudes, followed by substantive pairs.
+The preregistered sample count is even and at least six. Physical-core and SMT
+topology are recorded once; host load, CPU-pressure state, affinity, and
+concurrent Lake/Lean counts are retained around every measured arm. Cumulative
+CPU-frequency residency is differenced across the arm to retain its
+time-weighted mean frequency; idle snapshots before and after the build are
+context only.
+Scheduler counters on the pinned CPU and every SMT sibling are differenced
+across each arm and combined with child user/system time and the harness's own
+CPU time inside that counter window. The pinned CPU's separately reported
+IRQ/softirq ticks are retained but excluded from the residual attributed to a
+foreign process; otherwise ordinary interrupt handling is systematically
+misclassified as another workload. The raw residual, interrupt time, and
+signed non-interrupt residual are all retained; child CPU time materially above
+the pinned CPU's non-interrupt busy time is an affinity/accounting failure.
+The positive foreign residual on the pinned CPU plus busy time on every SMT
+sibling forms one aggregate interference quantity. Exceeding the
+preregistered ratio or three scheduler ticks rejects the complete pair
+attempt.
+
+A rejected pair attempt is retained with both arms, their fixed orientation,
+and all counters. The runner then rebuilds both arms in the same order; it
+never retry-warms one arm in isolation. The default is eight retries, while a
+suite with preregistered long arms may explicitly request at most 32. The
+requested value counts retries after the initial attempt. The chosen finite
+bound is recorded and changes only how many clean-pair opportunities are
+attempted, never the admission threshold. Before each
+attempt, the runner waits up to five minutes for a two-second physical-core
+observation with at most two non-interrupt busy ticks on the pinned CPU and two
+busy ticks on each sibling. This preflight avoids spending the finite
+build-retry budget inside a sustained burst; every rejected preflight window
+and its counters are retained, and the unchanged per-arm admission gate
+remains authoritative.
+Only a wholly clean, adjacent pair attempt enters the timing sample. Exhausting
+the build-retry bound or the preflight wait emits an explicit partial artifact,
+records every rejected attempt or window, and never places a contaminated arm
+in results, medians, or budget conclusions. The effective quantized ceiling,
+retry count, and preflight wait are recorded rather than represented as the
+nominal ratio. Missing frequency residency or a spread of admitted arm means
+above the preregistered band also invalidates release quality. Global load and
+unrelated Lake/Lean presence are context rather than automatic failures in this
+mode.
+
+A proof-track sweep may precede its substantive pairs with one or more marked
+same-module null controls at representative build magnitudes. Each control uses
+the exact same module and axiom policy in both roles, independently rebuilds it
+under the ordinary alternating orientation, and requires an even preregistered
+sample count so each role is built first equally often. Its raw signed deltas
+describe fresh-build noise under that run's host conditions. The control
+records its median, MAD, IQR, Tukey fences, range, maximum absolute signed
+delta, and outlier count. Its conservative zero-centred envelope is the larger
+of the Tukey-fence magnitude and the largest observed absolute signed delta,
+so an isolated outlier can widen but never shrink the admission envelope.
+A control whose IQR exceeds 10% of its build magnitude invalidates release
+quality.
+
+The artifact interpolates control IQRs and conservative envelopes between
+representative build magnitudes. Outside the measured range it may scale a
+cheaper control upward by the build-time magnitude ratio, but never scales an
+envelope down. A control farther away than the preregistered magnitude factor
+is not comparable. Every substantive pair records `resolved`, `unresolved`, or
+`no-comparable-control` from the resulting envelope. A cheap control does not
+resolve noise for a much more expensive build.
+
+When a suite names an import-only baseline, its same-round wall time is
+subtracted from both arms before a workload ratio is formed. When the two arms
+also construct materially different inputs, a matched construction-only pair
+is subtracted round by round as well. If the attributed reference and
+candidate workloads are `r` and `c` and the comparable envelope is `e`, a
+threshold interval is `(r - e) / (c + e)` through
+`(r + e) / (c - e)`. A threshold passes only when the arm delta is resolved
+and the conservative lower bound exceeds the preregistered threshold.
+Baseline-limited or noise-limited point estimates do not pass.
+
+A fixed tactic budget is release-quality only when its median passes and
+remains below the budget after the comparable null envelope is applied as a
+conservative resolution check. The accepted worst-case core-interference
+allowance across both arms must also be smaller than the budget. The reported
+raw timing itself is never corrected. Artifact `release_quality` is derived
+from pristine provenance, complete scheduler accounting, magnitude-comparable
+controls, the scoped interference ceiling, and every required budget
+conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
+is not this protocol.
+
+Phase attribution uses matched module variants, not clocks embedded in the
+probe. A tactic library may use a baseline; a reify-only module; an input module
+containing the reflected sentence literal; a search module that runs compiled
+certificate construction from that input through a meta checksum but emits no
+proof; a literal module adding the pre-generated certificate; a replay module
+adding the kernel-checked theorem; and a full tactic module. The matched
+differences attribute reification, compiled search within the build, emitted
+literal elaboration, kernel replay, and whole-tactic cost.
+
+The search variant is phase-attribution evidence only: it gets no asymptotic
+verdict. The same Mathlib-free operation is also timed by LeanBench on a
+controlled ladder for its scientific complexity claim. The report links the
+two by input and source hash and never substitutes the fresh-build delta for
+the LeanBench verdict or adds both times together. Fixed tactic budgets apply
+to the predeclared paired fresh-build cases and are not asymptotic evidence.
 
 ## Within-Lean comparisons
 
@@ -321,11 +474,14 @@ Two integration patterns:
   - **Persistent-subprocess is the preferred shape when overhead is
     non-negligible.** Wrap the comparator in a driver that loops on
     stdin (one problem per request, length- or delimiter-framed)
-    and emits answers on stdout. The bench harness spawns the
-    driver once per `lake exe hexfoo_bench run` invocation and
-    reuses the file descriptors across calls, amortising one process
-    startup across all comparator calls in that registration.
-    Document the protocol in the bench module docstring.
+    and emits answers on stdout. For a fixed benchmark, the harness
+    spawns one Lean child per outer warmup or repeat. Configure
+    `warmupFirstIter` so that each child starts its driver before the
+    timed region, then reuses the file descriptors across the
+    auto-tuned inner-repeat batch. This amortises one driver startup
+    across the measured calls in that child; driver state is not
+    shared across outer repeats. Document the protocol and lifetime
+    in the bench module docstring.
   - **Per-call process spawn is acceptable only as a last resort.**
     FFI is preferred when feasible; persistent-subprocess is the
     fallback when FFI isn't viable. Per-call process spawn (the
@@ -338,6 +494,77 @@ Two integration patterns:
 Where a SPEC asks for a comparison lean-bench cannot directly model,
 file the gap as a feature request against lean-bench. Do not invent
 a parallel hex-local benchmark harness; one harness is the rule.
+
+### Cross-system comparator sweeps
+
+The one-harness rule governs **hex-internal** performance claims: any
+number that gates a phase, or that appears in a headline report as a
+statement about hex's own scaling, comes from lean-bench. It does *not*
+forbid a re-runnable multi-system *comparator sweep* whose purpose is a
+publication-quality cross-implementation picture, because such a sweep
+makes no hex-internal claim — it measures several independent factorizers
+under one protocol and plots them side by side.
+
+A comparator sweep (the Berlekamp–Zassenhaus factorization comparison is
+the motivating case) MUST obey:
+
+- **Not CI.** No workflow under `.github/workflows/` runs it; the
+  single-job rule is untouched. Sweeps run manually on dedicated hardware,
+  and their durable records are committed under `reports/bench-results/`,
+  named by git commit and host.
+- **Uniform warm-process protocol.** Every measured system — hex (running
+  as a warm process, one entry point per curve) and each external
+  comparator (e.g. FLINT, NTL, PARI/GP, and verified Isabelle/AFP
+  factorizers) — speaks one JSON line protocol: request `{"coeffs":[…]}`,
+  reply `{"ok":…}`. Per-call protocol overhead is measured on a trivial
+  input and recorded with each sweep, per the external-comparator overhead
+  clause above.
+- **Differential correctness.** A sweep cross-checks factor degree
+  multisets against the corpus's expected factor degrees and pairwise
+  across every system that answered; a mismatch fails the sweep, so the
+  sweep doubles as a differential-correctness test of hex against the
+  others.
+- **Cactus-plot convention.** Per system, sort its solved instances by
+  median runtime and plot cumulative time (log y) against instances solved
+  (x); a curve ends at that system's solved count. Declines and timeouts
+  are both "unsolved", not distinguished. One chart per polynomial family
+  plus one balanced combined mixture (each family capped at an equal count
+  so none dominates). Charts regenerate deterministically from the
+  committed record, and every number in the sweep report traces to a
+  SHA-256-pinned artifact per [§Artefact traceability](#artefact-traceability).
+
+#### Core pinning when measurements can overlap
+
+A comparator sweep and the factorization diagnostic drivers pin the measured
+process to one core so the scheduler cannot perturb their timings. Pinning to a
+*fixed* core is only correct while one measurement runs at a time. Several
+concurrent measurements pinned to the same core each measure the others, and
+the usual health signal does not show it: on a 96-core host, three measurement
+processes sharing core 0 left the load average at 2 to 5 while inflating about
+a quarter of a sweep's rows by roughly 1.9x, with the affected rows differing
+run to run. `ps -eo pid,psr` reveals it at once; load average never does.
+
+So: **pin to a verified-idle core, not to a fixed one.** `python3
+scripts/bench/idle_core.py` prints a logical CPU that is idle on itself and on
+every SMT sibling, sampled from `/proc/stat`.
+
+- `scripts/bench/factor_phase_profile.py` and
+  `scripts/profile/factor_sampling_profile.py` take `--cpu auto` and do this
+  themselves by default; the chosen CPU is recorded in the run's `config`.
+- `scripts/bench/factor_sweep.py` is deliberately *not* changed, because
+  `scripts/bench/check_factor_sweep_freshness.py` treats it as a shared source
+  path: editing it marks every system's committed record stale, including the
+  external comparator records that cannot be cheaply re-measured. Invoke it
+  through the helper instead:
+
+  ```sh
+  taskset -c "$(python3 scripts/bench/idle_core.py)" \
+    python3 scripts/bench/factor_sweep.py --systems hex-factor
+  ```
+
+A release-quality verdict under the designated-shared-host protocol above still
+preregisters and records an explicit CPU; this clause is about not colliding,
+not about relaxing that.
 
 ### Comparator classification: `gating` vs `informational`
 
@@ -407,9 +634,9 @@ which bench target each comparator covers. This is the common shape
 when an external tool exposes some of a library's surfaces as
 user-callable functions but not others.
 
-Where a bench target has no external comparator, the per-library
-SPEC declares the absence with a library-specific reason identifying
-exactly one of:
+Where a bench target has no external comparator, or where the library
+has no bench target at all, the per-library SPEC declares the absence
+with a library-specific reason identifying exactly one of:
 
 - **implementation-is-extern** — the surface is an external library
   via `@[extern]`; there is nothing algorithmically distinct to
@@ -427,6 +654,14 @@ exactly one of:
   declares a comparator for some surfaces but the named comparator
   tool does not expose this specific surface as a callable function
   (the tool builds it internally but doesn't surface it as user API).
+- **correspondence-only-layer** — the library is a correspondence-only
+  mathlib layer and therefore has zero bench targets (see
+  [§Mathlib-free benches](#mathlib-free-benches)), so there is no
+  surface of its own to compare. The declaration names the
+  computational performance owner or owners whose bench targets carry
+  the evidence for the operations it transports; more than one owner is
+  normal, since a layer may transport operations from several
+  Mathlib-free libraries.
 
 Generic "not applicable" is not a valid declaration. Unwired-but-
 required comparators are declared with the `blocked` state per
@@ -546,9 +781,10 @@ medium and large primes (e.g. `(97, 127)`, `(521, 13)`,
 Benchmarks measure the computational kernel. The project's
 architectural premise is the Mathlib-free split: `Hex*` libraries are
 computational and Mathlib-free; `Hex*Mathlib` libraries are
-proof-only bridges. Two invariants follow, both hard:
+proof-only bridges. Computational benchmark executables therefore obey two
+hard invariants:
 
-1. **`Hex*Mathlib` libraries do not have benchmarks.** No
+1. **`Hex*Mathlib` libraries do not have computational benchmarks.** No
    `Hex*Mathlib/Bench.lean`, no `Hex*Mathlib/Bench/`, no
    `lean_exe *mathlib*_bench` in `lakefile.lean`. The Mathlib bridge
    modules are proof-only; there is nothing computational to
@@ -565,32 +801,49 @@ proof-only bridges. Two invariants follow, both hard:
    `Hex*Mathlib.*` modules are not what this rule forbids — but per
    invariant (1) above, no bench imports them either.
 
+There is one narrow, non-computational exception. A `mathlib: true` library may
+declare recursive directory roots in `libraries.yml: proof_probes` for the
+fresh-module evidence specified above. No suffix or library flag grants an
+implicit exception, and files outside the exact declared roots remain ordinary
+Mathlib-free bench sources. A probe is not a LeanBench registration and must
+not import `LeanBench`, use `setup_benchmark` or `setup_fixed_benchmark`, define
+`main`, perform an in-process timing loop, or serve as the root of any
+`lean_exe`. This exception covers proof encodings and elaboration/replay costs;
+it does not permit computational timing through Mathlib.
+
 Both invariants are enforced by
-`scripts/ci/check_benches_mathlib_free.sh`, invoked from the `build`
+`scripts/ci/check_benches_mathlib_free.py`, invoked from the `build`
 job in `ci.yml`. The script:
 
-- Globs `lakefile.lean` for `lean_exe *_bench where root := ...` to
-  enumerate bench exe roots (handles top-level roots like
-  `HexGF2Bench` as well as `Hex*/Bench` modules).
-- Walks each root's transitive `import` graph (Lean syntax allows
-  `import` only at file start, so a simple `^import ` line scan up
-  to the first non-import/non-comment line is sound).
+- Parses `lakefile.lean` for each benchmark executable's literal `root` and
+  effective `srcDir`, failing closed on missing roots or computed source
+  directories.
+- Walks each root's transitive `import` graph through repository and configured
+  package source roots, recognizing module headers, `prelude`, import
+  visibility/meta modifiers, and `import all`.
 - Fails on the first reachable `Mathlib.*` import, printing the
   offending bench root and the full chain (e.g.
   `HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`).
 - Globs `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/` and fails
   if any such path exists.
+- Reads exact proof-probe roots from `libraries.yml`, validates their ownership
+  and physical containment, scans every probe for `LeanBench` imports,
+  benchmark registrations, `main`, in-process clocks, or an executable root,
+  and rejects every undeclared bench source whose transitive closure reaches
+  Mathlib.
 
-A bench that needs Mathlib is a category error, not an oversight to
-work around: either it's measuring through Mathlib (slow and missing
-the computational kernel) or it accidentally dragged Mathlib into a
-native link chain. Either way, the fix is structural — file the
-finding, roll back if necessary, and either remove the bench or
-move what it measures into a Mathlib-free location.
+A computational bench that needs Mathlib is a category error, not an oversight
+to work around: either it is measuring through Mathlib (slow and missing the
+computational kernel) or it accidentally dragged Mathlib into a native link
+chain. Either way, the fix is structural — file the finding, roll back if
+necessary, and either remove the bench or move what it measures into a
+Mathlib-free location. A genuine proof-elaboration question instead uses the
+build-only probe exception above.
 
 ## CI integration
 
-Every library at `done_through ≥ 4` ships a CI job that runs:
+Every library at `done_through ≥ 4` with a compiled track extends the existing
+CI job with:
 
 ```sh
 lake exe hexfoo_bench list
@@ -603,10 +856,14 @@ child exits cleanly, and verifies hashable benchmarks emit hashes.
 It does NOT assert timing values — the gate detects bitrot of the
 bench module itself, not regressions in the implementation.
 
+A proof-only track instead builds its reduced declared probes in that same
+single CI job and runs the structural lint. A mixed library does both. Proof
+probes never add a second job, matrix, executable, or `list`/`verify` command.
+
 The `Bench verify` step lives in `ci.yml`'s `build` ubuntu job (per
 [SPEC/CI.md §Job-count budget](CI.md)), one sequential block, no
-matrix. New libraries at `done_through ≥ 4` append their bench
-target to that block.
+matrix. New compiled tracks at `done_through ≥ 4` append their bench target to
+that block.
 
 ### Time budget
 
@@ -713,15 +970,29 @@ single, scannable place a reviewer can land on to see whether
 Phase-4 coverage is real and what is known about the library's
 performance shape.
 
+A correspondence-only mathlib layer is the one exception: it has zero
+bench targets and no proof-track probes of its own, so it has nothing
+to report, and no headline report is required of it. Its performance
+evidence lives in the computational owners named by its
+`correspondence-only-layer` declaration ([§Comparator
+naming](#comparator-naming)). A report already committed for such a
+library is a historical artefact and need not be deleted.
+
 The report contains five subsections:
 
-1. **Bench targets.** The registered bench targets and their
-   declared complexities, copied (not paraphrased) from the
-   `setup_benchmark` registration sites.
+1. **Bench targets.** The registered compiled targets and their declared
+   complexities, copied (not paraphrased) from the `setup_benchmark`
+   registration sites. A mixed/proof library also lists every fresh-module
+   probe, its matched baseline, and the generic requirements that probe
+   replaces.
 2. **Verdicts.** Each parametric registration's verdict at
    scientific settings ("consistent with declared complexity",
    "inconclusive", with the verdict text). Each fixed registration's
-   median per-call time and observed-hash agreement.
+   median per-call time and observed-hash agreement. Proof-track entries report
+   all raw rotated fresh-build samples and paired deltas, never a complexity
+   verdict. When the sweep has null controls, their raw deltas, absolute and
+   relative ranges, and medians precede the substantive proof deltas in
+   `config.order` and remain descriptive only.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
    `informational` alike — with measured ratios across the full
@@ -772,9 +1043,12 @@ The report contains five subsections:
      baseline shape is a ratio that converges to a small constant
      past the regime where startup or fixed costs dominate; a
      diverging trend (one side steadily losing ground as the
-     parameter grows) is itself an audit-found Concern even when
-     the highest-rung verdict happens to pass, linked from the
-     §"Concerns" subsection.
+     parameter grows) is an audit-found Concern when it contradicts
+     the comparator's declared algorithm-class expectation or a
+     `gating` goal, even when the highest-rung verdict happens to
+     pass. Expected divergence against an `informational` comparator
+     with a documented different complexity class is recorded as a
+     finding in the trend narrative, but is not by itself a Concern.
 
    - **Gating-goal verdict at the top eligible rung.** When the
      per-library SPEC states a performance goal against a `gating`
@@ -797,14 +1071,15 @@ The report contains five subsections:
      Plots disagreeing with the §"Comparator ratios" values are
      an audit-found issue.
 4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
-   one representative case per `phase4.input_families`. Dominant
+   one representative compiled case per `phase4.input_families`. Dominant
    inclusive costs are named and explained, with leaf cost
    categorised across {own code, GMP, allocation, Lean runtime}.
    Any inclusive cost the author cannot attribute to a registered
    bench target is filed as an audit-found issue per
    [Conventions.md §Bench-found, conformance-found, and audit-found
    issues](../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues)
-   and linked from the next subsection.
+   and linked from the next subsection. Proof-track surfaces cite their
+   fresh-build artefacts and state that timed-region sampling does not apply.
 5. **Concerns.** Audit-found issues filed against this library
    that have not yet resolved. The library cannot **remain** at
    `done_through: 4` while any Concern is unresolved (see
@@ -814,12 +1089,20 @@ The report contains five subsections:
 
 ### Artefact traceability
 
-Every numeric claim in a headline report is traceable: the report
-cites the exact bench case name, the command line that produced
-the number, the seed or parameter, the JSONL row path or hash,
-the profile artefact location, and the comparator's source. A
-narrative without traceable artefacts does not satisfy this
-requirement.
+Every numeric claim in a headline report is traceable: the report cites the
+exact bench/probe case name, command line, seed or parameter, JSONL row or raw
+fresh-build sample path/hash, applicable profile artefact location, source
+hash, host/toolchain/commit, and comparator source. A narrative without
+traceable artefacts does not satisfy this requirement.
+
+For the published integer polynomial factorization comparison, the current
+snapshot additionally covers the complete committed corpus for Hex, FLINT,
+NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the clean source
+commit and corpus hash, performs factor-degree cross-checking, and retains
+timeouts as explicit rows. Relevant source changes require fresh measurements
+for the affected systems. All cactus and runtime-by-degree figures are then
+regenerated from the newest current-corpus measurement of each system; CI
+checks both freshness and byte-for-byte figure regeneration on every PR.
 
 The `reports/<lib>-performance.md` file is overwrite-on-rerun:
 when the report is regenerated against a newer build, the previous

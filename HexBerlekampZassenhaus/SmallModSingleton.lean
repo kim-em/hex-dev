@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBerlekampZassenhaus.FactorProduct
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 Small-mod singleton Berlekamp irreducibility wrapper.
 
 This module composes the modular Berlekamp soundness chain from
 `HexBerlekamp.RabinSoundness` with the executable prime-selection data
-maintained by `HexBerlekampZassenhaus.Basic` to expose a Mathlib-free
+maintained by `HexBerlekampZassenhaus` to expose a Mathlib-free
 `Hex.FpPoly.Irreducible` witness for the monic modular image of a
 `choosePrimeData?` selection whose Berlekamp factor count is at most one.
 
@@ -127,6 +131,7 @@ theorem common_dvd_one_of_isGoodPrime_monicModularImage
     unfold Hex.Berlekamp.isUnitPolynomial
     have hpos : 0 < (DensePoly.gcd r (DensePoly.derivative r)).size := by omega
     rw [DensePoly.degree?_eq_some_of_pos_size _ hpos, hsize]
+    rfl
   exact Hex.Berlekamp.isUnitPolynomial_of_dvd_gcd_isUnit hg_r hg_dr hgcd_unit
 
 /--
@@ -137,7 +142,7 @@ irreducible as an `FpPoly`.
 Composes `choosePrimeData?_berlekampFactor_factors_length_le_one_of_small`
 (the shape fact) with the relaxed Berlekamp soundness theorem
 `Hex.Berlekamp.berlekampFactor_singleton_irreducible`, using the
-`isGoodPrime` invariants maintained by the prime selection to discharge
+`isGoodPrime` invariants maintained by the selected prime to discharge
 the relaxed common-divisor precondition through
 `common_dvd_one_of_isGoodPrime_monicModularImage`.
 -/
@@ -206,9 +211,9 @@ private theorem ZPoly_Primitive_left_of_mul (p q : Hex.ZPoly)
     omega
 
 /--
-Generic core-level small-mod singleton irreducibility lemma: given a primitive
+Generic polynomial-level small-mod singleton irreducibility lemma: given a primitive
 `ZPoly` whose `degree` is positive, a `choosePrimeData?` success witness, and a
-singleton-bounded Berlekamp factor count, the core is `ZPoly.Irreducible`.
+singleton-bounded Berlekamp factor count, the square-free part is `ZPoly.Irreducible`.
 
 Composes
 `monicModularImage_modP_irreducible_of_choosePrimeData?_small`
@@ -277,7 +282,7 @@ private theorem zpoly_irreducible_of_choosePrimeData?_small_of_primitive
     core primeData.p hprime hprim hadm hsize_gt_one hirr_modP
 
 /--
-Small-mod singleton branch irreducibility for the square-free core of
+Small-mod singleton branch irreducibility for the primitive square-free part of
 `Hex.normalizeForFactor f`, packaged Mathlib-free.
 
 Composes
@@ -286,7 +291,7 @@ Composes
 with the Gauss reduction-mod-`p` transfer
 `Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible`
 to lift `Hex.ZPoly.Irreducible` from the modular image back to the
-square-free core.
+primitive square-free part.
 
 Side conditions discharged internally:
 
@@ -295,12 +300,9 @@ Side conditions discharged internally:
   invariant on `(extractXPower (primitivePart f)).core`.
 * `leadingCoeffAdmissible core primeData.p` from
   `choosePrimeData?_isGoodPrime` and `isGoodPrime_leadingCoeffAdmissible`.
-* `1 < core.size` from `hdeg` (non-constancy marker also used by the capstone
-  caller to dispatch into this branch).
+* `1 < core.size` from `hdeg`, which also identifies this nonconstant branch.
 
-This is the Mathlib-free analog of
-`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-in `HexBerlekampZassenhausMathlib/IntReductionMod.lean`. -/
+-/
 theorem squareFreeCore_irreducible_of_small_mod_singleton
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (primeData : Hex.PrimeChoiceData)

@@ -1,252 +1,442 @@
 {
   "adv/bad_prime_retry": {
-    "declined": false,
-    "subsetCandidates": 4,
-    "tier": "classical"
+    "candidatesTried": 4,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "adv/cyclotomic_12": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/cyclotomic_15": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/cyclotomic_8": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/eisenstein_5": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/high_multiplicity": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/identical_mod_profile": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/large_height": {
-    "declined": false,
-    "subsetCandidates": 3,
-    "tier": "classical"
+    "candidatesTried": 3,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 3
   },
   "adv/large_plus_distractors": {
-    "declined": false,
-    "subsetCandidates": 4,
-    "tier": "classical"
+    "candidatesTried": 4,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "adv/mignotte_swell": {
-    "declined": false,
-    "subsetCandidates": 6,
-    "tier": "classical"
+    "candidatesTried": 6,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
+  },
+  "adv/multiquadratic_nonnorm_64": {
+    "candidatesTried": 0,
+    "decline": "largeSupport",
+    "henselLifts": 0,
+    "method": "lattice",
+    "primeProbes": 2,
+    "r": 32
   },
   "adv/neg_content": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "quadratic"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadratic",
+    "primeProbes": 0,
+    "r": 0
   },
   "adv/non_monic": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/phi15": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/planted_1": {
-    "declined": false,
-    "subsetCandidates": 6,
-    "tier": "classical"
+    "candidatesTried": 6,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "adv/planted_nonmonic": {
-    "declined": false,
-    "subsetCandidates": 3,
-    "tier": "classical"
+    "candidatesTried": 3,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 3
   },
   "adv/quad_sqrt2_sqrt3": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/reciprocal": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/swinnerton_dyer_2": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/swinnerton_dyer_3_shift1": {
-    "declined": false,
-    "subsetCandidates": 8,
-    "tier": "classical"
+    "candidatesTried": 8,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "adv/swinnerton_dyer_sd3": {
-    "declined": false,
-    "subsetCandidates": 8,
-    "tier": "classical"
+    "candidatesTried": 8,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
+  },
+  "adv/swinnerton_dyer_sd5_pair": {
+    "candidatesTried": 0,
+    "decline": "largeSupport",
+    "henselLifts": 0,
+    "method": "lattice",
+    "primeProbes": 2,
+    "r": 32
+  },
+  "adv/swinnerton_dyer_sd6": {
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadraticNorm",
+    "primeProbes": 2,
+    "r": 32
   },
   "adv/trinomial": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/x12_minus_1": {
-    "declined": false,
-    "subsetCandidates": 10,
-    "tier": "classical"
+    "candidatesTried": 10,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 8
   },
   "adv/x4_plus_1": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "adv/x6_minus_1": {
-    "declined": false,
-    "subsetCandidates": 4,
-    "tier": "classical"
+    "candidatesTried": 4,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "content2/cyclo5": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "content3/cyclo7": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
+  },
+  "direct/chebyshev_u18": {
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
+  },
+  "direct/legendre_p28": {
+    "candidatesTried": 8,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "edge/neg_one": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/neg_six": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/neg_two": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/neg_two_x_minus_one_squared": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "edge/neg_x": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/neg_x_minus_one_squared": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "edge/neg_x_squared_plus_one": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "quadratic"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadratic",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/one": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/six": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/two": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/two_x_minus_one_x_plus_one": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "quadratic"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadratic",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/x": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/x_minus_one_squared": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "edge/x_squared": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "edge/zero": {
-    "declined": false,
-    "subsetCandidates": 0,
-    "tier": "constant"
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "constant",
+    "primeProbes": 0,
+    "r": 0
   },
   "irr/cyclo11": {
-    "declined": false,
-    "subsetCandidates": 2,
-    "tier": "classical"
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
   },
   "irr/cyclo17": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "irr/cyclo5": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "irr/cyclo7": {
-    "declined": false,
-    "subsetCandidates": 1,
-    "tier": "classical"
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
   },
   "red/cyclo11_cyclo22": {
-    "declined": false,
-    "subsetCandidates": 4,
-    "tier": "classical"
+    "candidatesTried": 4,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 4
   },
   "red/quad2_deg4": {
-    "declined": false,
-    "subsetCandidates": 3,
-    "tier": "classical"
+    "candidatesTried": 3,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 3
   },
   "regression/split_roots_1_11": {
-    "declined": false,
-    "subsetCandidates": 11,
-    "tier": "classical"
+    "candidatesTried": 11,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 2,
+    "r": 11
   },
   "regression/split_roots_1_24": {
-    "declined": false,
-    "subsetCandidates": 24,
-    "tier": "classical"
+    "candidatesTried": 24,
+    "decline": "largeSupport",
+    "henselLifts": 1,
+    "method": "replay",
+    "primeProbes": 2,
+    "r": 24
   },
   "regression/split_roots_1_72": {
-    "declined": false,
-    "subsetCandidates": 72,
-    "tier": "classical"
+    "candidatesTried": 72,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 2,
+    "r": 72
   }
 }

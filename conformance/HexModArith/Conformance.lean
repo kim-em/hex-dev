@@ -35,17 +35,19 @@ Covered properties:
 Covered edge cases:
 - modulus `1`
 - small prime modulus `7`
+- composite modulus `15`, including the exact non-coprime inverse convention
 - power-of-two modulus `16`
 - small Barrett-friendly moduli `2`, `7`, and `65535`
 - odd Montgomery-friendly moduli `3`, `7`, and `65537`
-- large word-sized modulus `2^63 + 29`
+- large small-modulus prime `2^31 - 1` (the Mersenne prime `M31`, the largest
+  admissible modulus under the `p < 2^31` bound)
 - zero operands, wraparound operands, and negative integer representatives
 -/
 
 namespace Hex
 namespace ZMod64
 
-private abbrev LargeMod : Nat := 2 ^ 63 + 29
+private abbrev LargeMod : Nat := 2 ^ 31 - 1
 private abbrev BarrettWideMod : Nat := 65535
 private abbrev MontWideMod : Nat := 65537
 
@@ -53,6 +55,7 @@ private instance conformanceBoundsOne : Bounds 1 := ⟨by decide, by decide⟩
 private instance conformanceBoundsTwo : Bounds 2 := ⟨by decide, by decide⟩
 private instance conformanceBoundsThree : Bounds 3 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSeven : Bounds 7 := ⟨by decide, by decide⟩
+private instance conformanceBoundsFifteen : Bounds 15 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSixteen : Bounds 16 := ⟨by decide, by decide⟩
 private instance conformanceBoundsBarrettWide : Bounds BarrettWideMod := ⟨by decide, by decide⟩
 private instance conformanceBoundsMontWide : Bounds MontWideMod := ⟨by decide, by decide⟩
@@ -121,14 +124,15 @@ private def a3 : ZMod64 3 := ofNat 3 2
 private def b3 : ZMod64 3 := ofNat 3 2
 private def a7 : ZMod64 7 := ofNat 7 3
 private def b7 : ZMod64 7 := ofNat 7 5
+private def nonCoprime15 : ZMod64 15 := ofNat 15 6
 private def c16 : ZMod64 16 := ofNat 16 15
 private def d16 : ZMod64 16 := ofNat 16 9
 private def barrettWideA : ZMod64 BarrettWideMod := ofNat BarrettWideMod 65534
 private def barrettWideB : ZMod64 BarrettWideMod := ofNat BarrettWideMod 32769
 private def montWideA : ZMod64 MontWideMod := ofNat MontWideMod 65536
 private def montWideB : ZMod64 MontWideMod := ofNat MontWideMod 32771
-private def wideA : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 + 1)
-private def wideB : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 - 17)
+private def wideA : ZMod64 LargeMod := ofNat LargeMod (2 ^ 31 - 2)
+private def wideB : ZMod64 LargeMod := ofNat LargeMod (2 ^ 31 - 17)
 
 private def barrettCtx2 : Hex.BarrettCtx 2 :=
   Hex.BarrettCtx.ofModulus (p := 2) (by decide) (by decide)
@@ -204,7 +208,15 @@ private def montCtxWide : Hex.MontCtx MontWideMod :=
 
 #guard (inv a7 * a7).toNat = 1 % 7
 #guard (inv oneOnly * oneOnly).toNat = 1 % 1
+#guard (inv nonCoprime15).toNat = 13
+#guard (List.range 15).all fun n =>
+  let a : ZMod64 15 := ofNat 15 n
+  (inv a * a).toNat == Nat.gcd n 15 % 15
 #guard (inv wideA * wideA).toNat = 1 % LargeMod
+
+/-- The logical reference separately pins the non-coprime cofactor convention. -/
+example : (HexArith.Int.extGcd 6 15).2.1 % 15 = 13 := by
+  simp [HexArith.Int.extGcd, Hex.pureIntExtGcd, Hex.pureIntExtGcd.go.eq_def]
 
 #guard (-a7).toNat = (7 - a7.toNat) % 7
 #guard (-oneOnly).toNat = (1 - oneOnly.toNat) % 1

@@ -22,7 +22,7 @@ the leading Gram determinants (`gramDetVecEntry_eq_gramDet`,
 singular step, and the lower-triangle slots capture the corresponding Bareiss
 target-column values. It exposes the determinant base case `gramDet_zero`, the
 lower-triangularity of the public matrix (`scaledCoeffs_upper`), and the
-lattice-norm helper `rowCombination_coeffs_apply_eq_of_zero_above` giving the
+lattice-norm helper `vecMul_coeffs_apply_eq_of_zero_above` giving the
 top Gram-Schmidt coordinate of a row combination when the later integer
 coefficients vanish.
 -/
@@ -60,9 +60,9 @@ private theorem getArrayEntry_scaledCoeffRows_col_zero
           = getArrayEntry (gramRows b) 0 0
       by_cases hNext : (0 : Nat) + 1 < fuel + 1
       · by_cases hp : getArrayEntry (gramRows b) 0 0 = 0
-        · rw [scaledCoeffArrayLoop_singular_branch (n := fuel + 1) fuel initState hn hNext hp]
+        · rw [scaledCoeffArrayLoop_of_singular (n := fuel + 1) fuel initState hn hNext hp]
           exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
-        · rw [scaledCoeffArrayLoop_regular_branch (n := fuel + 1) fuel initState hn hNext hp]
+        · rw [scaledCoeffArrayLoop_of_regular (n := fuel + 1) fuel initState hn hNext hp]
           rw [getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
                 (n := fuel + 1) fuel _ 0 0 (show (0 : Nat) < 0 + 1 by omega)]
           exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
@@ -131,9 +131,8 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
         rw [getArrayEntry_scaledCoeffArrayLoop_current_col_written n fuel' state_array
           i.val j.val h_array_step hji i.isLt h_coeffs_size h_coeffs_rows_size]
         have hdist : j.val - state_matrix.step = 0 := by omega
-        rw [hdist, Matrix.noPivotLoop_zero_fuel]
-        rw [getArrayEntry_eq_rowsToMatrix state_array.matrix i j]
-        rw [h_matrix_eq]
+        rw [hdist, Matrix.noPivotLoop_zero_fuel,
+          getArrayEntry_eq_rowsToMatrix state_array.matrix i j, h_matrix_eq]
       · have h_step_lt_j : state_matrix.step < j.val :=
           Nat.lt_of_le_of_ne h_step_le_j h_at_target
         have hDone : state_matrix.step + 1 < n := by
@@ -152,13 +151,13 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
         · have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
-          rw [hdist, Matrix.noPivotLoop_singular_branch _ state_matrix hDone hp] at h_target_nonsing
+          rw [hdist, Matrix.noPivotLoop_of_singular _ state_matrix hDone hp] at h_target_nonsing
           simp at h_target_nonsing
         · have hp_array :
               getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]
             exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array]
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
               matrix := stepScaledRows state_array.matrix n state_array.step
@@ -214,7 +213,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
             have hdist :
                 j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
               omega
-            rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_target_nonsing
+            rw [hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp] at h_target_nonsing
             simpa [new_matrix] using h_target_nonsing
           have h_capture := ih h_step_new h_matrix_new h_prev_new h_array_size_new
             h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
@@ -222,8 +221,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
           have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
-          rw [h_capture]
-          rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp]
+          rw [h_capture, hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp]
           rfl
 
 /-- Early-singular zero tail after the singular column: if the lower entries
@@ -252,8 +250,8 @@ private theorem scaledCoeffArrayLoop_lower_singular_after_step
     have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
     rw [this, h_matrix_eq]
     exact hp
-  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array]
-  rw [getArrayEntry_writeScaledColumn]
+  rw [scaledCoeffArrayLoop_of_singular fuel state_array hArrayStep hArrayNext hp_array,
+    getArrayEntry_writeScaledColumn]
   · exact h_coeffs_unwritten i j hsj hji
   · rw [h_step_eq]
     omega
@@ -314,7 +312,7 @@ private theorem scaledCoeffArrayLoop_lower_zero
               getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]
             exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep
             hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
@@ -388,7 +386,7 @@ private theorem scaledCoeffArrayLoop_lower_zero
             have hdist :
                 j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
               omega
-            rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_sing
+            rw [hdist, Matrix.noPivotLoop_of_regular _ state_matrix hDone hp] at h_sing
             simpa [new_matrix] using h_sing
           exact ih h_step_new h_matrix_new h_prev_new h_array_size_new
             h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
@@ -461,8 +459,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A1: singular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step = 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_singular_branch fuel' state_array hArrayStep hArrayNext hp_array]
-          rw [Matrix.noPivotLoop_singular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_of_singular fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_of_singular fuel' state_matrix hDone hp]
           right
           refine ⟨state_matrix.step, rfl, ?_⟩
           by_cases h_ilt : i.val < state_matrix.step
@@ -505,8 +503,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A2: regular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array]
-          rw [Matrix.noPivotLoop_regular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_of_regular fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_of_regular fuel' state_matrix hDone hp]
           -- Build new compatible states.
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
@@ -576,8 +574,7 @@ private theorem scaledCoeffArrayLoop_diag_matches
                 rw [h_coeffs_rows_size j hjn]; exact hjn
               rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol]
               -- Goal: getArrayEntry state_array.matrix j j = state_matrix.matrix[jFin][jFin]
-              rw [getArrayEntry_eq_rowsToMatrix state_array.matrix jFin jFin]
-              rw [h_matrix_eq]
+              rw [getArrayEntry_eq_rowsToMatrix state_array.matrix jFin jFin, h_matrix_eq]
             · have hj_lt : j < state_matrix.step := Nat.lt_of_le_of_ne hj_le hj_eq
               rw [getArrayEntry_writeScaledColumn _ _ _ _ _ _
                 (show j ≠ state_array.step by rw [h_step_eq]; omega)]
@@ -621,9 +618,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
               rw [h_coeffs_size]; exact i.isLt
             have hcol : i.val < state_array.coeffs[i.val]!.size := by
               rw [h_coeffs_rows_size i.val i.isLt]; exact i.isLt
-            rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol]
-            rw [getArrayEntry_eq_rowsToMatrix state_array.matrix i i]
-            rw [h_matrix_eq]
+            rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol,
+              getArrayEntry_eq_rowsToMatrix state_array.matrix i i, h_matrix_eq]
           · by_cases h_ilt : i.val < state_matrix.step
             · change getArrayEntry (writeScaledColumn _ _ _ _) i.val i.val = _
               rw [getArrayEntry_writeScaledColumn _ _ _ _ _ _
@@ -641,12 +637,12 @@ private theorem scaledCoeffArrayLoop_diag_matches
           exact h_coeffs_processed i.val h_ilt i.isLt
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
-private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+private theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (hquot : StepWitness b) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨r + 1, Nat.succ_lt_succ hr⟩ =
       (Matrix.bareiss
-        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
           (Nat.succ_le_of_lt hr))).toNat := by
   let GM := Matrix.gramMatrix b
   let init := Matrix.noPivotInitialState GM
@@ -655,7 +651,7 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
   by_cases h_prefix :
       (Matrix.noPivotLoop r init).singularStep = none
   · have hdiag :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+      bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
         (b := b) r hr (by simpa [GM, init] using h_prefix)
     have h_step_r : (Matrix.noPivotLoop r init).step = r := by
       have h_room : init.step + r + 1 ≤ n := by
@@ -677,7 +673,7 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
       · have hdata : data.singularStep = none := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_none
         simp [gramDetVecEntry, data, hdata, i]
-        rfl
+        simp [bareissDiagNat]
       · rcases h_sing with ⟨k, h_sing_full, h_step_full, h_zero_full, _hk_bound⟩
         have hdata : data.singularStep = some k.val := by
           simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_sing_full
@@ -699,14 +695,14 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
           simpa [data, i] using (congrArg Int.toNat hzero_i).symm
         · have hlt : ¬ k.val < r + 1 := by omega
           simp [gramDetVecEntry, data, hdata, i, hlt]
-          rfl
+          simp [bareissDiagNat]
     calc
       gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
           ⟨r + 1, Nat.succ_lt_succ hr⟩ =
           (data.matrix[i][i]).toNat := by
             simpa [data, GM, i] using h_entry_diag
       _ = (Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr))).toNat := by
             exact congrArg Int.toNat (by simpa [data, GM, i] using hdiag)
   · rcases noPivotLoop_singular_inv (n := n) r init rfl with h_none | h_sing
@@ -730,9 +726,9 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
         simp [gramDetVecEntry, data, hdata, hsr]
       have hright :
           (Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr))).toNat = 0 :=
-        leadingPrefix_gram_bareiss_toNat_eq_zero
+        principalSubmatrix_gram_bareiss_toNat_eq_zero
           (b := b) r hr hquot k.val (by simpa [GM, init] using h_sing_r)
       rw [hright]
       simpa [data, GM] using hleft
@@ -757,11 +753,11 @@ theorem gramDetVecEntry_eq_gramDet
             ⟨r + 1, Nat.succ_lt_succ hr⟩ := by
               rfl
         _ = (Matrix.bareiss
-              (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
                 (Nat.succ_le_of_lt hr))).toNat :=
-              gramDetVecEntry_eq_leadingPrefix_bareiss (b := b) hquot r hr
+              gramDetVecEntry_eq_principalSubmatrix_bareiss (b := b) hquot r hr
         _ = gramDet b (r + 1) hk := by
-              simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+              simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
 
 
 /-- The scaled-coefficient array loop writes the same diagonal determinant
@@ -803,10 +799,10 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
       ⟨i + 1, Nat.succ_lt_succ hi⟩
   rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
   · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
+      bareissDiagNat, Matrix.getElem_pair_eq_nested, h_sing]
     exact congrArg Int.toNat h_eq
   · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
+      bareissDiagNat, Matrix.getElem_pair_eq_nested, h_sing]
     rcases h_cases with ⟨hsi, h_zero⟩ | ⟨his, h_eq⟩
     · have hsi' : s ≤ i := by
         simpa [iFin] using hsi
@@ -825,19 +821,19 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDet
     (b : Matrix Int n m) (hquot : StepWitness b) (i : Nat) (hi : i < n) :
     (getArrayEntry (scaledCoeffRows b) i i).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
-  rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
-  rw [gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
+  rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi,
+    gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
 
 /-- Signed leading-prefix diagonal information from the executable
 scaled-coefficient loop: the diagonal slot is either the zero tail after an
 early singular no-pivot step, or the Bareiss determinant of the matching
 leading Gram prefix. -/
-private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
+private theorem scaledCoeffRows_diag_eq_zero_or_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i = 0 ∨
       getArrayEntry (scaledCoeffRows b) i i =
         Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
+          (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi)) := by
   let iFin : Fin n := ⟨i, hi⟩
   have hdiag :=
@@ -873,7 +869,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
           coeffs := zeroRows n
           prevPivot := 1 }).coeffs i i =
         Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
+          (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi))
   rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
   · right
@@ -888,7 +884,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
       noPivotLoop_prefix_none_of_final_none i (n - i)
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final
     have h_leading :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+      bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
         (b := b) i hi h_prefix
     have h_eq_noPivot :
         getArrayEntry
@@ -920,7 +916,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
         noPivotLoop_prefix_none_of_final_singular_after i (n - i)
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final h_after
       have h_leading :=
-        bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+        bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
           (b := b) i hi h_prefix
       have h_eq_noPivot :
           getArrayEntry
@@ -982,10 +978,11 @@ private theorem foldl_add_eq_acc_rat_int {α : Type u}
 private theorem foldl_finRange_eq_prefix_of_zero_above_from
     {n : Nat} (k : Fin n) (f : Fin n → Rat) (acc : Rat)
     (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
-    (List.finRange n).foldl (fun acc j => acc + f j) acc =
-      (List.finRange (k.val + 1)).foldl
+    Fin.foldl n (fun acc j => acc + f j) acc =
+      Fin.foldl (k.val + 1)
         (fun acc j =>
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) acc := by
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   induction n generalizing acc with
   | zero =>
       exact Fin.elim0 k
@@ -1021,20 +1018,21 @@ private theorem foldl_finRange_eq_prefix_of_zero_above_from
 private theorem foldl_finRange_eq_prefix_of_zero_above
     {n : Nat} (k : Fin n) (f : Fin n → Rat)
     (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
-    (List.finRange n).foldl (fun acc j => acc + f j) 0 =
-      (List.finRange (k.val + 1)).foldl
+    Fin.foldl n (fun acc j => acc + f j) 0 =
+      Fin.foldl (k.val + 1)
         (fun acc j =>
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) 0 :=
   foldl_finRange_eq_prefix_of_zero_above_from k f 0 hzero
 
-/-- A `List.finRange (k + 1)` fold whose addend vanishes on every strict
+/-- A `Fin.foldl (k + 1)` fold whose addend vanishes on every strict
 predecessor of `k` reduces to the contribution at the last index. -/
 private theorem foldl_finRange_succ_eq_last_of_zero_below
     (k : Nat) (f : Fin (k + 1) → Rat) (acc : Rat)
     (hzero : ∀ j : Fin (k + 1), j.val < k → f j = 0) :
-    (List.finRange (k + 1)).foldl (fun acc j => acc + f j) acc =
+    Fin.foldl (k + 1) (fun acc j => acc + f j) acc =
       acc + f ⟨k, Nat.lt_succ_self k⟩ := by
-  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  rw [Fin.foldl_eq_finRange_foldl,
+    List.finRange_succ_last, List.foldl_append, List.foldl_map]
   have hprefix :
       (List.finRange k).foldl
           (fun acc i => acc + f (Fin.castSucc i)) acc = acc := by
@@ -1056,11 +1054,10 @@ This is the top Gram-Schmidt coordinate specialization consumed by the lattice
 norm lower bound: rows below `k` contribute zero by upper-triangularity,
 row `k` contributes one by the diagonal lemma, and rows above `k` contribute
 zero because the corresponding integer coefficient vanishes. -/
-theorem rowCombination_coeffs_apply_eq_of_zero_above
+theorem vecMul_coeffs_apply_eq_of_zero_above
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero_above : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
-    (Matrix.rowCombination (coeffs b)
-        (Vector.map (fun x : Int => (x : Rat)) c))[k]
+    (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b))[k]
       = ((c[k] : Int) : Rat) := by
   let castc : Vector Rat n := Vector.map (fun x : Int => (x : Rat)) c
   have hcastc_get : ∀ i : Fin n, castc[i] = ((c[i] : Int) : Rat) := by
@@ -1072,21 +1069,21 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
   let liftj : Fin (k.val + 1) → Fin n := fun j =>
     ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
   rw [show
-      (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c))[k]
-        = (Matrix.rowCombination (coeffs b) castc)[k] from rfl]
+      (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b))[k]
+        = (Matrix.vecMul castc (coeffs b))[k] from rfl]
   -- Step 1: rewrite the row-combination entry as a fold over the `k`-th column.
   have hcol :
-      (Matrix.rowCombination (coeffs b) castc)[k]
+      (Matrix.vecMul castc (coeffs b))[k]
         = (List.finRange n).foldl
             (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
     show ((coeffs b).transpose * castc)[k] = _
-    rw [Matrix.mulVec_getElem]
-    show Vector.dotProduct (((coeffs b).transpose).row k) castc = _
+    rw [Matrix.getElem_mulVec]
+    show (((coeffs b).transpose).row k).dotProduct castc = _
+    rw [Vector.dotProduct]
     show (List.finRange n).foldl
         (fun acc i =>
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _
-    simp only [Matrix.row_getElem, Matrix.transpose_getElem]
+    simp only [Matrix.getElem_row, Matrix.getElem_transpose]
   rw [hcol]
   -- Step 2: drop the tail above `k` via the zero-above truncation helper.
   let f : Fin n → Rat := fun i => (coeffs b)[i][k] * castc[i]
@@ -1101,8 +1098,9 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
   have htrunc :
       (List.finRange n).foldl (fun acc j => acc + f j) 0
         = (List.finRange (k.val + 1)).foldl
-            (fun acc j => acc + f (liftj j)) 0 :=
-    foldl_finRange_eq_prefix_of_zero_above k f habove
+            (fun acc j => acc + f (liftj j)) 0 := by
+    have h := foldl_finRange_eq_prefix_of_zero_above k f habove
+    rwa [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl] at h
   show (List.finRange n).foldl (fun acc j => acc + f j) 0
       = ((c[k] : Int) : Rat)
   rw [htrunc]
@@ -1124,8 +1122,9 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
     grind
   have hisolate :
       (List.finRange (k.val + 1)).foldl (fun acc j => acc + g j) 0
-        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ :=
-    foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
+        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ := by
+    have h := foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
+    rwa [Fin.foldl_eq_finRange_foldl] at h
   rw [hisolate]
   -- Step 4: evaluate `g` at the last index using `coeffs_diag`.
   change 0 + (coeffs b)[k][k] * castc[k] = ((c[k] : Int) : Rat)

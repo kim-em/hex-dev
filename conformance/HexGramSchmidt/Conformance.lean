@@ -72,7 +72,7 @@ private def dependent : Matrix Int 3 2 :=
     | _, _ => 0
 
 private def typicalRat : Matrix Rat 3 3 :=
-  Matrix.ofFn fun i j => (typical[i][j] : Rat)
+  Matrix.ofFn fun i j => (typical[(i, j)] : Rat)
 
 private def zeroRat : Matrix Rat 2 2 := 0
 

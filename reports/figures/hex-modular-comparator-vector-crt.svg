@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+<style>
+text { font-family: sans-serif; fill: #202124; }
+.grid { stroke: #cfd4da; stroke-width: 1; opacity: 0.65; }
+.axis { stroke: #202124; stroke-width: 1.4; }
+.series { fill: none; stroke-width: 2.5; }
+</style>
+<text x="450.0" y="28" text-anchor="middle" font-size="19" font-weight="600">Fixed-depth vector CRT</text>
+<text x="450.0" y="50" text-anchor="middle" font-size="12">eligible range; persistent-call overhead 9.6 µs</text>
+<rect x="92" y="76" width="780" height="408" fill="#ffffff"/>
+<line class="grid" x1="92.00" y1="76" x2="92.00" y2="484"/>
+<text x="92.00" y="507" text-anchor="middle" font-size="11">1</text>
+<line class="grid" x1="222.00" y1="76" x2="222.00" y2="484"/>
+<text x="222.00" y="507" text-anchor="middle" font-size="11">4</text>
+<line class="grid" x1="352.00" y1="76" x2="352.00" y2="484"/>
+<text x="352.00" y="507" text-anchor="middle" font-size="11">16</text>
+<line class="grid" x1="612.00" y1="76" x2="612.00" y2="484"/>
+<text x="612.00" y="507" text-anchor="middle" font-size="11">256</text>
+<line class="grid" x1="742.00" y1="76" x2="742.00" y2="484"/>
+<text x="742.00" y="507" text-anchor="middle" font-size="11">1024</text>
+<line class="grid" x1="807.00" y1="76" x2="807.00" y2="484"/>
+<text x="807.00" y="507" text-anchor="middle" font-size="11">2048</text>
+<line class="grid" x1="872.00" y1="76" x2="872.00" y2="484"/>
+<text x="872.00" y="507" text-anchor="middle" font-size="11">4096</text>
+<line class="grid" x1="92" y1="484.00" x2="872" y2="484.00"/>
+<text x="80" y="488.00" text-anchor="end" font-size="12">10^-5</text>
+<line class="grid" x1="92" y1="402.40" x2="872" y2="402.40"/>
+<text x="80" y="406.40" text-anchor="end" font-size="12">10^-4</text>
+<line class="grid" x1="92" y1="320.80" x2="872" y2="320.80"/>
+<text x="80" y="324.80" text-anchor="end" font-size="12">10^-3</text>
+<line class="grid" x1="92" y1="239.20" x2="872" y2="239.20"/>
+<text x="80" y="243.20" text-anchor="end" font-size="12">10^-2</text>
+<line class="grid" x1="92" y1="157.60" x2="872" y2="157.60"/>
+<text x="80" y="161.60" text-anchor="end" font-size="12">10^-1</text>
+<line class="grid" x1="92" y1="76.00" x2="872" y2="76.00"/>
+<text x="80" y="80.00" text-anchor="end" font-size="12">10^0</text>
+<line class="axis" x1="92" y1="484" x2="872" y2="484"/>
+<line class="axis" x1="92" y1="76" x2="92" y2="484"/>
+<text x="482.0" y="540" text-anchor="middle" font-size="14">benchmark parameter</text>
+<text x="22" y="280.0" text-anchor="middle" font-size="14" transform="rotate(-90 22 280.0)">wall time per call (s)</text>
+<polyline class="series" stroke="#2468b4" points="92.00,454.20 222.00,427.96 352.00,388.27 482.00,341.27 612.00,292.86 742.00,225.45 807.00,218.25 872.00,195.35"/>
+<circle cx="92.00" cy="454.20" r="4" fill="#2468b4"/>
+<circle cx="222.00" cy="427.96" r="4" fill="#2468b4"/>
+<circle cx="352.00" cy="388.27" r="4" fill="#2468b4"/>
+<circle cx="482.00" cy="341.27" r="4" fill="#2468b4"/>
+<circle cx="612.00" cy="292.86" r="4" fill="#2468b4"/>
+<circle cx="742.00" cy="225.45" r="4" fill="#2468b4"/>
+<circle cx="807.00" cy="218.25" r="4" fill="#2468b4"/>
+<circle cx="872.00" cy="195.35" r="4" fill="#2468b4"/>
+<line x1="110" y1="96" x2="138" y2="96" stroke="#2468b4" stroke-width="2.5"/>
+<text x="148" y="100" font-size="12">HexModular</text>
+<polyline class="series" stroke="#d95f02" points="92.00,409.83 222.00,361.50 352.00,338.50 482.00,292.26 612.00,224.76 742.00,195.15 807.00,171.06 872.00,145.94"/>
+<rect x="88.00" y="405.83" width="8" height="8" fill="#d95f02"/>
+<rect x="218.00" y="357.50" width="8" height="8" fill="#d95f02"/>
+<rect x="348.00" y="334.50" width="8" height="8" fill="#d95f02"/>
+<rect x="478.00" y="288.26" width="8" height="8" fill="#d95f02"/>
+<rect x="608.00" y="220.76" width="8" height="8" fill="#d95f02"/>
+<rect x="738.00" y="191.15" width="8" height="8" fill="#d95f02"/>
+<rect x="803.00" y="167.06" width="8" height="8" fill="#d95f02"/>
+<rect x="868.00" y="141.94" width="8" height="8" fill="#d95f02"/>
+<line x1="110" y1="120" x2="138" y2="120" stroke="#d95f02" stroke-width="2.5"/>
+<text x="148" y="124" font-size="12">python-flint fmpz CRT</text>
+</svg>

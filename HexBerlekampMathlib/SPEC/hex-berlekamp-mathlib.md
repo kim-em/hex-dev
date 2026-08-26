@@ -48,7 +48,7 @@ Then:
 
 And `h` is nonconstant mod `g`: `h ≡ 0 (mod a)` but `h ≡ 1 (mod b)`.
 
-Note: this does NOT require factoring `g` into irreducibles — any
+This does not require factoring `g` into irreducibles; any
 nontrivial coprime splitting works.
 
 **Step 3. Nonconstant kernel elements produce nontrivial GCD splits.**
@@ -85,7 +85,7 @@ Since every basis element is constant on `g`, and the basis spans the
 kernel of `f`, the image of the kernel of `f` under reduction mod `g`
 consists only of constants. By surjectivity (step 4), the kernel of `g`
 itself consists only of constants. If `g` were reducible, step 2 would
-give a nonconstant kernel element — contradiction. So `g` is
+give a nonconstant kernel element, a contradiction. So `g` is
 irreducible.
 
 **Note on representatives.** The `polyCRT` construction builds
@@ -114,7 +114,7 @@ degree `d < n`. Then `g | X^(p^n) - X`, so by the degree lemma
 `g | gcd(f, X^(p^(n/q)) - X)`, meaning the gcd is nontrivial and
 the coprimality check rejects.
 
-Note: `reducible f` alone does not give `d | n` — we need the
+The assumption `reducible f` alone does not give `d | n`; we need the
 test's divisibility condition `f | X^(p^n) - X` to get
 `g | X^(p^n) - X` first.
 
@@ -179,10 +179,82 @@ assembled from (1)+(4)):
   via `AdjoinRoot.liftAlgHom`
 - `finrank (ZMod p) (AdjoinRoot g) = g.natDegree` from
   `AdjoinRoot.powerBasis` and `PowerBasis.dim`
-- gcd ↔ divisibility bridge: `gcd(f, P) ≠ 1` plus `Irreducible f`
+- gcd-divisibility correspondence: `gcd(f, P) ≠ 1` plus `Irreducible f`
   gives `f | P` in `Polynomial (ZMod p)`, via Euclidean-domain / prime API
 - Divisibility arithmetic: from `d | n` and `d < n`, choose a prime
   `q | n/d` and derive `d | n/q` and `q | n`
-- Computational bridge: `rabinTest f = true` unfolds to the exact
+- Executable correspondence: `rabinTest f = true` unfolds to the exact
   divisibility check `f | X^(p^n) - X` plus coprimality of
   `f` with `X^(p^(n/q)) - X` for each prime `q | n`
+
+## The `Polynomial (ZMod q)` extension for `factor_poly` / `irreducibility`
+
+`HexBerlekampMathlib/FactorTactic.lean` declares
+`HexBerlekampMathlib.FactorTactic.extension`. The tactic driver finds it
+through `Hex.FactorTactic.extensionNames`, and registration tests ensure that
+the declaration remains discoverable. It extends
+the `factor_poly`/`irreducibility` elaborators to `Polynomial (ZMod q)`
+inputs with a literal prime modulus `q < 2^31`. Composite or oversized
+moduli are declined with a diagnostic; other types are not applicable.
+
+The implementation is a parser-with-proof: a meta recursion over the
+input expression (`X`, `Polynomial.C`, numerals, `+`, `-`, `*`, negation,
+`^` with `Nat` literal exponents, named defs unfolded under a fuel guard)
+that evaluates each node to an executable `Hex.FpPoly q` and combines
+per-node proofs through the named `toMathlibPolynomial_*` transport
+lemmas, producing `toMathlibPolynomial fLit = P` for the reified literal
+`fLit`. Scalar coefficient equalities are certified by `decide` on
+`ZMod64.toZMod` values (checked to reduce at elaboration time before
+emission).
+
+The factor search reuses the `FpPoly` factorization
+(`Hex.FactorTactic.fpFactorSearch` / `fpCoverEntries`) as untrusted
+search. Emitted terms apply the kernel-decidable assemblers in
+`HexBerlekampMathlib/FactorPoly.lean`: `Hex.FactoredPoly.ofFp` (result
+type `Hex.FactoredPoly P`, the `Polynomial`-level counterpart of
+`FpPoly.Factored`) and `HexBerlekampMathlib.irreducible_ofFp`, whose
+certification slots are all Boolean checks on reified literals discharged
+by `Eq.refl true`/`Eq.refl false`; the factorizer and certificate
+generator never appear in emitted terms.
+
+## Phase-4 proof evidence
+
+`factor_poly` and `irreducibility` on `Polynomial (ZMod q)` are
+elaboration/proof surfaces, not LeanBench executables. Build-only modules
+below `bench/HexBerlekampMathlib/ProofProbe/` measure `factor_poly` on
+products of distinct monic irreducible quadratics over `F_5` at degrees 4,
+8, and 12, and `irreducibility` on sparse irreducible binomials over `F_5`
+at degrees 4, 8, and 16. Each case is adjacent to the same import-only
+baseline, and degree 8 also has a direct multiplicity-attribution pair
+(four distinct quadratics against the fourth power of one quadratic: same
+degree and factor count, all multiplicity). Baseline and irreducible-16
+same-module controls are first in manifest `config.order`; execution order
+rotates by round. The external runner uses six balanced rounds, exact
+generated-artifact invalidation, ordinary kernel checking, exact axiom
+validation, and complete source provenance.
+`HexBerlekampMathlibProofProbe` supplies the reduced CI coverage;
+`HexBerlekampMathlibProofProbeScientific` owns the larger release arms and
+remains outside routine CI.
+
+On the named shared release machine a canonical invocation is:
+
+```bash
+python3 scripts/bench/berlekamp_mathlib_sweep.py --samples 6 \
+  --timeout 240 --warm-timeout 600 \
+  --shared-host --expected-host chungus2 --cpu 22
+```
+
+The release run preregisters its selected logical CPU and aggregate
+interference ratio on the command line; the artifact and headline report
+record those exact values. They govern that run rather than the
+illustrative CPU number above.
+
+The runner enforces the designated-shared-host contract in
+`SPEC/benchmarking.md`, including bounded retries of complete rejected
+pairs after a bounded quiet-core preflight and a single aggregate
+pinned-core/SMT interference ceiling; `--allow-busy` remains
+diagnostic-only. Executable factorization arithmetic belongs to the
+existing Mathlib-free `HexBerlekamp` benchmark. The bridge declarations
+have no separable compiled runtime kernel. For the proof-emitting
+elaborators there is `no-comparable-surface-in-named-comparator`: no
+external tool emits and kernel-checks the same Lean proof term.

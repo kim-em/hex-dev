@@ -1,298 +1,171 @@
 # HexMatrix Performance Report
 
+`HexMatrix` is the dense base of the matrix family (constructors, accessors,
+vector helpers, dot product, dense matrix algebra, elementary row/column
+operations, submatrix, Gram, Strassen-Winograd multiplication). The
+determinant, Bareiss, and row-reduction Phase-4 surfaces live in
+`reports/hex-determinant-performance.md`,
+`reports/hex-bareiss-performance.md`, and
+`reports/hex-row-reduce-performance.md`.
+
 ## Bench Targets
 
 - `Hex.MatrixBench.runSquareMulChecksum`: `n * n * n`
-- `Hex.MatrixBench.runBareissDet`: `n * n * n`
-- `Hex.MatrixBench.runLeibnizDet`: `n * leibnizDetComplexity n`
+- `Hex.MatrixBench.runSquareMulStrassenChecksum`: `7 ^ Nat.log2 n`
+  (on the power-of-two rungs both drivers use, this `Nat`-valued model equals
+  `n^{log₂ 7}` exactly)
+- `Hex.MatrixBench.runStrassenCut32` / `Cut64` / `Cut96` / `Cut128` / `Cut256`:
+  `7 ^ Nat.log2 n` (the cutoff sweep behind the shipped
+  `strassenDefault.cutoff`)
 
-Paired Hex/FLINT informational comparator fixed registrations:
-`runBareissDet{16,24,32,48,64,96,128,192,256,320,384,512}` ↔
-`runFlintBareissDet{…}` (`fmpz_mat.det` via the shared persistent-
-subprocess python-flint driver, per
-`SPEC/Libraries/hex-matrix.md §"External comparators"` and
-`SPEC/benchmarking.md §"External comparators" §"Process call"`).
+The dense base surfaces (multiplication, row operations on the structural
+`Vector` / `Array` primitives) have no named external comparator: they declare
+absence with the `structural-layer` reason per
+`SPEC/Libraries/hex-matrix.md §"External comparators"`. The Strassen driver
+declares the same `structural-layer` absence — it measures the multiplication
+surface already covered above, and its baseline is the internal naive `mul`.
+Its headline deliverables are the measured crossover cutoff and the speedup at
+the largest benched dimension, below.
 
 ## Verdicts
 
-Scientific run at commit `77870fc99995a60f33a16a24ceca67c024b68f23` on
-`carica` (Apple M2 Ultra, macOS 14.6.1), running every registered
-parametric target plus every paired Hex/FLINT fixed comparator rung:
-
-```sh
-lake exe hexmatrix_bench run $(lake exe hexmatrix_bench list | awk '/^  Hex\./ {print $1}') \
-    --export-file reports/bench-results/hex-matrix-77870fc.json
-```
-
-The harness recorded `77870fc-dirty` because this worktree carries the
-pod-managed `.claude/CLAUDE.md` change plus the in-flight HO-25
-`HexMatrix/Bench.lean` and `libraries.yml` additions. Export artefact:
-`reports/bench-results/hex-matrix-77870fc.json`.
+Multiplication scaling measured on `chungus2` (AMD EPYC 9455, Linux, Lean
+toolchain `4.32.0-rc1`), row-of-rows `Vector (Vector R m) n` backing, at
+monorepo commit `cf35f23a` plus the measured-cutoff change under review.
+Exports: `reports/bench-results/hex-matrix-mul-scaling-chungus2.json` and
+`reports/bench-results/hex-matrix-strassen-cutoff-chungus2.json`.
 
 - `Hex.MatrixBench.runSquareMulChecksum`
-  - Command: `lake exe hexmatrix_bench run Hex.MatrixBench.runSquareMulChecksum`
+  - Command: `hexmatrix_bench compare Hex.MatrixBench.runSquareMulChecksum
+    Hex.MatrixBench.runSquareMulStrassenChecksum --outer-trials 3
+    --max-seconds-per-call 120 --export-file
+    reports/bench-results/hex-matrix-mul-scaling-chungus2.json`
   - Input family: `dense-square-multiplication`; deterministic salts `17` and
-    `43`; parameters `160, 192, 224, 256`.
-  - Per-call times: `442.607 ms`, `763.753 ms`, `1.210 s`, `1.833 s`.
-  - Verdict: consistent with declared complexity (`cMin=107.634`,
-    `cMax=109.279`, `β=—`).
-- `Hex.MatrixBench.runBareissDet`
-  - Command: `lake exe hexmatrix_bench run Hex.MatrixBench.runBareissDet`
-  - Input family: `structured-bareiss-determinant`; deterministic salt `71`;
-    parameters `8, 12, 16`.
-  - Per-call times: `9.136 µs`, `28.275 µs`, `72.236 µs`.
-  - Verdict: consistent with declared complexity (`cMin=16.363`,
-    `cMax=17.846`, `β=—`).
-- `Hex.MatrixBench.runLeibnizDet`
-  - Command: `lake exe hexmatrix_bench run Hex.MatrixBench.runLeibnizDet`
-  - Input family: `leibniz-small-determinant`; deterministic salt `71`;
-    parameters `2, 3, 4, 5, 6, 7, 8`.
-  - Per-call times: `≤1 µs`, `1.957 µs`, `8.424 µs`, `47.000 µs`,
-    `321.418 µs`, `2.566 ms`, `23.174 ms`.
-  - Verdict: consistent with declared complexity (`cMin=71.843`,
-    `cMax=78.334`, `β=—`).
+    `43`; parameters `64, 128, 256, 512, 1024`.
+  - Per-call medians: `12.3 ms`, `97.7 ms`, `800.7 ms`, `6.251 s`, `51.750 s`.
+  - Verdict: consistent with declared complexity.
+- `Hex.MatrixBench.runSquareMulStrassenChecksum`
+  - Same command, export, fixtures, and parameters.
+  - Input family: `strassen-crossover-scaling`.
+  - Per-call medians: `12.3 ms`, `89.6 ms`, `603.6 ms`, `4.786 s`, `40.487 s`.
+  - Verdict: consistent with declared complexity.
 
-The 24 paired Hex / FLINT fixed-comparator registrations also passed —
-each Hex target and its paired FLINT call returned the same observed
-hash at every rung (every `setup_fixed_benchmark` pair appears as a
-`"hashes_agree": true` entry in the export). The agreement covers both
-the magnitude and the sign of the determinant: Hex's row-pivoted
-Bareiss tracks the swap permutation parity, and FLINT's multimodular
-CRT returns the signed determinant in the same convention.
+Smoke wiring was also checked with `lake exe hexmatrix_bench list` and
+`lake exe hexmatrix_bench verify` (7 registrations).
 
-Smoke wiring was also checked with:
+## Strassen crossover and scaling
 
-```sh
-lake exe hexmatrix_bench list
-lake exe hexmatrix_bench verify
-```
+### Measured cutoff
 
-`verify` passed all 27 registered benchmarks at the same commit (3
-parametric + 24 paired fixed comparator rungs).
+`strassenDefault.cutoff = 96`, measured by the cutoff sweep
+(`hexmatrix_bench compare Hex.MatrixBench.runSquareMulChecksum
+Hex.MatrixBench.runStrassenCut{32,64,96,128,256} --outer-trials 3
+--max-seconds-per-call 40 --export-file
+reports/bench-results/hex-matrix-strassen-cutoff-chungus2.json`). Per-call
+medians in ms (3 outer trials):
 
-## Comparator Ratios
+| target (leaf class) | n=64 | n=128 | n=256 | n=512 |
+|---|---:|---:|---:|---:|
+| naive `mul` | 12.26 | 96.49 | 776.74 | 6210.28 |
+| `Cut32` (leaf 16) | 12.88 | 109.42 | 785.29 | 6067.95 |
+| `Cut64` (leaf 32) | 10.95 | 91.55 | 666.72 | 5274.88 |
+| `Cut96` (leaf 64) | 12.19 | 89.78 | 604.52 | 4782.67 |
+| `Cut128` (leaf 64) | 12.20 | 89.54 | 605.54 | 4790.35 |
+| `Cut256` (leaf 128) | 12.31 | 96.63 | 609.80 | 4578.79 |
 
-`SPEC/Libraries/hex-matrix.md §"External comparators"` names
-`FLINT fmpz_mat_det via python-flint` (matching
-`libraries.yml: HexMatrix.phase4.comparators[0].tool`) as the
-`informational` external comparator for HexMatrix, scoped to the
-determinant-surface bench targets (`runBareissDet` and equivalents).
-The other Phase-4 matrix surfaces (`runSquareMulChecksum`, row
-operations on the structural `Vector` / `Array` primitives) declare
-absence with the `structural-layer` reason per the same SPEC
-subsection. The comparator is wired through
-`Hex.BenchOracle.Flint.runOp` against the shared persistent-subprocess
-python-flint driver (`scripts/oracle/flint_bench_driver.py`, HO-20),
-which already exposes `fmpz_mat.det`; HO-25 consumes the existing
-op rather than extending the driver. The pairing is one-to-one:
-`runBareissDet` ↔ `fmpz_mat.det`. `runSquareMulChecksum` and
-`runLeibnizDet` have no FLINT pairing — `fmpz_mat` does not expose a
-schoolbook-cubic multiplication entry point comparable to
-`runSquareMulChecksum`, and Leibniz on a small structured domain is a
-within-Lean cross-check (see the next paragraph), not an external
-comparator.
+On power-of-two dimensions every cutoff in `(64, 128]` produces the same
+recursion (naive leaves at `64×64`), which the `Cut96` ≡ `Cut128` columns
+confirm within noise. Recursing one level deeper (`Cut64`, `32×32` leaves)
+loses ~10% at `n ≥ 256`; a `16×16` leaf (`Cut32`) loses to plain naive at
+small `n`. Stopping a level earlier (`Cut256`, `128×128` leaves) is
+essentially tied at `n ≥ 256` (marginally ahead at `n = 512`, behind at
+`n = 128` where it never splits). `96` ships as the representative of the
+`64×64`-leaf class — the class that wins from the first splitting dimension
+and stays within ~4% of the `128×128`-leaf class at `n = 512` (where that
+class edges ahead) — with Strassen coverage extending to non-power-of-two
+blocks in `[96, 128)`. The crossover is
+representation-dependent (row-of-rows backing pays quadrant materialization
+and stride/cache overhead); the flat-backing follow-up re-measures it on this
+same bench.
 
-A within-Lean determinant cross-check between `runBareissDet` and
-`runLeibnizDet` remains available:
+### Scaling figure and fitted exponents
 
-```sh
-lake exe hexmatrix_bench compare Hex.MatrixBench.runBareissDet Hex.MatrixBench.runLeibnizDet --param-floor 8 --param-ceiling 8
-```
+![naive vs Strassen scaling](figures/hex-matrix-mul-scaling.svg)
 
-The harness reports that the declared custom schedules make the
-floor/ceiling flags informational for these registrations, then
-compares the common parameter domain (`n=8`, result
-`agreement: all functions agree on common params`). Both determinant
-registrations also returned stable hashes on their scientific runs
-(`Hex.MatrixBench.runBareissDet`, `n=16`: `0x15e450ea`;
-`Hex.MatrixBench.runLeibnizDet`, `n=8`: `0x6554`).
+Generated by `scripts/plots/hex-matrix-mul-scaling.py` from the committed
+scaling export; OLS power-law fits on `(log n, log t)` over the asymptotic
+window `n ∈ [128, 1024]` (the rungs where the default config splits, spanning
+just under a decade — the widest post-crossover window the benched rungs
+offer):
 
-### Per-call overhead
+| method | exponent p | R² | C₃ (ns·n³) | per-call @ n=1024 |
+|---|---:|---:|---:|---:|
+| naive mul | 3.01 | 1.0000 | 47 | 51.750 s |
+| mulStrassen (default) | 2.94 | 0.9994 | 38 | 40.487 s |
 
-FLINT per-call overhead is measured by timing one driver spawn plus
-one trivial `fmpz_mat.det` request on a `2×2` matrix
-(`scripts/oracle/flint_bench_driver.py` invoked via
-`/tmp/flint-overhead-measure.py`, 11 spawns on the same host):
-median **55.2 ms**, min 53.7 ms, max 57.9 ms. The figure agrees with
-HO-22's `fmpz_poly.add` measurement (56.3 ms median) — the driver
-shape is identical across families, so the per-call overhead is a
-single number per host, not per family. The `setup_fixed_benchmark`
-shape spawns one bench child per repeat, so every FLINT median below
-includes one driver startup. The `adjusted ratio` column subtracts
-this overhead from the FLINT median when positive, then divides by
-the Hex median. A rung is **eligible** under
-`SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`
-when (a) the 55.2 ms overhead is at most 50% of measured FLINT wall
-time on that rung and (b) per-call wall time is at most the 10 s hard
-ceiling.
-
-### FLINT `fmpz_mat.det` vs `runBareissDet`
-
-Input family `structured-bareiss-determinant`, declared complexity
-`n³`. Hex's row-pivoted Bareiss fraction-free elimination against
-FLINT's multimodular reduction + CRT determinant on the same
-deterministic tridiagonal `flatSmallMatrix` fixture.
-
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 75.315 µs | 51.750 ms | 687.118x | 0.000x | no |
-| 24 | 274.823 µs | 51.305 ms | 186.685x | 0.000x | no |
-| 32 | 687.666 µs | 51.755 ms | 75.260x | 0.000x | no |
-| 48 | 2.483 ms | 52.133 ms | 21.000x | 0.000x | no |
-| 64 | 6.343 ms | 52.556 ms | 8.286x | 0.000x | no |
-| 96 | 24.315 ms | 56.703 ms | 2.332x | 0.061x | no |
-| 128 | 59.993 ms | 58.395 ms | 0.973x | 0.053x | no |
-| 192 | 211.724 ms | 70.594 ms | 0.333x | 0.073x | no |
-| 256 | 520.158 ms | 88.929 ms | 0.171x | 0.065x | no |
-| 320 | 1.035 s | 114.064 ms | 0.110x | 0.057x | yes |
-| 384 | 1.816 s | 149.450 ms | 0.082x | 0.052x | yes |
-| 512 | 4.388 s | 270.629 ms | 0.062x | 0.049x | yes |
-
-Trend: raw ratio falls monotonically across the entire ladder from
-687x at `n = 16` (Hex is fast, FLINT is dominated by the ~55 ms
-startup floor) through unity at `n = 128` to 0.062x at `n = 512`
-(FLINT is more than sixteen times faster than Hex on wall time). Within
-the three eligible rungs at the top of the ladder (`n = 320, 384,
-512`) the adjusted ratio is essentially flat in the range
-`0.049x – 0.057x` with a slow trend toward FLINT pulling further
-ahead: once driver startup is subtracted, FLINT spends about 5% of
-Hex's wall time on the same determinant surface, with the gap
-widening as `n` grows. This is the structural gap
-`SPEC/Libraries/hex-matrix.md §"External comparators"`'s
-`informational` rationale named in advance (FLINT uses multimodular
-reduction + CRT, Hex uses Bareiss fraction-free elimination); the
-adverse trend is filed as the first Concern below. The comparator is
-`informational`, so the divergence does not produce a gating-goal
-verdict, but it is recorded here per
-`SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`
-("a diverging trend … is itself an audit-found Concern even when the
-highest-rung verdict happens to pass").
-
-The parametric `runBareissDet` schedule (`paramSchedule := .custom
-#[8, 12, 16]`) is unchanged — the densification lives entirely in
-the fixed-comparator ladder above per `SPEC/benchmarking.md
-§"Headline reports" §"Comparator ratios"` ("the ladder is densified
-with in-fill rungs between existing points, never extended past the
-wallclock ceiling"). The top rung (`n = 512`, Hex 4.388 s) sits well
-inside the 10 s hard per-call ceiling and the wider ladder gives
-twelve points across roughly six orders of magnitude in measured Hex
-wall time, enough to read the trend cleanly.
+**Speedup at the largest benched dimension `n = 1024`: 1.28×** (naive
+`51.750 s` / Strassen `40.487 s`); 1.30× at `n = 512`. The fitted Strassen
+exponent `2.94` is visibly shallower than the naive `3.01` but sits above
+`log₂ 7 ≈ 2.807`, as the SPEC anticipates for the row-of-rows backing at
+these sizes (crossover transient near the cutoff plus locality overhead);
+the exponent is a diagnostic, not an acceptance condition. On the measured
+rungs the two series tie at `n = 64` (identical computation below the cutoff)
+and Strassen wins from the first splitting rung `n = 128`; the boundary
+`n = 96` marked on the figure is the configured cutoff, not a measured
+intersection (no rung sits between `64` and `128`).
 
 ## Profile
 
-Profiles were captured at commit
-`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
-macOS 14.6.1, arm64) through the bench-timed-region filtering wrapper:
-`scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench <target>
-<param> 5000000000`. `samply 0.13.1` recorded at 999 Hz
-(`--rate 999 --unstable-presymbolicate`), the bench binary reported
-`lean-bench` version `0.1.0` on Lean `4.30.0-rc2`, and raw
-`*.json.gz` artefacts remain developer-local under `/tmp`. The bench
-child reported `git_dirty=true` because this pod worktree carried a
-pod-managed `.claude/CLAUDE.md` change during capture.
+Profile captured on `carica` through the bench-timed-region filtering wrapper
+(`scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench <target>
+<param> 5000000000`, `samply 0.13.1` at 999 Hz).
 
 - `dense-square-multiplication`
   - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runSquareMulChecksum 160 5000000000`
-  - Child row: `inner_repeats=8`, `per_call_nanos=469770166.750000`,
-    `result_hash=0x1f393709728b7e`.
   - Leaf cost: allocation/free 55.3%, Lean runtime and harness 24.7%,
     GMP big-integer arithmetic 15.1%, Lean own code 3.1%, other system
-    samples 1.8%. The largest leaves were allocator/refcount paths
-    (`libsystem_malloc`, `mi_malloc_small`, `mi_free`, `lean_dec_ref_cold`)
-    plus GMP integer construction/comparison/copying in the `Int` dot-product
-    loop.
+    samples 1.8%.
   - Inclusive ranking: `Hex.MatrixBench.runSquareMulChecksum` and its
     benchmark wrapper covered 100.0% of retained samples,
     `Hex.Matrix.mul` specialised for the target covered 99.1%,
     `Hex.Vector.dotProduct` covered 93.8%, and the inner dot-product fold
-    covered 82.0%. The high allocator/GMP leaf cost is therefore attributable
-    to the registered `runSquareMulChecksum` target's boxed `Int` matrix
-    multiplication surface.
-  - Diagnostics:
-    ```text
-    bench thread:       name='Thread <4893104>' tid=4893104
-    regions:            2, total timed = 4227.0 ms
-    expected samples:   ~4223 on bench thread
-    retained samples:   4219 on bench thread (15 rejected outside windows)
-    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
-    spawn anchor:       wall_ns=1780142601187822000, mono_ns=330635108396541
-    sidecar anchor:     mono_ns=330636312950125
-    filtered profile:   /tmp/hex-profile-runSquareMulChecksum-160.json.gz
-    ```
-- `structured-bareiss-determinant`
-  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runBareissDet 16 5000000000`
-  - Child row: `inner_repeats=32768`, `per_call_nanos=81462.912231`,
-    `result_hash=0x15e450ea`.
-  - Leaf cost: Lean runtime and harness 57.8%, Lean own code 22.6%,
-    allocation/free 13.5%, GMP big-integer arithmetic 5.5%, other system
-    samples 0.6%. The largest leaves were closure dispatch
-    (`lean_apply_2`, `lean_apply_1`), `Hex.Matrix.stepMatrix` closures,
-    `Array.ofFn` construction, `lean_array_push`, and exact-division support
-    (`Int.decidableDvd`, `Hex.Matrix.exactDiv`).
-  - Inclusive ranking: `Hex.Matrix.bareiss` covered 95.8% of retained samples,
-    `bareissArrayState` covered 95.6%, `pivotLoop` covered 92.5%,
-    `stepMatrix` covered 42.9% boxed / 36.5% unboxed, and
-    `exactDiv` covered 8.1%. These dominant entries are the row-pivoted
-    Bareiss determinant path measured by the registered `runBareissDet`
-    target.
-  - Diagnostics:
-    ```text
-    bench thread:       name='Thread <4894239>' tid=4894239
-    regions:            9, total timed = 2693.9 ms
-    expected samples:   ~2691 on bench thread
-    retained samples:   2691 on bench thread (10 rejected outside windows)
-    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
-    spawn anchor:       wall_ns=1780142613300175000, mono_ns=330647220881708
-    sidecar anchor:     mono_ns=330647459112916
-    filtered profile:   /tmp/hex-profile-runBareissDet-16.json.gz
-    ```
-- `leibniz-small-determinant`
-  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runLeibnizDet 8 5000000000`
-  - Child row: `inner_repeats=128`, `per_call_nanos=24285055.343750`,
-    `result_hash=0x6554`.
-  - Leaf cost: Lean runtime and harness 57.5%, Lean own code 20.9%,
-    allocation/free 17.4%, other system samples 4.2%, with no visible GMP
-    leaf share on this small structured determinant. The largest leaves were
-    refcount cold paths, `Hex.Matrix.inversionCount` folds, `mi_free`,
-    `mi_malloc_small`, closure dispatch, list-to-array conversion, and
-    permutation-list construction.
-  - Inclusive ranking: `Hex.MatrixBench.runLeibnizDet` and its wrapper covered
-    100.0% of retained samples, the Leibniz determinant fold covered 55.7%,
-    `detTerm` covered 54.5%, `permutationVectors` construction covered 43.0%
-    / 38.9% in the flat-map and map loops, `detSign` covered 29.9%, and
-    `inversionCount` covered 15.3%. These costs are the expected factorial
-    permutation/enumeration path measured by the registered
-    `runLeibnizDet` target.
-  - Diagnostics:
-    ```text
-    bench thread:       name='Thread <4895591>' tid=4895591
-    regions:            2, total timed = 3132.9 ms
-    expected samples:   ~3130 on bench thread
-    retained samples:   3129 on bench thread (9 rejected outside windows)
-    other-thread noise: 0 samples on non-bench threads within timed windows (informational)
-    spawn anchor:       wall_ns=1780142627735394000, mono_ns=330661656259250
-    sidecar anchor:     mono_ns=330661879149416
-    filtered profile:   /tmp/hex-profile-runLeibnizDet-8.json.gz
-    ```
+    covered 82.0%. The high allocator/GMP leaf cost is attributable to the
+    boxed `Int` matrix multiplication surface.
 
-The dominant inclusive costs all map to registered `HexMatrix.Bench` targets.
-No unattributed dominant cost was observed.
+The dominant inclusive costs all map to registered `HexMatrix.Bench`
+targets. No unattributed dominant cost was observed.
+
+## Strassen two-buffer storage schedule
+
+The BDPZ schedule was gated and measured on `chungus2` with the same toolchain
+as above. Each wall/RSS observation is one cold child and one multiplication;
+the final implementation has seven processes at 512 and five at 1024. Raw
+observations and commands are committed in
+`reports/bench-results/hex-matrix-strassen-two-buffer-chungus2.json`.
+
+| dimension | reference wall median | two-buffer wall median | change | reference RSS median | two-buffer RSS median | change |
+|---:|---:|---:|---:|---:|---:|---:|
+| 512 | 4.949 s | 4.730 s | −4.4% | 111,140 KiB | 102,132 KiB | −8.1% |
+| 1024 | 41.997 s | 39.849 s | −5.1% | 225,608 KiB | 200,936 KiB | −10.9% |
+
+All trials produced the pre-change hashes (`0x3ff9d8390625168` at 512 and
+`0x1ffbbcd11f386b8e` at 1024). The 512 wall range (`4.66–6.16 s`) includes one
+high-contention outlier, so its 4.4% median improvement is directional; the
+1024 range (`39.30–40.04 s`) supports the 5.1% wall improvement. Peak RSS
+clears the 5% gate at both sizes. Dimension 2048 was not run because a single
+sample was projected near five minutes on this host.
+
+A cold heaptrack run at 512 reported unchanged GMP-dominated allocation-call
+counts (398,980,177 total, 291,803,993 through `__gmp_default_allocate`) and a
+tracked peak-heap reduction from 4.06 MiB to 2.92 MiB (−28.1%). This is
+consistent with unchanged arithmetic and lower live matrix storage; heaptrack
+does not account for Lean-managed arrays as ordinary allocation calls.
+Generated C supplies that evidence: the region helpers thread their consumed
+array through `lean_array_fset`. After independent review, the write primitives
+were tightened further: row-start multiplication is hoisted out of column
+loops, and each accumulation reads its operands before one `lean_array_fset`,
+without a temporary row or `Vector.modify`'s clear-then-set sequence.
 
 ## Concerns
 
-- The FLINT `fmpz_mat.det` comparator pulls steadily ahead of
-  `runBareissDet` across the entire ladder: raw ratio
-  `0.973x → 0.062x` from `n = 128` to `n = 512`, and within the
-  eligible range (`n = 320, 384, 512`) the adjusted ratio drifts from
-  `0.057x` to `0.049x` — FLINT spends roughly 5% of Hex's wall time
-  on the same surface, and the gap widens with `n`. This is an
-  adverse trend at the `n³` determinant surface. The comparator is
-  `informational`, so this is recorded for orientation rather than as
-  a Phase-4 gate; the structural gap matches
-  `SPEC/Libraries/hex-matrix.md §"External comparators"`'s rationale
-  (FLINT uses multimodular reduction + CRT, structurally different
-  from Hex's row-pivoted Bareiss fraction-free elimination over
-  `Int`). A follow-up may file a narrow HO against
-  `Hex.Matrix.bareiss` if a faster Hex determinant surface is wanted
-  (for instance, a multimodular CRT path layered over the existing
-  Bareiss kernel as a Tier-2 fast path).
+None for the dense base surface.

@@ -10,8 +10,6 @@ public import HexArith.Montgomery.Redc
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
-set_option maxHeartbeats 1000000
 
 /-!
 User-facing Montgomery modular arithmetic for `HexArith`.
@@ -32,7 +30,7 @@ private def doubleMod (p acc : UInt64) : UInt64 :=
     acc + acc
 
 /-- Compute `R^2 mod p` by repeated doubling in native-word arithmetic. -/
-private def r2Loop (p : UInt64) : Nat → UInt64 → UInt64
+def r2Loop (p : UInt64) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | n + 1, acc => r2Loop p n (doubleMod p acc)
 
@@ -87,8 +85,7 @@ private theorem toNat_doubleMod (p acc : UInt64) (hacc : acc.toNat < p.toNat) :
         simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
       omega
     have hadd : (acc + acc).toNat = 2 * acc.toNat := by
-      rw [UInt64.toNat_add]
-      rw [Nat.mod_eq_of_lt]
+      rw [UInt64.toNat_add, Nat.mod_eq_of_lt]
       · omega
       · simpa [UInt64.word, Nat.two_mul] using htwo_lt_word
     have hmod : (2 * acc.toNat) % p.toNat = 2 * acc.toNat :=
@@ -125,7 +122,7 @@ private theorem toNat_r2Loop (p : UInt64) :
               ac_rfl
 
 /-- The executable `r2OfModulus` computes `R^2 mod p` for positive moduli. -/
-private theorem toNat_r2OfModulus (p : UInt64) (hp_pos : 0 < p.toNat) :
+theorem toNat_r2OfModulus (p : UInt64) (hp_pos : 0 < p.toNat) :
     (r2OfModulus p).toNat = (UInt64.word * UInt64.word) % p.toNat := by
   have hp_lt_word : p.toNat < UInt64.word := by
     simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
@@ -251,26 +248,26 @@ theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
   (mk p hp).p_lt_R
 
 /-- Convert a standard residue into Montgomery form. -/
-@[expose]
-def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_mont_to"]
+def toMont (ctx : @& MontCtx p) (a : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a ctx.r2
-  redc ctx hi lo
+  montgomeryReduce ctx hi lo
 
 /-- Convert a Montgomery residue back to the standard representation. -/
-@[expose]
-def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
-  redc ctx 0 a
+@[expose, extern "lean_hex_mont_from"]
+def fromMont (ctx : @& MontCtx p) (a : UInt64) : UInt64 :=
+  montgomeryReduce ctx 0 a
 
 /-- Multiply two Montgomery residues, staying inside the Montgomery domain. -/
-@[expose]
-def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_mont_mul"]
+def mulMont (ctx : @& MontCtx p) (a b : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a b
-  redc ctx hi lo
+  montgomeryReduce ctx hi lo
 
 /--
 For reduced inputs `a, b < p`, the two-word product `a * b` (encoded as
 `lo + hi * word`) stays below `p * word`. This is the range precondition
-`redc` needs to behave as Montgomery reduction on the `mulMont` product.
+`montgomeryReduce` needs to behave as Montgomery reduction on the `mulMont` product.
 -/
 private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     (ha : a.toNat < p.toNat) (hb : b.toNat < p.toNat) :
@@ -287,50 +284,54 @@ private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     _ < p.toNat * UInt64.word := hp2_lt_pword
 
 /--
-Reducing the two-word product through `redc` produces the Montgomery
+Reducing the two-word product through `montgomeryReduce` produces the Montgomery
 representative: multiplying the result back by `word` recovers `a * b` modulo
 `p`. The `p * p' ≡ -1 (mod word)` hypothesis is the Montgomery inverse
 condition that makes the reduction exact.
 -/
-private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
+private theorem montgomeryReduce_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
         p.toNat * UInt64.word)
     (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
-    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat *
+    (montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat *
         UInt64.word % p.toNat =
       (a.toNat * b.toNat) % p.toNat := by
-  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
-  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
+  rw [toNat_montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  have hmontgomeryReduce := montgomeryReduceNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
   calc
-    redcNat p.toNat ctx.p'.toNat
+    montgomeryReduceNat p.toNat ctx.p'.toNat
           ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word) *
         UInt64.word % p.toNat
         = ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat *
-            UInt64.word) % p.toNat := hredc
+            UInt64.word) % p.toNat := hmontgomeryReduce
     _ = (a.toNat * b.toNat) % p.toNat := by grind
 
 /--
-Reducing the two-word product through `redc` lands strictly below the modulus,
+Reducing the two-word product through `montgomeryReduce` lands strictly below the modulus,
 so `mulMont` returns an already-reduced residue with no extra conditional
 subtraction.
 -/
-private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
+private theorem montgomeryReduce_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
         p.toNat * UInt64.word)
     (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
-    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat < p.toNat := by
-  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+    (montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat < p.toNat := by
+  rw [toNat_montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  exact montgomeryReduceNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /--
 Multiplication by `word` is injective on residues modulo `p`: since `p` is odd
 it is coprime to `word = 2 ^ 64`, so two reduced values `x, y < p` with
 `x * word ≡ y * word (mod p)` are equal. This is what lets the
 representative-mod-word characterisation pin down a unique `mulMont` value.
+
+Public because any word-modular residue layer built on this context (for
+example a Montgomery-form residue ring) needs the same cancellation to prove
+that its additive operations preserve the represented value.
 -/
-private theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
+theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
     (hx : x < p.toNat) (hy : y < p.toNat)
     (h : x * UInt64.word % p.toNat = y * UInt64.word % p.toNat) :
     x = y := by
@@ -387,8 +388,8 @@ theorem fromMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
   unfold fromMont
-  rw [toNat_redc ctx 0 a hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+  rw [toNat_montgomeryReduce ctx 0 a hT]
+  exact montgomeryReduceNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /--
 `fromMont` removes one Montgomery radix factor from a reduced Montgomery
@@ -408,9 +409,9 @@ theorem fromMont_repr (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
   unfold fromMont
-  rw [toNat_redc ctx 0 a hT]
-  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
-  simpa [Nat.mod_eq_of_lt haNat] using hredc
+  rw [toNat_montgomeryReduce ctx 0 a hT]
+  have hmontgomeryReduce := montgomeryReduceNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
+  simpa [Nat.mod_eq_of_lt haNat] using hmontgomeryReduce
 
 /-- The `Nat` value of `toMont` is multiplication by the Montgomery radix. -/
 @[simp, grind =]
@@ -427,9 +428,9 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hraw :
       (ctx.toMont a).toNat * UInt64.word % p.toNat =
         (a.toNat * ctx.r2.toNat) % p.toNat := by
-    simpa [toMont] using redc_mulFull_repr_word ctx a ctx.r2 hT hpp'
+    simpa [toMont] using montgomeryReduce_mulFull_repr_word ctx a ctx.r2 hT hpp'
   have hto_lt_nat : (ctx.toMont a).toNat < p.toNat := by
-    simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
+    simpa [toMont] using montgomeryReduce_mulFull_lt ctx a ctx.r2 hT hpp'
   apply cancel_word_mod_of_lt ctx
   · exact hto_lt_nat
   · exact Nat.mod_lt _ ctx.p_pos
@@ -457,7 +458,7 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
 /--
 The Montgomery product `mulMont a b` represents `a * b` scaled by `word`:
 its representative multiplied back by `word` equals `a * b` modulo `p`. This
-is the core algebraic identity from which the user-facing `mulMont`
+is the fundamental algebraic identity from which the user-facing `mulMont`
 correctness lemmas are derived.
 -/
 private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
@@ -471,7 +472,7 @@ private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [mulMont] using redc_mulFull_repr_word ctx a b hT hpp'
+  simpa [mulMont] using montgomeryReduce_mulFull_repr_word ctx a b hT hpp'
 
 /-- Montgomery conversion returns a canonical residue. -/
 @[grind =>]
@@ -486,7 +487,7 @@ theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hT := twoWordProduct_lt_p_word ctx a ctx.r2 haNat hr2Nat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
+  simpa [toMont] using montgomeryReduce_mulFull_lt ctx a ctx.r2 hT hpp'
 
 /-- Montgomery multiplication returns a canonical residue. -/
 @[grind =>]
@@ -500,7 +501,7 @@ theorem mulMont_lt (ctx : MontCtx p) (a b : UInt64) (ha : a < p) (hb : b < p) :
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [mulMont] using redc_mulFull_lt ctx a b hT hpp'
+  simpa [mulMont] using montgomeryReduce_mulFull_lt ctx a b hT hpp'
 
 /-- Montgomery multiplication preserves the represented residue product. -/
 @[grind =]
@@ -640,7 +641,8 @@ end MontCtx
 namespace HexArith
 
 /-- Number of binary digits in a natural number. -/
-private def bitLength (n : Nat) : Nat :=
+@[expose]
+def bitLength (n : Nat) : Nat :=
   if n = 0 then 0 else n.log2 + 1
 
 private theorem lt_two_pow_bitLength (n : Nat) : n < 2 ^ bitLength n := by
@@ -669,7 +671,7 @@ private def powMontBitsGo (ctx : MontCtx p) (k : Nat) :
       powMontBitsGo ctx k remaining (bit + 1) acc' base'
 
 /-- Exponentiate a Montgomery-form base by repeated squaring. -/
-private def powMont (ctx : MontCtx p) (base : UInt64) (n : Nat) : UInt64 :=
+def powMont (ctx : MontCtx p) (base : UInt64) (n : Nat) : UInt64 :=
   powMontBitsGo ctx n (bitLength n) 0 (ctx.toMont (UInt64.ofNat (1 % p.toNat))) base
 
 /-- Word-sized odd-modulus modular exponentiation via Montgomery arithmetic. -/
@@ -680,17 +682,25 @@ def powModWordOdd (a n : Nat) (p : UInt64) (hp : p % 2 = 1) : Nat :=
   (ctx.fromMont (powMont ctx base n)).toNat
 
 /-- Tail-recursive Nat fallback for modular exponentiation. -/
-private def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
+@[expose]
+def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
   | 0, _, acc, _ => acc
   | remaining + 1, bit, acc, base =>
       let acc' := if n.testBit bit then (acc * base) % p else acc
       let base' := (base * base) % p
       powModNatGo n p remaining (bit + 1) acc' base'
 
-/-- Nat-level fallback modular exponentiation by repeated squaring. -/
+/-- Nat-level modular exponentiation by repeated squaring, with the same
+zero-modulus convention as `powMod`.
+
+This is the kernel-facing specification of modular exponentiation: it and its
+recursion are `@[expose]`, so proof terms that replay it (`decide`-style
+certificate checkers) reduce in the kernel. `powMod` is its runtime twin via
+`powModNat_eq_powMod`, so compiled callers of `powModNat` still take the
+Montgomery path for odd word-sized moduli. -/
 @[expose]
 def powModNat (a n p : Nat) : Nat :=
-  powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
+  if p = 0 then 0 else powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
 
 /-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/
 private theorem pow_sq (base q : Nat) :
@@ -789,10 +799,17 @@ private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)
         simpa [hbit] using ih (bit + 1) acc ((base * base) % p)
           htail_bound hacc hinv'
 
-/-- `powModNat_eq`: the `Nat`-level fallback exponentiation `powModNat a n p` computes `a ^ n % p`. -/
-private theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
+/-- `powModNat` modulo zero returns zero, matching `powMod`. -/
+@[simp, grind =]
+theorem powModNat_modulus_zero (a n : Nat) :
+    powModNat a n 0 = 0 := by
+  rfl
+
+/-- `powModNat_eq`: for a positive modulus, `powModNat a n p` computes `a ^ n % p`. -/
+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
     powModNat a n p = a ^ n % p := by
   unfold powModNat
+  rw [if_neg (by omega)]
   apply powModNatGo_eq a n p (bitLength n) 0 (1 % p) (a % p) hp
   · simpa using lt_two_pow_bitLength n
   · exact Nat.mod_lt _ hp
@@ -995,6 +1012,9 @@ private theorem powModWordOdd_eq (a n : Nat) (p : UInt64) (hp : p % 2 = 1) :
 /--
 Modular exponentiation by repeated squaring, using Montgomery arithmetic for
 odd `UInt64` moduli and a direct Nat fallback otherwise.
+
+This is the runtime twin of `powModNat`, the kernel-facing specification;
+`powModNat_eq_powMod` is the `@[csimp]` equality relating them.
 -/
 @[expose]
 def powMod (a n p : Nat) : Nat :=
@@ -1038,6 +1058,24 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
 theorem powMod_modulus_zero (a n : Nat) :
     powMod a n 0 = 0 := by
   rfl
+
+/-- The dispatching `powMod` and the Nat-level `powModNat` agree at every
+input, including modulus zero. -/
+theorem powMod_eq_powModNat (a n p : Nat) :
+    powMod a n p = powModNat a n p := by
+  by_cases hp : p = 0
+  · subst hp
+    rfl
+  · have hpos : 0 < p := Nat.pos_of_ne_zero hp
+    rw [powMod_eq a n p hpos, powModNat_eq a n p hpos]
+
+/-- `powModNat` is the kernel-facing specification and `powMod` its runtime
+twin: compiled code evaluating `powModNat` dispatches through `powMod`, taking
+the Montgomery path for odd word-sized moduli. -/
+@[csimp]
+theorem powModNat_eq_powMod : @powModNat = @powMod := by
+  funext a n p
+  exact (powMod_eq_powModNat a n p).symm
 
 /-- Modular exponentiation with exponent zero returns the residue of `1`. -/
 @[simp, grind =]
@@ -1083,8 +1121,8 @@ and reduce. -/
 @[grind =>]
 theorem powMod_succ (a n p : Nat) (hp : p > 0) :
     powMod a (n + 1) p = (a * powMod a n p) % p := by
-  rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ]
-  rw [Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
+  rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ,
+    Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
 
 /-- Reducing the base before modular exponentiation does not change `powMod`. -/
 @[simp, grind =]
@@ -1100,7 +1138,7 @@ theorem powMod_mul_base (a b n p : Nat) (hp : p > 0) :
   rw [powMod_eq (a * b) n p hp, powMod_eq a n p hp, powMod_eq b n p hp,
     Nat.mul_pow, Nat.mul_mod]
 
-/-- Exponent-addition expansion for `powMod`: combine two exponentiation phases
+/-- Exponent-addition expansion for `powMod`: combine two exponentiation steps
 by multiplying their reduced results. -/
 @[grind =>]
 theorem powMod_add_exp (a m n p : Nat) (hp : p > 0) :

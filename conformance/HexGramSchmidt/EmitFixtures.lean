@@ -16,8 +16,7 @@ when set).  The companion oracle driver `scripts/oracle/gs_flint.py`
 reads the same stream and re-runs the integer Gram-Schmidt
 computations through python-flint's `fmpq_mat` for cross-check.
 
-Operations cross-checked
-------------------------
+# Operations cross-checked
 
 * `gram_det_vec` — `GramSchmidt.Int.gramDetVec` (the `n+1` leading
   Gram determinants `d₀=1, d₁, …, d_n`).  The oracle computes
@@ -60,7 +59,7 @@ private def vecToInts {n : Nat} (v : Vector Int n) : List Int :=
   v.toArray.toList
 
 private def matToInts {n m : Nat} (b : Matrix Int n m) : List (List Int) :=
-  b.toArray.toList.map vecToInts
+  b.rows.toArray.toList.map vecToInts
 
 private def natVecToInts {n : Nat} (v : Vector Nat n) : List Int :=
   v.toArray.toList.map (fun x => Int.ofNat x)

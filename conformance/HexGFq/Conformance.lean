@@ -13,8 +13,8 @@ Core conformance checks for the canonical finite-field constructors in
 Oracle: none
 Mode: always
 Covered operations:
-- `Conway.packedGF2FpPoly`
-- `Conway.PackedGF2Entry`
+- `GFq.packedGF2FpPoly`
+- `GFq.PackedGF2Entry`
 - `GFq.modulus`, `GFq.ofPoly`, and `GFq.repr`
 - `GFqC.modulus`, `GFqC.ofPoly`, `GFqC.repr`, and `GFqC.frob`
 - `GF2q.supportedEntry`, `GF2q.lower`, `GF2q.modulus`,
@@ -76,38 +76,38 @@ private def packedAsGenericCoeffNats (w : UInt64) : List Nat :=
   else
     [(GF2q.repr (packed w)).toNat]
 
-#guard coeffNats (Conway.packedGF2FpPoly 1 1) = [1, 1]
+#guard coeffNats (GFq.packedGF2FpPoly 1 1) = [1, 1]
 -- `PackedGF2Entry` excludes degree zero; this checks only the raw helper's
 -- leading-coefficient convention at the lower boundary.
-#guard coeffNats (Conway.packedGF2FpPoly 0 0) = [1]
-#guard coeffNats (Conway.packedGF2FpPoly 0b101 3) = [1, 0, 1, 1]
-#guard coeffNats (Conway.packedGF2FpPoly ((1 : UInt64) <<< 63) 1) = [0, 1]
+#guard coeffNats (GFq.packedGF2FpPoly 0 0) = [1]
+#guard coeffNats (GFq.packedGF2FpPoly 0b101 3) = [1, 0, 1, 1]
+#guard coeffNats (GFq.packedGF2FpPoly ((1 : UInt64) <<< 63) 1) = [0, 1]
 
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 1).entry.poly = [1, 1]
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 1).entry.poly = [1, 1]
 #guard Conway.luebeckConwayPolynomial? 2 1 =
-  some (inferInstance : Conway.PackedGF2Entry 1).entry.poly
-#guard (inferInstance : Conway.PackedGF2Entry 1).lower = 1
+  some (inferInstance : GFq.PackedGF2Entry 1).entry.poly
+#guard (inferInstance : GFq.PackedGF2Entry 1).lower = 1
 example : 0 < 1 :=
-  (inferInstance : Conway.PackedGF2Entry 1).degree_pos
+  (inferInstance : GFq.PackedGF2Entry 1).degree_pos
 
 example : 1 < 64 :=
-  (inferInstance : Conway.PackedGF2Entry 1).degree_lt_word
-#guard coeffNats (Conway.conwayPoly 2 1 (inferInstance : Conway.PackedGF2Entry 1).entry) =
-  coeffNats (Conway.packedGF2FpPoly (inferInstance : Conway.PackedGF2Entry 1).lower 1)
+  (inferInstance : GFq.PackedGF2Entry 1).degree_lt_word
+#guard coeffNats (Conway.conwayPoly 2 1 (inferInstance : GFq.PackedGF2Entry 1).entry) =
+  coeffNats (GFq.packedGF2FpPoly (inferInstance : GFq.PackedGF2Entry 1).lower 1)
 
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 2).entry.poly = [1, 1, 1]
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 3).entry.poly = [1, 1, 0, 1]
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 4).entry.poly = [1, 1, 0, 0, 1]
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 5).entry.poly = [1, 0, 1, 0, 0, 1]
-#guard coeffNats (inferInstance : Conway.PackedGF2Entry 6).entry.poly = [1, 1, 0, 1, 1, 0, 1]
-#guard (inferInstance : Conway.PackedGF2Entry 2).lower = 0x3
-#guard (inferInstance : Conway.PackedGF2Entry 3).lower = 0x3
-#guard (inferInstance : Conway.PackedGF2Entry 4).lower = 0x3
-#guard (inferInstance : Conway.PackedGF2Entry 5).lower = 0x5
-#guard (inferInstance : Conway.PackedGF2Entry 6).lower = 0x1B
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 2).entry.poly = [1, 1, 1]
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 3).entry.poly = [1, 1, 0, 1]
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 4).entry.poly = [1, 1, 0, 0, 1]
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 5).entry.poly = [1, 0, 1, 0, 0, 1]
+#guard coeffNats (inferInstance : GFq.PackedGF2Entry 6).entry.poly = [1, 1, 0, 1, 1, 0, 1]
+#guard (inferInstance : GFq.PackedGF2Entry 2).lower = 0x3
+#guard (inferInstance : GFq.PackedGF2Entry 3).lower = 0x3
+#guard (inferInstance : GFq.PackedGF2Entry 4).lower = 0x3
+#guard (inferInstance : GFq.PackedGF2Entry 5).lower = 0x5
+#guard (inferInstance : GFq.PackedGF2Entry 6).lower = 0x1B
 
 example :
-    (Conway.CommittedEntry.entry (p := 2) (n := 1)) = Conway.supportedEntry_2_1 :=
+    (GFq.CommittedEntry.entry (p := 2) (n := 1)) = Conway.supportedEntry_2_1 :=
   rfl
 #guard coeffNats (GFqC.modulus (p := 2) (n := 1)) = [1, 1]
 #guard GFqC.modulus (p := 2) (n := 1) =
@@ -168,7 +168,7 @@ example (x y z : Generic21) :
 #guard GF2q.lower (n := 1) = 1
 #guard wordArray (GF2q.modulus (n := 1)) = #[3]
 #guard coeffNats (GFqC.modulus (p := 2) (n := 1)) =
-  coeffNats (Conway.packedGF2FpPoly (GF2q.lower (n := 1)) 1)
+  coeffNats (GFq.packedGF2FpPoly (GF2q.lower (n := 1)) 1)
 #guard wordArray (GF2q.modulus (n := 1)) =
   wordArray (GF2Poly.ofUInt64Monic (GF2q.lower (n := 1)) 1)
 
@@ -183,9 +183,9 @@ example (x y z : Generic21) :
 #guard GF2q.repr (GF2q.ofWord (n := 1) 2) =
   (GF2n.reduce
     (n := 1) (irr := GF2q.lower (n := 1))
-    (hn := Conway.PackedGF2Entry.degree_pos)
-    (hn64 := Conway.PackedGF2Entry.degree_lt_word)
-    (hirr := Conway.PackedGF2Entry.packed_irreducible) 2).val
+    (hn := GFq.PackedGF2Entry.degree_pos)
+    (hn64 := GFq.PackedGF2Entry.degree_lt_word)
+    (hirr := GFq.PackedGF2Entry.packed_irreducible) 2).val
 
 #guard wordArray (GF2q.modulus (n := 4)) = #[0x13]
 #guard GF2q.lower (n := 4) = 0x3
@@ -194,6 +194,31 @@ example (x y z : Generic21) :
 #guard coeffNats (GFq.repr (GF2q.toGFq (packed4 0x10))) = [1, 1]
 #guard GF2q.toGFq (packed4 0x10) =
   GFq.ofPoly (GF2q.supportedEntry (n := 4)) (GF2q.reprFpPoly (packed4 0x10))
+
+/-! # Degree-8 committed entries
+
+The binary column of the committed Conway table runs to degree 8, so both
+ergonomic constructors resolve there. These guards pin that: `GFqC 2 8` and
+`GF2q 8` are the reachability claim the table widening was for, and without
+them a future narrowing would go unnoticed.
+
+Note the modulus is the Conway polynomial for `(2, 8)`, lower word `0x1D`, not
+the AES modulus `0x1B`. They are different irreducibles of the same degree, so
+these are different presentations of the same 256-element field. -/
+
+private abbrev Committed28 : Type := GFqC 2 8
+private abbrev Packed28 : Type := GF2q 8
+
+#guard GF2q.lower (n := 8) = 0x1D
+#guard GF2q.repr (GF2q.ofWord (n := 8) 0x53) = 0x53
+
+-- Reduction past degree 8 folds the Conway modulus back in.
+#guard GF2q.repr (GF2q.ofWord (n := 8) 0x1FF) = (0x1FF ^^^ 0x11D : UInt64)
+
+-- The packed modulus is the monic degree-8 word, and it is the Conway
+-- polynomial for (2, 8) rather than any convenient irreducible: that
+-- identification is the `conway_eq_packed` field of the instance.
+#guard wordArray (GF2q.modulus (n := 8)) = #[0x11D]
 
 end GfqConformance
 end Hex

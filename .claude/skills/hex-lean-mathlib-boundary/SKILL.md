@@ -6,6 +6,37 @@ allowed-tools: Bash, Read, Grep, Glob
 
 # Mathlib-free / Mathlib boundary in the hex Lean layers
 
+## Repo-generation caveat (read first)
+
+Parts of this skill describe an older incarnation of the BHKS Mathlib layer
+(files like `Recovery.lean`/`TerminationBound.lean`/`BadVector.lean` with the
+`SeparationHypotheses`/`BadVectorBridgeData` cluster). In the current tree
+those were deleted (6bf20977, #8411) and the surviving `W ⊆ L'` half was
+resurrected by #8519 into `SignatureClasses.lean`, `Lattice.lean`,
+`CLDColumnBound.lean`, `Recovery.lean`, `PartitionRefinement.lean` (namespace
+`HexBerlekampZassenhausMathlib.BHKS`), keyed on `Matrix.rowReduce`, `vecMul`,
+and `lllNative`. Key #8519 facts that supersede older notes below:
+
+- **The CLD lattice runs in the monic (`M2`) coordinate**:
+  `bhksRecoverClassified` / `bhksSingleAllOnesPartition` build
+  `bhksLatticeBasis (ZPoly.toMonic f).monic …`, and the lattice tier
+  (`factorLatticeFactorsWithBound`) selects `ZPoly.toMonicPrimeData?` — so the
+  toMonic partition producers (`liftedFactorSubsetPartition_of_toMonicModP`)
+  and the monic-regime short-vector producer
+  (`BHKS.supportShortVectorData_of_recoveredLift`, which needs
+  `leadingCoeff f = 1`) apply directly. The standalone fast tier
+  (`factorFastFactorsWithBound`) still selects `choosePrimeData?` and is a
+  verification-guarded, decline-only heuristic for `lc ≢ 1 (mod p)`.
+- **The fast-core acceptance floor is `bhksRecoveryFloor`** (CLD column adequacy
+  `cldCoeffFloor` joined with both Mignotte bounds), so a
+  `bhksRecoveryCoreWithBound` success carries `bhksRecoveryFloor core ≤ k'` — enough
+  for the partition machinery AND `hsep`/`hthr` at the witness precision. The
+  old "L'=W is cap-only" analysis (#7985-era) no longer applies to the
+  `W ⊆ L'` direction: `normalizedFactors_card_le_bhksEquivalenceClassIndicators_size`
+  (`LatticeTier.lean`) proves it at any floor-cleared precision.
+- The cap (`latticePrecisionCap`) dominates every floor component by
+  construction (`bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap`).
+
 The executable types (`Hex.ZMod64 p`, `Hex.FpPoly p = Hex.DensePoly (ZMod64 p)`,
 `Hex.ZPoly = Hex.DensePoly Int`) carry **only `Lean.Grind` ring instances and a
 custom `Dvd`** — *not* Mathlib's `CommRing`/`Field`/`Monoid`/`AddGroup`
@@ -52,7 +83,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `dite` over `Array.getInternal`. Leave such lemmas as plain `@[simp]`.
   Plain *def*-headed LHSs (`coeff`, `size`, `support`) and `Option.getD`
   LHSs are fine. A second, softer rejection: a lemma whose **conclusion is
-  wrapped in a `let`** (e.g. `redc_m_spec` in `HexArith/Montgomery/Redc.lean`:
+  wrapped in a `let`** (e.g. `montgomeryReduce_m_spec` in `HexArith/Montgomery/Redc.lean`:
   `let m := Tlo * ctx.p'; m.toNat = …`) is not a bare `Eq`, so `grind =`
   refuses it with `invalid E-matching equality theorem, conclusion must be an
   equality` even though it "looks like a literal equation." Leave such lemmas
@@ -410,7 +441,7 @@ early-return; reassembly is a power of `X`, the unit core fails the guard via
 `factorFastFactorsWithBound_raw_guardedIrreducible_of_recoveredLift` (BHKS
 core-success, routing through the #8058 capstone). Slow producers
 (`slowModularRaw_irreducible_of_fast_none`,
-`factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none`) keep their
+`factorTrialFactorsWithBound_factor_irreducible_of_fast_none`) keep their
 *unguarded* statements — `fast = none` forces `degree ≠ 0`, so there is no unit
 core — and imply the guarded form by `fun raw hmem _ => producer raw hmem`. Note
 this guarded contract is the fast-path counterpart to the `normalizeFactorSign`
@@ -471,7 +502,7 @@ The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
 `exhaustiveCoreFactorsWithBound` at `exhaustiveLiftBound` — one deterministic
 array, so `hraw : … = some rawFactors` pins it directly and the irreducibility
 producer applies at that one precision. **Do not assume the fast path is the same
-shape.** `factorFastCoreWithBound` is a *schedule loop* (`Basic.lean:6935`): it
+shape.** `bhksRecoveryCoreWithBound` is a *schedule loop* (`Basic.lean:6935`): it
 starts at `Hex.initialHenselPrecision a`, walks `henselPrecisionSchedule`, and
 returns the array of the **first** precision where `bhksRecoverClassified`
 returns `.success`. A `ForwardRecoveryInputs` package sits at the cap `target`
@@ -486,13 +517,13 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
   executable run, where `start = initialHenselPrecision a ≠ target = cap`. Use
   the decoupled `…_of_forwardInputs_on_schedule` wrappers
   (`PartitionRefinement.lean`, #7666): the count argument routes through
-  `factorFastCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result params
+  `bhksRecoveryCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result params
   (`k`,`fuel`) and cut-precision param (`L`) are already independent.
-- Those decoupled wrappers still take `h : factorFastCoreWithBound core B
+- Those decoupled wrappers still take `h : bhksRecoveryCoreWithBound core B
   primeData start fuel = some hinputs.expectedFactors` as a hypothesis. Producing
   that `h` for the real `start = initialHenselPrecision a` is the **scheduled-loop
   determinism obligation** (loop's first success returns the cap recovery). It is
-  *not* derivable from the cap package: `factorFastCoreWithBound_isSome_of_
+  *not* derivable from the cap package: `bhksRecoveryCoreWithBound_isSome_of_
   recovery_on_schedule` (`Basic.lean:7105`) proves existence, not factor
   identity, and `bhksRecoverClassified_success_*` (`Basic.lean:11238-11322`) give
   product/dvd/sign for any success but neither irreducibility nor equality to the
@@ -507,8 +538,8 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
 `precisionForCoeffBound` is applied **twice** on the public fast path, so the
 CLD lattice runs at a precision far below the BHKS column-adequacy threshold.
 The public caller computes `a := precisionForCoeffBound B primeData.p`
-(`Basic.lean:7699/7714`, `B = factorFastPrecisionCap core`) and passes `a` as
-`factorFastCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
+(`Basic.lean:7699/7714`, `B = latticePrecisionCap core`) and passes `a` as
+`bhksRecoveryCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
 schedule variable `k` into `toMonicLiftData core k primeData`, which applies
 `precisionForCoeffBound` **again** (`:7001`, `(henselLiftData _ B _).k = B`).
 Net: the lattice's actual exponent is
@@ -524,7 +555,7 @@ empirically (true factor coefficients are tiny) but certifies nothing about
 column-adequacy. **Consequence:** no acceptance gate against the current
 `liftData.k` (the #7928 plan) can supply hsep/hthr — it would only flip fixtures
 `some → none`. Verify with a pure-integer `#eval` scratch (`bhksCoeffBound`,
-`precisionForCoeffBound`, `henselPrecisionSchedule`, `factorFastPrecisionCap` all
+`precisionForCoeffBound`, `henselPrecisionSchedule`, `latticePrecisionCap` all
 run under `lake env lean`, no extern). The real fix is a precision-*schedule*
 correction (drop the double `precisionForCoeffBound`), which is soundness-
 sensitive and touches the CI-gated determinism cluster — not a cheap gate.
@@ -535,20 +566,20 @@ clears the CLD floor; as of #7928 it did not.
 ### Resolved by #7938 (schedule) + #7951 (gate); the gate cascade is large
 
 #7938 dropped the double `precisionForCoeffBound` so the schedule now iterates
-*coefficient bounds* `k` up to the cap `factorFastPrecisionCap f` (single
+*coefficient bounds* `k` up to the cap `latticePrecisionCap f` (single
 conversion inside `toMonicLiftData`). #7951 then added the acceptance gate:
-`factorFastCoreWithBound`'s `.success` branch accepts only when
+`bhksRecoveryCoreWithBound`'s `.success` branch accepts only when
 `k ≥ cldCoeffFloor core = 2·max_j bhksCoeffBound (toMonic core).monic j`, else
 continues the schedule. Post-#7951, `success → k ≥ cldCoeffFloor core` (hence
 `hsep` via `precisionForCoeffBound_spec`) *is* derivable — that is the premise
 #7945's hsep/hthr proofs consume. Verify the floor numerically with a
-pure-integer `#eval` (`cldCoeffFloor`, `factorFastPrecisionCap`, the schedule)
+pure-integer `#eval` (`cldCoeffFloor`, `latticePrecisionCap`, the schedule)
 under `lake env lean` — for `cldGuardF` floor`=32`, cap`=50803201`, first gated
 success at `k=32`/`liftData.k=3` (`2·bhksCoeffBound=32 < 5^3=125`).
 
 Two traps when touching the gate:
 
-- **Adding an acceptance condition to `factorFastCoreWithBound` cascades through
+- **Adding an acceptance condition to `bhksRecoveryCoreWithBound` cascades through
   the entire CI-gated capstone chain, not just the obvious determinism lemmas.**
   Every wrapper whose conclusion asserts `factorFast … ≠ none` / `= some …`
   needs the new side condition threaded as an *open hypothesis* (like `hno`):
@@ -557,14 +588,14 @@ Two traps when touching the gate:
   `Recovery.lean` chain — the `_internalCapPositive*` variants and all ~18
   `factorFast_terminates*` capstones (which route through `factorFast_terminates`
   → `…_internalCapPositiveAndPrimeLowerBound`). Size it up front by grepping the
-  `hB_pos`/`one_le_factorFastPrecisionCap f`/`hchoose` arg chain (~30 lemmas);
+  `hB_pos`/`one_le_latticePrecisionCap f`/`hchoose` arg chain (~30 lemmas);
   do **not** regex-replace on `f primeData` (it appears pervasively in
   hypothesis *types* like `CanonicalRecoveryTailInputs f primeData …`, so a blind
   sed corrupts signatures — target exact call lines). The success→*property*
   lemmas (`_product`, `_dvd`, `_some_all_of_recovery`, `_some_classifiedSuccess`)
   stay signature-stable; they only need a `by_cases hfloor` in the `.success`
   case. Discharging the floor side condition needs
-  `cldCoeffFloor core ≤ factorFastPrecisionCap f` (a `toMonic` coefficient-norm
+  `cldCoeffFloor core ≤ latticePrecisionCap f` (a `toMonic` coefficient-norm
   vs `bhksBound`-slack analysis with no existing infra) — thread it, don't try
   to prove it inline.
 - **Reducing the gate `ite` on a `k ≥ cldCoeffFloor core` condition in a
@@ -579,7 +610,7 @@ Two traps when touching the gate:
 A "success ⟹ recovery package / `EquivalenceClassRecoveryHypotheses` /
 `ForwardRecoveryInputs` producer" directive (the #7917 prerequisite) looks like
 a thin assembly after #7980 landed hsep/hthr, but is **not** constructible.
-`factorFastCoreWithBound_some_indicatorCandidates` (`Basic.lean:11785`) already
+`bhksRecoveryCoreWithBound_some_indicatorCandidates` (`Basic.lean:11785`) already
 gives `k'`, `hrows`, `hcandidates`, non-degeneracy, and product=core from loop
 success with no extra hypotheses — so `hcandidates`/`hsize` are free. The whole
 deliverable collapses to the single field `hindicators`
@@ -589,14 +620,14 @@ trueSupports`), whose only route
 `Recovery.lean:572`) demands `lattice_eq_indicators` = the BHKS Lemma 3.3
 equality `L'=W`. That needs `SeparationHypotheses.no_projected_not_indicator`
 (bad-vector exclusion), whose **only** producer
-(`no_projected_not_indicator_of_factorFastPrecisionCap_le`,
-`TerminationBound.lean:508`) requires precision `≥ factorFastPrecisionCap` **and**
+(`no_projected_not_indicator_of_latticePrecisionCap_le`,
+`TerminationBound.lean:508`) requires precision `≥ latticePrecisionCap` **and**
 the still-open `BadVectorBridgeData` (BHKS Lemma 3.2 resultant divisibility).
 Crucially: the #7951 gate forces only `k' ≥ cldCoeffFloor core`, which feeds
 **only** the CLD column adequacy (`cut`/hsep/hthr, in `CLDColumnBound.lean`) —
 `cldCoeffFloor` appears in **zero** lines of `BadVector.lean`/`Lattice.lean`/
 `TerminationBound.lean`, all of which key the exclusion on
-`factorFastPrecisionCap … ≤ a`. And floor ≪ cap by orders of magnitude
+`latticePrecisionCap … ≤ a`. And floor ≪ cap by orders of magnitude
 (`cldGuardF`: floor=32, cap=50803201, both pure-integer `#eval`-checkable), so
 the cap producer cannot fire at the first-success precision. The `on_schedule`
 `hno` route is *worse than hard — it is false*: the gated loop returns at the
@@ -612,7 +643,7 @@ thin producer. (#7985 skipped on exactly this.)
 
 **#7938 fixed only the *cap*, not the success precision — the trap persists
 (#7945).** #7938 removed the *caller-side* double `precisionForCoeffBound` (the
-public path now passes the raw cap `B = factorFastPrecisionCap core`), so the
+public path now passes the raw cap `B = latticePrecisionCap core`), so the
 *cap* schedule entry is now adequate (cldGuardF: `liftData.k = 12` at `k = cap =
 50803201`). But the per-iteration lift still applies `precisionForCoeffBound` to
 the **schedule variable** `k` (`toMonicLiftData core k primeData` ⟹ `liftData.k
@@ -642,35 +673,24 @@ the dimension argument, `L.factorCount + L.coeffWidth` "has type ℕ … of sort
 outParam Type but is expected to have type Type", because Mathlib's `Matrix`
 wants its first two arguments to be index types, not `Nat`.
 
-## `HexGF2Mathlib` defines a project-local `RingEquiv`/`TypeEquiv` shadowing Mathlib's
+## `HexGF2Mathlib` equivalences are Mathlib's `≃+*` (a project-local shadow used to exist)
 
-`HexGF2Mathlib/Basic.lean` declares its own minimal `structure RingEquiv`
-(fields `toFun`/`invFun`/`left_inv`/`right_inv`/`map_mul'`/`map_add'`, a CoeFun
-to `toFun`, and `symm`) **with the same `≃+*` notation** (`infixl:25 " ≃+* "`)
-and a `TypeEquiv` shadowing `Equiv`. So `HexGF2Mathlib.GF2n.equiv :
-GF2n … ≃+* GenericFiniteField` is **`HexGF2Mathlib.RingEquiv`, not Mathlib's**.
+`HexGF2Mathlib` once declared its own minimal `RingEquiv`/`TypeEquiv`
+structures reusing the `≃+*` notation, and older issue bodies or progress
+notes may still warn about `HexGF2Mathlib.RingEquiv.trans` not existing.
+That is no longer the situation: `HexGF2Mathlib/Basic.lean` states
+`GF2Poly.equiv : GF2Poly ≃+* FpPoly 2` with Mathlib's `RingEquiv`,
+`equivPolynomial` is built with `RingEquiv.trans`, and the `GF2n`/`GF2nPoly`
+field equivalences are Mathlib's too. Compose them with `RingEquiv.trans`
+and use the standard lemmas (`RingEquiv.symm_apply_apply`, `map_mul`,
+`map_add`) directly; no structure-literal repackaging is needed.
 
-Symptom when you forget: composing it with a Mathlib `RingEquiv` (e.g. a `cast`-
-based equiv on the generic Conway field) fails with `RingEquiv.trans`/`.trans`
-resolving to `HexGF2Mathlib.RingEquiv.trans` (which doesn't exist), or an
-"Application type mismatch" / "type mismatch" between two `≃+*` types that
-**print identically** (one is the custom struct, one is Mathlib's). `e.symm`,
-`e.map_mul'`, `e.symm_apply_apply` dot-notation resolves into the custom
-namespace too. Confirm early with `set_option pp.all true in #check e` — Mathlib's
-prints `@RingEquiv.{…}`, the custom one prints `@HexGF2Mathlib.RingEquiv.{…}`.
-
-Recipe to compose a custom `e : A ≃+*[Hex] B` with a Mathlib `g : B ≃+* C` into
-a Mathlib `A ≃+* C`: build the Mathlib structure literal directly,
-`{ toFun := fun x => g (e x), invFun := fun x => e.invFun (g.symm x), … }`, and
-discharge its fields from **`e`'s struct projections** (`e.left_inv`,
-`e.right_inv`, `e.map_mul'`, `e.map_add'` — `e` is a bare structure, no
-`MulHomClass`) and **`g`'s Mathlib lemmas** (`RingEquiv.symm_apply_apply`,
-`apply_symm_apply`, `map_mul`, `map_add`). Do **not** `RingEquiv.trans` across
-the boundary — the two `RingEquiv`s are different types. Inline `e`/`g`
-(no `let`): a `let`-bound equiv whose type mentions the heavy
-`GFqField.FiniteField`/`GenericFiniteField` carrier blows the `whnf` heartbeat
-budget (same trap as the `set d := toMonicLiftData` warning above); name a thin
-`private def` for the repackaged `e` if you must, but reference it inline.
+One piece of the old advice still applies: inline the equivalences at use
+sites rather than `let`-binding them. A `let`-bound equiv whose type
+mentions the heavy `GFqField.FiniteField`/`GenericFiniteField` carrier
+blows the `whnf` heartbeat budget (same trap as the
+`set d := toMonicLiftData` warning above); name a thin `private def` if you
+must, but reference it inline.
 
 ### `GF2Poly` multiplication is carryless with no exported coeff-convolution
 
@@ -846,7 +866,7 @@ fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
-A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
+A `feature` issue that says "instantiate `HenselFactorData` / `…Evidence`
 constructed by the prerequisite issues" is only a token-swap if a theorem
 *concludes* that structure. A closed feeder issue does **not** prove its
 producer landed: these substrate issues are sometimes closed COMPLETED on a
@@ -867,7 +887,7 @@ lemma, even when no theorem states it.** #8068 was nearly skipped a 5th time on
 "no original→monic `RepresentsIntegerFactorAtLift` inversion exists"
 (`representsIntegerFactorAtLift_of_monicCorrespondent` only goes monic→original);
 that conclusion was *wrong* — the partition producer
-`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData` already
+`initialPartitionEvidence_of_toMonicModP` already
 reconstructs the monic correspondent from the *factor itself* (a local `descent`
 `have`, `IntReductionMod.lean`), via `exists_monicCorrespondent_of_dvd` +
 `representsModP_correspondent` + `toMonicLiftData_represents_lifted_monicCorrespondent`,
@@ -878,9 +898,9 @@ report a confident, wrong "NO" here — read the construction sites yourself.
 Substrate producers
 still missing as of this writing: `HenselLiftDescentHypotheses` and the
 `toMonicLiftData` modP→lift transport. `InitialLiftedFactorSubsetPartitionEvidence`
-now *has* one — `initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`
+now *has* one — `initialPartitionEvidence_of_toMonicModP`
 (`IntReductionMod.lean`, #7362). Note where it landed: not next to its natural
-consumer (`slowPathHenselSubstrate_*` in `Basic.lean`) but downstream in
+consumer (`HenselFactorData.of*` in `MonicCorrespondent.lean`) but downstream in
 `IntReductionMod.lean`, because its `pairwise_disjoint` field needs the mod-`p`
 squarefreeness datum (`modPFactorSubset_disjoint_of_choosePrimeData` /
 `squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`) that lives
@@ -890,16 +910,17 @@ de-privatising any `private` `Basic.lean` helpers it calls (visibility-only, saf
 Wiring it back up into the upstream slow-path substrate is a separate follow-up
 (the substrate cannot import downstream modules). That follow-up landed (#7584):
 `IntReductionMod.lean` now carries carrier-free toMonic producers that need only a
-`toMonicPrimeData?` selection witness plus core facts (lc>0, deg>0, primitive,
-squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicPrimeData_complete`
-and `slowPathHenselSubstrate_of_toMonicPrimeData`, both discharging `hinitial` via
-the #7362 producer above and `hcorr` via the new Basic.lean
-`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (the carrier-free
+mod-`p` factorization of the monic transform plus core facts (lc>0, deg>0, primitive,
+squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicModP`
+and `HenselFactorData.ofToMonicModP`, both discharging `hinitial` via
+the #7362 producer above and `hcorr` via the new `ToMonicUniqueness.lean`
+`henselSubsetCorrespondenceHypotheses_of_toMonicModP` (the carrier-free
 correspondence: at `True True`, `MonicDescentHypotheses`' only consumed fields
 `lift_eq`/`successful_lift` are `rfl`/`trivial`, so no descent carrier is needed —
 there is still no `MonicDescentHypotheses` *producer*, but the partition/substrate
 chain no longer needs one). So when wiring #6771/#7561, **do not re-derive these** —
-consume `slowPathHenselSubstrate_of_toMonicPrimeData` / `…_complete` directly. They
+consume `HenselFactorData.ofToMonicModP` /
+`liftedFactorSubsetPartition_of_toMonicModP` directly. They
 have no in-tree consumer yet; the slow-exhaustive branch
 (`liftedFactorSubsetPartition_outerBound_of_choosePrimeData`) is keyed on the
 different `choosePrimeData? squareFreeCore` selection, not `toMonicPrimeData?`.
@@ -967,7 +988,7 @@ one **only at `leadingCoeff core = 1`** (`liftedRecoveryCandidate.eq_productCand
 `MonicDescentHypotheses` / `hexists_lifted` adapter is **not** the blocker — `hcorr`
 and `hinitial` are producible from core facts now
 (`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`,
-`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`), and the
+`initialPartitionEvidence_of_toMonicModP`), and the
 heavy `descends` field is not consumed when building the correspondence (only
 `lift_eq = rfl` / `successful_lift = trivial`). Land the unscaled-support
 producer first, then #7561 is the thin composition.
@@ -1213,6 +1234,37 @@ restructure around the reported line first; it is usually a cheap `omega` or
   `omega` and defeq checks whnf that term — avoid binding the matrix; write it
   out or `clear_value` only when the value is genuinely unneeded downstream.
 
+## `private instance` does not hide an instance; `local instance` does
+
+Instance search in an importing module still finds a `private instance` from
+an imported module, but the emitted term cannot legally name it. When the
+`factor_poly` / `irreducibility` elaborators pick one up, the result is
+
+```
+Unknown constant `_private.HexPolyFp.SquareFree.0.Hex.FpPoly.squareFreeGuardBoundsTwo`
+Note: A private declaration ... exists but would need to be public to access here.
+```
+
+in whatever module invoked the tactic, which is nowhere near the declaration.
+This has bitten twice: once from a test module's anonymous instances, and once
+from `HexPolyFp.SquareFree`'s `private` guards, the latter masked for a while
+because a public duplicate happened to be declared later and win.
+
+So, for a `ZMod64.Bounds` witness at a concrete modulus:
+
+- `local instance` if only this file needs it. This is the default. Note it
+  scopes the *attribute*, not the name: the declaration stays referenceable.
+  To hide both, write `private theorem foo : ...` followed by
+  `attribute [local instance] foo`.
+- a plain public `instance` if downstream modules genuinely need it, and only
+  where no other module already provides one. `Hex.ZMod64.boundsTwo` in
+  `HexModArith/Residue.lean` is the canonical `Bounds 2`; do not re-declare it.
+- never `private instance`: it keeps the hazard and only hides the name.
+
+`Bounds p` is a `Prop`, so duplicate witnesses are never a coherence problem;
+they are an ambiguity and diagnosability problem, which is why one canonical
+public witness plus `local` everywhere else is the shape to aim for.
+
 ## Verifying executable-layer changes: build the module, not the target
 
 `lake build HexBerlekampZassenhaus` (the whole target) drags in
@@ -1299,7 +1351,7 @@ non-monic restatement before a non-monic consumer can use it.
 ### "Package the recovery witnesses into `TrueFactorLift`" is the centered/raw trap
 
 A directive asking you to derive a `TrueFactorLift` family (the hypothesis of
-`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift`,
+`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_lift`,
 `PartitionRefinement.lean`) from `RepresentsIntegerFactorAtLift` recovery
 witnesses is **not** a packaging step — it asks for a witness recovery cannot
 provide. `TrueFactorLift.support_product_eq` needs the **raw** integer product
@@ -1353,7 +1405,7 @@ vector (`periodAdjustedVector`, `CLDColumnBound.lean`) — packaged as a
 #7872) plus `two_mul_natAbs_sum_psiCut_period_le` (#7869), and
 `cutProjectionHypotheses_of_shortVectors` (the existing `SupportShortVectorData`
 consumer) carries it to the fast-disjunct endpoint
-(`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`). Two
+(`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`). Two
 load-bearing facts the earlier "skip" advice missed: (a) the period lemma's
 *proof* gives `2|d| < T.card+1`, i.e. `≤ T.card` over ℤ — the tight column bound,
 fitting the exact radius `4r+n·r²` (its stated `≤ T.card+1` was weaker than
@@ -1446,3 +1498,56 @@ lemma proved by the destructure pattern the namespace already uses
 `RecoveredLift.p_eq`/`precision_eq`/`cutThresholds_eq` — then consume it with
 `:=` or `simp only [hLp]` (simp rewrites the *projection term* fine; only the
 `rw [D.basis_eq]` whole-`L` abstraction fails).
+
+### Kernel-facing recursive specs: structural recursion only
+
+Definitions that cross-check `decide`s must kernel-reduce (design principle
+11). Two traps, verified on v4.32.0-rc1:
+
+- A multi-clause recursion whose clauses decrease *different* arguments (the
+  padded-zip shape) gets an **auto-derived lexicographic measure**
+  (`invImage`/`Prod.instWellFoundedRelation`), which does **not**
+  kernel-reduce — even `decide +kernel` sticks. Restructure so one argument
+  decreases in every clause (fold the asymmetric clause into a `List.map`,
+  as in `DensePoly.zipPad`).
+- Well-founded recursion with an explicit Nat measure
+  (`termination_by xs.length + ys.length`) *does* kernel-reduce, but the
+  definition is `@[irreducible]` by default, so plain `decide` still fails
+  at every use site until you add `unseal foo in` or switch to
+  `decide +kernel` (`@[semireducible]` is warned ineffective for WF
+  definitions). For a spec with many downstream `decide` sites, structural
+  recursion avoids all per-site annotations.
+
+### Diagnosing "decide sticks": elaborator whnf vs kernel reduction
+
+A stuck plain `decide` on a deep executable pipeline (e.g.
+`decide (Hex.ZPoly.isIrreducible f)`, which runs the whole factorizer) does
+**not** show that the kernel cannot reduce it — plain `decide` evaluates the
+`Decidable` instance in the *elaborator*, whose whnf respects
+`@[irreducible]` and never sees `unseal`-gated WF fixpoint bodies, so it
+sticks on definitions the kernel unfolds without complaint. Before
+concluding a kernel-decide route is infeasible (the wrong call was made once
+on the `irreducibility!`/`factor_poly!` fallbacks, #8863), probe with
+`decide +kernel`, and remember two refinements verified there:
+
+- Under the module system the *kernel's* remaining obstacle is the exposure
+  closure, and `import all` is **per-file, not recursive**: an umbrella
+  `import all HexBerlekampZassenhaus` does not pull in dependency bodies.
+  The stuck constant may be several libraries down (that case needed
+  `HexHensel`, the matrix libs, and core's non-exposed `Fin.foldl` from
+  `Init.Data.Fin.Fold`). Find it by descending with `Lean.Kernel.whnf`
+  probes, not by guessing.
+- With the closure complete, `WellFounded.Nat.fix` measures (fuel loops,
+  divide-and-conquer recursions) all kernel-reduce at tolerable cost — the
+  BZ factorizer replays a Swinnerton-Dyer quartic in seconds and degree 12
+  in tens of seconds. The genuine hard boundary is an `@[extern]`-backed
+  `opaque` in the path (e.g. `lllNative` in the lattice tier), which no
+  amount of exposure fixes — scope kernel-decide features to inputs whose
+  replay stays in the kernel-reducible tiers.
+- For raw-`Expr` emission the `decide +kernel` equivalent is: build
+  `of_decide_eq_true (Eq.refl true)` with the instance given explicitly and
+  assign it *without* an elaborator `isDefEq` on the refl slot — the kernel
+  verifies at declaration check. Runtime-precheck the Bool with the compiled
+  evaluator first so failures surface as elaboration errors, and precheck
+  kernel reducibility with `Lean.Kernel.whnf` so a missing `import all`
+  closure produces a named error instead of a kernel type mismatch.

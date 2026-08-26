@@ -1,6 +1,8 @@
-# hex-poly-fp (polynomials over F_p, depends on hex-poly + hex-mod-arith)
+# hex-poly-fp (polynomials over F_p)
 
 Specialized polynomial arithmetic over `Z/pZ` using `UInt64` coefficients.
+It depends on hex-poly and hex-mod-arith today. The fast-arithmetic stage adds
+hex-poly-fast and hex-modular, after both planned libraries are active.
 
 **Contents:**
 - `FpPoly p` = `DensePoly (ZMod64 p)` with specialized fast paths
@@ -52,3 +54,39 @@ hex-mod-arith (or hex-matrix as a fast path for matrix operations).
 
 For large p (≥ 2^32), each multiplication must reduce immediately
 (or use 128-bit intermediates), so lazy reduction doesn't apply.
+
+## Fast polynomial arithmetic
+
+[hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) supplies the generic
+lawful-plan interface, Newton division, half-gcd, product trees, multipoint
+operations, and Padé approximation. This library supplies the `FpPoly`
+multiplication plan and keeps `mulPacked` as its small-input baseline.
+
+Three NTT paths are exposed:
+
+- direct ordinary convolution when the target prime contains a root for the
+  padded transform length;
+- direct cyclic or negacyclic convolution when the corresponding root-order
+  condition holds;
+- convolution over the fixed auxiliary NTT-prime catalogue followed by
+  balanced CRT and reduction modulo the target prime.
+
+For operand sizes `r`, `s`, put `k = min r s`. Canonical coefficient lifts
+give the integer bound `B = k * (p - 1)^2`; auxiliary primes are accepted only
+when their product `P` satisfies the strict uniqueness condition `2*B < P`.
+`mulNtt?` and `mulNttCrt?` return `none` when no suitable length or sufficient
+catalogue product is available, and a `some` result is proved equal to
+`DensePoly.mul`. `mulFast` is total: it dispatches among packed schoolbook,
+generic Karatsuba, direct NTT, and CRT-NTT, falling back rather than exposing
+catalogue exhaustion.
+
+The same `FpPoly` plan drives fast division and half-gcd. Square-free
+decomposition, Frobenius/power reduction, modular composition, and quotient-
+ring consumers adopt those operations only at their measured crossover.
+`DensePoly.mul`, `mulPacked`, and every existing theorem remain compatible.
+
+Benchmarks sweep degree, target modulus, transform length, operand ratio,
+cold/warm plan use, and every dispatcher boundary. Conformance forces each
+kernel and checks it against `mulPacked`, schoolbook multiplication, and the
+existing FLINT oracle; an invalid direct root or insufficient CRT product is
+a required fallback case.

@@ -7,19 +7,32 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Basic
-public import HexMatrixMathlib.Determinant
-public import HexMatrixMathlib.Determinant.Bareiss
-public import HexMatrixMathlib.RankSpanNullspace
+public import HexMatrixMathlib.Vector
+public import HexMatrixMathlib.Algebra
+public import HexMatrixMathlib.Lemmas
+public import HexMatrixMathlib.Gram
+public import HexMatrixMathlib.Submatrix
 
 public section
 
 /-!
-The `HexMatrixMathlib` library connects the executable `HexMatrix` core to
-Mathlib's matrix API and linear-algebra definitions.
+The `HexMatrixMathlib` library is the base Mathlib bridge for the matrix family.
+It exposes the concrete equivalence `matrixEquiv` between the executable
+`HexMatrix` dense representation and Mathlib's function-based `Matrix`, together
+with the row-operation correspondence lemmas relating our executable `rowSwap`,
+`rowScale`, and `rowAdd` helpers to Mathlib's elementary matrix operations.
 
-This library exposes the concrete equivalence between the two matrix
-representations and the row-operation lemmas relating our executable
-`rowSwap`, `rowScale`, and `rowAdd` helpers to Mathlib's standard elementary
-matrix operations, the determinant comparison theorem, and the
-rank/span/nullspace correspondence theorems for row reduction.
+On top of this, `HexMatrixMathlib` equips `Hex.Matrix` with the Mathlib
+algebraic tower whose operations are the executable ones — `AddCommMonoid`,
+`AddCommGroup`, `Module`, `Semiring`, `Ring`, and `Algebra` — and upgrades
+`matrixEquiv` to additive (`matrixAddEquiv`), linear (`matrixLinearEquiv`), ring
+(`matrixRingEquiv`), and algebra (`matrixAlgEquiv`) equivalences. The companion
+modules carry the vector equivalence and matrix-vector product (`Vector`), the
+container API such as transpose and row/column updates (`Lemmas`), the Gram
+matrix (`Gram`), and the leading-submatrix family (`Submatrix`) across the
+equivalence.
+
+The determinant correspondence lives in `HexDeterminantMathlib`, the row-pivoted
+Bareiss correctness theorems in `HexBareissMathlib`, and the rank/span/nullspace
+correspondence in `HexRowReduceMathlib`.
 -/

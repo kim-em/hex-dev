@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 import LeanBench
@@ -13,8 +13,8 @@ import LeanBench
 Phase 4 benchmark registrations for `hex-berlekamp-zassenhaus`.
 
 This module is the Phase 4 benchmark root for the BZ factorization API. It
-covers the public combinator, the proof-facing fast path, the exhaustive slow
-path, the (degree, height) matrix, the (degree, height, precision,
+covers the public total cascade, the option-valued lattice tier, the exact
+trial backstop, the (degree, height) matrix, the (degree, height, precision,
 local-factor-count) fast-path setup surface, a shared-domain `compare` family,
 and the HO-2 adversarial recombination shapes. Comparator ratios and the
 headline performance report still depend on the scheduled-hardware runs and
@@ -31,31 +31,23 @@ per-target comment annotates which one.
 
 Split-family registrations (`prep := smokeInput`):
 
-* `runFactorChecksum`: public `factor` combinator on split inputs over the
+* `runFactorChecksum`: public `ZPoly.factorize` cascade on split inputs over the
   scientific degree schedule
   `splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`.
-* `runFactorFastChecksum`: CLD fast path on the same scientific schedule,
-  preserving `none`.
-* `runFactorSlowChecksum`: exhaustive backstop on the fast schedule
+* `runFactorSlowChecksum`: exact trial backstop on the fast schedule
   `smokeSchedule = #[1, 2, 3, 4]`.
-* `runFactorFallbackProbeChecksum`: public `factor` combinator on the explicit
+* `runFactorFallbackProbeChecksum`: public `ZPoly.factorize` on the explicit
   cascade-trigger split-degree schedule `fallbackProbeSchedule`.
 
 Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
 
 * `runFactorCompareChecksum` vs `runFactorSlowCompareChecksum` checks the
-  public fallback factorization against the exhaustive slow path.
-* `runFactorFastCompareChecksum` joins the same domain and returns the same
-  factorization checksum only when `factorFast` succeeds; a fast-path miss is
-  a distinct input-dependent checksum, so `compare` exposes rather than hides
-  `none`.
+  public cascade against exact trial factorization.
 
 Degree/height registrations (`prep := prepDegreeHeightInput`):
 
-* `runFactorDegreeHeightChecksum`: public `factor` over the scientific encoded
+* `runFactorDegreeHeightChecksum`: public `ZPoly.factorize` over the scientific encoded
   `degreeHeightSchedule`.
-* `runFactorFastDegreeHeightChecksum`: CLD fast path on the same schedule,
-  preserving `none`.
 * `runFactorSlowDegreeHeightChecksum`: bounded slow-path diagnostic on the
   smallest-completing encoded subset `slowDegreeHeightSchedule`.
 
@@ -65,21 +57,24 @@ Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
   over encoded degree, root-height, Hensel-precision, and local-factor-count
   regimes.
 
-HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
+HO-2 adversarial fixed targets:
 
 * `runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
-  `runFactorAdvPhi15Checksum`: full public `factor` on the named adversarial
+  `runFactorAdvPhi15Checksum`: full public `ZPoly.factorize` on the named adversarial
   input.
 * `runFactorFastSetupAdvX4Plus1Checksum`,
-  `runFactorFastSetupAdvPhi15Checksum`: fast-path *setup* only — these record
-  the public precision cap and pinned modular split profile, because the full
-  `factorFast` call exceeds the verifier's one-call budget on these inputs.
-* `runFactorFastAdvQuadSqrt2Sqrt3Checksum`: full `factorFast` on the quadratic
-  product (cheap enough to run in `verify`), preserving `none`.
+  `runFactorFastSetupAdvPhi15Checksum`: lattice precision-cap *setup* only —
+  these record the public precision cap and pinned modular split profile,
+  because a full lattice factorization exceeds the verifier's one-call budget
+  on these inputs.
 * `runAdvSwinnertonDyerSD3ModularSplitChecksum`: pinned modular split profile
-  for SD3 at the conformance prime, keeping the worst-case recombination
-  shape visible without running the full integer factorization (which exceeds
-  the `verify` budget).
+  for SD3 at the conformance prime, keeping the worst-case recombination shape
+  independently visible.
+* `runFactorLatticeAdvSwinnertonDyerSD3Checksum`,
+  `runFactorLatticeAdvSwinnertonDyerSD4Checksum`: full `factorLattice` on SD3
+  and SD4 — the lattice tier's certificate-backed early stop (#8395) makes the
+  complete lattice factorization of these extreme-`r` irreducibles affordable
+  in `verify`.
 
 Gating external comparator:
 
@@ -181,6 +176,14 @@ def advQuadSqrt2Sqrt3 : ZPoly :=
 def advSwinnertonDyerSD3 : ZPoly :=
   DensePoly.ofCoeffs #[576, 0, -960, 0, 352, 0, -40, 0, 1]
 
+/-- Swinnerton-Dyer `SD_4` input (minimal polynomial of `√2+√3+√5+√7`),
+degree 16: irreducible over `ℤ`, splits into 16 linear factors mod every
+prime. -/
+def advSwinnertonDyerSD4 : ZPoly :=
+  DensePoly.ofCoeffs
+    #[46225, 0, -5596840, 0, 13950764, 0, -7453176, 0, 1513334, 0, -141912, 0,
+      6476, 0, -136, 0, 1]
+
 /-- HO-2 cyclotomic `Phi_15` input. -/
 def advPhi15 : ZPoly :=
   DensePoly.ofCoeffs #[1, -1, 0, 1, -1, 1, 0, -1, 1]
@@ -195,8 +198,8 @@ structure DegreeHeightInput where
 /--
 Prepared input for the Phase 4 fast-path setup surface. The encoded parameter
 tracks input degree, root height, requested Hensel precision, and the number of
-mod-`31` local factors separately, while the timed target avoids full
-`factorFast` on adversarial cases.
+mod-`31` local factors separately, while the timed target avoids a full
+lattice factorization on adversarial cases.
 -/
 structure PrecisionLocalInput where
   degree : Nat
@@ -381,117 +384,109 @@ Stable checksum for `verify`-budget-safe fast-path setup on an adversarial
 singleton.
 
 This deliberately does not call the public fallback combinator: the checksum
-records the precision cap that `factorFast` would use and the pinned local split
-shape feeding recombination. It keeps the hard fast-path cases visible to
-`list` / `verify` while the full `factorFast` calls remain too expensive for
-the `verify` budget.
+records the lattice tier's precision cap and the pinned local split shape
+feeding recombination. It keeps the hard CLD cases visible to `list` / `verify`
+while the full lattice factorization remains too expensive for the `verify`
+budget.
 -/
 def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
-  mixHash (hash (factorFastPrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
+  mixHash (hash (latticePrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
-/-- Benchmark target: public fast-with-slow-fallback factorization. -/
+/-- Benchmark target: the public total factorization cascade. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factor f)
+  checksumFactorization (ZPoly.factorize f)
 
 /-- Benchmark target: public factorization on explicit fallback-prime probes. -/
 @[noinline]
 def runFactorFallbackProbeChecksum (f : ZPoly) : UInt64 :=
   runFactorChecksum f
 
-/-- Benchmark target: public CLD fast path, preserving fast-path misses. -/
-def runFactorFastChecksum (f : ZPoly) : UInt64 :=
-  checksumOptionFactorization (factorFast f)
-
-/-- Benchmark target: public exhaustive slow backstop. -/
+/-- Benchmark target: the exact trial-division backstop. -/
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlowTrial f)
+  checksumFactorization (factorTrial f)
 
 /-- Shared-domain compare target: public factorization on deterministic splits. -/
 def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factor f)
+  checksumFactorization (ZPoly.factorize f)
 
-/-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
+/-- Shared-domain compare target: exact trial factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlowTrial f)
+  checksumFactorization (factorTrial f)
 
-/--
-Shared-domain compare target: fast factorization on deterministic splits.
-
-When `factorFast` misses, return an input-dependent sentinel instead of routing
-through the public fallback. A `compare` run therefore reports divergence if the
-fast path stops producing the same semantic result on this domain.
--/
-def runFactorFastCompareChecksum (f : ZPoly) : UInt64 :=
-  match factorFast f with
-  | some φ => checksumFactorization φ
-  | none => mixHash 0xffffffffffffffff (checksumZPoly f)
-
-/-- Singleton benchmark target: public factorization on `X^4 + 1`. -/
+/-- Opaque IO boundary for fixed full-factorization benchmarks. -/
 @[noinline]
-def runFactorAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def factorChecksumIO (f : ZPoly) : IO UInt64 :=
+  pure (runFactorChecksum f)
 
-/-- Singleton benchmark target: fast-path setup on `X^4 + 1`, pinned at `p = 5`. -/
+/-- Opaque IO boundary for fixed fast-path-setup benchmarks. -/
 @[noinline]
-def runFactorFastSetupAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
-  checksumFastPathSetup f 5
+def setupChecksumIO (f : ZPoly) (p : Nat) : IO UInt64 :=
+  pure (checksumFastPathSetup f p)
 
-/-- Singleton benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
+/-- Opaque IO boundary for fixed modular-split benchmarks. -/
 @[noinline]
-def runFactorAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def splitChecksumIO (f : ZPoly) (p : Nat) : IO UInt64 :=
+  pure (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
-/-- Singleton benchmark target: fast path on `(X^2 - 2)(X^2 - 3)`, preserving `none`. -/
+/-- Opaque IO boundary for fixed lattice-tier benchmarks. -/
 @[noinline]
-def runFactorFastAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
-  runFactorFastChecksum f
+def latticeChecksumIO (f : ZPoly) : IO UInt64 :=
+  pure (checksumOptionFactorization (factorLattice f))
 
-/-- Singleton benchmark target: public factorization on `Phi_15`. -/
-@[noinline]
-def runFactorAdvPhi15Checksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+/-- Fixed benchmark target: public factorization on `X^4 + 1`. -/
+def runFactorAdvX4Plus1Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advX4Plus1
 
-/-- Singleton benchmark target: fast-path setup on `Phi_15`, pinned at `p = 31`. -/
-@[noinline]
-def runFactorFastSetupAdvPhi15Checksum (f : ZPoly) : UInt64 :=
-  checksumFastPathSetup f 31
+/-- Fixed benchmark target: fast-path setup on `X^4 + 1`, pinned at `p = 5`. -/
+def runFactorFastSetupAdvX4Plus1Checksum : Unit → IO UInt64 := fun _ =>
+  setupChecksumIO advX4Plus1 5
+
+/-- Fixed benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
+def runFactorAdvQuadSqrt2Sqrt3Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advQuadSqrt2Sqrt3
+
+/-- Fixed benchmark target: public factorization on `Phi_15`. -/
+def runFactorAdvPhi15Checksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO advPhi15
+
+/-- Fixed benchmark target: fast-path setup on `Phi_15`, pinned at `p = 31`. -/
+def runFactorFastSetupAdvPhi15Checksum : Unit → IO UInt64 := fun _ =>
+  setupChecksumIO advPhi15 31
 
 /--
 Singleton benchmark target: pinned modular split profile for Swinnerton-Dyer
 `SD_3` at `p = 71`, where the degree-eight integer polynomial splits into
 eight local linear factors.
 -/
-@[noinline]
-def runAdvSwinnertonDyerSD3ModularSplitChecksum (f : ZPoly) : UInt64 :=
-  checksumOptionNatArray (modularFactorDegreesAt? f 71)
+def runAdvSwinnertonDyerSD3ModularSplitChecksum : Unit → IO UInt64 := fun _ =>
+  splitChecksumIO advSwinnertonDyerSD3 71
 
-/-- Constant prep returning the `X^4 + 1` adversarial fixture for the pinned singleton schedule. -/
-def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
-  advX4Plus1
+/--
+Singleton benchmark target: CLD lattice tier (`factorLattice`) on
+Swinnerton-Dyer `SD_3`.  The certificate-backed early stop (#8395) certifies
+irreducibility at the first column-adequate precision instead of grinding the
+doubling schedule to the BHKS cap, which is what makes the full lattice-tier
+factorization affordable inside the `verify` budget.
+-/
+def runFactorLatticeAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ =>
+  latticeChecksumIO advSwinnertonDyerSD3
 
-/-- Constant prep returning the `(X^2 - 2)(X^2 - 3)` adversarial fixture. -/
-def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
-  advQuadSqrt2Sqrt3
-
-/-- Constant prep returning the Swinnerton-Dyer `SD_3` adversarial fixture. -/
-def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
-  advSwinnertonDyerSD3
-
-/-- Constant prep returning the cyclotomic `Phi_15` adversarial fixture. -/
-def prepAdvPhi15 (_ : Nat) : ZPoly :=
-  advPhi15
+/--
+Singleton benchmark target: CLD lattice tier (`factorLattice`) on
+Swinnerton-Dyer `SD_4` (degree 16, 16-way modular split). The early-stop
+separation certificate terminates at the column-adequacy floor, keeping the
+extreme-`r` tail visible in `verify`.
+-/
+def runFactorLatticeAdvSwinnertonDyerSD4Checksum : Unit → IO UInt64 := fun _ =>
+  latticeChecksumIO advSwinnertonDyerSD4
 
 /-- Benchmark target: public combinator over the degree/height matrix. -/
 def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumFactorization (factor input.poly)
-
-/-- Benchmark target: CLD fast path over the degree/height matrix. -/
-def runFactorFastDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumOptionFactorization (factorFast input.poly)
+  checksumFactorization (ZPoly.factorize input.poly)
 
 /-- Benchmark target: bounded slow-path diagnostic over small degree/height cases. -/
 def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumFactorization (factorSlowTrial input.poly)
+  checksumFactorization (factorTrial input.poly)
 
 /--
 Benchmark target: `verify`-budget-safe fast-path setup over encoded degree,
@@ -504,7 +499,7 @@ def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
   mixHash (hash input.precision) <|
     mixHash (hash input.localFactorCount) <|
       mixHash (checksumZPolyArray lifted) <|
-        mixHash (hash (factorFastPrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
+        mixHash (hash (latticePrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
 
 initialize isabelleBZBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 
@@ -628,7 +623,7 @@ def ensureIsabelleBZCrossCheck : IO Unit := do
   if (← isabelleBZCrossCheckRef.get) then
     return ()
   for f in isabelleFixtureInputs do
-    let leanChecksum := checksumCanonicalLeanFactorization (factor f)
+    let leanChecksum := checksumCanonicalLeanFactorization (ZPoly.factorize f)
     let (scalar, factors) ← requestIsabelleBZFactorizationRaw f
     let isabelleChecksum := checksumCanonicalFactorization scalar factors
     if leanChecksum != isabelleChecksum then
@@ -643,7 +638,7 @@ def requestIsabelleBZFactorization (f : ZPoly) : IO (Int × Array (List Int × N
 
 /-- Fixed Lean-side target matching the Isabelle comparator's canonical input. -/
 def runFactorIsabelleDomainChecksum : Unit → IO UInt64 := fun _ => do
-  return checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)
+  return checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)
 
 /-- Fixed verified-Isabelle BZ comparator target on the same canonical input. -/
 def runIsabelleFactorChecksum : Unit → IO UInt64 := fun _ => do
@@ -685,7 +680,7 @@ degree/height inputs `prepDegreeHeightInput param` for the rungs of
 `degreeHeightSchedule` (degree 3–6, height 2–32) and the additional
 smaller-degree rungs of `slowDegreeHeightSchedule` (degree 1–3). Each pairs
 with the corresponding rung of one of the parametric Lean
-`runFactorDegreeHeightChecksum` / `runFactorFastDegreeHeightChecksum` /
+`runFactorDegreeHeightChecksum` /
 `runFactorSlowDegreeHeightChecksum` registrations.
 -/
 def runIsabelleDegreeHeight3x2Checksum : Unit → IO UInt64 := fun _ => do
@@ -759,10 +754,10 @@ list of `n` distinct monic linears; this is the canonical-truth comparator the
 match on these rungs.
 
 `expectedHash` is left as `none` rather than computing
-`checksumCanonicalLeanFactorization (factor (prepFallbackProbeInput n))` at
+`checksumCanonicalLeanFactorization (ZPoly.factorize (prepFallbackProbeInput n))` at
 elaboration time, because that compile-time call would invoke the same cascade
-the post-mortem documents (200×–2,400× slower than Isabelle plus reducible
-factor entries on these inputs), inflating compile time. Bench-time multiset
+the post-mortem documents as producing reducible factor entries on these
+inputs, inflating compile time. Bench-time multiset
 agreement is recorded by comparing the observed Isabelle hash against the
 known split factorisation post-hoc.
 -/
@@ -804,7 +799,7 @@ The Lean target measures *fast-path setup* (multifactor lifting at the
 precision axis plus the modular split profile), not full factorisation, so
 the ratio `Lean_setup / Isabelle_full` is asymmetric: the operations
 differ on the same input. The recorded number is therefore a strict
-lower bound on the equivalent `factorFast`/`factor`-vs-Isabelle full-factor
+lower bound on the equivalent `factorLattice`/`factor`-vs-Isabelle full-factor
 ratio on that input — useful as a "setup alone exceeds Isabelle full
 factor" tripwire rather than a full gating verdict. See
 `reports/hex-berlekamp-zassenhaus-performance.md` §"Precision-local
@@ -916,24 +911,6 @@ setup_benchmark runFactorFallbackProbeChecksum n => bzClassicalSmokeComplexity n
   }
 
 /-
-Scientific split-family registration for the CLD fast path on the same inputs
-as `factor`. Since `smokeInput n` again has degree `n + 1`, the declared model
-uses the same offset-insensitive classical BHKS polynomial bound as the public
-combinator. The fast path pays the same dense arithmetic and recombination
-complexity on successful split inputs.
--/
-setup_benchmark runFactorFastChecksum n => bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 2
-    paramCeiling := 24
-    paramSchedule := .custom splitScientificSchedule
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
-
-/-
 Smoke-only registration for the exhaustive fallback. The declared cost model
 multiplies the classical BHKS polynomial bound by an exponential `2^n` search
 factor, matching the worst-case modular-factor-count bound that the full HO-3
@@ -987,39 +964,15 @@ setup_benchmark runFactorSlowCompareChecksum n => 2 ^ n * bzClassicalSmokeComple
     signalFloorMultiplier := 1.0
   }
 
-/-
-Shared-domain compare registration for the CLD fast path. The return checksum
-matches the public and slow compare targets when `factorFast` succeeds, and
-uses a distinct sentinel on `none`, so adding this target to `compare` exposes
-fast-path misses instead of masking them with the public fallback. The declared
-cost model is again `bzClassicalSmokeComplexity n`: the fast path is the BHKS
-bounded recombination route, and misses are encoded after that same attempted
-computation rather than by falling through the exponential slow path.
--/
-setup_benchmark runFactorFastCompareChecksum n => bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom smokeSchedule
+/- Fixed HO-2 adversarial target: `X^4 + 1`. This records one canonical
+recombination shape where the integer polynomial is irreducible but splits
+modulo `5`; a fixed registration avoids a meaningless singleton scaling
+verdict. -/
+setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
-
-/- Singleton HO-2 adversarial target: `X^4 + 1`. The declared cost model is
-`n + 1` because the schedule pins `n = 0`; this constant bound records a
-canonical recombination shape where the integer polynomial is irreducible but
-splits modulo `5` without widening this PR into the full Phase-4 matrix. -/
-setup_benchmark runFactorAdvX4Plus1Checksum n => n + 1
-  with prep := prepAdvX4Plus1
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xdbadaf53f188eac1
   }
 
 /-
@@ -1039,38 +992,15 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial fast-path setup target for `X^4 + 1`. Full
-`factorFast` exceeds the `verify` mode's one-call budget; the declared cost
-model is the constant `n + 1` singleton bound for the pinned `n = 0` schedule.
-This registration narrows the measured operation to the public fast-path
-precision cap plus the pinned `p = 5` modular split profile. The public fallback
-is not called, so a future `factorFast = none` result is not hidden by `factor`. -/
-setup_benchmark runFactorFastSetupAdvX4Plus1Checksum n => n + 1
-  with prep := prepAdvX4Plus1
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial lattice precision-cap setup target for `X^4 + 1`.
+A full lattice factorization exceeds the `verify` mode's one-call budget, so
+this measures the public precision cap plus the pinned `p = 5` modular split
+profile. -/
+setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
-
-/-
-The CLD fast path is measured on the same encoded degree/height matrix as the
-public combinator. Successful fast-path runs pay the same textbook dense
-arithmetic, lifting, and recombination bound `O(n^9 + n^7 h^2)`; `none`
-remains a distinct checksum outcome.
--/
-setup_benchmark runFactorFastDegreeHeightChecksum param => bzClassicalDegreeHeightComplexity param
-  with prep := prepDegreeHeightInput
-  where {
-    paramFloor := encodeDegreeHeightParam 3 2
-    paramCeiling := encodeDegreeHeightParam 6 32
-    paramSchedule := .custom degreeHeightSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x6125716b68ef63ab
   }
 
 /-
@@ -1094,8 +1024,8 @@ setup_benchmark runFactorSlowDegreeHeightChecksum param => bzSlowDegreeHeightCom
 Scientific fast-path setup registration for Phase 4. The encoded parameter
 carries `(degree, height, precision, localFactorCount)`; the timed target runs
 quadratic multifactor lifting at the requested precision and records the
-supported-prime modular split profile, avoiding pathological full `factorFast`
-calls while exposing the `k` and `r` axes required by the BZ/Hensel specs.
+supported-prime modular split profile, avoiding pathological full lattice
+factorizations while exposing the `k` and `r` axes required by the BZ/Hensel specs.
 -/
 setup_benchmark runFastPathPrecisionLocalChecksum param => bzPrecisionLocalComplexity param
   with prep := prepPrecisionLocalInput
@@ -1108,81 +1038,65 @@ setup_benchmark runFastPathPrecisionLocalChecksum param => bzPrecisionLocalCompl
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. The declared cost
-model is `n + 1`, a constant bound; at the pinned fixture prime this splits into
-four local linear factors and recombines into two true quadratics. -/
-setup_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum n => n + 1
-  with prep := prepAdvQuadSqrt2Sqrt3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. At the pinned fixture
+prime this splits into four local linear factors and recombines into two true
+quadratics. -/
+setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x2939937eff41b345
   }
 
-/- Singleton HO-2 adversarial fast-path target for `(X^2 - 2)(X^2 - 3)`. The
-declared cost model is the same constant `n + 1` singleton bound. -/
-setup_benchmark runFactorFastAdvQuadSqrt2Sqrt3Checksum n => n + 1
-  with prep := prepAdvQuadSqrt2Sqrt3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
-
-/- Singleton HO-2 adversarial target: `Phi_15`. The declared cost model is
-`n + 1`, a constant bound for the pinned singleton schedule; the degree-eight
-cyclotomic case exercises the recombination hot path without a wider matrix. -/
-setup_benchmark runFactorAdvPhi15Checksum n => n + 1
-  with prep := prepAdvPhi15
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial target: `Phi_15`. This degree-eight cyclotomic case
+exercises the recombination hot path on a canonical fixture. -/
+setup_fixed_benchmark runFactorAdvPhi15Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0x0f794f386e54863f
   }
 
-/- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. The declared
-cost model is the constant `n + 1` singleton bound for the pinned `n = 0`
-schedule. This setup-only registration keeps the fast-path precision cap and
-pinned `p = 31` eight-linear split visible without routing through the public
-fallback combinator. -/
-setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
-  with prep := prepAdvPhi15
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+/- Fixed HO-2 adversarial fast-path setup target for `Phi_15`. This keeps the
+fast-path precision cap and pinned `p = 31` eight-linear split visible without
+routing through the public fallback combinator. -/
+setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xf58fd4dcfb9a609a
   }
 
 /-
-Singleton HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
-`factorFast` on this degree-eight worst-case recombination input currently
+Fixed HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
+the CLD lattice tier on this degree-eight worst-case recombination input currently
 exceed the `verify`-mode budget, so this reduced registration pins the same
 canonical polynomial at the same conformance prime and records its eight-linear
-modular split profile. The constant model is intentional: the schedule fixes
-one canonical shape while keeping SD3 visible to `list` and `verify` until a
-scientific-only full factorization registration is affordable.
+modular split profile while keeping SD3 visible to `list` and `verify`.
 -/
-setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
-  with prep := prepAdvSwinnertonDyerSD3
-  where {
-    paramFloor := 0
-    paramCeiling := 0
-    paramSchedule := .custom #[0]
+setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
     maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+    expectedHash := some 0xe2da56484730f726
+  }
+
+/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer `SD_3`,
+certifying irreducibility via the early-stop separation certificate (#8395). -/
+setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
+    maxSecondsPerCall := 4.0
+    expectedHash := some 0xd91e58bd22915e00
+  }
+
+/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer
+`SD_4` (degree 16), the extreme-`r` tail case for the #8395 early stop. -/
+setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {
+    repeats := 5
+    minTotalSeconds := 0.2
+    maxSecondsPerCall := 6.0
+    expectedHash := some 0x687e925fbe11193b
   }
 
 /- Fixed bottom-rung verified-Isabelle comparator pair. Both targets return the
@@ -1192,14 +1106,14 @@ the verified-to-verified ratio. -/
 setup_fixed_benchmark runFactorIsabelleDomainChecksum where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)))
     tags := #[scheduledHardwareTag]
   }
 
 setup_fixed_benchmark runIsabelleFactorChecksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1220,7 +1134,7 @@ setup_fixed_benchmark runIsabelleSplitN2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 2))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 2))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1228,7 +1142,7 @@ setup_fixed_benchmark runIsabelleSplitN3Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 3))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 3))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1236,7 +1150,7 @@ setup_fixed_benchmark runIsabelleSplitN4Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 4))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 4))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1244,21 +1158,21 @@ setup_fixed_benchmark runIsabelleSplitN5Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 5))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 5))))
     tags := #[scheduledHardwareTag]
   }
 
 /- Per-rung verified-Isabelle comparator registrations on the encoded
 degree/height inputs at each schedule rung. The first five cover
 `degreeHeightSchedule = #[3002, 4002, 4008, 5008, 6032]` (paired with
-`runFactorDegreeHeightChecksum` and `runFactorFastDegreeHeightChecksum`); the
+`runFactorDegreeHeightChecksum`); the
 last three cover the smaller-degree `slowDegreeHeightSchedule = #[1002, 2002,
 3008]` (paired with `runFactorSlowDegreeHeightChecksum`). -/
 setup_fixed_benchmark runIsabelleDegreeHeight3x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1266,7 +1180,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight4x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1274,7 +1188,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight4x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1282,7 +1196,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight5x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1290,7 +1204,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight6x32Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1298,7 +1212,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight1x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1306,7 +1220,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight2x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1314,7 +1228,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight3x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1331,7 +1245,7 @@ setup_fixed_benchmark runIsabelleAdvX4Plus1Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advX4Plus1)))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advX4Plus1)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1339,7 +1253,7 @@ setup_fixed_benchmark runIsabelleAdvPhi15Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advPhi15)))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advPhi15)))
     tags := #[scheduledHardwareTag]
   }
 

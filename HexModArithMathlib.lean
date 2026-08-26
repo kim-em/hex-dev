@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModArithMathlib.Basic
+module
+
+public import HexModArithMathlib.ZMod64Equiv
+public import HexModArithMathlib.WordMod
+
+public section
 
 /-!
 The `HexModArithMathlib` library identifies executable `Hex.ZMod64` residues

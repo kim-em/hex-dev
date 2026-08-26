@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Basic
-public import HexMatrix.Bareiss
-public import HexMatrix.Determinant
+public import HexBareiss.Bareiss
+public import HexDeterminant
 
 public section
 
@@ -42,27 +42,25 @@ def liftFinLE (i : Fin k) (hk : k ≤ n) : Fin n :=
 @[expose]
 def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix Int k k :=
   Matrix.ofFn fun i j =>
-    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    (b.row (liftFinLE i hk)).dotProduct (b.row (liftFinLE j hk))
 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
 Gram matrix. This is the shape equation between the public `gramDet` API and
 the one-pass `gramDetVec` implementation. -/
-theorem leadingGramMatrixInt_eq_leadingPrefix_gram
+theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     leadingGramMatrixInt b k hk =
-      Matrix.leadingPrefix (Matrix.gramMatrix b) k hk := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
-    liftFinLE]
+      Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk := by
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  simp only [leadingGramMatrixInt, Matrix.getElem_ofFn,
+    Matrix.getElem_principalSubmatrix, Matrix.getElem_gramMatrix, liftFinLE]
 
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
 @[expose]
 def leadingGramMatrixRat (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Matrix Rat k k :=
   Matrix.ofFn fun i j =>
-    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    (b.row (liftFinLE i hk)).dotProduct (b.row (liftFinLE j hk))
 
 /-- Determinant matrix used by the integral `scaledCoeffs` entry formula:
 take the leading `j + 1` Gram matrix and replace its last column by the inner
@@ -74,10 +72,10 @@ def scaledCoeffMatrix (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
   Matrix.ofFn fun p q =>
     let p' := liftFinLE p hk
     if q.val = j.val then
-      Vector.dotProduct (b.row p') (b.row i)
+      (b.row p').dotProduct (b.row i)
     else
       let q' := liftFinLE q hk
-      Vector.dotProduct (b.row p') (b.row q')
+      (b.row p').dotProduct (b.row q')
 
 end GramSchmidt
 
@@ -88,12 +86,15 @@ predicate without making `hex-gram-schmidt` depend on the downstream LLL
 library. -/
 @[expose]
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
-  ∃ c : Vector Int n, Matrix.rowCombination b c = v
+  ∃ c : Vector Int n, Matrix.vecMul c b = v
 
 /-- The `k`-th Gram determinant: the determinant of the `k × k` leading
-principal Gram matrix of the integer input. -/
+principal Gram matrix of the integer input.
+
+The bound `hk : k ≤ n` defaults to `by omega`, so callers with a concrete `k`
+and `n` (as in `#guard`s and examples) can omit it. -/
 @[expose]
-def gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Nat :=
+def gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n := by omega) : Nat :=
   (Matrix.bareiss (GramSchmidt.leadingGramMatrixInt b k hk)).toNat
 
 /-- Linear independence of the row prefix determinants used by the
@@ -103,14 +104,22 @@ Gram-Schmidt theorem surface, stated over the Mathlib-free executable
 def independent (b : Matrix Int n m) : Prop :=
   ∀ k : Fin n, 0 < gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
+/-- `independent` is decidable: it is a bounded conjunction of `Nat` positivity
+tests on the leading Gram determinants. When *evaluated* (compiled) this is
+efficient — each determinant is computed fraction-free (Bareiss) in cubic time.
+Note it is not reducible by `decide` in the kernel, since `gramDet` runs through
+Bareiss's well-founded recursion; use it for runtime tests, not kernel proofs. -/
+instance (b : Matrix Int n m) : Decidable (independent b) := by
+  unfold independent; infer_instance
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 @[expose]
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     Rat :=
-  (List.finRange k).foldl
+  Fin.foldl k
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-      acc * Vector.normSq ((basis b).row jn))
+      acc * ((basis b).row jn).normSq)
     1
 
 /-- Read a diagonal entry from a Bareiss elimination matrix as a natural
@@ -118,7 +127,7 @@ determinant value. -/
 @[expose]
 def bareissDiagNat (data : Matrix.BareissData n) (r : Nat) (hr : r < n) : Nat :=
   let i : Fin n := ⟨r, hr⟩
-  ((data.matrix.get i).get i).toNat
+  (data.matrix[(i, i)]).toNat
 
 /-- Read the `k`-th leading-principal determinant from one no-pivot Bareiss
 elimination pass over the full Gram matrix. This helper is only used for Gram
@@ -179,13 +188,47 @@ def zeroRows (n : Nat) : Array (Array Int) :=
 def gramRows (b : Matrix Int n m) : Array (Array Int) :=
   Array.ofFn fun i : Fin n =>
     Array.ofFn fun j : Fin n =>
-      Vector.dotProduct (b.row i) (b.row j)
+      (b.row i).dotProduct (b.row j)
+
+/-- Symmetry-aware implementation of integer Gram rows. The upper triangle is
+computed once, then the lower triangle is filled by reading its transpose. -/
+@[expose]
+def gramRowsImpl (b : Matrix Int n m) : Array (Array Int) :=
+  let upper : Vector (Vector Int n) n :=
+    Vector.ofFn fun i =>
+      Vector.ofFn fun j =>
+        if i.val ≤ j.val then
+          (b.row i).dotProduct (b.row j)
+        else
+          0
+  Array.ofFn fun i : Fin n =>
+    Array.ofFn fun j : Fin n =>
+      if i.val ≤ j.val then upper[i][j] else upper[j][i]
+
+/-- Compiled integer Gram-row construction uses symmetry while `gramRows`
+remains the direct reference definition used by proofs. -/
+@[csimp] theorem gramRows_eq_impl : @gramRows = @gramRowsImpl := by
+  funext n m b
+  apply Array.ext
+  · simp [gramRows, gramRowsImpl]
+  · intro i hi href
+    apply Array.ext
+    · simp [gramRows, gramRowsImpl]
+    · intro j hj hrefj
+      simp only [gramRows, gramRowsImpl, Array.getElem_ofFn,
+        Vector.getElem_ofFn, Fin.getElem_fin]
+      split <;> rename_i hij
+      · rfl
+      · have hji : j ≤ i := by omega
+        rw [if_pos hji]
+        exact Vector.dotProduct_comm (R := Int) _ _
 
 /-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry
 `(gramMatrix b)[i][j]`. -/
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
-  simp [getArrayEntry, gramRows, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn]
+  rw [Matrix.getElem_gramMatrix]
+  simp [getArrayEntry, gramRows, Vector.dotProduct]
 
 /-- Reconstruct an `n × n` integer matrix from a row-major nested array, reading
 entry `(i, j)` as `rows[i]![j]!` (`getArrayEntry`). This converts the executable
@@ -199,12 +242,9 @@ def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
 nested-array packaging. -/
 private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
     rowsToMatrix (gramRows b) n = Matrix.gramMatrix b := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using
-    getArrayEntry_gramRows b (⟨i, hi⟩ : Fin n) (⟨j, hj⟩ : Fin n)
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  rw [rowsToMatrix, Matrix.getElem_ofFn, getArrayEntry_gramRows]
 
 /-- Write `value` into entry `(row, col)` of a row-major nested array. -/
 @[expose]
@@ -323,8 +363,8 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_ne
         intro y hy
         exact hxs y (by simp [hy])
       simp only [List.foldl_cons]
-      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hxs']
-      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hxs',
+        getArrayEntry_setArrayEntry_of_row_ne]
       omega
 
 /-- A column-targeted `foldl` preserves rows whose index is absent from the
@@ -343,8 +383,8 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_notMem
       have hrx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
       have hrxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
       simp only [List.foldl_cons]
-      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hrxs]
-      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hrxs,
+        getArrayEntry_setArrayEntry_of_row_ne]
       exact hrx
 
 /-- A column-targeted `foldl` of `setArrayEntry`s at column `k` leaves entries
@@ -538,8 +578,7 @@ private theorem getElem!_foldl_modify_of_mem_nodup
         have hbound' : r < (arr.modify x (f x)).size := by
           rw [modify_size]
           exact hbound
-        rw [ih _ hr_in hnodup' hbound']
-        rw [getElem!_modify_ne arr x r (f x) hr_ne_x]
+        rw [ih _ hr_in hnodup' hbound', getElem!_modify_ne arr x r (f x) hr_ne_x]
 
 /-- A `foldl` that modifies indices via `Array.modify` preserves the outer
 array size. -/
@@ -876,8 +915,9 @@ private theorem stepScaledRows_rows_size
           Matrix.exactDiv
             (pivot * nextEntry - rows[r]![k]! * getArrayEntry rows k j)
             prevPivot)
-    simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
-      hrowsize r hr] using hinner_size
+    simp only [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
+      hrowsize r hr] at hinner_size ⊢
+    exact hinner_size
   · rw [getElem!_foldl_modify_of_notMem xs rows f r hmem]
     exact hrowsize r hr
 
@@ -964,17 +1004,15 @@ private theorem rowsToMatrix_stepScaledRows_eq
     (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n) :
     rowsToMatrix (stepScaledRows rows n k pivot prevPivot) n =
       Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  apply Hex.Matrix.ext_getElem
+  intro i j
   have hentry : ∀ a b : Fin n,
       getArrayEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b
-    simp [rowsToMatrix, Matrix.ofFn]
-  simpa [rowsToMatrix, Matrix.ofFn] using
-    getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
-      k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
+    rw [rowsToMatrix, Matrix.getElem_ofFn]
+  rw [rowsToMatrix, Matrix.getElem_ofFn]
+  exact getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
+    k pivot prevPivot hentry hsize hrowsize i j
 
 end StepScaledRowsBookkeeping
 
@@ -1198,8 +1236,7 @@ private theorem getArrayEntry_schurRowLoop_upper
       simp
   | cons row rowList ih =>
       simp only [List.foldl_cons]
-      rw [ih _]
-      rw [getArrayEntry_schurColumnLoop_upper]
+      rw [ih _, getArrayEntry_schurColumnLoop_upper]
       · exact hij
       · intro c hc
         rw [List.mem_range'] at hc
@@ -1335,8 +1372,8 @@ private theorem getArrayEntry_schurColumnLoop_col_zero
           · exact h.symm
           · exact (h_zero_in_tail h).elim
         subst h_col_eq
-        rw [getArrayEntry_schurColumnLoop_col_zero_preserve _ _ _ _ h_zero_in_tail]
-        rw [getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
+        rw [getArrayEntry_schurColumnLoop_col_zero_preserve _ _ _ _ h_zero_in_tail,
+          getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
         simp [schurScaledCoeffEntry]
 
 /-- Size preservation: the Schur column loop keeps the outer-array length. -/

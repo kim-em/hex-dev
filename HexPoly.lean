@@ -4,9 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly.Dense
-import HexPoly.Euclid
-import HexPoly.Operations
+module
+
+public import HexPoly.Conditional
+public import HexPoly.Dense
+public import HexPoly.Euclid
+public import HexPoly.Lcm
+public import HexPoly.Field
+public import HexPoly.Instances
+public import HexPoly.Monic
+public import HexPoly.Operations
+
+public section
 
 /-! Dense polynomial support for the Hex project. The library exposes the normalized
 array-backed representation together with basic constructors, structural queries, arithmetic,

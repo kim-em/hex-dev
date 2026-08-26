@@ -10,7 +10,6 @@ public meta import Std.Tactic.BVDecide
 public import HexArith.Montgomery.RedcNat
 
 public section
-set_option maxHeartbeats 1000000
 
 /-!
 Montgomery inverses for `HexArith`.
@@ -32,7 +31,9 @@ private theorem montPosInvStep_mod_3_to_6 (p x : UInt64)
   unfold montPosInvStep
   bv_decide (config := { timeout := 120 })
 
-/-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits. -/
+set_option maxHeartbeats 1000000 in
+/-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits.
+The bit-vector decision procedure needs this theorem-local elaboration budget. -/
 private theorem montPosInvStep_mod_6_to_12 (p x : UInt64)
     (hx : p * x % 64 = 1) :
     p * montPosInvStep p x % 4096 = 1 := by
@@ -58,7 +59,7 @@ private theorem mod_uint64_word_mod_two_pow (n t : Nat) (ht : t ≤ 64) :
 private theorem UInt64.toNat_mul_mod_two_pow (a b : UInt64) {t : Nat}
     (ht : t ≤ 64) :
     (a * b).toNat % 2 ^ t = (a.toNat * b.toNat) % 2 ^ t := by
-  simpa [UInt64.toNat_mul] using
+  simpa [UInt64.toNat_mul, UInt64.word] using
     mod_uint64_word_mod_two_pow (a.toNat * b.toNat) t ht
 
 /-- Subtraction wrap at `2^64` is invisible when reducing modulo fewer bits. -/
@@ -66,7 +67,7 @@ private theorem UInt64.toNat_sub_mod_two_pow (a b : UInt64) {t : Nat}
     (ht : t ≤ 64) :
     (a - b).toNat % 2 ^ t =
       (2 ^ 64 - b.toNat + a.toNat) % 2 ^ t := by
-  simpa [UInt64.toNat_sub] using
+  simpa [UInt64.toNat_sub, UInt64.word] using
     mod_uint64_word_mod_two_pow (2 ^ 64 - b.toNat + a.toNat) t ht
 
 /-- One integer Newton/Hensel step doubles 2-adic precision: if `m ∣ y - 1`
@@ -225,8 +226,7 @@ private theorem nat_mod_eq_pred_of_int_dvd_add_one {T n : Nat} (hT : 1 < T)
   obtain ⟨r, hr⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : q.toNat ≠ 0)
   rw [hr] at hn_eq
   have hn_split : n = T * r + (T - 1) := by grind
-  rw [hn_split]
-  rw [Nat.add_mod]
+  rw [hn_split, Nat.add_mod]
   simp [Nat.mod_eq_of_lt (by omega : T - 1 < T)]
 
 /-- The 3-bit Newton seed fact: the square of any odd number is `1 mod 8`. -/

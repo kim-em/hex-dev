@@ -1,132 +1,274 @@
 # Further work
 
-Items not on the critical path for Berlekamp-Zassenhaus, but worth
-doing once the core is stable.
+Sketches for libraries and algorithms that do not yet have a SPEC. Each item
+records enough scope, dependencies, and correctness obligations to start a
+SPEC; it is not itself a specification.
 
-**Hermite normal form.** Row reduction over `Int`: upper triangular
-with positive pivots, entries above each pivot in `[0, pivot)`. Uses
-extended GCD to create pivots without division: given entries `a`, `b`
-in the same column, compute `(g, s, t)` with `s * a + t * b = g`,
-then apply the 2×2 row transformation `[[s, t], [-b/g, a/g]]` to
-zero out `b` and replace `a` with `g`. Reduce entries above each pivot
-modulo the pivot. The result is unique. Returns `RowEchelonData`; an
-`IsHNF` Prop-valued structure extending `IsEchelonForm` (parallel to
-`IsRREF`) certifies correctness, with HNF-specific fields:
-- Each pivot is positive
-- Entries above each pivot are in `[0, pivot)`
-- `det transform = 1 ∨ det transform = -1`
+[Libraries/README.md](Libraries/README.md) indexes work that has a SPEC, and
+[libraries.yml](../libraries.yml) records the libraries currently registered in
+the monorepo. Once an item below gains a SPEC, remove it from this file.
 
-HNF requires extended GCD, which lives in hex-arith. Since
-hex-matrix currently has no dependencies, HNF would either need:
-extended GCD upstreamed into Lean 4 stdlib, a new dependency
-hex-matrix → hex-arith, or a separate library (e.g.
-`hex-matrix-hermite` depending on both hex-matrix and hex-arith).
+The usual certificate discipline applies: checking an equality, divisibility,
+or decomposition establishes only that positive claim. Minimality,
+maximality, irreducibility, uniqueness, nonexistence, and completeness each
+need their own witness or theorem.
 
-**Smith normal form.** Diagonal form obtained by both row and column
-operations over a principal ideal domain. The diagonal entries satisfy
-`d₁ | d₂ | ⋯ | dᵣ` (divisibility chain). Useful for computing the
-structure of finitely generated abelian groups and solving integer
-linear systems. Like HNF, requires extended GCD and is not needed for
-Berlekamp-Zassenhaus.
+## Matrix and linear algebra
 
-**Sylvester's identity (hex-matrix).** The Desnanot-Jacobi identity
-relating minors of a matrix. Now the primary proof strategy for
-`bareiss_eq_det` (see hex-matrix section above). Listed here as
-further work only in the sense that it's a useful standalone result
-beyond the Bareiss application.
+### Certified eigenpair enclosures
 
-**Generic Bareiss over integral domains (hex-matrix).** Generalize
-Bareiss from `Int` to any integral domain with a data-carrying exact
-division operation (`ediv : α → α → α` with `b ∣ a → ediv a b * b = a`);
-for `Int` this is `Int.divExact`
-and no zero divisors (`a * b = 0 → a = 0 ∨ b = 0`).
+Run an untrusted numerical eigensolver and verify an approximate eigenpair
+with interval arithmetic, using a fixed-point or contraction argument to
+enclose a true eigenpair.
 
-**Swappable polynomial representations.** Abstract over the polynomial
-representation via typeclasses, allowing sparse and hash-backed
-representations alongside `DensePoly`. For now, all libraries use
-`DensePoly` directly.
+Scope the first version to simple isolated eigenpairs of symmetric matrices.
+Multiple or defective eigenvalues, singular values, rectangular matrices,
+phase conventions, pivoted QR, and interval inverse bounds should remain
+separate extensions. The verified layer depends on `hex-interval-mathlib` and
+the matrix correspondence API; `hex-char-poly`, `hex-roots`, and
+`hex-number-field` provide independent spectral cross-checks and exact names
+for algebraic eigenvalues.
 
-Typeclass interface:
-```lean
-class PolyOps (P : Type*) (R : outParam Type*) extends
-    Add P, Mul P, Neg P, Zero P, One P, BEq P where
-  X : P
-  C : R → P
-  degree : P → Nat
-  coeff : P → Nat → R
-  leadingCoeff : P → R
-  dropZeros : P → P
-  divMod : P → P → P × P
-  eval : P → R → R
-  ofCoeffs : Array R → P
-  toCoeffs : P → Array R
+The SPEC must choose an enclosure theorem whose hypotheses are executable to
+check and decide how an untrusted solver supplies candidates. An in-Lean
+floating-point implementation and an FFI solver are equivalent from the
+trusted layer's point of view.
 
-class LawfulPolyOps (P : Type*) (R : outParam Type*) [PolyOps P R] where
-  -- Ring axioms
-  add_comm : ∀ a b : P, a + b = b + a
-  add_assoc : ∀ a b c : P, a + b + c = a + (b + c)
-  mul_comm : ∀ a b : P, a * b = b * a
-  mul_assoc : ∀ a b c : P, a * b * c = a * (b * c)
-  add_zero : ∀ a : P, a + 0 = a
-  mul_one : ∀ a : P, a * 1 = a
-  left_distrib : ∀ a b c : P, a * (b + c) = a * b + a * c
-  -- Coefficient semantics
-  coeff_add : ∀ (a b : P) (i : Nat), coeff (a + b) i = coeff a i + coeff b i
-  coeff_mul : ...  -- convolution formula
-  -- BEq correctness: == agrees with coefficient equality
-  beq_iff : ∀ a b : P, (a == b) = true ↔ ∀ i, coeff a i = coeff b i
-  -- dropZeros: normalization to canonical form
-  dropZeros_idem : ∀ p, dropZeros (dropZeros p) = dropZeros p
-  dropZeros_coeff : ∀ p i, coeff (dropZeros p) i = coeff p i
-  dropZeros_ext : ∀ p q, dropZeros p = p → dropZeros q = q →
-      (∀ i, coeff p i = coeff q i) → p = q
-  -- Division
-  divMod_spec : ∀ a b : P, let (q, r) := divMod a b; q * b + r = a
-  -- Evaluation is a ring homomorphism
-  eval_C : ∀ r x, eval (C r) x = r
-  eval_X : ∀ x, eval X x = x
-  eval_add : ∀ p q x, eval (p + q) x = eval p x + eval q x
-  eval_mul : ∀ p q x, eval (p * q) x = eval p x * eval q x
-```
+### Sparse matrices
 
-`dropZeros` is the canonical form function. For dense representations,
-it strips trailing zeros. For sparse representations, it removes entries
-with zero coefficients. `dropZeros_ext` gives extensionality on the
-subtype `{ p : P // dropZeros p = p }` — two canonical-form polynomials
-with the same coefficients are propositionally equal.
+Add a canonical sparse representation alongside the dense matrix type, with
+`toDense` as its specification function. The first SPEC should choose among a
+coordinate builder, compressed sparse row storage, or a builder/frozen pair.
+The representation invariant must exclude duplicate positions and stored
+zeros and must support extensionality through `toDense`.
 
-The subtype `CanonicalPoly P := { p : P // dropZeros p = p }` is where
-the `≃+*` lives. The `-mathlib` bridge library would prove:
+The initial operation set should include construction, lookup, addition,
+scalar multiplication, transpose, sparse-by-sparse multiplication, and
+sparse-by-dense products. Correctness is expressed by `toDense` commuting
+with each operation. Benchmarks need a named consumer and input family where
+dense storage is genuinely the constraint before the project commits to a
+second matrix ecosystem.
+
+Sparse elimination is a separate project. Fill-in makes a frozen CSR layout a
+poor update structure and introduces pivot-order questions such as Markowitz
+selection. It should follow the representation library and be compared with
+black-box methods on the finite-field workloads that motivate it.
+
+### Black-box linear algebra
+
+Specify Wiedemann and block Wiedemann algorithms over finite fields, treating
+a matrix as a linear map rather than stored entries. Intended operations are
+solving `A x = b`, producing kernel vectors, and recovering Krylov minimal
+polynomials for large sparse systems.
+
+The trusted result checks a proposed solution or kernel vector with a single
+matrix-vector product. Claims about rank, nullity, minimality, or exhaustive
+kernel bases need additional certificates. The library should depend on the
+generic finite-field interface and the minimal-polynomial vocabulary without
+requiring the sparse-matrix representation.
+
+## Polynomial computation
+
+### Swappable polynomial representations (deferred)
+
+Do not introduce a `PolyOps` or `LawfulPolyOps` abstraction solely because
+dense and sparse polynomials both exist. Their useful operations, complexity,
+and normalization behaviour differ, and gcd or division of sparse inputs
+usually becomes dense. Keep explicit conversions until several real consumers
+show which operations a common interface must support.
+
+### Extended subresultant chain for gcd consumers
+
+Amend `hex-resultant` with the transformation that produces each Brown entry,
+not only the entries themselves. `hex-poly-z-gcd` and `hex-mv-gcd` both need
+it for their complete `splitBezout` fallback; the existing worker retains only
+each pseudo-remainder, so this is a real extension rather than an accessor:
 
 ```lean
-def CanonicalPoly (P : Type*) [PolyOps P R] := { p : P // dropZeros p = p }
-
-def equiv [LawfulPolyOps P R] : CanonicalPoly P ≃+* Polynomial R
+/-- `(uₖ, vₖ, Sₖ)` for every stored Brown entry, with
+`uₖ * f + vₖ * g = Sₖ`. -/
+def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) :
+    Array (DensePoly R × DensePoly R × DensePoly R)
 ```
 
-Eagerly-normalizing implementations (like `DensePoly`) satisfy
-`dropZeros = id`, so `CanonicalPoly (DensePoly R) ≃ DensePoly R` and
-the subtype wrapper is trivial. Lazy implementations pay the cost of
-normalization only when they need propositional equality.
+The extension uses the unchanged Brown remainder recurrence and accumulates
+the two transformation cofactors through every pseudo-scaling and exact
+scalar division. Its correctness theorem requires `Lean.Grind.CommRing R`
+and `ExactDivLaws R`, proves the displayed identity for every entry, and
+proves the cofactor numerators are divisible by each Brown scalar before the
+executable division. Projection of the third components equals
+`subresultantChain f g`, including input ordering and zero conventions. The
+API belongs in `hex-resultant` so the two gcd libraries share one recurrence
+and one proof; it does not alter the resultant or discriminant contracts.
 
-Alternative representations:
+### Positive-characteristic multivariate squarefree decomposition
 
-Sparse sorted array:
-```lean
-structure SparsePoly (R : Type*) [Zero R] [DecidableEq R] where
-  terms : Array (Nat × R)
-  sorted : ∀ i j, i < j → i < terms.size → j < terms.size →
-           (terms[i]).1 < (terms[j]).1
-  nonzero : ∀ i, i < terms.size → (terms[i]).2 ≠ 0
-```
+Amend `hex-mv-gcd` with squarefree decomposition over perfect fields of
+positive characteristic. The characteristic-zero Yun recursion is
+insufficient because every formal derivative may vanish. The replacement
+needs multi-derivative splitting, detection of `p`-th powers, coefficient
+`p`-th roots supplied by the finite-field interface, and a recursion whose
+measure accounts for the degree drop after extracting a `p`-th root.
 
-Sparse `ExtHashMap`-backed (with extensional equality):
-```lean
-structure ExtHashPoly (R : Type*) [Zero R] [BEq R] [Hashable Nat]
-    [EquivBEq Nat] [LawfulHashable Nat] where
-  map : ExtHashMap Nat R
-  nonzero : ∀ k v, map.find? k = some v → v ≠ 0
-```
+The SPEC must state whether it supports arbitrary perfect fields or only the
+project's finite-field instances and must distinguish squarefree factor
+decomposition from irreducible factorization.
 
-Using `ExtHashMap` (not `HashMap`) gives extensionality lemmas — two
-`ExtHashPoly` values are equal iff they have the same key-value pairs.
+### Gröbner bases
+
+Start with Buchberger's algorithm and the Gebauer-Möller pair criteria; add F4
+only if benchmarks justify it. Applications include ideal membership,
+intersection, quotient, elimination, implicitization, and radical membership
+through the Rabinowitsch trick.
+
+Ideal membership has a compact trusted boundary: return cofactors witnessing
+`p = sum_i h_i * g_i`. Non-membership requires more. A nonzero remainder is
+conclusive only after the divisor set is certified to be a Gröbner basis and
+connected to the original generators, including the required S-pair
+criterion. Treat positive and negative decisions as separate certificate
+types with separate budgets.
+
+The computational layer depends on `hex-mv-poly`; coefficient-domain
+hypotheses and monomial order must be explicit. Zero-dimensional solving and
+root reconstruction are downstream work rather than part of the first basis
+library.
+
+### Rational-expression tactics
+
+Specify three related but separable operations:
+
+- `Together`: combine ring operations and division into one quotient. This
+  needs common-denominator arithmetic but no gcd.
+- `cancel`: reduce a quotient to lowest terms. The multivariate form depends
+  on `hex-mv-gcd`.
+- `Apart`: partial fractions. The univariate rational form can use existing
+  factorization and polynomial extended gcd; multivariate variants require
+  substantially more machinery.
+
+Denominator nonvanishing cannot be inferred for free indeterminates. Tactics
+should emit explicit side goals, following `field_simp`, and term-level APIs
+should return both the normalized expression and the hypotheses under which
+it equals the input.
+
+### Holonomic functions
+
+Extend [hex-summation](Libraries/hex-summation.md) with closure operations for
+sequences and functions satisfying linear recurrences or differential
+equations with polynomial coefficients. Candidate operations include sum,
+product, specialization, definite summation, differentiation, and integration,
+with executable recurrence certificates for each closure step.
+
+The first SPEC should choose either the recurrence or differential-equation
+side and define normalization, initial-value obligations, singular indices,
+and equality from a shared operator. It should reuse summation's certificate
+checker rather than enlarge the trusted surface of its search algorithms.
+
+## Number fields and groups
+
+### Exact p-adic numbers
+
+Add an inverse-limit or lazy exact `Z_p` and `Q_p` type above
+[hex-padics](Libraries/hex-padics.md). Exact equality cannot be decided from a
+finite approximation, so the API must distinguish observation at a requested
+precision from mathematical equality. Arithmetic should refine precision on
+demand and expose nontermination or undecidability honestly where zero-testing
+is required.
+
+Do not introduce a shared valued-approximation typeclass until both the
+fixed-precision p-adic and truncated-series APIs have enough consumers to
+identify a useful common contract.
+
+### Ring of integers
+
+Build the maximal order `O_K` of a number field, with an integral basis and
+field discriminant, using a Round 2/Pohst-Zassenhaus-style algorithm. The
+library depends on `hex-number-field`, `hex-number-field-tower`, and
+`hex-int-factor` for the discriminant's squarefree part.
+
+Factorization may run out of budget. The result type must distinguish a proved
+maximal order from an order conditional on an incomplete factorization and
+must retain the residual factorization data rather than silently asserting
+maximality.
+
+### Unit and class groups
+
+Build the unit group, regulator, and ideal class group on top of the maximal
+order. Relation collection produces checkable individual relations, but a set
+of relations is not by itself a completeness proof for the relation lattice.
+
+The SPEC must choose between unconditional enumeration bounded by Minkowski
+with an explicit completeness certificate and conditional algorithms whose
+hypotheses, including any GRH assumption used for factor-base sufficiency, are
+present in the theorem statements. Unit completeness, regulator
+certification, and class-group completeness are distinct obligations.
+
+### Permutation groups
+
+Provide finite permutation groups with orbits, stabilizers, subgroup
+containment, cosets, and the transitive-group data required by resolvent
+methods. Executable certificates should cover membership and subgroup
+relations; classification tables and their trust boundary need an explicit
+data policy.
+
+This library is independently useful and is a prerequisite for certified
+Galois-group computation.
+
+### Galois groups
+
+Compute the Galois group of an irreducible polynomial over `Q` as a
+permutation group on its roots, using Stauduhar-style resolvent descent.
+Dependencies include permutation groups, `hex-roots`, `hex-resultant`,
+univariate factorization, and `hex-number-field-tower`.
+
+Subgroup containment can be witnessed by an invariant polynomial in the roots
+taking a rational value. Full group identification additionally needs exact
+stabilizer data, a fixed root labelling, separation of distinct coset
+resolvent values, and certified non-containment at rejected branches.
+
+## Lattices and real algebra
+
+### Lattice applications beyond factor recombination
+
+Build certified APIs on top of `hex-lll` for:
+
+- Minimal-polynomial recovery from an exact algebraic target, a certified
+  approximation error, and degree and height bounds.
+- Integer-relation detection for exact real targets with certified
+  approximations and coefficient bounds.
+- Stronger reduction such as deep-insertion LLL or BKZ, once benchmarks show
+  that reduction quality rather than reduction time is the limiting factor.
+
+An enclosure around a candidate root or relation is not sufficient. Recovery
+needs a separation theorem ruling out every competing polynomial or relation
+within the stated bounds.
+
+### Cylindrical algebraic decomposition
+
+Extend the univariate real-closed-field decision procedure to quantifier
+elimination in a small number of variables. The intended stack includes a
+projection operator, multivariate subresultant chains in a distinguished
+variable, exact algebraic sample points, and sign determination for
+polynomials with algebraic coefficients.
+
+Dependencies include `hex-mv-poly`, `hex-mv-factor`, `hex-resultant`,
+`hex-real-roots`, `hex-number-field`, and `hex-number-field-tower`. Scope the
+first version to two or three variables. Before fixing a public API, prototype
+the projection phase and a certificate that carries a complete cell
+decomposition with the sign-invariance evidence needed for a negative as well
+as a positive decision.
+
+## Cross-cutting infrastructure
+
+### Certificate serialization and caching
+
+Define a shared envelope for expensive certificates while leaving each
+library's payload format under its own versioning. The envelope should include
+the checker and schema versions, toolchain and ABI identifiers, a hash of the
+certified input, and a payload type tag.
+
+A cache hit supplies untrusted data and validation always replays the checker.
+The SPEC must decide content addressing, version skew, storage location, and
+resource limits for decoding and replay. `hex-conway`'s stored database and
+the interval certificate schema are useful first consumers, but neither
+should become a universal payload representation.

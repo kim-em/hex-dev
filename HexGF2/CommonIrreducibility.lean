@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.RabinSoundness
+module
+
+public import HexGF2.RabinSoundness
+
+public section
 
 /-!
 Project-side irreducibility witnesses for committed packed `GF(2)` moduli.
@@ -20,7 +24,8 @@ namespace Hex
 namespace GF2Poly
 
 /-- The AES Rijndael modulus over `GF(2)`: `X^8 + X^4 + X^3 + X + 1`. -/
-private def aesModulus : GF2Poly := ofUInt64Monic 0x1B 8
+@[expose]
+def aesModulus : GF2Poly := ofUInt64Monic 0x1B 8
 
 /-- Rabin certificate for the AES modulus. The pow chain stores
 `X^(2^k) mod aesModulus` for `k = 0..8`; the single Bezout witness covers
@@ -31,7 +36,8 @@ executable `xpow2kMod` and `xgcd` so the certificate doubles as a
 mechanical recipe. The chain is given as an explicit array literal so
 kernel reduction (used by `decide` below) can normalize each entry
 without going through the well-founded `Array.map`. -/
-private def aesCert : IrreducibilityCertificate :=
+@[expose]
+def aesCert : IrreducibilityCertificate :=
   { n := 8
     powChain :=
       #[xpow2kMod aesModulus 0, xpow2kMod aesModulus 1, xpow2kMod aesModulus 2,
@@ -41,6 +47,7 @@ private def aesCert : IrreducibilityCertificate :=
       let diff := frobeniusDiffMod aesModulus 4
       let xg := xgcd aesModulus diff
       #[{ left := xg.left, right := xg.right }] }
+
 
 set_option maxRecDepth 4096 in
 private theorem aesCert_check :
@@ -54,11 +61,13 @@ theorem aes_modulus_irreducible :
   checkIrreducibilityCertificate_imp_irreducible aesModulus aesCert aesCert_check
 
 /-- The degree-4 fixture modulus over `GF(2)`: `X^4 + X + 1`. -/
-private def gf16Modulus : GF2Poly := ofUInt64Monic 0x3 4
+@[expose]
+def gf16Modulus : GF2Poly := ofUInt64Monic 0x3 4
 
 /-- Rabin certificate for the degree-4 fixture modulus. The unique maximal
 proper divisor of `4` is `2`, so the certificate has one Bezout leg. -/
-private def gf16Cert : IrreducibilityCertificate :=
+@[expose]
+def gf16Cert : IrreducibilityCertificate :=
   { n := 4
     powChain :=
       #[xpow2kMod gf16Modulus 0, xpow2kMod gf16Modulus 1,
@@ -80,11 +89,13 @@ theorem gf16_modulus_irreducible :
     gf16Modulus gf16Cert gf16Cert_check
 
 /-- The degree-16 fixture modulus over `GF(2)`: `X^16 + X^12 + X^3 + X + 1`. -/
-private def gf65kModulus : GF2Poly := ofUInt64Monic 0x100B 16
+@[expose]
+def gf65kModulus : GF2Poly := ofUInt64Monic 0x100B 16
 
 /-- Rabin certificate for the degree-16 fixture modulus. The unique maximal
 proper divisor of `16` is `8`, so the certificate has one Bezout leg. -/
-private def gf65kCert : IrreducibilityCertificate :=
+@[expose]
+def gf65kCert : IrreducibilityCertificate :=
   { n := 16
     powChain :=
       #[xpow2kMod gf65kModulus 0, xpow2kMod gf65kModulus 1,
@@ -114,13 +125,15 @@ theorem gf65k_modulus_irreducible :
     gf65kModulus gf65kCert gf65kCert_check
 
 /-- The GHASH degree-128 modulus: `X^128 + X^7 + X^2 + X + 1`. -/
-private def ghashModulus : GF2Poly :=
+@[expose]
+def ghashModulus : GF2Poly :=
   ofWords #[0x87, 0, 1]
 
 /- Rabin certificate for the GHASH degree-128 modulus. The pow chain stores
 precomputed `X^(2^k) mod ghashModulus` entries, avoiding a quadratic
 certificate recomputation inside the kernel. -/
-private def ghashCert : IrreducibilityCertificate :=
+@[expose]
+def ghashCert : IrreducibilityCertificate :=
   { n := 128
     powChain :=
       #[ofWords #[0x2],
@@ -258,7 +271,8 @@ private def ghashCert : IrreducibilityCertificate :=
 
 /-- Quotient witnesses for each GHASH pow-chain squaring step. Entry `k`
 certifies `pow[k] * pow[k] = pow[k+1] + quotient[k] * ghashModulus`. -/
-private def ghashPowQuotients : Array GF2Poly :=
+@[expose]
+def ghashPowQuotients : Array GF2Poly :=
       #[ofWords #[],
         ofWords #[],
         ofWords #[],
@@ -388,7 +402,8 @@ private def ghashPowQuotients : Array GF2Poly :=
         ofWords #[0x1401401401401420, 0x4144144144144144],
         ofWords #[0x4104104104104106, 0x410410410410410]]
 
-private def checkPowChainQuotientWitnesses (f : GF2Poly)
+@[expose]
+def checkPowChainQuotientWitnesses (f : GF2Poly)
     (cert : IrreducibilityCertificate) (quotients : Array GF2Poly) : Bool :=
   cert.powChain.size == cert.n + 1 &&
     quotients.size == cert.n &&

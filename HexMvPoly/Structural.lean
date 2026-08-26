@@ -1,0 +1,702 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexBasic.Conditional
+import HexBasic.Fold
+public import HexMvPoly.Eval
+
+@[expose] public section
+
+/-!
+Structural transformations of `Hex.MvPoly`: reordering, renaming,
+differentiation, homogeneous restriction, and substitution.
+-/
+
+namespace Hex.MvPoly
+
+universe u v
+
+variable {n k : Nat} {R : Type u} {S : Type v}
+  {cmp : Mono n → Mono n → Ordering}
+  {targetCmp : Mono k → Mono k → Ordering}
+  [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+  [Std.TransCmp targetCmp] [Std.LawfulEqCmp targetCmp]
+
+/-- Rebuild a polynomial under a different monomial comparator. -/
+def reorder (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    [Lean.Grind.Semiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) : MvPoly n R cmp' :=
+  ofTerms p.termsList
+
+/-- Rename variables, adding exponents in fibres and combining all resulting
+term collisions. -/
+def rename (cmp' : Mono k → Mono k → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (p : MvPoly n R cmp) : MvPoly k R cmp' :=
+  p.foldTerms
+    (fun acc m c => acc.addMonomial (Mono.rename f m) c)
+    0
+
+/-- Decrease the exponent at `i` by one, leaving every other exponent
+unchanged. -/
+def predAt (i : Fin n) (m : Mono n) : Mono n :=
+  Hex.Vector.ofFn' fun j => if j = i then m[j] - 1 else m[j]
+
+/-- Incrementing a monomial raises the selected variable degree by one. -/
+@[simp] theorem degreeOf_succAt (i : Fin n) (m : Mono n) :
+    Mono.degreeOf i (Mono.succAt i m) = Mono.degreeOf i m + 1 := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  unfold Mono.degreeOf Mono.succAt
+  change (Mono.mul m (Mono.unit i)).get i = m.get i + 1
+  rw [get_mul, get_unit]
+  simp
+
+/-- Decrementing the selected exponent reverses `succAt`. -/
+@[simp] theorem predAt_succAt (i : Fin n) (m : Mono n) :
+    predAt i (Mono.succAt i m) = m := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  apply Vector.ext
+  intro j hj
+  let k : Fin n := ⟨j, hj⟩
+  change (predAt i (Mono.succAt i m)).get k = m.get k
+  unfold predAt Mono.succAt
+  rw [get_ofFn]
+  change
+    (if k = i then
+      (Mono.mul m (Mono.unit i)).get k - 1
+    else (Mono.mul m (Mono.unit i)).get k) = m.get k
+  rw [get_mul, get_unit]
+  by_cases hki : k = i
+  · simp [hki]
+  · simp [hki]
+
+/-- `predAt` yields a monomial exactly when the source is its successor at
+the selected variable. -/
+theorem predAt_eq_iff (i : Fin n) (m t : Mono n)
+    (ht : Mono.degreeOf i t ≠ 0) :
+    predAt i t = m ↔ t = Mono.succAt i m := by
+  have get_ofFn {r : Nat} (g : Fin r → Nat) (j : Fin r) :
+      (Hex.Vector.ofFn' g).get j = g j := by
+    change (Hex.Vector.ofFn' g)[j.val] = g j
+    rw [Hex.Vector.getElem_ofFn' g j.val j.isLt]
+  have get_mul (a b : Mono n) (j : Fin n) :
+      (Mono.mul a b).get j = a.get j + b.get j := by
+    unfold Mono.mul
+    rw [get_ofFn]
+    rfl
+  have get_unit (j : Fin n) :
+      (Mono.unit i).get j = if j = i then 1 else 0 := by
+    unfold Mono.unit
+    rw [get_ofFn]
+  constructor
+  · intro h
+    apply Vector.ext
+    intro j hj
+    let k : Fin n := ⟨j, hj⟩
+    have hk := congrArg (fun a : Mono n => a.get k) h
+    change (predAt i t).get k = m.get k at hk
+    unfold predAt at hk
+    rw [get_ofFn] at hk
+    change (if k = i then t.get k - 1 else t.get k) = m.get k at hk
+    change t.get k = (Mono.succAt i m).get k
+    unfold Mono.succAt
+    change t.get k = (Mono.mul m (Mono.unit i)).get k
+    rw [get_mul, get_unit]
+    by_cases hki : k = i
+    · rw [hki] at hk ⊢
+      simp only [Hex.ite_eq_left] at hk ⊢
+      have ht' : t.get i ≠ 0 := by
+        exact ht
+      omega
+    · simp only [Hex.ite_eq_right hki]
+      simp only [Hex.ite_eq_right hki] at hk
+      exact hk
+  · rintro rfl
+    exact predAt_succAt i m
+
+attribute [local instance] Lean.Grind.Semiring.natCast
+
+/-- Formal derivative with respect to variable `i`. -/
+def derivative [Zero R] [NatCast R] [Add R] [Mul R] [DecidableEq R]
+    (i : Fin n) (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  p.foldTerms
+    (fun acc m c =>
+      let e := Mono.degreeOf i m
+      if e = 0 then acc
+      else acc.addMonomial (predAt i m) ((e : R) * c))
+    0
+
+/-- Homogeneous component of total degree `d`. -/
+def homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
+    (d : Nat) (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  p.restrictBy fun m => decide (Mono.degree m = d)
+
+/-- General substitution, mapping coefficients through `f` and variables
+through `g`. -/
+def bind [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
+    (f : R → S) (g : Fin n → MvPoly k S targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k S targetCmp :=
+  p.foldTerms
+    (fun acc m c => acc + C (f c) * Mono.prod g m)
+    0
+
+/-- General substitution is the ordered sum of mapped coefficient-monomial
+terms. -/
+theorem bind_eq [Zero R] [Lean.Grind.Semiring S] [DecidableEq S]
+    (f : R → S) (g : Fin n → MvPoly k S targetCmp)
+    (p : MvPoly n R cmp) :
+    bind f g p =
+      p.termsList.foldl
+        (fun acc term => acc + C (f term.2) * Mono.prod g term.1) 0 := by
+  unfold bind foldTerms termsList
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+
+/-- Substitute polynomials for variables without changing the coefficient
+type. -/
+def subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → MvPoly k R targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k R targetCmp :=
+  bind id f p
+
+/-- Compatibility spelling for same-coefficient substitution. -/
+def bind₁ [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → MvPoly k R targetCmp)
+    (p : MvPoly n R cmp) : MvPoly k R targetCmp :=
+  subst f p
+
+/-- Reconstruct a polynomial by summing its ordered term iteration. -/
+def sumToIter [Lean.Grind.Semiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  ofTerms p.termsList
+
+/-- Reconstructing from the ordered term iterator recovers the polynomial. -/
+@[simp] theorem sumToIter_eq [Lean.Grind.Semiring R] [DecidableEq R]
+    (p : MvPoly n R cmp) :
+    sumToIter p = p := by
+  apply ext
+  intro m
+  unfold sumToIter
+  rw [coeff_ofTerms, coeff_terms]
+
+/-- Reordering a polynomial preserves every coefficient. -/
+theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
+    (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (m : Mono n) (p : MvPoly n R cmp) :
+    coeff m (reorder cmp' p) = coeff m p := by
+  unfold reorder
+  rw [coeff_ofTerms, coeff_terms]
+
+/-- Renaming variables sums coefficients whose target monomials coincide. -/
+theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
+    (cmp' : Mono k → Mono k → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (f : Fin n → Fin k) (m : Mono k) (p : MvPoly n R cmp) :
+    coeff m (rename cmp' f p) =
+      p.termsList.foldl
+        (fun acc term => if Mono.rename f term.1 = m then acc + term.2 else acc) 0 := by
+  have aux : ∀ (ts : List (Mono n × R)) (init : MvPoly k R cmp'),
+      coeff m
+          (ts.foldl
+            (fun acc t => acc.addMonomial (Mono.rename f t.1) t.2)
+            init) =
+        ts.foldl
+          (fun acc t =>
+            if Mono.rename f t.1 = m then acc + t.2 else acc)
+          (coeff m init) := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases ht : Mono.rename f t.1 = m
+      · simp [ht, coeff_addMonomial]
+      · have hmt : m ≠ Mono.rename f t.1 := fun h => ht h.symm
+        simp [ht, hmt, coeff_addMonomial]
+  unfold rename foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux, coeff_zero]
+  rfl
+
+/-- A derivative coefficient is the successor coefficient scaled by its
+corresponding exponent. -/
+theorem coeff_derivative [Lean.Grind.Semiring R] [DecidableEq R]
+    (i : Fin n) (m : Mono n) (p : MvPoly n R cmp) :
+    coeff m (derivative i p) =
+      ((Mono.degreeOf i m + 1 : Nat) : R) * coeff (Mono.succAt i m) p := by
+  let scale : R := ((Mono.degreeOf i m + 1 : Nat) : R)
+  have aux : ∀ (ts : List (Mono n × R)) (init : MvPoly n R cmp),
+      coeff m
+          (ts.foldl
+            (fun acc t =>
+              let e := Mono.degreeOf i t.1
+              if e = 0 then acc
+              else acc.addMonomial (predAt i t.1) ((e : R) * t.2))
+            init) =
+        ts.foldl
+          (fun acc t =>
+            let e := Mono.degreeOf i t.1
+            if e = 0 then acc
+            else if m = predAt i t.1 then acc + (e : R) * t.2 else acc)
+          (coeff m init) := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ih]
+      by_cases he : Mono.degreeOf i t.1 = 0
+      · simp [he]
+      · by_cases hm : m = predAt i t.1
+        · simp [he, hm, coeff_addMonomial]
+        · have hmp : m ≠ predAt i t.1 := hm
+          simp [he, hmp, coeff_addMonomial]
+  have step (acc : R) (t : Mono n × R) :
+      (let e := Mono.degreeOf i t.1
+        if e = 0 then acc
+        else if m = predAt i t.1 then acc + (e : R) * t.2 else acc) =
+      if t.1 = Mono.succAt i m then acc + scale * t.2 else acc := by
+    rcases t with ⟨t, c⟩
+    by_cases ht : t = Mono.succAt i m
+    · subst t
+      simp [scale]
+    · by_cases he : Mono.degreeOf i t = 0
+      · simp [he, ht]
+      · have hpred : m ≠ predAt i t := by
+          intro h
+          have : t = Mono.succAt i m :=
+            (predAt_eq_iff i m t he).mp h.symm
+          exact ht this
+        simp [he, hpred, ht]
+  have filter_fold : ∀ (ts : List (Mono n × R)) (init : R),
+      ts.foldl
+          (fun acc t =>
+            if t.1 = Mono.succAt i m then acc + scale * t.2 else acc)
+          init =
+        (ts.filter fun t => t.1 = Mono.succAt i m).foldl
+          (fun acc t => acc + scale * t.2) init := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons]
+      by_cases ht : t.1 = Mono.succAt i m
+      · simp [ht, ih]
+      · simp [ht, ih]
+  have scale_fold : ∀ (ts : List (Mono n × R)) (init : R),
+      ts.foldl (fun acc t => acc + scale * t.2) (scale * init) =
+        scale * ts.foldl (fun acc t => acc + t.2) init := by
+    intro ts
+    induction ts with
+    | nil =>
+      intro init
+      rfl
+    | cons t ts ih =>
+      intro init
+      rw [List.foldl_cons, ← Lean.Grind.Semiring.left_distrib, ih,
+        List.foldl_cons]
+  unfold derivative foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList, aux]
+  rw [coeff_zero]
+  simp only [step]
+  rw [filter_fold]
+  change
+    (p.termsInternal.toList.filter fun t => t.1 = Mono.succAt i m).foldl
+        (fun acc t => acc + scale * t.2) 0 =
+      scale * coeff (Mono.succAt i m) p
+  rw [← Lean.Grind.Semiring.mul_zero scale, scale_fold]
+  congr 1
+  simpa [termsList] using coeff_terms (Mono.succAt i m) p
+
+/-- A homogeneous component keeps exactly the terms of the requested total
+degree. -/
+theorem coeff_homogeneousComponent [Lean.Grind.Semiring R] [DecidableEq R]
+    (d : Nat) (m : Mono n) (p : MvPoly n R cmp) :
+    coeff m (homogeneousComponent d p) =
+      if Mono.degree m = d then coeff m p else 0 := by
+  unfold homogeneousComponent
+  rw [coeff_restrictBy]
+  simp
+
+/-- Substitution evaluates each source monomial at the replacement
+polynomials and sums the results. -/
+theorem subst_eq [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → MvPoly k R targetCmp) (p : MvPoly n R cmp) :
+    subst f p =
+      p.termsList.foldl
+        (fun acc term => acc + C term.2 * Mono.prod f term.1) 0 := by
+  unfold subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+  unfold termsList
+  rfl
+
+/-- Substituting variables into one monomial produces the renamed
+monomial. -/
+private theorem prod_X_rename [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (m : Mono n) :
+    Mono.prod
+        (fun i => X (f i) : Fin n → MvPoly k R targetCmp) m =
+      monomial (Mono.rename f m) 1 := by
+  unfold Mono.prod
+  have one_pow (d : Nat) : Mono.powBySq (1 : R) d = 1 := by
+    rw [Mono.powBySq_eq_pow]
+    induction d with
+    | zero =>
+        rw [Lean.Grind.Semiring.pow_zero]
+    | succ d ih =>
+        rw [Lean.Grind.Semiring.pow_succ, ih,
+          Lean.Grind.Semiring.one_mul]
+  have factor (i : Fin n) :
+      Mono.powBySq (X (f i) : MvPoly k R targetCmp) m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1 := by
+    change
+      Mono.powBySq
+          (monomial (Mono.unit (f i)) 1 : MvPoly k R targetCmp)
+          m[i] =
+        monomial (Mono.scale m[i] (Mono.unit (f i))) 1
+    rw [powBySq_monomial, one_pow]
+  have fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      xs.foldl
+          (fun acc i => acc * Mono.powBySq (X (f i)) m[i])
+          (monomial a 1 : MvPoly k R targetCmp) =
+        monomial
+          (xs.foldl
+            (fun acc i =>
+              Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+            a)
+          1 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [factor, monomial_mul_monomial,
+          Lean.Grind.Semiring.one_mul]
+        exact ih _
+  have hone :
+      (1 : MvPoly k R targetCmp) = monomial Mono.zero 1 := by
+    rfl
+  rw [hone, fold]
+  congr 1
+  apply Vector.ext
+  intro j hj
+  let r : Fin k := ⟨j, hj⟩
+  have get_fold : ∀ (xs : List (Fin n)) (a : Mono k),
+      (xs.foldl
+          (fun acc i =>
+            Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+          a)[r] =
+        xs.foldl
+          (fun acc i => acc + if f i = r then m[i] else 0)
+          a[r] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a
+        rfl
+    | cons i xs ih =>
+        intro a
+        simp only [List.foldl_cons]
+        rw [ih, Mono.getElem_mul, Mono.getElem_scale,
+          Mono.getElem_unit]
+        by_cases h : f i = r
+        · simp [h]
+        · simp [h, Ne.symm h]
+  change
+    ((List.finRange n).foldl
+        (fun acc i =>
+          Mono.mul acc (Mono.scale m[i] (Mono.unit (f i))))
+        Mono.zero)[r] =
+      (Mono.rename f m)[r]
+  rw [get_fold, Mono.getElem_zero]
+  simp [Mono.rename]
+
+/-- Renaming is substitution by the target variables. -/
+theorem rename_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (f : Fin n → Fin k) (p : MvPoly n R cmp) :
+    rename targetCmp f p =
+      subst (targetCmp := targetCmp) (fun i => X (f i)) p := by
+  unfold rename subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  apply List.foldl_congr
+  intro acc term _
+  rw [addMonomial_eq, prod_X_rename]
+  change
+    acc + monomial (Mono.rename f term.1) term.2 =
+      acc + monomial Mono.zero term.2 *
+        monomial (Mono.rename f term.1) 1
+  rw [monomial_mul_monomial, Mono.zero_mul,
+    Lean.Grind.Semiring.mul_one]
+
+/-- The residual monomial product is the corresponding substitution
+product. -/
+private theorem prod_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (s : Fin n → Option R) (m : Mono n) :
+    Mono.prod
+        (fun i => match s i with | some x => C x | none => X i)
+        m =
+      (monomial (eraseAssigned s m)
+        (Mono.prod (fun i => (s i).getD 1) m) : MvPoly n R cmp) := by
+  let g : Fin n → MvPoly n R cmp :=
+    fun i => match s i with | some x => C x | none => X i
+  let mono : Fin n → Mono n :=
+    fun i =>
+      if (s i).isSome then Mono.zero
+      else Mono.scale m[i] (Mono.unit i)
+  let value : Fin n → R :=
+    fun i => Mono.powBySq ((s i).getD 1) m[i]
+  have factor (i : Fin n) :
+      Mono.powBySq (g i) m[i] =
+        monomial (mono i) (value i) := by
+    cases hsi : s i with
+    | none =>
+        simpa [g, mono, value, hsi, X] using
+          (powBySq_monomial (cmp := cmp) (Mono.unit i) (1 : R) m[i])
+    | some x =>
+        simpa [g, mono, value, hsi, C] using
+          (powBySq_monomial (cmp := cmp) (Mono.zero : Mono n) x m[i])
+  have fold : ∀ (xs : List (Fin n)) (a : Mono n) (c : R),
+      xs.foldl
+          (fun acc i => acc * Mono.powBySq (g i) m[i])
+          (monomial a c) =
+        monomial
+          (xs.foldl (fun acc i => Mono.mul acc (mono i)) a)
+          (xs.foldl (fun acc i => acc * value i) c) := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro a c
+        rfl
+    | cons i xs ih =>
+        intro a c
+        simp only [List.foldl_cons]
+        rw [factor, monomial_mul_monomial, ih]
+  unfold Mono.prod
+  change
+    (List.finRange n).foldl
+        (fun acc i => acc * Mono.powBySq (g i) m[i])
+        (monomial Mono.zero 1) =
+      monomial (eraseAssigned s m)
+        ((List.finRange n).foldl
+          (fun acc i => acc * value i) 1)
+  rw [fold]
+  congr 1
+  calc
+    (List.finRange n).foldl
+        (fun acc i => Mono.mul acc (mono i)) Mono.zero =
+        (List.finRange n).foldl
+          (fun acc i =>
+            Mono.mul acc
+              (Mono.scale (eraseAssigned s m)[i] (Mono.unit i)))
+          Mono.zero := by
+            apply List.foldl_congr
+            intro acc i _
+            unfold mono eraseAssigned
+            cases hsi : s i <;> simp [hsi]
+    _ = eraseAssigned s m := Mono.mul_units _
+
+/-- Partial evaluation is substitution by constants at assigned variables
+and variables at unassigned ones. -/
+theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
+    (s : Fin n → Option R) (p : MvPoly n R cmp) :
+    partialEval s p =
+      subst (targetCmp := cmp)
+        (fun i => match s i with | some x => C x | none => X i) p := by
+  unfold partialEval subst bind foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList,
+    Std.ExtTreeMap.foldl_eq_foldl_toList]
+  apply List.foldl_congr
+  intro acc term _
+  rcases term with ⟨m, c⟩
+  simp only [id_eq]
+  let g : Fin n → MvPoly n R cmp :=
+    fun i => match s i with | some x => C x | none => X i
+  let assigned := Mono.prod (fun i => (s i).getD 1) m
+  have hprod :
+      Mono.prod g m =
+        (monomial (eraseAssigned s m) assigned : MvPoly n R cmp) := by
+    exact prod_subst (cmp := cmp) s m
+  change
+    acc.addMonomial (eraseAssigned s m) (c * assigned) =
+      acc + (monomial Mono.zero c : MvPoly n R cmp) * Mono.prod g m
+  calc
+    acc.addMonomial (eraseAssigned s m) (c * assigned) =
+        acc + monomial (eraseAssigned s m) (c * assigned) :=
+      addMonomial_eq ..
+    _ = acc + (monomial Mono.zero c : MvPoly n R cmp) *
+        monomial (eraseAssigned s m) assigned := by
+      rw [monomial_mul_monomial, Mono.zero_mul]
+    _ = acc + (monomial Mono.zero c : MvPoly n R cmp) *
+        Mono.prod g m :=
+      congrArg
+        (fun q => acc + (monomial Mono.zero c : MvPoly n R cmp) * q)
+        hprod.symm
+
+/-! Coefficient maps.
+
+`bind` already changes the coefficient type, so `mapCoeffs φ` agrees with
+`bind φ X`, though no agreement lemma is proved here: `bind` has no
+coefficient characterisation to prove one against. It is a separate operation
+for two reasons.
+
+Cost: `bind` folds `acc + C (φ c) * Mono.prod g m` over the terms, so it pays
+one polynomial addition and one monomial product per term, quadratic in the
+term count where a map over the backing values is linear. Reduction of an
+integer polynomial modulo a prime is the inner loop of every modular algorithm
+built on this type, so the linear form is the one to have.
+
+Laws: the homomorphism lemmas below take their hypotheses on `φ` explicitly
+rather than through a bundled homomorphism record, because nothing else in
+this library needs such a record and a caller can bundle as it likes. -/
+
+section MapCoeffs
+
+variable [Zero R] [Zero S] [BEq S] [LawfulBEq S]
+
+/-- Map `φ` over the coefficients, dropping every term it sends to zero.
+
+Terms are never merged, since the monomials are untouched, so this is the
+one member of the substitution family that cannot create a collision. -/
+def mapCoeffs (φ : R → S) (p : MvPoly n R cmp) : MvPoly n S cmp :=
+  letI : DecidableEq S := instDecidableEqOfLawfulBEq
+  { termsInternal := p.termsInternal.filterMap fun _ c =>
+      let c' := φ c
+      if c' = 0 then none else some c'
+    nonzeroInternal := by
+      intro m
+      rw [Std.ExtTreeMap.getElem?_filterMap']
+      cases hcoeff : p.termsInternal[m]? with
+      | none => simp
+      | some c =>
+          simp only [Option.bind_some]
+          split <;> simp_all }
+
+/-- Coefficients of a coefficient map, for a `φ` that fixes zero. -/
+@[simp]
+theorem coeff_mapCoeffs {φ : R → S} (hzero : φ 0 = 0) (m : Mono n)
+    (p : MvPoly n R cmp) :
+    coeff m (mapCoeffs φ p) = φ (coeff m p) := by
+  letI : DecidableEq S := instDecidableEqOfLawfulBEq
+  change ((mapCoeffs φ p).termsInternal[m]?).getD 0 = φ ((p.termsInternal[m]?).getD 0)
+  change ((p.termsInternal.filterMap fun _ c =>
+    let c' := φ c
+    if c' = 0 then none else some c')[m]?).getD 0 = _
+  rw [Std.ExtTreeMap.getElem?_filterMap']
+  cases hcoeff : p.termsInternal[m]? with
+  | none => simp [hzero]
+  | some c =>
+      simp only [Option.bind_some]
+      split <;> simp_all
+
+end MapCoeffs
+
+section MapCoeffsLaws
+
+variable [Lean.Grind.Semiring R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Lean.Grind.Semiring S] [DecidableEq S] [BEq S] [LawfulBEq S]
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [DecidableEq S] in
+/-- A coefficient map fixing zero sends the zero polynomial to zero. -/
+theorem mapCoeffs_zero {φ : R → S} (hzero : φ 0 = 0) :
+    mapCoeffs (cmp := cmp) (n := n) φ 0 = 0 := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_zero, coeff_zero, hzero]
+
+/-- A coefficient map fixing zero and one sends one to one. -/
+theorem mapCoeffs_one {φ : R → S} (hzero : φ 0 = 0) (hone : φ 1 = 1) :
+    mapCoeffs (cmp := cmp) (n := n) φ 1 = 1 := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_one, coeff_one]
+  by_cases hm : m = Mono.zero
+  · simp only [hm, Hex.ite_true]; exact hone
+  · simp only [hm, Hex.ite_false]; exact hzero
+
+/-- An additive coefficient map commutes with polynomial addition. -/
+theorem mapCoeffs_add {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b) (p q : MvPoly n R cmp) :
+    mapCoeffs (cmp := cmp) φ (p + q) =
+      mapCoeffs φ p + mapCoeffs φ q := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_add, coeff_add, hadd,
+    coeff_mapCoeffs hzero, coeff_mapCoeffs hzero]
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [DecidableEq S] in
+/-- Pushing a ring map through the convolution fold that computes a product
+coefficient. The accumulator is generalised so the induction goes through. -/
+private theorem foldl_map_convolution {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b)
+    (hmul : ∀ a b : R, φ (a * b) = φ a * φ b) (p q : MvPoly n R cmp) :
+    ∀ (L : List (Mono n × Mono n)) (acc : R),
+      φ (L.foldl (fun acc ab => acc + coeff ab.1 p * coeff ab.2 q) acc) =
+        L.foldl
+          (fun acc ab =>
+            acc + coeff ab.1 (mapCoeffs φ p) * coeff ab.2 (mapCoeffs φ q))
+          (φ acc) := by
+  intro L
+  induction L with
+  | nil => intro acc; rfl
+  | cons ab rest ih =>
+      intro acc
+      rw [List.foldl_cons, List.foldl_cons, ih]
+      congr 1
+      rw [hadd, hmul, coeff_mapCoeffs hzero, coeff_mapCoeffs hzero]
+
+/-- A ring map on coefficients commutes with polynomial multiplication. -/
+theorem mapCoeffs_mul {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b)
+    (hmul : ∀ a b : R, φ (a * b) = φ a * φ b) (p q : MvPoly n R cmp) :
+    mapCoeffs (cmp := cmp) φ (p * q) =
+      mapCoeffs φ p * mapCoeffs φ q := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_mul, coeff_mul,
+    foldl_map_convolution hzero hadd hmul p q (Mono.splits m) 0, hzero]
+
+end MapCoeffsLaws
+
+end Hex.MvPoly

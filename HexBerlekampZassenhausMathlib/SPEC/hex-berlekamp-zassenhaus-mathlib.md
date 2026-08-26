@@ -1,100 +1,270 @@
-# hex-berlekamp-zassenhaus-mathlib (depends on hex-berlekamp-zassenhaus + hex-poly-z-mathlib)
+# hex-berlekamp-zassenhaus-mathlib
 
-Instantiates the conditional correctness theorems from
-hex-berlekamp-zassenhaus (which take an abstract coefficient bound)
-with the Mignotte bound from hex-poly-z-mathlib, giving unconditional
-results. All statements use the `Factorization` record from
-`hex-berlekamp-zassenhaus.md`'s output-convention section.
+`hex-berlekamp-zassenhaus-mathlib` proves the mathematical
+correctness of executable integer polynomial factorization. It
+depends on `hex-berlekamp-zassenhaus`, `hex-poly-z-mathlib`,
+`hex-hensel-mathlib`, and `hex-lll-mathlib`.
 
-The headline theorems below hold over the **cost-based hybrid `factor`**
-(the `factorClassical` / `factorLattice` / `factorTrial` tiers). By the
-tier-result-equivalence and dispatch-soundness contracts (main spec
-§*Invariant contracts and dispatch soundness*), `factor`'s output is
-independent of which tier the dispatcher selects, so these theorems
-reduce to the per-tier correctness — Group A for the classical tier,
-Group B for the lattice tier, Group C for the combinator. Per the
-project's performance-led principle (`SPEC/design-principles.md`), these
-proofs adapt to the committed executable tiers; the implementation is
-not reshaped to ease them.
+The ordinary umbrella exposes factorization soundness, the
+correspondence with `Polynomial ℤ`, and the factor tactics.
+`HexBerlekampZassenhausMathlib.All` exposes the complete proof
+development.
 
-```lean
-theorem factor_product (f : ZPoly) :
-    Factorization.product (factor f) = f
+## Polynomial correspondence
 
-theorem factor_irreducible_of_nonUnit (f : ZPoly) :
-    ∀ (g, m) ∈ (factor f).factors, Hex.ZPoly.Irreducible g
+`HexPolyZMathlib.toPolynomial` identifies a dense `Hex.ZPoly` with a
+Mathlib polynomial over the integers. It preserves coefficients,
+addition, multiplication, degree, content, primitive parts, and
+divisibility.
 
-theorem factor_unique (f : ZPoly) (φ ψ : Factorization) :
-    Factorization.product φ = f →
-    Factorization.product ψ = f →
-    (∀ (g, m) ∈ φ.factors, Hex.ZPoly.Irreducible g) →
-    (∀ (g, m) ∈ ψ.factors, Hex.ZPoly.Irreducible g) →
-    φ.scalar = ψ.scalar ∧
-    φ.factors.toList.toFinmap = ψ.factors.toList.toFinmap
--- Multiset equality of polynomial factors with multiplicities; the
--- scalar matches because both Factorizations encode the same f.
--- Follows from `UniqueFactorizationMonoid.factors_unique` over `Int`
--- (in `Mathlib.RingTheory.UniqueFactorizationDomain.Basic`) via the
--- ring equivalence. `Polynomial ℤ` gets the
--- `UniqueFactorizationMonoid` instance from
--- `Mathlib.RingTheory.Polynomial.UniqueFactorization`.
-
-theorem checkIrreducibleCert_sound
-    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate) :
-    checkIrreducibleCert f cert = true → Irreducible f
-```
-
-`factor_irreducible_of_nonUnit` is the corrected form of the old
-`factor_irreducible` (which incorrectly claimed *every* element of
-the old `Array ZPoly` output was irreducible — false for content
-factors like `[C 6, ...]` since `C 6 = C 2 · C 3` is reducible in
-`Polynomial ℤ`). Under the new `Factorization` API, the
-`factors` field by SPEC contains *only* irreducible non-unit
-polynomial factors, so the per-element irreducibility claim is
-precisely what we want.
-
-**Bridge for `Hex.ZPoly.Irreducible`** (the Mathlib-free class
-defined in `hex-berlekamp-zassenhaus.md`):
+The public irreducibility equivalences are:
 
 ```lean
-theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : ZPoly) :
-    Hex.ZPoly.Irreducible f ↔ Irreducible (toPolynomial f)
+theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
+  Hex.ZPoly.Irreducible f ↔
+    Irreducible (HexPolyZMathlib.toPolynomial f)
+
+theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
+  Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f
 ```
 
-Cheap from the existing `irreducibleByFactorization_iff` infrastructure
-plus the `Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f)` bridge from
-`hex-poly-z-mathlib`. The two definitions of irreducibility (ours and
-Mathlib's) are propositionally identical when phrased over the
-respective unit predicates; the bridge unfolds both sides and
-rewrites `IsUnit` and `(· * ·)` through `toPolynomial`.
+The second theorem supplies the decidable instance for concrete
+dense integer polynomials.
 
-**Correctness of the executable checker.** The biconditional linking
-the Mathlib-free `isIrreducible` *checker* to the `Irreducible`
-*class* lives here, not in `hex-berlekamp-zassenhaus`, because it is
-equivalent to the full forward correctness of `factor` (Group C; see
-that library's §`Mathlib-free Hex.ZPoly.Irreducible class` for why a
-Mathlib-free file cannot state it):
+## Modular factorization
+
+`ModPFactorization f data` is the semantic contract for selected
+prime data. It records:
+
+- primality and admissibility of the modulus;
+- equality of the cached polynomial with the reduction of `f`;
+- monicity, distinctness, coprimality, irreducibility, and positive
+  degree of the modular factors;
+- equality of their product with the monic modular image.
+
+`DirectPrimeFacts` combines this contract with the Berlekamp
+certificate form and the small-prime bound used in the resultant
+estimate.
+
+## Hensel correspondence
+
+`DirectLiftFacts` interprets the executable direct-coordinate Hensel
+lift. The proof identifies lifted-factor indices with modular-factor
+indices and transports selected products through reduction.
+
+An irreducible integer divisor has a unique modular support.
+`DirectSupportPartition` strengthens this statement to the recursive
+factorization state: the remaining supports cover the remaining
+indices, nonassociated factors have disjoint supports, and associated
+factors have the same support.
+
+`DirectFactorCertificate` packages one normalized irreducible factor,
+its cofactor, its modular support, and the scaled congruence needed by
+the logarithmic-derivative proof.
+
+## Classical completeness
+
+The classical proof follows the executable head-forced subset
+iterator. It establishes:
+
+- correctness of every accepted exact division;
+- completeness of each fully enumerated cardinality level;
+- identification of the first accepted subset with the irreducible
+  support containing the distinguished index;
+- preservation of the support partition after removing a factor;
+- complete irreducibility of a successful returned factor list.
+
+A typed resource decline makes no mathematical claim.
+
+## Lattice completeness
+
+For each local factor `g`, the combined logarithmic derivative (CLD)
+is `f g' / g` modulo the Hensel modulus. Additivity turns products of
+local factors into sums of CLD coefficient vectors.
+
+The Belabas-Hoeij-Klüners-Steel (BHKS) lattice appends scaled CLD
+coefficients to factor-indicator coordinates. Its exact LLL reduction
+is cut by Gram-Schmidt length and projected back to the indicator
+coordinates.
+
+`SupportShortVectorData` describes a short lattice vector whose first
+coordinates are a genuine support indicator.
+`CutProjectionHypotheses` states that every genuine indicator lies in
+the projected span. The resultant argument proves the reverse
+containment: every retained projected row is constant on genuine
+supports.
+
+`DirectAdequacy` collects the precision, coefficient recovery,
+leading-coefficient invertibility, Hensel lift, and support partition
+needed by both arguments. `LatticeTotality` proves that the public
+precision returns either recovered factors or a conclusive
+irreducibility result whenever direct prime selection succeeds.
+
+## Final factorization theorems
+
+For every dense integer polynomial:
 
 ```lean
-theorem Hex.ZPoly.isIrreducible_iff (f : ZPoly) :
-    Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f
-
-instance (f : ZPoly) : Decidable (Hex.ZPoly.Irreducible f) :=
-  decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
+theorem factorize_product (f : Hex.ZPoly) :
+  Hex.Factorization.product (Hex.ZPoly.factorize f) = f
 ```
 
-The forward direction follows from C1 (`factor f` is the irreducible
-factorisation): a single primitive unit-scalar factor of multiplicity
-one is `f` itself up to a unit, and completeness of `factor` rules out
-any finer decomposition. The backward direction is the converse. The
-constant case reduces to `Nat.Prime` decidability. This is the only
-route to `decide`-ing `Hex.ZPoly.Irreducible` for concrete inputs;
-Mathlib-free consumers (e.g. `HexNumberField`) must instead thread
-`[Hex.ZPoly.Irreducible p]` as an instance argument.
+For a nonzero input, `factorize_normalized` states that:
 
-Also connects to Mathlib's `Polynomial ℤ` and provides
-`Decidable (Irreducible f)` for `f : Polynomial ℤ`.
+- the scalar is the signed content;
+- each polynomial factor is primitive and irreducible;
+- every leading coefficient and multiplicity is positive;
+- distinct entries are not associates;
+- the recorded product is the input.
 
-This library is thin — the hard work is split between
-hex-berlekamp-zassenhaus (algorithmic correctness, Mathlib-free) and
-hex-poly-z-mathlib (the Mignotte bound).
+`factorize_unique` shows that two normalized factorizations of the
+same input have the same scalar and the same factors with
+multiplicities.
+
+The headline product, irreducibility, normalization, uniqueness, and
+lattice-totality theorems use only the accepted Lean and Mathlib
+foundations reported by the trust-surface check.
+
+## Quadratic norm correspondence
+
+For a commutative ring `K` and `r : K` with `r² = d`, `map_quadNorm`
+identifies the executable quadratic norm with the honest polynomial
+statement:
+
+```lean
+theorem map_quadNorm (g : Hex.ZPoly) (d : ℤ) (r : K) (hr : r ^ 2 = (d : K)) :
+  (toPolynomial (Hex.quadNorm d g)).map (algebraMap ℤ K)
+    = ((toPolynomial g).map (algebraMap ℤ K)).comp (X - C r)
+      * ((toPolynomial g).map (algebraMap ℤ K)).comp (X + C r)
+```
+
+`map_iteratedNorm` iterates it: given square roots of every radicand,
+the executable `iteratedNorm` maps to `∏_ε (X - c - ∑ᵢ εᵢ rᵢ)` over the
+`2ⁿ` sign patterns, which is the polynomial the multiquadratic tower
+theorem is about.
+
+`Hex.SquareClass.Independent` says no nonempty sublist of the radicands
+has a square product in `ℚ`, and
+`independentSquareClasses_iff` shows the executable check
+decides it. `associated_toPolynomial_of_check` carries a successful
+certificate check to an `Associated` in `Polynomial ℤ`, so the input and
+the iterated norm are irreducible together.
+
+The tower theorem is `Hex.SquareClass.irreducible_int_of_map_eq_signPoly`:
+a monic integer polynomial whose complex image is the sign-pattern
+product of independent square classes is irreducible, because it is the
+minimal polynomial of `c + ∑ᵢ √dᵢ`. It writes the product as a
+`Finset.prod` over `Fin n → Bool`, which is what lets an automorphism act
+by a reindexing equivalence; `map_iteratedNorm` writes it as a
+`List.prod` over a fold-built list, which is what the iterated norm
+computes. `signPatternPoly_ofFn` proves the two encodings are the same
+polynomial, by induction on the number of radicands, splitting the last
+sign off with `Fin.snocEquiv` on one side and the last fold step on the
+other.
+
+Composing those gives `irreducible_of_check`: a successful
+`QuadraticNormCertificate.check` makes its input irreducible in
+`Polynomial ℤ`, with no hypothesis on the input, and
+`irreducible_of_quadraticNormCertified` says the same of the production
+gate. That is what discharges the certificate arm of
+`factorClassicalFactors_factor_irreducible`, so a certified singleton is
+proved irreducible on the same footing as every other returned factor.
+
+## Factor tactics
+
+The `Polynomial ℤ` tactic support parses a closed polynomial
+expression to a dense polynomial while proving the conversion
+equality. Compiled factorization searches for:
+
+- small-prime irreducibility witnesses;
+- multi-prime degree-obstruction certificates;
+- factor covers with one certificate per distinct factor.
+
+The emitted term contains reified data, coefficientwise product
+checks, certificate checks, and conversion theorems. The compiled
+factorizer itself is not in the emitted proof.
+
+The stronger `irreducibility!` and `factor_poly!` forms may use kernel
+evaluation of the decidable factorization theorem on small inputs.
+They require all executable definitions to be visible and cannot
+evaluate native LLL code.
+
+## Conformance
+
+The library owns an executable runtime: the `factor_poly` /
+`irreducibility` elaborators (with their `factor_poly!` /
+`irreducibility!` kernel-decide fallbacks) and the reified certificate
+checks their emitted terms replay. It is therefore not a
+correspondence-only bridge:
+`conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
+`core` conformance profile, built by the `HexConformance` library on
+every CI run. It exercises the tactic entry points on committed
+`Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
+(single-prime witness, Eisenstein handover, multi-prime degree
+obstruction, kernel fallback), pins hand-derived factor lists and factor
+counts, checks the decline diagnostics on reducible, zero, unit, and
+over-budget inputs, and `#print axioms`-checks the emitted proofs. There
+is no external oracle for the tactic surface (mode `always`): every
+accepted invocation is kernel-certified, and the compiled factorizer the
+tactics run as untrusted search is oracle-checked against python-flint
+in the computational sibling's profile
+(`conformance/HexBerlekampZassenhaus/`).
+
+## Phase-4 proof evidence
+
+`factor_poly` and `irreducibility` on `Polynomial ℤ` / `Hex.ZPoly` are
+elaboration/proof surfaces, not LeanBench executables. Build-only modules
+below `bench/HexBerlekampZassenhausMathlib/ProofProbe/` measure
+`factor_poly` on products of distinct irreducible quadratics `X² + c`
+over `ℤ` at degrees 4, 8, and 12, `irreducibility` on the Eisenstein
+binomials `Xⁿ − 2` at degrees 4, 8, and 16, and the kernel-decide
+fallback `irreducibility!` on the certificate-declined Swinnerton-Dyer
+minimal polynomials at degrees 4 and 8. Each case is adjacent to the
+same import-only baseline (whose import block carries the `import all`
+executable closure the emitted certificate checks and kernel replays
+need, identically in every probe), and degree 8 also has a direct
+multiplicity-attribution pair (four distinct quadratics against the
+fourth power of one quadratic: same degree and factor count with
+multiplicity, all multiplicity). Baseline and irreducible-16 same-module
+controls are first in manifest `config.order`; execution order rotates
+by round. The external runner uses six balanced rounds, exact
+generated-artifact invalidation, ordinary kernel checking, exact axiom
+validation, and complete source provenance.
+`HexBerlekampZassenhausMathlibProofProbe` supplies the reduced CI
+coverage; `HexBerlekampZassenhausMathlibProofProbeScientific` owns the
+larger release arms and remains outside routine CI.
+
+On the named shared release machine a canonical invocation is:
+
+```bash
+python3 scripts/bench/bz_mathlib_sweep.py --samples 6 \
+  --timeout 300 --warm-timeout 900 \
+  --shared-host --expected-host chungus2 --cpu 22
+```
+
+The release run preregisters its selected logical CPU and aggregate
+interference ratio on the command line; the artifact and headline report
+record those exact values. They govern that run rather than the
+illustrative CPU number above.
+
+The runner enforces the designated-shared-host contract in
+`SPEC/benchmarking.md`, including bounded retries of complete rejected
+pairs after a bounded quiet-core preflight and a single aggregate
+pinned-core/SMT interference ceiling; `--allow-busy` remains
+diagnostic-only. Executable factorization arithmetic belongs to the
+existing Mathlib-free `HexBerlekampZassenhaus` benchmark. The bridge
+declarations have no separable compiled runtime kernel. For the
+proof-emitting elaborators there is
+`no-comparable-surface-in-named-comparator`: no external tool emits and
+kernel-checks the same Lean proof term.
+
+## Verification
+
+Changes must pass:
+
+- the root build and trust-surface check;
+- the advertised root-name compile checks;
+- `#print axioms` checks for the headline theorems;
+- factor-tactic regression modules;
+- the integer-factorization conformance and external comparisons;
+- the release manifest and dependency checks.

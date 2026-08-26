@@ -3,27 +3,76 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it overwrites the repo's *managed* paths from here, leaves
-# everything else (root + sidecar lakefiles, CI, toolchains, LICENSE, README,
-# manifests) untouched, rewrites the root lakefile's cross-repo Hex pins to the
-# commits just synced, and commits to the released repo's `main`.
+# everything else except the release-wide toolchain and dependency locks
+# untouched, enables native Verso docstrings in each managed-source repo's root
+# + sidecar lakefiles, copies the monorepo's Lean toolchain, synchronizes exact
+# external dependency locks, rewrites cross-repo Hex pins to the commits just
+# synced, and commits to the released repo's `main`.
 #
 # Order is topological (upstream first) so each repo's freshly-pushed SHA is
 # known before its downstream consumers are processed.
 #
+# ADDING A REPO HERE IS ONLY HALF THE JOB. Each publishing token is scoped to
+# an explicit list of repositories (and a fine-grained token caps that list,
+# so there is more than one), so the new repo must also be added to one of the
+# `hex-publishing` / `hex-publishing-2` fine-grained tokens and approved by an
+# organization owner before the sync can push to it. Any token with room
+# works; the sync routes per repo. See PLAN/Releases.md
+# §"Publishing a new library: widen a token first"; sync_released.py
+# preflights this and refuses to start if it was missed.
+#
 # Per-repo managed path conventions (resolved by the driver):
-#   <Lib>/            (minus <Lib>/SPEC/)   -> <Lib>/
+#   <Lib>/    (minus <Lib>/SPEC/ and <Lib>/README.md)  -> <Lib>/
+#   <Lib>/README.md   (unless readme: false)  -> README.md
 #   <Lib>.lean        (if umbrella: true)   -> <Lib>.lean
 #   <Lib>/SPEC/<spec>.md                    -> SPEC/<spec>.md
 #   bench/<Lib>/       (if bench: true)      -> bench/<Lib>/
 #   conformance/<Lib>/ (if conformance)      -> conformance/<Lib>/
 #   conformance-fixtures/<f>/                -> conformance-fixtures/<f>/
 #   scripts/oracle/<o>                       -> scripts/oracle/<o>
+# `test_modules` lists verification-only modules copied with the source but
+# intentionally absent from the public umbrella; released CI builds them via a
+# non-public `lean_lib` target.
+# `build_modules` lists complete development umbrellas that the released Lake
+# skeleton must build separately from the curated public umbrella.
+# `executables` maps an unmanaged released executable name to its mathematical
+# root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
+# `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
+# where this library was announced; it renders as one line per library in the
+# aggregate README's Announcements section. Deliberately not a table column:
+# only a couple of libraries are ever announced, so a column would be empty for
+# almost every row.
+# `component` is the human label this library gets in the aggregate README's
+# table (see `readme_template` below). Required on every aggregated
+# computational library, so releasing one cannot silently skip the table; the
+# `*-mathlib` companions need none, they occupy the table's third column.
+#
+# A `pins_only: true` entry (the leanprover/hex aggregate) manages no library
+# source from the monorepo: its umbrella lakefile and umbrella .lean live only
+# in the released repo, and the sync re-pins it to the SHAs published this run.
+# Its `readme_template` is rendered by scripts/release/aggregate_readme.py and
+# published as the repo's README.md. Such an entry is listed last so every
+# upstream it pins is already synced.
 
 repos:
-  - repo: kim-em/hex-test-kit
+  - repo: leanprover/hex-basic
+    component: Foundations
+    lib: HexBasic
+    umbrella: true
+    readme: false        # README is authored in the released repo, not managed
+    spec: null
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: []
+    lakefile: toml
+
+  - repo: leanprover/hex-test-kit
     lib: Hex
+    aggregate: false          # test/conformance helper, not user-facing Hex API
     umbrella: false        # released HexTestKit.lean umbrella is fixed
     paths:                 # explicit: only the shared helper source
       - { src: "Hex", dest: "Hex" }
@@ -35,18 +84,381 @@ repos:
     pins: []
     lakefile: toml
 
-  - repo: kim-em/hex-matrix
-    lib: HexMatrix
+  - repo: leanprover/hex-arith
+    component: Exact word arithmetic
+    lib: HexArith
     umbrella: true
-    spec: hex-matrix
+    spec: hex-arith
     bench: true
     conformance: true
-    fixtures: [HexMatrix]
-    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    fixtures: []
+    oracles: []
+    pins: []
+    lakefile: lean
+
+  - repo: leanprover/hex-poly
+    component: Dense univariate polynomials
+    lib: HexPoly
+    umbrella: true
+    spec: hex-poly
+    bench: true
+    conformance: true
+    fixtures: [HexPoly]
+    oracles: [poly_flint.py, common.py, flint_bench_driver.py]
     pins: []
     lakefile: toml
 
-  - repo: kim-em/hex-matrix-mathlib
+  - repo: leanprover/hex-mv-poly
+    component: Sparse multivariate polynomials
+    lib: HexMvPoly
+    test_modules: [HexMvPoly.KernelTests]
+    umbrella: true
+    spec: hex-mv-poly
+    bench: true
+    bench_files: [HexMvPolyCorpus.lean]
+    conformance: true
+    conformance_files: [HexMvPolyFixtures.lean]
+    fixtures: [HexMvPoly]
+    oracles: [mvpoly_sympy.py, common.py]
+    pins: [hex-basic, hex-poly]
+    lakefile: toml
+
+  - repo: leanprover/hex-mod-arith
+    component: Modular arithmetic
+    lib: HexModArith
+    umbrella: true
+    spec: hex-mod-arith
+    bench: true
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-arith]
+    lakefile: lean
+
+  - repo: leanprover/hex-poly-mathlib
+    lib: HexPolyMathlib
+    umbrella: true
+    spec: hex-poly-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-poly]
+    lakefile: toml
+
+  - repo: leanprover/hex-mv-poly-mathlib
+    lib: HexMvPolyMathlib
+    umbrella: true
+    spec: hex-mv-poly-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-poly-fp
+    component: Polynomials over a prime field
+    lib: HexPolyFp
+    umbrella: true
+    spec: hex-poly-fp
+    bench: true
+    conformance: true
+    fixtures: [HexPolyFp]
+    oracles: [polyfp_flint.py, common.py]
+    pins: [hex-arith, hex-poly, hex-mod-arith]
+    lakefile: toml
+
+  - repo: leanprover/hex-sparse-poly
+    component: Sparse univariate polynomials
+    lib: HexSparsePoly
+    test_modules: [HexSparsePoly.KernelTests]
+    umbrella: true
+    spec: hex-sparse-poly
+    bench: true
+    conformance: true
+    conformance_files: [HexSparsePolyFixtures.lean]
+    fixtures: [HexSparsePoly]
+    oracles: [sparsepoly_sympy.py, common.py]
+    pins: [hex-basic, hex-poly, hex-arith, hex-mod-arith, hex-poly-fp]
+    conformance_pins: [hex-arith, hex-mod-arith]
+    bench_pins: [hex-poly-fp]
+    lakefile: toml
+
+  - repo: leanprover/hex-sparse-poly-mathlib
+    lib: HexSparsePolyMathlib
+    umbrella: true
+    spec: hex-sparse-poly-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-poly-z
+    component: Integer polynomials
+    lib: HexPolyZ
+    umbrella: true
+    spec: hex-poly-z
+    bench: true
+    conformance: true
+    fixtures: [HexPolyZ]
+    oracles: [polyz_flint.py, common.py]
+    pins: [hex-basic, hex-arith, hex-poly]
+    lakefile: toml
+
+  - repo: leanprover/hex-mod-arith-mathlib
+    lib: HexModArithMathlib
+    umbrella: true
+    spec: hex-mod-arith-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-arith, hex-mod-arith]
+    lakefile: toml
+
+  - repo: leanprover/hex-poly-fp-mathlib
+    lib: HexPolyFpMathlib
+    umbrella: true
+    spec: hex-poly-fp-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq-ring
+    component: Quotient rings `F_p[x]/(f)`
+    lib: HexGFqRing
+    umbrella: true
+    spec: hex-gfq-ring
+    bench: true
+    conformance: true
+    fixtures: [HexGFqRing]
+    oracles: [gfqring_flint.py, common.py]
+    pins: [hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
+    lakefile: toml
+
+  - repo: leanprover/hex-hensel
+    component: Hensel lifting
+    lib: HexHensel
+    precompile_modules: true
+    umbrella: true
+    spec: hex-hensel
+    bench: true
+    conformance: true
+    fixtures: [HexHensel]
+    oracles: [hensel_pari.py, common.py, flint_bench_driver.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
+    lakefile: toml
+
+  - repo: leanprover/hex-poly-z-mathlib
+    lib: HexPolyZMathlib
+    umbrella: true
+    spec: hex-poly-z-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-hensel-mathlib
+    lib: HexHenselMathlib
+    umbrella: true
+    spec: hex-hensel-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-roots
+    component: Complex root isolation
+    lib: HexRoots
+    umbrella: true
+    spec: hex-roots
+    bench: true
+    conformance: true
+    fixtures: [HexRoots]
+    oracles: [roots_flint.py, common.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-poly-z]
+    lakefile: toml
+
+  - repo: leanprover/hex-real-roots
+    component: Real root isolation
+    lib: HexRealRoots
+    test_modules: [HexRealRoots.ReplayTest]
+    umbrella: true
+    spec: hex-real-roots
+    bench: true
+    conformance: true
+    fixtures: [HexRealRoots]
+    oracles: [realroots_flint.py, common.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-poly-z]
+    lakefile: toml
+
+  - repo: leanprover/hex-roots-mathlib
+    lib: HexRootsMathlib
+    test_modules: [HexRootsMathlib.Examples]
+    umbrella: true
+    spec: hex-roots-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots]
+    lakefile: toml
+
+  - repo: leanprover/hex-real-roots-mathlib
+    lib: HexRealRootsMathlib
+    test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests]
+    umbrella: true
+    spec: hex-real-roots-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots]
+    lakefile: toml
+
+  - repo: leanprover/hex-matrix
+    component: Matrices
+    lib: HexMatrix
+    umbrella: true
+    spec: hex-matrix
+    bench: true                # dense multiplication
+    conformance: true          # oracle-free base #guard module
+    fixtures: []
+    oracles: []
+    pins: [hex-basic]
+    lakefile: toml
+
+  - repo: leanprover/hex-row-reduce
+    component: Row reduction
+    lib: HexRowReduce
+    umbrella: true
+    spec: hex-row-reduce
+    bench: false
+    conformance: true
+    fixtures: [HexRowReduce]
+    oracles: [matrix_flint.py, common.py]
+    pins: [hex-basic, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-berlekamp
+    component: Finite-field factorization
+    lib: HexBerlekamp
+    test_modules: [HexBerlekamp.FactorTacticTests]
+    umbrella: true
+    spec: hex-berlekamp
+    bench: true
+    conformance: true
+    fixtures: [HexBerlekamp]
+    oracles: [berlekamp_flint.py, common.py, flint_bench_driver.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring]
+    lakefile: toml
+
+  - repo: leanprover/hex-conway
+    component: Conway polynomials
+    lib: HexConway
+    umbrella: true
+    spec: hex-conway
+    bench: true
+    conformance: true
+    fixtures: [HexConway]
+    oracles: [conway_luebeck.py, conway_polynomials_table.py, common.py, luebeck_conway_cache.json, update_luebeck_conway_cache.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq-field
+    component: Finite fields `F_p[x]/(f)`
+    lib: HexGFqField
+    umbrella: true
+    spec: hex-gfq-field
+    bench: true
+    conformance: true
+    fixtures: [HexGFqField]
+    oracles: [gfqfield_flint.py, common.py, flint_bench_driver.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    lakefile: toml
+
+  - repo: leanprover/hex-gf2
+    component: Packed GF(2) polynomials
+    lib: HexGF2
+    precompile_modules: true
+    umbrella: true
+    spec: hex-gf2
+    bench: true
+    conformance: true
+    fixtures: [HexGF2]
+    oracles: [gf2_flint.py, common.py, gf2_ntl_bench_driver.cc, setup_gf2_ntl_driver.sh]
+    pins: [hex-basic]
+    lakefile: lean
+
+  - repo: leanprover/hex-gf2-mathlib
+    lib: HexGF2Mathlib
+    umbrella: true
+    spec: hex-gf2-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq
+    component: Canonical finite fields
+    lib: HexGFq
+    umbrella: true
+    spec: hex-gfq
+    bench: true
+    conformance: true
+    fixtures: [HexGFq]
+    oracles: [gfq_flint.py, common.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq-mathlib
+    lib: HexGFqMathlib
+    umbrella: true
+    spec: hex-gfq-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-determinant
+    component: Determinants
+    lib: HexDeterminant
+    umbrella: true
+    spec: hex-determinant
+    bench: true                # Leibniz determinant
+    conformance: true
+    fixtures: [HexDeterminant]
+    oracles: [matrix_flint.py, common.py]
+    pins: [hex-basic, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-bareiss
+    component: Bareiss determinant
+    lib: HexBareiss
+    umbrella: true
+    spec: hex-bareiss
+    bench: true                # Bareiss determinant + FLINT comparator
+    conformance: true
+    fixtures: [HexBareiss]
+    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    pins: [hex-basic, hex-arith, hex-determinant, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-matrix-mathlib
     lib: HexMatrixMathlib
     umbrella: true
     spec: hex-matrix-mathlib
@@ -54,10 +466,56 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-matrix]
+    pins: [hex-basic, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-gram-schmidt
+  - repo: leanprover/hex-row-reduce-mathlib
+    lib: HexRowReduceMathlib
+    umbrella: true
+    spec: hex-row-reduce-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-row-reduce, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-determinant-mathlib
+    lib: HexDeterminantMathlib
+    umbrella: true
+    spec: hex-determinant-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-bareiss-mathlib
+    lib: HexBareissMathlib
+    umbrella: true
+    spec: hex-bareiss-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-determinant-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-berlekamp-mathlib
+    lib: HexBerlekampMathlib
+    test_modules: [HexBerlekampMathlib.FactorPolyTests]
+    umbrella: true
+    spec: hex-berlekamp-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-gram-schmidt
+    component: Gram-Schmidt
     lib: HexGramSchmidt
     umbrella: true
     spec: hex-gram-schmidt
@@ -65,10 +523,10 @@ repos:
     conformance: true
     fixtures: [HexGramSchmidt]
     oracles: [gs_flint.py, common.py]
-    pins: [hex-matrix]
+    pins: [hex-basic, hex-arith, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-gram-schmidt-mathlib
+  - repo: leanprover/hex-gram-schmidt-mathlib
     lib: HexGramSchmidtMathlib
     umbrella: true
     spec: hex-gram-schmidt-mathlib
@@ -76,11 +534,17 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-gram-schmidt, hex-matrix-mathlib, hex-matrix]
+    pins: [hex-basic, hex-arith, hex-gram-schmidt, hex-bareiss-mathlib, hex-determinant-mathlib, hex-matrix-mathlib, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-lll
+  - repo: leanprover/hex-lll
+    component: LLL lattice reduction
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-7-7-lattice-basis-reduction-using-the-hex-lean-library/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20a.20computational.20algebra.20library/near/608173688
+      linkedin: https://www.linkedin.com/posts/kim-morrison-219962b_lattice-basis-reduction-using-the-hex-lean-share-7480672935360266241-WF7o/
     lib: HexLLL
+    executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
     spec: hex-lll
     bench: true
@@ -88,10 +552,38 @@ repos:
     conformance: true
     fixtures: [HexLLL]
     oracles: [lll_fpylll.py, lll_fpylll_bench_driver.py, common.py, __init__.py, setup_fplll_ffi.sh, setup_lll_isabelle.sh, patches]
-    pins: [hex-matrix, hex-gram-schmidt]
+    pins: [hex-basic, hex-arith, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
+    lakefile: lean
+    # user-facing performance doc (HexLLL/PERFORMANCE.md -> repo-root PERFORMANCE.md)
+    performance: true
+    # tight explicit figure allow-list (no broad globs); add per new family
+    figures:
+      - hex-lll-comparator-random-bounded.svg
+      - hex-lll-comparator-harsh-cubic.svg
+      - hex-lll-comparator-ajtai.svg
+      - hex-lll-comparator-q-ary.svg
+      - hex-lll-comparator-ntru.svg
+      - hex-lll-comparator-knapsack.svg
+
+  - repo: leanprover/hex-berlekamp-zassenhaus
+    component: Integer polynomial factorization
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-8-10-certified-integer-polynomial-factorization-in-lean/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20integer.20polynomial.20factorization/near/615747356
+      linkedin: https://www.linkedin.com/feed/update/urn:li:activity:7492744920349192193
+    lib: HexBerlekampZassenhaus
+    test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
+    build_modules: [HexBerlekampZassenhaus.All]
+    umbrella: true
+    spec: hex-berlekamp-zassenhaus
+    bench: true
+    conformance: true
+    fixtures: [HexBerlekampZassenhaus]
+    oracles: [bz_flint.py, common.py, factor_service_common.py, bz_flint_service.py, bz_pari_service.py, bz_ntl_service.cc, setup_bz_ntl_driver.sh, setup_bz_isabelle.sh, setup_bz_lll_isabelle.sh]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel]
     lakefile: lean
 
-  - repo: kim-em/hex-lll-mathlib
+  - repo: leanprover/hex-lll-mathlib
     lib: HexLLLMathlib
     umbrella: true
     spec: hex-lll-mathlib
@@ -99,5 +591,32 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-lll, hex-gram-schmidt-mathlib, hex-matrix-mathlib, hex-gram-schmidt, hex-matrix]
+    pins: [hex-basic, hex-arith, hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-matrix-mathlib, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-berlekamp-zassenhaus-mathlib
+    lib: HexBerlekampZassenhausMathlib
+    test_modules:
+      - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.IrreducibilityTests
+    build_modules: [HexBerlekampZassenhausMathlib.All]
+    umbrella: true
+    spec: hex-berlekamp-zassenhaus-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
+    lakefile: lean
+
+  # Aggregate: re-pinned only, never regenerated from managed source (its
+  # umbrella lakefile.toml and HexAll.lean live only in the released repo).
+  # Its README is the one managed artifact: rendered from `readme_template`
+  # with the library table generated from the `component:` labels above, so
+  # releasing a new library updates it without a hand edit. Listed last so
+  # every pin resolves to a commit synced this run.
+  - repo: leanprover/hex
+    pins_only: true
+    readme_template: scripts/release/hex-README.md
+    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
     lakefile: toml

@@ -1,307 +1,131 @@
 # HexBerlekamp Performance Report
 
+Current at revision `f396965d439aeaffcb3f843d85998b23765a22b2`, measured
+2026-08-22 on `chungus2` (AMD EPYC 9455, NixOS 26.11, Linux x86-64), timing
+runs pinned to CPU 0 (`taskset -c 0`), machine idle-checked before
+measurement. LeanBench 0.1.0, Lean 4.33.0-rc1, python-flint 0.9.0 through the
+warmed persistent driver.
+
 ## Bench Targets
 
+The four parametric registrations in `bench/HexBerlekamp/Bench.lean` use these
+declared complexity expressions, copied from their registration sites, one per
+declared input family:
+
 - `Hex.BerlekampBench.runBerlekampMatrixChecksum`: `n * n`
+  (`berlekamp-matrix` family; iterative Frobenius columns at fixed `p = 5`).
 - `Hex.BerlekampBench.runRabinTestChecksum`: `n * n * n`
+  (`rabin-irreducibility` family; the dense Frobenius power dominates).
 - `Hex.BerlekampBench.runBerlekampFactorChecksum`: `n * n`
+  (`split-step-factorization` family; constant-bounded gcd loop over the
+  field constants).
 - `Hex.BerlekampBench.runDistinctDegreeChecksum`: `n * n * n`
+  (`distinct-degree-factorization` family; Frobenius updates against the
+  residual dominate).
+
+The Rabin and DDF ladders additionally carry one fixed Lean registration and
+one fixed FLINT registration per rung (`runRabinTestChecksumN` /
+`runFlintRabinTestChecksumN` at `n = 8..64`, `runDistinctDegreeChecksumN` /
+`runFlintDistinctDegreeChecksumN` at `n = 12..96`), sharing inputs prepared
+during module initialization outside the measured child region. The FLINT
+targets use `flintCompareConfig` (`warmupFirstIter := true`,
+`minTotalSeconds := 0.2`), which spawns the persistent driver outside the
+timed region and amortises steady-state work, and the paired Lean targets use
+the matching `leanCompareConfig` floor. `runBerlekampFullySplitChecksum` is a
+fixed regression for the complete recursive splitter. The declared
+`phase4.input_families` in `libraries.yml` are the coverage contract for this
+report; each family is exercised by exactly one parametric ladder above.
 
 ## Verdicts
 
-Scientific run at commit `ad74d65a9295` on `carica` (Apple M2 Ultra,
-macOS 14.6.1), command:
+Scientific run on clean commit `f396965d`, exported to
+`reports/bench-results/hex-berlekamp-f396965d-chungus2.json` (SHA-256
+`3df932c38c25668158a99725f06db6d19234108936c658577a3271260fe58cb2`).
+Command: `taskset -c 0 lake exe hexberlekamp_bench run <four parametric
+targets> --export-file ...`. `list` and `verify` pass in CI on every PR.
 
-```sh
-lake exe hexberlekamp_bench run \
-    Hex.BerlekampBench.runBerlekampMatrixChecksum \
-    Hex.BerlekampBench.runRabinTestChecksum \
-    Hex.BerlekampBench.runBerlekampFactorChecksum \
-    Hex.BerlekampBench.runDistinctDegreeChecksum \
-    --export-file reports/bench-results/hex-berlekamp-ad74d65.json
-```
+| Target | Family | Largest rung | Median | β | Verdict |
+|---|---|---:|---:|---:|---|
+| `runBerlekampMatrixChecksum` | `berlekamp-matrix` | 192 | 12.702 ms | -0.026 | consistent |
+| `runRabinTestChecksum` | `rabin-irreducibility` | 64 | 49.422 ms | -0.254 | consistent |
+| `runBerlekampFactorChecksum` | `split-step-factorization` | 256 | 3.785 ms | -0.251 | consistent |
+| `runDistinctDegreeChecksum` | `distinct-degree-factorization` | 96 | 215.369 ms | -0.345 | consistent |
 
-The deterministic benchmark fixtures in `HexBerlekamp/Bench.lean` use
-the fixed small prime `p = 5`; no random seeds are involved. The harness
-recorded `ad74d65-dirty` because this worktree carried a pre-existing
-local `.claude/CLAUDE.md` modification outside this evidence package.
-Export artefact: `reports/bench-results/hex-berlekamp-ad74d65.json`,
-SHA-256 `af9f901e5a8be1f3ae6c6c7313d9dd37f8985179884d880d07de3dc53bb6c9c7`.
-
-- `Hex.BerlekampBench.runBerlekampMatrixChecksum`: consistent with
-  declared complexity (`cMin=1560.075, cMax=2374.100, beta=-0.158`,
-  parameters `16..192`, final hash `0xa562d3f84baa18e9`).
-- `Hex.BerlekampBench.runRabinTestChecksum`: consistent with declared
-  complexity (`cMin=1068.124, cMax=1349.340, beta=-0.047`,
-  densified ladder `8,10,12,16,20,24,32,40,48,56,64`, final hash `0xd`).
-- `Hex.BerlekampBench.runBerlekampFactorChecksum`: consistent with
-  declared complexity (`cMin=1828.018, cMax=2634.728, beta=-0.149`,
-  parameters `16..256`, final hash `0xf7bf198d9173a6ce`).
-- `Hex.BerlekampBench.runDistinctDegreeChecksum`: consistent with
-  declared complexity (`cMin=1627.883, cMax=2869.790, beta=-0.296`,
-  densified ladder `12,16,20,24,32,40,48,64,80,96`,
-  final hash `0x967aa08b9f90679`).
-
-Smoke wiring was checked at the same commit with:
-
-```sh
-lake exe hexberlekamp_bench list
-lake exe hexberlekamp_bench verify
-```
-
-`verify` passed all four registered benchmarks.
+All four verdicts are `consistent_with_declared_complexity` with the
+registered slope tolerance 0.35.
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-berlekamp.md` names two `gating` FLINT comparators:
-`nmod_poly.is_irreducible` for `runRabinTestChecksum` and
-`nmod_poly.factor_distinct_deg` for `runDistinctDegreeChecksum`. Both
-are wired through `Hex.BenchOracle.Flint.runOp` and registered as fixed
-per-rung benchmark pairs over the same input families as the Lean
-targets.
+Both declared comparators are `informational` (see `libraries.yml` and the
+SPEC's External comparators section): the measured gap is the structural
+constant-factor cost of verified generic `FpPoly` arithmetic against FLINT's
+hand-tuned C word-level kernels, recorded for orientation.
 
-Measurement shape. The fixed FLINT registrations now use
-`flintCompareConfig` (`HexBerlekamp/Bench.lean`): `warmupFirstIter :=
-true` runs one discarded call so the persistent python-flint driver is
-spawned out of the timed region, and `minTotalSeconds := 0.2` forces the
-child auto-tuner to amortise steady-state FLINT work across enough inner
-repeats that the per-call median reflects the algorithm, not the one-time
-process startup. The paired Lean targets use `leanCompareConfig` (the
-same `minTotalSeconds` floor) so each per-rung ratio compares steady-state
-medians on both sides. This replaces the earlier fixed shape whose every
-FLINT median pinned at the `~52 ms` driver-startup floor, leaving no
-eligible rung.
+**FLINT nmod_poly.is_irreducible via python-flint**, paired against the Lean
+`rabin-irreducibility` fixed ladder. Export:
+`reports/bench-results/hex-berlekamp-rabin-compare-f396965d-chungus2.json`
+(SHA-256
+`dcd6a7f255202048fb2225549236d140dafde8cf5f1ef0870e4e356e3759f338`).
 
-Per-call overhead is now the steady-state persistent-driver round-trip
-(stdin/stdout JSON request plus reply), measured per
-`SPEC/benchmarking.md §"External comparators" §"Process call"` as the
-warm-driver median on the smallest registered input, whose FLINT
-algorithm work is sub-microsecond: `19.428 µs` for Rabin (rung `n = 8`)
-and `33.879 µs` for DDF (rung `n = 12`). This is a per-call floor; the
-JSON-marshalling component grows mildly with polynomial degree, so the
-constant-overhead model slightly understates overhead at the top rungs.
-Raw ratios are `FLINT median / Lean median` (lower means FLINT is
-faster); on every rung where overhead exceeds 5% of the FLINT median the
-overhead-adjusted ratio `(FLINT median − overhead) / Lean median` is also
-recorded. A rung is eligible for the gating-goal verdict when overhead is
-≤ 50% of the FLINT median and per-call wall time is within the
-`≤ 1 s` soft / `≤ 10 s` hard ceiling.
+| n | Lean median | FLINT median | ratio |
+|---:|---:|---:|---:|
+| 8 | 0.132 ms | 12.8 µs | 10.3x |
+| 16 | 0.806 ms | 18.5 µs | 43.6x |
+| 24 | 2.327 ms | 23.8 µs | 97.9x |
+| 32 | 5.575 ms | 42.4 µs | 131.4x |
+| 48 | 20.293 ms | 68.2 µs | 297.4x |
+| 64 | 45.004 ms | 120.6 µs | 373.3x |
 
-Measurement commands at commit `3ad7817b` on `carica` (Apple M2 Ultra,
-macOS 14.6.1), `HEX_FLINT_BENCH_PYTHON=python3`, python-flint `0.8.0`:
+**FLINT nmod_poly.factor_distinct_deg via python-flint**, paired against the
+Lean `distinct-degree-factorization` fixed ladder. Export:
+`reports/bench-results/hex-berlekamp-ddf-compare-f396965d-chungus2.json`
+(SHA-256
+`32f79d561e1056a26c78c8f822078023180a934e89a54aed1a21179ab27a4deb`).
 
-```sh
-lake exe hexberlekamp_bench compare \
-    Hex.BerlekampBench.runRabinTestChecksum{8,10,12,16,20,24,32,40,48,56,64} \
-    Hex.BerlekampBench.runFlintRabinTestChecksum{8,10,12,16,20,24,32,40,48,56,64} \
-    --export-file reports/bench-results/hex-berlekamp-rabin-compare.json
-lake exe hexberlekamp_bench compare \
-    Hex.BerlekampBench.runDistinctDegreeChecksum{12,16,20,24,32,40,48,64,80,96} \
-    Hex.BerlekampBench.runFlintDistinctDegreeChecksum{12,16,20,24,32,40,48,64,80,96} \
-    --export-file reports/bench-results/hex-berlekamp-ddf-compare.json
-```
+| n | Lean median | FLINT median | ratio |
+|---:|---:|---:|---:|
+| 12 | 1.372 ms | 21.5 µs | 63.9x |
+| 24 | 4.203 ms | 44.6 µs | 94.2x |
+| 32 | 8.948 ms | 45.7 µs | 195.8x |
+| 48 | 53.096 ms | 153.2 µs | 346.7x |
+| 64 | 61.218 ms | 204.9 µs | 298.7x |
+| 96 | 214.028 ms | 285.7 µs | 749.3x |
 
-(the Lean and FLINT targets are interleaved rung-by-rung on the actual
-command line). Export artefacts:
-`reports/bench-results/hex-berlekamp-rabin-compare.json`, SHA-256
-`9d85f268956099a4df99ded885dbeda2c25cb4a96e6f795a0b9bc4f922f41942`;
-`reports/bench-results/hex-berlekamp-ddf-compare.json`, SHA-256
-`225e85f1483a513701ffa5f0b01a85e01635b42a9db290c058fef37715f9cc57`.
-
-### FLINT `nmod_poly.is_irreducible` vs Rabin
-
-Per-call overhead `19.428 µs` (warm-driver round-trip, rung `n = 8`).
-
-| n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 8 | 0.775 ms | 19.428 µs | 0.0251x | — | no |
-| 10 | 1.587 ms | 23.246 µs | 0.0146x | 0.00240x | no |
-| 12 | 2.276 ms | 25.082 µs | 0.0110x | 0.00248x | no |
-| 16 | 5.623 ms | 34.988 µs | 0.00622x | 0.00277x | no |
-| 20 | 11.036 ms | 37.278 µs | 0.00338x | 0.00162x | no |
-| 24 | 16.621 ms | 47.494 µs | 0.00286x | 0.00169x | yes |
-| 32 | 36.726 ms | 67.924 µs | 0.00185x | 0.00132x | yes |
-| 40 | 79.722 ms | 75.643 µs | 0.000949x | 0.000705x | yes |
-| 48 | 126.661 ms | 105.176 µs | 0.000830x | 0.000677x | yes |
-| 56 | 222.325 ms | 151.275 µs | 0.000680x | 0.000593x | yes |
-| 64 | 328.185 ms | 193.108 µs | 0.000588x | 0.000529x | yes |
-
-Eligible range `n = 24 … 64` (six rungs): below `n = 24` the round-trip
-overhead is more than half the FLINT median, and the `n = 8` row is the
-overhead measurement itself. Across the eligible range the FLINT median
-grows with degree while staying three to four orders of magnitude below
-the Lean median, so the raw ratio falls monotonically from `0.00286x`
-(`n = 24`) to `0.000588x` (`n = 64`) — a diverging trend with FLINT
-pulling steadily further ahead. Overhead-adjustment moves the ratio in
-the same direction (FLINT looks faster still), so it does not change the
-verdict. Gating-goal verdict at the largest eligible rung (`n = 64`):
-**fails** — Lean's `runRabinTestChecksum` is `~1700x` slower than FLINT's
-`is_irreducible`, not at least as fast.
-
-### FLINT `nmod_poly.factor_distinct_deg` vs DDF
-
-Per-call overhead `33.879 µs` (warm-driver round-trip, rung `n = 12`).
-The DDF fixed targets use an opaque timing token for the fixed compare:
-the conformance oracle compares monic-normalised degree buckets, while
-the raw Lean and FLINT representative checksums are not a stable shared
-observable.
-
-| n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 12 | 6.916 ms | 33.879 µs | 0.00490x | — | no |
-| 16 | 13.141 ms | 44.882 µs | 0.00342x | 0.000837x | no |
-| 20 | 21.250 ms | 57.017 µs | 0.00268x | 0.00109x | no |
-| 24 | 45.354 ms | 88.100 µs | 0.00194x | 0.00120x | yes |
-| 32 | 77.882 ms | 81.074 µs | 0.00104x | 0.000606x | yes |
-| 40 | 123.663 ms | 105.013 µs | 0.000849x | 0.000575x | yes |
-| 48 | 225.748 ms | 162.508 µs | 0.000720x | 0.000570x | yes |
-| 64 | 516.348 ms | 390.753 µs | 0.000757x | 0.000691x | yes |
-| 80 | 886.891 ms | 407.712 µs | 0.000460x | 0.000422x | yes |
-| 96 | 1.473 s | 503.831 µs | 0.000342x | 0.000319x | yes* |
-
-`*` the `n = 96` Lean median (`1.473 s`) sits above the `1 s` soft cap
-but within the `10 s` hard ceiling; it is kept to extend the trend.
-Eligible range `n = 24 … 96`: below `n = 24` the round-trip overhead is
-more than half the FLINT median. As with Rabin, the FLINT median grows
-with degree but stays three orders of magnitude below the Lean median;
-the raw ratio falls from `0.00194x` (`n = 24`) to `0.000342x` (`n = 96`),
-again a diverging trend in FLINT's favour. Gating-goal verdict at the
-largest eligible rung (`n = 96`): **fails** — Lean's
-`runDistinctDegreeChecksum` is `~2900x` slower than FLINT's
-`factor_distinct_deg`. The verdict is the same at the largest rung under
-the `1 s` soft cap (`n = 80`, `~2200x` slower).
+Command per surface: `taskset -c 0 lake exe hexberlekamp_bench run --filter
+{RabinTestChecksum,DistinctDegreeChecksum} --export-file ...`, all repeats
+hash-agreeing, driver spawned out of the timed region.
 
 ## Profile
 
-The profiles below were recorded with `samply record --save-only
---unstable-presymbolicate` at commit `e7bf7c23bbb5` on `carica`
-(Apple M2 Ultra, macOS 14.6.1) at the default 1 kHz sampling rate.
-Raw Firefox Profiler JSON artefacts are developer-local under
-`/tmp/hex-profiles/` and are not committed. The optimized macOS build
-kept essentially all sampled child time in the generated Lean
-registration closure for each target rather than unwinding through
-smaller source functions; the attribution review below therefore maps
-that closure back to the registered target and the source-level
-algorithm path in `HexBerlekamp/Bench.lean` and `HexBerlekamp/*`.
-Across the four child profiles, classified leaf samples were at least
-99.5% own compiled Lean code, with Lean runtime and allocation/free
-each below 0.5%; no GMP big-integer cost was observed, as expected for
-fixed-word `ZMod64 5` arithmetic.
+Sampling profiles were captured for one representative rung of each input
+family with samply 0.13.1 at interval 1.001 ms (~999 Hz) through
+`scripts/profile/run_profile.sh` (lean-bench-samply orchestrator, filtered to
+the timed regions, target 3 s per capture), binary built from clean
+`f396965d`. Leaf-cost categorisation (own code / Lean runtime / allocator) is
+committed as
+`reports/bench-results/berlekamp-leafcost-f396965d-chungus2.txt` (SHA-256
+`2a91ece372fb44d7148d5f64068e64440a3182ebe227f79c9b9bf51332527d72`); the raw
+`*.json.gz` profiles are developer-local per SPEC/profiling.md.
 
-### `berlekamp-matrix`
+| Capture | own code | Lean runtime | allocator | top leaf symbols |
+|---|---:|---:|---:|---|
+| `berlekamp-matrix`, n=192 (4057 samples) | 33.8% | 37.6% | 27.9% | `lean_apply_2` 15.7%, `DensePoly.mulImpl` 7.2% |
+| `rabin-irreducibility`, n=64 (2547 samples) | 33.2% | 37.7% | 28.7% | `lean_apply_2` 19.9%, `DensePoly.mulImpl` 8.8% |
+| `split-step-factorization`, n=256 (1926 samples) | 45.5% | 27.3% | 27.1% | `DensePoly.subtractScaledShiftStep` 20.9%, `ZMod64.mul` boxed 10.5% |
+| `distinct-degree-factorization`, n=96 (1921 samples) | 35.8% | 34.7% | 29.2% | `lean_apply_2` 18.7%, `mi_free` 17.1% |
 
-Command:
-
-```sh
-lake exe hexberlekamp_bench profile Hex.BerlekampBench.runBerlekampMatrixChecksum \
-    --param 192 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-berlekamp-matrix-e7bf7c2.json --"
-```
-
-Representative case: deterministic monic `F_5` polynomial
-`monicPoly 193 101`, parameter `n = 192`, no seed. Child row:
-`inner_repeats=64`, `per_call_nanos=62169035.156250`,
-`result_hash=0xa562d3f84baa18e9`. Total `4095` main-thread samples.
-Leaf classification was own compiled Lean code 99.5%, Lean runtime
-0.3%, allocation/free 0.1%, GMP 0.0%, other below 0.1%. Inclusive
-cost was led by the optimized registration closure for
-`runBerlekampMatrixChecksum` (99.5%). Source attribution maps this
-closure to `berlekampMatrix`, whose work is the fixed-prime Frobenius
-column recurrence over a degree-`n` dense polynomial. The dominant
-work is exactly the registered `runBerlekampMatrixChecksum` target
-and matches the declared quadratic model.
-
-### `rabin-irreducibility`
-
-Command:
-
-```sh
-lake exe hexberlekamp_bench profile Hex.BerlekampBench.runRabinTestChecksum \
-    --param 64 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-berlekamp-rabin-e7bf7c2.json --"
-```
-
-Representative case: deterministic monic `F_5` polynomial
-`monicPoly 65 101`, parameter `n = 64`, no seed. Child row:
-`inner_repeats=16`, `per_call_nanos=341168148.437500`,
-`result_hash=0xd`. Total `5855` main-thread samples. Leaf
-classification was own compiled Lean code 99.6%, Lean runtime 0.3%,
-allocation/free below 0.1%, GMP 0.0%, other below 0.1%. Inclusive
-cost was led by the optimized registration closure for
-`runRabinTestChecksum` (99.6%). Source attribution maps this closure
-to `rabinTest`, where the Frobenius remainder and bounded gcd checks
-dominate the dense fixed-prime polynomial work. The profiled cost is
-covered by the registered `runRabinTestChecksum` target and matches
-the declared cubic model.
-
-### `split-step-factorization`
-
-Command:
-
-```sh
-lake exe hexberlekamp_bench profile Hex.BerlekampBench.runBerlekampFactorChecksum \
-    --param 256 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-berlekamp-factor-e7bf7c2.json --"
-```
-
-Representative case: Fibonacci-style polynomial pair
-`fibPoly 258` and `fibPoly 257`, parameter `n = 256`, no seed.
-Child row: `inner_repeats=32`, `per_call_nanos=128112763.000000`,
-`result_hash=0xf7bf198d9173a6ce`. Total `4296` main-thread samples.
-Leaf classification was own compiled Lean code 99.5%, Lean runtime
-0.3%, allocation/free below 0.1%, GMP 0.0%, other below 0.1%.
-Inclusive cost was led by the optimized registration closure for
-`runBerlekampFactorChecksum` (99.5%). Source attribution maps this
-closure to the constant-size sweep of `splitFactorAt` calls, each
-performing a dense Euclidean gcd against the prepared witness. The
-dominant work is directly measured by the registered target and
-matches the declared quadratic fixed-prime model.
-
-### `distinct-degree-factorization`
-
-Command:
-
-```sh
-lake exe hexberlekamp_bench profile Hex.BerlekampBench.runDistinctDegreeChecksum \
-    --param 96 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-berlekamp-ddf-e7bf7c2.json --"
-```
-
-Representative case: deterministic monic `F_5` polynomial
-`monicPoly 99 211`, parameter `n = 96`, no seed. Child row:
-`inner_repeats=2`, `per_call_nanos=1523663271.000000`,
-`result_hash=0x967aa08b9f90679`. Total `4642` main-thread samples.
-Leaf classification was own compiled Lean code 99.5%, Lean runtime
-0.3%, allocation/free below 0.1%, GMP 0.0%, other below 0.1%.
-Inclusive cost was led by the optimized registration closure for
-`runDistinctDegreeChecksum` (99.5%). Source attribution maps this
-closure to `distinctDegreeFactor`, where repeated Frobenius updates
-and gcds over the residual dominate. The work is covered by the
-registered `runDistinctDegreeChecksum` target and matches the
-declared cubic model.
+The distribution matches what the algorithms should be doing: the three
+Frobenius-dominated families spend their own-code time in `DensePoly.mulImpl`
+and the monic-reduction kernel, with roughly a quarter to a third of wall
+time in boxed closure dispatch (`lean_apply_2`) plus reference counting, and
+another ~28% in the allocator (`mi_malloc_small`/`mi_free`), the expected
+shape for boxed generic field arithmetic over small `F_5` elements. The
+split-step family is the most kernel-bound (45.5% own code, led by the
+Euclidean `subtractScaledShiftStep` at 20.9%), matching its gcd-loop cost
+model. The same boxed-arithmetic overhead is the structural component of the
+FLINT ratios above. No sample category contradicts a declared cost model; no
+audit-found issue was filed from these captures.
 
 ## Concerns
 
-- Both gating goals fail at the largest eligible rung. The comparator
-  measurement shape is now valid — `warmupFirstIter` plus the raised
-  `minTotalSeconds` floor amortise the persistent driver out of the
-  per-call median, so the eligible range is `n = 24 … 64` for Rabin and
-  `n = 24 … 96` for DDF rather than empty. But on those eligible rungs
-  FLINT is three to four orders of magnitude faster than Lean
-  (`runRabinTestChecksum` is `~1700x` slower than `is_irreducible` at
-  `n = 64`; `runDistinctDegreeChecksum` is `~2900x` slower than
-  `factor_distinct_deg` at `n = 96`). The SPEC goal is that Lean be at
-  least as fast as FLINT at the largest eligible rung; it is not.
-  HexBerlekamp should not re-claim Phase 4 until the Rabin and
-  distinct-degree kernels close that gap — this is an algorithm/constant-
-  factor gap in the executable Lean implementations, not a
-  measurement-harness artefact.
-- The raw FLINT ratio diverges (lower is faster for FLINT/Lean) across
-  both eligible ranges: Rabin falls from `0.00286x` (`n = 24`) to
-  `0.000588x` (`n = 64`), DDF from `0.00194x` (`n = 24`) to `0.000342x`
-  (`n = 96`). FLINT pulls steadily further ahead as the degree grows, so
-  the gap is widening, not a fixed offset.
+None.

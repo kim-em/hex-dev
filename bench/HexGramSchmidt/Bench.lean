@@ -21,6 +21,10 @@ Scientific registrations:
   `O(n^3 + n^2*m)` on deterministic `n x (2n + 1)` integer inputs.
 * `runScaledCoeffsChecksum`: the full scaled-coefficient matrix surface, using
   one shared fraction-free Gram elimination pass.
+* `runGramRowsSquareChecksum` and `runGramRowsWideChecksum`: the live integer
+  Gram-row construction on lattice-sized `n x n` and `n x (8n + 1)` inputs.
+* `runScaledCoeffRowsSquareChecksum` and `runScaledCoeffRowsWideChecksum`: the
+  corresponding complete per-row Schur consumers on identical fixtures.
 * `runSizeReduceChecksum` and `runAdjacentSwapChecksum`: executable row-update
   matrix helpers, checking only affected rows.
 * `runAdjacentSwapDenom`: the exact-swap denominator `d[k]`.
@@ -115,6 +119,20 @@ def prepIntBasisInput (n : Nat) : IntBasisInput :=
     cols := cols
     entries := flatBasis n cols 41 }
 
+/-- Per-parameter square fixture for the integer Gram-row construction. -/
+def prepGramRowsSquareInput (n : Nat) : IntBasisInput :=
+  { rows := n
+    cols := n
+    entries := flatBasis n n 137 }
+
+/-- Per-parameter wide fixture for the integer Gram-row construction. The
+`8n + 1` ambient dimension exercises the lattice regime `n ≪ m`. -/
+def prepGramRowsWideInput (n : Nat) : IntBasisInput :=
+  let cols := 8 * n + 1
+  { rows := n
+    cols := cols
+    entries := flatBasis n cols 173 }
+
 /-- Reconstruct a typed dense matrix from row-major entries. -/
 def matrixOfFlat (input : IntBasisInput) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
@@ -158,8 +176,14 @@ def intMatrixChecksum (M : Matrix Int n n) : Int :=
   (List.finRange n).foldl
     (fun acc i =>
       (List.finRange n).foldl
-        (fun rowAcc j => rowAcc * 65_537 + M[i][j])
+        (fun rowAcc j => rowAcc * 65_537 + M[(i, j)])
         acc)
+    0
+
+/-- Stable checksum for row-major nested integer arrays. -/
+def intRowsChecksum (rows : Array (Array Int)) : Int :=
+  rows.foldl
+    (fun acc row => row.foldl (fun rowAcc x => rowAcc * 65_537 + x) acc)
     0
 
 /-- Stable checksum for one integer row. -/
@@ -181,6 +205,24 @@ def gramSurfaceComplexity (n : Nat) : Nat :=
 same Gram build plus one Bareiss-style elimination shape as `gramDetVec`. -/
 def scaledCoeffSurfaceComplexity (n : Nat) : Nat :=
   gramSurfaceComplexity n
+
+/-- Gram-row construction model for a square `n x n` basis. -/
+def gramRowsSquareComplexity (n : Nat) : Nat :=
+  n * n * n
+
+/-- Gram-row construction model for a wide `n x (8n + 1)` basis. -/
+def gramRowsWideComplexity (n : Nat) : Nat :=
+  n * n * (8 * n + 1)
+
+/-- Full per-row Schur model on a square basis: Gram construction plus the
+cubic recurrence. -/
+def scaledCoeffRowsSquareComplexity (n : Nat) : Nat :=
+  2 * n * n * n
+
+/-- Full per-row Schur model on a wide basis: Gram construction plus the cubic
+recurrence. -/
+def scaledCoeffRowsWideComplexity (n : Nat) : Nat :=
+  n * n * (8 * n + 1) + n * n * n
 
 /-- Model for a row update plus checksumming the affected rows in the prepared
 `(n + 3) x (2(n + 3) + 1)` fixture. -/
@@ -204,6 +246,26 @@ def runGramDetVecChecksum (input : IntBasisInput) : Nat :=
 /-- Benchmark target: compute the scaled-coefficient matrix and checksum it. -/
 def runScaledCoeffsChecksum (input : IntBasisInput) : Int :=
   intMatrixChecksum (GramSchmidt.Int.scaledCoeffs (matrixOfFlat input))
+
+/-- Benchmark target: construct and checksum integer Gram rows for a square
+basis. -/
+def runGramRowsSquareChecksum (input : IntBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.gramRows (matrixOfFlat input))
+
+/-- Benchmark target: construct and checksum integer Gram rows for a basis
+with many more ambient columns than rows. -/
+def runGramRowsWideChecksum (input : IntBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.gramRows (matrixOfFlat input))
+
+/-- Benchmark target: construct and checksum the per-row Schur result for a
+square basis. -/
+def runScaledCoeffRowsSquareChecksum (input : IntBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.scaledCoeffRowsSchur (matrixOfFlat input))
+
+/-- Benchmark target: construct and checksum the per-row Schur result for a
+basis with many more ambient columns than rows. -/
+def runScaledCoeffRowsWideChecksum (input : IntBasisInput) : Int :=
+  intRowsChecksum (GramSchmidt.Int.scaledCoeffRowsSchur (matrixOfFlat input))
 
 /-- Benchmark target: size-reduce the final row against the first row and
 checksum the changed row plus source row. -/
@@ -266,6 +328,63 @@ setup_benchmark runScaledCoeffsChecksum n => scaledCoeffSurfaceComplexity n
     paramCeiling := 28
     paramSchedule := .custom #[16, 19, 22, 25, 28]
     maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost-model derivation: the square fixture performs `n^2` dot products at
+linear cost `n`, hence `O(n^3) = gramRowsSquareComplexity n`. This target
+isolates the live `gramRows` implementation from its downstream Schur pass. -/
+setup_benchmark runGramRowsSquareChecksum n => (gramRowsSquareComplexity n)
+  with prep := prepGramRowsSquareInput
+  where {
+    paramFloor := 32
+    paramCeiling := 96
+    paramSchedule := .custom #[32, 48, 64, 80, 96]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost-model derivation: the wide fixture performs `n^2` dot products at
+linear cost `8n + 1`, hence `O(n^2 * (8n + 1)) = gramRowsWideComplexity n`.
+This isolates the `n ≪ m` shape separately from the square construction. -/
+setup_benchmark runGramRowsWideChecksum n => (gramRowsWideComplexity n)
+  with prep := prepGramRowsWideInput
+  where {
+    paramFloor := 16
+    paramCeiling := 48
+    paramSchedule := .custom #[16, 24, 32, 40, 48]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- The complete square consumer pairs the same `prepGramRowsSquareInput`
+fixture with the per-row Schur recurrence, allowing the isolated construction
+share to be compared directly at each common rung. -/
+setup_benchmark runScaledCoeffRowsSquareChecksum n =>
+    scaledCoeffRowsSquareComplexity n
+  with prep := prepGramRowsSquareInput
+  where {
+    paramFloor := 16
+    paramCeiling := 32
+    paramSchedule := .custom #[16, 20, 24, 28, 32]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- The complete wide consumer uses the identical `n x (8n + 1)` fixture as
+`runGramRowsWideChecksum`; only the downstream Schur recurrence is added. -/
+setup_benchmark runScaledCoeffRowsWideChecksum n =>
+    scaledCoeffRowsWideComplexity n
+  with prep := prepGramRowsWideInput
+  where {
+    paramFloor := 12
+    paramCeiling := 28
+    paramSchedule := .custom #[12, 16, 20, 24, 28]
+    maxSecondsPerCall := 8.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }

@@ -1,0 +1,6 @@
+Reviewed by an independent agent session against
+HexTruncatedSeries/SPEC/hex-truncated-series.md and the PLAN/Phase2.md
+checklist. Verdict: pass-with-gaps, token committable. No placeholder,
+wrong-shape, fake-extern, native-detour, or dependency violation was found.
+The downstream API, helper deduplication, instance-policy, and allocation
+findings are tracked by issues #9551, #9552, #9553, #9554, and #9556.

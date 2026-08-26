@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import Init.Grind.Ring.Basic
-public import HexModArith.Basic
+public import HexModArith.Residue
 
 public section
 
@@ -25,7 +25,7 @@ namespace ZMod64
 variable {p : Nat} [Bounds p]
 
 /-- The canonical representative of negating a nonzero element: for `a ≠ 0`
-the negation primitive `-a.val - complementWord p hpLt` has `toNat` value
+the negation primitive `-a.val - complementWord p hpLt` has {name}`toNat` value
 `p - a.toNat`. This identifies the witness produced by the negation surface
 with the expected modular representative, and the side condition
 `hpLt : p < UInt64.word` keeps the complement word in range. -/
@@ -64,8 +64,8 @@ private theorem neg_nonzero_toNat (a : ZMod64 p) {hpLt : p < UInt64.word}
   simpa [UInt64.word] using hfinal
 
 /-- The negation representative stays in canonical range: for `a ≠ 0` the
-`toNat` value of `-a.val - complementWord p hpLt` is `< p`. This is the
-`p - a.toNat < p` bound (using `neg_nonzero_toNat`), needed so the negated
+{name}`toNat` value of `-a.val - complementWord p hpLt` is `< p`. This is the
+`p - a.toNat < p` bound (using {name}`neg_nonzero_toNat`), needed so the negated
 element is itself a valid `ZMod64 p` residue. The side condition
 `hpLt : p < UInt64.word` keeps the complement word in range. -/
 private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
@@ -83,15 +83,12 @@ private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
 /-- The additive inverse represented by the complementary residue mod `p`. -/
 @[expose]
 def neg (a : ZMod64 p) : ZMod64 p := by
-  by_cases hp : p = UInt64.word
-  · refine ⟨-a.val, ?_⟩
-    simpa [hp] using (UInt64.toNat_lt_size (-a.val))
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    let c64 := complementWord p hpLt
-    by_cases hzero : a.val = 0
-    · refine ⟨0, ?_⟩
-      simp [Bounds.pPos (p := p)]
-    · exact ⟨-a.val - c64, by simpa [c64] using neg_nonzero_lt a hzero⟩
+  have hpLt : p < UInt64.word := Bounds.pLtWord p
+  let c64 := complementWord p hpLt
+  by_cases hzero : a.val = 0
+  · refine ⟨0, ?_⟩
+    simp [Bounds.pPos (p := p)]
+  · exact ⟨-a.val - c64, by simpa [c64] using neg_nonzero_lt a hzero⟩
 
 /-- Natural-number literals in `ZMod64`. -/
 @[expose]
@@ -161,49 +158,43 @@ theorem natCast_eq_ofNat (n : Nat) :
     natCast p n = ofNat p n := by
   rfl
 
-/-- Operator-level form of `natCast_eq_ofNat`. -/
+/-- Operator-level form of {name}`natCast_eq_ofNat`. -/
 theorem natCast_op_eq_ofNat (n : Nat) :
     (n : ZMod64 p) = ofNat p n := by
-  simpa using natCast_eq_ofNat (p := p) n
+  exact natCast_eq_ofNat (p := p) n
 
 /-- Negation takes the complementary representative modulo `p`. -/
 @[simp, grind =] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
   unfold neg
-  by_cases hp : p = UInt64.word
-  · rw [dif_pos hp]
-    change (-a.val).toNat = (p - a.toNat) % p
-    rw [UInt64.toNat_neg]
-    simp [toNat_eq_val, hp, UInt64.word]
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    rw [dif_neg hp]
-    by_cases hzero : a.val = 0
-    · rw [dif_pos hzero]
-      change (0 : UInt64).toNat = (p - a.toNat) % p
-      have htoNat : a.toNat = 0 := by simp [toNat_eq_val, hzero]
-      have hval : a.val.toNat = 0 := by simpa [toNat_eq_val] using htoNat
-      simp [toNat_eq_val, hval]
-    · rw [dif_neg hzero]
-      change (-a.val - complementWord p hpLt).toNat = (p - a.toNat) % p
-      rw [neg_nonzero_toNat a hzero]
-      have hzeroNat : a.toNat ≠ 0 := by
-        intro h
-        apply hzero
-        apply UInt64.toNat_inj.mp
-        simpa [toNat_eq_val] using h
-      have hlt : p - a.toNat < p := by
-        have ha : a.toNat < p := a.isLt
-        omega
-      rw [Nat.mod_eq_of_lt hlt]
+  have hpLt : p < UInt64.word := Bounds.pLtWord p
+  by_cases hzero : a.val = 0
+  · rw [dif_pos hzero]
+    change (0 : UInt64).toNat = (p - a.toNat) % p
+    have htoNat : a.toNat = 0 := by simp [toNat_eq_val, hzero]
+    have hval : a.val.toNat = 0 := by simpa [toNat_eq_val] using htoNat
+    simp [toNat_eq_val, hval]
+  · rw [dif_neg hzero]
+    change (-a.val - complementWord p hpLt).toNat = (p - a.toNat) % p
+    rw [neg_nonzero_toNat a hzero]
+    have hzeroNat : a.toNat ≠ 0 := by
+      intro h
+      apply hzero
+      apply UInt64.toNat_inj.mp
+      simpa [toNat_eq_val] using h
+    have hlt : p - a.toNat < p := by
+      have ha : a.toNat < p := a.isLt
+      omega
+    rw [Nat.mod_eq_of_lt hlt]
 
 /-- Negation is the residue built from the complementary representative. -/
 theorem neg_eq_ofNat (a : ZMod64 p) :
     neg a = ofNat p (p - a.toNat) := by
   rw [eq_iff_toNat_eq, toNat_neg, toNat_ofNat]
 
-/-- Operator-level form of `neg_eq_ofNat`. -/
+/-- Operator-level form of {name}`neg_eq_ofNat`. -/
 theorem neg_op_eq_ofNat (a : ZMod64 p) :
     -a = ofNat p (p - a.toNat) := by
-  simpa using neg_eq_ofNat a
+  exact neg_eq_ofNat a
 
 /-- Natural scalar multiplication reduces the scaled representative modulo `p`. -/
 @[simp, grind =] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
@@ -215,10 +206,10 @@ theorem nsmul_eq_ofNat (n : Nat) (a : ZMod64 p) :
     nsmul n a = ofNat p (n * a.toNat) := by
   rw [eq_iff_toNat_eq, toNat_nsmul, toNat_ofNat]
 
-/-- Operator-level form of `nsmul_eq_ofNat`. -/
+/-- Operator-level form of {name}`nsmul_eq_ofNat`. -/
 theorem nsmul_op_eq_ofNat (n : Nat) (a : ZMod64 p) :
     n • a = ofNat p (n * a.toNat) := by
-  simpa using nsmul_eq_ofNat n a
+  exact nsmul_eq_ofNat n a
 
 /-- Integer casts of nonnegative representatives reduce modulo `p`. -/
 @[simp, grind =] theorem toNat_intCast_ofNat (n : Nat) :
@@ -245,11 +236,15 @@ theorem natCast_eq_natCast_iff (x y : Nat) :
     ((x : ZMod64 p) = y) ↔ x % p = y % p := by
   constructor
   · intro h
-    simpa using congrArg ZMod64.toNat h
+    have h2 : (natCast p x).toNat = (natCast p y).toNat := congrArg ZMod64.toNat h
+    rw [toNat_natCast, toNat_natCast] at h2
+    exact h2
   · intro h
     apply ext
     apply UInt64.toNat_inj.mp
-    simpa [toNat_natCast] using h
+    rw [show (↑x : ZMod64 p).val.toNat = x % p from toNat_natCast x,
+      show (↑y : ZMod64 p).val.toNat = y % p from toNat_natCast y]
+    exact h
 
 /-- A Nat literal vanishes in `ZMod64 p` exactly when `p` divides it. -/
 theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := by
@@ -263,10 +258,10 @@ theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := 
 @[simp, grind =] theorem natCast_self : ((p : Nat) : ZMod64 p) = 0 := by
   exact (natCast_eq_natCast_iff (p := p) p 0).2 (by simp)
 
-/-- The spec-level inverse law on canonical representatives. -/
+/-- The reference inverse law on canonical representatives. -/
 theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
     (a.inv * a).toNat = 1 % p := by
-  simpa [ZMod64.toNat_eq_val] using inv_mul_eq_one (p := p) a hcop
+  exact inv_mul_eq_one (p := p) a hcop
 
 /-- Associativity of `Nat` addition under an outer `% m`, written in the
 fully reduced form where each operand is already taken `% m`. This is the
@@ -307,8 +302,7 @@ theorem nat_left_distrib_mod (x y z m : Nat) :
       rw [← Nat.add_mod y z m, ← Nat.mul_mod x (y + z) m]
     _ = (x * y + x * z) % m := by rw [Nat.left_distrib]
     _ = ((x % m * (y % m)) % m + (x % m * (z % m)) % m) % m := by
-      rw [Nat.add_mod]
-      rw [Nat.mul_mod x y m, Nat.mul_mod x z m]
+      rw [Nat.add_mod, Nat.mul_mod x y m, Nat.mul_mod x z m]
 
 /-- Right distributivity of `Nat` multiplication over addition under an
 outer `% m`, with each operand pre-reduced `% m`. This is the
@@ -322,8 +316,7 @@ theorem nat_right_distrib_mod (x y z m : Nat) :
       rw [← Nat.add_mod x y m, ← Nat.mul_mod (x + y) z m]
     _ = (x * z + y * z) % m := by rw [Nat.right_distrib]
     _ = ((x % m * (z % m)) % m + (y % m * (z % m)) % m) % m := by
-      rw [Nat.add_mod]
-      rw [Nat.mul_mod x z m, Nat.mul_mod y z m]
+      rw [Nat.add_mod, Nat.mul_mod x z m, Nat.mul_mod y z m]
 
 /-- Additive cancellation of the modular negation representative: for
 `x < m`, the reduced complement `(m - x) % m` added back to `x` is `0`
@@ -357,9 +350,9 @@ theorem nat_mul_comm_mod (x y m : Nat) :
     (x * y) % m = (y * x) % m := by
   rw [Nat.mul_comm]
 
-/-- Negation on `ZMod64 p` is involutive: applying `ZMod64.neg` twice is the
+/-- Negation on `ZMod64 p` is involutive: applying {name}`ZMod64.neg` twice is the
 identity. This is the `ZMod64`-level consequence of `nat_neg_neg_mod`,
-lifted through `toNat`. -/
+lifted through {name}`toNat`. -/
 private theorem neg_neg (a : ZMod64 p) : ZMod64.neg (ZMod64.neg a) = a := by
   apply ext_toNat
   rw [toNat_neg, toNat_neg]
@@ -441,18 +434,17 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     apply ext_toNat
     change (OfNat.ofNat (n + 1) : ZMod64 p).toNat =
       (ZMod64.add (OfNat.ofNat n) ZMod64.one).toNat
-    rw [show (OfNat.ofNat (n + 1) : ZMod64 p) = ZMod64.natCast p (n + 1) from rfl]
-    rw [show (OfNat.ofNat n : ZMod64 p) = ZMod64.natCast p n from rfl]
-    rw [toNat_natCast, toNat_add, toNat_natCast, toNat_one]
+    rw [show (OfNat.ofNat (n + 1) : ZMod64 p) = ZMod64.natCast p (n + 1) from rfl,
+      show (OfNat.ofNat n : ZMod64 p) = ZMod64.natCast p n from rfl,
+      toNat_natCast, toNat_add, toNat_natCast, toNat_one]
     simp [Nat.add_mod]
   · intro n
     rfl
   · intro n a
     apply ext_toNat
     change (ZMod64.nsmul n a).toNat = (ZMod64.mul (↑n : ZMod64 p) a).toNat
-    rw [toNat_nsmul, toNat_mul]
-    rw [show (↑n : ZMod64 p).toNat = (ZMod64.natCast p n).toNat from rfl]
-    rw [toNat_natCast]
+    rw [toNat_nsmul, toNat_mul, show (↑n : ZMod64 p).toNat = (ZMod64.natCast p n).toNat from rfl,
+      toNat_natCast]
     simp [Nat.mul_mod]
 
 /-- Adding zero on the right leaves a residue unchanged. -/
@@ -535,8 +527,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
 @[simp, grind =] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.one n).toNat = (ZMod64.one : ZMod64 p).toNat
-  rw [toNat_pow, toNat_one]
-  rw [← Nat.pow_mod (1 : Nat) n p]
+  rw [toNat_pow, toNat_one, ← Nat.pow_mod (1 : Nat) n p]
   simp
 
 instance : Lean.Grind.Ring (ZMod64 p) where

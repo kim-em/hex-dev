@@ -5,3 +5,11 @@ __pycache__/
 .claude/.pod-checksums
 conformance-failures/*.json
 .venv-oracles/
+
+# Machine-local pod session state, not project knowledge.
+.pod/
+sessions/
+_out/
+
+# Accidentally-committed scratch benchmark tree; see PR #9044.
+/scratch-mvpoly-bench/

@@ -4,34 +4,37 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 
 /-!
-Core conformance checks for the `HexBerlekampZassenhaus` integer
-Berlekamp-Zassenhaus pipeline.
+Conformance checks for `HexBerlekampZassenhaus` integer
+Berlekamp-Zassenhaus factorization.
 
-Oracle: python-flint for the external JSONL factorization profile; core uses
+Oracle: python-flint for the external JSONL factorization profile; Lean uses
 Lean-only property and committed-fixture checks.
-Mode: if_available
+Mode: `if_available`
 Covered operations:
 - `isGoodPrime`, `choosePrime`, and `choosePrimeData?`
+- `directPrimePlan?`, and the prime walk's stopping decision `scoutPays` with
+  the modulus width `liftWords` it reads
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
-  `factorSlowModular`, and `factorFast`
-- `factorWithBound` and `factor`
+- `bhksRecover?`, `recombinationSearch`, and `factorTrial`
+- `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
   `PrimeFactorData.checkFactorCerts`, `PrimeFactorData.checkForPolynomial`,
   and `checkIrreducibleCert`
 Covered properties:
 - selected good primes satisfy the executable admissibility predicate
-- normalization prefix factors and square-free core multiply back to the input
+- normalization prefix factors and square-free input multiply back to the input
 - supported recombination/factorization outputs multiply back to the target on
   committed lifted factors
 - adversarial modular split cases exercise non-trivial subset-product
   recombination buckets
+- the prime walk declines another modular observation exactly when the plan it
+  holds has too little recombination work left to repay one
 - signed scalar and `(factor, multiplicity)` buckets match independently
   committed expectations on the public `Factorization` edge-case table
 - bounded and default factor entry points multiply their returned factors back
@@ -80,7 +83,6 @@ private def linear (r : Int) : ZPoly :=
 private def fromRoots (roots : List Int) : ZPoly :=
   Array.polyProduct (roots.map linear).toArray
 
-@[expose]
 private def coeffs (f : ZPoly) : List Int :=
   f.toArray.toList
 
@@ -100,7 +102,7 @@ private def sameFactorCoeffSet (actual expected : List (List Int × Nat)) : Bool
 
 /-- Product preservation guard for the public default `factor` entry point. -/
 private def factorPreservesProduct (f : ZPoly) : Bool :=
-  Factorization.product (factor f) = f
+  Factorization.product (ZPoly.factorize f) = f
 
 private def sameCoeffSet (actual expected : List (List Int)) : Bool :=
   actual.length == expected.length &&
@@ -123,7 +125,7 @@ private def unitPolyFive : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem unitPolyFive_monic : DensePoly.Monic unitPolyFive := by
   rfl
@@ -132,7 +134,7 @@ private def irreducibleQuadFive : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem irreducibleQuadFive_monic : DensePoly.Monic irreducibleQuadFive := by
   rfl
@@ -169,13 +171,24 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
-/-! ## Adversarial modular split cases (HO-2, #2565)
+/-- A non-monic Legendre input whose monic transform has large coefficients
+and ten factors at the first good prime. The adaptive selector finds an inert
+prime within its bounded look-ahead. -/
+private def legendreP20 : ZPoly :=
+  zpoly #[184756, 0, -38798760, 0, 1338557220, 0, -17847429600, 0,
+    120470149800, 0, -465817912560, 0, 1093966309800, 0, -1586852229600, 0,
+    1388495700900, 0, -671560012200, 0, 137846528820]
 
-These named polynomials exercise the SPEC-required shapes from
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures":
-at least one input where the integer factors require a non-trivial subset
-product of lifted mod-p factors, and at least one input that splits heavily
-(≥ 4 distinct mod-p factors) over a small admissible prime.
+/-- Large signed coefficients exercise the compiled one-pass content and
+primitive-part implementation, including its zero/trailing normalization. -/
+private def largeContentPoly : ZPoly :=
+  zpoly #[0, -(12 * (2 : Int) ^ 130), 18 * (2 : Int) ^ 130, 0]
+
+/-! # Adversarial modular split cases
+
+These named polynomials cover an input whose integer factors require a
+non-trivial subset product of lifted mod-p factors and inputs that split into
+at least four distinct mod-p factors over a small admissible prime.
 
 The Lean-only guards below check the local modular split facts and, where
 the executable BHKS recovery surface exposes it, the recombined integer
@@ -335,7 +348,7 @@ private def factorizationEdgeCases : List FactorizationCase :=
 /-- Edge-case table guard: expected signed scalar/multiplicity buckets and
 exact product preservation must both hold for the public `factor` output. -/
 private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
-  let φ := factor c.input
+  let φ := ZPoly.factorize c.input
   φ == c.expected && Factorization.product φ == c.input
 
 #guard
@@ -356,6 +369,15 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard choosePrime squareFreeTypical = 3
 #guard isGoodPrime squareFreeTypical 3
 #guard choosePrime leadingCoeffDivisibleByFive = 3
+
+/-- A live bounded-selector counterexample. For `g = X^3 - P`, where `P` is
+the product of all 94 candidates, every candidate reduction is `X^3`.
+Thus neither direct prime planning nor the conditional lattice method succeeds. -/
+private def hotPathNoPrimeCubic : ZPoly :=
+  DensePoly.ofCoeffs #[-(hotPathPrimorial : Int), 0, 0, 1]
+
+#guard (directPrimePlan? ⟨hotPathNoPrimeCubic⟩).isNone
+#guard factorLattice hotPathNoPrimeCubic = none
 
 #guard
   match choosePrimeData? squareFreeTypical with
@@ -393,18 +415,59 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
   | none => false
   | some data => 3 <= data.p
 
-/-! ### Extended-search cascade (HO-5d-3, #5819)
+#guard
+  match choosePrimeData? legendreP20, directPrimePlan? ⟨legendreP20⟩ with
+  | some first, some plan =>
+      first.factorsModP.size = 10 && plan.width = 1
+  | _, _ => false
 
-The `(x-1)(x-2)…(x-n)` cascade exhausts the historical fixed prefix once
-`n ≥ 72`, because then every old prefix prime had a colliding residue pair
-somewhere in `{1, ..., n}` and the modular image failed the square-free
-predicate. Materializing the degree-72 input via `fromRoots` in kernel
-reduction time is prohibitively slow (~10 minutes of `#guard` cost), so the
-fixture instead uses the engineered degree-2 cascade
-`(x - 1)(x - (1 + D))` with `D = product p` over the old fixed-list primes
-`p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. The expanded SPEC prefix now
-includes `29`, and `D mod 29 ≠ 0`, so `choosePrimeData?` reaches the new
-candidate instead of falling through to the post-prefix range.
+/-! ## Pricing one more modular observation
+
+`scoutPays` is the prime walk's only stopping decision, so pin both of its
+directions and the modulus width it reads. Every quantity below is a function of
+the input degree, the primes, and a degree multiset; the incumbent plans here
+are hypothetical shapes, not plans the walk builds. -/
+
+/-- A hypothetical incumbent plan at `p` with the given modular factor degrees.
+`scoutPays` reads only the prime and the degrees; the score follows from both. -/
+private def incumbentAt (core : SquareFreeInput) (p : Nat) (degrees : Array Nat) :
+    ScoutIncumbent :=
+  ⟨p, degrees, directDegreeScore core p degrees⟩
+
+-- `legendreP20`'s coefficient bound needs 27 powers of three, and `3 ^ 27` is a
+-- 43-bit number, so its Hensel modulus occupies one machine word. Estimating the
+-- width as `27 * bitLen 3` would have said two.
+#guard liftWords ⟨legendreP20⟩ 3 = 1
+
+-- The subset count is the complete head-forced one until it passes the budget
+-- where the direct engine abandons the search, and is that budget after.
+#guard (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 10 2)).candidatesLeft = 512
+#guard (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 20 1)).candidatesLeft
+  = defaultSubsetBudget
+
+-- One modular factor leaves no subset search at all, so nothing an observation
+-- could find can repay it.
+#guard !scoutPays ⟨legendreP20⟩ (incumbentAt ⟨legendreP20⟩ 3 #[20]) 5 2
+
+-- Four factors reaching degree 16 leave eight recombination candidates, against
+-- a scout that would run sixteen Frobenius rounds. Still nothing to shop for.
+#guard !scoutPays ⟨legendreP20⟩ (incumbentAt ⟨legendreP20⟩ 3 #[2, 2, 2, 16]) 5 2
+
+-- Sixteen factors of degree at most two leave 2^15 candidates, and a scout of a
+-- comparable image stops after two rounds. That pays.
+#guard scoutPays ⟨legendreP20⟩
+  (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 12 1 ++ Array.replicate 4 2)) 5 2
+
+/-! # Extended prime search
+
+The `(x-1)(x-2)…(x-n)` cascade has colliding residue pairs at many small
+primes, so those modular images fail the square-free predicate. Materializing
+the degree-72 input via `fromRoots` in kernel reduction time is prohibitively
+slow, so the fixture instead uses the engineered quadratic
+`(x - 1)(x - (1 + D))`, where `D` is the product of
+`{3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. Each of those primes divides `D`,
+while `D mod 29 ≠ 0`, so `choosePrimeData?` continues the search and selects
+an admissible prime.
 -/
 
 /-- Product of the fixed-list primes, used to engineer the extended-
@@ -425,9 +488,14 @@ private def extendedCascade2 : ZPoly :=
   | none => false
   | some data => 29 ≤ data.p
 
-#guard bhksBound (0 : ZPoly) = 1
-#guard bhksBound ZPoly.X = 9
-#guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) = 4609
+#guard bhksBound (0 : ZPoly) = 2
+#guard bhksBound ZPoly.X = 2250000000001
+#guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) =
+  792401927702564082548736000000000001
+
+#guard
+  ZPoly.contentPrimitive largeContentPoly =
+    (6 * (2 : Int) ^ 130, zpoly #[0, -2, 3])
 
 #guard
   let data := normalizeForFactor monomialWithContent
@@ -479,35 +547,6 @@ private def extendedCascade2 : ZPoly :=
   | none => false
 #guard recombinationSearch liftedTarget3 [] = none
 
-/-
-Non-monic recovered-candidate guard for `core = 2X² + 3X + 1` at `p = 3`,
-`k = 2` (`p ^ k = 9`).  This exercises the corrected recovered-candidate model
-(`liftedRecoveryCandidate` / `RecoveredAtLift` on the Mathlib side, mirrored by
-the per-step candidate of `scaledRecombinationSearchModAux` here): the centred
-lifted product is dilated by the integer leading coefficient before the
-primitive part is taken, so the model recovers genuine integer factors of a
-non-monic core rather than monic-coordinate witnesses.
-
-The monic transform `toMonic core = X² + 3X + 2` splits as `(X+1)(X+2)`; lifting
-each centred factor and dilating by `coreLc = 2` recovers the true integer
-factors `2X+1` and `X+1`, whose product is `core`.  An obvious non-factor
-(`2X+3`) is rejected by the exact-division check, distinguishing it from the
-recovered true factor.
--/
-#guard
-  let core := zpoly #[1, 3, 2]          -- 2X² + 3X + 1
-  let coreLc := (2 : Int)
-  let modulus := 9                      -- p ^ k = 3 ^ 2
-  let liftedFactors := [zpoly #[1, 1], zpoly #[2, 1]]   -- X+1, X+2
-  let recovered := normalizeFactorSign <| ZPoly.primitivePart <|
-    ZPoly.dilate coreLc <| centeredLiftPoly (zpoly #[1, 1]) modulus
-  recovered = zpoly #[1, 2]                            -- 2X + 1, a true factor
-    && (exactQuotient? core recovered).isSome          -- ... which divides core
-    && (exactQuotient? core (zpoly #[3, 2])).isNone    -- 2X + 3 is not a factor
-    && (match scaledRecombinationSearchMod coreLc core modulus liftedFactors with
-        | some factors => Array.polyProduct factors.toArray = core
-        | none => false)
-
 #guard
   match bhksRecover? liftedTarget5 liftedData5 with
   | some factors =>
@@ -526,63 +565,38 @@ recovered true factor.
   | none => false
 
 #guard
-  Factorization.product (factorSlowTrial liftedTarget3) = liftedTarget3
+  Factorization.product (factorTrial liftedTarget3) = liftedTarget3
 #guard
-  let φ := factorSlowTrial quadSqrt2Sqrt3
+  let φ := factorTrial quadSqrt2Sqrt3
   Factorization.product φ = quadSqrt2Sqrt3 &&
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
         (coeffs, 1))
--- The exhaustive *modular* recombination backstop (subset-product search, as
--- opposed to `factorSlowTrial`'s integer trial division) recovers the same
--- quadratic buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
 #guard
-  match factorSlowModular quadSqrt2Sqrt3 with
-  | some φ =>
-      Factorization.product φ = quadSqrt2Sqrt3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
-            (coeffs, 1))
-  | none => false
-#guard
-  match factorFast (linear 3) with
-  | some φ => Factorization.product φ = linear 3
-  | none => false
-
-#guard
-  let factors := factorWithBound (linear 3) 4
-  Factorization.product factors = linear 3
-#guard
-  let factors := factorWithBound repeatedRootPoly 4
-  Factorization.product factors = repeatedRootPoly
-#guard
-  let factors := factorWithBound cubicLinear123 4
-  Factorization.product factors = cubicLinear123
-#guard
-  let factors := factor monomialWithContent
+  let factors := ZPoly.factorize monomialWithContent
   Factorization.product factors = monomialWithContent
 #guard
-  let φ := factor monomialWithContent
+  let φ := ZPoly.factorize monomialWithContent
   φ.scalar = 6 && φ.factors == #[(ZPoly.X, 2)]
 #guard
-  let φ := factor negativeMonomial
+  let φ := ZPoly.factorize negativeMonomial
   φ.scalar = -1 && φ.factors == #[(ZPoly.X, 1)]
 #guard
-  let φ := factor repeatedRootPoly
+  let φ := ZPoly.factorize repeatedRootPoly
   φ.scalar = 1 && φ.factors == #[(linear 1, 2)]
 #guard
-  let φ := factor negativeRepeatedRootWithContent
+  let φ := ZPoly.factorize negativeRepeatedRootWithContent
   φ.scalar = -2 && φ.factors == #[(linear 1, 2)] &&
     Factorization.product φ = negativeRepeatedRootWithContent
 #guard
   factorPreservesProduct cubicLinear123
 #guard
-  let factors := factor cyclo11Times22
+  let factors := ZPoly.factorize cyclo11Times22
   factorPreservesProduct cyclo11Times22 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi11, phi22] |>.map fun coeffs => (coeffs, 1))
 #guard
-  let factors := factor quadSqrt2Sqrt3
+  let factors := ZPoly.factorize quadSqrt2Sqrt3
   factorPreservesProduct quadSqrt2Sqrt3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[zpoly #[-3, 0, 1], zpoly #[-2, 0, 1]] |>.map fun coeffs =>
@@ -591,42 +605,23 @@ recovered true factor.
 -- irreducible over `ℤ`, so the fast recombination "misses" and the public
 -- `factor` falls back to returning the single irreducible input.
 #guard
-  let factors := factor x4Plus1
+  let factors := ZPoly.factorize x4Plus1
   factorPreservesProduct x4Plus1 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
 
--- Heavy (8-way split) adversarial backstop cases: `swinnertonDyerSD3` and
--- `phi15` each split into eight linear factors over their small admissible
--- prime yet are irreducible over `ℤ`.  The exhaustive *modular* recombination
--- must reject every one of the `2^8` proper subset products and fall back to
--- the single irreducible input. This is the genuine worst case for "no
--- spurious recombination," dual to the `quadSqrt2Sqrt3` / `x4Plus1` guards
--- above.
 #guard
-  match factorSlowModular swinnertonDyerSD3 with
-  | some φ =>
-      Factorization.product φ = swinnertonDyerSD3 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
-  | none => false
-#guard
-  let factors := factor swinnertonDyerSD3
+  let factors := ZPoly.factorize swinnertonDyerSD3
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
+#guard (factorTraced swinnertonDyerSD3).2.method = .classical
 #guard
-  match factorSlowModular phi15 with
-  | some φ =>
-      Factorization.product φ = phi15 &&
-        sameFactorCoeffSet (factorizationCoeffSummary φ)
-          (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
-  | none => false
-#guard
-  let factors := factor phi15
+  let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
+#guard (factorTraced phi15).2.method = .classical
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]
@@ -645,6 +640,117 @@ recovered true factor.
 #guard !checkIrreducibleCert (zpoly #[2, 0, 1]) certMalformedDegree
 #guard !checkIrreducibleCert (zpoly #[2, 0, 1]) certMissingObstruction
 #guard !checkIrreducibleCert (zpoly #[1, -3, 2]) certValidQuad
+
+/-! # Compiled certificate generators
+
+The generators are the compiled *prep* half of certifying irreducibility. They
+carry no soundness proof; the round-trip guards below confirm that whatever they
+emit is accepted by the executable checkers (`Berlekamp.checkIrreducibilityCertificate`
+and `checkIrreducibleCert`), and that reducible / trivial inputs yield `none`.
+Correctness of an accepted certificate rides on the separately proved
+`checkIrreducibleCert_sound`.
+
+These `#guard`s exercise the *compiled* checker path (executable correctness of
+the generator output). The complementary *kernel* replay — reducing the checker
+on literal certificate data under `decide` — is demonstrated for the
+finite-field layer by `validQuadCert_linear_check` in
+`conformance/HexBerlekamp/Conformance.lean`, and for the integer checker by
+the `irreducible_cert` tactic: it reifies generator output as literal data at
+elaboration time and lets the kernel reduce `checkIrreducibleCertLinear`; its
+end-to-end tests live in
+`HexBerlekampZassenhausMathlib/IrreducibleCertTest.lean`. The `Linear`
+round-trip guards below pin the compiled form of exactly the check the kernel
+replays. -/
+
+/-- The Rabin certificate generator produces a certificate the executable
+checker accepts. -/
+private def fpCertRoundTrips {p : Nat} [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
+  match Berlekamp.buildIrreducibilityCertificate? f hmonic with
+  | some cert => Berlekamp.checkIrreducibilityCertificate f hmonic cert
+  | none => false
+
+/-- The integer certificate generator produces a certificate the executable
+checker accepts. -/
+private def zCertRoundTrips (f : ZPoly) : Bool :=
+  match certifyIrreducible? f with
+  | some cert => checkIrreducibleCert f cert
+  | none => false
+
+/-- The integer certificate generator's output is accepted by the
+kernel-reducible checker as well; the `irreducible_cert` tactic replays
+exactly this check in the kernel. -/
+private def zCertRoundTripsLinear (f : ZPoly) : Bool :=
+  match certifyIrreducible? f with
+  | some cert => checkIrreducibleCertLinear f cert
+  | none => false
+
+-- Rabin generator: irreducible monic `x² + 2` over `F₅` round-trips; the unit
+-- polynomial (degree 0) fails Rabin's test, so no certificate is emitted.
+#guard fpCertRoundTrips irreducibleQuadFive irreducibleQuadFive_monic
+#guard (Berlekamp.buildIrreducibilityCertificate? unitPolyFive unitPolyFive_monic).isNone
+
+-- Integer generator: monic irreducibles with an admissible obstructing prime
+-- for each candidate degree round-trip through the executable checker.
+#guard zCertRoundTrips (zpoly #[2, 0, 1])
+#guard zCertRoundTrips (zpoly #[1, 1, 1])
+
+-- A degree-1 primitive is irreducible with no candidate factor degrees to
+-- obstruct: the generator emits the (valid) empty certificate.
+#guard zCertRoundTrips (zpoly #[3, 1])
+
+-- Reducible or non-admissible inputs yield no certificate: `x² - 1` splits into
+-- linear factors modulo every prime (degree-1 obstruction impossible), and
+-- `(x - 1)²` has no admissible prime at all.
+#guard (certifyIrreducible? (zpoly #[-1, 0, 1])).isNone
+#guard (certifyIrreducible? repeatedRootPoly).isNone
+
+-- Inputs excluded by `checkIrreducibleCert_sound`'s side conditions are
+-- declined up front: constants and zero (`natDegree = 0`) and non-primitive
+-- inputs (`2·x² + 2 = 2·(x² + 1)` is reducible over `ℤ` even though the checker
+-- would accept its mod-`p` certificate).
+#guard (certifyIrreducible? (zpoly #[7])).isNone
+#guard (certifyIrreducible? (0 : ZPoly)).isNone
+#guard (certifyIrreducible? (zpoly #[2, 0, 2])).isNone
+
+-- A cubic irreducible over `ℤ` with an inert prime (`x³ - x - 1` is irreducible
+-- modulo `3`): the single inert block obstructs every proper factor degree at
+-- once, so the generator scales past quadratics whenever a suitable prime exists.
+#guard zCertRoundTrips (zpoly #[-1, -1, 0, 1])
+
+-- The kernel-reducible checker accepts the same generator outputs (compiled
+-- form of the `irreducible_cert` kernel replay).
+#guard zCertRoundTripsLinear (zpoly #[2, 0, 1])
+#guard zCertRoundTripsLinear (zpoly #[1, 1, 1])
+#guard zCertRoundTripsLinear (zpoly #[3, 1])
+#guard zCertRoundTripsLinear (zpoly #[-1, -1, 0, 1])
+
+-- Design limitation, NOT a generator bug: the checker's per-prime degree-sum
+-- obstruction (`checkDegreeObstructions`) must rule out *every* candidate degree
+-- in `1 .. deg/2`, but degree `deg/2` is essentially never obstructable when the
+-- local factorization is "balanced". Swinnerton-Dyer `√2+√3+√5` factors as
+-- `[2,2,2,2]` / `[1×8]` at every prime (degrees 2 and 4 always reachable), and
+-- `Φ₁₅` never avoids a subset summing to 4. Both are irreducible over `ℤ` yet
+-- admit no certificate the current checker can accept, so the generator returns
+-- `none`. Certifying them needs a stronger obstruction than per-prime degree
+-- sums (a checker-design change with its own soundness proof, out of scope for a
+-- compiled generator).
+#guard (certifyIrreducible? swinnertonDyerSD3).isNone
+#guard (certifyIrreducible? phi15).isNone
+
+-- Issue #8691: the word-sized Montgomery CLD kernel `cldQuotientModWord?` is
+-- byte-identical to the bignum `cldQuotientMod` whenever its guard
+-- (`Odd (p^a) ∧ p^a < 2^64`) holds, and declines (returns `none`) otherwise.
+-- `g` is monic (leading coefficient `1`), as the lifted local factors are.
+private def cldTestDivisor : ZPoly := DensePoly.ofCoeffs #[3, 1]
+#guard cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 7 5
+        = some (cldQuotientMod swinnertonDyerSD3 cldTestDivisor 7 5)
+#guard cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 11 13
+        = some (cldQuotientMod swinnertonDyerSD3 cldTestDivisor 11 13)
+#guard cldQuotientModWord? quadSqrt2Sqrt3 cldTestDivisor 5 9
+        = some (cldQuotientMod quadSqrt2Sqrt3 cldTestDivisor 5 9)
+-- Guard declines when `p^a` overflows the word.
+#guard (cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 11 400).isNone
 
 end BZConformance
 end Hex

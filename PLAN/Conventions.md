@@ -101,15 +101,14 @@ PRs before creating new work. Downstream agents are blocked on `main`
 until merged PRs land.
 
 `main` is branch-protected: auto-merge only fires once every required
-status check (`build`, `build-macos`, `conformance`) is green. CI
+status check is green. CI
 gating is non-negotiable — see [SPEC/CI.md](../SPEC/CI.md).
 
 ### CI work expansion
 
 When adding a new conformance check, oracle, benchmark, or build
 target, **extend the script of the existing single ubuntu job** in
-the relevant workflow (`conformance.yml` for conformance/oracle work,
-`ci.yml` for build/check/benchmark work). Do **not** add a new
+`ci.yml`. Do **not** add a new
 top-level job, a new `strategy.matrix`, or a new workflow file. The
 full rationale and the trigger / concurrency / Mathlib-cache rules
 every workflow must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read
@@ -157,7 +156,32 @@ So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-mathlib`
 lower-case; `fp` is "F_p" with `p` variable, lower-case.)
 
 Extend this table when adding libraries whose names involve further
-acronyms. Do not silently introduce a mixed-case spelling.
+acronyms. Do not silently introduce a mixed-case spelling. An acronym of
+four or more letters is not carried as a name segment at all: spell it
+out, following the lean4 naming guide (`RREF` → `RowReduce` /
+`IsRowReduced` / `rowReduce`, like `Json`). The acronyms above are all
+three letters or fewer.
+
+### Lemma and operation naming
+
+- **Entry-access lemmas use the `getElem_<op>` form.** Name a lemma for
+  the head symbol of its left-hand side. When the left-hand side is
+  `(op …)[…] = …` the head is `getElem`, so the lemma is `getElem_<op>`
+  (`getElem_row`, `getElem_transpose`, `getElem_rowSwap`, `getElem_modify`),
+  usually tagged `@[grind =]`; trailing qualifiers ride along
+  (`getElem_rowSwap_of_ne`). Reserve the `_getElem` *suffix* for lemmas
+  where `getElem` is not the head (`ext_getElem`, `getD_getElem`).
+
+- **Vector operations live in the root `Vector` namespace.** `dotProduct`,
+  `normSq`, `unit`, `modify`, and their lemmas attach to Lean core's
+  `Vector`, not a `Hex.Vector` or `Matrix.Vector` namespace — additions to
+  an existing type live in that type's namespace.
+
+- **State a lemma at its weakest typeclass.** Prove an algebraic lemma over
+  the weakest class that admits it (e.g. dot-product additivity over a
+  general ring), but keep a stronger class exactly where the statement is
+  false without it (the multiplicative right-argument lemmas genuinely need
+  commutativity).
 
 ### Process vocabulary stops at the issue boundary
 
@@ -187,9 +211,10 @@ implementation`.
 
 Each library `Foo` has a root file `Foo.lean` (the *umbrella*) and a
 directory `Foo/` containing its modules. The umbrella **must import
-every regular module** under `Foo/`. The only exempt files are those
-declared as `lean_exe` roots in `lakefile.lean` (typically
-`Foo/Bench.lean` and `Foo/EmitFixtures.lean`).
+every regular implementation module** under `Foo/`. Verification-only
+modules may instead be explicit roots of a non-public `lean_lib` such
+as `HexReleaseTests`; executable drivers may be `lean_exe` roots.
+Both exceptions must be declared in `lakefile.lean` and built in CI.
 
 Why this matters: with `precompileModules := true` (the default), Lake
 builds a per-library shared object `libHex_Foo.dylib`/`.so` from the
@@ -206,10 +231,17 @@ symbols. This is exactly the failure mode that motivated adding macOS
 to CI in [Phase0.md §6](Phase0.md).
 
 `scripts/check_dag.py` enforces this rule mechanically: every
-`Foo/X.lean` is either listed as a `lean_exe` root in `lakefile.lean`
-or imported (directly or transitively) by `Foo.lean`. Any PR that adds
-a new module under `Foo/` must also update `Foo.lean` (or chain the
-import through an existing intermediate module).
+`Foo/X.lean` is either an explicit `lean_exe`/`lean_lib` build root in
+`lakefile.lean` or imported (directly or transitively) by `Foo.lean`.
+Any PR that adds a regular implementation module under `Foo/` must also
+update `Foo.lean` (or chain the import through an existing intermediate
+module).
+
+### Module organization
+
+Give each module one subject and name it for its contents; do not keep
+re-export shell modules whose only job is to import others. Every file
+opens with a module docstring, placed immediately after `public section`.
 
 ---
 

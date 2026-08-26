@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Int
-public import HexMatrix.RowEchelon
+public import HexRowReduce.RowEchelon
 
 public section
 
@@ -109,11 +109,10 @@ nondegeneracy hypothesis `hnorm` records that row `j` of the basis is nonzero,
 so its coefficient is well defined. -/
 theorem coeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int)
-    (hnorm : Vector.dotProduct ((basis b).row j) ((basis b).row j) ≠ 0) :
+    (hnorm : ((basis b).row j).dotProduct ((basis b).row j) ≠ 0) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (coeffs b) k j - (r : Rat) := by
-  rw [sizeReduce]
-  rw [coeffs_rowAdd_pivot (b := b) (src := j) (dst := k) hjk (c := -r) hnorm]
+  rw [sizeReduce, coeffs_rowAdd_pivot (b := b) (src := j) (dst := k) hjk (c := -r) hnorm]
   grind
 
 /-- How size reduction propagates to coefficients below the pivot: for a column
@@ -126,8 +125,7 @@ theorem coeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (coeffs b) k l -
         (r : Rat) * GramSchmidt.entry (coeffs b) j l := by
-  rw [sizeReduce]
-  rw [coeffs_rowAdd_lower (b := b) (col := l) (src := j) (dst := k) hlj hjk (c := -r)]
+  rw [sizeReduce, coeffs_rowAdd_lower (b := b) (col := l) (src := j) (dst := k) hlj hjk (c := -r)]
   grind
 
 /-- Size reduction is local to the row being reduced: every coefficient row
@@ -220,15 +218,15 @@ theorem basis_adjacentSwap_curr (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val
       let km1 := GramSchmidt.prevRow k hk
       let swappedPrev :=
         (basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1
-      Vector.dotProduct swappedPrev swappedPrev ≠ 0) :
+      swappedPrev.dotProduct swappedPrev ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
     let μ := GramSchmidt.entry (coeffs b) k km1
     let prev := (basis b).row km1
     let curr := (basis b).row k
     let swappedPrev := curr + μ • prev
     (basis (adjacentSwap b k hk)).row k =
-      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
-        (μ * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr := by
+      (curr.dotProduct curr / swappedPrev.dotProduct swappedPrev) • prev -
+        (μ * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) • curr := by
   let km1 := GramSchmidt.prevRow k hk
   have hkm1 : km1.val + 1 = k.val := by
     dsimp [km1, GramSchmidt.prevRow]
@@ -291,14 +289,14 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
       let km1 := GramSchmidt.prevRow k hk
       let swappedPrev :=
         (basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1
-      Vector.dotProduct swappedPrev swappedPrev ≠ 0) :
+      swappedPrev.dotProduct swappedPrev ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
     let μ := GramSchmidt.entry (coeffs b) k km1
     let prev := (basis b).row km1
     let curr := (basis b).row k
     let swappedPrev := curr + μ • prev
     GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k km1 =
-      μ * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
+      μ * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev := by
   let km1 := GramSchmidt.prevRow k hk
   have hkm1 : km1.val + 1 = k.val := by
     dsimp [km1, GramSchmidt.prevRow]
@@ -311,11 +309,10 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
 /-! The four `adjacentSwap` scaled-coefficient identities for rows above the
 pivot (`scaledCoeffs_adjacentSwap_above_prev`, `_above_curr`, and the two
 `_dvd` companions) live in `HexGramSchmidtMathlib/Update.lean`. Their proof
-path goes through `bareiss_scaledCoeffMatrix_rowSwap_above_prev` /
-`_above_curr` (the bordered-minor identities), which cross the Bareiss / det
-correspondence and so cannot be proved in the Mathlib-free core per
-[SPEC/Libraries/hex-gram-schmidt.md "Proof path governs placement, not just
-statement"]. -/
+path goes through `bareiss_scaledCoeffMatrix_rowSwap_above_prev` and
+`bareiss_scaledCoeffMatrix_rowSwap_above_curr`, whose bordered-minor proofs
+use the Mathlib determinant correspondence and therefore live in the Mathlib
+bridge rather than the computational core. -/
 
 end GramSchmidt.Int
 

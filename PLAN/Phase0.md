@@ -17,7 +17,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
 ## Steps
 
 1. Create `lean-toolchain` containing exactly
-   `leanprover/lean4:v4.30.0-rc2`. This is the project baseline; do
+   `leanprover/lean4:v4.32.0-rc1`. This is the project baseline; do
    not substitute a different release.
 
 2. Create `lakefile.lean` (Lake's DSL form, **not** `lakefile.toml`)
@@ -25,7 +25,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    computational + bridge libraries), plus one additional `lean_lib`
    for `HexManual` (the Verso-based documentation aggregator — see
    [Phase7.md](Phase7.md)). All `-mathlib` bridge libraries depend
-   on the Mathlib tag `v4.30.0-rc2`. `HexManual` depends on Verso
+   on the Mathlib tag `v4.32.0-rc1`. `HexManual` depends on Verso
    and on every `hex-*` library, and is the `@[default_target]`.
 
    **Use `lakefile.lean`, not `lakefile.toml`, even though the toml
@@ -138,17 +138,17 @@ into Phase 1 until the Phase 0 PR lands on `main`.
      Ready (dispatch issues in parallel):
 
        HexArith → Phase 1 (library scaffolding)
-         spec: SPEC/Libraries/hex-arith.md
+         spec: HexArith/SPEC/hex-arith.md
          plan: PLAN/Phase1.md
          on complete: libraries.yml HexArith.done_through: 1
 
        HexPoly → Phase 1 (library scaffolding)
-         spec: SPEC/Libraries/hex-poly.md
+         spec: HexPoly/SPEC/hex-poly.md
          plan: PLAN/Phase1.md
          on complete: libraries.yml HexPoly.done_through: 1
 
        HexMatrix → Phase 1 (library scaffolding)
-         spec: SPEC/Libraries/hex-matrix.md
+         spec: HexMatrix/SPEC/hex-matrix.md
          plan: PLAN/Phase1.md
          on complete: libraries.yml HexMatrix.done_through: 1
 
@@ -168,7 +168,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
      The script emits one entry per library. The `spec` path is
      computed from the PascalCase library name via the naming
      convention in [Conventions.md](Conventions.md) — e.g.
-     `HexPolyZMathlib` → `SPEC/Libraries/hex-poly-z-mathlib.md`.
+     `HexPolyZMathlib` → `HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md`.
      Do **not** emit a "next up" / single-recommendation line: the
      planner needs the full menu of ready pairs so it can choose
      which to dispatch this cycle based on current open-issue
@@ -197,7 +197,10 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    rules every workflow in this repo must satisfy.
 
    **`.github/workflows/ci.yml`** (required, runs on every PR and on
-   pushes to `main`):
+   pushes to `main`) contains one Ubuntu job. It performs structural
+   checks, builds the libraries and all explicit verification targets,
+   then runs the benchmark and conformance/oracle tails against that
+   shared build. A schematic baseline is:
    ```yaml
    name: CI
    on:
@@ -219,18 +222,8 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - run: lake exe cache get
          - run: bash scripts/ci/check_no_mathlib_rebuild.sh
          - run: lake build
-         # plus per-library bench verify steps (see SPEC/benchmarking.md)
-     build-macos:
-       runs-on: macos-latest
-       steps:
-         - uses: actions/checkout@v4
-         - run: python3 scripts/check_dag.py
-         - run: brew install gmp
-         - uses: leanprover/lean-action@v1
-           with: { auto-config: false, build: false, use-mathlib-cache: false }
-         - run: lake exe cache get
-         - run: bash scripts/ci/check_no_mathlib_rebuild.sh
-         - run: lake build
+         # plus per-library bench verify and conformance/oracle steps
+         # (see SPEC/benchmarking.md and SPEC/testing.md)
    ```
 
    The cache + hard-fail-gate + manual `lake build` shape is
@@ -255,28 +248,12 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    violations fail fast without spending build time. `libgmp-dev` is installed
    explicitly because the `hex-arith` extern C shims `#include
    <gmp.h>`; Lean's toolchain ships `libgmp.a` for linking but not the
-   headers, and `ubuntu-latest` does not preinstall `libgmp-dev`. The
-   macOS job is required, not optional: macOS dyld uses a stricter
-   symbol-resolution discipline than Linux's flat-namespace lazy
-   binding, so a build that succeeds on Linux can still fail on macOS
-   with `dyld[..]: missing symbol called`. The most common trigger is
-   an incomplete library umbrella file (see
-   [Conventions.md §Library umbrella discipline](Conventions.md#library-umbrella-discipline));
-   `check_dag.py` enforces the source-side condition and the macOS
-   `lake build` is the cross-check.
-
-   **`.github/workflows/conformance.yml`** (required; runs on every
-   PR and on pushes to `main`): same trigger + concurrency shape as
-   `ci.yml`, plus a `workflow_dispatch:` trigger for ad-hoc runs.
-   Following [SPEC/testing.md](../SPEC/testing.md) and the single-job
-   budget in [SPEC/CI.md](../SPEC/CI.md), the workflow runs the full
-   conformance + oracle pipeline in **one** ubuntu job: external
-   tools (FLINT, PARI, fpLLL, Conway) install side-by-side via apt
-   and pip, the Mathlib cache is fetched via `lake exe cache get`
-   with a hard-fail gate against silent rebuilds, and per-library
-   oracle checks run sequentially. New oracles or new conformance
-   targets extend the existing job's script — they do not introduce
-   new top-level jobs, matrices, or workflows.
+   headers, and `ubuntu-latest` does not preinstall `libgmp-dev`.
+   Following [SPEC/testing.md](../SPEC/testing.md), external tools
+   (FLINT, PARI, Conway) install side-by-side and the oracle runner is
+   fail-closed in CI. New oracles, conformance modules, and benchmark
+   targets extend this existing job; they do not introduce new jobs,
+   matrices, or workflows.
 
 7. Create `.gitignore` (at minimum: `.lake/`, `build/`).
 
@@ -295,7 +272,7 @@ Phase 0 is done when:
   `HexManual`) via `lean_lib` declarations; no `lakefile.toml`
   is present in the repo root;
 - `lake-manifest.json` pins Mathlib to the resolved tag for
-  `v4.30.0-rc2`;
+  `v4.32.0-rc1`;
 - every library has an empty-or-stub root `.lean` file and source
   directory, including `HexManual`;
 - `scripts/check_dag.py` and `scripts/status.py` exist;

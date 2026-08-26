@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Basic
+module
+
+public import HexHensel.ModularPolynomial
+
+public section
 
 /-!
 Executable single-step linear Hensel lifting.
@@ -28,8 +32,8 @@ namespace ZPoly
 
 /-- Divide every coefficient by `m` using Lean's truncating integer division. -/
 def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    (List.range f.size).map (fun i => f.coeff i / Int.ofNat m) |>.toArray
+  DensePoly.ofList <|
+    (List.range f.size).map (fun i => f.coeff i / Int.ofNat m)
 
 /-- The `i`-th coefficient of `coeffwiseDiv f m` is the truncating integer
 quotient of `f.coeff i` by `m`. Lets a caller rewrite coefficient queries on
@@ -38,8 +42,7 @@ coefficient, with no dependence on the polynomial's size. -/
 @[simp, grind =] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
     (coeffwiseDiv f m).coeff i = f.coeff i / Int.ofNat m := by
   unfold coeffwiseDiv
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [DensePoly.coeff_ofList, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -73,9 +76,9 @@ end ZPoly
 
 /--
 Result of one linear Hensel lift step, packaging the lifted first factor `g`
-and the lifted complementary factor `h`. Callers can pattern-match on the
-two projections directly, or rewrite via the unfolding simp lemmas
-`linearHenselStep_g` / `linearHenselStep_h`.
+and the lifted complementary factor `h`. Callers can pattern-match on the two
+projections directly; the forward theorems `linearHenselStep_g` and
+`linearHenselStep_h` provide simplifying equations for them.
 -/
 structure LinearLiftResult where
   /-- The lifted first factor. -/
@@ -108,8 +111,7 @@ theorem congr_liftScaledIncrement_zero
     (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) :
     ZPoly.congr (liftScaledIncrement p k r) 0 (p ^ k) := by
   intro i
-  rw [coeff_liftScaledIncrement]
-  rw [DensePoly.coeff_zero]
+  rw [coeff_liftScaledIncrement, DensePoly.coeff_zero]
   simp
 
 end LinearLiftResult
@@ -311,10 +313,9 @@ theorem liftToZ_add_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f + g)) (FpPoly.liftToZ f + FpPoly.liftToZ g) p := by
   intro i
-  rw [FpPoly.coeff_liftToZ]
-  rw [DensePoly.coeff_add f g i (zmod_add_zero_zero p)]
-  rw [DensePoly.coeff_add (FpPoly.liftToZ f) (FpPoly.liftToZ g) i (by rfl)]
-  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
+  rw [FpPoly.coeff_liftToZ, DensePoly.coeff_add f g i (zmod_add_zero_zero p),
+    DensePoly.coeff_add (FpPoly.liftToZ f) (FpPoly.liftToZ g) i (by rfl),
+    FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
   exact zmod_add_lift_congr p (f.coeff i) (g.coeff i)
 
 /-- The integer lift of a `ZMod64 p` product agrees modulo `p` with the product
@@ -344,7 +345,7 @@ private theorem zmod_mul_lift_congr
 /-- Per-term coefficient congruence at the lifted product diagonal: the `i`th
 diagonal contribution to the `n`th coefficient of `f * g` over `FpPoly p`,
 lifted to `Int`, agrees mod `p` with the corresponding `DensePoly.mulCoeffStep`
-contribution over `FpPoly.liftToZ f · FpPoly.liftToZ g`. Gates the diagonal
+contribution over `FpPoly.liftToZ f · FpPoly.liftToZ g`. Conditions the diagonal
 fold underlying `liftToZ_mul_congr`. -/
 private theorem liftToZ_mulCoeffTerm_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n i : Nat) :
@@ -600,8 +601,7 @@ theorem liftToZ_mul_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f * g)) (FpPoly.liftToZ f * FpPoly.liftToZ g) p := by
   intro n
-  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_mul, DensePoly.coeff_mul]
-  rw [mulCoeffSum_eq_diagonal_int]
+  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_mul, DensePoly.coeff_mul, mulCoeffSum_eq_diagonal_int]
   rw [diagonalSum_eq_bound_int (FpPoly.liftToZ f) (FpPoly.liftToZ g) n f.size
     (liftToZ_size_le p f)]
   exact fold_liftToZ_mulCoeffTerm_congr p f g n (List.range f.size) 0 0 (by
@@ -751,8 +751,7 @@ private theorem scale_congr_of_congr_mod_base
   rcases hbase with ⟨w, hw⟩
   apply Int.emod_eq_zero_of_dvd
   refine ⟨w, ?_⟩
-  rw [← Int.mul_sub, hw]
-  rw [← Int.mul_assoc]
+  rw [← Int.mul_sub, hw, ← Int.mul_assoc]
   have hpow : p ^ (k + 1) = p ^ k * p := by
     rw [Nat.pow_succ]
   rw [hpow]
@@ -774,8 +773,7 @@ private theorem liftScaledCoeff_product_dvd_next
   have hpow_exp : (1 + k0) + (1 + k0) = (1 + k0 + 1) + k0 := by
     omega
   have hpow : p ^ (1 + k0) * p ^ (1 + k0) = p ^ (1 + k0 + 1) * p ^ k0 := by
-    rw [← Nat.pow_add, ← Nat.pow_add]
-    rw [hpow_exp]
+    rw [← Nat.pow_add, ← Nat.pow_add, hpow_exp]
   calc
     Int.ofNat (p ^ (1 + k0)) * Int.ofNat (r.coeff i).toNat *
         (Int.ofNat (p ^ (1 + k0)) * Int.ofNat (hCorrection.coeff j).toNat)
@@ -901,7 +899,8 @@ private theorem linearHenselStep_product_expansion_cross_congr
   rw [DensePoly.coeff_mul, DensePoly.coeff_zero]
   apply Int.emod_eq_zero_of_dvd
   unfold DensePoly.mulCoeffSum
-  simpa using
+  simp only [Int.sub_zero]
+  exact
     foldl_mulCoeffSum_liftScaled_dvd_next p k r hCorrection _hk i
       (List.range (LinearLiftResult.liftScaledIncrement p k r).size) 0 ⟨0, by simp⟩
 
@@ -1006,9 +1005,8 @@ private theorem dense_scale_mul_left_int
 private theorem dense_scale_mul_right_int
     (c : Int) (hc : c ≠ 0) (f g : ZPoly) :
     f * DensePoly.scale c g = DensePoly.scale c (f * g) := by
-  rw [DensePoly.mul_comm_poly f (DensePoly.scale c g)]
-  rw [dense_scale_mul_left_int c hc]
-  rw [DensePoly.mul_comm_poly g f]
+  rw [DensePoly.mul_comm_poly f (DensePoly.scale c g), dense_scale_mul_left_int c hc,
+    DensePoly.mul_comm_poly g f]
 
 /-- Scaling by `c` distributes over addition:
 `scale c (f + g) = scale c f + scale c g`. -/
@@ -1017,11 +1015,9 @@ private theorem dense_scale_add_int
     DensePoly.scale c (f + g) = DensePoly.scale c f + DensePoly.scale c g := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
+  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c), DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring, DensePoly.coeff_scale _ _ _ (Int.mul_zero c),
+    DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
   grind
 
 /-- When the cross term is zero modulo `m`, the regrouping
@@ -1031,11 +1027,8 @@ private theorem add_cross_congr
     (hcross : ZPoly.congr cross 0 m) :
     ZPoly.congr (base + a + (b + cross)) (base + (a + b)) m := by
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
   have hx := hcross i
   rw [DensePoly.coeff_zero] at hx
   have hdiff :
@@ -1048,7 +1041,7 @@ private theorem add_cross_congr
 
 /-- The product of the corrected factors is congruent modulo `p ^ (k + 1)` to
 `g * h` plus the `p ^ k`-scaled first-order term `r * h + g * hCorrection`. -/
-private theorem linearHenselStep_product_expansion_identity_congr_core
+private theorem linearHenselStep_product_expansion_firstOrder_congr
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
     (_hk : 1 ≤ k) :
@@ -1088,8 +1081,8 @@ private theorem linearHenselStep_product_expansion_identity_congr_core
       (DensePoly.scale (Int.ofNat (p ^ k)) (g * FpPoly.liftToZ hCorrection))
       cross hcross
 
-/-- The same product expansion as the `_core` lemma, stated for the `let`-bound
-corrected factors `g'` and `h'`. -/
+/-- The first-order product expansion, stated for the `let`-bound corrected
+factors `g'` and `h'`. -/
 private theorem linearHenselStep_product_expansion_identity_congr
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
@@ -1104,7 +1097,7 @@ private theorem linearHenselStep_product_expansion_identity_congr
       (p ^ (k + 1)) := by
   intro g' h'
   simpa [g', h'] using
-    linearHenselStep_product_expansion_identity_congr_core p k g h r hCorrection _hk
+    linearHenselStep_product_expansion_firstOrder_congr p k g h r hCorrection _hk
 
 /-- The recombination `g * h + (f - g * h)` is congruent to `f` modulo
 `p ^ (k + 1)`. -/
@@ -1345,6 +1338,7 @@ preserves `acc.g`'s degree) and is exactly what makes the per-step degree
 obligation `LinearLiftStepDegreeInvariant` provable from the invariant alone:
 without it the admissible constant case `acc.g = 1` satisfies every other
 component yet has degree `0`, so no strict degree drop is available. -/
+@[expose]
 def LinearLiftLoopInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult) : Prop :=
@@ -1451,10 +1445,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
   | mk coeffs normalized =>
       have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
       have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      change coeffs.getD (coeffs.size - 1) 0 = coeffs.back?.getD 0
-      rw [Array.back?_eq_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
-      exact (Array.getElem_eq_getD 0).symm
+      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
 
 /-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would
 have leading coefficient `0`, contradicting `leadingCoeff = 1`. This rules out the
@@ -1467,8 +1458,8 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
     have hlead : f.leadingCoeff = 0 := by
       cases f with
       | mk coeffs normalized =>
-          simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize]
+          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
+          simp [hsize, Array.getD] <;> rfl
     have hlead_one : f.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one
@@ -1869,7 +1860,7 @@ private theorem stepDegree_of_monic_pos
   rw [hgMod] at hlt
   exact hlt
 
-/-- The core invariant-preservation lemma for the linear-lift loop: given the
+/-- Invariant preservation for the linear-lift loop: given the
 `LinearLiftLoopInvariant` at modulus `p^current` plus the per-step degree and
 Bezout preservation hypotheses, running `steps` iterations keeps the invariant
 at the advanced modulus. The product/Bezout/monic correctness of `henselLift`
@@ -2075,7 +2066,7 @@ private theorem loopInvariant_one_of_base
 /-- Convenience corollary of `henselLift_spec`: the lifted factorization is
 congruent to `f` modulo `p^k`, discharging the loop preconditions internally
 from the base mod-`p` factorization data plus a nonconstant hypothesis on `g`.
-The nonconstant condition `0 < g.degree?.getD 0` is genuine — it is what makes
+The nonconstant condition `0 < g.degree?.getD 0` is genuine; it is what makes
 the per-step degree drop available; the admissible constant case `g = 1` has no
 such drop. -/
 theorem henselLift_congr_of_base

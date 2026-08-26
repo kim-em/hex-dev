@@ -1,0 +1,368 @@
+# Issue #8413: the classical recombination search returns irreducible factors
+
+## ✅ COMPLETE — the theorem is proven end to end
+
+`IntReductionMod.classicalCoreFactorsWithBound_factor_irreducible_of_bound` is
+proven sorry-free: `classicalCoreFactorsWithBound core B primeData = some cf →
+toMonicPrimeData? core = some primeData → (core ≠ 0, primitive, squarefree,
+deg ≥ 1, B ≠ 0) → 2 * defaultFactorCoeffBound core < p^(precisionForCoeffBound
+(exhaustiveLiftBound core B) p) → ∀ g ∈ cf.toList, Irreducible (toPolynomial g)`.
+The `hprecision` hypothesis is threaded exactly as in the exhaustive-tier
+`…_of_bound` theorems (the codebase convention); everything else is discharged
+from `toMonicPrimeData?` and the core side conditions. The full CI-gated
+`HexBerlekampZassenhausMathlib` build is green (3732 jobs, 0 errors).
+
+Proof chain (all landed on this branch, sorry-free):
+completeness `smartAux_none_budget_zero` → coverage `smartAux_covers_of_bound`
+→ public `RecoveredSmartSearch.covers`/`.trustworthyNone` → counting
+`smartCore_factor_irreducible_of_covers_of_squarefree` → top-level assembly.
+
+---
+
+
+## Accomplished
+
+Validated the premise of #8413 in depth and landed the first foundational
+piece of the capstone: **budget monotonicity for the three size-ordered smart
+loops** (`HexBerlekampZassenhaus/Basic.lean`, right after the
+`scaledRecombinationSmart*_product` mutual block):
+
+- `scaledRecombinationSmartAux_budget_le`
+- `scaledRecombinationSmartSizeLoop_budget_le`
+- `scaledRecombinationSmartCandLoop_budget_le`
+
+Each states the returned budget `b ≤` the input budget. Proved as one mutual
+block by structural recursion on `fuel`, mirroring the existing `_product`
+mutual block. `lake build HexBerlekampZassenhaus.Basic` is green with no new
+warnings.
+
+## Premise validation (the important part)
+
+The issue frames the work as "mirror the non-smart `RecoveredScaledSearch.covers_of_bound`
+proof; plus #8412". Two findings:
+
+1. **Sound, not a scale-vs-dilate trap.** The smart candidate is built with
+   `ZPoly.dilate coreLc` (`Basic.lean:7789`), i.e. the *dilate* coordinate where
+   the subset↔integer-factor correspondence actually lives
+   (`liftedRecoveryCandidate`, `RepresentsIntegerFactorAtLift`). This is exactly
+   the coordinate #8412's `subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches`
+   identifies. So the coverage argument is *not* blocked by the M1/scale
+   unsoundness described in the boundary skill.
+
+2. **The issue under-specifies the budget dimension.** Unlike the non-smart
+   search (`scaledRecombinationSearchModAux`, no budget), the smart search
+   threads a candidate `budget` that can abandon a factorable sub-target. This
+   has no analog in `covers_of_bound` and changes the theorem shape.
+
+## The clean theorem shape (resolved)
+
+`classicalCoreFactorsWithBound` (`Basic.lean:8906`) sets
+`budgetExhausted := res.isNone && remaining == 0` and returns `none` (declines to
+the lattice tier) exactly when `res = none ∧ remaining = 0`. So when it returns
+`some cf`, either `res = some factors` or (`res = none` with `remaining ≠ 0`).
+
+Key propagation fact (this is why budget monotonicity is the first piece): once
+the running budget reaches `0`, `SizeLoop`/`CandLoop` return `(none, 0)` and this
+propagates upward, so **any budget-forced skip of a finer split forces the whole
+search to `none`**. Therefore, conditional on the search returning `some result`
+(the accepted case), no budget skip happened on the accepted path: every inner
+`Aux` that returned `none` did so with budget *remaining*, which — with adequate
+fuel — can only be a genuine "no recombination" verdict. Given the true support
+`S_cov` of the min index is always a valid divisor split at its own size, the
+peeled subset is exactly `S_cov` (never a coarser reducible union), so the
+emitted candidate is the irreducible `f_cov`. Coverage then closes exactly as in
+the non-smart proof.
+
+So the capstone is the pair, proved by one induction on `fuel` (no budget lower
+bound needed, only fuel adequacy):
+
+```
+scaledRecombinationSmartAux ... = (res, b) → (hyps + fuel adequacy) →
+  (res = none → b = 0)                     -- completeness / trustworthy-none
+  ∧ (res = some result → coverage result)  -- every irreducible factor covered
+```
+
+Codex second-opinion (2026-07-01) confirmed: no accepted-path reducible
+counterexample under the full invariants (premise sound), and the crux is the
+`res = none → b = 0` half — budget monotonicity alone is insufficient; it must be
+proved *mutually* with accepted-path coverage. It also flagged that containment
+must be over the **remaining** supports of the running `target`, transported per
+peel by `liftedFactorSubsetPartition_transport`.
+
+## The fuel-adequacy invariant (resolved: `budget + 2 * J.card ≤ fuel`)
+
+The fuel decrements once per loop step. The apparent worry is that a `CandLoop`
+at size `d` must examine all `C(|tail|, d)` splits (exponential) before moving on
+— but the **budget** also decrements once per split examined, so the number of
+splits any single `CandLoop` examines is `≤ budget`. Crucially `SizeLoop` gives
+each size class a *fresh* fuel (its own `fuel` decremented only by the size
+index, not by prior `CandLoop` consumption). So the per-size fuel need is
+`≤ budget`, and the only extra fuel is the `≤ J.card` size-index overhead plus
+`≤ J.card` for the `Aux` recursion frames. The clean, maintained invariant is:
+
+```
+budget + 2 * J.card ≤ fuel
+```
+
+Maintenance across one peel of `S_cov` (worked out): with fuel consumed
+`|S_cov| + p* + 2` and budget consumed `E + p* + 1` (`E` = splits at smaller
+sizes, `p*` = position of `S_cov` at its size), the recursion gets
+`fuel_rec = fuel - |S_cov| - p* - 2` and `budget_rec = budget - E - p* - 1` over
+`J \ S_cov` with `2*(J.card - |S_cov|)` overhead; the inequality reduces to
+`|S_cov| + E ≥ 1`, true since `|S_cov| ≥ 1`. The wrapper's
+`fuel = budget + (r+1)(2r+3) ≥ budget + 2r = budget + 2 * J.card` (`J = univ`),
+so the top call satisfies it; every recursive call preserves it. `omega` closes
+each step given `_budget_le` (`b ≤ budget`, landed in #8498) and the per-size
+split-count-vs-budget bound.
+
+## Status: completeness AND coverage PROVEN; only top-level wiring left
+
+Both headline theorems are now **sorry-free**:
+- `smartAux_none_budget_zero` (+ SizeLoop/CandLoop) — trustworthy-none completeness.
+- `smartAux_covers_of_bound` (+ SizeLoop/CandLoop) — conditional coverage. The
+  coverage mutual block mirrors completeness: CandLoop peel derives `T = S_cov`
+  (reusing the completeness case-1 machinery), then `factor ∣ f_cov` (emitted
+  head) / `factor ∣ quotient` (Aux-coverage recursion); SizeLoop delegates at
+  `k = dsize` with `hk_le` from `List.pairwise_lt_range` sortedness of the size
+  range, or a budget-0 contradiction at `S_cov`'s size.
+
+## Reusable infrastructure now landed (all sorry-free)
+
+- `RecoveredSmartSearch.covers` / `.trustworthyNone` (Basic.lean) — public
+  wrappers of coverage/completeness at `defaultFactorCoeffBound core`.
+- `smartCore_factor_irreducible_of_covers_of_squarefree` (Basic.lean) — the
+  counting theorem: coverage + squarefree + product + recorded ⇒ each emitted
+  irreducible (via `UFDPartition.{length_le,normalizedFactors_card_le_length_of_coverage,
+  irreducible_of_partition_card_eq_normalizedFactors_card}`).
+- `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_shouldRecord` (exec) — every
+  emitted factor passes `shouldRecordPolynomialFactor`.
+
+## Exact wiring recipe (all substrate identified)
+
+Live in `IntReductionMod.lean`. For `B ≠ 0` (add as hyp; classical tier uses
+`defaultFactorCoeffBound f > 0`), unfold `classicalCoreFactorsWithBound`;
+`d := toMonicLiftData core (exhaustiveLiftBound core B) primeData`.
+- **Instantiate coverage at** `B' := defaultFactorCoeffBound (toMonic core).monic`
+  by calling `smartAux_covers_of_bound` directly (abstract-B'), NOT
+  `RecoveredSmartSearch.covers`, so the bound matches the precision substrate.
+  `hprecision := IntReductionMod.exhaustiveLiftBound_monic_precision core
+  (exhaustiveLiftBound core B... wait: the B fed to precision is
+  `exhaustiveLiftBound core B`? No — d.k = precisionForCoeffBound
+  (exhaustiveLiftBound core B) p, so use `exhaustiveLiftBound_monic_precision core
+  B primeData.p hp2` which already targets that exponent)`. `hp2 : 2 ≤ primeData.p`
+  from `toMonicPrimeData?_prime`.
+  Still need `hcore_lc_le`/`hvalid` for this B': via
+  `defaultFactorCoeffBound core ≤ defaultFactorCoeffBound (toMonic core).monic`
+  (find/prove this bridge) applied to `defaultFactorCoeffBound_{valid,
+  leadingCoeff_natAbs_le}`.
+- **Partition**: `liftedFactorSubsetPartition_of_toMonicPrimeData_complete core
+  (exhaustiveLiftBound core B) primeData hselected …core facts…
+  (exhaustiveLiftBound_monic_precision …)` — gives
+  `LiftedFactorSubsetPartition core d univ core`. (Note the `B` arg to `_complete`
+  is `exhaustiveLiftBound core B`.)
+- **Bundle**: `toMonicLiftData_liftedFactor_{monic,natDegree_pos,injective}_of_monicPrimeData`;
+  `hd_modulus` from `2 ≤ p^k`.
+- **Matches**: `LiftedFactorListMatches.univ d`; **`J = univ`**, `univ.card =
+  d.liftedFactors.size = localFactors.length = r`.
+- **Fuel**: the wrapper `scaledRecombinationSmart` calls Aux at fuel
+  `budget + (r+1)(2r+3)`; `smartFuelBound r = (r+1)(2r+3)`, so
+  `budget + smartFuelBound univ.card ≤ fuel` holds with equality.
+- **liftModulus**: `liftModulus d = d.p ^ d.k` (private def; may need a public
+  accessor added in the exec file, or restate coverage's modulus as
+  `liftModulus d`).
+- Unfold `scaledRecombinationSmart`; the `budgetExhausted` guard makes `res=none`
+  (with the accepted `¬budgetExhausted`) impossible by `trustworthyNone`
+  (`remaining≠0` vs `=0`); `res=some factors` ⇒ apply coverage + product
+  (`scaledRecombinationSmartAux_product`) + `_shouldRecord` +
+  `smartCore_factor_irreducible_of_covers_of_squarefree`. `factors.isEmpty` ⇒
+  product `1 = core` contradicts deg≥1, so `cf = factors.toArray`.
+- **Template**: mirror the exhaustive wiring at `IntReductionMod.lean:4483`
+  (`factor_exhaustive_branch_entry_irreducible_..._of_bound`) which uses exactly
+  this `defaultFactorCoeffBound` + `hprecision` pattern.
+
+## (historical) Remaining: the top-level wiring only
+
+**Prove `classicalCoreFactorsWithBound
+core B primeData = some cf → toMonicPrimeData? core = some primeData → (core ≠ 0,
+primitive, squarefree, deg ≥ 1) → ∀ g ∈ cf, Irreducible (toPolynomial g)`:
+- Unfold `classicalCoreFactorsWithBound` (`Basic.lean:8906`); `B=0` returns
+  `#[core]` (check whether the caller excludes it or core is forced irreducible);
+  else it runs `scaledRecombinationSmart (lc core) core (liftModulus liftData)
+  liftData.liftedFactors.toList` with `liftData = toMonicLiftData core
+  (exhaustiveLiftBound core B) primeData`, accepting only when
+  `¬ budgetExhausted`.
+- Bridge `liftModulus liftData = liftData.p ^ liftData.k` (liftModulus is a
+  `private def`; may need a public accessor or the defeq).
+- Get the substrate for the coverage call on `target = core, J = univ`: partition
+  `LiftedFactorSubsetPartition core d univ core`, `LiftedFactorListMatches d univ
+  d.liftedFactors.toList`, and the bundle (`hd_liftedFactor_monic`, `_inj`,
+  `_natDegree_pos`, precision `2·B' < p^k`) from `toMonicPrimeData?` producers
+  (search `*_of_toMonicPrimeData*` / `toMonicLiftData_*`). Fuel adequacy from the
+  wrapper's `budget + (r+1)(2r+3)` ≥ `budget + smartFuelBound r`.
+- Then irreducibility: coverage + product (`scaledRecombinationSmartAux_product`)
+  + `core` squarefree ⇒ `#result = #normalizedFactors` ⇒
+  `UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card` (mirror
+  `exhaustiveCoreFactorsWithBound_factor_irreducible_of_count`, 16770). Coverage
+  gives `#result ≥ #normalizedFactors` (distinct primes ↦ distinct emitted, since
+  squarefree); product+nonunit gives `≤` (`UFDPartition.length_le_...`).
+
+## (historical) Status: completeness chain PROVEN; 3 sorries left
+
+The trustworthy-none completeness mutual block is **done**:
+`smartAux_none_budget_zero`, `smartSizeLoop_none_budget_zero`,
+`smartCandLoop_none_budget_zero` all compile sorry-free (quadratic fuel bounds
+`smartFuelBound`/`smartLoopFuelBound`; CandLoop's core case proves `T = S_cov`
+via containment `coverAtMin_representingSubset_subset_...` + uniqueness + equal
+cardinality, then Aux-decline ⇒ budget 0 ⇒ `budget_zero` propagation).
+
+Remaining `sorry`s (besides the pre-existing project one at line ~239):
+1. `liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches` — the ONE
+   isolated substrate gap: `S ⊆ J` with `min ∈ S` has its `(selected, rejected)`
+   split enumerated by `subsetsOfSizeWithComplement tail (S.card-1)` (converse of
+   #8412). Prove via a `mask_split_mem_subsetsOfSizeWithComplement` induction
+   (b=true → first append branch, b=false → `[([],xs)]` at k=0 / second branch at
+   k+1) plus the S→mask direction (mirror `liftedSubsetSelectedList_eq_mask_partition_of_matches`
+   in reverse, or reuse `liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`
+   at 4610 + a size decomposition). Once proven, completeness is fully sorry-free.
+2. `smartAux_covers_of_bound` — conditional coverage. **Skeleton landed**: the
+   Aux half is fully proved (target=1 unit-contra, some≠none contras, head::tail
+   delegates); `smartSizeLoop_covers_of_bound` / `smartCandLoop_covers_of_bound`
+   are the two remaining `sorry`s in a mutual block. Fill plan (minimality is the
+   crux — thread it as extra hypotheses):
+   - **CandLoop coverage**: add params `k : Nat` and `hk_le : k ≤ S_cov.card - 1`,
+     with `hsplits_enum` over `subsetsOfSizeWithComplement tail k`. In the peel
+     case (`shouldRecord` + `exactQuotient? = some` + `Aux = some sub`): identify
+     `T` via #8412 (size `k`), `cand(T) ∣ target` ⇒ containment `S_cov ⊆ T`,
+     `|T| = k+1 ≤ S_cov.card` (from `hk_le`) and `≥ S_cov.card` ⇒ `T = S_cov`,
+     `cand(T) = f_cov`, `quotient = quotient_scov` (reuse CandLoop-completeness
+     case-1 machinery verbatim). Then `result = f_cov :: sub`; coverage: `factor ∣
+     target = f_cov * quotient`, prime ⇒ `factor ∣ f_cov` (assoc `f_cov`, emitted
+     head) or `factor ∣ quotient` (Aux coverage on `sub`, IH). Other loop cases
+     recurse on `rest` (with `hk_le`, `hsplits_enum` restricted).
+   - **SizeLoop coverage**: add `hsorted : List.Sorted (·≤·) sizes` so the head
+     `dsize ≤ S_cov.card-1` (via `hcontains`). At `(some res, cb)` from CandLoop:
+     delegate to CandLoop coverage with `k := dsize`, `hk_le` from `hsorted` +
+     `hcontains`. At `(none, cb)`: if `dsize = S_cov.card-1`, CandLoop
+     completeness ⇒ `cb=0` ⇒ `budget_zero` ⇒ `(none,0)` contra `some`; else recurse
+     on `ds`. Aux passes `hsorted := List.sorted_lt_range.le`-style for
+     `List.range`.
+
+Then the top-level wiring: `classicalCoreFactorsWithBound … = some cf → … →
+∀ g ∈ cf, Irreducible (toPolynomial g)` via coverage + squarefree counting +
+`UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`.
+
+## Executable substrate on this branch
+
+- `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_budget_le` (returned budget ≤
+  input) and `..._budget_zero` (budget 0 ⇒ `(none,0)`) in the executable file.
+- `smartAux_none_budget_zero` (Mathlib layer): 4 of 5 cases FILLED — `target=1`
+  (`simp`), `budget=0` (`omega`), `fuel=0` (adequacy `omega` contradiction),
+  `localFactors=[]` (unreachable via the `hJ_ne` argument copied from
+  `covers_of_bound`, using `LiftedFactorListMatches.length_eq_card` for `J.card=0`).
+  Only the `head :: tail` case remains `sorry` — it must delegate to a
+  `SizeLoop` completeness theorem (needs the mutual block).
+- `smartAux_covers_of_bound` (Mathlib layer): statement compiles, body `sorry`.
+- Fuel hypothesis `budget + 3 * J.card + 1 ≤ fuel`.
+
+NEXT: convert `smartAux_none_budget_zero` into a `mutual` block with
+`smartSizeLoop_none_budget_zero` and `smartCandLoop_none_budget_zero` (statements
+in the fill plan below), and have the `head :: tail` case derive `S_cov` via
+`hpartition.cover_at_min` (J nonempty from `head::tail` matching) and call the
+size-loop theorem. Preserve the 4 filled Aux cases verbatim.
+
+## Fill plan for the two `sorry` helpers (execute in one coherent pass)
+
+Both are proved by a **mutual `fuel`-structural recursion** over the three exec
+loops (pattern: the existing `scaledRecombinationSmart*_budget_le` block). Write
+a `mutual … end` block of THREE completeness theorems, then a second block of
+THREE coverage theorems consuming completeness. Per-loop fuel hypotheses:
+`Aux: budget + 3*J.card + 1 ≤ fuel`; `SizeLoop: budget + 2*J.card + sizes.length ≤
+fuel`; `CandLoop: budget + 2*J.card ≤ fuel`. These discharge each recursion's
+adequacy by `omega` + `_budget_le`.
+
+Loop-level statements carry the `cover_at_min` witness explicitly (`f_cov`,
+`S_cov`, `hf_cov_irr`, `hf_cov_dvd_target`, `hS_cov_J`, `hmin_in_S_cov`,
+`hS_cov_rep`) plus, for the enumeration:
+- CandLoop: `k` (= `S_cov.card - 1`), `hsplits_enum : ∀ split ∈ splits, split ∈
+  (subsetsOfSizeWithComplement tail k).map (fun sc => (head :: sc.1, sc.2))`, and
+  `hscov_mem : scovSplit ∈ splits` where `scovSplit =
+  (liftedSubsetSelectedList d S_cov, liftedSubsetSelectedList d (J \ S_cov))`.
+- SizeLoop: `hcontains : (S_cov.card - 1) ∈ sizes` and `hsizes_suffix : sizes` a
+  suffix of `List.range (tail.length + 1)`.
+
+Completeness case analysis (`= (none, b) → b = 0`):
+- `Aux`: `target=1`→`some`, contradiction; `budget=0`→`(none,0)`, `b=0`;
+  `fuel=0`→adequacy `omega` contradiction; `localFactors=[]`→`J` empty (matches),
+  so `target=1` by the `hJ_ne` argument from `covers_of_bound` (uses
+  `not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound`),
+  contradiction; `head::tail`→derive `S_cov` via `cover_at_min`, delegate to
+  `SizeLoop` completeness with `hcontains`/`hsizes_suffix`.
+- `SizeLoop`: `sizes=[]`→`hcontains` gives `False`; `budget=0`→`(none,0)`;
+  `fuel=0`→adequacy `omega`; `d::ds`: if `CandLoop` returns `some`→contradiction
+  with `none`; if `(none, cb)`→ when `d = S_cov.card-1` delegate to `CandLoop`
+  completeness (gives `cb=0`, then `_budget_zero` ⇒ `b=0`); when `d ≠` recurse
+  `SizeLoop` on `ds` (`hcontains` still holds since `d < S_cov.card-1`).
+- `CandLoop`: `splits=[]`→`hscov_mem` gives `False`; `budget=0`→`(none,0)`;
+  `fuel=0`→adequacy; `split::rest`: if `split = scovSplit`, it records
+  (`shouldRecord_liftedRecoveryCandidate_of_eq_factor` via
+  `liftedRecoveryCandidate_eq`) and divides
+  (`exactQuotient?_liftedRecoveryCandidate_eq_some_of_eq_factor_of_primitive_pos_lc`),
+  so `Aux(quotient_Scov)` is called; by `Aux` completeness (recursion) its
+  `none` return has budget `0`, then `_budget_zero` ⇒ `b=0`; if `split ≠
+  scovSplit`, `split`'s subset `T ≠ S_cov` at the same size `k` does NOT divide
+  (containment `S_cov ⊆ T` + `|T| = |S_cov|` ⇒ `T = S_cov`, contra), so `CandLoop`
+  recurses on `rest` (`hscov_mem` still holds; drop `split` from `hsplits_enum`).
+
+Coverage (`= (some result, b) → coverage`): structural peel-extraction gives
+`result = cand(T) :: sub` with `Aux(quotient) = (some sub, _)`; show `T = S_cov`
+(containment `S_cov ⊆ T`; if `|S_cov| < |T|` then `SizeLoop` reached size
+`|S_cov|` with `CandLoop` returning `none`, whose `b` is `0` by the completeness
+argument above ⇒ propagates ⇒ overall `none`, contra `some`). Then `cand(T) =
+f_cov` is irreducible; recurse via `liftedFactorSubsetPartition_transport` +
+`LiftedFactorListMatches.sdiff_of_subset` exactly as `covers_of_bound`.
+
+## Remaining work after the two helpers
+
+Recommended order (completeness first, since coverage consumes it):
+
+1. **Fuel-lockstep / reaching lemmas for `CandLoop`/`SizeLoop`**: under
+   `budget + 2 * card ≤ fuel`, a `none` return implies the loop exhausted its
+   splits/sizes (never fuel-limited) — so a dividing split `S_cov` present in the
+   list *was* examined and its recursive `Aux` was invoked. This is the
+   combinatorial "reaching" core; budget and fuel decrease in lockstep per
+   `CandLoop` step, so `budget ≤ fuel` is preserved and budget-exhaustion (not
+   fuel) is the only early termination.
+2. **Step-execution subset identification through the 3 loops**: from a
+   `SizeLoop`/`CandLoop` success extract the peeled `T ⊆ J`, `min ∈ T`,
+   `cand = liftedRecoveryCandidate core d T`, `cand ∣ target`, and the recursive
+   `Aux` on `target / cand` over `J \ T`. Consumes #8412's
+   `subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches`.
+3. **The completeness (`res=none→b=0`) mutual induction**, then the coverage
+   (`res=some→coverage`) mutual induction consuming completeness, mirroring
+   `covers_of_bound` (Mathlib `Basic.lean:17628`) and reusing its substrate
+   verbatim (`cover_at_min`, `liftedFactorSubsetPartition_transport`,
+   `coverAtMin_representingSubset_subset_of_liftedRecoveryCandidate_dvd_of_bound`,
+   `exactQuotient?_liftedRecoveryCandidate_eq_some_of_eq_factor_of_primitive_pos_lc`,
+   `representsIntegerFactorAtLift_primitive_of_bound`, ...). The peel `T = S_cov`
+   because containment gives `S_cov ⊆ T` and, if `|S_cov| < |T|`, `S_cov`'s
+   recursion at its own size returned `none` ⇒ (completeness) budget `0` ⇒
+   propagates ⇒ overall `none`, contradicting the accepted `some`.
+4. **Fuel adequacy discharge**: the wrapper passes
+   `fuel = budget + (r+1)(2r+3)` (`Basic.lean:7831`) ≥ `budget + 2 * r`, so the
+   invariant holds at the top.
+4. **Irreducibility wiring at `classicalCoreFactorsWithBound`**: coverage +
+   `core` squarefree ⇒ `#result = #normalizedFactors(core)` ⇒ reuse
+   `UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card` (the
+   same closer as `exhaustiveCoreFactorsWithBound_factor_irreducible_of_count`).
+
+## Next step
+
+Build piece 1 (step identification) in the Mathlib layer, then piece 2. All
+substrate is present; the difficulty is the size-ordered induction over three
+mutually-recursive loops with budget threading, not missing math.
+
+## Blockers
+
+None mathematical. The premise is sound. The scope is genuinely larger than
+"mirror + #8412": it is ~600–1000 lines of intricate mutual induction plus the
+budget/fuel accounting the issue body does not mention.

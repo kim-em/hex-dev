@@ -4,98 +4,322 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Init.Grind.Ring.Field
-import HexGFqField.Basic
-import HexGFqRing.Operations
+module
+
+public import Init.Grind.Ring.Field
+public import HexGFqField.Basic
+public import HexGFqRing.Operations
+
+public section
 
 /-!
 Executable finite-field operations for `F_p[x] / (f)`.
 
 This module keeps `GFqField.FiniteField` on the quotient-ring arithmetic path:
 all operations, exponentiation, and Frobenius are implemented by delegating to
-`Hex.GFqRing.PolyQuotient` and then rewrapping the reduced representative.
+{name}`Hex.GFqRing.PolyQuotient` and then rewrapping the reduced representative.
 -/
 namespace Hex
 
 namespace GFqField
 
-set_option linter.unusedSectionVars false
-
-variable {p : Nat} [ZMod64.Bounds p] {hp : Hex.Nat.Prime p}
+-- The quotient type these operations wrap is a prime-modulus type, and the
+-- extended-gcd / inverse machinery needs `ZMod64 p` to be a field besides.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
 
 /-- Natural-number literals reuse the quotient-ring cast and then rewrap the
 resulting reduced residue. -/
+@[expose]
 def natCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) (n : Nat) : FiniteField f hf hp hirr :=
   ofQuotient (n : GFqRing.PolyQuotient f hf)
 
 /-- The additive identity in the finite-field wrapper. -/
+@[expose]
 def zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) :
     FiniteField f hf hp hirr :=
   ofQuotient 0
 
 /-- The multiplicative identity in the finite-field wrapper. -/
+@[expose]
 def one (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) :
     FiniteField f hf hp hirr :=
   ofQuotient 1
 
 /-- Field addition reuses the quotient-ring sum. -/
+@[expose]
 def add {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient + y.toQuotient)
 
 /-- Field multiplication reuses the quotient-ring product. -/
+@[expose]
 def mul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient * y.toQuotient)
 
 /-- Field negation reuses the quotient-ring additive inverse. -/
+@[expose]
 def neg {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (-x.toQuotient)
 
 /-- Field subtraction reuses the quotient-ring difference. -/
+@[expose]
 def sub {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient - y.toQuotient)
 
 /-- Exponentiation reuses the quotient-ring repeated-multiplication path. -/
+@[expose]
 def pow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient ^ n)
 
 /-- Natural scalar multiplication reuses the quotient-ring scalar action. -/
+@[expose]
 def nsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (n • x.toQuotient)
 
 /-- Integer literals reuse the quotient-ring cast and then rewrap the reduced
 residue. -/
+@[expose]
 def intCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) (i : Int) : FiniteField f hf hp hirr :=
   ofQuotient (i : GFqRing.PolyQuotient f hf)
 
 /-- Integer scalar multiplication reuses the quotient-ring scalar action. -/
+@[expose]
 def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (i : Int) (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (i • x.toQuotient)
 
 section InverseInternals
 
-variable [ZMod64.PrimeModulus p]
+-- These helpers are modulus-agnostic: they take the `hp : Hex.Nat.Prime p`
+-- hypothesis where primality is needed, rather than the `ZMod64.PrimeModulus`
+-- instance the quotient type asks for. The ones that never mention the quotient
+-- `omit` that instance, so the namespace binder does not leak into their
+-- signatures.
+
+/-- Nonzero field elements have nonzero quotient representatives. This connects
+field-level hypotheses to the quotient-level helper lemmas. -/
+private theorem toQuotient_ne_zero
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
+    x.toQuotient ≠ (0 : GFqRing.PolyQuotient f hf) := by
+  intro hq
+  apply hx
+  exact GFqField.ext hq
+
+omit [ZMod64.PrimeModulus p] in
+/-- A nonzero `ZMod64 p` scalar is coprime to prime `p`, supplying the unit
+fact needed for constant-scaling inverses. -/
+private theorem zmod64_coprime_of_prime_ne_zero
+    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
+    Nat.Coprime a.toNat p := by
+  rw [Nat.Coprime]
+  have hnot_dvd : ¬ p ∣ a.toNat := by
+    intro hdiv
+    rcases hdiv with ⟨k, hk⟩
+    have ha_pos : 0 < a.toNat := by
+      by_cases hnat : a.toNat = 0
+      · exfalso
+        apply ha
+        apply ZMod64.ext
+        apply UInt64.toNat_inj.mp
+        exact hnat
+      · exact Nat.pos_of_ne_zero hnat
+    have hk_pos : 0 < k := by
+      cases k with
+      | zero =>
+          exfalso
+          have : a.toNat = 0 := by simpa using hk
+          omega
+      | succ k => exact Nat.succ_pos k
+    have hle : p ≤ a.toNat := by
+      rw [hk]
+      simpa [Nat.mul_comm] using Nat.le_mul_of_pos_left p hk_pos
+    exact (Nat.not_le_of_gt a.toNat_lt) hle
+  have hgcd_dvd_p : Nat.gcd a.toNat p ∣ p := Nat.gcd_dvd_right a.toNat p
+  rcases hp.2 (Nat.gcd a.toNat p) hgcd_dvd_p with hgcd | hgcd
+  · exact hgcd
+  · exfalso
+    apply hnot_dvd
+    rcases Nat.gcd_dvd_left a.toNat p with ⟨k, hk⟩
+    rw [hgcd] at hk
+    exact ⟨k, hk⟩
+
+omit [ZMod64.PrimeModulus p] in
+/-- Scaling the unit polynomial by `c` is the constant polynomial `C c`, the base
+case for relating scalar multiplication to constant-polynomial multiplication. -/
+private theorem scale_one_poly (c : ZMod64 p) :
+    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero]
+  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
+  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n => exact hzero
+
+omit [ZMod64.PrimeModulus p] in
+/-- Scaling a constant polynomial multiplies its constant coefficient, providing
+the coefficient-level normalization for constant factors. -/
+private theorem scale_C (c d : ZMod64 p) :
+    DensePoly.scale c (DensePoly.C d : FpPoly p) = DensePoly.C (c * d) := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => rfl
+  | succ n => exact hzero
+
+omit [ZMod64.PrimeModulus p] in
+/-- A polynomial with degree exactly zero is its constant coefficient polynomial,
+identifying degree-zero xgcd gcd witnesses as constants. -/
+private theorem eq_C_of_degree_eq_zero
+    (g : FpPoly p) (hdeg : g.degree? = some 0) :
+    g = DensePoly.C (g.coeff 0) := by
+  have hsize : g.size = 1 := by
+    unfold DensePoly.degree? at hdeg
+    by_cases hzero : g.size = 0
+    · simp [hzero] at hdeg
+    · have hpred : g.size - 1 = 0 := by
+        simpa [hzero] using hdeg
+      omega
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · have hle : g.size ≤ n := by omega
+    rw [DensePoly.coeff_eq_zero_of_size_le g hle]
+    simp [hn]
+
+omit [ZMod64.PrimeModulus p] in
+/-- A degree-zero polynomial has nonzero constant coefficient, supplying the
+nonzero scalar needed to invert a constant xgcd gcd witness. -/
+private theorem coeff_zero_ne_zero_of_degree_eq_zero
+    (g : FpPoly p) (hdeg : g.degree? = some 0) :
+    g.coeff 0 ≠ 0 := by
+  have hsize : g.size = 1 := by
+    unfold DensePoly.degree? at hdeg
+    by_cases hzero : g.size = 0
+    · simp [hzero] at hdeg
+    · have hpred : g.size - 1 = 0 := by
+        simpa [hzero] using hdeg
+      omega
+  have h := DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
+  simp only [hsize] at h
+  exact h
+
+omit [ZMod64.PrimeModulus p] in
+/-- Polynomial divisibility is transitive, chaining xgcd divisibility facts into
+the downstream inverse-soundness argument. -/
+private theorem dvd_trans_poly {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨u, hu⟩
+  rcases hbc with ⟨v, hv⟩
+  refine ⟨u * v, ?_⟩
+  rw [hv, hu]
+  exact DensePoly.mul_assoc_poly a u v
 
 /-- The inverse polynomial representative for a quotient element.
 
 This normalizes the extended-GCD left coefficient by the gcd's constant-unit
 factor, producing a polynomial whose residue is the multiplicative inverse
-whenever the quotient element is nonzero. -/
-private def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+whenever the quotient element is nonzero.
+
+At zero this is not an inverse and does not claim to be: the extended GCD of `0`
+and `f` returns `f` itself, so the result is `f` scaled by the inverse of its own
+constant coefficient. It stays public because `inv` is `@[expose]` and mentions
+it, but `inv` decides the zero case before reaching it, and callers should
+reason through the field-level lemmas below rather than by unfolding this. -/
+@[expose]
+def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) : FpPoly p :=
   let r := DensePoly.xgcd (GFqRing.repr x) f
   let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹
   DensePoly.scale unitInv r.left
+
+-- The scalar and constant-polynomial helpers below are pure `FpPoly` / `ZMod64`
+-- facts that take their own `hp` argument; none of them mention the quotient,
+-- so the ambient prime-modulus instance is dropped until it is needed again.
+omit [ZMod64.PrimeModulus p]
+
+/-- A nonzero `ZMod64 p` scalar multiplies with its inverse to one, turning the
+coprimality fact into the scalar cancellation used below. -/
+private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
+    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
+    a * a⁻¹ = 1 := by
+  have hcop := zmod64_coprime_of_prime_ne_zero hp ha
+  have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
+    exact ZMod64.inv_mul_eq_one (p := p) a hcop
+  have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
+  rw [hcomm]
+  apply ZMod64.ext
+  apply UInt64.toNat_inj.mp
+  simpa [ZMod64.toNat_eq_val] using hinv
+
+/-- Left multiplication by a constant polynomial agrees with {name}`DensePoly.scale`,
+allowing inverse soundness proofs to move between the two forms. -/
+private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
+    DensePoly.C c * f = DensePoly.scale c f := by
+  have hscale := FpPoly.scale_mul_left c (1 : FpPoly p) f
+  rw [FpPoly.one_mul, scale_one_poly] at hscale
+  exact hscale.symm
+
+/-- A nonzero constant polynomial times its inverse constant is one, giving the
+polynomial-level cancellation used in divisibility reversal. -/
+private theorem C_mul_C_inv_of_ne_zero
+    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
+    (DensePoly.C c : FpPoly p) * DensePoly.C c⁻¹ = 1 := by
+  rw [C_mul_eq_scale, scale_C, zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc]
+  rfl
+
+/-- Scaling a nonzero constant polynomial by the inverse scalar yields one,
+supporting the normalized xgcd gcd witness. -/
+private theorem scale_inv_C_eq_one_of_ne_zero
+    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
+    DensePoly.scale c⁻¹ (DensePoly.C c : FpPoly p) = 1 := by
+  rw [scale_C]
+  have hmul : c⁻¹ * c = 1 := by
+    have hright := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc
+    have hcomm : c⁻¹ * c = c * c⁻¹ := by grind
+    rw [hcomm]
+    exact hright
+  rw [hmul]
+  rfl
+
+/-- If multiplying `g` by a degree-zero factor gives `f`, then `f` divides `g`
+by cancelling the nonzero constant factor. -/
+private theorem dvd_left_of_mul_const_right_eq
+    (hp : Hex.Nat.Prime p) {g r f : FpPoly p}
+    (hfg : g * r = f) (hrdeg : r.degree? = some 0) :
+    f ∣ g := by
+  let c := r.coeff 0
+  have hrC : r = DensePoly.C c := eq_C_of_degree_eq_zero r hrdeg
+  have hc : c ≠ 0 := coeff_zero_ne_zero_of_degree_eq_zero r hrdeg
+  refine ⟨DensePoly.C c⁻¹, ?_⟩
+  have hfgC : g * DensePoly.C c = f := by
+    rw [← hfg, hrC]
+  calc
+    g = g * (1 : FpPoly p) := by rw [FpPoly.mul_one]
+    _ = g * (DensePoly.C c * DensePoly.C c⁻¹) := by
+      rw [C_mul_C_inv_of_ne_zero hp hc]
+    _ = (g * DensePoly.C c) * DensePoly.C c⁻¹ := by
+      exact (DensePoly.mul_assoc_poly g (DensePoly.C c) (DensePoly.C c⁻¹)).symm
+    _ = f * DensePoly.C c⁻¹ := by
+      rw [hfgC]
+
+variable [ZMod64.PrimeModulus p]
 
 /-- The extended-gcd output gives the unscaled Bezout identity for the reduced
 representative and the modulus. -/
@@ -176,16 +400,6 @@ private theorem reduceMod_repr_mul_invPoly_eq_scaled_gcd
           (DensePoly.xgcd (GFqRing.repr x) f).gcd) := by
           rw [scaled_xgcd_repr_bezout x]
 
-/-- Nonzero field elements have nonzero quotient representatives. This connects
-field-level hypotheses to the quotient-level helper lemmas. -/
-private theorem toQuotient_ne_zero
-    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
-    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
-    x.toQuotient ≠ (0 : GFqRing.PolyQuotient f hf) := by
-  intro hq
-  apply hx
-  exact GFqField.ext hq
-
 /-- The xgcd gcd witness divides the nonzero field representative. -/
 private theorem xgcd_repr_gcd_dvd_repr
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -201,181 +415,6 @@ private theorem xgcd_repr_gcd_dvd_modulus
     (DensePoly.xgcd (GFqRing.repr x) f).gcd ∣ f := by
   simpa [← DensePoly.gcd_eq_xgcd_gcd]
     using DensePoly.gcd_dvd_right (GFqRing.repr x) f
-
-/-- A nonzero `ZMod64 p` scalar is coprime to prime `p`, supplying the unit
-fact needed for constant-scaling inverses. -/
-private theorem zmod64_coprime_of_prime_ne_zero
-    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
-    Nat.Coprime a.toNat p := by
-  rw [Nat.Coprime]
-  have hnot_dvd : ¬ p ∣ a.toNat := by
-    intro hdiv
-    rcases hdiv with ⟨k, hk⟩
-    have ha_pos : 0 < a.toNat := by
-      by_cases hnat : a.toNat = 0
-      · exfalso
-        apply ha
-        apply ZMod64.ext
-        apply UInt64.toNat_inj.mp
-        simpa [ZMod64.toNat_eq_val] using hnat
-      · exact Nat.pos_of_ne_zero hnat
-    have hk_pos : 0 < k := by
-      cases k with
-      | zero =>
-          exfalso
-          have : a.toNat = 0 := by simpa using hk
-          omega
-      | succ k => exact Nat.succ_pos k
-    have hle : p ≤ a.toNat := by
-      rw [hk]
-      simpa [Nat.mul_comm] using Nat.le_mul_of_pos_left p hk_pos
-    exact (Nat.not_le_of_gt a.toNat_lt) hle
-  have hgcd_dvd_p : Nat.gcd a.toNat p ∣ p := Nat.gcd_dvd_right a.toNat p
-  rcases hp.2 (Nat.gcd a.toNat p) hgcd_dvd_p with hgcd | hgcd
-  · exact hgcd
-  · exfalso
-    apply hnot_dvd
-    rcases Nat.gcd_dvd_left a.toNat p with ⟨k, hk⟩
-    rw [hgcd] at hk
-    exact ⟨k, hk⟩
-
-/-- A nonzero `ZMod64 p` scalar multiplies with its inverse to one, turning the
-coprimality fact into the scalar cancellation used below. -/
-private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
-    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
-    a * a⁻¹ = 1 := by
-  have hcop := zmod64_coprime_of_prime_ne_zero hp ha
-  have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
-    simpa [ZMod64.toNat_one] using ZMod64.inv_mul_eq_one (p := p) a hcop
-  have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
-  rw [hcomm]
-  apply ZMod64.ext
-  apply UInt64.toNat_inj.mp
-  simpa [ZMod64.toNat_eq_val] using hinv
-
-/-- Scaling the unit polynomial by `c` is the constant polynomial `C c`, the base
-case for relating scalar multiplication to constant-polynomial multiplication. -/
-private theorem scale_one_poly (c : ZMod64 p) :
-    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
-  cases n with
-  | zero => grind
-  | succ n => exact hzero
-
-/-- Left multiplication by a constant polynomial agrees with `DensePoly.scale`,
-allowing inverse soundness proofs to move between the two forms. -/
-private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
-    DensePoly.C c * f = DensePoly.scale c f := by
-  have hscale := FpPoly.scale_mul_left c (1 : FpPoly p) f
-  rw [FpPoly.one_mul, scale_one_poly] at hscale
-  exact hscale.symm
-
-/-- Scaling a constant polynomial multiplies its constant coefficient, providing
-the coefficient-level normalization for constant factors. -/
-private theorem scale_C (c d : ZMod64 p) :
-    DensePoly.scale c (DensePoly.C d : FpPoly p) = DensePoly.C (c * d) := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
-  cases n with
-  | zero => rfl
-  | succ n => exact hzero
-
-/-- A nonzero constant polynomial times its inverse constant is one, giving the
-polynomial-level cancellation used in divisibility reversal. -/
-private theorem C_mul_C_inv_of_ne_zero
-    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
-    (DensePoly.C c : FpPoly p) * DensePoly.C c⁻¹ = 1 := by
-  rw [C_mul_eq_scale, scale_C, zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc]
-  rfl
-
-/-- Scaling a nonzero constant polynomial by the inverse scalar yields one,
-supporting the normalized xgcd gcd witness. -/
-private theorem scale_inv_C_eq_one_of_ne_zero
-    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
-    DensePoly.scale c⁻¹ (DensePoly.C c : FpPoly p) = 1 := by
-  rw [scale_C]
-  have hmul : c⁻¹ * c = 1 := by
-    have hright := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc
-    have hcomm : c⁻¹ * c = c * c⁻¹ := by grind
-    rw [hcomm]
-    exact hright
-  rw [hmul]
-  rfl
-
-/-- A polynomial with degree exactly zero is its constant coefficient polynomial,
-identifying degree-zero xgcd gcd witnesses as constants. -/
-private theorem eq_C_of_degree_eq_zero
-    (g : FpPoly p) (hdeg : g.degree? = some 0) :
-    g = DensePoly.C (g.coeff 0) := by
-  have hsize : g.size = 1 := by
-    unfold DensePoly.degree? at hdeg
-    by_cases hzero : g.size = 0
-    · simp [hzero] at hdeg
-    · have hpred : g.size - 1 = 0 := by
-        simpa [hzero] using hdeg
-      omega
-  apply DensePoly.ext_coeff
-  intro n
-  rw [DensePoly.coeff_C]
-  by_cases hn : n = 0
-  · simp [hn]
-  · have hle : g.size ≤ n := by omega
-    rw [DensePoly.coeff_eq_zero_of_size_le g hle]
-    simp [hn]
-
-/-- A degree-zero polynomial has nonzero constant coefficient, supplying the
-nonzero scalar needed to invert a constant xgcd gcd witness. -/
-private theorem coeff_zero_ne_zero_of_degree_eq_zero
-    (g : FpPoly p) (hdeg : g.degree? = some 0) :
-    g.coeff 0 ≠ 0 := by
-  have hsize : g.size = 1 := by
-    unfold DensePoly.degree? at hdeg
-    by_cases hzero : g.size = 0
-    · simp [hzero] at hdeg
-    · have hpred : g.size - 1 = 0 := by
-        simpa [hzero] using hdeg
-      omega
-  simpa [hsize] using DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
-
-/-- Polynomial divisibility is transitive, chaining xgcd divisibility facts into
-the downstream inverse-soundness argument. -/
-private theorem dvd_trans_poly {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
-    a ∣ c := by
-  rcases hab with ⟨u, hu⟩
-  rcases hbc with ⟨v, hv⟩
-  refine ⟨u * v, ?_⟩
-  rw [hv, hu]
-  exact DensePoly.mul_assoc_poly a u v
-
-/-- If multiplying `g` by a degree-zero factor gives `f`, then `f` divides `g`
-by cancelling the nonzero constant factor. -/
-private theorem dvd_left_of_mul_const_right_eq
-    (hp : Hex.Nat.Prime p) {g r f : FpPoly p}
-    (hfg : g * r = f) (hrdeg : r.degree? = some 0) :
-    f ∣ g := by
-  let c := r.coeff 0
-  have hrC : r = DensePoly.C c := eq_C_of_degree_eq_zero r hrdeg
-  have hc : c ≠ 0 := coeff_zero_ne_zero_of_degree_eq_zero r hrdeg
-  refine ⟨DensePoly.C c⁻¹, ?_⟩
-  have hfgC : g * DensePoly.C c = f := by
-    rw [← hfg]
-    rw [hrC]
-  calc
-    g = g * (1 : FpPoly p) := by rw [FpPoly.mul_one]
-    _ = g * (DensePoly.C c * DensePoly.C c⁻¹) := by
-      rw [C_mul_C_inv_of_ne_zero hp hc]
-    _ = (g * DensePoly.C c) * DensePoly.C c⁻¹ := by
-      exact (DensePoly.mul_assoc_poly g (DensePoly.C c) (DensePoly.C c⁻¹)).symm
-    _ = f * DensePoly.C c⁻¹ := by
-      rw [hfgC]
 
 /-- For a nonzero residue class modulo irreducible `f`, the xgcd gcd witness
 is a constant polynomial. -/
@@ -433,7 +472,9 @@ private theorem xgcd_repr_gcd_coeff_zero_ne_zero_of_ne_zero
         simpa [hzero] using hdeg
       omega
   have hpos : 0 < g.size := by omega
-  simpa [g, hsize] using DensePoly.coeff_last_ne_zero_of_pos_size g hpos
+  have h := DensePoly.coeff_last_ne_zero_of_pos_size g hpos
+  simp only [g, hsize] at h
+  exact h
 
 /-- For a nonzero residue class modulo an irreducible polynomial, the
 normalized xgcd witness reduces to the multiplicative identity. -/
@@ -455,8 +496,7 @@ private theorem reduceMod_repr_mul_invPoly_eq_one
   have hnormalized :
       GFqRing.reduceMod f (DensePoly.scale c⁻¹ r.gcd) =
         GFqRing.reduceMod f 1 := by
-    rw [hgcd_C]
-    rw [scale_inv_C_eq_one_of_ne_zero hp hc]
+    rw [hgcd_C, scale_inv_C_eq_one_of_ne_zero hp hc]
   exact hscaled.trans (by simpa [r, c] using hnormalized)
 
 end InverseInternals
@@ -465,6 +505,7 @@ end InverseInternals
 polynomial extended-GCD witness, normalized by the gcd's constant unit factor.
 The `0` case follows the usual junk-value convention required by
 `Lean.Grind.Field`. -/
+@[expose]
 def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -473,8 +514,8 @@ def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   else
     ofPoly f hf hp hirr (invPoly x.toQuotient)
 
-/-- For nonzero `x`, the quotient representative of `inv x` is `invPoly` of `x`'s
-representative; rewrites `inv` through `toQuotient` so inverse cancellation can be
+/-- For nonzero `x`, the quotient representative of `inv x` is {name}`invPoly` of `x`'s
+representative; rewrites {name}`inv` through `toQuotient` so inverse cancellation can be
 discharged at the quotient-ring level. -/
 private theorem toQuotient_inv_of_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -483,12 +524,14 @@ private theorem toQuotient_inv_of_ne_zero
   simp [GFqField.inv, hx]
 
 /-- Division is multiplication by the inverse candidate. -/
+@[expose]
 def div {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   mul x (inv y)
 
 /-- Integer exponentiation uses the existing natural-power path together with
 the inverse candidate for negative exponents. -/
+@[expose]
 def zpow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : Int → FiniteField f hf hp hirr
   | .ofNat n => pow x n
@@ -496,6 +539,7 @@ def zpow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
 
 /-- The Frobenius map is the `p`-th power map on the existing quotient
 representation. -/
+@[expose]
 def frob {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   pow x p
@@ -641,7 +685,7 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
   · intro h
     apply GFqField.ext
     apply GFqRing.ext
-    simpa [repr_natCast] using h
+    exact h
 
 /-- Equality of natural literals is equivalent to congruence modulo `p`. -/
 theorem natCast_eq_natCast_iff_mod_eq
@@ -658,6 +702,7 @@ theorem natCast_eq_natCast_iff_mod_eq
   · intro h
     exact natCast_eq_of_mod_eq f hf hp hirr h
 
+omit [ZMod64.PrimeModulus p] in
 /-- Addition projects to quotient-ring addition. -/
 @[simp, grind =] theorem toQuotient_add
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -666,6 +711,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient + y.toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Multiplication projects to quotient-ring multiplication. -/
 @[simp, grind =] theorem toQuotient_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -674,6 +720,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient * y.toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Negation projects to the quotient-ring additive inverse. -/
 @[simp, grind =] theorem toQuotient_neg
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -681,6 +728,7 @@ theorem natCast_eq_natCast_iff_mod_eq
     (-x : FiniteField f hf hp hirr).toQuotient = -x.toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Subtraction projects to the quotient-ring difference. -/
 @[simp, grind =] theorem toQuotient_sub
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -689,6 +737,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient - y.toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Natural scalar multiplication projects to the quotient-ring scalar action. -/
 @[simp, grind =] theorem toQuotient_nsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -702,6 +751,7 @@ theorem natCast_eq_natCast_iff_mod_eq
     ((i : FiniteField f hf hp hirr).toQuotient) = (i : GFqRing.PolyQuotient f hf) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Integer scalar multiplication projects to the quotient-ring scalar action. -/
 @[simp, grind =] theorem toQuotient_zsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -709,6 +759,7 @@ theorem natCast_eq_natCast_iff_mod_eq
     (i • x : FiniteField f hf hp hirr).toQuotient = i • x.toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Natural powers project to quotient-ring natural powers. -/
 @[simp, grind =] theorem toQuotient_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -717,6 +768,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient ^ n :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Division projects to multiplication by the projected inverse. -/
 @[simp, grind =] theorem toQuotient_div
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -725,6 +777,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient * (inv y).toQuotient :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Nonnegative integer powers project to quotient-ring natural powers. -/
 @[simp, grind =] theorem toQuotient_zpow_ofNat
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -733,6 +786,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient ^ n :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Negative integer powers project through inversion of the positive power. -/
 @[simp, grind =] theorem toQuotient_zpow_negSucc
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -750,6 +804,7 @@ theorem natCast_eq_natCast_iff_mod_eq
     ofPoly f hf hp hirr (invPoly ((0 : FiniteField f hf hp hirr).toQuotient))) = 0
   simp
 
+omit [ZMod64.PrimeModulus p] in
 /-- Division is field multiplication by inverse. -/
 @[simp, grind =]
 theorem div_eq_mul_inv
@@ -775,14 +830,11 @@ theorem mul_inv_cancel
       (1 : GFqRing.PolyQuotient f hf) = GFqRing.one f hf := by
     change GFqRing.natCast f hf 1 = GFqRing.one f hf
     rfl
-  set_option linter.unnecessarySimpa false in
   have hmulReduce :
       GFqRing.reduceMod f
           (GFqRing.repr x.toQuotient * GFqRing.reduceMod f (invPoly x.toQuotient)) =
         GFqRing.reduceMod f (GFqRing.repr x.toQuotient * invPoly x.toQuotient) := by
-    simpa [hxrepr] using
-      (GFqRing.reduceMod_mul_reduceMod f (GFqRing.repr x.toQuotient)
-        (invPoly x.toQuotient)).symm
+    simp
   apply GFqField.ext
   apply GFqRing.ext
   calc
@@ -799,8 +851,7 @@ theorem mul_inv_cancel
         hmulReduce
     _ = GFqRing.reduceMod f 1 := hreduced
     _ = GFqRing.repr ((1 : FiniteField f hf hp hirr).toQuotient) := by
-        rw [toQuotient_one]
-        rw [honeQuotient]
+        rw [toQuotient_one, honeQuotient]
         rfl
 
 /-- A nonzero field element cancels against its inverse on the left. -/
@@ -819,6 +870,7 @@ theorem inv_mul_cancel
     _ = (x * x⁻¹ : FiniteField f hf hp hirr).toQuotient := rfl
     _ = (1 : FiniteField f hf hp hirr).toQuotient := congrArg FiniteField.toQuotient hleft
 
+/-- The additive-identity representative is the reduced form of `0`. -/
 @[simp, grind =] theorem repr_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     repr (0 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 0 :=
@@ -830,6 +882,7 @@ theorem inv_mul_cancel
     repr (1 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 1 :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a sum is the reduced sum of representatives. -/
 @[simp, grind =] theorem repr_add
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -837,6 +890,7 @@ theorem inv_mul_cancel
     repr (x + y) = GFqRing.reduceMod f (repr x + repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a product is the reduced product of representatives. -/
 @[simp, grind =] theorem repr_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -844,6 +898,7 @@ theorem inv_mul_cancel
     repr (x * y) = GFqRing.reduceMod f (repr x * repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a negation reduces from the negated representative. -/
 @[simp, grind =] theorem repr_neg
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -851,6 +906,7 @@ theorem inv_mul_cancel
     repr (-x) = GFqRing.reduceMod f (-(repr x)) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a subtraction reduces from the difference of
 representatives. -/
 @[simp, grind =] theorem repr_sub
@@ -859,6 +915,7 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a natural power is the quotient-ring power representative. -/
 @[simp, grind =] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -866,6 +923,7 @@ representatives. -/
     repr (x ^ n) = GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a quotient is the quotient-ring product with the projected inverse. -/
 @[simp, grind =] theorem repr_div
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -874,6 +932,7 @@ representatives. -/
       GFqRing.repr (x.toQuotient * (inv y).toQuotient) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Nonnegative integer powers share the natural-power representative. -/
 @[simp, grind =] theorem repr_zpow_ofNat
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -882,6 +941,7 @@ representatives. -/
       GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Negative integer powers represent the inverse of the corresponding positive power. -/
 @[simp, grind =] theorem repr_zpow_negSucc
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -897,6 +957,7 @@ representatives. -/
       GFqRing.repr ((i : GFqRing.PolyQuotient f hf)) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a natural scalar action lifts the quotient-ring action. -/
 @[simp, grind =] theorem repr_nsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -904,6 +965,7 @@ representatives. -/
     repr (n • x : FiniteField f hf hp hirr) = GFqRing.repr (n • x.toQuotient) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of an integer scalar action lifts the quotient-ring action. -/
 @[simp, grind =] theorem repr_zsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -954,10 +1016,10 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     simpa using Lean.Grind.Semiring.pow_succ a.toQuotient n
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Semiring.ofNat_succ (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Semiring.ofNat_succ (α := GFqRing.PolyQuotient f hf) n
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Semiring.ofNat_eq_natCast (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Semiring.ofNat_eq_natCast (α := GFqRing.PolyQuotient f hf) n
   · intro n a
     apply GFqField.ext
     simpa using
@@ -982,7 +1044,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     simpa using Lean.Grind.Ring.zsmul_natCast_eq_nsmul (α := GFqRing.PolyQuotient f hf) n a.toQuotient
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Ring.intCast_ofNat (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Ring.intCast_ofNat (α := GFqRing.PolyQuotient f hf) n
   · intro i
     apply GFqField.ext
     simpa using Lean.Grind.Ring.intCast_neg (α := GFqRing.PolyQuotient f hf) i
@@ -997,7 +1059,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   simpa using Lean.Grind.CommSemiring.mul_comm a.toQuotient b.toQuotient
 
 /-- A right inverse is the inverse: `a * b = 1` forces `a = b⁻¹`; the uniqueness
-fact that lets the `FiniteField` field-structure proofs identify computed inverses
+fact that lets the {name}`FiniteField` field-structure proofs identify computed inverses
 with the canonical `⁻¹`. -/
 private theorem eq_inv_of_mul_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1022,14 +1084,14 @@ private theorem eq_inv_of_mul_eq_one
 
 /-- The inverse of `1` is `1`, since `1 * 1 = 1`; a normalization step in the
 field-structure proofs. -/
-private theorem inv_one
+theorem inv_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     (1 : FiniteField f hf hp hirr)⁻¹ = 1 :=
   (eq_inv_of_mul_eq_one (Lean.Grind.Semiring.mul_one (1 : FiniteField f hf hp hirr))).symm
 
 /-- Double inverse is the identity: `x⁻¹⁻¹ = x`; obtained from inverse uniqueness
 via the cancellation `x⁻¹ * x = 1`, with the zero case handled separately. -/
-private theorem inv_inv
+theorem inv_inv
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     x⁻¹⁻¹ = x := by
@@ -1040,24 +1102,24 @@ private theorem inv_inv
     apply eq_inv_of_mul_eq_one
     exact mul_inv_cancel (x := x) hx
 
-/-- Double inverse stated through the `inv`-named function: `(inv x)⁻¹ = x`; the
-form consumed where the explicit `inv` definition appears rather than the `⁻¹`
+/-- Double inverse stated through the {name}`inv`-named function: `(inv x)⁻¹ = x`; the
+form consumed where the explicit {name}`inv` definition appears rather than the `⁻¹`
 notation. -/
-private theorem inv_inv_def
+theorem inv_inv_def
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     (inv x)⁻¹ = x :=
   inv_inv x
 
 /-- The empty product `pow x 0 = 1`; the base case anchoring the exponentiation
-recursion in the `FiniteField` power API. -/
-private theorem pow_zero_eq_one
+recursion in the {name}`FiniteField` power API. -/
+theorem pow_zero_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     pow x 0 = 1 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   apply GFqField.ext
-  simpa using Lean.Grind.Semiring.pow_zero x.toQuotient
+  exact Lean.Grind.Semiring.pow_zero x.toQuotient
 
 /-- Field laws for finite-field elements, using the field-level inverse lemmas. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
@@ -1074,10 +1136,10 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     exact mul_inv_cancel (x := a) ha'
   · intro a
     apply GFqField.ext
-    simpa [zpow] using Lean.Grind.Semiring.pow_zero a.toQuotient
+    exact Lean.Grind.Semiring.pow_zero a.toQuotient
   · intro a n
     apply GFqField.ext
-    simpa [zpow] using Lean.Grind.Semiring.pow_succ a.toQuotient n
+    exact Lean.Grind.Semiring.pow_succ a.toQuotient n
   · intro a n
     cases n with
     | ofNat m =>
@@ -1097,6 +1159,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     Lean.Grind.IsCharP (FiniteField f hf hp hirr) p where
   ofNat_ext_iff {x y} := natCast_eq_natCast_iff_mod_eq f hf hp hirr x y
 
+omit [ZMod64.PrimeModulus p] in
 /-- Frobenius is definitionally the `p`-th power map. -/
 theorem frob_eq_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1104,6 +1167,7 @@ theorem frob_eq_pow
     frob x = x ^ p :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Frobenius projects to the quotient-ring `p`-th power. -/
 @[simp, grind =] theorem toQuotient_frob
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
@@ -1111,6 +1175,7 @@ theorem frob_eq_pow
     (frob x).toQuotient = x.toQuotient ^ p :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of Frobenius is the quotient-ring `p`-th power representative. -/
 @[simp, grind =] theorem repr_frob
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}

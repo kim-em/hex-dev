@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+<style>
+text { font-family: sans-serif; fill: #202124; }
+.grid { stroke: #cfd4da; stroke-width: 1; opacity: 0.65; }
+.axis { stroke: #202124; stroke-width: 1.4; }
+.series { fill: none; stroke-width: 2.5; }
+</style>
+<text x="450.0" y="30" text-anchor="middle" font-size="19" font-weight="600">HexMvPoly comparators — Sum-of-squares arithmetic (chungus2)</text>
+<rect x="90" y="62" width="780" height="420" fill="#ffffff"/>
+<line class="grid" x1="90.00" y1="62" x2="90.00" y2="482"/>
+<text x="90.00" y="506" text-anchor="middle" font-size="12">8</text>
+<line class="grid" x1="220.00" y1="62" x2="220.00" y2="482"/>
+<text x="220.00" y="506" text-anchor="middle" font-size="12">16</text>
+<line class="grid" x1="350.00" y1="62" x2="350.00" y2="482"/>
+<text x="350.00" y="506" text-anchor="middle" font-size="12">32</text>
+<line class="grid" x1="480.00" y1="62" x2="480.00" y2="482"/>
+<text x="480.00" y="506" text-anchor="middle" font-size="12">64</text>
+<line class="grid" x1="610.00" y1="62" x2="610.00" y2="482"/>
+<text x="610.00" y="506" text-anchor="middle" font-size="12">128</text>
+<line class="grid" x1="740.00" y1="62" x2="740.00" y2="482"/>
+<text x="740.00" y="506" text-anchor="middle" font-size="12">256</text>
+<line class="grid" x1="870.00" y1="62" x2="870.00" y2="482"/>
+<text x="870.00" y="506" text-anchor="middle" font-size="12">512</text>
+<line class="grid" x1="90" y1="482.00" x2="870" y2="482.00"/>
+<text x="78" y="486.00" text-anchor="end" font-size="12">10^-5</text>
+<line class="grid" x1="90" y1="412.00" x2="870" y2="412.00"/>
+<text x="78" y="416.00" text-anchor="end" font-size="12">10^-4</text>
+<line class="grid" x1="90" y1="342.00" x2="870" y2="342.00"/>
+<text x="78" y="346.00" text-anchor="end" font-size="12">10^-3</text>
+<line class="grid" x1="90" y1="272.00" x2="870" y2="272.00"/>
+<text x="78" y="276.00" text-anchor="end" font-size="12">10^-2</text>
+<line class="grid" x1="90" y1="202.00" x2="870" y2="202.00"/>
+<text x="78" y="206.00" text-anchor="end" font-size="12">10^-1</text>
+<line class="grid" x1="90" y1="132.00" x2="870" y2="132.00"/>
+<text x="78" y="136.00" text-anchor="end" font-size="12">10^0</text>
+<line class="grid" x1="90" y1="62.00" x2="870" y2="62.00"/>
+<text x="78" y="66.00" text-anchor="end" font-size="12">10^1</text>
+<line class="axis" x1="90" y1="482" x2="870" y2="482"/>
+<line class="axis" x1="90" y1="62" x2="90" y2="482"/>
+<text x="480.0" y="538" text-anchor="middle" font-size="14">source terms n</text>
+<text x="22" y="272.0" text-anchor="middle" font-size="14" transform="rotate(-90 22 272.0)">wall time per call (s)</text>
+<polyline class="series" stroke="#2468b4" points="90.00,399.72 220.00,348.70 350.00,298.36 480.00,250.31 610.00,201.60 686.05,175.35 740.00,154.64 816.05,125.90 870.00,108.20"/>
+<circle cx="90.00" cy="399.72" r="4" fill="#2468b4"/>
+<circle cx="220.00" cy="348.70" r="4" fill="#2468b4"/>
+<circle cx="350.00" cy="298.36" r="4" fill="#2468b4"/>
+<circle cx="480.00" cy="250.31" r="4" fill="#2468b4"/>
+<circle cx="610.00" cy="201.60" r="4" fill="#2468b4"/>
+<circle cx="686.05" cy="175.35" r="4" fill="#2468b4"/>
+<circle cx="740.00" cy="154.64" r="4" fill="#2468b4"/>
+<circle cx="816.05" cy="125.90" r="4" fill="#2468b4"/>
+<circle cx="870.00" cy="108.20" r="4" fill="#2468b4"/>
+<line x1="108" y1="82" x2="136" y2="82" stroke="#2468b4" stroke-width="2.5"/>
+<text x="146" y="86" font-size="12">Hex ExtTreeMap</text>
+<polyline class="series" stroke="#d95f02" points="90.00,411.51 220.00,339.59 350.00,268.19 480.00,198.44 610.00,129.57 686.05,89.60"/>
+<rect x="86.00" y="407.51" width="8" height="8" fill="#d95f02"/>
+<rect x="216.00" y="335.59" width="8" height="8" fill="#d95f02"/>
+<rect x="346.00" y="264.19" width="8" height="8" fill="#d95f02"/>
+<rect x="476.00" y="194.44" width="8" height="8" fill="#d95f02"/>
+<rect x="606.00" y="125.57" width="8" height="8" fill="#d95f02"/>
+<rect x="682.05" y="85.60" width="8" height="8" fill="#d95f02"/>
+<line x1="108" y1="106" x2="136" y2="106" stroke="#d95f02" stroke-width="2.5"/>
+<text x="146" y="110" font-size="12">CompPoly CMvPolynomial</text>
+<polyline class="series" stroke="#249148" points="90.00,423.09 220.00,374.33 350.00,325.40 480.00,277.14 610.00,231.02 686.05,204.37 740.00,184.21 816.05,153.20 870.00,129.61"/>
+<polygon points="90.00,418.09 85.00,427.09 95.00,427.09" fill="#249148"/>
+<polygon points="220.00,369.33 215.00,378.33 225.00,378.33" fill="#249148"/>
+<polygon points="350.00,320.40 345.00,329.40 355.00,329.40" fill="#249148"/>
+<polygon points="480.00,272.14 475.00,281.14 485.00,281.14" fill="#249148"/>
+<polygon points="610.00,226.02 605.00,235.02 615.00,235.02" fill="#249148"/>
+<polygon points="686.05,199.37 681.05,208.37 691.05,208.37" fill="#249148"/>
+<polygon points="740.00,179.21 735.00,188.21 745.00,188.21" fill="#249148"/>
+<polygon points="816.05,148.20 811.05,157.20 821.05,157.20" fill="#249148"/>
+<polygon points="870.00,124.61 865.00,133.61 875.00,133.61" fill="#249148"/>
+<line x1="108" y1="130" x2="136" y2="130" stroke="#249148" stroke-width="2.5"/>
+<text x="146" y="134" font-size="12">sorted-list MvSparsePoly proxy</text>
+</svg>

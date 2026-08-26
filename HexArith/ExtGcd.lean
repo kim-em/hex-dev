@@ -12,7 +12,7 @@ public section
 Extended GCD algorithms and specifications.
 
 This module defines pure-`Nat`, `Int`, and `UInt64` extended-GCD
-operations together with the core gcd and Bezout-certificate theorems
+operations together with the fundamental gcd and Bezout-certificate theorems
 used by the arithmetic library.
 -/
 
@@ -32,10 +32,10 @@ def natDivMod (a b : Nat) : Nat × Nat :=
 /--
 Pure natural-number extended GCD.
 
-`HexArith.extGcd a b` returns `(g, s, t)` with `g = Nat.gcd a b` and
+The result `(g, s, t)` satisfies `g = Nat.gcd a b` and
 `s * a + t * b = g` after coercing the inputs to `Int`. Use
-`HexArith.Int.extGcd` for the GMP-backed integer API and
-`HexArith.UInt64.extGcd` for machine-word inputs.
+the GMP-backed `HexArith.Int.extGcd` entry point for integer inputs and
+`HexArith.UInt64.extGcd` for `UInt64` inputs.
 -/
 @[expose]
 def extGcd (a b : Nat) : Nat × Int × Int :=
@@ -143,7 +143,7 @@ rewritten through `extGcd_fst`.
   rw [extGcd_bezout_proj, extGcd_fst]
 
 /--
-Combined correctness theorem for `extGcd`.
+Combined correctness theorem for {name}`HexArith.extGcd`.
 
 Use this when a caller needs both the gcd projection and the Bezout
 certificate after destructuring the returned triple.
@@ -194,7 +194,7 @@ decreasing_by
     have hnatAbs_lt :
         ((old_r % Int.ofNat (n + 1)).natAbs : Int) < (Int.ofNat (n + 1)).natAbs := by
       rw [Int.ofNat_natAbs_of_nonneg hmod_nonneg]
-      simpa using hmod_lt
+      omega
     exact Int.ofNat_lt.mp hnatAbs_lt
   · have hmod_nonneg : 0 ≤ old_r % Int.negSucc n := by
       exact Int.emod_nonneg _ (by simp)
@@ -297,7 +297,7 @@ private theorem pureIntExtGcd_go_spec
                   exact Int.emod_lt_of_pos _ hpos
                 have hnatAbs_lt : ((old_r % r').natAbs : Int) < r'.natAbs := by
                   rw [Int.ofNat_natAbs_of_nonneg hmod_nonneg]
-                  simpa [r'] using hmod_lt
+                  omega
                 exact Int.ofNat_lt.mp hnatAbs_lt
               have hn : r'.natAbs = n := by
                 simpa [r'] using hmeasure
@@ -479,8 +479,7 @@ theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
       omega
   | succ p =>
       simp [extGcd, Hex.pureIntExtGcd]
-      rw [show (↑p + 1 : Int) = Int.ofNat (p + 1) by simp]
-      rw [Hex.pureIntExtGcd.go.eq_def]
+      rw [show (↑p + 1 : Int) = Int.ofNat (p + 1) by simp, Hex.pureIntExtGcd.go.eq_def]
       simp
       rw [Hex.pureIntExtGcd.go.eq_def]
       simp [show ¬ (↑p + 1 : Int) < 0 by omega]

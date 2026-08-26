@@ -25,6 +25,29 @@ static void lean_int_to_mpz(b_lean_obj_arg n, mpz_t out) {
         lean_extract_mpz_value(n, out);
     }
 }
+
+/* `lean_alloc_mpz` constructs the heap representation used only outside
+   Lean's tagged-scalar range.  Normalize small GMP results before returning
+   them across the FFI boundary. */
+static lean_obj_res lean_nat_from_mpz(mpz_t n) {
+    if (mpz_fits_ulong_p(n)) {
+        unsigned long value = mpz_get_ui(n);
+        if (value <= LEAN_MAX_SMALL_NAT) {
+            return lean_box(value);
+        }
+    }
+    return lean_alloc_mpz(n);
+}
+
+static lean_obj_res lean_int_from_mpz(mpz_t n) {
+    if (mpz_fits_slong_p(n)) {
+        long value = mpz_get_si(n);
+        if (LEAN_MIN_SMALL_INT <= value && value <= LEAN_MAX_SMALL_INT) {
+            return lean_int64_to_int((int64_t)value);
+        }
+    }
+    return lean_alloc_mpz(n);
+}
 #else
 static lean_obj_res lean_int_extgcd_fallback(b_lean_obj_arg a, b_lean_obj_arg b) {
     lean_object * zero = lean_box(0);
@@ -65,6 +88,15 @@ static lean_obj_res lean_int_extgcd_fallback(b_lean_obj_arg a, b_lean_obj_arg b)
     lean_dec(s);
     lean_dec(t);
 
+    if (lean_int_lt(old_r, zero)) {
+        lean_object * normalized_s = lean_int_neg(old_s);
+        lean_object * normalized_t = lean_int_neg(old_t);
+        lean_dec(old_s);
+        lean_dec(old_t);
+        old_s = normalized_s;
+        old_t = normalized_t;
+    }
+
     lean_object * g = lean_nat_abs(old_r);
     lean_object * result = mk_extgcd_result(g, old_s, old_t);
     lean_dec(old_r);
@@ -86,9 +118,9 @@ LEAN_EXPORT lean_obj_res lean_hex_mpz_gcdext(b_lean_obj_arg a, b_lean_obj_arg b)
 
     mpz_gcdext(g_z, s_z, t_z, a_z, b_z);
 
-    lean_object * g = lean_alloc_mpz(g_z);
-    lean_object * s = lean_alloc_mpz(s_z);
-    lean_object * t = lean_alloc_mpz(t_z);
+    lean_object * g = lean_nat_from_mpz(g_z);
+    lean_object * s = lean_int_from_mpz(s_z);
+    lean_object * t = lean_int_from_mpz(t_z);
     lean_object * result = mk_extgcd_result(g, s, t);
 
     mpz_clears(a_z, b_z, g_z, s_z, t_z, NULL);

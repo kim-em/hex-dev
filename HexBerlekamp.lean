@@ -4,11 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Basic
-import HexBerlekamp.DistinctDegree
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBerlekamp.PackedKernel
+public import HexBerlekamp.CertificateSyntax
+public import HexBerlekamp.Factored
+public import HexBerlekamp.PolynomialTactic
+public import HexBerlekamp.FactorPolyElab
+public import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.DegreePattern
+public import HexBerlekamp.DelayedKernel
+public import HexBerlekamp.DistinctDegree
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.IrreducibleDecide
+public import HexBerlekamp.LinearFactors
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 `HexBerlekamp` exposes the executable Berlekamp-matrix surface for factoring

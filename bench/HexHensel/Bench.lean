@@ -84,7 +84,7 @@ instance {p : Nat} [ZMod64.Bounds p] : Hashable (FpPoly p) where
   hash f := hash f.toArray
 
 /-- Prepared input for the conversion-operation benchmarks. -/
-structure BridgeInput where
+structure ConversionInput where
   zpoly : ZPoly
   fpoly : FpPoly 5
   deriving Hashable
@@ -183,7 +183,7 @@ def checksumZPolyArray (polys : Array ZPoly) : UInt64 :=
   polys.foldl (fun acc f => mixHash acc (checksumZPoly f)) 0
 
 /-- Per-parameter fixture for conversion operations. -/
-def prepBridgeInput (n : Nat) : BridgeInput :=
+def prepConversionInput (n : Nat) : ConversionInput :=
   { zpoly := denseZPoly n 17
     fpoly := denseFpPoly n 23 }
 
@@ -248,15 +248,15 @@ def prepMultifactorLiftPrecisionInput (param : Nat) : MultifactorInput :=
     k := liftBenchPrecision param }
 
 /-- Benchmark target: reduce integer coefficients modulo `5`. -/
-def runModPChecksum (input : BridgeInput) : UInt64 :=
+def runModPChecksum (input : ConversionInput) : UInt64 :=
   checksumFpPoly <| ZPoly.modP 5 input.zpoly
 
 /-- Benchmark target: lift `F_5` coefficients to canonical integer representatives. -/
-def runLiftToZChecksum (input : BridgeInput) : UInt64 :=
+def runLiftToZChecksum (input : ConversionInput) : UInt64 :=
   checksumZPoly <| FpPoly.liftToZ input.fpoly
 
 /-- Benchmark target: reduce integer coefficients modulo `5^3`. -/
-def runReduceModPowChecksum (input : BridgeInput) : UInt64 :=
+def runReduceModPowChecksum (input : ConversionInput) : UInt64 :=
   checksumZPoly <| ZPoly.reduceModPow input.zpoly 5 3
 
 /-- Benchmark target: one linear Hensel correction step. -/
@@ -287,7 +287,7 @@ def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
 
-/-! ## FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
+/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
 
 Each of the five Hensel-lift Hex targets is paired with a corresponding
 call into the shared persistent-subprocess python-flint driver
@@ -540,7 +540,7 @@ Coefficient reduction maps each of the `n` dense integer coefficients once and
 then normalizes the result, so the conversion operation has linear cost.
 -/
 setup_benchmark runModPChecksum n => n
-  with prep := prepBridgeInput
+  with prep := prepConversionInput
   where {
     paramFloor := 8192
     paramCeiling := 131072
@@ -555,7 +555,7 @@ Canonical lifting maps each of the `n` finite-field coefficients to its
 integer representative and normalizes the dense result, giving linear cost.
 -/
 setup_benchmark runLiftToZChecksum n => n
-  with prep := prepBridgeInput
+  with prep := prepConversionInput
   where {
     paramFloor := 8192
     paramCeiling := 131072
@@ -570,7 +570,7 @@ Reduction modulo a fixed power `5^3` performs one bounded integer reduction per
 dense coefficient followed by normalization, so the model is linear in `n`.
 -/
 setup_benchmark runReduceModPowChecksum n => n
-  with prep := prepBridgeInput
+  with prep := prepConversionInput
   where {
     paramFloor := 8192
     paramCeiling := 131072
@@ -697,7 +697,7 @@ setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComple
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
+/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
 
 Each Hensel-lift Lean target is paired with the matching FLINT
 `nmod_poly_hensel` op via the shared persistent-subprocess driver. The pairs

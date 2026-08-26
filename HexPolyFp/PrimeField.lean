@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.Basic
+public import HexPolyFp.Degree
 public import Init.Grind.Ring.Field
 
 public section
@@ -20,7 +20,7 @@ threading through the executable `ZMod64.inv` defined in
 `HexModArith/Basic.lean` and the prime-modulus inverse identities from
 `HexModArith/Prime.lean`.
 
-The instance is shared between the Berlekamp factorisation pipeline and the
+The instance is shared between the Berlekamp factorisation computation and the
 Berlekamp–Zassenhaus integer lift, which both previously carried an inline
 copy of the construction.
 -/
@@ -30,6 +30,7 @@ namespace ZMod64
 
 variable {p : Nat} [Bounds p]
 
+/-- Integer powers in the prime field, using inverses for negative exponents. -/
 @[expose]
 def intPow (a : ZMod64 p) : Int → ZMod64 p
   | .ofNat n => a ^ n
@@ -86,9 +87,7 @@ theorem inv_inv_of_prime
       rw [Lean.Grind.CommSemiring.mul_comm]
       exact ZMod64.inv_mul_eq_one_of_prime hp ha
     have hprod : (((a⁻¹)⁻¹ - a) * a⁻¹) = (0 : ZMod64 p) := by
-      rw [Lean.Grind.Ring.sub_eq_add_neg]
-      rw [Lean.Grind.Semiring.right_distrib]
-      rw [hleft]
+      rw [Lean.Grind.Ring.sub_eq_add_neg, Lean.Grind.Semiring.right_distrib, hleft]
       grind
     rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hprod with hdiff | hzero
     · grind

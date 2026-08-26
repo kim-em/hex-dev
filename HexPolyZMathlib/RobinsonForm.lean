@@ -154,12 +154,10 @@ theorem reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot {α : ℂ} (h�
   rw [schurReflectedRoot, mul_sub, ← C_mul]
   have hmul : -(conj α) * (conj α)⁻¹ = -1 := by
     rw [neg_mul, mul_inv_cancel₀ hconj]
-  rw [hmul]
-  rw [mul_comm]
+  rw [hmul, mul_comm]
   have hxneg : X * C (-(conj α)) = -(X * C (conj α)) := by
     rw [← mul_neg, ← C_neg]
-  rw [mul_comm (C (-(conj α))) X]
-  rw [hxneg]
+  rw [mul_comm (C (-(conj α))) X, hxneg]
   norm_num
   ring
 
@@ -182,7 +180,7 @@ theorem derivativeMahler_reflectedLinearFactor_eq
 
 /--
 If the derivative Mahler measure is monotone along the Schur path on `[0,1]`,
-its value at the original root `α` is at most its value at the reflected root —
+its value at the original root `α` is at most its value at the reflected root;
 the comparison of the two path endpoints.
 -/
 theorem derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn
@@ -222,7 +220,7 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotone
       exact le_mul_of_one_le_left (mahlerMeasure_nonneg _) hα.le
 
 /--
-`MonotoneOn`-hypothesis form of `mahlerMeasure_derivative_le_of_schurRootPath_monotone`:
+{name}`MonotoneOn`-hypothesis form of `mahlerMeasure_derivative_le_of_schurRootPath_monotone`:
 the path-monotonicity premise is reduced to the endpoint comparison automatically.
 -/
 theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
@@ -236,7 +234,7 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
     (derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn f α hmono)
 
 /--
-One root-reflection step in the de Bruijn-Springer/Boyd route toward
+One root-reflection step in the de Bruijn-Springer/Boyd method toward
 `p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure`: if the Mahler
 measure of the derivative is monotone along the Schur path for the selected
 linear factor, then reflecting that exterior root cannot decrease the Mahler
@@ -326,7 +324,7 @@ theorem norm_eval_robinsonFactor_eq_norm_eval_X_sub_C
       _ = ‖(X - C α : ℂ[X]).eval z‖ := by simp
 
 /--
-The Robinson form agrees with `p` in modulus everywhere on the unit circle —
+The Robinson form agrees with `p` in modulus everywhere on the unit circle;
 the pointwise boundary identity behind the Mahler-measure equality
 `mahlerMeasure_robinsonForm`.
 -/
@@ -382,7 +380,7 @@ theorem mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero {p q : ℂ[X]}
 
 open Filter MeasureTheory Set in
 /--
-Jensen/circle-average upper bound used in the Mahler--Boyd analytic route:
+Jensen/circle-average upper bound used in the Mahler--Boyd analytic method:
 the exponential Mahler measure is bounded by the unit-circle mean of the
 absolute value.  This is the first Jensen step in the standard Landau/Mahler
 integral proof, exposed here so derivative-bound arguments can cite the
@@ -447,8 +445,7 @@ theorem mahlerMeasure_robinsonFactor (α : ℂ) :
         congr 1
         rw [map_neg]
         simp only [map_one]
-        rw [sub_eq_add_neg, add_comm]
-        rw [neg_mul]
+        rw [sub_eq_add_neg, add_comm, neg_mul]
       _ = max ‖-(conj α)‖ ‖(1 : ℂ)‖ := by
         simpa using mahlerMeasure_C_mul_X_add_C (a := -(conj α)) (b := 1) (by simpa using hconj_ne)
       _ = max 1 ‖α‖ := by
@@ -510,8 +507,7 @@ theorem norm_root_robinsonFactor_le (α : ℂ) {β : ℂ}
     rw [hβ]
     have : ‖-((-(conj α))⁻¹ * 1)‖ = ‖α‖⁻¹ := by
       rw [mul_one, norm_neg, norm_inv, norm_neg, Complex.norm_conj]
-    rw [this]
-    rw [inv_le_one_iff₀]
+    rw [this, inv_le_one_iff₀]
     right
     exact hα'.le
 
@@ -686,7 +682,7 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
   have hsub : p.natDegree - 1 + 1 = p.natDegree :=
     Nat.sub_add_cancel hnatpos
   have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
-    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+    natDegree_eq_of_degree_eq_some (degree_derivative hnatpos.ne')
   have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
     rw [Nat.cast_sub hnatpos, Nat.cast_one]; ring
   have hlead_deriv : p.derivative.leadingCoeff =
@@ -786,7 +782,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one
 
 /--
 The Schmeisser specialization is naturally applied to `X * p.derivative`.
-The extra root contributed by `X` is `0`, hence it is removed by the
+The extra root contributed by {name}`X` is `0`, hence it is removed by the
 `1 ≤ ‖β‖` filter.
 -/
 theorem roots_filter_norm_product_derivative_le_of_X_mul_derivative
@@ -825,7 +821,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
   have hsub : p.natDegree - 1 + 1 = p.natDegree :=
     Nat.sub_add_cancel hnatpos
   have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
-    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+    natDegree_eq_of_degree_eq_some (degree_derivative hnatpos.ne')
   have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
     rw [Nat.cast_sub hnatpos, Nat.cast_one]
     ring
@@ -868,7 +864,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_roots_le_one
 
 /--
 Robinson endpoint root-product comparison for the derivative.  This is the
-closed-disk endpoint of the de Bruijn-Springer/Boyd reflection route: all roots
+closed-disk endpoint of the de Bruijn-Springer/Boyd reflection method: all roots
 of `p.robinsonForm` lie in the closed unit disk, so Gauss-Lucas puts all roots
 of its derivative there as well.
 -/
@@ -886,13 +882,15 @@ theorem prod_max_one_norm_roots_robinsonForm_derivative_le
   rw [hderiv_prod]
   exact one_le_prod_max_one_norm_roots p
 
+namespace MahlerMeasure
+
 /--
-Corrected Boyd boundary-comparison source theorem. Boundary equality and the
+Boyd boundary-comparison theorem. Boundary equality and the
 closed-disk root hypothesis for `q` identify the right side as
 `q.natDegree * q.mahlerMeasure`; the additional hypothesis `hpderiv` is the
-necessary replacement for the invalid unconditional derivative Mahler bound.
+derivative Mahler bound needed on the source polynomial.
 -/
-theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
+theorem derivative_le_of_boundary
     {p q : ℂ[X]}
     (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
     (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖)
@@ -917,6 +915,8 @@ theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_o
     p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure := hpderiv
     _ = q.natDegree * q.mahlerMeasure := by rw [← hdeg, hmeasure]
     _ = q.derivative.mahlerMeasure := hqderiv.symm
+
+end MahlerMeasure
 
 /--
 The derivative of the Robinson form attains the exact identity

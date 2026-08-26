@@ -6,6 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Basic
+public import HexLLL.Lattice
+public import HexLLL.Certificate
+public import HexLLL.Reduced
+public import HexLLL.Interval
+public import HexLLL.Checker
+public import HexLLL.Native
+public import HexLLL.ExternalReducer
+public import HexLLL.Reduction
 
 public section

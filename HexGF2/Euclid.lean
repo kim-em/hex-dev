@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Multiply
+module
+
+public import HexGF2.Multiply
+
+public section
 
 /-!
 Executable Euclidean-algorithm operations for packed `GF2Poly`.
@@ -18,7 +22,8 @@ namespace Hex
 namespace GF2Poly
 
 /-- Tail-recursive long division for packed `GF(2)` polynomials. -/
-private def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
+@[expose]
+def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
     GF2Poly × GF2Poly :=
   match fuel with
   | 0 => (quot, rem)
@@ -37,14 +42,17 @@ private def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
         | _, _ => (quot, rem)
 
 /-- Polynomial long division over `GF(2)`. Division by `0` returns `(0, p)`. -/
+@[expose]
 def divMod (p q : GF2Poly) : GF2Poly × GF2Poly :=
   divModAux q (p.degree + 1) 0 p
 
 /-- Quotient from polynomial long division over `GF(2)`. -/
+@[expose]
 def div (p q : GF2Poly) : GF2Poly :=
   (divMod p q).1
 
 /-- Remainder from polynomial long division over `GF(2)`. -/
+@[expose]
 def mod (p q : GF2Poly) : GF2Poly :=
   (divMod p q).2
 
@@ -59,11 +67,13 @@ instance : Dvd GF2Poly where
   dvd p q := ∃ r : GF2Poly, q = p * r
 
 /-- Polynomial irreducibility over `GF(2)` phrased in terms of nontrivial
-factorizations inside the packed `GF2Poly` execution model. -/
+factorizations inside the packed {name}`Hex.GF2Poly` execution model. -/
+@[expose]
 def Irreducible (f : GF2Poly) : Prop :=
   f ≠ 0 ∧ ∀ a b : GF2Poly, a * b = f → a.degree = 0 ∨ b.degree = 0
 
 /-- Bitmask for coefficients of degree `< n` inside one `UInt64` word. -/
+@[expose]
 def lowerMask (n : Nat) : UInt64 :=
   if n < 64 then
     ((1 : UInt64) <<< n.toUInt64) - 1
@@ -72,15 +82,18 @@ def lowerMask (n : Nat) : UInt64 :=
 
 /-- Build the monic degree-`n` polynomial `x^n + lower`, truncating `lower` to
 degrees `< n` as required by the packed `GF(2^n)` modulus convention. -/
+@[expose]
 def ofUInt64Monic (lower : UInt64) (n : Nat) : GF2Poly :=
   monomial n + ofUInt64 (lower &&& lowerMask n)
 
 /-- Reduce a packed polynomial modulo a single-word extension modulus and read
 back the low canonical word. -/
+@[expose]
 def packedReduceWord (n : Nat) (irr : UInt64) (p : GF2Poly) : UInt64 :=
   (((p % ofUInt64Monic irr n).toWords).getD 0 0) &&& lowerMask n
 
 /-- Repackage a word as a canonical representative below `2^n`. -/
+@[expose]
 def canonicalWordLT (n : Nat) (hn64 : n < 64) (w : UInt64) : UInt64 :=
   UInt64.ofNatLT (w.toNat % 2 ^ n) <| by
     exact Nat.lt_of_lt_of_le (Nat.mod_lt _ (by
@@ -276,7 +289,8 @@ structure XGCDResult where
 
 /-- Tail-recursive extended Euclidean algorithm over packed `GF(2)`
 polynomials. -/
-private def xgcdAux
+@[expose]
+def xgcdAux
     (r₀ s₀ t₀ r₁ s₁ t₁ : GF2Poly) (fuel : Nat) : XGCDResult :=
   match fuel with
   | 0 => { gcd := r₀, left := s₀, right := t₀ }
@@ -291,15 +305,18 @@ private def xgcdAux
 
 /-- Extended gcd for packed `GF(2)` polynomials, returning the gcd together
 with Bezout coefficients. -/
+@[expose]
 def xgcd (p q : GF2Poly) : XGCDResult :=
   xgcdAux p 1 0 q 0 1 (p.degree + q.degree + 2)
 
 /-- The single-word xgcd inverse candidate reduced modulo the packed
 irreducible modulus. -/
+@[expose]
 def packedInvWord (n : Nat) (irr w : UInt64) : UInt64 :=
   packedReduceWord n irr ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left)
 
 /-- Polynomial gcd over packed `GF(2)`. -/
+@[expose]
 def gcd (p q : GF2Poly) : GF2Poly :=
   (xgcd p q).gcd
 
@@ -355,6 +372,12 @@ remainder. -/
 @[simp, grind =] theorem zero_mod (q : GF2Poly) :
     (0 : GF2Poly) % q = 0 := by
   rw [← divMod_snd, divMod_zero_left]
+
+/-- The packed zero and one polynomials are distinct. -/
+theorem one_ne_zero : (1 : GF2Poly) ≠ 0 := by
+  intro h
+  have hwords := congrArg toWords h
+  exact (by decide : toWords (1 : GF2Poly) ≠ toWords (0 : GF2Poly)) hwords
 
 /-- Quotient/remainder reconstruction through the public `/` and `%`
 operations. -/
@@ -600,7 +623,7 @@ theorem dvd_gcd (d p q : GF2Poly) :
 
 /-- A nonzero packed polynomial of degree `0` equals `1`, the only degree-`0`
 GF(2) polynomial. -/
-private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
+theorem eq_one_of_degree_zero {p : GF2Poly}
     (hp : p ≠ 0) (hdegree : p.degree = 0) :
     p = 1 := by
   have hpzeroFalse : p.isZero = false := by
@@ -619,8 +642,7 @@ private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
   | zero =>
       rw [coeff_eq_true_of_degree?_eq_some hd, coeff_monomial_self]
   | succ n =>
-      rw [coeff_eq_false_of_degree?_lt hd (by omega)]
-      rw [coeff_monomial_ne (by omega)]
+      rw [coeff_eq_false_of_degree?_lt hd (by omega), coeff_monomial_ne (by omega)]
 
 /-- A nonzero divisor of a nonzero packed polynomial has degree no larger than
 the dividend. -/
@@ -651,6 +673,43 @@ theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
   rw [degree_eq_of_degree?_eq_some hdp,
     degree_eq_of_degree?_eq_some hq_degree?]
   omega
+
+/-- Divisibility is antisymmetric for packed `GF(2)` polynomials. There is no
+unit ambiguity because `1` is the only nonzero degree-zero polynomial. -/
+theorem dvd_antisymm {p q : GF2Poly} (hpq : p ∣ q) (hqp : q ∣ p) :
+    p = q := by
+  by_cases hp : p = 0
+  · subst p
+    rcases hpq with ⟨r, hr⟩
+    simpa using hr.symm
+  · have hq : q ≠ 0 := by
+      intro hq
+      subst q
+      rcases hqp with ⟨r, hr⟩
+      apply hp
+      simpa using hr
+    rcases hpq with ⟨r, hr⟩
+    have hrne : r ≠ 0 := by
+      intro hrzero
+      apply hq
+      rw [hr, hrzero, mul_zero]
+    have hpzero : p.isZero = false :=
+      (isZero_eq_false_iff_ne_zero p).mpr hp
+    have hrzero : r.isZero = false :=
+      (isZero_eq_false_iff_ne_zero r).mpr hrne
+    obtain ⟨dp, hdp⟩ := degree?_isSome_of_isZero_false hpzero
+    obtain ⟨dr, hdr⟩ := degree?_isSome_of_isZero_false hrzero
+    have hqdegree : q.degree? = some (dp + dr) := by
+      rw [hr]
+      exact degree?_mul_of_degree?_eq_some hdp hdr
+    have hdegree := degree_le_of_dvd_nonzero hq hp hqp
+    rw [degree_eq_of_degree?_eq_some hqdegree,
+      degree_eq_of_degree?_eq_some hdp] at hdegree
+    have hdrzero : r.degree = 0 := by
+      rw [degree_eq_of_degree?_eq_some hdr]
+      omega
+    have hrone := eq_one_of_degree_zero hrne hdrzero
+    simpa [hrone] using hr.symm
 
 /-- A polynomial reduced below `bound` (either zero, or of degree `< bound`)
 has `coeff n = false` at every index `n ≥ bound`. -/
@@ -685,8 +744,7 @@ private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
   have hle : (1 : UInt64) ≤ ((1 : UInt64) <<< n.toUInt64) := by
     rw [UInt64.le_iff_toNat_le, hshift]
     exact Nat.one_le_two_pow
-  rw [if_pos hn64]
-  rw [UInt64.toNat_sub_of_le _ _ hle, hshift]
+  rw [if_pos hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
   simp
 
 /-- Masking a word whose value is already `< 2 ^ n` with `lowerMask n` returns
@@ -790,7 +848,7 @@ private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
   intro h
   apply hw
   apply ofUInt64_injective
-  simpa [ofUInt64] using h
+  exact h
 
 /-- A word with value `< 2 ^ n` unpacks to a polynomial that is either zero or
 of degree `< n`, i.e. reduced below `n`. -/
@@ -904,12 +962,12 @@ private theorem irreducible_common_divisor_eq_one_of_reduced
     apply ha
     rw [hs, hd, zero_mul]
   rcases hf.2 d r hr.symm with hd_degree | hr_degree
-  · exact nonzero_degree_zero_eq_one hdne hd_degree
+  · exact eq_one_of_degree_zero hdne hd_degree
   · have hrne : r ≠ 0 := by
       intro hzero
       apply hf.1
       rw [hr, hzero, mul_zero]
-    have hr_one : r = 1 := nonzero_degree_zero_eq_one hrne hr_degree
+    have hr_one : r = 1 := eq_one_of_degree_zero hrne hr_degree
     have hdf : d = f := by
       calc
         d = d * 1 := by rw [mul_one]
@@ -1050,11 +1108,9 @@ private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.deg
     simpa [degree, hfd] using hfdegree
   change (divMod 1 f).2 = 1
   unfold divMod
-  change (divModAux f 1 0 1).2 = 1
+  rw [degree_one]
   simp only [divModAux]
-  have hone_degree : (1 : GF2Poly).degree? = some 0 := by
-    rfl
-  rw [hone_degree, hfd]
+  rw [degree?_one, hfd]
   simp [hfzeroFalse, hfdpos]
 
 /-- The Bezout identity for `xgcd` gives a congruence between the left inverse
@@ -1089,8 +1145,7 @@ theorem xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Pol
         exact False.elim (ha (eq_zero_of_isZero hzero))
     | inr hlt =>
         omega
-  rw [xgcd_left_mul_mod_eq_gcd_mod]
-  rw [gcd_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
+  rw [xgcd_left_mul_mod_eq_gcd_mod, gcd_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
   exact one_mod_eq_one_of_degree_pos hfdegree
 
 /-- Reducing the xgcd left coefficient before multiplying preserves the
@@ -1150,9 +1205,8 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
     rw [hfdegree]
     simpa [a] using ofUInt64_reduced_of_toNat_lt hwlt
   have hcanonical : invCanonical = invWord := by
-    simpa [invCanonical, invWord] using
-      canonicalWordLT_eq_self_of_lt hn64 (packedReduceWord_toNat_lt hn64
-        ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left))
+    exact canonicalWordLT_eq_self_of_lt hn64 (packedReduceWord_toNat_lt hn64
+      ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left))
   have hinvWord :
       ofUInt64 invWord = (xgcd a f).left % f := by
     have hred :

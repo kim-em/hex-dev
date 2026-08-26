@@ -7,7 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import Batteries.Data.List.Lemmas
+public import HexMatrix.Diagonal
+public import HexMatrix.DotProduct
 
 public section
 
@@ -20,180 +21,6 @@ namespace Hex
 universe u v w
 
 namespace Matrix
-
-/-- A left fold `xs.foldl (· + f ·) acc` leaves the accumulator unchanged when `f`
-vanishes on every element of `xs`; the base case for collapsing zero summands in the
-fold-sum algebra. -/
-private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R)
-    (hf : ∀ x ∈ xs, f x = 0) :
-    xs.foldl (fun acc x => acc + f x) acc = acc := by
-  induction xs generalizing acc with
-  | nil =>
-      simp only [List.foldl_nil]
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hx : f x = 0 := hf x (by simp)
-      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
-      rw [hx]
-      have hac : acc + (0 : R) = acc := by grind
-      rw [hac]
-      exact ih acc hxs
-
-/-- `xs.foldl (· + f ·) acc` splits as `acc + xs.foldl (· + f ·) 0`, pulling the running
-accumulator out so a fold-sum can always be taken from a `0` start. -/
-private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R) :
-    xs.foldl (fun acc x => acc + f x) acc =
-      acc + xs.foldl (fun acc x => acc + f x) 0 := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-      grind
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      rw [ih (acc := (0 : R) + f x)]
-      grind
-
-/-- Two fold-sums over `xs` agree when their summand functions `f` and `g` agree
-pointwise on `xs`; congruence for the fold-sum under the integrand. -/
-private theorem foldl_sum_congr {R : Type u} [Add R]
-    {α : Type v} (xs : List α) (f g : α → R) (acc : R)
-    (h : ∀ x ∈ xs, f x = g x) :
-    xs.foldl (fun acc x => acc + f x) acc =
-      xs.foldl (fun acc x => acc + g x) acc := by
-  induction xs generalizing acc with
-  | nil =>
-      rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hx : f x = g x := h x (by simp)
-      have hxs : ∀ y ∈ xs, f y = g y := fun y hy => h y (List.mem_cons_of_mem _ hy)
-      rw [hx]
-      exact ih (acc + g x) hxs
-
-/-- The fold-sum of a pointwise sum splits into two fold-sums, provided the initial
-accumulator already splits the same way. -/
-private theorem foldl_sum_add_of_acc {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
-    (hacc : acc = accF + accG) :
-    xs.foldl (fun acc x => acc + (f x + g x)) acc =
-      xs.foldl (fun acc x => acc + f x) accF +
-        xs.foldl (fun acc x => acc + g x) accG := by
-  induction xs generalizing acc accF accG with
-  | nil =>
-      simpa only [List.foldl_nil] using hacc
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      apply ih
-      rw [hacc]
-      grind
-
-/-- The fold-sum of a pointwise sum `f x + g x` equals the sum of the two separate
-fold-sums; additivity of the fold-sum over its summand. -/
-private theorem foldl_sum_add {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f g : α → R) :
-    xs.foldl (fun acc x => acc + (f x + g x)) 0 =
-      xs.foldl (fun acc x => acc + f x) 0 +
-        xs.foldl (fun acc x => acc + g x) 0 := by
-  exact foldl_sum_add_of_acc xs f g 0 0 0 (by grind)
-
-/-- A double fold-sum may exchange the order of its outer and inner index lists `xs` and
-`ys`; the Fubini swap for fold-sums used to transpose iterated matrix sums. -/
-private theorem foldl_sum_comm {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} {β : Type w} (xs : List α) (ys : List β) (g : α → β → R) :
-    xs.foldl (fun acc x => acc + ys.foldl (fun acc y => acc + g x y) 0) 0 =
-      ys.foldl (fun acc y => acc + xs.foldl (fun acc x => acc + g x y) 0) 0 := by
-  induction xs with
-  | nil =>
-      symm
-      apply foldl_add_eq_acc_ring
-      intro y _hy
-      rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [foldl_sum_start xs (fun x => ys.foldl (fun acc y => acc + g x y) 0)
-        (0 + ys.foldl (fun acc y => acc + g x y) 0)]
-      rw [ih]
-      have hinner :
-          ys.foldl
-              (fun acc y =>
-                acc + xs.foldl (fun acc x' => acc + g x' y) (0 + g x y)) 0 =
-            ys.foldl
-              (fun acc y =>
-                acc + (g x y + xs.foldl (fun acc x' => acc + g x' y) 0)) 0 := by
-        apply foldl_sum_congr
-        intro y _hy
-        rw [foldl_sum_start xs (fun x' => g x' y) (0 + g x y)]
-        grind
-      rw [hinner]
-      rw [foldl_sum_add]
-      grind
-
-/-- Right multiplication by `c` distributes through a fold-sum, scaling each summand `f x`
-to `f x * c`. -/
-private theorem foldl_sum_mul_right {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
-    xs.foldl (fun acc x => acc + f x) acc * c =
-      xs.foldl (fun acc x => acc + f x * c) (acc * c) := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      have hdist : (acc + f x) * c = acc * c + f x * c := by grind
-      rw [hdist]
-
-/-- Left multiplication by `c` distributes through a fold-sum, scaling each summand `f x`
-to `c * f x`. -/
-private theorem foldl_sum_mul_left {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
-    c * xs.foldl (fun acc x => acc + f x) acc =
-      xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      have hdist : c * (acc + f x) = c * acc + c * f x := by grind
-      rw [hdist]
-
-/-- Negation distributes through a fold-sum. -/
-private theorem foldl_sum_neg {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R) :
-    xs.foldl (fun acc x => acc + -f x) (-acc) =
-      -xs.foldl (fun acc x => acc + f x) acc := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [show -acc + -f x = -(acc + f x) by grind]
-      exact ih (acc + f x)
-
-/-- The fold-sum of a pointwise difference `f x - g x` equals the difference of the two
-separate fold-sums. -/
-private theorem foldl_sum_sub {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f g : α → R) (accF accG : R) :
-    xs.foldl (fun acc x => acc + (f x - g x)) (accF - accG) =
-      xs.foldl (fun acc x => acc + f x) accF -
-        xs.foldl (fun acc x => acc + g x) accG := by
-  rw [show accF - accG = accF + -accG by grind]
-  calc
-    xs.foldl (fun acc x => acc + (f x - g x)) (accF + -accG) =
-        xs.foldl (fun acc x => acc + (f x + -g x)) (accF + -accG) := by
-      apply foldl_sum_congr
-      intro x _hx
-      grind
-    _ = xs.foldl (fun acc x => acc + f x) accF -
-          xs.foldl (fun acc x => acc + g x) accG := by
-      rw [foldl_sum_add_of_acc xs f (fun x => -g x) (accF + -accG) accF (-accG)
-        (by grind)]
-      rw [foldl_sum_neg]
-      grind
 
 /-- Folding the indicator-weighted terms `(if i = l then 1 else 0) * f l` over a
 duplicate-free list containing `i` picks out exactly `f i`, adding it to the accumulator;
@@ -216,8 +43,7 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
           have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
           rw [if_neg hxy]
           grind
-        rw [if_pos rfl]
-        rw [foldl_add_eq_acc_ring xs _ _ hxs_zero]
+        rw [if_pos rfl, List.foldl_add_eq_self xs _ _ hxs_zero]
         grind
       · have hxi : i ≠ x := by
           intro heq
@@ -230,13 +56,43 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
         rw [hac]
         exact ih hitail (List.nodup_cons.mp hnodup).2 acc
 
+/-- Multiplication by a standard basis vector selects the corresponding
+matrix column. -/
+@[simp, grind =]
+theorem mulVec_unit [Lean.Grind.CommRing R]
+    (M : Matrix R n m) (j : Fin m) :
+    M * Vector.unit R j = col M j := by
+  ext i hi
+  let ii : Fin n := ⟨i, hi⟩
+  show (M * Vector.unit R j)[ii] = (col M j)[ii]
+  rw [getElem_mulVec, getElem_col]
+  simp only [Vector.dotProduct]
+  calc
+    (List.finRange m).foldl
+        (fun acc l => acc + (row M ii)[l] * (Vector.unit R j)[l]) 0 =
+        (List.finRange m).foldl
+          (fun acc l => acc + (if j = l then (1 : R) else 0) * M[ii][l]) 0 := by
+      apply List.foldl_add_congr
+      intro l hl
+      rw [Vector.getElem_unit, getElem_row]
+      split
+      · have hone : (One.one : R) = 1 := rfl
+        rw [hone, Lean.Grind.Semiring.mul_one, Lean.Grind.Semiring.one_mul]
+      · have hzero : (Zero.zero : R) = 0 := rfl
+        rw [hzero, Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.zero_mul]
+    _ = M[ii][j] := by
+      rw [foldl_indicator_mul_unique (List.finRange m) j (fun l => M[ii][l])
+        (List.mem_finRange _) (List.nodup_finRange m) 0]
+      grind
+
 /-- Matrix multiplication associates with matrix-vector multiplication. -/
 theorem mul_assoc_vec [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (v : Vector R k) :
     (A * B) * v = A * (B * v) := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [HMul.hMul, mulVec, mul, row, col, Hex.Vector.dotProduct, ofFn]
+  show ((A * B) * v)[ii] = (A * (B * v))[ii]
+  simp only [getElem_mulVec, getElem_mul, getElem_row, getElem_col, Vector.dotProduct]
   change
     (List.finRange k).foldl
         (fun acc l =>
@@ -255,21 +111,21 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
           (fun acc l =>
             acc + (List.finRange m).foldl
               (fun acc j => acc + A[ii][j] * B[j][l] * v[l]) 0) 0 := by
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro l _hl
-          rw [foldl_sum_mul_right]
+          rw [List.foldl_add_mul_right]
           grind
     _ = (List.finRange m).foldl
         (fun acc j =>
           acc + A[ii][j] *
             (List.finRange k).foldl (fun acc l => acc + B[j][l] * v[l]) 0) 0 := by
-          rw [foldl_sum_comm]
-          apply foldl_sum_congr
+          rw [List.foldl_add_comm]
+          apply List.foldl_add_congr
           intro j _hj
-          rw [foldl_sum_mul_left]
+          rw [← List.foldl_add_mul_left]
           have hzero : A[ii][j] * (0 : R) = 0 := by grind
           rw [hzero]
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro l _hl
           grind
 
@@ -277,89 +133,172 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
 theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
     (A : Matrix R n m) (B : Matrix R m k) :
     Matrix.transpose (A * B) = Matrix.transpose B * Matrix.transpose A := by
-  ext i hi j hj
-  let ii : Fin k := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (Matrix.transpose (A * B))[ii][jj] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
-  rw [transpose_getElem]
-  change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
-  simp [HMul.hMul, mul, row, col, transpose, Hex.Vector.dotProduct, ofFn]
-  change
-    (List.finRange m).foldl (fun acc l => acc + A[jj][l] * B[l][ii]) 0 =
-      (List.finRange m).foldl (fun acc l => acc + B[l][ii] * A[jj][l]) 0
-  apply foldl_sum_congr
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_transpose, getElem_mul, getElem_mul, row_transpose, col_transpose,
+    Vector.dotProduct, Vector.dotProduct]
+  apply List.foldl_add_congr
   intro l _hl
   rw [Lean.Grind.CommSemiring.mul_comm]
 
+/-- Row-vector multiplication associates with matrix multiplication. -/
+theorem vecMul_mul [Lean.Grind.CommRing R]
+    (v : Vector R n) (A : Matrix R n m) (B : Matrix R m k) :
+    vecMul (vecMul v A) B = vecMul v (A * B) := by
+  unfold vecMul
+  rw [transpose_mul_of_mul_comm, mul_assoc_vec]
+
+private theorem getElem_foldl_add_smul [Lean.Grind.CommRing R]
+    (c : Vector R n) (rows : Vector (Vector R m) n) (xs : List (Fin n))
+    (acc : Vector R m) (j : Fin m) :
+    (xs.foldl (fun acc i => acc + c[i] • rows[i]) acc)[j] =
+      xs.foldl (fun acc i => acc + rows[i][j] * c[i]) acc[j] := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      have hstep : (acc + c[i] • rows[i])[j] =
+          acc[j] + rows[i][j] * c[i] := by
+        change (acc + c[i] • rows[i])[j.val] =
+          acc[j.val] + rows[i][j.val] * c[i]
+        rw [Vector.getElem_add, Vector.getElem_smul]
+        change acc[j.val] + c[i] * rows[i][j.val] =
+          acc[j.val] + rows[i][j.val] * c[i]
+        grind
+      rw [hstep]
+
+/-- A row-vector product with a matrix assembled from rows is the corresponding
+linear combination of those rows. -/
+theorem vecMul_ofRows [Lean.Grind.CommRing R]
+    (c : Vector R n) (rows : Vector (Vector R m) n) :
+    vecMul c (ofRows rows) =
+      (List.finRange n).foldl (fun acc i => acc + c[i] • rows[i]) 0 := by
+  ext j hj
+  let jj : Fin m := ⟨j, hj⟩
+  show (vecMul c (ofRows rows))[jj] =
+    ((List.finRange n).foldl (fun acc i => acc + c[i] • rows[i]) 0)[jj]
+  rw [getElem_foldl_add_smul c rows (List.finRange n) 0 jj]
+  have hzero : (0 : Vector R m)[jj] = 0 := by
+    change (0 : Vector R m)[jj.val] = 0
+    rw [Vector.getElem_zero]
+  rw [hzero]
+  change (c * ofRows rows)[jj] = _
+  rw [getElem_vecMul]
+  simp only [Vector.dotProduct, getElem_col, getElem_ofRows]
+
+/-- Row-vector multiplication associates with matrix multiplication. -/
+theorem vecMul_assoc [Lean.Grind.CommRing R]
+    (v : Vector R n) (A : Matrix R n m) (B : Matrix R m k) :
+    (v * A) * B = v * (A * B) := by
+  change B.transpose * (A.transpose * v) = (A * B).transpose * v
+  rw [← mul_assoc_vec, transpose_mul_of_mul_comm]
+
+/-- A row vector times a rectangular leading-diagonal matrix, entrywise. -/
+theorem getElem_vecMul_diagMatrix [Lean.Grind.CommRing R]
+    {r n m : Nat} (d : Vector R r) (v : Vector R n) (hrn : r ≤ n)
+    (j : Fin m) :
+    (v * diagMatrix d n m)[j] =
+      if h : j.val < r then d[j.val]'h * v[j.val]'(Nat.lt_of_lt_of_le h hrn) else 0 := by
+  rw [getElem_vecMul, Vector.dotProduct]
+  simp only [getElem_col]
+  split
+  · rename_i hj
+    let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le hj hrn⟩
+    have hterms :
+        (List.finRange n).foldl
+            (fun acc i => acc + (diagMatrix d n m)[i][j] * v[i]) 0 =
+          (List.finRange n).foldl
+            (fun acc i => acc + (if jj = i then (1 : R) else 0) *
+              (d[j.val]'hj * v[i])) 0 := by
+      apply List.foldl_add_congr
+      intro i _hi
+      by_cases hji : jj = i
+      · subst i
+        rw [if_pos rfl, getElem_diagMatrix_of_eq d jj j rfl hj]
+        grind
+      · rw [if_neg hji, getElem_diagMatrix_of_ne d i j]
+        · grind
+        · intro hij
+          apply hji
+          apply Fin.ext
+          exact hij.symm
+    rw [hterms, foldl_indicator_mul_unique (List.finRange n) jj
+      (fun i => d[j.val]'hj * v[i]) (List.mem_finRange _)
+      (List.nodup_finRange n) 0]
+    grind
+  · rename_i hj
+    apply List.foldl_add_eq_self
+    intro i _hi
+    by_cases hij : i.val = j.val
+    · rw [getElem_diagMatrix_of_ge d i j]
+      · grind
+      · omega
+    · rw [getElem_diagMatrix_of_ne d i j hij]
+      grind
+
 /-- Left-multiplication by the identity matrix leaves a vector unchanged. -/
-@[simp, grind =] theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
-    (1 : Matrix R n n) * v = v := by
+@[simp, grind =] theorem identity_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
+    (Matrix.identity (R := R) n) * v = v := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [HMul.hMul, mulVec, row, Hex.Vector.dotProduct]
+  simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change (List.finRange n).foldl
-      (fun acc j => acc + (1 : Matrix R n n)[ii][j] * v[j]) 0 =
+      (fun acc j => acc + (Matrix.identity (R := R) n)[ii][j] * v[j]) 0 =
     v[ii]
   calc
     (List.finRange n).foldl
-        (fun acc j => acc + (1 : Matrix R n n)[ii][j] * v[j]) 0 =
+        (fun acc j => acc + (Matrix.identity (R := R) n)[ii][j] * v[j]) 0 =
         (List.finRange n).foldl
           (fun acc j => acc + (if ii = j then (1 : R) else 0) * v[j]) 0 := by
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro j _hj
-          rw [getElem_one]
+          rw [getElem_identity]
     _ = v[ii] := by
           rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
             (List.mem_finRange _) (List.nodup_finRange n) 0]
           grind
 
+/-- Right-multiplication of a row vector by the identity leaves it unchanged. -/
+@[simp, grind =]
+theorem vecMul_identity [Lean.Grind.CommRing R] (v : Vector R n) :
+    vecMul v (Matrix.identity (R := R) n) = v := by
+  unfold vecMul
+  rw [transpose_identity, identity_mulVec]
+
 /-- Left-multiplication by the identity matrix leaves a matrix unchanged. -/
-@[simp, grind =] theorem one_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
-    (1 : Matrix R n n) * M = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  change ((1 : Matrix R n n) * M)[ii][jj] = M[ii][jj]
-  simp [HMul.hMul, mul, row, col, Hex.Vector.dotProduct]
-  simp [ofFn]
-  change
-    (List.finRange n).foldl
-        (fun acc l => acc + (1 : Matrix R n n)[ii][l] * M[l][jj]) 0 =
-      M[ii][jj]
+@[simp, grind =] theorem identity_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
+    (Matrix.identity (R := R) n) * M = M := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_mul, Vector.dotProduct]
   calc
     (List.finRange n).foldl
-        (fun acc l => acc + (1 : Matrix R n n)[ii][l] * M[l][jj]) 0 =
+        (fun acc l => acc + (row (Matrix.identity (R := R) n) ii)[l] * (col M jj)[l]) 0 =
         (List.finRange n).foldl
           (fun acc l => acc + (if ii = l then (1 : R) else 0) * M[l][jj]) 0 := by
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro l _hl
-          rw [getElem_one]
+          rw [getElem_row, getElem_col, getElem_identity]
     _ = M[ii][jj] := by
           rw [foldl_indicator_mul_unique (List.finRange n) ii (fun l => M[l][jj])
             (List.mem_finRange _) (List.nodup_finRange n) 0]
           grind
 
 /-- Right-multiplication by the identity matrix leaves a matrix unchanged. -/
-@[simp, grind =] theorem mul_one [Lean.Grind.Ring R] (M : Matrix R n m) :
-    M * (1 : Matrix R m m) = M := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin m := ⟨j, hj⟩
-  change (M * (1 : Matrix R m m))[ii][jj] = M[ii][jj]
-  simp [HMul.hMul, mul, row, col, Hex.Vector.dotProduct]
-  simp [ofFn]
-  change
-    (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (1 : Matrix R m m)[l][jj]) 0 =
-      M[ii][jj]
+@[simp, grind =] theorem mul_identity [Lean.Grind.Ring R] (M : Matrix R n m) :
+    M * (Matrix.identity (R := R) m) = M := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_mul, Vector.dotProduct]
   calc
     (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (1 : Matrix R m m)[l][jj]) 0 =
+        (fun acc l => acc + (row M ii)[l] * (col (Matrix.identity (R := R) m) jj)[l]) 0 =
         (List.finRange m).foldl
           (fun acc l => acc + (if jj = l then (1 : R) else 0) * M[ii][l]) 0 := by
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro l _hl
-          rw [getElem_one]
+          rw [getElem_row, getElem_col, getElem_identity]
           split <;> grind
     _ = M[ii][jj] := by
           rw [foldl_indicator_mul_unique (List.finRange m) jj (fun l => M[ii][l])
@@ -370,67 +309,224 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
 theorem mul_assoc [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (C : Matrix R k l) :
     (A * B) * C = A * (B * C) := by
-  ext i hi j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin l := ⟨j, hj⟩
-  change ((A * B) * C)[ii][jj] = (A * (B * C))[ii][jj]
-  simpa [HMul.hMul, mulVec, mul, row, col, Hex.Vector.dotProduct, ofFn] using
-    congrArg (fun v => v[ii]) (mul_assoc_vec A B (col C jj))
+  apply ext_getElem
+  intro ii jj
+  have key := congrArg (fun w => w[ii]) (mul_assoc_vec A B (col C jj))
+  simp only [getElem_mulVec, getElem_mul, getElem_row, getElem_col, Vector.dotProduct] at key ⊢
+  exact key
+
+/-- A zero row remains zero after right matrix multiplication. -/
+theorem row_mul_eq_zero [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (i : Fin n)
+    (hrow : row A i = 0) :
+    row (A * B) i = 0 := by
+  ext j hj
+  let jj : Fin k := ⟨j, hj⟩
+  show (row (A * B) i)[jj] = (0 : Vector R k)[jj]
+  rw [getElem_row, getElem_mul, hrow]
+  simp only [Vector.dotProduct]
+  have hright : (0 : Vector R k)[jj] = 0 := by
+    change (0 : Vector R k)[jj.val] = 0
+    rw [Vector.getElem_zero]
+  rw [hright]
+  apply List.foldl_add_eq_self
+  intro l hl
+  have hleft : (0 : Vector R m)[l] = 0 := by
+    change (0 : Vector R m)[l.val] = 0
+    rw [Vector.getElem_zero]
+  rw [hleft]
+  grind
 
 /-- Matrix-vector multiplication sends the zero vector to the zero vector. -/
 @[simp, grind =] theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
     A * (0 : Vector R m) = 0 := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [HMul.hMul, mulVec, row, Hex.Vector.dotProduct]
+  simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change (List.finRange m).foldl (fun acc j => acc + A[ii][j] * (0 : R)) 0 = 0
-  apply foldl_add_eq_acc_ring
+  apply List.foldl_add_eq_self
   intro j _hj
   grind
+
+/-- Matrix-vector multiplication is additive in the vector. -/
+@[simp, grind =]
+theorem mulVec_add [Lean.Grind.Ring R] (A : Matrix R n m) (u v : Vector R m) :
+    A * (u + v) = A * u + A * v := by
+  ext i hi
+  let ii : Fin n := ⟨i, hi⟩
+  rw [Vector.getElem_add]
+  show (A * (u + v))[ii] = (A * u)[ii] + (A * v)[ii]
+  rw [getElem_mulVec, getElem_mulVec, getElem_mulVec,
+    Vector.dotProduct_add_right]
+
+/-- Matrix-vector multiplication commutes with scalar multiplication. -/
+@[simp, grind =]
+theorem mulVec_smul [Lean.Grind.CommRing R] (A : Matrix R n m) (c : R)
+    (v : Vector R m) :
+    A * (c • v) = c • (A * v) := by
+  ext i hi
+  let ii : Fin n := ⟨i, hi⟩
+  rw [Vector.getElem_smul]
+  show (A * (c • v))[ii] = c * (A * v)[ii]
+  rw [getElem_mulVec, getElem_mulVec,
+    Vector.dotProduct_smul_right]
+
+/-- Row-vector multiplication is additive in the row vector. -/
+@[simp, grind =]
+theorem vecMul_add [Lean.Grind.Ring R]
+    (u v : Vector R n) (A : Matrix R n m) :
+    vecMul (u + v) A = vecMul u A + vecMul v A := by
+  unfold vecMul
+  rw [mulVec_add]
+
+/-- Row-vector multiplication commutes with scalar multiplication. -/
+@[simp, grind =]
+theorem vecMul_smul [Lean.Grind.CommRing R]
+    (c : R) (v : Vector R n) (A : Matrix R n m) :
+    vecMul (c • v) A = c • vecMul v A := by
+  unfold vecMul
+  rw [mulVec_smul]
+
+/-- The zero row vector multiplies every matrix to zero. -/
+@[simp, grind =]
+theorem vecMul_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
+    vecMul (0 : Vector R n) A = 0 := by
+  unfold vecMul
+  rw [mulVec_zero]
 
 /-- The zero matrix sends every vector to the zero vector. -/
 @[simp, grind =] theorem zero_mulVec [Lean.Grind.Ring R] (v : Vector R m) :
     (0 : Matrix R n m) * v = 0 := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [HMul.hMul, mulVec, row, Hex.Vector.dotProduct]
+  simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change (List.finRange m).foldl (fun acc j => acc + (0 : Matrix R n m)[ii][j] * v[j]) 0 = 0
-  apply foldl_add_eq_acc_ring
+  apply List.foldl_add_eq_self
   intro j _hj
-  change (Matrix.zero : Matrix R n m)[ii][j] * v[j] = 0
-  simpa [Matrix.zero, ofFn] using Lean.Grind.Semiring.zero_mul v[j]
+  rw [getElem_zero]
+  grind
 
-/-- Multiplication by `Q - I`, expressed entrywise, is `Q * v - v`. -/
-theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
-    mulVec (R := R) (n := n) (m := n)
-        (ofFn fun i j => Q[i][j] - if i = j then 1 else 0) v =
-      mulVec (R := R) (n := n) (m := n) Q v - v := by
+/-- Matrix-vector multiplication distributes over matrix subtraction. -/
+@[grind =] theorem sub_mulVec [Lean.Grind.Ring R] (A B : Matrix R n m) (v : Vector R m) :
+    (A - B) * v = A * v - B * v := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [mulVec, row, Hex.Vector.dotProduct, ofFn]
+  simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change
-    (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
-      (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii]
+    (List.finRange m).foldl (fun acc j => acc + (A - B)[ii][j] * v[j]) 0 =
+      (List.finRange m).foldl (fun acc j => acc + A[ii][j] * v[j]) 0 -
+        (List.finRange m).foldl (fun acc j => acc + B[ii][j] * v[j]) 0
   calc
-    (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
-        (List.finRange n).foldl
-          (fun acc j => acc + (Q[ii][j] * v[j] - (if ii = j then 1 else 0) * v[j]))
+    (List.finRange m).foldl (fun acc j => acc + (A - B)[ii][j] * v[j]) 0 =
+        (List.finRange m).foldl
+          (fun acc j => acc + (A[ii][j] * v[j] - B[ii][j] * v[j]))
           ((0 : R) - 0) := by
           have hzero : (0 : R) - 0 = 0 := by grind
           rw [hzero]
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro j _hj
-          grind
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 -
-          (List.finRange n).foldl
-            (fun acc j => acc + (if ii = j then 1 else 0) * v[j]) 0 := by
-          rw [foldl_sum_sub]
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii] := by
-          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
-            (List.mem_finRange _) (List.nodup_finRange n) 0]
-          grind
+          rw [getElem_sub]
+          have hdist : ∀ a b c : R, (a - b) * c = a * c - b * c := fun a b c => by grind
+          exact hdist _ _ _
+    _ = (List.finRange m).foldl (fun acc j => acc + A[ii][j] * v[j]) 0 -
+          (List.finRange m).foldl (fun acc j => acc + B[ii][j] * v[j]) 0 := by
+          rw [List.foldl_add_sub]
+
+/-- Multiplication by `Q - I` is `Q * v - v`. -/
+theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
+    (Q - Matrix.identity n) * v = Q * v - v := by
+  rw [sub_mulVec, identity_mulVec]
+
+/-- The `i`-th row of a matrix sum is the sum of the rows. -/
+@[simp, grind =] theorem row_add [Add R] (A B : Matrix R n m) (i : Fin n) :
+    row (A + B) i = row A i + row B i := by
+  ext j hj
+  rw [Vector.getElem_add]
+  show (row (A + B) i)[(⟨j, hj⟩ : Fin m)] = (row A i)[(⟨j, hj⟩ : Fin m)] + (row B i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, getElem_row, getElem_add]
+
+/-- The `i`-th row of a matrix difference is the difference of the rows. -/
+@[simp, grind =] theorem row_sub [Sub R] (A B : Matrix R n m) (i : Fin n) :
+    row (A - B) i = row A i - row B i := by
+  ext j hj
+  rw [Vector.getElem_sub]
+  show (row (A - B) i)[(⟨j, hj⟩ : Fin m)] = (row A i)[(⟨j, hj⟩ : Fin m)] - (row B i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, getElem_row, getElem_sub]
+
+/-- The `j`-th column of a matrix sum is the sum of the columns. -/
+@[simp, grind =] theorem col_add [Add R] (A B : Matrix R n m) (j : Fin m) :
+    col (A + B) j = col A j + col B j := by
+  ext i hi
+  rw [Vector.getElem_add]
+  show (col (A + B) j)[(⟨i, hi⟩ : Fin n)] = (col A j)[(⟨i, hi⟩ : Fin n)] + (col B j)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_col, getElem_add]
+
+/-- The `j`-th column of a matrix difference is the difference of the columns. -/
+@[simp, grind =] theorem col_sub [Sub R] (A B : Matrix R n m) (j : Fin m) :
+    col (A - B) j = col A j - col B j := by
+  ext i hi
+  rw [Vector.getElem_sub]
+  show (col (A - B) j)[(⟨i, hi⟩ : Fin n)] = (col A j)[(⟨i, hi⟩ : Fin n)] - (col B j)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_col, getElem_sub]
+
+/-- Matrix multiplication distributes over addition on the left. -/
+@[grind =] theorem add_mul [Lean.Grind.Ring R]
+    (A B : Matrix R n m) (C : Matrix R m k) :
+    (A + B) * C = A * C + B * C := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, row_add,
+    Vector.dotProduct_add_left]
+
+/-- Matrix multiplication distributes over addition on the right. -/
+@[grind =] theorem mul_add [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B C : Matrix R m k) :
+    A * (B + C) = A * B + A * C := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, col_add,
+    Vector.dotProduct_add_right]
+
+/-- Matrix multiplication distributes over subtraction on the left. -/
+@[grind =] theorem sub_mul [Lean.Grind.Ring R]
+    (A B : Matrix R n m) (C : Matrix R m k) :
+    (A - B) * C = A * C - B * C := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, row_sub,
+    Vector.dotProduct_sub_left]
+
+/-- Matrix multiplication distributes over subtraction on the right. -/
+@[grind =] theorem mul_sub [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B C : Matrix R m k) :
+    A * (B - C) = A * B - A * C := by
+  apply ext_getElem
+  intro ii jj
+  rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, col_sub,
+    Vector.dotProduct_sub_right]
+
+/-- Row `i` of a scalar multiple is the scalar multiple of row `i`. -/
+@[simp, grind =] theorem row_smul {S : Type v} [SMul S R] (c : S)
+    (M : Matrix R n m) (i : Fin n) :
+    row (c • M) i = c • row M i := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_smul]
+  show (row (c • M) i)[(⟨j, hj⟩ : Fin m)] = c • (row M i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, smul_getElem]
+
+/-- Scalar multiplication commutes with matrix multiplication on the left.
+
+Together with `mul_adjugate` and `adjugate_mul` this is what turns a one-sided
+matrix inverse into a two-sided one; see `HexDeterminant.mul_eq_one_comm`. -/
+@[grind =] theorem smul_mul [Lean.Grind.Ring R] (c : R)
+    (A : Matrix R n m) (B : Matrix R m k) :
+    (c • A) * B = c • (A * B) := by
+  apply ext_getElem
+  intro i j
+  rw [smul_getElem, getElem_mul, getElem_mul, row_smul,
+    Vector.dotProduct_smul_left]
+  rfl
 
 end Matrix
 

@@ -30,7 +30,7 @@ agent/feature branch even before a PR exists. Restricting `push:` to
 PR commit fire each workflow exactly once.
 
 `workflow_dispatch:` is allowed wherever an ad-hoc manual run is
-useful (currently `conformance.yml`).
+useful (currently the consolidated `ci.yml`).
 
 Other triggers (`schedule:`, `repository_dispatch:`, `release:`,
 `merge_group:`) are case-by-case; they must be documented in the
@@ -61,30 +61,61 @@ finished" on a now-superseded commit is not worth keeping.
 
 ## Job-count budget
 
-**Each workflow run uses exactly one ubuntu job.** The CI workflow
-also has one macOS job (the dyld cross-check). No other parallelism.
+**Each workflow runs in exactly one ubuntu job, and the project uses
+exactly one workflow (`ci.yml`).** Parallelism *within* that job is
+allowed only through GitHub Actions' in-job parallel steps (`background:`
+plus `wait-all:`): they run on the same runner, so they never raise the
+number of runners a PR holds — which is the quantity the shared
+~20-runner cap actually constrains. Extra jobs, `needs:` fan-out, and
+`strategy.matrix` remain forbidden.
 
 Concretely:
 
-- `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
-  the `HexBerlekampZassenhausMathlib` bridge build required by
-  the HO-1 correctness chain, per-library `bench verify` smoke gate per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md), plus the
-  structural and timing lints named there) and one `build-macos`
-  macOS job (hex `lake build` only — the dyld cross-check).
-  **Bench verify runs on ubuntu, not macOS**: the macOS job exists
-  for symbol-resolution coverage, not benchmarking, and macOS runners
-  are 10× the cost and a fraction of the concurrency. Per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify`
-  is a smoke gate (does the bench module compile and run?), not a
-  timing measurement; timing-relevant runs live on a separate
-  scheduled workflow on dedicated hardware.
-- `conformance.yml`: one ubuntu job that runs the full conformance
-  matrix and every oracle (FLINT, PARI, fpLLL, Conway) sequentially
-  inside that single runner.
-- Future workflows: one ubuntu job, period. If a second runner is
-  genuinely needed (e.g. a separate macOS bench cross-check), state
+- `ci.yml`: one `build` ubuntu job. It runs the structural and source
+  lints, then elaborates the hex graph **once** (`lake build` of the
+  libraries, the bench exes, the conformance `#guard` drivers, and the
+  emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
+  bridge required by integer-factorization correctness — followed by a
+  separate memory-bounded `lake build HexManual`). It then runs the two
+  independent verification tails concurrently as `background:` steps: the
+  per-library `bench verify` smoke gate per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
+  conformance/oracle suite (FLINT, PARI, Conway) with the BZ gates. A
+  `wait-all:` joins them and a fail-closed sentinel step fails the job
+  unless both tails signalled success. The oracle tail sets
+  `HEX_REQUIRE_ORACLES=1`, so a missing FLINT, PARI, or Conway Python package
+  is a hard failure rather than a successful `SKIP`.
+  **Bench verify runs on ubuntu**: per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
+  smoke gate (does the bench module compile and run?), not a timing
+  measurement; timing-relevant runs live on a separate scheduled
+  workflow on dedicated hardware.
+- Conformance used to be a second workflow (`conformance.yml`). It was
+  folded into this job because a separate workflow re-elaborated the
+  entire hex graph on a second runner — pure duplicated compute. Sharing
+  one build between the two tails removes that duplication while keeping
+  the runner count at one.
+- Future work: extend this one job. If a second runner is genuinely
+  needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
+
+### Polynomial-factorization performance artifacts
+
+Every pull request runs two deterministic checks for the published integer
+polynomial factorization comparison:
+
+- `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
+  cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
+  BZ, and Isabelle LLL. A relevant implementation, adapter, harness, corpus,
+  toolchain, or dependency change after a system's recorded clean commit makes
+  that system stale and the PR must refresh its measurement.
+- `scripts/plots/hexbz-cactus.py --check` regenerates all current cactus and
+  runtime-by-degree figures with the pinned Matplotlib version and compares the
+  SVG bytes with the committed files.
+
+A performance-affecting PR updates the measurements, all generated figures,
+and the current reports together. The checks extend the existing Ubuntu job;
+they never justify another workflow, job, or matrix entry.
 
 **Do not introduce matrices.** GitHub-hosted Actions on a personal
 account is concurrency-capped at ~20 parallel ubuntu runners across
@@ -128,6 +159,41 @@ requires a non-empty `Authors:` line, so additional contributors may be
 named. Run `python3 scripts/check_copyright_headers.py --fix` to add the
 header to any new file.
 
+Tracked `.lean` files are also line-count limited.
+`scripts/check_file_line_counts.py`, run as a step in the single `build`
+job, enforces two rules:
+
+* **Absolute cap.** No tracked `.lean` file (except `lakefile.lean`) may
+  exceed 3000 lines. Oversized files are hard to review and slow to
+  elaborate; split them into dependency-ordered submodules under a
+  same-named subdirectory (keeping a meaningfully-named public leaf), or,
+  for a `Basic.lean`-style aggregate, into content-named siblings.
+* **New-file budget.** A change may not *add* a new `.lean` file already
+  over 2000 lines. Existing files between 2000 and 3000 lines are
+  grandfathered; new files must start well under the absolute cap. This
+  rule diffs against the merge base, so it applies in pull-request context
+  and is skipped when no base is available.
+
+## Released-aggregate mirror
+
+`leanprover/hex` is a module-system umbrella that `public import`s every
+released library. A module may not import a non-module module, so a
+library that never adopted the module system builds fine here and breaks
+the aggregate: nothing inside this monorepo imports a released umbrella
+from module code, and the non-module conformance and bench drivers may
+import anything.
+
+`HexAggregateCheck.lean` closes that hole. It is a `module` whose only
+content is the same `public import`s the aggregate carries, in the same
+order, so the failure surfaces in `lake build` here instead of after the
+publish-out sync has pushed the library.
+`scripts/release/check_released_manifest.py` compares its import list
+against the `leanprover/hex` entry's `pins:` in
+`scripts/release/released.yml` and fails on drift, so publishing a new
+library updates this file rather than silently skipping it. The target is
+a `@[default_target] lean_lib` and is listed in `HEX_LIB_TARGETS`, so both
+a bare local `lake build` and the single `build` job cover it.
+
 ## Mathlib cache is mandatory
 
 Hex depends transitively on Mathlib (see `lakefile.lean`). Every
@@ -166,11 +232,27 @@ content hash; restoring a stale cache is safe because Lake
 re-elaborates any module whose source has changed and reuses
 anything that hasn't.
 
-The cache key does not need careful tuning. Lake handles
-invalidation. A per-run unique key (e.g. `${{ github.run_id }}`)
-with a constant prefix in `restore-keys` is sufficient — every run
-uploads a fresh snapshot, every run restores the most recent
-snapshot, and Lake reconciles the rest.
+The key prefix MUST include runner OS, runner architecture, and the
+hash of `lean-toolchain` plus `lake-manifest.json`. Lake can reconcile
+ordinary Hex source changes, but artifacts from a different Lean
+toolchain or dependency graph are not useful enough to justify their
+download. The final key component is the commit SHA, with the
+dependency-scoped prefix used as `restore-keys`.
+
+Only a fully verified `main` push saves a snapshot. Pull-request caches
+are scoped to that PR's merge ref and cannot seed another PR, while a
+cache saved on the default branch is available to pull requests. Saving
+an approximately 1 GB snapshot from every PR run therefore churns the
+repository's 10 GB cache quota without providing shared reuse. PRs and
+the Pages workflow restore the latest compatible `main` snapshot and
+let Lake rebuild their source delta.
+
+`leanprover/lean-action`'s own whole-`.lake` cache MUST be disabled with
+`use-github-cache: false`; the explicit Hex cache below owns this policy
+and Mathlib's cache is managed separately. The public R2/Lake artifact
+cache is a fallback only when the GitHub cache has no compatible match.
+Successful trusted `main` builds publish to both backends after all
+verification gates pass.
 
 Coverage:
 
@@ -184,6 +266,11 @@ Anti-patterns:
 - Keying on a content hash of the Hex source tree. The key changes
   on every commit, so the cache misses on every PR — buying
   nothing for what is otherwise the dominant build-time cost.
+- Omitting the toolchain and manifest from the restore prefix. That
+  downloads a large snapshot across a Lean or dependency upgrade even
+  though Lake must rebuild it.
+- Saving on pull-request refs. Those snapshots consume quota but are
+  not available to other pull requests.
 - Skipping the cache because "Lake should be fast." Lake from a
   clean `.lake/build` recompiles every Hex module elaborated by
   the workflow; on the conformance target list that runs ~13 min on
@@ -191,17 +278,16 @@ Anti-patterns:
 
 ## Branch protection
 
-`main` requires every status check produced by `ci.yml` and
-`conformance.yml` to pass before merge. The pod auto-merger
+`main` requires the status check produced by `ci.yml` to pass before
+merge. The pod auto-merger
 (`gh pr merge --auto`) respects branch protection, so this is the
 mechanism that gates merges on CI.
 
 Required contexts (kept in sync with the actual job names in the
 workflow files):
 
-- `build` (from `ci.yml`)
-- `build-macos` (from `ci.yml`)
-- `conformance` (from `conformance.yml`)
+- `build` (from `ci.yml`) — the single job, covering the build, the
+  bench-verify tail, and the conformance/oracle tail.
 
 `required_status_checks.strict` is `false`. With `strict: true`,
 every merge to `main` flips every other open PR to `BEHIND` and
@@ -240,9 +326,9 @@ self-hosted runners explicitly rather than drifting toward them.
 
 To add a new conformance check, oracle, benchmark, or build target:
 
-1. **Default**: extend the script of the existing single job in the
-   workflow that already covers this kind of work (`conformance.yml`
-   for conformance/oracle, `ci.yml` for build/check/benchmark).
+1. **Default**: extend the script of the single `build` job in
+   `ci.yml`. Conformance/oracle work goes in the conformance tail,
+   build/check/benchmark work in the build phase or the bench tail.
 2. Add any new system dependency to the existing apt/brew step.
 3. Add any new Python or Lean dependency to the existing install
    step.

@@ -44,6 +44,11 @@ private instance bounds5 : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance bounds7 : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 private instance bounds11 : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
 
+-- `PolyQuotient` is a prime-modulus type; every emitted case needs primality.
+private instance prime5 : ZMod64.PrimeModulus 5 := ZMod64.primeModulusOfPrime (by decide)
+private instance prime7 : ZMod64.PrimeModulus 7 := ZMod64.primeModulusOfPrime (by decide)
+private instance prime11 : ZMod64.PrimeModulus 11 := ZMod64.primeModulusOfPrime (by decide)
+
 /-- Lift an `FpPoly p` coefficient list to `List Int` via the canonical
 representative in `[0, p)`.  Used for fixture emission and result
 serialisation. -/
@@ -141,11 +146,11 @@ private def cases11 : List Case :=
       n       := 17 }
   ]
 
-/-- Run one case at a fixed `p` after the `[ZMod64.Bounds p]` instance
-has been resolved by the dispatchers below.  Builds the polynomials,
-constructs canonical quotient elements, and emits one fixture record
-plus the four operation results. -/
-private def emitCaseAt (p : Nat) [ZMod64.Bounds p] (c : Case)
+/-- Run one case at a fixed `p` after the `[ZMod64.Bounds p]` and
+`[ZMod64.PrimeModulus p]` instances have been resolved by the dispatchers
+below.  Builds the polynomials, constructs canonical quotient elements, and
+emits one fixture record plus the four operation results. -/
+private def emitCaseAt (p : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p] (c : Case)
     (hpos : 0 < FpPoly.degree (mkPoly (p := p) c.modulus)) : IO Unit := do
   let m       : FpPoly p := mkPoly c.modulus
   let aPoly   : FpPoly p := mkPoly c.a

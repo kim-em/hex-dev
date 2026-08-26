@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway
-import HexGF2
-import HexGFqField
+module
+
+public import HexConway
+public import HexGF2
+public import HexGFqField
+
+public section
 
 /-!
 User-facing canonical finite-field constructors.
@@ -18,7 +22,14 @@ separate declarations so the representation choice remains explicit.
 -/
 namespace Hex
 
-namespace Conway
+namespace GFq
+
+-- Everything in this block is `hex-gfq`'s own material: the two
+-- instance-synthesis classes that select a committed table entry, the packed
+-- binary modulus they name, and their certificates. The Conway table itself
+-- stays in `hex-conway`, and is opened here rather than qualified at each of
+-- the forty-odd instances.
+open Conway
 
 /-- A committed Conway-table entry available through instance synthesis.
 
@@ -50,6 +61,14 @@ instance committedEntry_2_5 : CommittedEntry 2 5 where
 /-- The committed table supports generic `GFq` construction for `C(2, 6)`. -/
 instance committedEntry_2_6 : CommittedEntry 2 6 where
   entry := supportedEntry_2_6
+
+/-- The committed table supports generic `GFq` construction for `C(2, 7)`. -/
+instance committedEntry_2_7 : CommittedEntry 2 7 where
+  entry := supportedEntry_2_7
+
+/-- The committed table supports generic `GFq` construction for `C(2, 8)`. -/
+instance committedEntry_2_8 : CommittedEntry 2 8 where
+  entry := supportedEntry_2_8
 
 /-- The committed table supports generic `GFq` construction for `C(3, 1)`. -/
 instance committedEntry_3_1 : CommittedEntry 3 1 where
@@ -174,6 +193,7 @@ instance committedEntry_13_6 : CommittedEntry 13 6 where
 /-- Interpret a packed single-word binary modulus as the corresponding generic
 `FpPoly 2` polynomial.  `lower` supplies the coefficients of degrees `< n`;
 the leading degree-`n` coefficient is inserted explicitly. -/
+@[expose]
 def packedGF2FpPoly (lower : UInt64) (n : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs <|
     (((List.range n).map fun i =>
@@ -357,7 +377,7 @@ private def packedGF2IrreducibilityCertificate (lower : UInt64) (n : Nat) :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 2)` (`0x3`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_2_irreducible :
+theorem packedGF2Entry_2_2_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 2) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x3 2)
@@ -367,7 +387,7 @@ private theorem packedGF2Entry_2_2_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 3)` (`0x3`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_3_irreducible :
+theorem packedGF2Entry_2_3_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 3) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x3 3)
@@ -377,7 +397,7 @@ private theorem packedGF2Entry_2_3_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 5)` (`0x5`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_5_irreducible :
+theorem packedGF2Entry_2_5_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x5 5) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x5 5)
@@ -387,11 +407,35 @@ private theorem packedGF2Entry_2_5_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 6)` (`0x1B`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_6_irreducible :
+theorem packedGF2Entry_2_6_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 6) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x1B 6)
     (packedGF2IrreducibilityCertificate 0x1B 6)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 7)` (`0x3`) is irreducible,
+checked from its certificate. -/
+theorem packedGF2Entry_2_7_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 7) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x3 7)
+    (packedGF2IrreducibilityCertificate 0x3 7)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 8)` (`0x1D`) is irreducible,
+checked from its certificate.
+
+This is not the AES modulus. AES uses `x^8 + x^4 + x^3 + x + 1` (`0x1B`), a
+different irreducible of the same degree, so `GF2q 8` and the AES field are
+different presentations of the same 256-element field. -/
+theorem packedGF2Entry_2_8_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1D 8) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x1D 8)
+    (packedGF2IrreducibilityCertificate 0x1D 8)
     (by decide)
 
 /-- The committed table supports a packed `GF2n` view of `C(2, 2)`. -/
@@ -439,7 +483,25 @@ instance packedGF2Entry_2_6 : PackedGF2Entry 6 where
   degree_lt_word := by decide
   packed_irreducible := packedGF2Entry_2_6_irreducible
 
-end Conway
+/-- The committed table supports a packed `GF2n` view of `C(2, 7)`. -/
+instance packedGF2Entry_2_7 : PackedGF2Entry 7 where
+  entry := supportedEntry_2_7
+  lower := 0x3
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_7_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 8)`. -/
+instance packedGF2Entry_2_8 : PackedGF2Entry 8 where
+  entry := supportedEntry_2_8
+  lower := 0x1D
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_8_irreducible
+
+end GFq
 
 /-- Canonical finite field with `p^n` elements for a committed Conway-table
 entry, using the generic quotient-field representation. -/
@@ -451,23 +513,31 @@ abbrev GFq (p n : Nat) [ZMod64.Bounds p] (h : Conway.SupportedEntry p n) : Type 
 
 namespace GFq
 
-variable {p n : Nat} [ZMod64.Bounds p]
+-- The quotient underlying `GFq` is a prime-modulus type.  A `SupportedEntry`
+-- always carries `h.prime`, but it is an ordinary structure, so it cannot drive
+-- instance search; the hypothesis is taken ambiently instead.  Every committed
+-- prime has a ground instance in `HexConway.Table`, so concrete uses resolve it
+-- automatically and only generic code has to carry it.
+variable {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- The Conway modulus selected for a committed `GFq p n` entry. -/
 abbrev modulus (h : Conway.SupportedEntry p n) : FpPoly p :=
   Conway.conwayPoly p n h
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFq.modulus` is the Conway polynomial selected by the committed entry. -/
 @[simp, grind =] theorem modulus_eq_conway (h : Conway.SupportedEntry p n) :
     modulus h = Conway.conwayPoly p n h :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The selected Conway modulus has positive degree. -/
 @[simp]
 theorem modulus_nonconstant (h : Conway.SupportedEntry p n) :
     0 < FpPoly.degree (modulus h) :=
   Conway.conwayPoly_nonconstant p n h
 
+omit [ZMod64.PrimeModulus p] in
 /-- The selected Conway modulus is irreducible. -/
 @[grind =>]
 theorem modulus_irreducible (h : Conway.SupportedEntry p n) :
@@ -476,6 +546,7 @@ theorem modulus_irreducible (h : Conway.SupportedEntry p n) :
 
 grind_pattern modulus_irreducible => Conway.conwayPoly p n h
 
+omit [ZMod64.PrimeModulus p] in
 /-- The selected Conway modulus lives over a prime base field. -/
 theorem modulus_prime (h : Conway.SupportedEntry p n) :
     Hex.Nat.Prime p :=
@@ -483,12 +554,18 @@ theorem modulus_prime (h : Conway.SupportedEntry p n) :
 
 grind_pattern modulus_prime => h.prime
 
+omit [ZMod64.PrimeModulus p] in
 /-- Reduce a polynomial into the canonical field selected by a committed Conway
-entry. -/
+entry.
+
+The entry already carries `h.prime`, so this needs no separate prime-modulus
+instance from the caller. -/
+@[expose]
 def ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) : GFq p n h :=
   GFqField.ofPoly (modulus h) (modulus_nonconstant h) (modulus_prime h)
     (modulus_irreducible h) g
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFq.ofPoly` delegates to the generic quotient-field constructor with the
 selected Conway modulus. -/
 @[simp, grind =] theorem ofPoly_eq_field_ofPoly (h : Conway.SupportedEntry p n)
@@ -499,15 +576,18 @@ selected Conway modulus. -/
   rfl
 
 /-- Project a canonical field element to its reduced polynomial representative. -/
+@[expose]
 def repr {h : Conway.SupportedEntry p n} (x : GFq p n h) : FpPoly p :=
   GFqField.repr x
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFq.repr` is the generic quotient-field representative projection. -/
 @[simp, grind =] theorem repr_eq_field_repr {h : Conway.SupportedEntry p n}
     (x : GFq p n h) :
     repr x = GFqField.repr x :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- Two canonical `GFq` elements are equal when their reduced polynomial
 representatives agree. -/
 @[ext] theorem ext {h : Conway.SupportedEntry p n} {x y : GFq p n h}
@@ -518,6 +598,7 @@ representatives agree. -/
   apply GFqRing.ext
   simpa [repr, GFqField.repr] using hxy
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of an injected `FpPoly` is that polynomial
 reduced modulo the selected Conway polynomial. Lets a caller normalise a
 `repr (ofPoly h g)` round-trip to a plain `reduceMod`. -/
@@ -537,6 +618,7 @@ the selected Conway polynomial. -/
     repr (1 : GFq p n h) = GFqRing.reduceMod (modulus h) 1 :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a sum in `GFq` reduces from the sum of
 representatives modulo the selected Conway polynomial. -/
 @[simp, grind =] theorem repr_add {h : Conway.SupportedEntry p n}
@@ -544,6 +626,7 @@ representatives modulo the selected Conway polynomial. -/
     repr (x + y) = GFqRing.reduceMod (modulus h) (repr x + repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a product in `GFq` reduces from the product
 of representatives modulo the selected Conway polynomial. -/
 @[simp, grind =] theorem repr_mul {h : Conway.SupportedEntry p n}
@@ -551,11 +634,13 @@ of representatives modulo the selected Conway polynomial. -/
     repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a negation reduces from the negated representative. -/
 @[simp, grind =] theorem repr_neg {h : Conway.SupportedEntry p n} (x : GFq p n h) :
     repr (-x) = GFqRing.reduceMod (modulus h) (-(repr x)) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a subtraction reduces from the difference of
 representatives. -/
 @[simp, grind =] theorem repr_sub {h : Conway.SupportedEntry p n} (x y : GFq p n h) :
@@ -570,6 +655,7 @@ polynomial carrying the literal as a `ZMod64` coefficient. -/
       GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a quotient in `GFq` lifts the
 quotient-ring product of the dividend's representative with the inverse of
 the divisor. -/
@@ -579,6 +665,7 @@ the divisor. -/
       GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a natural power in `GFq` lifts the
 quotient-ring power of the underlying quotient representative. -/
 @[simp, grind =] theorem repr_pow {h : Conway.SupportedEntry p n}
@@ -586,6 +673,7 @@ quotient-ring power of the underlying quotient representative. -/
     repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a nonnegative integer power in `GFq` lifts
 the quotient-ring power of the underlying quotient representative. -/
 @[simp, grind =] theorem repr_zpow_ofNat {h : Conway.SupportedEntry p n}
@@ -594,6 +682,7 @@ the quotient-ring power of the underlying quotient representative. -/
       GFqRing.repr (x.toQuotient ^ k) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a negative integer power in `GFq` lifts
 the inverse of the corresponding quotient-ring positive power. -/
 @[simp, grind =] theorem repr_zpow_negSucc {h : Conway.SupportedEntry p n}
@@ -610,6 +699,7 @@ quotient-ring integer-cast representative. -/
         ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of a natural scalar action lifts the quotient-ring
 action. -/
 @[simp, grind =] theorem repr_nsmul {h : Conway.SupportedEntry p n}
@@ -617,6 +707,7 @@ action. -/
     repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of an integer scalar action lifts the quotient-ring
 action. -/
 @[simp, grind =] theorem repr_zsmul {h : Conway.SupportedEntry p n}
@@ -643,6 +734,7 @@ convention and has zero representative. -/
   exact GFqField.inv_zero (modulus h) (modulus_nonconstant h)
     (modulus_prime h) (modulus_irreducible h)
 
+omit [ZMod64.PrimeModulus p] in
 /-- Division in `GFq` is multiplication by inverse. -/
 @[grind =]
 theorem div_eq_mul_inv {h : Conway.SupportedEntry p n}
@@ -665,6 +757,7 @@ theorem inv_mul_cancel {h : Conway.SupportedEntry p n}
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
   exact GFqField.inv_mul_cancel (x := x) hx
 
+omit [ZMod64.PrimeModulus p] in
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
@@ -680,6 +773,7 @@ theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
     apply ext
     simpa using hred
 
+omit [ZMod64.PrimeModulus p] in
 /-- Injecting an `FpPoly` into `GFq` is invariant under pre-reduction modulo
 the selected Conway polynomial: a caller may drop a `reduceMod` already
 sitting under `ofPoly`. -/
@@ -692,14 +786,17 @@ sitting under `ofPoly`. -/
 
 /-- The Frobenius endomorphism on the canonical Conway-backed field, computed
 as the `p`-th power on the underlying quotient representation. -/
+@[expose]
 def frob {h : Conway.SupportedEntry p n} (x : GFq p n h) : GFq p n h :=
   GFqField.frob x
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFq.frob` is the `p`-th power map. -/
 theorem frob_eq_pow {h : Conway.SupportedEntry p n} (x : GFq p n h) :
     frob x = x ^ p :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of `GFq.frob` is the quotient-ring `p`-th power
 representative. -/
 @[simp, grind =] theorem repr_frob {h : Conway.SupportedEntry p n} (x : GFq p n h) :
@@ -712,12 +809,12 @@ end GFq
 
 Use `GFqC p n` when the committed entry should be inferred from the current
 Conway table. Use explicit `GFq p n h` when a proof needs to name the witness. -/
-abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : Conway.CommittedEntry p n] : Type :=
+abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : GFq.CommittedEntry p n] : Type :=
   GFq p n h.entry
 
 namespace GFqC
 
-variable {p n : Nat} [ZMod64.Bounds p] [h : Conway.CommittedEntry p n]
+variable {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] [h : GFq.CommittedEntry p n]
 
 /-- The committed Conway-table entry selected for `GFqC p n`. -/
 abbrev entry : Conway.SupportedEntry p n :=
@@ -727,16 +824,20 @@ abbrev entry : Conway.SupportedEntry p n :=
 abbrev modulus : FpPoly p :=
   GFq.modulus (entry (p := p) (n := n))
 
-/-- `GFqC.modulus` delegates to the explicit-entry `GFq.modulus`. -/
+omit [ZMod64.PrimeModulus p] in
+/-- {name}`Hex.GFqC.modulus` delegates to the explicit-entry
+{name}`Hex.GFq.modulus`. -/
 theorem modulus_eq_gfq :
     modulus (p := p) (n := n) =
       GFq.modulus (entry (p := p) (n := n)) :=
   rfl
 
 /-- Reduce a polynomial into the committed `GFqC p n` field. -/
+@[expose]
 def ofPoly (g : FpPoly p) : GFqC p n :=
   GFq.ofPoly (entry (p := p) (n := n)) g
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFqC.ofPoly` delegates to the explicit-entry `GFq.ofPoly`. -/
 theorem ofPoly_eq_gfq (g : FpPoly p) :
     ofPoly (p := p) (n := n) g =
@@ -744,14 +845,17 @@ theorem ofPoly_eq_gfq (g : FpPoly p) :
   rfl
 
 /-- Project a committed `GFqC` element to its reduced polynomial representative. -/
+@[expose]
 def repr (x : GFqC p n) : FpPoly p :=
   GFq.repr x
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFqC.repr` delegates to the explicit-entry `GFq.repr`. -/
 theorem repr_eq_gfq (x : GFqC p n) :
     repr x = GFq.repr x :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of an injected polynomial is reduction modulo the
 selected committed Conway polynomial. -/
 @[simp, grind =] theorem repr_ofPoly (g : FpPoly p) :
@@ -759,6 +863,7 @@ selected committed Conway polynomial. -/
       GFqRing.reduceMod (modulus (p := p) (n := n)) g :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a sum in `GFqC` reduces from the sum of
 representatives modulo the selected committed Conway polynomial. -/
 @[simp, grind =] theorem repr_add (x y : GFqC p n) :
@@ -766,6 +871,7 @@ representatives modulo the selected committed Conway polynomial. -/
       GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x + repr y) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The canonical representative of a product in `GFqC` reduces from the
 product of representatives modulo the selected committed Conway polynomial. -/
 @[simp, grind =] theorem repr_mul (x y : GFqC p n) :
@@ -774,19 +880,23 @@ product of representatives modulo the selected committed Conway polynomial. -/
   rfl
 
 /-- The Frobenius endomorphism on the committed `GFqC p n` field. -/
+@[expose]
 def frob (x : GFqC p n) : GFqC p n :=
   GFq.frob x
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFqC.frob` delegates to the explicit-entry `GFq.frob`. -/
 theorem frob_eq_gfq (x : GFqC p n) :
     frob x = GFq.frob x :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- `GFqC.frob` is the `p`-th power map. -/
 theorem frob_eq_pow (x : GFqC p n) :
     frob x = x ^ p :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 /-- The representative of `GFqC.frob` is the quotient-ring `p`-th power
 representative. -/
 @[simp, grind =] theorem repr_frob (x : GFqC p n) :
@@ -797,14 +907,15 @@ end GFqC
 
 /-- Optimized canonical binary field for committed Conway entries that have a
 single-word packed modulus. -/
-abbrev GF2q (n : Nat) [h : Conway.PackedGF2Entry n] : Type :=
+abbrev GF2q (n : Nat) [h : GFq.PackedGF2Entry n] : Type :=
   GF2n n h.lower h.degree_pos h.degree_lt_word h.packed_irreducible
 
 namespace GF2q
 
-variable {n : Nat} [h : Conway.PackedGF2Entry n]
+variable {n : Nat} [h : GFq.PackedGF2Entry n]
 
 /-- The supported Conway-table entry backing this optimized binary field. -/
+@[expose]
 def supportedEntry : Conway.SupportedEntry 2 n :=
   h.entry
 
@@ -815,6 +926,7 @@ def supportedEntry : Conway.SupportedEntry 2 n :=
 
 /-- The lower-word packed modulus selected for a committed optimized `GF2q`
 entry. -/
+@[expose]
 def lower : UInt64 :=
   h.lower
 
@@ -825,6 +937,7 @@ def lower : UInt64 :=
 
 /-- The packed modulus polynomial selected for a committed optimized `GF2q`
 entry. -/
+@[expose]
 def modulus : GF2Poly :=
   GF2Poly.ofUInt64Monic h.lower n
 
@@ -836,13 +949,13 @@ def modulus : GF2Poly :=
 /-- The packed modulus, viewed through the generic `FpPoly 2` representation,
 is the committed Conway polynomial for this entry. -/
 theorem conway_eq_packed :
-    Conway.conwayPoly 2 n h.entry = Conway.packedGF2FpPoly h.lower n :=
+    Conway.conwayPoly 2 n h.entry = GFq.packedGF2FpPoly h.lower n :=
   h.conway_eq_packed
 
 /-- The generic `GFq` modulus for a packed binary entry agrees with the packed
 modulus viewed as an `FpPoly 2`. -/
 theorem gfq_modulus_eq_packedFpPoly :
-    GFq.modulus h.entry = Conway.packedGF2FpPoly (lower (n := n)) n := by
+    GFq.modulus h.entry = GFq.packedGF2FpPoly (lower (n := n)) n := by
   simpa [GFq.modulus, lower] using h.conway_eq_packed
 
 /-- The selected packed modulus has positive extension degree. -/
@@ -862,6 +975,7 @@ theorem modulus_irreducible : GF2Poly.Irreducible (modulus (n := n)) :=
 
 /-- Reduce a machine word into the optimized binary field selected by a
 committed packed Conway entry. -/
+@[expose]
 def ofWord (w : UInt64) : GF2q n :=
   GF2n.reduce (n := n) (irr := h.lower) w
 
@@ -873,6 +987,7 @@ Conway modulus. -/
 
 /-- Project an optimized binary field element to its packed machine-word
 representative. -/
+@[expose]
 def repr (x : GF2q n) : UInt64 :=
   x.val
 
@@ -883,6 +998,7 @@ def repr (x : GF2q n) : UInt64 :=
 
 /-- Interpret the low `n` bits of a packed binary word as an `FpPoly 2`
 polynomial. -/
+@[expose]
 def wordFpPoly (w : UInt64) : FpPoly 2 :=
   FpPoly.ofCoeffs <|
     (((List.range n).map fun i =>
@@ -893,11 +1009,13 @@ def wordFpPoly (w : UInt64) : FpPoly 2 :=
 
 /-- Interpret the packed representative of an optimized binary-field element
 as a generic `FpPoly 2` polynomial. -/
+@[expose]
 def reprFpPoly (x : GF2q n) : FpPoly 2 :=
   wordFpPoly (n := n) (repr x)
 
 /-- Map an optimized packed canonical binary-field element into the generic
 canonical `GFq 2 n` model for the same committed Conway entry. -/
+@[expose]
 def toGFq (x : GF2q n) : GFq 2 n (supportedEntry (n := n)) :=
   GFq.ofPoly (supportedEntry (n := n)) (reprFpPoly x)
 

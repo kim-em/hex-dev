@@ -1,0 +1,449 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexArith.Nat.Prime
+public import HexPrimality.Sieve
+-- Kernel-reducible `Array` equality for the sieve-backed table check; see
+-- `HexBasic.ArrayDecEq`.
+public import HexBasic.ArrayDecEq
+
+open scoped Hex
+
+public section
+
+/-!
+The committed prime table: every prime below `primeTableBound`, ascending,
+with membership decided by binary search and both membership directions
+proved against `Hex.Nat.Prime`.
+
+The table literal and the batched sieve states below are generated
+(`#rebuild_primeTable` in `HexPrimality.SieveElab`), and their correctness
+is machine-checked here, so the generator carries no soundness claim: the
+membership directions come from one verified sieve run replayed by the
+kernel in fixed-size chunks and chained to the committed literal, and
+sortedness from a structural adjacent-ascent check.
+-/
+
+namespace Hex
+
+namespace Nat
+
+/- Incidental elaborator reductions that touch the committed table (its
+`size`, entry lookups) recurse once per element, and the table has 1229
+entries; the default 512 ceiling is far too low for them. -/
+set_option maxRecDepth 10000
+
+/-- Exclusive upper bound of the committed prime table: `primeTable` lists
+every prime below this. -/
+@[expose]
+def primeTableBound : Nat := 10000
+
+/-- Every prime below `primeTableBound`, ascending. A committed literal;
+`mem_primeTable_prime` and `mem_primeTable_of_prime` are the two membership
+directions, so the generator that produced the literal is untrusted. -/
+@[expose]
+def primeTable : Array Nat :=
+  #[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+    71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139,
+    149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
+    227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293,
+    307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383,
+    389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
+    467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569,
+    571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647,
+    653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743,
+    751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839,
+    853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941,
+    947, 953, 967, 971, 977, 983, 991, 997, 1009, 1013, 1019, 1021, 1031,
+    1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087, 1091, 1093, 1097, 1103,
+    1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201,
+    1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279, 1283, 1289,
+    1291, 1297, 1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381,
+    1399, 1409, 1423, 1427, 1429, 1433, 1439, 1447, 1451, 1453, 1459, 1471,
+    1481, 1483, 1487, 1489, 1493, 1499, 1511, 1523, 1531, 1543, 1549, 1553,
+    1559, 1567, 1571, 1579, 1583, 1597, 1601, 1607, 1609, 1613, 1619, 1621,
+    1627, 1637, 1657, 1663, 1667, 1669, 1693, 1697, 1699, 1709, 1721, 1723,
+    1733, 1741, 1747, 1753, 1759, 1777, 1783, 1787, 1789, 1801, 1811, 1823,
+    1831, 1847, 1861, 1867, 1871, 1873, 1877, 1879, 1889, 1901, 1907, 1913,
+    1931, 1933, 1949, 1951, 1973, 1979, 1987, 1993, 1997, 1999, 2003, 2011,
+    2017, 2027, 2029, 2039, 2053, 2063, 2069, 2081, 2083, 2087, 2089, 2099,
+    2111, 2113, 2129, 2131, 2137, 2141, 2143, 2153, 2161, 2179, 2203, 2207,
+    2213, 2221, 2237, 2239, 2243, 2251, 2267, 2269, 2273, 2281, 2287, 2293,
+    2297, 2309, 2311, 2333, 2339, 2341, 2347, 2351, 2357, 2371, 2377, 2381,
+    2383, 2389, 2393, 2399, 2411, 2417, 2423, 2437, 2441, 2447, 2459, 2467,
+    2473, 2477, 2503, 2521, 2531, 2539, 2543, 2549, 2551, 2557, 2579, 2591,
+    2593, 2609, 2617, 2621, 2633, 2647, 2657, 2659, 2663, 2671, 2677, 2683,
+    2687, 2689, 2693, 2699, 2707, 2711, 2713, 2719, 2729, 2731, 2741, 2749,
+    2753, 2767, 2777, 2789, 2791, 2797, 2801, 2803, 2819, 2833, 2837, 2843,
+    2851, 2857, 2861, 2879, 2887, 2897, 2903, 2909, 2917, 2927, 2939, 2953,
+    2957, 2963, 2969, 2971, 2999, 3001, 3011, 3019, 3023, 3037, 3041, 3049,
+    3061, 3067, 3079, 3083, 3089, 3109, 3119, 3121, 3137, 3163, 3167, 3169,
+    3181, 3187, 3191, 3203, 3209, 3217, 3221, 3229, 3251, 3253, 3257, 3259,
+    3271, 3299, 3301, 3307, 3313, 3319, 3323, 3329, 3331, 3343, 3347, 3359,
+    3361, 3371, 3373, 3389, 3391, 3407, 3413, 3433, 3449, 3457, 3461, 3463,
+    3467, 3469, 3491, 3499, 3511, 3517, 3527, 3529, 3533, 3539, 3541, 3547,
+    3557, 3559, 3571, 3581, 3583, 3593, 3607, 3613, 3617, 3623, 3631, 3637,
+    3643, 3659, 3671, 3673, 3677, 3691, 3697, 3701, 3709, 3719, 3727, 3733,
+    3739, 3761, 3767, 3769, 3779, 3793, 3797, 3803, 3821, 3823, 3833, 3847,
+    3851, 3853, 3863, 3877, 3881, 3889, 3907, 3911, 3917, 3919, 3923, 3929,
+    3931, 3943, 3947, 3967, 3989, 4001, 4003, 4007, 4013, 4019, 4021, 4027,
+    4049, 4051, 4057, 4073, 4079, 4091, 4093, 4099, 4111, 4127, 4129, 4133,
+    4139, 4153, 4157, 4159, 4177, 4201, 4211, 4217, 4219, 4229, 4231, 4241,
+    4243, 4253, 4259, 4261, 4271, 4273, 4283, 4289, 4297, 4327, 4337, 4339,
+    4349, 4357, 4363, 4373, 4391, 4397, 4409, 4421, 4423, 4441, 4447, 4451,
+    4457, 4463, 4481, 4483, 4493, 4507, 4513, 4517, 4519, 4523, 4547, 4549,
+    4561, 4567, 4583, 4591, 4597, 4603, 4621, 4637, 4639, 4643, 4649, 4651,
+    4657, 4663, 4673, 4679, 4691, 4703, 4721, 4723, 4729, 4733, 4751, 4759,
+    4783, 4787, 4789, 4793, 4799, 4801, 4813, 4817, 4831, 4861, 4871, 4877,
+    4889, 4903, 4909, 4919, 4931, 4933, 4937, 4943, 4951, 4957, 4967, 4969,
+    4973, 4987, 4993, 4999, 5003, 5009, 5011, 5021, 5023, 5039, 5051, 5059,
+    5077, 5081, 5087, 5099, 5101, 5107, 5113, 5119, 5147, 5153, 5167, 5171,
+    5179, 5189, 5197, 5209, 5227, 5231, 5233, 5237, 5261, 5273, 5279, 5281,
+    5297, 5303, 5309, 5323, 5333, 5347, 5351, 5381, 5387, 5393, 5399, 5407,
+    5413, 5417, 5419, 5431, 5437, 5441, 5443, 5449, 5471, 5477, 5479, 5483,
+    5501, 5503, 5507, 5519, 5521, 5527, 5531, 5557, 5563, 5569, 5573, 5581,
+    5591, 5623, 5639, 5641, 5647, 5651, 5653, 5657, 5659, 5669, 5683, 5689,
+    5693, 5701, 5711, 5717, 5737, 5741, 5743, 5749, 5779, 5783, 5791, 5801,
+    5807, 5813, 5821, 5827, 5839, 5843, 5849, 5851, 5857, 5861, 5867, 5869,
+    5879, 5881, 5897, 5903, 5923, 5927, 5939, 5953, 5981, 5987, 6007, 6011,
+    6029, 6037, 6043, 6047, 6053, 6067, 6073, 6079, 6089, 6091, 6101, 6113,
+    6121, 6131, 6133, 6143, 6151, 6163, 6173, 6197, 6199, 6203, 6211, 6217,
+    6221, 6229, 6247, 6257, 6263, 6269, 6271, 6277, 6287, 6299, 6301, 6311,
+    6317, 6323, 6329, 6337, 6343, 6353, 6359, 6361, 6367, 6373, 6379, 6389,
+    6397, 6421, 6427, 6449, 6451, 6469, 6473, 6481, 6491, 6521, 6529, 6547,
+    6551, 6553, 6563, 6569, 6571, 6577, 6581, 6599, 6607, 6619, 6637, 6653,
+    6659, 6661, 6673, 6679, 6689, 6691, 6701, 6703, 6709, 6719, 6733, 6737,
+    6761, 6763, 6779, 6781, 6791, 6793, 6803, 6823, 6827, 6829, 6833, 6841,
+    6857, 6863, 6869, 6871, 6883, 6899, 6907, 6911, 6917, 6947, 6949, 6959,
+    6961, 6967, 6971, 6977, 6983, 6991, 6997, 7001, 7013, 7019, 7027, 7039,
+    7043, 7057, 7069, 7079, 7103, 7109, 7121, 7127, 7129, 7151, 7159, 7177,
+    7187, 7193, 7207, 7211, 7213, 7219, 7229, 7237, 7243, 7247, 7253, 7283,
+    7297, 7307, 7309, 7321, 7331, 7333, 7349, 7351, 7369, 7393, 7411, 7417,
+    7433, 7451, 7457, 7459, 7477, 7481, 7487, 7489, 7499, 7507, 7517, 7523,
+    7529, 7537, 7541, 7547, 7549, 7559, 7561, 7573, 7577, 7583, 7589, 7591,
+    7603, 7607, 7621, 7639, 7643, 7649, 7669, 7673, 7681, 7687, 7691, 7699,
+    7703, 7717, 7723, 7727, 7741, 7753, 7757, 7759, 7789, 7793, 7817, 7823,
+    7829, 7841, 7853, 7867, 7873, 7877, 7879, 7883, 7901, 7907, 7919, 7927,
+    7933, 7937, 7949, 7951, 7963, 7993, 8009, 8011, 8017, 8039, 8053, 8059,
+    8069, 8081, 8087, 8089, 8093, 8101, 8111, 8117, 8123, 8147, 8161, 8167,
+    8171, 8179, 8191, 8209, 8219, 8221, 8231, 8233, 8237, 8243, 8263, 8269,
+    8273, 8287, 8291, 8293, 8297, 8311, 8317, 8329, 8353, 8363, 8369, 8377,
+    8387, 8389, 8419, 8423, 8429, 8431, 8443, 8447, 8461, 8467, 8501, 8513,
+    8521, 8527, 8537, 8539, 8543, 8563, 8573, 8581, 8597, 8599, 8609, 8623,
+    8627, 8629, 8641, 8647, 8663, 8669, 8677, 8681, 8689, 8693, 8699, 8707,
+    8713, 8719, 8731, 8737, 8741, 8747, 8753, 8761, 8779, 8783, 8803, 8807,
+    8819, 8821, 8831, 8837, 8839, 8849, 8861, 8863, 8867, 8887, 8893, 8923,
+    8929, 8933, 8941, 8951, 8963, 8969, 8971, 8999, 9001, 9007, 9011, 9013,
+    9029, 9041, 9043, 9049, 9059, 9067, 9091, 9103, 9109, 9127, 9133, 9137,
+    9151, 9157, 9161, 9173, 9181, 9187, 9199, 9203, 9209, 9221, 9227, 9239,
+    9241, 9257, 9277, 9281, 9283, 9293, 9311, 9319, 9323, 9337, 9341, 9343,
+    9349, 9371, 9377, 9391, 9397, 9403, 9413, 9419, 9421, 9431, 9433, 9437,
+    9439, 9461, 9463, 9467, 9473, 9479, 9491, 9497, 9511, 9521, 9533, 9539,
+    9547, 9551, 9587, 9601, 9613, 9619, 9623, 9629, 9631, 9643, 9649, 9661,
+    9677, 9679, 9689, 9697, 9719, 9721, 9733, 9739, 9743, 9749, 9767, 9769,
+    9781, 9787, 9791, 9803, 9811, 9817, 9829, 9833, 9839, 9851, 9857, 9859,
+    9871, 9883, 9887, 9901, 9907, 9923, 9929, 9931, 9941, 9949, 9967, 9973]
+
+#guard primeTable.size = 1229
+
+/-- Adjacent strict ascent of a list, structurally: `true` iff consecutive
+entries strictly increase. -/
+@[expose]
+def ascAdj : List Nat → Bool
+  | [] => true
+  | [_] => true
+  | a :: b :: rest => decide (a < b) && ascAdj (b :: rest)
+
+private theorem pairwise_lt_of_ascAdj :
+    ∀ (l : List Nat), ascAdj l = true → l.Pairwise (· < ·)
+  | [], _ => List.Pairwise.nil
+  | [_], _ => List.pairwise_singleton ..
+  | a :: b :: rest, h => by
+      unfold ascAdj at h
+      rw [Bool.and_eq_true, decide_eq_true_iff] at h
+      have ih := pairwise_lt_of_ascAdj (b :: rest) h.2
+      rw [List.pairwise_cons]
+      refine ⟨?_, ih⟩
+      have hb := (List.pairwise_cons.mp ih).1
+      intro x hx
+      rcases List.mem_cons.mp hx with rfl | hx
+      · exact h.1
+      · exact Nat.lt_trans h.1 (hb x hx)
+
+/-- The committed table is strictly ascending. -/
+theorem primeTable_sorted : primeTable.toList.Pairwise (· < ·) :=
+  pairwise_lt_of_ascAdj _ (by decide +kernel)
+
+private theorem getD_eq {a : Array Nat} {i : Nat} (h : i < a.size) :
+    a.getD i 0 = a[i] := by
+  rw [Array.getD_eq_getD_getElem?, Array.getD_getElem?, dif_pos h]
+
+private theorem getD_le_getD {a : Array Nat}
+    (hs : a.toList.Pairwise (· < ·)) {i j : Nat} (hij : i ≤ j)
+    (hj : j < a.size) : a.getD i 0 ≤ a.getD j 0 := by
+  have hi : i < a.size := Nat.lt_of_le_of_lt hij hj
+  rcases Nat.eq_or_lt_of_le hij with rfl | hlt
+  · exact Nat.le_refl _
+  · have hlen : a.toList.length = a.size := Array.length_toList
+    have hs' := List.pairwise_iff_getElem.mp hs i j
+      (by omega) (by omega) hlt
+    simp only [Array.getElem_toList] at hs'
+    rw [getD_eq hi, getD_eq hj]
+    omega
+
+/-- Fuel-bounded binary search for `n` in the sorted array `a` over the
+half-open index range `[lo, hi)`. -/
+@[expose]
+def binSearchGo (a : Array Nat) (n : Nat) : Nat → Nat → Nat → Bool
+  | 0, _, _ => false
+  | fuel + 1, lo, hi =>
+      if lo < hi then
+        if a.getD ((lo + hi) / 2) 0 = n then true
+        else if a.getD ((lo + hi) / 2) 0 < n then
+          binSearchGo a n fuel ((lo + hi) / 2 + 1) hi
+        else
+          binSearchGo a n fuel lo ((lo + hi) / 2)
+      else false
+
+/-- Membership in the committed prime table, by binary search. -/
+@[expose]
+def isTablePrime (n : Nat) : Bool :=
+  binSearchGo primeTable n (primeTable.size + 1) 0 primeTable.size
+
+private theorem binSearchGo_sound {a : Array Nat} {n : Nat} :
+    ∀ (fuel lo hi : Nat), hi ≤ a.size → binSearchGo a n fuel lo hi = true →
+      n ∈ a := by
+  intro fuel
+  induction fuel with
+  | zero => intro lo hi _ h; simp [binSearchGo] at h
+  | succ fuel ih =>
+      intro lo hi hhi h
+      unfold binSearchGo at h
+      by_cases hlh : lo < hi
+      · rw [if_pos hlh] at h
+        have hmid : (lo + hi) / 2 < a.size := by omega
+        by_cases heq : a.getD ((lo + hi) / 2) 0 = n
+        · have : a.getD ((lo + hi) / 2) 0 = a[(lo + hi) / 2] := by
+            simp [Array.getD, hmid]
+          rw [this] at heq
+          exact heq ▸ Array.getElem_mem hmid
+        · rw [if_neg heq] at h
+          by_cases hlt : a.getD ((lo + hi) / 2) 0 < n
+          · rw [if_pos hlt] at h
+            exact ih ((lo + hi) / 2 + 1) hi hhi h
+          · rw [if_neg hlt] at h
+            exact ih lo ((lo + hi) / 2) (by omega) h
+      · rw [if_neg hlh] at h
+        cases h
+
+private theorem binSearchGo_complete {a : Array Nat} {n : Nat}
+    (hs : a.toList.Pairwise (· < ·)) :
+    ∀ (fuel lo hi i : Nat), hi ≤ a.size → hi - lo < 2 ^ fuel →
+      lo ≤ i → i < hi → a.getD i 0 = n →
+      binSearchGo a n fuel lo hi = true := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro lo hi i _ hfuel hloi hihi _
+      have : (2 : Nat) ^ 0 = 1 := by decide
+      omega
+  | succ fuel ih =>
+      intro lo hi i hhi hfuel hloi hihi hval
+      have hp2 : (2 : Nat) ^ (fuel + 1) = 2 ^ fuel + 2 ^ fuel := by
+        rw [Nat.pow_succ]; omega
+      have hlh : lo < hi := by omega
+      unfold binSearchGo
+      rw [if_pos hlh]
+      by_cases heq : a.getD ((lo + hi) / 2) 0 = n
+      · rw [if_pos heq]
+      · rw [if_neg heq]
+        by_cases hlt : a.getD ((lo + hi) / 2) 0 < n
+        · rw [if_pos hlt]
+          -- The target index is strictly above the midpoint: at or below it
+          -- the sorted values are at most the midpoint value, which is < n.
+          have hup : (lo + hi) / 2 < i := by
+            rcases Nat.lt_or_ge ((lo + hi) / 2) i with h | h
+            · exact h
+            · have := getD_le_getD hs h (by omega : (lo + hi) / 2 < a.size)
+              omega
+          exact ih ((lo + hi) / 2 + 1) hi i hhi (by omega) (by omega) hihi hval
+        · rw [if_neg hlt]
+          -- Symmetrically the target index is strictly below the midpoint.
+          have hdown : i < (lo + hi) / 2 := by
+            rcases Nat.lt_or_ge i ((lo + hi) / 2) with h | h
+            · exact h
+            · have hmid : (lo + hi) / 2 < a.size := by omega
+              have := getD_le_getD hs h (by omega : i < a.size)
+              omega
+          exact ih lo ((lo + hi) / 2) i (by omega) (by omega) hloi hdown hval
+
+/-- A binary-search hit is table membership, and conversely: the lemma that
+lets a caller conclude anything from a lookup. -/
+theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable := by
+  constructor
+  · intro h
+    exact binSearchGo_sound (primeTable.size + 1) 0 primeTable.size
+      (Nat.le_refl _) h
+  · intro hmem
+    rw [Array.mem_def] at hmem
+    obtain ⟨i, hilt, hval⟩ := List.mem_iff_getElem.mp hmem
+    have hlen : primeTable.toList.length = primeTable.size := Array.length_toList
+    have hi : i < primeTable.size := by omega
+    have hval' : primeTable.getD i 0 = n := by
+      rw [Array.getElem_toList] at hval
+      simpa [Array.getD, hi] using hval
+    refine binSearchGo_complete primeTable_sorted (primeTable.size + 1) 0
+      primeTable.size i (Nat.le_refl _) ?_ (Nat.zero_le _) hi hval'
+    -- Kept generic in `s` so nothing forces the literal `2 ^ 1229`.
+    have hgen : ∀ s : Nat, s - 0 < 2 ^ (s + 1) := by
+      intro s
+      have h1 : s < 2 ^ s := Nat.lt_two_pow_self
+      have h2 : 2 ^ s ≤ 2 ^ (s + 1) :=
+        Nat.pow_le_pow_right (by decide) (Nat.le_succ _)
+      omega
+    exact hgen _
+
+/-! The sieve-backed verification of the committed literal.
+
+The block below is generated: the batched intermediate states are one
+sieve run split into kernel-replayed chunks, chained by
+`sieveGoRange_add` to the full run, and the table literal is tied to the
+final state's read-back by one cheap kernel comparison. Regenerate with
+`#rebuild_primeTable 10000 100 4` (`HexPrimality.SieveElab`) after any
+change to the sieve or the bound; the generator is untrusted, since a
+wrong state or literal fails the kernel checks below. -/
+
+-- #rebuild_primeTable 10000 100 4
+
+private def sieveState1 : Nat :=
+  3080292615959739964204484627571240058109023344876904136670066404714457643420220685313930459391025032880942212071706666506233064134106640092752850382696999010127135677239034590579934415311303670306939956512482118437455886815663169599809598771790928697752146843281290990233739742078125423778626894701558321912306824958977746503541588957007771071497680780085365203621989994826433338813736584322130524865068608253328345348929603079809551185296279515351540324503254159236216334786996080393854729767413230286513181874477261687618266711145588467196156452676011727185826270120889273426543424043539995844350320694497274394592012186155628180856952522517197796465582204220495612034285632721377253184628623742750839281709556311485248379272410821501598325775628515580593374670921802878231898785556532289456306832759793237976037341749209755146836602688662115974028462024729078107927985004447983038394181942599069762291902578956020747780921381500857400384661318109283049954027534099211149327354007674661105199648274174
+
+private def sieveState2 : Nat :=
+  3079964065817684060434902880381761654547261924990830458473128600185624189145456663211266024686028346610852021422929846097793481735473533177867295057753103679751335535849323515914308157427883736811606555564724579336492331370886219255650657463483341884330953956285122533471813239709498918939449169214496835214282442050086395574537642625152600644702110552699449679550755756474856128808789219031757697365368789155172001469175884281667446975186803309959052106130094989846582966275779041020541774410317690931048645872739711739595823670450280640216383584397646076032249789976483278467876292078461890255843094768386449803152522112592748473857229952115027154998894124583174220563052773077564908224903426878504528991762527701220875764847638042980762475965932497442569973566979586095713656687508976233967191240097902266835987328709248674608699146386390603852111408189282924704724946361880148433737870285706967978319092701557268485730409839238176534809049240977293008474827046702738516165728987860390335385953826558
+
+private def sieveState3 : Nat :=
+  2743569799150457740567117867529305710737286404975487885816421920831007151935623494201071190905527885762344033559330561210746670076679222736991895702072237554169262563099055179759821680250277279264064730532589012306700701119199884147752271498898435770350844560967116714087815994103518859161772048921139390811737067421903089407267113508247467922260065019716361051934508028515803775457111616521622097166727138949685086516458251860803208089185959029516085704718584640305851785038349379033007521710927260154627735038092608716077088116354864118416573865177325707380176719589224755511618899220758525247493791981098132462127060240030612213462228616220679840808541757660192076058919459176316153293833679819700198462081693181611673085127963862563607594444061037441733115786629750989183984758449594431174404608868007951740286929939044798726375726613140906127048593862602300814876669108047208044711897626232332307361809822926628769700480677621751230848429062180970736590450139238366134144937299691562679374995715838
+
+private def sieveState4 : Nat :=
+  52744135752356285805936049398430563853758494609160225796514743786617123787620821399859121188119528101218220704463160359020095888945827635244508551010264497147167328698916098549052770734386406558041136130951220102097589450036487889862513102237711001722261432163007766193243016959423550658809307427773430294686683256681071210928838628543230569721425513953798750330765562118972569850882871190532603134328126767999785051707298755561378421812626158609156306647472120885083908582702272771219708333402279408395106681754643926429383297469258864876040886224701339896630672022302096628438499126987700336836567734457421391999963402097693015614183764830163944020476605413722530296274936433158534311607292874987555134543420113288105285420780192126190733639406080137861321897321781112012330763582464554593728659183893472014340227531384209118011000733524518182848382804666019367121594964961391550350451044259814842469661079561979434448449143257563380571818704504412933327123869610585710153823488183849678548714059518
+
+private theorem sieveChunk1 :
+    sieveGoRange 3333 1 8 (sieveInit 3333) = sieveState1 := by
+  decide +kernel
+
+private theorem sieveChunk2 :
+    sieveGoRange 3333 9 8 sieveState1 = sieveState2 := by
+  decide +kernel
+
+private theorem sieveChunk3 :
+    sieveGoRange 3333 17 8 sieveState2 = sieveState3 := by
+  decide +kernel
+
+private theorem sieveChunk4 :
+    sieveGoRange 3333 25 8 sieveState3 = sieveState4 := by
+  decide +kernel
+
+private theorem sieve_eq_final : sieve 10000 100 = sieveState4 := by
+  show sieveGoRange 3333 1 32 (sieveInit 3333) = _
+  rw [show (32 : Nat) = 8 + 24 from rfl, sieveGoRange_add, sieveChunk1,
+    show (1 + 8 : Nat) = 9 from rfl,
+    show (24 : Nat) = 8 + 16 from rfl, sieveGoRange_add, sieveChunk2,
+    show (9 + 8 : Nat) = 17 from rfl,
+    show (16 : Nat) = 8 + 8 from rfl, sieveGoRange_add, sieveChunk3,
+    show (17 + 8 : Nat) = 25 from rfl, sieveChunk4]
+
+private theorem primeTable_eq_bits :
+    primeTable = (2 :: 3 :: bitsToList sieveState4 10000).toArray := by
+  decide +kernel
+
+private theorem mem_primeTable_iff_bits {n : Nat} :
+    n ∈ primeTable ↔
+      n = 2 ∨ n = 3 ∨ n ∈ bitsToList sieveState4 10000 := by
+  rw [primeTable_eq_bits, List.mem_toArray, List.mem_cons, List.mem_cons]
+
+/-- Every table entry is prime: the committed literal read back through
+the verified sieve run. -/
+theorem mem_primeTable_prime {n : Nat} (h : n ∈ primeTable) : Prime n := by
+  rw [mem_primeTable_iff_bits] at h
+  rcases h with rfl | rfl | h
+  · decide
+  · decide
+  · obtain ⟨t, ht1, htw, hbit, rfl⟩ := (mem_bitsToList (by decide)).mp h
+    have hbit' : (sieve 10000 100).testBit t = true := by
+      rw [sieve_eq_final]
+      exact hbit
+    exact (sieve_testBit_iff (by decide) (by decide) ht1
+      (numOfIndex_lt_iff.mpr htw)).mp hbit'
+
+/-- Every prime below the bound is a table entry: completeness through
+the sieve's completeness direction, which is what lets a caller conclude
+anything from a *failed* lookup. -/
+theorem mem_primeTable_of_prime {n : Nat} (hp : Prime n)
+    (hlt : n < primeTableBound) : n ∈ primeTable := by
+  have hb : primeTableBound = 10000 := rfl
+  rw [mem_primeTable_iff_bits]
+  rcases Nat.lt_or_ge n 5 with h5 | h5
+  · have h2 := hp.two_le
+    have : n = 2 ∨ n = 3 ∨ n = 4 := by omega
+    rcases this with rfl | rfl | rfl
+    · exact Or.inl rfl
+    · exact Or.inr (Or.inl rfl)
+    · exfalso
+      rcases hp.2 2 (by decide) with h | h <;> omega
+  · right
+    right
+    have hmod := prime_mod_six hp h5
+    have hval : numOfIndex (indexOfNum n) = n := numOfIndex_indexOfNum hmod
+    have ht1 : 1 ≤ indexOfNum n := by
+      unfold indexOfNum
+      omega
+    have htw : indexOfNum n < indexWidth 10000 := by
+      refine numOfIndex_lt_iff.mp ?_
+      rw [hval]
+      omega
+    refine (mem_bitsToList (by decide)).mpr
+      ⟨indexOfNum n, ht1, htw, ?_, hval⟩
+    rw [← sieve_eq_final]
+    refine (sieve_testBit_iff (by decide) (by decide) ht1
+      (numOfIndex_lt_iff.mpr htw)).mpr ?_
+    rw [hval]
+    exact hp
+
+/-- The primes in `[lo, hi)`, ascending. Runtime decision through the
+`isPrimeTrial`-backed `Decidable` instance; the committed table plays no
+role, so the range is unrestricted. -/
+def primesIn (lo hi : Nat) : Array Nat :=
+  ((List.range' lo (hi - lo)).filter (fun n => decide (Prime n))).toArray
+
+theorem mem_primesIn {lo hi n : Nat} :
+    n ∈ primesIn lo hi ↔ lo ≤ n ∧ n < hi ∧ Prime n := by
+  unfold primesIn
+  simp only [List.mem_toArray, List.mem_filter, List.mem_range',
+    decide_eq_true_iff]
+  constructor
+  · rintro ⟨⟨i, hilt, rfl⟩, hp⟩
+    refine ⟨by omega, by omega, hp⟩
+  · rintro ⟨hlo, hhi, hp⟩
+    exact ⟨⟨n - lo, by omega, by omega⟩, hp⟩
+
+/-! Regression coverage: bound edges, small entries, the largest entry, a
+prime just above the bound, and the classical prime counts. -/
+
+#guard isTablePrime 2 = true
+#guard isTablePrime 3 = true
+#guard isTablePrime 4 = false
+#guard isTablePrime 9973 = true
+#guard isTablePrime 9999 = false
+#guard isTablePrime 10007 = false  -- prime, but above the bound
+#guard (primesIn 0 100).size = 25
+#guard (primesIn 90 100).toList = [97]
+#guard primesIn 10 10 = #[]
+
+end Nat
+
+end Hex

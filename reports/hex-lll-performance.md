@@ -12,6 +12,10 @@
 - `Hex.LLLBench.runOfBasisHarshCubicChecksum`: `ofBasisHarshCubicComplexity n`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: `firstShortVectorRandomBoundedComplexity n`
 - `Hex.LLLBench.runSizeReduceColumnChecksum`: `sizeReduceColumnComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsSquareChecksum` (`hexlll_gram_bench`): `intervalGramRowsSquareComplexity n`
+- `Hex.LLLBench.runIntervalGramRowsWideChecksum` (`hexlll_gram_bench`): `intervalGramRowsWideComplexity n`
+- `Hex.LLLBench.runReducedIntervalSquareChecksum` (`hexlll_gram_bench`): `reducedIntervalSquareComplexity n`
+- `Hex.LLLBench.runReducedIntervalWideChecksum` (`hexlll_gram_bench`): `reducedIntervalWideComplexity n`
 - `Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum`: fixed, repeats `5`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq`: fixed, repeats `3`
@@ -147,8 +151,57 @@ lake exe hexlll_bench verify
 ```
 
 At current worktree commit `924910079376c876da2e2fe9d94915505dd477e4`,
-the smoke verifier succeeds for all 52 registered HexLLL benchmarks, including
+the bench verify step succeeds for all 52 registered HexLLL benchmarks, including
 the densified Isabelle ladder added after the scientific run below.
+
+### Symmetry-aware interval-checker Gram rows
+
+The four focused targets live in `hexlll_gram_bench`, which imports the
+production interval checker without initializing the unrelated fixed-result
+LLL benchmark fixtures in `hexlll_bench`. They use deterministic integer bases
+at square shapes and at wide shapes with eight columns per row. The before and
+after runs were recorded on `chungus2` (AMD EPYC 9455, Linux x86-64) with:
+
+```sh
+lake exe hexlll_gram_bench run \
+  Hex.LLLBench.runIntervalGramRowsSquareChecksum \
+  Hex.LLLBench.runReducedIntervalSquareChecksum \
+  Hex.LLLBench.runIntervalGramRowsWideChecksum \
+  Hex.LLLBench.runReducedIntervalWideChecksum \
+  --export-file <artefact>
+```
+
+Baseline Gram construction represented 28.08% (`n = 32`) to 47.68%
+(`n = 96`) of the square interval checker, and 58.41% (`n = 16`) to 70.81%
+(`n = 48`) of the wide checker. Both paths clear the 10% Amdahl-adjusted gate.
+
+| Target | Representative `n` | Before | After | Improvement |
+| --- | ---: | ---: | ---: | ---: |
+| Gram rows, square | 96 | 36.168 ms | 26.900 ms | 25.63% |
+| Interval checker, square | 96 | 75.854 ms | 68.022 ms | 10.33% |
+| Gram rows, wide | 48 | 19.102 ms | 10.905 ms | 42.91% |
+| Interval checker, wide | 48 | 26.978 ms | 18.884 ms | 30.00% |
+
+The two Gram-row result-hash ladders match and discriminate every matrix. The
+two checker ladders also match, but both are the constant Boolean rejection
+result `0`, so they are timing observables rather than strong regression
+checks; behavior preservation is supplied by `gramRows_eq_impl` and the
+checker soundness build. All eight benchmark verdicts are consistent with
+their declared complexity models. Artefacts:
+
+- `reports/bench-results/hex-lll-interval-gram-baseline-3d41529f-chungus2.json`,
+  SHA-256 `12267b61a8934f6c59198b43fc6fc4a178f785fba67cdba9404bb9cb31ef6f81`.
+- `reports/bench-results/hex-lll-interval-gram-after-02e35882-chungus2.json`,
+  SHA-256 `53f87841ae3524980a6227a578917cab3464500ff0c45aab91a75c41348472f4`.
+
+The deterministic consumer fixtures exercise the checker reject path after a
+complete interval Gram–Schmidt pass; the final size/Lovasz predicates may
+short-circuit. Their Amdahl shares are therefore conservative upper bounds for
+an accepted certificate's extra tail, which is quadratic beside the measured
+cubic pass. Each rung has one outer trial, but unlike the Gram–Schmidt pair the
+before/after spawn floors were matched at 23–25 ms. Inputs use bounded
+machine-word integers, so the reported construction wins should not be read as
+a ceiling for large-coefficient production lattices.
 
 Current scientific rerun for the five formerly inconclusive parametric
 registrations at commit `924910079376c876da2e2fe9d94915505dd477e4` on
@@ -300,7 +353,7 @@ The Hex certified path is now registered as fixed process-call targets:
 and
 `runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55,60,65}Checksum`.
 Each target sends a `CERT\t` request to the persistent fpylll driver, receives a
-flat `(B', U, V)` payload, and runs `LLLProvider.certifyFlat`, so the measured
+flat `(B', U, V)` payload, and runs `ExternalReducer.certifyFlat`, so the measured
 path is fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.
@@ -464,21 +517,20 @@ Architectural asymmetries for this ratio:
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
 
-The random-bounded plot shows six labelled series across the full committed
-ladder: Lean native, Lean steered, Isabelle native, Lean certified, Isabelle
-certified (adjusted), and fpLLL via fplll-ffi. **Lean native** is the exact
-`d`/`ν` reducer (`lllNative`); **Lean steered** is the default native path, the
-approximation-steered reducer that drives exact integer row operations from an
-untrusted floating-point Gram–Schmidt and certifies its own output at
-`(δ, 11/20)`. The steered curve sits below exact native across the whole ladder
-(2.5× faster at `n = 180`) and above the certified path, which only checks an
-fpLLL candidate rather than reducing the basis itself. A single `n ≥ 30`
-dispatch routes every rung from `n = 30` up to the steered path, so the steered
-curve is smooth to the bottom rung (`n = 30` at 4.4 ms, where the exact reducer
-would cost ~14 ms); below that floor the exact reducer runs directly. The fpLLL series is the
-in-process `fplll-ffi` shim called at the dispatch's requested reduction
-parameters with transform production — the exact reducer call the production
-dispatch makes.
+The random-bounded plot shows five labelled series across the full committed
+ladder: Lean native, Isabelle native, Lean certified, Isabelle certified
+(adjusted), and fpLLL via fplll-ffi. **Lean native** is the exact `d`/`ν`
+reducer (`lllNative`), the sole in-tree reducer and the public `lll`'s native
+path; the certified path only checks an fpLLL candidate rather than reducing the
+basis itself. The fpLLL series is the in-process `fplll-ffi` shim called at the
+dispatch's requested reduction parameters with transform production — the exact
+reducer call the production dispatch makes.
+
+(The earlier approximation-steered reducer was removed in
+[#8500](https://github.com/kim-em/hex-dev/issues/8500); the comparator is now
+provider-vs-native. The per-family SVG figures and their plot script are
+regenerated without the "Lean steered" series on
+`feat/hexlll-perf-restore-extend`.)
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
@@ -488,21 +540,19 @@ request, which Hex's in-process `fplll-ffi` path avoids. The floor is the
 committed `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2×2
 request, so its median is the floor with negligible `n`-dependent work),
 measured in the **same run** as the harsh-cubic ladder (~19.9 ms on `carica`)
-so it is a true lower bound under every rung and every point survives the
-subtraction — including harsh-cubic `n = 15`, whose certified work is only
-~2.4 ms above the floor. The plot reads that measured value rather than a
-hardcoded constant; the ratio tables above and the scaling fits keep the raw
-medians.
+so it is a true lower bound under every rung. The comparator drops rungs whose
+raw time is within 15% of the floor (*floor-dominated*: the subtracted value is
+within the floor's own measurement noise), so bottom rungs such as harsh-cubic
+`n = 15` — whose certified work is only ~2.4 ms above a ~20 ms floor — are
+omitted from the adjusted curve rather than plotted near-zero. The plot reads
+that measured value rather than a hardcoded constant; the ratio tables above and
+the scaling fits keep the raw medians.
 
-The harsh-cubic plot shows the same six series, and this is the family where the
-steered curve matters most. The exact `d`/`ν` reducers ride the `~n^5.6` slope
-of their Θ(n⁴)-bit Gram-determinant state, while **Lean steered leaves that
-complexity class** (`p ≈ 2.73`, 6.0× ahead of exact native at `n = 55`) and
-lands within `~1.1×` of the Lean-certified curve. Both certified curves and the
-steered curve carry the crossover story on this family, so all are plotted —
-the earlier figure omitted the certified curves on harsh-cubic; they are now
-shown alongside the steered native path they are closest to. The Lean-certified
-curve now runs the full `15..65` schedule (from
+The harsh-cubic plot shows the same five series, and this is the family where
+the certified path's lead matters most. The exact `d`/`ν` reducer rides the
+`~n^5.6` slope of its Θ(n⁴)-bit Gram-determinant state, while the certified path
+— which only checks an fpLLL candidate — stays in a much lower complexity class.
+The Lean-certified curve now runs the full `15..65` schedule (from
 `hex-lll-certified-harsh-extended-1e6679ff.json`), matching the native and
 Isabelle-certified curves rung for rung; it widens its lead over exact native
 across the new top rungs (`0.090×` at `n = 65`).
@@ -519,13 +569,12 @@ medians.
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
 [hex-lll-scaling.md](hex-lll-scaling.md). In brief: on random-bounded the
-exact-native, steered, certified, and fpLLL methods are all near-`n³` and differ
-by constant factors (Lean steered 2.5× faster than exact native, Lean certified
-faster still); on harsh-cubic the exact native reducers (`~n^5.6`) fan out from
-the steered default (`~n^2.73`), the certified path (`~n^2.79`), and fpLLL
-(`~n^2.8` for the in-process shim at the production-requested parameters) —
-the steered reducer is the one that moved the native curve out of the
-`~n^5.6` class.
+exact-native, certified, and fpLLL methods are all near-`n³` and differ by
+constant factors (Lean certified faster than exact native); on harsh-cubic the
+exact native reducer (`~n^5.6`) fans out from the certified path (`~n^2.79`) and
+fpLLL (`~n^2.8` for the in-process shim at the production-requested parameters)
+— the certified external-candidate path is what stays out of the `~n^5.6`
+class.
 
 ### Per-call comparator overhead
 
@@ -810,11 +859,36 @@ runtime dispatch. Inclusive Hex cost was led by `Hex.lll.firstShortVector`,
 entry bit-length grows with `n`, so the dominant constant lands in exact
 integer arithmetic.
 
+### Worst-case and structured families (`ajtai`, `q-ary`, `ntru`, `knapsack`)
+
+Four faithful fplll-generator ports add adversarial and structured coverage
+(clean idle-`carica` data, `git_dirty=false`; five-curve plots at
+`reports/figures/hex-lll-comparator-{ajtai,q-ary,ntru,knapsack}.svg`):
+
+- **`ajtai`** — fplll `gen_trg` (`latticegen t <d> 1.2`), a steeply decreasing
+  triangular diagonal that drives the `Θ(d² log B)` swap count. The exact
+  reducers blow up `~d⁷` (Lean native 4805 ms, Isabelle native 5167 ms at
+  d=36) while the certified path stays cheap (97 ms).
+- **`q-ary`** — fplll `gen_qary` `[[I,H],[0,qI]]`, the LWE/SIS Z-shape. At n=48
+  the exact reducers reach 67–82 ms; fpLLL 10 ms, Lean certified 24 ms.
+- **`ntru`** — fplll `gen_ntrulike` `[[I,Rot h],[0,qI]]` on `2d×2d`. At n=24 the
+  exact reducers reach 1.1–1.4 s; Lean certified 133 ms, ~1.2× fpLLL.
+- **`knapsack`** — fplll `gen_intrel`, the rectangular `d×(d+1)` integer-relation
+  form (the only `cols≠rows` family, exercising the `m>n` `ofBasis` path). At
+  n=48 the exact reducers are 26–33 ms; Lean certified 10 ms.
+
+Across all four, the exact reducers are correct but diverge on the hard bases
+while the certified path (fpLLL candidate + verified Lean `certCheck`) stays
+within ~1.2–2.5× of raw fpLLL. The generators are structurally validated by
+`scripts/dev/validate_latticegen.py` (ajtai additionally cross-checked against
+`latticegen`). Full per-family discussion and the asymptotic fits:
+[HexLLL/PERFORMANCE.md](../HexLLL/PERFORMANCE.md).
+
 ## Concerns
 
 - **The verified Isabelle certified-LLL series has only one committed point
   per family.** This is sufficient for the five-way plot legend and the
-  bottom/shared-rung smoke verdict above, but it does not yet provide a
+  bottom/shared-rung fast-check verdict above, but it does not yet provide a
   full-ladder certified-vs-certified trend. The native `verified Isabelle LLL`
   gate is closed on both headline families: random-bounded `n = 180` is Lean
   `4.76 s` vs Isabelle `7.55 s`, ratio `0.6304`, and harsh-cubic `n = 65` is

@@ -4,14 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHenselMathlib.Basic
-import HexHenselMathlib.Correctness
+module
+
+public import HexHenselMathlib.CoprimeLift
+public import HexHenselMathlib.HenselLemmas
+
+public section
 
 /-!
 The `HexHenselMathlib` library transfers the executable `HexHensel` surface to
 Mathlib's `Polynomial ℤ` API.
 
-The library currently exposes coprimality-lifting infrastructure plus
-proof-only Hensel correctness and uniqueness theorem statements used by later
-factorization arguments.
+It provides coprimality-lifting results together with Hensel correctness and
+uniqueness theorems used by integer-factorization proofs.
 -/

@@ -17,48 +17,73 @@ extern void __gmpz_clear(mpz_t);
 extern void* __gmpz_export(void*, size_t*, int, size_t, int, size_t, const mpz_t);
 extern void lean_extract_mpz_value(lean_object*, mpz_t);
 
+/* `ZMod64.Bounds p` guarantees `0 < p < 2^31` (`Bounds.pLtR`), so the modulus
+   fits in a `uint64_t` and reading it needs no width check. Because both inputs
+   are reduced residues `< p < 2^31`, their product is `< 2^62` and fits in a
+   single `uint64_t`: no `__uint128_t` is needed, and the reduction is a plain
+   64/64 division rather than a 128/64 one. The result is byte-identical to the
+   pure Lean fallback `ofNat p (a * b)`. */
+
 LEAN_EXPORT uint64_t lean_hex_zmod64_mul(b_lean_obj_arg p, uint64_t a, uint64_t b) {
-    lean_object* max_word_nat = lean_uint64_to_nat(UINT64_MAX);
-    __uint128_t product = (__uint128_t)a * (__uint128_t)b;
-    uint64_t result;
-
-    if (lean_nat_lt(max_word_nat, p)) {
-        /* The only bounded modulus above UINT64_MAX is 2^64 itself. */
-        result = (uint64_t)product;
-    } else {
-        uint64_t modulus = lean_uint64_of_nat(p);
-        result = (uint64_t)(product % modulus);
-    }
-
-    lean_dec(max_word_nat);
-    return result;
+    uint64_t modulus = lean_uint64_of_nat(p);
+    uint64_t product = a * b;
+    return product % modulus;
 }
 
-static bool lean_hex_modulus_is_word(lean_object* p) {
-    lean_object* max_word_nat = lean_uint64_to_nat(UINT64_MAX);
-    bool is_word = lean_nat_lt(max_word_nat, p);
-    lean_dec(max_word_nat);
-    return is_word;
+/* Return the exact residue selected by the logical `ZMod64.inv` body without
+   constructing Lean Ints or entering GMP.  For the positive inputs here,
+   `Hex.pureIntExtGcd` starts with remainder rows `(a, p)` and cofactor rows
+   `(1, 0)`, then repeatedly applies
+
+       quotient := old_r / r
+       (old_r, r) := (r, old_r % r)
+       (old_s, s) := (s, old_s - quotient * s).
+
+   We need only `old_s % p`, so the cofactor recurrence can run modulo `p`.
+   This remains exact for composite moduli and non-coprime inputs: reducing
+   after every linear update preserves the final cofactor's residue.  Under
+   `ZMod64.Bounds`, `p < 2^31`; all remainders and reduced cofactors are below
+   `p`, every quotient is at most `p`, and `quotient * s < 2^62`, so every
+   operation fits in uint64_t. */
+LEAN_EXPORT uint64_t lean_hex_zmod64_inv(b_lean_obj_arg p, uint64_t a) {
+    uint64_t modulus = lean_uint64_of_nat(p);
+    uint64_t old_r = a;
+    uint64_t r = modulus;
+    uint64_t old_s = 1 % modulus;
+    uint64_t s = 0;
+
+    while (r != 0) {
+        uint64_t quotient = old_r / r;
+        uint64_t next_r = old_r % r;
+        uint64_t quotient_s = (quotient * s) % modulus;
+        uint64_t next_s = old_s >= quotient_s
+            ? old_s - quotient_s
+            : old_s + (modulus - quotient_s);
+
+        old_r = r;
+        r = next_r;
+        old_s = s;
+        s = next_s;
+    }
+
+    return old_s;
 }
 
-static uint64_t lean_hex_mul_mod_word(uint64_t a, uint64_t b, uint64_t modulus, bool word_modulus) {
+static uint64_t lean_hex_mul_mod_word(uint64_t a, uint64_t b, uint64_t modulus) {
     __uint128_t product = (__uint128_t)a * (__uint128_t)b;
-    if (word_modulus) {
-        return (uint64_t)product;
-    }
     return (uint64_t)(product % modulus);
 }
 
-static uint64_t lean_hex_pow_mod_u64(uint64_t base, uint64_t exponent, uint64_t modulus, bool word_modulus) {
-    uint64_t acc = word_modulus ? 1 : 1 % modulus;
+static uint64_t lean_hex_pow_mod_u64(uint64_t base, uint64_t exponent, uint64_t modulus) {
+    uint64_t acc = 1 % modulus;
 
     while (exponent != 0) {
         if ((exponent & 1) != 0) {
-            acc = lean_hex_mul_mod_word(acc, base, modulus, word_modulus);
+            acc = lean_hex_mul_mod_word(acc, base, modulus);
         }
         exponent >>= 1;
         if (exponent != 0) {
-            base = lean_hex_mul_mod_word(base, base, modulus, word_modulus);
+            base = lean_hex_mul_mod_word(base, base, modulus);
         }
     }
 
@@ -86,10 +111,10 @@ static uint64_t* lean_hex_nat_to_u64_limbs(b_lean_obj_arg exponent, size_t* limb
 }
 
 static uint64_t lean_hex_pow_mod_big_nat(uint64_t base, b_lean_obj_arg exponent,
-        uint64_t modulus, bool word_modulus) {
+        uint64_t modulus) {
     size_t limb_count = 0;
     uint64_t* limbs = lean_hex_nat_to_u64_limbs(exponent, &limb_count);
-    uint64_t acc = word_modulus ? 1 : 1 % modulus;
+    uint64_t acc = 1 % modulus;
 
     if (limb_count != 0) {
         size_t top_bits = lean_hex_bit_length_u64(limbs[limb_count - 1]);
@@ -97,9 +122,9 @@ static uint64_t lean_hex_pow_mod_big_nat(uint64_t base, b_lean_obj_arg exponent,
             uint64_t limb = limbs[limb_index - 1];
             size_t bit_limit = (limb_index == limb_count) ? top_bits : 64;
             for (size_t bit = bit_limit; bit > 0; --bit) {
-                acc = lean_hex_mul_mod_word(acc, acc, modulus, word_modulus);
+                acc = lean_hex_mul_mod_word(acc, acc, modulus);
                 if (((limb >> (bit - 1)) & 1) != 0) {
-                    acc = lean_hex_mul_mod_word(acc, base, modulus, word_modulus);
+                    acc = lean_hex_mul_mod_word(acc, base, modulus);
                 }
             }
         }
@@ -110,18 +135,52 @@ static uint64_t lean_hex_pow_mod_big_nat(uint64_t base, b_lean_obj_arg exponent,
 }
 
 LEAN_EXPORT uint64_t lean_hex_zmod64_pow(b_lean_obj_arg p, uint64_t a, b_lean_obj_arg n) {
-    bool word_modulus = lean_hex_modulus_is_word(p);
-    uint64_t modulus = word_modulus ? 0 : lean_uint64_of_nat(p);
+    uint64_t modulus = lean_uint64_of_nat(p);
 
-    if (!word_modulus && modulus == 1) {
+    if (modulus == 1) {
         return 0;
     }
 
-    uint64_t base = word_modulus ? a : a % modulus;
+    uint64_t base = a % modulus;
 
     if (lean_is_scalar(n)) {
-        return lean_hex_pow_mod_u64(base, (uint64_t)lean_unbox(n), modulus, word_modulus);
+        return lean_hex_pow_mod_u64(base, (uint64_t)lean_unbox(n), modulus);
     }
 
-    return lean_hex_pow_mod_big_nat(base, n, modulus, word_modulus);
+    return lean_hex_pow_mod_big_nat(base, n, modulus);
+}
+
+/* Lazy-reduction schoolbook convolution over F_p, backing `FpPoly.fpConvolve`.
+   Inputs are two `Array UInt64` of reduced residues (< p < 2^31); the whole
+   inner accumulation runs natively in `__uint128_t`, so each output coefficient
+   pays exactly one 64-bit reduction instead of one per product term, with no
+   per-term FFI boundary or boxed-residue traffic. Value-identical to the Lean
+   fallback body (`FpPoly.mulPacked_eq` proves the packed multiply equals `*`). */
+LEAN_EXPORT lean_obj_res lean_hex_fp_convolve(b_lean_obj_arg a_arr,
+        b_lean_obj_arg b_arr, uint64_t modulus) {
+    size_t na = lean_array_size(a_arr);
+    size_t nb = lean_array_size(b_arr);
+    if (na == 0 || nb == 0) {
+        return lean_alloc_array(0, 0);
+    }
+    size_t nk = na + nb - 1;
+    lean_object* out = lean_alloc_array(nk, nk);
+    for (size_t k = 0; k < nk; ++k) {
+        __uint128_t acc = 0;
+        size_t i_lo = (k + 1 > nb) ? (k + 1 - nb) : 0;
+        size_t i_hi = (k < na) ? k : (na - 1);
+        for (size_t i = i_lo; i <= i_hi; ++i) {
+            uint64_t ai = lean_unbox_uint64(lean_array_get_core(a_arr, i));
+            uint64_t bj = lean_unbox_uint64(lean_array_get_core(b_arr, k - i));
+            acc += (__uint128_t)ai * (__uint128_t)bj;
+        }
+        /* modulus == 0 would be division-by-zero UB; the pure-Lean fallback
+           computes `sum % 0 = sum` reduced into a `UInt64`, i.e. the low 64 bits
+           of the (128-bit-truncated) accumulator, so match it here. The real
+           callers (`FpPoly.mulPacked`) always pass `0 < modulus < 2^31` with
+           reduced word inputs, under which no truncation occurs. */
+        uint64_t r = modulus ? (uint64_t)(acc % modulus) : (uint64_t)acc;
+        lean_array_set_core(out, k, lean_box_uint64(r));
+    }
+    return out;
 }

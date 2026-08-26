@@ -5,25 +5,32 @@ incubated before they are split out for release. `hex` is the released
 aggregate repo; it depends on released split libraries at exact Lake
 revisions.
 
-The split repos published from `hex-dev`, in dependency order, are:
+The authoritative list of split repos published from `hex-dev` is
+[`scripts/release/released.yml`](scripts/release/released.yml), which
+lists them in topological (upstream-first) order along with each repo's
+library name, SPEC, fixtures, oracles and cross-repo pins. Read that
+file rather than a list restated elsewhere: the set grows as new
+sublibraries are released, and prose copies go stale.
 
-- `hex-test-kit` (shared conformance/bench helpers; source: `Hex/`)
-- `hex-matrix`
-- `hex-matrix-mathlib`, `hex-gram-schmidt`
-- `hex-gram-schmidt-mathlib`, `hex-lll`
-- `hex-lll-mathlib`
+Two structural things the manifest encodes:
 
-Treat this as the current set, not a permanent exhaustive list: more
-sublibraries may be released from `hex-dev` later. Computational
-libraries are Mathlib-free; `*-mathlib` repos are the Mathlib bridge
-layers and should contain correspondence proofs and Mathlib-facing APIs.
+- `hex-test-kit` is the shared conformance/bench helper library
+  (source: `Hex/`), not user-facing Hex API.
+- `leanprover/hex` is `pins_only`: it publishes no library source and is
+  re-pinned to the SHAs synced each run, so it is listed last. Its README
+  is generated from `scripts/release/hex-README.md` plus the manifest's
+  `component:` labels (see [SPEC/readme.md](SPEC/readme.md)).
+
+Computational libraries are Mathlib-free; `*-mathlib` repos are the
+Mathlib bridge layers and should contain correspondence proofs and
+Mathlib-facing APIs.
 
 ## Source-of-truth model: develop here, publish outward
 
 `hex-dev` is the **single source of truth** for every library. All
 development happens in this one tree; a single `lake build` (plus the
 `bench/` and `conformance/` sub-projects) builds everything together.
-The split repos above are **published mirrors**: a dispatchable CI
+The split repos are **published mirrors**: a dispatchable CI
 workflow regenerates each one from the matching content in `hex-dev`,
 rewriting their cross-repo Lake pins and committing to their `main`.
 Never hand-edit a released repo; change it here and let the sync publish.
@@ -83,18 +90,6 @@ Use only standard terminology an expert in Berlekamp–Zassenhaus and LLL
 recognizes immediately — no coined jargon or private coordinate names —
 and let proofs track the operations the executable performs rather than a
 parallel reformulation of them.
-
-## Per-turn progress files
-
-Start of turn: read the most recent file in `progress/` (ISO-8601
-timestamps sort chronologically). If only `progress/0000-init.md`
-exists, the repo is freshly initialised — proceed with Phase 0.
-
-End of turn: write `progress/<UTC-timestamp>.md` with sections
-**Accomplished** / **Current frontier** / **Next step** / **Blockers**.
-Scope these to *your* session — what you touched, where you stopped,
-what you think comes next for your corner of the project.
-Commits made during the turn should mention the progress file.
 
 ## Lean
 

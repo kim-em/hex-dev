@@ -1,0 +1,1809 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexBerlekampZassenhaus
+public import HexBerlekampMathlib.Irreducibility
+public import HexBerlekampZassenhausMathlib.UFDPartition
+public import HexHenselMathlib.HenselLemmas
+public import HexPolyZMathlib.PolynomialEquivalence
+public import HexPolyZMathlib.Mignotte
+public import Mathlib.RingTheory.Coprime.Lemmas
+public import Mathlib.RingTheory.Polynomial.UniqueFactorization
+public import Mathlib.RingTheory.PrincipalIdealDomain
+
+public import HexBerlekampZassenhausMathlib.SubsetCoprimality
+public import HexBerlekampZassenhausMathlib.ModPFactorization
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
+import all HexBerlekampZassenhausMathlib.ModPFactor
+import all HexBerlekampZassenhausMathlib.LiftedFactor
+import all HexBerlekampZassenhausMathlib.M1Recovery
+import all HexBerlekampZassenhausMathlib.RecombinationSplit
+import all HexBerlekampZassenhausMathlib.RecombinationCandidate
+import all HexBerlekampZassenhausMathlib.LocalFactors
+import all HexBerlekampZassenhausMathlib.SubsetCoprimality
+import all HexBerlekampZassenhausMathlib.ModPFactorization
+
+public section
+set_option backward.proofsInPublic true
+
+/-!
+This module collects the forward Hensel transport for the canonical lifted subset.
+-/
+
+namespace HexBerlekampZassenhausMathlib
+
+noncomputable section
+
+open Polynomial
+
+/-! # Forward Hensel transport for the canonical lifted subset
+
+The next theorem closes the forward `represents_lifted_of_modP` direction of
+`HenselSubsetLiftHypotheses`: if `factor` is a monic integer divisor of `core`
+that is represented modulo `primeData.p` by the modular-factor subset `S`,
+then the canonical Hensel lift `liftedSubsetOfModPSubset` of `S` represents
+`factor` modulo `primeData.p ^ B` on the integer side. The proof feeds the
+packaged subset/complement product and coprimality inputs
+into `HexHenselMathlib.hensel_unique` and converts the resulting Mathlib
+`Polynomial.map` equality back to the executable `Hex.ZPoly.reduceModPow`
+equality stored by `RepresentsIntegerFactorAtLift`. -/
+
+/-- Monic integer polynomials reduce to non-`isZero` `FpPoly` images modulo
+any prime `p > 1`: the leading coefficient `1` survives reduction, so the
+stored size is preserved. -/
+private theorem modP_isZero_false_of_monic
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    {f : Hex.ZPoly} (hf_monic : Hex.DensePoly.Monic f) (hp : 1 < p) :
+    (Hex.ZPoly.modP p f).isZero = false := by
+  have hf_size_pos : 0 < f.size := zpoly_size_pos_of_monic hf_monic
+  have hf_lead : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_size_pos]
+    exact hf_monic
+  have hmod1 : 1 % p = 1 := Nat.mod_eq_of_lt hp
+  have htoNat_one : (1 : Hex.ZMod64 p).toNat = 1 := by
+    show Hex.ZMod64.one.toNat = 1
+    rw [Hex.ZMod64.toNat_one, hmod1]
+  have hone_ne_zero : (1 : Hex.ZMod64 p) ≠ (0 : Hex.ZMod64 p) := by
+    intro h
+    have hnat := congrArg Hex.ZMod64.toNat h
+    rw [htoNat_one, show (0 : Hex.ZMod64 p) = Hex.ZMod64.zero from rfl,
+        Hex.ZMod64.toNat_zero] at hnat
+    exact absurd hnat (by decide)
+  have hmodP_coeff_lead :
+      (Hex.ZPoly.modP p f).coeff (f.size - 1) = (1 : Hex.ZMod64 p) := by
+    rw [Hex.ZPoly.coeff_modP, hf_lead]
+    have hintModNat : Hex.ZPoly.intModNat (1 : Int) p = 1 := by
+      show Int.toNat ((1 : Int) % Int.ofNat p) = 1
+      have hppos : (1 : Int) < Int.ofNat p := Int.ofNat_lt.mpr hp
+      rw [Int.emod_eq_of_lt (by decide) hppos]
+      rfl
+    rw [hintModNat]
+    rfl
+  have hmodP_size_pos : 0 < (Hex.ZPoly.modP p f).size := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP p f).size with hsz | hsz
+    · exfalso
+      have hcoeff_zero :
+          (Hex.ZPoly.modP p f).coeff (f.size - 1) = 0 := by
+        apply Hex.DensePoly.coeff_eq_zero_of_size_le
+        omega
+      rw [hcoeff_zero] at hmodP_coeff_lead
+      exact hone_ne_zero hmodP_coeff_lead.symm
+    · exact hsz
+  exact (Hex.DensePoly.isZero_eq_false_iff _).mpr hmodP_size_pos
+
+/-- `monicModPImage` is the identity on the mod-`p` reduction of a monic
+integer polynomial, since the leading coefficient `1` reduces to `1` and
+`(1 : ZMod64 p)⁻¹ = 1`. -/
+theorem monicModPImage_modP_eq_self_of_monic
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    {f : Hex.ZPoly} (hf_monic : Hex.DensePoly.Monic f)
+    (hprime : Hex.Nat.Prime p) (hp : 1 < p) :
+    monicModPImage (Hex.ZPoly.modP p f) = Hex.ZPoly.modP p f := by
+  rw [monicModPImage_eq_monicModularImage]
+  exact monicModularImage_modP_eq_of_monic f hf_monic hprime hp
+    (modP_isZero_false_of_monic hf_monic hp)
+
+/--
+A modular support representing an integer factor also represents that
+factor's direct-coordinate `monicTarget` at any positive coprime precision.
+-/
+theorem representsMonicTarget_of_represents
+    {factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {S : ModPFactorSubset primeData} {k : Nat}
+    (hprime : Hex.Nat.Prime primeData.p)
+    (hpk : 1 < primeData.p ^ k)
+    (hk : 0 < k)
+    (hfactor_size : 0 < factor.size)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (primeData.p ^ k)) = 1)
+    (hrep : RepresentsIntegerFactorModP primeData factor S) :
+    RepresentsIntegerFactorModP primeData
+      (Hex.ZPoly.monicTarget factor primeData.p k) S := by
+  letI := primeData.bounds
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hp : 1 < primeData.p := hprime.one_lt
+  have htarget_monic :
+      Hex.DensePoly.Monic
+        (Hex.ZPoly.monicTarget factor primeData.p k) :=
+    Hex.ZPoly.monicTarget_monic factor primeData.p k hpk hgcd hfactor_size
+  unfold RepresentsIntegerFactorModP at hrep ⊢
+  rw [monicModPImage_modP_eq_self_of_monic htarget_monic hprime hp]
+  rw [← monicModularImage_modP_eq_modP_monicTarget
+    factor primeData.p k hprime hpk hk hgcd]
+  exact hrep
+
+/-- Forward Hensel-lift transport for the canonical lifted subset: a monic
+integer factor of `core` that is represented modulo `primeData.p` by a
+modular-factor subset `S` is represented modulo `primeData.p ^ B` on the
+integer side by the corresponding canonical lifted subset
+`liftedSubsetOfModPSubset primeData d hsize S`.
+
+The proof packages the subset/complement product modulo `p ^ B`
+(`henselLiftData_liftedFactorProduct_subset_complement_congr_core`) and the
+subset/complement coprimality modulo `p`
+(`henselLiftData_liftedSubset_complement_isCoprime_mod_p`) into the
+hypothesis list of `HexHenselMathlib.hensel_unique`, alongside the integer
+factorization `core = factor * q` derived from `factor ∣ core` and the
+mod-`p` subset representation hypothesis. Converting the resulting Mathlib
+`Polynomial.map` equality back to the executable
+`Hex.ZPoly.reduceModPow` form via
+`HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq` and
+`Hex.ZPoly.reduceModPow_eq_of_congr` discharges
+`RepresentsIntegerFactorAtLift`.
+
+This supplies the forward `represents_lifted_of_modP` field of
+`HenselSubsetLiftHypotheses`; its hypotheses are the boundary facts provided
+by `Hex.choosePrimeData` and `Hex.henselLiftData`. -/
+theorem henselLiftData_represents_lifted_of_modP
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)))
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    {factor : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hfactor_monic : Hex.DensePoly.Monic factor)
+    (_hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd : factor ∣ core)
+    (hrepP : RepresentsIntegerFactorModP primeData factor S) :
+    letI := primeData.bounds
+    RepresentsIntegerFactorAtLift core (Hex.henselLiftData core B primeData) factor
+      (liftedSubsetOfModPSubset primeData (Hex.henselLiftData core B primeData)
+        (henselLiftData_liftedFactors_size_eq core B primeData) S) := by
+  letI := primeData.bounds
+  haveI hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime
+      (by
+        constructor
+        · exact hprime.two_le
+        · intro m hmdvd
+          rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+          · exact Or.inl h
+          · exact Or.inr h)
+  have hp : 1 < primeData.p := hprime.one_lt
+  have hprime_hex : Hex.Nat.Prime primeData.p := by
+    constructor
+    · exact hprime.two_le
+    · intro m hmdvd
+      rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+      · exact Or.inl h
+      · exact Or.inr h
+  obtain ⟨q, hcoreq⟩ := hfactor_dvd
+  -- Mathlib aliases for the Hensel-unique inputs.
+  set d := Hex.henselLiftData core B primeData with hd_def
+  set hsize := henselLiftData_liftedFactors_size_eq core B primeData with hsize_def
+  set liftedS := liftedSubsetOfModPSubset primeData d hsize S with hliftedS_def
+  set complementS : LiftedFactorSubset d := (Finset.univ : LiftedFactorSubset d) \ liftedS
+    with hcomplementS_def
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  set g := HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS) with hg_def
+  set h := HexPolyZMathlib.toPolynomial (liftedFactorProduct d complementS) with hh_def
+  set g' := HexPolyZMathlib.toPolynomial factor with hg'_def
+  set h' := HexPolyZMathlib.toPolynomial q with hh'_def
+  -- Monicness.
+  have hg_dense_monic : Hex.DensePoly.Monic (liftedFactorProduct d liftedS) :=
+    henselLiftData_liftedFactorProduct_monic core B primeData
+      hcore_monic hprime_invariant hp hB liftedS
+  have hg_monic : g.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hg_dense_monic
+  have hg'_monic : g'.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hfactor_monic
+  -- Subset/complement product modulo `p ^ B` on the lifted side.
+  have hgh_congr :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        core (primeData.p ^ B) :=
+    henselLiftData_liftedFactorProduct_subset_complement_congr_core
+      core B primeData hprime_invariant hp hB liftedS
+  have hgh_map_pB :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod (primeData.p ^ B))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr
+  have hprod :
+      (g.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    have hmul := hgh_map_pB
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  -- Integer-side product (`core = factor * q`).
+  have hf_eq : f = g' * h' := by
+    rw [hf_def, hg'_def, hh'_def, hcoreq, HexPolyZMathlib.toPolynomial_mul]
+  have hprod' :
+      (g'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    rw [hf_eq, Polynomial.map_mul]
+  -- Identify `RepresentsIntegerFactorModP` with the Mathlib mod-`p` map equality.
+  have hg1 :
+      g.map (Int.castRingHom (ZMod primeData.p)) =
+        g'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have h1 :=
+      toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+        core B primeData hcore_monic hprime_invariant hp hB
+        hfactors_monic hproduct_mod_p S
+    have h2 : modPFactorProduct primeData S =
+        monicModPImage (Hex.ZPoly.modP primeData.p factor) := hrepP
+    have h3 := monicModPImage_modP_eq_self_of_monic
+      (f := factor) hfactor_monic hprime_hex hp
+    have h4 := toMathlibPolynomial_modP_eq_map_intCast_zmod (p := primeData.p) factor
+    show (HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        (HexPolyZMathlib.toPolynomial factor).map (Int.castRingHom (ZMod primeData.p))
+    rw [show liftedS = liftedSubsetOfModPSubset primeData d hsize S from rfl,
+      h1, h2, h3, h4]
+  -- Derive `hdeg` from `hg1` and monicness via `Monic.natDegree_map`.
+  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  have hdeg : g.natDegree = g'.natDegree := by
+    have hg_map_natDeg :
+        (g.map (Int.castRingHom (ZMod primeData.p))).natDegree = g.natDegree :=
+      hg_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    have hg'_map_natDeg :
+        (g'.map (Int.castRingHom (ZMod primeData.p))).natDegree = g'.natDegree :=
+      hg'_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    rw [← hg_map_natDeg, ← hg'_map_natDeg, hg1]
+  -- Mod-`p` map equality on the complement, via cancellation in `Polynomial (ZMod p)`.
+  have hp_dvd_pB : primeData.p ∣ primeData.p ^ B := by
+    have h := Nat.pow_dvd_pow primeData.p hB
+    simpa using h
+  have hgh_congr_p :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        core primeData.p :=
+    Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd_pB hgh_congr
+  have hgh_map_p :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        f.map (Int.castRingHom (ZMod primeData.p)) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr_p
+  have hprod_p :
+      (g.map (Int.castRingHom (ZMod primeData.p))) *
+          (h.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hmul := hgh_map_p
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hprod'_p :
+      (g'.map (Int.castRingHom (ZMod primeData.p))) *
+          (h'.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    rw [hf_eq, Polynomial.map_mul]
+  have hg_map_p_monic : (g.map (Int.castRingHom (ZMod primeData.p))).Monic :=
+    hg_monic.map _
+  have hg'_map_p_monic : (g'.map (Int.castRingHom (ZMod primeData.p))).Monic :=
+    hg'_monic.map _
+  have hg'_map_p_ne_zero : g'.map (Int.castRingHom (ZMod primeData.p)) ≠ 0 :=
+    hg'_map_p_monic.ne_zero
+  have hh1 :
+      h.map (Int.castRingHom (ZMod primeData.p)) =
+        h'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hsame :
+        (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h.map (Int.castRingHom (ZMod primeData.p))) =
+          (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h'.map (Int.castRingHom (ZMod primeData.p))) := by
+      calc (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p)))
+          = (g.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p))) := by rw [hg1]
+        _ = f.map (Int.castRingHom (ZMod primeData.p)) := hprod_p
+        _ = (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h'.map (Int.castRingHom (ZMod primeData.p))) := hprod'_p.symm
+    exact mul_left_cancel₀ hg'_map_p_ne_zero hsame
+  -- Subset/complement coprimality modulo `p` (#4761).
+  have hcop :
+      IsCoprime (g.map (Int.castRingHom (ZMod primeData.p)))
+        (h.map (Int.castRingHom (ZMod primeData.p))) :=
+    henselLiftData_liftedSubset_complement_isCoprime_mod_p
+      core B primeData hcore_monic hprime hprime_invariant hp hB
+      hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup S
+  -- Apply `hensel_unique`.
+  obtain ⟨hgg', _⟩ :=
+    HexHenselMathlib.hensel_unique f g h g' h' primeData.p B hB
+      hg_monic hg'_monic hdeg hprod hprod' hg1 hh1 hcop
+  -- Convert back to the recovered-coordinate `RepresentsIntegerFactorAtLift`.
+  have hcongr_pk :
+      Hex.ZPoly.congr (liftedFactorProduct d liftedS) factor (primeData.p ^ B) :=
+    HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
+  have hdp : d.p = primeData.p := rfl
+  have hdk : d.k = B := rfl
+  have hrec_congr :
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d liftedS) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k := by
+    rw [hdp, hdk]
+    exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_pk
+  refine RepresentsIntegerFactorAtLift.ofRecovered ?_
+  exact
+    { monicFactor := factor
+      congr := hrec_congr
+      dilate_eq := by
+        rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic,
+          Hex.ZPoly.dilate_one]
+        exact Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+          (zpoly_primitive_of_monic hfactor_monic)
+      monic_dvd := by
+        rw [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core
+          (show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic)]
+        exact ⟨q, hcoreq⟩ }
+
+/--
+Subset-level Hensel uniqueness in additive congruence form.
+
+This is the main proof behind the recovered-coordinate
+`henselLiftData_represents_lifted_of_modP`: if a selected modular subset `S`
+represents a monic integer factor `factor` modulo `p`, and `factor * cofactor`
+is a second factorisation of the same monic Hensel target modulo `p ^ B`, then
+the canonical lifted subset product is congruent to `factor` modulo `p ^ B`.
+
+The statement deliberately returns only the coefficientwise congruence.  This
+fits non-recovered coordinates such as the BHKS `monicTarget` M1 target, where
+the product comparison is a modular target-coordinate assertion rather than an
+integer equality `target = factor * cofactor`.
+-/
+theorem henselLiftData_liftedSubset_congr_of_modP
+    (target : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (htarget_monic : Hex.DensePoly.Monic target)
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B target
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        target primeData.p)
+    (hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)))
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    {factor cofactor : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hfactor_monic : Hex.DensePoly.Monic factor)
+    (hfactor_product :
+      Hex.ZPoly.congr (factor * cofactor) target (primeData.p ^ B))
+    (hrepP : RepresentsIntegerFactorModP primeData factor S) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.henselLiftData target B primeData)
+        (liftedSubsetOfModPSubset primeData (Hex.henselLiftData target B primeData)
+          (henselLiftData_liftedFactors_size_eq target B primeData) S))
+      factor (primeData.p ^ B) := by
+  letI := primeData.bounds
+  haveI hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime
+      (by
+        constructor
+        · exact hprime.two_le
+        · intro m hmdvd
+          rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+          · exact Or.inl h
+          · exact Or.inr h)
+  have hp : 1 < primeData.p := hprime.one_lt
+  have hprime_hex : Hex.Nat.Prime primeData.p := by
+    constructor
+    · exact hprime.two_le
+    · intro m hmdvd
+      rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+      · exact Or.inl h
+      · exact Or.inr h
+  set d := Hex.henselLiftData target B primeData with hd_def
+  set hsize := henselLiftData_liftedFactors_size_eq target B primeData with hsize_def
+  set liftedS := liftedSubsetOfModPSubset primeData d hsize S with hliftedS_def
+  set complementS : LiftedFactorSubset d := (Finset.univ : LiftedFactorSubset d) \ liftedS
+    with hcomplementS_def
+  set f := HexPolyZMathlib.toPolynomial target with hf_def
+  set g := HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS) with hg_def
+  set h := HexPolyZMathlib.toPolynomial (liftedFactorProduct d complementS) with hh_def
+  set g' := HexPolyZMathlib.toPolynomial factor with hg'_def
+  set h' := HexPolyZMathlib.toPolynomial cofactor with hh'_def
+  have hg_dense_monic : Hex.DensePoly.Monic (liftedFactorProduct d liftedS) :=
+    henselLiftData_liftedFactorProduct_monic target B primeData
+      htarget_monic hprime_invariant hp hB liftedS
+  have hg_monic : g.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hg_dense_monic
+  have hg'_monic : g'.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hfactor_monic
+  have hgh_congr :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        target (primeData.p ^ B) :=
+    henselLiftData_liftedFactorProduct_subset_complement_congr_core
+      target B primeData hprime_invariant hp hB liftedS
+  have hgh_map_pB :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod (primeData.p ^ B))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr
+  have hprod :
+      (g.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    have hmul := hgh_map_pB
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hfactor_map_pB :
+      (HexPolyZMathlib.toPolynomial (factor * cofactor)).map
+          (Int.castRingHom (ZMod (primeData.p ^ B))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hfactor_product
+  have hprod' :
+      (g'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    have hmul := hfactor_map_pB
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hg1 :
+      g.map (Int.castRingHom (ZMod primeData.p)) =
+        g'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have h1 :=
+      toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+        target B primeData htarget_monic hprime_invariant hp hB
+        hfactors_monic hproduct_mod_p S
+    have h2 : modPFactorProduct primeData S =
+        monicModPImage (Hex.ZPoly.modP primeData.p factor) := hrepP
+    have h3 := monicModPImage_modP_eq_self_of_monic
+      (f := factor) hfactor_monic hprime_hex hp
+    have h4 := toMathlibPolynomial_modP_eq_map_intCast_zmod (p := primeData.p) factor
+    show (HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        (HexPolyZMathlib.toPolynomial factor).map (Int.castRingHom (ZMod primeData.p))
+    rw [show liftedS = liftedSubsetOfModPSubset primeData d hsize S from rfl,
+      h1, h2, h3, h4]
+  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  have hdeg : g.natDegree = g'.natDegree := by
+    have hg_map_natDeg :
+        (g.map (Int.castRingHom (ZMod primeData.p))).natDegree = g.natDegree :=
+      hg_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    have hg'_map_natDeg :
+        (g'.map (Int.castRingHom (ZMod primeData.p))).natDegree = g'.natDegree :=
+      hg'_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    rw [← hg_map_natDeg, ← hg'_map_natDeg, hg1]
+  have hp_dvd_pB : primeData.p ∣ primeData.p ^ B := by
+    have h := Nat.pow_dvd_pow primeData.p hB
+    simpa using h
+  have hgh_congr_p :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        target primeData.p :=
+    Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd_pB hgh_congr
+  have hgh_map_p :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        f.map (Int.castRingHom (ZMod primeData.p)) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr_p
+  have hprod_p :
+      (g.map (Int.castRingHom (ZMod primeData.p))) *
+          (h.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hmul := hgh_map_p
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hfactor_congr_p :
+      Hex.ZPoly.congr (factor * cofactor) target primeData.p :=
+    Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd_pB hfactor_product
+  have hfactor_map_p :
+      (HexPolyZMathlib.toPolynomial (factor * cofactor)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        f.map (Int.castRingHom (ZMod primeData.p)) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hfactor_congr_p
+  have hprod'_p :
+      (g'.map (Int.castRingHom (ZMod primeData.p))) *
+          (h'.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hmul := hfactor_map_p
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hg'_map_p_monic : (g'.map (Int.castRingHom (ZMod primeData.p))).Monic :=
+    hg'_monic.map _
+  have hg'_map_p_ne_zero : g'.map (Int.castRingHom (ZMod primeData.p)) ≠ 0 :=
+    hg'_map_p_monic.ne_zero
+  have hh1 :
+      h.map (Int.castRingHom (ZMod primeData.p)) =
+        h'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hsame :
+        (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h.map (Int.castRingHom (ZMod primeData.p))) =
+          (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h'.map (Int.castRingHom (ZMod primeData.p))) := by
+      calc (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p)))
+          = (g.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p))) := by rw [hg1]
+        _ = f.map (Int.castRingHom (ZMod primeData.p)) := hprod_p
+        _ = (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h'.map (Int.castRingHom (ZMod primeData.p))) := hprod'_p.symm
+    exact mul_left_cancel₀ hg'_map_p_ne_zero hsame
+  have hcop :
+      IsCoprime (g.map (Int.castRingHom (ZMod primeData.p)))
+        (h.map (Int.castRingHom (ZMod primeData.p))) :=
+    henselLiftData_liftedSubset_complement_isCoprime_mod_p
+      target B primeData htarget_monic hprime hprime_invariant hp hB
+      hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup S
+  obtain ⟨hgg', _⟩ :=
+    HexHenselMathlib.hensel_unique f g h g' h' primeData.p B hB
+      hg_monic hg'_monic hdeg hprod hprod' hg1 hh1 hcop
+  exact HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
+
+/--
+M1 (`monicTarget`-coordinate) subset Hensel uniqueness for `directLiftData`.
+
+If the modular subset `S` represents the `monicTarget` coordinate of an integer
+factor, and that coordinate participates in a modular factorisation of
+`monicTarget core p k`, then the canonical selected product in
+`directLiftData core B primeData` is congruent to `monicTarget factor p k` modulo
+the Hensel modulus.  The modular product decomposition is an explicit premise:
+it is the scale-coordinate M1 fact to be supplied by callers, not something
+derived from the older dilation-coordinate recovery carrier.
+-/
+theorem directLiftData_subset_congr_monicTarget
+    (core factor : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hvalid : ModPFactorization core primeData)
+    (hcore_size : 0 < core.size)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hgcd_core : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    (hfactor_size : 0 < factor.size)
+    (hgcd_factor : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    {cofactor : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hfactor_product :
+      Hex.ZPoly.congr
+        (Hex.ZPoly.monicTarget factor primeData.p
+            (Hex.precisionForCoeffBound B primeData.p) * cofactor)
+        (Hex.ZPoly.monicTarget core primeData.p
+            (Hex.precisionForCoeffBound B primeData.p))
+        (primeData.p ^ Hex.precisionForCoeffBound B primeData.p))
+    (hrepP : RepresentsIntegerFactorModP primeData
+      (Hex.ZPoly.monicTarget factor primeData.p
+        (Hex.precisionForCoeffBound B primeData.p)) S) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.ZPoly.directLiftData core B primeData)
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.directLiftData core B primeData)
+          (henselLiftData_liftedFactors_size_eq
+            (Hex.ZPoly.monicTarget core primeData.p
+              (Hex.precisionForCoeffBound B primeData.p))
+            (Hex.precisionForCoeffBound B primeData.p) primeData) S))
+      (Hex.ZPoly.monicTarget factor primeData.p
+        (Hex.precisionForCoeffBound B primeData.p))
+      ((Hex.ZPoly.directLiftData core B primeData).p ^
+        (Hex.ZPoly.directLiftData core B primeData).k) := by
+  letI := primeData.bounds
+  set precision := Hex.precisionForCoeffBound B primeData.p with hprecision_def
+  set target := Hex.ZPoly.monicTarget core primeData.p precision with htarget_def
+  set monicFactor := Hex.ZPoly.monicTarget factor primeData.p precision with hfactor_def
+  have hp_prime_hex : Hex.Nat.Prime primeData.p := hvalid.prime
+  have hp_prime : _root_.Nat.Prime primeData.p :=
+    natPrime_of_hexNatPrime hp_prime_hex
+  have hp : 1 < primeData.p := hp_prime_hex.one_lt
+  have hpk : 1 < primeData.p ^ precision :=
+    Nat.one_lt_pow (by omega) hp
+  have htarget_monic : Hex.DensePoly.Monic target := by
+    rw [htarget_def]
+    exact Hex.ZPoly.monicTarget_monic core primeData.p precision hpk
+      (by simpa [hprecision_def] using hgcd_core) hcore_size
+  have hfactor_monic : Hex.DensePoly.Monic monicFactor := by
+    rw [hfactor_def]
+    exact Hex.ZPoly.monicTarget_monic factor primeData.p precision hpk
+      (by simpa [hprecision_def] using hgcd_factor) hfactor_size
+  have hfactors_monic :
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    hvalid.monic
+  have hproduct_mod_p :
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        target primeData.p := by
+    have htarget_modP :
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
+          Hex.ZPoly.modP primeData.p target := by
+      rw [htarget_def]
+      exact monicModularImage_modP_eq_modP_monicTarget
+        core primeData.p precision hp_prime_hex hpk (by omega)
+        (by simpa [hprecision_def] using hgcd_core)
+    have hroundtrip :
+        Hex.ZPoly.congr
+          (Hex.FpPoly.liftToZ
+            (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+          target primeData.p := by
+      rw [htarget_modP]
+      exact Hex.FpPoly.congr_liftToZ_modP target
+    exact Hex.ZPoly.congr_trans _ _ _ primeData.p hvalid.product hroundtrip
+  have hcoprime :
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    hvalid.coprime
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    hvalid.ne_nil
+  have hinv :
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant primeData.p precision target
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      target precision primeData hp_prime_hex hp
+      (by simpa [hprecision_def] using hprecision)
+      htarget_monic hfactors_monic hproduct_mod_p hcoprime hnonempty
+  have hfactors_irr :
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
+    hvalid.irreducible
+  have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
+    hvalid.nodup
+  have hproduct : Hex.ZPoly.congr (monicFactor * cofactor) target
+      (primeData.p ^ precision) := by
+    simpa [hfactor_def, htarget_def, hprecision_def] using hfactor_product
+  have hrepP' : RepresentsIntegerFactorModP primeData monicFactor S := by
+    simpa [hfactor_def, hprecision_def] using hrepP
+  have hcongr :=
+    henselLiftData_liftedSubset_congr_of_modP target precision primeData
+      htarget_monic hp_prime hinv (by simpa [hprecision_def] using hprecision)
+      hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup
+      hfactor_monic hproduct hrepP'
+  simpa [Hex.ZPoly.directLiftData, htarget_def, hfactor_def, hprecision_def] using hcongr
+
+
+/-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
+half-window and is preserved by the centred-reduction operation. -/
+private theorem centeredModNat_one_of_two_le {m : Nat} (hm : 2 ≤ m) :
+    Hex.centeredModNat (1 : Int) m = (1 : Int) := by
+  by_cases hm3 : 3 ≤ m
+  · have hbound : (1 : Int).natAbs ≤ (1 : Nat) := by decide
+    have hsep : 2 * (1 : Nat) < m := by omega
+    have h := Hex.centeredModNat_emod_eq_of_natAbs_le (1 : Int) m 1 hbound hsep
+    have h1mod : (1 : Int) % (m : Int) = 1 :=
+      Int.emod_eq_of_lt (by decide) (by exact_mod_cast (show 1 < m by omega))
+    rwa [h1mod] at h
+  · have hm2 : m = 2 := by omega
+    subst hm2
+    rfl
+
+/--
+Centred-lift preserves monicness once the modulus is at least two.
+
+The leading coefficient `1` of a monic input survives the centred-reduction
+(`centeredModNat 1 m = 1` for `m ≥ 2`) and `DensePoly.ofCoeffs` does not trim
+it, so the output preserves both size and leading coefficient.
+-/
+theorem monic_centeredLiftPoly_of_monic
+    {g : Hex.ZPoly} (hg : Hex.DensePoly.Monic g) {m : Nat} (hm : 2 ≤ m) :
+    Hex.DensePoly.Monic (Hex.centeredLiftPoly g m) := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_monic hg
+  have hg_lead : g.coeff (g.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]; exact hg
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = (1 : Int) := by
+    rw [hcoeff, hg_lead]; exact centeredModNat_one_of_two_le hm
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact absurd h_zero (by decide)
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    -- `g.toArray.size = g.coeffs.size = g.size` definitionally
+    exact h
+  have hg'_size_eq : g'.size = g.size := le_antisymm hg'_size_le hg'_size_ge
+  show Hex.DensePoly.leadingCoeff g' = (1 : Int)
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last g' (hg'_size_eq ▸ hg_size_pos),
+    hg'_size_eq]
+  exact hcoeff_top
+
+/-- Centred-lift preserves stored size when the input is monic and the modulus
+is at least two. The leading coefficient `1` survives the centred reduction
+(forcing `g'.size ≥ g.size`) and `DensePoly.ofCoeffs` never grows the array
+(forcing `g'.size ≤ g.size`). -/
+private theorem size_centeredLiftPoly_eq_of_monic
+    {g : Hex.ZPoly} (hg : Hex.DensePoly.Monic g) {m : Nat} (hm : 2 ≤ m) :
+    (Hex.centeredLiftPoly g m).size = g.size := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_monic hg
+  have hg_lead : g.coeff (g.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]; exact hg
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = (1 : Int) := by
+    rw [hcoeff, hg_lead]; exact centeredModNat_one_of_two_le hm
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact absurd h_zero (by decide)
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  exact le_antisymm hg'_size_le hg'_size_ge
+
+/--
+`Array.polyProduct` of an array all of whose entries are monic is monic.
+
+The base case is `Monic 1` (`zpoly_monic_one`); the inductive step chains
+`zpoly_monic_mul` through each entry along the `foldl` accumulator.
+-/
+theorem polyProduct_monic_of_all_monic
+    {factors : Array Hex.ZPoly}
+    (hmonic : ∀ p ∈ factors.toList, Hex.DensePoly.Monic p) :
+    Hex.DensePoly.Monic (Array.polyProduct factors) := by
+  unfold Array.polyProduct
+  rw [← Array.foldl_toList]
+  suffices h : ∀ (l : List Hex.ZPoly) (acc : Hex.ZPoly),
+      Hex.DensePoly.Monic acc →
+      (∀ p ∈ l, Hex.DensePoly.Monic p) →
+      Hex.DensePoly.Monic (l.foldl (· * ·) acc) by
+    exact h factors.toList 1 zpoly_monic_one hmonic
+  intro l
+  induction l with
+  | nil =>
+    intro acc hacc _
+    simpa using hacc
+  | cons x rest ih =>
+    intro acc hacc hl
+    simp only [List.foldl_cons]
+    apply ih
+    · exact zpoly_monic_mul hacc (hl x List.mem_cons_self)
+    · intro p hp; exact hl p (List.mem_cons_of_mem _ hp)
+
+
+/--
+A successful `bhksIndicatorCandidate?` call yields, under monic polynomial and
+monic-selected-factor hypotheses, the canonical modular product equality
+`reduceModPow raw p k = reduceModPow candidate p k`.
+
+This is the per-candidate modular-product fact needed to derive the
+`RepresentsIntegerFactorAtLift` certificate from a successful candidate path
+and uses:
+
+- the centred-lift round-trip identity `centeredLiftPoly_reduceModPow_eq`,
+- `monic_centeredLiftPoly_of_monic` to push monicness through the centred lift,
+- `zpoly_primitive_of_monic` + `primitivePart_eq_self_of_primitive` to
+  collapse `normalizeCandidateFactor` to identity on monic input,
+- `zpoly_normalize_factor_sign_of_monic` to collapse `normalizeFactorSign` to
+  identity on monic input.
+-/
+theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
+    {core : Hex.ZPoly} {d : Hex.LiftData} {indicator : Array Int}
+    {candidate quotient : Hex.ZPoly} {selected : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidate? core d indicator = some (candidate, quotient))
+    (hselected :
+       Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hselected_monic :
+       ∀ p ∈ selected.toList, Hex.DensePoly.Monic p)
+    (hp_two_lt : 2 ≤ d.p ^ d.k) :
+    Hex.ZPoly.reduceModPow
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+          (Array.polyProduct selected)) d.p d.k =
+      Hex.ZPoly.reduceModPow candidate d.p d.k := by
+  -- Step 1: lc(core) = 1 since core is monic.
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  -- Step 2: polyProduct selected is monic.
+  have hprod_monic : Hex.DensePoly.Monic (Array.polyProduct selected) :=
+    polyProduct_monic_of_all_monic hselected_monic
+  -- Step 3: raw = scale 1 (polyProduct selected) = polyProduct selected, so raw is monic.
+  set raw := Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+    (Array.polyProduct selected) with hraw_def
+  have hraw_eq : raw = Array.polyProduct selected := by
+    rw [hraw_def, hlc]
+    -- scale 1 g = g (coefficient-wise): both sides equal Array.polyProduct selected.
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    rw [Hex.DensePoly.coeff_scale _ _ _ (by ring : (1 : Int) * 0 = 0)]
+    ring
+  have hraw_monic : Hex.DensePoly.Monic raw := by rw [hraw_eq]; exact hprod_monic
+  -- Step 4: centeredLiftPoly raw (p^k) is monic.
+  have hcl_raw_monic : Hex.DensePoly.Monic
+      (Hex.centeredLiftPoly raw (d.p ^ d.k)) :=
+    monic_centeredLiftPoly_of_monic hraw_monic hp_two_lt
+  -- Step 5: centeredLiftPoly (reduceModPow raw p k) (p^k) = centeredLiftPoly raw (p^k).
+  have hcl_eq : Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k) =
+      Hex.centeredLiftPoly raw (d.p ^ d.k) :=
+    centeredLiftPoly_reduceModPow_eq raw d.p d.k d.p_pos
+  -- Step 6: The centred lift is monic, and normalize-stuff are identities on monic input.
+  set cl := Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k)
+    with hcl_def
+  have hcl_monic : Hex.DensePoly.Monic cl := by rw [hcl_eq]; exact hcl_raw_monic
+  have hcl_prim : Hex.ZPoly.Primitive cl := zpoly_primitive_of_monic hcl_monic
+  have hpprim : Hex.ZPoly.primitivePart cl = cl :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive cl hcl_prim
+  have hnorm_cand : Hex.normalizeCandidateFactor cl = cl := by
+    unfold Hex.normalizeCandidateFactor
+    rw [hpprim]
+    have : ¬ Hex.DensePoly.leadingCoeff cl < 0 := by
+      have : Hex.DensePoly.leadingCoeff cl = (1 : Int) := hcl_monic
+      rw [this]; decide
+    simp [this]
+  have hnorm_sign : Hex.normalizeFactorSign cl = cl :=
+    zpoly_normalize_factor_sign_of_monic hcl_monic
+  -- Step 7: candidate = cl, using the executable-layer characterization.
+  have hcand_eq : candidate = cl := by
+    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_directLift h hselected
+    have hcl_selected :
+        Hex.centeredLiftPoly selected.polyProduct (d.p ^ d.k) = cl := by
+      rw [hcl_eq, hraw_eq]
+    have hscale_one :
+        Hex.DensePoly.scale (1 : Int) selected.polyProduct =
+          selected.polyProduct := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale _ _ _ (by ring : (1 : Int) * 0 = 0)]
+      ring
+    rw [hext, hlc]
+    rw [hscale_one]
+    rw [hcl_selected, hnorm_cand, hnorm_sign]
+  -- Step 8: reduceModPow raw p k = reduceModPow cl p k via the centered lift.
+  rw [hcand_eq]
+  -- Goal: reduceModPow raw p k = reduceModPow cl p k.
+  -- cl = centeredLiftPoly (reduceModPow raw p k) (p^k).
+  -- Reducing the centred lift back recovers the canonical residue.
+  -- Key helper: centeredModNat x m ≡ x (mod m).
+  have hcenteredModNat_emod_eq :
+      ∀ (z : Int) (m : Nat), m ≠ 0 →
+        (Hex.centeredModNat z m) % (Int.ofNat m) = z % (Int.ofNat m) := by
+    intro z m hm
+    unfold Hex.centeredModNat
+    rw [if_neg hm]
+    set r := z % (Int.ofNat m) with hr_def
+    have hrmod : r % (Int.ofNat m) = r := by
+      rw [hr_def, Int.emod_emod_of_dvd _ (dvd_refl _)]
+    by_cases hc1 : 2 * r.natAbs ≤ m
+    · rw [if_pos hc1]; exact hrmod
+    · rw [if_neg hc1]
+      by_cases hc2 : r < 0
+      · rw [if_pos hc2]
+        have hrwadd : (r + Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
+          rw [show r + Int.ofNat m = r + 1 * Int.ofNat m by ring,
+            Int.add_mul_emod_self_right]
+        rw [hrwadd, hrmod]
+      · rw [if_neg hc2]
+        have hrwsub : (r - Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
+          rw [show r - Int.ofNat m = r + (-1) * Int.ofNat m by ring,
+            Int.add_mul_emod_self_right]
+        rw [hrwsub, hrmod]
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [hcl_def, Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos),
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos),
+    Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos)]
+  -- Goal: raw.coeff n % m = centeredModNat (raw.coeff n % m) m % m.
+  rw [hcenteredModNat_emod_eq _ _ (Nat.ne_of_gt (Nat.pow_pos d.p_pos))]
+  exact (Int.emod_emod_of_dvd _ (dvd_refl _)).symm
+
+/--
+The Mathlib-transported `natDegree` of the executable recombination candidate
+over a lifted-factor subset equals the sum of the Mathlib-transported
+`natDegree`s of the selected lifted factors.
+
+Under the modulus condition `2 ≤ d.p ^ d.k` and monicness of every lifted
+factor, the candidate's `centeredLiftPoly`/`primitivePart`/`normalizeFactorSign`
+chain collapses to a single monic polynomial whose stored size is the same as
+the underlying lifted-factor product, so its Mathlib-side `natDegree` is the
+sum over the subset.
+
+This is the candidate-side ingredient of the reverse-coverage degree-counting
+argument in the `representedFactor_dvd_recombinationCandidate_of_subset`
+divisibility theorem.
+-/
+theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
+    {d : Hex.LiftData}
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  -- lp is monic from monicness of each lifted factor.
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  -- centeredLiftPoly preserves monicness under the modulus condition.
+  have hcl_monic := monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
+  -- A monic poly has trivial content and trivial sign normalisation.
+  have hnorm : Hex.normalizeFactorSign cl = cl :=
+    zpoly_normalize_factor_sign_of_monic hcl_monic
+  have hprim : Hex.ZPoly.primitivePart cl = cl :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive cl
+      (zpoly_primitive_of_monic hcl_monic)
+  -- Combining, the candidate is just the centered lift of the product.
+  have hrec_eq : recombinationCandidate d T = cl := by
+    unfold recombinationCandidate
+    rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct,
+      ← hlp_def, ← hcl_def, hprim, hnorm]
+  rw [hrec_eq]
+  -- The centered lift has the same stored size as the product.
+  have hsize_eq : cl.size = lp.size :=
+    size_centeredLiftPoly_eq_of_monic hlp_monic hd_modulus
+  -- `natDegree (toPolynomial _)` is `size - 1` on a nonzero (monic) poly.
+  have hcl_size_pos : 0 < cl.size := zpoly_size_pos_of_monic hcl_monic
+  have hlp_size_pos : 0 < lp.size := zpoly_size_pos_of_monic hlp_monic
+  have hcl_natDeg :
+      (HexPolyZMathlib.toPolynomial cl).natDegree = cl.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hcl_natDeg, hsize_eq, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  -- Mathlib `natDegree_prod_of_monic` over monic factors.
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  -- Monicness of `toPolynomial (liftedFactor d i)` from monicness of the
+  -- lifted factor itself via `HexPolyMathlib.leadingCoeff_toPolynomial`.
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
+/--
+The Mathlib-transported `natDegree` of a represented integer factor equals the
+sum of the Mathlib-transported `natDegree`s of the lifted factors in the
+representing subset.
+
+On a monic polynomial, the partition pins the represented factor to its executable
+recombination candidate (`LiftedFactorSubsetPartition.recombinationCandidate_eq`),
+after which `natDegree_toPolynomial_recombinationCandidate_eq_sum` reads off the
+degree sum. This uses the sound partition equality rather than passing
+`RepresentsIntegerFactorAtLift` to the old scaled-product recovery lemmas.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d}
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hrec_eq : recombinationCandidate d S = factor :=
+    hpartition.recombinationCandidate_eq hcore_monic hfactor_irr
+      hfactor_dvd_target hSJ hrep
+  rw [← hrec_eq]
+  exact natDegree_toPolynomial_recombinationCandidate_eq_sum
+    hd_modulus hd_liftedFactor_monic S
+
+/--
+Identification of the executable `Hex.ZPoly.Primitive` predicate with Mathlib's
+`Polynomial.IsPrimitive` on the transported polynomial.
+-/
+private theorem toPolynomial_isPrimitive_of_zpoly_primitive_basic
+    {f : Hex.ZPoly} (hprim : Hex.ZPoly.Primitive f) :
+    (HexPolyZMathlib.toPolynomial f).IsPrimitive := by
+  intro r hdvd
+  have hcoeff : ∀ n, r ∣ f.coeff n := by
+    intro n
+    have h :=
+      (Polynomial.C_dvd_iff_dvd_coeff r (HexPolyZMathlib.toPolynomial f)).mp hdvd n
+    rwa [HexPolyZMathlib.coeff_toPolynomial] at h
+  have hnatAbs_dvd : ∀ n, (r.natAbs : ℤ) ∣ f.coeff n := fun n =>
+    Int.natAbs_dvd.mpr (hcoeff n)
+  have hr_dvd_content : (r.natAbs : ℤ) ∣ Hex.ZPoly.content f :=
+    Hex.ZPoly.dvd_content_of_nat_dvd_coeff f r.natAbs hnatAbs_dvd
+  rw [show Hex.ZPoly.content f = 1 from hprim] at hr_dvd_content
+  have hone : r.natAbs ∣ 1 := by exact_mod_cast hr_dvd_content
+  exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
+
+/--
+Reverse identification from Mathlib's `Polynomial.IsPrimitive` on the transported
+polynomial to the executable `Hex.ZPoly.Primitive` predicate.
+-/
+private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
+    {f : Hex.ZPoly}
+    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive) :
+    Hex.ZPoly.Primitive f := by
+  show Hex.ZPoly.content f = 1
+  have hC_dvd :
+      Polynomial.C (Hex.ZPoly.content f) ∣ HexPolyZMathlib.toPolynomial f := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro n
+    rw [HexPolyZMathlib.coeff_toPolynomial]
+    exact Hex.ZPoly.content_dvd_coeff f n
+  have hIsUnit : IsUnit (Hex.ZPoly.content f) := hprim _ hC_dvd
+  have hcontent_nonneg : 0 ≤ Hex.ZPoly.content f := by
+    show 0 ≤ Hex.DensePoly.content _
+    unfold Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  rcases Int.isUnit_iff.mp hIsUnit with hone | hneg
+  · exact hone
+  · rw [hneg] at hcontent_nonneg
+    omega
+
+/-- A `Hex.ZPoly` with positive leading coefficient has positive stored size. -/
+private theorem zpoly_size_pos_of_pos_lc {f : Hex.ZPoly}
+    (hpos : 0 < Hex.DensePoly.leadingCoeff f) : 0 < f.size := by
+  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
+  · exfalso
+    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD]; rfl
+    rw [hlc_zero] at hpos
+    omega
+  · exact hcs_pos
+
+
+/-- Every integer-polynomial divisor of a primitive polynomial is primitive. -/
+theorem zpoly_primitive_of_dvd_primitive_basic
+    {factor target : Hex.ZPoly}
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (hfactor_dvd_target : factor ∣ target) :
+    Hex.ZPoly.Primitive factor := by
+  apply zpoly_primitive_of_toPolynomial_isPrimitive_basic
+  exact isPrimitive_of_dvd
+    (toPolynomial_isPrimitive_of_zpoly_primitive_basic htarget_primitive)
+    (HexPolyMathlib.toPolynomial_dvd hfactor_dvd_target)
+
+
+private theorem centeredModNat_eq_of_pos_natAbs_le
+    {z : Int} {m B : Nat}
+    (hz_pos : 0 < z) (hbound : z.natAbs ≤ B) (hsep : 2 * B < m) :
+    Hex.centeredModNat z m = z := by
+  have hz_nonneg : 0 ≤ z := le_of_lt hz_pos
+  have hltNat : z.natAbs < m := by omega
+  have hlt : z < (m : Int) := by
+    have hz_le_abs : z ≤ (z.natAbs : Int) := by
+      rw [Int.natAbs_of_nonneg hz_nonneg]
+    have habs_lt : (z.natAbs : Int) < (m : Int) := by exact_mod_cast hltNat
+    exact lt_of_le_of_lt hz_le_abs habs_lt
+  have hmod : z % (m : Int) = z := Int.emod_eq_of_lt hz_nonneg hlt
+  have hcenter :=
+    Hex.centeredModNat_emod_eq_of_natAbs_le z m B hbound hsep
+  rwa [hmod] at hcenter
+
+/--
+Centred-lift preserves a strictly positive leading coefficient that lies inside
+the Mignotte half-window.
+-/
+theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+    {g : Hex.ZPoly} {m B : Nat}
+    (hg_lc_pos : 0 < Hex.DensePoly.leadingCoeff g)
+    (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
+    (hsep : 2 * B < m) :
+    Hex.DensePoly.leadingCoeff (Hex.centeredLiftPoly g m) =
+      Hex.DensePoly.leadingCoeff g := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_pos_lc hg_lc_pos
+  have hg_lead :
+      g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top :
+      g'.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [hcoeff, hg_lead]
+    exact centeredModNat_eq_of_pos_natAbs_le hg_lc_pos hbound_lc hsep
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact (ne_of_gt hg_lc_pos) h_zero
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  have hg'_size_eq : g'.size = g.size := le_antisymm hg'_size_le hg'_size_ge
+  show Hex.DensePoly.leadingCoeff g' = Hex.DensePoly.leadingCoeff g
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last g' (hg'_size_eq ▸ hg_size_pos),
+    hg'_size_eq]
+  exact hcoeff_top
+
+/-- Scaling a monic integer polynomial by a nonzero constant preserves its
+stored size: the leading coefficient becomes `c * 1 = c ≠ 0`, and `scale` never
+grows the array. -/
+private theorem size_scale_eq_of_monic_of_ne_zero
+    {c : Int} (hc : c ≠ 0) {f : Hex.ZPoly} (hmonic : Hex.DensePoly.Monic f) :
+    (Hex.DensePoly.scale c f).size = f.size := by
+  have hf_size_pos : 0 < f.size := zpoly_size_pos_of_monic hmonic
+  have hf_lead : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_size_pos]; exact hmonic
+  set g := Hex.DensePoly.scale c f with hg_def
+  have hcoeff_top : g.coeff (f.size - 1) = c := by
+    rw [hg_def, Hex.DensePoly.coeff_scale (R := Int) c f _ (Int.mul_zero _),
+      hf_lead]; ring
+  have hg_size_ge : f.size ≤ g.size := by
+    by_contra hlt
+    have hlt' : g.size < f.size := Nat.lt_of_not_ge hlt
+    have hle : g.size ≤ f.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g hle
+    rw [hcoeff_top] at h_zero
+    exact hc h_zero
+  have hg_size_le : g.size ≤ f.size := by
+    rw [hg_def]
+    unfold Hex.DensePoly.scale
+    simpa [Hex.DensePoly.length_toList] using
+      Hex.DensePoly.size_ofList_le (f.toList.map fun a => c * a)
+  exact le_antisymm hg_size_le hg_size_ge
+
+/-- Variable dilation by a nonzero integer preserves stored size for monic
+integer polynomials. -/
+private theorem size_dilate_eq_of_monic_of_ne_zero
+    {c : Int} (hc : c ≠ 0) {f : Hex.ZPoly} (hmonic : Hex.DensePoly.Monic f) :
+    (Hex.ZPoly.dilate c f).size = f.size := by
+  have hf_size_pos : 0 < f.size := zpoly_size_pos_of_monic hmonic
+  have hf_lead : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_size_pos]
+    exact hmonic
+  set g := Hex.ZPoly.dilate c f with hg_def
+  have hcoeff_top : g.coeff (f.size - 1) = c ^ (f.size - 1) := by
+    rw [hg_def, Hex.ZPoly.coeff_dilate, hf_lead, Int.mul_one]
+  have hpow_ne : c ^ (f.size - 1) ≠ 0 := pow_ne_zero _ hc
+  have hg_size_ge : f.size ≤ g.size := by
+    by_contra hlt
+    have hlt' : g.size < f.size := Nat.lt_of_not_ge hlt
+    have hle : g.size ≤ f.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g hle
+    rw [hcoeff_top] at h_zero
+    exact hpow_ne h_zero
+  have hg_size_le : g.size ≤ f.size := by
+    rw [hg_def]
+    unfold Hex.ZPoly.dilate
+    simpa using
+      Hex.DensePoly.size_ofList_le
+        ((List.range f.size).map fun i => c ^ i * f.coeff i)
+  exact le_antisymm hg_size_le hg_size_ge
+
+/-- Centred-lift preserves stored size when the leading coefficient is strictly
+positive and lies inside the Mignotte half-window. Companion to
+`leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound`. -/
+private theorem size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
+    {g : Hex.ZPoly} {m B : Nat}
+    (hg_lc_pos : 0 < Hex.DensePoly.leadingCoeff g)
+    (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
+    (hsep : 2 * B < m) :
+    (Hex.centeredLiftPoly g m).size = g.size := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_pos_lc hg_lc_pos
+  have hg_lead :
+      g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [hcoeff, hg_lead]
+    exact centeredModNat_eq_of_pos_natAbs_le hg_lc_pos hbound_lc hsep
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact (ne_of_gt hg_lc_pos) h_zero
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  exact le_antisymm hg'_size_le hg'_size_ge
+
+/-- `Hex.normalizeFactorSign` preserves stored size: it either returns the input
+unchanged or negates every coefficient via `DensePoly.scale (-1)`, and scaling by
+the nonzero integer `-1` preserves stored size. -/
+private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
+    (Hex.normalizeFactorSign f).size = f.size := by
+  unfold Hex.normalizeFactorSign
+  by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
+  · rw [if_pos hneg]
+    exact Hex.ZPoly.scale_size_of_ne_zero (-1 : Int) f (by decide)
+  · rw [if_neg hneg]
+
+/-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
+
+Reconstruct `f = scale (content f) (primitivePart f)` via
+`content_mul_primitivePart`, then apply `Hex.ZPoly.scale_size_of_ne_zero` with
+the fact that `content f ≠ 0` whenever `f ≠ 0`. -/
+private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) :
+    (Hex.ZPoly.primitivePart f).size = f.size := by
+  have hcontent_ne : (Hex.ZPoly.content f : Int) ≠ 0 := by
+    intro hcontent
+    apply hf
+    have hpart_zero : Hex.ZPoly.primitivePart f = 0 := by
+      simpa [Hex.ZPoly.primitivePart] using
+        Hex.DensePoly.primitivePart_eq_zero_of_content_eq_zero f
+          (by simpa [Hex.ZPoly.content] using hcontent)
+    have hreconstruct := Hex.ZPoly.content_mul_primitivePart f
+    rw [hcontent, hpart_zero] at hreconstruct
+    have : Hex.DensePoly.scale (0 : Int) (0 : Hex.ZPoly) = (0 : Hex.ZPoly) := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale (R := Int) (0 : Int) (0 : Hex.ZPoly) n
+        (Int.zero_mul 0), Hex.DensePoly.coeff_zero]
+      exact Int.zero_mul _
+    rw [this] at hreconstruct
+    exact hreconstruct.symm
+  have h_rec := Hex.ZPoly.content_mul_primitivePart f
+  have h_scale_size :
+      (Hex.DensePoly.scale (Hex.ZPoly.content f) (Hex.ZPoly.primitivePart f)).size =
+        (Hex.ZPoly.primitivePart f).size :=
+    Hex.ZPoly.scale_size_of_ne_zero (Hex.ZPoly.content f)
+      (Hex.ZPoly.primitivePart f) hcontent_ne
+  calc (Hex.ZPoly.primitivePart f).size
+      = (Hex.DensePoly.scale (Hex.ZPoly.content f)
+          (Hex.ZPoly.primitivePart f)).size := h_scale_size.symm
+    _ = f.size := by rw [h_rec]
+
+/-- Abstract-bound variant of
+`natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum`: takes
+`B' : Nat`, `hcore_lc_le : (lc core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
+`defaultFactorCoeffBound core` precision constraint.
+
+The single precision caller in the proof body is
+`size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound`, which requires a
+leading-coefficient bound on `scaledLiftedFactorProduct core d T`. That
+leading coefficient is `lc core`, so the hypothesis-supplied
+`hcore_lc_le` discharges the precondition directly.
+
+Follows the `(B', hcore_lc_le, hprecision)` parameter ordering
+established by `representsIntegerFactorAtLift_primitive_of_bound`,
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`,
+and `zpoly_primitive_scaledRecombinationCandidate_of_bound`. -/
+theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (_hcore_ne : core ≠ 0)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (scaledRecombinationCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  have hlp_size_pos : 0 < lp.size := zpoly_size_pos_of_monic hlp_monic
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hslp_size :
+      (scaledLiftedFactorProduct core d T).size = lp.size := by
+    unfold scaledLiftedFactorProduct
+    exact size_scale_eq_of_monic_of_ne_zero hcore_lc_ne hlp_monic
+  have hslp_lc :
+      Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T) =
+        Hex.DensePoly.leadingCoeff core := by
+    unfold scaledLiftedFactorProduct
+    rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+      (Hex.DensePoly.leadingCoeff core) lp hcore_lc_ne,
+      show Hex.DensePoly.leadingCoeff lp = (1 : Int) from hlp_monic]
+    ring
+  have hslp_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T) := by
+    rw [hslp_lc]; exact hcore_lc_pos
+  have hslp_lc_bound :
+      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T)).natAbs ≤
+        B' := by
+    rwa [hslp_lc]
+  have hcl_size :
+      (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+          (d.p ^ d.k)).size =
+        (scaledLiftedFactorProduct core d T).size :=
+    size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
+      hslp_lc_pos hslp_lc_bound hprecision
+  have hcl_size_pos :
+      0 < (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+          (d.p ^ d.k)).size := by
+    rw [hcl_size, hslp_size]; exact hlp_size_pos
+  have hcl_ne :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T) (d.p ^ d.k)
+        ≠ 0 := by
+    intro h
+    have h0 :
+        (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)).size = 0 := by
+      rw [h]; rfl
+    omega
+  have hpp_size :
+      (Hex.ZPoly.primitivePart
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k))).size =
+        (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)).size :=
+    size_primitivePart_eq_of_ne_zero hcl_ne
+  have hsc_size :
+      (scaledRecombinationCandidate core d T).size = lp.size := by
+    show (Hex.normalizeFactorSign
+        (Hex.ZPoly.primitivePart
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)))).size = lp.size
+    rw [size_normalizeFactorSign_eq, hpp_size, hcl_size, hslp_size]
+  have hsc_size_pos : 0 < (scaledRecombinationCandidate core d T).size := by
+    rw [hsc_size]; exact hlp_size_pos
+  have hsc_natDeg :
+      (HexPolyZMathlib.toPolynomial
+          (scaledRecombinationCandidate core d T)).natDegree =
+        (scaledRecombinationCandidate core d T).size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hsc_natDeg, hsc_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
+/-- The Mathlib-transported `natDegree` of the scaled recombination candidate
+over a lifted-factor subset equals the sum of the Mathlib-transported
+`natDegree`s of the selected lifted factors, given primitive + positive-leading
+`core` and the Mignotte precision bound.
+
+The candidate goes through `centeredLiftPoly ∘ primitivePart ∘ normalizeFactorSign`
+on top of `scaledLiftedFactorProduct = scale (lc core) (liftedFactorProduct)`.
+Each step preserves stored size: scaling by the nonzero leading coefficient,
+centred-lift under the positive-leading bound, primitive part on a nonzero
+input, and sign normalisation. Combined with `lp.size = ∑ + 1` for the monic
+lifted-factor product, the candidate's natDegree decomposes as a sum.
+
+Thin wrapper over
+`natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound` that
+instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and discharges
+`hcore_lc_le` via `defaultFactorCoeffBound_valid core hcore_ne core
+hcore_dvd_self` at index `core.size - 1`, converted to the leading
+coefficient via `leadingCoeff_eq_coeff_last`.
+
+Companion scaled variant of `natDegree_toPolynomial_recombinationCandidate_eq_sum`.
+Consumed by the scaled cover-at-min chain for the primitive recursive
+recombination coverage proof. -/
+theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (scaledRecombinationCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_le hprecision T
+
+/-- The Mathlib-transported `natDegree` of the corrected recovered candidate
+equals the sum of the selected lifted-factor degrees.  The selected product is
+centred while monic, then variable-dilated by a nonzero leading coefficient;
+both operations preserve the stored degree before primitive/sign
+normalisation. -/
+theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (liftedRecoveryCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
+  have hcl_monic : Hex.DensePoly.Monic cl := by
+    rw [hcl_def]
+    exact monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  have hcl_size : cl.size = lp.size := by
+    rw [hcl_def]
+    exact size_centeredLiftPoly_eq_of_monic hlp_monic hd_modulus
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hdil_size :
+      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size =
+        cl.size :=
+    size_dilate_eq_of_monic_of_ne_zero hcore_lc_ne hcl_monic
+  have hcl_size_pos : 0 < cl.size := zpoly_size_pos_of_monic hcl_monic
+  have hdil_ne :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl ≠ 0 := by
+    intro h
+    have h0 :
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size = 0 := by
+      rw [h]; rfl
+    omega
+  have hpp_size :
+      (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl)).size =
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size :=
+    size_primitivePart_eq_of_ne_zero hdil_ne
+  have hrec_size :
+      (liftedRecoveryCandidate core d T).size = lp.size := by
+    show (Hex.normalizeFactorSign
+        (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (liftedFactorProduct d T) (d.p ^ d.k))))).size =
+        lp.size
+    rw [← hlp_def, ← hcl_def, size_normalizeFactorSign_eq, hpp_size,
+      hdil_size, hcl_size]
+  have hrec_size_pos : 0 < (liftedRecoveryCandidate core d T).size := by
+    rw [hrec_size, ← hcl_size]
+    exact hcl_size_pos
+  have hlp_size_pos : 0 < lp.size := by
+    rw [← hcl_size]
+    exact hcl_size_pos
+  have hrec_natDeg :
+      (HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core d T)).natDegree =
+        (liftedRecoveryCandidate core d T).size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hrec_natDeg, hrec_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
+/-- Abstract-bound wrapper for
+`natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum`.  The bound and
+precision hypotheses are used only to derive the modulus lower bound from the
+positive leading coefficient. -/
+theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (liftedRecoveryCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hB_pos : 0 < B' := by
+    have hlc_nat_pos :
+        0 < (Hex.DensePoly.leadingCoeff core).natAbs :=
+      Int.natAbs_pos.mpr (ne_of_gt hcore_lc_pos)
+    omega
+  have hd_modulus : 2 ≤ d.p ^ d.k := by
+    have htwo_le : 2 ≤ 2 * B' := by omega
+    omega
+  exact natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic T
+
+/-- Abstract-bound variant of
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
+`hcore_lc_le : (lc core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
+`defaultFactorCoeffBound core` precision constraint.
+
+The unscaled `_hrec_scaled` step from the existing proof is dropped
+entirely; its result was never consumed; and the centred-lift
+recovery call is handled through
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
+in place of the input-shape recovery. Both changes make this sibling
+independent of `scaledRecombinationCandidate_eq_factor_of_recovery`
+and hence of the scaled recovery-candidate `_of_bound` chain.
+
+Note: this sibling needs `hcore_lc_le` in addition to `hvalid`
+because the size-preservation step
+`size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound` consumes a
+leading-coefficient bound on `scaledLiftedFactorProduct core d S`,
+whose leading coefficient is `lc core`. Without a `B'`-shape bound
+on `lc core` itself, the abstract-precision hypothesis cannot
+discharge that lemma's separation requirement. The existing
+input-shape wrapper supplies this from
+`defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self`.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d}
+    (B' : Nat)
+    (_hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (_hcore_ne : core ≠ 0)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  -- The partition pins the represented factor to its sound recovered candidate.
+  have hrec_eq : liftedRecoveryCandidate core d S = factor :=
+    hpartition.liftedRecoveryCandidate_eq hfactor_irr hfactor_dvd_target hSJ hrep
+  rw [← hrec_eq]
+  exact natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum_of_bound
+    B' hcore_lc_pos hcore_lc_le hd_liftedFactor_monic hprecision S
+
+/--
+Primitive + positive-leading-coefficient polynomial variant of
+`natDegree_toPolynomial_eq_sum_of_represents`.
+
+For primitive non-monic `core`, the represented factor's natDegree equals the
+sum of natDegrees of the selected lifted factors. The proof uses the
+scaled recovery identity `scaledRecombinationCandidate core d S = factor`
+  and the size identities
+`factor.size = (scaledLiftedFactorProduct core d S).size =
+ (liftedFactorProduct d S).size`. Scaling by `C (lc core)` and the centred lift
+both preserve stored size under the Mignotte half-window bound on `lc core`,
+so the sum decomposition `natDegree_prod_of_monic` over `liftedFactorProduct`
+applies unchanged. The `hcore_primitive` and `hfactor_irr` hypotheses are
+threaded for API uniformity with the monic variant but are not used by the
+proof; the natDegree extraction depends only on the leading-coefficient bound
+and the primitive/sign-normalised facts on `factor`.
+
+This is a thin wrapper over
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd` and the
+leading-coefficient bound via
+`defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self`.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hdvd : factor ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+    hpartition hfactor_irr hfactor_dvd_target hSJ hrep hprecision
+
+/-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
+transported polynomial is non-zero and a non-unit, then the executable
+`shouldRecordPolynomialFactor` check passes.  Used to package executable
+witnesses for one recombination split from Mathlib-side irreducibility. -/
+theorem shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    {f : Hex.ZPoly}
+    (hne_zero : HexPolyZMathlib.toPolynomial f ≠ 0)
+    (hnonunit : ¬ IsUnit (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true := by
+  have hf_ne_zero : f ≠ 0 := fun hf => hne_zero (by
+    rw [hf]; exact HexPolyZMathlib.toPolynomial_zero)
+  have hf_ne_one : f ≠ 1 := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; left; rfl))
+  have hf_ne_neg_one : f ≠ Hex.DensePoly.C (-1) := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; right; rfl))
+  unfold Hex.shouldRecordPolynomialFactor
+  simp [hf_ne_zero, hf_ne_one, hf_ne_neg_one]
+
+/-- An irreducible (after transport) `Hex.ZPoly` value passes the executable
+`shouldRecordPolynomialFactor` check.  Combines the previous lemma with
+`Irreducible`'s structural projections. -/
+theorem shouldRecordPolynomialFactor_of_irreducible_toPolynomial
+    {f : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true :=
+  shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    hirr.ne_zero hirr.not_isUnit
+
+
+/-- One-step `exactQuotient?` discharge for a recombination split: when the
+candidate equals an integer divisor of `core` and is monic of positive degree,
+the executable exact-division check returns `some` of the proof-side cofactor. -/
+theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : recombinationCandidate d S = factor)
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ core) :
+    ∃ quotient,
+      Hex.exactQuotient? core (recombinationCandidate d S) = some quotient ∧
+        quotient * recombinationCandidate d S = core := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : core = factor * q
+  have hmul : q * factor = core := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
+  · rw [heq]; exact hmul
+
+
+/-- Scaled-candidate counterpart of `exactQuotient?_recombinationCandidate_eq_some_of_eq_factor`.
+When the scaled candidate equals a monic integer divisor of `target` of
+positive degree, the executable exact-division check on `target` returns
+`some` of the proof-side cofactor.
+
+This connects the recovery identity
+`scaledRecombinationCandidate_eq_factor_of_recovery` to the exact-division
+check in `Hex.scaledRecombinationSearchModAux`. -/
+theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (heq : scaledRecombinationCandidate core d S = factor)
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ target) :
+    ∃ quotient,
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =
+        some quotient ∧
+        quotient * scaledRecombinationCandidate core d S = target := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : target = factor * q
+  have hmul : q * factor = target := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
+  · rw [heq]; exact hmul
+
+/-- Non-monic counterpart of
+`exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor`.
+When the scaled candidate equals an integer divisor of `target` with positive
+leading coefficient and positive degree, the executable exact-division check
+on `target` returns `some` of the proof-side cofactor.
+
+Drops `Monic factor` in favour of `0 < lc factor`, handling through
+`exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` instead of the
+monic-only `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`.  Consumed
+by the primitive recursive coverage proof together with the recovery identity
+`scaledRecombinationCandidate_eq_factor_of_recovery` and the primitive,
+positive-leading bound from
+`representsIntegerFactorAtLift_primitive`. -/
+theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor_of_primitive_pos_lc
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (heq : scaledRecombinationCandidate core d S = factor)
+    (hpos_lc : 0 < Hex.DensePoly.leadingCoeff factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ target) :
+    ∃ quotient,
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =
+        some quotient ∧
+        quotient * scaledRecombinationCandidate core d S = target := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : target = factor * q
+  have hmul : q * factor = target := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq hpos_lc hpos hmul
+  · rw [heq]; exact hmul
+
+namespace RecombinationSearch
+
+
+end RecombinationSearch
+
+/-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
+check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
+executable check rejects `0`, `1`, and `-1`, which are exactly the zero
+and unit constants on the Mathlib side. -/
+theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+    {f : Hex.ZPoly} (h : Hex.shouldRecordPolynomialFactor f = true) :
+    HexPolyZMathlib.toPolynomial f ≠ 0 ∧
+      ¬ IsUnit (HexPolyZMathlib.toPolynomial f) := by
+  rw [Hex.shouldRecordPolynomialFactor] at h
+  -- `h : (f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)) = true`
+  rw [Bool.and_eq_true, Bool.and_eq_true] at h
+  obtain ⟨⟨hne_zero, hne_one⟩, hne_neg_one⟩ := h
+  have hne_zero' : f ≠ 0 := by simpa using hne_zero
+  have hne_one' : f ≠ 1 := by simpa using hne_one
+  have hne_neg_one' : f ≠ Hex.DensePoly.C (-1) := by simpa using hne_neg_one
+  refine ⟨?_, ?_⟩
+  · intro hpoly
+    apply hne_zero'
+    apply HexPolyZMathlib.equiv.injective
+    simpa using hpoly
+  · intro hunit
+    have hisUnit : Hex.ZPoly.IsUnit f :=
+      (HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mpr hunit
+    rcases hisUnit with hone | hneg_one
+    · exact hne_one' hone
+    · exact hne_neg_one' hneg_one
+
+
+end
+
+end HexBerlekampZassenhausMathlib

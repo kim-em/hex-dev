@@ -23,11 +23,32 @@ API.
   `n+1 ↦ pred + 1` recursion is forbidden.
 - `Lean.Grind.CommRing (PolyQuotient p f hf)` instance
 
-Representation choice: the stored representative is always canonical.
-Callers do not manage reduction manually; `ofPoly` and all ring
-operations normalize through `reduceMod`. Equality of quotient elements
-is therefore equality of canonical representatives, not a separate
-setoid-style relation.
+Representation choice: the stored representative is canonical, and the
+type says so. `PolyQuotient` is a subtype carrying `IsReduced`, so a raw
+`FpPoly` cannot be passed where a quotient element is expected. Callers
+do not manage reduction manually; `ofPoly` and all ring operations
+normalize through `reduceMod`. Equality of quotient elements is therefore
+equality of canonical representatives, not a separate setoid-style
+relation.
+
+`PolyQuotient` takes `[ZMod64.PrimeModulus p]`, so a quotient element
+cannot be formed over a composite modulus at all. That restriction is
+real rather than defensive: at composite `p` the long-division step
+divides by a leading coefficient that need not be a unit, `reduceMod` is
+then not a canonical form, and two values would represent one residue
+class. `isReduced_iff_degree_lt` states the contract the hypothesis
+buys.
+
+Primality is sufficient rather than necessary. A monic modulus needs no
+coefficient inversion and would be canonical over any `p`; the uniform
+prime hypothesis is the deliberate choice, since every modulus this
+library serves is over a prime field. Generalizing to monic moduli over
+a general coefficient ring would need a division-law package that does
+not exist yet.
+
+`reduceMod` itself stays general, along with its degree-short-circuit
+lemmas; it is the quotient type that carries the canonicality claim, so
+it is the quotient type that is restricted.
 
 This does NOT require `f` to be irreducible — the quotient is always a
 ring. When `f` is irreducible, the same underlying representation
@@ -40,6 +61,21 @@ supports a field structure; that extension belongs to hex-gfq-field.
 - `reduceMod f (a + b) = reduceMod f (reduceMod f a + reduceMod f b)`
 - `reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b)`
 - Ring axioms for `PolyQuotient p f hf`
+
+## Fast-arithmetic adoption
+
+After [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), a quotient context
+may cache an `FpPoly` multiplication plan and a `DivPlan` for its fixed
+modulus. Multiplication, square-and-multiply exponentiation, and repeated
+reduction then use the cached plans above their measured crossover. The
+canonical representative and every `reduceMod` theorem remain unchanged
+because the fast operations agree exactly with the current multiplication and
+division.
+
+Benchmarks report context construction separately from warm quotient
+operations. Production adopts the cached route only where repeated operations
+recover its construction cost; one-shot and small-degree calls retain the
+current path.
 
 ## External comparators
 

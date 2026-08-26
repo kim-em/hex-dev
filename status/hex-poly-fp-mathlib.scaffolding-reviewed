@@ -1,0 +1,36 @@
+HexPolyFpMathlib Phase 2 scaffolding reviewed, by an agent other than the
+author of the scaffolding.
+
+Read in full against HexPolyFpMathlib/SPEC/hex-poly-fp-mathlib.md:
+- HexPolyFpMathlib/Basic.lean
+- HexPolyFpMathlib.lean
+and the consumer surface in HexBerlekampMathlib/Irreducibility.lean,
+HexGF2Mathlib/Basic.lean, HexGFqMathlib/Subfield.lean and
+HexGFqMathlib/Primitivity.lean.
+
+Clean on the Phase 1 prohibitions: no `sorry`, no `axiom`, no `@[extern]`, no
+placeholder or wrong-shape or wrong-complexity body. The library is
+correspondence statements in a `noncomputable section`. Its data-level
+declarations are, in full: the two transport maps `fpPolyToPolynomial` and
+`polynomialToFpPoly`, the `fpPolyEquiv` they assemble into,
+`toMathlibPolynomial` (the forward map under the name statements use), and the
+`commRing` instance, which carries data — its `sub` and `neg` fields are pinned
+to the executable `DensePoly` operations rather than left at the
+minimal-axioms defaults. Each computes what its name says.
+`scripts/check_dag.py` passes and the declared deps match the imports.
+
+No SPEC-promised declaration is missing. The SPEC Contents was under-describing
+the implemented surface, and is corrected in the same commit; the central index
+line in SPEC/Libraries/README.md advertised degree transport that the library
+does not have, corrected by PR #9367.
+
+Three gaps identified, with drafted follow-up issues recorded in
+progress/20260822T031132Z_poly-fp-mathlib-phase2-review.md:
+- the transport surface is a strict subset of the generic
+  HexPolyMathlib.PolynomialEquivalence surface that this library exists
+  because it cannot reuse, and two consumers re-derive missing members by hand;
+- degree and leading-coefficient transport is absent, and its
+  representation-level half is proved inside hex-berlekamp-mathlib, which the
+  SPEC's own ownership rule places here;
+- `coeff_toMathlibPolynomial_equiv` is a redundant `@[simp]` lemma with a
+  non-simp-normal right-hand side and no consumer.

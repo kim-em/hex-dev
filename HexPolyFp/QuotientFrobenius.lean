@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyFp.Quotient
+public import HexPolyFp.Frobenius
 public import HexPolyFp.SquareFree
 
 public section
@@ -76,6 +77,22 @@ theorem pow_eq_reduce_linearPow (a : Quotient g hmonic hg_pos) (n : Nat) :
         (FpPoly.linearPow a.val n) := by
   rw [reduce_linearPow_eq_pow, reduce_val_self]
 
+/-- Structural modular exponentiation represents ordinary powering in the
+quotient.
+
+The executable loop reduces after every multiplication; quotient reduction
+forgets those intermediate choices and returns the power of the base class. -/
+theorem reduce_powModMonicLinear_eq_pow (base : FpPoly p) (n : Nat) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (FpPoly.powModMonicLinear base g hmonic n) =
+      (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) base) ^ n := by
+  rw [← reduce_linearPow_eq_pow]
+  apply ext
+  rw [reduce_val, reduce_val, FpPoly.modByMonic, FpPoly.modByMonic,
+    DensePoly.modByMonic_eq_mod, DensePoly.modByMonic_eq_mod,
+    FpPoly.powModMonicLinear_eq_powModMonic,
+    FpPoly.powModMonic_mod_eq_linearPow]
+
 /-- Freshman's dream on the quotient (prime case): raising a sum to the
 characteristic distributes additively. -/
 theorem add_pow_prime (a b : Quotient g hmonic hg_pos) :
@@ -87,9 +104,8 @@ theorem add_pow_prime (a b : Quotient g hmonic hg_pos) :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (FpPoly.linearPow (a.val + b.val) p) from
     (reduce_linearPow_eq_pow (a.val + b.val) p).symm]
-  rw [FpPoly.linearPow_add_prime hp]
-  rw [reduce_add]
-  rw [pow_eq_reduce_linearPow a, pow_eq_reduce_linearPow b]
+  rw [FpPoly.linearPow_add_prime hp, reduce_add,
+    pow_eq_reduce_linearPow a, pow_eq_reduce_linearPow b]
 
 omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_pow_succ (c : ZMod64 p) (n : Nat) :
@@ -99,9 +115,8 @@ private theorem zmod64_pow_succ (c : ZMod64 p) (n : Nat) :
   show (c ^ (n + 1)).toNat = (c ^ n * c).toNat
   rw [show ((c ^ n * c) : ZMod64 p) = ZMod64.mul (c ^ n) c from rfl,
     ZMod64.toNat_mul]
-  rw [show (c ^ (n + 1) : ZMod64 p) = ZMod64.pow c (n + 1) from rfl]
-  rw [show (c ^ n : ZMod64 p) = ZMod64.pow c n from rfl]
-  rw [ZMod64.toNat_pow, ZMod64.toNat_pow]
+  rw [show (c ^ (n + 1) : ZMod64 p) = ZMod64.pow c (n + 1) from rfl,
+    show (c ^ n : ZMod64 p) = ZMod64.pow c n from rfl, ZMod64.toNat_pow, ZMod64.toNat_pow]
   have hc_lt : c.toNat < p := c.toNat_lt
   have hcm : c.toNat % p = c.toNat := Nat.mod_eq_of_lt hc_lt
   rw [Nat.pow_succ, Nat.mul_mod, hcm]
@@ -144,9 +159,8 @@ private theorem zmod64_pow_zero (c : ZMod64 p) :
   apply ZMod64.ext
   apply UInt64.toNat_inj.mp
   show (c ^ (0 : Nat) : ZMod64 p).toNat = (1 : ZMod64 p).toNat
-  rw [show ((c ^ (0 : Nat)) : ZMod64 p) = ZMod64.pow c 0 from rfl]
-  rw [ZMod64.toNat_pow]
-  rw [show ((1 : ZMod64 p) : ZMod64 p) = ZMod64.one from rfl, ZMod64.toNat_one]
+  rw [show ((c ^ (0 : Nat)) : ZMod64 p) = ZMod64.pow c 0 from rfl, ZMod64.toNat_pow,
+    show ((1 : ZMod64 p) : ZMod64 p) = ZMod64.one from rfl, ZMod64.toNat_one]
   simp
 
 omit [ZMod64.PrimeModulus p] in
@@ -171,8 +185,7 @@ theorem linearPow_C_pow_prime (c : ZMod64 p) :
 theorem reduce_C_pow_prime_eq (c : ZMod64 p) :
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c)) ^ p =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) := by
-  rw [← reduce_linearPow_eq_pow]
-  rw [linearPow_C_pow_prime]
+  rw [← reduce_linearPow_eq_pow, linearPow_C_pow_prime]
 
 /-- Constants are fixed by every iterate of the Frobenius on the quotient. -/
 theorem reduce_C_pow_pPow_eq (c : ZMod64 p) (k : Nat) :
@@ -196,8 +209,8 @@ theorem reduce_C_pow_pPow_eq (c : ZMod64 p) (k : Nat) :
         _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
               (DensePoly.C c) := reduce_C_pow_prime_eq c
 
-/-- Iterated Frobenius is the identity on `Quotient.X` powers, given a fixed
-point at `Quotient.X` itself. -/
+/-- Iterated Frobenius is the identity on {name}`Quotient.X` powers, given a fixed
+point at {name}`Quotient.X` itself. -/
 theorem X_pow_pPowN (hp_pos : 0 < p) {n : Nat}
     (hX : (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) ^ (p ^ n) =
             X (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
@@ -263,8 +276,7 @@ theorem reduce_monomial_eq (m : Nat) (c : ZMod64 p) :
   rw [show (DensePoly.C c * DensePoly.monomial m (1 : ZMod64 p)
     : FpPoly p) = DensePoly.scale c (DensePoly.monomial m (1 : ZMod64 p))
     from FpPoly.C_mul_eq_scale c _]
-  rw [DensePoly.coeff_scale c _ k hzero]
-  rw [DensePoly.coeff_monomial m (1 : ZMod64 p) k]
+  rw [DensePoly.coeff_scale c _ k hzero, DensePoly.coeff_monomial m (1 : ZMod64 p) k]
   by_cases hk : k = m
   · simp only [hk, if_true]
     show c = c * (1 : ZMod64 p)
@@ -298,9 +310,7 @@ private theorem coeff_fpPolyMonoSum (f : FpPoly p) (m k : Nat) :
   | succ m ih =>
       show (fpPolyMonoSum f m + DensePoly.monomial m (f.coeff m)).coeff k =
         if k < m + 1 then f.coeff k else 0
-      rw [DensePoly.coeff_add_semiring]
-      rw [ih]
-      rw [DensePoly.coeff_monomial m (f.coeff m) k]
+      rw [DensePoly.coeff_add_semiring, ih, DensePoly.coeff_monomial m (f.coeff m) k]
       by_cases hk_lt_m : k < m
       · have hk_lt_succ : k < m + 1 := Nat.lt_succ_of_lt hk_lt_m
         have hk_ne_m : k ≠ m := Nat.ne_of_lt hk_lt_m
@@ -375,16 +385,53 @@ private theorem quotMonoSum_pow_pPow_eq_self
         quotMonoSum f g hmonic hg_pos m +
           reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
             (DensePoly.monomial m (f.coeff m))
-      rw [add_pow_pPow]
-      rw [ih]
+      rw [add_pow_pPow, ih]
       congr 1
-      rw [reduce_monomial_eq]
-      rw [mul_pow]
-      rw [reduce_C_pow_pPow_eq]
-      rw [X_pow_pPowN hp_pos hX m]
+      rw [reduce_monomial_eq, mul_pow, reduce_C_pow_pPow_eq, X_pow_pPowN hp_pos hX m]
 
-/-- **Capstone:** if the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
-`Quotient.X`, it fixes every quotient element.
+private theorem zero_pow_of_pos {k : Nat} (hk : 0 < k) :
+    (0 : Quotient g hmonic hg_pos) ^ k = 0 := by
+  rcases Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hk) with ⟨j, hj⟩
+  rw [hj, pow_succ, mul_zero]
+
+/-- Evaluation commutes with the Frobenius.
+
+`g(β^p) = g(β)^p` in characteristic `p`: freshman's dream distributes the power
+over the Horner sum, and Fermat fixes each coefficient, since the coefficients
+live in the prime field. This is the step that identifies composing with
+`x^p mod f` as the `p`-th power map on residues, which is what makes the
+Conway norm computable by Frobenius iteration rather than by modular
+exponentiation. -/
+theorem Internal.evalCoeffList_pow_prime (β : Quotient g hmonic hg_pos) :
+    ∀ cs : List (ZMod64 p),
+      Internal.evalCoeffList
+          (cs.map fun c =>
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c))
+          (β ^ p) =
+        (Internal.evalCoeffList
+          (cs.map fun c =>
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c))
+          β) ^ p
+  | [] => by
+      have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+      have hp_pos : 0 < p := Nat.lt_of_lt_of_le (by decide) (Hex.Nat.Prime.two_le hp)
+      show (0 : Quotient g hmonic hg_pos) = (0 : Quotient g hmonic hg_pos) ^ p
+      exact (zero_pow_of_pos hp_pos).symm
+  | c :: cs => by
+      rw [List.map_cons, Internal.evalCoeffList_cons, Internal.evalCoeffList_cons,
+        Internal.evalCoeffList_pow_prime β cs, add_pow_prime, mul_pow,
+        reduce_C_pow_prime_eq]
+
+/-- The `FpPoly`-level form of {name}`Hex.FpPoly.Quotient.Internal.evalCoeffList_pow_prime`. -/
+theorem Internal.eval_pow_prime (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f (β ^ p) =
+      (Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β) ^ p := by
+  rw [Internal.eval_eq_evalCoeffList, Internal.eval_eq_evalCoeffList]
+  unfold Internal.evalQuotientCoeffs
+  exact Internal.evalCoeffList_pow_prime β f.toList
+
+/-- If the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
+{name}`Quotient.X`, it fixes every quotient element.
 
 The irreducibility hypothesis is recorded for downstream callers but is
 not used in the proof: the X-generation argument is purely an algebra fact
@@ -398,8 +445,7 @@ theorem pow_pPowN_eq_self_of_pow_pPowN_X_eq_X
   -- Reduce β to its canonical representative.
   have hβ : β = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β.val :=
     (reduce_val_self β).symm
-  rw [hβ]
-  rw [reduce_eq_quotMonoSum]
+  rw [hβ, reduce_eq_quotMonoSum]
   exact quotMonoSum_pow_pPow_eq_self hX β.val β.val.size
 
 end Quotient

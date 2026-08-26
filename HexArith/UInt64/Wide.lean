@@ -69,13 +69,15 @@ def subBorrow (a b : UInt64) (bin : Bool) : UInt64 × Bool :=
   else
     (.ofNat (word + a.toNat - rhs), true)
 
-/-- Low-word projection of `addCarry` as Nat reduction modulo `2^64`. -/
+/-- Low-word projection of {name}`UInt64.addCarry` as natural-number reduction
+modulo `2^64`. -/
 @[simp, grind =]
 theorem toNat_addCarry_fst (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).1.toNat = (a.toNat + b.toNat + cin.toNat) % word := by
   simp [addCarry, word]
 
-/-- The outgoing carry bit of `addCarry` is set exactly when the exact sum overflows. -/
+/-- The outgoing carry bit of {name}`UInt64.addCarry` is set exactly when the
+exact sum overflows. -/
 @[grind =]
 theorem addCarry_snd (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = decide (word ≤ a.toNat + b.toNat + cin.toNat) := by
@@ -123,7 +125,7 @@ theorem addCarry_fst_eq_of_overflow (a b : UInt64) (cin : Bool)
     (addCarry a b cin).1 = UInt64.ofNat (a.toNat + b.toNat + cin.toNat) := by
   simpa using congrArg Prod.fst (addCarry_eq_of_overflow a b cin h)
 
-/-- Low-word projection of `subBorrow` after one-word wrapping. -/
+/-- Low-word projection of {name}`UInt64.subBorrow` after one-word wrapping. -/
 @[simp, grind =]
 theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).1.toNat =
@@ -156,7 +158,8 @@ theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
     rw [Nat.mod_eq_of_lt hwrap_lt']
     simpa [rhs] using hmod.symm
 
-/-- The outgoing borrow bit of `subBorrow` is set exactly when the subtrahend is larger. -/
+/-- The outgoing borrow bit of {name}`UInt64.subBorrow` is set exactly when the
+subtrahend is larger. -/
 @[grind =]
 theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).2 = decide (a.toNat < b.toNat + bin.toNat) := by
@@ -293,7 +296,7 @@ theorem mulHi_mulLo (a b : UInt64) :
     (mulHi a b).toNat * word + (a * b).toNat = a.toNat * b.toNat := by
   have h := Nat.div_add_mod (a.toNat * b.toNat) word
   simpa [toNat_mulHi, UInt64.toNat_mul, Nat.mul_comm, Nat.mul_left_comm,
-    Nat.mul_assoc] using h
+    Nat.mul_assoc, word] using h
 
 /--
 Low-word-first product reconstruction for callers that encode a two-word value

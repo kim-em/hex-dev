@@ -1,0 +1,787 @@
+#!/usr/bin/env python3
+"""Unit tests for the source-pinned PNT+ migration inventory."""
+
+import copy
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from scripts.maintenance import pnt_inventory as inventory
+
+
+class MaskLeanTests(unittest.TestCase):
+    def test_masks_comments_and_strings_but_not_identifiers(self) -> None:
+        source = """theorem check' : True := by
+  interval_decide
+  -- interval_decide
+  /- outer interval_auto /- nested interval_decide -/ done -/
+  let s := "interval_auto"
+  let c := 'x'
+  let escaped := '\\x41'
+  let quote := '\\"'
+  interval_auto
+"""
+        masked = inventory.mask_lean(source)
+
+        self.assertIn("check'", masked)
+        self.assertEqual(len(source), len(masked))
+        self.assertEqual(source.count("\n"), masked.count("\n"))
+        self.assertEqual(len(list(inventory.TOKEN_RE["interval_decide"].finditer(masked))), 1)
+        self.assertEqual(len(list(inventory.TOKEN_RE["interval_auto"].finditer(masked))), 1)
+        self.assertEqual(
+            len(list(inventory.TOKEN_RE["interval_decide"].finditer("interval_decide'"))),
+            0,
+        )
+
+    def test_rejects_unterminated_comment_and_string(self) -> None:
+        with self.assertRaisesRegex(inventory.InventoryError, "block comment"):
+            inventory.mask_lean("/- unfinished")
+        with self.assertRaisesRegex(inventory.InventoryError, "string literal"):
+            inventory.mask_lean('"unfinished')
+
+    def test_masks_escaped_single_quote_character(self) -> None:
+        literal = r"'\''"
+        self.assertEqual(inventory.char_literal_end(literal, 0), len(literal))
+        masked = inventory.mask_lean(f"let apostrophe := {literal}\ninterval_auto\n")
+        self.assertEqual(len(list(inventory.TOKEN_RE["interval_auto"].finditer(masked))), 1)
+
+    def test_escaped_character_cannot_consume_a_newline(self) -> None:
+        source = "let broken := '\\\ninterval_auto\n'\n"
+        masked = inventory.mask_lean(source)
+        self.assertEqual(source.count("\n"), masked.count("\n"))
+        self.assertEqual(len(list(inventory.TOKEN_RE["interval_auto"].finditer(masked))), 1)
+
+    def test_table_rows_include_first_tuple_on_opening_line(self) -> None:
+        source = (
+            "noncomputable def table_12_aux := [(0, 0)]\n"
+            "noncomputable def table_12 := [(1, f (2)),\n  (3, 4)]\n"
+            "def later := []\n"
+        )
+        rows = inventory.table_rows(inventory.mask_lean(source), "table_12")
+        self.assertEqual(rows, ["(1, f (2))", "(3, 4)"])
+
+    def test_fks2_probe_requires_exact_shard(self) -> None:
+        source = "def cells_11 := [\n  ⟨1, 2, 3/4, 5/6, 7/8⟩,\n  ⟨2, 3, 4/5, 6/7, 8/9⟩\n]\n"
+        provider = "def cells11 := [\n⟨1,2,3/4,5/6,7/8⟩,\n⟨2,3,4/5,6/7,8/9⟩\n]\n"
+        old_count = inventory.FKS2_PROBE_CELLS
+        inventory.FKS2_PROBE_CELLS = 2
+        self.addCleanup(setattr, inventory, "FKS2_PROBE_CELLS", old_count)
+        inventory.require_fks2_shard_match(source, provider)
+        with self.assertRaisesRegex(inventory.InventoryError, "cell 1"):
+            inventory.require_fks2_shard_match(
+                source, provider.replace("8/9", "9/10")
+            )
+
+    def test_fks2_family_requires_every_digest_and_tuple(self) -> None:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        source_dir = root / "source/PrimeNumberTheoremAnd/IEANTN/FKS2Tables"
+        provider_dir = root / "provider"
+        source_dir.mkdir(parents=True)
+        provider_dir.mkdir()
+        records = []
+        for shard in range(14):
+            row = f"⟨{shard}, {shard + 1}, 3/4, 5/6, 7/8⟩"
+            (source_dir / f"Table4ExtData_{shard:02}.lean").write_text(
+                f"def cells := [\n  {row}\n]\n", encoding="utf-8"
+            )
+            provider = provider_dir / f"PntFks2FamilyData{shard:02}.lean"
+            provider.write_text(f"def cells := [\n  {row}\n]\n", encoding="utf-8")
+            normalized = [row.replace(" ", "")]
+            records.append(
+                f'⟨{shard}, 1, "{inventory.fks_rows_digest(normalized)}"⟩'
+            )
+        aggregate = root / "family.lean"
+        aggregate.write_text("\n".join(records), encoding="utf-8")
+        old_counts = inventory.FKS2_SHARD_COUNTS
+        old_family = inventory.FKS2_FAMILY_PROVIDER
+        old_data = inventory.FKS2_FAMILY_DATA
+        old_probe = inventory.FKS2_PROBE_PROVIDER
+        inventory.FKS2_SHARD_COUNTS = tuple([1] * 14)
+        inventory.FKS2_FAMILY_PROVIDER = aggregate
+        inventory.FKS2_FAMILY_DATA = provider_dir
+        inventory.FKS2_PROBE_PROVIDER = provider_dir / "PntFks2FamilyData11.lean"
+        self.addCleanup(setattr, inventory, "FKS2_SHARD_COUNTS", old_counts)
+        self.addCleanup(setattr, inventory, "FKS2_FAMILY_PROVIDER", old_family)
+        self.addCleanup(setattr, inventory, "FKS2_FAMILY_DATA", old_data)
+        self.addCleanup(setattr, inventory, "FKS2_PROBE_PROVIDER", old_probe)
+        inventory.require_fks2_family_match(root / "source")
+        bad = provider_dir / "PntFks2FamilyData12.lean"
+        bad.write_text(bad.read_text().replace("7/8", "8/9"), encoding="utf-8")
+        with self.assertRaisesRegex(inventory.InventoryError, "shard 12 at cell 0"):
+            inventory.require_fks2_family_match(root / "source")
+
+    def test_declaration_map_tracks_enclosing_declaration(self) -> None:
+        masked = inventory.mask_lean(
+            "theorem first : True := by\n  trivial\n\nexample : True := by\n  trivial\n"
+        )
+        declarations = inventory.declaration_map(masked)
+        self.assertEqual(declarations[1], "first")
+        self.assertEqual(declarations[4], "example@4")
+
+
+class InventoryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.fixture = inventory.default_fixture()
+        cls.meta, cls.records = inventory.read_inventory(cls.fixture)
+
+    def write_rows(self, meta: dict, records: list[dict]) -> Path:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = Path(directory.name) / "inventory.jsonl"
+        inventory.write_inventory(path, meta, records)
+        return path
+
+    def test_small_prime_snippets_match_both_local_tables(self) -> None:
+        rows = [(n, n * 10 + 1) for n in range(2, 32)]
+        records = []
+        for path, (helper, declaration) in inventory.SMALL_PRIME_FAMILIES.items():
+            for line, (n, cut) in enumerate(rows, 1):
+                records.append({
+                    "kind": "tactic-occurrence",
+                    "tactic": "interval_auto",
+                    "actual": True,
+                    "path": path,
+                    "line": line,
+                    "declaration": declaration,
+                    "snippet": (
+                        f"· exact {helper} {n} {cut} "
+                        f"count_prime_{cut}_le_{n - 1} (by interval_auto)"
+                    ),
+                })
+        provider = (
+            "def sourceCut : Nat → Nat\n"
+            + "".join(f"  | {n} => {cut}\n" for n, cut in rows)
+            + "  | _ => 0\n\n"
+            + "def sourceRows : Array (Nat × Nat) := #["
+            + ", ".join(f"({n}, {cut})" for n, cut in rows)
+            + "]\n"
+        )
+        inventory.require_small_prime_log_match(records, provider)
+
+        wrong = copy.deepcopy(records)
+        for index in (0, 30):
+            wrong[index]["snippet"] = wrong[index]["snippet"].replace(
+                " 21 count_prime_21", " 22 count_prime_22",
+            )
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_small_prime_log_match(wrong, provider)
+
+        missing = records[:-1]
+        with self.assertRaisesRegex(inventory.InventoryError, "must contain 30"):
+            inventory.require_small_prime_log_match(missing, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[29]["snippet"] = duplicate[28]["snippet"]
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_small_prime_log_match(duplicate, provider)
+
+    def test_dusart_sites_match_local_table(self) -> None:
+        sites = tuple((line, declaration) for line, declaration, *_ in inventory.DUSART_ROWS) + (
+            inventory.DUSART_REPLACEMENT[:2],
+        )
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "actual": True,
+                "path": "PrimeNumberTheoremAnd/IEANTN/Dusart.lean",
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+                "migration": ({
+                    "status": "replaced-by-stronger-result",
+                    "replacement": inventory.DUSART_REPLACEMENT_NAME,
+                } if index == 7 else {"status": "accepted-after-rewrite"}),
+            }
+            for index, ((line, declaration), snippet) in enumerate(
+                zip(sites, inventory.DUSART_SNIPPETS, strict=True)
+            )
+        ]
+        provider = "def sourceRows : List Certificate := [\n" + "\n".join(
+            f"  ⟨{index}, {num}, {den}, {target}, .{relation}, 64, 12⟩,"
+            for _, _, index, num, den, target, relation in inventory.DUSART_ROWS
+        ) + "\n]"
+        inventory.require_dusart_exp_match(records, provider)
+
+        wrong_provider = provider.replace("⟨2, 1283, 100, 370261,", "⟨2, 1283, 100, 400000,")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_dusart_exp_match(records, wrong_provider)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[2]["line"] = 459
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_dusart_exp_match(wrong_sites, provider)
+
+        wrong_number = copy.deepcopy(records)
+        wrong_number[2]["snippet"] = wrong_number[2]["snippet"].replace("370261", "370262")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_dusart_exp_match(wrong_number, provider)
+
+        wrong_direction = copy.deepcopy(records)
+        wrong_direction[6]["snippet"] = wrong_direction[6]["snippet"].replace("≤", "≥")
+        with self.assertRaisesRegex(inventory.InventoryError, "unrecognized"):
+            inventory.require_dusart_exp_match(wrong_direction, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_dusart_exp_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_dusart_exp_match(duplicate, provider)
+
+    def test_fks2_mu_sites_match_local_table(self) -> None:
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "actual": True,
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+            }
+            for (path, line, declaration, *_), snippet in zip(
+                inventory.FKS2_MU_ROWS, inventory.FKS2_MU_SNIPPETS, strict=True
+            )
+        ]
+        provider = "def sourceRows := [\n" + "\n".join(
+            f"  ⟨⟨.{file}, {line}⟩, .{relation}, {input_num}, {input_den}, "
+            f"{target_num}, {target_den}⟩,"
+            for _, line, _, file, relation, input_num, input_den,
+                target_num, target_den in inventory.FKS2_MU_ROWS
+        ) + "\n]"
+        inventory.require_fks2_mu_match(records, provider)
+
+        wrong_provider = provider.replace("10138790, 10000000", "10138789, 10000000", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_fks2_mu_match(records, wrong_provider)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[2]["line"] = 25
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(wrong_sites, provider)
+
+        wrong_snippet = copy.deepcopy(records)
+        wrong_snippet[0]["snippet"] = wrong_snippet[0]["snippet"].replace(
+            "141.4213562", "141.4213563",
+        )
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_fks2_mu_match(wrong_snippet, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(duplicate, provider)
+
+    def test_fks2_structure_sites_match_seven_prefixes(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+            }
+            for path, line, declaration, _, _
+            in inventory.FKS2_STRUCTURE_SOURCE_ROWS
+        ]
+        tags = {path: tag for tag, path
+                in inventory.FKS2_STRUCTURE_FILE_PATHS.items()}
+        provider = "def prefixes : List Prefix := [\n" + "\n".join(
+            f"  ⟨{line}, {cells}, {last}⟩,"
+            for line, cells, last in inventory.FKS2_STRUCTURE_PREFIX_ROWS
+        ) + "\n]\ndef certificateFiles : List SourceFile := [\n" + "\n".join(
+            f"  .{file},"
+            for file in inventory.FKS2_STRUCTURE_CERTIFICATE_FILES
+        ) + "\n]\ndef sourceRows : List SourceRow := [\n" + "\n".join(
+            f'  ⟨.{tags[path]}, {line}, "{declaration}", .{fact}, {certificate}⟩,'
+            for path, line, declaration, fact, certificate
+            in inventory.FKS2_STRUCTURE_SOURCE_ROWS
+        ) + "\n]\n"
+        inventory.require_fks2_structure_match(records, provider)
+
+        wrong_prefix = provider.replace("⟨36, 70, 80⟩", "⟨36, 70, 79⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "prefixes differ"):
+            inventory.require_fks2_structure_match(records, wrong_prefix)
+
+        wrong_file = provider.replace("  .cor24Row7,", "  .cor24Row8,", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "certificateFiles differ"):
+            inventory.require_fks2_structure_match(records, wrong_file)
+
+        wrong_source = provider.replace(
+            '"midCells_chain_row6", .chain, 0',
+            '"midCells_chain_row6", .chain, 1', 1,
+        )
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_fks2_structure_match(records, wrong_source)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[0]["line"] = 35
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_structure_match(wrong_sites, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_structure_match(duplicate, provider)
+
+    def test_fks2_xpow_sites_match_six_prefixes_and_bands(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+            }
+            for path, line, declaration, _, _ in inventory.FKS2_XPOW_SOURCE_ROWS
+        ]
+        tags = {path: tag for tag, path in inventory.FKS2_XPOW_FILE_PATHS.items()}
+        provider = "def prefixes : List Prefix := [\n" + "\n".join(
+            f"  ⟨.{file}, {n}, {cells}, {boundary}⟩,"
+            for file, n, cells, boundary in inventory.FKS2_XPOW_PREFIX_ROWS
+        ) + "\n]\ndef bands : List Band := [\n" + "\n".join(
+            f"  ⟨{certificate}, {start}, {count}⟩,"
+            for certificate, start, count in inventory.FKS2_XPOW_BANDS
+        ) + "\n]\ndef sourceRows : List SourceRow := [\n" + "\n".join(
+            f'  ⟨.{tags[path]}, {line}, "{declaration}", .{fact}, {certificate}⟩,'
+            for path, line, declaration, fact, certificate
+            in inventory.FKS2_XPOW_SOURCE_ROWS
+        ) + "\n]\n"
+        inventory.require_fks2_xpow_match(records, provider)
+
+        wrong_prefix = provider.replace("⟨.row10, 50, 1348, 1358⟩",
+                                        "⟨.row10, 49, 1348, 1358⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "prefixes differ"):
+            inventory.require_fks2_xpow_match(records, wrong_prefix)
+
+        wrong_band = provider.replace("⟨5, 1348, 2398⟩", "⟨5, 1348, 2397⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "bands differ"):
+            inventory.require_fks2_xpow_match(records, wrong_band)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[-1]["line"] = 392
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_xpow_match(wrong_sites, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_xpow_match(duplicate, provider)
+
+    def test_fks2_xpow_source_shapes_are_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            texts = {key: [] for key in inventory.FKS2_XPOW_FILE_PATHS}
+            texts["row11"] = [""] * (inventory.FKS2_XPOW_SAMPLE_DEF_LINE - 1)
+            texts["row11"].append(inventory.FKS2_XPOW_SAMPLE_DEF)
+            texts["row11"].append(
+                "theorem checkXpowCell_sound (n : ℕ) (hn : 0 < n) (c : Cell) "
+                "(hc : checkXpowCell n c = true) : (c.eps : ℝ) ≤ "
+                "Real.exp (-(c.b' : ℝ) / n) := by"
+            )
+            for file_key, n, cells, _ in inventory.FKS2_XPOW_PREFIX_ROWS:
+                suffix = "" if file_key == "row11" else f"_row{file_key[3:]}"
+                texts[file_key].append(
+                    f"theorem allCells_take_checkXpow{suffix} : "
+                    f"(allCells.take {cells}).all (fun c => checkXpowCell {n} c) "
+                    "= true := by native_decide"
+                )
+                texts[file_key].append(
+                    f"theorem boundaryCell_fails{suffix} : "
+                    f"((allCells.drop {cells}).take 1).all "
+                    f"(fun c => checkXpowCell {n} c) = false := by native_decide"
+                )
+                texts[file_key].append(
+                    f"mid_xpow_of args allCells_take_checkXpow{suffix} x hmem"
+                )
+            texts["row11"].append(
+                "theorem sampleCells_checkXpow : sampleCells.all "
+                "(fun c => checkXpowCell 100 c) = true := by native_decide"
+            )
+            texts["row11"].append(
+                "have hck : checkXpowCell n c = true := "
+                "List.all_eq_true.mp hall c hcmem exact cell_Epi_le_xpow_of_check "
+                "n hn c hck"
+            )
+            texts["row11"].append(
+                "cell_Epi_le_xpow n hn c hrow "
+                "(checkXpowCell_sound n hn c hc)"
+            )
+            for key, path in inventory.FKS2_XPOW_FILE_PATHS.items():
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("\n".join(texts[key]), encoding="utf-8")
+            inventory.require_fks2_xpow_source_match(root)
+
+            row11 = root / inventory.FKS2_XPOW_FILE_PATHS["row11"]
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "allCells.drop 3726", "allCells.drop 3725", 1), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "sample definition shape differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "allCells.drop 3725", "allCells.drop 3726", 1), encoding="utf-8")
+            row11.write_text("\n" + row11.read_text(encoding="utf-8"), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "sample definition shape differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8")[1:], encoding="utf-8")
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "(checkXpowCell_sound n hn c hc)",
+                "(checkXpowCell_sound n hn c altered)", 1), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "semantic consumer bridge differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "(checkXpowCell_sound n hn c altered)",
+                "(checkXpowCell_sound n hn c hc)", 1), encoding="utf-8")
+
+            row10 = root / inventory.FKS2_XPOW_FILE_PATHS["row10"]
+            row10.write_text(row10.read_text(encoding="utf-8").replace(
+                "checkXpowCell 50", "checkXpowCell 49", 1), encoding="utf-8")
+            with self.assertRaisesRegex(inventory.InventoryError, "prefix shape differs"):
+                inventory.require_fks2_xpow_source_match(root)
+
+    def test_positive_exp_sites_match_shared_table(self) -> None:
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "tactic": "interval_decide",
+                "actual": True,
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+            }
+            for (path, line, declaration, *_), snippet in zip(
+                inventory.PNT_EXP_UPPER_ROWS,
+                inventory.PNT_EXP_UPPER_SNIPPETS,
+                strict=True,
+            )
+        ]
+        provider = "def sourceRows := [\n" + "\n".join(
+            f"  ⟨⟨.{file}, {line}⟩, .{relation}, {exponent}, {additive}, {target}⟩,"
+            for _, line, _, file, relation, exponent, additive, target
+                in inventory.PNT_EXP_UPPER_ROWS
+        ) + "\n]"
+        inventory.require_pnt_exp_upper_match(records, provider)
+
+        wrong_provider = provider.replace(".strict, 10, 0, 22027", ".weak, 10, 0, 22027")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_pnt_exp_upper_match(records, wrong_provider)
+
+        wrong_number = copy.deepcopy(records)
+        wrong_number[1]["snippet"] = wrong_number[1]["snippet"].replace("11325", "11324")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_pnt_exp_upper_match(wrong_number, provider)
+
+        wrong_direction = copy.deepcopy(records)
+        wrong_direction[2]["snippet"] = wrong_direction[2]["snippet"].replace("≤", "<")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_pnt_exp_upper_match(wrong_direction, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_pnt_exp_upper_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_pnt_exp_upper_match(duplicate, provider)
+
+    def test_fks2_nested_snippet_matches_literal_provider_row(self) -> None:
+        record = {
+            "kind": "tactic-occurrence",
+            "tactic": "interval_decide",
+            "actual": True,
+            "path": inventory.FKS2_NESTED_PATH,
+            "line": 3605,
+            "declaration": inventory.FKS2_NESTED_DECLARATION,
+            "snippet": inventory.FKS2_NESTED_SNIPPET,
+        }
+        provider = """def sourceRows : List Certificate := [
+  ⟨⟨3605⟩, 14, 3, 3, 11, 8, 2, 3, 1⟩
+]
+"""
+        inventory.require_fks2_nested_match([record], provider)
+
+        wrong_source = copy.deepcopy(record)
+        wrong_source["snippet"] = wrong_source["snippet"].replace("log 14", "log 15", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "differs from pinned source"):
+            inventory.require_fks2_nested_match([wrong_source], provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_fks2_nested_match(
+                [record], provider.replace(", 1⟩", ", 5⟩"),
+            )
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 0"):
+            inventory.require_fks2_nested_match([], provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 2"):
+            inventory.require_fks2_nested_match([record, copy.deepcopy(record)], provider)
+
+    def test_ramanujan_theta_leaves_match_literal_provider_rows(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": inventory.RAMANUJAN_THETA_SOURCE,
+                "line": line,
+                "declaration": declaration,
+            }
+            for declaration, line in inventory.RAMANUJAN_THETA_DECLARATIONS.items()
+        ]
+        provider = """def sourceRows : List Certificate := [
+  ⟨⟨505⟩, 599, 65, 1000, 20, 812, 813⟩
+]
+def rangeRows : List RangeCertificate := [
+  ⟨⟨500⟩, 3, 599, 768, 1000, 20⟩
+]
+"""
+        inventory.require_ramanujan_theta_match(records, provider)
+
+        wrong_coordinate = copy.deepcopy(records)
+        wrong_coordinate[0]["line"] = 499
+        with self.assertRaisesRegex(inventory.InventoryError, "coordinate differs"):
+            inventory.require_ramanujan_theta_match(wrong_coordinate, provider)
+
+        wrong_range = provider.replace("768, 1000", "767, 1000")
+        with self.assertRaisesRegex(inventory.InventoryError, "rangeRows differs"):
+            inventory.require_ramanujan_theta_match(records, wrong_range)
+
+        wrong_point = provider.replace("812, 813", "811, 813")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_ramanujan_theta_match(records, wrong_point)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 1"):
+            inventory.require_ramanujan_theta_match(records[:-1], provider)
+
+        duplicate = [records[0], copy.deepcopy(records[0])]
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_ramanujan_theta_match(duplicate, provider)
+
+    def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
+        inventory.check_inventory(self.fixture, require_classified=False)
+        with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
+            inventory.check_inventory(self.fixture, require_classified=True)
+
+    def test_classification_edits_do_not_change_audit_identity(self) -> None:
+        meta = copy.deepcopy(self.meta)
+        records = copy.deepcopy(self.records)
+        row = next(row for row in records if row.get("migration", {}).get("status") == "pending")
+        row["migration"] = {
+            "status": "accepted-after-rewrite",
+            "note": "unit-test classification",
+            "rewrite": "factor the repeated bound through one shared theorem",
+            "evidence": [
+                "conformance/HexIntervalMathlib/PntLogTableConformance.lean"
+            ],
+        }
+        path = self.write_rows(meta, records)
+        inventory.update_classifications(path)
+        inventory.check_inventory(path, require_classified=False)
+
+    def test_source_verification_ignores_valid_migration_edits(self) -> None:
+        committed_meta = copy.deepcopy(self.meta)
+        committed_records = copy.deepcopy(self.records)
+        generated_meta = copy.deepcopy(self.meta)
+        generated_records = copy.deepcopy(self.records)
+        row = next(
+            row for row in committed_records
+            if row.get("migration", {}).get("status") == "pending"
+        )
+        row["migration"]["note"] = "classification work may change this note"
+        committed_meta["record_digest"] = inventory.record_digest(committed_records)
+        inventory.require_source_match(
+            committed_meta, committed_records, generated_meta, generated_records,
+        )
+
+    def test_refresh_carries_classifications_by_audit_identity(self) -> None:
+        previous = copy.deepcopy(self.records)
+        generated = copy.deepcopy(self.records)
+        previous[0]["migration"]["note"] = "preserved migration note"
+        carried_records, carried, removed = inventory.carry_migrations(previous, generated)
+        expected_carried = sum(
+            row["migration"]["status"] not in {"not-a-call", "inventory-only"}
+            for row in self.records
+        )
+        self.assertEqual((carried, removed), (expected_carried, 0))
+        self.assertEqual(carried_records[0]["migration"]["note"], "preserved migration note")
+
+    def test_refresh_does_not_report_fixed_audit_labels_as_carried(self) -> None:
+        previous = [{"kind": "leancert-reference", "migration": inventory.inventory_only()}]
+        generated = copy.deepcopy(previous)
+        _, carried, removed = inventory.carry_migrations(previous, generated)
+        self.assertEqual((carried, removed), (0, 0))
+
+    def test_refresh_refuses_to_drop_classified_record(self) -> None:
+        previous = copy.deepcopy(self.records[:1])
+        previous[0]["migration"] = {
+            "status": "accepted-unchanged",
+            "note": "classified",
+            "evidence": ["HexIntervalMathlib.PNT.example"],
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "discard 1 classified"):
+            inventory.carry_migrations(previous, [])
+
+    def test_source_field_tamper_is_rejected_even_with_updated_record_digest(self) -> None:
+        meta = copy.deepcopy(self.meta)
+        records = copy.deepcopy(self.records)
+        row = next(row for row in records if "path" in row)
+        row["path"] += ".tampered"
+        records.sort(key=inventory.record_sort_key)
+        meta["record_digest"] = inventory.record_digest(records)
+        meta["counts"] = inventory.summarize(records)
+        path = self.write_rows(meta, records)
+        with self.assertRaisesRegex(inventory.InventoryError, "audit-record digest"):
+            inventory.check_inventory(path, require_classified=False)
+
+    def test_noncanonical_order_is_rejected(self) -> None:
+        meta = copy.deepcopy(self.meta)
+        records = copy.deepcopy(self.records)
+        records[0], records[1] = records[1], records[0]
+        meta["record_digest"] = inventory.record_digest(records)
+        path = self.write_rows(meta, records)
+        with self.assertRaisesRegex(inventory.InventoryError, "canonical order"):
+            inventory.check_inventory(path, require_classified=False)
+
+    def test_missing_migration_classification_is_rejected(self) -> None:
+        meta = copy.deepcopy(self.meta)
+        records = copy.deepcopy(self.records)
+        row = next(row for row in records if row.get("migration", {}).get("status") == "pending")
+        row.pop("migration")
+        meta["record_digest"] = inventory.record_digest(records)
+        path = self.write_rows(meta, records)
+        with self.assertRaisesRegex(inventory.InventoryError, "migration must be an object"):
+            inventory.check_inventory(path, require_classified=False)
+
+    def test_malformed_migration_is_reported_as_inventory_error(self) -> None:
+        record = {"kind": "dependency-interface", "migration": "pending"}
+        with self.assertRaisesRegex(inventory.InventoryError, "migration must be an object"):
+            inventory.require_migrations([record])
+
+    def test_lexical_reference_is_audit_evidence_not_release_obligation(self) -> None:
+        record = {
+            "kind": "leancert-reference",
+            "symbol": "LeanCert.Core",
+            "interface_provenance": [
+                "LeanCert.ANT", "LeanCert.Validity.AffineCover",
+            ],
+            "migration": inventory.inventory_only(),
+        }
+        inventory.require_migrations([record])
+        self.assertEqual(list(inventory.migration_statuses(record)), [])
+
+    def test_unowned_lexical_reference_is_rejected(self) -> None:
+        with self.assertRaisesRegex(inventory.InventoryError, "lacks interface provenance"):
+            inventory.reference_interfaces("LeanCert.Unreviewed.API")
+
+    def test_finished_classification_requires_structured_evidence(self) -> None:
+        record = {
+            "kind": "dependency-interface",
+            "migration": {
+                "status": "replaced-by-stronger-result",
+                "note": "ported",
+                "evidence": ["HexIntervalMathlib.PNT.bklnwBounds"],
+            },
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "replacement theorem"):
+            inventory.require_migrations([record])
+        record["migration"]["replacement"] = "PNT.Hex.bklnwBounds"
+        inventory.require_migrations([record])
+
+    def test_finished_classification_requires_existing_evidence_path(self) -> None:
+        record = {
+            "kind": "dependency-interface",
+            "migration": {
+                "status": "accepted-unchanged",
+                "note": "ported",
+                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+            },
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):
+            inventory.require_migrations([record])
+
+    def test_pending_classification_validates_supplied_evidence_path(self) -> None:
+        record = {
+            "kind": "generated-family",
+            "migration": {
+                "status": "pending",
+                "note": "partial probe",
+                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+            },
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):
+            inventory.require_migrations([record])
+
+    def test_dependency_surface_must_match_all_six_interfaces(self) -> None:
+        imports = [
+            {"module": module, "path": "X.lean", "line": index + 1}
+            for index, module in enumerate(inventory.DEPENDENCY_INTERFACES)
+        ]
+        rows = inventory.dependency_records(imports)
+        self.assertEqual({row["module"] for row in rows}, set(inventory.DEPENDENCY_INTERFACES))
+        with self.assertRaisesRegex(inventory.InventoryError, "import surface drifted"):
+            inventory.dependency_records(imports[:-1])
+
+    def test_fks2_family_has_exact_shard_partition(self) -> None:
+        family = next(
+            row for row in self.records
+            if row.get("kind") == "generated-family"
+            and row.get("family") == "fks2-table4ext"
+        )
+        sizes = sorted(shard["cells"] for shard in family["shards"])
+        self.assertEqual(sizes, [590] + [1000] * 13)
+        self.assertEqual(sum(sizes), 13590)
+
+    def test_bklnw_generated_families_expand_outer_source_forms(self) -> None:
+        families = {
+            row["family"]: row for row in self.records
+            if row.get("kind") == "generated-family"
+        }
+        table10 = families["bklnw-table10-source-sites"]
+        self.assertEqual(table10["target_check_sites"], 87)
+        self.assertEqual(table10["supporting_a2_check_sites"], 38)
+        table12 = families["bklnw-table12-cells"]
+        self.assertEqual(
+            (table12["rows"], table12["ordinary_rows"], table12["logarithmic_rows"]),
+            (26, 24, 2),
+        )
+        self.assertEqual(table12["checks_per_row"], 5)
+        self.assertEqual(table12["expanded_checks"], 130)
+        self.assertEqual(len(table12["false_original_boundary_rows"]), 4)
+
+    def test_headline_source_counts_are_pinned_independently(self) -> None:
+        self.assertEqual(self.meta["lean_source_files"], 232)
+        self.assertEqual(self.meta["counts"], {
+            "bklnw_table10_a2_sites": 38,
+            "bklnw_table10_target_sites": 87,
+            "bklnw_table12_checks": 130,
+            "bklnw_table12_logarithmic_rows": 2,
+            "bklnw_table12_ordinary_rows": 24,
+            "dependency_interface": 6,
+            "fks2_cells": 13590,
+            "fks2_shards": 14,
+            "interval_auto_actual": 60,
+            "interval_auto_textual": 61,
+            "interval_decide_actual": 280,
+            "interval_decide_textual": 290,
+            "leancert_import": 16,
+            "leancert_reference": 107,
+            "native_decide_actual": 83,
+            "records": 567,
+        })
+
+
+if __name__ == "__main__":
+    unittest.main()

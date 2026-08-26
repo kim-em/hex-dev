@@ -18,7 +18,11 @@ REDC routine that consumes a two-word product `(Thi, Tlo)` and returns one
 reduced residue.
 -/
 
-/-- Runtime Montgomery context for an odd `UInt64` modulus. -/
+/-- Runtime Montgomery context for an odd `UInt64` modulus.
+
+The native Montgomery externs rely on proof erasure leaving `p'` and `r2` as
+runtime constructor fields 0 and 1. Any change to the data-bearing fields must
+be mirrored in the C accessors and the native cross-checks. -/
 structure MontCtx (p : UInt64) where
   mkCtx ::
   /-- The modulus is odd. -/
@@ -33,11 +37,11 @@ structure MontCtx (p : UInt64) where
   r2_eq : r2.toNat = (UInt64.word * UInt64.word) % p.toNat
 
 /--
-Executable Montgomery reduction from a two-word product `(Thi, Tlo)` encoded in
-base `2^64`.
+Executable Montgomery reduction (classically `REDC`) from a two-word product
+`(Thi, Tlo)` encoded in base `2^64`.
 -/
-@[expose]
-def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
+@[expose, extern "lean_hex_montgomery_reduce"]
+def montgomeryReduce (ctx : @& MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
   let m := Tlo * ctx.p'
   let (mhi, mlo) := UInt64.mulFull m p
   let (_, c1) := UInt64.addCarry Tlo mlo false
@@ -50,7 +54,7 @@ def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
     addHi
 
 /-- A word-sized value plus its `R - 1` multiple vanishes modulo `R`. -/
-private theorem redc_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
+private theorem montgomeryReduce_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
     (a + (a * (UInt64.word - 1)) % UInt64.word) % UInt64.word = 0 := by
   have hword_pos : 0 < UInt64.word := by
     simp [UInt64.word]
@@ -66,15 +70,14 @@ private theorem redc_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
           have hword : UInt64.word - 1 + 1 = UInt64.word :=
             Nat.sub_add_cancel hword_pos
           have hmul : a + a * (UInt64.word - 1) = a * UInt64.word := by
-            rw [Nat.add_comm]
-            rw [← Nat.mul_succ]
+            rw [Nat.add_comm, ← Nat.mul_succ]
             have hs : (UInt64.word - 1).succ = UInt64.word := by
               simpa [Nat.succ_eq_add_one] using hword
             rw [hs]
           rw [hmul, Nat.mul_mod_left]
 
 /-- The low-word Montgomery correction makes the adjusted low word zero modulo `R`. -/
-private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
+private theorem montgomeryReduce_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
     let m := Tlo * ctx.p'
     (Tlo.toNat + (m * p).toNat) % UInt64.word = 0 := by
   intro m
@@ -91,8 +94,7 @@ private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
           = (Tlo.toNat * ctx.p'.toNat * p.toNat) % UInt64.word := by
             rw [Nat.mul_mod ((Tlo.toNat * ctx.p'.toNat) % UInt64.word) p.toNat
               UInt64.word]
-            rw [Nat.mod_mod]
-            rw [← Nat.mul_mod (Tlo.toNat * ctx.p'.toNat) p.toNat UInt64.word]
+            rw [Nat.mod_mod, ← Nat.mul_mod (Tlo.toNat * ctx.p'.toNat) p.toNat UInt64.word]
       _ = (Tlo.toNat * (ctx.p'.toNat * p.toNat)) % UInt64.word := by
             rw [Nat.mul_assoc]
   calc
@@ -107,14 +109,13 @@ private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
           rw [hmul_mod]
     _ = (Tlo.toNat + (Tlo.toNat * ((ctx.p'.toNat * p.toNat) %
             UInt64.word)) % UInt64.word) % UInt64.word := by
-          rw [Nat.mul_mod]
-          rw [Nat.mod_eq_of_lt hTlo]
+          rw [Nat.mul_mod, Nat.mod_eq_of_lt hTlo]
     _ = 0 := by
           rw [hpp']
-          exact redc_cancel_pred_word Tlo.toNat hTlo
+          exact montgomeryReduce_cancel_pred_word Tlo.toNat hTlo
 
 /-- The first add-with-carry step computes an exact carry and a zero low word. -/
-private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
+private theorem montgomeryReduce_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
     let m := Tlo * ctx.p'
     let (lo, c1) := UInt64.addCarry Tlo (m * p) false
     lo.toNat = 0 ∧ Tlo.toNat + (m * p).toNat = c1.toNat * UInt64.word := by
@@ -124,7 +125,7 @@ private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
       have hcarry := UInt64.toNat_addCarry Tlo (m * p) false
       simp [hcarry_pair] at hcarry
       have hmod : (Tlo.toNat + (m * p).toNat) % UInt64.word = 0 := by
-        simpa [m] using redc_low_correction_zero ctx Tlo
+        simpa [m] using montgomeryReduce_low_correction_zero ctx Tlo
       have hmul_toNat : (m * p).toNat = m.toNat * p.toNat % UInt64.word := by
         simp [UInt64.toNat_mul, UInt64.word]
       have hlo : lo.toNat < UInt64.word := by
@@ -161,7 +162,7 @@ private theorem MontCtx.p_lt_word (_ctx : MontCtx p) : p.toNat < UInt64.word := 
 
 /-- The low-word multiply computes the Montgomery correction factor `m`. -/
 @[simp]
-theorem redc_m_spec (ctx : MontCtx p) (_Thi Tlo : UInt64) :
+theorem montgomeryReduce_m_spec (ctx : MontCtx p) (_Thi Tlo : UInt64) :
     let m := Tlo * ctx.p'
     m.toNat = (Tlo.toNat * ctx.p'.toNat) % UInt64.word := by
   simp [UInt64.toNat_mul, UInt64.word]
@@ -171,7 +172,7 @@ The carry pair `(c2, addHi)` represents the exact quotient `u`, stated over the
 `(mhi, mlo)` pair returned by `UInt64.mulFull m p` rather than the split
 `(UInt64.mulHi m p, m * p)` view.
 -/
-theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
+theorem montgomeryReduce_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
     let m := Tlo * ctx.p'
     let (mhi, mlo) := UInt64.mulFull m p
     let (_, c1) := UInt64.addCarry Tlo mlo false
@@ -184,7 +185,7 @@ theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
   | mk lo c1 =>
       have hlow : lo.toNat = 0 ∧
           Tlo.toNat + (m * p).toNat = c1.toNat * UInt64.word := by
-        simpa [m, hlow_pair] using redc_low_addCarry_exact ctx Tlo
+        simpa [m, hlow_pair] using montgomeryReduce_low_addCarry_exact ctx Tlo
       cases hhi_pair : UInt64.addCarry Thi (UInt64.mulHi m p) c1 with
       | mk addHi c2 =>
           have hhi := UInt64.toNat_addCarry Thi (UInt64.mulHi m p) c1
@@ -197,10 +198,8 @@ theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
                 UInt64.word * (Thi.toNat + (UInt64.mulHi m p).toNat + c1.toNat) := by
             have hlow_exact := hlow.2
             have hmul_exact := hmul
-            rw [Nat.mul_add, Nat.mul_add]
-            rw [Nat.mul_comm UInt64.word Thi.toNat]
-            rw [Nat.mul_comm UInt64.word (UInt64.mulHi m p).toNat]
-            rw [Nat.mul_comm UInt64.word c1.toNat]
+            rw [Nat.mul_add, Nat.mul_add, Nat.mul_comm UInt64.word Thi.toNat,
+              Nat.mul_comm UInt64.word (UInt64.mulHi m p).toNat, Nat.mul_comm UInt64.word c1.toNat]
             omega
           have hresult :
               addHi.toNat + c2.toNat * UInt64.word =
@@ -216,10 +215,10 @@ theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
           simpa [hlow_pair, hhi_pair] using hresult
 
 /-- The final subtraction logic matches the Nat-level REDC normalization step. -/
-theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
+theorem montgomeryReduce_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
-    (redc ctx Thi Tlo).toNat =
-      redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
+    (montgomeryReduce ctx Thi Tlo).toNat =
+      montgomeryReduceNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
   let m := Tlo * ctx.p'
   have hTmod :
       (Tlo.toNat + Thi.toNat * UInt64.word) % UInt64.word = Tlo.toNat := by
@@ -232,8 +231,8 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
         ((Tlo.toNat + Thi.toNat * UInt64.word) % UInt64.word) * ctx.p'.toNat %
           UInt64.word := by
     rw [hTmod]
-    exact redc_m_spec ctx Thi Tlo
-  unfold redc
+    exact montgomeryReduce_m_spec ctx Thi Tlo
+  unfold montgomeryReduce
   change
     (match UInt64.mulFull m p with
       | (mhi, mlo) =>
@@ -242,14 +241,14 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
           match UInt64.addCarry Thi mhi c1 with
           | (addHi, c2) =>
             if c2 then addHi - p else if addHi ≥ p then addHi - p else addHi).toNat =
-      redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word)
+      montgomeryReduceNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word)
   cases hfull_pair : UInt64.mulFull m p with
   | mk mhi mlo =>
       cases hlow_pair : UInt64.addCarry Tlo mlo false with
       | mk lo c1 =>
           cases hhi_pair : UInt64.addCarry Thi mhi c1 with
           | mk addHi c2 =>
-              have hu := redc_u_spec ctx Thi Tlo
+              have hu := montgomeryReduce_u_spec ctx Thi Tlo
               simp [m, hfull_pair, hlow_pair, hhi_pair] at hu
               have hp_pos := ctx.p_pos
               have hp_lt := ctx.p_lt_word
@@ -258,10 +257,11 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
               have hu_lt :
                   addHi.toNat + c2.toNat * UInt64.word < 2 * p.toNat := by
                 rw [hu]
-                simpa [hTmod] using redcNat_u_lt_two_p hp_pos hp_lt hpp' hT
-              simp [redcNat, hTmod]
+                simpa [hTmod, UInt64.word] using
+                  montgomeryReduceNat_quotient_lt_two_p hp_pos hp_lt hpp' hT
+              simp [montgomeryReduceNat, hTmod]
               simp only [UInt64.word] at hu ⊢
-              rw [← hu]
+              simp only [← hu]
               cases c2
               · simp only [Bool.toNat_false, Nat.zero_mul, Nat.add_zero]
                 by_cases hge : p ≤ addHi
@@ -299,32 +299,32 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
                 exact (Nat.sub_add_comm (Nat.le_of_lt hp_lt_lit)).symm
 
 /-- The executable REDC routine agrees with the Nat-level specification. -/
-theorem toNat_redc (ctx : MontCtx p) (Thi Tlo : UInt64)
+theorem toNat_montgomeryReduce (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
-    (redc ctx Thi Tlo).toNat =
-      redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
-  exact redc_sub_spec ctx Thi Tlo hT
+    (montgomeryReduce ctx Thi Tlo).toNat =
+      montgomeryReduceNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
+  exact montgomeryReduce_sub_spec ctx Thi Tlo hT
 
 /-- Executable REDC returns a canonical residue below the modulus. -/
-theorem redc_lt (ctx : MontCtx p) (Thi Tlo : UInt64)
+theorem montgomeryReduce_lt (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
-    redc ctx Thi Tlo < p := by
-  rw [UInt64.lt_iff_toNat_lt, toNat_redc ctx Thi Tlo hT]
+    montgomeryReduce ctx Thi Tlo < p := by
+  rw [UInt64.lt_iff_toNat_lt, toNat_montgomeryReduce ctx Thi Tlo hT]
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  exact redcNat_lt ctx.p_pos ctx.p_lt_word hpp' hT
+  exact montgomeryReduceNat_lt ctx.p_pos ctx.p_lt_word hpp' hT
 
 /--
 Executable REDC represents division by the Montgomery radix modulo `p`.
 
-This is the direct executable form of `redcNat_eq_mod`, avoiding an explicit
+This is the direct executable form of `montgomeryReduceNat_eq_mod`, avoiding an explicit
 unfolding through the Nat-level REDC definition for downstream callers.
 -/
-theorem redc_mul_word_mod (ctx : MontCtx p) (Thi Tlo : UInt64)
+theorem montgomeryReduce_mul_word_mod (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
-    (redc ctx Thi Tlo).toNat * UInt64.word % p.toNat =
+    (montgomeryReduce ctx Thi Tlo).toNat * UInt64.word % p.toNat =
       (Tlo.toNat + Thi.toNat * UInt64.word) % p.toNat := by
-  rw [toNat_redc ctx Thi Tlo hT]
+  rw [toNat_montgomeryReduce ctx Thi Tlo hT]
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  exact redcNat_eq_mod ctx.p_pos ctx.p_lt_word hpp' hT
+  exact montgomeryReduceNat_eq_mod ctx.p_pos ctx.p_lt_word hpp' hT

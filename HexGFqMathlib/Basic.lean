@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFq
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Field.MinimalAxioms
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexGFq
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Field.MinimalAxioms
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Generic Mathlib-side definitions for the executable `GFq` model.
@@ -246,7 +250,7 @@ through the field laws already proved for the implementation-facing
 `Lean.Grind.Field` hierarchy. -/
 noncomputable instance field :
     Field (Hex.GFqField.FiniteField f hf hp hirr) :=
-  Field.ofMinimalAxioms (Hex.GFqField.FiniteField f hf hp hirr)
+  { Field.ofMinimalAxioms (Hex.GFqField.FiniteField f hf hp hirr)
     (by intro a b c; exact Lean.Grind.Semiring.add_assoc a b c)
     (by
       intro a
@@ -260,7 +264,17 @@ noncomputable instance field :
     (by intro a ha; exact Lean.Grind.Field.mul_inv_cancel ha)
     (Lean.Grind.Field.inv_zero (α := Hex.GFqField.FiniteField f hf hp hirr))
     (by intro a b c; exact Lean.Grind.Semiring.left_distrib a b c)
-    ⟨0, 1, Hex.GFqField.zero_ne_one f hf hp hirr⟩
+    ⟨0, 1, Hex.GFqField.zero_ne_one f hf hp hirr⟩ with
+    -- `npow` is pinned to the executable power rather than left at Mathlib's
+    -- `npowRec` default. `HexGFqField` already installs a `Pow` instance, so
+    -- the default would put two different exponentiations on the type, not
+    -- definitionally equal (`npowRec` is repeated multiplication, the
+    -- executable one is square-and-multiply). A statement written with `^`
+    -- would then pick up whichever instance elaboration reached first, and
+    -- Mathlib's power lemmas would silently fail to apply to it.
+    npow := fun n x => Hex.GFqField.pow x n
+    npow_zero := fun x => Hex.GFqField.pow_zero_eq_one x
+    npow_succ := fun n x => Lean.Grind.Semiring.pow_succ x n }
 
 /-- Reduced polynomial representatives for the quotient by `f`. -/
 abbrev ReducedRep (f : Hex.FpPoly p) : Type :=
@@ -269,9 +283,7 @@ abbrev ReducedRep (f : Hex.FpPoly p) : Type :=
 /-- The executable finite-field wrapper is equivalent to its canonical reduced
 polynomial representatives. -/
 def reducedRepEquiv :
-    HexGF2Mathlib.TypeEquiv
-      (Hex.GFqField.FiniteField f hf hp hirr)
-      (ReducedRep f) where
+    Hex.GFqField.FiniteField f hf hp hirr ≃ ReducedRep f where
   toFun x := ⟨Hex.GFqField.repr x, Hex.GFqField.degree_repr_lt_degree x⟩
   invFun x := Hex.GFqField.ofPoly f hf hp hirr x.1
   left_inv := by
@@ -289,9 +301,7 @@ positive-degree hypothesis is needed for the decoder's degree bound (see
 `FpPoly.ofIndexBelowDegree_degree_lt`); it is supplied at every call site by the
 nonconstant-modulus assumption. -/
 def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
-    HexGF2Mathlib.TypeEquiv
-      (ReducedRep f)
-      (Fin (p ^ Hex.FpPoly.degree f)) where
+    ReducedRep f ≃ Fin (p ^ Hex.FpPoly.degree f) where
   toFun x :=
     ⟨FpPoly.coeffIndex (Hex.FpPoly.degree f) x.1,
       FpPoly.coeffIndex_lt_of_degree_lt x.2⟩
@@ -308,17 +318,19 @@ def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
 
 /-- Generic finite-field elements are equivalent to the expected finite index
 type. -/
-noncomputable def finEquiv :
+def finEquiv :
     Hex.GFqField.FiniteField f hf hp hirr ≃
       Fin (p ^ Hex.FpPoly.degree f) :=
-  HexGF2Mathlib.TypeEquiv.toEquiv <|
-    HexGF2Mathlib.TypeEquiv.trans reducedRepEquiv (reducedRepFinEquiv f hf)
+  reducedRepEquiv.trans (reducedRepFinEquiv f hf)
 
 /-- The generic executable finite-field wrapper is finite. -/
+-- `noncomputable`: `p ^ degree f` elements is not something to enumerate
+-- by accident. `finEquiv` above is computable.
 noncomputable instance fintype :
     Fintype (Hex.GFqField.FiniteField f hf hp hirr) :=
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
 
+omit [ZMod64.PrimeModulus p] in
 /-- The generic executable finite-field wrapper has the expected cardinality. -/
 @[simp, grind =]
 theorem fintype_card :
@@ -339,6 +351,7 @@ noncomputable instance fintype (h : Hex.Conway.SupportedEntry p n) :
     Fintype (Hex.GFq p n h) :=
   FiniteField.fintype
 
+omit [ZMod64.PrimeModulus p] in
 /-- Cardinality of the canonical Conway-backed `GFq` in terms of its selected
 modulus degree. -/
 theorem fintype_card (h : Hex.Conway.SupportedEntry p n) :
@@ -364,20 +377,24 @@ theorem conwayPoly_degree (h : Hex.Conway.SupportedEntry p n) :
     Hex.FpPoly.degree (Hex.Conway.conwayPoly p n h) = n :=
   modulus_degree h
 
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- Cardinality of canonical `GFq p n` as `p ^ n`. -/
 @[simp]
 theorem fintype_card_eq_pow (h : Hex.Conway.SupportedEntry p n) :
     Fintype.card (Hex.GFq p n h) = p ^ n := by
   rw [fintype_card h, modulus_degree h]
 
-/-- Canonical `GFq` and Mathlib's `GaloisField` have matching cardinalities. -/
+omit [Hex.ZMod64.PrimeModulus p] in
+/-- Canonical {name}`Hex.GFq` and Mathlib's
+{name}`GaloisField` have matching cardinalities. -/
 theorem card_eq_galoisField_card [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     Fintype.card (Hex.GFq p n h) = Nat.card (GaloisField p n) := by
   rw [fintype_card_eq_pow h, GaloisField.card p n hn]
 
-/-- Canonical `GFq` values are ring-equivalent to Mathlib's `GaloisField`
-with the same characteristic and extension degree. -/
+/-- Canonical {name}`Hex.GFq` values are ring-equivalent to Mathlib's
+{name}`GaloisField` with the same characteristic and
+extension degree. -/
 noncomputable def equivGaloisField [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     _root_.RingEquiv (Hex.GFq p n h) (GaloisField p n) := by

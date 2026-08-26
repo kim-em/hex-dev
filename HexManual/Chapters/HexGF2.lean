@@ -15,6 +15,8 @@ import HexGF2.Irreducibility
 import HexGF2.RabinSoundness
 import HexGF2.CommonIrreducibility
 
+import HexGF2Mathlib
+
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -30,29 +32,28 @@ tag := "hex-gf2"
 tag := "hex-gf2-intro"
 %%%
 
-`HexGF2` is the packed characteristic-two layer of the stack: the
-polynomial ring `F₂[x]` represented as 64-bit words, and the finite
-fields `GF(2ⁿ)` built on top of it. Because every coefficient is a
-single bit, a polynomial over `F₂` is just a bit-string, and a whole
-machine word holds 64 coefficients at once. Addition is then a bitwise
-XOR, multiplication by `xᵏ` is a bit shift, and polynomial
-multiplication reduces to the carry-less product of two words — the
-hardware `CLMUL`/`PMULL` instruction. `HexGF2` exposes this packed core
-together with the derived Euclidean algorithms, the single-word and
-arbitrary-degree field wrappers, and a Lean-checked Rabin
+`HexGF2` represents the polynomial ring `F₂[x]` as 64-bit words and
+builds the finite fields `GF(2ⁿ)` on top of it. Because every
+coefficient is a single bit, a polynomial over `F₂` is just a
+bit-string, and a whole machine word holds 64 coefficients at once.
+Addition is then a bitwise XOR, multiplication by `xᵏ` is a bit shift,
+and polynomial multiplication reduces to the carry-less product of two
+words (the hardware `CLMUL`/`PMULL` instruction). On top of the packed
+representation, `HexGF2` adds the Euclidean algorithms, the single-word
+and arbitrary-degree field wrappers, and a Lean-checked Rabin
 irreducibility test.
 
 `HexGF2` is Mathlib-free and depends only on
-{ref "hex-poly"}[`HexPoly`], the generic dense-polynomial layer, which
+{ref "hex-poly"}[`HexPoly`], the generic dense-polynomial library, which
 supplies the shared polynomial vocabulary the packed representation is
-checked against; see {ref "hex-gf2-cross-references"}[Cross-references].
+checked against. See {ref "hex-gf2-cross-references"}[Cross-references].
 
 # The packed word representation
 %%%
 tag := "hex-gf2-words"
 %%%
 
-A `GF2Poly` is an array of 64-bit words carrying a normalization
+A {name}`Hex.GF2Poly` is an array of 64-bit words carrying a normalization
 invariant: bit `j` of word `i` is the coefficient of `x^(64·i + j)`,
 and the array stores no trailing zero word, so equal polynomials have
 equal word arrays.
@@ -105,7 +106,7 @@ and the compiled path merely runs faster.
 Lifting the word-level product to packed polynomials gives
 {name}`Hex.GF2Poly.mul` (the `*` of the `Mul GF2Poly` instance). Its
 correctness is stated as the carry-less convolution coefficient law,
-the reference specification the Mathlib bridge is checked against.
+which `HexGF2Mathlib` is checked against.
 
 {docstring Hex.GF2Poly.coeff_mul_diagonal}
 
@@ -114,15 +115,15 @@ the reference specification the Mathlib bridge is checked against.
 tag := "hex-gf2-euclid"
 %%%
 
-Long division over `F₂` needs no coefficient inversion — the leading
-coefficient of any nonzero polynomial is already `1` — so the packed
+Long division over `F₂` needs no coefficient inversion (the leading
+coefficient of any nonzero polynomial is already `1`), so the packed
 representation supports a direct shift-and-XOR division.
 {name}`Hex.GF2Poly.divMod` returns the quotient and remainder, with the
 `Div` and `Mod` instances projecting out each component.
 
 {docstring Hex.GF2Poly.divMod}
 
-The Euclidean algorithm built on `divMod` gives both the plain gcd and
+The Euclidean algorithm built on {name}`Hex.GF2Poly.divMod` gives both the plain gcd and
 its extended form, which additionally returns the Bézout cofactors.
 
 {docstring Hex.GF2Poly.gcd}
@@ -145,18 +146,56 @@ field. {name}`Hex.GF2n` is the single-word wrapper for `GF(2ⁿ)` with
 monic degree-`n` modulus, and the type carries the irreducibility proof
 of that modulus so only genuine fields can be formed.
 {name}`Hex.GF2nPoly` is the arbitrary-degree counterpart, backed by a
-full `GF2Poly` rather than a single word. Both expose the field
-operations — addition, multiplication, inverse, division — and a
+full {name}`Hex.GF2Poly` rather than a single word. Both expose the field
+operations (addition, multiplication, inverse, division) and a
 square-and-multiply exponentiation {name}`Hex.GF2n.pow`.
+
+{docstring Hex.GF2n}
+
+{docstring Hex.GF2n.reduce}
+
+{docstring Hex.GF2n.mul}
+
+{docstring Hex.GF2n.inv}
+
+{docstring Hex.GF2n.pow}
+
+{docstring Hex.GF2n.mul_inv_cancel}
+
+The single word is the constraint, not the representation: `GF2n`
+requires `n < 64`, which covers AES's `GF(2⁸)` and the byte- and
+word-sized fields but stops short of the ones cryptography reaches for
+next. GHASH multiplies in `GF(2¹²⁸)`, and a 128-bit element does not fit
+in a `UInt64`. That is what {name}`Hex.GF2nPoly` is for: it takes any
+{name}`Hex.GF2Poly` modulus, so the degree bound disappears and the same
+field operations run over a packed word array instead.
+
+{docstring Hex.GF2nPoly}
+
+{docstring Hex.GF2nPoly.mul}
+
+{docstring Hex.GF2nPoly.inv}
+
+{docstring Hex.GF2nPoly.mul_inv_cancel}
+
+The price is the representation: `GF2n` arithmetic is word operations on
+a register, while `GF2nPoly` allocates. Choose `GF2n` when the degree
+fits and `GF2nPoly` when it does not.
+
+The moduli themselves are committed with certified irreducibility, so a
+caller naming one does not have to supply a proof.
+
+{docstring Hex.GF2Poly.aesModulus}
+
+{docstring Hex.GF2Poly.ghashModulus}
 
 # Worked example
 %%%
 tag := "hex-gf2-worked"
 %%%
 
-The first block exercises the pure packed surface: the bit accessors,
-XOR addition, the shift, and a gcd. Each `#guard` is checked when the
-chapter is built.
+The first block runs the packed operations: the bit accessors, XOR
+addition, the shift, and a gcd.
 
 ```lean
 open Hex Hex.GF2Poly
@@ -193,7 +232,7 @@ The second block works inside the AES field `GF(2⁸)`, presented by the
 Rijndael modulus `x⁸ + x⁴ + x³ + x + 1` (the word `0x1B` above the
 leading `x⁸`). The irreducibility of that modulus is the committed
 theorem {name}`Hex.GF2Poly.aes_modulus_irreducible`, so the field type
-typechecks; the byte `0x53` and its inverse `0xCA` are the standard AES
+typechecks. The byte `0x53` and its inverse `0xCA` are the standard AES
 worked pair.
 
 ```lean
@@ -214,6 +253,32 @@ def aes (w : UInt64) : AES := GF2n.reduce w
 
 end HexGF2Chapter
 ```
+
+`#guard` checks a value you already know. To see one, evaluate it.
+AES's `xtimes` is multiplication by `x`, which on a byte is a shift left
+followed by a conditional XOR with the modulus when the top bit was set.
+Both cases:
+
+```lean (name := gf2XtimesEval)
+open Hex HexGF2Chapter in
+#eval ((aes 0x57) * (aes 0x02)).val
+```
+```leanOutput gf2XtimesEval
+174
+```
+
+```lean (name := gf2XtimesReduceEval)
+open Hex HexGF2Chapter in
+#eval ((aes 0xAE) * (aes 0x02)).val
+```
+```leanOutput gf2XtimesReduceEval
+71
+```
+
+The results print in decimal: `174` is `0xAE` and `71` is `0x47`. So
+`0x57 · x = 0xAE` is the plain shift, and `0xAE · x` overflows degree
+eight, so the modulus folds it back to `0x47`. Both are the FIPS-197
+worked values.
 
 # Rabin irreducibility
 %%%
@@ -240,28 +305,174 @@ also commits machine-checked certificates: a
 {name}`Hex.GF2Poly.IrreducibilityCertificate` packages the
 Frobenius-residue chain and Bézout witnesses, and
 {name}`Hex.GF2Poly.checkIrreducibilityCertificate` verifies one with
-`checkIrreducibilityCertificate_imp_irreducible` as its soundness
-target. The committed cryptographic moduli — the AES modulus and its
-siblings — are proved this way, none of them through `native_decide`.
+{name}`Hex.GF2Poly.checkIrreducibilityCertificate_imp_irreducible` as its soundness
+target. The committed cryptographic moduli (the AES modulus and its
+siblings) are proved this way, none of them through `native_decide`.
 
 {docstring Hex.GF2Poly.aes_modulus_irreducible}
+
+# Performance
+%%%
+tag := "hex-gf2-performance"
+%%%
+
+The packed representation exists for speed, so it is worth saying what
+the speed is. Two comparisons are recorded in
+`reports/hex-gf2-performance.md`.
+
+Against the generic `FpPoly 2` path inside Hex, on the same `GF(2)`
+coefficient inputs at `n = 64`, packed GCD runs in 14.1 ms against
+1.41 s, and the Berlekamp-style Frobenius-column construction in
+9.77 ms against 419 ms. That is roughly `100x` and `43x`: the packed
+long division is 64-bit XOR and shift on whole words, while the generic
+path pays per-bit `ZMod64`-wrapped arithmetic for every coefficient.
+
+Against NTL's `GF2X`, the picture depends on where you look, and the
+honest summary is that Hex wins at small degree and loses at large.
+Multiplication crosses over near `n = 512`: below it Hex is ahead, at
+`n = 2048` NTL spends about 4% of Hex's wall time on the same product.
+The reason is algorithmic and known — NTL switches to Karatsuba and
+then FFT multiplication, and the schoolbook packed-word loop here does
+not. Addition is not a useful comparison at all: NTL's measured time is
+dominated by marshaling across the process boundary at every rung, so
+those ratios describe the harness rather than the kernel.
+
+# The Mathlib correspondence
+%%%
+tag := "hex-gf2-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexGF2Mathlib` is the
+companion that connects it to Mathlib, and this section is where that
+library is documented.
+
+The starting point is that the packed representation is the generic
+dense one in disguise. Unpacking a {name}`Hex.GF2Poly` bit by bit gives a
+{name}`Hex.FpPoly` over `ZMod64 2`, and the two directions are mutually
+inverse ring maps.
+
+{docstring HexGF2Mathlib.GF2Poly.toFpPoly}
+
+{docstring HexGF2Mathlib.GF2Poly.ofFpPoly}
+
+{docstring HexGF2Mathlib.GF2Poly.equiv}
+
+That lands on a Hex type. A Mathlib user wants `Polynomial (ZMod 2)`, one
+composition further along.
+
+{docstring HexGF2Mathlib.GF2Poly.equivPolynomial}
+
+{docstring HexGF2Mathlib.GF2Poly.coeff_equivPolynomial}
+
+The field wrappers correspond the same way, to the quotient-field
+construction of {ref "hex-gfq-field"}[`HexGFqField`] over the transported
+modulus.
+
+{docstring HexGF2Mathlib.GF2n.equiv}
+
+{docstring HexGF2Mathlib.GF2nPoly.equiv}
+
+Cardinality comes from indexing the elements directly rather than from
+transporting finiteness across those equivalences: `GF2n` by its `val`
+bound, `GF2nPoly` through its reduced-representative subtype.
+
+{docstring HexGF2Mathlib.GF2n.fintype_card}
+
+{docstring HexGF2Mathlib.GF2nPoly.fintype_card}
+
+The `Equiv`s are computable; the `Fintype` instances behind these are
+deliberately not. A carrier here has `2 ^ n` elements, and for a
+GHASH-sized modulus that is `2 ^ 128`, so a compiled `Finset.univ` over
+one would be a footgun rather than a feature.
+
+## Mathlib algebraic structure
+%%%
+tag := "hex-gf2-mathlib-instances"
+%%%
+
+A `RingEquiv` does not install a `CommRing`. `SPEC/design-principles.md`
+asks for those instances to live in the companion, transported so that
+they keep the executable operations, and they do.
+
+{docstring HexGF2Mathlib.commRing}
+
+{docstring HexGF2Mathlib.GF2Poly.euclideanDomain}
+
+{docstring HexGF2Mathlib.GF2Poly.gcdMonoid}
+
+That instance is built from the laws `HexGF2` proves, not by copying
+Mathlib's operations across the equivalence, so multiplication under it
+is still packed carry-less multiplication.
+
+```lean
+open Hex in
+example (p q : GF2Poly) :
+    p * q = GF2Poly.mul p q := rfl
+
+example (p q : GF2Poly) :
+    p / q = GF2Poly.div p q ∧ p % q = GF2Poly.mod p q :=
+  ⟨rfl, rfl⟩
+
+example (p q : GF2Poly) :
+    GCDMonoid.gcd p q = GF2Poly.gcd p q := rfl
+```
+
+Mathlib's recursive Euclidean gcd is a separate definition. Over `F₂[x]`
+the only unit is `1`, so mutual divisibility fixes the representative and the
+two gcd algorithms agree exactly:
+
+{docstring HexGF2Mathlib.GF2Poly.euclidean_gcd_eq_packed}
+
+The instance supplies Mathlib's Bezout, principal-ideal, and
+unique-factorization interfaces directly on the packed type.
+
+So Mathlib's ring automation applies directly to packed polynomials:
+
+```lean
+open Hex in
+example (p q : GF2Poly) :
+    (p + q) ^ 2 = p ^ 2 + 2 * (p * q) + q ^ 2 := by
+  ring
+```
+
+{docstring HexGF2Mathlib.GF2nPoly.field}
+
+The `Fact (0 < f.degree)` hypothesis on that instance is not
+bureaucracy. {name}`Hex.GF2Poly.Irreducible` asks that the modulus be
+nonzero and admit no factorization into two positive-degree parts, and
+the constant `1` satisfies both. `GF2nPoly 1 _` is then the trivial ring,
+where every residue is `0` and `0 = 1`, so a `Field` instance for every
+modulus the type accepts would be false.
+{ref "hex-gfq-field"}[`HexGFqField`] sidesteps this by carrying the
+degree bound as a type parameter; the packed wrapper does not, so the
+bound is asked for here instead.
+
+{name}`Hex.GF2n` has no Mathlib `Field` instance yet: `HexGF2` proves its
+laws for the field operations but not the bare ring laws that the
+minimal-axioms constructor needs, so reaching Mathlib from a `GF2n` today
+means going through {name}`HexGF2Mathlib.GF2n.equiv`.
 
 # Cross-references
 %%%
 tag := "hex-gf2-cross-references"
 %%%
 
-`HexGF2` sits low in the executable DAG:
+Where `HexGF2` fits in the executable DAG:
 
 * {ref "hex-poly"}[`HexPoly`] is the only dependency: it provides the
   generic dense-polynomial vocabulary against which the packed
   representation's arithmetic and Euclidean laws are stated. `HexGF2`
   specializes that theory to the single-bit-coefficient case where the
   packed word layout and carry-less multiply apply.
-* `HexGF2` is consumed by the finite-field constructor layers above it
-  (the packed characteristic-two entries of the `GFq` constructors),
-  which reuse its `GF2n`/`GF2nPoly` wrappers and committed
+* `HexGF2` is consumed by the finite-field constructors that build on
+  it (the packed characteristic-two entries of the `GFq` constructors),
+  which reuse its {name}`Hex.GF2n` and {name}`Hex.GF2nPoly` wrappers and committed
   irreducibility certificates.
-* `HexGF2` is Mathlib-free; the Mathlib correspondence for the `GF(2ⁿ)`
-  field theory flows through the higher layers' `*Mathlib`
-  counterparts, not through this library.
+* `HexGF2` is Mathlib-free. Its Mathlib correspondence is `HexGF2Mathlib`,
+  which unpacks `GF2Poly` into the generic `FpPoly 2` representation,
+  identifies both `GF2n` and `GF2nPoly` with the quotient-field
+  construction from {ref "hex-gfq-field"}[`HexGFqField`], and carries the
+  finiteness and cardinality results for the packed types. The
+  executable API documented above does not depend on it: the packed
+  arithmetic, the Euclidean algorithms, and the Rabin certificates are
+  all executable and Mathlib-free.

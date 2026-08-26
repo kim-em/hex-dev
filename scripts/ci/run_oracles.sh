@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Sequential oracle runner used by `.github/workflows/conformance.yml`.
+# Sequential oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
-# ubuntu jobs. All oracle dependencies (FLINT, PARI, fpLLL, Conway
+# ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
 # tables) are installed once at the top of the workflow; this script
 # loops over every (lib, emit, oracle, fixture) tuple, cross-checks
 # the committed fixture against fresh emission, and pipes the
@@ -18,6 +18,23 @@
 
 set -uo pipefail
 
+# Local development may intentionally run only the installed comparators, but
+# release CI must never turn a missing oracle dependency into a green `SKIP`.
+# Preflight the required oracle dependency families before emitting any fixtures so a
+# broken installation fails early and unambiguously.
+if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+  if ! python3 - <<'PY'
+import flint
+import cypari2
+import conway_polynomials
+import sympy
+PY
+  then
+    echo "FAIL: required oracle dependencies are unavailable" >&2
+    exit 1
+  fi
+fi
+
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
 ORACLES=(
   # python-flint backed
@@ -30,10 +47,35 @@ ORACLES=(
   "HexGFq|hexgfq_emit_fixtures|scripts/oracle/gfq_flint.py|conformance-fixtures/HexGFq/gfq.jsonl"
   "HexGFqRing|hexgfqring_emit_fixtures|scripts/oracle/gfqring_flint.py|conformance-fixtures/HexGFqRing/gfqring.jsonl"
   "HexGFqField|hexgfqfield_emit_fixtures|scripts/oracle/gfqfield_flint.py|conformance-fixtures/HexGFqField/gfqfield.jsonl"
-  "HexMatrix|hexmatrix_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMatrix/matrix.jsonl"
+  "HexRowReduce|hexrowreduce_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexRowReduce/rowreduce.jsonl"
+  "HexDeterminant|hexdeterminant_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexDeterminant/determinant.jsonl"
+  "HexBareiss|hexbareiss_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexBareiss/bareiss.jsonl"
+  "HexHermite|hexhermite_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexHermite/hermite.jsonl"
+  "HexSmith|hexsmith_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexSmith/smith.jsonl"
+  "HexCharPoly|hexcharpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexCharPoly/charpoly.jsonl"
+  "HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
+  "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
+  "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
+  "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
+  # SymPy backed
+  "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
+  "HexTruncatedSeries|hextruncatedseries_emit_fixtures|scripts/oracle/series_sympy.py|conformance-fixtures/HexTruncatedSeries/series.jsonl"
+  "HexSparsePoly|hexsparsepoly_emit_fixtures|scripts/oracle/sparsepoly_sympy.py|conformance-fixtures/HexSparsePoly/sparsepoly.jsonl"
+  "HexModular|hexmodular_emit_fixtures|scripts/oracle/modular_sympy.py|conformance-fixtures/HexModular/modular.jsonl"
+  "HexPolyZGcd|hexpolyzgcd_emit_fixtures|scripts/oracle/zgcd_sympy.py|conformance-fixtures/HexPolyZGcd/zgcd.jsonl"
+  "HexMvGcd|hexmvgcd_emit_fixtures|scripts/oracle/mvgcd_sympy.py|conformance-fixtures/HexMvGcd/mvgcd.jsonl"
+  "HexMvHensel|hexmvhensel_emit_fixtures|scripts/oracle/mvhensel_sympy.py|conformance-fixtures/HexMvHensel/mvhensel.jsonl"
+  "HexMvFactor|hexmvfactor_emit_fixtures|scripts/oracle/mvfactor_sympy.py|conformance-fixtures/HexMvFactor/mvfactor.jsonl"
+  "HexPolySmith|hexpolysmith_emit_fixtures|scripts/oracle/polymatrix.py|conformance-fixtures/HexPolySmith/smith.jsonl"
+  # python-flint + PARI backed
+  "HexResultant|hexresultant_emit_fixtures|scripts/oracle/resultant_flint_pari.py|conformance-fixtures/HexResultant/resultant.jsonl"
   # PARI backed
   "HexHensel|hexhensel_emit_fixtures|scripts/oracle/hensel_pari.py|conformance-fixtures/HexHensel/hensel.jsonl"
+  "HexPrimality|hexprimality_emit_fixtures|scripts/oracle/primality_pari.py|conformance-fixtures/HexPrimality/primality.jsonl"
+  "HexIntFactor|hexintfactor_emit_fixtures|scripts/oracle/intfactor_pari.py|conformance-fixtures/HexIntFactor/intfactor.jsonl"
+  "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
+  "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
   # Conway tables backed
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
 )
@@ -63,7 +105,13 @@ for entry in "${ORACLES[@]}"; do
   oracle_args=()
   case "$oracle" in
     *conway_luebeck.py)
-      oracle_args=(--require-conway-polynomials)
+      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+        oracle_args=(--require-conway-polynomials)
+      else
+        # The committed Lübeck cache is always checked. Locally, add the
+        # package-backed leg when available and report a clean SKIP otherwise.
+        oracle_args=(--check-conway-polynomials)
+      fi
       ;;
   esac
 

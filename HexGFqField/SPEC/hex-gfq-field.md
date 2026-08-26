@@ -12,9 +12,19 @@ canonical reduction function, and one equality story across the ring and
 field libraries.
 
 **Contents:**
-- `FiniteField p f hf hirr` — the field `F_p[x]/(f)`, where `hf : 0 <
-  f.degree` and `hirr : Irreducible f`
-- Coercions or conversion functions to and from `PolyQuotient p f hf`
+- `FiniteField f hf hp hirr` — the field `F_p[x]/(f)`, where `hf : 0 <
+  f.degree`, `hp : Hex.Nat.Prime p`, and `hirr : Irreducible f`, with `p`
+  implicit and `[ZMod64.Bounds p]` ambient. The prime witness is a type
+  parameter rather than a typeclass so the field type carries its own
+  evidence: `ZMod64.PrimeModulus p` is derived from `hp` where the operations
+  need it, instead of being demanded again at every call site.
+
+  Both `hf` and `hirr` are needed. Irreducibility alone does not give a field,
+  since the predicate admits nonzero constants, and the quotient by a constant
+  is trivial. `hex-gf2`'s packed types omit `hf` from their structures and pay
+  for it: their field laws have to take the degree hypothesis separately.
+- Conversion functions `ofQuotient` and the `toQuotient` projection to and from
+  `PolyQuotient f hf`. These are plain functions rather than coercions.
 - Multiplicative inverse via extended GCD in `F_p[x]`
 - Division and exponentiation. `pow x n` is square-and-multiply
   (`O(log n)` field multiplications); the textbook `n+1 ↦ pow n * x`

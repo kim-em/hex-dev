@@ -4,17 +4,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
-import HexBerlekampZassenhaus.CrossCheck
-import HexBerlekampZassenhaus.SmallModSingleton
+module
+
+public import HexBerlekampZassenhaus.Factorization
+public import HexBerlekampZassenhaus.FactorProduct
+public import HexBerlekampZassenhaus.IrreducibleDecide
+public import HexBerlekampZassenhaus.Factored
+public meta import HexBerlekamp.FactorPolyElab
+public import HexBerlekamp.FactorPolyElab
+public meta import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.IrreducibilityElab
+public meta import HexBerlekampZassenhaus.FactorTactic
+public import HexBerlekampZassenhaus.FactorTactic
+
+public section
 
 /-!
-The `HexBerlekampZassenhaus` library exposes the executable integer
-Berlekamp-Zassenhaus factorization pipeline: normalization, good-prime
-selection, Hensel-lift packaging, LLL-based recombination, bounded/default
-factor entry points, and the integer irreducibility certificate checker.
+Stable user API for executable integer Berlekamp-Zassenhaus factorization.
 
-The library root also imports `HexBerlekampZassenhaus.Conformance` for
-Phase 3 core checks and `HexBerlekampZassenhaus.CrossCheck`, the
-SPEC-sanctioned LLL-vs-exhaustive recombination cross-check.
+This umbrella contains the factorization operations and result types, the
+integer irreducibility certificates, and the `factor_poly` and
+`irreducibility` tactics. Import `HexBerlekampZassenhaus.All` only when
+developing the factorization algorithms themselves.
 -/

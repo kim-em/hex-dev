@@ -1,0 +1,2182 @@
+#!/usr/bin/env python3
+"""Generate and validate the source-pinned PNT+/LeanCert usage inventory.
+
+Refresh mode reads an exact checkout of PrimeNumberTheoremAnd, masks Lean
+comments and string literals without changing source offsets, and records:
+
+* textual and executable ``interval_decide`` / ``interval_auto`` occurrences;
+* direct LeanCert imports, qualified references, and the six imported public
+  interface families that the migration must classify;
+* executable textual ``native_decide`` occurrences (trust-audit candidates); and
+* the generated FKS2 Table4Ext shard sizes plus named BKLNW tactic families.
+
+Check mode is deliberately network-free.  It validates the committed JSONL's
+pins, record digest, counts, ordering, classifications, and batch invariants.
+Use ``--require-classified`` for a migration/release claim; the ordinary
+pre-D8 structural check permits explicit ``pending`` migration decisions.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterable
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PNT_COMMIT = "21998bb6196b56789f72a52656a781a75e134eb0"
+LEANCERT_COMMIT = "58edbea59458e9b010262238eaca27b6e0240dae"
+MATHLIB_COMMIT = "905b95818eb32af7874a58b427f50c1711a5e96c"
+LEAN_TOOLCHAIN = "leanprover/lean4:v4.32.2"
+FORMAT_VERSION = 1
+PNT_LEAN_SOURCE_DIGEST = "84b1cdfe1cae7b6ddc181aede13c35b276422a206f6815143c2a1c50c3c0b112"
+PNT_LEAN_SOURCE_FILES = 232
+# Digest of fixed record identity with editable migration decisions removed.
+# It covers source locations plus reviewed interface/workload annotations; it
+# is not described as if every annotation were mechanically source-derived.
+PNT_AUDIT_RECORD_DIGEST = "6cfed911ea5dc11a114be8cadad83aaf1a68972a166700ceea894a7145e2d07d"
+
+EXPECTED = {
+    "interval_decide_actual": 280,
+    "interval_decide_textual": 290,
+    "interval_auto_actual": 60,
+    "interval_auto_textual": 61,
+    "native_decide_actual": 83,
+    "leancert_import": 16,
+    "leancert_reference": 107,
+    "dependency_interface": 6,
+    "fks2_cells": 13590,
+    "fks2_shards": 14,
+    "bklnw_table10_target_sites": 87,
+    "bklnw_table10_a2_sites": 38,
+    "bklnw_table12_checks": 130,
+    "bklnw_table12_ordinary_rows": 24,
+    "bklnw_table12_logarithmic_rows": 2,
+}
+
+DEPENDENCY_INTERFACES = {
+    "LeanCert.ANT": (
+        "whole-interval ANT expression checker used by the extended FKS2 table",
+        "fks2-table4ext",
+    ),
+    "LeanCert.CertifiedBounds.BKLNW": (
+        "certified exponential and power bounds used by the BKLNW sums",
+        "bklnw-certified-bounds",
+    ),
+    "LeanCert.CertifiedBounds.Chebyshev": (
+        "certified Chebyshev bounds used by Chebyshev, FKS2 floor, and Ramanujan proofs",
+        "chebyshev-certified-bounds",
+    ),
+    "LeanCert.CertifiedBounds.Li2": (
+        "Li(2) integrand, positivity, boundedness, value, and integral bounds",
+        "li2-certified-bounds",
+    ),
+    "LeanCert.Tactic.IntervalAuto": (
+        "interval_decide and interval_auto tactic entry points",
+        "interval-tactics",
+    ),
+    "LeanCert.Validity.AffineCover": (
+        "affine-cover certificate used by the small-x FKS2 floor",
+        "affine-cover",
+    ),
+}
+
+# Lexical qualified references are audit evidence, not separate migration
+# obligations.  This table records which reviewed imported interface owns each
+# namespace surface, including namespaces reached transitively by that import.
+REFERENCE_PROVENANCE = {
+    "LeanCert.ANT": ("LeanCert.ANT",),
+    "LeanCert.CertifiedBounds.BKLNW": ("LeanCert.CertifiedBounds.BKLNW",),
+    "LeanCert.CertifiedBounds.Chebyshev": (
+        "LeanCert.CertifiedBounds.Chebyshev",
+    ),
+    "LeanCert.CertifiedBounds.Li2": ("LeanCert.CertifiedBounds.Li2",),
+    "LeanCert.Core": ("LeanCert.ANT", "LeanCert.Validity.AffineCover"),
+    "LeanCert.Validity": ("LeanCert.Validity.AffineCover",),
+}
+
+CLASSIFICATIONS = {
+    "pending",
+    "accepted-unchanged",
+    "accepted-after-rewrite",
+    "replaced-by-stronger-result",
+    "retained-other-dependency",
+    "expected-failure",
+}
+
+TOKEN_RE = {
+    name: re.compile(rf"(?<![A-Za-z0-9_']){name}(?![A-Za-z0-9_'])")
+    for name in ("interval_decide", "interval_auto", "native_decide")
+}
+IMPORT_RE = re.compile(r"^\s*import\s+(LeanCert(?:\.[A-Za-z0-9_']+)*)\s*$")
+LEANCERT_REF_RE = re.compile(
+    r"(?<![A-Za-z0-9_'.])LeanCert(?:\.[A-Za-z0-9_']+)+"
+)
+DECL_RE = re.compile(
+    r"^\s*(?:@\[[^\]]+\]\s*)*"
+    r"(?:(?:private|protected|noncomputable|local|scoped|unsafe|partial|nonrec)\s+)*"
+    r"(?P<kind>theorem|lemma|def|abbrev|opaque|instance|example)\b"
+    r"(?:\s+(?P<name>[A-Za-z_][A-Za-z0-9_'.]*))?"
+)
+FKS_CELL_RE = re.compile(r"^\s*⟨")
+FKS2_PROBE_SOURCE = (
+    "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtData_11.lean"
+)
+FKS2_PROBE_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2ShardData.lean"
+FKS2_PROBE_CELLS = 1000
+FKS2_FAMILY_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2FamilyData.lean"
+FKS2_FAMILY_DATA = REPO_ROOT / "HexInterval/Experiment"
+FKS2_SHARD_COUNTS = tuple([1000] * 13 + [590])
+FKS2_DIGEST_RE = re.compile(
+    r'⟨(?P<shard>\d+),\s*(?P<cells>\d+),\s*"(?P<digest>[0-9a-f]{64})"⟩'
+)
+FKS2_STRUCTURE_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntFks2Structure.lean"
+)
+FKS2_STRUCTURE_PREFIX_ROWS = (
+    (36, 70, 80),
+    (36, 97, 107),
+    (36, 124, 134),
+    (36, 260, 270),
+    (36, 1348, 1358),
+    (383, 3746, 3756),
+    (99, 13590, 20000),
+)
+FKS2_STRUCTURE_FILE_PATHS = {
+    "table4Ext": "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4Ext.lean",
+    "cor24Row6": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row6.lean",
+    "cor24Row7": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row7.lean",
+    "cor24Row8": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row8.lean",
+    "cor24Row9": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row9.lean",
+    "cor24Row10": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row10.lean",
+    "cor24Row11": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row11.lean",
+}
+FKS2_STRUCTURE_CERTIFICATE_FILES = (
+    "cor24Row6",
+    "cor24Row7",
+    "cor24Row8",
+    "cor24Row9",
+    "cor24Row10",
+    "cor24Row11",
+    "table4Ext",
+)
+FKS2_STRUCTURE_SOURCE_ROWS = (
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 36, "midCells_chain_row6", "chain", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 38, "midCells_ne_nil_row6", "nonempty", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 40, "midCells_last_row6", "last", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 36, "midCells_chain_row7", "chain", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 38, "midCells_ne_nil_row7", "nonempty", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 40, "midCells_last_row7", "last", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 36, "midCells_chain_row8", "chain", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 38, "midCells_ne_nil_row8", "nonempty", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 40, "midCells_last_row8", "last", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 36, "midCells_chain_row9", "chain", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 38, "midCells_ne_nil_row9", "nonempty", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 40, "midCells_last_row9", "last", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 36, "midCells_chain_row10", "chain", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 38, "midCells_ne_nil_row10", "nonempty", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 40, "midCells_last_row10", "last", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 383, "midCells_chain", "chain", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 385, "midCells_ne_nil", "nonempty", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 387, "midCells_last", "last", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 99, "allCells_chain", "chain", 6),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 102, "allCells_last", "last", 6),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 104, "allCells_ne_nil", "nonempty", 6),
+)
+FKS2_STRUCTURE_PREFIX_RE = re.compile(
+    r"⟨(?P<line>\d+),\s*(?P<cells>\d+),\s*(?P<last>\d+)⟩"
+)
+FKS2_STRUCTURE_SOURCE_RE = re.compile(
+    r'⟨\.(?P<file>[A-Za-z0-9_]+),\s*(?P<line>\d+),\s*'
+    r'"(?P<declaration>[A-Za-z0-9_]+)",\s*\.(?P<fact>chain|nonempty|last),\s*'
+    r'(?P<certificate>\d+)⟩'
+)
+FKS2_STRUCTURE_CERTIFICATE_FILE_RE = re.compile(
+    r"^\s*\.(?P<file>[A-Za-z0-9_]+),?\s*$", re.MULTILINE
+)
+FKS2_XPOW_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Xpow.lean"
+FKS2_XPOW_PREFIX_ROWS = (
+    ("row6", 3, 70, 80),
+    ("row7", 4, 97, 107),
+    ("row8", 5, 124, 134),
+    ("row9", 10, 260, 270),
+    ("row10", 50, 1348, 1358),
+    ("row11", 100, 3746, 3756),
+)
+FKS2_XPOW_BANDS = (
+    (0, 0, 70),
+    (1, 70, 27),
+    (2, 97, 27),
+    (3, 124, 136),
+    (4, 260, 1088),
+    (5, 1348, 2398),
+)
+FKS2_XPOW_FILE_PATHS = {
+    key: f"PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row{row}.lean"
+    for key, row in (("row6", 6), ("row7", 7), ("row8", 8),
+                     ("row9", 9), ("row10", 10), ("row11", 11))
+}
+FKS2_XPOW_SOURCE_ROWS = (
+    (FKS2_XPOW_FILE_PATHS["row6"], 46, "allCells_take_checkXpow_row6", "prefix", 0),
+    (FKS2_XPOW_FILE_PATHS["row6"], 52, "boundaryCell_fails_row6", "boundary", 0),
+    (FKS2_XPOW_FILE_PATHS["row7"], 46, "allCells_take_checkXpow_row7", "prefix", 1),
+    (FKS2_XPOW_FILE_PATHS["row7"], 52, "boundaryCell_fails_row7", "boundary", 1),
+    (FKS2_XPOW_FILE_PATHS["row8"], 46, "allCells_take_checkXpow_row8", "prefix", 2),
+    (FKS2_XPOW_FILE_PATHS["row8"], 52, "boundaryCell_fails_row8", "boundary", 2),
+    (FKS2_XPOW_FILE_PATHS["row9"], 46, "allCells_take_checkXpow_row9", "prefix", 3),
+    (FKS2_XPOW_FILE_PATHS["row9"], 52, "boundaryCell_fails_row9", "boundary", 3),
+    (FKS2_XPOW_FILE_PATHS["row10"], 46, "allCells_take_checkXpow_row10", "prefix", 4),
+    (FKS2_XPOW_FILE_PATHS["row10"], 52, "boundaryCell_fails_row10", "boundary", 4),
+    (FKS2_XPOW_FILE_PATHS["row11"], 187, "sampleCells_checkXpow", "sample", 5),
+    (FKS2_XPOW_FILE_PATHS["row11"], 193, "boundaryCell_fails", "boundary", 5),
+    (FKS2_XPOW_FILE_PATHS["row11"], 393, "allCells_take_checkXpow", "prefix", 5),
+)
+FKS2_XPOW_SAMPLE_DEF_LINE = 183
+FKS2_XPOW_SAMPLE_DEF = (
+    "def sampleCells : List Cell := "
+    "allCells.take 20 ++ (allCells.drop 3726).take 20"
+)
+FKS2_XPOW_PREFIX_RE = re.compile(
+    r"⟨\.(?P<file>row(?:6|7|8|9|10|11)),\s*(?P<n>\d+),\s*"
+    r"(?P<cells>\d+),\s*(?P<boundary>\d+)⟩"
+)
+FKS2_XPOW_BAND_RE = re.compile(
+    r"⟨(?P<certificate>\d+),\s*(?P<start>\d+),\s*(?P<count>\d+)⟩"
+)
+FKS2_XPOW_SOURCE_RE = re.compile(
+    r'⟨\.(?P<file>row(?:6|7|8|9|10|11)),\s*(?P<line>\d+),\s*'
+    r'"(?P<declaration>[A-Za-z0-9_]+)",\s*\.(?P<fact>prefix|boundary|sample),\s*'
+    r'(?P<certificate>\d+)⟩'
+)
+SMALL_PRIME_PROVIDER = (
+    REPO_ROOT / "HexIntervalMathlib/Experiment/PntPrimeLogSmall.lean"
+)
+SMALL_PRIME_FAMILIES = {
+    "PrimeNumberTheoremAnd/IEANTN/RosserSchoenfeld/RSPrimeLower.lean": (
+        "nth_prime_gt_bound", "p_n_lower_small",
+    ),
+    "PrimeNumberTheoremAnd/IEANTN/TMEEMT.lean": ("key", "p_n_gt_1"),
+}
+SMALL_PRIME_SNIPPET_RE = re.compile(
+    r"\b(?P<helper>nth_prime_gt_bound|key)\s+"
+    r"(?P<n>\d+)\s+(?P<cut>\d+)\s+"
+    r"count_prime_(?P<count_cut>\d+)_le_(?P<count>\d+)\s+"
+    r"\(by\s+interval_auto\)"
+)
+DUSART_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntDusartExp.lean"
+DUSART_ROWS = (
+    (361, "proposition_5_4a", 0, 29, 1, 4000000000000000000, "upperLe"),
+    (406, "proposition_5_4a", 1, 10, 1, 4000000000000000000, "upperLt"),
+    (458, "proposition_5_4b", 2, 1283, 100, 370261, "lowerLe"),
+    (463, "proposition_5_4b", 3, 1312, 100, 492113, "lowerLe"),
+    (468, "proposition_5_4b", 4, 1452, 100, 2010733, "lowerLe"),
+    (473, "proposition_5_4b", 5, 1666, 100, 17051707, "lowerLe"),
+    (527, "proposition_5_4b", 6, 43, 1, 4000000000000000000, "lowerLe"),
+)
+DUSART_REPLACEMENT = (
+    532, "proposition_5_4b", 22, 1, 117352333, "lowerLe",
+)
+DUSART_REPLACEMENT_NAME = (
+    "Hex.Interval.Experiment.PntExpPoint.one_e9_le_exp_22, weakened by "
+    "Hex.IntervalMathlib.PntDusartExpConformance.exp22Lower"
+)
+DUSART_SNIPPETS = (
+    "have : exp (29 : ℝ) ≤ (4e18 : ℝ) := by interval_decide",
+    "(lt_log_iff_exp_lt hx_pos).mpr (lt_of_lt_of_le (by interval_decide) hx)",
+    "have hexp : (370261 : ℝ) ≤ exp (1283/100) := by interval_decide",
+    "have hexp : (492113 : ℝ) ≤ exp (1312/100) := by interval_decide",
+    "have hexp : (2010733 : ℝ) ≤ exp (1452/100) := by interval_decide",
+    "have hexp : (17051707 : ℝ) ≤ exp (1666/100) := by interval_decide",
+    "· have hexp43 : (4e18 : ℝ) ≤ exp 43 := by interval_decide",
+    "have hexp22_lb : (117352333 : ℝ) ≤ exp 22 := by interval_decide",
+)
+DUSART_CONTEXT_SNIPPET = (
+    "(lt_log_iff_exp_lt hx_pos).mpr "
+    "(lt_of_lt_of_le (by interval_decide) hx)"
+)
+DUSART_UPPER_RE = re.compile(
+    r"^have : exp \((?P<num>\d+) : ℝ\) ≤ "
+    r"\((?P<coefficient>\d+)e(?P<exponent>\d+) : ℝ\) := by interval_decide$"
+)
+DUSART_LOWER_RATIONAL_RE = re.compile(
+    r"^have hexp : \((?P<target>\d+) : ℝ\) ≤ exp "
+    r"\((?P<num>\d+)/(?P<den>\d+)\) := by interval_decide$"
+)
+DUSART_LOWER_INTEGER_RE = re.compile(
+    r"^(?:· )?have [A-Za-z0-9_]+ : "
+    r"\((?P<target>\d+|\d+e\d+) : ℝ\) ≤ exp (?P<num>\d+) "
+    r":= by interval_decide$"
+)
+DUSART_PROVIDER_ROW_RE = re.compile(
+    r"⟨(?P<index>\d+),\s*(?P<num>\d+),\s*(?P<den>\d+),\s*"
+    r"(?P<target>\d+),\s*\.(?P<relation>upperLe|upperLt|lowerLe),\s*64,\s*12⟩"
+)
+FKS2_MU_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Mu.lean"
+FKS2_MU_ROWS = (
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4274, "mu_asymp_num_le",
+     "fks2", "sqrtLower", 20000, 1, 1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4282, "mu_asymp_num_le",
+     "fks2", "expUpper", 13689, 1000000, 10138790, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 24,
+     "mu_asymp_num_le_cor14", "cor14", "sqrtLower", 20000, 1,
+     1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 32,
+     "mu_asymp_num_le_cor14", "cor14", "expUpper", 13689, 1000000,
+    10138790, 10000000),
+)
+FKS2_MU_SNIPPETS = (
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+)
+FKS2_MU_PROVIDER_ROW_RE = re.compile(
+    r"⟨⟨\.(?P<file>fks2|cor14),\s*(?P<line>\d+)⟩,\s*"
+    r"\.(?P<relation>sqrtLower|expUpper),\s*(?P<input_num>\d+),\s*"
+    r"(?P<input_den>\d+),\s*(?P<target_num>\d+),\s*(?P<target_den>\d+)⟩"
+)
+PNT_EXP_UPPER_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntExpUpper.lean"
+PNT_EXP_UPPER_ROWS = (
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Floor/Cor22Floor.lean", 11,
+     "exp10_lt", "fks2Floor", "strict", 10, 0, 22027),
+    ("PrimeNumberTheoremAnd/IEANTN/Goldbach.lean", 250,
+     "kadiri_lumley_odd_goldbach_finite", "goldbach", "weak", 59, 5,
+     113250000000000000000000000),
+    ("PrimeNumberTheoremAnd/IEANTN/Goldbach.lean", 267,
+     "kadiri_lumley_odd_goldbach_finite", "goldbach", "weak", 60, 5,
+     7785131284000000000000000004),
+)
+PNT_EXP_UPPER_SNIPPETS = (
+    "theorem exp10_lt : Real.exp 10 < 22027 := by interval_decide",
+    "have : Real.exp 59 + 4 + 1 ≤ 11325 * 10 ^ 22 := by interval_decide",
+    "have : Real.exp 60 + 4 + 1 ≤ 7785131284000000000000000004 := by interval_decide",
+)
+PNT_EXP_UPPER_PROVIDER_ROW_RE = re.compile(
+    r"⟨⟨\.(?P<file>fks2Floor|goldbach),\s*(?P<line>\d+)⟩,\s*"
+    r"\.(?P<relation>strict|weak),\s*(?P<exponent>\d+),\s*"
+    r"(?P<additive>\d+),\s*(?P<target>\d+)⟩"
+)
+FKS2_NESTED_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntFks2Nested.lean"
+)
+FKS2_NESTED_PATH = "PrimeNumberTheoremAnd/IEANTN/FKS2.lean"
+FKS2_NESTED_DECLARATION = "theorem_6_2"
+FKS2_NESTED_ROW = (3605, 14, 3, 3, 11, 8, 2, 3, 1)
+FKS2_NESTED_SNIPPET = (
+    "show (0 : ℝ) < log 14 + log (log 14) - 1 from by interval_decide]"
+)
+RAMANUJAN_THETA_SOURCE = "PrimeNumberTheoremAnd/IEANTN/Ramanujan/Ramanujan.lean"
+RAMANUJAN_THETA_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntRamanujanTheta.lean"
+)
+RAMANUJAN_THETA_RANGE_ROW = (500, 3, 599, 768, 1000, 20)
+RAMANUJAN_THETA_POINT_ROW = (505, 599, 65, 1000, 20, 812, 813)
+RAMANUJAN_THETA_DECLARATIONS = {
+    "allThetaChecks_3_599": RAMANUJAN_THETA_RANGE_ROW[0],
+    "thetaCheck599": RAMANUJAN_THETA_POINT_ROW[0],
+}
+
+
+class InventoryError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class Source:
+    path: str
+    text: str
+    masked: str
+    declarations: tuple[str | None, ...]
+
+
+def mask_lean(text: str) -> str:
+    """Mask comments and string literals, preserving offsets and newlines."""
+    out = list(text)
+    i = 0
+    block_depth = 0
+    state = "code"
+    while i < len(text):
+        if block_depth:
+            if text.startswith("/-", i):
+                out[i : i + 2] = "  "
+                block_depth += 1
+                i += 2
+            elif text.startswith("-/", i):
+                out[i : i + 2] = "  "
+                block_depth -= 1
+                i += 2
+            else:
+                if text[i] != "\n":
+                    out[i] = " "
+                i += 1
+            continue
+
+        if state == "string":
+            if text[i] == "\\" and i + 1 < len(text):
+                out[i] = " "
+                if text[i + 1] != "\n":
+                    out[i + 1] = " "
+                i += 2
+            else:
+                ch = text[i]
+                if ch != "\n":
+                    out[i] = " "
+                i += 1
+                if ch == '"':
+                    state = "code"
+            continue
+
+        if text.startswith("--", i):
+            while i < len(text) and text[i] != "\n":
+                out[i] = " "
+                i += 1
+        elif text.startswith("/-", i):
+            out[i : i + 2] = "  "
+            block_depth = 1
+            i += 2
+        elif text[i] == "'":
+            end = char_literal_end(text, i)
+            if end is None:
+                i += 1
+            else:
+                for pos in range(i, end):
+                    out[pos] = " "
+                i = end
+        elif text[i] == '"':
+            out[i] = " "
+            state = "string"
+            i += 1
+        else:
+            i += 1
+    if block_depth:
+        raise InventoryError("unterminated Lean block comment")
+    if state == "string":
+        raise InventoryError("unterminated Lean string literal")
+    return "".join(out)
+
+
+def char_literal_end(text: str, start: int) -> int | None:
+    """Return the end offset of a syntactic Lean character literal, if any."""
+    if start > 0 and (text[start - 1].isalnum() or text[start - 1] in "_'"):
+        return None
+    if start + 2 < len(text) and text[start + 1] not in {"\\", "\n"} \
+            and text[start + 2] == "'":
+        return start + 3
+    if start + 3 < len(text) and text[start + 1] == "\\" \
+            and text[start + 2] != "\n":
+        # The byte immediately after the backslash is part of the escape.  In
+        # particular, it is not the closing delimiter in the literal '\\''.
+        end = start + 3
+        while end < min(len(text), start + 16) and text[end] != "\n":
+            if text[end] == "'":
+                return end + 1
+            end += 1
+    return None
+
+
+def declaration_map(masked: str) -> tuple[str | None, ...]:
+    current: str | None = None
+    result: list[str | None] = []
+    for line_no, line in enumerate(masked.splitlines(), 1):
+        match = DECL_RE.match(line)
+        if match:
+            kind = match.group("kind")
+            name = match.group("name")
+            current = name if name and kind != "example" else f"{kind}@{line_no}"
+        result.append(current)
+    return tuple(result)
+
+
+def line_col(text: str, offset: int) -> tuple[int, int]:
+    line = text.count("\n", 0, offset) + 1
+    start = text.rfind("\n", 0, offset) + 1
+    return line, offset - start + 1
+
+
+def snippet(text: str, line: int) -> str:
+    lines = text.splitlines()
+    return lines[line - 1].strip() if 0 < line <= len(lines) else ""
+
+
+def git_head(root: Path) -> str:
+    proc = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+    )
+    if proc.returncode != 0:
+        raise InventoryError(f"source is not a git checkout: {root}")
+    return proc.stdout.strip()
+
+
+def load_pins(root: Path) -> dict[str, str]:
+    manifest = json.loads((root / "lake-manifest.json").read_text(encoding="utf-8"))
+    packages = {entry["name"]: entry["rev"] for entry in manifest["packages"]}
+    return {
+        "pnt": git_head(root),
+        "leancert": packages.get("leancert", ""),
+        "mathlib": packages.get("mathlib", ""),
+        "lean_toolchain": (root / "lean-toolchain").read_text(encoding="utf-8").strip(),
+    }
+
+
+def require_pins(pins: dict[str, str]) -> None:
+    expected = {
+        "pnt": PNT_COMMIT,
+        "leancert": LEANCERT_COMMIT,
+        "mathlib": MATHLIB_COMMIT,
+        "lean_toolchain": LEAN_TOOLCHAIN,
+    }
+    if pins != expected:
+        raise InventoryError(f"upstream pins differ: expected {expected}, got {pins}")
+
+
+def load_sources(root: Path) -> list[Source]:
+    proc = subprocess.run(
+        ["git", "ls-files", "--", "*.lean"], cwd=root, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+    )
+    if proc.returncode != 0:
+        raise InventoryError(f"cannot list pinned Lean sources: {proc.stderr.strip()}")
+    paths = [root / line for line in proc.stdout.splitlines() if line]
+    if not paths:
+        raise InventoryError(f"no tracked Lean sources in {root}")
+    sources: list[Source] = []
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        masked = mask_lean(text)
+        sources.append(Source(
+            path=path.relative_to(root).as_posix(),
+            text=text,
+            masked=masked,
+            declarations=declaration_map(masked),
+        ))
+    return sources
+
+
+def fks_cell_rows(text: str) -> list[str]:
+    """Return whitespace-insensitive source cell tuples, without trailing commas."""
+    return [
+        re.sub(r"\s+", "", line).removesuffix(",")
+        for line in mask_lean(text).splitlines()
+        if FKS_CELL_RE.match(line)
+    ]
+
+
+def require_fks2_shard_match(source_text: str, provider_text: str) -> None:
+    """Require the retained provider table to equal pinned shard 11."""
+    source_rows = fks_cell_rows(source_text)
+    provider_rows = fks_cell_rows(provider_text)
+    if len(source_rows) < FKS2_PROBE_CELLS:
+        raise InventoryError(
+            f"pinned FKS2 shard 11 has only {len(source_rows)} cells"
+        )
+    if len(provider_rows) != FKS2_PROBE_CELLS:
+        raise InventoryError(
+            "local FKS2 shard must contain exactly "
+            f"{FKS2_PROBE_CELLS} cells, found {len(provider_rows)}"
+        )
+    for index, (source_row, provider_row) in enumerate(
+            zip(source_rows[:FKS2_PROBE_CELLS], provider_rows, strict=True)):
+        if source_row != provider_row:
+            raise InventoryError(
+                f"local FKS2 shard differs from pinned shard 11 at cell {index}"
+            )
+
+
+def require_fks2_probe_match(source_root: Path) -> None:
+    source_path = source_root / FKS2_PROBE_SOURCE
+    require_fks2_shard_match(
+        source_path.read_text(encoding="utf-8"),
+        FKS2_PROBE_PROVIDER.read_text(encoding="utf-8"),
+    )
+
+
+def fks_rows_digest(rows: list[str]) -> str:
+    """Hash the exact normalized tuple stream used by the generated provider."""
+    return hashlib.sha256(("\n".join(rows) + "\n").encode()).hexdigest()
+
+
+def require_fks2_family_match(source_root: Path) -> None:
+    """Require every generated shard and digest to match the pinned family."""
+    records_text = FKS2_FAMILY_PROVIDER.read_text(encoding="utf-8")
+    records = {
+        int(match.group("shard")): (
+            int(match.group("cells")), match.group("digest")
+        )
+        for match in FKS2_DIGEST_RE.finditer(records_text)
+    }
+    if len(records) != len(FKS2_SHARD_COUNTS):
+        raise InventoryError(
+            f"local FKS2 family must record 14 shard digests, found {len(records)}"
+        )
+    for shard, expected_count in enumerate(FKS2_SHARD_COUNTS):
+        source_path = source_root / (
+            "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/"
+            f"Table4ExtData_{shard:02}.lean"
+        )
+        provider_path = (
+            FKS2_PROBE_PROVIDER if shard == 11 else
+            FKS2_FAMILY_DATA / f"PntFks2FamilyData{shard:02}.lean"
+        )
+        source_rows = fks_cell_rows(source_path.read_text(encoding="utf-8"))
+        provider_rows = fks_cell_rows(provider_path.read_text(encoding="utf-8"))
+        if len(source_rows) != expected_count or len(provider_rows) != expected_count:
+            raise InventoryError(
+                f"FKS2 shard {shard:02} count mismatch: source {len(source_rows)}, "
+                f"provider {len(provider_rows)}, expected {expected_count}"
+            )
+        for index, (source_row, provider_row) in enumerate(
+                zip(source_rows, provider_rows, strict=True)):
+            if source_row != provider_row:
+                raise InventoryError(
+                    f"local FKS2 family differs from pinned shard {shard:02} "
+                    f"at cell {index}"
+                )
+        recorded_count, recorded_digest = records[shard]
+        expected_digest = fks_rows_digest(source_rows)
+        if recorded_count != expected_count or recorded_digest != expected_digest:
+            raise InventoryError(
+                f"local FKS2 shard {shard:02} digest record does not match source"
+            )
+
+
+def fks2_structure_migration() -> dict[str, Any]:
+    return {
+        "status": "accepted-after-rewrite",
+        "note": (
+            "Seven source-pinned prefix certificates replace all 21 pure list-geometry "
+            "native leaves: chain, nonemptiness, and final coordinate for six Corollary "
+            "24 prefixes and the complete extended Table 4 family. Prefix lengths are "
+            "byte-pinned audited literal mappings, not values derived from source syntax "
+            "by the matcher. Analytic cell and slab predicates remain separate pending "
+            "obligations."
+        ),
+        "rewrite": (
+            "Replace each chainOk, nonempty, or lastB native_decide leaf by the matching "
+            "field of the package-owned Prefix Holds certificate over the exact copied "
+            "allCells table."
+        ),
+        "evidence": [
+            "HexInterval/Experiment/PntFks2Structure.lean:prefixes_checked",
+            "HexInterval/Experiment/PntFks2Structure.lean:certificateHolds",
+            "HexInterval/Experiment/PntFks2Structure.lean:firstFailure?",
+            "conformance/HexIntervalMathlib/PntFks2StructureConformance.lean:fullFamily",
+            "scripts/maintenance/pnt_inventory.py:require_fks2_structure_match",
+        ],
+    }
+
+
+def require_fks2_structure_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate 21 structural leaves with seven audited literal prefixes.
+
+    The source identities and all local literals are exact.  This matcher does
+    not derive prefix lengths from the syntax of the pinned upstream files.
+    """
+    expected_sites = tuple((path, line, declaration)
+                           for path, line, declaration, _, _
+                           in FKS2_STRUCTURE_SOURCE_ROWS)
+    expected_set = set(expected_sites)
+    matches = [
+        record for record in records
+        if record.get("kind") == "native-decide-occurrence"
+        and record.get("mechanism") == "native_decide"
+        and (record.get("path"), record.get("line"), record.get("declaration"))
+        in expected_set
+    ]
+    observed_sites = tuple(
+        (record.get("path"), record.get("line"), record.get("declaration"))
+        for record in matches
+    )
+    if len(observed_sites) != len(expected_sites) \
+            or set(observed_sites) != expected_set:
+        raise InventoryError(
+            f"FKS2 structure sites differ: {sorted(observed_sites)} != "
+            f"{sorted(expected_sites)}"
+        )
+    if len(set(observed_sites)) != len(observed_sites):
+        raise InventoryError("duplicate FKS2 structure source site")
+
+    if provider_text is None:
+        provider_text = FKS2_STRUCTURE_PROVIDER.read_text(encoding="utf-8")
+    prefix_marker = provider_text.find("def prefixes : List Prefix := [")
+    files_marker = provider_text.find("def certificateFiles : List SourceFile := [")
+    source_marker = provider_text.find("def sourceRows : List SourceRow := [")
+    if prefix_marker < 0 or files_marker < 0 or source_marker < 0 \
+            or not prefix_marker < files_marker < source_marker:
+        raise InventoryError("cannot locate local FKS2 structure tables")
+    prefix_text = provider_text[prefix_marker:files_marker]
+    files_text = provider_text[files_marker:source_marker]
+    source_text = provider_text[source_marker:]
+    provider_prefixes = tuple(
+        tuple(map(int, match.groups()))
+        for match in FKS2_STRUCTURE_PREFIX_RE.finditer(prefix_text)
+    )
+    if provider_prefixes != FKS2_STRUCTURE_PREFIX_ROWS:
+        raise InventoryError(
+            f"local FKS2 structure prefixes differ: {provider_prefixes}"
+        )
+    provider_files = tuple(
+        match.group("file")
+        for match in FKS2_STRUCTURE_CERTIFICATE_FILE_RE.finditer(files_text)
+    )
+    if provider_files != FKS2_STRUCTURE_CERTIFICATE_FILES:
+        raise InventoryError(
+            f"local FKS2 structure certificateFiles differ: {provider_files}"
+        )
+    provider_rows = []
+    for match in FKS2_STRUCTURE_SOURCE_RE.finditer(source_text):
+        file_key, line, declaration, fact, certificate = match.groups()
+        path = FKS2_STRUCTURE_FILE_PATHS.get(file_key)
+        if path is None:
+            raise InventoryError(f"unknown local FKS2 structure file tag {file_key}")
+        provider_rows.append((path, int(line), declaration, fact, int(certificate)))
+    if tuple(provider_rows) != FKS2_STRUCTURE_SOURCE_ROWS:
+        raise InventoryError(
+            f"local FKS2 structure sourceRows differ: {tuple(provider_rows)}"
+        )
+    for certificate, file_key in enumerate(FKS2_STRUCTURE_CERTIFICATE_FILES):
+        expected_path = FKS2_STRUCTURE_FILE_PATHS[file_key]
+        row_paths = {
+            path for path, _, _, _, row_certificate in provider_rows
+            if row_certificate == certificate
+        }
+        if row_paths != {expected_path}:
+            raise InventoryError(
+                "local FKS2 structure certificate/source mapping differs: "
+                f"certificate {certificate} has {sorted(row_paths)}"
+            )
+
+
+def apply_fks2_structure_migrations(records: list[dict[str, Any]]) -> None:
+    expected = set((path, line, declaration)
+                   for path, line, declaration, _, _
+                   in FKS2_STRUCTURE_SOURCE_ROWS)
+    for record in records:
+        identity = (record.get("path"), record.get("line"),
+                    record.get("declaration"))
+        if record.get("kind") == "native-decide-occurrence" \
+                and identity in expected:
+            record["migration"] = fks2_structure_migration()
+
+
+def require_fks2_structure_migrations(records: list[dict[str, Any]]) -> None:
+    expected = set((path, line, declaration)
+                   for path, line, declaration, _, _
+                   in FKS2_STRUCTURE_SOURCE_ROWS)
+    matches = [record for record in records
+               if record.get("kind") == "native-decide-occurrence"
+               and (record.get("path"), record.get("line"),
+                    record.get("declaration")) in expected]
+    migration = fks2_structure_migration()
+    if len(matches) != len(expected) or any(
+        record.get("migration") != migration for record in matches
+    ):
+        raise InventoryError("FKS2 structure migration classifications differ")
+
+
+def fks2_xpow_migration() -> dict[str, Any]:
+    return {
+        "status": "accepted-after-rewrite",
+        "note": (
+            "One source-pinned rational Taylor provider replaces the 13 Corollary "
+            "24 inverse-power native leaves. Six disjoint bands authenticate all "
+            "3,746 cells once; monotonicity reconstructs the six nested prefixes. "
+            "A strict lower Taylor witness proves the actual analytic failure at "
+            "each boundary, stronger than failure of the upstream dyadic checker. "
+            "This is a semantic replacement, not a proof of the original Boolean "
+            "equalities. Inspection of the pinned source shows that downstream uses "
+            "of the six true prefix folds pass only through mid_xpow_of, which "
+            "extracts a per-cell check and consumes it through checkXpowCell_sound; "
+            "the sample and false-boundary declarations have no downstream uses."
+        ),
+        "rewrite": (
+            "Replace each source all/checkXpowCell Boolean theorem by the matching "
+            "XpowHolds membership theorem, and each false boundary fold by the "
+            "matching not-XpowHolds theorem, over the exact copied allCells data."
+        ),
+        "numeric_provider": (
+            "Exact rational reduction b'/(128*n), degree-11 Taylor sum with a "
+            "degree-12 upper remainder, 128th power by seven squarings, and ordinary "
+            "Mathlib exponential remainder semantics"
+        ),
+        "evidence": [
+            "HexInterval/Experiment/PntFks2Xpow.lean:sourceRows",
+            "HexIntervalMathlib/Experiment/PntFks2Xpow.lean:xpowHolds_of_upperValid",
+            "HexIntervalMathlib/Experiment/PntFks2Xpow.lean:not_xpowHolds_of_lowerValid",
+            "HexIntervalMathlib/Experiment/PntFks2XpowResults.lean:row11_prefix",
+            "HexIntervalMathlib/Experiment/PntFks2XpowResults.lean:row11_sample",
+            "conformance/HexIntervalMathlib/PntFks2XpowConformance.lean:fullPrefix",
+            "scripts/maintenance/pnt_inventory.py:require_fks2_xpow_match",
+            "scripts/maintenance/pnt_inventory.py:require_fks2_xpow_source_match",
+        ],
+    }
+
+
+def require_fks2_xpow_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate the 13 xpow leaves with exact local prefixes and bands."""
+    expected_sites = tuple((path, line, declaration)
+                           for path, line, declaration, _, _
+                           in FKS2_XPOW_SOURCE_ROWS)
+    expected_set = set(expected_sites)
+    observed = [
+        (record.get("path"), record.get("line"), record.get("declaration"))
+        for record in records
+        if record.get("kind") == "native-decide-occurrence"
+        and record.get("mechanism") == "native_decide"
+        and (record.get("path"), record.get("line"), record.get("declaration"))
+        in expected_set
+    ]
+    if len(observed) != len(expected_sites) or set(observed) != expected_set:
+        raise InventoryError(
+            f"FKS2 xpow sites differ: {sorted(observed)} != {sorted(expected_sites)}"
+        )
+    if len(set(observed)) != len(observed):
+        raise InventoryError("duplicate FKS2 xpow source site")
+
+    if provider_text is None:
+        provider_text = FKS2_XPOW_PROVIDER.read_text(encoding="utf-8")
+    prefixes_marker = provider_text.find("def prefixes : List Prefix := [")
+    bands_marker = provider_text.find("def bands : List Band := [")
+    rows_marker = provider_text.find("def sourceRows : List SourceRow := [")
+    if prefixes_marker < 0 or bands_marker < 0 or rows_marker < 0 \
+            or not prefixes_marker < bands_marker < rows_marker:
+        raise InventoryError("cannot locate local FKS2 xpow tables")
+    prefixes_text = provider_text[prefixes_marker:bands_marker]
+    bands_text = provider_text[bands_marker:rows_marker]
+    rows_text = provider_text[rows_marker:]
+    provider_prefixes = tuple(
+        (match.group("file"), int(match.group("n")),
+         int(match.group("cells")), int(match.group("boundary")))
+        for match in FKS2_XPOW_PREFIX_RE.finditer(prefixes_text)
+    )
+    if provider_prefixes != FKS2_XPOW_PREFIX_ROWS:
+        raise InventoryError(f"local FKS2 xpow prefixes differ: {provider_prefixes}")
+    provider_bands = tuple(
+        tuple(map(int, match.groups()))
+        for match in FKS2_XPOW_BAND_RE.finditer(bands_text)
+    )
+    if provider_bands != FKS2_XPOW_BANDS:
+        raise InventoryError(f"local FKS2 xpow bands differ: {provider_bands}")
+    provider_rows = []
+    for match in FKS2_XPOW_SOURCE_RE.finditer(rows_text):
+        file_key, line, declaration, fact, certificate = match.groups()
+        provider_rows.append((FKS2_XPOW_FILE_PATHS[file_key], int(line),
+                              declaration, fact, int(certificate)))
+    if tuple(provider_rows) != FKS2_XPOW_SOURCE_ROWS:
+        raise InventoryError(f"local FKS2 xpow sourceRows differ: {provider_rows}")
+
+
+def require_fks2_xpow_source_match(source_root: Path) -> None:
+    """Pin the exact upstream Bool theorem and semantic result shapes."""
+    source_text = {
+        key: (source_root / path).read_text(encoding="utf-8")
+        for key, path in FKS2_XPOW_FILE_PATHS.items()
+    }
+    normalized = {
+        key: " ".join(text.split()) for key, text in source_text.items()
+    }
+    row11_lines = source_text["row11"].splitlines()
+    if len(row11_lines) < FKS2_XPOW_SAMPLE_DEF_LINE or row11_lines[
+        FKS2_XPOW_SAMPLE_DEF_LINE - 1
+    ].strip() != FKS2_XPOW_SAMPLE_DEF:
+        raise InventoryError("pinned FKS2 xpow sample definition shape differs")
+    semantic_header = (
+        "theorem checkXpowCell_sound (n : ℕ) (hn : 0 < n) (c : Cell) "
+        "(hc : checkXpowCell n c = true) : (c.eps : ℝ) ≤ "
+        "Real.exp (-(c.b' : ℝ) / n) := by"
+    )
+    if semantic_header not in normalized["row11"]:
+        raise InventoryError("pinned checkXpowCell_sound result shape differs")
+    for file_key, n, cells, _boundary in FKS2_XPOW_PREFIX_ROWS:
+        suffix = "" if file_key == "row11" else f"_row{file_key[3:]}"
+        declaration = f"allCells_take_checkXpow{suffix}"
+        snippet = (
+            f"theorem {declaration} : (allCells.take {cells}).all "
+            f"(fun c => checkXpowCell {n} c) = true := by native_decide"
+        )
+        if snippet not in normalized[file_key]:
+            raise InventoryError(f"pinned FKS2 xpow prefix shape differs: {declaration}")
+        if f"{declaration} x hmem" not in normalized[file_key]:
+            raise InventoryError(
+                f"pinned FKS2 xpow prefix consumer differs: {declaration}"
+            )
+        boundary_name = f"boundaryCell_fails{suffix}"
+        boundary_snippet = (
+            f"theorem {boundary_name} : ((allCells.drop {cells}).take 1).all "
+            f"(fun c => checkXpowCell {n} c) = false := by native_decide"
+        )
+        if boundary_snippet not in normalized[file_key]:
+            raise InventoryError(
+                f"pinned FKS2 xpow boundary shape differs: {boundary_name}"
+            )
+    sample_theorem = (
+        "theorem sampleCells_checkXpow : sampleCells.all "
+        "(fun c => checkXpowCell 100 c) = true := by native_decide"
+    )
+    if sample_theorem not in normalized["row11"]:
+        raise InventoryError("pinned FKS2 xpow sample shape differs")
+    downstream_bridge = (
+        "have hck : checkXpowCell n c = true := "
+        "List.all_eq_true.mp hall c hcmem exact cell_Epi_le_xpow_of_check "
+        "n hn c hck"
+    )
+    sound_use = (
+        "cell_Epi_le_xpow n hn c hrow "
+        "(checkXpowCell_sound n hn c hc)"
+    )
+    if downstream_bridge not in normalized["row11"] or sound_use not in normalized["row11"]:
+        raise InventoryError("pinned FKS2 xpow semantic consumer bridge differs")
+
+
+def apply_fks2_xpow_migrations(records: list[dict[str, Any]]) -> None:
+    expected = {(path, line, declaration)
+                for path, line, declaration, _, _ in FKS2_XPOW_SOURCE_ROWS}
+    for record in records:
+        identity = (record.get("path"), record.get("line"),
+                    record.get("declaration"))
+        if record.get("kind") == "native-decide-occurrence" and identity in expected:
+            record["migration"] = fks2_xpow_migration()
+
+
+def require_fks2_xpow_migrations(records: list[dict[str, Any]]) -> None:
+    expected = {(path, line, declaration)
+                for path, line, declaration, _, _ in FKS2_XPOW_SOURCE_ROWS}
+    matches = [record for record in records
+               if record.get("kind") == "native-decide-occurrence"
+               and (record.get("path"), record.get("line"),
+                    record.get("declaration")) in expected]
+    migration = fks2_xpow_migration()
+    if len(matches) != len(expected) or any(
+        record.get("migration") != migration for record in matches
+    ):
+        raise InventoryError("FKS2 xpow migration classifications differ")
+
+
+def small_prime_provider_rows(provider_text: str) -> tuple[list[tuple[int, int]],
+                                                            list[tuple[int, int]]]:
+    """Read the literal ``sourceRows`` and ``sourceCut`` tables."""
+    rows_match = re.search(
+        r"\bdef\s+sourceRows\s*:\s*Array\s*\(Nat\s*×\s*Nat\)\s*:=\s*#\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if rows_match is None:
+        raise InventoryError("cannot locate the local small-prime sourceRows table")
+    row_pairs = [
+        (int(match.group(1)), int(match.group(2)))
+        for match in re.finditer(r"\((\d+)\s*,\s*(\d+)\)", rows_match.group("body"))
+    ]
+
+    cut_match = re.search(
+        r"\bdef\s+sourceCut\s*:\s*Nat\s*→\s*Nat(?P<body>.*?)"
+        r"\bdef\s+sourceRows\b",
+        provider_text,
+        re.DOTALL,
+    )
+    if cut_match is None:
+        raise InventoryError("cannot locate the local small-prime sourceCut table")
+    cut_pairs = [
+        (int(match.group(1)), int(match.group(2)))
+        for match in re.finditer(
+            r"^\s*\|\s*(\d+)\s*=>\s*(\d+)\s*$",
+            cut_match.group("body"), re.MULTILINE,
+        )
+    ]
+    if not re.search(
+        r"^\s*\|\s*_\s*=>\s*0\s*$", cut_match.group("body"), re.MULTILINE,
+    ):
+        raise InventoryError("local small-prime sourceCut lacks its zero default")
+    return row_pairs, cut_pairs
+
+
+def require_small_prime_log_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate all sixty committed snippets with both local source tables."""
+    families: dict[str, list[tuple[int, int]]] = {
+        path: [] for path in SMALL_PRIME_FAMILIES
+    }
+    for record in records:
+        path = record.get("path")
+        if path not in SMALL_PRIME_FAMILIES or record.get("kind") != "tactic-occurrence" \
+                or record.get("tactic") != "interval_auto" or not record.get("actual"):
+            continue
+        helper, declaration = SMALL_PRIME_FAMILIES[path]
+        if record.get("declaration") != declaration:
+            raise InventoryError(
+                f"small-prime source evidence in {path} has declaration "
+                f"{record.get('declaration')!r}, expected {declaration!r}"
+            )
+        match = SMALL_PRIME_SNIPPET_RE.search(record.get("snippet", ""))
+        if match is None:
+            raise InventoryError(
+                f"cannot parse small-prime source snippet at {path}:{record.get('line')}"
+            )
+        n = int(match.group("n"))
+        cut = int(match.group("cut"))
+        if match.group("helper") != helper:
+            raise InventoryError(f"wrong small-prime helper at {path}:{record.get('line')}")
+        if int(match.group("count_cut")) != cut or int(match.group("count")) != n - 1:
+            raise InventoryError(
+                f"small-prime counting evidence disagrees at {path}:{record.get('line')}"
+            )
+        families[path].append((n, cut))
+
+    expected_coordinates: list[tuple[int, int]] | None = None
+    for path, coordinates in families.items():
+        if len(coordinates) != 30:
+            raise InventoryError(
+                f"small-prime family {path} must contain 30 coordinates, "
+                f"found {len(coordinates)}"
+            )
+        if len(set(coordinates)) != len(coordinates):
+            raise InventoryError(f"duplicate small-prime coordinate in {path}")
+        if expected_coordinates is None:
+            expected_coordinates = coordinates
+        elif coordinates != expected_coordinates:
+            raise InventoryError("the two small-prime theorem families have different coordinates")
+
+    assert expected_coordinates is not None
+    if provider_text is None:
+        provider_text = SMALL_PRIME_PROVIDER.read_text(encoding="utf-8")
+    source_rows, source_cut = small_prime_provider_rows(provider_text)
+    for name, coordinates in (("sourceRows", source_rows), ("sourceCut", source_cut)):
+        if len(set(coordinates)) != len(coordinates):
+            raise InventoryError(f"duplicate coordinate in local small-prime {name}")
+        if coordinates != expected_coordinates:
+            raise InventoryError(
+                f"local small-prime {name} differs from the committed source snippets"
+            )
+
+
+def require_dusart_exp_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie all eight committed Dusart sites to seven rows plus one replacement."""
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence"
+        and row.get("actual")
+        and row.get("path") == "PrimeNumberTheoremAnd/IEANTN/Dusart.lean"
+    ]
+    expected_values = tuple(row[3:] for row in DUSART_ROWS) + (DUSART_REPLACEMENT[2:],)
+    expected_sites = tuple((line, declaration) for line, declaration, *_ in DUSART_ROWS) + (
+        DUSART_REPLACEMENT[:2],
+    )
+    observed = tuple((row.get("line"), row.get("declaration")) for row in source_records)
+    if len(set(observed)) != len(observed):
+        raise InventoryError("duplicate Dusart exponential source coordinate")
+    if observed != expected_sites:
+        raise InventoryError(
+            f"Dusart exponential sites differ: {observed} != {expected_sites}"
+        )
+    if provider_text is None:
+        provider_text = DUSART_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (int(match.group("index")), int(match.group("num")),
+         int(match.group("den")), int(match.group("target")),
+         match.group("relation"))
+        for match in DUSART_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    parsed_values = tuple(_parse_dusart_snippet(row.get("snippet", "")) for row in source_records)
+    if parsed_values != expected_values:
+        raise InventoryError(
+            f"Dusart exponential snippets differ: {parsed_values} != {expected_values}"
+        )
+    replacement = source_records[-1].get("migration", {})
+    if replacement.get("status") != "replaced-by-stronger-result" or \
+            replacement.get("replacement") != DUSART_REPLACEMENT_NAME:
+        raise InventoryError("Dusart exp 22 site lacks its explicit stronger replacement")
+    expected_rows = tuple(row[2:] for row in DUSART_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local Dusart sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def _scientific_value(value: str) -> int:
+    if "e" not in value:
+        return int(value)
+    coefficient, exponent = value.split("e", maxsplit=1)
+    return int(coefficient) * 10 ** int(exponent)
+
+
+def _parse_dusart_snippet(snippet: str) -> tuple[int, int, int, str]:
+    # This invocation text contains no numeric goal. Byte-pin its exact context
+    # and correlate it with the separately audited expected provider row.
+    if snippet == DUSART_CONTEXT_SNIPPET:
+        return (10, 1, 4000000000000000000, "upperLt")
+    match = DUSART_UPPER_RE.fullmatch(snippet)
+    if match:
+        target = int(match.group("coefficient")) * 10 ** int(match.group("exponent"))
+        return (int(match.group("num")), 1, target, "upperLe")
+    match = DUSART_LOWER_RATIONAL_RE.fullmatch(snippet)
+    if match:
+        return (int(match.group("num")), int(match.group("den")),
+                int(match.group("target")), "lowerLe")
+    match = DUSART_LOWER_INTEGER_RE.fullmatch(snippet)
+    if match:
+        return (int(match.group("num")), 1,
+                _scientific_value(match.group("target")), "lowerLe")
+    raise InventoryError(f"unrecognized Dusart exponential snippet: {snippet!r}")
+
+
+def require_fks2_mu_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie both mu-asymptotic numerical pairs to the local certificate rows."""
+    expected_sites = tuple(row[:3] for row in FKS2_MU_ROWS)
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence" and row.get("actual")
+        and (row.get("path"), row.get("line"), row.get("declaration"))
+        in expected_sites
+    ]
+    observed_sites = tuple(
+        (row.get("path"), row.get("line"), row.get("declaration"))
+        for row in source_records
+    )
+    if observed_sites != expected_sites:
+        raise InventoryError(
+            f"FKS2 mu sites differ: {observed_sites} != {expected_sites}"
+        )
+    observed_snippets = tuple(row.get("snippet") for row in source_records)
+    if observed_snippets != FKS2_MU_SNIPPETS:
+        raise InventoryError(
+            f"FKS2 mu snippets differ: {observed_snippets} != {FKS2_MU_SNIPPETS}"
+        )
+    if provider_text is None:
+        provider_text = FKS2_MU_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (match.group("file"), int(match.group("line")), match.group("relation"),
+         int(match.group("input_num")), int(match.group("input_den")),
+         int(match.group("target_num")), int(match.group("target_den")))
+        for match in FKS2_MU_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple((row[3], row[1], *row[4:]) for row in FKS2_MU_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local FKS2 mu sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def require_pnt_exp_upper_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie all three positive-exp snippets to the shared certificate table."""
+    expected_sites = tuple(row[:3] for row in PNT_EXP_UPPER_ROWS)
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence" and row.get("actual")
+        and (row.get("path"), row.get("line"), row.get("declaration"))
+        in expected_sites
+    ]
+    observed_sites = tuple(
+        (row.get("path"), row.get("line"), row.get("declaration"))
+        for row in source_records
+    )
+    if len(set(observed_sites)) != len(observed_sites):
+        raise InventoryError("duplicate positive-exp source coordinate")
+    if observed_sites != expected_sites:
+        raise InventoryError(
+            f"positive-exp sites differ: {observed_sites} != {expected_sites}"
+        )
+    observed_snippets = tuple(row.get("snippet") for row in source_records)
+    if observed_snippets != PNT_EXP_UPPER_SNIPPETS:
+        raise InventoryError(
+            "positive-exp snippets differ: "
+            f"{observed_snippets} != {PNT_EXP_UPPER_SNIPPETS}"
+        )
+    if provider_text is None:
+        provider_text = PNT_EXP_UPPER_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (match.group("file"), int(match.group("line")), match.group("relation"),
+         int(match.group("exponent")), int(match.group("additive")),
+         int(match.group("target")))
+        for match in PNT_EXP_UPPER_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple((row[3], row[1], *row[4:]) for row in PNT_EXP_UPPER_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local positive-exp sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def fks2_nested_provider_row(provider_text: str) -> tuple[int, ...]:
+    """Read the literal source row for the theorem-6.2 nested-log premise."""
+    table = re.search(
+        r"\bdef\s+sourceRows\s*:\s*List\s+Certificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if table is None:
+        raise InventoryError("cannot locate the local FKS2 nested sourceRows table")
+    row = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<input>\d+),\s*(?P<shift>\d+),\s*"
+        r"(?P<x_num>\d+),\s*(?P<x_den>\d+),\s*(?P<terms>\d+),\s*"
+        r"(?P<lower>\d+),\s*(?P<upper>\d+),\s*(?P<threshold>\d+)⟩\s*",
+        table.group("body"),
+    )
+    if row is None:
+        raise InventoryError("cannot parse the local FKS2 nested source row")
+    return tuple(int(row.group(name)) for name in (
+        "line", "input", "shift", "x_num", "x_den", "terms", "lower",
+        "upper", "threshold",
+    ))
+
+
+def require_fks2_nested_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie the pinned theorem-6.2 snippet to its fixed local certificate."""
+    matches = [
+        record for record in records
+        if record.get("path") == FKS2_NESTED_PATH
+        and record.get("kind") == "tactic-occurrence"
+        and record.get("tactic") == "interval_decide"
+        and record.get("actual")
+        and record.get("declaration") == FKS2_NESTED_DECLARATION
+    ]
+    if len(matches) != 1:
+        raise InventoryError(
+            f"expected one FKS2 nested-log source site, found {len(matches)}"
+        )
+    record = matches[0]
+    if record.get("line") != FKS2_NESTED_ROW[0] \
+            or record.get("snippet") != FKS2_NESTED_SNIPPET:
+        raise InventoryError("committed FKS2 nested-log snippet differs from pinned source")
+    if provider_text is None:
+        provider_text = FKS2_NESTED_PROVIDER.read_text(encoding="utf-8")
+    if fks2_nested_provider_row(provider_text) != FKS2_NESTED_ROW:
+        raise InventoryError(
+            "local FKS2 nested sourceRows differs from the committed source snippet"
+        )
+
+
+def ramanujan_theta_provider_rows(
+    provider_text: str,
+) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """Read the exact range and point rows from the local provider."""
+    range_table = re.search(
+        r"\bdef\s+rangeRows\s*:\s*List\s+RangeCertificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    point_table = re.search(
+        r"\bdef\s+sourceRows\s*:\s*List\s+Certificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if range_table is None or point_table is None:
+        raise InventoryError("cannot locate both local Ramanujan theta source tables")
+    range_match = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<start>\d+),\s*(?P<limit>\d+),\s*"
+        r"(?P<numerator>\d+),\s*(?P<denominator>\d+),\s*"
+        r"(?P<precision>\d+)⟩\s*",
+        range_table.group("body"),
+    )
+    point_match = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<input>\d+),\s*"
+        r"(?P<numerator>\d+),\s*(?P<denominator>\d+),\s*"
+        r"(?P<precision>\d+),\s*(?P<lower>\d+),\s*(?P<upper>\d+)⟩\s*",
+        point_table.group("body"),
+    )
+    if range_match is None or point_match is None:
+        raise InventoryError("cannot parse the local Ramanujan theta source tables")
+    return (
+        tuple(map(int, range_match.groups())),
+        tuple(map(int, point_match.groups())),
+    )
+
+
+def require_ramanujan_theta_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate both pinned Ramanujan native leaves with local literal rows."""
+    matches = [
+        record for record in records
+        if record.get("path") == RAMANUJAN_THETA_SOURCE
+        and record.get("kind") == "native-decide-occurrence"
+        and record.get("mechanism") == "native_decide"
+        and record.get("declaration") in RAMANUJAN_THETA_DECLARATIONS
+    ]
+    if len(matches) != 2:
+        raise InventoryError(
+            f"expected two Ramanujan theta native leaves, found {len(matches)}"
+        )
+    declarations = [record["declaration"] for record in matches]
+    if len(set(declarations)) != 2:
+        raise InventoryError("duplicate Ramanujan theta native declaration")
+    for record in matches:
+        expected_line = RAMANUJAN_THETA_DECLARATIONS[record["declaration"]]
+        if record.get("line") != expected_line:
+            raise InventoryError(
+                f"Ramanujan theta source coordinate differs for {record['declaration']}"
+            )
+    if provider_text is None:
+        provider_text = RAMANUJAN_THETA_PROVIDER.read_text(encoding="utf-8")
+    range_row, point_row = ramanujan_theta_provider_rows(provider_text)
+    if range_row != RAMANUJAN_THETA_RANGE_ROW:
+        raise InventoryError(
+            f"local Ramanujan theta rangeRows differs: {range_row}"
+        )
+    if point_row != RAMANUJAN_THETA_POINT_ROW:
+        raise InventoryError(
+            f"local Ramanujan theta sourceRows differs: {point_row}"
+        )
+
+
+def source_digest(sources: Iterable[Source]) -> str:
+    digest = hashlib.sha256()
+    for source in sources:
+        digest.update(source.path.encode())
+        digest.update(b"\0")
+        digest.update(source.text.encode())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def classification() -> dict[str, str]:
+    return {
+        "status": "pending",
+        "note": "D8 migration decision not yet assigned",
+    }
+
+
+def inventory_only() -> dict[str, str]:
+    return {
+        "status": "inventory-only",
+        "note": "lexical audit evidence subsumed by imported-interface classification",
+    }
+
+
+def occurrence_record(source: Source, token: str, match: re.Match[str],
+                      actual: bool) -> dict[str, Any]:
+    line, column = line_col(source.text, match.start())
+    declaration = (
+        source.declarations[line - 1]
+        if actual and line <= len(source.declarations) else None
+    )
+    return {
+        "kind": "tactic-occurrence",
+        "tactic": token,
+        "actual": actual,
+        "path": source.path,
+        "line": line,
+        "column": column,
+        "declaration": declaration,
+        "snippet": snippet(source.text, line),
+        "migration": classification() if actual else {"status": "not-a-call"},
+    }
+
+
+def tactic_records(sources: Iterable[Source]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for source in sources:
+        for token in ("interval_decide", "interval_auto"):
+            actual_offsets = {m.start() for m in TOKEN_RE[token].finditer(source.masked)}
+            for match in TOKEN_RE[token].finditer(source.text):
+                records.append(occurrence_record(
+                    source, token, match, match.start() in actual_offsets,
+                ))
+    return records
+
+
+def import_records(sources: Iterable[Source]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for source in sources:
+        for line_no, line in enumerate(source.masked.splitlines(), 1):
+            match = IMPORT_RE.match(line)
+            if match:
+                records.append({
+                    "kind": "leancert-import",
+                    "module": match.group(1),
+                    "path": source.path,
+                    "line": line_no,
+                    "migration": classification(),
+                })
+    return records
+
+
+def dependency_records(imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Record audited public interfaces without pretending to name-resolve Lean.
+
+    Qualified symbol occurrences are recorded separately.  Uses after ``open``
+    cannot be resolved reliably by a lexer, so the durable obligation here is
+    the imported interface family and its load-bearing role.  Migration work
+    later classifies the exact replacement theorem(s).
+    """
+    imported = {row["module"] for row in imports}
+    expected = set(DEPENDENCY_INTERFACES)
+    if imported != expected:
+        raise InventoryError(
+            f"LeanCert import surface drifted: expected {sorted(expected)}, "
+            f"got {sorted(imported)}"
+        )
+    result = []
+    for module, (role, workload) in DEPENDENCY_INTERFACES.items():
+        sites = [
+            {"path": row["path"], "line": row["line"]}
+            for row in imports if row["module"] == module
+        ]
+        result.append({
+            "kind": "dependency-interface",
+            "module": module,
+            "role": role,
+            "workload": workload,
+            "import_sites": sites,
+            "migration": classification(),
+        })
+    return result
+
+
+def reference_records(sources: Iterable[Source], *, audited: bool = True) \
+        -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for source in sources:
+        import_lines = {
+            index for index, line in enumerate(source.masked.splitlines(), 1)
+            if IMPORT_RE.match(line)
+        }
+        for match in LEANCERT_REF_RE.finditer(source.masked):
+            line, column = line_col(source.masked, match.start())
+            if line in import_lines:
+                continue
+            try:
+                provenance = reference_interfaces(match.group(0))
+            except InventoryError:
+                if audited:
+                    raise
+                provenance = []
+            records.append({
+                "kind": "leancert-reference",
+                "symbol": match.group(0),
+                "path": source.path,
+                "line": line,
+                "column": column,
+                "declaration": source.declarations[line - 1],
+                "interface_provenance": provenance,
+                "migration": inventory_only(),
+            })
+    return records
+
+
+def reference_interfaces(symbol: str) -> list[str]:
+    matches = [
+        (prefix, interfaces) for prefix, interfaces in REFERENCE_PROVENANCE.items()
+        if symbol == prefix or symbol.startswith(prefix + ".")
+    ]
+    if not matches:
+        raise InventoryError(f"qualified reference lacks interface provenance: {symbol}")
+    _, interfaces = max(matches, key=lambda item: len(item[0]))
+    unknown = set(interfaces) - set(DEPENDENCY_INTERFACES)
+    if unknown:
+        raise InventoryError(f"reference provenance names unknown interfaces: {sorted(unknown)}")
+    return list(interfaces)
+
+
+def native_records(sources: Iterable[Source]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for source in sources:
+        for match in TOKEN_RE["native_decide"].finditer(source.masked):
+            line, column = line_col(source.masked, match.start())
+            records.append({
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": source.path,
+                "line": line,
+                "column": column,
+                "declaration": source.declarations[line - 1],
+                "migration": classification(),
+            })
+    return records
+
+
+def table_rows(masked: str, definition: str) -> list[str]:
+    """Return the top-level tuple rows of one masked Lean list definition."""
+    marker = re.compile(
+        rf"\bnoncomputable\s+def\s+{re.escape(definition)}(?![A-Za-z0-9_'])"
+    )
+    matches = list(marker.finditer(masked))
+    if len(matches) != 1:
+        raise InventoryError(
+            f"expected one pinned {definition} list definition, found {len(matches)}"
+        )
+    try:
+        start = matches[0].start()
+        assign = masked.index(":=", matches[0].end())
+        opening = masked.index("[", assign + 2)
+    except ValueError as exc:
+        raise InventoryError(f"cannot locate the pinned {definition} list") from exc
+
+    bracket_depth = 1
+    paren_depth = 0
+    row_start: int | None = None
+    rows: list[str] = []
+    index = opening + 1
+    while index < len(masked) and bracket_depth:
+        char = masked[index]
+        if char == "[":
+            bracket_depth += 1
+        elif char == "]":
+            bracket_depth -= 1
+            if bracket_depth == 0:
+                if paren_depth or row_start is not None:
+                    raise InventoryError(f"unterminated tuple in {definition}")
+                break
+        elif bracket_depth == 1:
+            if char == "(":
+                if paren_depth == 0:
+                    row_start = index
+                paren_depth += 1
+            elif char == ")":
+                if paren_depth == 0:
+                    raise InventoryError(f"unmatched ')' in {definition}")
+                paren_depth -= 1
+                if paren_depth == 0:
+                    assert row_start is not None
+                    rows.append(masked[row_start:index + 1])
+                    row_start = None
+        index += 1
+    if bracket_depth:
+        raise InventoryError(f"unterminated list in {definition}")
+    return rows
+
+
+def batch_records(sources: Iterable[Source],
+                  tactic_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    source_list = list(sources)
+    by_path = {source.path: source for source in source_list}
+    shards: list[dict[str, Any]] = []
+    for source in sorted(source_list, key=lambda item: item.path):
+        if not re.search(r"/FKS2Tables/Table4ExtData_[^/]*\.lean$", source.path):
+            continue
+        count = sum(1 for line in source.masked.splitlines() if FKS_CELL_RE.match(line))
+        shards.append({"path": source.path, "cells": count})
+
+    table10_sites = [
+        row for row in tactic_rows
+        if row["tactic"] == "interval_decide" and row["actual"]
+        and "/BKLNW/BKLNW_table10_rows" in row["path"]
+    ]
+    table10_targets = [
+        row for row in table10_sites
+        if str(row.get("declaration", "")).startswith("table_10_")
+    ]
+    table10_a2 = [
+        row for row in table10_sites
+        if str(row.get("declaration", "")).startswith("row")
+        and str(row.get("declaration", "")).endswith("_a2_le")
+    ]
+    if len(table10_targets) + len(table10_a2) != len(table10_sites):
+        raise InventoryError("unclassified BKLNW Table 10 source check site")
+    bklnw_all = [
+        row for row in tactic_rows
+        if row["tactic"] == "interval_decide" and row["actual"]
+        and "/BKLNW/" in row["path"]
+    ]
+    table12_path = "PrimeNumberTheoremAnd/IEANTN/BKLNW/BKLNW_tables.lean"
+    try:
+        table12_masked = by_path[table12_path].masked
+    except KeyError as exc:
+        raise InventoryError("pinned BKLNW Table 12 source is not tracked") from exc
+    table12_rows = table_rows(table12_masked, "table_12")
+    table12_log_rows = sum(row.lstrip().startswith("(Real.log") for row in table12_rows)
+    table12_ordinary_rows = len(table12_rows) - table12_log_rows
+    return [
+        {
+            "kind": "generated-family",
+            "family": "fks2-table4ext",
+            "source": "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtData_*.lean",
+            "shards": shards,
+            "cells": sum(item["cells"] for item in shards),
+            "migration": classification(),
+        },
+        {
+            "kind": "generated-family",
+            "family": "bklnw-table10-source-sites",
+            "source": "PrimeNumberTheoremAnd/IEANTN/BKLNW/BKLNW_table10_rows*.lean",
+            "target_check_sites": len(table10_targets),
+            "supporting_a2_check_sites": len(table10_a2),
+            "declarations": [
+                {"path": path, "declaration": declaration}
+                for path, declaration in sorted({
+                    (row["path"], row["declaration"])
+                    for row in table10_sites if row["declaration"]
+                })
+            ],
+            "migration": classification(),
+        },
+        {
+            "kind": "generated-family",
+            "family": "bklnw-all-source-checks",
+            "source": "PrimeNumberTheoremAnd/IEANTN/BKLNW/*.lean",
+            "actual_interval_decide": len(bklnw_all),
+            "declarations": [
+                {"path": path, "declaration": declaration}
+                for path, declaration in sorted({
+                    (row["path"], row["declaration"])
+                    for row in bklnw_all if row["declaration"]
+                })
+            ],
+            "migration": classification(),
+        },
+        {
+            "kind": "generated-family",
+            "family": "bklnw-table12-cells",
+            "source": table12_path,
+            "check_declaration": "table_12_check",
+            "rows": len(table12_rows),
+            "ordinary_rows": table12_ordinary_rows,
+            "logarithmic_rows": table12_log_rows,
+            "checks_per_row": 5,
+            "expanded_checks": (table12_ordinary_rows + table12_log_rows) * 5,
+            "annotation_provenance": (
+                "pinned BKLNW_tables.lean row count plus reviewed five-column "
+                "expansion; false rows from PNT+ PR #1405"
+            ),
+            "false_original_boundary_rows": [
+                "log(5e10)", "25", "log(3.2e13)", "32",
+            ],
+            "migration": classification(),
+        },
+    ]
+
+
+def record_sort_key(record: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        record["kind"], record.get("path", ""), record.get("line", -1),
+        record.get("column", -1), record.get("tactic", ""),
+        record.get("symbol", ""), record.get("module", ""),
+        record.get("family", ""),
+        json.dumps(
+            {name: value for name, value in record.items() if name != "migration"},
+            sort_keys=True, separators=(",", ":"),
+        ),
+    )
+
+
+def record_digest(records: list[dict[str, Any]]) -> str:
+    digest = hashlib.sha256()
+    for record in records:
+        digest.update(json.dumps(record, sort_keys=True, separators=(",", ":")).encode())
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def audit_record_digest(records: list[dict[str, Any]]) -> str:
+    return record_digest(audit_records(records))
+
+
+def audit_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for record in records:
+        audit_record = dict(record)
+        audit_record.pop("migration", None)
+        result.append(audit_record)
+    return result
+
+
+def carry_migrations(
+    previous: list[dict[str, Any]], generated: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, int]:
+    def key(record: dict[str, Any]) -> str:
+        return json.dumps(
+            {name: value for name, value in record.items() if name != "migration"},
+            sort_keys=True, separators=(",", ":"),
+        )
+
+    previous_by_key: dict[str, dict[str, Any]] = {}
+    for record in previous:
+        identity = key(record)
+        if identity in previous_by_key:
+            raise InventoryError("previous inventory has duplicate audit-record identity")
+        previous_by_key[identity] = record
+
+    carried = 0
+    result = []
+    generated_keys = set()
+    for record in generated:
+        identity = key(record)
+        generated_keys.add(identity)
+        old = previous_by_key.get(identity)
+        if old is not None:
+            if record.get("migration", {}).get("status") \
+                    not in {"not-a-call", "inventory-only"}:
+                record = dict(record)
+                record["migration"] = old["migration"]
+                carried += 1
+        result.append(record)
+
+    removed = [
+        record for identity, record in previous_by_key.items()
+        if identity not in generated_keys
+    ]
+    classified_removed = [
+        record for record in removed
+        if record.get("migration", {}).get("status")
+        not in {"pending", "not-a-call", "inventory-only"}
+    ]
+    if classified_removed:
+        raise InventoryError(
+            f"refresh would discard {len(classified_removed)} classified records; "
+            "reconcile them explicitly before refreshing"
+        )
+    return result, carried, len(removed)
+
+
+def summarize(records: list[dict[str, Any]]) -> dict[str, int]:
+    tactic = [row for row in records if row["kind"] == "tactic-occurrence"]
+    fks = next((row for row in records
+                if row["kind"] == "generated-family" and row["family"] == "fks2-table4ext"), None)
+    table10 = next((row for row in records
+                    if row["kind"] == "generated-family"
+                    and row["family"] == "bklnw-table10-source-sites"), None)
+    table12 = next((row for row in records
+                    if row["kind"] == "generated-family"
+                    and row["family"] == "bklnw-table12-cells"), None)
+    return {
+        "interval_decide_actual": sum(
+            row["tactic"] == "interval_decide" and row["actual"] for row in tactic),
+        "interval_decide_textual": sum(row["tactic"] == "interval_decide" for row in tactic),
+        "interval_auto_actual": sum(
+            row["tactic"] == "interval_auto" and row["actual"] for row in tactic),
+        "interval_auto_textual": sum(row["tactic"] == "interval_auto" for row in tactic),
+        "leancert_import": sum(row["kind"] == "leancert-import" for row in records),
+        "leancert_reference": sum(row["kind"] == "leancert-reference" for row in records),
+        "dependency_interface": sum(
+            row["kind"] == "dependency-interface" for row in records),
+        "native_decide_actual": sum(
+            row["kind"] == "native-decide-occurrence" for row in records),
+        "fks2_cells": fks["cells"] if fks else 0,
+        "fks2_shards": len(fks["shards"]) if fks else 0,
+        "bklnw_table10_target_sites": table10["target_check_sites"] if table10 else 0,
+        "bklnw_table10_a2_sites": table10["supporting_a2_check_sites"] if table10 else 0,
+        "bklnw_table12_checks": table12["expanded_checks"] if table12 else 0,
+        "bklnw_table12_ordinary_rows": table12["ordinary_rows"] if table12 else 0,
+        "bklnw_table12_logarithmic_rows": (
+            table12["logarithmic_rows"] if table12 else 0
+        ),
+        "records": len(records),
+    }
+
+
+def require_workload_partitions(records: list[dict[str, Any]]) -> None:
+    tactics = [row for row in records if row["kind"] == "tactic-occurrence"]
+    decide = [row for row in tactics if row["tactic"] == "interval_decide"]
+
+    def partition(predicate: Any) -> tuple[int, int]:
+        rows = [row for row in decide if predicate(row)]
+        return len(rows), sum(row["actual"] for row in rows)
+
+    log_tables = partition(lambda row: row["path"].endswith("/LogTables.lean"))
+    bklnw = partition(lambda row: "/BKLNW/" in row["path"])
+    remaining = partition(
+        lambda row: not row["path"].endswith("/LogTables.lean")
+        and "/BKLNW/" not in row["path"]
+    )
+    expected = {
+        "LogTables": (141, 136),
+        "BKLNW": (132, 128),
+        "remaining": (17, 16),
+    }
+    actual = {"LogTables": log_tables, "BKLNW": bklnw, "remaining": remaining}
+    if actual != expected:
+        raise InventoryError(f"PNT+ interval_decide partitions drifted: {actual} != {expected}")
+    bklnw_paths = {row["path"] for row in decide if "/BKLNW/" in row["path"]}
+    log_paths = {row["path"] for row in decide if row["path"].endswith("/LogTables.lean")}
+    if len(bklnw_paths) != 9:
+        raise InventoryError(
+            f"BKLNW interval_decide file count drifted: expected 9, got {len(bklnw_paths)}"
+        )
+    if log_paths != {"PrimeNumberTheoremAnd/IEANTN/LogTables.lean"}:
+        raise InventoryError(f"LogTables interval_decide path drifted: {sorted(log_paths)}")
+
+    paths = {row["path"] for row in decide}
+    if len(paths) != 15:
+        raise InventoryError(f"interval_decide file count drifted: expected 15, got {len(paths)}")
+    remaining_paths = {
+        "PrimeNumberTheoremAnd/IEANTN/Dusart.lean",
+        "PrimeNumberTheoremAnd/IEANTN/FKS2.lean",
+        "PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean",
+        "PrimeNumberTheoremAnd/IEANTN/FKS2Floor/Cor22Floor.lean",
+        "PrimeNumberTheoremAnd/IEANTN/Goldbach.lean",
+    }
+    actual_remaining_paths = {
+        row["path"] for row in decide
+        if "/BKLNW/" not in row["path"]
+        and not row["path"].endswith("/LogTables.lean")
+    }
+    if actual_remaining_paths != remaining_paths:
+        raise InventoryError(
+            "remaining interval_decide file set drifted: "
+            f"{sorted(actual_remaining_paths)} != {sorted(remaining_paths)}"
+        )
+
+    interval_auto = [row for row in tactics if row["tactic"] == "interval_auto"]
+    actual_auto = [row for row in interval_auto if row["actual"]]
+    auto_counts = Counter(row["path"] for row in actual_auto)
+    expected_auto_counts = Counter({
+        "PrimeNumberTheoremAnd/IEANTN/TMEEMT.lean": 30,
+        "PrimeNumberTheoremAnd/IEANTN/RosserSchoenfeld/RSPrimeLower.lean": 30,
+    })
+    if auto_counts != expected_auto_counts:
+        raise InventoryError(
+            f"interval_auto executable file partition drifted: {auto_counts} "
+            f"!= {expected_auto_counts}"
+        )
+
+
+def generate(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    pins = load_pins(root)
+    require_pins(pins)
+    sources = load_sources(root)
+    if len(sources) != PNT_LEAN_SOURCE_FILES:
+        raise InventoryError(
+            f"pinned Lean-source file count drifted: expected {PNT_LEAN_SOURCE_FILES}, "
+            f"got {len(sources)}"
+        )
+    tree_digest = source_digest(sources)
+    if tree_digest != PNT_LEAN_SOURCE_DIGEST:
+        raise InventoryError(
+            "pinned checkout contents differ from the audited Lean-source digest: "
+            f"expected {PNT_LEAN_SOURCE_DIGEST}, got {tree_digest}"
+        )
+    tactics = tactic_records(sources)
+    imports = import_records(sources)
+    records = tactics + imports + dependency_records(imports) + reference_records(sources)
+    records += native_records(sources) + batch_records(sources, tactics)
+    records.sort(key=record_sort_key)
+    counts = summarize(records)
+    require_workload_partitions(records)
+    for name, expected in EXPECTED.items():
+        if counts.get(name) != expected:
+            raise InventoryError(
+                f"upstream {name} drifted: expected {expected}, got {counts.get(name)}"
+            )
+    meta = {
+        "kind": "meta",
+        "format": FORMAT_VERSION,
+        "pins": pins,
+        "lean_source_digest": tree_digest,
+        "lean_source_files": len(sources),
+        "audit_record_digest": audit_record_digest(records),
+        "record_digest": record_digest(records),
+        "counts": counts,
+    }
+    return meta, records
+
+
+def inspect_source(root: Path) -> dict[str, Any]:
+    """Report observed pin-bump inputs without accepting them as audited."""
+    pins = load_pins(root)
+    sources = load_sources(root)
+    tactics = tactic_records(sources)
+    imports = import_records(sources)
+    references = reference_records(sources, audited=False)
+    native = native_records(sources)
+    batch_error = None
+    try:
+        batches = batch_records(sources, tactics)
+    except InventoryError as exc:
+        batches = []
+        batch_error = str(exc)
+    provisional = tactics + imports + references + native + batches
+    provisional.sort(key=record_sort_key)
+    counts = summarize(provisional)
+    counts["dependency_interface"] = len({row["module"] for row in imports})
+    counts.pop("records", None)
+    return {
+        "pins": pins,
+        "lean_source_files": len(sources),
+        "lean_source_digest": source_digest(sources),
+        "observed_counts": counts,
+        "leancert_import_modules": sorted({row["module"] for row in imports}),
+        "generated_families": [
+            {key: value for key, value in row.items() if key != "migration"}
+            for row in batches
+        ],
+        "generated_family_error": batch_error,
+        "warning": (
+            "inspection is not an accepted audit; review interfaces, workload "
+            "partitions, constants, SPEC, and fixture before --refresh"
+        ),
+    }
+
+
+def write_inventory(path: Path, meta: dict[str, Any], records: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as stream:
+        for row in [meta, *records]:
+            stream.write(json.dumps(row, sort_keys=True, separators=(",", ":")))
+            stream.write("\n")
+
+
+def read_inventory(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    rows: list[dict[str, Any]] = []
+    with path.open(encoding="utf-8") as stream:
+        for line_no, line in enumerate(stream, 1):
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise InventoryError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+            if not isinstance(row, dict):
+                raise InventoryError(f"{path}:{line_no}: inventory row must be an object")
+            rows.append(row)
+    if not rows or rows[0].get("kind") != "meta":
+        raise InventoryError("inventory must start with one meta row")
+    return rows[0], rows[1:]
+
+
+def migration_statuses(record: dict[str, Any]) -> Iterable[str]:
+    migration = record.get("migration")
+    if migration and migration.get("status") not in {"not-a-call", "inventory-only"}:
+        yield migration.get("status", "")
+
+
+def require_migrations(records: list[dict[str, Any]]) -> None:
+    for index, record in enumerate(records):
+        migration = record.get("migration")
+        if not isinstance(migration, dict):
+            raise InventoryError(f"record {index}: migration must be an object")
+        status = migration.get("status")
+        raw_tactic = record.get("kind") == "tactic-occurrence" and not record.get("actual")
+        audit_reference = record.get("kind") == "leancert-reference"
+        if raw_tactic:
+            if status != "not-a-call":
+                raise InventoryError(
+                    f"record {index}: non-executable textual occurrence must be not-a-call"
+                )
+        elif audit_reference:
+            if status != "inventory-only":
+                raise InventoryError(
+                    f"record {index}: lexical reference must be inventory-only"
+                )
+            expected_provenance = reference_interfaces(record.get("symbol", ""))
+            if record.get("interface_provenance") != expected_provenance:
+                raise InventoryError(
+                    f"record {index}: lexical reference provenance drifted"
+                )
+        elif status not in CLASSIFICATIONS:
+            raise InventoryError(
+                f"record {index}: executable/imported record has invalid migration {status!r}"
+            )
+        else:
+            note = migration.get("note")
+            if not isinstance(note, str) or not note.strip():
+                raise InventoryError(f"record {index}: migration requires a nonempty note")
+            evidence = migration.get("evidence")
+            if evidence is not None:
+                if not isinstance(evidence, list) or not evidence or not all(
+                    isinstance(item, str) and item.strip() for item in evidence
+                ):
+                    raise InventoryError(
+                        f"record {index}: evidence must be a nonempty string list"
+                    )
+                for item in evidence:
+                    reference = item.split(":", 1)[0]
+                    if "/" not in reference:
+                        continue
+                    path = Path(reference)
+                    if path.is_absolute() or ".." in path.parts \
+                            or not (REPO_ROOT / path).is_file():
+                        raise InventoryError(
+                            f"record {index}: evidence path does not exist: {reference}"
+                        )
+            if status == "pending":
+                continue
+            if not isinstance(evidence, list) or not evidence or not all(
+                isinstance(item, str) and item.strip() for item in evidence
+            ):
+                raise InventoryError(
+                    f"record {index}: {status} requires nonempty evidence entries"
+                )
+            if status == "accepted-after-rewrite":
+                if not isinstance(migration.get("rewrite"), str) \
+                        or not migration["rewrite"].strip():
+                    raise InventoryError(
+                        f"record {index}: accepted-after-rewrite requires rewrite and evidence"
+                    )
+            elif status == "replaced-by-stronger-result":
+                replacement = migration.get("replacement")
+                if not isinstance(replacement, str) or not replacement.strip():
+                    raise InventoryError(
+                        f"record {index}: replacement theorem/result is required"
+                    )
+            elif status == "retained-other-dependency":
+                dependency = migration.get("dependency")
+                if not isinstance(dependency, str) or not dependency.strip():
+                    raise InventoryError(
+                        f"record {index}: retained dependency is required"
+                    )
+
+
+def validate_inventory(
+    meta: dict[str, Any], records: list[dict[str, Any]],
+    require_classified: bool, require_record_digest: bool = True,
+) -> None:
+    if meta.get("format") != FORMAT_VERSION:
+        raise InventoryError(f"unsupported inventory format {meta.get('format')}")
+    require_pins(meta.get("pins", {}))
+    if meta.get("lean_source_digest") != PNT_LEAN_SOURCE_DIGEST:
+        raise InventoryError("inventory Lean-source digest does not match the pinned PNT+ tree")
+    if meta.get("lean_source_files") != PNT_LEAN_SOURCE_FILES:
+        raise InventoryError("inventory Lean-source file count does not match the pinned PNT+ tree")
+    if meta.get("audit_record_digest") != PNT_AUDIT_RECORD_DIGEST:
+        raise InventoryError(
+            "inventory audit-record digest does not match the pinned audit surface: "
+            f"expected {PNT_AUDIT_RECORD_DIGEST}, got {meta.get('audit_record_digest')}"
+        )
+    if records != sorted(records, key=record_sort_key):
+        raise InventoryError("inventory records are not in canonical order")
+    if require_record_digest and meta.get("record_digest") != record_digest(records):
+        raise InventoryError("inventory record digest does not match contents")
+    if meta.get("audit_record_digest") != audit_record_digest(records):
+        raise InventoryError("inventory audit-record digest does not match record contents")
+    require_migrations(records)
+    counts = summarize(records)
+    require_workload_partitions(records)
+    require_small_prime_log_match(records)
+    require_dusart_exp_match(records)
+    require_fks2_mu_match(records)
+    require_pnt_exp_upper_match(records)
+    require_fks2_nested_match(records)
+    require_ramanujan_theta_match(records)
+    require_fks2_structure_match(records)
+    require_fks2_structure_migrations(records)
+    require_fks2_xpow_match(records)
+    require_fks2_xpow_migrations(records)
+    if meta.get("counts") != counts:
+        raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
+    for name, expected in EXPECTED.items():
+        if counts.get(name) != expected:
+            raise InventoryError(f"{name}: expected {expected}, got {counts.get(name)}")
+
+    statuses = Counter(status for row in records for status in migration_statuses(row))
+    unknown = set(statuses) - CLASSIFICATIONS
+    if unknown:
+        raise InventoryError(f"unknown migration classifications: {sorted(unknown)}")
+    if require_classified and statuses["pending"]:
+        raise InventoryError(
+            f"migration inventory still has {statuses['pending']} pending decisions"
+        )
+
+
+def check_inventory(path: Path, require_classified: bool) -> None:
+    meta, records = read_inventory(path)
+    validate_inventory(meta, records, require_classified)
+
+
+def update_classifications(path: Path) -> None:
+    meta, records = read_inventory(path)
+    apply_fks2_structure_migrations(records)
+    apply_fks2_xpow_migrations(records)
+    validate_inventory(meta, records, require_classified=False, require_record_digest=False)
+    meta["record_digest"] = record_digest(records)
+    validate_inventory(meta, records, require_classified=False)
+    write_inventory(path, meta, records)
+
+
+def require_source_match(
+    committed_meta: dict[str, Any], committed_records: list[dict[str, Any]],
+    generated_meta: dict[str, Any], generated_records: list[dict[str, Any]],
+) -> None:
+    fixed_meta = {
+        "kind", "format", "pins", "lean_source_digest", "lean_source_files",
+        "audit_record_digest", "counts",
+    }
+    if any(committed_meta.get(key) != generated_meta.get(key) for key in fixed_meta) \
+            or audit_records(committed_records) != audit_records(generated_records):
+        raise InventoryError("committed inventory differs from pinned source regeneration")
+
+
+def default_fixture() -> Path:
+    return REPO_ROOT / (
+        "conformance-fixtures/HexIntervalMathlib/pnt-inventory.jsonl"
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--refresh", action="store_true", help="regenerate from --source")
+    mode.add_argument("--verify-source", action="store_true",
+                      help="regenerate from --source and compare with --output")
+    mode.add_argument("--check", action="store_true",
+                      help="validate the committed fixture without network/source access")
+    mode.add_argument(
+        "--update-classifications", action="store_true",
+        help="validate edited migration fields and refresh only the record digest",
+    )
+    mode.add_argument(
+        "--inspect-source", action="store_true",
+        help="print observed pin/count inputs without accepting or writing them",
+    )
+    parser.add_argument("--source", type=Path,
+                        help="exact PrimeNumberTheoremAnd checkout for refresh/verify")
+    parser.add_argument("--output", type=Path, default=default_fixture())
+    parser.add_argument("--require-classified", action="store_true",
+                        help="reject pending migration decisions")
+    args = parser.parse_args()
+
+    try:
+        if args.require_classified and not args.check:
+            parser.error("--require-classified is valid only with --check")
+        if args.check:
+            check_inventory(args.output, args.require_classified)
+            print(f"pnt inventory: {args.output} is valid")
+            return 0
+        if args.update_classifications:
+            update_classifications(args.output)
+            print(f"pnt inventory: validated classifications in {args.output}")
+            return 0
+        if args.source is None:
+            parser.error("--source is required with source-reading modes")
+        if args.inspect_source:
+            print(json.dumps(inspect_source(args.source.resolve()), indent=2, sort_keys=True))
+            return 0
+        source_root = args.source.resolve()
+        meta, records = generate(source_root)
+        require_fks2_probe_match(source_root)
+        require_fks2_family_match(source_root)
+        require_fks2_xpow_source_match(source_root)
+        if args.refresh:
+            carried = 0
+            removed = 0
+            if args.output.exists():
+                _, previous = read_inventory(args.output)
+                records, carried, removed = carry_migrations(previous, records)
+            meta["record_digest"] = record_digest(records)
+            validate_inventory(meta, records, require_classified=False)
+            write_inventory(args.output, meta, records)
+            print(
+                f"pnt inventory: wrote {len(records)} records to {args.output}; "
+                f"carried {carried} migration decisions, removed {removed} pending/raw records"
+            )
+            return 0
+        committed_meta, committed_records = read_inventory(args.output)
+        validate_inventory(committed_meta, committed_records, require_classified=False)
+        require_source_match(committed_meta, committed_records, meta, records)
+        print(f"pnt inventory: {args.output} matches {args.source}")
+        return 0
+    except (InventoryError, OSError, KeyError, TypeError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

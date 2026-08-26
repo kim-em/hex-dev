@@ -22,12 +22,10 @@ compared against both the packed (`HexGF2.GF2n`) and the generic
 agree on a wrong polynomial, the python-flint comparison still trips
 because both `packed_*` and `generic_*` would mismatch.
 
-The `HexConway` Tier-1 table currently exposes a `Conway.SupportedEntry`
-plus `Conway.PackedGF2Entry` only at extension degree `(2, 1)`, which
-makes the committed correspondence trivial.  Following the
-`HexGFq/CrossCheck.lean` pattern, this driver exercises the correspondence
-at larger binary degrees by constructing ad-hoc moduli with local
-irreducibility witnesses; the operations themselves still execute and
+Following the `conformance/HexGFq/CrossCheck.lean` pattern, this driver
+supplies its moduli locally with their own irreducibility witnesses rather
+than taking them from the Conway table, which lets it reach binary degrees
+above the committed entries; the operations themselves still execute and
 their outputs feed the python-flint cross-check.
 
 The correspondence is binary-only by design — `HexGF2.GF2n` packs `F_2`
@@ -59,7 +57,7 @@ private def lib : String := "HexGFq"
 
 private instance bounds2 : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
-private def primeTwo : Hex.Nat.Prime 2 := by
+private theorem primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
   intro m hm
   have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
@@ -89,15 +87,15 @@ private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
 set_option maxRecDepth 4096 in
 private theorem genericN4Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinear
-        (Conway.packedGF2FpPoly 0x3 4)
-        (by unfold Conway.packedGF2FpPoly; rfl)
+        (GFq.packedGF2FpPoly 0x3 4)
+        (by unfold GFq.packedGF2FpPoly; rfl)
         genericN4Cert = true := by
   simp [Berlekamp.checkIrreducibilityCertificateLinear,
     genericN4Cert,
     Berlekamp.IrreducibilityCertificate.toAmbient?,
     Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_4, Conway.packedGF2FpPoly, polyP2]
+    maxProperDiv_4, GFq.packedGF2FpPoly, polyP2]
   constructor
   · constructor
     · constructor
@@ -109,12 +107,12 @@ private theorem genericN4Cert_check :
   · rfl
 
 private theorem genericN4_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x3 4) :=
-  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x3 4)
-    (by unfold Conway.packedGF2FpPoly; rfl)
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x3 4) :=
+  Berlekamp.rabinTest_imp_irreducible (GFq.packedGF2FpPoly 0x3 4)
+    (by unfold GFq.packedGF2FpPoly; rfl)
     (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
-      (Conway.packedGF2FpPoly 0x3 4)
-      (by unfold Conway.packedGF2FpPoly; rfl)
+      (GFq.packedGF2FpPoly 0x3 4)
+      (by unfold GFq.packedGF2FpPoly; rfl)
       genericN4Cert
       genericN4Cert_check)
 
@@ -133,8 +131,8 @@ private def genericN8Cert : Berlekamp.IrreducibilityCertificate where
 set_option maxRecDepth 4096 in
 private theorem genericN8Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
-        (Conway.packedGF2FpPoly 0x1B 8)
-        (by unfold Conway.packedGF2FpPoly; rfl)
+        (GFq.packedGF2FpPoly 0x1B 8)
+        (by unfold GFq.packedGF2FpPoly; rfl)
         genericN8Cert = true := by
   simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
     genericN8Cert,
@@ -143,7 +141,7 @@ private theorem genericN8Cert_check :
     Berlekamp.checkPowChainLinearIncrementalStep,
     Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_8, Conway.packedGF2FpPoly, polyP2]
+    maxProperDiv_8, GFq.packedGF2FpPoly, polyP2]
   constructor
   · constructor
     · constructor
@@ -158,17 +156,17 @@ private theorem genericN8Cert_check :
   · rfl
 
 private theorem genericN8_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x1B 8) :=
-  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x1B 8)
-    (by unfold Conway.packedGF2FpPoly; rfl)
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x1B 8) :=
+  Berlekamp.rabinTest_imp_irreducible (GFq.packedGF2FpPoly 0x1B 8)
+    (by unfold GFq.packedGF2FpPoly; rfl)
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      (Conway.packedGF2FpPoly 0x1B 8)
-      (by unfold Conway.packedGF2FpPoly; rfl)
+      (GFq.packedGF2FpPoly 0x1B 8)
+      (by unfold GFq.packedGF2FpPoly; rfl)
       genericN8Cert
       genericN8Cert_check)
 
 private theorem genericN16_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x100B 16) :=
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x100B 16) :=
   Hex.GfqCrossCheck.genericN16_irr
 
 /-- Mask the low `n` bits of `w`, matching the canonical packed-form
@@ -208,12 +206,12 @@ underlying array is canonical. -/
 private def fp2Coeffs (f : FpPoly 2) : List Int :=
   f.toArray.toList.map (fun c => Int.ofNat c.toNat)
 
-/-! ## Per-degree case bundles
+/-! # Per-degree case bundles
 
 Each namespace fixes a known irreducible packed modulus, packages the
-matching generic `FpPoly 2` modulus via `Conway.packedGF2FpPoly`, and
+matching generic `FpPoly 2` modulus via `GFq.packedGF2FpPoly`, and
 provides irreducibility plus positive-degree witnesses for both
-representations.  This mirrors `HexGFq/CrossCheck.lean`.
+representations.  This mirrors `conformance/HexGFq/CrossCheck.lean`.
 -/
 
 namespace N4
@@ -227,7 +225,7 @@ private theorem packed_irr :
   exact GF2Poly.gf16_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
@@ -296,7 +294,7 @@ private theorem packed_irr :
   exact GF2Poly.aes_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
@@ -366,7 +364,7 @@ private theorem packed_irr :
   exact GF2Poly.gf65k_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide

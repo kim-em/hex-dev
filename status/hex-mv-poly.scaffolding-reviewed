@@ -1,0 +1,3 @@
+Reviewed in issue #9101.
+The identified kernel-coverage, consumer-reproducibility, and reporting gaps
+are addressed in the same implementation PR that commits this token.

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexModArith
+import HexModArithMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -23,25 +23,23 @@ tag := "hex-mod-arith"
 tag := "hex-mod-arith-intro"
 %%%
 
-`HexModArith` is the modular-arithmetic layer of the stack: arithmetic
-in `ℤ/pℤ` carried out on `UInt64`-backed coefficients. A residue is a
-single machine word holding the standard representative in `[0, p)`,
-bundled with a proof that the word is reduced. There is one residue
-type, {name}`Hex.ZMod64`, parametrised by the modulus `p`; the Barrett
-and Montgomery hot-loop routines are opt-in *operations* on that type,
-not parallel residue types.
+`HexModArith` does modular arithmetic in `ℤ/pℤ` on `UInt64`-backed
+coefficients. A residue is a single machine word holding the standard
+representative in `[0, p)`, bundled with a proof that the word is
+reduced. There is one residue type, {name}`Hex.ZMod64`, parametrised by
+the modulus `p`. The Barrett and Montgomery hot-loop routines are opt-in
+*operations* on that type, not parallel residue types.
 
 The modulus carries a side condition: it must be positive and fit in a
 machine word. That condition is packaged as the typeclass
 {name}`Hex.ZMod64.Bounds`, which every `ZMod64 p` value and operation
-takes as an instance argument. `HexModArith` is Mathlib-free; it depends
+takes as an instance argument. `HexModArith` is Mathlib-free. It depends
 only on `HexArith`, from which it borrows the Barrett and Montgomery
-machine-word kernels. It underpins the finite-field and prime-field
-polynomial layers (`HexGFqRing`, `HexPolyFp`, and beyond), which read
-their coefficient arithmetic off this representation; see
-{ref "hex-mod-arith-cross-references"}[Cross-references].
+machine-word kernels. The finite-field and prime-field polynomial
+libraries (`HexGFqRing`, `HexPolyFp`) use `ZMod64 p` as their coefficient
+type. See {ref "hex-mod-arith-cross-references"}[Cross-references].
 
-# Core types
+# The residue type
 %%%
 tag := "hex-mod-arith-core-types"
 %%%
@@ -81,8 +79,8 @@ residue of `3`.
 {docstring Hex.ZMod64.ofNat}
 
 Its defining property is that the representative of `ofNat p n` is `n`
-reduced modulo `p` — the bridge every coefficient computation rewrites
-across.
+reduced modulo `p`. Every coefficient computation rewrites across this
+identity.
 
 {docstring Hex.ZMod64.toNat_ofNat}
 
@@ -95,8 +93,8 @@ The ring operations add, subtract, negate, and multiply residues,
 re-reducing each result so the output is again a standard
 representative. The standard `Add`, `Sub`, `Neg`, and `Mul` instances on
 {name}`Hex.ZMod64` dispatch to these, so `a + b`, `a - b`, `-a`, and
-`a * b` work directly, and a `Lean.Grind.CommRing` instance exposes the
-whole surface to the `grind` tactic.
+`a * b` work directly, and a `Lean.Grind.CommRing` instance lets the
+`grind` tactic reason about them.
 
 {docstring Hex.ZMod64.add}
 
@@ -107,7 +105,7 @@ whole surface to the `grind` tactic.
 {docstring Hex.ZMod64.mul}
 
 Exponentiation uses repeated squaring, and inversion runs the
-extended-GCD helper from `HexArith`; for an element coprime to the
+extended-GCD helper from `HexArith`. For an element coprime to the
 modulus the result is the modular inverse.
 
 {docstring Hex.ZMod64.pow}
@@ -120,10 +118,7 @@ tag := "hex-mod-arith-worked-ring"
 %%%
 
 The block below works in `ZMod64 7`. After supplying the `Bounds 7`
-instance it builds two residues and exercises the constructors and the
-ring operations. Each `#guard` is checked when the chapter builds, so
-the expected representatives are guaranteed to match what the executable
-implementation produces.
+instance it builds two residues and runs the ring operations on them.
 
 ```lean
 open Hex Hex.ZMod64
@@ -169,7 +164,7 @@ values.
 
 Barrett reduction replaces the per-multiply division by a fixed-shift
 multiply. The context is built from the small modulus, and its
-multiplication agrees on the nose with the ordinary product.
+multiplication agrees with the ordinary product.
 
 {docstring Hex.BarrettCtx}
 
@@ -178,8 +173,8 @@ multiplication agrees on the nose with the ordinary product.
 {docstring Hex.BarrettCtx.mulMod_eq_mul}
 
 Montgomery multiplication works in a transformed domain. Values are
-first mapped to Montgomery form — a distinct type {name}`Hex.MontResidue`
-so the representation cannot be confused with a standard residue — then
+first mapped to Montgomery form (a distinct type {name}`Hex.MontResidue`,
+so the representation cannot be confused with a standard residue), then
 multiplied repeatedly without leaving the domain, and converted back
 once at the end.
 
@@ -194,7 +189,7 @@ once at the end.
 {docstring Hex.MontCtx.fromMont}
 
 Entering Montgomery form, multiplying there, and leaving again computes
-exactly the ordinary product — the correctness statement that licenses
+exactly the ordinary product. This correctness statement licenses
 swapping the hot loop in for the default multiply.
 
 {docstring Hex.MontCtx.fromMont_mulMont_toMont}
@@ -208,7 +203,7 @@ This block builds both contexts for the prime `7` and checks that each
 hot-loop product reproduces the ordinary residue product `3 · 5 ≡ 1`.
 The Barrett smart constructor needs `1 < p` and `p < 2^32`; the
 Montgomery one needs an odd modulus. Both side conditions are discharged
-by `decide`.
+by {tactic}`decide`.
 
 ```lean
 open Hex Hex.ZMod64
@@ -268,8 +263,8 @@ its two-sided inverse.
 {docstring Hex.ZMod64.inv_mul_eq_one_of_coprime}
 
 Over a prime modulus the residues form a field. Under the
-{name}`Hex.ZMod64.PrimeModulus` assumption — equivalently a proof that
-`p` is prime — there are no zero divisors, every nonzero residue is
+{name}`Hex.ZMod64.PrimeModulus` assumption (equivalently, a proof that
+`p` is prime) there are no zero divisors, every nonzero residue is
 invertible, and Fermat's little theorem holds.
 
 {docstring Hex.ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero}
@@ -278,27 +273,54 @@ invertible, and Fermat's little theorem holds.
 
 {docstring Hex.ZMod64.pow_prime}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-mod-arith-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexModArithMathlib`
+connects it to Mathlib: every {name}`Hex.ZMod64` value corresponds to an
+element of Mathlib's `ZMod p`. The two transfer maps convert a residue to a
+`ZMod p` element and back.
+
+{docstring HexModArithMathlib.ZMod64.toZMod}
+
+{docstring HexModArithMathlib.ZMod64.ofZMod}
+
+They are mutually inverse:
+
+{docstring HexModArithMathlib.ZMod64.ofZMod_toZMod}
+
+{docstring HexModArithMathlib.ZMod64.toZMod_ofZMod}
+
+{name}`HexModArithMathlib.ZMod64.toZMod` preserves the ring operations: addition and multiplication
+transfer, as do negation, subtraction, the casts, and powers (each a
+`@[simp]` lemma):
+
+{docstring HexModArithMathlib.ZMod64.toZMod_add}
+
+{docstring HexModArithMathlib.ZMod64.toZMod_mul}
+
+The maps and laws bundle into a ring equivalence, so the `CommRing`
+theory of `ZMod p` transports to the executable type:
+
+{docstring HexModArithMathlib.ZMod64.equiv}
+
 # Cross-references
 %%%
 tag := "hex-mod-arith-cross-references"
 %%%
 
-`HexModArith` sits one level above `HexArith` and below the finite-field
-stack:
+`HexModArith` depends on `HexArith` and underpins the finite-field
+libraries:
 
 * `HexArith` supplies the machine-word Barrett and Montgomery kernels
   that the {ref "hex-mod-arith-hot-loop"}[hot-loop contexts] wrap. The
   `_root_.BarrettCtx` and `_root_.MontCtx` types referenced by
   {name}`Hex.BarrettCtx` and {name}`Hex.MontCtx` are the untyped
   `UInt64` kernels from that library.
-* `HexModArithMathlib` is the correspondence layer: it re-exports the
-  executable {name}`Hex.ZMod64` theory as theorems about Mathlib's
-  `ZMod p`, so the computational results in this chapter transfer to the
-  abstract setting. The Mathlib dependency lives entirely on that side
-  of the boundary; see
-  {ref "hex-mod-arith-mathlib"}[the HexModArithMathlib chapter].
-* The finite-field layer `HexGFqRing` and the prime-field polynomial
-  layer `HexPolyFp` consume `ZMod64 p` as their coefficient type,
+* The finite-field library `HexGFqRing` and the prime-field polynomial
+  library `HexPolyFp` consume `ZMod64 p` as their coefficient type,
   inheriting the ring structure and the
   {ref "hex-mod-arith-key-correctness"}[field facts] above for prime
   `p`.

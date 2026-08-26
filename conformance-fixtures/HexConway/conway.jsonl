@@ -10,6 +10,10 @@
 {"kind":"result","lib":"HexConway","case":"p2_n5","op":"coeffs","value":[1,0,1,0,0,1]}
 {"kind":"conway","lib":"HexConway","case":"p2_n6","p":2,"n":6}
 {"kind":"result","lib":"HexConway","case":"p2_n6","op":"coeffs","value":[1,1,0,1,1,0,1]}
+{"kind":"conway","lib":"HexConway","case":"p2_n7","p":2,"n":7}
+{"kind":"result","lib":"HexConway","case":"p2_n7","op":"coeffs","value":[1,1,0,0,0,0,0,1]}
+{"kind":"conway","lib":"HexConway","case":"p2_n8","p":2,"n":8}
+{"kind":"result","lib":"HexConway","case":"p2_n8","op":"coeffs","value":[1,0,1,1,1,0,0,0,1]}
 {"kind":"conway","lib":"HexConway","case":"p3_n1","p":3,"n":1}
 {"kind":"result","lib":"HexConway","case":"p3_n1","op":"coeffs","value":[1,1]}
 {"kind":"conway","lib":"HexConway","case":"p3_n2","p":3,"n":2}

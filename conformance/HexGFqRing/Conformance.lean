@@ -47,6 +47,11 @@ namespace GFqRing
 
 private instance conformanceBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
+-- `PolyQuotient` is a prime-modulus type, so the quotient checks below need
+-- primality of the coefficient modulus, not just its word bound.
+private instance conformancePrimeFive : ZMod64.PrimeModulus 5 :=
+  ZMod64.primeModulusOfPrime (by decide)
+
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
@@ -67,7 +72,7 @@ private def modulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem modulus_pos_degree : 0 < FpPoly.degree modulus := by
   decide
@@ -210,9 +215,12 @@ private def x5 : Q := q #[0, 0, 0, 0, 0, 1]
 #guard zsmul 7 a = ((7 : Int) : Q) * a
 #guard zsmul (-2) x = ((-2 : Int) : Q) * x
 
-/-! ## Second concrete quotient: `F_7[x] / (x^2 + 1)` -/
+/-! # Second concrete quotient: `F_7[x] / (x^2 + 1)` -/
 
 private instance conformanceBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+
+private instance conformancePrimeSeven : ZMod64.PrimeModulus 7 :=
+  ZMod64.primeModulusOfPrime (by decide)
 
 private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   intro h
@@ -234,7 +242,7 @@ private def modulus7 : FpPoly 7 :=
   { coeffs := #[(1 : ZMod64 7), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_seven }
+      decide }
 
 private theorem modulus7_pos_degree : 0 < FpPoly.degree modulus7 := by
   decide

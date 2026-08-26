@@ -13,8 +13,9 @@
 #   scripts/run-oracles-local.sh hensel_pari --check
 #
 # Supported oracles map to system + pip dependencies:
-#   poly_flint, berlekamp_flint, bz_flint  → python-flint
-#   hensel_pari                                          → cypari2 (+libpari)
+#   poly_flint, berlekamp_flint, bz_flint → python-flint
+#   polymatrix                              → SymPy
+#   hensel_pari, number_field_tower_pari   → cypari2 (+libpari)
 #
 # Platform detection picks one of:
 #   * NixOS  — re-exec under `nix shell` with the required nixpkgs.
@@ -57,7 +58,12 @@ case "$oracle" in
     need_pari=0
     need_fplll=0
     ;;
-  hensel_pari)
+  polymatrix)
+    pip_packages="sympy"
+    need_pari=0
+    need_fplll=0
+    ;;
+  hensel_pari|number_field_tower_pari)
     pip_packages="cypari2"
     need_pari=1
     need_fplll=0

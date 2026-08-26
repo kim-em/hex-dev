@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.Basic
+module
+
+public import HexBasic
+public import HexArith.Nat.Prime
+public import HexPolyZ.Decomposition
+
+public section
 
 /-!
 Executable Mignotte-bound helpers for `hex-poly-z`.
@@ -18,14 +24,6 @@ mathematical proof that these quantities bound factors lives in
 namespace Hex
 
 namespace ZPoly
-
-/-- Executable binomial coefficients for the Mignotte bound. -/
-def binom (n k : Nat) : Nat :=
-  if n < k then
-    0
-  else
-    let kk := min k (n - k)
-    (List.range kk).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
 
 /-- One Newton step for the natural-number square-root iteration. -/
 private def sqrtStep (n x : Nat) : Nat :=
@@ -106,9 +104,9 @@ private theorem sqrtStep_upper_succ
   exact Nat.le_trans hn_le
     (by simpa [sqrtStep, q] using mul_succ_le_midpoint_succ_sq x q)
 
-/-- Inductive core: the iterate `sqrtAux n fuel x` stays in the upper envelope
+/-- Induction step: the iterate `sqrtAux n fuel x` stays in the upper envelope
 `n ≤ (sqrtAux n fuel x + 1) ^ 2` for any starting `x` already in it. -/
-private theorem sqrtAux_upper_succ_core
+private theorem sqrtAux_upper_succ_from_bound
     (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 := by
   induction fuel generalizing x with
@@ -133,7 +131,7 @@ private theorem sqrtAux_upper_succ_core
 private theorem sqrtAux_upper_succ
     (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
-  sqrtAux_upper_succ_core n fuel x h
+  sqrtAux_upper_succ_from_bound n fuel x h
 
 /--
 Stop-condition lemma for the Newton iteration: when `sqrtStep n x ≥ x`
@@ -252,8 +250,8 @@ private theorem sqrtStep_gap_halves
 
 /-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
 by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
-This geometric gap contraction drives phase-one convergence. -/
-private theorem sqrtAux_gap_contract_of_not_done
+This geometric gap contraction drives the initial convergence bound. -/
+private theorem sqrtAux_two_pow_gap_le_of_not_le
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
       ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n) :
@@ -302,15 +300,15 @@ private theorem sqrtAux_gap_contract_of_not_done
 /-- After `n.log2 + 1` Newton steps from `x = n`, the iterate undershoots
 (`(sqrtAux n (n.log2 + 1) n) ^ 2 ≤ n`), since the gap cannot survive that many
 halvings while staying below `2 ^ (n.log2 + 1)`. -/
-private theorem sqrtAux_phase_one_sq_le
+private theorem sqrtAux_sq_le_after_log
     (n : Nat) (hn : 0 < n) :
     (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n := by
   by_cases hsq :
       (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n
   · exact hsq
-  · have hcontract :
+  · have hgap_le :
         2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
-      sqrtAux_gap_contract_of_not_done n (n.log2 + 1) n hn hsq
+      sqrtAux_two_pow_gap_le_of_not_le n (n.log2 + 1) n hn hsq
     have hgap_pos :
         0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
       have hpos : 0 < sqrtAux n (n.log2 + 1) n := by
@@ -325,7 +323,7 @@ private theorem sqrtAux_phase_one_sq_le
         2 ^ (n.log2 + 1) ≤
             2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
               exact Nat.le_mul_of_pos_right _ hgap_pos
-        _ ≤ sqrtGap n n := hcontract
+        _ ≤ sqrtGap n n := hgap_le
     have hgap_lt : sqrtGap n n < 2 ^ (n.log2 + 1) := by
       unfold sqrtGap
       have hdiv : n / n = 1 := Nat.div_self hn
@@ -337,7 +335,7 @@ private theorem sqrtAux_phase_one_sq_le
 
 /-- The iteration composes over fuel:
 `sqrtAux n (fuel₁ + fuel₂) x = sqrtAux n fuel₂ (sqrtAux n fuel₁ x)`, letting a
-full-fuel run split into a phase-one prefix and a refinement tail. -/
+full-fuel run split into an initial prefix and a refinement tail. -/
 private theorem sqrtAux_append
     (n fuel₁ fuel₂ x : Nat) :
     sqrtAux n (fuel₁ + fuel₂) x =
@@ -385,7 +383,7 @@ private theorem sqrtAux_full_fuel_sq_le
   rw [hfuel, sqrtAux_append]
   have hsq : (sqrtAux n (n.log2 + 1) n) *
       (sqrtAux n (n.log2 + 1) n) ≤ n :=
-    sqrtAux_phase_one_sq_le n hn
+    sqrtAux_sq_le_after_log n hn
   have hself :
       sqrtAux n n.log2 (sqrtAux n (n.log2 + 1) n) =
         sqrtAux n (n.log2 + 1) n :=
@@ -393,18 +391,22 @@ private theorem sqrtAux_full_fuel_sq_le
   simpa [hself] using hsq
 
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
+@[expose]
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
 
 /-- A conservative natural-number upper bound on the Euclidean norm of the
 coefficient vector of `f`. -/
+@[expose]
 def coeffL2NormBound (f : ZPoly) : Nat :=
   ceilSqrt (coeffNormSq f)
 
 /-- The executable Mignotte bound for the `j`-th coefficient of a degree-`k`
-factor of `f`, using the conservative `coeffL2NormBound`. -/
+factor of `f`, using the conservative
+{name}`Hex.ZPoly.coeffL2NormBound`. -/
+@[expose]
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
-  binom k j * coeffL2NormBound f
+  Nat.binom k j * coeffL2NormBound f
 
 /--
 Uniform executable coefficient bound used by the default integer
@@ -413,8 +415,14 @@ factorization entry point.
 It takes the maximum of the executable Mignotte coefficient bounds over every
 candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
 to that degree.
+
+The compiled runtime uses the value-equal closed form below, registered through
+`@[csimp]`, which computes the loop-invariant
+{name}`Hex.ZPoly.coeffL2NormBound` once instead of recomputing the whole bignum
+coefficient norm inside every one of the `O(deg^2)` `mignotteCoeffBound` terms.
 -/
-def defaultFactorCoeffBound (f : ZPoly) : Nat :=
+@[expose]
+noncomputable def defaultFactorCoeffBound (f : ZPoly) : Nat :=
   let degreeBound := f.degree?.getD 0
   (List.range (degreeBound + 1)).foldl
     (fun acc k =>
@@ -422,20 +430,6 @@ def defaultFactorCoeffBound (f : ZPoly) : Nat :=
         (fun acc j => max acc (mignotteCoeffBound f k j))
         acc)
     0
-
-/-- Base case of `binom`: choosing `0` elements always gives `1`, so the empty
-`foldl` over `List.range 0` normalizes `binom n 0` to `1`. -/
-@[simp, grind =] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
-  simp [binom]
-
-/-- Base case of `binom`: choosing `k + 1` elements from `0` is impossible, so
-the `n < k` guard fires and normalizes `binom 0 (k + 1)` to `0`. -/
-@[simp, grind =] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
-  simp [binom]
-
-/-- The executable binomial coefficient `binom n k` vanishes when `n < k`. -/
-theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
-  simp [binom, h]
 
 /-- Base case of `floorSqrt`: the `n = 0` guard fires before the Newton
 iteration, so `floorSqrt 0` normalizes to `0`. -/
@@ -458,10 +452,10 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
   simp [ceilSqrt]
 
 /--
-The square of `ceilSqrt n` is at least `n`.  This is the executable upper-square
+The square of {name}`Hex.ZPoly.ceilSqrt` applied to `n` is at least `n`. This is the executable upper-square
 bound used by the Mignotte coefficient norm chain: in the perfect-square branch
-of `ceilSqrt`, equality holds; in the non-perfect-square branch, the bound
-follows from the Newton iterator invariant `sqrtAux_upper_succ`.
+of the ceiling square root, equality holds; in the non-perfect-square branch,
+the bound follows from the Newton iterator invariant.
 -/
 theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
   by_cases hn : n = 0
@@ -529,7 +523,7 @@ theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
 /-- `mignotteCoeffBound f k j` equals the product `binom k j * coeffL2NormBound f`
 of the binomial coefficient and the conservative coefficient-norm bound. -/
 theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
-    mignotteCoeffBound f k j = binom k j * coeffL2NormBound f := rfl
+    mignotteCoeffBound f k j = Nat.binom k j * coeffL2NormBound f := rfl
 
 /-- Restates `defaultFactorCoeffBound f` as the nested `foldl` taking the maximum of
 `mignotteCoeffBound f k j` over factor degrees `k` up to `f.degree?.getD 0` and
@@ -600,37 +594,7 @@ normalizes to `0`. -/
 the coefficient index `j` exceeds the factor degree `k`. -/
 theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
-  simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
-
-/-- A maximizing natural-number `foldl` only increases (or preserves) its
-accumulator, so the initial value bounds the fold result. -/
-private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (init : Nat) :
-    init ≤ xs.foldl (fun acc x => max acc (g x)) init := by
-  induction xs generalizing init with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_max_left init (g x)) (ih (max init (g x)))
-
-/-- For a maximizing natural-number `foldl`, the value `g x` at any member index
-`x ∈ xs` is bounded by the fold result. -/
-private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
-    {x : α} {init : Nat} (hx : x ∈ xs) :
-    g x ≤ xs.foldl (fun acc y => max acc (g y)) init := by
-  induction xs generalizing init with
-  | nil =>
-      cases hx
-  | cons y ys ih =>
-      simp only [List.mem_cons] at hx
-      simp only [List.foldl_cons]
-      cases hx with
-      | inl h =>
-          rw [h]
-          exact Nat.le_trans (Nat.le_max_right init (g y))
-            (le_foldl_max_left ys g (max init (g y)))
-      | inr h =>
-          exact ih h
+  simp [mignotteCoeffBound, Nat.binom_eq_zero_of_lt h]
 
 /-- The inner `max`-fold over `j ∈ range (k+1)` dominates each
 `mignotteCoeffBound f k j` at an in-range index, by `le_foldl_max_of_mem`. -/
@@ -640,7 +604,7 @@ private theorem mignotteCoeffBound_le_degree_innerFold
       (List.range (k + 1)).foldl
         (fun acc j => max acc (mignotteCoeffBound f k j))
         init := by
-  exact le_foldl_max_of_mem (List.range (k + 1))
+  exact List.le_foldl_max_of_mem (List.range (k + 1))
     (fun j => mignotteCoeffBound f k j)
     (List.mem_range.mpr (Nat.lt_succ_of_le hj))
 
@@ -662,7 +626,7 @@ private theorem defaultFactorCoeffBound_outerFold_preserves
   | cons k ks ih =>
       simp only [List.foldl_cons]
       exact Nat.le_trans
-        (le_foldl_max_left (List.range (k + 1))
+        (List.le_foldl_max_self (List.range (k + 1))
           (fun j => mignotteCoeffBound f k j) init)
         (ih ((List.range (k + 1)).foldl
           (fun acc j => max acc (mignotteCoeffBound f k j)) init))
@@ -759,34 +723,6 @@ theorem defaultFactorCoeffBound_le (f : ZPoly) {B : Nat}
   exact outer (List.range (f.degree?.getD 0 + 1)) 0 (Nat.zero_le _)
     (fun k hk j hj => h k (Nat.lt_succ_iff.mp (List.mem_range.mp hk)) j hj)
 
-/-- An additive natural-number `foldl` only increases (or preserves) its
-accumulator. -/
-private theorem le_foldl_add_self {α : Type} (xs : List α) (g : α → Nat)
-    (init : Nat) :
-    init ≤ xs.foldl (fun acc y => acc + g y) init := by
-  induction xs generalizing init with
-  | nil => simp
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_add_right init (g y)) (ih (init + g y))
-
-/-- For an additive natural-number `foldl`, each summand at a member index is
-bounded by the result. -/
-private theorem le_foldl_add_of_mem {α : Type} (xs : List α) (g : α → Nat)
-    {x : α} {init : Nat} (hx : x ∈ xs) :
-    g x ≤ xs.foldl (fun acc y => acc + g y) init := by
-  induction xs generalizing init with
-  | nil => cases hx
-  | cons head tail ih =>
-      simp only [List.mem_cons] at hx
-      simp only [List.foldl_cons]
-      cases hx with
-      | inl h =>
-          subst h
-          exact Nat.le_trans (Nat.le_add_left (g x) init)
-            (le_foldl_add_self tail g (init + g x))
-      | inr h => exact ih h
-
 /-- The ceiling square root is positive on positive inputs. -/
 private theorem ceilSqrt_pos_of_pos {n : Nat} (hn : 0 < n) :
     0 < ceilSqrt n := by
@@ -814,7 +750,7 @@ theorem coeffNormSq_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     rw [Nat.pow_two]; exact Nat.mul_pos hnatabs hnatabs
   unfold coeffNormSq
   exact Nat.lt_of_lt_of_le hsq_pos
-    (le_foldl_add_of_mem (List.range f.size)
+    (List.le_foldl_add_of_mem (List.range f.size)
       (fun i => (f.coeff i).natAbs ^ 2) hi_mem)
 
 /-- A nonzero integer polynomial has positive conservative Euclidean
@@ -828,15 +764,75 @@ theorem coeffL2NormBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
 A nonzero integer polynomial has positive uniform default factor coefficient
 bound.
 
-This is the Mignotte-side fact downstream callers need to derive
-`B ≠ 0` and the precision-modulus invariant `2 ≤ p ^ precisionForCoeffBound B p`
-from `f ≠ 0` alone (combined with the standard `p ≥ 2` provenance from
-the selected-prime primality lemma and `precisionForCoeffBound_spec`).
+Consequently, `f ≠ 0` gives `B ≠ 0`; together with `p ≥ 2`, it also gives the
+precision-modulus lower bound required by coefficient reconstruction.
 -/
 theorem defaultFactorCoeffBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     0 < defaultFactorCoeffBound f :=
   Nat.lt_of_lt_of_le (coeffL2NormBound_pos_of_ne_zero hf)
     (coeffL2NormBound_le_defaultFactorCoeffBound f)
+
+/-!
+# Closed-form runtime implementation of `defaultFactorCoeffBound`
+
+The specification maxes `binom k j * coeffL2NormBound f` over the whole
+`j ≤ k ≤ degree f` rectangle, recomputing the loop-invariant bignum norm
+`coeffL2NormBound f` inside every one of the `O(deg^2)` terms. Because
+`binom k j` peaks at the central binomial `binom n (n / 2)` (`n = degree f`),
+the entire double max collapses to `binom n (n / 2) * coeffL2NormBound f`; one
+norm, one binomial. The correspondence to the Mathlib-free Pascal `Hex.Nat.choose`
+supplies the monotonicity needed to prove the collapse; the compiled runtime
+then runs the closed form via a `@[csimp]` swap.
+-/
+
+/-- The binomial coefficient over the factor rectangle `j ≤ k ≤ n` is dominated
+by the central binomial of the top row: `binom k j ≤ binom n (n / 2)`. This is the
+monotonicity that collapses the `defaultFactorCoeffBound` double max. -/
+theorem binom_le_central {n k j : Nat} (hjk : j ≤ k) (hkn : k ≤ n) :
+    Nat.binom k j ≤ Nat.binom n (n / 2) := by
+  rw [Nat.binom_eq_choose, Nat.binom_eq_choose]
+  -- reduce `j` to the left-half index `j' = min j (k - j)`
+  have hbjk : Hex.Nat.choose k j = Hex.Nat.choose k (min j (k - j)) := by
+    rcases Nat.le_total j (k - j) with hle | hle
+    · rw [Nat.min_eq_left hle]
+    · rw [Nat.min_eq_right hle]; exact (Hex.Nat.choose_symm hjk).symm
+  have h2j' : 2 * min j (k - j) ≤ k := by
+    rcases Nat.le_total j (k - j) with hle | hle
+    · rw [Nat.min_eq_left hle]; omega
+    · rw [Nat.min_eq_right hle]; omega
+  rw [hbjk]
+  exact Nat.le_trans
+    (Hex.Nat.choose_le_center k (k / 2) (min j (k - j)) (Nat.sub_le _ _) h2j')
+    (Hex.Nat.centralChoose_mono hkn)
+
+/-- Runtime implementation of `defaultFactorCoeffBound`: the closed-form central
+binomial times the single loop-invariant norm. -/
+@[expose]
+def defaultFactorCoeffBoundImpl (f : ZPoly) : Nat :=
+  let n := f.degree?.getD 0
+  Nat.binom n (n / 2) * coeffL2NormBound f
+
+/-- Register the value-equal closed form `defaultFactorCoeffBoundImpl` as the
+compiled implementation of `defaultFactorCoeffBound`. The `@[csimp]` swap is
+backed by the proof, so the runtime one-norm/one-binomial evaluation is verified
+equal to the `O(deg^2)` specification. -/
+@[csimp]
+theorem defaultFactorCoeffBound_eq_impl :
+    @defaultFactorCoeffBound = @defaultFactorCoeffBoundImpl := by
+  funext f
+  show defaultFactorCoeffBound f = defaultFactorCoeffBoundImpl f
+  apply Nat.le_antisymm
+  · refine defaultFactorCoeffBound_le f ?_
+    intro k hk j hj
+    rw [mignotteCoeffBound_eq]
+    exact Nat.mul_le_mul_right (coeffL2NormBound f) (binom_le_central hj hk)
+  · have hcentral :
+        mignotteCoeffBound f (f.degree?.getD 0) (f.degree?.getD 0 / 2)
+          ≤ defaultFactorCoeffBound f :=
+      mignotteCoeffBound_le_defaultFactorCoeffBound f (Nat.le_refl _)
+        (Nat.div_le_self _ 2)
+    rw [mignotteCoeffBound_eq] at hcentral
+    exact hcentral
 
 end ZPoly
 end Hex

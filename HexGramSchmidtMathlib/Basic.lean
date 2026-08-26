@@ -69,7 +69,7 @@ theorem rowToEuclidean_smul (c : Rat) (row : Vector Rat m) :
 /-- Cast an integer dense matrix into the rational matrix space of `HexGramSchmidt`. -/
 @[expose]
 def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
-  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+  Hex.Matrix.ofRows (b.rows.map (fun row => row.map (fun x : Int => (x : Rat))))
 
 /-- The row family fed to Mathlib's `gramSchmidt` for a rational matrix. -/
 @[expose]
@@ -100,9 +100,9 @@ theorem rowToEuclidean_inner (a b : Vector Rat m) :
     inner ℝ (rowToEuclidean a) (rowToEuclidean b) =
       ((Vector.dotProduct (u := a) (v := b) : Rat) : ℝ) := by
   rw [PiLp.inner_apply]
-  simp [rowToEuclidean, PiLp.toLp_apply, real_inner_eq_re_inner,
+  simp [rowToEuclidean, PiLp.toLp_apply,
     RCLike.inner_apply, mul_comm]
-  rw [Hex.Vector.dotProduct, cast_foldl_dotProduct_rat]
+  rw [Vector.dotProduct, cast_foldl_dotProduct_rat]
   simp only [Rat.cast_zero, zero_add]
   rw [← List.sum_toFinset _ (List.nodup_finRange m)]
   simp [List.toFinset_finRange]
@@ -117,21 +117,19 @@ theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 := by
   rw [Hex.GramSchmidt.Rat.coeffs_lower_projection_comm (b := b) hji]
   by_cases hnorm :
-      Vector.dotProduct ((Hex.GramSchmidt.Rat.basis b).row j)
+      ((Hex.GramSchmidt.Rat.basis b).row j).dotProduct
           ((Hex.GramSchmidt.Rat.basis b).row j) = 0
   · have hnorm_real :
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 = 0 := by
-      rw [← real_inner_self_eq_norm_sq]
-      rw [rowToEuclidean_inner]
+      rw [← real_inner_self_eq_norm_sq, rowToEuclidean_inner]
       exact_mod_cast hnorm
     simp [hnorm, hnorm_real]
   ·
     have hnorm_real :
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 =
-          ((Vector.dotProduct ((Hex.GramSchmidt.Rat.basis b).row j)
+          ((((Hex.GramSchmidt.Rat.basis b).row j).dotProduct
             ((Hex.GramSchmidt.Rat.basis b).row j) : Rat) : ℝ) := by
-      rw [← real_inner_self_eq_norm_sq]
-      rw [rowToEuclidean_inner]
+      rw [← real_inner_self_eq_norm_sq, rowToEuclidean_inner]
     simp [hnorm, rowToEuclidean_inner, hnorm_real]
 
 private theorem rowToEuclidean_foldl_linear
@@ -182,7 +180,7 @@ private theorem rowToEuclidean_prefixCombination_eq_Iio_sum
           InnerProductSpace.gramSchmidt ℝ (ratRowFamily b) j := by
   classical
   unfold Hex.GramSchmidt.prefixCombination
-  rw [rowToEuclidean_foldl_linear]
+  rw [Fin.foldl_eq_finRange_foldl, rowToEuclidean_foldl_linear]
   simp only [rowToEuclidean_zero, zero_add]
   rw [← List.sum_toFinset _ (List.nodup_finRange i.val)]
   simpa [rat_coeffs_lower_projection_real, hprev, ratRowFamily] using
@@ -235,8 +233,9 @@ theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
 theorem int_basis_row_eq_gramSchmidt (b : Matrix Int n m) (i : Fin n) :
     rowToEuclidean ((Hex.GramSchmidt.Int.basis b).row i) =
       InnerProductSpace.gramSchmidt ℝ (intRowFamily b) i := by
-  simpa [intRowFamily, castIntMatrix, Hex.GramSchmidt.Int.basis, Hex.GramSchmidt.Rat.basis]
-    using rat_basis_row_eq_gramSchmidt (castIntMatrix b) i
+  have key := rat_basis_row_eq_gramSchmidt (castIntMatrix b) i
+  simp only [intRowFamily, castIntMatrix, Hex.GramSchmidt.Int.basis, Hex.GramSchmidt.Rat.basis] at key ⊢
+  exact key
 
 end GramSchmidtMathlib
 end Hex

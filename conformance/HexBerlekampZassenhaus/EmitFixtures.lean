@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 
 /-!
 JSONL emit driver for the `hex-berlekamp-zassenhaus` oracle.
@@ -19,27 +19,26 @@ cases also carry optional pinned modular-factor metadata so the oracle
 checks that the committed input has the intended split over a named
 prime.
 
-Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, and 20,
-covering the currently Phase-2-stable shapes:
+Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, 18, 20, and 28,
+covering the supported factorization shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
-  Φ_p for `p ∈ {5, 7, 11, 17}`),
+  `Φ_p` for `p ∈ {5, 7, 11, 17}`),
 * reducible products whose current output is already fully refined into
   irreducible components,
 * polynomials with content greater than `1`,
 * the degree-20 `Φ_11 · Φ_22` reducible product,
-* HO-2 (#2565) adversarial cases where mod-p factors split more finely
-  than the integer factorisation; see "HO-2 adversarial coverage" below.
+* adversarial cases where mod-p factors split more finely than the integer
+  factorisation; see "Adversarial modular-split coverage" below.
+* original-coordinate M1 acceptance on a reducible Chebyshev input and on an
+  irreducible Legendre input requiring the two-prime degree certificate.
 
-HO-2 adversarial coverage
--------------------------
+# Adversarial modular-split coverage
 
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures"
-requires the core profile to include at least one input where the integer
-factorisation requires a non-trivial subset product of lifted mod-p factors,
-and at least one input that splits heavily (≥ 4 distinct mod-p factors)
-over a small admissible prime.  Four `adv/*` cases are emitted with pinned
+The corpus includes inputs where integer factorisation requires a non-trivial
+subset product of lifted mod-p factors and inputs that split into at least four
+distinct mod-p factors over a small admissible prime. Four `adv/*` cases carry pinned
 `modFactorPrime` / `modFactorDegrees` metadata so the oracle independently
 verifies the named modular split:
 
@@ -54,10 +53,75 @@ verifies the named modular split:
 * `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
   linear factors over F₃₁ (heavy split, small admissible prime).
 
-Cross-checked operation
------------------------
+# Lattice-method coverage
 
-* `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
+Two corpus cases can be answered **only by the lattice method**, one for each
+lattice result:
+
+* `adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the
+  two true factors are the 32-blocks `SD₅(x)` and `SD₅(x+1)`) exercises
+  the **split** arm: CLD recovery separates the two 32-blocks at modest
+  precision.
+* `adv/multiquadratic_nonnorm_64` — the minimal polynomial of
+  √2+√3+√5+√7+√11+√13+√6 (degree 64, content 1, irreducible over ℤ)
+  exercises the **irreducibility-certification** arm: recovery converges
+  to the single all-ones class and the certificate-backed early stop
+  returns the original polynomial without grinding to the `bhksBound` cap.
+  This element generates the same degree-64 multiquadratic field as SD₆,
+  so it too splits into quadratics modulo every admissible prime, but its
+  conjugates are `±√2 ±√3 ±√5 ±√7 ±√11 ±√13 ± √6` with the last sign
+  *determined* by the first two. It is therefore **not** an iterated
+  quadratic norm, the recognizer of the next section correctly refuses
+  it, and the lattice answers. That refusal is the point of the case: it
+  is the adversarial twin of `adv/swinnerton_dyer_sd6`.
+
+Multiquadratic fields split into factors of degree ≤ 2 modulo every
+admissible (squarefree-image) prime, so the lifted-factor count is
+`r ≥ 32` no matter which prime the selector picks (at the selected
+primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
+size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
+candidates to reach its half-size frontier. For `sd5_pair` that is
+where the two 16-block factors live, and for `multiquadratic_nonnorm_64`
+that is what exhausting all nontrivial subset products takes. This is far past
+the direct classical candidate budget, so it declines before starting an
+incomplete cardinality level and the hybrid falls through to the van Hoeij CLD
+lattice arm. Both cases emit the
+*hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
+rejects a run unless the lattice method answered, while the committed trace records
+`method = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
+remainder is lifted independently, the classical trace reports
+`subsetCandidates = 0`; the separate wall-clock benchmark detects excessive
+recombination work. The `bz_trace_gate.py` baseline also checks the method,
+decline status, and candidate-count bound.
+There is deliberately no `#guard` twin in `Conformance.lean` --
+elaboration-time interpretation of the lattice run would cost minutes
+of build time; the compiled emit executable covers it in seconds.
+
+# Certificate coverage
+
+`adv/swinnerton_dyer_sd6` — SD₆ (degree 64, minimal polynomial of
+√2+√3+√5+√7+√11+√13, irreducible over ℤ) is answered by the
+iterated-quadratic-norm certificate. At `r = 32` the width floor opens the
+gate, recovery reads the radicands `2, 3, 5, 7, 11, 13` and the translation `0`
+off the top coefficients, and the check confirms both independence and the
+coefficientwise identity, so the whole square-free core is returned as one
+irreducible factor with no Hensel lift. Its helper requires
+`method = "quadraticNorm"` and no classical decline. Unlike the lattice cases
+its `classicalFactor` result is emitted rather than skipped, because the
+certificate answers on the classical entry point itself.
+
+# Checked-proposal replay coverage
+
+`regression/split_roots_1_24` has 24 lifted linear factors. The total selector
+routes it through unforced exact peeling and then replays the proved classical
+factorizer on every exact piece. Its helper requires `method = "replay"` and a
+`largeSupport` routing decline. The separately emitted classical result is
+deliberately skipped for this sentinel; nearby split-root cases continue to
+cover the unrestricted public classical entry point.
+
+# Cross-checked operation
+
+* `factor` — `Hex.ZPoly.factorize` from `HexBerlekampZassenhaus` (the
   default-bound public entry point).  Lean serialises the resulting
   `Factorization` as `[scalar, [[coeffs, multiplicity], ...]]`;
   python-flint cross-checks each reported nonconstant component directly
@@ -68,7 +132,7 @@ Cross-checked operation
 The fixture set is committed under
 `conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl` and is
 intentionally small.  Coordinate any future case-id additions with
-`HexBerlekampZassenhaus/Conformance.lean` and the Phase-3 oracle script
+`HexBerlekampZassenhaus/Conformance.lean` and the oracle script
 so identical ids stay in sync.
 -/
 
@@ -112,19 +176,28 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
-/-- Serialise a `FactorTrace` to JSON for the performance gate. Deterministic
+/-- Serialise a `DirectFactorTrace` to JSON for the performance gate. Deterministic
 (no wall-clock), so it lives in the committed fixtures and is pinned by the gate
 baseline. -/
-private def traceValue (t : FactorTrace) : String :=
-  "{\"tier\":\"" ++ t.tier ++ "\",\"prime\":" ++ toString t.prime ++
-    ",\"r\":" ++ toString t.liftedFactorCount ++
-    ",\"subsetCandidates\":" ++ toString t.subsetCandidates ++
-    ",\"declined\":" ++ (if t.declined then "true" else "false") ++ "}"
+private def traceValue (t : DirectFactorTrace) : String :=
+  "{\"method\":\"" ++ t.method.name ++ "\"" ++
+    ",\"decline\":" ++
+      (match t.classicalDecline with
+      | none => "null"
+      | some reason => "\"" ++ reason.name ++ "\"") ++
+    ",\"prime\":" ++ toString t.classical.prime ++
+    ",\"primeProbes\":" ++ toString t.classical.primeProbes ++
+    ",\"r\":" ++ toString t.classical.liftedFactorCount ++
+    ",\"henselLifts\":" ++ toString t.classical.henselLifts ++
+    ",\"candidatesTried\":" ++ toString t.classical.candidatesTried ++
+    ",\"completedLevels\":[" ++
+      String.intercalate ","
+        (t.classical.completedLevels.toList.map toString) ++ "]}"
 
-/-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
-checking against FLINT, plus its diagnostic `trace` (tier, prime, `r`, subset
+/-- Emit the size-ordered classical method's result (`factorClassical`) for cross
+checking against FLINT, plus its diagnostic `trace` (method, prime, `r`, subset
 candidate count, declined) for the performance gate. The `classicalFactor` value
-is `null` when the tier declines (no admissible prime or subset budget exceeded),
+is `null` when the method declines (no admissible prime or subset budget exceeded),
 which the oracle treats as a skip. -/
 private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
   let (result, trace) := factorClassicalTraced f
@@ -136,7 +209,7 @@ private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
 /-- Emit one fixture record plus the `factor` and `classicalFactor` result records. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
-  emitResult lib case "factor" (factorValue (factor f))
+  emitResult lib case "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult case f
 
 /-- One fixture whose result is emitted by running the public Lean `factor`. -/
@@ -204,12 +277,12 @@ private def mkPinnedExpected (id : String) (coeffs : Array Int)
     (factors : List (List Int × Nat)) : PinnedExpectedCase :=
   { id, coeffs, p, degrees, scalar, factors }
 
-/-! ## Already-irreducible Mignotte-bounded polynomials
+/-! # Already-irreducible Mignotte-bounded polynomials
 
-Cyclotomic Φ_p(x) = x^(p-1) + ... + x + 1 has `coeffL2NormBound`
+Cyclotomic `Φ_p(x) = x^(p-1) + ... + x + 1` has `coeffL2NormBound`
 `⌈√p⌉`, well inside the production lift's tractable range. -/
 
-/-! ## Signed-scalar and multiplicity convention edge cases -/
+/-! # Signed-scalar and multiplicity convention edge cases -/
 
 /- These cases intentionally emit the actual public `factor` result via
 `emitCase`; the python-flint oracle supplies the independent expected scalar
@@ -254,7 +327,7 @@ private def cases_irr_expected : List ExpectedCase :=
       1
       [([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1)] ]
 
-/-! ## Reducible products of two or three irreducibles
+/-! # Reducible products of two or three irreducibles
 
 These polynomials all factor over `Z` into two or three irreducibles
 and are oracle-checked against committed expected `Factorization` data. -/
@@ -271,11 +344,9 @@ private def cases_red : List ExpectedCase :=
       [ ([1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1], 1)
       , ([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1) ] ]
 
-/-! ## HO-2 adversarial cases with pinned modular split metadata
+/-! # Adversarial cases with pinned modular split metadata
 
-These cases discharge `SPEC/Libraries/hex-berlekamp-zassenhaus.md`
-§"Conformance fixtures" (HO-2, #2565); see the module docstring above
-for the case-by-case role.  Each case is emitted with
+Each case is emitted with
 `modFactorPrime` / `modFactorDegrees`, which the python-flint oracle
 cross-checks via `nmod_poly.factor`.  Conformance buckets for the same
 polynomials live in `HexBerlekampZassenhaus/Conformance.lean` under
@@ -286,31 +357,28 @@ the local Lean polynomial names there. -/
 private def cases_pinned_factor : List PinnedCase :=
   [ -- adv/quad_sqrt2_sqrt3 — (X^2 - 2)(X^2 - 3) splits over F_23 into
     -- four linear factors that the integer factorisation recombines
-    -- into two quadratics.  Discharges the HO-2 non-trivial
-    -- subset-product requirement.
+    -- into two quadratics, exercising non-trivial subset recombination.
     mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1] ]
 
 private def cases_pinned_expected : List PinnedExpectedCase :=
   [ -- adv/x4_plus_1 — X^4 + 1 is irreducible over Z and splits over F_5
-    -- into two quadratics; HO-2 subset-product case at a small
-    -- admissible prime.
+    -- into two quadratics at a small admissible prime.
     mkPinnedExpected "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
       1 [([1, 0, 0, 0, 1], 1)]
     -- adv/swinnerton_dyer_sd3 — Swinnerton-Dyer SD_3 (degree 8, root
     -- field Q(√2, √3, √5)) is irreducible over Z and splits completely
-    -- over F_71 as eight linear factors; HO-2 heavy-split case.
+    -- over F_71 as eight linear factors.
   , mkPinnedExpected "adv/swinnerton_dyer_sd3"
       #[576, 0, -960, 0, 352, 0, -40, 0, 1]
       71 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([576, 0, -960, 0, 352, 0, -40, 0, 1], 1)]
     -- adv/phi15 — Φ_15 (degree 8) is irreducible over Z and splits
-    -- completely over F_31 as eight linear factors; HO-2 heavy-split
-    -- case at a small admissible prime.
+    -- completely over F_31 as eight linear factors at a small admissible prime.
   , mkPinnedExpected "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
       31 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([1, -1, 0, 1, -1, 1, 0, -1, 1], 1)] ]
 
-/-! ## Polynomials with non-unit content -/
+/-! # Polynomials with non-unit content -/
 
 private def cases_content : List ExpectedCase :=
   [ -- 2·Φ_5 — content 2 around an irreducible quartic.
@@ -320,7 +388,7 @@ private def cases_content : List ExpectedCase :=
   , mkExpected "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3]
       3 [([1, 1, 1, 1, 1, 1, 1], 1)] ]
 
-/-! ## Good-prime regression cases
+/-! # Good-prime regression cases
 
 These split products exercise the path where the raw executable gcd can return
 a non-monic unit for square-free modular images.  Results are pinned rather
@@ -328,10 +396,16 @@ than emitted through `factor` so the oracle catches any reducible Hex output. -/
 
 private def cases_good_prime_regression : List ExpectedCase :=
   [ mkExpected "regression/split_roots_1_11" (splitProductCoeffs 11)
-      1 (splitProductExpectedFactors 11)
-  , mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
-      1 (splitProductExpectedFactors 24)
-  , mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
+      1 (splitProductExpectedFactors 11) ]
+
+/-- A large-support exact-peeling case accepted through proved classical
+replay. It is separated so the emitter can require the `.replay` method. -/
+private def cases_replay : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
+      1 (splitProductExpectedFactors 24) ]
+
+private def cases_good_prime_regression_large : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
       1 (splitProductExpectedFactors 72) ]
 
 /-- Adversarial conformance corpus (per-PR; the heavy high-`r` cases SD4-SD6 and
@@ -358,6 +432,165 @@ private def cases_adversarial : List Case :=
   , mk "adv/bad_prime_retry" #[-180, 0, 156, 0, -35, 0, 1]               -- (x²-2)(x²-3)(x²-30)
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
+
+/-! # Direct classical performance controls -/
+
+private def cases_direct : List Case :=
+  [ mk "direct/chebyshev_u18"
+      #[-1, 0, 180, 0, -5280, 0, 59136, 0, -329472, 0, 1025024, 0,
+        -1863680, 0, 1966080, 0, -1114112, 0, 262144]
+  , mk "direct/legendre_p28"
+      #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
+        0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
+        0, -62588625639883200, 0, 156993135980040360, 0,
+        -277046710553012400, 0, 342663036736620600, 0,
+        -290744394806829600, 0, 161173523208133800, 0,
+        -52567364492499024, 0, 7648690600760440] ]
+
+/-! # Lattice-method coverage
+
+See the module docstring section "Lattice-method coverage". The cases are
+emitted through the public `factorize` path (`factorTraced`, whose `.1`
+is `factorize`) so the pinned trace catches method regressions, not just
+lattice ones. -/
+
+/-- The two lattice-only cases, one per lattice answer arm:
+
+* `adv/swinnerton_dyer_sd5_pair` (split arm) — `SD₅(x)·SD₅(x+1)`, the
+  product of Swinnerton-Dyer SD₅ (the committed scheduled-corpus
+  `adv/swinnerton_dyer_5` polynomial, minimal polynomial of
+  √2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly
+  two integer factors (the two 32-blocks).
+* `adv/swinnerton_dyer_sd6` (certification arm) — Swinnerton-Dyer SD₆
+  (the committed corpus `sd6` polynomial, minimal polynomial of
+  √2+√3+√5+√7+√11+√13).  Degree 64, content 1, irreducible over ℤ. -/
+private def cases_lattice : List PinnedCase :=
+  [ mkPinned "adv/swinnerton_dyer_sd5_pair"
+      #[11101827931906700692775396966400, -20149686329260169158205217177600,
+        -401485862864015096914747179663360,
+        542434245172328681950369347010560,
+        5012420864790130900370848844087296,
+        -3960296326489454660478287277457408,
+        -28871495437215984552457055575736320,
+        11815096040503473304118591431376896,
+        90368762389881951552993316215717888,
+        -13442597726530711239756206246461440,
+        -169318168569256976670002306583887872,
+        -5106043062269303041007476577140736,
+        203790362268099712418642466877997056,
+        31842327843847761548027667364708352,
+        -166334963114402183779967280242491392,
+        -41646299510886909758182690325004288,
+        95874293133421566632128940101033984,
+        31326757230671744837148463739961344,
+        -40187520195658809490187600727801856,
+        -15900390561260410792279551448449024,
+        12498575684329014278226171313364992,
+        5825581268692550371280448447840256,
+        -2916887831323939096164149638410240,
+        -1600596315332161707818522495549440,
+        511272707272924709604596704746752,
+        338023896633458155076239295324160,
+        -66207908947743815016914836967936,
+        -55807892326401711872028021776384, 5967370836164084103445688902528,
+        7288775394478910547448726589440, -290278430652522926846805232064,
+        -759046229065707375681704978432, -9985470465978726142566051647,
+        63320575321577635160023538080, 3616672133248706617687751600,
+        -4237357988791915834302206880, -406182697044518040602433480,
+        226959069964451393388035360, 30132996847158857667661456,
+        -9660637130776100972376608, -1659605660525774158311716,
+        321903767632358798247712, 70559426385456543819184,
+        -8139551415430337779488, -2350253717762252454136,
+        144958892545273337504, 61530513414120188304, -1377982586328124832,
+        -1260267322467469178, -10241566640720160, 19948369397622416,
+        666700176676640, -238675624057208, -13436639601312, 2076738859824,
+        166363635616, -12197577892, -1365630880, 39901712, 7273376, -10696,
+        -22816, -400, 32, 1]
+      29 (List.replicate 32 2)
+  , mkPinned "adv/multiquadratic_nonnorm_64"
+      #[163982603328605578670736365403530625,
+        -86959594253853575496760446828545760000,
+        -1298897017660841547045707551087396812000,
+        -3326772778152505773521065270831190592000,
+        5213946132035189693334485431550541183600,
+        29217432446276212152131937249988076025600,
+        21801280851488556396174830894143071585120,
+        -47795348778766259945283776772530508026880,
+        -76299477429482460846366554378531282500616,
+        15695732468265994283157206660051930697984,
+        88595989827498886761592971270455843225504,
+        24272599200856908764534655154465260655104,
+        -53142834497950043011505168728881351850416,
+        -29819269354516191340276352104239366941952,
+        18515200611768511024361000830851741349344,
+        16350437042064944717907533275046228981760,
+        -3661633729451114814804997721004448633188,
+        -5635804691293911367291892932720451129088,
+        237727343268205401671816016653718726816,
+        1362352173646846874354801285967122425344,
+        85407505946182659716457781061726027632,
+        -244353376352580633447861087097055728896,
+        -32147103735480890753734866080053365280,
+        33681483320422417422408341041672590336,
+        6086146531421791704502800466807211208,
+        -3654263280901659963021977208368923392,
+        -795712147076387105436899026455919328,
+        317414465907171238594994222036144640,
+        78314833092705393793624500108067280,
+        -22344180097244858792170297768687872,
+        -6031793428250322113661329719974816,
+        1285666025680213804313961852211200,
+        371445567949950394665727794703046,
+        -60809049829416498788587315577088,
+        -18530552413956808758433979631776,
+        2371774753732484711322208399872, 755090746852536656681762998992,
+        -76367068274747742898233625344, -25255849058458839569065572320,
+        2028069524122737419915891712, 695037934128888499959185864,
+        -44299942009965594581163264, -15740808535498464807845664,
+        792171962648666530776576, 292829904636304825188464,
+        -11516838065323468576512, -4457105458945325284448,
+        134830844106917345280, 55155654037385437596, -1254620459298821376,
+        -549836371216732960, 9113339713122816, 4358844214238032,
+        -50370678249216, -26985384532320, 203907935232, 127120725240,
+        -568340736, -438246816, 972288, 1038192, -768, -1504, 0, 1]
+      19 (List.replicate 32 2) ]
+
+/-! # Certificate coverage
+
+See the module docstring section "Certificate coverage". -/
+
+/-- The certificate case: SD₆, the minimal polynomial of
+√2+√3+√5+√7+√11+√13, degree 64, content 1, irreducible over ℤ.  Its
+recovered certificate is the translation `0` with radicands
+`2, 3, 5, 7, 11, 13`.  The helper requires `method = "quadraticNorm"`, so a
+regression that loses the recognizer -- or gates it out at width 32 --
+fails the emit rather than silently falling back to the lattice. -/
+private def cases_certificate : List PinnedCase :=
+  [ mkPinned "adv/swinnerton_dyer_sd6"
+      #[198828783273803025550632280753863681, 0,
+        -8316202966928528723117528333532208416, 0,
+        100392008259975194458539996111340080624, 0,
+        -511762449216265420619809586571618679392, 0,
+        1258829468814790188483900997578812102776, 0,
+        -1771080720430629161685158978892152599456, 0,
+        1585722240968892813653220405983168716752, 0,
+        -968316307427310602872375357706532108000, 0,
+        423140580409718469187953106123559340828, 0,
+        -137048942135190916858196960829292680864, 0,
+        33785494292069713784801456649105169648, 0,
+        -6471399892949448329687739464771529952, 0,
+        978878175154164215599705915851796296, 0,
+        -118444912349891951852181962142375200, 0,
+        11582497564629879101390954172990800, 0,
+        -922739669127277027441017551584608, 0,
+        60261059130667890854325275719238, 0, -3240853899326109989616514647392,
+        0, 143976257181996292530653998416, 0, -5292590468585153795497272608,
+        0, 161038437520893531719546696, 0, -4051269676739248306877664, 0,
+        84041236543621002233072, 0, -1431186296399427673760, 0,
+        19875965471079809820, 0, -223010452468129504, 0, 1995413247403984, 0,
+        -13981172308896, 0, 74737287288, 0, -293134944, 0, 792048, 0, -1312,
+        0, 1]
+      19 (List.replicate 32 2) ]
 
 -- Metamorphic relations (checked without an external oracle): factoring a
 -- transformed input relates predictably to factoring the original.
@@ -386,11 +619,77 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
   emitClassicalResult c.id (DensePoly.ofCoeffs c.coeffs)
 
+/-- Emit a checked-proposal sentinel and reject any method change. The public
+factor result is independently pinned; the classical operation is skipped here
+because this case exists to exercise the total selector's replay branch. -/
+private def emitReplayExpectedCase (c : ExpectedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (phi, trace) := factorTraced f
+  unless trace.method == .replay && trace.classicalDecline == some .largeSupport do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: expected checked proposal replay, got \
+        method={trace.method.name}, decline={trace.classicalDecline.map (·.name)}"
+  unless Factorization.product phi == f do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: replay result does not reconstruct input"
+  emitPolyFixture lib c.id c.coeffs.toList none
+  emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+  emitResult lib c.id "classicalFactor" "null"
+  emitResult lib c.id "trace" (traceValue trace)
+
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
-  emitResult lib c.id "factor" (factorValue (factor f))
+  emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
+
+/-- Emit one lattice-only fixture through the traced public factorization path.
+
+single `factorTraced` run supplies the `factorize` result (its `.1` is the
+public `factorize`) **and** the trace, so the committed trace pins the method
+`factorize` actually used.  The helper is sentinel-only: it errors out unless the
+classical method declined and the lattice method answered, which is the case's
+purpose: a case that stops using the lattice method must not emit
+quietly. A method change also breaks the committed-fixture byte comparison and
+the `bz_trace_gate.py` baseline. Since the
+lattice method answered, the classical method returned `none`, so
+`classicalFactor` is `null` (an oracle skip) without paying the classical
+decline burn a second time.  The exact `prime` / `r` / `subsetCandidates`
+values are pinned by the committed-fixture byte-diff in
+`scripts/ci/run_oracles.sh`; the trace-gate baseline additionally pins
+method/decline and upper-bounds `subsetCandidates`. -/
+private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (φ, trace) := factorTraced f
+  unless trace.method == .lattice && trace.classicalDecline.isSome do
+    throw <| IO.userError
+      s!"emitHybridTracedCase {c.id}: expected the classical method to decline and \
+        the lattice method to answer, got method={trace.method.name}, \
+        decline={trace.classicalDecline.map (·.name)}"
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
+  emitResult lib c.id "factor" (factorValue φ)
+  emitResult lib c.id "classicalFactor" "null"
+  emitResult lib c.id "trace" (traceValue trace)
+
+/--
+Emit one case that the iterated-quadratic-norm certificate must answer.
+
+The helper rejects a run unless the certificate answered with no classical
+decline, so losing the recognizer -- or gating it out at this width -- fails
+the emit instead of silently falling back to the lattice.
+-/
+private def emitCertifiedTracedCase (c : PinnedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (φ, trace) := factorTraced f
+  unless trace.method == .quadraticNorm && trace.classicalDecline.isNone do
+    throw <| IO.userError
+      s!"emitCertifiedTracedCase {c.id}: expected the iterated-quadratic-norm \
+        certificate to answer, got method={trace.method.name}, \
+        decline={trace.classicalDecline.map (·.name)}"
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
+  emitResult lib c.id "factor" (factorValue φ)
+  emitResult lib c.id "classicalFactor" (factorValue φ)
+  emitResult lib c.id "trace" (traceValue trace)
 
 private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
@@ -409,4 +708,10 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_replay do Hex.BZEmit.emitReplayExpectedCase c
+  for c in Hex.BZEmit.cases_good_prime_regression_large do
+    Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_direct do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c
+  for c in Hex.BZEmit.cases_certificate do Hex.BZEmit.emitCertifiedTracedCase c

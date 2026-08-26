@@ -1,0 +1,55 @@
+# Raw stdout: production/full-witness and lattice-seam spikes
+# Revision base: b4b36754 (exact/factor-only patch pending)
+# Worktree: dirty (runtime patch, fresh exports, and reports pending)
+# Date: 2026-07-29
+# Host: chungus2, AMD EPYC 9455, Linux x86-64
+# CPU placement: taskset -c 0
+#
+# Command: taskset -c 0 .lake/build/bin/hex_classical_spike
+=== classical BZ spike: per-phase breakdown (Int) ===
+    16 distinct shifted (x-a)..(x-a-(n-1)) inputs per degree
+--- degree 8 ---  (balanced k=4 size=8, balanced Mignotte size=8, want 8)
+  production   Mignotte: 208.053160 us/call (sink=12833638329268420244)
+  full-witness Mignotte: 219.928170 us/call (sink=12833638329268420244)
+  production   k=4     : 144.864380 us/call (sink=12833638329268420244)
+  full-witness k=4     : 152.689780 us/call (sink=12833638329268420244)
+--- degree 12 ---  (balanced k=4 size=12, balanced Mignotte size=12, want 12)
+  production   Mignotte: 525.871760 us/call (sink=9893462369674057444)
+  full-witness Mignotte: 663.704810 us/call (sink=9893462369674057444)
+  production   k=4     : 276.286120 us/call (sink=9893462369674057444)
+  full-witness k=4     : 293.028950 us/call (sink=9893462369674057444)
+--- degree 16 ---  (balanced k=4 size=16, balanced Mignotte size=16, want 16)
+  production   Mignotte: 1192.364300 us/call (sink=17690097090999870004)
+  full-witness Mignotte: 1789.023420 us/call (sink=17690097090999870004)
+  production   k=4     : 493.225560 us/call (sink=17690097090999870004)
+  full-witness k=4     : 520.152280 us/call (sink=17690097090999870004)
+--- degree 20 ---  (balanced k=4 size=20, balanced Mignotte size=20, want 20)
+  production   Mignotte: 2012.295440 us/call (sink=6682610095357522596)
+  full-witness Mignotte: 2891.766840 us/call (sink=6682610095357522596)
+  production   k=4     : 797.602030 us/call (sink=6682610095357522596)
+  full-witness k=4     : 847.892890 us/call (sink=6682610095357522596)
+--- degree 24 ---  (balanced k=4 size=24, balanced Mignotte size=24, want 24)
+  production   Mignotte: 4506.050490 us/call (sink=12343536985062083412)
+  full-witness Mignotte: 5837.450530 us/call (sink=12343536985062083412)
+  production   k=4     : 1240.887440 us/call (sink=12343536985062083412)
+  full-witness k=4     : 1274.291670 us/call (sink=12343536985062083412)
+#
+# Command: taskset -c 0 .lake/build/bin/hex_lattice_spike hybrid
+=== factorLattice wall-clock (#8395 early-termination spike) ===
+hybrid reducible deg 4: 0.107269 ms (tier=classical, declined=false, prime=5, r=2, subsetCandidates=0, factors=2)
+hybrid SD2   deg  4: 0.041050 ms (tier=classical, declined=false, prime=5, r=2, subsetCandidates=0, factors=1)
+hybrid Phi15 deg  8: 0.108891 ms (tier=classical, declined=false, prime=7, r=2, subsetCandidates=0, factors=1)
+hybrid SD3   deg  8: 0.214488 ms (tier=classical, declined=false, prime=7, r=4, subsetCandidates=0, factors=1)
+hybrid SD4   deg 16: 1.189805 ms (tier=classical, declined=false, prime=11, r=8, subsetCandidates=0, factors=1)
+hybrid SD5   deg 32: 100.705714 ms (tier=classical, declined=false, prime=19, r=16, subsetCandidates=0, factors=1)
+hybrid SD6   deg 64: 9132.376641 ms (tier=lattice, declined=true, prime=19, r=32, subsetCandidates=0, factors=1)
+#
+# Command: taskset -c 0 .lake/build/bin/hex_lattice_spike core
+=== factorLattice wall-clock (#8395 early-termination spike) ===
+after  reducible deg 4: 0.128320 ms (coreFactors=2, sink=14137321081195240780)
+after  SD2   deg  4: 0.212225 ms (coreFactors=1, sink=4495854109012413457)
+after  Phi15 deg  8: 0.275598 ms (coreFactors=1, sink=13946368074614375556)
+after  SD3   deg  8: 1.621914 ms (coreFactors=1, sink=12339489461881267390)
+after  SD4   deg 16: 28.722453 ms (coreFactors=1, sink=10635310798412723221)
+after  SD5   deg 32: 231.403103 ms (coreFactors=1, sink=9047904015630793366)
+after  SD6   deg 64: 8256.663741 ms (coreFactors=1, sink=7773109907390136533)

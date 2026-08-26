@@ -126,12 +126,12 @@ private theorem maxProperDiv_5 : Berlekamp.maximalProperDivisors 5 = [1] := by d
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
 
-/-! ## Certificate-backed benchmark moduli -/
+/-! # Certificate-backed benchmark moduli -/
 
 /-- `x^2 + 6x + 3` over `F_7`. -/
 private def m_p7_n2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
 private theorem m_p7_n2_monic : DensePoly.Monic m_p7_n2 := by rfl
 
@@ -172,7 +172,7 @@ private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
 /-- `x^3 + 6x^2 + 4` over `F_7`. -/
 private def m_p7_n3 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n3_pos : 0 < FpPoly.degree m_p7_n3 := by decide
 private theorem m_p7_n3_monic : DensePoly.Monic m_p7_n3 := by rfl
 
@@ -215,7 +215,7 @@ private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 :=
 /-- `x^4 + 5x^2 + 4x + 3` over `F_7`. -/
 private def m_p7_n4 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n4_pos : 0 < FpPoly.degree m_p7_n4 := by decide
 private theorem m_p7_n4_monic : DensePoly.Monic m_p7_n4 := by rfl
 
@@ -259,7 +259,7 @@ private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 :=
 /-- `x^5 + x + 4` over `F_7`. -/
 private def m_p7_n5 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 1, 0, 0, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n5_pos : 0 < FpPoly.degree m_p7_n5 := by decide
 private theorem m_p7_n5_monic : DensePoly.Monic m_p7_n5 := by rfl
 
@@ -307,7 +307,7 @@ private theorem m_p7_n5_irr : FpPoly.Irreducible m_p7_n5 :=
 /-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` over `F_7`. -/
 private def m_p7_n6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n6_pos : 0 < FpPoly.degree m_p7_n6 := by decide
 private theorem m_p7_n6_monic : DensePoly.Monic m_p7_n6 := by rfl
 
@@ -361,7 +361,7 @@ private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 :=
 /-- `x^8 + x + 3` over `F_7`. -/
 private def m_p7_n8 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 1, 0, 0, 0, 0, 0, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n8_pos : 0 < FpPoly.degree m_p7_n8 := by decide
 private theorem m_p7_n8_monic : DensePoly.Monic m_p7_n8 := by rfl
 
@@ -925,7 +925,7 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `fq_default` informational comparator fixed registrations -/
+/-! # FLINT `fq_default` informational comparator fixed registrations -/
 
 setup_fixed_benchmark runOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runFlintOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }

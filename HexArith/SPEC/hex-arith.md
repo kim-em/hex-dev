@@ -280,20 +280,20 @@ Needed because `omega` won't solve nonlinear modular goals.
 stated and proved at `Nat` with `R = 2^64`. No `UInt64` appears:
 
 ```lean
-def redcNat (p p' T : Nat) : Nat :=
+def montgomeryReduceNat (p p' T : Nat) : Nat :=
   let m := (T % R) * p' % R
   let u := (T + m * p) / R
   if u < p then u else u - p
 
-theorem redcNat_eq_mod (hp_pos : 0 < p) (hp_lt : p < R)
+theorem montgomeryReduceNat_eq_mod (hp_pos : 0 < p) (hp_lt : p < R)
     (hpp' : p * p' % R = R - 1) (hT : T < p * R) :
-    redcNat p p' T * R % p = T % p
+    montgomeryReduceNat p p' T * R % p = T % p
 
-theorem redcNat_lt (hp_pos : 0 < p) (hp_lt : p < R)
+theorem montgomeryReduceNat_lt (hp_pos : 0 < p) (hp_lt : p < R)
     (hpp' : p * p' % R = R - 1) (hT : T < p * R) :
-    redcNat p p' T < p
+    montgomeryReduceNat p p' T < p
 
-theorem redcNat_u_lt_two_p (hp_pos : 0 < p) (hp_lt : p < R)
+theorem montgomeryReduceNat_quotient_lt_two_p (hp_pos : 0 < p) (hp_lt : p < R)
     (hpp' : p * p' % R = R - 1) (hT : T < p * R) :
     (T + ((T % R) * p' % R) * p) / R < 2 * p
 ```
@@ -329,13 +329,13 @@ Note: `2 - p*x` is computed in wrapping UInt64 arithmetic (underflows
 in `Nat`). The Nat-level proof works mod `2^(2k)`.
 
 *Layer 5 — `HexArith/Montgomery/Redc.lean` (UInt64 bridge).* Executable
-REDC in `UInt64`, proven equivalent to `redcNat` via intermediate lemmas
+REDC in `UInt64`, proven equivalent to `montgomeryReduceNat` via intermediate lemmas
 (not definitional equality — executable code uses `mulHi`/carries while
-`redcNat` uses division). Key subtlety: `u < 2p` may exceed `UInt64.size`
+`montgomeryReduceNat` uses division). Key subtlety: `u < 2p` may exceed `UInt64.size`
 when `p` is near `2^64`, so `u` is a 65-bit value `(carry, lo) : Bool × UInt64`:
 
 ```lean
-def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
+def montgomeryReduce (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
   let m := Tlo * ctx.p'
   let (_, c1) := UInt64.addCarry Tlo (m * p) false
   let (addHi, c2) := UInt64.addCarry Thi (mulHi m p) c1
@@ -343,18 +343,25 @@ def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
   else if addHi ≥ p then addHi - p else addHi
 
 -- Intermediate bridge lemmas
-theorem redc_m_spec ...    -- m.toNat = (T % R) * p'.toNat % R
-theorem redc_u_spec ...    -- (c2, addHi) represents u = (T + m*p) / R
-theorem redc_sub_spec ...  -- conditional subtraction matches redcNat
+theorem montgomeryReduce_m_spec ...    -- m.toNat = (T % R) * p'.toNat % R
+theorem montgomeryReduce_u_spec ...    -- (c2, addHi) represents u = (T + m*p) / R
+theorem montgomeryReduce_sub_spec ...  -- conditional subtraction matches montgomeryReduceNat
 
-theorem toNat_redc (ctx : MontCtx p) (Thi Tlo : UInt64)
+theorem toNat_montgomeryReduce (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * 2^64 < p.toNat * 2^64) :
-    (redc ctx Thi Tlo).toNat =
-      redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * 2^64)
+    (montgomeryReduce ctx Thi Tlo).toNat =
+      montgomeryReduceNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * 2^64)
 ```
 
+`montgomeryReduce` has this transparent word-arithmetic body as its proof
+contract and the mandatory runtime extern `lean_hex_montgomery_reduce`. The
+extern performs the same carry-aware REDC with unboxed machine words. Likewise,
+`MontCtx.toMont`, `MontCtx.fromMont`, and `MontCtx.mulMont` retain their logical
+bodies but use scalar C externs in compiled code, avoiding intermediate Lean
+tuple allocation in coefficient-level hot loops.
+
 *Layer 6 — `HexArith/Montgomery/Context.lean` (user-facing API).*
-Definitions of `toMont`, `fromMont`, `mulMont` in terms of `redc`,
+Definitions of `toMont`, `fromMont`, `mulMont` in terms of `montgomeryReduce`,
 plus derived Nat-level projections (`p_pos`, `p_lt_R`, `p_odd_nat`)
 proved once on `MontCtx`, bounds/closure lemmas (`toMont_lt`,
 `mulMont_lt`), a Montgomery domain invariant (`mulMont_repr`), and
@@ -402,10 +409,19 @@ callers go through GMP.
 
 **Modular exponentiation:**
 ```lean
-def powMod (a n p : Nat) : Nat  -- uses Montgomery internally
+def powMod (a n p : Nat) : Nat     -- runtime twin; uses Montgomery internally
+def powModNat (a n p : Nat) : Nat  -- kernel-facing specification
 
 theorem powMod_eq (a n p : Nat) (hp : p > 0) :
     powMod a n p = a ^ n % p
+
+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
+    powModNat a n p = a ^ n % p
+
+theorem powMod_eq_powModNat (a n p : Nat) :
+    powMod a n p = powModNat a n p
+
+@[csimp] theorem powModNat_eq_powMod : @powModNat = @powMod
 ```
 
 For inputs that don't take the Montgomery path (even `p`, or
@@ -416,6 +432,17 @@ before reducing, so memory and time grow exponentially in the bit-size
 of `n`. This is a Phase 1 "wrong-complexity" violation
 ([PLAN/Phase1.md](../../PLAN/Phase1.md)) regardless of how well the
 proof of `powMod_eq` happens to discharge.
+
+The two forms are a specification/twin pair. `powModNat` and its
+recursion (`powModNatGo`, `bitLength`) are `@[expose]`, so a
+certificate checker written against `powModNat` replays by kernel
+reduction; the `@[csimp]` equality swaps in `powMod`'s Montgomery
+dispatch when the same checker runs compiled. Both return `0` at
+`p = 0` (the modulus-zero convention `powMod` always had); the
+agreement at every input is what makes the `@[csimp]` registration
+unconditional. Downstream consumer: hex-primality's `checkPrime`
+(see [HexPrimality/SPEC/hex-primality.md](../../HexPrimality/SPEC/hex-primality.md)
+§Kernel exposure).
 
 **Binomial coefficients and Fermat's little theorem:**
 
@@ -444,6 +471,24 @@ theorem Nat.Prime.dvd_mul (hp : Nat.Prime p) :
 ```
 Proof via extended GCD: if `p ∤ a` then `gcd(a, p) = 1`, Bezout gives
 `s * a + t * p = 1`, multiply by `b`, since `p ∣ a * b` conclude `p ∣ b`.
+
+**Primality decision and prime-divisor extraction:**
+```lean
+instance : DecidablePred Hex.Nat.Prime   -- via isPrimeTrial, O(√p)
+
+theorem exists_prime_dvd (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d
+theorem exists_prime_le_sqrt (h : 2 ≤ n) (hcomp : ¬ Prime n) :
+    ∃ p, Prime p ∧ p ∣ n ∧ p * p ≤ n
+```
+
+The instance routes `decide` through the balanced trial-division
+checker `isPrimeTrial` and its two directions
+(`isPrimeTrial_isPrime`, `isPrimeTrial_of_prime`), so kernel
+reduction depth stays logarithmic in the candidate count while the
+remainder-test count stays `O(√p)`. The two existence lemmas are the
+composite-witness facts hex-primality's Pocklington argument
+finishes with; `exists_trial_divisor` (a nontrivial divisor yields
+one at most the square root) is exported for the same reason.
 
 **Note:** `Nat.gcd` already exists with GMP-backed `mpz_gcd`. We build on
 it for extended GCD. The pure Lean `extGcd` is the logical definition used

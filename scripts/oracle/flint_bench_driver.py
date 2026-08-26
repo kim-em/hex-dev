@@ -8,12 +8,13 @@ is JSON encode/decode and the FLINT operation itself.
 
 Per `SPEC/benchmarking.md` (post-#3657) §"External comparators"
 §"Process call": this driver is the persistent-subprocess shape
-required when per-call overhead is non-negligible. The bench harness
-spawns the driver once per `lake exe hexfoo_bench run` invocation,
-holds its stdin / stdout handles in an `IO.Ref` (see
-`Hex/BenchOracle/Flint.lean`), and reuses the file descriptors
-across every measured call in that bench process. One process
-startup is amortised across all comparator calls in the run.
+required when per-call overhead is non-negligible. A fixed benchmark
+starts a fresh Lean child for each outer warmup or repeat. Within one
+child, `warmupFirstIter` starts this driver before timing, stores its
+stdin / stdout handles in an `IO.Ref` (see
+`Hex/BenchOracle/Flint.lean`), and the auto-tuned inner-repeat batch
+reuses those handles. Thus one driver startup is amortised across the
+measured calls in that child; it is not shared across outer repeats.
 
 ## Framing
 
@@ -71,6 +72,51 @@ degree (the same convention `Hex.DensePoly` uses in
 * ``primitive_part`` — returns ``a // content(a)`` as a coefficient
   list (FLINT's primitive-part normal form). The zero polynomial
   returns ``[]``.
+* ``resultant`` — returns the integer resultant of ``a`` and ``b``.
+* ``discriminant`` — returns the integer discriminant of ``a``.
+* ``overhead`` — returns ``0`` without constructing a polynomial; this is the
+  steady-state JSON framing / dispatch calibration used by headline reports.
+
+### `fmpz_mpoly` (multivariate integer polynomial Z[x₀, ..., xₙ₋₁])
+
+Request field ``nvars`` is the arity. ``a`` and ``b`` are sparse term lists
+``[[[e₀, ..., eₙ₋₁], coefficient], ...]``. Results use the same encoding,
+with zero coefficients omitted and terms reversed from FLINT's descending
+traversal into Hex's canonical ascending lexicographic traversal.
+
+* ``gcd`` — returns ``gcd(a, b)`` in FLINT's canonical integer normal form.
+* ``divexact`` — returns the exact quotient ``a / b`` and rejects a nonzero
+  remainder.
+* ``squarefree`` — returns the sorted multiplicities from FLINT's squarefree
+  factorisation of ``a``.
+* ``overhead`` — returns an empty term list without constructing a context;
+  this is the steady-state framing / dispatch calibration.
+
+### `fmpq_mpoly` (multivariate rational polynomial Q[x₀, ..., xₙ₋₁])
+
+The sparse term shape is the same as ``fmpz_mpoly``, except that each
+coefficient is ``[numerator, denominator]`` in lowest terms. ``gcd`` returns
+the canonical monic rational GCD; ``overhead`` returns an empty term list.
+
+### `fmpq_series` (fixed-precision rational power series)
+
+Request fields: ``a`` and, for composition, ``b`` are rational coefficient
+objects ``{"num": [...], "den": [...]}``; ``precision`` is the truncation
+bound.  Results use the same parallel numerator/denominator encoding, padded
+to exactly ``precision`` coefficients.
+
+* ``inv`` — multiplicative inverse through the requested precision.
+* ``exp`` — exponential of a series with zero constant coefficient.
+* ``log`` — logarithm of a series with constant coefficient one.
+* ``sqrt`` — the square root branch with positive supplied constant root.
+* ``compose`` — truncated substitution ``a(b)``.
+* ``revert`` — compositional inverse of a valuation-one series.
+* ``overhead`` — protocol calibration with an empty rational result.
+
+python-flint exposes these FLINT ``fmpq_poly_*_series`` kernels through its
+``fmpq_series`` wrapper.  Every request sets the wrapper's process-global
+context cap to its explicit precision before constructing operands, so a
+preceding request cannot silently truncate a later result.
 
 ### `nmod_poly` (F_p[x] for prime p that fits in a word)
 
@@ -96,6 +142,15 @@ Request fields: ``rows`` (list of list of int).
 * ``det`` — returns the determinant as an integer. Computed via
   ``flint.fmpz_mat(rows).det()`` (FLINT's multimodular-CRT
   determinant).
+* ``charpoly`` — returns the complete characteristic-polynomial coefficient
+  list in ascending degree order via ``flint.fmpz_mat(rows).charpoly()``.
+* ``minpoly`` — returns the minimal-polynomial coefficient list in ascending
+  degree order via ``flint.fmpz_mat(rows).minpoly()``.
+* ``hnf`` — returns FLINT's canonical row Hermite normal form as rows.
+* ``overhead`` — returns ``0`` without constructing a matrix, calibrating the
+  persistent JSON protocol.
+* ``snf`` — returns the nonnegative Smith diagonal in divisibility order via
+  ``flint.fmpz_mat(rows).snf()``.
 
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
@@ -141,6 +196,15 @@ schema is the textbook Newton-style quadratic lift. HO-24 owns
 the Hensel-family wiring on the Lean side and may extend the
 operation set here as its bench targets require.
 
+### `rcf` (univariate real-closed-field sentences)
+
+Request field: ``sentence``, a version-1 HexRCF sentence object using the
+same schema as ``scripts/oracle/rcf_flint.py``.
+
+* ``decide`` — returns the Boolean verdict produced by the shared independent
+  python-flint RCF engine. The benchmark driver imports that engine rather
+  than duplicating its carrier, root certification, or cell evaluation.
+
 ## Per-call overhead
 
 The driver imports ``flint`` once at startup; per-call cost in the
@@ -164,11 +228,23 @@ from __future__ import annotations
 import json
 import sys
 import traceback
+from pathlib import Path
 from typing import Any, Callable
 
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+try:
+    from scripts.oracle.rcf_flint import decide_sentence
+
+    _rcf_import_error: str | None = None
+except Exception as exc:  # pragma: no cover - defensive isolation
+    decide_sentence = None  # type: ignore[assignment]
+    _rcf_import_error = f"HexRCF oracle unavailable: {exc!r}"
+
 # Import flint at startup so the first request does not pay the
-# `import flint` cost. The CI workflow installs python-flint at the
-# top of `conformance.yml`; if it is unavailable the driver still
+# `import flint` cost. The CI workflow installs python-flint in its
+# shared dependency step; if it is unavailable the driver still
 # starts but every request that needs flint will reply with an
 # error frame.
 try:
@@ -257,6 +333,18 @@ def _fmpz_poly_primitive_part(req: dict[str, Any]) -> list[int]:
     return _fmpz_poly_coeffs(a // flint.fmpz_poly([c]))  # type: ignore[union-attr]
 
 
+def _fmpz_poly_resultant(req: dict[str, Any]) -> int:
+    return int(_fmpz_poly(req["a"]).resultant(_fmpz_poly(req["b"])))
+
+
+def _fmpz_poly_discriminant(req: dict[str, Any]) -> int:
+    return int(_fmpz_poly(req["a"]).discriminant())
+
+
+def _fmpz_poly_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
 _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "add": _fmpz_poly_add,
     "sub": _fmpz_poly_sub,
@@ -267,6 +355,289 @@ _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "compose": _fmpz_poly_compose,
     "content": _fmpz_poly_content,
     "primitive_part": _fmpz_poly_primitive_part,
+    "resultant": _fmpz_poly_resultant,
+    "discriminant": _fmpz_poly_discriminant,
+    "overhead": _fmpz_poly_overhead,
+}
+
+
+# ---------------------------------------------------------------------
+# `fmpz_mpoly` (Z[x₀, ..., xₙ₋₁])
+# ---------------------------------------------------------------------
+
+
+def _fmpz_mpoly_terms(value: Any, nvars: int, field: str) -> dict[tuple[int, ...], int]:
+    if not isinstance(value, list):
+        raise ValueError(f"fmpz_mpoly field {field!r} must be a term list")
+    terms: dict[tuple[int, ...], int] = {}
+    for index, term in enumerate(value):
+        if not isinstance(term, list) or len(term) != 2:
+            raise ValueError(
+                f"fmpz_mpoly field {field!r} term {index} must be [exponents, coefficient]"
+            )
+        exponents, coefficient = term
+        if not isinstance(exponents, list) or len(exponents) != nvars:
+            raise ValueError(
+                f"fmpz_mpoly field {field!r} term {index} has exponent length "
+                f"{len(exponents) if isinstance(exponents, list) else 'non-list'}; "
+                f"expected {nvars}"
+            )
+        powers = tuple(int(exponent) for exponent in exponents)
+        if any(exponent < 0 for exponent in powers):
+            raise ValueError(
+                f"fmpz_mpoly field {field!r} term {index} has a negative exponent"
+            )
+        if powers in terms:
+            raise ValueError(
+                f"fmpz_mpoly field {field!r} repeats exponent vector {powers}"
+            )
+        coefficient = int(coefficient)
+        if coefficient != 0:
+            terms[powers] = coefficient
+    return terms
+
+
+def _fmpz_mpoly_context(req: dict[str, Any]):
+    nvars = int(req["nvars"])
+    if nvars < 0:
+        raise ValueError("fmpz_mpoly nvars must be nonnegative")
+    names = tuple(f"x{index}" for index in range(nvars))
+    return flint.fmpz_mpoly_ctx.get(names, "lex")  # type: ignore[union-attr]
+
+
+def _fmpz_mpoly(ctx, req: dict[str, Any], field: str):
+    return ctx.from_dict(_fmpz_mpoly_terms(req[field], ctx.nvars(), field))
+
+
+def _fmpz_mpoly_encode(poly) -> list[list[Any]]:
+    return [
+        [[int(exponent) for exponent in powers], int(coefficient)]
+        for powers, coefficient in reversed(list(poly.terms()))
+    ]
+
+
+def _fmpz_mpoly_gcd(req: dict[str, Any]) -> list[list[Any]]:
+    ctx = _fmpz_mpoly_context(req)
+    return _fmpz_mpoly_encode(
+        _fmpz_mpoly(ctx, req, "a").gcd(_fmpz_mpoly(ctx, req, "b"))
+    )
+
+
+def _fmpz_mpoly_divexact(req: dict[str, Any]) -> list[list[Any]]:
+    ctx = _fmpz_mpoly_context(req)
+    divisor = _fmpz_mpoly(ctx, req, "b")
+    if divisor == 0:
+        raise ValueError("fmpz_mpoly divisor is zero")
+    quotient, remainder = divmod(_fmpz_mpoly(ctx, req, "a"), divisor)
+    if remainder != 0:
+        raise ValueError("fmpz_mpoly division has a nonzero remainder")
+    return _fmpz_mpoly_encode(quotient)
+
+
+def _fmpz_mpoly_squarefree(req: dict[str, Any]) -> list[int]:
+    ctx = _fmpz_mpoly_context(req)
+    polynomial = _fmpz_mpoly(ctx, req, "a")
+    if polynomial == 0:
+        raise ValueError("fmpz_mpoly squarefree factorisation of zero")
+    _content, factors = polynomial.factor_squarefree()
+    return sorted(int(multiplicity) for _factor, multiplicity in factors)
+
+
+def _fmpz_mpoly_overhead(_req: dict[str, Any]) -> list[list[Any]]:
+    return []
+
+
+_FMPZ_MPOLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "gcd": _fmpz_mpoly_gcd,
+    "divexact": _fmpz_mpoly_divexact,
+    "squarefree": _fmpz_mpoly_squarefree,
+    "overhead": _fmpz_mpoly_overhead,
+}
+
+
+# ---------------------------------------------------------------------
+# `fmpq_mpoly` (Q[x₀, ..., xₙ₋₁])
+# ---------------------------------------------------------------------
+
+
+def _fmpq_mpoly_terms(value: Any, nvars: int, field: str):
+    if not isinstance(value, list):
+        raise ValueError(f"fmpq_mpoly field {field!r} must be a term list")
+    terms = {}
+    for index, term in enumerate(value):
+        if not isinstance(term, list) or len(term) != 2:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} must be "
+                "[exponents, [numerator, denominator]]"
+            )
+        exponents, coefficient = term
+        if not isinstance(exponents, list) or len(exponents) != nvars:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} has exponent length "
+                f"{len(exponents) if isinstance(exponents, list) else 'non-list'}; "
+                f"expected {nvars}"
+            )
+        powers = tuple(int(exponent) for exponent in exponents)
+        if any(exponent < 0 for exponent in powers):
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} has a negative exponent"
+            )
+        if powers in terms:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} repeats exponent vector {powers}"
+            )
+        if not isinstance(coefficient, list) or len(coefficient) != 2:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} coefficient must be "
+                "[numerator, denominator]"
+            )
+        numerator, denominator = (int(value) for value in coefficient)
+        if denominator == 0:
+            raise ValueError("fmpq_mpoly coefficient denominator is zero")
+        rational = flint.fmpq(numerator, denominator)  # type: ignore[union-attr]
+        if rational != 0:
+            terms[powers] = rational
+    return terms
+
+
+def _fmpq_mpoly_context(req: dict[str, Any]):
+    nvars = int(req["nvars"])
+    if nvars < 0:
+        raise ValueError("fmpq_mpoly nvars must be nonnegative")
+    names = tuple(f"x{index}" for index in range(nvars))
+    return flint.fmpq_mpoly_ctx.get(names, "lex")  # type: ignore[union-attr]
+
+
+def _fmpq_mpoly(ctx, req: dict[str, Any], field: str):
+    return ctx.from_dict(_fmpq_mpoly_terms(req[field], ctx.nvars(), field))
+
+
+def _fmpq_mpoly_encode(poly) -> list[list[Any]]:
+    return [
+        [
+            [int(exponent) for exponent in powers],
+            [int(coefficient.p), int(coefficient.q)],
+        ]
+        for powers, coefficient in reversed(list(poly.terms()))
+    ]
+
+
+def _fmpq_mpoly_gcd(req: dict[str, Any]) -> list[list[Any]]:
+    ctx = _fmpq_mpoly_context(req)
+    return _fmpq_mpoly_encode(
+        _fmpq_mpoly(ctx, req, "a").gcd(_fmpq_mpoly(ctx, req, "b"))
+    )
+
+
+def _fmpq_mpoly_overhead(_req: dict[str, Any]) -> list[list[Any]]:
+    return []
+
+
+_FMPQ_MPOLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "gcd": _fmpq_mpoly_gcd,
+    "overhead": _fmpq_mpoly_overhead,
+}
+
+
+# ---------------------------------------------------------------------
+# `fmpq_series` (Q[[x]] / (x^precision))
+# ---------------------------------------------------------------------
+
+
+def _decode_fmpq_coeffs(value: Any) -> list[Any]:
+    if not isinstance(value, dict):
+        raise ValueError("rational coefficients must be an object")
+    nums = value.get("num")
+    dens = value.get("den")
+    if not isinstance(nums, list) or not isinstance(dens, list):
+        raise ValueError("rational coefficients require list fields 'num' and 'den'")
+    if len(nums) != len(dens):
+        raise ValueError("rational numerator/denominator lengths differ")
+    out = []
+    for num, den in zip(nums, dens, strict=True):
+        den = int(den)
+        if den == 0:
+            raise ValueError("rational coefficient denominator is zero")
+        out.append(flint.fmpq(int(num), den))  # type: ignore[union-attr]
+    return out
+
+
+def _encode_fmpq_series(series, precision: int) -> dict[str, list[int]]:
+    coeffs = list(series.coeffs())
+    coeffs.extend([flint.fmpq(0)] * (precision - len(coeffs)))  # type: ignore[union-attr]
+    coeffs = coeffs[:precision]
+    return {
+        "num": [int(q.p) for q in coeffs],
+        "den": [int(q.q) for q in coeffs],
+    }
+
+
+def _fmpq_series(req: dict[str, Any], precision: int, field: str = "a"):
+    return flint.fmpq_series(  # type: ignore[union-attr]
+        _decode_fmpq_coeffs(req[field]), prec=precision
+    )
+
+
+def _fmpq_series_unary(req: dict[str, Any], method: str) -> dict[str, list[int]]:
+    precision = int(req["precision"])
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = getattr(_fmpq_series(req, precision), method)()
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
+
+
+def _fmpq_series_inv(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "inv")
+
+
+def _fmpq_series_exp(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "exp")
+
+
+def _fmpq_series_log(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "log")
+
+
+def _fmpq_series_sqrt(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "sqrt")
+
+
+def _fmpq_series_compose(req: dict[str, Any]) -> dict[str, list[int]]:
+    precision = int(req["precision"])
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = _fmpq_series(req, precision, "a")(
+            _fmpq_series(req, precision, "b")
+        )
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
+
+
+def _fmpq_series_revert(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "reversion")
+
+
+def _fmpq_series_overhead(_req: dict[str, Any]) -> dict[str, list[int]]:
+    return {"num": [], "den": []}
+
+
+_FMPQ_SERIES_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "inv": _fmpq_series_inv,
+    "exp": _fmpq_series_exp,
+    "log": _fmpq_series_log,
+    "sqrt": _fmpq_series_sqrt,
+    "compose": _fmpq_series_compose,
+    "revert": _fmpq_series_revert,
+    "overhead": _fmpq_series_overhead,
 }
 
 
@@ -377,8 +748,47 @@ def _fmpz_mat_det(req: dict[str, Any]) -> int:
     return int(m.det())
 
 
+def _fmpz_mat_charpoly(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    polynomial = m.charpoly()
+    return [int(polynomial[i]) for i in range(m.nrows() + 1)]
+
+
+def _fmpz_mat_minpoly(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    return [int(c) for c in m.minpoly().coeffs()]
+
+
+def _fmpz_mat_hnf(req: dict[str, Any]) -> list[list[int]]:
+    rows = req["rows"]
+    matrix = flint.fmpz_mat([[int(c) for c in row] for row in rows])  # type: ignore[union-attr]
+    form = matrix.hnf()
+    return [
+        [int(form[i, j]) for j in range(form.ncols())]
+        for i in range(form.nrows())
+    ]
+
+
+def _fmpz_mat_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
+def _fmpz_mat_snf(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    d = m.snf()
+    return [abs(int(d[i, i])) for i in range(min(d.nrows(), d.ncols()))]
+
+
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
+    "charpoly": _fmpz_mat_charpoly,
+    "minpoly": _fmpz_mat_minpoly,
+    "hnf": _fmpz_mat_hnf,
+    "overhead": _fmpz_mat_overhead,
+    "snf": _fmpz_mat_snf,
 }
 
 
@@ -578,16 +988,39 @@ _NMOD_POLY_HENSEL_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 # ---------------------------------------------------------------------
+# `rcf` (univariate real-closed-field sentences)
+# ---------------------------------------------------------------------
+
+
+def _rcf_decide(req: dict[str, Any]) -> bool:
+    if decide_sentence is None:
+        raise RuntimeError(_rcf_import_error or "HexRCF oracle unavailable")
+    sentence = req.get("sentence")
+    if not isinstance(sentence, dict):
+        raise ValueError("rcf/decide request missing object 'sentence' field")
+    return decide_sentence(sentence)
+
+
+_RCF_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "decide": _rcf_decide,
+}
+
+
+# ---------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------
 
 
 _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpz_poly": _FMPZ_POLY_OPS,
+    "fmpz_mpoly": _FMPZ_MPOLY_OPS,
+    "fmpq_mpoly": _FMPQ_MPOLY_OPS,
+    "fmpq_series": _FMPQ_SERIES_OPS,
     "nmod_poly": _NMOD_POLY_OPS,
     "fmpz_mat": _FMPZ_MAT_OPS,
     "fq_default": _FQ_DEFAULT_OPS,
     "nmod_poly_hensel": _NMOD_POLY_HENSEL_OPS,
+    "rcf": _RCF_OPS,
 }
 
 
@@ -641,6 +1074,7 @@ def _serve(stdin, stdout) -> None:
 #       '{"family":"fmpz_poly","op":"mul","a":[1,2,3],"b":[4,5]}' \\
 #       '{"family":"nmod_poly","op":"is_irreducible","p":7,"a":[1,1,1]}' \\
 #       '{"family":"fmpz_mat","op":"det","rows":[[1,2],[3,4]]}' \\
+#       '{"family":"rcf","op":"decide","sentence":{"quantifier":"exists_real","bounds":null,"formula":{"tag":"tt"}}}' \\
 #       | python3 scripts/oracle/flint_bench_driver.py
 #
 # Expected replies (one per request, in order)::
@@ -648,6 +1082,7 @@ def _serve(stdin, stdout) -> None:
 #   {"ok":true,"result":[4,13,22,15]}
 #   {"ok":true,"result":true}
 #   {"ok":true,"result":-2}
+#   {"ok":true,"result":true}
 #
 # Malformed requests are echoed back as `{"ok":false,"error":"..."}`
 # and never terminate the driver.

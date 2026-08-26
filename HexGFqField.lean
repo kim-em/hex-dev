@@ -4,8 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqField.Basic
-import HexGFqField.Operations
+module
+
+public import HexGFqField.Basic
+public import HexGFqField.Operations
+public import HexGFqField.Example
+
+public section
 
 /-!
 Thin finite-field wrapper for executable `F_p[x] / (f)`.

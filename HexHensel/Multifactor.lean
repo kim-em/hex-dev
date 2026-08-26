@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Linear
+module
+
+public import HexBasic
+public import HexHensel.Linear
+
+public section
 
 /-!
 Executable multifactor Hensel lifting surface.
@@ -17,6 +22,7 @@ reducing the problem to the binary Hensel lift.
 namespace Array
 
 /-- Ordered product of integer polynomial factors, using left-fold order. -/
+@[expose]
 def polyProduct (factors : Array Hex.ZPoly) : Hex.ZPoly :=
   factors.foldl (· * ·) 1
 
@@ -30,6 +36,7 @@ namespace ZPoly
 Extended gcd witnesses scaled so their Bezout combination is monic when the
 raw Euclidean gcd is a nonzero constant unit.
 -/
+@[expose]
 def normalizedXGCD
     (p : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) : DensePoly.XGCDResult (ZMod64 p) :=
@@ -96,6 +103,7 @@ complementary product `Array.polyProduct rest.toArray` via `henselLift`, and
 recurses with `lifted.h` as the new target on `rest`. The singleton case
 returns the input reduced modulo `p^k`; the empty case returns the empty
 array. -/
+@[expose]
 def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -112,6 +120,7 @@ def multifactorLiftList
 Lift an ordered array of factors from congruence modulo `p` to congruence
 modulo `p^k`.
 -/
+@[expose]
 def multifactorLift
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
@@ -125,7 +134,7 @@ In the `g :: h :: tail` arm, the four conjuncts are exactly the inputs
 complementary product `Array.polyProduct (h :: tail).toArray`, followed by the
 recursive precondition for the lifted complement:
 
-1. `LinearLiftLoopInvariant` at `n = 1` — initial state for the linear loop;
+1. `LinearLiftLoopInvariant` at `n = 1`; initial state for the linear loop;
 2. the step-degree invariant at every iteration `n ≥ 1`;
 3. the step-Bezout congruence at every iteration `n ≥ 1`;
 4. `MultifactorLiftInvariant` for the recursive tail with `lifted.h` as the
@@ -143,7 +152,7 @@ provided: the four-conjunct shape mentions per-iteration `LinearLiftLoopInvarian
 and `LinearLiftStepDegreeInvariant` quantifications that would require
 substrate lemmas (an `of_product_bezout_monic` constructor for
 `LinearLiftLoopInvariant`, plus `henselLift_h_congr_mod_base` and
-`henselLift_h_monic` analogues of the quadratic recursive bridge) that
+`henselLift_h_monic` analogues of the quadratic recursive correspondence) that
 `HexHensel/Linear.lean` does not currently expose.
 
 Callers wanting a consumer-facing Hensel-lift correctness surface should use
@@ -151,7 +160,7 @@ the quadratic flavour `QuadraticMultifactorLiftInvariant`, constructed from
 natural mod-`p` factorisation facts by
 `quadraticMultifactorLiftInvariant_of_factorsModP` (with the
 `QuadraticMultifactorLiftInvariant_of_choosePrimeData` wrapper at the
-Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus pipeline
+Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus computation
 already uses the quadratic invariant exclusively
 (`HexBerlekampZassenhaus/Basic.lean`). A Mathlib-side downstream caller that
 needs the linear-path lifted factors modulo `p^k` should obtain them via
@@ -159,6 +168,7 @@ needs the linear-path lifted factors modulo `p^k` should obtain them via
 the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
 canonicalisation.
 -/
+@[expose]
 def MultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Prop
@@ -188,7 +198,7 @@ def MultifactorLiftInvariant
 /-- Left identity for `ZPoly` multiplication, used to reason about
 `Array.polyProduct` as a left fold from `1`. Shared by the linear and
 quadratic multifactor proofs. -/
-@[simp, grind =]
+@[simp]
 theorem one_mul_zpoly (g : ZPoly) :
     (1 : ZPoly) * g = g := by
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
@@ -205,20 +215,8 @@ theorem polyProduct_singleton (g : ZPoly) :
 left fold. -/
 theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
     xs.foldl (fun acc factor => acc * factor) g =
-      g * xs.foldl (fun acc factor => acc * factor) 1 := by
-  induction xs generalizing g with
-  | nil =>
-      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
-      calc
-        xs.foldl (fun acc factor => acc * factor) (g * x) =
-            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
-        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
-            rw [DensePoly.mul_assoc_poly (S := Int)]
-        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
-            rw [ih x]
+      g * xs.foldl (fun acc factor => acc * factor) 1 :=
+  List.foldl_mul_eq_mul_foldl xs id g
 
 /-- Splitting `Array.polyProduct` across a singleton prepend: the head
 factors out as a left multiplication. Used to relate the multifactor

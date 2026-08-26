@@ -75,7 +75,6 @@ structure F7 where
 
 namespace F7
 
-@[expose]
 def ofNat (n : Nat) : F7 :=
   { val := ⟨n % 7, Nat.mod_lt n (by decide)⟩ }
 
@@ -200,7 +199,7 @@ def monicDivisor (degree : Nat) : DensePoly F7 :=
 
 /-- Generated monomial divisors are monic by construction. -/
 theorem monicDivisor_monic (degree : Nat) : DensePoly.Monic (monicDivisor degree) := by
-  simp [monicDivisor, DensePoly.Monic, DensePoly.leadingCoeff]
+  simp [monicDivisor, DensePoly.Monic, DensePoly.leadingCoeff, Array.getElem_push] <;> rfl
 
 /-- Stable bounded observable for polynomial-valued benchmark results. -/
 def checksum [Hashable R] [Zero R] [DecidableEq R] (p : DensePoly R) : UInt64 :=
@@ -757,7 +756,7 @@ setup_benchmark runPolyCRTChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/-! ## FLINT `fmpz_poly` informational comparator fixed registrations
+/-! # FLINT `fmpz_poly` informational comparator fixed registrations
 
 Each parametric Lean target on `DensePoly Int` is paired with the
 matching FLINT `fmpz_poly` op via the shared persistent-subprocess

@@ -7,15 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import Batteries.Data.List.Lemmas
 
 public section
 
 /-!
 Gram matrices and standard-basis dot products.
 -/
-
-namespace Hex
 
 universe u v
 
@@ -94,7 +91,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (xs : List (Fin n)) (i j : Fin n) (acc : R) :
     xs.foldl
         (fun acc l =>
-          acc + (unit (R := R) i)[l] * (unit (R := R) j)[l]) acc =
+          acc + (unit R i)[l] * (unit R j)[l]) acc =
       xs.foldl
         (fun acc l =>
           acc + (if i = l then (1 : R) else 0) * (if j = l then (1 : R) else 0)) acc := by
@@ -102,14 +99,14 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
   | nil => rfl
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [unit_getElem, unit_getElem]
+      rw [getElem_unit, getElem_unit]
       exact ih (acc + (if i = x then 1 else 0) * (if j = x then 1 else 0))
 
 /-- Dot product of standard basis vectors. -/
 @[simp] theorem dotProduct_unit_unit {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (i j : Fin n) :
-    dotProduct (unit (R := R) i) (unit (R := R) j) = if i = j then 1 else 0 := by
-  unfold dotProduct
+    dotProduct (unit R i) (unit R j) = if i = j then 1 else 0 := by
+  simp only [dotProduct]
   rw [foldl_dotProduct_unit_body]
   by_cases hij : i = j
   · subst hij
@@ -124,55 +121,59 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
       · have hjl : j ≠ l := fun heq => hij (hil.trans heq.symm)
         rw [if_pos hil, if_neg hjl]; grind
       · rw [if_neg hil]; grind
-    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero]
-    rw [if_neg hij]
+    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero, if_neg hij]
 
 end Vector
+
+namespace Hex
 
 namespace Matrix
 
 /-- Gram matrix of the rows of a dense matrix. -/
 @[expose]
 def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
-  ofFn fun i j => Hex.Vector.dotProduct (row M i) (row M j)
+  ofFn fun i j => (row M i).dotProduct (row M j)
 
 /-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
-@[grind =] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem getElem_gramMatrix [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (i j : Fin n) :
-    (gramMatrix M)[i][j] = Hex.Vector.dotProduct (row M i) (row M j) := by
+    (gramMatrix M)[i][j] = (row M i).dotProduct (row M j) := by
   rw [gramMatrix, getElem_ofFn]
 
+/-- Row `i` of the Gram matrix pairs `row M i` against every row of `M`. -/
+@[simp, grind =] theorem row_gramMatrix [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (i : Fin n) :
+    row (gramMatrix M) i = Vector.ofFn fun j => (row M i).dotProduct (row M j) := by
+  ext j hj
+  show (row (gramMatrix M) i)[(⟨j, hj⟩ : Fin n)] =
+    (Vector.ofFn fun j => (row M i).dotProduct (row M j))[(⟨j, hj⟩ : Fin n)]
+  rw [getElem_row, getElem_gramMatrix]
+  simp
+
+/-- Column `j` of the Gram matrix pairs every row of `M` against `row M j`.
+The Gram matrix is symmetric, so this matches `row_gramMatrix`. -/
+@[simp, grind =] theorem col_gramMatrix [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (j : Fin n) :
+    col (gramMatrix M) j = Vector.ofFn fun i => (row M i).dotProduct (row M j) := by
+  ext i hi
+  show (col (gramMatrix M) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun i => (row M i).dotProduct (row M j))[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_gramMatrix]
+  simp
+
 /-- The Gram matrix of the identity is the identity. -/
-@[simp, grind =] theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
-    gramMatrix (1 : Matrix R n n) = (1 : Matrix R n n) := by
-  ext i hi j hj
-  have hrow_i : (1 : Matrix R n n).row ⟨i, hi⟩ =
-      Hex.Vector.unit (R := R) ⟨i, hi⟩ := by
+@[simp, grind =] theorem gramMatrix_identity {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+    gramMatrix (Matrix.identity (R := R) n) = (Matrix.identity (R := R) n) := by
+  have hrow : ∀ i : Fin n, (Matrix.identity (R := R) n).row i = Vector.unit R i := by
+    intro i
     ext a ha
-    show ((1 : Matrix R n n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Hex.Vector.unit (R := R) ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row]
-    rw [Hex.Matrix.getElem_one (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rw [Hex.Vector.unit_getElem (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+    show ((Matrix.identity (R := R) n).row i)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.unit R i)[(⟨a, ha⟩ : Fin n)]
+    rw [getElem_row, getElem_identity, Vector.getElem_unit]
     rfl
-  have hrow_j : (1 : Matrix R n n).row ⟨j, hj⟩ =
-      Hex.Vector.unit (R := R) ⟨j, hj⟩ := by
-    ext a ha
-    show ((1 : Matrix R n n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Hex.Vector.unit (R := R) ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row]
-    rw [Hex.Matrix.getElem_one (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rw [Hex.Vector.unit_getElem (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rfl
-  show (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-    (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
-  have hgram :
-      (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-        Hex.Vector.dotProduct ((1 : Matrix R n n).row ⟨i, hi⟩)
-          ((1 : Matrix R n n).row ⟨j, hj⟩) := by
-    unfold gramMatrix ofFn
-    simp
-  rw [hgram, hrow_i, hrow_j, Hex.Vector.dotProduct_unit_unit, getElem_one]
+  apply ext_getElem
+  intro i j
+  rw [getElem_gramMatrix, hrow, hrow, Vector.dotProduct_unit_unit, getElem_identity]
 
 end Matrix
 

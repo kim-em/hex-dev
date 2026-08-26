@@ -1,4 +1,4 @@
-# hex — Verified Computational Algebra in Lean 4
+# hex: Verified Computational Algebra in Lean 4
 
 A collection of cooperating Lean 4 libraries providing performant, verified
 algorithms for computational algebra: polynomial arithmetic, factoring,
@@ -7,23 +7,44 @@ and related tools.
 
 ## What we're building
 
-The end state is a verified Berlekamp-Zassenhaus factoring pipeline for
+The end state is verified Berlekamp-Zassenhaus factorization for
 polynomials over the integers, with LLL lattice basis reduction for the
 factor recombination step. All algorithms are implemented and run natively
-in Lean 4 — no external CAS in the loop. The pipeline produces machine-checked
-proofs of correctness alongside its computational results.
+in Lean 4; no external CAS participates. The algorithms produce machine-checked
+proofs of correctness alongside their computational results.
 
-The computational core is Mathlib-free: dense `Array`-backed polynomials with
+The computational libraries are Mathlib-free: dense `Array`-backed polynomials with
 `UInt64` coefficients for finite-field arithmetic, Barrett/Montgomery reduction
 for modular operations, and GMP FFI for big-integer primitives. Separate
-Mathlib bridge libraries prove correspondence with Mathlib's mathematical
+Mathlib libraries prove correspondence with Mathlib's mathematical
 definitions (e.g. `DensePoly R ≃+* Polynomial R`, `ZMod64 p ≃+* ZMod p`,
 `GFq p n ≃+* GaloisField p n`), transferring deep correctness results from
 Mathlib's abstract algebra without imposing Mathlib as a dependency on the
 computational code.
 
-The library DAG has three independent roots — polynomial arithmetic, integer
-arithmetic, and matrix operations — meeting at the top in
+The user surface for factorization is the `factor_poly` /
+`irreducibility` elaborator family (term, tactic, and goal forms). The base
+drivers live in hex-berlekamp, handling `FpPoly p` natively; other input
+types are handled by extensions registered by well-known name from
+hex-berlekamp-zassenhaus (`Hex.ZPoly`) and the two Mathlib libraries
+(`Polynomial (ZMod p)`, `Polynomial ℤ`). The trust model is uniform across
+extensions: compiled factorization and certificate generation run as
+untrusted search at elaboration time, certification slots are Boolean
+checks on reified literal data (the Mathlib extensions additionally emit
+kernel-checked correspondence equations such as `toMathlibPolynomial fLit = P`),
+and the factorizer never runs in the kernel (except in the opt-in bang
+forms). Coverage for `FpPoly p` is complete within the supported-input
+contract: closed, kernel-transparent inputs at literal prime moduli inside
+the `ZMod64` bounds and the certificate replay budget. For integer
+polynomials, the computational layer certifies
+irreducibility by prime-constant, primitive-linear, single-prime modular,
+and Eisenstein-after-shift witnesses; the Mathlib layer adds multi-prime
+degree-obstruction certificates; Swinnerton-Dyer-class inputs remain
+uncovered, and the tactics decline them with a diagnostic rather than
+weakening the emitted statement.
+
+The library DAG has three independent roots, polynomial arithmetic, integer
+arithmetic, and matrix operations, meeting at the top in
 Berlekamp-Zassenhaus. This structure allows parallel development: LLL has no
 dependency on polynomial arithmetic, Hensel lifting is independent of LLL,
 and all proof work is fully parallelizable once theorem statements are in
@@ -67,9 +88,11 @@ SPEC names the checker soundness theorem and the provider contract.
 
 ## Applications
 
-**Cryptographic field construction:** To build `GF(2^128)` for AES, you
+**Cryptographic field construction:** To build `GF(2^128)` for AES-GCM's
+GHASH authentication, you
 need an irreducible polynomial of degree 128 over `F_2`. With
-hex-berlekamp, produce a Lean proof that it's irreducible.
+hex-berlekamp's `irreducibility` tactic, produce a Lean proof that it's
+irreducible.
 
 **Coding theory:** Reed-Solomon and BCH codes need irreducible polynomials
 over finite fields. Verified factoring provides certified generator
@@ -88,6 +111,7 @@ verified LLL gives confidence in attack results.
 - [Lean 4 stdlib inventory](lean4-stdlib-inventory.md)
 - [Libraries](Libraries/) (DAG + per-library docs)
 - [Tutorials](tutorials.md)
+- [Released-repo READMEs](readme.md)
 - [Testing](testing.md)
 - [Benchmarking](benchmarking.md)
 - [CI](CI.md)

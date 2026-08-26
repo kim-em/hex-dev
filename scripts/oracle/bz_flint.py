@@ -14,9 +14,8 @@ independently factors the integer input reduced modulo that prime and
 checks the sorted irreducible factor degree multiset.  Plain historical
 ``factor`` fixtures omit these fields and keep the original behaviour.
 
-HO-2 adversarial coverage (#2565).
-``SPEC/Libraries/hex-berlekamp-zassenhaus.md`` §"Conformance fixtures"
-requires the core profile to include at least one input where the
+Adversarial modular-split coverage.
+The core profile includes inputs where the
 integer factors require a non-trivial subset product of lifted mod-p
 factors, and at least one input that splits heavily (>= 4 distinct
 mod-p factors) over a small admissible prime.  The committed sample
@@ -464,7 +463,7 @@ def check(
                     oracle_version=oracle_version, op="classicalFactor",
                 )
             elif op == "trace":
-                # Diagnostic FactorTrace for the performance gate
+                # Diagnostic DirectFactorTrace for the performance gate
                 # (scripts/oracle/bz_trace_gate.py); not a FLINT cross-check.
                 continue
             else:

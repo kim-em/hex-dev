@@ -1,173 +1,52 @@
-# Localizing the F_p Berlekamp factorization bottleneck
+# BZ Finite-Field Factor Localization
 
-Investigation for [#8267](https://github.com/kim-em/hex/issues/8267)
-("speed up single Berlekamp factorization of f mod p").
+Current compiled diagnostic at revision
+`a1fdbd81ef038faa41765fb39a79cd083109c8ed`, 2026-07-29, on
+`chungus2`, pinned to CPU 0.
 
-## Summary
+The capture records a dirty worktree because the benchmark registrations and
+reports were being repaired together; the measured library revision is the
+full hash above.
 
-The ~90 % `factorFast` cost that #8062 item 4 and #8267 attribute to
-`choosePrimeData?` is **not** in the Berlekamp matrix build or the
-nullspace (Frobenius / Q-matrix) step, as deliverable 2 hypothesized.
-It is almost entirely in the **equal-degree split loop**
-(`berlekampFactorLoop` → `splitFirstFactor?` → `kernelWitnessSplit?`),
-which runs a full p-constant `gcd(factor, witness − c)` sweep for every
-(current factor, kernel witness) pair — including the many *futile*
-pairs where the witness is constant modulo the factor, which is **every**
-witness once a factor is already irreducible.
+## Current Cost Shape
 
-A value-preserving guard that skips the constant sweep when
-`witness mod factor` is constant takes a single deg-12 factorization over
-F₁₃ from **76 ms to 6 ms (12.7×)** with **bit-identical factor output**.
+The kernel-sharing optimization remains decisive on fully split inputs:
 
-## Method
+| Degree | Rebuilding baseline | Shared baseline | Fixed factor path |
+|---:|---:|---:|---:|
+| 6 | 166.246 µs | 43.685 µs | 30.415 µs |
+| 12 | 1.374 ms | 206.766 µs | 116.122 µs |
+| 18 | 5.736 ms | 579.529 µs | 285.233 µs |
+| 24 | 16.387 ms | 1.245 ms | 569.224 µs |
 
-A standalone profiling executable (linked against
-`HexBerlekampZassenhaus.Basic` and `HexBerlekamp.Factor`) timed each
-stage on the family `(X−(1+s))…(X−(12+s))`, `s = 0…31` — degree-12
-integer polynomials that are squarefree mod 13 and select `p = 13` as the
-first good prime (they have repeated roots mod 3, 5, 7, 11). Each timed
-iteration consumes a *different* member of the family, indexed by the loop
-counter, to defeat the loop-invariant hoisting / common-subexpression
-elimination that silently collapses a fixed-input micro-benchmark to a
-constant (an early fixed-input version reported the full factorization at
-37 ns — the compiler had computed it once and reused the value).
+At degree 24, the fixed path spends 18.89% in matrix construction, 2.95% in
+nullspace computation, and 78.17% in witness splitting. Within the detailed
+witness profile, GCD work accounts for 419.554 µs of the 495.815 µs profiled
+total. That separately instrumented total is 9.4% above the 453.402 µs
+end-to-end witness baseline, so its phase shares are interpreted only within
+the instrumented run. The remaining performance frontier is therefore witness
+splitting and GCD work, not matrix inversion or nullspace construction.
 
-Measured on the dev machine (Darwin arm64, Opus session worktree).
+Reduced-witness caching is neutral on the fully split ladder:
+453.402 µs baseline versus 453.703 µs cached at degree 24. It helps the
+`SD_4` witness phase modestly, from 261.758 µs to 236.521 µs.
 
-## Per-stage breakdown (deg-12 input, p = 13)
+## Production Context
 
-| Stage | Time | Share |
-|---|---|---|
-| `factorFast` (whole pipeline) | ~86 ms | 100 % |
-| `choosePrimeData?` | ~74 ms | ~86 % |
-| `isGoodPrime` over all scanned primes (3, 5, 7, 11, 13) | ~0.09 ms | 0.1 % |
-| `monicModularImage` (mod-p reduction + monic normalize) | ~0.003 ms | <0.01 % |
-| Berlekamp matrix build (`berlekampMatrix`) | ~0.09 ms | 0.1 % |
-| Berlekamp matrix **+ nullspace** (`fixedSpaceKernel`) | ~1.76 ms | 2.3 % |
-| Berlekamp factorization (`berlekampFactor`, full) | ~76 ms | — |
-| → equal-degree **split loop** (full − kernel) | **~74 ms** | **97.7 % of the factorization** |
+The standalone finite-field suite remains consistent with its declared models:
+Berlekamp factorization takes 3.271 ms at its largest degree-256 rung;
+matrix construction takes 10.791 ms at degree 192. Rabin and DDF remain much
+slower than their FLINT comparators, as documented in
+`hex-berlekamp-performance.md`.
 
-Key conclusions for deliverable 1:
+Raw stdout:
+`reports/bench-results/berlekamp-diagnostic-a1fdbd81-chungus2.txt`
+(SHA-256
+`03e59491ed588ca377ece2ef387450ba699ef9e63d323db50e6c36fa17f265b5`).
 
-- **(a) `isGoodPrime`'s gcd / squarefree test is negligible** (~0.1 %).
-  The first-suitable prime change (the existing
-  `choosePrimeDataScoreStep` comment) already removed the
-  factor-at-every-prime cost; a single factorization remains.
-- **(b) The Berlekamp matrix build + nullspace is small** (~2 %). The
-  Frobenius column recurrence and the `HexMatrix` RREF nullspace are not
-  the bottleneck; deliverable 2's "Q-matrix construction via repeated
-  squaring vs naive powering" hypothesis is not where the time goes.
-- **(c) The distinct/equal-degree split dominates** (~98 % of the
-  factorization, ~86 % of `factorFast`).
+## Reproducing
 
-The residual `factorFast − choosePrimeData?` (~12 ms) is the integer-side
-work (Hensel lifting + van Hoeij recombination, the #8064 core); with the
-split fixed it becomes the next visible cost.
-
-## Why the split loop is slow
-
-`berlekampFactor` computes the fixed-space kernel basis once (the `r`
-witnesses, where `r` = number of irreducible factors), then repeatedly
-calls `splitFirstFactor?`, which for the current factor tries every
-witness, and for every witness runs `kernelWitnessSplit?` — a sweep of
-`gcd(factor, witness − c)` over all `c ∈ F_p`.
-
-The waste: a witness `w` yields a nontrivial split of `factor` **iff
-`w mod factor` is non-constant**. Once a factor is irreducible, *every*
-kernel witness is constant modulo it (that is the defining property of the
-kernel mod an irreducible factor). So for each of the `r` final
-irreducible factors, every `splitFirstFactor?` pass spends `r` witnesses ×
-`p` constants = `r·p` futile gcds (here 12 × 13 ≈ 156) finding nothing,
-and the loop makes `O(r)` passes. The total is `Θ(r²·p)` gcds, the
-overwhelming majority futile. For the deg-12 / 12-factor case at p = 13
-that is ~2×10⁴ gcd calls; at ~3 µs each (degree-12 dense EEA gcd with
-allocation) this is the measured ~74 ms.
-
-For comparison, FLINT / NTL factor the same input in microseconds. The
-structural differences (deliverable 2):
-
-- They use Cantor–Zassenhaus equal-degree splitting with **modular
-  exponentiation** (`gcd(f, X^((p^d−1)/2) − 1)`), separating *all*
-  factors of a given degree per gcd, instead of a per-constant linear
-  sweep that re-tests every (witness, factor) pair.
-- They never re-scan a factor already proved irreducible.
-
-The hex implementation is deterministic Berlekamp (null space + linear
-constant sweep), which is correct and proof-friendly but pays the
-`Θ(r²·p)`-gcd tax. The matrix/null-space substrate is already fast.
-
-## Validated fix (deliverable 3, designed + validated + landed)
-
-The cheapest value-preserving win: in `kernelWitnessSplit?`, skip the entire
-constant sweep when the witness is constant modulo the factor (`(witness %
-f).size ≤ 1`):
-
+```sh
+taskset -c 0 env RELIFT_PROFILE=berlekamp \
+  .lake/build/bin/hex_recursive_relift_spike
 ```
-def kernelWitnessSplit? (f witness : FpPoly p) : Option (SplitResult p) :=
-  if (witness % f).size ≤ 1 then none
-  else kernelWitnessSplitAux f witness p 0
-```
-
-This is value-preserving: if `witness mod f` is a constant `k`, then for
-every `c`, `gcd(f, witness − c) = gcd(f, (witness mod f) − c) =
-gcd(f, k − c)`, which is `f` (when `c = k`) or a unit (otherwise) — never
-a nontrivial split. So the guard returns `none` exactly when the full
-sweep would have. Prototype measurement (guarded reimplementation of the
-whole split loop, same kernel basis):
-
-| | full split loop | with guard |
-|---|---|---|
-| `berlekampFactor`, deg-12 / p=13 | ~70–76 ms | **~6 ms** |
-
-with **0 factor-multiset mismatches over 32 distinct inputs** (product of
-per-factor checksums identical to the library `berlekampFactor`).
-
-### Soundness proof (landed)
-
-The guard is referenced by load-bearing lemmas (`RabinSoundness.lean`
-consumes `kernelWitnessSplit?_some_of_nontrivial_splitFactorAt` and
-`kernelWitnessSplit?_none_scale`), so it is justified by the completeness
-lemma `isNontrivialSplitFactor_false_of_mod_size_le_one`:
-
-> `(witness % f).size ≤ 1 → ∀ c, isNontrivialSplitFactor f
-> (splitFactorAt f witness c) = false`
-
-The divisibility proof (avoids unfolding `gcdAux`): let
-`g = gcd f (witness − C c)`, `r = witness % f` with `r.size ≤ 1`.
-
-- `g ∣ f` (`gcd_dvd_left`) and `g ∣ (witness − C c)` (`gcd_dvd_right`).
-- `g ∣ ((witness − C c) − (witness / f) * f) = r − C c` (`dvd_sub_poly` +
-  `dvd_mul_left_poly`), where `(r − C c).size ≤ 1`.
-- If `r − C c ≠ 0`: `g ∣` a nonzero constant ⟹ via
-  `degree?_mul_eq_add_degree?`, `g.degree? = some 0` ⟹ not nontrivial.
-- If `r − C c = 0`: `f ∣ (witness − C c)`, so `f ∣ g` (`dvd_gcd`) and
-  `g ∣ f`; mutual dvd ⟹ `g.size = f.size` (`size_eq_of_dvd_dvd`) ⟹ not
-  (`g.size < f.size`).
-
-The guard then makes `kernelWitnessSplit?` extensionally equal to the
-unguarded `kernelWitnessSplitAux` sweep
-(`kernelWitnessSplitAux_none_of_mod_size_le_one`), so every existing
-soundness lemma about `kernelWitnessSplit?` carries over unchanged.
-
-### Measured speedup (landed)
-
-The `runFactorFastChecksum` split-family ladder `(X−1)…(X−n)`, warm cache,
-Darwin arm64 (this work vs the same binary with the guard reverted):
-
-| degree | no guard | with guard | speedup |
-|---|---|---|---|
-| 12 | 112.7 ms | 18.3 ms | 6.2× |
-| 16 | 416.9 ms | 56.9 ms | 7.3× |
-| 20 | 1.355 s | 125.6 ms | 10.8× |
-| 24 | 3.294 s | 224.4 ms | **14.7×** |
-
-All 18 `hexbz_bench verify` checksums are bit-identical with and without
-the guard.
-
-The four existing `kernelWitnessSplit?` lemmas (`_product_spec`,
-`_nontrivial`, `_size_lt`, `_none_scale`) need the trivial `if`-split
-update, and `_none_scale` additionally needs
-`p % (scale c q) = p % q` for `c ≠ 0`.
-
-The whole `HexBerlekampZassenhausMathlib` chain (CI-gated) rebuilds
-unchanged because the factor output is bit-identical.
