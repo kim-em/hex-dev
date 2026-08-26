@@ -427,8 +427,8 @@ It makes **no** completeness claim. The indexed checked form prevents a
 partial factorization of one subject from answering a request about
 another. The characterising lemmas `checkPartial_prod`,
 `checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
-expose those checked invariants without requiring consumers to unfold the
-checker, and
+expose reconstruction, primality, exponent positivity, and factor-base
+ordering without requiring consumers to unfold the checker, and
 
 ```lean
 theorem factorPartial?_error {n r fuel f}

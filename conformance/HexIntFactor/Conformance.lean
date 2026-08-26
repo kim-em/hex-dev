@@ -37,16 +37,25 @@ private def checkedHugeTau :
       ⟨100, .small 7⟩, ⟨100, .small 11⟩, ⟨100, .small 13⟩]⟩,
     rfl, by decide⟩
 
-private def checkedPartial12 : CheckedPartialFactorization 12 :=
-  ⟨⟨12, [⟨2, .small 2⟩], 3⟩, rfl, by decide⟩
+private def checkedPartial60 : CheckedPartialFactorization 60 :=
+  ⟨⟨60, [⟨2, .small 2⟩, ⟨1, .small 3⟩], 5⟩, rfl, by decide⟩
 
 -- Partial-certificate consumers obtain entry invariants directly from `valid`.
-example : ∀ e ∈ checkedPartial12.raw.factors, 0 < e.exponent :=
-  checkPartial_exponent checkedPartial12.valid
+example : ∀ e ∈ checkedPartial60.raw.factors, 0 < e.exponent :=
+  checkPartial_exponent checkedPartial60.valid
 
-example : checkedPartial12.raw.factors.Pairwise
+example : checkedPartial60.raw.factors.Pairwise
     (fun a b => a.prime < b.prime) :=
-  checkPartial_sorted checkedPartial12.valid
+  checkPartial_sorted checkedPartial60.valid
+
+example {n : Nat} (F : CheckedPartialFactorization n) :
+    ∀ e ∈ F.raw.factors, 0 < e.exponent :=
+  checkPartial_exponent F.valid
+
+example {n : Nat} (F : CheckedPartialFactorization n) :
+    F.raw.factors.Pairwise
+    (fun a b => a.prime < b.prime) :=
+  checkPartial_sorted F.valid
 
 #guard checkFactorization raw12
 #guard !checkFactorization ⟨12, [⟨1, .small 4⟩, ⟨1, .small 3⟩]⟩
