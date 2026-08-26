@@ -407,21 +407,6 @@ theorem checkIrreducibleCert_sound
     · exact hcontradict b a (by rw [hab]; ring) hb_ne ha_ne hb_prim hb_not_unit (le_of_lt hgt)
 
 /--
-The executable integer-polynomial irreducibility checker is sound for the
-Mathlib-free irreducibility predicate as well.
--/
-theorem checkIrreducibleCert_sound_zpoly
-    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
-    (hprime : ∀ primeData ∈ cert.perPrime.toList, Nat.Prime primeData.p)
-    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive)
-    (hpos : 0 < (HexPolyZMathlib.toPolynomial f).natDegree) :
-    Hex.checkIrreducibleCert f cert = true → Hex.ZPoly.Irreducible f := by
-  intro hcert
-  exact
-    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
-      (checkIrreducibleCert_sound f cert hprime hprim hpos hcert)
-
-/--
 Soundness of the kernel-reducible integer checker: a certificate accepted by
 `checkIrreducibleCertLinear` on literal data certifies irreducibility of the
 transported polynomial. The primality hypothesis feeds both the
