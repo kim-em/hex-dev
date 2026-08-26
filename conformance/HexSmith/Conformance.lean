@@ -228,7 +228,10 @@ adversarial invalid-chain data, rather than only as a conjunct of `snfCert`. -/
 #guard diagonalChecks #v[0, 2]
 #guard diagonalChecks #v[-2, 0]
 #guard diagonalChecks #v[0, 0]
+#guard diagonalChecks #v[2, 2]
 #guard diagonalChecks #v[-6, 15, 10]
+#guard (snfDiagonalData #v[2, 2]).left = Matrix.identity 2
+#guard (snfDiagonalData #v[2, 2]).right = Matrix.identity 2
 
 #guard let D := snfData coprimeDiagonal
   D.left * coprimeDiagonal * D.right = diagMatrix D.diag 2 2
