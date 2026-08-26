@@ -137,10 +137,7 @@ theorem totient_eq {n : Nat} (F : CheckedFactorization n) :
 Mathlib's divisor finset. -/
 theorem sigma_eq {n k : Nat} (F : CheckedFactorization n) :
     sigma F k = ∑ d ∈ n.divisors, d ^ k := by
-  have hd : (divisors F).toList.Nodup := by
-    simpa [divisors] using
-      (List.nodup_range.filter (fun d => decide (d ∣ n)))
-  rw [sigma_eq_sum, ← List.sum_toFinset _ hd, divisors_eq F]
+  rw [sigma_eq_sum, ← List.sum_toFinset _ (divisors_nodup F), divisors_eq F]
 
 /-- The checked radical is Mathlib's product of the distinct prime factors. -/
 theorem radical_eq {n : Nat} (F : CheckedFactorization n) :
