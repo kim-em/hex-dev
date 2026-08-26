@@ -1,19 +1,37 @@
-family=conjugate n=16 peakBits=6 outputBits=5
-family=conjugate n=24 peakBits=6 outputBits=5
-family=conjugate n=32 peakBits=6 outputBits=6
-family=conjugate n=48 peakBits=7 outputBits=6
-family=conjugate n=64 peakBits=8 outputBits=7
-family=conjugate n=96 peakBits=8 outputBits=7
-family=conjugate n=128 peakBits=9 outputBits=8
+source_commit=136980ce850c3c89b7ed90902b07eb1318336dae
+lean=4.34.0-rc2
+lean_bench=0.1.0
+host=chungus2
+os=linux-x86_64
+family=conjugate n=16 peakBits=12 outputBits=5
+family=conjugate n=24 peakBits=16 outputBits=5
+family=conjugate n=32 peakBits=18 outputBits=6
+family=conjugate n=48 peakBits=27 outputBits=6
+family=conjugate n=64 peakBits=35 outputBits=7
+family=conjugate n=96 peakBits=51 outputBits=7
+family=conjugate n=128 peakBits=70 outputBits=8
 family=dense n=8 peakBits=30 outputBits=17
 family=dense n=12 peakBits=42 outputBits=24
 family=dense n=16 peakBits=115 outputBits=57
-family=dense n=20 peakBits=118 outputBits=64
 family=dense n=24 peakBits=195 outputBits=100
 family=dense n=32 peakBits=249 outputBits=126
+family=dense n=48 peakBits=455 outputBits=231
+family=dense n=64 peakBits=647 outputBits=325
+family=dense n=96 peakBits=972 outputBits=491
+family=dense n=128 peakBits=1375 outputBits=691
 family=deficient n=8 peakBits=18 outputBits=13
 family=deficient n=12 peakBits=28 outputBits=17
 family=deficient n=16 peakBits=54 outputBits=30
-family=deficient n=20 peakBits=59 outputBits=34
 family=deficient n=24 peakBits=87 outputBits=46
 family=deficient n=32 peakBits=120 outputBits=64
+family=deficient n=48 peakBits=194 outputBits=102
+family=deficient n=64 peakBits=267 outputBits=133
+family=deficient n=96 peakBits=422 outputBits=214
+family=deficient n=128 peakBits=640 outputBits=323
+family=tall n=8 peakBits=6 outputBits=4
+family=tall n=12 peakBits=8 outputBits=4
+family=tall n=16 peakBits=8 outputBits=5
+family=tall n=24 peakBits=10 outputBits=5
+family=tall n=32 peakBits=10 outputBits=6
+family=tall n=48 peakBits=12 outputBits=6
+family=tall n=64 peakBits=12 outputBits=7
