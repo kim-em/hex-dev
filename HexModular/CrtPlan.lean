@@ -318,6 +318,113 @@ theorem reconstructVec?_le {plan : CrtPlan}
   simp only [Vector.getElem_map]
   exact symMod_le plan.modulus_pos
 
+private theorem coprime_prod_of_forall {modulus : Nat} {moduli : List Nat}
+    (h : ∀ other ∈ moduli, Nat.gcd modulus other = 1) :
+    Nat.Coprime modulus moduli.prod := by
+  induction moduli with
+  | nil => exact Nat.coprime_one_right modulus
+  | cons other moduli ih =>
+      rw [List.prod_cons, Nat.coprime_mul_iff_right]
+      exact ⟨h other (by simp), ih (by
+        intro value hvalue
+        exact h value (by simp [hvalue]))⟩
+
+private theorem prod_dvd_natAbs_of_pairwise {moduli : List Nat} {value : Int}
+    (hpair : moduli.Pairwise (fun left right => Nat.gcd left right = 1))
+    (hdvd : ∀ modulus ∈ moduli, (modulus : Int) ∣ value) :
+    moduli.prod ∣ value.natAbs := by
+  induction moduli with
+  | nil => simp
+  | cons modulus moduli ih =>
+      rw [List.prod_cons]
+      exact (coprime_prod_of_forall (List.pairwise_cons.mp hpair).1).mul_dvd_of_dvd_of_dvd
+        (Int.ofNat_dvd_left.mp (hdvd modulus (by simp)))
+        (ih (List.pairwise_cons.mp hpair).2 (by
+          intro other hother
+          exact hdvd other (by simp [hother])))
+
+/-- Congruence at every leaf modulus implies congruence at the complete
+pairwise-coprime product recorded by the plan. -/
+theorem emod_eq_modulus (plan : CrtPlan) {left right : Int}
+    (h : ∀ i : Fin plan.moduli.size,
+      left % (plan.moduli[i] : Int) = right % (plan.moduli[i] : Int)) :
+    left % (plan.modulus : Int) = right % (plan.modulus : Int) := by
+  apply Int.emod_eq_emod_iff_emod_sub_eq_zero.mpr
+  apply Int.emod_eq_zero_of_dvd
+  apply Int.ofNat_dvd_left.mpr
+  apply prod_dvd_natAbs_of_pairwise (valid_iff.mp plan.valid).2
+  intro modulus hmodulus
+  have hmem : modulus ∈ plan.moduli :=
+    Array.mem_toList_iff.mp hmodulus
+  rcases Array.mem_iff_getElem.mp hmem with ⟨i, hi, himodulus⟩
+  apply Int.dvd_of_emod_eq_zero
+  apply Int.emod_eq_emod_iff_emod_sub_eq_zero.mp
+  simpa [himodulus] using h ⟨i, hi⟩
+
+/-- Every successful scalar reconstruction is already reduced to the
+symmetric interval of the complete modulus. -/
+theorem reconstruct?_symMod {plan : CrtPlan} {residues : Array Int} {value : Int}
+    (h : plan.reconstruct? residues = some value) :
+    symMod value plan.modulus = value := by
+  unfold reconstruct? at h
+  split at h <;> try contradiction
+  dsimp only at h
+  split at h <;> try contradiction
+  cases h
+  exact symMod_symMod plan.modulus_pos
+
+/-- Every lane of a successful vector reconstruction is already reduced to
+the symmetric interval of the complete modulus. -/
+theorem reconstructVec?_symMod {plan : CrtPlan}
+    {residues : Array (Vector Int k)} {value : Vector Int k}
+    (h : plan.reconstructVec? residues = some value) :
+    ∀ j : Fin k, symMod value[j] plan.modulus = value[j] := by
+  unfold reconstructVec? at h
+  split at h <;> try contradiction
+  dsimp only at h
+  split at h <;> try contradiction
+  cases h
+  intro j
+  simp [Vector.map, symMod_symMod plan.modulus_pos]
+
+/-- Strictly half-bounded candidates that match every input residue are
+recovered exactly by scalar reconstruction. -/
+theorem reconstruct?_eq_candidate {plan : CrtPlan} {residues : Array Int}
+    {value candidate : Int} (hresult : plan.reconstruct? residues = some value)
+    (hbound : 2 * candidate.natAbs < plan.modulus)
+    (hcongr : ∀ i : Fin plan.moduli.size,
+      candidate % (plan.moduli[i] : Int) =
+        residues.getD i.val 0 % (plan.moduli[i] : Int)) :
+    value = candidate := by
+  have hvalue := (reconstruct?_congr hresult).2
+  have hroot : value % (plan.modulus : Int) =
+      candidate % (plan.modulus : Int) :=
+    emod_eq_modulus plan (fun i => (hvalue i).trans (hcongr i).symm)
+  rw [← reconstruct?_symMod hresult]
+  exact symMod_unique hbound hroot.symm
+
+/-- Strictly half-bounded candidate lanes that match every input residue are
+recovered exactly by batch reconstruction. -/
+theorem reconstructVec?_eq_candidate {plan : CrtPlan}
+    {residues : Array (Vector Int k)} {value candidate : Vector Int k}
+    (hresult : plan.reconstructVec? residues = some value)
+    (hbound : ∀ j : Fin k, 2 * candidate[j].natAbs < plan.modulus)
+    (hcongr : ∀ i : Fin plan.moduli.size, ∀ j : Fin k,
+      candidate[j] % (plan.moduli[i] : Int) =
+        (residues.getD i.val (Vector.replicate k 0))[j] %
+          (plan.moduli[i] : Int)) :
+    value = candidate := by
+  have hvalue := (reconstructVec?_congr hresult).2
+  apply Vector.ext
+  intro j hj
+  let j' : Fin k := ⟨j, hj⟩
+  have hroot : value[j'] % (plan.modulus : Int) =
+      candidate[j'] % (plan.modulus : Int) :=
+    emod_eq_modulus plan (fun i => (hvalue i j').trans (hcongr i j').symm)
+  change value[j'] = candidate[j']
+  rw [← reconstructVec?_symMod hresult j']
+  exact symMod_unique (hbound j') hroot.symm
+
 end CrtPlan
 
 end Modular
