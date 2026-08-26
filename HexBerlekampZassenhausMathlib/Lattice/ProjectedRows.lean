@@ -102,11 +102,13 @@ theorem indicatorVector_mem_trueSupportSpanInt {r : Nat}
     indicatorVector S.1 ∈ trueSupportSpanInt trueSupports := by
   exact Submodule.subset_span (Set.mem_range_self S)
 
+/-- The indicator is `1` on members. -/
 @[simp, grind =] theorem indicatorVector_apply_mem {r : Nat} (S : Set (Fin r))
     {i : Fin r} (hi : i ∈ S) :
     indicatorVector S i = 1 := by
   simp [indicatorVector, hi]
 
+/-- The indicator is `0` off members. -/
 @[simp, grind =] theorem indicatorVector_apply_not_mem {r : Nat} (S : Set (Fin r))
     {i : Fin r} (hi : i ∉ S) :
     indicatorVector S i = 0 := by
@@ -133,43 +135,10 @@ theorem indicatorVector_sq_sum_le_factorCount {r : Nat} (S : Set (Fin r)) :
     _ = (r : ℝ) := by
           simp
 
-/-- The BHKS cut-radius expression dominates the squared norm of every
-true-support indicator vector. -/
-theorem indicatorVector_sq_sum_le_bhksCutRadiusSq4
-    (L : Hex.BhksLatticeBasis) (S : Set (Fin L.factorCount)) :
-    (∑ i : Fin L.factorCount, ((((indicatorVector S i : ℤ) : ℝ) ^ 2))) ≤
-      (Hex.bhksCutRadiusSq4 L : ℝ) := by
-  have hnorm := indicatorVector_sq_sum_le_factorCount S
-  have hfactor_le_cut :
-      (L.factorCount : ℝ) ≤ (Hex.bhksCutRadiusSq4 L : ℝ) := by
-    unfold Hex.bhksCutRadiusSq4
-    have hnat :
-        L.factorCount ≤ 4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount := by
-      exact Nat.le_trans (Nat.le_mul_of_pos_left L.factorCount (by decide : 0 < 4))
-        (Nat.le_add_right _ _)
-    exact_mod_cast hnat
-  exact hnorm.trans hfactor_le_cut
-
-/-- Projected-row form of `indicatorVector_sq_sum_le_bhksCutRadiusSq4`, stated
-against the cut-radius field stored by the executable Gram-Schmidt cut output. -/
-theorem indicatorVector_sq_sum_le_projectedRows_cutRadiusSq4
-    (L : Hex.BhksLatticeBasis)
-    (hrows : 1 ≤ L.factorCount + L.coeffWidth)
-    (S : Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)) :
-    (∑ i : Fin (Hex.bhksProjectedRows L hrows).factorCount,
-        ((((indicatorVector S i : ℤ) : ℝ) ^ 2))) ≤
-      ((Hex.bhksProjectedRows L hrows).cutRadiusSq4 : ℝ) := by
-  exact indicatorVector_sq_sum_le_bhksCutRadiusSq4 L S
-
 
 /-- A support of lifted local-factor indices for a BHKS lattice basis. -/
 abbrev LiftedFactorSupport (L : Hex.BhksLatticeBasis) :=
   Set (Fin L.factorCount)
-
-/-- The `0/1` indicator vector attached to a lifted-factor support. -/
-def liftedFactorIndicator (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
-    Fin L.factorCount → ℤ :=
-  indicatorVector S
 
 /--
 Product of the lifted factors selected by a support, using the factor order
@@ -654,6 +623,7 @@ def supportPartitionByMinColumn {r : Nat}
 def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
+/-- A class indicator array has one entry per column. -/
 @[simp, grind =] theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
     (classIndicatorArray r members).size = r := by
   unfold classIndicatorArray
@@ -752,15 +722,6 @@ theorem supportClassMembers_rep_mem {r : Nat}
   exact ⟨supportRepresentativeColumns_lt trueSupports hrep,
     supportEquivalentAt_refl trueSupports
       (supportRepresentativeColumns_lt trueSupports hrep)⟩
-
-theorem supportClassMembers_mem_iff_fin {r : Nat}
-    (trueSupports : Set (Set (Fin r))) {rep j : Nat}
-    (hj : j < r) (hrep : rep < r) :
-    j ∈ supportClassMembers trueSupports rep ↔
-      supportEquivalent trueSupports ⟨j, hj⟩ ⟨rep, hrep⟩ := by
-  rw [mem_supportClassMembers_iff, supportEquivalentAt_iff trueSupports hj hrep]
-  simp [hj]
-
 
 private theorem foldl_cut_ge_of_bound {N : Nat} (g : Fin N → Bool) (bound : Nat) :
     ∀ (l : List (Fin N)) (init : Nat),
@@ -1117,13 +1078,6 @@ structure CutProjectionHypotheses
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
 
-/-- Direct caller-facing form of the cut hypothesis for one true support. -/
-theorem indicatorVector_mem_projectedRowSpan_of_cut
-    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
-    (hcut : CutProjectionHypotheses L trueSupports) (S : trueSupports) :
-    indicatorVector S.1 ∈ projectedRowSpanInt L :=
-  hcut.indicator_mem_projected S
-
 /-- The existing per-support cut theorem is exactly the forward lattice
 containment `W ≤ L'`. -/
 theorem trueSupportSpanInt_le_projectedRowSpanInt
@@ -1147,18 +1101,6 @@ theorem projectedRowSpanInt_le_trueSupportSpanInt_of_rows
   apply Submodule.span_le.mpr
   rintro _ ⟨i, rfl⟩
   exact hrows i
-
-/-- Equality form of the two BHKS containments. -/
-theorem projectedRowSpanInt_eq_trueSupportSpanInt
-    (L : Hex.BhksProjectedRows)
-    (trueSupports : Set (Set (Fin L.factorCount)))
-    (hcut : CutProjectionHypotheses L trueSupports)
-    (hrows : ∀ i : Fin L.projectedRows.size,
-      Matrix.row (projectedRowsIntMatrix L) i ∈ trueSupportSpanInt trueSupports) :
-    projectedRowSpanInt L = trueSupportSpanInt trueSupports := by
-  apply le_antisymm
-  · exact projectedRowSpanInt_le_trueSupportSpanInt_of_rows L trueSupports hrows
-  · exact trueSupportSpanInt_le_projectedRowSpanInt L trueSupports hcut
 
 /-- Every projected matrix row belongs to the integer span of the projected rows. -/
 theorem projectedRow_mem_projectedRowSpanInt

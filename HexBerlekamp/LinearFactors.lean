@@ -41,17 +41,6 @@ variable {p : Nat} [ZMod64.Bounds p]
 def primeFieldLinearFactor (c : ZMod64 p) : FpPoly p :=
   FpPoly.X - FpPoly.C c
 
-private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
-    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
-  intro h
-  have h2 : 2 ≤ p := Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
-  exact absurd htoNat (by omega)
-
 /-- The listed prime-field linear factors are genuinely degree-one candidates. -/
 theorem primeFieldLinearFactor_coeff_one (c : ZMod64 p) :
     (primeFieldLinearFactor c).coeff 1 = (1 : ZMod64 p) := by
@@ -69,7 +58,7 @@ theorem primeFieldLinearFactor_ne_zero
   have hcoeff := congrArg (fun f : FpPoly p => f.coeff 1) hzero
   change (primeFieldLinearFactor c).coeff 1 = (0 : FpPoly p).coeff 1 at hcoeff
   rw [primeFieldLinearFactor_coeff_one c, DensePoly.coeff_zero] at hcoeff
-  exact zmod64_one_ne_zero_of_prime hcoeff
+  exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
 
 /-- The high coefficients of a prime-field linear factor vanish. -/
 private theorem primeFieldLinearFactor_coeff_high (c : ZMod64 p) {n : Nat}
@@ -88,7 +77,7 @@ theorem primeFieldLinearFactor_size [ZMod64.PrimeModulus p] (c : ZMod64 p) :
     (primeFieldLinearFactor c).size = 2 := by
   have h_coeff_1_ne : (primeFieldLinearFactor c).coeff 1 ≠ 0 := by
     rw [primeFieldLinearFactor_coeff_one c]
-    exact zmod64_one_ne_zero_of_prime
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p))
   have h_lower : 2 ≤ (primeFieldLinearFactor c).size := by
     apply Classical.byContradiction
     intro h
@@ -310,7 +299,7 @@ theorem fpPoly_one_ne_zero [ZMod64.PrimeModulus p] : (1 : FpPoly p) ≠ 0 := by
     rw [DensePoly.coeff_C]
     simp
   rw [hone_coeff] at hcoeff
-  exact zmod64_one_ne_zero_of_prime hcoeff
+  exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
 
 /-- The constant polynomial `1` over a prime modulus has size `1`. -/
 theorem fpPoly_one_size [ZMod64.PrimeModulus p] : (1 : FpPoly p).size = 1 := by
@@ -460,7 +449,7 @@ theorem primeFieldLinearFactor_dvd_of_mem_rootsIn
 /-! # Reconstruction from a complete root list -/
 
 /-- A size-one monic polynomial is `1`. -/
-private theorem eq_one_of_size_one_of_monic [ZMod64.PrimeModulus p]
+private theorem eq_one_of_size_one_of_monic
     (q : FpPoly p) (hsize : q.size = 1) (hmonic : DensePoly.Monic q) :
     q = 1 := by
   have hlead : q.coeff 0 = (1 : ZMod64 p) := by

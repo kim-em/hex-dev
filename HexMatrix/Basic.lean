@@ -43,6 +43,24 @@ structure Matrix (R : Type u) (n m : Nat) where
   data : Vector R (n * m)
 deriving DecidableEq, BEq
 
+/-- Structural matrix comparison is lawful whenever entry comparison is. -/
+instance {R : Type u} {n m : Nat} [BEq R] [LawfulBEq R] :
+    LawfulBEq (Matrix R n m) where
+  eq_of_beq := by
+    intro A B h
+    cases A with
+    | mk a =>
+      cases B with
+      | mk b =>
+        congr
+        exact eq_of_beq h
+  rfl := by
+    intro A
+    cases A with
+    | mk a =>
+      change (a == a) = true
+      exact beq_self_eq_true a
+
 end Hex
 
 namespace Vector

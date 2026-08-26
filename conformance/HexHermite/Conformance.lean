@@ -77,6 +77,24 @@ hand-derived row-HNF values. -/
 #guard hnf alreadyHNF = alreadyHNF
 #guard hnf (hnf rectangular) = hnf rectangular
 
+/- The rank-profiled candidate itself, rather than only its guarded fallback,
+passes the complete HNF shape checker on every structural fixture family. -/
+private def principalPasses (A : Matrix Int n m) : Bool :=
+  let result := Hermite.principalRun (Hermite.formAccumulator n) A
+  isHNFForm result.matrix result.pivots.length result.pivotVector
+
+#guard principalPasses empty00
+#guard principalPasses empty03
+#guard principalPasses empty30
+#guard principalPasses negativeLast
+#guard principalPasses rankDeficient
+#guard principalPasses rectangular
+#guard principalPasses zeroLeft
+#guard principalPasses tall
+#guard principalPasses wide
+#guard principalPasses alreadyHNF
+#guard principalPasses pivotOne
+
 /- Rank and basis observers, including equal lattices presented with different
 numbers of rows. -/
 #guard hnfRank empty03 = 0

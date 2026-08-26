@@ -28,6 +28,33 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
+/-- Square submatrix obtained by selecting arbitrary row and column index
+tuples. Strictly increasing tuples give the canonical unoriented minors; the
+more general constructor is also useful while expanding products. -/
+@[expose]
+def selectedSubmatrix {R : Type u} {n m k : Nat} (M : Matrix R n m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) : Matrix R k k :=
+  ofFn fun i j => M[(rows[i], cols[j])]
+
+/-- Entry formula for an arbitrary selected submatrix. -/
+@[grind =] theorem getElem_selectedSubmatrix {R : Type u} {n m k : Nat}
+    (M : Matrix R n m) (rows : Vector (Fin n) k) (cols : Vector (Fin m) k)
+    (i j : Fin k) :
+    (selectedSubmatrix M rows cols)[i][j] = M[rows[i]][cols[j]] := by
+  unfold selectedSubmatrix
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
+/-- Selecting rows and columns after transposition swaps the two index
+tuples. -/
+theorem selectedSubmatrix_transpose {R : Type u} {n m k : Nat}
+    (M : Matrix R n m) (rows : Vector (Fin m) k) (cols : Vector (Fin n) k) :
+    selectedSubmatrix M.transpose rows cols =
+      (selectedSubmatrix M cols rows).transpose := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_selectedSubmatrix, getElem_transpose, getElem_transpose,
+    getElem_selectedSubmatrix]
+
 /-- Embed `Fin n` into `Fin (n + 1)` while skipping one deleted index. -/
 @[expose]
 def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=

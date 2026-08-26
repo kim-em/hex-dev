@@ -57,6 +57,7 @@ index-preserving partition and `S.toList` becomes a permutation.
 def liftedSubsetMask (d : Hex.LiftData) (S : LiftedFactorSubset d) : List Bool :=
   (List.finRange d.liftedFactors.size).map fun i => decide (i ∈ S)
 
+/-- The mask has one entry per lifted factor. -/
 theorem liftedSubsetMask_length (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     (liftedSubsetMask d S).length = d.liftedFactors.toList.length := by
   unfold liftedSubsetMask; simp
@@ -143,15 +144,6 @@ theorem subsetSplits_mem_exists_mask :
         · simp [hselected]
         · simp [hrest]
 
-/-- The lifted-factor subset partition lies in the executable
-`Hex.subsetSplits` enumeration of the lifted-factor list. -/
-theorem liftedSubsetSplit_mem_subsetSplits
-    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
-    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
-      Hex.subsetSplits d.liftedFactors.toList := by
-  unfold liftedSubsetSelectedList liftedSubsetRejectedList
-  exact subsetSplits_zip_filterMap_partition d.liftedFactors.toList
-    (liftedSubsetMask d S) (liftedSubsetMask_length d S)
 
 /-- Auxiliary partition lemma at the `subsetSplitsWithFirst` surface: when the
 mask starts with `true`, the partition lies in
@@ -184,25 +176,6 @@ theorem subsetSplitsWithFirst_mem_exists_tail_mask
   rcases subsetSplits_mem_exists_mask hsplit with
     ⟨mask, hmask_len, hselected, hrest⟩
   exact ⟨mask, hmask_len, by simp [hselected], hrest⟩
-
-/-- The first entry of `liftedSubsetMask d S`, via `head?`, records membership
-of index `0` in `S`. -/
-private theorem liftedSubsetMask_head?_eq_decide
-    (d : Hex.LiftData) (S : LiftedFactorSubset d)
-    (hpos : 0 < d.liftedFactors.size) :
-    (liftedSubsetMask d S).head? =
-      some (decide ((⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S)) := by
-  unfold liftedSubsetMask
-  rw [List.head?_map]
-  have hfin : (List.finRange d.liftedFactors.size).head? =
-      some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
-    have h : (List.finRange d.liftedFactors.size)[0]? =
-        some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
-      rw [List.getElem?_eq_getElem (by simp; exact hpos)]
-      simp
-    simpa [List.head?_eq_getElem?] using h
-  rw [hfin]
-  rfl
 
 /-- General `filterMap`/`filter`-`map` equivalence: a `filterMap` whose body is
 either `some (f x)` or `none` is the same as filtering then mapping. -/
@@ -297,15 +270,6 @@ def LiftedFactorListMatches (d : Hex.LiftData) (J : LiftedFactorSubset d)
     ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∈ J)).map
       (liftedFactor d)
 
-/-- The matching predicate is equivalent to `localFactors = liftedSubsetSelectedList d J`,
-the cleanest form for connecting to the executable recombination split API. -/
-theorem LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList
-    (d : Hex.LiftData) (J : LiftedFactorSubset d)
-    (localFactors : List Hex.ZPoly) :
-    LiftedFactorListMatches d J localFactors ↔
-      localFactors = liftedSubsetSelectedList d J := by
-  unfold LiftedFactorListMatches
-  rw [liftedSubsetSelectedList_eq_filter_map]
 
 /-- Initial-state instance: the full lifted-factor list matches the universe
 of indices.  This pairs with `henselSubsetCorrespondenceRest_initial` at the
@@ -323,13 +287,6 @@ theorem LiftedFactorListMatches.univ (d : Hex.LiftData) :
   congr 1
   exact (List.filter_eq_self.mpr (by intro a _; simp)).symm
 
-/-- Cardinality lemma: a matched list has length equal to `J.card`.  This is
-the natural induction measure for the recursive coverage proof. -/
-theorem LiftedFactorListMatches.length_eq_card
-    {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
-    (h : LiftedFactorListMatches d J localFactors) :
-    localFactors.length = J.card := by
-  rw [h, List.length_map, (finRange_filter_mem_perm_toList J).length_eq, Finset.length_toList]
 
 /-- A matched `localFactors` is `Nodup` whenever `liftedFactor d` is injective
 on the index set `J`.
@@ -366,16 +323,6 @@ theorem liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff
   intro i _
   simp [Finset.mem_sdiff]
 
-/-- Rejection-step instance: emitting `S` from the universal initial state
-leaves the executable's running `localFactors` matched to `Finset.univ \ S`.
-This is the universe-level case of the recursive invariant transition; the
-general `J ↦ J \ S` step lives in the recursive coverage proof and uses this
-lemma plus a partition-relating lemma. -/
-theorem LiftedFactorListMatches.rejected_of_subset
-    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
-    LiftedFactorListMatches d (Finset.univ \ S) (liftedSubsetRejectedList d S) := by
-  rw [LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList]
-  exact liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff d S
 
 /-- The order-preserving filter of `List.finRange n` by membership in a Finset
 equals the sorted list of that Finset.  Two sorted lists with the same
@@ -447,15 +394,6 @@ private theorem finRange_filter_mem_and_not_mem_eq_sdiff_of_subset
     · simp [hJ, hS, Finset.mem_sdiff]
   · simp [hJ, Finset.mem_sdiff]
 
-/-- Generalised matching transition: removing `S ⊆ J` from a matching state
-yields a matching state for `J \ S` whose `localFactors` is
-`liftedSubsetSelectedList d (J \ S)`.  This is the recursive invariant
-transition used inside the recombination coverage proof. -/
-theorem LiftedFactorListMatches.sdiff_of_subset
-    {d : Hex.LiftData} {J S : LiftedFactorSubset d} :
-    LiftedFactorListMatches d (J \ S)
-      (liftedSubsetSelectedList d (J \ S)) :=
-  (LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList d (J \ S) _).mpr rfl
 
 /-- Generalised partition lemma at the `subsetSplitsWithFirst` surface: for any
 matching state and any `S ⊆ J` containing `J.min'`, the order-preserving
@@ -1478,33 +1416,6 @@ theorem polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct
   apply List.Perm.map
   exact finRange_filter_mem_perm_toList S
 
-/-- When index `0` is in `S`, the lifted-factor subset partition lies in the
-`subsetSplitsWithFirst` enumeration that the recombination search iterates. -/
-theorem liftedSubsetSplit_mem_subsetSplitsWithFirst
-    (d : Hex.LiftData) (S : LiftedFactorSubset d)
-    (hpos : 0 < d.liftedFactors.size)
-    (h0 : (⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S) :
-    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
-      Hex.subsetSplitsWithFirst d.liftedFactors.toList := by
-  unfold liftedSubsetSelectedList liftedSubsetRejectedList
-  -- Decompose d.liftedFactors.toList and the mask into cons forms.
-  have hxs_pos : 0 < d.liftedFactors.toList.length := by simpa using hpos
-  have hmask_len := liftedSubsetMask_length d S
-  have hmask_head := liftedSubsetMask_head?_eq_decide d S hpos
-  rcases hxs : d.liftedFactors.toList with _ | ⟨x, xs⟩
-  · rw [hxs] at hxs_pos; simp at hxs_pos
-  rcases hmask : liftedSubsetMask d S with _ | ⟨b, bs⟩
-  · rw [hmask] at hmask_head; simp at hmask_head
-  -- Head bit is determined by `h0`.
-  rw [hmask] at hmask_head
-  simp [h0] at hmask_head
-  -- `hmask_head : b = true`
-  subst hmask_head
-  -- Lengths line up.
-  have hbs_len : bs.length = xs.length := by
-    rw [hmask, hxs] at hmask_len
-    simpa using hmask_len
-  exact subsetSplitsWithFirst_zip_filterMap_partition x xs bs hbs_len
 
 end
 

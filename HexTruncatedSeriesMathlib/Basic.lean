@@ -155,6 +155,8 @@ noncomputable def ofPowerSeriesHom [CommRing R] : PowerSeries R →+* TSeries R 
       coeff_ofPowerSeries f i hi, coeff_ofPowerSeries g i hi,
       map_add]
 
+/-- Applying the truncation ring homomorphism is definitionally the same as
+truncating a Mathlib power series. -/
 @[simp]
 theorem ofPowerSeriesHom_apply [CommRing R] (f : PowerSeries R) :
     ofPowerSeriesHom (R := R) (n := n) f = ofPowerSeries f :=

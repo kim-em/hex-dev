@@ -155,6 +155,8 @@ private theorem polyProduct_filteredNormalizedFactors_append_one_of_all_recorded
   rw [filteredNormalizedFactors_append_one_of_all_recorded_normalized
     factors.toList hnormalized hrecorded]
 
+/-- The raw bounded trial-division factor array multiplies back to the input
+once the signed content scalar is restored. -/
 theorem factorTrialFactorsWithBound_polyProduct
     (f : ZPoly) (B : Nat) :
     DensePoly.C (signedContentScalar f) *
@@ -327,6 +329,8 @@ private theorem factorTrialWithBound_product_of_trial
       (normalizeForFactor f).squareFreeCore B
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
 
+/-- Bounded trial division reconstructs its input exactly: the packed
+`Factorization` multiplies back to `f` for every bound. -/
 theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
     Factorization.product (factorTrialWithBound f B) = f := by
   by_cases hf : f = 0

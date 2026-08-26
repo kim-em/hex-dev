@@ -168,6 +168,7 @@ theorem factor_dvd
     C.factor ∣ core :=
   ⟨C.cofactor, C.factor_mul.symm⟩
 
+/-- A certified direct factor is nonzero. -/
 theorem factor_ne
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
@@ -313,6 +314,8 @@ theorem liftedFactor_map_dvd
 
 end DirectFactorCertificate
 
+/-- The modular support representing a positive-degree irreducible integer
+divisor is nonempty. -/
 theorem directSupport_nonempty_of_represents
     {core factor : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     {S : ModPFactorSubset data}
