@@ -21,8 +21,8 @@ Covered operations:
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
 - checked exact division and its ordered rejection prefilters
-- the one-, two-point, and reciprocal Kronecker-substitution kernels against
-  the schoolbook loop
+- the one-, two-point, reciprocal, and four-point Kronecker-substitution
+  kernels against the schoolbook loop
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -322,6 +322,8 @@ private def kernelAgrees : Bool :=
         && (mulKS2 q p == q * p)
         && (mulKS3 p q == p * q)
         && (mulKS3 q p == q * p)
+        && (mulKS4 p q == p * q)
+        && (mulKS4 q p == q * p)
 
 #guard kernelAgrees
 
@@ -344,6 +346,7 @@ private def kernelAgreesOnBoundaries : Bool :=
         && (mulKronecker p q == p * q)
         && (mulKS2 p q == p * q)
         && (mulKS3 p q == p * q)
+        && (mulKS4 p q == p * q)
 
 #guard kernelAgreesOnBoundaries
 
@@ -357,6 +360,7 @@ private def multipointAgreesAsymmetric : Bool :=
         kernelCoeff long i 9 * Int.ofNat (2 ^ 73)).toArray
       (mulKS2 p q == p * q) && (mulKS2 q p == q * p)
         && (mulKS3 p q == p * q) && (mulKS3 q p == q * p)
+        && (mulKS4 p q == p * q) && (mulKS4 q p == q * p)
 
 #guard multipointAgreesAsymmetric
 
