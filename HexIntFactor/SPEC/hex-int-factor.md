@@ -414,6 +414,23 @@ Suyama setup does need one inversion or gcd. And the primitive required
 is `Nat.gcd`, not Bézout coefficients, so the relevant hex-arith export
 is the gcd rather than `HexArith.Int.extGcd`.
 
+The stage keeps `A24 = a24num / a24den` scaled throughout. If
+`AA = (X + Z)²`, `BB = (X - Z)²`, and `C = AA - BB`, doubling is
+
+```
+X₂ = AA * BB * a24den
+Z₂ = C * (BB * a24den + a24num * C)
+```
+
+modulo the input. The denominator multiplies both projective coordinates;
+omitting it from `X₂` changes the represented point. Scalar multiplication
+maintains the adjacent pair `(mP, (m+1)P)`. For an even scalar it returns
+`(2mP, (2m+1)P)`, and for an odd scalar it returns
+`((2m+1)P, (2m+2)P)`, using differential addition with the original `P`.
+This is the invariant required by `xADD`; independently recursing to `mP`
+and passing `P` as the difference between `2mP` and `mP` is valid only when
+`m = 1`.
+
 Lenstra's analysis, https://annals.math.princeton.edu/1987/126-3/p09,
 is the source for the dependence on the smallest prime factor.
 
@@ -427,7 +444,12 @@ existing Montgomery context is `UInt64`-only and is not claimed to be an
 arbitrary-precision backend. The ECM benchmark family must show that the
 direct-`Nat` route is useful before this milestone is complete; a future
 stage 2 or a failed benchmark is the point at which to specify a separate
-big-integer modular context.
+big-integer modular context. On the word route, one context is constructed
+after setup, the curve constants and initial point enter Montgomery
+representation once, every stage multiplication stays there, and only the
+final `z` coordinate is decoded for the boundary gcd. Context construction
+or representation conversion inside the scalar-multiplication loop is not
+the word backend specified here.
 
 ### 4. Fuel, and what failure means
 
@@ -1028,7 +1050,8 @@ non-functional. The suite therefore needs route-level tests in Lean:
 that the perfect-power detector fired on a perfect power, that `p − 1`
 distinguished proper-factor, `1`, and whole-modulus outcomes, that rho
 found the factor within the expected iteration count for a fixed seed,
-that ECM stage 1 distinguished its three gcd outcomes, and that
+that ECM stage 1 distinguished its three gcd outcomes after a setup gcd of
+one (including stage-found proper-factor and whole-modulus cases), and that
 `cyclotomicSplit?` ran before the generic dispatch on a `b^n − 1`
 input. This is the same division
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes, and it is worth more than the oracle

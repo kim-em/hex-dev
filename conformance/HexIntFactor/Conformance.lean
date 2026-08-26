@@ -217,6 +217,42 @@ example {n base bound d : Nat}
 #guard ecmStage1 6 7 2 == .factor 2
 #guard ecmStage1 4 6 2 == .whole
 
+-- These attempts all pass Suyama setup and execute the smooth scalar stage.
+-- The factor and whole cases distinguish the invariant-preserving adjacent-
+-- multiple ladder and correctly homogenized doubling formulas from the former
+-- recurrence; their old outcomes were respectively `whole` and `factor 3`.
+private def ecmStageFactorTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 51 13 5
+
+#guard ecmStageFactorTrace.backend == .word
+#guard ecmStageFactorTrace.setupGcd == 1
+#guard ecmStageFactorTrace.stageGcd == 3
+#guard ecmStageFactorTrace.result == .factor 3
+
+private def ecmStageWholeTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 33 8 5
+
+#guard ecmStageWholeTrace.backend == .word
+#guard ecmStageWholeTrace.setupGcd == 1
+#guard ecmStageWholeTrace.stageGcd == 33
+#guard ecmStageWholeTrace.result == .whole
+
+private def ecmStageNoFactorTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 289 13 5
+
+#guard ecmStageNoFactorTrace.setupGcd == 1
+#guard ecmStageNoFactorTrace.stageGcd == 1
+#guard ecmStageNoFactorTrace.result == .noFactor
+
+-- The direct-`Nat` backend also reaches stage multiplication beyond one word.
+private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace (2 ^ 64 + 1) 6 2
+
+#guard ecmNaturalTrace.backend == .natural
+#guard ecmNaturalTrace.setupGcd == 1
+#guard ecmNaturalTrace.stageGcd == 1
+#guard ecmNaturalTrace.result == .noFactor
+
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
