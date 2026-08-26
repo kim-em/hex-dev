@@ -256,6 +256,8 @@ private theorem foldl_add_eq_foldr {A : Type v} (xs : List A) (h : A → R)
       rw [ih]
       grind
 
+/-- Each column inside the block contributes one reversed coefficient of `p`
+at its own index, and columns outside the block contribute nothing. -/
 private theorem coeff_blockCols (start count total : Nat) (p : DensePoly R)
     (cols : List (Fin total)) (k : Nat) :
     (blockCols start count total p cols).coeff k =
@@ -614,6 +616,8 @@ theorem bounded_bezout_unique [Div R] [ExactDivLaws R]
       simpa only [j, hindex] using hj
     · exact coeff_eq_zero_of_size_le v (by omega)
 
+/-- Vanishing above index `n` bounds the normalized size by `n`. This is the
+size-bound entry point for the cofactor columns below. -/
 private theorem size_le_of_coeff_zero_above (p : DensePoly R) (n : Nat)
     (hzero : ∀ k, n ≤ k → p.coeff k = 0) : p.size ≤ n := by
   by_cases hle : p.size ≤ n
@@ -637,6 +641,8 @@ theorem size_sub_le_max (p q : DensePoly R) :
     coeff_eq_zero_of_size_le q hq]
   grind
 
+/-- The `f`-side cofactor accumulates only monomials below `dg - J`, so it
+stays inside the `g` block's column budget. -/
 private theorem cofactorUCols_size_le (df dg J : Nat) (f g : DensePoly R)
     (cols : List (Fin ((df - J) + (dg - J)))) :
     (cofactorUCols df dg J f g cols).size ≤ dg - J := by
@@ -655,6 +661,8 @@ private theorem cofactorUCols_size_le (df dg J : Nat) (f g : DensePoly R)
       · rw [if_neg hj]
         exact ih
 
+/-- The `g`-side cofactor accumulates only monomials below `df - J`, so it
+stays inside the `f` block's column budget. -/
 private theorem cofactorVCols_size_le (df dg J : Nat) (f g : DensePoly R)
     (cols : List (Fin ((df - J) + (dg - J)))) :
     (cofactorVCols df dg J f g cols).size ≤ df - J := by
@@ -788,6 +796,8 @@ theorem coeff_cofactorAt_mul (df dg J l : Nat) (f g : DensePoly R)
   rw [cofactorCols_mul, coeff_cofactorRowCols,
     cofactorScalarCols_finRange df dg J l f g hcount]
 
+/-- The integer-indexed lookup vanishes above the normalized size, which is
+what lets the cofactor rows be summed over a fixed integer window. -/
 private theorem coeffInt_eq_zero_of_size_le (p : DensePoly R) (k : Int)
     (h : Int.ofNat p.size ≤ k) : coeffInt p k = 0 := by
   cases k with

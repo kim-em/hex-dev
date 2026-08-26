@@ -504,10 +504,9 @@ recombination loop rather than about division.
 
 **`subresultantChainExt` belongs in hex-resultant.** Route 4 needs the
 Bézout cofactors of the chain to produce the `constant` witness, and
-`subresultantAux` discards the quotient of each `pseudoDivMod`
-(`HexResultant/Subresultant.lean:609` and `:616`).
-[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) asks for the same addition under the same
-name for its `splitBezout` constructor, so it should be written once.
+`subresultantAux` discards the quotient of each `pseudoDivMod`.
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) needs the same operation for
+its `splitBezout` constructor, so it is written once, in hex-resultant.
 
 **`Modulus` and the bundled `Prime` belong in hex-mod-arith**, as
 [hex-modular](../../HexModular/SPEC/hex-modular.md) sets out. The `modular` witness names one.
@@ -730,8 +729,8 @@ companion beyond these and one correspondence lemma per public operation.
    code.
 
 5. **The heuristic and the subresultant fallback.** Route 2, and route 4
-   becoming the primary deterministic fallback once hex-resultant is far
-   enough along, with the rational implementation retained for an absent
+   as the primary deterministic fallback on hex-resultant's extended
+   chain, with the rational implementation retained for an absent
    extended-chain terminal.
 
 6. **The companion**, and the fast squarefree decomposition. The
