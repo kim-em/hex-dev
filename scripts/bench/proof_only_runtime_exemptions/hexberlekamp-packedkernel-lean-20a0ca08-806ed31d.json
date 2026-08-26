@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/PackedKernel.lean",
+ "baseline_blob": "20a0ca089f1946b5c0d31266e501325d77747ab8",
+ "current_blob": "806ed31de287bd0d5f9fe2fb0684c98cd4b38564",
+ "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`dif_pos`/`dif_neg` rewrites to their `ite_eq_*`/`dite_eq_*` aliases inside proofs, adds docstrings to the packed-word arithmetic and `Rep` lemmas, and demotes the non-simp-normal `toNat_toZMod` to a plain theorem. The only signature change is dropping the unused `[ZMod64.Bounds p]` argument of `modWord`; `ZMod64.Bounds` is a `Prop` class, so it is compiler-erased and `modWord` generates identical code. `mulMod`, `addMod`, `negMod`, `invMod`, the packed row operations, `reduce`, `kernelArray`, and the `@[csimp]` `fixedSpaceKernelVectors_eq_packed` bridge are unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Rational.lean",
+ "baseline_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
+ "current_blob": "5495375e8339591996f2607e4a858f48e09a80b2",
+ "reason": "Exports two already-proved rational-polynomial size laws for proof reuse by HexPolyZGcd; no executable definition or factorization runtime call path changes."
+}

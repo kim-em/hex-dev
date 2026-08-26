@@ -21,6 +21,13 @@ namespace Nat
 def pMinusOneFactor (n base bound : Nat) : PMinusOneResult :=
   pMinusOneStage1 n base bound
 
+/-- Every factor reported by the integer-factorization adapter is a proper
+divisor of its subject. -/
+theorem pMinusOneFactor_spec {n base bound d : Nat}
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneStage1_spec h
+
 end Nat
 
 end Hex

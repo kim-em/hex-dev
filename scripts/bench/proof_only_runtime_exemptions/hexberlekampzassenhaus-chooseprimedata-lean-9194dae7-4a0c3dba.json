@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+ "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
+ "current_blob": "4a0c3dba62c7c3c607545daff10ba4bf70351681",
+ "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; prime selection, arithmetic, and control flow are unchanged."
+}

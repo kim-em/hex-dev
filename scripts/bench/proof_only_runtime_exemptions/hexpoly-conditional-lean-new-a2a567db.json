@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Conditional.lean",
+ "baseline_blob": null,
+ "current_blob": "a2a567db59005c2be9c3ccfc5e2ae092183a3613",
+ "reason": "Adds proof-only conditional reduction aliases to the standalone HexPoly library without changing its dependency graph or executable factorization definitions."
+}

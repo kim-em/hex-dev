@@ -1,4 +1,4 @@
-# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly and hex-basic)
+# hex-resultant (subresultant chain, depends on hex-poly, hex-basic, hex-determinant)
 
 Polynomial resultant and discriminant for `Hex.DensePoly R` over a
 commutative exact-division domain. Computed via the **subresultant
@@ -241,9 +241,15 @@ exact scalar multiple after its factorization has been proved.
 
 The generalized Sylvester constructions in this proof are local,
 coefficient-indexed proof objects with their finite-sum identities developed
-inside `hex-resultant`; they are not matrices from `hex-matrix` or
-`hex-determinant`. Consequently the released dependency graph remains the one
-stated at the top of this SPEC.
+inside `hex-resultant`; they are not matrices from `hex-matrix`. The
+executable resultant and discriminant path never leaves this library.
+
+The cofactor development behind the extended chain does reach for
+`hex-determinant`: `SubresultantMinor.toMatrix` regards a local square
+coefficient family as a `Hex.Matrix` so the kernel row-transport argument
+can use `Matrix.det` and `Matrix.adjugate` rather than redevelop them.
+`hex-determinant` is therefore a proof-side dependency of this library and
+is recorded as such in `libraries.yml`.
 
 Concretely, `DensePoly.Subresultant.coeffMatrixAt` is a finite scalar
 coefficient family at explicit formal degrees, and
@@ -309,7 +315,8 @@ The executable specialization is split into two further polynomial identities.
 pseudo-remainder, including defective degree drops. `poly_descent` transports
 the entire lower subresultant family across any nonzero scaled
 pseudo-remainder while leaving all factors cross-multiplied. In
-`Subresultant.lean`, the private `BrownInv` states that every generalized
+`Subresultant.lean`, `BrownInv` (public since the extended chain's cofactor
+development consumes it) states that every generalized
 subresultant of the current adjacent pair is an explicit scalar multiple of
 the corresponding original-pair subresultant. Its initialization, scale,
 factor, and step lemmas identify each `hCurr`, prove both exact Brown
@@ -450,9 +457,13 @@ quotient is exact over every stated exact-division domain.
 ## Downstream contracts
 
 The extended chain `subresultantChainExt` (Bezout cofactors for every stored
-Brown entry) is a `hex-poly-z-gcd`/`hex-mv-gcd` prerequisite, sketched in
-[SPEC/future-work.md](../../SPEC/future-work.md); it does not alter the
-current resultant or discriminant contracts.
+Brown entry) is delivered in `SubresultantExt.lean`:
+`subresultantChainExt_law` packages the Bezout and exactness laws,
+`subresultantChainExt_values` projects the stored values onto
+`subresultantChain`, and the determinantal cofactor development lives in
+`SubresultantCofactor.lean`. `hex-poly-z-gcd` reads the terminal entry for
+its `CoprimeWitness.constant` route and `hex-mv-gcd` for its `splitBezout`
+constructor. It does not alter the resultant or discriminant contracts.
 
 ## File organisation
 
@@ -476,8 +487,10 @@ current resultant or discriminant contracts.
   fraction-embedding image certificates.
 - `HexResultant/DeterminantAlgebra.lean`: local column multilinearity,
   adjacent swaps and swap-sequence parity, arbitrary alternation and update
-  laws, consecutive-block scaling, and the resulting left/right homogeneity
-  laws for generalized subresultants.
+  laws, consecutive-block scaling, the resulting left/right homogeneity
+  laws for generalized subresultants, and `toMatrix`/`lastCofactor`, which
+  read a local coefficient family as a `Hex.Matrix` so that
+  `hex-determinant`'s Laplace and adjugate algebra applies to it.
 - `HexResultant/BlockDeterminant.lean`: dimension recasting, numeric adjacent
   swaps, consecutive-block rotation with its parity law, and the resulting
   generalized-subresultant input-swap law.
@@ -488,6 +501,12 @@ current resultant or discriminant contracts.
 - `HexResultant/Subresultant.lean`: the integral recursive subresultant
   invariant, `BrownLaw`, the Brown worker, `subresultantChain`, `resultant`,
   chain termination, and degree bounds.
+- `HexResultant/SubresultantCofactor.lean`: the coefficient-matrix
+  cofactor construction behind the extended chain, its size and degree
+  bounds, and the kernel row-transport argument.
+- `HexResultant/SubresultantExt.lean`: `subresultantChainExt`, its
+  `Law`/`CofactorStep` packaging, `brownScale`, and the
+  `subresultantChainExt_law` Bezout/exactness/value laws.
 - `HexResultant/Discriminant.lean`: the Mathlib-free executable `disc`.
 - `HexResultantMathlib/Discriminant.lean`: discriminant correspondence and
   the algebraic identities needed downstream. In characteristic zero, for

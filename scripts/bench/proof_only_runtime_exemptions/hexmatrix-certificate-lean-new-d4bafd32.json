@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Certificate.lean",
+ "baseline_blob": null,
+ "current_blob": "d4bafd32cf66130696292b73a9386d481cc2d9e1",
+ "reason": "Relocates the existing packed matrix certificate declarations from HexLLL.Certificate so Hermite can reuse them without depending on LLL; their definitions are unchanged and existing factorization consumers retain the same behavior."
+}

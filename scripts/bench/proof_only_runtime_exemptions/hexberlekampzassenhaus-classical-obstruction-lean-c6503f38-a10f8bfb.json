@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Classical/Obstruction.lean",
+ "baseline_blob": "c6503f384a5e97defd593b440430b5dcc1d6b19b",
+ "current_blob": "a10f8bfb2b9ceef8eb49029c10ffd3c4aa2670ac",
+ "reason": "Names the public ZMod64.Bounds obstructionPrime proof instance without changing its body, priority, scope or declaration position. Elaboration may now refer to the new declaration name, but Bounds is a Prop and its instance arguments are erased, so generated factorization code and runtime behaviour are unchanged."
+}

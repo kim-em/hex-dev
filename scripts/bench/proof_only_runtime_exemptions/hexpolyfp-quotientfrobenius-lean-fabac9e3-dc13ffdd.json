@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/QuotientFrobenius.lean",
+ "baseline_blob": "fabac9e32d1e5c364fa51077d067129c76dabb03",
+ "current_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
+ "reason": "Adds eval_pow_prime and its coefficient-list form, new theorems saying quotient evaluation commutes with the Frobenius. Theorems only, no definition changes, so the compiled factorization path is unchanged."
+}
