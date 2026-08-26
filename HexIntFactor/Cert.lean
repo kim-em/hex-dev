@@ -181,6 +181,17 @@ private theorem checked_parts {F : Factorization}
       factorProduct F.subject F.factors 1 = some F.subject := by
   simpa [checkFactorization, Bool.and_eq_true, and_assoc] using h
 
+/-- A complete factorization accepted by the checker has positive subject. -/
+theorem checkFactorization_pos {F : Factorization}
+    (h : checkFactorization F = true) : 0 < F.subject :=
+  (checked_parts h).1
+
+/-- The subject indexed by checked complete factorization data is positive. -/
+theorem CheckedFactorization.pos {n : Nat} (F : CheckedFactorization n) :
+    0 < n := by
+  rw [← F.subject_eq]
+  exact checkFactorization_pos F.valid
+
 /-- The checked prime powers multiply to the claimed subject. -/
 theorem checkFactorization_prod {F : Factorization}
     (h : checkFactorization F = true) :

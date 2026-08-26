@@ -19,6 +19,8 @@ Covered operations:
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
 - `Hex.Nat.primeCert?`
+- `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
+  instrumentation
 - `Hex.Nat.millerRabin` / `Hex.Nat.isProbablePrime`
 - `Hex.Nat.isTablePrime`
 - `Hex.Nat.primesIn`
@@ -97,6 +99,77 @@ open Hex.Nat
 #guard (match primeCert? 2147483649 (Hex.Rand.ofSeed 0) 8 with
         | .error f => f.stop == .composite
         | .ok _ => false)
+
+-- Counted compatibility forms retain successful randomized work without
+-- changing the ordinary pair-returning entry points.
+#guard (match Internal.rhoFactorCounted? 9 (Hex.Rand.ofSeed 2) 8 with
+  | .ok success => success.factor == 3 && success.attempts == 4
+  | .error _ => false)
+
+#guard (match Internal.primeCertCounted? 1000003
+    (Hex.Rand.ofSeed 3) 16 with
+  | .ok success =>
+      success.attempts == 8 &&
+        success.rand == ((Hex.Rand.ofSeed 3).words 8).2
+  | .error _ => false)
+
+-- Fuel two certifies an earlier child and finds its witness before a later
+-- recursive child exhausts. The failure retains that successful work.
+#guard (match Internal.primeCertCounted? 1000003
+    (Hex.Rand.ofSeed 3) 2 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 2 &&
+        failure.rand == ((Hex.Rand.ofSeed 3).words 2).2
+  | .ok _ => false)
+
+-- A deeper child consumes its own randomized subtotal before exhaustion;
+-- the parent retains both its earlier witness and that child subtotal.
+#guard (match Internal.primeCertCounted? 1000000007
+    (Hex.Rand.ofSeed 3) 3 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 7 &&
+        failure.rand == ((Hex.Rand.ofSeed 3).words 7).2
+  | .ok _ => false)
+
+-- This strong pseudoprime passes the fixed Miller--Rabin screen, then its
+-- first certificate witness search consumes all 32 candidates. The retained
+-- total also includes the preceding four partial-factor rho restarts.
+#guard (match Internal.primeCertCounted? 3317044064679887385961981
+    (Hex.Rand.ofSeed 0) 2 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 36
+  | .ok _ => false)
+
+-- Routine gcds are genuinely batched: this fixed restart performs 95
+-- polynomial steps but only seven gcds.
+private def rhoBatchTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 100160063 1 2 256
+
+#guard rhoBatchTrace.factor == some 10007
+#guard rhoBatchTrace.steps == 95
+#guard rhoBatchTrace.gcds == 7
+#guard (match rhoFactor? 100160063 (Hex.Rand.ofSeed 1) 8 with
+  | .ok (d, _) => 1 < d && d < 100160063 && 100160063 % d == 0
+  | .error _ => false)
+
+-- Collisions for 11 and 13 share the cycle-boundary batch, so the route
+-- returns their proper composite product rather than pretending it is prime.
+#guard (Hex.Nat.Internal.rhoTrace 2431 1 1 32).factor == some 143
+
+-- A whole-modulus batch is replayed and recovers the proper factor 3.
+private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 9 1 0 32
+
+#guard rhoRecoveryTrace.factor == some 3
+#guard rhoRecoveryTrace.recoveries == 1
+
+-- Seed 213 first draws the fixed pair `(c, x) = (71, 61)` modulo 91; the
+-- route rejects it and advances to a non-fixed pair.
+#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 213) == (37, 6, 1)
+-- Seed 40 first draws the globally degenerate offset `c = n - 2` and then
+-- advances to the usable pair `(81, 74)`.
+#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 40) == (81, 74, 1)
+#guard Hex.Nat.Internal.rhoRestartCap == 8
 
 -- Miller-Rabin filter behaviour on the adversarial families.
 #guard isProbablePrime 561 = false

@@ -135,7 +135,9 @@ private theorem prime_dvd_product {q : Nat} (hq : Prime q) :
           (fun x hx => hprime x (by simp [hx])) hr
         exact ⟨x, by simp [hx], heq⟩
 
-private theorem head_coprime {entry : PrimePower} {rest : List PrimePower}
+/-- The first prime power in a strictly ordered prime-power list is coprime to
+the product represented by the tail. -/
+theorem head_coprime {entry : PrimePower} {rest : List PrimePower}
     (hprime : ∀ e ∈ entry :: rest, Prime e.prime)
     (hsorted : (entry :: rest).Pairwise fun a b => a.prime < b.prime) :
     Nat.Coprime (entry.prime ^ entry.exponent)

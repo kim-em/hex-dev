@@ -1,0 +1,6 @@
+{
+ "path": "Hex/Conformance/Emit.lean",
+ "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+ "current_blob": "873aec7387d46c7864913c43e9f9c25b25b33ffc",
+ "reason": "Adds JSON serializers used only by modular conformance fixture emitters; no factorization runtime module imports the conformance helper."
+}

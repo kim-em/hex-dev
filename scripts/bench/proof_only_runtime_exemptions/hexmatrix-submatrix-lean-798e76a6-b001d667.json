@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Submatrix.lean",
+ "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+ "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+ "reason": "Adds selectRows and selectCols for determinant and Smith proofs; neither definition is referenced by the production factor entry, and existing submatrix operations are unchanged."
+}

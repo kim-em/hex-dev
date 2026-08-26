@@ -524,7 +524,28 @@ def rhoFactor? (n : Nat) (r : Rand) (fuel : Nat) :
 theorem rhoFactor?_spec {n d r r' fuel}
     (h : rhoFactor? n r fuel = .ok (d, r')) :
     1 < d ∧ d < n ∧ d ∣ n
+
+structure Internal.RhoSuccess where
+  factor   : Nat
+  attempts : Nat
+  rand     : Rand
+
+def Internal.rhoFactorCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except RhoFailure Internal.RhoSuccess
+
+theorem Internal.rhoFactorCounted?_spec {n r fuel success}
+    (h : Internal.rhoFactorCounted? n r fuel = .ok success) :
+    1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n
 ```
+
+The compatible pair-returning API is backed by the counted internal result
+`Internal.RhoSuccess`, whose `factor`, `attempts`, and `rand` fields are
+returned by `Internal.rhoFactorCounted?`. One attempt is one accepted restart
+draw and Brent run, including the successful restart; rejection draws used to
+choose that restart remain part of the same attempt. The ordinary
+`rhoFactor?` projection does not rerun the search or alter its final state.
+The deterministic even-input shortcut returns factor `2` with zero attempts
+and an unchanged generator because it runs no restart.
 
 `rhoFactor?` validates range and divisibility before returning.
 Randomness and fuel affect only whether it finds a factor. The advanced
@@ -534,6 +555,17 @@ accidentally reuse the same failed stream. `.invalidInput` covers
 no proper factor was found, and makes no primality claim. It is public
 because hex-int-factor reuses this exact primitive; it does not certify
 that `d` is prime and makes no completeness claim.
+
+One restart uses Brent's power-of-two cycle schedule and accumulates up
+to 32 differences modulo `n` before taking a gcd. Cycle boundaries also
+flush a shorter batch. If a batched gcd is the whole modulus, the route
+replays just that batch one difference at a time; the caller accepts only
+a dynamically validated proper divisor. Each restart draws `c` from
+`[1, n - 1]` and a start from `[0, n - 1]`. It globally rejects the
+degenerate map `x ↦ x² - 2`; other offsets are rejected only with a start
+that makes a fixed point of `x ↦ x² + c`. The rejection loop and each
+restart's inner work are bounded. Both current worklist consumers share an
+eight-restart cap before retaining the residual or trying later routes.
 
 `partialFactor` is **internal**, not part of the public API. An earlier
 draft exposed it with "no correctness theorem at all", which is safe
@@ -557,7 +589,8 @@ private theorem partialFactor_prod (n r fuel) (hn : 0 < n) :
 ```
 
 hex-int-factor reuses `rhoFactor?` rather than introducing a second rho.
-Brent's cycle detection is already part of the lower primitive; the
+Brent's batched cycle detection and whole-modulus recovery are already
+part of the lower primitive; the
 higher library adds structural reductions, ECM, complete-factorization
 assembly, and their dispatch. The routes by which its advances flow
 back into this library's search are fixed below.
@@ -581,7 +614,10 @@ without inverting the proof dependency, in three ways:
    Pollard `p − 1` stage 1 joins it beside rho when hex-int-factor
    lands, under the same dynamically validated proper-factor contract
    and resumable-failure shape: both libraries want it, and it widens
-   `partialFactor`'s reach cheaply. ECM stays downstream; curve
+   `partialFactor`'s reach cheaply. Its public smoothness request is capped by
+   `smoothBound B = min B (primeTableBound - 1)`, so the committed table
+   contains every required prime and `pMinusOneStage1_bound` identifies every
+   larger request with that capped call. ECM stays downstream; curve
    arithmetic is a real dependency, not a shared primitive.
 3. **An optional search hook**, deferred until hex-int-factor exists to
    consume it. A `primeCert?With
@@ -732,6 +768,18 @@ structure NextPrimeFailure where
 
 def defaultPrimeFuel (n : Nat) : Nat
 
+structure Internal.PrimeCertSuccess (n : Nat) where
+  cert     : CheckedPrimeCert n
+  attempts : Nat
+  rand     : Rand
+
+def Internal.primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+theorem Internal.primeCertCounted?_composite {n r fuel f}
+    (hresult : Internal.primeCertCounted? n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n
+
 def primeCert? (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (CheckedPrimeCert n × Rand)
 def checkPrime (c : PrimeCert) : Bool
@@ -786,9 +834,16 @@ count and advanced state. The theorem records that a success is the
 division or a failed Miller-Rabin base, from `.exhausted`, which makes
 no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
 factored past a square root (or a cube root), and there are `n` for
-which that is out of reach. `PrimeCertFailure` retains the advanced
-state and attempt count because `partialFactor` runs Pollard rho; success
-returns the state alongside the certificate. The failure propagates
+which that is out of reach. `PrimeCertFailure` retains the advanced state and
+exact attempt count because `partialFactor` runs Pollard rho.
+`Internal.primeCertCounted?` also exposes that count on success, while
+`primeCert?` is its compatibility projection. Certificate metering counts
+every rho restart and every tried witness candidate, including successful
+ones, throughout recursive child construction; deterministic table lookup,
+Miller--Rabin filtering, and checker replay are not search attempts. Earlier
+successful child and witness searches are accumulated before a later failure,
+and both entry points return the same advanced state without duplicate work.
+The failure propagates
 rather than being papered over, which is
 design principle 8's third remedy again.
 

@@ -22,7 +22,7 @@ variable {R : Type u}
 
 /-- The executable and Mathlib discriminants agree under dense-polynomial
 correspondence. -/
-theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
+theorem toPolynomial_disc [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R] (f : DensePoly R) :
     disc f = Polynomial.discr (HexPolyMathlib.toPolynomial f) := by
   let F := HexPolyMathlib.toPolynomial f

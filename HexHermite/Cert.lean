@@ -58,19 +58,23 @@ theorem hnfCert_sound {A H : Matrix Int n m} {U W : Matrix Int n n}
           zero_row := hzero }
       pivot_leading := ?_
       pivot_pos := ?_
-      above_nonneg := hnonneg
+      above_nonneg := ?_
       above_lt := ?_ }
   · intro i row hir
-    exact hbelow i row hir
+    change (H.getRow row).get (piv.get i) = 0
+    simpa only [Matrix.getElem_pair_eq_get] using hbelow i row hir
   · intro i j hj
     change (H.getRow (pivotRow i)).get j = 0
-    exact hleading i (pivotRow i) rfl j hj
+    simpa only [Matrix.getElem_pair_eq_get] using hleading i (pivotRow i) rfl j hj
   · intro i
     change 0 < (H.getRow (pivotRow i)).get (piv.get i)
-    exact hpos i (pivotRow i) rfl
+    simpa only [Matrix.getElem_pair_eq_get] using hpos i (pivotRow i) rfl
+  · intro i row hir
+    change 0 ≤ (H.getRow row).get (piv.get i)
+    simpa only [Matrix.getElem_pair_eq_get] using hnonneg i row hir
   · intro i row hir
     change (H.getRow row).get (piv.get i) <
       (H.getRow (pivotRow i)).get (piv.get i)
-    exact hlt i row hir (pivotRow i) rfl
+    simpa only [Matrix.getElem_pair_eq_get] using hlt i row hir (pivotRow i) rfl
 
 end Hex.Matrix

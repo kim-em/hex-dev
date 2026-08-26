@@ -19,7 +19,7 @@ namespace Smith
 
 private theorem clearColumn_spec (ops : Accumulator α n m)
     (s : Result α n m) (pivotRow row : Fin n) (pivotCol : Fin m)
-    (hne : pivotRow ≠ row) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
+    (hne : pivotRow ≠ row)
     (hb : s.matrix[(row, pivotCol)] ≠ 0) :
     let p := s.matrix[(pivotRow, pivotCol)]
     let b := s.matrix[(row, pivotCol)]
@@ -68,7 +68,7 @@ private theorem clearColumn_spec (ops : Accumulator α n m)
 
 private theorem clearRow_spec (ops : Accumulator α n m)
     (s : Result α n m) (pivotRow : Fin n) (pivotCol col : Fin m)
-    (hne : pivotCol ≠ col) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
+    (hne : pivotCol ≠ col)
     (hb : s.matrix[(pivotRow, col)] ≠ 0) :
     let p := s.matrix[(pivotRow, pivotCol)]
     let b := s.matrix[(pivotRow, col)]
@@ -133,7 +133,7 @@ private theorem clearColumn_pivot_lt (ops : Accumulator α n m)
     (hmod : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] ≠ 0) :
     (clearColumn ops s pivotRow row pivotCol).matrix[(pivotRow, pivotCol)].natAbs <
       s.matrix[(pivotRow, pivotCol)].natAbs := by
-  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hp hb
+  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
   rw [if_neg hmod] at hs
   rw [hs.1]
@@ -146,12 +146,13 @@ private theorem clearRow_pivot_lt (ops : Accumulator α n m)
     (hmod : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] ≠ 0) :
     (clearRow ops s pivotRow pivotCol col).matrix[(pivotRow, pivotCol)].natAbs <
       s.matrix[(pivotRow, pivotCol)].natAbs := by
-  have hs := clearRow_spec ops s pivotRow pivotCol col hne hp hb
+  have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
   rw [if_neg hmod] at hs
   rw [hs.1]
   exact gcd_lt_natAbs hp hmod
 
+/-- Number of nonzero entries strictly below or right of the active pivot. -/
 @[expose]
 def crossCount (M : Matrix Int n m) (pivotRow : Fin n) (pivotCol : Fin m) : Nat :=
   (List.finRange n).foldl (fun count row => count +
@@ -208,7 +209,7 @@ private theorem crossCount_le (M : Matrix Int n m) (pivotRow : Fin n)
 
 private theorem crossCount_clearColumn (ops : Accumulator α n m)
     (s : Result α n m) (pivotRow row : Fin n) (pivotCol : Fin m)
-    (hr : pivotRow.val < row.val) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
+    (hr : pivotRow.val < row.val)
     (hb : s.matrix[(row, pivotCol)] ≠ 0)
     (hdiv : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] = 0) :
     crossCount (clearColumn ops s pivotRow row pivotCol).matrix pivotRow pivotCol + 1 =
@@ -217,7 +218,7 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
     intro heq
     have := congrArg Fin.val heq
     omega
-  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hp hb
+  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
   rw [if_pos hdiv] at hs
   have hb' : s.matrix[row][pivotCol] ≠ 0 := by
@@ -282,7 +283,7 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
 
 private theorem crossCount_clearRow (ops : Accumulator α n m)
     (s : Result α n m) (pivotRow : Fin n) (pivotCol col : Fin m)
-    (hc : pivotCol.val < col.val) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
+    (hc : pivotCol.val < col.val)
     (hb : s.matrix[(pivotRow, col)] ≠ 0)
     (hdiv : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] = 0) :
     crossCount (clearRow ops s pivotRow pivotCol col).matrix pivotRow pivotCol + 1 =
@@ -291,7 +292,7 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
     intro heq
     have := congrArg Fin.val heq
     omega
-  have hs := clearRow_spec ops s pivotRow pivotCol col hne hp hb
+  have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
   rw [if_pos hdiv] at hs
   let oldCol : Fin n → Nat := fun r =>
@@ -349,6 +350,8 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
   rw [hcol, hrow]
   omega
 
+/-- Lexicographic termination measure combining pivot magnitude and uncleared
+cross entries. -/
 @[expose]
 def reductionMeasure (M : Matrix Int n m) (pivotRow : Fin n)
     (pivotCol : Fin m) : Nat :=
@@ -387,10 +390,10 @@ private theorem measure_clearColumn_lt (ops : Accumulator α n m)
     have := congrArg Fin.val heq
     omega
   by_cases hdiv : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] = 0
-  · have hs := clearColumn_spec ops s pivotRow row pivotCol hne hp hb
+  · have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
     dsimp only at hs
     rw [if_pos hdiv] at hs
-    have hcount := crossCount_clearColumn ops s pivotRow row pivotCol hr hp hb hdiv
+    have hcount := crossCount_clearColumn ops s pivotRow row pivotCol hr hb hdiv
     unfold reductionMeasure
     rw [hs.1]
     omega
@@ -408,10 +411,10 @@ private theorem measure_clearRow_lt (ops : Accumulator α n m)
     have := congrArg Fin.val heq
     omega
   by_cases hdiv : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] = 0
-  · have hs := clearRow_spec ops s pivotRow pivotCol col hne hp hb
+  · have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
     dsimp only at hs
     rw [if_pos hdiv] at hs
-    have hcount := crossCount_clearRow ops s pivotRow pivotCol col hc hp hb hdiv
+    have hcount := crossCount_clearRow ops s pivotRow pivotCol col hc hb hdiv
     unfold reductionMeasure
     rw [hs.1]
     omega
@@ -478,9 +481,13 @@ private theorem measure_repair_lt (ops : Accumulator α n m)
 /-- The local postcondition delivered by one completed Smith pivot. -/
 structure Reduced (M : Matrix Int n m) (pivotRow : Fin n)
     (pivotCol : Fin m) : Prop where
+  /-- The pivot is normalized to be positive. -/
   pivot_pos : 0 < M[(pivotRow, pivotCol)]
+  /-- Entries below the pivot in its column vanish. -/
   column_zero : ∀ row : Fin n, pivotRow.val < row.val → M[(row, pivotCol)] = 0
+  /-- Entries right of the pivot in its row vanish. -/
   row_zero : ∀ col : Fin m, pivotCol.val < col.val → M[(pivotRow, col)] = 0
+  /-- The pivot divides every entry of the remaining block. -/
   divides : ∀ row : Fin n, ∀ col : Fin m, pivotRow.val < row.val →
     pivotCol.val < col.val → M[(pivotRow, pivotCol)] ∣ M[(row, col)]
 
@@ -489,7 +496,7 @@ private theorem clearColumn_pivot_ne (ops : Accumulator α n m)
     (hne : pivotRow ≠ row) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
     (hb : s.matrix[(row, pivotCol)] ≠ 0) :
     (clearColumn ops s pivotRow row pivotCol).matrix[(pivotRow, pivotCol)] ≠ 0 := by
-  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hp hb
+  have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
   by_cases hdiv : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] = 0
   · rw [if_pos hdiv] at hs
@@ -503,7 +510,7 @@ private theorem clearRow_pivot_ne (ops : Accumulator α n m)
     (hne : pivotCol ≠ col) (hp : s.matrix[(pivotRow, pivotCol)] ≠ 0)
     (hb : s.matrix[(pivotRow, col)] ≠ 0) :
     (clearRow ops s pivotRow pivotCol col).matrix[(pivotRow, pivotCol)] ≠ 0 := by
-  have hs := clearRow_spec ops s pivotRow pivotCol col hne hp hb
+  have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
   by_cases hdiv : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] = 0
   · rw [if_pos hdiv] at hs
@@ -739,21 +746,29 @@ private theorem reduce_diag (ops : Accumulator α n m) (s : Result α n m)
 
 /-- Invariant of the completed leading block in the outer Smith sweep. -/
 structure Prefix (s : Result α n m) : Prop where
+  /-- The completed prefix fits within the rows. -/
   length_le_n : s.diag.length ≤ n
+  /-- The completed prefix fits within the columns. -/
   length_le_m : s.diag.length ≤ m
+  /-- Completed diagonal entries agree with the working matrix. -/
   diagonal : ∀ (i : Nat) (hi : i < s.diag.length),
     s.matrix[((⟨i, Nat.lt_of_lt_of_le hi length_le_n⟩ : Fin n),
       (⟨i, Nat.lt_of_lt_of_le hi length_le_m⟩ : Fin m))] = s.diag[i]'hi
+  /-- Every completed row or column is zero away from the diagonal. -/
   offDiagonal : ∀ (row : Fin n) (col : Fin m),
     (row.val < s.diag.length ∨ col.val < s.diag.length) →
       row.val ≠ col.val → s.matrix[(row, col)] = 0
+  /-- Completed entries are positive. -/
   positive : ∀ (i : Nat) (hi : i < s.diag.length), 0 < s.diag[i]'hi
+  /-- Completed entries form a divisibility chain. -/
   chain : ∀ (i : Nat) (hi : i + 1 < s.diag.length),
     s.diag[i]'(by omega) ∣ s.diag[i + 1]'hi
+  /-- Every completed entry divides the unprocessed trailing block. -/
   dividesTail : ∀ (i : Nat) (hi : i < s.diag.length)
     (row : Fin n) (col : Fin m), s.diag.length ≤ row.val →
       s.diag.length ≤ col.val → s.diag[i]'hi ∣ s.matrix[(row, col)]
 
+/-- The empty completed prefix satisfies the sweep invariant. -/
 theorem Prefix.initial (A : Matrix Int n m) (acc : α) :
     Prefix ({ matrix := A, diag := [], accumulator := acc } : Result α n m) := by
   constructor
@@ -1380,6 +1395,8 @@ private theorem moved_pivot (ops : Accumulator α n m) (s : Result α n m)
       (pivotRow, pivotCol)] = s.matrix[(sourceRow, sourceCol)] := by
   rw [swapCols_pivot, swapRows_pivot]
 
+/-- Sufficient outer-loop fuel completes a valid prefix and diagonalizes the
+working matrix. -/
 theorem runFuel_complete (ops : Accumulator α n m) (fuel : Nat)
     {s : Result α n m} (h : Prefix s)
     (hbudget : Nat.min n m ≤ s.diag.length + fuel) :
@@ -1473,7 +1490,9 @@ theorem runFuel_diag_le (ops : Accumulator α n m) (fuel : Nat) (s : Result α n
 /-- Results agree on the working matrix and completed diagonal whenever their
 companion accumulators are ignored. -/
 structure Same (s : Result α n m) (t : Result β n m) : Prop where
+  /-- The erased working matrices agree. -/
   matrix : s.matrix = t.matrix
+  /-- The erased completed diagonals agree. -/
   diag : s.diag = t.diag
 
 private theorem swapRows_same (ops : Accumulator α n m) (ops' : Accumulator β n m)

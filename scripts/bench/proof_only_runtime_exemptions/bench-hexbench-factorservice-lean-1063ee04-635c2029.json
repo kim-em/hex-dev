@@ -1,0 +1,6 @@
+{
+ "path": "bench/HexBench/FactorService.lean",
+ "baseline_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
+ "current_blob": "635c202971d2276a498505da9842deac1c833c9f",
+ "reason": "Updates diagnostic-service projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; every measured operation and branch is unchanged."
+}

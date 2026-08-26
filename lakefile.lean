@@ -300,6 +300,10 @@ lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.PrimalityKernel]
 
+lean_lib HexIntFactorKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.IntFactorKernel]
+
 lean_lib HexMvGcdKernelProbe where
   srcDir := "bench"
   globs := #[`HexMvGcd.Kernel]
@@ -779,6 +783,14 @@ lean_lib HexSparsePolyTests where
 @[default_target]
 lean_lib HexTruncatedSeriesTests where
   globs := #[`HexTruncatedSeriesMathlib.LintTests]
+
+-- Monorepo-only lint regression for the integer Smith pair. It moves into the
+-- release-manifest-backed test target when the pair is published.
+@[default_target]
+lean_lib HexSmithTests where
+  globs := #[`HexSmith.QuickstartTests,
+    `HexSmithMathlib.LintTests,
+    `HexSmithMathlib.QuickstartTests]
 
 -- HexCharPoly is not yet a published split repository (its released.yml
 -- entries were withdrawn until the phase pipeline completes), so its

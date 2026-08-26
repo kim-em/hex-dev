@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexMatrix.Notation
 public import HexSmith.Cert
 public import HexSmith.Correct
 public import HexSmith.Diagonal

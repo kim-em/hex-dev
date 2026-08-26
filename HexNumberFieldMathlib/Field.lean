@@ -106,7 +106,8 @@ noncomputable def field : Field AlgebraicNumber := by
     rfl
   · intro q a
     change (smul q a).toComplex = q • a.toComplex
-    rw [smul, mul_toComplex, ofRat_toComplex, Rat.smul_def]
+    rw [Rat.smul_def]
+    exact smul_toComplex q a
   · exact natPow_toComplex
   · exact intPow_toComplex
   · intro n

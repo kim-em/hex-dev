@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/Irreducibility.lean",
+ "baseline_blob": "de4103699a6ad204c72ad32395c3496deb960a7a",
+ "current_blob": "ec58158b56e1bac08a219f7f054c74cce98501db",
+ "reason": "Phase 6 polish only: renames a deprecated `if_true` rewrite to `ite_true`, replaces the private `zmod64_one_ne_zero_of_prime` with the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, and documents the `bounds` instance field of `IrreducibilityCertificate`. `rabinTest`, `rabinDividesTest`, `berlekampRankTest`, the certificate checkers, and the certificate structure layout are unchanged."
+}
