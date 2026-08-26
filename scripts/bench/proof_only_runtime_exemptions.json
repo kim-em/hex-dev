@@ -1486,5 +1486,11 @@
   "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
   "current_blob": "7f9c2a05b5a8acd54eb08d0a968950d5add5f334",
   "reason": "Additionally registers the build-only HexBerlekampMathlibProofProbe and HexBerlekampMathlibProofProbeScientific proof-probe targets on top of main's current registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+ },
+ {
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "6d5151d24197c5ab0a4c6ca169ea0aa065d4a144",
+  "current_blob": "6492f52a4273c8dcac0ebdc11b9f977b969c492f",
+  "reason": "Adds the equality-indexed row-dimension transport `castRows` and entry-characterization theorems. The equality proof and cast erase at runtime, and neither `castRows` nor the new theorems occur in the factorization service call graph; all existing matrix executable definitions are byte-for-byte unchanged."
  }
 ]

@@ -410,7 +410,7 @@ libraries:
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -428,7 +428,7 @@ libraries:
         - name: tall-hermite
           description: tall matrices with many redundant row generators
         - name: unimodular-conjugate
-          description: random unimodular left factors times a known diagonal form
+          description: deterministic full unit-triangular factors times a known diagonal form
   HexSmith:
     deps: [HexHermite]
     mathlib: false
@@ -757,7 +757,7 @@ libraries:
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
