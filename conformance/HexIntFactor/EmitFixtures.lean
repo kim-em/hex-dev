@@ -102,7 +102,8 @@ def main : IO Unit := do
   for (tag, n) in factorCases do emitFactor tag n
   for p in primesBelowHundred do emitFactor ("below100/" ++ toString p) p
   for n in primePowersBelowHundred do emitFactor ("below100/" ++ toString n) n
-  for n in [1, 2, 4, 12, 72, 360] do emitDivisorFns (toString n) n
+  for n in [1, 2, 4, 12, 72, 360, 248832, 1296000] do
+    emitDivisorFns (toString n) n
   emitOrder "primitive/3mod7" 3 7
   emitOrder "nonprimitive/2mod7" 2 7
   emitOrder "primepower/2mod9" 2 9

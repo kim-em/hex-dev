@@ -157,9 +157,8 @@ private theorem geometricSum_spec {q : Nat} (hq : 1 < q) : ∀ e : Nat,
             _ = q ^ (e + 1) * q - 1 := by omega
             _ = q ^ ((e + 1) + 1) - 1 := by simp only [Nat.pow_succ]
 
-/-- On a prime base, the closed form equals the finite prime-power sum. -/
-theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
-    (hp : Prime entry.prime) :
+/-- The closed form equals the finite prime-power sum for every entry. -/
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
     sigmaEntry entry k =
       ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
         fun q => q ^ k).sum := by
@@ -168,16 +167,24 @@ theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
     rw [sigmaEntry, ite_eq_left rfl]
     simp only [Nat.pow_zero, sum_ones,
       DivisorEnumeration.length_powers]
-  · have hq : 1 < entry.prime ^ k := Nat.one_lt_pow hk hp.one_lt
-    rw [sigmaEntry, ite_eq_right hk,
-      ite_eq_right (by omega : entry.prime ^ k ≠ 0),
-      ite_eq_right (by omega : entry.prime ^ k ≠ 1), powers_sum]
+  · rw [sigmaEntry, ite_eq_right hk, powers_sum]
     simp only [Nat.one_pow, Nat.one_mul]
-    rw [← geometricSum_spec hq entry.exponent,
-      Nat.mul_comm (entry.prime ^ k - 1), Nat.mul_div_left _ (by omega)]
+    by_cases hq0 : entry.prime ^ k = 0
+    · rw [ite_eq_left hq0, hq0]
+      induction entry.exponent with
+      | zero => rfl
+      | succ e ih => simp [geometricSum, ih]
+    · rw [ite_eq_right hq0]
+      by_cases hq1 : entry.prime ^ k = 1
+      · rw [ite_eq_left hq1, hq1]
+        induction entry.exponent with
+        | zero => simp [geometricSum]
+        | succ e ih => simp [geometricSum, ih, Nat.add_comm]
+      · have hq : 1 < entry.prime ^ k := by omega
+        rw [ite_eq_right hq1, ← geometricSum_spec hq entry.exponent,
+          Nat.mul_comm (entry.prime ^ k - 1), Nat.mul_div_left _ (by omega)]
 
-private theorem sigmaEntries_eq (entries : List PrimePower) (k : Nat)
-    (hprime : ∀ entry ∈ entries, Prime entry.prime) :
+private theorem sigmaEntries_eq (entries : List PrimePower) (k : Nat) :
     (entries.map fun entry => sigmaEntry entry k).prod =
       (entries.map fun entry =>
         ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
@@ -186,8 +193,7 @@ private theorem sigmaEntries_eq (entries : List PrimePower) (k : Nat)
   | nil => simp
   | cons entry rest ih =>
       rw [List.map_cons, List.prod_cons, List.map_cons, List.prod_cons,
-        sigmaEntry_eq_powerSum entry k (hprime entry (by simp)),
-        ih (fun e he => hprime e (by simp [he]))]
+        sigmaEntry_eq_powerSum entry k, ih]
 
 /-- `sigma` is the sum of `k`th powers over all divisors. -/
 theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
@@ -197,8 +203,7 @@ theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
     rw [sigma, ite_eq_left rfl, numDivisors_eq_size]
     simp only [Nat.pow_zero, sum_ones, Array.length_toList]
   · rw [sigma, ite_eq_right hk,
-      sigmaEntries_eq F.raw.factors k
-        (checkFactorization_prime F.valid),
+      sigmaEntries_eq F.raw.factors k,
       ← DivisorEnumeration.sum_pow_values]
     have hperm := List.mergeSort_perm
       (DivisorEnumeration.values F.raw.factors) (fun a b => decide (a ≤ b))

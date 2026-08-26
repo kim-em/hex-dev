@@ -729,8 +729,7 @@ theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum
-theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
-    (hp : Hex.Nat.Prime entry.prime) :
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
     sigmaEntry entry k =
       ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
         (fun q => q ^ k)).sum
@@ -768,6 +767,10 @@ the geometric-series product must not evaluate its `0 / 0` form. For
 geometric sum `(q^(e + 1) - 1) / (q - 1)`, where `q = p^k`, and `sigma`
 multiplies those contributions. Checked primality supplies `1 < q`, so
 the division is exact; this route never enumerates the divisors.
+`sigmaEntry` is total on arbitrary `PrimePower` values: at `k = 0` and
+at base `1` it returns `e + 1`, at base `0` with positive `k` it returns
+`1`, and in every case `sigmaEntry_eq_powerSum` identifies it with the
+finite power sum over `powers p e 1`.
 
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
@@ -847,7 +850,7 @@ Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 ```
 
 Fixture kinds: `factor` (a number and its prime-exponent list),
-`divisorfn` (a number and `τ`, `σ₁`, `φ`, `rad`, `sqfpart`), `order` (a
+`divisorfn` (a number and `τ`, `σ₀`, `σ₁`, `σ₂`, `φ`, `rad`, `sqfpart`), `order` (a
 base, a modulus, and the order), and `cyclotomic` (`b`, `n`, sign, and
 the split).
 
@@ -935,10 +938,12 @@ Families:
   check's cost is visible next to the search's.
 - **Generalized divisor sums**, with one ladder growing a prime-power
   exponent through multi-million-bit output and one growing the number
-  of certified prime-power entries. These isolate the geometric-sum and
-  factor-product costs and rule out divisor enumeration. The native
-  wall-clock models include big-integer cost: `n log² n` for the exponent
-  ladder's exact division and `n log n` for the growing factor product.
+  of certified prime-power entries. Per-rung preparation constructs or
+  selects the checked factorization outside the timed loop, so these isolate
+  the geometric-sum and factor-product costs and rule out divisor enumeration.
+  The native wall-clock models include big-integer cost: `n log n` for the
+  exponentiation-dominated exponent ladder and `n²` for the sequential product
+  of bounded-size table-prime entry sums into a linearly growing accumulator.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,

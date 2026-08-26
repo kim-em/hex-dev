@@ -649,6 +649,8 @@ libraries:
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: generalized-divisor-sums
+          description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:

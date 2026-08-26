@@ -98,6 +98,10 @@
 {"kind":"result","lib":"HexIntFactor","case":"divisorfn/72","op":"divisorfn","value":{"tau":12,"sigma0":12,"sigma1":195,"sigma2":7735,"phi":24,"rad":6,"sqfpart":2}}
 {"kind":"divisorfn","lib":"HexIntFactor","case":"divisorfn/360","n":360}
 {"kind":"result","lib":"HexIntFactor","case":"divisorfn/360","op":"divisorfn","value":{"tau":24,"sigma0":24,"sigma1":1170,"sigma2":201110,"phi":96,"rad":30,"sqfpart":10}}
+{"kind":"divisorfn","lib":"HexIntFactor","case":"divisorfn/248832","n":248832}
+{"kind":"result","lib":"HexIntFactor","case":"divisorfn/248832","op":"divisorfn","value":{"tau":66,"sigma0":66,"sigma1":745108,"sigma2":92875849430,"phi":82944,"rad":6,"sqfpart":3}}
+{"kind":"divisorfn","lib":"HexIntFactor","case":"divisorfn/1296000","n":1296000}
+{"kind":"result","lib":"HexIntFactor","case":"divisorfn/1296000","op":"divisorfn","value":{"tau":160,"sigma0":160,"sigma1":4813380,"sigma2":2624308792820,"phi":345600,"rad":30,"sqfpart":10}}
 {"kind":"order","lib":"HexIntFactor","case":"order/primitive/3mod7","base":3,"modulus":7}
 {"kind":"result","lib":"HexIntFactor","case":"order/primitive/3mod7","op":"order","value":6}
 {"kind":"order","lib":"HexIntFactor","case":"order/nonprimitive/2mod7","base":2,"modulus":7}

@@ -69,7 +69,7 @@ example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 #guard sigma checked10800 1 == 38440
 #guard sigma checkedPow64 1 == 2 ^ 65 - 1
 -- The trillion-divisor input demonstrates that `sigma` never enumerates them;
--- the independent modular value also rejects a constant nonzero result.
+-- the fixed modular regression value also rejects a constant nonzero result.
 #guard sigma checkedHugeTau 1 % 1000000007 == 898750509
 example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
 example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
