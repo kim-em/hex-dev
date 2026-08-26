@@ -480,7 +480,8 @@ setup_benchmark runCert n => n ^ 2 with prep := certInput where {
 }
 
 /- The diagonal fast path performs `n` adjacent passes, each containing
-`O(n)` gcd/lcm pair steps, and never allocates dense transforms. -/
+`O(n)` gcd/lcm pair steps, and never allocates dense transforms. Materialising
+and hashing the resulting dense diagonal matrix is a second `O(n²)` term. -/
 setup_benchmark runDiagonal n => n ^ 2 where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
   maxSecondsPerCall := 10.0, targetInnerNanos := 100000000,

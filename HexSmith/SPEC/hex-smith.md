@@ -238,7 +238,11 @@ gives `[[a, b], [0, b]]`, right-multiplying by `V` (which has
 determinant `(s·a + t·b)/g = 1`) gives `[[g, 0], [b·t, l]]`, and the
 second row operation clears the `b·t` entry, which is divisible by `g`
 because `g` divides `b`. Run a fixed bubble network of `r` full adjacent
-passes. On each prime valuation, `(gcd, lcm)` is `(min, max)`, so the same
+passes. An equal positive adjacent pair is already its own gcd/lcm pair and is
+a true no-op; the transform-producing API therefore keeps identity transforms
+on an already normalised equal pair. This shortcut relies on the positivity
+established by the preceding normalisation pass. On each prime valuation,
+`(gcd, lcm)` is `(min, max)`, so the same
 network sorts every valuation and yields the divisibility chain after at
 most `r · (r - 1)` pair steps. This fixed schedule makes both termination
 and the `O(r²)` bound immediate. This is FLINT's
@@ -310,11 +314,12 @@ results. `invariantFactors` drops nothing, so its leading entries may be `1`;
 The form-only definitions must not be projections of `snfData`: eager
 evaluation would allocate the discarded transforms. Implement the general
 pivot loop once, parameterised by a companion accumulator that is `Unit` for
-`snf` and `(U, W, V, X)` for `snfData`; likewise parameterise the fixed
-diagonal network by `Unit` versus the four transforms. Inline the accumulator
-operations so the `Unit` instances allocate no matrices. Agreement then comes
-from accumulator-parametric step lemmas rather than duplicated correctness
-inductions.
+`snf` and `(U, W, V, X)` for `snfData`; inline those operations so the `Unit`
+instance allocates no matrices. The fixed diagonal form-only path instead runs
+the proved-equivalent pair network directly on its uniquely owned backing
+array, while `snfDiagonalData` uses the accumulator-parametric network to
+produce four transforms. Array/vector equivalence and the shared pair-step
+model establish agreement without recomputing the form through the data API.
 
 There is deliberately no second integer solver or quotient-order function in
 this library. `latticeCoeffs` and `latticeIndex` in `hex-hermite` already own
@@ -669,11 +674,23 @@ each registration:
 presentation family; `isSNFShape` and `snfCert` use certificates prepared
 outside the timed region; and both diagonal APIs use the same repair-heavy
 diagonal ladder. Fixed FLINT/PARI rungs cover all three square common-domain
-families. There is `no-comparable-surface-in-named-comparator` for transforms,
-their inverses, `smithBasis`, `abelianStructure`, `isSNFShape`, and `snfCert`;
-these are checked independently in Lean rather than timed against a ceremonial
-external substitute. FLINT and PARI comparison is canonical invariant data
-only.
+families and therefore the canonical-invariant output of the `runDense`,
+`runChain`, `runPresentation`, and `runInvariantFactors` surfaces. The tall,
+wide, rank-deficient, chain-deficient, and wide-presentation registrations are
+controlled geometry variants of that same `snf` operation rather than new
+public operations; FLINT accepts the rectangular variants, while PARI
+`matsnf` does not, so the two-comparator ratio ladder stays on the honest
+square common domain and the geometry variants retain scientific scaling and
+oracle coverage. `runDiagonal` and `runDiagonalGeneral` answer an internal
+routing question on identical input; FLINT/PARI expose only general Smith form,
+not a separately callable diagonal fast path, so the route-to-route comparison
+is `no-comparable-surface-in-named-comparator`. The same declaration applies
+to `runRank` because neither tool exposes the projection as a callable unit,
+and to `runDiagonalData`, `snfData`, their transforms and inverses,
+`smithBasis`, `abelianStructure`, `isSNFShape`, and `snfCert` because neither
+named tool emits or checks those executable data. These surfaces are checked
+independently in Lean rather than timed against a ceremonial external
+substitute. FLINT and PARI comparison is canonical invariant data only.
 
 **Comparators.** FLINT `fmpz_mat_snf` through python-flint,
 `informational`. FLINT's default dispatch includes algorithms not

@@ -92,6 +92,16 @@ declared complexity:
 | `runDiagonalGeneral` | 8, 12, 16, 24, 32, 48, 64 | consistent; `beta=-0.055` |
 | `runDiagonalData` | 16, 24, 32, 48, 64, 96, 128 | consistent; `cMin=16.223`, `cMax=19.017` |
 
+The ladder column lists every measured rung. The harness computes each printed
+verdict after the registration's declared leading warmup fraction: 0.2 for the
+ordinary dense/chain/projection/diagonal routes, 0.3 for the presentation
+routes, and 0.5 for `runCert` and `runDiagonalData`. Thus, for example,
+`runCert`'s displayed band is the verdict window `n=48,64,96`, not a claim that
+the omitted warmup rungs have the same normalised constant. The upward
+pre-window drift is expected while the packed certificate operands acquire
+their linear bit width; all raw rung constants and inclusion flags are in the
+committed export.
+
 The internal paired medians in that same export answer the two route-cost
 questions. `snfData / snf` rises from 1.494x at `n=4` through 1.721x,
 1.792x, and 2.164x to 2.176x at `n=12`. On common diagonal rungs
@@ -127,10 +137,17 @@ consistent with its declared dense cubic model, so a sparse Smith algorithm
 is not a release requirement; it remains future work if downstream sizes make
 the measured dense path inadequate.
 
+The repair-heavy diagonal ladder deliberately holds operand width at `O(1)`
+with entries from `{2, -1, 0}`. Its quadratic verdict therefore isolates the
+fixed pair count, array routing, dense result materialisation, and hashing; it
+does not claim a bit-complexity bound for growing diagonal entries. The SPEC's
+separate operand-size statement remains "bounded by the product of the input
+diagonal".
+
 ## Comparator ratios
 
 The registry's exact comparator names are `FLINT fmpz_mat_snf via python-flint`
-and `PARI matsnf via cypari2`. FLINT uses python-flint 0.9.0 / FLINT 0.9.0;
+and `PARI matsnf via cypari2`. FLINT uses python-flint 0.9.0 / FLINT 3.6.0;
 PARI uses cypari2 2.2.4 / PARI 2.17.3. Both are informational comparators with
 different tuned dispatch policies. The fixed run used five measured repeats
 per target and the persistent JSON-line drivers:
@@ -222,8 +239,8 @@ implementations and is informational.
 ## Profile
 
 One representative case was sampled for every `libraries.yml` input family.
-The presentation-wide case is the downstream-realistic hot path and belongs
-to the family with the worst top-rung comparator gap. All profiles used source
+The presentation-wide case is the downstream-realistic hot path; the dense
+family separately has the worst top-rung comparator gap. All profiles used source
 commit `2746306efc1239b7a2cab87e688ddee311257003`, the same host and LeanBench
 environment as the scientific run, samply 0.13.1 at 999 Hz, and this command
 shape:
@@ -237,6 +254,12 @@ Raw filtered profiles are developer-local under `/tmp` and are not committed,
 as required by `SPEC/profiling.md`. Percentages below are derived by
 `scripts/profile/summarize_profile.py --thread hexsmith_bench`; the four
 required leaf categories classify at least 99.59% of every profile.
+
+The prepared `runShape`/`runCert` certificate uses identity transforms and a
+constant diagonal so that every checker conjunct executes without timing an
+`snfData` preparation. These measurements are a controlled checker floor;
+transform-heavy end-to-end cost is represented separately by `runData` and
+`runSmithBasis`.
 
 ### Random dense Smith
 

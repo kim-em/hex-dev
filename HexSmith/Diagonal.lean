@@ -834,7 +834,7 @@ def pairArray (values : Array Int) (hsize : values.size = r)
     let first := values.set i.val g' hi
     first.set j.val (HexArith.Int.exactDiv (a * b) g') (by simpa [first] using hj)
 
-@[simp] theorem pairArray_size (values : Array Int) (hsize : values.size = r)
+theorem pairArray_size (values : Array Int) (hsize : values.size = r)
     (i j : Fin r) : (pairArray values hsize i j).size = r := by
   simp only [pairArray]
   by_cases ha : values[i.val]'(by omega) = 0
@@ -876,7 +876,7 @@ def passArrayFuel : (fuel index : Nat) → (values : Array Int) →
         passArrayFuel fuel (index + 1) next (pairArray_size values hsize _ _)
       else values
 
-@[simp] theorem passArrayFuel_size (fuel index : Nat) (values : Array Int)
+theorem passArrayFuel_size (fuel index : Nat) (values : Array Int)
     (hsize : values.size = r) :
     (passArrayFuel fuel index values hsize).size = r := by
   induction fuel generalizing index values with
@@ -896,7 +896,7 @@ def networkArrayFuel : (fuel : Nat) → (values : Array Int) →
       let next := passArrayFuel (r - 1) 0 values hsize
       networkArrayFuel fuel next (passArrayFuel_size (r - 1) 0 values hsize)
 
-@[simp] theorem networkArrayFuel_size (fuel : Nat) (values : Array Int)
+theorem networkArrayFuel_size (fuel : Nat) (values : Array Int)
     (hsize : values.size = r) :
     (networkArrayFuel fuel values hsize).size = r := by
   induction fuel generalizing values with
