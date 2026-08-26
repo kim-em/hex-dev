@@ -16,6 +16,7 @@ public import HexPolyFast.Tree
 public import HexPolyFast.Multipoint
 public import HexPolyFast.Interpolation
 public import HexPolyFast.HalfGcd
+public import HexPolyFast.Pade
 
 public section
 

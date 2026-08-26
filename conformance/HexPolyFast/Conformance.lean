@@ -18,6 +18,7 @@ public meta import HexPolyFast.Tree
 public meta import HexPolyFast.Multipoint
 public meta import HexPolyFast.Interpolation
 public meta import HexPolyFast.HalfGcd
+public meta import HexPolyFast.Pade
 
 public section
 
@@ -173,5 +174,28 @@ private def ratPlan : MulPlan Rat := karatsubaPlan 2
 #guard gcdWith ratPlan ratA 0 = gcd ratA 0
 #guard gcdWith ratPlan 0 ratA = gcd 0 ratA
 #guard gcdWith ratPlan ratB ratA = gcd ratB ratA
+
+private def padeUnit : TSeries Rat 3 :=
+  TSeries.ofFn fun _ => 1
+
+private def padeNonunit : TSeries Rat 3 :=
+  TSeries.ofFn fun i => if i = 2 then 1 else 0
+
+private def padeEmpty : TSeries Rat 0 :=
+  TSeries.ofFn fun _ => 0
+
+#guard let approx := padeHomogeneous ratPlan padeUnit 1 1
+  approx.p = C 1 ∧ approx.q = ofList [1, -1]
+#guard match pade? ratPlan padeUnit 1 1 with
+  | none => false
+  | some approx => approx.p = C 1 ∧ approx.q = ofList [1, -1]
+#guard (padeHomogeneous ratPlan padeNonunit 1 1).q.coeff 0 = 0
+#guard (pade? ratPlan padeNonunit 1 1).isNone
+#guard match pade? ratPlan padeUnit 0 0 with
+  | none => false
+  | some approx => approx.p = C 1 ∧ approx.q = C 1
+#guard match pade? ratPlan padeEmpty 2 2 with
+  | none => false
+  | some approx => approx.p = 0 ∧ approx.q = C 1
 
 end HexPolyFast.Conformance

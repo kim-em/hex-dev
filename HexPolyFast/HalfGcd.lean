@@ -40,6 +40,11 @@ structure GcdStep (F : Type u) [Zero F] [DecidableEq F] where
 
 namespace GcdStep
 
+/-- Determinant of a polynomial transformation. -/
+@[expose]
+def det (m : GcdStep F) : DensePoly F :=
+  m.a00 * m.a11 - m.a01 * m.a10
+
 /-- Identity transformation. -/
 def one : GcdStep F :=
   { a00 := 1, a01 := 0, a10 := 0, a11 := 1 }
@@ -54,6 +59,22 @@ def compose (m n : GcdStep F) : GcdStep F :=
     a01 := m.a00 * n.a01 + m.a01 * n.a11
     a10 := m.a10 * n.a00 + m.a11 * n.a10
     a11 := m.a10 * n.a01 + m.a11 * n.a11 }
+
+/-- The identity transformation has determinant one. -/
+@[simp] theorem det_one : det (one : GcdStep F) = 1 := by
+  simp only [det, one, mul_one_right_poly, zero_mul, sub_zero_ring]
+
+/-- A Euclidean row update has determinant negative one. -/
+@[simp] theorem det_euclid (q : DensePoly F) : det (euclid q) = -1 := by
+  simp only [det, euclid, zero_mul, mul_one_right_poly, zero_sub_ring]
+
+/-- Determinants multiply under transformation composition. -/
+theorem det_compose (m n : GcdStep F) :
+    det (compose m n) = det m * det n := by
+  cases m
+  cases n
+  simp only [det, compose]
+  grind
 
 /-- Plan-driven matrix composition.  Half-gcd builds transformations at half
 the active degree and composes them before touching the full operands. -/
@@ -83,8 +104,17 @@ def composeLowWith (plan : MulPlan F) (len : Nat)
     a11 := mulLow plan len m.a10 n.a01 + mulLow plan len m.a11 n.a11 }
 
 /-- Apply a transformation to a polynomial pair. -/
+@[expose]
 def apply (m : GcdStep F) (a b : DensePoly F) : DensePoly F × DensePoly F :=
   (m.a00 * a + m.a01 * b, m.a10 * a + m.a11 * b)
+
+/-- First row of a polynomial transformation application. -/
+@[simp] theorem apply_fst (m : GcdStep F) (a b : DensePoly F) :
+    (m.apply a b).1 = m.a00 * a + m.a01 * b := rfl
+
+/-- Second row of a polynomial transformation application. -/
+@[simp] theorem apply_snd (m : GcdStep F) (a b : DensePoly F) :
+    (m.apply a b).2 = m.a10 * a + m.a11 * b := rfl
 
 /-- Apply a transformation using the selected multiplication plan. -/
 def applyWith (plan : MulPlan F) (m : GcdStep F)
@@ -304,6 +334,34 @@ theorem quotientStep_append (plan : MulPlan F)
   intro a b
   rw [apply_quotientStep, runQuotients_append, GcdStep.apply_compose,
     apply_quotientStep, apply_quotientStep]
+
+private theorem det_quotientFold (plan : MulPlan F) (qs : List (DensePoly F))
+    (matrix : GcdStep F)
+    (hdet : matrix.det = 1 ∨ matrix.det = -1) :
+    (qs.foldl (fun m q => GcdStep.composeWith plan (GcdStep.euclid q) m)
+      matrix).det = 1 ∨
+    (qs.foldl (fun m q => GcdStep.composeWith plan (GcdStep.euclid q) m)
+      matrix).det = -1 := by
+  induction qs generalizing matrix with
+  | nil => exact hdet
+  | cons q qs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      rw [GcdStep.composeWith_eq, GcdStep.det_compose, GcdStep.det_euclid]
+      rcases hdet with hdet | hdet
+      · right
+        rw [hdet]
+        grind
+      · left
+        rw [hdet]
+        grind
+
+/-- A quotient transformation is unimodular. -/
+theorem det_quotientStep (plan : MulPlan F) (qs : List (DensePoly F)) :
+    (quotientStep plan qs).det = 1 ∨
+      (quotientStep plan qs).det = -1 := by
+  unfold quotientStep
+  exact det_quotientFold plan qs GcdStep.one (Or.inl GcdStep.det_one)
 
 /-- A singleton quotient list is its elementary Euclidean matrix. -/
 theorem quotientStep_singleton (plan : MulPlan F) (q : DensePoly F) :
@@ -1485,6 +1543,20 @@ theorem reduceToMatrixResult_spec (plan : MulPlan F) (bound : Nat)
   rw [← hmatrix] at hdenominator
   dsimp only
   exact ⟨happly, hstops.1, hstops.2, hdenominator⟩
+
+/-- Every boundary transformation is unimodular. -/
+theorem reduceToMatrixResult_det (plan : MulPlan F) (bound fuel : Nat)
+    (a b : DensePoly F) (hbound : 0 < bound) (hinput : b.size < a.size) :
+    let result := reduceToMatrixResult plan bound fuel a b
+    result.matrix.det = 1 ∨ result.matrix.det = -1 := by
+  let result := reduceToMatrixResult plan bound fuel a b
+  have hproper := reduceToMatrixResult_proper plan bound fuel a b
+    hbound hinput
+  change MatrixProper plan result.matrix a b result.first result.second at hproper
+  rcases hproper with ⟨qs, hquotients, hmatrix, happly⟩
+  dsimp only
+  rw [hmatrix]
+  exact det_quotientStep plan qs
 
 private theorem gcdMatrixResult_exact (plan : MulPlan F) (fuel : Nat)
     (a b : DensePoly F) (hfuel : b.size < fuel) :
