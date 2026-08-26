@@ -252,7 +252,9 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
 /-- Runtime factorization payload before re-indexing coefficients by a public
 `NumberTower`. -/
 structure RawFactorization where
+  /-- The leading scalar's raw coordinates. -/
   scalar : Array Rat
+  /-- Raw monic factors, canonically sorted, each with its multiplicity. -/
   factors : Array (Array (Array Rat) × Nat)
 
 /-- Lexicographic order on rational lists. -/

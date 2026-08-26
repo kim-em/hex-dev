@@ -45,6 +45,10 @@ theorem ext {a b : QAdjoin p x} (h : a.coeffs = b.coeffs) : a = b := by
           subst bc
           rfl
 
+/-- Equality is exactly equality of canonical coordinate polynomials; the
+generated iff form of {name}`Hex.QAdjoin.ext`. -/
+add_decl_doc Hex.QAdjoin.ext_iff
+
 /-- Equality is exactly equality of canonical coordinate polynomials. -/
 theorem eq_iff_coeffs {a b : QAdjoin p x} : a = b ↔ a.coeffs = b.coeffs :=
   ⟨fun h => congrArg QAdjoin.coeffs h, ext⟩
