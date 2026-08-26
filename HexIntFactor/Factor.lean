@@ -47,8 +47,6 @@ structure FactorFailure where
   snapshot : Option PartialSnapshot := none
   /-- Raw aggregate rejected by a checker, when rejection caused the stop. -/
   culprit : Option PartialFactorization := none
-  /-- Whether `attempts` is an exact count for the stopped route. -/
-  metered : Bool := true
 deriving Repr
 
 /-- Default search budget, scaled by input bit length. -/

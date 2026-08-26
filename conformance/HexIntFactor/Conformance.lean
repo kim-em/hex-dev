@@ -422,7 +422,7 @@ private def retainedCertInput : Nat := starvedInput * 1000037
 
 #guard (match factor? retainedCertInput (Rand.ofSeed 3) (fuel := 3) with
   | .error failure =>
-      failure.stop == .incomplete && failure.metered &&
+      failure.stop == .incomplete &&
         failure.attempts == 6 &&
         failure.rand == ((Rand.ofSeed 3).words 8).2 &&
         match failure.snapshot with
@@ -452,6 +452,7 @@ private def retainedCertInput : Nat := starvedInput * 1000037
   | some parts => parts.map (·.value) == [5, 13]
   | none => false)
 
+-- The repeated factor `3` in the minus split is merged before checker replay.
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
   | .ok (F, _, route) =>
       route == .cyclotomic &&
@@ -464,12 +465,11 @@ private def retainedCertInput : Nat := starvedInput * 1000037
         F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(5, 1), (13, 1)]
   | .error _ => false)
 
--- The repeated factor `3` in the minus split is merged before checker replay.
 -- A stopped continuation includes successful earlier-part work and remains
--- exactly metered, even when every charged search subtotal happens to be zero.
+-- exactly accounted, even when every charged search subtotal happens to be zero.
 #guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 0 && failure.metered
+      failure.stop == .incomplete && failure.attempts == 0
   | .ok _ => false)
 
 -- Here `Φ_19(2)` succeeds after eight charged attempts, `Φ_57(2)` stops
@@ -478,7 +478,7 @@ private def retainedCertInput : Nat := starvedInput * 1000037
 -- omits.
 #guard (match factorPowerWithRoute? 2 57 .minus (Rand.ofSeed 1) (fuel := 3) with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 25 && failure.metered
+      failure.stop == .incomplete && failure.attempts == 25
   | .ok _ => false)
 
 -- Degenerate split input uses the ordinary dispatcher, and the route tag makes
@@ -498,7 +498,7 @@ private def rejectedPart : FactorFailure :=
 
 #guard (match Hex.Nat.Internal.retryPower? 63 rejectedPart 0 with
   | .error failure =>
-      failure.stop == .rejected && failure.attempts == 4 && failure.metered &&
+      failure.stop == .rejected && failure.attempts == 4 &&
         failure.rand == Rand.ofSeed 11 &&
           match failure.culprit with
           | some rejected => rejected.subject == 7
@@ -508,7 +508,7 @@ private def rejectedPart : FactorFailure :=
 example : Hex.Nat.Internal.retryPower? 63 rejectedPart 0 = .error rejectedPart :=
   Hex.Nat.Internal.retryPower?_rejected (by decide)
 
-#check factorPowerWithRoute?_spec
+#check factorPowerWithRoute?_cyclotomic
 #check factorPower?_error_iff
 #check factorPower?_ok_iff
 #check factorPowerWithRoute?_generic
@@ -518,7 +518,7 @@ example : Hex.Nat.Internal.retryPower? 63 rejectedPart 0 = .error rejectedPart :
 #guard (match Hex.Nat.Internal.retryPower? starvedInput
     { stop := .incomplete, attempts := 4, rand := Rand.ofSeed 11 } 1 with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 5 && failure.metered
+      failure.stop == .incomplete && failure.attempts == 5
   | .ok _ => false)
 
 #guard (match factor? 4826808 (Rand.ofSeed 7) with

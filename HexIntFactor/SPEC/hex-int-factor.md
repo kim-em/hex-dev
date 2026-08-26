@@ -266,7 +266,6 @@ structure FactorFailure where
   rand     : Rand
   snapshot : Option PartialSnapshot := none
   culprit  : Option PartialFactorization := none
-  metered   : Bool := true
 
 def defaultFuel (n : Nat) : Nat
 
@@ -515,7 +514,7 @@ rejection propagated from a cyclotomic part remains scoped to that subproblem;
 a rejected merged cyclotomic aggregate records the target candidate and random
 state. The internal counted-success shape retains the successful subsearch
 attempts that the compatible public `factor?` pair omits, so cyclotomic
-continuations and aggregate rejection report exact totals with `metered = true`.
+continuations and aggregate rejection report exact totals.
 
 A partial answer is more useful than no answer, so the search also
 exposes
@@ -593,7 +592,7 @@ the exact attempt count on success without changing the public pair-returning
 `factor?` API. Every successfully factored part is added to a later failure or
 generic-continuation total, and the advanced generator state is threaded in
 the same order. Thus generic and cyclotomic dispatcher failures, including
-their checker-rejection boundaries, remain exactly metered.
+their checker-rejection boundaries, retain exact attempt totals.
 
 `factor?` uses the same partial-candidate acceptance boundary: it propagates
 `FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete
@@ -718,12 +717,14 @@ reject a correct answer. The generic dispatcher and power-form wrapper share
 the same canonical insertion/merge helper.
 
 `factorPowerWithRoute?` attempts the checked split before the generic route;
-`factorPower?` only hides that diagnostic tag. Their characterising lemmas
-state that every success is checked for `powerTarget`, projection preserves
-successes and errors exactly, and a rejected/absent split uses the documented
+`factorPower?` only hides that diagnostic tag. Its indexed result type carries
+the checked `powerTarget` guarantee. The characterising lemmas state that a
+cyclotomic-tagged success has a checked split, projection preserves successes
+and errors exactly, and a rejected/absent split uses the documented
 scoped-rejection or generic-fallback behaviour. The default fuel is computed
-from the selected sign's target, so the minus path never constructs
-`b^n + 1` merely to choose its budget.
+from the selected sign's target, so the minus path neither constructs
+`b^n + 1` nor uses its budget; at a power-of-two boundary this gives the minus
+target four fewer fuel units than the former plus-based default.
 
 Two things this does not do, and they bound the claim.
 

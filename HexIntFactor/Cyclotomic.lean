@@ -43,7 +43,7 @@ private def divisorIndices (n : Nat) : List Nat :=
 private def properValueProduct (i : Nat) (prior : List Nat)
     (values : Array Nat) : Nat :=
   prior.foldl (fun acc d =>
-    if i % d = 0 then acc * values.getD d 1 else acc) 1
+    if i % d = 0 then acc * values.getD d 0 else acc) 1
 
 /-- Fill the required divisor-closed indices once, in ascending order. The
 array gives constant-time access to every previously computed proper divisor;
@@ -55,7 +55,8 @@ private def buildValues (b : Nat) : List Nat → List Nat → Array Nat → Arra
       let value := (b ^ i - 1) / denominator
       buildValues b rest (i :: prior) (values.set! i value)
 
-private def valueTable (b limit : Nat) (indices : List Nat) : Array Nat :=
+private def valueTable (b : Nat) (indices : List Nat) : Array Nat :=
+  let limit := indices.foldl max 0
   buildValues b indices [] (Array.replicate (limit + 1) 0)
 
 /-- Recursive Nat candidate for `Φ_d(b)`. -/
@@ -63,7 +64,7 @@ def cyclotomicValue (b d : Nat) : Nat :=
   if d = 0 then 0
   else
     let indices := divisorIndices d
-    (valueTable b d indices).getD d 0
+    (valueTable b indices).getD d 0
 
 private def splitIndices (n : Nat) (sign : Sign) (all : List Nat) : List Nat :=
   match sign with
@@ -79,7 +80,7 @@ def cyclotomicSplit? (b n : Nat) (sign : Sign) :
   else
     let limit : Nat := match sign with | .minus => n | .plus => 2 * n
     let all : List Nat := divisorIndices limit
-    let values : Array Nat := valueTable b limit all
+    let values : Array Nat := valueTable b all
     let parts : List CyclotomicPart := (splitIndices n sign all).map fun d =>
       ⟨d, values.getD d 0⟩
     let target := powerTarget b n sign
@@ -139,8 +140,7 @@ def retryPower? (target : Nat) (failure : FactorFailure) (fuel : Nat) :
       | .ok (F, r') => .ok (F, r', .generic)
       | .error fallback =>
           .error { fallback with
-            attempts := failure.attempts + fallback.attempts
-            metered := failure.metered && fallback.metered }
+            attempts := failure.attempts + fallback.attempts }
 
 /-- A scoped checker rejection is propagated unchanged and never retried as
 generic exhaustion. -/
@@ -156,8 +156,7 @@ theorem retryPower?_fallback {target : Nat} {failure fallback : FactorFailure}
     (hfactor : factor? target failure.rand fuel = .error fallback) :
     retryPower? target failure fuel = .error
       { fallback with
-        attempts := failure.attempts + fallback.attempts
-        metered := failure.metered && fallback.metered } := by
+        attempts := failure.attempts + fallback.attempts } := by
   cases h : failure.stop <;> simp_all [retryPower?]
 
 end Internal
@@ -224,15 +223,47 @@ def factorPower? (b n : Nat) (sign : Sign) (r : Rand)
   | .ok (F, r', _) => .ok (F, r')
   | .error failure => .error failure
 
-/-- Every power-route success is a checked factorization of the requested
-signed power target. -/
-theorem factorPowerWithRoute?_spec {b n : Nat} {sign : Sign} {r r' : Rand}
+/-- A result tagged as cyclotomic came from an available checked split, rather
+than from generic fallback. -/
+theorem factorPowerWithRoute?_cyclotomic {b n : Nat} {sign : Sign} {r r' : Rand}
     {fuel : Nat} {F : CheckedFactorization (powerTarget b n sign)}
-    {route : PowerRoute}
-    (_h : factorPowerWithRoute? b n sign r fuel = .ok (F, r', route)) :
-    F.raw.subject = powerTarget b n sign ∧
-      checkFactorization F.raw = true :=
-  ⟨F.subject_eq, F.valid⟩
+    (h : factorPowerWithRoute? b n sign r fuel = .ok (F, r', .cyclotomic)) :
+    ∃ parts, cyclotomicSplit? b n sign = some parts := by
+  cases sign with
+  | minus =>
+      change factorPowerTarget? (b ^ n - 1) (cyclotomicSplit? b n .minus)
+          r fuel = _ at h
+      cases hparts : cyclotomicSplit? b n .minus with
+      | none =>
+          simp only [hparts, factorPowerTarget?] at h
+          cases hfactor : factor? (b ^ n - 1) r fuel with
+          | error failure =>
+              rw [hfactor] at h
+              simp only [Except.map] at h
+              cases h
+          | ok result =>
+              rcases result with ⟨G, s⟩
+              rw [hfactor] at h
+              simp only [Except.map] at h
+              cases h
+      | some parts => exact ⟨parts, rfl⟩
+  | plus =>
+      change factorPowerTarget? (b ^ n + 1) (cyclotomicSplit? b n .plus)
+          r fuel = _ at h
+      cases hparts : cyclotomicSplit? b n .plus with
+      | none =>
+          simp only [hparts, factorPowerTarget?] at h
+          cases hfactor : factor? (b ^ n + 1) r fuel with
+          | error failure =>
+              rw [hfactor] at h
+              simp only [Except.map] at h
+              cases h
+          | ok result =>
+              rcases result with ⟨G, s⟩
+              rw [hfactor] at h
+              simp only [Except.map] at h
+              cases h
+      | some parts => exact ⟨parts, rfl⟩
 
 /-- The convenience projection preserves every failure unchanged, including
 scoped checker rejection and accumulated retry diagnostics. -/
