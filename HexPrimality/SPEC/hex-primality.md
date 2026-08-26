@@ -593,7 +593,10 @@ without inverting the proof dependency, in three ways:
    Pollard `p − 1` stage 1 joins it beside rho when hex-int-factor
    lands, under the same dynamically validated proper-factor contract
    and resumable-failure shape: both libraries want it, and it widens
-   `partialFactor`'s reach cheaply. ECM stays downstream; curve
+   `partialFactor`'s reach cheaply. Its public smoothness request is capped by
+   `smoothBound B = min B (primeTableBound - 1)`, so the committed table
+   contains every required prime and `pMinusOneStage1_bound` identifies every
+   larger request with that capped call. ECM stays downstream; curve
    arithmetic is a real dependency, not a shared primitive.
 3. **An optional search hook**, deferred until hex-int-factor exists to
    consume it. A `primeCert?With

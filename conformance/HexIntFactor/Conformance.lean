@@ -221,6 +221,18 @@ private def iteratedPower : Nat := 10009 ^ 8
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
+#guard smoothBoundCap == primeTableBound - 1
+#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+
+example (n base bound : Nat) :
+    pMinusOneStage1 n base bound =
+      pMinusOneStage1 n base (smoothBound bound) :=
+  pMinusOneStage1_bound n base bound
+
+example (n sigma bound : Nat) :
+    ecmStage1 n sigma bound = ecmStage1 n sigma (smoothBound bound) :=
+  ecmStage1_bound n sigma bound
+
 example {n base bound d : Nat}
     (h : pMinusOneFactor n base bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n :=
@@ -295,6 +307,80 @@ private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
 -- modulus does not fit, rather than claiming that Montgomery arithmetic ran.
 #guard (Hex.Nat.Internal.ecmTraceWith .word
   (51 * (2 ^ 64 + 1)) 13 5).stageBackend == some .natural
+
+-- One fixed-seed production schedule covers both retry responses for each
+-- smooth route. Pollard p−1 changes base and lowers the bound on `whole`,
+-- while gcd one raises it. ECM always draws a fresh curve; it raises the bound
+-- after gcd one and retains the bound after whole modulus.
+private def smoothRetryTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
+
+#guard smoothRetryTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .whole,
+  .pMinusOne 5 2 .noFactor,
+  .pMinusOne 5 16 .whole,
+  .ecm 181 64 .whole,
+  .ecm 250 64 .whole,
+  .ecm 85 64 .whole,
+  .ecm 242 64 .whole]
+#guard smoothRetryTrace.factor.isNone
+#guard smoothRetryTrace.events.length == Hex.Nat.Internal.smoothAttemptCap
+#guard smoothRetryTrace.rand == ((Rand.ofSeed 0).words 4).2
+#guard smoothRetryTrace ==
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
+
+-- A successful deterministic p−1 attempt charges one event and consumes no
+-- randomness; an ECM success charges all preceding retries and one draw.
+private def smoothPMinusOneTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 243 (Rand.ofSeed 9) 8
+
+#guard smoothPMinusOneTrace.events == [.pMinusOne 2 64 (.factor 81)]
+#guard smoothPMinusOneTrace.factor == some 81
+#guard smoothPMinusOneTrace.rand == Rand.ofSeed 9
+
+private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 10051 (Rand.ofSeed 0) 8
+
+#guard smoothEcmTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .noFactor,
+  .pMinusOne 3 64 .whole,
+  .pMinusOne 5 8 .noFactor,
+  .ecm 181 64 (.factor 19)]
+#guard smoothEcmTrace.factor == some 19
+#guard smoothEcmTrace.rand == (Rand.ofSeed 0).next.2
+
+private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 4) 0
+
+#guard smoothZeroFuelTrace.events.isEmpty
+#guard smoothZeroFuelTrace.factor.isNone
+#guard smoothZeroFuelTrace.rand == Rand.ofSeed 4
+
+-- A smaller budget truncates the deterministic p−1 phase itself. It neither
+-- manufactures ECM attempts nor advances the generator.
+private def smoothThreeFuelTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 4) 3
+
+#guard smoothThreeFuelTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .whole,
+  .pMinusOne 5 2 .noFactor]
+#guard smoothThreeFuelTrace.factor.isNone
+#guard smoothThreeFuelTrace.events.length == 3
+#guard smoothThreeFuelTrace.rand == Rand.ofSeed 4
+
+-- A production-shaped p−1 miss climbs through every scheduled bound and
+-- executes the cap-equality fall-through before ECM receives the remainder.
+private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch (20123 * 20183) (Rand.ofSeed 7) 8
+
+#guard smoothCapTrace.events.take 4 == [
+  .pMinusOne 2 64 .noFactor,
+  .pMinusOne 2 512 .noFactor,
+  .pMinusOne 2 4096 .noFactor,
+  .pMinusOne 2 smoothBoundCap .noFactor]
 
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0

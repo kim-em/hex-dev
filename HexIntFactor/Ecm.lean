@@ -224,9 +224,8 @@ structure EcmTrace where
   result : EcmResult
 deriving Repr, DecidableEq
 
-/-- Instrumented ECM attempt using an explicit requested stage backend. The
-trace records the backend that actually ran, including a safe natural fallback. -/
-def ecmTraceWith (backend : EcmBackend) (n sigma bound : Nat) : EcmTrace :=
+private def ecmTraceCoreWith (backend : EcmBackend)
+    (n sigma bound : Nat) : EcmTrace :=
   if n < 4 ∨ sigma < 6 then
     ⟨none, 0, 0, .noFactor⟩
   else
@@ -245,15 +244,27 @@ def ecmTraceWith (backend : EcmBackend) (n sigma bound : Nat) : EcmTrace :=
       let stage := stageGcdWith backend n bound curveNum curveDen u3 v3
       ⟨some stage.2, setup, stage.1, classifyGcd n stage.1⟩
 
+/-- Instrumented ECM attempt using an explicit requested stage backend. The
+trace records the backend that actually ran, including a safe natural fallback.
+The effective smoothness bound is always `smoothBound bound`. -/
+def ecmTraceWith (backend : EcmBackend) (n sigma bound : Nat) : EcmTrace :=
+  ecmTraceCoreWith backend n sigma (smoothBound bound)
+
 /-- Instrumented ECM attempt using the production backend selection. -/
 def ecmTrace (n sigma bound : Nat) : EcmTrace :=
   ecmTraceWith (ecmBackend n) n sigma bound
 
 end Internal
 
-/-- One Suyama-parameterized Montgomery ECM stage-1 attempt. -/
+/-- One Suyama-parameterized Montgomery ECM stage-1 attempt. Requests beyond
+`smoothBoundCap` are exactly capped to the complete prime-table range. -/
 def ecmStage1 (n sigma bound : Nat) : EcmResult :=
   (Internal.ecmTrace n sigma bound).result
+
+/-- Requests beyond the complete prime-table range are exactly capped. -/
+theorem ecmStage1_bound (n sigma bound : Nat) :
+    ecmStage1 n sigma bound = ecmStage1 n sigma (smoothBound bound) := by
+  simp [ecmStage1, Internal.ecmTrace, Internal.ecmTraceWith]
 
 private theorem classifyGcd_spec {n g d : Nat}
     (h : classifyGcd n g = .factor d) :
@@ -272,7 +283,8 @@ private theorem classifyGcd_spec {n g d : Nat}
 theorem ecmStage1_spec {n sigma bound d : Nat}
     (h : ecmStage1 n sigma bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n := by
-  unfold ecmStage1 Internal.ecmTrace Internal.ecmTraceWith at h
+  unfold ecmStage1 Internal.ecmTrace Internal.ecmTraceWith
+    Internal.ecmTraceCoreWith at h
   split at h
   · cases h
   · dsimp only at h
