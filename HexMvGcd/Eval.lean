@@ -17,6 +17,7 @@ private abbrev P0 := MvPoly 0 Int Mono.lex
 private abbrev P1 := MvPoly 1 Int Mono.lex
 private abbrev P2 := MvPoly 2 Int Mono.lex
 private abbrev Q2 := MvPoly 2 Rat Mono.lex
+private abbrev Q3 := MvPoly 3 Rat Mono.lex
 private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   (ZMod64.primesBelow p 1)[0]?
 #guard (smallPrimeSupply 47 5).map (fun P => P.m) == [2, 3, 5, 7, 11]
@@ -125,6 +126,21 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   (checkedCandidate? f h (intHeuristicCandidateAt f h 101)).isSome
 #guard
   let x : P1 := X 0
+  let common := x + 1
+  let f := common * x
+  let h := common * (x ^ 2 + 1)
+  match remainderCert? f h with
+  | some cert => checkGcd f h cert && cert.gcd == common
+  | none => false
+#guard
+  let x : P1 := X 0
+  let f := x
+  let h := x ^ 2 + 1
+  match unitRemainderCert? f h with
+  | some cert => checkCoprime f h cert
+  | none => false
+#guard
+  let x : P1 := X 0
   let f := x
   let h := x + 5
   (checkedCandidate? f h (intHeuristicCandidateAt f h 5)).isNone
@@ -229,6 +245,16 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   | some cert => checkGcd f h cert && cert.gcd == common
   | none => false
 #guard
+  let x : Q3 := X 0
+  let y : Q3 := X 1
+  let z : Q3 := X 2
+  let common := x + y + z + 1
+  let f := common * (x + 2)
+  let h := common * (x + 3)
+  match brownFieldCert? 12 [0, 1, 2] f h with
+  | some cert => checkGcd f h cert && cert.gcd == common
+  | none => false
+#guard
   let x : Q2 := X 0
   let y : Q2 := X 1
   let left := C ((1 : Rat) / 2) * x + C ((1 : Rat) / 3) * y + 1
@@ -283,6 +309,15 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   match intBrownModularCert? cfg f h with
   | some cert => checkGcd f h cert && cert.gcd == common
   | none => false
+#guard
+  let lower : BrownOpsAt Rat 1 :=
+    { candidate? := fun _ _ _ _ _ _ => none }
+  let x : Q2 := X 0
+  let y : Q2 := X 1
+  let common := x + y + 1
+  let f := common * (x + 2)
+  let h := common * (y + 3)
+  ((brownStepOps lower).candidate? Mono.lex 8 [0, 1, 2] f h).isNone
 #guard
   let x : P2 := X 0
   let f := C 2 * x + 1

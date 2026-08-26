@@ -93,6 +93,24 @@ instance : BEq AlgebraicPoly := ⟨beq⟩
 
 /-! Compiled semantic-normalization checks. -/
 
+private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
+
+private def sqrtTwo? : Option AlgebraicNumber :=
+  if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+    if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
+      AlgebraicNumber.ofNormalized? sqrtTwoPoly (by rfl) (by decide)
+        (by decide) ⟨hirred, by decide⟩ hsimple sqrtTwoRep
+    else
+      none
+  else
+    none
+
 #guard
     let z := AlgebraicNumber.zero
     let f := ofArray #[z, z, z]
@@ -103,6 +121,16 @@ instance : BEq AlgebraicPoly := ⟨beq⟩
     let f := ofArray #[]
     let g := ofArray #[z]
     f == g && (f.coeff 17).isZero
+
+#guard
+    match sqrtTwo? with
+    | some sqrtTwo =>
+        let z := AlgebraicNumber.zero
+        let f := ofArray #[z, sqrtTwo, z]
+        let g := ofArray #[z, sqrtTwo, z, z]
+        !f.isZero && f.size = 2 && f.degree? = some 1 &&
+          (f.coeff 1 == sqrtTwo) && f == g
+    | none => false
 
 end AlgebraicPoly
 end Hex

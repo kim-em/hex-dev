@@ -157,6 +157,7 @@ theorem levelsDim_pos (levels : List Level)
   | cons level lower ih =>
       exact Nat.mul_pos (Nat.zero_lt_of_lt hvalid.1.1) (ih hvalid.2.2)
 
+/-- Every validated tower has positive dimension. -/
 theorem dim_pos (T : NumberTower) : 0 < T.dim := by
   exact levelsDim_pos T.levels.toList T.valid
 
@@ -560,9 +561,7 @@ private theorem polynomial_nil (f : Array (Array Rat)) :
       (HexPolyMathlib.toPolynomial (Factor.toRatPoly f)).map
         (algebraMap Rat ℂ) := by
   ext n
-  simp [polynomial, Factor.toRatPoly,
-    HexPolyMathlib.coeff_toPolynomial, DensePoly.coeff_ofCoeffs,
-    denote, Array.getD]
+  simp [polynomial, Factor.toRatPoly, denote, Array.getD]
   by_cases hn : n < f.size
   · rw [Finset.sum_eq_single n]
     · simp [hn]

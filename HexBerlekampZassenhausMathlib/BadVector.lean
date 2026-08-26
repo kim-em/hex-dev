@@ -170,6 +170,7 @@ def fullAux
     (v : Vector ℤ (L.factorCount + L.coeffWidth)) : Hex.ZPoly :=
   Hex.DensePoly.ofCoeffs <| Array.ofFn fun j => fullAuxCoeff L z v j
 
+/-- Coefficient rule for `pol`. -/
 @[simp, grind =] theorem pol_coeff
     (L : Hex.BhksLatticeBasis)
     (z : Fin L.factorCount → Fin L.coeffWidth → ℤ)
@@ -179,6 +180,7 @@ def fullAux
   rw [pol, Hex.DensePoly.coeff_ofCoeffs]
   simp [Array.getD, j.isLt]
 
+/-- Coefficient rule for `fullAux`. -/
 @[simp, grind =] theorem fullAux_coeff
     (L : Hex.BhksLatticeBasis)
     (z : Fin L.factorCount → Fin L.coeffWidth → ℤ)

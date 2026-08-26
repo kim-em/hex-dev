@@ -42,20 +42,22 @@ example : True := by
   have := factors_irred
   exact True.intro
 
--- Negation and subtraction arms; `Polynomial.C` coefficients.
+/-- Exercises the negation and subtraction parser arms and `Polynomial.C`
+coefficients. -/
 noncomputable def facNeg :=
   factor_poly (-(X + 1) * (X - 1) * Polynomial.C 2 : Polynomial (ZMod 5))
 
 /-! # `irreducibility` on `Polynomial (ZMod 5)` -/
 
+/-- Term-mode `irreducibility` on an irreducible quadratic. -/
 theorem quad_irred : Irreducible (X ^ 2 + 2 : Polynomial (ZMod 5)) :=
   irreducibility (X ^ 2 + 2 : Polynomial (ZMod 5))
 
--- Coefficient over the modulus (7 ≡ 2 mod 5) and a negative coefficient
--- (X² - 3 = X² + 2 mod 5).
+/-- Exercises a coefficient over the modulus (7 ≡ 2 mod 5). -/
 theorem quad_irred_big : Irreducible (X ^ 2 + 7 : Polynomial (ZMod 5)) :=
   irreducibility (X ^ 2 + 7 : Polynomial (ZMod 5))
 
+/-- Exercises a negative coefficient (X² - 3 = X² + 2 mod 5). -/
 theorem quad_irred_negc : Irreducible (X ^ 2 - 3 : Polynomial (ZMod 5)) :=
   irreducibility (X ^ 2 - 3 : Polynomial (ZMod 5))
 

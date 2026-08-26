@@ -41,6 +41,8 @@ private theorem toPolynomial_ne_zero {R : Type*} [CommRing R] [DecidableEq R]
       (HexPolyMathlib.ofPolynomial_toPolynomial f).symm
     _ = 0 := by rw [hzero, HexPolyMathlib.ofPolynomial_zero]
 
+/-- A dense polynomial of size one is the constant on its leading
+coefficient. -/
 private theorem eq_C_leadingCoeff_of_size_one {R : Type*} [Zero R]
     [DecidableEq R] (f : DensePoly R) (hsize : f.size = 1) :
     f = DensePoly.C f.leadingCoeff := by
@@ -232,6 +234,8 @@ theorem DenoteInjective.nil : DenoteInjective [] := by
     subst i
     simpa [Array.getD, haSize, hbSize] using hvalue
 
+/-- The nested-coefficient view `Arithmetic.Coeff.value` determines the flat
+coordinate data, so equal values give equal canonical coefficients. -/
 private theorem value_injective (level : Level) (lower : List Level)
     (hlowerDim : 0 < levelsDim lower)
     {a b : Arithmetic.Coeff (level :: lower)}
@@ -993,6 +997,8 @@ noncomputable def coeffRatEquiv :
       a.data.getD 0 0 + b.data.getD 0 0
     simp [Arithmetic.addCoords, levelsDim, Array.getD]
 
+/-- Under the rational identification of base-tower coefficients, rebuilding
+from raw data reads off its first entry. -/
 @[simp]
 theorem coeffRatEquiv_ofData (data : Array Rat) :
     letI : Field (Arithmetic.Coeff []) := coeffFieldNil
