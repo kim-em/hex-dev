@@ -711,6 +711,7 @@ and it buys nothing: two call sites, two lines each.
 ```lean
 def divisors {n} (F : CheckedFactorization n) : Array Nat   -- ascending
 def numDivisors {n} (F : CheckedFactorization n) : Nat     -- τ, ∏ (eᵢ + 1)
+def sigmaEntry (entry : PrimePower) (k : Nat) : Nat         -- one geometric sum
 def sigma {n} (F : CheckedFactorization n) (k : Nat) : Nat -- σ_k
 def totient {n} (F : CheckedFactorization n) : Nat         -- φ
 def radical {n} (F : CheckedFactorization n) : Nat         -- ∏ pᵢ
@@ -728,6 +729,10 @@ theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
@@ -757,7 +762,15 @@ would be exponential. The local semantic theorems are deliberate: the
 Mathlib bridge proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
-the geometric-series product must not evaluate its `0 / 0` form.
+the geometric-series product must not evaluate its `0 / 0` form. For
+`k > 0`, each certified prime-power entry `(p, e)` contributes the exact
+geometric sum `(q^(e + 1) - 1) / (q - 1)`, where `q = p^k`, and `sigma`
+multiplies those contributions. Checked primality supplies `1 < q`, so
+the division is exact; this route never enumerates the divisors.
+`sigmaEntry` is total on arbitrary `PrimePower` values: at `k = 0` and
+at base `1` it returns `e + 1`, at base `0` with positive `k` it returns
+`1`, and in every case `sigmaEntry_eq_powerSum` identifies it with the
+finite power sum over `powers p e 1`.
 
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
@@ -784,6 +797,7 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
+| `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
 | everything else in the divisor API | `O(k)` | |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
@@ -836,7 +850,7 @@ Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 ```
 
 Fixture kinds: `factor` (a number and its prime-exponent list),
-`divisorfn` (a number and `τ`, `σ₁`, `φ`, `rad`, `sqfpart`), `order` (a
+`divisorfn` (a number and `τ`, `σ₀`, `σ₁`, `σ₂`, `φ`, `rad`, `sqfpart`), `order` (a
 base, a modulus, and the order), and `cyclotomic` (`b`, `n`, sign, and
 the split).
 
@@ -922,6 +936,14 @@ Families:
 - **Order and primitive root**, primes up to `64` bits, reported
   separately from the factorization of `p − 1` they depend on, so the
   check's cost is visible next to the search's.
+- **Generalized divisor sums**, with one ladder growing a prime-power
+  exponent through multi-million-bit output and one growing the number
+  of certified prime-power entries. Per-rung preparation constructs or
+  selects the checked factorization outside the timed loop, so these isolate
+  the geometric-sum and factor-product costs and rule out divisor enumeration.
+  The native wall-clock models include big-integer cost: `n log n` for the
+  exponentiation-dominated exponent ladder and `n²` for the sequential product
+  of bounded-size table-prime entry sums into a linearly growing accumulator.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,

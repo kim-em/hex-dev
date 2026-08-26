@@ -62,7 +62,9 @@ def _divisor_functions(pari, n: int) -> dict[str, int]:
     sqfpart = math.prod(p for p, e in factors if e % 2 == 1)
     return {
         "tau": len(pari.divisors(n)),
+        "sigma0": int(pari.sigma(n, 0)),
         "sigma1": int(pari.sigma(n)),
+        "sigma2": int(pari.sigma(n, 2)),
         "phi": int(pari.eulerphi(n)),
         "rad": radical,
         "sqfpart": sqfpart,
