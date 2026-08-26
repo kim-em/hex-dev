@@ -451,11 +451,11 @@ quotient is exact over every stated exact-division domain.
 ## Downstream contracts
 
 The extended chain `subresultantChainExt` (Bezout cofactors for every stored
-Brown entry) is the `hex-poly-z-gcd`/`hex-mv-gcd` prerequisite. It is
-delivered in `SubresultantExt.lean`: `subresultantChainExt_law` packages the
-Bezout, exactness, and value laws, with the determinantal cofactor
-development in `SubresultantCofactor.lean`. It does not alter the current
-resultant or discriminant contracts.
+Brown entry) is delivered in `SubresultantExt.lean`:
+`subresultantChainExt_law` packages the Bezout, exactness, and value laws,
+with the determinantal cofactor development in `SubresultantCofactor.lean`.
+`hex-poly-z-gcd` and `hex-mv-gcd` consume it for their `splitBezout`
+fallback. It does not alter the resultant or discriminant contracts.
 
 ## File organisation
 

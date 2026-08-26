@@ -979,5 +979,9 @@ theorem subresultantChainExt_exact {S : Type u}
     subresultantChainExt linear 0 = #[(1, 0, linear)] &&
     subresultantChainExt (0 : DensePoly Int) 0 = #[]
 
+/-- info: 'Hex.DensePoly.subresultantChainExt' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms subresultantChainExt
+
 end DensePoly
 end Hex
