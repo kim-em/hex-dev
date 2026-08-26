@@ -9,6 +9,7 @@ module
 public import HexModArith.Residue
 public import HexModArith.HotLoop
 public import HexModArith.Modulus
+public import HexModArith.Ntt.Butterfly
 public import HexModArith.Ntt.Plan
 public import HexModArith.Prime
 public import HexModArith.Ring

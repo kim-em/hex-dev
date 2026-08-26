@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
-import HexModArith.Ntt.Plan
+import HexModArith.Ntt.Butterfly
 import HexModArith.Prime
 import HexModArith.Ring
 
@@ -21,7 +21,7 @@ Covered operations:
 - natural and integer scalar multiplication
 - `BarrettCtx.mulMod`
 - `MontCtx.toMont`, `mulMont`, `fromMont`
-- `ZMod64.NttPlan.build?` and reusable Shoup twiddle tables
+- `ZMod64.NttPlan.build?`, reusable Shoup twiddle tables, and bounded butterflies
 
 Covered properties:
 - constructors and casts reduce representatives modulo the committed modulus
@@ -34,6 +34,8 @@ Covered properties:
   multiplication agrees with the core `ZMod64` multiplication contract
 - every checked result remains in canonical range through `toNat`
 - NTT plans validate power-of-two lengths and exact-order roots
+- Shoup multiplication and forward/inverse butterflies preserve their residues
+  while remaining in their advertised redundant ranges
 
 Covered edge cases:
 - modulus `1`
@@ -113,6 +115,29 @@ end PrimeModulusAutomation
         plan.forwardTwiddles.size == 2 &&
         plan.forwardTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6] &&
         plan.inverseTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6]
+
+private def nttTwiddleSeven : NttTwiddle 7 :=
+  NttTwiddle.ofValue (ofNat 7 6)
+
+private def nttForwardSeven : NttRaw2 7 × NttRaw2 7 :=
+  Ntt.forwardButterfly nttTwiddleSeven
+    (NttRaw2.ofZMod (ofNat 7 3)) (NttRaw2.ofZMod (ofNat 7 5))
+
+private def nttInverseSeven : NttRaw4 7 × NttRaw4 7 :=
+  Ntt.inverseButterfly nttTwiddleSeven
+    (NttRaw4.ofZMod (ofNat 7 1)) (NttRaw4.ofZMod (ofNat 7 2))
+
+#guard nttTwiddleSeven.precon.toNat = 6 * UInt64.word / 7
+#guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).val.toNat < 14
+#guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).normalize.toNat = 2
+#guard nttForwardSeven.1.val.toNat < 14
+#guard nttForwardSeven.2.val.toNat < 14
+#guard nttForwardSeven.1.normalize.toNat = 1
+#guard nttForwardSeven.2.normalize.toNat = 2
+#guard nttInverseSeven.1.val.toNat < 28
+#guard nttInverseSeven.2.val.toNat < 28
+#guard nttInverseSeven.1.normalize.toNat = 6
+#guard nttInverseSeven.2.normalize.toNat = 3
 
 section BasicConstructorAutomation
 

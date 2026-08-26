@@ -45,24 +45,27 @@ structure NttTwiddle (p : Nat) [Bounds p] where
   value : ZMod64 p
   /-- Shoup quotient preconditioner. -/
   precon : UInt64
+  /-- The preconditioner stores the exact one-word quotient. -/
+  precon_eq : precon.toNat = value.toNat * UInt64.word / p
 
 namespace NttTwiddle
 
 /-- Build a twiddle and its Shoup preconditioner. -/
 def ofValue {p : Nat} [Bounds p] (value : ZMod64 p) : NttTwiddle p :=
   { value
-    precon := UInt64.ofNat (value.toNat * UInt64.word / p) }
+    precon := UInt64.ofNat (value.toNat * UInt64.word / p)
+    precon_eq := by
+      have hproduct : value.toNat * UInt64.word < p * UInt64.word :=
+        (Nat.mul_lt_mul_right (by decide : 0 < UInt64.word)).mpr value.toNat_lt
+      have hquot : value.toNat * UInt64.word / p < UInt64.word :=
+        Nat.div_lt_of_lt_mul hproduct
+      exact UInt64.toNat_ofNat_of_lt' (by
+        simpa [UInt64.word, UInt64.size] using hquot) }
 
 /-- The Shoup quotient fits in one word and is stored without wraparound. -/
 @[simp] theorem precon_toNat {p : Nat} [Bounds p] (value : ZMod64 p) :
     (ofValue value).precon.toNat = value.toNat * UInt64.word / p := by
-  have hproduct : value.toNat * UInt64.word < p * UInt64.word :=
-    (Nat.mul_lt_mul_right (by decide : 0 < UInt64.word)).mpr value.toNat_lt
-  have hquot : value.toNat * UInt64.word / p < UInt64.word :=
-    Nat.div_lt_of_lt_mul hproduct
-  change (UInt64.ofNat (value.toNat * UInt64.word / p)).toNat = _
-  exact UInt64.toNat_ofNat_of_lt' (by
-    simpa [UInt64.word, UInt64.size] using hquot)
+  exact (ofValue value).precon_eq
 
 end NttTwiddle
 
