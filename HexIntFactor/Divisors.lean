@@ -27,14 +27,17 @@ def divisors {n : Nat} (F : CheckedFactorization n) : Array Nat :=
 def numDivisors {n : Nat} (F : CheckedFactorization n) : Nat :=
   (F.raw.factors.map fun e => e.exponent + 1).prod
 
-/-- The geometric sum for one prime-power entry. -/
+/-- The geometric sum for one prime-power entry. The `0` and `1` bases use
+their total finite-sum values; certified factorizations only contain primes. -/
 @[expose]
 def sigmaEntry (entry : PrimePower) (k : Nat) : Nat :=
   if k = 0 then
     entry.exponent + 1
   else
     let q := entry.prime ^ k
-    (q ^ (entry.exponent + 1) - 1) / (q - 1)
+    if q = 0 then 1
+    else if q = 1 then entry.exponent + 1
+    else (q ^ (entry.exponent + 1) - 1) / (q - 1)
 
 /-- Generalized divisor sum `σ_k`. -/
 @[expose]
@@ -154,7 +157,8 @@ private theorem geometricSum_spec {q : Nat} (hq : 1 < q) : ∀ e : Nat,
             _ = q ^ (e + 1) * q - 1 := by omega
             _ = q ^ ((e + 1) + 1) - 1 := by simp only [Nat.pow_succ]
 
-private theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
+/-- On a prime base, the closed form equals the finite prime-power sum. -/
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
     (hp : Prime entry.prime) :
     sigmaEntry entry k =
       ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
@@ -165,7 +169,9 @@ private theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
     simp only [Nat.pow_zero, sum_ones,
       DivisorEnumeration.length_powers]
   · have hq : 1 < entry.prime ^ k := Nat.one_lt_pow hk hp.one_lt
-    rw [sigmaEntry, ite_eq_right hk, powers_sum]
+    rw [sigmaEntry, ite_eq_right hk,
+      ite_eq_right (by omega : entry.prime ^ k ≠ 0),
+      ite_eq_right (by omega : entry.prime ^ k ≠ 1), powers_sum]
     simp only [Nat.one_pow, Nat.one_mul]
     rw [← geometricSum_spec hq entry.exponent,
       Nat.mul_comm (entry.prime ^ k - 1), Nat.mul_div_left _ (by omega)]

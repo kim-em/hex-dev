@@ -711,6 +711,7 @@ and it buys nothing: two call sites, two lines each.
 ```lean
 def divisors {n} (F : CheckedFactorization n) : Array Nat   -- ascending
 def numDivisors {n} (F : CheckedFactorization n) : Nat     -- τ, ∏ (eᵢ + 1)
+def sigmaEntry (entry : PrimePower) (k : Nat) : Nat         -- one geometric sum
 def sigma {n} (F : CheckedFactorization n) (k : Nat) : Nat -- σ_k
 def totient {n} (F : CheckedFactorization n) : Nat         -- φ
 def radical {n} (F : CheckedFactorization n) : Nat         -- ∏ pᵢ
@@ -728,6 +729,11 @@ theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
+    (hp : Hex.Nat.Prime entry.prime) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
@@ -788,7 +794,7 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
-| `sigma` | `O(k)` geometric sums | for fixed `p` and `k`, an entry has `Θ(e)` output bits |
+| `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
 | everything else in the divisor API | `O(k)` | |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
@@ -930,7 +936,9 @@ Families:
 - **Generalized divisor sums**, with one ladder growing a prime-power
   exponent through multi-million-bit output and one growing the number
   of certified prime-power entries. These isolate the geometric-sum and
-  factor-product costs and rule out divisor enumeration.
+  factor-product costs and rule out divisor enumeration. The native
+  wall-clock models include big-integer cost: `n log² n` for the exponent
+  ladder's exact division and `n log n` for the growing factor product.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,

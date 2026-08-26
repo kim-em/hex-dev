@@ -13,6 +13,8 @@ namespace Hex.IntFactorBench
 
 open Hex.Nat
 
+set_option maxRecDepth 20000
+
 def runFactor (n : Nat) : Nat :=
   match factor? n (Hex.Rand.ofSeed n) with
   | .ok (F, _) => F.raw.factors.length
@@ -48,16 +50,80 @@ def runReplay (e : Nat) : Nat :=
 
 def runOrder (p : Nat) : Nat := orderOf 2 p
 
-def runSigmaExponent (e : Nat) : Nat :=
-  sigmaEntry ⟨e, .small 2⟩ 1
+private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q) : ∀ e : Nat,
+    boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
+  | 0 => by simp [boundedPowMul]
+  | e + 1 => by
+      rw [boundedPowMul, ite_eq_right]
+      · simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
+          Nat.mul_left_comm] using boundedPowMul_exact q (acc * q) hq e
+      · have hpow : 0 < q ^ e := Nat.pow_pos hq
+        have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
+        exact Nat.not_lt_of_ge (by
+          simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle)
 
-def sigmaEntries : List PrimePower :=
-  [⟨1, .small 2⟩, ⟨1, .small 3⟩, ⟨1, .small 5⟩, ⟨1, .small 7⟩,
-    ⟨1, .small 11⟩, ⟨1, .small 13⟩, ⟨1, .small 17⟩,
-    ⟨1, .small 19⟩, ⟨1, .small 23⟩, ⟨1, .small 29⟩]
+private def sigmaExponentInput (e : Nat) : CheckedFactorization (3 ^ (e + 1)) :=
+  ⟨⟨3 ^ (e + 1), [⟨e + 1, .small 3⟩]⟩, rfl, by
+    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
+    refine ⟨⟨Nat.pow_pos (by decide), ?_⟩, ?_⟩
+    · simp [checkEntries, show checkPrime (.small 3) = true by decide]
+    · simp only [factorProduct, PrimePower.prime, PrimeCert.subject]
+      have h : boundedPowMul (3 ^ (e + 1)) 3 1 (e + 1) =
+          some (3 ^ (e + 1)) := by
+        simpa using boundedPowMul_exact 3 1 (by decide) (e + 1)
+      rw [h]⟩
+
+def runSigmaExponent (e : Nat) : Nat := sigma (sigmaExponentInput e) 1
+
+private def sigmaEntries : List PrimePower :=
+  [⟨32, .small 2⟩, ⟨32, .small 3⟩, ⟨32, .small 5⟩,
+    ⟨32, .small 7⟩, ⟨32, .small 11⟩, ⟨32, .small 13⟩,
+    ⟨32, .small 17⟩, ⟨32, .small 19⟩, ⟨32, .small 23⟩,
+    ⟨32, .small 29⟩, ⟨32, .small 31⟩, ⟨32, .small 37⟩,
+    ⟨32, .small 41⟩, ⟨32, .small 43⟩, ⟨32, .small 47⟩,
+    ⟨32, .small 53⟩, ⟨32, .small 59⟩, ⟨32, .small 61⟩,
+    ⟨32, .small 67⟩, ⟨32, .small 71⟩, ⟨32, .small 73⟩,
+    ⟨32, .small 79⟩, ⟨32, .small 83⟩, ⟨32, .small 89⟩,
+    ⟨32, .small 97⟩]
+
+private def sigmaSubject (count : Nat) : Nat :=
+  ((sigmaEntries.take count).map fun entry => entry.prime ^ entry.exponent).prod
+
+private def sigmaInput (count : Nat) (h : checkFactorization
+    ⟨sigmaSubject count, sigmaEntries.take count⟩ = true) :
+    CheckedFactorization (sigmaSubject count) :=
+  ⟨⟨sigmaSubject count, sigmaEntries.take count⟩, rfl, h⟩
+
+private opaque sigmaInput4 : CheckedFactorization (sigmaSubject 4) :=
+  sigmaInput 4 (by decide)
+private opaque sigmaInput8 : CheckedFactorization (sigmaSubject 8) :=
+  sigmaInput 8 (by decide)
+private opaque sigmaInput12 : CheckedFactorization (sigmaSubject 12) :=
+  sigmaInput 12 (by decide)
+private opaque sigmaInput16 : CheckedFactorization (sigmaSubject 16) :=
+  sigmaInput 16 (by decide)
+private opaque sigmaInput20 : CheckedFactorization (sigmaSubject 20) :=
+  sigmaInput 20 (by decide)
+private opaque sigmaInput25 : CheckedFactorization (sigmaSubject 25) :=
+  sigmaInput 25 (by decide)
+
+private structure SigmaInput where
+  subject : Nat
+  checked : CheckedFactorization subject
+
+@[noinline]
+private def sigmaInputForCount : Nat → SigmaInput
+  | 4 => ⟨_, sigmaInput4⟩
+  | 8 => ⟨_, sigmaInput8⟩
+  | 12 => ⟨_, sigmaInput12⟩
+  | 16 => ⟨_, sigmaInput16⟩
+  | 20 => ⟨_, sigmaInput20⟩
+  | 25 => ⟨_, sigmaInput25⟩
+  | _ => ⟨_, sigmaInput4⟩
 
 def runSigmaFactorCount (count : Nat) : Nat :=
-  ((sigmaEntries.take count).map fun entry => sigmaEntry entry 1).prod
+  let input := sigmaInputForCount count
+  sigma input.checked 1
 
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
@@ -137,10 +203,17 @@ setup_benchmark runOrder n => n
     targetInnerNanos := 100000000
   }
 
-/- With a fixed base and `k = 1`, the geometric sum has `Theta(e)` output bits.
-Binary exponentiation uses logarithmically many multiplications, but merely
-constructing the result therefore gives the declared linear lower-bound model. -/
-setup_benchmark runSigmaExponent n => n
+/- These two targets use warm, autotuned 100 ms child-side batches over fixed
+scientific rungs. On the scheduled high-startup host, the default ten-spawn
+floor would discard those in-process measurements; the 1.0 multiplier changes
+only that filter, and exported evidence still records the measured floor. -/
+
+/- For the certified input `3^(e+1)` at `k = 1`, `sigma` computes a nontrivial
+exact geometric quotient with `Theta(e)` output bits. Binary exponentiation and
+division dominate; hashing also traverses the growing result. Divide-and-
+conquer division contributes a logarithmic factor over quasi-linear
+multiplication, giving the declared soft-linear `n log^2 n` model. -/
+setup_benchmark runSigmaExponent n => n * n.log2 * n.log2
   where {
     paramFloor := 16384
     paramCeiling := 4194304
@@ -151,13 +224,15 @@ setup_benchmark runSigmaExponent n => n
     outerTrials := 3
   }
 
-/- The factor-product route performs a constant number of geometric-series
-operations per certified prime-power entry, hence linear cost in the count. -/
-setup_benchmark runSigmaFactorCount n => n
+/- Each certified entry has exponent 32, so the geometric quotient dominates
+fixed dispatch cost. `sigma` performs one such quotient and one product step
+per entry; the growing product operands add the logarithmic factor in the
+declared soft-linear model. -/
+setup_benchmark runSigmaFactorCount n => n * n.log2
   where {
-    paramFloor := 1
-    paramCeiling := 10
-    paramSchedule := .custom #[1, 2, 4, 6, 8, 10]
+    paramFloor := 4
+    paramCeiling := 25
+    paramSchedule := .custom #[4, 8, 12, 16, 20, 25]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0

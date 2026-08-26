@@ -50,7 +50,9 @@ private def emitDivisorFns (tag : String) (n : Nat) : IO Unit := do
     | .error _ => "null"
     | .ok (F, _) =>
         "{\"tau\":" ++ toString (numDivisors F) ++
+        ",\"sigma0\":" ++ toString (sigma F 0) ++
         ",\"sigma1\":" ++ toString (sigma F 1) ++
+        ",\"sigma2\":" ++ toString (sigma F 2) ++
         ",\"phi\":" ++ toString (totient F) ++
         ",\"rad\":" ++ toString (radical F) ++
         ",\"sqfpart\":" ++ toString (squarefreePart F) ++ "}"
