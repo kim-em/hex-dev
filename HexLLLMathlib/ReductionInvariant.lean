@@ -64,7 +64,7 @@ private theorem independent_of_upperTriangular_pos_diag {n : Nat}
   exact GramSchmidt.Int.independent_of_det_positive M (by
     intro k hk _
     have hpos :=
-      det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag M hzero hdiag k hk
+      det_gram_takeRows_pos M hzero hdiag k hk
     rwa [gramMatrix_takeRows_eq_principalSubmatrix M k hk] at hpos)
 
 end Matrix

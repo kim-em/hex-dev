@@ -60,8 +60,8 @@ theorem getElem_combineRows (M : Matrix Int n m) (i k r : Fin n)
 
 /-- Replace columns `i` and `k` by two simultaneous linear combinations. -/
 @[expose]
-def combineCols (M : Matrix Int n n) (i k : Fin n)
-    (a b c d : Int) : Matrix Int n n :=
+def combineCols (M : Matrix Int n m) (i k : Fin m)
+    (a b c d : Int) : Matrix Int n m :=
   let ci := Vector.ofFn fun r => M[(r, i)]
   let ck := Vector.ofFn fun r => M[(r, k)]
   let vi := Vector.ofFn fun r =>
@@ -75,7 +75,8 @@ def combineCols (M : Matrix Int n n) (i k : Fin n)
 
 /-- Entrywise characterization of `combineCols`. -/
 @[simp, grind =]
-theorem getElem_combineCols (M : Matrix Int n n) (i k r j : Fin n)
+theorem getElem_combineCols (M : Matrix Int n m) (i k : Fin m)
+    (r : Fin n) (j : Fin m)
     (a b c d : Int) :
     (combineCols M i k a b c d)[r][j] =
       if j = i then a * M[(r, i)] + b * M[(r, k)]
@@ -89,7 +90,6 @@ theorem getElem_combineCols (M : Matrix Int n n) (i k r j : Fin n)
   · rw [dif_neg hik, Matrix.getElem_setCol, Matrix.getElem_setCol]
     by_cases hjk : j = k <;> by_cases hji : j = i <;>
       simp_all
-
 /-- Simultaneous two-row replacement commutes with multiplication on the
 right. -/
 theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
@@ -147,7 +147,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
 
 /-- Transposition exchanges a simultaneous two-column replacement with the
 same two-row replacement. -/
-theorem transpose_combineCols (M : Matrix Int n n) (i k : Fin n)
+theorem transpose_combineCols (M : Matrix Int n m) (i k : Fin m)
     (a b c d : Int) :
     Matrix.transpose (combineCols M i k a b c d) =
       combineRows (Matrix.transpose M) i k a b c d := by
@@ -159,7 +159,7 @@ theorem transpose_combineCols (M : Matrix Int n n) (i k : Fin n)
 
 /-- Simultaneous two-column replacement commutes with multiplication on the
 left. -/
-theorem mul_combineCols (A B : Matrix Int n n) (i k : Fin n)
+theorem mul_combineCols (A : Matrix Int p n) (B : Matrix Int n n) (i k : Fin n)
     (a b c d : Int) :
     A * combineCols B i k a b c d = combineCols (A * B) i k a b c d := by
   have ht :
@@ -180,7 +180,7 @@ theorem mul_combineCols (A B : Matrix Int n n) (i k : Fin n)
   have := congrArg Matrix.transpose ht
   simpa using this
 
-theorem mul_colSwap (A B : Matrix Int n n) (i k : Fin n) :
+theorem mul_colSwap (A : Matrix Int p n) (B : Matrix Int n n) (i k : Fin n) :
     A * Matrix.colSwap B i k = Matrix.colSwap (A * B) i k := by
   have ht : Matrix.transpose (A * Matrix.colSwap B i k) =
       Matrix.transpose (Matrix.colSwap (A * B) i k) := by
@@ -199,7 +199,7 @@ theorem mul_colSwap (A B : Matrix Int n n) (i k : Fin n) :
   have := congrArg Matrix.transpose ht
   simpa using this
 
-theorem mul_colScale (A B : Matrix Int n n) (i : Fin n) (c : Int) :
+theorem mul_colScale (A : Matrix Int p n) (B : Matrix Int n n) (i : Fin n) (c : Int) :
     A * Matrix.colScale B i c = Matrix.colScale (A * B) i c := by
   have ht : Matrix.transpose (A * Matrix.colScale B i c) =
       Matrix.transpose (Matrix.colScale (A * B) i c) := by
@@ -404,5 +404,21 @@ theorem gcdCoeffs_apply {a b : Int} (hb : b ≠ 0) :
     rw [show -b * a = a * -b by simp [Int.mul_comm]]
     simp only [Int.zero_mul, Int.mul_neg]
     omega
+
+/-- The pivot combination returned by `gcdCoeffs` is the canonical positive
+integer gcd, not merely an unspecified positive associate. -/
+theorem gcdCoeffs_pivot (a b : Int) :
+    let (x, y, _z, _w) := gcdCoeffs a b
+    x * a + y * b = Int.ofNat (Int.gcd a b) := by
+  rcases he : HexArith.Int.extGcd a b with ⟨g, s, t⟩
+  have hspec := HexArith.Int.extGcd_spec a b
+  rw [he] at hspec
+  simp only at hspec
+  rcases hspec with ⟨hg, hbez⟩
+  unfold gcdCoeffs
+  rw [he]
+  dsimp only
+  rw [hbez, hg]
+  rfl
 
 end Hex.Matrix.Hermite

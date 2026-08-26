@@ -40,6 +40,7 @@ def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) wh
   map_add' a b := by funext i; simp
   map_smul' c a := by funext i; simp
 
+/-- Application rule for the first-block projection. -/
 @[simp, grind =] theorem projFirst_apply (r n : Nat) (w : Fin (r + n) → ℤ) (i : Fin r) :
     projFirst r n w i = w (Fin.castAdd n i) := rfl
 
@@ -269,24 +270,6 @@ theorem cutProjectionHypotheses_of_shortVectors
       rw [projFirst_apply, HexMatrixMathlib.vectorEquiv_apply]
       exact (data S).project_eq i
     rwa [hproj] at hmem
-
-/--
-**True-factor cut-projection producer.**
-
-Build `CutProjectionHypotheses` for a family of true-factor supports directly
-from their CLD-vector certificates (`TrueFactorCLDVectorData`), their tight
-norm bounds (`TrueFactorCLDTightNormBound`), and independence of the BHKS basis.
-Each true support's indicator vector is the first block of a genuine short
-lattice vector, which the prefix survivor-span lemma places in the retained
-prefix span; projecting to the first `factorCount` coordinates lands the
-indicator in `projectedRowSpanInt`.  This method does **not** pass through
-`CutRetention`.
--/
-
-theorem projectedRow_mem_projectedRowSpaceRat
-    (L : Hex.BhksProjectedRows) (i : Fin L.projectedRows.size) :
-    Matrix.row (projectedRowsRatMatrix L) i ∈ projectedRowSpaceRat L := by
-  exact Submodule.subset_span ⟨i, rfl⟩
 
 /-- `intVectorToRat` of the zero vector is the zero rational vector. -/
 @[simp, grind =] theorem intVectorToRat_zero {r : Nat} :

@@ -137,9 +137,9 @@ private theorem array_toList_getD {α : Type}
       rw [List.getD_eq_getElem?_getD]
       unfold Array.getD Array.size Array.getInternal
       by_cases hlt : i < data.length
-      · rw [dif_pos hlt]
+      · rw [dite_eq_left hlt]
         simp [List.getElem?_eq_getElem hlt]
-      · rw [dif_neg hlt]
+      · rw [dite_eq_right hlt]
         simp [List.getElem?_eq_none_iff.mpr (Nat.le_of_not_gt hlt)]
 
 private theorem list_getD_map_range
@@ -373,7 +373,6 @@ private theorem powModMonic_column_size_le
 /-- `composeCoeffPowerSumUpTo` written with the last term appended on the
 right. -/
 private theorem composeCoeffPowerSumUpTo_succ_right
-    [ZMod64.PrimeModulus p]
     (coeff : Nat → ZMod64 p) (q : FpPoly p) (n : Nat) :
     ∀ base,
       FpPoly.composeCoeffPowerSumUpTo coeff (n + 1) base q =
@@ -397,7 +396,6 @@ private theorem composeCoeffPowerSumUpTo_succ_right
 /-- `composeCoeffPowerSumUpTo … n 0 q` viewed as the `List.finRange n`-foldl
 sum `Σ_{j < n} C(coeff j) · linearPow q j`. -/
 private theorem composeCoeffPowerSumUpTo_eq_foldl_finRange
-    [ZMod64.PrimeModulus p]
     (coeff : Nat → ZMod64 p) (q : FpPoly p) (n : Nat) :
     FpPoly.composeCoeffPowerSumUpTo coeff n 0 q =
       (List.finRange n).foldl
@@ -709,7 +707,7 @@ private theorem vector_sub_eq_zero_iff_eq [Lean.Grind.Ring R] (u v : Vector R n)
 fixed-space equation `Q_f * v = v`. -/
 theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [ZMod64.PrimeModulus p] (v : Vector (ZMod64 p) (basisSize f)) :
+    (v : Vector (ZMod64 p) (basisSize f)) :
     IsFixedSpaceKernelVector f hmonic v ↔
       Matrix.mulVec (berlekampMatrix f hmonic) v = v := by
   unfold IsFixedSpaceKernelVector

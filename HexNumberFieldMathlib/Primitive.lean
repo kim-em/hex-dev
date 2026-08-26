@@ -207,16 +207,16 @@ private theorem exists_shift_degree_eq (theta alpha : AlgebraicNumber) :
     exact _root_.Nat.choose_le_choose 2 hfinrank
   exact ⟨k, by omega, candidate, hcandidate, hdegree⟩
 
-private theorem extendStep_bounds (theta alpha : AlgebraicNumber)
-    (best : Option AlgebraicNumber) (k : Nat) (next : AlgebraicNumber)
-    (hnext : extendStep theta alpha best k = some (some next)) :
-    (∀ current, best = some current → degree current ≤ degree next) ∧
+private theorem extendShiftStep_bounds (theta alpha : AlgebraicNumber)
+    (best : Option ShiftCandidate) (k : Nat) (next : ShiftCandidate)
+    (hnext : extendShiftStep theta alpha best k = some (some next)) :
+    (∀ current, best = some current →
+      degree current.value ≤ degree next.value) ∧
       ∀ candidate, shift? theta alpha (signedShift k) = some candidate →
-        degree candidate ≤ degree next := by
+        degree candidate ≤ degree next.value := by
   obtain ⟨candidate, hcandidate⟩ := Option.isSome_iff_exists.mp
     (shift?_isSome theta alpha (signedShift k))
-  unfold extendStep at hnext
-  rw [hcandidate] at hnext
+  simp only [extendShiftStep, hcandidate] at hnext
   cases best with
   | none =>
       have hvalue := Option.some.inj hnext
@@ -230,7 +230,7 @@ private theorem extendStep_bounds (theta alpha : AlgebraicNumber)
           Option.some.inj (hshifted.symm.trans hcandidate)
         exact le_of_eq (congrArg degree heq)
   | some current =>
-      by_cases hdegree : degree current < degree candidate
+      by_cases hdegree : degree current.value < degree candidate
       · simp [hdegree] at hnext
         subst next
         constructor
@@ -248,29 +248,32 @@ private theorem extendStep_bounds (theta alpha : AlgebraicNumber)
         constructor
         · intro previous hprevious
           exact le_of_eq
-            (congrArg degree (Option.some.inj hprevious)).symm
+            (congrArg (fun a => degree a.value)
+              (Option.some.inj hprevious)).symm
         · intro shifted hshifted
           have heq : shifted = candidate :=
             Option.some.inj (hshifted.symm.trans hcandidate)
           subst shifted
           exact Nat.le_of_not_gt hdegree
 
-private theorem extendFold_max (theta alpha : AlgebraicNumber)
-    (indices : List Nat) (best : Option AlgebraicNumber)
-    (out : AlgebraicNumber)
-    (hfold : indices.foldlM (extendStep theta alpha) best =
+private theorem extendShiftFold_max (theta alpha : AlgebraicNumber)
+    (indices : List Nat) (best : Option ShiftCandidate)
+    (out : ShiftCandidate)
+    (hfold : indices.foldlM (extendShiftStep theta alpha) best =
       some (some out)) :
-    (∀ current, best = some current → degree current ≤ degree out) ∧
+    (∀ current, best = some current →
+      degree current.value ≤ degree out.value) ∧
       ∀ k ∈ indices, ∀ candidate,
         shift? theta alpha (signedShift k) = some candidate →
-          degree candidate ≤ degree out := by
+          degree candidate ≤ degree out.value := by
   induction indices generalizing best with
   | nil =>
       have hbest := Option.some.inj hfold
       constructor
       · intro current hcurrent
         rw [hbest] at hcurrent
-        exact le_of_eq (congrArg degree (Option.some.inj hcurrent)).symm
+        exact le_of_eq (congrArg (fun a => degree a.value)
+          (Option.some.inj hcurrent)).symm
       · simp
   | cons k indices ih =>
       rw [List.foldlM_cons] at hfold
@@ -279,19 +282,21 @@ private theorem extendFold_max (theta alpha : AlgebraicNumber)
       obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
         (shift?_isSome theta alpha (signedShift k))
       have hnextExists : ∃ next, nextBest = some next := by
-        unfold extendStep at hstep
-        rw [hshifted] at hstep
+        simp only [extendShiftStep, hshifted] at hstep
         cases best with
-        | none => exact ⟨shifted, (Option.some.inj hstep).symm⟩
+        | none =>
+            exact ⟨⟨signedShift k, shifted⟩,
+              (Option.some.inj hstep).symm⟩
         | some current =>
-            by_cases hdegree : degree current < degree shifted
-            · exact ⟨shifted, by simpa [hdegree] using hstep.symm⟩
+            by_cases hdegree : degree current.value < degree shifted
+            · exact ⟨⟨signedShift k, shifted⟩,
+                by simpa [hdegree] using hstep.symm⟩
             · exact ⟨current, by simpa [hdegree] using hstep.symm⟩
       obtain ⟨next, hnext⟩ := hnextExists
       subst nextBest
       obtain ⟨hnextOut, htailMax⟩ := ih (some next) htail
       obtain ⟨hbestNext, hshiftNext⟩ :=
-        extendStep_bounds theta alpha best k next hstep
+        extendShiftStep_bounds theta alpha best k next hstep
       constructor
       · intro current hcurrent
         exact (hbestNext current hcurrent).trans
@@ -303,59 +308,6 @@ private theorem extendFold_max (theta alpha : AlgebraicNumber)
             (hnextOut next rfl)
         · exact htailMax index hindex candidate hcandidate
 
-private theorem extendStep_source (theta alpha : AlgebraicNumber)
-    (best : Option AlgebraicNumber) (k : Nat) (next : AlgebraicNumber)
-    (hnext : extendStep theta alpha best k = some (some next)) :
-    best = some next ∨
-      shift? theta alpha (signedShift k) = some next := by
-  obtain ⟨candidate, hcandidate⟩ := Option.isSome_iff_exists.mp
-    (shift?_isSome theta alpha (signedShift k))
-  unfold extendStep at hnext
-  rw [hcandidate] at hnext
-  cases best with
-  | none =>
-      change some (some candidate) = some (some next) at hnext
-      have heq : candidate = next :=
-        Option.some.inj (Option.some.inj hnext)
-      right
-      exact hcandidate.trans (congrArg some heq)
-  | some current =>
-      change some (if degree current < degree candidate then some candidate
-        else some current) = some (some next) at hnext
-      by_cases hdegree : degree current < degree candidate
-      · right
-        simp [hdegree] at hnext
-        subst next
-        exact hcandidate
-      · left
-        simp [hdegree] at hnext
-        subst next
-        rfl
-
-private theorem extendFold_source (theta alpha : AlgebraicNumber)
-    (indices : List Nat) (best : Option AlgebraicNumber)
-    (out : AlgebraicNumber)
-    (hfold : indices.foldlM (extendStep theta alpha) best =
-      some (some out)) :
-    best = some out ∨
-      ∃ k ∈ indices,
-        shift? theta alpha (signedShift k) = some out := by
-  induction indices generalizing best with
-  | nil =>
-      left
-      exact Option.some.inj hfold
-  | cons k indices ih =>
-      rw [List.foldlM_cons] at hfold
-      obtain ⟨nextBest, hstep, htail⟩ :=
-        Option.bind_eq_some_iff.mp hfold
-      rcases ih nextBest htail with hsame | ⟨index, hindex, hshift⟩
-      · rw [hsame] at hstep
-        rcases extendStep_source theta alpha best k out hstep with
-          hbest | hshift
-        · exact Or.inl hbest
-        · exact Or.inr ⟨k, by simp, hshift⟩
-      · exact Or.inr ⟨index, by simp [hindex], hshift⟩
-
 /-- A successful maximum-degree shift search reaches the full compositum
 degree. -/
 theorem extend?_degree (theta alpha gamma : AlgebraicNumber)
@@ -364,26 +316,34 @@ theorem extend?_degree (theta alpha gamma : AlgebraicNumber)
       finrank Rat Rat⟮theta.toComplex, alpha.toComplex⟯ := by
   let upper := degree theta * degree alpha
   let count := Nat.choose upper 2 + 1
-  unfold extend? at hgamma
-  change ((List.range count).foldlM (extendStep theta alpha) none >>=
-    fun best => best) = some gamma at hgamma
+  obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
+    (extendShift?_isSome theta alpha)
+  have hvalue : shifted.value = gamma := by
+    unfold extend? at hgamma
+    rw [hshifted] at hgamma
+    exact Option.some.inj hgamma
+  subst gamma
+  have hselected := hshifted
+  unfold extendShift? at hshifted
+  change ((List.range count).foldlM
+    (extendShiftStep theta alpha) none >>= fun best => best) =
+      some shifted at hshifted
   obtain ⟨best, hfold, hbest⟩ :=
-    Option.bind_eq_some_iff.mp hgamma
+    Option.bind_eq_some_iff.mp hshifted
   subst best
-  obtain ⟨_, hmaximum⟩ := extendFold_max theta alpha
-    (List.range count) none gamma hfold
+  obtain ⟨_, hmaximum⟩ := extendShiftFold_max theta alpha
+    (List.range count) none shifted hfold
   obtain ⟨k, hk, candidate, hcandidate, hcandidateDegree⟩ :=
     exists_shift_degree_eq theta alpha
   have hlower :
-      finrank Rat Rat⟮theta.toComplex, alpha.toComplex⟯ ≤ degree gamma := by
+      finrank Rat Rat⟮theta.toComplex, alpha.toComplex⟯ ≤
+        degree shifted.value := by
     rw [← hcandidateDegree]
     exact hmaximum k (List.mem_range.mpr hk) candidate hcandidate
-  have hsource := extendFold_source theta alpha
-    (List.range count) none gamma hfold
-  rcases hsource with hnone | ⟨k, _hk, hshift⟩
-  · simp at hnone
-  · exact le_antisymm
-      (shift_degree_le theta alpha gamma (signedShift k) hshift) hlower
+  have hsource := extendShift?_source theta alpha shifted hselected
+  exact le_antisymm
+    (shift_degree_le theta alpha shifted.value shifted.shift hsource)
+    hlower
 
 /-- The maximum-degree shift returned by `extend?` generates exactly the
 compositum of its two inputs. -/
@@ -391,20 +351,18 @@ theorem extend?_field (theta alpha gamma : AlgebraicNumber)
     (hgamma : extend? theta alpha = some gamma) :
     Rat⟮gamma.toComplex⟯ =
       Rat⟮theta.toComplex, alpha.toComplex⟯ := by
-  let upper := degree theta * degree alpha
-  let count := Nat.choose upper 2 + 1
-  unfold extend? at hgamma
-  change ((List.range count).foldlM (extendStep theta alpha) none >>=
-    fun best => best) = some gamma at hgamma
-  obtain ⟨best, hfold, hbest⟩ :=
-    Option.bind_eq_some_iff.mp hgamma
-  subst best
-  obtain ⟨k, _hk, hshift⟩ := (extendFold_source theta alpha
-    (List.range count) none gamma hfold).resolve_left (by simp)
+  obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
+    (extendShift?_isSome theta alpha)
+  have hvalue : shifted.value = gamma := by
+    unfold extend? at hgamma
+    rw [hshifted] at hgamma
+    exact Option.some.inj hgamma
+  have hshift := extendShift?_source theta alpha shifted hshifted
+  rw [hvalue] at hshift
   let K : IntermediateField Rat ℂ :=
     Rat⟮theta.toComplex, alpha.toComplex⟯
   have hmember : gamma.toComplex ∈ K := by
-    rw [shift?_sound theta alpha (signedShift k) hshift]
+    rw [shift?_sound theta alpha shifted.shift hshift]
     apply K.add_mem
     · exact IntermediateField.mem_adjoin_pair_left
         Rat theta.toComplex alpha.toComplex

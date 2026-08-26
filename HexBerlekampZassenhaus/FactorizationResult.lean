@@ -429,14 +429,6 @@ def firstSome {α β : Type} : List α → (α → Option β) → Option β
       | some y => some y
       | none => firstSome xs f
 
-private theorem polyProduct_contentFactorArray (content : Int) :
-    Array.polyProduct (contentFactorArray content) =
-      if content = 1 then 1 else DensePoly.C content := by
-  unfold contentFactorArray
-  by_cases hcontent : content = 1
-  · simp [hcontent, ZPoly.polyProduct_empty]
-  · simp [hcontent, Array.polyProduct]
-
 private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
     Array.polyProduct (repeatedPartFactorArray repeatedPart) =
       if repeatedPart = 1 then 1 else repeatedPart := by
@@ -444,10 +436,6 @@ private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
   by_cases hrepeated : repeatedPart = 1
   · simp [hrepeated, ZPoly.polyProduct_empty]
   · simp [hrepeated, Array.polyProduct]
-
-private theorem polyProduct_replicate_X_zero :
-    Array.polyProduct ((List.replicate 0 ZPoly.X).toArray) = 1 := by
-  rfl
 
 private theorem polyProduct_replicate_X_succ (power : Nat) :
     Array.polyProduct ((List.replicate (power + 1) ZPoly.X).toArray) =
@@ -775,14 +763,6 @@ private theorem polyProduct_reassemblePolynomialFactors
         rw [ZPoly.polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors,
           polyProduct_xPowerFactorArray_mul, polyProduct_repeatedPartFactorArray_eq]
 
-private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationData) :
-    Array.polyProduct (normalizationPrefixFactors d) =
-      Array.polyProduct (contentFactorArray d.content) *
-        (Array.polyProduct (xPowerFactorArray d.xPower) *
-          Array.polyProduct (repeatedPartFactorArray d.repeatedPart)) := by
-  unfold normalizationPrefixFactors
-  rw [ZPoly.polyProduct_append, ZPoly.polyProduct_append, DensePoly.mul_assoc_poly (S := Int)]
-
 private theorem polyPow_zero (g : ZPoly) :
     Factorization.polyPow g 0 = (1 : ZPoly) := rfl
 
@@ -918,6 +898,7 @@ private theorem shouldRecordPolynomialFactor_eq_true_of_ne
   unfold shouldRecordPolynomialFactor
   simp [hzero, hone, hneg_one]
 
+/-- Sign normalization preserves nonzeroness. -/
 theorem normalizeFactorSign_ne_zero_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign f ≠ 0 := by

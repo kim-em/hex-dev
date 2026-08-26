@@ -258,7 +258,7 @@ of the full-precision cost:
 zero. Its logical body is the bounded schoolbook convolution. -/
 def mulUpTo (m : Nat) (a b : TSeries R n) : TSeries R n
 
-/-- The measured schoolbook/Karatsuba implementation of `mulUpTo`. -/
+/-- The allocation-conscious schoolbook implementation of `mulUpTo`. -/
 def mulUpToImpl (m : Nat) (a b : TSeries R n) : TSeries R n
 
 @[csimp] theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl
@@ -267,25 +267,23 @@ theorem coeff_mulUpTo (m) (a b) (i) (hi : i < n) :
     (mulUpTo m a b).coeff i = if i < m then (a * b).coeff i else 0
 ```
 
-`mulUpTo n = (· * ·)` up to the propositional equality above, and
-`mulUpTo` is the single place fast multiplication goes. That is
-the reason the iterations are written against it rather than against
-`*`.
+`mulUpTo n = (· * ·)` up to the propositional equality above. The Newton
+iterations use `mulUpTo` so each step computes only its useful prefix rather
+than repeatedly paying for the final precision.
 
-**Fast series multiplication lands in this library, not in
-hex-poly-fast.** `mulUpTo` is a concrete definition here, and a library
-above cannot change what `invOfUnit` calls; saying otherwise would be
-wrong about how Lean works. `mulUpToImpl` therefore uses schoolbook below a
-measured cutoff and a clipped Karatsuba recursion above it, with the same
-signature and `coeff_mulUpTo` theorem. The recursion needs only coefficient
-addition, subtraction, and multiplication and so adds no dependency.
+**The generic multiplication contract is schoolbook.** Both `mulUpTo` and its
+compiled implementation intentionally require only `Zero`, `Add`, and `Mul`.
+Three-product Karatsuba needs subtraction to recover its middle term, so it
+cannot implement this signature over every admitted coefficient type. A
+future subtraction-capable fast path must therefore be a separately typed API
+with an explicit dispatch story; it must not be described as the compiled
+replacement for this semiring-generic definition.
 
 [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) owns polynomial reversal and a separate
 plan-driven Newton inverse. That inverse is proved equal to `invOfUnit` after
 conversion, but it does not modify this function or route a coefficient-
 specific NTT/Kronecker plan into this library. This deliberate duplication
-keeps the DAG acyclic and lets this library's own `exp`, `log`, square root,
-and reversion benefit from subquadratic bounded products.
+keeps the DAG acyclic.
 
 ## Degenerate precisions
 
@@ -351,6 +349,17 @@ theorem coeff_extend   (i) (hi : i < m) : (a.extend m h).coeff i = a.coeff i
 theorem truncate_extend : (a.extend m h).truncate n h' = a
 theorem coeff_mulXPow  (i) (hi : i < n) :
     (a.mulXPow k).coeff i = if k ≤ i then a.coeff (i - k) else 0
+theorem divXPow?_eq_some_iff (b : TSeries R (n - k)) :
+    divXPow? a k = some b ↔
+      (∀ i, i < min k n → a.coeff i = 0) ∧
+        ∀ i, i < n - k → b.coeff i = a.coeff (i + k)
+theorem divXPow?_mulXPow :
+    divXPow? (a.mulXPow k) k =
+      some (a.truncate (n - k) (Nat.sub_le n k))
+theorem valuation?_eq_some_iff :
+    valuation? a = some k ↔
+      k < n ∧ a.coeff k ≠ 0 ∧ ∀ i, i < k → a.coeff i = 0
+theorem valuation?_eq_none_iff_eq_zero : valuation? a = none ↔ a = 0
 theorem coeff_deriv    (i) (hi : i < n - 1) :
     a.deriv.coeff i = ((i + 1 : Nat) : R) * a.coeff (i + 1)
 ```
@@ -451,6 +460,14 @@ two generic instances are what make the claim "`exp` and `log` at
 precisions `0` and `1` work over any ring" a fact about instance
 resolution rather than only about the proposition being satisfiable.
 
+The core also ships higher-priority instances for the syntactic indices
+`0 - k`, `k - k`, and `2 - 1`. They are intentionally redundant at the
+proposition level: all three reduce to bounds `0` or `1`. They are present
+because typeclass matching across module boundaries does not reliably reduce
+the subtraction before matching the generic `0` and `1` instances. These are
+the only subtraction-shaped instances; arbitrary weakening continues to use
+the explicit `NatInverses.mono` definition so instance search cannot loop.
+
 The `ZMod64 p` instances are **not**
 here, because `ZMod64` is hex-mod-arith's type and depending on
 hex-mod-arith would add an edge this library does not need. They belong
@@ -463,7 +480,7 @@ Per-algorithm hypotheses, collected:
 |---|---|
 | `invOfUnit a u` | `a.coeff 0 * u = 1` |
 | `inv?` | `[UnitOps R] [LawfulUnitOps R]` |
-| `sqrtOfRoot a r v` | `r * r = a.coeff 0` and `(2 * r) * v = 1` |
+| `sqrtOfRoot a r v` | `r * r = a.coeff 0` and `((1 + 1) * r) * v = 1` |
 | `sqrt? a r` | `[UnitOps R] [LawfulUnitOps R]`, and `r` from the caller |
 | `exp` | `a.coeff 0 = 0` and `[NatInverses R (n - 1)]` |
 | `log` | `(a - 1).coeff 0 = 0` and `[NatInverses R (n - 1)]` |
@@ -519,7 +536,8 @@ theorem rev?_isSome_iff (b : TSeries R n) :
 
 theorem sqrt?_isSome_iff (a : TSeries R n) (r : R) :
     (sqrt? a r).isSome = true ↔
-      n = 0 ∨ (r * r = a.coeff 0 ∧ (n ≤ 1 ∨ ∃ v, (2 * r) * v = 1))
+      n = 0 ∨
+        (r * r = a.coeff 0 ∧ (n ≤ 1 ∨ ∃ v, ((1 + 1) * r) * v = 1))
 ```
 
 **Where the degenerate disjunct goes is different for each of the
@@ -550,7 +568,7 @@ that twice. Putting a `SqrtOps R` class here would oblige this library
 to carry instances for rings it does not depend on. The root is an
 argument in both forms, and the choice of root is a real choice: `r` and
 `-r` give the two square roots when `2` is a unit. What `sqrt?` does
-look up is the inverse of `2 * r`, which is what `UnitOps` is for.
+look up is the inverse of `(1 + 1) * r`, which is what `UnitOps` is for.
 
 ## Newton iteration and the step count
 
@@ -629,11 +647,31 @@ implementation that omits these still gets the right answers and the
 wrong complexity, which is why the bench family below compares ratios
 across the ladder rather than checking a single precision.
 
+Prefix agreement is the common statement of those guarantees:
+
+```lean
+def Agree (p : Nat) (a b : TSeries R n) : Prop :=
+  ∀ i, i < n → i < p → a.coeff i = b.coeff i
+
+theorem sqrtUpTo_agree (m : Nat) (hr : r * r = a.coeff 0)
+    (hv : ((1 + 1) * r) * v = 1) :
+    Agree m (sqrtUpTo m a r v) (sqrtOfRoot a r v)
+theorem expUpTo_agree (m : Nat) (ha : a.coeff 0 = 0) :
+    Agree m (expUpTo m a) (exp a)
+theorem revUpTo_agree (m : Nat) (h0 : b.coeff 0 = 0)
+    (hv : b.coeff 1 * v = 1) :
+    Agree m (revUpTo m b v) (revOfUnit b v)
+```
+
+The shared Newton iterator also exposes `steps_mono` and `newton_agree`:
+increasing the target never decreases the iteration count, and later
+iterates preserve every prefix certified stable by the step-specific proof.
+
 One cost the arithmetic-operation count does not capture: each step
 writes a `TSeries R n` of full length, so there is `Ω(n)` allocation or
 copying per step and `Ω(n log n)` across the iteration. That is
-dominated by `M(n)` at schoolbook multiplication and would not be under
-a quasi-linear one, so the reusable-buffer implementation that design
+dominated by `M(n)` at schoolbook multiplication. The reusable-buffer
+implementation that design
 principle 3 asks for (`Hex.Vector.modify` on a uniquely owned buffer) is
 a requirement here rather than an optimisation.
 
@@ -674,42 +712,45 @@ commutative, `a` is a unit, and inverses of a unit are unique. It is
 what lets every later theorem say "the inverse" rather than "an
 inverse".
 
-**Against a naive baseline, Newton inversion wins only after the measured
-Karatsuba crossover.** The linear recurrence
+**Against a naive baseline, Newton inversion has a bounded constant-factor
+cost.** The linear recurrence
 `b_i = -u · Σ_{j<i} a_{i-j} b_j` and schoolbook Newton both use `O(n²)`
-coefficient operations. Above the `mulUpToImpl` crossover, bounded Newton is
-subquadratic. The benchmark therefore requires a bounded constant ratio in
-the schoolbook range and a growing win in the Karatsuba range; a claim that
-Newton wins below the multiplication crossover would still be false.
+coefficient operations. The benchmark therefore requires Newton to remain
+within `4x` of the recurrence across the complete ladder; it does not claim a
+speedup from a multiplication algorithm this library does not provide.
 
 ## Square root
 
 ```lean
 /-- The square root of `a` with constant term `r`, given `v` inverting
-`2 * r`. -/
+`(1 + 1) * r`. -/
 def sqrtOfRoot (a : TSeries R n) (r v : R) : TSeries R n
 /-- The square root of `a` with constant term `r`, looking up the
-inverse of `2 * r` and checking that `r` really is a root of the
+inverse of `(1 + 1) * r` and checking that `r` really is a root of the
 constant term. -/
 def sqrt? [UnitOps R] (a : TSeries R n) (r : R) : Option (TSeries R n)
 
 theorem sqrtOfRoot_sq (a : TSeries R n) (r v : R)
-    (hr : r * r = a.coeff 0) (hv : (2 * r) * v = 1) :
+    (hr : r * r = a.coeff 0) (hv : ((1 + 1) * r) * v = 1) :
     sqrtOfRoot a r v * sqrtOfRoot a r v = a
 
-theorem sqrtOfRoot_coeff_zero (hr : r * r = a.coeff 0) (hv : (2 * r) * v = 1)
+theorem sqrtOfRoot_coeff_zero (hr : r * r = a.coeff 0)
+    (hv : ((1 + 1) * r) * v = 1)
     (h : 0 < n) : (sqrtOfRoot a r v).coeff 0 = r
 
-theorem sqrt_unique (s t : TSeries R n) (r v : R) (hv : (2 * r) * v = 1)
+theorem sqrt_unique (s t : TSeries R n) (r v : R)
+    (hv : ((1 + 1) * r) * v = 1)
     (hs : s * s = t * t)
     (hsr : s.coeff 0 = r) (htr : t.coeff 0 = r) : s = t
 ```
 
-**One hypothesis, `2 * r` invertible, rather than two.** In a
+**One hypothesis, `(1 + 1) * r` invertible, rather than two.** In a
 commutative ring a product is a unit exactly when both factors are, so
-`(2 * r) * v = 1` says precisely that `2` is a unit and `r` is a unit,
-and it is the quantity the iteration divides by. Splitting it into two
-hypotheses would state the same thing less usefully.
+`((1 + 1) * r) * v = 1` says precisely that `1 + 1` is a unit and `r`
+is a unit, and it is the quantity the iteration divides by. This spelling is
+load-bearing in the Mathlib-free core, where no `OfNat R 2` instance is
+assumed. Splitting it into two hypotheses would state the same thing less
+usefully.
 
 Both halves are needed, and two examples show that neither one alone is
 enough. Over `ZMod 2` the constant root `r = 1` is a unit while `2` is
@@ -769,6 +810,13 @@ theorem exp_log (a : TSeries R n) (h : (a - 1).coeff 0 = 0) : exp (log a) = a
 theorem exp_add (a b : TSeries R n) (ha : a.coeff 0 = 0) (hb : b.coeff 0 = 0) :
     exp (a + b) = exp a * exp b
 ```
+
+The `h` arguments on `deriv_log` and `log_coeff_zero` are part of the
+uniform public logarithm contract and are retained for API stability. Their
+individual proofs do not need the hypothesis because the total definition
+always integrates with zero constant coefficient, but callers should not
+have to switch theorem signatures when moving between the basic and inverse
+logarithm laws.
 
 `log a` is `integrate (deriv a * inv a)` followed by a truncation back
 to `n`:
@@ -882,8 +930,7 @@ Two algorithms, with the second the intended one:
   manipulating formal power series" (JACM 25, 1978).
 
 Brent-Kung is a real improvement even at schoolbook multiplication,
-`O(n^{2.5})` against Horner's `O(n³)`, so unlike inversion the fast
-route pays before hex-poly-fast exists. The crossover between them is a
+`O(n^{2.5})` against Horner's `O(n³)`. The crossover between them is a
 measured number and this SPEC does not guess it. The near-linear
 composition algorithms published since 2024 are out of scope and are
 recorded in the open questions.
@@ -894,6 +941,9 @@ recorded in the open questions.
 /-- The compositional inverse of `b`, given `v` inverting `b.coeff 1`. -/
 def revOfUnit (b : TSeries R n) (v : R) : TSeries R n
 def rev? [UnitOps R] (b : TSeries R n) : Option (TSeries R n)
+/-- Direct evaluation of the Lagrange coefficient formula. -/
+def revLagrange [NatInverses R (n - 1)]
+    (b : TSeries R n) (v : R) : TSeries R n
 
 theorem revOfUnit_comp (b : TSeries R n) (v : R)
     (h0 : b.coeff 0 = 0) (hv : b.coeff 1 * v = 1) :
@@ -901,6 +951,10 @@ theorem revOfUnit_comp (b : TSeries R n) (v : R)
 
 theorem revOfUnit_coeff_one (h0 : b.coeff 0 = 0) (hv : b.coeff 1 * v = 1)
     (h : 1 < n) : (revOfUnit b v).coeff 1 = v
+
+theorem revLagrange_eq [NatInverses R (n - 1)]
+    (h0 : b.coeff 0 = 0) (hv : b.coeff 1 * v = 1) :
+    revLagrange b v = revOfUnit b v
 
 /-- At precision one there is no linear coefficient, and the only series
 with zero constant term is `0`, which reverts to itself. -/
@@ -1038,7 +1092,7 @@ disjunction inside, and writing it as `n ≤ 1 ∨ (b.coeff 0 = 0 ∧ …)`
 claims every precision-one series is reversible, which is false.
 
 `sqrt?` splits the same way and in the same place. At `n ≤ 1` the
-unitality of `2 * r` is irrelevant, since `C r` squares to `C (r * r)`
+unitality of `(1 + 1) * r` is irrelevant, since `C r` squares to `C (r * r)`
 and nothing has to be lifted, but `r * r = a.coeff 0` still has to hold.
 So `sqrt? (4 + x) 2` over `ℤ` is `some (C 2)` at precision one and
 `none` at precision two.
@@ -1054,7 +1108,7 @@ and `1` over `ℤ` for exactly this reason.
 ## Complexity
 
 `M(m)` is the cost of `mulUpToImpl m` in coefficient operations: `O(m²)`
-below the measured schoolbook crossover and `O(m^(log 2 3))` above it.
+for the current schoolbook implementation.
 
 | operation | algorithm | cost |
 |---|---|---|
@@ -1079,9 +1133,10 @@ rows all tie the naive linear recurrence for the same operation, which
 is `O(n²)` in each case, and lose on the constant: bounded Newton
 inversion does `(4/3)n²` coefficient multiplications against the
 recurrence's `n²/2`. Only composition and reversion win outright today.
-The table should therefore be read as a description of what happens when
-`M` improves rather than as a claim of a present-day win across the
-board.
+These are coefficient-operation bounds. The exact-`Rat` benchmark ladders
+also declare their coefficient-bit-growth normalization explicitly so that a
+wallclock verdict does not pretend arbitrary-precision operations are
+constant-time.
 
 ## Kernel exposure
 
@@ -1163,11 +1218,11 @@ Cases that must be present:
   checking the two answers are negatives of each other.
 - `sqrt?` over `Int` on `4 + x` with `r = 2`, expecting `some (C 2)` at
   precisions `0` and `1` and `none` from precision `2` on, because
-  `2 * r = 4` is not a unit of `ℤ` but nothing needs lifting below
+  `(1 + 1) * r = 4` is not a unit of `ℤ` but nothing needs lifting below
   precision `2`.
 - `sqrt?` over `Rat` on `1 + x` with `r = 2`, expecting `none` because
   `2 * 2 ≠ 1 = a.coeff 0`. This is the check on the other half of
-  `sqrt?_isSome_iff`, which an implementation that only tests `2 * r`
+  `sqrt?_isSome_iff`, which an implementation that only tests `(1 + 1) * r`
   for unitality fails.
 - `exp` and `log` over `Rat` at precisions `1` through `16`, with
   `log (exp a) = a` and `exp (a + b) = exp a * exp b` checked in Lean as
@@ -1198,10 +1253,7 @@ what a downstream proof pays.
 Families:
 
 - **Multiplication**, precisions 8 to 4096 over `Int` and `Rat`. The
-  baseline every other family is read against. It compares forced schoolbook,
-  forced Karatsuba, and production dispatch at cells immediately around the
-  crossover; no selected production cell may lose outside the benchmark
-  protocol's uncertainty band.
+  production schoolbook baseline every other family is read against.
 - **Inverse**, the same ladder, Newton against the linear recurrence.
 - **`exp` and `log`**, precisions 8 to 1024 over `Rat`.
 - **Square root**, the same ladder over `Rat`.
@@ -1215,9 +1267,9 @@ Families:
 `fmpq_poly_sqrt_series`, `fmpq_poly_compose_series`,
 `fmpq_poly_revert_series`) are `informational`, not `gating`. The
 rationale is structural and is the same one hex-poly records for
-`fmpz_poly`: FLINT's series routines are built on a tuned
-Karatsuba/Toom-Cook/FFT multiplication, while this library stops at generic
-Karatsuba and has no coefficient-specific transform. The ratio therefore
+rational polynomial operations: FLINT's series routines are built on tuned,
+coefficient-specific Karatsuba/Toom-Cook/FFT multiplication, while this
+library uses a generic schoolbook kernel. The ratio therefore
 continues to measure a known kernel gap rather than only the Newton iteration,
 so it does not gate.
 
@@ -1301,11 +1353,13 @@ theorem ofPowerSeries_substInvOfIsUnit (g : PowerSeries R)
     ofPowerSeries (n := n) (g.substInvOfIsUnit hu)
       = revOfUnit (ofPowerSeries g) ((hu.unit⁻¹ : Rˣ) : R)
 
-theorem ofPowerSeries_exp [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_exp [Algebra ℚ R] [NatInverses R (n - 1)]
+    (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 0) :
     ofPowerSeries (n := n) ((PowerSeries.exp R).subst f) = exp (ofPowerSeries f)
 
-theorem ofPowerSeries_logOf [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_logOf [Algebra ℚ R] [NatInverses R (n - 1)]
+    (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 1) :
     ofPowerSeries (n := n) (PowerSeries.logOf f) = log (ofPowerSeries f)
 ```
@@ -1406,8 +1460,8 @@ operation.
 ## Milestones
 
 1. **The type and the ring.** `TSeries`, `coeff`, `ofFn`, `ext`,
-   `DecidableEq`, the ring operations, `mulUpTo`, its measured
-   schoolbook/Karatsuba `mulUpToImpl`, and the
+   `DecidableEq`, the ring operations, `mulUpTo`, its allocation-conscious
+   schoolbook `mulUpToImpl`, and the
    `Lean.Grind.CommRing` instance. The `decide +kernel` test lands here,
    because that is when the `Vector` instance choice is still cheap to
    change.
@@ -1469,7 +1523,7 @@ HexTruncatedSeriesMathlib.lean
       comparators:
         - tool: FLINT fmpq_poly truncated series routines via python-flint
           class: informational
-          rationale: "FLINT's series routines run on tuned Karatsuba/Toom-Cook/FFT multiplication while this library stops at generic Karatsuba, so the measured ratio includes a known coefficient-specific kernel gap."
+          rationale: "FLINT's series routines run on tuned coefficient-specific Karatsuba/Toom-Cook/FFT multiplication while this library uses a generic schoolbook kernel, so the measured ratio includes a known kernel gap."
       input_families:
         - name: multiplication
           description: truncated products at precisions 8 to 4096 over Int and Rat
@@ -1517,6 +1571,11 @@ release time.
 - **The Horner/Brent-Kung crossover**, and whether Brent-Kung's block
   size should be `⌈√n⌉` or tuned. Both are measured numbers and this
   SPEC does not guess them.
+- **Whether a subtraction-capable fast multiplication API belongs here.**
+  Three-product Karatsuba cannot implement the current semiring-generic
+  `mulUpTo` signature. Any future fast path needs an explicitly stronger
+  coefficient interface and a dispatch design that the Newton callers can
+  actually select.
 - **Whether near-linear composition belongs here later.** Kinoshita and
   Li, "Power series composition in near-linear time" (2024), supersedes
   Brent-Kung asymptotically. It is out of scope

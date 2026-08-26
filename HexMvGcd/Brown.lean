@@ -251,7 +251,7 @@ def brownStepOps {n : Nat} {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Inv R]
     [Dvd R] [BezoutOps R]
     (lower : BrownOpsAt R (n + 1)) : BrownOpsAt R (n + 2) where
-  candidate? := fun cmp _ pointFuel points f h =>
+  candidate? := fun cmp _ pointFuel points f h => do
     if f == 0 || h == 0 || polyIsUnit f || polyIsUnit h then
       some (prsCert f h).gcd
     else
@@ -259,21 +259,37 @@ def brownStepOps {n : Nat} {R : Type u}
       let outer : Fin (n + 2) := Fin.last (n + 1)
       let fView := toUnivariate main Mono.lex f
       let hView := toUnivariate main Mono.lex h
-      let fContent := contentCertWith (fun a b => prsCert a b)
-        fView.toArray.toList
-      let hContent := contentCertWith (fun a b => prsCert a b)
-        hView.toArray.toList
-      let common := prsCert fContent.value hContent.value
-      let fPrimitive := quotient f (constIn main Mono.lex fContent.value)
-      let hPrimitive := quotient h (constIn main Mono.lex hContent.value)
-      let gamma :=
-        (prsCert (brownMainLeadingCoeff fPrimitive)
-          (brownMainLeadingCoeff hPrimitive)).gcd
+      let lowerGcd? := fun a b => do
+        let candidate ← lower.candidate? Mono.lex pointFuel points a b
+        some (polyNormalize candidate)
+      -- A recursive Brown decline must abort this speculative image.  Falling
+      -- back to multivariate PRS here can turn one unlucky small-prime image
+      -- into the dominant cost of the whole modular route; the outer prime
+      -- loop can instead try the next bundled modulus immediately.
+      let fContent ← fView.toArray.toList.foldlM lowerGcd? 0
+      let hContent ← hView.toArray.toList.foldlM lowerGcd? 0
+      let common ← lowerGcd? fContent hContent
+      let fPrimitive := quotient f (constIn main Mono.lex fContent)
+      let hPrimitive := quotient h (constIn main Mono.lex hContent)
+      let gamma ← lowerGcd? (brownMainLeadingCoeff fPrimitive)
+        (brownMainLeadingCoeff hPrimitive)
       let sampleTarget :=
         max (degreeOf outer fPrimitive) (degreeOf outer hPrimitive) + 1
+      let reconstruct := fun
+          (samples : List (R × MvPoly (n + 1) R Mono.lex)) => do
+        let interpolation ← brownInterpolate? samples
+        let reconstructed :=
+          ofUnivariate (cmp := cmp) outer Mono.lex interpolation
+        let reconstructedView := toUnivariate main Mono.lex reconstructed
+        let reconstructedContent ←
+          reconstructedView.toArray.toList.foldlM lowerGcd? 0
+        let primitive := quotient reconstructed
+          (constIn main Mono.lex reconstructedContent)
+        some (constIn main Mono.lex common * primitive)
       let rec loop (remaining : List R) (fuel : Nat)
           (state : BrownPointState)
-          (samples : List (R × MvPoly (n + 1) R Mono.lex)) :
+          (samples : List (R × MvPoly (n + 1) R Mono.lex))
+          (previous? : Option (MvPoly (n + 2) R cmp)) :
           Option (MvPoly (n + 2) R cmp) := do
         if fuel = 0 then none else pure PUnit.unit
         match remaining with
@@ -283,54 +299,46 @@ def brownStepOps {n : Nat} {R : Type u}
             let hImage := brownEvalLast point hPrimitive
             let gammaAt := brownEvalLast point gamma
             if brownPointBad point gamma fPrimitive hPrimitive then
-              loop rest (fuel - 1) state samples
+              loop rest (fuel - 1) state samples previous?
             else
-              match lower.candidate? Mono.lex (fuel - 1) rest fImage hImage with
-              | none => loop rest (fuel - 1) state samples
+              -- Each recursive variable has an independent interpolation
+              -- axis; consuming an outer point must not shorten its supply.
+              match lower.candidate? Mono.lex pointFuel points fImage hImage with
+              | none => loop rest (fuel - 1) state samples previous?
               | some rawImage =>
                   let imageLeading := brownMainLeadingCoeff rawImage
                   match divExact? gammaAt imageLeading with
-                  | none => loop rest (fuel - 1) state samples
+                  | none => loop rest (fuel - 1) state samples previous?
                   | some scale =>
                       let corrected := constIn (0 : Fin (n + 1)) Mono.lex scale * rawImage
                       if brownMainLeadingCoeff corrected != gammaAt then
-                        loop rest (fuel - 1) state samples
+                        loop rest (fuel - 1) state samples previous?
                       else
                         let imageDegree := degreeOf (0 : Fin (n + 1)) corrected
                         let offered := state.offer true true imageDegree
                         match offered.1 with
                         | .bad | .unlucky =>
-                            loop rest (fuel - 1) offered.2 samples
+                            loop rest (fuel - 1) offered.2 samples previous?
                         | .restart =>
-                            if sampleTarget ≤ 1 then
-                              let interpolation ← brownInterpolate? [(point, corrected)]
-                              let reconstructed :=
-                                ofUnivariate (cmp := cmp) outer Mono.lex interpolation
-                              let reconstructedView := toUnivariate main Mono.lex reconstructed
-                              let reconstructedContent := contentCertWith
-                                (fun a b => prsCert a b)
-                                reconstructedView.toArray.toList
-                              let primitive := quotient reconstructed
-                                (constIn main Mono.lex reconstructedContent.value)
-                              some (constIn main Mono.lex common.gcd * primitive)
-                            else
-                              loop rest (fuel - 1) offered.2 [(point, corrected)]
+                            let nextSamples := [(point, corrected)]
+                            let next ← reconstruct nextSamples
+                            if sampleTarget ≤ 1 then some next
+                            else loop rest (fuel - 1) offered.2 nextSamples (some next)
                         | .accept =>
                             let nextSamples := (point, corrected) :: samples
-                            if sampleTarget ≤ offered.2.accepted then
-                              let interpolation ← brownInterpolate? nextSamples
-                              let reconstructed :=
-                                ofUnivariate (cmp := cmp) outer Mono.lex interpolation
-                              let reconstructedView := toUnivariate main Mono.lex reconstructed
-                              let reconstructedContent := contentCertWith
-                                (fun a b => prsCert a b)
-                                reconstructedView.toArray.toList
-                              let primitive := quotient reconstructed
-                                (constIn main Mono.lex reconstructedContent.value)
-                              some (constIn main Mono.lex common.gcd * primitive)
-                            else
-                              loop rest (fuel - 1) offered.2 nextSamples
-      loop points pointFuel {} []
+                            match previous? with
+                            | some previous =>
+                                if brownEvalLast point previous == corrected then
+                                  some previous
+                                else
+                                  let next ← reconstruct nextSamples
+                                  if sampleTarget ≤ offered.2.accepted then some next
+                                  else loop rest (fuel - 1) offered.2 nextSamples (some next)
+                            | none =>
+                                let next ← reconstruct nextSamples
+                                if sampleTarget ≤ offered.2.accepted then some next
+                                else loop rest (fuel - 1) offered.2 nextSamples (some next)
+      loop points pointFuel {} [] none
 
 /-- Construct all recursive point layers by arity. -/
 def brownOps {R : Type u}
@@ -609,13 +617,16 @@ delegated arity-one case. -/
 def intConcreteProposalGeneric {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Int cmp) : GcdProposal n Int cmp :=
-  let fast := intFastProposal cfg f h
-  match fast.cert? with
-  | some _ => fast
+  match remainderCert? f h with
+  | some cert => ⟨some cert, cfg.rand⟩
   | none =>
-      match intHeuristicCert? cfg f h with
-      | some cert => ⟨some cert, fast.rand⟩
-      | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
+      let fast := intFastProposal cfg f h
+      match fast.cert? with
+      | some _ => fast
+      | none =>
+          match intHeuristicCert? cfg f h with
+          | some cert => ⟨some cert, fast.rand⟩
+          | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
 
 /-- Concrete integer producer.  Arity one delegates immediately to the
 released dense integer kernel; other arities use the multivariate routes. -/

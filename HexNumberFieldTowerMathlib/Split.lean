@@ -525,14 +525,6 @@ private theorem identity_preserves (T : NumberTower) :
   intro a
   rfl
 
-private theorem trans_preserves {T : NumberTower} (outer : Extension T)
-    (inner : Extension outer.tower)
-    (houter : outer.PreservesEmbedding)
-    (hinner : inner.PreservesEmbedding) :
-    (outer.trans inner).PreservesEmbedding := by
-  intro a
-  exact (hinner (outer.embed a)).trans (houter a)
-
 private abbrev composeExtension {T : NumberTower} (outer : Extension T)
     (inner : Extension outer.tower) : Extension T :=
   { tower := inner.tower

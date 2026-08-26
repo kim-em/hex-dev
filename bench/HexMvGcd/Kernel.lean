@@ -162,6 +162,24 @@ theorem bezoutSplitCorrupt :
     checkCoprime x (x + 1) badBezoutSplit = false := by
   decide +kernel
 
+private def directBezout : CoprimeCert 1 Int Mono.lex :=
+  .bezout (-1) 1
+
+private def badDirectBezout : CoprimeCert 1 Int Mono.lex :=
+  .bezout 0 1
+
+theorem directBezoutValid :
+    checkCoprime x (x + 1) directBezout = true := by
+  unfold checkCoprime checkOps succCheckCoprime directBezout
+  unfold x
+  decide +kernel
+
+theorem directBezoutCorrupt :
+    checkCoprime x (x + 1) badDirectBezout = false := by
+  unfold checkCoprime checkOps succCheckCoprime badDirectBezout
+  unfold x
+  decide +kernel
+
 private def baseCert : GcdCert 0 Int Mono.lex :=
   .mk (C 6) (C 2) (C 3) (.base (-1) 1)
 

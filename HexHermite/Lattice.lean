@@ -347,7 +347,7 @@ def latticeContains (A : Matrix Int n m) (v : Vector Int m) : Bool :=
 /-- The rows of the transform corresponding to zero HNF rows. -/
 @[expose]
 def kernelBasis (A : Matrix Int n m) : Matrix Int (n - hnfRank A) n :=
-  let hr := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  let hr := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   Matrix.ofFn fun i j =>
     let row : Fin n := ⟨hnfRank A + i.val, by omega⟩
     (hnfData A).transform[(row, j)]
@@ -355,8 +355,8 @@ def kernelBasis (A : Matrix Int n m) : Matrix Int (n - hnfRank A) n :=
 /-- Positive HNF pivot values in pivot-column order. -/
 @[expose]
 def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A) :=
-  let result := Hermite.run (Hermite.formAccumulator n) A
-  have hr := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  let result := Hermite.checkedRun (Hermite.formAccumulator n) A
+  have hr := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   Vector.ofFn fun i =>
     let row : Fin n := Fin.castLE hr i
     (result.matrix[(row, result.pivotVector.get i)]).natAbs
@@ -406,23 +406,23 @@ theorem row_mul_eq_vecMul (M : Matrix Int n' n) (N : Matrix Int n m)
 
 private theorem basis_mul_form (A : Matrix Int n m) :
     let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
-      if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+      if Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i = j
         then 1 else 0
     P * hnf A = hnfBasis A := by
   dsimp only
   let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
-    if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+    if Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i = j
       then 1 else 0
   apply Matrix.ext_getElem
   intro i j
   have hrow : Matrix.row P i = Vector.ofFn fun k : Fin n =>
-      if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = k
+      if Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i = k
         then 1 else 0 := by
     apply Vector.ext
     intro k hk
     let kk : Fin n := ⟨k, hk⟩
     have hp : (Matrix.row P i)[kk] =
-        (if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = kk
+        (if Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i = kk
           then 1 else 0) := by
       rw [Matrix.getElem_row]
       simp only [P, Matrix.getElem_ofFn]
@@ -433,7 +433,7 @@ private theorem basis_mul_form (A : Matrix Int n m) :
   calc
     (P * hnf A)[i][j] =
         (hnf A)[Fin.castLE
-          (Hermite.run_rank_le (Hermite.formAccumulator n) A) i][j] := hentry
+          (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i][j] := hentry
     _ = (hnfBasis A)[i][j] := by
       simp only [hnfBasis, Matrix.getElem_ofFn,
         Matrix.getElem_pair_eq_nested]
@@ -505,7 +505,7 @@ lattice. -/
 theorem hnfBasis_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
     (hnfBasis A).memLattice v ↔ A.memLattice v := by
   let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
-    if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+    if Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i = j
       then 1 else 0
   let Q : Matrix Int n (hnfRank A) := Matrix.ofFn fun i j =>
     if i.val = j.val then 1 else 0
@@ -629,11 +629,11 @@ private theorem dotProduct_drop_of_head_zero {R : Type} [Lean.Grind.Ring R]
 
 private theorem vecMul_kernelBasis (A : Matrix Int n m) (d : Vector Int n)
     (hz : ∀ i : Fin (hnfRank A),
-      d[Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i] = 0) :
+      d[Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i] = 0) :
     vecMul (d.drop (hnfRank A)) (kernelBasis A) =
       vecMul d (hnfData A).transform := by
   let r := hnfRank A
-  have hr : r ≤ n := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  have hr : r ≤ n := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   apply Vector.ext
   intro j hj
   let col : Fin n := ⟨j, hj⟩
@@ -703,7 +703,7 @@ theorem kernelBasis_complete {A : Matrix Int n m} {x : Vector Int n} :
         hform.toIsEchelonForm.vecMul_transformInv_transpose hinv x
       _ = 0 := hx
   have hr : hnfRank A ≤ n :=
-    Hermite.run_rank_le (Hermite.formAccumulator n) A
+    Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   have hz : ∀ i : Fin (hnfRank A), d[Fin.castLE hr i] = 0 := by
     intro i
     have hi : i.val < D.rank := by
@@ -742,7 +742,7 @@ theorem kernelBasis_independent {A : Matrix Int n m}
     vecMul c (kernelBasis A) = 0 → c = 0 := by
   intro hc
   let r := hnfRank A
-  have hr : r ≤ n := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  have hr : r ≤ n := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   let d : Vector Int n := Vector.ofFn fun i =>
     if h : i.val < r then 0 else c[i.val - r]'(by omega)
   have hz : ∀ i : Fin r, d[Fin.castLE hr i] = 0 := by
@@ -865,20 +865,20 @@ theorem latticeIndex_eq_det (A : Matrix Int n n) :
         rw [Vector.getElem_toList, List.getElem_ofFn]
         unfold pivots
         rw [Vector.getElem_ofFn]
-        let rs := Hermite.run (Hermite.formAccumulator n) A
-        let rt := Hermite.run (Hermite.transformAccumulator n) A
+        let rs := Hermite.checkedRun (Hermite.formAccumulator n) A
+        let rt := Hermite.checkedRun (Hermite.transformAccumulator n) A
         have hm : rs.matrix = rt.matrix :=
-          Hermite.run_matrix_agree (Hermite.formAccumulator n)
+          Hermite.checkedRun_matrix_agree (Hermite.formAccumulator n)
             (Hermite.transformAccumulator n) A
         have hp : rs.pivots = rt.pivots :=
-          Hermite.run_pivots_agree (Hermite.formAccumulator n)
+          Hermite.checkedRun_pivots_agree (Hermite.formAccumulator n)
             (Hermite.transformAccumulator n) A
         have hkR : k < hnfRank A := by rw [hfull]; exact hk
         let is : Fin rs.pivots.length := ⟨k, by simpa [rs, hnfRank] using hkR⟩
         let it : Fin rt.pivots.length :=
           Fin.cast (congrArg List.length hp) is
         have hrow : Fin.castLE
-            (Hermite.run_rank_le (Hermite.formAccumulator n) A)
+            (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A)
             (⟨k, hkR⟩ : Fin (hnfRank A)) = i := Fin.ext rfl
         have hit : it = Fin.cast hrD.symm i := Fin.ext rfl
         have hcolS : rs.pivotVector.get is = i := by
@@ -891,7 +891,7 @@ theorem latticeIndex_eq_det (A : Matrix Int n n) :
               simp [D, rt, hnfData]
             _ = i := hcol
         change rs.matrix[(Fin.castLE
-          (Hermite.run_rank_le (Hermite.formAccumulator n) A)
+          (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A)
           (⟨k, hkR⟩ : Fin (hnfRank A)),
           rs.pivotVector.get is)].natAbs = D.echelon[i][i].natAbs
         rw [hrow, hcolS, hm]

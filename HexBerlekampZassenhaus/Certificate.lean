@@ -84,6 +84,7 @@ against the polynomial it is meant to certify.
 structure PrimeFactorData where
   /-- The prime characteristic of this factorization. -/
   p : Nat
+  /-- Word-arithmetic bounds witness for `p`, available for instance search. -/
   [bounds : ZMod64.Bounds p]
   /-- The degrees of the modular irreducible factors. -/
   factorDegrees : Array Nat

@@ -978,9 +978,9 @@ theorem hnfBasis_eq_of_memLattice (A : Matrix Int n m) (B : Matrix Int n' m)
   simp only [hnfBasis, Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
   rw [hnf_eq_hnfData_echelon A, hnf_eq_hnfData_echelon B]
   let rowA : Fin n := Fin.castLE
-    (Hermite.run_rank_le (Hermite.formAccumulator n) A) i
+    (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i
   let rowB : Fin n' := Fin.castLE
-    (Hermite.run_rank_le (Hermite.formAccumulator n') B) ib
+    (Hermite.checkedRun_rank_le (Hermite.formAccumulator n') B) ib
   have hrowA : rowA = hA.toIsEchelonForm.pivotRow ⟨i.val, hiD⟩ := Fin.ext rfl
   have hrowB : rowB = hB.toIsEchelonForm.pivotRow ⟨ib.val, hiE⟩ := Fin.ext rfl
   change D.echelon[rowA][j] = E.echelon[rowB][j]

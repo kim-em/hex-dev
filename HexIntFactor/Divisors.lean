@@ -1,0 +1,376 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexIntFactor.DivisorEnumeration
+
+public section
+
+/-! Arithmetic functions computed from already-checked factorization data. -/
+
+namespace Hex
+
+namespace Nat
+
+/-- Positive divisors, in ascending order. -/
+@[expose]
+def divisors {n : Nat} (F : CheckedFactorization n) : Array Nat :=
+  (DivisorEnumeration.values F.raw.factors).mergeSort
+    (fun a b => decide (a ≤ b)) |>.toArray
+
+/-- Number of positive divisors, `τ(n) = ∏ (eᵢ + 1)`. -/
+@[expose]
+def numDivisors {n : Nat} (F : CheckedFactorization n) : Nat :=
+  (F.raw.factors.map fun e => e.exponent + 1).prod
+
+/-- The geometric sum for one prime-power entry. The `0` and `1` bases use
+their total finite-sum values; certified factorizations only contain primes. -/
+@[expose]
+def sigmaEntry (entry : PrimePower) (k : Nat) : Nat :=
+  if k = 0 then
+    entry.exponent + 1
+  else
+    let q := entry.prime ^ k
+    if q = 0 then 1
+    else if q = 1 then entry.exponent + 1
+    else (q ^ (entry.exponent + 1) - 1) / (q - 1)
+
+/-- Generalized divisor sum `σ_k`. -/
+@[expose]
+def sigma {n : Nat} (F : CheckedFactorization n) (k : Nat) : Nat :=
+  if k = 0 then
+    numDivisors F
+  else
+    (F.raw.factors.map fun entry => sigmaEntry entry k).prod
+
+/-- Euler's totient from a checked prime-power decomposition. -/
+@[expose]
+def totient {n : Nat} (_F : CheckedFactorization n) : Nat :=
+  ((List.range n).filter fun a => decide (Nat.Coprime a n)).length
+
+/-- Product of the distinct prime divisors. -/
+@[expose]
+def radical {n : Nat} (F : CheckedFactorization n) : Nat :=
+  (F.raw.factors.map fun e => e.prime).prod
+
+def squareCandidates (n : Nat) : List Nat :=
+  (List.range (n + 1)).filter fun d => decide (d ^ 2 ∣ n)
+
+/-- Lcm of all roots of square divisors, equivalently the largest such root. -/
+@[expose]
+def squareDivisor {n : Nat} (_F : CheckedFactorization n) : Nat :=
+  (squareCandidates n).foldl Nat.lcm 1
+
+/-- Squarefree part left after removing the largest square divisor. -/
+@[expose]
+def squarefreePart {n : Nat} (F : CheckedFactorization n) : Nat :=
+  n / squareDivisor F ^ 2
+
+/-- Whether every prime multiplicity is exactly one. -/
+@[expose]
+def isSquarefree {n : Nat} (F : CheckedFactorization n) : Bool :=
+  F.raw.factors.all fun e => e.exponent == 1
+
+/-- Enumeration has exactly the positive divisors of `n`. -/
+theorem mem_divisors {n d : Nat} (F : CheckedFactorization n) :
+    d ∈ (divisors F).toList ↔ d ∣ n := by
+  rw [divisors, List.toList_toArray, List.mem_mergeSort,
+    DivisorEnumeration.mem_values_iff
+      (checkFactorization_prime F.valid)
+      (checkFactorization_sorted F.valid),
+    checkFactorization_prod F.valid, F.subject_eq]
+
+/-- The ascending divisor enumeration contains no duplicates. -/
+theorem divisors_nodup {n : Nat} (F : CheckedFactorization n) :
+    (divisors F).toList.Nodup := by
+  apply (List.mergeSort_perm _ _).symm.nodup
+  exact DivisorEnumeration.nodup_values
+    (checkFactorization_prime F.valid)
+    (checkFactorization_sorted F.valid)
+
+/-- The divisor enumeration is in ascending order. -/
+theorem divisors_sorted {n : Nat} (F : CheckedFactorization n) :
+    (divisors F).toList.Pairwise (fun a b => a ≤ b) := by
+  rw [divisors, List.toList_toArray]
+  simpa only [decide_eq_true_eq] using
+    (List.pairwise_mergeSort
+      (le := fun a b : Nat => decide (a ≤ b))
+      (fun a b c hab hbc => by
+        simp only [decide_eq_true_eq] at hab hbc ⊢
+        exact Nat.le_trans hab hbc)
+      (fun a b => by
+        simp only [Bool.or_eq_true, decide_eq_true_eq]
+        exact Nat.le_total a b)
+      (DivisorEnumeration.values F.raw.factors))
+
+/-- The product formula agrees with divisor enumeration. -/
+theorem numDivisors_eq_size {n : Nat} (F : CheckedFactorization n) :
+    numDivisors F = (divisors F).size := by
+  simp [numDivisors, divisors, DivisorEnumeration.length_values]
+
+private def geometricSum (q : Nat) : Nat → Nat
+  | 0 => 1
+  | e + 1 => 1 + q * geometricSum q e
+
+private theorem sum_ones (xs : List Nat) :
+    (xs.map fun _ => 1).sum = xs.length := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih => simp [ih, Nat.add_comm]
+
+private theorem powers_sum (p e acc k : Nat) :
+    ((DivisorEnumeration.powers p e acc).map fun q => q ^ k).sum =
+      acc ^ k * geometricSum (p ^ k) e := by
+  induction e generalizing acc with
+  | zero => simp [DivisorEnumeration.powers, geometricSum]
+  | succ e ih =>
+      rw [DivisorEnumeration.powers, List.map_cons, List.sum_cons, ih,
+        geometricSum, Nat.mul_add, Nat.mul_one, Nat.mul_pow]
+      congr 1
+      ac_rfl
+
+private theorem geometricSum_spec {q : Nat} (hq : 1 < q) : ∀ e : Nat,
+    (q - 1) * geometricSum q e = q ^ (e + 1) - 1
+  | 0 => by simp [geometricSum]
+  | e + 1 => by
+      rw [geometricSum]
+      calc
+        (q - 1) * (1 + q * geometricSum q e) =
+            (q - 1) + q * ((q - 1) * geometricSum q e) := by
+          rw [Nat.mul_add, Nat.mul_one]
+          congr 1
+          ac_rfl
+        _ = (q - 1) + q * (q ^ (e + 1) - 1) := by
+          rw [geometricSum_spec hq e]
+        _ = q ^ ((e + 1) + 1) - 1 := by
+          have hpow : 0 < q ^ (e + 1) := Nat.pow_pos (by omega)
+          have hle : q ≤ q ^ (e + 1) * q := Nat.le_mul_of_pos_left q hpow
+          calc
+            (q - 1) + q * (q ^ (e + 1) - 1) =
+                (q - 1) + (q ^ (e + 1) * q - q) := by
+              rw [Nat.mul_sub_left_distrib, Nat.mul_one,
+                Nat.mul_comm q (q ^ (e + 1))]
+            _ = q ^ (e + 1) * q - 1 := by omega
+            _ = q ^ ((e + 1) + 1) - 1 := by simp only [Nat.pow_succ]
+
+/-- The closed form equals the finite prime-power sum for every entry. -/
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        fun q => q ^ k).sum := by
+  by_cases hk : k = 0
+  · subst k
+    rw [sigmaEntry, ite_eq_left rfl]
+    simp only [Nat.pow_zero, sum_ones,
+      DivisorEnumeration.length_powers]
+  · rw [sigmaEntry, ite_eq_right hk, powers_sum]
+    simp only [Nat.one_pow, Nat.one_mul]
+    by_cases hq0 : entry.prime ^ k = 0
+    · rw [ite_eq_left hq0, hq0]
+      induction entry.exponent with
+      | zero => rfl
+      | succ e ih => simp [geometricSum, ih]
+    · rw [ite_eq_right hq0]
+      by_cases hq1 : entry.prime ^ k = 1
+      · rw [ite_eq_left hq1, hq1]
+        induction entry.exponent with
+        | zero => simp [geometricSum]
+        | succ e ih => simp [geometricSum, ih, Nat.add_comm]
+      · have hq : 1 < entry.prime ^ k := by omega
+        rw [ite_eq_right hq1, ← geometricSum_spec hq entry.exponent,
+          Nat.mul_comm (entry.prime ^ k - 1), Nat.mul_div_left _ (by omega)]
+
+private theorem sigmaEntries_eq (entries : List PrimePower) (k : Nat) :
+    (entries.map fun entry => sigmaEntry entry k).prod =
+      (entries.map fun entry =>
+        ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+          fun q => q ^ k).sum).prod := by
+  induction entries with
+  | nil => simp
+  | cons entry rest ih =>
+      rw [List.map_cons, List.prod_cons, List.map_cons, List.prod_cons,
+        sigmaEntry_eq_powerSum entry k, ih]
+
+/-- `sigma` is the sum of `k`th powers over all divisors. -/
+theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
+    sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum := by
+  by_cases hk : k = 0
+  · subst k
+    rw [sigma, ite_eq_left rfl, numDivisors_eq_size]
+    simp only [Nat.pow_zero, sum_ones, Array.length_toList]
+  · rw [sigma, ite_eq_right hk,
+      sigmaEntries_eq F.raw.factors k,
+      ← DivisorEnumeration.sum_pow_values]
+    have hperm := List.mergeSort_perm
+      (DivisorEnumeration.values F.raw.factors) (fun a b => decide (a ≤ b))
+    have hsum := (hperm.map (fun d => d ^ k)).sum_nat
+    simpa only [divisors, List.toList_toArray] using hsum.symm
+
+/-- The factor-product formula counts residues coprime to `n`. -/
+theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :
+    totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length := by
+  simp [totient]
+
+private theorem prime_dvd_product {q : Nat} (hq : Prime q) :
+    ∀ (entries : List PrimePower),
+      (∀ e ∈ entries, Prime e.prime) →
+      q ∣ (entries.map fun e => e.prime).prod →
+      ∃ e ∈ entries, e.prime = q := by
+  intro entries
+  induction entries with
+  | nil =>
+      intro _ hd
+      simp only [List.map_nil, List.prod_nil] at hd
+      have heq := Nat.dvd_one.mp hd
+      have := hq.two_le
+      omega
+  | cons e rest ih =>
+      intro hall hdvd
+      simp only [List.map_cons, List.prod_cons] at hdvd
+      rcases hq.dvd_mul.mp hdvd with he | hr
+      · have heprime := hall e (by simp)
+        rcases heprime.2 q he with heq | heq
+        · have := hq.two_le
+          omega
+        · exact ⟨e, by simp, heq.symm⟩
+      · obtain ⟨x, hx, heq⟩ := ih (fun x hx => hall x (by simp [hx])) hr
+        exact ⟨x, by simp [hx], heq⟩
+
+private theorem entry_dvd_product : ∀ (entries : List PrimePower) (e : PrimePower),
+    e ∈ entries → e.prime ∣ (entries.map fun x => x.prime).prod := by
+  intro entries
+  induction entries with
+  | nil => simp
+  | cons x rest ih =>
+      intro e he
+      simp only [List.map_cons, List.prod_cons]
+      rcases List.mem_cons.mp he with rfl | he
+      · exact Nat.dvd_mul_right _ _
+      · exact Nat.dvd_trans (ih e he) (Nat.dvd_mul_left _ _)
+
+/-- A prime divides the radical exactly when it divides the subject. -/
+theorem prime_dvd_radical_iff {n q : Nat} (F : CheckedFactorization n)
+    (hq : Prime q) : q ∣ radical F ↔ q ∣ n := by
+  constructor
+  · intro h
+    obtain ⟨e, he, heq⟩ := prime_dvd_product hq F.raw.factors
+      (checkFactorization_prime F.valid) (by simpa [radical] using h)
+    have hraw := (checkFactorization_primeSupport F.valid hq).mpr
+      ⟨e, he, heq⟩
+    simpa [F.subject_eq] using hraw
+  · intro hn
+    have hraw : q ∣ F.raw.subject := by simpa [F.subject_eq] using hn
+    obtain ⟨e, he, heq⟩ :=
+      (checkFactorization_primeSupport F.valid hq).mp hraw
+    unfold radical
+    rw [← heq]
+    exact entry_dvd_product F.raw.factors e he
+
+private theorem foldl_lcm_square_dvd (n : Nat) :
+    ∀ (values : List Nat) (acc : Nat), acc ^ 2 ∣ n →
+      (∀ d ∈ values, d ^ 2 ∣ n) → (values.foldl Nat.lcm acc) ^ 2 ∣ n := by
+  intro values
+  induction values with
+  | nil => simpa
+  | cons d rest ih =>
+      intro acc hacc hall
+      apply ih (Nat.lcm acc d)
+      · rw [← Nat.pow_lcm_pow]
+        exact Nat.lcm_dvd hacc (hall d (by simp))
+      · intro x hx
+        exact hall x (by simp [hx])
+
+private theorem dvd_foldl_lcm {d : Nat} :
+    ∀ (values : List Nat) (acc : Nat), d ∈ values →
+      d ∣ values.foldl Nat.lcm acc := by
+  intro values
+  induction values with
+  | nil => simp
+  | cons x rest ih =>
+      intro acc hd
+      have acc_dvd : ∀ (ys : List Nat) (a : Nat), a ∣ ys.foldl Nat.lcm a := by
+        intro ys
+        induction ys with
+        | nil => simp
+        | cons y ys ih =>
+            intro a
+            exact Nat.dvd_trans (Nat.dvd_lcm_left a y) (ih (Nat.lcm a y))
+      rcases List.mem_cons.mp hd with hdx | hd
+      · subst x
+        exact Nat.dvd_trans (Nat.dvd_lcm_right acc d)
+          (acc_dvd rest (Nat.lcm acc d))
+      · exact ih (Nat.lcm acc x) hd
+
+private theorem squareDivisor_dvd_subject {n : Nat} (F : CheckedFactorization n) :
+    squareDivisor F ^ 2 ∣ n := by
+  unfold squareDivisor
+  apply foldl_lcm_square_dvd n (squareCandidates n) 1
+  · simp
+  · intro d hd
+    simpa [squareCandidates] using (List.mem_filter.mp hd).2
+
+/-- Canonical squarefree-times-square decomposition. -/
+theorem squarefreePart_mul_square {n : Nat} (F : CheckedFactorization n) :
+    squarefreePart F * squareDivisor F ^ 2 = n := by
+  rw [Nat.mul_comm]
+  exact Nat.mul_div_cancel' (squareDivisor_dvd_subject F)
+
+/-- `squareDivisor` is the largest square divisor root. -/
+theorem squareDivisor_spec {n : Nat} (F : CheckedFactorization n) :
+    squareDivisor F ^ 2 ∣ n ∧
+      ∀ d, d ^ 2 ∣ n → d ∣ squareDivisor F := by
+  refine ⟨squareDivisor_dvd_subject F, ?_⟩
+  intro d hd
+  have hnraw : 0 < F.raw.subject := by
+    have hv := F.valid
+    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
+    exact hv.1.1
+  have hn : 0 < n := F.subject_eq ▸ hnraw
+  have hdle : d ≤ n := by
+    by_cases hd0 : d = 0
+    · subst d
+      have : n = 0 := Nat.eq_zero_of_zero_dvd (by simpa using hd)
+      omega
+    · have hsqle := Nat.le_of_dvd hn hd
+      have hself : d ≤ d ^ 2 := by
+        rw [Nat.pow_two]
+        exact Nat.le_mul_of_pos_right d (by omega)
+      exact Nat.le_trans hself hsqle
+  unfold squareDivisor
+  apply dvd_foldl_lcm (values := squareCandidates n) (acc := 1)
+  simp [squareCandidates, hd, Nat.lt_succ_of_le hdle]
+
+/-- Checked multiplicities characterize squarefreeness. -/
+theorem isSquarefree_iff {n : Nat} (F : CheckedFactorization n) :
+    isSquarefree F = true ↔
+      ∀ q, Prime q → ¬(q ^ 2 ∣ n) := by
+  constructor
+  · intro hall q hq hq2
+    have hq2raw : q ^ 2 ∣ F.raw.subject := by
+      simpa [F.subject_eq] using hq2
+    obtain ⟨e, he, heq⟩ := (checkFactorization_primeSupport F.valid hq).mp
+      (Nat.dvd_trans (by exact ⟨q, by rw [Nat.pow_two]⟩) hq2raw)
+    have hmult := (checkFactorization_multiplicity F.valid he (k := 2)).mp
+      (heq ▸ hq2raw)
+    have hexp := checkFactorization_exponent F.valid e he
+    have hone : e.exponent = 1 := by
+      exact beq_iff_eq.mp (List.all_eq_true.mp hall e he)
+    omega
+  · intro h
+    simp only [isSquarefree, List.all_eq_true]
+    intro e he
+    have hpos := checkFactorization_exponent F.valid e he
+    by_cases hone : e.exponent = 1
+    · simp [hone]
+    · have htwo : 2 ≤ e.exponent := by omega
+      have hsquare := (checkFactorization_multiplicity F.valid he (k := 2)).mpr htwo
+      exact False.elim (h e.prime (checkFactorization_prime F.valid e he)
+        (by simpa [F.subject_eq] using hsquare))
+
+end Nat
+
+end Hex

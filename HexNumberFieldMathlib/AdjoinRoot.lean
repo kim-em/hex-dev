@@ -96,8 +96,7 @@ noncomputable def toAdjoinRoot (a : QAdjoin p x) :
 
 /-- Recover the unique reduced executable coordinates of an {name}`AdjoinRoot`
 class. -/
-@[expose]
-noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
+private noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
     (a : AdjoinRoot (definingPolynomial p)) : QAdjoin p x where
   coeffs := HexPolyMathlib.ofPolynomial
     (AdjoinRoot.modByMonicHom (definingPolynomial_monic p) a)
@@ -427,9 +426,26 @@ theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
 theorem map_natPow (a : QAdjoin p x) (n : Nat)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex (natPow a n) rep h = toComplex a rep h ^ n := by
-  induction n with
-  | zero => simp [natPow, map_one]
-  | succ n ih => rw [natPow, map_mul, ih, pow_succ]
+  induction n using Nat.strongRecOn with
+  | ind n ih =>
+      cases n with
+      | zero => simp [natPow, map_one]
+      | succ n =>
+          have hlt : (n + 1) / 2 < n + 1 :=
+            Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
+          rw [natPow]
+          by_cases heven : (n + 1) % 2 = 0
+          · rw [if_pos heven, map_mul, ih ((n + 1) / 2) hlt,
+              ← pow_add]
+            have hdecomp := Nat.mod_add_div (n + 1) 2
+            congr 1
+            omega
+          · rw [if_neg heven, map_mul, map_mul,
+              ih ((n + 1) / 2) hlt, ← pow_add, ← pow_succ]
+            have hdecomp := Nat.mod_add_div (n + 1) 2
+            have hmod := Nat.mod_two_eq_zero_or_one (n + 1)
+            congr 1
+            omega
 
 /-- Executable integer powers preserve the selected interpretation. -/
 theorem map_intPow [ZPoly.CheckedIrreducible p]

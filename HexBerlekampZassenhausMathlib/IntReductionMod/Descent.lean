@@ -884,14 +884,6 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_normalize
   rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_nonneg,
     Units.val_one, Polynomial.C_1, mul_one]
 
-private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : Nat) :
-    (p ^ N).IsPrimitive := by
-  induction N with
-  | zero =>
-      simp
-  | succ N ih =>
-      simpa [pow_succ] using ih.mul hp
-
 /-! # Squarefree transport for the primitive square-free part
 
 The lemmas below identify the executable `Hex.ZPoly.SquareFreeRat` invariant
@@ -1078,20 +1070,6 @@ theorem squarefree_of_isPrimitive_of_squarefree_map_intCast
   -- Hence `q = C n` is a unit in `Polynomial ℤ`.
   rw [hn]
   exact Polynomial.isUnit_C.mpr hn_unit
-
-/-- The rational image of the primitive square-free part extracted by
-`normalizeForFactor` is separable whenever the input polynomial is nonzero. -/
-theorem normalizeForFactor_squareFreeCore_toPolynomial_separable
-    (f : Hex.ZPoly) (hf : f ≠ 0) :
-    ((HexPolyZMathlib.toPolynomial
-        (Hex.normalizeForFactor f).squareFreeCore).map
-      (Int.castRingHom ℚ)).Separable := by
-  have hprim := Hex.squareFreeCore_primitive_of_ne_zero f hf
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
-    Hex.ZPoly.ne_zero_of_primitive _ hprim
-  exact isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
-    (Hex.normalizeForFactor f).squareFreeCore hcore_ne
-    (Hex.squareFreeCore_squareFreeRat_of_ne_zero f hf)
 
 /--
 The primitive square-free part extracted by `normalizeForFactor` is squarefree over
