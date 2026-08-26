@@ -121,6 +121,7 @@ namespace AlgebraicNumber
 def x (a : AlgebraicNumber) : SimpleRoot a.p :=
   SimpleRoot.mk a.rep
 
+/-- The stored canonical representative selects exactly the root `a.x`. -/
 @[simp] theorem rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x := rfl
 
