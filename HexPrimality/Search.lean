@@ -31,6 +31,11 @@ resume rather than replay a failed stream. It is public because
 hex-int-factor reuses this exact primitive; it does not certify that the
 factor is prime and makes no completeness claim.
 
+Each restart uses Brent's power-of-two anchor schedule, accumulates at most
+32 differences per routine gcd, and replays a whole-modulus batch to recover
+an individual divisor. Restart draws exclude degenerate polynomials and
+fixed starting points before entering the bounded loop.
+
 `partialFactor` is internal: trial division by the committed table, then
 Brent rho over a worklist, with everything unsplittable multiplied into the
 residual. Its one theorem is the product invariant its certificate-search
@@ -79,6 +84,25 @@ private structure BrentResult where
   /-- Whole-modulus batches replayed by this terminating result. -/
   recoveries : Nat
 
+/-- Mutable state of one Brent restart, grouped so call sites cannot silently
+transpose the cycle and batch counters. The two small counters intentionally
+travel through the production loop: conformance then observes the exact route
+rather than a duplicated tracing implementation that can drift from it. -/
+private structure BrentState where
+  fuel : Nat
+  x : Nat
+  y : Nat
+  r : Nat
+  k : Nat
+  q : Nat
+  batchStart : Nat
+  batchCount : Nat
+  steps : Nat
+  gcds : Nat
+
+private def brentStart (start fuel : Nat) : BrentState :=
+  ⟨fuel, start, start, 1, 0, 1, start, 0, 0, 0⟩
+
 /-- Replay one failed batch difference by difference when its accumulated gcd
 is the whole modulus. -/
 private def brentRecover (n c x : Nat) :
@@ -93,10 +117,9 @@ private def brentRecover (n c x : Nat) :
 /-- Brent cycle search inside one restart. Differences are multiplied modulo
 `n` and share one gcd per batch. If a batch gcd is `n`, `brentRecover`
 replays only that batch to recover the first nontrivial individual gcd. -/
-private def brentGo (n c : Nat) :
-    Nat → Nat → Nat → Nat → Nat → Nat → Nat → Nat → Nat → Nat → BrentResult
-  | 0, _, _, _, _, _, _, _, steps, gcds => ⟨none, steps, gcds, 0⟩
-  | fuel + 1, x, y, r, k, q, batchStart, batchCount, steps, gcds =>
+private def brentGo (n c : Nat) : BrentState → BrentResult
+  | ⟨0, _, _, _, _, _, _, _, steps, gcds⟩ => ⟨none, steps, gcds, 0⟩
+  | ⟨fuel + 1, x, y, r, k, q, batchStart, batchCount, steps, gcds⟩ =>
       let y' := rhoNext n c y
       let difference := (x + n - y') % n
       let q' := q * difference % n
@@ -107,16 +130,19 @@ private def brentGo (n c : Nat) :
         let d := Nat.gcd q' n
         if d = 1 then
           if cycleDone then
-            brentGo n c fuel y' y' (r * 2) 0 1 y' 0 (steps + 1) (gcds + 1)
+            brentGo n c ⟨fuel, y', y', r * 2, 0, 1, y', 0,
+              steps + 1, gcds + 1⟩
           else
-            brentGo n c fuel x y' r k' 1 y' 0 (steps + 1) (gcds + 1)
+            brentGo n c ⟨fuel, x, y', r, k', 1, y', 0,
+              steps + 1, gcds + 1⟩
         else if d < n then
           ⟨some d, steps + 1, gcds + 1, 0⟩
         else
           brentRecover n c x batchCount' batchStart (steps + 1) (gcds + 1)
       else
-        brentGo n c fuel x y' r k' q' batchStart batchCount'
-          (steps + 1) gcds
+        brentGo n c ⟨fuel, x, y', r, k', q', batchStart, batchCount',
+          steps + 1, gcds⟩
+termination_by state => state.fuel
 
 /-- Inner iteration budget for one Brent restart: scaled past the expected
 `n^(1/4)` cycle length for small `n`, capped at `2^22` so one restart is
@@ -129,7 +155,7 @@ private def rhoInnerFuel (n : Nat) : Nat :=
 
 /-- One accepted restart draw together with its advanced random state. -/
 private structure RhoDraw where
-  /-- Nonzero polynomial offset in `[1, n - 1]`. -/
+  /-- Nonzero, nondegenerate polynomial offset below `n`. -/
   c : Nat
   /-- Starting point below the modulus. -/
   start : Nat
@@ -145,16 +171,20 @@ private def rhoDrawGo (n : Nat) : Nat → Nat → Rand → RhoDraw
       let startDraw := cDraw.2.next
       let c := cDraw.1.toNat % (n - 1) + 1
       let start := startDraw.1.toNat % n
-      if rhoNext n c start = start then
+      if c + 2 = n ∨ rhoNext n c start = start then
         rhoDrawGo n fuel (rejections + 1) startDraw.2
       else ⟨c, start, startDraw.2, rejections⟩
 
-/-- Draw a nonzero polynomial offset and reject the pair, rather than the
-offset globally, when the chosen start is a fixed point. -/
+/-- Draw a nonzero polynomial offset, globally reject the degenerate
+`x ↦ x² - 2`, and reject other draws only when the chosen start is a fixed
+point. -/
 private def rhoDraw (n : Nat) (r : Rand) : RhoDraw :=
   rhoDrawGo n 8 0 r
 
 namespace Internal
+
+/-- Shared maximum rho restart allocation for current worklist consumers. -/
+def rhoRestartCap : Nat := 8
 
 /-- Deterministic Brent instrumentation for route-level conformance tests. -/
 structure RhoTrace where
@@ -166,15 +196,14 @@ structure RhoTrace where
   gcds : Nat
   /-- Whole-modulus batches replayed. -/
   recoveries : Nat
-deriving Repr, DecidableEq
 
 /-- Run one explicitly parameterized Brent restart and report its batching
 counters. -/
 def rhoTrace (n c start fuel : Nat) : RhoTrace :=
-  let result := brentGo n c fuel start start 1 0 1 start 0 0 0
+  let result := brentGo n c (brentStart start fuel)
   ⟨result.factor, result.steps, result.gcds, result.recoveries⟩
 
-/-- Inspect the pair-specific rejection count of the deterministic draw. -/
+/-- Inspect the rejection count of the deterministic restart draw. -/
 def rhoDrawTrace (n : Nat) (r : Rand) : Nat × Nat × Nat :=
   let draw := rhoDraw n r
   (draw.c, draw.start, draw.rejections)
@@ -185,8 +214,7 @@ private def rhoTry (n : Nat) : Nat → Nat → Rand → Except RhoFailure (Nat �
   | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
   | tries + 1, attempts, r =>
       let draw := rhoDraw n r
-      match (brentGo n draw.c (rhoInnerFuel n) draw.start draw.start
-          1 0 1 draw.start 0 0 0).factor with
+      match (brentGo n draw.c (brentStart draw.start (rhoInnerFuel n))).factor with
       | some d =>
           if 1 < d then
             if d < n then
@@ -196,11 +224,12 @@ private def rhoTry (n : Nat) : Nat → Nat → Rand → Except RhoFailure (Nat �
           else rhoTry n tries (attempts + 1) draw.rand
       | none => rhoTry n tries (attempts + 1) draw.rand
 
-/-- A dynamically validated proper-factor candidate by Brent rho. `fuel`
-bounds the restart attempts; each restart draws a fresh polynomial offset
-and starting point and runs a cycle budget scaled to `n^(1/4)` and capped
-at `2^22` (see `rhoInnerFuel`), so exhaustion arrives rather than hangs
-when the smallest factor is out of rho's reach. Every
+/-- A dynamically validated proper-factor candidate by batched Brent rho.
+`fuel` bounds restart attempts. Each restart draws a fresh polynomial and
+starting point, accumulates up to 32 differences per gcd, and replays a
+whole-modulus batch difference by difference. Its cycle budget is scaled to
+`n^(1/4)` and capped at `2^22` (see `rhoInnerFuel`), so exhaustion arrives
+rather than hangs when the smallest factor is out of rho's reach. Every
 success is validated (`1 < d < n` and `d ∣ n`) before it is returned, so
 randomness and fuel affect only whether a factor is found. -/
 def rhoFactor? (n : Nat) (r : Rand) (fuel : Nat) :
@@ -355,7 +384,7 @@ private theorem insertFactor_prod (p : Nat) :
         simp [Nat.mul_left_comm]
 
 /-- Restart budget for each rho call inside the worklist. -/
-private def rhoRestartBudget : Nat := 8
+private def rhoRestartBudget : Nat := Internal.rhoRestartCap
 
 /-- The rho worklist: pop a pending number, drop it if it is `1`, keep it
 as a claimed factor if the filter calls it prime, split it if rho finds a

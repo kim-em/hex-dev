@@ -322,7 +322,9 @@ Floyd's (fewer function evaluations per step), and take
 serves many steps. The shared implementation flushes at 32 differences
 or a cycle boundary. A whole-modulus batch is replayed difference by
 difference, so a proper factor hidden inside that batch can still be
-recovered.
+recovered. A nontrivial batched gcd need not be prime: collisions for
+different prime factors in one batch can return their composite product,
+which the recursive dispatcher splits or certifies like any other divisor.
 
 Expected cost is `O(p^{1/2})` iterations to find a factor `p`, so
 `O(n^{1/4})` to split a semiprime. The batching constant matters: a gcd
@@ -333,15 +335,16 @@ primitive required is `Nat.gcd`, not extended GCD.
 [hex-finite-field](../../SPEC/Libraries/hex-finite-field.md), sited in hex-basic), following
 the same explicit-argument discipline: the draw is an argument, the
 retry budget is fuel, and a bad draw costs time and never correctness.
-The draw rejects `c = 0` and any starting point `x` satisfying
+The draw rejects `c = 0`, globally rejects the degenerate polynomial
+`x² - 2`, and rejects any other `(c, x)` pair satisfying
 `x² + c ≡ x (mod n)`, a fixed point that can be detected before the
-loop. In particular, `c = n - 2` is bad for the conventional start
-`x = 2` but is not globally blacklisted for every start.
+loop. An offset rejected for one fixed start remains available with
+another start.
 
 Complete-factorization dispatch allocates at most eight rho restarts to
 one unresolved cofactor. Exhausting that bounded attempt leaves Pollard
-`p − 1`, cyclotomic splitting, and ECM reachable; it does not spend a
-fuel-squared number of restarts before those routes can run.
+`p − 1` and ECM reachable; it does not spend a fuel-squared number of
+restarts before those routes can run.
 
 ### 2. Pollard `p − 1`
 

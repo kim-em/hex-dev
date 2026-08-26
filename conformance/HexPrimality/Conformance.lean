@@ -19,6 +19,7 @@ Covered operations:
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
 - `Hex.Nat.primeCert?`
+- `Hex.Nat.rhoFactor?` and its batched-Brent route instrumentation
 - `Hex.Nat.millerRabin` / `Hex.Nat.isProbablePrime`
 - `Hex.Nat.isTablePrime`
 - `Hex.Nat.primesIn`
@@ -97,6 +98,33 @@ open Hex.Nat
 #guard (match primeCert? 2147483649 (Hex.Rand.ofSeed 0) 8 with
         | .error f => f.stop == .composite
         | .ok _ => false)
+
+-- Routine gcds are genuinely batched: this fixed restart performs 95
+-- polynomial steps but only seven gcds.
+private def rhoBatchTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 100160063 1 2 256
+
+#guard rhoBatchTrace.factor == some 10007
+#guard rhoBatchTrace.steps == 95
+#guard rhoBatchTrace.gcds == 7
+#guard (match rhoFactor? 100160063 (Hex.Rand.ofSeed 1) 8 with
+  | .ok (d, _) => 1 < d && d < 100160063 && 100160063 % d == 0
+  | .error _ => false)
+
+-- A whole-modulus batch is replayed and recovers the proper factor 3.
+private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 9 1 0 32
+
+#guard rhoRecoveryTrace.factor == some 3
+#guard rhoRecoveryTrace.recoveries == 1
+
+-- Seed 213 first draws the fixed pair `(c, x) = (71, 61)` modulo 91; the
+-- route rejects it and advances to a non-fixed pair.
+#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 213) == (37, 6, 1)
+-- Seed 40 first draws the globally degenerate offset `c = n - 2` and then
+-- advances to the usable pair `(81, 74)`.
+#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 40) == (81, 74, 1)
+#guard Hex.Nat.Internal.rhoRestartCap == 8
 
 -- Miller-Rabin filter behaviour on the adversarial families.
 #guard isProbablePrime 561 = false

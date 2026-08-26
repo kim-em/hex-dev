@@ -71,8 +71,10 @@ private def mergePowers (entries : List PrimePower) (into : List PrimePower) :
 namespace Internal
 
 /-- Rho restarts allocated by the complete-factorization dispatcher. The cap
-keeps Pollard p−1 and ECM reachable after rho exhaustion. -/
-def rhoRestartBudget (fuel : Nat) : Nat := min 8 fuel
+keeps Pollard p−1 and ECM reachable after rho exhaustion, while the fuel side
+prevents a nearly exhausted search from manufacturing extra attempts. -/
+def rhoRestartBudget (fuel : Nat) : Nat :=
+  min Hex.Nat.Internal.rhoRestartCap fuel
 
 end Internal
 

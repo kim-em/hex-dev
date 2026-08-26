@@ -540,12 +540,11 @@ to 32 differences modulo `n` before taking a gcd. Cycle boundaries also
 flush a shorter batch. If a batched gcd is the whole modulus, the route
 replays just that batch one difference at a time; the caller accepts only
 a dynamically validated proper divisor. Each restart draws `c` from
-`[1, n - 1]` and a start from `[0, n - 1]`, rejecting the pair exactly
-when the start is a fixed point of `x ↦ x² + c`. Thus an offset that is
-bad for one start remains available for another. The rejection loop and
-each restart's inner work are bounded, and both current worklist consumers
-allocate at most eight rho restarts before retaining the residual or
-trying their later routes.
+`[1, n - 1]` and a start from `[0, n - 1]`. It globally rejects the
+degenerate map `x ↦ x² - 2`; other offsets are rejected only with a start
+that makes a fixed point of `x ↦ x² + c`. The rejection loop and each
+restart's inner work are bounded. Both current worklist consumers share an
+eight-restart cap before retaining the residual or trying later routes.
 
 `partialFactor` is **internal**, not part of the public API. An earlier
 draft exposed it with "no correctness theorem at all", which is safe
