@@ -2,13 +2,11 @@
 <rect width="100%" height="100%" fill="white"/>
 <text x="380.0" y="25" text-anchor="middle" font-family="sans-serif" font-size="17">HexHermite comparator runtimes: unimodular-conjugate</text>
 <line x1="86" y1="388.00" x2="732" y2="388.00" stroke="#dddddd"/>
-<text x="76" y="392.00" text-anchor="end" font-family="sans-serif" font-size="12">10^-2 ms</text>
-<line x1="86" y1="303.00" x2="732" y2="303.00" stroke="#dddddd"/>
-<text x="76" y="307.00" text-anchor="end" font-family="sans-serif" font-size="12">10^-1 ms</text>
-<line x1="86" y1="218.00" x2="732" y2="218.00" stroke="#dddddd"/>
-<text x="76" y="222.00" text-anchor="end" font-family="sans-serif" font-size="12">10^0 ms</text>
-<line x1="86" y1="133.00" x2="732" y2="133.00" stroke="#dddddd"/>
-<text x="76" y="137.00" text-anchor="end" font-family="sans-serif" font-size="12">10^1 ms</text>
+<text x="76" y="392.00" text-anchor="end" font-family="sans-serif" font-size="12">10^-1 ms</text>
+<line x1="86" y1="274.67" x2="732" y2="274.67" stroke="#dddddd"/>
+<text x="76" y="278.67" text-anchor="end" font-family="sans-serif" font-size="12">10^0 ms</text>
+<line x1="86" y1="161.33" x2="732" y2="161.33" stroke="#dddddd"/>
+<text x="76" y="165.33" text-anchor="end" font-family="sans-serif" font-size="12">10^1 ms</text>
 <line x1="86" y1="48.00" x2="732" y2="48.00" stroke="#dddddd"/>
 <text x="76" y="52.00" text-anchor="end" font-family="sans-serif" font-size="12">10^2 ms</text>
 <line x1="86" y1="48" x2="86" y2="388" stroke="#222"/>
@@ -25,24 +23,24 @@
 <text x="732.00" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">48</text>
 <text x="409.0" y="442" text-anchor="middle" font-family="sans-serif" font-size="13">matrix dimension n</text>
 <text x="18" y="218.0" text-anchor="middle" transform="rotate(-90 18 218.0)" font-family="sans-serif" font-size="13">median wall time per call (log scale)</text>
-<polyline points="86.00,268.37 247.50,217.99 409.00,188.13 570.50,163.87 732.00,144.22" fill="none" stroke="#2864dc" stroke-width="2.5"/>
-<circle cx="86.00" cy="268.37" r="3.5" fill="#2864dc"/>
-<circle cx="247.50" cy="217.99" r="3.5" fill="#2864dc"/>
-<circle cx="409.00" cy="188.13" r="3.5" fill="#2864dc"/>
-<circle cx="570.50" cy="163.87" r="3.5" fill="#2864dc"/>
-<circle cx="732.00" cy="144.22" r="3.5" fill="#2864dc"/>
-<polyline points="86.00,304.55 247.50,277.03 409.00,255.04 570.50,168.33 732.00,130.21" fill="none" stroke="#d62728" stroke-width="2.5"/>
-<circle cx="86.00" cy="304.55" r="3.5" fill="#d62728"/>
-<circle cx="247.50" cy="277.03" r="3.5" fill="#d62728"/>
-<circle cx="409.00" cy="255.04" r="3.5" fill="#d62728"/>
-<circle cx="570.50" cy="168.33" r="3.5" fill="#d62728"/>
-<circle cx="732.00" cy="130.21" r="3.5" fill="#d62728"/>
-<polyline points="86.00,273.21 247.50,245.43 409.00,220.38 570.50,202.52 732.00,189.00" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
-<circle cx="86.00" cy="273.21" r="3.5" fill="#2ca02c"/>
-<circle cx="247.50" cy="245.43" r="3.5" fill="#2ca02c"/>
-<circle cx="409.00" cy="220.38" r="3.5" fill="#2ca02c"/>
-<circle cx="570.50" cy="202.52" r="3.5" fill="#2ca02c"/>
-<circle cx="732.00" cy="189.00" r="3.5" fill="#2ca02c"/>
+<polyline points="86.00,336.32 247.50,258.74 409.00,214.21 570.50,179.54 732.00,150.55" fill="none" stroke="#2864dc" stroke-width="2.5"/>
+<circle cx="86.00" cy="336.32" r="3.5" fill="#2864dc"/>
+<circle cx="247.50" cy="258.74" r="3.5" fill="#2864dc"/>
+<circle cx="409.00" cy="214.21" r="3.5" fill="#2864dc"/>
+<circle cx="570.50" cy="179.54" r="3.5" fill="#2864dc"/>
+<circle cx="732.00" cy="150.55" r="3.5" fill="#2864dc"/>
+<polyline points="86.00,386.15 247.50,347.04 409.00,314.34 570.50,286.55 732.00,177.62" fill="none" stroke="#d62728" stroke-width="2.5"/>
+<circle cx="86.00" cy="386.15" r="3.5" fill="#d62728"/>
+<circle cx="247.50" cy="347.04" r="3.5" fill="#d62728"/>
+<circle cx="409.00" cy="314.34" r="3.5" fill="#d62728"/>
+<circle cx="570.50" cy="286.55" r="3.5" fill="#d62728"/>
+<circle cx="732.00" cy="177.62" r="3.5" fill="#d62728"/>
+<polyline points="86.00,332.59 247.50,287.18 409.00,250.24 570.50,224.05 732.00,203.25" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
+<circle cx="86.00" cy="332.59" r="3.5" fill="#2ca02c"/>
+<circle cx="247.50" cy="287.18" r="3.5" fill="#2ca02c"/>
+<circle cx="409.00" cy="250.24" r="3.5" fill="#2ca02c"/>
+<circle cx="570.50" cy="224.05" r="3.5" fill="#2ca02c"/>
+<circle cx="732.00" cy="203.25" r="3.5" fill="#2ca02c"/>
 <line x1="98" y1="62" x2="122" y2="62" stroke="#2864dc" stroke-width="3"/>
 <text x="129" y="66" font-family="sans-serif" font-size="12">Lean</text>
 <line x1="210" y1="62" x2="234" y2="62" stroke="#d62728" stroke-width="3"/>
