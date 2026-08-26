@@ -319,7 +319,10 @@ about `10^{12}`: iterate
 `x ↦ x² + c (mod n)`, detect a cycle by Brent's method rather than
 Floyd's (fewer function evaluations per step), and take
 `gcd(|xᵢ − x_j|, n)` in batches of accumulated products so that one gcd
-serves many steps.
+serves many steps. The shared implementation flushes at 32 differences
+or a cycle boundary. A whole-modulus batch is replayed difference by
+difference, so a proper factor hidden inside that batch can still be
+recovered.
 
 Expected cost is `O(p^{1/2})` iterations to find a factor `p`, so
 `O(n^{1/4})` to split a semiprime. The batching constant matters: a gcd
@@ -334,6 +337,11 @@ The draw rejects `c = 0` and any starting point `x` satisfying
 `x² + c ≡ x (mod n)`, a fixed point that can be detected before the
 loop. In particular, `c = n - 2` is bad for the conventional start
 `x = 2` but is not globally blacklisted for every start.
+
+Complete-factorization dispatch allocates at most eight rho restarts to
+one unresolved cofactor. Exhausting that bounded attempt leaves Pollard
+`p − 1`, cyclotomic splitting, and ECM reachable; it does not spend a
+fuel-squared number of restarts before those routes can run.
 
 ### 2. Pollard `p − 1`
 
@@ -895,7 +903,7 @@ the number of distinct primes, `B` a smoothness bound.
 | trailing-zero split | one big-`Nat` operation | not `O(1)` bit complexity |
 | perfect-power test | `O(b · b · M(b))` | `O(b)` roots, Newton each |
 | trial division to `T` | `O(π(T))` divisions | `π(10^4) = 1229` |
-| Pollard rho | `O(√p)` iterations expected | `O(n^{1/4})` for a semiprime |
+| Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
 | `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |

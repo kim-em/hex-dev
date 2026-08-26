@@ -68,6 +68,14 @@ private def mergePowers (entries : List PrimePower) (into : List PrimePower) :
     List PrimePower :=
   entries.foldl (fun acc entry => insertPower entry acc) into
 
+namespace Internal
+
+/-- Rho restarts allocated by the complete-factorization dispatcher. The cap
+keeps Pollard p−1 and ECM reachable after rho exhaustion. -/
+def rhoRestartBudget (fuel : Nat) : Nat := min 8 fuel
+
+end Internal
+
 private structure SearchState where
   factors : List PrimePower
   residual : Nat
@@ -109,7 +117,7 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
                 residual r' attempts powerRoutes
           | .error primeFailure =>
               match rhoSplit? m primeFailure.rand
-                  (min 1000000 ((fuel + 1) * (fuel + 1))) with
+                  (Internal.rhoRestartBudget (fuel + 1)) with
               | .ok (d, r') =>
                   searchGo fuel ((d, multiplier) :: (m / d, multiplier) :: stack)
                     factors residual r' (attempts + primeFailure.attempts + 1)

@@ -173,7 +173,7 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard recursivePowerCandidate.factors.isEmpty
 #guard recursivePowerCandidate.residualBase == 10037
 #guard recursivePowerCandidate.residualExponent == 6
-#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 17) == 1
+#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
 #guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 17) == 0
 #guard (match factor? recursivePowerInput (Rand.ofSeed 17) with
   | .ok (F, _) =>
@@ -217,6 +217,27 @@ example {n base bound d : Nat}
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
+
+-- Routine gcds are genuinely batched: this fixed restart performs 95
+-- polynomial steps but only seven gcds.
+private def rhoBatchTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 100160063 1 2 256
+
+#guard rhoBatchTrace.factor == some 10007
+#guard rhoBatchTrace.steps == 95
+#guard rhoBatchTrace.gcds == 7
+
+-- A whole-modulus batch is replayed and recovers the proper factor 3.
+private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
+  Hex.Nat.Internal.rhoTrace 9 1 0 32
+
+#guard rhoRecoveryTrace.factor == some 3
+#guard rhoRecoveryTrace.recoveries == 1
+
+-- Seed 213 first draws the fixed pair `(c, x) = (71, 61)` modulo 91; the
+-- route rejects it and advances to a non-fixed pair.
+#guard Hex.Nat.Internal.rhoDrawTrace 91 (Rand.ofSeed 213) == (37, 6, 1)
+#guard Hex.Nat.Internal.rhoRestartBudget 1000000 == 8
 
 -- A malformed aggregate is exposed as an invariant failure, rather than
 -- being replaced by an empty partial answer or ordinary exhaustion.

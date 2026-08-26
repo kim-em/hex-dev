@@ -535,6 +535,18 @@ no proper factor was found, and makes no primality claim. It is public
 because hex-int-factor reuses this exact primitive; it does not certify
 that `d` is prime and makes no completeness claim.
 
+One restart uses Brent's power-of-two cycle schedule and accumulates up
+to 32 differences modulo `n` before taking a gcd. Cycle boundaries also
+flush a shorter batch. If a batched gcd is the whole modulus, the route
+replays just that batch one difference at a time; the caller accepts only
+a dynamically validated proper divisor. Each restart draws `c` from
+`[1, n - 1]` and a start from `[0, n - 1]`, rejecting the pair exactly
+when the start is a fixed point of `x ↦ x² + c`. Thus an offset that is
+bad for one start remains available for another. The rejection loop and
+each restart's inner work are bounded, and both current worklist consumers
+allocate at most eight rho restarts before retaining the residual or
+trying their later routes.
+
 `partialFactor` is **internal**, not part of the public API. An earlier
 draft exposed it with "no correctness theorem at all", which is safe
 only if every consumer checks everything, and its return type said
@@ -557,7 +569,8 @@ private theorem partialFactor_prod (n r fuel) (hn : 0 < n) :
 ```
 
 hex-int-factor reuses `rhoFactor?` rather than introducing a second rho.
-Brent's cycle detection is already part of the lower primitive; the
+Brent's batched cycle detection and whole-modulus recovery are already
+part of the lower primitive; the
 higher library adds structural reductions, ECM, complete-factorization
 assembly, and their dispatch. The routes by which its advances flow
 back into this library's search are fixed below.
