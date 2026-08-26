@@ -38,7 +38,8 @@ deriving Repr
 structure FactorFailure where
   /-- Semantic reason the complete or partial search stopped. -/
   stop : FactorStop
-  /-- Search attempts accumulated before stopping. -/
+  /-- Search attempts accumulated before stopping: rho restarts, certificate
+  witness candidates, p−1 calls, and ECM curves, including successful ones. -/
   attempts : Nat
   /-- Generator state after every randomized attempt that actually ran. -/
   rand : Rand
@@ -207,18 +208,20 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
         if m = 1 then
           searchGo fuel stack factors residual r attempts powerRoutes
         else
-          match primeCert? m r (fuel + 1) with
-          | .ok (cert, r') =>
+          match Internal.primeCertCounted? m r (fuel + 1) with
+          | .ok certified =>
               searchGo fuel stack
-                (insertPower ⟨multiplier, cert.raw⟩ factors)
-                residual r' attempts powerRoutes
+                (insertPower ⟨multiplier, certified.cert.raw⟩ factors)
+                residual certified.rand (attempts + certified.attempts) powerRoutes
           | .error primeFailure =>
-              match rhoSplit? m primeFailure.rand
+              match Internal.rhoSplitCounted? m primeFailure.rand
                   (Internal.rhoRestartBudget (fuel + 1)) with
-              | .ok (d, r') =>
-                  searchGo fuel ((d, multiplier) :: (m / d, multiplier) :: stack)
-                    factors residual r' (attempts + primeFailure.attempts + 1)
-                    powerRoutes
+              | .ok split =>
+                  searchGo fuel
+                    ((split.factor, multiplier) ::
+                      (m / split.factor, multiplier) :: stack)
+                    factors residual split.rand
+                    (attempts + primeFailure.attempts + split.attempts) powerRoutes
               | .error rhoFailure =>
                   let smooth := Internal.smoothSearch m rhoFailure.rand (fuel + 1)
                   match smooth.factor with
