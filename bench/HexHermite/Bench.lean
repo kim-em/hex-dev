@@ -62,8 +62,10 @@ def conjugate (n : Nat) : Input :=
 private def matrix (input : Input) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
 
-private def checksum (M : Matrix Int n m) : Int :=
-  M.data.foldl (fun acc x => acc * 65537 + x) 0
+/- A fixed-width structural checksum keeps result observation linear in the
+matrix size without making the benchmark multiply ever-growing `Int` values. -/
+private def checksum (M : Matrix Int n m) : UInt64 :=
+  M.data.foldl (fun acc x => mixHash acc (hash x)) 0
 
 private def bitLength (z : Int) : Nat :=
   let n := z.natAbs
@@ -171,13 +173,13 @@ def conjugateGrowth (n : Nat) : Nat × Nat :=
   let input := conjugate n
   (peakBits input, matrixBits (Matrix.hnf (matrix input)))
 
-def runDense (input : Input) : Int := checksum (Matrix.hnf (matrix input))
-def runDeficient (input : Input) : Int := checksum (Matrix.hnf (matrix input))
-def runTall (input : Input) : Int := checksum (Matrix.hnf (matrix input))
-def runConjugate (input : Input) : Int := checksum (Matrix.hnf (matrix input))
+def runDense (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
+def runDeficient (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
+def runTall (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
+def runConjugate (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
 
-private def vectorChecksum (v : Vector Int n) : Int :=
-  v.foldl (fun acc x => acc * 65537 + x) 0
+private def vectorChecksum (v : Vector Int n) : UInt64 :=
+  v.foldl (fun acc x => mixHash acc (hash x)) 0
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
@@ -197,31 +199,32 @@ def runRank (_ : Unit) : IO Nat := do
   let A ← live fixedMatrix
   return Matrix.hnfRank A
 
-def runBasis (_ : Unit) : IO Int := do
+def runBasis (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   return checksum (Matrix.hnfBasis A)
 
-def runData (_ : Unit) : IO Int := do
+def runData (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   let D := Matrix.hnfData A
-  return checksum D.echelon + checksum D.transform + Int.ofNat D.rank
+  return mixHash (checksum D.echelon) <| mixHash (checksum D.transform) (hash D.rank)
 
-def runWithInv (_ : Unit) : IO Int := do
+def runWithInv (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   let D := Matrix.hnfWithInv A
-  return checksum D.rowData.echelon + checksum D.rowData.transform + checksum D.inverse
+  return mixHash (checksum D.rowData.echelon) <|
+    mixHash (checksum D.rowData.transform) (checksum D.inverse)
 
-def runCoeffs (_ : Unit) : IO Int := do
+def runCoeffs (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   return match Matrix.latticeCoeffs A (Matrix.row A 0) with
     | some c => vectorChecksum c
-    | none => -1
+    | none => 0xffffffffffffffff
 
 def runContains (_ : Unit) : IO Bool := do
   let A ← live fixedMatrix
   return Matrix.latticeContains A (Matrix.row A 0)
 
-def runKernelBasis (_ : Unit) : IO Int := do
+def runKernelBasis (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   return checksum (Matrix.kernelBasis A)
 
@@ -244,11 +247,11 @@ private def rowsJson (input : Input) : Lean.Json :=
     Hex.BenchOracle.Flint.intsToJson
       (List.ofFn fun j : Fin input.cols => (matrix input)[(i, j)]))
 
-private def jsonMatrixChecksum (json : Lean.Json) : IO Int := do
+private def jsonMatrixChecksum (json : Lean.Json) : IO UInt64 := do
   let rows ← match json.getArr? with
     | .ok value => pure value
     | .error error => throw <| IO.userError s!"expected matrix rows: {error}"
-  let mut acc : Int := 0
+  let mut acc : UInt64 := 0
   for rowJson in rows do
     let row ← match rowJson.getArr? with
       | .ok value => pure value
@@ -257,72 +260,84 @@ private def jsonMatrixChecksum (json : Lean.Json) : IO Int := do
       let value ← match valueJson.getInt? with
         | .ok value => pure value
         | .error error => throw <| IO.userError s!"expected integer entry: {error}"
-      acc := acc * 65537 + value
+      acc := mixHash acc (hash value)
   return acc
 
-private def runHexAt (input : Input) (_ : Unit) : IO Int := do
+private def runHexAt (input : Input) (_ : Unit) : IO UInt64 := do
   let ref ← IO.mkRef input
   let live ← ref.get
   return checksum (Matrix.hnf (matrix live))
 
-private def runFlintAt (input : Input) (_ : Unit) : IO Int := do
+private def runFlintAt (input : Input) (_ : Unit) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fmpz_mat" "hnf"
     #[("rows", rowsJson input)]
   jsonMatrixChecksum result
 
-private def runPariAt (input : Input) (_ : Unit) : IO Int := do
+private def runPariAt (input : Input) (_ : Unit) : IO UInt64 := do
   let result ← Hex.BenchOracle.Pari.runOp "fmpz_mat" "hnf"
     #[("rows", rowsJson input)]
   jsonMatrixChecksum result
 
-def runHexDense16 : Unit → IO Int := runHexAt (dense 16)
-def runFlintDense16 : Unit → IO Int := runFlintAt (dense 16)
-def runPariDense16 : Unit → IO Int := runPariAt (dense 16)
-def runHexDense24 : Unit → IO Int := runHexAt (dense 24)
-def runFlintDense24 : Unit → IO Int := runFlintAt (dense 24)
-def runPariDense24 : Unit → IO Int := runPariAt (dense 24)
-def runHexDense32 : Unit → IO Int := runHexAt (dense 32)
-def runFlintDense32 : Unit → IO Int := runFlintAt (dense 32)
-def runPariDense32 : Unit → IO Int := runPariAt (dense 32)
-def runHexDense40 : Unit → IO Int := runHexAt (dense 40)
-def runFlintDense40 : Unit → IO Int := runFlintAt (dense 40)
-def runPariDense40 : Unit → IO Int := runPariAt (dense 40)
-def runHexDeficient16 : Unit → IO Int := runHexAt (deficient 16)
-def runFlintDeficient16 : Unit → IO Int := runFlintAt (deficient 16)
-def runPariDeficient16 : Unit → IO Int := runPariAt (deficient 16)
-def runHexDeficient24 : Unit → IO Int := runHexAt (deficient 24)
-def runFlintDeficient24 : Unit → IO Int := runFlintAt (deficient 24)
-def runPariDeficient24 : Unit → IO Int := runPariAt (deficient 24)
-def runHexDeficient32 : Unit → IO Int := runHexAt (deficient 32)
-def runFlintDeficient32 : Unit → IO Int := runFlintAt (deficient 32)
-def runPariDeficient32 : Unit → IO Int := runPariAt (deficient 32)
-def runHexDeficient40 : Unit → IO Int := runHexAt (deficient 40)
-def runFlintDeficient40 : Unit → IO Int := runFlintAt (deficient 40)
-def runPariDeficient40 : Unit → IO Int := runPariAt (deficient 40)
-def runHexTall16 : Unit → IO Int := runHexAt (tall 16)
-def runFlintTall16 : Unit → IO Int := runFlintAt (tall 16)
-def runPariTall16 : Unit → IO Int := runPariAt (tall 16)
-def runHexTall24 : Unit → IO Int := runHexAt (tall 24)
-def runFlintTall24 : Unit → IO Int := runFlintAt (tall 24)
-def runPariTall24 : Unit → IO Int := runPariAt (tall 24)
-def runHexTall32 : Unit → IO Int := runHexAt (tall 32)
-def runFlintTall32 : Unit → IO Int := runFlintAt (tall 32)
-def runPariTall32 : Unit → IO Int := runPariAt (tall 32)
-def runHexTall40 : Unit → IO Int := runHexAt (tall 40)
-def runFlintTall40 : Unit → IO Int := runFlintAt (tall 40)
-def runPariTall40 : Unit → IO Int := runPariAt (tall 40)
-def runHexConjugate16 : Unit → IO Int := runHexAt (conjugate 16)
-def runFlintConjugate16 : Unit → IO Int := runFlintAt (conjugate 16)
-def runPariConjugate16 : Unit → IO Int := runPariAt (conjugate 16)
-def runHexConjugate24 : Unit → IO Int := runHexAt (conjugate 24)
-def runFlintConjugate24 : Unit → IO Int := runFlintAt (conjugate 24)
-def runPariConjugate24 : Unit → IO Int := runPariAt (conjugate 24)
-def runHexConjugate32 : Unit → IO Int := runHexAt (conjugate 32)
-def runFlintConjugate32 : Unit → IO Int := runFlintAt (conjugate 32)
-def runPariConjugate32 : Unit → IO Int := runPariAt (conjugate 32)
-def runHexConjugate40 : Unit → IO Int := runHexAt (conjugate 40)
-def runFlintConjugate40 : Unit → IO Int := runFlintAt (conjugate 40)
-def runPariConjugate40 : Unit → IO Int := runPariAt (conjugate 40)
+def runHexDense16 : Unit → IO UInt64 := runHexAt (dense 16)
+def runFlintDense16 : Unit → IO UInt64 := runFlintAt (dense 16)
+def runPariDense16 : Unit → IO UInt64 := runPariAt (dense 16)
+def runHexDense24 : Unit → IO UInt64 := runHexAt (dense 24)
+def runFlintDense24 : Unit → IO UInt64 := runFlintAt (dense 24)
+def runPariDense24 : Unit → IO UInt64 := runPariAt (dense 24)
+def runHexDense32 : Unit → IO UInt64 := runHexAt (dense 32)
+def runFlintDense32 : Unit → IO UInt64 := runFlintAt (dense 32)
+def runPariDense32 : Unit → IO UInt64 := runPariAt (dense 32)
+def runHexDense40 : Unit → IO UInt64 := runHexAt (dense 40)
+def runFlintDense40 : Unit → IO UInt64 := runFlintAt (dense 40)
+def runPariDense40 : Unit → IO UInt64 := runPariAt (dense 40)
+def runHexDense48 : Unit → IO UInt64 := runHexAt (dense 48)
+def runFlintDense48 : Unit → IO UInt64 := runFlintAt (dense 48)
+def runPariDense48 : Unit → IO UInt64 := runPariAt (dense 48)
+def runHexDeficient16 : Unit → IO UInt64 := runHexAt (deficient 16)
+def runFlintDeficient16 : Unit → IO UInt64 := runFlintAt (deficient 16)
+def runPariDeficient16 : Unit → IO UInt64 := runPariAt (deficient 16)
+def runHexDeficient24 : Unit → IO UInt64 := runHexAt (deficient 24)
+def runFlintDeficient24 : Unit → IO UInt64 := runFlintAt (deficient 24)
+def runPariDeficient24 : Unit → IO UInt64 := runPariAt (deficient 24)
+def runHexDeficient32 : Unit → IO UInt64 := runHexAt (deficient 32)
+def runFlintDeficient32 : Unit → IO UInt64 := runFlintAt (deficient 32)
+def runPariDeficient32 : Unit → IO UInt64 := runPariAt (deficient 32)
+def runHexDeficient40 : Unit → IO UInt64 := runHexAt (deficient 40)
+def runFlintDeficient40 : Unit → IO UInt64 := runFlintAt (deficient 40)
+def runPariDeficient40 : Unit → IO UInt64 := runPariAt (deficient 40)
+def runHexDeficient48 : Unit → IO UInt64 := runHexAt (deficient 48)
+def runFlintDeficient48 : Unit → IO UInt64 := runFlintAt (deficient 48)
+def runPariDeficient48 : Unit → IO UInt64 := runPariAt (deficient 48)
+def runHexTall16 : Unit → IO UInt64 := runHexAt (tall 16)
+def runFlintTall16 : Unit → IO UInt64 := runFlintAt (tall 16)
+def runPariTall16 : Unit → IO UInt64 := runPariAt (tall 16)
+def runHexTall24 : Unit → IO UInt64 := runHexAt (tall 24)
+def runFlintTall24 : Unit → IO UInt64 := runFlintAt (tall 24)
+def runPariTall24 : Unit → IO UInt64 := runPariAt (tall 24)
+def runHexTall32 : Unit → IO UInt64 := runHexAt (tall 32)
+def runFlintTall32 : Unit → IO UInt64 := runFlintAt (tall 32)
+def runPariTall32 : Unit → IO UInt64 := runPariAt (tall 32)
+def runHexTall40 : Unit → IO UInt64 := runHexAt (tall 40)
+def runFlintTall40 : Unit → IO UInt64 := runFlintAt (tall 40)
+def runPariTall40 : Unit → IO UInt64 := runPariAt (tall 40)
+def runHexTall48 : Unit → IO UInt64 := runHexAt (tall 48)
+def runFlintTall48 : Unit → IO UInt64 := runFlintAt (tall 48)
+def runPariTall48 : Unit → IO UInt64 := runPariAt (tall 48)
+def runHexConjugate16 : Unit → IO UInt64 := runHexAt (conjugate 16)
+def runFlintConjugate16 : Unit → IO UInt64 := runFlintAt (conjugate 16)
+def runPariConjugate16 : Unit → IO UInt64 := runPariAt (conjugate 16)
+def runHexConjugate24 : Unit → IO UInt64 := runHexAt (conjugate 24)
+def runFlintConjugate24 : Unit → IO UInt64 := runFlintAt (conjugate 24)
+def runPariConjugate24 : Unit → IO UInt64 := runPariAt (conjugate 24)
+def runHexConjugate32 : Unit → IO UInt64 := runHexAt (conjugate 32)
+def runFlintConjugate32 : Unit → IO UInt64 := runFlintAt (conjugate 32)
+def runPariConjugate32 : Unit → IO UInt64 := runPariAt (conjugate 32)
+def runHexConjugate40 : Unit → IO UInt64 := runHexAt (conjugate 40)
+def runFlintConjugate40 : Unit → IO UInt64 := runFlintAt (conjugate 40)
+def runPariConjugate40 : Unit → IO UInt64 := runPariAt (conjugate 40)
+def runHexConjugate48 : Unit → IO UInt64 := runHexAt (conjugate 48)
+def runFlintConjugate48 : Unit → IO UInt64 := runFlintAt (conjugate 48)
+def runPariConjugate48 : Unit → IO UInt64 := runPariAt (conjugate 48)
 
 def runFlintOverhead (_ : Unit) : IO Int := do
   let result ← Hex.BenchOracle.Flint.runOp "fmpz_mat" "overhead" #[]
@@ -336,34 +351,37 @@ def runPariOverhead (_ : Unit) : IO Int := do
   | .ok value => return value
   | .error error => throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
-/- Cost-model derivation: rank profiling is cubic on square input. In the
-principal sweep, restoring all earlier prefixes after each admitted row has
-`O(n³)` scheduled reduction checks, with each nontrivial row update touching
-`O(n)` entries; the conservative worst-case model is therefore `O(n⁴)`. -/
-setup_benchmark runDense n => n ^ 4 with prep := dense where {
+/- Cost-model derivation: at fixed square aspect ratio, fraction-free rank
+profiling and the observed principal sweep each scale cubically on this
+deterministic bounded-entry family. The SPEC separately retains its `O(n⁴)`
+worst-case scheduled-update ceiling. -/
+setup_benchmark runDense n => n ^ 3 with prep := dense where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 2_000_000_000
+  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: rank deficiency lowers the active rank in practice,
-but the dimension-only upper model retains the square `O(n⁴)` bound. -/
-setup_benchmark runDeficient n => n ^ 4 with prep := deficient where {
+/- Cost-model derivation: the active rank is `n / 2`; substituting that fixed
+rank fraction into the controlled-family profile and principal sweeps leaves
+the measured scientific model cubic in `n`. -/
+setup_benchmark runDeficient n => n ^ 3 with prep := deficient where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 2_000_000_000
+  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: the tall family has `4n` rows and `n` columns. Its
-fixed aspect ratio leaves the conservative principal-sweep model `O(n⁴)`. -/
-setup_benchmark runTall n => n ^ 4 with prep := tall where {
+/- Cost-model derivation: the tall family has `4n` rows and `n` columns, so
+the constant aspect ratio does not change the cubic controlled-family model;
+redundant signed rows exercise reconstruction without increasing rank. -/
+setup_benchmark runTall n => n ^ 3 with prep := tall where {
   paramFloor := 8, paramCeiling := 24, paramSchedule := .custom #[8, 12, 16, 20, 24]
-  targetInnerNanos := 2_000_000_000
+  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: conjugation changes coefficient growth but not the
-conservative square principal-sweep upper model `O(n⁴)`. -/
-setup_benchmark runConjugate n => n ^ 4 with prep := conjugate where {
+/- Cost-model derivation: the triangular conjugate has a known full-rank
+diagonal form. Conjugation changes operand growth, while its fixed triangular
+schedule leaves the controlled-family wall-clock model cubic. -/
+setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 2_000_000_000
+  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 
@@ -380,68 +398,89 @@ private def externalComparisonConfig : LeanBench.FixedBenchmarkConfig where
   maxSecondsPerCall := 8.0
   warmupFirstIter := true
 
-setup_fixed_benchmark runIsHNFForm where apiConfig
-setup_fixed_benchmark runRank where apiConfig
-setup_fixed_benchmark runBasis where apiConfig
-setup_fixed_benchmark runData where apiConfig
-setup_fixed_benchmark runWithInv where apiConfig
-setup_fixed_benchmark runCoeffs where apiConfig
-setup_fixed_benchmark runContains where apiConfig
-setup_fixed_benchmark runKernelBasis where apiConfig
-setup_fixed_benchmark runPivots where apiConfig
-setup_fixed_benchmark runIndex where apiConfig
-setup_fixed_benchmark runCert where apiConfig
+private def apiExpected (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { apiConfig with expectedHash := some expected }
 
-setup_fixed_benchmark runFlintOverhead where externalComparisonConfig
-setup_fixed_benchmark runPariOverhead where externalComparisonConfig
-setup_fixed_benchmark runHexDense16 where hexComparisonConfig
-setup_fixed_benchmark runFlintDense16 where externalComparisonConfig
-setup_fixed_benchmark runPariDense16 where externalComparisonConfig
-setup_fixed_benchmark runHexDense24 where hexComparisonConfig
-setup_fixed_benchmark runFlintDense24 where externalComparisonConfig
-setup_fixed_benchmark runPariDense24 where externalComparisonConfig
-setup_fixed_benchmark runHexDense32 where hexComparisonConfig
-setup_fixed_benchmark runFlintDense32 where externalComparisonConfig
-setup_fixed_benchmark runPariDense32 where externalComparisonConfig
-setup_fixed_benchmark runHexDense40 where hexComparisonConfig
-setup_fixed_benchmark runFlintDense40 where externalComparisonConfig
-setup_fixed_benchmark runPariDense40 where externalComparisonConfig
-setup_fixed_benchmark runHexDeficient16 where hexComparisonConfig
-setup_fixed_benchmark runFlintDeficient16 where externalComparisonConfig
-setup_fixed_benchmark runPariDeficient16 where externalComparisonConfig
-setup_fixed_benchmark runHexDeficient24 where hexComparisonConfig
-setup_fixed_benchmark runFlintDeficient24 where externalComparisonConfig
-setup_fixed_benchmark runPariDeficient24 where externalComparisonConfig
-setup_fixed_benchmark runHexDeficient32 where hexComparisonConfig
-setup_fixed_benchmark runFlintDeficient32 where externalComparisonConfig
-setup_fixed_benchmark runPariDeficient32 where externalComparisonConfig
-setup_fixed_benchmark runHexDeficient40 where hexComparisonConfig
-setup_fixed_benchmark runFlintDeficient40 where externalComparisonConfig
-setup_fixed_benchmark runPariDeficient40 where externalComparisonConfig
-setup_fixed_benchmark runHexTall16 where hexComparisonConfig
-setup_fixed_benchmark runFlintTall16 where externalComparisonConfig
-setup_fixed_benchmark runPariTall16 where externalComparisonConfig
-setup_fixed_benchmark runHexTall24 where hexComparisonConfig
-setup_fixed_benchmark runFlintTall24 where externalComparisonConfig
-setup_fixed_benchmark runPariTall24 where externalComparisonConfig
-setup_fixed_benchmark runHexTall32 where hexComparisonConfig
-setup_fixed_benchmark runFlintTall32 where externalComparisonConfig
-setup_fixed_benchmark runPariTall32 where externalComparisonConfig
-setup_fixed_benchmark runHexTall40 where hexComparisonConfig
-setup_fixed_benchmark runFlintTall40 where externalComparisonConfig
-setup_fixed_benchmark runPariTall40 where externalComparisonConfig
-setup_fixed_benchmark runHexConjugate16 where hexComparisonConfig
-setup_fixed_benchmark runFlintConjugate16 where externalComparisonConfig
-setup_fixed_benchmark runPariConjugate16 where externalComparisonConfig
-setup_fixed_benchmark runHexConjugate24 where hexComparisonConfig
-setup_fixed_benchmark runFlintConjugate24 where externalComparisonConfig
-setup_fixed_benchmark runPariConjugate24 where externalComparisonConfig
-setup_fixed_benchmark runHexConjugate32 where hexComparisonConfig
-setup_fixed_benchmark runFlintConjugate32 where externalComparisonConfig
-setup_fixed_benchmark runPariConjugate32 where externalComparisonConfig
-setup_fixed_benchmark runHexConjugate40 where hexComparisonConfig
-setup_fixed_benchmark runFlintConjugate40 where externalComparisonConfig
-setup_fixed_benchmark runPariConjugate40 where externalComparisonConfig
+private def hexExpected (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { hexComparisonConfig with expectedHash := some expected }
+
+private def externalExpected (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { externalComparisonConfig with expectedHash := some expected }
+
+setup_fixed_benchmark runIsHNFForm where apiExpected 0xb
+setup_fixed_benchmark runRank where apiExpected 0x8
+setup_fixed_benchmark runBasis where apiExpected 0x4bd6c0414a37c54a
+setup_fixed_benchmark runData where apiExpected 0xd37fb7926b798a32
+setup_fixed_benchmark runWithInv where apiExpected 0x91815657fb9e95e2
+setup_fixed_benchmark runCoeffs where apiExpected 0x1de54f237a173da8
+setup_fixed_benchmark runContains where apiExpected 0xb
+setup_fixed_benchmark runKernelBasis where apiExpected 0x0
+setup_fixed_benchmark runPivots where apiExpected 0x820065002f49d8
+setup_fixed_benchmark runIndex where apiExpected 0x52738
+setup_fixed_benchmark runCert where apiExpected 0xb
+
+setup_fixed_benchmark runFlintOverhead where externalExpected 0x0
+setup_fixed_benchmark runPariOverhead where externalExpected 0x0
+setup_fixed_benchmark runHexDense16 where hexExpected 0xd4c4d30cf11e3902
+setup_fixed_benchmark runFlintDense16 where externalExpected 0xd4c4d30cf11e3902
+setup_fixed_benchmark runPariDense16 where externalExpected 0xd4c4d30cf11e3902
+setup_fixed_benchmark runHexDense24 where hexExpected 0xc2db6d9cd48562cf
+setup_fixed_benchmark runFlintDense24 where externalExpected 0xc2db6d9cd48562cf
+setup_fixed_benchmark runPariDense24 where externalExpected 0xc2db6d9cd48562cf
+setup_fixed_benchmark runHexDense32 where hexExpected 0x7dea452eb86f21c4
+setup_fixed_benchmark runFlintDense32 where externalExpected 0x7dea452eb86f21c4
+setup_fixed_benchmark runPariDense32 where externalExpected 0x7dea452eb86f21c4
+setup_fixed_benchmark runHexDense40 where hexExpected 0x3e6a06331c9a70f5
+setup_fixed_benchmark runFlintDense40 where externalExpected 0x3e6a06331c9a70f5
+setup_fixed_benchmark runPariDense40 where externalExpected 0x3e6a06331c9a70f5
+setup_fixed_benchmark runHexDense48 where hexExpected 0xf0b970d34f3479cf
+setup_fixed_benchmark runFlintDense48 where externalExpected 0xf0b970d34f3479cf
+setup_fixed_benchmark runPariDense48 where externalExpected 0xf0b970d34f3479cf
+setup_fixed_benchmark runHexDeficient16 where hexExpected 0x8c3b42aee1b184e
+setup_fixed_benchmark runFlintDeficient16 where externalExpected 0x8c3b42aee1b184e
+setup_fixed_benchmark runPariDeficient16 where externalExpected 0x8c3b42aee1b184e
+setup_fixed_benchmark runHexDeficient24 where hexExpected 0x9a533e7da7244459
+setup_fixed_benchmark runFlintDeficient24 where externalExpected 0x9a533e7da7244459
+setup_fixed_benchmark runPariDeficient24 where externalExpected 0x9a533e7da7244459
+setup_fixed_benchmark runHexDeficient32 where hexExpected 0xe5df8cb1544b5979
+setup_fixed_benchmark runFlintDeficient32 where externalExpected 0xe5df8cb1544b5979
+setup_fixed_benchmark runPariDeficient32 where externalExpected 0xe5df8cb1544b5979
+setup_fixed_benchmark runHexDeficient40 where hexExpected 0x705d86c1ef31d9c9
+setup_fixed_benchmark runFlintDeficient40 where externalExpected 0x705d86c1ef31d9c9
+setup_fixed_benchmark runPariDeficient40 where externalExpected 0x705d86c1ef31d9c9
+setup_fixed_benchmark runHexDeficient48 where hexExpected 0x98d873e64dfda3bc
+setup_fixed_benchmark runFlintDeficient48 where externalExpected 0x98d873e64dfda3bc
+setup_fixed_benchmark runPariDeficient48 where externalExpected 0x98d873e64dfda3bc
+setup_fixed_benchmark runHexTall16 where hexExpected 0x8194afcd561bfd53
+setup_fixed_benchmark runFlintTall16 where externalExpected 0x8194afcd561bfd53
+setup_fixed_benchmark runPariTall16 where externalExpected 0x8194afcd561bfd53
+setup_fixed_benchmark runHexTall24 where hexExpected 0x720fca5c6fa3aec1
+setup_fixed_benchmark runFlintTall24 where externalExpected 0x720fca5c6fa3aec1
+setup_fixed_benchmark runPariTall24 where externalExpected 0x720fca5c6fa3aec1
+setup_fixed_benchmark runHexTall32 where hexExpected 0x418e1a4c9e9d84b3
+setup_fixed_benchmark runFlintTall32 where externalExpected 0x418e1a4c9e9d84b3
+setup_fixed_benchmark runPariTall32 where externalExpected 0x418e1a4c9e9d84b3
+setup_fixed_benchmark runHexTall40 where hexExpected 0x39dab28adc1593b5
+setup_fixed_benchmark runFlintTall40 where externalExpected 0x39dab28adc1593b5
+setup_fixed_benchmark runPariTall40 where externalExpected 0x39dab28adc1593b5
+setup_fixed_benchmark runHexTall48 where hexExpected 0xb51a4d975bdc6feb
+setup_fixed_benchmark runFlintTall48 where externalExpected 0xb51a4d975bdc6feb
+setup_fixed_benchmark runPariTall48 where externalExpected 0xb51a4d975bdc6feb
+setup_fixed_benchmark runHexConjugate16 where hexExpected 0x1b4006b1f4d4df66
+setup_fixed_benchmark runFlintConjugate16 where externalExpected 0x1b4006b1f4d4df66
+setup_fixed_benchmark runPariConjugate16 where externalExpected 0x1b4006b1f4d4df66
+setup_fixed_benchmark runHexConjugate24 where hexExpected 0xe47f13aca06b7628
+setup_fixed_benchmark runFlintConjugate24 where externalExpected 0xe47f13aca06b7628
+setup_fixed_benchmark runPariConjugate24 where externalExpected 0xe47f13aca06b7628
+setup_fixed_benchmark runHexConjugate32 where hexExpected 0x531c1c24c585ac12
+setup_fixed_benchmark runFlintConjugate32 where externalExpected 0x531c1c24c585ac12
+setup_fixed_benchmark runPariConjugate32 where externalExpected 0x531c1c24c585ac12
+setup_fixed_benchmark runHexConjugate40 where hexExpected 0xfc1deb59344974c8
+setup_fixed_benchmark runFlintConjugate40 where externalExpected 0xfc1deb59344974c8
+setup_fixed_benchmark runPariConjugate40 where externalExpected 0xfc1deb59344974c8
+setup_fixed_benchmark runHexConjugate48 where hexExpected 0x501203bf9b14db75
+setup_fixed_benchmark runFlintConjugate48 where externalExpected 0x501203bf9b14db75
+setup_fixed_benchmark runPariConjugate48 where externalExpected 0x501203bf9b14db75
 
 end Hex.HermiteBench
 
