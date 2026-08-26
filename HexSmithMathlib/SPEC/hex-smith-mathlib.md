@@ -41,3 +41,20 @@ cannot represent the free complement.
 The authoritative algorithm, correctness, uniqueness, conformance, and
 benchmark requirements shared with this layer are in
 [`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
+
+## Verification
+
+This is a correspondence-only layer, so Phase 3 is established by auditing
+the executable coverage in `hex-smith`, not by adding a ceremonial Mathlib
+conformance module:
+
+- the general and diagonal form/data agreement, transform, and inverse guards
+  cover the executable bases transported by `smithNormalForm`;
+- invariant-factor, shape, and rank guards cover `smithNormalForm_chain`;
+- rank-deficient, rectangular, and abelian-presentation guards cover the
+  executable rank, invariant factors, and free/torsion split transported by
+  `quotientEquiv`.
+
+`hex-smith-mathlib` owns no executable reifier, certificate checker, tactic,
+or other runtime surface. Its declarations are correspondence proofs checked
+by the kernel in the ordinary `HexSmithMathlib` build.
