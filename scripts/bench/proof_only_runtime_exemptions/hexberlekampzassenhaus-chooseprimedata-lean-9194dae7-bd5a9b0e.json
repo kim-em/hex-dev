@@ -1,6 +1,0 @@
-{
- "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
- "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
- "current_blob": "bd5a9b0e6da14217645d5243010fafc00fdc4d27",
- "reason": "Raises maxRecDepth on one theorem's proof after the prime-table migration; proof elaboration only, no executable change."
-}

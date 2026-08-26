@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "d7a6b7f5c4576d3435ffa5f39cb8bee459abd555",
- "reason": "Combines current main's build-only registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance and RuntimeEmitConformance registrations; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
-}

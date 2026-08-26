@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "3cbffd9841ac08abcd6777e6fc23def1de704d05",
- "reason": "Registers only the HexSmith libraries, conformance emitter, and benchmark executable on top of current main; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
-}

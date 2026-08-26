@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "efca6a658b0a62ad3de48d957ed2c834966e68c1",
- "reason": "Additionally registers the elaborator canary which runs interval planning and emits the existing transparent Real.sin proof; the factorization service target and executable dependency graph are unchanged."
-}

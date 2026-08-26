@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
- "current_blob": "c5d22d5cbafc71a28f5c47536cdd1d06bf16f7e6",
- "reason": "Adds the HexSparsePolyTests kernel-probe lean_lib on top of the reviewed main registrations; no factorization module, executable, or build-flag changes."
-}

@@ -1,6 +1,0 @@
-{
- "path": "HexMatrix/Diagonal.lean",
- "baseline_blob": null,
- "current_blob": "12c18a3f9aacefac47a83cdb9de9a70960ff5a58",
- "reason": "Adds the independent rectangular diagonal constructor and its correctness theorems for HexSmith; the production factor entry never calls these definitions, so factorization runtime behavior is unchanged."
-}

@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "e559a09067dc43ae2b7406fd2cab4e36dafe9189",
- "reason": "Additionally registers the supported HexIntervalMathlib real-semantics companion and its proof-only conformance module; the factorization service target and executable dependency graph are unchanged."
-}

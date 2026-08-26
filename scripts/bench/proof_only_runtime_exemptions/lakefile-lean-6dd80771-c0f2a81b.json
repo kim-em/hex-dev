@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "c0f2a81bc122209582fd9b0514237b36b800678d",
- "reason": "Additionally registers the bounded PNT+ Table 12 logarithmic-row proof experiment and conformance module; these modules are acceptance-only and do not enter the factorization service target or its executable dependency graph."
-}

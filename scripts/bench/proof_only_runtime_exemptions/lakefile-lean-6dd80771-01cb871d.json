@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "01cb871d1f98573f516680e4c004e29b7271b1ef",
- "reason": "Additionally registers the bounded Table 10 target/support providers, the proof-only exact-supremum bridge completing the pinned PNT+ localized rewrite, and their conformance modules on top of the complete FKS2 family; these acceptance-only modules do not enter the factorization service target or its executable dependency graph."
-}

@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "93b5d48c2868027cb186ba84dea21de832485f4e",
- "reason": "Additionally registers the proof-only centered-function real-semantics companion and its conformance module; the factorization service target and executable dependency graph are unchanged."
-}

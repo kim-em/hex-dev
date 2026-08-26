@@ -1,6 +1,0 @@
-{
- "path": "Hex/Conformance/Emit.lean",
- "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
- "current_blob": "683278f7a8270484bc67e30317237ebae0d2ef3f",
- "reason": "Adds the sparsepoly fixture serializer to the shared conformance emit helper; no factorization module imports it at runtime."
-}

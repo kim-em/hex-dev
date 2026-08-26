@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
- "current_blob": "71093e603b8f4b6965534ffa140cf129522c6e0b",
- "reason": "Additionally registers the Mathlib-free HexInterval authenticated decision benchmark on top of the reviewed typed-runtime proof conformance and executable-controller targets; this benchmark does not enter the factorization service target or change its executable dependency graph."
-}

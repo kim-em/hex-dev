@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "a311762cafc62e9bbfd16385a2da6cd53639978b",
- "reason": "Additionally registers the supported proof-only HexIntervalMathlib reciprocal-enclosure semantics module on top of the retained multiplication, natural-power, transactional-split, PNT+, and public interval registrations; the factorization service target and executable dependency graph are unchanged."
-}

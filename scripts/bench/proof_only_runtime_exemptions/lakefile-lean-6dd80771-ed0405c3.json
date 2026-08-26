@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "ed0405c31f37e4415031e8f020251d965ab344fb",
- "reason": "Additionally registers the isolated Mathlib-free adaptive interval-policy experiment on top of the retained exact-branch proof, subtraction replay, staged policy, complete LogTables, PNT, and public interval registrations; it does not enter the factorization service target or change its executable dependency graph."
-}

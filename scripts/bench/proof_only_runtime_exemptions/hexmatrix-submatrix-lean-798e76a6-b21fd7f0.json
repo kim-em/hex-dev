@@ -1,6 +1,0 @@
-{
- "path": "HexMatrix/Submatrix.lean",
- "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
- "current_blob": "b21fd7f027b3ecf38eeb39db7f5773c94bafe8e1",
- "reason": "Adds the row_takeRows theorem for HexMinPoly proofs; the existing takeRows implementation and every factorization runtime definition are unchanged."
-}

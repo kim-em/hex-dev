@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "9ba2195e5e253f4b322594da01e7c59573951877",
- "reason": "Additionally registers the supported HexIntervalMathlib outward-regularization semantics module on top of the retained reciprocal, division, transactional split, multiplication, natural-power, PNT+, and public interval registrations; the factorization service target and executable dependency graph are unchanged."
-}

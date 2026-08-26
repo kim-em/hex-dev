@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "8ac991a3185fb38f5617a272fbaf771db4fc6367",
- "reason": "Additionally registers the complete bounded source-pinned PNT+ LogTables provider stack, its ordinary-kernel companions, and conformance modules on top of the retained staged-policy, small-prime, and controller registrations; these acceptance-only modules do not enter the factorization service target or its executable dependency graph."
-}

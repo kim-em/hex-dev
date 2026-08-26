@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
- "current_blob": "dcb37c10309b6da8453022b47b27f680508177fe",
- "reason": "Additionally registers the proof-only HexIntervalMathlib typed-runtime quotation and recursive replay conformance module on top of the retained typed runtime and executable controller registrations; this theorem-side target does not enter the factorization service target or change its executable dependency graph."
-}

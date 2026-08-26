@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "7b6aaa8aa8a5af86fb3de13fc11606499863c170",
- "reason": "Additionally registers the isolated Mathlib-free HexInterval branch-proof experiment and its ReLU conformance module only; the factorization service target and executable dependency graph are unchanged."
-}

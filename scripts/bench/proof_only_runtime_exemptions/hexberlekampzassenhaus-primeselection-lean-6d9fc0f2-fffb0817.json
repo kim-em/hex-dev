@@ -1,6 +1,0 @@
-{
- "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
- "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
- "current_blob": "fffb08176c872a5a67129af1ca093ae21867c945",
- "reason": "Rebuilds hotPathCandidates as a proof-carrying view of the committed prime table with identical values and order (pinned by the #guard block); prime selection behaviour is unchanged."
-}

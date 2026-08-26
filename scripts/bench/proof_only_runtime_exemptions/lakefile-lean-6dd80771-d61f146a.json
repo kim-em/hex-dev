@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "d61f146ae2a77f159c2afbb1b5b3b1893186d9d5",
- "reason": "Additionally registers package-composed interval operation semantics only; the factorization service target and executable dependency graph are unchanged."
-}

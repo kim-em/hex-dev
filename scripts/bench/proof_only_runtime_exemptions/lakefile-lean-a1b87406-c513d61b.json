@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "c513d61bc5722221227dd3f126a96b9cc8a178a1",
- "reason": "Combines current main's registrations with Hermite libraries, conformance, fixture, and benchmark targets; none enters hexbz_factor_service or changes its executable dependency graph or build flags."
-}

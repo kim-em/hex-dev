@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "8630fd6ae9209094dd0a9d67dded5870fe1ea86a",
- "reason": "Additionally registers the HexPrimality conformance driver targets on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
-}

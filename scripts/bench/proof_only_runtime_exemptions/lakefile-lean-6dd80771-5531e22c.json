@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "5531e22c687dc8534e79fac44549fa8819044211",
- "reason": "Additionally registers the supported HexIntervalMathlib multiplication-semantics module and its Mathlib-free and proof-only conformance coverage on top of the retained absolute-value and minimum/maximum registrations; the factorization service target and executable dependency graph are unchanged."
-}

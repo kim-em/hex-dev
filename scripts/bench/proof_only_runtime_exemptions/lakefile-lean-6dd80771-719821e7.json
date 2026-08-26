@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "719821e7ca29eda1440ea688bb9dbaf64dda8880",
- "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
-}

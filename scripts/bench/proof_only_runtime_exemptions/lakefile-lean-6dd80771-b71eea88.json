@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "b71eea88678be6aa3c8c461ce3cd130c867ed65d",
- "reason": "Additionally registers the shared interval frontend encoder and independent exponential-sign experiment/conformance only; the factorization service target and executable dependency graph are unchanged."
-}

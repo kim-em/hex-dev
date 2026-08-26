@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "adea9d7e264460970cf90b816e88cb0ac780e1f6",
- "reason": "Registers the semantic- and chronological-replay experiments and their conformance modules only; the factorization service target and its executable dependency graph are unchanged."
-}

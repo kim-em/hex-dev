@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
- "current_blob": "bf922af667c8719a11622b73acbccd5767e1fbe5",
- "reason": "Adds the HexSparsePolyMathlib lean_lib on top of the sparse-poly conformance/bench registrations; no factorization module, executable, or build-flag changes."
-}

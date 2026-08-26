@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "74deaf32e9f11c0cb238b524148deac6d86b5c58",
- "reason": "Additionally registers the supported HexIntervalMathlib forward Meta/tactic bridge and its proof-only quotation, replay, emission, reciprocal, division, regularization, and source-closure conformance; these modules do not enter the factorization service target or change its executable dependency graph."
-}

@@ -1,6 +1,0 @@
-{
- "path": "Hex/Conformance/Emit.lean",
- "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
- "current_blob": "1801e5fde394c6f03084098ebf6a62841349c2f7",
- "reason": "Adds the primality fixture emitters (isprime/certcheck/segment) and boolValue, used only by conformance drivers; the factorization service does not call the emission library."
-}

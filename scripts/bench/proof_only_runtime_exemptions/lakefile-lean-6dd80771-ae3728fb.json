@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "ae3728fb01b946482533d3f2e6a0145364b65f62",
- "reason": "Registers interval trace-replay, transparent proof-emission, and generic instance-reconstruction experiments and conformance modules only; the factorization service target and executable dependency graph are unchanged."
-}

@@ -1,6 +1,0 @@
-{
- "path": "HexMatrix/MatrixAlgebra.lean",
- "baseline_blob": "461006d810f79d065f6e179497407449788d895a",
- "current_blob": "702cb10dbb32083c99837d2632e662bc4a3d6150",
- "reason": "Adds matrix and vector algebra theorems used by HexMinPoly proofs; it adds no executable definition and cannot alter the factorization runtime."
-}

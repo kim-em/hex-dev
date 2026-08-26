@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "07e7dc9c548e343756b4342f6741e7e9b4f6a164",
- "reason": "Additionally registers the Mathlib-free source-correlated Dusart exponential checker, its proof-only real-semantics companion, and conformance module on top of the retained supported Proof, Search, Policy, State, Trace, Chebyshev, LogTables, FKS2, BKLNW, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
-}

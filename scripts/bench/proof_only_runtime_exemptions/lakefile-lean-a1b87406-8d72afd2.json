@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "8d72afd2241be192611ea15f53b2ada3ff97361e",
- "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
-}

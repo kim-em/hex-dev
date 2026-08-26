@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
- "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
- "reason": "Adds the unrelated HexSparsePoly lean_lib, two interval experiment/conformance globs, and the interval typed-runtime and executable-controller conformance globs; the hexbz_factor_service target, BZ library targets, and build flags are unchanged."
-}

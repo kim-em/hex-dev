@@ -1,6 +1,0 @@
-{
- "path": "HexBerlekampZassenhaus/Classical/Candidate.lean",
- "baseline_blob": "eb455d18622fadc04de194c129936ee771df248c",
- "current_blob": "4efda541aabadce1a70ffe45c339274894a17d68",
- "reason": "Rewords one docstring to drop em-dashes; no declaration, definition, or attribute changes."
-}

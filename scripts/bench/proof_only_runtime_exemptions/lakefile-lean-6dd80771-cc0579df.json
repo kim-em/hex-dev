@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "cc0579df444cae1a2fcc9a900c8f9c53c452943a",
- "reason": "Additionally registers the isolated Mathlib-free HexInterval staged-policy experiment and its conformance module; the factorization service target and executable dependency graph are unchanged."
-}

@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "2148017bd5b97da69cbe5f3d5147fa746153ab22",
- "reason": "Additionally registers the supported HexIntervalMathlib built-in arithmetic Rule module and its proof-only conformance on top of the current public interval, Proof, Chebyshev, and PNT registrations; they do not enter the factorization service target or change its executable dependency graph."
-}

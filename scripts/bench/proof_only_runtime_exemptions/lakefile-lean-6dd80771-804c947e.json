@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "804c947e909eaf5e5393719c652fbfb733193948",
- "reason": "Additionally registers the generated Mathlib-free PNT+ Table 12 ordinary-row batch, its proof-only real-semantics companion, and conformance module; the factorization service target and executable dependency graph are unchanged."
-}

@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "d1964196b54e1ed5c9875073b64b97f3c0953eb7",
- "reason": "Additionally registers the build-only HexTruncatedSeries lint regression target; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
-}

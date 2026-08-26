@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "665cf74c2e425a35d05b654b5de4200d394525ae",
- "reason": "Registers only the HexMvGcd Phase 4 benchmark executable; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
-}

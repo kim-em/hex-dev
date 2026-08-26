@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "aac7487a2c21b57b10ac790c9a107febdad2bd89",
- "reason": "Registers only the HexMvHensel conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
-}

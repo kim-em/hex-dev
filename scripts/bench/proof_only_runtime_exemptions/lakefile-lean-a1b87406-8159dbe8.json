@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "8159dbe8532091eaf8426ef4c051523050f2322f",
- "reason": "Additionally registers the build-only HexMvGcd FLINT benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
-}

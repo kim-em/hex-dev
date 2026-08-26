@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
- "current_blob": "ce28c059fd9412e7f82e0dd5a482911ccd29b0ef",
- "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexMvGcd conformance executables; none changes a factorization runtime target, definition, build flag, or dependency."
-}

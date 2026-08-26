@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "f8b696cb4dc5f8a99fdc57e21d8dbdaf163a2ba5",
- "reason": "Registers Examples.FiniteFields in the HexReleaseExamples glob. That target is a release example library, not part of the measured executable set; the factorization service target and its dependency graph are unchanged."
-}

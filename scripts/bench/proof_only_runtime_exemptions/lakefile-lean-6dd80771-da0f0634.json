@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
- "current_blob": "da0f063465448492e3eaedd3e6a4784d6633a588",
- "reason": "Additionally registers the supported HexIntervalMathlib minimum/maximum semantics module and the Mathlib-free and proof-only conformance modules; the factorization service target and executable dependency graph are unchanged."
-}

@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
- "current_blob": "064210c12920d18f29e7390e4ae02a329aba6ea1",
- "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and MV-GCD benchmark registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
-}
