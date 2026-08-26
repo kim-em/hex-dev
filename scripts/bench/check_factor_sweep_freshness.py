@@ -15,6 +15,7 @@ from collections import Counter
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 RESULTS = ROOT / "reports" / "bench-results"
 PROOF_ONLY_EXEMPTIONS = (
-    ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions.json")
+    ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions")
 SYSTEMS = ("hex-factor", "flint", "ntl", "pari", "isabelle-bz", "isabelle-lll")
 
 COMMON_PATHS = {
@@ -80,6 +81,95 @@ def git(*args: str) -> str:
     return result.stdout
 
 
+LAKEFILE = "lakefile.lean"
+
+# Lines that begin a top-level Lake declaration. Anything before one of these
+# (comments, docstrings, `@[default_target]`) belongs to the declaration that
+# follows it.
+LAKE_DECL = re.compile(
+    r"^(package|require|lean_lib|lean_exe|extern_lib|target|script"
+    r"|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+
+
+def lakefile_blocks(text: str) -> dict[str, str]:
+    """Split a lakefile into top-level declaration blocks, keyed by decl name."""
+    blocks: dict[str, str] = {}
+    key: str | None = None
+    pending: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        match = LAKE_DECL.match(line)
+        if match:
+            if key is not None:
+                blocks[key] = "\n".join(current).rstrip()
+            key = f"{match.group(1)} {match.group(2)}"
+            current = pending + [line]
+            pending = []
+        elif key is None:
+            pending.append(line)
+        elif line.strip() == "" or line.startswith((" ", "\t")):
+            current.append(line)
+        else:
+            # A bare top-level line (comment, attribute, `open ...`) starts a
+            # run that attaches to whatever declaration comes next.
+            pending.append(line)
+    if key is not None:
+        blocks[key] = "\n".join(current).rstrip()
+    return blocks
+
+
+FACTOR_SERVICE_EXE = "hexbz_factor_service"
+
+
+def factorization_blocks(text: str) -> dict[str, str]:
+    """The lakefile declarations that can affect the factorization binary.
+
+    That is the package options, the dependencies, the factorization service
+    executable, and the libraries it is built from -- the same set of libraries
+    `HEX_PREFIXES` already names as factorization source. Every other
+    declaration builds a different target and cannot reach this one.
+    """
+    libs = {prefix.rstrip("/") for prefix in HEX_PREFIXES}
+    relevant = {}
+    for name, body in lakefile_blocks(text).items():
+        kind, _, decl = name.partition(" ")
+        if kind in ("package", "require"):
+            relevant[name] = body
+        elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
+            relevant[name] = body
+        elif kind == "lean_lib" and decl in libs:
+            relevant[name] = body
+    return relevant
+
+
+def lakefile_affects_runtime(baseline: str) -> bool:
+    """Did this lakefile edit change how the factorization binary is built?
+
+    Nearly every change here registers a *new* library or executable, which
+    cannot alter that binary: Lake builds each target from its own declaration.
+    Comparing whole-file blobs therefore flagged every such pull request, and
+    each one needed its own proof-only exemption keyed to a blob that the next
+    merge invalidated.
+
+    So compare only the declarations the factorization binary is built from.
+    """
+    before = git_blob(baseline, LAKEFILE)
+    after = git_blob("HEAD", LAKEFILE)
+    if before is None or after is None:
+        return True
+    return lakefile_texts_differ(
+        git("cat-file", "blob", before), git("cat-file", "blob", after))
+
+
+def lakefile_texts_differ(before: str, after: str) -> bool:
+    """The block comparison behind `lakefile_affects_runtime`, without git."""
+    old_blocks = factorization_blocks(before)
+    new_blocks = factorization_blocks(after)
+    if set(old_blocks) != set(new_blocks):
+        return True
+    return any(new_blocks[name] != body for name, body in old_blocks.items())
+
+
 def source_path(system: str, path: str) -> bool:
     if path in COMMON_PATHS:
         return True
@@ -103,15 +193,19 @@ def load_proof_only_exemptions() -> set[tuple[str, str, str]]:
     Both blob IDs are required so an exemption expires automatically as soon
     as the file changes again. This is intentionally narrower than exempting a
     path or trusting a commit-message marker.
+
+    One file per exemption. A single shared list cannot be merged: entries are
+    appended by whichever branches happen to be open, so concurrent pull
+    requests collide on it textually even when their exemptions are unrelated.
     """
-    entries = json.loads(PROOF_ONLY_EXEMPTIONS.read_text())
     exemptions = set()
-    for entry in entries:
+    for entry_path in sorted(PROOF_ONLY_EXEMPTIONS.glob("*.json")):
+        entry = json.loads(entry_path.read_text())
         required = {"path", "baseline_blob", "current_blob", "reason"}
         missing = required - entry.keys()
         if missing:
             raise SystemExit(
-                f"{PROOF_ONLY_EXEMPTIONS}: missing {', '.join(sorted(missing))}")
+                f"{entry_path}: missing {', '.join(sorted(missing))}")
         exemptions.add((
             entry["path"], entry["baseline_blob"], entry["current_blob"]))
     return exemptions
@@ -191,8 +285,10 @@ def main() -> int:
         stale = sorted(
             name for name in changed
             if source_path(system, name) and not (
-                system == "hex-factor" and proof_only_transition(
-                    name, commit, proof_only_exemptions)))
+                system == "hex-factor" and (
+                    proof_only_transition(name, commit, proof_only_exemptions)
+                    or (name == LAKEFILE
+                        and not lakefile_affects_runtime(commit)))))
         if stale:
             errors.append(
                 f"{system}: source differs from {commit[:12]}: " + ", ".join(stale))

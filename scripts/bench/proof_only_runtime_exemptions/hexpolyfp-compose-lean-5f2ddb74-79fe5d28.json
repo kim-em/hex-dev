@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/Compose.lean",
+ "baseline_blob": "5f2ddb7456186793f29a6187c490c3e7dea90686",
+ "current_blob": "79fe5d281f3009f42744ff252d82ec2d47ee2ccf",
+ "reason": "Adds only a theorem that X is the right identity for polynomial composition; no executable definition or factorization runtime call path changes."
+}

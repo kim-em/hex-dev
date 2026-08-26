@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/BerlekampMatrix.lean",
+ "baseline_blob": "2ce2ddd1a12dc0af8f368c77bb257e4a24738ec0",
+ "current_blob": "04bc056e0cf45ae4cae0fccc9d05b643914594cc",
+ "reason": "Phase 6 polish only: renames the deprecated core `dif_pos`/`dif_neg` rewrites to `dite_eq_left`/`dite_eq_right` (drop-in aliases of the same statements) and drops three unused `[ZMod64.PrimeModulus p]` instance binders from proof-only lemmas. `berlekampMatrix`, `berlekampColumn`, `frobeniusDiffMod`, and every other executable definition in the file are unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexModArith/Residue.lean",
+ "baseline_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+ "current_blob": "26e8b637086e9493ad19930d9b9aa5ce1dda4c24",
+ "reason": "Adds the DecidableEq (ZMod64 p) instance previously supplied by HexPolyFp/Field.lean, with the same stored-word comparison; the compiled factorization call graph is unchanged."
+}

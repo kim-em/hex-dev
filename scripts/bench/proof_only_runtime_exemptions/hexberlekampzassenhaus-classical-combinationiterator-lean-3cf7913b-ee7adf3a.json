@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Classical/CombinationIterator.lean",
+ "baseline_blob": "3cf7913b9837d27fb8c7b31baaa5fae1eb77d9f3",
+ "current_blob": "ee7adf3a6993483b905fd9f5cc007260efd99ede",
+ "reason": "Phase 6 polish only: demotes the simp-redundant `LiftSupport.modulusNat_spec` and `modulusInt_spec` to plain theorems with the reason recorded in their docstrings. Both are proof-side statements about recorded fields; the combination iterator's executable definitions are unchanged."
+}

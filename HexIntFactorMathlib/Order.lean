@@ -5,7 +5,6 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor.Order
-import HexPrimalityMathlib.Prime
 import Mathlib.Data.ZMod.Basic
 import Mathlib.GroupTheory.OrderOfElement
 
@@ -32,35 +31,37 @@ private theorem unit_pow_iff {a n k : Nat} (ha : Nat.Coprime a n) :
     simpa only [Units.val_pow_eq_pow_val, Units.val_one,
       ZMod.coe_unitOfCoprime, Nat.cast_pow, Nat.cast_one] using hv
 
+/-- The Mathlib order of a residue-class unit agrees with the Mathlib-free
+natural order. -/
+theorem orderOf_unitOfCoprime {a n : Nat} (hn : 1 < n)
+    (ha : Nat.Coprime a n) :
+    _root_.orderOf (ZMod.unitOfCoprime a ha) = Hex.Nat.orderOf a n := by
+  have hpos : 0 < Hex.Nat.orderOf a n := Hex.Nat.orderOf_pos hn ha
+  apply (_root_.orderOf_eq_iff hpos).2
+  constructor
+  · exact (unit_pow_iff ha).2 (Hex.Nat.orderOf_pow_mod hpos)
+  · intro k hkn hk hpow
+    exact Hex.Nat.orderOf_min hpos k hk hkn ((unit_pow_iff ha).1 hpow)
+
+/-- The Mathlib order of a natural-number residue agrees with the Mathlib-free
+natural order, including the zero value for nonunits. -/
+theorem orderOf_natCast {a n : Nat} (hn : 1 < n) :
+    _root_.orderOf (a : ZMod n) = Hex.Nat.orderOf a n := by
+  by_cases ha : Nat.Coprime a n
+  · rw [← orderOf_unitOfCoprime hn ha]
+    simpa only [ZMod.coe_unitOfCoprime] using
+      (_root_.orderOf_units (y := ZMod.unitOfCoprime a ha))
+  · have hz : Hex.Nat.orderOf a n = 0 :=
+      Nat.eq_zero_of_not_pos fun h => ha (coprime_of_orderOf_pos h)
+    rw [hz, _root_.orderOf_eq_zero_iff]
+    exact fun h => ha ((ZMod.isUnit_iff_coprime a n).1 h.isUnit)
+
 /-- A checked natural order is the order of the corresponding Mathlib unit. -/
 theorem orderOf_eq {c : OrderCert} (h : checkOrder c = true) :
     _root_.orderOf
         (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order := by
-  have hp :
-      1 < c.modulus ∧ 0 < c.order ∧ c.orderFac.subject = c.order ∧
-        checkFactorization c.orderFac = true ∧
-        HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus ∧
-        ∀ e ∈ c.orderFac.factors,
-          HexArith.powModNat c.base (c.order / e.prime) c.modulus ≠
-            1 % c.modulus := by
-    simpa only [checkOrder, Bool.and_eq_true, decide_eq_true_eq,
-      List.all_eq_true, and_assoc] using h
-  let ha := coprime_of_checkOrder h
-  apply orderOf_eq_of_pow_and_pow_div_prime hp.2.1
-  · apply (unit_pow_iff ha).2
-    have hpow := hp.2.2.2.2.1
-    rw [HexArith.powModNat_eq _ _ _ (by omega)] at hpow
-    exact hpow
-  · intro q hq hqDvd hunit
-    have hqLocal : Prime q := prime_iff.mpr hq
-    have hqRaw : q ∣ c.orderFac.subject := by simpa [hp.2.2.1] using hqDvd
-    obtain ⟨e, he, heq⟩ :=
-      (checkFactorization_primeSupport hp.2.2.2.1 hqLocal).mp hqRaw
-    have hbad := (unit_pow_iff ha).1 hunit
-    rw [← heq] at hbad
-    have hne := hp.2.2.2.2.2 e he
-    rw [HexArith.powModNat_eq _ _ _ (by omega)] at hne
-    exact hne hbad
+  rw [orderOf_unitOfCoprime (checkOrder_one_lt_modulus h)
+    (coprime_of_checkOrder h), order_eq_of_checkOrder h]
 
 end Nat
 

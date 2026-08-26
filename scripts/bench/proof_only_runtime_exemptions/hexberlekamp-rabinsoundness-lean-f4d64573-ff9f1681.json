@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/RabinSoundness.lean",
+ "baseline_blob": "f4d64573fbfb65030ed70c5c72fe8a6812ffc60b",
+ "current_blob": "ff9f168135b562eebc899e966737cbf23dbd14cc",
+ "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg` rewrites to `ite_eq_left`/`ite_eq_right` and repoints three uses of a deleted private `1 != 0` helper at the upstream public `Hex.ZMod64.one_ne_zero_of_prime`. The file is proofs only; it declares no executable factorization code."
+}

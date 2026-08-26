@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Rand.lean",
+ "baseline_blob": null,
+ "current_blob": "aa8588a6a6a6db3e4393346d885e1f81ccd2aaff",
+ "reason": "Adds the standalone SplitMix64 and unbiased bounded-sampling API for future randomized consumers. Existing factorization code does not reference its declarations, so the measured factorization service runtime is unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Rational.lean",
+ "baseline_blob": "e43de53cbeced2ebe811ff1a6a6fa6ceaf843c14",
+ "current_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
+ "reason": "Adds an unused rational-reflection helper and supporting theorems for NumberField certificate transport; existing factorization definitions and their call graph are unchanged."
+}
