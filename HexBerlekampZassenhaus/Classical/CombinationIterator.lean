@@ -198,15 +198,15 @@ theorem modulus_spec {basis : LiftData} (lift : LiftSupport basis) :
     lift.modulus = LiftModulus.ofNat (liftModulus basis) :=
   lift.modulus_eq
 
-/-- The recorded modulus records the lift modulus. -/
-@[simp]
+/-- The recorded modulus records the lift modulus.  Not `@[simp]`: simp
+already closes this via `modulus_spec` and `LiftModulus.nat_ofNat`. -/
 theorem modulusNat_spec {basis : LiftData} (lift : LiftSupport basis) :
     lift.modulus.nat = liftModulus basis := by
   rw [lift.modulus_eq]
   rfl
 
-/-- The recorded integer modulus is the lift modulus. -/
-@[simp]
+/-- The recorded integer modulus is the lift modulus.  Not `@[simp]`: simp
+already closes this via `modulus_spec` and `LiftModulus.int_ofNat`. -/
 theorem modulusInt_spec {basis : LiftData} (lift : LiftSupport basis) :
     lift.modulus.int = (liftModulus basis : Int) := by
   rw [lift.modulus_eq]

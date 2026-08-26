@@ -1408,5 +1408,71 @@
   "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
   "current_blob": "944b638839ace41bbc12c9915ff15456bb5c6b7d",
   "reason": "Additionally registers the HexBerlekampZassenhausMathlib proof-probe bench targets (Baseline/Factor/Irreducible/Repeated/Kernel modules) and the HexBerlekampZassenhausMathlib conformance glob on top of main's current registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/Certificate.lean",
+  "baseline_blob": "5e102c460b63bbf2b79470b81189f25cbb92e021",
+  "current_blob": "83887ccd940bb0686d891b0b3ddf2a8000097234",
+  "reason": "Phase 6 polish only: adds a docstring to the instance-implicit `bounds` field of `PrimeFactorData`. Prose only; every executable definition is unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+  "baseline_blob": "4a0c3dba62c7c3c607545daff10ba4bf70351681",
+  "current_blob": "3daac863ec01f3b5b59208497a282ced58b5224b",
+  "reason": "Phase 6 polish only: adds docstrings to `choosePrimeDataAdaptive?_p_le_500` and the `henselLiftData_p`/`henselLiftData_k` projection lemmas, and deletes the unreferenced private `betterPrimeChoiceDataScore_prime` and `betterPrimeChoiceDataScore_fModP_eq` proof lemmas. `choosePrimeData?`, `choosePrimeDataAdaptive?`, `henselLiftData`, and every other executable definition are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/Classical/CombinationIterator.lean",
+  "baseline_blob": "3cf7913b9837d27fb8c7b31baaa5fae1eb77d9f3",
+  "current_blob": "ee7adf3a6993483b905fd9f5cc007260efd99ede",
+  "reason": "Phase 6 polish only: demotes the simp-redundant `LiftSupport.modulusNat_spec` and `modulusInt_spec` to plain theorems with the reason recorded in their docstrings. Both are proof-side statements about recorded fields; the combination iterator's executable definitions are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/Classical/Obstruction.lean",
+  "baseline_blob": "a10f8bfb2b9ceef8eb49029c10ffd3c4aa2670ac",
+  "current_blob": "2135fd4f9fe33dfc40dab57c664c537959d5b36f",
+  "reason": "Phase 6 polish only: adds docstrings to the two obstruction-prime instances and re-expresses `TargetImage` as a subtype instead of a one-field structure with a pinned proof field, removing its auto-generated non-simp-normal `mk.injEq` lemma. Both forms erase to the single stored `FpPoly`, so `targetImage` and `obstructs` compile to identical code; `obstructionImage`, `obstructionRemainder`, and `obstructedQuotient?` are untouched."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/EisensteinCriterion.lean",
+  "baseline_blob": "0e595d99a2907307a9f220850f90ad6be70c049c",
+  "current_blob": "b9c6419e089f2523ea212a9c59e3856ccdfeeb15",
+  "reason": "Phase 6 polish only: adds docstrings to `translate_zero`, `translate_C`, `translate_one`, and `translate_X`. Prose only; `translate` and every executable definition are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/FactorProduct.lean",
+  "baseline_blob": "444adc46b057c6ae272c51ba29ab9bd0382abc27",
+  "current_blob": "434110d3de51c9ab3a747768bbe364f3ca47ffd3",
+  "reason": "Phase 6 polish only: adds docstrings to `factorTrialFactorsWithBound_polyProduct` and `factorTrialWithBound_product`. Prose only; every executable definition is unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/Factorization.lean",
+  "baseline_blob": "8d796854822562cd7883e2308d444f9e07702b36",
+  "current_blob": "bb06dd6b8bade049d2ffc6e1844297e56bd23bff",
+  "reason": "Phase 6 polish only: adds docstrings to the scalar-contract and precision-cap lemmas and to `runClassical_plan`, and deletes the unreferenced public wrapper `classicalCoreFactors`, which no caller, driver, or SPEC entry names. `ZPoly.factorize`, `factorClassical`, `factorLattice`, `factorTrial`, and every executable definition on the factorization path are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/FactorizationData.lean",
+  "baseline_blob": "33f7ede176ccc3c557c940a8a16370399fe9fbbc",
+  "current_blob": "d384fc8734c36d643ceb9f6fd70aadfe667c0150",
+  "reason": "Phase 6 polish only: adds docstrings to the `ToMonicData` and `toMonic` projection lemmas, the `bounds` field, `bounds_499`, and the two `@[csimp]` bridges; demotes the non-simp-normal `transformedCoeffs_getD_top` to a plain theorem; and deletes the unreferenced public wrapper `modularSquareFreeFires` (the fast path tests `modularSquareFreeCoreFires` on its own prepared input). `normalizeForFactor`, `normalizeForFactorFast`, `contentPrimitive`, and every executable definition on the factorization path are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/FactorizationResult.lean",
+  "baseline_blob": "202cbc51164c5f2c4c2a95b1617c6767035424b2",
+  "current_blob": "3d1316b3479b2b9a2d2bf73d5ee1a08154586147",
+  "reason": "Phase 6 polish only: adds a docstring to `normalizeFactorSign_ne_zero_of_ne_zero` and deletes the unreferenced private `polyProduct_contentFactorArray`, `polyProduct_replicate_X_zero`, and `polyProduct_normalizationPrefixFactors` proof lemmas. `factorizationOfFactors`, `reassemblePolynomialFactors`, and every executable definition are unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/Lattice.lean",
+  "baseline_blob": "dfe12e7fa1f63585cf5db01490f99c61981cbf6f",
+  "current_blob": "1e7d3ff08062a2e97617de2758353e24a2473116",
+  "reason": "Phase 6 polish only: adds docstrings to the `LiftModulus.ofNat` projection lemmas, the lattice-basis block characterizations, `bhksRowsArrayToMatrix_row`, and `bhksProjectedRows_eq_trace`. Prose only; every executable definition is unchanged."
+ },
+ {
+  "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+  "baseline_blob": "c5ab3913c20b4497962ed20851da5c54af208f04",
+  "current_blob": "4bbd05135104c8ad1a90b1db780d46f56911a47f",
+  "reason": "Phase 6 polish only: adds docstrings to `choosePrimeScore?_isGoodPrime` and `choosePrime_isGoodPrime_of_selected`, and deletes nineteen unreferenced private `ZMod64.Bounds` and trial-division primality witnesses that the candidate lists never consume (every `SmallPrimeCandidate` builds its evidence inline via `smallPrimeCandidateOfTrial`). `isGoodPrime`, `choosePrime`, the candidate lists, and every executable definition are unchanged."
  }
 ]
