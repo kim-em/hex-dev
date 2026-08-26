@@ -1,5 +1,11 @@
 [
  {
+  "path": "lakefile.lean",
+  "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+  "current_blob": "8886336db669d731c99268c5022302bccc76589a",
+  "reason": "Registers only the build-only HexIntFactor kernel replay probe; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+ },
+ {
   "path": "HexBasic/List.lean",
   "baseline_blob": "244224572752565242dcada3d1254fdaf4e22e9d",
   "current_blob": "e495f2df26b2591ebadf97831bf3d1cc24dabf06",

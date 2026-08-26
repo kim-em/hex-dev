@@ -854,11 +854,11 @@ in increasing order of what they can afford to be wrong about.
 
 The replay closure is `checkFactorization`, `checkOrder`, and what they
 call: `Nat` multiplication and comparison, hex-primality's
-kernel-facing `powModNat`, and `checkPrime`. The reducers in that
-closure are `@[expose]`, and a downstream module carries a
-`decide +kernel` test that fails if any of them stops reducing. The
-SPEC does not invent a second public `Hex.powMod` name for the same
-operation.
+kernel-facing `powModNat`, and `checkPrime`. The reducers in that closure are
+`@[expose]`, and `decide +kernel` tests in
+`bench/HexBench/IntFactorKernel.lean`, built by the
+`HexIntFactorKernelProbe` CI target, fail if any of them stops reducing. The
+SPEC does not invent a second public `Hex.powMod` name for the same operation.
 
 Nothing in routes 0 through 3 is in that closure. Rho, `p − 1`, ECM,
 the cyclotomic split, and the perfect-power test are search; they never
@@ -872,6 +872,14 @@ promise kernel evaluation of `divisors`, whose asymptotically appropriate
 `List.mergeSort` uses well-founded recursion. Proofs about that enumeration
 use `mem_divisors`, `divisors_nodup`, and `divisors_sorted`; `numDivisors`
 is the kernel-facing operation when only the count is required.
+
+The probe also replays `numDivisors`, `sigma`, `totient`, `radical`,
+`squarefreePart`, `squareDivisor`, `isSquarefree`, `carmichaelPrimePower`, and
+`carmichael` on bounded inputs; `sigmaEntry` is replayed on a bare
+`PrimePower`, matching its total API. Factorization tests reach both the table
+and Pocklington primality routes. Valid and corrupt checker cases include a
+non-minimal order witness, ensuring the tests exercise the final prime-divisor
+criterion rather than merely normalizing constants.
 
 ## Conformance
 
