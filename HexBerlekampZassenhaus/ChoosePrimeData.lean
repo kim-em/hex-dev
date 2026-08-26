@@ -238,37 +238,6 @@ private theorem primeChoiceDataScore_fModP_eq
     rfl
   · simp [hgood] at hscore
 
-private theorem betterPrimeChoiceDataScore_prime
-    (old new score : PrimeChoiceDataScore)
-    (hold : Nat.Prime old.data.p)
-    (hnew : Nat.Prime new.data.p)
-    (hscore : betterPrimeChoiceDataScore old new = score) :
-    Nat.Prime score.data.p := by
-  unfold betterPrimeChoiceDataScore at hscore
-  split at hscore
-  · cases hscore
-    exact hnew
-  · cases hscore
-    exact hold
-
-private theorem betterPrimeChoiceDataScore_fModP_eq
-    (f : ZPoly) (old new score : PrimeChoiceDataScore)
-    (hold :
-      old.data.fModP =
-        @ZPoly.modP old.data.p old.data.bounds f)
-    (hnew :
-      new.data.fModP =
-        @ZPoly.modP new.data.p new.data.bounds f)
-    (hscore : betterPrimeChoiceDataScore old new = score) :
-    score.data.fModP =
-      @ZPoly.modP score.data.p score.data.bounds f := by
-  unfold betterPrimeChoiceDataScore at hscore
-  split at hscore
-  · cases hscore
-    exact hnew
-  · cases hscore
-    exact hold
-
 private theorem choosePrimeDataScoreStep_prime
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
     (score : PrimeChoiceDataScore)

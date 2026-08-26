@@ -398,13 +398,6 @@ instance bounds_499 : ZMod64.Bounds 499 := ⟨by decide, by decide⟩
 def modularSquareFreeCoreFires (q : ZPoly) : Bool :=
   !q.isZero && (ZPoly.leadingCoeffModP q 499 != 0) && ZPoly.separableModP q 499
 
-/-- Boolean guard for the modular square-free fast path: the primitive `x`-free
-square-free part is nonzero, admissible at the trial prime, and separable over `𝔽_p`. -/
-@[expose]
-def modularSquareFreeFires (f : ZPoly) : Bool :=
-  let q := ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core
-  modularSquareFreeCoreFires q
-
 /-- Fast implementation of `normalizeForFactor`: a machine-word `𝔽_p`
 square-freeness trial on the primitive `x`-free square-free part.  When it fires (the input
 is square-free over `ℚ`) the decomposition is trivial; otherwise it falls back to

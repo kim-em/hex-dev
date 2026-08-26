@@ -196,12 +196,6 @@ instance (f : ZPoly) (liftedFactorCount : Nat) :
   unfold proposalEligible
   infer_instance
 
-/-- Run the sole direct-coordinate classical engine on a normalized polynomial. -/
-@[expose]
-def classicalCoreFactors (core : ZPoly) : ClassicalOutcome :=
-  match factorDirectCore ⟨core⟩ with
-  | outcome => outcome
-
 /-- Normalization and prime selection for the classical engine.  The selected
 plan carries its defining equality, so every later route consumes exactly the
 prime data computed here. -/
