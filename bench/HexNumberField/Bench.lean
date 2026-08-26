@@ -762,19 +762,20 @@ setup_benchmark runCommonPresentationLadder n => n
 
 /- Cost model. Per SPEC §Complexity the root API runs Yun decomposition
 (`O(n^2)` field operations, lower order here) and one norm eliminant per
-squarefree component, then isolates and disambiguates. For the degree-`n`
-squarefree component over the fixed quadratic field the norm eliminant has
-degree `d = 2n`, and its separation-depth isolation dominates exactly as in
-the lazy-addition derivation above (`O(d^3 * B^2)` with
-`tau, B = O(d log d)`), so the declared wall model is the same
-`n^5 log^2 n` shape. -/
+squarefree component, then isolates and disambiguates. Disambiguation builds
+one shared double-resultant evaluation eliminant. Its evaluation-variable
+degree is at most `deg(p) * deg(e) = 4n` in this fixed-quadratic family, and it
+is not root-isolated. The degree-`d = 2n` norm eliminant's separation-depth
+isolation remains the declared ceiling exactly as in the lazy-addition
+derivation above (`O(d^3 * B^2)` with `tau, B = O(d log d)`), giving the same
+`n^5 log^2 n` wall shape. -/
 setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
     paramFloor := 1
     paramCeiling := 6
     paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 60.0
+    maxSecondsPerCall := 180.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35

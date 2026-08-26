@@ -365,9 +365,15 @@ For `QAdjoin.roots?`:
    resultant with `p`. It is nonzero because coefficients are reduced modulo the
    irreducible `p`.
 3. Normalize and isolate the eliminant's roots.
-4. Reject candidates belonging only to other embeddings of `QAdjoin p x` by
-   evaluating the original component at the candidate and the selected `x`.
-   Refute wrong candidates at `evalDisambiguationPrec`.
+4. For each component, build one shared integer evaluation eliminant
+   `q(S) = Res_y(p(y), Res_z(e(z), S - G(y,z)))`, where `e` is the
+   squarefree norm eliminant and `G` is the denominator-cleared component.
+   Dilate `q` by the common denominator so its roots are the original
+   component evaluations. The eliminant is nonzero and contains the true
+   evaluation at every candidate. Reject candidates belonging only to other
+   embeddings of `QAdjoin p x` by evaluating the original component at the
+   candidate and the selected `x`; refute wrong candidates at
+   `evalDisambiguationPrec`.
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
@@ -376,9 +382,9 @@ construction is deterministic and bounded, is not used for binary arithmetic,
 and is a public surface in its own right (the tower library builds on it); its
 contract is the next section.
 
-For a candidate evaluation, construct its integer eliminant `q`, remove its
-maximal `X` power, and take the primitive part. If the evaluation is nonzero,
-`q(0) ≠ 0` and the reciprocal Cauchy bound gives
+For each candidate, reuse the component's shared evaluation eliminant `q`,
+remove its maximal `X` power, and take the primitive part. If the evaluation
+is nonzero, `q(0) ≠ 0` and the reciprocal Cauchy bound gives
 `|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
 computed from the input coefficient heights, degrees, and Cauchy root bounds.
 Define `evalDisambiguationPrec` as the least precision in the finite range
@@ -515,8 +521,10 @@ oracle's independently computed decomposition with Lean's finite output.
 - Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
   Larger cases are local until new measurements justify promotion.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
-  selection. Root APIs add Yun decomposition and one norm eliminant per
-  squarefree component.
+  selection. Root APIs add Yun decomposition, one norm eliminant, and one
+  shared double-resultant evaluation eliminant per squarefree component. The
+  latter has degree at most the product of the defining-polynomial and norm-
+  eliminant degrees and is not itself root-isolated.
 
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
