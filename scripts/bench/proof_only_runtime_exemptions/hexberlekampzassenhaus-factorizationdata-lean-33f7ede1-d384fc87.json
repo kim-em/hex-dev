@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorizationData.lean",
+ "baseline_blob": "33f7ede176ccc3c557c940a8a16370399fe9fbbc",
+ "current_blob": "d384fc8734c36d643ceb9f6fd70aadfe667c0150",
+ "reason": "Phase 6 polish only: adds docstrings to the `ToMonicData` and `toMonic` projection lemmas, the `bounds` field, `bounds_499`, and the two `@[csimp]` bridges; demotes the non-simp-normal `transformedCoeffs_getD_top` to a plain theorem; and deletes the unreferenced public wrapper `modularSquareFreeFires` (the fast path tests `modularSquareFreeCoreFires` on its own prepared input). `normalizeForFactor`, `normalizeForFactorFast`, `contentPrimitive`, and every executable definition on the factorization path are unchanged."
+}

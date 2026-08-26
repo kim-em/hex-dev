@@ -1,0 +1,6 @@
+{
+ "path": "Hex/BenchOracle/Pari.lean",
+ "baseline_blob": "8088a21c35f5bb60ea8cc0d9f5b5eb2d32a77265",
+ "current_blob": "67864822cc40d953e1324bc2f4224ab6d6f24e89",
+ "reason": "Extends the shared PARI bench driver helper with the number-field polmod/nffactor codec surface; it remains bench-oracle infrastructure never imported by the factorization service or any Hex library module."
+}

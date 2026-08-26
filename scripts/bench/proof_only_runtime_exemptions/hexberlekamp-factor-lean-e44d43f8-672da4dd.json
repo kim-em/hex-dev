@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/Factor.lean",
+ "baseline_blob": "e44d43f86ae80274f35478a3246196fe092bd06c",
+ "current_blob": "672da4ddcb29bb8387a087b4cb1d92eeb1434875",
+ "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`if_false` rewrites to their `ite_*` aliases, promotes the private `factorProduct_append` to public so the duplicate copy in DistinctDegree could be deleted, drops unused `[ZMod64.PrimeModulus p]` binders from proof-only lemmas, and documents `kernelWitnessSplit_factor_pos_degree`. `berlekampFactor`, `fpFactorSearch`, `splitFactorAt`, `kernelWitnessSplit?`, and the split loops are unchanged."
+}

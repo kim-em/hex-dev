@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/QuotientCompose.lean",
+ "baseline_blob": null,
+ "current_blob": "48cd72f73100465311303e0a6ab1e34f6fcfdf63",
+ "reason": "New file, proofs only: it states that modular composition on representatives equals evaluation in the quotient. It defines no operation and is imported by no executable path; the factorization service does not reference it."
+}

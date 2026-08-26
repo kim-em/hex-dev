@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/MatrixAlgebra.lean",
+ "baseline_blob": "a203c0a4f7aa5a096774bdac2092ad43b35b92b2",
+ "current_blob": "461006d810f79d065f6e179497407449788d895a",
+ "reason": "Adds the theorems row_smul and smul_mul only; no definition, attribute, or existing declaration on the compiled factorization path changes."
+}

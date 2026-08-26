@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/EisensteinCriterion.lean",
+ "baseline_blob": "0e595d99a2907307a9f220850f90ad6be70c049c",
+ "current_blob": "b9c6419e089f2523ea212a9c59e3856ccdfeeb15",
+ "reason": "Phase 6 polish only: adds docstrings to `translate_zero`, `translate_C`, `translate_one`, and `translate_X`. Prose only; `translate` and every executable definition are unchanged."
+}

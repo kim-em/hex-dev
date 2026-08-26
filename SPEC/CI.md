@@ -247,9 +247,13 @@ repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
 let Lake rebuild their source delta.
 
-`leanprover/lean-action`'s own whole-`.lake` cache MUST be disabled with
-`use-github-cache: false`; the explicit Hex cache below owns this policy
-and Mathlib's cache is managed separately. The public R2/Lake artifact
+Every build workflow installs the exact `lean-toolchain` pin through
+`scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
+release asset and verifies the reported version before placing its binaries on
+`PATH`. This avoids depending on Elan's separate distribution redirect, which
+may lose prerelease artifacts that remain present in the canonical release.
+The helper owns no whole-`.lake` cache; the explicit Hex cache below owns this
+policy and Mathlib's cache is managed separately. The public R2/Lake artifact
 cache is a fallback only when the GitHub cache has no compatible match.
 Successful trusted `main` builds publish to both backends after all
 verification gates pass.

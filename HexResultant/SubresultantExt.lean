@@ -752,8 +752,6 @@ private theorem subresultantOrderedExt_law {S : Type u}
 @[inline]
 private def swap (e : Entry R) : Entry R := (e.2.1, e.1, e.2.2)
 
-private theorem value_swap (e : Entry R) : value (swap e) = value e := rfl
-
 /-- The recursive worker is equivariant under exchange of its two cofactor
 coordinates. -/
 private theorem subresultantAuxExt_swap [One R] [Add R] [Sub R] [Mul R]
@@ -821,6 +819,8 @@ private theorem subresultantOrderedExt_swap [One R] [Add R] [Sub R] [Mul R]
           simpa [delta, h₂, qr, q, p, hp, sign, g₃, hg₃, a, g₃U, g₃V,
             Array.map_push, swap] using haux
 
+/-- Exchanging the two cofactor coordinates commutes with indexed lookup,
+including past the end where both sides read the zero entry. -/
 private theorem getD_map_swap (chain : Array (Entry R)) (i : Nat) :
     (chain.map swap).getD i (0, 0, 0) =
       swap (chain.getD i (0, 0, 0)) := by
@@ -828,6 +828,8 @@ private theorem getD_map_swap (chain : Array (Entry R)) (i : Nat) :
     Array.getElem?_map]
   cases chain[i]? <;> rfl
 
+/-- The Brown scale reads only the stored values, so exchanging the cofactor
+coordinates leaves it unchanged. -/
 private theorem brownScale_map_swap [One R] [Mul R] [Div R]
     (chain : Array (Entry R)) (i : Nat) :
     brownScale (chain.map swap) i = brownScale chain i := by
@@ -844,6 +846,8 @@ private theorem brownScale_map_swap [One R] [Mul R] [Div R]
           rw [getD_map_swap, getD_map_swap, ih]
           rfl
 
+/-- One divided Brown step keeps its exactness witness when both cofactor
+coordinates are exchanged; the two numerator equations trade places. -/
 private theorem CofactorStep.swap [One R] [Add R] [Sub R] [Mul R] [Div R]
     (chain : Array (Entry R)) (i : Nat) (h : CofactorStep chain i) :
     CofactorStep (chain.map swap) i := by
@@ -974,6 +978,10 @@ theorem subresultantChainExt_exact {S : Type u}
     subresultantChainExt (0 : DensePoly Int) linear = #[(0, 1, linear)] &&
     subresultantChainExt linear 0 = #[(1, 0, linear)] &&
     subresultantChainExt (0 : DensePoly Int) 0 = #[]
+
+/-- info: 'Hex.DensePoly.subresultantChainExt' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms subresultantChainExt
 
 end DensePoly
 end Hex

@@ -335,6 +335,7 @@ theorem mulCoords_size (levels : List Level) (a b : Array Rat) :
 recurses through runtime level data rather than a dependent `NumberTower`.
 The `raw` helper normalizes to the represented mixed-radix dimension. -/
 structure RawElem (levels : List Level) where
+  /-- The flattened mixed-radix rational coordinates. -/
   data : Array Rat
 
 /-- Wrap coordinate data as a `RawElem`, zero-padding or truncating to the
@@ -374,7 +375,9 @@ instance (levels : List Level) : Mul (RawElem levels) :=
 general-purpose `RawElem`, this type carries the fixed-width invariant needed
 by the semantic field bridge for polynomial xgcd. -/
 structure Coeff (levels : List Level) where
+  /-- The flattened mixed-radix rational coordinates. -/
   data : Array Rat
+  /-- The coordinate array has exactly the represented dimension. -/
   size_eq : data.size = levelsDim levels
 
 /-- Normalize arbitrary data into a canonical lower-tower coefficient. -/

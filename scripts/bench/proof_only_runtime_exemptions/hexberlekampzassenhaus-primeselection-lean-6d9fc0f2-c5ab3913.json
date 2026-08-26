@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+ "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
+ "current_blob": "c5ab3913c20b4497962ed20851da5c54af208f04",
+ "reason": "Replaces a duplicate three-field prime record with an abbreviation of the representation-identical bundled ZMod64.Prime record and renames its modulus projection; the candidate list, proofs, arithmetic, and control flow are unchanged."
+}

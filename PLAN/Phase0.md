@@ -191,7 +191,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    - Exit non-zero on malformed `libraries.yml` or disagreement
      between `libraries.yml` and `lakefile.lean`.
 
-6. Set up CI using `leanprover/lean-action`. **Read
+6. Set up CI using the repository's pinned-toolchain helper. **Read
    [SPEC/CI.md](../SPEC/CI.md) before editing any workflow file** —
    it pins the trigger, concurrency, job-count, and Mathlib-cache
    rules every workflow in this repo must satisfy.
@@ -217,8 +217,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - uses: actions/checkout@v4
          - run: python3 scripts/check_dag.py
          - run: sudo apt-get install -y libgmp-dev
-         - uses: leanprover/lean-action@v1
-           with: { auto-config: false, build: false, use-mathlib-cache: false }
+         - run: bash scripts/ci/setup_lean_toolchain.sh
          - run: lake exe cache get
          - run: bash scripts/ci/check_no_mathlib_rebuild.sh
          - run: lake build
@@ -229,8 +228,8 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    The cache + hard-fail-gate + manual `lake build` shape is
    non-negotiable and exists to prevent silent Mathlib rebuilds on
    CI; see [SPEC/CI.md § Mathlib cache is mandatory](../SPEC/CI.md).
-   `lean-action` is invoked with `build: false` so the cache step
-   runs before any build, and the hard-fail gate aborts the job
+   The setup helper installs without building, so the cache step runs before
+   any build, and the hard-fail gate aborts the job
    *before* `lake build` would silently rebuild Mathlib if the
    cache fetch fell short.
 

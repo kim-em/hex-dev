@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/ExtTreeMap.lean",
+ "baseline_blob": "3bf43f7b6ec5c15e81dcf5d9110d1d428c4ebb52",
+ "current_blob": "9ce7098cfe9d5aaf05a3ba8e878918072fbe357c",
+ "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+}

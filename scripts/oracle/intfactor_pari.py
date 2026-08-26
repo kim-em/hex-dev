@@ -60,6 +60,7 @@ def _divisor_functions(pari, n: int) -> dict[str, int]:
     assert isinstance(factors, list)
     radical = math.prod(p for p, _ in factors)
     sqfpart = math.prod(p for p, e in factors if e % 2 == 1)
+    sqdiv = math.prod(p ** (e // 2) for p, e in factors)
     return {
         "tau": len(pari.divisors(n)),
         "sigma0": int(pari.sigma(n, 0)),
@@ -68,6 +69,7 @@ def _divisor_functions(pari, n: int) -> dict[str, int]:
         "phi": int(pari.eulerphi(n)),
         "rad": radical,
         "sqfpart": sqfpart,
+        "sqdiv": sqdiv,
     }
 
 

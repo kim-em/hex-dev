@@ -298,7 +298,8 @@ columns. `detDivisor A 0 = 1`, and `detDivisor A k = 0` when
 
 This is the specification function. Its definition is the gcd above and
 mentions nothing about `snf`; `IsSNF.detDivisor_eq` is what says the
-invariant factors compute it. -/
+invariant factors compute it. Direct evaluation enumerates exponentially many
+minors; use `invariantFactors` for computation. -/
 noncomputable def detDivisor (A : Matrix Int n m) (k : Nat) : Nat
 
 end Hex.Matrix
@@ -357,6 +358,12 @@ theorem invariantFactors_chain (A : Matrix Int n m) (i : Nat)
     (h : i + 1 < snfRank A) :
     (invariantFactors A)[⟨i, by omega⟩] ∣
       (invariantFactors A)[⟨i + 1, h⟩]
+theorem abelianStructure_freeRank (A : Matrix Int n m) :
+    (abelianStructure A).freeRank = m - snfRank A
+theorem abelianStructure_torsionFactors (A : Matrix Int n m) :
+    (abelianStructure A).torsionFactors =
+      ((invariantFactors A).toList.filterMap fun d =>
+        if 1 < d then some d.natAbs else none).toArray
 
 theorem snfDiagonalData_isSNF {r : Nat} (d : Vector Int r) :
     IsSNF (diagMatrix d r r) (snfDiagonalData d)

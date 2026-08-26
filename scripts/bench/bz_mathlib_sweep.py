@@ -29,8 +29,16 @@ BASELINE = ProbeModule("HexBerlekampZassenhausMathlib.ProofProbe.Baseline")
 FACTOR8 = ProbeModule(
     "HexBerlekampZassenhausMathlib.ProofProbe.Factor8", EXPECTED_AXIOMS
 )
-IRREDUCIBLE16 = ProbeModule(
-    "HexBerlekampZassenhausMathlib.ProofProbe.Irreducible16", EXPECTED_AXIOMS
+# Expensive null control. Every probe here carries the same ~6.7 s `import all`
+# executable closure, so the marginal elaboration cost has to be large before
+# a module is a genuinely distinct build magnitude: the degree-16 binomial
+# reaches only 1.37x the baseline, under the 2.0x the shared harness requires
+# of its two controls. The degree-8 kernel replay is 2.48x, and it is also the
+# only control that brackets the most expensive substantive arm (`kernel-8`
+# itself), so the robust-null envelopes are interpolated rather than
+# extrapolated.
+KERNEL8 = ProbeModule(
+    "HexBerlekampZassenhausMathlib.ProofProbe.Kernel8", EXPECTED_AXIOMS
 )
 
 
@@ -64,12 +72,12 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         ProbePair(
-            "irreducible-16-null",
-            IRREDUCIBLE16,
-            IRREDUCIBLE16,
+            "kernel-8-null",
+            KERNEL8,
+            KERNEL8,
             {
                 "family": "fresh-build-noise",
-                "magnitude": "irreducible-16",
+                "magnitude": "kernel-8",
                 "interpretation": "calibration-only",
             },
             null_control=True,
@@ -158,6 +166,16 @@ SPEC = SweepSpec(
     ),
     output_stem="hex-berlekamp-zassenhaus-mathlib",
     required_samples=6,
+    # Preregistered long-arm retry bound (`SPEC/benchmarking.md`: a suite with
+    # preregistered long arms may explicitly request at most 32). These arms
+    # run 6.65 s to 16.60 s, roughly 3x the sibling `HexBerlekampMathlib`
+    # suite's, so each one spends proportionally longer exposed to a stray
+    # scheduler tick on the pinned core or its SMT sibling and is rejected
+    # correspondingly more often. Raising the retry bound buys more
+    # clean-pair opportunities at the unchanged admission threshold; it is
+    # the lever for a shared host that stays busy, and deliberately not the
+    # interference ratio, which would instead admit dirtier arms.
+    max_pair_retries=32,
 )
 
 
