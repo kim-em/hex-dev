@@ -309,7 +309,8 @@ The executable specialization is split into two further polynomial identities.
 pseudo-remainder, including defective degree drops. `poly_descent` transports
 the entire lower subresultant family across any nonzero scaled
 pseudo-remainder while leaving all factors cross-multiplied. In
-`Subresultant.lean`, the private `BrownInv` states that every generalized
+`Subresultant.lean`, `BrownInv` (public since the extended chain's cofactor
+development consumes it) states that every generalized
 subresultant of the current adjacent pair is an explicit scalar multiple of
 the corresponding original-pair subresultant. Its initialization, scale,
 factor, and step lemmas identify each `hCurr`, prove both exact Brown
@@ -450,9 +451,11 @@ quotient is exact over every stated exact-division domain.
 ## Downstream contracts
 
 The extended chain `subresultantChainExt` (Bezout cofactors for every stored
-Brown entry) is a `hex-poly-z-gcd`/`hex-mv-gcd` prerequisite, sketched in
-[SPEC/future-work.md](../../SPEC/future-work.md); it does not alter the
-current resultant or discriminant contracts.
+Brown entry) is the `hex-poly-z-gcd`/`hex-mv-gcd` prerequisite. It is
+delivered in `SubresultantExt.lean`: `subresultantChainExt_law` packages the
+Bezout, exactness, and value laws, with the determinantal cofactor
+development in `SubresultantCofactor.lean`. It does not alter the current
+resultant or discriminant contracts.
 
 ## File organisation
 
@@ -488,6 +491,12 @@ current resultant or discriminant contracts.
 - `HexResultant/Subresultant.lean`: the integral recursive subresultant
   invariant, `BrownLaw`, the Brown worker, `subresultantChain`, `resultant`,
   chain termination, and degree bounds.
+- `HexResultant/SubresultantCofactor.lean`: the coefficient-matrix
+  cofactor construction behind the extended chain, its size and degree
+  bounds, and the kernel row-transport argument.
+- `HexResultant/SubresultantExt.lean`: `subresultantChainExt`, its
+  `Law`/`CofactorStep` packaging, `brownScale`, and the
+  `subresultantChainExt_law` Bezout/exactness/value laws.
 - `HexResultant/Discriminant.lean`: the Mathlib-free executable `disc`.
 - `HexResultantMathlib/Discriminant.lean`: discriminant correspondence and
   the algebraic identities needed downstream. In characteristic zero, for

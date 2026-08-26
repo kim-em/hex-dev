@@ -752,8 +752,6 @@ private theorem subresultantOrderedExt_law {S : Type u}
 @[inline]
 private def swap (e : Entry R) : Entry R := (e.2.1, e.1, e.2.2)
 
-private theorem value_swap (e : Entry R) : value (swap e) = value e := rfl
-
 /-- The recursive worker is equivariant under exchange of its two cofactor
 coordinates. -/
 private theorem subresultantAuxExt_swap [One R] [Add R] [Sub R] [Mul R]
