@@ -99,22 +99,25 @@ private structure EcmWordPoint where
   x : UInt64
   z : UInt64
 
-private def addWord (p a b : UInt64) : UInt64 :=
-  let gap := p - b
+/-- Add residues known to be reduced modulo `modulus`, without word overflow. -/
+private def addWord (modulus a b : UInt64) : UInt64 :=
+  let gap := modulus - b
   if gap ≤ a then a - gap else a + b
 
-private def subWord (p a b : UInt64) : UInt64 :=
-  if b ≤ a then a - b else p - (b - a)
+/-- Subtract residues known to be reduced modulo `modulus`, without word overflow. -/
+private def subWord (modulus a b : UInt64) : UInt64 :=
+  if b ≤ a then a - b else modulus - (b - a)
 
-private def xDoubleWord {p : UInt64} (ctx : MontCtx p)
+private def xDoubleWord {modulus : UInt64} (ctx : MontCtx modulus)
     (a24num a24den : UInt64) (point : EcmWordPoint) : EcmWordPoint :=
-  let sum := addWord p point.x point.z
-  let difference := subWord p point.x point.z
+  let sum := addWord modulus point.x point.z
+  let difference := subWord modulus point.x point.z
   let aa := ctx.mulMont sum sum
   let bb := ctx.mulMont difference difference
-  let c := subWord p aa bb
+  let c := subWord modulus aa bb
   ⟨ctx.mulMont (ctx.mulMont aa bb) a24den,
-    ctx.mulMont c (addWord p (ctx.mulMont bb a24den) (ctx.mulMont a24num c))⟩
+    ctx.mulMont c
+      (addWord modulus (ctx.mulMont bb a24den) (ctx.mulMont a24num c))⟩
 
 private def xAddWord {modulus : UInt64} (ctx : MontCtx modulus)
     (p q difference : EcmWordPoint) : EcmWordPoint :=
@@ -187,9 +190,10 @@ private def stageGcdNat (n bound curveNum curveDen u3 v3 : Nat) : Nat :=
     primeTable.toList ⟨u3, v3⟩
   Nat.gcd p.z n
 
-private def stageGcd (n bound curveNum curveDen u3 v3 : Nat) : Nat :=
-  match ecmBackend n with
-  | .natural => stageGcdNat n bound curveNum curveDen u3 v3
+private def stageGcdWith (backend : EcmBackend)
+    (n bound curveNum curveDen u3 v3 : Nat) : Nat × EcmBackend :=
+  match backend with
+  | .natural => (stageGcdNat n bound curveNum curveDen u3 v3, .natural)
   | .word =>
       let modulus := UInt64.ofNat n
       if _hfit : modulus.toNat = n then
@@ -199,20 +203,20 @@ private def stageGcd (n bound curveNum curveDen u3 v3 : Nat) : Nat :=
           let a24den := ctx.toMont (UInt64.ofNat (4 * curveDen % n))
           let p := stageMultiplyWord ctx bound a24num a24den primeTable.toList
             ⟨ctx.toMont (UInt64.ofNat u3), ctx.toMont (UInt64.ofNat v3)⟩
-          Nat.gcd (ctx.fromMont p.z).toNat n
+          (Nat.gcd (ctx.fromMont p.z).toNat n, .word)
         else
-          stageGcdNat n bound curveNum curveDen u3 v3
+          (stageGcdNat n bound curveNum curveDen u3 v3, .natural)
       else
-        stageGcdNat n bound curveNum curveDen u3 v3
+        (stageGcdNat n bound curveNum curveDen u3 v3, .natural)
 
 namespace Internal
 
 /-- Route-level observations from one ECM attempt. The zero stage gcd means
 the attempt stopped before stage multiplication. -/
 structure EcmTrace where
-  /-- Arithmetic backend selected for the stage. -/
-  backend : EcmBackend
-  /-- Gcd of the Suyama setup denominator and the modulus. -/
+  /-- Arithmetic backend that actually executed the stage, or none before it. -/
+  stageBackend : Option EcmBackend
+  /-- Setup gcd, or zero when argument validation stopped the attempt. -/
   setupGcd : Nat
   /-- Stage-boundary gcd, or zero when setup stopped the attempt. -/
   stageGcd : Nat
@@ -220,11 +224,11 @@ structure EcmTrace where
   result : EcmResult
 deriving Repr, DecidableEq
 
-/-- Instrumented ECM attempt used by route-level conformance checks. -/
-def ecmTrace (n sigma bound : Nat) : EcmTrace :=
-  let backend := ecmBackend n
+/-- Instrumented ECM attempt using an explicit requested stage backend. The
+trace records the backend that actually ran, including a safe natural fallback. -/
+def ecmTraceWith (backend : EcmBackend) (n sigma bound : Nat) : EcmTrace :=
   if n < 4 ∨ sigma < 6 then
-    ⟨backend, 0, 0, .noFactor⟩
+    ⟨none, 0, 0, .noFactor⟩
   else
     let u := (sigma * sigma + n - 5) % n
     let v := (4 * sigma) % n
@@ -236,10 +240,14 @@ def ecmTrace (n sigma bound : Nat) : EcmTrace :=
     let curveDen := mulMod n (4 * u3 % n) v
     let setup := Nat.gcd curveDen n
     if setup != 1 then
-      ⟨backend, setup, 0, classifyGcd n setup⟩
+      ⟨none, setup, 0, classifyGcd n setup⟩
     else
-      let stage := stageGcd n bound curveNum curveDen u3 v3
-      ⟨backend, setup, stage, classifyGcd n stage⟩
+      let stage := stageGcdWith backend n bound curveNum curveDen u3 v3
+      ⟨some stage.2, setup, stage.1, classifyGcd n stage.1⟩
+
+/-- Instrumented ECM attempt using the production backend selection. -/
+def ecmTrace (n sigma bound : Nat) : EcmTrace :=
+  ecmTraceWith (ecmBackend n) n sigma bound
 
 end Internal
 
@@ -264,7 +272,7 @@ private theorem classifyGcd_spec {n g d : Nat}
 theorem ecmStage1_spec {n sigma bound d : Nat}
     (h : ecmStage1 n sigma bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n := by
-  unfold ecmStage1 Internal.ecmTrace at h
+  unfold ecmStage1 Internal.ecmTrace Internal.ecmTraceWith at h
   split at h
   · cases h
   · dsimp only at h

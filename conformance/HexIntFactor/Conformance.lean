@@ -224,7 +224,7 @@ example {n base bound d : Nat}
 private def ecmStageFactorTrace : Hex.Nat.Internal.EcmTrace :=
   Hex.Nat.Internal.ecmTrace 51 13 5
 
-#guard ecmStageFactorTrace.backend == .word
+#guard ecmStageFactorTrace.stageBackend == some .word
 #guard ecmStageFactorTrace.setupGcd == 1
 #guard ecmStageFactorTrace.stageGcd == 3
 #guard ecmStageFactorTrace.result == .factor 3
@@ -232,7 +232,7 @@ private def ecmStageFactorTrace : Hex.Nat.Internal.EcmTrace :=
 private def ecmStageWholeTrace : Hex.Nat.Internal.EcmTrace :=
   Hex.Nat.Internal.ecmTrace 33 8 5
 
-#guard ecmStageWholeTrace.backend == .word
+#guard ecmStageWholeTrace.stageBackend == some .word
 #guard ecmStageWholeTrace.setupGcd == 1
 #guard ecmStageWholeTrace.stageGcd == 33
 #guard ecmStageWholeTrace.result == .whole
@@ -241,17 +241,41 @@ private def ecmStageNoFactorTrace : Hex.Nat.Internal.EcmTrace :=
   Hex.Nat.Internal.ecmTrace 289 13 5
 
 #guard ecmStageNoFactorTrace.setupGcd == 1
+#guard ecmStageNoFactorTrace.stageBackend == some .word
 #guard ecmStageNoFactorTrace.stageGcd == 1
 #guard ecmStageNoFactorTrace.result == .noFactor
 
--- The direct-`Nat` backend also reaches stage multiplication beyond one word.
-private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
-  Hex.Nat.Internal.ecmTrace (2 ^ 64 + 1) 6 2
+-- Explicitly running the duplicate direct-`Nat` arithmetic on the same inputs
+-- must agree with the word implementation at both observable boundaries.
+private def ecmStageFactorNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 51 13 5
 
-#guard ecmNaturalTrace.backend == .natural
+#guard ecmStageFactorNatTrace.setupGcd == ecmStageFactorTrace.setupGcd
+#guard ecmStageFactorNatTrace.stageGcd == ecmStageFactorTrace.stageGcd
+#guard ecmStageFactorNatTrace.result == ecmStageFactorTrace.result
+#guard ecmStageFactorNatTrace.stageBackend == some .natural
+
+private def ecmStageWholeNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 33 8 5
+
+#guard ecmStageWholeNatTrace.stageGcd == ecmStageWholeTrace.stageGcd
+#guard ecmStageWholeNatTrace.result == ecmStageWholeTrace.result
+
+private def ecmStageNoFactorNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 289 13 5
+
+#guard ecmStageNoFactorNatTrace.stageGcd == ecmStageNoFactorTrace.stageGcd
+#guard ecmStageNoFactorNatTrace.result == ecmStageNoFactorTrace.result
+
+-- The production direct-`Nat` backend also executes a discriminating odd-
+-- scalar stage beyond one word. The old formulas yielded stage gcd `51`.
+private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace (51 * (2 ^ 64 + 1)) 13 5
+
+#guard ecmNaturalTrace.stageBackend == some .natural
 #guard ecmNaturalTrace.setupGcd == 1
-#guard ecmNaturalTrace.stageGcd == 1
-#guard ecmNaturalTrace.result == .noFactor
+#guard ecmNaturalTrace.stageGcd == 3
+#guard ecmNaturalTrace.result == .factor 3
 
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
