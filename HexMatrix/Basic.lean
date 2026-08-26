@@ -228,7 +228,7 @@ form. The nested form is the simp-normal form the entry lemmas are stated in. -/
   rw [getElem_eq_getRow, getElem_getRow]; rfl
 
 /-- The constant-time pair entry agrees with the explicit row-vector projection. -/
-@[simp, grind =] theorem getElem_pair_eq_get (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+theorem getElem_pair_eq_get (M : Matrix R n m) (i : Fin n) (j : Fin m) :
     M[(i, j)] = (getRow M i).get j := by
   rw [getElem_pair_eq_nested, getElem_eq_getRow]
   rfl

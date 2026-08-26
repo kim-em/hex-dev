@@ -555,19 +555,19 @@ def runPariOverhead (_ : Unit) : IO Int := do
   | .ok value => return value
   | .error error => throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
-/- Cost-model derivation: fixed-aspect rank profiling plus the nonzero
-principal reductions make cubic matrix-entry visits. Their Euclidean pivot
-work grows with the logarithmic controlled-family operand ladder, yielding the
-registered `O(n³ log n)` wall model; unrestricted scheduling remains `O(n⁴)`. -/
+/- Cost-model derivation: fixed-aspect profiling plus principal reduction makes
+cubic matrix-entry visits. Exact-integer cost rises as the measured bit widths
+grow roughly linearly; `n³ log₂(n + 1)` is the registered slowly growing wall
+surrogate over 16..128, while unrestricted scheduling remains `O(n⁴)`. -/
 setup_benchmark runDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: active rank is `n / 2`, leaving cubic entry visits;
-the dependent rows multiply bounded generators by indices through `n`, so
-Euclidean operand work contributes the explicit `log n` factor. -/
+/- Cost-model derivation: active rank `n / 2` leaves cubic entry visits, while
+dependent rows widen exact coefficients. The controlled 16..128 wall surrogate
+is `n³ log₂(n + 1)`; this is not a bit-complexity claim. -/
 setup_benchmark runDeficient n => n ^ 3 * Nat.log2 (n + 1) with prep := deficient where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
@@ -578,16 +578,14 @@ setup_benchmark runDeficient n => n ^ 3 * Nat.log2 (n + 1) with prep := deficien
 the constant aspect ratio does not change the cubic controlled-family model;
 redundant signed rows exercise reconstruction without increasing rank. -/
 setup_benchmark runTall n => n ^ 3 with prep := tall where {
-  paramFloor := 8, paramCeiling := 64,
-  paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
-  verdictWarmupFraction := 0.3
+  paramFloor := 8, paramCeiling := 128,
+  paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64, 96, 128]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: the dense unit-triangular factors give a known
-full-rank diagonal form while increasing coefficient width with dimension.
-Cubic matrix-entry visits plus the measured controlled operand factor give
-the registered `O(n³ log n)` wall model. -/
+/- Cost-model derivation: full unit-triangular factors give a known diagonal
+form and cubic entry visits while coefficient widths grow roughly linearly.
+The calibrated 16..128 wall surrogate is `n³ log₂(n + 1)`. -/
 setup_benchmark runConjugate n => n ^ 3 * Nat.log2 (n + 1) with prep := conjugate where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
@@ -596,8 +594,8 @@ setup_benchmark runConjugate n => n ^ 3 * Nat.log2 (n + 1) with prep := conjugat
 }
 
 /- Cost-model derivation: fraction-free profiling visits a cubic number of
-matrix entries. Dense minors grow linearly in bit width on this bounded-entry
-family, giving the registered controlled-family `O(n³ log n)` wall model. -/
+entries and dense minors widen with `n`. The registered slowly growing
+exact-integer wall surrogate over 16..128 is `n³ log₂(n + 1)`. -/
 setup_benchmark runProfile n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
@@ -605,10 +603,10 @@ setup_benchmark runProfile n => n ^ 3 * Nat.log2 (n + 1) with prep := dense wher
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: rank-profile preparation is excluded from this
-target. The principal phase admits `n` rows, restores at most `n` earlier
-pivots per row, and each row update visits `n` entries. Its controlled dense
-operand ladder contributes the same logarithmic factor as the complete route. -/
+/- Cost-model derivation: rank-profile preparation is excluded. The principal
+phase admits `n` rows, restores at most `n` earlier pivots per row, and visits
+`n` entries per update. It uses the same calibrated 16..128 exact-integer wall
+surrogate as the complete dense route. -/
 setup_benchmark runPrincipalDense n => (n ^ 3) * Nat.log2 (n + 1)
     with prep := principalInput where {
   paramFloor := 16, paramCeiling := 128,

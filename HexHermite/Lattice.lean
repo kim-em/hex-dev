@@ -397,9 +397,10 @@ theorem getElem_kernelBasis (A : Matrix Int n m)
 def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A) :=
   let result := Hermite.checkedRun (Hermite.formAccumulator n) A
   have hr := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
+  let pivotCols := result.pivotVector
   let values : Vector Nat result.pivots.length := Vector.ofFn fun i =>
     let row : Fin n := Fin.castLE hr i
-    (result.matrix[(row, result.pivotVector.get i)]).natAbs
+    (result.matrix[(row, pivotCols.get i)]).natAbs
   have hlen : result.pivots.length = hnfRank A := rfl
   hlen ▸ values
 
@@ -423,10 +424,11 @@ def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A) :=
 def latticeIndex (A : Matrix Int n m) : Nat :=
   let result := Hermite.checkedRun (Hermite.formAccumulator n) A
   if result.pivots.length = m then
+    let pivotCols := result.pivotVector
     let values : Vector Nat result.pivots.length := Vector.ofFn fun i =>
       let row : Fin n := Fin.castLE
         (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i
-      (result.matrix[(row, result.pivotVector.get i)]).natAbs
+      (result.matrix[(row, pivotCols.get i)]).natAbs
     values.foldl (· * ·) 1
   else
     0

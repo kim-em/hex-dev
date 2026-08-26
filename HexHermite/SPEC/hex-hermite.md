@@ -685,17 +685,18 @@ depends on which algorithm ran, and that product is measured rather than
 derived. See "Benchmarking".
 
 The Phase-4 registrations additionally state controlled-family wall models.
-On the registered bounded-entry dense and rank-deficient ladders, the schedule
-has cubic matrix-entry visits and Euclidean quotient-step counts logarithmic in
-the encountered coefficient magnitude; the measured range is normalized by
-`n³ log n`. This is a range-specific wall model checked against timings and the
-recorded operand-width curve, not a claim that unrestricted bit complexity is
-`O(n³ log n)`. The tall family keeps its active coefficients bounded and uses
-`n³`; the conjugate ladder uses `n` as an explicit conditioning knob and its
-measured width curve gives `n³ log n`. These empirical-family models do not replace the
-unrestricted scheduled-update bounds below. The untimed diagnostic records
-peak and output bit widths over every timed family/range and checks that its
-instrumented final matrix equals the public uninstrumented result.
+The dense, rank-deficient, and conjugate schedules have cubic matrix-entry
+visits, while exact-integer work becomes more expensive as encountered
+coefficients widen. Their peak bit widths grow roughly linearly, not
+logarithmically, in `n` over the registered ladders. The normalization
+`n³ log n` is therefore an empirically calibrated, slowly growing wall-cost
+surrogate for the range `16..128`; its adequacy is the flat measured timing
+ratio, not a claim that it follows algebraically from the width curve or that
+unrestricted bit complexity is `O(n³ log n)`. The tall family keeps active
+coefficients word-scale and uses `n³`. These controlled-family models do not
+replace the unrestricted scheduled-update bounds below. The untimed diagnostic
+records peak and output bit widths over every timed family/range and checks that
+its instrumented final matrix equals the public uninstrumented result.
 
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
