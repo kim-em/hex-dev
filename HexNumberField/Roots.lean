@@ -580,6 +580,13 @@ private def rootsSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
 private def rootsLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
   DensePoly.ofList [-rootsSqrtTwo, 1]
 
+private def rootsHalfSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
+  QAdjoin.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
+    (DensePoly.ofList ([0, (1 : Rat) / 2] : List Rat))
+
+private def rootsHalfLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
+  DensePoly.ofList [-rootsHalfSqrtTwo, 1]
+
 private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
   if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
@@ -603,6 +610,16 @@ private def algebraicLinearRoots? : Option RootSet := do
     QAdjoin.Roots.evalEliminant rootsLinear
       (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsLinear)) =
     DensePoly.ofList [0, 0, -8, 0, 1]
+
+-- A non-unit common denominator exercises the dilation direction: before
+-- dilation the nonzero evaluation roots are `±2√2`; substituting `2S`
+-- moves them to the actual values `±√2`.
+#guard QAdjoin.Roots.commonDen rootsHalfLinear = 2
+
+#guard
+    QAdjoin.Roots.evalEliminant rootsHalfLinear
+      (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsHalfLinear)) =
+    DensePoly.ofList [0, 0, -128, 0, 64]
 
 #guard
     if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
