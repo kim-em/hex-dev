@@ -738,6 +738,10 @@ theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
         (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
+theorem coprimeCount_mul {m n} (hcop : Nat.Coprime m n) :
+    ((List.range (m * n)).filter (fun a => Nat.Coprime a (m * n))).length =
+      ((List.range m).filter (fun a => Nat.Coprime a m)).length *
+        ((List.range n).filter (fun a => Nat.Coprime a n)).length
 theorem coprime_primePow_iff {a p e} (he : 0 < e) :
     Nat.Coprime a (p ^ e) ↔ Nat.Coprime a p
 theorem coprimeCount_primePow {p e} (hp : Hex.Nat.Prime p) (he : 0 < e) :
@@ -766,9 +770,11 @@ a `Nat`, which is the API decision worth defending. Taking a `Nat` would
 mean each call re-factors, and would mean each has to answer at `0` and at
 inputs the search cannot handle. Taking certified data makes them total
 functions whose semantic theorems need no side hypothesis, and makes the
-cost model visible: factoring is expensive, everything downstream of it
-is not. The two `coprime*primePow` theorems are raw-`Nat` ingredients for
-the totient proof, rather than additional divisor functions.
+cost model visible: factoring is expensive, while most certificate consumers
+are linear in the number of prime-power entries. Divisor enumeration and the
+current placeholder implementation of `totient` are the stated exceptions.
+The `coprimeCount_mul` and two `coprime*primePow` theorems are raw-`Nat`
+ingredients for the totient proof, rather than additional divisor functions.
 
 `squareDivisor` and `squarefreePart` traverse only the certified factor
 list: the former multiplies `pᵢ^(eᵢ / 2)`, and the latter multiplies
@@ -799,9 +805,15 @@ characterization of a divisor of a product of distinct prime powers.
 and the multiplicative counting bijection for coprime moduli (a finite
 CRT argument). `coprimeCount_primePow` now supplies the first directly in
 the Mathlib-free layer by counting periodic blocks modulo the base prime.
-The CRT counting bijection is still outstanding and is part of the
-divisor-API milestone; listing `totient_eq_count` here is not a claim
-that the arithmetic root already proves that step.
+`coprimeCount_mul` supplies the second: the forward map sends a residue to
+its representatives modulo the two coprime factors, and a constructive
+extended-GCD inverse proves the resulting finite lists are permutations.
+The zero/unit boundary is included in the theorem. Listing
+`totient_eq_count` here is not a claim that the arithmetic root already uses
+these ingredients: `totient` currently ignores its certificate and enumerates
+`List.range n`, so it costs `O(n)` gcd computations rather than `O(k)`.
+Replacing it by `∏ pᵢ^(eᵢ-1)(pᵢ-1)`, proved from the two counting theorems,
+is the next divisor-API milestone.
 
 ## Complexity
 
@@ -820,7 +832,8 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
 | `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
-| everything else in the divisor API | `O(k)` | |
+| `totient` (current placeholder) | `O(n)` gcds | becomes `O(k)` when the certified product formula lands |
+| everything else in the divisor API | `O(k)` | excludes `divisors` and the current `totient` placeholder |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
 complexity: the operands are big integers throughout, `p^e` costs
