@@ -272,6 +272,7 @@ theorem factorPowerWithRoute?_cyclotomic {b n : Nat} {sign : Sign} {r r' : Rand}
           rw [hfactor] at h
           simp only [Except.map] at h
           cases h
+
 end Nat
 
 end Hex
