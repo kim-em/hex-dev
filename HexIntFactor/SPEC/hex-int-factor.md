@@ -740,6 +740,12 @@ theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
     (hq : Hex.Nat.Prime q) : q ∣ radical F ↔ q ∣ n
+theorem squareDivisor_eq_prod {n} (F : CheckedFactorization n) :
+    squareDivisor F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent / 2)).prod
+theorem squarefreePart_eq_prod {n} (F : CheckedFactorization n) :
+    squarefreePart F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent % 2)).prod
 theorem squarefreePart_mul_square {n} (F : CheckedFactorization n) :
     squarefreePart F * squareDivisor F ^ 2 = n
 theorem squareDivisor_spec {n} (F : CheckedFactorization n) :
@@ -757,6 +763,11 @@ the search cannot handle. Taking certified data makes them total
 functions whose theorems need no side hypothesis, and makes the cost
 model visible: factoring is expensive, everything downstream of it is
 not.
+
+`squareDivisor` and `squarefreePart` traverse only the certified factor
+list: the former multiplies `pᵢ^(eᵢ / 2)`, and the latter multiplies
+`pᵢ^(eᵢ % 2)`. Neither operation scans candidate divisors or values below
+the subject.
 
 `divisors` returns ascending, which costs a sort over `∏(eᵢ + 1)`
 entries and is what every consumer wants. `numDivisors` exists

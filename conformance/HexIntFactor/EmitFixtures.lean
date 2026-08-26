@@ -55,7 +55,8 @@ private def emitDivisorFns (tag : String) (n : Nat) : IO Unit := do
         ",\"sigma2\":" ++ toString (sigma F 2) ++
         ",\"phi\":" ++ toString (totient F) ++
         ",\"rad\":" ++ toString (radical F) ++
-        ",\"sqfpart\":" ++ toString (squarefreePart F) ++ "}"
+        ",\"sqfpart\":" ++ toString (squarefreePart F) ++
+        ",\"sqdiv\":" ++ toString (squareDivisor F) ++ "}"
   emitResult lib case "divisorfn" value
 
 private def emitOrder (tag : String) (a n : Nat) : IO Unit := do
