@@ -115,6 +115,18 @@ theorem checkPartial_prime {F : PartialFactorization}
     ∀ e ∈ F.factors, Prime e.prime :=
   checkEntries_prime (checkedPartial_parts h).2.1
 
+/-- Every listed exponent in accepted partial data is positive. -/
+theorem checkPartial_exponent {F : PartialFactorization}
+    (h : checkPartial F = true) :
+    ∀ e ∈ F.factors, 0 < e.exponent :=
+  checkEntries_positive (checkedPartial_parts h).2.1
+
+/-- Listed bases in accepted partial data are strictly ascending. -/
+theorem checkPartial_sorted {F : PartialFactorization}
+    (h : checkPartial F = true) :
+    F.factors.Pairwise (fun a b => a.prime < b.prime) :=
+  checkEntries_pairwise (checkedPartial_parts h).2.1
+
 end Nat
 
 end Hex
