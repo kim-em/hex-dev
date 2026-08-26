@@ -244,6 +244,12 @@ def runPrincipalDense (input : PrincipalInput) : UInt64 :=
   mixHash (checksum result.matrix) <|
     result.pivots.foldl (fun acc x => mixHash acc (hash x)) 0
 
+private def principalAgrees (n : Nat) : Bool :=
+  let input := principalInput n
+  let result := Matrix.Hermite.principalCore
+    (Matrix.Hermite.formAccumulator input.n) input.form input.profile
+  result.matrix == Matrix.hnf input.form
+
 /-- Rank projection on the dense family. -/
 def runRankDense (input : Input) : Nat := Matrix.hnfRank (matrix input)
 
@@ -358,6 +364,7 @@ def runCertPrepared (input : CertInput) : Bool :=
 
 #guard runShapePrepared (shapeInput 16)
 #guard runCertPrepared (certInput 8)
+#guard principalAgrees 16
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
