@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
+import HexModArith.Ntt.Convolution
 import HexModArith.Ntt.Transform
 import HexModArith.Prime
 import HexModArith.Ring
@@ -21,7 +22,8 @@ Covered operations:
 - natural and integer scalar multiplication
 - `BarrettCtx.mulMod`
 - `MontCtx.toMont`, `mulMont`, `fromMont`
-- `ZMod64.NttPlan.build?`, reusable Shoup twiddle tables, and bounded butterflies
+- `ZMod64.NttPlan.build?`, reusable Shoup twiddle tables, bounded butterflies,
+  radix-two transforms, and cyclic, ordinary, and negacyclic convolution
 
 Covered properties:
 - constructors and casts reduce representatives modulo the committed modulus
@@ -36,10 +38,13 @@ Covered properties:
 - NTT plans validate power-of-two lengths and exact-order roots
 - Shoup multiplication and forward/inverse butterflies preserve their residues
   while remaining in their advertised redundant ranges
+- checked NTT convolution agrees with direct cyclic, zero-padded ordinary, and
+  primitive-`2n` negacyclic products
 
 Covered edge cases:
 - modulus `1`
 - small prime modulus `7`
+- small prime modulus `5`, including a primitive fourth root
 - composite modulus `15`, including the exact non-coprime inverse convention
 - power-of-two modulus `16`
 - small Barrett-friendly moduli `2`, `7`, and `65535`
@@ -59,6 +64,7 @@ private abbrev MontWideMod : Nat := 65537
 private instance conformanceBoundsOne : Bounds 1 := ⟨by decide, by decide⟩
 private instance conformanceBoundsTwo : Bounds 2 := ⟨by decide, by decide⟩
 private instance conformanceBoundsThree : Bounds 3 := ⟨by decide, by decide⟩
+private instance conformanceBoundsFive : Bounds 5 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSeven : Bounds 7 := ⟨by decide, by decide⟩
 private instance conformanceBoundsFifteen : Bounds 15 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSixteen : Bounds 16 := ⟨by decide, by decide⟩
@@ -88,6 +94,24 @@ private theorem conformancePrimeSeven : Hex.Nat.Prime 7 := by
 
 private instance conformancePrimeModulusSeven : PrimeModulus 7 :=
   primeModulusOfPrime conformancePrimeSeven
+
+private theorem conformancePrimeFive : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by
+      omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private instance conformancePrimeModulusFive : PrimeModulus 5 :=
+  primeModulusOfPrime conformancePrimeFive
 
 example {a : ZMod64 7} (ha : a ≠ 0) : ZMod64.inv a * a = 1 := by
   grind
@@ -141,6 +165,40 @@ end PrimeModulusAutomation
   | some plan =>
       (Ntt.forward? plan #[ofNat 7 3]).isNone &&
         (Ntt.inverse? plan #[ofNat 7 3]).isNone
+
+private def negacyclicPlanFive? : Option (Ntt.NegacyclicPlan 5 2) :=
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => none
+  | some transform =>
+      if hroot : transform.root = (ofNat 5 2) ^ 2 then
+        if horder : ExactOrder (ofNat 5 2) 4 then
+          some { transform, twist := ofNat 5 2, twist_order := horder, root_eq := hroot }
+        else none
+      else none
+
+#guard
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match Ntt.cyclic? plan #[ofNat 5 1, ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[3, 3]
+
+#guard
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match Ntt.ordinary? plan #[ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[1, 2]
+
+#guard
+  match negacyclicPlanFive? with
+  | none => false
+  | some plan =>
+      match Ntt.negacyclic? plan #[ofNat 5 1, ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[4, 3]
 
 private def nttTwiddleSeven : NttTwiddle 7 :=
   NttTwiddle.ofValue (ofNat 7 6)
