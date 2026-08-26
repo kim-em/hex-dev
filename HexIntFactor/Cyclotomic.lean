@@ -142,14 +142,18 @@ private def factorPowerTarget? (target : Nat) (parts? : Option (List CyclotomicP
           let raw : Factorization := ⟨target, entries⟩
           if h : checkFactorization raw = true then
             .ok (⟨raw, rfl, h⟩, r', .cyclotomic)
-          else
-            match factor? target r' fuel with
-            | .ok (F, r'') => .ok (F, r'', .generic)
-            | .error failure => .error failure
+          else .error
+            { stop := .rejected
+              attempts := 0
+              rand := r'
+              culprit := some ⟨target, entries, 1⟩ }
       | .error failure =>
-          match factor? target failure.rand fuel with
-          | .ok (F, r') => .ok (F, r', .generic)
-          | .error fallback => .error fallback
+          match failure.stop with
+          | .rejected => .error failure
+          | .zero | .incomplete =>
+              match factor? target failure.rand fuel with
+              | .ok (F, r') => .ok (F, r', .generic)
+              | .error fallback => .error fallback
   | none =>
       match factor? target r fuel with
       | .ok (F, r') => .ok (F, r', .generic)

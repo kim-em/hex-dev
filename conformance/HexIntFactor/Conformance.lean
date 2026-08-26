@@ -180,11 +180,38 @@ example : 1 < 3 ∧ 3 < 15 ∧ 3 ∣ 15 :=
 -- being replaced by an empty partial answer or ordinary exhaustion.
 #guard (match Hex.Nat.Internal.acceptPartial? 12 (by decide)
     ⟨12, [⟨1, .small 2⟩], 5⟩
-    (Rand.ofSeed 9) 17 with
+    rfl (Rand.ofSeed 9) 17 with
   | .error failure =>
       failure.stop == .rejected && failure.attempts == 17 &&
+        (match failure.snapshot with
+          | some saved => checkPartial saved.raw && saved.raw.subject == 12
+          | none => false) &&
+        (match failure.culprit with
+          | some rejected => !checkPartial rejected
+          | none => false)
+  | .ok _ => false)
+
+-- Real producer output must cross the aggregate checker without rejection.
+#guard ([1, 2, 4, 12, 97, 4826808, 2 ^ 32 - 1,
+    1000003 ^ 2, 1000003 * 1000033].all fun n =>
+  match factorPartial? n (Rand.ofSeed n) with
+  | .ok (F, _) => checkPartial F.raw
+  | .error _ => false)
+
+-- Zero fuel is checked partial exhaustion, while complete search reports the
+-- distinct incomplete stop and retains the same checked aggregate.
+private def starvedInput : Nat := 1000003 * 1000033
+
+#guard (match factorPartial? starvedInput (Rand.ofSeed 3) (fuel := 0) with
+  | .ok (F, _) => checkPartial F.raw && F.raw.residual == starvedInput
+  | .error _ => false)
+
+#guard (match factor? starvedInput (Rand.ofSeed 3) (fuel := 1) with
+  | .error failure =>
+      failure.stop == .incomplete && 0 < failure.attempts &&
+        failure.rand != Rand.ofSeed 3 &&
         match failure.snapshot with
-        | some saved => checkPartial saved.raw && saved.raw.subject == 12
+        | some saved => checkPartial saved.raw && saved.raw.subject == starvedInput
         | none => false
   | .ok _ => false)
 

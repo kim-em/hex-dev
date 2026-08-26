@@ -39,6 +39,7 @@ structure FactorFailure where
   attempts : Nat
   rand : Rand
   snapshot : Option PartialSnapshot := none
+  culprit : Option PartialFactorization := none
 deriving Repr
 
 /-- Default search budget, scaled by input bit length. -/
@@ -131,7 +132,7 @@ namespace Internal
 /-- Check an untrusted partial candidate and tie it to the requested subject.
 Checker rejection is an internal search failure, not fuel exhaustion. -/
 def acceptPartial? (n : Nat) (hn : 0 < n) (raw : PartialFactorization)
-    (r : Rand) (attempts : Nat) :
+    (hs : raw.subject = n) (r : Rand) (attempts : Nat) :
     Except FactorFailure (CheckedPartialFactorization n × Rand) :=
   let fallback : PartialFactorization := ⟨n, [], n⟩
   have hf : checkPartial fallback = true := by
@@ -141,28 +142,30 @@ def acceptPartial? (n : Nat) (hn : 0 < n) (raw : PartialFactorization)
     { stop := .rejected
       attempts
       rand := r
-      snapshot := some ⟨fallback, hf⟩ }
-  if hs : raw.subject = n then
-    if hv : checkPartial raw = true then
-      .ok (⟨raw, hs, hv⟩, r)
-    else .error rejected
+      snapshot := some ⟨fallback, hf⟩
+      culprit := some raw }
+  if hv : checkPartial raw = true then
+    .ok (⟨raw, hs, hv⟩, r)
   else .error rejected
 
 /-- Candidate acceptance never confuses checker rejection with exhaustion. -/
-theorem acceptPartial?_error {n hn raw r attempts f}
-    (h : acceptPartial? n hn raw r attempts = .error f) :
-    f.stop = .rejected ∧
+theorem acceptPartial?_error {n hn raw hs r attempts f}
+    (h : acceptPartial? n hn raw hs r attempts = .error f) :
+    f.stop = .rejected ∧ f.culprit = some raw ∧
+      checkPartial raw = false ∧
       ∃ saved, f.snapshot = some saved ∧ saved.raw.subject = n := by
   unfold acceptPartial? at h
   dsimp only at h
   split at h
-  · split at h
-    · cases h
-    · injection h with h
-      subst h
-      simp
-  · injection h with h
+  · cases h
+  · rename_i hv
+    injection h with h
     subst h
+    have hbad : checkPartial raw = false := by
+      cases hcheck : checkPartial raw with
+      | false => rfl
+      | true => exact False.elim (hv hcheck)
+    refine ⟨rfl, rfl, hbad, ?_⟩
     simp
 
 end Internal
@@ -174,7 +177,8 @@ def factorPartial? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
   if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
   else
     let out := smallAttempt n r fuel
-    Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw out.rand out.attempts
+    Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw out.subject_eq
+      out.rand out.attempts
 
 /-- Complete factorization when the checked partial residual is `1`. -/
 def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
@@ -182,19 +186,16 @@ def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
   if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
   else
     let out := smallAttempt n r fuel
-    match Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw out.rand
-        out.attempts with
+    match Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw
+        out.subject_eq out.rand out.attempts with
     | .error failure => .error failure
     | .ok (F, r') =>
         if _hr : F.raw.residual = 1 then
           let raw : Factorization := ⟨n, F.raw.factors⟩
-          if hv : checkFactorization raw = true then
-            .ok (⟨raw, rfl, hv⟩, r')
-          else .error
-            { stop := .rejected
-              attempts := out.attempts
-              rand := r'
-              snapshot := some ⟨F.raw, F.valid⟩ }
+          have hv : checkFactorization raw = true := by
+            simpa [raw, F.subject_eq] using
+              checkFactorization_of_checkPartial F.valid _hr
+          .ok (⟨raw, rfl, hv⟩, r')
         else .error
           { stop := .incomplete
             attempts := out.attempts
@@ -207,7 +208,9 @@ theorem factorPartial?_error {n r fuel f}
     (h : factorPartial? n r fuel = .error f) :
     (f.stop = .zero ∧ n = 0) ∨
       (f.stop = .rejected ∧
-        ∃ saved, f.snapshot = some saved ∧ saved.raw.subject = n) := by
+        ∃ rejected saved, f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n) := by
   unfold factorPartial? at h
   split at h
   · rename_i hn
@@ -215,23 +218,29 @@ theorem factorPartial?_error {n r fuel f}
     subst h
     exact Or.inl ⟨rfl, hn⟩
   · dsimp only at h
-    exact Or.inr (Internal.acceptPartial?_error h)
+    obtain ⟨hrejected, hculprit, hbad, saved, hsaved, hsubject⟩ :=
+      Internal.acceptPartial?_error h
+    exact Or.inr
+      ⟨hrejected, _, saved, hculprit, hbad, hsaved, hsubject⟩
 
 /-- Every positive input either has checked partial data or exposes an internal
 candidate rejection; rejection is never reported as ordinary exhaustion. -/
 theorem factorPartial?_success {n r fuel} (hn : 0 < n) :
     (∃ F r', factorPartial? n r fuel = .ok (F, r')) ∨
-      ∃ f saved, factorPartial? n r fuel = .error f ∧
-        f.stop = .rejected ∧ f.snapshot = some saved ∧
-          saved.raw.subject = n := by
+      ∃ f rejected saved, factorPartial? n r fuel = .error f ∧
+        f.stop = .rejected ∧ f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n := by
   cases hresult : factorPartial? n r fuel with
   | ok result => exact Or.inl ⟨result.1, result.2, rfl⟩
   | error f =>
-      rcases factorPartial?_error hresult with ⟨_, hz⟩ | ⟨hrejected, hsnapshot⟩
+      rcases factorPartial?_error hresult with ⟨_, hz⟩ | ⟨hrejected, evidence⟩
       · subst n
         cases hn
-      · obtain ⟨saved, hsaved, hsubject⟩ := hsnapshot
-        exact Or.inr ⟨f, saved, rfl, hrejected, hsaved, hsubject⟩
+      · obtain ⟨rejected, saved, hculprit, hbad, hsaved, hsubject⟩ := evidence
+        exact Or.inr
+          ⟨f, rejected, saved, rfl, hrejected, hculprit, hbad, hsaved,
+            hsubject⟩
 
 end Nat
 
