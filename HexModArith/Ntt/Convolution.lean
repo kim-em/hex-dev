@@ -448,6 +448,27 @@ theorem ordinary?_eq_reference {p n : Nat} [Bounds p] [PrimeModulus p]
   rw [hnext]
   exact Nat.le_nextPowerOfTwo (left.size + right.size - 1)
 
+/-- A successful checked ordinary convolution has the independent
+coefficient-level reference value.  This packages the length checks performed
+inside `ordinary?`, so coefficient-owner adapters need no duplicate unchecked
+hypotheses. -/
+theorem ordinary?_eq_of_some {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (left right result : Array (ZMod64 p))
+    (hresult : ordinary? plan left right = some result) :
+  result = (padTo n
+      (linearConvolution left.toList right.toList)).toArray := by
+  unfold ordinary? at hresult
+  dsimp only at hresult
+  split at hresult
+  next hvalid =>
+    obtain ⟨hnext, hleft, hright⟩ := hvalid
+    have href := ordinary?_eq_reference plan left right hnext hleft hright
+    unfold ordinary? at href
+    rw [if_pos ⟨hnext, hleft, hright⟩] at href
+    rw [href] at hresult
+    exact (Option.some.inj hresult).symm
+  next hinvalid => simp at hresult
+
 /-- Split an exponent into its residue and quotient contributions. -/
 theorem pow_mod_div {p : Nat} [Bounds p] (point : ZMod64 p)
     (n degree : Nat) :
