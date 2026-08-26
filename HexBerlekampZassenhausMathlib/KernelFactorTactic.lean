@@ -197,6 +197,7 @@ kernel factorizer replay when the certificate computation declines (see the
 module docstring for the `import all` closure and cost caveats). -/
 syntax (name := irreducibilityBangTerm) "irreducibility!" term:max : term
 
+/-- Elaborator for term-mode `irreducibility!`. -/
 @[term_elab irreducibilityBangTerm] meta def elabIrreducibilityBang :
     Term.TermElab := fun stx expectedType? => do
   match stx with
@@ -253,6 +254,7 @@ factorizer replay when the certificate computation declines. -/
 syntax (name := irreducibilityBangTac)
   "irreducibility!" (atomic(ident " : "))? (term:max)? : tactic
 
+/-- Elaborator for the `irreducibility!` tactic forms. -/
 @[tactic irreducibilityBangTac] meta def evalIrreducibilityBangTac :
     Tactic.Tactic := fun stx => do
   match stx with
@@ -307,6 +309,7 @@ kernel factorizer replays when the certificate computation declines (see the
 module docstring for the `import all` closure and cost caveats). -/
 syntax (name := factorPolyBangTerm) "factor_poly!" term:max : term
 
+/-- Elaborator for term-mode `factor_poly!`. -/
 @[term_elab factorPolyBangTerm] meta def elabFactorPolyBang : Term.TermElab :=
   fun stx expectedType? => do
     match stx with
@@ -320,6 +323,7 @@ syntax (name := factorPolyBangTerm) "factor_poly!" term:max : term
 kernel-replay fallback. -/
 syntax (name := factorPolyBangTac) "factor_poly!" term:max : tactic
 
+/-- Elaborator for the `factor_poly!` tactic form. -/
 @[tactic factorPolyBangTac] meta def evalFactorPolyBangTac : Tactic.Tactic :=
   fun stx => do
     match stx with
