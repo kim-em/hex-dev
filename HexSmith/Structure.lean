@@ -27,7 +27,7 @@ def abelianStructure (A : Matrix Int n m) : AbelianStructure :=
 
 /-- The free rank is the number of presentation columns beyond the Smith
 rank. -/
-@[simp]
+@[simp, grind =]
 theorem abelianStructure_freeRank (A : Matrix Int n m) :
     (abelianStructure A).freeRank = m - snfRank A := by
   rfl

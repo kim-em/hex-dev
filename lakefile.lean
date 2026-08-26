@@ -784,7 +784,8 @@ lean_lib HexTruncatedSeriesTests where
 -- release-manifest-backed test target when the pair is published.
 @[default_target]
 lean_lib HexSmithTests where
-  globs := #[`HexSmithMathlib.LintTests,
+  globs := #[`HexSmith.QuickstartTests,
+    `HexSmithMathlib.LintTests,
     `HexSmithMathlib.QuickstartTests]
 
 -- HexCharPoly is not yet a published split repository (its released.yml

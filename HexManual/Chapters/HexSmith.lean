@@ -110,10 +110,12 @@ private def impossible : Vector Int 2 := #v[1, 0]
 #guard (latticeCoeffs A solvable).isSome
 #guard !(latticeCoeffs A impossible).isSome
 
-private def presentation : Matrix Int 2 3 := #m[2, 0, 0; 0, 6, 0]
+private def presentation : Matrix Int 2 3 :=
+  #m[2, 0, 0; 0, 6, 0]
 
 #guard (abelianStructure presentation).freeRank == 1
-#guard (abelianStructure presentation).torsionFactors == #[2, 6]
+#guard
+  (abelianStructure presentation).torsionFactors == #[2, 6]
 
 end HexSmithSystemsExample
 ```

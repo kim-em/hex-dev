@@ -145,7 +145,7 @@ does not claim a bit-complexity bound for growing diagonal entries. The SPEC's
 separate operand-size statement remains "bounded by the product of the input
 diagonal".
 
-## Phase-6 regression check
+### Phase-6 regression check
 
 After proof and API polishing, the complete 18-target scientific ladder was
 rerun from clean source commit

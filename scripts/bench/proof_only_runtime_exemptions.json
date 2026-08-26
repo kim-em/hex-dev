@@ -1496,7 +1496,7 @@
  {
   "path": "lakefile.lean",
   "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
-  "current_blob": "dbb5134a926b990c33ffb8ee74b2d000abd59d6e",
+  "current_blob": "f382207e0f10f7ecef1217535194969bbfb7e68a",
   "reason": "Registers the HexSmith libraries, conformance, fixtures, benchmark, and build-only publication-test target along with other unrelated library and proof-probe targets accumulated since the measured baseline. The hexbz_factor_service target, its build flags, and every factorization runtime dependency remain unchanged."
  }
 ]
