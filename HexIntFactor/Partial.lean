@@ -57,6 +57,17 @@ private theorem checkedPartial_parts {F : PartialFactorization}
     simp only [Bool.and_eq_true, decide_eq_true_eq] at h
     exact ⟨h.1.1, h.1.2, acc, hprod, h.2⟩
 
+/-- A partial factorization accepted by the checker has positive subject. -/
+theorem checkPartial_pos {F : PartialFactorization}
+    (h : checkPartial F = true) : 0 < F.subject :=
+  (checkedPartial_parts h).1
+
+/-- The subject indexed by checked partial factorization data is positive. -/
+theorem CheckedPartialFactorization.pos {n : Nat}
+    (F : CheckedPartialFactorization n) : 0 < n := by
+  rw [← F.subject_eq]
+  exact checkPartial_pos F.valid
+
 private theorem boundedPowMul_eq {bound q : Nat} :
     ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
       r = acc * q ^ e := by

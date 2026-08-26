@@ -188,6 +188,11 @@ theorem checkFactorization_prod {F} (h : checkFactorization F = true) :
 theorem checkFactorization_prime {F} (h : checkFactorization F = true) :
     ∀ e ∈ F.factors, Hex.Nat.Prime e.prime
 
+theorem checkFactorization_pos {F} (h : checkFactorization F = true) :
+    0 < F.subject
+
+theorem CheckedFactorization.pos {n} (F : CheckedFactorization n) : 0 < n
+
 /-- The prime support is exactly the listed primes. Not "nothing else
 divides" -- composite divisors certainly exist -- but no other *prime*
 does, which is the statement the order and primitivity certificates
@@ -466,10 +471,11 @@ as `checkFactorization` minus the requirement that the residual be `1`.
 Its product calculation uses the same subject-bounded loop.
 It makes **no** completeness claim. The indexed checked form prevents a
 partial factorization of one subject from answering a request about
-another. The characterising lemmas `checkPartial_prod`,
+another. The characterising lemmas `checkPartial_pos`,
+`CheckedPartialFactorization.pos`, `checkPartial_prod`,
 `checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
-expose reconstruction, primality, exponent positivity, and factor-base
-ordering without requiring consumers to unfold the checker.
+expose subject positivity, reconstruction, primality, exponent positivity, and
+factor-base ordering without requiring consumers to unfold the checker.
 `checkFactorization_of_checkPartial` proves that residual one is already a
 complete certificate, avoiding a second certificate replay. The search result
 theorems are
@@ -657,6 +663,13 @@ structure CheckedOrderCert where
 The identity is normalised as `1 % modulus` rather than `1` so that the
 same modular expression is used throughout, although `1 < c.modulus`
 excludes the degenerate modulus.
+
+The characterisation `checkOrder_iff` and named projections
+`checkOrder_one_lt_modulus`, `checkOrder_order_pos`,
+`checkOrder_orderFac_subject`, `checkOrder_orderFac`, `checkOrder_pow`, and
+`checkOrder_pow_div_prime` expose these accepted facts so
+downstream proofs do not unfold the Boolean checker or index a nested
+conjunction.
 
 ```lean
 theorem order_eq_of_checkOrder {c} (h : checkOrder c = true) :
