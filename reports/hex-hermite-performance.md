@@ -67,7 +67,8 @@ agreeing repeat hashes and matching expected hashes.
 ## Verdicts
 
 The definitive run used clean source commit
-`cdfc17b733b3f51bf06ef16eb2d4738caeca4b72`, Lean 4.34.0-rc2,
+`cdfc17b733b3f51bf06ef16eb2d4738caeca4b72` (content-identical rebased
+commit `04bab989148d155151c2e0957bab9b651ba7a917`), Lean 4.34.0-rc2,
 LeanBench 0.1.0, warm-cache compiled execution, and three outer trials on
 `chungus2` (Linux x86-64, AMD EPYC 9455 48-Core Processor, 96 logical CPUs):
 
@@ -129,7 +130,8 @@ lake exe hexhermite_bench growth tall 8 12 16 24 32 48 64
 ```
 
 The committed [growth transcript](bench-results/hex-hermite-phase4-growth.txt)
-records source commit `136980ce850c3c89b7ed90902b07eb1318336dae`, Lean and
+records source commit `136980ce850c3c89b7ed90902b07eb1318336dae`
+(content-identical rebased commit `0cedb722b7f8f3934442165a3cc6ac6344377bc9`), Lean and
 LeanBench versions, host, OS, family, dimension, peak width, and output width;
 its SHA-256 is
 `e567ae1b90713b599db0a3330b99605e404b40f8c65332f3026bb5d9a30a625b`.
@@ -146,7 +148,8 @@ this release unit.
 The informational comparators are `FLINT fmpz_mat_hnf via python-flint`
 (python-flint 0.9.0 / FLINT 3.6.0) and `PARI mathnf via cypari2`
 (cypari2 2.2.4 / PARI 2.17.3). The clean fixed run used source commit
-`8692efcfd` on the same host and toolchain:
+`8692efcfd` (content-identical rebased commit
+`aab3f84cdc670078603427925a23f75e270c972f`) on the same host and toolchain:
 
 ```sh
 nix-shell -p python313Packages.cypari2 python313Packages.cysignals pari --run '
@@ -241,6 +244,7 @@ done
 ## Profile
 
 Samply 0.13.1 profiled clean commit `11d29fee274c0e27390d3ffd098515a0c9505069`
+(content-identical rebased commit `71d9f7b17e6fd338dfb715825561f8aa1d3a34aa`)
 at 999 Hz on the same `chungus2` hardware, Lean 4.34.0-rc2, and LeanBench
 0.1.0. Inputs are deterministic: dense salt 5, deficient salt 17, full
 triangular salts 41/43, and the fixed tall construction in the bench source.
