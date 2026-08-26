@@ -61,7 +61,7 @@ private theorem eval_coeffMinorAt_zero [CommRing R] [DecidableEq R]
     eval (Subresultant.coeffMinorAt df dg 0 0 f g) a =
       Polynomial.resultant (specialize f a) (specialize g a)
         (m := df) (n := dg) := by
-  letI : CommRing (DensePoly R) := denseCommRing
+  let _ : CommRing (DensePoly R) := denseCommRing
   let ε : DensePoly R →+* R :=
     (Polynomial.evalRingHom a).comp
       (HexPolyMathlib.equiv (R := R)).toRingHom
