@@ -738,6 +738,11 @@ theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
         (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
+theorem coprime_primePow_iff {a p e} (he : 0 < e) :
+    Nat.Coprime a (p ^ e) ↔ Nat.Coprime a p
+theorem coprimeCount_primePow {p e} (hp : Hex.Nat.Prime p) (he : 0 < e) :
+    ((List.range (p ^ e)).filter (fun a => Nat.Coprime a (p ^ e))).length =
+      p ^ (e - 1) * (p - 1)
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
     (hq : Hex.Nat.Prime q) : q ∣ radical F ↔ q ∣ n
 theorem squareDivisor_eq_prod {n} (F : CheckedFactorization n) :
@@ -756,13 +761,14 @@ theorem isSquarefree_iff {n} (F : CheckedFactorization n) :
       ∀ q, Hex.Nat.Prime q → ¬ (q ^ 2 ∣ n)
 ```
 
-All of these take a `CheckedFactorization` rather than a `Nat`, which
-is the API decision worth defending. Taking a `Nat` would mean each
-call re-factors, and would mean each has to answer at `0` and at inputs
-the search cannot handle. Taking certified data makes them total
-functions whose theorems need no side hypothesis, and makes the cost
-model visible: factoring is expensive, everything downstream of it is
-not.
+All public divisor functions take a `CheckedFactorization` rather than
+a `Nat`, which is the API decision worth defending. Taking a `Nat` would
+mean each call re-factors, and would mean each has to answer at `0` and at
+inputs the search cannot handle. Taking certified data makes them total
+functions whose semantic theorems need no side hypothesis, and makes the
+cost model visible: factoring is expensive, everything downstream of it
+is not. The two `coprime*primePow` theorems are raw-`Nat` ingredients for
+the totient proof, rather than additional divisor functions.
 
 `squareDivisor` and `squarefreePart` traverse only the certified factor
 list: the former multiplies `pᵢ^(eᵢ / 2)`, and the latter multiplies
@@ -789,11 +795,13 @@ finite power sum over `powers p e 1`.
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
 characterization of a divisor of a product of distinct prime powers.
-`totient_eq_count` additionally needs the prime-power coprime count and
-the multiplicative counting bijection for coprime moduli (a finite CRT
-argument). None of those results is presently exported by hex-arith.
-They are part of the divisor-API milestone; listing the theorems here is
-not a claim that the existing arithmetic root already proves them.
+`totient_eq_count` needs two ingredients: the prime-power coprime count
+and the multiplicative counting bijection for coprime moduli (a finite
+CRT argument). `coprimeCount_primePow` now supplies the first directly in
+the Mathlib-free layer by counting periodic blocks modulo the base prime.
+The CRT counting bijection is still outstanding and is part of the
+divisor-API milestone; listing `totient_eq_count` here is not a claim
+that the arithmetic root already proves that step.
 
 ## Complexity
 
