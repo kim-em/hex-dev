@@ -216,3 +216,45 @@ type `Hex.FactoredPoly P`, the `Polynomial`-level counterpart of
 certification slots are all Boolean checks on reified literals discharged
 by `Eq.refl true`/`Eq.refl false`; the factorizer and certificate
 generator never appear in emitted terms.
+
+## Phase-4 proof evidence
+
+`factor_poly` and `irreducibility` on `Polynomial (ZMod q)` are
+elaboration/proof surfaces, not LeanBench executables. Build-only modules
+below `bench/HexBerlekampMathlib/ProofProbe/` measure `factor_poly` on
+products of distinct monic irreducible quadratics over `F_5` at degrees 4,
+8, and 12, and `irreducibility` on sparse irreducible binomials over `F_5`
+at degrees 4, 8, and 16. Each case is adjacent to the same import-only
+baseline, and degree 8 also has a direct multiplicity-attribution pair
+(four distinct quadratics against the fourth power of one quadratic: same
+degree and factor count, all multiplicity). Baseline and irreducible-16
+same-module controls are first in manifest `config.order`; execution order
+rotates by round. The external runner uses six balanced rounds, exact
+generated-artifact invalidation, ordinary kernel checking, exact axiom
+validation, and complete source provenance.
+`HexBerlekampMathlibProofProbe` supplies the reduced CI coverage;
+`HexBerlekampMathlibProofProbeScientific` owns the larger release arms and
+remains outside routine CI.
+
+On the named shared release machine a canonical invocation is:
+
+```bash
+python3 scripts/bench/berlekamp_mathlib_sweep.py --samples 6 \
+  --timeout 240 --warm-timeout 600 \
+  --shared-host --expected-host chungus2 --cpu 22
+```
+
+The release run preregisters its selected logical CPU and aggregate
+interference ratio on the command line; the artifact and headline report
+record those exact values. They govern that run rather than the
+illustrative CPU number above.
+
+The runner enforces the designated-shared-host contract in
+`SPEC/benchmarking.md`, including bounded retries of complete rejected
+pairs after a bounded quiet-core preflight and a single aggregate
+pinned-core/SMT interference ceiling; `--allow-busy` remains
+diagnostic-only. Executable factorization arithmetic belongs to the
+existing Mathlib-free `HexBerlekamp` benchmark. The bridge declarations
+have no separable compiled runtime kernel. For the proof-emitting
+elaborators there is `no-comparable-surface-in-named-comparator`: no
+external tool emits and kernel-checks the same Lean proof term.

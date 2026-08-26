@@ -55,6 +55,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexMvPolyMathlibProofProbe",
     "HexBerlekampZassenhausMathlibProofProbe",
     "HexBerlekampZassenhausMathlibProofProbeScientific",
+    "HexBerlekampMathlibProofProbe",
+    "HexBerlekampMathlibProofProbeScientific",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
