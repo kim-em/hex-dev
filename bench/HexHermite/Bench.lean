@@ -573,6 +573,7 @@ redundant signed rows exercise reconstruction without increasing rank. -/
 setup_benchmark runTall n => n ^ 3 with prep := tall where {
   paramFloor := 8, paramCeiling := 64,
   paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
+  verdictWarmupFraction := 0.3
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
