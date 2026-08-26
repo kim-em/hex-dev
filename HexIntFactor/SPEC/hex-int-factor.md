@@ -1088,6 +1088,12 @@ theorem totient_eq {n} (F : CheckedFactorization n) :
 theorem sigma_eq, divisors_eq, radical_eq
 theorem squarefreePart_mathlib, squareDivisor_mathlib
 
+theorem orderOf_unitOfCoprime {a n} (hn : 1 < n) (ha : Nat.Coprime a n) :
+    orderOf (ZMod.unitOfCoprime a ha) = Hex.Nat.orderOf a n
+
+theorem orderOf_natCast {a n} (hn : 1 < n) :
+    orderOf (a : ZMod n) = Hex.Nat.orderOf a n
+
 theorem orderOf_eq {c} (h : checkOrder c = true) :
     orderOf (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order
 ```
@@ -1109,10 +1115,15 @@ witness form -- `squarefreePart_mul_square` and `squareDivisor_spec`
 above --
 which the decision procedure does not produce.
 
-`orderOf_eq` needs a unit to speak about, and the coprimality that
-names one is derived rather than requested: `coprime_of_checkOrder`
-above supplies it from the accepted certificate, so the caller passes
-nothing extra.
+`orderOf_unitOfCoprime` is the function-level correspondence: it proves the
+general unit result directly from the positive-power/minimality
+characterisations on both sides, without computing an order or constructing a
+certificate. `orderOf_natCast` covers every underlying ring element: the
+coprime case follows from the unit result, while both sides are zero for a
+nonunit. The certificate specialization `orderOf_eq` composes that
+correspondence with
+`order_eq_of_checkOrder`; the coprimality needed to name the unit is derived
+by `coprime_of_checkOrder`, so the caller passes nothing extra.
 
 ## Milestones
 
@@ -1151,8 +1162,9 @@ nothing extra.
 6. **ECM stage 1.** Montgomery curves, Suyama parameterisation, the
    word/direct-`Nat` arithmetic dispatch, and its route-level tests.
 
-7. **The companion.** `factorization_eq` and its consequences plus
-   `orderOf_eq`. It adds no duplicate decidability instances. The
+7. **The companion.** `factorization_eq` and its consequences plus the general
+   `orderOf_unitOfCoprime` and `orderOf_natCast` correspondences and the
+   certificate specialization `orderOf_eq`. It adds no duplicate decidability instances. The
    factorization correspondence begins after milestone 1; divisor and
    order transports follow milestones 2 and 3 while later search routes
    proceed independently.
@@ -1175,7 +1187,7 @@ HexIntFactor/
 HexIntFactor.lean
 HexIntFactorMathlib/
   Factorization.lean -- factorization_eq, factors_eq and consequences
-  Order.lean        -- orderOf_eq
+  Order.lean        -- general and certificate-level orderOf correspondences
 HexIntFactorMathlib.lean
 ```
 
