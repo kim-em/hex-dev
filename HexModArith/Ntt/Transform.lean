@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexModArith.Ntt.Butterfly
+public import HexModArith.Ntt.Dft
 
 public section
 
@@ -111,6 +112,64 @@ theorem invRoot_pow_mul_root_pow {p n : Nat} [Bounds p] [PrimeModulus p]
               (plan.root⁻¹ * plan.root) := by grind
         _ = 1 := by rw [ih, hinv]; simp
 
+/-- For a nontrivial power-of-two plan, the half-order root power is `-1`. -/
+theorem root_half_eq_neg_one {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (hn : 1 < n) :
+    plan.root ^ (n / 2) = 0 - 1 := by
+  obtain ⟨k, hk⟩ := plan.length_pow_two
+  subst n
+  cases k with
+  | zero => simp at hn
+  | succ k =>
+      have hnotone : plan.root ^ (2 ^ k) ≠ 1 := by
+        have hhalf := plan.root_order.half
+        simp only [Nat.pow_succ] at hhalf
+        have h := hhalf.resolve_left (by
+          have hpow := Nat.two_pow_pos k
+          omega)
+        simpa using h
+      have hsquare :
+          plan.root ^ (2 ^ k) * plan.root ^ (2 ^ k) = 1 := by
+        rw [← Lean.Grind.Semiring.pow_add]
+        have hsum : 2 ^ k + 2 ^ k = 2 ^ (k + 1) := by
+          rw [Nat.pow_succ]
+          omega
+        rw [hsum]
+        exact plan.root_order.pow_eq_one
+      have hfactor :
+          (plan.root ^ (2 ^ k) - 1) * (plan.root ^ (2 ^ k) + 1) = 0 := by
+        rw [Lean.Grind.Ring.sub_eq_add_neg]
+        grind
+      rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus hfactor with
+        hminus | hplus
+      · exfalso
+        apply hnotone
+        grind
+      · simp only [Nat.pow_succ]
+        grind
+
+/-- At every recursive radix depth, the effective root raised to half the
+current transform length is minus one. -/
+theorem root_stride_half {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (stride fuel : Nat)
+    (hscale : n = stride * 2 ^ (fuel + 1)) :
+    (plan.root ^ stride) ^ (2 ^ fuel) = 0 - 1 := by
+  have hstride : 0 < stride := by
+    cases Nat.eq_zero_or_pos stride with
+    | inl hzero =>
+        rw [hzero, Nat.zero_mul] at hscale
+        exact False.elim ((Nat.ne_of_gt plan.length_pos) hscale)
+    | inr hpos => exact hpos
+  have hn : 1 < n := by
+    have hpow := Nat.two_pow_pos fuel
+    have hproduct : 0 < stride * 2 ^ fuel := Nat.mul_pos hstride hpow
+    rw [hscale, Nat.pow_succ, ← Nat.mul_assoc]
+    omega
+  have hexponent : stride * 2 ^ fuel = n / 2 := by
+    rw [hscale, Nat.pow_succ, ← Nat.mul_assoc]
+    simp
+  rw [Ntt.pow_mul, hexponent, plan.root_half_eq_neg_one hn]
+
 end NttPlan
 
 namespace Ntt
@@ -194,6 +253,64 @@ def inverseStageSpec {p n : Nat} [Bounds p] [PrimeModulus p]
       let twiddle := plan.invRoot ^ ((i * stride) % n)
       let rest := inverseStageSpec plan stride (i + 1) xs ys
       ((x + twiddle * y) :: rest.1, (x - twiddle * y) :: rest.2)
+
+/-- Evaluating the sum half of a forward DIF stage adds the evaluations of
+the two input halves. -/
+theorem eval_forwardStageSpec_fst {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (stride i : Nat) (point : ZMod64 p)
+    (left right : List (ZMod64 p)) (hlength : left.length = right.length) :
+    evalCoeffs point (forwardStageSpec plan stride i left right).1 =
+      evalCoeffs point left + evalCoeffs point right := by
+  induction left generalizing i right with
+  | nil =>
+      have hnil : right = [] := List.length_eq_zero_iff.mp hlength.symm
+      subst right
+      simp [forwardStageSpec]
+  | cons x xs ih =>
+      cases right with
+      | nil => simp at hlength
+      | cons y ys =>
+          have htail : xs.length = ys.length := by simpa using hlength
+          have hrest := ih (i + 1) ys htail
+          simp only [forwardStageSpec, evalCoeffs_cons]
+          rw [hrest]
+          grind
+
+/-- Evaluating the difference half of a forward DIF stage absorbs its
+coefficient twiddles into the evaluation point. -/
+theorem eval_forwardStageSpec_snd {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (stride i : Nat) (point : ZMod64 p)
+    (left right : List (ZMod64 p)) (hlength : left.length = right.length) :
+    evalCoeffs point (forwardStageSpec plan stride i left right).2 =
+      plan.root ^ (i * stride) *
+        (evalCoeffs (plan.root ^ stride * point) left -
+          evalCoeffs (plan.root ^ stride * point) right) := by
+  induction left generalizing i right with
+  | nil =>
+      have hnil : right = [] := List.length_eq_zero_iff.mp hlength.symm
+      subst right
+      simp [forwardStageSpec]
+      grind
+  | cons x xs ih =>
+      cases right with
+      | nil => simp at hlength
+      | cons y ys =>
+          have htail : xs.length = ys.length := by simpa using hlength
+          have hrest := ih (i + 1) ys htail
+          have hperiod := pow_mod plan.root plan.root_order.pow_eq_one
+            (i * stride)
+          have hnext :
+              plan.root ^ ((i + 1) * stride) =
+                plan.root ^ (i * stride) * plan.root ^ stride := by
+            rw [show (i + 1) * stride = i * stride + stride by
+                simp [Nat.add_mul],
+              Lean.Grind.Semiring.pow_add]
+          simp only [forwardStageSpec, evalCoeffs_cons]
+          rw [hperiod, hrest, hnext]
+          rw [Lean.Grind.Ring.sub_eq_add_neg,
+            Lean.Grind.Ring.sub_eq_add_neg,
+            Lean.Grind.Ring.sub_eq_add_neg]
+          grind
 
 /-- Normalizing a raw forward stage gives its residue-level specification. -/
 theorem normalize_forwardStage {p n : Nat} [Bounds p] [PrimeModulus p]
@@ -462,6 +579,64 @@ theorem length_interleave {α : Type u} (left right : List α) :
           simp only [interleave, List.length_cons, ih]
           omega
 
+/-- An even position of an equal-length interleave comes from the left list. -/
+theorem getElem_interleave_even {α : Type u} (left right : List α)
+    (hlength : left.length = right.length) (k : Nat) (hk : k < left.length) :
+    (interleave left right)[2 * k]'(by
+      rw [length_interleave, hlength]
+      omega) = left[k] := by
+  induction k generalizing left right with
+  | zero =>
+      cases left with
+      | nil => simp at hk
+      | cons x xs =>
+          cases right with
+          | nil => simp at hlength
+          | cons y ys => rfl
+  | succ k ih =>
+      cases left with
+      | nil => simp at hk
+      | cons x xs =>
+          cases right with
+          | nil => simp at hlength
+          | cons y ys =>
+              have htail : xs.length = ys.length := by simpa using hlength
+              have hktail : k < xs.length := by simpa using hk
+              simpa [interleave, Nat.mul_succ, Nat.add_assoc] using
+                ih xs ys htail hktail
+
+/-- An odd position of an equal-length interleave comes from the right list. -/
+theorem getElem_interleave_odd {α : Type u} (left right : List α)
+    (hlength : left.length = right.length) (k : Nat) (hk : k < right.length) :
+    (interleave left right)[2 * k + 1]'(by
+      rw [length_interleave, hlength]
+      omega) = right[k] := by
+  induction k generalizing left right with
+  | zero =>
+      cases left with
+      | nil =>
+          have hnil : right = [] := List.length_eq_zero_iff.mp hlength.symm
+          subst right
+          simp at hk
+      | cons x xs =>
+          cases right with
+          | nil => simp at hk
+          | cons y ys => rfl
+  | succ k ih =>
+      cases left with
+      | nil =>
+          have hnil : right = [] := List.length_eq_zero_iff.mp hlength.symm
+          subst right
+          simp at hk
+      | cons x xs =>
+          cases right with
+          | nil => simp at hk
+          | cons y ys =>
+              have htail : xs.length = ys.length := by simpa using hlength
+              have hktail : k < ys.length := by simpa using hk
+              simpa [interleave, Nat.mul_succ, Nat.add_assoc] using
+                ih xs ys htail hktail
+
 /-- A forward stage preserves both equal half lengths. -/
 theorem forwardStage_lengths {p n : Nat} [Bounds p] [PrimeModulus p]
     (plan : NttPlan p n) (stride i : Nat)
@@ -661,6 +836,203 @@ theorem length_inverseRadix {p n : Nat} [Bounds p] [PrimeModulus p]
   rw [← hlengthEq]
   exact length_inverseGo plan stride fuel raw hraw
 
+/-- At every recursive depth, the residue-level forward recurrence is the
+coefficientwise DFT for the effective root at that depth. -/
+theorem forwardRadix_eq_dft {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (stride fuel : Nat)
+    (values : List (ZMod64 p)) (hlength : values.length = 2 ^ fuel)
+    (hscale : n = stride * 2 ^ fuel) :
+    forwardRadix plan stride fuel values =
+      dft (plan.root ^ stride) (2 ^ fuel) values := by
+  induction fuel generalizing stride values with
+  | zero =>
+      cases values with
+      | nil => simp at hlength
+      | cons value values =>
+          cases values with
+          | nil => simp [forwardRadix]
+          | cons next values => simp at hlength
+  | succ fuel ih =>
+      have hdouble : values.length = 2 * 2 ^ fuel := by
+        simpa [Nat.pow_succ, Nat.mul_comm] using hlength
+      let halves := values.splitAt (values.length / 2)
+      have hhalfLength : values.length / 2 = 2 ^ fuel := by omega
+      have hleft : halves.1.length = 2 ^ fuel := by
+        simp only [halves, List.splitAt_eq, List.length_take]
+        rw [hhalfLength, hdouble, Nat.min_eq_left (by omega)]
+      have hright : halves.2.length = 2 ^ fuel := by
+        simp only [halves, List.splitAt_eq, List.length_drop]
+        rw [hhalfLength, hdouble]
+        omega
+      have hhalves : halves.1.length = halves.2.length :=
+        hleft.trans hright.symm
+      have hjoin : halves.1 ++ halves.2 = values := by
+        simpa only [halves, List.splitAt_eq] using
+          List.take_append_drop (values.length / 2) values
+      let stage := forwardStageSpec plan stride 0 halves.1 halves.2
+      have hstage := forwardStageSpec_lengths plan stride 0 halves.1 halves.2 hhalves
+      have hstageLeft : stage.1.length = 2 ^ fuel := hstage.1.trans hleft
+      have hstageRight : stage.2.length = 2 ^ fuel := hstage.2.trans hright
+      have hnextScale : n = (2 * stride) * 2 ^ fuel := by
+        rw [hscale, Nat.pow_succ]
+        simp [Nat.mul_assoc, Nat.mul_comm]
+      have hleftDft := ih (2 * stride) stage.1 hstageLeft hnextScale
+      have hrightDft := ih (2 * stride) stage.2 hstageRight hnextScale
+      have hhalfRoot := plan.root_stride_half stride fuel hscale
+      simp only [forwardRadix]
+      change interleave
+          (forwardRadix plan (2 * stride) fuel stage.1)
+          (forwardRadix plan (2 * stride) fuel stage.2) =
+        dft (plan.root ^ stride) (2 ^ (fuel + 1)) values
+      rw [hleftDft, hrightDft]
+      apply List.ext_getElem
+      · rw [length_interleave, length_dft, length_dft, length_dft,
+          Nat.pow_succ]
+        omega
+      · intro frequency hfrequencyLeft hfrequencyRight
+        have hfrequency : frequency < 2 * 2 ^ fuel := by
+          simpa [Nat.pow_succ, Nat.mul_comm] using hfrequencyRight
+        have hmod : frequency % 2 < 2 := Nat.mod_lt _ (by decide)
+        by_cases heven : frequency % 2 = 0
+        · let k := frequency / 2
+          have hfrequencyEq : frequency = 2 * k := by
+            have hdiv := Nat.mod_add_div frequency 2
+            omega
+          have hk : k < 2 ^ fuel := by omega
+          have hEvenBound : 2 * k < 2 ^ (fuel + 1) := by
+            rw [Nat.pow_succ]
+            omega
+          have hEvenDft :
+              2 * k < (dft (plan.root ^ stride) (2 ^ (fuel + 1)) values).length :=
+            Eq.mp
+              (congrArg (fun length : Nat => 2 * k < length)
+                (length_dft (plan.root ^ stride) (2 ^ (fuel + 1)) values).symm)
+              hEvenBound
+          have hkLeft :
+              k < (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1).length :=
+            Eq.mp
+              (congrArg (fun length : Nat => k < length)
+                (length_dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1).symm)
+              hk
+          have hEvenInterleave :
+              2 * k <
+                (interleave
+                  (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1)
+                  (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2)).length := by
+            rw [← hfrequencyEq]
+            exact hfrequencyLeft
+          have hdftLength :
+              (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1).length =
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2).length := by
+            simp
+          have hequality :
+              (interleave
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1)
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2))[2 * k]'hEvenInterleave =
+                (dft (plan.root ^ stride) (2 ^ (fuel + 1)) values)[2 * k]'hEvenDft := by
+            rw [getElem_interleave_even _ _ hdftLength k hkLeft]
+            rw [getElem_dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1 k hk]
+            rw [getElem_dft (plan.root ^ stride) (2 ^ (fuel + 1)) values
+              (2 * k) hEvenBound]
+            rw [dftCoeff_eq, dftCoeff_eq]
+            have hpoint :
+                (plan.root ^ (2 * stride)) ^ k =
+                  (plan.root ^ stride) ^ (2 * k) := by
+              rw [pow_mul, pow_mul]
+              congr 1
+              simp [Nat.mul_comm, Nat.mul_left_comm]
+            rw [hpoint]
+            have hpointPow :
+                ((plan.root ^ stride) ^ (2 * k)) ^ halves.1.length = 1 := by
+              rw [hleft, pow_mul, Nat.mul_comm, ← pow_mul, hhalfRoot]
+              exact negOne_pow_even k
+            calc
+              evalCoeffs ((plan.root ^ stride) ^ (2 * k)) stage.1 =
+                  evalCoeffs ((plan.root ^ stride) ^ (2 * k)) halves.1 +
+                    evalCoeffs ((plan.root ^ stride) ^ (2 * k)) halves.2 :=
+                eval_forwardStageSpec_fst plan stride 0
+                  ((plan.root ^ stride) ^ (2 * k)) halves.1 halves.2 hhalves
+              _ = evalCoeffs ((plan.root ^ stride) ^ (2 * k))
+                    (halves.1 ++ halves.2) :=
+                (evalCoeffs_append_eq_add _ halves.1 halves.2 hpointPow).symm
+              _ = evalCoeffs ((plan.root ^ stride) ^ (2 * k)) values := by
+                rw [hjoin]
+          simpa only [hfrequencyEq] using hequality
+        · have hodd : frequency % 2 = 1 := by omega
+          let k := frequency / 2
+          have hfrequencyEq : frequency = 2 * k + 1 := by
+            have hdiv := Nat.mod_add_div frequency 2
+            omega
+          have hk : k < 2 ^ fuel := by omega
+          have hOddBound : 2 * k + 1 < 2 ^ (fuel + 1) := by
+            rw [Nat.pow_succ]
+            omega
+          have hOddDft :
+              2 * k + 1 <
+                (dft (plan.root ^ stride) (2 ^ (fuel + 1)) values).length :=
+            Eq.mp
+              (congrArg (fun length : Nat => 2 * k + 1 < length)
+                (length_dft (plan.root ^ stride) (2 ^ (fuel + 1)) values).symm)
+              hOddBound
+          have hkRight :
+              k < (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2).length :=
+            Eq.mp
+              (congrArg (fun length : Nat => k < length)
+                (length_dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2).symm)
+              hk
+          have hOddInterleave :
+              2 * k + 1 <
+                (interleave
+                  (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1)
+                  (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2)).length := by
+            rw [← hfrequencyEq]
+            exact hfrequencyLeft
+          have hdftLength :
+              (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1).length =
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2).length := by
+            simp
+          have hequality :
+              (interleave
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.1)
+                (dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2))[2 * k + 1]'hOddInterleave =
+                (dft (plan.root ^ stride) (2 ^ (fuel + 1)) values)[2 * k + 1]'hOddDft := by
+            rw [getElem_interleave_odd _ _ hdftLength k hkRight]
+            rw [getElem_dft (plan.root ^ (2 * stride)) (2 ^ fuel) stage.2 k hk]
+            rw [getElem_dft (plan.root ^ stride) (2 ^ (fuel + 1)) values
+              (2 * k + 1) hOddBound]
+            rw [dftCoeff_eq, dftCoeff_eq]
+            have hevenPoint :
+                (plan.root ^ (2 * stride)) ^ k =
+                  (plan.root ^ stride) ^ (2 * k) := by
+              rw [pow_mul, pow_mul]
+              congr 1
+              simp [Nat.mul_comm, Nat.mul_left_comm]
+            rw [hevenPoint]
+            have hoddPoint :
+                plan.root ^ stride * (plan.root ^ stride) ^ (2 * k) =
+                  (plan.root ^ stride) ^ (2 * k + 1) := by
+              rw [Lean.Grind.Semiring.pow_add, ZMod64.pow_one]
+              grind
+            have hpointPow :
+                ((plan.root ^ stride) ^ (2 * k + 1)) ^ halves.1.length =
+                  0 - 1 := by
+              rw [hleft, pow_mul, Nat.mul_comm, ← pow_mul, hhalfRoot]
+              exact negOne_pow_odd k
+            calc
+              evalCoeffs ((plan.root ^ stride) ^ (2 * k)) stage.2 =
+                  evalCoeffs ((plan.root ^ stride) ^ (2 * k + 1)) halves.1 -
+                    evalCoeffs ((plan.root ^ stride) ^ (2 * k + 1)) halves.2 := by
+                rw [eval_forwardStageSpec_snd plan stride 0
+                  ((plan.root ^ stride) ^ (2 * k)) halves.1 halves.2 hhalves]
+                simp only [Nat.zero_mul, ZMod64.pow_zero, ZMod64.one_mul]
+                rw [hoddPoint]
+              _ = evalCoeffs ((plan.root ^ stride) ^ (2 * k + 1))
+                    (halves.1 ++ halves.2) :=
+                (evalCoeffs_append_eq_sub _ halves.1 halves.2 hpointPow).symm
+              _ = evalCoeffs ((plan.root ^ stride) ^ (2 * k + 1)) values := by
+                rw [hjoin]
+          simpa only [hfrequencyEq] using hequality
+
 /-- The unscaled inverse radix recurrence cancels the forward recurrence and
 multiplies every coefficient by the transform length. -/
 theorem inverse_forwardRadix {p n : Nat} [Bounds p] [PrimeModulus p]
@@ -743,9 +1115,23 @@ def inverseRadixArray {p n : Nat} [Bounds p] [PrimeModulus p]
   (inverseRadix plan 1 n.log2 values.toList).toArray.map fun value =>
     plan.invLength * value
 
+/-- The residue-level forward array is exactly the coefficientwise DFT. -/
+theorem forwardArray_eq_dft {p n : Nat}
+    [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (values : Array (ZMod64 p))
+    (hsize : values.size = n) :
+    forwardRadixArray plan values = dftArray plan.root n values := by
+  unfold forwardRadixArray dftArray
+  congr 1
+  have hlength : values.toList.length = 2 ^ n.log2 := by
+    simpa [hsize] using plan.length_eq_pow_log2
+  rw [forwardRadix_eq_dft plan 1 n.log2 values.toList hlength (by
+    simpa using plan.length_eq_pow_log2)]
+  rw [ZMod64.pow_one, ← plan.length_eq_pow_log2]
+
 /-- The scaled residue-level inverse exactly cancels the forward transform on
 an array of the plan length. -/
-theorem inverseRadixArray_forwardRadixArray {p n : Nat}
+theorem inverse_forwardArray {p n : Nat}
     [Bounds p] [PrimeModulus p]
     (plan : NttPlan p n) (values : Array (ZMod64 p))
     (hsize : values.size = n) :
@@ -813,6 +1199,14 @@ theorem forward?_eq_radix {p n : Nat} [Bounds p] [PrimeModulus p]
   rw [List.map_map]
   rw [show List.map (NttRaw2.normalize ∘ NttRaw2.ofZMod) values.toList =
       values.toList by simp [Function.comp_def]]
+
+/-- Successful public forward execution is the coefficientwise DFT. -/
+theorem forward?_eq_dft {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (values : Array (ZMod64 p))
+    (hsize : values.size = n) :
+    forward? plan values = some (dftArray plan.root n values) := by
+  rw [forward?_eq_radix plan values hsize]
+  rw [forwardArray_eq_dft plan values hsize]
 
 /-- Successful inverse execution is exactly its residue-level radix
 specification. -/
@@ -906,7 +1300,7 @@ theorem inverse?_forward? {p n : Nat} [Bounds p] [PrimeModulus p]
   rw [hforward]
   simp only [Option.bind_some]
   rw [inverse?_eq_radix plan (forwardRadixArray plan values) hforwardSize]
-  rw [inverseRadixArray_forwardRadixArray plan values hsize]
+  rw [inverse_forwardArray plan values hsize]
 
 end Ntt
 
