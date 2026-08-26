@@ -54,6 +54,7 @@ private structure FactorAttempt (n : Nat) where
   subject_eq : raw.subject = n
   rand : Rand
   attempts : Nat
+  powerRoutes : Nat
 
 private def insertPower (entry : PrimePower) : List PrimePower → List PrimePower
   | [] => [entry]
@@ -72,43 +73,52 @@ private structure SearchState where
   residual : Nat
   rand : Rand
   attempts : Nat
+  powerRoutes : Nat
 
 private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
-    Rand → Nat → SearchState
-  | 0, stack, factors, residual, r, attempts =>
+    Rand → Nat → Nat → SearchState
+  | 0, stack, factors, residual, r, attempts, powerRoutes =>
       { factors
         residual := stack.foldl (fun acc item => acc * item.1 ^ item.2) residual
         rand := r
-        attempts }
-  | _fuel + 1, [], factors, residual, r, attempts =>
-      ⟨factors, residual, r, attempts⟩
-  | fuel + 1, (m, multiplier) :: stack, factors, residual, r, attempts =>
-      if m = 1 then searchGo fuel stack factors residual r attempts
+        attempts
+        powerRoutes }
+  | _fuel + 1, [], factors, residual, r, attempts, powerRoutes =>
+      ⟨factors, residual, r, attempts, powerRoutes⟩
+  | fuel + 1, (m, multiplier) :: stack, factors, residual, r, attempts,
+      powerRoutes =>
+      if m = 1 then
+        searchGo fuel stack factors residual r attempts powerRoutes
       else
-        let trial := trialFactors m
-        let found := trial.1.map fun e =>
-          { e with exponent := e.exponent * multiplier }
-        let factors := mergePowers found factors
-        let m := trial.2
-        if m = 1 then searchGo fuel stack factors residual r attempts
+        let candidate := (smallCandidate m).scale multiplier
+        let powerRoutes := match candidate.route with
+          | .trial => powerRoutes
+          | .perfectPower => powerRoutes + 1
+        let factors := mergePowers candidate.factors factors
+        let m := candidate.residualBase
+        let multiplier := candidate.residualExponent
+        if m = 1 then
+          searchGo fuel stack factors residual r attempts powerRoutes
         else
           match primeCert? m r (fuel + 1) with
           | .ok (cert, r') =>
               searchGo fuel stack
                 (insertPower ⟨multiplier, cert.raw⟩ factors)
-                residual r' attempts
+                residual r' attempts powerRoutes
           | .error primeFailure =>
               match rhoSplit? m primeFailure.rand
                   (min 1000000 ((fuel + 1) * (fuel + 1))) with
               | .ok (d, r') =>
                   searchGo fuel ((d, multiplier) :: (m / d, multiplier) :: stack)
                     factors residual r' (attempts + primeFailure.attempts + 1)
+                    powerRoutes
               | .error rhoFailure =>
                   match pMinusOneFactor m 2 (min primeTableBound (64 * (fuel + 1))) with
                   | .factor d =>
                       searchGo fuel ((d, multiplier) :: (m / d, multiplier) :: stack)
                         factors residual rhoFailure.rand
                         (attempts + primeFailure.attempts + rhoFailure.attempts + 1)
+                        powerRoutes
                   | .noFactor | .whole =>
                       match ecmStage1 m (6 + attempts % 64)
                           (min primeTableBound (64 * (fuel + 1))) with
@@ -117,21 +127,31 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
                             ((d, multiplier) :: (m / d, multiplier) :: stack)
                             factors residual rhoFailure.rand
                             (attempts + primeFailure.attempts + rhoFailure.attempts + 1)
+                            powerRoutes
                       | .noFactor | .whole =>
                           searchGo fuel stack factors (residual * m ^ multiplier)
                             rhoFailure.rand
                             (attempts + primeFailure.attempts + rhoFailure.attempts + 1)
+                            powerRoutes
 
 private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat) :
     FactorAttempt n :=
   let candidate := smallCandidate n
+  let powerRoutes := match candidate.route with
+    | .trial => 0
+    | .perfectPower => 1
   let result := searchGo fuel
     [(candidate.residualBase, candidate.residualExponent)]
-    candidate.factors 1 r 0
+    candidate.factors 1 r 0 powerRoutes
   ⟨⟨n, result.factors, result.residual⟩, rfl,
-    result.rand, result.attempts⟩
+    result.rand, result.attempts, result.powerRoutes⟩
 
 namespace Internal
+
+/-- Count perfect-power reductions taken by the exact factor dispatcher. This
+diagnostic exists for route-level conformance tests. -/
+def countPowerRoutes (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) : Nat :=
+  (smallAttempt n r fuel).powerRoutes
 
 /-- Check an untrusted partial candidate and tie it to the requested subject.
 Checker rejection is an internal search failure, not fuel exhaustion. -/

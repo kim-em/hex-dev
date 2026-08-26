@@ -160,6 +160,34 @@ example :
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
 #guard (smallCandidate ((6 ^ 5) ^ 3)).route == .perfectPower
 
+-- The subject is not a perfect power, but this exact split leaves a square
+-- cofactor. The same structural producer used for every popped search entry
+-- detects it, and stack multiplicity scales both its known and residual powers.
+private def recursivePowerInput : Nat := 10009 * 10037 ^ 2
+private def recursivePowerCandidate : SmallCandidate :=
+  (smallCandidate (recursivePowerInput / 10009)).scale 3
+
+#guard (perfectPower? recursivePowerInput).isNone
+#guard recursivePowerInput / 10009 == 10037 ^ 2
+#guard recursivePowerCandidate.route == .perfectPower
+#guard recursivePowerCandidate.factors.isEmpty
+#guard recursivePowerCandidate.residualBase == 10037
+#guard recursivePowerCandidate.residualExponent == 6
+#guard 0 < Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 17)
+#guard (match factor? recursivePowerInput (Rand.ofSeed 17) with
+  | .ok (F, _) =>
+      F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) ==
+        [(10009, 1), (10037, 2)]
+  | .error _ => false)
+
+private def nestedPowerCandidate : SmallCandidate :=
+  (smallCandidate ((6 ^ 5) ^ 3)).scale 2
+
+#guard nestedPowerCandidate.route == .perfectPower
+#guard nestedPowerCandidate.factors.map (fun entry => (entry.prime, entry.exponent)) ==
+  [(2, 30), (3, 30)]
+#guard nestedPowerCandidate.residualBase == 1
+
 #guard pMinusOneFactor 15 2 2 == .factor 3
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
