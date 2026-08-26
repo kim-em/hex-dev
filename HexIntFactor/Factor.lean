@@ -90,6 +90,8 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
       if m = 1 then
         searchGo fuel stack factors residual r attempts powerRoutes
       else
+        -- Keep the full structural pipeline here: table-coprimality of stack
+        -- entries is an invariant of the current producers, not of their type.
         let candidate := (smallCandidate m).scale multiplier
         let powerRoutes := match candidate.route with
           | .trial => powerRoutes
@@ -148,10 +150,10 @@ private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat) :
 
 namespace Internal
 
-/-- Count perfect-power reductions taken by the exact factor dispatcher. This
-diagnostic exists for route-level conformance tests. -/
+/-- Run a full factor search and count its perfect-power reductions. This
+diagnostic exists for route-level conformance tests and rejects zero cheaply. -/
 def countPowerRoutes (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) : Nat :=
-  (smallAttempt n r fuel).powerRoutes
+  if n = 0 then 0 else (smallAttempt n r fuel).powerRoutes
 
 /-- Check an untrusted partial candidate and tie it to the requested subject.
 Checker rejection is an internal search failure, not fuel exhaustion. -/

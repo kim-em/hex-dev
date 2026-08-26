@@ -173,7 +173,8 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard recursivePowerCandidate.factors.isEmpty
 #guard recursivePowerCandidate.residualBase == 10037
 #guard recursivePowerCandidate.residualExponent == 6
-#guard 0 < Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 17)
+#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 17) == 1
+#guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 17) == 0
 #guard (match factor? recursivePowerInput (Rand.ofSeed 17) with
   | .ok (F, _) =>
       F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) ==
@@ -187,6 +188,17 @@ private def nestedPowerCandidate : SmallCandidate :=
 #guard nestedPowerCandidate.factors.map (fun entry => (entry.prime, entry.exponent)) ==
   [(2, 30), (3, 30)]
 #guard nestedPowerCandidate.residualBase == 1
+
+-- Composite exponents reduce at both the initial and recursive boundaries:
+-- `p^8` becomes `(p^4)^2`, then the popped `p^4` becomes `(p^2)^2` with
+-- accumulated multiplicity four. The eventual split still restores exponent 8.
+private def iteratedPower : Nat := 10009 ^ 8
+
+#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 2
+#guard (match factor? iteratedPower (Rand.ofSeed 19) with
+  | .ok (F, _) =>
+      F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) == [(10009, 8)]
+  | .error _ => false)
 
 #guard pMinusOneFactor 15 2 2 == .factor 3
 #guard pMinusOneFactor 25 2 2 == .noFactor

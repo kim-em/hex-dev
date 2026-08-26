@@ -291,9 +291,9 @@ prerequisite, specified there and sited in hex-basic.
 - **Perfect powers.** If `n = m^k` for some `k ≥ 2`, factor `m` and
   multiply the exponents. Detected by trying each prime `k ≤ log₂ n`
   and taking an exact integer `k`th root by bounded binary search. The
-  reduction is reapplied to every recursive cofactor popped after a split;
-  its exponent is multiplied by the cofactor's accumulated multiplicity
-  before the result is merged. Strongly
+  full structural pipeline is reapplied to every popped search-stack entry,
+  including recursive cofactors produced by a split; its exponent is multiplied
+  by the entry's accumulated multiplicity before the result is merged. Strongly
   recommended rather than mathematically required: an earlier draft
   claimed Pollard `p − 1` and ECM "fail on prime powers, because the
   group they work in has no distinct primes to separate", and that is
