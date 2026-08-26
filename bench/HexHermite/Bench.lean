@@ -56,7 +56,7 @@ def conjugate (n : Nat) : Input :=
       let i := k / n
       let j := k % n
       if j = i then Int.ofNat (i + 2)
-      else if j < i then Int.ofNat ((i - j + 1) * (j + 2))
+      else if j < i then entry 41 n i j * Int.ofNat (j + 2)
       else 0 }
 
 private def matrix (input : Input) : Matrix Int input.rows input.cols :=
@@ -183,6 +183,14 @@ private def vectorChecksum (v : Vector Int n) : UInt64 :=
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
+private def fixedDeficientMatrix : Matrix Int 8 8 := matrix (deficient 8)
+
+private def missMatrix : Matrix Int 1 2 :=
+  Matrix.ofFn fun _ j => if j.val = 0 then 1 else 0
+
+private def missVector : Vector Int 2 :=
+  Vector.ofFn fun j => if j.val = 0 then 0 else 1
+
 private def fixedCertificate : Matrix.HermiteData 8 8 :=
   Matrix.hnfWithInv fixedMatrix
 
@@ -217,20 +225,30 @@ def runWithInv (_ : Unit) : IO UInt64 := do
 def runCoeffs (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
   return match Matrix.latticeCoeffs A (Matrix.row A 0) with
-    | some c => vectorChecksum c
-    | none => 0xffffffffffffffff
+    | some c => mixHash 1 (vectorChecksum c)
+    | none => 0
 
 def runContains (_ : Unit) : IO Bool := do
   let A ← live fixedMatrix
   return Matrix.latticeContains A (Matrix.row A 0)
 
 def runKernelBasis (_ : Unit) : IO UInt64 := do
-  let A ← live fixedMatrix
+  let A ← live fixedDeficientMatrix
   return checksum (Matrix.kernelBasis A)
 
-def runPivots (_ : Unit) : IO Nat := do
+def runCoeffsMiss (_ : Unit) : IO Bool := do
+  let A ← live missMatrix
+  let v ← live missVector
+  return (Matrix.latticeCoeffs A v).isNone
+
+def runContainsMiss (_ : Unit) : IO Bool := do
+  let A ← live missMatrix
+  let v ← live missVector
+  return !(Matrix.latticeContains A v)
+
+def runPivots (_ : Unit) : IO UInt64 := do
   let A ← live fixedMatrix
-  return (Matrix.pivots A).foldl (fun acc x => acc * 65537 + x) 0
+  return (Matrix.pivots A).foldl (fun acc x => mixHash acc (hash x)) 0
 
 def runIndex (_ : Unit) : IO Nat := do
   let A ← live fixedMatrix
@@ -245,7 +263,8 @@ def runCert (_ : Unit) : IO Bool := do
 private def rowsJson (input : Input) : Lean.Json :=
   Lean.Json.arr (Array.ofFn fun i : Fin input.rows =>
     Hex.BenchOracle.Flint.intsToJson
-      (List.ofFn fun j : Fin input.cols => (matrix input)[(i, j)]))
+      (List.ofFn fun j : Fin input.cols =>
+        input.entries.getD (i.val * input.cols + j.val) 0))
 
 private def jsonMatrixChecksum (json : Lean.Json) : IO UInt64 := do
   let rows ← match json.getArr? with
@@ -351,37 +370,41 @@ def runPariOverhead (_ : Unit) : IO Int := do
   | .ok value => return value
   | .error error => throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
-/- Cost-model derivation: at fixed square aspect ratio, fraction-free rank
-profiling and the observed principal sweep each scale cubically on this
-deterministic bounded-entry family. The SPEC separately retains its `O(n⁴)`
-worst-case scheduled-update ceiling. -/
+/- Cost-model derivation: rank profiling is cubic at fixed square aspect
+ratio. On this bounded-entry family, zero-quotient reductions leave at most a
+quadratic number of full-row updates, also giving cubic entry work; the SPEC
+separately retains the unrestricted `O(n⁴)` scheduled-update ceiling. -/
 setup_benchmark runDense n => n ^ 3 with prep := dense where {
-  paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 /- Cost-model derivation: the active rank is `n / 2`; substituting that fixed
 rank fraction into the controlled-family profile and principal sweeps leaves
 the measured scientific model cubic in `n`. -/
 setup_benchmark runDeficient n => n ^ 3 with prep := deficient where {
-  paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 /- Cost-model derivation: the tall family has `4n` rows and `n` columns, so
 the constant aspect ratio does not change the cubic controlled-family model;
 redundant signed rows exercise reconstruction without increasing rank. -/
 setup_benchmark runTall n => n ^ 3 with prep := tall where {
-  paramFloor := 8, paramCeiling := 24, paramSchedule := .custom #[8, 12, 16, 20, 24]
-  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
+  paramFloor := 8, paramCeiling := 64,
+  paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 /- Cost-model derivation: the triangular conjugate has a known full-rank
 diagonal form. Conjugation changes operand growth, while its fixed triangular
 schedule leaves the controlled-family wall-clock model cubic. -/
 setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
-  paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
-  targetInnerNanos := 100_000_000, signalFloorMultiplier := 1.0, outerTrials := 3
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 
@@ -412,10 +435,12 @@ setup_fixed_benchmark runRank where apiExpected 0x8
 setup_fixed_benchmark runBasis where apiExpected 0x4bd6c0414a37c54a
 setup_fixed_benchmark runData where apiExpected 0xd37fb7926b798a32
 setup_fixed_benchmark runWithInv where apiExpected 0x91815657fb9e95e2
-setup_fixed_benchmark runCoeffs where apiExpected 0x1de54f237a173da8
+setup_fixed_benchmark runCoeffs where apiExpected 0x93d3a019b62bba94
 setup_fixed_benchmark runContains where apiExpected 0xb
-setup_fixed_benchmark runKernelBasis where apiExpected 0x0
-setup_fixed_benchmark runPivots where apiExpected 0x820065002f49d8
+setup_fixed_benchmark runKernelBasis where apiExpected 0x781397e5d22ca373
+setup_fixed_benchmark runCoeffsMiss where apiExpected 0xb
+setup_fixed_benchmark runContainsMiss where apiExpected 0xb
+setup_fixed_benchmark runPivots where apiExpected 0x88b839d5137f8c3d
 setup_fixed_benchmark runIndex where apiExpected 0x52738
 setup_fixed_benchmark runCert where apiExpected 0xb
 

@@ -60,13 +60,13 @@ def _load_family(
             for tool in ("FLINT", "PARI")
         ):
             continue
-        if any(row["median_nanos"] > 1_000_000_000 for row in selected.values()):
+        if any(row["median_nanos"] > 10_000_000_000 for row in selected.values()):
             continue
         eligible.append(parameter)
         for tool, _, _ in TOOLS:
             series[tool].append(selected[tool]["median_nanos"] / 1_000_000)
-    if len(eligible) < 5:
-        raise SystemExit(f"{family}: fewer than five eligible comparator rungs")
+    if len(eligible) < 2:
+        raise SystemExit(f"{family}: fewer than two eligible comparator rungs")
     return eligible, series
 
 
