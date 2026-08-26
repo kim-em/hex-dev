@@ -50,14 +50,26 @@ def tall (n : Nat) : Input :=
       let value : Int := if source = j then 2 else 1
       if i < n ∨ i % 2 = 0 then value else -value }
 
+private def lowerFactor (n i j : Nat) : Int :=
+  if i = j then 1
+  else if j + 1 = i then if entry 41 n i j < 0 then -1 else 1
+  else 0
+
+private def upperFactor (n i j : Nat) : Int :=
+  if i = j then 1
+  else if i + 1 = j then if entry 43 n i j < 0 then -1 else 1
+  else 0
+
+/-- A deterministic pseudo-random unimodular product `L * U * D`. Both
+triangular factors vary, while `D` fixes the expected row lattice. -/
 def conjugate (n : Nat) : Input :=
   { rows := n, cols := n
     entries := (Array.range (n * n)).map fun k =>
       let i := k / n
       let j := k % n
-      if j = i then Int.ofNat (i + 2)
-      else if j < i then entry 41 n i j * Int.ofNat (j + 2)
-      else 0 }
+      let vij := (List.range n).foldl (fun acc t =>
+        acc + lowerFactor n i t * upperFactor n t j) 0
+      vij * Int.ofNat (j + 2) }
 
 private def matrix (input : Input) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
@@ -167,11 +179,15 @@ def peakBits (input : Input) : Nat :=
   else
     (columnGrowth A).peak
 
-/-- Peak-versus-output growth data for the predeclared badly-conditioned
-family. -/
-def conjugateGrowth (n : Nat) : Nat × Nat :=
-  let input := conjugate n
-  (peakBits input, matrixBits (Matrix.hnf (matrix input)))
+/-- Peak-versus-output growth data, including a check that the instrumented
+schedule finishes at the public uninstrumented result. -/
+def growthData (input : Input) : Nat × Nat × Bool :=
+  let A := matrix input
+  let candidate := principalGrowth A
+  let result := if Matrix.isHNFForm candidate.result.matrix candidate.result.pivots.length
+      candidate.result.pivotVector then candidate else columnGrowth A
+  let H := Matrix.hnf A
+  (result.peak, matrixBits H, result.result.matrix == H)
 
 def runDense (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
 def runDeficient (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
@@ -180,6 +196,82 @@ def runConjugate (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input)
 
 private def vectorChecksum (v : Vector Int n) : UInt64 :=
   v.foldl (fun acc x => mixHash acc (hash x)) 0
+
+/-- Fraction-free rank-profile work, registered separately because profiling
+identifies it as a dominant separable phase of `hnf`. -/
+def runProfile (input : Input) : UInt64 :=
+  let profile := Matrix.Hermite.rankProfile (matrix input)
+  let pivots := profile.pivots.foldl (fun acc x => mixHash acc (hash x)) 0
+  let swaps := profile.swaps.foldl (fun acc x =>
+    mixHash acc (mixHash (hash x.1) (hash x.2))) 0
+  mixHash (checksum profile.matrix) <|
+    mixHash pivots (mixHash swaps (mixHash (hash profile.row) (hash profile.previous)))
+
+/-- Rank projection on the dense family. -/
+def runRankDense (input : Input) : Nat := Matrix.hnfRank (matrix input)
+
+/-- Canonical nonzero HNF rows on the dense family. -/
+def runBasisDense (input : Input) : UInt64 := checksum (Matrix.hnfBasis (matrix input))
+
+/-- Transform-producing HNF data on the dense family. -/
+def runDataDense (input : Input) : UInt64 :=
+  let D := Matrix.hnfData (matrix input)
+  mixHash (checksum D.echelon) <| mixHash (checksum D.transform) (hash D.rank)
+
+/-- Transform and inverse accumulation on the dense family. -/
+def runWithInvDense (input : Input) : UInt64 :=
+  let D := Matrix.hnfWithInv (matrix input)
+  mixHash (checksum D.rowData.echelon) <|
+    mixHash (checksum D.rowData.transform) (checksum D.inverse)
+
+/-- Constructive membership coefficients for a known member. -/
+def runCoeffsDense (input : Input) : UInt64 :=
+  let A := matrix input
+  match Matrix.latticeCoeffs A (0 : Vector Int input.cols) with
+  | some c => mixHash 1 (vectorChecksum c)
+  | none => 0
+
+/-- Membership decision for a known member. -/
+def runContainsDense (input : Input) : Bool :=
+  let A := matrix input
+  Matrix.latticeContains A (0 : Vector Int input.cols)
+
+/-- Kernel extraction on the rank-deficient family. -/
+def runKernelDeficient (input : Input) : UInt64 :=
+  checksum (Matrix.kernelBasis (matrix input))
+
+/-- Pivot extraction on the dense family. -/
+def runPivotsDense (input : Input) : UInt64 :=
+  (Matrix.pivots (matrix input)).foldl (fun acc x => mixHash acc (hash x)) 0
+
+/-- Lattice-index projection on the dense family. -/
+def runIndexDense (input : Input) : Nat := Matrix.latticeIndex (matrix input)
+
+/-- Valid diagonal HNF data prepared outside the checker timings. -/
+structure CertInput where
+  n : Nat
+  matrix : Matrix Int n n
+  pivots : Vector (Fin n) n
+
+instance : Hashable CertInput where
+  hash input := mixHash (hash input.n) <|
+    mixHash (checksum input.matrix)
+      (input.pivots.foldl (fun acc x => mixHash acc (hash x)) 0)
+
+instance : Inhabited CertInput where
+  default := ⟨0, 0, Vector.ofFn fun i => nomatch i⟩
+
+def certInput (n : Nat) : CertInput :=
+  { n := n
+    matrix := Matrix.ofFn fun i j => if i = j then Int.ofNat (i.val + 1) else 0
+    pivots := Vector.ofFn id }
+
+def runShapePrepared (input : CertInput) : Bool :=
+  Matrix.isHNFForm input.matrix input.n input.pivots
+
+def runCertPrepared (input : CertInput) : Bool :=
+  let I : Matrix Int input.n input.n := Matrix.identity input.n
+  Matrix.hnfCert input.matrix input.matrix I I input.n input.pivots
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
@@ -408,6 +500,122 @@ setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
   maxSecondsPerCall := 10.0
 }
 
+/- Cost-model derivation: fraction-free profiling visits a cubic number of
+matrix entries. Dense minors grow linearly in bit width on this bounded-entry
+family, giving the registered controlled-family `O(n³ log n)` wall model. -/
+setup_benchmark runProfile n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: rank projects one value from the same dense
+form-only run, so its controlled wall model is the `O(n³ log n)` form model. -/
+setup_benchmark runRankDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: basis extraction performs two shared form-only runs
+(rank and form) plus a quadratic slice, preserving the dense `O(n³ log n)`
+controlled wall model. -/
+setup_benchmark runBasisDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: transform accumulation follows the same dense pivot
+schedule and updates an additional fixed-aspect matrix. On this controlled
+family it preserves the `O(n³ log n)` wall model; the SPEC retains the larger
+unrestricted scheduled-update ceiling. -/
+setup_benchmark runDataDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: inverse accumulation adds another fixed-aspect row
+update to the transform schedule, preserving its controlled `O(n³ log n)` wall
+model while increasing the constant. -/
+setup_benchmark runWithInvDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: constructive membership is `hnfData` plus quadratic
+solve and residual work, so the dense controlled wall model remains
+`O(n³ log n)`. -/
+setup_benchmark runCoeffsDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: membership projects `Option.isSome` from the same
+constructive solve, preserving its dense `O(n³ log n)` controlled wall model. -/
+setup_benchmark runContainsDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: kernel extraction performs one rank run, one
+transform run, and a quadratic slice. The controlled deficient-family wall
+model is therefore `O(n³ log n)`. -/
+setup_benchmark runKernelDeficient n => n ^ 3 * Nat.log2 (n + 1)
+    with prep := deficient where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: pivot extraction adds a linear scan to one form-only
+run, preserving the dense `O(n³ log n)` controlled wall model. -/
+setup_benchmark runPivotsDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: the lattice index adds a linear pivot product to one
+form-only run, preserving the dense `O(n³ log n)` controlled wall model. -/
+setup_benchmark runIndexDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: the entry-level HNF predicate scans a quadratic
+number of entries and pivot pairs on a prepared diagonal certificate. -/
+setup_benchmark runShapePrepared n => n ^ 2 with prep := certInput where {
+  paramFloor := 16, paramCeiling := 256,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: certificate replay performs two dense matrix
+products plus the quadratic shape scan, giving the registered cubic model. -/
+setup_benchmark runCertPrepared n => n ^ 3 with prep := certInput where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
 private def apiConfig : LeanBench.FixedBenchmarkConfig where
   repeats := 3
   maxSecondsPerCall := 6.0
@@ -509,15 +717,26 @@ setup_fixed_benchmark runPariConjugate48 where externalExpected 0x501203bf9b14db
 
 end Hex.HermiteBench
 
-private def growthMain (args : List String) : IO UInt32 := do
+private def growthInput (family : String) (n : Nat) : IO Hex.HermiteBench.Input :=
+  match family with
+  | "dense" => pure <| Hex.HermiteBench.dense n
+  | "deficient" => pure <| Hex.HermiteBench.deficient n
+  | "tall" => pure <| Hex.HermiteBench.tall n
+  | "conjugate" => pure <| Hex.HermiteBench.conjugate n
+  | _ => throw <| IO.userError s!"unknown growth family: {family}"
+
+private def growthMain (family : String) (args : List String) : IO UInt32 := do
   for arg in args do
     let some n := arg.toNat?
       | throw <| IO.userError s!"invalid growth dimension: {arg}"
-    let (peak, output) := Hex.HermiteBench.conjugateGrowth n
-    IO.println s!"n={n} peakBits={peak} outputBits={output}"
+    let input ← growthInput family n
+    let (peak, output, agrees) := Hex.HermiteBench.growthData input
+    unless agrees do
+      throw <| IO.userError s!"instrumented result mismatch: family={family} n={n}"
+    IO.println s!"family={family} n={n} peakBits={peak} outputBits={output}"
   return 0
 
 def main (args : List String) : IO UInt32 :=
   match args with
-  | "growth" :: dimensions => growthMain dimensions
+  | "growth" :: family :: dimensions => growthMain family dimensions
   | _ => LeanBench.Cli.dispatch args

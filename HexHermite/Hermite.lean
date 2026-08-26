@@ -2090,8 +2090,9 @@ def hnfRank (A : Matrix Int n m) : Nat :=
 /-- The nonzero rows of `hnf A`. -/
 @[expose]
 def hnfBasis (A : Matrix Int n m) : Matrix Int (hnfRank A) m :=
+  let H := hnf A
   Matrix.ofFn fun i j =>
-    (hnf A)[(Fin.castLE (Hermite.checkedRun_rank_le
+    H[(Fin.castLE (Hermite.checkedRun_rank_le
       (Hermite.formAccumulator n) A) i, j)]
 
 /-- Hermite form with rank, pivot columns, and left transform. -/

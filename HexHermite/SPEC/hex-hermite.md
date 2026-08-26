@@ -684,6 +684,18 @@ complexity would be the product of these counts with an operand size that
 depends on which algorithm ran, and that product is measured rather than
 derived. See "Benchmarking".
 
+The Phase-4 registrations additionally state controlled-family wall models.
+On bounded-entry dense and rank-deficient ladders, fraction-free minors and
+Euclidean operands acquire linearly growing bit width, so the registered model
+is `n³ log n`: cubic matrix-entry visits times the logarithmic word-cost factor
+visible once values leave the immediate-integer regime. The tall family keeps
+its active coefficients bounded, and the conjugate ladder keeps its operands
+within machine-word width over the registered range, so those families use
+`n³`. These empirical-family models do not replace the unrestricted scheduled
+update bounds below. The untimed diagnostic records peak and output bit widths
+for the family/range used to justify each distinction and checks that its
+instrumented final matrix equals the public uninstrumented result.
+
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
 | `hnf` | fraction-free rank profile, then guarded principal-block sweep | `O(r · n · m)` profile-entry updates; at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps, each nontrivial row update touching `m` entries | active principal prefixes are eagerly reduced; dependent rows are also cleared; the candidate is shape-checked, with the column sweep as fallback |
@@ -811,10 +823,12 @@ a single family would hide:
   extraction.
 - `tall-hermite`: many more rows than columns, the shape a number-field
   module basis has, where most rows are redundant.
-- `unimodular-conjugate`: `V * D` for a random unimodular `V` and a
+- `unimodular-conjugate`: `V * D` for a deterministic pseudo-random
+  unimodular `V` formed from both unit-lower- and unit-upper-triangular factors and a
   diagonal `D` with known entries, so the expected form is known in
   advance and the input can be made arbitrarily badly conditioned
-  without a large determinant.
+  without a large determinant. The benchmark records the factor salts and
+  treats the dimension as the conditioning knob.
 
 **Comparators.** FLINT `fmpz_mat_hnf` through python-flint, and PARI
 `mathnf` through `cypari2`, both `informational`. FLINT dispatches
@@ -831,8 +845,10 @@ entry bit-size grows faster in the dimension than output entry bit-size on
 `unimodular-conjugate`, and wallclock follows that divergence across the
 upper half of the dimension ladder. The implementation provides a separate
 untimed diagnostic runner that scans the working matrix after every
-elementary update and returns `peakBits`; ordinary benchmark timings run the
-uninstrumented API. No claim is made about "time spent in big-integer
+elementary update, verifies the instrumented final form against `hnf`, and
+returns `peakBits`. The same runner records dense and rank-deficient operand
+growth used by their controlled-family wall models; ordinary benchmark timings
+run the uninstrumented API. No claim is made about "time spent in big-integer
 arithmetic", which the benchmark harness cannot isolate.
 
 ## File organisation

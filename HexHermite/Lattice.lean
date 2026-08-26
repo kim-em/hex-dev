@@ -347,10 +347,12 @@ def latticeContains (A : Matrix Int n m) (v : Vector Int m) : Bool :=
 /-- The rows of the transform corresponding to zero HNF rows. -/
 @[expose]
 def kernelBasis (A : Matrix Int n m) : Matrix Int (n - hnfRank A) n :=
+  let r := hnfRank A
+  let D := hnfData A
   let hr := Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A
   Matrix.ofFn fun i j =>
-    let row : Fin n := ⟨hnfRank A + i.val, by omega⟩
-    (hnfData A).transform[(row, j)]
+    let row : Fin n := ⟨r + i.val, by omega⟩
+    D.transform[(row, j)]
 
 /-- Positive HNF pivot values in pivot-column order. -/
 @[expose]
