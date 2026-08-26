@@ -52,6 +52,11 @@ def ofZMod {p : Nat} [Bounds p] (value : ZMod64 p) : NttRaw2 p :=
 def normalize {p : Nat} [Bounds p] (value : NttRaw2 p) : ZMod64 p :=
   ZMod64.ofNat p value.val.toNat
 
+/-- Entering the forward raw domain and normalizing is the identity. -/
+@[simp] theorem normalize_ofZMod {p : Nat} [Bounds p] (value : ZMod64 p) :
+    (ofZMod value).normalize = value := by
+  exact ZMod64.ofNat_toNat value
+
 end NttRaw2
 
 namespace NttRaw4
@@ -74,6 +79,11 @@ def ofZMod {p : Nat} [Bounds p] (value : ZMod64 p) : NttRaw4 p :=
 /-- Canonical residue represented by a raw inverse word. -/
 def normalize {p : Nat} [Bounds p] (value : NttRaw4 p) : ZMod64 p :=
   ZMod64.ofNat p value.val.toNat
+
+/-- Entering the inverse raw domain and normalizing is the identity. -/
+@[simp] theorem normalize_ofZMod {p : Nat} [Bounds p] (value : ZMod64 p) :
+    (ofZMod value).normalize = value := by
+  exact ZMod64.ofNat_toNat value
 
 end NttRaw4
 

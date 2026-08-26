@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
-import HexModArith.Ntt.Butterfly
+import HexModArith.Ntt.Transform
 import HexModArith.Prime
 import HexModArith.Ring
 
@@ -115,6 +115,32 @@ end PrimeModulusAutomation
         plan.forwardTwiddles.size == 2 &&
         plan.forwardTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6] &&
         plan.inverseTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      match Ntt.forward? plan #[ofNat 7 3, ofNat 7 5] with
+      | none => false
+      | some transformed => transformed.map ZMod64.toNat == #[1, 5]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      match Ntt.forward? plan #[ofNat 7 3, ofNat 7 5] with
+      | none => false
+      | some transformed =>
+          match Ntt.inverse? plan transformed with
+          | none => false
+          | some values => values.map ZMod64.toNat == #[3, 5]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      (Ntt.forward? plan #[ofNat 7 3]).isNone &&
+        (Ntt.inverse? plan #[ofNat 7 3]).isNone
 
 private def nttTwiddleSeven : NttTwiddle 7 :=
   NttTwiddle.ofValue (ofNat 7 6)

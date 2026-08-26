@@ -38,6 +38,17 @@ instance {p : Nat} [Bounds p] (root : ZMod64 p) (n : Nat) :
     Decidable (ExactOrder root n) :=
   inferInstanceAs (Decidable (root ^ n = 1 ∧ (n = 1 ∨ root ^ (n / 2) ≠ 1)))
 
+/-- An exact-order certificate includes the root-of-unity equation. -/
+theorem ExactOrder.pow_eq_one {p n : Nat} [Bounds p] {root : ZMod64 p}
+    (h : ExactOrder root n) : root ^ n = 1 :=
+  h.1
+
+/-- The nontrivial half-order clause of a power-of-two exact-order
+certificate. -/
+theorem ExactOrder.half {p n : Nat} [Bounds p] {root : ZMod64 p}
+    (h : ExactOrder root n) : n = 1 ∨ root ^ (n / 2) ≠ 1 :=
+  h.2
+
 /-- A transform twiddle and the quotient preconditioner
 `floor(value * 2^64 / p)` used by Shoup multiplication. -/
 structure NttTwiddle (p : Nat) [Bounds p] where
@@ -91,10 +102,16 @@ structure NttPlan (p n : Nat) [Bounds p] [PrimeModulus p] where
   forwardTwiddles : Array (NttTwiddle p)
   /-- There is one forward power for every exponent below `n`. -/
   forward_size : forwardTwiddles.size = n
+  /-- Every stored forward twiddle is the corresponding root power. -/
+  forward_value : ∀ (i : Nat) (hi : i < n),
+    (forwardTwiddles[i]'(by simpa [forward_size] using hi)).value = root ^ i
   /-- Reusable inverse-root powers and Shoup preconditioners. -/
   inverseTwiddles : Array (NttTwiddle p)
   /-- There is one inverse power for every exponent below `n`. -/
   inverse_size : inverseTwiddles.size = n
+  /-- Every stored inverse twiddle is the corresponding inverse-root power. -/
+  inverse_value : ∀ (i : Nat) (hi : i < n),
+    (inverseTwiddles[i]'(by simpa [inverse_size] using hi)).value = invRoot ^ i
 
 namespace NttPlan
 
@@ -139,8 +156,10 @@ def build? {p n : Nat} [Bounds p] [PrimeModulus p]
         invLength_eq := rfl
         forwardTwiddles := twiddles root n
         forward_size := twiddles_size root n
+        forward_value := twiddles_value root n
         inverseTwiddles := twiddles invRoot n
-        inverse_size := twiddles_size invRoot n }
+        inverse_size := twiddles_size invRoot n
+        inverse_value := twiddles_value invRoot n }
   else
     none
 
