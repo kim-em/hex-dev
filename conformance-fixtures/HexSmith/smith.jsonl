@@ -28,3 +28,5 @@
 {"kind":"result","lib":"HexSmith","case":"group-z2-z2/2x2","op":"snf","value":[[2,0],[0,2]]}
 {"kind":"matrix","lib":"HexSmith","case":"group-z2/2x2","rows":[[1,1],[0,2]]}
 {"kind":"result","lib":"HexSmith","case":"group-z2/2x2","op":"snf","value":[[1,0],[0,2]]}
+{"kind":"matrix","lib":"HexSmith","case":"chain-conjugate/6x6","rows":[[3,2,0,0,0,0],[2,8,6,0,0,0],[0,6,18,12,0,0],[0,0,12,12,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]}
+{"kind":"result","lib":"HexSmith","case":"chain-conjugate/6x6","op":"snf","value":[[1,0,0,0,0,0],[0,2,0,0,0,0],[0,0,6,0,0,0],[0,0,0,12,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]}

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexSmith
+import HexMatrix.Notation
 
 /-! JSONL fixtures for the canonical Smith diagonal. -/
 
@@ -55,6 +56,28 @@ private def group22 : Matrix Int 2 2 :=
   Matrix.ofFn fun i j => if i = j then 2 else 0
 private def group2 : Matrix Int 2 2 :=
   Matrix.ofFn fun i j => #[#[1, 1], #[0, 2]][i.val]![j.val]!
+private def leftSix : Matrix Int 6 6 :=
+  #m[1, 1, 0, 0, 0, 0;
+     0, 1, 1, 0, 0, 0;
+     0, 0, 1, 1, 0, 0;
+     0, 0, 0, 1, 1, 0;
+     0, 0, 0, 0, 1, 1;
+     0, 0, 0, 0, 0, 1]
+private def diagonalSix : Matrix Int 6 6 :=
+  #m[1, 0, 0, 0, 0, 0;
+     0, 2, 0, 0, 0, 0;
+     0, 0, 6, 0, 0, 0;
+     0, 0, 0, 12, 0, 0;
+     0, 0, 0, 0, 0, 0;
+     0, 0, 0, 0, 0, 0]
+private def rightSix : Matrix Int 6 6 :=
+  #m[1, 0, 0, 0, 0, 0;
+     1, 1, 0, 0, 0, 0;
+     0, 1, 1, 0, 0, 0;
+     0, 0, 1, 1, 0, 0;
+     0, 0, 0, 1, 1, 0;
+     0, 0, 0, 0, 1, 1]
+private def conjugateSix : Matrix Int 6 6 := leftSix * diagonalSix * rightSix
 
 def emitAll : IO Unit := do
   emitCase "empty/0x0" empty00
@@ -72,6 +95,7 @@ def emitAll : IO Unit := do
   emitCase "negative-last/2x2" negativeLast
   emitCase "group-z2-z2/2x2" group22
   emitCase "group-z2/2x2" group2
+  emitCase "chain-conjugate/6x6" conjugateSix
 
 end Hex.SmithEmit
 

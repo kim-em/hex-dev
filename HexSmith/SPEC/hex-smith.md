@@ -269,6 +269,10 @@ def snfRank (A : Matrix Int n m) : Nat
 /-- Smith form with all four change-of-basis matrices. -/
 def snfData (A : Matrix Int n m) : SmithData n m
 
+/-- The independent relation rows obtained from the left-transformed
+presentation. -/
+def smithBasis (A : Matrix Int n m) : Matrix Int (snfRank A) m
+
 /-- The invariant factors of `A`, positive and in a divisibility chain. -/
 def invariantFactors (A : Matrix Int n m) : Vector Int (snfRank A)
 
