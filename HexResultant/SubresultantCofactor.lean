@@ -805,7 +805,7 @@ private theorem coeffInt_eq_zero_of_size_le (p : DensePoly R) (k : Int)
 /-- Coefficient minors above the requested subresultant degree vanish: in
 the active range their selector row repeats an earlier Sylvester row, and
 above that range the selector row is zero. -/
-theorem coeffMinorAt_zero_high (df dg J l : Nat) (f g : DensePoly R)
+theorem coeffMinorAt_eq_zero_of_lt (df dg J l : Nat) (f g : DensePoly R)
     (hJ : J < dg) (hdg : dg ≤ df)
     (hf : f.size ≤ df + 1) (hg : g.size ≤ dg + 1)
     (hl : J < l) :
@@ -897,7 +897,7 @@ theorem cofactor_bezout (J : Nat) (f g : DensePoly R)
   · rw [if_pos hl]
     rfl
   · rw [if_neg hl]
-    apply coeffMinorAt_zero_high
+    apply coeffMinorAt_eq_zero_of_lt
     · exact hJ
     · exact hdg
     · dsimp only [df, formalDegree]
