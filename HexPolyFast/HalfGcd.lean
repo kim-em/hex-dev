@@ -99,6 +99,15 @@ def applyLowWith (plan : MulPlan F) (len : Nat) (m : GcdStep F)
   (mulLow plan len m.a00 a + mulLow plan len m.a01 b,
     mulLow plan len m.a10 a + mulLow plan len m.a11 b)
 
+/-- Reconstruct a full application from its already-computed high-half
+application and one application to the low halves.  Half-gcd uses this to
+avoid applying the same recursive matrix to the full operands again. -/
+def applyFromHighWith (plan : MulPlan F) (k : Nat) (m : GcdStep F)
+    (highPair : DensePoly F × DensePoly F) (a b : DensePoly F) :
+    DensePoly F × DensePoly F :=
+  let lowPair := applyWith plan m (low k a) (low k b)
+  (lowPair.1 + shift k highPair.1, lowPair.2 + shift k highPair.2)
+
 /-- Planned composition has the ordinary matrix semantics. -/
 theorem composeWith_eq (plan : MulPlan F) (m n : GcdStep F) :
     composeWith plan m n = compose m n := by
@@ -508,6 +517,46 @@ private theorem size_shift (k : Nat) (p : DensePoly F) :
     simp [size_zero]
   · rw [_root_.ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
 
+private theorem GcdStep.apply_split (matrix : GcdStep F) (k : Nat)
+    (a b : DensePoly F) :
+    matrix.apply a b =
+      let lowPair := matrix.apply (low k a) (low k b)
+      let highPair := matrix.apply (high k a) (high k b)
+      (lowPair.1 + shift k highPair.1,
+        lowPair.2 + shift k highPair.2) := by
+  calc
+    matrix.apply a b = matrix.apply
+        (low k a + shift k (high k a))
+        (low k b + shift k (high k b)) := by
+      rw [low_add_shift_high, low_add_shift_high]
+    _ = _ := by
+      apply Prod.ext
+      · dsimp [GcdStep.apply]
+        rw [mul_add_right_poly, mul_add_right_poly, mul_shift, mul_shift]
+        apply ext_coeff
+        intro i
+        simp only [coeff_add_semiring, coeff_shift]
+        have hzero : (Zero.zero : F) = 0 := rfl
+        simp only [hzero]
+        split <;> grind
+      · dsimp [GcdStep.apply]
+        rw [mul_add_right_poly, mul_add_right_poly, mul_shift, mul_shift]
+        apply ext_coeff
+        intro i
+        simp only [coeff_add_semiring, coeff_shift]
+        have hzero : (Zero.zero : F) = 0 := rfl
+        simp only [hzero]
+        split <;> grind
+
+/-- Reusing the exact high-half application preserves ordinary matrix
+application semantics. -/
+theorem GcdStep.applyFromHighWith_eq (plan : MulPlan F) (k : Nat)
+    (matrix : GcdStep F) (a b : DensePoly F) :
+    matrix.applyFromHighWith plan k
+      (matrix.apply (high k a) (high k b)) a b = matrix.apply a b := by
+  rw [GcdStep.applyFromHighWith, GcdStep.applyWith_eq]
+  exact (GcdStep.apply_split matrix k a b).symm
+
 private theorem size_shift_lt (k : Nat) {p q : DensePoly F}
     (hlt : p.size < q.size) : (shift k p).size < (shift k q).size := by
   rw [size_shift, size_shift]
@@ -584,8 +633,8 @@ decreasing_by all_goals omega
 The quotient predictor above is useful as a small executable specification,
 but consuming its quotients one at a time repeats full-size coefficient
 updates.  The engine below is the actual half-gcd shape: recursive calls see
-only high halves, and their transformations are applied to the full pair once
-per recursion level. -/
+only high halves; their already-computed high applications are reused while
+only the low halves are multiplied at the current recursion level. -/
 
 /-- Reduce a Euclidean pair through roughly half of the active degree.  The
 fuel is a totality guard; recursive calls receive half of it. -/
@@ -599,7 +648,7 @@ private def halfGcdMatrix (plan : MulPlan F) :
       else
         let first := halfGcdMatrix plan (fuel / 2) (high m a) (high m b)
         let highCd := GcdStep.applyWith plan first (high m a) (high m b)
-        let cd := GcdStep.applyWith plan first a b
+        let cd := GcdStep.applyFromHighWith plan m first highCd a b
         if cd.1.size = (shift m highCd.1).size ∧
             cd.2.size = (shift m highCd.2).size then
           if cd.2.size ≤ m then
@@ -615,7 +664,8 @@ private def halfGcdMatrix (plan : MulPlan F) :
                 (high cut₂ cd.2) (high cut₂ qr.2)
               let highEf := GcdStep.applyWith plan second
                 (high cut₂ cd.2) (high cut₂ qr.2)
-              let ef := GcdStep.applyWith plan second cd.2 qr.2
+              let ef := GcdStep.applyFromHighWith plan cut₂ second highEf
+                cd.2 qr.2
               if ef.1.size = (shift cut₂ highEf.1).size ∧
                   ef.2.size = (shift cut₂ highEf.2).size then
                 GcdStep.composeLowWith plan a.size second boundary
@@ -1071,7 +1121,7 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
             simpa only [halfGcdMatrix] using MatrixProper.one plan a b⟩
       | succ fuel =>
           unfold halfGcdMatrix
-          simp only [GcdStep.applyWith_eq]
+          simp only [GcdStep.applyWith_eq, GcdStep.applyFromHighWith_eq]
           split
           · exact ⟨a, b, MatrixProper.one plan a b⟩
           · rename_i hactive
@@ -1100,13 +1150,13 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
             · rename_i hvalid
               rcases ih (fuel / 2) (by omega) (high cut a) (high cut b) with
                 ⟨highC, highD, hfirstHigh⟩
+              have hbase := hactive
+              simp only [Bool.or_eq_true, decide_eq_true_eq, not_or] at hbase
               have hfirstFull : MatrixProper plan first a b cd.1 cd.2 := by
                 exact hfirstHigh.liftHigh plan cut hvalid.1 hvalid.2
               split
               · exact ⟨cd.1, cd.2, hfirstFull⟩
               · rename_i hnotStop
-                have hbase := hactive
-                simp only [Bool.or_eq_true, decide_eq_true_eq, not_or] at hbase
                 have hacut : 0 < cut := by
                   dsimp [cut]
                   omega
@@ -1123,7 +1173,8 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
                   exact MatrixProper.euclid plan hfirstFull hqpos hddegree hdiv
                 split
                 · exact ⟨cd.2, qr.2, hboundary⟩
-                · rcases ih (fuel / 2) (by omega)
+                · rename_i hcontinue
+                  rcases ih (fuel / 2) (by omega)
                     (high cut₂ cd.2) (high cut₂ qr.2) with
                     ⟨highE, highF, hsecondHigh⟩
                   split
