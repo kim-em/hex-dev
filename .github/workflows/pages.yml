@@ -38,21 +38,27 @@ jobs:
         with:
           fetch-depth: 0
       - run: sudo apt-get install -y libgmp-dev libntl-dev pkg-config
-      - name: Set up Lean toolchain (no build)
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          use-mathlib-cache: false
+      - name: Set up pinned Lean toolchain (no build)
+        run: bash scripts/ci/setup_lean_toolchain.sh
       - name: Fetch Mathlib cache
         run: lake exe cache get
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
         run: |
-          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
-          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+          lean_prefix="$(lean --print-prefix)"
+          test -d "$lean_prefix/lib/lean"
+          echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      - name: Restore .lake/build (Hex modules only)
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       - name: Render the manual
         run: lake exe hexmanual --output _out
       - name: Upload Pages artifact

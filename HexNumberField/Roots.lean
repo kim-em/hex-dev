@@ -106,31 +106,38 @@ polynomial. -/
 def normEliminant (f : DensePoly (QAdjoin p x)) : ZPoly :=
   DensePoly.resultant p.liftOuter (clearedOuter f)
 
-/-- A canonical coefficient as a lazy root, propagating any checked
-conversion failure. -/
+/-- Constant trivariate lift of a candidate eliminant: regard `e(z)` as a
+polynomial in the candidate variable `z` whose coefficients are constant in
+both the generator variable `y` and the evaluation variable `S`. -/
 @[expose]
-def coeffRoot? [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) : Option AlgebraicRoot :=
-  if a.isZero then
-    some AlgebraicNumber.zero.toRoot
-  else do
-    let exact ← a.toAlgebraicNumber? rep h
-    some exact.toRoot
+def candidateLift (e : ZPoly) : DensePoly (DensePoly ZPoly) :=
+  DensePoly.ofCoeffs (e.toArray.map fun c => DensePoly.C (DensePoly.C c))
 
-/-- Exact lazy Horner evaluation. Its enclosing polynomial is the evaluation
-eliminant used for the reciprocal-Cauchy zero bound. -/
+/-- The trivariate polynomial `S - G(y, z)` with `G = clearedOuter f`,
+regarded as a polynomial in the candidate variable `z` whose coefficients are
+polynomials in the generator `y` over `Int[S]`. The evaluation variable `S`
+enters only the constant coordinate of the constant `z`-coefficient. -/
 @[expose]
-def evalRoot? [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) :
-    Option AlgebraicRoot := do
-  f.toArray.reverse.toList.foldlM
-    (fun acc coeff => do
-      let product ← acc.mul? candidate
-      let coefficient ← coeffRoot? coeff rep h
-      product.add? coefficient)
-    AlgebraicNumber.zero.toRoot
+def evalShifted (f : DensePoly (QAdjoin p x)) : DensePoly (DensePoly ZPoly) :=
+  let den := commonDen f
+  let generatorDegree := p.degree?.getD 0
+  DensePoly.ofCoeffs <| ((List.range (Nat.max f.size 1)).map fun i =>
+    DensePoly.ofCoeffs <| ((List.range generatorDegree).map fun j =>
+      let c := clearRat den ((f.coeff i).coeffs.coeff j)
+      if i = 0 && j = 0 then DensePoly.ofCoeffs #[-c, 1]
+      else DensePoly.C (-c)).toArray).toArray
+
+/-- Integer evaluation eliminant for one component and candidate eliminant:
+the double resultant `Res_y(p(y), Res_z(e(z), S - G(y, z)))` with
+`G = clearedOuter f`, dilated by the common denominator so that its roots are
+the candidate evaluations themselves rather than their denominator-cleared
+multiples. Zero-root removal and primitive normalization happen inside the
+bounded disambiguation search, per the SPEC. -/
+@[expose]
+def evalEliminant (f : DensePoly (QAdjoin p x)) (e : ZPoly) : ZPoly :=
+  ZPoly.dilate (Int.ofNat (commonDen f))
+    (DensePoly.resultant p.liftOuter
+      (DensePoly.resultant (candidateLift e) (evalShifted f)))
 
 /-- Certified ball Horner evaluation at the selected fixed-field embedding and
 one absolute candidate root. Coefficient approximation retains its sound
@@ -169,6 +176,7 @@ def componentRoots? [ZPoly.CheckedIrreducible p]
         if hsimple : HasOnlySimpleRoots eliminant then do
           let isolations ← isolate eliminant hsimple (separationDepth eliminant : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+          let evaluationEliminant := evalEliminant f eliminant
           refined.foldlM
             (fun out candidateRep => do
               let candidate : AlgebraicRoot :=
@@ -180,8 +188,8 @@ def componentRoots? [ZPoly.CheckedIrreducible p]
                   x := SimpleRoot.mk candidateRep
                   rep := candidateRep
                   rep_mk := rfl }
-              let evaluation ← evalRoot? f rep h candidate
-              let keep ← retainZero? evaluation.p (evalMajorant f candidate.p)
+              let keep ← retainZero? evaluationEliminant
+                (evalMajorant f candidate.p)
                 (evalBall? f rep h candidate)
               if keep then
                 some (out.push
@@ -301,7 +309,9 @@ namespace Hex.AlgebraicPoly.Common
 
 /-- A primitive fixed-field presentation of an algebraic coefficient array. -/
 structure Presentation where
+  /-- The canonical primitive element of the common field. -/
   generator : AlgebraicNumber
+  /-- The input coefficients rewritten in the generator's fixed field. -/
   coefficients : Array (QAdjoin generator.p generator.x)
 
 /-- Deterministic signed shift order `0, 1, -1, 2, -2, ...`. -/
@@ -358,7 +368,9 @@ def degree (a : AlgebraicNumber) : Nat :=
 /-- A primitive-search candidate together with the signed shift that produced
 it. -/
 structure ShiftCandidate where
+  /-- The signed integer shift that produced this candidate. -/
   shift : Int
+  /-- The candidate primitive element `theta + shift * alpha`. -/
   value : AlgebraicNumber
 
 /-- One maximum-degree update that retains the producing signed shift. -/
@@ -389,19 +401,8 @@ def extendShift? (theta alpha : AlgebraicNumber) : Option ShiftCandidate := do
 primitive-element search. The maximum-degree candidate generates the
 compositum even when the two fields overlap. -/
 @[expose]
-def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber := do
-  let upper := degree theta * degree alpha
-  let count := Nat.choose upper 2 + 1
-  let best ← (List.range count).foldlM
-    (fun best k => do
-      let candidate ← shift? theta alpha (signedShift k)
-      some <| match best with
-      | none => some candidate
-      | some current =>
-          if degree current < degree candidate then some candidate
-          else some current)
-    (none : Option AlgebraicNumber)
-  best
+def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber :=
+  (extendShift? theta alpha).map ShiftCandidate.value
 
 /-- Bounded primitive element for all nonzero coefficients. -/
 @[expose]
@@ -572,6 +573,13 @@ private def rootsSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
 private def rootsLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
   DensePoly.ofList [-rootsSqrtTwo, 1]
 
+private def rootsHalfSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
+  QAdjoin.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
+    (DensePoly.ofList ([0, (1 : Rat) / 2] : List Rat))
+
+private def rootsHalfLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
+  DensePoly.ofList [-rootsHalfSqrtTwo, 1]
+
 private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
   if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
@@ -587,6 +595,24 @@ private def algebraicLinearRoots? : Option RootSet := do
   AlgebraicPoly.roots? (AlgebraicPoly.ofArray #[negSqrtTwo, one])
 
 #guard QAdjoin.Roots.normEliminant rootsLinear = rootsSqrtTwoPoly
+
+-- The double-resultant evaluation eliminant for `X - √2` over `ℚ(√2)` with
+-- candidate eliminant `X² - 2`: its roots are the four differences
+-- `z - y` over conjugate pairs, i.e. `S²(S² - 8)`.
+#guard
+    QAdjoin.Roots.evalEliminant rootsLinear
+      (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsLinear)) =
+    DensePoly.ofList [0, 0, -8, 0, 1]
+
+-- A non-unit common denominator exercises the dilation direction: before
+-- dilation the nonzero evaluation roots are `±2√2`; substituting `2S`
+-- moves them to the actual values `±√2`.
+#guard QAdjoin.Roots.commonDen rootsHalfLinear = 2
+
+#guard
+    QAdjoin.Roots.evalEliminant rootsHalfLinear
+      (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsHalfLinear)) =
+    DensePoly.ofList [0, 0, -128, 0, 64]
 
 #guard
     if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then

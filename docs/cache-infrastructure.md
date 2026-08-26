@@ -36,20 +36,32 @@ to sign them, so the read host must be public; only uploads use a key.
 
 Lake service names: `hex-public` for reads, `hex-r2` for uploads.
 
-## The read host, and why it is `r2.dev`
+## Read path and the interim `r2.dev` host
 
-Reads go through `pub-*.r2.dev`, Cloudflare's public bucket URL. This is a deliberate choice: it
-needs no domain name, and this repository's CI volume is low enough that its rate limit is not a
-practical concern.
+GitHub Actions cache is the primary CI read path. Its key is scoped by runner platform, Lean
+toolchain, and Lake manifest; pull requests restore the latest compatible snapshot saved by a
+fully verified `main` build. The workflow calls the public Lake/R2 cache only when that restore has
+no match. This avoids both redundant R2 requests and per-PR GitHub cache snapshots that cannot be
+shared with other pull requests.
+
+Fallback reads currently go through `pub-*.r2.dev`, Cloudflare's public bucket URL. Cloudflare
+documents `r2.dev` as a non-production development endpoint with variable rate limiting and
+recommends a custom domain for production traffic. It remains useful here as a reduced-volume
+fallback because it needs no domain name, but it is not the desired permanent serving model.
 
 The limit is real, so it is worth knowing the shape of it. `lake cache get` continues past failed
 downloads, so a throttled fetch can leave the local cache holding input-to-output mappings whose
 artifact blobs never arrived, and `ci.yml` discards its exit status:
 
 ```
-lake cache get --service hex-public --repo kim-em/hex-dev \
+lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
   || echo "::warning::lake cache miss for this revision; building from source"
 ```
+
+The 20-revision window bounds serial public-cache requests while still reaching
+the recently published base of an ordinary pull-request merge commit. A
+HEAD-only lookup cannot work: pull-request merge SHAs are never published, and
+a main SHA is published only after the current run completes.
 
 The consequence here is mild. `ci.yml` builds with plain `lake build`, so an unresolvable cache
 entry makes Lake log a warning and rebuild the module from source, and the build stays green. The
@@ -57,8 +69,10 @@ cost is a redundant rebuild, not red CI.
 
 That holds only because no `--fail-level` is raised. Adding `--iofail` or `--wfail` would turn each
 such warning into a build failure, via https://github.com/leanprover/lean4/issues/14670. Raising the
-fail level and staying on `r2.dev` do not combine well; wanting both means putting an R2 custom
-domain in front of `hex-cache` first, which needs a zone in this same Cloudflare account.
+fail level and staying on `r2.dev` do not combine well. The durable fix is an R2 custom domain,
+which first requires a Cloudflare zone in the `hex` account; the account currently has none. Once
+one is available, replace both public repository variables together and exercise an anonymous
+restore before removing the `r2.dev` URL.
 
 ## Cost
 

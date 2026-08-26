@@ -218,7 +218,7 @@ theorem splitFactorCached_eq
     splitFactorCached f witness (witness % f) c = splitFactorAt f witness c := by
   unfold splitFactorCached
   by_cases hfast : 2 ≤ f.size ∧ f.size < witness.size
-  · rw [if_pos hfast]
+  · rw [ite_eq_left hfast]
     rw [FpPoly.gcdAuxCached_eq]
     have hf : f.isZero = false :=
       (DensePoly.isZero_eq_false_iff f).mpr (by omega)
@@ -231,7 +231,7 @@ theorem splitFactorCached_eq
     unfold splitFactorAt
     rw [DensePoly.gcd_eq_aux_mod f (witness - FpPoly.C c) hf hshiftLt,
       hshiftSize, sub_C_mod_eq f witness c hfast.1]
-  · rw [if_neg hfast]
+  · rw [ite_eq_right hfast]
 
 /-- `true` exactly when the gcd candidate is nonconstant and strictly smaller
 than `f` in size (i.e. strictly smaller in degree). Strict size suffices to
@@ -288,7 +288,7 @@ private theorem cachedSplitAux_eq
       let factor := splitFactorAt f witness splitConstant
       by_cases hnon : isNontrivialSplitFactor f factor
       · simp [splitConstant, factor, hnon]
-      · simp only [splitConstant, factor, hnon, Bool.false_eq_true, if_false]
+      · simp only [splitConstant, factor, hnon, Bool.false_eq_true, ite_false]
         exact ih (c + 1)
 
 /--
@@ -328,8 +328,8 @@ private theorem kernelWitnessSplitAux_of_some
     kernelWitnessSplitAux f witness p 0 = some r := by
   unfold kernelWitnessSplit? at hsplit
   by_cases hguard : (witness % f).size ≤ 1
-  · rw [if_pos hguard] at hsplit; exact absurd hsplit (by simp)
-  · rw [if_neg hguard] at hsplit
+  · rw [ite_eq_left hguard] at hsplit; exact absurd hsplit (by simp)
+  · rw [ite_eq_right hguard] at hsplit
     rw [cachedSplitAux_eq] at hsplit
     exact hsplit
 
@@ -864,7 +864,7 @@ private theorem isNontrivialSplitFactor_false_of_mod_size_le_one
     rw [DensePoly.coeff_sub_ring]
     have h1 : (witness % f).coeff i = 0 :=
       DensePoly.coeff_eq_zero_of_size_le (witness % f) (by omega)
-    have h2 : (FpPoly.C c).coeff i = 0 := by rw [FpPoly.coeff_C, if_neg (by omega)]
+    have h2 : (FpPoly.C c).coeff i = 0 := by rw [FpPoly.coeff_C, ite_eq_right (by omega)]
     rw [h1, h2]; grind
   by_cases hs0 : (witness % f - FpPoly.C c) = 0
   · -- `c` matches the constant residue: `f ∣ witness - c`, so the gcd is `~ f`.
@@ -925,7 +925,7 @@ private theorem kernelWitnessSplitAux_none_of_mod_size_le_one
       have hnon : isNontrivialSplitFactor f
           (splitFactorAt f witness (ZMod64.ofNat p c)) = false :=
         isNontrivialSplitFactor_false_of_mod_size_le_one f witness hconst (ZMod64.ofNat p c)
-      simp only [hnon, Bool.false_eq_true, if_false]
+      simp only [hnon, Bool.false_eq_true, ite_false]
       exact ih (c + 1)
 
 /--
@@ -956,7 +956,7 @@ theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
         (splitFactorAt f witness (ZMod64.ofNat p (0 + c.toNat))) = true := by
     rw [Nat.zero_add, hc_eq]; exact hnontriv
   unfold kernelWitnessSplit?
-  rw [if_neg hguard]
+  rw [ite_eq_right hguard]
   rw [cachedSplitAux_eq]
   exact kernelWitnessSplitAux_some_of_nontrivial_offset f witness p 0 c.toNat hc_lt hnon
 
@@ -1024,8 +1024,8 @@ private theorem kernelWitnessSplitAux_none_scale
       · simp [splitConstant, factorG, hnon] at h
       · have hnonSG : ¬ isNontrivialSplitFactor (DensePoly.scale c g) factorSG := by
           rw [hcong]; exact hnon
-        simp only [splitConstant, factorG, hnon, Bool.false_eq_true, if_false] at h
-        simp only [splitConstant, factorSG, hnonSG, Bool.false_eq_true, if_false]
+        simp only [splitConstant, factorG, hnon, Bool.false_eq_true, ite_false] at h
+        simp only [splitConstant, factorSG, hnonSG, Bool.false_eq_true, ite_false]
         exact ih (start + 1) h
 
 /-- Transport of a failed Berlekamp split search across a unit scaling: if no
@@ -1045,15 +1045,15 @@ theorem kernelWitnessSplit?_none_scale
     · exact kernelWitnessSplitAux_none_of_mod_size_le_one g witness hguard p 0
     · have h' := h
       unfold kernelWitnessSplit? at h'
-      rw [if_neg hguard] at h'
+      rw [ite_eq_right hguard] at h'
       rw [cachedSplitAux_eq] at h'
       exact h'
   have haux_sg : kernelWitnessSplitAux (DensePoly.scale c g) witness p 0 = none :=
     kernelWitnessSplitAux_none_scale hc g witness p 0 haux_g
   unfold kernelWitnessSplit?
   by_cases hguard2 : (witness % DensePoly.scale c g).size ≤ 1
-  · rw [if_pos hguard2]
-  · rw [if_neg hguard2, cachedSplitAux_eq]; exact haux_sg
+  · rw [ite_eq_left hguard2]
+  · rw [ite_eq_right hguard2, cachedSplitAux_eq]; exact haux_sg
 
 private theorem splitWithWitnesses?_product_spec
     [ZMod64.PrimeModulus p]
@@ -1076,7 +1076,6 @@ private theorem splitWithWitnesses?_product_spec
       exact ih h
 
 private theorem one_mul_poly
-    [ZMod64.PrimeModulus p]
     (a : FpPoly p) :
     (1 : FpPoly p) * a = a :=
   (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
@@ -1087,7 +1086,6 @@ product. Useful for downstream proofs that reason about `factorProduct` without
 unfolding the underlying `List.foldl`.
 -/
 theorem factorProduct_cons
-    [ZMod64.PrimeModulus p]
     (x : FpPoly p) (xs : List (FpPoly p)) :
     factorProduct (x :: xs) = x * factorProduct xs := by
   show xs.foldl (fun acc factor => acc * factor) (1 * x)
@@ -1096,8 +1094,7 @@ theorem factorProduct_cons
   exact List.foldl_mul_eq_mul_foldl xs id x
 
 /-- `factorProduct` distributes over list append. -/
-private theorem factorProduct_append
-    [ZMod64.PrimeModulus p]
+theorem factorProduct_append
     (xs ys : List (FpPoly p)) :
     factorProduct (xs ++ ys) = factorProduct xs * factorProduct ys := by
   induction xs with
@@ -1123,9 +1120,9 @@ private theorem factorProduct_fullySplit
   | succ fuel ih =>
       rw [fullySplit]
       by_cases hsize : f.size ≤ 2
-      · rw [if_pos hsize, factorProduct_cons, factorProduct_nil]
+      · rw [ite_eq_left hsize, factorProduct_cons, factorProduct_nil]
         exact DensePoly.mul_one_right_poly f
-      · rw [if_neg hsize]
+      · rw [ite_eq_right hsize]
         cases hsplit : splitWithWitnesses? f witnesses with
         | none =>
             rw [factorProduct_cons, factorProduct_nil]
@@ -1179,9 +1176,9 @@ private theorem fullySplit_ne_nil
   | succ fuel ih =>
       rw [fullySplit]
       by_cases hsize : f.size ≤ 2
-      · rw [if_pos hsize]
+      · rw [ite_eq_left hsize]
         exact List.cons_ne_nil f []
-      · rw [if_neg hsize]
+      · rw [ite_eq_right hsize]
         cases hsplit : splitWithWitnesses? f witnesses with
         | none => exact List.cons_ne_nil f []
         | some split =>
@@ -1305,6 +1302,8 @@ private theorem kernelWitnessSplitAux_factor_pos_degree
       · simp [splitConstant, factor, hnon] at hsplit
         exact ih (c + 1) hsplit
 
+/-- A successful kernel-witness split returns a factor of positive degree, so
+the recursive splitter always makes progress. -/
 theorem kernelWitnessSplit_factor_pos_degree
     [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (r : SplitResult p)
@@ -1469,7 +1468,7 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
               = fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor
                 ++ fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor := by
             rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
-            rw [fullySplit, if_neg hsize, hsp]
+            rw [fullySplit, ite_eq_right hsize, hsp]
           rw [hfac_eq, List.length_append] at hsmall
           have h1 :
               0 < (fullySplit ((fixedSpaceKernel f hmonic).toList)
@@ -1511,7 +1510,6 @@ private theorem splitWithWitnesses?_cofactor_size_lt
 
 /-- An element of a list of `FpPoly p` divides the product of the list. -/
 private theorem dvd_factorProduct_of_mem
-    [ZMod64.PrimeModulus p]
     (xs : List (FpPoly p)) {g : FpPoly p} (hg : g ∈ xs) :
     g ∣ factorProduct xs := by
   induction xs with
@@ -1533,7 +1531,6 @@ private theorem dvd_factorProduct_of_mem
 /-- Two distinct elements of a `Nodup` list of `FpPoly p` have a product that
 divides the list's product. -/
 theorem mul_dvd_factorProduct_of_mem_of_ne
-    [ZMod64.PrimeModulus p]
     {xs : List (FpPoly p)} (h_nodup : xs.Nodup)
     {a b : FpPoly p} (ha : a ∈ xs) (hb : b ∈ xs) (hab : a ≠ b) :
     a * b ∣ factorProduct xs := by
@@ -1577,7 +1574,6 @@ theorem mul_dvd_factorProduct_of_mem_of_ne
 
 /-- A polynomial that divides both `a` and `b` squares-divides `a * b`. -/
 private theorem squared_dvd_of_dvd_dvd
-    [ZMod64.PrimeModulus p]
     {a b g : FpPoly p} (hga : g ∣ a) (hgb : g ∣ b) :
     g * g ∣ a * b := by
   rcases hga with ⟨a', ha'⟩
@@ -1596,7 +1592,6 @@ private theorem squared_dvd_of_dvd_dvd
 
 /-- `factorProduct rest` divides `factorProduct (fac :: rest)`. -/
 private theorem factorProduct_tail_dvd_cons
-    [ZMod64.PrimeModulus p]
     (fac : FpPoly p) (rest : List (FpPoly p)) :
     factorProduct rest ∣ factorProduct (fac :: rest) := by
   rw [factorProduct_cons]
@@ -1737,7 +1732,6 @@ divides two distinct positions.  This is a direct consequence of the
 no-squared invariant and the fact that any two list entries multiply to a
 factor of `factorProduct`. -/
 private theorem factorProduct_pairwise_no_common_pos_divisor
-    [ZMod64.PrimeModulus p]
     (factors : List (FpPoly p))
     (h_no_squared : ∀ g : FpPoly p,
         g * g ∣ factorProduct factors → ¬ (0 < g.degree?.getD 0)) :

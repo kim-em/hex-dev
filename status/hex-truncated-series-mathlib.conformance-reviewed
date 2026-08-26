@@ -1,0 +1,12 @@
+HexTruncatedSeriesMathlib Phase 3 conformance was reviewed. The library is a
+proof-only correspondence layer with no executable reifier, certificate
+checker, tactic, or other runtime surface, so the absence of a dedicated
+Conformance module and HexConformance glob is intentional.
+
+The transported representation, ring operations, truncation, powers of X,
+derivative, inverse, substitution, exponential, logarithm, square root, and
+reversion operations are exercised by
+conformance/HexTruncatedSeries/Conformance.lean and by the SymPy fixture oracle
+wired through scripts/ci/run_oracles.sh. Conversion and quotient-equivalence
+declarations are proofs rather than executable destinations for conformance
+cases.

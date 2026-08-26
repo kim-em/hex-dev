@@ -177,9 +177,15 @@ theorem fractionMap_mul (f g : MvPoly n R cmp) :
   exact mapCoeffs_mul Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add
     Hex.Fraction.ofCoeff_mul f g
 
+omit [BEq R] [LawfulBEq R] [Dvd R] in
 theorem fractionMap_injective :
     Function.Injective (fractionMap (n := n) (R := R) (cmp := cmp)) := by
-  sorry
+  intro p q hpq
+  apply ext
+  intro m
+  apply Hex.Fraction.ofCoeff_injective
+  have hcoeff := congrArg (coeff m) hpq
+  simpa [fractionMap, Hex.Fraction.ofCoeff_zero] using hcoeff
 
 /-- Coprimality after embedding the coefficients into the fraction field. -/
 def CoprimeOverFraction (f g : MvPoly n R cmp) : Prop :=
@@ -195,11 +201,89 @@ structure FractionPolyGcd
   dvdRight : value ∣ g
   greatest : ∀ d, d ∣ f → d ∣ g → d ∣ value
 
+omit [BEq R] [LawfulBEq R] [Dvd R] in
+private theorem fractionDivCancel
+    (q : DensePoly (Hex.Fraction R)) (hq : 0 < q.size) :
+    ∀ a, a - (a / q.leadingCoeff) * q.leadingCoeff = 0 := by
+  intro a
+  rw [Hex.Fraction.div_mul_cancel a
+    (DensePoly.leadingCoeff_ne_zero_of_pos_size q hq)]
+  grind
+
+omit [BEq R] [LawfulBEq R] [Dvd R] in
+private theorem fractionRemSizeLt
+    (p q : DensePoly (Hex.Fraction R)) (hq : q ≠ 0) :
+    (DensePoly.divMod p q).2.size < q.size := by
+  have hqpos : 0 < q.size := by
+    have hqsize0 : q.size ≠ 0 := by
+      intro hsize
+      exact hq ((DensePoly.size_eq_zero_iff q).mp hsize)
+    omega
+  by_cases hqsize : q.size = 1
+  · have hrzero :=
+      DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel
+        p q hqsize (fractionDivCancel q hqpos)
+    rw [hrzero, DensePoly.size_zero]
+    exact hqpos
+  · have hqdeg : 0 < q.degree?.getD 0 := by
+      rw [DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some]
+      omega
+    have hdeg :=
+      DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel
+        p q hqdeg (fractionDivCancel q hqpos)
+    let r := (DensePoly.divMod p q).2
+    change r.size < q.size
+    by_cases hr : r = 0
+    · rw [hr, DensePoly.size_zero]
+      exact hqpos
+    · have hrpos : 0 < r.size := by
+        have hrsize0 : r.size ≠ 0 := by
+          intro hsize
+          exact hr ((DensePoly.size_eq_zero_iff r).mp hsize)
+        omega
+      change r.degree?.getD 0 < q.degree?.getD 0 at hdeg
+      rw [DensePoly.degree?_eq_some_of_pos_size r hrpos,
+        DensePoly.degree?_eq_some_of_pos_size q hqpos,
+        Option.getD_some, Option.getD_some] at hdeg
+      omega
+
+omit [BEq R] [LawfulBEq R] [Dvd R] in
 /-- Univariate polynomials over the coefficient fraction field admit gcds. -/
 theorem fractionPolyGcd_nonempty
     (f g : DensePoly (Hex.Fraction R)) :
     Nonempty (FractionPolyGcd f g) := by
-  sorry
+  revert f
+  apply (measure DensePoly.size).wf.induction g
+  intro g ih f
+  by_cases hg : g = 0
+  · subst g
+    refine ⟨⟨f, DensePoly.dvd_refl_poly f, DensePoly.dvd_zero_poly f, ?_⟩⟩
+    intro d hdf _
+    exact hdf
+  · let qr := DensePoly.divMod f g
+    have hlt : qr.2.size < g.size := by
+      simpa [qr] using fractionRemSizeLt f g hg
+    rcases ih qr.2 hlt g with ⟨h⟩
+    have hrec : qr.1 * g + qr.2 = f := by
+      simpa [qr] using
+        DensePoly.divMod_reconstruction f g
+          (fractionDivCancel g (by
+            have hgsize0 : g.size ≠ 0 := by
+              intro hsize
+              exact hg ((DensePoly.size_eq_zero_iff g).mp hsize)
+            omega))
+    refine ⟨⟨h.value, ?_, h.dvdLeft, ?_⟩⟩
+    · rw [← hrec]
+      exact DensePoly.dvd_add_poly
+        (DensePoly.dvd_mul_left_poly qr.1 h.dvdLeft) h.dvdRight
+    · intro d hdf hdg
+      apply h.greatest d hdg
+      have hdr : d ∣ f - qr.1 * g :=
+        DensePoly.dvd_sub_poly hdf
+          (DensePoly.dvd_mul_left_poly qr.1 hdg)
+      have hr : f - qr.1 * g = qr.2 := by
+        grind
+      rwa [hr] at hdr
 
 /-- Primitive descent: fraction-field coprimality of primitive inputs rules
 out every nonunit common divisor back in the coefficient ring. -/

@@ -448,6 +448,67 @@ theorem xgcd_bezout_of_divModLaws {S : Type _}
   · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
   · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
 
+/-- Bezout correctness from the reconstruction law needed along the nonzero
+divisors actually visited by the Euclidean loop.  This weaker interface lets
+generic fields use the executable gcd without constructing the unrelated
+remainder-congruence laws. -/
+theorem xgcd_bezout_of_reconstruction {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
+    (hspec : ∀ p q : DensePoly S, q.isZero = false →
+      let qr := divMod p q
+      qr.1 * q + qr.2 = p)
+    (p q : DensePoly S) :
+    let r := xgcd p q
+    r.left * p + r.right * q = r.gcd := by
+  unfold xgcd
+  have aux : ∀ (fuel : Nat) (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S),
+      s₀ * p + t₀ * q = r₀ → s₁ * p + t₁ * q = r₁ →
+      let r := xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel
+      r.left * p + r.right * q = r.gcd := by
+    intro fuel
+    induction fuel with
+    | zero =>
+        intro r₀ s₀ t₀ r₁ s₁ t₁ hr₀ _hr₁
+        simpa [xgcdAux] using hr₀
+    | succ fuel ih =>
+        intro r₀ s₀ t₀ r₁ s₁ t₁ hr₀ hr₁
+        unfold xgcdAux
+        by_cases hr₁zero : r₁.isZero
+        · simp [hr₁zero, hr₀]
+        · simp [hr₁zero]
+          let qr := divMod r₀ r₁
+          let r := qr.2
+          let s := s₀ - qr.1 * s₁
+          let t := t₀ - qr.1 * t₁
+          apply ih r₁ s₁ t₁ r s t
+          · exact hr₁
+          · have hr₁false : r₁.isZero = false := by
+              cases h : r₁.isZero <;> simp [h] at hr₁zero ⊢
+            have hrec : qr.1 * r₁ + qr.2 = r₀ := by
+              exact hspec r₀ r₁ hr₁false
+            calc
+              s * p + t * q =
+                  (s₀ * p + t₀ * q) - qr.1 * (s₁ * p + t₁ * q) :=
+                xgcd_bezout_step qr.1 s₀ t₀ s₁ t₁ p q
+              _ = r₀ - qr.1 * r₁ := by rw [hr₀, hr₁]
+              _ = qr.2 := by
+                have h : r₀ = qr.1 * r₁ + qr.2 := hrec.symm
+                rw [h]
+                apply ext_coeff
+                intro n
+                have hzeroAdd : (0 : S) + 0 = 0 := by grind
+                have hzeroSub : (0 : S) - 0 = 0 := by grind
+                rw [coeff_sub]
+                · rw [coeff_add]
+                  · grind
+                  · exact hzeroAdd
+                · exact hzeroSub
+  apply aux
+  · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul,
+      add_zero_poly]
+  · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly,
+      zero_add]
+
 /-- Common-divisor direction: any `d` dividing both `r₀` and `r₁` divides the
 gcd returned by {name}`xgcdAux`. -/
 private theorem xgcdAux_common_dvd_gcd {S : Type _}
@@ -577,6 +638,79 @@ theorem gcd_dvd_right_of_divModLaws {S : Type _}
     (by
       have hq := degree_getD_lt_size_add_one q
       omega)).2
+
+/-- The executable gcd divides both inputs from only reconstruction, strict
+remainder descent, and the nonzero-constant remainder case. -/
+theorem gcd_dvd_inputs_of_reconstruction {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
+    (hspec : ∀ p q : DensePoly S, q.isZero = false →
+      let qr := divMod p q
+      qr.1 * q + qr.2 = p)
+    (hdegree : ∀ p q : DensePoly S, q.isZero = false →
+      0 < q.degree?.getD 0 →
+      (divMod p q).2.degree?.getD 0 < q.degree?.getD 0)
+    (hsmall : ∀ p q : DensePoly S, q.isZero = false →
+      ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (p q : DensePoly S) : gcd p q ∣ p ∧ gcd p q ∣ q := by
+  rw [gcd_eq_xgcd_gcd]
+  unfold xgcd
+  have aux : ∀ (fuel : Nat) (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S),
+      r₁.degree?.getD 0 < fuel →
+      (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
+        (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
+    intro fuel
+    induction fuel with
+    | zero =>
+        intro r₀ s₀ t₀ r₁ s₁ t₁ hfuel
+        omega
+    | succ fuel ih =>
+        intro r₀ s₀ t₀ r₁ s₁ t₁ hfuel
+        unfold xgcdAux
+        by_cases hr₁zero : r₁.isZero
+        · simp only [hr₁zero, ↓reduceDIte]
+          exact ⟨dvd_refl_poly r₀, by
+            rw [eq_zero_of_isZero_true r₁ hr₁zero]
+            exact dvd_zero_poly r₀⟩
+        · simp only [hr₁zero]
+          let qr := divMod r₀ r₁
+          let rem := qr.2
+          have hr₁false : r₁.isZero = false := by
+            cases h : r₁.isZero <;> simp [h] at hr₁zero ⊢
+          change (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ r₀ ∧
+            (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁
+          by_cases hpos : 0 < r₁.degree?.getD 0
+          · have hremDegree : rem.degree?.getD 0 < r₁.degree?.getD 0 := by
+              simpa [qr, rem] using hdegree r₀ r₁ hr₁false hpos
+            have hrec := ih r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) (by omega)
+            have hgRight : (xgcdAux r₁ s₁ t₁ rem
+                (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁ := hrec.1
+            have hgRem : (xgcdAux r₁ s₁ t₁ rem
+                (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ rem := hrec.2
+            constructor
+            · have hrecEq : qr.1 * r₁ + rem = r₀ := hspec r₀ r₁ hr₁false
+              rw [← hrecEq]
+              exact dvd_add_poly (dvd_mul_left_poly qr.1 hgRight) hgRem
+            · exact hgRight
+          · have hremZero : rem = 0 := by
+              simpa [qr, rem] using hsmall r₀ r₁ hr₁false hpos
+            have hgEq : (xgcdAux r₁ s₁ t₁ rem
+                (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd = r₁ :=
+              xgcdAux_gcd_eq_left_of_right_zero r₁ s₁ t₁ rem
+                (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel hremZero
+            constructor
+            · rw [hgEq]
+              have hrecEq : qr.1 * r₁ + rem = r₀ := hspec r₀ r₁ hr₁false
+              rw [hremZero, add_zero_poly] at hrecEq
+              rw [← hrecEq]
+              exact dvd_mul_left_poly qr.1 (dvd_refl_poly r₁)
+            · rw [hgEq]
+              exact dvd_refl_poly r₁
+  apply aux
+  have hq := degree_getD_lt_size_add_one q
+  omega
 
 /-- Any common divisor divides the gcd returned by {name}`xgcd`; this packages the
 `DivModLaws` proof needed by `GcdLaws` instance construction. -/
@@ -834,7 +968,7 @@ private theorem foldl_add_general_eq_zero_of_forall_zero {S : Type _}
 
 /-- The top coefficient of a product of nonzero dense polynomials over any
 commutative ring is the product of their top coefficients. -/
-private theorem coeff_mul_top_general {S : Type _}
+theorem coeff_mul_top {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S)
     (hp : 0 < p.size) (hq : 0 < q.size) :
@@ -897,6 +1031,35 @@ private theorem size_le_of_coeff_zero_above {S : Type _}
       coeff_last_ne_zero_of_pos_size p hpos
     exact hne hzero
 
+/-- Stored size of a product when its top coefficient does not cancel. -/
+theorem size_mul_of_top_ne {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S)
+    (hp : 0 < p.size) (hq : 0 < q.size)
+    (hprod : p.leadingCoeff * q.leadingCoeff ≠ (Zero.zero : S)) :
+    (p * q).size = p.size + q.size - 1 := by
+  let top := p.size - 1 + (q.size - 1)
+  have hp_top : p.coeff (p.size - 1) = p.leadingCoeff := by
+    rw [leadingCoeff_eq_coeff_last p hp]
+  have hq_top : q.coeff (q.size - 1) = q.leadingCoeff := by
+    rw [leadingCoeff_eq_coeff_last q hq]
+  have htop_coeff : (p * q).coeff top = p.leadingCoeff * q.leadingCoeff := by
+    unfold top
+    rw [coeff_mul_top p q hp hq, hp_top, hq_top]
+  have htop_ne : (p * q).coeff top ≠ (Zero.zero : S) := by
+    rw [htop_coeff]
+    exact hprod
+  have hsize_lower : top < (p * q).size := by
+    rcases Nat.lt_or_ge top (p * q).size with h | hle
+    · exact h
+    · exact False.elim (htop_ne (coeff_eq_zero_of_size_le _ hle))
+  have hsize_upper : (p * q).size ≤ top + 1 := by
+    apply size_le_of_coeff_zero_above
+    intro i hi
+    exact coeff_mul_above_top_general p q hp hq (by omega)
+  unfold top at hsize_lower hsize_upper
+  omega
+
 /-- Leading coefficient of a product, in the cancellation-free form needed over
 commutative rings. The explicit nonzero top-coefficient product hypothesis is
 the no-cancellation fact that callers over domains can derive from nonzero
@@ -915,7 +1078,7 @@ theorem leadingCoeff_mul {S : Type _}
   have htop_coeff :
       (p * q).coeff top = p.leadingCoeff * q.leadingCoeff := by
     unfold top
-    rw [coeff_mul_top_general p q hp hq, hp_top, hq_top]
+    rw [coeff_mul_top p q hp hq, hp_top, hq_top]
   have htop_ne : (p * q).coeff top ≠ (Zero.zero : S) := by
     rw [htop_coeff]
     exact hprod
@@ -988,7 +1151,7 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
         m'.coeff (m'.size - 1) * q.getD qDegree (Zero.zero : S) := by
     intro m' hm'_pos
     have hofq_pos : 0 < (ofCoeffs q : DensePoly S).size := by rw [hofq_size]; omega
-    have htop := coeff_mul_top_general m' (ofCoeffs q) hm'_pos hofq_pos
+    have htop := coeff_mul_top m' (ofCoeffs q) hm'_pos hofq_pos
     rw [hofq_size] at htop
     have hsub_qd : qDegree + 1 - 1 = qDegree := by omega
     rw [hsub_qd, hofq_coeff] at htop
@@ -1384,7 +1547,7 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
         p.coeff (qq.size - 1 + (q.size - 1)) =
           qq.coeff (qq.size - 1) * q.coeff (q.size - 1) := by
       rw [← hmul]
-      exact coeff_mul_top_general qq q hqq_pos hq_pos
+      exact coeff_mul_top qq q hqq_pos hq_pos
     have hp_top_ne :
         p.coeff (qq.size - 1 + (q.size - 1)) ≠ 0 := by
       rw [hp_top, ← leadingCoeff_eq_coeff_last q hq_pos]

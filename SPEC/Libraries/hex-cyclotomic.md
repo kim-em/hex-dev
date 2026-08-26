@@ -276,7 +276,7 @@ described under "Prerequisite changes in other libraries".
 can be evaluated as a truncated power series quotient at precision
 `φ(n) + 1`, which is the method the fast external implementations use.
 It needs a truncated series division, which is
-[hex-truncated-series](hex-truncated-series.md), and adding that
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md), and adding that
 dependency for a route whose advantage over the ladder has not been
 measured is premature. The bench families below are what decide it. Note
 that the term-by-term form is only valid as a single final quotient, the
@@ -857,10 +857,8 @@ theorem prod_divisors_eq {n : Nat} (F : CheckedFactorization n) :
         (fun dp => HexPolyMathlib.toPolynomial dp.2)).foldl (· * ·) 1 = X ^ n - 1
 ```
 
-`toPolynomial_cyclotomic` is the correspondence everything else goes
-through, exactly as `factorization_eq` is for
-[hex-int-factor](hex-int-factor.md). The rest are short
-consequences of it together with Mathlib's `natDegree_cyclotomic`,
+`toPolynomial_cyclotomic` is the central correspondence for this layer. The
+rest are short consequences of it together with Mathlib's `natDegree_cyclotomic`,
 `cyclotomic.irreducible`, `cyclotomic.irreducible_rat`, and
 `prod_cyclotomic_eq_X_pow_sub_one`. Exact helper names are read from the
 pinned Mathlib during implementation. The SPEC does not depend on

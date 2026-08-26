@@ -189,6 +189,100 @@ evaluation of the decidable factorization theorem on small inputs.
 They require all executable definitions to be visible and cannot
 evaluate native LLL code.
 
+## Conformance
+
+The library owns an executable runtime: the `factor_poly` /
+`irreducibility` elaborators (with their `factor_poly!` /
+`irreducibility!` kernel-decide fallbacks) and the reified certificate
+checks their emitted terms replay. It is therefore not a
+correspondence-only bridge:
+`conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
+`core` conformance profile, built by the `HexConformance` library on
+every CI run. It exercises the tactic entry points on committed
+`Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
+(single-prime witness, Eisenstein handover, multi-prime degree
+obstruction, kernel fallback), pins hand-derived factor lists and factor
+counts, checks the decline diagnostics on reducible, zero, unit, and
+over-budget inputs, and `#print axioms`-checks the emitted proofs. There
+is no external oracle for the tactic surface (mode `always`): every
+accepted invocation is kernel-certified, and the compiled factorizer the
+tactics run as untrusted search is oracle-checked against python-flint
+in the computational sibling's profile
+(`conformance/HexBerlekampZassenhaus/`).
+
+## Phase-4 proof evidence
+
+`factor_poly` and `irreducibility` on `Polynomial ℤ` / `Hex.ZPoly` are
+elaboration/proof surfaces, not LeanBench executables. Build-only modules
+below `bench/HexBerlekampZassenhausMathlib/ProofProbe/` measure
+`factor_poly` on products of distinct irreducible quadratics `X² + c`
+over `ℤ` at degrees 4, 8, and 12, `irreducibility` on the Eisenstein
+binomials `Xⁿ − 2` at degrees 4, 8, and 16, and the kernel-decide
+fallback `irreducibility!` on the certificate-declined Swinnerton-Dyer
+minimal polynomials at degrees 4 and 8. Each case is adjacent to the
+same import-only baseline (whose import block carries the `import all`
+executable closure the emitted certificate checks and kernel replays
+need, identically in every probe), and degree 8 also has a direct
+multiplicity-attribution pair (four distinct quadratics against the
+fourth power of one quadratic: same degree and factor count with
+multiplicity, all multiplicity). Baseline and kernel-8 same-module
+controls are first in manifest `config.order`; execution order rotates
+by round. Every probe carries the same large `import all` executable
+closure, so the marginal elaboration cost must be substantial before a
+module counts as a distinct build magnitude: the degree-16 binomial
+reaches only `1.37x` the baseline, under the `2.0x` the shared harness
+requires of its two controls, while the degree-8 kernel replay reaches
+`2.48x` and is also the only control that brackets the most expensive
+substantive arm. The external runner uses six balanced rounds, exact
+generated-artifact invalidation, ordinary kernel checking, exact axiom
+validation, and complete source provenance.
+`HexBerlekampZassenhausMathlibProofProbe` supplies the reduced CI
+coverage; `HexBerlekampZassenhausMathlibProofProbeScientific` owns the
+larger release arms and remains outside routine CI.
+
+On the named shared release machine a canonical invocation is:
+
+```bash
+taskset -c 22 python3 scripts/bench/bz_mathlib_sweep.py --samples 6 \
+  --timeout 300 --warm-timeout 900 \
+  --shared-host --expected-host chungus2 --cpu 22 \
+  --max-core-interference-ratio 0.005 \
+  --max-pair-retries 32 \
+  --preflight-timeout-seconds 1800
+```
+
+The release run preregisters its selected logical CPU and aggregate
+interference ratio on the command line; the artifact and headline report
+record those exact values. They govern that run rather than the
+illustrative CPU number above.
+
+These arms run 6.65 s to 16.60 s, roughly `3x` the sibling
+`HexBerlekampMathlib` suite's, so `ratio x wall` exceeds the `0.030 s`
+three-tick quantization floor throughout and the ratio, not the floor, is
+the binding admission gate. Each arm is correspondingly longer exposed to a
+stray scheduler tick on the pinned core or its SMT sibling, so on a busy
+shared host the run rejects more pair attempts and can exhaust the default
+eight-retry budget on the longest arms. The preregistered response is the
+`32`-retry bound this suite's manifest declares, which buys more clean-pair
+opportunities at an unchanged admission threshold. Raising the interference
+ratio instead would admit dirtier arms and is not the lever to reach for.
+
+The runner enforces the designated-shared-host contract in
+`SPEC/benchmarking.md`, including bounded retries of complete rejected
+pairs after a bounded quiet-core preflight and a single aggregate
+pinned-core/SMT interference ceiling; `--allow-busy` remains
+diagnostic-only. Executable factorization arithmetic belongs to the
+existing Mathlib-free `HexBerlekampZassenhaus` benchmark. The bridge
+declarations have no separable compiled runtime kernel. For the
+proof-emitting elaborators there is
+`no-comparable-surface-in-named-comparator`: no external tool emits and
+kernel-checks the same Lean proof term.
+
+The headline report is
+[`reports/hex-berlekamp-zassenhaus-mathlib-performance.md`](../../reports/hex-berlekamp-zassenhaus-mathlib-performance.md);
+it cites the committed raw sweep artifact under `reports/bench-results/`
+and records the release run's preregistered CPU and interference ratio.
+
 ## Verification
 
 Changes must pass:
@@ -198,4 +292,8 @@ Changes must pass:
 - `#print axioms` checks for the headline theorems;
 - factor-tactic regression modules;
 - the integer-factorization conformance and external comparisons;
+- the reduced proof-probe build
+  (`HexBerlekampZassenhausMathlibProofProbe`) and the sweep manifest
+  self-test (`python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py`),
+  both of which run on every CI job;
 - the release manifest and dependency checks.

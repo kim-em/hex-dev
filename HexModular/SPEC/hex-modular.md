@@ -81,6 +81,7 @@ work, and would trade one library for one reopened phase.
 
 In scope: symmetric representatives modulo `m`; incremental Chinese
 remaindering for a scalar and for a vector of residues sharing a modulus;
+balanced batch CRT for many fixed moduli and many coefficient lanes;
 rational reconstruction with explicit bounds, with symmetric bounds, and
 with the maximal-quotient heuristic; the vector form with a common
 denominator; the modulus supply and its runtime primality test; and the
@@ -220,6 +221,49 @@ family of algorithms gets its answer. Nothing above it needs a theorem
 about the Chinese remainder *isomorphism*: the executable statement is
 that a small enough integer is determined by its residues, and the
 isomorphism is the companion's business.
+
+### Balanced batch CRT
+
+[hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) introduces a consumer that reconstructs
+every coefficient of a convolution from the same fixed auxiliary primes. The
+incremental API remains right for algorithms that test after every new image,
+but it is the wrong shape when all moduli are known before any reconstruction:
+it repeatedly multiplies through a growing accumulated modulus and makes the
+large-integer work quadratic in the number of primes.
+
+```lean
+/-- A validated balanced product tree of pairwise-coprime moduli greater than
+one. -/
+structure CrtPlan where
+  moduli : Array Nat
+  ...
+
+def CrtPlan.build? (moduli : Array Nat) : Option CrtPlan
+
+/-- Reconstruct one residue for every modulus. -/
+def CrtPlan.reconstruct? (plan : CrtPlan)
+    (residues : Array Int) : Option Int
+
+/-- Reconstruct `k` lanes sharing the plan, amortising all modulus-only work. -/
+def CrtPlan.reconstructVec? (plan : CrtPlan)
+    (residues : Array (Vector Int k)) : Option (Vector Int k)
+```
+
+`build?` succeeds exactly when the moduli are all greater than one and
+pairwise coprime. It stores the balanced modulus-product tree and the inverses
+needed to combine sibling results. Reconstruction rejects a residue-count
+mismatch and returns the symmetric representative modulo the root product.
+
+Soundness states congruence to every input lane at every modulus. The root
+product and symmetric bound are observations of the result, so a consumer
+with `2 * |x| < product` obtains exact recovery from `symMod_unique`. The
+vector form computes the tree's inverses once and applies each combination to
+all lanes; mapping the scalar form and repeating extended gcd per coefficient
+is forbidden.
+
+The target cost is quasi-linear in the total modulus bit length up to tree
+logarithms, plus linear work per residue lane. Incremental `Crt` is not
+rewritten in terms of this operation and retains its early-stopping behavior.
 
 ## Rational reconstruction
 
@@ -626,25 +670,34 @@ carries its own rejection rules.
 ## Complexity
 
 `k` moduli of `w` bits, an accumulated modulus of `M = k·w` bits, a
-vector of `n` residues.
+vector of `n` residues, and `I(t)` the cost of multiplying `t`-bit integers.
+
+Write `D(M)` for the bit cost of one balanced `M`-bit division and `S(M)`
+for integer square root. On the GMP operand range exercised below, the native
+benchmark uses `M√M` as the Karatsuba-range wall-clock surrogate for both;
+this refines the abstract word-operation counts without changing the
+algorithm.
 
 | operation | algorithm | cost |
 |---|---|---|
-| `symMod` | one division | `O(M)` word ops |
+| `symMod` | one balanced division | `O(D(M))`; native proxy `O(M√M)` |
 | `Crt.push` | one `extGcd` on two words, one multiply-add at size `M` | `O(w²)` plus `O(M)` |
 | `CrtVec.push` | one `extGcd`, `n` multiply-adds | `O(w²)` plus `O(n·M)` |
 | `k` pushes, cumulative | quadratic in the number of moduli | `O(k²·w²)` word ops |
+| `CrtPlan.build?` | balanced product/inverse tree | `O(I(M) log k)` |
+| `CrtPlan.reconstructVec?` | balanced tree over `n` lanes | `O(n·I(M) log k)` |
 | `euclidUntil` | truncated Euclidean run at size `M` | `O(M²)` word ops |
 | `ratRecon?` | `euclidUntil` plus checks | `O(M²)` |
+| `ratReconWide?` on an early-success input | integer square root plus bounded checks | `O(S(M))`; native proxy `O(M√M)` |
+| `ratReconCheck` with bounded quotient | same-size modular congruence check | `O(M)` |
 | `ratReconVec?` | one run plus `n` multiplications, on average | `O(M²) + O(n·M)` |
+| `ratReconMaxQuot?` | complete Euclidean quotient scan | `O(M²)` |
 
-The cumulative `O(k²w²)` for a full multi-modular run is the entry that
-matters, and it is what a product-tree (fast) CRT would improve to
-`O(M(M) log k)`. That is a later milestone: at `k = 400` and `w = 31` the
-incremental cost is under a millisecond of word operations, which is far
-below the `O(n³)` per-image cost that motivates the whole technique. The
-crossover is a measurement, and the benchmark family below is designed to
-find it rather than to assume it.
+The cumulative `O(k²w²)` incremental cost remains the right price when a
+consumer may stop after any image. `CrtPlan` supplies the product-tree route
+when every modulus is known in advance, as in auxiliary-prime convolution.
+The crossover is measured independently for one lane and for vectors; neither
+API silently dispatches to the other because their stopping behavior differs.
 
 ## Kernel exposure
 
@@ -735,24 +788,32 @@ operations a downstream certificate replay pays for.
 Families:
 
 - **Incremental CRT**, `k` from 4 to 4000 moduli of 31 bits. The declared
-  complexity is `k²`, and the family exists to find the point where a
-  product tree would pay.
+  complexity is `k²`, retained because early-stopping consumers need it.
+- **Balanced batch CRT**, the same modulus ladder, forced against incremental
+  reconstruction for one lane and for convolution-sized vectors. This fixes
+  the measured crossover for callers that know all moduli in advance.
 - **Vector CRT**, `k` moduli against `n` from 1 to 4096 residues,
   checking that the extended gcd is amortised across the vector rather
   than repeated.
-- **Rational reconstruction**, moduli from 64 to 100000 bits, over
+- **Rational reconstruction**, moduli from 64 to 262144 bits, over
   reconstructions that succeed early, succeed late, and fail.
 - **Failure cost**, the same sizes where no rational exists, since a
   consumer in a loop pays this on every modulus until the last.
 
-**Comparators.** `gmpy2`'s `gcdext` and FLINT's `fmpz_mod_ctx` CRT are
-`informational`: both are C implementations of the same operations and
-the ratio measures the GMP binding rather than the algorithm. SymPy is
-the oracle and is not a performance comparator. No comparator is
-`gating`, because this library has no algorithmic choice for one to
-discriminate: the algorithms here are the standard ones and the
-performance question is entirely about the arithmetic underneath, which
-hex-arith already measures.
+**Comparators.** [`gmpy2.gcdext`](https://gmpy2.readthedocs.io/) is scoped to
+the `euclidUntil` target and therefore supplies the external curve for the
+`rational-reconstruction` and `failure-cost` families. The
+[`python-flint fmpz CRT`](https://python-flint.readthedocs.io/en/latest/fmpz_mod.html)
+comparator is scoped to scalar `Crt.push` and fixed-depth `CrtVec.push`, using
+`fmpz_mod_ctx` inversion and `fmpz` multiply-adds for the same incremental
+Garner recurrence; it supplies the `incremental-crt` and `vector-crt` curves.
+Both are `informational`: they are C-backed implementations of the same
+arithmetic primitives, and the ratios chiefly measure binding and orchestration
+cost rather than an alternative Hex algorithm. SymPy is the oracle and is not
+a performance comparator. No comparator is `gating`, because this library has
+no algorithmic choice for one to discriminate: the algorithms here are the
+standard ones and the performance question is entirely about the arithmetic
+underneath, which hex-arith already measures.
 
 ## The Mathlib layer
 
@@ -847,10 +908,15 @@ argument says should not exist.
    in hex-mod-arith alongside. At the end of this milestone both consumer
    libraries can be written.
 
-4. **Completeness and the heuristic.** `ratRecon?_complete` and
+4. **Balanced batch CRT.** `CrtPlan`, its validation and product tree,
+   scalar/vector reconstruction, congruence and uniqueness corollaries, and
+   the crossover against incremental reconstruction. This milestone unblocks
+   auxiliary-prime polynomial NTTs.
+
+5. **Completeness and the heuristic.** `ratRecon?_complete` and
    `ratReconMaxQuot?`.
 
-5. **The companion.** The `ZMod` correspondence, the `ℚ` restatements,
+6. **The companion.** The `ZMod` correspondence, the `ℚ` restatements,
    and the decidability instances. Begins as soon as milestone 2 is done.
 
 ## File organisation
@@ -859,6 +925,7 @@ argument says should not exist.
 HexModular/
   SymMod.lean       -- symMod and its uniqueness lemma
   Crt.lean          -- Crt, CrtVec, push, crt_unique
+  BatchCrt.lean     -- CrtPlan and balanced scalar/vector reconstruction
   Euclid.lean       -- Row, euclidUntil
   Recon.lean        -- ratRecon?, ratReconWide?, ratReconVec?, ratReconMaxQuot?
   Loop.lean         -- crtLoop
@@ -898,11 +965,6 @@ planned until its correspondence and decidability layer is implemented.
   loop with a stopping predicate would serve both, at the cost of an
   indirection in hex-arith's hottest scalar routine. Measure before
   merging them.
-- **Whether the product-tree CRT is worth having.** The complexity table
-  says the incremental cost is negligible against the images at the sizes
-  the consumers use. The benchmark family exists to find the size where
-  that stops being true, and the answer may be that no consumer reaches
-  it.
 - **Whether `Modulus` should carry the Barrett context.** hex-arith has
   Barrett and Montgomery reduction, and a modulus used for `O(n³)`
   operations wants its reduction context precomputed once. Attaching it

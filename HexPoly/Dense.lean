@@ -49,18 +49,14 @@ module system, so `decide`/`rfl` on `DensePoly` equalities would get stuck
 (see `progress/lean4-array-decidableeq-module-repro.md`, fixed upstream by
 leanprover/lean4#14270). `List` equality is fully exposed and kernel-reduces.
 
-`HexBasic.ArrayDecEq` carries the same workaround as a reusable instance, but
-`hex-poly` has no dependencies and so cannot import it; this instance stays
-local until either that dependency is added or the upstream fix lands. -/
-instance : DecidableEq (DensePoly R) := fun a b =>
-  match decEq a.coeffs.toList b.coeffs.toList with
+This specialization is owned here so `hex-poly` remains dependency-free until
+the upstream fix lands. -/
+private unsafe def decEqRuntime : DecidableEq (DensePoly R) := fun a b =>
+  match decEq a.coeffs b.coeffs with
   | isTrue h =>
       isTrue (by
         cases a with | mk ca na =>
         cases b with | mk cb nb =>
-        cases ca with | mk la =>
-        cases cb with | mk lb =>
-        change la = lb at h
         cases h
         rfl)
   | isFalse h =>
@@ -68,6 +64,33 @@ instance : DecidableEq (DensePoly R) := fun a b =>
         intro hab
         apply h
         rw [hab])
+
+@[implemented_by decEqRuntime]
+instance : DecidableEq (DensePoly R) := fun a b =>
+  match decEq a.coeffs.toList b.coeffs.toList with
+  | isTrue h =>
+    isTrue (by
+      cases a with | mk ca na =>
+      cases b with | mk cb nb =>
+      cases ca with | mk la =>
+      cases cb with | mk lb =>
+      change la = lb at h
+      cases h
+      rfl)
+  | isFalse h =>
+    isFalse (by
+      intro hab
+      apply h
+      rw [hab])
+
+/-- The equality-derived Boolean comparison is lawful. -/
+instance : LawfulBEq (DensePoly R) where
+  eq_of_beq := by
+    intro a b h
+    exact of_decide_eq_true h
+  rfl := by
+    intro a
+    exact decide_eq_true rfl
 
 /-- Remove trailing zeros from a coefficient list without disturbing the remaining order. -/
 @[expose]
@@ -322,6 +345,18 @@ def isZero (p : DensePoly R) : Bool :=
 @[expose]
 def coeff (p : DensePoly R) (n : Nat) : R :=
   p.coeffs.getD n (Zero.zero : R)
+
+/-- The first `r` coefficients, in ascending degree order.  Coefficients past
+the stored size are represented by zero. -/
+@[expose]
+def coeffVec (p : DensePoly R) (r : Nat) : Vector R r :=
+  Vector.ofFn fun i => p.coeff i.val
+
+@[simp, grind =]
+theorem coeffVec_get (p : DensePoly R) {r : Nat} (i : Fin r) :
+    (p.coeffVec r).get i = p.coeff i.val := by
+  change (Vector.ofFn fun i : Fin r => p.coeff i.val)[i.val] = p.coeff i.val
+  rw [Vector.getElem_ofFn]
 
 /-- Coefficient of `ofCoeffs arr` agrees with `arr.getD _ 0`: trimming trailing zeros does not
 change the value at any index. -/

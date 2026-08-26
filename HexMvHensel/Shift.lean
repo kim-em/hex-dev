@@ -170,7 +170,7 @@ def truncate (i : Fin (n + 1)) (d : Fin n → Nat)
 @[simp] theorem unshift_shift (i : Fin (n + 1)) (a : Fin n → Int)
     (p : MvPoly (n + 1) Int cmp) :
     shift i a (unshift i a p) = p := by
-  sorry
+  simpa [unshift] using shift_unshift i (fun j => -a j) p
 
 theorem shift_add (i : Fin (n + 1)) (a : Fin n → Int)
     (p q : MvPoly (n + 1) Int cmp) :

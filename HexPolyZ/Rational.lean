@@ -579,6 +579,11 @@ private theorem rat_scale_size_of_ne_zero {u : Rat} (hu : u ≠ 0) (p : DensePol
         exact hscaled_zero
       exact (Rat.mul_eq_zero.mp hmul_zero).resolve_left hu
 
+/-- Scaling a rational polynomial by a nonzero scalar preserves its size. -/
+theorem rat_size_scale {u : Rat} (hu : u ≠ 0) (p : DensePoly Rat) :
+    (DensePoly.scale u p).size = p.size :=
+  rat_scale_size_of_ne_zero hu p
+
 /-- `rat_scale_mulCoeffStep`: scaling the factors by `u` and `v` pulls the
 `u * v` factor out through one `mulCoeffStep` term of the coefficient
 convolution. -/
@@ -1087,6 +1092,22 @@ private theorem rat_product_size_gt_top
   rcases Nat.lt_or_ge (f.size - 1 + (g.size - 1)) (f * g).size with hlt | hle
   · exact hlt
   · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (f * g) hle))
+
+/-- The size of a product of nonzero rational polynomials is one less than
+the sum of their sizes. -/
+theorem rat_size_mul (f g : DensePoly Rat) (hf : f ≠ 0) (hg : g ≠ 0) :
+    (f * g).size = f.size + g.size - 1 := by
+  have hfPos : 0 < f.size := by
+    apply Nat.pos_of_ne_zero
+    intro hzero
+    exact hf (rat_eq_zero_of_size_zero f hzero)
+  have hgPos : 0 < g.size := by
+    apply Nat.pos_of_ne_zero
+    intro hzero
+    exact hg (rat_eq_zero_of_size_zero g hzero)
+  have hlower := rat_product_size_gt_top f g hfPos hgPos
+  have hupper := DensePoly.size_mul_le f g
+  omega
 
 /-- A nonzero rational polynomial divisor has size at most the size of the
 nonzero polynomial it divides. -/

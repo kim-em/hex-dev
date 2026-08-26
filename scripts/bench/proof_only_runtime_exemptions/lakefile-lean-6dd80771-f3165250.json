@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "f316525022094da9ec017e2268c929dcc1193816",
+ "reason": "Additionally registers the generic interval goal-closure proof bridge only; the factorization service target and executable dependency graph are unchanged."
+}

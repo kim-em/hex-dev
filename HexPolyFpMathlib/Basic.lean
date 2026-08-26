@@ -237,6 +237,20 @@ theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) :=
   coeff_fpPolyToPolynomial f n
 
+/-- Rebuilding a Mathlib polynomial preserves coefficients, transported back
+through the `ZMod64` equivalence. -/
+@[simp, grind =]
+theorem coeff_polynomialToFpPoly (f : Polynomial (ZMod p)) (n : Nat) :
+    (polynomialToFpPoly f).coeff n =
+      HexModArithMathlib.ZMod64.ofZMod (f.coeff n) := by
+  unfold polynomialToFpPoly
+  rw [Hex.DensePoly.coeff_ofList, HexPolyMathlib.list_getD_map_range_zero]
+  by_cases hn : n < f.natDegree + 1
+  · simp only [hn, ite_true, HexModArithMathlib.ZMod64.equiv_symm_apply]
+  · rw [ite_eq_right hn, Polynomial.coeff_eq_zero_of_natDegree_lt (by omega),
+      HexModArithMathlib.ZMod64.ofZMod_zero]
+    rfl
+
 /-- Monicity of executable finite-field polynomials transfers to Mathlib.
 
 No nontriviality hypothesis is required: when `ZMod p` is trivial every
@@ -266,6 +280,57 @@ theorem toMathlibPolynomial_monic (f : Hex.FpPoly p) :
   · rw [coeff_toMathlibPolynomial, hlc,
       Hex.DensePoly.leadingCoeff_eq_one_of_monic hmonic]
     exact HexModArithMathlib.ZMod64.toZMod_one
+
+/-- The executable degree transports to Mathlib's `natDegree`, with the zero
+polynomial mapping to degree `0`. No nontriviality hypothesis is needed: in the
+trivial ring every transported polynomial is zero and every executable
+coefficient is zero as well. -/
+@[simp, grind =]
+theorem natDegree_toMathlibPolynomial (f : Hex.FpPoly p) :
+    (toMathlibPolynomial f).natDegree = f.degree?.getD 0 := by
+  by_cases hsize : f.size = 0
+  · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
+    rw [hf_zero]
+    change (toMathlibPolynomial (0 : Hex.FpPoly p)).natDegree = 0
+    have hzero : toMathlibPolynomial (0 : Hex.FpPoly p) = 0 := by
+      apply Polynomial.ext
+      intro n
+      rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_zero, Polynomial.coeff_zero]
+      exact HexModArithMathlib.ZMod64.toZMod_zero
+    rw [hzero, Polynomial.natDegree_zero]
+  · have hpos : 0 < f.size := Nat.pos_of_ne_zero hsize
+    have hdegree_some : f.degree? = some (f.size - 1) := by
+      simp [Hex.DensePoly.degree?, hsize]
+    rw [hdegree_some, Option.getD_some]
+    apply le_antisymm
+    · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
+      intro N hN
+      rw [coeff_toMathlibPolynomial,
+        Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)]
+      exact HexModArithMathlib.ZMod64.toZMod_zero
+    · apply Polynomial.le_natDegree_of_ne_zero
+      rw [coeff_toMathlibPolynomial]
+      intro hzero
+      apply Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      apply (HexModArithMathlib.ZMod64.equiv (p := p)).injective
+      rw [HexModArithMathlib.ZMod64.equiv_apply,
+        HexModArithMathlib.ZMod64.equiv_apply]
+      exact hzero.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+
+/-- The executable leading coefficient transports through `toZMod` to
+Mathlib's leading coefficient. -/
+@[simp, grind =]
+theorem leadingCoeff_toMathlibPolynomial (f : Hex.FpPoly p) :
+    (toMathlibPolynomial f).leadingCoeff =
+      HexModArithMathlib.ZMod64.toZMod f.leadingCoeff := by
+  rw [Polynomial.leadingCoeff, natDegree_toMathlibPolynomial,
+    coeff_toMathlibPolynomial]
+  by_cases hsize : f.size = 0
+  · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
+    rw [hf_zero, Hex.DensePoly.leadingCoeff_zero, Hex.DensePoly.coeff_zero]
+  · have hpos : 0 < f.size := Nat.pos_of_ne_zero hsize
+    rw [Hex.DensePoly.degree?_eq_some_of_pos_size f hpos, Option.getD_some,
+      Hex.DensePoly.leadingCoeff_eq_coeff_last f hpos]
 
 /-! # Ring operations across the correspondence
 
@@ -304,6 +369,21 @@ theorem toMathlibPolynomial_sub (f g : Hex.FpPoly p) :
     coeff_toMathlibPolynomial, Hex.DensePoly.coeff_sub_ring,
     HexModArithMathlib.ZMod64.toZMod_sub]
 
+/-- Negation commutes with the finite-field polynomial transport. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_neg (f : Hex.FpPoly p) :
+    toMathlibPolynomial (-f) = -toMathlibPolynomial f := by
+  apply Polynomial.ext
+  intro n
+  rw [Polynomial.coeff_neg, coeff_toMathlibPolynomial, coeff_toMathlibPolynomial,
+    Hex.DensePoly.coeff_neg f n (by show (0 : Hex.ZMod64 p) - 0 = 0; grind),
+    HexModArithMathlib.ZMod64.toZMod_sub]
+  calc HexModArithMathlib.ZMod64.toZMod (0 : Hex.ZMod64 p) -
+        HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n)
+      = 0 - HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n) := by
+        rw [HexModArithMathlib.ZMod64.toZMod_zero]
+    _ = -HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n) := zero_sub _
+
 /-- The constant executable polynomial transports to the Mathlib constant. -/
 theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
     toMathlibPolynomial (Hex.DensePoly.C c) =
@@ -315,16 +395,28 @@ theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
   · subst hn; rw [if_pos rfl, if_pos rfl]
   · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
 
+/-- An executable monomial transports to the corresponding Mathlib monomial. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_monomial (m : Nat) (c : Hex.ZMod64 p) :
+    toMathlibPolynomial (Hex.DensePoly.monomial m c) =
+      Polynomial.monomial m (HexModArithMathlib.ZMod64.toZMod c) := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_monomial,
+    Polynomial.coeff_monomial]
+  by_cases hn : n = m
+  · subst hn
+    simp
+  · rw [ite_eq_right hn, ite_eq_right (fun h : m = n => hn h.symm)]
+    exact HexModArithMathlib.ZMod64.toZMod_zero
+
 /-- The monic monomial `X^m` transports to `X^m` over `ZMod p`. -/
+@[simp, grind =]
 theorem toMathlibPolynomial_monomial_one (m : Nat) :
     toMathlibPolynomial (Hex.DensePoly.monomial m (1 : Hex.ZMod64 p)) =
       (Polynomial.X : Polynomial (ZMod p)) ^ m := by
-  apply Polynomial.ext
-  intro n
-  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_X_pow]
-  by_cases hn : n = m
-  · rw [if_pos hn, if_pos hn]; exact HexModArithMathlib.ZMod64.toZMod_one
-  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+  rw [toMathlibPolynomial_monomial, HexModArithMathlib.ZMod64.toZMod_one,
+    Polynomial.monomial_one_right_eq_X_pow]
 
 /-- The executable indeterminate transports to Mathlib's `X`. -/
 theorem toMathlibPolynomial_X :
@@ -341,6 +433,30 @@ theorem toMathlibPolynomial_dvd {f g : Hex.FpPoly p} (h : f ∣ g) :
     toMathlibPolynomial f ∣ toMathlibPolynomial g := by
   obtain ⟨r, hr⟩ := h
   exact ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩
+
+/-- Executable finite-field polynomials divide one another exactly when their
+Mathlib images do. -/
+theorem toMathlibPolynomial_dvd_iff {f g : Hex.FpPoly p} :
+    toMathlibPolynomial f ∣ toMathlibPolynomial g ↔ f ∣ g := by
+  constructor
+  · rintro ⟨R, hR⟩
+    refine ⟨fpPolyEquiv.symm R, ?_⟩
+    apply fpPolyEquiv.injective
+    rw [map_mul, fpPolyEquiv.apply_symm_apply]
+    exact hR
+  · exact toMathlibPolynomial_dvd
+
+/-- Evaluation of a transported polynomial is its degree-indexed coefficient
+sum after transporting each executable coefficient through `toZMod`. -/
+theorem eval₂_toMathlibPolynomial {S : Type*} [Semiring S]
+    (h : ZMod p →+* S) (f : Hex.FpPoly p) (x : S) :
+    (toMathlibPolynomial f).eval₂ h x =
+      ∑ i ∈ Finset.range f.size,
+        h (HexModArithMathlib.ZMod64.toZMod (f.coeff i)) * x ^ i := by
+  change (fpPolyToPolynomial f).eval₂ h x = _
+  unfold fpPolyToPolynomial
+  rw [Polynomial.eval₂_finsetSum]
+  exact Finset.sum_congr rfl fun i _ => Polynomial.eval₂_monomial h x
 
 /-- The Mathlib primality fact yields the executable prime-modulus witness, so
 executable field-dependent lemmas (gcd/Bezout, modular division) become
@@ -383,6 +499,182 @@ instance commRing : CommRing (Hex.FpPoly p) :=
     sub := fun a b => Hex.DensePoly.sub a b
     neg := fun a => Hex.DensePoly.neg a
     sub_eq_add_neg := Hex.FpPoly.sub_eq_add_neg }
+
+/-- The executable zero polynomial transports to Mathlib's zero polynomial. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_zero :
+    toMathlibPolynomial (0 : Hex.FpPoly p) = 0 :=
+  map_zero fpPolyEquiv
+
+/-- The executable unit polynomial transports to Mathlib's unit polynomial. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_one :
+    toMathlibPolynomial (1 : Hex.FpPoly p) = 1 :=
+  map_one fpPolyEquiv
+
+/-- Powers commute with the finite-field polynomial transport. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_pow (f : Hex.FpPoly p) (n : Nat) :
+    toMathlibPolynomial (f ^ n) = toMathlibPolynomial f ^ n :=
+  map_pow fpPolyEquiv f n
+
+/-! # Inverse transport and composition
+
+The executable polynomial ring instance makes the standard `RingEquiv.symm`
+operation lemmas available on the inverse map. The coefficient and monomial
+lemmas remain explicit so callers never need to unfold either representation.
+-/
+
+/-- The inverse transport sends Mathlib's zero polynomial to executable zero. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_zero :
+    polynomialToFpPoly (0 : Polynomial (ZMod p)) = 0 := by
+  change fpPolyEquiv.symm 0 = 0
+  exact map_zero fpPolyEquiv.symm
+
+/-- The inverse transport sends Mathlib's one polynomial to executable one. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_one :
+    polynomialToFpPoly (1 : Polynomial (ZMod p)) = 1 := by
+  change fpPolyEquiv.symm 1 = 1
+  exact map_one fpPolyEquiv.symm
+
+/-- The inverse transport sends a Mathlib constant to the corresponding
+executable constant. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_C (c : ZMod p) :
+    polynomialToFpPoly (Polynomial.C c) =
+      Hex.DensePoly.C (HexModArithMathlib.ZMod64.ofZMod c) := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [coeff_polynomialToFpPoly, Polynomial.coeff_C, Hex.DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · subst hn
+    simp
+  · rw [ite_eq_right hn, ite_eq_right hn,
+      HexModArithMathlib.ZMod64.ofZMod_zero]
+    rfl
+
+/-- The inverse transport commutes with polynomial negation. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_neg (f : Polynomial (ZMod p)) :
+    polynomialToFpPoly (-f) = -polynomialToFpPoly f := by
+  change fpPolyEquiv.symm (-f) = -fpPolyEquiv.symm f
+  exact map_neg fpPolyEquiv.symm f
+
+/-- The inverse transport commutes with polynomial subtraction. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_sub (f g : Polynomial (ZMod p)) :
+    polynomialToFpPoly (f - g) =
+      polynomialToFpPoly f - polynomialToFpPoly g := by
+  change fpPolyEquiv.symm (f - g) = fpPolyEquiv.symm f - fpPolyEquiv.symm g
+  exact map_sub fpPolyEquiv.symm f g
+
+/-- The inverse transport commutes with polynomial addition. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_add (f g : Polynomial (ZMod p)) :
+    polynomialToFpPoly (f + g) =
+      polynomialToFpPoly f + polynomialToFpPoly g := by
+  change fpPolyEquiv.symm (f + g) = fpPolyEquiv.symm f + fpPolyEquiv.symm g
+  exact map_add fpPolyEquiv.symm f g
+
+/-- The inverse transport commutes with polynomial multiplication. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_mul (f g : Polynomial (ZMod p)) :
+    polynomialToFpPoly (f * g) =
+      polynomialToFpPoly f * polynomialToFpPoly g := by
+  change fpPolyEquiv.symm (f * g) = fpPolyEquiv.symm f * fpPolyEquiv.symm g
+  exact map_mul fpPolyEquiv.symm f g
+
+/-- The inverse transport sends a Mathlib monomial to the corresponding
+executable monomial. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_monomial (n : Nat) (c : ZMod p) :
+    polynomialToFpPoly (Polynomial.monomial n c) =
+      Hex.DensePoly.monomial n (HexModArithMathlib.ZMod64.ofZMod c) := by
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [coeff_polynomialToFpPoly, Polynomial.coeff_monomial,
+    Hex.DensePoly.coeff_monomial]
+  by_cases hi : i = n
+  · subst hi
+    simp
+  · rw [ite_eq_right hi, ite_eq_right (fun h : n = i => hi h.symm),
+      HexModArithMathlib.ZMod64.ofZMod_zero]
+    rfl
+
+/-- The Horner polynomial obtained by transporting a low-to-high executable
+coefficient list to `ZMod p`. -/
+private def fpHornerList (l : List (Hex.ZMod64 p)) : Polynomial (ZMod p) :=
+  l.foldr (fun c acc =>
+    Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) + Polynomial.X * acc) 0
+
+private theorem coeff_fpHornerList : ∀ (l : List (Hex.ZMod64 p)) (n : Nat),
+    (fpHornerList l).coeff n =
+      HexModArithMathlib.ZMod64.toZMod (l.getD n (Zero.zero : Hex.ZMod64 p))
+  | [], n => by
+      simp [fpHornerList]
+      exact HexModArithMathlib.ZMod64.toZMod_zero.symm
+  | c :: cs, n => by
+      show (Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) +
+          Polynomial.X * fpHornerList cs).coeff n = _
+      cases n with
+      | zero => simp
+      | succ m =>
+          rw [Polynomial.coeff_add, Polynomial.coeff_C,
+            ite_eq_right (Nat.succ_ne_zero m), Polynomial.coeff_X_mul,
+            coeff_fpHornerList cs m, zero_add, List.getD_cons_succ]
+
+private theorem fpHornerList_comp (M : Polynomial (ZMod p)) :
+    ∀ l : List (Hex.ZMod64 p),
+      (fpHornerList l).comp M =
+        l.foldr (fun c acc =>
+          Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) + M * acc) 0
+  | [] => by simp [fpHornerList]
+  | c :: cs => by
+      show (Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) +
+          Polynomial.X * fpHornerList cs).comp M = _
+      rw [Polynomial.add_comp, Polynomial.C_comp, Polynomial.mul_comp,
+        Polynomial.X_comp, fpHornerList_comp M cs]
+      rfl
+
+private theorem fpPoly_toList_getD (f : Hex.FpPoly p) (n : Nat) :
+    f.toList.getD n (Zero.zero : Hex.ZMod64 p) = f.coeff n := by
+  rw [Hex.DensePoly.toList, List.getD_eq_getElem?_getD, Array.getElem?_toList]
+  have h := Hex.DensePoly.toArray_getD f n
+  rw [Array.getD_eq_getD_getElem?] at h
+  exact h
+
+private theorem toMathlibPolynomial_eq_fpHornerList (f : Hex.FpPoly p) :
+    toMathlibPolynomial f = fpHornerList f.toList := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, coeff_fpHornerList, fpPoly_toList_getD]
+
+/-- The finite-field transport intertwines executable Horner composition with
+Mathlib polynomial composition. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_compose (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (Hex.DensePoly.compose f g) =
+      (toMathlibPolynomial f).comp (toMathlibPolynomial g) := by
+  have hlist : ∀ l : List (Hex.ZMod64 p),
+      toMathlibPolynomial (Hex.DensePoly.composeCoeffList l g) =
+        l.foldr (fun c acc =>
+          Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) +
+            toMathlibPolynomial g * acc) 0 := by
+    intro l
+    induction l with
+    | nil =>
+        change toMathlibPolynomial (0 : Hex.FpPoly p) = 0
+        exact map_zero fpPolyEquiv
+    | cons c cs ih =>
+        show toMathlibPolynomial
+            (Hex.DensePoly.composeCoeffList cs g * g + Hex.DensePoly.C c) = _
+        rw [toMathlibPolynomial_add, toMathlibPolynomial_mul,
+          toMathlibPolynomial_C, ih, List.foldr_cons, mul_comm, add_comm]
+  show toMathlibPolynomial (Hex.DensePoly.composeCoeffList f.toList g) = _
+  rw [hlist, toMathlibPolynomial_eq_fpHornerList f,
+    fpHornerList_comp]
 
 /-- The executable linear power is Mathlib's monoid power. `HexPolyFp` defines
 `linearPow` by structural recursion for kernel reduction; the `CommRing` above

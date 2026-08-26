@@ -4,13 +4,14 @@ Dense matrices over a coefficient type `R`.
 
 **Contents:**
 - `Matrix R n m`, an encapsulated dense matrix type. Consumers go through
-  its API — `ofFn`, `ofRows`, `getRow`, `rows`, and entry access
+  its API — `ofFn`, `ofRows`, `castRows`, `getRow`, `rows`, and entry access
   `M[(i, j)]` (the normal form for entries) — so the backing representation
   stays private and can change.
 - Matrix-vector multiplication, matrix-matrix multiplication
 - Dot product, norm squared (for `R = Int` and `R = Rat`)
 - Row operations (swap, scale, add multiple of one row to another) and the
   corresponding column operations
+- Rectangular leading-diagonal construction `diagMatrix`
 - Submatrix / leading-submatrix slicing and the Gram matrix
 - Generic over the coefficient type `R`
 
@@ -81,10 +82,20 @@ to change one column.
 
 **Key properties:**
 - identity matrices act as left and right multiplicative identities
+- row-vector multiplication associates with matrix multiplication, and its
+  action on `diagMatrix` is characterized entrywise
 - `transpose` is involutive
 - `gramMatrix M = M * Mᵀ`
 - elementary-operation multiplicative and inverse-preservation lemmas
 - `smul_mul : (c • A) * B = c • (A * B)`, with `row_smul` underneath it
+
+The executable operations remain in `Elementary.lean`; the reusable algebraic
+surface is grouped in `ElementaryAlgebra.lean`. It includes multiplication
+transport for row and column operations, the explicit inverse-preservation
+lemmas used by certificate-producing elimination, and
+`transpose_colAdd`. `Matrix` and `DensePoly` structural Boolean equality are
+lawful whenever entry equality is lawful, so certificate checkers may use
+matrix `BEq` without a separate soundness assumption.
 
 The determinant of a row operation (`det_rowSwap`, `det_rowScale`,
 `det_rowAdd`) is stated in `hex-determinant`, where `det` is defined.
@@ -477,6 +488,13 @@ not reduce cheaply in the kernel, so it stays off the `decide` cross-check path
 that design principle 11 discusses. Oracle: none; the surface is structural-layer
 exact arithmetic, as for the existing multiplication guards.
 
+`Matrix.castRows` transports the row dimension along an equality without
+changing the backing buffer. `Matrix.getElem_castRows` and
+`Matrix.getElem_castRows_nested` expose its pair and nested entry behaviour;
+`Matrix.getElem_pair_eq_get` relates constant-time pair access to the explicit
+row-vector projection. These representation lemmas support downstream
+dimension-dependent projections without making the backing field public.
+
 `conformance/HexBerlekamp/Conformance.lean` adds the coefficient-specific
 cross-checks for `strassenBarrett`: near-upper-bound residues exercise high-word
 carries; inner dimensions `4095`, `4096`, and `4097` straddle the implementation
@@ -493,6 +511,10 @@ with qualifiers in the `Hex.Matrix` namespace. Prior art for a verified Strassen
 is CoqEAL's refinement-based implementation (`SPEC/prior-art.md`); `hex-matrix`
 instead proves the executable schedule equal to the naive reference directly and
 swaps it in with `@[csimp]`.
+
+The row-transport additions are `Matrix.castRows`,
+`Matrix.getElem_castRows`, `Matrix.getElem_castRows_nested`, and
+`Matrix.getElem_pair_eq_get`.
 
 ## External comparators
 

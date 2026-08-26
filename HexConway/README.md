@@ -59,7 +59,9 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
   `conwayPoly_nonconstant` and `conwayPoly_monic` are the facts a field
   construction needs.
 - `Compatible p m n hm hn` is the decidable divisor-compatibility statement,
-  computed by `compatCheck`. `subfieldGen` names the norm element it is about.
+  computed by `compatCheck`. `subfieldGen` names the norm element it is about,
+  and `subfieldGen_eq_norm` proves that it is
+  `X ^ ((p^n - 1) / (p^m - 1))` in the quotient.
 - `Primitive p n h qs es fullDigits perPrimeDigits` is primitivity, computed by
   `primitiveCheck`, which validates the supplied factorization of `p^n - 1`
   before running the two power conditions.

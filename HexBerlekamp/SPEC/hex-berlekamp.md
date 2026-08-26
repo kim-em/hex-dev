@@ -138,6 +138,21 @@ The emitted term contains:
 `hex-berlekamp-mathlib` adds the same syntax for
 `Polynomial (ZMod p)`.
 
+## Fast-arithmetic adoption
+
+After [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), the Fp production
+plan is audited in the repeated Frobenius reductions, distinct-degree gcd
+chain, Rabin powers, and Berlekamp splits. Fast division and half-gcd must
+agree exactly with the existing `DensePoly` operations, so certificate shapes
+and checker theorems do not change.
+
+Adoption is decided by the complete operation benchmark, not by a standalone
+NTT or half-gcd microbenchmark. Small degrees retain packed multiplication and
+the current Euclidean gcd; larger cells may select direct or CRT-NTT,
+reciprocal division, and half-gcd. Every selected cell is recorded beside its
+retained baseline, including prime, degree, and whether a transform plan was
+reused.
+
 ## Mathematical companion
 
 `hex-berlekamp-mathlib` uses the ring equivalence

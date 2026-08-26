@@ -203,6 +203,8 @@ input types), usable as
 `obtain ⟨scalar, factors, factors_mul, factors_irred⟩ := factor_poly f`. -/
 syntax (name := factorPolyTerm) "factor_poly" term:max : term
 
+/-- Term elaborator for `factor_poly f`: runs the search in compiled code and
+returns the checked certificate term. -/
 @[term_elab factorPolyTerm] meta def elabFactorPoly : Term.TermElab :=
   fun stx expectedType? => do
     match stx with
@@ -266,6 +268,8 @@ meta def introFactored (e : Expr) : Tactic.TacticM Unit := do
 `factors_irred` hypotheses stated over them. -/
 syntax (name := factorPolyTac) "factor_poly" term:max : tactic
 
+/-- Tactic elaborator for `factor_poly f`: elaborates the certificate and
+introduces its four fields into the local context. -/
 @[tactic factorPolyTac] meta def evalFactorPolyTac : Tactic.Tactic :=
   fun stx => do
     match stx with

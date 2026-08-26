@@ -350,47 +350,56 @@ class TokenPreflightTests(unittest.TestCase):
             self.assertEqual(sync_released.main(), 0)
         self.assertEqual(seen_tokens, [None])
 
-    def _check(self, responses: list) -> str | None:
-        """Run selection_check with `_api_repo` answering from `responses`,
-        in call order: authenticated first, then the anonymous probe."""
-        with patch.object(sync_released, "_api_repo", side_effect=responses):
+    def _check(self, advertisement, anonymous: list | None = None) -> str | None:
+        """Run selection_check with the receive-pack advertisement answering
+        `advertisement` and, when reached, the anonymous `_api_repo` probe
+        answering from `anonymous`."""
+        with (
+            patch.object(sync_released, "_receive_pack_status",
+                         side_effect=[advertisement]),
+            patch.object(sync_released, "_api_repo",
+                         side_effect=anonymous or []),
+        ):
             return sync_released.selection_check("leanprover/hex-arith", "t")
 
-    def test_visible_repo_passes(self) -> None:
-        self.assertIsNone(self._check([{"permissions": {"push": True}}]))
-
-    def test_visible_but_read_only_role_still_passes(self) -> None:
-        # `permissions` reports the *user's* role, not the token's grants, so it
-        # is deliberately not treated as evidence either way.
-        self.assertIsNone(self._check([{"permissions": {"push": False}}]))
+    def test_write_capable_repo_passes(self) -> None:
+        self.assertIsNone(self._check(200))
 
     def test_unselected_repo_is_named_as_such(self) -> None:
-        reason = self._check([404, {"name": "hex-arith"}])
-        self.assertIn("not in the token's selected repositories", reason)
+        # A public repository is readable by any fine-grained token whether or
+        # not it is selected, so only the write handshake separates the tokens:
+        # unauthorized receive-pack means no Contents: write grant here.
+        for status in (401, 403):
+            with self.subTest(status=status):
+                reason = self._check(status)
+                self.assertIn("not granted Contents: write", reason)
 
     def test_absent_repo_says_create_it(self) -> None:
-        reason = self._check([404, 404])
+        reason = self._check(404, [404])
         self.assertIn("no such repository", reason)
 
     def test_rate_limit_is_indeterminate_not_a_missing_repo(self) -> None:
-        for status in (403, 429):
-            with self.subTest(status=status):
-                reason = self._check([status])
-                self.assertIn("could not be checked", reason)
-                self.assertNotIn("no such repository", reason)
+        reason = self._check(429)
+        self.assertIn("could not be checked", reason)
+        self.assertNotIn("no such repository", reason)
 
     def test_server_error_is_indeterminate(self) -> None:
-        reason = self._check([503])
+        reason = self._check(503)
         self.assertIn("could not be checked", reason)
 
     def test_anonymous_probe_failure_does_not_claim_the_repo_is_missing(self) -> None:
-        reason = self._check([404, 429])
+        reason = self._check(404, [429])
+        self.assertIn("undetermined", reason)
+        self.assertNotIn("no such repository", reason)
+
+    def test_hidden_but_public_repo_is_undetermined(self) -> None:
+        reason = self._check(404, [{"name": "hex-arith"}])
         self.assertIn("undetermined", reason)
         self.assertNotIn("no such repository", reason)
 
     def test_network_failure_is_indeterminate(self) -> None:
         import urllib.error
-        reason = self._check([urllib.error.URLError("dns")])
+        reason = self._check(urllib.error.URLError("dns"))
         self.assertIn("could not be checked", reason)
 
     def test_misspelled_only_fails_instead_of_publishing_nothing(self) -> None:

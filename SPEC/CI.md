@@ -232,11 +232,31 @@ content hash; restoring a stale cache is safe because Lake
 re-elaborates any module whose source has changed and reuses
 anything that hasn't.
 
-The cache key does not need careful tuning. Lake handles
-invalidation. A per-run unique key (e.g. `${{ github.run_id }}`)
-with a constant prefix in `restore-keys` is sufficient — every run
-uploads a fresh snapshot, every run restores the most recent
-snapshot, and Lake reconciles the rest.
+The key prefix MUST include runner OS, runner architecture, and the
+hash of `lean-toolchain` plus `lake-manifest.json`. Lake can reconcile
+ordinary Hex source changes, but artifacts from a different Lean
+toolchain or dependency graph are not useful enough to justify their
+download. The final key component is the commit SHA, with the
+dependency-scoped prefix used as `restore-keys`.
+
+Only a fully verified `main` push saves a snapshot. Pull-request caches
+are scoped to that PR's merge ref and cannot seed another PR, while a
+cache saved on the default branch is available to pull requests. Saving
+an approximately 1 GB snapshot from every PR run therefore churns the
+repository's 10 GB cache quota without providing shared reuse. PRs and
+the Pages workflow restore the latest compatible `main` snapshot and
+let Lake rebuild their source delta.
+
+Every build workflow installs the exact `lean-toolchain` pin through
+`scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
+release asset and verifies the reported version before placing its binaries on
+`PATH`. This avoids depending on Elan's separate distribution redirect, which
+may lose prerelease artifacts that remain present in the canonical release.
+The helper owns no whole-`.lake` cache; the explicit Hex cache below owns this
+policy and Mathlib's cache is managed separately. The public R2/Lake artifact
+cache is a fallback only when the GitHub cache has no compatible match.
+Successful trusted `main` builds publish to both backends after all
+verification gates pass.
 
 Coverage:
 
@@ -250,6 +270,11 @@ Anti-patterns:
 - Keying on a content hash of the Hex source tree. The key changes
   on every commit, so the cache misses on every PR — buying
   nothing for what is otherwise the dominant build-time cost.
+- Omitting the toolchain and manifest from the restore prefix. That
+  downloads a large snapshot across a Lean or dependency upgrade even
+  though Lake must rebuild it.
+- Saving on pull-request refs. Those snapshots consume quota but are
+  not available to other pull requests.
 - Skipping the cache because "Lake should be fast." Lake from a
   clean `.lake/build` recompiles every Hex module elaborated by
   the workflow; on the conformance target list that runs ~13 min on

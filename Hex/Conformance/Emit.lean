@@ -77,6 +77,25 @@ private def jsonIntMatrix (rows : List (List Int)) : String := Id.run do
     out := out ++ jsonIntList row
   out.push ']'
 
+private def jsonRatList (xs : List Rat) : String :=
+  let nums := xs.map (·.num)
+  let dens := xs.map fun r => (r.den : Int)
+  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
+  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
+
+private def jsonIntPolyMatrix (rows : List (List (List Int))) : String := Id.run do
+  let mut out := "["
+  let mut firstRow := true
+  for row in rows do
+    if firstRow then firstRow := false else out := out.push ','
+    out := out.push '['
+    let mut firstEntry := true
+    for entry in row do
+      if firstEntry then firstEntry := false else out := out.push ','
+      out := out ++ jsonIntList entry
+    out := out.push ']'
+  out.push ']'
+
 private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run do
   let mut out := "["
   let mut first := true
@@ -87,6 +106,18 @@ private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run 
       out := out.push ','
     out := out ++ "[" ++
       jsonIntList (exponents.map Int.ofNat) ++ "," ++ jsonInt coeff ++ "]"
+  out.push ']'
+
+private def jsonMvPolyList
+    (polynomials : List (List (List Nat × Int))) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for terms in polynomials do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ jsonMvPolyTerms terms
   out.push ']'
 
 private def jsonOptionalInt : Option Int → String
@@ -118,6 +149,40 @@ private def jsonObject (fields : List Field) : String := Id.run do
       out := out.push ','
     out := out ++ jsonString k |>.push ':' |>.append v
   out.push '}'
+
+private def jsonMvFactors
+    (factors : List (List (List Nat × Int) × Nat)) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for (terms, multiplicity) in factors do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ jsonObject [
+      ("terms", jsonMvPolyTerms terms),
+      ("multiplicity", toString multiplicity)
+    ]
+  out.push ']'
+
+private def jsonRatPoly (coeffs : List Rat) : String :=
+  jsonObject [
+    ("num", jsonIntList (coeffs.map (·.num))),
+    ("den", jsonIntList (coeffs.map fun q => (q.den : Int)))
+  ]
+
+private def jsonRatPolyMatrix (rows : List (List (List Rat))) : String := Id.run do
+  let mut out := "["
+  let mut firstRow := true
+  for row in rows do
+    if firstRow then firstRow := false else out := out.push ','
+    out := out.push '['
+    let mut firstEntry := true
+    for entry in row do
+      if firstEntry then firstEntry := false else out := out.push ','
+      out := out ++ jsonRatPoly entry
+    out := out.push ']'
+  out.push ']'
 
 /-- Write a single JSONL record (the trailing newline) either to
 `stdout` or, when set, to the file named by `HEX_FIXTURE_OUTPUT`. -/
@@ -166,6 +231,34 @@ def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := 
     ("rows", jsonIntMatrix rows)
   ]
 
+/-- Emit a polynomial-matrix fixture over `ZMod64 p`. Polynomial
+coefficients are in ascending exponent order. -/
+def emitPolyMatrixZModFixture (lib case : String) (p rows cols : Nat)
+    (entries : List (List (List Int))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "polymatrix"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("field", jsonObject [("p", toString p)]),
+    ("rows", toString rows),
+    ("cols", toString cols),
+    ("entries", jsonIntPolyMatrix entries)
+  ]
+
+/-- Emit a polynomial-matrix fixture over `Rat`. Each entry is encoded by
+parallel numerator and positive-denominator arrays. -/
+def emitPolyMatrixRatFixture (lib case : String) (rows cols : Nat)
+    (entries : List (List (List Rat))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "polymatrix"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("field", jsonObject [("rat", "true")]),
+    ("rows", toString rows),
+    ("cols", toString cols),
+    ("entries", jsonRatPolyMatrix entries)
+  ]
+
 /-- Emit a canonical or pre-normalization `mvpoly` fixture. Each term is an
 exponent vector paired with its integer coefficient. -/
 def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
@@ -177,6 +270,144 @@ def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
     ("arity", toString arity),
     ("order", jsonString order),
     ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a fixed-precision univariate-series fixture. Coefficients use a
+parallel numerator/denominator encoding for both `ZZ` and `QQ`; the domain
+field tells the oracle which coefficient ring contract applies. -/
+def emitSeriesFixture (lib case domain : String) (precision : Nat)
+    (coeffs : List Rat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "series"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("domain", jsonString domain),
+    ("precision", toString precision),
+    ("coeffs", jsonRatList coeffs)
+  ]
+
+/-- Emit a multivariate-gcd fixture over the named coefficient domain. -/
+def emitMvGcdFixture (lib case : String) (arity : Nat) (order domain : String)
+    (modulus : Option Int) (left right : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvgcd"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("mod", jsonOptionalInt modulus),
+    ("left", jsonMvPolyTerms left),
+    ("right", jsonMvPolyTerms right)
+  ]
+
+/-- Emit a characteristic-zero multivariate squarefree-decomposition fixture. -/
+def emitMvSqfFixture (lib case : String) (arity : Nat) (order domain : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsqf"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a finite-characteristic multivariate squarefree-decision fixture. -/
+def emitMvSquarefreeFixture (lib case : String) (arity : Nat) (order : String)
+    (modulus : Nat) (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsquarefree"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString "zmod"),
+    ("mod", toString modulus),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a checked multivariate-Hensel fixture. Univariate images use
+ascending coefficient lists; target and intended leading coefficients use the
+shared multivariate term encoding. -/
+def emitMvHenselFixture (lib case : String) (arity : Nat) (order : String)
+    (main : Nat) (point : List Int) (prime exponent : Nat)
+    (target : List (List Nat × Int)) (images : List (List Int))
+    (leading : List (List (List Nat × Int))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvhensel"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("main", toString main),
+    ("point", jsonIntList point),
+    ("prime", toString prime),
+    ("exponent", toString exponent),
+    ("target", jsonMvPolyTerms target),
+    ("images", jsonIntMatrix images),
+    ("leading", jsonMvPolyList leading)
+  ]
+
+/-- Emit one recursive multivariate-diophantine fixture. `bases` are the
+complementary products used in the checked equation and `witness` is the
+univariate partial-fraction tuple supplied to the executable route. -/
+def emitMvDiophFixture (lib case : String) (arity : Nat) (order : String)
+    (main modulus : Nat) (degrees : List Nat)
+    (bases : List (List (List Nat × Int))) (images witness : List (List Int))
+    (rhs : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvdioph"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("main", toString main),
+    ("modulus", toString modulus),
+    ("degrees", jsonIntList (degrees.map Int.ofNat)),
+    ("bases", jsonMvPolyList bases),
+    ("images", jsonIntMatrix images),
+    ("witness", jsonIntMatrix witness),
+    ("rhs", jsonMvPolyTerms rhs)
+  ]
+
+/-- Emit a multivariate integer-factorization input. -/
+def emitMvFactorFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvfactor"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a multivariate irreducibility-decision input. -/
+def emitMvIrredFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvirred"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit one caller-selected evaluation point for Wang point probing. -/
+def emitMvPointFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) (main : Nat) (point : List Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvpoint"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms),
+    ("main", toString main),
+    ("point", jsonIntList point)
   ]
 
 /-- Emit a `sparsepoly` fixture record: a sparse univariate polynomial as
@@ -212,6 +443,40 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("case", jsonString case),
     ("p",    jsonInt p),
     ("n",    jsonInt n)
+  ]
+
+/-- Emit an `isprime` fixture record: a single number whose primality
+verdict the oracle recomputes. -/
+def emitIsPrimeFixture (lib case : String) (n : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "isprime"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("n",    jsonInt n)
+  ]
+
+/-- Emit a `certcheck` fixture record: a primality certificate for the
+claimed subject `n`, serialized by the emitting driver as a raw JSON
+object (this shared library cannot depend on the certificate type). -/
+def emitCertCheckFixture (lib case : String) (n : Int) (cert : String) :
+    IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "certcheck"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("n",    jsonInt n),
+    ("cert", cert)
+  ]
+
+/-- Emit a `segment` fixture record: a half-open range whose ascending
+prime list the oracle recomputes. -/
+def emitSegmentFixture (lib case : String) (lo hi : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "segment"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("lo",   jsonInt lo),
+    ("hi",   jsonInt hi)
   ]
 
 /-- Emit a symmetric-representative fixture. -/
@@ -437,6 +702,9 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
     ("value", value)
   ]
 
+/-- Boolean result value. -/
+def boolValue (b : Bool) : String := if b then "true" else "false"
+
 /-- Polynomial-shaped result value: a coefficient list. -/
 def polyValue (coeffs : List Int) : String := jsonIntList coeffs
 
@@ -455,6 +723,54 @@ def intMatrixValue (rows : List (List Int)) : String := jsonIntMatrix rows
 def mvPolyValue (terms : List (List Nat × Int)) : String :=
   jsonMvPolyTerms terms
 
+/-- A list of multivariate polynomials in the shared term encoding. -/
+def mvPolyListValue (polynomials : List (List (List Nat × Int))) : String :=
+  jsonMvPolyList polynomials
+
+/-- Successful multivariate-Hensel result payload. -/
+def mvHenselSuccessValue
+    (factors : List (List (List Nat × Int))) : String :=
+  jsonObject [("factors", jsonMvPolyList factors)]
+
+/-- Failed multivariate-Hensel result payload. Indexed constructors include
+their index or modulus in the caller-provided stable string. -/
+def mvHenselFailureValue (failure : String) : String :=
+  jsonObject [("failure", jsonString failure)]
+
+/-- Recursive-diophantine result payload; `none` is encoded as JSON null. -/
+def mvDiophValue
+    (answer : Option (List (List (List Nat × Int)))) : String :=
+  match answer with
+  | none => "null"
+  | some polynomials => jsonMvPolyList polynomials
+
+/-- Canonical multivariate integer factorization payload. -/
+def mvFactorValue (content : Int)
+    (factors : List (List (List Nat × Int) × Nat)) : String :=
+  jsonObject [
+    ("content", jsonInt content),
+    ("factors", jsonMvFactors factors)
+  ]
+
+/-- Irreducibility decision and the stable certificate-route name. -/
+def mvIrredValue (irreducible : Bool) (constructor : String) : String :=
+  jsonObject [
+    ("irreducible", if irreducible then "true" else "false"),
+    ("constructor", jsonString constructor)
+  ]
+
+/-- Rejected Wang evaluation point. -/
+def mvPointRejectValue (reject : String) : String :=
+  jsonObject [("reject", jsonString reject)]
+
+/-- Accepted Wang point, including the data handed to Hensel lifting. -/
+def mvPointSuccessValue (images : List (List Int))
+    (leading : List (List (List Nat × Int))) : String :=
+  jsonObject [
+    ("images", jsonIntMatrix images),
+    ("leading", jsonMvPolyList leading)
+  ]
+
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=
   "[" ++ jsonIntList quot ++ "," ++ jsonIntList rem ++ "]"
@@ -465,10 +781,27 @@ The oracle compares Lean's gcd to `flint.fmpq_poly`'s gcd by normalising
 both to the monic associate, which is meaningful because `Hex.DensePoly`
 gcd over `Rat` is only determined up to a (rational) scalar associate. -/
 def polyRatValue (coeffs : List Rat) : String :=
-  let nums := coeffs.map (·.num)
-  let dens := coeffs.map fun r => (r.den : Int)
-  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
-  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
+  jsonRatList coeffs
+
+/-- Rational coefficient-list value used by truncated-series results. -/
+def seriesValue (coeffs : List Rat) : String :=
+  jsonRatList coeffs
+
+/-- Optional rational coefficient-list value used by partial series
+operations. -/
+def optionSeriesValue (coeffs : Option (List Rat)) : String :=
+  match coeffs with
+  | none => "null"
+  | some xs => jsonRatList xs
+
+/-- A diagonal of polynomials over a prime field. -/
+def polyListValue (polys : List (List Int)) : String :=
+  jsonIntMatrix polys
+
+/-- A diagonal of rational-coefficient polynomials. -/
+def polyRatListValue (polys : List (List Rat)) : String :=
+  let values := polys.map jsonRatPoly
+  "[" ++ String.intercalate "," values ++ "]"
 
 /-- Lattice-shaped result value: a basis as a list of integer rows. -/
 def latticeValue (basis : List (List Int)) : String := jsonIntMatrix basis

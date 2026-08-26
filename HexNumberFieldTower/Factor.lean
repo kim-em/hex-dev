@@ -22,26 +22,6 @@ single full executable certificate replay.
 -/
 namespace Hex.NumberTower
 
-namespace Factor
-
-/-- Checked Yun decomposition in a fixed tower. -/
-@[expose]
-def yun? (T : NumberTower) (f : Poly T) : Option (Array (Poly T × Nat)) :=
-  let input := f.toArray.map coeffs
-  let components := yunRaw T.levels.toList input
-  if checkYun T.levels.toList input components then
-    some <| components.map fun component =>
-      (DensePoly.ofCoeffs (component.1.map (ofCoeffs T)), component.2)
-  else
-    none
-
-#guard
-    match yun? rat (0 : Poly rat) with
-    | some components => components.isEmpty
-    | none => false
-
-end Factor
-
 /-- Reconstruct and recursively certify a proposed public factorization. -/
 @[expose]
 def checkFactorization {T : NumberTower} (f : Poly T) (scalar : Elem T)
@@ -53,8 +33,12 @@ def checkFactorization {T : NumberTower} (f : Poly T) (scalar : Elem T)
 
 /-- A checked complete factorization in a fixed tower. -/
 structure Factorization (T : NumberTower) (f : Poly T) where
+  /-- The leading scalar; the listed factors are monic. -/
   scalar : Elem T
+  /-- Monic irreducible factors, canonically sorted, each with its positive
+  multiplicity. -/
   factors : Array (Poly T × Nat)
+  /-- The reconstruction and recursive irreducibility replay succeeded. -/
   checked : checkFactorization f scalar factors = true
 
 /-- Complete irreducible factorization with multiplicity. -/

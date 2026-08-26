@@ -86,6 +86,14 @@ mutual
         {cmp : Mono 0 → Mono 0 → Ordering}
         [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
         (u v : R) : CoprimeCert 0 R cmp
+    /-- A direct Bézout identity at any arity.  The checker replays the
+    polynomial identity instead of descending through a subresultant chain. -/
+    | bezout {n : Nat} {R : Type u}
+        [zeroR : Zero R]
+        {cmp : Mono n → Mono n → Ordering}
+        [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
+        (u v : @MvPoly n R zeroR cmp outerTrans outerEq) :
+        @CoprimeCert n R zeroR cmp outerTrans outerEq
     /-- Internal universe-polymorphic form of rational lifting.  The public
     `CoprimeCert.ratLift` smart constructor fixes the embedded coefficient
     type to `Int` and the target type to `Rat`. -/
@@ -144,6 +152,8 @@ mutual
       (n : Nat) → (R : Type u) → [Zero R] →
       (cmp : Mono n → Mono n → Ordering) →
       [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type (u + 1)
+    /-- Package a gcd, its two exact cofactors, and evidence that the
+    cofactors are coprime. -/
     | mk {n : Nat} {R : Type u} [Zero R]
         {cmp : Mono n → Mono n → Ordering}
         [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -263,6 +273,19 @@ implementation detail of Lean's mutual-inductive positivity checker. -/
     ContentCert n R cmp :=
   .mk value (GcdCerts.ofList steps)
 
+@[simp] theorem value_ofSteps (value : MvPoly n R cmp)
+    (steps : List (GcdCert n R cmp)) :
+    (ofSteps value steps).value = value := by
+  rfl
+
+@[simp] theorem steps_ofSteps (value : MvPoly n R cmp)
+    (steps : List (GcdCert n R cmp)) :
+    (ofSteps value steps).steps = steps := by
+  induction steps with
+  | nil => rfl
+  | cons step steps ih =>
+      simp only [ContentCert.steps, GcdCerts.toList, ih]
+
 end ContentCert
 
 /-- Coefficientwise cast from the integer model used by `ratLift`. -/
@@ -296,6 +319,23 @@ structure CheckOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
     (polyNormalize cert.gcd == cert.gcd) &&
     coprime cert.cofL cert.cofR cert.coprime
 
+/-! `checkContentSteps` exposes the accumulator used by content replay.  The
+public checker fixes that accumulator to zero; keeping the general recursion
+named lets producer proofs state the natural induction invariant. -/
+
+@[reducible] def checkContentSteps {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [IsMonomialOrder cmp]
+    (gcd : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp → Bool)
+    (value acc : MvPoly n R cmp) :
+    List (MvPoly n R cmp) → List (GcdCert n R cmp) → Bool
+  | [], [] => acc == value
+  | q :: qs, step :: steps =>
+      gcd acc q step && checkContentSteps gcd value step.gcd qs steps
+  | _, _ => false
+
 @[reducible] def checkContentUsing {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -303,12 +343,7 @@ structure CheckOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
     [Dvd R] [GcdOps R] [IsMonomialOrder cmp]
     (gcd : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp → Bool)
     (coeffs : List (MvPoly n R cmp)) (cert : ContentCert n R cmp) : Bool :=
-  let rec go (acc : MvPoly n R cmp) :
-      List (MvPoly n R cmp) → List (GcdCert n R cmp) → Bool
-    | [], [] => acc == cert.value
-    | q :: qs, step :: steps => gcd acc q step && go step.gcd qs steps
-    | _, _ => false
-  go 0 coeffs cert.steps
+  checkContentSteps gcd cert.value 0 coeffs cert.steps
 
 /-! The rational-lift branch contains an embedded coefficient certificate at
 the same arity.  Its replay therefore uses this independent structural
@@ -325,6 +360,7 @@ recursive. -/
   match cert with
   | .unit => polyIsUnit f || polyIsUnit h
   | .base u v => u * coeff Mono.zero f + v * coeff Mono.zero h == 1
+  | .bezout u v => u * f + v * h == 1
   | _ => false
 
 @[reducible] def succCheckNoLift {n : Nat} {S : Type u}
@@ -337,6 +373,7 @@ recursive. -/
     (cert : CoprimeCert (n + 1) S cmp) : Bool := by
   cases cert with
   | unit => exact polyIsUnit f || polyIsUnit h
+  | bezout u v => exact u * f + v * h == 1
   | ratLiftCore => exact false
   | split i cmp' P φ a α β left right rest =>
       letI : ZMod64.Bounds P.m := P.bounds
@@ -405,6 +442,7 @@ recursive. -/
   match cert with
   | .unit => polyIsUnit f || polyIsUnit h
   | .base u v => u * coeff Mono.zero f + v * coeff Mono.zero h == 1
+  | .bezout u v => u * f + v * h == 1
   | @CoprimeCert.ratLiftCore _ _ S _ _ _ _ _ringModel _decModel
       _beqModel _lawfulModel _dvdModel _gcdModel _ _ _ embed _ _ _ _ _
       scaleL scaleR invL invR left right cert =>
@@ -421,6 +459,7 @@ recursive. -/
     (cert : CoprimeCert (n + 1) R cmp) : Bool := by
   cases cert with
   | unit => exact polyIsUnit f || polyIsUnit h
+  | bezout u v => exact u * f + v * h == 1
   | @ratLiftCore _ _ S _ _ _ _ ringModel decModel beqModel
       lawfulModel dvdModel gcdModel _ _ _ embed _ _ _ _ _
       scaleL scaleR invL invR left right cert =>
@@ -572,7 +611,17 @@ theorem checkGcd_sound {n : Nat} {R : Type u}
     {f h : MvPoly n R cmp} {cert : GcdCert n R cmp}
     (hc : checkGcd f h cert = true) :
     CheckedGcdResult f h cert.gcd cert.cofL cert.cofR := by
-  sorry
+  cases n with
+  | zero =>
+      simp only [checkGcd, checkGcdUsing, Bool.and_eq_true,
+        beq_iff_eq] at hc
+      exact ⟨hc.1.1.1.symm, hc.1.1.2.symm, hc.1.2,
+        checkCoprime_sound hc.2⟩
+  | succ n =>
+      simp only [checkGcd, checkGcdUsing, Bool.and_eq_true,
+        beq_iff_eq] at hc
+      exact ⟨hc.1.1.1.symm, hc.1.1.2.symm, hc.1.2,
+        checkCoprime_sound hc.2⟩
 
 /-- Separate gcd-domain cancellation turns checked coprime cofactors into
 maximality. -/
@@ -585,7 +634,11 @@ theorem CheckedGcdResult.greatest {n : Nat} {R : Type u}
     {f h g cofL cofR : MvPoly n R cmp}
     (hc : CheckedGcdResult f h g cofL cofR) :
     ∀ d, d ∣ f → d ∣ h → d ∣ g := by
-  sorry
+  intro d hdf hdh
+  rcases hc with ⟨hf, hh, _, hcop⟩
+  rw [hf] at hdf
+  rw [hh] at hdh
+  exact CoprimeCancelLaws.cancel_coprime g cofL cofR d hcop hdf hdh
 
 /-- Full semantic payload of an accepted certificate. -/
 theorem checkGcd_greatest {n : Nat} {R : Type u}

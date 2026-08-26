@@ -37,63 +37,27 @@ open Polynomial
 -- sites spelling these `HexBerlekampMathlib.foo` keep resolving.
 export HexPolyFpMathlib (fpPolyToPolynomial polynomialToFpPoly
   coeff_fpPolyToPolynomial fpPolyEquiv toMathlibPolynomial fpPolyEquiv_apply
-  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial
+  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial coeff_polynomialToFpPoly
+  natDegree_toMathlibPolynomial leadingCoeff_toMathlibPolynomial
   toMathlibPolynomial_monic toMathlibPolynomial_derivative toMathlibPolynomial_mul
-  toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_C
+  toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_neg
+  toMathlibPolynomial_zero toMathlibPolynomial_one toMathlibPolynomial_pow
+  toMathlibPolynomial_C toMathlibPolynomial_monomial
   toMathlibPolynomial_monomial_one toMathlibPolynomial_X toMathlibPolynomial_dvd
-  primeModulus_of_fact)
+  toMathlibPolynomial_dvd_iff eval₂_toMathlibPolynomial
+  polynomialToFpPoly_zero polynomialToFpPoly_one polynomialToFpPoly_C
+  polynomialToFpPoly_neg polynomialToFpPoly_sub polynomialToFpPoly_add polynomialToFpPoly_mul
+  polynomialToFpPoly_monomial toMathlibPolynomial_compose primeModulus_of_fact)
 
 variable {p : Nat} [Hex.ZMod64.Bounds p]
 
 /-- The executable Berlekamp basis size is the Mathlib natural degree after
-transport. Requires `Nontrivial (ZMod p)`: over a trivial `ZMod p` the
-transport collapses to `0` while `basisSize` can be positive (e.g. `p = 1`,
-`f = X`). -/
-theorem natDegree_toMathlibPolynomial_eq_basisSize
-    [Nontrivial (ZMod p)]
-    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f) :
+transport. This is the algorithm-facing specialization of the representation
+theorem `natDegree_toMathlibPolynomial`. -/
+theorem natDegree_toMathlibPolynomial_eq_basisSize (f : Hex.FpPoly p) :
     (toMathlibPolynomial f).natDegree = Hex.Berlekamp.basisSize f := by
-  -- Monicity plus nontriviality forces the leading coefficient `1 ≠ 0`, so the
-  -- polynomial is nonzero and `f.size > 0`.
-  have hsize_pos : 0 < f.size := by
-    rcases Nat.eq_zero_or_pos f.size with h0 | hpos
-    · exfalso
-      have hf0 : f = 0 := by
-        apply Hex.DensePoly.ext_coeff
-        intro n
-        rw [Hex.DensePoly.coeff_zero]
-        exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
-      have h1 : f.leadingCoeff = 1 :=
-        Hex.DensePoly.leadingCoeff_eq_one_of_monic hmonic
-      rw [hf0, Hex.DensePoly.leadingCoeff_zero] at h1
-      -- `h1 : (0 : ZMod64 p) = 1`; transport to `ZMod p` to contradict
-      -- `Nontrivial`.
-      have hz : (0 : ZMod p) = (1 : ZMod p) := by
-        calc (0 : ZMod p)
-            = HexModArithMathlib.ZMod64.toZMod (0 : Hex.ZMod64 p) :=
-              HexModArithMathlib.ZMod64.toZMod_zero.symm
-          _ = HexModArithMathlib.ZMod64.toZMod (1 : Hex.ZMod64 p) :=
-              congrArg _ h1
-          _ = (1 : ZMod p) := HexModArithMathlib.ZMod64.toZMod_one
-      exact one_ne_zero hz.symm
-    · exact hpos
-  have hlc : f.coeff (f.size - 1) = 1 := by
-    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos]
-    exact hmonic
-  have hcoeff_one : (toMathlibPolynomial f).coeff (f.size - 1) = 1 := by
-    rw [coeff_toMathlibPolynomial, hlc]
-    exact HexModArithMathlib.ZMod64.toZMod_one
-  have hub : (toMathlibPolynomial f).natDegree ≤ f.size - 1 := by
-    refine Polynomial.natDegree_le_iff_coeff_eq_zero.mpr ?_
-    intro N hN
-    rw [coeff_toMathlibPolynomial,
-      Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)]
-    exact HexModArithMathlib.ZMod64.toZMod_zero
-  have hlb : f.size - 1 ≤ (toMathlibPolynomial f).natDegree :=
-    Polynomial.le_natDegree_of_ne_zero (by rw [hcoeff_one]; exact one_ne_zero)
-  rw [le_antisymm hub hlb]
-  unfold Hex.Berlekamp.basisSize Hex.DensePoly.degree?
-  simp [Nat.ne_of_gt hsize_pos]
+  rw [natDegree_toMathlibPolynomial]
+  rfl
 
 /-- An executable unit polynomial (a nonzero constant) transports to a Mathlib
 unit. -/
@@ -202,53 +166,6 @@ theorem toMathlibPolynomial_xPowSubX (k : Nat) :
   unfold Hex.Berlekamp.xPowSubX frobeniusPolynomial
   rw [toMathlibPolynomial_sub, toMathlibPolynomial_monomial_one, toMathlibPolynomial_X]
 
-/-
-Divisibility by the modulus is exactly vanishing in the corresponding
-`AdjoinRoot` quotient.
--/
-omit [Hex.ZMod64.Bounds p] in
-theorem adjoinRoot_mk_eq_zero_of_dvd
-    (g P : Polynomial (ZMod p)) :
-    AdjoinRoot.mk g P = 0 ↔ g ∣ P := by
-  exact AdjoinRoot.mk_eq_zero
-
-/--
-If an irreducible `g` divides `X^(p^n) - X`, its quotient root maps into the
-degree-`n` Galois field over `ZMod p`.
--/
-theorem exists_algHom_adjoinRoot_to_galoisField
-    [Fact (Nat.Prime p)] {n : Nat} (hn : n ≠ 0)
-    {g : Polynomial (ZMod p)}
-    (hg_irreducible : Irreducible g)
-    (hg_dvd : g ∣ frobeniusPolynomial p n) :
-    Nonempty (AdjoinRoot g →ₐ[ZMod p] GaloisField p n) := by
-  haveI : Fact (Irreducible g) := ⟨hg_irreducible⟩
-  have hg_ne_zero : g ≠ 0 := hg_irreducible.ne_zero
-  have hg_dvd' : g ∣ X ^ Nat.card (ZMod p) ^ n - X := by
-    simpa [frobeniusPolynomial, Nat.card_zmod] using hg_dvd
-  have hdegree_dvd : g.natDegree ∣ n := by
-    exact
-      (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
-        (n := n) (f := g) hg_irreducible hg_dvd')
-  have hfinrank_dvd :
-      Module.finrank (ZMod p) (AdjoinRoot g) ∣
-        Module.finrank (ZMod p) (GaloisField p n) := by
-    rw [PowerBasis.finrank (AdjoinRoot.powerBasis hg_ne_zero),
-      AdjoinRoot.powerBasis_dim hg_ne_zero, GaloisField.finrank p hn]
-    exact hdegree_dvd
-  exact FiniteField.nonempty_algHom_of_finrank_dvd hfinrank_dvd
-
-/-
-The finite-dimensional rank of an `AdjoinRoot` quotient by a nonzero
-polynomial is its natural degree.
--/
-omit [Hex.ZMod64.Bounds p] in
-theorem finrank_adjoinRoot_eq_natDegree
-    [Fact (Nat.Prime p)] {g : Polynomial (ZMod p)} (hg : g ≠ 0) :
-    Module.finrank (ZMod p) (AdjoinRoot g) = g.natDegree := by
-  rw [PowerBasis.finrank (AdjoinRoot.powerBasis hg),
-    AdjoinRoot.powerBasis_dim hg]
-
 /--
 The Rabin finite-field degree lemma in the local `ZMod p` form used by the
 contrapositive proof.
@@ -264,11 +181,9 @@ theorem natDegree_dvd_of_irreducible_dvd_frobeniusPolynomial
     (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
       (n := n) (f := g) hg_irreducible hg_dvd')
 
-/-
-For an irreducible polynomial, any nontrivial gcd/coprimality failure with
-`P` forces divisibility by `P`.
--/
 omit [Hex.ZMod64.Bounds p] in
+/-- For an irreducible polynomial, any nontrivial gcd/coprimality failure with
+`P` forces divisibility by `P`. -/
 theorem irreducible_dvd_of_not_isCoprime
     [Fact (Nat.Prime p)] {g P : Polynomial (ZMod p)}
     (hg_irreducible : Irreducible g)
@@ -328,35 +243,6 @@ theorem maximalProperDivisors_lt {n d : Nat}
   simp only [List.mem_filter, List.mem_map, List.mem_range] at hmem
   rcases hmem with ⟨⟨⟨k, hk, rfl⟩, _hdvd⟩, _hmax⟩
   omega
-
-/--
-Divisor arithmetic used by Rabin's reducible contrapositive: a proper divisor
-`d` of `n` yields a prime `q` such that `q ∣ n` and `d ∣ n / q`.
--/
-theorem exists_prime_divisor_with_divisor_quotient
-    {d n : Nat} (hd_pos : 0 < d) (hd_dvd : d ∣ n) (hd_lt : d < n) :
-    ∃ q : Nat, Nat.Prime q ∧ q ∣ n / d ∧ q ∣ n ∧ d ∣ n / q := by
-  obtain ⟨c, hc⟩ := hd_dvd
-  -- `c = n / d ≥ 2`, since `d < n = d * c` with `d > 0` forces `c > 1`.
-  have hc_ge : 2 ≤ c := by
-    rcases Nat.lt_or_ge c 2 with h | h
-    · interval_cases c <;> omega
-    · exact h
-  have hnd : n / d = c := by rw [hc]; exact Nat.mul_div_cancel_left c hd_pos
-  have hc_ne : n / d ≠ 1 := by rw [hnd]; omega
-  obtain ⟨q, hq_prime, hq_dvd⟩ := Nat.exists_prime_and_dvd hc_ne
-  have hq_pos : 0 < q := hq_prime.pos
-  -- `c ∣ n` because `n = d * c = c * d`.
-  have hc_dvd_n : c ∣ n := ⟨d, by rw [hc, Nat.mul_comm]⟩
-  have hq_dvd_c : q ∣ c := by rwa [hnd] at hq_dvd
-  have hq_dvd_n : q ∣ n := dvd_trans hq_dvd_c hc_dvd_n
-  -- write `c = q * m`, so `n = q * (d * m)` and `n / q = d * m`.
-  obtain ⟨m, hm⟩ := hq_dvd_c
-  have hnq : n / q = d * m := by
-    rw [hc, hm, show d * (q * m) = q * (d * m) from by ring]
-    exact Nat.mul_div_cancel_left (d * m) hq_pos
-  have hd_dvd_nq : d ∣ n / q := by rw [hnq]; exact ⟨m, rfl⟩
-  exact ⟨q, hq_prime, hq_dvd, hq_dvd_n, hd_dvd_nq⟩
 
 /--
 The executable Rabin test passing entails the exact Mathlib divisibility and
@@ -429,22 +315,10 @@ theorem rabinTest_true_of_mathlib_checks
     · exact Or.inr h
   haveI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
   obtain ⟨hn_pos, hdvd, hcoprime⟩ := hchecks
-  -- Transport executable divisibility along the ring iso, in both directions.
-  have transport : ∀ {a b : Hex.FpPoly p}, a ∣ b →
-      toMathlibPolynomial a ∣ toMathlibPolynomial b := by
-    rintro a b ⟨r, hr⟩
-    exact ⟨toMathlibPolynomial r, by rw [hr]; exact map_mul fpPolyEquiv a r⟩
-  have untransport : ∀ {a b : Hex.FpPoly p},
-      toMathlibPolynomial a ∣ toMathlibPolynomial b → a ∣ b := by
-    rintro a b ⟨R, hR⟩
-    refine ⟨fpPolyEquiv.symm R, ?_⟩
-    apply fpPolyEquiv.injective
-    rw [map_mul, fpPolyEquiv.apply_symm_apply]
-    exact hR
   rw [Hex.Berlekamp.rabinTest_eq_true_iff]
   refine ⟨by rw [hdegree]; exact hn_pos, ?_, ?_⟩
   · -- Divisibility leg: untransport `M f ∣ frobeniusPolynomial p n` to `f ∣ xPowSubX n`.
-    apply untransport
+    apply toMathlibPolynomial_dvd_iff.mp
     rw [toMathlibPolynomial_xPowSubX, hdegree]
     exact hdvd
   · -- Coprimality leg: each maximal-proper-divisor witness is accepted.
@@ -468,11 +342,11 @@ theorem rabinTest_true_of_mathlib_checks
           Hex.Berlekamp.xPowSubX (p := p) d :=
       Hex.Berlekamp.dvd_xPowSubX_of_dvd_frobeniusDiffMod hmonic hg_dvd_f hg_dvd_diff
     -- Transport the two divisibilities and read off a Bezout combination of `1`.
-    have hMg_dvd_Mf := transport hg_dvd_f
+    have hMg_dvd_Mf := toMathlibPolynomial_dvd hg_dvd_f
     have hMg_dvd_frob :
         toMathlibPolynomial (Hex.DensePoly.gcd f (Hex.Berlekamp.frobeniusDiffMod f hmonic d)) ∣
           frobeniusPolynomial p d := by
-      have h := transport hg_dvd_xpow
+      have h := toMathlibPolynomial_dvd hg_dvd_xpow
       rwa [toMathlibPolynomial_xPowSubX] at h
     obtain ⟨u, v, huv⟩ := hcop_d
     have hMg_dvd_one :
@@ -491,7 +365,7 @@ theorem rabinTest_true_of_mathlib_checks
       · rw [if_neg hm, if_neg hm]; exact HexModArithMathlib.ZMod64.toZMod_zero
     have hg_dvd_one :
         Hex.DensePoly.gcd f (Hex.Berlekamp.frobeniusDiffMod f hmonic d) ∣ (1 : Hex.FpPoly p) := by
-      apply untransport
+      apply toMathlibPolynomial_dvd_iff.mp
       rw [h_one]
       exact hMg_dvd_one
     exact Hex.Berlekamp.isUnitPolynomial_of_dvd_isUnitPolynomial hg_dvd_one
@@ -519,48 +393,20 @@ theorem toMathlibPolynomial_gcd_associated
     · exact Or.inl h
     · exact Or.inr h
   haveI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
-  -- The executable `∣` is custom (`∃ r, b = a * r`), so transport it through the
-  -- iso by destructuring and re-multiplying rather than via `map_dvd`.
-  have transport : ∀ {a b : Hex.FpPoly p}, a ∣ b →
-      toMathlibPolynomial a ∣ toMathlibPolynomial b := by
-    rintro a b ⟨r, hr⟩
-    exact ⟨toMathlibPolynomial r, by rw [hr]; exact map_mul fpPolyEquiv a r⟩
-  have untransport : ∀ {a b : Hex.FpPoly p},
-      toMathlibPolynomial a ∣ toMathlibPolynomial b → a ∣ b := by
-    rintro a b ⟨R, hR⟩
-    refine ⟨fpPolyEquiv.symm R, ?_⟩
-    apply fpPolyEquiv.injective
-    rw [map_mul, fpPolyEquiv.apply_symm_apply]
-    exact hR
   apply associated_of_dvd_dvd
-  · exact dvd_gcd (transport (Hex.DensePoly.gcd_dvd_left f g))
-      (transport (Hex.DensePoly.gcd_dvd_right f g))
+  · exact dvd_gcd (toMathlibPolynomial_dvd (Hex.DensePoly.gcd_dvd_left f g))
+      (toMathlibPolynomial_dvd (Hex.DensePoly.gcd_dvd_right f g))
   · set d : Hex.FpPoly p :=
       fpPolyEquiv.symm (gcd (toMathlibPolynomial f) (toMathlibPolynomial g)) with hd
     have hsymm :
         toMathlibPolynomial d = gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
       rw [hd]; exact fpPolyEquiv.apply_symm_apply _
     have hdf : d ∣ f := by
-      apply untransport; rw [hsymm]; exact gcd_dvd_left _ _
+      apply toMathlibPolynomial_dvd_iff.mp; rw [hsymm]; exact gcd_dvd_left _ _
     have hdg : d ∣ g := by
-      apply untransport; rw [hsymm]; exact gcd_dvd_right _ _
+      apply toMathlibPolynomial_dvd_iff.mp; rw [hsymm]; exact gcd_dvd_right _ _
     rw [← hsymm]
-    exact transport (Hex.DensePoly.dvd_gcd d f g hdf hdg)
-
-/--
-Executable gcd transfers to Mathlib's gcd after coefficient transport, up to
-normalization. The executable `Hex.DensePoly.gcd` is the last nonzero xgcd
-remainder and is not monic, while Mathlib's `gcd` applies `normalize`; the two
-coincide only after normalizing the transport. Coprimality is a unit-gcd
-statement, so this up-to-unit shape is the correct primitive for downstream
-square-free reasoning.
--/
-theorem toMathlibPolynomial_gcd_normalize
-    [Fact (Nat.Prime p)] (f g : Hex.FpPoly p) :
-    normalize (toMathlibPolynomial (Hex.DensePoly.gcd f g)) =
-      gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
-  rw [normalize_eq_normalize_iff_associated.mpr (toMathlibPolynomial_gcd_associated f g),
-    normalize_gcd]
+    exact toMathlibPolynomial_dvd (Hex.DensePoly.dvd_gcd d f g hdf hdg)
 
 /--
 The executable square-free hypothesis used by Berlekamp is the corresponding
@@ -785,7 +631,7 @@ theorem rabinTest_true_irreducible
     Rabin.rabinTest_true_to_mathlib_checks f hmonic rfl htest
   have hfM_monic : fM.Monic := toMathlibPolynomial_monic f hmonic
   have hfM_natDegree : fM.natDegree = n :=
-    natDegree_toMathlibPolynomial_eq_basisSize f hmonic
+    natDegree_toMathlibPolynomial_eq_basisSize f
   have hfM_pos : 0 < fM.natDegree := hfM_natDegree.symm ▸ hpos
   refine ⟨fun hunit => by
     have := Polynomial.natDegree_eq_zero_of_isUnit hunit
@@ -842,7 +688,7 @@ theorem rabin_irreducible
     set fM := toMathlibPolynomial f
     have hfM_monic : fM.Monic := toMathlibPolynomial_monic f hmonic
     have hfM_natDegree : fM.natDegree = n := by
-      simpa [fM, hdegree] using natDegree_toMathlibPolynomial_eq_basisSize f hmonic
+      simpa [fM, hdegree] using natDegree_toMathlibPolynomial_eq_basisSize f
     have hn_pos : 0 < n := by
       have hpos : 0 < fM.natDegree :=
         hfM_monic.natDegree_pos_of_not_isUnit hirr.not_isUnit
@@ -868,31 +714,6 @@ theorem rabin_irreducible
       have hn_le_d : n ≤ d := Nat.le_of_dvd hd_pos hn_dvd_d
       have hd_lt_n : d < n := Rabin.maximalProperDivisors_lt hd_mem
       exact (not_lt_of_ge hn_le_d) hd_lt_n
-
-/--
-Rabin's executable test is equivalent to Mathlib irreducibility with the
-explicit positive-degree hypothesis used by the finite-field proof.
--/
-theorem rabin_irreducible_of_positive_degree
-    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Fact (Nat.Prime p)] {n : Nat}
-    (hdegree : Hex.Berlekamp.basisSize f = n) (_hpos : 0 < n) :
-    Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
-  exact rabin_irreducible f hmonic n hdegree
-
-/--
-Accepted executable irreducibility certificates imply Mathlib irreducibility
-after transporting the checked polynomial to `Polynomial (ZMod p)`.
--/
-theorem checkIrreducibilityCertificate_irreducible
-    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
-    (cert : Hex.Berlekamp.IrreducibilityCertificate) :
-    Hex.Berlekamp.checkIrreducibilityCertificate f hmonic cert = true →
-      Irreducible (toMathlibPolynomial f) := by
-  intro hcheck
-  exact rabinTest_true_irreducible f hmonic
-    (Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
 end
 

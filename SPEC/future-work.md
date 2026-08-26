@@ -77,52 +77,6 @@ and normalization behaviour differ, and gcd or division of sparse inputs
 usually becomes dense. Keep explicit conversions until several real consumers
 show which operations a common interface must support.
 
-### Fast polynomial arithmetic
-
-Proposed library: `hex-poly-fast`, depending on `hex-poly` and
-`hex-truncated-series`.
-
-Add algorithms behind the existing dense-polynomial semantics in measured
-stages:
-
-- Karatsuba multiplication with a benchmarked crossover.
-- Newton inversion of reversed polynomials, then fast division.
-- Half-gcd for gcd and extended gcd after fast division is useful.
-- Toom-Cook or NTT multiplication only when a consumer justifies the added
-  machinery. An NTT implementation may also depend on `hex-mod-arith` and use
-  CRT reconstruction for integer coefficients.
-
-Each fast routine needs an executable agreement theorem with the existing
-operation and benchmarks that include crossover-sized inputs rather than only
-asymptotic winners. The SPEC must keep the dependency direction from
-`hex-poly-fast` to both input libraries; `hex-truncated-series` should not
-acquire a dependency on `hex-poly` merely to support this consumer.
-
-### Extended subresultant chain for gcd consumers
-
-Amend `hex-resultant` with the transformation that produces each Brown entry,
-not only the entries themselves. `hex-poly-z-gcd` and `hex-mv-gcd` both need
-it for their complete `splitBezout` fallback; the existing worker retains only
-each pseudo-remainder, so this is a real extension rather than an accessor:
-
-```lean
-/-- `(uₖ, vₖ, Sₖ)` for every stored Brown entry, with
-`uₖ * f + vₖ * g = Sₖ`. -/
-def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
-    [Mul R] [Div R] (f g : DensePoly R) :
-    Array (DensePoly R × DensePoly R × DensePoly R)
-```
-
-The extension uses the unchanged Brown remainder recurrence and accumulates
-the two transformation cofactors through every pseudo-scaling and exact
-scalar division. Its correctness theorem requires `Lean.Grind.CommRing R`
-and `ExactDivLaws R`, proves the displayed identity for every entry, and
-proves the cofactor numerators are divisible by each Brown scalar before the
-executable division. Projection of the third components equals
-`subresultantChain f g`, including input ordering and zero conventions. The
-API belongs in `hex-resultant` so the two gcd libraries share one recurrence
-and one proof; it does not alter the resultant or discriminant contracts.
-
 ### Positive-characteristic multivariate squarefree decomposition
 
 Amend `hex-mv-gcd` with squarefree decomposition over perfect fields of

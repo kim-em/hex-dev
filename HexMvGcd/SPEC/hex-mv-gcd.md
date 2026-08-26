@@ -432,36 +432,30 @@ lines belonging with the content operations here. The arity-preserving
 recursive view is not wanted at all, for the reason under "The recursive
 view".
 
-## Required amendment to hex-resultant
+## The extended chain from hex-resultant
 
 The `splitBezout` certificate constructor needs the Bézout cofactors of
-the subresultant chain. hex-resultant does not compute them, and it is
-worth saying so explicitly because the chain looks as though it must:
-`subresultantAux` calls `pseudoDivMod` and keeps only `.2`
-(`HexResultant/Subresultant.lean:609` and `:616`); the quotient is
-discarded and no transformation is accumulated.
+the subresultant chain. The plain chain does not carry them:
+`subresultantAux` calls `pseudoDivMod` and keeps only `.2`, discarding the
+quotient and accumulating no transformation.
 
-An extended chain is therefore a new recurrence that tracks the
-transformation pair through the pseudo-scaling and the exact scalar
-division at every step, with proofs that each cofactor numerator is
-divisible by the Brown scalar it is divided by.
-
-The owning contract is now recorded under "Extended subresultant chain for
-gcd consumers" in [SPEC/future-work.md](../../SPEC/future-work.md), with a pointer
-from the Downstream contracts section of
+The extended chain is a separate recurrence that tracks the transformation
+pair through the pseudo-scaling and the exact scalar division at every step,
+with proofs that each cofactor numerator is divisible by the Brown scalar it
+is divided by. It is owned by hex-resultant, whose SPEC records the contract
+under Downstream contracts in
 [hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md); its
 signature is repeated here only to show the consumer boundary:
 
 ```lean
-/-- The subresultant chain with the cofactors producing each entry:
-`(uₖ, vₖ, Sₖ)` with `uₖ · f + vₖ · g = Sₖ`. -/
+/-- Brown's nonzero subresultant chain together with a caller-order-sensitive
+Bezout representation for every stored entry. -/
 def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
     [Mul R] [Div R] (f g : DensePoly R) :
     Array (DensePoly R × DensePoly R × DensePoly R)
 ```
 
-That is a substantive development, not a one-line export, and it is a
-hard prerequisite for this library's complete fallback. The modular
+This library's complete fallback depends on it. The modular
 constructor is intentionally primary but cannot be complete while
 `ZMod64.Bounds` caps its primes. With
 `L = lcm(1, …, 2^31 - 1)`, the coprime univariate pair `x` and `x + L`
@@ -578,7 +572,14 @@ and `u · x + v · 2 = 1` has no solution in `ℤ[x]`. The same holds in
 `R[x₁, …, xₙ]` over any base that is not a field, and over a field as
 soon as `n ≥ 2` (`x₁` and `x₂` are coprime with no Bézout identity).
 
-Two things do work, and both are supported.
+Three things do work, and all are supported. A direct polynomial Bézout
+identity, when one happens to exist, is the cheapest: replay
+`u · f' + v · h' = 1` without claiming that every coprime pair admits such
+an identity. The modular and recursive witnesses below cover pairs for which
+no direct identity exists. Candidate checking recognises two common direct
+forms before invoking recursive PRS: a unit difference, and a one-step
+polynomial division whose remainder is `1` or `-1`. In the latter case the
+quotient and sign give the two Bézout coefficients immediately.
 
 ### The modular witness, which is primary when available
 
@@ -634,6 +635,7 @@ mutual
       [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
     | unit : CoprimeCert n R cmp
     | base (u v : R) : CoprimeCert 0 R cmp
+    | bezout (u v : MvPoly n R cmp) : CoprimeCert n R cmp
     | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
         [IsMonomialOrder cmp'] [One R] [Add R] [Mul R]
         (P : ZMod64.Prime)
@@ -698,8 +700,9 @@ typeclass search. Producers try the smallest usable prime because kernel
 replay checks its primality proof and the project-local trial proof becomes
 expensive near the 31-bit limit.
 `splitBezout` checks `r ≠ 0`, `u · f + v · h = constIn i cmp' r`, the two
-content certificates, and the same recursive check. `base` checks the
-Bézout identity in `R`, and `unit` checks that one side is a unit.
+content certificates, and the same recursive check. `bezout` checks the
+direct identity `u · f + v · h = 1`; `base` checks its scalar analogue in
+`R`, and `unit` checks that one side is a unit.
 `ratLift` checks `scaleL ≠ 0`, `scaleR ≠ 0`, that the two rational inputs
 are the stated scalar multiples of the coefficientwise `Int → Rat` images,
 that both integer models have `scalarContent = 1`, and that `cert` checks
@@ -1001,6 +1004,14 @@ linear in the term count and strictly shrinks the problem without changing
 the certificate's arity. Restricting to `vars f ∩ vars h` is deferred until
 there is a specified certificate re-embedding operation.
 
+Before modular evaluation, integer dispatch performs polynomial division in
+both directions and offers any strict nonzero remainder as a gcd candidate;
+an exact division offers the divisor. A no-progress remainder is ignored.
+This inexpensive prepass captures affine-multiple shapes such as
+`h = q · f + g`, but proves nothing from that equation alone: exact division
+by `g` and a checked coprimality certificate for the two cofactors remain the
+acceptance condition.
+
 ### 1. Coprime detection, the case that dominates
 
 `tryCoprimeCert?` runs, per variable, one evaluation and one univariate
@@ -1075,7 +1086,17 @@ Fix the main variable `i`. Recursion on the remaining variables:
   points, keep the images of minimal degree, and restart the
   interpolation whenever a smaller degree appears.
 - Interpolate in the outermost remaining variable, take the primitive
-  part in `xᵢ`, and multiply back the content gcd.
+  part in `xᵢ`, and multiply back the content gcd. The content and
+  leading-coefficient gcds use the same recursive Brown operation. If one
+  of those speculative recursive calls declines, the current image declines
+  too: it must not start the complete multivariate PRS fallback inside a
+  modular image, because the surrounding point or prime loop can cheaply try
+  its next value.
+- Reconstruction may stop before the dense degree bound when the current
+  interpolant predicts the next accepted image exactly. This is only an
+  untrusted early-termination heuristic. The completed field image is checked
+  by exact division and a cofactor certificate before the prime layer uses it,
+  and the eventual integer candidate passes the same public checker.
 
 The prime layer needs the same machinery, one level up: primes must
 preserve the input degrees, primes giving a larger modular gcd degree
@@ -1222,6 +1243,7 @@ structure SqfDecomp (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering
   content : R
   factors : List (SqfFactor n R cmp)
 
+def sqfPrimitiveSplit (p : MvPoly n R cmp) : R × MvPoly n R cmp
 def sqfDecomp [NatNoZero R] (p : MvPoly n R cmp) : SqfDecomp n R cmp
 def radical [NatNoZero R] (p : MvPoly n R cmp) : MvPoly n R cmp
 def isSquarefree (p : MvPoly n R cmp) : Bool
@@ -1357,6 +1379,13 @@ reserved by this SPEC.
 ### Contract theorems
 
 ```lean
+theorem sqfPrimitiveSplit_product :
+    C (sqfPrimitiveSplit p).1 * (sqfPrimitiveSplit p).2 = p
+theorem sqfPrimitiveSplit_normalized :
+    polyNormalize (sqfPrimitiveSplit p).2 = (sqfPrimitiveSplit p).2
+theorem sqfPrimitiveSplit_primitive
+    (hsecond : (sqfPrimitiveSplit p).2 ≠ 0) :
+    content (sqfPrimitiveSplit p).2 = 1
 theorem sqfDecomp_prod :
     (sqfDecomp p).factors.foldl (fun acc f => acc * f.factor ^ f.multiplicity)
       (C (sqfDecomp p).content) = p
@@ -1521,10 +1550,10 @@ cover the decomposition surface over `ℤ` and `ℚ`, and its `modulus=`
 argument covers the positive-characteristic Boolean cases above. Extension
 fields `F_q` are not covered by SymPy and are out of scope for the
 oracle; `GFq` Boolean cases are checked in Lean, with their arity-one
-specializations compared to hex-poly-fp. python-flint's `fmpz_mpoly.gcd` is a
-stronger implementation but does not expose cofactors or squarefree
-decomposition uniformly, so it appears below as a performance comparator
-rather than as the oracle.
+specializations compared to hex-poly-fp. python-flint exposes the matching
+GCD, exact-division, and squarefree operations, but not the complete
+certificate and cofactor surface required above, so it appears below as a
+performance comparator rather than as the oracle.
 
 The companion adds randomised comparison against
 `MvPolynomial (Fin n) ℤ` through hex-mv-poly's `equiv`, checking the
@@ -1536,7 +1565,7 @@ oracle's normalisation conventions.
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexMvGcd/Bench.lean`. Native only for throughput. A separate
 `bench/HexMvGcd/Kernel.lean` suite replays valid and one-field-corrupted
-certificates through `by decide +kernel`: base, modular split,
+certificates through `by decide +kernel`: base, direct Bézout, modular split,
 `splitBezout`, `ratLift`, nested content folds, zero, and unit cases. Hex-mv-poly's
 kernel suite cannot substitute for this recursive checker coverage.
 
@@ -1561,18 +1590,26 @@ gap:
 - **Cofactor-heavy**, where the gcd is small and the cofactors are large,
   which stresses `divExact?` rather than the interpolation.
 
-**Comparators.** FLINT's `fmpz_mpoly_gcd` is `informational`. It selects
-among Brown, Zippel, a sparse Hensel route, and subresultants with tuned
-crossovers, while this library specifies Brown and the subresultant
-fallback. A required broad ratio would therefore be a check on routes that
-do not exist. The written-down
-expectation is therefore narrow: on the **coprime**
-family the ratio should be within a small constant, since both sides do
-one evaluation and one univariate gcd per variable, and a large ratio
-there means the fast path is not firing. No advance claim is made on the
-sparse family, where FLINT's Hensel route has no counterpart here.
-Singular is `informational` for the same reason. SymPy is the oracle and
+**Comparators.** Every family has two matched endpoints and three arms: Hex,
+FLINT, and Singular. The arms return Hex's ascending canonical term list (or
+the sorted squarefree multiplicity signature), and every registration pins
+the shared output hash. The FLINT driver uses `fmpz_mpoly.gcd` for the
+integer GCD families, `fmpq_mpoly.gcd` for rationals, exact `divmod` for the
+cofactor-heavy family, and `factor_squarefree` for squarefree decomposition.
+The Singular driver uses `gcd`, checked exact quotient, and `factorize` in a
+persistent characteristic-zero polynomial ring. SymPy remains the oracle and
 is not a performance comparator.
+
+Both performance comparators are `informational`. FLINT selects among Brown,
+Zippel, a sparse Hensel route, and subresultants with tuned crossovers, while
+this library specifies Brown and the subresultant fallback; Singular likewise
+has sparse routes outside this SPEC. A required broad ratio would therefore
+check routes that do not exist. The written-down expectation is narrow: on
+the **coprime** family the ratio should be within a small constant, since all
+three sides should discharge the inputs without full interpolation. A large
+ratio there means the fast path is not firing. No advance ratio claim is made
+on the remaining families, especially sparse stress, where the comparator
+route has no Hex counterpart.
 
 ## The Mathlib layer
 
@@ -1635,7 +1672,7 @@ public semantic operation: `gcd`, `cofactors`, `contentIn`, `primPartIn`,
 ## Milestones
 
 1. **Prerequisite and coefficient kernel.** Land
-   `Hex.Resultant.subresultantChainExt` with its transformation and exact
+   `Hex.DensePoly.subresultantChainExt` with its transformation and exact
    division proofs. Then implement `GcdOps`, `BezoutOps`,
    `LawfulGcdOps`, `LawfulBezoutOps`, `CoeffHom`, `divMod`,
    `divExact?`, the `Dvd` / `Div` / `ExactDivLaws` instances, `constIn`,

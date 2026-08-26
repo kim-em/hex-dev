@@ -69,8 +69,31 @@ libraries:
   HexBasic:
     deps: []
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
+  HexTruncatedSeries:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpq_poly truncated series routines via python-flint
+          class: informational
+          rationale: "FLINT's series routines run on tuned coefficient-specific Karatsuba/Toom-Cook/FFT multiplication while this library uses a semiring-generic schoolbook kernel, so the measured ratio includes a known kernel gap rather than only the Newton iterations."
+      input_families:
+        - name: multiplication
+          description: truncated products at precisions 8 to 4096 over Int and Rat
+        - name: inverse
+          description: Newton inversion against the linear recurrence on the same ladder
+        - name: exp-log
+          description: exp and log at precisions 8 to 1024 over Rat
+        - name: sqrt
+          description: square root at a supplied constant root over Rat
+        - name: composition
+          description: Horner against Brent-Kung at precisions 8 to 512
+        - name: reversion
+          description: Newton reversion against Lagrange inversion over Rat
   HexArith:
     deps: []
     mathlib: false
@@ -130,8 +153,31 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 2
+    done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly and fmpq_mpoly via python-flint
+          class: informational
+          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition; FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement, so only the coprime-family expectation is like-for-like.
+        - tool: Singular gcd, quotient, and factorize
+          class: informational
+          rationale: The persistent driver covers all seven families; Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+      input_families:
+        - name: coprime-pairs
+          description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
+        - name: dense-gcds
+          description: Dense inputs in 3 to 5 variables with degree 5 to 20 in each variable, isolating Brown interpolation.
+        - name: sparse-stress
+          description: High-degree, few-term inputs in 5 to 12 variables recording the known absence of a sparse route.
+        - name: swell
+          description: Small inputs whose extended subresultant remainder sequence develops large coefficients.
+        - name: rational
+          description: Integer-family shapes over rationals, exercising denominator clearing and integer lifting.
+        - name: squarefree
+          description: Multiplicity patterns 1, 1-through-5, 7, and 2-3-5-7 in 2 to 5 variables.
+        - name: cofactor-heavy
+          description: Small gcds with large cofactors, isolating checked multivariate exact division.
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
@@ -184,7 +230,7 @@ libraries:
         - name: leibniz-small-determinant
           description: Small structured integer matrices where the generic Leibniz determinant remains practical, cross-checked against the row-pivoted Bareiss determinant.
   HexBareiss:
-    deps: [HexDeterminant, HexMatrix]
+    deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
     done_through: 7
     status: active
@@ -200,6 +246,57 @@ libraries:
     deps: [HexMatrix, HexPoly]
     mathlib: false
     done_through: 0
+    status: active
+  HexMinPoly:
+    deps: [HexMatrix, HexRowReduce, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_minpoly and fmpq_mat.minpoly via python-flint"
+          class: informational
+          rationale: "FLINT uses a small-vector candidate-and-annihilation strategy rather than Hex's deterministic basis sweep with a minimality certificate. The ratio is useful orientation but does not gate the verified algorithm. Wired through the shared persistent-subprocess Python driver."
+        - tool: "PARI minpoly via cypari2"
+          class: informational
+          rationale: "PARI's matrix minimal-polynomial implementation is algorithmically independent of Hex's certificate-producing basis sweep, so its ratio is recorded for orientation rather than used as a release threshold. Wired through the shared persistent-subprocess Python driver."
+      input_families:
+        - name: random-dense-minpoly
+          description: Dense bounded-entry integer matrices read over Rat, usually with full-degree minimal polynomial.
+        - name: modular-minpoly
+          description: Full-degree companion matrices over a fixed-width prime field, isolating operation count from rational coefficient growth.
+        - name: derogatory-minpoly
+          description: Repeated nilpotent blocks whose minimal-polynomial degree stays bounded while dimension grows.
+        - name: companion-minpoly
+          description: Companion matrices with known full-degree minimal polynomials used as an in-benchmark correctness check.
+  HexPolySmith:
+    deps: [HexPoly, HexMatrix, HexDeterminant]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: "SymPy smith_normal_form over polynomial domains"
+          class: informational
+          rationale: "SymPy is a pure-Python conformance oracle and uses a separately tuned algorithm; its ratio provides orientation but does not gate the classical Euclidean pivot implementation."
+        - tool: "PARI matsnf on polynomial entries"
+          class: informational
+          rationale: "PARI's polynomial-entry surface is square-only and does not match the full rectangular API, so it is retained as an informational cross-check."
+      input_families:
+        - name: random-dense-polysmith
+          description: Deterministic dense nonsingular rational polynomial matrices across independent degree and dimension ladders.
+        - name: chain-conjugate-poly
+          description: Known monic invariant-factor chains conjugated by deterministic unimodular matrices.
+        - name: rational-coefficients
+          description: Rational polynomial matrices exposing coefficient growth in addition to degree growth.
+        - name: diagonal-polysmith
+          description: Diagonal polynomial presentations across a matrix-dimension ladder.
+        - name: small-field
+          description: ZMod64 2 inputs where evaluation certificates cannot obtain enough distinct field points.
+  HexPolySmithMathlib:
+    deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
+    mathlib: true
+    done_through: 7
     status: active
 
   # ---------- Depth 1 ----------
@@ -219,8 +316,25 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
+    phase4:
+      comparators:
+        - tool: "gmpy2.gcdext"
+          class: informational
+          rationale: "gmpy2 exposes GMP's tuned extended GCD, while HexModular reaches the same arithmetic through HexArith's GMP-backed compiled path. The ratio isolates binding and orchestration overhead rather than an algorithm choice, so it is recorded for orientation and does not gate Phase 4."
+        - tool: "python-flint fmpz CRT"
+          class: informational
+          rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
+      input_families:
+        - name: incremental-crt
+          description: Scalar accumulation over 4 to 8192 pairwise-coprime word-size prime-power moduli.
+        - name: vector-crt
+          description: Fixed-depth width ladders and fixed-width depth ladders that expose reuse of one extended GCD across coordinates.
+        - name: rational-reconstruction
+          description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
+        - name: failure-cost
+          description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -273,7 +387,7 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -293,6 +407,48 @@ libraries:
           description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
+  HexHermite:
+    deps: [HexRowReduce, HexArith, HexDeterminant]
+    mathlib: false
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_hnf via python-flint
+          class: informational
+          rationale: FLINT dispatches to asymptotically faster algorithms outside this SPEC
+        - tool: PARI mathnf via cypari2
+          class: informational
+          rationale: PARI is column-style and the timing includes convention conversion
+      input_families:
+        - name: random-dense-hermite
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: rank-deficient-hermite
+          description: rows drawn as integer combinations of a smaller independent set
+        - name: tall-hermite
+          description: tall matrices with many redundant row generators
+        - name: unimodular-conjugate
+          description: deterministic full unit-triangular factors times a known diagonal form
+  HexSmith:
+    deps: [HexHermite]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_snf via python-flint
+          class: informational
+          rationale: FLINT dispatches to algorithms and crossover policies outside this SPEC
+        - tool: PARI matsnf via cypari2
+          class: informational
+          rationale: PARI uses a separately tuned implementation and is recorded for orientation
+      input_families:
+        - name: random-dense-smith
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: chain-conjugate
+          description: known divisibility chains conjugated by random unimodular matrices
+        - name: presentation-smith
+          description: sparse abelian-group relation matrices run through the dense implementation
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
@@ -374,7 +530,7 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexRowReduce, HexGFqRing, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -439,7 +595,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -459,6 +615,42 @@ libraries:
           description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for `ZPoly.factorize`, covering prime selection and BHKS recombination together.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
+  HexPrimality:
+    deps: [HexArith, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "PrimeCert (b-mehta/PrimeCert kernel-replay primality certificates)"
+          class: informational
+          rationale: "The closest prior art and the one number a reader wants, but its toolchain pin (stable Lean) differs from this repository's release candidate, so the figure is obtained in a separate checkout on scheduled hardware rather than wired as a CI comparator; PARI is the conformance oracle, not a performance comparator, since BPSW+APRCL answers a different question by a different method."
+      input_families:
+        - name: table-smooth-certificates
+          description: Primes of 31 to 511 bits with n - 1 = k * 2^m and k factoring over the committed table, so decision, certificate-search, and checker rows share a deterministic rho-free certificate shape.
+        - name: segment-enumeration
+          description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
+  HexIntFactor:
+    deps: [HexPrimality, HexArith, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "PARI factor and GMP-ECM"
+          class: informational
+          rationale: "PARI and GMP-ECM use broader algorithm portfolios; comparisons diagnose route constants but are not merge gates."
+      input_families:
+        - name: table-and-balanced-semiprimes
+          description: Table-range integers and balanced semiprimes through 64 bits for dispatch and rho.
+        - name: smooth-and-unbalanced-semiprimes
+          description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
+        - name: power-forms
+          description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
+        - name: certificate-replay-and-order
+          description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: generalized-divisor-sums
+          description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -527,6 +719,11 @@ libraries:
     mathlib: true
     done_through: 0
     status: active
+  HexMinPolyMathlib:
+    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
@@ -547,10 +744,25 @@ libraries:
     mathlib: true
     done_through: 6
     status: active
+  HexPolyZGcdMathlib:
+    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 7
+    status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
     done_through: 4
+    status: active
+  HexHermiteMathlib:
+    deps: [HexHermite, HexRowReduceMathlib]
+    mathlib: true
+    done_through: 4
+    status: active
+  HexSmithMathlib:
+    deps: [HexSmith, HexHermiteMathlib]
+    mathlib: true
+    done_through: 7
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
@@ -568,8 +780,9 @@ libraries:
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
+    proof_probes: [bench/HexBerlekampMathlib/ProofProbe]
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
@@ -585,10 +798,26 @@ libraries:
     mathlib: true
     done_through: 7
     status: active
+  HexPrimalityMathlib:
+    deps: [HexPrimality]
+    mathlib: true
+    done_through: 0
+    status: active
+  HexIntFactorMathlib:
+    deps: [HexIntFactor, HexPrimalityMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 4
+    status: active
+    proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
+  HexTruncatedSeriesMathlib:
+    deps: [HexTruncatedSeries]
+    mathlib: true
+    done_through: 7
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
@@ -614,12 +843,12 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
   HexResultant:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -634,13 +863,58 @@ libraries:
   HexMvHensel:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: SymPy dmp_zz_wang_hensel_lifting
+          class: informational
+          rationale: SymPy provides the matching Wang/EEZ intermediate algorithm but runs in Python, so the ratio diagnoses scaling and does not gate acceptance.
+      input_families:
+        - name: factor-count
+          description: Two through eight factors at fixed variable count and degrees, isolating the linear factor-count contribution in each solve.
+        - name: variable-count
+          description: Two through six variables at low dense degree, isolating the product of side-variable degree bounds.
+        - name: main-degree
+          description: Main-variable degrees 5 through 40 at three variables, isolating the univariate divisions.
+        - name: coefficient-size
+          description: Fixed shapes with coefficients large enough to force successive exponent doublings and expose modulus-lifting cost.
+        - name: nonconstant-leading
+          description: Prescribed main-variable leading coefficients with increasing term counts, stressing seed installation and invariant maintenance.
+        - name: sparse-target
+          description: Sparse targets whose shifted intermediate products become dense, recording the known absence of a sparse lifting route.
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly_factor (dense EEZ bench target)
+          class: gating
+          goal: Solve every rung of the dense EEZ family that the comparator solves under the declared cap, and stay within a stated constant of it there. Scoped to that bench target; on the sparse, recombination-stress, and irreducible-input families the same tool is informational, because FLINT's sparse Hensel and Zippel routes have no counterpart in the dense diophantine recursion hex-mv-hensel specifies.
+        - tool: Singular factorize
+          class: informational
+          rationale: A second mature EEZ implementation with different route selection and its own crossovers, useful as orientation on every family and not as a yardstick for any single one.
+      input_families:
+        - name: dense-eez
+          description: Two through four variables of degree four through twelve, with two or three irreducible factors and constant leading coefficient; this is the end-to-end gating family.
+        - name: nonconstant-leading
+          description: Matching shapes whose main-variable leading coefficient has several irreducible factors, isolating recursive leading-coefficient factorization and assignment.
+        - name: factor-count
+          description: Two through eight factors at fixed degrees, exposing the factor-count contribution to lifting and recombination.
+        - name: recombination-stress
+          description: Inputs whose univariate image has substantially more factors than the multivariate target, measuring unsuccessful lifted combinations per accepted factor.
+        - name: point-difficulty
+          description: Inputs for which small points often drop degree or produce non-squarefree images, isolating evaluation-point search.
+        - name: coefficient-size
+          description: Fixed shapes with coefficients large enough to force successive modulus doublings, measuring coefficient-growth scaling.
+        - name: main-variable-choice
+          description: Equivalent inputs presented so that the two specified main-variable heuristics disagree, turning variable choice into a measured comparison.
+        - name: irreducible-inputs
+          description: Single-factor inputs run with Kronecker fallback disabled and enabled, isolating certificate production and its fallback cost.
+        - name: sparse-targets
+          description: Sparse targets whose dense lift intermediates expose the known absence of a sparse factorization route.
   HexInterval:
     deps: []
     mathlib: false
@@ -660,27 +934,57 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: "PARI/GP via cypari2"
+          class: informational
+          rationale: "PARI is a mature optimized C library; its t_POLMOD arithmetic (Mod(a, m) * Mod(b, m), Mod(a, m)^(-1)) is the callable unit surface matching QAdjoin multiplication and extended-gcd inversion, and the constant-factor gap against Hex's verified rational implementation is structural rather than algorithmic, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the QAdjoin multiplication and inversion fixed registrations on identical inputs. Lazy certified arithmetic, exactification, and the certified root-set APIs have no comparable PARI unit surface; the per-library SPEC declares those absences."
+      input_families:
+        - name: qadjoin-arithmetic
+          description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
+        - name: lazy-arithmetic
+          description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
+        - name: exactification
+          description: Factorization-lazy roots of (X^n - 2)(X + 3), so canonicalization always selects among at least two irreducible candidate factors.
+        - name: fixed-field-roots
+          description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
+        - name: algebraic-poly-roots
+          description: Canonical-coefficient root extraction and the separated common-field presentation for dense polynomials with one sqrt(2) coefficient among nonzero rationals.
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: "PARI/GP nffactor via cypari2"
+          class: informational
+          rationale: "PARI is a mature optimized C library whose nffactor runs over nfinit's absolute integral-basis presentation with maximal-order machinery, a structurally different pipeline from Hex's relative one-level Trager norms, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the factor? fixed registrations on shared Selmer trinomial inputs over Q(sqrt(2)), joined on the sorted factor degree/multiplicity multiset hash. Tower element arithmetic, adjoining, splitting, and flattening have no comparable PARI unit surface; the per-library SPEC declares those absences."
+      input_families:
+        - name: tower-coordinate-arithmetic
+          description: Dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with dense all-nonzero mixed-radix elements for addition, subtraction, negation, multiplication, recursive inversion, division, and rational scalar action.
+        - name: trager-factorization
+          description: Selmer trinomials X^n - X - 1 over Q(sqrt(2)) whose rational coefficients force a genuine shift retry, plus the fixed rational, one-level retry, recursive two-level, and checked-replay cases.
+        - name: adjoin-extend
+          description: Fixed adjoining of a fourth root of two to Q(sqrt(2)), the identity re-adjoining case, and the one-level presentation constructor.
+        - name: split-flatten
+          description: Fixed quartic splitting, two-level flattening, candidate, certification, and coordinate-map components, and the degree-six recovery adversary.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexRealRoots:
     deps: [HexPolyZ]
@@ -710,7 +1014,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:

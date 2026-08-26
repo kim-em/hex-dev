@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexResultant.SubresultantMinor
+public import HexDeterminant.Adjugate
 import all HexResultant.SubresultantMinor
 
 public section
@@ -69,15 +70,17 @@ theorem swapAdjacent_apply {R : Type u} {n : Nat}
       else M i j := by
   rfl
 
-/-- After an adjacent swap, the left column reads the old right column. -/
-@[simp, grind =]
+/-- After an adjacent swap, the left column reads the old right column.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_left {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.castSucc = M i left.succ := by
   simp [swapAdjacent]
 
-/-- After an adjacent swap, the right column reads the old left column. -/
-@[simp, grind =]
+/-- After an adjacent swap, the right column reads the old left column.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_right {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.succ = M i left.castSucc := by
@@ -87,8 +90,9 @@ theorem swapAdjacent_right {R : Type u} {n : Nat}
     simp at hval
   simp [swapAdjacent, hne]
 
-/-- Columns away from the swapped pair are untouched. -/
-@[simp, grind =]
+/-- Columns away from the swapped pair are untouched.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1))
     (hl : j ≠ left.castSucc) (hr : j ≠ left.succ) :
@@ -588,6 +592,242 @@ theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     grind
   rw [hcol]
   exact h.trans (by grind)
+
+/-! # Bridge to the reusable matrix determinant
+
+The finite-function determinant remains the definition used by the resultant
+development.  This bridge lets later proof-only cofactor arguments reuse the
+row and adjugate algebra of `HexDeterminant` without changing that definition.
+-/
+
+/-- Regard a proof-only square coefficient family as a `Hex.Matrix`. -/
+@[expose]
+def toMatrix {R : Type u} {n : Nat} (M : Square R n) : Matrix R n n :=
+  Matrix.ofFn M
+
+/-- Entries are unchanged by the matrix view.  Stated in the nested
+`M[i][j]` form like `Matrix.getElem_ofFn`, so it is `grind`-only: the
+simp-normal form of the left-hand side goes through `Matrix.getRow`. -/
+@[grind =]
+theorem toMatrix_get {R : Type u} {n : Nat} (M : Square R n)
+    (i j : Fin n) : (toMatrix M)[i][j] = M i j := by
+  rw [toMatrix, Matrix.getElem_ofFn]
+
+/-- The local first-row Laplace determinant agrees with the reusable Leibniz
+matrix determinant. -/
+theorem det_toMatrix {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) : det M = Matrix.det (toMatrix M) := by
+  induction n with
+  | zero =>
+      rw [det_zero]
+      have h := Matrix.det_principalSubmatrix_zero (toMatrix M)
+      have hmatrix :
+          Matrix.principalSubmatrix (toMatrix M) 0 (Nat.zero_le 0) =
+            toMatrix M := by
+        apply Matrix.ext_getElem
+        intro i
+        exact Fin.elim0 i
+      rw [hmatrix] at h
+      exact h.symm
+  | succ n ih =>
+      let row : Fin (n + 1) := ⟨0, by omega⟩
+      change
+        (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + sign j.val * M row j * det (deleteFirst M j)) 0 =
+          Matrix.det (toMatrix M)
+      rw [Matrix.det_eq_foldl_laplace_row (toMatrix M) row]
+      simp only [toMatrix_get]
+      change
+        (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + sign j.val * M row j * det (deleteFirst M j)) 0 =
+          (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + M row j * Matrix.cofactor (toMatrix M) row j) 0
+      apply foldl_congr
+      · rfl
+      · intro acc j _hj
+        have hminor :
+            Matrix.deleteRowCol (toMatrix M) row j =
+              toMatrix (deleteFirst M j) := by
+          apply Matrix.ext_getElem
+          intro i k
+          rw [Matrix.getElem_deleteRowCol, toMatrix_get, toMatrix_get]
+          rfl
+        have hsign : sign (R := R) j.val =
+            Matrix.cofactorSign (R := R) row j := by
+          unfold sign Matrix.cofactorSign
+          by_cases h : j.val % 2 = 0
+          · rw [if_pos h, if_pos (by simpa [row] using h)]
+          · rw [if_neg h, if_neg (by simpa [row] using h)]
+            grind
+        unfold Matrix.cofactor
+        rw [hminor, ← ih, ← hsign]
+        grind
+
+/-- A local determinant with two equal rows vanishes. -/
+theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (src dst : Fin n) (h : src ≠ dst)
+    (hrow : ∀ j, M src j = M dst j) :
+    det M = 0 := by
+  rw [det_toMatrix]
+  apply Matrix.det_eq_zero_of_row_eq (toMatrix M) src dst h
+  apply Vector.ext
+  intro j hj
+  change (toMatrix M)[src][(⟨j, hj⟩ : Fin n)] =
+    (toMatrix M)[dst][(⟨j, hj⟩ : Fin n)]
+  rw [toMatrix_get, toMatrix_get]
+  exact hrow _
+
+/-- A square matrix with nonzero determinant has trivial right kernel over an
+exact-division domain. -/
+theorem vector_eq_zero_of_mul_eq_zero {R : Type u}
+    [Lean.Grind.CommRing R] [Div R] [ExactDivLaws R] {n : Nat}
+    (M : Square R n) (hn : 0 < n) (hdet : det M ≠ 0) (v : Vector R n)
+    (hmul : toMatrix M * v = 0) : ∀ j : Fin n, v[j] = 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      have hassoc := Matrix.mul_assoc_vec
+        (Matrix.adjugate (toMatrix M)) (toMatrix M) v
+      have hscale :
+          ((Matrix.det (toMatrix M)) • Matrix.identity (R := R) (n + 1)) * v =
+            (Matrix.det (toMatrix M)) • v := by
+        apply Vector.ext
+        intro i hi
+        let ii : Fin (n + 1) := ⟨i, hi⟩
+        change
+          (((Matrix.det (toMatrix M)) • Matrix.identity (R := R) (n + 1)) * v)[ii] =
+            ((Matrix.det (toMatrix M)) • v)[ii]
+        rw [Matrix.getElem_mulVec, Matrix.row_smul,
+          Vector.dotProduct_smul_left]
+        have hid := congrArg (fun w : Vector R (n + 1) => w[ii])
+          (Matrix.identity_mulVec v)
+        rw [Matrix.getElem_mulVec] at hid
+        change ((Matrix.identity (R := R) (n + 1)).row ii).dotProduct v =
+          v[ii] at hid
+        have hentry : ((Matrix.det (toMatrix M)) • v)[ii] =
+            Matrix.det (toMatrix M) * v[ii] := by
+          simp only [Fin.getElem_fin, Vector.getElem_smul]
+          rfl
+        rw [hid, hentry]
+      rw [Matrix.adjugate_mul, hscale, hmul, Matrix.mulVec_zero] at hassoc
+      intro j
+      have hj := congrArg (fun w : Vector R (n + 1) => w[j]) hassoc
+      have hsmul : ((Matrix.det (toMatrix M)) • v)[j] =
+          Matrix.det (toMatrix M) * v[j] := by
+        simp only [Fin.getElem_fin, Vector.getElem_smul]
+        rfl
+      have hzero : (0 : Vector R (n + 1))[j] = 0 := by
+        simp only [Fin.getElem_fin, Vector.getElem_zero]
+      rw [hsmul, hzero] at hj
+      rw [← det_toMatrix] at hj
+      apply ExactDivLaws.mul_right_cancel hdet
+      grind
+
+/-- The signed cofactor of a column along the final row. -/
+@[expose]
+def lastCofactor {R : Type u} [Lean.Grind.CommRing R] :
+    {n : Nat} → Square R n → Fin n → R
+  | 0, _, j => Fin.elim0 j
+  | n + 1, M, j => Matrix.cofactor (toMatrix M) (Fin.last n) j
+
+/-- A final-row cofactor is independent of the entries in that final row. -/
+theorem lastCofactor_congr {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Square R n) (j : Fin n)
+    (h : ∀ i k, i.val < n - 1 → M i k = N i k) :
+    lastCofactor M j = lastCofactor N j := by
+  cases n with
+  | zero => exact Fin.elim0 j
+  | succ n =>
+      simp only [lastCofactor]
+      unfold Matrix.cofactor
+      congr 1
+      apply congrArg Matrix.det
+      apply Matrix.ext_getElem
+      intro i k
+      rw [Matrix.getElem_deleteRowCol, Matrix.getElem_deleteRowCol,
+        toMatrix_get, toMatrix_get]
+      apply h
+      simp [Matrix.skipIndex_last]
+
+/-- Laplace expansion along the final row using `lastCofactor`. -/
+theorem det_lastCofactor {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) :
+    det M = (List.finRange (n + 1)).foldl
+      (fun acc j => acc + M (Fin.last n) j * lastCofactor M j) 0 := by
+  rw [det_toMatrix, Matrix.det_eq_foldl_laplace_row (toMatrix M) (Fin.last n)]
+  apply foldl_congr
+  · rfl
+  · intro acc j _hj
+    simp only [toMatrix_get, lastCofactor]
+
+/-- Laplace expansion along the final row, stated for an arbitrary positive
+dimension. -/
+theorem det_lastCofactor_of_pos {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (hn : 0 < n) :
+    det M = (List.finRange n).foldl
+      (fun acc j => acc + M ⟨n - 1, by omega⟩ j * lastCofactor M j) 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      rw [det_lastCofactor M]
+      apply foldl_congr
+      · rfl
+      · intro acc j _hj
+        congr 2
+
+/-! # Zero final row
+
+The coefficient row in a generalized Sylvester minor is the last row.  The
+local determinant recurses on the first row, so the following lemmas derive
+its vanishing on a zero final row directly from that recursion. -/
+
+/-- A square family with zero final row has zero determinant. -/
+theorem det_lastRow_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) (hzero : ∀ j, M (Fin.last n) j = 0) :
+    det M = 0 := by
+  induction n with
+  | zero =>
+      change 0 + sign 0 * M 0 0 * 1 = 0
+      have hentry : M 0 0 = 0 := by
+        apply hzero
+      rw [hentry]
+      grind
+  | succ n ih =>
+      have hminor (j : Fin (n + 2)) : det (deleteFirst M j) = 0 := by
+        apply ih
+        intro k
+        change M (Fin.last n).succ (skipIndex j k) = 0
+        have hlast : (Fin.last n).succ = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp
+        rw [hlast]
+        exact hzero _
+      change (List.finRange (n + 2)).foldl
+        (fun acc j => acc + sign j.val * M 0 j * det (deleteFirst M j)) 0 = 0
+      apply foldl_add_zero
+      intro j _hj
+      rw [hminor]
+      grind
+
+/-- A positive-dimensional square family with zero final row has zero
+determinant. -/
+theorem det_lastRow_zero_of_pos {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (hn : 0 < n)
+    (hzero : ∀ j, M ⟨n - 1, by omega⟩ j = 0) :
+    det M = 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      apply det_lastRow_zero M
+      intro j
+      have hlast : Fin.last n = ⟨n + 1 - 1, by omega⟩ := by
+        apply Fin.ext
+        simp
+      rw [hlast]
+      exact hzero j
 
 /-- Scale a consecutive range of columns. -/
 @[expose]

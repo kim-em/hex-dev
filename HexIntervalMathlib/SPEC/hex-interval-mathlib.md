@@ -57,11 +57,31 @@ structural sharing, checks the completed SSA program, and enforces explicit
 source, operation, node, and depth caps separately from registry and replay
 caps. Before seeding facts it rechecks the transparent result's one-entry-per-
 node correspondence, structural sharing, stable operation key, ordered child
-edges, and source-index range. It then binds every caller-selected source
-interval exactly once, proves computed domain-top seeds automatically, and requires
-constants and every improvement to enter through package-owned chronology.
-Successful replay can be eliminated to a target membership theorem, either
-endpoint inequality, their conjunction, or equality for a closed singleton.
+edges, and source-index range. Its generalized `InitialContext` has exactly one
+node-indexed version-zero row per retained reifier entry. An absent selection
+materializes as `whole`; a present interval is plain caller data and gains no
+authority until a separate positional `InitialContext.Contains` proof relates
+that exact row to the entry's retained term evaluation. This permits an
+authenticated fact on a computed node without treating the data or the row
+label as proof. Exact row count and order are checked only after source,
+operation, node, and depth caps; `setFact` refuses out-of-range or mistargeted
+writes transactionally.
+
+The original `inputWithin` remains a source-only convenience wrapper: it binds
+every caller-selected source interval exactly once, leaves computed rows at
+domain top, and proves those top seeds automatically. Both constructors share
+one common bounded reifier preflight, so the wrapper preserves its source-error
+precedence without repeating the structural scan. Constants and later
+improvements still enter through package-owned chronology. Successful replay
+can be eliminated from either source containment or generalized initial-row
+containment to a target membership theorem, either endpoint inequality, their
+conjunction, or equality for a closed singleton.
+For Meta clients, `modelOfCheck` transparently projects the exact `Model` from
+a kernel-reduced successful `modelWithin` call. `valuesAt` quotes a finite list
+as the total source valuation used by the frontend, and
+`SourcesContain.ofForall₂` converts one membership proof per list entry into
+the exact array-indexed source obligation; indices beyond the list are never
+observed. These helpers add no proof schema and do not replay chronology.
 These are ordinary theorem combinators over a flat caller-supplied event
 chronology: the module does not turn a generic search tree into proof recipes,
 parse Lean expressions or hypotheses, or contain tactic syntax. The caps run
@@ -82,27 +102,44 @@ generators with the same-order runtime and proof registries, regenerates
 resource-first deterministic offers from the authenticated current head, and
 runs bounded repeated policy selection over the sealed tree/session bundle.
 The explicit `Controller.Package` vertical still uses toy fact-event callbacks
-and application generators; it has no concrete built-in arithmetic
-`Driver.Package`. Concrete built-in arithmetic reaches the controller only
-through the separate `Controller.Executable` adapter, which consumes a sealed
-Mathlib-free `Executable.Assembly` and correlates accepted fact quotations with
-independently replayed theorem schemas. The Mathlib-free `Runtime.State`
-separately owns an executable assembly and
+and application generators. Concrete built-in arithmetic has two explicit
+adapters: the fact-only `Controller.Executable` route and the typed-batch
+`RuntimeRule` route. `RuntimeRule` recomputes all twelve supported arithmetic
+operations from exact executable requests, emits one typed fact batch with the
+matching one-cell format, and seals its assembly against the same-order
+`Rule` theorem registry through `RuntimeProof.Registry`. Paired caller packages
+extend both sides for configured opaque meanings. The Mathlib-free
+`Runtime.State` owns that executable assembly and
 atomically validates typed fact/equality/transport/instance batches, including
 an exact equality descriptor arena and append-only application/binding/node
 suffixes; `Search.Result.Tree` retains its sealed transition in a child.
-Wiring those typed batches to this controller and correlating their inert
-quotations with theorem events, automatic discovery/program extension, and
-public-tactic split search remain later edges.
+The built-in offers are deliberately one-shot: only a version-zero result node
+whose current fact is domain top is scheduled, so the callback installs its
+recomputed proposal as version one without raw access to the previous branch.
+Direct repeats fail the runtime predecessor check. Runtime-to-proof quotation
+and exact target/refutation correlation are supported. The public tactic uses
+that route with a fixed topological application plan; automatic package
+discovery and a general search-selected tactic policy remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
 selects strongest integer lower and upper hypotheses, constructs the exact
-runtime `Program`, `Proof.Input`, and chronology as plain checked data, reruns
-`Frontend.replay`, and independently reconstructs a caller proof
-through package-owned image theorems and `Proof.emitChecked`. It does not emit
-those discarded runtime records as Lean expressions. The bare `interval`
-tactic currently closes
+runtime program and source facts, starts the sealed branch/runtime/retained
+tree/controller bundle, and selects each authenticated arithmetic application
+in topological order. It requires a stopped controller with no live offers or
+residual plan, resolves the exact final target version and fact, and settles
+that lineage through `RuntimeEmit`. The emitter quotes the authenticated
+`Proof.Input` and chronology into a transparent `Proof.replayWith` proof term;
+the tactic then kernel-checks the input/program/target/fact/model correlations,
+closes the exact caller source proofs, and proves that the reified term
+evaluates to the original Lean expression. Every emitted boundary crosses
+`Proof.emitChecked`; runtime success is never reflected into proof syntax. The
+first residual application is resolved back through the same sealed assembly
+and registration table for diagnostics, so a resource-starved built-in names
+the responsible stable rule rather than exposing a brittle aggregate pending
+count. Handler applicability currently retains only a Boolean; the tactic does
+not rerun arithmetic to manufacture a more specific discarded refusal cost.
+The bare `interval` tactic currently closes
 strict or non-strict lower and upper goals, closed-singleton equality, and
 conjunctions. `interval?` reports the fixed forward configuration only after
 the same transaction succeeds; failure emits no misleading query result.
@@ -123,10 +160,10 @@ programmatic `deriveBound` may instead receive another precision admitted by
 the explicit resource envelope. Automatic regularization adds one internal
 `Term` layer after every computed arithmetic layer, so the reported/default
 term-depth cap `32` permits about 16 nested arithmetic operations on a source
-spine. Noninteger hypotheses are not authenticated
-as integer cuts. It has no subdivision, contractors, arbitrary-function discovery, named-
-hypothesis selection, or search-selected recipe emitter. All parse, resource,
-replay, and emission failures leave the tactic state unchanged.
+spine. Noninteger hypotheses are not authenticated as integer cuts. It has no
+subdivision, contractors, arbitrary-function discovery, named-hypothesis
+selection, or general search-selected policy. All parse, resource, controller,
+settlement, replay, and emission failures leave the tactic state unchanged.
 
 The proof contract treats runtime states, callback replies, payload bytes,
 search decisions, contradiction flags, and diagnostic traces as untrusted
@@ -271,6 +308,57 @@ replay independently proves it again. Search/result and proof body resources
 are checked at settlement, while complete transition/event/structural/proof-
 tree resources remain transactional at bundle quotation.
 
+`HexIntervalMathlib.RuntimeEmit` is the supported Meta boundary from that
+sealed root-target lineage to kernel syntax. Emitter packages pair exact
+`Proof.Key`s with transparent theorem-schema expressions. One joint builder
+checks package-local and global missing, extra, duplicate, and wrong-role
+coverage. Preparation also projects each emitted schema's key and requires it
+to be definitionally equal to the handle's declared key. The builder constructs
+the `Proof.Registry` and `RuntimeProof.Registry` from the same package array and
+seals those registries with the emitter table; there is no post-hoc
+compatibility-key attachment. `Active`, `Lineage`, and `Checked` retain this
+unified registry alongside the corresponding private `RuntimeTerminal` token.
+
+`RuntimeEmit.Checked.emitResultWithin` supports only a one-node root target. It
+quotes the already authenticated program, input, registrations, and exact
+fact/equality/transport/instance chronology as ordinary data and applies the
+transparent `Proof.replayWith` fold. A decidable success proof projects an
+exact `Proof.Evidence` term. The sealed result contains both the quoted
+`Proof.Input` expression and Evidence whose claim projects that same expression;
+its private constructor prevents callers from pairing independently emitted
+terms. Every fact and schema callback crosses `Proof.emitChecked`, and the input
+and final evidence separately cross it against their exact types. Both are
+independently charged against the expression cap in the same saved-state
+transaction before rollback; metavariables, synthetic placeholders, temporary
+declarations, or retained Meta-state leakage therefore cannot escape.
+`Checked.emitWithin` remains the evidence-only compatibility projection of that
+operation. There is no refutation or split expression emitter.
+`Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
+the theorem in the world they quote, but a generic registry cannot prove that a
+caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
+public builders must therefore own those callbacks and compare the emitted
+claim with the caller's exact goal before installation.
+
+For `S` emitter handles, `C` retained events, `B` total body cells, `D` total
+dependency cells, and `X` cells in a checked expression, registry coverage is
+quadratic in the worst case because list membership/count checks scan the
+package and global key tables. Preparation is `O(S)` callback invocations plus
+one `O(X)` syntax traversal per returned schema expression. Chronology
+prechecking and quotation are `O(C + B + D)` apart from fact callbacks and
+construction of quoted program/action data; the transparent replay then pays
+the existing proof fold and package theorem callbacks, which are arbitrary
+pure Lean code and are not preemptible. The two final expression caps perform
+one `O(X)` traversal for the quoted input and one for its correlated evidence.
+Schema, chronology, body, dependency, and
+expression limits fail without returning a partial expression.
+
+`HexIntervalMathlib.RuntimeRuleEmit` supplies the paired handles and fact
+quoter for exactly the twelve built-in arithmetic schemas. Its convenience
+builder jointly constructs the executable batch assembly, theorem registry,
+and emitter registry. Configurations with caller-owned opaque meanings require
+their own paired emitter packages and are deliberately rejected by this
+built-in-only builder.
+
 A general split terminal adapter is intentionally absent. `Proof.seedChild`
 inherits the parent proof equality table and compact identities, whereas
 `Runtime.State.startWithin` restarts a child with an empty equality arena and
@@ -304,11 +392,17 @@ The typed-proof registry and bundle constructors are likewise sealed;
 `import all HexIntervalMathlib.RuntimeProof` is rejected outside an
 exact reviewed allowlist, currently empty.
 Automatic arbitrary-function theorem-package discovery and default registries
-remain experimental; supported typed-runtime replay requires an explicit
-sealed executable/proof registry pair.
+remain experimental. `RuntimeRule.buildWithWithin` accepts only explicit paired
+executable and proof packages for configured opaque meanings and then seals
+bidirectional coverage over the complete registry; unpaired formats or schemas
+are rejected. Its package cache counts committed callbacks and is independently
+bounded by executable cache resources. Checked arithmetic refusal yields no
+fact batch and is rejected transactionally by the runtime rather than gaining
+theorem authority.
 The supported explicit fact-event controller can produce and replay
-search-selected recipes, while the tactic below remains a deliberately narrow
-direct forward client rather than that generic search bridge.
+search-selected recipes. The tactic below now crosses the typed controller and
+emitter boundary, but remains a deliberately narrow deterministic topological
+client rather than the generic discovery/policy bridge.
 Further arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
@@ -487,6 +581,25 @@ and guards the ordinary root/recursive axiom surfaces.
 after the ordinary typed chronology at the root and in both restarted split
 children, exact package-owned refutation, cross-schema/current-fact/input and
 resource refusals, private constructors, and the ordinary replay axiom surface.
+`HexIntervalMathlib.RuntimeRuleConformance` assembles every built-in arithmetic
+handler, starts `Runtime.State` from frontend-shaped version-zero facts,
+executes all unary and binary operations (including repeated argument slots),
+settles the exact final target, and consumes `RuntimeTerminal.Checked.replay`
+over the complete retained chronology without a fallback theorem. It checks
+exact proposed/installed facts, one-cell bodies, semantic schema execution,
+sticky cache refusal and replayability, sealed rule mutation rejection, and a
+paired opaque-operation extension.
+`HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
+the sealed input/evidence pair for all twelve built-in rules, including repeated-input
+binary applications, and separately emits the mixed `sin (-x)` instance,
+equality, fact, and transport chronology. It rejects package-local/global
+coverage errors, cross-package and input transplants, a wrong schema
+expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
+and exact one-under schema, chronology, body, dependency, input-expression, and
+evidence-expression resources while guarding every private constructor and the
+ordinary theorem axiom surface. `FrontendConformance` additionally pins
+transparent model projection and conversion from per-source list membership to
+the indexed containment obligation.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked
@@ -514,8 +627,12 @@ DAG recursively, pins exact source and configured-constant node binding,
 rejects malformed result entries, duplicate stable keys, and one-over
 source/operation/node/depth limits, replays a flat supported chronology, and
 closes fully discharged lower inequality, two-sided conjunction, and equality
-theorems from source containment alone, with guarded ordinary-theorem axiom
-reports.
+theorems from source containment alone. It additionally pins transactional
+initial-row writes, structural and semantic anti-permutation, every generalized
+input refusal, and a real zero-event replay of a computed target fact, with
+guarded ordinary-theorem axiom reports. This first computed-row canary targets
+version zero directly; an interior computed assumption feeding later rule
+chronology is a distinct coverage target.
 `HexIntervalMathlib.TacticConformance` exercises supported Meta parsing and
 caller-proof emission over closed, strict, negative, shared-expression, power,
 absolute-value, minimum, maximum, reciprocal, and division examples. It pins

@@ -35,11 +35,6 @@ def evalPoly? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot) :
     Option AlgebraicRoot :=
   RawEvaluation.evalPoly? T.levels.toList (f.toArray.map coeffs) candidate
 
-/-- Integer magnitude majorant for a fixed tower element. -/
-@[expose]
-def elemMajorant (T : NumberTower) (a : Elem T) : Nat :=
-  RawEvaluation.coordsMajorant T.levels.toList (coeffs a)
-
 /-- Certified ball Horner evaluation at the tower's fixed embedding and one
 absolute candidate root. Each exact coefficient is refined far enough to
 supply the common `2^-prec` input-error unit consumed by
@@ -96,7 +91,9 @@ inductive Roots (T : NumberTower) where
 /-- A checked extension together with all roots of the original polynomial in
 that extension. -/
 structure Splitting (T : NumberTower) (f : Poly T) where
+  /-- The extension over which the polynomial splits into linear factors. -/
   extension : Extension T
+  /-- All roots of the input polynomial in the extended tower. -/
   roots : Roots extension.tower
 
 /-- Map polynomial coefficients through an explicitly supplied tower
@@ -133,15 +130,6 @@ theorem Extension.trans_tower {T : NumberTower} (outer : Extension T)
 theorem Extension.trans_embed {T : NumberTower} (outer : Extension T)
     (inner : Extension outer.tower) (a : Elem T) :
     (outer.trans inner).embed a = inner.embed (outer.embed a) := rfl
-
-/-- Record-level normal form for a composed extension. -/
-theorem Extension.trans_eq {T : NumberTower} (outer : Extension T)
-    (inner : Extension outer.tower) :
-    outer.trans inner =
-      { tower := inner.tower
-        embed := fun a => inner.embed (outer.embed a)
-        gen := inner.gen
-        root := inner.root } := rfl
 
 /-- Whole-record normal form for pulling an inner splitting back through an
 extension.  Stating the equality at this level keeps the dependent root

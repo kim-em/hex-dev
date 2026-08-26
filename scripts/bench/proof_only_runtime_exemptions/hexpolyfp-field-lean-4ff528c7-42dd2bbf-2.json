@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/Field.lean",
+ "baseline_blob": "4ff528c7940c6e385c7ca83bbe6a6e8158d9e4a2",
+ "current_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+ "reason": "Removes the DecidableEq (ZMod64 p) instance now supplied upstream by HexModArith/Residue.lean; no other change."
+}

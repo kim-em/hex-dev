@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMvFactor.IrredData
-public import HexBerlekampZassenhaus.Factorization
+public import HexBerlekampZassenhaus.FactorProduct
 public import HexPolyZ.ExactDivision
 public import Batteries.Data.Vector.Basic
 
@@ -167,10 +167,27 @@ def zPow (P : ZPoly) : Nat → ZPoly
   | 0 => 1
   | exponent + 1 => zPow P exponent * P
 
+private theorem zPow_factorPower (P : ZPoly) : ∀ exponent,
+    zPow P exponent = Factorization.factorPower P exponent
+  | 0 => rfl
+  | exponent + 1 => by
+      rw [zPow, Factorization.factorPower_succ,
+        zPow_factorPower P exponent]
+
 /-- Product represented by the univariate part of a Kronecker certificate. -/
 def uniProduct (scalar : Int) (uni : List (ZPoly × Nat)) : ZPoly :=
   uni.foldl (fun product entry => product * zPow entry.1 entry.2)
     (DensePoly.C scalar)
+
+private theorem uniProduct_factorization (factorization : Factorization) :
+    uniProduct factorization.scalar factorization.factors.toList =
+      factorization.product := by
+  unfold uniProduct Factorization.product
+  rw [← Array.foldl_toList]
+  apply List.foldl_congr
+  intro acc entry _
+  rw [zPow_factorPower]
+  rfl
 
 /-- Product selected by one exponent vector.  Length mismatch is rejected. -/
 def candidateProduct? : List (ZPoly × Nat) → List Nat → Option ZPoly
@@ -209,20 +226,37 @@ def distinctUni : List (ZPoly × Nat) → Bool
   | entry :: entries =>
       entries.all (fun other => decide (entry.1 ≠ other.1)) && distinctUni entries
 
+/-- Pairwise-distinct factor keys pass the structural replay. -/
+private theorem distinctUni_of_pairwise : ∀ {uni : List (ZPoly × Nat)},
+    uni.Pairwise (fun a b => a.1 ≠ b.1) → distinctUni uni = true
+  | [], _ => rfl
+  | _ :: _, .cons head tail => by
+      simp only [distinctUni, Bool.and_eq_true, List.all_eq_true,
+        decide_eq_true_eq]
+      exact ⟨head, distinctUni_of_pairwise tail⟩
+
+/-- Cheap replay core shared by `checkSplit` and the producer. -/
+def checkSplitCore (g : MvPoly n Int cmp) (split : Split n cmp) : Bool :=
+  (split.left * split.right == g) &&
+    !polyIsUnit split.left && !polyIsUnit split.right
+
 /-- One candidate is refuted when it does not decode, decodes to a constant,
-or fails checked exact division.  Mixed-radix prework is shared by the whole
-candidate sweep. -/
+or fails to give a checked nontrivial split. Mixed-radix prework is shared by
+the whole candidate sweep. -/
 def candidateRejected (degrees : Fin n → Nat) (weights : Vector Nat n)
     (size : Nat) (g : MvPoly n Int cmp) (uni : List (ZPoly × Nat))
     (exponents : List Nat) : Bool :=
   match candidateProduct? uni exponents with
-  | none => false
+  | none => true
   | some candidate =>
       match unKronWith? (cmp := cmp) degrees weights size candidate with
       | none => true
       | some divisor =>
           if divisor.vars.isEmpty then true
-          else (MvPoly.divExact? g divisor).isNone
+          else
+            match MvPoly.divExact? g divisor with
+            | none => true
+            | some quotient => !checkSplitCore g ⟨divisor, quotient⟩
 
 /-- Replay against a prepared degree box and its exact Kronecker image. -/
 def checkKroneckerWith (degrees : Fin n → Nat) (weights : Vector Nat n)
@@ -246,11 +280,6 @@ def checkKronecker (g : MvPoly n Int cmp) (scalar : Int)
   checkKroneckerWith degrees weights (radixSize degrees) g
     (kronWith weights g) scalar uni
 
-/-- Cheap replay core shared by `checkSplit` and the producer. -/
-def checkSplitCore (g : MvPoly n Int cmp) (split : Split n cmp) : Bool :=
-  (split.left * split.right == g) &&
-    !polyIsUnit split.left && !polyIsUnit split.right
-
 /-- Inspect candidates in order and retain the first accepted nontrivial
 divisor and its exact quotient. -/
 def findSplitAux (degrees : Fin n → Nat) (weights : Vector Nat n)
@@ -273,6 +302,56 @@ def findSplitAux (degrees : Fin n → Nat) (weights : Vector Nat n)
                     let split : Split n cmp := ⟨divisor, quotient⟩
                     if checkSplitCore g split then some split
                     else findSplitAux degrees weights size g uni rest
+
+/-- Every split returned by the candidate sweep has passed cheap replay. -/
+private theorem findSplitAux_checks (degrees : Fin n → Nat)
+    (weights : Vector Nat n) (size : Nat) (g : MvPoly n Int cmp)
+    (uni : List (ZPoly × Nat)) : ∀ {candidates split},
+      findSplitAux degrees weights size g uni candidates = some split →
+        checkSplitCore g split = true
+  | [], _, h => by contradiction
+  | _ :: rest, _, h => by
+      unfold findSplitAux at h
+      split at h
+      · exact findSplitAux_checks degrees weights size g uni h
+      · split at h
+        · exact findSplitAux_checks degrees weights size g uni h
+        · split at h
+          · exact findSplitAux_checks degrees weights size g uni h
+          · split at h
+            · exact findSplitAux_checks degrees weights size g uni h
+            · dsimp only at h
+              split at h
+              · cases h
+                assumption
+              · exact findSplitAux_checks degrees weights size g uni h
+
+/-- Exhausting the split search refutes every candidate by the replay
+predicate used in a Kronecker certificate. -/
+private theorem findSplitAux_none (degrees : Fin n → Nat)
+    (weights : Vector Nat n) (size : Nat) (g : MvPoly n Int cmp)
+    (uni : List (ZPoly × Nat)) : ∀ {candidates},
+      findSplitAux degrees weights size g uni candidates = none →
+        candidates.all
+          (candidateRejected degrees weights size g uni) = true
+  | [], _ => rfl
+  | _ :: rest, h => by
+      unfold findSplitAux at h
+      simp only [List.all_cons, Bool.and_eq_true]
+      unfold candidateRejected
+      split at *
+      · exact ⟨by simp_all, findSplitAux_none degrees weights size g uni h⟩
+      · split at *
+        · exact ⟨by simp_all, findSplitAux_none degrees weights size g uni h⟩
+        · split at *
+          · exact ⟨by simp_all, findSplitAux_none degrees weights size g uni h⟩
+          · split at *
+            · exact ⟨by simp_all, findSplitAux_none degrees weights size g uni h⟩
+            · dsimp only at h ⊢
+              split at *
+              · contradiction
+              · exact ⟨by simp_all,
+                  findSplitAux_none degrees weights size g uni h⟩
 
 /-- Search with mixed-radix prework supplied by the caller. -/
 def findSplitWith (degrees : Fin n → Nat) (weights : Vector Nat n)
@@ -327,17 +406,76 @@ def kronDecide (g : MvPoly n Int cmp) : Verdict n cmp :=
   let weights := radixWeights degrees
   kronDecideWith degrees weights (radixSize degrees) g (kronWith weights g)
 
+set_option maxHeartbeats 800000
+
 /-- The producer's irreducible branch replays on its intended domain. -/
 theorem kronDecide_checks {g : MvPoly n Int cmp} {cert : IrredCert n cmp}
     (hprim : MvPoly.content g = 1) (hnonconst : ¬ MvPoly.IsConst g)
     (h : kronDecide g = .irreducible cert) :
     ∃ scalar uni,
       cert = .kronecker scalar uni ∧ checkKronecker g scalar uni = true := by
-  sorry
+  simp only [kronDecide, kronDecideWith] at h
+  split at h
+  next => contradiction
+  next hfind =>
+    cases h
+    let degrees : Fin n → Nat := fun i => (kronDegrees g)[i]
+    let weights := radixWeights degrees
+    let size := radixSize degrees
+    let image := kronWith weights g
+    let factorization := ZPoly.factorize image
+    change findSplitWith degrees weights size g
+      factorization.factors.toList = none at hfind
+    refine ⟨factorization.scalar, factorization.factors.toList, rfl, ?_⟩
+    change checkKroneckerWith degrees weights size g image
+      factorization.scalar factorization.factors.toList = true
+    unfold checkKroneckerWith
+    have hvars : g.vars ≠ [] := hnonconst
+    have hprimB : decide (MvPoly.content g = 1) = true := by
+      simp [hprim]
+    have hvarsB : decide (g.vars ≠ []) = true := by
+      simp [hvars]
+    rw [hprimB, hvarsB]
+    simp only [Bool.true_and, Bool.and_eq_true, beq_iff_eq]
+    constructor
+    · constructor
+      · constructor
+        · exact (uniProduct_factorization factorization).trans
+            (factorize_product image)
+        · rw [List.all_eq_true]
+          intro entry hentry
+          have harray : entry ∈ factorization.factors :=
+            Array.mem_toList_iff.mp hentry
+          by_cases himage : image = 0
+          · change entry ∈ (ZPoly.factorize image).factors at harray
+            rw [himage, factorize_zero_factors] at harray
+            simp at harray
+          · have hmult := factorize_entry_multiplicity_pos image entry hentry
+            have hprimEntry := factorize_entries_primitive_of_ne_zero
+              image himage entry harray
+            change ZPoly.content entry.1 = 1 at hprimEntry
+            have hdegree := factorize_entries_degree_pos
+              image himage entry harray
+            unfold checkUniFactor
+            simp only [hmult, decide_true, hprimEntry, Bool.true_and]
+            cases hdegreeOpt : entry.1.degree? with
+            | none => simp [hdegreeOpt] at hdegree
+            | some degree => simpa [hdegreeOpt] using hdegree
+      · exact distinctUni_of_pairwise (factorize_pairwise_first image)
+    · unfold findSplitWith at hfind
+      exact findSplitAux_none _ _ _ _ _ hfind
+
+set_option maxHeartbeats 200000
 
 /-- Every reducible outcome has already passed cheap split replay. -/
 theorem kronDecide_split {g : MvPoly n Int cmp} {split : Split n cmp}
     (h : kronDecide g = .reducible split) : checkSplitCore g split = true := by
-  sorry
+  simp only [kronDecide, kronDecideWith] at h
+  split at h
+  next found hfind =>
+    cases h
+    unfold findSplitWith at hfind
+    exact findSplitAux_checks _ _ _ _ _ hfind
+  next hfind => contradiction
 
 end Hex.MvFactor

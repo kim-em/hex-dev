@@ -20,6 +20,28 @@ universe u
 
 namespace Matrix
 
+/-- Reindex the rows of a matrix by an arbitrary fixed-length tuple. -/
+@[expose]
+def selectRows (M : Matrix R n m) (rows : Vector (Fin n) k) : Matrix R k m :=
+  ofFn fun i j => M[(rows[i], j)]
+
+/-- Reindex the columns of a matrix by an arbitrary fixed-length tuple. -/
+@[expose]
+def selectCols (M : Matrix R n m) (cols : Vector (Fin m) k) : Matrix R n k :=
+  ofFn fun i j => M[(i, cols[j])]
+
+@[grind =] theorem getElem_selectRows (M : Matrix R n m)
+    (rows : Vector (Fin n) k) (i : Fin k) (j : Fin m) :
+    (selectRows M rows)[i][j] = M[rows[i]][j] := by
+  unfold selectRows
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
+@[grind =] theorem getElem_selectCols (M : Matrix R n m)
+    (cols : Vector (Fin m) k) (i : Fin n) (j : Fin k) :
+    (selectCols M cols)[i][j] = M[i][cols[j]] := by
+  unfold selectCols
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
 /-- Leading principal `k × k` submatrix of a square matrix: the top-left block
 indexed by `{0, …, k-1}` along both axes. Includes the empty submatrix
 (`k = 0`) and is convenient for Bareiss pivot/minor statements. -/
@@ -98,6 +120,17 @@ def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
        M[ii][j]) := by
   unfold takeRows
   rw [getElem_ofFn, getElem_pair_eq_nested]
+
+/-- A row of a first-row slice is the corresponding source row. -/
+@[simp, grind =]
+theorem row_takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) (i : Fin k) :
+    row (takeRows M k hk) i =
+      row M ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ := by
+  ext j hj
+  let jj : Fin m := ⟨j, hj⟩
+  show (row (takeRows M k hk) i)[jj] =
+    (row M ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩)[jj]
+  rw [getElem_row, getElem_takeRows, getElem_row]
 
 /-- Entry formula for the first-`k`-columns slice. -/
 @[grind =] theorem getElem_takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m)

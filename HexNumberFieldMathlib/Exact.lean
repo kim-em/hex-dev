@@ -485,15 +485,6 @@ private theorem relationPoly_natDegree {k : Nat} (coeffs : Vector Rat k) :
   rw [HexPolyMathlib.natDegree_toPolynomial]
   simp [DensePoly.degree?, relationPoly_size coeffs]
 
-private theorem relationPoly_monic {k : Nat} (coeffs : Vector Rat k) :
-    (HexPolyMathlib.toPolynomial (relationPoly coeffs)).Monic := by
-  rw [Polynomial.Monic.def]
-  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
-  have hsize := relationPoly_size coeffs
-  have hpos : 0 < (relationPoly coeffs).size := by omega
-  rw [DensePoly.leadingCoeff_eq_coeff_last _ hpos, hsize]
-  simpa using relationPoly_coeff_top coeffs
-
 private theorem adjoinRoot_repr [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (i : Fin (definingPolynomial p).natDegree) :
     (AdjoinRoot.powerBasisAux' (definingPolynomial_monic p)).repr
@@ -517,19 +508,26 @@ private noncomputable def adjoinRootAlgEquiv [ZPoly.CheckedIrreducible p] :
       r • (1 : AdjoinRoot (definingPolynomial p))
     rw [toAdjoinRoot_smul, toAdjoinRoot_one]
 
-private theorem krylovPowers_get (a : QAdjoin p x) (n : Nat)
+private theorem natPow_succ [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (n : Nat) :
+    a ^ (n + 1) = a ^ n * a := pow_succ a n
+
+private theorem krylovPowers_get [ZPoly.CheckedIrreducible p]
+    (a : QAdjoin p x) (n : Nat)
     (i : Fin (n + 1)) :
     (krylovPowers a n).get i = a ^ i.val := by
   induction n with
   | zero =>
       have hi : i = 0 := Fin.eq_zero i
       subst i
+      change (krylovPowers a 0).get 0 = natPow a 0
+      unfold krylovPowers Vector.get natPow
       rfl
   | succ n ih =>
       by_cases hi : i = Fin.last (n + 1)
       · subst i
         simp [krylovPowers, ih]
-        rfl
+        exact (natPow_succ a n).symm
       · let j : Fin (n + 1) := ⟨i.val, by
           have hilast : i.val ≠ n + 1 := by
             intro hval

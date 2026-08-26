@@ -409,10 +409,19 @@ callers go through GMP.
 
 **Modular exponentiation:**
 ```lean
-def powMod (a n p : Nat) : Nat  -- uses Montgomery internally
+def powMod (a n p : Nat) : Nat     -- runtime twin; uses Montgomery internally
+def powModNat (a n p : Nat) : Nat  -- kernel-facing specification
 
 theorem powMod_eq (a n p : Nat) (hp : p > 0) :
     powMod a n p = a ^ n % p
+
+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
+    powModNat a n p = a ^ n % p
+
+theorem powMod_eq_powModNat (a n p : Nat) :
+    powMod a n p = powModNat a n p
+
+@[csimp] theorem powModNat_eq_powMod : @powModNat = @powMod
 ```
 
 For inputs that don't take the Montgomery path (even `p`, or
@@ -423,6 +432,17 @@ before reducing, so memory and time grow exponentially in the bit-size
 of `n`. This is a Phase 1 "wrong-complexity" violation
 ([PLAN/Phase1.md](../../PLAN/Phase1.md)) regardless of how well the
 proof of `powMod_eq` happens to discharge.
+
+The two forms are a specification/twin pair. `powModNat` and its
+recursion (`powModNatGo`, `bitLength`) are `@[expose]`, so a
+certificate checker written against `powModNat` replays by kernel
+reduction; the `@[csimp]` equality swaps in `powMod`'s Montgomery
+dispatch when the same checker runs compiled. Both return `0` at
+`p = 0` (the modulus-zero convention `powMod` always had); the
+agreement at every input is what makes the `@[csimp]` registration
+unconditional. Downstream consumer: hex-primality's `checkPrime`
+(see [HexPrimality/SPEC/hex-primality.md](../../HexPrimality/SPEC/hex-primality.md)
+§Kernel exposure).
 
 **Binomial coefficients and Fermat's little theorem:**
 
@@ -451,6 +471,24 @@ theorem Nat.Prime.dvd_mul (hp : Nat.Prime p) :
 ```
 Proof via extended GCD: if `p ∤ a` then `gcd(a, p) = 1`, Bezout gives
 `s * a + t * p = 1`, multiply by `b`, since `p ∣ a * b` conclude `p ∣ b`.
+
+**Primality decision and prime-divisor extraction:**
+```lean
+instance : DecidablePred Hex.Nat.Prime   -- via isPrimeTrial, O(√p)
+
+theorem exists_prime_dvd (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d
+theorem exists_prime_le_sqrt (h : 2 ≤ n) (hcomp : ¬ Prime n) :
+    ∃ p, Prime p ∧ p ∣ n ∧ p * p ≤ n
+```
+
+The instance routes `decide` through the balanced trial-division
+checker `isPrimeTrial` and its two directions
+(`isPrimeTrial_isPrime`, `isPrimeTrial_of_prime`), so kernel
+reduction depth stays logarithmic in the candidate count while the
+remainder-test count stays `O(√p)`. The two existence lemmas are the
+composite-witness facts hex-primality's Pocklington argument
+finishes with; `exists_trial_divisor` (a nontrivial divisor yields
+one at most the square root) is exported for the same reason.
 
 **Note:** `Nat.gcd` already exists with GMP-backed `mpz_gcd`. We build on
 it for extended GCD. The pure Lean `extGcd` is the logical definition used

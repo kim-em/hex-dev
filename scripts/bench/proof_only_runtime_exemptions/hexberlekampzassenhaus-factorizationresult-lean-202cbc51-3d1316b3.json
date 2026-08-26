@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorizationResult.lean",
+ "baseline_blob": "202cbc51164c5f2c4c2a95b1617c6767035424b2",
+ "current_blob": "3d1316b3479b2b9a2d2bf73d5ee1a08154586147",
+ "reason": "Phase 6 polish only: adds a docstring to `normalizeFactorSign_ne_zero_of_ne_zero` and deletes the unreferenced private `polyProduct_contentFactorArray`, `polyProduct_replicate_X_zero`, and `polyProduct_normalizationPrefixFactors` proof lemmas. `factorizationOfFactors`, `reassemblePolynomialFactors`, and every executable definition are unchanged."
+}

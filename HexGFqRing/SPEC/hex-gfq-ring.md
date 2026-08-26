@@ -62,6 +62,21 @@ supports a field structure; that extension belongs to hex-gfq-field.
 - `reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b)`
 - Ring axioms for `PolyQuotient p f hf`
 
+## Fast-arithmetic adoption
+
+After [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), a quotient context
+may cache an `FpPoly` multiplication plan and a `DivPlan` for its fixed
+modulus. Multiplication, square-and-multiply exponentiation, and repeated
+reduction then use the cached plans above their measured crossover. The
+canonical representative and every `reduceMod` theorem remain unchanged
+because the fast operations agree exactly with the current multiplication and
+division.
+
+Benchmarks report context construction separately from warm quotient
+operations. Production adopts the cached route only where repeated operations
+recover its construction cost; one-shot and small-degree calls retain the
+current path.
+
 ## External comparators
 
 No external comparator is required.

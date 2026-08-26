@@ -301,7 +301,7 @@ private theorem ofFn_toList_eq {α : Type v} {n : Nat}
   intro i _
   exact vector_ofFn_getElem_fin f i
 
-private theorem ofFn_mem_permutationVectors {n : Nat}
+theorem ofFn_mem_permutationVectors {n : Nat}
     (cols : Fin n → Fin n) (hcols : Function.Injective cols) :
     Vector.ofFn cols ∈ permutationVectors n := by
   apply permutationVectors_complete
@@ -310,7 +310,7 @@ private theorem ofFn_mem_permutationVectors {n : Nat}
   intro a _ha b _hb hab
   exact hcols hab
 
-private theorem columnTupleMatrix_eq_ofFn_ofFn
+theorem columnTupleMatrix_eq_ofFn_ofFn
     {R : Type u} {n : Nat} (M : Matrix R n n) (cols : Fin n → Fin n) :
     columnTupleMatrix M cols =
       (ofFn fun r c => M[r][(Vector.ofFn cols)[c]] : Matrix R n n) := by
@@ -323,7 +323,7 @@ private theorem columnTupleMatrix_eq_ofFn_ofFn
   exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
     (vector_ofFn_getElem_fin cols (⟨c, hc⟩ : Fin n)).symm
 
-private theorem det_columnTupleMatrix_of_injective
+theorem det_columnTupleMatrix_of_injective
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (cols : Fin n → Fin n)
     (hcols : Function.Injective cols) :

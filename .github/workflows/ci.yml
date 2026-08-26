@@ -60,7 +60,11 @@ jobs:
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
+          python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
+          python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_hexrcf_proof_sweep.py
+          python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
+          python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py
           python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
@@ -73,39 +77,38 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp
+          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
-            python-flint cypari2 conway-polynomials sympy matplotlib==3.11.1
+            python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
+          python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
       - name: Verify factorization measurements and figures are current
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
-      - name: Set up Lean toolchain (no build)
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          use-mathlib-cache: false
+      - name: Set up pinned Lean toolchain (no build)
+        run: bash scripts/ci/setup_lean_toolchain.sh
       - name: Fetch Mathlib cache
         run: lake exe cache get
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
         run: |
-          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
-          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+          lean_prefix="$(lean --print-prefix)"
+          test -d "$lean_prefix/lib/lean"
+          echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
       - name: Restore .lake/build (Hex modules only)
-        uses: actions/cache@v4
+        id: hex-build-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             .lake/build/lib/lean/Hex*
             .lake/build/ir/Hex*
-          key: lake-build-${{ github.workflow }}-${{ github.run_id }}
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
-            lake-build-${{ github.workflow }}-
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       # --- Lake artifact cache (dormant unless the LAKE_CACHE_*_PUBLIC repo
       # variables are set). A rev-precise, cross-runner fallback to the
       # actions/cache restore above: when that misses (eviction, a new branch),
@@ -139,11 +142,12 @@ jobs:
             echo "::notice::Lake artifact cache not configured (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
           fi
       - name: Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)
-        if: ${{ env.HEX_CACHE_ENABLED == '1' }}
+        if: ${{ steps.hex-build-cache.outputs.cache-matched-key == '' && env.HEX_CACHE_ENABLED == '1' }}
         run: |
-          lake cache get --service hex-public --repo kim-em/hex-dev \
+          lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
             || echo "::warning::lake cache miss for this revision; building from source"
-          echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
+      - name: Disable implicit Lake cache restores during build
+        run: echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
       # With the cache env now active, assert the entire Mathlib graph is already
       # up to date. `--no-build` reports stale targets and exits non-zero instead
       # of building them, so this fails loudly (never silently rebuilds) if the
@@ -158,8 +162,8 @@ jobs:
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
         run: |
-          echo "HEX_LIB_TARGETS=Hex HexBasic HexArith HexPoly HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexCharPoly HexGramSchmidt HexLLL HexMatrixMathlib HexCharPolyMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexmvpoly_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexgramschmidt_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=Hex HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexIntFactor HexPrimalityKernelProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLLL HexMatrixMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexCharPolyMathlib HexMinPolyMathlib HexPolySmithMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolysmith_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexintfactor_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexhermite_bench hexsmith_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
@@ -172,20 +176,26 @@ jobs:
       # `.lake/build` (no recompilation) but cap the peak at whichever single
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
-        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
-            HexConformance hexmvpoly_emit_fixtures \
+            HexConformance hextruncatedseries_emit_fixtures \
+            hexmvpoly_emit_fixtures hexsparsepoly_emit_fixtures \
+            hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
+            hexpolysmith_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
             hexgf2_emit_fixtures hexgfq_emit_fixtures \
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
-            hexhensel_emit_fixtures \
+            hexhensel_emit_fixtures hexprimality_emit_fixtures \
+            hexintfactor_emit_fixtures \
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
-            hexbareiss_emit_fixtures hexcharpoly_emit_fixtures \
+            hexbareiss_emit_fixtures hexhermite_emit_fixtures \
+            hexsmith_emit_fixtures hexcharpoly_emit_fixtures \
+            hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures \
             hexlll_emit_fixtures hexrealroots_emit_fixtures \
             hexrcf_emit_fixtures \
@@ -208,33 +218,6 @@ jobs:
           done
           lake exe lean-readme --prefix .lean-readme/Aggregate.lean \
             scripts/release/hex-README.md
-      # Publish hex-dev's oleans on a trusted main push so later builds (and any
-      # consumer) restore them. Skips silently without the upload key.
-      - name: Publish hex-dev oleans to the Lake cache (main only)
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && env.HEX_CACHE_ENABLED == '1' }}
-        env:
-          LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
-        run: |
-          if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-            echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-          fi
-          CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-          {
-            echo 'cache.defaultUploadService = "hex-r2"'
-            echo '[[cache.service]]'
-            echo 'name = "hex-r2"'
-            echo 'kind = "s3"'
-            echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-            echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-          } > "$CFG"
-          export LAKE_CONFIG="$CFG"
-          # HexManual is built in its own memory-bounded phase above, so append
-          # it only while collecting the outputs to publish.
-          lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS} HexManual
-          echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-          lake cache put .lake/outputs.jsonl --service hex-r2 --repo kim-em/hex-dev
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to
       # disjoint outputs, so they are safe to run concurrently. Each touches a
@@ -252,12 +235,18 @@ jobs:
           BENCH_VERIFY_HARD_CAP_SECONDS: "360"
         run: |
           bash scripts/ci/check_bench_verify_budget.sh \
-            hexarith_bench hexpoly_bench hexmvpoly_bench hexpolyz_bench \
-            hexsparsepoly_bench hexpolyfp_bench hexmodarith_bench \
+            hextruncatedseries_bench \
+            hexarith_bench hexpoly_bench hexpolysmith_bench \
+            hexmvpoly_bench hexmvgcd_bench \
+            hexpolyz_bench \
+            hexpolyzgcd_bench hexsparsepoly_bench hexpolyfp_bench \
+            hexmodarith_bench \
+            hexmodular_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
-            hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexhensel_bench hexintfactor_bench hexberlekamp_bench hexbz_bench \
             hexconway_bench hexdeterminant_bench hexmatrix_bench \
-            hexcharpoly_bench \
+            hexhermite_bench hexsmith_bench \
+            hexcharpoly_bench hexminpoly_bench \
             hexgramschmidt_bench hexlll_gram_bench \
             hexrealroots_bench hexrcf_bench hexroots_bench \
             hexresultant_bench hexnumberfield_bench \
@@ -293,6 +282,44 @@ jobs:
           [ -f "$RUNNER_TEMP/bench.ok" ] || { echo "::error::Bench verify did not complete successfully"; rc=1; }
           [ -f "$RUNNER_TEMP/conformance.ok" ] || { echo "::error::Conformance/oracles did not complete successfully"; rc=1; }
           exit $rc
+      # Save only a fully verified main snapshot. Pull-request caches are scoped
+      # to their merge ref and cannot help another PR, so saving one per PR would
+      # churn the repository's cache quota without providing shared reuse.
+      - name: Save .lake/build (Hex modules only; main only)
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+      # Publish only after every verification gate passes. R2 remains a
+      # cross-runner fallback for a GitHub cache miss and for external consumers.
+      - name: Publish hex-dev oleans to the Lake cache (main only)
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && env.HEX_CACHE_ENABLED == '1' }}
+        env:
+          LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+        run: |
+          if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
+            echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
+          fi
+          CFG="$RUNNER_TEMP/lake-cache-upload.toml"
+          {
+            echo 'cache.defaultUploadService = "hex-r2"'
+            echo '[[cache.service]]'
+            echo 'name = "hex-r2"'
+            echo 'kind = "s3"'
+            echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
+            echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
+          } > "$CFG"
+          export LAKE_CONFIG="$CFG"
+          # HexManual is built in its own memory-bounded phase above, so append
+          # it only while collecting the outputs to publish.
+          lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS} HexManual
+          echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
+          lake cache put .lake/outputs.jsonl --service hex-r2 --repo kim-em/hex-dev
       - name: Upload failure records
         if: failure()
         uses: actions/upload-artifact@v4

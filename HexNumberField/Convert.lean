@@ -192,17 +192,6 @@ variable {p : ZPoly} {x : SimpleRoot p}
 
 /-! # Fixed-presentation minimal polynomials -/
 
-/-- Matrix of multiplication by `a` in the power basis
-`1, X, ..., X^(degree p - 1)`. -/
-@[expose]
-def mulMatrix (a : QAdjoin p x) :
-    Matrix Rat (p.degree?.getD 0) (p.degree?.getD 0) :=
-  let n := p.degree?.getD 0
-  let products : Vector (QAdjoin p x) n := Vector.ofFn fun j =>
-    a * reduce p x (DensePoly.monomial j.val 1)
-  Matrix.ofFn fun i j =>
-    products[j].coeffs.coeff i.val
-
 /-- The first `n + 1` Krylov powers, built with one multiplication per step. -/
 @[expose]
 def krylovPowers (a : QAdjoin p x) :

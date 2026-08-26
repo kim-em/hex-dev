@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Lattice.lean",
+ "baseline_blob": null,
+ "current_blob": "14f093c3941384cbf0bb826a9936ff354f41e3ee",
+ "reason": "Relocates lattice propositions and proof lemmas for Hermite, then reconciles their names with generic matrix laws used by HexMinPoly; propositions and theorems are erased, and no factorization operation changes."
+}

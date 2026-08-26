@@ -96,6 +96,42 @@ def heuCert? (f h : ZPoly) : Option GcdCert :=
   let base := max 3 (2 * norm + 1)
   heuLoop f h base 4096 (by omega)
 
+/-- Every certificate produced by the bounded heuristic loop passed the
+shared checker. -/
+private theorem heuLoop_checks (f h : ZPoly) (base remainingBits : Nat)
+    (hbase : 1 < base) {cert : GcdCert}
+    (hcert : heuLoop f h base remainingBits hbase = some cert) :
+    checkGcd f h cert = true := by
+  unfold heuLoop at hcert
+  dsimp only at hcert
+  by_cases hcost : projectedBits f h base > remainingBits
+  · rw [if_pos hcost] at hcert
+    contradiction
+  · rw [if_neg hcost] at hcert
+    generalize hcand : checkedCandidate? f h
+        (heuCandidateAt f h base hbase) = candidate? at hcert
+    cases candidate? with
+    | some candidate =>
+        cases hcert
+        exact checkedCandidate?_checks hcand
+    | none =>
+        exact heuLoop_checks f h (2 * base + 1)
+          (remainingBits - projectedBits f h base) (by omega) hcert
+termination_by remainingBits
+decreasing_by
+  have hcostOne : 1 ≤ projectedBits f h base := by
+    unfold projectedBits
+    exact Nat.le_max_left 1 _
+  omega
+
+/-- Every certificate returned by the public heuristic route passed the full
+checker. -/
+theorem heuCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : heuCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold heuCert? at hcert
+  exact heuLoop_checks f h _ 4096 (by omega) hcert
+
 /-! Route-level pins: one genuine hit and one accidental evaluated factor. -/
 
 #guard

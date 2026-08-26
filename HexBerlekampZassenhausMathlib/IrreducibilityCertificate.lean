@@ -90,13 +90,13 @@ private theorem checkCertAtFactor_of_checkFactorCerts
   exact hall _ hmem
 
 /--
-The Mathlib transport of an executable monic factor recorded in a
+The Mathlib transport of an executable factor recorded in a
 `PrimeFactorData` block has natural degree equal to the recorded factor
-degree. Uses the executable `degree?` slot, the recorded monicity, and the
-Mathlib basisSize identification.
+degree. This follows directly from the executable `degree?` slot and the
+Mathlib basis-size identification.
 -/
 private theorem natDegree_toMathlibPolynomial_factorPolys_eq
-    (primeData : Hex.PrimeFactorData) [Nontrivial (ZMod primeData.p)]
+    (primeData : Hex.PrimeFactorData)
     (hcheck : primeData.checkFactorCerts = true)
     (i : Nat) (hi_polys : i < primeData.factorPolys.size)
     (hi_deg : i < primeData.factorDegrees.size)
@@ -107,18 +107,12 @@ private theorem natDegree_toMathlibPolynomial_factorPolys_eq
   letI := primeData.bounds
   have hpair :=
     checkCertAtFactor_of_checkFactorCerts primeData hcheck i hi_deg hi_polys hi_certs
-  -- factor.leadingCoeff = 1, factor.degree? = some primeData.factorDegrees[i]
-  have hmonic : Hex.DensePoly.Monic primeData.factorPolys[i] := by
-    by_cases hmon : primeData.factorPolys[i].leadingCoeff = 1
-    · exact hmon
-    · exfalso
-      simp [Hex.PrimeFactorData.checkCertAtFactor, hmon] at hpair
   have hdegree :
       primeData.factorPolys[i].degree? = some primeData.factorDegrees[i] := by
     simp only [Hex.PrimeFactorData.checkCertAtFactor, Bool.and_eq_true, beq_iff_eq,
       decide_eq_true_eq] at hpair
     exact hpair.1.2
-  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize _ hmonic]
+  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize]
   show primeData.factorPolys[i].degree?.getD 0 = _
   rw [hdegree]
   rfl
@@ -411,21 +405,6 @@ theorem checkIrreducibleCert_sound
     rcases le_or_gt a.natDegree b.natDegree with hle | hgt
     · exact hcontradict a b hab.symm ha_ne hb_ne ha_prim ha_not_unit hle
     · exact hcontradict b a (by rw [hab]; ring) hb_ne ha_ne hb_prim hb_not_unit (le_of_lt hgt)
-
-/--
-The executable integer-polynomial irreducibility checker is sound for the
-Mathlib-free irreducibility predicate as well.
--/
-theorem checkIrreducibleCert_sound_zpoly
-    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
-    (hprime : ∀ primeData ∈ cert.perPrime.toList, Nat.Prime primeData.p)
-    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive)
-    (hpos : 0 < (HexPolyZMathlib.toPolynomial f).natDegree) :
-    Hex.checkIrreducibleCert f cert = true → Hex.ZPoly.Irreducible f := by
-  intro hcert
-  exact
-    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
-      (checkIrreducibleCert_sound f cert hprime hprim hpos hcert)
 
 /--
 Soundness of the kernel-reducible integer checker: a certificate accepted by
