@@ -247,31 +247,74 @@ def runPivotsDense (input : Input) : UInt64 :=
 /-- Lattice-index projection on the dense family. -/
 def runIndexDense (input : Input) : Nat := Matrix.latticeIndex (matrix input)
 
-/-- Valid diagonal HNF data prepared outside the checker timings. -/
+/-- Valid bounded HNF data prepared outside the shape-checker timings. -/
+structure ShapeInput where
+  n : Nat
+  form : Matrix Int n n
+  pivots : Vector (Fin n) n
+
+instance : Hashable ShapeInput where
+  hash input := mixHash (hash input.n) <|
+    mixHash (checksum input.form)
+      (input.pivots.foldl (fun acc x => mixHash acc (hash x)) 0)
+
+instance : Inhabited ShapeInput where
+  default :=
+    { n := 0
+      form := 0
+      pivots := Vector.ofFn fun i => nomatch i }
+
+def shapeInput (n : Nat) : ShapeInput :=
+  { n := n
+    form := Matrix.ofFn fun i j => if i = j then Int.ofNat (i.val + 1) else 0
+    pivots := Vector.ofFn id }
+
+def runShapePrepared (input : ShapeInput) : Bool :=
+  if Matrix.isHNFForm input.form input.n input.pivots then true
+  else panic! "prepared HNF shape was rejected"
+
+/-- A nontrivial bounded unimodular certificate prepared outside replay timings. -/
 structure CertInput where
   n : Nat
-  matrix : Matrix Int n n
+  source : Matrix Int n n
+  form : Matrix Int n n
+  transform : Matrix Int n n
+  inverse : Matrix Int n n
   pivots : Vector (Fin n) n
 
 instance : Hashable CertInput where
   hash input := mixHash (hash input.n) <|
-    mixHash (checksum input.matrix)
+    mixHash (checksum input.source) <|
+    mixHash (checksum input.form) <|
+    mixHash (checksum input.transform) <|
+    mixHash (checksum input.inverse)
       (input.pivots.foldl (fun acc x => mixHash acc (hash x)) 0)
 
 instance : Inhabited CertInput where
-  default := ⟨0, 0, Vector.ofFn fun i => nomatch i⟩
+  default :=
+    { n := 0
+      source := 0
+      form := 0
+      transform := 0
+      inverse := 0
+      pivots := Vector.ofFn fun i => nomatch i }
 
 def certInput (n : Nat) : CertInput :=
-  { n := n
-    matrix := Matrix.ofFn fun i j => if i = j then Int.ofNat (i.val + 1) else 0
-    pivots := Vector.ofFn id }
-
-def runShapePrepared (input : CertInput) : Bool :=
-  Matrix.isHNFForm input.matrix input.n input.pivots
+  let form : Matrix Int n n :=
+    Matrix.ofFn fun i j => if i = j then Int.ofNat (i.val + 1) else 0
+  let transform : Matrix Int n n := Matrix.ofFn fun i j =>
+    if i = j then 1 else if i.val = j.val + 1 then 1 else 0
+  let inverse : Matrix Int n n := Matrix.ofFn fun i j =>
+    if j.val ≤ i.val then if (i.val - j.val) % 2 = 0 then 1 else -1 else 0
+  let source : Matrix Int n n := Matrix.ofFn fun i j =>
+    if j.val ≤ i.val then
+      if (i.val - j.val) % 2 = 0 then Int.ofNat (j.val + 1) else -Int.ofNat (j.val + 1)
+    else 0
+  { n, source, form, transform, inverse, pivots := Vector.ofFn id }
 
 def runCertPrepared (input : CertInput) : Bool :=
-  let I : Matrix Int input.n input.n := Matrix.identity input.n
-  Matrix.hnfCert input.matrix input.matrix I I input.n input.pivots
+  if Matrix.hnfCert input.source input.form input.transform input.inverse input.n input.pivots then true
+  else panic! "prepared HNF certificate was rejected"
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
@@ -598,20 +641,24 @@ setup_benchmark runIndexDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense w
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: the entry-level HNF predicate scans a quadratic
-number of entries and pivot pairs on a prepared diagonal certificate. -/
-setup_benchmark runShapePrepared n => n ^ 2 with prep := certInput where {
+/- Cost-model derivation: the entry-level HNF predicate has quadratically many
+clauses; executable nested finite-quantifier traversal contributes one further
+linear factor in the current representation, for a controlled `O(n³)` wall
+model on a prepared bounded diagonal certificate. -/
+setup_benchmark runShapePrepared n => n ^ 3 with prep := shapeInput where {
   paramFloor := 16, paramCeiling := 256,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: certificate replay performs two dense matrix
-products plus the quadratic shape scan, giving the registered cubic model. -/
+/- Cost-model derivation: certificate replay performs two packed product
+checks whose `n` packed dot products each traverse `n` entries and operate on
+rows of linearly growing packed width, plus the shape scan. On this bounded
+certificate family that gives the registered cubic wall model. -/
 setup_benchmark runCertPrepared n => n ^ 3 with prep := certInput where {
-  paramFloor := 16, paramCeiling := 128,
-  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  paramFloor := 64, paramCeiling := 512,
+  paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }

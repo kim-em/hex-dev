@@ -52,15 +52,93 @@ instance (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) :
   unfold HNFForm
   infer_instance
 
+private def HNFFormChecked (H : Matrix Int n m) (r : Nat)
+    (piv : Vector (Fin m) r) (hrn : r ≤ n) : Prop :=
+  r ≤ m ∧
+  (∀ i j : Fin r, i < j → piv.get i < piv.get j) ∧
+  (∀ (i : Fin r) (j : Fin m), j < piv.get i →
+    (H.getRow (Fin.castLE hrn i)).get j = 0) ∧
+  (∀ i : Fin r, 0 < (H.getRow (Fin.castLE hrn i)).get (piv.get i)) ∧
+  (∀ (i : Fin r) (row : Fin n), i.val < row.val →
+    (H.getRow row).get (piv.get i) = 0) ∧
+  (∀ row : Fin n, r ≤ row.val → H.getRow row = 0) ∧
+  (∀ (i : Fin r) (row : Fin n), row.val < i.val →
+    0 ≤ (H.getRow row).get (piv.get i)) ∧
+  (∀ (i : Fin r) (row : Fin n), row.val < i.val →
+    (H.getRow row).get (piv.get i) <
+      (H.getRow (Fin.castLE hrn i)).get (piv.get i))
+
+private instance (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r)
+    (hrn : r ≤ n) : Decidable (HNFFormChecked H r piv hrn) := by
+  unfold HNFFormChecked
+  infer_instance
+
+private theorem hnfFormChecked_iff (H : Matrix Int n m) (r : Nat)
+    (piv : Vector (Fin m) r) (hrn : r ≤ n) :
+    HNFFormChecked H r piv hrn ↔ HNFForm H r piv := by
+  unfold HNFFormChecked HNFForm
+  constructor
+  · rintro ⟨hrm, sorted, leading, positive, below, zero, above, reduced⟩
+    refine ⟨hrn, hrm, sorted, ?_, ?_, below, zero, above, ?_⟩
+    · intro i row hrow j hj
+      have : row = Fin.castLE hrn i := by
+        apply Fin.ext
+        exact hrow
+      subst row
+      exact leading i j hj
+    · intro i row hrow
+      have : row = Fin.castLE hrn i := by
+        apply Fin.ext
+        exact hrow
+      subst row
+      exact positive i
+    · intro i row hrow pivotRow hpivot
+      have : pivotRow = Fin.castLE hrn i := by
+        apply Fin.ext
+        exact hpivot
+      subst pivotRow
+      exact reduced i row hrow
+  · rintro ⟨_, hrm, sorted, leading, positive, below, zero, above, reduced⟩
+    refine ⟨hrm, sorted, ?_, ?_, below, zero, above, ?_⟩
+    · intro i j hj
+      exact leading i (Fin.castLE hrn i) rfl j hj
+    · intro i
+      exact positive i (Fin.castLE hrn i) rfl
+    · intro i row hrow
+      exact reduced i row hrow (Fin.castLE hrn i) rfl
+
 /-- Decide all row-HNF shape clauses directly from the entries. -/
 @[expose]
 def isHNFForm (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) : Bool :=
-  decide (HNFForm H r piv)
+  if hrn : r ≤ n then
+    decide (
+      r ≤ m ∧
+      (∀ i j : Fin r, i < j → piv.get i < piv.get j) ∧
+      (∀ (i : Fin r) (j : Fin m), j < piv.get i →
+        (H.getRow (Fin.castLE hrn i)).get j = 0) ∧
+      (∀ i : Fin r, 0 < (H.getRow (Fin.castLE hrn i)).get (piv.get i)) ∧
+      (∀ (i : Fin r) (row : Fin n), i.val < row.val →
+        (H.getRow row).get (piv.get i) = 0) ∧
+      (∀ row : Fin n, r ≤ row.val → H.getRow row = 0) ∧
+      (∀ (i : Fin r) (row : Fin n), row.val < i.val →
+        0 ≤ (H.getRow row).get (piv.get i)) ∧
+      (∀ (i : Fin r) (row : Fin n), row.val < i.val →
+        (H.getRow row).get (piv.get i) <
+          (H.getRow (Fin.castLE hrn i)).get (piv.get i)))
+  else false
 
 @[simp] theorem isHNFForm_iff (H : Matrix Int n m) (r : Nat)
     (piv : Vector (Fin m) r) :
     isHNFForm H r piv = true ↔ HNFForm H r piv := by
-  simp [isHNFForm]
+  unfold isHNFForm
+  split
+  next hrn =>
+    change decide (HNFFormChecked H r piv hrn) = true ↔ HNFForm H r piv
+    simpa only [decide_eq_true_eq] using hnfFormChecked_iff H r piv hrn
+  next hrn =>
+    simp only [Bool.false_eq_true, false_iff]
+    unfold HNFForm
+    omega
 
 private theorem int_factor_one {x y : Int} (h : x * y = 1) :
     x = 1 ∨ x = -1 := by
