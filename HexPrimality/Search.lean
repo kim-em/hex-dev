@@ -89,7 +89,6 @@ transpose the cycle and batch counters. The two small counters intentionally
 travel through the production loop: conformance then observes the exact route
 rather than a duplicated tracing implementation that can drift from it. -/
 private structure BrentState where
-  fuel : Nat
   x : Nat
   y : Nat
   r : Nat
@@ -100,11 +99,14 @@ private structure BrentState where
   steps : Nat
   gcds : Nat
 
-private def brentStart (start fuel : Nat) : BrentState :=
-  ⟨fuel, start, start, 1, 0, 1, start, 0, 0, 0⟩
+private def brentStart (start : Nat) : BrentState :=
+  { x := start, y := start, r := 1, k := 0, q := 1,
+    batchStart := start, batchCount := 0, steps := 0, gcds := 0 }
 
 /-- Replay one failed batch difference by difference when its accumulated gcd
-is the whole modulus. -/
+is the whole modulus. The zero-fuel `none` result is unreachable from
+`brentGo`: a whole-modulus product of batch differences guarantees that at
+least one replayed difference has nontrivial gcd. -/
 private def brentRecover (n c x : Nat) :
     Nat → Nat → Nat → Nat → BrentResult
   | 0, _, steps, gcds => ⟨none, steps, gcds, 1⟩
@@ -117,32 +119,39 @@ private def brentRecover (n c x : Nat) :
 /-- Brent cycle search inside one restart. Differences are multiplied modulo
 `n` and share one gcd per batch. If a batch gcd is `n`, `brentRecover`
 replays only that batch to recover the first nontrivial individual gcd. -/
-private def brentGo (n c : Nat) : BrentState → BrentResult
-  | ⟨0, _, _, _, _, _, _, _, steps, gcds⟩ => ⟨none, steps, gcds, 0⟩
-  | ⟨fuel + 1, x, y, r, k, q, batchStart, batchCount, steps, gcds⟩ =>
-      let y' := rhoNext n c y
-      let difference := (x + n - y') % n
-      let q' := q * difference % n
-      let k' := k + 1
-      let batchCount' := batchCount + 1
-      let cycleDone := r ≤ k'
+private def brentGo (n c : Nat) : Nat → BrentState → BrentResult
+  | 0, state => ⟨none, state.steps, state.gcds, 0⟩
+  | fuel + 1, state =>
+      let y' := rhoNext n c state.y
+      let difference := (state.x + n - y') % n
+      let q' := state.q * difference % n
+      let k' := state.k + 1
+      let batchCount' := state.batchCount + 1
+      let cycleDone := state.r ≤ k'
       if rhoBatchSize ≤ batchCount' ∨ cycleDone then
         let d := Nat.gcd q' n
         if d = 1 then
           if cycleDone then
-            brentGo n c ⟨fuel, y', y', r * 2, 0, 1, y', 0,
-              steps + 1, gcds + 1⟩
+            brentGo n c fuel
+              { x := y', y := y', r := state.r * 2,
+                k := 0, q := 1, batchStart := y', batchCount := 0,
+                steps := state.steps + 1, gcds := state.gcds + 1 }
           else
-            brentGo n c ⟨fuel, x, y', r, k', 1, y', 0,
-              steps + 1, gcds + 1⟩
+            brentGo n c fuel
+              { x := state.x, y := y', r := state.r, k := k',
+                q := 1, batchStart := y', batchCount := 0,
+                steps := state.steps + 1, gcds := state.gcds + 1 }
         else if d < n then
-          ⟨some d, steps + 1, gcds + 1, 0⟩
+          ⟨some d, state.steps + 1, state.gcds + 1, 0⟩
         else
-          brentRecover n c x batchCount' batchStart (steps + 1) (gcds + 1)
+          brentRecover n c state.x batchCount' state.batchStart
+            (state.steps + 1) (state.gcds + 1)
       else
-        brentGo n c ⟨fuel, x, y', r, k', q', batchStart, batchCount',
-          steps + 1, gcds⟩
-termination_by state => state.fuel
+        brentGo n c fuel
+          { x := state.x, y := y', r := state.r, k := k',
+            q := q', batchStart := state.batchStart,
+            batchCount := batchCount', steps := state.steps + 1,
+            gcds := state.gcds }
 
 /-- Inner iteration budget for one Brent restart: scaled past the expected
 `n^(1/4)` cycle length for small `n`, capped at `2^22` so one restart is
@@ -200,7 +209,7 @@ structure RhoTrace where
 /-- Run one explicitly parameterized Brent restart and report its batching
 counters. -/
 def rhoTrace (n c start fuel : Nat) : RhoTrace :=
-  let result := brentGo n c (brentStart start fuel)
+  let result := brentGo n c fuel (brentStart start)
   ⟨result.factor, result.steps, result.gcds, result.recoveries⟩
 
 /-- Inspect the rejection count of the deterministic restart draw. -/
@@ -214,7 +223,7 @@ private def rhoTry (n : Nat) : Nat → Nat → Rand → Except RhoFailure (Nat �
   | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
   | tries + 1, attempts, r =>
       let draw := rhoDraw n r
-      match (brentGo n draw.c (brentStart draw.start (rhoInnerFuel n))).factor with
+      match (brentGo n draw.c (rhoInnerFuel n) (brentStart draw.start)).factor with
       | some d =>
           if 1 < d then
             if d < n then

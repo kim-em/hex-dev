@@ -174,9 +174,10 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard recursivePowerCandidate.residualBase == 10037
 #guard recursivePowerCandidate.residualExponent == 6
 -- Batched rho may return a composite divisor when two collisions share a
--- batch. One seed pins both the recursive power-route count and final replay.
+-- batch. Seed 17 therefore changed the route count after batching; seed 1
+-- pins that count while the final checked factorization remains unchanged.
 #guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
-#guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 17) == 0
+#guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 1) == 0
 #guard (match factor? recursivePowerInput (Rand.ofSeed 1) with
   | .ok (F, _) =>
       F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) ==

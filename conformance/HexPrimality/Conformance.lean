@@ -111,6 +111,10 @@ private def rhoBatchTrace : Hex.Nat.Internal.RhoTrace :=
   | .ok (d, _) => 1 < d && d < 100160063 && 100160063 % d == 0
   | .error _ => false)
 
+-- Collisions for 11 and 13 share the cycle-boundary batch, so the route
+-- returns their proper composite product rather than pretending it is prime.
+#guard (Hex.Nat.Internal.rhoTrace 2431 1 1 32).factor == some 143
+
 -- A whole-modulus batch is replayed and recovers the proper factor 3.
 private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
   Hex.Nat.Internal.rhoTrace 9 1 0 32
