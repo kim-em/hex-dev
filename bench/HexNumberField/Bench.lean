@@ -374,12 +374,22 @@ setup_fixed_benchmark runRoots where {
 private def xPowSubTwo (m : Nat) : ZPoly :=
   DensePoly.ofList ((-2 : Int) :: List.replicate (m - 1) 0 ++ [1])
 
-/-- Deterministic dense all-nonzero rational coefficients keyed by length
-and salt: alternating signs, growing numerators, denominator `i + 2`. -/
+/-- Deterministic dense all-nonzero rational coefficients keyed by length and
+salt: alternating signs, numerators cycling modulo 11 and denominators modulo
+6, so both are bounded independently of `len` and a ladder over `len` varies
+the modulus degree alone.
+
+The bound matters. The earlier form used numerator `i + salt + 1` over
+denominator `i + 2`; the reduced common denominator of that vector is
+`lcm (2, …, len + 1)`, whose bit length is `Θ(len)` by the prime number
+theorem. A ladder built on it varies coefficient height together with degree,
+so it is not the controlled one-parameter ladder
+[PLAN/Phase4.md](../../PLAN/Phase4.md) requires, and no bounded-height cost
+model can fit it. -/
 private def denseRatCoeffs (len salt : Nat) : Array Rat :=
   (Array.range len).map fun i =>
     let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
-    mkRat (sign * Int.ofNat (i + salt + 1)) (i + 2)
+    mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
 
 /-- Deterministic refined isolation for a squarefree polynomial: run the
 bounded isolator at separation depth and take the first returned atom. -/
@@ -490,10 +500,15 @@ wall model is linear. -/
 setup_benchmark runQAdjoinAddLadder n => n
   with prep := prepFieldInput
   where {
+    -- The fixture, not the timed operation, bounds this ladder: building the
+    -- certified root of `X^n - 2` isolates all `n` complex roots at
+    -- separation depth, which costs 4.9 s at n = 16, 14.2 s at n = 20 and
+    -- 30.8 s at n = 24, and runs past a quarter hour by n = 32. The wallclock
+    -- cap is sized for that prelude; the measured call itself is microseconds.
     paramFloor := 4
-    paramCeiling := 32
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 24
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -507,10 +522,15 @@ the declared model is `n^2`. -/
 setup_benchmark runQAdjoinMulLadder n => n * n
   with prep := prepFieldInput
   where {
+    -- The fixture, not the timed operation, bounds this ladder: building the
+    -- certified root of `X^n - 2` isolates all `n` complex roots at
+    -- separation depth, which costs 4.9 s at n = 16, 14.2 s at n = 20 and
+    -- 30.8 s at n = 24, and runs past a quarter hour by n = 32. The wallclock
+    -- cap is sized for that prelude; the measured call itself is microseconds.
     paramFloor := 4
-    paramCeiling := 32
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 24
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -526,10 +546,14 @@ arbitrary-precision operation constant-cost. -/
 setup_benchmark runQAdjoinInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
-    paramFloor := 3
-    paramCeiling := 12
-    paramSchedule := .custom #[3, 4, 6, 8, 12]
-    maxSecondsPerCall := 10.0
+    -- The fixture decides irreducibility of `X^n - 2` and isolates its roots
+    -- (1.3 s at n = 12, 4.9 s at n = 16); the cap covers that prelude so the
+    -- ladder reaches a range where coefficient growth, not the small-integer
+    -- regime, sets the cost.
+    paramFloor := 4
+    paramCeiling := 20
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 20]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -589,10 +613,14 @@ proxy used by the HexResultant registrations, so the declared wall model is
 setup_benchmark runAddEliminantLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepEliminantInput
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 16, 32, 64]
-    maxSecondsPerCall := 10.0
+    -- The chain's per-step integer payloads only clear a machine word past
+    -- degree 8, so rungs below that read the small-integer regime rather than
+    -- the declared one; the ladder starts at 8 and runs to 256 to fit the
+    -- model over the range where its limb term is the operative cost.
+    paramFloor := 8
+    paramCeiling := 256
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -613,7 +641,10 @@ setup_benchmark runLazyAddLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
     paramFloor := 2
     paramCeiling := 10
     paramSchedule := .custom #[2, 3, 4, 6, 8, 10]
-    maxSecondsPerCall := 60.0
+    -- The top rung costs about 92 s per call; a 60 s cap truncated the ladder
+    -- there and left the verdict resting on the `C`-spread fallback instead of
+    -- a fitted slope.
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -751,9 +782,13 @@ the coefficient count. -/
 setup_benchmark runCommonPresentationLadder n => n
   with prep := prepAlgPolyInput
   where {
-    paramFloor := 2
-    paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 8, 16]
+    -- `presentation?` carries a fixed start-up cost (the generator's powers
+    -- and the first `extend?` shifts) of roughly four coefficients' worth of
+    -- work. Below eight coefficients that constant, not the linear term,
+    -- dominates, so the ladder starts at 8 and runs to 128.
+    paramFloor := 8
+    paramCeiling := 128
+    paramSchedule := .custom #[8, 16, 32, 64, 128]
     maxSecondsPerCall := 60.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -772,10 +807,13 @@ derivation above (`O(d^3 * B^2)` with `tau, B = O(d log d)`), giving the same
 setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
-    paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 180.0
+    -- Degree 1 leaves the norm eliminant linear, so that rung measures the
+    -- Yun and embedding prelude rather than the isolation the model declares;
+    -- the ladder starts at 2 and reaches 8, where isolation is the whole cost.
+    paramFloor := 2
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    maxSecondsPerCall := 900.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -791,10 +829,13 @@ shape. -/
 setup_benchmark runAlgebraicRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepAlgPolyInput
   where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
-    maxSecondsPerCall := 60.0
+    -- The common-field embedding is linear in the coefficient count and costs
+    -- tens of milliseconds; below three coefficients it is comparable to the
+    -- root work the model declares, so the ladder starts at 3 and reaches 8.
+    paramFloor := 3
+    paramCeiling := 8
+    paramSchedule := .custom #[3, 4, 5, 6, 8]
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
