@@ -109,6 +109,7 @@ Each witness proves coprimality of `f` and
 structure IrreducibilityCertificate where
   /-- The characteristic of the finite field. -/
   p : Nat
+  /-- The modulus bound, carried so the certificate is self-describing. -/
   [bounds : ZMod64.Bounds p]
   /-- The degree claimed for the polynomial under test. -/
   n : Nat
@@ -321,27 +322,14 @@ theorem rabinDividesTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f) :
       (frobeniusDiffMod f hmonic (basisSize f)).isZero := by
   rfl
 
-private theorem zmod64_one_ne_zero_of_prime
-    (hp : Hex.Nat.Prime p) :
-    (1 : ZMod64 p) ≠ 0 := by
-  intro hone
-  have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat hone
-  change (ZMod64.one : ZMod64 p).toNat = (ZMod64.zero : ZMod64 p).toNat at hnat
-  have hp_gt : 1 < p := by
-    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
-    omega
-  rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
-  omega
-
 private theorem fp_one_ne_zero [ZMod64.PrimeModulus p] :
     (1 : FpPoly p) ≠ 0 := by
   intro hone
   have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
   change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
   rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
-  simp only [if_true] at hcoeff
-  exact zmod64_one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
+  simp only [ite_true] at hcoeff
+  exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
 
 private theorem eq_zero_of_size_eq_zero (f : FpPoly p) (hsize : f.size = 0) :
     f = 0 := by

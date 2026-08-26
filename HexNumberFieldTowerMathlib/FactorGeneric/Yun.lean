@@ -10,6 +10,15 @@ public import HexNumberFieldTowerMathlib.FactorGeneric.Product
 
 public section
 
+/-!
+# Correctness of the executable Yun squarefree decomposition
+
+Root-multiplicity analysis of `Factor.yunRaw` over the tower coefficient
+field: the loop invariant at one complex root, soundness, completeness, and
+monicity of the emitted components, and acceptance of the produced
+decomposition by the executable certificate check `Factor.checkYun`.
+-/
+
 namespace Hex.NumberTower
 
 section Yun
@@ -23,6 +32,8 @@ variable (hinv : ∀ a : Arithmetic.Coeff levels,
 
 include hvalid hinjective hinv
 
+/-- Monic normalisation only rescales by a unit: the interpretation of
+`Norm.monic f` over `ℂ` is associated to the interpretation of `f`. -/
 theorem rawPolynomial_monic_associated
     (f : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0) :
@@ -51,12 +62,16 @@ theorem rawPolynomial_monic_associated
   exact hmapped
 
 omit hvalid hinjective hinv in
+/-- Associated complex polynomials have the same root multiplicity at every
+point. -/
 theorem rootMultiplicity_associated_complex
     {f g : Polynomial ℂ} (h : Associated f g) (z : ℂ) :
     f.rootMultiplicity z = g.rootMultiplicity z := by
   rw [← Polynomial.count_roots, ← Polynomial.count_roots, h.roots_eq]
 
 omit hvalid hinjective hinv in
+/-- Over `ℂ` the root multiplicity of a gcd at each point is the minimum of
+the root multiplicities of its arguments. -/
 theorem rootMultiplicity_gcd_complex
     (f g : Polynomial ℂ) (hf : f ≠ 0) (hg : g ≠ 0) (z : ℂ) :
     (EuclideanDomain.gcd f g).rootMultiplicity z =
@@ -77,6 +92,8 @@ theorem rootMultiplicity_gcd_complex
     · rw [← Polynomial.le_rootMultiplicity_iff hg]
       exact min_le_right _ _
 
+/-- The monic normalisation of the executable gcd `DensePoly.gcd f g` divides
+both `f` and `g` in the executable polynomial ring. -/
 theorem monicGcd_dvd
     (f g : DensePoly (Arithmetic.Coeff levels))
     (hf : f ≠ 0) :
@@ -116,6 +133,8 @@ theorem monicGcd_dvd
   · exact hmonicNormalized.dvd.trans
       (EuclideanDomain.gcd_dvd_right _ _)
 
+/-- The monic executable gcd interprets to a nonzero complex polynomial
+whenever its first argument does. -/
 theorem rawPolynomial_monicGcd_ne_zero
     (f g : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0) :
@@ -155,6 +174,9 @@ theorem rawPolynomial_monicGcd_ne_zero
     (LevelSemantics.coeffHom levels hvalid hinjective hinv).injective).mpr
       hsourceNe
 
+/-- The executable monic gcd tracks complex root multiplicities: at every
+`z`, the interpretation of `Norm.monic (DensePoly.gcd f g)` has root
+multiplicity the minimum of those of `f` and `g`. -/
 theorem rootMultiplicity_monicGcd
     (f g : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0)
@@ -226,6 +248,9 @@ theorem rootMultiplicity_monicGcd
         ((Norm.rawPolynomial levels g).rootMultiplicity z) :=
       rootMultiplicity_gcd_complex _ _ hf hg z
 
+/-- For an exact executable division the interpretations reconstruct the
+dividend: interpreting `dividend / divisor` and multiplying by the
+interpreted divisor recovers the interpreted dividend. -/
 theorem rawPolynomial_div_mul
     (dividend divisor : DensePoly (Arithmetic.Coeff levels))
     (hdivisor : divisor ∣ dividend) :
@@ -252,6 +277,8 @@ theorem rawPolynomial_div_mul
     (HexPolyMathlib.toPolynomial dividend).map ι
   simpa only [Polynomial.map_mul] using hmapped
 
+/-- An exact executable quotient of a semantically nonzero dividend is
+semantically nonzero. -/
 theorem rawPolynomial_div_ne_zero
     (dividend divisor : DensePoly (Arithmetic.Coeff levels))
     (hdivisor : divisor ∣ dividend)
@@ -265,6 +292,9 @@ theorem rawPolynomial_div_ne_zero
   rw [hquotient, zero_mul] at hreconstruct
   exact hdividend hreconstruct.symm
 
+/-- Root multiplicities subtract across the monic exact quotient: at every
+`z`, the multiplicity of `Norm.monic (dividend / divisor)` is the dividend's
+multiplicity minus the divisor's. -/
 theorem rootMultiplicity_monicDiv
     (dividend divisor : DensePoly (Arithmetic.Coeff levels))
     (hdivisor : divisor ∣ dividend)
@@ -288,6 +318,8 @@ theorem rootMultiplicity_monicDiv
   rw [hreconstruct] at hmultiplicity
   omega
 
+/-- The monic normalisation of an exact quotient of a semantically nonzero
+dividend is semantically nonzero. -/
 theorem rawPolynomial_monicDiv_ne_zero
     (dividend divisor : DensePoly (Arithmetic.Coeff levels))
     (hdivisor : divisor ∣ dividend)
@@ -300,6 +332,10 @@ theorem rawPolynomial_monicDiv_ne_zero
   exact (rawPolynomial_monic_associated hvalid hinjective hinv
     (dividend / divisor) hquotient).ne_zero_iff.mpr hquotient
 
+/-- Loop invariant of Yun's algorithm tracked at one complex root `z` of
+multiplicity `r` in the original input. Before emitting the component of
+multiplicity `k`, the working polynomial `w` carries `z` simply exactly when
+`k ≤ r`, and the repeated part carries the remaining multiplicity `r - k`. -/
 structure YunInvariant (z : ℂ) (r k : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels)) : Prop where
   w_ne : Norm.rawPolynomial levels w ≠ 0
@@ -309,6 +345,9 @@ structure YunInvariant (z : ℂ) (r k : Nat)
   repeated_multiplicity :
     (Norm.rawPolynomial levels repeated).rootMultiplicity z = r - k
 
+/-- One Yun iteration preserves the invariant: replacing `w` by the monic
+gcd with the repeated part and dividing that gcd out of the repeated part
+advances the multiplicity counter from `k` to `k + 1`. -/
 theorem YunInvariant.step (z : ℂ) (r k : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels))
     (invariant : YunInvariant z r k w repeated) :
@@ -352,6 +391,9 @@ theorem YunInvariant.step (z : ℂ) (r k : Nat)
       invariant.repeated_multiplicity]
     by_cases hk : k ≤ r <;> simp [hk] <;> omega
 
+/-- The component emitted at counter `k` carries `z` as a simple root exactly
+when `k` is the multiplicity of `z` in the original input, and avoids `z`
+otherwise. -/
 theorem YunInvariant.component (z : ℂ) (r k : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels))
     (invariant : YunInvariant z r k w repeated) :
@@ -383,6 +425,10 @@ theorem YunInvariant.component (z : ℂ) (r k : Nat)
   · have heq : k ≠ r := by omega
     simp [hk, heq]
 
+/-- The Yun setup establishes the invariant at counter `1`: over a
+characteristic-zero coefficient field, dividing the monic input by its gcd
+with the derivative leaves each root exactly once, and the gcd retains the
+remaining multiplicity. -/
 theorem YunInvariant.init
     (f : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0)
@@ -473,6 +519,8 @@ theorem natDegree_rawPolynomial
       (LevelSemantics.coeffHom levels hvalid hinjective hinv).injective,
     HexPolyMathlib.natDegree_toPolynomial]
 
+/-- The raw complex interpretation is coefficientwise mapping through the
+coefficient denotation homomorphism. -/
 theorem rawPolynomial_eq_map
     (f : DensePoly (Arithmetic.Coeff levels)) :
     letI : Field (Arithmetic.Coeff levels) :=
@@ -485,6 +533,8 @@ theorem rawPolynomial_eq_map
   rw [← Norm.rawPolynomialHom_apply levels hvalid hinjective hinv]
   rfl
 
+/-- A semantically nonzero executable polynomial with a complex root has
+positive executable degree. -/
 theorem degree_pos_of_rawPolynomial_root
     (f : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0) {z : ℂ}
@@ -498,6 +548,8 @@ theorem degree_pos_of_rawPolynomial_root
   rw [natDegree_rawPolynomial hvalid hinjective hinv] at hnatDegree
   exact hnatDegree
 
+/-- Entries already accumulated survive the rest of the Yun loop: the
+accumulator only grows. -/
 theorem mem_yunAux_of_mem
     (w repeated : DensePoly (Arithmetic.Coeff levels)) (k fuel : Nat)
     (out : Array (Array (Array Rat) × Nat)) {entry}
@@ -516,6 +568,9 @@ theorem mem_yunAux_of_mem
           exact Or.inl hentry
         · exact ih _ _ _ _ hentry
 
+/-- Soundness of the Yun loop at one root: assuming the invariant, every
+emitted component that vanishes at `z` is labelled with exactly the
+multiplicity `r` of `z` in the original input. -/
 theorem yunAux_sound (z : ℂ) (r : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels)) (k fuel : Nat)
     (out : Array (Array (Array Rat) × Nat))
@@ -575,6 +630,9 @@ theorem yunAux_sound (z : ℂ) (r : Nat)
             exact hcomponentSound hroot
         · exact ih shared nextRepeated (k + 1) _ hnextInvariant hOut
 
+/-- Squarefreeness of the emitted components: assuming the invariant, every
+component produced by the Yun loop carries `z` with multiplicity at most
+one. -/
 theorem yunAux_rootMultiplicity_le_one (z : ℂ) (r : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels)) (k fuel : Nat)
     (out : Array (Array (Array Rat) × Nat))
@@ -616,6 +674,8 @@ theorem yunAux_rootMultiplicity_le_one (z : ℂ) (r : Nat)
         · exact ih shared nextRepeated (k + 1) _ hnextInvariant hOut
 
 set_option maxHeartbeats 1200000 in
+/-- Completeness of the Yun loop at one root: with enough fuel, some emitted
+component vanishes at `z` and is labelled with its multiplicity `r`. -/
 theorem yunAux_complete (z : ℂ) (r : Nat)
     (w repeated : DensePoly (Arithmetic.Coeff levels)) (k fuel : Nat)
     (out : Array (Array (Array Rat) × Nat))
@@ -684,6 +744,8 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         · exact ih shared nextRepeated (k + 1) _ hnextInvariant
             hnextIndex hnextFuel
 
+/-- The Yun loop only emits nonconstant components with positive
+multiplicity labels. -/
 theorem yunAux_positive
     (w repeated : DensePoly (Arithmetic.Coeff levels))
     (multiplicity fuel : Nat) (out : Array (Array (Array Rat) × Nat))
@@ -717,6 +779,8 @@ theorem yunAux_positive
           · exact hOut
 
 omit hvalid hinjective hinv in
+/-- Multiplicity labels emitted by the Yun loop are strictly increasing and
+bounded by the starting counter plus the remaining fuel. -/
 theorem yunAux_multiplicities
     (w repeated : DensePoly (Arithmetic.Coeff levels))
     (multiplicity fuel : Nat) (out : Array (Array (Array Rat) × Nat))
@@ -780,6 +844,8 @@ theorem yunAux_multiplicities
           have := hresult.2 entry hentry
           omega
 
+/-- Every component emitted by the Yun loop is monic in the executable
+sense: its raw leading coefficient is `1`. -/
 theorem yunAux_monic
     (w repeated : DensePoly (Arithmetic.Coeff levels))
     (multiplicity fuel : Nat) (out : Array (Array (Array Rat) × Nat))
@@ -826,6 +892,8 @@ theorem yunAux_monic
         · exact ih _ _ _ _ hOut
 
 omit hvalid hinjective hinv in
+/-- The multiplicity of any single root of a nonzero complex polynomial is
+bounded by its degree. -/
 theorem rootMultiplicity_le_natDegree_complex
     (f : Polynomial ℂ) (hf : f ≠ 0) (z : ℂ) :
     f.rootMultiplicity z ≤ f.natDegree := by
@@ -1089,6 +1157,8 @@ theorem yun_coprime
   omega
 
 omit hvalid hinjective hinv in
+/-- Root multiplicities scale linearly under powers of a nonzero complex
+polynomial. -/
 theorem rootMultiplicity_pow_complex
     (P : Polynomial ℂ) (hP : P ≠ 0) (n : Nat) (z : ℂ) :
     (P ^ n).rootMultiplicity z = n * P.rootMultiplicity z := by
@@ -1100,6 +1170,8 @@ theorem rootMultiplicity_pow_complex
       simp [Nat.succ_mul]
 
 omit hvalid hinjective hinv in
+/-- Root multiplicities add across a product of nonzero complex
+polynomials. -/
 theorem rootMultiplicity_list_prod_complex
     (polys : List (Polynomial ℂ))
     (hnonzero : ∀ P ∈ polys, P ≠ 0) (z : ℂ) :
@@ -1120,6 +1192,8 @@ theorem rootMultiplicity_list_prod_complex
         (mul_ne_zero hP htailProd), ih htail]
       simp
 
+/-- Semantic interpretation turns the executable power `Factor.polyPow` into
+the complex polynomial power. -/
 theorem rawPolynomial_polyPow
     (f : DensePoly (Arithmetic.Coeff levels)) (n : Nat) :
     Norm.rawPolynomial levels (Factor.polyPow f n) =
@@ -1151,6 +1225,8 @@ theorem rawPolynomial_polyPow
           congr 1
           omega
 
+/-- The executable fold multiplying labelled component powers interprets to
+the product of interpreted component powers times the accumulator. -/
 theorem rawPolynomial_yunFold
     (components : List (Array (Array Rat) × Nat))
     (acc : DensePoly (Arithmetic.Coeff levels)) :
@@ -1173,6 +1249,10 @@ theorem rawPolynomial_yunFold
       simp only [List.map_cons, List.prod_cons]
       ring
 
+/-- Multiplicity bookkeeping for the weighted Yun product: at every root `z`
+of the input, the labels of the (squarefree, strictly ordered, jointly
+complete) components weighted by their own multiplicities at `z` sum to the
+input's multiplicity at `z`. -/
 theorem yunMultiplicity_sum
     (f : Array (Array Rat))
     (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) (z : ℂ)
@@ -1291,6 +1371,8 @@ theorem yunMultiplicity_sum
         simp only [List.map_cons, List.sum_cons, hmultiplicity, mul_one,
           htailZero, add_zero, hlabel]
 
+/-- Every component emitted by `Factor.yunRaw` interprets to a monic complex
+polynomial. -/
 theorem yun_rawPolynomial_monic
     (f : Array (Array Rat))
     (entry : Array (Array Rat) × Nat)

@@ -35,11 +35,6 @@ def evalPoly? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot) :
     Option AlgebraicRoot :=
   RawEvaluation.evalPoly? T.levels.toList (f.toArray.map coeffs) candidate
 
-/-- Integer magnitude majorant for a fixed tower element. -/
-@[expose]
-def elemMajorant (T : NumberTower) (a : Elem T) : Nat :=
-  RawEvaluation.coordsMajorant T.levels.toList (coeffs a)
-
 /-- Certified ball Horner evaluation at the tower's fixed embedding and one
 absolute candidate root. Each exact coefficient is refined far enough to
 supply the common `2^-prec` input-error unit consumed by

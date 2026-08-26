@@ -770,6 +770,7 @@ private theorem exists_irreducible_factor_of_pos_degree_aux :
         ∃ g : GF2Poly,
           GF2Poly.Irreducible g ∧ g ∣ a ∧
             0 < g.degree ∧ g.degree ≤ a.degree := by
+  classical
   intro n
   induction n using Nat.strongRecOn with
   | ind n ih =>

@@ -428,6 +428,8 @@ theorem PolynomialIrreducible.ofMathlib {T : NumberTower} {f : Poly T}
       simpa only [HexPolyMathlib.natDegree_toPolynomial] using
         Polynomial.natDegree_eq_zero_of_isUnit hh
 
+/-- The executable-carrier irreducibility predicate coincides with Mathlib
+irreducibility of the interpreted polynomial. -/
 theorem polynomialIrreducible_iff (T : NumberTower) (f : Poly T) :
     PolynomialIrreducible T f ↔
       Irreducible (HexPolyMathlib.toPolynomial f) :=

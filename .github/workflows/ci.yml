@@ -61,6 +61,8 @@ jobs:
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_hexrcf_proof_sweep.py
+          python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
+          python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py
           python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
@@ -73,7 +75,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp
+          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
@@ -162,8 +164,8 @@ jobs:
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
         run: |
-          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexPrimalityKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexCharPoly HexMinPoly HexGramSchmidt HexLLL HexMatrixMathlib HexHermiteMathlib HexCharPolyMathlib HexMinPolyMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexPrimalityMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexhermite_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexIntFactor HexPrimalityKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLLL HexMatrixMathlib HexHermiteMathlib HexSmithMathlib HexCharPolyMathlib HexMinPolyMathlib HexPolySmithMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexpolysmith_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexintfactor_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexhermite_bench hexsmith_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
@@ -176,23 +178,25 @@ jobs:
       # `.lake/build` (no recompilation) but cap the peak at whichever single
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
-        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
             HexConformance hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
+            hexpolysmith_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
             hexgf2_emit_fixtures hexgfq_emit_fixtures \
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
             hexhensel_emit_fixtures hexprimality_emit_fixtures \
+            hexintfactor_emit_fixtures \
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexhermite_emit_fixtures \
-            hexcharpoly_emit_fixtures \
+            hexsmith_emit_fixtures hexcharpoly_emit_fixtures \
             hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures \
             hexlll_emit_fixtures hexrealroots_emit_fixtures \
@@ -220,14 +224,16 @@ jobs:
         run: |
           bash scripts/ci/check_bench_verify_budget.sh \
             hextruncatedseries_bench \
-            hexarith_bench hexpoly_bench hexpolyfast_bench hexmvpoly_bench hexmvgcd_bench \
+            hexarith_bench hexpoly_bench hexpolyfast_bench hexpolysmith_bench \
+            hexmvpoly_bench hexmvgcd_bench \
             hexpolyz_bench \
             hexpolyzgcd_bench hexsparsepoly_bench hexpolyfp_bench \
             hexmodarith_bench \
             hexmodular_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
-            hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench hexdeterminant_bench hexmatrix_bench hexhermite_bench \
+            hexhensel_bench hexintfactor_bench hexberlekamp_bench hexbz_bench \
+            hexconway_bench hexdeterminant_bench hexmatrix_bench \
+            hexhermite_bench hexsmith_bench \
             hexcharpoly_bench hexminpoly_bench \
             hexgramschmidt_bench hexlll_gram_bench \
             hexrealroots_bench hexrcf_bench hexroots_bench \

@@ -1,0 +1,6 @@
+An independent Phase 2 review found and drove the removal of a slower
+diagonal pseudo-fast-path, degenerate benchmark fixtures, an accidental
+HexPoly-to-HexBasic dependency, production trace retention, and dead Smith
+state. The resulting public surface, ownership boundaries, executable bodies,
+and downstream-facing contracts were re-reviewed with no remaining scaffold
+gaps.

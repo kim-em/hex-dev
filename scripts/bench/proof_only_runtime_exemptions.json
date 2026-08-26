@@ -1,5 +1,17 @@
 [
   {
+    "path": "HexBasic/List.lean",
+    "baseline_blob": "244224572752565242dcada3d1254fdaf4e22e9d",
+    "current_blob": "e495f2df26b2591ebadf97831bf3d1cc24dabf06",
+    "reason": "Adds only the nodup_map_on theorem and its proof; no executable definition in the factorization service or its runtime call graph changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "d1964196b54e1ed5c9875073b64b97f3c0953eb7",
+    "reason": "Additionally registers the build-only HexTruncatedSeries lint regression target; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
     "path": "HexPoly/Euclid.lean",
     "baseline_blob": "893e5013cacbf1f00dc5a3f88c99f43ee97d5958",
     "current_blob": "6a967b30b4778ae1f5d9fed74e62452d35bac004",
@@ -1222,5 +1234,173 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "9877274032003d4096cbc3141ab3cf714448ad2b",
     "reason": "Registers only the independent HexPolyFast library, conformance module, and benchmark executable; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "8159dbe8532091eaf8426ef4c051523050f2322f",
+    "reason": "Additionally registers the build-only HexMvGcd FLINT benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "ba87c482d13eae7564308de364a919eb71efc640",
+    "reason": "Additionally registers the build-only HexMvGcd Singular benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "398a71fbd46baa0037c64f2954d300ad8977fe10",
+    "reason": "Additionally registers the independent HexIntFactor library, Mathlib companion, conformance emitter, and benchmark executable; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "064210c12920d18f29e7390e4ae02a329aba6ea1",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and MV-GCD benchmark registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "f9e1661e342a6ba74c2d50753a263b8e22769b51",
+    "reason": "Additionally registers the build-only HexMvGcd Phase 4 shape-matrix support modules; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "ca24d94a282d984be81fb1de20e578439cacf5b8",
+    "reason": "Additionally registers the build-only HexMvGcd Phase 4 shape-matrix and external-comparator support modules; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "3276b34df952955b9ddbfa4ce4850d6223856134",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and MV-GCD benchmark support registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "afe2867de3e4f86d390aa9c16d32c8ac5ddcdae0",
+    "reason": "Additionally registers the build-only HexMvGcd Phase 4 sampling-profile module; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "e5e9e83f03c5d443e196eeefdfa6770b17b5575e",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and complete MV-GCD Phase 4 benchmark support registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "HexMatrix/Diagonal.lean",
+    "baseline_blob": null,
+    "current_blob": "12c18a3f9aacefac47a83cdb9de9a70960ff5a58",
+    "reason": "Adds the independent rectangular diagonal constructor and its correctness theorems for HexSmith; the production factor entry never calls these definitions, so factorization runtime behavior is unchanged."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+    "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+    "reason": "Adds selectRows and selectCols for determinant and Smith proofs; neither definition is referenced by the production factor entry, and existing submatrix operations are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3cbffd9841ac08abcd6777e6fc23def1de704d05",
+    "reason": "Registers only the HexSmith libraries, conformance emitter, and benchmark executable on top of current main; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "HexMatrix/Diagonal.lean",
+    "baseline_blob": "3b2aced8a7aec2bc4112f4432d342aed30267cac",
+    "current_blob": "1e4257b3bcd214f71082004f05763b9d9cc64af7",
+    "reason": "Keeps the measured rectangular diagonal constructor unchanged and adds only entry and row theorems needed by the independent HexSmith proofs; the production factor entry does not call the constructor."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "b21fd7f027b3ecf38eeb39db7f5773c94bafe8e1",
+    "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+    "reason": "Adds selectRows and selectCols beside the measured PolySmith submatrix helpers for determinant and HexSmith proofs; neither new definition is referenced by the production factor entry, and existing operations are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "10549d33f216b6879838e63f96725aec7633ddfc",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor, MV-GCD, and HexSmith build registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "Hex/BenchOracle/Pari.lean",
+    "baseline_blob": "8088a21c35f5bb60ea8cc0d9f5b5eb2d32a77265",
+    "current_blob": "67864822cc40d953e1324bc2f4224ab6d6f24e89",
+    "reason": "Extends the shared PARI bench driver helper with the number-field polmod/nffactor codec surface; it remains bench-oracle infrastructure never imported by the factorization service or any Hex library module."
+  },
+  {
+    "path": "HexBerlekamp/BerlekampMatrix.lean",
+    "baseline_blob": "2ce2ddd1a12dc0af8f368c77bb257e4a24738ec0",
+    "current_blob": "04bc056e0cf45ae4cae0fccc9d05b643914594cc",
+    "reason": "Phase 6 polish only: renames the deprecated core `dif_pos`/`dif_neg` rewrites to `dite_eq_left`/`dite_eq_right` (drop-in aliases of the same statements) and drops three unused `[ZMod64.PrimeModulus p]` instance binders from proof-only lemmas. `berlekampMatrix`, `berlekampColumn`, `frobeniusDiffMod`, and every other executable definition in the file are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/DelayedKernel.lean",
+    "baseline_blob": "772cd3048ddb0550ed59d3c9f6ed3b17fe0b50fe",
+    "current_blob": "c17e430d7bd078519cfaea928e3a3f6f4e84e7c0",
+    "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`dif_pos`/`dif_neg` rewrites to their `ite_eq_*`/`dite_eq_*` aliases inside proofs and adds a docstring to the `@[csimp]` lemma `delayedDot_eq_impl`. `delayedDot`, `delayedDotImpl`, `barrettBaseMul`, `strassenBarrett`, and the Barrett accumulator loop are unchanged, so the compiled dot-product path is identical."
+  },
+  {
+    "path": "HexBerlekamp/DistinctDegree.lean",
+    "baseline_blob": "5dcbf473b634ffff65e4f007025362b8e876a347",
+    "current_blob": "445d82bd0b7b0785e5db88650f372b44ad1e804d",
+    "reason": "Phase 6 polish only: removes duplicate private proofs (`factorProduct_cons_eq`, `factorProduct_append`, `zmod_one_ne_zero_local`) in favour of the public `Hex.Berlekamp.factorProduct_cons`/`factorProduct_append` and the upstream `Hex.ZMod64.one_ne_zero_of_prime`, deletes the unreferenced private lemma `distinctDegreeCandidate_mul_div_eq`, drops unused `[ZMod64.PrimeModulus p]` binders, and demotes the simp-redundant `degreeBucketProduct_singleton` to a plain theorem. `distinctDegreeFactor`, `distinctDegreeLoop`, `finishDegreePower`, `distinctDegreeCandidate`, and `scoutDegreePattern` are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/Factor.lean",
+    "baseline_blob": "e44d43f86ae80274f35478a3246196fe092bd06c",
+    "current_blob": "672da4ddcb29bb8387a087b4cb1d92eeb1434875",
+    "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`if_false` rewrites to their `ite_*` aliases, promotes the private `factorProduct_append` to public so the duplicate copy in DistinctDegree could be deleted, drops unused `[ZMod64.PrimeModulus p]` binders from proof-only lemmas, and documents `kernelWitnessSplit_factor_pos_degree`. `berlekampFactor`, `fpFactorSearch`, `splitFactorAt`, `kernelWitnessSplit?`, and the split loops are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/FactorPolyElab.lean",
+    "baseline_blob": "c9d914971f41cd52e9c4a5f6d4635fc5ce688d87",
+    "current_blob": "dd813f31f9277710e2bb3de58de2d1171717901a",
+    "reason": "Phase 6 documentation only: adds docstrings to the `factor_poly` term and tactic elaborators. No elaborator logic, reified certificate shape, or kernel check changes, and the file contains no factorization runtime code."
+  },
+  {
+    "path": "HexBerlekamp/Irreducibility.lean",
+    "baseline_blob": "de4103699a6ad204c72ad32395c3496deb960a7a",
+    "current_blob": "ec58158b56e1bac08a219f7f054c74cce98501db",
+    "reason": "Phase 6 polish only: renames a deprecated `if_true` rewrite to `ite_true`, replaces the private `zmod64_one_ne_zero_of_prime` with the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, and documents the `bounds` instance field of `IrreducibilityCertificate`. `rabinTest`, `rabinDividesTest`, `berlekampRankTest`, the certificate checkers, and the certificate structure layout are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/IrreducibilityElab.lean",
+    "baseline_blob": "48bcd76b1f8387493490a99e2997697688c7b5d2",
+    "current_blob": "16e3e61a3fbe2da597b3d27e180078b9ba6dfc91",
+    "reason": "Phase 6 documentation only: adds docstrings to the `irreducibility` term and tactic elaborators. No elaborator logic or emitted proof term changes, and the file contains no factorization runtime code."
+  },
+  {
+    "path": "HexBerlekamp/LinearFactors.lean",
+    "baseline_blob": "b5e563464f7279455eb19eefb395e5b7a13449c2",
+    "current_blob": "571b9760528a9304fedb73242baaaefe3226c80a",
+    "reason": "Phase 6 polish only: replaces the private `zmod64_one_ne_zero_of_prime` with the upstream public `Hex.ZMod64.one_ne_zero_of_prime` and drops an unused `[ZMod64.PrimeModulus p]` binder from a proof-only lemma. `primeFieldLinearFactor`, `rootsIn`, and the reconstruction folds are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/PackedKernel.lean",
+    "baseline_blob": "20a0ca089f1946b5c0d31266e501325d77747ab8",
+    "current_blob": "806ed31de287bd0d5f9fe2fb0684c98cd4b38564",
+    "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`dif_pos`/`dif_neg` rewrites to their `ite_eq_*`/`dite_eq_*` aliases inside proofs, adds docstrings to the packed-word arithmetic and `Rep` lemmas, and demotes the non-simp-normal `toNat_toZMod` to a plain theorem. The only signature change is dropping the unused `[ZMod64.Bounds p]` argument of `modWord`; `ZMod64.Bounds` is a `Prop` class, so it is compiler-erased and `modWord` generates identical code. `mulMod`, `addMod`, `negMod`, `invMod`, the packed row operations, `reduce`, `kernelArray`, and the `@[csimp]` `fixedSpaceKernelVectors_eq_packed` bridge are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/RabinSoundness.lean",
+    "baseline_blob": "f4d64573fbfb65030ed70c5c72fe8a6812ffc60b",
+    "current_blob": "ff9f168135b562eebc899e966737cbf23dbd14cc",
+    "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg` rewrites to `ite_eq_left`/`ite_eq_right` and repoints three uses of a deleted private `1 != 0` helper at the upstream public `Hex.ZMod64.one_ne_zero_of_prime`. The file is proofs only; it declares no executable factorization code."
+  },
+  {
+    "path": "HexBerlekamp/RabinSoundness/RabinCore.lean",
+    "baseline_blob": "023f2fe8a19519addb945ad8e3fe88064c333375",
+    "current_blob": "21a9b51389ee87077860e7ffb1b763360c6e813a",
+    "reason": "Phase 6 polish only: renames a deprecated `if_pos` rewrite to `ite_eq_left`, deletes the two duplicate private `1 != 0` helpers in favour of the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, removes the unreferenced private lemma `pos_of_mem_properDivisors`, drops two dead `haveI` lines and the `[ZMod64.PrimeModulus p]` binders they were the only consumers of, and demotes the simp-redundant `primeFieldLinearProduct_factor_count` to a plain theorem. `xPowSubX`, `primeFieldLinearProduct`, the `crtZeroOne*` candidates, and every executable definition are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/RabinSoundness/RabinShape.lean",
+    "baseline_blob": "345ed80958ca9720416f70cdc9e22263f9e9f098",
+    "current_blob": "cc2e8fca3a3a35c1b3b31f1dde1bd53f20bfa44f",
+    "reason": "Phase 6 polish only: repoints two uses of a deleted private `1 != 0` helper at the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, and corrects a stale docstring that still described the soundness proof as delegating to sorries. The file is proofs only; it declares no executable factorization code."
   }
 ]

@@ -8,6 +8,7 @@ module
 
 public import HexPoly
 public meta import HexPoly.Dense
+public meta import HexPoly.Instances
 import all HexPoly.Euclid.MulRing
 
 public section

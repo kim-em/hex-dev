@@ -486,26 +486,17 @@ private theorem size_add_eq_left_of_lt {p q : DensePoly F}
     exact Lean.Grind.Semiring.add_zero 0
   omega
 
-private theorem size_mul_field (p q : DensePoly F)
-    (hp : 0 < p.size) (hq : 0 < q.size) :
-    (p * q).size = p.size + q.size - 1 := by
-  apply size_mul_of_top_ne p q hp hq
-  intro hzero
-  have hleadp := leadingCoeff_ne_zero_of_pos_size p hp
-  have hleadq := leadingCoeff_ne_zero_of_pos_size q hq
-  have h : p.leadingCoeff * (q.leadingCoeff * q.leadingCoeff⁻¹) = 0 := by
-    rw [← Lean.Grind.Semiring.mul_assoc, hzero]
-    exact Lean.Grind.Semiring.zero_mul _
-  rw [Lean.Grind.Field.mul_inv_cancel hleadq,
-    Lean.Grind.Semiring.mul_one] at h
-  exact hleadp h
-
 private theorem size_shift_of_pos (k : Nat) (p : DensePoly F)
     (hp : 0 < p.size) : (shift k p).size = k + p.size := by
   rw [← monomial_one_mul_poly_eq_shift]
   have hone : (1 : F) ≠ 0 := fun h => Lean.Grind.Field.zero_ne_one h.symm
+  have hpne : p ≠ 0 := by
+    intro hzero
+    subst p
+    simp only [size_zero] at hp
+    omega
   rw [size_mul_field (monomial k 1) p
-    (by rw [size_monomial_of_ne_zero hone]; omega) hp,
+    (monomial_ne_zero_of_ne_zero hone) hpne,
     size_monomial_of_ne_zero hone]
   omega
 
@@ -565,9 +556,19 @@ private theorem size_shift_lt (k : Nat) {p q : DensePoly F}
 private theorem size_reconstruct (q b r : DensePoly F)
     (hq : 0 < q.size) (hb : 0 < b.size) (hr : r.size < b.size) :
     (q * b + r).size = q.size + b.size - 1 := by
+  have hqne : q ≠ 0 := by
+    intro hzero
+    subst q
+    simp only [size_zero] at hq
+    omega
+  have hbne : b ≠ 0 := by
+    intro hzero
+    subst b
+    simp only [size_zero] at hb
+    omega
   rw [size_add_eq_left_of_lt (p := q * b) (q := r) (by
-    rw [size_mul_field q b hq hb]
-    omega), size_mul_field q b hq hb]
+    rw [size_mul_field q b hqne hbne]
+    omega), size_mul_field q b hqne hbne]
 
 private theorem quotient_reconstruct {a b q r : DensePoly F}
     (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :

@@ -49,6 +49,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexMvGcdKernelProbe",
+    "HexMvGcdBenchSupport",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
@@ -68,6 +69,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexReleaseTests",
     "HexRCFTests",
     "HexSparsePolyTests",
+    "HexTruncatedSeriesTests",
     "HexCharPolyTests",
     "HexReleaseExamples",
 }

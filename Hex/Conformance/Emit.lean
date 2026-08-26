@@ -83,6 +83,19 @@ private def jsonRatList (xs : List Rat) : String :=
   "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
   "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
 
+private def jsonIntPolyMatrix (rows : List (List (List Int))) : String := Id.run do
+  let mut out := "["
+  let mut firstRow := true
+  for row in rows do
+    if firstRow then firstRow := false else out := out.push ','
+    out := out.push '['
+    let mut firstEntry := true
+    for entry in row do
+      if firstEntry then firstEntry := false else out := out.push ','
+      out := out ++ jsonIntList entry
+    out := out.push ']'
+  out.push ']'
+
 private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run do
   let mut out := "["
   let mut first := true
@@ -152,6 +165,25 @@ private def jsonMvFactors
     ]
   out.push ']'
 
+private def jsonRatPoly (coeffs : List Rat) : String :=
+  jsonObject [
+    ("num", jsonIntList (coeffs.map (·.num))),
+    ("den", jsonIntList (coeffs.map fun q => (q.den : Int)))
+  ]
+
+private def jsonRatPolyMatrix (rows : List (List (List Rat))) : String := Id.run do
+  let mut out := "["
+  let mut firstRow := true
+  for row in rows do
+    if firstRow then firstRow := false else out := out.push ','
+    out := out.push '['
+    let mut firstEntry := true
+    for entry in row do
+      if firstEntry then firstEntry := false else out := out.push ','
+      out := out ++ jsonRatPoly entry
+    out := out.push ']'
+  out.push ']'
+
 /-- Write a single JSONL record (the trailing newline) either to
 `stdout` or, when set, to the file named by `HEX_FIXTURE_OUTPUT`. -/
 private def emitLine (record : String) : IO Unit := do
@@ -197,6 +229,34 @@ def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := 
     ("lib",  jsonString lib),
     ("case", jsonString case),
     ("rows", jsonIntMatrix rows)
+  ]
+
+/-- Emit a polynomial-matrix fixture over `ZMod64 p`. Polynomial
+coefficients are in ascending exponent order. -/
+def emitPolyMatrixZModFixture (lib case : String) (p rows cols : Nat)
+    (entries : List (List (List Int))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "polymatrix"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("field", jsonObject [("p", toString p)]),
+    ("rows", toString rows),
+    ("cols", toString cols),
+    ("entries", jsonIntPolyMatrix entries)
+  ]
+
+/-- Emit a polynomial-matrix fixture over `Rat`. Each entry is encoded by
+parallel numerator and positive-denominator arrays. -/
+def emitPolyMatrixRatFixture (lib case : String) (rows cols : Nat)
+    (entries : List (List (List Rat))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "polymatrix"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("field", jsonObject [("rat", "true")]),
+    ("rows", toString rows),
+    ("cols", toString cols),
+    ("entries", jsonRatPolyMatrix entries)
   ]
 
 /-- Emit a canonical or pre-normalization `mvpoly` fixture. Each term is an
@@ -733,6 +793,15 @@ def optionSeriesValue (coeffs : Option (List Rat)) : String :=
   match coeffs with
   | none => "null"
   | some xs => jsonRatList xs
+
+/-- A diagonal of polynomials over a prime field. -/
+def polyListValue (polys : List (List Int)) : String :=
+  jsonIntMatrix polys
+
+/-- A diagonal of rational-coefficient polynomials. -/
+def polyRatListValue (polys : List (List Rat)) : String :=
+  let values := polys.map jsonRatPoly
+  "[" ++ String.intercalate "," values ++ "]"
 
 /-- Lattice-shaped result value: a basis as a list of integer rows. -/
 def latticeValue (basis : List (List Int)) : String := jsonIntMatrix basis
