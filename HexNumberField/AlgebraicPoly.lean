@@ -127,8 +127,9 @@ private def sqrtTwo? : Option AlgebraicNumber :=
     | some sqrtTwo =>
         let z := AlgebraicNumber.zero
         let f := ofArray #[z, sqrtTwo, z]
+        let g := ofArray #[z, sqrtTwo, z, z]
         !f.isZero && f.size = 2 && f.degree? = some 1 &&
-          (f.coeff 1 == sqrtTwo)
+          (f.coeff 1 == sqrtTwo) && f == g
     | none => false
 
 end AlgebraicPoly

@@ -224,7 +224,9 @@ example : LawfulBEq (QAdjoin sqrtTwoPoly sqrtTwoRoot) := inferInstance
       let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
         reduce sqrtTwoPoly sqrtTwoRoot xPoly
       x * x⁻¹ = 1 && x / x = 1 &&
-        (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
+        (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0 &&
+        x ^ (5 : Nat) = (4 : Rat) • x &&
+        x ^ (6 : Nat) = (8 : Rat) • 1
     else
       false
 

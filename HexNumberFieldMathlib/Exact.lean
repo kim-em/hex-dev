@@ -519,13 +519,7 @@ private noncomputable def adjoinRootAlgEquiv [ZPoly.CheckedIrreducible p] :
 
 private theorem natPow_succ [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (n : Nat) :
-    a ^ (n + 1) = a ^ n * a := by
-  let rep : RefinedIsolation p := Quot.out x
-  have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply toComplex_injective rep hrep
-  change toComplex (natPow a (n + 1)) rep hrep =
-    toComplex (natPow a n * a) rep hrep
-  rw [map_natPow, map_mul, map_natPow, pow_succ]
+    a ^ (n + 1) = a ^ n * a := pow_succ a n
 
 private theorem krylovPowers_get [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (n : Nat)

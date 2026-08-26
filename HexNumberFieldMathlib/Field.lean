@@ -148,6 +148,7 @@ attribute [-instance] AlgebraicNumber.instZero AlgebraicNumber.instOne
   AlgebraicNumber.instMul AlgebraicNumber.instNeg AlgebraicNumber.instInv
   AlgebraicNumber.instDiv AlgebraicNumber.instPowNat
   AlgebraicNumber.instPowInt AlgebraicNumber.instSMulRat
+  AlgebraicNumber.instSMulNat AlgebraicNumber.instSMulInt
 
 example : (0 : AlgebraicNumber) = AlgebraicNumber.zero := rfl
 example : (1 : AlgebraicNumber) = AlgebraicNumber.ofRat 1 := rfl

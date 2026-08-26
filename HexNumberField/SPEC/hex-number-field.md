@@ -149,10 +149,11 @@ of represented complex values. `AlgebraicPoly` owns the required semantic
 trimming without exporting an unjustified `DecidableEq`. That Boolean
 operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
 canonical equality over the trimmed data. Its faithfulness on canonical
-coefficients is the companion theorem `AlgebraicPoly.beq_iff`, derived from
-`LawfulBEq AlgebraicNumber` plus trimming. `coeff n` is the canonical
-coefficient (`0` beyond the degree) and `size` is the trimmed length backing
-`degree?`; all three are exercised by the module's compiled regressions.
+coefficients is the companion theorem `AlgebraicPoly.beq_iff`, which equates
+Boolean equality with equality of the semantic polynomial interpretations and
+is derived from `LawfulBEq AlgebraicNumber` plus trimming. `coeff n` is the
+canonical coefficient (`0` beyond the degree) and `size` is the trimmed length
+backing `degree?`; all three are exercised by the module's compiled regressions.
 
 ## Equality and zero
 
@@ -242,6 +243,9 @@ def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
 def AlgebraicRoot.ofEliminant? (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot
 ```
+
+`AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
+isolation, and the supplied operation ball identify one unique root.
 
 `QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
@@ -462,12 +466,12 @@ primitive-element candidate `theta + c * alpha`, with `c = 0` returning
 `extend? theta alpha` is the bounded primitive-element search: it tests
 `choose(degree theta * degree alpha, 2) + 1` signed shifts and keeps a
 maximum-degree candidate, which generates the compositum even when the two
-fields overlap. It is the value projection of `extendShift?`, so both APIs run
-one shared search retaining the producing shift (the form the tower's
-flattening recovery needs), and
-`extendShiftStep` is its single fold step, exposed so consumers can interleave
-the search with their own early exits. `primitive?` folds `extend?` over the
-nonzero entries of a coefficient array.
+fields overlap. It is the value projection of `extendShift?`, so both APIs
+share one search retaining the producing shift (the form the tower's
+flattening recovery needs). `extendShiftStep` is `extendShift?`'s single fold
+step, exposed so consumers can interleave the search with their own early
+exits. `primitive?` folds `extend?` over the nonzero entries of a coefficient
+array.
 
 `powers? gamma last` returns the checked canonical powers
 `1, gamma, ..., gamma^last`. `trace? ambient a` is the field trace of `a`

@@ -21,23 +21,6 @@ numbers.
 
 namespace Hex.AlgebraicPoly
 
-/-- Canonical coefficientwise Boolean equality agrees with equality of the
-trimmed executable representation. -/
-theorem beq_iff (f g : AlgebraicPoly) :
-    f == g ↔ f = g := by
-  constructor
-  · intro h
-    change f.data == g.data at h
-    have hdata : f.data = g.data := eq_of_beq h
-    cases f
-    cases g
-    cases hdata
-    rfl
-  · intro h
-    subst g
-    change f.data == f.data
-    exact BEq.rfl
-
 /-- Interpret a normalized executable algebraic polynomial in `Polynomial ℂ`. -/
 @[expose]
 noncomputable def toPolynomial (f : AlgebraicPoly) : Polynomial ℂ :=
@@ -148,5 +131,60 @@ theorem natDegree_toPolynomial (f : AlgebraicPoly) (h : !f.isZero) :
   have hfalse : f.isZero = false := by
     cases hz : f.isZero <;> simp_all
   simp [AlgebraicPoly.degree?, hfalse]
+
+/-- Canonical coefficientwise Boolean equality is faithful to the semantic
+polynomial interpretation. -/
+theorem beq_iff (f g : AlgebraicPoly) :
+    f == g ↔ f.toPolynomial = g.toPolynomial := by
+  constructor
+  · intro h
+    change f.data == g.data at h
+    have hdata : f.data = g.data := eq_of_beq h
+    cases f
+    cases g
+    cases hdata
+    rfl
+  · intro hpoly
+    have hzero : f.isZero = g.isZero := by
+      apply Bool.eq_iff_iff.mpr
+      rw [isZero_iff, isZero_iff, hpoly]
+    have hsize : f.size = g.size := by
+      by_cases hf : f.isZero
+      · have hg : g.isZero := by simpa [hzero] using hf
+        have hfsize := Array.isEmpty_iff_size_eq_zero.mp hf
+        have hgsize := Array.isEmpty_iff_size_eq_zero.mp hg
+        change f.data.size = g.data.size
+        omega
+      · have hg : g.isZero ≠ true := by simpa [hzero] using hf
+        have hfn : !f.isZero := by
+          cases hz : f.isZero <;> simp_all
+        have hgn : !g.isZero := by
+          cases hz : g.isZero <;> simp_all
+        have hdegree := congrArg Polynomial.natDegree hpoly
+        rw [natDegree_toPolynomial f hfn,
+          natDegree_toPolynomial g hgn] at hdegree
+        have hfsize : 0 < f.size := by
+          apply Nat.pos_of_ne_zero
+          intro h
+          apply hf
+          exact Array.isEmpty_iff_size_eq_zero.mpr h
+        have hgsize : 0 < g.size := by
+          apply Nat.pos_of_ne_zero
+          intro h
+          apply hg
+          exact Array.isEmpty_iff_size_eq_zero.mpr h
+        have hffalse : f.isZero = false := Bool.eq_false_iff.mpr hf
+        have hgfalse : g.isZero = false := Bool.eq_false_iff.mpr hg
+        simp [AlgebraicPoly.degree?, hffalse, hgfalse] at hdegree
+        omega
+    change f.data == g.data
+    apply beq_iff_eq.mpr
+    apply Array.ext
+    · exact hsize
+    · intro i hif hig
+      apply AlgebraicNumber.toComplex_injective
+      have hcoeff := congrArg (fun p : Polynomial ℂ => p.coeff i) hpoly
+      rw [coeff_toPolynomial, coeff_toPolynomial] at hcoeff
+      simpa [AlgebraicPoly.coeff, Array.getD, hif, hig] using hcoeff
 
 end Hex.AlgebraicPoly

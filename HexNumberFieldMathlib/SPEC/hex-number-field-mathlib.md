@@ -68,7 +68,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     a == b ↔ a.toComplex = b.toComplex
 
 theorem AlgebraicPoly.beq_iff (f g : AlgebraicPoly) :
-    f == g ↔ f = g
+    f == g ↔ f.toPolynomial = g.toPolynomial
 
 theorem AlgebraicRoot.isZero_iff (a : AlgebraicRoot) :
     a.isZero ↔ a.toComplex = 0
