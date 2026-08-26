@@ -5,7 +5,13 @@ Authors: Kim Morrison
 -/
 
 import HexMvGcd
+import HexMvGcd.Families
+import HexMvGcd.Matrix
+import HexMvGcd.Comparators
+import HexMvGcd.Profile
 import HexMvPolyCorpus
+import HexMvGcdFlint
+import HexMvGcdSingular
 import LeanBench
 
 /-!
@@ -31,26 +37,11 @@ namespace Hex.MvGcdBench
 open Hex
 open Hex.MvPoly
 open Hex.MvPolyBench.Corpus
+open Hex.MvGcdBench.Families
 
 abbrev P2 (R : Type) [Zero R] := MvPoly 2 R Mono.lex
 abbrev P3 (R : Type) [Zero R] := MvPoly 3 R Mono.lex
 abbrev P8 (R : Type) [Zero R] := MvPoly 8 R Mono.lex
-
-/-- Stable structural hash of a canonical sparse polynomial. -/
-def checksum [Zero R] [Hashable R]
-    {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (p : MvPoly n R cmp) : UInt64 :=
-  p.termsList.foldl
-    (fun acc term =>
-      mixHash (mixHash acc (hash term.1.toList)) (hash term.2))
-    0
-
-instance [Zero R] [Hashable R]
-    {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :
-    Hashable (MvPoly n R cmp) where
-  hash := checksum
 
 /-- Dense bivariate coefficient box. -/
 def denseBox2 [Lean.Grind.CommRing R] [DecidableEq R]
@@ -420,45 +411,105 @@ setup_benchmark runToUnivariate n => n * Nat.log2 (n + 1)
 /- Named content and primitive part invoke recursive gcd production, for which
 the SPEC gives probe counts rather than a full runtime model. They therefore
 use canonical fixed registrations instead of invented asymptotics. -/
-setup_fixed_benchmark runContentInFixed
-setup_fixed_benchmark runPrimPartInFixed
+setup_fixed_benchmark runContentInFixed where {
+  expectedHash := some 0xd1f9ea943ea7ea73
+}
+setup_fixed_benchmark runPrimPartInFixed where {
+  expectedHash := some 0x358b5704b57e7de5
+}
 
 /- The public exact-division entry point is covered here on the same canonical
 input as the other wrappers. The cofactor-heavy family below carries its
 machine-operation model without constructing unrelated public results. -/
-setup_fixed_benchmark runDivExactFixed
+setup_fixed_benchmark runDivExactFixed where {
+  expectedHash := some 0xeeadb45fd4afbeef
+}
 
 /- The public dispatcher, cofactor wrappers, list/lcm wrappers, and squarefree
 operations are route-dependent. Canonical fixed registrations cover their API
 surface; the isolated families below carry the scientific ladders. -/
-setup_fixed_benchmark runGcdFixed
-setup_fixed_benchmark runCofactorsFixed
-setup_fixed_benchmark runIsCoprimeFixed
-setup_fixed_benchmark runGcdListFixed
-setup_fixed_benchmark runLcmFixed
-setup_fixed_benchmark runSqfDecompFixed
-setup_fixed_benchmark runRadicalFixed
-setup_fixed_benchmark runIsSquarefreeFixed
+setup_fixed_benchmark runGcdFixed where {
+  expectedHash := some 0x01a55d7eea73bbb3
+}
+setup_fixed_benchmark runCofactorsFixed where {
+  expectedHash := some 0x0cc3e4fb6781af05
+}
+setup_fixed_benchmark runIsCoprimeFixed where {
+  expectedHash := some 0x000000000000000d
+}
+setup_fixed_benchmark runGcdListFixed where {
+  expectedHash := some 0x01a55d7eea73bbb3
+}
+setup_fixed_benchmark runLcmFixed where {
+  expectedHash := some 0x45d39921edcf59e0
+}
+setup_fixed_benchmark runSqfDecompFixed where {
+  expectedHash := some 0xc2c56dd345ace7ce
+}
+setup_fixed_benchmark runRadicalFixed where {
+  expectedHash := some 0x45d39921edcf59e0
+}
+setup_fixed_benchmark runIsSquarefreeFixed where {
+  expectedHash := some 0x000000000000000d
+}
 
 /- The SPEC gives image-gcd probe counts, not full runtime models, for the
 route-dependent families. Canonical fixed cases record their costs without
 inventing asymptotics from degree alone. Phase 4 expands these representatives
 across the full arity and shape matrix named by the SPEC. -/
-setup_fixed_benchmark runCoprimeFamilyFixed
-setup_fixed_benchmark runDenseFixed
-setup_fixed_benchmark runSparseFixed
+setup_fixed_benchmark runCoprimeFamilyFixed where {
+  expectedHash := some 0x42905229134041e6
+}
+setup_fixed_benchmark runDenseFixed where {
+  expectedHash := some 0x78ec2b32b48ac34
+}
+setup_fixed_benchmark runSparseFixed where {
+  expectedHash := some 0xb45fffc66bacdc5f
+}
 
 /- The extended PRS has no useful asymptotic bound in the SPEC. Fixed rungs
 record coefficient swell without asserting a false scaling model. -/
-setup_fixed_benchmark runSwell3
-setup_fixed_benchmark runSwell4
-setup_fixed_benchmark runSwell5
+setup_fixed_benchmark runSwell3 where {
+  expectedHash := some 0x9fac850485b60c86
+}
+setup_fixed_benchmark runSwell4 where {
+  expectedHash := some 0x9fac850485b60c86
+}
+setup_fixed_benchmark runSwell5 where {
+  expectedHash := some 0x9fac850485b60c86
+}
 
 /- Denominator clearing and Yun's loop likewise inherit dispatcher-dependent
 gcd costs. Their fixed cases exercise the rational lift and repeated-factor
 paths without treating probe counts as machine-operation models. -/
-setup_fixed_benchmark runRationalFixed
-setup_fixed_benchmark runSquarefreeFixed
+setup_fixed_benchmark runRationalFixed where {
+  expectedHash := some 0xf6040a6b74bc3ff1
+}
+setup_fixed_benchmark runSquarefreeFixed where {
+  expectedHash := some 0x5262547c4fa35a9e
+}
+
+/-! # Informational FLINT comparator registrations
+
+The pair returns the same canonical sparse term list, so `compare` also checks
+cross-system agreement. The FLINT registration is scheduled-only;
+python-flint must be installed in that environment. -/
+
+setup_fixed_benchmark Flint.runFlintMpolyOverhead where
+  Flint.flintCompareConfig 0x0000000000000007
+
+setup_fixed_benchmark Flint.runLeanCoprime2 where
+  Flint.leanCompareConfig 0x227808efbc4a0df6
+setup_fixed_benchmark Flint.runFlintCoprime2 where
+  Flint.flintCompareConfig 0x227808efbc4a0df6
+
+/- Singular runs in a separate persistent process and certifies the same
+coprime result over `Q[x,y]`.  Its empty overhead request calibrates the two
+process-framing layers without polynomial work. -/
+setup_fixed_benchmark Singular.runOverhead where
+  Singular.config 0x0000000000000007
+setup_fixed_benchmark Singular.runCoprime2 where
+  Singular.config 0x227808efbc4a0df6
 
 /- With a three-term divisor and a dense quotient, exact division visits each
 quotient/divisor term pair and performs logarithmic support updates. -/
@@ -474,5 +525,26 @@ setup_benchmark runCofactor n => n * n * Nat.log2 (n + 1)
 
 end Hex.MvGcdBench
 
+namespace Hex.MvGcdBench
+
+/-- Verify the ordinary API smoke targets while leaving the Phase 4
+scientific matrix, comparator, and sampling registrations to scheduled
+hardware. Explicitly named `verify` calls still use the standard CLI path. -/
+def verifySmokeTargetsOnly : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names :=
+    (parametric.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList) ++
+    (fixed.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList)
+  let reports ← LeanBench.verify names
+  IO.println (LeanBench.Format.fmtCombinedVerify reports)
+  return if reports.passed then 0 else 1
+
+end Hex.MvGcdBench
+
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["verify"] => Hex.MvGcdBench.verifySmokeTargetsOnly
+  | _ => LeanBench.Cli.dispatch args

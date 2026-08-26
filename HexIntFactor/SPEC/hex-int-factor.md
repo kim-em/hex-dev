@@ -9,7 +9,7 @@ supplies factorization-derived witnesses for squarefree decomposition,
 and relates the order API to `orderOf` in `(ZMod n)ˣ`.
 
 This SPEC expands the "Integer factorization" entry in
-[future-work](../future-work.md) and depends on
+[future-work](../../SPEC/future-work.md) and depends on
 [hex-primality](../../HexPrimality/SPEC/hex-primality.md), which owns the primality
 certificates each factor carries and the multiplicative order this
 library's order API is stated with.
@@ -71,7 +71,7 @@ sanctioned routes (certificate hand-off, shared stage-1 primitives
 sited upstream, an optional search hook), recorded in hex-primality's
 "Taking up downstream factoring advances".
 
-**The maximal order needs it.** [future-work](../future-work.md)'s
+**The maximal order needs it.** [future-work](../../SPEC/future-work.md)'s
 "Ring of integers" entry names the squarefree part of the polynomial
 discriminant as its dependency, "where such computations turn
 conditional in practice". That is a consumer whose design is shaped by
@@ -203,7 +203,7 @@ theorem checkFactorization_multiplicity {F} (h : checkFactorization F = true)
 ```
 
 **This certificate pins the prime support, and it is worth being
-precise about why**, because [future-work](../future-work.md)'s own
+precise about why**, because [future-work](../../SPEC/future-work.md)'s own
 preamble warns that a positive certificate usually does not establish
 completeness.
 Here it does, and the argument is the one the entry gives: any further
@@ -266,7 +266,7 @@ default is generous" as a classification. The default fuel is a
 
 `r : Rand` is threaded because Pollard rho draws its polynomial
 constant and starting point, and because
-[hex-finite-field](hex-finite-field.md)'s randomness discipline
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md)'s randomness discipline
 requires the draw to be an explicit argument and the advanced state to
 come back. `Hex.Rand` does not exist in the tree yet; it is a
 prerequisite, specified there and sited in hex-basic.
@@ -307,7 +307,7 @@ per step makes the routine gcd-bound rather than multiply-bound. The
 primitive required is `Nat.gcd`, not extended GCD.
 
 `c` and the starting point are drawn from `Hex.Rand` (specified in
-[hex-finite-field](hex-finite-field.md), sited in hex-basic), following
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md), sited in hex-basic), following
 the same explicit-argument discipline: the draw is an argument, the
 retry budget is fuel, and a bad draw costs time and never correctness.
 The draw rejects `c = 0` and any starting point `x` satisfying
@@ -425,7 +425,10 @@ as `checkFactorization` minus the requirement that the residual be `1`.
 Its product calculation uses the same subject-bounded loop.
 It makes **no** completeness claim. The indexed checked form prevents a
 partial factorization of one subject from answering a request about
-another, and
+another. The characterising lemmas `checkPartial_prod`,
+`checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
+expose reconstruction, primality, exponent positivity, and factor-base
+ordering without requiring consumers to unfold the checker, and
 
 ```lean
 theorem factorPartial?_error {n r fuel f}
@@ -511,7 +514,7 @@ way round it was. Invalid domains use the existing failure channel: at
 answer.
 
 This needs cyclotomic polynomials evaluated at an integer, which is the
-subject of [hex-cyclotomic](hex-cyclotomic.md). This library does not
+subject of [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md). This library does not
 depend on it. Evaluating
 `Φ_d(b)` does not need the polynomial: the recursion
 
@@ -532,7 +535,7 @@ Mathlib-free formalization of cyclotomic-polynomial identities is not a
 prerequisite for this checked search optimization.
 
 The two computations of `Φ_d(b)`, this one in `Nat` and
-[hex-cyclotomic](hex-cyclotomic.md)'s evaluation of the constructed
+[hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md)'s evaluation of the constructed
 polynomial, are independent and must agree. The comparison lives in that
 library's conformance suite, which is the one that can import both.
 
@@ -625,7 +628,7 @@ proves only that the order divides `m`; a proper divisor of `m` could
 be the true order. Ruling that out means ruling out `order/q` for every
 prime `q ∣ order`, and that quantifier ranges over a set the
 factorization certificate is what pins down. This is the "second
-witness" pattern [future-work](../future-work.md)'s preamble describes,
+witness" pattern [future-work](../../SPEC/future-work.md)'s preamble describes,
 and here the second witness is the completeness of a factorization
 rather than a separate object.
 
@@ -711,6 +714,7 @@ and it buys nothing: two call sites, two lines each.
 ```lean
 def divisors {n} (F : CheckedFactorization n) : Array Nat   -- ascending
 def numDivisors {n} (F : CheckedFactorization n) : Nat     -- τ, ∏ (eᵢ + 1)
+def sigmaEntry (entry : PrimePower) (k : Nat) : Nat         -- one geometric sum
 def sigma {n} (F : CheckedFactorization n) (k : Nat) : Nat -- σ_k
 def totient {n} (F : CheckedFactorization n) : Nat         -- φ
 def radical {n} (F : CheckedFactorization n) : Nat         -- ∏ pᵢ
@@ -720,10 +724,18 @@ def isSquarefree {n} (F : CheckedFactorization n) : Bool   -- ∀ i, eᵢ = 1
 
 theorem mem_divisors {n d} (F : CheckedFactorization n) :
     d ∈ (divisors F).toList ↔ d ∣ n
+theorem divisors_nodup {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Nodup
+theorem divisors_sorted {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Pairwise (fun a b => a ≤ b)
 theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
@@ -753,7 +765,15 @@ would be exponential. The local semantic theorems are deliberate: the
 Mathlib bridge proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
-the geometric-series product must not evaluate its `0 / 0` form.
+the geometric-series product must not evaluate its `0 / 0` form. For
+`k > 0`, each certified prime-power entry `(p, e)` contributes the exact
+geometric sum `(q^(e + 1) - 1) / (q - 1)`, where `q = p^k`, and `sigma`
+multiplies those contributions. Checked primality supplies `1 < q`, so
+the division is exact; this route never enumerates the divisors.
+`sigmaEntry` is total on arbitrary `PrimePower` values: at `k = 0` and
+at base `1` it returns `e + 1`, at base `0` with positive `k` it returns
+`1`, and in every case `sigmaEntry_eq_powerSum` identifies it with the
+finite power sum over `powers p e 1`.
 
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
@@ -780,6 +800,7 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
+| `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
 | everything else in the divisor API | `O(k)` | |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
@@ -811,11 +832,16 @@ appear in a proof term and should not pay for exposure.
 
 The divisor-function API sits between the two: it is cheap, it is
 sometimes wanted in a proof (`totient` in a Fermat-Euler argument, say),
-and it takes already-checked data. It is `@[expose]`.
+and it takes already-checked data. It is `@[expose]`. This exposure makes
+the factor-list bodies available for definitional reasoning; it does not
+promise kernel evaluation of `divisors`, whose asymptotically appropriate
+`List.mergeSort` uses well-founded recursion. Proofs about that enumeration
+use `mem_divisors`, `divisors_nodup`, and `divisors_sorted`; `numDivisors`
+is the kernel-facing operation when only the count is required.
 
 ## Conformance
 
-Per [SPEC/testing.md](../testing.md). A driver at
+Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 `conformance/HexIntFactor/EmitFixtures.lean` exposed as
 `lean_exe hexintfactor_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexIntFactor/intfactor.jsonl`, an oracle at
@@ -827,7 +853,7 @@ Per [SPEC/testing.md](../testing.md). A driver at
 ```
 
 Fixture kinds: `factor` (a number and its prime-exponent list),
-`divisorfn` (a number and `τ`, `σ₁`, `φ`, `rad`, `sqfpart`), `order` (a
+`divisorfn` (a number and `τ`, `σ₀`, `σ₁`, `σ₂`, `φ`, `rad`, `sqfpart`), `order` (a
 base, a modulus, and the order), and `cyclotomic` (`b`, `n`, sign, and
 the split).
 
@@ -889,7 +915,7 @@ half.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexIntFactor/Bench.lean`. Native and kernel suites: the kernel
 side is `checkFactorization` replay, which is the cost a downstream
 proof pays and is therefore the number that matters most.
@@ -913,6 +939,14 @@ Families:
 - **Order and primitive root**, primes up to `64` bits, reported
   separately from the factorization of `p − 1` they depend on, so the
   check's cost is visible next to the search's.
+- **Generalized divisor sums**, with one ladder growing a prime-power
+  exponent through multi-million-bit output and one growing the number
+  of certified prime-power entries. Per-rung preparation constructs or
+  selects the checked factorization outside the timed loop, so these isolate
+  the geometric-sum and factor-product costs and rule out divisor enumeration.
+  The native wall-clock models include big-integer cost: `n log n` for the
+  exponentiation-dominated exponent ladder and `n²` for the sequential product
+  of bounded-size table-prime entry sums into a linearly growing accumulator.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
@@ -1017,6 +1051,7 @@ nothing extra.
 HexIntFactor/
   Cert.lean         -- PrimePower, Factorization, checkFactorization, soundness
   Partial.lean      -- PartialFactorization and checkPartial
+  DivisorEnumeration.lean -- certified enumeration from prime powers
   Divisors.lean     -- the divisor-function API
   Small.lean        -- trailing zeros, perfect powers, trial division
   Rho.lean          -- adapter from the shared rho primitive to the dispatch
@@ -1077,7 +1112,7 @@ state until those entries land.
   known factorizations of `b^n ± 1` would make hex-conway Tier 2 cheap
   at any table size, at the cost of a large data file whose entries are
   each individually checkable by `checkFactorization`. This is exactly
-  the case [future-work](../future-work.md)'s "Certificate serialization
+  the case [future-work](../../SPEC/future-work.md)'s "Certificate serialization
   and caching" entry describes -- an expensive search run once and
   replayed -- and it should wait for that item rather than inventing a
   format here.

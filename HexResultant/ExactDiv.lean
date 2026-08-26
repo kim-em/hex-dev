@@ -8,6 +8,8 @@ module
 
 public import HexBasic.ExactDiv
 public import HexPoly
+public import HexPoly.Instances
+public meta import HexPoly.Instances
 
 public section
 
@@ -254,235 +256,12 @@ theorem scale_cancel [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
 
 end DensePoly
 
-/-! The Mathlib-free dense-polynomial ring instance.
-
-`HexPoly` proves its ring laws as standalone lemmas so its computational core
-does not impose an algebra hierarchy.  Resultant correctness must recurse to
-polynomial coefficient rings, however, so this layer packages those existing
-lemmas as the lightweight `Lean.Grind` hierarchy.
--/
-
-attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
-
-/-- Dense-polynomial negation is involutive. -/
-theorem DensePoly.neg_neg_poly [Lean.Grind.CommRing R] [DecidableEq R]
-    (p : DensePoly R) : -(-p) = p := by
-  apply DensePoly.ext_coeff
-  intro n
-  rw [DensePoly.coeff_neg_ring, DensePoly.coeff_neg_ring]
-  grind
-
-private theorem coeffZero_eq [Lean.Grind.CommRing R] :
-    (Zero.zero : R) = 0 := rfl
-
-namespace DensePoly
-
-/-- Natural powers used by the lightweight dense-polynomial ring instance. -/
-@[expose]
-def natPow [Lean.Grind.CommRing R] [DecidableEq R]
-    (p : DensePoly R) : Nat → DensePoly R
-  | 0 => 1
-  | n + 1 => natPow p n * p
-
-/-- Natural-number casts are constant polynomials, reusing the canonical zero
-and one. -/
-instance instNatCast [Lean.Grind.CommRing R] [DecidableEq R] :
-    NatCast (DensePoly R) :=
-  ⟨fun n =>
-    match n with
-    | 0 => Zero.zero
-    | 1 => One.one
-    | n + 2 => C (Nat.cast (n + 2))⟩
-
-/-- Numerals are constant polynomials, reusing the canonical zero and one. -/
-instance instOfNat [Lean.Grind.CommRing R] [DecidableEq R] (n : Nat) :
-    OfNat (DensePoly R) n :=
-  ⟨match n with
-    | 0 => Zero.zero
-    | 1 => One.one
-    | n + 2 => C (OfNat.ofNat (n + 2))⟩
-
-/-- Natural scalar multiplication is multiplication by the cast constant. -/
-instance instNSMul [Lean.Grind.CommRing R] [DecidableEq R] :
-    SMul Nat (DensePoly R) :=
-  ⟨fun n p => (Nat.cast n : DensePoly R) * p⟩
-
-/-- Natural powers of dense polynomials via `natPow`. -/
-instance instNPow [Lean.Grind.CommRing R] [DecidableEq R] :
-    HPow (DensePoly R) Nat (DensePoly R) :=
-  ⟨natPow⟩
-
-/-- Integer casts are signed constant polynomials through the natural cast. -/
-instance instIntCast [Lean.Grind.CommRing R] [DecidableEq R] :
-    IntCast (DensePoly R) :=
-  ⟨fun i =>
-    match i with
-    | .ofNat n => (Nat.cast n : DensePoly R)
-    | .negSucc n => -(Nat.cast (n + 1) : DensePoly R)⟩
-
-/-- Integer scalar multiplication is signed natural scalar multiplication. -/
-instance instZSMul [Lean.Grind.CommRing R] [DecidableEq R] :
-    SMul Int (DensePoly R) :=
-  ⟨fun i p =>
-    match i with
-    | .ofNat n => n • p
-    | .negSucc n => -((n + 1) • p)⟩
-
-/-- A numeral polynomial stores its value in coefficient zero only. -/
-@[simp]
-theorem coeff_ofNat [Lean.Grind.CommRing R] [DecidableEq R]
-    (n i : Nat) :
-    (OfNat.ofNat (α := DensePoly R) n).coeff i =
-      if i = 0 then OfNat.ofNat (α := R) n else 0 := by
-  cases n with
-  | zero =>
-      change (0 : DensePoly R).coeff i = if i = 0 then (0 : R) else 0
-      rw [DensePoly.coeff_zero]
-      by_cases hi : i = 0 <;> simp only [hi, if_true, if_false]
-  | succ n =>
-      cases n with
-      | zero =>
-          change (DensePoly.C (1 : R)).coeff i =
-            if i = 0 then (1 : R) else 0
-          rw [DensePoly.coeff_C]
-          by_cases hi : i = 0
-          · simp only [hi, if_true]
-          · simpa only [hi, if_false] using (coeffZero_eq (R := R))
-      | succ n =>
-          change (DensePoly.C (OfNat.ofNat (α := R) (n + 2))).coeff i =
-            if i = 0 then OfNat.ofNat (α := R) (n + 2) else 0
-          rw [DensePoly.coeff_C]
-          by_cases hi : i = 0
-          · simp only [hi, if_true]
-          · simpa only [hi, if_false] using (coeffZero_eq (R := R))
-
-/-- A cast-natural polynomial stores its value in coefficient zero only. -/
-@[simp]
-theorem coeff_natCast [Lean.Grind.CommRing R] [DecidableEq R]
-    (n i : Nat) :
-    (Nat.cast n : DensePoly R).coeff i =
-      if i = 0 then (Nat.cast n : R) else 0 := by
-  cases n with
-  | zero =>
-      change (0 : DensePoly R).coeff i =
-        if i = 0 then (Nat.cast 0 : R) else 0
-      rw [DensePoly.coeff_zero, Lean.Grind.Semiring.natCast_zero]
-      by_cases hi : i = 0 <;> simp only [hi, if_true, if_false]
-  | succ n =>
-      cases n with
-      | zero =>
-          change (DensePoly.C (1 : R)).coeff i =
-            if i = 0 then (Nat.cast 1 : R) else 0
-          rw [DensePoly.coeff_C, Lean.Grind.Semiring.natCast_one]
-          by_cases hi : i = 0
-          · simp only [hi, if_true]
-          · simpa only [hi, if_false] using (coeffZero_eq (R := R))
-      | succ n =>
-          change (DensePoly.C (Nat.cast (n + 2))).coeff i =
-            if i = 0 then (Nat.cast (n + 2) : R) else 0
-          rw [DensePoly.coeff_C]
-          by_cases hi : i = 0
-          · simp only [hi, if_true]
-          · simpa only [hi, if_false] using (coeffZero_eq (R := R))
-
-end DensePoly
-
-/-- Dense polynomials over a lightweight commutative ring again form a
-lightweight semiring. -/
-instance instGrindSemiringDensePoly [Lean.Grind.CommRing R] [DecidableEq R] :
-    Lean.Grind.Semiring (DensePoly R) := by
-  refine Lean.Grind.Semiring.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-  · exact DensePoly.add_zero_poly
-  · exact DensePoly.add_comm_poly
-  · exact DensePoly.add_assoc_poly
-  · exact DensePoly.mul_assoc_poly
-  · exact DensePoly.mul_one_right_poly
-  · intro p
-    exact (DensePoly.mul_comm_poly 1 p).trans (DensePoly.mul_one_right_poly p)
-  · exact DensePoly.mul_add_right_poly
-  · exact DensePoly.mul_add_left_poly
-  · exact DensePoly.zero_mul
-  · intro p
-    exact (DensePoly.mul_comm_poly p 0).trans (DensePoly.zero_mul p)
-  · intro p
-    rfl
-  · intro p n
-    rfl
-  · intro n
-    apply DensePoly.ext_coeff
-    intro i
-    rw [DensePoly.coeff_add_semiring, DensePoly.coeff_ofNat,
-      DensePoly.coeff_ofNat, DensePoly.coeff_ofNat]
-    by_cases hi : i = 0
-    · simpa [hi] using (Lean.Grind.Semiring.ofNat_succ (α := R) n)
-    · simp only [hi, if_false]
-      grind
-  · intro n
-    apply DensePoly.ext_coeff
-    intro i
-    rw [DensePoly.coeff_ofNat, DensePoly.coeff_natCast]
-    by_cases hi : i = 0
-    · simpa [hi] using
-        (Lean.Grind.Semiring.ofNat_eq_natCast (α := R) n)
-    · simp [hi]
-  · intro n p
-    rfl
-
-/-- Dense polynomials over a lightweight commutative ring again form a
-lightweight ring. -/
-instance instGrindRingDensePoly [Lean.Grind.CommRing R] [DecidableEq R] :
-    Lean.Grind.Ring (DensePoly R) := by
-  refine Lean.Grind.Ring.mk ?_ ?_ ?_ ?_ ?_ ?_
-  · intro p
-    apply DensePoly.ext_coeff
-    intro n
-    rw [DensePoly.coeff_add_semiring, DensePoly.coeff_neg_ring,
-      DensePoly.coeff_zero]
-    change -p.coeff n + p.coeff n = (0 : R)
-    grind
-  · exact DensePoly.sub_eq_add_neg_poly
-  · intro i p
-    cases i with
-    | ofNat n =>
-        cases n with
-        | zero =>
-            change (0 : Nat) • p = -((0 : Nat) • p)
-            change (0 : DensePoly R) * p = -((0 : DensePoly R) * p)
-            rw [DensePoly.zero_mul, DensePoly.neg_zero_ring]
-        | succ n => rfl
-    | negSucc n =>
-        change (n + 1) • p = -(-((n + 1) • p))
-        exact (DensePoly.neg_neg_poly _).symm
-  · intro _ _
-    rfl
-  · intro n
-    exact (Lean.Grind.Semiring.ofNat_eq_natCast (α := DensePoly R) n).symm
-  · intro i
-    cases i with
-    | ofNat n =>
-        cases n with
-        | zero =>
-            change (Nat.cast 0 : DensePoly R) = -(Nat.cast 0 : DensePoly R)
-            rw [Lean.Grind.Semiring.natCast_zero, DensePoly.neg_zero_ring]
-        | succ n => rfl
-    | negSucc n =>
-        change (Nat.cast (n + 1) : DensePoly R) =
-          -(-(Nat.cast (n + 1) : DensePoly R))
-        exact (DensePoly.neg_neg_poly _).symm
-
-/-- Dense polynomial multiplication is commutative when coefficient
-multiplication is. -/
-instance instGrindCommRingDensePoly [Lean.Grind.CommRing R] [DecidableEq R] :
-    Lean.Grind.CommRing (DensePoly R) := by
-  refine Lean.Grind.CommRing.mk ?_
-  exact DensePoly.mul_comm_poly
-
 /-- Exact coefficient division lifts recursively to exact dense-polynomial
 division, including nonunit constants and nonmonic polynomial factors. -/
 instance instExactDivLawsDensePoly [Lean.Grind.CommRing R] [DecidableEq R]
     [Div R] [ExactDivLaws R] : ExactDivLaws (DensePoly R) where
   mul_div_cancel_right a b hb := by
-    have hb_pos : 0 < b.size := by
+    have hbPos : 0 < b.size := by
       by_cases hpos : 0 < b.size
       · exact hpos
       · exfalso
@@ -492,7 +271,7 @@ instance instExactDivLawsDensePoly [Lean.Grind.CommRing R] [DecidableEq R]
         rw [DensePoly.coeff_zero]
         exact DensePoly.coeff_eq_zero_of_size_le b (by omega)
     have hlc : b.leadingCoeff ≠ (0 : R) :=
-      DensePoly.leadingCoeff_ne_zero_of_pos_size b hb_pos
+      DensePoly.leadingCoeff_ne_zero_of_pos_size b hbPos
     have hpair : DensePoly.divMod (a * b) b = (a, 0) :=
       DensePoly.divMod_eq_of_polynomial_mul (a * b) b a hb
         (fun x => ExactDivLaws.mul_div_cancel_right x b.leadingCoeff hlc)

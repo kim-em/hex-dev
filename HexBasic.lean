@@ -34,5 +34,8 @@ across supported Lean versions (`HexBasic.Conditional`).
 It also holds the shared exact-division contract (`HexBasic.ExactDiv`): the
 total `exactDiv` wrapper with deterministic division by zero, the
 `ExactDivLaws` package, and the coefficient-independent cancellation lemmas
-that fraction-free algorithms in `hex-resultant` and `hex-bareiss` both need.
+that the fraction-free algorithms in `hex-resultant`, `hex-mv-gcd` and
+`hex-poly-smith` share. (`hex-bareiss` solves the same problem one layer down,
+against `HexArith.Int.exactDiv` on a fixed carrier, and does not depend on this
+library.)
 -/

@@ -75,7 +75,10 @@ theorem NumberTower.factor?_isSome (T) (f : T.Poly) :
 
 `Factorization.Sound` states reconstruction including the scalar, monicity,
 positive multiplicities, irreducibility over `T.toField`, no associates, and
-deterministic ordering.
+deterministic ordering. The no-associates clause is not a separate conjunct:
+monicity together with the strict `factorsSorted` ordering already forbids
+associated factors, since associated monic polynomials are equal and the
+strict order rules out duplicates.
 
 The proof is organized by Yun squarefree component:
 

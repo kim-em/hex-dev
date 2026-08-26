@@ -10,8 +10,19 @@ public import HexNumberFieldTowerMathlib.FactorGeneric.Trager
 
 public section
 
+/-!
+# Reconstruction products for Trager factorization
+
+Product identities assembling one squarefree component from its recovered
+factors: fold/product correspondences for factor arrays, gcd-distribution
+over squarefree products, and the reconstruction theorems for one Trager
+recovery step and for the rational base case.
+-/
+
 namespace Hex.NumberTower
 
+/-- Mapping a ring homomorphism across a list of polynomials commutes with
+taking the product. -/
 theorem polynomial_map_list_prod {R S : Type*}
     [Semiring R] [Semiring S] (f : R →+* S)
     (ps : List (Polynomial R)) :
@@ -20,6 +31,9 @@ theorem polynomial_map_list_prod {R S : Type*}
   | nil => simp
   | cons p ps ih => simp [ih]
 
+/-- Over the empty tower the raw coordinate polynomial vanishes exactly when
+its rational reading does: `Factor.rawPoly []` and `Factor.toRatPoly` present
+the same polynomial through the coefficient identification with `ℚ`. -/
 theorem rawPoly_nil_eq_zero_iff (f : Array (Array Rat)) :
     letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
       LevelSemantics.DenoteInjective.nil
@@ -42,6 +56,10 @@ theorem rawPoly_nil_eq_zero_iff (f : Array (Array Rat)) :
     rw [LevelSemantics.map_rawPoly_nil, h,
       HexPolyMathlib.toPolynomial_zero, Polynomial.map_zero]
 
+/-- Over the empty tower, monic normalisation commutes with the coefficient
+identification with `ℚ`: normalising `Factor.rawPoly [] f` and then reading
+coefficients rationally gives the leading-coefficient rescaling of
+`Factor.toRatPoly f`. -/
 theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
     letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
       LevelSemantics.DenoteInjective.nil
@@ -118,6 +136,8 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
         p.leadingCoeff := hlc
     rw [hlc', hmap]
 
+/-- The executable left fold multiplying raw tower factors interprets to the
+initial value times the product of the interpreted factors. -/
 theorem rawFactorFoldl (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -145,6 +165,9 @@ theorem rawFactorFoldl (levels : List Level)
         HexPolyMathlib.toPolynomial_mul]
       ring
 
+/-- Rational analogue of {name}`rawFactorFoldl`: the executable left fold
+multiplying rational readings of factors interprets to the initial value
+times the product of the interpreted factors. -/
 theorem ratFactorFoldl (factors : List (Array (Array Rat)))
     (init : DensePoly Rat) :
     HexPolyMathlib.toPolynomial
@@ -161,6 +184,9 @@ theorem ratFactorFoldl (factors : List (Array (Array Rat)))
         HexPolyMathlib.toPolynomial_mul]
       ring
 
+/-- Reconstruction for one squarefree component: the factors returned by
+`Factor.factorSquarefree?` multiply to the monic normalisation of the input,
+after interpretation over the tower coefficient field. -/
 theorem factorSquarefree_product (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -270,6 +296,9 @@ theorem factorSquarefree_product (levels : List Level)
         · contradiction
       · contradiction
 
+/-- The gcd of `P` with a squarefree product is associated to the product of
+the gcds with the individual factors: pairwise coprimality of the squarefree
+factors lets the gcd distribute over the product. -/
 theorem gcd_prod_associated {K : Type*} [Field K] [DecidableEq K]
     (P : Polynomial K) : ∀ qs : List (Polynomial K),
     Squarefree qs.prod →
@@ -303,6 +332,8 @@ theorem gcd_prod_associated {K : Type*} [Field K] [DecidableEq K]
       simpa [gq, gt] using hstep.trans
         ((Associated.refl (gcd P q)).mul_mul htail)
 
+/-- Trager's gcd recovery is complete: if `P` divides a squarefree product,
+the product of the gcds of `P` with the factors recovers `P` up to a unit. -/
 theorem prod_gcd_associated {K : Type*} [Field K] [DecidableEq K]
     (P : Polynomial K) (qs : List (Polynomial K))
     (hsquarefree : Squarefree qs.prod) (hdiv : P ∣ qs.prod) :
@@ -313,6 +344,8 @@ theorem prod_gcd_associated {K : Type*} [Field K] [DecidableEq K]
   rw [hgcd] at h
   exact h.trans (associated_normalize P).symm
 
+/-- The Euclidean-algorithm gcd and the normalised `GCDMonoid` gcd of two
+polynomials agree up to a unit. -/
 theorem euclidean_gcd_associated_gcd {K : Type*} [Field K]
     [DecidableEq K]
     (a b : Polynomial K) :
@@ -326,6 +359,11 @@ theorem euclidean_gcd_associated_gcd {K : Type*} [Field K]
     · exact gcd_dvd_right a b
 
 set_option maxHeartbeats 800000 in
+/-- Shifting the product of the factors recovered by `Factor.recover` back by
+the shift delta gives, up to a unit, the product of the gcds of the shifted
+component with the lifted lower-tower factors. Lower factors whose gcd is
+constant contribute a unit and are exactly the ones the recovery loop
+discards. -/
 theorem recover_product_associated (level : Level)
     (lower : List Level) (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -510,6 +548,9 @@ theorem recover_product_associated (level : Level)
   simpa [List.map_filterMap, Function.comp_def, recovered,
     rawPoly_polyCoords, delta, shifted, lifted] using hfiltered
 
+/-- When every recovered factor interprets to an irreducible polynomial, the
+product of the interpreted recovered factors is monic: each factor is a monic
+normalisation by construction. -/
 theorem recover_product_monic (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -583,6 +624,10 @@ theorem recover_product_monic (level : Level) (lower : List Level)
   exact go allFactors (fun factor hfactor => hfactor)
 
 set_option maxHeartbeats 800000 in
+/-- Reconstruction across one Trager recovery step: given a squarefree
+one-level norm at the accepted shift and lower-tower factors that multiply to
+its monic normalisation, the recovered top-level factors multiply to the
+monic normalisation of the squarefree component itself. -/
 theorem recover_product (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -790,6 +835,9 @@ theorem recover_product (level : Level) (lower : List Level)
   exact Polynomial.eq_of_monic_of_associated hrecoveredMonic hcomponentMonic
     (hrecoveredAssoc.trans hcomponentAssoc.symm)
 
+/-- The executable left fold multiplying monically rescaled rational readings
+of integer factors interprets to the initial value times the product of the
+corresponding {name}`normalizedRatFactor`s. -/
 theorem normalizedRatFactorFoldl (factors : List ZPoly)
     (init : DensePoly Rat) :
     HexPolyMathlib.toPolynomial
@@ -806,6 +854,9 @@ theorem normalizedRatFactorFoldl (factors : List ZPoly)
         HexPolyMathlib.toPolynomial_mul]
       ring
 
+/-- Rational base case of reconstruction: the monically rescaled
+Berlekamp-Zassenhaus factors of the primitive part of a monic rational
+polynomial multiply back to the polynomial itself. -/
 theorem factorRat_product (p : DensePoly Rat) (hp : p ≠ 0)
     (hpMonic : (HexPolyMathlib.toPolynomial p).Monic) :
     let integer := ZPoly.ratPolyPrimitivePart p
@@ -890,6 +941,8 @@ theorem factorRat_product (p : DensePoly Rat) (hp : p ≠ 0)
   exact Polynomial.eq_of_monic_of_associated hnormalizedMonic hpMonic
     (hnormalizedAssociated.trans hpAssociated.symm)
 
+/-- For a separable input the executable gcd with the derivative is constant,
+so the squarefreeness guard in the rational factorizer passes. -/
 theorem gcd_derivative_size_le_one_of_separable
     (p : DensePoly Rat)
     (hseparable : (HexPolyMathlib.toPolynomial p).Separable) :
