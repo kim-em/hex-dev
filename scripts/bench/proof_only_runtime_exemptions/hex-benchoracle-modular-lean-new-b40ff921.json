@@ -1,0 +1,6 @@
+{
+ "path": "Hex/BenchOracle/Modular.lean",
+ "baseline_blob": null,
+ "current_blob": "b40ff92191f6d955b4a5fcde35cc1eb03ebc5b3c",
+ "reason": "Adds a persistent external-comparator driver used only by HexModularBench; no factorization runtime module imports it."
+}

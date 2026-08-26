@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp.lean",
+ "baseline_blob": "e1ea7d1bdde28fae1f647cfc2a35a73063928627",
+ "current_blob": "7ca67bbd9ea1453691641675f65c969dc95be8c7",
+ "reason": "Adds the umbrella import of the proof-only HexPolyFp.QuotientCompose. No definition changes, so the compiled factorization path is unchanged."
+}

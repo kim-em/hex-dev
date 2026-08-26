@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorProduct.lean",
+ "baseline_blob": "444adc46b057c6ae272c51ba29ab9bd0382abc27",
+ "current_blob": "434110d3de51c9ab3a747768bbe364f3ca47ffd3",
+ "reason": "Phase 6 polish only: adds docstrings to `factorTrialFactorsWithBound_polyProduct` and `factorTrialWithBound_product`. Prose only; every executable definition is unchanged."
+}

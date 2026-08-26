@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorTactic.lean",
+ "baseline_blob": "cdcfd422598d4c0ae7c6fa9f8f90a780cbcf57f1",
+ "current_blob": "fa093db4b7244a8c42005c479c9aa1ffcc40fa9f",
+ "reason": "Removes only the meta extension's version initializer; no executable factorization definition used by the benchmarked Hex.ZPoly.factorize entry changes."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Euclid.lean",
+ "baseline_blob": "02c31021555da6611ab93e146f31cfa625c2936f",
+ "current_blob": "cb1e71843d119dbafc3614fbd4b9886203b4ef1d",
+ "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+}
