@@ -609,7 +609,7 @@ setup_benchmark runProfile n => n ^ 3 * Nat.log2 (n + 1) with prep := dense wher
 target. The principal phase admits `n` rows, restores at most `n` earlier
 pivots per row, and each row update visits `n` entries. Its controlled dense
 operand ladder contributes the same logarithmic factor as the complete route. -/
-setup_benchmark runPrincipalDense n => n ^ 3 * Nat.log2 (n + 1)
+setup_benchmark runPrincipalDense n => (n ^ 3) * Nat.log2 (n + 1)
     with prep := principalInput where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
