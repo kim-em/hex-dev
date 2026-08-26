@@ -35,7 +35,9 @@ coefficients. Construction is sealed so every stored array has had its
 trailing semantic zeros removed. -/
 structure AlgebraicPoly where
   private mk ::
+  /-- The stored coefficients, in increasing degree order. -/
   data : Array AlgebraicNumber
+  /-- The stored coefficients have no trailing semantic zero. -/
   normalized : AlgebraicPolyNormalized data
 
 namespace AlgebraicPoly

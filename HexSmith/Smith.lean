@@ -18,13 +18,21 @@ namespace Smith
 
 /-- Companion operations run alongside the working-matrix schedule. -/
 structure Accumulator (α : Type) (n m : Nat) where
+  /-- Initial companion state. -/
   init : α
+  /-- Update the companion for a row swap. -/
   rowSwap : α → Fin n → Fin n → α
+  /-- Update the companion for a determinant-one two-row combination. -/
   rowCombine : α → Fin n → Fin n → Int → Int → Int → Int → α
+  /-- Update the companion for row negation. -/
   rowNegate : α → Fin n → α
+  /-- Update the companion for adding a row multiple. -/
   rowAdd : α → Fin n → Fin n → Int → α
+  /-- Update the companion for a column swap. -/
   colSwap : α → Fin m → Fin m → α
+  /-- Update the companion for adding a column multiple. -/
   colAdd : α → Fin m → Fin m → Int → α
+  /-- Update the companion for a determinant-one two-column combination. -/
   colCombine : α → Fin m → Fin m → Int → Int → Int → Int → α
 
 /-- The form-only companion. All operations erase to `Unit`, so this path
@@ -42,9 +50,13 @@ def formAccumulator (n m : Nat) : Accumulator Unit n m where
 
 /-- The four transforms accumulated by the data-producing path. -/
 structure Transforms (n m : Nat) where
+  /-- Accumulated left transform. -/
   left : Matrix Int n n
+  /-- Explicit inverse of the left transform. -/
   leftInv : Matrix Int n n
+  /-- Accumulated right transform. -/
   right : Matrix Int m m
+  /-- Explicit inverse of the right transform. -/
   rightInv : Matrix Int m m
 
 /-- Companion which maintains `leftInv = left⁻¹` and
@@ -89,8 +101,11 @@ def transformAccumulator (n m : Nat) : Accumulator (Transforms n m) n m where
 /-- Internal result: the current matrix, completed diagonal entries, and the
 optional companion state. -/
 structure Result (α : Type) (n m : Nat) where
+  /-- Current working matrix. -/
   matrix : Matrix Int n m
+  /-- Completed positive diagonal prefix. -/
   diag : List Int
+  /-- Companion state accumulated alongside the matrix operations. -/
   accumulator : α
 
 /-- Row-major entries eligible to become the next pivot. -/
@@ -278,6 +293,7 @@ theorem findBad?_none {M : Matrix Int n m} {pivotRow : Fin n}
   simp only [Bool.and_eq_true, decide_eq_true_eq]
   exact ⟨⟨hr, hc⟩, hne⟩
 
+/-- Swap two working rows and update the companion state. -/
 @[expose]
 def swapRows (ops : Accumulator α n m) (s : Result α n m) (i k : Fin n) :
     Result α n m :=
@@ -286,6 +302,7 @@ def swapRows (ops : Accumulator α n m) (s : Result α n m) (i k : Fin n) :
       matrix := Matrix.rowSwap s.matrix i k
       accumulator := ops.rowSwap s.accumulator i k }
 
+/-- Swap two working columns and update the companion state. -/
 @[expose]
 def swapCols (ops : Accumulator α n m) (s : Result α n m) (i k : Fin m) :
     Result α n m :=
@@ -417,6 +434,7 @@ def run (ops : Accumulator α n m) (A : Matrix Int n m) : Result α n m :=
 def Result.diagVector (s : Result α n m) : Vector Int s.diag.length :=
   ⟨s.diag.toArray, by simp⟩
 
+/-- Indexing the vector view returns the corresponding completed-list entry. -/
 @[simp] theorem Result.diagVector_get (s : Result α n m)
     (i : Fin s.diag.length) : s.diagVector.get i = s.diag.get i := by
   change s.diag.toArray[i.val] = s.diag[i.val]

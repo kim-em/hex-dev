@@ -975,7 +975,7 @@ theorem hnfBasis_eq_of_memLattice (A : Matrix Int n m) (B : Matrix Int n' m)
     exact ib.isLt
   have hrow := IsHNF.pivotRow_eq hA hB hL hp hiD hiE
   have hentry := congrArg (fun row : Vector Int m => row[j.val]'j.isLt) hrow
-  simp only [hnfBasis, Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
+  simp only [getElem_hnfBasis]
   rw [hnf_eq_hnfData_echelon A, hnf_eq_hnfData_echelon B]
   let rowA : Fin n := Fin.castLE
     (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i

@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+ "baseline_blob": "80f9ea2b180066079f41d912b8f9137074a8676a",
+ "current_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
+ "reason": "Adds the DirectPrimeProbe.Trial proposition and the retained-probe theorems, and rederives directPrimePlan?_selected_p_le_500 from the all-probes version. Trial is Prop-valued and nothing on the ZPoly.factorize path mentions it; no executable definition changes."
+}

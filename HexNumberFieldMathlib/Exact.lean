@@ -485,15 +485,6 @@ private theorem relationPoly_natDegree {k : Nat} (coeffs : Vector Rat k) :
   rw [HexPolyMathlib.natDegree_toPolynomial]
   simp [DensePoly.degree?, relationPoly_size coeffs]
 
-private theorem relationPoly_monic {k : Nat} (coeffs : Vector Rat k) :
-    (HexPolyMathlib.toPolynomial (relationPoly coeffs)).Monic := by
-  rw [Polynomial.Monic.def]
-  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
-  have hsize := relationPoly_size coeffs
-  have hpos : 0 < (relationPoly coeffs).size := by omega
-  rw [DensePoly.leadingCoeff_eq_coeff_last _ hpos, hsize]
-  simpa using relationPoly_coeff_top coeffs
-
 private theorem adjoinRoot_repr [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (i : Fin (definingPolynomial p).natDegree) :
     (AdjoinRoot.powerBasisAux' (definingPolynomial_monic p)).repr

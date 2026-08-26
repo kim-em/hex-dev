@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/DelayedKernel.lean",
+ "baseline_blob": "772cd3048ddb0550ed59d3c9f6ed3b17fe0b50fe",
+ "current_blob": "c17e430d7bd078519cfaea928e3a3f6f4e84e7c0",
+ "reason": "Phase 6 polish only: renames the deprecated `if_pos`/`if_neg`/`dif_pos`/`dif_neg` rewrites to their `ite_eq_*`/`dite_eq_*` aliases inside proofs and adds a docstring to the `@[csimp]` lemma `delayedDot_eq_impl`. `delayedDot`, `delayedDotImpl`, `barrettBaseMul`, `strassenBarrett`, and the Barrett accumulator loop are unchanged, so the compiled dot-product path is identical."
+}

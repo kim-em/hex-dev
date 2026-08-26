@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/Irreducibility.lean",
+ "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
+ "current_blob": "d3abc2673a4968020241b5891630a42086637bd3",
+ "reason": "Renames the public ZMod64.Bounds 2 proof instance without changing its body, priority, scope or declaration position. Elaboration may now refer to the new declaration name, but Bounds is a Prop and its instance arguments are erased, so generated factorization code and runtime behaviour are unchanged."
+}

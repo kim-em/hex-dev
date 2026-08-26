@@ -433,7 +433,7 @@ libraries:
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -451,11 +451,11 @@ libraries:
         - name: tall-hermite
           description: tall matrices with many redundant row generators
         - name: unimodular-conjugate
-          description: random unimodular left factors times a known diagonal form
+          description: deterministic full unit-triangular factors times a known diagonal form
   HexSmith:
     deps: [HexHermite]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -780,12 +780,12 @@ libraries:
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
@@ -803,7 +803,7 @@ libraries:
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexBerlekampMathlib/ProofProbe]
   HexHenselMathlib:
@@ -834,7 +834,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
   HexTruncatedSeriesMathlib:
@@ -871,7 +871,7 @@ libraries:
   HexResultant:
     deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:

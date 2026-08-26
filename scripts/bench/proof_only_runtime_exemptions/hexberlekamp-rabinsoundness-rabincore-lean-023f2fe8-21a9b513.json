@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/RabinSoundness/RabinCore.lean",
+ "baseline_blob": "023f2fe8a19519addb945ad8e3fe88064c333375",
+ "current_blob": "21a9b51389ee87077860e7ffb1b763360c6e813a",
+ "reason": "Phase 6 polish only: renames a deprecated `if_pos` rewrite to `ite_eq_left`, deletes the two duplicate private `1 != 0` helpers in favour of the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, removes the unreferenced private lemma `pos_of_mem_properDivisors`, drops two dead `haveI` lines and the `[ZMod64.PrimeModulus p]` binders they were the only consumers of, and demotes the simp-redundant `primeFieldLinearProduct_factor_count` to a plain theorem. `xPowSubX`, `primeFieldLinearProduct`, the `crtZeroOne*` candidates, and every executable definition are unchanged."
+}

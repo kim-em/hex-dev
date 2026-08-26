@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/DistinctDegree.lean",
+ "baseline_blob": "5dcbf473b634ffff65e4f007025362b8e876a347",
+ "current_blob": "445d82bd0b7b0785e5db88650f372b44ad1e804d",
+ "reason": "Phase 6 polish only: removes duplicate private proofs (`factorProduct_cons_eq`, `factorProduct_append`, `zmod_one_ne_zero_local`) in favour of the public `Hex.Berlekamp.factorProduct_cons`/`factorProduct_append` and the upstream `Hex.ZMod64.one_ne_zero_of_prime`, deletes the unreferenced private lemma `distinctDegreeCandidate_mul_div_eq`, drops unused `[ZMod64.PrimeModulus p]` binders, and demotes the simp-redundant `degreeBucketProduct_singleton` to a plain theorem. `distinctDegreeFactor`, `distinctDegreeLoop`, `finishDegreePower`, `distinctDegreeCandidate`, and `scoutDegreePattern` are unchanged."
+}
