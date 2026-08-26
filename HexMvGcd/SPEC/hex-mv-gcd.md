@@ -450,8 +450,9 @@ signature is repeated here only to show the consumer boundary:
 ```lean
 /-- Brown's nonzero subresultant chain together with a caller-order-sensitive
 Bezout representation for every stored entry. -/
-def subresultantChainExt [One R] [Add R] [Sub R] [Mul R] [Div R]
-    (f g : DensePoly R) : Array (DensePoly R × DensePoly R × DensePoly R)
+def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) :
+    Array (DensePoly R × DensePoly R × DensePoly R)
 ```
 
 This library's complete fallback depends on it. The modular
@@ -1671,7 +1672,7 @@ public semantic operation: `gcd`, `cofactors`, `contentIn`, `primPartIn`,
 ## Milestones
 
 1. **Prerequisite and coefficient kernel.** Land
-   `Hex.Resultant.subresultantChainExt` with its transformation and exact
+   `Hex.DensePoly.subresultantChainExt` with its transformation and exact
    division proofs. Then implement `GcdOps`, `BezoutOps`,
    `LawfulGcdOps`, `LawfulBezoutOps`, `CoeffHom`, `divMod`,
    `divExact?`, the `Dvd` / `Div` / `ExactDivLaws` instances, `constIn`,

@@ -5,12 +5,13 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 Polynomial resultants and discriminants for `Hex.DensePoly R` over a
-commutative exact-division domain, implemented in Lean 4 without Mathlib.
-The algorithm is the subresultant pseudo-remainder sequence of Collins and
-Brown, the standard fraction-free method. The package depends on
-[`hex-poly`](https://github.com/leanprover/hex-poly) and
-[`hex-basic`](https://github.com/leanprover/hex-basic); its Mathlib
-counterpart is
+commutative exact-division domain. It is implemented in Lean 4 without
+Mathlib. The algorithm is the subresultant pseudo-remainder sequence of
+Collins and Brown, the standard fraction-free method. The package depends on
+[`hex-poly`](https://github.com/leanprover/hex-poly),
+[`hex-basic`](https://github.com/leanprover/hex-basic) and
+[`hex-determinant`](https://github.com/leanprover/hex-determinant); its
+Mathlib counterpart is
 [`hex-resultant-mathlib`](https://github.com/leanprover/hex-resultant-mathlib).
 
 # Quickstart

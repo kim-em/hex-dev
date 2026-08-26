@@ -90,7 +90,7 @@ private theorem eval_coeffMinorAt_zero [CommRing R] [DecidableEq R]
 
 /-- Specializing the coefficient variable after elimination agrees with the
 formal-degree Mathlib resultant of the specialized inputs. -/
-theorem eval_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+theorem eval_resultant [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a : R) :
     eval (resultant f g) a =
@@ -294,7 +294,7 @@ theorem resultant_eq_zero_of_common_eval
 /-- The specialization law at default Mathlib degrees when neither outer
 leading coefficient vanishes. -/
 theorem eval_resultant_default
-    [CommRing R] [IsDomain R] [DecidableEq R]
+    [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a : R)
     (hf : eval f.leadingCoeff a ≠ 0) (hg : eval g.leadingCoeff a ≠ 0) :

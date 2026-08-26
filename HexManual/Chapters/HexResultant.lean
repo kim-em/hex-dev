@@ -286,13 +286,16 @@ exact rather than truncating.
 
 {docstring Hex.DensePoly.subresultantChainExt_law}
 
+The two halves are also available separately:
+
 {docstring Hex.DensePoly.subresultantChainExt_bezout}
 
 {docstring Hex.DensePoly.subresultantChainExt_exact}
 
-`HexPolyZGcd` and `HexMvGcd` consume this to produce the `splitBezout`
-certificate constructor for their deterministic fallback route, which needs a
-Bezout pair with no modulus and so cannot go through the modular gcd.
+Both gcd libraries read the terminal entry for a deterministic fallback that
+needs a Bezout pair with no modulus, and so cannot go through the modular
+route. `HexPolyZGcd` turns it into a `CoprimeWitness.constant`; `HexMvGcd`
+turns it into a `splitBezout` certificate.
 
 # A small exact computation
 %%%
