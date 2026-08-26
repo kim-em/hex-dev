@@ -20,6 +20,7 @@ BUILD_ONLY_LIBS = {
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
+    "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
     "HexMvPolyBenchSupport",
@@ -46,6 +47,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFTests",
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
+    "HexSmithTests",
     "HexCharPolyTests",
     "HexReleaseExamples",
 }

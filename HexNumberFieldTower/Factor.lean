@@ -33,8 +33,12 @@ def checkFactorization {T : NumberTower} (f : Poly T) (scalar : Elem T)
 
 /-- A checked complete factorization in a fixed tower. -/
 structure Factorization (T : NumberTower) (f : Poly T) where
+  /-- The leading scalar; the listed factors are monic. -/
   scalar : Elem T
+  /-- Monic irreducible factors, canonically sorted, each with its positive
+  multiplicity. -/
   factors : Array (Poly T × Nat)
+  /-- The reconstruction and recursive irreducibility replay succeeded. -/
   checked : checkFactorization f scalar factors = true
 
 /-- Complete irreducible factorization with multiplicity. -/

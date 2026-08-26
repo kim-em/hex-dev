@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Factorization.lean",
+ "baseline_blob": "2d08c80028bc54024965a5c0f114bba51d18523e",
+ "current_blob": "8d796854822562cd7883e2308d444f9e07702b36",
+ "reason": "Updates one projection from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; factorization arithmetic and control flow are unchanged."
+}

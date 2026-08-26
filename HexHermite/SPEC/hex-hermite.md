@@ -684,15 +684,43 @@ complexity would be the product of these counts with an operand size that
 depends on which algorithm ran, and that product is measured rather than
 derived. See "Benchmarking".
 
+The Phase-4 registrations additionally state controlled-family wall models.
+The dense, rank-deficient, and conjugate schedules have cubic matrix-entry
+visits, while exact-integer work becomes more expensive as encountered
+coefficients widen. Their peak bit widths grow roughly linearly, not
+logarithmically, in `n` over the registered ladders. The normalization
+`n³ log n` is therefore an empirically calibrated, slowly growing wall-cost
+surrogate for the range `16..128`; its adequacy is the flat measured timing
+ratio, not a claim that it follows algebraically from the width curve or that
+unrestricted bit complexity is `O(n³ log n)`. The tall family keeps active
+coefficients word-scale and uses `n³`. These controlled-family models do not
+replace the unrestricted scheduled-update bounds below. The untimed diagnostic
+records peak and output bit widths over every timed family/range and checks that
+its instrumented final matrix equals the public uninstrumented result.
+
+The prepared certificate ladder is deliberately narrower than unrestricted
+`hnfCert`: its unit-bidiagonal transform gives only two nonzero packed terms per
+product row, so two product checks plus the shape scan make quadratically many
+packed-word operations. `n² log n` is the calibrated wall surrogate for that
+bounded sparse-transform family, not a complexity claim for replay with a
+general dense transform.
+
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
 | `hnf` | fraction-free rank profile, then guarded principal-block sweep | `O(r · n · m)` profile-entry updates; at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps, each nontrivial row update touching `m` entries | active principal prefixes are eagerly reduced; dependent rows are also cleared; the candidate is shape-checked, with the column sweep as fallback |
+| `rankProfile` | fraction-free elimination used only to select row swaps and pivot columns | `O(r · n · m)` profile-entry updates | fraction-free minors; recorded separately because it is a separable preparation phase |
+| `principalCore` | guarded principal-block sweep from a prepared rank profile | at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps | the same eagerly reduced principal prefixes as `hnf`, excluding profile construction |
+| `hnfRank` | rank projection from one form-only result | as `hnf` | as `hnf` |
+| `hnfBasis` | rank and nonzero-row projection from one shared form-only result | as `hnf`, plus `O(r · m)` for the slice | as `hnf` |
 | `hnfData` | the same schedule plus accumulation of `U` | at most `O(n · r² · (m + n) + r · n · m)` integer operations | `U` may be much larger than `H` |
 | `hnfWithInv` | `hnfData` plus right-updates of `W = U⁻¹` | at most another `O(n² · r²)` integer operations | `U`'s and `W`'s |
 | `latticeCoeffs` | `hnfData`, forward pivot solve, residual check, one `vecMul` through `U` | as `hnfData`, plus `O(n · m)` | bounded by `H`, `U`, and the residual |
 | `latticeContains` | `latticeCoeffs` followed by `Option.isSome` | as `latticeCoeffs` | as `latticeCoeffs` |
 | `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
-| `latticeIndex` | `hnf` plus pivot scan and product | as `hnf`, plus `O(m)` | bounded by the form and index |
+| `pivots` | pivot projection from one shared form-only result | as `hnf`, plus `O(r)` | bounded by the form |
+| `latticeIndex` | pivot product from one shared form-only result | as `hnf`, plus `O(r)` | bounded by the form and index |
+| `isHNFForm` | direct entry-level HNF predicate | `O(n · m)` entry inspections with constant-time single-entry access | input entries only |
+| `hnfCert` | two packed product checks plus `isHNFForm` | `O(n² + n · m)` entry traversals; packed integer widths depend on the certified matrices | `A`, `H`, `U`, `W`, and packed rows |
 
 ## The Mathlib layer
 
@@ -811,10 +839,12 @@ a single family would hide:
   extraction.
 - `tall-hermite`: many more rows than columns, the shape a number-field
   module basis has, where most rows are redundant.
-- `unimodular-conjugate`: `V * D` for a random unimodular `V` and a
+- `unimodular-conjugate`: `V * D` for a deterministic pseudo-random
+  unimodular `V` formed from both unit-lower- and unit-upper-triangular factors and a
   diagonal `D` with known entries, so the expected form is known in
   advance and the input can be made arbitrarily badly conditioned
-  without a large determinant.
+  without a large determinant. The benchmark records the factor salts and
+  treats the dimension as the conditioning knob.
 
 **Comparators.** FLINT `fmpz_mat_hnf` through python-flint, and PARI
 `mathnf` through `cypari2`, both `informational`. FLINT dispatches
@@ -831,8 +861,10 @@ entry bit-size grows faster in the dimension than output entry bit-size on
 `unimodular-conjugate`, and wallclock follows that divergence across the
 upper half of the dimension ladder. The implementation provides a separate
 untimed diagnostic runner that scans the working matrix after every
-elementary update and returns `peakBits`; ordinary benchmark timings run the
-uninstrumented API. No claim is made about "time spent in big-integer
+elementary update, verifies the instrumented final form against `hnf`, and
+returns `peakBits`. The same runner records dense and rank-deficient operand
+growth used by their controlled-family wall models; ordinary benchmark timings
+run the uninstrumented API. No claim is made about "time spent in big-integer
 arithmetic", which the benchmark harness cannot isolate.
 
 ## File organisation

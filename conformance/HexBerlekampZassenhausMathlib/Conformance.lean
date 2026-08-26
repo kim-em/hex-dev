@@ -212,6 +212,13 @@ Covered edge cases:
   (`X⁴ + 8X + 12`, Galois group `A₄`), and balanced Swinnerton-Dyer
   decline (`X⁴ − 10X² + 1`, kernel fallback only)
 - an over-budget kernel-fallback input (dense size 17 against the cap 13)
+
+Sizes: the certificate cases run at degrees 1 to 16, at the upper end of the
+`core` range in `SPEC/testing.md` §Profile sizes. The `!` cases are capped at
+degree 12 by construction rather than by choice: `bangBudget` rejects a dense
+size above 13, because the kernel re-runs the whole factorizer there and
+degree 12 already costs tens of seconds of kernel time. The over-budget case
+below pins that boundary.
 -/
 
 namespace HexBerlekampZassenhausMathlib.Conformance

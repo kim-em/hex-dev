@@ -1,0 +1,6 @@
+{
+ "path": "HexLLL/Lattice.lean",
+ "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
+ "current_blob": "b82aa0eb2ae3c57f9069c6fe080462a9d88ccb8d",
+ "reason": "Imports the relocated lattice propositions and proofs from HexMatrix.Lattice and removes their former copies; no executable factorization definition changes."
+}

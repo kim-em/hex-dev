@@ -256,6 +256,8 @@ private theorem foldl_add_eq_foldr {A : Type v} (xs : List A) (h : A → R)
       rw [ih]
       grind
 
+/-- Each column inside the block contributes one reversed coefficient of `p`
+at its own index, and columns outside the block contribute nothing. -/
 private theorem coeff_blockCols (start count total : Nat) (p : DensePoly R)
     (cols : List (Fin total)) (k : Nat) :
     (blockCols start count total p cols).coeff k =
@@ -313,7 +315,7 @@ theorem blockCols_finRange (start count total : Nat) (p : DensePoly R)
               dsimp only [term, q]
               by_cases hjq : j = ⟨start + (count - 1 - k), by omega⟩
               · subst j
-                simp only [if_pos rfl]
+                simp only [reduceIte]
                 rw [if_pos (by omega), if_pos (by omega)]
                 congr 1
                 omega
@@ -444,6 +446,10 @@ theorem coeff_bezoutCols (df dg J l : Nat) (u v f g : DensePoly R)
         rw [hcast]
         grind
 
+/-- Every row of a generalized coefficient matrix is the final row of the
+matrix at some other requested coefficient: the non-final rows are shifted
+polynomial coefficients, and the final row is selected by `ell` itself.  This
+lets a single final-row Laplace identity cover the whole matrix. -/
 private theorem coeffMatrixAt_row_eq_last (df dg J ell : Nat)
     (f g : DensePoly R) (hJ : J < dg)
     (hcount : 0 < (df - J) + (dg - J))
@@ -610,6 +616,8 @@ theorem bounded_bezout_unique [Div R] [ExactDivLaws R]
       simpa only [j, hindex] using hj
     · exact coeff_eq_zero_of_size_le v (by omega)
 
+/-- Vanishing above index `n` bounds the normalized size by `n`. This is the
+size-bound entry point for the cofactor columns below. -/
 private theorem size_le_of_coeff_zero_above (p : DensePoly R) (n : Nat)
     (hzero : ∀ k, n ≤ k → p.coeff k = 0) : p.size ≤ n := by
   by_cases hle : p.size ≤ n
@@ -619,6 +627,8 @@ private theorem size_le_of_coeff_zero_above (p : DensePoly R) (n : Nat)
     exact False.elim
       ((coeff_last_ne_zero_of_pos_size p hpos) (hzero _ hlast))
 
+/-- A difference of dense polynomials is bounded by the larger operand
+size. -/
 theorem size_sub_le_max (p q : DensePoly R) :
     (p - q).size ≤ Nat.max p.size q.size := by
   apply size_le_of_coeff_zero_above
@@ -631,6 +641,8 @@ theorem size_sub_le_max (p q : DensePoly R) :
     coeff_eq_zero_of_size_le q hq]
   grind
 
+/-- The `f`-side cofactor accumulates only monomials below `dg - J`, so it
+stays inside the `g` block's column budget. -/
 private theorem cofactorUCols_size_le (df dg J : Nat) (f g : DensePoly R)
     (cols : List (Fin ((df - J) + (dg - J)))) :
     (cofactorUCols df dg J f g cols).size ≤ dg - J := by
@@ -649,6 +661,8 @@ private theorem cofactorUCols_size_le (df dg J : Nat) (f g : DensePoly R)
       · rw [if_neg hj]
         exact ih
 
+/-- The `g`-side cofactor accumulates only monomials below `df - J`, so it
+stays inside the `f` block's column budget. -/
 private theorem cofactorVCols_size_le (df dg J : Nat) (f g : DensePoly R)
     (cols : List (Fin ((df - J) + (dg - J)))) :
     (cofactorVCols df dg J f g cols).size ≤ df - J := by
@@ -667,23 +681,30 @@ private theorem cofactorVCols_size_le (df dg J : Nat) (f g : DensePoly R)
       · rw [if_neg hj]
         exact ih
 
-/-- Degree bounds for the two determinantal cofactor blocks. -/
+/-- Degree bound for the left determinantal cofactor block at explicit formal
+degrees. -/
 theorem cofactorUAt_size_le (df dg J : Nat) (f g : DensePoly R) :
     (cofactorUAt df dg J f g).size ≤ dg - J := by
   exact cofactorUCols_size_le df dg J f g _
 
+/-- Degree bound for the right determinantal cofactor block at explicit formal
+degrees. -/
 theorem cofactorVAt_size_le (df dg J : Nat) (f g : DensePoly R) :
     (cofactorVAt df dg J f g).size ≤ df - J := by
   exact cofactorVCols_size_le df dg J f g _
 
-/-- Degree bounds for the canonical cofactors at the actual formal degrees. -/
+/-- Degree bound for the canonical left cofactor at the actual formal
+degrees. -/
 theorem cofactorU_size_le (J : Nat) (f g : DensePoly R) :
     (cofactorU J f g).size ≤ formalDegree g - J := by
   exact cofactorUAt_size_le _ _ J f g
 
+/-- Degree bound for the canonical right cofactor at the actual formal
+degrees. -/
 theorem cofactorV_size_le (J : Nat) (f g : DensePoly R) :
     (cofactorV J f g).size ≤ formalDegree f - J := by
   exact cofactorVAt_size_le _ _ J f g
+
 /-- Each coefficient of the polynomial column sum is its scalar Laplace
 column sum. -/
 theorem coeff_cofactorRowCols (df dg J l : Nat) (f g : DensePoly R)
@@ -775,6 +796,8 @@ theorem coeff_cofactorAt_mul (df dg J l : Nat) (f g : DensePoly R)
   rw [cofactorCols_mul, coeff_cofactorRowCols,
     cofactorScalarCols_finRange df dg J l f g hcount]
 
+/-- The integer-indexed lookup vanishes above the normalized size, which is
+what lets the cofactor rows be summed over a fixed integer window. -/
 private theorem coeffInt_eq_zero_of_size_le (p : DensePoly R) (k : Int)
     (h : Int.ofNat p.size ≤ k) : coeffInt p k = 0 := by
   cases k with
@@ -786,13 +809,13 @@ private theorem coeffInt_eq_zero_of_size_le (p : DensePoly R) (k : Int)
       apply coeff_eq_zero_of_size_le
       exact Int.ofNat_le.mp h
   | negSucc n =>
-      have hs : 0 ≤ Int.ofNat p.size := Int.ofNat_zero_le _
+      have hs : 0 ≤ Int.ofNat p.size := Int.natCast_nonneg _
       omega
 
 /-- Coefficient minors above the requested subresultant degree vanish: in
 the active range their selector row repeats an earlier Sylvester row, and
 above that range the selector row is zero. -/
-theorem coeffMinorAt_zero_high (df dg J l : Nat) (f g : DensePoly R)
+theorem coeffMinorAt_eq_zero_of_lt (df dg J l : Nat) (f g : DensePoly R)
     (hJ : J < dg) (hdg : dg ≤ df)
     (hf : f.size ≤ df + 1) (hg : g.size ≤ dg + 1)
     (hl : J < l) :
@@ -884,7 +907,7 @@ theorem cofactor_bezout (J : Nat) (f g : DensePoly R)
   · rw [if_pos hl]
     rfl
   · rw [if_neg hl]
-    apply coeffMinorAt_zero_high
+    apply coeffMinorAt_eq_zero_of_lt
     · exact hJ
     · exact hdg
     · dsimp only [df, formalDegree]
