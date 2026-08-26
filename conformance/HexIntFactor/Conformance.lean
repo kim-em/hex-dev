@@ -277,6 +277,11 @@ private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
 #guard ecmNaturalTrace.stageGcd == 3
 #guard ecmNaturalTrace.result == .factor 3
 
+-- An explicitly requested word route reports the natural backend when the
+-- modulus does not fit, rather than claiming that Montgomery arithmetic ran.
+#guard (Hex.Nat.Internal.ecmTraceWith .word
+  (51 * (2 ^ 64 + 1)) 13 5).stageBackend == some .natural
+
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
