@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyZ.Kronecker
+public import HexPolyFast.Division
 
 public section
 set_option backward.proofsInPublic true
@@ -457,6 +458,54 @@ theorem mulKS2_eq (p q : ZPoly) : mulKS2 p q = p * q := by
 
 namespace KS3
 
+private theorem packSpec_congr (b : Nat) :
+    ∀ (slots : Nat) (f g : Nat → Int),
+      (∀ i, i < slots → f i = g i) → packSpec b f slots = packSpec b g slots := by
+  intro slots
+  induction slots with
+  | zero => intro f g _; rfl
+  | succ slots ih =>
+      intro f g h
+      simp only [packSpec]
+      rw [h 0 (by omega), ih (fun i => f (i + 1)) (fun i => g (i + 1))
+        (fun i hi => h (i + 1) (by omega))]
+
+/-- Pack an operand in descending coefficient order.  Multiplying two such
+values is the reciprocal product used by KS3. -/
+@[expose]
+def reversePack (b : Nat) (p : ZPoly) : Int :=
+  packAux b (fun i => p.coeff (p.size - 1 - i)) 0 p.size
+
+private theorem reversePack_eq_eval (b : Nat) (p : ZPoly) :
+    reversePack b p = DensePoly.eval
+      (DensePoly.polyOfSeries (DensePoly.reverseSeries p p.size)) ((2 : Int) ^ b) := by
+  unfold reversePack
+  rw [packAux_eq]
+  rw [← packSpec_eq_eval b
+    (DensePoly.polyOfSeries (DensePoly.reverseSeries p p.size)) p.size (by
+      unfold DensePoly.polyOfSeries
+      simpa using DensePoly.size_ofList_le
+        ((List.range p.size).map (DensePoly.reverseSeries p p.size).coeff))]
+  apply packSpec_congr
+  intro i hi
+  rw [DensePoly.coeff_polyOf_reverseSeries, ite_eq_left hi, ite_eq_left hi]
+  simp
+
+private theorem reversePoly_extend (p : ZPoly) (slots : Nat)
+    (hsize : p.size ≤ slots) :
+    DensePoly.polyOfSeries (DensePoly.reverseSeries p p.size) =
+      DensePoly.polyOfSeries (DensePoly.reverseSeries p slots) := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_polyOf_reverseSeries,
+    DensePoly.coeff_polyOf_reverseSeries]
+  by_cases hi : i < p.size
+  · rw [ite_eq_left hi, ite_eq_left hi, ite_eq_left (by omega)]
+  · rw [ite_eq_right hi, ite_eq_right hi]
+    by_cases his : i < slots
+    · rw [ite_eq_left his]
+    · rw [ite_eq_right his]
+
 /-- Recover one coefficient from the low end of a forward packed residual and
 the high end of its reciprocal packed residual. -/
 @[expose]
@@ -484,6 +533,24 @@ def digits (b : Nat) : Nat → Nat → Nat → List Nat
 @[expose]
 def unpack (b forward reverse slots : Nat) : Array Nat :=
   (digits b slots forward reverse).toArray
+
+/-- Per-slot translation used by signed reciprocal recovery.  It is exactly
+half of `B * (B - 1)` for `B = 2 ^ b`. -/
+@[expose]
+def bias (b : Nat) : Nat :=
+  2 ^ (b - 1) * (2 ^ b - 1)
+
+/-- Reciprocal recovery at an explicit half-width and output shape.  The only
+large products are the forward and reversed operand packings. -/
+@[expose]
+def recover (b slots : Nat) (p q : ZPoly) : ZPoly :=
+  let offset : Int := bias b
+  let forward := (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+    constPack b offset slots).toNat
+  let reverse := (reversePack b p * reversePack b q +
+    constPack b offset slots).toNat
+  DensePoly.ofCoeffs ((unpack b forward reverse slots).map
+    (fun d : Nat => (d : Int) - offset))
 
 private theorem natEval_add_base_le (b : Nat) :
     ∀ (slots : Nat) (f : Nat → Nat),
@@ -683,7 +750,263 @@ theorem digits_natEval (b : Nat) :
       rw [List.range_succ_eq_map, List.map_cons, List.map_map]
       simp [Function.comp_apply]
 
+private theorem reversePrefix_reverseSeries_eq_shift (p : ZPoly) (slots : Nat)
+    (hsize : p.size ≤ slots) :
+    DensePoly.reversePrefix slots (DensePoly.reverseSeries p slots) =
+      DensePoly.shift (slots - p.size) p := by
+  have hsum : slots - p.size + p.size = slots := Nat.sub_add_cancel hsize
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_reversePrefix, DensePoly.coeff_shift]
+  by_cases hi : i < slots
+  · rw [ite_eq_left hi,
+      DensePoly.coeff_reverseSeries _ _ _ (by omega)]
+    by_cases hbefore : i < slots - p.size
+    · rw [ite_eq_right (by omega), ite_eq_left hbefore]
+      rfl
+    · rw [ite_eq_left (by omega), ite_eq_right hbefore]
+      congr 1
+      omega
+  · rw [ite_eq_right hi, ite_eq_right (by omega)]
+    have hidx : p.size ≤ i - (slots - p.size) := by omega
+    exact (DensePoly.coeff_eq_zero_of_size_le p hidx).symm
+
+private theorem shift_mul (d : Nat) (p q : ZPoly) :
+    DensePoly.shift d p * q = DensePoly.shift d (p * q) := by
+  calc
+    DensePoly.shift d p * q = (DensePoly.monomial d 1 * p) * q := by
+      rw [DensePoly.monomial_one_mul_poly_eq_shift]
+    _ = DensePoly.monomial d 1 * (p * q) := DensePoly.mul_assoc_poly _ _ _
+    _ = DensePoly.shift d (p * q) := DensePoly.monomial_one_mul_poly_eq_shift _ _
+
+private theorem coeff_reverseProduct (p q : ZPoly) (slots t : Nat)
+    (hp : 0 < p.size) (hq : 0 < q.size)
+    (hslots : slots = p.size + q.size - 1) (ht : t < slots) :
+    (DensePoly.polyOfSeries (DensePoly.reverseSeries p slots) *
+        DensePoly.polyOfSeries (DensePoly.reverseSeries q slots)).coeff t =
+      (p * q).coeff (slots - 1 - t) := by
+  have hps : p.size ≤ slots := by omega
+  have hqs : q.size ≤ slots := by omega
+  have hhigh : slots + q.size - 2 - t ≥ slots - p.size := by omega
+  have hseries := DensePoly.coeff_reversePrefix_mul
+    (DensePoly.reverseSeries p slots) q slots t (Nat.le_refl _) ht hq
+  rw [reversePrefix_reverseSeries_eq_shift p slots hps, shift_mul,
+    DensePoly.coeff_shift, ite_eq_right (by omega)] at hseries
+  have hindex :
+      slots + q.size - 2 - t - (slots - p.size) = slots - 1 - t := by
+    omega
+  rw [hindex] at hseries
+  rw [DensePoly.coeff_polyOfSeries_mul _ _ t ht, TSeries.mul_comm]
+  exact hseries.symm
+
+private theorem reversePack_mul_eq_packSpec (b slots : Nat) (p q : ZPoly)
+    (hp : 0 < p.size) (hq : 0 < q.size)
+    (hslots : slots = p.size + q.size - 1) :
+    reversePack b p * reversePack b q =
+      packSpec b (fun i => (p * q).coeff (slots - 1 - i)) slots := by
+  let rp := DensePoly.polyOfSeries (DensePoly.reverseSeries p p.size)
+  let rq := DensePoly.polyOfSeries (DensePoly.reverseSeries q q.size)
+  have hrp : rp.size ≤ p.size := by
+    unfold rp DensePoly.polyOfSeries
+    simpa using DensePoly.size_ofList_le
+      ((List.range p.size).map (DensePoly.reverseSeries p p.size).coeff)
+  have hrq : rq.size ≤ q.size := by
+    unfold rq DensePoly.polyOfSeries
+    simpa using DensePoly.size_ofList_le
+      ((List.range q.size).map (DensePoly.reverseSeries q q.size).coeff)
+  have hproduct : (rp * rq).size ≤ slots :=
+    Nat.le_trans (DensePoly.size_mul_le rp rq) (by omega)
+  rw [reversePack_eq_eval, reversePack_eq_eval,
+    ← DensePoly.eval_mul_commring, ← packSpec_eq_eval b (rp * rq) slots hproduct]
+  apply packSpec_congr
+  intro i hi
+  unfold rp rq
+  rw [reversePoly_extend p slots (by omega),
+    reversePoly_extend q slots (by omega)]
+  exact coeff_reverseProduct p q slots i hp hq hslots hi
+
+private theorem pack_mul_eq_packSpec (b slots : Nat) (p q : ZPoly)
+    (hsize : (p * q).size ≤ slots) :
+    packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size =
+      packSpec b (p * q).coeff slots := by
+  rw [pack_eq_eval, pack_eq_eval, ← DensePoly.eval_mul_commring,
+    ← packSpec_eq_eval b (p * q) slots hsize]
+
+private theorem biasedPack_toNat (b slots amount : Nat) (f : Nat → Int)
+    (hnonneg : ∀ i, 0 ≤ f i + (amount : Int)) :
+    (packSpec b f slots + constPack b (amount : Int) slots).toNat =
+      natEval b (fun i => (f i + (amount : Int)).toNat) slots := by
+  have hcast : ∀ i, ((((f i + (amount : Int)).toNat : Nat) : Int)) =
+      f i + (amount : Int) := by
+    intro i
+    exact Int.toNat_of_nonneg (hnonneg i)
+  rw [constPack_eq, ← packSpec_add_fun]
+  have hfun : (fun i => f i + (amount : Int)) =
+      (fun i => ((((f i + (amount : Int)).toNat : Nat) : Int))) := by
+    funext i
+    rw [hcast i]
+  rw [hfun, packSpec_natCast]
+  exact Int.toNat_natCast _
+
+/-- Forward and reciprocal packing recover the schoolbook product whenever
+every signed coefficient fits strictly inside the reciprocal bias range. -/
+theorem recover_eq (p q : ZPoly) (b slots : Nat)
+    (hb : 0 < b) (hp : 0 < p.size) (hq : 0 < q.size)
+    (hslots : slots = p.size + q.size - 1)
+    (hbudget : ∀ i, ((p * q).coeff i).natAbs < bias b) :
+    recover b slots p q = p * q := by
+  let amount := bias b
+  let f := fun i => (p * q).coeff i
+  let d := fun i => (f i + (amount : Int)).toNat
+  have hnonneg : ∀ i, 0 ≤ f i + (amount : Int) := by
+    intro i
+    have hi := hbudget i
+    dsimp [f, amount]
+    omega
+  have hcast : ∀ i, (((d i : Nat) : Int)) = f i + (amount : Int) := by
+    intro i
+    unfold d
+    exact Int.toNat_of_nonneg (hnonneg i)
+  have hpow : 2 ^ b = 2 * 2 ^ (b - 1) := by
+    calc
+      2 ^ b = 2 ^ ((b - 1) + 1) := by congr 1 <;> omega
+      _ = 2 ^ (b - 1) * 2 := Nat.pow_succ 2 (b - 1)
+      _ = 2 * 2 ^ (b - 1) := Nat.mul_comm _ _
+  have htwice : 2 * amount = 2 ^ b * (2 ^ b - 1) := by
+    unfold amount bias
+    calc
+      2 * (2 ^ (b - 1) * (2 ^ b - 1)) =
+          (2 * 2 ^ (b - 1)) * (2 ^ b - 1) := by ac_rfl
+      _ = 2 ^ b * (2 ^ b - 1) := by rw [← hpow]
+  have hfit : ∀ i, d i < 2 ^ b * (2 ^ b - 1) := by
+    intro i
+    have hi := hbudget i
+    have hltInt : (d i : Int) < ((2 * amount : Nat) : Int) := by
+      rw [hcast i]
+      dsimp [f, amount] at hi ⊢
+      omega
+    have hlt : d i < 2 * amount := by exact_mod_cast hltInt
+    simpa [htwice] using hlt
+  have hsize : (p * q).size ≤ slots := by
+    exact Nat.le_trans (DensePoly.size_mul_le p q) (by omega)
+  have hforward :
+      (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+          constPack b (amount : Int) slots).toNat = natEval b d slots := by
+    rw [pack_mul_eq_packSpec b slots p q hsize]
+    exact biasedPack_toNat b slots amount f hnonneg
+  have hreverse :
+      (reversePack b p * reversePack b q +
+          constPack b (amount : Int) slots).toNat =
+        natEval b (fun i => d (slots - 1 - i)) slots := by
+    rw [reversePack_mul_eq_packSpec b slots p q hp hq hslots]
+    exact biasedPack_toNat b slots amount
+      (fun i => f (slots - 1 - i)) (fun i => hnonneg (slots - 1 - i))
+  have hdigits := digits_natEval b slots d hfit
+  have harray :
+      (unpack b
+          (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+            constPack b (amount : Int) slots).toNat
+          (reversePack b p * reversePack b q +
+            constPack b (amount : Int) slots).toNat slots).map
+          (fun x : Nat => (x : Int) - (amount : Int)) =
+        ((List.range slots).map f).toArray := by
+    unfold unpack
+    rw [hforward, hreverse, hdigits]
+    apply Array.ext
+    · simp
+    · intro i hi₁ hi₂
+      have hirange : i < slots := by simpa using hi₂
+      have hid : i < ((List.range slots).map d).toArray.size := by
+        simpa using hirange
+      rw [Array.getElem_map _ hi₁]
+      have hleft : ((List.range slots).map d).toArray[i]'hid = d i := by simp
+      have hright : ((List.range slots).map f).toArray[i]'hi₂ = f i := by simp
+      rw [hleft, hright, hcast i]
+      omega
+  unfold recover
+  change DensePoly.ofCoeffs
+      ((unpack b
+          (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+            constPack b (amount : Int) slots).toNat
+          (reversePack b p * reversePack b q +
+            constPack b (amount : Int) slots).toNat slots).map
+        (fun x : Nat => (x : Int) - (amount : Int))) = _
+  rw [harray]
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?]
+  by_cases hi : i < slots
+  · rw [Array.getElem?_eq_getElem (by simpa using hi), Option.getD_some]
+    simp [f]
+  · rw [Array.getElem?_eq_none (by simpa using Nat.le_of_not_gt hi), Option.getD_none]
+    exact (DensePoly.coeff_eq_zero_of_size_le (p * q) (by omega)).symm
+
 end KS3
+
+/-! # Forced KS3 kernel -/
+
+/-- Half-width used by reciprocal Kronecker substitution.  Each recovered
+coefficient may occupy two adjacent base digits. -/
+@[expose]
+def ks3Width (p q : ZPoly) : Nat :=
+  (bitLen (coeffBudget p q) + 3) / 2
+
+private theorem coeff_lt_ks3Bias (p q : ZPoly) (i : Nat) :
+    ((p * q).coeff i).natAbs < KS3.bias (ks3Width p q) := by
+  let budget := coeffBudget p q
+  let width := ks3Width p q
+  have hcoeff := natAbs_mulCoeff_le_min p q (maxAbs p) (maxAbs q)
+    (natAbs_coeff_le_maxAbs p) (natAbs_coeff_le_maxAbs q) i
+  have hfit := lt_two_pow_bitLen budget
+  have hwidth : bitLen budget ≤ 2 * width - 2 := by
+    unfold width ks3Width budget
+    omega
+  have hwpos : 0 < width := by
+    unfold width ks3Width
+    omega
+  have hpow : 2 ^ width = 2 * 2 ^ (width - 1) := by
+    calc
+      2 ^ width = 2 ^ ((width - 1) + 1) := by congr 1 <;> omega
+      _ = 2 ^ (width - 1) * 2 := Nat.pow_succ 2 (width - 1)
+      _ = 2 * 2 ^ (width - 1) := Nat.mul_comm _ _
+  have hhalf : 2 ^ (width - 1) ≤ 2 ^ width - 1 := by
+    have hpos := Nat.two_pow_pos (width - 1)
+    omega
+  have hbias : 2 ^ (2 * width - 2) ≤ KS3.bias width := by
+    have hexp : 2 * width - 2 = (width - 1) + (width - 1) := by omega
+    rw [hexp, Nat.pow_add]
+    unfold KS3.bias
+    exact Nat.mul_le_mul_left (2 ^ (width - 1)) hhalf
+  have hbudget : ((p * q).coeff i).natAbs < 2 ^ bitLen budget :=
+    Nat.lt_of_le_of_lt (by simpa [budget, coeffBudget] using hcoeff) hfit
+  exact Nat.lt_of_lt_of_le hbudget
+    (Nat.le_trans (Nat.pow_le_pow_right (by decide : 0 < 2) hwidth) hbias)
+
+/-- Forced reciprocal Kronecker substitution.  Every nonzero input uses
+exactly the forward and reversed packed integer products; there is no size or
+width fallback in this entry point. -/
+@[expose]
+def mulKS3 (p q : ZPoly) : ZPoly :=
+  if p.isZero || q.isZero then 0
+  else
+    let slots := p.size + q.size - 1
+    KS3.recover (ks3Width p q) slots p q
+
+/-- Forced KS3 agrees with the schoolbook polynomial product. -/
+theorem mulKS3_eq (p q : ZPoly) : mulKS3 p q = p * q := by
+  unfold mulKS3
+  by_cases hz : p.isZero || q.isZero
+  · rw [ite_eq_left hz]
+    exact (mul_eq_zero_of_isZero p q (by simpa using hz)).symm
+  rw [ite_eq_right hz]
+  have hnonzero := Bool.or_eq_false_iff.mp (Bool.eq_false_iff.mpr hz)
+  apply KS3.recover_eq
+  · unfold ks3Width
+    omega
+  · exact (DensePoly.isZero_eq_false_iff p).mp hnonzero.1
+  · exact (DensePoly.isZero_eq_false_iff q).mp hnonzero.2
+  · rfl
+  · exact coeff_lt_ks3Bias p q
 
 end ZPoly
 
