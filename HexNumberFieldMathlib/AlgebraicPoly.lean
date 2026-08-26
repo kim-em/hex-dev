@@ -21,6 +21,23 @@ numbers.
 
 namespace Hex.AlgebraicPoly
 
+/-- Canonical coefficientwise Boolean equality agrees with equality of the
+trimmed executable representation. -/
+theorem beq_iff (f g : AlgebraicPoly) :
+    f == g ↔ f = g := by
+  constructor
+  · intro h
+    change f.data == g.data at h
+    have hdata : f.data = g.data := eq_of_beq h
+    cases f
+    cases g
+    cases hdata
+    rfl
+  · intro h
+    subst g
+    change f.data == f.data
+    exact BEq.rfl
+
 /-- Interpret a normalized executable algebraic polynomial in `Polynomial ℂ`. -/
 @[expose]
 noncomputable def toPolynomial (f : AlgebraicPoly) : Polynomial ℂ :=

@@ -133,12 +133,17 @@ def div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x) : QAdjoin p x :=
 
 instance [ZPoly.CheckedIrreducible p] : Div (QAdjoin p x) := ⟨div⟩
 
-/-- Natural powers assembled from executable fixed-presentation
+/-- Natural powers by repeated squaring using executable fixed-presentation
 multiplication. -/
 @[expose]
 def natPow (a : QAdjoin p x) : Nat → QAdjoin p x
   | 0 => 1
-  | n + 1 => natPow a n * a
+  | n + 1 =>
+      let q := natPow a ((n + 1) / 2)
+      let q2 := q * q
+      if (n + 1) % 2 = 0 then q2 else q2 * a
+termination_by n => n
+decreasing_by omega
 
 instance : Pow (QAdjoin p x) Nat := ⟨natPow⟩
 

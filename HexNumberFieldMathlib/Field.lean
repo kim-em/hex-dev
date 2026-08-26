@@ -137,7 +137,7 @@ info: 'Hex.AlgebraicNumber.field' depends on axioms: [propext, Classical.choice,
 
 section OperationRegression
 
-variable (a b : AlgebraicNumber) (q : Rat)
+variable (a b : AlgebraicNumber) (q : Rat) (n : Nat) (z : Int)
 
 -- Force notation through the installed field dictionary, rather than the
 -- standalone executable instances, so these equalities inspect the data
@@ -160,6 +160,8 @@ example : a / b = AlgebraicNumber.div a b := rfl
 example : a ^ (3 : Nat) = AlgebraicNumber.natPow a 3 := rfl
 example : a ^ (-3 : Int) = AlgebraicNumber.intPow a (-3) := rfl
 example : q • a = AlgebraicNumber.smul q a := rfl
+example : n • a = AlgebraicNumber.smul (n : Rat) a := rfl
+example : z • a = AlgebraicNumber.smul (z : Rat) a := rfl
 example : ((2 : Nat) : AlgebraicNumber) = (2 : AlgebraicNumber) := rfl
 
 end OperationRegression

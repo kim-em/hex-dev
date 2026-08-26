@@ -343,132 +343,69 @@ theorem signedShift_injective : Function.Injective signedShift := by
         exact Int.ofNat.inj hij
       omega
 
-/-- One maximum-degree update in the bounded primitive-element search. -/
-@[expose]
-def extendStep (theta alpha : AlgebraicNumber) :
-    Option AlgebraicNumber → Nat → Option (Option AlgebraicNumber) :=
-  fun best k => do
-    let candidate ← shift? theta alpha (signedShift k)
-    some <| match best with
-    | none => some candidate
-    | some current =>
-        if degree current < degree candidate then some candidate
-        else some current
-
-private theorem extendStep_some (theta alpha : AlgebraicNumber)
-    (best : Option AlgebraicNumber) (k : Nat) :
-    ∃ candidate, extendStep theta alpha best k = some (some candidate) := by
+private theorem extendShiftStep_some (theta alpha : AlgebraicNumber)
+    (best : Option ShiftCandidate) (k : Nat) :
+    ∃ candidate, extendShiftStep theta alpha best k = some (some candidate) := by
   obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
     (shift?_isSome theta alpha (signedShift k))
-  unfold extendStep
-  rw [hshifted]
+  simp only [extendShiftStep, hshifted]
   cases best with
-  | none => exact ⟨shifted, rfl⟩
+  | none => exact ⟨⟨signedShift k, shifted⟩, rfl⟩
   | some current =>
-      by_cases hdegree : degree current < degree shifted
-      · exact ⟨shifted, by simp [hdegree]⟩
+      by_cases hdegree : degree current.value < degree shifted
+      · exact ⟨⟨signedShift k, shifted⟩, by simp [hdegree]⟩
       · exact ⟨current, by simp [hdegree]⟩
 
-private theorem extendFold_fromSome (theta alpha : AlgebraicNumber)
-    (indices : List Nat) (current : AlgebraicNumber) :
-    ∃ candidate, indices.foldlM (extendStep theta alpha) (some current) =
+private theorem extendShiftFold_fromSome (theta alpha : AlgebraicNumber)
+    (indices : List Nat) (current : ShiftCandidate) :
+    ∃ candidate, indices.foldlM (extendShiftStep theta alpha) (some current) =
       some (some candidate) := by
   induction indices generalizing current with
   | nil => exact ⟨current, rfl⟩
   | cons k indices ih =>
-      obtain ⟨next, hnext⟩ := extendStep_some theta alpha (some current) k
+      obtain ⟨next, hnext⟩ :=
+        extendShiftStep_some theta alpha (some current) k
       rw [List.foldlM_cons, hnext]
       exact ih next
 
-private theorem extendFold_nonempty (theta alpha : AlgebraicNumber)
+private theorem extendShiftFold_nonempty (theta alpha : AlgebraicNumber)
     (indices : List Nat) (hnonempty : indices ≠ []) :
-    ∃ candidate, indices.foldlM (extendStep theta alpha) none =
+    ∃ candidate, indices.foldlM (extendShiftStep theta alpha) none =
       some (some candidate) := by
   cases indices with
   | nil => exact (hnonempty rfl).elim
   | cons k indices =>
-      obtain ⟨first, hfirst⟩ := extendStep_some theta alpha none k
+      obtain ⟨first, hfirst⟩ := extendShiftStep_some theta alpha none k
       rw [List.foldlM_cons, hfirst]
-      exact extendFold_fromSome theta alpha indices first
+      exact extendShiftFold_fromSome theta alpha indices first
 
-/-- The bounded maximum-degree primitive-element search is operationally
-total. Its field-generation invariant is established separately. -/
-theorem extend?_isSome (theta alpha : AlgebraicNumber) :
-    (extend? theta alpha).isSome := by
+/-- The shift-retaining primitive search is total. -/
+theorem extendShift?_isSome (theta alpha : AlgebraicNumber) :
+    (extendShift? theta alpha).isSome := by
   let upper := degree theta * degree alpha
   let count := Nat.choose upper 2 + 1
   have hcount : count ≠ 0 := by omega
   have hrange : List.range count ≠ [] := by simp [hcount]
   obtain ⟨candidate, hfold⟩ :=
-    extendFold_nonempty theta alpha (List.range count) hrange
-  unfold extend?
-  change ((List.range count).foldlM (extendStep theta alpha) none >>=
+    extendShiftFold_nonempty theta alpha (List.range count) hrange
+  unfold extendShift?
+  change ((List.range count).foldlM (extendShiftStep theta alpha) none >>=
     fun best => best).isSome
   rw [hfold]
   simp
-
-private theorem extendShiftFold_value (theta alpha : AlgebraicNumber)
-    (indices : List Nat) (best : Option ShiftCandidate) :
-    (indices.foldlM (extendShiftStep theta alpha) best).map
-        (Option.map ShiftCandidate.value) =
-      indices.foldlM (extendStep theta alpha)
-        (best.map ShiftCandidate.value) := by
-  induction indices generalizing best with
-  | nil => simp
-  | cons k indices ih =>
-      rw [List.foldlM_cons, List.foldlM_cons]
-      cases hshift : shift? theta alpha (signedShift k) with
-      | none => simp [extendShiftStep, extendStep, hshift]
-      | some candidate =>
-          cases best with
-          | none =>
-              simpa [extendShiftStep, extendStep, hshift] using
-                ih (some ⟨signedShift k, candidate⟩)
-          | some current =>
-              by_cases hdegree : degree current.value < degree candidate
-              · simpa [extendShiftStep, extendStep, hshift, hdegree] using
-                  ih (some ⟨signedShift k, candidate⟩)
-              · simpa [extendShiftStep, extendStep, hshift, hdegree] using
-                  ih (some current)
 
 /-- Retaining the producing shift does not change the selected primitive
 element. -/
 theorem extendShift?_value (theta alpha : AlgebraicNumber) :
     (extendShift? theta alpha).map ShiftCandidate.value =
-      extend? theta alpha := by
-  let upper := degree theta * degree alpha
-  let count := Nat.choose upper 2 + 1
-  have hfold := extendShiftFold_value theta alpha
-    (List.range count) none
-  unfold extendShift? extend?
-  change (((List.range count).foldlM
-      (extendShiftStep theta alpha) none >>= fun best => best).map
-        ShiftCandidate.value) =
-    ((List.range count).foldlM (extendStep theta alpha) none >>=
-      fun best => best)
-  cases htracked : (List.range count).foldlM
-      (extendShiftStep theta alpha) none with
-  | none =>
-      rw [htracked] at hfold
-      simp only [Option.map_none] at hfold
-      have hplain : (List.range count).foldlM
-          (extendStep theta alpha) none = none := by
-        simpa using hfold.symm
-      simp [htracked, hplain]
-  | some tracked =>
-      rw [htracked] at hfold
-      simp only [Option.map_some] at hfold
-      have hplain : (List.range count).foldlM
-          (extendStep theta alpha) none =
-            some (tracked.map ShiftCandidate.value) := by
-        simpa using hfold.symm
-      simp [htracked, hplain]
+      extend? theta alpha := rfl
 
-/-- The shift-retaining primitive search is total. -/
-theorem extendShift?_isSome (theta alpha : AlgebraicNumber) :
-    (extendShift? theta alpha).isSome := by
-  rw [← Option.isSome_map, extendShift?_value]
-  exact extend?_isSome theta alpha
+/-- The bounded maximum-degree primitive-element search is operationally
+total. Its field-generation invariant is established separately. -/
+theorem extend?_isSome (theta alpha : AlgebraicNumber) :
+    (extend? theta alpha).isSome := by
+  rw [← extendShift?_value, Option.isSome_map]
+  exact extendShift?_isSome theta alpha
 
 private theorem extendShiftFold_source (theta alpha : AlgebraicNumber)
     (indices : List Nat) (best : Option ShiftCandidate)
@@ -489,7 +426,7 @@ private theorem extendShiftFold_source (theta alpha : AlgebraicNumber)
       | some candidate =>
           cases best with
           | none =>
-              simp only [extendShiftStep, hshift, Option.bind_some] at hfold
+              simp only [extendShiftStep, hshift] at hfold
               apply ih (some ⟨signedShift k, candidate⟩)
               · intro current hcurrent
                 have heq := Option.some.inj hcurrent

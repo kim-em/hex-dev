@@ -103,6 +103,10 @@ inductive RootSet where
 /-- A polynomial with canonical algebraic coefficients. The constructor trims
     trailing coefficients using semantic `AlgebraicNumber.isZero`. -/
 opaque AlgebraicPoly
+def AlgebraicPolyNormalized (coeffs : Array AlgebraicNumber) : Prop
+def AlgebraicPoly.data (f : AlgebraicPoly) : Array AlgebraicNumber
+def AlgebraicPoly.normalized (f : AlgebraicPoly) :
+    AlgebraicPolyNormalized f.data
 def AlgebraicPoly.ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly
 def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
 def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
@@ -145,9 +149,8 @@ of represented complex values. `AlgebraicPoly` owns the required semantic
 trimming without exporting an unjustified `DecidableEq`. That Boolean
 operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
 canonical equality over the trimmed data. Its faithfulness on canonical
-coefficients follows from the companion's `LawfulBEq AlgebraicNumber`
-plus trimming; packaging that as an `AlgebraicPoly.beq_iff` is Phase-6
-work (#9418). `coeff n` is the canonical
+coefficients is the companion theorem `AlgebraicPoly.beq_iff`, derived from
+`LawfulBEq AlgebraicNumber` plus trimming. `coeff n` is the canonical
 coefficient (`0` beyond the degree) and `size` is the trimmed length backing
 `degree?`; all three are exercised by the module's compiled regressions.
 
@@ -235,6 +238,9 @@ def AlgebraicRoot.exact? (a : AlgebraicRoot) : Option AlgebraicNumber
 /-- Primary total API. -/
 def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (panicWith 0 "AlgebraicRoot.exact: certification failed")
+
+def AlgebraicRoot.ofEliminant? (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot
 ```
 
 `QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
@@ -387,6 +393,13 @@ remove its maximal `X` power, and take the primitive part. If the evaluation
 is nonzero, `q(0) ≠ 0` and the reciprocal Cauchy bound gives
 `|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
 computed from the input coefficient heights, degrees, and Cauchy root bounds.
+The generic cross-library recurrence is public:
+
+```lean
+def Disambiguation.evalMajorant {A : Type} [Zero A] [DecidableEq A]
+    (f : DensePoly A) (valueBound : A → Nat) (q : ZPoly) : Nat
+```
+
 Define `evalDisambiguationPrec` as the least precision in the finite range
 
 ```text
@@ -449,8 +462,9 @@ primitive-element candidate `theta + c * alpha`, with `c = 0` returning
 `extend? theta alpha` is the bounded primitive-element search: it tests
 `choose(degree theta * degree alpha, 2) + 1` signed shifts and keeps a
 maximum-degree candidate, which generates the compositum even when the two
-fields overlap. `extendShift?` is the same search retaining the producing
-shift (the form the tower's flattening recovery needs), and
+fields overlap. It is the value projection of `extendShift?`, so both APIs run
+one shared search retaining the producing shift (the form the tower's
+flattening recovery needs), and
 `extendShiftStep` is its single fold step, exposed so consumers can interleave
 the search with their own early exits. `primitive?` folds `extend?` over the
 nonzero entries of a coefficient array.
