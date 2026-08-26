@@ -780,8 +780,9 @@ libraries:
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexBerlekampMathlib/ProofProbe]
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
