@@ -1,4 +1,4 @@
-# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly, hex-basic and hex-determinant)
+# hex-resultant (subresultant chain, depends on hex-poly, hex-basic, hex-determinant)
 
 Polynomial resultant and discriminant for `Hex.DensePoly R` over a
 commutative exact-division domain. Computed via the **subresultant
@@ -488,8 +488,9 @@ constructor. It does not alter the resultant or discriminant contracts.
 - `HexResultant/DeterminantAlgebra.lean`: local column multilinearity,
   adjacent swaps and swap-sequence parity, arbitrary alternation and update
   laws, consecutive-block scaling, the resulting left/right homogeneity
-  laws for generalized subresultants, and the `toMatrix`/`lastCofactor`
-  bridge to `hex-determinant`'s Laplace and adjugate algebra.
+  laws for generalized subresultants, and `toMatrix`/`lastCofactor`, which
+  read a local coefficient family as a `Hex.Matrix` so that
+  `hex-determinant`'s Laplace and adjugate algebra applies to it.
 - `HexResultant/BlockDeterminant.lean`: dimension recasting, numeric adjacent
   swaps, consecutive-block rotation with its parity law, and the resulting
   generalized-subresultant input-swap law.
