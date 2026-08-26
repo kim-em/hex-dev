@@ -145,6 +145,36 @@ does not claim a bit-complexity bound for growing diagonal entries. The SPEC's
 separate operand-size statement remains "bounded by the product of the input
 diagonal".
 
+## Phase-6 regression check
+
+After proof and API polishing, the complete 18-target scientific ladder was
+rerun from clean source commit
+`79c47ef8ee45ecc1b9be6c16b8d25c534746500d` on the same host and toolchain as
+the Phase-4 baseline. The exact reproduction command was:
+
+```sh
+lake exe hexsmith_bench run \
+  Hex.SmithBench.runDense Hex.SmithBench.runDenseTall \
+  Hex.SmithBench.runDenseWide Hex.SmithBench.runDenseDeficient \
+  Hex.SmithBench.runChain Hex.SmithBench.runChainDeficient \
+  Hex.SmithBench.runPresentation Hex.SmithBench.runPresentationWide \
+  Hex.SmithBench.runRank Hex.SmithBench.runInvariantFactors \
+  Hex.SmithBench.runData Hex.SmithBench.runSmithBasis \
+  Hex.SmithBench.runAbelianStructure Hex.SmithBench.runShape \
+  Hex.SmithBench.runCert Hex.SmithBench.runDiagonal \
+  Hex.SmithBench.runDiagonalGeneral Hex.SmithBench.runDiagonalData \
+  --export-file reports/bench-results/hex-smith-phase6-polish.json
+```
+
+The committed export has SHA-256
+`8274676fad0198c93439c6da1d1ff24dd4f148482c2c943ec4bef894469172b2`.
+All 18 targets again reported `consistent_with_declared_complexity`. Across
+all 109 common target/rung medians, the polished-to-baseline runtime ratio had
+median `0.999x`, 95th percentile `1.012x`, and maximum `1.047x`; this is no
+performance regression. The comparison divides each
+`trial_summaries[].median_per_call_nanos` in that export by the matching value
+in `hex-smith-phase4-scientific.json`.
+
 ## Comparator ratios
 
 The registry's exact comparator names are `FLINT fmpz_mat_snf via python-flint`
