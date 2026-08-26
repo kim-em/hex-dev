@@ -129,15 +129,6 @@ theorem Extension.trans_embed {T : NumberTower} (outer : Extension T)
     (inner : Extension outer.tower) (a : Elem T) :
     (outer.trans inner).embed a = inner.embed (outer.embed a) := rfl
 
-/-- Record-level normal form for a composed extension. -/
-theorem Extension.trans_eq {T : NumberTower} (outer : Extension T)
-    (inner : Extension outer.tower) :
-    outer.trans inner =
-      { tower := inner.tower
-        embed := fun a => inner.embed (outer.embed a)
-        gen := inner.gen
-        root := inner.root } := rfl
-
 /-- Whole-record normal form for pulling an inner splitting back through an
 extension.  Stating the equality at this level keeps the dependent root
 carrier aligned while clients reason about the explicit composite. -/

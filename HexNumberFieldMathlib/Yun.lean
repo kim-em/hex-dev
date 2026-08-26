@@ -291,15 +291,6 @@ theorem rootMultiplicity_monicDiv [ZPoly.CheckedIrreducible p]
   rw [rootMultiplicity_monic (dividend / divisor) hquotient z]
   exact rootMultiplicity_div dividend divisor hdivisor hdividend z
 
-/-- A monic exact quotient of a nonzero executable polynomial is nonzero. -/
-theorem toPolynomial_monicDiv_ne_zero [ZPoly.CheckedIrreducible p]
-    (dividend divisor : DensePoly (QAdjoin p x))
-    (hdivisor : divisor ∣ dividend)
-    (hdividend : HexPolyMathlib.toPolynomial dividend ≠ 0) :
-    HexPolyMathlib.toPolynomial (monic (dividend / divisor)) ≠ 0 :=
-  toPolynomial_monic_ne_zero _
-    (toPolynomial_div_ne_zero dividend divisor hdivisor hdividend)
-
 /-- Monic normalization remains associated after any field embedding. -/
 theorem map_monic_associated [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
