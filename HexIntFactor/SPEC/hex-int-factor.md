@@ -513,9 +513,9 @@ conformance tests. Genuine incomplete failures retain the checked aggregate in
 propagates rejection rather than retrying it as though it were exhaustion. A
 rejection propagated from a cyclotomic part remains scoped to that subproblem;
 a rejected merged cyclotomic aggregate records the target candidate and random
-state. Its successful subsearch attempts are not exposed by `factor?`, so its
-placeholder count is marked unavailable by `metered = false` rather than being
-presented as an exact total.
+state. The internal counted-success shape retains the successful subsearch
+attempts that the compatible public `factor?` pair omits, so cyclotomic
+continuations and aggregate rejection report exact totals with `metered = true`.
 
 A partial answer is more useful than no answer, so the search also
 exposes
@@ -588,12 +588,12 @@ continuations without changing the compatible public pair-returning APIs.
 Success returns the state alongside the checked data, so a caller never
 repeats a failed random stream accidentally.
 
-The current cyclotomic wrapper cannot recover attempt counts for successfully
-factored parts from the compatible pair-returning `factor?` API. If a later
-part or its generic continuation stops, the wrapper therefore preserves the
-failure and generator state but sets `metered := false`; it never presents the
-remaining subtotal as exact. Outside the cyclotomic wrapper, the generic
-dispatcher and its checker-rejection boundary remain exactly metered.
+The cyclotomic wrapper uses the internal `factorCounted?` result, which carries
+the exact attempt count on success without changing the public pair-returning
+`factor?` API. Every successfully factored part is added to a later failure or
+generic-continuation total, and the advanced generator state is threaded in
+the same order. Thus generic and cyclotomic dispatcher failures, including
+their checker-rejection boundaries, remain exactly metered.
 
 `factor?` uses the same partial-candidate acceptance boundary: it propagates
 `FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete
@@ -637,6 +637,8 @@ roughly `2 log p` bits in place of one of `6 log p` bits.
 ```lean
 inductive Sign where | minus | plus
 
+def powerTarget (b n : Nat) : Sign → Nat
+
 /-- One candidate cyclotomic part: its index `d` and proposed value
 `Φ_d(b)`. Exact cyclotomic semantics are conformance-tested, not trusted by
 the factorization route. -/
@@ -651,8 +653,19 @@ def cyclotomicSplit? (b n : Nat) (sign : Sign) : Option (List CyclotomicPart)
 theorem cyclotomicSplit?_prod {b n sign parts}
     (h : cyclotomicSplit? b n sign = some parts) :
     2 ≤ b ∧ 0 < n ∧
-      (parts.map (·.value)).prod =
-        match sign with | .minus => b ^ n - 1 | .plus => b ^ n + 1
+      (parts.map (·.value)).prod = powerTarget b n sign
+
+inductive PowerRoute where | cyclotomic | generic
+
+def factorPowerWithRoute? (b n : Nat) (sign : Sign) (r : Rand)
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
+    Except FactorFailure
+      (CheckedFactorization (powerTarget b n sign) × Rand × PowerRoute)
+
+def factorPower? (b n : Nat) (sign : Sign) (r : Rand)
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
+    Except FactorFailure
+      (CheckedFactorization (powerTarget b n sign) × Rand)
 ```
 
 An enum rather than a `Bool`, and a named pair rather than
@@ -682,6 +695,15 @@ because it is the natural fast candidate algorithm; a separate
 Mathlib-free formalization of cyclotomic-polynomial identities is not a
 prerequisite for this checked search optimization.
 
+For one split, the implementation enumerates the divisor-closed index set once
+in ascending order, fills a dense array through the largest required index,
+and reuses each prior value by constant-time lookup. It does not recursively
+rebuild divisor prefixes for every selected part. If `D` is that index set,
+candidate construction performs `O(max D + |D|²)` small index tests/lookups,
+plus one natural power and up to `|D|` big-integer multiplications per filled
+index. The final exact-product check and factorization checker remain the
+trusted boundary; the complexity statement is about the untrusted producer.
+
 The two computations of `Φ_d(b)`, this one in `Nat` and
 [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md)'s evaluation of the constructed
 polynomial, are independent and must agree. The comparison lives in that
@@ -692,7 +714,16 @@ separately can produce the same prime twice with different exponents.
 A merge pass -- collect, group by prime, sum exponents, sort -- runs
 before the candidate `Factorization` is offered to `checkFactorization`,
 which requires strictly ascending distinct bases and would otherwise
-reject a correct answer.
+reject a correct answer. The generic dispatcher and power-form wrapper share
+the same canonical insertion/merge helper.
+
+`factorPowerWithRoute?` attempts the checked split before the generic route;
+`factorPower?` only hides that diagnostic tag. Their characterising lemmas
+state that every success is checked for `powerTarget`, projection preserves
+successes and errors exactly, and a rejected/absent split uses the documented
+scoped-rejection or generic-fallback behaviour. The default fuel is computed
+from the selected sign's target, so the minus path never constructs
+`b^n + 1` merely to choose its budget.
 
 Two things this does not do, and they bound the claim.
 
@@ -985,6 +1016,7 @@ the number of distinct primes, `B` a smoothness bound.
 | Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
+| cyclotomic candidate table | `O(m + d²)` index work plus big-integer powers/products | `m` is the largest required index and `d` the number of its divisors; one ascending divisor-closed table is shared by all selected parts |
 | `checkFactorization` | `O(Σ eᵢ)` bounded multiplications plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts above the subject |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |

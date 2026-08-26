@@ -453,14 +453,40 @@ private def retainedCertInput : Nat := starvedInput * 1000037
   | none => false)
 
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
-  | .ok (_, _, route) => route == .cyclotomic
+  | .ok (F, _, route) =>
+      route == .cyclotomic &&
+        F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(3, 2), (7, 1)]
   | .error _ => false)
 
--- A stopped generic continuation cannot recover successful earlier-part
--- counts from the compatible factor API, so it is explicitly unmetered.
+#guard (match factorPowerWithRoute? 2 6 .plus (Rand.ofSeed 1) with
+  | .ok (F, _, route) =>
+      route == .cyclotomic &&
+        F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(5, 1), (13, 1)]
+  | .error _ => false)
+
+-- The repeated factor `3` in the minus split is merged before checker replay.
+-- A stopped continuation includes successful earlier-part work and remains
+-- exactly metered, even when every charged search subtotal happens to be zero.
 #guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
-  | .error failure => failure.stop == .incomplete && !failure.metered
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 0 && failure.metered
   | .ok _ => false)
+
+-- Here `Φ_19(2)` succeeds after eight charged attempts, `Φ_57(2)` stops
+-- after twelve, and the generic continuation adds five more. This guards the
+-- successful-part subtotal that the public pair-returning API intentionally
+-- omits.
+#guard (match factorPowerWithRoute? 2 57 .minus (Rand.ofSeed 1) (fuel := 3) with
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 25 && failure.metered
+  | .ok _ => false)
+
+-- Degenerate split input uses the ordinary dispatcher, and the route tag makes
+-- the fallback observable rather than inferring it from end-to-end success.
+#guard (match factorPowerWithRoute? 2 0 .plus (Rand.ofSeed 1) with
+  | .ok (F, _, route) =>
+      route == .generic && F.raw.subject == powerTarget 2 0 .plus
+  | .error _ => false)
 
 -- A rejected cyclotomic subproblem is propagated, never retried as generic
 -- exhaustion for the outer target.
@@ -478,6 +504,14 @@ private def rejectedPart : FactorFailure :=
           | some rejected => rejected.subject == 7
           | none => false
   | .ok _ => false)
+
+example : Hex.Nat.Internal.retryPower? 63 rejectedPart 0 = .error rejectedPart :=
+  Hex.Nat.Internal.retryPower?_rejected (by decide)
+
+#check factorPowerWithRoute?_spec
+#check factorPower?_error_iff
+#check factorPower?_ok_iff
+#check factorPowerWithRoute?_generic
 
 -- Standalone retry accounting adds the earlier exact subtotal to the generic
 -- continuation rather than silently replacing it with retry-only work.
