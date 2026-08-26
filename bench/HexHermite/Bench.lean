@@ -52,12 +52,12 @@ def tall (n : Nat) : Input :=
 
 private def lowerFactor (n i j : Nat) : Int :=
   if i = j then 1
-  else if j + 1 = i then if entry 41 n i j < 0 then -1 else 1
+  else if j < i then if entry 41 n i j < 0 then -1 else 1
   else 0
 
 private def upperFactor (n i j : Nat) : Int :=
   if i = j then 1
-  else if i + 1 = j then if entry 43 n i j < 0 then -1 else 1
+  else if i < j then if entry 43 n i j < 0 then -1 else 1
   else 0
 
 /-- A deterministic pseudo-random unimodular product `L * U * D`. Both
@@ -207,6 +207,43 @@ def runProfile (input : Input) : UInt64 :=
   mixHash (checksum profile.matrix) <|
     mixHash pivots (mixHash swaps (mixHash (hash profile.row) (hash profile.previous)))
 
+/-- Dense matrix and precomputed rank profile for isolating the principal HNF
+phase from its fraction-free preparation. -/
+structure PrincipalInput where
+  n : Nat
+  form : Matrix Int n n
+  profile : Matrix.Hermite.Profile n n
+
+instance : Hashable PrincipalInput where
+  hash input :=
+    let pivots := input.profile.pivots.foldl
+      (fun acc x => mixHash acc (hash x)) 0
+    let swaps := input.profile.swaps.foldl (fun acc x =>
+      mixHash acc (mixHash (hash x.1) (hash x.2))) 0
+    mixHash (hash input.n) <|
+      mixHash (checksum input.form) <|
+      mixHash (checksum input.profile.matrix) <|
+      mixHash pivots <| mixHash swaps <|
+      mixHash (hash input.profile.row) (hash input.profile.previous)
+
+instance : Inhabited PrincipalInput where
+  default :=
+    { n := 0
+      form := 0
+      profile := Matrix.Hermite.rankProfile (0 : Matrix Int 0 0) }
+
+def principalInput (n : Nat) : PrincipalInput :=
+  let A := matrix (dense n)
+  { n, form := A, profile := Matrix.Hermite.rankProfile A }
+
+/-- Principal-block reduction with rank profiling prepared outside the timed
+region. -/
+def runPrincipalDense (input : PrincipalInput) : UInt64 :=
+  let result := Matrix.Hermite.principalCore
+    (Matrix.Hermite.formAccumulator input.n) input.form input.profile
+  mixHash (checksum result.matrix) <|
+    result.pivots.foldl (fun acc x => mixHash acc (hash x)) 0
+
 /-- Rank projection on the dense family. -/
 def runRankDense (input : Input) : Nat := Matrix.hnfRank (matrix input)
 
@@ -227,14 +264,19 @@ def runWithInvDense (input : Input) : UInt64 :=
 /-- Constructive membership coefficients for a known member. -/
 def runCoeffsDense (input : Input) : UInt64 :=
   let A := matrix input
-  match Matrix.latticeCoeffs A (0 : Vector Int input.cols) with
-  | some c => mixHash 1 (vectorChecksum c)
+  let v : Vector Int input.cols :=
+    if h : 0 < input.rows then Matrix.row A ⟨0, h⟩ else 0
+  match Matrix.latticeCoeffs A v with
+  | some c => mixHash (vectorChecksum v) (vectorChecksum c)
   | none => 0
 
-/-- Membership decision for a known member. -/
-def runContainsDense (input : Input) : Bool :=
+/-- Membership decision for a known member, with the query included in the
+observed result. -/
+def runContainsDense (input : Input) : UInt64 :=
   let A := matrix input
-  Matrix.latticeContains A (0 : Vector Int input.cols)
+  let v : Vector Int input.cols :=
+    if h : 0 < input.rows then Matrix.row A ⟨0, h⟩ else 0
+  mixHash (vectorChecksum v) (hash (Matrix.latticeContains A v))
 
 /-- Kernel extraction on the rank-deficient family. -/
 def runKernelDeficient (input : Input) : UInt64 :=
@@ -270,8 +312,7 @@ def shapeInput (n : Nat) : ShapeInput :=
     pivots := Vector.ofFn id }
 
 def runShapePrepared (input : ShapeInput) : Bool :=
-  if Matrix.isHNFForm input.form input.n input.pivots then true
-  else panic! "prepared HNF shape was rejected"
+  Matrix.isHNFForm input.form input.n input.pivots
 
 /-- A nontrivial bounded unimodular certificate prepared outside replay timings. -/
 structure CertInput where
@@ -313,8 +354,10 @@ def certInput (n : Nat) : CertInput :=
   { n, source, form, transform, inverse, pivots := Vector.ofFn id }
 
 def runCertPrepared (input : CertInput) : Bool :=
-  if Matrix.hnfCert input.source input.form input.transform input.inverse input.n input.pivots then true
-  else panic! "prepared HNF certificate was rejected"
+  Matrix.hnfCert input.source input.form input.transform input.inverse input.n input.pivots
+
+#guard runShapePrepared (shapeInput 16)
+#guard runCertPrepared (certInput 8)
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
@@ -533,10 +576,11 @@ setup_benchmark runTall n => n ^ 3 with prep := tall where {
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: the triangular conjugate has a known full-rank
-diagonal form. Conjugation changes operand growth, while its fixed triangular
-schedule leaves the controlled-family wall-clock model cubic. -/
-setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
+/- Cost-model derivation: the dense unit-triangular factors give a known
+full-rank diagonal form while increasing coefficient width with dimension.
+Cubic matrix-entry visits plus the measured controlled operand factor give
+the registered `O(n³ log n)` wall model. -/
+setup_benchmark runConjugate n => n ^ 3 * Nat.log2 (n + 1) with prep := conjugate where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
@@ -553,6 +597,18 @@ setup_benchmark runProfile n => n ^ 3 * Nat.log2 (n + 1) with prep := dense wher
   maxSecondsPerCall := 10.0
 }
 
+/- Cost-model derivation: rank-profile preparation is excluded from this
+target. The principal phase admits `n` rows, restores at most `n` earlier
+pivots per row, and each row update visits `n` entries. Its controlled dense
+operand ladder contributes the same logarithmic factor as the complete route. -/
+setup_benchmark runPrincipalDense n => n ^ 3 * Nat.log2 (n + 1)
+    with prep := principalInput where {
+  paramFloor := 16, paramCeiling := 128,
+  paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+  targetInnerNanos := 2_000_000_000, outerTrials := 3
+  maxSecondsPerCall := 10.0
+}
+
 /- Cost-model derivation: rank projects one value from the same dense
 form-only run, so its controlled wall model is the `O(n³ log n)` form model. -/
 setup_benchmark runRankDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
@@ -562,8 +618,8 @@ setup_benchmark runRankDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense wh
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: basis extraction performs two shared form-only runs
-(rank and form) plus a quadratic slice, preserving the dense `O(n³ log n)`
+/- Cost-model derivation: basis extraction shares one form-only result across
+its rank and quadratic row slice, preserving the dense `O(n³ log n)`
 controlled wall model. -/
 setup_benchmark runBasisDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
   paramFloor := 16, paramCeiling := 128,
@@ -612,8 +668,8 @@ setup_benchmark runContainsDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dens
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: kernel extraction performs one rank run, one
-transform run, and a quadratic slice. The controlled deficient-family wall
+/- Cost-model derivation: kernel extraction shares one transform-producing run
+across its rank and quadratic row slice. The controlled deficient-family wall
 model is therefore `O(n³ log n)`. -/
 setup_benchmark runKernelDeficient n => n ^ 3 * Nat.log2 (n + 1)
     with prep := deficient where {
@@ -642,10 +698,9 @@ setup_benchmark runIndexDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense w
 }
 
 /- Cost-model derivation: the entry-level HNF predicate has quadratically many
-clauses; executable nested finite-quantifier traversal contributes one further
-linear factor in the current representation, for a controlled `O(n³)` wall
-model on a prepared bounded diagonal certificate. -/
-setup_benchmark runShapePrepared n => n ^ 3 with prep := shapeInput where {
+clauses. Single entries use constant-time flat access and the zero-row clauses
+scan at most `n` complete rows, giving a quadratic prepared-certificate model. -/
+setup_benchmark runShapePrepared n => n ^ 2 with prep := shapeInput where {
   paramFloor := 16, paramCeiling := 256,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
@@ -653,10 +708,10 @@ setup_benchmark runShapePrepared n => n ^ 3 with prep := shapeInput where {
 }
 
 /- Cost-model derivation: certificate replay performs two packed product
-checks whose `n` packed dot products each traverse `n` entries and operate on
-rows of linearly growing packed width, plus the shape scan. On this bounded
-certificate family that gives the registered cubic wall model. -/
-setup_benchmark runCertPrepared n => n ^ 3 with prep := certInput where {
+checks with `n²` big-by-small terms and a quadratic shape scan. The packed
+word width grows across the ladder, contributing the measured logarithmic
+factor on this bounded certificate family. -/
+setup_benchmark runCertPrepared n => n ^ 2 * Nat.log2 (n + 1) with prep := certInput where {
   paramFloor := 64, paramCeiling := 512,
   paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
   targetInnerNanos := 2_000_000_000, outerTrials := 3

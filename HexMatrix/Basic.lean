@@ -197,6 +197,11 @@ def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
   ⟨Hex.Vector.ofFn' fun p : Fin (n * m) =>
     f ⟨p.val / m, row_of_lt p⟩ ⟨p.val % m, col_of_lt p⟩⟩
 
+/-- Transport the row dimension of a matrix along an equality. The backing
+buffer is unchanged. -/
+@[expose] def castRows {n' : Nat} (h : n = n') (A : Matrix R n m) : Matrix R n' m :=
+  h ▸ A
+
 /-! # Core reduction lemmas -/
 
 /-- Row access `M[i]` normalizes to the computable `getRow M i`. -/
@@ -221,6 +226,19 @@ form. The nested form is the simp-normal form the entry lemmas are stated in. -/
 @[simp, grind =] theorem getElem_pair_eq_nested (M : Matrix R n m) (i : Fin n) (j : Fin m) :
     M[(i, j)] = M[i][j] := by
   rw [getElem_eq_getRow, getElem_getRow]; rfl
+
+/-- The constant-time pair entry agrees with the explicit row-vector projection. -/
+@[simp, grind =] theorem getElem_pair_eq_get (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+    M[(i, j)] = (getRow M i).get j := by
+  rw [getElem_pair_eq_nested, getElem_eq_getRow]
+  rfl
+
+/-- Entry access through a row-dimension transport. -/
+@[simp] theorem getElem_castRows {n' : Nat} (h : n = n') (A : Matrix R n m)
+    (i : Fin n') (j : Fin m) :
+    (castRows h A)[(i, j)] = A[(Fin.cast h.symm i, j)] := by
+  subst n'
+  rfl
 
 /-- `Nat`-pair entry access, normalized to the row lookup (concrete-index form).
 The statement observes rows, not the backing buffer, so it is representation-

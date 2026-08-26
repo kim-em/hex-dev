@@ -685,26 +685,34 @@ depends on which algorithm ran, and that product is measured rather than
 derived. See "Benchmarking".
 
 The Phase-4 registrations additionally state controlled-family wall models.
-On bounded-entry dense and rank-deficient ladders, fraction-free minors and
-Euclidean operands acquire linearly growing bit width, so the registered model
-is `n³ log n`: cubic matrix-entry visits times the logarithmic word-cost factor
-visible once values leave the immediate-integer regime. The tall family keeps
-its active coefficients bounded, and the conjugate ladder keeps its operands
-within machine-word width over the registered range, so those families use
-`n³`. These empirical-family models do not replace the unrestricted scheduled
-update bounds below. The untimed diagnostic records peak and output bit widths
-for the family/range used to justify each distinction and checks that its
+On the registered bounded-entry dense and rank-deficient ladders, the schedule
+has cubic matrix-entry visits and Euclidean quotient-step counts logarithmic in
+the encountered coefficient magnitude; the measured range is normalized by
+`n³ log n`. This is a range-specific wall model checked against timings and the
+recorded operand-width curve, not a claim that unrestricted bit complexity is
+`O(n³ log n)`. The tall family keeps its active coefficients bounded and uses
+`n³`; the conjugate ladder uses `n` as an explicit conditioning knob and its
+measured width curve gives `n³ log n`. These empirical-family models do not replace the
+unrestricted scheduled-update bounds below. The untimed diagnostic records
+peak and output bit widths over every timed family/range and checks that its
 instrumented final matrix equals the public uninstrumented result.
 
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
 | `hnf` | fraction-free rank profile, then guarded principal-block sweep | `O(r · n · m)` profile-entry updates; at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps, each nontrivial row update touching `m` entries | active principal prefixes are eagerly reduced; dependent rows are also cleared; the candidate is shape-checked, with the column sweep as fallback |
+| `rankProfile` | fraction-free elimination used only to select row swaps and pivot columns | `O(r · n · m)` profile-entry updates | fraction-free minors; recorded separately because it is a separable preparation phase |
+| `principalCore` | guarded principal-block sweep from a prepared rank profile | at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps | the same eagerly reduced principal prefixes as `hnf`, excluding profile construction |
+| `hnfRank` | rank projection from one form-only result | as `hnf` | as `hnf` |
+| `hnfBasis` | rank and nonzero-row projection from one shared form-only result | as `hnf`, plus `O(r · m)` for the slice | as `hnf` |
 | `hnfData` | the same schedule plus accumulation of `U` | at most `O(n · r² · (m + n) + r · n · m)` integer operations | `U` may be much larger than `H` |
 | `hnfWithInv` | `hnfData` plus right-updates of `W = U⁻¹` | at most another `O(n² · r²)` integer operations | `U`'s and `W`'s |
 | `latticeCoeffs` | `hnfData`, forward pivot solve, residual check, one `vecMul` through `U` | as `hnfData`, plus `O(n · m)` | bounded by `H`, `U`, and the residual |
 | `latticeContains` | `latticeCoeffs` followed by `Option.isSome` | as `latticeCoeffs` | as `latticeCoeffs` |
 | `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
-| `latticeIndex` | `hnf` plus pivot scan and product | as `hnf`, plus `O(m)` | bounded by the form and index |
+| `pivots` | pivot projection from one shared form-only result | as `hnf`, plus `O(r)` | bounded by the form |
+| `latticeIndex` | pivot product from one shared form-only result | as `hnf`, plus `O(r)` | bounded by the form and index |
+| `isHNFForm` | direct entry-level HNF predicate | `O(n · m)` entry inspections with constant-time single-entry access | input entries only |
+| `hnfCert` | two packed product checks plus `isHNFForm` | `O(n² + n · m)` entry traversals; packed integer widths depend on the certified matrices | `A`, `H`, `U`, `W`, and packed rows |
 
 ## The Mathlib layer
 

@@ -35,17 +35,17 @@ def HNFForm (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) : Prop :=
   r ≤ m ∧
   (∀ i j : Fin r, i < j → piv.get i < piv.get j) ∧
   (∀ (i : Fin r) (row : Fin n), row.val = i.val →
-    ∀ j : Fin m, j < piv.get i → (H.getRow row).get j = 0) ∧
+    ∀ j : Fin m, j < piv.get i → H[(row, j)] = 0) ∧
   (∀ (i : Fin r) (row : Fin n), row.val = i.val →
-    0 < (H.getRow row).get (piv.get i)) ∧
+    0 < H[(row, piv.get i)]) ∧
   (∀ (i : Fin r) (row : Fin n), i.val < row.val →
-    (H.getRow row).get (piv.get i) = 0) ∧
+    H[(row, piv.get i)] = 0) ∧
   (∀ row : Fin n, r ≤ row.val → H.getRow row = 0) ∧
   (∀ (i : Fin r) (row : Fin n), row.val < i.val →
-    0 ≤ (H.getRow row).get (piv.get i)) ∧
+    0 ≤ H[(row, piv.get i)]) ∧
   (∀ (i : Fin r) (row : Fin n), row.val < i.val →
     ∀ pivotRow : Fin n, pivotRow.val = i.val →
-      (H.getRow row).get (piv.get i) < (H.getRow pivotRow).get (piv.get i))
+      H[(row, piv.get i)] < H[(pivotRow, piv.get i)])
 
 instance (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) :
     Decidable (HNFForm H r piv) := by
@@ -57,16 +57,15 @@ private def HNFFormChecked (H : Matrix Int n m) (r : Nat)
   r ≤ m ∧
   (∀ i j : Fin r, i < j → piv.get i < piv.get j) ∧
   (∀ (i : Fin r) (j : Fin m), j < piv.get i →
-    (H.getRow (Fin.castLE hrn i)).get j = 0) ∧
-  (∀ i : Fin r, 0 < (H.getRow (Fin.castLE hrn i)).get (piv.get i)) ∧
+    H[(Fin.castLE hrn i, j)] = 0) ∧
+  (∀ i : Fin r, 0 < H[(Fin.castLE hrn i, piv.get i)]) ∧
   (∀ (i : Fin r) (row : Fin n), i.val < row.val →
-    (H.getRow row).get (piv.get i) = 0) ∧
+    H[(row, piv.get i)] = 0) ∧
   (∀ row : Fin n, r ≤ row.val → H.getRow row = 0) ∧
   (∀ (i : Fin r) (row : Fin n), row.val < i.val →
-    0 ≤ (H.getRow row).get (piv.get i)) ∧
+    0 ≤ H[(row, piv.get i)]) ∧
   (∀ (i : Fin r) (row : Fin n), row.val < i.val →
-    (H.getRow row).get (piv.get i) <
-      (H.getRow (Fin.castLE hrn i)).get (piv.get i))
+    H[(row, piv.get i)] < H[(Fin.castLE hrn i, piv.get i)])
 
 private instance (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r)
     (hrn : r ≤ n) : Decidable (HNFFormChecked H r piv hrn) := by
@@ -115,16 +114,15 @@ def isHNFForm (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) : Bool :=
       r ≤ m ∧
       (∀ i j : Fin r, i < j → piv.get i < piv.get j) ∧
       (∀ (i : Fin r) (j : Fin m), j < piv.get i →
-        (H.getRow (Fin.castLE hrn i)).get j = 0) ∧
-      (∀ i : Fin r, 0 < (H.getRow (Fin.castLE hrn i)).get (piv.get i)) ∧
+        H[(Fin.castLE hrn i, j)] = 0) ∧
+      (∀ i : Fin r, 0 < H[(Fin.castLE hrn i, piv.get i)]) ∧
       (∀ (i : Fin r) (row : Fin n), i.val < row.val →
-        (H.getRow row).get (piv.get i) = 0) ∧
+        H[(row, piv.get i)] = 0) ∧
       (∀ row : Fin n, r ≤ row.val → H.getRow row = 0) ∧
       (∀ (i : Fin r) (row : Fin n), row.val < i.val →
-        0 ≤ (H.getRow row).get (piv.get i)) ∧
+        0 ≤ H[(row, piv.get i)]) ∧
       (∀ (i : Fin r) (row : Fin n), row.val < i.val →
-        (H.getRow row).get (piv.get i) <
-          (H.getRow (Fin.castLE hrn i)).get (piv.get i)))
+        H[(row, piv.get i)] < H[(Fin.castLE hrn i, piv.get i)]))
   else false
 
 @[simp] theorem isHNFForm_iff (H : Matrix Int n m) (r : Nat)

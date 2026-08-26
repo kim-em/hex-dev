@@ -703,9 +703,10 @@ private theorem latticeIndex_eq_detDivisor (A : Matrix Int n m) :
       · intro k hkA hkB
         have hk : k < m := by simpa using hkB
         let i : Fin m := ⟨k, hk⟩
+        have hkR : k < hnfRank A := by rw [hfull]; exact hk
         rw [Vector.getElem_toList, List.getElem_ofFn]
-        unfold pivots
-        rw [Vector.getElem_ofFn]
+        change (pivots A).get (⟨k, hkR⟩ : Fin (hnfRank A)) = _
+        rw [get_pivots]
         let rs := Hermite.checkedRun (Hermite.formAccumulator n) A
         let rt := Hermite.checkedRun (Hermite.transformAccumulator n) A
         have hm : rs.matrix = rt.matrix :=
@@ -714,7 +715,6 @@ private theorem latticeIndex_eq_detDivisor (A : Matrix Int n m) :
         have hp : rs.pivots = rt.pivots :=
           Hermite.checkedRun_pivots_agree (Hermite.formAccumulator n)
             (Hermite.transformAccumulator n) A
-        have hkR : k < hnfRank A := by rw [hfull]; exact hk
         let is : Fin rs.pivots.length := ⟨k, by simpa [rs, hnfRank] using hkR⟩
         let it : Fin rt.pivots.length :=
           Fin.cast (congrArg List.length hp) is
@@ -764,7 +764,7 @@ private theorem latticeIndex_eq_detDivisor (A : Matrix Int n m) :
       apply hrank
       exact Nat.le_antisymm (snfRank_le_m A) hm
     rw [if_neg hnotle] at hS
-    rw [latticeIndex, if_neg hfull, hS]
+    rw [latticeIndex_eq_zero A hfull, hS]
 
 /-- The lattice index is the product of the Smith invariant factors in full
 column rank, and zero otherwise. -/
