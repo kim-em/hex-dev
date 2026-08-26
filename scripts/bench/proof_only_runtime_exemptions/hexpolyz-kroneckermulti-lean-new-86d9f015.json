@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/KroneckerMulti.lean",
+ "baseline_blob": null,
+ "current_blob": "86d9f0154609649d246e791e1245174a3f3a165b",
+ "reason": "Adds the forced KS2 multiplication kernel, its correctness theorem, conformance checks, and crossover measurement; the production multiplication dispatcher and factorization call graph remain unchanged."
+}
