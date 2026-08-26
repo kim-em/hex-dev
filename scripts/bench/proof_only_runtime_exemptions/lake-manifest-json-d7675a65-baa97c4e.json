@@ -1,0 +1,6 @@
+{
+ "path": "lake-manifest.json",
+ "baseline_blob": "d7675a65d5bec03396cb8f75c81bff62479b64e9",
+ "current_blob": "baa97c4e3953de6e3a7eea9bdea72e493d1c1534",
+ "reason": "Updates only the pinned lean-readme documentation checker revision; every factorization dependency remains unchanged."
+}
