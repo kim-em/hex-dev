@@ -99,6 +99,15 @@ structure SmallCandidate where
   route : SmallRoute
 deriving Repr
 
+/-- Scale every multiplicity represented by a structural candidate. -/
+def SmallCandidate.scale (candidate : SmallCandidate) (multiplier : Nat) :
+    SmallCandidate :=
+  { factors := candidate.factors.map fun entry =>
+      { entry with exponent := entry.exponent * multiplier }
+    residualBase := candidate.residualBase
+    residualExponent := candidate.residualExponent * multiplier
+    route := candidate.route }
+
 /-- Apply perfect-power reduction before table trial division. -/
 def smallCandidate (n : Nat) : SmallCandidate :=
   match perfectPower? n with
