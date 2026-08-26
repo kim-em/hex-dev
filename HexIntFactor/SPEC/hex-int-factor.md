@@ -290,16 +290,21 @@ prerequisite, specified there and sited in hex-basic.
 
 ### 0. Structural reductions, always applied
 
-- **Powers of two**, by counting trailing zeros. One `Nat` operation
-  and it removes the factor that trial division would otherwise find
-  slowest per bit.
+- **Powers of two**, by a dedicated trailing-zero count followed by one
+  right shift. For positive `n`, the isolated lowest set bit is
+  `n XOR (n AND (n - 1))`, so its `log₂` is exactly the multiplicity of two.
+  The native `Nat` bit operations remove that factor before the table loop and
+  avoid repeating the generic `% p`/`/ p` producer for `p = 2`.
 - **Perfect powers.** If `n = m^k` for some `k ≥ 2`, factor `m` and
-  multiply the exponents. Detected by trying each prime `k ≤ log₂ n`
-  and taking an exact integer `k`th root by bounded binary search. The
+  multiply the exponents. Detection first tries every committed prime
+  exponent below `primeTableBound`, then every larger exponent through
+  `log₂ n`; the latter superset of the prime exponents keeps the finite table
+  from becoming a completeness boundary. Each exact integer root uses bounded
+  binary search with the upper bound `2^(⌊log₂ n / k⌋ + 1)`. The
   full structural pipeline is reapplied to every popped search-stack entry,
   including recursive cofactors produced by a split; its exponent is multiplied
-  by the entry's accumulated multiplicity before the result is merged. Strongly
-  recommended rather than mathematically required: an earlier draft
+  by the entry's accumulated multiplicity before the result is merged.
+  Strongly recommended rather than mathematically required: an earlier draft
   claimed Pollard `p − 1` and ECM "fail on prime powers, because the
   group they work in has no distinct primes to separate", and that is
   false. On `n = 9` with `a = 2` and `M = 2`, `p − 1` returns
@@ -925,22 +930,22 @@ the number of distinct primes, `B` a smoothness bound.
 
 | operation | cost | note |
 |---|---|---|
-| trailing-zero split | one big-`Nat` operation | not `O(1)` bit complexity |
-| perfect-power test | `O(b · b · M(b))` | `O(b)` roots, Newton each |
+| trailing-zero split | five bit operations on `b`-bit naturals | isolated-low-bit identity plus one shift; `O(b)` bit complexity |
+| perfect-power test | `O(b²)` bounded multiplications | the committed prime exponents plus only prime candidates above the table; a `k`th-root search has `O(b/k)` probes of a linear, early-aborting power loop |
 | trial division to `T` | `O(π(T))` divisions | `π(10^4) = 1229` |
 | Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
-| `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
+| `checkFactorization` | `O(Σ eᵢ)` bounded multiplications plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts above the subject |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
 | `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
 | `totient` | `O(Σ log eᵢ)` multiplications | `k` certified prime-power contributions; no residue scan |
 | everything else in the divisor API | `O(k)` | excludes `divisors` |
 
-These are **arithmetic-operation counts on `Nat`**, not bit
-complexity: the operands are big integers throughout, `p^e` costs
-`O(log e)` multiplications rather than one, and the divisor functions
+These are **arithmetic-operation counts on `Nat`** except where the table says
+bit complexity explicitly: the operands are big integers throughout,
+`boundedPowMul` uses up to `e` multiplications for `p^e`, and the divisor functions
 are `O(k)` only if the output's bit length is ignored. A bit-complexity
 model would have to name a multiplication cost and multiply through,
 and this SPEC does not attempt one.
@@ -1047,13 +1052,16 @@ SPEC takes the cheaper route of using the installed pair.
 candidate goes through `checkFactorization`, and a broken route falls
 through to the next one, so a fixture passes even if ECM is entirely
 non-functional. The suite therefore needs route-level tests in Lean:
-that the perfect-power detector fired on a perfect power, that `p − 1`
+that the two-adic and perfect-power producers fired on their route-specific
+inputs, that `p − 1`
 distinguished proper-factor, `1`, and whole-modulus outcomes, that rho
 found the factor within the expected iteration count for a fixed seed,
 that ECM stage 1 distinguished its three gcd outcomes after a setup gcd of
 one (including stage-found proper-factor and whole-modulus cases), and that
 `cyclotomicSplit?` ran before the generic dispatch on a `b^n − 1`
-input. This is the same division
+input. The internal `countPowerRoutes` diagnostic counts perfect-power
+reductions: a pure two-adic split contributes zero, while a combined
+two-adic/perfect-power candidate contributes one. This is the same division
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes, and it is worth more than the oracle
 half.
 
