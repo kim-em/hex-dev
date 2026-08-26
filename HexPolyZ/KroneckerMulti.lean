@@ -453,6 +453,238 @@ theorem mulKS2_eq (p q : ZPoly) : mulKS2 p q = p * q := by
     omega
   · exact coeff_lt_ks2Range p q
 
+/-! # Reciprocal signed recovery -/
+
+namespace KS3
+
+/-- Recover one coefficient from the low end of a forward packed residual and
+the high end of its reciprocal packed residual. -/
+@[expose]
+def headDigit (b remaining forward reverse : Nat) : Nat :=
+  let base := 2 ^ b
+  let lo := forward % base
+  let top := reverse / base ^ (remaining + 1)
+  let near := (reverse / base ^ remaining) % base
+  let hi := if lo > near then top - 1 else top
+  lo + base * hi
+
+/-- Sequential reciprocal recovery.  Each step removes the coefficient just
+recovered from both packed residuals; the forward residual is then shifted by
+one base digit. -/
+@[expose]
+def digits (b : Nat) : Nat → Nat → Nat → List Nat
+  | 0, _, _ => []
+  | remaining + 1, forward, reverse =>
+      let base := 2 ^ b
+      let d := headDigit b remaining forward reverse
+      d :: digits b remaining ((forward - d) / base)
+        (reverse - base ^ remaining * d)
+
+/-- Array-valued wrapper around {name}`digits`. -/
+@[expose]
+def unpack (b forward reverse slots : Nat) : Array Nat :=
+  (digits b slots forward reverse).toArray
+
+private theorem natEval_add_base_le (b : Nat) :
+    ∀ (slots : Nat) (f : Nat → Nat),
+      (∀ i, f i < (2 ^ b) * (2 ^ b - 1)) →
+        natEval b f slots + 2 ^ b ≤ (2 ^ b) ^ (slots + 1) := by
+  intro slots
+  induction slots with
+  | zero =>
+      intro f _
+      simp [natEval]
+  | succ slots ih =>
+      intro f hfit
+      let base := 2 ^ b
+      have hbase : 0 < base := Nat.two_pow_pos _
+      have hcoeff : f 0 + base ≤ base * base := by
+        have hlt : f 0 + base < base * (base - 1) + base :=
+          Nat.add_lt_add_right (hfit 0) base
+        have heq : base * (base - 1) + base = base * base := by
+          rw [Nat.mul_sub_left_distrib]
+          simp only [Nat.mul_one]
+          have hle : base ≤ base * base := by
+            calc
+              base = base * 1 := by omega
+              _ ≤ base * base := Nat.mul_le_mul_left base hbase
+          omega
+        exact Nat.le_of_lt (by simpa [heq] using hlt)
+      have htail := ih (fun i => f (i + 1)) (fun i => hfit (i + 1))
+      change f 0 + base * natEval b (fun i => f (i + 1)) slots + base ≤
+        base ^ (slots + 2)
+      calc
+        f 0 + base * natEval b (fun i => f (i + 1)) slots + base =
+            base * natEval b (fun i => f (i + 1)) slots + (f 0 + base) := by omega
+        _ ≤ base * natEval b (fun i => f (i + 1)) slots + base * base :=
+          Nat.add_le_add_left hcoeff _
+        _ = base * (natEval b (fun i => f (i + 1)) slots + base) := by
+          rw [Nat.mul_add]
+        _ ≤ base * base ^ (slots + 1) := Nat.mul_le_mul_left base htail
+        _ = base ^ (slots + 2) := by
+          simp only [Nat.pow_succ]
+          rw [Nat.mul_comm base, Nat.mul_assoc]
+
+private theorem glueDigit (base lo hi carry : Nat)
+    (hlo : lo < base) (hcarry : carry < base) :
+    let near := (lo + carry) % base
+    let top := hi + (lo + carry) / base
+    let recoveredHi := if lo > near then top - 1 else top
+    lo + base * recoveredHi = lo + base * hi := by
+  dsimp only
+  by_cases hsum : lo + carry < base
+  · rw [Nat.mod_eq_of_lt hsum, Nat.div_eq_of_lt hsum,
+      ite_eq_right (by omega : ¬lo > lo + carry)]
+    simp
+  · have hsumLe : base ≤ lo + carry := Nat.le_of_not_gt hsum
+    have hsumLt : lo + carry < 2 * base := by omega
+    have hdiv : (lo + carry) / base = 1 :=
+      Nat.div_eq_of_lt_le (by simpa using hsumLe) (by simpa [Nat.two_mul] using hsumLt)
+    have hmod : (lo + carry) % base = lo + carry - base := by
+      rw [Nat.mod_eq_sub_mod hsumLe, Nat.mod_eq_of_lt (by omega)]
+    have hgt : lo > lo + carry - base := by omega
+    rw [hdiv, hmod, ite_eq_left hgt]
+    simp
+
+private theorem headDigit_eq (b remaining d forwardTail reverseTail : Nat)
+    (htail : reverseTail + 2 ^ b ≤ (2 ^ b) ^ (remaining + 1)) :
+    headDigit b remaining (d + 2 ^ b * forwardTail)
+        (reverseTail + (2 ^ b) ^ remaining * d) = d := by
+  let base := 2 ^ b
+  let lo := d % base
+  let hi := d / base
+  let carry := reverseTail / base ^ remaining
+  have hbase : 0 < base := Nat.two_pow_pos _
+  have hpow : 0 < base ^ remaining := Nat.pow_pos hbase
+  have hlo : lo < base := Nat.mod_lt _ hbase
+  have htailLt : reverseTail < base ^ (remaining + 1) := by
+    change reverseTail + base ≤ base ^ (remaining + 1) at htail
+    omega
+  have hcarry : carry < base := by
+    unfold carry
+    rw [Nat.div_lt_iff_lt_mul hpow]
+    simpa [Nat.pow_succ, Nat.mul_comm] using htailLt
+  have hsplit : d = lo + base * hi := by
+    unfold lo hi
+    simpa [Nat.mul_comm, Nat.add_comm] using (Nat.div_add_mod d base).symm
+  have hforward : (d + base * forwardTail) % base = lo := by
+    unfold lo
+    simp [Nat.add_mod]
+  have hreverse :
+      (reverseTail + base ^ remaining * d) / base ^ remaining = carry + d := by
+    unfold carry
+    simpa [Nat.mul_comm] using Nat.add_mul_div_left reverseTail d hpow
+  have hnear :
+      ((reverseTail + base ^ remaining * d) / base ^ remaining) % base =
+        (lo + carry) % base := by
+    rw [hreverse, hsplit]
+    simp [Nat.add_mod, Nat.add_comm, Nat.add_assoc]
+  have htop :
+      (reverseTail + base ^ remaining * d) / base ^ (remaining + 1) =
+        hi + (lo + carry) / base := by
+    calc
+      (reverseTail + base ^ remaining * d) / base ^ (remaining + 1) =
+          (reverseTail + base ^ remaining * d) / (base ^ remaining * base) := by
+            rw [Nat.pow_succ]
+      _ = ((reverseTail + base ^ remaining * d) / base ^ remaining) / base := by
+        rw [Nat.div_div_eq_div_mul]
+      _ = (carry + d) / base := by rw [hreverse]
+      _ = (carry + (lo + base * hi)) / base := by rw [hsplit]
+      _ = hi + (lo + carry) / base := by
+        simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, Nat.mul_comm] using
+          Nat.add_mul_div_left (lo + carry) hi hbase
+  unfold headDigit
+  change (d + base * forwardTail) % base + base *
+      (if (d + base * forwardTail) % base >
+          ((reverseTail + base ^ remaining * d) / base ^ remaining) % base
+        then (reverseTail + base ^ remaining * d) / base ^ (remaining + 1) - 1
+        else (reverseTail + base ^ remaining * d) / base ^ (remaining + 1)) = d
+  rw [hforward, hnear, htop]
+  rw [glueDigit base lo hi carry hlo hcarry]
+  exact hsplit.symm
+
+private theorem natEval_congr (b : Nat) :
+    ∀ (slots : Nat) (f g : Nat → Nat),
+      (∀ i, i < slots → f i = g i) → natEval b f slots = natEval b g slots := by
+  intro slots
+  induction slots with
+  | zero => intro f g _; rfl
+  | succ slots ih =>
+      intro f g h
+      simp only [natEval]
+      rw [h 0 (by omega), ih (fun i => f (i + 1)) (fun i => g (i + 1))
+        (fun i hi => h (i + 1) (by omega))]
+
+/-- Reciprocal recovery inverts a forward packing and its reversed packing
+when every coefficient fits in two base digits with one spare high value for
+carry disambiguation. -/
+theorem digits_natEval (b : Nat) :
+    ∀ (slots : Nat) (f : Nat → Nat),
+      (∀ i, f i < (2 ^ b) * (2 ^ b - 1)) →
+        digits b slots (natEval b f slots)
+            (natEval b (fun i => f (slots - 1 - i)) slots) =
+          (List.range slots).map f := by
+  intro slots
+  induction slots with
+  | zero =>
+      intro f _
+      rfl
+  | succ remaining ih =>
+      intro f hfit
+      let base := 2 ^ b
+      let forwardTail := natEval b (fun i => f (i + 1)) remaining
+      let reverseTail := natEval b (fun i => f (remaining - i)) remaining
+      have hforward : natEval b f (remaining + 1) = f 0 + base * forwardTail := by
+        rfl
+      have hreverse :
+          natEval b (fun i => f (remaining + 1 - 1 - i)) (remaining + 1) =
+            reverseTail + base ^ remaining * f 0 := by
+        change natEval b (fun i => f (remaining - i)) (remaining + 1) = _
+        have hsplit := natEval_add b (fun i => f (remaining - i)) remaining 1
+        simpa [reverseTail, base, Nat.pow_mul, natEval, Nat.mul_comm] using hsplit
+      have htail : reverseTail + base ≤ base ^ (remaining + 1) := by
+        unfold reverseTail base
+        exact natEval_add_base_le b remaining (fun i => f (remaining - i))
+          (fun i => hfit (remaining - i))
+      have hhead :
+          headDigit b remaining (natEval b f (remaining + 1))
+              (natEval b (fun i => f (remaining + 1 - 1 - i)) (remaining + 1)) = f 0 := by
+        rw [hforward, hreverse]
+        exact headDigit_eq b remaining (f 0) forwardTail reverseTail (by
+          simpa [base] using htail)
+      have hforwardNext :
+          (natEval b f (remaining + 1) - f 0) / base = forwardTail := by
+        rw [hforward]
+        have hsub : f 0 + base * forwardTail - f 0 = base * forwardTail := by omega
+        rw [hsub]
+        change (2 ^ b * forwardTail) / 2 ^ b = forwardTail
+        simpa only [Nat.mul_comm] using
+          Nat.mul_div_left forwardTail (Nat.two_pow_pos b)
+      have hreverseNext :
+          natEval b (fun i => f (remaining + 1 - 1 - i)) (remaining + 1)
+                - base ^ remaining * f 0 = reverseTail := by
+        rw [hreverse]
+        omega
+      have hreverseTail : reverseTail =
+          natEval b (fun i => (fun j => f (j + 1)) (remaining - 1 - i)) remaining := by
+        unfold reverseTail
+        apply natEval_congr
+        intro i hi
+        congr 1
+        omega
+      simp only [digits]
+      rw [hhead]
+      change f 0 :: digits b remaining
+          ((natEval b f (remaining + 1) - f 0) / base)
+          (natEval b (fun i => f (remaining + 1 - 1 - i)) (remaining + 1)
+            - base ^ remaining * f 0) = _
+      rw [hforwardNext, hreverseNext, hreverseTail,
+        ih (fun i => f (i + 1)) (fun i => hfit (i + 1))]
+      rw [List.range_succ_eq_map, List.map_cons, List.map_map]
+      simp [Function.comp_apply]
+
+end KS3
+
 end ZPoly
 
 end Hex
