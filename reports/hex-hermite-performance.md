@@ -71,7 +71,8 @@ agreeing repeat hashes and matching expected hashes.
 ## Verdicts
 
 The definitive run used clean source commit
-`fb8595cc1e0eaa74f5b9f8760e25ba38ac02faf3`, Lean 4.34.0-rc2,
+`fb8595cc1e0eaa74f5b9f8760e25ba38ac02faf3` (content-identical rebased
+commit `7fab5372bfc4ebe41e5785d289268d2cec84df43`), Lean 4.34.0-rc2,
 LeanBench 0.1.0, warm-cache compiled execution, and three outer trials on
 `chungus2` (Linux x86-64, AMD EPYC 9455 48-Core Processor, 96 logical CPUs):
 
@@ -135,8 +136,10 @@ lake exe hexhermite_bench growth tall 8 12 16 24 32 48 64 96 128
 The committed [growth transcript](bench-results/hex-hermite-phase4-growth.txt)
 records the original ranges at source commit
 `136980ce850c3c89b7ed90902b07eb1318336dae` (content-identical rebased
-commit `0cedb722b7f8f3934442165a3cc6ac6344377bc9`) and the two extended tall
-rungs at source commit `6f4360f29c1f1bce8f8981412f4e28d7ff55573a`. It includes Lean and
+commit `29bfa4b0598fe40f87897ad405d9a621893767ad`) and the two extended tall
+rungs at source commit `6f4360f29c1f1bce8f8981412f4e28d7ff55573a`
+(content-identical rebased commit
+`1c505c21de24045f590649b2af2bf4863b86a4cd`). It includes Lean and
 LeanBench versions, host, OS, family, dimension, peak width, and output width;
 its SHA-256 is
 `40c1b4b1906a329890bc7e4bdea571493e5d1dc1d560c3c10284fda97ca261ab`.
@@ -153,7 +156,8 @@ this release unit.
 The informational comparators are `FLINT fmpz_mat_hnf via python-flint`
 (python-flint 0.9.0 / FLINT 3.6.0) and `PARI mathnf via cypari2`
 (cypari2 2.2.4 / PARI 2.17.3). The clean fixed run used source commit
-`bfc68387031a582cdbdd76ba6d84f0f047289c7d` on the same host and toolchain:
+`bfc68387031a582cdbdd76ba6d84f0f047289c7d` (content-identical rebased
+commit `4266878989daedecbe73d664e8e0dc50fb13a12d`) on the same host and toolchain:
 
 ```sh
 nix-shell -p python313Packages.cypari2 python313Packages.cysignals pari --run '
@@ -248,7 +252,7 @@ done
 ## Profile
 
 Samply 0.13.1 profiled clean commit `11d29fee274c0e27390d3ffd098515a0c9505069`
-(content-identical rebased commit `71d9f7b17e6fd338dfb715825561f8aa1d3a34aa`)
+(content-identical rebased commit `29c98c982b9faa957651f8e4781d6ffef816272b`)
 at 999 Hz on the same `chungus2` hardware, Lean 4.34.0-rc2, and LeanBench
 0.1.0. Subsequent changes do not alter the profiled routes. Inputs are
 deterministic: dense salt 5, deficient salt 17, full
