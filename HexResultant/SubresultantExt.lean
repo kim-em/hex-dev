@@ -819,6 +819,8 @@ private theorem subresultantOrderedExt_swap [One R] [Add R] [Sub R] [Mul R]
           simpa [delta, h₂, qr, q, p, hp, sign, g₃, hg₃, a, g₃U, g₃V,
             Array.map_push, swap] using haux
 
+/-- Exchanging the two cofactor coordinates commutes with indexed lookup,
+including past the end where both sides read the zero entry. -/
 private theorem getD_map_swap (chain : Array (Entry R)) (i : Nat) :
     (chain.map swap).getD i (0, 0, 0) =
       swap (chain.getD i (0, 0, 0)) := by
@@ -826,6 +828,8 @@ private theorem getD_map_swap (chain : Array (Entry R)) (i : Nat) :
     Array.getElem?_map]
   cases chain[i]? <;> rfl
 
+/-- The Brown scale reads only the stored values, so exchanging the cofactor
+coordinates leaves it unchanged. -/
 private theorem brownScale_map_swap [One R] [Mul R] [Div R]
     (chain : Array (Entry R)) (i : Nat) :
     brownScale (chain.map swap) i = brownScale chain i := by
@@ -842,6 +846,8 @@ private theorem brownScale_map_swap [One R] [Mul R] [Div R]
           rw [getD_map_swap, getD_map_swap, ih]
           rfl
 
+/-- One divided Brown step keeps its exactness witness when both cofactor
+coordinates are exchanged; the two numerator equations trade places. -/
 private theorem CofactorStep.swap [One R] [Add R] [Sub R] [Mul R] [Div R]
     (chain : Array (Entry R)) (i : Nat) (h : CofactorStep chain i) :
     CofactorStep (chain.map swap) i := by

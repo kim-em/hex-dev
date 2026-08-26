@@ -256,6 +256,44 @@ the zero and constant conventions handled explicitly:
 
 {docstring Hex.DensePoly.disc}
 
+# The extended chain
+%%%
+tag := "hex-resultant-extended-chain"
+%%%
+
+Gcd consumers need more than the chain entries: to build a Bezout certificate
+they need the transformation that produced each entry. The extended chain runs
+the same Brown recurrence and additionally carries a cofactor pair through
+every pseudo-scaling and every exact scalar division, so each stored triple is
+a Bezout identity for the caller's two inputs.
+
+{docstring Hex.DensePoly.SubresultantExt.Entry}
+
+{docstring Hex.DensePoly.subresultantChainExt}
+
+The third components are the plain chain, unchanged. The extension adds
+information; it does not alter the resultant or discriminant contracts.
+
+{docstring Hex.DensePoly.subresultantChainExt_values}
+
+Correctness is packaged as one law with two halves. The Bezout half applies to
+every stored entry. The exactness half is what makes the executable divisions
+legitimate: at each divided step, both transformation numerators are the Brown
+scalar times the stored quotients, so the division the executable performs is
+exact rather than truncating.
+
+{docstring Hex.DensePoly.SubresultantExt.Law}
+
+{docstring Hex.DensePoly.subresultantChainExt_law}
+
+{docstring Hex.DensePoly.subresultantChainExt_bezout}
+
+{docstring Hex.DensePoly.subresultantChainExt_exact}
+
+`HexPolyZGcd` and `HexMvGcd` consume this to produce the `splitBezout`
+certificate constructor for their deterministic fallback route, which needs a
+Bezout pair with no modulus and so cannot go through the modular gcd.
+
 # A small exact computation
 %%%
 tag := "hex-resultant-example"
@@ -315,6 +353,11 @@ with the executable correspondence, this identity underlies one-level field
 norms and the Trager collision bound:
 
 {docstring Hex.DensePoly.resultant_eq_leadingCoeff_mul_prod_roots}
+
+Its immediate consequence is the classical vanishing criterion, stated over
+the complex numbers for integer inputs:
+
+{docstring Hex.DensePoly.resultant_eq_zero_iff_common_root}
 
 # Cross-references
 %%%

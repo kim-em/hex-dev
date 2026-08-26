@@ -432,36 +432,29 @@ lines belonging with the content operations here. The arity-preserving
 recursive view is not wanted at all, for the reason under "The recursive
 view".
 
-## Required amendment to hex-resultant
+## The extended chain from hex-resultant
 
 The `splitBezout` certificate constructor needs the Bézout cofactors of
-the subresultant chain. hex-resultant does not compute them, and it is
-worth saying so explicitly because the chain looks as though it must:
-`subresultantAux` calls `pseudoDivMod` and keeps only `.2`
-(`HexResultant/Subresultant.lean:609` and `:616`); the quotient is
-discarded and no transformation is accumulated.
+the subresultant chain. The plain chain does not carry them:
+`subresultantAux` calls `pseudoDivMod` and keeps only `.2`, discarding the
+quotient and accumulating no transformation.
 
-An extended chain is therefore a new recurrence that tracks the
-transformation pair through the pseudo-scaling and the exact scalar
-division at every step, with proofs that each cofactor numerator is
-divisible by the Brown scalar it is divided by.
-
-The owning contract is now recorded under "Extended subresultant chain for
-gcd consumers" in [SPEC/future-work.md](../../SPEC/future-work.md), with a pointer
-from the Downstream contracts section of
+The extended chain is a separate recurrence that tracks the transformation
+pair through the pseudo-scaling and the exact scalar division at every step,
+with proofs that each cofactor numerator is divisible by the Brown scalar it
+is divided by. It is owned by hex-resultant, whose SPEC records the contract
+under Downstream contracts in
 [hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md); its
 signature is repeated here only to show the consumer boundary:
 
 ```lean
-/-- The subresultant chain with the cofactors producing each entry:
-`(uₖ, vₖ, Sₖ)` with `uₖ · f + vₖ · g = Sₖ`. -/
-def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
-    [Mul R] [Div R] (f g : DensePoly R) :
-    Array (DensePoly R × DensePoly R × DensePoly R)
+/-- Brown's nonzero subresultant chain together with a caller-order-sensitive
+Bezout representation for every stored entry. -/
+def subresultantChainExt [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (f g : DensePoly R) : Array (DensePoly R × DensePoly R × DensePoly R)
 ```
 
-That is a substantive development, not a one-line export, and it is a
-hard prerequisite for this library's complete fallback. The modular
+This library's complete fallback depends on it. The modular
 constructor is intentionally primary but cannot be complete while
 `ZMod64.Bounds` caps its primes. With
 `L = lcm(1, …, 2^31 - 1)`, the coprime univariate pair `x` and `x + L`
