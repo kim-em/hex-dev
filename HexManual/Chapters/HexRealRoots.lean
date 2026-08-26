@@ -44,6 +44,42 @@ elaborates, and produces a term whose type records the certified
 statements. No knowledge of Sturm chains, dyadic arithmetic, or
 squarefreeness is needed at the call site.
 
+# The Mathlib correspondence
+%%%
+tag := "hex-real-roots-mathlib"
+%%%
+
+The split between `HexRealRoots` and `HexRealRootsMathlib` is a trust and
+dependency boundary. `HexRealRoots` contains the Mathlib-free executable
+algorithm: dense integer polynomials, signed pseudo-remainder Sturm chains,
+dyadic sign evaluation, Descartes and Sturm search, and interval refinement.
+Its output is exact certificate data, but the computational package does not
+state that data in Mathlib's language of `Polynomial ℝ` and real roots.
+
+`HexRealRootsMathlib` supplies that interpretation. The abstract development
+proves Sturm's theorem for a generalized polynomial chain. The correspondence
+theorems then identify the executable chain with such a chain, identify
+integer and dyadic sign-variation computations with their real counterparts,
+and turn finite and infinite variation gaps into exact root counts. In
+particular, {name}`HexRealRootsMathlib.sturmChain_isSturmChain` connects the
+computed chain to the abstract theorem, while the literal replay API checks a
+supplied chain coefficient by coefficient. Isolation soundness and
+completeness package those counts as {name}`Hex.IsolatedRealRoots`, including
+one distinct root per half-open interval and coverage of every real root.
+
+The term elaborator sits precisely on this boundary. It evaluates the closed
+input and runs compiled search only while elaborating, to choose a squarefree
+core, a Sturm chain, and dyadic intervals. It then emits literal data and a
+call to {name}`Hex.IsolatedRealRoots.ofCertPretty`. Ordinary Lean `decide`
+proofs replay the chain, the per-interval counts, the total count, and endpoint
+ordering. The kernel therefore trusts neither the compiled search nor the
+Descartes dispatch. For repeated roots, a checked polynomial identity proves
+that the squarefree core and original polynomial have the same real zeros,
+and {name}`Hex.IsolatedRealRoots.congrRoots` transports the isolation across
+that equivalence. Inputs written as `Polynomial ℤ`, `Polynomial ℚ`, or
+`Polynomial ℝ` cross the same boundary through
+{name}`HexPolyZMathlib.toPolynomial` and a checked evaluation equivalence.
+
 # The `isolate_roots` elaborator
 %%%
 tag := "hex-real-roots-isolate"
