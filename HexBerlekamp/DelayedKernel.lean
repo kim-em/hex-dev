@@ -204,7 +204,7 @@ private theorem delayedDotLoop_eq_foldl (ctx : Hex.BarrettCtx p) (u v : Vector (
           (BarrettCtx.accStep ctx.toUInt64Ctx) (lo, hi, count)).2.1 := by
   fun_induction delayedDotLoop ctx u v i lo hi count with
   | case1 i lo hi count h hwin ih =>
-    -- Flush step: the fold's `accStep` takes the `if_pos` branch.
+    -- Flush step: the fold's `accStep` takes the `ite_eq_left` branch.
     have hcomb :
         (((List.finRange m).drop i).map (fun j => u[j].toUInt64 * v[j].toUInt64)).foldl
             (BarrettCtx.accStep ctx.toUInt64Ctx) (lo, hi, count) =
@@ -215,7 +215,7 @@ private theorem delayedDotLoop_eq_foldl (ctx : Hex.BarrettCtx p) (u v : Vector (
               (lo + u[i].toUInt64 * v[i].toUInt64)
               (hi + (if lo + u[i].toUInt64 * v[i].toUInt64 < lo then 1 else 0)), 0, 0) := by
       rw [List.drop_eq_getElem_cons (by simpa using h), List.map_cons, List.foldl_cons,
-        BarrettCtx.accStep_eq_inline, if_pos hwin]
+        BarrettCtx.accStep_eq_inline, ite_eq_left hwin]
       simp only [List.getElem_finRange, Fin.getElem_fin, Fin.val_cast]
     exact ih.trans (congrArg
       (fun s : UInt64 × UInt64 × Nat =>
@@ -223,7 +223,7 @@ private theorem delayedDotLoop_eq_foldl (ctx : Hex.BarrettCtx p) (u v : Vector (
           s.1 s.2.1)
       hcomb).symm
   | case2 i lo hi count h hwin ih =>
-    -- In-window step: the fold's `accStep` takes the `if_neg` branch.
+    -- In-window step: the fold's `accStep` takes the `ite_eq_right` branch.
     have hcomb :
         (((List.finRange m).drop i).map (fun j => u[j].toUInt64 * v[j].toUInt64)).foldl
             (BarrettCtx.accStep ctx.toUInt64Ctx) (lo, hi, count) =
@@ -234,7 +234,7 @@ private theorem delayedDotLoop_eq_foldl (ctx : Hex.BarrettCtx p) (u v : Vector (
               hi + (if lo + u[i].toUInt64 * v[i].toUInt64 < lo then 1 else 0),
               count + 1) := by
       rw [List.drop_eq_getElem_cons (by simpa using h), List.map_cons, List.foldl_cons,
-        BarrettCtx.accStep_eq_inline, if_neg hwin]
+        BarrettCtx.accStep_eq_inline, ite_eq_right hwin]
       simp only [List.getElem_finRange, Fin.getElem_fin, Fin.val_cast]
     exact ih.trans (congrArg
       (fun s : UInt64 × UInt64 × Nat =>
@@ -266,12 +266,15 @@ private theorem delayedDotRun_eq_loop (ctx : Hex.BarrettCtx p) (u v : Vector (ZM
   | case1 i lo hi h ih =>
     intro count hcount
     have hne : ¬ (count + 1 = BarrettCtx.barrettWindow) := by omega
-    rw [delayedDotLoop, dif_pos h, if_neg hne]
+    rw [delayedDotLoop, dite_eq_left h, ite_eq_right hne]
     exact ih (count + 1) (by omega)
   | case2 i lo hi h =>
     intro count _
-    rw [delayedDotLoop, dif_neg h]
+    rw [delayedDotLoop, dite_eq_right h]
 
+/-- The reference delayed dot product agrees with the windowed implementation,
+registered `@[csimp]` so compiled code runs `delayedDotImpl` while proofs keep
+reasoning about `delayedDot`. -/
 @[csimp] theorem delayedDot_eq_impl : @delayedDot = @delayedDotImpl := by
   funext p inst m ctx u v
   -- The loop from the empty start state computes exactly `foldReduce` (the
@@ -286,11 +289,11 @@ private theorem delayedDotRun_eq_loop (ctx : Hex.BarrettCtx p) (u v : Vector (ZM
     calc delayedDot ctx u v
         = ZMod64.ofNat p (delayedDotRun ctx u v 0 0 0).toNat :=
           congrArg (fun w : UInt64 => ZMod64.ofNat p w.toNat) (hrun.trans hloop).symm
-      _ = delayedDotImpl ctx u v := by rw [delayedDotImpl, if_pos hm]
+      _ = delayedDotImpl ctx u v := by rw [delayedDotImpl, ite_eq_left hm]
   · calc delayedDot ctx u v
         = ZMod64.ofNat p (delayedDotLoop ctx u v 0 0 0 0).toNat :=
           congrArg (fun w : UInt64 => ZMod64.ofNat p w.toNat) hloop.symm
-      _ = delayedDotImpl ctx u v := by rw [delayedDotImpl, if_neg hm]
+      _ = delayedDotImpl ctx u v := by rw [delayedDotImpl, ite_eq_right hm]
 
 /-- **Correctness of the delayed dot product.** The periodically-reduced dot
 product equals the naive `Vector.dotProduct` on `ZMod64 p`: reduction modulo `p`
