@@ -302,27 +302,45 @@ private def runPariAt (input : Input) (_ : Unit) : IO (List Int) := do
 def runHexDense6 : Unit → IO (List Int) := runHexAt (dense 6)
 def runFlintDense6 : Unit → IO (List Int) := runFlintAt (dense 6)
 def runPariDense6 : Unit → IO (List Int) := runPariAt (dense 6)
+def runHexDense8 : Unit → IO (List Int) := runHexAt (dense 8)
+def runFlintDense8 : Unit → IO (List Int) := runFlintAt (dense 8)
+def runPariDense8 : Unit → IO (List Int) := runPariAt (dense 8)
 def runHexDense10 : Unit → IO (List Int) := runHexAt (dense 10)
 def runFlintDense10 : Unit → IO (List Int) := runFlintAt (dense 10)
 def runPariDense10 : Unit → IO (List Int) := runPariAt (dense 10)
+def runHexDense12 : Unit → IO (List Int) := runHexAt (dense 12)
+def runFlintDense12 : Unit → IO (List Int) := runFlintAt (dense 12)
+def runPariDense12 : Unit → IO (List Int) := runPariAt (dense 12)
 def runHexDense14 : Unit → IO (List Int) := runHexAt (dense 14)
 def runFlintDense14 : Unit → IO (List Int) := runFlintAt (dense 14)
 def runPariDense14 : Unit → IO (List Int) := runPariAt (dense 14)
 def runHexChain6 : Unit → IO (List Int) := runHexAt (chainConjugate 6)
 def runFlintChain6 : Unit → IO (List Int) := runFlintAt (chainConjugate 6)
 def runPariChain6 : Unit → IO (List Int) := runPariAt (chainConjugate 6)
+def runHexChain8 : Unit → IO (List Int) := runHexAt (chainConjugate 8)
+def runFlintChain8 : Unit → IO (List Int) := runFlintAt (chainConjugate 8)
+def runPariChain8 : Unit → IO (List Int) := runPariAt (chainConjugate 8)
 def runHexChain10 : Unit → IO (List Int) := runHexAt (chainConjugate 10)
 def runFlintChain10 : Unit → IO (List Int) := runFlintAt (chainConjugate 10)
 def runPariChain10 : Unit → IO (List Int) := runPariAt (chainConjugate 10)
+def runHexChain12 : Unit → IO (List Int) := runHexAt (chainConjugate 12)
+def runFlintChain12 : Unit → IO (List Int) := runFlintAt (chainConjugate 12)
+def runPariChain12 : Unit → IO (List Int) := runPariAt (chainConjugate 12)
 def runHexChain14 : Unit → IO (List Int) := runHexAt (chainConjugate 14)
 def runFlintChain14 : Unit → IO (List Int) := runFlintAt (chainConjugate 14)
 def runPariChain14 : Unit → IO (List Int) := runPariAt (chainConjugate 14)
 def runHexPresentation8 : Unit → IO (List Int) := runHexAt (presentation 8)
 def runFlintPresentation8 : Unit → IO (List Int) := runFlintAt (presentation 8)
 def runPariPresentation8 : Unit → IO (List Int) := runPariAt (presentation 8)
+def runHexPresentation12 : Unit → IO (List Int) := runHexAt (presentation 12)
+def runFlintPresentation12 : Unit → IO (List Int) := runFlintAt (presentation 12)
+def runPariPresentation12 : Unit → IO (List Int) := runPariAt (presentation 12)
 def runHexPresentation16 : Unit → IO (List Int) := runHexAt (presentation 16)
 def runFlintPresentation16 : Unit → IO (List Int) := runFlintAt (presentation 16)
 def runPariPresentation16 : Unit → IO (List Int) := runPariAt (presentation 16)
+def runHexPresentation20 : Unit → IO (List Int) := runHexAt (presentation 20)
+def runFlintPresentation20 : Unit → IO (List Int) := runFlintAt (presentation 20)
+def runPariPresentation20 : Unit → IO (List Int) := runPariAt (presentation 20)
 def runHexPresentation24 : Unit → IO (List Int) := runHexAt (presentation 24)
 def runFlintPresentation24 : Unit → IO (List Int) := runFlintAt (presentation 24)
 def runPariPresentation24 : Unit → IO (List Int) := runPariAt (presentation 24)
@@ -505,27 +523,45 @@ setup_fixed_benchmark runPariOverhead where externalExpected 0x0
 setup_fixed_benchmark runHexDense6 where hexExpected 0xf04520317df0def8
 setup_fixed_benchmark runFlintDense6 where externalExpected 0xf04520317df0def8
 setup_fixed_benchmark runPariDense6 where externalExpected 0xf04520317df0def8
+setup_fixed_benchmark runHexDense8 where hexExpected 0xe4073bf661a3c59a
+setup_fixed_benchmark runFlintDense8 where externalExpected 0xe4073bf661a3c59a
+setup_fixed_benchmark runPariDense8 where externalExpected 0xe4073bf661a3c59a
 setup_fixed_benchmark runHexDense10 where hexExpected 0xf68ae7878c8af87b
 setup_fixed_benchmark runFlintDense10 where externalExpected 0xf68ae7878c8af87b
 setup_fixed_benchmark runPariDense10 where externalExpected 0xf68ae7878c8af87b
+setup_fixed_benchmark runHexDense12 where hexExpected 0x5e971675ada9d783
+setup_fixed_benchmark runFlintDense12 where externalExpected 0x5e971675ada9d783
+setup_fixed_benchmark runPariDense12 where externalExpected 0x5e971675ada9d783
 setup_fixed_benchmark runHexDense14 where hexExpected 0x699fd5ab6f700da0
 setup_fixed_benchmark runFlintDense14 where externalExpected 0x699fd5ab6f700da0
 setup_fixed_benchmark runPariDense14 where externalExpected 0x699fd5ab6f700da0
 setup_fixed_benchmark runHexChain6 where hexExpected 0x1e5b9e22113b8d71
 setup_fixed_benchmark runFlintChain6 where externalExpected 0x1e5b9e22113b8d71
 setup_fixed_benchmark runPariChain6 where externalExpected 0x1e5b9e22113b8d71
+setup_fixed_benchmark runHexChain8 where hexExpected 0xb3713c08af9eb87c
+setup_fixed_benchmark runFlintChain8 where externalExpected 0xb3713c08af9eb87c
+setup_fixed_benchmark runPariChain8 where externalExpected 0xb3713c08af9eb87c
 setup_fixed_benchmark runHexChain10 where hexExpected 0xefcb83d9d11c9839
 setup_fixed_benchmark runFlintChain10 where externalExpected 0xefcb83d9d11c9839
 setup_fixed_benchmark runPariChain10 where externalExpected 0xefcb83d9d11c9839
+setup_fixed_benchmark runHexChain12 where hexExpected 0x239317e249e653d3
+setup_fixed_benchmark runFlintChain12 where externalExpected 0x239317e249e653d3
+setup_fixed_benchmark runPariChain12 where externalExpected 0x239317e249e653d3
 setup_fixed_benchmark runHexChain14 where hexExpected 0x049888f934ad3581
 setup_fixed_benchmark runFlintChain14 where externalExpected 0x049888f934ad3581
 setup_fixed_benchmark runPariChain14 where externalExpected 0x049888f934ad3581
 setup_fixed_benchmark runHexPresentation8 where hexExpected 0x82b42ad65a90f9be
 setup_fixed_benchmark runFlintPresentation8 where externalExpected 0x82b42ad65a90f9be
 setup_fixed_benchmark runPariPresentation8 where externalExpected 0x82b42ad65a90f9be
+setup_fixed_benchmark runHexPresentation12 where hexExpected 0xfc1472e454f53028
+setup_fixed_benchmark runFlintPresentation12 where externalExpected 0xfc1472e454f53028
+setup_fixed_benchmark runPariPresentation12 where externalExpected 0xfc1472e454f53028
 setup_fixed_benchmark runHexPresentation16 where hexExpected 0x47ef2f14529c425f
 setup_fixed_benchmark runFlintPresentation16 where externalExpected 0x47ef2f14529c425f
 setup_fixed_benchmark runPariPresentation16 where externalExpected 0x47ef2f14529c425f
+setup_fixed_benchmark runHexPresentation20 where hexExpected 0x032c9800f08ccd0d
+setup_fixed_benchmark runFlintPresentation20 where externalExpected 0x032c9800f08ccd0d
+setup_fixed_benchmark runPariPresentation20 where externalExpected 0x032c9800f08ccd0d
 setup_fixed_benchmark runHexPresentation24 where hexExpected 0xb281650658ac39a7
 setup_fixed_benchmark runFlintPresentation24 where externalExpected 0xb281650658ac39a7
 setup_fixed_benchmark runPariPresentation24 where externalExpected 0xb281650658ac39a7
