@@ -1297,7 +1297,7 @@ by `coprime_of_checkOrder`, so the caller passes nothing extra.
    route description), with route-level tests written before the code.
 
 5. **The cyclotomic candidate.** `cyclotomicSplit?`, its checked product
-   theorem, the recursive evaluation candidate, and the `b^n ± 1`
+   theorem, the ascending evaluation table, and the `b^n ± 1`
    benchmark family. Ahead of ECM because it is cheaper and directly
    serves the motivating family.
 
