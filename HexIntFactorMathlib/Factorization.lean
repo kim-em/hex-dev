@@ -89,7 +89,7 @@ theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
     (expandedFactors_prod F |>.trans (checkFactorization_prod h))
     (prime_of_mem_expandedFactors F h)).symm
 
-/-- An absent prime has zero Mathlib multiplicity. -/
+/-- A base absent from the checked list has zero Mathlib multiplicity. -/
 theorem factorization_absent (F : Factorization)
     (h : checkFactorization F = true) {p : Nat}
     (hmem : ∀ e ∈ F.factors, e.prime ≠ p) :

@@ -474,8 +474,8 @@ partial factorization of one subject from answering a request about
 another. The characterising lemmas `checkPartial_pos`,
 `CheckedPartialFactorization.pos`, `checkPartial_prod`,
 `checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
-expose reconstruction, primality, exponent positivity, and factor-base
-ordering without requiring consumers to unfold the checker.
+expose subject positivity, reconstruction, primality, exponent positivity, and
+factor-base ordering without requiring consumers to unfold the checker.
 `checkFactorization_of_checkPartial` proves that residual one is already a
 complete certificate, avoiding a second certificate replay. The search result
 theorems are
@@ -664,9 +664,10 @@ The identity is normalised as `1 % modulus` rather than `1` so that the
 same modular expression is used throughout, although `1 < c.modulus`
 excludes the degenerate modulus.
 
-The named projections `checkOrder_modulus`, `checkOrder_order_pos`,
-`checkOrder_factorization_subject`, `checkOrder_factorization`,
-`checkOrder_pow`, and `checkOrder_prime_divisor` expose these accepted facts so
+The characterisation `checkOrder_iff` and named projections
+`checkOrder_one_lt_modulus`, `checkOrder_order_pos`,
+`checkOrder_orderFac_subject`, `checkOrder_orderFac`, `checkOrder_pow`, and
+`checkOrder_pow_div_prime` expose these accepted facts so
 downstream proofs do not unfold the Boolean checker or index a nested
 conjunction.
 

@@ -37,7 +37,8 @@ theorem orderOf_eq {c : OrderCert} (h : checkOrder c = true) :
     _root_.orderOf
         (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order := by
   let ha := coprime_of_checkOrder h
-  have hn : 0 < c.modulus := Nat.zero_lt_of_lt (checkOrder_modulus h)
+  have hn : 0 < c.modulus :=
+    _root_.Nat.zero_lt_of_lt (checkOrder_one_lt_modulus h)
   apply orderOf_eq_of_pow_and_pow_div_prime (checkOrder_order_pos h)
   · apply (unit_pow_iff ha).2
     have hpow := checkOrder_pow h
@@ -46,12 +47,12 @@ theorem orderOf_eq {c : OrderCert} (h : checkOrder c = true) :
   · intro q hq hqDvd hunit
     have hqLocal : Prime q := prime_iff.mpr hq
     have hqRaw : q ∣ c.orderFac.subject := by
-      simpa [checkOrder_factorization_subject h] using hqDvd
+      simpa [checkOrder_orderFac_subject h] using hqDvd
     obtain ⟨e, he, heq⟩ :=
-      (checkFactorization_primeSupport (checkOrder_factorization h) hqLocal).mp hqRaw
+      (checkFactorization_primeSupport (checkOrder_orderFac h) hqLocal).mp hqRaw
     have hbad := (unit_pow_iff ha).1 hunit
     rw [← heq] at hbad
-    have hne := checkOrder_prime_divisor h e he
+    have hne := checkOrder_pow_div_prime h e he
     rw [HexArith.powModNat_eq _ _ _ hn] at hne
     exact hne hbad
 
