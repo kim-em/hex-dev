@@ -370,20 +370,20 @@ def runPariOverhead (_ : Unit) : IO Int := do
   | .ok value => return value
   | .error error => throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
-/- Cost-model derivation: rank profiling is cubic at fixed square aspect
-ratio. On this bounded-entry family, zero-quotient reductions leave at most a
-quadratic number of full-row updates, also giving cubic entry work; the SPEC
-separately retains the unrestricted `O(n⁴)` scheduled-update ceiling. -/
-setup_benchmark runDense n => n ^ 3 with prep := dense where {
+/- Cost-model derivation: fixed-aspect rank profiling plus the nonzero
+principal reductions make cubic matrix-entry visits. Their Euclidean pivot
+work grows with the logarithmic controlled-family operand ladder, yielding the
+registered `O(n³ log n)` wall model; unrestricted scheduling remains `O(n⁴)`. -/
+setup_benchmark runDense n => n ^ 3 * Nat.log2 (n + 1) with prep := dense where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: the active rank is `n / 2`; substituting that fixed
-rank fraction into the controlled-family profile and principal sweeps leaves
-the measured scientific model cubic in `n`. -/
-setup_benchmark runDeficient n => n ^ 3 with prep := deficient where {
+/- Cost-model derivation: active rank is `n / 2`, leaving cubic entry visits;
+the dependent rows multiply bounded generators by indices through `n`, so
+Euclidean operand work contributes the explicit `log n` factor. -/
+setup_benchmark runDeficient n => n ^ 3 * Nat.log2 (n + 1) with prep := deficient where {
   paramFloor := 16, paramCeiling := 128,
   paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
   targetInnerNanos := 2_000_000_000, outerTrials := 3
