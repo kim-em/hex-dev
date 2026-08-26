@@ -149,7 +149,7 @@ theorem natAbs_coeff_mul_le (p q : ZPoly) (A : Nat)
     unfold DensePoly.diagonalMulCoeffTerm
     by_cases h : n < i
     · simp [h]
-    · rw [if_neg h, Int.natAbs_mul]
+    · rw [ite_eq_right h, Int.natAbs_mul]
       exact Nat.mul_le_mul (hp i) (hq (n - i))
   have := foldl_add_natAbs_le (DensePoly.diagonalMulCoeffTerm p q n) (A * A) hterm
     (List.range p.size) 0
@@ -164,6 +164,35 @@ theorem natAbs_coeff_mul_le_min (p q : ZPoly) (A : Nat)
     exact natAbs_coeff_mul_le p q A hp hq n
   · rw [Nat.min_eq_right (Nat.le_of_not_ge h), DensePoly.mul_comm_poly]
     exact natAbs_coeff_mul_le q p A hq hp n
+
+/-- A product coefficient is bounded using the two operands' separate
+coefficient bounds.  Keeping `A * C` rather than first replacing both by their
+maximum is important for strongly asymmetric inputs. -/
+theorem natAbs_mulCoeff_le (p q : ZPoly) (A C : Nat)
+    (hp : ∀ i, (p.coeff i).natAbs ≤ A) (hq : ∀ j, (q.coeff j).natAbs ≤ C) (n : Nat) :
+    ((p * q).coeff n).natAbs ≤ p.size * (A * C) := by
+  rw [DensePoly.coeff_mul, DensePoly.mulCoeffSum_eq_diagonal]
+  have hterm : ∀ i, (DensePoly.diagonalMulCoeffTerm p q n i).natAbs ≤ A * C := by
+    intro i
+    unfold DensePoly.diagonalMulCoeffTerm
+    by_cases h : n < i
+    · simp [h]
+    · rw [ite_eq_right h, Int.natAbs_mul]
+      exact Nat.mul_le_mul (hp i) (hq (n - i))
+  have := foldl_add_natAbs_le (DensePoly.diagonalMulCoeffTerm p q n) (A * C) hterm
+    (List.range p.size) 0
+  simpa using this
+
+/-- The symmetric diagonal-length form of {name}`natAbs_mulCoeff_le`, while
+retaining separate coefficient bounds for the two operands. -/
+theorem natAbs_mulCoeff_le_min (p q : ZPoly) (A C : Nat)
+    (hp : ∀ i, (p.coeff i).natAbs ≤ A) (hq : ∀ j, (q.coeff j).natAbs ≤ C) (n : Nat) :
+    ((p * q).coeff n).natAbs ≤ min p.size q.size * (A * C) := by
+  by_cases h : p.size ≤ q.size
+  · rw [Nat.min_eq_left h]
+    exact natAbs_mulCoeff_le p q A C hp hq n
+  · rw [Nat.min_eq_right (Nat.le_of_not_ge h), DensePoly.mul_comm_poly]
+    simpa [Nat.mul_comm] using natAbs_mulCoeff_le q p C A hq hp n
 
 /-! # Base-`2 ^ b` Horner specifications -/
 

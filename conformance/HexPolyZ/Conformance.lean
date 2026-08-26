@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.Kronecker
+import HexPolyZ.KroneckerMulti
 import HexPolyZ.Mignotte
 import HexPolyZ.ExactDivision
 
@@ -21,7 +21,7 @@ Covered operations:
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
 - checked exact division and its ordered rejection prefilters
-- the Kronecker-substitution product kernel against the schoolbook loop
+- the one- and two-point Kronecker-substitution kernels against the schoolbook loop
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -317,6 +317,8 @@ private def kernelAgrees : Bool :=
       (mulKroneckerAt 0 0 p q == p * q)
         && (mulKroneckerAt 0 0 q p == q * p)
         && (mulKronecker p q == p * q)
+        && (mulKS2 p q == p * q)
+        && (mulKS2 q p == q * p)
 
 #guard kernelAgrees
 
@@ -335,9 +337,23 @@ private def kernelAgreesOnBoundaries : Bool :=
     ([0, 1] : List Nat).all fun i =>
       let p := boundaryPoly k i
       let q := boundaryPoly (k + 1) (i + 1)
-      (mulKroneckerAt 0 0 p q == p * q) && (mulKronecker p q == p * q)
+      (mulKroneckerAt 0 0 p q == p * q)
+        && (mulKronecker p q == p * q)
+        && (mulKS2 p q == p * q)
 
 #guard kernelAgreesOnBoundaries
+
+/-- KS2 uses the two operands' separate maxima, so strongly asymmetric
+coefficient widths and lengths are exercised explicitly in both orders. -/
+private def ks2AgreesAsymmetric : Bool :=
+  ([1, 2, 3, 7] : List Nat).all fun short =>
+    ([25, 64] : List Nat).all fun long =>
+      let p := kernelPoly short 1
+      let q := DensePoly.ofCoeffs ((List.range long).map fun i =>
+        kernelCoeff long i 9 * Int.ofNat (2 ^ 73)).toArray
+      (mulKS2 p q == p * q) && (mulKS2 q p == q * p)
+
+#guard ks2AgreesAsymmetric
 
 end ZPoly
 
