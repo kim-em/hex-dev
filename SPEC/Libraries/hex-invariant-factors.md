@@ -4,7 +4,7 @@ The invariant factors of a square matrix `A : Matrix F n n` over a field.
 They are the monic diagonal entries in the Smith normal form of the
 characteristic matrix `xI - A`, ordered so that each divides the next. The
 Mathlib-free library constructs that polynomial matrix and calls
-[hex-poly-smith](hex-poly-smith.md). It introduces no second polynomial or
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md). It introduces no second polynomial or
 polynomial-matrix representation.
 
 The companion `hex-invariant-factors-mathlib` proves that the product of the

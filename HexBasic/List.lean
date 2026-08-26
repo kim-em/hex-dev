@@ -19,6 +19,25 @@ Batteries signatures, this file owns Hex-local additions to the `List` API.
 
 namespace List
 
+/-- Mapping a list without duplicates by a function injective on that list
+preserves the absence of duplicates. -/
+theorem nodup_map_on {α β : Type} {xs : List α} {f : α → β}
+    (hxs : xs.Nodup)
+    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
+    (xs.map f).Nodup := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.map_cons]
+      rw [List.nodup_cons] at hxs ⊢
+      constructor
+      · intro hx
+        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
+        have : x = y := hinj x (by simp) y (by simp [hy]) hxy.symm
+        exact hxs.1 (by simpa [this] using hy)
+      · exact ih hxs.2 fun a ha b hb hab =>
+          hinj a (by simp [ha]) b (by simp [hb]) hab
+
 /-- A flat map is duplicate-free when every row is duplicate-free and rows
 coming from distinct source elements are disjoint. -/
 theorem nodup_flatMap_of_disjoint {α β} {xs : List α} {f : α → List β}

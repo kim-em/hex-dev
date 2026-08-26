@@ -178,9 +178,38 @@ def gcdCertWith (cfg : GcdConfig)
                 fallback proposal.rand
           | none => fallback proposal.rand
 
+/-- Direct coprimality witness when two cofactors differ by one. -/
+def unitDiffCert? {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    (f h : MvPoly n R cmp) : Option (CoprimeCert n R cmp) :=
+  if f - h == 1 then some (.bezout 1 (-1))
+  else if h - f == 1 then some (.bezout (-1) 1)
+  else none
+
+/-- Detect a one-step polynomial remainder equal to `±1` and replay the
+resulting direct Bézout identity.  This keeps candidate checking cheap when a
+large cofactor is an affine polynomial multiple of the other. -/
+def unitRemainderCert? {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R]
+    (f h : MvPoly n R cmp) : Option (CoprimeCert n R cmp) :=
+  let right := divMod h f
+  if right.2 == 1 then some (.bezout (-right.1) 1)
+  else if right.2 == -1 then some (.bezout right.1 (-1))
+  else
+    let left := divMod f h
+    if left.2 == 1 then some (.bezout 1 (-left.1))
+    else if left.2 == -1 then some (.bezout (-1) left.1)
+    else none
+
 /-- Offer an arbitrary nonzero polynomial candidate to the full multivariate
-checker.  Exact division builds cofactors and route 4 supplies their
-coprimality witness; no producer may bypass this function's final replay. -/
+checker.  Exact division builds cofactors; a unit difference or unit remainder
+gives a direct Bézout witness, and all other pairs use route 4.  No producer
+may bypass this function's final replay. -/
 def checkedCandidate? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
@@ -192,9 +221,34 @@ def checkedCandidate? {n : Nat} {R : Type u}
     let normalized := polyNormalize candidate
     let cofL := quotient f normalized
     let cofR := quotient h normalized
-    let cofactorCert := prsCert cofL cofR
-    let cert := GcdCert.mk normalized cofL cofR cofactorCert.coprime
+    let coprime := match unitDiffCert? cofL cofR with
+      | some cert => cert
+      | none => match unitRemainderCert? cofL cofR with
+        | some cert => cert
+        | none => (prsCert cofL cofR).coprime
+    let cert := GcdCert.mk normalized cofL cofR coprime
     if checkGcd f h cert then some cert else none
+
+/-- Offer a strict one-step polynomial remainder as a gcd candidate.  Exact
+division and coprimality replay remain the acceptance gate; a division which
+makes no progress is skipped, and exact divisibility offers the divisor. -/
+def remainderCert? {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R]
+    (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
+  let right := (divMod h f).2
+  if right != h then
+    match checkedCandidate? f h (if right == 0 then f else right) with
+    | some cert => some cert
+    | none => tryLeft f h
+  else tryLeft f h
+where
+  tryLeft (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
+    let left := (divMod f h).2
+    if left == f then none
+    else checkedCandidate? f h (if left == 0 then h else left)
 
 /-! # Integer modular coprimality -/
 

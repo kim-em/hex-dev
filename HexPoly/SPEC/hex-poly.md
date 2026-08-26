@@ -60,6 +60,14 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - Composition, derivative
 - Content and primitive part (for `DensePoly Int`)
 
+**Lightweight field and ring surface.** The umbrella also exports the
+Mathlib-free `Lean.Grind` semiring/ring instances for `DensePoly`, using binary
+exponentiation for natural powers. Over every lightweight field it exports
+lawful division, remainder, gcd, and extended-gcd instances, plus the canonical
+`monicize` operation and its size, divisibility, idempotence, and nonzero laws.
+These declarations use no `HexBasic` or Mathlib dependency; coefficient-ring
+exact-division instances remain in their owning downstream libraries.
+
 **Polynomial GCD, key properties:**
 - `gcd f g` divides both `f` and `g`
 - Every common divisor of `f` and `g` divides `gcd f g`

@@ -146,9 +146,9 @@ Each library with its immediate dependencies:
 - **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
 - **hex-conway**: hex-berlekamp
 - **hex-gfq-ring**: hex-poly-fp
-- **hex-gfq-field**: hex-gfq-ring, hex-finite-field
+- **hex-gfq-field**: hex-gfq-ring, hex-berlekamp, hex-finite-field
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
-- **hex-gf2**: hex-poly, hex-basic, hex-finite-field
+- **hex-gf2**: hex-basic, hex-finite-field
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
 - **hex-summation**: hex-poly, hex-mv-poly, hex-resultant, hex-matrix, hex-row-reduce, hex-berlekamp-zassenhaus, hex-basic
 
@@ -193,7 +193,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-berlekamp-mathlib**: hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib
 - **hex-hensel-mathlib**: hex-hensel, hex-poly-mathlib
 - **hex-gf2-mathlib**: hex-gf2, hex-poly-fp, hex-gfq-field, hex-poly-fp-mathlib
-- **hex-gfq-mathlib**: hex-gfq
+- **hex-gfq-mathlib**: hex-gfq, hex-gf2-mathlib
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
 
@@ -279,7 +279,7 @@ The polynomial normal form is a sibling rather than a descendant. It
 shares the subject with `hex-smith` and none of the code: the base ring
 is `F[x]`, the units are the nonzero constants, and there is no
 polynomial Hermite normal form underneath it. The comparison is drawn
-row by row in [hex-poly-smith.md](hex-poly-smith.md).
+row by row in [hex-poly-smith.md](../../HexPolySmith/SPEC/hex-poly-smith.md).
 
 ```text
 hex-poly ────────┐
@@ -587,7 +587,7 @@ for developments whose source-local move has not happened yet.
 - [hex-min-poly.md](hex-min-poly.md): the matrix minimal polynomial from Krylov sequences, the vector order polynomial, the lcm over the standard basis, and a certificate carrying an independence witness for minimality (the Mathlib companion is specified in the same file)
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
 - [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
-- [hex-poly-smith.md](hex-poly-smith.md): Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and `F[x]`-module structure (the Mathlib companion is specified in the same file)
+- [hex-poly-smith.md](../../HexPolySmith/SPEC/hex-poly-smith.md): Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and `F[x]`-module structure (the Mathlib companion is specified in the same file)
 - [hex-invariant-factors.md](hex-invariant-factors.md): matrix invariant factors from the polynomial Smith form of `xI - A`, with independent characteristic- and minimal-polynomial comparisons (the Mathlib companion is specified in the same file)
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-finite-field.md](hex-finite-field.md): the Mathlib-free `F_q` interface, the generic `q`-power Frobenius, and the equal-degree stage (Cantor-Zassenhaus) it makes worthwhile, specified as hex-berlekamp amendments

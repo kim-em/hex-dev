@@ -264,7 +264,7 @@ theorem det_setRow_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   simpa using det_setCol_add (transpose M) dst (fun a => v[a]) (fun a => w[a])
 
 /-- The assembled determinant `det` vanishes when the replaced column is zero. -/
-private theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) :
     det (setCol M dst (fun _ => (0 : R))) = 0 := by
   have h := det_setCol_smul M dst (0 : R) (fun _ => (1 : R))
@@ -273,6 +273,24 @@ private theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     grind
   rw [hcol] at h
   grind
+
+/-- A square matrix with a zero row has zero determinant. -/
+theorem det_eq_zero_of_row_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (row : Fin n) (hrow : M[row] = 0) : det M = 0 := by
+  have hcol : ∀ i : Fin n, M.transpose[i][row] = 0 := by
+    intro i
+    rw [getElem_transpose]
+    simpa using congrArg (fun v : Vector R n => v[i]) hrow
+  have hset : setCol M.transpose row (fun _ => (0 : R)) = M.transpose := by
+    apply ext_getElem
+    intro i j
+    rw [getElem_setCol]
+    split
+    · subst j
+      exact (hcol i).symm
+    · rfl
+  rw [← det_transpose M, ← hset]
+  exact det_setCol_zero M.transpose row
 
 /-- Determinant linearity in one replaced column, finite-list form. -/
 theorem det_setCol_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
