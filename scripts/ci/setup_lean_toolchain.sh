@@ -25,6 +25,7 @@ lean_dir="$RUNNER_TEMP/hex-lean-toolchain"
 
 mkdir -p "$lean_dir"
 curl --fail --location --retry 3 --silent --show-error \
+  --connect-timeout 20 --max-time 900 \
   --output "$RUNNER_TEMP/$lean_archive" "$lean_url"
 tar --zstd --extract --file "$RUNNER_TEMP/$lean_archive" \
   --directory "$lean_dir" --strip-components=1
@@ -34,7 +35,7 @@ if [ ! -x "$lean_dir/bin/lean" ] || [ ! -x "$lean_dir/bin/lake" ]; then
   exit 1
 fi
 
-lean_output=$($lean_dir/bin/lean --version)
+lean_output=$("$lean_dir/bin/lean" --version)
 if ! grep -Fq "$lean_release" <<< "$lean_output"; then
   echo "::error::resolved Lean is not $lean_version: $lean_output" >&2
   exit 1
@@ -42,4 +43,4 @@ fi
 
 echo "$lean_dir/bin" >> "$GITHUB_PATH"
 echo "$lean_output"
-$lean_dir/bin/lake --version
+"$lean_dir/bin/lake" --version

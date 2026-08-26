@@ -54,9 +54,14 @@ downloads, so a throttled fetch can leave the local cache holding input-to-outpu
 artifact blobs never arrived, and `ci.yml` discards its exit status:
 
 ```
-lake cache get --max-revs=1 --service hex-public --repo kim-em/hex-dev \
+lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
   || echo "::warning::lake cache miss for this revision; building from source"
 ```
+
+The 20-revision window bounds serial public-cache requests while still reaching
+the recently published base of an ordinary pull-request merge commit. A
+HEAD-only lookup cannot work: pull-request merge SHAs are never published, and
+a main SHA is published only after the current run completes.
 
 The consequence here is mild. `ci.yml` builds with plain `lake build`, so an unresolvable cache
 entry makes Lake log a warning and rebuild the module from source, and the build stays green. The

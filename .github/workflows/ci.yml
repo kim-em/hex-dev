@@ -144,7 +144,7 @@ jobs:
       - name: Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)
         if: ${{ steps.hex-build-cache.outputs.cache-matched-key == '' && env.HEX_CACHE_ENABLED == '1' }}
         run: |
-          lake cache get --max-revs=1 --service hex-public --repo kim-em/hex-dev \
+          lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
             || echo "::warning::lake cache miss for this revision; building from source"
       - name: Disable implicit Lake cache restores during build
         run: echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
