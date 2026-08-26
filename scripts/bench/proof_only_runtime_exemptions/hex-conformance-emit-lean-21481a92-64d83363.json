@@ -1,0 +1,6 @@
+{
+ "path": "Hex/Conformance/Emit.lean",
+ "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+ "current_blob": "64d83363de132e0b02be9beae25d28b3f377636a",
+ "reason": "Combines the current conformance JSON serializers with the multivariate-gcd fixture emitters; no factorization runtime module imports the conformance helper."
+}

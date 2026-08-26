@@ -15,7 +15,7 @@ class ManifestTests(unittest.TestCase):
             [pair.name for pair in bz.SPEC.pairs],
             [
                 "fresh-build-null",
-                "irreducible-16-null",
+                "kernel-8-null",
                 "factor-4",
                 "factor-8",
                 "factor-12",
@@ -48,6 +48,31 @@ class ManifestTests(unittest.TestCase):
             all(pair.reference == pair.candidate for pair in controls)
         )
         self.assertEqual(bz.SPEC.required_samples, 6)
+
+    def test_kernel8_is_control_and_substantive_candidate(self) -> None:
+        # Every probe carries the same large `import all` closure, so only the
+        # costliest module is a distinct enough build magnitude to serve as the
+        # expensive control (see the `KERNEL8` comment in the sweep manifest).
+        # Pinning it here keeps a cheaper module from silently regressing the
+        # controls back under the harness's 2.0x distinctness requirement.
+        # This is the structural half of that contract: whether the control
+        # really is 2.0x the baseline, and really is the costliest arm, is a
+        # property of a measured artifact, and the harness enforces it there.
+        cheap, expensive = bz.SPEC.pairs[:2]
+        self.assertEqual(
+            cheap.reference.module,
+            "HexBerlekampZassenhausMathlib.ProofProbe.Baseline",
+        )
+        self.assertEqual(
+            expensive.reference.module,
+            "HexBerlekampZassenhausMathlib.ProofProbe.Kernel8",
+        )
+        substantive = {
+            pair.candidate.module
+            for pair in bz.SPEC.pairs
+            if not pair.null_control
+        }
+        self.assertIn(expensive.reference.module, substantive)
 
     def test_every_measured_module_has_identical_imports(self) -> None:
         imports = {

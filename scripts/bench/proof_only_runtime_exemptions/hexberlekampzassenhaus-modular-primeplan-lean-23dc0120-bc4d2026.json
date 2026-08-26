@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+ "baseline_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
+ "current_blob": "bc4d2026af3dda89e2928c572570e4fb3866f8e8",
+ "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; modular planning arithmetic and control flow are unchanged."
+}

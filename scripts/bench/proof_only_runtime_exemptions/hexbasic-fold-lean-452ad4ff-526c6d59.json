@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Fold.lean",
+ "baseline_blob": "452ad4ff435f3046c54717c99cb6f5a6f2faf02f",
+ "current_blob": "526c6d59061d7c8dc71cfc58477784dc34080544",
+ "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+}

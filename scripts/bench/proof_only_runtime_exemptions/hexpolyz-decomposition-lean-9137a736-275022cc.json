@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Decomposition.lean",
+ "baseline_blob": "9137a73618359488c9c2f8de6a0674f7918c7bd7",
+ "current_blob": "275022ccb5ce74a3bac17daa81a2ede16fe7e963",
+ "reason": "Adds square-free-core theorem proofs and docstring changes only; executable factorization definitions are unchanged."
+}

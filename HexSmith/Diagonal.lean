@@ -147,7 +147,9 @@ instance (s : Smith.Result α r r) : Decidable (Valid s) := by
 
 /-- Agreement of diagonal runs after erasing their companion accumulators. -/
 structure Same (s : Smith.Result α r r) (t : Smith.Result β r r) : Prop where
+  /-- The erased working matrices agree. -/
   matrix : s.matrix = t.matrix
+  /-- The erased diagonal lists agree. -/
   diag : s.diag = t.diag
 
 /-- Shape validation depends only on the erased matrix and diagonal list. -/
@@ -478,6 +480,7 @@ def vectorStep (v : Vector Nat r) (i j : Fin r) : Vector Nat r :=
   (v.set i.val (Nat.gcd v[i] v[j]) i.isLt).set j.val
     (Nat.lcm v[i] v[j]) j.isLt
 
+/-- Execute consecutive fixed-length vector pair steps. -/
 @[expose]
 def vectorPassFuel : Nat → Nat → Vector Nat r → Vector Nat r
   | 0, _, v => v
@@ -487,10 +490,12 @@ def vectorPassFuel : Nat → Nat → Vector Nat r → Vector Nat r
           (vectorStep v ⟨index, by omega⟩ ⟨index + 1, h⟩)
       else v
 
+/-- Execute one complete vector pair pass. -/
 @[expose]
 def vectorPass (v : Vector Nat r) : Vector Nat r :=
   vectorPassFuel (r - 1) 0 v
 
+/-- Execute the requested number of complete vector passes. -/
 @[expose]
 def vectorNetwork : Nat → Vector Nat r → Vector Nat r
   | 0, v => v
@@ -569,6 +574,7 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
       rw [hsplit]
       simp [carry, List.append_assoc]
 
+/-- The vector pass agrees with the proof-oriented list pass. -/
 theorem vectorPass_toList (v : Vector Nat r) :
     (vectorPass v).toList = pass v.toList := by
   cases r with
@@ -594,6 +600,7 @@ theorem vectorPass_toList (v : Vector Nat r) :
           simpa [hvalues, ha] using
             vectorPassFuel_toList r 0 v (by omega)
 
+/-- The vector network agrees with the proof-oriented list network. -/
 theorem vectorNetwork_toList (fuel : Nat) (v : Vector Nat r) :
     (vectorNetwork fuel v).toList = network fuel v.toList := by
   induction fuel generalizing v with
@@ -601,6 +608,7 @@ theorem vectorNetwork_toList (fuel : Nat) (v : Vector Nat r) :
   | succ fuel ih =>
       rw [vectorNetwork, network, ih, vectorPass_toList]
 
+/-- A full fixed-length vector network produces a divisibility chain. -/
 theorem vectorNetwork_chain (v : Vector Nat r) :
     Chain (vectorNetwork r v).toList := by
   rw [vectorNetwork_toList]
@@ -732,7 +740,9 @@ namespace Compact
 
 /-- Diagonal values paired with the optional accumulator. -/
 structure Result (α : Type) (r : Nat) where
+  /-- Current diagonal values. -/
   values : Vector Int r
+  /-- Companion state accumulated alongside diagonal operations. -/
   accumulator : α
 
 /-- First nonzero value at or after `start`. -/
@@ -834,6 +844,7 @@ def pairArray (values : Array Int) (hsize : values.size = r)
     let first := values.set i.val g' hi
     first.set j.val (HexArith.Int.exactDiv (a * b) g') (by simpa [first] using hj)
 
+/-- A compact pair update preserves the backing-array size. -/
 theorem pairArray_size (values : Array Int) (hsize : values.size = r)
     (i j : Fin r) : (pairArray values hsize i j).size = r := by
   simp only [pairArray]
@@ -876,6 +887,7 @@ def passArrayFuel : (fuel index : Nat) → (values : Array Int) →
         passArrayFuel fuel (index + 1) next (pairArray_size values hsize _ _)
       else values
 
+/-- Compact pass iteration preserves the backing-array size. -/
 theorem passArrayFuel_size (fuel index : Nat) (values : Array Int)
     (hsize : values.size = r) :
     (passArrayFuel fuel index values hsize).size = r := by
@@ -896,6 +908,7 @@ def networkArrayFuel : (fuel : Nat) → (values : Array Int) →
       let next := passArrayFuel (r - 1) 0 values hsize
       networkArrayFuel fuel next (passArrayFuel_size (r - 1) 0 values hsize)
 
+/-- Compact network iteration preserves the backing-array size. -/
 theorem networkArrayFuel_size (fuel : Nat) (values : Array Int)
     (hsize : values.size = r) :
     (networkArrayFuel fuel values hsize).size = r := by
@@ -1060,6 +1073,8 @@ private theorem networkArrayFuel_eq (fuel : Nat) (values : Array Int)
               ⟨next, passArrayFuel_size (r - 1) 0 values hsize⟩).toArray := ih _ _
         _ = _ := by rw [hv]
 
+/-- The array-only form path agrees with the accumulator-parametric compact
+run after erasing its companion. -/
 theorem runValues_eq (d : Vector Int r) :
     runValues d = (run (Smith.formAccumulator r r) d).values := by
   unfold runValues run
@@ -1098,6 +1113,7 @@ def candidateData (d : Vector Int r) : SmithData r r :=
 
 /-- Compact runs with different companions have identical diagonal values. -/
 structure Same (s : Result α r) (t : Result β r) : Prop where
+  /-- The erased diagonal values agree. -/
   values : s.values = t.values
 
 private theorem swap_same (ops : Smith.Accumulator α r r)

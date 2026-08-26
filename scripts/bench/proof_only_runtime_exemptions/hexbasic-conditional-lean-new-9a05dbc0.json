@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Conditional.lean",
+ "baseline_blob": null,
+ "current_blob": "9a05dbc008fe5dc93f9f158faaa8709ba808fa88",
+ "reason": "Adds proof-only conditional reduction aliases that are stable across Lean 4.33 and 4.34; no executable factorization definitions are added or changed."
+}

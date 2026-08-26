@@ -291,15 +291,6 @@ theorem rootMultiplicity_monicDiv [ZPoly.CheckedIrreducible p]
   rw [rootMultiplicity_monic (dividend / divisor) hquotient z]
   exact rootMultiplicity_div dividend divisor hdivisor hdividend z
 
-/-- A monic exact quotient of a nonzero executable polynomial is nonzero. -/
-theorem toPolynomial_monicDiv_ne_zero [ZPoly.CheckedIrreducible p]
-    (dividend divisor : DensePoly (QAdjoin p x))
-    (hdivisor : divisor ∣ dividend)
-    (hdividend : HexPolyMathlib.toPolynomial dividend ≠ 0) :
-    HexPolyMathlib.toPolynomial (monic (dividend / divisor)) ≠ 0 :=
-  toPolynomial_monic_ne_zero _
-    (toPolynomial_div_ne_zero dividend divisor hdivisor hdividend)
-
 /-- Monic normalization remains associated after any field embedding. -/
 theorem map_monic_associated [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
@@ -479,10 +470,14 @@ repeated part contains the remaining `r - k` copies. -/
 structure YunInvariant [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] (embedding : QAdjoin p x →+* K) (z : K)
     (r k : Nat) (w repeated : DensePoly (QAdjoin p x)) : Prop where
+  /-- The current squarefree-product accumulator is nonzero. -/
   w_ne : toPolynomialMap embedding w ≠ 0
+  /-- The current repeated part is nonzero. -/
   repeated_ne : toPolynomialMap embedding repeated ≠ 0
+  /-- The accumulator contains `z` exactly once while copies remain. -/
   w_multiplicity : (toPolynomialMap embedding w).rootMultiplicity z =
     if k ≤ r then 1 else 0
+  /-- The repeated part contains the remaining `r - k` copies of `z`. -/
   repeated_multiplicity :
     (toPolynomialMap embedding repeated).rootMultiplicity z = r - k
 
