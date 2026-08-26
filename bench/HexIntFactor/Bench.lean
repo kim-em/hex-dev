@@ -48,6 +48,17 @@ def runReplay (e : Nat) : Nat :=
 
 def runOrder (p : Nat) : Nat := orderOf 2 p
 
+def runSigmaExponent (e : Nat) : Nat :=
+  sigmaEntry ⟨e, .small 2⟩ 1
+
+def sigmaEntries : List PrimePower :=
+  [⟨1, .small 2⟩, ⟨1, .small 3⟩, ⟨1, .small 5⟩, ⟨1, .small 7⟩,
+    ⟨1, .small 11⟩, ⟨1, .small 13⟩, ⟨1, .small 17⟩,
+    ⟨1, .small 19⟩, ⟨1, .small 23⟩, ⟨1, .small 29⟩]
+
+def runSigmaFactorCount (count : Nat) : Nat :=
+  ((sigmaEntries.take count).map fun entry => sigmaEntry entry 1).prod
+
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
 arithmetic iterations. The returned factor-count hash is constant-size. -/
@@ -124,6 +135,33 @@ setup_benchmark runOrder n => n
     paramSchedule := .custom #[7, 31, 257, 65537]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+  }
+
+/- With a fixed base and `k = 1`, the geometric sum has `Theta(e)` output bits.
+Binary exponentiation uses logarithmically many multiplications, but merely
+constructing the result therefore gives the declared linear lower-bound model. -/
+setup_benchmark runSigmaExponent n => n
+  where {
+    paramFloor := 16384
+    paramCeiling := 4194304
+    paramSchedule := .custom #[16384, 65536, 262144, 1048576, 4194304]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- The factor-product route performs a constant number of geometric-series
+operations per certified prime-power entry, hence linear cost in the count. -/
+setup_benchmark runSigmaFactorCount n => n
+  where {
+    paramFloor := 1
+    paramCeiling := 10
+    paramSchedule := .custom #[1, 2, 4, 6, 8, 10]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 end Hex.IntFactorBench

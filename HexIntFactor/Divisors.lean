@@ -27,14 +27,22 @@ def divisors {n : Nat} (F : CheckedFactorization n) : Array Nat :=
 def numDivisors {n : Nat} (F : CheckedFactorization n) : Nat :=
   (F.raw.factors.map fun e => e.exponent + 1).prod
 
+/-- The geometric sum for one prime-power entry. -/
+@[expose]
 def sigmaEntry (entry : PrimePower) (k : Nat) : Nat :=
-  (List.range (entry.exponent + 1)).foldl
-    (fun acc j => acc + entry.prime ^ (j * k)) 0
+  if k = 0 then
+    entry.exponent + 1
+  else
+    let q := entry.prime ^ k
+    (q ^ (entry.exponent + 1) - 1) / (q - 1)
 
 /-- Generalized divisor sum `σ_k`. -/
 @[expose]
 def sigma {n : Nat} (F : CheckedFactorization n) (k : Nat) : Nat :=
-  ((divisors F).toList.map fun d => d ^ k).sum
+  if k = 0 then
+    numDivisors F
+  else
+    (F.raw.factors.map fun entry => sigmaEntry entry k).prod
 
 /-- Euler's totient from a checked prime-power decomposition. -/
 @[expose]
@@ -101,10 +109,95 @@ theorem numDivisors_eq_size {n : Nat} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size := by
   simp [numDivisors, divisors, DivisorEnumeration.length_values]
 
+private def geometricSum (q : Nat) : Nat → Nat
+  | 0 => 1
+  | e + 1 => 1 + q * geometricSum q e
+
+private theorem sum_ones (xs : List Nat) :
+    (xs.map fun _ => 1).sum = xs.length := by
+  induction xs with
+  | nil => simp
+  | cons x xs ih => simp [ih, Nat.add_comm]
+
+private theorem powers_sum (p e acc k : Nat) :
+    ((DivisorEnumeration.powers p e acc).map fun q => q ^ k).sum =
+      acc ^ k * geometricSum (p ^ k) e := by
+  induction e generalizing acc with
+  | zero => simp [DivisorEnumeration.powers, geometricSum]
+  | succ e ih =>
+      rw [DivisorEnumeration.powers, List.map_cons, List.sum_cons, ih,
+        geometricSum, Nat.mul_add, Nat.mul_one, Nat.mul_pow]
+      congr 1
+      ac_rfl
+
+private theorem geometricSum_spec {q : Nat} (hq : 1 < q) : ∀ e : Nat,
+    (q - 1) * geometricSum q e = q ^ (e + 1) - 1
+  | 0 => by simp [geometricSum]
+  | e + 1 => by
+      rw [geometricSum]
+      calc
+        (q - 1) * (1 + q * geometricSum q e) =
+            (q - 1) + q * ((q - 1) * geometricSum q e) := by
+          rw [Nat.mul_add, Nat.mul_one]
+          congr 1
+          ac_rfl
+        _ = (q - 1) + q * (q ^ (e + 1) - 1) := by
+          rw [geometricSum_spec hq e]
+        _ = q ^ ((e + 1) + 1) - 1 := by
+          have hpow : 0 < q ^ (e + 1) := Nat.pow_pos (by omega)
+          have hle : q ≤ q ^ (e + 1) * q := Nat.le_mul_of_pos_left q hpow
+          calc
+            (q - 1) + q * (q ^ (e + 1) - 1) =
+                (q - 1) + (q ^ (e + 1) * q - q) := by
+              rw [Nat.mul_sub_left_distrib, Nat.mul_one,
+                Nat.mul_comm q (q ^ (e + 1))]
+            _ = q ^ (e + 1) * q - 1 := by omega
+            _ = q ^ ((e + 1) + 1) - 1 := by simp only [Nat.pow_succ]
+
+private theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat)
+    (hp : Prime entry.prime) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        fun q => q ^ k).sum := by
+  by_cases hk : k = 0
+  · subst k
+    rw [sigmaEntry, ite_eq_left rfl]
+    simp only [Nat.pow_zero, sum_ones,
+      DivisorEnumeration.length_powers]
+  · have hq : 1 < entry.prime ^ k := Nat.one_lt_pow hk hp.one_lt
+    rw [sigmaEntry, ite_eq_right hk, powers_sum]
+    simp only [Nat.one_pow, Nat.one_mul]
+    rw [← geometricSum_spec hq entry.exponent,
+      Nat.mul_comm (entry.prime ^ k - 1), Nat.mul_div_left _ (by omega)]
+
+private theorem sigmaEntries_eq (entries : List PrimePower) (k : Nat)
+    (hprime : ∀ entry ∈ entries, Prime entry.prime) :
+    (entries.map fun entry => sigmaEntry entry k).prod =
+      (entries.map fun entry =>
+        ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+          fun q => q ^ k).sum).prod := by
+  induction entries with
+  | nil => simp
+  | cons entry rest ih =>
+      rw [List.map_cons, List.prod_cons, List.map_cons, List.prod_cons,
+        sigmaEntry_eq_powerSum entry k (hprime entry (by simp)),
+        ih (fun e he => hprime e (by simp [he]))]
+
 /-- `sigma` is the sum of `k`th powers over all divisors. -/
 theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum := by
-  rfl
+  by_cases hk : k = 0
+  · subst k
+    rw [sigma, ite_eq_left rfl, numDivisors_eq_size]
+    simp only [Nat.pow_zero, sum_ones, Array.length_toList]
+  · rw [sigma, ite_eq_right hk,
+      sigmaEntries_eq F.raw.factors k
+        (checkFactorization_prime F.valid),
+      ← DivisorEnumeration.sum_pow_values]
+    have hperm := List.mergeSort_perm
+      (DivisorEnumeration.values F.raw.factors) (fun a b => decide (a ≤ b))
+    have hsum := (hperm.map (fun d => d ^ k)).sum_nat
+    simpa only [divisors, List.toList_toArray] using hsum.symm
 
 /-- The factor-product formula counts residues coprime to `n`. -/
 theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :

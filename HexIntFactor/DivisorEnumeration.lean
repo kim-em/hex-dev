@@ -58,7 +58,7 @@ private theorem mem_powers {p e acc x : Nat} :
             rw [Nat.pow_succ]
             ac_rfl
 
-@[simp] private theorem length_powers (p e acc : Nat) :
+@[simp] theorem length_powers (p e acc : Nat) :
     (powers p e acc).length = e + 1 := by
   induction e generalizing acc with
   | zero => simp [powers]
@@ -274,6 +274,41 @@ theorem nodup_values {entries : List PrimePower}
           ((mem_values_iff htail hsortedTail).mp hb₁)
           ((mem_values_iff htail hsortedTail).mp hb₂)
           heq).2
+
+private theorem sum_mul_powers (a k : Nat) : ∀ ys : List Nat,
+    ((ys.map fun b => (a * b) ^ k).sum) =
+      a ^ k * (ys.map fun b => b ^ k).sum
+  | [] => by simp
+  | b :: ys => by
+      rw [List.map_cons, List.sum_cons, List.map_cons, List.sum_cons,
+        Nat.mul_pow, sum_mul_powers a k ys, Nat.mul_add]
+
+private theorem sum_pow_extend (ds : List Nat) (entry : PrimePower) (k : Nat) :
+    ((extend ds entry).map fun d => d ^ k).sum =
+      (ds.map fun d => d ^ k).sum *
+        ((powers entry.prime entry.exponent 1).map fun q => q ^ k).sum := by
+  induction ds with
+  | nil => simp [extend]
+  | cons d ds ih =>
+      rw [show extend (d :: ds) entry =
+        (powers entry.prime entry.exponent 1).map (fun q => d * q) ++
+          extend ds entry by rfl]
+      rw [List.map_append, List.sum_append, ih, List.map_cons, List.sum_cons,
+        Nat.add_mul]
+      congr 1
+      simpa only [List.map_map, Function.comp_def] using
+        sum_mul_powers d k (powers entry.prime entry.exponent 1)
+
+/-- Power sums over generated divisors factor into prime-power power sums. -/
+theorem sum_pow_values (entries : List PrimePower) (k : Nat) :
+    ((values entries).map fun d => d ^ k).sum =
+      (entries.map fun entry =>
+        ((powers entry.prime entry.exponent 1).map fun q => q ^ k).sum).prod := by
+  induction entries with
+  | nil => simp [values]
+  | cons entry rest ih =>
+      simp only [values, List.map_cons, List.prod_cons, sum_pow_extend, ih]
+      exact Nat.mul_comm _ _
 
 private theorem length_extend (values : List Nat) (entry : PrimePower) :
     (extend values entry).length = values.length * (entry.exponent + 1) := by

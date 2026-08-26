@@ -57,7 +57,17 @@ private def checkedHugeTau :
 -- `101 ^ 6` divisors rules out computing the count by enumeration.
 #guard numDivisors checkedHugeTau == 101 ^ 6
 example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
+#guard sigma checked1 0 == 1
+#guard sigma checked12 0 == 6
 #guard sigma checked12 1 == 28
+#guard sigma checked64 1 == 127
+#guard sigma checked64 2 == 5461
+#guard sigma checked10800 1 == 38440
+#guard sigma checkedPow64 1 == 2 ^ 65 - 1
+-- The trillion-divisor input demonstrates that `sigma` never enumerates them.
+#guard sigma checkedHugeTau 1 > 0
+example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
+example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked12 == 4
 #guard radical checked12 == 6
 #guard squarefreePart checked12 == 3

@@ -757,7 +757,11 @@ would be exponential. The local semantic theorems are deliberate: the
 Mathlib bridge proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
-the geometric-series product must not evaluate its `0 / 0` form.
+the geometric-series product must not evaluate its `0 / 0` form. For
+`k > 0`, each certified prime-power entry `(p, e)` contributes the exact
+geometric sum `(q^(e + 1) - 1) / (q - 1)`, where `q = p^k`, and `sigma`
+multiplies those contributions. Checked primality supplies `1 < q`, so
+the division is exact; this route never enumerates the divisors.
 
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
@@ -784,6 +788,7 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
+| `sigma` | `O(k)` geometric sums | for fixed `p` and `k`, an entry has `Θ(e)` output bits |
 | everything else in the divisor API | `O(k)` | |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
@@ -922,6 +927,10 @@ Families:
 - **Order and primitive root**, primes up to `64` bits, reported
   separately from the factorization of `p − 1` they depend on, so the
   check's cost is visible next to the search's.
+- **Generalized divisor sums**, with one ladder growing a prime-power
+  exponent through multi-million-bit output and one growing the number
+  of certified prime-power entries. These isolate the geometric-sum and
+  factor-product costs and rule out divisor enumeration.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
