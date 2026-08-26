@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Dense.lean",
+ "baseline_blob": "e733247cf5aaf1f03d27aab58d9b4d08ada29fae",
+ "current_blob": "919dec4f5be58dd40ef9285b372e3379dc5dfec5",
+ "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+}

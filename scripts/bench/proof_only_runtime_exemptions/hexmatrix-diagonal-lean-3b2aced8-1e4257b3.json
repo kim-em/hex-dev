@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Diagonal.lean",
+ "baseline_blob": "3b2aced8a7aec2bc4112f4432d342aed30267cac",
+ "current_blob": "1e4257b3bcd214f71082004f05763b9d9cc64af7",
+ "reason": "Keeps the measured rectangular diagonal constructor unchanged and adds only entry and row theorems needed by the independent HexSmith proofs; the production factor entry does not call the constructor."
+}

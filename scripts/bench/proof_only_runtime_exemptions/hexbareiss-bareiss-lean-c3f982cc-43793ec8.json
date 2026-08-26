@@ -1,0 +1,6 @@
+{
+ "path": "HexBareiss/Bareiss.lean",
+ "baseline_blob": "c3f982cc5d0f9b0b551b3d203c5f060aaeb0a6d1",
+ "current_blob": "43793ec86e4870abeda7effe3ca8f6c7cf1a5ba4",
+ "reason": "Replaces the local exact-division definition with a compatibility alias to the identical primitive moved to HexArith; Bareiss and the factorization runtime retain the same lean_int_div_exact operation."
+}

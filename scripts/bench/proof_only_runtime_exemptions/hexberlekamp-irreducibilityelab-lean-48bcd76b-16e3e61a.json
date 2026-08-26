@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/IrreducibilityElab.lean",
+ "baseline_blob": "48bcd76b1f8387493490a99e2997697688c7b5d2",
+ "current_blob": "16e3e61a3fbe2da597b3d27e180078b9ba6dfc91",
+ "reason": "Phase 6 documentation only: adds docstrings to the `irreducibility` term and tactic elaborators. No elaborator logic or emitted proof term changes, and the file contains no factorization runtime code."
+}

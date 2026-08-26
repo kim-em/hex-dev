@@ -29,24 +29,37 @@ namespace Hex
 /-- Runtime evidence that the factorization-backed irreducibility checker
 accepted an integer polynomial. -/
 class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
+  /-- The factorization-backed Boolean irreducibility checker accepted `p`. -/
   is_true : ZPoly.isIrreducible p = true
+  /-- `p` has positive degree, excluding the prime constants the integer
+  checker also accepts. -/
   pos_degree : 0 < p.degree?.getD 0
 
 /-- Canonical reduced rational coordinates in the fixed field `ℚ(x)`. -/
 structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
+  /-- Reduced rational coordinates in the power basis of the selected root. -/
   coeffs : DensePoly Rat
+  /-- The coordinates are already reduced modulo the defining polynomial. -/
   degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
 
 /-- A factorization-lazy algebraic root with an eagerly certified isolating
 representative. -/
 structure AlgebraicRoot where
+  /-- The enclosing integer polynomial; it need not be irreducible. -/
   p : ZPoly
+  /-- `p` has unit content. -/
   prim : ZPoly.Primitive p
+  /-- `p` has positive leading coefficient. -/
   pos_lc : 0 < p.leadingCoeff
+  /-- `p` has positive degree. -/
   pos_degree : 0 < p.degree?.getD 0
+  /-- `p` has only simple roots. -/
   squarefree : HasOnlySimpleRoots p
+  /-- The selected root of `p`. -/
   x : SimpleRoot p
+  /-- The certified refined isolation of the selected root. -/
   rep : RefinedIsolation p
+  /-- The stored representative selects exactly the root `x`. -/
   rep_mk : SimpleRoot.mk rep = x
 
 namespace AlgebraicNumber
@@ -105,13 +118,22 @@ end AlgebraicNumber
 polynomial/root pair receives one fixed representative. -/
 structure AlgebraicNumber where
   private mk ::
+  /-- The normalized minimal integer polynomial of the represented value. -/
   p : ZPoly
+  /-- `p` has unit content. -/
   prim : ZPoly.Primitive p
+  /-- `p` has positive leading coefficient. -/
   pos_lc : 0 < p.leadingCoeff
+  /-- `p` has positive degree. -/
   pos_degree : 0 < p.degree?.getD 0
+  /-- The Boolean irreducibility checker accepted `p`. -/
   checked : ZPoly.CheckedIrreducible p
+  /-- `p` has only simple roots. -/
   squarefree : HasOnlySimpleRoots p
+  /-- The certified refined isolation of the represented root. -/
   rep : RefinedIsolation p
+  /-- The stored representative comes from the deterministic canonical
+  isolation pipeline (or is the fixed representative of zero). -/
   canonical : AlgebraicNumber.IsCanonical p squarefree rep
 
 namespace AlgebraicNumber
@@ -121,6 +143,7 @@ namespace AlgebraicNumber
 def x (a : AlgebraicNumber) : SimpleRoot a.p :=
   SimpleRoot.mk a.rep
 
+/-- The stored canonical representative selects exactly the root `a.x`. -/
 @[simp] theorem rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x := rfl
 
@@ -315,8 +338,11 @@ def panicWith (fallback : α) (message : String) : α :=
 
 /-- A root paired with its positive multiplicity. -/
 structure RootCount where
+  /-- The recorded root. -/
   root : AlgebraicRoot
+  /-- The multiplicity of the root in the polynomial being solved. -/
   multiplicity : Nat
+  /-- Roots are recorded only with positive multiplicity. -/
   multiplicity_pos : 0 < multiplicity
 
 /-- A polynomial root set; `.all` is reserved for the zero polynomial. -/

@@ -19,8 +19,8 @@ the end-to-end post-condition of the public API: exact agreement of
 values, units, powers, and signs included, not merely simultaneous
 vanishing. It needs no monicity, coprimality, or nonzero hypotheses on
 `f` and `g`; its typeclass context is the executable algorithm's own
-(`CommRing R`, `IsDomain R`, `DecidableEq R`, `Div R`,
-`Hex.ExactDivLaws R`). It is built from
+(`CommRing R`, `DecidableEq R`, `Div R`, `Hex.ExactDivLaws R`). It is
+built from
 `coeffMinor_zero_eq_resultant` through the ordered Brown-Traub chain
 correspondence.
 
@@ -167,7 +167,7 @@ end PseudoDivMod
 
 /-- The executable and Mathlib resultants agree under the dense-polynomial
     correspondence. -/
-theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R] (f g : DensePoly R) :
     resultant f g =
       Polynomial.resultant (HexPolyMathlib.toPolynomial f)
@@ -184,7 +184,7 @@ theorem resultant_eq_zero_iff_common_root
 
 /-- Specialize the coefficient variable after eliminating the polynomial
     variable. -/
-theorem eval_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+theorem eval_resultant [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a : R) :
     eval (resultant f g) a =
@@ -194,7 +194,7 @@ theorem eval_resultant [CommRing R] [IsDomain R] [DecidableEq R]
 /-- Default-formal-degree specialization when neither leading coefficient
     vanishes at the specialization point. -/
 theorem eval_resultant_default
-    [CommRing R] [IsDomain R] [DecidableEq R]
+    [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly (DensePoly R)) (a : R)
     (hf : eval f.leadingCoeff a ≠ 0) (hg : eval g.leadingCoeff a ≠ 0) :
@@ -218,7 +218,7 @@ theorem resultant_eq_leadingCoeff_mul_prod_roots
     Polynomial.resultant f g =
       f.leadingCoeff ^ g.natDegree * (f.roots.map g.eval).prod
 
-theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
+theorem toPolynomial_disc [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R] (f : DensePoly R) :
     disc f = Polynomial.discr (HexPolyMathlib.toPolynomial f)
 

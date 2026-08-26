@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Factorization.lean",
+ "baseline_blob": "8d796854822562cd7883e2308d444f9e07702b36",
+ "current_blob": "bb06dd6b8bade049d2ffc6e1844297e56bd23bff",
+ "reason": "Phase 6 polish only: adds docstrings to the scalar-contract and precision-cap lemmas and to `runClassical_plan`, and deletes the unreferenced public wrapper `classicalCoreFactors`, which no caller, driver, or SPEC entry names. `ZPoly.factorize`, `factorClassical`, `factorLattice`, `factorTrial`, and every executable definition on the factorization path are unchanged."
+}

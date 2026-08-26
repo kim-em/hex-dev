@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Lcm.lean",
+ "baseline_blob": null,
+ "current_blob": "30fe4e90c0b4ad1efd395214bdbbbe3108e68837",
+ "reason": "Adds the polynomial LCM API used only by HexMinPoly; although reachable through the HexPoly umbrella, none of its definitions is called by hexbz_factor_service's factor entry."
+}

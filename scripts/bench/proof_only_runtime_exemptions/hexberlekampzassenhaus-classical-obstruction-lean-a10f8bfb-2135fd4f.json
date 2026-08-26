@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Classical/Obstruction.lean",
+ "baseline_blob": "a10f8bfb2b9ceef8eb49029c10ffd3c4aa2670ac",
+ "current_blob": "2135fd4f9fe33dfc40dab57c664c537959d5b36f",
+ "reason": "Phase 6 polish only: adds docstrings to the two obstruction-prime instances and re-expresses `TargetImage` as a subtype instead of a one-field structure with a pinned proof field, removing its auto-generated non-simp-normal `mk.injEq` lemma. Both forms erase to the single stored `FpPoly`, so `targetImage` and `obstructs` compile to identical code; `obstructionImage`, `obstructionRemainder`, and `obstructedQuotient?` are untouched."
+}

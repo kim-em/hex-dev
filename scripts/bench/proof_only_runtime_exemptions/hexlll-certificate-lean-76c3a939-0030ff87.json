@@ -1,0 +1,6 @@
+{
+ "path": "HexLLL/Certificate.lean",
+ "baseline_blob": "76c3a939fa7f85f336e67218b879485c0fa759f5",
+ "current_blob": "0030ff8748a9cce918ab64ed0fe4127483b1d95e",
+ "reason": "Turns HexLLL.Certificate into a compatibility import after moving its packed certificate declarations unchanged to HexMatrix.Certificate; existing consumers receive the same executable definitions."
+}

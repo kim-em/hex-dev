@@ -21,6 +21,21 @@ def rhoSplit? (n : Nat) (r : Rand) (fuel : Nat) :
     Except RhoFailure (Nat × Rand) :=
   rhoFactor? n r fuel
 
+namespace Internal
+
+/-- Try the shared Brent-rho search while retaining its exact restart count. -/
+def rhoSplitCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except RhoFailure RhoSuccess :=
+  rhoFactorCounted? n r fuel
+
+/-- Every counted adapter success is a proper divisor. -/
+theorem rhoSplitCounted?_spec {n : Nat} {r : Rand} {fuel : Nat}
+    {success : RhoSuccess} (h : rhoSplitCounted? n r fuel = .ok success) :
+    1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n :=
+  rhoFactorCounted?_spec h
+
+end Internal
+
 /-- Every rho adapter success is a proper divisor. -/
 theorem rhoSplit?_spec {n : Nat} {r r' : Rand} {fuel d : Nat}
     (h : rhoSplit? n r fuel = .ok (d, r')) :

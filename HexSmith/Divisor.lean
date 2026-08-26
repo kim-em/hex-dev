@@ -29,7 +29,12 @@ noncomputable def minorValue (A : Matrix Int n m)
 /-- The natural gcd of the determinants of all `k × k` minors. Row and
 column selections are enumerated in the canonical strictly increasing order
 provided by `selectedColumnTuples`; the definition therefore contains no
-reference to `snf`. The empty minor has determinant one. -/
+reference to `snf`. The empty minor has determinant one.
+
+Direct evaluation enumerates all `k × k` minors and is exponential in the
+matrix dimensions. This is a specification surface for uniqueness proofs,
+not the executable way to obtain invariant factors; use `invariantFactors`
+for computation. -/
 noncomputable def detDivisor (A : Matrix Int n m) (k : Nat) : Nat :=
   (minorSelections n m k).foldl (fun g selection =>
     Nat.gcd g (minorValue A selection)) 0
@@ -76,6 +81,8 @@ private theorem foldl_gcd_eq_zero {R : Type} (xs : List R) (f : R → Nat)
       intro y hy
       exact hall y (List.mem_cons_of_mem x hy)
 
+/-- A pair of canonical row and column selections occurs in the combined
+minor-selection enumeration. -/
 theorem minorSelections_mem (rows : Vector (Fin n) k) (cols : Vector (Fin m) k)
     (hrows : rows ∈ selectedColumnTuples k n)
     (hcols : cols ∈ selectedColumnTuples k m) :
@@ -175,6 +182,7 @@ private theorem IsSNF.diag_dvd_of_le {A : Matrix Int n m} {S : SmithData n m}
         exact Int.dvd_trans (ih (by omega) hi_le_j)
           (h.chain j (by omega))
 
+/-- Folding a vector prefix agrees with folding its finite index range. -/
 theorem foldl_take_eq_finFoldl (d : Vector Int r) (k : Nat)
     (hk : k ≤ r) :
     (d.take k).foldl (· * ·) 1 =
@@ -282,10 +290,9 @@ theorem IsSNF.detDivisor_diag_eq {A : Matrix Int n m} {S : SmithData n m}
     intro rows hrows cols _hcols
     exact h.prefix_dvd_minor k hk rows cols hrows
 
-/-- Minors larger than the represented Smith diagonal all vanish. -/
-theorem IsSNF.detDivisor_diag_eq_zero {A : Matrix Int n m}
-    {S : SmithData n m} (h : IsSNF A S) (k : Nat) (hk : S.rank < k) :
-    detDivisor (diagMatrix S.diag n m) k = 0 := by
+/-- Minors larger than a represented diagonal vector all vanish. -/
+theorem detDivisor_diag_eq_zero (d : Vector Int r) (n m k : Nat) (hk : r < k) :
+    detDivisor (diagMatrix d n m) k = 0 := by
   unfold detDivisor
   apply foldl_gcd_eq_zero
   intro selection hselection
@@ -294,17 +301,17 @@ theorem IsSNF.detDivisor_diag_eq_zero {A : Matrix Int n m}
   rw [List.mem_map] at hcols
   rcases hcols with ⟨cols, _hcols, rfl⟩
   unfold minorValue
-  have hzero : det (selectedSubmatrix (diagMatrix S.diag n m) rows cols) = 0 :=
-      det_eq_zero_of_row_zero _ (⟨S.rank, hk⟩ : Fin k) (by
+  have hzero : det (selectedSubmatrix (diagMatrix d n m) rows cols) = 0 :=
+      det_eq_zero_of_row_zero _ (⟨r, hk⟩ : Fin k) (by
     apply Vector.ext
     intro j hj
     simp only [Vector.getElem_zero]
     have hge := index_le_of_strictlyIncreasing rows
       ((mem_selectedColumnTuples_iff rows).mp hrows)
-      (⟨S.rank, hk⟩ : Fin k)
-    exact (getElem_selectedSubmatrix (diagMatrix S.diag n m) rows cols
-      (⟨S.rank, hk⟩ : Fin k) (⟨j, hj⟩ : Fin k)).trans
-        (diagMatrix_apply_of_ge S.diag rows[(⟨S.rank, hk⟩ : Fin k)]
+      (⟨r, hk⟩ : Fin k)
+    exact (getElem_selectedSubmatrix (diagMatrix d n m) rows cols
+      (⟨r, hk⟩ : Fin k) (⟨j, hj⟩ : Fin k)).trans
+        (diagMatrix_apply_of_ge d rows[(⟨r, hk⟩ : Fin k)]
           cols[(⟨j, hj⟩ : Fin k)] hge))
   simp [hzero]
 
@@ -375,8 +382,9 @@ theorem IsSNF.detDivisor_eq {A : Matrix Int n m} {S : SmithData n m}
   rw [← hform]
   split
   next hk => exact h.detDivisor_diag_eq k hk
-  next hk => exact h.detDivisor_diag_eq_zero k (Nat.lt_of_not_ge hk)
+  next hk => exact detDivisor_diag_eq_zero S.diag n m k (Nat.lt_of_not_ge hk)
 
+/-- The zeroth determinantal divisor is the empty-minor determinant, one. -/
 @[simp]
 theorem detDivisor_zero (A : Matrix Int n m) : detDivisor A 0 = 1 := by
   simp [detDivisor, minorValue, minorSelections, selectedColumnTuples,

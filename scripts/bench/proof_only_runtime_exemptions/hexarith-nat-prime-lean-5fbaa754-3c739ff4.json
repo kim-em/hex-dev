@@ -1,0 +1,6 @@
+{
+ "path": "HexArith/Nat/Prime.lean",
+ "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
+ "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
+ "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
+}

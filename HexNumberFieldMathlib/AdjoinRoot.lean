@@ -659,6 +659,7 @@ noncomputable def adjoinRootEquiv [ZPoly.CheckedIrreducible p] :
     QAdjoin p x ≃+* AdjoinRoot (definingPolynomial p) :=
   RingEquiv.ofBijective toAdjoinRootHom toAdjoinRoot_bijective
 
+/-- The packaged ring equivalence acts by the underlying comparison map. -/
 @[simp]
 theorem adjoinRootEquiv_apply [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) : adjoinRootEquiv a = toAdjoinRoot a := rfl
@@ -674,6 +675,7 @@ noncomputable def embedding [ZPoly.CheckedIrreducible p]
   map_add' := fun a b => map_add a b rep h
   map_mul' := fun a b => map_mul a b rep h
 
+/-- The packaged ring homomorphism acts by evaluation at the selected root. -/
 @[simp]
 theorem embedding_apply [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)

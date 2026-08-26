@@ -41,15 +41,49 @@ structure CheckedOrderCert where
   raw : OrderCert
   valid : checkOrder raw = true
 
-private theorem checkOrder_parts {c : OrderCert} (h : checkOrder c = true) :
+/-- Characterisation of every condition replayed by the order checker. -/
+theorem checkOrder_iff {c : OrderCert} : checkOrder c = true ↔
     1 < c.modulus ∧ 0 < c.order ∧ c.orderFac.subject = c.order ∧
       checkFactorization c.orderFac = true ∧
       HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus ∧
       ∀ e ∈ c.orderFac.factors,
         HexArith.powModNat c.base (c.order / e.prime) c.modulus ≠
           1 % c.modulus := by
-  simpa only [checkOrder, Bool.and_eq_true, decide_eq_true_eq,
-    List.all_eq_true, and_assoc] using h
+  simp only [checkOrder, Bool.and_eq_true, decide_eq_true_eq,
+    List.all_eq_true, and_assoc]
+
+/-- An accepted order certificate has a nontrivial modulus. -/
+theorem checkOrder_one_lt_modulus {c : OrderCert} (h : checkOrder c = true) :
+    1 < c.modulus :=
+  (checkOrder_iff.mp h).1
+
+/-- An accepted order certificate has positive claimed order. -/
+theorem checkOrder_order_pos {c : OrderCert} (h : checkOrder c = true) :
+    0 < c.order :=
+  (checkOrder_iff.mp h).2.1
+
+/-- The factorization in an accepted order certificate targets its order. -/
+theorem checkOrder_orderFac_subject {c : OrderCert}
+    (h : checkOrder c = true) : c.orderFac.subject = c.order :=
+  (checkOrder_iff.mp h).2.2.1
+
+/-- The factorization in an accepted order certificate is valid. -/
+theorem checkOrder_orderFac {c : OrderCert} (h : checkOrder c = true) :
+    checkFactorization c.orderFac = true :=
+  (checkOrder_iff.mp h).2.2.2.1
+
+/-- The claimed order in an accepted certificate sends the base to one. -/
+theorem checkOrder_pow {c : OrderCert} (h : checkOrder c = true) :
+    HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus :=
+  (checkOrder_iff.mp h).2.2.2.2.1
+
+/-- Removing any listed prime divisor from an accepted claimed order does not
+send the base to one. -/
+theorem checkOrder_pow_div_prime {c : OrderCert} (h : checkOrder c = true) :
+    ∀ e ∈ c.orderFac.factors,
+      HexArith.powModNat c.base (c.order / e.prime) c.modulus ≠
+        1 % c.modulus :=
+  (checkOrder_iff.mp h).2.2.2.2.2
 
 private theorem prime_dvd_pow' {q a : Nat} (hq : Prime q) :
     ∀ {k : Nat}, q ∣ a ^ k → q ∣ a := by
@@ -115,38 +149,43 @@ private theorem factorProduct_dvd {d : Nat} :
 /-- Accepted order data identifies the local `orderOf`. -/
 theorem order_eq_of_checkOrder {c : OrderCert} (h : checkOrder c = true) :
     orderOf c.base c.modulus = c.order := by
-  have hp := checkOrder_parts h
-  have hpow := hp.2.2.2.2.1
-  rw [HexArith.powModNat_eq _ _ _ (by omega)] at hpow
+  have hn : 0 < c.modulus := Nat.zero_lt_of_lt (checkOrder_one_lt_modulus h)
+  have hpow := checkOrder_pow h
+  rw [HexArith.powModNat_eq _ _ _ hn] at hpow
   have hord_dvd : orderOf c.base c.modulus ∣ c.order :=
-    orderOf_dvd_of_pow_eq_one hp.1 hp.2.1 hpow
+    orderOf_dvd_of_pow_eq_one (checkOrder_one_lt_modulus h)
+      (checkOrder_order_pos h) hpow
   have hentry : ∀ e ∈ c.orderFac.factors,
       e.prime ^ e.exponent ∣ orderOf c.base c.modulus := by
     intro e he
     have heOrder : e.prime ^ e.exponent ∣ c.order := by
-      rw [← hp.2.2.1]
-      exact (checkFactorization_multiplicity hp.2.2.2.1 he).2 (Nat.le_refl _)
-    have hne := hp.2.2.2.2.2 e he
-    rw [HexArith.powModNat_eq _ _ _ (by omega)] at hne
+      rw [← checkOrder_orderFac_subject h]
+      exact (checkFactorization_multiplicity (checkOrder_orderFac h) he).2
+        (Nat.le_refl _)
+    have hne := checkOrder_pow_div_prime h e he
+    rw [HexArith.powModNat_eq _ _ _ hn] at hne
     exact prime_pow_dvd_orderOf
-      (checkFactorization_prime hp.2.2.2.1 e he) heOrder hp.1 hpow hne
+      (checkFactorization_prime (checkOrder_orderFac h) e he) heOrder
+      (checkOrder_one_lt_modulus h) hpow hne
   have horder_product :
       (c.orderFac.factors.map fun e => e.prime ^ e.exponent).prod ∣
         orderOf c.base c.modulus :=
-    factorProduct_dvd (checkFactorization_prime hp.2.2.2.1)
-      (checkFactorization_sorted hp.2.2.2.1) hentry
+    factorProduct_dvd (checkFactorization_prime (checkOrder_orderFac h))
+      (checkFactorization_sorted (checkOrder_orderFac h)) hentry
   have hc_dvd : c.order ∣ orderOf c.base c.modulus := by
-    rw [← hp.2.2.1, ← checkFactorization_prod hp.2.2.2.1]
+    rw [← checkOrder_orderFac_subject h,
+      ← checkFactorization_prod (checkOrder_orderFac h)]
     exact horder_product
   exact Nat.dvd_antisymm hord_dvd hc_dvd
 
 /-- A positive power equal to one makes the base a unit. -/
 theorem coprime_of_checkOrder {c : OrderCert} (h : checkOrder c = true) :
     Nat.Coprime c.base c.modulus := by
-  have hp := checkOrder_parts h
-  have hpow := hp.2.2.2.2.1
-  rw [HexArith.powModNat_eq _ _ _ (by omega)] at hpow
-  exact coprime_of_pow_mod_eq_one hp.1 hp.2.1 hpow
+  have hn : 0 < c.modulus := Nat.zero_lt_of_lt (checkOrder_one_lt_modulus h)
+  have hpow := checkOrder_pow h
+  rw [HexArith.powModNat_eq _ _ _ hn] at hpow
+  exact coprime_of_pow_mod_eq_one (checkOrder_one_lt_modulus h)
+    (checkOrder_order_pos h) hpow
 
 /-- Test primitivity modulo a certified prime using the complete
 factorization of `p - 1`. -/
@@ -188,14 +227,8 @@ theorem isPrimitiveRoot_iff {p : Nat} {pc : CheckedPrimeCert p}
       · simpa [horder] using hquotLt
       · rw [← HexArith.powModNat_eq _ _ _ hp.pos]
         exact heq
-    simpa only [isPrimitiveRoot, checkOrder, Bool.and_eq_true,
-      decide_eq_true_eq, List.all_eq_true, and_assoc] using
-      (show 1 < p ∧ 0 < p - 1 ∧ F.raw.subject = p - 1 ∧
-          checkFactorization F.raw = true ∧
-          HexArith.powModNat g (p - 1) p = 1 % p ∧
-          ∀ e ∈ F.raw.factors,
-            HexArith.powModNat g ((p - 1) / e.prime) p ≠ 1 % p from
-        ⟨hp.one_lt, hpred, F.subject_eq, F.valid, hpow, hne⟩)
+    exact checkOrder_iff.mpr
+      ⟨hp.one_lt, hpred, F.subject_eq, F.valid, hpow, hne⟩
 
 private def primitiveRootGo {p : Nat} (F : CheckedFactorization (p - 1)) :
     Nat → Nat → Option (Nat × CheckedOrderCert)
@@ -450,23 +483,7 @@ theorem pow_carmichael {n : Nat} (F : CheckedFactorization n)
     a ^ carmichael F % n = 1 % n := by
   by_cases hn : n = 1
   · simpa only [hn, Nat.mod_one]
-  have hnPos : 0 < n := by
-    have product_pos : ∀ (entries : List PrimePower),
-        (∀ e ∈ entries, Prime e.prime) →
-        0 < (entries.map fun e => e.prime ^ e.exponent).prod := by
-      intro entries
-      induction entries with
-      | nil => simp
-      | cons e rest ih =>
-          intro hprime
-          simp only [List.map_cons, List.prod_cons]
-          exact Nat.mul_pos (Nat.pow_pos (hprime e List.mem_cons_self).pos)
-            (ih (fun x hx => hprime x (List.mem_cons_of_mem e hx)))
-    have hprodPos : 0 <
-        (F.raw.factors.map fun e => e.prime ^ e.exponent).prod := by
-      exact product_pos F.raw.factors (checkFactorization_prime F.valid)
-    rw [checkFactorization_prod F.valid, F.subject_eq] at hprodPos
-    exact hprodPos
+  have hnPos : 0 < n := F.pos
   have hnOne : 1 < n := by omega
   have hlocal : ∀ e ∈ F.raw.factors,
       e.prime ^ e.exponent ∣ a ^ carmichael F - 1 := by

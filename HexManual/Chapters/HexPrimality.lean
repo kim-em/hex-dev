@@ -181,9 +181,8 @@ with the proof that it is about the requested number:
 {docstring Hex.Nat.primeCert?}
 
 The search factors `n - 1` with trial division against the table
-followed by Brent's variant of Pollard rho; the rho primitive is
-public (the planned hex-int-factor library will reuse it) and
-validates every factor it returns:
+followed by Brent's variant of Pollard rho; the rho primitive is public,
+reused by hex-int-factor, and validates every factor it returns:
 
 {docstring Hex.Nat.rhoFactor?}
 
