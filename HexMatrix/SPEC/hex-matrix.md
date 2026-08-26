@@ -11,6 +11,7 @@ Dense matrices over a coefficient type `R`.
 - Dot product, norm squared (for `R = Int` and `R = Rat`)
 - Row operations (swap, scale, add multiple of one row to another) and the
   corresponding column operations
+- Rectangular leading-diagonal construction `diagMatrix`
 - Submatrix / leading-submatrix slicing and the Gram matrix
 - Generic over the coefficient type `R`
 
@@ -81,10 +82,20 @@ to change one column.
 
 **Key properties:**
 - identity matrices act as left and right multiplicative identities
+- row-vector multiplication associates with matrix multiplication, and its
+  action on `diagMatrix` is characterized entrywise
 - `transpose` is involutive
 - `gramMatrix M = M * Mᵀ`
 - elementary-operation multiplicative and inverse-preservation lemmas
 - `smul_mul : (c • A) * B = c • (A * B)`, with `row_smul` underneath it
+
+The executable operations remain in `Elementary.lean`; the reusable algebraic
+surface is grouped in `ElementaryAlgebra.lean`. It includes multiplication
+transport for row and column operations, the explicit inverse-preservation
+lemmas used by certificate-producing elimination, and
+`transpose_colAdd`. `Matrix` and `DensePoly` structural Boolean equality are
+lawful whenever entry equality is lawful, so certificate checkers may use
+matrix `BEq` without a separate soundness assumption.
 
 The determinant of a row operation (`det_rowSwap`, `det_rowScale`,
 `det_rowAdd`) is stated in `hex-determinant`, where `det` is defined.

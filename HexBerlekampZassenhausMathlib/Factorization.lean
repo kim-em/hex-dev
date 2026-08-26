@@ -198,15 +198,6 @@ theorem factorPower_toPolynomial (f : Hex.ZPoly) (k : Nat) :
       rw [Hex.Factorization.factorPower_succ, HexPolyZMathlib.toPolynomial_mul, ih]
       exact (pow_succ (HexPolyZMathlib.toPolynomial f) k).symm
 
-theorem map_toPolynomial_replicate_prod (f : Hex.ZPoly) (k : Nat) :
-    ((List.replicate k f).map HexPolyZMathlib.toPolynomial).prod =
-      HexPolyZMathlib.toPolynomial f ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-      rw [List.replicate_succ, List.map_cons, List.prod_cons, ih]
-      exact (pow_succ' (HexPolyZMathlib.toPolynomial f) k).symm
-
 private theorem factorizationProduct_toPolynomial_foldl
     (entries : List (Hex.ZPoly × Nat)) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial

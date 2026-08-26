@@ -107,10 +107,12 @@ private theorem monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false
   unfold Hex.monicModularImage
   simp [hf]
 
+/-- The monic modular image of the zero polynomial is zero. -/
 theorem monicModPImage_zero {p : Nat} [Hex.ZMod64.Bounds p] :
     @monicModPImage p _ 0 = 0 := by
   rfl
 
+/-- The monic modular image of a nonzero polynomial is nonzero. -/
 theorem monicModPImage_ne_zero_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Hex.Nat.Prime p)]
     {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -162,6 +164,8 @@ private theorem monicModularImage_dvd_self_of_isZero_false
   rw [monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hf]
   exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
 
+/-- The monic modular image of a nonzero polynomial divides the input: the
+image is a unit (inverse-leading-coefficient) scaling. -/
 theorem monicModPImage_dvd_self_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -180,9 +184,11 @@ theorem monicModPImage_dvd_self_of_ne_zero
     Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
   exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
 
-theorem dvd_monicModPImage_of_dvd
+/-- A nonzero polynomial divides its monic modular image, the reverse direction
+of `monicModPImage_dvd_self_of_ne_zero`: the two are associates. -/
+theorem dvd_monicModPImage_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
-    (_hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p}
+    {f : Hex.FpPoly p}
     (hf : f.isZero = false) :
     f ∣ monicModPImage f := by
   unfold monicModPImage

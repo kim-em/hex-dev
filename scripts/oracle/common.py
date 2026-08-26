@@ -18,6 +18,12 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``polymatrix`` — ``{"kind": "polymatrix", "lib": str, "case": str,
+                     "field": {"p": int}|{"rat": true}, "rows": int,
+                     "cols": int, "entries": <polynomial matrix>}``
+                     Modular polynomials are ascending integer coefficient
+                     lists; rational polynomials have parallel ``num``/``den``
+                     lists.
 * ``sparsepoly`` — ``{"kind": "sparsepoly", "lib": str, "case": str,
                      "domain": "int"|"rat"|"zmod", "mod": int|None,
                      "terms": List[[exp, num, den]]}`` — ascending
@@ -70,6 +76,8 @@ JSONL fixture record shape (one record per line):
                          "sentence": <recursive sentence AST>}``
                      (one univariate real sentence; atoms contain integer
                       polynomial coefficients in ascending degree order.)
+* ``factor`` / ``divisorfn`` / ``order`` / ``cyclotomic`` — natural-number
+  inputs for the certified integer-factorization oracle.
 
 Result records (emitted by Lean alongside the fixture, on the same
 JSONL stream) carry the operation name and Lean's computed answer:
@@ -94,6 +102,7 @@ caller-supplied directory):
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -104,6 +113,7 @@ VALID_FIXTURE_KINDS = frozenset(
     {
         "poly",
         "matrix",
+        "polymatrix",
         "mvpoly",
         "mvgcd",
         "mvsqf",
@@ -127,6 +137,10 @@ VALID_FIXTURE_KINDS = frozenset(
         "gfqring",
         "gfqfield",
         "rcf_sentence",
+        "factor",
+        "divisorfn",
+        "order",
+        "cyclotomic",
     }
 )
 
@@ -359,6 +373,68 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "polymatrix":
+        rows = record.get("rows")
+        cols = record.get("cols")
+        if not _is_int(rows) or rows < 0 or not _is_int(cols) or cols < 0:
+            raise FixtureError(
+                f"polymatrix rows/cols must be nonnegative ints: {record!r}"
+            )
+        field = record.get("field")
+        if not isinstance(field, dict) or (
+            set(field) not in ({"p"}, {"rat"})
+        ):
+            raise FixtureError(
+                f"polymatrix.field must be {{'p': p}} or {{'rat': true}}: {record!r}"
+            )
+        is_rat = "rat" in field
+        if is_rat:
+            if field["rat"] is not True:
+                raise FixtureError(f"polymatrix.field.rat must be true: {record!r}")
+        elif not _is_int(field["p"]) or field["p"] < 2:
+            raise FixtureError(f"polymatrix.field.p must be an int >= 2: {record!r}")
+        entries = record.get("entries")
+        expected_rows = 0 if rows == 0 or cols == 0 else rows
+        if not isinstance(entries, list) or len(entries) != expected_rows:
+            raise FixtureError(
+                f"polymatrix.entries has wrong row count: {record!r}"
+            )
+        for row in entries:
+            if not isinstance(row, list) or len(row) != cols:
+                raise FixtureError(
+                    f"polymatrix entry row has wrong column count: {record!r}"
+                )
+            for poly in row:
+                if is_rat:
+                    if not isinstance(poly, dict) or set(poly) != {"num", "den"}:
+                        raise FixtureError(
+                            f"rational polynomial must have num/den arrays: {record!r}"
+                        )
+                    nums, dens = poly["num"], poly["den"]
+                    if (
+                        not isinstance(nums, list)
+                        or not isinstance(dens, list)
+                        or len(nums) != len(dens)
+                        or not all(_is_int(x) for x in nums)
+                        or not all(_is_int(x) and x > 0 for x in dens)
+                        or any(math.gcd(abs(a), b) != 1 for a, b in zip(nums, dens))
+                    ):
+                        raise FixtureError(
+                            f"invalid rational polynomial coefficients: {record!r}"
+                        )
+                    if nums and nums[-1] == 0:
+                        raise FixtureError(
+                            f"polymatrix polynomial has trailing zero: {record!r}"
+                        )
+                else:
+                    if not isinstance(poly, list) or not all(_is_int(x) for x in poly):
+                        raise FixtureError(
+                            f"modular polynomial must be List[int]: {record!r}"
+                        )
+                    if poly and poly[-1] == 0:
+                        raise FixtureError(
+                            f"polymatrix polynomial has trailing zero: {record!r}"
+                        )
     elif kind == "sparsepoly":
         domain = record.get("domain")
         if domain not in {"int", "rat", "zmod"}:
@@ -566,6 +642,20 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not _is_int(record.get("n")) or record["n"] < 0:
             raise FixtureError(f"certcheck.n must be a nonnegative int: {record!r}")
         _validate_prime_cert(record.get("cert"), "certcheck.cert")
+    elif kind in {"factor", "divisorfn"}:
+        _exact_keys(record, {"kind", "lib", "case", "n"}, kind)
+        if not _is_nat(record.get("n")):
+            raise FixtureError(f"{kind}.n must be a nonnegative int: {record!r}")
+    elif kind == "order":
+        _exact_keys(record, {"kind", "lib", "case", "base", "modulus"}, kind)
+        if not _is_nat(record.get("base")) or not _is_nat(record.get("modulus")):
+            raise FixtureError(f"order fields must be nonnegative ints: {record!r}")
+    elif kind == "cyclotomic":
+        _exact_keys(record, {"kind", "lib", "case", "b", "n", "sign"}, kind)
+        if not _is_nat(record.get("b")) or not _is_nat(record.get("n")):
+            raise FixtureError(f"cyclotomic b/n must be nonnegative ints: {record!r}")
+        if record.get("sign") not in {"minus", "plus"}:
+            raise FixtureError(f"cyclotomic.sign must be minus/plus: {record!r}")
     elif kind == "prime":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):

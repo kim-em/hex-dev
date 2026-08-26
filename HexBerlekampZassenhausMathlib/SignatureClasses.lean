@@ -70,6 +70,8 @@ def partitionAcc (r : Nat) (sig : Nat → Array Rat) :
     (fun rep =>
       (sig rep, (List.range r).filter (fun j => sig j = sig rep)))
 
+/-- Forgetting the signatures in `partitionAcc` leaves the canonical
+min-column partition. -/
 theorem partitionAcc_map_snd (r : Nat) (sig : Nat → Array Rat) :
     (partitionAcc r sig).map Prod.snd = partitionByMinColumn r sig := by
   unfold partitionAcc partitionByMinColumn
@@ -113,6 +115,7 @@ theorem bhksInsertSignatureClass_eq_replace
       have := ih hl'
       simp [Hex.bhksInsertSignatureClass, hs', this]
 
+/-- A fresh signature at column `m` appends `m` as a new representative. -/
 theorem representativeColumns_succ_of_fresh
     (m : Nat) (sig : Nat → Array Rat)
     (hfresh : ∀ k, k < m → sig k ≠ sig m) :
@@ -134,6 +137,7 @@ theorem representativeColumns_succ_of_fresh
     simp [List.filter, hempty]
   rw [hsuffix]
 
+/-- A column whose signature was already seen adds no new representative. -/
 theorem representativeColumns_succ_of_match
     (m : Nat) (sig : Nat → Array Rat)
     (k₀ : Nat) (hk₀ : k₀ < m) (hsig : sig k₀ = sig m) :
@@ -190,27 +194,16 @@ theorem mem_representativeColumns_iff
     rw [List.mem_range] at hmem
     exact hfresh k hmem (by simpa using hsig)
 
+/-- Representative columns lie in `{0, …, m-1}`. -/
 theorem representativeColumns_lt (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
     (h : rep ∈ representativeColumns m sig) : rep < m :=
   ((mem_representativeColumns_iff m sig rep).mp h).1
 
+/-- A representative column's signature does not occur at any earlier column. -/
 theorem representativeColumns_fresh (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
     (h : rep ∈ representativeColumns m sig) :
     ∀ k, k < rep → sig k ≠ sig rep :=
   ((mem_representativeColumns_iff m sig rep).mp h).2
-
-/--
-Representatives in `representativeColumns m sig` carry pairwise
-distinct signatures: each rep's signature first appears at that rep.
--/
-theorem representativeColumns_distinct_sig
-    (m : Nat) (sig : Nat → Array Rat)
-    {rep₁ rep₂ : Nat}
-    (_h₁ : rep₁ ∈ representativeColumns m sig)
-    (h₂ : rep₂ ∈ representativeColumns m sig)
-    (hlt : rep₁ < rep₂) :
-    sig rep₁ ≠ sig rep₂ :=
-  representativeColumns_fresh m sig rep₂ h₂ rep₁ hlt
 
 /-- Filtering `List.range (m + 1)` splits as filtering range `m` plus
 the trailing element. -/

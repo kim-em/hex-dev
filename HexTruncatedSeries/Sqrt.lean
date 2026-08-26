@@ -191,6 +191,22 @@ private theorem sqrtStep_stable [Lean.Grind.CommRing R]
     exact hzmul
   exact hstep.trans hraw
 
+private theorem sqrtNewton_stable [Lean.Grind.CommRing R]
+    (a : TSeries R n) (r v : R) (hr : r * r = a.coeff 0)
+    (hv : ((1 + 1) * r) * v = 1) (j : Nat) :
+    Agree (2 ^ j)
+      (newton (sqrtStep a (r * v)) (C ((1 + 1) * v)) (j + 1))
+      (newton (sqrtStep a (r * v)) (C ((1 + 1) * v)) j) := by
+  change Agree (2 ^ j)
+    (sqrtStep a (r * v)
+      (newton (sqrtStep a (r * v)) (C ((1 + 1) * v)) j)
+      (2 ^ (j + 1)))
+    (newton (sqrtStep a (r * v)) (C ((1 + 1) * v)) j)
+  apply sqrtStep_stable a _ (r * v) (2 ^ j) (2 ^ (j + 1))
+  · exact Nat.pow_le_pow_right (by decide : 0 < 2) (Nat.le_succ j)
+  · grind
+  · exact sqrtNewton_correct a r v hr hv j
+
 private theorem sqrtNewton_const [Lean.Grind.CommRing R]
     (a : TSeries R n) (r v : R) (hr : r * r = a.coeff 0)
     (hv : ((1 + 1) * r) * v = 1) (j : Nat) :
@@ -219,6 +235,31 @@ private theorem sqrtOfRoot_eq [Lean.Grind.CommRing R]
   unfold sqrtOfRoot sqrtUpTo
   simp only [Nat.min_self]
   rw [coeff_ofFn _ i hi, if_pos hi, coeff_mulUpTo n _ _ i hi, if_pos hi]
+
+/-- Bounded square-root lifting agrees with the full lift throughout the
+requested prefix. -/
+theorem sqrtUpTo_agree [Lean.Grind.CommRing R]
+    (m : Nat) (a : TSeries R n) (r v : R)
+    (hr : r * r = a.coeff 0) (hv : ((1 + 1) * r) * v = 1) :
+    Agree m (sqrtUpTo m a r v) (sqrtOfRoot a r v) := by
+  let q := min m n
+  let init : TSeries R n := C ((1 + 1) * v)
+  let short := newton (sqrtStep a (r * v)) init (steps q)
+  let full := newton (sqrtStep a (r * v)) init (steps n)
+  have hiter : Agree q short full := by
+    have h := newton_agree (sqrtStep a (r * v)) init
+      (sqrtNewton_stable a r v hr hv)
+      (steps_mono (Nat.min_le_right m n))
+    exact (h.mono (two_pow_steps_ge q)).symm
+  have hmul : Agree q (mulUpTo m a short) (a * full) := by
+    exact ((Agree.mulUpTo m a short).mono (Nat.min_le_left m n)).trans
+      (Agree.mul (Agree.refl q a) hiter)
+  intro i hi him
+  have hiq : i < q := by dsimp only [q]; omega
+  unfold sqrtUpTo
+  rw [coeff_ofFn _ i hi, if_pos him]
+  rw [sqrtOfRoot_eq]
+  exact hmul i hi hiq
 
 /-- Newton lifting squares to the input under the stated root and unit
 hypotheses. -/

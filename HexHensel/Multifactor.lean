@@ -198,7 +198,7 @@ def MultifactorLiftInvariant
 /-- Left identity for `ZPoly` multiplication, used to reason about
 `Array.polyProduct` as a left fold from `1`. Shared by the linear and
 quadratic multifactor proofs. -/
-@[simp, grind =]
+@[simp]
 theorem one_mul_zpoly (g : ZPoly) :
     (1 : ZPoly) * g = g := by
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]

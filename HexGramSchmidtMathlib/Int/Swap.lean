@@ -711,7 +711,7 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) := by
         have hpos :=
-          Matrix.det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+          Matrix.det_gram_takeRows_pos M hzero hdiag
             (r + 1) hk
         rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram] at hpos
       have hdet_nat :
