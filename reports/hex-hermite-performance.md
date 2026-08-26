@@ -27,19 +27,23 @@ timed function.
 | `runShapePrepared` | direct HNF predicate on a prepared form | `n ^ 2` |
 | `runCertPrepared` | packed certificate replay | `n ^ 2 * Nat.log2 (n + 1)` |
 
-The dense and deficient schedules make cubic matrix visits while measured
-operand widths grow over their ladders. The tall family has fixed aspect ratio
-and word-scale coefficients. The conjugate generator uses every entry of
-deterministic unit-lower and unit-upper triangular factors, rather than a
-bidiagonal shortcut, and the measured coefficient ladder supplies its explicit
-logarithmic factor. `runShapePrepared` uses constant-time tuple entry access;
+The dense, deficient, and conjugate schedules make cubic matrix visits while
+measured peak widths grow roughly linearly over their ladders. Their
+`n³ log₂(n + 1)` normalizer is an empirically calibrated, slowly growing wall
+surrogate over 16..128, not a bit-complexity consequence of that width curve.
+The tall family has fixed aspect ratio and word-scale coefficients. The
+conjugate generator uses every entry of deterministic unit-lower and unit-upper
+triangular factors, rather than a bidiagonal shortcut. `runShapePrepared` uses
+constant-time tuple entry access;
 `runCertPrepared` charges packed-integer width. Prepared witnesses are checked
 by build-time `#guard`s. A further build-time guard compares the isolated
 principal result with public `hnf` on the same dense input.
 
 `hnfBasis`, `kernelBasis`, `pivots`, and `latticeIndex` each project from one
-shared HNF result. Their ladders therefore measure one form/transform run, not
-the former hidden two- or three-run constants.
+shared HNF result. Previously, form/transform computation occurred inside
+entry-producing closures for basis and kernel extraction, causing a full run
+per output entry; pivots and index separately repeated their form projections.
+The new ladders measure one shared run followed by the advertised projection.
 
 The thirteen small API fixed targets have the following medians in the
 committed [fixed export](bench-results/hex-hermite-phase4-comparators.json):
