@@ -18,6 +18,25 @@ private def raw12 : Factorization :=
 private def checked12 : CheckedFactorization 12 :=
   ⟨raw12, rfl, by decide⟩
 
+private def checked1 : CheckedFactorization 1 :=
+  ⟨⟨1, []⟩, rfl, by decide⟩
+
+private def checked64 : CheckedFactorization 64 :=
+  ⟨⟨64, [⟨6, .small 2⟩]⟩, rfl, by decide⟩
+
+private def checked10800 : CheckedFactorization 10800 :=
+  ⟨⟨10800, [⟨4, .small 2⟩, ⟨3, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checkedPow64 : CheckedFactorization (2 ^ 64) :=
+  ⟨⟨2 ^ 64, [⟨64, .small 2⟩]⟩, rfl, by decide⟩
+
+private def checkedHugeTau :
+    CheckedFactorization ((2 * 3 * 5 * 7 * 11 * 13) ^ 100) :=
+  ⟨⟨(2 * 3 * 5 * 7 * 11 * 13) ^ 100,
+    [⟨100, .small 2⟩, ⟨100, .small 3⟩, ⟨100, .small 5⟩,
+      ⟨100, .small 7⟩, ⟨100, .small 11⟩, ⟨100, .small 13⟩]⟩,
+    rfl, by decide⟩
+
 #guard checkFactorization raw12
 #guard !checkFactorization ⟨12, [⟨1, .small 4⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩
@@ -25,8 +44,19 @@ private def checked12 : CheckedFactorization 12 :=
 #guard !checkFactorization ⟨12, [⟨0, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 3⟩, ⟨2, .small 2⟩]⟩
 
+#guard divisors checked1 == #[1]
+#guard numDivisors checked1 == 1
 #guard divisors checked12 == #[1, 2, 3, 4, 6, 12]
 #guard numDivisors checked12 == 6
+#guard divisors checked64 == #[1, 2, 4, 8, 16, 32, 64]
+#guard numDivisors checked64 == 7
+#guard (divisors checked10800).size == 60
+#guard numDivisors checked10800 == 60
+-- This subject is far beyond any feasible scan through `List.range n`.
+#guard numDivisors checkedPow64 == 65
+-- `101 ^ 6` divisors rules out computing the count by enumeration.
+#guard numDivisors checkedHugeTau == 101 ^ 6
+example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 #guard sigma checked12 1 == 28
 #guard totient checked12 == 4
 #guard radical checked12 == 6

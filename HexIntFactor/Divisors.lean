@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntFactor.Cert
+public import HexIntFactor.DivisorEnumeration
 
 public section
 
@@ -16,23 +16,16 @@ namespace Hex
 
 namespace Nat
 
-def divisorPowers (p : Nat) : Nat → Nat → List Nat
-  | 0, acc => [acc]
-  | e + 1, acc => acc :: divisorPowers p e (acc * p)
-
-def expandDivisors (values : List Nat) (entry : PrimePower) : List Nat :=
-  values.flatMap fun d =>
-    (divisorPowers entry.prime entry.exponent 1).map fun q => d * q
-
 /-- Positive divisors, in ascending order. -/
 @[expose]
-def divisors {n : Nat} (_F : CheckedFactorization n) : Array Nat :=
-  (List.range (n + 1)).filter (fun d => decide (d ∣ n)) |>.toArray
+def divisors {n : Nat} (F : CheckedFactorization n) : Array Nat :=
+  (DivisorEnumeration.values F.raw.factors).mergeSort
+    (fun a b => decide (a ≤ b)) |>.toArray
 
 /-- Number of positive divisors, `τ(n) = ∏ (eᵢ + 1)`. -/
 @[expose]
 def numDivisors {n : Nat} (F : CheckedFactorization n) : Nat :=
-  (divisors F).size
+  (F.raw.factors.map fun e => e.exponent + 1).prod
 
 def sigmaEntry (entry : PrimePower) (k : Nat) : Nat :=
   (List.range (entry.exponent + 1)).foldl
@@ -74,19 +67,39 @@ def isSquarefree {n : Nat} (F : CheckedFactorization n) : Bool :=
 /-- Enumeration has exactly the positive divisors of `n`. -/
 theorem mem_divisors {n d : Nat} (F : CheckedFactorization n) :
     d ∈ (divisors F).toList ↔ d ∣ n := by
-  have hnraw : 0 < F.raw.subject := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact hv.1.1
-  have hn : 0 < n := F.subject_eq ▸ hnraw
-  simp only [divisors, List.mem_filter, List.mem_range, decide_eq_true_eq]
-  exact ⟨fun h => h.2, fun hd =>
-    ⟨by exact Nat.lt_succ_of_le (Nat.le_of_dvd hn hd), hd⟩⟩
+  rw [divisors, List.toList_toArray, List.mem_mergeSort,
+    DivisorEnumeration.mem_values_iff
+      (checkFactorization_prime F.valid)
+      (checkFactorization_sorted F.valid),
+    checkFactorization_prod F.valid, F.subject_eq]
+
+/-- The ascending divisor enumeration contains no duplicates. -/
+theorem divisors_nodup {n : Nat} (F : CheckedFactorization n) :
+    (divisors F).toList.Nodup := by
+  apply (List.mergeSort_perm _ _).symm.nodup
+  exact DivisorEnumeration.nodup_values
+    (checkFactorization_prime F.valid)
+    (checkFactorization_sorted F.valid)
+
+/-- The divisor enumeration is in ascending order. -/
+theorem divisors_sorted {n : Nat} (F : CheckedFactorization n) :
+    (divisors F).toList.Pairwise (fun a b => a ≤ b) := by
+  rw [divisors, List.toList_toArray]
+  simpa only [decide_eq_true_eq] using
+    (List.pairwise_mergeSort
+      (le := fun a b : Nat => decide (a ≤ b))
+      (fun a b c hab hbc => by
+        simp only [decide_eq_true_eq] at hab hbc ⊢
+        exact Nat.le_trans hab hbc)
+      (fun a b => by
+        simp only [Bool.or_eq_true, decide_eq_true_eq]
+        exact Nat.le_total a b)
+      (DivisorEnumeration.values F.raw.factors))
 
 /-- The product formula agrees with divisor enumeration. -/
 theorem numDivisors_eq_size {n : Nat} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size := by
-  rfl
+  simp [numDivisors, divisors, DivisorEnumeration.length_values]
 
 /-- `sigma` is the sum of `k`th powers over all divisors. -/
 theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :

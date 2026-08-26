@@ -720,6 +720,10 @@ def isSquarefree {n} (F : CheckedFactorization n) : Bool   -- ∀ i, eᵢ = 1
 
 theorem mem_divisors {n d} (F : CheckedFactorization n) :
     d ∈ (divisors F).toList ↔ d ∣ n
+theorem divisors_nodup {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Nodup
+theorem divisors_sorted {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Pairwise (fun a b => a ≤ b)
 theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
@@ -811,7 +815,12 @@ appear in a proof term and should not pay for exposure.
 
 The divisor-function API sits between the two: it is cheap, it is
 sometimes wanted in a proof (`totient` in a Fermat-Euler argument, say),
-and it takes already-checked data. It is `@[expose]`.
+and it takes already-checked data. It is `@[expose]`. This exposure makes
+the factor-list bodies available for definitional reasoning; it does not
+promise kernel evaluation of `divisors`, whose asymptotically appropriate
+`List.mergeSort` uses well-founded recursion. Proofs about that enumeration
+use `mem_divisors`, `divisors_nodup`, and `divisors_sorted`; `numDivisors`
+is the kernel-facing operation when only the count is required.
 
 ## Conformance
 
@@ -1017,6 +1026,7 @@ nothing extra.
 HexIntFactor/
   Cert.lean         -- PrimePower, Factorization, checkFactorization, soundness
   Partial.lean      -- PartialFactorization and checkPartial
+  DivisorEnumeration.lean -- certified enumeration from prime powers
   Divisors.lean     -- the divisor-function API
   Small.lean        -- trailing zeros, perfect powers, trial division
   Rho.lean          -- adapter from the shared rho primitive to the dispatch
