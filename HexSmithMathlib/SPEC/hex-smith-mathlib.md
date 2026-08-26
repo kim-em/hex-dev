@@ -48,3 +48,8 @@ benchmark requirements shared with this layer are in
 or other runtime surface. Its declarations are correspondence proofs checked
 by the kernel in the ordinary `HexSmithMathlib` build. All executable data it
 transports is owned by `hex-smith`.
+
+For Phase 4 this is a `correspondence-only-layer`: `HexSmith` is the
+performance owner for every transported operation. This companion therefore
+has no independent benchmark executable, comparator, raw timing evidence, or
+performance report.

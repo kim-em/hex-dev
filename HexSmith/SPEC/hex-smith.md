@@ -580,9 +580,18 @@ is the point made under "Algorithms".
 | `snf` | form-only classical Euclidean pivot loop | `O(P · r · (n + m) · max n m)` | unbounded; measured, not proved |
 | `snfRank`, `invariantFactors` | projections of the form-only run | as `snf` | as `snf` |
 | `snfData` | `snf` plus accumulation of `U`, `W`, `V`, and `X` | `+ O(P · r · (n + m) · max n m)` | transforms may exceed the form substantially |
+| `smithBasis` | `snfData` plus one dense matrix product and row projection | as `snfData`, plus `O(n²m)` scalar operations | transform-dependent |
 | `snfDiagonal` | form-only normalisation plus fixed adjacent-pair network | `O(r²)` | bounded by the product of the input diagonal |
 | `snfDiagonalData` | `snfDiagonal` plus four transform updates | `O(r³)` scalar entry updates in the dense matrices | transform-dependent |
 | `abelianStructure` | `snf` plus a filter | as `snf` | as `snf` |
+| `isSNFShape` | rank bounds, positivity, and adjacent divisibility scan | `O(r)` integer predicates | bounded by certificate diagonal |
+| `snfCert` | four packed product-equality certificates plus `isSNFShape` | `O(n² + m² + nm)` big-by-small operations | packed operands have linear width in the corresponding row length; certificate-dependent |
+
+`detDivisor` is a noncomputable specification surface rather than an
+executable operation: direct enumeration of its minors is exponential and is
+not a supported evaluation route. Consumers needing its value compute
+`invariantFactors` and use `IsSNF.detDivisor_eq`; Phase 4 therefore assigns no
+runtime benchmark to `detDivisor`.
 
 ## Conformance
 
@@ -640,15 +649,31 @@ identities instead.
 Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
 `bench/HexSmith/Bench.lean`, no Mathlib import.
 
-**Input families.**
+**Input families.** The scientific driver covers the following controlled
+variants, with deterministic salts and exact parameter ladders recorded beside
+each registration:
 
-- `random-dense-smith`: uniform entries, square and nonsingular.
+- `random-dense-smith`: uniform-looking bounded entries with a diagonal shift,
+  in nonsingular square, fixed-aspect tall/wide, and rank-deficient square
+  variants.
 - `chain-conjugate`: `U * diag(d) * V` for known `d` with a long
   divisibility chain and random unimodular `U`, `V`, so the expected
   answer is known and the difficulty is entry growth rather than the
-  answer's size.
+  answer's size; both full-rank and a linear zero-tail variant are measured.
 - `presentation-smith`: sparse relation matrices from abelian group
-  presentations, the shape the headline consumer produces, run dense.
+  presentations, in square and wide relation-by-generator shapes, run dense.
+
+**Evidence assignment.** `snf` owns the family/shape sweeps.
+`snfRank` and `invariantFactors` get projection sweeps; `snfData` and
+`smithBasis` get transform-producing sweeps; `abelianStructure` uses the wide
+presentation family; `isSNFShape` and `snfCert` use certificates prepared
+outside the timed region; and both diagonal APIs use the same repair-heavy
+diagonal ladder. Fixed FLINT/PARI rungs cover all three square common-domain
+families. There is `no-comparable-surface-in-named-comparator` for transforms,
+their inverses, `smithBasis`, `abelianStructure`, `isSNFShape`, and `snfCert`;
+these are checked independently in Lean rather than timed against a ceremonial
+external substitute. FLINT and PARI comparison is canonical invariant data
+only.
 
 **Comparators.** FLINT `fmpz_mat_snf` through python-flint,
 `informational`. FLINT's default dispatch includes algorithms not

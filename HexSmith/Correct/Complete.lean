@@ -849,36 +849,61 @@ private theorem Diagonal.Compact.pairStep_model
             hik, hjk, hij, hji, hcastNat k hk]
           exact (hcastNat k hk).symm
     · rw [if_neg hb0]
-      rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
-      have hg : g = Nat.gcd a.natAbs b.natAbs := by
-        have := HexArith.Int.extGcd_fst a b
-        rw [he] at this
-        exact this
-      have hl := quotient_lcm a b ha hb ha0
-      have hl' : HexArith.Int.exactDiv (s.values[i] * s.values[j])
-          (Int.ofNat (Nat.gcd s.values[i].natAbs s.values[j].natAbs)) =
-          Int.ofNat (Nat.lcm s.values[i].natAbs s.values[j].natAbs) := by
-        simpa [a, b] using hl
-      have hlNat : HexArith.Int.exactDiv (s.values[i.val] * s.values[j.val])
-          (Int.ofNat (Nat.gcd s.values[i.val].natAbs s.values[j.val].natAbs)) =
-          Int.ofNat (Nat.lcm s.values[i.val].natAbs s.values[j.val].natAbs) := hl'
-      apply Vector.ext
-      intro k hk
-      by_cases hki : k = i.val
-      · subst k
-        simp [Diagonal.Bubble.vectorStep, a, b, he, hg,
-          Vector.getElem_set, hne, hij, hji]
-      · by_cases hkj : k = j.val
+      by_cases hab : a = b
+      · rw [if_pos hab]
+        have habv : s.values[i.val] = s.values[j.val] := by
+          simpa [a, b] using hab
+        apply Vector.ext
+        intro k hk
+        by_cases hki : k = i.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, he, hg, hl, hl', hlNat,
+          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
+            Vector.getElem_set, hne, hij, hji, hcastNat i.val i.isLt]
+          rw [habv, Nat.gcd_self]
+          exact (hcastNat j.val j.isLt).symm
+        · by_cases hkj : k = j.val
+          · subst k
+            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
+              Vector.getElem_set, hne, hij, hji, hcastNat j.val j.isLt]
+            rw [habv, Nat.lcm_self]
+            exact (hcastNat j.val j.isLt).symm
+          · have hik : i.val ≠ k := Ne.symm hki
+            have hjk : j.val ≠ k := Ne.symm hkj
+            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
+              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
+              hcastNat k hk]
+            exact (hcastNat k hk).symm
+      · rw [if_neg hab]
+        rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
+        have hg : g = Nat.gcd a.natAbs b.natAbs := by
+          have := HexArith.Int.extGcd_fst a b
+          rw [he] at this
+          exact this
+        have hl := quotient_lcm a b ha hb ha0
+        have hl' : HexArith.Int.exactDiv (s.values[i] * s.values[j])
+            (Int.ofNat (Nat.gcd s.values[i].natAbs s.values[j].natAbs)) =
+            Int.ofNat (Nat.lcm s.values[i].natAbs s.values[j].natAbs) := by
+          simpa [a, b] using hl
+        have hlNat : HexArith.Int.exactDiv (s.values[i.val] * s.values[j.val])
+            (Int.ofNat (Nat.gcd s.values[i.val].natAbs s.values[j.val].natAbs)) =
+            Int.ofNat (Nat.lcm s.values[i.val].natAbs s.values[j.val].natAbs) := hl'
+        apply Vector.ext
+        intro k hk
+        by_cases hki : k = i.val
+        · subst k
+          simp [Diagonal.Bubble.vectorStep, a, b, he, hg,
             Vector.getElem_set, hne, hij, hji]
-          exact hlNat
-        · have hik : i.val ≠ k := Ne.symm hki
-          have hjk : j.val ≠ k := Ne.symm hkj
-          simp [Diagonal.Bubble.vectorStep, a, b, he,
-            Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
-            hcastNat k hk]
-          exact (hcastNat k hk).symm
+        · by_cases hkj : k = j.val
+          · subst k
+            simp [Diagonal.Bubble.vectorStep, a, b, he, hg, hl, hl', hlNat,
+              Vector.getElem_set, hne, hij, hji]
+            exact hlNat
+          · have hik : i.val ≠ k := Ne.symm hki
+            have hjk : j.val ≠ k := Ne.symm hkj
+            simp [Diagonal.Bubble.vectorStep, a, b, he,
+              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
+              hcastNat k hk]
+            exact (hcastNat k hk).symm
 
 private theorem Diagonal.Compact.pairStep_nonneg
     (ops : Accumulator α r r) (s : Diagonal.Compact.Result α r)
@@ -1301,7 +1326,11 @@ private theorem Diagonal.Compact.pairStep_agrees (ops : Accumulator α r r)
     · rw [if_pos hb, if_pos hb]
       exact ⟨rfl, rfl⟩
     · rw [if_neg hb, if_neg hb]
-      exact ⟨Diagonal.Compact.pair_matrix values i j hne ha hb, rfl⟩
+      by_cases hab : values[i] = values[j]
+      · rw [if_pos hab, if_pos hab]
+        exact ⟨rfl, rfl⟩
+      · rw [if_neg hab, if_neg hab]
+        exact ⟨Diagonal.Compact.pair_matrix values i j hne ha hb, rfl⟩
 
 private theorem Diagonal.Compact.passFuel_agrees (ops : Accumulator α r r)
     (fuel index : Nat) {compact : Diagonal.Compact.Result α r}
@@ -1392,25 +1421,27 @@ private theorem Diagonal.pairStep_transforms (A : Matrix Int r r)
     · exact Diagonal.swap_transforms A h i j
   · split
     · exact h
-    · let a := s.matrix[(i, i)]
-      let b := s.matrix[(j, j)]
-      let rowAdded : Result (Transforms r r) r r :=
-        { s with
-          matrix := Matrix.rowAdd s.matrix j i 1
-          accumulator := (transformAccumulator r r).rowAdd s.accumulator j i 1 }
-      let ext := HexArith.Int.extGcd a b
-      let g' := Int.ofNat ext.1
-      let qa := HexArith.Int.exactDiv a g'
-      let qb := HexArith.Int.exactDiv b g'
-      let columns : Result (Transforms r r) r r :=
-        { rowAdded with
-          matrix := Hermite.combineCols rowAdded.matrix i j ext.2.1 ext.2.2 (-qb) qa
-          accumulator := (transformAccumulator r r).colCombine
-            rowAdded.accumulator i j ext.2.1 ext.2.2 (-qb) qa }
-      let c := -(HexArith.Int.exactDiv (b * ext.2.2) g')
-      exact rowAdd_transforms A
-        (colCombine_transforms A (rowAdd_transforms A h j i 1)
-          i j ext.2.1 ext.2.2 (-qb) qa) i j c
+    · split
+      · exact h
+      · let a := s.matrix[(i, i)]
+        let b := s.matrix[(j, j)]
+        let rowAdded : Result (Transforms r r) r r :=
+          { s with
+            matrix := Matrix.rowAdd s.matrix j i 1
+            accumulator := (transformAccumulator r r).rowAdd s.accumulator j i 1 }
+        let ext := HexArith.Int.extGcd a b
+        let g' := Int.ofNat ext.1
+        let qa := HexArith.Int.exactDiv a g'
+        let qb := HexArith.Int.exactDiv b g'
+        let columns : Result (Transforms r r) r r :=
+          { rowAdded with
+            matrix := Hermite.combineCols rowAdded.matrix i j ext.2.1 ext.2.2 (-qb) qa
+            accumulator := (transformAccumulator r r).colCombine
+              rowAdded.accumulator i j ext.2.1 ext.2.2 (-qb) qa }
+        let c := -(HexArith.Int.exactDiv (b * ext.2.2) g')
+        exact rowAdd_transforms A
+          (colCombine_transforms A (rowAdd_transforms A h j i 1)
+            i j ext.2.1 ext.2.2 (-qb) qa) i j c
 
 private theorem Diagonal.passFuel_transforms (A : Matrix Int r r)
     (fuel index : Nat) {s : Result (Transforms r r) r r}
@@ -1545,30 +1576,32 @@ private theorem Diagonal.pairStep_inverses
     split
     · exact h
     · rename_i hb
-      let a := s.matrix[(i, i)]
-      let b := s.matrix[(j, j)]
-      have hb0 : b ≠ 0 := by simpa [b] using hb
-      rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
-      let g' := Int.ofNat g
-      let qa := HexArith.Int.exactDiv a g'
-      let qb := HexArith.Int.exactDiv b g'
-      have hdet := Hermite.gcdCoeffs_det (a := a) (b := b) hb0
-      unfold Hermite.gcdCoeffs at hdet
-      rw [he] at hdet
-      dsimp only at hdet
-      let rowAdded : Result (Transforms r r) r r :=
-        { s with
-          matrix := Matrix.rowAdd s.matrix j i 1
-          accumulator := (transformAccumulator r r).rowAdd s.accumulator j i 1 }
-      let columns : Result (Transforms r r) r r :=
-        { rowAdded with
-          matrix := Hermite.combineCols rowAdded.matrix i j u v (-qb) qa
-          accumulator := (transformAccumulator r r).colCombine
-            rowAdded.accumulator i j u v (-qb) qa }
-      let c := -(HexArith.Int.exactDiv (b * v) g')
-      exact rowAdd_inverses
-        (colCombine_inverses (rowAdd_inverses h j i 1 (Ne.symm hne))
-          i j u v (-qb) qa hne hdet) i j c hne
+      split
+      · exact h
+      · let a := s.matrix[(i, i)]
+        let b := s.matrix[(j, j)]
+        have hb0 : b ≠ 0 := by simpa [b] using hb
+        rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
+        let g' := Int.ofNat g
+        let qa := HexArith.Int.exactDiv a g'
+        let qb := HexArith.Int.exactDiv b g'
+        have hdet := Hermite.gcdCoeffs_det (a := a) (b := b) hb0
+        unfold Hermite.gcdCoeffs at hdet
+        rw [he] at hdet
+        dsimp only at hdet
+        let rowAdded : Result (Transforms r r) r r :=
+          { s with
+            matrix := Matrix.rowAdd s.matrix j i 1
+            accumulator := (transformAccumulator r r).rowAdd s.accumulator j i 1 }
+        let columns : Result (Transforms r r) r r :=
+          { rowAdded with
+            matrix := Hermite.combineCols rowAdded.matrix i j u v (-qb) qa
+            accumulator := (transformAccumulator r r).colCombine
+              rowAdded.accumulator i j u v (-qb) qa }
+        let c := -(HexArith.Int.exactDiv (b * v) g')
+        exact rowAdd_inverses
+          (colCombine_inverses (rowAdd_inverses h j i 1 (Ne.symm hne))
+            i j u v (-qb) qa hne hdet) i j c hne
 
 private theorem Diagonal.passFuel_inverses (fuel index : Nat)
     {s : Result (Transforms r r) r r} (h : HasInverses s) :
@@ -1815,7 +1848,7 @@ theorem snfDiagonal_eq_data {r : Nat} (d : Vector Int r) :
   have hm := hvt.2.1
   dsimp only [et, Smith.Diagonal.Compact.erase, Smith.Result.diagVector] at hm
   simp only [Smith.Diagonal.Compact.candidateData]
-  rw [hsame.values]
+  rw [Smith.Diagonal.Compact.runValues_eq, hsame.values]
   exact hm
 
 /-- Every invariant factor returned by the form-only path is positive. -/

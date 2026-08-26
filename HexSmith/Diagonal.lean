@@ -65,6 +65,7 @@ def pairStep (ops : Smith.Accumulator α r r) (s : Smith.Result α r r)
   if a = 0 then
     if b = 0 then s else swap ops s i j
   else if b = 0 then s
+  else if a = b then s
   else
     let rowAdded : Smith.Result α r r :=
       { s with
@@ -243,7 +244,11 @@ private theorem pairStep_same (ops : Smith.Accumulator α r r)
     · rw [if_pos hb, if_pos hb]
       exact ⟨rfl, rfl⟩
     · rw [if_neg hb, if_neg hb]
-      exact ⟨rfl, rfl⟩
+      by_cases hab : matrix[i][i] = matrix[j][j]
+      · rw [if_pos hab, if_pos hab]
+        exact ⟨rfl, rfl⟩
+      · rw [if_neg hab, if_neg hab]
+        exact ⟨rfl, rfl⟩
 
 private theorem passFuel_same (ops : Smith.Accumulator α r r)
     (ops' : Smith.Accumulator β r r) (fuel index : Nat)
@@ -782,6 +787,7 @@ def pairStep (ops : Smith.Accumulator α r r) (s : Result α r)
   if a = 0 then
     if b = 0 then s else swap ops s i j
   else if b = 0 then s
+  else if a = b then s
   else
     let (g, u, v) := HexArith.Int.extGcd a b
     let g' := Int.ofNat g
@@ -793,6 +799,161 @@ def pairStep (ops : Smith.Accumulator α r r) (s : Result α r)
       accumulator := ops.rowAdd
         (ops.colCombine (ops.rowAdd s.accumulator j i 1)
           i j u v (-qb) qa) i j c }
+
+/-- Form-only adjacent update. Keeping the vector as the sole recursive state
+lets compiled `Vector.set` reuse its uniquely owned array instead of retaining
+it through an irrelevant accumulator record. -/
+@[expose]
+def pairValues (values : Vector Int r) (i j : Fin r) : Vector Int r :=
+  let a := values[i]
+  let b := values[j]
+  if a = 0 then
+    if b = 0 then values else values.swap i.val j.val i.isLt j.isLt
+  else if b = 0 then values
+  else if a = b then values
+  else
+    let g' := Int.ofNat (HexArith.Int.extGcd a b).1
+    (values.set i.val g' i.isLt).set j.val
+      (HexArith.Int.exactDiv (a * b) g') j.isLt
+
+/-- Array-only implementation of `pairValues`; the size proof is erased and
+the tail-recursive callers retain unique ownership of the backing array. -/
+@[expose]
+def pairArray (values : Array Int) (hsize : values.size = r)
+    (i j : Fin r) : Array Int :=
+  let hi : i.val < values.size := by omega
+  let hj : j.val < values.size := by omega
+  let a := values[i.val]'hi
+  let b := values[j.val]'hj
+  if a = 0 then
+    if b = 0 then values else values.swap i.val j.val hi hj
+  else if b = 0 then values
+  else if a = b then values
+  else
+    let g' := Int.ofNat (HexArith.Int.extGcd a b).1
+    let first := values.set i.val g' hi
+    first.set j.val (HexArith.Int.exactDiv (a * b) g') (by simpa [first] using hj)
+
+@[simp] theorem pairArray_size (values : Array Int) (hsize : values.size = r)
+    (i j : Fin r) : (pairArray values hsize i j).size = r := by
+  simp only [pairArray]
+  by_cases ha : values[i.val]'(by omega) = 0
+  · rw [if_pos ha]
+    by_cases hb : values[j.val]'(by omega) = 0
+    · rw [if_pos hb]; exact hsize
+    · rw [if_neg hb]; simpa using hsize
+  · rw [if_neg ha]
+    by_cases hb : values[j.val]'(by omega) = 0
+    · rw [if_pos hb]; exact hsize
+    · rw [if_neg hb]
+      split <;> simp [hsize]
+
+private theorem pairArray_eq (values : Array Int) (hsize : values.size = r)
+    (i j : Fin r) :
+    pairArray values hsize i j = (pairValues ⟨values, hsize⟩ i j).toArray := by
+  simp only [pairArray, pairValues, Fin.getElem_fin, Vector.getElem_mk]
+  by_cases ha : values[i.val]'(by omega) = 0
+  · simp only [ha, if_pos]
+    by_cases hb : values[j.val]'(by omega) = 0
+    · simp only [hb, if_pos]
+    · simp [hb]
+  · simp only [ha, if_neg]
+    by_cases hb : values[j.val]'(by omega) = 0
+    · simp [hb]
+    · simp only [hb, if_neg]
+      by_cases hab : values[i.val]'(by omega) = values[j.val]'(by omega)
+      · simp [hab]
+      · simp [hab]
+
+/-- Array-only consecutive adjacent updates. -/
+@[expose]
+def passArrayFuel : (fuel index : Nat) → (values : Array Int) →
+    values.size = r → Array Int
+  | 0, _, values, _ => values
+  | fuel + 1, index, values, hsize =>
+      if h : index + 1 < r then
+        let next := pairArray values hsize ⟨index, by omega⟩ ⟨index + 1, h⟩
+        passArrayFuel fuel (index + 1) next (pairArray_size values hsize _ _)
+      else values
+
+@[simp] theorem passArrayFuel_size (fuel index : Nat) (values : Array Int)
+    (hsize : values.size = r) :
+    (passArrayFuel fuel index values hsize).size = r := by
+  induction fuel generalizing index values with
+  | zero => exact hsize
+  | succ fuel ih =>
+      rw [passArrayFuel]
+      split
+      · exact ih _ _ (pairArray_size values hsize _ _)
+      · exact hsize
+
+/-- Array-only fixed bubble network. -/
+@[expose]
+def networkArrayFuel : (fuel : Nat) → (values : Array Int) →
+    values.size = r → Array Int
+  | 0, values, _ => values
+  | fuel + 1, values, hsize =>
+      let next := passArrayFuel (r - 1) 0 values hsize
+      networkArrayFuel fuel next (passArrayFuel_size (r - 1) 0 values hsize)
+
+@[simp] theorem networkArrayFuel_size (fuel : Nat) (values : Array Int)
+    (hsize : values.size = r) :
+    (networkArrayFuel fuel values hsize).size = r := by
+  induction fuel generalizing values with
+  | zero => exact hsize
+  | succ fuel ih =>
+      rw [networkArrayFuel]
+      exact ih _ (passArrayFuel_size (r - 1) 0 values hsize)
+
+private theorem pairValues_eq (ops : Smith.Accumulator α r r) (s : Result α r)
+    (i j : Fin r) : pairValues s.values i j = (pairStep ops s i j).values := by
+  simp only [pairValues, pairStep]
+  by_cases ha : s.values[i] = 0
+  · rw [if_pos ha, if_pos ha]
+    by_cases hb : s.values[j] = 0
+    · rw [if_pos hb, if_pos hb]
+    · rw [if_neg hb, if_neg hb, swap]
+      split
+      · rename_i hij
+        subst j
+        exact (hb ha).elim
+      · rfl
+  · rw [if_neg ha, if_neg ha]
+    by_cases hb : s.values[j] = 0
+    · rw [if_pos hb, if_pos hb]
+    · rw [if_neg hb, if_neg hb]
+      by_cases hab : s.values[i] = s.values[j]
+      · rw [if_pos hab, if_pos hab]
+      · rw [if_neg hab, if_neg hab]
+
+/-- Consecutive form-only adjacent updates. -/
+@[expose]
+def passValuesFuel : Nat → Nat → Vector Int r → Vector Int r
+  | 0, _, values => values
+  | fuel + 1, index, values =>
+      if h : index + 1 < r then
+        passValuesFuel fuel (index + 1)
+          (pairValues values ⟨index, by omega⟩ ⟨index + 1, h⟩)
+      else values
+
+/-- One form-only adjacent pass. -/
+@[expose]
+def passValues (values : Vector Int r) : Vector Int r :=
+  passValuesFuel (r - 1) 0 values
+
+/-- Fixed form-only bubble network. -/
+@[expose]
+def networkValuesFuel : Nat → Vector Int r → Vector Int r
+  | 0, values => values
+  | fuel + 1, values => networkValuesFuel fuel (passValues values)
+
+/-- Run normalization once, then the accumulator-free diagonal network. -/
+@[expose]
+def runValues (d : Vector Int r) : Vector Int r :=
+  let normalized := normalize (Smith.formAccumulator r r)
+    ({ values := d, accumulator := () } : Result Unit r)
+  let values := networkArrayFuel r normalized.values.toArray normalized.values.size_toArray
+  ⟨values, networkArrayFuel_size r _ normalized.values.size_toArray⟩
 
 /-- Execute consecutive compact adjacent steps beginning at `index`. -/
 @[expose]
@@ -826,6 +987,95 @@ def collect (values : Vector Int r) : List Int :=
 @[expose]
 def run (ops : Smith.Accumulator α r r) (d : Vector Int r) : Result α r :=
   networkFuel ops r (normalize ops { values := d, accumulator := ops.init })
+
+private theorem passValuesFuel_eq (ops : Smith.Accumulator α r r)
+    (fuel index : Nat) (s : Result α r) :
+    passValuesFuel fuel index s.values = (passFuel ops fuel index s).values := by
+  induction fuel generalizing index s with
+  | zero => rfl
+  | succ fuel ih =>
+      rw [passValuesFuel, passFuel]
+      split
+      · rw [pairValues_eq]
+        exact ih _ _
+      · rfl
+
+private theorem passValues_eq (ops : Smith.Accumulator α r r) (s : Result α r) :
+    passValues s.values = (pass ops s).values := by
+  exact passValuesFuel_eq ops (r - 1) 0 s
+
+private theorem passArrayFuel_eq (fuel index : Nat) (values : Array Int)
+    (hsize : values.size = r) :
+    passArrayFuel fuel index values hsize =
+      (passValuesFuel fuel index ⟨values, hsize⟩).toArray := by
+  induction fuel generalizing index values with
+  | zero => rfl
+  | succ fuel ih =>
+      rw [passArrayFuel, passValuesFuel]
+      split
+      · let next := pairArray values hsize
+          ⟨index, by omega⟩ ⟨index + 1, by assumption⟩
+        have hp := pairArray_eq values hsize
+          ⟨index, by omega⟩ ⟨index + 1, by assumption⟩
+        have hv : (⟨next, pairArray_size values hsize _ _⟩ : Vector Int r) =
+            pairValues ⟨values, hsize⟩ ⟨index, by omega⟩
+              ⟨index + 1, by assumption⟩ := by
+          symm
+          rw [Vector.eq_mk]
+          exact hp.symm
+        calc
+          passArrayFuel fuel (index + 1) next _ =
+              (passValuesFuel fuel (index + 1)
+                ⟨next, pairArray_size values hsize _ _⟩).toArray := ih _ _ _
+          _ = _ := by rw [hv]
+      · rfl
+
+private theorem networkValuesFuel_eq (ops : Smith.Accumulator α r r)
+    (fuel : Nat) (s : Result α r) :
+    networkValuesFuel fuel s.values = (networkFuel ops fuel s).values := by
+  induction fuel generalizing s with
+  | zero => rfl
+  | succ fuel ih =>
+      rw [networkValuesFuel, networkFuel, passValues_eq]
+      exact ih _
+
+private theorem networkArrayFuel_eq (fuel : Nat) (values : Array Int)
+    (hsize : values.size = r) :
+    networkArrayFuel fuel values hsize =
+      (networkValuesFuel fuel ⟨values, hsize⟩).toArray := by
+  induction fuel generalizing values with
+  | zero => rfl
+  | succ fuel ih =>
+      rw [networkArrayFuel, networkValuesFuel]
+      have hp := passArrayFuel_eq (r := r) (r - 1) 0 values hsize
+      let next := passArrayFuel (r - 1) 0 values hsize
+      have hv : (⟨next, passArrayFuel_size (r - 1) 0 values hsize⟩ : Vector Int r) =
+          passValues ⟨values, hsize⟩ := by
+        symm
+        rw [Vector.eq_mk]
+        exact hp.symm
+      calc
+        networkArrayFuel fuel next _ =
+            (networkValuesFuel fuel
+              ⟨next, passArrayFuel_size (r - 1) 0 values hsize⟩).toArray := ih _ _
+        _ = _ := by rw [hv]
+
+theorem runValues_eq (d : Vector Int r) :
+    runValues d = (run (Smith.formAccumulator r r) d).values := by
+  unfold runValues run
+  let normalized := normalize (Smith.formAccumulator r r)
+    ({ values := d, accumulator := () } : Result Unit r)
+  have harr := networkArrayFuel_eq r normalized.values.toArray
+    normalized.values.size_toArray
+  have hnetwork := networkValuesFuel_eq (Smith.formAccumulator r r) r normalized
+  have hv : (⟨networkArrayFuel r normalized.values.toArray
+      normalized.values.size_toArray,
+      networkArrayFuel_size r _ normalized.values.size_toArray⟩ : Vector Int r) =
+      networkValuesFuel r normalized.values := by
+    symm
+    rw [Vector.eq_mk]
+    exact harr.symm
+  exact hv.trans hnetwork
 
 /-- View compact state through the existing shape predicate. -/
 @[expose]
@@ -923,7 +1173,11 @@ private theorem pairStep_same (ops : Smith.Accumulator α r r)
     · rw [if_pos hb, if_pos hb]
       exact ⟨rfl⟩
     · rw [if_neg hb, if_neg hb]
-      exact ⟨rfl⟩
+      by_cases hab : values[i] = values[j]
+      · rw [if_pos hab, if_pos hab]
+        exact ⟨rfl⟩
+      · rw [if_neg hab, if_neg hab]
+        exact ⟨rfl⟩
 
 private theorem passFuel_same (ops : Smith.Accumulator α r r)
     (ops' : Smith.Accumulator β r r) (fuel index : Nat)
@@ -972,8 +1226,7 @@ end Smith.Diagonal
 /-- Smith form of a diagonal matrix without allocating transforms. -/
 @[expose]
 def snfDiagonal {r : Nat} (d : Vector Int r) : Matrix Int r r :=
-  let result := Smith.Diagonal.Compact.run (Smith.formAccumulator r r) d
-  diagMatrix result.values r r
+  diagMatrix (Smith.Diagonal.Compact.runValues d) r r
 
 /-- Smith data for a diagonal matrix, including both transforms and inverses. -/
 @[expose]
