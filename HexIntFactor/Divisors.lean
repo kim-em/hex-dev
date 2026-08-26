@@ -57,23 +57,32 @@ def totient {n : Nat} (_F : CheckedFactorization n) : Nat :=
 def radical {n : Nat} (F : CheckedFactorization n) : Nat :=
   (F.raw.factors.map fun e => e.prime).prod
 
-def squareCandidates (n : Nat) : List Nat :=
-  (List.range (n + 1)).filter fun d => decide (d ^ 2 ∣ n)
-
-/-- Lcm of all roots of square divisors, equivalently the largest such root. -/
+/-- Largest square-divisor root, computed from certified multiplicities. -/
 @[expose]
-def squareDivisor {n : Nat} (_F : CheckedFactorization n) : Nat :=
-  (squareCandidates n).foldl Nat.lcm 1
+def squareDivisor {n : Nat} (F : CheckedFactorization n) : Nat :=
+  (F.raw.factors.map fun e => e.prime ^ (e.exponent / 2)).prod
 
-/-- Squarefree part left after removing the largest square divisor. -/
+/-- Squarefree part, computed from the odd certified multiplicities. -/
 @[expose]
 def squarefreePart {n : Nat} (F : CheckedFactorization n) : Nat :=
-  n / squareDivisor F ^ 2
+  (F.raw.factors.map fun e => e.prime ^ (e.exponent % 2)).prod
 
 /-- Whether every prime multiplicity is exactly one. -/
 @[expose]
 def isSquarefree {n : Nat} (F : CheckedFactorization n) : Bool :=
   F.raw.factors.all fun e => e.exponent == 1
+
+/-- The largest square-divisor root uses half of each certified exponent. -/
+theorem squareDivisor_eq_prod {n : Nat} (F : CheckedFactorization n) :
+    squareDivisor F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent / 2)).prod :=
+  rfl
+
+/-- The squarefree part retains exactly the parity of each certified exponent. -/
+theorem squarefreePart_eq_prod {n : Nat} (F : CheckedFactorization n) :
+    squarefreePart F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent % 2)).prod :=
+  rfl
 
 /-- Enumeration has exactly the positive divisors of `n`. -/
 theorem mem_divisors {n d : Nat} (F : CheckedFactorization n) :
@@ -270,54 +279,161 @@ theorem prime_dvd_radical_iff {n q : Nat} (F : CheckedFactorization n)
     rw [← heq]
     exact entry_dvd_product F.raw.factors e he
 
-private theorem foldl_lcm_square_dvd (n : Nat) :
-    ∀ (values : List Nat) (acc : Nat), acc ^ 2 ∣ n →
-      (∀ d ∈ values, d ^ 2 ∣ n) → (values.foldl Nat.lcm acc) ^ 2 ∣ n := by
-  intro values
-  induction values with
-  | nil => simpa
-  | cons d rest ih =>
-      intro acc hacc hall
-      apply ih (Nat.lcm acc d)
-      · rw [← Nat.pow_lcm_pow]
-        exact Nat.lcm_dvd hacc (hall d (by simp))
-      · intro x hx
-        exact hall x (by simp [hx])
+private theorem squareEntry_decomp (entry : PrimePower) :
+    entry.prime ^ (entry.exponent % 2) *
+        (entry.prime ^ (entry.exponent / 2)) ^ 2 =
+      entry.prime ^ entry.exponent := by
+  rw [← Nat.pow_mul, ← Nat.pow_add]
+  congr 1
+  have h := Nat.mod_add_div entry.exponent 2
+  omega
 
-private theorem dvd_foldl_lcm {d : Nat} :
-    ∀ (values : List Nat) (acc : Nat), d ∈ values →
-      d ∣ values.foldl Nat.lcm acc := by
-  intro values
-  induction values with
+private theorem squareEntries_decomp : ∀ entries : List PrimePower,
+    (entries.map fun e => e.prime ^ (e.exponent % 2)).prod *
+        ((entries.map fun e => e.prime ^ (e.exponent / 2)).prod) ^ 2 =
+      (entries.map fun e => e.prime ^ e.exponent).prod := by
+  intro entries
+  induction entries with
   | nil => simp
-  | cons x rest ih =>
-      intro acc hd
-      have acc_dvd : ∀ (ys : List Nat) (a : Nat), a ∣ ys.foldl Nat.lcm a := by
-        intro ys
-        induction ys with
-        | nil => simp
-        | cons y ys ih =>
-            intro a
-            exact Nat.dvd_trans (Nat.dvd_lcm_left a y) (ih (Nat.lcm a y))
-      rcases List.mem_cons.mp hd with hdx | hd
-      · subst x
-        exact Nat.dvd_trans (Nat.dvd_lcm_right acc d)
-          (acc_dvd rest (Nat.lcm acc d))
-      · exact ih (Nat.lcm acc x) hd
+  | cons entry rest ih =>
+      simp only [List.map_cons, List.prod_cons, Nat.mul_pow]
+      calc
+        entry.prime ^ (entry.exponent % 2) *
+              (rest.map fun e => e.prime ^ (e.exponent % 2)).prod *
+              ((entry.prime ^ (entry.exponent / 2)) ^ 2 *
+                ((rest.map fun e => e.prime ^ (e.exponent / 2)).prod) ^ 2) =
+            (entry.prime ^ (entry.exponent % 2) *
+              (entry.prime ^ (entry.exponent / 2)) ^ 2) *
+              ((rest.map fun e => e.prime ^ (e.exponent % 2)).prod *
+                ((rest.map fun e => e.prime ^ (e.exponent / 2)).prod) ^ 2) := by
+          ac_rfl
+        _ = entry.prime ^ entry.exponent *
+              (rest.map fun e => e.prime ^ e.exponent).prod := by
+          rw [squareEntry_decomp, ih]
+
+private theorem prime_dvd_pow_factor {q a : Nat} (hq : Prime q) :
+    ∀ {k : Nat}, q ∣ a ^ k → q ∣ a := by
+  intro k
+  induction k with
+  | zero =>
+      intro h
+      exact absurd (Nat.dvd_one.mp h) hq.ne_one
+  | succ k ih =>
+      intro h
+      rw [Nat.pow_succ] at h
+      exact (hq.dvd_mul.mp h).elim ih id
+
+private theorem prime_dvd_power_product {q : Nat} (hq : Prime q) :
+    ∀ (entries : List PrimePower),
+      (∀ e ∈ entries, Prime e.prime) →
+      q ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
+      ∃ e ∈ entries, e.prime = q := by
+  intro entries hprime hdvd
+  induction entries with
+  | nil => exact absurd (Nat.dvd_one.mp hdvd) hq.ne_one
+  | cons entry rest ih =>
+      simp only [List.map_cons, List.prod_cons] at hdvd
+      rcases hq.dvd_mul.mp hdvd with he | hrest
+      · have hbase := prime_dvd_pow_factor hq he
+        have hp := hprime entry (by simp)
+        rcases hp.2 q hbase with hq1 | heq
+        · exact absurd hq1 hq.ne_one
+        · exact ⟨entry, by simp, heq.symm⟩
+      · obtain ⟨e, he, heq⟩ := ih
+          (fun e he => hprime e (by simp [he])) hrest
+        exact ⟨e, by simp [he], heq⟩
+
+private theorem head_not_dvd_tail_product {entry : PrimePower}
+    {rest : List PrimePower}
+    (hprime : ∀ e ∈ entry :: rest, Prime e.prime)
+    (hsorted : (entry :: rest).Pairwise fun a b => a.prime < b.prime) :
+    ¬entry.prime ∣ (rest.map fun e => e.prime ^ e.exponent).prod := by
+  intro hdvd
+  obtain ⟨e, he, heq⟩ := prime_dvd_power_product
+    (hprime entry (by simp)) rest
+    (fun e he => hprime e (by simp [he])) hdvd
+  have hlt := (List.pairwise_cons.mp hsorted).1 e he
+  rw [heq] at hlt
+  exact Nat.lt_irrefl _ hlt
+
+private theorem squareRoot_dvd_primeProduct {p rest root : Nat}
+    (hp : Prime p) (hnot : ¬p ∣ rest)
+    (hrest : ∀ c, c ^ 2 ∣ rest → c ∣ root) :
+    ∀ e d, d ^ 2 ∣ p ^ e * rest → d ∣ p ^ (e / 2) * root := by
+  intro e
+  induction e using Nat.strongRecOn with
+  | ind e ih =>
+    intro d hd
+    by_cases hpd : p ∣ d
+    · obtain ⟨c, rfl⟩ := hpd
+      cases e with
+      | zero =>
+          exfalso
+          apply hnot
+          have hdsq : (p * c) ^ 2 ∣ rest := by simpa using hd
+          exact Nat.dvd_trans
+            ⟨c * (p * c), by simp [Nat.pow_two, Nat.mul_left_comm,
+              Nat.mul_comm]⟩ hdsq
+      | succ e =>
+          cases e with
+          | zero =>
+              exfalso
+              apply hnot
+              have hcancel : p * c ^ 2 ∣ rest := by
+                apply (Nat.mul_dvd_mul_iff_left hp.pos).mp
+                simpa [Nat.pow_two, Nat.mul_assoc, Nat.mul_left_comm,
+                  Nat.mul_comm] using hd
+              exact Nat.dvd_trans (Nat.dvd_mul_right p (c ^ 2)) hcancel
+          | succ e =>
+              have hcancel : c ^ 2 ∣ p ^ e * rest := by
+                apply (Nat.mul_dvd_mul_iff_left
+                  (Nat.pow_pos hp.pos : 0 < p ^ 2)).mp
+                simpa [Nat.pow_succ, Nat.pow_two, Nat.mul_assoc,
+                  Nat.mul_left_comm, Nat.mul_comm] using hd
+              have hc := ih e (by omega) c hcancel
+              have hmul := Nat.mul_dvd_mul_left p hc
+              simpa [show (e + 1 + 1) / 2 = e / 2 + 1 by omega,
+                Nat.pow_succ, Nat.mul_assoc, Nat.mul_left_comm,
+                Nat.mul_comm] using hmul
+    · have hcop : Nat.Coprime (d ^ 2) (p ^ e) :=
+        Nat.Coprime.pow 2 e (hp.coprime_of_not_dvd hpd).symm
+      have hdrest : d ^ 2 ∣ rest := hcop.dvd_of_dvd_mul_left hd
+      exact Nat.dvd_trans (hrest d hdrest) (Nat.dvd_mul_left _ _)
+
+private theorem squareRoot_dvd_entries : ∀ (entries : List PrimePower),
+    (∀ e ∈ entries, Prime e.prime) →
+    entries.Pairwise (fun a b => a.prime < b.prime) →
+    ∀ d, d ^ 2 ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
+      d ∣ (entries.map fun e => e.prime ^ (e.exponent / 2)).prod := by
+  intro entries hprime hsorted
+  induction entries with
+  | nil =>
+      intro d hd
+      simp only [List.map_nil, List.prod_nil] at hd ⊢
+      rw [Nat.pow_two] at hd
+      exact Nat.dvd_trans (Nat.dvd_mul_right d d) hd
+  | cons entry rest ih =>
+      intro d hd
+      simp only [List.map_cons, List.prod_cons] at hd ⊢
+      apply squareRoot_dvd_primeProduct
+        (hprime entry (by simp))
+        (head_not_dvd_tail_product hprime hsorted)
+        (fun c hc => ih
+          (fun e he => hprime e (by simp [he]))
+          (List.pairwise_cons.mp hsorted).2 c hc)
+        entry.exponent d hd
 
 private theorem squareDivisor_dvd_subject {n : Nat} (F : CheckedFactorization n) :
     squareDivisor F ^ 2 ∣ n := by
-  unfold squareDivisor
-  apply foldl_lcm_square_dvd n (squareCandidates n) 1
-  · simp
-  · intro d hd
-    simpa [squareCandidates] using (List.mem_filter.mp hd).2
+  refine ⟨squarefreePart F, ?_⟩
+  rw [Nat.mul_comm, squarefreePart, squareDivisor, squareEntries_decomp,
+    checkFactorization_prod F.valid, F.subject_eq]
 
 /-- Canonical squarefree-times-square decomposition. -/
 theorem squarefreePart_mul_square {n : Nat} (F : CheckedFactorization n) :
     squarefreePart F * squareDivisor F ^ 2 = n := by
-  rw [Nat.mul_comm]
-  exact Nat.mul_div_cancel' (squareDivisor_dvd_subject F)
+  rw [squarefreePart, squareDivisor, squareEntries_decomp,
+    checkFactorization_prod F.valid, F.subject_eq]
 
 /-- `squareDivisor` is the largest square divisor root. -/
 theorem squareDivisor_spec {n : Nat} (F : CheckedFactorization n) :
@@ -325,24 +441,10 @@ theorem squareDivisor_spec {n : Nat} (F : CheckedFactorization n) :
       ∀ d, d ^ 2 ∣ n → d ∣ squareDivisor F := by
   refine ⟨squareDivisor_dvd_subject F, ?_⟩
   intro d hd
-  have hnraw : 0 < F.raw.subject := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact hv.1.1
-  have hn : 0 < n := F.subject_eq ▸ hnraw
-  have hdle : d ≤ n := by
-    by_cases hd0 : d = 0
-    · subst d
-      have : n = 0 := Nat.eq_zero_of_zero_dvd (by simpa using hd)
-      omega
-    · have hsqle := Nat.le_of_dvd hn hd
-      have hself : d ≤ d ^ 2 := by
-        rw [Nat.pow_two]
-        exact Nat.le_mul_of_pos_right d (by omega)
-      exact Nat.le_trans hself hsqle
-  unfold squareDivisor
-  apply dvd_foldl_lcm (values := squareCandidates n) (acc := 1)
-  simp [squareCandidates, hd, Nat.lt_succ_of_le hdle]
+  apply squareRoot_dvd_entries F.raw.factors
+    (checkFactorization_prime F.valid)
+    (checkFactorization_sorted F.valid) d
+  simpa [checkFactorization_prod F.valid, F.subject_eq] using hd
 
 /-- Checked multiplicities characterize squarefreeness. -/
 theorem isSquarefree_iff {n : Nat} (F : CheckedFactorization n) :

@@ -115,6 +115,9 @@ private opaque sigmaInput256 : SigmaInput :=
   ⟨_, sigmaInput 256 (by decide)⟩
 private opaque sigmaInput512 : SigmaInput :=
   ⟨_, sigmaInput 512 (by decide)⟩
+set_option maxHeartbeats 1000000 in
+private opaque sigmaInput1024 : SigmaInput :=
+  ⟨_, sigmaInput 1024 (by decide)⟩
 
 @[noinline]
 def sigmaInputForCount : Nat → SigmaInput
@@ -123,10 +126,14 @@ def sigmaInputForCount : Nat → SigmaInput
   | 128 => sigmaInput128
   | 256 => sigmaInput256
   | 512 => sigmaInput512
+  | 1024 => sigmaInput1024
   | _ => sigmaInputDefault
 
 def runSigmaFactorCount (input : SigmaInput) : Nat :=
   sigma input.checked 1
+
+def runSquareFactorCount (input : SigmaInput) : Nat :=
+  squareDivisor input.checked + squarefreePart input.checked
 
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
@@ -246,6 +253,27 @@ setup_benchmark runSigmaFactorCount n => n * n
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Each prepared certificate has `n` entries of fixed exponent 32. The
+square-divisor accumulator grows linearly in limbs, so its sequential
+multiplication has the declared `Theta(n²)` native-cost model; the parity
+product is identically one and contributes only a linear pass. Preparation
+hoists the enormous certified subject out of the timed loop, so an input-range
+scan would be immediately observable rather than hidden in setup. -/
+setup_benchmark runSquareFactorCount n => n * n
+  with prep := sigmaInputForCount
+  where {
+    paramFloor := 32
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    -- At 32..512 the early accumulator-width regimes gave an inconclusive
+    -- slope. Extending to 1024 exposes convergence toward the n² model.
+    slopeTolerance := 0.20
     outerTrials := 3
   }
 

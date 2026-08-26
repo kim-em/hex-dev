@@ -27,6 +27,12 @@ private def checked64 : CheckedFactorization 64 :=
 private def checked10800 : CheckedFactorization 10800 :=
   ⟨⟨10800, [⟨4, .small 2⟩, ⟨3, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
 
+private def checked30 : CheckedFactorization 30 :=
+  ⟨⟨30, [⟨1, .small 2⟩, ⟨1, .small 3⟩, ⟨1, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checked3600 : CheckedFactorization 3600 :=
+  ⟨⟨3600, [⟨4, .small 2⟩, ⟨2, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
+
 private def checkedPow64 : CheckedFactorization (2 ^ 64) :=
   ⟨⟨2 ^ 64, [⟨64, .small 2⟩]⟩, rfl, by decide⟩
 
@@ -95,8 +101,22 @@ example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
 example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked12 == 4
 #guard radical checked12 == 6
+#guard squarefreePart checked1 == 1
+#guard squareDivisor checked1 == 1
 #guard squarefreePart checked12 == 3
 #guard squareDivisor checked12 == 2
+#guard squarefreePart checked30 == 30
+#guard squareDivisor checked30 == 1
+#guard isSquarefree checked30
+#guard squarefreePart checked3600 == 1
+#guard squareDivisor checked3600 == 60
+#guard squarefreePart checked10800 == 3
+#guard squareDivisor checked10800 == 60
+-- This input is much too large for a scan through `List.range n`.
+#guard squarefreePart checkedPow64 == 1
+#guard squareDivisor checkedPow64 == 2 ^ 32
+example : squareDivisor checkedPow64 = 2 ^ 32 := by decide +kernel
+example : squarefreePart checkedHugeTau = 1 := by decide +kernel
 #guard !isSquarefree checked12
 
 #guard (smallCandidate (2 ^ 20)).route == .perfectPower
