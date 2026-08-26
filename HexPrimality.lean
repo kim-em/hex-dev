@@ -11,6 +11,7 @@ public import HexPrimality.Cert3
 public import HexPrimality.Elab
 public import HexPrimality.MillerRabin
 public import HexPrimality.Order
+public import HexPrimality.PMinusOne
 public import HexPrimality.Search
 public import HexPrimality.Sieve
 public import HexPrimality.SieveElab

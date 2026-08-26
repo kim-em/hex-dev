@@ -113,6 +113,8 @@ def projectedRowsRrefColumnSignature (L : Hex.BhksProjectedRows) (j : Nat) :
   let echelonRows : Array (Array Rat) := D.echelon.rows.toArray.map (·.toArray)
   echelonRows.map (·.getD j 0)
 
+/-- The executable projected-row matrix transports to the Mathlib-facing
+rational matrix. -/
 theorem matrixEquiv_bhksProjectedRowsAsRatMatrix
     (L : Hex.BhksProjectedRows) :
     HexMatrixMathlib.matrixEquiv
@@ -152,7 +154,9 @@ private theorem projectedRowsRrefColumnSignature_eq_iff_forall_echelon
       simpa [projectedRowsRrefColumnSignature, Array.getD, hj, hk,
         Hex.Matrix.getRow] using hrow
 
-theorem projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+/-- Two RREF column signatures agree exactly when every vector of the rational
+projected row space has equal coordinates at those columns. -/
+theorem projectedRowsRrefColumnSignature_eq_iff_coordAgreement
     (L : Hex.BhksProjectedRows) {j k : Nat}
     (hj : j < L.factorCount) (hk : k < L.factorCount) :
     projectedRowsRrefColumnSignature L j = projectedRowsRrefColumnSignature L k ↔
@@ -186,7 +190,7 @@ theorem projectedRowsRrefColumnSignature_eq_imp_supportEquivalent_of_cut
       projectedRowsRrefColumnSignature L j = projectedRowsRrefColumnSignature L k) :
     supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩ := by
   have hcoord :=
-    (projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+    (projectedRowsRrefColumnSignature_eq_iff_coordAgreement
       L hj hk).mp hsig
   intro S hS
   have hmem_int :
@@ -221,7 +225,7 @@ theorem projectedRowsRrefColumnSignature_eq_iff_supportEquivalent_of_span_eq
     projectedRowsRrefColumnSignature L j =
         projectedRowsRrefColumnSignature L k ↔
       supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩ := by
-  rw [projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+  rw [projectedRowsRrefColumnSignature_eq_iff_coordAgreement
     L hj hk]
   exact projectedRowSpace_coordAgreement_iff_supportEquivalent
     L trueSupports hspan ⟨j, hj⟩ ⟨k, hk⟩

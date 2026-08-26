@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexTruncatedSeries.Inverse
+public import HexTruncatedSeries.Revert
 
 public section
 
@@ -59,5 +59,33 @@ private def oneMinusX : TSeries Int 8 :=
 
 example : invOfUnit oneMinusX 1 = ofFn fun _ => 1 := by
   decide +kernel
+
+/-- The successful-division law remains available to downstream modules
+without unfolding the executable zero-prefix test. -/
+example (c : TSeries Int 8) (k : Nat) :
+    divXPow? (mulXPow c k) k =
+      some (truncate c (8 - k) (Nat.sub_le 8 k)) := by
+  exact divXPow?_mulXPow c k
+
+/-- The valuation search exposes its complete mathematical contract across a
+module boundary. -/
+example (c : TSeries Int 8) (k : Nat) :
+    valuation? c = some k ↔
+      k < 8 ∧ c.coeff k ≠ 0 ∧ ∀ i, i < k → c.coeff i = 0 := by
+  exact valuation?_eq_some_iff c k
+
+/-- Bounded reversion agrees with the full Newton result throughout the
+requested prefix. -/
+example (c : TSeries Int 8) (v : Int)
+    (h0 : c.coeff 0 = 0) (hv : c.coeff 1 * v = 1) :
+    Agree 5 (revUpTo 5 c v) (revOfUnit c v) := by
+  exact revUpTo_agree 5 c v h0 hv
+
+/-- Direct Lagrange inversion and Newton reversion expose the same public
+result over a coefficient ring with the required natural inverses. -/
+example (c : TSeries Rat 8) (v : Rat)
+    (h0 : c.coeff 0 = 0) (hv : c.coeff 1 * v = 1) :
+    revLagrange c v = revOfUnit c v := by
+  exact revLagrange_eq c v h0 hv
 
 end Hex.TSeries.ModuleBoundaryTests

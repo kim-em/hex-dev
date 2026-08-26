@@ -75,7 +75,7 @@ where their product is exact for any `UInt32` inputs. -/
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- The modulus as a packed word. -/
-@[inline] def modWord (p : Nat) [ZMod64.Bounds p] : UInt32 :=
+@[inline] def modWord (p : Nat) : UInt32 :=
   UInt32.ofNat p
 
 /-- Read a packed word as a residue. -/
@@ -86,20 +86,29 @@ variable {p : Nat} [ZMod64.Bounds p]
 @[inline] def ofZMod (a : ZMod64 p) : UInt32 :=
   a.val.toUInt32
 
+/-- A residue is below `2 ^ 32`, so `ofZMod` loses nothing: `ZMod64.Bounds`
+caps the modulus at `2 ^ 31`. -/
 theorem toNat_lt_two_pow_32 (a : ZMod64 p) : a.toNat < 2 ^ 32 :=
   Nat.lt_trans a.isLt (Nat.lt_trans (ZMod64.Bounds.pLtR (p := p)) (by decide))
 
+/-- Packing a residue preserves its numeral. -/
 @[simp] theorem toNat_ofZMod (a : ZMod64 p) : (ofZMod a).toNat = a.toNat := by
   show (a.val.toUInt32).toNat = a.toNat
   rw [UInt64.toNat_toUInt32]
   exact Nat.mod_eq_of_lt (toNat_lt_two_pow_32 a)
 
+/-- `ofZMod` is a section of `toZMod`: packing then reading recovers the
+residue. -/
 @[simp] theorem toZMod_ofZMod (a : ZMod64 p) : toZMod p (ofZMod a) = a := by
   rw [toZMod, toNat_ofZMod, ZMod64.ofNat_toNat]
 
-@[simp] theorem toNat_toZMod (a : UInt32) : (toZMod p a).toNat = a.toNat % p := by
+/-- Reading an arbitrary packed word canonicalizes it modulo `p`.
+Not `@[simp]`: `ZMod64.toNat_eq_val` rewrites the `ZMod64.toNat` head of the
+left-hand side, so this shape is not simp-normal. -/
+theorem toNat_toZMod (a : UInt32) : (toZMod p a).toNat = a.toNat % p := by
   simp [toZMod]
 
+/-- The packed modulus word carries the modulus faithfully. -/
 @[simp] theorem toNat_modWord : (modWord p).toNat = p := by
   show (UInt32.ofNat p).toNat = p
   rw [UInt32.toNat_ofNat']
@@ -121,6 +130,9 @@ theorem toNat_toZMod_of_lt {a : UInt32} (h : a.toNat < p) :
 
 /-! ## Correctness of the packed operations -/
 
+/-- `mulMod` computes the modular product of its operands as naturals. The
+`UInt64` widening keeps the unreduced product exact for arbitrary `UInt32`
+inputs, so no reducedness hypothesis is needed. -/
 theorem toNat_mulMod {q a b : UInt32} (hq : q.toNat = p) :
     (mulMod q a b).toNat = (a.toNat * b.toNat) % p := by
   have hprod : (a.toUInt64 * b.toUInt64).toNat = a.toNat * b.toNat := by
@@ -138,10 +150,14 @@ theorem toNat_mulMod {q a b : UInt32} (hq : q.toNat = p) :
   exact Nat.mod_eq_of_lt
     (Nat.lt_trans (Nat.mod_lt _ (ZMod64.Bounds.pPos (p := p))) (pLt32 (p := p)))
 
+/-- `mulMod` returns a reduced residue. -/
 theorem mulMod_lt {q a b : UInt32} (hq : q.toNat = p) : (mulMod q a b).toNat < p := by
   rw [toNat_mulMod hq]
   exact Nat.mod_lt _ (ZMod64.Bounds.pPos (p := p))
 
+/-- `addMod` computes the modular sum of two reduced operands. Reducedness is
+required: the single conditional subtraction only canonicalizes a sum that is
+below `2 * p`. -/
 theorem toNat_addMod {q a b : UInt32} (hq : q.toNat = p)
     (ha : a.toNat < p) (hb : b.toNat < p) :
     (addMod q a b).toNat = (a.toNat + b.toNat) % p := by
@@ -151,11 +167,11 @@ theorem toNat_addMod {q a b : UInt32} (hq : q.toNat = p)
     exact Nat.mod_eq_of_lt (by omega)
   unfold addMod
   by_cases hlt : a + b < q
-  · rw [if_pos hlt]
+  · rw [ite_eq_left hlt]
     have hlt' : (a + b).toNat < q.toNat := UInt32.lt_iff_toNat_lt.mp hlt
     rw [hq, hsum] at hlt'
     rw [hsum, Nat.mod_eq_of_lt hlt']
-  · rw [if_neg hlt]
+  · rw [ite_eq_right hlt]
     have hge : p ≤ a.toNat + b.toNat :=
       Nat.le_of_not_lt fun hcon =>
         hlt (UInt32.lt_iff_toNat_lt.mpr (by rw [hq, hsum]; exact hcon))
@@ -165,22 +181,25 @@ theorem toNat_addMod {q a b : UInt32} (hq : q.toNat = p)
       Nat.add_mod_right, Nat.mod_eq_of_lt (by omega : a.toNat + b.toNat - p < 2 ^ 32)]
     rw [Nat.mod_eq_sub_mod hge, Nat.mod_eq_of_lt (by omega)]
 
+/-- `addMod` returns a reduced residue when both operands are reduced. -/
 theorem addMod_lt {q a b : UInt32} (hq : q.toNat = p)
     (ha : a.toNat < p) (hb : b.toNat < p) : (addMod q a b).toNat < p := by
   rw [toNat_addMod hq ha hb]
   exact Nat.mod_lt _ (ZMod64.Bounds.pPos (p := p))
 
+/-- `negMod` computes the modular negation of a reduced operand. The `a == 0`
+branch is what makes the result reduced rather than `p`. -/
 theorem toNat_negMod {q a : UInt32} (hq : q.toNat = p) (ha : a.toNat < p) :
     (negMod q a).toNat = (p - a.toNat) % p := by
   have hp32 : p < 2 ^ 32 := pLt32 (p := p)
   unfold negMod
   by_cases h : a == 0
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have ha0 : a.toNat = 0 := by
       have : a = 0 := by simpa using h
       simp [this]
     simp [ha0]
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     have ha0 : a.toNat ≠ 0 := by
       intro hz
       exact h (by simpa using UInt32.toNat_inj.mp (by simpa using hz))
@@ -189,6 +208,7 @@ theorem toNat_negMod {q a : UInt32} (hq : q.toNat = p) (ha : a.toNat < p) :
       Nat.add_mod_right, Nat.mod_eq_of_lt (by omega : p - a.toNat < 2 ^ 32)]
     exact (Nat.mod_eq_of_lt (by omega)).symm
 
+/-- `negMod` returns a reduced residue when its operand is reduced. -/
 theorem negMod_lt {q a : UInt32} (hq : q.toNat = p) (ha : a.toNat < p) :
     (negMod q a).toNat < p := by
   rw [toNat_negMod hq ha]
@@ -226,11 +246,13 @@ not need a word-level extended-Euclid specialization. -/
 @[inline] def invMod (p : Nat) [ZMod64.Bounds p] (a : UInt32) : UInt32 :=
   ofZMod (ZMod64.inv (toZMod p a))
 
+/-- The packed inverse of a packed word is the packed inverse residue. -/
 @[simp] theorem toZMod_invMod (a : UInt32) :
     toZMod p (invMod p a) = (toZMod p a)⁻¹ := by
   rw [invMod, toZMod_ofZMod]
   rfl
 
+/-- `invMod` returns a reduced residue for any input word. -/
 theorem invMod_lt (a : UInt32) : (invMod p a).toNat < p := by
   rw [invMod, toNat_ofZMod]
   exact (ZMod64.inv (toZMod p a)).isLt
@@ -267,11 +289,16 @@ variable {n m : Nat}
 def Rep (A : Matrix UInt32 n m) (E : Matrix (ZMod64 p) n m) : Prop :=
   ∀ (i : Fin n) (j : Fin m), A[i][j].toNat = E[i][j].toNat
 
+/-- Every entry of a representing packed matrix is a reduced residue word,
+because the residues it represents are canonical. -/
 theorem Rep.lt {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m}
     (h : Rep A E) (i : Fin n) (j : Fin m) : A[i][j].toNat < p := by
   rw [h i j]
   exact E[i][j].isLt
 
+/-- Reading an entry of a representing packed matrix recovers the residue
+entry. This is the form `Rep` is consumed in once the goal is stated over
+residues rather than over `toNat`. -/
 theorem Rep.toZMod_eq {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m}
     (h : Rep A E) (i : Fin n) (j : Fin m) : toZMod p A[i][j] = E[i][j] :=
   ZMod64.ext_toNat (by rw [toNat_toZMod_of_lt (h.lt i j), h i j])
@@ -305,23 +332,29 @@ def rowAdd (q : UInt32) (A : Matrix UInt32 n m) (src dst : Fin n) (c : UInt32) :
     Matrix UInt32 n m :=
   rowAddFrom q A (Matrix.getRow A src) dst c
 
+/-- Entrywise characterisation of `rowScale`: row `i` is scaled, every other
+row is untouched. -/
 theorem getElem_rowScale (q : UInt32) (A : Matrix UInt32 n m) (i r : Fin n)
     (c : UInt32) (k : Fin m) :
     (rowScale q A i c)[r][k] = if r = i then mulMod q c A[i][k] else A[r][k] := by
   rw [rowScale, Matrix.getElem_modifyEntries]
   by_cases h : r = i
-  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
-  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+  · rw [ite_eq_left (congrArg Fin.val h), ite_eq_left h, h]
+  · rw [ite_eq_right (fun hv => h (Fin.ext hv)), ite_eq_right h]
 
+/-- Entrywise characterisation of `rowAddFrom`: row `dst` gains `c * rsrc`,
+every other row is untouched. -/
 theorem getElem_rowAddFrom (q : UInt32) (A : Matrix UInt32 n m)
     (rsrc : Vector UInt32 m) (dst r : Fin n) (c : UInt32) (k : Fin m) :
     (rowAddFrom q A rsrc dst c)[r][k] =
       if r = dst then addMod q A[dst][k] (mulMod q c rsrc[k]) else A[r][k] := by
   rw [rowAddFrom, Matrix.getElem_modifyEntries]
   by_cases h : r = dst
-  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
-  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+  · rw [ite_eq_left (congrArg Fin.val h), ite_eq_left h, h]
+  · rw [ite_eq_right (fun hv => h (Fin.ext hv)), ite_eq_right h]
 
+/-- Entrywise characterisation of `rowAdd`, the `rowAddFrom` special case that
+reads the source row out of the matrix. -/
 theorem getElem_rowAdd (q : UInt32) (A : Matrix UInt32 n m) (src dst r : Fin n)
     (c : UInt32) (k : Fin m) :
     (rowAdd q A src dst c)[r][k] =
@@ -331,17 +364,20 @@ theorem getElem_rowAdd (q : UInt32) (A : Matrix UInt32 n m) (src dst r : Fin n)
 
 /-! ## The packed elementary operations interpret to the generic ones -/
 
+/-- A packed row swap interprets the reference row swap. -/
 theorem Rep.rowSwap {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m}
     (h : Rep A E) (i j : Fin n) :
     Rep (Matrix.rowSwap A i j) (Matrix.rowSwap E i j) := by
   intro r k
   rw [Matrix.getElem_rowSwap, Matrix.getElem_rowSwap]
   by_cases hrj : r = j
-  · simp only [if_pos hrj]; exact h i k
+  · simp only [ite_eq_left hrj]; exact h i k
   · by_cases hri : r = i
-    · simp only [if_neg hrj, if_pos hri]; exact h j k
-    · simp only [if_neg hrj, if_neg hri]; exact h r k
+    · simp only [ite_eq_right hrj, ite_eq_left hri]; exact h j k
+    · simp only [ite_eq_right hrj, ite_eq_right hri]; exact h r k
 
+/-- A packed row scaling by a word representing `γ` interprets the reference
+row scaling by `γ`. -/
 theorem Rep.rowScale {q : UInt32} (hq : q.toNat = p)
     {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m} (h : Rep A E)
     (i : Fin n) {c : UInt32} {γ : ZMod64 p} (hc : c.toNat = γ.toNat) :
@@ -349,10 +385,10 @@ theorem Rep.rowScale {q : UInt32} (hq : q.toNat = p)
   intro r k
   rw [getElem_rowScale, Matrix.getElem_rowScale]
   by_cases hri : r = i
-  · rw [if_pos hri, if_pos hri, toNat_mulMod hq]
+  · rw [ite_eq_left hri, ite_eq_left hri, toNat_mulMod hq]
     show _ = (ZMod64.mul γ E[i][k]).toNat
     rw [ZMod64.toNat_mul, hc, h i k]
-  · rw [if_neg hri, if_neg hri]; exact h r k
+  · rw [ite_eq_right hri, ite_eq_right hri]; exact h r k
 
 /-- A caller-supplied source row that agrees entrywise with row `src` of the
 packed matrix interprets the reference row addition, just as reading the row out
@@ -366,12 +402,14 @@ theorem Rep.rowAddFrom {q : UInt32} (hq : q.toNat = p)
   intro r k
   rw [getElem_rowAddFrom, Matrix.getElem_rowAdd]
   by_cases hrd : r = dst
-  · rw [if_pos hrd, if_pos hrd, hsrc k]
+  · rw [ite_eq_left hrd, ite_eq_left hrd, hsrc k]
     rw [toNat_addMod hq (h.lt dst k) (mulMod_lt hq), toNat_mulMod hq]
     show _ = (ZMod64.add E[dst][k] (ZMod64.mul γ E[src][k])).toNat
     rw [ZMod64.toNat_add, ZMod64.toNat_mul, h dst k, hc, h src k]
-  · rw [if_neg hrd, if_neg hrd]; exact h r k
+  · rw [ite_eq_right hrd, ite_eq_right hrd]; exact h r k
 
+/-- A packed row addition by a word representing `γ` interprets the reference
+row addition by `γ`. -/
 theorem Rep.rowAdd {q : UInt32} (hq : q.toNat = p)
     {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m} (h : Rep A E)
     (src dst : Fin n) {c : UInt32} {γ : ZMod64 p} (hc : c.toNat = γ.toNat) :
@@ -490,18 +528,18 @@ private theorem findPivotAux_eq {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n
   | succ fuel ih =>
       unfold findPivotAux Hex.Matrix.findPivotAux
       by_cases hstart : start < n
-      · rw [dif_pos hstart, dif_pos hstart]
+      · rw [dite_eq_left hstart, dite_eq_left hstart]
         have hiff := rep_eq_zero_iff h ⟨start, hstart⟩ col
         show (if (A[((⟨start, hstart⟩ : Fin n), col)] == 0) = true then
               findPivotAux A col (start + 1) fuel else some ⟨start, hstart⟩)
             = (if E[((⟨start, hstart⟩ : Fin n), col)] = 0 then
               Hex.Matrix.findPivotAux E col (start + 1) fuel else some ⟨start, hstart⟩)
         by_cases hA : A[((⟨start, hstart⟩ : Fin n), col)] = 0
-        · rw [if_pos (beq_iff_eq.mpr hA), if_pos (hiff.mp hA)]
+        · rw [ite_eq_left (beq_iff_eq.mpr hA), ite_eq_left (hiff.mp hA)]
           exact ih (start + 1)
-        · rw [if_neg (fun hb => hA (beq_iff_eq.mp hb)),
-            if_neg (fun hE => hA (hiff.mpr hE))]
-      · rw [dif_neg hstart, dif_neg hstart]
+        · rw [ite_eq_right (fun hb => hA (beq_iff_eq.mp hb)),
+            ite_eq_right (fun hE => hA (hiff.mpr hE))]
+      · rw [dite_eq_right hstart, dite_eq_right hstart]
 
 /-- Packed pivot search agrees with the reference pivot search. -/
 private theorem findPivot?_eq {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m}
@@ -527,8 +565,8 @@ private theorem rep_elim_step {q : UInt32} (hq : q.toNat = p)
           if coeff = 0 then st
           else (Matrix.rowAdd st.1 pivotRow j coeff, Matrix.rowAdd st.2 pivotRow j coeff)).1 := by
   by_cases hj : j = pivotRow
-  · rw [if_pos hj, dif_pos hj]; exact h
-  · rw [if_neg hj, dif_neg hj]
+  · rw [ite_eq_left hj, dite_eq_left hj]; exact h
+  · rw [ite_eq_right hj, dite_eq_right hj]
     have hcoeff : (negMod q A[(j, col)]).toNat = (-st.1[(j, col)]).toNat := by
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested,
         toNat_negMod hq (h.lt j col), h j col]
@@ -545,10 +583,10 @@ private theorem rep_elim_step {q : UInt32} (hq : q.toNat = p)
         rw [hcoeff, hz]
         exact ZMod64.toNat_zero (p := p)
     by_cases hA : negMod q A[(j, col)] = 0
-    · rw [if_pos (beq_iff_eq.mpr hA), if_pos (hiff.mp hA)]
+    · rw [ite_eq_left (beq_iff_eq.mpr hA), ite_eq_left (hiff.mp hA)]
       exact h
-    · rw [if_neg (fun hb => hA (beq_iff_eq.mp hb)),
-        if_neg (fun hE => hA (hiff.mpr hE))]
+    · rw [ite_eq_right (fun hb => hA (beq_iff_eq.mp hb)),
+        ite_eq_right (fun hE => hA (hiff.mpr hE))]
       exact h.rowAddFrom hq pivotRow j hsrc hcoeff
 
 /-- One elimination step leaves the pivot row alone: the step either does
@@ -563,12 +601,12 @@ private theorem elim_step_pivotRow {q : UInt32} (A : Matrix UInt32 n m)
         if c == 0 then A else rowAddFrom q A rsrc j c)[pivotRow][k]
       = A[pivotRow][k] := by
   by_cases hj : j = pivotRow
-  · rw [if_pos hj]
-  · rw [if_neg hj]
+  · rw [ite_eq_left hj]
+  · rw [ite_eq_right hj]
     by_cases hA : negMod q A[(j, col)] = 0
-    · rw [if_pos (beq_iff_eq.mpr hA)]
-    · rw [if_neg (fun hb => hA (beq_iff_eq.mp hb)), getElem_rowAddFrom,
-        if_neg (fun hp => hj hp.symm)]
+    · rw [ite_eq_left (beq_iff_eq.mpr hA)]
+    · rw [ite_eq_right (fun hb => hA (beq_iff_eq.mp hb)), getElem_rowAddFrom,
+        ite_eq_right (fun hp => hj hp.symm)]
 
 omit [ZMod64.PrimeModulus p] in
 /-- The packed column elimination represents the reference column elimination.
@@ -648,11 +686,11 @@ theorem reduceLoop_sim {q : UInt32} (hq : q.toNat = p) :
         · have hfp := findPivot?_eq h ⟨col, hCol⟩ row
           cases hpv : Hex.Matrix.findPivot? E ⟨col, hCol⟩ row with
           | none =>
-              simp only [reduceLoop, Matrix.rowReduceLoop, dif_pos hRow, dif_pos hCol,
+              simp only [reduceLoop, Matrix.rowReduceLoop, dite_eq_left hRow, dite_eq_left hCol,
                 hfp, hpv]
               exact ih (col + 1) row pivots A E T h
           | some pivot =>
-              simp only [reduceLoop, Matrix.rowReduceLoop, dif_pos hRow, dif_pos hCol,
+              simp only [reduceLoop, Matrix.rowReduceLoop, dite_eq_left hRow, dite_eq_left hCol,
                 hfp, hpv]
               have hswap := h.rowSwap (⟨row, hRow⟩ : Fin n) pivot
               have hinv :
@@ -673,9 +711,9 @@ theorem reduceLoop_sim {q : UInt32} (hq : q.toNat = p) :
                       (⟨col, hCol⟩ : Fin m))]⁻¹))
                   (⟨row, hRow⟩ : Fin n) (⟨col, hCol⟩ : Fin m)
               exact ih (col + 1) (row + 1) (pivots.concat (⟨col, hCol⟩ : Fin m)) _ _ _ helim
-        · simp only [reduceLoop, Matrix.rowReduceLoop, dif_pos hRow, dif_neg hCol]
+        · simp only [reduceLoop, Matrix.rowReduceLoop, dite_eq_left hRow, dite_eq_right hCol]
           exact ⟨trivial, trivial, h⟩
-      · simp only [reduceLoop, Matrix.rowReduceLoop, dif_neg hRow]
+      · simp only [reduceLoop, Matrix.rowReduceLoop, dite_eq_right hRow]
         exact ⟨trivial, trivial, h⟩
 
 end Simulation
@@ -777,15 +815,15 @@ private theorem pivotRowOf_drop (D : Matrix.RowEchelonData (ZMod64 p) n m) (j : 
         (List.drop_eq_getElem_cons hlen)
       have hget : D.pivotCols.toList[start] = D.pivotCols.get ⟨start, hlt⟩ := by
         simp [Vector.get]
-      rw [hdrop, hget, pivotRowOf, Matrix.IsRowReduced.pivotIndexAux, dif_pos hlt]
+      rw [hdrop, hget, pivotRowOf, Matrix.IsRowReduced.pivotIndexAux, dite_eq_left hlt]
       show (if D.pivotCols.get ⟨start, hlt⟩ = j then some start
             else pivotRowOf (D.pivotCols.toList.drop (start + 1)) j (start + 1))
           = Option.map Fin.val
               (if D.pivotCols.get ⟨start, hlt⟩ = j then some ⟨start, hlt⟩
                else Matrix.IsRowReduced.pivotIndexAux D j (start + 1) fuel)
       by_cases hc : D.pivotCols.get ⟨start, hlt⟩ = j
-      · rw [if_pos hc, if_pos hc]; rfl
-      · rw [if_neg hc, if_neg hc]
+      · rw [ite_eq_left hc, ite_eq_left hc]; rfl
+      · rw [ite_eq_right hc, ite_eq_right hc]
         exact ih (start + 1) (by omega)
 
 omit [ZMod64.PrimeModulus p] in
@@ -835,14 +873,14 @@ theorem nullspaceArray_eq {q : UInt32} (hq : q.toNat = p)
       Matrix.getElem_pair_eq_nested, Matrix.getElem_ofFn]
     rw [hgetfree]
     by_cases hjf : (⟨j, hj⟩ : Fin m) = hE.toIsEchelonForm.freeCols.get ⟨k, hklt⟩
-    · rw [if_pos hjf, dif_pos hjf]
-    · rw [if_neg hjf, dif_neg hjf, pivotRowOf_eq (Matrix.rowReduce E) ⟨j, hj⟩]
+    · rw [ite_eq_left hjf, dite_eq_left hjf]
+    · rw [ite_eq_right hjf, dite_eq_right hjf, pivotRowOf_eq (Matrix.rowReduce E) ⟨j, hj⟩]
       cases hpi : Matrix.IsRowReduced.pivotIndex? (Matrix.rowReduce E) (⟨j, hj⟩ : Fin m) with
       | none => rfl
       | some i =>
           have hin : i.val < n := Nat.lt_of_lt_of_le i.isLt hrank
           show (if hi : i.val < n then toZMod p (negMod q _) else 0) = _
-          rw [dif_pos hin, toZMod_negMod hq (h.lt _ _), h.toZMod_eq _ _]
+          rw [dite_eq_left hin, toZMod_negMod hq (h.lt _ _), h.toZMod_eq _ _]
           rfl
 
 end Basis

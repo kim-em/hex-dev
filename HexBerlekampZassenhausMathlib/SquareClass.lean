@@ -265,9 +265,11 @@ def adjoinSqrt (ds : List ℤ) : IntermediateField ℚ ℂ :=
 theorem exists_sqrt (d : ℤ) : ∃ r : ℂ, r ^ 2 = (d : ℂ) :=
   IsAlgClosed.exists_pow_nat_eq ((d : ℤ) : ℂ) (by norm_num)
 
+/-- No radicands, no square roots. -/
 @[simp]
 theorem sqrtSet_nil : sqrtSet [] = ∅ := by simp [sqrtSet]
 
+/-- The square-root set of a cons splits off the head radicand's roots. -/
 theorem sqrtSet_cons (d : ℤ) (ds : List ℤ) :
     sqrtSet (d :: ds) = {x : ℂ | x ^ 2 = (d : ℂ)} ∪ sqrtSet ds := by
   ext x
@@ -298,6 +300,7 @@ theorem adjoin_sqrtSet_singleton {c r : ℂ} (hr : r ^ 2 = c) :
       rw [Set.mem_singleton_iff] at hx
       exact IntermediateField.subset_adjoin ℚ _ (by rw [hx]; exact hr)
 
+/-- Adjoining no square roots leaves the base field. -/
 @[simp]
 theorem adjoinSqrt_nil : adjoinSqrt [] = ⊥ := by
   simp [adjoinSqrt, IntermediateField.adjoin_empty]
@@ -307,16 +310,6 @@ theorem adjoinSqrt_cons_sup {d : ℤ} {r : ℂ} (hr : r ^ 2 = (d : ℂ)) (ds : L
     adjoinSqrt (d :: ds) = adjoinSqrt ds ⊔ IntermediateField.adjoin ℚ ({r} : Set ℂ) := by
   rw [adjoinSqrt, adjoinSqrt, sqrtSet_cons, IntermediateField.adjoin_union,
     adjoin_sqrtSet_singleton hr, sup_comm]
-
-/-- `adjoinSqrt` depends only on which radicands appear, not on their order. -/
-theorem adjoinSqrt_of_perm {ds ds' : List ℤ} (hp : ds.Perm ds') :
-    adjoinSqrt ds = adjoinSqrt ds' := by
-  have : sqrtSet ds = sqrtSet ds' := by
-    ext x
-    simp only [sqrtSet, Set.mem_setOf_eq]
-    exact ⟨fun ⟨d, hd, hx⟩ => ⟨d, hp.mem_iff.1 hd, hx⟩,
-      fun ⟨d, hd, hx⟩ => ⟨d, hp.mem_iff.2 hd, hx⟩⟩
-  rw [adjoinSqrt, adjoinSqrt, this]
 
 /-- The tower grows monotonically in the radicands. -/
 theorem adjoinSqrt_mono {ds ds' : List ℤ} (h : ∀ d ∈ ds, d ∈ ds') :

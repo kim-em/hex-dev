@@ -238,37 +238,6 @@ private theorem primeChoiceDataScore_fModP_eq
     rfl
   · simp [hgood] at hscore
 
-private theorem betterPrimeChoiceDataScore_prime
-    (old new score : PrimeChoiceDataScore)
-    (hold : Nat.Prime old.data.p)
-    (hnew : Nat.Prime new.data.p)
-    (hscore : betterPrimeChoiceDataScore old new = score) :
-    Nat.Prime score.data.p := by
-  unfold betterPrimeChoiceDataScore at hscore
-  split at hscore
-  · cases hscore
-    exact hnew
-  · cases hscore
-    exact hold
-
-private theorem betterPrimeChoiceDataScore_fModP_eq
-    (f : ZPoly) (old new score : PrimeChoiceDataScore)
-    (hold :
-      old.data.fModP =
-        @ZPoly.modP old.data.p old.data.bounds f)
-    (hnew :
-      new.data.fModP =
-        @ZPoly.modP new.data.p new.data.bounds f)
-    (hscore : betterPrimeChoiceDataScore old new = score) :
-    score.data.fModP =
-      @ZPoly.modP score.data.p score.data.bounds f := by
-  unfold betterPrimeChoiceDataScore at hscore
-  split at hscore
-  · cases hscore
-    exact hnew
-  · cases hscore
-    exact hold
-
 private theorem choosePrimeDataScoreStep_prime
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
     (score : PrimeChoiceDataScore)
@@ -736,6 +705,8 @@ theorem choosePrimeDataAdaptive?_prime
     (fun c score hscore => primeChoiceDataScore_prime f c score hscore) hdata
   exact hprime
 
+/-- Every prime returned by the adaptive selector is at most `500`: its
+look-ahead only rearranges the fixed small-prime candidate lists. -/
 theorem choosePrimeDataAdaptive?_p_le_500
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -1294,9 +1265,11 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
+/-- The lift data keeps the selected prime. -/
 @[simp, grind =] theorem henselLiftData_p (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).p = d.p := rfl
 
+/-- The lift data keeps the requested precision exponent. -/
 @[simp, grind =] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).k = B := rfl
 

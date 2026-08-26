@@ -125,7 +125,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
       exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
-    exact zmod64_one_ne_zero_local hlead.symm
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hlead.symm
   refine ⟨hf_ne_zero, ?_⟩
   intro a₀ b₀ hab
   by_cases ha₀_unit : a₀.degree? = some 0
@@ -459,8 +459,8 @@ private theorem C_add_C (a b : ZMod64 p) :
   rw [DensePoly.coeff_add (DensePoly.C a) (DensePoly.C b) i h0,
       DensePoly.coeff_C, DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hi : i = 0
-  · rw [if_pos hi, if_pos hi, if_pos hi]
-  · rw [if_neg hi, if_neg hi, if_neg hi]; exact h0
+  · rw [ite_eq_left hi, ite_eq_left hi, ite_eq_left hi]
+  · rw [ite_eq_right hi, ite_eq_right hi, ite_eq_right hi]; exact h0
 
 omit [ZMod64.PrimeModulus p] in
 /-- The `i`-th coefficient of `q * C c` is `q.coeff i * c`. -/
@@ -843,7 +843,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
       exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
-    exact zmod64_one_ne_zero_local hlead.symm
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hlead.symm
   have hg_ne_zero : g ≠ 0 := by
     intro hzero
     have hlead : g.leadingCoeff = 1 := hg_monic
@@ -851,7 +851,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
       exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
-    exact zmod64_one_ne_zero_local hlead.symm
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hlead.symm
   refine ⟨hg_ne_zero, ?_⟩
   intro a₀ b₀ hab
   by_cases ha₀_unit : a₀.degree? = some 0

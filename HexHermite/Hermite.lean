@@ -24,6 +24,17 @@ structure Result (α : Type) (n m : Nat) where
   pivots : List (Fin m)
   accumulator : α
 
+/-- Convert the stored pivot list to the dependent vector expected by
+`RowEchelonData`. -/
+@[expose]
+def Result.pivotVector (s : Result α n m) : Vector (Fin m) s.pivots.length :=
+  ⟨s.pivots.toArray, by simp⟩
+
+@[simp] theorem Result.pivotVector_get (s : Result α n m)
+    (i : Fin s.pivots.length) : s.pivotVector.get i = s.pivots.get i := by
+  change s.pivots.toArray[i.val] = s.pivots[i.val]
+  apply List.getElem_toArray
+
 /-- Search for the first nonzero entry at or below `start`. -/
 @[expose]
 def findPivot? (M : Matrix Int n m) (col : Fin m) (start : Nat) : Option (Fin n) :=
@@ -658,6 +669,105 @@ def run (ops : Accumulator α n) (A : Matrix Int n m) : Result α n m :=
   (List.finRange m).foldl (columnStep ops)
     { matrix := A, pivots := [], accumulator := ops.init }
 
+/-- Fraction-free row-profile state. The elimination matrix is used only to
+choose a row permutation and pivot columns; the Hermite computation itself
+still consists exclusively of unimodular integer row operations. -/
+structure Profile (n m : Nat) where
+  matrix : Matrix Int n m
+  row : Nat
+  previous : Int
+  swaps : List (Fin n × Fin n)
+  pivots : List (Fin m)
+
+/-- One rectangular fraction-free elimination update below a selected pivot. -/
+def profileEliminate (M : Matrix Int n m) (row : Fin n) (col : Fin m)
+    (previous : Int) : Matrix Int n m :=
+  let pivot := M[(row, col)]
+  Matrix.ofFn fun i j =>
+    if row.val < i.val then
+      if j = col then 0
+      else if col.val < j.val then
+        (pivot * M[(i, j)] - M[(i, col)] * M[(row, j)]) / previous
+      else M[(i, j)]
+    else M[(i, j)]
+
+/-- Extend a fraction-free row profile by one input column. -/
+def profileStep (s : Profile n m) (col : Fin m) : Profile n m :=
+  if hr : s.row < n then
+    match findPivot? s.matrix col s.row with
+    | none => s
+    | some found =>
+        let row : Fin n := ⟨s.row, hr⟩
+        let swapped := Matrix.rowSwap s.matrix row found
+        let pivot := swapped[(row, col)]
+        { matrix := profileEliminate swapped row col s.previous
+          row := s.row + 1
+          previous := pivot
+          swaps := s.swaps ++ [(row, found)]
+          pivots := s.pivots ++ [col] }
+  else s
+
+/-- A fraction-free row rank profile, represented as the row swaps needed to
+place independent rows first and their increasing pivot columns. -/
+def rankProfile (A : Matrix Int n m) : Profile n m :=
+  (List.finRange m).foldl profileStep
+    { matrix := A, row := 0, previous := 1, swaps := [], pivots := [] }
+
+/-- Normalize one nonzero pivot and reduce every entry above it. A zero entry
+is left alone, making the rank profile a checked optimization hint rather than
+a partiality assumption. -/
+def normalizeRow (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (pivot : Fin n) : Result α n m :=
+  if s.matrix[(pivot, col)] = 0 then s else
+    let s := signStep ops col pivot s
+    (List.finRange n).foldl (fun s row =>
+      if row.val < pivot.val then reduceStep ops col pivot row s else s) s
+
+/-- Clear one earlier pivot from the row currently being admitted, then
+restore the canonical residues above that pivot immediately. -/
+def clearPrior (ops : Accumulator α n) (pivots : List (Fin m))
+    (row : Fin n) (s : Result α n m) (pivot : Fin n) : Result α n m :=
+  if _hpr : pivot.val < row.val then
+    if hp : pivot.val < pivots.length then
+      let col := pivots.get ⟨pivot.val, hp⟩
+      normalizeRow ops (gcdStep ops col pivot row s) col pivot
+    else s
+  else s
+
+/-- Admit one profiled row into the growing principal Hermite block. -/
+def admitRow (ops : Accumulator α n) (pivots : List (Fin m))
+    (s : Result α n m) (row : Fin n) : Result α n m :=
+  let s := (List.finRange n).foldl (clearPrior ops pivots row) s
+  if hp : row.val < pivots.length then
+    normalizeRow ops s (pivots.get ⟨row.val, hp⟩) row
+  else s
+
+/-- Rank-profiled principal-block Hermite candidate. Each prefix is restored
+before another row is admitted, preventing uncontrolled suffix growth. -/
+@[expose]
+def principalCore (ops : Accumulator α n) (A : Matrix Int n m)
+    (profile : Profile n m) : Result α n m :=
+  let initial : Result α n m :=
+    { matrix := A, pivots := profile.pivots, accumulator := ops.init }
+  let permuted := profile.swaps.foldl (fun s swap =>
+    swapStep ops s swap.1 swap.2) initial
+  (List.finRange n).foldl (admitRow ops profile.pivots) permuted
+
+/-- Compute the row profile and run the principal-block candidate. -/
+@[expose]
+def principalRun (ops : Accumulator α n) (A : Matrix Int n m) : Result α n m :=
+  principalCore ops A (rankProfile A)
+
+/-- Use the bounded-growth candidate when its complete HNF shape checks;
+otherwise retain the proven column sweep as a total fallback. -/
+@[expose]
+def checkedRun (ops : Accumulator α n) (A : Matrix Int n m) : Result α n m :=
+  let candidate := principalRun ops A
+  if isHNFForm candidate.matrix candidate.pivots.length candidate.pivotVector then
+    candidate
+  else
+    run ops A
+
 /-- Shape invariant after processing the first `bound` columns. -/
 private structure PrefixForm (s : Result α n m) (bound : Nat) : Prop where
   rank_le_n : s.pivots.length ≤ n
@@ -940,6 +1050,61 @@ private theorem run_form (ops : Accumulator α n) (A : Matrix Int n m) :
     simpa using (@List.take_length (Fin m) (List.finRange m))
   simpa [prefixRun, run, ht] using h
 
+private theorem PrefixForm.hnfForm {s : Result α n m}
+    (h : PrefixForm s m) :
+    HNFForm s.matrix s.pivots.length s.pivotVector := by
+  refine ⟨h.rank_le_n, h.rank_le_bound, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro i j hij
+    simpa only [Result.pivotVector_get] using h.pivots_sorted i j hij
+  · intro i row hrow j hj
+    simp only [Result.pivotVector_get] at hj
+    change s.matrix[row][j] = 0
+    rw [← Matrix.getElem_pair_eq_nested]
+    exact h.leading i row hrow j hj
+  · intro i row hrow
+    rw [Result.pivotVector_get]
+    change 0 < s.matrix[row][s.pivots.get i]
+    rw [← Matrix.getElem_pair_eq_nested]
+    exact h.pivot_pos i row hrow
+  · intro i row hrow
+    rw [Result.pivotVector_get]
+    change s.matrix[row][s.pivots.get i] = 0
+    rw [← Matrix.getElem_pair_eq_nested]
+    exact h.below_zero i row hrow
+  · intro row hrow
+    apply Vector.ext
+    intro col hcol
+    simp only [Vector.getElem_zero]
+    change s.matrix[row][(⟨col, hcol⟩ : Fin m)] = 0
+    simpa only [Matrix.getElem_pair_eq_nested] using
+      h.zero_prefix row hrow ⟨col, hcol⟩ (by omega)
+  · intro i row hrow
+    rw [Result.pivotVector_get]
+    change 0 ≤ s.matrix[row][s.pivots.get i]
+    rw [← Matrix.getElem_pair_eq_nested]
+    exact (h.above_bounds i row hrow).1
+  · intro i row hrow pivotRow hpivotRow
+    rw [Result.pivotVector_get]
+    change s.matrix[row][s.pivots.get i] < s.matrix[pivotRow][s.pivots.get i]
+    rw [← Matrix.getElem_pair_eq_nested, ← Matrix.getElem_pair_eq_nested]
+    exact (h.above_bounds i row hrow).2 pivotRow hpivotRow
+
+private theorem checkedRun_form (ops : Accumulator α n) (A : Matrix Int n m) :
+    HNFForm (checkedRun ops A).matrix (checkedRun ops A).pivots.length
+      (checkedRun ops A).pivotVector := by
+  by_cases h : isHNFForm (principalRun ops A).matrix
+      (principalRun ops A).pivots.length (principalRun ops A).pivotVector = true
+  · have hc : checkedRun ops A = principalRun ops A := by
+      rw [checkedRun]
+      exact if_pos h
+    rw [hc]
+    exact (isHNFForm_iff _ _ _).mp h
+  · have hc : checkedRun ops A = run ops A := by
+      rw [checkedRun]
+      exact if_neg h
+    rw [hc]
+    exact (run_form ops A).hnfForm
+
 /-- Two accumulator runs agree on the computational form and pivot schedule. -/
 def Result.Same (s : Result α n m) (t : Result β n m) : Prop :=
   s.matrix = t.matrix ∧ s.pivots = t.pivots
@@ -999,6 +1164,67 @@ private theorem foldl_same {γ : Type}
       rw [List.foldl_cons, List.foldl_cons]
       apply ih (hstep x h)
 
+private theorem normalizeRow_same (ops : Accumulator α n)
+    (ops' : Accumulator β n) {s : Result α n m} {t : Result β n m}
+    (h : s.Same t) (col : Fin m) (pivot : Fin n) :
+    (normalizeRow ops s col pivot).Same (normalizeRow ops' t col pivot) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Same] at h
+  rcases h with ⟨rfl, rfl⟩
+  rw [normalizeRow, normalizeRow]
+  split
+  · exact ⟨rfl, rfl⟩
+  · apply foldl_same
+    · exact signStep_same ops ops' ⟨rfl, rfl⟩ col pivot
+    · intro state state' row hstate
+      split
+      · exact reduceStep_same ops ops' hstate col pivot row
+      · exact hstate
+
+private theorem clearPrior_same (ops : Accumulator α n)
+    (ops' : Accumulator β n) (pivots : List (Fin m)) (row : Fin n)
+    {s : Result α n m} {t : Result β n m} (h : s.Same t) (pivot : Fin n) :
+    (clearPrior ops pivots row s pivot).Same
+      (clearPrior ops' pivots row t pivot) := by
+  rw [clearPrior, clearPrior]
+  split
+  · split
+    · exact normalizeRow_same ops ops'
+        (gcdStep_same ops ops' h _ pivot row) _ pivot
+    · exact h
+  · exact h
+
+private theorem admitRow_same (ops : Accumulator α n)
+    (ops' : Accumulator β n) (pivots : List (Fin m))
+    {s : Result α n m} {t : Result β n m} (h : s.Same t) (row : Fin n) :
+    (admitRow ops pivots s row).Same (admitRow ops' pivots t row) := by
+  rw [admitRow, admitRow]
+  have hc := foldl_same (clearPrior ops pivots row) (clearPrior ops' pivots row)
+    (List.finRange n) h (fun pivot hp => clearPrior_same ops ops' pivots row hp pivot)
+  split
+  · exact normalizeRow_same ops ops' hc _ row
+  · exact hc
+
+private theorem principalRun_same (ops : Accumulator α n)
+    (ops' : Accumulator β n) (A : Matrix Int n m) :
+    (principalRun ops A).Same (principalRun ops' A) := by
+  rw [principalRun, principalRun, principalCore, principalCore]
+  let profile := rankProfile A
+  have hp :
+      (profile.swaps.foldl (fun s swap => swapStep ops s swap.1 swap.2)
+        { matrix := A, pivots := profile.pivots, accumulator := ops.init }).Same
+      (profile.swaps.foldl (fun s swap => swapStep ops' s swap.1 swap.2)
+        { matrix := A, pivots := profile.pivots, accumulator := ops'.init }) := by
+    exact foldl_same _ _ profile.swaps ⟨rfl, rfl⟩ (by
+      intro state state' swap hs
+      exact swapStep_same ops ops' hs swap.1 swap.2)
+  have hr := foldl_same (admitRow ops profile.pivots)
+    (admitRow ops' profile.pivots) (List.finRange n) hp (by
+      intro state state' row hs
+      exact admitRow_same ops ops' profile.pivots hs row)
+  exact hr
+
 private theorem clearColumn_same (ops : Accumulator α n) (ops' : Accumulator β n)
     {s : Result α n m} {t : Result β n m} (h : s.Same t)
     (col : Fin m) (pivotRow found : Fin n) :
@@ -1054,10 +1280,177 @@ theorem run_pivots_agree (ops : Accumulator α n) (ops' : Accumulator β n)
     { matrix := A, pivots := [], accumulator := ops'.init }) ⟨rfl, rfl⟩
       (fun col h => columnStep_same ops ops' h col)).2
 
+private theorem checkedRun_same (ops : Accumulator α n)
+    (ops' : Accumulator β n) (A : Matrix Int n m) :
+    (checkedRun ops A).Same (checkedRun ops' A) := by
+  have hp := principalRun_same ops ops' A
+  have hc : isHNFForm (principalRun ops A).matrix
+      (principalRun ops A).pivots.length (principalRun ops A).pivotVector =
+      isHNFForm (principalRun ops' A).matrix
+        (principalRun ops' A).pivots.length (principalRun ops' A).pivotVector := by
+    rcases hpo : principalRun ops A with ⟨matrix, pivots, acc⟩
+    rcases hpo' : principalRun ops' A with ⟨matrix', pivots', acc'⟩
+    rw [hpo, hpo'] at hp
+    simp only [Result.Same, Result.pivotVector] at hp ⊢
+    rcases hp with ⟨rfl, rfl⟩
+    rfl
+  rw [checkedRun, checkedRun, hc]
+  split
+  · exact hp
+  · exact ⟨run_matrix_agree ops ops' A, run_pivots_agree ops ops' A⟩
+
+theorem checkedRun_matrix_agree (ops : Accumulator α n)
+    (ops' : Accumulator β n) (A : Matrix Int n m) :
+    (checkedRun ops A).matrix = (checkedRun ops' A).matrix :=
+  (checkedRun_same ops ops' A).1
+
+theorem checkedRun_pivots_agree (ops : Accumulator α n)
+    (ops' : Accumulator β n) (A : Matrix Int n m) :
+    (checkedRun ops A).pivots = (checkedRun ops' A).pivots :=
+  (checkedRun_same ops ops' A).2
+
 /-- A relation between accumulator runs that also tracks a homomorphism on
 the companion state. -/
 private def Result.Mapped (f : α → β) (s : Result α n m) (t : Result β n m) : Prop :=
   s.matrix = t.matrix ∧ s.pivots = t.pivots ∧ f s.accumulator = t.accumulator
+
+private structure Accumulator.Hom (f : α → β)
+    (ops : Accumulator α n) (ops' : Accumulator β n) : Prop where
+  init : f ops.init = ops'.init
+  swap : ∀ a i k, f (ops.swap a i k) = ops'.swap (f a) i k
+  combine : ∀ a i k x y z w,
+    f (ops.combine a i k x y z w) = ops'.combine (f a) i k x y z w
+  negate : ∀ a i, f (ops.negate a i) = ops'.negate (f a) i
+  add : ∀ a i k c, f (ops.add a i k c) = ops'.add (f a) i k c
+
+private theorem swapStep_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t) (i k : Fin n) :
+    (swapStep ops s i k).Mapped f (swapStep ops' t i k) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Mapped] at h ⊢
+  rcases h with ⟨rfl, rfl, rfl⟩
+  rw [swapStep, swapStep]
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · exact ⟨rfl, rfl, hom.swap acc i k⟩
+
+private theorem gcdStep_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (col : Fin m) (i k : Fin n) :
+    (gcdStep ops col i k s).Mapped f (gcdStep ops' col i k t) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Mapped] at h ⊢
+  rcases h with ⟨rfl, rfl, rfl⟩
+  rw [gcdStep, gcdStep]
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · exact ⟨rfl, rfl, hom.combine acc i k _ _ _ _⟩
+
+private theorem signStep_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (col : Fin m) (i : Fin n) :
+    (signStep ops col i s).Mapped f (signStep ops' col i t) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Mapped] at h ⊢
+  rcases h with ⟨rfl, rfl, rfl⟩
+  rw [signStep, signStep]
+  split
+  · exact ⟨rfl, rfl, hom.negate acc i⟩
+  · exact ⟨rfl, rfl, rfl⟩
+
+private theorem reduceStep_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (col : Fin m) (i k : Fin n) :
+    (reduceStep ops col i k s).Mapped f (reduceStep ops' col i k t) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Mapped] at h ⊢
+  rcases h with ⟨rfl, rfl, rfl⟩
+  rw [reduceStep, reduceStep]
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · exact ⟨rfl, rfl, hom.add acc i k _⟩
+
+private theorem foldl_mapped (f : α → β) {γ : Type}
+    (fstep : Result α n m → γ → Result α n m)
+    (gstep : Result β n m → γ → Result β n m) (xs : List γ)
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (hstep : ∀ {s t} x, s.Mapped f t → (fstep s x).Mapped f (gstep t x)) :
+    (xs.foldl fstep s).Mapped f (xs.foldl gstep t) := by
+  induction xs generalizing s t with
+  | nil => exact h
+  | cons x xs ih =>
+      rw [List.foldl_cons, List.foldl_cons]
+      exact ih (hstep x h)
+
+private theorem normalizeRow_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (col : Fin m) (pivot : Fin n) :
+    (normalizeRow ops s col pivot).Mapped f (normalizeRow ops' t col pivot) := by
+  rcases s with ⟨matrix, pivots, acc⟩
+  rcases t with ⟨matrix', pivots', acc'⟩
+  simp only [Result.Mapped] at h
+  rcases h with ⟨rfl, rfl, rfl⟩
+  rw [normalizeRow, normalizeRow]
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · apply foldl_mapped f
+    · exact signStep_mapped f ops ops' hom ⟨rfl, rfl, rfl⟩ col pivot
+    · intro state state' row hs
+      split
+      · exact reduceStep_mapped f ops ops' hom hs col pivot row
+      · exact hs
+
+private theorem clearPrior_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops') (pivots : List (Fin m))
+    (row : Fin n) {s : Result α n m} {t : Result β n m} (h : s.Mapped f t)
+    (pivot : Fin n) :
+    (clearPrior ops pivots row s pivot).Mapped f
+      (clearPrior ops' pivots row t pivot) := by
+  rw [clearPrior, clearPrior]
+  split
+  · split
+    · exact normalizeRow_mapped f ops ops' hom
+        (gcdStep_mapped f ops ops' hom h _ pivot row) _ pivot
+    · exact h
+  · exact h
+
+private theorem admitRow_mapped (f : α → β) (ops : Accumulator α n)
+    (ops' : Accumulator β n) (hom : ops.Hom f ops') (pivots : List (Fin m))
+    {s : Result α n m} {t : Result β n m} (h : s.Mapped f t) (row : Fin n) :
+    (admitRow ops pivots s row).Mapped f (admitRow ops' pivots t row) := by
+  rw [admitRow, admitRow]
+  have hc := foldl_mapped f (clearPrior ops pivots row) (clearPrior ops' pivots row)
+    (List.finRange n) h (fun pivot hp =>
+      clearPrior_mapped f ops ops' hom pivots row hp pivot)
+  split
+  · exact normalizeRow_mapped f ops ops' hom hc _ row
+  · exact hc
+
+private theorem principalRun_accumulator_map (f : α → β)
+    (ops : Accumulator α n) (ops' : Accumulator β n) (hom : ops.Hom f ops')
+    (A : Matrix Int n m) :
+    f (principalRun ops A).accumulator = (principalRun ops' A).accumulator := by
+  rw [principalRun, principalRun, principalCore, principalCore]
+  let profile := rankProfile A
+  have hp := foldl_mapped f _ _ profile.swaps
+    (show ({ matrix := A, pivots := profile.pivots, accumulator := ops.init } :
+        Result α n m).Mapped f
+      { matrix := A, pivots := profile.pivots, accumulator := ops'.init } from
+        ⟨rfl, rfl, hom.init⟩)
+    (fun swap hs => swapStep_mapped f ops ops' hom hs swap.1 swap.2)
+  have hr := foldl_mapped f (admitRow ops profile.pivots)
+    (admitRow ops' profile.pivots) (List.finRange n) hp (fun row hs =>
+      admitRow_mapped f ops ops' hom profile.pivots hs row)
+  exact hr.2.2
 
 private theorem run_accumulator_map (f : α → β)
     (ops : Accumulator α n) (ops' : Accumulator β n)
@@ -1178,6 +1571,27 @@ private theorem run_accumulator_map (f : α → β)
     ⟨rfl, rfl, hinit⟩ (fun col h => column_mapped h col)
   exact result.2.2
 
+private theorem checkedRun_accumulator_map (f : α → β)
+    (ops : Accumulator α n) (ops' : Accumulator β n)
+    (hom : ops.Hom f ops') (A : Matrix Int n m) :
+    f (checkedRun ops A).accumulator = (checkedRun ops' A).accumulator := by
+  have hs := principalRun_same ops ops' A
+  have hc : isHNFForm (principalRun ops A).matrix
+      (principalRun ops A).pivots.length (principalRun ops A).pivotVector =
+      isHNFForm (principalRun ops' A).matrix
+        (principalRun ops' A).pivots.length (principalRun ops' A).pivotVector := by
+    rcases hpo : principalRun ops A with ⟨matrix, pivots, acc⟩
+    rcases hpo' : principalRun ops' A with ⟨matrix', pivots', acc'⟩
+    rw [hpo, hpo'] at hs
+    simp only [Result.Same, Result.pivotVector] at hs ⊢
+    rcases hs with ⟨rfl, rfl⟩
+    rfl
+  rw [checkedRun, checkedRun, hc]
+  split
+  · exact principalRun_accumulator_map f ops ops' hom A
+  · exact run_accumulator_map f ops ops' hom.init hom.swap hom.combine
+      hom.negate hom.add A
+
 /-- Projecting the transform from the inverse-tracking path agrees with the
 transform-only path. -/
 theorem run_inverse_transform (A : Matrix Int n m) :
@@ -1190,16 +1604,16 @@ theorem run_inverse_transform (A : Matrix Int n m) :
   · intros; rfl
   · intros; rfl
 
-/-- Convert the stored pivot list to the dependent vector expected by
-`RowEchelonData`. -/
-@[expose]
-def Result.pivotVector (s : Result α n m) : Vector (Fin m) s.pivots.length :=
-  ⟨s.pivots.toArray, by simp⟩
-
-@[simp] theorem Result.pivotVector_get (s : Result α n m)
-    (i : Fin s.pivots.length) : s.pivotVector.get i = s.pivots.get i := by
-  change s.pivots.toArray[i.val] = s.pivots[i.val]
-  apply List.getElem_toArray
+private theorem checkedRun_inverse_transform (A : Matrix Int n m) :
+    (checkedRun (inverseAccumulator n) A).accumulator.transform =
+      (checkedRun (transformAccumulator n) A).accumulator := by
+  apply checkedRun_accumulator_map (fun p : TransformPair n => p.transform)
+  exact
+    { init := rfl
+      swap := by intros; rfl
+      combine := by intros; rfl
+      negate := by intros; rfl
+      add := by intros; rfl }
 
 /-- The bounded sweep creates no more than one pivot per row. -/
 theorem run_rank_le (ops : Accumulator α n) (A : Matrix Int n m) :
@@ -1214,6 +1628,10 @@ theorem run_rank_le (ops : Accumulator α n) (A : Matrix Int n m) :
       rw [List.foldl_cons]
       apply ih
       exact columnStep_rank_le ops s col hinit
+
+theorem checkedRun_rank_le (ops : Accumulator α n) (A : Matrix Int n m) :
+    (checkedRun ops A).pivots.length ≤ n :=
+  (checkedRun_form ops A).1
 
 /-- The transform accumulator always maps the original input to the current
 working matrix. -/
@@ -1307,6 +1725,117 @@ private theorem run_transform (A : Matrix Int n m) :
     exact Matrix.identity_mul A) (by
     intro state col h
     exact column_preserves h col)
+
+private theorem transformSwap {s : Result (Matrix Int n n) n m}
+    {A : Matrix Int n m} (h : s.Transforms A) (i k : Fin n) :
+    (swapStep (transformAccumulator n) s i k).Transforms A := by
+  rw [swapStep]
+  split
+  · exact h
+  · change Matrix.rowSwap s.accumulator i k * A = Matrix.rowSwap s.matrix i k
+    rw [Matrix.rowSwap_mul, h]
+
+private theorem transformGcd {s : Result (Matrix Int n n) n m}
+    {A : Matrix Int n m} (h : s.Transforms A) (col : Fin m) (i k : Fin n) :
+    (gcdStep (transformAccumulator n) col i k s).Transforms A := by
+  rw [gcdStep]
+  split
+  · exact h
+  · change combineRows s.accumulator i k _ _ _ _ * A =
+        combineRows s.matrix i k _ _ _ _
+    rw [combineRows_mul, h]
+
+private theorem transformSign {s : Result (Matrix Int n n) n m}
+    {A : Matrix Int n m} (h : s.Transforms A) (col : Fin m) (i : Fin n) :
+    (signStep (transformAccumulator n) col i s).Transforms A := by
+  rw [signStep]
+  split
+  · change Matrix.rowScale s.accumulator i (-1) * A = Matrix.rowScale s.matrix i (-1)
+    rw [Matrix.rowScale_mul, h]
+  · exact h
+
+private theorem transformReduce {s : Result (Matrix Int n n) n m}
+    {A : Matrix Int n m} (h : s.Transforms A) (col : Fin m) (i k : Fin n) :
+    (reduceStep (transformAccumulator n) col i k s).Transforms A := by
+  rw [reduceStep]
+  split
+  · exact h
+  · change Matrix.rowAdd s.accumulator i k _ * A = Matrix.rowAdd s.matrix i k _
+    rw [Matrix.rowAdd_mul, h]
+
+private theorem transformFold {A : Matrix Int n m} {γ : Type}
+    (step : Result (Matrix Int n n) n m → γ → Result (Matrix Int n n) n m)
+    (xs : List γ) {s : Result (Matrix Int n n) n m} (h : s.Transforms A)
+    (hstep : ∀ {s} x, s.Transforms A → (step s x).Transforms A) :
+    (xs.foldl step s).Transforms A := by
+  induction xs generalizing s with
+  | nil => exact h
+  | cons x xs ih =>
+      rw [List.foldl_cons]
+      exact ih (hstep x h)
+
+private theorem transformNormalize {s : Result (Matrix Int n n) n m}
+    {A : Matrix Int n m} (h : s.Transforms A) (col : Fin m) (pivot : Fin n) :
+    (normalizeRow (transformAccumulator n) s col pivot).Transforms A := by
+  rw [normalizeRow]
+  split
+  · exact h
+  · exact transformFold _ (List.finRange n) (transformSign h col pivot) (by
+      intro state row hs
+      split
+      · exact transformReduce hs col pivot row
+      · exact hs)
+
+private theorem transformClear (pivots : List (Fin m)) (row : Fin n)
+    {s : Result (Matrix Int n n) n m} {A : Matrix Int n m} (h : s.Transforms A)
+    (pivot : Fin n) :
+    (clearPrior (transformAccumulator n) pivots row s pivot).Transforms A := by
+  rw [clearPrior]
+  split
+  · split
+    · exact transformNormalize (transformGcd h _ pivot row) _ pivot
+    · exact h
+  · exact h
+
+private theorem transformAdmit (pivots : List (Fin m))
+    {s : Result (Matrix Int n n) n m} {A : Matrix Int n m} (h : s.Transforms A)
+    (row : Fin n) :
+    (admitRow (transformAccumulator n) pivots s row).Transforms A := by
+  rw [admitRow]
+  have hc := transformFold (clearPrior (transformAccumulator n) pivots row)
+    (List.finRange n) h (fun pivot hs => transformClear pivots row hs pivot)
+  split
+  · exact transformNormalize hc _ row
+  · exact hc
+
+private theorem principalCore_transform (A : Matrix Int n m) (profile : Profile n m) :
+    let initial : Result (Matrix Int n n) n m :=
+      { matrix := A, pivots := profile.pivots, accumulator := Matrix.identity n }
+    let permuted := profile.swaps.foldl
+      (fun s swap => swapStep (transformAccumulator n) s swap.1 swap.2) initial
+    ((List.finRange n).foldl
+      (admitRow (transformAccumulator n) profile.pivots) permuted).Transforms A := by
+  dsimp only
+  apply transformFold
+  · apply transformFold
+    · exact Matrix.identity_mul A
+    · intro state swap hs
+      exact transformSwap hs swap.1 swap.2
+  · intro state row hs
+    exact transformAdmit profile.pivots hs row
+
+private theorem principalRun_transform (A : Matrix Int n m) :
+    (principalRun (transformAccumulator n) A).Transforms A := by
+  change (principalCore (transformAccumulator n) A (rankProfile A)).Transforms A
+  exact principalCore_transform A (rankProfile A)
+
+private theorem checkedRun_transform (A : Matrix Int n m) :
+    (checkedRun (transformAccumulator n) A).accumulator * A =
+      (checkedRun (transformAccumulator n) A).matrix := by
+  rw [checkedRun]
+  split
+  · exact principalRun_transform A
+  · exact run_transform A
 
 set_option maxHeartbeats 800000 in
 /-- The explicit inverse accumulator remains a right inverse of its transform. -/
@@ -1411,6 +1940,136 @@ private theorem run_inverse_mul (A : Matrix Int n m) :
     intro state col h
     exact column_preserves h col)
 
+private def Result.Invertible (s : Result (TransformPair n) n m) : Prop :=
+  s.accumulator.transform * s.accumulator.inverse = Matrix.identity n
+
+private theorem inverseSwap {s : Result (TransformPair n) n m}
+    (h : s.Invertible) (i k : Fin n) :
+    (swapStep (inverseAccumulator n) s i k).Invertible := by
+  rw [swapStep]
+  split
+  · exact h
+  · change Matrix.rowSwap s.accumulator.transform i k *
+        Matrix.colSwap s.accumulator.inverse i k = Matrix.identity n
+    rw [Matrix.rowSwap_mul, mul_colSwap, h, swap_inverse_identity]
+
+private theorem inverseGcd {s : Result (TransformPair n) n m}
+    (h : s.Invertible) (col : Fin m) (i k : Fin n) (hik : i ≠ k) :
+    (gcdStep (inverseAccumulator n) col i k s).Invertible := by
+  rw [gcdStep]
+  split
+  · exact h
+  · rename_i hb
+    let a := s.matrix[(i, col)]
+    let b := s.matrix[(k, col)]
+    rcases hc : gcdCoeffs a b with ⟨x, y, z, w⟩
+    have hdet := gcdCoeffs_det (a := a) (b := b) hb
+    rw [hc] at hdet
+    dsimp only at hdet
+    dsimp [a, b] at hc
+    dsimp only
+    rw [hc]
+    change combineRows s.accumulator.transform i k x y z w *
+        combineCols s.accumulator.inverse i k w (-z) (-y) x = Matrix.identity n
+    rw [combineRows_mul, mul_combineCols, h,
+      combine_inverse_identity i k hik x y z w hdet]
+
+private theorem inverseSign {s : Result (TransformPair n) n m}
+    (h : s.Invertible) (col : Fin m) (i : Fin n) :
+    (signStep (inverseAccumulator n) col i s).Invertible := by
+  rw [signStep]
+  split
+  · change Matrix.rowScale s.accumulator.transform i (-1) *
+        Matrix.colScale s.accumulator.inverse i (-1) = Matrix.identity n
+    rw [Matrix.rowScale_mul, mul_colScale, h, negate_inverse_identity]
+  · exact h
+
+private theorem inverseReduce {s : Result (TransformPair n) n m}
+    (h : s.Invertible) (col : Fin m) (i k : Fin n) (hik : i ≠ k) :
+    (reduceStep (inverseAccumulator n) col i k s).Invertible := by
+  rw [reduceStep]
+  split
+  · exact h
+  · change Matrix.rowAdd s.accumulator.transform i k _ *
+        Matrix.colAdd s.accumulator.inverse k i (-_) = Matrix.identity n
+    rw [Matrix.rowAdd_mul, Matrix.mul_colAdd, h]
+    exact add_inverse_identity i k hik _
+
+private theorem inverseFold {γ : Type}
+    (step : Result (TransformPair n) n m → γ → Result (TransformPair n) n m)
+    (xs : List γ) {s : Result (TransformPair n) n m} (h : s.Invertible)
+    (hstep : ∀ {s} x, s.Invertible → (step s x).Invertible) :
+    (xs.foldl step s).Invertible := by
+  induction xs generalizing s with
+  | nil => exact h
+  | cons x xs ih =>
+      rw [List.foldl_cons]
+      exact ih (hstep x h)
+
+private theorem inverseNormalize {s : Result (TransformPair n) n m}
+    (h : s.Invertible) (col : Fin m) (pivot : Fin n) :
+    (normalizeRow (inverseAccumulator n) s col pivot).Invertible := by
+  rw [normalizeRow]
+  split
+  · exact h
+  · exact inverseFold _ (List.finRange n) (inverseSign h col pivot) (by
+      intro state row hs
+      split
+      · exact inverseReduce hs col pivot row (by omega)
+      · exact hs)
+
+private theorem inverseClear (pivots : List (Fin m)) (row : Fin n)
+    {s : Result (TransformPair n) n m} (h : s.Invertible) (pivot : Fin n) :
+    (clearPrior (inverseAccumulator n) pivots row s pivot).Invertible := by
+  rw [clearPrior]
+  split
+  · rename_i hpr
+    split
+    · exact inverseNormalize (inverseGcd h _ pivot row (by omega)) _ pivot
+    · exact h
+  · exact h
+
+private theorem inverseAdmit (pivots : List (Fin m))
+    {s : Result (TransformPair n) n m} (h : s.Invertible) (row : Fin n) :
+    (admitRow (inverseAccumulator n) pivots s row).Invertible := by
+  rw [admitRow]
+  have hc := inverseFold (clearPrior (inverseAccumulator n) pivots row)
+    (List.finRange n) h (fun pivot hs => inverseClear pivots row hs pivot)
+  split
+  · exact inverseNormalize hc _ row
+  · exact hc
+
+private theorem principalCore_inverse (A : Matrix Int n m) (profile : Profile n m) :
+    let initial : Result (TransformPair n) n m :=
+      { matrix := A, pivots := profile.pivots
+        accumulator := ⟨Matrix.identity n, Matrix.identity n⟩ }
+    let permuted := profile.swaps.foldl
+      (fun s swap => swapStep (inverseAccumulator n) s swap.1 swap.2) initial
+    ((List.finRange n).foldl
+      (admitRow (inverseAccumulator n) profile.pivots) permuted).Invertible := by
+  dsimp only
+  apply inverseFold
+  · apply inverseFold
+    · exact Matrix.identity_mul _
+    · intro state swap hs
+      exact inverseSwap hs swap.1 swap.2
+  · intro state row hs
+    exact inverseAdmit profile.pivots hs row
+
+private theorem principalRun_inverse_mul (A : Matrix Int n m) :
+    (principalRun (inverseAccumulator n) A).Invertible := by
+  change (principalCore (inverseAccumulator n) A (rankProfile A)).Invertible
+  exact principalCore_inverse A (rankProfile A)
+
+private theorem checkedRun_inverse_mul (A : Matrix Int n m) :
+    (checkedRun (inverseAccumulator n) A).accumulator.transform *
+        (checkedRun (inverseAccumulator n) A).accumulator.inverse =
+      Matrix.identity n := by
+  rw [checkedRun]
+  split
+  · exact principalRun_inverse_mul A
+  · exact run_inverse_mul A
+
 end Hermite
 
 /-- Hermite data with the inverse transform accumulated on the value path. -/
@@ -1421,23 +2080,24 @@ structure HermiteData (n m : Nat) where
 /-- The Hermite normal form of `A`. Does not compute the transform. -/
 @[expose]
 def hnf (A : Matrix Int n m) : Matrix Int n m :=
-  (Hermite.run (Hermite.formAccumulator n) A).matrix
+  (Hermite.checkedRun (Hermite.formAccumulator n) A).matrix
 
 /-- The number of nonzero rows of `hnf A`. -/
 @[expose]
 def hnfRank (A : Matrix Int n m) : Nat :=
-  (Hermite.run (Hermite.formAccumulator n) A).pivots.length
+  (Hermite.checkedRun (Hermite.formAccumulator n) A).pivots.length
 
 /-- The nonzero rows of `hnf A`. -/
 @[expose]
 def hnfBasis (A : Matrix Int n m) : Matrix Int (hnfRank A) m :=
   Matrix.ofFn fun i j =>
-    (hnf A)[(Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i, j)]
+    (hnf A)[(Fin.castLE (Hermite.checkedRun_rank_le
+      (Hermite.formAccumulator n) A) i, j)]
 
 /-- Hermite form with rank, pivot columns, and left transform. -/
 @[expose]
 def hnfData (A : Matrix Int n m) : RowEchelonData Int n m :=
-  let result := Hermite.run (Hermite.transformAccumulator n) A
+  let result := Hermite.checkedRun (Hermite.transformAccumulator n) A
   { rank := result.pivots.length
     echelon := result.matrix
     transform := result.accumulator
@@ -1446,24 +2106,24 @@ def hnfData (A : Matrix Int n m) : RowEchelonData Int n m :=
 /-- The accumulated left transform carries the input to the reported form. -/
 theorem hnfData_transform_mul (A : Matrix Int n m) :
     (hnfData A).transform * A = (hnfData A).echelon := by
-  exact Hermite.run_transform A
+  exact Hermite.checkedRun_transform A
 
 /-- The form-only and transform paths run the same matrix schedule. -/
 theorem hnf_eq_hnfData_echelon (A : Matrix Int n m) :
     hnf A = (hnfData A).echelon := by
-  exact Hermite.run_matrix_agree (Hermite.formAccumulator n)
+  exact Hermite.checkedRun_matrix_agree (Hermite.formAccumulator n)
     (Hermite.transformAccumulator n) A
 
 /-- The form-only and transform paths report the same rank. -/
 theorem hnfRank_eq (A : Matrix Int n m) :
     hnfRank A = (hnfData A).rank := by
-  exact congrArg List.length (Hermite.run_pivots_agree
+  exact congrArg List.length (Hermite.checkedRun_pivots_agree
     (Hermite.formAccumulator n) (Hermite.transformAccumulator n) A)
 
 /-- Hermite data with both transform and inverse accumulated in one sweep. -/
 @[expose]
 def hnfWithInv (A : Matrix Int n m) : HermiteData n m :=
-  let result := Hermite.run (Hermite.inverseAccumulator n) A
+  let result := Hermite.checkedRun (Hermite.inverseAccumulator n) A
   { rowData :=
       { rank := result.pivots.length
         echelon := result.matrix
@@ -1474,16 +2134,16 @@ def hnfWithInv (A : Matrix Int n m) : HermiteData n m :=
 /-- The inverse-tracking path returns the same row data as `hnfData`. -/
 theorem hnfWithInv_data (A : Matrix Int n m) :
     (hnfWithInv A).rowData = hnfData A := by
-  let ri := Hermite.run (Hermite.inverseAccumulator n) A
-  let rt := Hermite.run (Hermite.transformAccumulator n) A
+  let ri := Hermite.checkedRun (Hermite.inverseAccumulator n) A
+  let rt := Hermite.checkedRun (Hermite.transformAccumulator n) A
   have hm : ri.matrix = rt.matrix :=
-    Hermite.run_matrix_agree (Hermite.inverseAccumulator n)
+    Hermite.checkedRun_matrix_agree (Hermite.inverseAccumulator n)
       (Hermite.transformAccumulator n) A
   have hp : ri.pivots = rt.pivots :=
-    Hermite.run_pivots_agree (Hermite.inverseAccumulator n)
+    Hermite.checkedRun_pivots_agree (Hermite.inverseAccumulator n)
       (Hermite.transformAccumulator n) A
   have hu : ri.accumulator.transform = rt.accumulator :=
-    Hermite.run_inverse_transform A
+    Hermite.checkedRun_inverse_transform A
   change
     RowEchelonData.mk ri.pivots.length ri.matrix ri.accumulator.transform
       ri.pivotVector =
@@ -1500,7 +2160,7 @@ theorem hnfWithInv_data (A : Matrix Int n m) :
 theorem hnfWithInv_mul_inv (A : Matrix Int n m) :
     (hnfWithInv A).rowData.transform * (hnfWithInv A).inverse =
       Matrix.identity n := by
-  exact Hermite.run_inverse_mul A
+  exact Hermite.checkedRun_inverse_mul A
 
 /-- The explicitly accumulated inverse is also a left inverse of the transform. -/
 theorem hnfWithInv_inv_mul (A : Matrix Int n m) :
@@ -1516,9 +2176,10 @@ theorem hnfWithInv_transform_mul (A : Matrix Int n m) :
 
 /-- The executable Hermite sweep satisfies the complete row-HNF contract. -/
 theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
-  let s := Hermite.run (Hermite.transformAccumulator n) A
-  have hs : Hermite.PrefixForm s m :=
-    Hermite.run_form (Hermite.transformAccumulator n) A
+  let s := Hermite.checkedRun (Hermite.transformAccumulator n) A
+  have hs : HNFForm s.matrix s.pivots.length s.pivotVector :=
+    Hermite.checkedRun_form (Hermite.transformAccumulator n) A
+  rcases hs with ⟨hrn, hrm, hsorted, hleading, hpos, hbelow, hzero, hnonneg, hlt⟩
   have hleft : (hnfWithInv A).inverse * (hnfData A).transform =
       Matrix.identity n := by
     rw [← hnfWithInv_data A]
@@ -1533,17 +2194,14 @@ theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
       transform := s.accumulator
       pivotCols := s.pivotVector }
   let pivotRow : Fin s.pivots.length → Fin n := fun i =>
-    ⟨i.val, Nat.lt_of_lt_of_le i.isLt hs.rank_le_n⟩
-  have pivotGet (i : Fin s.pivots.length) :
-      s.pivotVector.get i = s.pivots.get i :=
-    Hermite.Result.pivotVector_get s i
+    ⟨i.val, Nat.lt_of_lt_of_le i.isLt hrn⟩
   refine
     { toIsEchelonForm :=
         { transform_mul := hnfData_transform_mul A
           transform_inv := ⟨(hnfWithInv A).inverse, ?_⟩
           transform_right_inv := ⟨(hnfWithInv A).inverse, ?_⟩
-          rank_le_n := hs.rank_le_n
-          rank_le_m := hs.rank_le_bound
+          rank_le_n := hrn
+          rank_le_m := hrm
           pivotCols_sorted := ?_
           below_pivot_zero := ?_
           zero_row := ?_ }
@@ -1554,36 +2212,20 @@ theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
   · exact hleft
   · exact hright
   · intro i j hij
-    change s.pivotVector.get i < s.pivotVector.get j
-    rw [Hermite.Result.pivotVector_get, Hermite.Result.pivotVector_get]
-    exact hs.pivots_sorted i j hij
+    exact hsorted i j hij
   · intro i row hir
-    change s.matrix[row][s.pivotVector.get i] = 0
-    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
-    exact hs.below_zero i row hir
+    change (s.matrix.getRow row).get (s.pivotVector.get i) = 0
+    exact hbelow i row hir
   · intro row hr
-    apply Vector.ext
-    intro j hj
-    simp only [Vector.getElem_zero]
-    change s.matrix[row][(⟨j, hj⟩ : Fin m)] = 0
-    simpa only [Matrix.getElem_pair_eq_nested] using
-      hs.zero_prefix row hr ⟨j, hj⟩ (by omega)
+    exact hzero row hr
   · intro i j hj
-    change s.matrix[pivotRow i][j] = 0
-    simpa only [Hermite.Result.pivotVector_get, Matrix.getElem_pair_eq_nested] using
-      hs.leading i (pivotRow i) rfl j hj
+    change (s.matrix.getRow (pivotRow i)).get j = 0
+    exact hleading i (pivotRow i) rfl j hj
   · intro i
-    change 0 < s.matrix[pivotRow i][s.pivotVector.get i]
-    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
-    exact hs.pivot_pos i (pivotRow i) rfl
+    exact hpos i (pivotRow i) rfl
   · intro i row hir
-    change 0 ≤ s.matrix[row][s.pivotVector.get i]
-    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
-    exact (hs.above_bounds i row hir).1
+    exact hnonneg i row hir
   · intro i row hir
-    change s.matrix[row][s.pivotVector.get i] <
-      s.matrix[pivotRow i][s.pivotVector.get i]
-    rw [← Matrix.getElem_pair_eq_nested, ← Matrix.getElem_pair_eq_nested, pivotGet]
-    exact (hs.above_bounds i row hir).2 (pivotRow i) rfl
+    exact hlt i row hir (pivotRow i) rfl
 
 end Hex.Matrix

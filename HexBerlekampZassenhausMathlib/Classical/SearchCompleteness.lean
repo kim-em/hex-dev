@@ -125,16 +125,6 @@ theorem findDirectHead_found_le
                 (completed.push level) split budget' candidates' completed'
                 hfind
 
-private theorem centeredModNat_emod_left (z : Int) (m : Nat) :
-    Hex.centeredModNat (z % (m : Int)) m = Hex.centeredModNat z m := by
-  unfold Hex.centeredModNat
-  by_cases hm : m = 0
-  · simp [hm]
-  · rw [if_neg hm, if_neg hm]
-    have hz : z % (m : Int) % Int.ofNat m = z % Int.ofNat m := by
-      show z % (m : Int) % (m : Int) = z % (m : Int)
-      rw [Int.emod_emod]
-    rw [hz]
 
 private theorem foldl_mul_emod_eq
     (f : α → Int) (m : Int) (xs : List α) :
@@ -149,27 +139,6 @@ private theorem foldl_mul_emod_eq
         ih (a * f x % m)]
       conv_lhs => rw [Int.mul_emod, Int.emod_emod, ← Int.mul_emod]
       rw [mul_assoc]
-
-private theorem directSelectedTrail_eq_centered_prod
-    (basis : Hex.LiftData)
-    (selected : List (Hex.DirectLiftedIndex basis)) :
-    Hex.centeredModNat
-        (Hex.directSelectedTrail basis selected)
-        (Hex.liftModulus basis) =
-      Hex.centeredModNat
-        ((Hex.directSelectedFactors basis selected).map
-          (fun g => g.coeff 0)).prod
-        (Hex.liftModulus basis) := by
-  unfold Hex.directSelectedTrail
-  rw [← centeredModNat_emod_left
-      ((Hex.directSelectedFactors basis selected).foldl
-        (fun residue factor =>
-          residue * factor.coeff 0 % (Hex.liftModulus basis : Int)) 1)
-      (Hex.liftModulus basis),
-    foldl_mul_emod_eq (fun g : Hex.ZPoly => g.coeff 0)
-      (Hex.liftModulus basis)
-      (Hex.directSelectedFactors basis selected) 1,
-    one_mul, centeredModNat_emod_left]
 
 private theorem directSelectedTrail_emod_eq_prod_emod
     (basis : Hex.LiftData)

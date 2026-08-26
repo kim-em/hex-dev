@@ -151,26 +151,6 @@ theorem modPFactorization_of_choosePrimeData
   exact modPFactorization_of_form hprime hgood
     (Hex.choosePrimeData?_fModP_eq f data hchoose) hform hprim hlc_pos hpos
 
-/-- The adaptive prime-plan witness yields the same semantic bundle as the
-fixed prime selector.  Downstream lifting and recombination consume this
-bundle, not the history of which trials the adaptive selector performed. -/
-theorem modPFactorization_of_choosePrimeDataAdaptive
-    {f : Hex.ZPoly} {extra : Nat} {data : Hex.PrimeChoiceData}
-    (hchoose : Hex.choosePrimeDataAdaptive? f extra = some data)
-    (hprim : Hex.ZPoly.Primitive f)
-    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
-    (hpos : 0 < f.degree?.getD 0) :
-    ModPFactorization f data := by
-  have hprime := Hex.choosePrimeDataAdaptive?_prime f extra data hchoose
-  have hgood := Hex.choosePrimeDataAdaptive?_isGoodPrime f extra data hchoose
-  have hform : Hex.factorsModPBerlekampForm f data := by
-    obtain ⟨hzero, heq⟩ :=
-      Hex.choosePrimeDataAdaptive?_form f extra data hchoose
-    exact ⟨hprime, hzero, heq⟩
-  exact modPFactorization_of_form hprime hgood
-    (Hex.choosePrimeDataAdaptive?_fModP_eq f extra data hchoose)
-    hform hprim hlc_pos hpos
-
 /-- An explicit cached prime trial yields the semantic modular factorization
 bundle consumed by direct lifting. -/
 theorem modPFactorization_of_probePrimeData
@@ -188,43 +168,6 @@ theorem modPFactorization_of_probePrimeData
     (Hex.probePrimeData?_form f candidate data hprobe)
     hprim hlc_pos hpos
 
-/-- Monic-target form of the bundle producer: primitivity and the positive
-leading coefficient come from monicity. -/
-theorem modPFactorization_of_choosePrimeData_of_monic
-    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (hchoose : Hex.choosePrimeData? f = some data)
-    (hmonic : Hex.DensePoly.Monic f)
-    (hpos : 0 < f.degree?.getD 0) :
-    ModPFactorization f data :=
-  modPFactorization_of_choosePrimeData hchoose
-    (zpoly_primitive_of_monic hmonic)
-    (by rw [show Hex.DensePoly.leadingCoeff f = 1 from hmonic]; exact Int.one_pos)
-    hpos
-
-/-- Plain-form product congruence for a monic lift target: the
-`monicModularImage` layer collapses, landing at `≡ f (mod p)` (the shape the
-`QuadraticMultifactorLiftInvariant` boundary hypotheses consume). -/
-theorem ModPFactorization.product_congr_target
-    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (h : ModPFactorization f data)
-    (hmonic : Hex.DensePoly.Monic f) :
-    letI := data.bounds
-    Hex.ZPoly.congr
-      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ)) f data.p := by
-  letI := data.bounds
-  letI : Hex.ZMod64.PrimeModulus data.p :=
-    Hex.ZMod64.primeModulusOfPrime h.prime
-  have hp : 1 < data.p := by have := h.prime.two_le; omega
-  have hzero : (Hex.ZPoly.modP data.p f).isZero = false :=
-    Hex.isGoodPrime_modP_isZero_false f data.p h.good
-  have hcollapse :
-      Hex.monicModularImage (Hex.ZPoly.modP data.p f) =
-        Hex.ZPoly.modP data.p f :=
-    monicModularImage_modP_eq_of_monic f hmonic h.prime hp hzero
-  have hprod := h.product
-  rw [hcollapse] at hprod
-  exact Hex.ZPoly.congr_trans _ _ _ data.p hprod
-    (Hex.FpPoly.congr_liftToZ_modP f)
 
 /-- A modular factor array of positive-degree monic factors has no more
 entries than the degree of any monic integer target to which its product is
@@ -322,17 +265,5 @@ theorem ModPFactorization.factorCount_le_degree_of_product
     simp [t]
   rw [← hcard, ← HexPolyMathlib.natDegree_toPolynomial target, ← hsum]
   exact hcard_le_sum
-
-/--
-A modular factorization into positive-degree factors has no more factors than
-the degree of its monic target.
--/
-theorem ModPFactorization.factorCount_le_degree
-    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (h : ModPFactorization f data)
-    (hmonic : Hex.DensePoly.Monic f) :
-    data.factorsModP.size ≤ f.degree?.getD 0 :=
-  h.factorCount_le_degree_of_product hmonic (h.product_congr_target hmonic)
-
 
 end HexBerlekampZassenhausMathlib
