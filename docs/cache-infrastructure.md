@@ -54,7 +54,7 @@ downloads, so a throttled fetch can leave the local cache holding input-to-outpu
 artifact blobs never arrived, and `ci.yml` discards its exit status:
 
 ```
-lake cache get --service hex-public --repo kim-em/hex-dev \
+lake cache get --max-revs=1 --service hex-public --repo kim-em/hex-dev \
   || echo "::warning::lake cache miss for this revision; building from source"
 ```
 
