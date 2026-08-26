@@ -39,6 +39,27 @@ theorem length_eq_pow_log2 {p n : Nat} [Bounds p] [PrimeModulus p]
   obtain ⟨k, rfl⟩ := plan.length_pow_two
   simp
 
+/-- A valid transform length is strictly smaller than its prime modulus. -/
+theorem length_lt_modulus {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) : n < p := by
+  have hp2 : 2 ≤ p := (PrimeModulus.prime (p := p)).two_le
+  have hnle : n ≤ p - 1 := Nat.le_of_dvd (by omega) plan.length_dvd
+  omega
+
+/-- The transform length is nonzero as a prime-field residue. -/
+theorem length_ne_zero {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) : (n : ZMod64 p) ≠ 0 := by
+  intro hzero
+  have hp_dvd_n := (ZMod64.natCast_eq_zero_iff_dvd n).mp hzero
+  have hp_le_n := Nat.le_of_dvd plan.length_pos hp_dvd_n
+  exact (Nat.not_le_of_gt plan.length_lt_modulus) hp_le_n
+
+/-- The stored inverse-length scale cancels the transform length. -/
+theorem invLength_mul_length {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) : plan.invLength * (n : ZMod64 p) = 1 := by
+  rw [plan.invLength_eq]
+  exact ZMod64.inv_mul_eq_one_of_ne_zero plan.length_ne_zero
+
 /-- Read a forward twiddle, wrapping the requested exponent into the plan. -/
 def forwardTwiddle {p n : Nat} [Bounds p] [PrimeModulus p]
     (plan : NttPlan p n) (i : Nat) : NttTwiddle p :=
@@ -640,6 +661,77 @@ theorem length_inverseRadix {p n : Nat} [Bounds p] [PrimeModulus p]
   rw [← hlengthEq]
   exact length_inverseGo plan stride fuel raw hraw
 
+/-- The unscaled inverse radix recurrence cancels the forward recurrence and
+multiplies every coefficient by the transform length. -/
+theorem inverse_forwardRadix {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (stride fuel : Nat)
+    (values : List (ZMod64 p)) (hlength : values.length = 2 ^ fuel) :
+    inverseRadix plan stride fuel (forwardRadix plan stride fuel values) =
+      values.map fun value => ((2 ^ fuel : Nat) : ZMod64 p) * value := by
+  induction fuel generalizing stride values with
+  | zero =>
+      simp only [forwardRadix, inverseRadix, Nat.pow_zero]
+      calc
+        values = values.map id := (List.map_id values).symm
+        _ = values.map (fun value => ((1 : Nat) : ZMod64 p) * value) := by
+          apply List.map_congr_left
+          intro value hvalue
+          grind
+  | succ fuel ih =>
+      have hdouble : values.length = 2 * 2 ^ fuel := by
+        simpa [Nat.pow_succ, Nat.mul_comm] using hlength
+      let halves := values.splitAt (values.length / 2)
+      have hhalf : values.length / 2 = 2 ^ fuel := by omega
+      have hleft : halves.1.length = 2 ^ fuel := by
+        simp only [halves, List.splitAt_eq, List.length_take]
+        rw [hhalf, hdouble, Nat.min_eq_left (by omega)]
+      have hright : halves.2.length = 2 ^ fuel := by
+        simp only [halves, List.splitAt_eq, List.length_drop]
+        rw [hhalf, hdouble]
+        omega
+      have hhalves : halves.1.length = halves.2.length :=
+        hleft.trans hright.symm
+      let stage := forwardStageSpec plan stride 0 halves.1 halves.2
+      have hstage := forwardStageSpec_lengths plan stride 0 halves.1 halves.2 hhalves
+      have hstageLeft : stage.1.length = 2 ^ fuel := hstage.1.trans hleft
+      have hstageRight : stage.2.length = 2 ^ fuel := hstage.2.trans hright
+      let left := forwardRadix plan (2 * stride) fuel stage.1
+      let right := forwardRadix plan (2 * stride) fuel stage.2
+      have hleftLength : left.length = 2 ^ fuel :=
+        length_forwardRadix plan (2 * stride) fuel stage.1 hstageLeft
+      have hrightLength : right.length = 2 ^ fuel :=
+        length_forwardRadix plan (2 * stride) fuel stage.2 hstageRight
+      have hsplit : deinterleave (interleave left right) = (left, right) :=
+        deinterleave_interleave left right (hleftLength.trans hrightLength.symm)
+      have hleftRoundtrip := ih (2 * stride) stage.1 hstageLeft
+      have hrightRoundtrip := ih (2 * stride) stage.2 hstageRight
+      have hscale := inverseStageSpec_scale plan stride 0
+        (((2 ^ fuel : Nat) : ZMod64 p)) stage.1 stage.2
+        (hstageLeft.trans hstageRight.symm)
+      have hstageInverse :=
+        inverse_forwardStageSpec plan stride 0 halves.1 halves.2 hhalves
+      simp only [forwardRadix, inverseRadix]
+      change
+        let split := deinterleave (interleave left right)
+        let inverseLeft := inverseRadix plan (2 * stride) fuel split.1
+        let inverseRight := inverseRadix plan (2 * stride) fuel split.2
+        let output := inverseStageSpec plan stride 0 inverseLeft inverseRight
+        output.1 ++ output.2 =
+          values.map fun value => ((2 ^ (fuel + 1) : Nat) : ZMod64 p) * value
+      rw [hsplit]
+      simp only
+      rw [hleftRoundtrip, hrightRoundtrip, hscale, hstageInverse]
+      simp only [List.map_map, Function.comp_def]
+      rw [← List.map_append]
+      have hjoin : halves.1 ++ halves.2 = values := by
+        simpa only [halves, List.splitAt_eq] using
+          List.take_append_drop (values.length / 2) values
+      rw [hjoin]
+      apply List.map_congr_left
+      intro value hvalue
+      rw [Nat.pow_succ]
+      grind
+
 /-- Residue-level forward result computed by the radix specification. -/
 def forwardRadixArray {p n : Nat} [Bounds p] [PrimeModulus p]
     (plan : NttPlan p n) (values : Array (ZMod64 p)) : Array (ZMod64 p) :=
@@ -650,6 +742,38 @@ def inverseRadixArray {p n : Nat} [Bounds p] [PrimeModulus p]
     (plan : NttPlan p n) (values : Array (ZMod64 p)) : Array (ZMod64 p) :=
   (inverseRadix plan 1 n.log2 values.toList).toArray.map fun value =>
     plan.invLength * value
+
+/-- The scaled residue-level inverse exactly cancels the forward transform on
+an array of the plan length. -/
+theorem inverseRadixArray_forwardRadixArray {p n : Nat}
+    [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (values : Array (ZMod64 p))
+    (hsize : values.size = n) :
+    inverseRadixArray plan (forwardRadixArray plan values) = values := by
+  rw [← Array.toList_inj]
+  simp only [inverseRadixArray, forwardRadixArray, Array.toList_map,
+    List.toList_toArray]
+  have hlength : values.toList.length = 2 ^ n.log2 := by
+    simpa [hsize] using plan.length_eq_pow_log2
+  have hcast : (((2 ^ n.log2 : Nat) : ZMod64 p)) = (n : ZMod64 p) :=
+    congrArg (fun length : Nat => (length : ZMod64 p))
+      plan.length_eq_pow_log2.symm
+  rw [inverse_forwardRadix plan 1 n.log2 values.toList hlength]
+  simp only [List.map_map, Function.comp_def]
+  calc
+    values.toList.map
+          (fun value => plan.invLength *
+            (((2 ^ n.log2 : Nat) : ZMod64 p) * value)) =
+        values.toList.map id := by
+      apply List.map_congr_left
+      intro value hvalue
+      calc
+        plan.invLength * (((2 ^ n.log2 : Nat) : ZMod64 p) * value) =
+            (plan.invLength * (n : ZMod64 p)) * value := by
+          rw [hcast]
+          grind
+        _ = value := by rw [plan.invLength_mul_length]; simp
+    _ = values.toList := List.map_id values.toList
 
 /-- Forward radix-two transform.  A length mismatch is normal checked
 failure; successful execution reuses every root power from `plan`. -/
@@ -769,6 +893,20 @@ theorem inverse?_size {p n : Nat} [Bounds p] [PrimeModulus p]
         simpa [hsize] using plan.length_eq_pow_log2
       _ = n := plan.length_eq_pow_log2.symm
   · contradiction
+
+/-- On an array of the plan length, public forward execution followed by
+public inverse execution returns the original array. -/
+theorem inverse?_forward? {p n : Nat} [Bounds p] [PrimeModulus p]
+    (plan : NttPlan p n) (values : Array (ZMod64 p))
+    (hsize : values.size = n) :
+    Option.bind (forward? plan values) (inverse? plan) = some values := by
+  have hforward := forward?_eq_radix plan values hsize
+  have hforwardSize :=
+    forward?_size plan values (forwardRadixArray plan values) hforward
+  rw [hforward]
+  simp only [Option.bind_some]
+  rw [inverse?_eq_radix plan (forwardRadixArray plan values) hforwardSize]
+  rw [inverseRadixArray_forwardRadixArray plan values hsize]
 
 end Ntt
 
