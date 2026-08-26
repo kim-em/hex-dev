@@ -25,9 +25,20 @@ def abelianStructure (A : Matrix Int n m) : AbelianStructure :=
   { freeRank := m - result.diag.length
     torsionFactors := factors.toArray }
 
+/-- The free rank is the number of presentation columns beyond the Smith
+rank. -/
 @[simp]
 theorem abelianStructure_freeRank (A : Matrix Int n m) :
     (abelianStructure A).freeRank = m - snfRank A := by
+  rfl
+
+/-- The torsion factors are exactly the non-unit invariant factors, converted
+to natural numbers in divisibility-chain order. -/
+@[simp]
+theorem abelianStructure_torsionFactors (A : Matrix Int n m) :
+    (abelianStructure A).torsionFactors =
+      ((invariantFactors A).toList.filterMap fun d =>
+        if 1 < d then some d.natAbs else none).toArray := by
   rfl
 
 /-- The independent relation rows obtained by discarding the zero rows of the
