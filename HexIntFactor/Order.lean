@@ -51,6 +51,39 @@ private theorem checkOrder_parts {c : OrderCert} (h : checkOrder c = true) :
   simpa only [checkOrder, Bool.and_eq_true, decide_eq_true_eq,
     List.all_eq_true, and_assoc] using h
 
+/-- An accepted order certificate has a nontrivial modulus. -/
+theorem checkOrder_modulus {c : OrderCert} (h : checkOrder c = true) :
+    1 < c.modulus :=
+  (checkOrder_parts h).1
+
+/-- An accepted order certificate has positive claimed order. -/
+theorem checkOrder_order_pos {c : OrderCert} (h : checkOrder c = true) :
+    0 < c.order :=
+  (checkOrder_parts h).2.1
+
+/-- The factorization in an accepted order certificate targets its order. -/
+theorem checkOrder_factorization_subject {c : OrderCert}
+    (h : checkOrder c = true) : c.orderFac.subject = c.order :=
+  (checkOrder_parts h).2.2.1
+
+/-- The factorization in an accepted order certificate is valid. -/
+theorem checkOrder_factorization {c : OrderCert} (h : checkOrder c = true) :
+    checkFactorization c.orderFac = true :=
+  (checkOrder_parts h).2.2.2.1
+
+/-- The claimed order in an accepted certificate sends the base to one. -/
+theorem checkOrder_pow {c : OrderCert} (h : checkOrder c = true) :
+    HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus :=
+  (checkOrder_parts h).2.2.2.2.1
+
+/-- Removing any listed prime divisor from an accepted claimed order does not
+send the base to one. -/
+theorem checkOrder_prime_divisor {c : OrderCert} (h : checkOrder c = true) :
+    ∀ e ∈ c.orderFac.factors,
+      HexArith.powModNat c.base (c.order / e.prime) c.modulus ≠
+        1 % c.modulus :=
+  (checkOrder_parts h).2.2.2.2.2
+
 private theorem prime_dvd_pow' {q a : Nat} (hq : Prime q) :
     ∀ {k : Nat}, q ∣ a ^ k → q ∣ a := by
   intro k
@@ -450,23 +483,7 @@ theorem pow_carmichael {n : Nat} (F : CheckedFactorization n)
     a ^ carmichael F % n = 1 % n := by
   by_cases hn : n = 1
   · simpa only [hn, Nat.mod_one]
-  have hnPos : 0 < n := by
-    have product_pos : ∀ (entries : List PrimePower),
-        (∀ e ∈ entries, Prime e.prime) →
-        0 < (entries.map fun e => e.prime ^ e.exponent).prod := by
-      intro entries
-      induction entries with
-      | nil => simp
-      | cons e rest ih =>
-          intro hprime
-          simp only [List.map_cons, List.prod_cons]
-          exact Nat.mul_pos (Nat.pow_pos (hprime e List.mem_cons_self).pos)
-            (ih (fun x hx => hprime x (List.mem_cons_of_mem e hx)))
-    have hprodPos : 0 <
-        (F.raw.factors.map fun e => e.prime ^ e.exponent).prod := by
-      exact product_pos F.raw.factors (checkFactorization_prime F.valid)
-    rw [checkFactorization_prod F.valid, F.subject_eq] at hprodPos
-    exact hprodPos
+  have hnPos : 0 < n := F.pos
   have hnOne : 1 < n := by omega
   have hlocal : ∀ e ∈ F.raw.factors,
       e.prime ^ e.exponent ∣ a ^ carmichael F - 1 := by

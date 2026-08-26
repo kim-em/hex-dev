@@ -41,18 +41,13 @@ private theorem prime_of_mem_expandedFactors (F : Factorization)
   obtain ⟨e, he, _, rfl⟩ := hp
   exact prime_iff.mp (checkFactorization_prime h e he)
 
-private theorem subject_ne_zero {F : Factorization}
-    (h : checkFactorization F = true) : F.subject ≠ 0 := by
-  have hp := h
-  simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hp
-  omega
-
-private theorem factorization_entry_eq (F : Factorization)
+/-- A listed exponent is exactly Mathlib's multiplicity. -/
+theorem factorization_entry (F : Factorization)
     (h : checkFactorization F = true) (e : PrimePower) (he : e ∈ F.factors) :
     F.subject.factorization e.prime = e.exponent := by
   have hp : _root_.Nat.Prime e.prime :=
     prime_iff.mp (checkFactorization_prime h e he)
-  have hn := subject_ne_zero h
+  have hn := (checkFactorization_pos h).ne'
   apply Nat.le_antisymm
   · have hdvd : e.prime ^ (F.subject.factorization e.prime) ∣ F.subject :=
       (hp.pow_dvd_iff_le_factorization hn).2 (Nat.le_refl _)
@@ -68,14 +63,14 @@ theorem factorization_eq (F : Factorization)
   unfold factorExponent
   cases hfind : F.factors.find? (fun e => e.prime == p) with
   | some e =>
-    simp only [hfind, Option.elim_some]
+    simp only [Option.elim_some]
     have he := List.mem_of_find?_eq_some hfind
     have hep : e.prime = p := by
       simpa using List.find?_some hfind
     subst p
-    exact factorization_entry_eq F h e he
+    exact factorization_entry F h e he
   | none =>
-    simp only [hfind, Option.elim_none]
+    simp only [Option.elim_none]
     by_cases hp : _root_.Nat.Prime p
     · apply Nat.factorization_eq_zero_of_not_dvd
       intro hdiv
@@ -94,15 +89,9 @@ theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
     (expandedFactors_prod F |>.trans (checkFactorization_prod h))
     (prime_of_mem_expandedFactors F h)).symm
 
-/-- A listed exponent is exactly Mathlib's multiplicity. -/
-theorem factorization_entry (F : Factorization)
-    (h : checkFactorization F = true) (e : PrimePower) (he : e ∈ F.factors) :
-    F.subject.factorization e.prime = e.exponent :=
-  factorization_entry_eq F h e he
-
 /-- An absent prime has zero Mathlib multiplicity. -/
 theorem factorization_absent (F : Factorization)
-    (h : checkFactorization F = true) {p : Nat} (_hp : _root_.Nat.Prime p)
+    (h : checkFactorization F = true) {p : Nat}
     (hmem : ∀ e ∈ F.factors, e.prime ≠ p) :
     F.subject.factorization p = 0 := by
   rw [factorization_eq F h]
@@ -115,10 +104,7 @@ theorem factorization_absent (F : Factorization)
 /-- The checked divisor enumeration is Mathlib's divisor finset. -/
 theorem divisors_eq {n : Nat} (F : CheckedFactorization n) :
     (divisors F).toList.toFinset = n.divisors := by
-  have hn : n ≠ 0 := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact (F.subject_eq ▸ hv.1.1).ne'
+  have hn : n ≠ 0 := F.pos.ne'
   ext d
   simp only [List.mem_toFinset, Hex.Nat.mem_divisors F,
     _root_.Nat.mem_divisors]
@@ -142,10 +128,7 @@ theorem sigma_eq {n k : Nat} (F : CheckedFactorization n) :
 /-- The checked radical is Mathlib's product of the distinct prime factors. -/
 theorem radical_eq {n : Nat} (F : CheckedFactorization n) :
     radical F = ∏ p ∈ n.primeFactors, p := by
-  have hn : n ≠ 0 := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact (F.subject_eq ▸ hv.1.1).ne'
+  have hn : n ≠ 0 := F.pos.ne'
   have hset : (F.raw.factors.map fun e => e.prime).toFinset = n.primeFactors := by
     ext p
     simp only [List.mem_toFinset, List.mem_map, Nat.mem_primeFactors_of_ne_zero hn]
@@ -179,10 +162,7 @@ theorem squarefreePart_mathlib {n : Nat} (F : CheckedFactorization n) :
     Squarefree (squarefreePart F) := by
   rw [Nat.squarefree_iff_prime_squarefree]
   intro q hq hq2
-  have hn : 0 < n := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact F.subject_eq ▸ hv.1.1
+  have hn : 0 < n := F.pos
   have hd : 0 < squareDivisor F := by
     apply Nat.pos_of_ne_zero
     intro hd0
@@ -207,10 +187,7 @@ theorem squarefreePart_mathlib {n : Nat} (F : CheckedFactorization n) :
 order-theoretic vocabulary. -/
 theorem squareDivisor_mathlib {n : Nat} (F : CheckedFactorization n) :
     IsGreatest {d : Nat | d ^ 2 ∣ n} (squareDivisor F) := by
-  have hn : 0 < n := by
-    have hv := F.valid
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq] at hv
-    exact F.subject_eq ▸ hv.1.1
+  have hn : 0 < n := F.pos
   have hd : 0 < squareDivisor F := by
     apply Nat.pos_of_ne_zero
     intro hd0

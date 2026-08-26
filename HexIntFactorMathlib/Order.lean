@@ -36,30 +36,23 @@ private theorem unit_pow_iff {a n k : Nat} (ha : Nat.Coprime a n) :
 theorem orderOf_eq {c : OrderCert} (h : checkOrder c = true) :
     _root_.orderOf
         (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order := by
-  have hp :
-      1 < c.modulus ∧ 0 < c.order ∧ c.orderFac.subject = c.order ∧
-        checkFactorization c.orderFac = true ∧
-        HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus ∧
-        ∀ e ∈ c.orderFac.factors,
-          HexArith.powModNat c.base (c.order / e.prime) c.modulus ≠
-            1 % c.modulus := by
-    simpa only [checkOrder, Bool.and_eq_true, decide_eq_true_eq,
-      List.all_eq_true, and_assoc] using h
   let ha := coprime_of_checkOrder h
-  apply orderOf_eq_of_pow_and_pow_div_prime hp.2.1
+  have hn : 0 < c.modulus := Nat.zero_lt_of_lt (checkOrder_modulus h)
+  apply orderOf_eq_of_pow_and_pow_div_prime (checkOrder_order_pos h)
   · apply (unit_pow_iff ha).2
-    have hpow := hp.2.2.2.2.1
-    rw [HexArith.powModNat_eq _ _ _ (by omega)] at hpow
+    have hpow := checkOrder_pow h
+    rw [HexArith.powModNat_eq _ _ _ hn] at hpow
     exact hpow
   · intro q hq hqDvd hunit
     have hqLocal : Prime q := prime_iff.mpr hq
-    have hqRaw : q ∣ c.orderFac.subject := by simpa [hp.2.2.1] using hqDvd
+    have hqRaw : q ∣ c.orderFac.subject := by
+      simpa [checkOrder_factorization_subject h] using hqDvd
     obtain ⟨e, he, heq⟩ :=
-      (checkFactorization_primeSupport hp.2.2.2.1 hqLocal).mp hqRaw
+      (checkFactorization_primeSupport (checkOrder_factorization h) hqLocal).mp hqRaw
     have hbad := (unit_pow_iff ha).1 hunit
     rw [← heq] at hbad
-    have hne := hp.2.2.2.2.2 e he
-    rw [HexArith.powModNat_eq _ _ _ (by omega)] at hne
+    have hne := checkOrder_prime_divisor h e he
+    rw [HexArith.powModNat_eq _ _ _ hn] at hne
     exact hne hbad
 
 end Nat
