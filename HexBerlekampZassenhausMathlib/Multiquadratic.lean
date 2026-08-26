@@ -254,10 +254,12 @@ variable {ds : List ℤ} {r : Fin ds.length → ℂ}
 def root (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (i : Fin ds.length) : adjoinSqrt ds :=
   ⟨r i, sqrt_mem_adjoinSqrt (List.getElem_mem i.2) (hr i)⟩
 
+/-- The chosen root's underlying complex value. -/
 @[simp]
 theorem root_val (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (i : Fin ds.length) :
     ((root hr i : adjoinSqrt ds) : ℂ) = r i := rfl
 
+/-- The chosen root squares to its radicand inside the tower. -/
 theorem root_sq (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (i : Fin ds.length) :
     root hr i ^ 2 = ((ds[i] : ℤ) : adjoinSqrt ds) := by
   apply Subtype.ext
@@ -311,6 +313,7 @@ theorem signOf_eq_of_apply (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] :
 def gen (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (c : ℤ) : adjoinSqrt ds :=
   signSum c (root hr) (fun _ => true)
 
+/-- The generator's underlying complex value is the all-plus sign sum. -/
 @[simp]
 theorem gen_val (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (c : ℤ) :
     ((gen hr c : adjoinSqrt ds) : ℂ) = signSum c r (fun _ => true) :=
@@ -597,29 +600,6 @@ theorem irreducible_int_of_map_eq_signPoly (h : Independent ds)
   rw [Polynomial.map_map,
     RingHom.ext_int ((algebraMap ℚ ℂ).comp (Int.castRingHom ℚ)) (Int.castRingHom ℂ)]
   exact hf
-
-/--
-The `2 ^ n` sign-pattern sums are pairwise distinct, so the Galois orbit of `α`
-has exactly `2 ^ n` elements. This is the trivial-stabilizer fact again, not a
-separate one.
--/
-theorem signSum_injective (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (c : ℤ) :
-    Function.Injective (signSum c r) := by
-  intro ε ε' hε
-  funext i
-  have hshift : ∑ i, (if ε i then r i else -r i) = ∑ i, (if ε' i then r i else -r i) :=
-    add_left_cancel (a := ((c : ℂ))) hε
-  have hzero : ∑ i, (((if ε i then (1 : ℤ) else -1) - (if ε' i then 1 else -1) : ℤ) : ℂ) * r i
-      = 0 := by
-    have hterm : ∀ i : Fin ds.length,
-        (((if ε i then (1 : ℤ) else -1) - (if ε' i then 1 else -1) : ℤ) : ℂ) * r i
-          = (if ε i then r i else -r i) - (if ε' i then r i else -r i) := by
-      intro i
-      cases ε i <;> cases ε' i <;> simp <;> ring
-    rw [Finset.sum_congr rfl fun i _ => hterm i, Finset.sum_sub_distrib, hshift, sub_self]
-  have hai := eq_zero_of_sum_eq_zero h hr hzero i
-  by_contra hne
-  cases hεi : ε i <;> cases hεi' : ε' i <;> simp [hεi, hεi'] at hai hne
 
 end Consequences
 

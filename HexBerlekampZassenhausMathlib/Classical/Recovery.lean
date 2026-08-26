@@ -23,17 +23,6 @@ proof-side M1 candidate.  It contains no dilation or `toMonic` recovery path.
 
 namespace HexBerlekampZassenhausMathlib
 
-/-- The executable selected-list candidate is exactly the proof-side direct
-candidate on the corresponding lifted subset. -/
-theorem directCandidate_selected_eq
-    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
-    Hex.directCandidate (Hex.DensePoly.leadingCoeff core) (d.p ^ d.k)
-        (liftedSubsetSelectedList d S) =
-      scaledRecombinationCandidate core d S := by
-  unfold Hex.directCandidate scaledRecombinationCandidate
-    scaledLiftedFactorProduct
-  rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
-
 /-- An indexed support list with no duplicate indices has the proof-side
 finite-set product, independently of its traversal order. -/
 theorem polyProduct_directSelectedFactors

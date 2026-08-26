@@ -36,6 +36,7 @@ def liftedSubsetOfClass
     (d : Hex.LiftData) (members : List Nat) : LiftedFactorSubset d :=
   Finset.univ.filter fun i : LiftedFactorIndex d => i.val ∈ members
 
+/-- Membership rule for `liftedSubsetOfClass`. -/
 @[simp] theorem mem_liftedSubsetOfClass
     (d : Hex.LiftData) (members : List Nat) (i : LiftedFactorIndex d) :
     i ∈ liftedSubsetOfClass d members ↔ i.val ∈ members := by
