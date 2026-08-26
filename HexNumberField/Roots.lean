@@ -397,19 +397,8 @@ def extendShift? (theta alpha : AlgebraicNumber) : Option ShiftCandidate := do
 primitive-element search. The maximum-degree candidate generates the
 compositum even when the two fields overlap. -/
 @[expose]
-def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber := do
-  let upper := degree theta * degree alpha
-  let count := Nat.choose upper 2 + 1
-  let best ← (List.range count).foldlM
-    (fun best k => do
-      let candidate ← shift? theta alpha (signedShift k)
-      some <| match best with
-      | none => some candidate
-      | some current =>
-          if degree current < degree candidate then some candidate
-          else some current)
-    (none : Option AlgebraicNumber)
-  best
+def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber :=
+  (extendShift? theta alpha).map ShiftCandidate.value
 
 /-- Bounded primitive element for all nonzero coefficients. -/
 @[expose]
