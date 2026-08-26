@@ -694,7 +694,7 @@ libraries:
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
-    done_through: 7
+    done_through: 6
     status: active
     phase4:
       input_families:
@@ -707,7 +707,7 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    done_through: 6
+    done_through: 5
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
@@ -1008,7 +1008,7 @@ libraries:
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
   HexRCF:

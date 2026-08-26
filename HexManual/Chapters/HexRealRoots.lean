@@ -44,42 +44,6 @@ elaborates, and produces a term whose type records the certified
 statements. No knowledge of Sturm chains, dyadic arithmetic, or
 squarefreeness is needed at the call site.
 
-# The Mathlib correspondence
-%%%
-tag := "hex-real-roots-mathlib"
-%%%
-
-The split between `HexRealRoots` and `HexRealRootsMathlib` is a trust and
-dependency boundary. `HexRealRoots` contains the Mathlib-free executable
-algorithm: dense integer polynomials, signed pseudo-remainder Sturm chains,
-dyadic sign evaluation, Descartes and Sturm search, and interval refinement.
-Its output is exact certificate data, but the computational package does not
-state that data in Mathlib's language of `Polynomial ℝ` and real roots.
-
-`HexRealRootsMathlib` supplies that interpretation. The abstract development
-proves Sturm's theorem for a generalized polynomial chain. The correspondence
-theorems then identify the executable chain with such a chain, identify
-integer and dyadic sign-variation computations with their real counterparts,
-and turn finite and infinite variation gaps into exact root counts. In
-particular, {name}`HexRealRootsMathlib.sturmChain_isSturmChain` connects the
-computed chain to the abstract theorem, while the literal replay API checks a
-supplied chain coefficient by coefficient. Isolation soundness and
-completeness package those counts as {name}`Hex.IsolatedRealRoots`, including
-one distinct root per half-open interval and coverage of every real root.
-
-The term elaborator sits precisely on this boundary. It evaluates the closed
-input and runs compiled search only while elaborating, to choose a squarefree
-core, a Sturm chain, and dyadic intervals. It then emits literal data and a
-call to {name}`Hex.IsolatedRealRoots.ofCertPretty`. Ordinary Lean `decide`
-proofs replay the chain, the per-interval counts, the total count, and endpoint
-ordering. The kernel therefore trusts neither the compiled search nor the
-Descartes dispatch. For repeated roots, a checked polynomial identity proves
-that the squarefree core and original polynomial have the same real zeros,
-and {name}`Hex.IsolatedRealRoots.congrRoots` transports the isolation across
-that equivalence. Inputs written as `Polynomial ℤ`, `Polynomial ℚ`, or
-`Polynomial ℝ` cross the same boundary through
-{name}`HexPolyZMathlib.toPolynomial` and a checked evaluation equivalence.
-
 # The `isolate_roots` elaborator
 %%%
 tag := "hex-real-roots-isolate"
@@ -240,22 +204,36 @@ A polynomial with no real roots isolates as the empty vector, and a
 nonzero constant isolates as `n = 0` without ever entering the isolator.
 The zero polynomial is rejected, since every real number is a root.
 
-# How the certificate is checked
+# The Mathlib correspondence
 %%%
-tag := "hex-real-roots-certificate"
+tag := "hex-real-roots-mathlib"
 %%%
 
-The elaborator does the search at elaboration time with the compiled
-isolator, then emits a term the kernel re-checks. It does not ask the
-kernel to redo the search. The emitted term reifies the Sturm chain once
-as an array of integer-coefficient polynomials. The root-count fields
-reduce to sign-variation counts against that fixed chain: one count per
-interval for `unique_root`, and an endpoint-at-infinity count for the root
-total. These are `decide`-checked polynomial evaluations over the
-integers, so their kernel cost grows with the degree and the endpoint
-sizes, not with the number of bisections the search performed. The
-`ordered` field is cheaper still — an adjacent-pair comparison of the
-dyadic endpoints, no polynomial evaluation at all.
+The split between `HexRealRoots` and `HexRealRootsMathlib` is a trust and
+dependency boundary. `HexRealRoots` performs exact integer and dyadic
+computation without importing Mathlib. `HexRealRootsMathlib` interprets the
+result in Mathlib's language of `Polynomial ℝ` and real roots. Its abstract
+Sturm theorem is connected to the executable signed pseudo-remainder chain by
+the following headline correspondence.
+
+{docstring HexRealRootsMathlib.sturmChain_isSturmChain}
+
+The elaborator runs compiled search only to choose certificate data. It emits
+the integer polynomial, Sturm chain, and intervals as literals, then applies
+the replay constructor whose obligations are ordinary Lean propositions.
+
+{docstring Hex.IsolatedRealRoots.ofCert}
+
+The emitted top-level term uses {name}`Hex.IsolatedRealRoots.ofCertPretty`,
+which changes only the presentation of dyadic endpoints. The kernel checks
+the chain, each interval count, the total count, and interval ordering; it
+does not trust the compiled search or the Descartes dispatch. Inputs written
+as `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` are connected to
+{name}`HexPolyZMathlib.toPolynomial` by a checked evaluation equivalence.
+Repeated-root inputs are isolated through a squarefree core and transported
+back with the following root-equivalence operation.
+
+{docstring Hex.IsolatedRealRoots.congrRoots}
 
 The interval endpoints are presented as reduced rational literals, and
 the identification of the emitted literals with the isolator's dyadic
