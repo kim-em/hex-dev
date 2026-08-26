@@ -811,7 +811,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
     proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
   HexTruncatedSeriesMathlib:
