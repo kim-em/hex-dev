@@ -1,5 +1,7 @@
-n=20 peakBits=7 outputBits=5
+n=16 peakBits=8 outputBits=5
+n=24 peakBits=8 outputBits=5
 n=32 peakBits=9 outputBits=6
-n=48 peakBits=10 outputBits=6
-n=64 peakBits=11 outputBits=7
-n=80 peakBits=11 outputBits=7
+n=48 peakBits=9 outputBits=6
+n=64 peakBits=10 outputBits=7
+n=96 peakBits=10 outputBits=7
+n=128 peakBits=11 outputBits=8

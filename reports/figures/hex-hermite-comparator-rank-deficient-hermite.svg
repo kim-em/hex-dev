@@ -23,24 +23,24 @@
 <text x="732.00" y="410" text-anchor="middle" font-family="sans-serif" font-size="12">48</text>
 <text x="409.0" y="442" text-anchor="middle" font-family="sans-serif" font-size="13">matrix dimension n</text>
 <text x="18" y="218.0" text-anchor="middle" transform="rotate(-90 18 218.0)" font-family="sans-serif" font-size="13">median wall time per call (log scale)</text>
-<polyline points="86.00,332.24 247.50,254.56 409.00,205.00 570.50,167.91 732.00,141.57" fill="none" stroke="#2864dc" stroke-width="2.5"/>
-<circle cx="86.00" cy="332.24" r="3.5" fill="#2864dc"/>
-<circle cx="247.50" cy="254.56" r="3.5" fill="#2864dc"/>
-<circle cx="409.00" cy="205.00" r="3.5" fill="#2864dc"/>
-<circle cx="570.50" cy="167.91" r="3.5" fill="#2864dc"/>
-<circle cx="732.00" cy="141.57" r="3.5" fill="#2864dc"/>
-<polyline points="86.00,281.91 247.50,206.90 409.00,152.10 570.50,107.22 732.00,72.94" fill="none" stroke="#d62728" stroke-width="2.5"/>
-<circle cx="86.00" cy="281.91" r="3.5" fill="#d62728"/>
-<circle cx="247.50" cy="206.90" r="3.5" fill="#d62728"/>
-<circle cx="409.00" cy="152.10" r="3.5" fill="#d62728"/>
-<circle cx="570.50" cy="107.22" r="3.5" fill="#d62728"/>
-<circle cx="732.00" cy="72.94" r="3.5" fill="#d62728"/>
-<polyline points="86.00,270.84 247.50,202.73 409.00,150.32 570.50,104.71 732.00,71.53" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
-<circle cx="86.00" cy="270.84" r="3.5" fill="#2ca02c"/>
-<circle cx="247.50" cy="202.73" r="3.5" fill="#2ca02c"/>
-<circle cx="409.00" cy="150.32" r="3.5" fill="#2ca02c"/>
-<circle cx="570.50" cy="104.71" r="3.5" fill="#2ca02c"/>
-<circle cx="732.00" cy="71.53" r="3.5" fill="#2ca02c"/>
+<polyline points="86.00,331.90 247.50,254.20 409.00,204.90 570.50,167.89 732.00,141.43" fill="none" stroke="#2864dc" stroke-width="2.5"/>
+<circle cx="86.00" cy="331.90" r="3.5" fill="#2864dc"/>
+<circle cx="247.50" cy="254.20" r="3.5" fill="#2864dc"/>
+<circle cx="409.00" cy="204.90" r="3.5" fill="#2864dc"/>
+<circle cx="570.50" cy="167.89" r="3.5" fill="#2864dc"/>
+<circle cx="732.00" cy="141.43" r="3.5" fill="#2864dc"/>
+<polyline points="86.00,380.00 247.50,333.52 409.00,267.07 570.50,227.85 732.00,199.61" fill="none" stroke="#d62728" stroke-width="2.5"/>
+<circle cx="86.00" cy="380.00" r="3.5" fill="#d62728"/>
+<circle cx="247.50" cy="333.52" r="3.5" fill="#d62728"/>
+<circle cx="409.00" cy="267.07" r="3.5" fill="#d62728"/>
+<circle cx="570.50" cy="227.85" r="3.5" fill="#d62728"/>
+<circle cx="732.00" cy="199.61" r="3.5" fill="#d62728"/>
+<polyline points="86.00,332.65 247.50,281.07 409.00,235.76 570.50,194.79 732.00,187.74" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
+<circle cx="86.00" cy="332.65" r="3.5" fill="#2ca02c"/>
+<circle cx="247.50" cy="281.07" r="3.5" fill="#2ca02c"/>
+<circle cx="409.00" cy="235.76" r="3.5" fill="#2ca02c"/>
+<circle cx="570.50" cy="194.79" r="3.5" fill="#2ca02c"/>
+<circle cx="732.00" cy="187.74" r="3.5" fill="#2ca02c"/>
 <line x1="98" y1="62" x2="122" y2="62" stroke="#2864dc" stroke-width="3"/>
 <text x="129" y="66" font-family="sans-serif" font-size="12">Lean</text>
 <line x1="210" y1="62" x2="234" y2="62" stroke="#d62728" stroke-width="3"/>
