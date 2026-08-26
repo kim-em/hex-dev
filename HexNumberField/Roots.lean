@@ -309,7 +309,9 @@ namespace Hex.AlgebraicPoly.Common
 
 /-- A primitive fixed-field presentation of an algebraic coefficient array. -/
 structure Presentation where
+  /-- The canonical primitive element of the common field. -/
   generator : AlgebraicNumber
+  /-- The input coefficients rewritten in the generator's fixed field. -/
   coefficients : Array (QAdjoin generator.p generator.x)
 
 /-- Deterministic signed shift order `0, 1, -1, 2, -2, ...`. -/
@@ -366,7 +368,9 @@ def degree (a : AlgebraicNumber) : Nat :=
 /-- A primitive-search candidate together with the signed shift that produced
 it. -/
 structure ShiftCandidate where
+  /-- The signed integer shift that produced this candidate. -/
   shift : Int
+  /-- The candidate primitive element `theta + shift * alpha`. -/
   value : AlgebraicNumber
 
 /-- One maximum-degree update that retains the producing signed shift. -/

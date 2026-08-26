@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/QuotientCompose.lean",
+ "baseline_blob": "48cd72f73100465311303e0a6ab1e34f6fcfdf63",
+ "current_blob": "9641f1d1c9b112dcdcff9cf9c999b721982729e6",
+ "reason": "Adds an import and a quotient-evaluation theorem only; no executable definition or factorization runtime call path changes."
+}

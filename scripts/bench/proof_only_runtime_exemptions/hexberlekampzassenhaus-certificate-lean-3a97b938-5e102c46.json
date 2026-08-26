@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Certificate.lean",
+ "baseline_blob": "3a97b9385574e3ddf48da545df6a157a2f96e8b4",
+ "current_blob": "5e102c460b63bbf2b79470b81189f25cbb92e021",
+ "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; certificate checks, arithmetic, and control flow are unchanged."
+}

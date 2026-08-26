@@ -857,10 +857,8 @@ theorem prod_divisors_eq {n : Nat} (F : CheckedFactorization n) :
         (fun dp => HexPolyMathlib.toPolynomial dp.2)).foldl (· * ·) 1 = X ^ n - 1
 ```
 
-`toPolynomial_cyclotomic` is the correspondence everything else goes
-through, exactly as `factorization_eq` is for
-[hex-int-factor](hex-int-factor.md). The rest are short
-consequences of it together with Mathlib's `natDegree_cyclotomic`,
+`toPolynomial_cyclotomic` is the central correspondence for this layer. The
+rest are short consequences of it together with Mathlib's `natDegree_cyclotomic`,
 `cyclotomic.irreducible`, `cyclotomic.irreducible_rat`, and
 `prod_cyclotomic_eq_X_pow_sub_one`. Exact helper names are read from the
 pinned Mathlib during implementation. The SPEC does not depend on

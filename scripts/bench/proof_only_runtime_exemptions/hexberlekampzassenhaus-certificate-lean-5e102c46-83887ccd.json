@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Certificate.lean",
+ "baseline_blob": "5e102c460b63bbf2b79470b81189f25cbb92e021",
+ "current_blob": "83887ccd940bb0686d891b0b3ddf2a8000097234",
+ "reason": "Phase 6 polish only: adds a docstring to the instance-implicit `bounds` field of `PrimeFactorData`. Prose only; every executable definition is unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/QuotientFrobenius.lean",
+ "baseline_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
+ "current_blob": "cbef5cd34b581e312d21c2f76da11d6989b2aa6a",
+ "reason": "Adds an import and a quotient-power theorem only; no executable definition or factorization runtime call path changes."
+}

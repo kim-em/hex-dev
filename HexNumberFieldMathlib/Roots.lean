@@ -23,6 +23,8 @@ normal-form contracts for both fixed-field and algebraic-coefficient drivers.
 
 namespace Hex
 
+/-- Proof-local Mathlib `CommRing` view of `ZPoly`, assembled from the
+executable library's verified `Lean.Grind.CommRing` instance. -/
 @[implicit_reducible] local instance : CommRing ZPoly :=
   let s := (inferInstance : Lean.Grind.CommRing ZPoly)
   { s with
@@ -43,6 +45,8 @@ namespace Hex
         Lean.Grind.Ring.intCast_natCast_add_one,
         Lean.Grind.Semiring.natCast_succ] }
 
+/-- Proof-local domain structure on `ZPoly`, transported from
+`Polynomial Int`. -/
 local instance : IsDomain ZPoly :=
   MulEquiv.isDomain (Polynomial Int)
     (HexPolyMathlib.equiv (R := Int)).toMulEquiv

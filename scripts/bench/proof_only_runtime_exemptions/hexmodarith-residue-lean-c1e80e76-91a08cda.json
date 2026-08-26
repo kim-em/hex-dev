@@ -1,0 +1,6 @@
+{
+ "path": "HexModArith/Residue.lean",
+ "baseline_blob": "c1e80e762e66f1ff6000217dd09ac9b746ecccd9",
+ "current_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+ "reason": "Adds the canonical ZMod64.Bounds 2 instance beside the class. Bounds proofs are erased before code generation, and the factorization and irreducibility elaborators transport the witness through types and constructor applications without branching on its identity, so which witness is selected cannot reach the benchmarked executable."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/Irreducibility.lean",
+ "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
+ "current_blob": "de4103699a6ad204c72ad32395c3496deb960a7a",
+ "reason": "Marks checkIrreducibilityCertificateLinear and checkPowChainLinear @[expose], and replaces a hand-written primality proof with by decide. @[expose] widens what the elaborator may unfold; it does not alter compiled code, and the replaced proof is a Prop."
+}

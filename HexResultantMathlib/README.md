@@ -55,7 +55,7 @@ consumer surface:
 
 Everything in this package is proved; it contains no executable code of its
 own. The typeclass context of the headline theorem is the executable
-algorithm's own (`CommRing R`, `IsDomain R`, `DecidableEq R`, `Div R`,
+algorithm's own (`CommRing R`, `DecidableEq R`, `Div R`,
 `Hex.ExactDivLaws R`), so the correspondence applies to every instantiation
 the computational package supports. The computational library stays
 Mathlib-free; algebraic semantics live here. See the

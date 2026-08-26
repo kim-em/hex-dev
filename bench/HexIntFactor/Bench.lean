@@ -26,7 +26,7 @@ def runRho (n : Nat) : Nat :=
   | .error f => f.attempts
 
 def runPMinusOne (n : Nat) : Nat :=
-  match pMinusOneStage1 n 2 10000 with
+  match pMinusOneFactor n 2 10000 with
   | .factor d => d
   | .noFactor => 1
   | .whole => n
@@ -115,6 +115,9 @@ private opaque sigmaInput256 : SigmaInput :=
   ⟨_, sigmaInput 256 (by decide)⟩
 private opaque sigmaInput512 : SigmaInput :=
   ⟨_, sigmaInput 512 (by decide)⟩
+set_option maxHeartbeats 1000000 in
+private opaque sigmaInput1024 : SigmaInput :=
+  ⟨_, sigmaInput 1024 (by decide)⟩
 
 @[noinline]
 def sigmaInputForCount : Nat → SigmaInput
@@ -123,10 +126,17 @@ def sigmaInputForCount : Nat → SigmaInput
   | 128 => sigmaInput128
   | 256 => sigmaInput256
   | 512 => sigmaInput512
+  | 1024 => sigmaInput1024
   | _ => sigmaInputDefault
 
 def runSigmaFactorCount (input : SigmaInput) : Nat :=
   sigma input.checked 1
+
+def runSquareFactorCount (input : SigmaInput) : Nat :=
+  squareDivisor input.checked + squarefreePart input.checked
+
+def runTotientFactorCount (input : SigmaInput) : Nat :=
+  totient input.checked
 
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
@@ -206,7 +216,7 @@ setup_benchmark runOrder n => n
     targetInnerNanos := 100000000
   }
 
-/- These two targets are much faster per call than the route-search targets
+/- These targets are much faster per call than the route-search targets
 above, while using the same warm, autotuned 100 ms child-side batches. On the
 scheduled high-startup host, the default ten-spawn floor would discard their
 in-process measurements; the 1.0 multiplier changes only that filter, and
@@ -246,6 +256,48 @@ setup_benchmark runSigmaFactorCount n => n * n
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Each prepared certificate has `n` entries of fixed exponent 32. The
+square-divisor accumulator grows linearly in limbs, so its sequential
+multiplication has the declared `Theta(n²)` native-cost model; the parity
+product is identically one and contributes only a linear pass. Preparation
+hoists the enormous certified subject out of the timed loop, so an input-range
+scan would be immediately observable rather than hidden in setup. -/
+setup_benchmark runSquareFactorCount n => n * n
+  with prep := sigmaInputForCount
+  where {
+    paramFloor := 32
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    -- At 32..512 the early accumulator-width regimes gave an inconclusive
+    -- slope. Extending to 1024 exposes convergence toward the n² model.
+    slopeTolerance := 0.20
+    outerTrials := 3
+  }
+
+/- Each prepared certificate has `n` fixed-exponent prime-power entries.
+`totient` builds one bounded-size contribution per entry, then sequentially
+multiplies an accumulator whose limb count grows linearly, giving the declared
+`Theta(n²)` native-cost model. Hashing the linearly sized result is lower-order.
+Preparation hoists the enormous subject out of the timed loop; scanning
+residues below it would not terminate on these subjects. -/
+setup_benchmark runTotientFactorCount n => n * n
+  with prep := sigmaInputForCount
+  where {
+    paramFloor := 32
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    -- The ladder crosses accumulator-width regimes; 0.20 admits that
+    -- finite-range transition without changing the model.
+    slopeTolerance := 0.20
     outerTrials := 3
   }
 

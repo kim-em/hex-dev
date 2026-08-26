@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/FactorPolyElab.lean",
+ "baseline_blob": "c9d914971f41cd52e9c4a5f6d4635fc5ce688d87",
+ "current_blob": "dd813f31f9277710e2bb3de58de2d1171717901a",
+ "reason": "Phase 6 documentation only: adds docstrings to the `factor_poly` term and tactic elaborators. No elaborator logic, reified certificate shape, or kernel check changes, and the file contains no factorization runtime code."
+}

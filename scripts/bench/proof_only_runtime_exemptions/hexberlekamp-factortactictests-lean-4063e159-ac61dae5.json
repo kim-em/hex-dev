@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/FactorTacticTests.lean",
+ "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
+ "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",
+ "reason": "Names the four ZMod64.Bounds test fixtures and marks them private, so instance search cannot capture them into terms emitted in other modules. Test-module fixtures only; no factorizer definition and nothing in the benchmarked executable graph changes."
+}

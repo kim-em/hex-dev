@@ -246,7 +246,7 @@ end Subresultant
 
 /-- The executable and Mathlib resultants agree under dense-polynomial
 correspondence, with the executable default formal degrees made explicit. -/
-theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
+theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
     [Div R] [Hex.ExactDivLaws R] (f g : DensePoly R) :
     resultant f g =
       Polynomial.resultant (HexPolyMathlib.toPolynomial f)

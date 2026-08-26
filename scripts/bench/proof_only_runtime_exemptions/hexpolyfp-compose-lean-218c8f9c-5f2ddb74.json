@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/Compose.lean",
+ "baseline_blob": "218c8f9c2748eabc283f7baf40877f8f157b232a",
+ "current_blob": "5f2ddb7456186793f29a6187c490c3e7dea90686",
+ "reason": "Adds compose_add and compose_monomial, new theorems derived from the existing compose_sub and the power-sum characterization. No definition changes, so the compiled factorization path is unchanged."
+}
