@@ -104,8 +104,10 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
         -- entries is an invariant of the current producers, not of their type.
         let candidate := (smallCandidate m).scale multiplier
         let powerRoutes := match candidate.route with
-          | .trial => powerRoutes
-          | .perfectPower => powerRoutes + 1
+          -- Split-produced stack entries are odd; the two-adic cases are
+          -- defensive if a future producer weakens that invariant.
+          | .trial | .twos => powerRoutes
+          | .perfectPower | .twosPower => powerRoutes + 1
         let factors := mergePowers candidate.factors factors
         let m := candidate.residualBase
         let multiplier := candidate.residualExponent
@@ -150,8 +152,8 @@ private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat) :
     FactorAttempt n :=
   let candidate := smallCandidate n
   let powerRoutes := match candidate.route with
-    | .trial => 0
-    | .perfectPower => 1
+    | .trial | .twos => 0
+    | .perfectPower | .twosPower => 1
   let result := searchGo fuel
     [(candidate.residualBase, candidate.residualExponent)]
     candidate.factors 1 r 0 powerRoutes

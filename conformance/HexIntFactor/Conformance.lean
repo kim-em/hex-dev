@@ -155,10 +155,22 @@ example :
 #guard squareDivisor checkedPow64 == 2 ^ 32
 #guard !isSquarefree checked12
 
-#guard (smallCandidate (2 ^ 20)).route == .perfectPower
+#guard splitTwos 0 == (0, 0)
+#guard splitTwos 99 == (0, 99)
+#guard splitTwos (2 ^ 20) == (20, 1)
+#guard splitTwos (3 * 2 ^ 20) == (20, 3)
+#guard (trialFactors 0).1.isEmpty && (trialFactors 0).2 == 0
+#guard (smallCandidate (2 ^ 20)).route == .twos
+#guard (smallCandidate (2 ^ 20)).factors.map
+  (fun entry => (entry.prime, entry.exponent)) == [(2, 20)]
+#guard exactRoot? 65025 2 == some 255
+#guard exactRoot? 759375 5 == some 15
+#guard perfectPower? (2 ^ 9973) == some (2, 9973)
+#guard (perfectPower? (2 ^ 10000)).isSome
+#guard perfectPower? (2 ^ 10009) == some (2, 10009)
 #guard (smallCandidate (3 ^ 13)).route == .perfectPower
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
-#guard (smallCandidate ((6 ^ 5) ^ 3)).route == .perfectPower
+#guard (smallCandidate ((6 ^ 5) ^ 3)).route == .twosPower
 
 -- The subject is not a perfect power, but this exact split leaves a square
 -- cofactor. The same structural producer used for every popped search entry
@@ -178,6 +190,8 @@ private def recursivePowerCandidate : SmallCandidate :=
 -- pins that count while the final checked factorization remains unchanged.
 #guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
 #guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 1) == 0
+#guard Hex.Nat.Internal.countPowerRoutes (2 ^ 20) (Rand.ofSeed 1) == 0
+#guard Hex.Nat.Internal.countPowerRoutes ((6 ^ 5) ^ 3) (Rand.ofSeed 1) == 1
 #guard (match factor? recursivePowerInput (Rand.ofSeed 1) with
   | .ok (F, _) =>
       F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) ==
@@ -187,7 +201,7 @@ private def recursivePowerCandidate : SmallCandidate :=
 private def nestedPowerCandidate : SmallCandidate :=
   (smallCandidate ((6 ^ 5) ^ 3)).scale 2
 
-#guard nestedPowerCandidate.route == .perfectPower
+#guard nestedPowerCandidate.route == .twosPower
 #guard nestedPowerCandidate.factors.map (fun entry => (entry.prime, entry.exponent)) ==
   [(2, 30), (3, 30)]
 #guard nestedPowerCandidate.residualBase == 1
