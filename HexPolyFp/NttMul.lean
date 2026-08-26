@@ -208,6 +208,83 @@ theorem mulNtt?_eq {n : Nat} [ZMod64.PrimeModulus p]
           left * right
         rw [DensePoly.ofList_toList, DensePoly.ofList_toList]
 
+/-- Direct cyclic NTT multiplication.  Inputs shorter than the quotient
+length are zero-padded; an input exceeding that length is rejected. -/
+def mulCyclicNtt? {n : Nat} [ZMod64.PrimeModulus p]
+    (plan : ZMod64.NttPlan p n) (left right : FpPoly p) : Option (FpPoly p) :=
+  if left.size ≤ n ∧ right.size ≤ n then
+    (ZMod64.Ntt.cyclic? plan
+      (ZMod64.Ntt.padTo n left.toArray.toList).toArray
+      (ZMod64.Ntt.padTo n right.toArray.toList).toArray).map DensePoly.ofCoeffs
+  else
+    none
+
+/-- A successful direct cyclic transform is the independent schoolbook
+product folded modulo `x^n - 1`. -/
+theorem mulCyclicNtt?_eq {n : Nat} [ZMod64.PrimeModulus p]
+    (plan : ZMod64.NttPlan p n) (left right result : FpPoly p)
+    (hresult : mulCyclicNtt? plan left right = some result) :
+    result = DensePoly.ofList
+      (ZMod64.Ntt.cyclicConvolution n left.toList right.toList) := by
+  unfold mulCyclicNtt? at hresult
+  split at hresult
+  next hfit =>
+    have hleft : (ZMod64.Ntt.padTo n left.toArray.toList).toArray.size = n := by
+      simp [ZMod64.Ntt.length_padTo, hfit.1]
+    have hright : (ZMod64.Ntt.padTo n right.toArray.toList).toArray.size = n := by
+      simp [ZMod64.Ntt.length_padTo, hfit.2]
+    have href := ZMod64.Ntt.cyclic?_eq_reference plan
+      (ZMod64.Ntt.padTo n left.toArray.toList).toArray
+      (ZMod64.Ntt.padTo n right.toArray.toList).toArray hleft hright
+    simp at href
+    rw [href] at hresult
+    simp only [Option.map_some, Option.some.injEq] at hresult
+    subst result
+    exact congrArg DensePoly.ofCoeffs
+      (ZMod64.Ntt.cyclicConvolution_pad_inputs plan
+        left.toArray.toList right.toArray.toList)
+  next hfit => simp at hresult
+
+/-- Direct negacyclic NTT multiplication through a primitive `2n`th-root
+twist.  Inputs shorter than `n` are zero-padded and oversized inputs are
+rejected. -/
+def mulNegacyclicNtt? {n : Nat} [ZMod64.PrimeModulus p]
+    (plan : ZMod64.Ntt.NegacyclicPlan p n)
+    (left right : FpPoly p) : Option (FpPoly p) :=
+  if left.size ≤ n ∧ right.size ≤ n then
+    (ZMod64.Ntt.negacyclic? plan
+      (ZMod64.Ntt.padTo n left.toArray.toList).toArray
+      (ZMod64.Ntt.padTo n right.toArray.toList).toArray).map DensePoly.ofCoeffs
+  else
+    none
+
+/-- A successful direct negacyclic transform is the independent schoolbook
+product folded modulo `x^n + 1`. -/
+theorem mulNegacyclicNtt?_eq {n : Nat} [ZMod64.PrimeModulus p]
+    (plan : ZMod64.Ntt.NegacyclicPlan p n)
+    (left right result : FpPoly p)
+    (hresult : mulNegacyclicNtt? plan left right = some result) :
+    result = DensePoly.ofList
+      (ZMod64.Ntt.negacyclicConvolution n left.toList right.toList) := by
+  unfold mulNegacyclicNtt? at hresult
+  split at hresult
+  next hfit =>
+    have hleft : (ZMod64.Ntt.padTo n left.toArray.toList).toArray.size = n := by
+      simp [ZMod64.Ntt.length_padTo, hfit.1]
+    have hright : (ZMod64.Ntt.padTo n right.toArray.toList).toArray.size = n := by
+      simp [ZMod64.Ntt.length_padTo, hfit.2]
+    have href := ZMod64.Ntt.negacyclic?_eq_reference plan
+      (ZMod64.Ntt.padTo n left.toArray.toList).toArray
+      (ZMod64.Ntt.padTo n right.toArray.toList).toArray hleft hright
+    simp at href
+    rw [href] at hresult
+    simp only [Option.map_some, Option.some.injEq] at hresult
+    subst result
+    exact congrArg DensePoly.ofCoeffs
+      (ZMod64.Ntt.negacyclicConvolution_pad_inputs plan
+        left.toArray.toList right.toArray.toList)
+  next hfit => simp at hresult
+
 end FpPoly
 
 end Hex

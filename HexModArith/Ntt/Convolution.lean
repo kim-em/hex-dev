@@ -775,6 +775,21 @@ theorem dft_cyclic_twist {p n : Nat} [Bounds p] [PrimeModulus p]
       getElem_dft _ _ _ _ hfrequency]
     exact dftCoeff_cyclic_twist plan left right frequency
 
+/-- Zero padding before coefficient twisting does not change the transformed
+values. -/
+theorem dft_scalePowers_padTo {p : Nat} [Bounds p]
+    (root twist : ZMod64 p) (count n : Nat)
+    (coefficients : List (ZMod64 p)) :
+    dft root count (scalePowers twist (padTo n coefficients)) =
+      dft root count (scalePowers twist coefficients) := by
+  apply List.ext_getElem
+  · simp
+  · intro frequency hleft hright
+    have hfrequency : frequency < count := by simpa using hleft
+    rw [getElem_dft _ _ _ _ hfrequency,
+      getElem_dft _ _ _ _ hfrequency]
+    simp only [dftCoeff_eq, evalCoeffs_scalePowers, evalCoeffs_padTo]
+
 /-- Cyclic convolution of twisted inputs is exactly the twisted negacyclic
 coefficient reference. -/
 theorem cyclic_twist_eq_negacyclic {p n : Nat}
@@ -797,6 +812,44 @@ theorem cyclic_twist_eq_negacyclic {p n : Nat}
   unfold dftArray
   congr 1
   exact dft_cyclic_twist plan left right
+
+/-- Padding either negacyclic-convolution input with zeros does not alter the
+fixed-length result. -/
+theorem negacyclicConvolution_pad_inputs {p n : Nat}
+    [Bounds p] [PrimeModulus p] (plan : NegacyclicPlan p n)
+    (left right : List (ZMod64 p)) :
+    (negacyclicConvolution n (padTo n left) (padTo n right)).toArray =
+      (negacyclicConvolution n left right).toArray := by
+  let padded := negacyclicConvolution n (padTo n left) (padTo n right)
+  let original := negacyclicConvolution n left right
+  have hpadded : padded.length = n := by
+    simp [padded, negacyclicConvolution, length_foldNegacyclic,
+      plan.length_pos]
+  have horiginal : original.length = n := by
+    simp [original, negacyclicConvolution, length_foldNegacyclic,
+      plan.length_pos]
+  have hscaled :
+      (scalePowers plan.twist padded).toArray =
+        (scalePowers plan.twist original).toArray := by
+    have hpaddedTwist := cyclic_twist_eq_negacyclic plan
+      (padTo n left) (padTo n right)
+    have horiginalTwist := cyclic_twist_eq_negacyclic plan left right
+    apply dftArray_injective plan.transform
+    · simp [hpadded]
+    · simp [horiginal]
+    unfold dftArray
+    congr 1
+    rw [← hpaddedTwist, ← horiginalTwist,
+      dft_cyclicConvolution, dft_cyclicConvolution,
+      dft_scalePowers_padTo, dft_scalePowers_padTo]
+  have hscaledList :
+      scalePowers plan.twist padded =
+        scalePowers plan.twist original := by
+    simpa using congrArg Array.toList hscaled
+  have hunscaled := congrArg (scalePowers plan.twist⁻¹) hscaledList
+  rw [scalePowers_inv plan.twist plan.twist_ne_zero padded,
+    scalePowers_inv plan.twist plan.twist_ne_zero original] at hunscaled
+  exact congrArg List.toArray hunscaled
 
 /-- Checked negacyclic NTT convolution via coefficient twisting. Length
 mismatch is normal failure. -/

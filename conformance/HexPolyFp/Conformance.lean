@@ -25,6 +25,7 @@ Covered operations:
 - `weightedProduct`
 - `linearPow`
 - `mulNtt?`
+- `mulCyclicNtt?`, `mulNegacyclicNtt?`
 - `neg` (the `Neg (FpPoly p)` instance, at `p = 5`)
 Covered properties:
 - modular exponentiation by exponent zero returns the quotient-ring identity
@@ -35,6 +36,7 @@ Covered properties:
 - weighted products respect positive multiplicities
 - `linearPow` is exponent-additive, and exponent one is the base
 - direct target-modulus NTT multiplication agrees with schoolbook multiplication
+- cyclic and negacyclic NTT adapters agree with their independent folded references
 - negation is the additive inverse and an involution, and subtraction agrees
   with adding the negation
 Covered edge cases:
@@ -54,6 +56,7 @@ Covered edge cases:
 - exponent zero and a zero base for `linearPow`, and the zero polynomial for
   `neg`
 - a valid length-four direct NTT plan and rejection of a too-short plan
+- cyclic and negacyclic length-two products, including oversized-input rejection
 - `(x + 1)^5` over `F_5`, whose interior binomial coefficients all vanish, so
   the result carries internal zeros
 - a degree-10 sparse input to `neg`, checking normalisation keeps the degree
@@ -116,6 +119,42 @@ private def sfReconstruction (d : SquareFreeDecomposition 5) : FpPoly 5 :=
   | none => false
   | some plan =>
       (mulNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2])).isNone
+
+private def negacyclicPlanFive? : Option (ZMod64.Ntt.NegacyclicPlan 5 2) :=
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => none
+  | some transform =>
+      if hroot : transform.root = (ZMod64.ofNat 5 2) ^ 2 then
+        if horder : ZMod64.ExactOrder (ZMod64.ofNat 5 2) 4 then
+          some
+            { transform
+              twist := ZMod64.ofNat 5 2
+              twist_order := horder
+              root_eq := hroot }
+        else none
+      else none
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match mulCyclicNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2]) with
+      | none => false
+      | some result => coeffNats result == [3, 3]
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => false
+  | some plan =>
+      (mulCyclicNtt? plan (polyFive #[1, 1, 1]) (polyFive #[1])).isNone
+
+#guard
+  match negacyclicPlanFive? with
+  | none => false
+  | some plan =>
+      match mulNegacyclicNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2]) with
+      | none => false
+      | some result => coeffNats result == [4, 3]
 
 private def constModulus : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
