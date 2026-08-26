@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
+import HexModArith.Ntt.Plan
 import HexModArith.Prime
 import HexModArith.Ring
 
@@ -20,6 +21,7 @@ Covered operations:
 - natural and integer scalar multiplication
 - `BarrettCtx.mulMod`
 - `MontCtx.toMont`, `mulMont`, `fromMont`
+- `ZMod64.NttPlan.build?` and reusable Shoup twiddle tables
 
 Covered properties:
 - constructors and casts reduce representatives modulo the committed modulus
@@ -31,6 +33,7 @@ Covered properties:
 - Montgomery round-trips preserve standard residues and Montgomery hot-loop
   multiplication agrees with the core `ZMod64` multiplication contract
 - every checked result remains in canonical range through `toNat`
+- NTT plans validate power-of-two lengths and exact-order roots
 
 Covered edge cases:
 - modulus `1`
@@ -94,6 +97,22 @@ example {a b : ZMod64 7} (h : a * b = 0) : a = 0 ∨ b = 0 := by
   grind
 
 end PrimeModulusAutomation
+
+/-! Reusable NTT plan validation and observations. -/
+
+#guard (NttPlan.build? (p := 7) (n := 0) (ofNat 7 1)).isNone
+#guard (NttPlan.build? (p := 7) (n := 4) (ofNat 7 6)).isNone
+#guard (NttPlan.build? (p := 7) (n := 2) (ofNat 7 1)).isNone
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      plan.root.toNat == 6 && plan.invRoot.toNat == 6 &&
+        plan.invLength.toNat == 4 &&
+        plan.forwardTwiddles.size == 2 &&
+        plan.forwardTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6] &&
+        plan.inverseTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6]
 
 section BasicConstructorAutomation
 
