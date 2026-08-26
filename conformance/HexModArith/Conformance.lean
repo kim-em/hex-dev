@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
+import HexModArith.Ntt.Catalogue
 import HexModArith.Ntt.Convolution
 import HexModArith.Ntt.Transform
 import HexModArith.Prime
@@ -36,6 +37,8 @@ Covered properties:
   multiplication agrees with the core `ZMod64` multiplication contract
 - every checked result remains in canonical range through `toNat`
 - NTT plans validate power-of-two lengths and exact-order roots
+- the fixed NTT-prime catalogue supports its advertised length ladder and
+  rejects invalid or out-of-capacity requests
 - Shoup multiplication and forward/inverse butterflies preserve their residues
   while remaining in their advertised redundant ranges
 - checked NTT convolution agrees with direct cyclic, zero-padded ordinary, and
@@ -165,6 +168,26 @@ end PrimeModulusAutomation
   | some plan =>
       (Ntt.forward? plan #[ofNat 7 3]).isNone &&
         (Ntt.inverse? plan #[ofNat 7 3]).isNone
+
+#guard nttPrimes.map NttPrime.modulus ==
+  [167772161, 469762049, 754974721, 998244353, 1004535809, 1224736769, 2013265921]
+
+#guard nttPrimes.map NttPrime.maxLog == [25, 26, 24, 23, 21, 24, 27]
+
+#guard
+  match nttPrimes with
+  | first :: _ =>
+      (first.plan? 8).isSome && (first.plan? 3).isNone &&
+        (first.plan? (2 ^ 26)).isNone
+  | [] => false
+
+/-- The largest advertised catalogue length is supported without constructing
+its enormous twiddle array during conformance elaboration. -/
+example :
+    ((nttPrimes[6]'(by decide)).plan? (2 ^ 27)).isSome = true := by
+  apply NttPrime.plan?_isSome_of_supported
+  · decide
+  · decide
 
 private def negacyclicPlanFive? : Option (Ntt.NegacyclicPlan 5 2) :=
   match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with

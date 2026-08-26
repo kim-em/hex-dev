@@ -22,7 +22,7 @@ namespace Hex
 namespace ZMod64
 
 /-- Executable characterization of a nonzero power of two. -/
-def IsPowTwo (n : Nat) : Prop :=
+@[expose] def IsPowTwo (n : Nat) : Prop :=
   n ≠ 0 ∧ n = 2 ^ n.log2
 
 instance (n : Nat) : Decidable (IsPowTwo n) :=
@@ -31,7 +31,7 @@ instance (n : Nat) : Decidable (IsPowTwo n) :=
 /-- Exact-order certificate specialized to a power-of-two order.  For a
 power-of-two `n`, an `n`th root has exact order `n` precisely when it is not
 already an `(n / 2)`th root (with the order-one case separated). -/
-def ExactOrder {p : Nat} [Bounds p] (root : ZMod64 p) (n : Nat) : Prop :=
+@[expose] def ExactOrder {p : Nat} [Bounds p] (root : ZMod64 p) (n : Nat) : Prop :=
   root ^ n = 1 ∧ (n = 1 ∨ root ^ (n / 2) ≠ 1)
 
 instance {p : Nat} [Bounds p] (root : ZMod64 p) (n : Nat) :
@@ -116,7 +116,7 @@ structure NttPlan (p n : Nat) [Bounds p] [PrimeModulus p] where
 namespace NttPlan
 
 /-- Everything checked by NTT plan construction. -/
-def Valid {p : Nat} [Bounds p] (n : Nat) (root : ZMod64 p) : Prop :=
+@[expose] def Valid {p : Nat} [Bounds p] (n : Nat) (root : ZMod64 p) : Prop :=
   IsPowTwo n ∧ n ∣ p - 1 ∧ ExactOrder root n
 
 instance {p n : Nat} [Bounds p] (root : ZMod64 p) : Decidable (Valid n root) :=
