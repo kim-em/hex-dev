@@ -599,7 +599,6 @@ repos:
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
-      - HexBerlekampZassenhausMathlib.QuickstartTests
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib

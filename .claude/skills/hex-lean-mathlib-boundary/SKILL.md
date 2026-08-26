@@ -23,7 +23,7 @@ and `lllNative`. Key #8519 facts that supersede older notes below:
   (`factorLatticeFactorsWithBound`) selects `ZPoly.toMonicPrimeData?` — so the
   toMonic partition producers (`liftedFactorSubsetPartition_of_toMonicModP`)
   and the monic-regime short-vector producer
-  (`BHKS.supportShortVectorData_of_recoveredLift`, which needs
+  (`BHKS.recoveredShortVector`, which needs
   `leadingCoeff f = 1`) apply directly. The standalone fast tier
   (`factorFastFactorsWithBound`) still selects `choosePrimeData?` and is a
   verification-guarded, decline-only heuristic for `lc ≢ 1 (mod p)`.
@@ -1400,7 +1400,7 @@ the *period-adjusted* tail `∑ psiCut(zᵢ) − tⱼ·p^(a−ℓⱼ)` is a genu
 vector (`periodAdjustedVector`, `CLDColumnBound.lean`) — packaged as a
 `SupportShortVectorData` (the period-adjusted certificate carrying its own
 `vector`), **not** the zero-period `trueFactorCLDVector`.
-`supportShortVectorData_of_recoveredLift` bounds each period-adjusted column by
+`recoveredShortVector` bounds each period-adjusted column by
 `factorCount/2` from the aggregate residue (`recoveredLift_aggregate_residue`,
 #7872) plus `two_mul_natAbs_sum_psiCut_period_le` (#7869), and
 `cutProjectionHypotheses_of_shortVectors` (the existing `SupportShortVectorData`
