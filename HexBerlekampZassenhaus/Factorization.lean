@@ -117,6 +117,8 @@ structure FactorRun where
   trace : DirectFactorTrace
 deriving DecidableEq
 
+/-- A successful lift-and-recover at any scheduled precision at or above the
+recovery floor forces the bounded BHKS recovery loop to return a result. -/
 theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
@@ -720,6 +722,8 @@ def latticePrecisionCap (f : ZPoly) : Nat :=
     (max (ZPoly.defaultFactorCoeffBound f)
       (ZPoly.defaultFactorCoeffBound core))
 
+/-- The cap dominates the BHKS resultant-precision bound of the primitive
+square-free part, the first of the four maxima defining it. -/
 theorem bhksBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     bhksBound (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
   unfold latticePrecisionCap
@@ -732,6 +736,8 @@ theorem cldCoeffFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
   unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _)
 
+/-- The cap dominates the input polynomial's own Mignotte-style coefficient
+bound, so cap-precision recovery covers ordinary factor reconstruction. -/
 theorem defaultFactorCoeffBound_le_latticePrecisionCap (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound f ≤ latticePrecisionCap f := by
   unfold latticePrecisionCap
@@ -1371,6 +1377,8 @@ theorem runClassicalPlan_modular
       (SquareFreeInput.ofNormalized (normalizeForFactor f)) modular <;>
     simp [runClassicalPlan, hrun]
 
+/-- A modular plan retained by the full classical run is exactly the plan the
+direct prime selector chose for the normalized polynomial. -/
 theorem runClassical_plan
     (f : ZPoly)
     {modular : DirectPrimePlan
@@ -1630,16 +1638,21 @@ theorem factorizationOfFactors_scalar (f : ZPoly) (rawFactors : Array ZPoly) :
         ZPoly.content f := by
   rfl
 
+/-- Packing raw factors of the zero polynomial records the zero scalar. -/
 @[simp, grind =] theorem factorizationOfFactors_scalar_zero (rawFactors : Array ZPoly) :
     (factorizationOfFactors 0 rawFactors).scalar = 0 := by
   simp [factorizationOfFactors_scalar]
 
+/-- A nonzero input with negative leading coefficient records the negated
+content as its scalar. -/
 theorem factorizationOfFactors_scalar_of_leadingCoeff_neg
     {f : ZPoly} (rawFactors : Array ZPoly)
     (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
     (factorizationOfFactors f rawFactors).scalar = -ZPoly.content f := by
   simp [factorizationOfFactors_scalar, hf, hneg]
 
+/-- A nonzero input with positive leading coefficient records its content as
+its scalar. -/
 theorem factorizationOfFactors_scalar_of_leadingCoeff_pos
     {f : ZPoly} (rawFactors : Array ZPoly)
     (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
@@ -1647,6 +1660,7 @@ theorem factorizationOfFactors_scalar_of_leadingCoeff_pos
   have hnot_neg : ¬ DensePoly.leadingCoeff f < 0 := by omega
   simp [factorizationOfFactors_scalar, hf, hnot_neg]
 
+/-- The packed scalar vanishes exactly on the zero input. -/
 theorem factorizationOfFactors_scalar_eq_zero_iff
     (f : ZPoly) (rawFactors : Array ZPoly) :
     (factorizationOfFactors f rawFactors).scalar = 0 ↔ f = 0 := by
@@ -1665,6 +1679,7 @@ theorem factorize_scalar (f : ZPoly) :
   rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar f (factorFactors f)
 
+/-- The default factorization of `0` records the zero scalar. -/
 @[simp, grind =] theorem factorize_scalar_zero :
     (ZPoly.factorize 0).scalar = 0 := by
   rw [factorize_eq_factorizationOfFactors]
@@ -1678,6 +1693,8 @@ vacuously, without a nonzero hypothesis. -/
 theorem factorize_zero_factors : (ZPoly.factorize (0 : ZPoly)).factors = #[] := by
   decide
 
+/-- A nonzero polynomial with negative leading coefficient records the negated
+content as its scalar, keeping every stored factor's leading coefficient positive. -/
 theorem factorize_scalar_of_leadingCoeff_neg
     {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
     (ZPoly.factorize f).scalar = -ZPoly.content f := by
@@ -1691,6 +1708,7 @@ theorem factorize_scalar_of_leadingCoeff_pos
   rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_of_leadingCoeff_pos (factorFactors f) hf hpos
 
+/-- The public scalar vanishes exactly on the zero input. -/
 theorem factorize_scalar_eq_zero_iff (f : ZPoly) :
     (ZPoly.factorize f).scalar = 0 ↔ f = 0 := by
   rw [factorize_eq_factorizationOfFactors]

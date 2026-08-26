@@ -918,6 +918,7 @@ private theorem shouldRecordPolynomialFactor_eq_true_of_ne
   unfold shouldRecordPolynomialFactor
   simp [hzero, hone, hneg_one]
 
+/-- Sign normalization preserves nonzeroness. -/
 theorem normalizeFactorSign_ne_zero_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign f ≠ 0 := by

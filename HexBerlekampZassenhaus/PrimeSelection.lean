@@ -1176,6 +1176,8 @@ def choosePrime (f : ZPoly) : Nat :=
   | some score => score.p
   | none => 3
 
+/-- Any score the hot-path walk returns records a prime that passes the
+good-prime check for `f`. -/
 theorem choosePrimeScore?_isGoodPrime
     (f : ZPoly) (score : PrimeCandidateScore)
     (hscore : choosePrimeScore? f = some score) :
@@ -1186,6 +1188,8 @@ theorem choosePrimeScore?_isGoodPrime
     (by intro old hnone; cases hnone)
     hscore
 
+/-- When `choosePrime` returns the winning score's prime, that prime passes
+the good-prime check for `f`. -/
 theorem choosePrime_isGoodPrime_of_selected
     (f : ZPoly) (score : PrimeCandidateScore)
     (hscore : choosePrimeScore? f = some score)

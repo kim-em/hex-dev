@@ -736,6 +736,8 @@ theorem choosePrimeDataAdaptive?_prime
     (fun c score hscore => primeChoiceDataScore_prime f c score hscore) hdata
   exact hprime
 
+/-- Every prime returned by the adaptive selector is at most `500`: its
+look-ahead only rearranges the fixed small-prime candidate lists. -/
 theorem choosePrimeDataAdaptive?_p_le_500
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -1294,9 +1296,11 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
+/-- The lift data keeps the selected prime. -/
 @[simp, grind =] theorem henselLiftData_p (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).p = d.p := rfl
 
+/-- The lift data keeps the requested precision exponent. -/
 @[simp, grind =] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).k = B := rfl
 
