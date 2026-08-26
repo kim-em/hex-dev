@@ -1,7 +1,19 @@
-n=16 peakBits=8 outputBits=5
-n=24 peakBits=8 outputBits=5
-n=32 peakBits=9 outputBits=6
-n=48 peakBits=9 outputBits=6
-n=64 peakBits=10 outputBits=7
-n=96 peakBits=10 outputBits=7
-n=128 peakBits=11 outputBits=8
+family=conjugate n=16 peakBits=6 outputBits=5
+family=conjugate n=24 peakBits=6 outputBits=5
+family=conjugate n=32 peakBits=6 outputBits=6
+family=conjugate n=48 peakBits=7 outputBits=6
+family=conjugate n=64 peakBits=8 outputBits=7
+family=conjugate n=96 peakBits=8 outputBits=7
+family=conjugate n=128 peakBits=9 outputBits=8
+family=dense n=8 peakBits=30 outputBits=17
+family=dense n=12 peakBits=42 outputBits=24
+family=dense n=16 peakBits=115 outputBits=57
+family=dense n=20 peakBits=118 outputBits=64
+family=dense n=24 peakBits=195 outputBits=100
+family=dense n=32 peakBits=249 outputBits=126
+family=deficient n=8 peakBits=18 outputBits=13
+family=deficient n=12 peakBits=28 outputBits=17
+family=deficient n=16 peakBits=54 outputBits=30
+family=deficient n=20 peakBits=59 outputBits=34
+family=deficient n=24 peakBits=87 outputBits=46
+family=deficient n=32 peakBits=120 outputBits=64
