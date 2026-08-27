@@ -13,7 +13,8 @@ namespace Hex.IntFactorBench
 
 open Hex.Nat
 
-set_option maxRecDepth 20000
+-- Proof-producing benchmark inputs walk the committed primality table.
+set_option maxRecDepth 100000
 
 def runFactor (n : Nat) : Nat :=
   match factor? n (Hex.Rand.ofSeed n) with
