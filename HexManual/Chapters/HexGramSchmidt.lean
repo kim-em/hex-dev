@@ -51,8 +51,12 @@ are `noncomputable`. The computable determinant operations
 ({name}`Hex.GramSchmidt.Int.gramDet`,
 {name}`Hex.GramSchmidt.Int.scaledCoeffs`) drive the worked examples below.
 
-`HexGramSchmidt` is Mathlib-free and depends only on `HexMatrix`. `HexLLL`
-uses it for orthogonalization and the exact-update formulas. See
+`HexGramSchmidt` is Mathlib-free and depends on
+{ref "hex-row-reduce"}[HexRowReduce],
+{ref "hex-determinant"}[HexDeterminant], and
+{ref "hex-bareiss"}[HexBareiss], which in turn build on
+{ref "hex-matrix"}[HexMatrix]. `HexLLL` uses it for orthogonalization and
+the exact-update formulas. See
 {ref "hex-gram-schmidt-cross-references"}[Cross-references].
 
 # Fundamental operations
@@ -232,16 +236,23 @@ integral.
 tag := "hex-gram-schmidt-cross-references"
 %%%
 
-`HexGramSchmidt` depends only on `HexMatrix` and underpins `HexLLL`:
+`HexGramSchmidt` builds on the matrix, row-reduction, determinant, and
+Bareiss libraries and underpins `HexLLL`:
 
 * `HexMatrix` supplies the {name}`Hex.Matrix` representation and the row
   operations ({name}`Hex.Matrix.rowAdd`, {name}`Hex.Matrix.rowSwap`) that the
   {ref "hex-gram-schmidt-updates"}[update formulas] reason about. The
   orthogonalization here is built entirely on that representation.
-* `HexGramSchmidtMathlib` re-exports this executable theory as theorems
-  about Mathlib's {name}`LinearMap` and
-  Mathlib's {name}`_root_.Matrix` Gram-Schmidt. `HexGramSchmidt`
-  itself imports only `HexMatrix` and `Std`.
+* {ref "hex-row-reduce"}[HexRowReduce] supplies
+  {name}`Hex.Matrix.IsRowReduced` and its row-echelon contracts, used by the
+  integer Bareiss-Gram invariant, while
+  {ref "hex-determinant"}[HexDeterminant] and
+  {ref "hex-bareiss"}[HexBareiss] supply the determinant and fraction-free
+  elimination layers used by the integer data.
+* `HexGramSchmidtMathlib` re-expresses this executable theory as theorems
+  about Mathlib's {name}`InnerProductSpace.gramSchmidt` on
+  {name}`EuclideanSpace` and Mathlib's {name}`_root_.Matrix` determinants.
+  `HexGramSchmidt` itself is Mathlib-free.
 * `HexLLL` consumes the {ref "hex-gram-schmidt-core"}[integer data]
   (the Gram determinants and scaled coefficients) and the
   {ref "hex-gram-schmidt-updates"}[exact update formulas] to drive
