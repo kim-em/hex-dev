@@ -226,14 +226,14 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
 | `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
-| `runLazyAddLadder` | **fixed: 4.560 s, hash match** | — | isolation fixed |
+| `runLazyAddLadder` | **fixed: 4.533 s, hash match** | — | isolation fixed |
 | `runExactLadder` | inconclusive, faster | — | exactification audit |
 | `runExactFactorLadder` | inconclusive, faster | — | exactification audit |
 | `runCanonicalRepLadder` | inconclusive, faster | — | exactification audit |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
 | `runQAdjoinRootsLadder` | **consistent** | -0.251 | root-merge fix |
-| `runAlgebraicRootsLadder` | **fixed: 6.000 s, hash match** | — | isolation fixed |
+| `runAlgebraicRootsLadder` | **fixed: 5.996 s, hash match** | — | isolation fixed |
 
 Six parametric registrations fit their declared models. The four that do not
 are §Concerns entries,
@@ -586,11 +586,11 @@ and the two isolation cases in the isolation fixed exports:
 | `runIsolateAdd` | 9.649 ms | `0x4367ab34a73ea4ed` | match |
 | `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
 | `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
-| `runLazyAddLadder` | 4.560 s | `0x91175572810ff8e2` | match |
+| `runLazyAddLadder` | 4.533 s | `0x91175572810ff8e2` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
-| `runAlgebraicRootsLadder` | 6.000 s | `0x2fade2409323a752` | match |
+| `runAlgebraicRootsLadder` | 5.996 s | `0x2fade2409323a752` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
@@ -964,8 +964,8 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
 | [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
-| [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | isolation fixed implementation worktree | idle | `051511fadf1b3917e195bac85605b2c48bbb99cb476140626adb7e43f9f6e90f` |
-| [`bench-results/hex-number-field-algebraic-roots-fixed.json`](bench-results/hex-number-field-algebraic-roots-fixed.json) | isolation fixed implementation worktree | idle | `aa9981df9471e78c954a234a161601b8b856f84915aaba7f4bc46860b65d70f2` |
+| [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | `327774fe1`, clean tree | idle | `d10264fb8f5c74386ddd60705c8dc4861f53aff9b86ca4b74586763e429cc4fa` |
+| [`bench-results/hex-number-field-algebraic-roots-fixed.json`](bench-results/hex-number-field-algebraic-roots-fixed.json) | `770990af4`, clean tree | idle | `2e2b56565b1951d4efe0c34bd53e4cedd3b11eb8085bb1cead428d2aa50798aa` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
