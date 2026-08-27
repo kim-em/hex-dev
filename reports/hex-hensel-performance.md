@@ -10,11 +10,13 @@ All nine registrations use **mode 1, two-sided parametric**. Their models are
 derived from the intended linear or quadratic lifting algorithm on the
 registered degree/precision family, so mode 2's prerequisite — inability to
 derive a tight family model — does not hold. The six consistent results pass
-mode 1. The three inconclusive results leave the library **mode 4, blocked**:
-the existing mixed schedules have not established the derived scaling, and no
-published bound plus dominant-phase attribution has been supplied for a
-one-sided reinterpretation. Mode 3 is not justified while the controlled
-degree/precision families remain available.
+mode 1. The three inconclusive results are failed mode-1 results, so Phase 4 is
+blocked: the existing mixed schedules have not established the derived
+scaling, and no published bound plus dominant-phase attribution has been
+supplied for a one-sided reinterpretation. Mode 3 is not justified while the
+controlled degree/precision families remain available. Mode 4 does not apply
+to these registrations because mode 1 is an honest claim; it simply has not
+passed.
 
 | Target | Model | Largest rung | Median | Verdict |
 |---|---|---:|---:|---|
@@ -59,9 +61,12 @@ and is not a native-FLINT performance claim.
 
 ## Concerns
 
-- **Mode 4, blocked.** The `n²k` iterated-linear verdicts remain inconclusive
-  on the mixed degree/precision schedule.
+- The `n²k` iterated-linear mode-1 verdicts remain inconclusive on the mixed
+  degree/precision schedule, so Phase 4 is blocked.
 - The quadratic-multifactor model is now inconclusive because the optimized
   high-precision rung changes the observed ladder shape.
 - A current native-FLINT Hensel comparison still needs bindings that
   python-flint does not expose.
+
+The failed mode-1 verdicts and rollback are tracked by
+[#9741](https://github.com/kim-em/hex-dev/issues/9741).

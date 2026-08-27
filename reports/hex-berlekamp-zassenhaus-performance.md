@@ -52,6 +52,9 @@ parametric**. Mode 1 does not apply: the public cascade chooses among prime
 plans, bounded classical recombination, CLD lattice recombination, exact
 fallbacks, and early exits from input-dependent intermediate structure, so no
 tight scaling law for these registered families can be derived in advance.
+This classification comes from the registration comments and the pre-policy
+report's explicit description of the declarations as conservative upper
+envelopes, not from sorting the registrations by their observed verdicts.
 The declared polynomial envelope is Corollary 5.3 of Belabas, van Hoeij,
 Klüners, and Steel,
 [*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
@@ -88,6 +91,12 @@ with declared complexity*. Representative top rungs: `runFactorChecksum`
 3.595 ms at n=24, `runFactorFallbackProbeChecksum` 3.370 ms at n=24,
 `runFastPathPrecisionLocalChecksum` 899 µs at the 8_032_128_008 encoding.
 No ladder shows the slower-than-declared direction.
+For traceability of that direction, the fitted residual slopes are `-6.778`
+for `runFactorChecksum`, `-7.245` for `runFactorSlowDegreeHeightChecksum`, and
+`-5.821` for `runFastPathPrecisionLocalChecksum`; ladders too narrow for a fit
+still have falling normalized constants, for example
+`runFactorFallbackProbeChecksum` from `0.000106` after warmup to `0.000001` at
+the final rung.
 
 ## Comparator Ratios
 

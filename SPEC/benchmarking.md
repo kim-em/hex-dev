@@ -52,8 +52,10 @@ that earned its keep.
 ### Choosing the complexity claim
 
 Choose the first mode in this ordered list that the operation admits. This is
-not a menu: every headline report names the selected mode and explains why
-each stronger preceding mode does not apply.
+not a menu. A report created or reconciled under this rule names the selected
+mode for every registration and explains why each stronger preceding mode does
+not apply. Existing passing two-sided registrations are mode 1 by default and
+need not be relabelled until their report is next revised.
 
 1. **Two-sided parametric — the default.** Use this whenever the intended
    algorithm's expected scaling on the registered input family can be derived
@@ -62,8 +64,8 @@ each stronger preceding mode does not apply.
    family is wrong.
 2. **One-sided upper-bound parametric.** Use this only when all three
    conditions hold:
-   - no tight family-specific model can be derived, and the registration says
-     why;
+   - no tight family-specific model can be derived, and the headline report
+     says why;
    - the declared bound is published and cited, and the cited result covers
      the phase that the profile shows dominating — a citation for work absent
      from the profile is not evidence for the registration;
@@ -73,7 +75,9 @@ each stronger preceding mode does not apply.
    Slower than the bound fails. Faster than the bound passes and is reported
    as **within declared upper bound (observed faster)**. This is visibly weaker
    than a two-sided pass and is never rendered as *consistent with declared
-   complexity*. lean-bench does not yet have this registration mode; until
+   complexity*. A matching observation is **within declared upper bound
+   (observed matching)**, not a two-sided consistency claim. lean-bench does
+   not yet have this registration mode; until
    [lean-bench #70](https://github.com/kim-em/lean-bench/issues/70) lands, the
    headline report records the harness verdict, the observed direction, and
    the reason it is a passing upper-bound result.
@@ -81,6 +85,10 @@ each stronger preceding mode does not apply.
    stable one-parameter wall-time model is reachable and a canonical hard
    input with a meaningful ceiling exists. The headline report states plainly
    that asymptotic regression detection has been given up for this operation.
+   The budget is an operation-specific regression ceiling justified from a
+   comparator, a reference requirement, or a measured baseline plus stated
+   margin. A generic harness timeout or inherited `maxSecondsPerCall` default
+   is a safety cap, not an absolute budget.
 4. **Blocked.** If none of the preceding modes honestly applies, Phase 4 is
    not done. Failure to characterise an operation's cost is a reason to stay
    at the current phase, not a route to a fixed registration.
@@ -964,8 +972,8 @@ Full timing runs (`lake exe hexfoo_bench run NAME` with a real
 budget) are not part of merge-gating CI. They run on a scheduled
 workflow or release-candidate workflow, on dedicated hardware where
 timing comparisons are meaningful. Each release names the libraries
-whose timing runs must succeed; a release is blocked by an
-inconclusive verdict or a comparator divergence even when proofs
+whose timing runs must succeed; a release is blocked by a failing verdict in
+the registration's declared mode or a comparator divergence even when proofs
 are complete.
 
 ## Reproducibility contract
@@ -1039,7 +1047,8 @@ The report contains five subsections:
    parametric registration this includes the harness verdict ("consistent with
    declared complexity", "inconclusive", with the verdict text); until the
    one-sided harness mode lands, a mode-2 report also records the direction and
-   the distinct manual result *within declared upper bound (observed faster)*.
+   the distinct manual result *within declared upper bound (observed faster)*
+   or *within declared upper bound (observed matching)*.
    Each fixed registration records its absolute budget, its
    median per-call time and observed-hash agreement. Proof-track entries report
    all raw rotated fresh-build samples and paired deltas, never a complexity
@@ -1259,8 +1268,7 @@ explicitly forbidden:
   faster-than-declared harness result is a pass only for a registration that
   independently satisfies mode 2's citation-and-attribution conditions; the
   report records the distinct upper-bound result while lean-bench #70 is open.
-  An
-  inconclusive verdict whose root cause is a too-narrow schedule
+  An inconclusive verdict whose root cause is a too-narrow schedule
   (rungs too close to the per-spawn floor, even when some survive
   the filter) is miscalibration, not a finding, and the registration
   must be re-tuned before the library advances through Phase 4.

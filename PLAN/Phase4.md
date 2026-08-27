@@ -155,9 +155,10 @@ For library `hex-foo`, Phase 4 is done when:
   track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
   proof-track operation has the specified externally timed fresh-module probe;
-- every registration names the strongest applicable mode from
-  `SPEC/benchmarking.md`'s ordered rule; every mode-1 parametric declaration
-  matches the independently derived expected scaling on its family, every
+- the headline report names the strongest applicable mode from
+  `SPEC/benchmarking.md`'s ordered rule for every registration; every mode-1
+  parametric declaration matches the independently derived expected scaling
+  on its family, every
   mode-2 declaration is a cited published upper bound covering the dominant
   profiled phase, and every mode-3 registration has a canonical hard input and
   meaningful absolute budget;

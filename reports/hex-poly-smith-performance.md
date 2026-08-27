@@ -281,4 +281,5 @@ intermediate degree and coefficient swell. The boundary-growth artifact and
 profiles localize the gap to the classical Euclidean kernel, but localization
 does not make the algebraic-operation proxies passing complexity claims. The
 external comparators are informational and all hashes agree; those facts do
-not discharge the missing model.
+not discharge the missing model. Tracked by
+[#9742](https://github.com/kim-em/hex-dev/issues/9742).
