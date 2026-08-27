@@ -1,7 +1,7 @@
 # HexPolyFast Performance Report
 
 This report is the current audit snapshot for the active, unreleased
-`HexPolyFast` library. The implementation is recorded at `done_through: 2`;
+`HexPolyFast` library. The implementation is recorded at `done_through: 3`;
 this document does not claim a Phase-4 exit.
 
 The retained scientific comparisons were measured on 2026-08-27 on
@@ -45,11 +45,14 @@ registrations.
 - `runSeriesSchoolbookRat`: `n ^ 2`
 - `runSeriesKaratsubaRat`: `n * Nat.sqrt n`
 
-The fixed informational comparator targets are `runLeanInt64`,
-`runFlintInt64`, `runLeanInt256`, `runFlintInt256`, `runLeanInt1024`,
+The fixed informational comparator targets are `runFlintOverhead`,
+`runLeanInt64`, `runFlintInt64`, `runLeanInt256`, `runFlintInt256`, `runLeanInt1024`,
 `runFlintInt1024`, `runLeanMod64`, `runFlintMod64`, `runLeanMod256`,
 `runFlintMod256`, `runLeanMod1024`, and `runFlintMod1024`. Every target has
-three repeats and an expected result hash.
+three repeats and an expected result hash. `runFlintOverhead` exercises the
+same warmed persistent subprocess and JSON framing without constructing a
+polynomial, so it is the adjustment baseline for both FLINT multiplication
+families.
 
 ### Newton division
 
@@ -98,9 +101,11 @@ libraries that own the coefficient representation.
 `lake exe hexpolyfast_bench list` and `verify` passed all 57 registrations at
 commit `0aaa2af1f`. The two later regression targets
 `runKaratsubaRatioUnder2` and `runRemainderTree` passed focused verification at
-commit `6bf47916d`. The fixed FLINT refresh below also passed every expected
-hash. The complete scientific slope export for all 47 parametric targets was
-not retained, so no blanket complexity verdict is claimed here.
+commit `6bf47916d`. The current registry has 47 parametric and 13 fixed targets
+(60 total); the newly wired `runFlintOverhead` passed focused verification.
+The fixed FLINT refresh below also passed every expected hash. The complete
+scientific slope export for all 47 parametric targets was not retained, so no
+blanket complexity verdict is claimed here.
 
 The following within-Lean crossover cells are retained and traceable to the
 commits that introduced them. All commands use cold cache mode, three outer
@@ -235,7 +240,8 @@ FLINT has coefficient-specific dispatch and tuned native kernels, while these
 fixed Lean rows deliberately exercise the generic Karatsuba plan. The
 comparison is informational and does not select a production cell.
 
-No separate persistent-transport no-op row was retained. Consequently these
+The persistent-transport no-op is now registered as `runFlintOverhead`, but no
+clean-tree scientific timing row has yet been retained. Consequently these
 microsecond cells are useful orientation and agreement evidence, but they do
 not yet satisfy the report policy's adjusted-overhead calculation.
 
@@ -251,18 +257,19 @@ declared input families:
 - `pade`
 - `coefficient-kernels`
 
-The current host has `samply 0.13.1`, but the required
-`lean-bench-samply/scripts/profile_bench.py` orchestration checkout is absent.
-The commands should be run only after that tool is installed, because an
-unfiltered whole-process profile does not satisfy the timed-region contract.
+The current lean-bench dependency exposes `profile NAME --profiler ...` and
+timed-region boundary records, and the host has `samply 0.13.1`. The filtering,
+symbolication, diagnostics, and analytical-summary step required by
+`SPEC/profiling.md` has not yet been run. An unfiltered whole-process profile
+does not satisfy that contract.
 
 ## Concerns
 
-- The full scientific slope export and per-registration verdicts for all 45
+- The full scientific slope export and per-registration verdicts for all 47
   parametric targets have not been retained.
 - The six required timed-region sampling profiles are missing.
-- The informational FLINT fixed ladder lacks the separate persistent-process
-  overhead measurement needed for adjusted ratios at microsecond rungs.
+- The informational FLINT overhead target is wired, but its clean-tree timing
+  and the resulting adjusted ladder ratios have not yet been retained.
 
 These are evidence gaps, not known implementation failures. They keep the
 library below Phase 4 and must be resolved before `done_through` advances to

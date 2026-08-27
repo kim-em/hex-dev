@@ -274,6 +274,16 @@ def runFlintMod (input : BinaryMod) : IO UInt64 := do
       ("b", modPolyJson input.right)]
   return checksumModList (← Hex.BenchOracle.Flint.jsonToInts result)
 
+/-- Persistent FLINT process/framing overhead with no polynomial work. -/
+def runFlintOverhead (_ : Unit) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | .ok 0 => return 0
+  | .ok value =>
+      throw <| IO.userError s!"FLINT overhead result was {value}, expected zero"
+  | .error message =>
+      throw <| IO.userError s!"FLINT overhead result not integer: {message}"
+
 initialize intInput64 : IO.Ref Binary ← IO.mkRef (prepBalanced 64)
 initialize intInput256 : IO.Ref Binary ← IO.mkRef (prepBalanced 256)
 initialize intInput1024 : IO.Ref Binary ← IO.mkRef (prepBalanced 1024)
@@ -1295,6 +1305,9 @@ setup_benchmark runRepeatedDirectEval n => (8 * n ^ 2)
     tags := #["multipoint", "horner", "repeated", "reused-points"]
   }
 
+/- Eight polynomials reuse one point-product plan. Each remainder-tree
+traversal costs `O(M(n) log n)`, so the fixed batch costs eight times the
+Karatsuba surrogate with its logarithmic tree depth. -/
 setup_benchmark runRepeatedMultipointEval n =>
     8 * n * Nat.sqrt n * (Nat.log2 n + 1)
   with prep := prepMultipointBatch
@@ -1394,6 +1407,8 @@ def leanCompareConfig (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
 def flintCompareConfig (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 5.0, minTotalSeconds := 0.1,
     warmupFirstIter := true, expectedHash := some expected }
+
+setup_fixed_benchmark runFlintOverhead where flintCompareConfig 0x0
 
 setup_fixed_benchmark runLeanInt64 where leanCompareConfig 0x53782e9490aaa3dc
 setup_fixed_benchmark runFlintInt64 where flintCompareConfig 0x53782e9490aaa3dc
