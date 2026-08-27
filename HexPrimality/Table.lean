@@ -38,8 +38,9 @@ namespace Nat
 entries; the default 512 ceiling is far too low for them. -/
 set_option maxRecDepth 10000
 
-/-- Exclusive upper bound of the committed prime table: `primeTable` lists
-every prime below this. -/
+/-- Exclusive upper bound of the committed prime table. The accepted `10000`
+policy is the largest measured candidate whose generated native literal fits
+Lean's runtime object-size field; `primeTable` lists every prime below it. -/
 @[expose]
 def primeTableBound : Nat := 10000
 

@@ -708,18 +708,21 @@ each equation by reduction, and chains the equations to the final literal.
 This is PrimeCert's `run_sieve` architecture and is required here: a
 single enormous `decide +kernel` expression is not the scaling claim.
 
-**`primeTableBound` is set by measurement, not chosen.** The bound is
-whatever keeps the table's own verification, generated source size, and
-incremental compile cost inside the "few minutes on
-the benchmark machine" budget that
-[hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed
-table, and the same rule applies for the same reason. The
-[future-work](../../SPEC/future-work.md) entry says timing targets belong in
-the SPEC that adopts the technique, measured in this repository, so
-this SPEC commits to the measurement and to the budget rule, and to no
-number. The bench family "table verification" below is the measurement;
-its multi-bound sweep is still pending, so the committed `10^4` stands
-on the budget rule alone.
+**`primeTableBound = 10^4` is the accepted measured policy.** The controlled
+fresh-module sweep runs the standard generator at `10^4`, `10^5`, `10^6`, and
+`10^7`, retaining generation/replay time, source/olean size, and the largest
+generated native object. The `10^4` replay is small and comfortably inside the
+"few minutes on the benchmark machine" budget that
+[hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed table.
+The next candidate is not a valid native artifact: its 9,592-entry literal
+requires a 76,760-byte static array object, exceeding the 65,535-byte runtime
+object-size field. At `10^6` replay also exhausts the default heartbeat budget,
+and `10^7` generation exceeds the five-minute command budget. Thus `10^4` is
+the largest candidate satisfying both build and runtime representation
+constraints, independently of whether the larger candidates' wall times alone
+would be acceptable. The raw samples and exact reproduction command are in
+`reports/bench-results/hex-primality-table-issue-9757-chungus2.json` and
+`scripts/bench/primality_table_sweep.py`.
 
 `hotPathCandidates` in hex-berlekamp-zassenhaus becomes a view of
 `primeTable` restricted to `[3, 500]`, keeping its two existing
@@ -805,9 +808,12 @@ theorem nextPrime?_spec {n r r' fuel p}
     n < p ∧ Hex.Nat.Prime p ∧ ∀ q, n < q → q < p → ¬ Hex.Nat.Prime q
 ```
 
-`isPrime?` dispatches: table lookup below `primeTableBound`; trial
-division below a measured second threshold; `isProbablePrime` as a
-filter; then `primeCert?`. A failed base returns a certified `false`, an
+`isPrime?` dispatches: table lookup below `primeTableBound`; trial division
+below the accepted `isPrimeTrialThreshold = 10^5`; `isProbablePrime` as a
+filter; then `primeCert?`. The threshold is the first decimal ladder point
+strictly above the measured prime-case crossover: trial wins through `5·10^4`,
+the certificate arm wins from `7·10^4`, and hard semiprimes favor the
+certificate arm at every rung. A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
 indexed success prevents a certificate for one number from answering a
@@ -1053,13 +1059,16 @@ the kernel side is the point of the library.
 
 Families:
 
-- **Table verification**, the batched kernel-replay cost and generated
-  artifact size of the committed table. Measured today only at the
-  committed `10^4` (2.2 s of module elaboration after the sieve swap);
-  the `10^5`-to-`10^7` sweep that would justify raising
-  `primeTableBound` is a pending `scripts/bench` fresh-module family,
-  and until it runs the committed bound is a floor chosen for safety,
-  not the sweep's output.
+- **Table verification**, the standard generator plus fresh emitted replay at
+  `10^4`, `10^5`, `10^6`, and `10^7`. The controlled driver records every raw
+  wall-time sample, source/olean/generated-C size, deterministic source hash,
+  and the generated native object's size. This is policy evidence rather than
+  a Phase-4 verdict; the committed raw record is reusable by that later report.
+- **Decision dispatch**, counterbalanced warm native timings for exact trial
+  division and the root-table-disabled bounded certificate arm on prime/hard-
+  semiprime pairs from `10^4` through `10^6`. A deterministic independent
+  64-bit Miller–Rabin implementation checks both results before a sample is
+  accepted. Raw per-block timings are committed for later Phase-4 reuse.
 - **Kernel replay**, `checkPrime` on certificates for primes of `31`,
   `61`, `123`, `256`, and `511` bits (the table-smooth ladder). Decides
   the `powModNat`-versus-Montgomery question under "Kernel exposure".
@@ -1208,9 +1217,6 @@ may add further uses, but the dependency does not depend on them.
 
 ## Open questions
 
-- **`primeTableBound`.** Set by the table-verification benchmark. Until
-  it is measured the table is built at `10^4`, which comfortably covers
-  every consumer in the tree today and is certain to fit the budget.
 - **Whether the sieve's correctness proof is worth its cost.** The
   alternative is to commit the table with a per-entry `isPrimeTrial`
   proof, as `hotPathCandidates` does today, which scales to perhaps
