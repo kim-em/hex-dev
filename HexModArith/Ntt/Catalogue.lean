@@ -24,6 +24,107 @@ namespace Hex
 
 namespace ZMod64
 
+namespace Ntt
+
+/-- Integer coefficient addition with the same zero-extending shape as the
+modular convolution reference. -/
+@[expose] def intAddCoeffs : List Int → List Int → List Int
+  | [], right => right
+  | left, [] => left
+  | x :: xs, y :: ys => (x + y) :: intAddCoeffs xs ys
+
+/-- Ordinary low-to-high integer schoolbook convolution.  This is the
+coefficient target reconstructed from auxiliary-prime transforms. -/
+@[expose] def intLinearConvolution : List Int → List Int → List Int
+  | [], _ => []
+  | _ :: _, [] => []
+  | value :: values, right@(_ :: _) =>
+      intAddCoeffs (right.map fun coefficient => value * coefficient)
+        (0 :: intLinearConvolution values right)
+
+/-- Zero-pad an integer coefficient list to a requested capacity. -/
+@[expose] def intPadTo (n : Nat) (coefficients : List Int) : List Int :=
+  coefficients ++ List.replicate (n - coefficients.length) 0
+
+@[simp] theorem length_intPadTo (n : Nat) (coefficients : List Int)
+    (hfit : coefficients.length ≤ n) :
+    (intPadTo n coefficients).length = n := by
+  simp [intPadTo]
+  omega
+
+private theorem map_intCast_addCoeffs {p : Nat} [Bounds p]
+    (left right : List Int) :
+    addCoeffs (left.map fun (value : Int) => (value : ZMod64 p))
+        (right.map fun (value : Int) => (value : ZMod64 p)) =
+      (intAddCoeffs left right).map
+        fun (value : Int) => (value : ZMod64 p) := by
+  induction left generalizing right with
+  | nil => simp [addCoeffs, intAddCoeffs]
+  | cons value values ih =>
+      cases right with
+      | nil => simp [addCoeffs, intAddCoeffs]
+      | cons coefficient coefficients =>
+          simp [addCoeffs, intAddCoeffs, ih, Lean.Grind.Ring.intCast_add]
+
+/-- Reducing an integer convolution modulo `p` coefficientwise gives the
+modular convolution of the reduced inputs. -/
+theorem linearConvolution_intCast {p : Nat} [Bounds p]
+    (left right : List Int) :
+    linearConvolution
+        (left.map fun (value : Int) => (value : ZMod64 p))
+        (right.map fun (value : Int) => (value : ZMod64 p)) =
+      (intLinearConvolution left right).map
+        fun (value : Int) => (value : ZMod64 p) := by
+  induction left with
+  | nil => simp [linearConvolution, intLinearConvolution]
+  | cons value values ih =>
+      cases right with
+      | nil => simp [linearConvolution, intLinearConvolution]
+      | cons coefficient coefficients =>
+          simp only [List.map_cons]
+          change addCoeffs
+              (List.map
+                (fun entry : ZMod64 p => (value : ZMod64 p) * entry)
+                ((coefficient : ZMod64 p) ::
+                  List.map (fun (entry : Int) => (entry : ZMod64 p)) coefficients))
+              (0 :: linearConvolution
+                (List.map (fun (entry : Int) => (entry : ZMod64 p)) values)
+                ((coefficient : ZMod64 p) ::
+                  List.map (fun (entry : Int) => (entry : ZMod64 p)) coefficients)) =
+            List.map (fun (entry : Int) => (entry : ZMod64 p))
+              (intAddCoeffs
+                (List.map (fun entry => value * entry)
+                  (coefficient :: coefficients))
+                (0 :: intLinearConvolution values
+                  (coefficient :: coefficients)))
+          simp only [List.map_cons] at ih
+          rw [show
+            List.map
+                (fun entry : ZMod64 p => (value : ZMod64 p) * entry)
+                ((coefficient : ZMod64 p) ::
+                  List.map (fun (entry : Int) => (entry : ZMod64 p)) coefficients) =
+              List.map (fun (entry : Int) => (entry : ZMod64 p))
+                (List.map (fun entry => value * entry)
+                  (coefficient :: coefficients)) by
+                    simp [List.map_map, ← Lean.Grind.Ring.intCast_mul]]
+          rw [ih]
+          rw [show (0 : ZMod64 p) = ((0 : Int) : ZMod64 p) from
+            (Lean.Grind.Ring.intCast_zero).symm]
+          rw [← List.map_cons]
+          exact map_intCast_addCoeffs (p := p)
+            (List.map (fun entry => value * entry)
+              (coefficient :: coefficients))
+            (0 :: intLinearConvolution values (coefficient :: coefficients))
+
+private theorem padTo_intCast {p : Nat} [Bounds p]
+    (n : Nat) (coefficients : List Int) :
+    padTo n (coefficients.map fun (value : Int) => (value : ZMod64 p)) =
+      (intPadTo n coefficients).map
+        fun (value : Int) => (value : ZMod64 p) := by
+  simp [padTo, intPadTo, List.map_append, Lean.Grind.Ring.intCast_zero]
+
+end Ntt
+
 /-- One fixed auxiliary prime and its maximal radix-two root. -/
 structure NttPrime where
   /-- Prime modulus, always below `2^31`. -/
@@ -169,6 +270,77 @@ theorem plan?_eq_none_of_capacity (prime : NttPrime) (n : Nat)
     plan? prime n = none := by
   unfold plan?
   rw [ite_eq_right hcapacity]
+
+/-- Run ordinary convolution at one catalogue prime and erase the dependent
+modular coefficient type to canonical integer residues. -/
+def convolution? (prime : NttPrime) (n : Nat)
+    (left right : Array Int) : Option (Array Int) :=
+  letI : Bounds prime.modulus := prime.bounds
+  letI : PrimeModulus prime.modulus := prime.prime
+  match prime.plan? n with
+  | none => none
+  | some plan =>
+      (Ntt.ordinary? plan
+        (left.map fun (value : Int) =>
+          (value : @ZMod64 prime.modulus prime.bounds))
+        (right.map fun (value : Int) =>
+          (value : @ZMod64 prime.modulus prime.bounds))).map
+        fun coefficients => coefficients.map
+          fun value => Int.ofNat value.toNat
+
+/-- Canonicalizing an integer through one catalogue modulus preserves its
+ordinary integer remainder. -/
+theorem residue_emod (prime : NttPrime) (value : Int) :
+    Int.ofNat
+        (@ZMod64.toNat prime.modulus prime.bounds
+          (@ZMod64.intCast prime.modulus prime.bounds value)) %
+        (prime.modulus : Int) =
+      value % (prime.modulus : Int) := by
+  letI : Bounds prime.modulus := prime.bounds
+  letI : PrimeModulus prime.modulus := prime.prime
+  apply (Lean.Grind.IsCharP.intCast_ext_iff
+    (α := @ZMod64 prime.modulus prime.bounds) prime.modulus).mp
+  change @ZMod64.intCast prime.modulus prime.bounds
+      (Int.ofNat (@ZMod64.toNat prime.modulus prime.bounds
+        (@ZMod64.intCast prime.modulus prime.bounds value))) =
+    @ZMod64.intCast prime.modulus prime.bounds value
+  rw [ZMod64.intCast_ofNat, ZMod64.natCast_eq_ofNat,
+    ZMod64.ofNat_toNat]
+
+/-- A successful erased transform is the padded integer convolution reduced
+coefficientwise to canonical representatives at this catalogue prime. -/
+theorem convolution?_eq_of_some (prime : NttPrime) (n : Nat)
+    (left right result : Array Int)
+    (hresult : prime.convolution? n left right = some result) :
+    result =
+      (Ntt.intPadTo n
+        (Ntt.intLinearConvolution left.toList right.toList)).toArray.map
+        (fun value => Int.ofNat
+          (@ZMod64.toNat prime.modulus prime.bounds
+            (@ZMod64.intCast prime.modulus prime.bounds value))) := by
+  letI : Bounds prime.modulus := prime.bounds
+  letI : PrimeModulus prime.modulus := prime.prime
+  unfold convolution? at hresult
+  cases hplan : prime.plan? n with
+  | none => simp [hplan] at hresult
+  | some plan =>
+      cases hordinary : Ntt.ordinary? plan
+          (left.map fun (value : Int) =>
+            (value : @ZMod64 prime.modulus prime.bounds))
+          (right.map fun (value : Int) =>
+            (value : @ZMod64 prime.modulus prime.bounds)) with
+      | none => simp [hplan, hordinary] at hresult
+      | some coefficients =>
+          simp only [hplan, hordinary, Option.map_some,
+            Option.some.injEq] at hresult
+          subst result
+          have href := Ntt.ordinary?_eq_of_some plan _ _ coefficients hordinary
+          subst coefficients
+          simp only [Array.toList_map]
+          rw [Ntt.linearConvolution_intCast,
+            Ntt.padTo_intCast]
+          rw [← List.map_toArray, Array.map_map]
+          rfl
 
 end NttPrime
 

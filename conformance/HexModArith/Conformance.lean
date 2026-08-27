@@ -181,6 +181,18 @@ end PrimeModulusAutomation
         (first.plan? (2 ^ 26)).isNone
   | [] => false
 
+#guard
+  match nttPrimes with
+  | first :: _ =>
+      first.convolution? 4 #[1, -2, 3] #[4, 5] ==
+        some #[4, Int.ofNat (first.modulus - 3), 2, 15]
+  | [] => false
+
+#guard
+  match nttPrimes with
+  | first :: _ => (first.convolution? 3 #[1] #[1]).isNone
+  | [] => false
+
 /-- The largest advertised catalogue length is supported without constructing
 its enormous twiddle array during conformance elaboration. -/
 example :
