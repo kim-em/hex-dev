@@ -324,11 +324,7 @@ def main() -> int:
     # were already published before this rule existed and are grandfathered at
     # the phase they had then: each may only move up (a regression fails), no
     # library may join this list, and an entry leaves it by reaching Phase 7.
-    prepublished_floor = {
-        "HexRowReduceMathlib": 5,
-        "HexDeterminantMathlib": 5,
-        "HexBareissMathlib": 5,
-    }
+    prepublished_floor = {}
     graduated = sorted(
         lib for lib in prepublished_floor
         if lib in libraries and libraries[lib].done_through >= 7

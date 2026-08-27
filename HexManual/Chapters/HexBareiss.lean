@@ -152,10 +152,21 @@ tag := "hex-bareiss-mathlib"
 %%%
 
 Everything above is executable and Mathlib-free. `HexBareissMathlib`
-connects it to Mathlib. Its headline theorem is that the fraction-free
-Bareiss determinant equals the Leibniz {ref "hex-determinant"}[determinant]
-on integer square matrices, so the cubic-time route and the
-specification agree outright.
+connects it to Mathlib. The final public umbrella exposes the correspondence
+over any commutative coefficient ring supplied with an exact quotient. The
+single law says that quotient cancels a known nonzero right factor; no public
+domain or nontriviality hypothesis is added.
+
+{docstring HexMatrixMathlib.bareissWith_eq_det}
+
+The matching theorem against Mathlib's determinant is available directly,
+without unfolding the generic loop or relying on definitional equality.
+
+{docstring HexMatrixMathlib.bareissWith_eq_mathlib_det}
+
+For integer matrices, {name}`Hex.Matrix.bareiss` remains the specialization
+using the native exact-division primitive. Its original theorem names and
+premise-free statements remain the convenient compatibility surface.
 
 {docstring HexMatrixMathlib.bareiss_eq_det}
 

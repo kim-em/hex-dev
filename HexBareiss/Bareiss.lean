@@ -1433,6 +1433,13 @@ def noPivotInitialState (M : Matrix R n n) : BareissState R n :=
 def bareissNoPivotDataWith (quot : R → R → R) (M : Matrix R n n) : BareissData R n :=
   finish <| noPivotLoopWith quot n (noPivotInitialState M)
 
+/-- Characterisation of the generic no-pivot result by its completed loop
+state. Consumers can use this theorem without unfolding the public wrapper. -/
+theorem bareissNoPivotDataWith_eq_finish (M : Matrix R n n) :
+    bareissNoPivotDataWith quot M =
+      finish (noPivotLoopWith quot n (noPivotInitialState M)) :=
+  rfl
+
 /-- Determinant computed by the no-pivot Bareiss recurrence. -/
 @[expose]
 def bareissNoPivotWith (quot : R → R → R) (M : Matrix R n n) : R :=
@@ -1540,8 +1547,9 @@ abbrev bareissArrayState (M : Matrix Int n n) : BareissArrayState Int :=
   bareissArrayStateWith exactDiv M
 
 /-- Integer specialization returning no-pivot elimination data. -/
-abbrev bareissNoPivotData (M : Matrix Int n n) : BareissData Int n :=
-  bareissNoPivotDataWith exactDiv M
+@[expose]
+def bareissNoPivotData (M : Matrix Int n n) : BareissData Int n :=
+  finish <| noPivotLoop n (noPivotInitialState M)
 
 /-- Integer specialization of the no-pivot Bareiss determinant. -/
 abbrev bareissNoPivot (M : Matrix Int n n) : Int :=
@@ -1784,10 +1792,17 @@ theorem pivotLoop_eq_noPivotLoop_of_no_singular (fuel : Nat)
   pivotLoopWith_eq_noPivotLoopWith_of_no_singular
     (quot := exactDiv) fuel state h_no_sing
 
+/-- The integer no-pivot result is the completed integer no-pivot loop state. -/
+theorem bareissNoPivotData_eq_finish (M : Matrix Int n n) :
+    bareissNoPivotData M = finish (noPivotLoop n (noPivotInitialState M)) :=
+  rfl
+
+/-- The integer row-pivoted result is the completed pivot-loop state. -/
 theorem bareissData_eq_finish_pivotLoop (M : Matrix Int n n) :
     bareissData M = finish (pivotLoop n (noPivotInitialState M)) :=
   bareissDataWith_eq_finish_pivotLoopWith (quot := exactDiv) M
 
+/-- The integer determinant entry point agrees with its packaged result. -/
 theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
     bareiss M = (bareissData M).det :=
   bareissWith_eq_bareissDataWith_det (quot := exactDiv) M

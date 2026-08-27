@@ -1464,8 +1464,8 @@ theorem bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingu
     (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
         (⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
         fullAtR.matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] := by
-          simpa [Matrix.bareissNoPivotData, Matrix.finish, GM, init, fullAtR] using
-            h_final_diag
+          rw [Matrix.bareissNoPivotData_eq_finish]
+          simpa [Matrix.finish, GM, init, fullAtR] using h_final_diag
     _ =
         (Matrix.noPivotLoop r (Matrix.noPivotInitialState LP)).matrix[
           (⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][

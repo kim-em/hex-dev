@@ -707,12 +707,12 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
@@ -727,7 +727,7 @@ libraries:
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexModArithMathlib:
     deps: [HexModArith]

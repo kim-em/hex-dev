@@ -41,10 +41,10 @@ variable {hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a}
 theorem isDomain_of_quot (quot : R → R → R)
     (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
     (h1 : (1 : R) ≠ 0) : IsDomain R := by
-  letI : Div R := ⟨quot⟩
-  haveI : Hex.ExactDivLaws R := ⟨hquot⟩
-  letI : Nontrivial R := ⟨⟨1, 0, h1⟩⟩
-  letI : NoZeroDivisors R := ⟨by
+  let _ : Div R := ⟨quot⟩
+  have _ : Hex.ExactDivLaws R := ⟨hquot⟩
+  let _ : Nontrivial R := ⟨⟨1, 0, h1⟩⟩
+  let _ : NoZeroDivisors R := ⟨by
     intro a b hab
     by_cases ha : a = 0
     · exact Or.inl ha
@@ -117,7 +117,7 @@ structure BareissNoPivotInvariant
 /-- The initial Bareiss no-pivot state satisfies the bordered-minor invariant:
 the matrix is the source itself, and the previous-pivot convention is
 `det (principalSubmatrix _ 0 _) = 1`. -/
-theorem bareissNoPivotInvariant_initial {R : Type u} [CommRing R]
+theorem bareissNoPivotInvariant_initialWith {R : Type u} [CommRing R]
     (M : Hex.Matrix R n n) (h1 : (1 : R) ≠ 0) :
     BareissNoPivotInvariant M (Hex.Matrix.noPivotInitialState M) where
   singular_none := rfl
@@ -138,6 +138,11 @@ theorem bareissNoPivotInvariant_initial {R : Type u} [CommRing R]
     show M[i][j] =
         (Hex.Matrix.borderedMinor M 0 h0 i j)[(Fin.last 0)][(Fin.last 0)]
     rw [Hex.Matrix.borderedMinor_entry_last_last]
+
+/-- Integer compatibility form of `bareissNoPivotInvariant_initialWith`. -/
+theorem bareissNoPivotInvariant_initial (M : Hex.Matrix Int n n) :
+    BareissNoPivotInvariant M (Hex.Matrix.noPivotInitialState M) :=
+  bareissNoPivotInvariant_initialWith M (by omega)
 
 /-- One regular no-pivot Bareiss step preserves the bordered-minor invariant.
 Given a state satisfying the invariant with `state.step + 1 < n` and a nonzero
@@ -386,8 +391,8 @@ theorem borderedMinor_zero_column_succ_det_eq_zero_of_entries
                   (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
               hleft
       _ = 0 := by ring
-  letI : Div R := ⟨quot⟩
-  haveI : Hex.ExactDivLaws R := ⟨hquot⟩
+  let _ : Div R := ⟨quot⟩
+  have _ : Hex.ExactDivLaws R := ⟨hquot⟩
   apply Hex.ExactDivLaws.mul_right_cancel hprev
   simpa using hmul_zero
 
@@ -637,7 +642,7 @@ theorem bareissPivotInvariant_initial {R : Type u} [CommRing R]
     (M : Hex.Matrix R n n) (h1 : (1 : R) ≠ 0) :
     BareissPivotInvariant M (Hex.Matrix.noPivotInitialState M) :=
   ⟨M, by simp [bareissStateSign, Hex.Matrix.noPivotInitialState],
-    bareissNoPivotInvariant_initial M h1⟩
+    bareissNoPivotInvariant_initialWith M h1⟩
 
 /-- A regular row-pivoted Bareiss step that does not swap rows preserves the
 pivoted invariant. -/
@@ -850,7 +855,7 @@ theorem bareissNoPivotInvariant_holds
     BareissNoPivotInvariant M
       (Hex.Matrix.noPivotLoopWith quot n (Hex.Matrix.noPivotInitialState M)) :=
   noPivotLoop_invariant hquot M n (Hex.Matrix.noPivotInitialState M)
-    (bareissNoPivotInvariant_initial M h1)
+    (bareissNoPivotInvariant_initialWith M h1)
     (fun k _ => h k)
 
 /-- Immediate consequence of the bordered-minor invariant: under
@@ -880,7 +885,7 @@ non-singular outcome guarantees every visited pivot was nonzero, which is the
 hypothesis the inductive step needs.
 
 This is the no-pivot analog of `pivotLoop_invariant_of_singularStep_eq_none`. -/
-theorem noPivotLoop_invariant_of_singularStep_eq_none
+theorem noPivotLoopWith_invariant_of_singularStep_eq_none
     (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
     (source : Hex.Matrix R n n)
     (fuel : Nat) (state : Hex.Matrix.BareissState R n)
@@ -903,6 +908,17 @@ theorem noPivotLoop_invariant_of_singularStep_eq_none
           · simpa [Hex.Matrix.noPivotLoopWith_of_regular (quot := quot) fuel state hDone hp0]
               using hregular
       · simpa [Hex.Matrix.noPivotLoopWith_done (quot := quot) fuel state hDone] using hinv
+
+/-- Integer compatibility form of
+`noPivotLoopWith_invariant_of_singularStep_eq_none`. -/
+theorem noPivotLoop_invariant_of_singularStep_eq_none
+    (source : Hex.Matrix Int n n)
+    (fuel : Nat) (state : Hex.Matrix.BareissState Int n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hregular : (Hex.Matrix.noPivotLoop fuel state).singularStep = none) :
+    BareissNoPivotInvariant source (Hex.Matrix.noPivotLoop fuel state) :=
+  noPivotLoopWith_invariant_of_singularStep_eq_none Int.mul_ediv_cancel
+    source fuel state hinv hregular
 
 /-- The no-pivot Bareiss loop preserves the bound `state.step + 1 ≤ n`. -/
 private theorem noPivotLoop_step_succ_le
@@ -1048,7 +1064,7 @@ private theorem bareissNoPivotWith_eq_det_of_one_ne_zero
               + 1 := by
         apply noPivotLoop_step_succ_ge hquot (k + 1)
           (Hex.Matrix.noPivotInitialState M) M
-          (bareissNoPivotInvariant_initial M h1)
+          (bareissNoPivotInvariant_initialWith M h1)
         · intro k' _
           exact h k'
         · show k + 1 ≤ 0 + (k + 1) + 1
@@ -1428,7 +1444,7 @@ theorem det_eq_zero_of_bareiss_failed_column
     (hcol : ∀ i : Fin n, k ≤ i.val →
       Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i ⟨k, hk⟩) = 0) :
     Hex.Matrix.det source = 0 := by
-  letI : IsDomain R := isDomain_of_quot quot hquot h1
+  let _ : IsDomain R := isDomain_of_quot quot hquot h1
   obtain ⟨α, hα_ne, _hα_above, hmulvec⟩ :=
     failed_bareiss_column_dependence source k hk hprev hcol
   have hdet_zero : Matrix.det (matrixEquiv source) = 0 := by
@@ -1784,7 +1800,7 @@ at `(a, c)` with `k + 1 ≤ a.val, c.val` equals the determinant of the
 `(k + 2) × (k + 2)` bordered minor of `M` with trailing row `a` and column
 `c`, provided the partial loop records no singular step.
 
-Composes `noPivotLoop_invariant_of_singularStep_eq_none` (the invariant
+Composes `noPivotLoopWith_invariant_of_singularStep_eq_none` (the invariant
 propagates through a non-singular partial pass), `BareissNoPivotInvariant`
 (the trailing-block entries equal bordered-minor determinants), and
 `noPivotLoop_step_eq_add_of_singularStep_none` (the partial pass advances
@@ -1802,8 +1818,8 @@ theorem noPivotLoop_full_eq_borderedMinor_det
       Hex.Matrix.det (Hex.Matrix.borderedMinor M (k + 1) hk a c) := by
   have hinv : BareissNoPivotInvariant M
       (Hex.Matrix.noPivotLoopWith quot (k + 1) (Hex.Matrix.noPivotInitialState M)) :=
-    noPivotLoop_invariant_of_singularStep_eq_none hquot M (k + 1)
-      (Hex.Matrix.noPivotInitialState M) (bareissNoPivotInvariant_initial M h1)
+    noPivotLoopWith_invariant_of_singularStep_eq_none hquot M (k + 1)
+      (Hex.Matrix.noPivotInitialState M) (bareissNoPivotInvariant_initialWith M h1)
       h_no_sing
   have hstep_eq :
       k + 1 =
