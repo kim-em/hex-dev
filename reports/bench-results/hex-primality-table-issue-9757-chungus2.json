@@ -1,0 +1,173 @@
+{
+  "candidates": [
+    {
+      "batches": 4,
+      "bound": 10000,
+      "samples": [
+        {
+          "generated_c_bytes": 67195,
+          "generation_wall_nanos": 2209449803,
+          "max_runtime_object_bytes": 9856,
+          "olean_bytes": 1678784,
+          "olean_sha256": "0fa8a086113d0e9fb31cb7f162cd7748a736d71e34c6d9124174e369dbdceb17",
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 2494651518,
+          "runtime_object_limit_bytes": 65535,
+          "source_bytes": 13015,
+          "source_sha256": "39ae6a6ae9c7e3b2193bc5ab6ca12acb7e8ec1fc9c7654e6af499785a91f2ceb",
+          "status": "ok"
+        },
+        {
+          "generated_c_bytes": 67195,
+          "generation_wall_nanos": 1680129591,
+          "max_runtime_object_bytes": 9856,
+          "olean_bytes": 1678784,
+          "olean_sha256": "1c10e822052915e7832d0fdef76e7076d143da54d7f41fca030d11ad74845be8",
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 2279910765,
+          "runtime_object_limit_bytes": 65535,
+          "source_bytes": 13015,
+          "source_sha256": "39ae6a6ae9c7e3b2193bc5ab6ca12acb7e8ec1fc9c7654e6af499785a91f2ceb",
+          "status": "ok"
+        },
+        {
+          "generated_c_bytes": 67195,
+          "generation_wall_nanos": 1481825794,
+          "max_runtime_object_bytes": 9856,
+          "olean_bytes": 1678784,
+          "olean_sha256": "c9edf24539fa85aed73976fbea74f0cfe36b81a044fc49aba0fa7ace4abbb146",
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 2241756547,
+          "runtime_object_limit_bytes": 65535,
+          "source_bytes": 13015,
+          "source_sha256": "39ae6a6ae9c7e3b2193bc5ab6ca12acb7e8ec1fc9c7654e6af499785a91f2ceb",
+          "status": "ok"
+        }
+      ],
+      "sqrt_bound": 100
+    },
+    {
+      "batches": 14,
+      "bound": 100000,
+      "samples": [
+        {
+          "generated_c_bytes": 596542,
+          "generation_wall_nanos": 2959273139,
+          "max_runtime_object_bytes": 76760,
+          "olean_bytes": 12963456,
+          "olean_sha256": "3d5053097cce3cc931de56d978c8887c70d6afe5fc4402b683aa483abc90cbc0",
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 15742315944,
+          "runtime_object_limit_bytes": 65535,
+          "source_bytes": 213950,
+          "source_sha256": "0ec682e8df6f2cff34c9303fc31c7a296c45d3ca14c73d006475e06592139593",
+          "status": "native-object-too-large"
+        }
+      ],
+      "sqrt_bound": 317
+    },
+    {
+      "batches": 42,
+      "bound": 1000000,
+      "samples": [
+        {
+          "diagnostic_tail": "/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-pfuemoes/b1000000-s0/Replay.lean:7:2: warning: `@[expose]` has no effect outside a `module` file\n/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-pfuemoes/b1000000-s0/Replay.lean:10:2: warning: `@[expose]` has no effect outside a `module` file\n/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-pfuemoes/b1000000-s0/Replay.lean:3830:44: error: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\n/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-pfuemoes/b1000000-s0/Replay.lean:8989:2: error: Expected type must not contain free variables\n  primeTable = (2 :: 3 :: bitsToList sieveState42 1000000).toArray\n\nHint: Use the `+revert` option to automatically clean up and revert free variables\n",
+          "generated_c_bytes": 0,
+          "generation_wall_nanos": 120189879085,
+          "max_runtime_object_bytes": 0,
+          "replay_exit_code": 1,
+          "replay_wall_nanos": 116251335185,
+          "runtime_object_limit_bytes": 65535,
+          "source_bytes": 4877188,
+          "source_sha256": "e3cb4537e7c439ebead3451e958947627aff3ed736fb9ccc7a53de392acb92cc",
+          "status": "replay-failed"
+        }
+      ],
+      "sqrt_bound": 1000
+    },
+    {
+      "batches": 132,
+      "bound": 10000000,
+      "samples": [
+        {
+          "diagnostic_tail": "",
+          "generation_exit_code": null,
+          "generation_wall_nanos": 300135271884,
+          "status": "generation-timeout"
+        }
+      ],
+      "sqrt_bound": 3163
+    }
+  ],
+  "config": {
+    "bounds": [
+      10000,
+      100000,
+      1000000,
+      10000000
+    ],
+    "max_sieve_bases_per_batch": 8,
+    "samples": 3,
+    "timeout_seconds": 300.0
+  },
+  "environment": {
+    "commit": "db7701f9e72cb2aa8e76f314e3ebe4a551d8701e",
+    "dirty": false,
+    "dirty_status": "",
+    "hostname": "chungus2",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6"
+  },
+  "measurement": "standard generator plus fresh emitted replay module",
+  "schema": "hex-primality-table-policy/1",
+  "summary": [
+    {
+      "batches": 4,
+      "bound": 10000,
+      "generation_median_nanos": 1680129591,
+      "max_runtime_object_bytes": 9856,
+      "olean_bytes": 1678784,
+      "replay_median_nanos": 2279910765,
+      "source_bytes": 13015,
+      "source_sha256": "39ae6a6ae9c7e3b2193bc5ab6ca12acb7e8ec1fc9c7654e6af499785a91f2ceb",
+      "sqrt_bound": 100,
+      "status": "ok"
+    },
+    {
+      "batches": 14,
+      "bound": 100000,
+      "generation_median_nanos": 2959273139,
+      "max_runtime_object_bytes": 76760,
+      "olean_bytes": 12963456,
+      "replay_median_nanos": 15742315944,
+      "source_bytes": 213950,
+      "source_sha256": "0ec682e8df6f2cff34c9303fc31c7a296c45d3ca14c73d006475e06592139593",
+      "sqrt_bound": 317,
+      "status": "native-object-too-large"
+    },
+    {
+      "batches": 42,
+      "bound": 1000000,
+      "generation_median_nanos": 120189879085,
+      "max_runtime_object_bytes": 0,
+      "olean_bytes": null,
+      "replay_median_nanos": 116251335185,
+      "source_bytes": 4877188,
+      "source_sha256": "e3cb4537e7c439ebead3451e958947627aff3ed736fb9ccc7a53de392acb92cc",
+      "sqrt_bound": 1000,
+      "status": "replay-failed"
+    },
+    {
+      "batches": 132,
+      "bound": 10000000,
+      "generation_median_nanos": 300135271884,
+      "max_runtime_object_bytes": null,
+      "olean_bytes": null,
+      "replay_median_nanos": 0,
+      "source_bytes": null,
+      "source_sha256": null,
+      "sqrt_bound": 3163,
+      "status": "generation-timeout"
+    }
+  ]
+}
