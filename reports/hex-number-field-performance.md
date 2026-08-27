@@ -155,7 +155,7 @@ runs below give the measurements; this table says which one counts.
 |---|---|---:|---|
 | `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
-| `runQAdjoinInvLadder` | inconclusive, faster | **-0.721** | normalized inversion |
+| `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
 | `runExactLadder` | inconclusive, faster | — | exactification audit |
@@ -169,6 +169,11 @@ runs below give the measurements; this table says which one counts.
 Seven fit their declared models. The five that do not are §Concerns entries,
 each with a filed issue; none of them is a measurement artefact, and §Profile
 identifies the phase controlling each profiled end-to-end call.
+For the normalized inversion chain specifically, the former
+slower-than-declared defect is fixed. The single-root fixture now carries the
+normalized chain through degree 96; its remaining faster-than-declared result
+shows that the corrected `n³ log n` worst-case bit-cost bound is conservative
+on this family and is tracked by issue #9743.
 
 Eight parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
@@ -204,7 +209,7 @@ transient spikes do not: `runQAdjoinMulLadder` recorded a 48% three-trial
 spread at its top rung and `runAddEliminantLadder` 65% at `n = 128`.
 
 The **quiet run** therefore re-measures the ladders that fit inside a short
-window, at five outer trials, with the host idle (load average 1.5). Two of
+window, at five outer trials, with the host idle (load average 1.5). Three of
 its six entries — `runAddEliminantLadder`, `runCommonPresentationLadder`, and
 `runQAdjoinInvLadder` — were later superseded and are omitted from the table:
 
@@ -275,18 +280,19 @@ the chain's `O(n²)` rational coefficient operations gives the corrected
 
 | target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
 |---|---|---|---:|---|---:|
-| `runQAdjoinInvLadder` | 4, 6, 8, 12, 16, 20 | inconclusive, faster | **-0.721** | 33.688..76.091 | 24.67% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive, faster | **-0.556** | 15.532..64.047 | 2.55% |
 
-The `n = 12` spread is one 419.1 µs outlier against four samples at
-335.4..339.6 µs; all other rungs have spread at or below 3.4%. Median time is
-716.8 µs at `n = 16` and 1.348 ms at `n = 20`, respectively 2.10× and 2.41×
-faster than the idle-host shipped-chain medians. At `n = 4`, normalization's
-extra scale passes instead cost 23.66 µs versus 19.98 µs, an 18% regression;
-the crossover is around `n = 6`. The result hashes match the superseded run at
-all six rungs, confirming identical reduced inverses. Against the complexity
+All seven rungs have five-trial spread at or below 2.55%. Median time is
+708.2 µs at `n = 16`, 4.686 ms at `n = 32`, 32.519 ms at `n = 64`, and
+96.194 ms at `n = 96`: respectively 2.09×, 4.31×, 14.73×, and 31.04× faster
+than the shipped-chain single-root medians. At `n = 4`, normalization's extra
+scale passes instead cost 23.58 µs versus 20.24 µs, a 16.5% regression; it is
+already 1.07× faster at `n = 8`. The result hashes match the superseded run at
+all seven rungs, confirming identical reduced inverses. Against the complexity
 declaration, the defect's direction has therefore reversed: the normalized
-chain lies comfortably inside the corrected upper bound rather than growing
-faster than its declaration. This does not update the historical PARI ratio
+chain lies inside the corrected worst-case upper bound rather than growing
+faster than its declaration. Issue #9743 tracks the remaining conservative
+gap without widening tolerance. This does not update the historical PARI ratio
 curve below, which needs a paired comparator rerun.
 
 The **exactification audit run** measures the replacement end-to-end family
@@ -876,7 +882,7 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
-| [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `793f139d3`, clean tree | light load (1-minute average 22.8/96) | `4d46f7a61352b96a9a20abef70eacf9b164952f799fe4922a394a25a4a9dbcfe` |
+| [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -906,6 +912,14 @@ the bench source rather than by a seed.
 swell concern is resolved by the monic-normalized chain and corrected bit-cost
 model recorded in §Verdicts. The remaining Phase-4 exit criteria that do not
 pass are each tracked:
+- **Normalized inversion stays below its worst-case bit-cost declaration.**
+  The degree-96 single-root run returns `beta = -0.556` against `n³ log n`
+  with spreads at or below 2.55%. The declaration charges every rational
+  coefficient operation the chain's peak Hadamard bit length, so a tighter
+  aggregate model needs stepwise coefficient-size evidence rather than a
+  wider tolerance.
+  https://github.com/kim-em/hex-dev/issues/9743 — bench-found: normalized
+  QAdjoin.inv stays below its conservative bit-cost model.
 - **The advertised API surface is not fully registered.** Roughly thirty
   advertised compiled operations have no `setup_benchmark` or
   `setup_fixed_benchmark`, and `Roots.normEliminant` and `Roots.evalEliminant`
