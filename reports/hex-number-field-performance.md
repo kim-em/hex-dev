@@ -13,24 +13,23 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
 registers 10 controlled parametric targets and 37 fixed targets (47 total).
-The adjacent comments in the driver derive each model from the work performed
-inside the timed function; the models below are copied from the registration
-sites.
+The adjacent comments in the driver derive each parametric model or explain the
+fixed-mode choice. The contracts below are copied from the registration sites.
 
-| target | operation and controlled input | declared model |
-|---|---|---|
-| `runQAdjoinAddLadder` | `QAdjoin` addition in `ℚ(2^(1/n))`, both operands dense and all-nonzero | `n` |
-| `runQAdjoinMulLadder` | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
-| `runQAdjoinInvLadder` | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
-| `runAddEliminantLadder` | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
-| `runLazyAddLadder` | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | fixed canonical input, 12 s ceiling |
-| `runExactLadder` | `AlgebraicRoot.exact?` on the first root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)`, with `n` quadratic factors | `exactFamilyComplexity n`, i.e. the BHKS `d^9 + d^7 h^2` at the fixture's actual degree and coefficient bit height |
-| `runExactFactorLadder` | `AlgebraicRoot.exactFactor?` for the degree-`n` candidate `X^n - 2` inside `(X^n - 2)(X + 3)`, with the enclosing root pinned to that candidate | `exactFactorComplexity n`, i.e. BHKS factorization plus the `n ^ 5 log² n` isolation envelope |
-| `runCanonicalRepLadder` | `AlgebraicNumber.canonicalRep?` for the first root of `X^n - 2` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
-| `runCommonPresentationLadder` | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
-| `runMergeRootListLadder` | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
-| `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
-| `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | fixed canonical input, 15 s ceiling |
+| target | mode | operation and controlled input | model or ceiling |
+|---|---|---|---|
+| `runQAdjoinAddLadder` | parametric | `QAdjoin` addition in `ℚ(2^(1/n))`, both operands dense and all-nonzero | `n` |
+| `runQAdjoinMulLadder` | parametric | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
+| `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
+| `runAddEliminantLadder` | parametric | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
+| `runLazyAddLadder` | fixed | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | 12 s ceiling |
+| `runExactLadder` | parametric | `AlgebraicRoot.exact?` on the first root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)`, with `n` quadratic factors | `exactFamilyComplexity n`, i.e. the BHKS `d^9 + d^7 h^2` at the fixture's actual degree and coefficient bit height |
+| `runExactFactorLadder` | parametric | `AlgebraicRoot.exactFactor?` for the degree-`n` candidate `X^n - 2` inside `(X^n - 2)(X + 3)`, with the enclosing root pinned to that candidate | `exactFactorComplexity n`, i.e. BHKS factorization plus the `n ^ 5 log² n` isolation envelope |
+| `runCanonicalRepLadder` | parametric | `AlgebraicNumber.canonicalRep?` for the first root of `X^n - 2` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
+| `runCommonPresentationLadder` | parametric | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
+| `runMergeRootListLadder` | parametric | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
+| `runQAdjoinRootsLadder` | parametric | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
+| `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
 
 The 37 fixed registrations are twelve canonical API cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
@@ -43,18 +42,22 @@ comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 
 ### Isolation benchmark mode
 
-The two isolation-dominated end-to-end registrations use the fixed mode. A
-two-sided expected scaling cannot be derived independently of their timings:
-the former `n⁵ log² n` expression substituted fixture assumptions into
+The two isolation-dominated end-to-end registrations use the fixed-problem
+form described in [`SPEC/benchmarking.md` §Fixed-problem benchmarks](../SPEC/benchmarking.md#fixed-problem-benchmarks).
+The ordered assessment requested by issue #9728 first asks for a two-sided
+expected scaling. None can be derived independently of the timings: the former
+`n⁵ log² n` expression substituted fixture assumptions into
 HexRoots' explicitly heuristic `O(d³ B²)` contract. It was not a complexity
 result for either operation.
 
-[Becker–Sagraloff–Sharma–Yap, Corollary 6](https://arxiv.org/abs/1509.06231) proves
+[Becker–Sagraloff–Sharma–Yap, Corollary 6](https://arxiv.org/abs/1509.06231v4) proves
 `Õ(d³ + d² tau)` bit operations for its `CIsolate` algorithm on a
-square-free integer polynomial of degree `d` and coefficient bit size below
-`tau`. The inputs here do satisfy that polynomial shape after
-`squareFreeCore`; the table below maps `d` and `tau` directly. The theorem does
-not provide a mode-2 upper bound for this executable, however. HexRoots differs
+square-free integer polynomial of degree `d` whose coefficients have magnitude
+below `2^tau`. The inputs here satisfy that polynomial shape after
+`squareFreeCore`. The table records `ceilLog2 coeffAbsMax`, which is the
+quantity HexRoots passes to `mahlerPrec`; BSSY's strict `tau` can be one larger
+when `coeffAbsMax` is a power of two. The theorem does not provide a published
+upper bound for this executable, however. HexRoots differs
 from `CIsolate` in its bounded-precision front end with exact-dyadic fallback,
 speculative Newton acceptance, dual certificate routes, and conservative
 global completeness depth. No proof transfers BSSY's amortised complexity
@@ -62,17 +65,22 @@ analysis across those changes. Profiling does show that this unmatched phase
 dominates: `isolate` accounts for 91.87% of `AlgebraicPoly.roots?` and 92% of
 the lazy-addition call.
 
-Mode 3 therefore applies: `n = 6` is a canonical hard point shared by both
+The fixed-problem option therefore applies. `n = 6` is the rung shared by both
 former schedules, gives degree-product and norm-eliminant degree 12, and stays
-practical in smoke verification. The registrations enforce absolute ceilings
-and expected hashes, and give up asymptotic detection for these two operations.
+practical in smoke verification. These are project-internal canonical inputs;
+there is no comparator unit surface for either certified API. Their 12 s and
+15 s ceilings give 2.5–2.6x headroom over the maximum recorded repeats, matching
+the documented 2–3x hosted-runner variance. Full timing runs enforce those
+ceilings; merge-gating `verify` enforces the expected hashes. Asymptotic
+detection is explicitly given up for these two operations.
 The per-library SPEC retains the HexRoots isolation ceiling as its worst-case
 contract; changing the benchmark mode does not weaken that contract.
 
 The compiled `isolation-stats` command reproduces the input characterisation.
-`realised precision` is the exact `separationDepth` passed to `isolate`:
+`isolation target` is the exact `separationDepth` passed to `isolate`, not the
+adaptive working precision eventually reached by the isolator:
 
-| family | fixture parameter | degree after `squareFreeCore` | `coeffAbsMax` | `ceilLog2 coeffAbsMax` | realised precision |
+| family | fixture parameter | degree after `squareFreeCore` | `coeffAbsMax` | `ceilLog2 coeffAbsMax` | isolation target |
 |---|---:|---:|---:|---:|---:|
 | lazy add | 2 | 4 | 10 | 4 | 36 |
 | lazy add | 3 | 6 | 36 | 6 | 64 |
@@ -86,8 +94,23 @@ The compiled `isolation-stats` command reproduces the input characterisation.
 | algebraic roots | 6 | 12 | 366,720 | 19 | 274 |
 | algebraic roots | 8 | 16 | 602,625 | 20 | 389 |
 
-The four exactification registrations verify together in 1.052 s on the
-reference host, including the fixed case's warmup, against CI's 360 s hard cap
+This operation-specific assessment does not reclassify the three other
+registrations whose comments contain the HexRoots isolation proxy:
+`runExactFactorLadder` and `runCanonicalRepLadder` already remain open
+faster-than-envelope concerns under #9733, while `runQAdjoinRootsLadder` has a
+different repeated-component path repaired under #9724. Their heuristic
+isolation terms are not presented here as consequences of the BSSY theorem or
+as support for this fixed-mode decision.
+
+The current local `hexnumberfield_bench verify` invocation completes in 11.84 s
+on the reference host, below the per-library 30 s soft-warning threshold. Both
+new fixed targets pass; the invocation reports only the twelve expected PARI
+comparator failures because `cypari2` is absent locally. Unlike the full timing
+path, `verify` runs each fixed body once and does not enforce its per-call
+ceiling, so its merge-gating role here is correctness and hash stability.
+
+Separately, the four exactification registrations verify together in 1.052 s
+on the reference host, including the fixed case's warmup, against CI's 360 s hard cap
 for the whole bench suite. Their smoke-cost increase is therefore not a
 material threat to the existing verification budget.
 
@@ -536,9 +559,10 @@ Read as a sensitivity check. On the uncontrolled fixture most of
 `runAlgebraicRootsLadder`'s spread was the step; with bounded coefficient
 height the residual is large under either evaluation and the step no longer
 explains it. `runExactLadder`'s declared envelope over-predicts by roughly
-four powers of `n` under either evaluation. It and
-`runAlgebraicRootsLadder` was `inconclusive` on the harness's own verdict; it
-is now a fixed registration for the independent mode-selection reasons above.
+four powers of `n` under either evaluation and remains `inconclusive` on the
+harness's own verdict.
+`runAlgebraicRootsLadder` was also inconclusive and is now a fixed registration
+for the independent selection reasons above.
 The repaired `runQAdjoinRootsLadder` smooth
 proxy remains within tolerance independently of the integer-log steps, which
 supports its official fitted verdict. The old fixed-field-root reading is

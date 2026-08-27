@@ -696,20 +696,30 @@ setup_benchmark runAddEliminantLadder n => n * n * (Nat.log2 (n + 2) + 1)
     signalFloorMultiplier := 1.0
   }
 
-initialize lazyAddLadderRef : IO.Ref LazyAddInput ← IO.mkRef (prepLazyAddInput 6)
+initialize lazyAddLadderRef : IO.Ref (Option LazyAddInput) ← IO.mkRef none
+
+private def getLazyAddLadderInput : IO LazyAddInput := do
+  match ← lazyAddLadderRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepLazyAddInput 6
+    lazyAddLadderRef.set (some input)
+    pure input
 
 def runLazyAddLadder : Unit → IO UInt64 := fun _ => do
-  return lazyAddChecksum (← lazyAddLadderRef.get)
+  return lazyAddChecksum (← getLazyAddLadderInput)
 
 /- Fixed canonical case. The timed `AlgebraicRoot.add?` constructs the sum
 eliminant of `X^6 - 2` and `X^2 - 3`, square-free normalizes its degree-12
-result, isolates it at the realised `separationDepth`, and selects the sum.
+result, isolates it at the `separationDepth` target, and selects the sum.
 The BSSY `Õ(d³ + d²·tau)` theorem is for its `CIsolate` algorithm, not
 HexRoots' exact-dyadic fallback, speculative Newton, or global completeness
 depth. HexRoots itself gives only a heuristic whole-isolator cost, so no cited
-one-parameter wall model applies to this implementation. This canonical input
-therefore tracks the SPEC's absolute budget without asserting an asymptotic
-shape. -/
+one-parameter wall model applies to this implementation. This project-internal
+canonical input is the `n = 6` rung shared by both former schedules and tracks
+the SPEC's absolute budget without asserting an asymptotic shape. The historical
+`Ladder` name is retained so committed exports continue to identify the same
+operation across the mode change. -/
 setup_fixed_benchmark runLazyAddLadder where {
   repeats := 3
   maxSecondsPerCall := 12.0
@@ -1025,7 +1035,7 @@ structure IsolationStats where
   degree : Nat
   coeffAbsMax : Nat
   coeffBitHeight : Nat
-  realisedPrecision : Nat
+  isolationTarget : Nat
 
 private def isolationStats (n : Nat) (p : ZPoly) : IsolationStats :=
   let coeffAbsMax := ZPoly.coeffAbsMax p
@@ -1033,7 +1043,7 @@ private def isolationStats (n : Nat) (p : ZPoly) : IsolationStats :=
     degree := p.degree?.getD 0
     coeffAbsMax
     coeffBitHeight := ceilLog2 coeffAbsMax
-    realisedPrecision := separationDepth p }
+    isolationTarget := separationDepth p }
 
 /-- Parameters of the square-free sum eliminant isolated by the lazy-addition
 benchmark family. -/
@@ -1056,14 +1066,26 @@ def algebraicRootsIsolationStats? (n : Nat) : Option IsolationStats := do
   else
     none
 
-private def printIsolationStatsRow (family : String) (stats : IsolationStats) : IO Unit :=
-  IO.println s!"{family}\t{stats.parameter}\t{stats.degree}\t{stats.coeffAbsMax}\t{stats.coeffBitHeight}\t{stats.realisedPrecision}"
+#guard
+  let stats := lazyAddIsolationStats 6
+  stats.degree = 12 ∧ stats.coeffAbsMax = 1998 ∧
+    stats.coeffBitHeight = 11 ∧ stats.isolationTarget = 186
 
-/-- Print the eliminant degree, coefficient maximum, bit height, and realised
-isolation target for every former parametric rung. This is input
+#guard
+  match algebraicRootsIsolationStats? 6 with
+  | some stats =>
+      stats.degree = 12 ∧ stats.coeffAbsMax = 366720 ∧
+        stats.coeffBitHeight = 19 ∧ stats.isolationTarget = 274
+  | none => False
+
+private def printIsolationStatsRow (family : String) (stats : IsolationStats) : IO Unit :=
+  IO.println s!"{family}\t{stats.parameter}\t{stats.degree}\t{stats.coeffAbsMax}\t{stats.coeffBitHeight}\t{stats.isolationTarget}"
+
+/-- Print the eliminant degree, coefficient maximum, bit height, and isolation
+target for every former parametric rung. This is input
 characterisation, not a timing path. -/
 def printIsolationStats : IO Unit := do
-  IO.println "family\tparameter\tdegree\tcoeffAbsMax\tcoeffBitHeight\trealisedPrecision"
+  IO.println "family\tparameter\tdegree\tcoeffAbsMax\tcoeffBitHeight\tisolationTarget"
   for n in #[2, 3, 4, 6, 8, 10] do
     printIsolationStatsRow "lazy-add" (lazyAddIsolationStats n)
   for n in #[3, 4, 5, 6, 8] do
@@ -1164,21 +1186,31 @@ setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
     slopeTolerance := 0.35
   }
 
-initialize algebraicRootsLadderRef : IO.Ref AlgPolyInput ← IO.mkRef (prepAlgPolyInput 6)
+initialize algebraicRootsLadderRef : IO.Ref (Option AlgPolyInput) ← IO.mkRef none
+
+private def getAlgebraicRootsLadderInput : IO AlgPolyInput := do
+  match ← algebraicRootsLadderRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepAlgPolyInput 6
+    algebraicRootsLadderRef.set (some input)
+    pure input
 
 def runAlgebraicRootsLadder : Unit → IO UInt64 := fun _ => do
-  return algebraicRootsChecksum (← algebraicRootsLadderRef.get)
+  return algebraicRootsChecksum (← getAlgebraicRootsLadderInput)
 
 /- Fixed canonical case. `AlgebraicPoly.roots?` first embeds the seven
 coefficients into the fixed quadratic field generated by `√2`, then the
 fixed-field driver square-free normalizes and isolates the degree-12 norm
-eliminant at its realised `separationDepth`. BSSY Corollary 6 bounds BSSY's
+eliminant at its `separationDepth` target. BSSY Corollary 6 bounds BSSY's
 `CIsolate` on square-free integer polynomials by `Õ(d³ + d²·tau)`, but the
 bound does not transfer to HexRoots' materially different driver. The local
 HexRoots contract is heuristic, so neither that result nor the former composed
 heuristic supplies a cited one-parameter wall model for this operation. The
-fixed registration gives up asymptotic detection and enforces the SPEC's
-absolute canonical-input budget. -/
+fixed registration gives up asymptotic detection and checks the SPEC's absolute
+budget in full timing runs. The historical `Ladder` name is retained so the
+fixed export can supersede the earlier parametric export without changing the
+operation identity. -/
 setup_fixed_benchmark runAlgebraicRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 15.0

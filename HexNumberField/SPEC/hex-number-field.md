@@ -543,19 +543,26 @@ oracle's independently computed decomposition with Lean's finite output.
   `deg(a.p) * deg(b.p)`. Its ceiling is the measured resultant cost plus the
   existing HexRoots ceiling at that eliminant degree. Do not promise a faster
   end-to-end time than root isolation itself.
-- Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
-  Larger cases are local until new measurements justify promotion.
+- Degree-product 20 is the largest studied merge-facing lazy arithmetic class,
+  but the merge-gating end-to-end regression uses the degree-product-12 input
+  below. The former sweep through 20 is retained as report evidence: its upper
+  rungs are too slow for smoke verification, and no honest one-parameter model
+  is available for them. Larger cases remain local until new measurements
+  justify promotion.
 - Isolation-dominated end-to-end regressions use canonical fixed inputs rather
   than an asymptotic claim. On the reference host, lazy addition of the selected
-  roots of `X^6 - 2` and `X^2 - 3` must complete under 12 seconds (measured
-  median 4.560 s); its square-free sum eliminant has degree 12,
+  roots of `X^6 - 2` and `X^2 - 3` must complete under 12 seconds; its
+  square-free sum eliminant has degree 12,
   `coeffAbsMax = 1998`, coefficient bit height 11, and isolation target 186.
   `AlgebraicPoly.roots?` on the controlled dense degree-6 polynomial with one
-  `√2` coefficient must complete under 15 seconds (measured median 6.000 s);
-  its single square-free norm eliminant has degree 12,
+  `√2` coefficient must complete under 15 seconds; its single square-free norm
+  eliminant has degree 12,
   `coeffAbsMax = 366720`, coefficient bit height 19, and isolation target 274.
-  These ceilings detect wall-clock regressions on characterised hard inputs;
-  they make no one-parameter scaling claim.
+  These project-internal canonical inputs come from the shared `n = 6` rung of
+  the former schedules. Full timing runs check the ceilings; merge-gating smoke
+  verification checks the result hashes. The measured reference timings live
+  in the [performance report](../../reports/hex-number-field-performance.md).
+  Neither registration makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
   selection. Root APIs add Yun decomposition, one norm eliminant, and one
   shared double-resultant evaluation eliminant per squarefree component. The
