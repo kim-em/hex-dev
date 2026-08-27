@@ -674,7 +674,8 @@ hexpolyfast_emit_fixtures` emits the committed
 `conformance-fixtures/HexPolyFast/polyfast.jsonl` fixture, which
 `scripts/oracle/polyfast_flint.py` checks. The JSONL surface contains:
 
-- `mul`, `square`, and `slice`, including the selected kernel name;
+- `mul`, `square`, and `slice`; the `z_dispatch` result additionally reports
+  the kernel selected by its public dispatcher;
 - `divmod`, `gcd`, `xgcd`, and `xgcd_left`;
 - `cyclic` and `negacyclic`;
 - `eval_many` and `interpolate`;
@@ -695,7 +696,10 @@ Mandatory edge families:
 - operand ratios from balanced through at least 64:1;
 - empty, one-coefficient, last-coefficient, and wholly out-of-range slices;
 - positive and negative coefficients at every Kronecker digit bound;
-- NTT lengths `1`, `2`, the largest catalogue length, and one beyond it;
+- NTT lengths `1`, `2`, the largest catalogue length, and one beyond it. The
+  largest case is an allocation-free theorem check in the coefficient owner's
+  conformance module; the executable stream calls `NttPrime.plan?` on the
+  remaining three;
 - raw butterfly values at `0`, `p-1`, `p`, `2p-1`, and `4p-1` where valid;
 - CRT modulus products immediately below and above `2*B`;
 - zero divisor, constant divisor, larger divisor, and exact division;

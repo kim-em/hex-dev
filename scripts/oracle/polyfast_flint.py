@@ -3,9 +3,9 @@
 
 Integer whole products are recomputed by python-flint. Rational division and
 Euclidean results, interpolation, cyclic products, and Padé constraints are
-checked independently with exact ``Fraction`` arithmetic. Kernel labels are
-treated only as reported metadata: the oracle checks their result, never tells
-Hex which kernel to select.
+checked independently with exact ``Fraction`` arithmetic. The only kernel
+label is an observation emitted by the public integer dispatcher; the oracle
+checks its result but never tells Hex which kernel to select.
 """
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def _gcd(a: list[Fraction], b: list[Fraction]) -> list[Fraction]:
     while b:
         _, r = _divmod(a, b)
         a, b = b, r
-    return _monic(a)
+    return a
 
 
 def _decode_rat(value: dict[str, list[int]]) -> list[Fraction]:
@@ -273,25 +273,26 @@ def _check_result(result: dict[str, Any], cases: dict[str, dict[str, Any]]) -> N
     if op in {"mul", "square"}:
         left = _poly(cases, f"{case}/left")
         right = left if op == "square" else _poly(cases, f"{case}/right")
-        if value.get("kernel") not in {
-            "schoolbook", "karatsuba", "ks1", "ks2", "ks3", "ks4", "crt_ntt"
-        }:
-            raise AssertionError(f"unknown reported kernel {value.get('kernel')!r}")
-        if value["coeffs"] != _flint_mul(left, right):
+        if value != _flint_mul(left, right):
             raise AssertionError("FLINT multiplication mismatch")
         return
 
-    if op in {"ks1", "ks2", "ks3", "ks4", "z_dispatch"}:
+    if op in {"ks1", "ks2", "ks3", "ks4"}:
+        left = _poly(cases, f"{case}/left")
+        right = _poly(cases, f"{case}/right")
+        if value != _flint_mul(left, right):
+            raise AssertionError("coefficient-kernel multiplication mismatch")
+        return
+
+    if op == "z_dispatch":
         left = _poly(cases, f"{case}/left")
         right = _poly(cases, f"{case}/right")
         if value.get("kernel") not in {
             "schoolbook", "karatsuba", "ks1", "ks2", "ks3", "ks4", "crt_ntt"
         }:
             raise AssertionError(f"unknown reported kernel {value.get('kernel')!r}")
-        if op.startswith("ks") and value["kernel"] != op:
-            raise AssertionError("forced KS result reported the wrong kernel")
         if value["coeffs"] != _flint_mul(left, right):
-            raise AssertionError("coefficient-kernel multiplication mismatch")
+            raise AssertionError("dispatched multiplication mismatch")
         return
 
     if op.startswith("slice/"):
@@ -301,7 +302,7 @@ def _check_result(result: dict[str, Any], cases: dict[str, dict[str, Any]]) -> N
             _poly(cases, f"{case}/left"), _poly(cases, f"{case}/right")
         )
         expected = _trim((product + [0] * (lo + length))[lo : lo + length])
-        if value["kernel"] != "karatsuba" or value["coeffs"] != expected:
+        if value != expected:
             raise AssertionError("clipped multiplication mismatch")
         return
 
@@ -320,8 +321,8 @@ def _check_result(result: dict[str, Any], cases: dict[str, dict[str, Any]]) -> N
             got = _decode_rat(value)
         else:
             got = _decode_rat(value["gcd"])
-        if _monic(got) != _gcd(left, right):
-            raise AssertionError("gcd associate mismatch")
+        if got != _gcd(left, right):
+            raise AssertionError("exact gcd mismatch")
         if op == "xgcd":
             s = _decode_rat(value["left"])
             t = _decode_rat(value["right"])

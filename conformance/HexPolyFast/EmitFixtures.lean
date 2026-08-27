@@ -17,7 +17,7 @@ import HexPolyZ.NttMul
 /-!
 JSONL fixtures for the generic hex-poly-fast surface.
 
-The stream records the selected multiplication plan beside whole results and
+The stream records the public integer dispatcher's selected kernel and
 exercises multiplication, clipped products, division, exact Euclidean APIs,
 cyclic products, multipoint evaluation, interpolation, and both Padé result
 forms. The companion FLINT/exact-Python driver independently recomputes polynomial
@@ -103,9 +103,9 @@ private def emitMulCase (c : MulCase) : IO Unit := do
   let right := intPoly c.right
   let plan : MulPlan Int := karatsubaPlan c.cutoff
   emitResult lib c.id "mul"
-    (namedIntPolyValue "karatsuba" (mulWith plan left right))
+    (polyValue (mulWith plan left right).toArray.toList)
   emitResult lib c.id "square"
-    (namedIntPolyValue "karatsuba" (squareWith plan left))
+    (polyValue (squareWith plan left).toArray.toList)
 
 private structure SliceCase where
   id : String
@@ -118,6 +118,8 @@ private def sliceCases : List SliceCase := [
   { id := "slice/empty", left := [], right := [1, 2], lo := 0, len := 0 },
   { id := "slice/one", left := [2, -1, 3], right := [4, 5], lo := 0, len := 1 },
   { id := "slice/last", left := [2, -1, 3], right := [4, 5], lo := 3, len := 1 },
+  { id := "slice/normalized-output", left := [1, 1], right := [1, -1],
+    lo := 0, len := 2 },
   { id := "slice/out-of-range", left := [2, -1, 3], right := [4, 5], lo := 20, len := 4 },
   { id := "slice/middle", left := oddCoeffs 33 23, right := oddCoeffs 17 29,
     lo := 16, len := 33 }
@@ -126,10 +128,11 @@ private def sliceCases : List SliceCase := [
 private def emitSliceCase (c : SliceCase) : IO Unit := do
   emitPolyFixture lib (c.id ++ "/left") c.left
   emitPolyFixture lib (c.id ++ "/right") c.right
-  let value := mulSlice (karatsubaPlan 32) c.lo c.len
-    (intPoly c.left) (intPoly c.right)
+  let left := intPoly c.left
+  let right := intPoly c.right
+  let value := mulSlice (karatsubaPlan 32) c.lo c.len left right
   emitResult lib c.id s!"slice/{c.lo}/{c.len}"
-    (namedIntPolyValue "karatsuba" value)
+    (polyValue value.toArray.toList)
 
 private def emitMiddle : IO Unit := do
   let leftCoeffs := oddCoeffs 33 41
@@ -141,8 +144,7 @@ private def emitMiddle : IO Unit := do
   emitPolyFixture lib "middle/checked/left" leftCoeffs
   emitPolyFixture lib "middle/checked/right" rightCoeffs
   emitResult lib "middle/checked" s!"slice/{lo}/{len}"
-    (namedIntPolyValue "karatsuba"
-      (mulMiddleChecked (karatsubaPlan 32) left right))
+    (polyValue (mulMiddleChecked (karatsubaPlan 32) left right).toArray.toList)
 
 private structure RatPairCase where
   id : String
@@ -219,6 +221,11 @@ private def emitEval : IO Unit := do
   let plan := EvalPlan.build (karatsubaPlan 2) points
   emitResult lib "eval" "eval_many"
     (intListValue (plan.eval polynomial).toList)
+  let largePolynomial : DensePoly Int := intPoly [1, 2, 3, 4, 5, 6, 7]
+  emitPolyFixture lib "eval-large/points" points.toList
+  emitPolyFixture lib "eval-large/polynomial" largePolynomial.toArray.toList
+  emitResult lib "eval-large" "eval_many"
+    (intListValue (plan.eval largePolynomial).toList)
   emitPolyFixture lib "eval-empty/points" []
   emitPolyFixture lib "eval-empty/polynomial" polynomial.toArray.toList
   emitResult lib "eval-empty" "eval_many"
@@ -238,13 +245,25 @@ private def emitInterpolation : IO Unit := do
           emitResult lib "interpolate" "interpolate" (polyRatValue (ratCoeffs p))
   emitPolyFixture lib "interpolate-duplicate/points" [1, 2, 1]
   emitPolyFixture lib "interpolate-duplicate/values" [3, 4, 5]
-  emitResult lib "interpolate-duplicate" "interpolate" "null"
+  let duplicate := (InterpPlan.build? (karatsubaPlan 2) (#[1, 2, 1] : Array Rat)).bind
+    (fun plan => plan.interpolate? (#[3, 4, 5] : Array Rat))
+  emitResult lib "interpolate-duplicate" "interpolate"
+    (match duplicate with | none => "null" | some p => polyRatValue (ratCoeffs p))
   emitPolyFixture lib "interpolate-mismatch/points" [0, 1, 2]
   emitPolyFixture lib "interpolate-mismatch/values" [4, 5]
   let mismatch := (InterpPlan.build? (karatsubaPlan 2) (#[0, 1, 2] : Array Rat)).bind
     (fun plan => plan.interpolate? (#[4, 5] : Array Rat))
   emitResult lib "interpolate-mismatch" "interpolate"
     (match mismatch with | none => "null" | some p => polyRatValue (ratCoeffs p))
+  let widePoints : Array Rat := #[-4, -3, -2, -1, 0, 1, 2, 3]
+  let widePolynomial : DensePoly Rat := ofList [1, 2, 3, 4, 5, 6, 7, 8]
+  let wideValues := widePoints.map (widePolynomial.eval ·)
+  emitPolyFixture lib "interpolate-wide/points" (widePoints.toList.map (·.num))
+  emitPolyFixture lib "interpolate-wide/values" (wideValues.toList.map (·.num))
+  let wide := (InterpPlan.build? (karatsubaPlan 2) widePoints).bind
+    (fun plan => plan.interpolate? wideValues)
+  emitResult lib "interpolate-wide" "interpolate"
+    (match wide with | none => "null" | some p => polyRatValue (ratCoeffs p))
 
 private def emitPadeCase {k : Nat} (id : String) (series : TSeries Rat k)
     (m n : Nat) : IO Unit := do
@@ -262,12 +281,15 @@ private def emitPade : IO Unit := do
   let nonunit : TSeries Rat 3 := TSeries.ofFn fun i => if i = 2 then 1 else 0
   let zero : TSeries Rat 5 := 0
   let empty : TSeries Rat 0 := TSeries.ofFn fun _ => 0
+  let wide : TSeries Rat 9 :=
+    TSeries.ofFn fun i => [1, 2, -1, 3, 0, 4, -2, 1, 5].getD i 0
   emitPadeCase "pade/unit" unit 1 1
   emitPadeCase "pade/nonunit" nonunit 1 1
   emitPadeCase "pade/zero" zero 2 2
   emitPadeCase "pade/numerator-constant" unit 0 1
   emitPadeCase "pade/denominator-constant" unit 1 0
   emitPadeCase "pade/precision-zero" empty 2 2
+  emitPadeCase "pade/wide" wide 4 4
 
 /-! Coefficient-owner kernels share this monorepo driver so the JSONL surface
 also records forced KS and direct/CRT-NTT results without moving those kernels
@@ -302,36 +324,49 @@ private def emitFpInputs (id : String) (left right : List Nat) : IO Unit := do
   emitPolyFixture lib (id ++ "/left") (left.map Int.ofNat) (some 5)
   emitPolyFixture lib (id ++ "/right") (right.map Int.ofNat) (some 5)
 
-private def emitForwardButterfly (id : String) (value : Nat)
-    (hvalue : value < 2 * 5) : IO Unit := do
-  emitPolyFixture lib (id ++ "/input") [0, Int.ofNat value] (some 5)
+private def emitForwardButterfly (id : String) (xValue yValue : Nat)
+    (hx : xValue < 2 * 5) (hy : yValue < 2 * 5) : IO Unit := do
+  emitPolyFixture lib (id ++ "/input") [Int.ofNat xValue, Int.ofNat yValue] (some 5)
   let twiddle := ZMod64.NttTwiddle.ofValue (ZMod64.ofNat 5 2)
-  let x : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat 0 (by decide)
-  let y : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat value hvalue
+  let x : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat xValue hx
+  let y : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat yValue hy
   let output := ZMod64.Ntt.forwardButterfly twiddle x y
   emitResult lib id "ntt_forward_butterfly/5/2"
     (natPairValue output.1.val.toNat output.2.val.toNat)
 
-private def emitInverseButterfly (id : String) (value : Nat)
-    (hvalue : value < 4 * 5) : IO Unit := do
-  emitPolyFixture lib (id ++ "/input") [0, Int.ofNat value] (some 5)
+private def emitInverseButterfly (id : String) (xValue yValue : Nat)
+    (hx : xValue < 4 * 5) (hy : yValue < 4 * 5) : IO Unit := do
+  emitPolyFixture lib (id ++ "/input") [Int.ofNat xValue, Int.ofNat yValue] (some 5)
   let twiddle := ZMod64.NttTwiddle.ofValue (ZMod64.ofNat 5 2)
-  let x : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat 0 (by decide)
-  let y : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat value hvalue
+  let x : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat xValue hx
+  let y : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat yValue hy
   let output := ZMod64.Ntt.inverseButterfly twiddle x y
   emitResult lib id "ntt_inverse_butterfly/5/2"
     (natPairValue output.1.val.toNat output.2.val.toNat)
 
 private def emitButterflyBoundaries : IO Unit := do
-  emitForwardButterfly "ntt/butterfly-forward/zero" 0 (by decide)
-  emitForwardButterfly "ntt/butterfly-forward/p-minus-one" 4 (by decide)
-  emitForwardButterfly "ntt/butterfly-forward/p" 5 (by decide)
-  emitForwardButterfly "ntt/butterfly-forward/two-p-minus-one" 9 (by decide)
-  emitInverseButterfly "ntt/butterfly-inverse/zero" 0 (by decide)
-  emitInverseButterfly "ntt/butterfly-inverse/p-minus-one" 4 (by decide)
-  emitInverseButterfly "ntt/butterfly-inverse/p" 5 (by decide)
-  emitInverseButterfly "ntt/butterfly-inverse/two-p-minus-one" 9 (by decide)
-  emitInverseButterfly "ntt/butterfly-inverse/four-p-minus-one" 19 (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/zero" 0 0 (by decide) (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/p-minus-one" 0 4 (by decide) (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/p" 0 5 (by decide) (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/two-p-minus-one" 0 9 (by decide) (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/first-two-p-minus-one" 9 0
+    (by decide) (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/both-two-p-minus-one" 9 9
+    (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/zero" 0 0 (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/p-minus-one" 0 4 (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/p" 0 5 (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/two-p-minus-one" 0 9 (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/four-p-minus-one" 0 19
+    (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/first-two-p-minus-one" 9 0
+    (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/both-two-p-minus-one" 9 9
+    (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/first-four-p-minus-one" 19 0
+    (by decide) (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/both-four-p-minus-one" 19 19
+    (by decide) (by decide)
 
 private def emitCrtSelectionBoundaries : IO Unit := do
   let first := ZMod64.nttPrimes[0]'(by decide)
@@ -394,8 +429,11 @@ private def emitNtt : IO Unit := do
 
   let prime := ZMod64.nttPrimes[6]'(by decide)
   let maxLength := ZMod64.NttPrime.maxLength prime
-  for n in [1, 2, maxLength, maxLength + 1] do
-    let supported := n != 0 && 2 ^ n.log2 == n && n ≤ maxLength
+  -- The owner conformance module proves support at `maxLength` without
+  -- allocating its enormous twiddle table.  These executable cases call the
+  -- catalogue API at both small lengths and on the cheap capacity miss.
+  for n in [1, 2, maxLength + 1] do
+    let supported := (prime.plan? n).isSome
     emitResult lib s!"ntt/capacity/{n}" s!"ntt_capacity/{prime.maxLog}/{n}"
       (boolValue supported)
 
@@ -416,10 +454,10 @@ private def emitKsCase (c : KsCase) : IO Unit := do
   emitPolyFixture lib (c.id ++ "/right") c.right
   let left := intPoly c.left
   let right := intPoly c.right
-  emitResult lib c.id "ks1" (namedIntPolyValue "ks1" (ZPoly.mulKroneckerAt 0 0 left right))
-  emitResult lib c.id "ks2" (namedIntPolyValue "ks2" (ZPoly.mulKS2 left right))
-  emitResult lib c.id "ks3" (namedIntPolyValue "ks3" (ZPoly.mulKS3 left right))
-  emitResult lib c.id "ks4" (namedIntPolyValue "ks4" (ZPoly.mulKS4 left right))
+  emitResult lib c.id "ks1" (polyValue (ZPoly.mulKroneckerAt 0 0 left right).toArray.toList)
+  emitResult lib c.id "ks2" (polyValue (ZPoly.mulKS2 left right).toArray.toList)
+  emitResult lib c.id "ks3" (polyValue (ZPoly.mulKS3 left right).toArray.toList)
+  emitResult lib c.id "ks4" (polyValue (ZPoly.mulKS4 left right).toArray.toList)
 
 private def emitDispatch : IO Unit := do
   let left : ZPoly := ofList (List.replicate 24 (Int.ofNat (2 ^ 63)))
