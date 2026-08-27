@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexModArith.HotLoop
 import HexModArith.Ntt.Catalogue
 import HexModArith.Ntt.Convolution
+import HexModArith.Ntt.CrtInput
 import HexModArith.Ntt.Transform
 import HexModArith.Prime
 import HexModArith.Ring
@@ -39,6 +40,8 @@ Covered properties:
 - NTT plans validate power-of-two lengths and exact-order roots
 - the fixed NTT-prime catalogue supports its advertised length ladder and
   rejects invalid or out-of-capacity requests
+- auxiliary-prime selection obtains a strict CRT bound and runs matching
+  signed integer convolutions at every selected modulus
 - Shoup multiplication and forward/inverse butterflies preserve their residues
   while remaining in their advertised redundant ranges
 - checked NTT convolution agrees with direct cyclic, zero-padded ordinary, and
@@ -192,6 +195,25 @@ end PrimeModulusAutomation
   match nttPrimes with
   | first :: _ => (first.convolution? 3 #[1] #[1]).isNone
   | [] => false
+
+#guard
+  match Ntt.CrtSelection.build? 4 100 with
+  | none => false
+  | some selection =>
+      selection.primes.length == 1 &&
+        200 < selection.moduli.toList.prod
+
+#guard
+  match Ntt.CrtSelection.build? 4 100 with
+  | none => false
+  | some selection =>
+      match selection.images? #[1, -2, 3] #[4, 5] with
+      | none => false
+      | some images =>
+          match selection.primes, images.residues with
+          | prime :: [], residue :: [] =>
+              residue.toArray == #[4, Int.ofNat (prime.modulus - 3), 2, 15]
+          | _, _ => false
 
 /-- The largest advertised catalogue length is supported without constructing
 its enormous twiddle array during conformance elaboration. -/

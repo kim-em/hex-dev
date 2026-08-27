@@ -11,6 +11,7 @@ public import HexModArith.HotLoop
 public import HexModArith.Modulus
 public import HexModArith.Ntt.Butterfly
 public import HexModArith.Ntt.Catalogue
+public import HexModArith.Ntt.CrtInput
 public import HexModArith.Ntt.Convolution
 public import HexModArith.Ntt.Dft
 public import HexModArith.Ntt.Plan
