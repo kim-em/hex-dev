@@ -1,6 +1,0 @@
-{
- "path": "HexBerlekampZassenhaus/FactorTacticTests.lean",
- "baseline_blob": "38d0f866598954615ed9496c1d611ba7c01b56d7",
- "current_blob": "921eee51ebdec69c5f6b82e8a705b8b1b2828527",
- "reason": "Adds a README quickstart namespace to the build-only publication test module. The module is absent from the hexbz_factor_service import graph, and no factorizer definition or benchmarked runtime path changes."
-}

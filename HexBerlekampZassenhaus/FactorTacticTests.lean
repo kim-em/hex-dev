@@ -6,13 +6,10 @@ Authors: Kim Morrison
 
 module
 
--- PLAIN `public import` only (plus the `public meta import` required for
--- elaboration-time evaluation): the emitted kernel checks must reduce through
--- the exposed closure alone.
-public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhaus.FactorTactic
-public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhaus.FactorTactic
+-- Exercise the exact public umbrella named by the released README. The meta
+-- import is required for elaboration-time evaluation of the two tactics.
+public meta import HexBerlekampZassenhaus
+public import HexBerlekampZassenhaus
 
 public section
 
