@@ -814,7 +814,7 @@ rather than take the irreducible or linear-factor fast paths. The declared
 model is the classical BHKS polynomial bound `d^9 + d^7 h^2` (the same shape
 the HexBerlekampZassenhaus registrations declare), evaluated at the enclosing
 polynomial's actual degree `d` and coefficient bit height `h`. -/
-setup_benchmark runExactLadder n => exactFamilyComplexity n
+setup_benchmark runExactLadder n => (exactFamilyComplexity n)
   with prep := prepExactInput
   where {
     paramFloor := 2
@@ -833,7 +833,7 @@ two isolations dominate the lower-order scans. Applying the HexRoots
 state-of-practice isolation bound `~O(d^3 + d^2 tau)` with the implementation's
 working-precision proxy `O(d^3 B^2)` and `B = O(n log n)` gives the declared
 `n^5 log^2 n` wall shape. -/
-setup_benchmark runExactFactorLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
+setup_benchmark runExactFactorLadder n => (n ^ 5 * (Nat.log2 (n + 2)) ^ 2)
   with prep := prepExactSelectionInput
   where {
     paramFloor := 2
@@ -850,7 +850,7 @@ irreducible polynomial at separation depth, refines every isolation, and finds
 the canonical disc matching the supplied root. With `B = O(n log n)`, the same
 HexRoots isolation proxy `O(n^3 B^2)` gives `n^5 log^2 n`; refinement and the
 linear selection scan are lower order. -/
-setup_benchmark runCanonicalRepLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
+setup_benchmark runCanonicalRepLadder n => (n ^ 5 * (Nat.log2 (n + 2)) ^ 2)
   with prep := prepCanonicalInput
   where {
     paramFloor := 2
