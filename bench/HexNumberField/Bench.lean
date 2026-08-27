@@ -29,8 +29,10 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
   growing first-operand degree;
 * `runLazyAddLadder`: end-to-end lazy `AlgebraicRoot.add?` at growing
   degree product (capped at the SPEC's merge-facing ceiling `20`);
-* `runExactLadder`: exactification through an enclosing polynomial with an
-  irrelevant linear factor at growing degree;
+* `runExactFactorLadder` / `runCanonicalRepLadder`: the two separable
+  certification phases exposed by exactification;
+* `runExactLadder`: end-to-end exactification through a growing product of
+  quadratic factors whose modular factorization requires recombination;
 * `runQAdjoinRootsLadder` / `runAlgebraicRootsLadder`: the two root APIs on
   non-degenerate inputs with a repeated factor (fixed field) and a
   `√2`-dependent coefficient (canonical coefficients);
@@ -694,14 +696,105 @@ setup_benchmark runLazyAddLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
 irreducible candidate factors. -/
 private structure ExactInput where
   root : Option AlgebraicRoot
+  factor : ZPoly
 
 private instance : Hashable ExactInput where
-  hash input := (input.root.map rootChecksum).getD 0
+  hash input := mixHash ((input.root.map rootChecksum).getD 0)
+    (polyChecksum input.factor)
 
-private instance : Inhabited ExactInput := ⟨⟨none⟩⟩
+private instance : Inhabited ExactInput := ⟨⟨none, 0⟩⟩
+
+def prepExactSelectionInput (n : Nat) : ExactInput :=
+  let factor := xPowSubTwo (max n 2)
+  ⟨mkLadderRoot? (factor * DensePoly.ofList [3, 1]), factor⟩
+
+initialize exactSelectionRef : IO.Ref (Option ExactInput) ← IO.mkRef none
+
+private def getExactSelection : IO ExactInput := do
+  match ← exactSelectionRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepExactSelectionInput 8
+    exactSelectionRef.set (some input)
+    pure input
+
+def runExactSelection : Unit → IO UInt64 := fun _ => do
+  let input ← getExactSelection
+  match input.root with
+  | some root =>
+    match root.exact? with
+    | some a => return polyChecksum a.p
+    | none => return 1
+  | none => return 0
+
+/- The first isolated root of `(X^8 - 2)(X + 3)` makes exactification inspect
+more than one candidate factor, re-isolate the selected candidate against the
+enclosing polynomial's precision, and canonicalize it. This is retained as a
+fixed certification/selection case: profiling showed that its BZ factorization
+is not scaling evidence for the BHKS envelope. -/
+setup_fixed_benchmark runExactSelection where {
+  repeats := 3, maxSecondsPerCall := 5.0, warmupFirstIter := true,
+  expectedHash := some 0xd5512fda51bc6ff6
+}
+
+def runExactFactorLadder (input : ExactInput) : UInt64 :=
+  match input.root with
+  | some root =>
+    match root.exactFactor? input.factor with
+    | some a => polyChecksum a.p
+    | none => 1
+  | none => 0
+
+private structure CanonicalInput where
+  p : ZPoly
+  squarefree : HasOnlySimpleRoots p
+  rep : RefinedIsolation p
+  nonzero : p ≠ ZPoly.X
+
+private instance : Hashable CanonicalInput where
+  hash input := mixHash (polyChecksum input.p)
+    (squareChecksum input.rep.1.square)
+
+def prepCanonicalInput (n : Nat) : Option CanonicalInput :=
+  let p := xPowSubTwo (max n 2)
+  if hsf : HasOnlySimpleRoots p then
+    match refinedOf? p hsf with
+    | some rep =>
+      if hzero : p ≠ ZPoly.X then some ⟨p, hsf, rep, hzero⟩
+      else none
+    | none => none
+  else none
+
+def runCanonicalRepLadder (input : Option CanonicalInput) : UInt64 :=
+  match input with
+  | some input =>
+    match AlgebraicNumber.canonicalRep? input.p input.squarefree input.rep
+        input.nonzero with
+    | some rep => squareChecksum rep.1.1.square
+    | none => 1
+  | none => 0
+
+private def exactFactorPrimes : Array Int :=
+  #[2, 3, 5, 7, 11, 13, 17, 19]
+
+private def exactFactorFamily (count : Nat) : ZPoly :=
+  (exactFactorPrimes.take (max count 2)).foldl
+    (fun acc prime => acc * DensePoly.ofList [-prime, 0, 1])
+    (1 : ZPoly)
+
+private def coefficientBits (p : ZPoly) : Nat :=
+  p.toArray.foldl
+    (fun bits coefficient => max bits (Nat.log2 (coefficient.natAbs + 1))) 0
+
+def exactFamilyComplexity (count : Nat) : Nat :=
+  let p := exactFactorFamily count
+  let degree := p.degree?.getD 0
+  let height := coefficientBits p
+  degree ^ 9 + degree ^ 7 * height ^ 2
 
 def prepExactInput (n : Nat) : ExactInput :=
-  ⟨mkLadderRoot? (xPowSubTwo (max n 2) * DensePoly.ofList [3, 1])⟩
+  let p := exactFactorFamily n
+  ⟨mkLadderRoot? p, p⟩
 
 def runExactLadder (input : ExactInput) : UInt64 :=
   match input.root with
@@ -712,13 +805,52 @@ def runExactLadder (input : ExactInput) : UInt64 :=
   | none => 0
 
 /- Cost model. Per SPEC §Complexity, exactification adds one
-Berlekamp-Zassenhaus factorization of the degree-`(n+1)` enclosing polynomial
-plus factor-root selection. The declared model is the classical BHKS
-polynomial bound in the enclosing degree, `n^9 + n^7 log^2 n` (the same shape
-the HexBerlekampZassenhaus registrations declare); the subsequent candidate
-re-isolation and canonicalization are lower order against it. -/
-setup_benchmark runExactLadder n => n ^ 9 + n ^ 7 * (Nat.log2 (n + 2)) ^ 2
+Berlekamp-Zassenhaus factorization of an enclosing polynomial of degree `2n`
+plus factor-root selection. This family extends the BZ adversarial fixture
+`(X^2 - 2)(X^2 - 3)` with further irreducible quadratic factors, so modular
+factorization and Hensel lifting must feed a nontrivial combination search
+rather than take the irreducible or linear-factor fast paths. The declared
+model is the classical BHKS polynomial bound `d^9 + d^7 h^2` (the same shape
+the HexBerlekampZassenhaus registrations declare), evaluated at the enclosing
+polynomial's actual degree `d` and coefficient bit height `h`. -/
+setup_benchmark runExactLadder n => exactFamilyComplexity n
   with prep := prepExactInput
+  where {
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 5, 6]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
+/- Cost model. `exactFactor?` certifies one degree-`n`, constant-height
+candidate: irreducibility checking, isolation to separation depth, refinement
+against the enclosing polynomial, selection, and canonical re-isolation. The
+two isolations dominate the lower-order scans. Applying the HexRoots
+state-of-practice isolation bound `~O(d^3 + d^2 tau)` with the implementation's
+working-precision proxy `O(d^3 B^2)` and `B = O(n log n)` gives the declared
+`n^5 log^2 n` wall shape. -/
+setup_benchmark runExactFactorLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
+  with prep := prepExactSelectionInput
+  where {
+    paramFloor := 2
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
+/- Cost model. `canonicalRep?` isolates a degree-`n`, constant-height
+irreducible polynomial at separation depth, refines every isolation, and finds
+the canonical disc matching the supplied root. With `B = O(n log n)`, the same
+HexRoots isolation proxy `O(n^3 B^2)` gives `n^5 log^2 n`; refinement and the
+linear selection scan are lower order. -/
+setup_benchmark runCanonicalRepLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
+  with prep := prepCanonicalInput
   where {
     paramFloor := 2
     paramCeiling := 8
