@@ -41,32 +41,6 @@ recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
   exact GramSchmidt.Int.independent_identity
 
-private theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
-    (hk : k ≤ n) :
-    gramMatrix (takeRows M k hk) = principalSubmatrix (gramMatrix M) k hk := by
-  apply Hex.Matrix.ext_getElem
-  intro i j
-  rw [getElem_gramMatrix, getElem_principalSubmatrix, getElem_gramMatrix]
-  have hrow : ∀ p : Fin k,
-      row (takeRows M k hk) p = row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩ := by
-    intro p
-    apply Vector.ext
-    intro c hc
-    show (row (takeRows M k hk) p)[(⟨c, hc⟩ : Fin n)] =
-      (row M ⟨p.val, Nat.lt_of_lt_of_le p.isLt hk⟩)[(⟨c, hc⟩ : Fin n)]
-    rw [getElem_row, getElem_row, getElem_takeRows]
-  rw [hrow i, hrow j]
-
-private theorem independent_of_upperTriangular_pos_diag {n : Nat}
-    (M : Matrix Int n n)
-    (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
-    (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
-  exact GramSchmidt.Int.independent_of_det_positive M (by
-    intro k hk _
-    have hpos :=
-      det_gram_takeRows_pos M hzero hdiag k hk
-    rwa [gramMatrix_takeRows_eq_principalSubmatrix M k hk] at hpos)
-
 end Matrix
 
 namespace Internal.LLLState
@@ -174,7 +148,7 @@ private theorem foldl_setSource_get_eq
       refine ⟨⟨l.val, Nat.lt_of_lt_of_le hlj hkm⟩, ?_, rfl⟩
       rw [List.mem_map]
       exact ⟨⟨l.val, hlj⟩, List.mem_finRange _, rfl⟩
-    rw [if_pos hex, if_pos hlj]
+    rw [_root_.ite_eq_left hex, _root_.ite_eq_left hlj]
   · have hno : ¬ ∃ i ∈ (List.finRange kmVal).map cast, i.val = l.val := by
       rintro ⟨i, hi_mem, hi_eq⟩
       rw [List.mem_map] at hi_mem
@@ -184,7 +158,7 @@ private theorem foldl_setSource_get_eq
         rw [← hi_eq, ← hl', hcast]
         exact l'.isLt
       exact hlj this
-    rw [if_neg hno, if_neg hlj]
+    rw [_root_.ite_eq_right hno, _root_.ite_eq_right hlj]
 
 private theorem setPrefix_get_lt {source row : Vector Int n} {km1 : Fin n}
     (l : Fin n) (hl : l.val < km1.val) :
@@ -193,14 +167,6 @@ private theorem setPrefix_get_lt {source row : Vector Int n} {km1 : Fin n}
   rw [Fin.foldl_eq_finRange_foldl,
     foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
   simp [hl]
-
-private theorem setPrefix_get_ge {source row : Vector Int n} {km1 : Fin n}
-    (l : Fin n) (hl : km1.val ≤ l.val) :
-    (setPrefix source row km1).get l = row.get l := by
-  unfold setPrefix
-  rw [Fin.foldl_eq_finRange_foldl,
-    foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
-  simp [Nat.not_lt.mpr hl]
 
 /-- Outer foldl in `swapStep` over rows above `k`. The update applied to row `i`
 depends only on the original `source` (`s.ν`), not on the accumulator. -/
@@ -218,7 +184,7 @@ private theorem foldl_modify_rows_get
     have hxnd : x ∉ xs := (List.nodup_cons.mp hnd).1
     have hxs_nd : xs.Nodup := (List.nodup_cons.mp hnd).2
     by_cases hkx : k < x.val
-    · rw [if_pos hkx]
+    · rw [_root_.ite_eq_left hkx]
       rw [ih hxs_nd (base.modify x.val (upd x))]
       by_cases hlx : x.val = l.val
       · have hxeq : x = l := Fin.eq_of_val_eq hlx
@@ -237,7 +203,7 @@ private theorem foldl_modify_rows_get
             · exact h'
           · exact fun h => List.mem_cons.mpr (Or.inr h)
         simp only [hl_cons_iff]
-    · rw [if_neg hkx]
+    · rw [_root_.ite_eq_right hkx]
       rw [ih hxs_nd base]
       by_cases hxl : x = l
       · subst hxl
@@ -274,8 +240,9 @@ private theorem foldl_modify_matrix_getRow
     | cons x xs ih =>
       simp only [List.foldl_cons]
       by_cases hkx : k < x.val
-      · rw [if_pos hkx, if_pos hkx, ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
-      · rw [if_neg hkx, if_neg hkx, ih acc]
+      · rw [_root_.ite_eq_left hkx, _root_.ite_eq_left hkx,
+          ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
+      · rw [_root_.ite_eq_right hkx, _root_.ite_eq_right hkx, ih acc]
   have h := foldl_modify_rows_get k xs hnd base.rows upd l
   rw [← key base] at h
   simpa [vector_get_eq_getElem, Hex.Matrix.getElem_rows] using h
@@ -284,16 +251,16 @@ private theorem foldl_modify_matrix_getRow
 private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k) :
     (s.swapStep k).b = GramSchmidt.Int.adjacentSwap s.b ⟨k, hk⟩ hk0 := by
   unfold swapStep
-  rw [dif_pos hk, dif_pos hk0]
+  rw [_root_.dite_eq_left hk, _root_.dite_eq_left hk0]
 
 private theorem swapStep_valid (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) :
     (s.swapStep k).Valid := by
   unfold swapStep
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [_root_.dite_eq_left hk]
     by_cases hk0 : 0 < k
-    · rw [dif_pos hk0]
+    · rw [_root_.dite_eq_left hk0]
       set kFin : Fin n := ⟨k, hk⟩ with hkFin_def
       set km1 : Fin n := GramSchmidt.prevRow kFin hk0 with hkm1_def
       have hkFinVal : kFin.val = k := rfl
@@ -355,7 +322,7 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
         intro i hi
         show (Vector.ofFn _)[i.1] = _
         rw [Vector.getElem_ofFn]
-        exact dif_pos hi
+        exact _root_.dite_eq_left hi
       have hkm1_ne_kFin : km1 ≠ kFin := by
         intro h; rw [h] at hkm1_lt_k; omega
       have hkm1_val_ne_kFin : km1.val ≠ kFin.val := fun h =>
@@ -435,7 +402,7 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
         -- Now case analysis on iFin's position.
         by_cases hki : k < iFin.val
         · -- Case D: k < iFin.val. ν' = upd iFin (νPivot.getRow iFin) and iFin ≠ km1, ≠ kFin.
-          rw [if_pos hki]
+          rw [_root_.ite_eq_left hki]
           have hi_ne_km1 : iFin.val ≠ km1.val := by
             have : iFin.val > km1.val := by omega
             omega
@@ -544,7 +511,7 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
                   _ = ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin := by
                         simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
         · -- Cases A/B/C: iFin.val ≤ k.
-          rw [if_neg hki]
+          rw [_root_.ite_eq_right hki]
           have hki : iFin.val ≤ k := Nat.le_of_not_lt hki
           by_cases hi_eq_k : iFin.val = kFin.val
           · -- Case C: iFin = kFin.
@@ -667,9 +634,9 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
           rw [hvalid_d]
           exact (GramSchmidt.Int.gramDet_adjacentSwap_of_ne s.b kFin hk0 i
                   (Nat.le_of_lt_succ hi) hik).symm
-    · rw [dif_neg hk0]
+    · rw [_root_.dite_eq_right hk0]
       exact hvalid
-  · rw [dif_neg hk]
+  · rw [_root_.dite_eq_right hk]
     exact hvalid
 
 /-- Adjacent swap preserves the executable Gram-determinant independence
@@ -1011,7 +978,7 @@ theorem swapStep_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
         rw [hb_i, hb_ip1, hcoeff]; exact hres
     · -- k ≥ n: swapStep is identity, shrink prefix via monotonicity.
       have hsw : s.swapStep k = s := by
-        unfold swapStep; rw [dif_neg hk]
+        unfold swapStep; rw [_root_.dite_eq_right hk]
       rw [hsw]
       apply h.mono
       apply max_le <;> omega
@@ -1033,7 +1000,7 @@ private theorem sizeReduceColumn_b_reduce (s : LLLState n m) (j k : Fin n)
       GramSchmidt.Int.sizeReduce s.b j k
         (nearestQuotient ((s.ν.getRow k).get j)
           (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
-  unfold sizeReduceColumn; rw [dif_pos hreduce]
+  unfold sizeReduceColumn; rw [_root_.dite_eq_left hreduce]
 
 /-- Field projection: `sizeReduceColumn`'s `.d` field (always unchanged). -/
 private theorem sizeReduceColumn_d_eq (s : LLLState n m) (j k : Fin n)
@@ -1043,8 +1010,8 @@ private theorem sizeReduceColumn_d_eq (s : LLLState n m) (j k : Fin n)
   by_cases hreduce :
       2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
-  · rw [dif_pos hreduce]
-  · rw [dif_neg hreduce]
+  · rw [_root_.dite_eq_left hreduce]
+  · rw [_root_.dite_eq_right hreduce]
 
 /-- Field projection: `sizeReduceColumn`'s `.ν` row at `k` under the reducing
 branch.  Reads exactly the foldl + extra `.set j` from the def body.  Takes
@@ -1065,7 +1032,7 @@ private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
         (s.ν.getRow k)).set j ((s.ν.getRow k).get j -
           r * Int.ofNat (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
   subst hr
-  unfold sizeReduceColumn; rw [dif_pos hreduce]
+  unfold sizeReduceColumn; rw [_root_.dite_eq_left hreduce]
   exact Hex.Matrix.setRow_get_self s.ν k _
 
 /-- Field projection: `sizeReduceColumn`'s `.ν` row at indices other than `k`
@@ -1076,7 +1043,7 @@ private theorem sizeReduceColumn_ν_get_ne (s : LLLState n m) (j k : Fin n)
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)
     (i : Fin n) (hi : i ≠ k) :
     (s.sizeReduceColumn j k hjk).ν.getRow i = s.ν.getRow i := by
-  unfold sizeReduceColumn; rw [dif_pos hreduce]
+  unfold sizeReduceColumn; rw [_root_.dite_eq_left hreduce]
   exact Hex.Matrix.setRow_row_ne s.ν k i _ hi
 
 /-- The single-column size reduction preserves `Valid`. -/
@@ -1153,7 +1120,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
               (Nat.le_of_lt j.isLt) (s.ν.getRow iFin) (s.ν.getRow iFin) (s.ν.getRow j) r jFin]
           by_cases hjlt : jFin.val < j.val
           · -- Below pivot.
-            rw [if_pos hjlt, hν_at iFin jFin hji', hν_at j jFin hjlt]
+            rw [_root_.ite_eq_left hjlt, hν_at iFin jFin hji', hν_at j jFin hjlt]
             have hsc :=
               GramSchmidt.Int.scaledCoeffs_sizeReduce_lower s.b jFin j iFin hjlt hjk r
             have hsc' : ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin =
@@ -1163,7 +1130,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
             rw [hsc']
             rfl
           · -- Above pivot.  jFin ≠ j and ¬ (jFin < j), so j < jFin.
-            rw [if_neg hjlt]
+            rw [_root_.ite_eq_right hjlt]
             have hjge : j.val ≤ jFin.val := Nat.le_of_not_lt hjlt
             have hjlt' : j.val < jFin.val := lt_of_le_of_ne hjge
               (fun h => hj_eq (Fin.eq_of_val_eq h.symm))
@@ -1195,7 +1162,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
       exact (GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)).symm
   · -- The non-reducing branch: state unchanged.
     have h_eq : s.sizeReduceColumn j k hjk = s := by
-      unfold sizeReduceColumn; rw [dif_neg hreduce]
+      unfold sizeReduceColumn; rw [_root_.dite_eq_right hreduce]
     rw [h_eq]; exact hvalid
 
 /-- The size-reduction outer foldl preserves `Valid`. -/
@@ -1203,7 +1170,7 @@ theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
     (s.sizeReduce k).Valid := by
   unfold sizeReduce
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [_root_.dite_eq_left hk]
     -- Foldl over `(List.finRange k).reverse` of sizeReduceColumn applications,
     -- each preserving Valid.
     suffices h : ∀ (xs : List (Fin k)) (s' : LLLState n m), s'.Valid →
@@ -1220,7 +1187,7 @@ theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
       intro s' hv
       simp only [List.foldl_cons]
       exact ih _ (sizeReduceColumn_valid s' _ _ _ hv)
-  · rw [dif_neg hk]
+  · rw [_root_.dite_eq_right hk]
     exact hvalid
 
 /-! # Size-reduce size-reducedness
@@ -1276,9 +1243,9 @@ private theorem sizeReduceColumn_b_gramDet (s : LLLState n m) (j k : Fin n)
   by_cases hreduce :
       2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
-  · rw [dif_pos hreduce]
+  · rw [_root_.dite_eq_left hreduce]
     exact GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk _ t ht
-  · rw [dif_neg hreduce]
+  · rw [_root_.dite_eq_right hreduce]
 
 private theorem sizeReduceColumn_independent (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val) (hind : s.b.independent) :
@@ -1303,7 +1270,7 @@ private theorem sizeReduceColumn_ν_pivot_bound (s : LLLState n m) (j k : Fin n)
           fun xs x => Vector.getElem_set_self j.isLt]
     exact nearestQuotient_residue_bound _ _ hdpos
   · have h_eq : s.sizeReduceColumn j k hjk = s := by
-      unfold sizeReduceColumn; rw [dif_neg hreduce]
+      unfold sizeReduceColumn; rw [_root_.dite_eq_right hreduce]
     rw [h_eq]
     exact Nat.le_of_not_lt hreduce
 
@@ -1322,9 +1289,9 @@ private theorem sizeReduceColumn_ν_get_above_pivot (s : LLLState n m)
           fun xs x => Vector.getElem_set_ne j.isLt l.isLt hj_ne_l]
     rw [LLLState.foldl_finRange_set_outerSubMul_get_eq j.val
         (Nat.le_of_lt j.isLt) (s.ν.getRow k) (s.ν.getRow k) (s.ν.getRow j) _ l]
-    rw [if_neg (Nat.not_lt.mpr (Nat.le_of_lt hjl))]
+    rw [_root_.ite_eq_right (Nat.not_lt.mpr (Nat.le_of_lt hjl))]
   · have h_eq : s.sizeReduceColumn j k hjk = s := by
-      unfold sizeReduceColumn; rw [dif_neg hreduce]
+      unfold sizeReduceColumn; rw [_root_.dite_eq_right hreduce]
     rw [h_eq]
 
 /-- `sizeReduceColumn` does not change `s.d`. -/
@@ -1356,23 +1323,6 @@ private theorem sizeReduce_foldl_preserves_ν_above {n m : Nat}
     rw [ih _ hjs_lt_e]
     let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
     exact sizeReduceColumn_ν_get_above_pivot s' jFin ⟨k, hk⟩ j.isLt e hj_lt_e
-
-/-- Preservation of `s.d` under foldl. -/
-private theorem sizeReduce_foldl_d_get {n m : Nat}
-    (k : Nat) (hk : k < n) (i : Fin (n + 1)) :
-    ∀ (xs : List (Fin k)) (s' : LLLState n m),
-      (xs.foldl
-          (fun state j =>
-            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
-            state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
-          s').d.get i = s'.d.get i := by
-  intro xs
-  induction xs with
-  | nil => intros; rfl
-  | cons j js ih =>
-    intro s'
-    simp only [List.foldl_cons]
-    rw [ih _]; rw [sizeReduceColumn_d_get]
 
 /-- Foldl invariant: if the iterating list is strictly decreasing, then after
 foldl every iterated column is size-reduced. -/
@@ -1459,7 +1409,7 @@ theorem sizeReduce_ν_bound (s : LLLState n m) (k : Nat) (hk : k < n)
         s.d.get ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hj hk)⟩ := by
   intro j hj
   unfold sizeReduce
-  rw [dif_pos hk]
+  rw [_root_.dite_eq_left hk]
   simpa [Fin.foldr_eq_finRange_foldr] using
     sizeReduce_foldl_size_reduced k hk (List.finRange k).reverse
       (pairwise_finRange_reverse_lt k)
@@ -1601,7 +1551,7 @@ theorem swapStep_d_pivot (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k)
           Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) := by
   intro _hkm1lt
   unfold swapStep
-  rw [dif_pos hk, dif_pos hk0]
+  rw [_root_.dite_eq_left hk, _root_.dite_eq_left hk0]
   exact Vector.getElem_set_self (xs := s.d) (Nat.lt_succ_of_lt hk)
 
 private theorem foldl_mul_pull {α : Type*} (xs : List α) (f : α → Nat) (a : Nat) :
@@ -1839,7 +1789,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
       (s.swapStep k).d.get ⟨i, hi⟩ = s.d.get ⟨i, hi⟩ := by
     intro i hi hik
     unfold swapStep
-    rw [dif_pos hk, dif_pos hk0]
+    rw [_root_.dite_eq_left hk, _root_.dite_eq_left hk0]
     exact Vector.getElem_set_ne (Nat.lt_succ_of_lt hk) hi (fun h => hik h.symm)
   -- Step 5: apply the foldl strict-decrease helper.
   unfold potential
@@ -1917,7 +1867,7 @@ private theorem lllLoop_eq_b_at_n
   | succ f =>
     show (if hdone : n = n then s.b
           else _) = s.b
-    rw [dif_pos rfl]
+    rw [_root_.dite_eq_left rfl]
 
 /-- The inner body of `lllLoop`'s `fuel = g + 1` branch (under `k < n`),
 extracted for use in fuel-sufficiency reasoning. -/
@@ -1953,7 +1903,7 @@ private theorem lllLoop_succ_eq_body
     lllLoop s k δ hδ hδ' hk hkn (fuel + 1) =
       lllLoopBody s k δ hδ hδ' hk hkn hlt fuel := by
   show (if hdone : k = n then s.b else _) = _
-  rw [dif_neg (Nat.ne_of_lt hlt)]
+  rw [_root_.dite_eq_right (Nat.ne_of_lt hlt)]
   rfl
 
 /-- δ.num positivity and δ.num ≤ δ.den from `1/4 < δ ≤ 1`.  These are the
@@ -2116,9 +2066,9 @@ private theorem sizeReduceColumn_coeffs_row_of_ne (s : LLLState n m) (j k : Fin 
   by_cases hreduce :
       2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
-  · rw [dif_pos hreduce]
+  · rw [_root_.dite_eq_left hreduce]
     exact GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk _ i hik
-  · rw [dif_neg hreduce]
+  · rw [_root_.dite_eq_right hreduce]
 
 private theorem sizeReduce_foldl_coeffs_row_of_ne {n m : Nat}
     (k : Nat) (hk : k < n) (i : Fin n) (hik : i ≠ ⟨k, hk⟩) :
@@ -2144,11 +2094,11 @@ theorem sizeReduce_coeffs_row_of_ne (s : LLLState n m) (k : Nat) (i : Fin n)
       (GramSchmidt.Int.coeffs s.b).row i := by
   unfold sizeReduce
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [_root_.dite_eq_left hk]
     have hik' : i ≠ ⟨k, hk⟩ := fun h => hik (by rw [h])
     simpa [Fin.foldr_eq_finRange_foldr] using
       sizeReduce_foldl_coeffs_row_of_ne k hk i hik' (List.finRange k).reverse s
-  · rw [dif_neg hk]
+  · rw [_root_.dite_eq_right hk]
 
 /-- Size reduction preserves `prefixLLLReduced` at the same prefix length: rows
 strictly below `k` are unaffected by the row-`k` update, so the prefix invariant

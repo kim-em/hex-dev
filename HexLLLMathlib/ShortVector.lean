@@ -26,6 +26,7 @@ namespace HexLLLMathlib
 
 /-- Membership in the Mathlib `latticeSubmodule` is preserved by
 `Hex.lllNative`. -/
+@[simp]
 theorem lllNative_mem_latticeSubmodule_iff
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
@@ -40,10 +41,11 @@ theorem lllNative_mem_latticeSubmodule_iff
   exact Hex.lllNative_memLattice_iff b δ hδ hδ' hn v
 
 /-- Membership in the Mathlib `latticeSubmodule` is preserved by `Hex.lll`. -/
+@[simp]
 theorem lll_mem_latticeSubmodule_iff
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) (x : Fin m → ℤ) :
+    (x : Fin m → ℤ) :
     x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn) ↔ x ∈ latticeSubmodule b := by
   let v := HexMatrixMathlib.vectorEquiv.symm x
   have hxv : x = HexMatrixMathlib.vectorEquiv v :=
@@ -51,7 +53,7 @@ theorem lll_mem_latticeSubmodule_iff
   rw [hxv]
   rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn) v,
       mem_latticeSubmodule_iff b v]
-  exact Hex.lll_memLattice_iff b δ hδ hδ' hn hind v
+  exact Hex.lll_memLattice_iff b δ hδ hδ' hn v
 
 /-- Classical Mathlib-Euclidean LLL short-vector bound on `Hex.lllNative` at
 `η = 1/2`. Combines `Hex.lllNative_isLLLReduced` with the conditional
@@ -100,7 +102,7 @@ theorem lll_first_row_norm_sq_le
   have hind' : (Hex.lll b δ hδ hδ' hn).independent :=
     Hex.lll_independent b δ hδ hδ' hn hind
   have hx_lll : x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn) :=
-    (lll_mem_latticeSubmodule_iff b δ hδ hδ' hn hind x).mpr hx
+    (lll_mem_latticeSubmodule_iff b δ hδ hδ' hn x).mpr hx
   have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
     have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
     grind
