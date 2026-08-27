@@ -226,7 +226,7 @@ tag := "hex-matrix-mathlib"
 
 Everything above is executable and Mathlib-free. `HexMatrixMathlib`
 connects it to Mathlib: every {name}`Hex.Matrix` corresponds to a Mathlib
-Mathlib's {name}`_root_.Matrix` type with the same entries.
+{name}`_root_.Matrix` type with the same entries.
 
 {docstring HexMatrixMathlib.matrixEquiv}
 
