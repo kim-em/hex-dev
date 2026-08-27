@@ -111,29 +111,34 @@ private theorem mul_monic_ring {p q : DensePoly R} (hp : p.Monic) (hq : q.Monic)
       leadingCoeff_mul p q hppos hqpos hprod, hp, hq]
     grind
 
-/-- A balanced remainder tree indexed by the exact point sequence below it. -/
-private inductive PointNode (R : Type u) [DecidableEq R]
-    [Lean.Grind.CommRing R] : List R → Type u where
-  | leaf (a : R) : PointNode R [a]
+/-- Internal balanced remainder-tree shape, indexed by its exact point sequence
+and product polynomial. Public clients use it only through opaque plans. -/
+inductive PointNode (R : Type u) [DecidableEq R]
+    [Lean.Grind.CommRing R] (mul : MulPlan R) :
+    List R → DensePoly R → Type u where
+  | leaf (a : R) : PointNode R mul [a] (pointFactor a)
   | branch {leftPoints rightPoints : List R}
-      (left : PointNode R leftPoints) (right : PointNode R rightPoints)
+      {leftPoly rightPoly : DensePoly R}
+      (left : PointNode R mul leftPoints leftPoly)
+      (right : PointNode R mul rightPoints rightPoly)
       (leftPlan rightPlan : DivPlan R)
       (leftZero : ∀ a, a ∈ leftPoints → leftPlan.divisor.eval a = 0)
       (rightZero : ∀ a, a ∈ rightPoints → rightPlan.divisor.eval a = 0) :
-      PointNode R (leftPoints ++ rightPoints)
+      PointNode R mul (leftPoints ++ rightPoints)
+        (mulWith mul leftPoly rightPoly)
 
 /-- A constructed node together with its monic product polynomial. -/
 private structure BuiltNode (mul : MulPlan R) (points : List R) where
-  node : PointNode R points
   poly : DensePoly R
+  node : PointNode R mul points poly
   monic : poly.Monic
   ne : poly ≠ 0
   evalZero : ∀ a, a ∈ points → poly.eval a = 0
 
 private def leafNode (mul : MulPlan R) (hone : (1 : R) ≠ 0) (a : R) :
     BuiltNode mul [a] :=
-  { node := .leaf a
-    poly := pointFactor a
+  { poly := pointFactor a
+    node := .leaf a
     monic := pointFactor_monic a
     ne := monic_ne_zero_of_one_ne_zero hone (pointFactor_monic a)
     evalZero := by
@@ -149,10 +154,10 @@ private def branchNode (mul : MulPlan R) (hone : (1 : R) ≠ 0)
   let leftPlan := DivPlan.ofMonic mul left.poly left.monic left.ne rightPoints.length
   let rightPlan := DivPlan.ofMonic mul right.poly right.monic right.ne leftPoints.length
   let poly := mulWith mul left.poly right.poly
-  { node := .branch left.node right.node leftPlan rightPlan
+  { poly
+    node := .branch left.node right.node leftPlan rightPlan
       (by intro a ha; simpa [leftPlan] using left.evalZero a ha)
       (by intro a ha; simpa [rightPlan] using right.evalZero a ha)
-    poly
     monic := by
       dsimp [poly]
       rw [mulWith_eq]
@@ -230,22 +235,22 @@ private def buildNode (mul : MulPlan R) (hone : (1 : R) ≠ 0) :
 structure EvalPlan (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
   private mulData : MulPlan R
   private pointsData : Array R
-  private treeData : ProductTree R
   /-- Empty and trivial-ring plans use `none`; otherwise the type index ties
   every cached divisor to the exact public point sequence. -/
-  private nodeData : Option (PointNode R pointsData.toList)
+  private nodeData : Option
+    (Sigma fun poly => PointNode R mulData pointsData.toList poly)
 
 namespace EvalPlan
 
 /-- Build the point-product tree and all finite-capacity reciprocal plans. -/
 def build (mul : MulPlan R) (points : Array R) : EvalPlan R :=
-  let tree := ProductTree.build mul (points.map pointFactor)
   { mulData := mul
     pointsData := points
-    treeData := tree
     nodeData := if hone : (1 : R) = 0 then none
       else if hempty : points.toList = [] then none
-      else some (buildNode mul hone points.toList hempty).node }
+      else
+        let built := buildNode mul hone points.toList hempty
+        some ⟨built.poly, built.node⟩ }
 
 /-- The planned point sequence. -/
 def points (plan : EvalPlan R) : Array R := plan.pointsData
@@ -258,8 +263,26 @@ def points (plan : EvalPlan R) : Array R := plan.pointsData
 /-- Number of planned points. -/
 def size (plan : EvalPlan R) : Nat := plan.points.size
 
-/-- The reusable product tree. -/
-def tree (plan : EvalPlan R) : ProductTree R := plan.treeData
+/-- Lawful multiplication plan used by the cached tree. -/
+def mulPlan (plan : EvalPlan R) : MulPlan R := plan.mulData
+
+/-- The cached indexed tree, when the point sequence and coefficient ring are
+nondegenerate. -/
+def cachedNode (plan : EvalPlan R) : Option
+    (Sigma fun poly => PointNode R plan.mulPlan plan.points.toList poly) :=
+  plan.nodeData
+
+/-- A nonempty point sequence over a nontrivial ring has a cached node. -/
+theorem cachedNode_build_isSome (mul : MulPlan R) (points : Array R)
+    (hone : (1 : R) ≠ 0) (hne : points.toList ≠ []) :
+    (build mul points).cachedNode.isSome := by
+  simp [cachedNode, mulPlan, build, hone, hne]
+  rfl
+
+/-- The observational product-tree view. Constructing an evaluation plan does
+not eagerly build this redundant level representation. -/
+def tree (plan : EvalPlan R) : ProductTree R :=
+  ProductTree.build plan.mulPlan (plan.points.map pointFactor)
 
 /-- Specification of multipoint evaluation.  The compiled implementation
 below replaces this direct map by the cached remainder tree. -/
@@ -304,18 +327,19 @@ private theorem eval_reduceNode (parent : DensePoly R) (node : DivPlan R) (a : R
   · rfl
 
 /-- Execute the balanced remainder tree, preserving left-to-right point order. -/
-private def evalNode {points : List R} :
-    PointNode R points → DensePoly R → List R
+private def evalNode {points : List R} {poly : DensePoly R} :
+    PointNode R plan points poly → DensePoly R → List R
   | .leaf a, f => [f.eval a]
   | .branch left right leftPlan rightPlan _ _, f =>
       evalNode left (reduceNode f leftPlan) ++
         evalNode right (reduceNode f rightPlan)
 
-private theorem evalNode_eq {points : List R} (node : PointNode R points)
+private theorem evalNode_eq {points : List R} {poly : DensePoly R}
+    (node : PointNode R plan points poly)
     (f : DensePoly R) : evalNode node f = points.map (f.eval ·) := by
   induction node generalizing f with
   | leaf a => rfl
-  | @branch leftPoints rightPoints left right leftPlan rightPlan
+  | @branch leftPoints rightPoints leftPoly rightPoly left right leftPlan rightPlan
       leftZero rightZero leftIH rightIH =>
       simp only [evalNode, List.map_append]
       rw [leftIH, rightIH]
@@ -337,7 +361,7 @@ def evalImpl (plan : EvalPlan R) (f : DensePoly R) : Array R :=
   if f.size ≤ plan.size then
     match plan.nodeData with
     | none => plan.points.map (f.eval ·)
-    | some node => (evalNode node f).toArray
+    | some built => (evalNode built.2 f).toArray
   else
     plan.points.map (f.eval ·)
 
@@ -349,9 +373,9 @@ theorem eval_eq_impl (plan : EvalPlan R) (f : DensePoly R) :
   split
   · cases hnode : plan.nodeData with
     | none => rfl
-    | some node =>
+    | some built =>
         simp only
-        rw [evalNode_eq node f]
+        rw [evalNode_eq built.2 f]
         unfold points
         rw [← Array.toList_map, Array.toArray_toList]
   · rfl

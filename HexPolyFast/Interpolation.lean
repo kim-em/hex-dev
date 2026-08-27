@@ -28,65 +28,13 @@ attribute [local instance 1100] Lean.Grind.Semiring.natCast
 
 variable {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
 
-/-- Internal balanced product-tree shape whose polynomial is tracked in its
-type index. Public construction remains through the opaque `InterpPlan`. -/
-inductive InterpNode (F : Type u) [DecidableEq F]
-    [Lean.Grind.Field F] (mul : MulPlan F) :
-    List F → DensePoly F → Type u where
-  | leaf (a : F) : InterpNode F mul [a] (pointFactor a)
-  | branch {leftPoints rightPoints : List F} {leftPoly rightPoly : DensePoly F}
-      (left : InterpNode F mul leftPoints leftPoly)
-      (right : InterpNode F mul rightPoints rightPoly) :
-      InterpNode F mul (leftPoints ++ rightPoints)
-        (mulWith mul leftPoly rightPoly)
-
-/-- Build a count-balanced interpolation tree. -/
-private def buildInterpNode (mul : MulPlan F) :
-    (points : List F) → points ≠ [] →
-      Sigma fun poly => InterpNode F mul points poly
-  | [], hne => False.elim (hne rfl)
-  | [a], _ => ⟨pointFactor a, .leaf a⟩
-  | a :: b :: rest, _ =>
-      let points := a :: b :: rest
-      let split := treeSplit points.length
-      have splitPos : 0 < split := treeSplit_pos points.length
-      have splitLt : split < points.length := treeSplit_lt points.length (by
-        dsimp [points]
-        simp)
-      let leftPoints := points.take split
-      let rightPoints := points.drop split
-      let left := buildInterpNode mul leftPoints (by
-        intro hnil
-        have hz := congrArg List.length hnil
-        dsimp [leftPoints] at hz
-        rw [List.length_take, Nat.min_eq_left (Nat.le_of_lt splitLt)] at hz
-        omega)
-      let right := buildInterpNode mul rightPoints (by
-        intro hnil
-        have hz := congrArg List.length hnil
-        dsimp [rightPoints] at hz
-        rw [List.length_drop] at hz
-        omega)
-      have hsplit : leftPoints ++ rightPoints = a :: b :: rest := by
-        simpa only [leftPoints, rightPoints, points] using
-          List.take_append_drop split points
-      have node : InterpNode F mul (leftPoints ++ rightPoints)
-          (mulWith mul left.1 right.1) := .branch left.2 right.2
-      hsplit ▸ ⟨mulWith mul left.1 right.1, node⟩
-  termination_by points => points.length
-  decreasing_by
-    all_goals
-      simp only [List.length_take, List.length_drop, List.length_cons]
-      have hsplitPos := treeSplit_pos (rest.length + 1 + 1)
-      have hsplitLt := treeSplit_lt (rest.length + 1 + 1) (by omega)
-      omega
-
 /-- Combine weighted Lagrange numerators through the cached balanced shape. -/
 private def combineNode (mul : MulPlan F) {points : List F} {poly : DensePoly F}
-    (node : InterpNode F mul points poly) (weights : List F) : DensePoly F :=
+    (node : PointNode F mul points poly) (weights : List F) : DensePoly F :=
   match node with
   | .leaf _ => C (weights.getD 0 0)
-  | @InterpNode.branch _ _ _ _ leftPoints _ leftPoly rightPoly left right =>
+  | @PointNode.branch _ _ _ _ leftPoints _ leftPoly rightPoly
+      left right _ _ _ _ =>
       let leftWeights := weights.take leftPoints.length
       let rightWeights := weights.drop leftPoints.length
       mulWith mul (combineNode mul left leftWeights) rightPoly +
@@ -123,23 +71,24 @@ private theorem derivative_pointFactor (a : F) : derivative (pointFactor a) = 1 
     change ((i + 1 : Nat) : F) * ((0 : F) - 0) = 0
     rw [hz, Lean.Grind.Semiring.mul_zero]
 
-private theorem InterpNode.eval_zero (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly) (a : F)
+private theorem PointNode.eval_zero (mul : MulPlan F) {points : List F}
+    {poly : DensePoly F} (node : PointNode F mul points poly) (a : F)
     (ha : a ∈ points) : poly.eval a = 0 := by
   induction node with
   | leaf x =>
       simp only [List.mem_singleton] at ha
       subst a
       exact pointFactor_eval x
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       rw [mulWith_eq, eval_mul_commring]
       rw [List.mem_append] at ha
       cases ha with
       | inl hleft => rw [leftIH hleft, Lean.Grind.Semiring.zero_mul]
       | inr hright => rw [rightIH hright, Lean.Grind.Semiring.mul_zero]
 
-private theorem InterpNode.eval_ne (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly) (a : F)
+private theorem PointNode.eval_ne (mul : MulPlan F) {points : List F}
+    {poly : DensePoly F} (node : PointNode F mul points poly) (a : F)
     (ha : a ∉ points) : poly.eval a ≠ 0 := by
   induction node with
   | leaf x =>
@@ -148,7 +97,8 @@ private theorem InterpNode.eval_ne (mul : MulPlan F) {points : List F}
       apply ha
       simp only [List.mem_singleton]
       grind
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       rw [mulWith_eq, eval_mul_commring]
       apply field_mul_ne_zero
       · have hparts : a ∉ leftPoints ∧ a ∉ rightPoints := by simpa using ha
@@ -156,8 +106,8 @@ private theorem InterpNode.eval_ne (mul : MulPlan F) {points : List F}
       · have hparts : a ∉ leftPoints ∧ a ∉ rightPoints := by simpa using ha
         exact rightIH hparts.2
 
-private theorem InterpNode.derivative_ne (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly)
+private theorem PointNode.derivative_ne (mul : MulPlan F) {points : List F}
+    {poly : DensePoly F} (node : PointNode F mul points poly)
     (hdistinct : points.Nodup) (a : F) (ha : a ∈ points) :
     (derivative poly).eval a ≠ 0 := by
   induction node with
@@ -165,7 +115,8 @@ private theorem InterpNode.derivative_ne (mul : MulPlan F) {points : List F}
       rw [derivative_pointFactor, show (1 : DensePoly F) = C 1 by rfl,
         eval_C_semiring]
       exact fun h => Lean.Grind.Field.zero_ne_one h.symm
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       rcases List.nodup_append.mp hdistinct with ⟨hleftDistinct, hrightDistinct, hdisjoint⟩
       rw [List.mem_append] at ha
       rw [mulWith_eq, derivative_mul, eval_add_semiring,
@@ -175,22 +126,22 @@ private theorem InterpNode.derivative_ne (mul : MulPlan F) {points : List F}
           have hright : a ∉ rightPoints := by
             intro hmem
             exact hdisjoint a hleft a hmem rfl
-          rw [InterpNode.eval_zero mul left a hleft, Lean.Grind.Semiring.zero_mul,
+          rw [PointNode.eval_zero mul left a hleft, Lean.Grind.Semiring.zero_mul,
             Lean.Grind.Semiring.add_zero]
           exact field_mul_ne_zero
-            (leftIH hleftDistinct hleft) (InterpNode.eval_ne mul right a hright)
+            (leftIH hleftDistinct hleft) (PointNode.eval_ne mul right a hright)
       | inr hright =>
           have hleft : a ∉ leftPoints := by
             intro hmem
             exact hdisjoint a hmem a hright rfl
-          rw [InterpNode.eval_zero mul right a hright, Lean.Grind.Semiring.mul_zero]
+          rw [PointNode.eval_zero mul right a hright, Lean.Grind.Semiring.mul_zero]
           rw [show (0 : F) + leftPoly.eval a * (derivative rightPoly).eval a =
             leftPoly.eval a * (derivative rightPoly).eval a by grind]
           exact field_mul_ne_zero
-            (InterpNode.eval_ne mul left a hleft) (rightIH hrightDistinct hright)
+            (PointNode.eval_ne mul left a hleft) (rightIH hrightDistinct hright)
 
 private theorem combineNode_eval (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly)
+    {poly : DensePoly F} (node : PointNode F mul points poly)
     (weights : List F) (hlen : weights.length = points.length)
     (hdistinct : points.Nodup) (i : Nat) (hi : i < points.length) :
     (combineNode mul node weights).eval points[i] =
@@ -206,7 +157,8 @@ private theorem combineNode_eval (mul : MulPlan F) {points : List F}
       rw [List.getD_eq_getElem?_getD,
         List.getElem?_eq_getElem (by rw [hlen]; exact hi)]
       simp
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       rcases List.nodup_append.mp hdistinct with
         ⟨hleftDistinct, hrightDistinct, hdisjoint⟩
       have hleftLe : leftPoints.length ≤ weights.length := by
@@ -224,13 +176,13 @@ private theorem combineNode_eval (mul : MulPlan F) {points : List F}
         simp only [combineNode]
         rw [eval_add_semiring, mulWith_eq, mulWith_eq,
           eval_mul_commring, eval_mul_commring, hpoint, hleftEval, hweight,
-          InterpNode.eval_zero mul left leftPoints[i] (List.getElem_mem ..),
+          PointNode.eval_zero mul left leftPoints[i] (List.getElem_mem ..),
           Lean.Grind.Semiring.mul_zero]
         rw [show (0 : F) = 0 * rightPoly.eval leftPoints[i] by
           rw [Lean.Grind.Semiring.zero_mul]]
         rw [mulWith_eq, derivative_mul, eval_add_semiring,
           eval_mul_commring, eval_mul_commring,
-          InterpNode.eval_zero mul left leftPoints[i] (List.getElem_mem ..),
+          PointNode.eval_zero mul left leftPoints[i] (List.getElem_mem ..),
           Lean.Grind.Semiring.zero_mul]
         grind
       · have hrightIndex : i - leftPoints.length < rightPoints.length := by
@@ -252,7 +204,7 @@ private theorem combineNode_eval (mul : MulPlan F) {points : List F}
         simp only [combineNode]
         rw [eval_add_semiring, mulWith_eq, mulWith_eq,
           eval_mul_commring, eval_mul_commring, hpoint, hrightEval, hweight,
-          InterpNode.eval_zero mul right rightPoints[i - leftPoints.length]
+          PointNode.eval_zero mul right rightPoints[i - leftPoints.length]
             (List.getElem_mem ..), Lean.Grind.Semiring.mul_zero]
         rw [show (0 : F) +
             (weights[i] * (derivative rightPoly).eval rightPoints[i - leftPoints.length]) *
@@ -261,32 +213,34 @@ private theorem combineNode_eval (mul : MulPlan F) {points : List F}
               leftPoly.eval rightPoints[i - leftPoints.length] by grind]
         rw [mulWith_eq, derivative_mul, eval_add_semiring,
           eval_mul_commring, eval_mul_commring,
-          InterpNode.eval_zero mul right rightPoints[i - leftPoints.length]
+          PointNode.eval_zero mul right rightPoints[i - leftPoints.length]
             (List.getElem_mem ..), Lean.Grind.Semiring.mul_zero]
         grind
 
-private theorem InterpNode.poly_size (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly) :
+private theorem PointNode.poly_size (mul : MulPlan F) {points : List F}
+    {poly : DensePoly F} (node : PointNode F mul points poly) :
     poly.size ≤ points.length + 1 := by
   induction node with
   | leaf a =>
       rw [pointFactor_size a (fun h => Lean.Grind.Field.zero_ne_one h.symm)]
       simp
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       rw [mulWith_eq]
       have hmul := size_mul_le leftPoly rightPoly
       simp only [List.length_append]
       omega
 
-private theorem InterpNode.combine_size (mul : MulPlan F) {points : List F}
-    {poly : DensePoly F} (node : InterpNode F mul points poly) (weights : List F) :
+private theorem PointNode.combine_size (mul : MulPlan F) {points : List F}
+    {poly : DensePoly F} (node : PointNode F mul points poly) (weights : List F) :
     (combineNode mul node weights).size ≤ points.length := by
   induction node generalizing weights with
   | leaf a => exact size_C_le_one _
-  | @branch leftPoints rightPoints leftPoly rightPoly left right leftIH rightIH =>
+  | @branch leftPoints rightPoints leftPoly rightPoly left right
+      leftPlan rightPlan leftZero rightZero leftIH rightIH =>
       simp only [combineNode, List.length_append]
-      have hleftPoly := InterpNode.poly_size mul left
-      have hrightPoly := InterpNode.poly_size mul right
+      have hleftPoly := PointNode.poly_size mul left
+      have hrightPoly := PointNode.poly_size mul right
       have hleftTerm := size_mul_le
         (combineNode mul left (weights.take leftPoints.length)) rightPoly
       have hrightTerm := size_mul_le
@@ -407,7 +361,7 @@ structure InterpPlan (F : Type u) [DecidableEq F] [Lean.Grind.Field F] where
   private pointsData : Array F
   private evalData : EvalPlan F
   private nodeData : Option
-    (Sigma fun poly => InterpNode F mulData pointsData.toList poly)
+    (Sigma fun poly => PointNode F mulData pointsData.toList poly)
   private invDerivData : Array F
   private distinctData : pointsData.toList.Nodup
   private evalPointsData : evalData.points = pointsData
@@ -423,26 +377,33 @@ def build? (mul : MulPlan F) (points : Array F) : Option (InterpPlan F) :=
     let evalPlan := EvalPlan.build mul points
     if hempty : points.toList = [] then
       some
-        { mulData := mul
-          pointsData := points
+        { mulData := evalPlan.mulPlan
+          pointsData := evalPlan.points
           evalData := evalPlan
           nodeData := none
           invDerivData := #[]
-          distinctData := hdistinct
-          evalPointsData := EvalPlan.points_build mul points
-          emptyData := fun _ => hempty
+          distinctData := by
+            simpa only [evalPlan, EvalPlan.points_build] using hdistinct
+          evalPointsData := rfl
+          emptyData := fun _ => by
+            simpa only [evalPlan, EvalPlan.points_build] using hempty
           invDerivSpec := by intro built h; contradiction }
     else
-      let built := buildInterpNode mul points.toList hempty
+      have hone : (1 : F) ≠ 0 := fun h => Lean.Grind.Field.zero_ne_one h.symm
+      have hnode : evalPlan.cachedNode.isSome := by
+        simpa [evalPlan] using
+          EvalPlan.cachedNode_build_isSome mul points hone hempty
+      let built := evalPlan.cachedNode.get hnode
       let invDeriv := (evalPlan.eval (derivative built.1)).map (fun x => x⁻¹)
       some
-        { mulData := mul
-          pointsData := points
+        { mulData := evalPlan.mulPlan
+          pointsData := evalPlan.points
           evalData := evalPlan
           nodeData := some built
           invDerivData := invDeriv
-          distinctData := hdistinct
-          evalPointsData := EvalPlan.points_build mul points
+          distinctData := by
+            simpa only [evalPlan, EvalPlan.points_build] using hdistinct
+          evalPointsData := rfl
           emptyData := by intro h; contradiction
           invDerivSpec := by intro other h; cases h; rfl }
   else
@@ -566,7 +527,7 @@ theorem interpolate?_sound (plan : InterpPlan F) (values : Array F)
       constructor
       · rw [size_eq_data]
         simpa only [Array.length_toList] using
-          InterpNode.combine_size plan.mulData built.2 weights
+          PointNode.combine_size plan.mulData built.2 weights
       · intro i hi
         have hipoints : i < plan.pointsData.toList.length := by
           rw [Array.length_toList, ← size_eq_data]
@@ -600,7 +561,7 @@ theorem interpolate?_sound (plan : InterpPlan F) (values : Array F)
                 plan.pointsData.toList[i] := congrArg _ hpointList.symm
             _ = _ := heval
         have hderiv : (derivative built.1).eval plan.pointsData.toList[i] ≠ 0 :=
-          InterpNode.derivative_ne plan.mulData built.2 plan.distinctData
+          PointNode.derivative_ne plan.mulData built.2 plan.distinctData
             plan.pointsData.toList[i] (List.getElem_mem ..)
         have hinvArray : plan.invDerivData[i]'(by rw [hinvSize]; exact hi) =
             ((derivative built.1).eval plan.pointsData.toList[i])⁻¹ := by
