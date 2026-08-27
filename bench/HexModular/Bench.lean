@@ -332,9 +332,9 @@ setup_benchmark runScalarCrt k => k * k
     outerTrials := 3
   }
 
-/- Building a `CrtPlan` validates the complete modulus set and precomputes a
-balanced product/inverse tree.  This cold target keeps construction separate
-from the warm reconstruction comparison. -/
+/- Cost model: building a `CrtPlan` validates every modulus pair, giving a
+quadratic upper bound in `k`, then precomputes a balanced product/inverse tree.
+This cold target keeps construction separate from warm reconstruction. -/
 setup_benchmark runCrtPlanBuild k => k * k
   with prep := prepScalarCrt
   where {

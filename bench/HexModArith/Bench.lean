@@ -555,6 +555,8 @@ setup_benchmark runMontCompareChain n => n
     targetInnerNanos := 300000000
   }
 
+/- Cost model: the reference performs one constant-size forward butterfly per
+prepared sample, so its work is linear in `n`. -/
 setup_benchmark runCanonicalForwardButterflyChecksum n => n
   with prep := prepButterflyInput
   where {
@@ -566,6 +568,8 @@ setup_benchmark runCanonicalForwardButterflyChecksum n => n
     tags := #["ntt", "butterfly", "forward", "canonical", "reference"]
   }
 
+/- Cost model: the bounded kernel performs one constant-size forward butterfly
+and two normalizations per sample, so its work is linear in `n`. -/
 setup_benchmark runRedundantForwardButterflyChecksum n => n
   with prep := prepButterflyInput
   where {
@@ -577,6 +581,8 @@ setup_benchmark runRedundantForwardButterflyChecksum n => n
     tags := #["ntt", "butterfly", "forward", "redundant"]
   }
 
+/- Cost model: the reference performs one constant-size inverse butterfly per
+prepared sample, so its work is linear in `n`. -/
 setup_benchmark runCanonicalInverseButterflyChecksum n => n
   with prep := prepButterflyInput
   where {
@@ -588,6 +594,8 @@ setup_benchmark runCanonicalInverseButterflyChecksum n => n
     tags := #["ntt", "butterfly", "inverse", "canonical", "reference"]
   }
 
+/- Cost model: the bounded kernel performs one constant-size inverse butterfly
+and two normalizations per sample, so its work is linear in `n`. -/
 setup_benchmark runRedundantInverseButterflyChecksum n => n
   with prep := prepButterflyInput
   where {
@@ -599,6 +607,9 @@ setup_benchmark runRedundantInverseButterflyChecksum n => n
     tags := #["ntt", "butterfly", "inverse", "redundant"]
   }
 
+/- Cost model: plan construction fills radix-two twiddle tables across
+logarithmically many stages with linear total entries per stage, giving
+`O(n log n)` work. -/
 setup_benchmark runNttPlanBuildChecksum n => n * (Nat.log2 n + 1)
   with prep := prepNttBuildInput
   where {
@@ -610,6 +621,8 @@ setup_benchmark runNttPlanBuildChecksum n => n * (Nat.log2 n + 1)
     tags := #["ntt", "plan", "cold"]
   }
 
+/- Cost model: a radix-two transform has logarithmically many stages and each
+stage visits all `n` values, giving `O(n log n)` work. -/
 setup_benchmark runNttForwardChecksum n => n * (Nat.log2 n + 1)
   with prep := prepNttInput
   where {
@@ -621,6 +634,8 @@ setup_benchmark runNttForwardChecksum n => n * (Nat.log2 n + 1)
     tags := #["ntt", "transform", "forward", "warm-plan"]
   }
 
+/- Cost model: cold execution combines plan construction and one radix-two
+transform, each bounded by `O(n log n)`. -/
 setup_benchmark runNttForwardColdChecksum n => n * (Nat.log2 n + 1)
   with prep := prepNttBuildInput
   where {
