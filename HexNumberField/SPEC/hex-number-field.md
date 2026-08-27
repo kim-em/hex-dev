@@ -171,7 +171,9 @@ compare refined isolations with `sameRoot`.
 The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
 primitive. The gcd guard prevents repeated factorization for coprime
 enclosing polynomials during cross-component root merging without changing
-the v1 semantics.
+the v1 semantics. It is a discriminator, not a constant-time operation:
+computing a rational gcd between two high-degree enclosing polynomials can
+itself incur coefficient growth.
 
 ```lean
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X

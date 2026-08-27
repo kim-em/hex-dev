@@ -988,9 +988,7 @@ def prepMergeRootsInput (n : Nat) : MergeRootsInput :=
     match componentRoots? with
     | some roots =>
       match roots.toList with
-      | [first, second] =>
-        if first.size ≤ second.size then ⟨first.toList, second⟩
-        else ⟨second.toList, first⟩
+      | [first, second] => ⟨first.toList, second⟩
       | _ => panic! "prepMergeRootsInput: expected two Yun components"
     | none => panic! "prepMergeRootsInput: component root construction failed"
   | none => panic! "prepMergeRootsInput: irreducibility check failed"
@@ -1068,11 +1066,13 @@ Attribution rule. The linear Yun component seeds the list, then `n` roots
 from the degree-`n` component are merged. Candidate `k` performs one rational
 gcd against the linear component and `k` same-polynomial isolation comparisons.
 The gcd of a degree-`2n` norm eliminant and a linear polynomial takes `O(n)`
-rational coefficient operations, while the same-polynomial comparisons are
-constant-time square intersection tests. Summed over all candidates, both
-parts are `O(n²)` coefficient/square operations. The fixture computes Yun,
-norm eliminants, isolation, and disambiguation before timing begins. -/
-setup_benchmark runMergeRootListLadder n => n ^ 2
+rational coefficient operations. The eliminant coefficients have
+`O(n log n)`-bit height, represented here by one `log₂(n) + 1` limb-growth
+factor. The same-polynomial comparisons are constant-time square intersection
+tests, so the `n` cross-component gcds give the declared
+`n² (log₂(n + 2) + 1)` ceiling. The fixture computes Yun, norm eliminants,
+isolation, and disambiguation before timing begins. -/
+setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
   with prep := prepMergeRootsInput
   where {
     paramFloor := 2
@@ -1096,20 +1096,21 @@ rational-gcd guard measured by `runMergeRootListLadder` makes those coprime
 comparisons quadratic lower-order work. The repaired profile puts 92.94% in
 `componentRoots?` and 85.01% in `isolate`, so the degree-`d = 2n` norm
 eliminant's separation-depth isolation supplies the ceiling again. Following
-the HexRoots wall-model convention, its `d⁵` degree shape suppresses
-polylogarithms; this registration retains one conservative
-`log₂(d) + 1` limb-growth proxy. Constants in `d = 2n` drop out, giving
-`n⁵ (log₂(n + 2) + 1)`. The shared double-resultant evaluation eliminant
-remains unisolated and was below profile resolution. -/
-setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2) + 1)
+the original derivation, its `O(d³ B²)` isolation cost with
+`tau, B = O(d log d)` gives `O(d⁵ log² d)`. Constants in `d = 2n` drop out,
+giving `n⁵ log² n`. The shared double-resultant evaluation eliminant remains
+unisolated and was below profile resolution. -/
+setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
     -- Degree 1 leaves the norm eliminant linear, so that rung measures the
     -- Yun and embedding prelude rather than the degree-`2n` isolation the
-    -- model declares; the ladder starts at 2 and reaches 8.
+    -- model declares. With duplicate exactification removed, degree 12 is
+    -- reachable and gives the post-warmup ladder the two octaves needed for
+    -- `fitSlope` rather than the narrow-range fallback.
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 900.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
