@@ -275,6 +275,27 @@ def DivPlan.ofNonzero {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
       dsimp [reciprocal]
       exact reciprocalWith_eq mul _ u }
 
+/-- A field division plan retains its supplied divisor. -/
+@[simp] theorem DivPlan.divisor_ofNonzero {F : Type u} [DecidableEq F]
+    [Lean.Grind.Field F] (mul : MulPlan F) (q : DensePoly F) (hqne : q ≠ 0)
+    (capacity : Nat) :
+    (DivPlan.ofNonzero mul q hqne capacity).divisor = q := by
+  rfl
+
+/-- A field division plan retains its supplied multiplication plan. -/
+@[simp] theorem DivPlan.mul_ofNonzero {F : Type u} [DecidableEq F]
+    [Lean.Grind.Field F] (mul : MulPlan F) (q : DensePoly F) (hqne : q ≠ 0)
+    (capacity : Nat) :
+    (DivPlan.ofNonzero mul q hqne capacity).mul = mul := by
+  rfl
+
+/-- A field division plan retains its supplied capacity. -/
+@[simp] theorem DivPlan.capacity_ofNonzero {F : Type u} [DecidableEq F]
+    [Lean.Grind.Field F] (mul : MulPlan F) (q : DensePoly F) (hqne : q ≠ 0)
+    (capacity : Nat) :
+    (DivPlan.ofNonzero mul q hqne capacity).capacity = capacity := by
+  rfl
+
 /-- Quotient obtained from a cached reversed reciprocal. -/
 def DivPlan.quotient (plan : DivPlan R) (p : DensePoly R)
     (_hcap : quotientLength p plan.divisor ≤ plan.capacity) : DensePoly R :=

@@ -160,9 +160,57 @@ structure DivisionInput where
 instance : Hashable DivisionInput where
   hash input := mixHash (hash input.dividend.toArray) (hash input.divisor.toArray)
 
+/-- One dividend paired with a reciprocal plan prepared outside timing. -/
+structure CachedDivisionInput where
+  dividend : DensePoly Rat
+  plan : Option (DivPlan Rat)
+
+/-- A fixed divisor reused across several dividends. -/
+structure RepeatedDivisionInput where
+  dividends : Array (DensePoly Rat)
+  divisor : DensePoly Rat
+  plan : Option (DivPlan Rat)
+
+instance : Hashable CachedDivisionInput where
+  hash input := mixHash (hash input.dividend.toArray) <| match input.plan with
+    | none => 0
+    | some plan => hash plan.divisor.toArray
+
+instance : Hashable RepeatedDivisionInput where
+  hash input := mixHash
+    (input.dividends.foldl (fun acc p => mixHash acc (hash p.toArray)) 0)
+    (hash input.divisor.toArray)
+
+private def divisionDividend (n salt : Nat) : DensePoly Rat :=
+  ofList ((List.range (2 * n + 1)).map fun i => (coeff i salt : Rat))
+
+private def divisionDivisor (n : Nat) : DensePoly Rat :=
+  ofList (((List.range n).map fun i => (coeff i 47 : Rat)) ++ [1])
+
 def prepDivision (n : Nat) : DivisionInput :=
-  { dividend := ofList ((List.range (2 * n + 1)).map fun i => (coeff i 31 : Rat))
-    divisor := ofList (((List.range n).map fun i => (coeff i 47 : Rat)) ++ [1]) }
+  { dividend := divisionDividend n 31
+    divisor := divisionDivisor n }
+
+private def cachedPlan? (divisor : DensePoly Rat) (capacity : Nat) :
+    Option (DivPlan Rat) :=
+  if h : divisor = 0 then
+    none
+  else
+    some (DivPlan.ofNonzero (karatsubaPlan 32) divisor h capacity)
+
+def prepCachedDivision (n : Nat) : CachedDivisionInput :=
+  let input := prepDivision n
+  let capacity := quotientLength input.dividend input.divisor
+  { dividend := input.dividend
+    plan := cachedPlan? input.divisor capacity }
+
+def prepRepeatedDivision (n : Nat) : RepeatedDivisionInput :=
+  let divisor := divisionDivisor n
+  let dividends := (Array.range 8).map fun i => divisionDividend n (31 + i * 13)
+  let capacity := 2 * n + 1
+  { dividends
+    divisor
+    plan := cachedPlan? divisor capacity }
 
 private def checksumRat (p : DensePoly Rat) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
@@ -175,6 +223,30 @@ def runLongDivision (input : DivisionInput) : UInt64 :=
 
 def runNewtonDivision (input : DivisionInput) : UInt64 :=
   checksumDiv (divModWith (karatsubaPlan 32) input.dividend input.divisor)
+
+def runCachedDivision (input : CachedDivisionInput) : UInt64 :=
+  match input.plan with
+  | none => 0
+  | some plan =>
+      if hcap : quotientLength input.dividend plan.divisor ≤ plan.capacity then
+        checksumDiv (plan.divMod input.dividend hcap)
+      else
+        0
+
+def runRepeatedNewtonDivision (input : RepeatedDivisionInput) : UInt64 :=
+  input.dividends.foldl (fun acc dividend =>
+    mixHash acc <| checksumDiv
+      (divModWith (karatsubaPlan 32) dividend input.divisor)) 0
+
+def runRepeatedCachedDivision (input : RepeatedDivisionInput) : UInt64 :=
+  match input.plan with
+  | none => 0
+  | some plan =>
+      input.dividends.foldl (fun acc dividend =>
+        if hcap : quotientLength dividend plan.divisor ≤ plan.capacity then
+          mixHash acc (checksumDiv (plan.divMod dividend hcap))
+        else
+          acc) 0
 
 structure GcdInput where
   left : DensePoly F2
@@ -439,6 +511,46 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["division", "newton", "cold"]
+  }
+
+/- Reciprocal construction is hoisted into `prep`; the timed body performs
+only the quotient low product and reconstruction product. -/
+setup_benchmark runCachedDivision n => n * Nat.sqrt n
+  with prep := prepCachedDivision
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "cached-divisor", "warm-plan"]
+  }
+
+/- Eight dividends share one fixed reciprocal. This separates amortized plan
+reuse from the one-shot comparison above. -/
+setup_benchmark runRepeatedNewtonDivision n => 8 * n * Nat.sqrt n
+  with prep := prepRepeatedDivision
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "repeated", "cold-plan"]
+  }
+
+setup_benchmark runRepeatedCachedDivision n => 8 * n * Nat.sqrt n
+  with prep := prepRepeatedDivision
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "repeated", "warm-plan"]
   }
 
 setup_benchmark runSkewLongDivision n => n ^ 2

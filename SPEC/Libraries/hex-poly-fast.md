@@ -335,6 +335,24 @@ precision `k` is available and `O(M(k))` including construction, since the
 doubling steps form a geometric series for every supported multiplication
 plan.
 
+The cached-divisor crossover is measured separately from one-shot reciprocal
+construction. Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean
+`4.34.0-rc2`, give the following rational-polynomial medians for a dividend
+with `2n + 1` coefficients and a divisor with `n + 1` coefficients:
+
+| `n` | long division | cached Newton division |
+|---:|---:|---:|
+| 256 | 36.891 ms | 42.504 ms |
+| 512 | 177.681 ms | 163.155 ms |
+| 1024 | 881.427 ms | 648.437 ms |
+| 2048 | 5.158 s | 2.875 s |
+
+Thus an already-cached divisor crosses between 256 and 512 coefficients. For
+eight dividends sharing one divisor, cached medians at `n = 128, 256, 512`
+are 98.102 ms, 335.285 ms, and 1.303 s, versus 290.340 ms, 954.347 ms, and
+3.451 s when rebuilding the reciprocal for every dividend. Reproduce the
+boundary with `lake exe hexpolyfast_bench compare Hex.PolyFastBench.runLongDivision Hex.PolyFastBench.runCachedDivision --param-floor 256 --param-ceiling 1024 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`.
+
 ## Half-gcd
 
 The half-gcd implementation uses a dedicated four-polynomial transformation

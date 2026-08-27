@@ -115,9 +115,17 @@ private def ratA : DensePoly Rat :=
 
 private def ratB : DensePoly Rat := ofList [2, -3, 5]
 
+private def cachedRatPlan : DivPlan Rat :=
+  DivPlan.ofNonzero (karatsubaPlan 2) ratB (by decide)
+    (quotientLength ratA ratB)
+
 #guard divModWith (karatsubaPlan 2) ratA ratB = divMod ratA ratB
 #guard divModWith (karatsubaPlan 2) ratA 0 = (0, ratA)
 #guard divModWith (karatsubaPlan 2) (ratA * ratB) ratB = (ratA, 0)
+#guard cachedRatPlan.divMod ratA (by
+    simp [cachedRatPlan]) = divMod ratA ratB
+#guard cachedRatPlan.mod ratA (by
+    simp [cachedRatPlan]) = (divMod ratA ratB).2
 
 private def treeLeaves : Array (DensePoly Int) :=
   #[ofList [1, 1], ofList [2, 1], ofList [3, 1], ofList [4, 1], ofList [5, 1]]
