@@ -34,6 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # The release-manifest admission check reads release-sync-baseline.
           fetch-depth: 0
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
@@ -43,7 +44,10 @@ jobs:
         run: |
           python3 -m unittest scripts/test_check_dag.py
           python3 scripts/check_dag.py
-      - run: python3 scripts/release/check_released_manifest.py
+      - name: Check the released manifest and Phase-7 admission state
+        run: |
+          python3 -m unittest scripts/release/test_check_released_manifest.py
+          python3 scripts/release/check_released_manifest.py
       - name: Check the manual's released/unreleased split matches released.yml
         run: python3 scripts/release/check_manual_split.py
       - run: python3 -m unittest scripts/release/test_sync_released.py
