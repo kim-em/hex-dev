@@ -65,4 +65,10 @@ theorem replay256 : checkPrime cert256 = true := by decide +kernel
 
 theorem replay511 : checkPrime cert511 = true := by decide +kernel
 
+/-- The cube-root checker arm also replays through the kernel-facing closure. -/
+theorem replayPock3 :
+    checkPrime
+      (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true := by
+  decide +kernel
+
 end HexBench.PrimalityKernel

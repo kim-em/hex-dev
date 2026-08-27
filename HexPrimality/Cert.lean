@@ -27,12 +27,14 @@ every child certificate. The prime of each factor entry is not stored; it is
 read off as the child certificate's subject, which removes a redundancy an
 attacker could otherwise exploit.
 
-The checker-owned definitions are `@[expose]` and structurally recursive.
-An accepted certificate therefore replays by kernel reduction alone through
-`HexArith.powModNat` (the kernel-facing specification whose `@[csimp]` twin
-takes the Montgomery path at runtime), core `Nat.gcd` and `Nat.mod`, and the
-table's exposed binary search. `prime_of_checkPrime` proves soundness of both
-Pocklington arms; per the SPEC, no certificate-existence,
+The checker-owned definitions are `@[expose]` and structurally recursive. The
+replay closure runs through `HexArith.powModNat` (the kernel-facing
+specification whose `@[csimp]` twin takes the Montgomery path at runtime),
+core `Nat` arithmetic including `Nat.gcd`, `Nat.mod`, and `Nat.div`, and the
+table's exposed binary search. The `decide +kernel` probes in
+`HexBench.PrimalityKernel` confirm that accepted certificates in both
+Pocklington forms replay by kernel reduction alone. `prime_of_checkPrime`
+proves soundness of both arms; per the SPEC, no certificate-existence,
 checker-completeness, or search-completeness claim accompanies it.
 -/
 
