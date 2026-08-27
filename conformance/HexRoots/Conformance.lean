@@ -23,6 +23,7 @@ Disc containment and geometry are checked in exact `Rat` arithmetic via
 Covered operations:
 - `isolate` — all-atoms driver for squarefree inputs.
 - `isolateAll?` — worklist driver returning atoms and clusters.
+- `isolateOne?` — local single-atom certification from a selected square.
 - `DyadicRootIsolation.refineTo?` — precision refinement of one atom.
 - `RefinedIsolation.sameRoot` — root identity up to isolation.
 - `witnessCheck` / `witness` — three-radius strong Pellet certificate.
@@ -45,6 +46,8 @@ Covered properties:
   exactly one atom of another);
 - a non-squarefree input keeps its multiple root as a `k = 2` cluster rather
   than atomizing it;
+- `isolateOne?` returns one refined atom from the selected region without a
+  complete root family;
 - `refineTo?` reaches the requested precision and preserves the root (the old
   and new discs still meet), can emit before the full global prefix when its
   singleton result is already ready, and succeeds for a simple selected root
@@ -285,6 +288,18 @@ squarefree fixtures return all atoms. -/
             isolateAll? linear 8 #[Component.cauchy linear h] else none) with
     | some rs => rs.size == 1
     | none => false)
+
+/-! # `isolateOne?`: local single-root certification. -/
+
+-- A coarse square around the root `1` is certified and refined to the
+-- requested precision without constructing the atoms at `2` and `-3`.
+#guard
+  (match isolateOne? rat1 32 ⟨1, 0, 4⟩ with
+    | some r => 32 ≤ r.1.square.prec && discCovers r.1.square 1 0
+    | none => false)
+
+-- A region far from every root is exhausted without producing a certificate.
+#guard (isolateOne? rat1 32 ⟨100, 100, 4⟩).isNone
 
 /-! # `refineTo?` and `sameRoot`.
 

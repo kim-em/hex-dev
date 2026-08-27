@@ -12,8 +12,8 @@ public import HexRoots.SimpleRoot
 public section
 
 /-!
-The end-to-end drivers `isolateAll?` and `isolate`, thin wrappers over the
-shared `isolateLoop`.
+The end-to-end drivers `isolateAll?`, `isolate`, and `isolateOne?`, thin
+wrappers over the shared refinement loops.
 
 `isolateAll?` globally refines and reglues an arbitrary worklist through
 `completenessDepth`, then continues until every component certifies at prec
@@ -24,6 +24,11 @@ polynomials with only simple roots: it starts from `Component.cauchy`, uses
 `target := max atom_prec (separationDepth p)`, and requires every result to
 be an atom, pinning the degenerate inputs (nonzero constant to `some #[]`,
 zero polynomial to `none`).
+
+`isolateOne?` starts from a caller-selected square and returns the first atom
+found there, refined only to the precision needed by `SimpleRoot`. Its atom
+certificate says that one region contains exactly one simple root, so it does
+not pay for a complete pairwise-disjoint family.
 -/
 namespace Hex
 
@@ -62,6 +67,20 @@ emission condition was not reached within that fuel bound. -/
     (isolateAll? p target #[Component.cauchy p hd] strategy).bind fun rs =>
       rs.mapM Certified.asAtom?
   else if p.size = 0 then none else some #[]
+
+/-- Find one simple root in a caller-selected square and refine its atom to at
+    least `max atomPrec (mahlerPrec p)`. This is a deliberately local search:
+    unlike {name}`Hex.isolate`, it neither certifies every root nor establishes
+    pairwise disjointness against roots outside the returned atom. The
+    self-contained {name}`Hex.AtomCertificate` is exactly the weaker fact
+    needed by {name}`Hex.SimpleRoot.mk`. `none` means the selected region was
+    exhausted or the bounded search did not find an atom. -/
+@[expose] def isolateOne? (p : ZPoly) (atomPrec : Int) (seed : DyadicSquare)
+    (strategy : AtomStrategy := .nkThenPellet) : Option (RefinedIsolation p) := do
+  let target := max atomPrec (mahlerPrec p : Int)
+  let iso ← findAtomLoop p target strategy (fuelFor p target seed.prec)
+    #[{ squares := #[seed], candidateK := 1 }]
+  iso.toRefined?
 
 /-- Refine a refined isolation, staying in the refined type and returning
     the proof that the result isolates the same root. The refinement target

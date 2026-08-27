@@ -35,6 +35,12 @@ pass, preserving Newton's logarithmic precision growth. If that pass cannot
 emit exactly one target-ready atom, `refineLoop` restarts from the original
 atom and uses the same globally reglued prefix as the full driver; subdivision
 can split even a single starting square into sibling survivor lineages.
+
+`findAtomLoop` starts instead from an uncertified caller-selected square. It
+searches only that region and stops as soon as any component certifies as an
+atom, then hands that atom to the ordinary one-atom refiner. The returned
+certificate is self-contained, so this path needs neither all roots nor a
+pairwise-disjoint output family.
 -/
 namespace Hex
 
@@ -259,6 +265,43 @@ all-atoms fast path in the full isolation driver. -/
       | _ => none
     else none
   | none => none
+
+/-- Find the first atom among a round's certification attempts. Array order
+    makes the choice deterministic; clusters and failures are skipped. -/
+@[expose] def firstAtom? {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) :
+    Option (DyadicRootIsolation p) :=
+  tried.toList.findSome? fun t => match t.2 with
+    | some (.atom iso) => some iso
+    | _ => none
+
+/-- Refine every component of a one-atom search round. A certified cluster is
+    re-entered through its tighter certified region when that makes progress;
+    otherwise it, and every failed component, is subdivided locally. -/
+@[expose] def nextAtomSearch {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Array Component :=
+  tried.flatMap fun t => match t with
+    | (c, some result) =>
+      let c' := result.toComponent
+      if c.prec < c'.prec then #[c'] else c.refine1 p
+    | (c, none) => c.refine1 p
+
+/-- Search a caller-selected region for one certified simple root, then refine
+    that atom to `target`. Unlike `isolateLoop`, this loop does not construct a
+    complete, pairwise-disjoint family: an atom certificate already states
+    that its own region contains exactly one simple root. Consequently a
+    successful result is sound without examining or refining any other root.
+    `none` means the region was exhausted or no atom was found within fuel. -/
+@[expose] def findAtomLoop (p : ZPoly) (target : Int)
+    (strategy : AtomStrategy) :
+    Nat → Array Component → Option (DyadicRootIsolation p)
+  | 0, _ => none
+  | fuel + 1, work =>
+    if work.isEmpty then none else
+    let tried := IsolationLoop.attempts p strategy work
+    match firstAtom? tried with
+    | some iso => refineAtom? iso target strategy
+    | none => findAtomLoop p target strategy fuel (nextAtomSearch tried)
 
 namespace IsolationLoop
 
