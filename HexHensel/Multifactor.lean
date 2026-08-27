@@ -8,6 +8,7 @@ module
 
 public import HexBasic
 public import HexHensel.Linear
+public import HexPolyFast.Tree
 
 public section
 
@@ -25,6 +26,33 @@ namespace Array
 @[expose]
 def polyProduct (factors : Array Hex.ZPoly) : Hex.ZPoly :=
   factors.foldl (· * ·) 1
+
+/-- Smallest measured factor count at which the balanced integer product tree
+beats the retained left fold on the Hensel linear-factor family. -/
+@[expose] def treeProductMin : Nat := 8
+
+/-- Exclusive end of the measured winning interval.  At 1024 linear factors
+the left fold is reproducibly faster and also uses substantially less memory. -/
+@[expose] def treeProductLimit : Nat := 1024
+
+/-- Compiled ordered-product dispatcher.  The balanced tree is selected only
+on the measured winning interval; both branches preserve the exact ordered
+product observed by `polyProduct`. -/
+def polyProductImpl (factors : Array Hex.ZPoly) : Hex.ZPoly :=
+  if treeProductMin ≤ factors.size && factors.size < treeProductLimit then
+    (Hex.DensePoly.ProductTree.build Hex.ZPoly.fastPlan factors).root
+  else
+    factors.foldl (· * ·) 1
+
+/-- The compiled product-tree dispatch is extensionally the specified ordered
+left fold, independently of its measured crossover constants. -/
+@[csimp] theorem polyProduct_eq_impl : @polyProduct = @polyProductImpl := by
+  funext factors
+  unfold polyProductImpl
+  split
+  · exact (Hex.DensePoly.ProductTree.root_build_eq_foldl
+      Hex.ZPoly.fastPlan factors).symm
+  · rfl
 
 end Array
 

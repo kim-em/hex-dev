@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.BenchOracle.Flint
+import HexPolyFast.Tree
 import HexHensel.Multifactor
 import HexHensel.Quadratic
 import HexHensel.QuadraticMultifactor
@@ -26,7 +27,11 @@ Scientific registrations:
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
 * `runHenselLiftChecksum`: iterative linear lift over `(n, k)`, `O(n^2 k)`.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
-* `runPolyProductChecksum`: ordered product of `n` linear factors, `O(n^2)`.
+* `runPolyProductChecksum`: public ordered-product dispatcher, with a
+  conservative `O(n^2)` upper bound.
+* `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
+* `runPolyProductTreeChecksum`: the same ordered product through a balanced
+  tree and `ZPoly.fastPlan`, `O(M(n) log n)`.
 * `runMultifactorLiftChecksum`: two-factor ordered lift over `(n, k)`,
   `O(n^2 k)`.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
@@ -278,6 +283,15 @@ def runQuadraticHenselStepChecksum (input : QuadraticInput) : UInt64 :=
 /-- Benchmark target: ordered product of prepared integer-polynomial factors. -/
 def runPolyProductChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPoly <| Array.polyProduct input.factors
+
+/-- Benchmark comparator: the retained ordered left fold without dispatch. -/
+def runPolyProductFoldChecksum (input : MultifactorInput) : UInt64 :=
+  checksumZPoly <| input.factors.foldl (· * ·) 1
+
+/-- Benchmark candidate: the same ordered product through a balanced tree and
+the proved integer fast-multiplication plan. -/
+def runPolyProductTreeChecksum (input : MultifactorInput) : UInt64 :=
+  checksumZPoly <| (DensePoly.ProductTree.build ZPoly.fastPlan input.factors).root
 
 /-- Benchmark target: ordered multifactor lift of two prepared factors. -/
 def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
@@ -635,8 +649,8 @@ setup_benchmark runQuadraticHenselStepChecksum n => n * n
   }
 
 /-
-Left-folding `n` linear factors grows the accumulator degree one step at a
-time, giving a quadratic total number of coefficient operations.
+The public dispatcher is never slower asymptotically than its retained
+left-fold fallback, giving a conservative quadratic upper bound.
 -/
 setup_benchmark runPolyProductChecksum n => n * n
   with prep := prepProductInput
@@ -647,6 +661,42 @@ setup_benchmark runPolyProductChecksum n => n * n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/-
+Left-folding `n` linear factors grows the accumulator degree one step at a
+time, giving a quadratic total number of coefficient operations.  This is the
+explicit comparator retained on both sides of the product-tree interval.
+-/
+setup_benchmark runPolyProductFoldChecksum n => n * n
+  with prep := prepProductInput
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multifactor", "product", "left-fold", "retained"]
+  }
+
+/-
+The balanced tree has `log n` levels and total work `O(M(n) log n)`.  The
+integer plan's packed multiplication is quasi-linear over these fixed-width
+linear leaves; `n * log² n` is the conservative integer-valued model.  This
+registration shares every fixture and rung with the retained left fold so its
+result hash and end-to-end crossover gate a compiled replacement.
+-/
+setup_benchmark runPolyProductTreeChecksum n => n * (Nat.log2 (n + 1) + 1) ^ 2
+  with prep := prepProductInput
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multifactor", "product", "balanced-tree", "candidate"]
   }
 
 /-
