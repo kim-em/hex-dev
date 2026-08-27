@@ -950,7 +950,7 @@ libraries:
         - name: qadjoin-arithmetic
           description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
         - name: lazy-arithmetic
-          description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
+          description: Sum-eliminant construction across the degree-varying family; a canonical end-to-end lazy addition pairing the first root of X^6 - 2 with sqrt(3) at degree product 12; plus the fixed isolation and operation-ball selection components. The archived performance sweep characterises degree products through the studied merge-facing ceiling 20 without retaining an unsupported asymptotic registration.
         - name: exactification-selection
           description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
         - name: exactification-certification
