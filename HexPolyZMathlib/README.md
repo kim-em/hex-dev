@@ -7,9 +7,9 @@ with spec-driven development.
 This package supplies Mathlib semantics and analytic bounds for its
 computational counterpart,
 [`hex-poly-z`](https://github.com/leanprover/hex-poly-z). It depends on
-`hex-hensel`, `hex-poly-mathlib`, `hex-mod-arith-mathlib`, and Mathlib. It
-identifies `Hex.ZPoly` with `Polynomial ℤ` and provides the proofs shared by
-integer factorization and certified root isolation.
+`hex-poly-z`, `hex-hensel`, `hex-poly-mathlib`, `hex-mod-arith-mathlib`, and
+Mathlib. It identifies `Hex.ZPoly` with `Polynomial ℤ` and provides the proofs
+shared by integer factorization and certified root isolation.
 
 # Quickstart
 
@@ -43,7 +43,7 @@ example (f : Hex.ZPoly) :
   squarefreeness.
 - `mignotte_bound`, `one_le_mahlerDist`, and the discriminant, Hadamard, and
   Robinson-form APIs provide the analytic results used downstream.
-- `PolyParse` supplies shared elaboration-time polynomial parsing.
+- `PolyParse.parsePoly` supplies shared elaboration-time polynomial parsing.
 
 # Verification
 

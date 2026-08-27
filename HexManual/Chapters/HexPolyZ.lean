@@ -69,6 +69,12 @@ analogue of normalizing to a monic polynomial over a field.
 
 {docstring Hex.ZPoly.Primitive}
 
+The decidable {name}`Hex.ZPoly.SquareFreeRat` predicate tests whether
+the executable rational gcd of a polynomial and its derivative has
+size at most one.
+
+{docstring Hex.ZPoly.SquareFreeRat}
+
 A related substitution, used when transferring a factor of a monic
 transform back to the original polynomial, scales the variable rather
 than the polynomial.
@@ -132,6 +138,11 @@ being coprime modulo `p`.
 {docstring Hex.ZPoly.congr}
 
 {docstring Hex.ZPoly.coprimeModP}
+
+{name}`Hex.ZPoly.modP` reduces an integer polynomial coefficientwise to
+an executable polynomial over {name}`Hex.ZMod64`.
+
+{docstring Hex.ZPoly.modP}
 
 The congruence is an equivalence relation and is compatible with the
 ring operations, so Hensel-step reasoning can rewrite under it.
@@ -299,6 +310,10 @@ changing their meaning.
 
 {docstring HexPolyZMathlib.equiv}
 
+{docstring HexPolyZMathlib.toPolynomial_zero}
+
+{docstring HexPolyZMathlib.toPolynomial_one}
+
 {docstring HexPolyZMathlib.toPolynomial_C}
 
 {docstring HexPolyZMathlib.toPolynomial_add}
@@ -309,9 +324,10 @@ changing their meaning.
 
 {docstring HexPolyZMathlib.toPolynomial_sub}
 
-The following live example illustrates the usual proof pattern: cross
-to `Polynomial ℤ`, use the simplification rules supplied by the bridge,
-and cross back only if executable data is needed again.
+The example below illustrates the usual proof pattern. Convert to
+`Polynomial ℤ`, use the simplification rules supplied by
+`HexPolyZMathlib`, and convert back only if executable data is needed
+again.
 
 ```lean
 open HexPolyZMathlib
@@ -334,11 +350,11 @@ end HexPolyZChapterCorrespondence
 tag := "hex-poly-z-mathlib-transports"
 %%%
 
-The bridge also names the transports that do not follow from the ring
-equivalence alone. The Mathlib-free unit predicate agrees with
-`IsUnit`; variable dilation becomes composition by `C c * X`; and the
-executable content and primitive-part decomposition becomes Mathlib's
-Gauss decomposition.
+`HexPolyZMathlib` also names the transports that do not follow from the
+ring equivalence alone. The Mathlib-free unit predicate agrees with
+{name}`IsUnit`. Variable dilation becomes composition by `C c * X`.
+The executable content and primitive-part decomposition agrees with
+Mathlib's Gauss decomposition.
 
 {docstring HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit}
 
@@ -350,11 +366,12 @@ Gauss decomposition.
 
 {docstring HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive}
 
-Reduction modulo `p` crosses both representation boundaries: integer
-coefficients are reduced into executable `ZMod64 p` values, then
-identified with Mathlib's `ZMod p`. The coefficient theorem is the
-rewrite rule used to prove the extensional map theorem and to transport
-divisibility.
+{name}`Hex.ZPoly.modP` reduces integer coefficients into executable
+{name}`Hex.ZMod64` values. The coefficient theorem identifies them with
+the corresponding values in Mathlib's {name}`ZMod` type. It is the
+rewrite rule used to prove the extensional map theorem. Divisibility
+transports separately because {name}`Polynomial.map` preserves
+multiplication.
 
 {docstring HexPolyZMathlib.coeff_toZMod_modP_eq_coeff_map_intCast}
 
@@ -370,7 +387,7 @@ tag := "hex-poly-z-mathlib-correctness"
 The executable library computes a natural-number squared coefficient
 norm and a conservative integer bound. The companion identifies that
 norm with the square of the real `l2norm`, identifies the executable
-binomial coefficient with `Nat.choose`, and then applies Mathlib's
+binomial coefficient with {name}`Nat.choose`, and then applies Mathlib's
 Mahler-measure theory to prove Mignotte's coefficient bound for every
 factor of a nonzero integer polynomial.
 
@@ -382,12 +399,11 @@ factor of a nonzero integer polynomial.
 
 {docstring HexPolyZMathlib.mignotte_bound}
 
-The same boundary covers rational squarefreeness and the shared
-root-separation foundations. The executable gcd test is related to
-`Squarefree` after casting to `Polynomial ℚ`; discriminant,
-Hadamard, Robinson-form, and Mahler-separation theorems remain entirely
-on the Mathlib side for downstream certified factorization and root
-isolation proofs.
+`HexPolyZMathlib` also relates the executable rational squarefreeness
+test to Mathlib's {name}`Squarefree` predicate after casting to
+`Polynomial ℚ`. Its discriminant, Hadamard, Robinson-form, and
+Mahler-separation theorems remain entirely on the Mathlib side for
+downstream certified factorization and root isolation proofs.
 
 {docstring HexPolyZMathlib.squareFreeRat_iff}
 
