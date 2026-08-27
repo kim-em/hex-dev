@@ -877,9 +877,24 @@ use bounded Hex certificate search. The opt-in erasure is local to the
 module and does not persist when that module is imported.
 
 The `2^24` boundary comes from fresh one-goal modules on the pinned
-toolchain: trial division was ahead at six digits, the routes were mixed
-and input-dependent through seven digits, and the certificate route was
-ahead at the 25-bit edge. Mathlib's generated trial proof reaches the
+toolchain. Each arm was a fresh importing module containing only one
+`Nat.Prime` example. The trial arm used the ordinary Mathlib registration;
+the certificate arm invoked the opt-in with the threshold temporarily set to
+zero. Representative wall times in seconds were:
+
+| numeral | trial division | certificate |
+|---:|---:|---:|
+| 100003 | 1.7 | 2.1 |
+| 300007 | 1.4 | 1.0 |
+| 1000003 | 1.6 | 1.7 |
+| 3000017 | 1.5 | 3.6 |
+| 10000019 | 3.1 | 3.4 |
+| 30000001 | 3.4 | 3.5 |
+| 33554467 | 2.4 | 1.7 |
+
+These are policy measurements rather than a Phase-4 performance verdict:
+they establish the crossover region while exposing that certificate search
+is input-dependent. Mathlib's generated trial proof also reaches the pinned
 default kernel recursion limit on the 31-bit Mersenne prime. Choosing the
 power-of-two boundary keeps the full 24-bit range on the simpler route and
 puts every 25-bit input on the bounded route. If certificate production or

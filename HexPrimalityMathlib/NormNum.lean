@@ -23,11 +23,11 @@ own choice.
 
 The threshold is `2^24`. Fresh one-goal modules under the pinned toolchain
 showed trial division ahead at six digits, mixed input-dependent results
-through seven digits, and the certificate route ahead at the 25-bit edge;
-Mathlib's generated trial proof exceeds the default kernel recursion depth
-on the 31-bit Mersenne prime. The power-of-two policy keeps all inputs with
-at most 24 bits on trial division and sends every larger input to the
-bounded certificate route.
+through low eight digits, and the certificate route ahead at the 25-bit edge;
+the measurement table is recorded in the library SPEC. Mathlib's generated
+trial proof exceeds the default kernel recursion depth on the 31-bit Mersenne
+prime. The power-of-two policy keeps all inputs with at most 24 bits on trial
+division and sends every larger input to the bounded certificate route.
 
 Above the threshold, a positive verdict emits a reified Pocklington
 certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
@@ -74,6 +74,8 @@ verdicts at and above `natPrimeCertThreshold`. -/
         match f.stop with
         | .exhausted => failure
         | .composite =>
+            -- Keep the advertised negative contract factor-backed: the
+            -- Miller--Rabin verdict selects this branch but is not emitted.
             match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n') 16 with
             | .ok (d, _) =>
                 unless 1 < d && d < n' && n' % d == 0 do failure
@@ -115,7 +117,9 @@ certificate tier, so exhaustion there cannot start a large trial search. -/
     Mathlib.Meta.NormNum.NormNumExt where
   eval {_ _} e := do
     let .app (.const `Nat.Prime _) (n : Q(ℕ)) ← whnfR e | failure
-    let some n' ← getNatValue? n | failure
+    let derived ← deriveNat n q(Nat.instAddMonoidWithOne)
+    let nn := derived.1
+    let n' := nn.natLit!
     if n' < natPrimeCertThreshold then
       Mathlib.Meta.NormNum.evalNatPrime.eval e
     else

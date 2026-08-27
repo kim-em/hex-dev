@@ -26,7 +26,7 @@ Covered properties:
 - the default registration remains Mathlib's and the opt-in is per module
 - Mathlib's existing `DecidablePred Nat.Prime` instance remains selected
 
-Covered cases:
+Covered edge cases:
 
 - typical small prime and composite inputs
 - edge inputs `0`, `1`, and both sides of the `2^24` threshold
@@ -34,8 +34,6 @@ Covered cases:
 - a strong pseudoprime as an adversarial negative input
 - composite and non-literal tactic failures
 -/
-
-open Hex.PrimalityTactic
 
 -- Ordinary imports retain pinned Mathlib's registration and small-number behavior.
 example : Nat.Prime 101 := by norm_num
@@ -45,6 +43,7 @@ example : ¬ Nat.Prime 100 := by norm_num
 error: (kernel) deep recursion detected, use `set_option maxRecDepth <num>` to increase the limit
 -/
 #guard_msgs in
+set_option maxRecDepth 1000 in
 example : Nat.Prime 2147483647 := by norm_num
 
 -- The bare tactic supports both predicates independently of `norm_num` registration.
