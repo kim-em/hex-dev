@@ -613,10 +613,11 @@ proxy used by the HexResultant registrations, so the declared wall model is
 setup_benchmark runAddEliminantLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepEliminantInput
   where {
-    -- The chain's per-step integer payloads only clear a machine word past
-    -- degree 8, so rungs below that read the small-integer regime rather than
-    -- the declared one; the ladder starts at 8 and runs to 256 to fit the
-    -- model over the range where its limb term is the operative cost.
+    -- The old `4 .. 64` schedule left three contributing rungs, all with
+    -- sub-millisecond calls, and its fitted `C` had not settled (178 .. 321,
+    -- beta = +0.258). Extending to 256 puts four decades of work under the
+    -- fit and flattens `C` to 144 .. 166 at beta = +0.015 against the same
+    -- declared model.
     paramFloor := 8
     paramCeiling := 256
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
@@ -808,8 +809,8 @@ setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
     -- Degree 1 leaves the norm eliminant linear, so that rung measures the
-    -- Yun and embedding prelude rather than the isolation the model declares;
-    -- the ladder starts at 2 and reaches 8, where isolation is the whole cost.
+    -- Yun and embedding prelude rather than the degree-`2n` isolation the
+    -- model declares; the ladder starts at 2 and reaches 8.
     paramFloor := 2
     paramCeiling := 8
     paramSchedule := .custom #[2, 3, 4, 6, 8]
