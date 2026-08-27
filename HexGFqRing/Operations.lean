@@ -9,6 +9,7 @@ module
 public import Init.Grind.Ring.Basic
 public import HexModArith.Ring
 public import HexGFqRing.PolynomialQuotient
+public import HexPolyFp.NttMul
 
 public section
 
@@ -54,7 +55,7 @@ def add {f : FpPoly p} {hf : 0 < FpPoly.degree f}
 @[expose]
 def mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) : PolyQuotient f hf :=
-  ofPoly f hf (repr x * repr y)
+  ofPoly f hf (FpPoly.mulFast (repr x) (repr y))
 
 /-- Quotient negation reduces the coefficientwise additive inverse. -/
 @[expose]
@@ -311,8 +312,10 @@ theorem natCast_eq_natCast_iff_mod_eq
 /-- The canonical representative of a product reduces the product of representatives. -/
 @[simp, grind =] theorem repr_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
-    repr (x * y) = reduceMod f (repr x * repr y) :=
-  rfl
+    repr (x * y) = reduceMod f (repr x * repr y) := by
+  change reduceMod f (FpPoly.mulFast (repr x) (repr y)) =
+    reduceMod f (repr x * repr y)
+  rw [FpPoly.mulFast_eq]
 
 /-- The canonical representative of a negation reduces the negation of the representative. -/
 @[simp, grind =] theorem repr_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -593,7 +596,9 @@ form for multiplication through {name}`ofPoly`. -/
 @[simp, grind =] theorem repr_mul_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a * ofPoly f hf b) = reduceMod f (a * b) := by
-  change reduceMod f (reduceMod f a * reduceMod f b) = reduceMod f (a * b)
+  change reduceMod f (FpPoly.mulFast (reduceMod f a) (reduceMod f b)) =
+    reduceMod f (a * b)
+  rw [FpPoly.mulFast_eq]
   exact (reduceMod_mul_reduceMod_congr f a b).symm
 
 /-- Representative-level left-zero law used to build the quotient `Lean.Grind.Semiring`. -/

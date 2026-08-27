@@ -122,7 +122,7 @@ There is deliberately no typeclass for the plan. Plans are passed explicitly:
 ```lean
 namespace Hex.DensePoly
 
-structure MulPlan (R : Type u) [Zero R] [DecidableEq R]
+structure MulPlan (R : Type u) [DecidableEq R]
     [Lean.Grind.CommRing R] where
   /-- A complete normalized product. -/
   mul : DensePoly R → DensePoly R → DensePoly R
@@ -149,6 +149,11 @@ def mulLow (plan : MulPlan R) (len : Nat)
     (a b : DensePoly R) : DensePoly R :=
   plan.slice 0 len a b
 ```
+
+`Zero R` is derived from the commutative-ring numeral structure rather than
+accepted as an independent parameter.  This matters for normalized dense
+polynomials: a separately supplied `Zero` could disagree with the ring's
+additive identity, invalidating both trimming and Karatsuba subtraction.
 
 The proof fields are erased. Passing a plan does not move correctness into a
 runtime checker, and using a structure rather than a typeclass prevents a
@@ -205,6 +210,8 @@ and assembles `z0 + x^k z1 + x^(2k) z2`. The recursion:
 - stops at an explicit cutoff, including cutoff zero;
 - handles odd sizes without padding an observable trailing zero;
 - normalizes only once at the public `DensePoly` boundary;
+- orders schoolbook base cases so the shorter operand drives the coefficient
+  loop;
 - uses uniquely owned arrays for assembly rather than repeated append;
 - has a specialized square recursion, reusing the two equal halves rather
   than rediscovering equality inside the generic product;
@@ -243,12 +250,14 @@ the leading end first and zero-extends to exactly `n` entries:
 def reverseSeries (f : DensePoly R) (n : Nat) : TSeries R n
 
 theorem coeff_reverseSeries (f : DensePoly R) (n i : Nat) (hi : i < n) :
-    (reverseSeries f n).coeff i = f.coeff (f.size - 1 - i)
+    (reverseSeries f n).coeff i =
+      if i < f.size then f.coeff (f.size - 1 - i) else 0
 ```
 
-The theorem is accompanied by a range-aware form, because subtraction on
-`Nat` makes the displayed convenience statement useful only while
-`i < f.size`. `polyOfSeries` converts a fixed prefix back through
+The theorem is accompanied by a range form that removes the conditional under
+`i < f.size`.  The guard is essential: subtraction on `Nat` saturates at zero,
+so the unguarded right-hand side would read the constant coefficient rather
+than zero once `i` passes the leading end. `polyOfSeries` converts a fixed prefix back through
 `DensePoly.ofCoeffs`; its coefficient theorem, not structural array equality,
 is the bridge used by division proofs.
 
@@ -264,13 +273,30 @@ explicit inverse `u` of the constant coefficient. Under
 `TSeries.invOfUnit g u`. This library does not replace or redirect
 `TSeries.invOfUnit`.
 
+`seriesMulUpTo (karatsubaPlan 32)` is the dependency-safe generic Karatsuba
+path for callers already above `hex-poly-fast`; its agreement theorem is exact
+equality with `TSeries.mulUpTo`. The lower semiring-generic operation remains
+schoolbook. Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean
+`4.34.0-rc2`, give:
+
+| coefficients | coefficient type | `TSeries.mulUpTo` median | planned Karatsuba median |
+|---:|:---|---:|---:|
+| 4096 | `Int` | 102.388 ms | 1.040 s |
+| 4096 | `Rat` | 1.810 s | 1.884 s |
+| 8192 | `Rat` | 7.266 s | 6.961 s |
+
+The rational win at 8192 is comparable to the observed trial spread, while
+the integer plan loses decisively, so no implicit route changes. The complete
+registered ladder extends through 16384 coefficients. Reproduce a cell with
+`lake exe hexpolyfast_bench compare Hex.PolyFastBench.runSeriesSchoolbookRat Hex.PolyFastBench.runSeriesKaratsubaRat --param-floor 8192 --param-ceiling 8192 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1 --max-seconds-per-call 15`.
+
 ## Reusable fast division
 
 A reciprocal is worth caching whenever a fixed modulus divides many values,
 as in a remainder tree or quotient ring:
 
 ```lean
-structure DivPlan (R : Type u) [Zero R] [DecidableEq R]
+structure DivPlan (R : Type u) [DecidableEq R]
     [Lean.Grind.CommRing R] where
   divisor : DensePoly R
   capacity : Nat
@@ -279,7 +305,7 @@ structure DivPlan (R : Type u) [Zero R] [DecidableEq R]
   reciprocal_spec : ...
 
 def DivPlan.ofMonic (mul : MulPlan R) (q : DensePoly R)
-    (hq : Monic q) (capacity : Nat) : DivPlan R
+    (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) : DivPlan R
 
 def DivPlan.ofNonzero [Lean.Grind.Field R] (mul : MulPlan R)
     (q : DensePoly R) (hq : q ≠ 0) (capacity : Nat) : DivPlan R
@@ -311,13 +337,31 @@ precision `k` is available and `O(M(k))` including construction, since the
 doubling steps form a geometric series for every supported multiplication
 plan.
 
+The cached-divisor crossover is measured separately from one-shot reciprocal
+construction. Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean
+`4.34.0-rc2`, give the following rational-polynomial medians for a dividend
+with `2n + 1` coefficients and a divisor with `n + 1` coefficients:
+
+| `n` | long division | cached Newton division |
+|---:|---:|---:|
+| 256 | 36.891 ms | 42.504 ms |
+| 512 | 177.681 ms | 163.155 ms |
+| 1024 | 881.427 ms | 648.437 ms |
+| 2048 | 5.158 s | 2.875 s |
+
+Thus an already-cached divisor crosses between 256 and 512 coefficients. For
+eight dividends sharing one divisor, cached medians at `n = 128, 256, 512`
+are 98.102 ms, 335.285 ms, and 1.303 s, versus 290.340 ms, 954.347 ms, and
+3.451 s when rebuilding the reciprocal for every dividend. Reproduce the
+boundary with `lake exe hexpolyfast_bench compare Hex.PolyFastBench.runLongDivision Hex.PolyFastBench.runCachedDivision --param-floor 256 --param-ceiling 1024 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`.
+
 ## Half-gcd
 
 The half-gcd implementation uses a dedicated four-polynomial transformation
 record rather than depending on hex-matrix:
 
 ```lean
-structure GcdStep (R : Type u) [Zero R] [DecidableEq R] where
+structure GcdStep (R : Type u) [DecidableEq R] where
   a00 : DensePoly R
   a01 : DensePoly R
   a10 : DensePoly R
@@ -326,8 +370,11 @@ structure GcdStep (R : Type u) [Zero R] [DecidableEq R] where
 
 Its invariant states that applying the transformation to the input pair gives
 the current Euclidean pair and that the second component has crossed the
-requested degree boundary. Recursive high-half calls use middle products;
-the finishing steps use `divModWith`.
+requested degree boundary. Recursive calls operate on high halves;
+`applyFromHighWith` combines a cached high application with planned products
+of the low halves, and `composeLowWith` uses clipped products when composing
+transformations. The finishing steps use `divModWith`. `mulMiddleChecked` is
+the separately exposed canonical middle-product primitive.
 
 Expose `gcdWith`, `xgcdWith`, and `xgcdLeftWith`. Their acceptance theorem is
 exact executable agreement with `DensePoly.gcd`, `DensePoly.xgcd`, and
@@ -354,20 +401,39 @@ observations are its leaf sequence, root product, and the product represented
 by each node. Construction accepts general polynomial leaves; a point plan
 uses leaves `x - C point`.
 
-`EvalPlan` stores the point sequence, its product tree, and the reciprocal
-plans needed by the remainder tree. Reusing it for another polynomial does
-not rebuild products or reciprocals:
+`RemainderTree` accepts an ordered array of proof-carrying nonzero monic
+leaves. Its root caches the caller-supplied reciprocal capacity; each proper
+node caches exactly the sibling-subtree degree, the largest quotient length
+that can reach it after its parent reduction. `remainders?` returns `none`
+when the input exceeds the root capacity. On success, `remainders?_sound`
+supplies a `RemainderSpec`: the output
+has one entry per leaf in the original order, each leaf divides the difference
+between the input and its result, and every result has size strictly below its
+leaf divisor. The empty tree succeeds with an empty result.
+
+`EvalPlan` stores the point sequence and one indexed point-product tree carrying
+the reciprocal plans needed by evaluation and interpolation. Reusing it for
+another polynomial does not rebuild products or reciprocals. `treeView`
+explicitly rebuilds the separate level-oriented `ProductTree` observation when
+that representation is needed:
 
 ```lean
 def EvalPlan.build (mul : MulPlan R) (points : Array R) : EvalPlan R
 def EvalPlan.eval (plan : EvalPlan R) (f : DensePoly R) : Array R
+def EvalPlan.treeView (plan : EvalPlan R) : ProductTree R
 
 theorem EvalPlan.get_eval (plan : EvalPlan R) (f) (i) (hi : i < plan.size) :
     (plan.eval f)[i] = f.eval plan.points[i]
 ```
 
-Evaluation works over a commutative ring because every divisor in the point
-tree is monic. The empty point sequence produces an empty result.
+The cached remainder-tree path applies when `f.size <= plan.size`; this is the
+finite capacity determined when the plan is built. `EvalPlan.eval` remains
+total for larger inputs and uses direct pointwise evaluation in that case.
+This fallback is necessary because the signature accepts polynomials of
+unbounded size: no finite plan built from only the points can cache the
+unbounded reciprocal precision required to reduce every such input at the
+root. Evaluation works over a commutative ring because every divisor in the
+point tree is monic. The empty point sequence produces an empty result.
 
 Interpolation needs a field and distinct points. `InterpPlan.build?` returns
 `none` exactly when duplicate points are present. It reuses the point product,
@@ -378,9 +444,48 @@ value array to zero.
 
 Soundness states that the result has size at most the point count and evaluates
 to every supplied value. Uniqueness states that any polynomial of smaller
-degree with those values is equal to the result. Both construction and one
-evaluation/interpolation cost `O(M(n) log n)`; the reusable plan cost is
-reported separately.
+degree with those values is equal to the result. Construction, bounded-size
+evaluation, and interpolation cost `O(M(n) log n)`; the oversized
+direct-evaluation fallback costs `O(plan.size * f.size)`. The reusable plan
+cost is reported separately.
+
+Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`,
+give the following integer multipoint-evaluation medians for `n` coefficients
+at `n` points:
+
+| `n` | direct Horner | reused plan | cold plan |
+|---:|---:|---:|---:|
+| 256 | 7.378 ms | 30.602 ms | 73.527 ms |
+| 512 | 35.154 ms | 141.703 ms | 316.823 ms |
+| 1024 | 196.186 ms | 970.018 ms | 1.777 s |
+
+Reusing the same plan for eight polynomials still loses at the measured
+boundary: at `n = 256, 512`, direct Horner takes 58.137 ms and 273.181 ms,
+versus 243.688 ms and 1.152 s for the remainder tree. There is therefore no
+automatic multipoint-evaluation adoption for this integer workload. Reproduce
+the one-polynomial table with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runDirectEval Hex.PolyFastBench.runMultipointEval
+Hex.PolyFastBench.runColdMultipointEval --param-floor 256 --param-ceiling 1024
+--param-schedule doubling --cache-mode cold --outer-trials 3
+--signal-floor-multiplier 1`.
+
+For rational interpolation at distinct points, the corresponding medians are:
+
+| `n` | direct Lagrange | reused plan | cold plan |
+|---:|---:|---:|---:|
+| 8 | 148.931 us | 35.533 us | 145.636 us |
+| 16 | 1.186 ms | 162.831 us | 666.097 us |
+| 32 | 12.880 ms | 1.104 ms | 3.381 ms |
+
+The reused plan wins throughout these cells; including construction gives a
+clear win from 16 points. The warm `n = 8` cell had a 188% trial spread, but
+even its slowest trial remained below direct Lagrange. Reproduce the table
+with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runDirectInterpolation
+Hex.PolyFastBench.runPlannedInterpolation
+Hex.PolyFastBench.runColdInterpolation --param-floor 8 --param-ceiling 32
+--param-schedule doubling --cache-mode cold --outer-trials 3
+--signal-floor-multiplier 1`.
 
 ## Padé approximation
 
@@ -407,6 +512,25 @@ but every admissible denominator has zero constant coefficient.
 
 The declared cost is `O(M(m+n) log (m+n))` and the specification includes the
 zero series, `m = 0`, `n = 0`, and precision zero.
+
+The independent benchmark reference forms the classical normalized Hankel
+system for diagonal `[n/n]` approximation, solves it by dense rational
+Gauss-Jordan elimination, and agrees exactly with `pade?` on every common
+rung from 1 through 128. Three cold outer trials on `chungus2` (AMD EPYC
+9455), Lean `4.34.0-rc2`, give:
+
+| `n` | linear-algebra reference | half-gcd Padé |
+|---:|---:|---:|
+| 32 | 7.908 ms | 20.954 ms |
+| 64 | 83.094 ms | 109.469 ms |
+| 128 | 981.178 ms | 571.852 ms |
+
+The half-gcd path crosses between 64 and 128 for this rational-coefficient
+family. Reproduce the boundary with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runLinearPade Hex.PolyFastBench.runHalfGcdPade
+--param-floor 32 --param-ceiling 128 --param-schedule doubling --cache-mode
+cold --outer-trials 3 --signal-floor-multiplier 1
+--max-seconds-per-call 15`.
 
 ## Integer multiplication: multipoint Kronecker
 
@@ -550,10 +674,14 @@ banned.
 
 ## Conformance
 
-The new driver is `conformance/HexPolyFast/Conformance.lean`, with fixtures in
-`conformance-fixtures/HexPolyFast/`. The JSONL surface contains:
+The proof driver is `conformance/HexPolyFast/Conformance.lean`. The executable
+JSONL driver is `conformance/HexPolyFast/EmitFixtures.lean`; `lake exe
+hexpolyfast_emit_fixtures` emits the committed
+`conformance-fixtures/HexPolyFast/polyfast.jsonl` fixture, which
+`scripts/oracle/polyfast_flint.py` checks. The JSONL surface contains:
 
-- `mul`, `square`, and `slice`, including the selected kernel name;
+- `mul`, `square`, and `slice`; the `z_dispatch` result additionally reports
+  the kernel selected by its public dispatcher;
 - `divmod`, `gcd`, `xgcd`, and `xgcd_left`;
 - `cyclic` and `negacyclic`;
 - `eval_many` and `interpolate`;
@@ -561,9 +689,9 @@ The new driver is `conformance/HexPolyFast/Conformance.lean`, with fixtures in
 - NTT plan, round-trip, direct convolution, and CRT convolution cases;
 - KS1/KS2/KS3/KS4 forced-kernel cases.
 
-Small cases are checked independently against schoolbook operations and a
-simple Python/SymPy oracle. Integer and prime-field whole results are also
-checked against FLINT through the existing persistent oracle infrastructure.
+Small cases are checked independently by exact Python arithmetic. Integer and
+prime-field whole results are also checked against FLINT through the existing
+persistent oracle infrastructure.
 The oracle never reports which kernel Hex should choose; dispatch is tested by
 agreement plus benchmark evidence.
 
@@ -574,7 +702,10 @@ Mandatory edge families:
 - operand ratios from balanced through at least 64:1;
 - empty, one-coefficient, last-coefficient, and wholly out-of-range slices;
 - positive and negative coefficients at every Kronecker digit bound;
-- NTT lengths `1`, `2`, the largest catalogue length, and one beyond it;
+- NTT lengths `1`, `2`, the largest catalogue length, and one beyond it. The
+  largest case is an allocation-free theorem check in the coefficient owner's
+  conformance module; the executable stream calls `NttPrime.plan?` on the
+  remaining three;
 - raw butterfly values at `0`, `p-1`, `p`, `2p-1`, and `4p-1` where valid;
 - CRT modulus products immediately below and above `2*B`;
 - zero divisor, constant divisor, larger divisor, and exact division;
@@ -587,8 +718,10 @@ Mandatory edge families:
 
 Per [benchmarking](../benchmarking.md), the bench driver is
 `bench/HexPolyFast/Bench.lean`. It imports no Mathlib. Every dispatch family
-records both time and allocation counts and includes cells immediately below,
-at, and above the proposed crossover.
+records time and the memory fields supported by the benchmark harness
+(`peak_rss_kb` on Linux and `alloc_bytes` when the Lean runtime exposes an
+allocation counter), and includes cells immediately below, at, and above the
+proposed crossover.
 
 Required families:
 
@@ -620,6 +753,64 @@ The downstream audit covers at least:
 - `FpPoly.composeModMonic`, Frobenius, and GFq reduction/power paths;
 - Berlekamp-Zassenhaus trial products and integer reassembly;
 - repeated modulus division in finite-field and quotient-ring consumers.
+
+A shared finite-field substrate screen compares the retained field operations
+with one-shot Newton division and half-gcd through `FpPoly.fastPlan`.  Three
+warm outer trials on `chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, give these
+medians over `F_65537`; all result hashes agree:
+
+| operation | degree | retained | plan-driven |
+|---|---:|---:|---:|
+| `divMod` | 8 | 2.095 µs | 82.740 µs |
+| `divMod` | 256 | 979.291 µs | 77.636 ms |
+| `divMod` | 2048 | 58.874 ms | 2.439 s |
+| `gcd` | 8 | 2.355 µs | 75.333 µs |
+| `gcd` | 256 | 1.005 ms | 51.738 ms |
+| `gcd` | 2048 | 61.875 ms | 2.289 s |
+
+The one-shot plan paths lose on every rung from 8 through 2048, so the Fp,
+GFq, Berlekamp, and Berlekamp-Zassenhaus consumers retain their Euclidean
+division and gcd calls. This rules out a wholesale substrate replacement.
+Reproduce the screen with
+`lake exe hexpolyfp_bench compare Hex.FpPolyBench.runDivModChecksum Hex.FpPolyBench.runDivModFastChecksum --param-floor 8 --param-ceiling 2048 --param-schedule doubling --target-inner-nanos 1000000 --outer-trials 3 --signal-floor-multiplier 1 --max-seconds-per-call 10`
+and the analogous command naming `runGcdChecksum` and `runGcdFastChecksum`.
+
+The independent multiplication audit does produce winning downstream cells.
+`FpPoly.mulFast` uses schoolbook multiplication below 16 coefficients and the
+packed kernel above it; modular power switches its compiled loop from modulus
+size 18. Modular composition, GFq quotient multiplication and power, and the
+Rabin/Frobenius portion of Berlekamp select this dispatcher. Representative
+three-trial medians on the same host and toolchain are:
+
+| consumer | parameter | retained | selected |
+|---|---:|---:|---:|
+| `FpPoly.powModMonic` | 64 | 3.368 ms | 1.964 ms |
+| `FpPoly.composeModMonic` | 192 | 247.598 ms | 188.076 ms |
+| GFq quotient power | 128 | 9.359 ms | 6.688 ms |
+| Berlekamp Rabin test | 32 | 7.452 ms | 2.823 ms |
+
+All result hashes agree. The owning SPECs record the full schedules and exact
+reproduction commands.
+
+The Berlekamp-Zassenhaus product audit is also complete.  Every subset trial
+and final reassembly already goes through the proof-backed
+`Array.polyProduct` dispatcher.  The balanced `ZPoly.fastPlan` tree loses on
+degree-4, 64-bit lifted factors (5.282 ms versus 1.902 ms for the retained fold
+at 32 factors, one warm discovery trial) and degree-32, 128-bit reassembly
+factors (642.608 ms versus 116.793 ms at 32).  A skewed family wins at 64
+factors but reverses sharply by 128 (387.616 ms versus 21.470 ms), so factor
+count alone is not a safe selector.
+
+The shared production dispatcher now admits the tree only for its measured
+Hensel domain: 8 through 1023 factors, each with at most two coefficients and
+maximum coefficient magnitude four.  BZ-shaped products retain the ordered
+fold.  Three warm outer trials on the same host and toolchain confirm the
+guarded dispatcher stays within measurement noise: 55.870 ms versus 55.729 ms
+at 128 degree-4 lifted factors, 5.758 s versus 5.740 s at 128 high-width
+reassembly factors, and 21.430 ms versus 21.229 ms at 128 skewed factors.  All
+result hashes agree; the BZ SPEC records the full ladders and reproduction
+commands.  Its division and gcd substrate decision is the measured retention
+above.
 
 A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a
@@ -675,12 +866,15 @@ HexPolyFast/
   Plan.lean          -- MulPlan, schoolbookPlan, agreement projections
   Karatsuba.lean     -- full, square, unbalanced, and clipped recursion
   Cyclic.lean        -- cyclic and negacyclic reference operations
+  CyclicRemainder.lean -- cyclic and negacyclic canonical remainder laws
   Reverse.lean       -- DensePoly/TSeries bridges
   Reciprocal.lean    -- plan-driven Newton inverse
   Division.lean      -- DivPlan and one-shot division
   HalfGcd.lean       -- GcdStep, gcd, xgcd, xgcdLeft
-  ProductTree.lean   -- balanced product/remainder trees
-  Multipoint.lean    -- EvalPlan and InterpPlan
+  Tree.lean          -- balanced product trees and shared tree lemmas
+  Multipoint.lean    -- EvalPlan and its cached point tree
+  Interpolation.lean -- InterpPlan reusing the cached point tree
+  RemainderTree.lean -- general cached monic remainder trees
   Pade.lean          -- homogeneous and normalized approximants
 HexPolyFast.lean
 ```

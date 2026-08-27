@@ -35,6 +35,23 @@ primality proof. -/
 theorem primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
   ⟨hp⟩
 
+/-- `1 ≠ 0` in `ZMod64 p` when `p` is prime. -/
+theorem one_ne_zero_of_prime
+    (hp : Hex.Nat.Prime p) :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro h
+  have hp2 : 2 ≤ p := hp.two_le
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  omega
+
+/-- Typeclass form of `one_ne_zero_of_prime`. -/
+theorem one_ne_zero [PrimeModulus p] : (1 : ZMod64 p) ≠ 0 :=
+  one_ne_zero_of_prime (PrimeModulus.prime (p := p))
+
 private theorem eq_zero_of_dvd_modulus {a : ZMod64 p} (h : p ∣ a.toNat) : a = 0 := by
   apply ext
   apply UInt64.toNat_inj.mp

@@ -6,7 +6,10 @@ Authors: Kim Morrison
 
 import HexPolyFp.Frobenius
 import HexPolyFp.ModCompose
+import HexPolyFp.NttMul
+import HexPolyFp.PrimeField
 import HexPolyFp.SquareFree
+import HexPolyFast.HalfGcd
 import LeanBench
 
 /-!
@@ -18,6 +21,20 @@ the square-free/product benchmarks use `F_5`. Input construction is hoisted into
 `prep`; timed targets return compact checksums or decomposition summaries.
 
 Scientific registrations:
+
+* `runMulSchoolbookChecksum`, `runMulPackedChecksum`,
+  `runMulKaratsubaChecksum`, `runMulDirectNttChecksum`,
+  `runMulCrtNttChecksum`, and `runMulFastChecksum`: forced finite-field
+  multiplication kernels and the public dispatcher on identical `F_65537`
+  fixtures.  Direct NTT plan construction is hoisted into `prep`.
+* `runMulDirectNttColdChecksum`: the same direct NTT path with checked plan
+  construction included in the timed body.
+* `runDivModFastChecksum` and `runGcdFastChecksum`: Newton division and
+  half-gcd through `FpPoly.fastPlan`, paired with the retained field routines.
+* `runFastPowChecksum`, `runFastFrobeniusChecksum`,
+  `runFastFrobeniusPowChecksum`, and `runFastComposeChecksum`: end-to-end
+  consumer candidates using `FpPoly.mulFast` with the retained monic
+  reduction.
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
@@ -37,6 +54,7 @@ namespace FpPolyBench
 open FpPoly
 
 private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+private instance benchBoundsFermat : ZMod64.Bounds 257 := ⟨by decide, by decide⟩
 private instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
@@ -62,6 +80,19 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
     · simp at hm
     · simp at hm
     · exact Or.inr rfl
+
+private theorem prime_257 : Hex.Nat.Prime 257 :=
+  Hex.Nat.prime_of_bounded 257 16 (by decide) (by decide) (by decide)
+
+set_option maxRecDepth 8192 in
+private theorem prime_65537 : Hex.Nat.Prime 65537 :=
+  Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
+
+private instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
+  ZMod64.primeModulusOfPrime prime_65537
+
+private instance benchPrimeFermat : ZMod64.PrimeModulus 257 :=
+  ZMod64.primeModulusOfPrime prime_257
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
   hash a := hash a.toNat
@@ -114,6 +145,40 @@ structure GcdInput where
   g : FpPoly 65537
   deriving Hashable
 
+/-- Prepared operands shared by finite-field multiplication kernels. -/
+structure MulInput where
+  left : FpPoly 65537
+  right : FpPoly 65537
+  deriving Hashable
+
+/-- Prepared operands over the smaller Fermat prime in the modulus ladder. -/
+structure MulInput257 where
+  left : FpPoly 257
+  right : FpPoly 257
+  deriving Hashable
+
+/-- Multiplication operands paired with a checked reusable target-modulus NTT
+plan.  The plan length is retained as an index, so an ill-sized plan cannot be
+passed to the direct kernel. -/
+structure DirectMulInput where
+  length : Nat
+  plan : ZMod64.NttPlan 65537 length
+  left : FpPoly 65537
+  right : FpPoly 65537
+
+instance : Hashable DirectMulInput where
+  hash input := mixHash (hash input.left) (hash input.right)
+
+/-- `F_257` operands paired with a checked reusable direct-NTT plan. -/
+structure DirectMulInput257 where
+  length : Nat
+  plan : ZMod64.NttPlan 257 length
+  left : FpPoly 257
+  right : FpPoly 257
+
+instance : Hashable DirectMulInput257 where
+  hash input := mixHash (hash input.left) (hash input.right)
+
 /-- Deterministic coefficient generator keyed by size, index, and salt. -/
 def coeffValueFive (n i salt : Nat) : ZMod64 5 :=
   ZMod64.ofNat 5 <|
@@ -131,6 +196,20 @@ def densePolyFive (n salt : Nat) : FpPoly 5 :=
 /-- Deterministic dense polynomial over the large benchmark prime field. -/
 def densePolyLarge (n salt : Nat) : FpPoly 65537 :=
   ofCoeffs <| (Array.range n).map fun i => coeffValueLarge n i salt
+
+/-- Deterministic hash-mixed dense polynomial for gcd inputs.  Unlike
+`densePolyLarge`, changing the salt does not leave a low-degree difference
+between the two coefficient streams. -/
+def denseGcdPolyLarge (degree salt : Nat) : FpPoly 65537 :=
+  ofCoeffs <| ((Array.range degree).map fun i =>
+    ZMod64.ofNat 65537 <|
+      (mixHash (hash (degree, salt)) (hash (i, salt + 1))).toNat % 65537).push 1
+
+/-- Deterministic dense polynomial over `F_257`. -/
+def densePoly257 (n salt : Nat) : FpPoly 257 :=
+  ofCoeffs <| (Array.range n).map fun i =>
+    ZMod64.ofNat 257 <|
+      ((i + 1) * (salt + 17) + (i + 3) * (i + 5) * 13 + n * 29) % 257
 
 /-- Deterministic monic modulus of degree `degree` over `F_5`. -/
 def monicModulusFive (degree : Nat) : FpPoly 5 :=
@@ -250,35 +329,139 @@ def prepDivModInput (n : Nat) : DivModInput :=
 independent degree-`n` polynomials, almost always coprime over `F_p`, so the
 remainder sequence has `Θ(n)` `divMod` steps. -/
 def prepGcdInput (n : Nat) : GcdInput :=
-  { f := densePolyLarge (n + 1) 5
-    g := densePolyLarge (n + 1) 9 }
+  { f := denseGcdPolyLarge n 5
+    g := denseGcdPolyLarge n 9 }
+
+/-- Balanced dense multiplication fixture over the large benchmark prime. -/
+def prepMulInput (n : Nat) : MulInput :=
+  { left := densePolyLarge n 101
+    right := densePolyLarge n 211 }
+
+/-- Balanced dense multiplication fixture over `F_257`. -/
+def prepMulInput257 (n : Nat) : MulInput257 :=
+  { left := densePoly257 n 101
+    right := densePoly257 n 211 }
+
+/-- Build the checked target-modulus plan for a prepared product.  The residue
+`3` has order `65536` modulo `65537`; exponentiating it by the transform stride
+derives the exact-order root checked by `NttPlan.build?`. -/
+def directMulInput? (input : MulInput) : Option DirectMulInput := do
+  let length := (input.left.size + input.right.size - 1).nextPowerOfTwo
+  let root : ZMod64 65537 :=
+    (ZMod64.ofNat 65537 3) ^ (65536 / length)
+  let plan ← ZMod64.NttPlan.build? (n := length) root
+  pure { length, plan, left := input.left, right := input.right }
+
+/-- Prepared reusable-plan direct NTT input. -/
+def prepDirectMulInput (n : Nat) : Option DirectMulInput :=
+  directMulInput? (prepMulInput n)
+
+/-- Build a reusable direct plan over `F_257`, whose element `3` has order
+`256`.  The largest registered operand size `128` therefore uses transform
+length `256`, exactly at this modulus's radix-two limit. -/
+def directMulInput257? (input : MulInput257) : Option DirectMulInput257 := do
+  let length := (input.left.size + input.right.size - 1).nextPowerOfTwo
+  let root : ZMod64 257 :=
+    (ZMod64.ofNat 257 3) ^ (256 / length)
+  let plan ← ZMod64.NttPlan.build? (n := length) root
+  pure { length, plan, left := input.left, right := input.right }
+
+def prepDirectMulInput257 (n : Nat) : Option DirectMulInput257 :=
+  directMulInput257? (prepMulInput257 n)
+
+/-- Reduce one fast-dispatch product with the retained monic long division. -/
+def mulModFast (left right modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) : FpPoly 65537 :=
+  modByMonic modulus (mulFast left right) hmonic
+
+/-- Reduce one schoolbook product with the retained monic long division. -/
+def mulModSchoolbook (left right modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) : FpPoly 65537 :=
+  modByMonic modulus (left * right) hmonic
+
+/-- One-shot schoolbook modular power reference. -/
+def powModSchoolbook (base modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) (exponent : Nat) : FpPoly 65537 :=
+  FpPoly.powModMonicAux modulus hmonic exponent
+    (modByMonic modulus base hmonic) 1
+
+/-- Square-and-multiply candidate using fast coefficient multiplication but
+the retained monic reduction. -/
+def powModFastAux (modulus : FpPoly 65537) (hmonic : DensePoly.Monic modulus) :
+    Nat → FpPoly 65537 → FpPoly 65537 → FpPoly 65537
+  | 0, _, acc => acc
+  | n + 1, base, acc =>
+      let acc' :=
+        if (n + 1) % 2 = 0 then acc else mulModFast acc base modulus hmonic
+      let base' := mulModFast base base modulus hmonic
+      powModFastAux modulus hmonic ((n + 1) / 2) base' acc'
+termination_by n => n
+decreasing_by
+  simpa using Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
+
+/-- One-shot fast-multiply modular power candidate. -/
+def powModFast (base modulus : FpPoly 65537) (hmonic : DensePoly.Monic modulus)
+    (exponent : Nat) : FpPoly 65537 :=
+  powModFastAux modulus hmonic exponent (modByMonic modulus base hmonic) 1
 
 /-- Benchmark target: compute `base^exponent mod modulus`. -/
 def runPowModMonicChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
-    powModMonic input.base (monicModulusLarge input.degree)
+    powModSchoolbook input.base (monicModulusLarge input.degree)
       (monicModulusLarge_monic input.degree)
       input.exponent
+
+/-- Benchmark candidate: modular power with fast multiplication. -/
+def runFastPowChecksum (input : ModInput) : UInt64 :=
+  checksumPoly <|
+    powModFast input.base (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) input.exponent
 
 /-- Benchmark target: compute a batch of `X^p mod modulus` calls. -/
 def runFrobeniusXModChecksum (input : FrobeniusBatchInput) : UInt64 :=
   (Array.range input.count).foldl
     (fun acc _ =>
       mixHash acc <| checksumPoly <|
-        frobeniusXMod (monicModulusLarge input.degree) (monicModulusLarge_monic input.degree))
+        powModSchoolbook X (monicModulusLarge input.degree)
+          (monicModulusLarge_monic input.degree) 65537)
+    0
+
+/-- Benchmark candidate: batched Frobenius with fast multiplication. -/
+def runFastFrobeniusChecksum (input : FrobeniusBatchInput) : UInt64 :=
+  (Array.range input.count).foldl
+    (fun acc _ =>
+      mixHash acc <| checksumPoly <|
+        powModFast X (monicModulusLarge input.degree)
+          (monicModulusLarge_monic input.degree) 65537)
     0
 
 /-- Benchmark target: compute `X^(p^k) mod modulus`. -/
 def runFrobeniusXPowModChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
-    frobeniusXPowMod (monicModulusLarge input.degree) (monicModulusLarge_monic input.degree)
-      input.exponent
+    powModSchoolbook X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) (65537 ^ input.exponent)
+
+/-- Benchmark candidate: high Frobenius power with fast multiplication. -/
+def runFastFrobeniusPowChecksum (input : ModInput) : UInt64 :=
+  checksumPoly <|
+    powModFast X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) (65537 ^ input.exponent)
 
 /-- Benchmark target: compute modular composition and checksum the result. -/
 def runComposeModMonicChecksum (input : ComposeInput) : UInt64 :=
-  checksumPoly <|
-    composeModMonic input.outer input.inner (monicModulusLarge input.degree)
-      (monicModulusLarge_monic input.degree)
+  let modulus := monicModulusLarge input.degree
+  let hmonic := monicModulusLarge_monic input.degree
+  checksumPoly <| input.outer.toArray.foldr
+    (fun coeff acc => modByMonic modulus (acc * input.inner + C coeff) hmonic)
+    0
+
+/-- Benchmark candidate: modular Horner composition with fast multiplication. -/
+def runFastComposeChecksum (input : ComposeInput) : UInt64 :=
+  let modulus := monicModulusLarge input.degree
+  let hmonic := monicModulusLarge_monic input.degree
+  checksumPoly <| input.outer.toArray.foldr
+    (fun coeff acc => modByMonic modulus (mulFast acc input.inner + C coeff) hmonic)
+    0
 
 /-- Benchmark target: multiply weighted square-free factors. -/
 def runWeightedProductChecksum (input : WeightedInput) : UInt64 :=
@@ -293,9 +476,290 @@ def runDivModChecksum (input : DivModInput) : UInt64 :=
   let qr := DensePoly.divMod input.num input.den
   mixHash (checksumPoly qr.1) (checksumPoly qr.2)
 
+/-- Benchmark candidate: Newton division through the finite-field fast plan. -/
+def runDivModFastChecksum (input : DivModInput) : UInt64 :=
+  let qr : FpPoly 65537 × FpPoly 65537 :=
+    @DensePoly.divModWith (ZMod64 65537) inferInstance inferInstance
+      (FpPoly.fastPlan (p := 65537)) input.num input.den
+  mixHash (checksumPoly qr.1) (checksumPoly qr.2)
+
 /-- Benchmark target: Euclidean gcd over `F_p`, checksumming the result. -/
 def runGcdChecksum (input : GcdInput) : UInt64 :=
   checksumPoly <| DensePoly.gcd input.f input.g
+
+/-- Benchmark candidate: half-gcd through the finite-field fast plan. -/
+def runGcdFastChecksum (input : GcdInput) : UInt64 :=
+  let result : FpPoly 65537 :=
+    @DensePoly.gcdWith (ZMod64 65537) inferInstance inferInstance
+      (FpPoly.fastPlan (p := 65537)) input.f input.g
+  checksumPoly result
+
+/-- Benchmark target: forced generic schoolbook multiplication. -/
+def runMulSchoolbookChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (DensePoly.mulImpl input.left input.right)
+
+/-- Benchmark target: forced packed lazy-reduction multiplication. -/
+def runMulPackedChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (mulPacked input.left input.right)
+
+/-- Benchmark target: forced generic Karatsuba multiplication. -/
+def runMulKaratsubaChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (DensePoly.mulKaratsuba FpPoly.karatsubaCutoff input.left input.right)
+
+/-- Benchmark target: direct target-modulus NTT with a plan reused from
+fixture preparation. -/
+def runMulDirectNttChecksum (input : Option DirectMulInput) : UInt64 :=
+  match input with
+  | none => 0
+  | some input =>
+      match mulNtt? input.plan input.left input.right with
+      | some result => checksumPoly result
+      | none => 0
+
+/-- Benchmark target: direct target-modulus NTT including checked plan
+construction in the timed body. -/
+def runMulDirectNttColdChecksum (input : MulInput) : UInt64 :=
+  runMulDirectNttChecksum (directMulInput? input)
+
+/-- Benchmark target: forced auxiliary-prime CRT-NTT multiplication. -/
+def runMulCrtNttChecksum (input : MulInput) : UInt64 :=
+  match mulNttCrt? input.left input.right with
+  | some result => checksumPoly result
+  | none => 0
+
+/-- Benchmark target: public finite-field multiplication dispatcher. -/
+def runMulFastChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (mulFast input.left input.right)
+
+/-- Forced generic schoolbook multiplication over `F_257`. -/
+def runMulSchoolbook257Checksum (input : MulInput257) : UInt64 :=
+  checksumPoly (DensePoly.mulImpl input.left input.right)
+
+/-- Forced packed lazy-reduction multiplication over `F_257`. -/
+def runMulPacked257Checksum (input : MulInput257) : UInt64 :=
+  checksumPoly (mulPacked input.left input.right)
+
+/-- Forced generic Karatsuba multiplication over `F_257`. -/
+def runMulKaratsuba257Checksum (input : MulInput257) : UInt64 :=
+  checksumPoly (DensePoly.mulKaratsuba FpPoly.karatsubaCutoff input.left input.right)
+
+/-- Reusable-plan direct target-modulus NTT over `F_257`. -/
+def runMulDirectNtt257Checksum (input : Option DirectMulInput257) : UInt64 :=
+  match input with
+  | none => 0
+  | some input =>
+      match mulNtt? input.plan input.left input.right with
+      | some result => checksumPoly result
+      | none => 0
+
+/-- Forced auxiliary-prime CRT-NTT multiplication over `F_257`. -/
+def runMulCrtNtt257Checksum (input : MulInput257) : UInt64 :=
+  match mulNttCrt? input.left input.right with
+  | some result => checksumPoly result
+  | none => 0
+
+/-- Public finite-field multiplication dispatcher over `F_257`. -/
+def runMulFast257Checksum (input : MulInput257) : UInt64 :=
+  checksumPoly (mulFast input.left input.right)
+
+/-
+The `F_257` registrations form the small-modulus half of the target-modulus
+ladder.  All forced kernels share operands and rungs; the direct path reaches
+transform length `256` at `n = 128`, exactly the two-adic capacity of `257 - 1`.
+-/
+/- Cost model: schoolbook convolution forms a quadratic number of coefficient
+products in the balanced operand length. -/
+setup_benchmark runMulSchoolbook257Checksum n => (n * n)
+  with prep := prepMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp257"]
+  }
+
+/- Cost model: packed multiplication is bounded conservatively by the
+quadratic schoolbook fallback on this finite ladder. -/
+setup_benchmark runMulPacked257Checksum n => (n * n)
+  with prep := prepMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp257"]
+  }
+
+/- Cost model: the three-subproblem Karatsuba recurrence is represented by
+the integer-valued `n * sqrt n` surrogate. -/
+setup_benchmark runMulKaratsuba257Checksum n => (n * Nat.sqrt n)
+  with prep := prepMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp257"]
+  }
+
+/- Cost model: radix-two NTT has logarithmically many linear butterfly stages,
+giving `O(n log n)` work with the plan prepared outside the timed body. -/
+setup_benchmark runMulDirectNtt257Checksum n => (n * Nat.log2 (n + 1))
+  with prep := prepDirectMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp257", "warm-plan"]
+  }
+
+/- Cost model: the fixed auxiliary-prime ladder performs a constant number of
+radix-two transforms, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulCrtNtt257Checksum n => (n * Nat.log2 (n + 1))
+  with prep := prepMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp257"]
+  }
+
+/- Cost model: the dispatcher is bounded conservatively by its retained
+quadratic schoolbook kernel across this crossover ladder. -/
+setup_benchmark runMulFast257Checksum n => (n * n)
+  with prep := prepMulInput257
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 31, 32, 33, 64, 127, 128]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "dispatch", "balanced", "fp257"]
+  }
+
+/-
+Every warm registration uses the same deterministic operands and crossover
+rungs.  The direct target-modulus entry alone uses the dependently typed plan
+prepared outside the timed body; its cold companion exposes construction cost.
+-/
+/- Cost model: schoolbook convolution forms a quadratic number of coefficient
+products in the balanced operand length. -/
+setup_benchmark runMulSchoolbookChecksum n => (n * n)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+/- Cost model: packed multiplication is bounded conservatively by the
+quadratic schoolbook fallback while the measured rungs expose GMP regimes. -/
+setup_benchmark runMulPackedChecksum n => (n * n)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+/- Cost model: `n * sqrt n` is the nearest integer-valued built-in model to
+`n^(log_2 3)`; crossover comparison, rather than the slope verdict, is the
+purpose of this forced registration. -/
+setup_benchmark runMulKaratsubaChecksum n => (n * Nat.sqrt n)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+/- Cost model: radix-two NTT has logarithmically many linear butterfly stages,
+giving `O(n log n)` work with a reusable plan. -/
+setup_benchmark runMulDirectNttChecksum n => (n * Nat.log2 (n + 1))
+  with prep := prepDirectMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537", "warm-plan"]
+  }
+
+/- Cost model: cold plan construction and the transform each use linear work
+per logarithmic level, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulDirectNttColdChecksum n => (n * Nat.log2 (n + 1))
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537", "cold-plan"]
+  }
+
+/- Cost model: the fixed auxiliary-prime ladder performs a constant number of
+radix-two transforms, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulCrtNttChecksum n => (n * Nat.log2 (n + 1))
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+/- Cost model: the dispatcher is bounded conservatively by its retained
+quadratic schoolbook kernel across the full crossover ladder. -/
+setup_benchmark runMulFastChecksum n => (n * n)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 16384
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512,
+      1024, 2048, 4095, 4096, 4097, 8191, 8192, 8193, 16384]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "dispatch", "balanced", "fp65537"]
+  }
 
 /-
 The modulus degree, reduced base degree, and exponent all scale with `n`.
@@ -311,6 +775,20 @@ setup_benchmark runPowModMonicChecksum n => n * n * Nat.log2 (n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: the fast path performs logarithmically many reduced products,
+each conservatively quadratic in the modulus degree. -/
+setup_benchmark runFastPowChecksum n => (n * n * Nat.log2 (n + 1))
+  with prep := prepPowModInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "power", "fast-multiply", "fp65537"]
   }
 
 /-
@@ -335,6 +813,21 @@ setup_benchmark runFrobeniusXModChecksum n => n * n * n
     slopeTolerance := 0.20
   }
 
+/- Cost model: batching `n` Frobenius calls, each with a quadratic reduced
+multiplication bound, gives cubic work. -/
+setup_benchmark runFastFrobeniusChecksum n => (n * n * n)
+  with prep := prepFrobeniusInput
+  where {
+    paramFloor := 16
+    paramCeiling := 80
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 80]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.20
+    tags := #["adoption", "frobenius", "fast-multiply", "fp65537"]
+  }
+
 /-
 Here both the modulus degree and Frobenius height scale with `n`. The exponent
 `65537^n` has Theta(n) bits, so the quotient-ring square-and-multiply loop performs
@@ -354,6 +847,20 @@ setup_benchmark runFrobeniusXPowModChecksum n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
+/- Cost model: the exponent has linearly many bits and each reduced product is
+quadratic, giving a cubic conservative bound. -/
+setup_benchmark runFastFrobeniusPowChecksum n => (n * n * n)
+  with prep := prepFrobeniusPowInput
+  where {
+    paramFloor := 16
+    paramCeiling := 64
+    paramSchedule := .custom #[16, 24, 32, 48, 64]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "frobenius-power", "fast-multiply", "fp65537"]
+  }
+
 /-
 Horner modular composition does one reduced multiplication per coefficient of
 the outer polynomial. With all reduced polynomials bounded by degree `n`, each
@@ -371,6 +878,20 @@ setup_benchmark runComposeModMonicChecksum n => n * n * n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: Horner composition performs linearly many conservatively
+quadratic reduced products, giving cubic work. -/
+setup_benchmark runFastComposeChecksum n => (n * n * n)
+  with prep := prepComposeInput
+  where {
+    paramFloor := 32
+    paramCeiling := 192
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "composition", "fast-multiply", "fp65537"]
   }
 
 /-
@@ -429,11 +950,26 @@ setup_benchmark runDivModChecksum n => n * n
   with prep := prepDivModInput
   where {
     paramFloor := 8
-    paramCeiling := 256
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Newton division has `O(M(n))` algebraic work.  With the currently selected
+packed Fp kernel below the NTT crossover, the conservative registered model is
+quadratic; the shared rungs and result hash gate any consumer adoption. -/
+setup_benchmark runDivModFastChecksum n => (n * n)
+  with prep := prepDivModInput
+  where {
+    paramFloor := 8
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "candidate", "fp65537"]
   }
 
 /-
@@ -447,11 +983,26 @@ setup_benchmark runGcdChecksum n => n * n
   with prep := prepGcdInput
   where {
     paramFloor := 8
-    paramCeiling := 256
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Half-gcd performs `O(M(n) log n)` algebraic work.  The quadratic model is a
+conservative fit while `FpPoly.fastPlan` retains packed multiplication on this
+ladder; direct comparison with Euclid, not a slope claim, gates consumers. -/
+setup_benchmark runGcdFastChecksum n => (n * n)
+  with prep := prepGcdInput
+  where {
+    paramFloor := 8
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["gcd", "half-gcd", "candidate", "fp65537"]
   }
 
 end FpPolyBench

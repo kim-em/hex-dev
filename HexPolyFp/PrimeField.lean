@@ -36,19 +36,6 @@ def intPow (a : ZMod64 p) : Int → ZMod64 p
   | .ofNat n => a ^ n
   | .negSucc n => (a ^ (n + 1))⁻¹
 
-/-- `1 ≠ 0` in `ZMod64 p` when `p` is prime. -/
-theorem one_ne_zero_of_prime
-    (hp : Hex.Nat.Prime p) :
-    (1 : ZMod64 p) ≠ 0 := by
-  intro h
-  have hp2 : 2 ≤ p := hp.two_le
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
-  omega
-
 /-- The `0⁻¹ = 0` junk-value convention for `ZMod64 p`. -/
 theorem inv_zero_of_zero : (0 : ZMod64 p)⁻¹ = 0 := by
   apply ZMod64.ext

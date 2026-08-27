@@ -16,6 +16,7 @@ Covered operations:
 - `symMod`
 - `Crt.init` and `Crt.push`
 - `CrtVec.init` and `CrtVec.push`
+- balanced `CrtPlan` scalar and vector reconstruction
 - `euclidUntil`
 - `ratReconCheck`, `ratRecon?`, and `ratReconWide?`
 - `ratReconVec?` and `ratReconMaxQuot?`
@@ -24,6 +25,8 @@ Covered properties:
 - symmetric representatives preserve residues and obey the half-modulus bound
 - scalar and vector CRT pushes preserve old residues, record new residues, and
   multiply the accumulated modulus
+- batch CRT validates its fixed moduli, rejects count mismatches, and
+  reconstructs uneven product trees with one inverse per sibling pair
 - Euclidean stopping rows satisfy their modular linear relation
 - every accepted rational reconstruction satisfies its congruence and bounds
 - vector reconstruction uses one positive bounded common denominator
@@ -117,6 +120,39 @@ private def crtVecContract {k : Nat} (old next : CrtVec k)
       | none => false
 
 #guard ((CrtVec.init 3).push #v[1, 2, 3] 1).isNone
+
+/-! Balanced batch CRT: exact validation, uneven trees, and shared lanes. -/
+
+#guard (CrtPlan.build? #[1, 3, 5]).isNone
+#guard (CrtPlan.build? #[3, 5, 15]).isNone
+
+#guard
+  let moduli := #[3, 5, 7, 11, 13]
+  let target : Int := -123
+  match CrtPlan.build? moduli with
+  | none => false
+  | some plan =>
+      let residues := moduli.map fun (modulus : Nat) => target % Int.ofNat modulus
+      plan.modulus == 15015 && plan.reconstruct? residues == some target &&
+        (plan.reconstruct? (residues.pop)).isNone
+
+#guard
+  let moduli := #[3, 5, 7, 11, 13]
+  let target : Vector Int 3 := #v[-123, 456, 0]
+  match CrtPlan.build? moduli with
+  | none => false
+  | some plan =>
+      let residues := moduli.map fun (modulus : Nat) =>
+        Vector.map (fun value => value % Int.ofNat modulus) target
+      plan.reconstructVec? residues == some target &&
+        (plan.reconstructVec? (residues.pop)).isNone
+
+#guard
+  match CrtPlan.build? #[] with
+  | none => false
+  | some plan =>
+      plan.modulus == 1 && plan.reconstruct? #[] == some 0 &&
+        plan.reconstructVec? (k := 2) #[] == some #v[0, 0]
 
 /-! Truncated Euclid rows: typical, zero modulus, and signed inputs. -/
 

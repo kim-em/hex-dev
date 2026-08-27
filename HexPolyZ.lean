@@ -9,6 +9,8 @@ module
 public import HexPolyZ.IntegerPolynomial
 public import HexPolyZ.ExactDivision
 public import HexPolyZ.Kronecker
+public import HexPolyZ.KroneckerMulti
+public import HexPolyZ.NttMul
 public import HexPolyZ.Rational
 public import HexPolyZ.Decomposition
 public import HexPolyZ.Mignotte

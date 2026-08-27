@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexGFqRing.Operations
+import HexPolyFast.Division
+import HexPolyFp.PrimeField
 import LeanBench
 
 /-!
@@ -24,8 +26,13 @@ Scientific registrations:
 * `runAddChecksum`: quotient addition on canonical representatives, `O(n)`.
 * `runMulChecksum`: quotient multiplication on canonical representatives,
   `O(n^2)`.
+* `runMulSchoolbookChecksum`: the retained schoolbook multiplication path for
+  the end-to-end `mulFast` adoption comparison.
 * `runNegSubChecksum`: quotient negation and subtraction, `O(n)`.
 * `runPowChecksum`: square-and-multiply exponentiation, `O(n^2 log n)`.
+* `runPowSchoolbookChecksum`: the retained quotient-power implementation.
+* `runReduceFastChecksum`: one-shot Newton reduction paired with retained
+  `runReduceModChecksum`.
 * `runNsmulNatCastChecksum`: binary natural scalar multiplication plus casts,
   `O(n log n)`.
 -/
@@ -206,6 +213,13 @@ def prepNatInput (n : Nat) : NatInput :=
 def runReduceModChecksum (input : ReduceInput) : UInt64 :=
   checksumPoly <| reduceMod input.modulus input.poly
 
+/-- Benchmark candidate: quotient remainder through one-shot Newton division. -/
+def runReduceFastChecksum (input : ReduceInput) : UInt64 :=
+  let qr : FpPoly 65537 × FpPoly 65537 :=
+    @DensePoly.divModWith (ZMod64 65537) inferInstance inferInstance
+      (FpPoly.fastPlan (p := 65537)) input.poly input.modulus
+  checksumPoly qr.2
+
 /-- Benchmark target: construct and project a quotient representative. -/
 def runOfPolyReprChecksum (input : OfPolyInput) : UInt64 :=
   checksumPoly <| repr <| ofPoly input.modulus input.modulusDegreePos input.poly
@@ -218,6 +232,10 @@ def runAddChecksum (input : BinaryInput) : UInt64 :=
 def runMulChecksum (input : BinaryInput) : UInt64 :=
   checksumPoly <| repr (input.lhs * input.rhs)
 
+/-- Benchmark reference: quotient multiplication with schoolbook products. -/
+def runMulSchoolbookChecksum (input : BinaryInput) : UInt64 :=
+  checksumPoly <| reduceMod input.modulus (repr input.lhs * repr input.rhs)
+
 /-- Benchmark target: quotient negation and subtraction checksum. -/
 def runNegSubChecksum (input : BinaryInput) : UInt64 :=
   mixHash (checksumPoly <| repr (-input.lhs)) (checksumPoly <| repr (input.lhs - input.rhs))
@@ -225,6 +243,29 @@ def runNegSubChecksum (input : BinaryInput) : UInt64 :=
 /-- Benchmark target: quotient exponentiation checksum. -/
 def runPowChecksum (input : PowInput) : UInt64 :=
   checksumPoly <| repr (input.value ^ input.exponent)
+
+/-- Retained quotient multiplication used only by the benchmark reference. -/
+def mulSchoolbook {f : FpPoly 65537} {hf : 0 < FpPoly.degree f}
+    (x y : PolyQuotient f hf) : PolyQuotient f hf :=
+  ofPoly f hf (repr x * repr y)
+
+/-- Retained quotient square-and-multiply used only by the benchmark reference. -/
+def powSchoolbook {f : FpPoly 65537} {hf : 0 < FpPoly.degree f}
+    (x : PolyQuotient f hf) (n : Nat) : PolyQuotient f hf :=
+  let rec go (acc base : PolyQuotient f hf) (k : Nat) : PolyQuotient f hf :=
+    if hk : k = 0 then acc
+    else
+      let acc' := if k % 2 = 1 then mulSchoolbook acc base else acc
+      go acc' (mulSchoolbook base base) (k / 2)
+  termination_by k
+  decreasing_by
+    simp_wf
+    exact Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
+  go (one f hf) x n
+
+/-- Benchmark reference: quotient exponentiation with schoolbook products. -/
+def runPowSchoolbookChecksum (input : PowInput) : UInt64 :=
+  checksumPoly <| repr (powSchoolbook input.value input.exponent)
 
 /-- Benchmark target: natural scalar multiplication and casts checksum. -/
 def runNsmulNatCastChecksum (input : NatInput) : UInt64 :=
@@ -245,6 +286,22 @@ setup_benchmark runReduceModChecksum n => n * n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/-
+Newton reduction is `O(M(n))`; the registered quadratic bound is conservative
+for the current dense finite-field multiplication substrate.
+-/
+setup_benchmark runReduceFastChecksum n => (n * n)
+  with prep := prepReduceInput
+  where {
+    paramFloor := 32
+    paramCeiling := 256
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "reduction", "newton", "candidate", "fp65537"]
   }
 
 /-
@@ -293,6 +350,22 @@ setup_benchmark runMulChecksum n => n * n
   }
 
 /-
+The retained path performs quadratic dense multiplication followed by a
+degree-`n` reduction with the same quadratic bound.
+-/
+setup_benchmark runMulSchoolbookChecksum n => (n * n)
+  with prep := prepBinaryInput
+  where {
+    paramFloor := 32
+    paramCeiling := 256
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "multiplication", "schoolbook", "reference", "fp65537"]
+  }
+
+/-
 Negation and subtraction are coefficientwise operations on canonical
 degree-bounded representatives, followed by degree-bounded normalization.
 -/
@@ -321,6 +394,22 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/-
+Binary powering performs logarithmically many retained quadratic quotient
+multiplications, giving `O(n^2 log n)` coefficient work.
+-/
+setup_benchmark runPowSchoolbookChecksum n => (n * n * Nat.log2 (n + 1))
+  with prep := prepPowInput
+  where {
+    paramFloor := 32
+    paramCeiling := 256
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "power", "schoolbook", "reference", "fp65537"]
   }
 
 /-

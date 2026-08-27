@@ -482,7 +482,7 @@ hex-mod-arith owns reusable word-modular NTT plans, hex-modular owns balanced
 batch CRT, hex-poly-fp owns direct and auxiliary-prime NTT adapters, and
 hex-poly-z owns multipoint Kronecker and integer CRT-NTT dispatch. The complete
 boundary and staged dependency change are specified in
-[hex-poly-fast](hex-poly-fast.md).
+[hex-poly-fast](../../HexPolyFast/SPEC/hex-poly-fast.md).
 
 `hex-primality` sits directly on `hex-arith`, which owns the
 `Hex.Nat.Prime` predicate, Fermat's little theorem, and the modular
@@ -605,7 +605,7 @@ for developments whose source-local move has not happened yet.
 - [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
 - [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion
 - [hex-truncated-series-mathlib](../../HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md): quotient-by-`X ^ n` equivalence and operation correspondence
-- [hex-poly-fast.md](hex-poly-fast.md): explicit lawful multiplication plans, Karatsuba and clipped products, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
+- [hex-poly-fast.md](../../HexPolyFast/SPEC/hex-poly-fast.md): explicit lawful multiplication plans, Karatsuba and clipped products, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition, and packed/direct-NTT/CRT-NTT multiplication
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
 - [hex-gf2-mathlib](../../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md): `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality

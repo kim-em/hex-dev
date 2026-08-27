@@ -90,6 +90,8 @@ lean_lib HexArith where
 
 lean_lib HexPoly where
 
+lean_lib HexPolyFast where
+
 lean_lib HexMvPoly where
 
 lean_lib HexMvGcd where
@@ -120,6 +122,7 @@ lean_lib HexNumberField where
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where
+  precompileModules := true
 
 lean_lib HexGFqRing where
 
@@ -623,6 +626,8 @@ lean_lib HexConformance where
 
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
+    ++ #[`HexPolyFast.Conformance].map Glob.one
+
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntFactor.Conformance].map Glob.one
@@ -1062,6 +1067,14 @@ lean_exe hexmvgcd_bench where
 lean_exe hextruncatedseries_bench where
   srcDir := "bench"
   root := `HexTruncatedSeries.Bench
+
+lean_exe hexpolyfast_bench where
+  srcDir := "bench"
+  root := `HexPolyFast.Bench
+
+lean_exe hexpolyfast_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPolyFast.EmitFixtures
 
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"

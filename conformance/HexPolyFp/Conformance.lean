@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPolyFp.Frobenius
 import HexPolyFp.ModCompose
+import HexPolyFp.NttMul
 import HexPolyFp.SquareFree
 
 /-!
@@ -23,6 +24,10 @@ Covered operations:
 - `squareFreeDecomposition`
 - `weightedProduct`
 - `linearPow`
+- `mulNtt?`
+- `mulNttCrt?`
+- `mulFast` and `fastPlan`
+- `mulCyclicNtt?`, `mulNegacyclicNtt?`
 - `neg` (the `Neg (FpPoly p)` instance, at `p = 5`)
 Covered properties:
 - modular exponentiation by exponent zero returns the quotient-ring identity
@@ -32,6 +37,10 @@ Covered properties:
 - square-free decompositions reconstruct the input from the unit and weighted factors
 - weighted products respect positive multiplicities
 - `linearPow` is exponent-additive, and exponent one is the base
+- direct target-modulus NTT multiplication agrees with schoolbook multiplication
+- auxiliary-prime NTT multiplication agrees after integer CRT reconstruction
+- the total dispatcher and its generic multiplication plan agree with schoolbook
+- cyclic and negacyclic NTT adapters agree with their independent folded references
 - negation is the additive inverse and an involution, and subtraction agrees
   with adding the negation
 Covered edge cases:
@@ -50,6 +59,9 @@ Covered edge cases:
 - square-free, repeated-factor, derivative-zero, zero, and scalar square-free inputs
 - exponent zero and a zero base for `linearPow`, and the zero polynomial for
   `neg`
+- a valid length-four direct NTT plan and rejection of a too-short plan
+- a forced auxiliary-prime convolution over a target with no catalogue identity
+- cyclic and negacyclic length-two products, including oversized-input rejection
 - `(x + 1)^5` over `F_5`, whose interior binomial coefficients all vanish, so
   the result carries internal zeros
 - a degree-10 sparse input to `neg`, checking normalisation keeps the degree
@@ -79,6 +91,9 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
     · simp at hm
     · exact Or.inr rfl
 
+private instance conformancePrimeModulusFive : ZMod64.PrimeModulus 5 :=
+  ZMod64.primeModulusOfPrime prime_five
+
 private def polyFive (coeffs : Array Nat) : FpPoly 5 :=
   ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
 
@@ -93,6 +108,77 @@ private def sfSummary (d : SquareFreeDecomposition 5) : Nat × List (List Nat ×
 
 private def sfReconstruction (d : SquareFreeDecomposition 5) : FpPoly 5 :=
   DensePoly.C d.unit * weightedProduct d.factors
+
+/-! Direct target-modulus NTT multiplication and its checked length miss. -/
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 4) (ZMod64.ofNat 5 2) with
+  | none => false
+  | some plan =>
+      match mulNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2]) with
+      | none => false
+      | some result => coeffNats result == [1, 3, 2]
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => false
+  | some plan =>
+      (mulNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2])).isNone
+
+#guard
+  match mulNttCrt? (polyFive #[4, 0, 3]) (polyFive #[2, 1, 4]) with
+  | none => false
+  | some result => coeffNats result == [3, 4, 2, 3, 2]
+
+#guard (mulNttCrt? (0 : FpPoly 5) (polyFive #[1, 2, 3])).isNone
+
+private def fastLeft : FpPoly 5 :=
+  DensePoly.ofCoeffs (Array.replicate 128 1)
+
+private def fastRight : FpPoly 5 :=
+  DensePoly.ofCoeffs (Array.replicate 128 2)
+
+example : mulFast fastLeft fastRight = fastLeft * fastRight :=
+  mulFast_eq fastLeft fastRight
+
+example : DensePoly.mulWith fastPlan fastLeft fastRight = fastLeft * fastRight :=
+  DensePoly.mulWith_eq fastPlan fastLeft fastRight
+
+private def negacyclicPlanFive? : Option (ZMod64.Ntt.NegacyclicPlan 5 2) :=
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => none
+  | some transform =>
+      if hroot : transform.root = (ZMod64.ofNat 5 2) ^ 2 then
+        if horder : ZMod64.ExactOrder (ZMod64.ofNat 5 2) 4 then
+          some
+            { transform
+              twist := ZMod64.ofNat 5 2
+              twist_order := horder
+              root_eq := hroot }
+        else none
+      else none
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match mulCyclicNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2]) with
+      | none => false
+      | some result => coeffNats result == [3, 3]
+
+#guard
+  match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
+  | none => false
+  | some plan =>
+      (mulCyclicNtt? plan (polyFive #[1, 1, 1]) (polyFive #[1])).isNone
+
+#guard
+  match negacyclicPlanFive? with
+  | none => false
+  | some plan =>
+      match mulNegacyclicNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2]) with
+      | none => false
+      | some result => coeffNats result == [4, 3]
 
 private def constModulus : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
