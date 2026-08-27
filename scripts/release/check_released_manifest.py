@@ -336,7 +336,6 @@ def main() -> int:
         "HexBareissMathlib": 5,
         "HexBerlekampMathlib": 3,
         "HexGramSchmidtMathlib": 6,
-        "HexBerlekampZassenhaus": 4,
         "HexLLLMathlib": 4,
     }
     for entry in entries:

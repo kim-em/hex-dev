@@ -20,6 +20,24 @@ open Hex
 
 namespace HexBerlekampZassenhaus.FactorTacticTests
 
+/-! # README quickstart -/
+
+namespace READMEQuickstart
+
+#check ZPoly.factorize
+#check ZPoly.factors
+#check Factorization.product
+#check factorClassical
+#check factorLattice
+#check factorTrial
+
+def f : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+
+noncomputable def fFactored := factor_poly f
+theorem fIrreducible : ZPoly.Irreducible f := irreducibility f
+
+end READMEQuickstart
+
 /-- `-6·(x+1)²·(x²+1)`: content, sign, and multiplicity. -/
 def testZ : ZPoly :=
   DensePoly.C (-6) * (DensePoly.ofCoeffs #[1, 1] * DensePoly.ofCoeffs #[1, 1] *
