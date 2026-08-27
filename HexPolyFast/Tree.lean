@@ -26,6 +26,61 @@ universe u
 
 variable {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
 
+omit [DecidableEq R] in
+private theorem eqZeroOfOneEqZero (h : (1 : R) = 0) (a : R) : a = 0 := by
+  calc
+    a = a * 1 := (Lean.Grind.Semiring.mul_one a).symm
+    _ = a * 0 := by rw [h]
+    _ = 0 := Lean.Grind.Semiring.mul_zero a
+
+/-- A monic polynomial over a nontrivial commutative ring is nonzero. -/
+theorem Monic.neOfOneNe {p : DensePoly R} (hp : p.Monic)
+    (hone : (1 : R) ≠ 0) : p ≠ 0 := by
+  intro hz
+  rw [hz, monic_iff_leadingCoeff_eq_one, leadingCoeff_zero] at hp
+  exact hone hp.symm
+
+/-- A product of monic polynomials over a commutative ring is monic. -/
+theorem Monic.mul {p q : DensePoly R} (hp : p.Monic) (hq : q.Monic) :
+    (p * q).Monic := by
+  by_cases h : (1 : R) = 0
+  · rw [monic_iff_leadingCoeff_eq_one, h]
+    exact eqZeroOfOneEqZero h _
+  · have hpne := hp.neOfOneNe h
+    have hqne := hq.neOfOneNe h
+    have hppos : 0 < p.size := by
+      apply Nat.pos_of_ne_zero
+      intro hs
+      exact hpne ((size_eq_zero_iff p).mp hs)
+    have hqpos : 0 < q.size := by
+      apply Nat.pos_of_ne_zero
+      intro hs
+      exact hqne ((size_eq_zero_iff q).mp hs)
+    have hone : (1 : R) * 1 ≠ 0 := by
+      rw [Lean.Grind.Semiring.one_mul]
+      exact h
+    have hprod : p.leadingCoeff * q.leadingCoeff ≠ (0 : R) := by
+      rw [hp, hq]
+      exact hone
+    rw [monic_iff_leadingCoeff_eq_one,
+      leadingCoeff_mul p q hppos hqpos hprod, hp, hq]
+    grind
+
+/-- Root split used by adjacent-pair product levels: the largest power of two
+strictly below `n`. -/
+def treeSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
+
+theorem treeSplit_pos (n : Nat) : 0 < treeSplit n := by
+  unfold treeSplit
+  exact Nat.pow_pos (by omega)
+
+theorem treeSplit_lt (n : Nat) (hn : 2 ≤ n) : treeSplit n < n := by
+  have hm : n - 1 ≠ 0 := by omega
+  have hle : 2 ^ Nat.log2 (n - 1) ≤ n - 1 :=
+    Nat.log2_self_le hm
+  unfold treeSplit
+  omega
+
 /-- Multiply adjacent entries, carrying an unpaired final entry unchanged. -/
 private def pairProducts (plan : MulPlan R) : List (DensePoly R) → List (DensePoly R)
   | [] => []

@@ -64,7 +64,7 @@ theorem pointFactor_size (a : R) (hone : (1 : R) ≠ 0) :
       exact False.elim (hone hz)
 
 omit [DecidableEq R] in
-private theorem eq_zero_of_one_eq_zero_ring (h : (1 : R) = 0) (a : R) : a = 0 := by
+private theorem eqZeroOfOneEqZero (h : (1 : R) = 0) (a : R) : a = 0 := by
   calc
     a = a * 1 := (Lean.Grind.Semiring.mul_one a).symm
     _ = a * 0 := by rw [h]
@@ -73,43 +73,12 @@ private theorem eq_zero_of_one_eq_zero_ring (h : (1 : R) = 0) (a : R) : a = 0 :=
 theorem pointFactor_monic (a : R) : (pointFactor a).Monic := by
   by_cases h : (1 : R) = 0
   · rw [monic_iff_leadingCoeff_eq_one, h]
-    exact eq_zero_of_one_eq_zero_ring h _
+    exact eqZeroOfOneEqZero h _
   · rw [monic_iff_leadingCoeff_eq_one,
       leadingCoeff_eq_coeff_last _ (by rw [pointFactor_size a h]; omega),
       pointFactor_size a h]
     rw [pointFactor, coeff_ofList]
     simp
-
-private theorem monic_ne_zero_of_one_ne_zero {p : DensePoly R}
-    (hone : (1 : R) ≠ 0) (hp : p.Monic) : p ≠ 0 := by
-  intro hz
-  rw [hz, monic_iff_leadingCoeff_eq_one, leadingCoeff_zero] at hp
-  exact hone hp.symm
-
-private theorem mul_monic_ring {p q : DensePoly R} (hp : p.Monic) (hq : q.Monic) :
-    (p * q).Monic := by
-  by_cases h : (1 : R) = 0
-  · rw [monic_iff_leadingCoeff_eq_one, h]
-    exact eq_zero_of_one_eq_zero_ring h _
-  · have hpne := monic_ne_zero_of_one_ne_zero h hp
-    have hqne := monic_ne_zero_of_one_ne_zero h hq
-    have hppos : 0 < p.size := by
-      apply Nat.pos_of_ne_zero
-      intro hs
-      exact hpne ((size_eq_zero_iff p).mp hs)
-    have hqpos : 0 < q.size := by
-      apply Nat.pos_of_ne_zero
-      intro hs
-      exact hqne ((size_eq_zero_iff q).mp hs)
-    have hone : (1 : R) * 1 ≠ 0 := by
-      rw [Lean.Grind.Semiring.one_mul]
-      exact h
-    have hprod : p.leadingCoeff * q.leadingCoeff ≠ (0 : R) := by
-      rw [hp, hq]
-      exact hone
-    rw [monic_iff_leadingCoeff_eq_one,
-      leadingCoeff_mul p q hppos hqpos hprod, hp, hq]
-    grind
 
 /-- Internal balanced remainder-tree shape, indexed by its exact point sequence
 and product polynomial. Public clients use it only through opaque plans. -/
@@ -140,7 +109,7 @@ private def leafNode (mul : MulPlan R) (hone : (1 : R) ≠ 0) (a : R) :
   { poly := pointFactor a
     node := .leaf a
     monic := pointFactor_monic a
-    ne := monic_ne_zero_of_one_ne_zero hone (pointFactor_monic a)
+    ne := (pointFactor_monic a).neOfOneNe hone
     evalZero := by
       intro x hx
       simp only [List.mem_singleton] at hx
@@ -161,12 +130,13 @@ private def branchNode (mul : MulPlan R) (hone : (1 : R) ≠ 0)
     monic := by
       dsimp [poly]
       rw [mulWith_eq]
-      exact mul_monic_ring left.monic right.monic
+      exact left.monic.mul right.monic
     ne := by
-      apply monic_ne_zero_of_one_ne_zero hone
-      dsimp [poly]
-      rw [mulWith_eq]
-      exact mul_monic_ring left.monic right.monic
+      apply Monic.neOfOneNe
+      · dsimp [poly]
+        rw [mulWith_eq]
+        exact left.monic.mul right.monic
+      · exact hone
     evalZero := by
       intro a ha
       dsimp [poly]
@@ -175,21 +145,6 @@ private def branchNode (mul : MulPlan R) (hone : (1 : R) ≠ 0)
       cases ha with
       | inl hleft => rw [left.evalZero a hleft]; grind
       | inr hright => rw [right.evalZero a hright]; grind }
-
-/-- Root split used by adjacent-pair product levels: the largest power of two
-strictly below `n`. -/
-def treeSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
-
-theorem treeSplit_pos (n : Nat) : 0 < treeSplit n := by
-  unfold treeSplit
-  exact Nat.pow_pos (by omega)
-
-theorem treeSplit_lt (n : Nat) (hn : 2 ≤ n) : treeSplit n < n := by
-  have hm : n - 1 ≠ 0 := by omega
-  have hle : 2 ^ Nat.log2 (n - 1) ≤ n - 1 :=
-    Nat.log2_self_le hm
-  unfold treeSplit
-  omega
 
 /-- Recursively build a count-balanced cached remainder tree. -/
 private def buildNode (mul : MulPlan R) (hone : (1 : R) ≠ 0) :

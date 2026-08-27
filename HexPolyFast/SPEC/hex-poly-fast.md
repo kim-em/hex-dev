@@ -390,6 +390,14 @@ observations are its leaf sequence, root product, and the product represented
 by each node. Construction accepts general polynomial leaves; a point plan
 uses leaves `x - C point`.
 
+`RemainderTree` accepts an ordered array of proof-carrying nonzero monic
+leaves and caches a `DivPlan` of fixed reciprocal capacity at every balanced
+node. `remainders?` returns `none` when that capacity is insufficient at any
+node. On success, `remainders?_sound` supplies a `RemainderSpec`: the output
+has one entry per leaf in the original order, each leaf divides the difference
+between the input and its result, and every result has size strictly below its
+leaf divisor. The empty tree succeeds with an empty result.
+
 `EvalPlan` stores the point sequence, its product tree, and the reciprocal
 plans needed by the remainder tree. Reusing it for another polynomial does
 not rebuild products or reciprocals:
@@ -838,12 +846,15 @@ HexPolyFast/
   Plan.lean          -- MulPlan, schoolbookPlan, agreement projections
   Karatsuba.lean     -- full, square, unbalanced, and clipped recursion
   Cyclic.lean        -- cyclic and negacyclic reference operations
+  CyclicRemainder.lean -- cyclic and negacyclic canonical remainder laws
   Reverse.lean       -- DensePoly/TSeries bridges
   Reciprocal.lean    -- plan-driven Newton inverse
   Division.lean      -- DivPlan and one-shot division
   HalfGcd.lean       -- GcdStep, gcd, xgcd, xgcdLeft
-  ProductTree.lean   -- balanced product/remainder trees
-  Multipoint.lean    -- EvalPlan and InterpPlan
+  Tree.lean          -- balanced product trees and shared tree lemmas
+  Multipoint.lean    -- EvalPlan and its cached point tree
+  Interpolation.lean -- InterpPlan reusing the cached point tree
+  RemainderTree.lean -- general cached monic remainder trees
   Pade.lean          -- homogeneous and normalized approximants
 HexPolyFast.lean
 ```

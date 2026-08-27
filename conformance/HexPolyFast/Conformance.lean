@@ -17,6 +17,7 @@ public meta import HexPolyFast.Division
 public meta import HexPolyFast.Tree
 public meta import HexPolyFast.Multipoint
 public meta import HexPolyFast.Interpolation
+public meta import HexPolyFast.RemainderTree
 public meta import HexPolyFast.HalfGcd
 public meta import HexPolyFast.Pade
 
@@ -161,6 +162,23 @@ private def evalPoly : DensePoly Int := ofList [7, -4, 3, 2, -1]
 #guard (EvalPlan.build plan (#[] : Array Int)).evalImpl evalPoly = #[]
 #guard tree.nodeProduct? 3 0 = some tree.root
 #guard tree.nodeProduct? 4 0 = none
+
+private def remainderLeaves : Array (MonicLeaf Int) :=
+  #[{ poly := ofList [1, 1], monic := by rfl, ne := by decide },
+    { poly := ofList [2, 1], monic := by rfl, ne := by decide },
+    { poly := ofList [3, 1], monic := by rfl, ne := by decide },
+    { poly := ofList [4, 1], monic := by rfl, ne := by decide },
+    { poly := ofList [5, 1], monic := by rfl, ne := by decide }]
+
+private def remainderTree : RemainderTree Int :=
+  RemainderTree.build plan 8 remainderLeaves (by decide)
+
+#guard remainderTree.leaves = treeLeaves
+#guard remainderTree.remainders? a =
+  some (remainderLeaves.map fun leaf => modByMonic a leaf.poly leaf.monic)
+#guard (RemainderTree.build plan 0 remainderLeaves (by decide)).remainders? a = none
+#guard (RemainderTree.build plan 0 (#[] : Array (MonicLeaf Int))
+  (by decide)).remainders? a = some #[]
 
 private def interpPoints : Array Rat := #[-1, 0, 2]
 private def interpValues : Array Rat := #[6, 3, 3]
