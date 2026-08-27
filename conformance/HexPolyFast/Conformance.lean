@@ -79,6 +79,12 @@ private def plan : MulPlan Int := karatsubaPlan 2
     (ofList [1, 2, 3] : DensePoly Int) (ofList [4, 5]) = ofList [19, 13, 22]
 #guard mulNegacyclic (karatsubaPlan 2) 3 (by omega)
     (ofList [1, 2, 3] : DensePoly Int) (ofList [4, 5]) = ofList [-11, 13, 22]
+#guard mulCyclic (karatsubaPlan 2) 3 (by omega)
+    (ofList [1, 2, 3, 4, 5, 6, 7] : DensePoly Int) (C 1) =
+      ofList [12, 7, 9]
+#guard mulNegacyclic (karatsubaPlan 2) 3 (by omega)
+    (ofList [1, 2, 3, 4, 5, 6, 7] : DensePoly Int) (C 1) =
+      ofList [4, -3, -3]
 #guard mulCyclic? (karatsubaPlan 2) 0 a b = none
 
 private def unitSeries : TSeries Int 8 :=

@@ -112,6 +112,10 @@ the checked forms return `none` for length zero.
 
 {docstring Hex.DensePoly.mulNegacyclic}
 
+{docstring Hex.DensePoly.mulCyclic_eq_modByMonic}
+
+{docstring Hex.DensePoly.mulNegacyclic_eq_modByMonic}
+
 {docstring Hex.DensePoly.mulCyclic?}
 
 {docstring Hex.DensePoly.mulNegacyclic?}
