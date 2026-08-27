@@ -338,7 +338,6 @@ def main() -> int:
         "HexGramSchmidtMathlib": 6,
         "HexBerlekampZassenhaus": 4,
         "HexLLLMathlib": 4,
-        "HexBerlekampZassenhausMathlib": 2,
     }
     for entry in entries:
         lib = entry.get("lib")
