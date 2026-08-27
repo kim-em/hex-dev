@@ -8,6 +8,7 @@ import VersoManual
 
 import HexPolyZ.Decomposition
 import HexPolyZ.Mignotte
+import HexPolyZMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -67,6 +68,12 @@ analogue of normalizing to a monic polynomial over a field.
 {docstring Hex.ZPoly.primitivePart}
 
 {docstring Hex.ZPoly.Primitive}
+
+The decidable {name}`Hex.ZPoly.SquareFreeRat` predicate tests whether
+the executable rational gcd of a polynomial and its derivative has
+size at most one.
+
+{docstring Hex.ZPoly.SquareFreeRat}
 
 A related substitution, used when transferring a factor of a monic
 transform back to the original polynomial, scales the variable rather
@@ -131,6 +138,11 @@ being coprime modulo `p`.
 {docstring Hex.ZPoly.congr}
 
 {docstring Hex.ZPoly.coprimeModP}
+
+{name}`Hex.ZPoly.modP` reduces an integer polynomial coefficientwise to
+an executable polynomial over {name}`Hex.ZMod64`.
+
+{docstring Hex.ZPoly.modP}
 
 The congruence is an equivalence relation and is compatible with the
 ring operations, so Hensel-step reasoning can rewrite under it.
@@ -262,6 +274,146 @@ polynomial, which the factorization driver needs to set a valid
 precision modulus.
 
 {docstring Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero}
+
+# The Mathlib correspondence
+%%%
+tag := "hex-poly-z-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexPolyZMathlib` is
+the proof-facing companion: it identifies {name}`Hex.ZPoly` with
+Mathlib's `Polynomial ℤ`, transports the integer-polynomial operations
+used by factorization, and proves the analytic bounds that justify the
+executable estimates.
+
+## Conversion and ring operations
+%%%
+tag := "hex-poly-z-mathlib-conversion"
+%%%
+
+The two conversion functions preserve coefficients and are mutually
+inverse.
+
+{docstring HexPolyZMathlib.toPolynomial}
+
+{docstring HexPolyZMathlib.ofPolynomial}
+
+{docstring HexPolyZMathlib.coeff_toPolynomial}
+
+{docstring HexPolyZMathlib.toPolynomial_ofPolynomial}
+
+{docstring HexPolyZMathlib.ofPolynomial_toPolynomial}
+
+They are bundled as a ring equivalence, so zero, one, constants,
+addition, multiplication, negation, and subtraction transport without
+changing their meaning.
+
+{docstring HexPolyZMathlib.equiv}
+
+{docstring HexPolyZMathlib.toPolynomial_zero}
+
+{docstring HexPolyZMathlib.toPolynomial_one}
+
+{docstring HexPolyZMathlib.toPolynomial_C}
+
+{docstring HexPolyZMathlib.toPolynomial_add}
+
+{docstring HexPolyZMathlib.toPolynomial_mul}
+
+{docstring HexPolyZMathlib.toPolynomial_neg}
+
+{docstring HexPolyZMathlib.toPolynomial_sub}
+
+The example below illustrates the usual proof pattern. Convert to
+`Polynomial ℤ`, use the simplification rules supplied by
+`HexPolyZMathlib`, and convert back only if executable data is needed
+again.
+
+```lean
+open HexPolyZMathlib
+
+namespace HexPolyZChapterCorrespondence
+
+example (f g : Hex.ZPoly) :
+    ofPolynomial (toPolynomial (f * g)) = f * g := by
+  simp
+
+example (f : Hex.ZPoly) (n : Nat) :
+    (toPolynomial f).coeff n = f.coeff n := by
+  simp
+
+end HexPolyZChapterCorrespondence
+```
+
+## Integer-specific transports
+%%%
+tag := "hex-poly-z-mathlib-transports"
+%%%
+
+`HexPolyZMathlib` also names the transports that do not follow from the
+ring equivalence alone. The Mathlib-free unit predicate agrees with
+{name}`IsUnit`. Variable dilation becomes composition by `C c * X`.
+The executable content and primitive-part decomposition agrees with
+Mathlib's Gauss decomposition.
+
+{docstring HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit}
+
+{docstring HexPolyZMathlib.toPolynomial_dilate}
+
+{docstring HexPolyZMathlib.toPolynomial_content}
+
+{docstring HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart}
+
+{docstring HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive}
+
+{name}`Hex.ZPoly.modP` reduces integer coefficients into executable
+{name}`Hex.ZMod64` values. The coefficient theorem identifies them with
+the corresponding values in Mathlib's {name}`ZMod` type. It is the
+rewrite rule used to prove the extensional map theorem. Divisibility
+transports separately because {name}`Polynomial.map` preserves
+multiplication.
+
+{docstring HexPolyZMathlib.coeff_toZMod_modP_eq_coeff_map_intCast}
+
+{docstring HexPolyZMathlib.eq_map_intCast_of_coeff_eq_toZMod_modP}
+
+{docstring HexPolyZMathlib.dvd_modP_of_dvd}
+
+## Correctness theorems and the proof boundary
+%%%
+tag := "hex-poly-z-mathlib-correctness"
+%%%
+
+The executable library computes a natural-number squared coefficient
+norm and a conservative integer bound. The companion identifies that
+norm with the square of the real `l2norm`, identifies the executable
+binomial coefficient with {name}`Nat.choose`, and then applies Mathlib's
+Mahler-measure theory to prove Mignotte's coefficient bound for every
+factor of a nonzero integer polynomial.
+
+{docstring HexPolyZMathlib.l2norm}
+
+{docstring HexPolyZMathlib.l2norm_toPolynomial_sq_eq_coeffNormSq}
+
+{docstring HexPolyZMathlib.binom_eq_choose}
+
+{docstring HexPolyZMathlib.mignotte_bound}
+
+`HexPolyZMathlib` also relates the executable rational squarefreeness
+test to Mathlib's {name}`Squarefree` predicate after casting to
+`Polynomial ℚ`. Its discriminant, Hadamard, Robinson-form, and
+Mahler-separation theorems remain entirely on the Mathlib side for
+downstream certified factorization and root isolation proofs.
+
+{docstring HexPolyZMathlib.squareFreeRat_iff}
+
+{docstring HexPolyZMathlib.one_le_mahlerDist}
+
+Thus callers use {name}`Hex.ZPoly` and its natural-number bounds when
+they need computation. They import `HexPolyZMathlib` only when a proof
+must interpret those results as Mathlib polynomials or invoke
+noncomputable algebraic and analytic theory. No Mathlib dependency
+flows back into `HexPolyZ`.
 
 # Cross-references
 %%%
