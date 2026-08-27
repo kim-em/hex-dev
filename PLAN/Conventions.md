@@ -631,6 +631,19 @@ further) means:
    (above) makes this mechanical: any `M` with `L ∈ M.deps` and a
    dep-coupled phase ≥ K is now ineligible until L recovers.
 
+This last step blocks new or incomplete dep-coupled work. It does not
+retroactively roll back a downstream library whose dep-coupled phase was
+genuinely completed while the dependency satisfied its gate; later local
+phases remain valid as stated above. Roll the downstream library back too only
+when the finding invalidates evidence that its own completed phase relied on.
+
+The rolled-back library itself cannot retain a separate `done_through` record
+for later phases: the field is a completed prefix, so a Phase-4 rollback to 3
+also removes its recorded Phase-5–7 completion and the Phase-7 checker stops
+covering it. The later-phase evidence remains in git and the manual; once
+Phase 4 recovers, re-attesting those phases is bookkeeping against that
+preserved evidence unless the finding invalidated it too.
+
 The next agent picking up `L` enters the rolled-back phase with the
 bug-finding evidence (the issue, the JSONL artefact for a bench
 finding, the failing `#guard` for a conformance finding) as its

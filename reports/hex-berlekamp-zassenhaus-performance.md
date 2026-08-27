@@ -47,25 +47,36 @@ record for cross-system evidence; `list` and `verify` run in CI on every PR.
 
 ## Verdicts
 
-All eight parametric registrations use **mode 2, one-sided upper-bound
-parametric**. Mode 1 does not apply: the public cascade chooses among prime
-plans, bounded classical recombination, CLD lattice recombination, exact
-fallbacks, and early exits from input-dependent intermediate structure, so no
-tight scaling law for these registered families can be derived in advance.
-The declared polynomial envelope is Corollary 5.3 of Belabas, van Hoeij,
-Klüners, and Steel,
-[*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
-`O(n^9 + n^7 h^2)` with classical arithmetic. The slow registrations add the
-exhaustive subset-count bound, and the precision/local-factor registration
-separates the Hensel contribution already covered in that analysis.
+All eight parametric registrations are currently **mode 4, blocked**. Mode 1
+does not apply: the public cascade chooses among prime plans, bounded classical
+recombination, CLD lattice recombination, exact fallbacks, and early exits from
+input-dependent intermediate structure, so no tight scaling law for these
+registered families can be derived in advance.
 
-The citation covers the work these families exercise. The profile attributes
-the time to the registered factorization cascade: candidate construction and
-discarding in the classical paths, subset-enumeration churn in the exact
-backstop, and big-integer lift/CLD work in the precision and degree-height
-paths. No profile is dominated by a phase outside that bound. Mode 3 is
-therefore inapplicable: a published one-parameter upper bound and families
-that exercise it are available.
+Five registrations are candidates for mode 2 because their declarations use
+the polynomial bound in Corollary 5.9 of Belabas, van Hoeij, Klüners, and
+Steel,
+[*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
+`O(n^9 + n^7 h^2)` with classical arithmetic. The current profiles do not
+complete mode 2's dominant-phase test, however. They record leaf categories
+and symbols, not inclusive time by prime selection, Hensel lifting, classical
+recombination, and CLD. Allocation and Lean runtime dominate every category
+table, so this report cannot show that the phase covered by the cited bound is
+the phase controlling a registration.
+
+The three `runFactorSlow*` registrations do not even have the right candidate
+citation. Their timed implementation is `factorTrial`, an exhaustive integer
+trial-division path, not the modular-factor subset recombination analysed by
+van Hoeij's
+[*Factoring polynomials and the knapsack problem*](https://doi.org/10.1006/jnth.2001.2763).
+The slow profile is led by integer-divisor/list construction and allocator
+work. Its declared `2^n` multiplier therefore lacks a published citation that
+covers the measured algorithm and dominant phase. Mode 3 has not been
+established: doing so would require an operation-specific canonical hard input
+and justified absolute budget, which the existing fixed adversarial checks do
+not provide. Until that work is attempted, the ladders remain blocked.
+The `runIsabelle*` fixed endpoints are comparator anchors: they make no
+complexity claim, have no mode, and cannot replace performance coverage.
 
 Parametric export at clean `f396965d`:
 `reports/bench-results/hex-berlekamp-zassenhaus-parametric-f396965d-chungus2.json`
@@ -79,15 +90,18 @@ faster than declared`, the same
 status as the previous committed export
 (`hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`):
 the declared models are deliberately conservative upper envelopes over
-encoded degree/height/precision parameters (the smoke models bound the
-classical tier's worst dispatch, the `2^n` factor bounds the exact backstop),
-so observed cost growing strictly more slowly than the declared envelope is
-the expected direction. Under mode 2 each is a passing result, **within
-declared upper bound (observed faster)**; none is represented as *consistent
-with declared complexity*. Representative top rungs: `runFactorChecksum`
+encoded degree/height/precision parameters. The ordered rule does not turn
+that direction into a pass without the missing citation-and-attribution
+evidence. Representative top rungs: `runFactorChecksum`
 3.595 ms at n=24, `runFactorFallbackProbeChecksum` 3.370 ms at n=24,
 `runFastPathPrecisionLocalChecksum` 899 µs at the 8_032_128_008 encoding.
 No ladder shows the slower-than-declared direction.
+For traceability of that direction, the fitted residual slopes are `-6.778`
+for `runFactorChecksum`, `-7.245` for `runFactorSlowDegreeHeightChecksum`, and
+`-5.821` for `runFastPathPrecisionLocalChecksum`; ladders too narrow for a fit
+still have falling normalized constants, for example
+`runFactorFallbackProbeChecksum` from `0.000106` after warmup to `0.000001` at
+the final rung.
 
 ## Comparator Ratios
 
@@ -209,4 +223,11 @@ coverage for that family, not an omission.
 
 ## Concerns
 
-None.
+The eight parametric registrations have no passing mode. Five lack the
+inclusive dominant-phase attribution required for their candidate published
+upper bound; three slow registrations cite a modular-subset algorithm that the
+timed integer trial-division implementation does not run. The fixed
+adversarial checks do not supply budgeted mode-3 replacements. This finding
+and the rollback are recorded by
+[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
+issue follows after the policy lands.

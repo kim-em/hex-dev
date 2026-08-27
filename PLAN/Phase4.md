@@ -155,9 +155,12 @@ For library `hex-foo`, Phase 4 is done when:
   track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
   proof-track operation has the specified externally timed fresh-module probe;
-- every registration names the strongest applicable mode from
-  `SPEC/benchmarking.md`'s ordered rule; every mode-1 parametric declaration
-  matches the independently derived expected scaling on its family, every
+- the headline report names the strongest applicable mode from
+  `SPEC/benchmarking.md`'s ordered rule for every performance-evidence
+  registration; fixed registrations used only as hash, comparator, or protocol
+  anchors are labelled as such and cannot satisfy operation coverage; every mode-1
+  parametric declaration matches the independently derived expected scaling
+  on its family, every
   mode-2 declaration is a cited published upper bound covering the dominant
   profiled phase, and every mode-3 registration has a canonical hard input and
   meaningful absolute budget;
@@ -169,9 +172,11 @@ For library `hex-foo`, Phase 4 is done when:
   smoke settings, and
   `lake exe hexfoo_bench run NAME` returns a passing verdict for every
   parametric registration's declared mode at its scientific settings; until
-  lean-bench has a one-sided mode, the headline report may translate only a
-  faster-than-declared mode-2 harness result to the distinct passing result
-  *within declared upper bound (observed faster)*;
+  lean-bench has a one-sided mode, the headline report may translate a mode-2
+  harness result to the distinct passing result *within declared upper bound
+  (observed faster)* or *within declared upper bound (observed matching)*, as
+  its observed direction requires; a slower-than-declared observation fails
+  mode 2 and admits no translation;
 - every `compare` group named by the SPEC is registered and reports
   `allAgreed` on its declared common domain;
 - every comparator declared `gating` in `libraries.yml:
@@ -264,5 +269,12 @@ issue with a checkbox per library; per-library follow-on issues
 are filed only when the audit identifies actual gaps. Libraries
 already passing all new criteria stay at `done_through: 4`
 unchanged.
+
+The ordered complexity-mode rule is likewise an audit reset. Its merge queues
+one umbrella audit of every library at `done_through ≥ 4`; existing passing
+two-sided registrations need no relabelling until their report is revised, but
+an inconclusive result or non-empty Concern is not grandfathered. The audit
+files per-library remediation issues only where the ordered rule exposes an
+actual gap, and applies the normal rollback rule there.
 
 Record completion by bumping `libraries.yml[L].done_through` to `4`.

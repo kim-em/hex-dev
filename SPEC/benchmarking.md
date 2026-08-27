@@ -52,8 +52,18 @@ that earned its keep.
 ### Choosing the complexity claim
 
 Choose the first mode in this ordered list that the operation admits. This is
-not a menu: every headline report names the selected mode and explains why
-each stronger preceding mode does not apply.
+not a menu. A report created or reconciled under this rule names the selected
+mode for every performance-evidence registration and explains why each
+stronger preceding mode does not apply. Existing passing two-sided
+registrations are mode 1 by default and need not be relabelled until their
+report is next revised.
+
+This ordering applies to registrations used as Phase-4 performance evidence
+for an operation. A fixed registration used only as an expected-hash anchor,
+an external-comparator endpoint, or protocol-overhead control makes no
+complexity claim and has no mode. The report labels that limited purpose
+explicitly, and such an anchor cannot discharge performance coverage for an
+advertised operation.
 
 1. **Two-sided parametric — the default.** Use this whenever the intended
    algorithm's expected scaling on the registered input family can be derived
@@ -62,8 +72,8 @@ each stronger preceding mode does not apply.
    family is wrong.
 2. **One-sided upper-bound parametric.** Use this only when all three
    conditions hold:
-   - no tight family-specific model can be derived, and the registration says
-     why;
+   - no tight family-specific model can be derived, and the headline report
+     says why;
    - the declared bound is published and cited, and the cited result covers
      the phase that the profile shows dominating — a citation for work absent
      from the profile is not evidence for the registration;
@@ -73,7 +83,9 @@ each stronger preceding mode does not apply.
    Slower than the bound fails. Faster than the bound passes and is reported
    as **within declared upper bound (observed faster)**. This is visibly weaker
    than a two-sided pass and is never rendered as *consistent with declared
-   complexity*. lean-bench does not yet have this registration mode; until
+   complexity*. A matching observation is **within declared upper bound
+   (observed matching)**, not a two-sided consistency claim. lean-bench does
+   not yet have this registration mode; until
    [lean-bench #70](https://github.com/kim-em/lean-bench/issues/70) lands, the
    headline report records the harness verdict, the observed direction, and
    the reason it is a passing upper-bound result.
@@ -81,6 +93,18 @@ each stronger preceding mode does not apply.
    stable one-parameter wall-time model is reachable and a canonical hard
    input with a meaningful ceiling exists. The headline report states plainly
    that asymptotic regression detection has been given up for this operation.
+   It also records the attempted parameterisations and schedules and explains
+   why each failed to yield a stable independently derived model. When a
+   comparator or external requirement supplies a meaningful ceiling, use it;
+   a measured baseline plus stated margin is the fallback only when neither is
+   available.
+   The budget is an operation-specific regression ceiling justified from a
+   comparator, a reference requirement, or a measured baseline plus stated
+   margin. A generic harness timeout or inherited `maxSecondsPerCall` default
+   is a safety cap, not an absolute budget. The scientific evidence recorded
+   in the report must show the canonical input completing within the budget;
+   the budget remains a Phase-4 gate even when the current harness only emits
+   the measurement rather than a distinct fixed-budget verdict.
 4. **Blocked.** If none of the preceding modes honestly applies, Phase 4 is
    not done. Failure to characterise an operation's cost is a reason to stay
    at the current phase, not a route to a fixed registration.
@@ -751,10 +775,16 @@ hard inputs, not parameter sweeps:
   `(2, 409)`,
 - computing a `GF(p^n)` inverse for fixed `(p, n)` and chosen element.
 
-Use `setup_fixed_benchmark` for these. The bench module's docstring
-records the canonical input, the source it came from, and the
-reference timing the project considers reasonable (typically: time
-on the same canonical input in a comparator like FLINT or fpLLL).
+For Phase-4 performance evidence, use `setup_fixed_benchmark` only through
+mode 3 of [§Choosing the complexity claim](#choosing-the-complexity-claim),
+after modes 1 and 2 have been ruled out. Fixed hash, comparator, and protocol
+anchors have the narrower non-performance role stated there and do not need a
+mode-3 justification. The bench module's adjacent comment or docstring records
+the canonical input, the source it came from, and the absolute budget,
+including the reference timing the project considers reasonable (typically:
+time on the same canonical input in a comparator like FLINT or fpLLL). The
+headline report repeats that budget and records the scientific measurement
+against it.
 Comparison against the comparator is then a `compare` invocation
 across two `setup_fixed_benchmark` registrations, one per
 implementation.
@@ -964,8 +994,8 @@ Full timing runs (`lake exe hexfoo_bench run NAME` with a real
 budget) are not part of merge-gating CI. They run on a scheduled
 workflow or release-candidate workflow, on dedicated hardware where
 timing comparisons are meaningful. Each release names the libraries
-whose timing runs must succeed; a release is blocked by an
-inconclusive verdict or a comparator divergence even when proofs
+whose timing runs must succeed; a release is blocked by a failing verdict in
+the registration's declared mode or a comparator divergence even when proofs
 are complete.
 
 ## Reproducibility contract
@@ -1034,14 +1064,19 @@ The report contains five subsections:
    registration sites. A mixed/proof library also lists every fresh-module
    probe, its matched baseline, and the generic requirements that probe
    replaces.
-2. **Verdicts.** Each registration's selected mode, the reasons the preceding
-   stronger modes do not apply, and its result at scientific settings. For a
-   parametric registration this includes the harness verdict ("consistent with
+2. **Verdicts.** Each performance-evidence registration's selected mode, the
+   reasons the preceding stronger modes do not apply, and its result at
+   scientific settings. Fixed hash/comparator anchors instead name their
+   limited non-performance purpose. For a parametric performance registration
+   this includes the harness verdict ("consistent with
    declared complexity", "inconclusive", with the verdict text); until the
    one-sided harness mode lands, a mode-2 report also records the direction and
-   the distinct manual result *within declared upper bound (observed faster)*.
-   Each fixed registration records its absolute budget, its
-   median per-call time and observed-hash agreement. Proof-track entries report
+   the distinct manual result *within declared upper bound (observed faster)*
+   or *within declared upper bound (observed matching)*.
+   Each mode-3 fixed registration records its absolute budget, median per-call
+   time, and observed-hash agreement. Fixed hash, comparator, and protocol
+   anchors record their median per-call time and observed-hash agreement but
+   do not acquire a performance budget. Proof-track entries report
    all raw rotated fresh-build samples and paired deltas, never a complexity
    verdict. When the sweep has null controls, their raw deltas, absolute and
    relative ranges, and medians precede the substantive proof deltas in
@@ -1259,8 +1294,7 @@ explicitly forbidden:
   faster-than-declared harness result is a pass only for a registration that
   independently satisfies mode 2's citation-and-attribution conditions; the
   report records the distinct upper-bound result while lean-bench #70 is open.
-  An
-  inconclusive verdict whose root cause is a too-narrow schedule
+  An inconclusive verdict whose root cause is a too-narrow schedule
   (rungs too close to the per-spawn floor, even when some survive
   the filter) is miscalibration, not a finding, and the registration
   must be re-tuned before the library advances through Phase 4.

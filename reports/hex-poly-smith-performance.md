@@ -84,21 +84,33 @@ Scientific command:
 
 ## Verdicts
 
-This library is **mode 4, blocked**, except for the two passing mode-1
-registrations named below. `runChainSnf` and `runSmallField` use **mode 1,
+Fourteen parametric performance registrations are **mode 4, blocked**; the two
+passing registrations named below use mode 1. `runChainSnf` and
+`runSmallField` use **mode 1,
 two-sided parametric**: their fixed-degree families independently leave the
 cubic matrix-update cost dominant, and both match that declaration.
 
 The other fourteen registrations do not currently admit any passing mode.
-Their declarations are algebraic-operation proxies that deliberately exclude
-the intermediate polynomial-degree and rational coefficient-bit growth
-measured by `growth`; they are therefore neither tight wall-time models for
-mode 1 nor published wall-time upper bounds for mode 2. The profiles confirm
-that this omitted expression swell dominates the dense and rational families.
-Mode 3 is not available merely to evade those results: these operations have
-stable parametric input families, and no canonical hard input with an absolute
-budget has been justified as a replacement. Their current harness results are
-findings, not upper-bound passes.
+For twelve dense, rational, consumer, and evaluation registrations, the
+declarations are algebraic-operation proxies that exclude the intermediate
+polynomial-degree and rational coefficient-bit growth measured by `growth`;
+they are therefore neither tight wall-time models for mode 1 nor published
+wall-time upper bounds for mode 2. The profiles confirm that this omitted
+expression swell dominates the dense and rational families.
+
+Two failures have a different direction and cannot be explained by omitted
+swell. `runDirectProductCert` is faster than declared (`beta = -0.786`), so
+its model or family is wrong. `runDiagonalSnf` is marginally faster than its
+mode-1 tolerance (`beta = -0.155` against `0.15`) and requires an independent
+calibration diagnosis rather than being grouped with the slower swell cases.
+Mode 3 has not been established for any of the fourteen: doing so would
+require ruling out a reachable tight model and supplying a canonical hard
+input with a justified absolute budget. Until that work is done, their current
+harness results are blocked findings, not upper-bound or fixed passes.
+
+The fixed comparator endpoints and canonical expected-hash checks make no
+complexity claim, have no mode, and do not replace these sixteen performance
+registrations.
 
 `C` is per-call time divided by the declared model. The last column is the
 largest completed rung; `—` means the wallclock cap prevented a residual-slope
@@ -275,10 +287,15 @@ in the table, and a 3,000,000,000 ns target duration.
 
 ## Concerns
 
-The library is blocked in mode 4. Fourteen parametric registrations lack a
-tight wall-time model or a cited upper bound that includes the measured
-intermediate degree and coefficient swell. The boundary-growth artifact and
-profiles localize the gap to the classical Euclidean kernel, but localization
-does not make the algebraic-operation proxies passing complexity claims. The
+The library is blocked in mode 4. Twelve parametric registrations lack a tight
+wall-time model or a cited upper bound that includes the measured intermediate
+degree and coefficient swell. The boundary-growth artifact and profiles
+localize that gap to the classical Euclidean kernel, but localization does not
+make the algebraic-operation proxies passing complexity claims.
+`runDirectProductCert` instead has a faster model/family mismatch, while
+`runDiagonalSnf` needs a separate tolerance-boundary calibration audit. The
 external comparators are informational and all hashes agree; those facts do
-not discharge the missing model.
+not discharge either class of missing evidence. These findings and the
+rollback are recorded by
+[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
+issue follows after the policy lands.
