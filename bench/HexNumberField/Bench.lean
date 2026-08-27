@@ -784,7 +784,8 @@ private def exactFactorFamily (count : Nat) : ZPoly :=
 
 private def coefficientBits (p : ZPoly) : Nat :=
   p.toArray.foldl
-    (fun bits coefficient => max bits (Nat.log2 (coefficient.natAbs + 1))) 0
+    (fun bits coefficient =>
+      max bits (if coefficient = 0 then 0 else Nat.log2 coefficient.natAbs + 1)) 0
 
 def exactFamilyComplexity (count : Nat) : Nat :=
   let p := exactFactorFamily count
