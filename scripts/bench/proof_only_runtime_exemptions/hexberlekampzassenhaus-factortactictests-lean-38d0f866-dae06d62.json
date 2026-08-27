@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorTacticTests.lean",
+ "baseline_blob": "38d0f866598954615ed9496c1d611ba7c01b56d7",
+ "current_blob": "dae06d629062310f7f0d471b95c95b0341b019dd",
+ "reason": "Imports the public umbrella and adds a README quickstart namespace to the build-only publication test module. The module is absent from the hexbz_factor_service import graph, and no factorizer definition or benchmarked runtime path changes."
+}

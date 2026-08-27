@@ -28,7 +28,7 @@ The module provides the exact integer CLD column `phi g = f * g' / g` with its
 Landau-Mignotte coefficient
 bound, the aggregate-residue congruence for a recovered true-factor support,
 the period-aware carry bound `two_mul_natAbs_sum_psiCut_period_le`, and the
-short-vector producer `supportShortVectorData_of_recoveredLift` feeding
+short-vector producer `recoveredShortVector` feeding
 `cutProjectionHypotheses_of_shortVectors`.
 -/
 
@@ -1661,7 +1661,7 @@ period-adjusted vector by `factorCount/2`.  Together with the structural project
 and lattice-membership facts, this yields a `SupportShortVectorData` for the
 recovered support, feeding the fast-disjunct consumer through
 `cutProjectionHypotheses_of_shortVectors`. -/
-def supportShortVectorData_of_recoveredLift
+def recoveredShortVector
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S)
     (hp : 2 ≤ D.p)

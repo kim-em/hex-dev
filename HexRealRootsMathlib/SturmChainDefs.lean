@@ -99,8 +99,8 @@ theorem countSignChanges_congr {l₁ l₂ : List ℝ}
       have hiff : (a * c < 0) ↔ (b * d < 0) := by
         rw [← sign_eq_neg_one_iff, ← sign_eq_neg_one_iff, sign_mul, sign_mul, hab, hcd]
       by_cases hc : a * c < 0
-      · rw [if_pos hc, if_pos (hiff.mp hc), ih]
-      · rw [if_neg hc, if_neg (fun h => hc (hiff.mpr h)), ih]
+      · rw [ite_eq_left hc, ite_eq_left (hiff.mp hc), ih]
+      · rw [ite_eq_right hc, ite_eq_right (fun h => hc (hiff.mpr h)), ih]
 
 /-- Dropping the zero entries commutes with a pointwise sign-equal
 correspondence: the filtered lists remain pointwise sign-equal. -/
@@ -177,8 +177,8 @@ theorem signVariations_cons_pos {a : ℝ} (l : List ℝ) (ha : a ≠ 0) :
       simp only [Option.elim_some]
       congr 1
       by_cases hlt : a * b < 0
-      · rw [if_pos hlt, if_pos (sign_mul_eq_neg_one.mpr hlt)]
-      · rw [if_neg hlt, if_neg (fun h => hlt (sign_mul_eq_neg_one.mp h))]
+      · rw [ite_eq_left hlt, ite_eq_left (sign_mul_eq_neg_one.mpr hlt)]
+      · rw [ite_eq_right hlt, ite_eq_right (fun h => hlt (sign_mul_eq_neg_one.mp h))]
 
 /-- A local sign-pattern relation between two real lists: they agree entry by
 entry except that a nonzero entry flanked by two opposite-sign neighbours may
@@ -227,7 +227,7 @@ theorem SVRel.signVariations_eq {L M : List ℝ} (h : SVRel L M) :
       simp only [Option.elim_some]
       rw [← add_assoc, ih.1]
       congr 1
-      rw [← hsx, ← hsy, if_pos hopp]
+      rw [← hsx, ← hsy, ite_eq_left hopp]
       exact svrel_flank_arith _ _ _ hopp (fun h => hX (sign_eq_zero_iff.mp h))
     · rw [firstSign_cons_ne (X :: y :: l) hx, firstSign_cons_ne (0 :: y' :: m) hx', hsx]
 

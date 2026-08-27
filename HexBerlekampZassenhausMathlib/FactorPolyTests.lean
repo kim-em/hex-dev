@@ -8,6 +8,7 @@ module
 
 public meta import HexBerlekamp.IrreducibilityElab
 public meta import HexBerlekampZassenhaus.FactorTactic
+public import HexBerlekampZassenhausMathlib
 public meta import HexBerlekampZassenhausMathlib.FactorTactic
 public meta import HexBerlekampZassenhausMathlib.KernelFactorTactic
 public import HexBerlekamp.IrreducibilityElab
@@ -178,6 +179,23 @@ diagnostic for balanced inputs outside every certificate language.
 namespace HexBerlekampZassenhausMathlib.FactorPolyTests
 
 open Lean Polynomial
+
+/-! # README quickstart -/
+
+namespace READMEQuickstart
+
+#check HexBerlekampZassenhausMathlib.factorize_product
+#check HexBerlekampZassenhausMathlib.factorize_normalized
+#check HexBerlekampZassenhausMathlib.factorize_unique
+#check Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+
+noncomputable def fac :=
+  factor_poly ((X - 1) ^ 2 * (X ^ 2 + 1) : Polynomial ℤ)
+
+example : Irreducible (X ^ 4 + 8 * X + 12 : Polynomial ℤ) := by
+  irreducibility
+
+end READMEQuickstart
 
 /-! # Elaboration-time evaluation shims for the round-trip tests -/
 

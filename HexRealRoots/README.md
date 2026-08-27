@@ -1,16 +1,14 @@
 # hex-real-roots
 
-Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
-library for Lean 4. The aim is fast executable code, fully verified, built
-with spec-driven development.
+Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra library
+for Lean 4. The aim is fast executable code, fully verified, built with
+spec-driven development.
 
-Certified real-root isolation for dense integer polynomials, implemented in
-Lean 4 without Mathlib.
-
-Every result is a sorted half-open dyadic interval `(lo, hi]` carrying an exact
-Sturm-count witness that it contains one root. A complete output additionally
-certifies that the intervals are pairwise disjoint and that their number equals
-the total real-root count.
+Certified real-root isolation for dense integer polynomials, built on
+[`hex-poly-z`](https://github.com/leanprover/hex-poly-z) without Mathlib. Each
+half-open dyadic interval carries an exact Sturm-count witness; the
+[`hex-real-roots-mathlib`](https://github.com/leanprover/hex-real-roots-mathlib)
+companion proves the semantic isolation guarantees and provides `isolate_roots`.
 
 # Quickstart
 
@@ -23,12 +21,6 @@ rev = "main"
 
 ```lean
 import HexRealRoots
-```
-
-# Functionality
-
-```lean
-import HexRealRoots
 
 open Hex
 
@@ -37,17 +29,14 @@ def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 #eval (isolate? p).map (fun roots => roots.isolations.size)
 ```
 
-The stable executable API is:
+# Functionality
 
-```lean
-import HexRealRoots
-
-#check Hex.isolate?          -- Descartes search, certified by Sturm; Sturm fallback
-#check Hex.isolateSturm?     -- direct Sturm bisection
-#check Hex.isolateDescartes? -- Descartes-only search, still Sturm-certified
-#check Hex.rootCount         -- exact total real-root count
-#check Hex.sturmCount        -- exact count in one half-open interval
-```
+- `Hex.isolate?` tries the Descartes search first and falls back to Sturm.
+- `Hex.isolateSturm?` runs direct Sturm bisection.
+- `Hex.isolateDescartes?` runs only the Descartes search, while still
+  certifying every emitted interval with Sturm.
+- `Hex.rootCount` computes the exact total real-root count.
+- `Hex.sturmCount` computes the exact count in one half-open interval.
 
 `isolate?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.
@@ -66,7 +55,7 @@ speed, not trust.
 All endpoint evaluation is exact dyadic Horner arithmetic. There are no floats,
 numerical tolerances, or interval-arithmetic assumptions in the certificate.
 
-# Reference manual
+Reference material:
 
 - [SPEC](SPEC/hex-real-roots.md) — Sturm convention, engines, totality, and
   performance budgets.
@@ -74,8 +63,8 @@ numerical tolerances, or interval-arithmetic assumptions in the certificate.
 - `bench/HexRealRoots/` — deterministic real-root workloads.
 - `conformance/HexRealRoots/` — fixtures checked against python-flint.
 
-For semantic theorems and the user-facing elaborator, use
-[`hex-real-roots-mathlib`](https://github.com/leanprover/hex-real-roots-mathlib).
+For semantic theorems and the user-facing elaborator, use the companion
+package linked above.
 
 # Contributing
 

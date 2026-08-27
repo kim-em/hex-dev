@@ -9,8 +9,9 @@ with spec-driven development.
 identifies the executable dense-matrix Gram-Schmidt basis with Mathlib's
 `InnerProductSpace.gramSchmidt`, and the fraction-free integer
 coefficients with Bareiss determinants. It depends on
-[`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt) and on
-Mathlib.
+[`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt),
+[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib),
+and Mathlib.
 
 # Quickstart
 
@@ -41,7 +42,7 @@ open Hex
 
 # Functionality
 
-The proof-facing API splits into two parts.
+The proof-facing API splits into three parts.
 
 - The view `GramSchmidtMathlib.rowToEuclidean` from a rational dense row
   into `EuclideanSpace ℝ (Fin m)`, with its additivity, scaling, and
@@ -97,7 +98,7 @@ theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
 The executable Gram-Schmidt algorithm and its own algebraic API live in
 [`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt).
 
-# Reference manual
+Reference manual:
 
 The hex reference manual covers this library and its computational base at
 <https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-gram-schmidt>.

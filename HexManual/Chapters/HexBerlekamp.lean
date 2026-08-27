@@ -75,7 +75,8 @@ data in an irreducibility certificate.
 ```lean
 open Hex
 
-local instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+local instance boundsFive : ZMod64.Bounds 5 :=
+  ⟨by decide, by decide⟩
 
 def f : FpPoly 5 := #p[1, 0, 1]
 

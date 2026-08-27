@@ -326,20 +326,22 @@ def main() -> int:
     # library may join this list, and an entry leaves it by reaching Phase 7.
     prepublished_floor = {
         "HexPolyZMathlib": 6,
-        "HexRoots": 5,
-        "HexRealRoots": 5,
-        "HexRealRootsMathlib": 4,
-        "HexBerlekamp": 4,
         "HexMatrixMathlib": 6,
         "HexRowReduceMathlib": 5,
         "HexDeterminantMathlib": 5,
         "HexBareissMathlib": 5,
-        "HexBerlekampMathlib": 3,
         "HexGramSchmidtMathlib": 6,
-        "HexBerlekampZassenhaus": 4,
         "HexLLLMathlib": 4,
-        "HexBerlekampZassenhausMathlib": 2,
     }
+    graduated = sorted(
+        lib for lib in prepublished_floor
+        if lib in libraries and libraries[lib].done_through >= 7
+    )
+    if graduated:
+        fail(
+            "Phase-7 libraries must leave prepublished_floor: "
+            + ", ".join(graduated)
+        )
     for entry in entries:
         lib = entry.get("lib")
         if lib not in libraries:

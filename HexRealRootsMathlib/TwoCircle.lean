@@ -135,9 +135,9 @@ theorem descartes_node_count (hdeg : 1 ≤ (p.degree?).getD 0)
       = if (toPolyℝ p).IsRoot b then 1 else 0 := by
     rw [Multiset.filter_eq', Multiset.card_replicate]
     by_cases hbroot : (toPolyℝ p).IsRoot b
-    · rw [if_pos hbroot,
+    · rw [ite_eq_left hbroot,
         Multiset.count_eq_one_of_mem hnodup (Polynomial.mem_roots'.mpr ⟨hP0, hbroot⟩)]
-    · rw [if_neg hbroot, Multiset.count_eq_zero.mpr
+    · rw [ite_eq_right hbroot, Multiset.count_eq_zero.mpr
         (fun hm => hbroot (Polynomial.mem_roots'.mp hm).2)]
   have hsplit : ((toPolyℝ p).roots.filter (fun r => a < r ∧ r ≤ b)).card
       = ((toPolyℝ p).roots.filter (fun r => a < r ∧ r < b)).card
@@ -198,15 +198,15 @@ private theorem node_candidate (hdeg : 1 ≤ (p.degree?).getD 0)
   simp only [Bool.or_eq_true, Bool.and_eq_true] at hC
   rcases hC with ⟨hV0, hbz⟩ | ⟨hV1, hbz⟩
   · have hSV0 : Polynomial.signVariations M = 0 := by rw [← hV]; simpa using hV0
-    have hcp := Polynomial.countP_pos_eq_zero_of_signVariations_eq_zero hMne hSV0
+    have hcp := Polynomial.countP_pos_eq_zero_of_signVariations_eq_zero hSV0
     have hroot : (toPolyℝ p).IsRoot (Dyadic.toReal hi) := (bZero_iff hi).mp hbz
-    rw [hcnt, hcp, if_pos hroot]; norm_num
+    rw [hcnt, hcp, ite_eq_left hroot]; norm_num
   · have hSV1 : Polynomial.signVariations M = 1 := by rw [← hV]; simpa using hV1
     have hcp := Polynomial.countP_pos_eq_one_of_signVariations_eq_one hMne hSV1
     have hbzf : (Hex.dyadicSign (p.evalDyadic hi) == 0) = false := by simpa using hbz
     have hnroot : ¬ (toPolyℝ p).IsRoot (Dyadic.toReal hi) := fun hr => by
       rw [(bZero_iff hi).mpr hr] at hbzf; exact absurd hbzf (by decide)
-    rw [hcnt, hcp, if_neg hnroot]; norm_num
+    rw [hcnt, hcp, ite_eq_right hnroot]; norm_num
 
 /-- **Discard rows are truthful.** When the dispatch Boolean is `false` with
 `V = 0` (so `p(hi) ≠ 0`), the exact Sturm count is `0`, so the node's emitted
@@ -235,8 +235,8 @@ private theorem node_discard (hdeg : 1 ≤ (p.degree?).getD 0)
   have hnroot : ¬ (toPolyℝ p).IsRoot (Dyadic.toReal hi) := fun hr => by
     rw [(bZero_iff hi).mpr hr] at hbzf; exact absurd hbzf (by decide)
   have hSV0 : Polynomial.signVariations M = 0 := by rw [← hV]; exact hV0
-  have hcp := Polynomial.countP_pos_eq_zero_of_signVariations_eq_zero hMne hSV0
-  rw [hcnt, hcp, if_neg hnroot]; norm_num
+  have hcp := Polynomial.countP_pos_eq_zero_of_signVariations_eq_zero hSV0
+  rw [hcnt, hcp, ite_eq_right hnroot]; norm_num
 
 /-! # Depth-budget refutation of the bisecting rows -/
 
@@ -363,7 +363,7 @@ theorem bisect_refute_double (hdeg : 1 ≤ (p.degree?).getD 0)
   rw [← hM] at hcnt
   have h2 : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 2 := by
-    rw [hcnt, hcp, if_pos hroot]; norm_num
+    rw [hcnt, hcp, ite_eq_left hroot]; norm_num
   have hle := sturmCount_le_one hdeg hp ⟨lo, hi, hlt⟩ hw
   have hle' : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi ≤ 1 := hle
@@ -409,11 +409,11 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
               some #[]
             else none)
           else some #[]) := rfl
-    rw [dif_pos hlt] at hunf
+    rw [dite_eq_left hlt] at hunf
     by_cases hC : dispatchC p lo hi hlt = true
     · -- candidate leaf
       have hcert := node_candidate hdeg hp hlt hC
-      rw [if_pos hC, dif_pos hcert] at hunf
+      rw [ite_eq_left hC, dite_eq_left hcert] at hunf
       refine ⟨#[⟨⟨lo, hi, hlt⟩, by exact hcert⟩], hunf, ?_, ?_, ?_, ?_⟩
       · simp only [Array.size_singleton]; omega
       · intro i j hij
@@ -428,7 +428,7 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
         simp only [List.mem_toArray, List.mem_singleton] at hI
         subst hI; exact dle_refl hi
     · -- either discard leaf or a refuted bisect
-      rw [if_neg hC] at hunf
+      rw [ite_eq_right hC] at hunf
       have hCfalse : dispatchC p lo hi hlt = false := by
         cases h : dispatchC p lo hi hlt with
         | false => rfl
@@ -436,7 +436,7 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
       by_cases hV0 : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = 0
       · -- discard leaf
         have hcert := node_discard hdeg hp hlt hCfalse hV0
-        rw [if_pos hV0] at hunf
+        rw [ite_eq_left hV0] at hunf
         refine ⟨#[], hunf, ?_, ?_, ?_, ?_⟩
         · simp only [Array.size_empty]; omega
         · intro i j hij; exact absurd i.isLt (by simp)
@@ -444,7 +444,7 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
         · intro I hI; simp at hI
       · -- bisect at depth 0: refuted
         exfalso
-        rw [if_neg hV0] at hunf
+        rw [ite_eq_right hV0] at hunf
         rcases Nat.lt_or_ge (Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩)) 2 with hV2 | hV2
         · have hV1 : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = 1 := by omega
           have hbz : (Hex.dyadicSign (p.evalDyadic hi) == 0) = true := by
@@ -472,10 +472,10 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
                 | none => none
                 | some right => some (left ++ right))
           else some #[]) := rfl
-    rw [dif_pos hlt] at hunf
+    rw [dite_eq_left hlt] at hunf
     by_cases hC : dispatchC p lo hi hlt = true
     · have hcert := node_candidate hdeg hp hlt hC
-      rw [if_pos hC, dif_pos hcert] at hunf
+      rw [ite_eq_left hC, dite_eq_left hcert] at hunf
       refine ⟨#[⟨⟨lo, hi, hlt⟩, by exact hcert⟩], hunf, ?_, ?_, ?_, ?_⟩
       · simp only [Array.size_singleton]; omega
       · intro i j hij
@@ -489,21 +489,21 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
       · intro I hI
         simp only [List.mem_toArray, List.mem_singleton] at hI
         subst hI; exact dle_refl hi
-    · rw [if_neg hC] at hunf
+    · rw [ite_eq_right hC] at hunf
       have hCfalse : dispatchC p lo hi hlt = false := by
         cases h : dispatchC p lo hi hlt with
         | false => rfl
         | true => exact absurd h hC
       by_cases hV0 : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = 0
       · have hcert := node_discard hdeg hp hlt hCfalse hV0
-        rw [if_pos hV0] at hunf
+        rw [ite_eq_left hV0] at hunf
         refine ⟨#[], hunf, ?_, ?_, ?_, ?_⟩
         · simp only [Array.size_empty]; omega
         · intro i j hij; exact absurd i.isLt (by simp)
         · intro I hI; simp at hI
         · intro I hI; simp at hI
       · -- bisect: recurse into the two halves
-        rw [if_neg hV0] at hunf
+        rw [ite_eq_right hV0] at hunf
         have hlm : lo < (lo + hi) >>> (1 : Int) := lower_lt_midpoint ⟨lo, hi, hlt⟩
         have hmh : (lo + hi) >>> (1 : Int) < hi := midpoint_lt_upper ⟨lo, hi, hlt⟩
         have hmidR : Dyadic.toReal ((lo + hi) >>> (1 : Int))
@@ -589,7 +589,7 @@ private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?)
           | some arr => Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl arr) := by
     unfold Hex.isolateDescartes?
     simp only [hd]
-    rw [if_pos hp]
+    rw [ite_eq_left hp]
     rfl
   rw [heq, hvisit]
   exact assemble?_isSome rfl arr hord hsize'

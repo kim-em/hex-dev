@@ -97,7 +97,7 @@ pushing `aeval` through the user polynomial's `X / C / + / − / * / ^ / neg`
 structure, then closing with `ring`. Deliberately avoids `mul_eq_zero`, so a
 factored user polynomial (e.g. Wilkinson) does not collapse into a root
 disjunction. -/
-macro "aeval_ring_eq" : tactic =>
+macro (name := aevalRingEq) "aeval_ring_eq" : tactic =>
   `(tactic|
     (simp only [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
      simp [Hex.DensePoly.coeff_ofCoeffs, Finset.sum_range_succ, Finset.sum_range_zero,
@@ -106,11 +106,11 @@ macro "aeval_ring_eq" : tactic =>
 
 /-- Prove `∀ x, aeval x P = 0 ↔ aeval x Q = 0` for reified/closed literal
 polynomials by reducing to the underlying evaluation equality. -/
-macro "aeval_iff_bridge" : tactic =>
+macro (name := aevalIffBridge) "aeval_iff_bridge" : tactic =>
   `(tactic| (intro x; refine Iff.of_eq (congrArg (· = 0) ?_); aeval_ring_eq))
 
 /-- Bridge tactic for the reified product identities `aevalIff_radical` consumes. -/
-macro "isolate_roots_prod" : tactic =>
+macro (name := isolateRootsProd) "isolate_roots_prod" : tactic =>
   `(tactic| (intro x; aeval_ring_eq))
 
 namespace IsolateRoots
@@ -199,8 +199,11 @@ meta def divExactInt (num den : Array Int) : Option (Array Int) := Id.run do
 polynomial (the square-free core, when a swap happened), its Sturm chain, and the
 per-root dyadic endpoints. -/
 structure IsoData where
+  /-- The reified polynomial whose roots are isolated. -/
   poly       : Hex.ZPoly
+  /-- The executable Sturm chain used to certify the result. -/
   chain      : Array Hex.ZPoly
+  /-- One dyadic interval for each distinct real root. -/
   endpoints  : Array (Dyadic × Dyadic)
 
 /-- Run the compiled isolator on `f` (assumed square-free with a nonzero
@@ -495,6 +498,8 @@ meta def elabIsolate (widthStx : Option (TSyntax `term)) (pStx : TSyntax `term)
 syntax (name := isolateRoots) "isolate_roots"
   (atomic("(" "width" ":=") term ")")? term : term
 
+/-- Elaborate `isolate_roots`, run the compiled search, and emit a replay term
+whose certificate obligations are checked by Lean. -/
 @[term_elab isolateRoots]
 meta def elabIsolateRoots : TermElab := fun stx expectedType? => do
   match stx with

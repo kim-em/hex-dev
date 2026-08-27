@@ -91,7 +91,7 @@ noncomputable def FactoredPoly.ofFp {p : Nat} [inst : Hex.ZMod64.Bounds p]
       _ = toMathlibPolynomial f := by rw [Hex.DensePoly.eq_of_beqCoeffs hmul]
       _ = P := hP
   factors_irred := by
-    haveI : Fact (_root_.Nat.Prime p) := ⟨nat_prime_of_hex (Hex.Nat.isPrimeTrial_isPrime hp)⟩
+    have : Fact (_root_.Nat.Prime p) := ⟨nat_prime_of_hex (Hex.Nat.isPrimeTrial_isPrime hp)⟩
     intro q hq
     rw [List.mem_map] at hq
     obtain ⟨g, hg, rfl⟩ := hq
@@ -118,7 +118,7 @@ theorem irreducible_ofFp {p : Nat} [Hex.ZMod64.Bounds p]
     (hcheck : Hex.Berlekamp.checkMonicCert m cert = true)
     (hdeg : decide (0 < f.degree?.getD 0) = true)
     (hP : toMathlibPolynomial f = P) : Irreducible P := by
-  haveI : Fact (Nat.Prime p) := ⟨nat_prime_of_hex (Hex.Nat.isPrimeTrial_isPrime hp)⟩
+  have : Fact (Nat.Prime p) := ⟨nat_prime_of_hex (Hex.Nat.isPrimeTrial_isPrime hp)⟩
   have hf := Hex.Berlekamp.irreducible_of_checkMonicCert_scale f m c cert hp hc hfm hcheck
   have h := irreducible_toMathlibPolynomial_of_fpPolyIrreducible
     (natDegree_toMathlibPolynomial_pos_of_degree?_pos (of_decide_eq_true hdeg)) hf

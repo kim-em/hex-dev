@@ -44,6 +44,26 @@ elaborates, and produces a term whose type records the certified
 statements. No knowledge of Sturm chains, dyadic arithmetic, or
 squarefreeness is needed at the call site.
 
+# Mathlib-free execution
+%%%
+tag := "hex-real-roots-core"
+%%%
+
+The computational package exposes {name}`Hex.isolate?`, which tries Descartes
+search before falling back to Sturm bisection. The
+{name}`Hex.isolateDescartes?` and {name}`Hex.isolateSturm?` variants select one
+engine explicitly; {name}`Hex.rootCount` and {name}`Hex.sturmCount` expose the
+exact counting operations. These functions run in native Lean and need no
+external oracle at runtime.
+
+The core isolators reject the zero polynomial; positive-degree inputs must be
+squarefree, while nonzero constants have no roots and return an empty
+isolation. Every emitted interval carries executable evidence for its Sturm
+count, ordering, and contribution to the certified total. The core package
+checks that finite evidence, while `HexRealRootsMathlib` supplies the theorem
+connecting it to roots of `Polynomial ℝ` and handles squarefree reduction for
+the elaborator below.
+
 # The `isolate_roots` elaborator
 %%%
 tag := "hex-real-roots-isolate"
@@ -150,12 +170,21 @@ example : True := by
 tag := "hex-real-roots-width"
 %%%
 
-The natural intervals are only as tight as the isolator needed to
-separate the roots. Passing `(width := x)` refines every interval to width
-at most `x`, still with exact rational endpoints. The width may be written
-as a fraction, a power of two, or a decimal power: `1/1000`, `2^(-20)`,
-`10^(-2)` all work. Refining `x⁴ − 2` to width `2⁻²⁰` places the positive
-root in an interval of width exactly `2⁻²⁰`:
+The natural intervals are only as tight as the isolator needed to separate the
+roots. Passing `(width := x)` refines every interval to width at most `x`,
+still with exact rational endpoints. The width must be a closed, strictly
+positive rational expression; a free variable, zero, or a negative value is
+rejected during elaboration. It may be written as a fraction, a power of two,
+or a decimal power: `1/1000`, `2 ^ (-20 : ℤ)`, and `10 ^ (-2 : ℤ)` all work.
+
+Internally the elaborator chooses the least nonnegative `k` with `2⁻ᵏ ≤ x` and
+refines to that binary target. Widths above one therefore request `k = 0`,
+which still refines any wider natural interval to width at most one;
+refinement only narrows, so a coarse request cannot undo the isolator's
+separation. A non-dyadic request can produce a strictly narrower interval than
+requested. Targets finer than `2⁻⁴⁰⁹⁶` are rejected as pathological. Refining
+`x⁴ − 2` to width `2⁻²⁰` places the positive root in an interval of width
+exactly `2⁻²⁰`:
 
 ```lean
 open Hex Polynomial
@@ -204,22 +233,36 @@ A polynomial with no real roots isolates as the empty vector, and a
 nonzero constant isolates as `n = 0` without ever entering the isolator.
 The zero polynomial is rejected, since every real number is a root.
 
-# How the certificate is checked
+# The Mathlib correspondence
 %%%
-tag := "hex-real-roots-certificate"
+tag := "hex-real-roots-mathlib"
 %%%
 
-The elaborator does the search at elaboration time with the compiled
-isolator, then emits a term the kernel re-checks. It does not ask the
-kernel to redo the search. The emitted term reifies the Sturm chain once
-as an array of integer-coefficient polynomials. The root-count fields
-reduce to sign-variation counts against that fixed chain: one count per
-interval for `unique_root`, and an endpoint-at-infinity count for the root
-total. These are `decide`-checked polynomial evaluations over the
-integers, so their kernel cost grows with the degree and the endpoint
-sizes, not with the number of bisections the search performed. The
-`ordered` field is cheaper still — an adjacent-pair comparison of the
-dyadic endpoints, no polynomial evaluation at all.
+The split between `HexRealRoots` and `HexRealRootsMathlib` is a trust and
+dependency boundary. `HexRealRoots` performs exact integer and dyadic
+computation without importing Mathlib. `HexRealRootsMathlib` interprets the
+result in Mathlib's language of `Polynomial ℝ` and real roots. Its abstract
+Sturm theorem is connected to the executable signed pseudo-remainder chain by
+the following headline correspondence.
+
+{docstring HexRealRootsMathlib.sturmChain_isSturmChain}
+
+The elaborator runs compiled search only to choose certificate data. It emits
+the integer polynomial, Sturm chain, and intervals as literals, then applies
+the replay constructor whose obligations are ordinary Lean propositions.
+
+{docstring Hex.IsolatedRealRoots.ofCert}
+
+The emitted top-level term uses {name}`Hex.IsolatedRealRoots.ofCertPretty`,
+which changes only the presentation of dyadic endpoints. The kernel checks
+the chain, each interval count, the total count, and interval ordering; it
+does not trust the compiled search or the Descartes dispatch. Inputs written
+as `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` are connected to
+{name}`HexPolyZMathlib.toPolynomial` by a checked evaluation equivalence.
+Repeated-root inputs are isolated through a squarefree core and transported
+back with the following root-equivalence operation.
+
+{docstring Hex.IsolatedRealRoots.congrRoots}
 
 The interval endpoints are presented as reduced rational literals, and
 the identification of the emitted literals with the isolator's dyadic

@@ -120,8 +120,8 @@ theorem toReal_shiftRight (x : Dyadic) (i : Int) :
 theorem le_two_pow_ceilLog2Nat (m : Nat) : m ≤ 2 ^ Hex.ceilLog2Nat m := by
   unfold Hex.ceilLog2Nat
   by_cases hm : m ≤ 1
-  · rw [if_pos hm]; simpa using hm
-  · rw [if_neg hm]
+  · rw [ite_eq_left hm]; simpa using hm
+  · rw [ite_eq_right hm]
     have hm2 : 2 ≤ m := by omega
     have hne : m - 1 ≠ 0 := by omega
     have := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
@@ -462,7 +462,7 @@ theorem sepPrec_separates (p : Hex.ZPoly)
   have hsp : Hex.sepPrec p = ((ℓ.length + 2) * Hex.ceilLog2Nat ℓ.length + 1) / 2
       + (ℓ.length - 1) * Hex.ceilLog2Nat (Hex.ZPoly.coeffL2NormBound p) + 3 := by
     simp only [Hex.sepPrec, hdeg?]
-    rw [if_neg (show ¬ ℓ.length ≤ 1 by omega)]
+    rw [ite_eq_right (show ¬ ℓ.length ≤ 1 by omega)]
   set E := ((ℓ.length + 2) * Hex.ceilLog2Nat ℓ.length + 1) / 2
       + (ℓ.length - 1) * Hex.ceilLog2Nat (Hex.ZPoly.coeffL2NormBound p) with hEdef
   have hEx : (1 : ℝ) ≤ (2 : ℝ) ^ E * ‖z₁ - z₂‖ := by

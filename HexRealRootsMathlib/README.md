@@ -23,12 +23,6 @@ rev = "main"
 
 ```lean
 import HexRealRootsMathlib
-```
-
-# Functionality
-
-```lean
-import HexRealRootsMathlib
 
 open Hex Polynomial
 
@@ -38,6 +32,8 @@ noncomputable def roots :=
 example : roots.intervals =
     #v[((0 : ℚ), (2 : ℚ)), ((2 : ℚ), (4 : ℚ))] := rfl
 ```
+
+# Functionality
 
 The input may be a closed `Hex.ZPoly` or a closed integer-coefficient
 `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` expression. Repeated roots

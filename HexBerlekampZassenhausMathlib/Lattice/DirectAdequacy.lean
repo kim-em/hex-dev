@@ -115,7 +115,7 @@ Both executable certificates use the count lower bound
   (bhksEquivalenceClassIndicators …).size`: each irreducible factor of `core`
 yields a true lifted-factor support whose `0/1` indicator is the first block of
 a short vector of the direct-coordinate BHKS lattice
-(`BHKS.supportShortVectorData_of_recoveredLift`); the Gram-Schmidt
+(`BHKS.recoveredShortVector`); the Gram-Schmidt
 prefix-survivor lemma places it in the projected row span (`W ⊆ L'`,
 `BHKS.cutProjectionHypotheses_of_shortVectors`), so the RREF signature classes
 refine the true-support partition
@@ -965,7 +965,7 @@ noncomputable def shortVector
     rfl
   have hDf : C.recoveredLift.f = core := by
     rfl
-  apply BHKS.supportShortVectorData_of_recoveredLift C.recoveredLift
+  apply BHKS.recoveredShortVector C.recoveredLift
   · rw [hDp, hp_eq]
     exact hp2
   · rw [hDp, hDa]
