@@ -105,7 +105,7 @@ private theorem getArrayEntry_scaledCoeffRows_col_zero
 then the scaled-coefficient array loop records at `(i,j)` the matrix entry from
 the pre-elimination state at that target column. -/
 private theorem scaledCoeffArrayLoop_lower_matches_target_column
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState Int n}
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
@@ -165,7 +165,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
                 state_array.prevPivot
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n state_array.step
               prevPivot := getArrayEntry state_array.matrix state_array.step state_array.step }
-          let new_matrix : Matrix.BareissState n :=
+          let new_matrix : Matrix.BareissState Int n :=
             { step := state_matrix.step + 1
               matrix := Matrix.stepMatrix state_matrix.matrix state_matrix.step
                 state_matrix.matrix[kFin][kFin]
@@ -228,7 +228,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
 in columns strictly after the current step are still unwritten before the
 singular branch, writing the current column preserves that zero tail. -/
 private theorem scaledCoeffArrayLoop_lower_singular_after_step
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState Int n}
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_coeffs_unwritten : ∀ r c : Fin n,
@@ -261,7 +261,7 @@ When the matrix-side `noPivotLoop` records a singular step strictly before
 reaching column `j`, the array loop halts at the singular column and the
 target column is left at its initial (unwritten) zero value. -/
 private theorem scaledCoeffArrayLoop_lower_zero
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState Int n}
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
@@ -322,7 +322,7 @@ private theorem scaledCoeffArrayLoop_lower_zero
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n
                 state_array.step
               prevPivot := getArrayEntry state_array.matrix state_array.step state_array.step }
-          let new_matrix : Matrix.BareissState n :=
+          let new_matrix : Matrix.BareissState Int n :=
             { step := state_matrix.step + 1
               matrix := Matrix.stepMatrix state_matrix.matrix state_matrix.step
                 state_matrix.matrix[kFin][kFin]
@@ -405,7 +405,7 @@ diagonal of `noPivotLoop` (when no singular step has been hit at or before
 the loop-level interpretation of `gramDetVecEntry` against the executable
 array trajectory. -/
 private theorem scaledCoeffArrayLoop_diag_matches
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState Int n}
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
@@ -513,7 +513,7 @@ private theorem scaledCoeffArrayLoop_diag_matches
                 state_array.prevPivot
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n state_array.step
               prevPivot := getArrayEntry state_array.matrix state_array.step state_array.step }
-          let new_matrix : Matrix.BareissState n :=
+          let new_matrix : Matrix.BareissState Int n :=
             { step := state_matrix.step + 1
               matrix := Matrix.stepMatrix state_matrix.matrix state_matrix.step
                 state_matrix.matrix[kFin][kFin]

@@ -826,9 +826,9 @@ private theorem scaledCoeffRows_diag_eq_noPivotLoop_gramMatrix_of_no_singular
     getArrayEntry (scaledCoeffRows b) j.val j.val =
       (Matrix.noPivotLoop j.val
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[j][j] := by
-  let init : Matrix.BareissState n :=
+  let init : Matrix.BareissState Int n :=
     Matrix.noPivotInitialState (Matrix.gramMatrix b)
-  let prefAtJ : Matrix.BareissState n := Matrix.noPivotLoop j.val init
+  let prefAtJ : Matrix.BareissState Int n := Matrix.noPivotLoop j.val init
   have h_step_j : prefAtJ.step = j.val := by
     have h_room : init.step + j.val + 1 ≤ n := by
       have := j.isLt
@@ -930,7 +930,7 @@ private theorem scaledCoeffRows_diag_eq_zero_of_singularStep_lt
       (Matrix.noPivotLoop j.val
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
     getArrayEntry (scaledCoeffRows b) j.val j.val = 0 := by
-  let init : Matrix.BareissState n :=
+  let init : Matrix.BareissState Int n :=
     Matrix.noPivotInitialState (Matrix.gramMatrix b)
   -- Lift singularity from prefix `j` to full `n` via `prefix_singular`.
   have h_persist_split :
@@ -996,7 +996,7 @@ private theorem noPivotLoop_initial_gram_diag_ne_zero
       (⟨q, Nat.lt_trans hq hpn⟩ : Fin n)] ≠ 0 := by
   intro h_zero
   -- The (q+1)-prefix is also non-singular: split p = (q+1) + (p - q - 1).
-  let state₀ : Matrix.BareissState n := Matrix.noPivotInitialState (Matrix.gramMatrix b)
+  let state₀ : Matrix.BareissState Int n := Matrix.noPivotInitialState (Matrix.gramMatrix b)
   have h_split : p = (q + 1) + (p - q - 1) := by omega
   have h_prefix_succ_none :
       (Matrix.noPivotLoop (q + 1) state₀).singularStep = none := by
@@ -1184,7 +1184,7 @@ private theorem schurSigma_foldl_eq
   | succ q' ih =>
     -- Extend the fold by one iteration; rewrite the body via correspondence,
     -- apply the IH, then close via `schurSigma_noPivotCorrection_succ`.
-    let state₀ : Matrix.BareissState n :=
+    let state₀ : Matrix.BareissState Int n :=
       Matrix.noPivotInitialState (Matrix.gramMatrix b)
     have h_init_none : state₀.singularStep = none := by
       simp [state₀, Matrix.noPivotInitialState]

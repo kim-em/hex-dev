@@ -668,7 +668,7 @@ to the bordered minor, matches the bordered-minor state's matrix. -/
 private theorem noPivotLoop_sync_borderedMinor_aux
     {n : Nat} (k : Nat) (hk : k < n) (row col : Fin n)
     (hrow : k ≤ row.val) (hcol : k ≤ col.val) (fuel : Nat) :
-    ∀ (state_full : Matrix.BareissState n) (state_bm : Matrix.BareissState (k + 1)),
+    ∀ (state_full : Matrix.BareissState Int n) (state_bm : Matrix.BareissState Int (k + 1)),
       state_full.step = state_bm.step →
       state_full.prevPivot = state_bm.prevPivot →
       state_full.rowSwaps = state_bm.rowSwaps →
@@ -792,7 +792,7 @@ theorem noPivotLoop_full_eq_borderedMinor_at_trailing
 the resulting step between the starting step and the starting step plus the
 fuel. -/
 private theorem noPivotLoop_step_le_add
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n) :
     (Matrix.noPivotLoop fuel state).step ≤ state.step + fuel := by
   induction fuel generalizing state with
   | zero =>
@@ -826,7 +826,7 @@ update commutes through symmetry because the trailing block remains symmetric
 after each `stepMatrix` application. -/
 private theorem noPivotLoop_matrix_symm_preserve
     {n : Nat} (fuel : Nat) :
-    ∀ (state : Matrix.BareissState n),
+    ∀ (state : Matrix.BareissState Int n),
       (∀ a b : Fin n, state.step ≤ a.val → state.step ≤ b.val →
         state.matrix[a][b] = state.matrix[b][a]) →
       ∀ (a b : Fin n),
@@ -950,7 +950,7 @@ their bookkeeping fields agree and the full state's matrix, restricted
 to the leading prefix, matches the prefix state's matrix. -/
 private theorem noPivotLoop_sync_principalSubmatrix_aux
     {n K : Nat} (hK : K ≤ n) (fuel : Nat) :
-    ∀ (state_full : Matrix.BareissState n) (state_pref : Matrix.BareissState K),
+    ∀ (state_full : Matrix.BareissState Int n) (state_pref : Matrix.BareissState Int K),
       state_full.step = state_pref.step →
       state_full.prevPivot = state_pref.prevPivot →
       state_full.rowSwaps = state_pref.rowSwaps →
@@ -1044,7 +1044,7 @@ private theorem noPivotLoop_sync_principalSubmatrix_aux
 /-- Once the no-pivot Bareiss loop has reached the boundary
 (`state.step + 1 ≥ n`), any further fuel is a no-op. -/
 private theorem noPivotLoop_id_at_done
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (hDone : ¬ state.step + 1 < n) :
     Matrix.noPivotLoop fuel state = state := by
   induction fuel with
@@ -1055,7 +1055,7 @@ private theorem noPivotLoop_id_at_done
 (`state.singularStep = some state.step` with a zero pivot at that step),
 any further fuel is a no-op. -/
 theorem noPivotLoop_id_at_singular_fixedpoint
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0)
     (hsing : state.singularStep = some state.step) :
@@ -1074,7 +1074,7 @@ theorem noPivotLoop_id_at_singular_fixedpoint
 /-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
 fuel from `state` equals running `b` more units after `a` initial units. -/
 theorem noPivotLoop_add
-    {n : Nat} (a b : Nat) (state : Matrix.BareissState n) :
+    {n : Nat} (a b : Nat) (state : Matrix.BareissState Int n) :
     Matrix.noPivotLoop (a + b) state =
       Matrix.noPivotLoop b (Matrix.noPivotLoop a state) := by
   induction a generalizing state with
@@ -1100,7 +1100,7 @@ theorem noPivotLoop_add
           rw [h_lhs, h_rhs_inner]
           symm
           -- Now show: noPivotLoop b {state with singularStep := some state.step} = that.
-          let s' : Matrix.BareissState n :=
+          let s' : Matrix.BareissState Int n :=
             {state with singularStep := some state.step}
           have hDone_s' : s'.step + 1 < n := hDone
           have hp_s' : s'.matrix[(⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)][(⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)] = 0 := hp
@@ -1141,7 +1141,7 @@ step, the result has either no singular step, or it has a singular step
 that matches the current `step` field together with a zero pivot at that
 position. -/
 theorem noPivotLoop_singular_inv
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none) :
     (Matrix.noPivotLoop fuel state).singularStep = none ∨
     ∃ k : Fin n,
@@ -1180,7 +1180,7 @@ advances by at most one per regular iteration; with `fuel` iterations available
 and at least one used for the singular trigger, the recorded index is `< start
 + fuel`. -/
 theorem noPivotLoop_singularStep_lt
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none)
     (s : Nat)
     (h_sing : (Matrix.noPivotLoop fuel state).singularStep = some s) :
@@ -1216,7 +1216,7 @@ no recorded singular step, if the result also has no recorded singular step
 and the loop had at least `fuel + 1` steps of room from its starting step,
 then the result's step is the starting step plus `fuel`. -/
 private theorem noPivotLoop_step_eq_add_of_singularStep_none
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none)
     (h_room : state.step + fuel + 1 ≤ n)
     (h_no_sing : (Matrix.noPivotLoop fuel state).singularStep = none) :
@@ -1250,7 +1250,7 @@ nonzero status of the previous pivot. Regular branches replace `prevPivot` by
 the current nonzero pivot; singular branches contradict the final
 `singularStep = none` hypothesis. -/
 private theorem noPivotLoop_prevPivot_ne_zero
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n)
     (hprev : state.prevPivot ≠ 0)
     (h_no_sing : (Matrix.noPivotLoop fuel state).singularStep = none) :
     (Matrix.noPivotLoop fuel state).prevPivot ≠ 0 := by
@@ -1278,7 +1278,7 @@ private theorem noPivotLoop_prevPivot_ne_zero
 /-- The `step` field of a no-pivot Bareiss state never decreases under further
 loop iterations. -/
 theorem noPivotLoop_step_monotone
-    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState Int n) :
     state.step ≤ (Matrix.noPivotLoop fuel state).step := by
   induction fuel generalizing state with
   | zero =>
@@ -1309,7 +1309,7 @@ theorem noPivotLoop_step_monotone
 /-- A singular step recorded by an initial no-pivot prefix remains the recorded
 singular step after any further no-pivot iterations. -/
 private theorem noPivotLoop_singularStep
-    {n : Nat} (a b : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (a b : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none) {s : Nat}
     (h_prefix : (Matrix.noPivotLoop a state).singularStep = some s) :
     (Matrix.noPivotLoop (a + b) state).singularStep = some s := by
@@ -1349,7 +1349,7 @@ private theorem noPivotLoop_singularStep
 /-- If a full no-pivot run has no singular step, every initial prefix run also
 has no singular step. -/
 private theorem noPivotLoop_prefix_none_of_final_none
-    {n : Nat} (a b : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (a b : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none)
     (h_final : (Matrix.noPivotLoop (a + b) state).singularStep = none) :
     (Matrix.noPivotLoop a state).singularStep = none := by
@@ -1364,7 +1364,7 @@ private theorem noPivotLoop_prefix_none_of_final_none
 /-- If the full run records its first singular step after `a`, then the prefix
 of length `a` is non-singular. -/
 private theorem noPivotLoop_prefix_none_of_final_singular_after
-    {n : Nat} (a b : Nat) (state : Matrix.BareissState n)
+    {n : Nat} (a b : Nat) (state : Matrix.BareissState Int n)
     (h_init : state.singularStep = none) {s : Nat}
     (h_final : (Matrix.noPivotLoop (a + b) state).singularStep = some s)
     (hs_after : state.step + a ≤ s) :
