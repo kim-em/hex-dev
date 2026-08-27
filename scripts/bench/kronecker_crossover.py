@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Kernel microbenchmark for the integer dense polynomial product (issue #9142).
 
-Runs `hexpolyz_kronecker_crossover`, which times schoolbook convolution against
-Kronecker substitution over a degree by coefficient-width grid, and writes one
-durable JSON record with environment metadata. The record is the evidence behind
-`Hex.ZPoly.kroneckerSizeCutoff` and `Hex.ZPoly.kroneckerBitCutoff`; see
-`HexPolyZ/SPEC/hex-poly-z.md`.
+Runs `hexpolyz_kronecker_crossover`, which times schoolbook convolution and all
+four forced multipoint Kronecker kernels over a degree by coefficient-width
+grid, including wide packed integers. It writes one durable JSON record with
+environment metadata. The record is the evidence behind the integer kernel
+dispatcher; see `HexPolyZ/SPEC/hex-poly-z.md`.
 
 This is a manual diagnostic driver, not a CI job and not a hex-internal
 benchmark harness, so the one-harness rule stays intact (see
@@ -41,7 +41,7 @@ import idle_core  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 EXE = ROOT / ".lake" / "build" / "bin" / "hexpolyz_kronecker_crossover"
 
-SCHEMA = "hexbz-kronecker-crossover/1"
+SCHEMA = "hexbz-kronecker-crossover/2"
 
 
 def sha256(path: Path) -> str:
@@ -74,6 +74,16 @@ def crossovers(cells: list[dict]) -> dict[str, int | None]:
         else:
             out.setdefault(key, None)
     return out
+
+
+def fastest_ks(cells: list[dict]) -> dict[str, str]:
+    """Fastest forced KS kernel at each measured degree/width/sign cell."""
+    fields = ["ks1_nanos", "ks2_nanos", "ks3_nanos", "ks4_nanos"]
+    return {
+        f'{cell["n"]}:{cell["bits"]}:{str(cell["signed"]).lower()}':
+            min(fields, key=lambda field: cell[field]).removesuffix("_nanos")
+        for cell in cells
+    }
 
 
 def main() -> int:
@@ -114,6 +124,7 @@ def main() -> int:
         },
         "cells": payload["cells"],
         "crossover_degree_by_bits": crossovers(payload["cells"]),
+        "fastest_ks_by_degree_bits_sign": fastest_ks(payload["cells"]),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
