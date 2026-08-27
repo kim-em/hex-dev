@@ -204,7 +204,7 @@ theorem isZero_iff (a : QAdjoin p x) : a.isZero ↔ a = 0 := by
 guard in {name}`Hex.QAdjoin.inv` succeed for every nonzero element. -/
 theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (ha : a.isZero = false) :
-    (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
+    (DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
   let A := HexPolyMathlib.toPolynomial a.coeffs
   let P := HexPolyMathlib.toPolynomial (ZPoly.toRatPoly p)
   have ha0 : A ≠ 0 := by
@@ -232,27 +232,30 @@ theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     apply EuclideanDomain.gcd_isUnit_iff.mpr
     exact ((EuclideanDomain.dvd_or_coprime P A hirr).resolve_left
       hnotdvd).symm
-  have hassoc :
-      Associated
-        (HexPolyMathlib.toPolynomial
-          (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd)
-        (EuclideanDomain.gcd A P) := by
-    rw [DensePoly.xgcdLeft_gcd_eq_xgcd]
-    simpa [A, P] using
-      (HexPolyMathlib.toPolynomial_xgcd_gcd_associated
-        (R := Rat) a.coeffs (ZPoly.toRatPoly p))
+  let r := DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)
+  have hdvd := DensePoly.xgcdLeftMonic_dvd
+    a.coeffs (ZPoly.toRatPoly p)
+  have hleft : HexPolyMathlib.toPolynomial r.gcd ∣ A := by
+    rcases hdvd.1 with ⟨u, hu⟩
+    refine ⟨HexPolyMathlib.toPolynomial u, ?_⟩
+    simpa [r, A] using congrArg HexPolyMathlib.toPolynomial hu
+  have hright : HexPolyMathlib.toPolynomial r.gcd ∣ P := by
+    rcases hdvd.2 with ⟨u, hu⟩
+    refine ⟨HexPolyMathlib.toPolynomial u, ?_⟩
+    simpa [r, P] using congrArg HexPolyMathlib.toPolynomial hu
+  have hgcdDvd : HexPolyMathlib.toPolynomial r.gcd ∣
+      EuclideanDomain.gcd A P :=
+    EuclideanDomain.dvd_gcd hleft hright
   have hunit : IsUnit
-      (HexPolyMathlib.toPolynomial
-        (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd) :=
-    hassoc.isUnit_iff.mpr hnormUnit
+      (HexPolyMathlib.toPolynomial r.gcd) :=
+    isUnit_of_dvd_unit hgcdDvd hnormUnit
   obtain ⟨c, hc, hcPoly⟩ := Polynomial.isUnit_iff.mp hunit
   have hgcdC :
-      (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd =
-        DensePoly.C c := by
+      r.gcd = DensePoly.C c := by
     apply (HexPolyMathlib.equiv (R := Rat)).injective
     simpa only [HexPolyMathlib.equiv_apply,
       HexPolyMathlib.toPolynomial_C] using hcPoly.symm
-  rw [hgcdC, DensePoly.size_C_of_ne_zero hc.ne_zero]
+  simpa [r, hgcdC] using DensePoly.size_C_of_ne_zero hc.ne_zero
 
 /-- Fixed-presentation zero evaluates to complex zero. -/
 theorem map_zero (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
@@ -328,7 +331,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
   · have haFalse : a.isZero = false := by
       cases hzero : a.isZero <;> simp_all
     let m := ZPoly.toRatPoly p
-    let r := DensePoly.xgcdLeft a.coeffs m
+    let r := DensePoly.xgcdLeftMonic a.coeffs m
     have hs : r.gcd.size = 1 := by
       simpa [r, m] using inverse_gcd_size a haFalse
     have hpos : 0 < r.gcd.size := by omega
@@ -356,10 +359,10 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       rw [reduceCoeffs, HexPolyMathlib.toPolynomial_mod,
         EuclideanDomain.mod_self, Polynomial.eval₂_zero] at hp'
       simpa [m] using hp'.symm
-    have hbez := HexPolyMathlib.toPolynomial_xgcd_bezout_raw
-      (R := Rat) a.coeffs m
-    rw [← DensePoly.xgcdLeft_left_eq_xgcd,
-      ← DensePoly.xgcdLeft_gcd_eq_xgcd] at hbez
+    obtain ⟨t, hbezDense⟩ := DensePoly.xgcdLeftMonic_bezout a.coeffs m
+    have hbez := congrArg HexPolyMathlib.toPolynomial hbezDense
+    simp only [HexPolyMathlib.toPolynomial_add,
+      HexPolyMathlib.toPolynomial_mul] at hbez
     have hbezEval := congrArg
       (fun f : Polynomial Rat =>
         f.eval₂ (algebraMap Rat ℂ) rep.root) hbez
@@ -369,8 +372,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       (HexPolyMathlib.toPolynomial r.left).eval₂
           (algebraMap Rat ℂ) rep.root *
           toComplex a rep h +
-        (HexPolyMathlib.toPolynomial
-            (DensePoly.xgcd a.coeffs m).right).eval₂
+        (HexPolyMathlib.toPolynomial t).eval₂
           (algebraMap Rat ℂ) rep.root *
           (HexPolyMathlib.toPolynomial m).eval₂
             (algebraMap Rat ℂ) rep.root =
