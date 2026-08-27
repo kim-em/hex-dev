@@ -41,17 +41,11 @@ Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
 `Mod(a, m)^(-1)`) is the callable PARI surface matching `QAdjoin`
 multiplication and inversion. The `runQAdjoinMulPair*` / `runPariPolmodMul*`
-rungs run at `n = 4, 6, 8, 12, 16` and the `runQAdjoinInvPair*` /
-`runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12`: five rungs each rather than
+rungs run at `n = 4, 6, 8, 12, 16, 20` and the `runQAdjoinInvPair*` /
+`runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12, 16`: six rungs each rather than
 a doubling-only triple, because `SPEC/benchmarking.md` §Headline reports
 requires enough eligible rungs for the ratio's shape to be unambiguous, and
-both families cross the ratio 1 inside these ranges. The ladders stop there
-because `verify` is the CI smoke gate and builds every rung's fixture: rungs at
-`n = 20` and `n = 16` respectively cost 14.2 s and 4.9 s of certified-root
-construction each, which took this exe's share of the repo-wide bench-verify
-budget to 54 s against a 360 s cap that the run then hit exactly. Restoring
-them is part of the fixture fix tracked in issue 9727. The pairs consume
-identical
+both families cross the ratio 1 inside these ranges. The pairs consume identical
 deterministic inputs and hash the identical reduced rational coefficient
 vector, so `compare` joins them on result hashes. The PARI side runs through
 the persistent-subprocess driver `scripts/oracle/pari_bench_driver.py`
@@ -387,7 +381,8 @@ private def xPowSubTwo (m : Nat) : ZPoly :=
 /-- Deterministic dense all-nonzero rational coefficients keyed by length and
 salt: alternating signs, numerators cycling modulo 11 and denominators modulo
 6, so both are bounded independently of `len` and a ladder over `len` varies
-the modulus degree alone.
+the modulus degree alone. Every denominator is in `1 .. 6`, so the reduced
+vector's common denominator divides `lcm(1, ..., 6) = 60`.
 
 The bound matters. The earlier form used numerator `±(i + salt + 1)` over
 denominator `i + 2`. Since `gcd (i + salt + 1) (i + 2) = gcd (salt - 1) (i + 2)`,
@@ -407,8 +402,42 @@ private def denseRatCoeff (i salt : Nat) : Rat :=
 private def denseRatCoeffs (len salt : Nat) : Array Rat :=
   (Array.range len).map (denseRatCoeff · salt)
 
+/-- Floor the positive `n`th root of `a` by integer Newton iteration. -/
+private def nthRootFloor (a n : Nat) : Nat :=
+  if n = 0 then 0 else
+    let rec go : Nat → Nat → Nat
+      | 0, x => x
+      | fuel + 1, x =>
+        let y := ((n - 1) * x + a / x ^ (n - 1)) / n
+        if x ≤ y then x else go fuel y
+    go (a.log2 + 2) (2 ^ ((a.log2 + n) / n))
+
+#guard nthRootFloor 2 1 == 2
+#guard nthRootFloor 16 2 == 4
+#guard nthRootFloor 17 2 == 4
+#guard nthRootFloor 4096 6 == 4
+
+/-- A Mahler-precision dyadic approximation to the positive real root of
+`X^n - 2`. Integer Newton iteration computes
+`⌊2^(1/n) * 2^q⌋` from `2^(qn+1)`, where `q = mahlerPrec p`; the subsequent
+atom checker supplies all certification, so the approximation is not trusted. -/
+private def ladderRootSeed (p : ZPoly) (n : Nat) : DyadicSquare :=
+  let q := mahlerPrec p
+  let scaled := 2 ^ (q * n + 1)
+  let center := nthRootFloor scaled n
+  ⟨Dyadic.ofIntWithPrec (Int.ofNat center) q, 0, q⟩
+
+/-- Deterministically certify the positive real root from its untrusted dyadic
+approximation. The local single-atom search does not construct or refine the
+other complex roots. -/
+private def positiveBinomialRoot? (p : ZPoly) (n : Nat) :
+    Option (RefinedIsolation p) :=
+  isolateOne? p (mahlerPrec p : Int) (ladderRootSeed p n)
+
 /-- Deterministic refined isolation for a squarefree polynomial: run the
-bounded isolator at separation depth and take the first returned atom. -/
+bounded all-roots isolator at separation depth and take its first atom. This
+general constructor remains the fixture for ladders whose polynomial is not
+the binomial used to choose `ladderRootSeed`. -/
 private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
     Option (RefinedIsolation p) := do
   let isolations ← isolate p h (separationDepth p : Int)
@@ -452,15 +481,13 @@ private instance : Inhabited FieldInput :=
 def prepFieldInput (n : Nat) : FieldInput :=
   let m := max n 2
   let p := xPowSubTwo m
-  if hsf : HasOnlySimpleRoots p then
-    match refinedOf? p hsf with
-    | some rep =>
-      let x := SimpleRoot.mk rep
-      { p := p, x := x
-        a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 3))
-        b := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 7)) }
-    | none => panic! "prepFieldInput: isolation failed"
-  else panic! "prepFieldInput: squarefree check failed"
+  match positiveBinomialRoot? p m with
+  | some rep =>
+    let x := SimpleRoot.mk rep
+    { p := p, x := x
+      a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 3))
+      b := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 7)) }
+  | none => panic! "prepFieldInput: isolation failed"
 
 /-- Prepared inversion fixture: `FieldInput` data plus the runtime-checked
 irreducibility instance, decided in prep so no factorization work leaks
@@ -482,15 +509,13 @@ def prepInvInput (n : Nat) : InvInput :=
   let p := xPowSubTwo m
   if hirr : ZPoly.isIrreducible p = true then
     if hdeg : 0 < p.degree?.getD 0 then
-      if hsf : HasOnlySimpleRoots p then
-        match refinedOf? p hsf with
-        | some rep =>
-          let x := SimpleRoot.mk rep
-          { p := p, x := x
-            a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 5))
-            checked := some ⟨⟨hirr, hdeg⟩⟩ }
-        | none => panic! "prepInvInput: isolation failed"
-      else panic! "prepInvInput: squarefree check failed"
+      match positiveBinomialRoot? p m with
+      | some rep =>
+        let x := SimpleRoot.mk rep
+        { p := p, x := x
+          a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 5))
+          checked := some ⟨⟨hirr, hdeg⟩⟩ }
+      | none => panic! "prepInvInput: isolation failed"
     else panic! "prepInvInput: degree check failed"
   else panic! "prepInvInput: irreducibility check failed"
 
@@ -516,17 +541,12 @@ wall model is linear. -/
 setup_benchmark runQAdjoinAddLadder n => n
   with prep := prepFieldInput
   where {
-    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
-    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
-    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
-    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
-    -- n = 32, while the measured call is microseconds. 24 is the largest rung
-    -- reachable in a sane wallclock, not the largest the operation supports.
-    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
-    -- should rise once a cheaper certified-root construction exists.
+    -- The degree-128 ceiling supplies six doublings of the linear operation's
+    -- controlled input dimension and matches the multiplication domain. The
+    -- single-root fixture is certified independently of the other roots.
     paramFloor := 4
-    paramCeiling := 24
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128]
     maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -541,17 +561,11 @@ the declared model is `n^2`. -/
 setup_benchmark runQAdjoinMulLadder n => n * n
   with prep := prepFieldInput
   where {
-    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
-    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
-    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
-    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
-    -- n = 32, while the measured call is microseconds. 24 is the largest rung
-    -- reachable in a sane wallclock, not the largest the operation supports.
-    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
-    -- should rise once a cheaper certified-root construction exists.
+    -- Six doublings reach degree 128, where the timed dense multiplication is
+    -- in the millisecond regime and still far below its per-call ceiling.
     paramFloor := 4
-    paramCeiling := 24
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128]
     maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -568,13 +582,13 @@ arbitrary-precision operation constant-cost. -/
 setup_benchmark runQAdjoinInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
-    -- The fixture decides irreducibility of `X^n - 2` and isolates its roots
-    -- (1.3 s at n = 12, 4.9 s at n = 16); the cap covers that prelude so the
-    -- ladder reaches a range where coefficient growth, not the small-integer
-    -- regime, sets the cost.
+    -- The degree-96 ceiling is set by the timed extended-gcd operation: its
+    -- measured call is about 3.0 s there, supplying an upper asymptotic rung
+    -- while remaining practical. The denser upper schedule exposes
+    -- coefficient growth beyond the small-degree regime.
     paramFloor := 4
-    paramCeiling := 20
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 20]
+    paramCeiling := 96
+    paramSchedule := .custom #[4, 8, 16, 32, 48, 64, 96]
     maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -886,11 +900,13 @@ initialize mulPairRef6 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef8 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef12 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef16 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef20 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize invPairRef4 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef6 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef8 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef10 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef12 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef16 : IO.Ref (Option InvInput) ← IO.mkRef none
 
 private def getMulPair (ref : IO.Ref (Option FieldInput)) (n : Nat) :
     IO FieldInput := do
@@ -943,6 +959,10 @@ def runQAdjoinMulPair16 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef16 16)
 def runPariPolmodMul16 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef16 16)
+def runQAdjoinMulPair20 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef20 20)
+def runPariPolmodMul20 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef20 20)
 
 def runQAdjoinInvPair4 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef4 4)
@@ -964,6 +984,10 @@ def runQAdjoinInvPair12 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef12 12)
 def runPariPolmodInv12 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef12 12)
+def runQAdjoinInvPair16 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef16 16)
+def runPariPolmodInv16 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef16 16)
 
 /-- Per-call driver overhead for the PARI comparator: one `polmod`-family
 request whose PARI-side work is a constant `0`, so the measured time is the
@@ -983,9 +1007,8 @@ PARI side, spawns the persistent driver) outside the timed region, and the
 raised `minTotalSeconds` floor amortises steady-state work across the
 auto-tuned inner-repeat batch so per-rung ratios compare like with like. -/
 def pariCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  -- The cap covers the discarded `warmupFirstIter` call, which is where the
-  -- rung fixture is built: the certified root of `X^n - 2` costs 14.2 s at
-  -- n = 20. The timed calls themselves are microseconds.
+  -- The discarded `warmupFirstIter` call builds the certified single-root
+  -- fixture outside the measured region.
   { repeats := 5, maxSecondsPerCall := 120.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
@@ -1003,6 +1026,8 @@ setup_fixed_benchmark runQAdjoinMulPair12 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul12 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinMulPair16 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul16 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair20 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul20 where pariCompareConfig
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
 inversion against `QAdjoin` extended-gcd inversion (quadratic
@@ -1017,6 +1042,8 @@ setup_fixed_benchmark runQAdjoinInvPair10 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv10 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair12 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv12 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair16 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv16 where pariCompareConfig
 
 /- Driver round-trip floor for the PARI comparator: no algorithmic work on
 either side, so this registration measures only the per-call request/reply

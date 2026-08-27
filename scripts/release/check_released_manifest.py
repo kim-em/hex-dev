@@ -325,13 +325,9 @@ def main() -> int:
     # the phase they had then: each may only move up (a regression fails), no
     # library may join this list, and an entry leaves it by reaching Phase 7.
     prepublished_floor = {
-        "HexPolyZMathlib": 6,
-        "HexMatrixMathlib": 6,
         "HexRowReduceMathlib": 5,
         "HexDeterminantMathlib": 5,
         "HexBareissMathlib": 5,
-        "HexGramSchmidtMathlib": 6,
-        "HexLLLMathlib": 4,
     }
     graduated = sorted(
         lib for lib in prepublished_floor
