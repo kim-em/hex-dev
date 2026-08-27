@@ -489,6 +489,25 @@ but every admissible denominator has zero constant coefficient.
 The declared cost is `O(M(m+n) log (m+n))` and the specification includes the
 zero series, `m = 0`, `n = 0`, and precision zero.
 
+The independent benchmark reference forms the classical normalized Hankel
+system for diagonal `[n/n]` approximation, solves it by dense rational
+Gauss-Jordan elimination, and agrees exactly with `pade?` on every common
+rung from 1 through 128. Three cold outer trials on `chungus2` (AMD EPYC
+9455), Lean `4.34.0-rc2`, give:
+
+| `n` | linear-algebra reference | half-gcd Padé |
+|---:|---:|---:|
+| 32 | 7.908 ms | 20.954 ms |
+| 64 | 83.094 ms | 109.469 ms |
+| 128 | 981.178 ms | 571.852 ms |
+
+The half-gcd path crosses between 64 and 128 for this rational-coefficient
+family. Reproduce the boundary with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runLinearPade Hex.PolyFastBench.runHalfGcdPade
+--param-floor 32 --param-ceiling 128 --param-schedule doubling --cache-mode
+cold --outer-trials 3 --signal-floor-multiplier 1
+--max-seconds-per-call 15`.
+
 ## Integer multiplication: multipoint Kronecker
 
 The existing `Hex.ZPoly.mulKronecker` and `mulKroneckerAt` remain compatible

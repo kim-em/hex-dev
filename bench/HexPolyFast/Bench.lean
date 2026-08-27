@@ -410,6 +410,89 @@ def runColdInterpolation (input : InterpolationInput) : UInt64 :=
       | none => 0
       | some p => checksumRat p
 
+/-- A diagonal `[n/n]` Padé problem at precision `2n+1`. The reciprocal
+integer coefficients make the reference Hankel system nonsingular while
+keeping the benchmark deterministic. -/
+structure PadeInput where
+  precision : Nat
+  series : TSeries Rat precision
+  bound : Nat
+
+instance : Hashable PadeInput where
+  hash input := mixHash (hash input.bound) (hash input.series.coeffs.toArray)
+
+def prepPade (n : Nat) : PadeInput :=
+  { precision := 2 * n + 1
+    series := TSeries.ofFn fun i => (1 : Rat) / (i + 1)
+    bound := n }
+
+/-- Gauss-Jordan elimination for a flat `n × (n+1)` augmented rational
+matrix. This intentionally does not use any polynomial Euclidean machinery. -/
+private def solveUniqueRat (n : Nat) (augmented : Array Rat) : Option (Array Rat) :=
+  if augmented.size != n * (n + 1) then none else Id.run do
+    let width := n + 1
+    let mut a := augmented
+    for col in [0:n] do
+      let mut pivot := n
+      for row in [col:n] do
+        if a[row * width + col]! != 0 then
+          pivot := row
+          break
+      if pivot == n then
+        return none
+      if pivot != col then
+        for k in [0:width] do
+          let x := a[col * width + k]!
+          a := a.set! (col * width + k) a[pivot * width + k]!
+          a := a.set! (pivot * width + k) x
+      let pivotValue := a[col * width + col]!
+      for k in [col:width] do
+        a := a.set! (col * width + k) (a[col * width + k]! / pivotValue)
+      for row in [0:n] do
+        if row != col then
+          let factor := a[row * width + col]!
+          if factor != 0 then
+            for k in [col:width] do
+              a := a.set! (row * width + k)
+                (a[row * width + k]! - factor * a[col * width + k]!)
+    return some ((Array.range n).map fun i => a[i * width + n]!)
+
+/-- Classical normalized Padé construction: solve the `n × n` Hankel system
+for `q₁, …, qₙ` with `q₀ = 1`, then read the low product coefficients as the
+numerator. This is the independent linear-algebra benchmark reference. -/
+def directPade (input : PadeInput) : Option (DensePoly Rat × DensePoly Rat) :=
+  let n := input.bound
+  let augmented := Id.run do
+    let width := n + 1
+    let mut a : Array Rat := Array.replicate (n * width) 0
+    for row in [0:n] do
+      let k := n + 1 + row
+      for col in [0:n] do
+        let j := col + 1
+        a := a.set! (row * width + col) (input.series.coeff (k - j))
+      a := a.set! (row * width + n) (-input.series.coeff k)
+    return a
+  match solveUniqueRat n augmented with
+  | none => none
+  | some qTail =>
+      let q : DensePoly Rat := ofList ((1 : Rat) :: qTail.toList)
+      let product := q * polyOfSeries input.series
+      let p : DensePoly Rat := ofList ((List.range (n + 1)).map product.coeff)
+      some (p, q)
+
+private def checksumPadePair (result : Option (DensePoly Rat × DensePoly Rat)) : UInt64 :=
+  match result with
+  | none => 0
+  | some (p, q) => mixHash (checksumRat p) (checksumRat q)
+
+def runLinearPade (input : PadeInput) : UInt64 :=
+  checksumPadePair (directPade input)
+
+def runHalfGcdPade (input : PadeInput) : UInt64 :=
+  match pade? (karatsubaPlan 32) input.series input.bound input.bound with
+  | none => 0
+  | some approx => mixHash (checksumRat approx.p) (checksumRat approx.q)
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -796,6 +879,34 @@ setup_benchmark runColdInterpolation n =>
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["interpolation", "product-tree", "cold-plan"]
+  }
+
+/- Dense Gauss-Jordan elimination performs cubic rational arithmetic. The
+registered range is deliberately small because this is a reference path. -/
+setup_benchmark runLinearPade n => n ^ 3
+  with prep := prepPade
+  where {
+    paramFloor := 1
+    paramCeiling := 128
+    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64, 128]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["pade", "linear-algebra", "reference"]
+  }
+
+/- Padé delegates its Euclidean boundary search to the half-gcd engine, with
+the same `O(M(n) log n)` balanced cost model. -/
+setup_benchmark runHalfGcdPade n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepPade
+  where {
+    paramFloor := 1
+    paramCeiling := 1024
+    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["pade", "half-gcd", "normalized"]
   }
 
 end Hex.PolyFastBench
