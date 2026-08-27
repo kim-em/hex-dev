@@ -790,11 +790,19 @@ private instance : Hashable ElemInput where
 private instance : Inhabited ElemInput :=
   ⟨⟨rat, ofRat rat 1, ofRat rat 2⟩⟩
 
-/-- Deterministic dense all-nonzero mixed-radix coordinates. -/
+/-- Deterministic dense all-nonzero mixed-radix coordinates with bounded
+height: numerators cycle modulo 11 and denominators modulo 6, so every
+reduced common denominator divides `lcm(1, ..., 6) = 60` at every
+dimension. The previous denominator shape `i + 3` varied with the
+coordinate index, so the lcm of the vector's denominators had `Θ(D)` bit
+length and the ladders varied coefficient height together with dimension
+instead of holding it fixed as their one-parameter cost models require
+(the same correction `denseRatCoeff` records in the HexNumberField
+bench). -/
 private def ladderCoords (d salt : Nat) : Array Rat :=
   (Array.range d).map fun i =>
     let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
-    mkRat (sign * Int.ofNat (i + salt + 2)) (i + 3)
+    mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
 
 def prepElemInput (n : Nat) : ElemInput :=
   let m := max n 1
@@ -836,14 +844,20 @@ setup_benchmark runTowerAddLadder n => n
 coordinates and reduces from the top generator downward, `O(D^2)` rational
 operations at dimension `D = 2n` (SPEC §Complexity: "Schoolbook
 multiplication and reduction cost O(D²)"). Bounded fixture heights make each
-rational operation `O(1)` words, so the declared wall model is quadratic. -/
+rational operation `O(1)` words, so the declared wall model is quadratic.
+The schedule extends through `n = 12` because the normalized cost has a
+small-dimension transient (per-element construction and the `O(D)` checksum
+walk weigh more against `D²` work at dimension four) that flattens from
+`n = 6` on; the raised per-call cap accommodates the untimed tower-fixture
+construction at `m = 8` and `m = 12`, whose `adjoin?` factors `X^m - 3`
+over `ℚ(√2)` outside the timed region. -/
 setup_benchmark runTowerMulLadder n => n * n
   with prep := prepElemInput
   where {
     paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 12
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
