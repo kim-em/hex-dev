@@ -8,9 +8,9 @@ import HexPolyFast
 import LeanBench
 
 /-!
-Scientific benchmark registrations for the generic multiplication crossover.
-Input preparation is excluded from timing, and every target consumes its
-result through a coefficient hash.
+Scientific benchmark registrations for hex-poly-fast dispatch and reusable
+plans. Input preparation is excluded from timing except in explicitly cold
+plan targets, and every target consumes its result through a coefficient hash.
 -/
 
 namespace Hex.PolyFastBench
@@ -318,10 +318,30 @@ structure MultipointInput where
 instance : Hashable MultipointInput where
   hash input := mixHash (hash input.plan.points) (hash input.polynomial.toArray)
 
+/-- Several polynomials sharing one point/remainder-tree plan. -/
+structure MultipointBatchInput where
+  plan : EvalPlan Int
+  polynomials : Array (DensePoly Int)
+
+instance : Hashable MultipointBatchInput where
+  hash input := mixHash (hash input.plan.points) <|
+    input.polynomials.foldl (fun acc p => mixHash acc (hash p.toArray)) 0
+
+private def evalPointsFor (n : Nat) : Array Int :=
+  (List.range n).map (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
+
+private def evalPolynomial (n salt : Nat) : DensePoly Int :=
+  ofList ((List.range n).map fun i => coeff i salt)
+
 def prepMultipoint (n : Nat) : MultipointInput :=
-  let points := (List.range n).map (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
+  let points := evalPointsFor n
   { plan := EvalPlan.build (karatsubaPlan 32) points
-    polynomial := ofList ((List.range n).map fun i => coeff i 71) }
+    polynomial := evalPolynomial n 71 }
+
+def prepMultipointBatch (n : Nat) : MultipointBatchInput :=
+  let points := evalPointsFor n
+  { plan := EvalPlan.build (karatsubaPlan 32) points
+    polynomials := (Array.range 8).map fun i => evalPolynomial n (71 + i * 17) }
 
 private def checksumValues (values : Array Int) : UInt64 :=
   values.foldl (fun acc value => mixHash acc (hash value)) 0
@@ -331,6 +351,18 @@ def runDirectEval (input : MultipointInput) : UInt64 :=
 
 def runMultipointEval (input : MultipointInput) : UInt64 :=
   checksumValues (input.plan.eval input.polynomial)
+
+def runColdMultipointEval (input : MultipointInput) : UInt64 :=
+  let plan := EvalPlan.build (karatsubaPlan 32) input.plan.points
+  checksumValues (plan.eval input.polynomial)
+
+def runRepeatedDirectEval (input : MultipointBatchInput) : UInt64 :=
+  input.polynomials.foldl (fun acc polynomial =>
+    mixHash acc <| checksumValues (input.plan.points.map (polynomial.eval ·))) 0
+
+def runRepeatedMultipointEval (input : MultipointBatchInput) : UInt64 :=
+  input.polynomials.foldl (fun acc polynomial =>
+    mixHash acc <| checksumValues (input.plan.eval polynomial)) 0
 
 structure InterpolationInput where
   points : Array Rat
@@ -364,6 +396,14 @@ def runDirectInterpolation (input : InterpolationInput) : UInt64 :=
 
 def runPlannedInterpolation (input : InterpolationInput) : UInt64 :=
   match input.plan with
+  | none => 0
+  | some plan =>
+      match plan.interpolate? input.values with
+      | none => 0
+      | some p => checksumRat p
+
+def runColdInterpolation (input : InterpolationInput) : UInt64 :=
+  match InterpPlan.build? (karatsubaPlan 32) input.points with
   | none => 0
   | some plan =>
       match plan.interpolate? input.values with
@@ -674,6 +714,45 @@ setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["multipoint", "remainder-tree", "reused-plan"]
   }
 
+/- Product, reciprocal, and remainder trees are all constructed inside the
+timed call, exposing cold reusable-plan setup cost. -/
+setup_benchmark runColdMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepMultipoint
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multipoint", "remainder-tree", "cold-plan"]
+  }
+
+setup_benchmark runRepeatedDirectEval n => 8 * n ^ 2
+  with prep := prepMultipointBatch
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multipoint", "horner", "repeated", "reused-points"]
+  }
+
+setup_benchmark runRepeatedMultipointEval n =>
+    8 * n * Nat.sqrt n * (Nat.log2 n + 1)
+  with prep := prepMultipointBatch
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multipoint", "remainder-tree", "repeated", "reused-plan"]
+  }
+
 /- Direct Lagrange construction rebuilds `n` products of `n` linear factors;
 schoolbook multiplication by the growing numerators gives a cubic
 coefficient-operation model. -/
@@ -702,6 +781,21 @@ setup_benchmark runPlannedInterpolation n =>
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["interpolation", "product-tree", "reused-plan"]
+  }
+
+/- Distinct-point checking, derivative evaluation, inverses, and the product
+tree are included in the cold planned interpolation arm. -/
+setup_benchmark runColdInterpolation n =>
+    n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepInterpolation
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["interpolation", "product-tree", "cold-plan"]
   }
 
 end Hex.PolyFastBench

@@ -425,6 +425,44 @@ evaluation, and interpolation cost `O(M(n) log n)`; the oversized
 direct-evaluation fallback costs `O(plan.size * f.size)`. The reusable plan
 cost is reported separately.
 
+Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`,
+give the following integer multipoint-evaluation medians for `n` coefficients
+at `n` points:
+
+| `n` | direct Horner | reused plan | cold plan |
+|---:|---:|---:|---:|
+| 256 | 7.378 ms | 30.602 ms | 73.527 ms |
+| 512 | 35.154 ms | 141.703 ms | 316.823 ms |
+| 1024 | 196.186 ms | 970.018 ms | 1.777 s |
+
+Reusing the same plan for eight polynomials still loses at the measured
+boundary: at `n = 256, 512`, direct Horner takes 58.137 ms and 273.181 ms,
+versus 243.688 ms and 1.152 s for the remainder tree. There is therefore no
+automatic multipoint-evaluation adoption for this integer workload. Reproduce
+the one-polynomial table with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runDirectEval Hex.PolyFastBench.runMultipointEval
+Hex.PolyFastBench.runColdMultipointEval --param-floor 256 --param-ceiling 1024
+--param-schedule doubling --cache-mode cold --outer-trials 3
+--signal-floor-multiplier 1`.
+
+For rational interpolation at distinct points, the corresponding medians are:
+
+| `n` | direct Lagrange | reused plan | cold plan |
+|---:|---:|---:|---:|
+| 8 | 148.931 us | 35.533 us | 145.636 us |
+| 16 | 1.186 ms | 162.831 us | 666.097 us |
+| 32 | 12.880 ms | 1.104 ms | 3.381 ms |
+
+The reused plan wins throughout these cells; including construction gives a
+clear win from 16 points. The warm `n = 8` cell had a 188% trial spread, but
+even its slowest trial remained below direct Lagrange. Reproduce the table
+with `lake exe hexpolyfast_bench compare
+Hex.PolyFastBench.runDirectInterpolation
+Hex.PolyFastBench.runPlannedInterpolation
+Hex.PolyFastBench.runColdInterpolation --param-floor 8 --param-ceiling 32
+--param-schedule doubling --cache-mode cold --outer-trials 3
+--signal-floor-multiplier 1`.
+
 ## Padé approximation
 
 For a series prefix `s` and bounds `m`, `n`, a homogeneous approximant is a
