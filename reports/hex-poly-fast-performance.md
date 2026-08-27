@@ -297,32 +297,37 @@ reassembly products retain the ordered fold.
 The declared informational comparator is **FLINT fmpz_poly and nmod_poly via
 python-flint**. The fixed targets use the persistent oracle process, runtime
 `IO.Ref` operands, one discarded warmup iteration, and expected hashes. They
-were refreshed at binary revision `0aaa2af-dirty` on `chungus2` with:
+were refreshed at clean binary revision `7dac5bd67` on logical CPU 1 of
+`chungus2`. The retained export is
+`reports/bench-results/hex-poly-fast-flint-7dac5bd6-chungus2-cpu1.json`.
+The exact command was:
 
 ```sh
-uv run --with python-flint lake exe hexpolyfast_bench compare Hex.PolyFastBench.runLeanInt64 Hex.PolyFastBench.runFlintInt64 Hex.PolyFastBench.runLeanInt256 Hex.PolyFastBench.runFlintInt256 Hex.PolyFastBench.runLeanInt1024 Hex.PolyFastBench.runFlintInt1024 Hex.PolyFastBench.runLeanMod64 Hex.PolyFastBench.runFlintMod64 Hex.PolyFastBench.runLeanMod256 Hex.PolyFastBench.runFlintMod256 Hex.PolyFastBench.runLeanMod1024 Hex.PolyFastBench.runFlintMod1024 --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1
+uv run --with python-flint taskset -c 1 .lake/build/bin/hexpolyfast_bench run Hex.PolyFastBench.runFlintOverhead Hex.PolyFastBench.runLeanInt64 Hex.PolyFastBench.runFlintInt64 Hex.PolyFastBench.runLeanInt256 Hex.PolyFastBench.runFlintInt256 Hex.PolyFastBench.runLeanInt1024 Hex.PolyFastBench.runFlintInt1024 Hex.PolyFastBench.runLeanMod64 Hex.PolyFastBench.runFlintMod64 Hex.PolyFastBench.runLeanMod256 Hex.PolyFastBench.runFlintMod256 Hex.PolyFastBench.runLeanMod1024 Hex.PolyFastBench.runFlintMod1024 --export-file reports/bench-results/hex-poly-fast-flint-7dac5bd6-chungus2-cpu1.json
 ```
 
-Ratios are `FLINT median / Lean median`; values below one favor FLINT.
+The warmed persistent-process and JSON-framing overhead is **6.225 us** per
+request. Ratios are `FLINT median / Lean median`; adjusted ratios subtract
+6.225 us from the FLINT median before dividing. All six rungs are eligible:
+the overhead is below 50% of FLINT wall time and every call is below the 1 s
+soft ceiling. The overhead exceeds 5% at both degree-64 rungs, so raw and
+adjusted values are reported throughout the ladder for consistency.
 
-| family | `n` | Lean | FLINT | ratio | pair hash |
-|---|---:|---:|---:|---:|:---|
-| `fmpz_poly.mul` | 64 | 32.016 us | 44.365 us | 1.386 | equal |
-| `fmpz_poly.mul` | 256 | 317.716 us | 155.525 us | 0.490 | equal |
-| `fmpz_poly.mul` | 1024 | 3.074 ms | 617.461 us | 0.201 | equal |
-| `nmod_poly.mul` | 64 | 47.231 us | 43.622 us | 0.924 | equal |
-| `nmod_poly.mul` | 256 | 509.698 us | 145.518 us | 0.286 | equal |
-| `nmod_poly.mul` | 1024 | 4.853 ms | 553.399 us | 0.114 | equal |
+| family | `n` | Lean | FLINT | overhead | raw ratio | adjusted ratio | eligible | pair hash |
+|---|---:|---:|---:|---:|---:|---:|:---:|:---:|
+| `fmpz_poly.mul` | 64 | 49.150 us | 43.629 us | 14.27% | 0.888 | 0.761 | yes | equal |
+| `fmpz_poly.mul` | 256 | 466.393 us | 153.187 us | 4.06% | 0.328 | 0.315 | yes | equal |
+| `fmpz_poly.mul` | 1024 | 4.642 ms | 621.463 us | 1.00% | 0.134 | 0.133 | yes | equal |
+| `nmod_poly.mul` | 64 | 56.444 us | 42.350 us | 14.70% | 0.750 | 0.640 | yes | equal |
+| `nmod_poly.mul` | 256 | 571.288 us | 144.441 us | 4.31% | 0.253 | 0.242 | yes | equal |
+| `nmod_poly.mul` | 1024 | 5.310 ms | 556.923 us | 1.12% | 0.105 | 0.104 | yes | equal |
 
-Both curves increasingly favor FLINT as degree grows. That trend is expected:
-FLINT has coefficient-specific dispatch and tuned native kernels, while these
-fixed Lean rows deliberately exercise the generic Karatsuba plan. The
-comparison is informational and does not select a production cell.
-
-The persistent-transport no-op is now registered as `runFlintOverhead`, but no
-clean-tree scientific timing row has yet been retained. Consequently these
-microsecond cells are useful orientation and agreement evidence, but they do
-not yet satisfy the report policy's adjusted-overhead calculation.
+Both adjusted curves increasingly favor FLINT: `fmpz_poly` falls from 0.761
+to 0.133, and `nmod_poly` from 0.640 to 0.104. This is the trend predicted by
+the manifest's informational rationale: FLINT has coefficient-specific
+dispatch and tuned native kernels, while these Lean rows deliberately exercise
+the generic Karatsuba plan. It does not select a production cell and is not an
+unexpected adverse trend.
 
 ## Profile
 
@@ -345,8 +350,6 @@ does not satisfy that contract.
 ## Concerns
 
 - The six required timed-region sampling profiles are missing.
-- The informational FLINT overhead target is wired, but its clean-tree timing
-  and the resulting adjusted ladder ratios have not yet been retained.
 
 These are evidence gaps, not known implementation failures. They keep the
 library below Phase 4 and must be resolved before `done_through` advances to
