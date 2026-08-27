@@ -352,7 +352,8 @@ verdict; nothing here reclassifies them.
 All 31 fixed registrations agree across repeats, and all eleven with a declared
 `expectedHash` match it. Medians come from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json),
-with `runExactSelection` measured alongside the exactification audit:
+with `runExactSelection` in the
+[exactification fixed export](bench-results/hex-number-field-exactification-fixed.json):
 
 | fixed target | median | observed hash | expected |
 |---|---:|---|---|
@@ -364,7 +365,7 @@ with `runExactSelection` measured alongside the exactification audit:
 | `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
 | `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
-| `runExactSelection` | 314.675 ms | `0xd5512fda51bc6ff6` | match |
+| `runExactSelection` | 559.605 ms | `0xd5512fda51bc6ff6` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
@@ -688,6 +689,7 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `a20d30552`, clean tree | loaded, declining | `5f8c7f994f6d1f8a9fc0e469173fa9057bccd9c978ae6c0a42b4dd27e9d3841f` |
+| [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `93b9da05e`, clean tree | loaded | `0e756e3f8380be76e2da10acc047060103f15e507fb6e8b894e425c819e8c438` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
