@@ -1028,6 +1028,10 @@ lean_exe hexpolyfast_bench where
   srcDir := "bench"
   root := `HexPolyFast.Bench
 
+lean_exe hexpolyfast_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPolyFast.EmitFixtures
+
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexPoly.EmitFixtures

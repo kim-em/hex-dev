@@ -650,8 +650,11 @@ banned.
 
 ## Conformance
 
-The new driver is `conformance/HexPolyFast/Conformance.lean`, with fixtures in
-`conformance-fixtures/HexPolyFast/`. The JSONL surface contains:
+The proof driver is `conformance/HexPolyFast/Conformance.lean`. The executable
+JSONL driver is `conformance/HexPolyFast/EmitFixtures.lean`; `lake exe
+hexpolyfast_emit_fixtures` emits the committed
+`conformance-fixtures/HexPolyFast/polyfast.jsonl` fixture, which
+`scripts/oracle/polyfast_flint.py` checks. The JSONL surface contains:
 
 - `mul`, `square`, and `slice`, including the selected kernel name;
 - `divmod`, `gcd`, `xgcd`, and `xgcd_left`;
@@ -661,9 +664,9 @@ The new driver is `conformance/HexPolyFast/Conformance.lean`, with fixtures in
 - NTT plan, round-trip, direct convolution, and CRT convolution cases;
 - KS1/KS2/KS3/KS4 forced-kernel cases.
 
-Small cases are checked independently against schoolbook operations and a
-simple Python/SymPy oracle. Integer and prime-field whole results are also
-checked against FLINT through the existing persistent oracle infrastructure.
+Small cases are checked independently by exact Python arithmetic. Integer and
+prime-field whole results are also checked against FLINT through the existing
+persistent oracle infrastructure.
 The oracle never reports which kernel Hex should choose; dispatch is tested by
 agreement plus benchmark evidence.
 
