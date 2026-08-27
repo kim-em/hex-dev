@@ -40,7 +40,14 @@ open HexMatrixMathlib
 -- The same correspondence is available over any commutative ring equipped
 -- with an exact quotient satisfying the cancellation law.
 #check @bareissWith_eq_det
+-- @bareissWith_eq_det : ∀ {R n} [CommRing R] [DecidableEq R]
+--   (quot : R → R → R), (∀ a b, b ≠ 0 → quot (a * b) b = a) →
+--   ∀ M : Hex.Matrix R n n, Matrix.bareissWith quot M = Matrix.det M
 #check @bareissWith_eq_mathlib_det
+-- @bareissWith_eq_mathlib_det : ∀ {R n} [CommRing R] [DecidableEq R]
+--   (quot : R → R → R), (∀ a b, b ≠ 0 → quot (a * b) b = a) →
+--   ∀ M : Hex.Matrix R n n,
+--     Matrix.bareissWith quot M = (matrixEquiv M).det
 ```
 
 # Functionality

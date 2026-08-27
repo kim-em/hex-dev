@@ -55,10 +55,21 @@ Five-repeat medians on the same deterministic
 | 256 | 263.939 ms | 148.041 ms | 0.561x | 1.02x |
 | 384 | 825.551 ms | 512.178 ms | 0.620x | 1.02x |
 
-Both required rungs pass the no-regression ceiling. An additional same-binary
-comparison through a deliberately unspecialized quotient value was slower;
-that check confirms why the public `Int` specialization and its direct-call
-code-generation check are part of this gate.
+Both required rungs pass the no-regression ceiling.
+
+The SPEC's same-binary A/B comparison measures the retained `bareiss` entry
+against `bareissWith Hex.exactDiv`. Five repeats were pinned to verified-idle
+CPU 2 on `chungus2`; output hashes agreed at both rungs.
+
+| n | direct `Int` specialization | `bareissWith Hex.exactDiv` | generic/direct |
+|---:|---:|---:|---:|
+| 256 | 150.466 ms | 259.076 ms | 1.722x |
+| 384 | 523.082 ms | 919.823 ms | 1.758x |
+
+`Hex.exactDiv` is the guarded quotient derived from ordinary integer division,
+whereas the retained specialization reaches `lean_int_div_exact` directly.
+The A/B result records the material reason the direct-call code-generation
+check is part of the no-regression gate.
 
 ## Comparator Ratios
 
