@@ -11,9 +11,9 @@ import Mathlib.Data.Finset.Basic
 Segment statements over the committed prime table, in the form a Mathlib
 consumer states them.
 
-`forall_prime_lt` is the scaffold for "every prime in `[1, x]` satisfies
-`P`": combined with a decidable fold over the table literal it discharges
-the universally quantified segment statements the SPEC calls unlocked.
+`forall_prime_lt` reduces "every prime below `x` satisfies `P`" to the
+committed prime table: combined with a decidable fold over the table literal,
+it discharges the universally quantified segment statements in the SPEC.
 -/
 
 namespace Hex

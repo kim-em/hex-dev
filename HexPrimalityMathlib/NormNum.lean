@@ -49,7 +49,7 @@ open Lean Meta Elab Qq Mathlib.Meta.NormNum
 trial division; 25-bit and larger numerals use bounded certificate search. -/
 def natPrimeCertThreshold : Nat := 16777216
 
-theorem isNat_prime_of_hex : {n n' : ℕ} → IsNat n n' →
+theorem isNat_prime : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
   | _, _, ⟨rfl⟩, hp => by simpa using hp
 
@@ -69,7 +69,7 @@ verdicts at and above `natPrimeCertThreshold`. -/
         let prf : Q(_root_.Nat.Prime $nn) :=
           mkApp3 (mkConst ``Hex.Nat.natPrime_of_checkPrimeAt) nn
             (reifyPrimeCert c.raw) reflTrue
-        return .isTrue q(isNat_prime_of_hex $pn $prf)
+        return .isTrue q(isNat_prime $pn $prf)
     | .error f =>
         match f.stop with
         | .exhausted => failure
