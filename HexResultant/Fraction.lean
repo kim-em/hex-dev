@@ -51,8 +51,11 @@ end Fraction
 
 /-- A numerator and a certified nonzero denominator. -/
 structure Fraction.Rep (R : Type u) [Zero R] where
+  /-- The numerator. -/
   num : R
+  /-- The denominator. -/
   den : R
+  /-- The denominator is nonzero, so the quotient is well defined. -/
   den_ne : den ≠ 0
 
 namespace Fraction.Rep

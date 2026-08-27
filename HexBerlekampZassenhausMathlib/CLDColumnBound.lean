@@ -28,7 +28,7 @@ The module provides the exact integer CLD column `phi g = f * g' / g` with its
 Landau-Mignotte coefficient
 bound, the aggregate-residue congruence for a recovered true-factor support,
 the period-aware carry bound `two_mul_natAbs_sum_psiCut_period_le`, and the
-short-vector producer `supportShortVectorData_of_recoveredLift` feeding
+short-vector producer `recoveredShortVector` feeding
 `cutProjectionHypotheses_of_shortVectors`.
 -/
 
@@ -219,28 +219,6 @@ private theorem natDegree_h_mul_rootDeletionDerivativeSummand_le
     Polynomial.natDegree_mul_le
   omega
 
-/--
-Degree bound for the BHKS `Phi` column under a monic factorisation
-`f = g * h`: `Phi.natDegree ≤ f.natDegree - 1`.
--/
-private theorem phi_natDegree_le_of_monic_factor
-    (f g h : Polynomial ℤ) (hg_monic : g.Monic) (hfac : f = g * h) :
-    (phi f g).natDegree ≤ f.natDegree - 1 := by
-  rw [phi_eq_factor_mul_derivative f g h hg_monic hfac]
-  by_cases hg_one : g = 1
-  · simp [hg_one]
-  by_cases hh : h = 0
-  · simp [hh]
-  have hgd_pos : 0 < g.natDegree := by
-    rcases Nat.eq_zero_or_pos g.natDegree with hzero | hpos
-    · exact absurd (hg_monic.natDegree_eq_zero.mp hzero) hg_one
-    · exact hpos
-  have hgh : (g * h).natDegree = g.natDegree + h.natDegree := hg_monic.natDegree_mul' hh
-  have hf_deg : f.natDegree = g.natDegree + h.natDegree := by rw [hfac, hgh]
-  have h1 : (h * g.derivative).natDegree ≤ h.natDegree + g.derivative.natDegree :=
-    Polynomial.natDegree_mul_le
-  have h2 : g.derivative.natDegree ≤ g.natDegree - 1 := Polynomial.natDegree_derivative_le _
-  omega
 
 /--
 **BHKS Lemma 5.1** (unconditional form): the coefficient bound for the BHKS
@@ -741,18 +719,6 @@ private theorem C_dvd_toPolynomial_sub_of_congr
     HexPolyMathlib.coeff_toPolynomial]
   exact Int.dvd_of_emod_eq_zero (h j)
 
-/-- The converse of `C_dvd_toPolynomial_sub_of_congr`. -/
-private theorem congr_of_C_dvd_toPolynomial_sub
-    (a b : Hex.ZPoly) (m : Nat)
-    (h : Polynomial.C (m : ℤ) ∣
-      (HexPolyMathlib.toPolynomial a - HexPolyMathlib.toPolynomial b)) :
-    Hex.ZPoly.congr a b m := by
-  rw [Polynomial.C_dvd_iff_dvd_coeff] at h
-  intro j
-  have hj := h j
-  rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
-    HexPolyMathlib.coeff_toPolynomial] at hj
-  exact Int.emod_eq_zero_of_dvd hj
 
 /-- A centred residue modulo `m` has magnitude at most `m / 2`: `2·|x mod^± m| ≤ m`. -/
 theorem two_mul_natAbs_centeredModNat_le (z : Int) (m : Nat) (hm : 0 < m) :
@@ -1441,6 +1407,8 @@ def periodAdjustedRowCoeffs (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport 
     if hx : x.val < L.factorCount then indicatorVector S ⟨x.val, hx⟩
     else - t ⟨x.val - L.factorCount, by omega⟩
 
+/-- The first-block entries of the selection coefficients are the support
+indicator. -/
 theorem periodAdjustedRowCoeffs_castAdd (L : Hex.BhksLatticeBasis)
     (S : LiftedFactorSupport L) (t : Fin L.coeffWidth → ℤ) (i : Fin L.factorCount) :
     (periodAdjustedRowCoeffs L S t)[Fin.castAdd L.coeffWidth i] = indicatorVector S i := by
@@ -1450,6 +1418,8 @@ theorem periodAdjustedRowCoeffs_castAdd (L : Hex.BhksLatticeBasis)
     dif_pos (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
   congr 1
 
+/-- The tail entries of the selection coefficients are the negated period
+multipliers. -/
 theorem periodAdjustedRowCoeffs_natAdd (L : Hex.BhksLatticeBasis)
     (S : LiftedFactorSupport L) (t : Fin L.coeffWidth → ℤ) (j : Fin L.coeffWidth) :
     (periodAdjustedRowCoeffs L S t)[Fin.natAdd L.factorCount j] = - t j := by
@@ -1468,6 +1438,8 @@ def periodAdjustedVector (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (t : Fin L.coeffWidth → ℤ) : Vector ℤ (L.factorCount + L.coeffWidth) :=
   Hex.Matrix.vecMul (periodAdjustedRowCoeffs L S t) L.basis
 
+/-- The period-adjusted vector is a genuine BHKS lattice vector: it is a row
+combination of the basis by construction. -/
 theorem periodAdjustedVector_memLattice (L : Hex.BhksLatticeBasis)
     (S : LiftedFactorSupport L) (t : Fin L.coeffWidth → ℤ) :
     Hex.Matrix.memLattice L.basis (periodAdjustedVector L S t) :=
@@ -1689,7 +1661,7 @@ period-adjusted vector by `factorCount/2`.  Together with the structural project
 and lattice-membership facts, this yields a `SupportShortVectorData` for the
 recovered support, feeding the fast-disjunct consumer through
 `cutProjectionHypotheses_of_shortVectors`. -/
-def supportShortVectorData_of_recoveredLift
+def recoveredShortVector
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S)
     (hp : 2 ≤ D.p)

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/IntegerPolynomial.lean",
+ "baseline_blob": "5e4be17de30b87f6e2545d91932c977884181fad",
+ "current_blob": "2a98177eb8b631f974050c535d88e96cd0ccdcd6",
+ "reason": "Adds reflection invariant theorems only; the executable factorization call graph is unchanged."
+}

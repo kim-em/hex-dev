@@ -53,6 +53,7 @@ theorem lllNative_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   omega
 
 /-- The generated lattice is preserved by `Hex.lllNative`. -/
+@[simp]
 theorem lllNative_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (v : Vector Int m) :
@@ -126,9 +127,10 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
       exact (certifiedReduction_some_property hd).2.2
 
 /-- The generated lattice is preserved by `Hex.lll`. -/
+@[simp]
 theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (_hind : b.independent) (v : Vector Int m) :
+    (v : Vector Int m) :
     Matrix.memLattice (lll b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
   unfold lll
   cases hd : ExternalReducer.certifiedReduction b δ with
@@ -168,7 +170,7 @@ theorem lll_short_vector
   have hind' : (lll b δ hδ hδ' hn).independent :=
     lll_independent b δ hδ hδ' hn hind
   have hv_lll : Matrix.memLattice (lll b δ hδ hδ' hn) v :=
-    (lll_memLattice_iff b δ hδ hδ' hn hind v).mpr hv
+    (lll_memLattice_iff b δ hδ hδ' hn v).mpr hv
   have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
     have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
     grind

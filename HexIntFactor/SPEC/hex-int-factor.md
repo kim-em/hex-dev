@@ -188,6 +188,11 @@ theorem checkFactorization_prod {F} (h : checkFactorization F = true) :
 theorem checkFactorization_prime {F} (h : checkFactorization F = true) :
     ∀ e ∈ F.factors, Hex.Nat.Prime e.prime
 
+theorem checkFactorization_pos {F} (h : checkFactorization F = true) :
+    0 < F.subject
+
+theorem CheckedFactorization.pos {n} (F : CheckedFactorization n) : 0 < n
+
 /-- The prime support is exactly the listed primes. Not "nothing else
 divides" -- composite divisors certainly exist -- but no other *prime*
 does, which is the statement the order and primitivity certificates
@@ -237,19 +242,30 @@ consumer.
 
 ## The algorithms
 
-Every route produces a candidate `Factorization` and `factor?` accepts
-it only through `checkFactorization`. A rejected candidate is a bug in
-a route, never a wrong answer, and the dispatch simply continues.
+The generic routes produce a partial aggregate, which `factor?` accepts through
+`checkPartial`; residual one becomes a complete certificate by
+`checkFactorization_of_checkPartial`, without another checker replay. The
+cyclotomic route separately replays `checkFactorization` on its merged complete
+aggregate. Rejection at either boundary is a route bug, never ordinary fuel
+exhaustion, and is exposed as `FactorStop.rejected`. Route-local attempts that
+report no factor may still continue to the next search route.
 
 ```lean
 inductive FactorStop where
   | zero
   | incomplete
+  | rejected
+
+structure PartialSnapshot where
+  raw   : PartialFactorization
+  valid : checkPartial raw = true
 
 structure FactorFailure where
   stop     : FactorStop
   attempts : Nat
   rand     : Rand
+  snapshot : Option PartialSnapshot := none
+  culprit  : Option PartialFactorization := none
 
 def defaultFuel (n : Nat) : Nat
 
@@ -273,13 +289,21 @@ prerequisite, specified there and sited in hex-basic.
 
 ### 0. Structural reductions, always applied
 
-- **Powers of two**, by counting trailing zeros. One `Nat` operation
-  and it removes the factor that trial division would otherwise find
-  slowest per bit.
+- **Powers of two**, by a dedicated trailing-zero count followed by one
+  right shift. For positive `n`, the isolated lowest set bit is
+  `n XOR (n AND (n - 1))`, so its `log₂` is exactly the multiplicity of two.
+  The native `Nat` bit operations remove that factor before the table loop and
+  avoid repeating the generic `% p`/`/ p` producer for `p = 2`.
 - **Perfect powers.** If `n = m^k` for some `k ≥ 2`, factor `m` and
-  multiply the exponents. Detected by trying each prime `k ≤ log₂ n`
-  and taking an integer `k`th root by Newton iteration. Strongly
-  recommended rather than mathematically required: an earlier draft
+  multiply the exponents. Detection first tries every committed prime
+  exponent below `primeTableBound`, then every larger exponent through
+  `log₂ n`; the latter superset of the prime exponents keeps the finite table
+  from becoming a completeness boundary. Each exact integer root uses bounded
+  binary search with the upper bound `2^(⌊log₂ n / k⌋ + 1)`. The
+  full structural pipeline is reapplied to every popped search-stack entry,
+  including recursive cofactors produced by a split; its exponent is multiplied
+  by the entry's accumulated multiplicity before the result is merged.
+  Strongly recommended rather than mathematically required: an earlier draft
   claimed Pollard `p − 1` and ECM "fail on prime powers, because the
   group they work in has no distinct primes to separate", and that is
   false. On `n = 9` with `a = 2` and `M = 2`, `p − 1` returns
@@ -299,7 +323,12 @@ about `10^{12}`: iterate
 `x ↦ x² + c (mod n)`, detect a cycle by Brent's method rather than
 Floyd's (fewer function evaluations per step), and take
 `gcd(|xᵢ − x_j|, n)` in batches of accumulated products so that one gcd
-serves many steps.
+serves many steps. The shared implementation flushes at 32 differences
+or a cycle boundary. A whole-modulus batch is replayed difference by
+difference, so a proper factor hidden inside that batch can still be
+recovered. A nontrivial batched gcd need not be prime: collisions for
+different prime factors in one batch can return their composite product,
+which the recursive dispatcher splits or certifies like any other divisor.
 
 Expected cost is `O(p^{1/2})` iterations to find a factor `p`, so
 `O(n^{1/4})` to split a semiprime. The batching constant matters: a gcd
@@ -310,10 +339,16 @@ primitive required is `Nat.gcd`, not extended GCD.
 [hex-finite-field](../../SPEC/Libraries/hex-finite-field.md), sited in hex-basic), following
 the same explicit-argument discipline: the draw is an argument, the
 retry budget is fuel, and a bad draw costs time and never correctness.
-The draw rejects `c = 0` and any starting point `x` satisfying
+The draw rejects `c = 0`, globally rejects the degenerate polynomial
+`x² - 2`, and rejects any other `(c, x)` pair satisfying
 `x² + c ≡ x (mod n)`, a fixed point that can be detected before the
-loop. In particular, `c = n - 2` is bad for the conventional start
-`x = 2` but is not globally blacklisted for every start.
+loop. An offset rejected for one fixed start remains available with
+another start.
+
+Complete-factorization dispatch allocates at most eight rho restarts to
+one unresolved cofactor. Exhausting that bounded attempt leaves Pollard
+`p − 1` and ECM reachable; it does not spend a fuel-squared number of
+restarts before those routes can run.
 
 ### 2. Pollard `p − 1`
 
@@ -321,6 +356,15 @@ Like rho, stage 1 is sited upstream: hex-primality owns it beside
 `rhoFactor?`, under the same dynamically validated proper-factor
 contract, and this library reuses it. What follows specifies the
 algorithm both consumers get.
+
+The integer-factor adapter re-exports that contract under its own route name,
+parallel to the rho and ECM adapters:
+
+```lean
+theorem pMinusOneFactor_spec
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+```
 
 Stage 1 chooses `1 < a < n` and first checks `gcd(a,n)`: a gcd greater
 than `1` is necessarily a proper factor. Otherwise it computes
@@ -330,6 +374,15 @@ than `1` is necessarily a proper factor. Otherwise it computes
 the implementation must distinguish: `g = 1` (increase `B`, retry, or
 fall through), `1 < g < n` (a factor), `g = n` (the exponent killed
 every component; retry with a different base or a smaller `B`).
+
+The public bound is explicit rather than aspirational. `smoothBoundCap` is
+the conservative cap `primeTableBound - 1`, inside the range where the
+committed table is certified to contain every prime at or below the bound, and
+`smoothBound B = min B smoothBoundCap`. Both the selected primes and their
+prime-power exponents use that same effective bound. In particular a request
+above the cap is not the former hybrid that omitted large primes while still
+raising table primes to powers derived from the larger request. The theorem
+`pMinusOneStage1_bound` states exact equality with the capped call.
 
 The success condition is about the **order of `a` modulo `p`**, not
 about `p − 1`: stage 1 finds `p` when `ord_p(a) ∣ M`. That is implied
@@ -353,6 +406,14 @@ same is true of the moduli in the Cunningham tables generally. So it
 runs before ECM and after rho, and the benchmark family "`b^n ± 1`"
 below is the one that justifies its place.
 
+At one unresolved dispatcher entry, p−1 receives at most four attempts from
+the combined smooth-route budget. It starts with base `2` and bound `64`.
+A no-factor result multiplies the bound by eight up to `smoothBoundCap`, then
+falls through if the cap made no change. A whole-modulus result lowers the
+bound by a factor of eight (not below `2`) and advances through bases
+`[2, 3, 5, 7]`. A proper factor stops the ladder immediately. These are
+attempts, not hidden retries inside one nominal route call.
+
 ### 3. The elliptic curve method
 
 For factors past rho's reach. Montgomery curves in **projective `x:z`
@@ -374,6 +435,33 @@ Suyama setup does need one inversion or gcd. And the primitive required
 is `Nat.gcd`, not Bézout coefficients, so the relevant hex-arith export
 is the gcd rather than `HexArith.Int.extGcd`.
 
+ECM uses the same `smoothBound` contract, recorded by
+`ecmStage1_bound`. After the p−1 ladder, every remaining attempt in the
+combined budget draws a fresh Suyama parameter
+`sigma = 6 + word % 256` and advances `Rand` exactly once. It starts at
+bound `64`; gcd one raises the next bound eightfold, while whole modulus
+changes curve at the retained bound. A no-factor result at the cap falls
+through. Thus the production route is genuinely multi-curve
+and deterministic replay from a fixed state includes both the parameters and
+the final state.
+
+The stage keeps `A24 = a24num / a24den` scaled throughout. If
+`AA = (X + Z)²`, `BB = (X - Z)²`, and `C = AA - BB`, doubling is
+
+```
+X₂ = AA * BB * a24den
+Z₂ = C * (BB * a24den + a24num * C)
+```
+
+modulo the input. The denominator multiplies both projective coordinates;
+omitting it from `X₂` changes the represented point. Scalar multiplication
+maintains the adjacent pair `(mP, (m+1)P)`. For an even scalar it returns
+`(2mP, (2m+1)P)`, and for an odd scalar it returns
+`((2m+1)P, (2m+2)P)`, using differential addition with the original `P`.
+This is the invariant required by `xADD`; independently recursing to `mP`
+and passing `P` as the difference between `2mP` and `mP` is valid only when
+`m = 1`.
+
 Lenstra's analysis, https://annals.math.princeton.edu/1987/126-3/p09,
 is the source for the dependence on the smallest prime factor.
 
@@ -387,7 +475,12 @@ existing Montgomery context is `UInt64`-only and is not claimed to be an
 arbitrary-precision backend. The ECM benchmark family must show that the
 direct-`Nat` route is useful before this milestone is complete; a future
 stage 2 or a failed benchmark is the point at which to specify a separate
-big-integer modular context.
+big-integer modular context. On the word route, one context is constructed
+after setup, the curve constants and initial point enter Montgomery
+representation once, every stage multiplication stays there, and only the
+final `z` coordinate is decoded for the boundary gcd. Context construction
+or representation conversion inside the scalar-multiplication loop is not
+the word backend specified here.
 
 ### 4. Fuel, and what failure means
 
@@ -397,6 +490,31 @@ reachable -- deliberately so. Per design principle 8 that is the third
 remedy, propagating the failure upward, and it is the right one here:
 there is no fallback that is correct-but-slow, because trial division
 past `10^{18}` is not slow, it is unavailable.
+
+The p−1 and ECM ladders share `min fuel 8` attempts at each unresolved
+cofactor, with at most four assigned to p−1 and the unused remainder assigned
+to ECM. Their execution-order event list is the accounting source: its length
+is added on factor success and exhaustion alike, and its final `Rand` is
+threaded into every continuation. Checker rejection retains the attempt total
+already accumulated by the producing search; it does not replay a curve or
+replace the advanced state.
+
+`FactorStop.rejected` is deliberately separate: it means a final aggregate
+failed its certificate checker. At the generic partial-acceptance boundary it
+preserves the advanced random state and attempt count. A rejected partial
+aggregate also retains both the unchecked candidate in
+`FactorFailure.culprit` and a checked empty-factor
+recovery snapshot for the positive subject; the two are not conflated. It must
+be treated as an implementation defect rather than a request for more fuel.
+The internal candidate-acceptance boundary is exercised directly by negative
+conformance tests. Genuine incomplete failures retain the checked aggregate in
+`FactorFailure.snapshot`; the zero case has no snapshot. Cyclotomic dispatch
+propagates rejection rather than retrying it as though it were exhaustion. A
+rejection propagated from a cyclotomic part remains scoped to that subproblem;
+a rejected merged cyclotomic aggregate records the target candidate and random
+state. The internal counted-success shape retains the successful subsearch
+attempts that the compatible public `factor?` pair omits, so cyclotomic
+continuations and aggregate rejection report exact totals.
 
 A partial answer is more useful than no answer, so the search also
 exposes
@@ -425,29 +543,61 @@ as `checkFactorization` minus the requirement that the residual be `1`.
 Its product calculation uses the same subject-bounded loop.
 It makes **no** completeness claim. The indexed checked form prevents a
 partial factorization of one subject from answering a request about
-another, and
+another. The characterising lemmas `checkPartial_pos`,
+`CheckedPartialFactorization.pos`, `checkPartial_prod`,
+`checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
+expose subject positivity, reconstruction, primality, exponent positivity, and
+factor-base ordering without requiring consumers to unfold the checker.
+`checkFactorization_of_checkPartial` proves that residual one is already a
+complete certificate, avoiding a second certificate replay. The search result
+theorems are
 
 ```lean
 theorem factorPartial?_error {n r fuel f}
     (h : factorPartial? n r fuel = .error f) :
-    f.stop = .zero ∧ n = 0
+    (f.stop = .zero ∧ n = 0) ∨
+      (f.stop = .rejected ∧
+        ∃ rejected saved, f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n)
 
-theorem factorPartial?_success {n r fuel} (hn : 0 < n) :
-    ∃ F r', factorPartial? n r fuel = .ok (F, r')
+theorem factorPartial?_result {n r fuel} (hn : 0 < n) :
+    (∃ F r', factorPartial? n r fuel = .ok (F, r')) ∨
+      ∃ f rejected saved, factorPartial? n r fuel = .error f ∧
+        f.stop = .rejected ∧ f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n
 ```
 
-For positive `n`, the empty factor list with residual `n` is always a
-valid fallback, so fuel exhaustion still returns checked partial data.
-At `n = 0` no object satisfying `0 < subject` and `subject = n` exists,
-and `FactorStop.zero` reports that fact instead of returning checked
-data about another number. A failure retains its advanced state and
-attempt count, while success returns the state alongside the checked
-data, so a caller never repeats a failed random stream accidentally.
+For positive `n`, ordinary fuel exhaustion returns the checked aggregate with
+its unfactored residual. It does not use an empty fallback to conceal an
+aggregate that failed `checkPartial`. Such a failure is returned as
+`FactorStop.rejected`, and the success-or-rejection theorem makes that internal
+failure case explicit. At `n = 0` no object satisfying `0 < subject` and
+`subject = n` exists, and `FactorStop.zero` reports that fact instead of
+returning checked data about another number. A generic-search failure retains
+its advanced state and exact attempt count. The dispatcher's attempt unit is
+one Brent-rho restart, one primality-certificate witness candidate, one p−1
+base/bound call, or one ECM curve, including the successful attempt in each
+route. Certificate search also accumulates its internal rho restarts and
+recursive child witnesses. Structural reductions, table lookup,
+Miller--Rabin filtering, and checker replay are deterministic work rather than
+search attempts. Counted internal success shapes preserve these totals across
+continuations without changing the compatible public pair-returning APIs.
+Success returns the state alongside the checked data, so a caller never
+repeats a failed random stream accidentally.
 
-`factor?` is the convenience projection of `factorPartial?`: it
-propagates `FactorStop.zero`, returns the complete checked form exactly
-when the checked residual is `1`, and returns `FactorStop.incomplete`
-otherwise, retaining
+The cyclotomic wrapper uses the internal `factorCounted?` result, which carries
+the exact attempt count on success without changing the public pair-returning
+`factor?` API. Every successfully factored part is added to a later failure or
+generic-continuation total, and the advanced generator state is threaded in
+the same order. Thus generic and cyclotomic dispatcher failures, including
+their checker-rejection boundaries, retain exact attempt totals.
+
+`factor?` uses the same partial-candidate acceptance boundary: it propagates
+`FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete
+checked form by `checkFactorization_of_checkPartial` without replaying the
+certificates, and returns `FactorStop.incomplete` otherwise, retaining
 the same advanced state and attempt count. Keeping both APIs avoids
 forcing callers that require completeness to unpack an object they
 cannot use.
@@ -486,6 +636,8 @@ roughly `2 log p` bits in place of one of `6 log p` bits.
 ```lean
 inductive Sign where | minus | plus
 
+def powerTarget (b n : Nat) : Sign → Nat
+
 /-- One candidate cyclotomic part: its index `d` and proposed value
 `Φ_d(b)`. Exact cyclotomic semantics are conformance-tested, not trusted by
 the factorization route. -/
@@ -500,8 +652,19 @@ def cyclotomicSplit? (b n : Nat) (sign : Sign) : Option (List CyclotomicPart)
 theorem cyclotomicSplit?_prod {b n sign parts}
     (h : cyclotomicSplit? b n sign = some parts) :
     2 ≤ b ∧ 0 < n ∧
-      (parts.map (·.value)).prod =
-        match sign with | .minus => b ^ n - 1 | .plus => b ^ n + 1
+      (parts.map (·.value)).prod = powerTarget b n sign
+
+inductive PowerRoute where | cyclotomic | generic
+
+def factorPowerWithRoute? (b n : Nat) (sign : Sign) (r : Rand)
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
+    Except FactorFailure
+      (CheckedFactorization (powerTarget b n sign) × Rand × PowerRoute)
+
+def factorPower? (b n : Nat) (sign : Sign) (r : Rand)
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
+    Except FactorFailure
+      (CheckedFactorization (powerTarget b n sign) × Rand)
 ```
 
 An enum rather than a `Bool`, and a named pair rather than
@@ -531,6 +694,15 @@ because it is the natural fast candidate algorithm; a separate
 Mathlib-free formalization of cyclotomic-polynomial identities is not a
 prerequisite for this checked search optimization.
 
+For one split, the implementation enumerates the divisor-closed index set once
+in ascending order, fills a dense array through the largest required index,
+and reuses each prior value by constant-time lookup. It does not recursively
+rebuild divisor prefixes for every selected part. If `D` is that index set,
+candidate construction performs `O(max D + |D|²)` small index tests/lookups,
+plus one natural power and up to `|D|` big-integer multiplications per filled
+index. The final exact-product check and factorization checker remain the
+trusted boundary; the complexity statement is about the untrusted producer.
+
 The two computations of `Φ_d(b)`, this one in `Nat` and
 [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md)'s evaluation of the constructed
 polynomial, are independent and must agree. The comparison lives in that
@@ -541,7 +713,18 @@ separately can produce the same prime twice with different exponents.
 A merge pass -- collect, group by prime, sum exponents, sort -- runs
 before the candidate `Factorization` is offered to `checkFactorization`,
 which requires strictly ascending distinct bases and would otherwise
-reject a correct answer.
+reject a correct answer. The generic dispatcher and power-form wrapper share
+the same canonical insertion/merge helper.
+
+`factorPowerWithRoute?` attempts the checked split before the generic route;
+`factorPower?` only hides that diagnostic tag. Its indexed result type carries
+the checked `powerTarget` guarantee. The characterising lemmas state that a
+cyclotomic-tagged success has a checked split, projection preserves successes
+and errors exactly, and a rejected/absent split uses the documented
+scoped-rejection or generic-fallback behaviour. The default fuel is computed
+from the selected sign's target, so the minus path neither constructs
+`b^n + 1` nor uses its budget; at a power-of-two boundary this gives the minus
+target four fewer fuel units than the former plus-based default.
 
 Two things this does not do, and they bound the claim.
 
@@ -599,6 +782,13 @@ structure CheckedOrderCert where
 The identity is normalised as `1 % modulus` rather than `1` so that the
 same modular expression is used throughout, although `1 < c.modulus`
 excludes the degenerate modulus.
+
+The characterisation `checkOrder_iff` and named projections
+`checkOrder_one_lt_modulus`, `checkOrder_order_pos`,
+`checkOrder_orderFac_subject`, `checkOrder_orderFac`, `checkOrder_pow`, and
+`checkOrder_pow_div_prime` expose these accepted facts so
+downstream proofs do not unfold the Boolean checker or index a nested
+conjunction.
 
 ```lean
 theorem order_eq_of_checkOrder {c} (h : checkOrder c = true) :
@@ -711,6 +901,7 @@ and it buys nothing: two call sites, two lines each.
 ```lean
 def divisors {n} (F : CheckedFactorization n) : Array Nat   -- ascending
 def numDivisors {n} (F : CheckedFactorization n) : Nat     -- τ, ∏ (eᵢ + 1)
+def sigmaEntry (entry : PrimePower) (k : Nat) : Nat         -- one geometric sum
 def sigma {n} (F : CheckedFactorization n) (k : Nat) : Nat -- σ_k
 def totient {n} (F : CheckedFactorization n) : Nat         -- φ
 def radical {n} (F : CheckedFactorization n) : Nat         -- ∏ pᵢ
@@ -720,14 +911,41 @@ def isSquarefree {n} (F : CheckedFactorization n) : Bool   -- ∀ i, eᵢ = 1
 
 theorem mem_divisors {n d} (F : CheckedFactorization n) :
     d ∈ (divisors F).toList ↔ d ∣ n
+theorem divisors_nodup {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Nodup
+theorem divisors_sorted {n} (F : CheckedFactorization n) :
+    (divisors F).toList.Pairwise (fun a b => a ≤ b)
 theorem numDivisors_eq_size {n} (F : CheckedFactorization n) :
     numDivisors F = (divisors F).size
 theorem sigma_eq_sum {n k} (F : CheckedFactorization n) :
     sigma F k = ((divisors F).toList.map (fun d => d ^ k)).sum
+theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
+    sigmaEntry entry k =
+      ((DivisorEnumeration.powers entry.prime entry.exponent 1).map
+        (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
+theorem totient_eq_prod {n} (F : CheckedFactorization n) :
+    totient F =
+      (F.raw.factors.map fun e =>
+        e.prime ^ (e.exponent - 1) * (e.prime - 1)).prod
+theorem coprimeCount_mul {m n} (hcop : Nat.Coprime m n) :
+    ((List.range (m * n)).filter (fun a => Nat.Coprime a (m * n))).length =
+      ((List.range m).filter (fun a => Nat.Coprime a m)).length *
+        ((List.range n).filter (fun a => Nat.Coprime a n)).length
+theorem coprime_primePow_iff {a p e} (he : 0 < e) :
+    Nat.Coprime a (p ^ e) ↔ Nat.Coprime a p
+theorem coprimeCount_primePow {p e} (hp : Hex.Nat.Prime p) (he : 0 < e) :
+    ((List.range (p ^ e)).filter (fun a => Nat.Coprime a (p ^ e))).length =
+      p ^ (e - 1) * (p - 1)
 theorem prime_dvd_radical_iff {n q} (F : CheckedFactorization n)
     (hq : Hex.Nat.Prime q) : q ∣ radical F ↔ q ∣ n
+theorem squareDivisor_eq_prod {n} (F : CheckedFactorization n) :
+    squareDivisor F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent / 2)).prod
+theorem squarefreePart_eq_prod {n} (F : CheckedFactorization n) :
+    squarefreePart F =
+      (F.raw.factors.map fun e => e.prime ^ (e.exponent % 2)).prod
 theorem squarefreePart_mul_square {n} (F : CheckedFactorization n) :
     squarefreePart F * squareDivisor F ^ 2 = n
 theorem squareDivisor_spec {n} (F : CheckedFactorization n) :
@@ -738,13 +956,21 @@ theorem isSquarefree_iff {n} (F : CheckedFactorization n) :
       ∀ q, Hex.Nat.Prime q → ¬ (q ^ 2 ∣ n)
 ```
 
-All of these take a `CheckedFactorization` rather than a `Nat`, which
-is the API decision worth defending. Taking a `Nat` would mean each
-call re-factors, and would mean each has to answer at `0` and at inputs
-the search cannot handle. Taking certified data makes them total
-functions whose theorems need no side hypothesis, and makes the cost
-model visible: factoring is expensive, everything downstream of it is
-not.
+All public divisor functions take a `CheckedFactorization` rather than
+a `Nat`, which is the API decision worth defending. Taking a `Nat` would
+mean each call re-factors, and would mean each has to answer at `0` and at
+inputs the search cannot handle. Taking certified data makes them total
+functions whose semantic theorems need no side hypothesis, and makes the
+cost model visible: factoring is expensive, while most certificate consumers
+are linear in the number of prime-power entries. Divisor enumeration is the
+stated exception.
+The `coprimeCount_mul` and two `coprime*primePow` theorems are raw-`Nat`
+ingredients for the totient proof, rather than additional divisor functions.
+
+`squareDivisor` and `squarefreePart` traverse only the certified factor
+list: the former multiplies `pᵢ^(eᵢ / 2)`, and the latter multiplies
+`pᵢ^(eᵢ % 2)`. Neither operation scans candidate divisors or values below
+the subject.
 
 `divisors` returns ascending, which costs a sort over `∏(eᵢ + 1)`
 entries and is what every consumer wants. `numDivisors` exists
@@ -753,16 +979,30 @@ would be exponential. The local semantic theorems are deliberate: the
 Mathlib bridge proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
-the geometric-series product must not evaluate its `0 / 0` form.
+the geometric-series product must not evaluate its `0 / 0` form. For
+`k > 0`, each certified prime-power entry `(p, e)` contributes the exact
+geometric sum `(q^(e + 1) - 1) / (q - 1)`, where `q = p^k`, and `sigma`
+multiplies those contributions. Checked primality supplies `1 < q`, so
+the division is exact; this route never enumerates the divisors.
+`sigmaEntry` is total on arbitrary `PrimePower` values: at `k = 0` and
+at base `1` it returns `e + 1`, at base `0` with positive `k` it returns
+`1`, and in every case `sigmaEntry_eq_powerSum` identifies it with the
+finite power sum over `powers p e 1`.
 
 The semantic theorems also name real proof work rather than assumed
 infrastructure. `mem_divisors` needs the bounded-exponent
 characterization of a divisor of a product of distinct prime powers.
-`totient_eq_count` additionally needs the prime-power coprime count and
-the multiplicative counting bijection for coprime moduli (a finite CRT
-argument). None of those results is presently exported by hex-arith.
-They are part of the divisor-API milestone; listing the theorems here is
-not a claim that the existing arithmetic root already proves them.
+`totient_eq_count` needs two ingredients: the prime-power coprime count
+and the multiplicative counting bijection for coprime moduli (a finite
+CRT argument). `coprimeCount_primePow` now supplies the first directly in
+the Mathlib-free layer by counting periodic blocks modulo the base prime.
+`coprimeCount_mul` supplies the second: the forward map sends a residue to
+its representatives modulo the two coprime factors, and a constructive
+extended-GCD inverse proves the resulting finite lists are permutations.
+The zero/unit boundary is included in the theorem. The implementation of
+`totient` uses these ingredients to justify the certified product
+`∏ pᵢ^(eᵢ-1)(pᵢ-1)`. It traverses only the checked prime-power list and
+does not enumerate residues below the subject.
 
 ## Complexity
 
@@ -771,20 +1011,23 @@ the number of distinct primes, `B` a smoothness bound.
 
 | operation | cost | note |
 |---|---|---|
-| trailing-zero split | one big-`Nat` operation | not `O(1)` bit complexity |
-| perfect-power test | `O(b · b · M(b))` | `O(b)` roots, Newton each |
+| trailing-zero split | five bit operations on `b`-bit naturals | isolated-low-bit identity plus one shift; `O(b)` bit complexity |
+| perfect-power test | `O(b²)` bounded multiplications | the committed prime exponents plus only prime candidates above the table; a `k`th-root search has `O(b/k)` probes of a linear, early-aborting power loop |
 | trial division to `T` | `O(π(T))` divisions | `π(10^4) = 1229` |
-| Pollard rho | `O(√p)` iterations expected | `O(n^{1/4})` for a semiprime |
+| Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
-| `checkFactorization` | `O(k)` exponentiations plus `k` primality replays | `p^e` is `O(log e)` mults, not one |
+| cyclotomic candidate table | `O(m + d²)` index work plus big-integer powers/products | `m` is the largest required index and `d` the number of its divisors; one ascending divisor-closed table is shared by all selected parts |
+| `checkFactorization` | `O(Σ eᵢ)` bounded multiplications plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts above the subject |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
-| everything else in the divisor API | `O(k)` | |
+| `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
+| `totient` | `O(Σ log eᵢ)` multiplications | `k` certified prime-power contributions; no residue scan |
+| everything else in the divisor API | `O(k)` | excludes `divisors` |
 
-These are **arithmetic-operation counts on `Nat`**, not bit
-complexity: the operands are big integers throughout, `p^e` costs
-`O(log e)` multiplications rather than one, and the divisor functions
+These are **arithmetic-operation counts on `Nat`** except where the table says
+bit complexity explicitly: the operands are big integers throughout,
+`boundedPowMul` uses up to `e` multiplications for `p^e`, and the divisor functions
 are `O(k)` only if the output's bit length is ignored. A bit-complexity
 model would have to name a multiplication cost and multiply through,
 and this SPEC does not attempt one.
@@ -799,11 +1042,11 @@ in increasing order of what they can afford to be wrong about.
 
 The replay closure is `checkFactorization`, `checkOrder`, and what they
 call: `Nat` multiplication and comparison, hex-primality's
-kernel-facing `powModNat`, and `checkPrime`. The reducers in that
-closure are `@[expose]`, and a downstream module carries a
-`decide +kernel` test that fails if any of them stops reducing. The
-SPEC does not invent a second public `Hex.powMod` name for the same
-operation.
+kernel-facing `powModNat`, and `checkPrime`. The reducers in that closure are
+`@[expose]`, and `decide +kernel` tests in
+`bench/HexBench/IntFactorKernel.lean`, built by the
+`HexIntFactorKernelProbe` CI target, fail if any of them stops reducing. The
+SPEC does not invent a second public `Hex.powMod` name for the same operation.
 
 Nothing in routes 0 through 3 is in that closure. Rho, `p − 1`, ECM,
 the cyclotomic split, and the perfect-power test are search; they never
@@ -811,7 +1054,20 @@ appear in a proof term and should not pay for exposure.
 
 The divisor-function API sits between the two: it is cheap, it is
 sometimes wanted in a proof (`totient` in a Fermat-Euler argument, say),
-and it takes already-checked data. It is `@[expose]`.
+and it takes already-checked data. It is `@[expose]`. This exposure makes
+the factor-list bodies available for definitional reasoning; it does not
+promise kernel evaluation of `divisors`, whose asymptotically appropriate
+`List.mergeSort` uses well-founded recursion. Proofs about that enumeration
+use `mem_divisors`, `divisors_nodup`, and `divisors_sorted`; `numDivisors`
+is the kernel-facing operation when only the count is required.
+
+The probe also replays `numDivisors`, `sigma`, `totient`, `radical`,
+`squarefreePart`, `squareDivisor`, `isSquarefree`, `carmichaelPrimePower`, and
+`carmichael` on bounded inputs; `sigmaEntry` is replayed on a bare
+`PrimePower`, matching its total API. Factorization tests reach both the table
+and Pocklington primality routes. Valid and corrupt checker cases include a
+non-minimal order witness, ensuring the tests exercise the final prime-divisor
+criterion rather than merely normalizing constants.
 
 ## Conformance
 
@@ -827,7 +1083,7 @@ Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 ```
 
 Fixture kinds: `factor` (a number and its prime-exponent list),
-`divisorfn` (a number and `τ`, `σ₁`, `φ`, `rad`, `sqfpart`), `order` (a
+`divisorfn` (a number and `τ`, `σ₀`, `σ₁`, `σ₂`, `φ`, `rad`, `sqfpart`), `order` (a
 base, a modulus, and the order), and `cyclotomic` (`b`, `n`, sign, and
 the split).
 
@@ -878,12 +1134,18 @@ SPEC takes the cheaper route of using the installed pair.
 candidate goes through `checkFactorization`, and a broken route falls
 through to the next one, so a fixture passes even if ECM is entirely
 non-functional. The suite therefore needs route-level tests in Lean:
-that the perfect-power detector fired on a perfect power, that `p − 1`
+that the two-adic and perfect-power producers fired on their route-specific
+inputs, that `p − 1`
 distinguished proper-factor, `1`, and whole-modulus outcomes, that rho
 found the factor within the expected iteration count for a fixed seed,
-that ECM stage 1 distinguished its three gcd outcomes, and that
+that ECM stage 1 distinguished its three gcd outcomes after a setup gcd of
+one (including stage-found proper-factor and whole-modulus cases), that a
+fixed-seed smooth-route schedule exercised the p−1 and ECM no-factor/whole
+retry branches with exact event accounting and advanced random state, and that
 `cyclotomicSplit?` ran before the generic dispatch on a `b^n − 1`
-input. This is the same division
+input. The internal `countPowerRoutes` diagnostic counts perfect-power
+reductions: a pure two-adic split contributes zero, while a combined
+two-adic/perfect-power candidate contributes one. This is the same division
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes, and it is worth more than the oracle
 half.
 
@@ -913,6 +1175,14 @@ Families:
 - **Order and primitive root**, primes up to `64` bits, reported
   separately from the factorization of `p − 1` they depend on, so the
   check's cost is visible next to the search's.
+- **Generalized divisor sums**, with one ladder growing a prime-power
+  exponent through multi-million-bit output and one growing the number
+  of certified prime-power entries. Per-rung preparation constructs or
+  selects the checked factorization outside the timed loop, so these isolate
+  the geometric-sum and factor-product costs and rule out divisor enumeration.
+  The native wall-clock models include big-integer cost: `n log n` for the
+  exponentiation-dominated exponent ladder and `n²` for the sequential product
+  of bounded-size table-prime entry sums into a linearly growing accumulator.
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
@@ -934,28 +1204,50 @@ because nothing here reaches it.
 
 ```lean
 theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
-    F.subject.primeFactorsList = ... -- the multiset of listed primes with multiplicity
+    F.subject.primeFactorsList =
+      F.factors.flatMap fun e => List.replicate e.exponent e.prime
 
 theorem factorization_eq (F) (h : checkFactorization F = true) (p : Nat) :
-    F.subject.factorization p = (F.factors.find? (·.prime = p)).elim 0 (·.exponent)
+    F.subject.factorization p = (F.factors.find? (·.prime == p)).elim 0 (·.exponent)
+
+theorem CheckedFactorization.factorization_eq {n} (F : CheckedFactorization n) (p : Nat) :
+    n.factorization p = (F.raw.factors.find? (·.prime == p)).elim 0 (·.exponent)
+
+theorem CheckedFactorization.primeFactorsList_eq {n} (F : CheckedFactorization n) :
+    n.primeFactorsList =
+      F.raw.factors.flatMap fun e => List.replicate e.exponent e.prime
 
 theorem totient_eq {n} (F : CheckedFactorization n) :
     totient F = Nat.totient n
-theorem sigma_eq, divisors_eq, radical_eq
+theorem sigma_eq, divisors_eq, divisors_list_eq, numDivisors_eq_card
+theorem primeFactors_eq, radical_eq, isSquarefree_iff_squarefree
 theorem squarefreePart_mathlib, squareDivisor_mathlib
+
+theorem orderOf_unitOfCoprime {a n} (hn : 1 < n) (ha : Nat.Coprime a n) :
+    orderOf (ZMod.unitOfCoprime a ha) = Hex.Nat.orderOf a n
+
+theorem orderOf_natCast {a n} (hn : 1 < n) :
+    orderOf (a : ZMod n) = Hex.Nat.orderOf a n
 
 theorem orderOf_eq {c} (h : checkOrder c = true) :
     orderOf (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order
 ```
 
-`factorization_eq` is the correspondence everything else goes through:
-Mathlib's `Nat.factorization` is a `Finsupp` and this library's is an
-ascending list, and once they agree pointwise every arithmetic-function
-theorem in Mathlib applies. The companion's job is one correspondence
-and a series of short consequences, not a redevelopment. Exact helper
-declaration names are read from the pinned Mathlib during implementation;
-the SPEC deliberately does not depend on remembered names that may be
-deprecated or absent.
+`factorization_eq` is the pointwise multiplicity correspondence and
+`factors_eq` is its canonical-list counterpart: Mathlib's
+`Nat.factorization` is a `Finsupp` and this library's factorization is an
+ascending prime-power list. They are outward-facing correspondences for
+downstream consumers; checked-data corollaries avoid exposing raw certificate
+bookkeeping at call sites. The arithmetic transports in this companion each
+compose the core's Mathlib-free semantic theorem -- such as `mem_divisors`,
+`totient_eq_count`, `sigma_eq_sum`, `isSquarefree_iff`, or
+`squareDivisor_spec` -- with checker facts about products, prime support, and
+multiplicity. `primeFactors_eq` exposes that support-shaped correspondence
+directly. The `find?` and `flatMap` expressions in the public statements are
+normal forms, not separately advertised executable operations. Exact Mathlib
+helper declaration names are read from the pinned Mathlib during
+implementation; the SPEC deliberately does not depend on remembered names
+that may be deprecated or absent.
 
 **No `DecidablePred Squarefree` instance on `Nat`.** Mathlib has one
 (`Mathlib/Data/Nat/Squarefree.lean:234`), so a second would be a
@@ -965,10 +1257,15 @@ witness form -- `squarefreePart_mul_square` and `squareDivisor_spec`
 above --
 which the decision procedure does not produce.
 
-`orderOf_eq` needs a unit to speak about, and the coprimality that
-names one is derived rather than requested: `coprime_of_checkOrder`
-above supplies it from the accepted certificate, so the caller passes
-nothing extra.
+`orderOf_unitOfCoprime` is the function-level correspondence: it proves the
+general unit result directly from the positive-power/minimality
+characterisations on both sides, without computing an order or constructing a
+certificate. `orderOf_natCast` covers every underlying ring element: the
+coprime case follows from the unit result, while both sides are zero for a
+nonunit. The certificate specialization `orderOf_eq` composes that
+correspondence with
+`order_eq_of_checkOrder`; the coprimality needed to name the unit is derived
+by `coprime_of_checkOrder`, so the caller passes nothing extra.
 
 ## Milestones
 
@@ -978,9 +1275,11 @@ nothing extra.
    structural reductions, and trial division against hex-primality's
    table. The whole library starts after
    hex-primality milestone 3, because `PrimePower` carries
-   `PrimeCert`. This milestone returns checked partial data for every
-   positive input and a complete result when every residual prime can
-   be certified; it makes no blanket size claim. The committed Conway
+   `PrimeCert`. This milestone returns checked partial data on every ordinary
+   positive-input outcome; an internal aggregate rejection is explicit and
+   retains both its rejected candidate and checked recovery snapshot. It returns
+   a complete result when every residual prime can be certified and makes no
+   blanket size claim. The committed Conway
    table is a required regression family, not a currently blocked
    consumer.
 
@@ -998,15 +1297,17 @@ nothing extra.
    route description), with route-level tests written before the code.
 
 5. **The cyclotomic candidate.** `cyclotomicSplit?`, its checked product
-   theorem, the recursive evaluation candidate, and the `b^n ± 1`
+   theorem, the ascending evaluation table, and the `b^n ± 1`
    benchmark family. Ahead of ECM because it is cheaper and directly
    serves the motivating family.
 
 6. **ECM stage 1.** Montgomery curves, Suyama parameterisation, the
    word/direct-`Nat` arithmetic dispatch, and its route-level tests.
 
-7. **The companion.** `factorization_eq` and its consequences plus
-   `orderOf_eq`. It adds no duplicate decidability instances. The
+7. **The companion.** The pointwise, canonical-list, and prime-support
+   factorization correspondences; divisor and squarefree transports; the
+   general `orderOf_unitOfCoprime` and `orderOf_natCast` correspondences; and
+   the certificate specialization `orderOf_eq`. It adds no duplicate decidability instances. The
    factorization correspondence begins after milestone 1; divisor and
    order transports follow milestones 2 and 3 while later search routes
    proceed independently.
@@ -1017,6 +1318,7 @@ nothing extra.
 HexIntFactor/
   Cert.lean         -- PrimePower, Factorization, checkFactorization, soundness
   Partial.lean      -- PartialFactorization and checkPartial
+  DivisorEnumeration.lean -- certified enumeration from prime powers
   Divisors.lean     -- the divisor-function API
   Small.lean        -- trailing zeros, perfect powers, trial division
   Rho.lean          -- adapter from the shared rho primitive to the dispatch
@@ -1028,7 +1330,7 @@ HexIntFactor/
 HexIntFactor.lean
 HexIntFactorMathlib/
   Factorization.lean -- factorization_eq, factors_eq and consequences
-  Order.lean        -- orderOf_eq
+  Order.lean        -- general and certificate-level orderOf correspondences
 HexIntFactorMathlib.lean
 ```
 

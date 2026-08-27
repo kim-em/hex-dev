@@ -18,6 +18,51 @@ private def raw12 : Factorization :=
 private def checked12 : CheckedFactorization 12 :=
   ⟨raw12, rfl, by decide⟩
 
+private def checked1 : CheckedFactorization 1 :=
+  ⟨⟨1, []⟩, rfl, by decide⟩
+
+private def checked64 : CheckedFactorization 64 :=
+  ⟨⟨64, [⟨6, .small 2⟩]⟩, rfl, by decide⟩
+
+private def checked10800 : CheckedFactorization 10800 :=
+  ⟨⟨10800, [⟨4, .small 2⟩, ⟨3, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checked30 : CheckedFactorization 30 :=
+  ⟨⟨30, [⟨1, .small 2⟩, ⟨1, .small 3⟩, ⟨1, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checked3600 : CheckedFactorization 3600 :=
+  ⟨⟨3600, [⟨4, .small 2⟩, ⟨2, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checkedPow64 : CheckedFactorization (2 ^ 64) :=
+  ⟨⟨2 ^ 64, [⟨64, .small 2⟩]⟩, rfl, by decide⟩
+
+private def checkedHugeTau :
+    CheckedFactorization ((2 * 3 * 5 * 7 * 11 * 13) ^ 100) :=
+  ⟨⟨(2 * 3 * 5 * 7 * 11 * 13) ^ 100,
+    [⟨100, .small 2⟩, ⟨100, .small 3⟩, ⟨100, .small 5⟩,
+      ⟨100, .small 7⟩, ⟨100, .small 11⟩, ⟨100, .small 13⟩]⟩,
+    rfl, by decide⟩
+
+private def checkedPartial60 : CheckedPartialFactorization 60 :=
+  ⟨⟨60, [⟨2, .small 2⟩, ⟨1, .small 3⟩], 5⟩, rfl, by decide⟩
+
+-- Partial-certificate consumers obtain entry invariants directly from `valid`.
+example : ∀ e ∈ checkedPartial60.raw.factors, 0 < e.exponent :=
+  checkPartial_exponent checkedPartial60.valid
+
+example : checkedPartial60.raw.factors.Pairwise
+    (fun a b => a.prime < b.prime) :=
+  checkPartial_sorted checkedPartial60.valid
+
+example {n : Nat} (F : CheckedPartialFactorization n) :
+    ∀ e ∈ F.raw.factors, 0 < e.exponent :=
+  checkPartial_exponent F.valid
+
+example {n : Nat} (F : CheckedPartialFactorization n) :
+    F.raw.factors.Pairwise
+    (fun a b => a.prime < b.prime) :=
+  checkPartial_sorted F.valid
+
 #guard checkFactorization raw12
 #guard !checkFactorization ⟨12, [⟨1, .small 4⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩
@@ -25,32 +70,378 @@ private def checked12 : CheckedFactorization 12 :=
 #guard !checkFactorization ⟨12, [⟨0, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 3⟩, ⟨2, .small 2⟩]⟩
 
+#guard divisors checked1 == #[1]
+#guard numDivisors checked1 == 1
 #guard divisors checked12 == #[1, 2, 3, 4, 6, 12]
 #guard numDivisors checked12 == 6
+#guard divisors checked64 == #[1, 2, 4, 8, 16, 32, 64]
+#guard numDivisors checked64 == 7
+#guard (divisors checked10800).size == 60
+#guard numDivisors checked10800 == 60
+-- This subject is far beyond any feasible scan through `List.range n`.
+#guard numDivisors checkedPow64 == 65
+-- `101 ^ 6` divisors rules out computing the count by enumeration.
+#guard numDivisors checkedHugeTau == 101 ^ 6
+-- `sigmaEntry` remains total even for uncertified `PrimePower` values.
+#guard sigmaEntry ⟨3, .small 0⟩ 1 == 1
+#guard sigmaEntry ⟨3, .small 1⟩ 1 == 4
+#guard sigma checked1 0 == 1
+#guard sigma checked12 0 == 6
 #guard sigma checked12 1 == 28
+#guard sigma checked12 2 == 210
+#guard sigma checked64 1 == 127
+#guard sigma checked64 2 == 5461
+#guard sigma checked10800 1 == 38440
+#guard sigma checkedPow64 1 == 2 ^ 65 - 1
+-- The trillion-divisor input demonstrates that `sigma` never enumerates them;
+-- the fixed modular regression value also rejects a constant nonzero result.
+#guard sigma checkedHugeTau 1 % 1000000007 == 898750509
 #guard totient checked12 == 4
+#guard totient checked1 == 1
+#guard totient checked64 == 32
+#guard totient checked10800 == 2880
+#guard totient checked30 == 8
+-- A range scan to this subject is infeasible; this exercises the factor route.
+#guard totient checkedPow64 == 2 ^ 63
+example :
+    ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length = 6 := by
+  simpa using coprimeCount_primePow (p := 7) (e := 1) (by decide) (by decide)
+#guard ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length == 6
+example :
+    ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length = 54 := by
+  simpa using coprimeCount_primePow (p := 3) (e := 4) (by decide) (by decide)
+#guard ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length == 54
+example :
+    ((List.range (1 * 9)).filter fun a => Nat.Coprime a (1 * 9)).length =
+        ((List.range 1).filter fun a => Nat.Coprime a 1).length *
+        ((List.range 9).filter fun a => Nat.Coprime a 9).length := by
+  exact coprimeCount_mul (m := 1) (n := 9) (by decide)
+example :
+    ((List.range (0 * 1)).filter fun a => Nat.Coprime a (0 * 1)).length =
+      ((List.range 0).filter fun a => Nat.Coprime a 0).length *
+        ((List.range 1).filter fun a => Nat.Coprime a 1).length := by
+  exact coprimeCount_mul (m := 0) (n := 1) (by decide)
+example :
+    ((List.range (1 * 0)).filter fun a => Nat.Coprime a (1 * 0)).length =
+      ((List.range 1).filter fun a => Nat.Coprime a 1).length *
+        ((List.range 0).filter fun a => Nat.Coprime a 0).length := by
+  exact coprimeCount_mul (m := 1) (n := 0) (by decide)
+example :
+    ((List.range (4 * 9)).filter fun a => Nat.Coprime a (4 * 9)).length =
+        ((List.range 4).filter fun a => Nat.Coprime a 4).length *
+        ((List.range 9).filter fun a => Nat.Coprime a 9).length := by
+  exact coprimeCount_mul (m := 4) (n := 9) (by decide)
+#guard ((List.range 36).filter fun a => Nat.Coprime a 36).length == 12
+#guard ((List.range 4).filter fun a => Nat.Coprime a 4).length *
+  ((List.range 9).filter fun a => Nat.Coprime a 9).length == 12
+-- `φ(36) = 12` but `φ(6)^2 = 4`: the coprimality hypothesis is essential.
+#guard ((List.range 36).filter fun a => Nat.Coprime a 36).length !=
+  ((List.range 6).filter fun a => Nat.Coprime a 6).length *
+    ((List.range 6).filter fun a => Nat.Coprime a 6).length
 #guard radical checked12 == 6
+#guard squarefreePart checked1 == 1
+#guard squareDivisor checked1 == 1
 #guard squarefreePart checked12 == 3
 #guard squareDivisor checked12 == 2
+#guard squarefreePart checked30 == 30
+#guard squareDivisor checked30 == 1
+#guard isSquarefree checked30
+#guard squarefreePart checked3600 == 1
+#guard squareDivisor checked3600 == 60
+#guard squarefreePart checked10800 == 3
+#guard squareDivisor checked10800 == 60
+-- This input is much too large for a scan through `List.range n`.
+#guard squarefreePart checkedPow64 == 1
+#guard squareDivisor checkedPow64 == 2 ^ 32
 #guard !isSquarefree checked12
 
-#guard (smallCandidate (2 ^ 20)).route == .perfectPower
+#guard splitTwos 0 == (0, 0)
+#guard splitTwos 99 == (0, 99)
+#guard splitTwos (2 ^ 20) == (20, 1)
+#guard splitTwos (3 * 2 ^ 20) == (20, 3)
+#guard (trialFactors 0).1.isEmpty && (trialFactors 0).2 == 0
+#guard (smallCandidate (2 ^ 20)).route == .twos
+#guard (smallCandidate (2 ^ 20)).factors.map
+  (fun entry => (entry.prime, entry.exponent)) == [(2, 20)]
+#guard exactRoot? 65025 2 == some 255
+#guard exactRoot? 759375 5 == some 15
+#guard perfectPower? (2 ^ 9973) == some (2, 9973)
+#guard (perfectPower? (2 ^ 10000)).isSome
+#guard perfectPower? (2 ^ 10009) == some (2, 10009)
 #guard (smallCandidate (3 ^ 13)).route == .perfectPower
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
-#guard (smallCandidate ((6 ^ 5) ^ 3)).route == .perfectPower
+#guard (smallCandidate ((6 ^ 5) ^ 3)).route == .twosPower
 
-#guard pMinusOneStage1 15 2 2 == .factor 3
-#guard pMinusOneStage1 25 2 2 == .noFactor
-#guard pMinusOneStage1 15 4 2 == .whole
+-- The subject is not a perfect power, but this exact split leaves a square
+-- cofactor. The same structural producer used for every popped search entry
+-- detects it, and stack multiplicity scales both its known and residual powers.
+private def recursivePowerInput : Nat := 10009 * 10037 ^ 2
+private def recursivePowerCandidate : SmallCandidate :=
+  (smallCandidate (recursivePowerInput / 10009)).scale 3
+
+#guard (perfectPower? recursivePowerInput).isNone
+#guard recursivePowerInput / 10009 == 10037 ^ 2
+#guard recursivePowerCandidate.route == .perfectPower
+#guard recursivePowerCandidate.factors.isEmpty
+#guard recursivePowerCandidate.residualBase == 10037
+#guard recursivePowerCandidate.residualExponent == 6
+-- Batched rho may return a composite divisor when two collisions share a
+-- batch. Seed 17 therefore changed the route count after batching; seed 1
+-- pins that count while the final checked factorization remains unchanged.
+#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
+#guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 1) == 0
+#guard Hex.Nat.Internal.countPowerRoutes (2 ^ 20) (Rand.ofSeed 1) == 0
+#guard Hex.Nat.Internal.countPowerRoutes ((6 ^ 5) ^ 3) (Rand.ofSeed 1) == 1
+#guard (match factor? recursivePowerInput (Rand.ofSeed 1) with
+  | .ok (F, _) =>
+      F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) ==
+        [(10009, 1), (10037, 2)]
+  | .error _ => false)
+
+private def nestedPowerCandidate : SmallCandidate :=
+  (smallCandidate ((6 ^ 5) ^ 3)).scale 2
+
+#guard nestedPowerCandidate.route == .twosPower
+#guard nestedPowerCandidate.factors.map (fun entry => (entry.prime, entry.exponent)) ==
+  [(2, 30), (3, 30)]
+#guard nestedPowerCandidate.residualBase == 1
+
+-- Composite exponents reduce at both the initial and recursive boundaries:
+-- `p^8` becomes `(p^4)^2`, then the popped `p^4` becomes `(p^2)^2` with
+-- accumulated multiplicity four. The eventual split still restores exponent 8.
+private def iteratedPower : Nat := 10009 ^ 8
+
+#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 2
+#guard (match factor? iteratedPower (Rand.ofSeed 19) with
+  | .ok (F, _) =>
+      F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) == [(10009, 8)]
+  | .error _ => false)
+
+#guard pMinusOneFactor 15 2 2 == .factor 3
+#guard pMinusOneFactor 25 2 2 == .noFactor
+#guard pMinusOneFactor 15 4 2 == .whole
+
+#guard smoothBoundCap == primeTableBound - 1
+#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+
+example (n base bound : Nat) :
+    pMinusOneStage1 n base bound =
+      pMinusOneStage1 n base (smoothBound bound) :=
+  pMinusOneStage1_bound n base bound
+
+example (n sigma bound : Nat) :
+    ecmStage1 n sigma bound = ecmStage1 n sigma (smoothBound bound) :=
+  ecmStage1_bound n sigma bound
+
+example {n base bound d : Nat}
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneFactor_spec h
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
 #guard ecmStage1 6 7 2 == .factor 2
 #guard ecmStage1 4 6 2 == .whole
 
+-- These attempts all pass Suyama setup and execute the smooth scalar stage.
+-- The factor and whole cases distinguish the invariant-preserving adjacent-
+-- multiple ladder and correctly homogenized doubling formulas from the former
+-- recurrence; their old outcomes were respectively `whole` and `factor 3`.
+private def ecmStageFactorTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 51 13 5
+
+#guard ecmStageFactorTrace.stageBackend == some .word
+#guard ecmStageFactorTrace.setupGcd == 1
+#guard ecmStageFactorTrace.stageGcd == 3
+#guard ecmStageFactorTrace.result == .factor 3
+
+private def ecmStageWholeTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 33 8 5
+
+#guard ecmStageWholeTrace.stageBackend == some .word
+#guard ecmStageWholeTrace.setupGcd == 1
+#guard ecmStageWholeTrace.stageGcd == 33
+#guard ecmStageWholeTrace.result == .whole
+
+private def ecmStageNoFactorTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace 289 13 5
+
+#guard ecmStageNoFactorTrace.setupGcd == 1
+#guard ecmStageNoFactorTrace.stageBackend == some .word
+#guard ecmStageNoFactorTrace.stageGcd == 1
+#guard ecmStageNoFactorTrace.result == .noFactor
+
+-- Explicitly running the duplicate direct-`Nat` arithmetic on the same inputs
+-- must agree with the word implementation at both observable boundaries.
+private def ecmStageFactorNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 51 13 5
+
+#guard ecmStageFactorNatTrace.setupGcd == ecmStageFactorTrace.setupGcd
+#guard ecmStageFactorNatTrace.stageGcd == ecmStageFactorTrace.stageGcd
+#guard ecmStageFactorNatTrace.result == ecmStageFactorTrace.result
+#guard ecmStageFactorNatTrace.stageBackend == some .natural
+
+private def ecmStageWholeNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 33 8 5
+
+#guard ecmStageWholeNatTrace.stageGcd == ecmStageWholeTrace.stageGcd
+#guard ecmStageWholeNatTrace.result == ecmStageWholeTrace.result
+
+private def ecmStageNoFactorNatTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTraceWith .natural 289 13 5
+
+#guard ecmStageNoFactorNatTrace.stageGcd == ecmStageNoFactorTrace.stageGcd
+#guard ecmStageNoFactorNatTrace.result == ecmStageNoFactorTrace.result
+
+-- The production direct-`Nat` backend also executes a discriminating odd-
+-- scalar stage beyond one word. The old formulas yielded stage gcd `51`.
+private def ecmNaturalTrace : Hex.Nat.Internal.EcmTrace :=
+  Hex.Nat.Internal.ecmTrace (51 * (2 ^ 64 + 1)) 13 5
+
+#guard ecmNaturalTrace.stageBackend == some .natural
+#guard ecmNaturalTrace.setupGcd == 1
+#guard ecmNaturalTrace.stageGcd == 3
+#guard ecmNaturalTrace.result == .factor 3
+
+-- An explicitly requested word route reports the natural backend when the
+-- modulus does not fit, rather than claiming that Montgomery arithmetic ran.
+#guard (Hex.Nat.Internal.ecmTraceWith .word
+  (51 * (2 ^ 64 + 1)) 13 5).stageBackend == some .natural
+
+-- One fixed-seed production schedule covers both retry responses for each
+-- smooth route. Pollard p−1 changes base and lowers the bound on `whole`,
+-- while gcd one raises it. ECM always draws a fresh curve; it raises the bound
+-- after gcd one and retains the bound after whole modulus.
+private def smoothRetryTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
+
+#guard smoothRetryTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .whole,
+  .pMinusOne 5 2 .noFactor,
+  .pMinusOne 5 16 .whole,
+  .ecm 181 64 .whole,
+  .ecm 250 64 .whole,
+  .ecm 85 64 .whole,
+  .ecm 242 64 .whole]
+#guard smoothRetryTrace.factor.isNone
+#guard smoothRetryTrace.events.length == Hex.Nat.Internal.smoothAttemptCap
+#guard smoothRetryTrace.rand == ((Rand.ofSeed 0).words 4).2
+#guard smoothRetryTrace ==
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
+
+-- A successful deterministic p−1 attempt charges one event and consumes no
+-- randomness; an ECM success charges all preceding retries and one draw.
+private def smoothPMinusOneTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 243 (Rand.ofSeed 9) 8
+
+#guard smoothPMinusOneTrace.events == [.pMinusOne 2 64 (.factor 81)]
+#guard smoothPMinusOneTrace.factor == some 81
+#guard smoothPMinusOneTrace.rand == Rand.ofSeed 9
+
+private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 10051 (Rand.ofSeed 0) 8
+
+#guard smoothEcmTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .noFactor,
+  .pMinusOne 3 64 .whole,
+  .pMinusOne 5 8 .noFactor,
+  .ecm 181 64 (.factor 19)]
+#guard smoothEcmTrace.factor == some 19
+#guard smoothEcmTrace.rand == (Rand.ofSeed 0).next.2
+
+private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 4) 0
+
+#guard smoothZeroFuelTrace.events.isEmpty
+#guard smoothZeroFuelTrace.factor.isNone
+#guard smoothZeroFuelTrace.rand == Rand.ofSeed 4
+
+-- A smaller budget truncates the deterministic p−1 phase itself. It neither
+-- manufactures ECM attempts nor advances the generator.
+private def smoothThreeFuelTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 4) 3
+
+#guard smoothThreeFuelTrace.events == [
+  .pMinusOne 2 64 .whole,
+  .pMinusOne 3 8 .whole,
+  .pMinusOne 5 2 .noFactor]
+#guard smoothThreeFuelTrace.factor.isNone
+#guard smoothThreeFuelTrace.events.length == 3
+#guard smoothThreeFuelTrace.rand == Rand.ofSeed 4
+
+-- A production-shaped p−1 miss climbs through every scheduled bound and
+-- executes the cap-equality fall-through before ECM receives the remainder.
+private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
+  Hex.Nat.Internal.smoothSearch (20123 * 20183) (Rand.ofSeed 7) 8
+
+#guard smoothCapTrace.events.take 4 == [
+  .pMinusOne 2 64 .noFactor,
+  .pMinusOne 2 512 .noFactor,
+  .pMinusOne 2 4096 .noFactor,
+  .pMinusOne 2 smoothBoundCap .noFactor]
+
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
+
+#guard Hex.Nat.Internal.rhoRestartBudget 1000000 == 8
+#guard Hex.Nat.Internal.rhoRestartBudget 3 == 3
+
+-- A malformed aggregate is exposed as an invariant failure, rather than
+-- being replaced by an empty partial answer or ordinary exhaustion.
+#guard (match Hex.Nat.Internal.acceptPartial? 12 (by decide)
+    ⟨12, [⟨1, .small 2⟩], 5⟩
+    rfl (Rand.ofSeed 9) 17 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 17 &&
+        (match failure.snapshot with
+          | some saved => checkPartial saved.raw && saved.raw.subject == 12
+          | none => false) &&
+        (match failure.culprit with
+          | some rejected => !checkPartial rejected
+          | none => false)
+  | .ok _ => false)
+
+-- Real producer output must cross the aggregate checker without rejection.
+#guard ([1, 2, 4, 12, 97, 4826808, 2 ^ 32 - 1,
+    1000003 ^ 2, 1000003 * 1000033].all fun n =>
+  match factorPartial? n (Rand.ofSeed n) with
+  | .ok (F, _) => checkPartial F.raw
+  | .error _ => false)
+
+-- Zero fuel is checked partial exhaustion, while complete search reports the
+-- distinct incomplete stop and retains the same checked aggregate.
+private def starvedInput : Nat := 1000003 * 1000033
+
+-- One large prime is certified after the first split, then fuel exhaustion
+-- retains that checked entry. The failure total includes both the successful
+-- certificate work and the preceding split rather than dropping either.
+private def retainedCertInput : Nat := starvedInput * 1000037
+
+#guard (match factor? retainedCertInput (Rand.ofSeed 3) (fuel := 3) with
+  | .error failure =>
+      failure.stop == .incomplete &&
+        failure.attempts == 6 &&
+        failure.rand == ((Rand.ofSeed 3).words 8).2 &&
+        match failure.snapshot with
+        | some saved => saved.raw.factors.length == 1 && checkPartial saved.raw
+        | none => false
+  | .ok _ => false)
+
+#guard (match factorPartial? starvedInput (Rand.ofSeed 3) (fuel := 0) with
+  | .ok (F, _) => checkPartial F.raw && F.raw.residual == starvedInput
+  | .error _ => false)
+
+#guard (match factor? starvedInput (Rand.ofSeed 3) (fuel := 1) with
+  | .error failure =>
+      failure.stop == .incomplete && 0 < failure.attempts &&
+        failure.rand != Rand.ofSeed 3 &&
+        match failure.snapshot with
+        | some saved => checkPartial saved.raw && saved.raw.subject == starvedInput
+        | none => false
+  | .ok _ => false)
 
 #guard checkOrder ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
 
@@ -61,9 +452,74 @@ private def checked12 : CheckedFactorization 12 :=
   | some parts => parts.map (·.value) == [5, 13]
   | none => false)
 
+-- The repeated factor `3` in the minus split is merged before checker replay.
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
-  | .ok (_, _, route) => route == .cyclotomic
+  | .ok (F, _, route) =>
+      route == .cyclotomic &&
+        F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(3, 2), (7, 1)]
   | .error _ => false)
+
+#guard (match factorPowerWithRoute? 2 6 .plus (Rand.ofSeed 1) with
+  | .ok (F, _, route) =>
+      route == .cyclotomic &&
+        F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(5, 1), (13, 1)]
+  | .error _ => false)
+
+-- A stopped continuation includes successful earlier-part work and remains
+-- exactly accounted, even when every charged search subtotal happens to be zero.
+#guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 0
+  | .ok _ => false)
+
+-- Here `Φ_19(2)` succeeds after eight charged attempts, `Φ_57(2)` stops
+-- after twelve, and the generic continuation adds five more. This guards the
+-- successful-part subtotal that the public pair-returning API intentionally
+-- omits.
+#guard (match factorPowerWithRoute? 2 57 .minus (Rand.ofSeed 1) (fuel := 3) with
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 25
+  | .ok _ => false)
+
+-- Degenerate split input uses the ordinary dispatcher, and the route tag makes
+-- the fallback observable rather than inferring it from end-to-end success.
+#guard (match factorPowerWithRoute? 2 0 .plus (Rand.ofSeed 1) with
+  | .ok (F, _, route) =>
+      route == .generic && F.raw.subject == powerTarget 2 0 .plus
+  | .error _ => false)
+
+-- A rejected cyclotomic subproblem is propagated, never retried as generic
+-- exhaustion for the outer target.
+private def rejectedPart : FactorFailure :=
+  { stop := .rejected
+    attempts := 4
+    rand := Rand.ofSeed 11
+    culprit := some ⟨7, [⟨1, .small 2⟩], 3⟩ }
+
+#guard (match Hex.Nat.Internal.retryPower? 63 rejectedPart 0 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 4 &&
+        failure.rand == Rand.ofSeed 11 &&
+          match failure.culprit with
+          | some rejected => rejected.subject == 7
+          | none => false
+  | .ok _ => false)
+
+example : Hex.Nat.Internal.retryPower? 63 rejectedPart 0 = .error rejectedPart :=
+  Hex.Nat.Internal.retryPower?_rejected (by decide)
+
+#check factorPowerWithRoute?_cyclotomic
+#check factorPower?_error_iff
+#check factorPower?_ok_iff
+#check factorPowerWithRoute?_generic
+
+-- Standalone retry accounting adds the earlier exact subtotal to the generic
+-- continuation rather than silently replacing it with retry-only work.
+#guard (match Hex.Nat.Internal.retryPower? starvedInput
+    { stop := .incomplete, attempts := 4, rand := Rand.ofSeed 11 } 1 with
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 5
+  | .ok _ => false)
 
 #guard (match factor? 4826808 (Rand.ofSeed 7) with
   | .ok (F, _) =>

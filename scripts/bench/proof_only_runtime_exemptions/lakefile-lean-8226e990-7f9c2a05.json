@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+ "current_blob": "7f9c2a05b5a8acd54eb08d0a968950d5add5f334",
+ "reason": "Additionally registers the build-only HexBerlekampMathlibProofProbe and HexBerlekampMathlibProofProbeScientific proof-probe targets on top of main's current registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+}

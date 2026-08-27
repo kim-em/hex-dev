@@ -38,26 +38,32 @@ noncomputable def cW {m : UInt64} (ctx : _root_.MontCtx m)
   Polynomial.map (HexModArithMathlib.WordMod.toZModRingHom (ctx := ctx))
     (HexPolyMathlib.toPolynomial a)
 
+/-- Coefficient rule for the integer-polynomial cast `cZ`. -/
 @[simp] theorem cZ_coeff (m : UInt64) (f : Hex.ZPoly) (j : Nat) :
     (cZ m f).coeff j = ((f.coeff j : Int) : ZMod m.toNat) := by
   rw [cZ, Polynomial.coeff_map, HexPolyMathlib.coeff_toPolynomial]; simp
 
+/-- Coefficient rule for the `WordMod`-polynomial cast `cW`. -/
 @[simp] theorem cW_coeff {m : UInt64} (ctx : _root_.MontCtx m)
     (a : Hex.DensePoly (Hex.WordMod ctx)) (j : Nat) :
     (cW ctx a).coeff j = HexModArithMathlib.WordMod.toZMod (a.coeff j) := by
   rw [cW, Polynomial.coeff_map, HexPolyMathlib.coeff_toPolynomial,
     HexModArithMathlib.WordMod.toZModRingHom_apply]
 
+/-- `cZ` is multiplicative. -/
 theorem cZ_mul (m : UInt64) (f g : Hex.ZPoly) : cZ m (f * g) = cZ m f * cZ m g := by
   rw [cZ, cZ, cZ, HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul]
 
+/-- `cZ` is additive. -/
 theorem cZ_add (m : UInt64) (f g : Hex.ZPoly) : cZ m (f + g) = cZ m f + cZ m g := by
   rw [cZ, cZ, cZ, HexPolyMathlib.toPolynomial_add, Polynomial.map_add]
 
+/-- `cW` is multiplicative. -/
 theorem cW_mul {m : UInt64} (ctx : _root_.MontCtx m)
     (a b : Hex.DensePoly (Hex.WordMod ctx)) : cW ctx (a * b) = cW ctx a * cW ctx b := by
   rw [cW, cW, cW, HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul]
 
+/-- `cW` is additive. -/
 theorem cW_add {m : UInt64} (ctx : _root_.MontCtx m)
     (a b : Hex.DensePoly (Hex.WordMod ctx)) : cW ctx (a + b) = cW ctx a + cW ctx b := by
   rw [cW, cW, cW, HexPolyMathlib.toPolynomial_add, Polynomial.map_add]
@@ -124,6 +130,8 @@ theorem map_divMod_monic {S : Type*} [CommRing S] [DecidableEq S] [Div S]
 
 /-! # Coefficient correspondences -/
 
+/-- The canonical natural representative `intModNat` casts back to the original
+residue in `ZMod M`. -/
 theorem intCast_intModNat (c : Int) (M : Nat) (hM : 0 < M) :
     ((ZPoly.intModNat c M : Nat) : ZMod M) = (c : ZMod M) := by
   have hM0 : (M : Int) ≠ 0 := by exact_mod_cast hM.ne'
@@ -142,6 +150,7 @@ def toWMap {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) :
     Hex.DensePoly (Hex.WordMod ctx) :=
   Hex.DensePoly.ofCoeffs (x.toArray.map (fun c => Hex.WordMod.ofNat (ZPoly.intModNat c m.toNat)))
 
+/-- Coefficient rule for `toWMap`. -/
 theorem coeff_toWMap {m : UInt64} (ctx : _root_.MontCtx m) (x : Hex.ZPoly) (j : Nat) :
     (toWMap ctx x).coeff j = Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat (x.coeff j) m.toNat) := by
   have htoW0 : Hex.WordMod.ofNat (ctx := ctx) (ZPoly.intModNat 0 m.toNat) = 0 := by
@@ -182,6 +191,8 @@ theorem cZ_derivative (m : UInt64) (x : Hex.ZPoly) :
     cZ m (Hex.DensePoly.derivative x) = Polynomial.derivative (cZ m x) := by
   simp only [cZ, HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_map]
 
+/-- The `ZMod` cast of a word-modular polynomial commutes with the executable
+derivative. -/
 theorem cW_derivative {m : UInt64} (ctx : _root_.MontCtx m)
     (a : Hex.DensePoly (Hex.WordMod ctx)) :
     cW ctx (Hex.DensePoly.derivative a) = Polynomial.derivative (cW ctx a) := by
@@ -189,7 +200,8 @@ theorem cW_derivative {m : UInt64} (ctx : _root_.MontCtx m)
 
 /-! # Guard correctness -/
 
-theorem powLtWord?_go_eq (p : Nat) : ∀ (n acc r : Nat),
+/-- A successful `powLtWordAux` run computes `acc * p ^ n`. -/
+theorem powLtWordAux_eq (p : Nat) : ∀ (n acc r : Nat),
     Hex.powLtWordAux p n acc = some r → r = acc * p ^ n := by
   intro n
   induction n with
@@ -206,7 +218,8 @@ theorem powLtWord?_go_eq (p : Nat) : ∀ (n acc r : Nat),
         rw [this]; ring
       · rw [if_neg hlt] at h; exact absurd h (by simp)
 
-theorem powLtWord?_go_lt (p : Nat) : ∀ (n acc r : Nat),
+/-- A successful `powLtWordAux` run stays below the word bound. -/
+theorem powLtWordAux_lt (p : Nat) : ∀ (n acc r : Nat),
     acc < UInt64.word → Hex.powLtWordAux p n acc = some r → r < UInt64.word := by
   intro n
   induction n with
@@ -221,16 +234,19 @@ theorem powLtWord?_go_lt (p : Nat) : ∀ (n acc r : Nat),
       · rw [if_pos hlt] at h; exact ih (acc * p) r hlt h
       · rw [if_neg hlt] at h; exact absurd h (by simp)
 
+/-- A successful `powLtWord?` guard certifies both the power value and the word
+bound. -/
 theorem powLtWord?_eq {p a mval : Nat} (h : Hex.powLtWord? p a = some mval) :
     mval = p ^ a ∧ mval < UInt64.word := by
   have hgo : Hex.powLtWordAux p a 1 = some mval := h
-  refine ⟨?_, powLtWord?_go_lt p a 1 mval (by simp [UInt64.word]) hgo⟩
-  have := powLtWord?_go_eq p a 1 mval hgo
+  refine ⟨?_, powLtWordAux_lt p a 1 mval (by simp [UInt64.word]) hgo⟩
+  have := powLtWordAux_eq p a 1 mval hgo
   simpa using this
 
 /-! # Degree transport -/
 
 open HexPolyMathlib in
+/-- Executable degree comparison transports to Mathlib `degree` comparison. -/
 theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.DensePoly S}
     (hg0 : toPolynomial g ≠ 0)
     (hlt : r.degree?.getD 0 < g.degree?.getD 0) :

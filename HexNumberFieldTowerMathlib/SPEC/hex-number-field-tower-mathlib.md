@@ -207,6 +207,18 @@ HexNumberFieldTowerMathlib/
 The library is verified by building it. Executable conformance belongs to
 `hex-number-field-tower`.
 
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `correspondence-only-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
+tower arithmetic or factorization algorithm; it verifies the executable
+tower operations and the Trager pipeline implemented elsewhere. The
+computational performance owners are hex-number-field-tower, where the
+dimension ladders and the PARI/GP nffactor comparator are measured, and
+hex-number-field for the base-level arithmetic it transports.
+
 ## References
 
 - Trager, B. M. *Algebraic factoring and rational function

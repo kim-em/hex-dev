@@ -205,6 +205,12 @@ So a fact about Mathlib's {name _root_.Matrix.det}`Matrix.det` can be discharged
 executable determinant, and a fact about the executable determinant can
 be proved with Mathlib's determinant theory.
 
+The same public umbrella re-exports the bordered-minor form of
+Desnanot--Jacobi used by fraction-free elimination. It is stated over an
+arbitrary commutative ring and remains separate from the executable layer.
+
+{docstring HexMatrixMathlib.desnanot_jacobi_borderedMinor}
+
 # Cross-references
 %%%
 tag := "hex-determinant-cross-references"

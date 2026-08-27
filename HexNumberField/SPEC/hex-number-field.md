@@ -103,6 +103,10 @@ inductive RootSet where
 /-- A polynomial with canonical algebraic coefficients. The constructor trims
     trailing coefficients using semantic `AlgebraicNumber.isZero`. -/
 opaque AlgebraicPoly
+def AlgebraicPolyNormalized (coeffs : Array AlgebraicNumber) : Prop
+def AlgebraicPoly.data (f : AlgebraicPoly) : Array AlgebraicNumber
+def AlgebraicPoly.normalized (f : AlgebraicPoly) :
+    AlgebraicPolyNormalized f.data
 def AlgebraicPoly.ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly
 def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
 def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
@@ -145,11 +149,11 @@ of represented complex values. `AlgebraicPoly` owns the required semantic
 trimming without exporting an unjustified `DecidableEq`. That Boolean
 operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
 canonical equality over the trimmed data. Its faithfulness on canonical
-coefficients follows from the companion's `LawfulBEq AlgebraicNumber`
-plus trimming; packaging that as an `AlgebraicPoly.beq_iff` is Phase-6
-work (#9418). `coeff n` is the canonical
-coefficient (`0` beyond the degree) and `size` is the trimmed length backing
-`degree?`; all three are exercised by the module's compiled regressions.
+coefficients is the companion theorem `AlgebraicPoly.beq_iff`, which equates
+Boolean equality with equality of the semantic polynomial interpretations and
+is derived from `LawfulBEq AlgebraicNumber` plus trimming. `coeff n` is the
+canonical coefficient (`0` beyond the degree) and `size` is the trimmed length
+backing `degree?`; all three are exercised by the module's compiled regressions.
 
 ## Equality and zero
 
@@ -159,11 +163,17 @@ compare refined isolations with `sameRoot`.
 `AlgebraicRoot` uses two paths:
 
 1. If the stored polynomials agree, compare the refined isolations directly.
-2. Otherwise exactify both roots and use canonical `AlgebraicNumber` equality.
+2. Otherwise compute `gcd a.p b.p` over `ℚ`. If it is constant, the roots
+   cannot agree and comparison returns false without exactifying. If it is
+   nonconstant, exactify both roots and use canonical `AlgebraicNumber`
+   equality.
 
-The second path can factor twice and is not a fast arithmetic primitive. A future
-optimization may compare `gcd a.p b.p` and the two isolations without computing
-minimal polynomials, but it does not change the v1 semantics.
+The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
+primitive. The gcd guard prevents repeated factorization for coprime
+enclosing polynomials during cross-component root merging without changing
+the v1 semantics. It is a discriminator, not a constant-time operation:
+computing a rational gcd between two high-degree enclosing polynomials can
+itself incur coefficient growth.
 
 ```lean
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X
@@ -183,7 +193,8 @@ delegating to the generic exact `DyadicSquare.discContains` geometry primitive.
 `QAdjoin p x` retains canonical reduced rational coordinates. Addition,
 subtraction, negation, multiplication modulo `p`, and rational scalar actions do
 not require irreducibility. Inversion requires
-`[ZPoly.CheckedIrreducible p]` and uses polynomial extended gcd over `ℚ`.
+`[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
+gcd over `ℚ` to control rational coefficient growth.
 The computational API supplies `Inv` and `Div`, with `0⁻¹ = 0`; the companion
 proves their field laws after converting the checked certificate to semantic
 irreducibility.
@@ -235,7 +246,13 @@ def AlgebraicRoot.exact? (a : AlgebraicRoot) : Option AlgebraicNumber
 /-- Primary total API. -/
 def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (panicWith 0 "AlgebraicRoot.exact: certification failed")
+
+def AlgebraicRoot.ofEliminant? (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot
 ```
+
+`AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
+isolation, and the supplied operation ball identify one unique root.
 
 `QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
@@ -365,9 +382,15 @@ For `QAdjoin.roots?`:
    resultant with `p`. It is nonzero because coefficients are reduced modulo the
    irreducible `p`.
 3. Normalize and isolate the eliminant's roots.
-4. Reject candidates belonging only to other embeddings of `QAdjoin p x` by
-   evaluating the original component at the candidate and the selected `x`.
-   Refute wrong candidates at `evalDisambiguationPrec`.
+4. For each component, build one shared integer evaluation eliminant
+   `q(S) = Res_y(p(y), Res_z(e(z), S - G(y,z)))`, where `e` is the
+   squarefree norm eliminant and `G` is the denominator-cleared component.
+   Dilate `q` by the common denominator so its roots are the original
+   component evaluations. The eliminant is nonzero and contains the true
+   evaluation at every candidate. Reject candidates belonging only to other
+   embeddings of `QAdjoin p x` by evaluating the original component at the
+   candidate and the selected `x`; refute wrong candidates at
+   `evalDisambiguationPrec`.
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
@@ -376,11 +399,18 @@ construction is deterministic and bounded, is not used for binary arithmetic,
 and is a public surface in its own right (the tower library builds on it); its
 contract is the next section.
 
-For a candidate evaluation, construct its integer eliminant `q`, remove its
-maximal `X` power, and take the primitive part. If the evaluation is nonzero,
-`q(0) ≠ 0` and the reciprocal Cauchy bound gives
+For each candidate, reuse the component's shared evaluation eliminant `q`,
+remove its maximal `X` power, and take the primitive part. If the evaluation
+is nonzero, `q(0) ≠ 0` and the reciprocal Cauchy bound gives
 `|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
 computed from the input coefficient heights, degrees, and Cauchy root bounds.
+The generic cross-library recurrence is public:
+
+```lean
+def Disambiguation.evalMajorant {A : Type} [Zero A] [DecidableEq A]
+    (f : DensePoly A) (valueBound : A → Nat) (q : ZPoly) : Nat
+```
+
 Define `evalDisambiguationPrec` as the least precision in the finite range
 
 ```text
@@ -443,11 +473,12 @@ primitive-element candidate `theta + c * alpha`, with `c = 0` returning
 `extend? theta alpha` is the bounded primitive-element search: it tests
 `choose(degree theta * degree alpha, 2) + 1` signed shifts and keeps a
 maximum-degree candidate, which generates the compositum even when the two
-fields overlap. `extendShift?` is the same search retaining the producing
-shift (the form the tower's flattening recovery needs), and
-`extendShiftStep` is its single fold step, exposed so consumers can interleave
-the search with their own early exits. `primitive?` folds `extend?` over the
-nonzero entries of a coefficient array.
+fields overlap. It is the value projection of `extendShift?`, so both APIs
+share one search retaining the producing shift (the form the tower's
+flattening recovery needs). `extendShiftStep` is `extendShift?`'s single fold
+step, exposed so consumers can interleave the search with their own early
+exits. `primitive?` folds `extend?` over the nonzero entries of a coefficient
+array.
 
 `powers? gamma last` returns the checked canonical powers
 `1, gamma, ..., gamma^last`. `trace? ambient a` is the field trace of `a`
@@ -512,14 +543,50 @@ oracle's independently computed decomposition with Lean's finite output.
   `deg(a.p) * deg(b.p)`. Its ceiling is the measured resultant cost plus the
   existing HexRoots ceiling at that eliminant degree. Do not promise a faster
   end-to-end time than root isolation itself.
-- Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
-  Larger cases are local until new measurements justify promotion.
+- Degree-product 20 is the largest studied merge-facing lazy arithmetic class,
+  but the merge-gating end-to-end regression uses the degree-product-12 input
+  below. The former sweep through 20 is retained as report evidence: its upper
+  rungs are too slow for smoke verification, and no honest one-parameter model
+  is available for them. Larger cases remain local until new measurements
+  justify promotion.
+- Isolation-dominated end-to-end regressions use canonical fixed inputs rather
+  than an asymptotic claim. On the reference host, lazy addition of the selected
+  roots of `X^6 - 2` and `X^2 - 3` must complete under 12 seconds; its
+  square-free sum eliminant has degree 12,
+  `coeffAbsMax = 1998`, coefficient bit height 11, and isolation target 186.
+  `AlgebraicPoly.roots?` on the controlled dense degree-6 polynomial with one
+  `√2` coefficient must complete under 15 seconds; its single square-free norm
+  eliminant has degree 12,
+  `coeffAbsMax = 366720`, coefficient bit height 19, and isolation target 274.
+  These project-internal canonical inputs come from the shared `n = 6` rung of
+  the former schedules. Full timing runs check the ceilings; merge-gating smoke
+  verification checks the result hashes. The measured reference timings live
+  in the [performance report](../../reports/hex-number-field-performance.md).
+  Neither registration makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
-  selection. Root APIs add Yun decomposition and one norm eliminant per
-  squarefree component.
+  selection. Root APIs add Yun decomposition, one norm eliminant, and one
+  shared double-resultant evaluation eliminant per squarefree component. The
+  latter has degree at most the product of the defining-polynomial and norm-
+  eliminant degrees and is not itself root-isolated.
 
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
+
+The required exactification input families are:
+
+- `exactification-selection`: the fixed enclosing polynomial
+  `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
+  multiple-candidate selection and canonical re-isolation without treating
+  the easy enclosing factorization as scaling evidence;
+- `exactification-certification`: degree-`n` candidates `X^n - 2` inside
+  `(X^n - 2)(X + 3)`, again pinned to the nonlinear factor, separately time
+  `AlgebraicRoot.exactFactor?` and the public
+  `AlgebraicNumber.canonicalRep?` phase; and
+- `exactification-factorization`: a growing product of distinct Eisenstein
+  quadratics extends the Berlekamp-Zassenhaus adversarial fixture, and the
+  end-to-end `exact?` target must show modular factorization, multifactor
+  Hensel lifting, and recombination in a profile before it counts as the
+  factorization family.
 
 ## External comparators
 

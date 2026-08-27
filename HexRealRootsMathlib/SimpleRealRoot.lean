@@ -138,14 +138,14 @@ private theorem overlaps_iff_real (i₁ i₂ : Hex.RefinedRealIsolation p) :
       = Dyadic.toReal (if i₁.1.interval.lower ≤ i₂.1.interval.lower
           then i₂.1.interval.lower else i₁.1.interval.lower) := by
     by_cases h : i₁.1.interval.lower ≤ i₂.1.interval.lower
-    · rw [if_pos h, max_eq_right (toReal_le_toReal h)]
-    · rw [if_neg h, max_eq_left (toReal_le_of_not_le h)]
+    · rw [ite_eq_left h, max_eq_right (toReal_le_toReal h)]
+    · rw [ite_eq_right h, max_eq_left (toReal_le_of_not_le h)]
   have hmin : min (Dyadic.toReal i₁.1.interval.upper) (Dyadic.toReal i₂.1.interval.upper)
       = Dyadic.toReal (if i₁.1.interval.upper ≤ i₂.1.interval.upper
           then i₁.1.interval.upper else i₂.1.interval.upper) := by
     by_cases h : i₁.1.interval.upper ≤ i₂.1.interval.upper
-    · rw [if_pos h, min_eq_left (toReal_le_toReal h)]
-    · rw [if_neg h, min_eq_right (toReal_le_of_not_le h)]
+    · rw [ite_eq_left h, min_eq_left (toReal_le_toReal h)]
+    · rw [ite_eq_right h, min_eq_right (toReal_le_of_not_le h)]
   rw [hmax, hmin, toReal_lt_toReal_iff]
   exact Iff.rfl
 

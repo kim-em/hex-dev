@@ -41,3 +41,16 @@ cannot represent the free complement.
 The authoritative algorithm, correctness, uniqueness, conformance, and
 benchmark requirements shared with this layer are in
 [`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
+
+## Runtime boundary
+
+`hex-smith-mathlib` owns no independent executable algorithm, reifier,
+certificate checker, or tactic. Its computable projections, such as
+`relationVector`, only expose data computed by `HexSmith`; the remaining
+declarations are correspondence proofs checked by the kernel in the ordinary
+`HexSmithMathlib` build.
+
+For Phase 4 this is a `correspondence-only-layer`: `HexSmith` is the
+performance owner for every transported operation. This companion therefore
+has no independent benchmark executable, comparator, raw timing evidence, or
+performance report.

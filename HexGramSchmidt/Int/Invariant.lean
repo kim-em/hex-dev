@@ -89,7 +89,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
                      state.matrix[state.step][state.step] state.prevPivot
                    prevPivot := state.matrix[state.step][state.step]
                    rowSwaps := state.rowSwaps
-                   singularStep := none } : Matrix.BareissState n) := by
+                   singularStep := none } : Matrix.BareissState Int n) := by
             rw [noPivotLoop_add elapsed 1
               (Matrix.noPivotInitialState (Matrix.gramMatrix b))]
             rw [Matrix.noPivotLoop_of_regular 0 state hDone hp]
@@ -631,7 +631,7 @@ private theorem matrix_diag_at_fin_eq {n : Nat} (M : Matrix Int n n)
 /-- If the `a`-fueled no-pivot Bareiss prefix already recorded a singular step,
 that step persists into any longer pass. -/
 private theorem noPivotLoop_extends_singularStep
-    {n : Nat} (state : Matrix.BareissState n) (a b : Nat) (k : Fin n)
+    {n : Nat} (state : Matrix.BareissState Int n) (a b : Nat) (k : Fin n)
     (h_sing_a : (Matrix.noPivotLoop a state).singularStep = some k.val)
     (h_step_a : (Matrix.noPivotLoop a state).step = k.val)
     (h_zero_a : (Matrix.noPivotLoop a state).matrix[k][k] = 0)
@@ -752,8 +752,8 @@ explicitly as `result` to keep Fin-index proof terms uniform across the
 induction. -/
 private theorem pivotLoop_singularStep_some
     {n : Nat} :
-    ∀ (a : Nat) (fuel : Nat) (state : Matrix.BareissState n)
-      (result : Matrix.BareissState n)
+    ∀ (a : Nat) (fuel : Nat) (state : Matrix.BareissState Int n)
+      (result : Matrix.BareissState Int n)
       (_h_partial : Matrix.noPivotLoop a state = result),
       state.singularStep = none →
       a + 1 ≤ fuel →
@@ -824,7 +824,7 @@ private theorem pivotLoop_singularStep_some
                    state.matrix[state.step][state.step] state.prevPivot
                  prevPivot := state.matrix[state.step][state.step]
                  rowSwaps := state.rowSwaps
-                 singularStep := none } : Matrix.BareissState n) = result := by
+                 singularStep := none } : Matrix.BareissState Int n) = result := by
           rw [← h_unfold_noPiv]; exact h_partial
         exact ih fuel'
           { step := state.step + 1

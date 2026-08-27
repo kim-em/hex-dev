@@ -388,6 +388,12 @@ monic normalization between them. Zero pairs, one zero input, reversed degree
 order, and constant divisors are explicit base cases. The declared balanced
 cost is `O(M(n) log n)`.
 
+`DensePoly.xgcdLeftMonic` is a separate field-only performance surface whose
+cofactor is specified up to the normalized gcd representative. It is not an
+implementation of the exact-agreement `xgcdLeftWith` contract above. A fast
+replacement for normalized callers must expose a corresponding normalized
+operation and preserve its Bezout relation and monic-remainder convention.
+
 ## Product trees and multipoint operations
 
 `ProductTree` is an opaque balanced tree of nonempty levels. Its public

@@ -117,7 +117,7 @@ private theorem coeff_hornerPoly : ∀ (cs : List ℝ) (n : Nat),
       cases n with
       | zero => simp
       | succ m =>
-          rw [Polynomial.coeff_add, Polynomial.coeff_C, if_neg (Nat.succ_ne_zero m),
+          rw [Polynomial.coeff_add, Polynomial.coeff_C, ite_eq_right (Nat.succ_ne_zero m),
             Polynomial.coeff_X_mul, coeff_hornerPoly cs m, zero_add, List.getD_cons_succ]
 
 private theorem getD_map_intCast : ∀ (L : List Int) (n : Nat),
@@ -170,11 +170,11 @@ theorem sign_dyadicSign (d : Dyadic) :
         rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]; push_cast; ring
       rw [htr, Hex.dyadicSign]
       by_cases hlt : n < 0
-      · rw [if_pos hlt]
+      · rw [ite_eq_left hlt]
         rw [show ((-1 : Int) : ℝ) = -1 by norm_num,
           sign_neg (mul_neg_of_neg_of_pos (by exact_mod_cast hlt) h2), sign_neg (by norm_num)]
       · have hpos : 0 < n := lt_of_le_of_ne (by omega) (Ne.symm hn0)
-        rw [if_neg hlt]
+        rw [ite_eq_right hlt]
         rw [show ((1 : Int) : ℝ) = 1 by norm_num,
           sign_pos (mul_pos (by exact_mod_cast hpos) h2), sign_pos (by norm_num)]
 
@@ -218,9 +218,9 @@ private theorem signVar_cons_cons {a b : Int} (rest : List Int) (ha : a ≠ 0) (
     Hex.signVar (a :: b :: rest)
       = (if a * b < 0 then 1 else 0) + Hex.signVar (b :: rest) := by
   have fa : (a :: b :: rest).filter (· != 0) = a :: b :: rest.filter (· != 0) := by
-    rw [List.filter_cons, if_pos (by simpa using ha), List.filter_cons, if_pos (by simpa using hb)]
+    rw [List.filter_cons, ite_eq_left (by simpa using ha), List.filter_cons, ite_eq_left (by simpa using hb)]
   have fb : (b :: rest).filter (· != 0) = b :: rest.filter (· != 0) := by
-    rw [List.filter_cons, if_pos (by simpa using hb)]
+    rw [List.filter_cons, ite_eq_left (by simpa using hb)]
   unfold Hex.signVar
   rw [fa, fb]
   rfl
@@ -234,7 +234,7 @@ private theorem signVar_zeroFree : ∀ m : List Int, (∀ x ∈ m, x ≠ 0) →
   | [a], ha => by
       have ha0 : a ≠ 0 := ha a (by simp)
       unfold Hex.signVar
-      rw [List.filter_cons, if_pos (by simpa using ha0), List.filter_nil]
+      rw [List.filter_cons, ite_eq_left (by simpa using ha0), List.filter_nil]
       rfl
   | a :: b :: rest, hne => by
       have ha : a ≠ 0 := hne a (by simp)
@@ -246,8 +246,8 @@ private theorem signVar_zeroFree : ∀ m : List Int, (∀ x ∈ m, x ≠ 0) →
       have hcast : (a : ℝ) * (b : ℝ) = ((a * b : Int) : ℝ) := by push_cast; ring
       rw [hcast]
       by_cases h : a * b < 0
-      · rw [if_pos h, if_pos (by exact_mod_cast h)]
-      · rw [if_neg h, if_neg (by exact_mod_cast h)]
+      · rw [ite_eq_left h, ite_eq_left (by exact_mod_cast h)]
+      · rw [ite_eq_right h, ite_eq_right (by exact_mod_cast h)]
 
 /-- `signVar` reads only the zero-filtered list, so it is unchanged by
 pre-filtering out zeros. -/
@@ -310,8 +310,8 @@ theorem toPolynomial_shift {R : Type*} [CommRing R] [DecidableEq R]
   rw [HexPolyMathlib.coeff_toPolynomial, Hex.DensePoly.coeff_shift, mul_comm,
     Polynomial.coeff_mul_X_pow']
   by_cases h : k ≤ n
-  · rw [if_neg (by omega), if_pos h, HexPolyMathlib.coeff_toPolynomial]
-  · rw [if_pos (by omega), if_neg h]; rfl
+  · rw [ite_eq_right (by omega), ite_eq_left h, HexPolyMathlib.coeff_toPolynomial]
+  · rw [ite_eq_left (by omega), ite_eq_right h]; rfl
 
 /-- The real cast of a scalar multiple. -/
 theorem toPolyℝ_scale (c : Int) (p : Hex.ZPoly) :
@@ -333,8 +333,8 @@ theorem toPolyℝ_shift (k : Nat) (p : Hex.ZPoly) :
   ext n
   rw [coeff_toPolyℝ, Hex.DensePoly.coeff_shift, mul_comm, Polynomial.coeff_mul_X_pow']
   by_cases h : k ≤ n
-  · rw [if_neg (show ¬ n < k by omega), if_pos h, coeff_toPolyℝ]
-  · rw [if_pos (show n < k by omega), if_neg h]; exact Int.cast_zero
+  · rw [ite_eq_right (show ¬ n < k by omega), ite_eq_left h, coeff_toPolyℝ]
+  · rw [ite_eq_left (show n < k by omega), ite_eq_right h]; exact Int.cast_zero
 
 /-- The real cast of a difference. -/
 theorem toPolyℝ_sub (p q : Hex.ZPoly) :
@@ -392,9 +392,9 @@ private theorem spemAux_relate (g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0) :
            else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
            else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
       by_cases h0 : r.isZero
-      · exact ⟨1, 0, one_pos, by rw [hunf, if_pos h0]; simp⟩
+      · exact ⟨1, 0, one_pos, by rw [hunf, ite_eq_left h0]; simp⟩
       · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
-        · exact ⟨1, 0, one_pos, by rw [hunf, if_neg h0, if_pos h1]; simp⟩
+        · exact ⟨1, 0, one_pos, by rw [hunf, ite_eq_right h0, ite_eq_left h1]; simp⟩
         · obtain ⟨c', Q', hc', hrel'⟩ := ih (Hex.ZPoly.spemStep g r)
           refine ⟨c' * ((if g.leadingCoeff < 0 then -g.leadingCoeff
                     else g.leadingCoeff : Int) : ℝ),
@@ -402,7 +402,7 @@ private theorem spemAux_relate (g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0) :
                     else r.leadingCoeff : Int) : ℝ)
                 * Polynomial.X ^ ((r.degree?).getD 0 - (g.degree?).getD 0) + Q',
               mul_pos hc' habs, ?_⟩
-          rw [hunf, if_neg h0, if_neg h1, Polynomial.C_mul]
+          rw [hunf, ite_eq_right h0, ite_eq_right h1, Polynomial.C_mul]
           have key : toPolyℝ (Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r))
               = Polynomial.C c' * toPolyℝ (Hex.ZPoly.spemStep g r) - Q' * toPolyℝ g := by
             rw [hrel']; ring
@@ -533,7 +533,7 @@ private theorem spem_of_degree_zero (f : Hex.ZPoly) {g : Hex.ZPoly} (hg : g ≠ 
 
 /-- One `spemStep` strictly drops the degree (or reaches zero): the sign
 management makes the two leading terms cancel exactly. Proved over `ℝ` via
-`Polynomial.degree_sub_lt` and transferred back through `natDegree_toPolyℝ`. -/
+`Polynomial.degree_sub_lt_left` and transferred back through `natDegree_toPolyℝ`. -/
 private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 0)
     (hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0) :
     Hex.ZPoly.spemStep g r = 0 ∨
@@ -577,7 +577,7 @@ private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 
   have hA0 : A ≠ 0 := mul_ne_zero (Polynomial.C_ne_zero.mpr ha0) hPr0
   have hlt : (toPolyℝ (Hex.ZPoly.spemStep g r)).degree < (toPolyℝ r).degree := by
     rw [hstep, ← hdegA]
-    exact Polynomial.degree_sub_lt (hdegA.trans hdegB.symm) hA0 hlceq
+    exact Polynomial.degree_sub_lt_left (hdegA.trans hdegB.symm) hA0 hlceq
   have hstep0 : toPolyℝ (Hex.ZPoly.spemStep g r) ≠ 0 :=
     fun h => hz (toPolyℝ_eq_zero_iff.mp h)
   have hnat := Polynomial.natDegree_lt_natDegree hstep0 hlt
@@ -605,10 +605,10 @@ private theorem spemAux_degree {g : Hex.ZPoly} (hg : g ≠ 0)
            else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
            else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
       by_cases h0 : r.isZero
-      · left; rw [hunf, if_pos h0]; exact isZero_iff_eq_zero.mp h0
+      · left; rw [hunf, ite_eq_left h0]; exact isZero_iff_eq_zero.mp h0
       · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
-        · right; rw [hunf, if_neg h0, if_pos h1]; exact h1
-        · rw [hunf, if_neg h0, if_neg h1]
+        · right; rw [hunf, ite_eq_right h0, ite_eq_left h1]; exact h1
+        · rw [hunf, ite_eq_right h0, ite_eq_right h1]
           have hr : r ≠ 0 := fun h => h0 (isZero_iff_eq_zero.mpr h)
           have hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0 := not_lt.mp h1
           rcases spemStep_degree_lt hg hr hge with hz | hlt
@@ -697,8 +697,8 @@ private theorem sturmChainAux_toList (fuel : ℕ) (prev cur : Hex.ZPoly)
                   (acc.push (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))))) := rfl
       rw [hunf, chainList]
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · rw [if_pos h, if_pos h, List.append_nil]
-      · rw [if_neg h, if_neg h, ih, Array.toList_push, List.append_assoc,
+      · rw [ite_eq_left h, ite_eq_left h, List.append_nil]
+      · rw [ite_eq_right h, ite_eq_right h, ih, Array.toList_push, List.append_assoc,
           List.cons_append, List.nil_append]
 
 /-- For a positive-degree `p`, the executable Sturm chain is
@@ -815,12 +815,12 @@ private theorem chainList_nonzero :
       intro prev cur hprev hcur q hq
       rw [chainList] at hq
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · rw [if_pos h] at hq
+      · rw [ite_eq_left h] at hq
         simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
         rcases hq with rfl | rfl
         · exact hprev
         · exact hcur
-      · rw [if_neg h] at hq
+      · rw [ite_eq_right h] at hq
         have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
         rcases List.mem_cons.mp hq with rfl | hq'
         · exact hprev
@@ -848,9 +848,9 @@ private theorem chainList_triples :
       intro prev cur hcur i a b c ha hb hc
       rw [chainList] at ha hb hc
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · rw [if_pos h, List.getElem?_cons_succ, List.getElem?_cons_succ] at hc
+      · rw [ite_eq_left h, List.getElem?_cons_succ, List.getElem?_cons_succ] at hc
         simp at hc
-      · rw [if_neg h] at ha hb hc
+      · rw [ite_eq_right h] at ha hb hc
         have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
         cases i with
         | zero =>
@@ -891,7 +891,7 @@ private theorem chainList_pairs_coprime :
       intro prev cur hcur hco i a b ha hb
       rw [chainList] at ha hb
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · rw [if_pos h] at ha hb
+      · rw [ite_eq_left h] at ha hb
         cases i with
         | zero =>
             obtain rfl : prev = a := by simpa using ha
@@ -900,7 +900,7 @@ private theorem chainList_pairs_coprime :
         | succ j =>
             rw [List.getElem?_cons_succ, List.getElem?_cons_succ] at hb
             simp at hb
-      · rw [if_neg h] at ha hb
+      · rw [ite_eq_right h] at ha hb
         have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
         obtain ⟨c₀, k, Q, hc₀, _, hrel⟩ := chain_step hcur hr
         have hco' : IsCoprime (toPolyℝ cur)
@@ -933,7 +933,7 @@ private theorem chainList_last_unit :
       intro prev cur hcur hfuel hco z hz
       rw [chainList] at hz
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
-      · rw [if_pos h, List.getLast?_cons_cons] at hz
+      · rw [ite_eq_left h, List.getLast?_cons_cons] at hz
         obtain rfl : cur = z := by simpa using hz
         have hr0 : Hex.ZPoly.spem prev cur = 0 := isZero_iff_eq_zero.mp h
         have hne : toPolyℝ cur ≠ 0 := fun hh => hcur (toPolyℝ_eq_zero_iff.mp hh)
@@ -956,7 +956,7 @@ private theorem chainList_last_unit :
               _ = Polynomial.C c⁻¹ * (Q * toPolyℝ cur) := by rw [hrel]
               _ = toPolyℝ cur * (Polynomial.C c⁻¹ * Q) := by ring
           exact hco.isUnit_of_dvd' hdvd dvd_rfl
-      · rw [if_neg h, List.getLast?_cons_cons] at hz
+      · rw [ite_eq_right h, List.getLast?_cons_cons] at hz
         have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
         obtain ⟨c₀, k, Q, hc₀, _, hrel⟩ := chain_step hcur hr
         have hco' : IsCoprime (toPolyℝ cur)
@@ -1026,7 +1026,7 @@ private theorem chainList_seeds_coprime :
       by_cases h : (Hex.ZPoly.spem prev cur).isZero
       · -- The loop stops: the chain is `[prev, cur]`, so `cur` is the terminal unit.
         have hz : (prev :: cur :: chainList (fuel + 1) prev cur).getLast? = some cur := by
-          rw [chainList, if_pos h]; rfl
+          rw [chainList, ite_eq_left h]; rfl
         obtain ⟨w, hw⟩ := hunit cur hz
         exact ⟨0, ↑w⁻¹, by rw [← hw]; simp⟩
       · have hr : Hex.ZPoly.spem prev cur ≠ 0 := fun hh => h (isZero_iff_eq_zero.mpr hh)
@@ -1055,7 +1055,7 @@ private theorem chainList_seeds_coprime :
               = some z → IsUnit (toPolyℝ z) := by
           intro z hz
           apply hunit z
-          rw [chainList, if_neg h, List.getLast?_cons_cons]
+          rw [chainList, ite_eq_right h, List.getLast?_cons_cons]
           exact hz
         have hco_tail : IsCoprime (toPolyℝ cur)
             (toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))) :=
@@ -1500,11 +1500,11 @@ theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
   simp only [Function.comp_apply]
   rw [leadingCoeff_toPolyℝ, natDegree_toPolyℝ]
   by_cases hpar : (Hex.DensePoly.degree? q).getD 0 % 2 = 1
-  · rw [if_pos hpar, (Nat.odd_iff.mpr hpar).neg_one_pow, mul_neg_one, mul_neg_one]
+  · rw [ite_eq_left hpar, (Nat.odd_iff.mpr hpar).neg_one_pow, mul_neg_one, mul_neg_one]
     have h2 : ((-(Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ)
         = -(((Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ) := by push_cast; ring
     rw [h2, Left.sign_neg, Left.sign_neg, sign_intCast_sign]
-  · rw [if_neg hpar, (Nat.even_iff.mpr (by omega)).neg_one_pow, mul_one, mul_one]
+  · rw [ite_eq_right hpar, (Nat.even_iff.mpr (by omega)).neg_one_pow, mul_one, mul_one]
     exact sign_intCast_sign _
 
 /-- **Root count correspondence.** For positive-degree, rationally squarefree

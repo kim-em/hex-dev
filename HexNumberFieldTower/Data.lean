@@ -24,8 +24,12 @@ namespace Hex.NumberTower
 flattened lower-tower coefficient of `X^j`; the omitted coefficient of
 `X^degree` is one. -/
 structure Level where
+  /-- Relative degree of this extension over the tower below it. -/
   degree : Nat
+  /-- Lower coefficients of the monic defining polynomial, each flattened to
+  the lower tower's mixed-radix coordinates. -/
   defining : Array (Array Rat)
+  /-- The absolute algebraic root chosen as this level's generator. -/
   root : AlgebraicRoot
 
 /-- Dimension represented by a top-first list of extension levels. -/

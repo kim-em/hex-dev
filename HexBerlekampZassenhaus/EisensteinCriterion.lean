@@ -106,6 +106,7 @@ private theorem toList_zero : (0 : ZPoly).toList = [] := by
     rw [DensePoly.length_toList, DensePoly.size_zero]
   exact List.eq_nil_of_length_eq_zero hlen
 
+/-- Translation fixes the zero polynomial. -/
 @[simp] theorem translate_zero (s : Int) : translate s (0 : ZPoly) = 0 := by
   rw [translate_eq_aux, toList_zero]
   rfl
@@ -242,6 +243,7 @@ private theorem translate_divX_unfold (s : Int) (f : ZPoly) :
       simp only [translateAux]
       rw [hc]
 
+/-- Translation fixes constant polynomials. -/
 @[simp] theorem translate_C (s c : Int) :
     translate s (DensePoly.C c) = DensePoly.C c := by
   rw [translate_divX_unfold]
@@ -255,9 +257,11 @@ private theorem translate_divX_unfold (s : Int) (f : ZPoly) :
   rw [hdivX, translate_zero, DensePoly.zero_mul, hcoeff,
     DensePoly.add_comm_poly, DensePoly.add_zero_poly]
 
+/-- Translation fixes the constant one. -/
 @[simp] theorem translate_one (s : Int) : translate s (1 : ZPoly) = 1 :=
   translate_C s 1
 
+/-- Translating `X` by `s` yields `X + s`. -/
 theorem translate_X (s : Int) : translate s X = X + DensePoly.C s := by
   rw [translate_divX_unfold]
   have hdivX : divX X = 1 := by

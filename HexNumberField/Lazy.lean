@@ -315,21 +315,28 @@ end AlgebraicRoot
 
 namespace AlgebraicNumber
 
+/-- Canonical sum: perform the lazy operation, then exactify. -/
 @[expose] def add (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.add b.toRoot).exact
 
+/-- Canonical difference: perform the lazy operation, then exactify. -/
 @[expose] def sub (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.sub b.toRoot).exact
 
+/-- Canonical product: perform the lazy operation, then exactify. -/
 @[expose] def mul (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.mul b.toRoot).exact
 
+/-- Canonical negation: reflect the lazy root, then exactify. -/
 @[expose] def neg (a : AlgebraicNumber) : AlgebraicNumber :=
   a.toRoot.neg.exact
 
+/-- Canonical inverse, with `inv 0 = 0`: perform the lazy operation, then
+exactify. -/
 @[expose] def inv (a : AlgebraicNumber) : AlgebraicNumber :=
   a.toRoot.inv.exact
 
+/-- Canonical quotient: perform the lazy operation, then exactify. -/
 @[expose] def div (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.div b.toRoot).exact
 

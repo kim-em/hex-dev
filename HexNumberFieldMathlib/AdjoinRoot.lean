@@ -96,8 +96,7 @@ noncomputable def toAdjoinRoot (a : QAdjoin p x) :
 
 /-- Recover the unique reduced executable coordinates of an {name}`AdjoinRoot`
 class. -/
-@[expose]
-noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
+private noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
     (a : AdjoinRoot (definingPolynomial p)) : QAdjoin p x where
   coeffs := HexPolyMathlib.ofPolynomial
     (AdjoinRoot.modByMonicHom (definingPolynomial_monic p) a)
@@ -205,7 +204,7 @@ theorem isZero_iff (a : QAdjoin p x) : a.isZero ↔ a = 0 := by
 guard in {name}`Hex.QAdjoin.inv` succeed for every nonzero element. -/
 theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (ha : a.isZero = false) :
-    (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
+    (DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
   let A := HexPolyMathlib.toPolynomial a.coeffs
   let P := HexPolyMathlib.toPolynomial (ZPoly.toRatPoly p)
   have ha0 : A ≠ 0 := by
@@ -233,27 +232,30 @@ theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     apply EuclideanDomain.gcd_isUnit_iff.mpr
     exact ((EuclideanDomain.dvd_or_coprime P A hirr).resolve_left
       hnotdvd).symm
-  have hassoc :
-      Associated
-        (HexPolyMathlib.toPolynomial
-          (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd)
-        (EuclideanDomain.gcd A P) := by
-    rw [DensePoly.xgcdLeft_gcd_eq_xgcd]
-    simpa [A, P] using
-      (HexPolyMathlib.toPolynomial_xgcd_gcd_associated
-        (R := Rat) a.coeffs (ZPoly.toRatPoly p))
+  let r := DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)
+  have hdvd := DensePoly.xgcdLeftMonic_dvd
+    a.coeffs (ZPoly.toRatPoly p)
+  have hleft : HexPolyMathlib.toPolynomial r.gcd ∣ A := by
+    rcases hdvd.1 with ⟨u, hu⟩
+    refine ⟨HexPolyMathlib.toPolynomial u, ?_⟩
+    simpa [r, A] using congrArg HexPolyMathlib.toPolynomial hu
+  have hright : HexPolyMathlib.toPolynomial r.gcd ∣ P := by
+    rcases hdvd.2 with ⟨u, hu⟩
+    refine ⟨HexPolyMathlib.toPolynomial u, ?_⟩
+    simpa [r, P] using congrArg HexPolyMathlib.toPolynomial hu
+  have hgcdDvd : HexPolyMathlib.toPolynomial r.gcd ∣
+      EuclideanDomain.gcd A P :=
+    EuclideanDomain.dvd_gcd hleft hright
   have hunit : IsUnit
-      (HexPolyMathlib.toPolynomial
-        (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd) :=
-    hassoc.isUnit_iff.mpr hnormUnit
+      (HexPolyMathlib.toPolynomial r.gcd) :=
+    isUnit_of_dvd_unit hgcdDvd hnormUnit
   obtain ⟨c, hc, hcPoly⟩ := Polynomial.isUnit_iff.mp hunit
   have hgcdC :
-      (DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)).gcd =
-        DensePoly.C c := by
+      r.gcd = DensePoly.C c := by
     apply (HexPolyMathlib.equiv (R := Rat)).injective
     simpa only [HexPolyMathlib.equiv_apply,
       HexPolyMathlib.toPolynomial_C] using hcPoly.symm
-  rw [hgcdC, DensePoly.size_C_of_ne_zero hc.ne_zero]
+  simpa [r, hgcdC] using DensePoly.size_C_of_ne_zero hc.ne_zero
 
 /-- Fixed-presentation zero evaluates to complex zero. -/
 theorem map_zero (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
@@ -329,7 +331,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
   · have haFalse : a.isZero = false := by
       cases hzero : a.isZero <;> simp_all
     let m := ZPoly.toRatPoly p
-    let r := DensePoly.xgcdLeft a.coeffs m
+    let r := DensePoly.xgcdLeftMonic a.coeffs m
     have hs : r.gcd.size = 1 := by
       simpa [r, m] using inverse_gcd_size a haFalse
     have hpos : 0 < r.gcd.size := by omega
@@ -357,10 +359,10 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       rw [reduceCoeffs, HexPolyMathlib.toPolynomial_mod,
         EuclideanDomain.mod_self, Polynomial.eval₂_zero] at hp'
       simpa [m] using hp'.symm
-    have hbez := HexPolyMathlib.toPolynomial_xgcd_bezout_raw
-      (R := Rat) a.coeffs m
-    rw [← DensePoly.xgcdLeft_left_eq_xgcd,
-      ← DensePoly.xgcdLeft_gcd_eq_xgcd] at hbez
+    obtain ⟨t, hbezDense⟩ := DensePoly.xgcdLeftMonic_bezout a.coeffs m
+    have hbez := congrArg HexPolyMathlib.toPolynomial hbezDense
+    simp only [HexPolyMathlib.toPolynomial_add,
+      HexPolyMathlib.toPolynomial_mul] at hbez
     have hbezEval := congrArg
       (fun f : Polynomial Rat =>
         f.eval₂ (algebraMap Rat ℂ) rep.root) hbez
@@ -370,8 +372,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       (HexPolyMathlib.toPolynomial r.left).eval₂
           (algebraMap Rat ℂ) rep.root *
           toComplex a rep h +
-        (HexPolyMathlib.toPolynomial
-            (DensePoly.xgcd a.coeffs m).right).eval₂
+        (HexPolyMathlib.toPolynomial t).eval₂
           (algebraMap Rat ℂ) rep.root *
           (HexPolyMathlib.toPolynomial m).eval₂
             (algebraMap Rat ℂ) rep.root =
@@ -427,9 +428,26 @@ theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
 theorem map_natPow (a : QAdjoin p x) (n : Nat)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex (natPow a n) rep h = toComplex a rep h ^ n := by
-  induction n with
-  | zero => simp [natPow, map_one]
-  | succ n ih => rw [natPow, map_mul, ih, pow_succ]
+  induction n using Nat.strongRecOn with
+  | ind n ih =>
+      cases n with
+      | zero => simp [natPow, map_one]
+      | succ n =>
+          have hlt : (n + 1) / 2 < n + 1 :=
+            Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
+          rw [natPow]
+          by_cases heven : (n + 1) % 2 = 0
+          · rw [if_pos heven, map_mul, ih ((n + 1) / 2) hlt,
+              ← pow_add]
+            have hdecomp := Nat.mod_add_div (n + 1) 2
+            congr 1
+            omega
+          · rw [if_neg heven, map_mul, map_mul,
+              ih ((n + 1) / 2) hlt, ← pow_add, ← pow_succ]
+            have hdecomp := Nat.mod_add_div (n + 1) 2
+            have hmod := Nat.mod_two_eq_zero_or_one (n + 1)
+            congr 1
+            omega
 
 /-- Executable integer powers preserve the selected interpretation. -/
 theorem map_intPow [ZPoly.CheckedIrreducible p]
@@ -643,6 +661,7 @@ noncomputable def adjoinRootEquiv [ZPoly.CheckedIrreducible p] :
     QAdjoin p x ≃+* AdjoinRoot (definingPolynomial p) :=
   RingEquiv.ofBijective toAdjoinRootHom toAdjoinRoot_bijective
 
+/-- The packaged ring equivalence acts by the underlying comparison map. -/
 @[simp]
 theorem adjoinRootEquiv_apply [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) : adjoinRootEquiv a = toAdjoinRoot a := rfl
@@ -658,6 +677,7 @@ noncomputable def embedding [ZPoly.CheckedIrreducible p]
   map_add' := fun a b => map_add a b rep h
   map_mul' := fun a b => map_mul a b rep h
 
+/-- The packaged ring homomorphism acts by evaluation at the selected root. -/
 @[simp]
 theorem embedding_apply [ZPoly.CheckedIrreducible p]
     (a : QAdjoin p x) (rep : RefinedIsolation p)

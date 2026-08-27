@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Euclid/DivGcd.lean",
+ "baseline_blob": "22be88d54a51e98d2f2ff026f3ac00e8a55c466e",
+ "current_blob": "2c6c8c7de5586c6b4bb5a544647e634c49aa513c",
+ "reason": "Adds the separately named xgcdLeftMonic operation for number-field inversion; the factorization service has no caller of that operation and every existing executable definition is unchanged."
+}

@@ -1,13 +1,15 @@
 # hex-berlekamp-zassenhaus
 
 Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
-library for Lean 4.
+library for Lean 4. The project develops fast executable code with full
+verification through spec-driven development.
 
-This package factors dense univariate polynomials over `ℤ` without depending
-on Mathlib. It combines modular Berlekamp factorization, multifactor Hensel
-lifting, classical or lattice recombination, and exact trial division. The
-result records the signed scalar separately from primitive factors and their
-multiplicities.
+`hex-berlekamp-zassenhaus` factors dense univariate polynomials over `ℤ`.
+It builds on [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp),
+[`hex-hensel`](https://github.com/leanprover/hex-hensel), and
+[`hex-lll`](https://github.com/leanprover/hex-lll), and does not depend on
+Mathlib. Statements about Mathlib's `Polynomial ℤ` live in
+[`hex-berlekamp-zassenhaus-mathlib`](https://github.com/leanprover/hex-berlekamp-zassenhaus-mathlib).
 
 # Quickstart
 

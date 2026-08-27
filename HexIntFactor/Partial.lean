@@ -57,6 +57,17 @@ private theorem checkedPartial_parts {F : PartialFactorization}
     simp only [Bool.and_eq_true, decide_eq_true_eq] at h
     exact ⟨h.1.1, h.1.2, acc, hprod, h.2⟩
 
+/-- A partial factorization accepted by the checker has positive subject. -/
+theorem checkPartial_pos {F : PartialFactorization}
+    (h : checkPartial F = true) : 0 < F.subject :=
+  (checkedPartial_parts h).1
+
+/-- The subject indexed by checked partial factorization data is positive. -/
+theorem CheckedPartialFactorization.pos {n : Nat}
+    (F : CheckedPartialFactorization n) : 0 < n := by
+  rw [← F.subject_eq]
+  exact checkPartial_pos F.valid
+
 private theorem boundedPowMul_eq {bound q : Nat} :
     ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
       r = acc * q ^ e := by
@@ -114,6 +125,31 @@ theorem checkPartial_prime {F : PartialFactorization}
     (h : checkPartial F = true) :
     ∀ e ∈ F.factors, Prime e.prime :=
   checkEntries_prime (checkedPartial_parts h).2.1
+
+/-- Every listed exponent in accepted partial data is positive. -/
+theorem checkPartial_exponent {F : PartialFactorization}
+    (h : checkPartial F = true) :
+    ∀ e ∈ F.factors, 0 < e.exponent :=
+  checkEntries_positive (checkedPartial_parts h).2.1
+
+/-- Listed bases in accepted partial data are strictly ascending. -/
+theorem checkPartial_sorted {F : PartialFactorization}
+    (h : checkPartial F = true) :
+    F.factors.Pairwise (fun a b => a.prime < b.prime) :=
+  checkEntries_pairwise (checkedPartial_parts h).2.1
+
+/-- A checked partial factorization with residual one is already a complete
+factorization certificate; no second checker replay is needed. -/
+theorem checkFactorization_of_checkPartial {F : PartialFactorization}
+    (h : checkPartial F = true) (hr : F.residual = 1) :
+    checkFactorization ⟨F.subject, F.factors⟩ = true := by
+  obtain ⟨hsubject, hentries, acc, hproduct, hresidual⟩ :=
+    checkedPartial_parts h
+  have hacc : acc = F.subject := by
+    have heq := boundedPowMul_eq 1 acc F.subject hresidual
+    simpa [hr] using heq.symm
+  simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hsubject, hentries⟩, hacc ▸ hproduct⟩
 
 end Nat
 

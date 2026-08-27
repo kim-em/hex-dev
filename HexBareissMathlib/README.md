@@ -36,6 +36,18 @@ open HexMatrixMathlib
 -- ... and equals Mathlib's determinant of the corresponding matrix.
 #check @bareissDet_eq_det
 -- @bareissDet_eq_det : ∀ {n : ℕ} (M : Hex.Matrix ℤ n n), M.bareiss = (matrixEquiv M).det
+
+-- The same correspondence is available over any commutative ring equipped
+-- with an exact quotient satisfying the cancellation law.
+#check @bareissWith_eq_det
+-- @bareissWith_eq_det : ∀ {R n} [CommRing R] [DecidableEq R]
+--   (quot : R → R → R), (∀ a b, b ≠ 0 → quot (a * b) b = a) →
+--   ∀ M : Hex.Matrix R n n, Matrix.bareissWith quot M = Matrix.det M
+#check @bareissWith_eq_mathlib_det
+-- @bareissWith_eq_mathlib_det : ∀ {R n} [CommRing R] [DecidableEq R]
+--   (quot : R → R → R), (∀ a b, b ≠ 0 → quot (a * b) b = a) →
+--   ∀ M : Hex.Matrix R n n,
+--     Matrix.bareissWith quot M = (matrixEquiv M).det
 ```
 
 # Functionality
@@ -46,13 +58,16 @@ open HexMatrixMathlib
   `Matrix.det` of the corresponding matrix `matrixEquiv M`;
 - `bareissNoPivot_eq_det` and the bordered-minor invariant
   (`BareissNoPivotInvariant`, `NonzeroBareissPivots`): the Desnanot-Jacobi
-  argument that drives the no-pivot correctness proof.
+  argument that drives the no-pivot correctness proof;
+- `bareissWith_eq_det` and `bareissWith_eq_mathlib_det`: the generic
+  coefficient-ring correspondence for a supplied exact quotient.
 
 # Verification
 
-The correspondence is fully proven on integer square matrices. The two
-headline theorems are the preferred surface for Mathlib-side callers; both
-hold outright, with no hypothesis to discharge.
+The correspondence is fully proven over any commutative ring with decidable
+equality and a quotient satisfying exact right cancellation. No public domain
+or nontriviality hypothesis is required. The original integer theorems remain
+the preferred compatibility surface and hold outright.
 
 The executable Bareiss determinant equals the Leibniz determinant,
 `bareiss_eq_det`:

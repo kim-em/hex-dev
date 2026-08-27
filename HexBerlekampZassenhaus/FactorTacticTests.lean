@@ -6,19 +6,34 @@ Authors: Kim Morrison
 
 module
 
--- PLAIN `public import` only (plus the `public meta import` required for
--- elaboration-time evaluation): the emitted kernel checks must reduce through
--- the exposed closure alone.
-public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampZassenhaus.FactorTactic
-public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampZassenhaus.FactorTactic
+-- Exercise the exact public umbrella named by the released README. The meta
+-- import is required for elaboration-time evaluation of the two tactics.
+public meta import HexBerlekampZassenhaus
+public import HexBerlekampZassenhaus
 
 public section
 
 open Hex
 
 namespace HexBerlekampZassenhaus.FactorTacticTests
+
+/-! # README quickstart -/
+
+namespace READMEQuickstart
+
+#check ZPoly.factorize
+#check ZPoly.factors
+#check Factorization.product
+#check factorClassical
+#check factorLattice
+#check factorTrial
+
+def f : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+
+noncomputable def fFactored := factor_poly f
+theorem fIrreducible : ZPoly.Irreducible f := irreducibility f
+
+end READMEQuickstart
 
 /-- `-6·(x+1)²·(x²+1)`: content, sign, and multiplicity. -/
 def testZ : ZPoly :=

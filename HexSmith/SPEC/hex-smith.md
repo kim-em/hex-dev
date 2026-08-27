@@ -238,7 +238,11 @@ gives `[[a, b], [0, b]]`, right-multiplying by `V` (which has
 determinant `(s·a + t·b)/g = 1`) gives `[[g, 0], [b·t, l]]`, and the
 second row operation clears the `b·t` entry, which is divisible by `g`
 because `g` divides `b`. Run a fixed bubble network of `r` full adjacent
-passes. On each prime valuation, `(gcd, lcm)` is `(min, max)`, so the same
+passes. An equal positive adjacent pair is already its own gcd/lcm pair and is
+a true no-op; the transform-producing API therefore keeps identity transforms
+on an already normalised equal pair. This shortcut relies on the positivity
+established by the preceding normalisation pass. On each prime valuation,
+`(gcd, lcm)` is `(min, max)`, so the same
 network sorts every valuation and yields the divisibility chain after at
 most `r · (r - 1)` pair steps. This fixed schedule makes both termination
 and the `O(r²)` bound immediate. This is FLINT's
@@ -269,6 +273,10 @@ def snfRank (A : Matrix Int n m) : Nat
 /-- Smith form with all four change-of-basis matrices. -/
 def snfData (A : Matrix Int n m) : SmithData n m
 
+/-- The independent relation rows obtained from the left-transformed
+presentation. -/
+def smithBasis (A : Matrix Int n m) : Matrix Int (snfRank A) m
+
 /-- The invariant factors of `A`, positive and in a divisibility chain. -/
 def invariantFactors (A : Matrix Int n m) : Vector Int (snfRank A)
 
@@ -290,7 +298,8 @@ columns. `detDivisor A 0 = 1`, and `detDivisor A k = 0` when
 
 This is the specification function. Its definition is the gcd above and
 mentions nothing about `snf`; `IsSNF.detDivisor_eq` is what says the
-invariant factors compute it. -/
+invariant factors compute it. Direct evaluation enumerates exponentially many
+minors; use `invariantFactors` for computation. -/
 noncomputable def detDivisor (A : Matrix Int n m) (k : Nat) : Nat
 
 end Hex.Matrix
@@ -306,11 +315,12 @@ results. `invariantFactors` drops nothing, so its leading entries may be `1`;
 The form-only definitions must not be projections of `snfData`: eager
 evaluation would allocate the discarded transforms. Implement the general
 pivot loop once, parameterised by a companion accumulator that is `Unit` for
-`snf` and `(U, W, V, X)` for `snfData`; likewise parameterise the fixed
-diagonal network by `Unit` versus the four transforms. Inline the accumulator
-operations so the `Unit` instances allocate no matrices. Agreement then comes
-from accumulator-parametric step lemmas rather than duplicated correctness
-inductions.
+`snf` and `(U, W, V, X)` for `snfData`; inline those operations so the `Unit`
+instance allocates no matrices. The fixed diagonal form-only path instead runs
+the proved-equivalent pair network directly on its uniquely owned backing
+array, while `snfDiagonalData` uses the accumulator-parametric network to
+produce four transforms. Array/vector equivalence and the shared pair-step
+model establish agreement without recomputing the form through the data API.
 
 There is deliberately no second integer solver or quotient-order function in
 this library. `latticeCoeffs` and `latticeIndex` in `hex-hermite` already own
@@ -348,6 +358,12 @@ theorem invariantFactors_chain (A : Matrix Int n m) (i : Nat)
     (h : i + 1 < snfRank A) :
     (invariantFactors A)[⟨i, by omega⟩] ∣
       (invariantFactors A)[⟨i + 1, h⟩]
+theorem abelianStructure_freeRank (A : Matrix Int n m) :
+    (abelianStructure A).freeRank = m - snfRank A
+theorem abelianStructure_torsionFactors (A : Matrix Int n m) :
+    (abelianStructure A).torsionFactors =
+      ((invariantFactors A).toList.filterMap fun d =>
+        if 1 < d then some d.natAbs else none).toArray
 
 theorem snfDiagonalData_isSNF {r : Nat} (d : Vector Int r) :
     IsSNF (diagMatrix d r r) (snfDiagonalData d)
@@ -576,9 +592,18 @@ is the point made under "Algorithms".
 | `snf` | form-only classical Euclidean pivot loop | `O(P · r · (n + m) · max n m)` | unbounded; measured, not proved |
 | `snfRank`, `invariantFactors` | projections of the form-only run | as `snf` | as `snf` |
 | `snfData` | `snf` plus accumulation of `U`, `W`, `V`, and `X` | `+ O(P · r · (n + m) · max n m)` | transforms may exceed the form substantially |
+| `smithBasis` | `snfData` plus one dense matrix product and row projection | as `snfData`, plus `O(n²m)` scalar operations | transform-dependent |
 | `snfDiagonal` | form-only normalisation plus fixed adjacent-pair network | `O(r²)` | bounded by the product of the input diagonal |
 | `snfDiagonalData` | `snfDiagonal` plus four transform updates | `O(r³)` scalar entry updates in the dense matrices | transform-dependent |
 | `abelianStructure` | `snf` plus a filter | as `snf` | as `snf` |
+| `isSNFShape` | rank bounds, positivity, and adjacent divisibility scan | `O(r)` integer predicates | bounded by certificate diagonal |
+| `snfCert` | four packed product-equality certificates plus `isSNFShape` | `O(n² + m² + nm)` big-by-small operations | packed operands have linear width in the corresponding row length; certificate-dependent |
+
+`detDivisor` is a noncomputable specification surface rather than an
+executable operation: direct enumeration of its minors is exponential and is
+not a supported evaluation route. Consumers needing its value compute
+`invariantFactors` and use `IsSNF.detDivisor_eq`; Phase 4 therefore assigns no
+runtime benchmark to `detDivisor`.
 
 ## Conformance
 
@@ -636,15 +661,43 @@ identities instead.
 Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
 `bench/HexSmith/Bench.lean`, no Mathlib import.
 
-**Input families.**
+**Input families.** The scientific driver covers the following controlled
+variants, with deterministic salts and exact parameter ladders recorded beside
+each registration:
 
-- `random-dense-smith`: uniform entries, square and nonsingular.
+- `random-dense-smith`: uniform-looking bounded entries with a diagonal shift,
+  in nonsingular square, fixed-aspect tall/wide, and rank-deficient square
+  variants.
 - `chain-conjugate`: `U * diag(d) * V` for known `d` with a long
   divisibility chain and random unimodular `U`, `V`, so the expected
   answer is known and the difficulty is entry growth rather than the
-  answer's size.
+  answer's size; both full-rank and a linear zero-tail variant are measured.
 - `presentation-smith`: sparse relation matrices from abelian group
-  presentations, the shape the headline consumer produces, run dense.
+  presentations, in square and wide relation-by-generator shapes, run dense.
+
+**Evidence assignment.** `snf` owns the family/shape sweeps.
+`snfRank` and `invariantFactors` get projection sweeps; `snfData` and
+`smithBasis` get transform-producing sweeps; `abelianStructure` uses the wide
+presentation family; `isSNFShape` and `snfCert` use certificates prepared
+outside the timed region; and both diagonal APIs use the same repair-heavy
+diagonal ladder. Fixed FLINT/PARI rungs cover all three square common-domain
+families and therefore the canonical-invariant output of the `runDense`,
+`runChain`, `runPresentation`, and `runInvariantFactors` surfaces. The tall,
+wide, rank-deficient, chain-deficient, and wide-presentation registrations are
+controlled geometry variants of that same `snf` operation rather than new
+public operations; FLINT accepts the rectangular variants, while PARI
+`matsnf` does not, so the two-comparator ratio ladder stays on the honest
+square common domain and the geometry variants retain scientific scaling and
+oracle coverage. `runDiagonal` and `runDiagonalGeneral` answer an internal
+routing question on identical input; FLINT/PARI expose only general Smith form,
+not a separately callable diagonal fast path, so the route-to-route comparison
+is `no-comparable-surface-in-named-comparator`. The same declaration applies
+to `runRank` because neither tool exposes the projection as a callable unit,
+and to `runDiagonalData`, `snfData`, their transforms and inverses,
+`smithBasis`, `abelianStructure`, `isSNFShape`, and `snfCert` because neither
+named tool emits or checks those executable data. These surfaces are checked
+independently in Lean rather than timed against a ceremonial external
+substitute. FLINT and PARI comparison is canonical invariant data only.
 
 **Comparators.** FLINT `fmpz_mat_snf` through python-flint,
 `informational`. FLINT's default dispatch includes algorithms not

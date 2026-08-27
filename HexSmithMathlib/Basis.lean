@@ -59,6 +59,8 @@ noncomputable def ambientBasis (A : Hex.Matrix Int n m) :
     Basis (Fin m) ℤ (Fin m → ℤ) :=
   (Pi.basisFun ℤ (Fin m)).map (rightEquiv A)
 
+/-- The ambient basis vector is the corresponding row of the executable right
+inverse. -/
 @[simp]
 theorem ambientBasis_apply (A : Hex.Matrix Int n m) (i : Fin m) :
     ambientBasis A i =
@@ -79,6 +81,8 @@ def relationVector (A : Hex.Matrix Int n m) (i : Fin (Hex.Matrix.snfRank A)) :
   exact (Hex.Matrix.smithBasis_memLattice_iff A v).1
     (Hex.Matrix.row_memLattice (Hex.Matrix.smithBasis A) i)
 
+/-- Each relation-basis vector is its invariant factor times the corresponding
+ambient Smith-basis vector. -/
 theorem relationVector_eq (A : Hex.Matrix Int n m)
     (i : Fin (Hex.Matrix.snfRank A)) :
     (relationVector A i : Fin m → ℤ) =
@@ -131,6 +135,7 @@ theorem relationVector_eq (A : Hex.Matrix Int n m)
   rw [Vector.getElem_smul]
   rfl
 
+/-- The executable relation vectors are linearly independent. -/
 theorem relationVector_independent (A : Hex.Matrix Int n m) :
     LinearIndependent ℤ (relationVector A) := by
   apply LinearIndependent.of_comp (rowSpan A).subtype
@@ -150,6 +155,7 @@ theorem relationVector_independent (A : Hex.Matrix Int n m) :
   exact (mul_eq_zero.mp (hz i)).resolve_right
     (Int.ne_of_gt (Hex.Matrix.invariantFactors_pos A i))
 
+/-- The executable relation vectors span the original row submodule. -/
 theorem relationVector_spans (A : Hex.Matrix Int n m) :
     ⊤ ≤ Submodule.span ℤ (Set.range (relationVector A)) := by
   rw [top_le_iff, span_range_eq_top_iff_surjective_fintypeLinearCombination]
@@ -190,6 +196,8 @@ noncomputable def relationBasis (A : Hex.Matrix Int n m) :
     Basis (Fin (Hex.Matrix.snfRank A)) ℤ (rowSpan A) :=
   Basis.mk (relationVector_independent A) (relationVector_spans A)
 
+/-- The constructed relation basis evaluates to the executable relation
+vector. -/
 @[simp]
 theorem relationBasis_apply (A : Hex.Matrix Int n m)
     (i : Fin (Hex.Matrix.snfRank A)) :
@@ -211,6 +219,7 @@ noncomputable def smithNormalForm (A : Hex.Matrix Int n m) :
     rw [relationBasis_apply, relationVector_eq]
     rfl
 
+/-- Mathlib's Smith coefficients are the executable invariant factors. -/
 @[simp]
 theorem smithNormalForm_a (A : Hex.Matrix Int n m)
     (i : Fin (Hex.Matrix.snfRank A)) :

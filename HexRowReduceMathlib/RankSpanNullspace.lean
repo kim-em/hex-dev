@@ -120,7 +120,7 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
 /-- Every row of the computed echelon form lies in the row span of the original
 matrix `M`: row reduction does not enlarge the span. One inclusion of the
 "echelon rows span the same subspace as `M`" equivalence. -/
-theorem rowReduce_echelon_row_mem_span [Field R] [DecidableEq R]
+theorem rowReduce_echelon_row_mem_span [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) (i : Fin n) :
     vectorEquiv (Hex.Matrix.row D.echelon i) ∈

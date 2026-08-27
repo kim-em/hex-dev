@@ -19,10 +19,13 @@ namespace HexSmithMathlib
 open Module
 open scoped DirectSum
 
+/-- Cyclic quotient associated to one executable invariant factor. -/
 abbrev cyclic (A : Hex.Matrix Int n m)
     (i : Fin (Hex.Matrix.snfRank A)) :=
   ℤ ⧸ Ideal.span ({(Hex.Matrix.invariantFactors A)[i]} : Set ℤ)
 
+/-- Project ambient coordinates onto the free coordinates beyond the Smith
+rank. -/
 noncomputable def freeProjection (A : Hex.Matrix Int n m) :
     (Fin m → ℤ) →ₗ[ℤ] (Fin (m - Hex.Matrix.snfRank A) → ℤ) :=
   LinearMap.pi fun i =>
@@ -31,6 +34,7 @@ noncomputable def freeProjection (A : Hex.Matrix Int n m) :
         have := Hex.Matrix.snfRank_le_m A
         omega⟩
 
+/-- Project ambient coordinates into the family of cyclic torsion quotients. -/
 noncomputable def torsionProjectionFun (A : Hex.Matrix Int n m) :
     (Fin m → ℤ) →ₗ[ℤ] ((i : Fin (Hex.Matrix.snfRank A)) → cyclic A i) :=
   LinearMap.pi fun i =>
@@ -38,11 +42,14 @@ noncomputable def torsionProjectionFun (A : Hex.Matrix Int n m) :
       ((ambientBasis A).coord
         (Fin.castLE (Hex.Matrix.snfRank_le_m A) i))
 
+/-- Bundle the cyclic-coordinate projection as a finite direct sum. -/
 noncomputable def torsionProjection (A : Hex.Matrix Int n m) :
     (Fin m → ℤ) →ₗ[ℤ] ⨁ i : Fin (Hex.Matrix.snfRank A), cyclic A i :=
   (DirectSum.linearEquivFunOnFintype ℤ _ _).symm.toLinearMap.comp
     (torsionProjectionFun A)
 
+/-- Combined free-and-torsion projection whose kernel is the presented row
+submodule. -/
 noncomputable def presentationMap (A : Hex.Matrix Int n m) :
     (Fin m → ℤ) →ₗ[ℤ]
       (Fin (m - Hex.Matrix.snfRank A) → ℤ) ×
@@ -140,6 +147,7 @@ private theorem mem_rowSpan_iff (A : Hex.Matrix Int n m) (x : Fin m → ℤ) :
       simp only [map_smul, relationBasis_apply, coord_relationVector_tail,
         smul_zero, Finset.sum_const_zero, htail i]
 
+/-- The kernel of the free-and-torsion projection is exactly the row span. -/
 theorem ker_presentationMap (A : Hex.Matrix Int n m) :
     LinearMap.ker (presentationMap A) = rowSpan A := by
   ext x
@@ -181,6 +189,7 @@ theorem ker_presentationMap (A : Hex.Matrix Int n m) :
       rw [Ideal.mem_span_singleton]
       exact hhead i
 
+/-- Every free-and-torsion coordinate tuple has an ambient representative. -/
 theorem presentationMap_surjective (A : Hex.Matrix Int n m) :
     Function.Surjective (presentationMap A) := by
   classical

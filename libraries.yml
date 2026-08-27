@@ -433,7 +433,7 @@ libraries:
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -451,11 +451,11 @@ libraries:
         - name: tall-hermite
           description: tall matrices with many redundant row generators
         - name: unimodular-conjugate
-          description: random unimodular left factors times a known diagonal form
+          description: deterministic full unit-triangular factors times a known diagonal form
   HexSmith:
     deps: [HexHermite]
     mathlib: false
-    done_through: 0
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -618,7 +618,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -672,6 +672,8 @@ libraries:
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: generalized-divisor-sums
+          description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -715,7 +717,7 @@ libraries:
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -728,12 +730,12 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
@@ -748,7 +750,7 @@ libraries:
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexModArithMathlib:
     deps: [HexModArith]
@@ -758,12 +760,12 @@ libraries:
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
@@ -773,17 +775,17 @@ libraries:
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
@@ -801,8 +803,9 @@ libraries:
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
+    proof_probes: [bench/HexBerlekampMathlib/ProofProbe]
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
@@ -831,8 +834,9 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 7
     status: active
+    proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
@@ -843,7 +847,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -867,7 +871,7 @@ libraries:
   HexResultant:
     deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -969,9 +973,13 @@ libraries:
         - name: qadjoin-arithmetic
           description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
         - name: lazy-arithmetic
-          description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
-        - name: exactification
-          description: Factorization-lazy roots of (X^n - 2)(X + 3), so canonicalization always selects among at least two irreducible candidate factors.
+          description: Sum-eliminant construction across the degree-varying family; a canonical end-to-end lazy addition pairing the first root of X^6 - 2 with sqrt(3) at degree product 12; plus the fixed isolation and operation-ball selection components. The archived performance sweep characterises degree products through the studied merge-facing ceiling 20 without retaining an unsupported asymptotic registration.
+        - name: exactification-selection
+          description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
+        - name: exactification-certification
+          description: Degree-n X^n - 2 candidates inside (X^n - 2)(X + 3), with the enclosing root pinned to the candidate, separately exercising exactFactor? certification and public canonicalRep?.
+        - name: exactification-factorization
+          description: End-to-end exactification of a root of a growing product of distinct Eisenstein quadratics, exercising modular factorization, multifactor Hensel lifting, recombination, selection, and canonicalization.
         - name: fixed-field-roots
           description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
         - name: algebraic-poly-roots
@@ -979,7 +987,7 @@ libraries:
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
@@ -1003,12 +1011,12 @@ libraries:
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -1027,7 +1035,7 @@ libraries:
   HexRealRootsMathlib:
     deps: [HexRealRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
   HexRCF:

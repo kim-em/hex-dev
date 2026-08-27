@@ -38,6 +38,39 @@ covering both the magnitude and the sign of the determinant (Hex's row-pivoted
 Bareiss tracks the swap permutation parity; FLINT's multimodular CRT returns the
 signed determinant in the same convention).
 
+### Generic-coefficient regression gate
+
+The generic coefficient implementation retains `bareiss` as an `Int`
+specialization of `bareissWith`. The specialization annotations propagate the
+fixed exact quotient into the inner loop: generated C for the benchmark calls
+`lean_int_div_exact` directly and contains no closure application at the
+division site.
+
+Five-repeat medians on the same deterministic
+`structured-bareiss-determinant` inputs compared this branch with
+`origin/main` (`32ac5850a`). The observed determinant hashes agreed.
+
+| n | `origin/main` | generic branch | branch/base | limit |
+|---:|---:|---:|---:|---:|
+| 256 | 263.939 ms | 148.041 ms | 0.561x | 1.02x |
+| 384 | 825.551 ms | 512.178 ms | 0.620x | 1.02x |
+
+Both required rungs pass the no-regression ceiling.
+
+The SPEC's same-binary A/B comparison measures the retained `bareiss` entry
+against `bareissWith Hex.exactDiv`. Five repeats were pinned to verified-idle
+CPU 2 on `chungus2`; output hashes agreed at both rungs.
+
+| n | direct `Int` specialization | `bareissWith Hex.exactDiv` | generic/direct |
+|---:|---:|---:|---:|
+| 256 | 150.466 ms | 259.076 ms | 1.722x |
+| 384 | 523.082 ms | 919.823 ms | 1.758x |
+
+`Hex.exactDiv` is the guarded quotient derived from ordinary integer division,
+whereas the retained specialization reaches `lean_int_div_exact` directly.
+The A/B result records the material reason the direct-call code-generation
+check is part of the no-regression gate.
+
 ## Comparator Ratios
 
 Input family `structured-bareiss-determinant`, declared complexity `n³`. Hex's

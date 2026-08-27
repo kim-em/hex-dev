@@ -1057,20 +1057,11 @@ private theorem PrefixForm.hnfForm {s : Result α n m}
   · intro i j hij
     simpa only [Result.pivotVector_get] using h.pivots_sorted i j hij
   · intro i row hrow j hj
-    simp only [Result.pivotVector_get] at hj
-    change s.matrix[row][j] = 0
-    rw [← Matrix.getElem_pair_eq_nested]
-    exact h.leading i row hrow j hj
+    simpa only [Result.pivotVector_get] using h.leading i row hrow j hj
   · intro i row hrow
-    rw [Result.pivotVector_get]
-    change 0 < s.matrix[row][s.pivots.get i]
-    rw [← Matrix.getElem_pair_eq_nested]
-    exact h.pivot_pos i row hrow
+    simpa only [Result.pivotVector_get] using h.pivot_pos i row hrow
   · intro i row hrow
-    rw [Result.pivotVector_get]
-    change s.matrix[row][s.pivots.get i] = 0
-    rw [← Matrix.getElem_pair_eq_nested]
-    exact h.below_zero i row hrow
+    simpa only [Result.pivotVector_get] using h.below_zero i row hrow
   · intro row hrow
     apply Vector.ext
     intro col hcol
@@ -1079,15 +1070,10 @@ private theorem PrefixForm.hnfForm {s : Result α n m}
     simpa only [Matrix.getElem_pair_eq_nested] using
       h.zero_prefix row hrow ⟨col, hcol⟩ (by omega)
   · intro i row hrow
-    rw [Result.pivotVector_get]
-    change 0 ≤ s.matrix[row][s.pivots.get i]
-    rw [← Matrix.getElem_pair_eq_nested]
-    exact (h.above_bounds i row hrow).1
+    simpa only [Result.pivotVector_get] using (h.above_bounds i row hrow).1
   · intro i row hrow pivotRow hpivotRow
-    rw [Result.pivotVector_get]
-    change s.matrix[row][s.pivots.get i] < s.matrix[pivotRow][s.pivots.get i]
-    rw [← Matrix.getElem_pair_eq_nested, ← Matrix.getElem_pair_eq_nested]
-    exact (h.above_bounds i row hrow).2 pivotRow hpivotRow
+    simpa only [Result.pivotVector_get] using
+      (h.above_bounds i row hrow).2 pivotRow hpivotRow
 
 private theorem checkedRun_form (ops : Accumulator α n) (A : Matrix Int n m) :
     HNFForm (checkedRun ops A).matrix (checkedRun ops A).pivots.length
@@ -2090,9 +2076,22 @@ def hnfRank (A : Matrix Int n m) : Nat :=
 /-- The nonzero rows of `hnf A`. -/
 @[expose]
 def hnfBasis (A : Matrix Int n m) : Matrix Int (hnfRank A) m :=
-  Matrix.ofFn fun i j =>
-    (hnf A)[(Fin.castLE (Hermite.checkedRun_rank_le
-      (Hermite.formAccumulator n) A) i, j)]
+  let result := Hermite.checkedRun (Hermite.formAccumulator n) A
+  let basis : Matrix Int result.pivots.length m := Matrix.ofFn fun i j =>
+    result.matrix[(Fin.castLE
+      (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i, j)]
+  have hlen : result.pivots.length = hnfRank A := rfl
+  hlen ▸ basis
+
+/-- An entry of the HNF basis is the corresponding entry of the full form. -/
+@[simp] theorem getElem_hnfBasis (A : Matrix Int n m) (i : Fin (hnfRank A))
+    (j : Fin m) :
+    (hnfBasis A)[i][j] =
+      (hnf A)[Fin.castLE
+        (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i][j] := by
+  change Fin (Hermite.checkedRun (Hermite.formAccumulator n) A).pivots.length at i
+  simp only [hnfBasis, hnfRank, hnf, Matrix.getElem_pair_eq_nested]
+  rw [Matrix.getElem_ofFn]
 
 /-- Hermite form with rank, pivot columns, and left transform. -/
 @[expose]
@@ -2215,17 +2214,21 @@ theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
     exact hsorted i j hij
   · intro i row hir
     change (s.matrix.getRow row).get (s.pivotVector.get i) = 0
-    exact hbelow i row hir
+    simpa only [Matrix.getElem_pair_eq_get] using hbelow i row hir
   · intro row hr
     exact hzero row hr
   · intro i j hj
     change (s.matrix.getRow (pivotRow i)).get j = 0
-    exact hleading i (pivotRow i) rfl j hj
+    simpa only [Matrix.getElem_pair_eq_get] using hleading i (pivotRow i) rfl j hj
   · intro i
-    exact hpos i (pivotRow i) rfl
+    change 0 < (s.matrix.getRow (pivotRow i)).get (s.pivotVector.get i)
+    simpa only [Matrix.getElem_pair_eq_get] using hpos i (pivotRow i) rfl
   · intro i row hir
-    exact hnonneg i row hir
+    change 0 ≤ (s.matrix.getRow row).get (s.pivotVector.get i)
+    simpa only [Matrix.getElem_pair_eq_get] using hnonneg i row hir
   · intro i row hir
-    exact hlt i row hir (pivotRow i) rfl
+    change (s.matrix.getRow row).get (s.pivotVector.get i) <
+      (s.matrix.getRow (pivotRow i)).get (s.pivotVector.get i)
+    simpa only [Matrix.getElem_pair_eq_get] using hlt i row hir (pivotRow i) rfl
 
 end Hex.Matrix

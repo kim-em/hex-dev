@@ -39,6 +39,7 @@ have been performed anyway, and small enough that its trial-division primality
 proof is cheap to check in the kernel. -/
 def obstructionPrime : Nat := 67108859
 
+/-- `obstructionPrime` fits the word-arithmetic bounds of `ZMod64`. -/
 instance boundsObstructionPrime : ZMod64.Bounds obstructionPrime where
   pPos := by decide
   pLtR := by decide
@@ -48,6 +49,8 @@ set_option maxRecDepth 4000 in
 theorem obstructionPrime_prime : Hex.Nat.Prime obstructionPrime :=
   Hex.Nat.isPrimeTrial_isPrime (by decide)
 
+/-- `ZMod64` arithmetic modulo `obstructionPrime` is arithmetic in a prime
+field, by `obstructionPrime_prime`. -/
 instance : ZMod64.PrimeModulus obstructionPrime :=
   ZMod64.primeModulusOfPrime obstructionPrime_prime
 
@@ -59,18 +62,17 @@ def obstructionImage (f : ZPoly) : FpPoly obstructionPrime :=
 /-- The recombination target's image in `𝔽_q[X]`, computed once for a whole
 subset-cardinality level rather than once per candidate.
 
-The proof field pins the stored array to the reference reduction, so a traversal
-reading this is interchangeable with one reducing the target at every leaf. -/
-structure TargetImage (target : ZPoly) where
-  /-- The reduced target. -/
-  image : FpPoly obstructionPrime
-  /-- The stored reduction is the reference reduction. -/
-  image_eq : image = obstructionImage target
+The subtype proof pins the stored array to the reference reduction, so a
+traversal reading this is interchangeable with one reducing the target at
+every leaf. -/
+@[expose]
+def TargetImage (target : ZPoly) : Type :=
+  { image : FpPoly obstructionPrime // image = obstructionImage target }
 
 /-- Reduce a recombination target once. -/
 @[expose]
 def targetImage (target : ZPoly) : TargetImage target :=
-  { image := obstructionImage target, image_eq := rfl }
+  ⟨obstructionImage target, rfl⟩
 
 /-- Reference form of the obstruction: the `𝔽_q[X]` remainder of the reduced
 target by the reduced candidate. -/
@@ -87,14 +89,14 @@ long-division pass, which is the only difference from `obstructionRemainder`. -/
 @[expose]
 def obstructs {target : ZPoly} (cached : TargetImage target)
     (candidate : ZPoly) : Bool :=
-  !(FpPoly.modCached cached.image (obstructionImage candidate)).isZero
+  !(FpPoly.modCached cached.val (obstructionImage candidate)).isZero
 
 /-- The optimized obstruction computes the reference remainder. -/
 theorem obstructs_eq {target : ZPoly} (cached : TargetImage target)
     (candidate : ZPoly) :
     obstructs cached candidate = !(obstructionRemainder target candidate).isZero := by
   unfold obstructs obstructionRemainder
-  rw [cached.image_eq, FpPoly.modCached_eq]
+  rw [cached.property, FpPoly.modCached_eq]
 
 /-- Reduction modulo `q` carries integer divisibility into `𝔽_q[X]`, where
 division by the image leaves no remainder.  This is the whole content of the

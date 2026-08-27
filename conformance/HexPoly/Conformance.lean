@@ -14,7 +14,7 @@ Mode: always
 Covered operations:
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
 - basic executable arithmetic (`scale`, `shift`, `add`, `sub`, `mul`, `eval`, `compose`, `derivative`)
-- Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`)
+- Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)
 - integer content helpers (`content`, `primitivePart`)
 - polynomial CRT witness construction (`polyCRT`)
 Covered properties:
@@ -26,8 +26,8 @@ Covered properties:
   small polynomial calculations
 - division fixtures satisfy `quotient * divisor + remainder = dividend`, including exact,
   zero-dividend, and fractional-quotient cases
-- `gcd` and `xgcd` agree on committed fixtures and the returned Bezout coefficients
-  reconstruct the gcd
+- `gcd`, `xgcd`, and monic one-sided extended gcd agree up to the expected
+  normalized representative; the tracked Bezout coefficients reconstruct the gcd
 - `content` times `primitivePart` reconstructs committed integer polynomials
 - `polyCRT` witnesses reduce to both prescribed residues modulo committed coprime monic factors
 Covered edge cases:
@@ -313,6 +313,24 @@ private def crtWitness : DensePoly Rat :=
 #guard
   let r := xgcd ratGcdAdversarialLeft ratGcdAdversarialRight
   r.left * ratGcdAdversarialLeft + r.right * ratGcdAdversarialRight = r.gcd
+
+-- The normalized chain changes the typical gcd representative from
+-- `2(x - 1)` to `x - 1` while preserving the left-cofactor congruence.
+#guard
+  let r := xgcdLeftMonic ratGcdTypicalLeft ratGcdTypicalRight
+  r.gcd = ofCoeffs #[-1, 1] &&
+    (r.left * ratGcdTypicalLeft) % ratGcdTypicalRight =
+      r.gcd % ratGcdTypicalRight
+#guard
+  let r := xgcdLeftMonic ratGcdEdgeLeft ratGcdEdgeRight
+  r.gcd = ratGcdEdgeRight && r.left = 0
+#guard
+  let r := xgcdLeftMonic ratGcdAdversarialLeft ratGcdAdversarialRight
+  r.gcd = ratGcdAdversarialRight && r.left = 0
+-- With a zero right input there is no division step to normalize the left.
+#guard
+  let r := xgcdLeftMonic ratGcdTypicalValue 0
+  r.gcd = ratGcdTypicalValue && r.left = 1
 
 #guard content intContentZero = 0
 #guard content intContentPrimitive = 1

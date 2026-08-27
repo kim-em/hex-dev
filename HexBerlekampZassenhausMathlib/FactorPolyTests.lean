@@ -8,6 +8,7 @@ module
 
 public meta import HexBerlekamp.IrreducibilityElab
 public meta import HexBerlekampZassenhaus.FactorTactic
+public import HexBerlekampZassenhausMathlib
 public meta import HexBerlekampZassenhausMathlib.FactorTactic
 public meta import HexBerlekampZassenhausMathlib.KernelFactorTactic
 public import HexBerlekamp.IrreducibilityElab
@@ -179,6 +180,23 @@ namespace HexBerlekampZassenhausMathlib.FactorPolyTests
 
 open Lean Polynomial
 
+/-! # README quickstart -/
+
+namespace READMEQuickstart
+
+#check HexBerlekampZassenhausMathlib.factorize_product
+#check HexBerlekampZassenhausMathlib.factorize_normalized
+#check HexBerlekampZassenhausMathlib.factorize_unique
+#check Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+
+noncomputable def fac :=
+  factor_poly ((X - 1) ^ 2 * (X ^ 2 + 1) : Polynomial ℤ)
+
+example : Irreducible (X ^ 4 + 8 * X + 12 : Polynomial ℤ) := by
+  irreducibility
+
+end READMEQuickstart
+
 /-! # Elaboration-time evaluation shims for the round-trip tests -/
 
 private meta unsafe def evalZPolyUnsafe (e : Expr) :
@@ -271,6 +289,7 @@ example : Irreducible (HexPolyZMathlib.toPolynomial quadOmega) := by
 example : Irreducible (HexPolyZMathlib.toPolynomial linearThree) := by
   irreducibility
 
+/-- Multi-prime inert-block certificate on the transported statement. -/
 theorem cubicInert_irreducible :
     Irreducible (HexPolyZMathlib.toPolynomial cubicInert) := by
   irreducibility
@@ -289,6 +308,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cubicInert_irreducible' dep
 
 /-! # `Polynomial ℤ` inputs (integration-only registration test) -/
 
+/-- Term-mode `irreducibility` on a parsed `Polynomial ℤ` input. -/
 theorem sqrt2_irred : Irreducible ((X : Polynomial ℤ) ^ 2 - 2) :=
   irreducibility ((X : Polynomial ℤ) ^ 2 - 2)
 
@@ -307,11 +327,12 @@ example : True := by
   irreducibility h : (X ^ 2 + X + 1 : Polynomial ℤ)
   exact True.intro
 
--- Term form of `factor_poly`, with negation, `C` coefficients, and content.
+/-- Term form of `factor_poly` on a parsed `Polynomial ℤ` input. -/
 noncomputable def facSqrt2 := factor_poly (X ^ 2 - 2 : Polynomial ℤ)
 
 example : facSqrt2.factors.length = 1 := rfl
 
+/-- Exercises negation, `C` coefficients, and content extraction. -/
 noncomputable def facSplit :=
   factor_poly (-(X - 1) * (X + 1) * Polynomial.C 6 : Polynomial ℤ)
 
@@ -351,6 +372,7 @@ and this extension certifies it. -/
 witness exists, only the multi-prime degree obstruction. -/
 def quarticA4 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[12, 8, 0, 0, 1]
 
+/-- The decline-to-multi-prime handover on the free-layer statement. -/
 theorem quarticA4_irred : Hex.ZPoly.Irreducible quarticA4 :=
   irreducibility quarticA4
 
@@ -369,8 +391,8 @@ example : Hex.ZPoly.Irreducible quarticA4 := by irreducibility
 example : Irreducible (HexPolyZMathlib.toPolynomial quarticA4) := by
   irreducibility
 
--- `factor_poly` on the same input: the `Hex.ZPoly.Factored` cover mixes in
--- the multi-prime certificate.
+/-- `factor_poly` on the same input: the `Hex.ZPoly.Factored` cover mixes in
+the multi-prime certificate. -/
 noncomputable def quarticA4_factored : Hex.ZPoly.Factored quarticA4 :=
   factor_poly quarticA4
 
@@ -429,8 +451,10 @@ single-prime witness nor the multi-prime degree obstruction applies. The
 free layer's Eisenstein-after-shift search certifies it (shift `1`,
 prime `2`) before either correspondence certificate language is consulted. -/
 
+/-- `x⁴ + 1`, certified by the free layer's Eisenstein-after-shift search. -/
 def x4p1 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 
+/-- The Eisenstein handover on the free-layer statement. -/
 theorem x4p1_irred : Hex.ZPoly.Irreducible x4p1 := irreducibility x4p1
 
 /--
@@ -481,6 +505,7 @@ def cyc8 : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
 /-- The Swinnerton-Dyer quartic `x⁴ - 10x² + 1`. -/
 def swinDyer : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
 
+/-- Bang-form pass-through on an input the certificate pipeline serves. -/
 theorem cyc8_irred : Hex.ZPoly.Irreducible cyc8 := irreducibility! cyc8
 
 /--
@@ -489,11 +514,12 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cyc8_irred' depends on axio
 #guard_msgs in
 #print axioms cyc8_irred
 
--- Goal modes: free-layer, transported, and parsed `Polynomial ℤ`.
+/-- Goal-mode kernel-decide fallback on the free-layer statement. -/
 theorem swinDyer_irred : Hex.ZPoly.Irreducible swinDyer := by irreducibility!
 
 example : Irreducible (HexPolyZMathlib.toPolynomial cyc8) := by irreducibility!
 
+/-- Kernel-decide fallback on a parsed `Polynomial ℤ` input. -/
 theorem sd_poly_irred : Irreducible (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ) :=
   irreducibility! (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ)
 
@@ -521,11 +547,12 @@ example : True := by
   irreducibility! h : swinDyer
   exact True.intro
 
--- `factor_poly!` on a product with a balanced factor: the plain pipeline
--- declines on the `x⁴+1` factor, so the fallback replays the factorizer in
--- the kernel once per factor.
+/-- A product with a balanced factor: the plain pipeline declines on the
+`x⁴+1` factor, so the fallback replays the factorizer in the kernel once per
+factor. -/
 def cyc8Split : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-1, 1] * cyc8
 
+/-- `factor_poly!` through the per-factor kernel replay. -/
 noncomputable def cyc8Split_factored : Hex.ZPoly.Factored cyc8Split :=
   factor_poly! cyc8Split
 
@@ -539,7 +566,7 @@ info: 'HexBerlekampZassenhausMathlib.FactorPolyTests.cyc8Split_factored' depends
 
 example : cyc8Split_factored.factors.length = 2 := rfl
 
--- `factor_poly!` term + tactic on `Polynomial ℤ`.
+/-- `factor_poly!` term form on a parsed `Polynomial ℤ` input. -/
 noncomputable def facBangP :=
   factor_poly! ((X - 1) * (X ^ 4 + 1) : Polynomial ℤ)
 
@@ -561,6 +588,8 @@ error: irreducibility!: the kernel factorizer replay is capped at dense size 13 
 example := irreducibility!
   (Hex.DensePoly.ofCoeffs #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] : Hex.ZPoly)
 
+/-- The cyclotomic-product regression `Φ₅ · Φ₇`, checked against its exact
+factor list. -/
 noncomputable def cyclo57 :=
   factor_poly (X^10+2*X^9+3*X^8+4*X^7+5*X^6+5*X^5+5*X^4+4*X^3+3*X^2+2*X+1 : Polynomial ℤ)
 

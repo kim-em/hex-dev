@@ -1,0 +1,15 @@
+HexSmithMathlib Phase 3 conformance was reviewed. The library is a proof-only
+correspondence layer with no executable reifier, certificate checker, tactic,
+or other runtime surface, so the absence of a dedicated Conformance module and
+HexConformance glob is intentional.
+
+The executable `smithBasis` relation basis transported by `smithNormalForm` is
+checked against the independent Hermite lattice-membership and rank paths in
+conformance/HexSmith/Conformance.lean. The ambient basis comes from the
+recorded right inverse, covered by the general and diagonal transform/inverse
+guards. Its chain theorem is backed by that module's invariant-factor and
+shape guards. The rank, invariant factors, and free/torsion data transported by
+`quotientEquiv` are covered there on empty, rectangular, rank-deficient, and
+abelian-presentation inputs. Canonical Smith matrices are independently
+compared with python-flint through
+scripts/oracle/matrix_flint.py; non-unique transforms are checked in Lean.

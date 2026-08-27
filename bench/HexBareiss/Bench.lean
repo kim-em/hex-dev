@@ -79,6 +79,13 @@ def runBareissDet (input : DetInput) : Int :=
   let M : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.entries
   Hex.Matrix.bareiss M
 
+/-- Internal quotient-path comparison: run the same generic Bareiss algorithm
+through the guarded, `Div`-derived exact quotient. This is not an external
+comparator and does not replace the `Int` benchmark above. -/
+def runBareissGenericDet (input : DetInput) : Int :=
+  let M : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.entries
+  Hex.Matrix.bareissWith Hex.exactDiv M
+
 /-- Encode a row-major `n × n` integer matrix fixture as the JSON 2D
 array shape FLINT's `fmpz_mat` family accepts (`rows: [[…], …]`). -/
 def flatToFlintRows (n : Nat) (entries : Array Int) : Lean.Json :=
@@ -106,6 +113,8 @@ prepared input so wall-times are comparable in the same harness. -/
 
 def runBareissDetAt (n : Nat) : Unit → IO Int := fun _ =>
   return runBareissDet (prepDetInput n)
+def runBareissGenericDetAt (n : Nat) : Unit → IO Int := fun _ =>
+  return runBareissGenericDet (prepDetInput n)
 def runFlintBareissDetAt (n : Nat) : Unit → IO Int := fun _ =>
   runFlintBareissDet (prepDetInput n)
 
@@ -135,10 +144,12 @@ def runFlintBareissDet128 : Unit → IO Int := runFlintBareissDetAt 128
 def runBareissDet192 : Unit → IO Int := runBareissDetAt 192
 def runFlintBareissDet192 : Unit → IO Int := runFlintBareissDetAt 192
 def runBareissDet256 : Unit → IO Int := runBareissDetAt 256
+def runBareissGenericDet256 : Unit → IO Int := runBareissGenericDetAt 256
 def runFlintBareissDet256 : Unit → IO Int := runFlintBareissDetAt 256
 def runBareissDet320 : Unit → IO Int := runBareissDetAt 320
 def runFlintBareissDet320 : Unit → IO Int := runFlintBareissDetAt 320
 def runBareissDet384 : Unit → IO Int := runBareissDetAt 384
+def runBareissGenericDet384 : Unit → IO Int := runBareissGenericDetAt 384
 def runFlintBareissDet384 : Unit → IO Int := runFlintBareissDetAt 384
 def runBareissDet512 : Unit → IO Int := runBareissDetAt 512
 def runFlintBareissDet512 : Unit → IO Int := runFlintBareissDetAt 512
@@ -184,10 +195,12 @@ setup_fixed_benchmark runFlintBareissDet128 where { repeats := 5, maxSecondsPerC
 setup_fixed_benchmark runBareissDet192 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runFlintBareissDet192 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runBareissDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runBareissGenericDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runFlintBareissDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
 setup_fixed_benchmark runBareissDet320 where { repeats := 5, maxSecondsPerCall := 8.0 }
 setup_fixed_benchmark runFlintBareissDet320 where { repeats := 5, maxSecondsPerCall := 8.0 }
 setup_fixed_benchmark runBareissDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
+setup_fixed_benchmark runBareissGenericDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
 setup_fixed_benchmark runFlintBareissDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
 setup_fixed_benchmark runBareissDet512 where { repeats := 5, maxSecondsPerCall := 25.0 }
 setup_fixed_benchmark runFlintBareissDet512 where { repeats := 5, maxSecondsPerCall := 25.0 }

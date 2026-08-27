@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/FactorTacticTests.lean",
+ "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
+ "current_blob": "84ee69d7ff6520879b20dbf8644b0e27b8c4b3e5",
+ "reason": "Removes a test module's now-redundant local Bounds 2 fixture. Test module only; nothing in the benchmarked executable graph changes."
+}
