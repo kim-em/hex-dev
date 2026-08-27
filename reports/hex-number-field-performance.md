@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 9 controlled parametric targets and 30 fixed targets (39 total).
+registers 9 controlled parametric targets and 34 fixed targets (43 total).
 The adjacent comments in the driver derive each model from the work performed
 inside the timed function; the models below are copied from the registration
 sites.
@@ -29,12 +29,12 @@ sites.
 | `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on a dense degree-`n` polynomial with one `√2` coefficient | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 
-The 30 fixed registrations are nine canonical API cases (`runFixedMul`,
+The 34 fixed registrations are nine canonical API cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
-`runSelectAdd`, `runLazyAdd`, `runExact`, `runRoots`), twenty Lean/PARI
+`runSelectAdd`, `runLazyAdd`, `runExact`, `runRoots`), twenty-four Lean/PARI
 comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
-`n = 4, 6, 8, 12, 16` and `runQAdjoinInvPair` / `runPariPolmodInv` at
-`n = 4, 6, 8, 10, 12`), and one external-driver overhead probe
+`n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
+`n = 4, 6, 8, 10, 12, 16`), and one external-driver overhead probe
 (`runPariPolmodOverhead`).
 
 ### Fixture control
@@ -44,12 +44,10 @@ Every parametric fixture here — the arithmetic operands, and the
 ladders — builds coefficient `i` from one helper, `denseRatCoeff`, whose
 numerator cycles modulo 11 and denominator modulo 6. The reduced common
 denominator of a degree-`n` element therefore stays under six bits at every
-degree measured (verified at `n` = 8, 16, 32, 48, 64 for all salts in use),
-and the coefficient pattern has period 66, above the largest degree any rung
-of those ladders reaches (24), so no rung sees a repeat. (The
-`AlgebraicPoly` ladders run to 128 coefficients, where the pattern does
-repeat; there the parameter is the coefficient *count*, and repetition does
-not change any coefficient's height, which is what the models depend on.)
+degree measured. The coefficient pattern has period 66, so it repeats in the
+degree-128 arithmetic rungs and the 128-coefficient `AlgebraicPoly` rungs;
+repetition does not change any coefficient's height, which is what these
+controlled one-parameter models depend on.
 
 Holding height fixed is what makes these one-parameter ladders. An earlier
 form built coefficient `i` as `±(i + salt + 1) / (i + 2)`. Because
@@ -64,25 +62,21 @@ every rational operation single-limb, since the convolution accumulators grow
 by `O(log n)` bits. The declared `n^2` is a coefficient-operation count over
 the measured domain, where those accumulators stay within a machine word.
 
-### A provisional range, flagged
+### Scientific arithmetic ranges
 
-The arithmetic and inversion ladders stop where their **fixture** becomes
-intractable, not where their operation does. `prepFieldInput` and
-`prepInvInput` build a certified root of `X^n - 2` by isolating all `n`
-complex roots at separation depth and taking the first. Measured on the idle
-host: 1.3 s at `n = 12`, 4.9 s at `n = 16`, 14.2 s at `n = 20`, 30.8 s at
-`n = 24`, 61 s at `n = 28`, and over eleven minutes at `n = 32`. The timed
-calls are microseconds.
+The arithmetic fixtures now certify only the selected positive real root of
+`X^n - 2`. Integer Newton iteration supplies an untrusted Mahler-precision
+dyadic approximation, and HexRoots' local `isolateOne?` entry point checks the
+single atom directly. The certificate still says that its region contains
+exactly one simple root; it no longer constructs and pairwise-separates the
+other `n - 1` roots.
 
-`SPEC/benchmarking.md` §Anti-patterns is explicit that trimming a parameter
-range to fit a wallclock is not a repaired registration unless the underlying
-problem is named. It is named:
-https://github.com/kim-em/hex-dev/issues/9727 — bench-found: the QAdjoin
-arithmetic fixture, not the timed operation, caps its ladder at n = 24. Until
-that is fixed, `n = 24` for arithmetic and `n = 20` for inversion should be
-read as the largest reachable rungs rather than as scientific ceilings chosen
-on their merits. The verdicts recorded below hold over the range measured;
-they simply do not extend past it.
+The addition and multiplication ladders consequently cover six doublings,
+`n = 4, 8, 16, 32, 64, 128`. Degree 128 is a common controlled domain whose
+timed multiplication remains in the millisecond regime. The inversion ladder
+covers `n = 4, 8, 16, 32, 48, 64, 96`; its ceiling is set by the timed extended
+gcd, which takes about 3.25 s there and remains below the 10 s per-call
+boundary. These are scientific operation ranges, not fixture-wallclock caps.
 
 ### Track assignment re-audit
 
@@ -130,9 +124,9 @@ runs below give the measurements; this table says which one counts.
 
 | target | verdict | slope | from |
 |---|---|---:|---|
-| `runQAdjoinAddLadder` | **consistent** | -0.054 | quiet |
-| `runQAdjoinMulLadder` | **consistent** | -0.009 | quiet |
-| `runQAdjoinInvLadder` | inconclusive, slower | **+1.038** | quiet |
+| `runQAdjoinAddLadder` | **consistent** | -0.067 | single-root |
+| `runQAdjoinMulLadder` | **consistent** | -0.005 | single-root |
+| `runQAdjoinInvLadder` | inconclusive, slower | **+1.790** | single-root |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
 | `runExactLadder` | inconclusive, faster | — | quiet |
@@ -145,9 +139,10 @@ each with a filed issue; none of them is a measurement artefact, and §Profile
 shows that three are cases where the declared model names a phase that is not
 where the time goes.
 
-Four parametric runs are committed: one full-suite pass, two idle-host
+Five parametric runs are committed: one full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
-fixture-corrected run that supersedes three of those. §Artefact traceability
+fixture-corrected run plus the single-root run that supersede six of those.
+§Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
 which.
 
@@ -204,6 +199,29 @@ Quiet run, worst per-rung spread now at or below 5.5%:
 `runQAdjoinMulLadder`'s full-suite verdict was `inconclusive` at `+0.222`
 solely because of the load spike at `n = 24`; on the idle host its `C` is flat
 to 1.3% across all six rungs.
+
+The **single-root run** refreshes all three fixed-field arithmetic ladders
+after their fixture and scientific domains changed:
+
+```sh
+.lake/build/bin/hexnumberfield_bench run \
+  Hex.NumberFieldBench.runQAdjoinAddLadder \
+  Hex.NumberFieldBench.runQAdjoinMulLadder \
+  Hex.NumberFieldBench.runQAdjoinInvLadder \
+  --outer-trials 3 \
+  --export-file reports/bench-results/hex-number-field-single-root.json
+```
+
+| target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
+|---|---|---|---:|---|---:|
+| `runQAdjoinAddLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.067 | 95.97..113.61 | 2.38% |
+| `runQAdjoinMulLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.005 | 459.92..471.40 | 22.55% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive | **+1.790** | 597.2..50344.2 | 16.02% |
+
+Addition remains linear through 128 and multiplication remains quadratic
+through 128. Inversion's monotone normalized cost grows even more clearly over
+the repaired range: the extended ladder strengthens the existing #9721
+finding rather than attributing the former ceiling to its fixture.
 
 A second quiet run covers the three ladders too expensive to fit in the same
 window, at three outer trials, on the idle host:
@@ -314,8 +332,9 @@ them.
 
 ### Fixed registrations
 
-All 30 fixed registrations agree across repeats, and all ten with a declared
-`expectedHash` match it. Medians from the committed
+All 30 fixed registrations in the committed comparator export agree across
+repeats, and all ten with a declared `expectedHash` match it. Medians from the
+committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json):
 
 | fixed target | median | observed hash | expected |
@@ -376,17 +395,15 @@ PARI-side polynomial construction charged to PARI.
 **Eligible range and rung density.** `SPEC/benchmarking.md` warns that a
 doubling-only schedule usually does not give enough eligible rungs to read a
 trend, and both families here cross the ratio 1 inside the measured range —
-a claim three points cannot support. The schedules are therefore densified
-with in-fill rungs: multiplication at `n = 4, 6, 8, 12, 16` and inversion at
-`n = 4, 6, 8, 10, 12`, each bracketing its crossover.
+a claim three points cannot support. The registered schedules are therefore
+densified with in-fill rungs: multiplication at `n = 4, 6, 8, 12, 16, 20`
+and inversion at `n = 4, 6, 8, 10, 12, 16`, each bracketing its crossover.
 
-They stop there because `verify` is the CI smoke gate and builds every rung's
-fixture. Rungs at `n = 20` and `n = 16` cost 14.2 s and 4.9 s of certified-root
-construction each, which took this exe's share of the repo-wide bench-verify
-budget to 54 s and the run to the 360 s hard cap exactly. Trimming them is a
-smoke-cost reduction, which `SPEC/benchmarking.md` §Anti-patterns permits, not
-a scientific-parameter reduction: these rungs carry no verdict. Restoring them
-is part of https://github.com/kim-em/hex-dev/issues/9727.
+The local single-root fixture removes the former smoke-cost constraint. The
+registered comparison domains now restore multiplication at `n = 20` and
+inversion at `n = 16`, giving six rungs in each family. The committed table
+below records the earlier five-rung comparator run; the added endpoints retain
+the same paired inputs and result-hash agreement checks.
 
 Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 1 means Hex is faster.
@@ -516,9 +533,9 @@ calibration, confidence and the ±5 ms sensitivity check:
 | `algebraic-poly-roots` | `runAlgebraicRootsLadder` n=6 | 5,965 / 9 | 0.633 ms | allocation 53.80%, GMP 30.76%, Lean runtime 12.04%, own code 0.54% | 97.14% |
 
 The rejected counts are the untimed fixture preludes, which the filtering
-postprocessor excludes by construction. `runQAdjoinMulLadder` rejects more
-samples than it retains because building its certified root of `X^16 - 2`
-costs 4.9 s against a 5 s timed region.
+postprocessor excludes by construction. The arithmetic profile predates the
+single-root repair, so its rejected samples include the former 4.9 s
+all-roots fixture; that prelude is outside the retained timed region.
 
 "Own code" is under 2% everywhere because almost every leaf is a GMP entry
 point, a `malloc`/`free`, or a Lean runtime primitive reached from
@@ -621,6 +638,7 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
 | [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
+| [`bench-results/hex-number-field-single-root.json`](bench-results/hex-number-field-single-root.json) | `9cf6087f3`, clean tree | idle | `40fe59b58c62918eec4c0eaa81684a4095f63283bc2a1c2a4fefcd13acd56c92` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -628,7 +646,9 @@ only in two comments, and `9ae125c67` only changes comparator registrations
 and their smoke cost. The
 fixture-corrected run is the exception and is the reason it exists — it
 supersedes the earlier `runAddEliminantLadder`, `runCommonPresentationLadder`
-and `runAlgebraicRootsLadder` numbers, and only those three. Four of the five
+and `runAlgebraicRootsLadder` numbers, and only those three. The single-root
+run supersedes the earlier three fixed-field arithmetic ladders after their
+domains expanded. Four of the five
 profiles were taken from the `066f6fc29` binary; the `algebraic-poly-roots`
 profile was re-taken after the fixture correction. Toolchain throughout:
 Lean 4.34.0-rc2, LeanBench 0.1.0, samply 0.13.1, cypari2 driving PARI through
@@ -646,8 +666,8 @@ not pass, each tracked:
 
 - **`QAdjoin.inv` grows faster than any declared model absorbs.**
   `runQAdjoinInvLadder` returns the slower-than-declared direction at
-  `beta = +1.038` on the idle host with monotone `C` and a worst spread of
-  1.8%, and replaying the shipped `DensePoly.xgcdLeft` recursion shows its
+  `beta = +1.790` through degree 96 on the idle host with monotone `C`, and
+  replaying the shipped `DensePoly.xgcdLeft` recursion shows its
   rational entries reaching about `n^2.1` bits where a monic-normalised chain
   stays near the `n log n` Hadamard bound.
   https://github.com/kim-em/hex-dev/issues/9721 — bench-found: QAdjoin.inv's
@@ -683,9 +703,3 @@ not pass, each tracked:
   https://github.com/kim-em/hex-dev/issues/9728 — bench-found:
   AlgebraicPoly.roots? runs about n^4.3 against a declared n^5 log^2 isolation
   envelope.
-- **The arithmetic and inversion ladders stop at a fixture-imposed ceiling.**
-  `n = 24` and `n = 20` are the largest rungs whose certified-root fixture
-  completes in a sane wallclock, not ceilings chosen on the operations'
-  merits, so the evidence does not extend past them.
-  https://github.com/kim-em/hex-dev/issues/9727 — bench-found: the QAdjoin
-  arithmetic fixture, not the timed operation, caps its ladder at n = 24.
