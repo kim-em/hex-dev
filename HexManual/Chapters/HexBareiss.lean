@@ -13,7 +13,7 @@ open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexBareiss: the fraction-free integer determinant" =>
+#doc (Manual) "HexBareiss: the fraction-free determinant" =>
 %%%
 tag := "hex-bareiss"
 %%%
@@ -27,11 +27,12 @@ Released as [hex-bareiss](https://github.com/leanprover/hex-bareiss), with
 the Mathlib correspondence in
 [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib).
 
-`HexBareiss` is the executable fraction-free Bareiss determinant of a
-dense integer matrix: a Gaussian elimination in which every intermediate
-entry stays an exact integer because each update divides *exactly* by
-the previous pivot. It runs in cubic time and never leaves the integers,
-so it avoids both the factorial blow-up of the Leibniz
+`HexBareiss` is an executable fraction-free Bareiss determinant over a
+coefficient type with a caller-supplied exact quotient. Its retained integer
+entry point specializes that one implementation to a direct GMP-backed exact
+division call. On integer matrices every intermediate entry stays integral
+because each update divides exactly by the previous pivot. The algorithm runs
+in cubic time and avoids both the factorial blow-up of the Leibniz
 {ref "hex-determinant"}[determinant] and the denominators of ordinary
 Gaussian elimination. It builds on {ref "hex-matrix"}[HexMatrix] and the
 {ref "hex-determinant"}[HexDeterminant] Leibniz determinant (the
@@ -68,11 +69,18 @@ matrix with the swap sign applied.
 tag := "hex-bareiss-entry"
 %%%
 
-The public entry points run the row-pivoting elimination.
+The generic public entry points {name}`Hex.Matrix.bareissDataWith` and
+{name}`Hex.Matrix.bareissWith` run the row-pivoting elimination with an explicit
+quotient operation. The traditional integer entry points specialize them to
+the native exact quotient.
 {name}`Hex.Matrix.bareissData` returns the full record.
 {name}`Hex.Matrix.bareiss` returns just the integer determinant. The
 no-pivot variants skip the pivot search, for inputs whose leading pivots
 are already nonzero.
+
+{docstring Hex.Matrix.bareissDataWith}
+
+{docstring Hex.Matrix.bareissWith}
 
 {docstring Hex.Matrix.bareissData}
 
@@ -82,10 +90,11 @@ are already nonzero.
 
 {docstring Hex.Matrix.bareissNoPivot}
 
-The division at each step is `Int.divExact` (a GMP-backed
-`mpz_divexact`), which is always exact and carries its divisibility
-proof. The bordered minors are the intermediate determinants the
-correctness proof uses as its elimination invariant.
+For integers, the quotient specializes to the GMP-backed
+`lean_int_div_exact` primitive. The executable loop does not carry a
+divisibility proof; the Mathlib correspondence proves exactness from the
+quotient cancellation law. The bordered minors are the intermediate
+determinants used as the elimination invariant.
 
 {docstring Hex.Matrix.borderedMinor}
 
@@ -152,10 +161,21 @@ tag := "hex-bareiss-mathlib"
 %%%
 
 Everything above is executable and Mathlib-free. `HexBareissMathlib`
-connects it to Mathlib. Its headline theorem is that the fraction-free
-Bareiss determinant equals the Leibniz {ref "hex-determinant"}[determinant]
-on integer square matrices, so the cubic-time route and the
-specification agree outright.
+connects it to Mathlib. The final public umbrella exposes the correspondence
+over any commutative coefficient ring supplied with an exact quotient. The
+single law says that quotient cancels a known nonzero right factor; no public
+domain or nontriviality hypothesis is added.
+
+{docstring HexMatrixMathlib.bareissWith_eq_det}
+
+The matching theorem against Mathlib's determinant is available directly,
+without unfolding the generic loop or relying on definitional equality.
+
+{docstring HexMatrixMathlib.bareissWith_eq_mathlib_det}
+
+For integer matrices, {name}`Hex.Matrix.bareiss` remains the specialization
+using the native exact-division primitive. Its original theorem names and
+premise-free statements remain the convenient compatibility surface.
 
 {docstring HexMatrixMathlib.bareiss_eq_det}
 

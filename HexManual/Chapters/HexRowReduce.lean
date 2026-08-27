@@ -112,6 +112,33 @@ has a completeness theorem.
 
 {docstring Hex.Matrix.nullspace_complete}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-row-reduce-mathlib"
+%%%
+
+`HexRowReduce` computes with the length-indexed {name}`Hex.Matrix` type and
+stays Mathlib-free. The public `HexRowReduceMathlib` umbrella transports its
+certified output through {name}`HexMatrixMathlib.matrixEquiv` and
+{name}`HexMatrixMathlib.vectorEquiv`; users reason with the named theorems
+below and need not unfold either equivalence or the elimination loop.
+
+The computed rank is exactly Mathlib's matrix rank.
+
+{docstring HexMatrixMathlib.rank_eq}
+
+The Boolean span test characterizes membership in the Mathlib span of the
+original rows, while the computed nullspace spans precisely the kernel of
+Mathlib's `mulVec` linear map.
+
+{docstring HexMatrixMathlib.spanContains_iff_mem_span}
+
+{docstring HexMatrixMathlib.nullspace_span_eq_ker}
+
+These results consume {name}`Hex.Matrix.IsRowReduced`, the certificate returned
+by the executable driver. They do not depend on accidental definitional
+equality between Hex and Mathlib matrices.
+
 # Recipes
 %%%
 tag := "hex-row-reduce-recipes"

@@ -125,7 +125,7 @@ noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k 
 /-- Read a diagonal entry from a Bareiss elimination matrix as a natural
 determinant value. -/
 @[expose]
-def bareissDiagNat (data : Matrix.BareissData n) (r : Nat) (hr : r < n) : Nat :=
+def bareissDiagNat (data : Matrix.BareissData Int n) (r : Nat) (hr : r < n) : Nat :=
   let i : Fin n := ⟨r, hr⟩
   (data.matrix[(i, i)]).toNat
 
@@ -134,7 +134,7 @@ elimination pass over the full Gram matrix. This helper is only used for Gram
 matrices: once a leading row prefix is singular, every larger leading prefix is
 also singular, so all later leading determinants are zero. -/
 @[expose]
-def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Nat :=
+def gramDetVecEntry (data : Matrix.BareissData Int n) (k : Fin (n + 1)) : Nat :=
   match hk : k.val with
   | 0 => 1
   | r + 1 =>
@@ -149,7 +149,7 @@ def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Nat :=
 /-- After a no-pivot Bareiss pass records a singular step, every later
 `gramDetVecEntry` slot is the encoded zero tail rather than a diagonal read. -/
 private theorem gramDetVecEntry_eq_zero_of_singularStep_lt
-    (data : Matrix.BareissData n) (s r : Nat) (hr : r < n)
+    (data : Matrix.BareissData Int n) (s r : Nat) (hr : r < n)
     (hsing : data.singularStep = some s) (hs : s < r + 1) :
     gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ = 0 := by
   simp [gramDetVecEntry, hsing, hs]

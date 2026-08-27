@@ -215,7 +215,7 @@ private theorem matrix_diag_at_fin_eq {n : Nat} (M : Matrix Int n n)
 that step persists into any longer pass. The longer pass's recorded singular
 index therefore matches the earlier one. -/
 private theorem noPivotLoop_extends_singularStep
-    {n : Nat} (state : Matrix.BareissState n) (a b : Nat) (k : Fin n)
+    {n : Nat} (state : Matrix.BareissState Int n) (a b : Nat) (k : Fin n)
     (h_sing_a : (Matrix.noPivotLoop a state).singularStep = some k.val)
     (h_step_a : (Matrix.noPivotLoop a state).step = k.val)
     (h_zero_a :
@@ -314,7 +314,7 @@ re-state `BareissNoPivotInvariant.trailing_eq` with the step value supplied
 externally so the dependent bordered-minor type matches the desired
 `s = state.step` substitution cleanly. -/
 theorem trailing_eq_at_step_local
-    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
+    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState Int n'}
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (s : Nat) (hs : s < n') (hstep : s = state.step)
     (a c : Fin n') (hsa : s ≤ a.val) (hsc : s ≤ c.val) :
@@ -845,7 +845,7 @@ theorem noPivotLoop_initial_step_eq_and_fuel_succ_le
 so the dependent `principalSubmatrix` type matches the desired `s = state.step`
 substitution cleanly. -/
 theorem prevPivot_eq_at_step_local
-    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
+    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState Int n'}
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (s : Nat) (hs : s ≤ n') (hstep : s = state.step) :
     state.prevPivot = Hex.Matrix.det (Hex.Matrix.principalSubmatrix M s hs) := by
