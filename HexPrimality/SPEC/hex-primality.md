@@ -866,12 +866,25 @@ For reproducible syntax with no seed argument, the elaborator uses
 and diagnostics report the seed and attempts if certificate search
 exhausts its fuel.
 
-The companion adds `Nat.Prime n` through that correspondence, and
-registers a
-`norm_num` extension so `norm_num` picks it up on numerals too large
-for `Mathlib/Tactic/NormNum/Prime.lean`'s trial division. Which of the
-two runs on a given numeral is a threshold, and the threshold is
-measured, not assumed.
+The companion adds `Nat.Prime n` through that correspondence. Bare
+`primality` uses the certificate route directly. Pinned Mathlib's
+`Nat.Prime` `norm_num` extension was registered first, so ordinary imports
+retain Mathlib's trial-division behavior; the later Hex registration cannot
+transparently pre-empt it. A module explicitly opts into the supported Hex
+policy with `use_hex_primality_norm_num`. Under that policy, numerals below
+`2^24` use a guarded alias of Mathlib's trial extension and larger numerals
+use bounded Hex certificate search. The opt-in erasure is local to the
+module and does not persist when that module is imported.
+
+The `2^24` boundary comes from fresh one-goal modules on the pinned
+toolchain: trial division was ahead at six digits, the routes were mixed
+and input-dependent through seven digits, and the certificate route was
+ahead at the 25-bit edge. Mathlib's generated trial proof reaches the
+default kernel recursion limit on the 31-bit Mersenne prime. Choosing the
+power-of-two boundary keeps the full 24-bit range on the simpler route and
+puts every 25-bit input on the bounded route. If certificate production or
+factor search exhausts, the guarded trial alias also declines at that tier;
+the opt-in never silently starts a large unbounded trial search.
 
 ## Kernel exposure
 
@@ -1074,13 +1087,14 @@ Everything else transports along it.
 (`Mathlib/Data/Nat/Prime/Defs.lean:162`, `:334`), so a second global
 instance would be a duplicate and would risk instance-selection churn.
 An earlier draft of this SPEC proposed one. What the companion offers
-instead is the tactic and the `norm_num` extension, which is where the
-scale actually helps.
+instead is the tactic and the explicitly opted-in `norm_num` policy, which
+is where the scale actually helps.
 
-The companion also carries the `norm_num` extension, the `Nat.Prime`
-form of the `primality` tactic, and the universally quantified segment
-statements ("every prime in `[1, x]` satisfies `P`") in the form a
-Mathlib consumer would state them, over `Finset.filter Nat.Prime`.
+The companion also carries the opt-in `norm_num` extensions and command,
+the `Nat.Prime` form of the `primality` tactic, and the universally
+quantified segment statements ("every prime in `[1, x]` satisfies `P`")
+in the form a Mathlib consumer would state them, over
+`Finset.filter Nat.Prime`.
 
 **Where a PrimeCert dependency would go.** If the toolchains are
 aligned, `hex-primality-mathlib` may depend on PrimeCert and re-export
@@ -1130,8 +1144,8 @@ cannot see it.
    soundness case, with the stored square-root witness replacing any
    in-checker integer square root.
 
-5. **The companion.** `prime_iff`, the transports, the `norm_num`
-   extension, and the segment statements. Begins after milestone 1.
+5. **The companion.** `prime_iff`, the transports, the explicit opt-in
+   `norm_num` policy, and the segment statements. Begins after milestone 1.
 
 ## File organisation
 
@@ -1149,7 +1163,7 @@ HexPrimality/
 HexPrimality.lean
 HexPrimalityMathlib/
   Prime.lean        -- prime_iff and the transports
-  NormNum.lean      -- the norm_num extension
+  NormNum.lean      -- Nat.Prime tactic reach and opt-in norm_num policy
   Segment.lean      -- Finset-level segment statements
 HexPrimalityMathlib.lean
 ```
@@ -1190,12 +1204,6 @@ may add further uses, but the dependency does not depend on them.
   [future-work](../../SPEC/future-work.md) notes that Bhavik Mehta has elliptic
   curve computations in flight, which is the strongest argument for
   waiting rather than starting.
-- **How the `primality` tactic and `norm_num` should divide the range.**
-  Both will be available on the Mathlib side and both will answer small
-  numerals. A threshold is the obvious answer and the measurement is
-  cheap; whether `norm_num` should simply delegate everything above a
-  bound, or whether the two should stay independent, is a question
-  about Mathlib-side ergonomics rather than about this library.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
   search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down

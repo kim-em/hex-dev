@@ -9,31 +9,32 @@ import HexPrimality.Elab
 import Mathlib.Tactic.NormNum.Prime
 
 /-!
-The `Nat.Prime` reach of the `primality` tactic, and the `norm_num`
-extension for numerals beyond trial division.
+The `Nat.Prime` reach of the `primality` tactic and an explicitly opted-in
+certificate-backed `norm_num` policy.
 
-The `norm_num` extension fails on numerals below
-`natPrimeCertThreshold`, deferring them to Mathlib's trial-division
-extension; above it, a positive verdict emits the reified Pocklington
-certificate through `natPrime_of_checkPrimeAt` (the kernel replays only
-the checker) and a negative verdict emits a dynamically validated proper
-factor through Mathlib's `deriveNotPrime`. A hard semiprime whose factor
-the bounded rho search misses makes the extension fail silently rather
-than fall into an unbounded computation. The threshold is a placeholder
-until the bench measures the crossover.
+By default this module does not alter which extension handles
+`Nat.Prime`: pinned Mathlib's trial-division extension was registered first
+and remains first. A module opts into Hex's policy with the command
+`use_hex_primality_norm_num`. The command locally erases Mathlib's original
+registration, exposing the two extensions registered here: trial division
+below `natPrimeCertThreshold`, then certificate search at and above it.
+The erasure does not survive an import, so every importing module makes its
+own choice.
 
-**Dispatch caveat.** `norm_num` consults extensions in registration
-order, and Mathlib's trial-division extension registers at import time,
-ahead of this one; on a large numeral it succeeds at elaboration with a
-minFac chain whose proof the kernel cannot check past roughly 25 bits,
-so this extension is never consulted. Extension erasure does not persist
-across imports, so the division cannot be fixed here once and for all: a
-file that wants certificate-backed `norm_num` on large numerals opts in
-with `attribute [-norm_num] Mathlib.Meta.NormNum.evalNatPrime`, and the
-re-registered `evalNatPrimeTrial` alias keeps small numerals working
-there (see `NormNumTests.lean` for the pattern in action). The
-`primality` tactic has no such caveat and is the primary vehicle for
-large numerals.
+The threshold is `2^24`. Fresh one-goal modules under the pinned toolchain
+showed trial division ahead at six digits, mixed input-dependent results
+through seven digits, and the certificate route ahead at the 25-bit edge;
+Mathlib's generated trial proof exceeds the default kernel recursion depth
+on the 31-bit Mersenne prime. The power-of-two policy keeps all inputs with
+at most 24 bits on trial division and sends every larger input to the
+bounded certificate route.
+
+Above the threshold, a positive verdict emits a reified Pocklington
+certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
+checker. A negative verdict emits a dynamically validated proper factor
+through Mathlib's `deriveNotPrime`. If bounded certificate or factor search
+is exhausted, both Hex extensions decline, rather than falling through to
+unbounded trial division.
 
 The tactic handler registers on the same `primality` syntax kind as the
 Mathlib-free elaborator; registration order makes this handler run first,
@@ -44,16 +45,16 @@ namespace Hex.PrimalityTactic
 
 open Lean Meta Elab Qq Mathlib.Meta.NormNum
 
-/-- Numerals below this stay with Mathlib's trial-division `norm_num`
-extension; a placeholder until the bench measures the crossover. -/
-def natPrimeCertThreshold : Nat := 1000000
+/-- The measured opt-in `norm_num` crossover. Numerals below `2^24` use
+trial division; 25-bit and larger numerals use bounded certificate search. -/
+def natPrimeCertThreshold : Nat := 16777216
 
 theorem isNat_prime_of_hex : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
   | _, _, ⟨rfl⟩, hp => by simpa using hp
 
-/-- The `norm_num` extension: certificate-backed `Nat.Prime` verdicts for
-numerals beyond trial division. -/
+/-- The opt-in `norm_num` extension for certificate-backed `Nat.Prime`
+verdicts at and above `natPrimeCertThreshold`. -/
 @[norm_num _root_.Nat.Prime _] def evalNatPrimeCert : NormNumExt where
   eval {_ _} e := do
     let .app (.const `Nat.Prime _) (n : Q(ℕ)) ← whnfR e | failure
@@ -75,6 +76,7 @@ numerals beyond trial division. -/
         | .composite =>
             match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n') 16 with
             | .ok (d, _) =>
+                unless 1 < d && d < n' && n' % d == 0 do failure
                 let prf : Q(¬ _root_.Nat.Prime $nn) := deriveNotPrime n' d nn
                 return .isFalse q(isNat_not_prime $pn $prf)
             | .error _ => failure
@@ -104,19 +106,25 @@ reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
 
 end Hex.PrimalityTactic
 
-/-- Mathlib's trial-division extension, re-registered behind the
-certificate extension so that a file opting in with
-`attribute [-norm_num] Mathlib.Meta.NormNum.evalNatPrime` keeps its small
-numerals working (an attribute cannot be re-applied to an imported
-declaration, so this is an alias with its own name). -/
+open Lean Meta Qq Mathlib.Meta.NormNum
+
+/-- A threshold-guarded alias of Mathlib's trial-division extension. It keeps
+small numerals working under `use_hex_primality_norm_num` but declines at the
+certificate tier, so exhaustion there cannot start a large trial search. -/
 @[norm_num _root_.Nat.Prime _] def Hex.PrimalityTactic.evalNatPrimeTrial :
-    Mathlib.Meta.NormNum.NormNumExt :=
-  { Mathlib.Meta.NormNum.evalNatPrime with
-    name := `Hex.PrimalityTactic.evalNatPrimeTrial }
+    Mathlib.Meta.NormNum.NormNumExt where
+  eval {_ _} e := do
+    let .app (.const `Nat.Prime _) (n : Q(ℕ)) ← whnfR e | failure
+    let some n' ← getNatValue? n | failure
+    if n' < natPrimeCertThreshold then
+      Mathlib.Meta.NormNum.evalNatPrime.eval e
+    else
+      failure
 
-/-! Elaboration tests for the tactic on both predicates; the `norm_num`
-tests live in `NormNumTests.lean`, downstream of the registrations. -/
+/-- Opt the current module into Hex's thresholded `Nat.Prime` `norm_num`
+policy. The choice must be repeated by importers. -/
+syntax (name := useHexPrimalityNormNum) "use_hex_primality_norm_num" : command
 
-example : Nat.Prime 2147483647 := by primality
-example : Hex.Nat.Prime 2147483647 := by primality
-example : Nat.Prime 65537 := by primality
+macro_rules
+  | `(use_hex_primality_norm_num) =>
+      `(attribute [-norm_num] Mathlib.Meta.NormNum.evalNatPrime)

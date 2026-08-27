@@ -35,7 +35,7 @@ The library is Mathlib-free and states its results for the
 project-local {name}`Hex.Nat.Prime` predicate. The companion library
 `HexPrimalityMathlib` transports everything to Mathlib's `Nat.Prime`,
 extends the `primality` tactic to goals stated with it, and registers
-a `norm_num` extension.
+an explicitly opted-in `norm_num` policy.
 
 # Deciding primality
 %%%
@@ -123,23 +123,23 @@ example : Nat.Prime 2147483647 := by primality
 
 {docstring Hex.Nat.prime_iff}
 
-The companion also ships a certificate-backed `norm_num` extension for
-`Nat.Prime` above a threshold (`10^6`), leaving small numerals to
-Mathlib's trial-division extension. Mathlib's extension registered
-first, so a file that wants certificate reach through `norm_num` opts
-in by erasing it; a re-registered alias keeps small numerals working:
+An ordinary import leaves Mathlib's `Nat.Prime` `norm_num` behavior
+unchanged: its trial-division extension registered before Hex's and is
+therefore consulted first. A module that wants the supported Hex policy
+opts in explicitly. Numerals below `2^24` then use a guarded trial-division
+alias, while 25-bit and larger numerals use bounded certificate search:
 
 ```lean
-attribute [-norm_num] Mathlib.Meta.NormNum.evalNatPrime
+use_hex_primality_norm_num
 
 example : Nat.Prime 2147483647 := by norm_num
 example : ¬ Nat.Prime 2147483649 := by norm_num
 example : Nat.Prime 101 := by norm_num
 ```
 
-The erasure is per-file: attribute erasure does not persist across
-imports, which is what keeps this an opt-in rather than a global
-change to `norm_num` behaviour.
+The choice is per-module and does not persist across imports. If bounded
+certificate or factor search exhausts above the threshold, the Hex policy
+fails rather than falling back to a large trial-division computation.
 
 # Certificates
 %%%
