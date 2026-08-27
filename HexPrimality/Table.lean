@@ -149,8 +149,6 @@ def primeTable : Array Nat :=
     9781, 9787, 9791, 9803, 9811, 9817, 9829, 9833, 9839, 9851, 9857, 9859,
     9871, 9883, 9887, 9901, 9907, 9923, 9929, 9931, 9941, 9949, 9967, 9973]
 
-#guard primeTable.size = 1229
-
 /-- Adjacent strict ascent of a list, structurally: `true` iff consecutive
 entries strictly increase. -/
 @[expose]
@@ -332,6 +330,8 @@ private def sieveState3 : Nat :=
 private def sieveState4 : Nat :=
   52744135752356285805936049398430563853758494609160225796514743786617123787620821399859121188119528101218220704463160359020095888945827635244508551010264497147167328698916098549052770734386406558041136130951220102097589450036487889862513102237711001722261432163007766193243016959423550658809307427773430294686683256681071210928838628543230569721425513953798750330765562118972569850882871190532603134328126767999785051707298755561378421812626158609156306647472120885083908582702272771219708333402279408395106681754643926429383297469258864876040886224701339896630672022302096628438499126987700336836567734457421391999963402097693015614183764830163944020476605413722530296274936433158534311607292874987555134543420113288105285420780192126190733639406080137861321897321781112012330763582464554593728659183893472014340227531384209118011000733524518182848382804666019367121594964961391550350451044259814842469661079561979434448449143257563380571818704504412933327123869610585710153823488183849678548714059518
 
+private abbrev sieveStateFinal : Nat := sieveState4
+
 private theorem sieveChunk1 :
     sieveGoRange 3333 1 8 (sieveInit 3333) = sieveState1 := by
   decide +kernel
@@ -348,7 +348,7 @@ private theorem sieveChunk4 :
     sieveGoRange 3333 25 8 sieveState3 = sieveState4 := by
   decide +kernel
 
-private theorem sieve_eq_final : sieve 10000 100 = sieveState4 := by
+private theorem sieve_eq_final : sieve 10000 100 = sieveStateFinal := by
   show sieveGoRange 3333 1 32 (sieveInit 3333) = _
   rw [show (32 : Nat) = 8 + 24 from rfl, sieveGoRange_add, sieveChunk1,
     show (1 + 8 : Nat) = 9 from rfl,
@@ -358,12 +358,12 @@ private theorem sieve_eq_final : sieve 10000 100 = sieveState4 := by
     show (17 + 8 : Nat) = 25 from rfl, sieveChunk4]
 
 private theorem primeTable_eq_bits :
-    primeTable = (2 :: 3 :: bitsToList sieveState4 10000).toArray := by
+    primeTable = (2 :: 3 :: bitsToList sieveStateFinal 10000).toArray := by
   decide +kernel
 
 private theorem mem_primeTable_iff_bits {n : Nat} :
     n ∈ primeTable ↔
-      n = 2 ∨ n = 3 ∨ n ∈ bitsToList sieveState4 10000 := by
+      n = 2 ∨ n = 3 ∨ n ∈ bitsToList sieveStateFinal 10000 := by
   rw [primeTable_eq_bits, List.mem_toArray, List.mem_cons, List.mem_cons]
 
 /-- Every table entry is prime: the committed literal read back through
@@ -430,19 +430,6 @@ theorem mem_primesIn {lo hi n : Nat} :
     refine ⟨by omega, by omega, hp⟩
   · rintro ⟨hlo, hhi, hp⟩
     exact ⟨⟨n - lo, by omega, by omega⟩, hp⟩
-
-/-! Regression coverage: bound edges, small entries, the largest entry, a
-prime just above the bound, and the classical prime counts. -/
-
-#guard isTablePrime 2 = true
-#guard isTablePrime 3 = true
-#guard isTablePrime 4 = false
-#guard isTablePrime 9973 = true
-#guard isTablePrime 9999 = false
-#guard isTablePrime 10007 = false  -- prime, but above the bound
-#guard (primesIn 0 100).size = 25
-#guard (primesIn 90 100).toList = [97]
-#guard primesIn 10 10 = #[]
 
 end Nat
 

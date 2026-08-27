@@ -22,14 +22,18 @@ Covered operations:
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
 - `Hex.Nat.millerRabin` / `Hex.Nat.isProbablePrime`
+- `Hex.Nat.sieve` and its residue-index mapping
 - `Hex.Nat.isTablePrime`
 - `Hex.Nat.primesIn`
 - `Hex.Nat.nextPrime?`
+- `primality` term and tactic forms
 Covered properties:
 - the total decision agrees with trial division on an initial segment
 - a `.composite` certificate-search verdict never contradicts `isPrime`
 - accepted certificates replay; each rejection reason rejects
 - the committed table window and the runtime segment listing agree
+- the small sieve agrees with trial division on every represented index
+- term and tactic elaboration reach the table and certificate tiers
 Covered edge cases:
 - `0`, `1`, `2`, and the parity edge `4`
 - Carmichael numbers, where a Fermat test would pass and Miller-Rabin
@@ -186,3 +190,86 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 #guard (match nextPrime? 9973 (Hex.Rand.ofSeed 0) 64 with
         | .ok (p, _) => p == 10007
         | .error _ => false)
+
+-- Sieve representation and a complete small-bound comparison with the
+-- independent trial-division decision route.
+#guard (List.range 8).map numOfIndex = [1, 5, 7, 11, 13, 17, 19, 23]
+#guard indexWidth 10000 = 3333
+#guard numOfIndex (indexWidth 10000) ≥ 10000
+#guard (List.range (indexWidth 100)).all fun t =>
+  t == 0 || ((sieve 100 10).testBit t == isPrimeTrial (numOfIndex t))
+
+-- Table bound edges, the largest entry, an above-bound prime, and empty
+-- segment behavior.
+#guard primeTable.size = 1229
+#guard isTablePrime 2 = true
+#guard isTablePrime 3 = true
+#guard isTablePrime 4 = false
+#guard isTablePrime 9973 = true
+#guard isTablePrime 9999 = false
+#guard isTablePrime 10007 = false
+#guard (primesIn 90 100).toList = [97]
+#guard primesIn 10 10 = #[]
+
+-- Every Mathlib-free elaborator syntax form, across the table and certificate
+-- tiers.
+example : Hex.Nat.Prime 97 := primality 97
+example : Hex.Nat.Prime 9973 := primality 9973
+example : Hex.Nat.Prime 10007 := primality 10007
+example : Hex.Nat.Prime 2147483647 := primality 2147483647
+example : Hex.Nat.Prime 101 := by primality
+example : Hex.Nat.Prime 2147483647 := by primality
+example : True := by
+  primality 65537
+  primality fermat : 257
+  exact trivial
+
+/-- error: primality: 561 is not prime (Miller-Rabin witness 2) -/
+#guard_msgs in
+example : Hex.Nat.Prime 561 := primality 561
+
+/--
+error: primality: the goal
+  Prime (2 + 2)
+is not about a natural-number numeral
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 + 2) := by primality
+
+/-- error: primality: expected a natural-number term after the colon -/
+#guard_msgs in
+example : True := by primality h :
+
+/-! The generator emits a complete, batch-count-independent one-batch replay
+block. The committed four-batch path is regenerated separately because its
+literal is intentionally large. -/
+
+/--
+info: @[expose]
+def primeTableBound : Nat := 25
+
+@[expose]
+def primeTable : Array Nat :=
+  #[2, 3, 5, 7, 11, 13, 17, 19, 23]
+
+-- #rebuild_primeTable 25 5 1
+
+private def sieveState1 : Nat :=
+  254
+
+private abbrev sieveStateFinal : Nat := sieveState1
+
+private theorem sieveChunk1 :
+    sieveGoRange 8 1 1 (sieveInit 8) = sieveState1 := by
+  decide +kernel
+
+private theorem sieve_eq_final : sieve 25 5 = sieveStateFinal := by
+  show sieveGoRange 8 1 1 (sieveInit 8) = _
+  exact sieveChunk1
+
+private theorem primeTable_eq_bits :
+    primeTable = (2 :: 3 :: bitsToList sieveStateFinal 25).toArray := by
+  decide +kernel
+-/
+#guard_msgs in
+#rebuild_primeTable 25 5 1

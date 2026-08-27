@@ -204,6 +204,8 @@ syntax (name := primalityTac)
           let ty ← inferType proof
           let (_, g) ← (← g.assert `this ty proof).intro1P
           return [g]
+    | `(tactic| primality $_h:ident :) =>
+        throwError "primality: expected a natural-number term after the colon"
     | `(tactic| primality $h:ident : $t:term) => do
         let proof ← Tactic.withMainContext do
           elabPrimalityArgument t
@@ -214,29 +216,3 @@ syntax (name := primalityTac)
     | _ => Elab.throwUnsupportedSyntax
 
 end Hex.PrimalityTactic
-
-/-! Elaboration tests: every syntax form across the table, trial, and
-certificate tiers, and the two failure messages. -/
-
-example : Hex.Nat.Prime 97 := primality 97
-example : Hex.Nat.Prime 9973 := primality 9973
-example : Hex.Nat.Prime 10007 := primality 10007
-example : Hex.Nat.Prime 2147483647 := primality 2147483647
-example : Hex.Nat.Prime 101 := by primality
-example : Hex.Nat.Prime 2147483647 := by primality
-example : True := by
-  primality 65537
-  primality fermat : 257
-  exact trivial
-
-/-- error: primality: 561 is not prime (Miller-Rabin witness 2) -/
-#guard_msgs in
-example : Hex.Nat.Prime 561 := primality 561
-
-/--
-error: primality: the goal
-  Hex.Nat.Prime (2 + 2)
-is not about a natural-number numeral
--/
-#guard_msgs in
-example : Hex.Nat.Prime (2 + 2) := by primality
