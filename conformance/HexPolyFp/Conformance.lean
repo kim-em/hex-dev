@@ -25,6 +25,7 @@ Covered operations:
 - `weightedProduct`
 - `linearPow`
 - `mulNtt?`
+- `mulNttCrt?`
 - `mulCyclicNtt?`, `mulNegacyclicNtt?`
 - `neg` (the `Neg (FpPoly p)` instance, at `p = 5`)
 Covered properties:
@@ -36,6 +37,7 @@ Covered properties:
 - weighted products respect positive multiplicities
 - `linearPow` is exponent-additive, and exponent one is the base
 - direct target-modulus NTT multiplication agrees with schoolbook multiplication
+- auxiliary-prime NTT multiplication agrees after integer CRT reconstruction
 - cyclic and negacyclic NTT adapters agree with their independent folded references
 - negation is the additive inverse and an involution, and subtraction agrees
   with adding the negation
@@ -56,6 +58,7 @@ Covered edge cases:
 - exponent zero and a zero base for `linearPow`, and the zero polynomial for
   `neg`
 - a valid length-four direct NTT plan and rejection of a too-short plan
+- a forced auxiliary-prime convolution over a target with no catalogue identity
 - cyclic and negacyclic length-two products, including oversized-input rejection
 - `(x + 1)^5` over `F_5`, whose interior binomial coefficients all vanish, so
   the result carries internal zeros
@@ -119,6 +122,13 @@ private def sfReconstruction (d : SquareFreeDecomposition 5) : FpPoly 5 :=
   | none => false
   | some plan =>
       (mulNtt? plan (polyFive #[1, 1]) (polyFive #[1, 2])).isNone
+
+#guard
+  match mulNttCrt? (polyFive #[4, 0, 3]) (polyFive #[2, 1, 4]) with
+  | none => false
+  | some result => coeffNats result == [3, 4, 2, 3, 2]
+
+#guard (mulNttCrt? (0 : FpPoly 5) (polyFive #[1, 2, 3])).isNone
 
 private def negacyclicPlanFive? : Option (ZMod64.Ntt.NegacyclicPlan 5 2) :=
   match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with
