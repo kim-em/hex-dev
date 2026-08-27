@@ -857,9 +857,9 @@ theorem primeCert?_composite {n : Nat} {r : Rand} {fuel : Nat}
   · cases hresult
 
 /-- Exact trial division handles inputs from `primeTableBound` to `10000000`.
-This first power of ten beyond the adversarial Cunningham-chain crossover gives
-the bounded certificate route a clear prime-case margin; hard composites favor
-it throughout the measured ladder. -/
+This first power of ten beyond the measured Cunningham-chain crossover avoids
+encoding a noisy input-specific crossing point; hard composites favor the
+bounded certificate route throughout the measured ladder. -/
 def isPrimeTrialThreshold : Nat := 10000000
 
 /-- The bounded decision: table below `primeTableBound`, exact trial

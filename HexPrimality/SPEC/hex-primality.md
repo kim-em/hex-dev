@@ -817,7 +817,8 @@ adversarial prime near `10^7` favors the certificate arm; balanced semiprimes
 favor the certificate arm throughout the measured ladder. The accepted
 threshold is the first power of ten beyond the adversarial prime crossover.
 This selects a stable policy boundary rather than encoding the earlier,
-input-shape-sensitive fixed-prime crossover.
+input-shape-sensitive fixed-prime crossover; at the adversarial `10^7` rung,
+certificate time is 0.924 times trial time.
 A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
