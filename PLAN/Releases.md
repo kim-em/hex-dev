@@ -223,6 +223,18 @@ order:
    https://github.com/settings/personal-access-tokens; then
 3. add its entry to `released.yml` here and run the sync.
 
+A new source-bearing entry must name a library at `done_through: 7`; the
+manifest checker rejects an entry created before the library completes the
+phase pipeline. This is an admission rule, not a permanent claim that a
+published library remains valid through Phase 7. If a later audit triggers the
+normal rollback described in [Conventions](Conventions.md#rollback-is-a-normal-action),
+keep its manifest entry so fixes continue to publish to the existing split
+repository. The checker distinguishes that case from premature admission by
+reading the repository names in the live `release-sync-baseline` branch, with
+`scripts/release/synced.json` as the bootstrap fallback. The CI checkout must
+therefore retain `fetch-depth: 0`. An entry that has never completed a real sync
+still requires Phase 7 even if its intended split repository already exists.
+
 The repository has to exist before step 2 can name it, which is why step 1
 comes first; nothing in this order is circular. Step 2 is the one with a
 human in the loop, so start it early. Rotating a token means redoing step 2
