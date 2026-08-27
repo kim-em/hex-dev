@@ -37,10 +37,10 @@ atom and uses the same globally reglued prefix as the full driver; subdivision
 can split even a single starting square into sibling survivor lineages.
 
 `findAtomLoop` starts instead from an uncertified caller-selected square. It
-searches only that region and stops as soon as any component certifies as an
-atom, then hands that atom to the ordinary one-atom refiner. The returned
-certificate is self-contained, so this path needs neither all roots nor a
-pairwise-disjoint output family.
+stops as soon as any component certifies as an atom that can be refined to the
+target. The seed selects the initial search rather than imposing a containment
+postcondition. The returned certificate is self-contained, so this path needs
+neither all roots nor a pairwise-disjoint output family.
 -/
 namespace Hex
 
@@ -251,8 +251,8 @@ returns `none`, so callers can fall back without trusting this optimization. -/
     else none
   | none => none
 
-/-- Internal atom refiner shared by the public one-atom API and the
-all-atoms fast path in the full isolation driver. -/
+/-- Atom refiner shared by the local one-root search and the all-atoms fast
+path in the full isolation driver. -/
 @[expose] def refineAtom? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy) : Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else

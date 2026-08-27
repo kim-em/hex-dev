@@ -76,7 +76,7 @@ The addition and multiplication ladders consequently cover six doublings,
 `n = 4, 8, 16, 32, 64, 128`. Degree 128 is a common controlled domain whose
 timed multiplication remains in the millisecond regime. The inversion ladder
 covers `n = 4, 8, 16, 32, 48, 64, 96`; its ceiling is set by the timed extended
-gcd, which takes about 3.25 s there: a useful upper asymptotic rung that
+gcd, which takes about 3.0 s there: a useful upper asymptotic rung that
 remains practical to sample. These are scientific operation ranges, not
 fixture-wallclock caps.
 
@@ -126,9 +126,9 @@ runs below give the measurements; this table says which one counts.
 
 | target | verdict | slope | from |
 |---|---|---:|---|
-| `runQAdjoinAddLadder` | **consistent** | -0.067 | single-root |
-| `runQAdjoinMulLadder` | **consistent** | -0.005 | single-root |
-| `runQAdjoinInvLadder` | inconclusive, slower | **+1.790** | single-root |
+| `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
+| `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
+| `runQAdjoinInvLadder` | inconclusive, slower | **+1.784** | single-root |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
 | `runExactLadder` | inconclusive, faster | — | quiet |
@@ -210,15 +210,15 @@ after their fixture and scientific domains changed:
   Hex.NumberFieldBench.runQAdjoinAddLadder \
   Hex.NumberFieldBench.runQAdjoinMulLadder \
   Hex.NumberFieldBench.runQAdjoinInvLadder \
-  --outer-trials 3 \
+  --outer-trials 5 \
   --export-file reports/bench-results/hex-number-field-single-root.json
 ```
 
 | target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
 |---|---|---|---:|---|---:|
-| `runQAdjoinAddLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.067 | 95.97..113.61 | 2.38% |
-| `runQAdjoinMulLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.005 | 459.92..471.40 | 22.55% |
-| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive | **+1.790** | 597.2..50344.2 | 16.02% |
+| `runQAdjoinAddLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.064 | 94.94..110.95 | 2.56% |
+| `runQAdjoinMulLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.018 | 449.10..470.35 | 5.86% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive | **+1.784** | 549.2..46288.9 | 2.93% |
 
 Addition remains linear through 128 and multiplication remains quadratic
 through 128. Inversion's monotone normalized cost grows even more clearly over
@@ -334,9 +334,9 @@ them.
 
 ### Fixed registrations
 
-All 30 fixed registrations in the committed comparator export agree across
-repeats, and all ten with a declared `expectedHash` match it. Medians from the
-committed
+All 34 fixed registrations across the committed comparator export and the
+four-endpoint supplement agree across repeats, and all ten with a declared
+`expectedHash` match it. Medians from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json):
 
 | fixed target | median | observed hash | expected |
@@ -403,9 +403,11 @@ and inversion at `n = 4, 6, 8, 10, 12, 16`, each bracketing its crossover.
 
 The local single-root fixture removes the former smoke-cost constraint. The
 registered comparison domains now restore multiplication at `n = 20` and
-inversion at `n = 16`, giving six rungs in each family. The committed table
-below records the earlier five-rung comparator run; the added endpoints retain
-the same paired inputs and result-hash agreement checks.
+inversion at `n = 16`, giving six rungs in each family. The original five-rung
+comparator export supplies the first five rows and the committed
+[endpoint supplement](bench-results/hex-number-field-single-root-comparators.json)
+supplies the restored sixth rows. A full `verify` of all 43 registrations,
+including PARI, completes locally in 0.379 s.
 
 Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 1 means Hex is faster.
@@ -419,6 +421,7 @@ Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 | 8 | 30.356 us | 57.391 us | 12.4% | `0x195da6835711d63` | 1.891x | 1.656x |
 | 12 | 67.972 us | 70.731 us | 10.1% | `0xffbc782c4aba338b` | 1.041x | 0.936x |
 | 16 | 120.729 us | 89.841 us | 7.9% | `0x5e40c901cf3a60b9` | 0.744x | 0.685x |
+| 20 | 189.299 us | 72.142 us | 9.9% | `0xa6b61e5f0a5bbec9` | 0.381x | 0.343x |
 
 ### QAdjoin inversion against PARI `Mod(a, m)^(-1)`
 
@@ -429,14 +432,15 @@ Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 | 8 | 141.853 us | 218.302 us | 3.3% | `0xd16df20a45d683c7` | 1.539x | 1.489x |
 | 10 | 251.376 us | 215.512 us | 3.3% | `0x7d0941f1c8c5f9e8` | 0.857x | 0.829x |
 | 12 | 505.466 us | 253.295 us | 2.8% | `0x7776688d262fc467` | 0.501x | 0.487x |
+| 16 | 1.478 ms | 222.231 us | 3.2% | `0x5820b68b7d69021d` | 0.150x | 0.146x |
 
 ### Trend
 
-Both ratios decline monotonically in the large: multiplication from 5.279x at
-`n = 4` to 0.744x at `n = 16`, crossing 1 just past `n = 12`
-(1.041x raw, 0.936x adjusted); inversion from 1.677x at `n = 4` to 0.501x at
-`n = 12`. The two declines have different causes, and only one of them is a
-statement about arithmetic.
+Both ratios decline in the large: multiplication from 5.279x at `n = 4` to
+0.381x at `n = 20`, crossing 1 just past `n = 12` (1.041x raw, 0.936x
+adjusted); inversion from 1.677x at `n = 4` to 0.150x at `n = 16`. The two
+declines have different causes, and only one of them is a statement about
+arithmetic.
 
 For **multiplication** the decline is PARI's fixed per-call marshalling being
 amortised, not an algorithmic-class difference. Fitting each side's growth
@@ -444,8 +448,8 @@ across the six rungs, with the 7.126 us driver floor subtracted from PARI:
 
 - Hex grows as `n^2.01` — its declared `n^2` model, measured on the same
   inputs as the ladder.
-- PARI's net cost grows as `n^0.72`, and its net times are 31.9, 33.7, 50.3,
-  63.6 and 82.7 us.
+- PARI's net cost grows as `n^0.58`, and its net times are 31.9, 33.7, 50.3,
+  63.6, 82.7 and 65.0 us.
 
 A sub-linear exponent means PARI's `t_POLMOD` multiplication is not what is
 being timed: at these degrees the cost is building and reading back the
@@ -459,9 +463,9 @@ this comparator is `informational` rather than `gating`.
 For **inversion** the decline is real. Both sides do substantial work at
 every rung, and their exponents differ by a full power of `n`:
 
-- Hex grows as `n^2.86`.
-- PARI's net cost grows as `n^2.24`, with net times 26.3, 47.7, 211.2, 208.4
-  and 246.2 us.
+- Hex grows as `n^3.03`.
+- PARI's net cost grows as `n^1.73`, with net times 26.3, 47.7, 211.2, 208.4,
+  246.2 and 215.1 us.
 
 This is a diverging trend rather than a constant-factor gap, so it sits
 against the comparator's declared expectation, and it points the same way as
@@ -471,12 +475,12 @@ same inputs. The exponent difference should be read as indicative rather than
 precise — PARI's net cost jumps discontinuously between `n = 6` and `n = 8`,
 so a six-point fit through it is not a clean measurement of PARI's asymptotics.
 What survives that caveat is the direction and the fact that the ratio falls
-by more than a factor of three across the ladder, which is what coefficient
+by more than a factor of eleven across the ladder, which is what coefficient
 swell in the unnormalised rational extended gcd predicts. Recorded against
 https://github.com/kim-em/hex-dev/issues/9721 rather than as a separate
 Concern.
 
-The `n = 6` and `n = 8` inversion rungs are non-monotone (0.756x then 1.525x)
+The `n = 6` and `n = 8` inversion rungs are non-monotone (0.794x then 1.539x)
 because PARI's own net cost jumps from 45.4 us to 208.4 us between them while
 Hex's rises smoothly; that is a PARI-side discontinuity and no claim here
 rests on those two points.
@@ -640,7 +644,8 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
 | [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
-| [`bench-results/hex-number-field-single-root.json`](bench-results/hex-number-field-single-root.json) | `9cf6087f3`, clean tree | idle | `40fe59b58c62918eec4c0eaa81684a4095f63283bc2a1c2a4fefcd13acd56c92` |
+| [`bench-results/hex-number-field-single-root.json`](bench-results/hex-number-field-single-root.json) | `4ae98f272`, clean tree | idle | `8fc1546f02fe7bf42c4f939ab0cefc07fe9cd2a1d00006350cbe50b71db508ba` |
+| [`bench-results/hex-number-field-single-root-comparators.json`](bench-results/hex-number-field-single-root-comparators.json) | `96e0fd7ee`, clean tree | idle | `1243e69ce4256f4470700b43aba55fcb8d6ba1d30faa5ff38b1ddea0803133d4` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -668,7 +673,7 @@ not pass, each tracked:
 
 - **`QAdjoin.inv` grows faster than any declared model absorbs.**
   `runQAdjoinInvLadder` returns the slower-than-declared direction at
-  `beta = +1.790` through degree 96 on the idle host with monotone `C`, and
+  `beta = +1.784` through degree 96 on the idle host with monotone `C`, and
   replaying the shipped `DensePoly.xgcdLeft` recursion shows its
   rational entries reaching about `n^2.1` bits where a monic-normalised chain
   stays near the `n log n` Hadamard bound.
