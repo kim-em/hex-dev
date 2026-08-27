@@ -66,7 +66,7 @@ private def isPrimeCases : List (String × Nat) :=
     ("strongpsp/25326001", 25326001), ("strongpsp/3215031751", 3215031751),
     ("fermat/257", 257), ("fermat/65537", 65537),
     ("table/9973", 9973), ("trial/10007", 10007),
-    ("trial/99999989", 99999989),
+    ("cert/99999989", 99999989),
     ("cert/mersenne31", 2147483647),
     ("cert/mersenne31-succ2", 2147483649) ]
 

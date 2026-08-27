@@ -56,8 +56,8 @@
 {"kind":"result","lib":"HexPrimality","case":"isprime/table/9973","op":"isprime","value":true}
 {"kind":"isprime","lib":"HexPrimality","case":"isprime/trial/10007","n":10007}
 {"kind":"result","lib":"HexPrimality","case":"isprime/trial/10007","op":"isprime","value":true}
-{"kind":"isprime","lib":"HexPrimality","case":"isprime/trial/99999989","n":99999989}
-{"kind":"result","lib":"HexPrimality","case":"isprime/trial/99999989","op":"isprime","value":true}
+{"kind":"isprime","lib":"HexPrimality","case":"isprime/cert/99999989","n":99999989}
+{"kind":"result","lib":"HexPrimality","case":"isprime/cert/99999989","op":"isprime","value":true}
 {"kind":"isprime","lib":"HexPrimality","case":"isprime/cert/mersenne31","n":2147483647}
 {"kind":"result","lib":"HexPrimality","case":"isprime/cert/mersenne31","op":"isprime","value":true}
 {"kind":"isprime","lib":"HexPrimality","case":"isprime/cert/mersenne31-succ2","n":2147483649}
