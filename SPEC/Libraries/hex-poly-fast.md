@@ -271,6 +271,23 @@ explicit inverse `u` of the constant coefficient. Under
 `TSeries.invOfUnit g u`. This library does not replace or redirect
 `TSeries.invOfUnit`.
 
+`seriesMulUpTo (karatsubaPlan 32)` is the dependency-safe generic Karatsuba
+path for callers already above `hex-poly-fast`; its agreement theorem is exact
+equality with `TSeries.mulUpTo`. The lower semiring-generic operation remains
+schoolbook. Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean
+`4.34.0-rc2`, give:
+
+| coefficients | coefficient type | `TSeries.mulUpTo` median | planned Karatsuba median |
+|---:|:---|---:|---:|
+| 4096 | `Int` | 102.388 ms | 1.040 s |
+| 4096 | `Rat` | 1.810 s | 1.884 s |
+| 8192 | `Rat` | 7.266 s | 6.961 s |
+
+The rational win at 8192 is comparable to the observed trial spread, while
+the integer plan loses decisively, so no implicit route changes. The complete
+registered ladder extends through 16384 coefficients. Reproduce a cell with
+`lake exe hexpolyfast_bench compare Hex.PolyFastBench.runSeriesSchoolbookRat Hex.PolyFastBench.runSeriesKaratsubaRat --param-floor 8192 --param-ceiling 8192 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1 --max-seconds-per-call 15`.
+
 ## Reusable fast division
 
 A reciprocal is worth caching whenever a fixed modulus divides many values,

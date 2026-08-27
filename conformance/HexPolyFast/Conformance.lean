@@ -86,6 +86,14 @@ private def unitSeries : TSeries Int 8 :=
 
 #guard seriesMulUpTo plan 5 unitSeries unitSeries =
   TSeries.mulUpTo 5 unitSeries unitSeries
+#guard seriesMulUpTo (karatsubaPlan 0) 5 unitSeries unitSeries =
+  TSeries.mulUpTo 5 unitSeries unitSeries
+#guard seriesMulUpTo (karatsubaPlan 2) 0 unitSeries unitSeries =
+  TSeries.mulUpTo 0 unitSeries unitSeries
+#guard seriesMulUpTo (karatsubaPlan 2) 8 unitSeries unitSeries =
+  unitSeries * unitSeries
+private def emptySeries : TSeries Int 0 := TSeries.ofFn fun _ => 7
+#guard seriesMulUpTo (karatsubaPlan 2) 0 emptySeries emptySeries = emptySeries
 #guard reciprocalWith plan unitSeries 1 = TSeries.invOfUnit unitSeries 1
 #guard unitSeries * reciprocalWith plan unitSeries 1 = 1
 

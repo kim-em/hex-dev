@@ -75,6 +75,27 @@ structure Binary where
 instance : Hashable Binary where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
+/-- Fixed-precision integer-series operands used to compare the retained
+schoolbook `TSeries.mulUpTo` with the dependency-safe polynomial-plan path. -/
+structure SeriesIntInput where
+  n : Nat
+  left : TSeries Int n
+  right : TSeries Int n
+
+/-- The same bounded-product campaign over rational coefficients. -/
+structure SeriesRatInput where
+  n : Nat
+  left : TSeries Rat n
+  right : TSeries Rat n
+
+instance : Hashable SeriesIntInput where
+  hash input := mixHash (hash input.n)
+    (mixHash (hash input.left.coeffs.toArray) (hash input.right.coeffs.toArray))
+
+instance : Hashable SeriesRatInput where
+  hash input := mixHash (hash input.n)
+    (mixHash (hash input.left.coeffs.toArray) (hash input.right.coeffs.toArray))
+
 private def coeff (i salt : Nat) : Int :=
   Int.ofNat (((i + 3) * (salt + 11)) % 101 + 1) - 50
 
@@ -86,8 +107,21 @@ def prepSkew (n : Nat) : Binary :=
   { left := ofList ((List.range (64 * n)).map fun i => coeff i 5)
     right := ofList ((List.range n).map fun i => coeff i 23) }
 
+def prepSeriesInt (n : Nat) : SeriesIntInput :=
+  { n
+    left := TSeries.ofFn fun i => coeff i 29
+    right := TSeries.ofFn fun i => coeff i 43 }
+
+def prepSeriesRat (n : Nat) : SeriesRatInput :=
+  { n
+    left := TSeries.ofFn fun i => (coeff i 31 : Rat)
+    right := TSeries.ofFn fun i => (coeff i 47 : Rat) }
+
 private def checksum (p : DensePoly Int) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
+
+private def checksumSeries [Hashable R] (a : TSeries R n) : UInt64 :=
+  a.coeffs.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
 
 def runSchoolbook (input : Binary) : UInt64 :=
   checksum (mulWith schoolbookPlan input.left input.right)
@@ -100,6 +134,24 @@ def runKaratsubaSkew (input : Binary) : UInt64 :=
 
 def runKaratsubaSquare (input : Binary) : UInt64 :=
   checksum (squareWith (karatsubaPlan 32) input.left)
+
+/-- Retained semiring-generic bounded series multiplication. -/
+def runSeriesSchoolbookInt (input : SeriesIntInput) : UInt64 :=
+  checksumSeries (TSeries.mulUpTo input.n input.left input.right)
+
+/-- Bounded series multiplication through the generic Karatsuba plan. -/
+def runSeriesKaratsubaInt (input : SeriesIntInput) : UInt64 :=
+  checksumSeries
+    (seriesMulUpTo (karatsubaPlan 32) input.n input.left input.right)
+
+/-- Rational-coefficient retained bounded series multiplication. -/
+def runSeriesSchoolbookRat (input : SeriesRatInput) : UInt64 :=
+  checksumSeries (TSeries.mulUpTo input.n input.left input.right)
+
+/-- Rational bounded series multiplication through the Karatsuba plan. -/
+def runSeriesKaratsubaRat (input : SeriesRatInput) : UInt64 :=
+  checksumSeries
+    (seriesMulUpTo (karatsubaPlan 32) input.n input.left input.right)
 
 structure DivisionInput where
   dividend : DensePoly Rat
@@ -303,6 +355,61 @@ setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-64"]
+  }
+
+/- The lower library deliberately retains its weak semiring schoolbook API.
+This registration measures that triangular convolution against the
+commutative-ring Karatsuba plan supplied above the dependency boundary. -/
+setup_benchmark runSeriesSchoolbookInt n => n ^ 2
+  with prep := prepSeriesInt
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512,
+      1024, 2048, 4096, 8192, 16384]
+    maxSecondsPerCall := 20.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["series-multiplication", "schoolbook", "int", "bounded"]
+  }
+
+setup_benchmark runSeriesKaratsubaInt n => n * Nat.sqrt n
+  with prep := prepSeriesInt
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512,
+      1024, 2048, 4096, 8192, 16384]
+    maxSecondsPerCall := 20.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["series-multiplication", "karatsuba", "int", "bounded"]
+  }
+
+setup_benchmark runSeriesSchoolbookRat n => n ^ 2
+  with prep := prepSeriesRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512,
+      1024, 2048, 4096, 8192, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["series-multiplication", "schoolbook", "rat", "bounded"]
+  }
+
+setup_benchmark runSeriesKaratsubaRat n => n * Nat.sqrt n
+  with prep := prepSeriesRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 128, 256, 512,
+      1024, 2048, 4096, 8192, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["series-multiplication", "karatsuba", "rat", "bounded"]
   }
 
 /- The long-division comparator eliminates one leading coefficient at a time
