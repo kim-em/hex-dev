@@ -1101,8 +1101,7 @@ polylogarithms; this registration retains one conservative
 `log₂(d) + 1` limb-growth proxy. Constants in `d = 2n` drop out, giving
 `n⁵ (log₂(n + 2) + 1)`. The shared double-resultant evaluation eliminant
 remains unisolated and was below profile resolution. -/
-setup_benchmark runQAdjoinRootsLadder n =>
-    n ^ 5 * (Nat.log2 (n + 2) + 1)
+setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2) + 1)
   with prep := prepFieldRootsInput
   where {
     -- Degree 1 leaves the norm eliminant linear, so that rung measures the
