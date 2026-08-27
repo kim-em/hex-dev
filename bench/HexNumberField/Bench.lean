@@ -1078,7 +1078,10 @@ setup_benchmark runMergeRootListLadder n => n * n
     paramFloor := 2
     paramCeiling := 8
     paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 30.0
+    -- The timed merge is sub-millisecond, but preparing its isolated component
+    -- roots is the same expensive prelude as the end-to-end ladder and reaches
+    -- about one minute at n = 8.
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -1090,12 +1093,16 @@ squarefree component, then isolates and disambiguates. The earlier profile of
 this exact family found only 7.61% of the call in `componentRoots?`, because
 cross-component duplicate removal repeatedly exactified the same roots. The
 rational-gcd guard measured by `runMergeRootListLadder` makes those coprime
-comparisons quadratic lower-order work. The degree-`d = 2n` norm eliminant's
-separation-depth isolation can therefore supply the intended ceiling again:
-the HexRoots heuristic `O(d³ * B²)` with `tau, B = O(d log d)` gives the
-declared `n⁵ log² n` wall shape. The shared double-resultant evaluation
-eliminant remains unisolated and was below profile resolution. -/
-setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
+comparisons quadratic lower-order work. The repaired profile puts 92.94% in
+`componentRoots?` and 85.01% in `isolate`, so the degree-`d = 2n` norm
+eliminant's separation-depth isolation supplies the ceiling again. Following
+the HexRoots wall-model convention, its `d⁵` degree shape suppresses
+polylogarithms; this registration retains one conservative
+`log₂(d) + 1` limb-growth proxy. Constants in `d = 2n` drop out, giving
+`n⁵ (log₂(n + 2) + 1)`. The shared double-resultant evaluation eliminant
+remains unisolated and was below profile resolution. -/
+setup_benchmark runQAdjoinRootsLadder n =>
+    n ^ 5 * (Nat.log2 (n + 2) + 1)
   with prep := prepFieldRootsInput
   where {
     -- Degree 1 leaves the norm eliminant linear, so that rung measures the
