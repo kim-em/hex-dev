@@ -810,10 +810,12 @@ theorem nextPrime?_spec {n r r' fuel p}
 
 `isPrime?` dispatches: table lookup below `primeTableBound`; trial division
 below the accepted `isPrimeTrialThreshold = 10^5`; `isProbablePrime` as a
-filter; then `primeCert?`. The threshold is the first decimal ladder point
-strictly above the measured prime-case crossover: trial wins through `5·10^4`,
-the certificate arm wins from `7·10^4`, and hard semiprimes favor the
-certificate arm at every rung. A failed base returns a certified `false`, an
+filter; then `primeCert?`. Trial wins through `5·10^4`, the certificate arm
+wins from `7·10^4`, and hard semiprimes favor the certificate arm at every
+rung. The accepted threshold is the first power of ten beyond that measured
+crossover, where the prime-case certificate time is 69% of trial time. This
+keeps a clear margin instead of encoding the noise-sensitive crossover itself.
+A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
 indexed success prevents a certificate for one number from answering a

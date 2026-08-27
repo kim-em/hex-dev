@@ -856,9 +856,10 @@ theorem primeCert?_composite {n : Nat} {r : Rand} {fuel : Nat}
     exact Internal.primeCertCounted?_composite herr hstop
   · cases hresult
 
-/-- Exact trial division handles inputs below `100000`; at and above the
-measured prime-case crossover the bounded certificate route is faster, while
-hard composites favor that route throughout the measured ladder. -/
+/-- Exact trial division handles inputs below `100000`. This first power of ten
+beyond the measured `50000`--`70000` crossover gives the bounded certificate
+route a clear prime-case margin; hard composites favor it throughout the
+measured ladder. -/
 def isPrimeTrialThreshold : Nat := 100000
 
 /-- The bounded decision: table below `primeTableBound`, exact trial
