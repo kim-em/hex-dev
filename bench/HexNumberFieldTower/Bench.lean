@@ -434,14 +434,16 @@ setup_fixed_benchmark runOfQAdjoin where {
 `D = 4` case isolates that linear operation from multiplication and inversion. -/
 setup_fixed_benchmark runAdd where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xd381defc58f22934
+  expectedHash := some 0xd381defc58f22934,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Schoolbook multiplication and recursive reduction visit `O(D^2)` pairs of
 coordinates before coefficient-size growth. -/
 setup_fixed_benchmark runMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xca888473e6359390
+  expectedHash := some 0xca888473e6359390,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Top-level extended gcd recursively invokes lower-tower division; unlike
@@ -449,7 +451,8 @@ multiplication, its cost depends on both tower dimension and height. This fixed
 `D = 4`, height-two case attributes recursive inversion separately. -/
 setup_fixed_benchmark runInv where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xfdfda24536fdd084
+  expectedHash := some 0xfdfda24536fdd084,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Adjoining the fourth root factors a degree-four absolute presentation over
@@ -458,14 +461,16 @@ embedding, and validates the new level. This fixed case attributes that whole
 smart-constructor boundary. -/
 setup_fixed_benchmark runAdjoin where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xde9179e4f67a3948
+  expectedHash := some 0xde9179e4f67a3948,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Adjoining a root already represented in the base selects a linear factor
 and returns an identity extension instead of appending a redundant level. -/
 setup_fixed_benchmark runAdjoinIdentity where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0x51ddf5878af8a696
+  expectedHash := some 0x51ddf5878af8a696,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /-! # Trager factorization -/
@@ -562,7 +567,8 @@ bounded Trager search advances to a square-free one-level norm before gcd
 recovery. This isolates retry cost at base dimension two and input degree two. -/
 setup_fixed_benchmark runFactorRetry where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xf830f035fb69256e
+  expectedHash := some 0xf830f035fb69256e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Over `Q(sqrt(2), sqrt(3))`, `X^2 - 3` factors through the intermediate
@@ -570,7 +576,8 @@ field. The fixed dimension-four case measures recursive one-level norms and
 lower-field factorization instead of an invalid absolute-norm shortcut. -/
 setup_fixed_benchmark runFactorRecursive where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xd13bbfca65f65898
+  expectedHash := some 0xd13bbfca65f65898,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Replay reconstruction, multiplicities, canonical order, and recursive
@@ -632,7 +639,8 @@ steps before collecting four simple roots. Dimension and input degree are both
 four, so this fixed case measures the complete degree-reducing outer loop. -/
 setup_fixed_benchmark runSplit where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0xd863bc339d467bf8
+  expectedHash := some 0xd863bc339d467bf8,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The shift-`+1` full-degree candidate performs the exact Euclidean gcd over
@@ -640,35 +648,40 @@ its degree-six primitive field and rejects the resulting nonlinear recovery.
 This isolates the fast flattening scan without invoking trace recovery. -/
 setup_fixed_benchmark runRecoverPair where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0x190011a8e6411c8e
+  expectedHash := some 0x190011a8e6411c8e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The two-candidate search first pays the rejected recovery gcd at shift
 `+1`, then repeats candidate formation and accepts the linear gcd at `-1`. -/
 setup_fixed_benchmark runRecoverSearch where {
   repeats := 1, maxSecondsPerCall := 60.0,
-  expectedHash := some 0xf696f44e1e1e7ef7
+  expectedHash := some 0xf696f44e1e1e7ef7,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- `basisImages` expands recovered generator coordinates into the complete
 mixed-radix tower basis. The candidate search is precomputed for attribution. -/
 setup_fixed_benchmark runBasisImages where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xb5d54195958fb61e
+  expectedHash := some 0xb5d54195958fb61e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Certification checks the primitive relation and both coordinate maps on
 every tower basis vector for precomputed candidate images. -/
 setup_fixed_benchmark runCertifies where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x000000000000000b
+  expectedHash := some 0x000000000000000b,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The public conversion closures are timed from a precomputed flattening;
 the checksum applies both directions to every dimension-four basis vector. -/
 setup_fixed_benchmark runCoordinateMaps where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xcc1b7720bfe3fc24
+  expectedHash := some 0xcc1b7720bfe3fc24,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Flattening the dimension-four two-level tower searches signed primitive
@@ -677,7 +690,8 @@ and verifies both coordinate maps. This covers the complete primitive-element
 path at the CI size bound. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0xcc1b7720bfe3fc24
+  expectedHash := some 0xcc1b7720bfe3fc24,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 
@@ -709,25 +723,33 @@ def runSMul : Unit → IO UInt64 := fun _ => do
 /- Coordinate subtraction, like addition, visits exactly `D` rational
 coordinates; this fixed `D = 4` case completes the linear-cost surface. -/
 setup_fixed_benchmark runSub where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0x098874a34dd4ec44,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Negation visits `D` coordinates with one rational negation each; the
 linear cost model matches addition. -/
 setup_fixed_benchmark runNeg where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0x2e1510498ed9e174,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Division composes recursive extended-gcd inversion with one `O(D^2)`
 multiplication/reduction; the inversion term dominates as in `runInv`. -/
 setup_fixed_benchmark runDiv where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0xe534ce65592907a8,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Rational scalar action multiplies each of the `D` coordinates by one
 rational, a linear-cost surface like addition. -/
 setup_fixed_benchmark runSMul where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0xcea4d21168dc712c,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /-! # Parametric dimension ladders -/
