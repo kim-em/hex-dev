@@ -10,6 +10,7 @@ public import HexModArith.Ntt.CrtInput
 public import HexModular.CrtPlan
 public import HexPolyFast.Karatsuba
 public import HexPolyFp.Degree
+public import HexPolyFp.PackedMul
 
 public section
 
@@ -685,6 +686,50 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
                       rw [intLift_cast, intLift_cast,
                         ofList_linearConvolution,
                         DensePoly.ofList_toList, DensePoly.ofList_toList]
+
+/-! # Total dispatch -/
+
+/-- Shorter-size threshold below which the packed lazy-reduction kernel avoids
+auxiliary-plan construction.  Keeping the policy value named lets crossover
+benchmarks recalibrate it without changing the dispatcher proof. -/
+@[expose] def nttCrtCutoff : Nat := 128
+
+/-- Leaf cutoff for the generic Karatsuba fallback used when the fixed
+auxiliary catalogue cannot serve a large request. -/
+@[expose] def karatsubaCutoff : Nat := 32
+
+/-- Total finite-field multiplication.  Small products use the packed
+lazy-reduction kernel; large products try auxiliary-prime NTTs and fall back
+to Karatsuba on normal catalogue exhaustion. -/
+def mulFast (left right : FpPoly p) : FpPoly p :=
+  if min left.size right.size < nttCrtCutoff then
+    mulPacked left right
+  else
+    match mulNttCrt? left right with
+    | some result => result
+    | none => DensePoly.mulKaratsuba karatsubaCutoff left right
+
+/-- The total finite-field dispatcher is independent of its crossover
+constants and agrees with schoolbook multiplication. -/
+theorem mulFast_eq (left right : FpPoly p) :
+    mulFast left right = left * right := by
+  unfold mulFast
+  split
+  · exact mulPacked_eq left right
+  · split
+    · rename_i result hresult
+      exact mulNttCrt?_eq left right result hresult
+    · exact DensePoly.mulKaratsuba_eq karatsubaCutoff left right
+
+/-- Coefficient-owner multiplication plan for generic fast algorithms.  Full
+products use `mulFast`, squaring and slices use the proved Karatsuba kernels. -/
+def fastPlan : DensePoly.MulPlan (ZMod64 p) where
+  mul := mulFast
+  square := DensePoly.squareKaratsuba karatsubaCutoff
+  slice := DensePoly.karatsubaSlice karatsubaCutoff
+  mul_eq := mulFast_eq
+  square_eq := DensePoly.squareKaratsuba_eq karatsubaCutoff
+  coeff_slice := DensePoly.coeff_karatsubaSlice karatsubaCutoff
 
 /-- Direct cyclic NTT multiplication.  Inputs shorter than the quotient
 length are zero-padded; an input exceeding that length is rejected. -/

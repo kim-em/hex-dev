@@ -26,6 +26,7 @@ Covered operations:
 - `linearPow`
 - `mulNtt?`
 - `mulNttCrt?`
+- `mulFast` and `fastPlan`
 - `mulCyclicNtt?`, `mulNegacyclicNtt?`
 - `neg` (the `Neg (FpPoly p)` instance, at `p = 5`)
 Covered properties:
@@ -38,6 +39,7 @@ Covered properties:
 - `linearPow` is exponent-additive, and exponent one is the base
 - direct target-modulus NTT multiplication agrees with schoolbook multiplication
 - auxiliary-prime NTT multiplication agrees after integer CRT reconstruction
+- the total dispatcher and its generic multiplication plan agree with schoolbook
 - cyclic and negacyclic NTT adapters agree with their independent folded references
 - negation is the additive inverse and an involution, and subtraction agrees
   with adding the negation
@@ -129,6 +131,17 @@ private def sfReconstruction (d : SquareFreeDecomposition 5) : FpPoly 5 :=
   | some result => coeffNats result == [3, 4, 2, 3, 2]
 
 #guard (mulNttCrt? (0 : FpPoly 5) (polyFive #[1, 2, 3])).isNone
+
+private def fastLeft : FpPoly 5 :=
+  DensePoly.ofCoeffs (Array.replicate 128 1)
+
+private def fastRight : FpPoly 5 :=
+  DensePoly.ofCoeffs (Array.replicate 128 2)
+
+#guard mulFast fastLeft fastRight = fastLeft * fastRight
+
+#guard (DensePoly.mulWith fastPlan fastLeft fastRight).toArray ==
+  (fastLeft * fastRight).toArray
 
 private def negacyclicPlanFive? : Option (ZMod64.Ntt.NegacyclicPlan 5 2) :=
   match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with

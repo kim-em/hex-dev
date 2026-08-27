@@ -8,6 +8,7 @@ module
 
 public import HexModArith.Ntt.CrtInput
 public import HexModular.CrtPlan
+public import HexPolyFast.Karatsuba
 public import HexPolyZ.KroneckerMulti
 
 public section
@@ -319,6 +320,91 @@ theorem mulNttCrt?_eq (left right result : ZPoly)
                       change DensePoly.ofList left.toList *
                         DensePoly.ofList right.toList = left * right
                       rw [DensePoly.ofList_toList, DensePoly.ofList_toList]
+
+/-! # Total dispatch -/
+
+/-- Integer multiplication kernels represented in the crossover table.  The
+constructor is observable for benchmark and fixture reporting. -/
+inductive MulKernel where
+  | schoolbook
+  | ks1
+  | ks2
+  | ks3
+  | ks4
+  | crtNtt
+  deriving BEq, Repr
+
+/-- Stable JSON-facing name for an integer multiplication kernel. -/
+def MulKernel.name : MulKernel → String
+  | .schoolbook => "schoolbook"
+  | .ks1 => "ks1"
+  | .ks2 => "ks2"
+  | .ks3 => "ks3"
+  | .ks4 => "ks4"
+  | .crtNtt => "crt_ntt"
+
+/-- Integer crossover policy, indexed by shorter size, operand ratio, and
+maximum coefficient width.  The forced-kernel benchmarks can recalibrate
+these isolated boundaries without affecting any correctness theorem. -/
+def selectKernel (left right : ZPoly) : MulKernel :=
+  let shorter := min left.size right.size
+  if shorter < kroneckerSizeCutoff then
+    .schoolbook
+  else
+    let width := bitLen (max (maxAbs left) (maxAbs right))
+    if width < kroneckerBitCutoff then
+      .schoolbook
+    else
+      let ratio := max left.size right.size / shorter
+      if 256 ≤ shorter ∧ ratio ≤ 4 then
+        .crtNtt
+      else if 256 ≤ width ∧ ratio ≤ 2 then
+        .ks4
+      else if 128 ≤ width ∧ ratio ≤ 4 then
+        .ks3
+      else if 64 ≤ width ∧ ratio ≤ 8 then
+        .ks2
+      else
+        .ks1
+
+/-- Total integer multiplication.  A selected CRT-NTT capacity miss falls
+back to KS4; every other table cell names a total forced kernel directly. -/
+def mulFast (left right : ZPoly) : ZPoly :=
+  match selectKernel left right with
+  | .schoolbook => DensePoly.mulImpl left right
+  | .ks1 => mulKroneckerAt 0 0 left right
+  | .ks2 => mulKS2 left right
+  | .ks3 => mulKS3 left right
+  | .ks4 => mulKS4 left right
+  | .crtNtt =>
+      match mulNttCrt? left right with
+      | some result => result
+      | none => mulKS4 left right
+
+/-- The integer dispatcher agrees with schoolbook multiplication independently
+of every crossover-table entry and of catalogue availability. -/
+theorem mulFast_eq (left right : ZPoly) :
+    mulFast left right = left * right := by
+  unfold mulFast
+  cases hkernel : selectKernel left right with
+  | schoolbook => exact (DensePoly.mul_eq_mulImpl left right).symm
+  | ks1 => exact mulKroneckerAt_eq 0 0 left right
+  | ks2 => exact mulKS2_eq left right
+  | ks3 => exact mulKS3_eq left right
+  | ks4 => exact mulKS4_eq left right
+  | crtNtt =>
+      cases hresult : mulNttCrt? left right with
+      | none => exact mulKS4_eq left right
+      | some result => exact mulNttCrt?_eq left right result hresult
+
+/-- Coefficient-owner multiplication plan for generic fast algorithms. -/
+def fastPlan : DensePoly.MulPlan Int where
+  mul := mulFast
+  square := DensePoly.squareKaratsuba 32
+  slice := DensePoly.karatsubaSlice 32
+  mul_eq := mulFast_eq
+  square_eq := DensePoly.squareKaratsuba_eq 32
+  coeff_slice := DensePoly.coeff_karatsubaSlice 32
 
 end ZPoly
 

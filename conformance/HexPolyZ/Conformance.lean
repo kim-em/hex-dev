@@ -25,6 +25,7 @@ Covered operations:
 - the one-, two-point, reciprocal, and four-point Kronecker-substitution
   kernels against the schoolbook loop
 - auxiliary-prime NTT multiplication with signed CRT reconstruction
+- the integer kernel selector, total dispatcher, and generic multiplication plan
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -40,6 +41,8 @@ Covered properties:
   primitive-part extraction
 - exact divisors survive every prefilter, while degree, leading-coefficient,
   content, and evaluation obstructions reject before dense division
+- every integer dispatch-table cell is reachable, and the total dispatcher
+  agrees with schoolbook multiplication on its CRT-NTT route
 - Mignotte coefficient bounds equal `Nat.binom k j * coeffL2NormBound f`
 Covered edge cases:
 - zero polynomials and all-zero coefficient arrays
@@ -379,6 +382,29 @@ private def nttTooWide : ZPoly :=
   DensePoly.ofCoeffs #[Int.ofNat (2 ^ 256)]
 
 #guard (mulNttCrt? nttTooWide nttTooWide).isNone
+
+/-! # Total dispatch -/
+
+/-- Equal-sized operands at an exact coefficient-width boundary expose each
+non-schoolbook selector cell without coupling the fixture to kernel internals. -/
+private def dispatchPoly (size width : Nat) : ZPoly :=
+  DensePoly.ofCoeffs (Array.replicate size (Int.ofNat (2 ^ (width - 1))))
+
+#guard selectKernel (dispatchPoly 3 20) (dispatchPoly 3 20) == .schoolbook
+#guard selectKernel (dispatchPoly 24 20) (dispatchPoly 24 20) == .ks1
+#guard selectKernel (dispatchPoly 24 64) (dispatchPoly 24 64) == .ks2
+#guard selectKernel (dispatchPoly 24 128) (dispatchPoly 24 128) == .ks3
+#guard selectKernel (dispatchPoly 24 256) (dispatchPoly 24 256) == .ks4
+#guard selectKernel (dispatchPoly 256 20) (dispatchPoly 256 20) == .crtNtt
+
+private def dispatchLeft : ZPoly := dispatchPoly 256 20
+private def dispatchRight : ZPoly :=
+  DensePoly.ofCoeffs (Array.replicate 256 (-(Int.ofNat (2 ^ 19))))
+
+#guard mulFast dispatchLeft dispatchRight = dispatchLeft * dispatchRight
+
+#guard (DensePoly.mulWith fastPlan dispatchLeft dispatchRight).toArray ==
+  (dispatchLeft * dispatchRight).toArray
 
 end ZPoly
 
