@@ -608,14 +608,13 @@ setup_benchmark runQAdjoinMulLadder n => n * n
   }
 
 /- Cost model. Inversion runs the polynomial extended gcd of the degree-`(n-1)`
-element against the degree-`n` modulus over `ℚ`: the Euclidean remainder
-sequence performs a quadratic number of rational coefficient operations (SPEC
-§Complexity: "extended gcd ... quadratic number of coefficient operations with
-coefficient-size growth"). Intermediate numerator/denominator growth across the
-chain is modelled with the same logarithmic limb-growth proxy the HexResultant
-Brown-chain registrations use, giving `n^2 * log n` rather than declaring every
-arbitrary-precision operation constant-cost. -/
-setup_benchmark runQAdjoinInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
+element against the degree-`n` modulus over `ℚ`. Monic remainder normalization
+keeps the numerator and denominator bit lengths within the `O(n log n)`
+Hadamard bound. The Euclidean chain performs `O(n²)` rational coefficient
+operations, so charging linear work per coefficient limb gives the wallclock
+proxy `n² * (n log n) = n³ log n`. -/
+setup_benchmark runQAdjoinInvLadder n =>
+  n * n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
     -- The degree-96 ceiling is set by the timed extended-gcd operation: its

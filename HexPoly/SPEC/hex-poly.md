@@ -56,6 +56,11 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - One-sided extended GCD (`xgcdLeft`, gcd plus the coefficient of the left
   input) for inverse computations that need only one Bezout coefficient. It
   skips the second growing polynomial multiplication at every Euclidean step.
+- Monic one-sided extended GCD (`xgcdLeftMonic`) for field inverse computations
+  whose cofactor is needed only up to a nonzero scalar. It rescales each
+  nonzero remainder and its tracked coefficient before division, preventing
+  avoidable coefficient swell while preserving the Bezout relation up to the
+  returned gcd representative. `xgcdLeft` remains the exact-cofactor API.
 - Evaluation (Horner's method)
 - Composition, derivative
 - Content and primitive part (for `DensePoly Int`)
