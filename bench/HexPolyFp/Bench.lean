@@ -7,7 +7,9 @@ Authors: Kim Morrison
 import HexPolyFp.Frobenius
 import HexPolyFp.ModCompose
 import HexPolyFp.NttMul
+import HexPolyFp.PrimeField
 import HexPolyFp.SquareFree
+import HexPolyFast.HalfGcd
 import LeanBench
 
 /-!
@@ -27,6 +29,8 @@ Scientific registrations:
   fixtures.  Direct NTT plan construction is hoisted into `prep`.
 * `runMulDirectNttColdChecksum`: the same direct NTT path with checked plan
   construction included in the timed body.
+* `runDivModFastChecksum` and `runGcdFastChecksum`: Newton division and
+  half-gcd through `FpPoly.fastPlan`, paired with the retained field routines.
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
@@ -189,6 +193,14 @@ def densePolyFive (n salt : Nat) : FpPoly 5 :=
 def densePolyLarge (n salt : Nat) : FpPoly 65537 :=
   ofCoeffs <| (Array.range n).map fun i => coeffValueLarge n i salt
 
+/-- Deterministic hash-mixed dense polynomial for gcd inputs.  Unlike
+`densePolyLarge`, changing the salt does not leave a low-degree difference
+between the two coefficient streams. -/
+def denseGcdPolyLarge (degree salt : Nat) : FpPoly 65537 :=
+  ofCoeffs <| ((Array.range degree).map fun i =>
+    ZMod64.ofNat 65537 <|
+      (mixHash (hash (degree, salt)) (hash (i, salt + 1))).toNat % 65537).push 1
+
 /-- Deterministic dense polynomial over `F_257`. -/
 def densePoly257 (n salt : Nat) : FpPoly 257 :=
   ofCoeffs <| (Array.range n).map fun i =>
@@ -313,8 +325,8 @@ def prepDivModInput (n : Nat) : DivModInput :=
 independent degree-`n` polynomials, almost always coprime over `F_p`, so the
 remainder sequence has `Θ(n)` `divMod` steps. -/
 def prepGcdInput (n : Nat) : GcdInput :=
-  { f := densePolyLarge (n + 1) 5
-    g := densePolyLarge (n + 1) 9 }
+  { f := denseGcdPolyLarge n 5
+    g := denseGcdPolyLarge n 9 }
 
 /-- Balanced dense multiplication fixture over the large benchmark prime. -/
 def prepMulInput (n : Nat) : MulInput :=
@@ -393,9 +405,23 @@ def runDivModChecksum (input : DivModInput) : UInt64 :=
   let qr := DensePoly.divMod input.num input.den
   mixHash (checksumPoly qr.1) (checksumPoly qr.2)
 
+/-- Benchmark candidate: Newton division through the finite-field fast plan. -/
+def runDivModFastChecksum (input : DivModInput) : UInt64 :=
+  let qr : FpPoly 65537 × FpPoly 65537 :=
+    @DensePoly.divModWith (ZMod64 65537) inferInstance inferInstance
+      (FpPoly.fastPlan (p := 65537)) input.num input.den
+  mixHash (checksumPoly qr.1) (checksumPoly qr.2)
+
 /-- Benchmark target: Euclidean gcd over `F_p`, checksumming the result. -/
 def runGcdChecksum (input : GcdInput) : UInt64 :=
   checksumPoly <| DensePoly.gcd input.f input.g
+
+/-- Benchmark candidate: half-gcd through the finite-field fast plan. -/
+def runGcdFastChecksum (input : GcdInput) : UInt64 :=
+  let result : FpPoly 65537 :=
+    @DensePoly.gcdWith (ZMod64 65537) inferInstance inferInstance
+      (FpPoly.fastPlan (p := 65537)) input.f input.g
+  checksumPoly result
 
 /-- Benchmark target: forced generic schoolbook multiplication. -/
 def runMulSchoolbookChecksum (input : MulInput) : UInt64 :=
@@ -772,11 +798,26 @@ setup_benchmark runDivModChecksum n => n * n
   with prep := prepDivModInput
   where {
     paramFloor := 8
-    paramCeiling := 256
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Newton division has `O(M(n))` algebraic work.  With the currently selected
+packed Fp kernel below the NTT crossover, the conservative registered model is
+quadratic; the shared rungs and result hash gate any consumer adoption. -/
+setup_benchmark runDivModFastChecksum n => n * n
+  with prep := prepDivModInput
+  where {
+    paramFloor := 8
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "candidate", "fp65537"]
   }
 
 /-
@@ -790,11 +831,26 @@ setup_benchmark runGcdChecksum n => n * n
   with prep := prepGcdInput
   where {
     paramFloor := 8
-    paramCeiling := 256
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+/- Half-gcd performs `O(M(n) log n)` algebraic work.  The quadratic model is a
+conservative fit while `FpPoly.fastPlan` retains packed multiplication on this
+ladder; direct comparison with Euclid, not a slope claim, gates consumers. -/
+setup_benchmark runGcdFastChecksum n => n * n
+  with prep := prepGcdInput
+  where {
+    paramFloor := 8
+    paramCeiling := 2048
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["gcd", "half-gcd", "candidate", "fp65537"]
   }
 
 end FpPolyBench

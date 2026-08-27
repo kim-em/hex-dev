@@ -726,6 +726,29 @@ The downstream audit covers at least:
 - Berlekamp-Zassenhaus trial products and integer reassembly;
 - repeated modulus division in finite-field and quotient-ring consumers.
 
+A shared finite-field substrate screen compares the retained field operations
+with one-shot Newton division and half-gcd through `FpPoly.fastPlan`.  Three
+warm outer trials on `chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, give these
+medians over `F_65537`; all result hashes agree:
+
+| operation | degree | retained | plan-driven |
+|---|---:|---:|---:|
+| `divMod` | 8 | 2.095 µs | 82.740 µs |
+| `divMod` | 256 | 979.291 µs | 77.636 ms |
+| `divMod` | 2048 | 58.874 ms | 2.439 s |
+| `gcd` | 8 | 2.355 µs | 75.333 µs |
+| `gcd` | 256 | 1.005 ms | 51.738 ms |
+| `gcd` | 2048 | 61.875 ms | 2.289 s |
+
+The one-shot plan paths lose on every rung from 8 through 2048, so the Fp,
+GFq, Berlekamp, and Berlekamp-Zassenhaus consumers retain their Euclidean
+division and gcd calls.  This rules out a wholesale substrate replacement;
+the composition, Frobenius, quotient-ring, and reconstruction paths still
+require their own end-to-end audit for other possible fast operations.
+Reproduce the screen with
+`lake exe hexpolyfp_bench compare Hex.FpPolyBench.runDivModChecksum Hex.FpPolyBench.runDivModFastChecksum --param-floor 8 --param-ceiling 2048 --param-schedule doubling --target-inner-nanos 1000000 --outer-trials 3 --signal-floor-multiplier 1 --max-seconds-per-call 10`
+and the analogous command naming `runGcdChecksum` and `runGcdFastChecksum`.
+
 A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a
 reason to move the global crossover until unrelated cells regress.
