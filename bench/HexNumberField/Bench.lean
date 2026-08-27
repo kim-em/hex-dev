@@ -384,17 +384,23 @@ salt: alternating signs, numerators cycling modulo 11 and denominators modulo
 6, so both are bounded independently of `len` and a ladder over `len` varies
 the modulus degree alone.
 
-The bound matters. The earlier form used numerator `i + salt + 1` over
-denominator `i + 2`; the reduced common denominator of that vector is
-`lcm (2, …, len + 1)`, whose bit length is `Θ(len)` by the prime number
-theorem. A ladder built on it varies coefficient height together with degree,
-so it is not the controlled one-parameter ladder
-[PLAN/Phase4.md](../../PLAN/Phase4.md) requires, and no bounded-height cost
-model can fit it. -/
+The bound matters. The earlier form used numerator `±(i + salt + 1)` over
+denominator `i + 2`. Since `gcd (i + salt + 1) (i + 2) = gcd (salt - 1) (i + 2)`,
+coefficient `i` reduces to denominator `(i + 2) / gcd (i + 2) (salt - 1)`, and
+the common denominator is the lcm of those. For the fixed salts in use that
+lcm still has `Θ(len)` bit length — it differs from `lcm (2, …, len + 1)` only
+by the divisors of `salt - 1`, a constant. So a ladder built on it varied
+coefficient height together with degree: not the controlled one-parameter
+ladder [PLAN/Phase4.md](../../PLAN/Phase4.md) requires, and no bounded-height
+cost model could fit it.
+
+`prepAlgPolyInput` shares this helper for the same reason. -/
+private def denseRatCoeff (i salt : Nat) : Rat :=
+  let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
+  mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
+
 private def denseRatCoeffs (len salt : Nat) : Array Rat :=
-  (Array.range len).map fun i =>
-    let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
-    mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
+  (Array.range len).map (denseRatCoeff · salt)
 
 /-- Deterministic refined isolation for a squarefree polynomial: run the
 bounded isolator at separation depth and take the first returned atom. -/
@@ -505,11 +511,14 @@ wall model is linear. -/
 setup_benchmark runQAdjoinAddLadder n => n
   with prep := prepFieldInput
   where {
-    -- The fixture, not the timed operation, bounds this ladder: building the
-    -- certified root of `X^n - 2` isolates all `n` complex roots at
-    -- separation depth, which costs 4.9 s at n = 16, 14.2 s at n = 20 and
-    -- 30.8 s at n = 24, and runs past a quarter hour by n = 32. The wallclock
-    -- cap is sized for that prelude; the measured call itself is microseconds.
+    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
+    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
+    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
+    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
+    -- n = 32, while the measured call is microseconds. 24 is the largest rung
+    -- reachable in a sane wallclock, not the largest the operation supports.
+    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
+    -- should rise once a cheaper certified-root construction exists.
     paramFloor := 4
     paramCeiling := 24
     paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
@@ -527,11 +536,14 @@ the declared model is `n^2`. -/
 setup_benchmark runQAdjoinMulLadder n => n * n
   with prep := prepFieldInput
   where {
-    -- The fixture, not the timed operation, bounds this ladder: building the
-    -- certified root of `X^n - 2` isolates all `n` complex roots at
-    -- separation depth, which costs 4.9 s at n = 16, 14.2 s at n = 20 and
-    -- 30.8 s at n = 24, and runs past a quarter hour by n = 32. The wallclock
-    -- cap is sized for that prelude; the measured call itself is microseconds.
+    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
+    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
+    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
+    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
+    -- n = 32, while the measured call is microseconds. 24 is the largest rung
+    -- reachable in a sane wallclock, not the largest the operation supports.
+    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
+    -- should rise once a cheaper certified-root construction exists.
     paramFloor := 4
     paramCeiling := 24
     paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
@@ -623,9 +635,9 @@ setup_benchmark runAddEliminantLadder n => n * n * (Nat.log2 (n + 2) + 1)
     -- beta = +0.258). Extending to 256 puts four decades of work under the
     -- fit and flattens `C` to 144 .. 166 at beta = +0.015 against the same
     -- declared model.
-    paramFloor := 8
+    paramFloor := 4
     paramCeiling := 256
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
     maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -762,7 +774,7 @@ def prepAlgPolyInput (n : Nat) : AlgPolyInput :=
   | some sqrt2 =>
     ⟨AlgebraicPoly.ofArray <| (Array.range (m + 1)).map fun i =>
       if i == 1 then sqrt2
-      else AlgebraicNumber.ofRat (mkRat (Int.ofNat (i + 1)) (i + 2))⟩
+      else AlgebraicNumber.ofRat (denseRatCoeff i 2)⟩
   | none => panic! "prepAlgPolyInput: √2 fixture failed"
 
 def runAlgebraicRootsLadder (input : AlgPolyInput) : UInt64 :=
@@ -789,12 +801,13 @@ setup_benchmark runCommonPresentationLadder n => n
   with prep := prepAlgPolyInput
   where {
     -- `presentation?` carries a fixed start-up cost (the generator's powers
-    -- and the first `extend?` shifts) of roughly four coefficients' worth of
-    -- work. Below eight coefficients that constant, not the linear term,
-    -- dominates, so the ladder starts at 8 and runs to 128.
-    paramFloor := 8
+    -- and the first `extend?` shifts) worth roughly four coefficients, so the
+    -- bottom of the ladder is start-up dominated. The schedule keeps those
+    -- rungs — they are the range `runAlgebraicRootsLadder` actually calls this
+    -- at — and extends to 128 so the linear term dominates the fit.
+    paramFloor := 2
     paramCeiling := 128
-    paramSchedule := .custom #[8, 16, 32, 64, 128]
+    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128]
     maxSecondsPerCall := 60.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
