@@ -1,0 +1,503 @@
+{
+ "binary_commit": "d9fc6d73f372e34fc71ac507da3cae6e43f79a18",
+ "cpu_model": "AMD EPYC 9455 48-Core Processor",
+ "host": "chungus2",
+ "lean_bench_version": "0.1.0",
+ "lean_toolchain": "leanprover/lean4:v4.34.0-rc2",
+ "library": "HexNumberFieldTower",
+ "note": "Fixed dispatch emits no timed-region sidecar, so the two fixed-only families use whole-bench-thread raw captures over a long auto-tuned batch (min-total-nanos 5e9); the timed-region filtered captures carry lean-bench-samply diagnostics.",
+ "os": "Linux x86_64 6.12.100",
+ "profiles": [
+  {
+   "case": "Hex.NumberTowerBench.runTowerMulLadder",
+   "classified_percent": 99.15,
+   "command": "LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench Hex.NumberTowerBench.runTowerMulLadder 12 5000000000",
+   "diagnostics": {
+    "calibration_residual_ms": 0.7001481056213379,
+    "confidence": "passed",
+    "rejected_samples_bench_thread": 237605,
+    "retained_samples_bench_thread": 4957,
+    "total_timed_ms": 4961.437109
+   },
+   "family": "tower-coordinate-arithmetic",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTowerBench.runTowerMulLadder",
+     "percent": 100.0
+    },
+    {
+     "function": "Hex.NumberTower.mul",
+     "percent": 99.92
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.mulCoords",
+     "percent": 99.92
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.convolve",
+     "percent": 81.76
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.reduce",
+     "percent": 58.34
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.reduceCoeffs",
+     "percent": 56.93
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.addCoords",
+     "percent": 18.8
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.subCoords",
+     "percent": 10.11
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.block",
+     "percent": 1.31
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.flattenBlocks",
+     "percent": 0.61
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 39.72,
+    "gmp": 23.56,
+    "lean-own-code": 4.8,
+    "lean-runtime": 31.07,
+    "other": 0.85
+   },
+   "method": "timed-region-filtered",
+   "param": 12,
+   "samples": 4957
+  },
+  {
+   "case": "Hex.NumberTowerBench.runTowerInvLadder",
+   "classified_percent": 99.62,
+   "command": "LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench Hex.NumberTowerBench.runTowerInvLadder 6 5000000000",
+   "diagnostics": {
+    "calibration_residual_ms": 0.5416629314422607,
+    "confidence": "passed",
+    "rejected_samples_bench_thread": 2854,
+    "retained_samples_bench_thread": 4943,
+    "total_timed_ms": 4964.10383
+   },
+   "family": "tower-coordinate-arithmetic",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTowerBench.runTowerInvLadder",
+     "percent": 97.27
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.invCoords",
+     "percent": 96.9
+    },
+    {
+     "function": "Hex.NumberTower.inv",
+     "percent": 96.9
+    },
+    {
+     "function": "Hex.DensePoly.xgcdLeftAux",
+     "percent": 90.86
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.mulCoords",
+     "percent": 76.37
+    },
+    {
+     "function": "Hex.DensePoly.divMod",
+     "percent": 49.77
+    },
+    {
+     "function": "Hex.DensePoly.divModArray",
+     "percent": 49.75
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.convolve",
+     "percent": 46.23
+    },
+    {
+     "function": "Hex.DensePoly.mulImpl",
+     "percent": 42.99
+    },
+    {
+     "function": "Hex.DensePoly.subtractScaledShiftStep",
+     "percent": 28.22
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.addCoords",
+     "percent": 19.95
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.subCoords",
+     "percent": 19.0
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.reduce",
+     "percent": 18.11
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.reduceCoeffs",
+     "percent": 17.6
+    },
+    {
+     "function": "Hex.DensePoly.subImpl",
+     "percent": 3.99
+    },
+    {
+     "function": "Hex.DensePoly.trimTrailingZerosGo",
+     "percent": 1.68
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 34.86,
+    "gmp": 43.19,
+    "lean-own-code": 1.6,
+    "lean-runtime": 19.97,
+    "other": 0.38
+   },
+   "method": "timed-region-filtered",
+   "param": 6,
+   "samples": 4943
+  },
+  {
+   "case": "Hex.NumberTowerBench.runTowerFactorLadder",
+   "classified_percent": 99.78,
+   "command": "LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench Hex.NumberTowerBench.runTowerFactorLadder 16 5000000000",
+   "diagnostics": {
+    "calibration_residual_ms": 0.72359299659729,
+    "confidence": "passed",
+    "rejected_samples_bench_thread": 7,
+    "retained_samples_bench_thread": 5342,
+    "total_timed_ms": 5360.591522
+   },
+   "family": "trager-factorization",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTower.factor?",
+     "percent": 84.37
+    },
+    {
+     "function": "Hex.NumberTowerBench.runTowerFactorLadder",
+     "percent": 84.37
+    },
+    {
+     "function": "Hex.NumberTower.Factor.factorSquarefree?",
+     "percent": 81.6
+    },
+    {
+     "function": "Hex.DensePoly.gcdAuxImpl",
+     "percent": 54.08
+    },
+    {
+     "function": "Hex.NumberTower.Factor.factorRaw?",
+     "percent": 42.98
+    },
+    {
+     "function": "Hex.DensePoly.subtractScaledShiftStep",
+     "percent": 42.53
+    },
+    {
+     "function": "Hex.NumberTower.Factor.check",
+     "percent": 41.39
+    },
+    {
+     "function": "Hex.NumberTower.Factor.isIrreducible",
+     "percent": 41.2
+    },
+    {
+     "function": "Hex.NumberTower.Factor.appendComponent?",
+     "percent": 40.96
+    },
+    {
+     "function": "Hex.NumberTower.Norm.findSquarefreeShiftAux",
+     "percent": 40.72
+    },
+    {
+     "function": "Hex.DensePoly.modArray",
+     "percent": 30.59
+    },
+    {
+     "function": "Hex.NumberTower.Arithmetic.mulCoords",
+     "percent": 29.93
+    },
+    {
+     "function": "Hex.NumberTower.Factor.factorRat?",
+     "percent": 28.83
+    },
+    {
+     "function": "Hex.NumberTower.Norm.isSquarefree",
+     "percent": 25.95
+    },
+    {
+     "function": "Hex.DensePoly.modImpl",
+     "percent": 25.23
+    },
+    {
+     "function": "Hex.DensePoly.mulImpl",
+     "percent": 23.44
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 19.17,
+    "gmp": 54.02,
+    "lean-own-code": 2.23,
+    "lean-runtime": 24.35,
+    "other": 0.22
+   },
+   "method": "timed-region-filtered",
+   "param": 16,
+   "samples": 5342
+  },
+  {
+   "case": "Hex.NumberTowerBench.runAdjoin",
+   "classified_percent": 99.75,
+   "command": "samply record --save-only --no-open --rate 999 --unstable-presymbolicate -o /tmp/hex-profile-runAdjoin-fixedraw.json.gz -- .lake/build/bin/hexnumberfieldtower_bench _child --bench Hex.NumberTowerBench.runAdjoin --fixed --min-total-nanos 5000000000 --repeat-index 0",
+   "family": "adjoin-extend",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTower.adjoin?",
+     "percent": 95.71
+    },
+    {
+     "function": "Hex.NumberTowerBench.runAdjoin",
+     "percent": 95.71
+    },
+    {
+     "function": "Hex.NumberTower.RawEvaluation.vanishesAt?",
+     "percent": 95.46
+    },
+    {
+     "function": "Hex.isolate",
+     "percent": 95.15
+    },
+    {
+     "function": "Hex.isolateLoop",
+     "percent": 95.15
+    },
+    {
+     "function": "Hex.AlgebraicRoot.ofEliminant?",
+     "percent": 94.92
+    },
+    {
+     "function": "Hex.IsolationLoop.next",
+     "percent": 82.55
+    },
+    {
+     "function": "Hex.Component.refineAll",
+     "percent": 82.49
+    },
+    {
+     "function": "Hex.exactRootFree",
+     "percent": 78.01
+    },
+    {
+     "function": "Hex.taylor",
+     "percent": 69.37
+    },
+    {
+     "function": "Hex.Taylor.pass",
+     "percent": 67.8
+    },
+    {
+     "function": "Hex.IsolationLoop.finishAllAtoms?",
+     "percent": 65.94
+    },
+    {
+     "function": "Hex.refineAtom?",
+     "percent": 65.91
+    },
+    {
+     "function": "Hex.refineLoop",
+     "percent": 65.91
+    },
+    {
+     "function": "Hex.NumberTower.selectFactor?",
+     "percent": 63.62
+    },
+    {
+     "function": "Hex.GaussDyadic.mul",
+     "percent": 46.63
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 46.44,
+    "gmp": 27.26,
+    "lean-own-code": 2.01,
+    "lean-runtime": 24.05,
+    "other": 0.25
+   },
+   "method": "raw-fixed-capture",
+   "param": null,
+   "samples": 13786
+  },
+  {
+   "case": "Hex.NumberTowerBench.runSplit",
+   "classified_percent": 99.27,
+   "command": "samply record --save-only --no-open --rate 999 --unstable-presymbolicate -o /tmp/hex-profile-runSplit-fixedraw.json.gz -- .lake/build/bin/hexnumberfieldtower_bench _child --bench Hex.NumberTowerBench.runSplit --fixed --min-total-nanos 5000000000 --repeat-index 0",
+   "family": "split-flatten",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTower.splitAux",
+     "percent": 99.9
+    },
+    {
+     "function": "Hex.NumberTowerBench.runSplit",
+     "percent": 99.9
+    },
+    {
+     "function": "Hex.NumberTower.RawEvaluation.vanishesAt?",
+     "percent": 66.97
+    },
+    {
+     "function": "Hex.isolate",
+     "percent": 64.55
+    },
+    {
+     "function": "Hex.isolateLoop",
+     "percent": 64.48
+    },
+    {
+     "function": "Hex.IsolationLoop.finishAllAtoms?",
+     "percent": 52.76
+    },
+    {
+     "function": "Hex.refineAtom?",
+     "percent": 52.62
+    },
+    {
+     "function": "Hex.refineLoop",
+     "percent": 52.6
+    },
+    {
+     "function": "Hex.IsolationLoop.next",
+     "percent": 49.87
+    },
+    {
+     "function": "Hex.Component.refineAll",
+     "percent": 49.17
+    },
+    {
+     "function": "Hex.AlgebraicRoot.ofEliminant?",
+     "percent": 48.69
+    },
+    {
+     "function": "Hex.exactRootFree",
+     "percent": 38.01
+    },
+    {
+     "function": "Hex.NumberTower.adjoin?",
+     "percent": 35.2
+    },
+    {
+     "function": "Hex.NumberTower.factorRoot?",
+     "percent": 35.12
+    },
+    {
+     "function": "Hex.NumberTower.retainRoots?",
+     "percent": 33.59
+    },
+    {
+     "function": "Hex.NumberTower.factor?",
+     "percent": 30.48
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 37.91,
+    "gmp": 13.52,
+    "lean-own-code": 7.83,
+    "lean-runtime": 40.01,
+    "other": 0.73
+   },
+   "method": "raw-fixed-capture",
+   "param": null,
+   "samples": 9985
+  },
+  {
+   "case": "Hex.NumberTowerBench.runFlatten",
+   "classified_percent": 99.74,
+   "command": "samply record --save-only --no-open --rate 999 --unstable-presymbolicate -o /tmp/hex-profile-runFlatten-fixedraw.json.gz -- .lake/build/bin/hexnumberfieldtower_bench _child --bench Hex.NumberTowerBench.runFlatten --fixed --min-total-nanos 5000000000 --repeat-index 0",
+   "family": "split-flatten",
+   "inclusive_hex": [
+    {
+     "function": "Hex.NumberTowerBench.runFlatten",
+     "percent": 97.93
+    },
+    {
+     "function": "Hex.NumberTower.flatten?",
+     "percent": 97.36
+    },
+    {
+     "function": "Hex.isolate",
+     "percent": 94.99
+    },
+    {
+     "function": "Hex.isolateLoop",
+     "percent": 94.98
+    },
+    {
+     "function": "Hex.NumberTower.Flatten.searchRecoveredAux",
+     "percent": 90.2
+    },
+    {
+     "function": "Hex.NumberTower.Flatten.searchRecovered?",
+     "percent": 90.2
+    },
+    {
+     "function": "Hex.NumberTower.Flatten.candidateAt?",
+     "percent": 83.22
+    },
+    {
+     "function": "Hex.AlgebraicPoly.Common.shift?",
+     "percent": 83.22
+    },
+    {
+     "function": "Hex.IsolationLoop.next",
+     "percent": 81.57
+    },
+    {
+     "function": "Hex.Component.refineAll",
+     "percent": 81.23
+    },
+    {
+     "function": "Hex.exactRootFree",
+     "percent": 73.28
+    },
+    {
+     "function": "Hex.AlgebraicRoot.exact?",
+     "percent": 61.83
+    },
+    {
+     "function": "Hex.AlgebraicRoot.exactFactor?",
+     "percent": 61.51
+    },
+    {
+     "function": "Hex.IsolationLoop.finishAllAtoms?",
+     "percent": 55.75
+    },
+    {
+     "function": "Hex.refineAtom?",
+     "percent": 55.64
+    },
+    {
+     "function": "Hex.refineLoop",
+     "percent": 55.63
+    }
+   ],
+   "leaf_categories": {
+    "allocation": 37.74,
+    "gmp": 20.47,
+    "lean-own-code": 4.47,
+    "lean-runtime": 37.06,
+    "other": 0.26
+   },
+   "method": "raw-fixed-capture",
+   "param": null,
+   "samples": 18762
+  }
+ ],
+ "sampling_rate_hz": 999,
+ "samply": "0.13.1"
+}
