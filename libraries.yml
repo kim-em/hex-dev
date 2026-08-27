@@ -129,7 +129,7 @@ libraries:
   HexPolyFast:
     deps: [HexPoly, HexTruncatedSeries]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
     phase4:
       comparators:
