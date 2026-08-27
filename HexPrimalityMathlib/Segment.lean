@@ -11,9 +11,9 @@ import Mathlib.Data.Finset.Basic
 Segment statements over the committed prime table, in the form a Mathlib
 consumer states them.
 
-`forall_prime_lt` is the scaffold for "every prime in `[1, x]` satisfies
-`P`": combined with a decidable fold over the table literal it discharges
-the universally quantified segment statements the SPEC calls unlocked.
+`forall_prime_lt` reduces "every prime below `x` satisfies `P`" to the
+committed prime table: combined with a decidable fold over the table literal,
+it discharges the universally quantified segment statements in the SPEC.
 -/
 
 namespace Hex
@@ -39,7 +39,8 @@ theorem primesIn_spec (lo hi : Nat) :
 
 /-- The `Finset` of primes below a bound inside the table's range is the
 filtered table. -/
-theorem filter_prime_range {bound : Nat} (h : bound ≤ primeTableBound) :
+theorem filter_prime_range [DecidablePred (_root_.Nat.Prime)]
+    {bound : Nat} (h : bound ≤ primeTableBound) :
     (Finset.range bound).filter _root_.Nat.Prime =
       (primeTable.toList.filter (fun p => p < bound)).toFinset := by
   ext n

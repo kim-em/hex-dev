@@ -30,23 +30,7 @@ namespace Nat
 /-- The whole correspondence: the Mathlib-free predicate and `Nat.Prime`
 agree. Everything else transports along it. -/
 theorem prime_iff {n : Nat} : Prime n ↔ _root_.Nat.Prime n := by
-  rw [prime_iff_forall_lt, _root_.Nat.prime_def_lt]
-  constructor
-  · rintro ⟨h2, hdiv⟩
-    refine ⟨h2, fun m hmlt hdvd => ?_⟩
-    rcases Nat.lt_or_ge m 2 with hm2 | hm2
-    · rcases Nat.lt_or_ge m 1 with hm0 | hm1
-      · exfalso
-        have hm : m = 0 := by omega
-        subst hm
-        have := Nat.eq_zero_of_zero_dvd hdvd
-        omega
-      · omega
-    · exact absurd hdvd (hdiv m hmlt hm2)
-  · rintro ⟨h2, hdiv⟩
-    refine ⟨h2, fun m hmlt hm2 hdvd => ?_⟩
-    have := hdiv m hmlt hdvd
-    omega
+  simpa only [Hex.Nat.Prime] using (_root_.Nat.prime_def (p := n)).symm
 
 /-- Checker soundness, in Mathlib's vocabulary. -/
 theorem natPrime_of_checkPrime {c : PrimeCert} (h : checkPrime c = true) :
@@ -65,7 +49,7 @@ theorem isPrime_iff_natPrime {n : Nat} :
   isPrime_iff.trans prime_iff
 
 /-- A Miller-Rabin witness refutes `Nat.Prime`. -/
-theorem not_natPrime_of_millerRabin_false {n a : Nat}
+theorem millerRabin_refutes_natPrime {n a : Nat}
     (h : millerRabin n a = false) : ¬ _root_.Nat.Prime n :=
   fun hp => not_prime_of_millerRabin_false h (prime_iff.mpr hp)
 
