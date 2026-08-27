@@ -8,11 +8,14 @@ spec-driven development.
 [`hex-lll`](https://github.com/leanprover/hex-lll) to Mathlib submodules and
 Euclidean norms, building on
 [`hex-gram-schmidt-mathlib`](https://github.com/leanprover/hex-gram-schmidt-mathlib)
-and [`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib).
+and [`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib),
+and on Mathlib.
 Its principal theorem says that the first row returned by `Hex.lll` is short
 relative to every nonzero vector of the input lattice.
 
 # Quickstart
+
+Add to your `lakefile.toml`:
 
 ```toml
 [[require]]

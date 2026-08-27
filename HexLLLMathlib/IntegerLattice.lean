@@ -135,7 +135,6 @@ theorem norm_sq_intRowToEuclidean (row : Vector Int m) :
 /-- The Euclidean squared norm of a lattice vector embedded into
 `EuclideanSpace ℝ (Fin m)` equals the real cast of the executable integer
 squared norm of its `Vector` preimage. -/
-@[simp]
 theorem norm_sq_intVectorToEuclidean (x : Fin m → ℤ) :
     ‖intVectorToEuclidean x‖ ^ 2 =
       (((HexMatrixMathlib.vectorEquiv.symm x).normSq : Int) : ℝ) := by
@@ -170,8 +169,11 @@ theorem reduced_first_row_norm_sq_le
         ‖intVectorToEuclidean x‖ ^ 2 := by
   let v : Vector Int m := HexMatrixMathlib.vectorEquiv.symm x
   have hxExec : Hex.Matrix.memLattice b v := by
+    have hvx : HexMatrixMathlib.vectorEquiv v = x := by
+      simp only [v, Equiv.apply_symm_apply]
     have hx' : HexMatrixMathlib.vectorEquiv v ∈ latticeSubmodule b := by
-      simpa [v] using hx
+      rw [hvx]
+      exact hx
     exact (mem_latticeSubmodule_iff b v).mp hx'
   have hx0Exec : v ≠ 0 := by
     intro hv

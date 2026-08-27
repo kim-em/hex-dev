@@ -85,11 +85,25 @@ private theorem div_le_div_of_nonpos_den {a b c : Rat} (ha : a ≤ 0) (hb : 0 < 
 
 /-! # Containment lemmas for the interval kernel -/
 
+/-- Embedding an integer at scale `S` gives an interval containing that integer. -/
+theorem ofInt_mem (S z : Int) : (Ival.ofInt S z).mem S (z : Rat) := by
+  unfold Ival.ofInt Ival.mem
+  constructor <;> simp [Int.cast_mul]
+
 private theorem mem_add {S : Int} {I J : Ival} {x y : Rat}
     (hx : I.mem S x) (hy : J.mem S y) : (I.add J).mem S (x + y) := by
   obtain ⟨h1, h2⟩ := hx
   obtain ⟨h3, h4⟩ := hy
   unfold Ival.add Ival.mem
+  push_cast
+  constructor <;> [nlinarith; nlinarith]
+
+/-- Subtracting containing intervals gives an interval containing the difference. -/
+theorem sub_mem {S : Int} {I J : Ival} {x y : Rat}
+    (hx : I.mem S x) (hy : J.mem S y) : (I.sub J).mem S (x - y) := by
+  obtain ⟨h1, h2⟩ := hx
+  obtain ⟨h3, h4⟩ := hy
+  unfold Ival.sub Ival.mem
   push_cast
   constructor <;> [nlinarith; nlinarith]
 

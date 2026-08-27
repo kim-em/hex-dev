@@ -240,7 +240,8 @@ private theorem foldl_modify_matrix_getRow
     | cons x xs ih =>
       simp only [List.foldl_cons]
       by_cases hkx : k < x.val
-      · rw [_root_.ite_eq_left hkx, _root_.ite_eq_left hkx, ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
+      · rw [_root_.ite_eq_left hkx, _root_.ite_eq_left hkx,
+          ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
       · rw [_root_.ite_eq_right hkx, _root_.ite_eq_right hkx, ih acc]
   have h := foldl_modify_rows_get k xs hnd base.rows upd l
   rw [← key base] at h
