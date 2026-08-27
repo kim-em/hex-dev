@@ -6,6 +6,16 @@ All nine parametric targets were refreshed together from a clean worktree.
 
 ## Verdicts
 
+All nine registrations use **mode 1, two-sided parametric**. Their models are
+derived from the intended linear or quadratic lifting algorithm on the
+registered degree/precision family, so mode 2's prerequisite — inability to
+derive a tight family model — does not hold. The six consistent results pass
+mode 1. The three inconclusive results leave the library **mode 4, blocked**:
+the existing mixed schedules have not established the derived scaling, and no
+published bound plus dominant-phase attribution has been supplied for a
+one-sided reinterpretation. Mode 3 is not justified while the controlled
+degree/precision families remain available.
+
 | Target | Model | Largest rung | Median | Verdict |
 |---|---|---:|---:|---|
 | Reduce mod `p` | `n` | 131072 | 9.601 ms | consistent |
@@ -49,8 +59,8 @@ and is not a native-FLINT performance claim.
 
 ## Concerns
 
-- The `n²k` iterated-linear verdicts remain inconclusive on the mixed
-  degree/precision schedule.
+- **Mode 4, blocked.** The `n²k` iterated-linear verdicts remain inconclusive
+  on the mixed degree/precision schedule.
 - The quadratic-multifactor model is now inconclusive because the optimized
   high-precision rung changes the observed ladder shape.
 - A current native-FLINT Hensel comparison still needs bindings that

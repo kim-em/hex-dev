@@ -216,6 +216,32 @@ wall-time models. Which op-count models changed, and why:
 
 ## Verdicts
 
+`runMahlerPrec` uses **mode 1, two-sided parametric**. Its linear family model
+is derived from the coefficient scan with bounded coefficient height, and the
+scientific verdict passes in both directions.
+
+The other thirteen registrations use **mode 3, fixed registration with an
+absolute budget**, under
+[`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+Mode 1 is unavailable because the reachable wall-time bands cross GMP
+representations, combine degree with growing Taylor-coefficient width or
+separation depth, or quantize achieved precision; three calibration rounds
+found no stable one-parameter scalar wall model derived independently of the
+timings. Mode 2 is unavailable because the SPEC's schoolbook-operation bounds
+do not describe those GMP transition bands tightly enough to be published
+wall-time bounds for the profiled kernels. Each fixed target therefore uses
+the canonical hard input listed below, its registration's per-call ceiling as
+the absolute budget, and an expected hash. This deliberately gives up
+asymptotic regression detection for those operations; the SPEC's worst-case
+contracts remain unchanged.
+
+The absolute per-call budgets are 4 s for `runTaylor`, `runWitnessCheck`,
+`runNkWitnessCheck`, `runNewtonSquare`, `runRefine1`, and `runRefineTo`; 6 s
+for `runCertify`; 20 s for `runIsolateAll` and `runIsolateNk`; 30 s for
+`runIsolate`; 8 s for `runIsolatePellet` and
+`runIsolateNkThenPellet`; and the lean-bench fixed-registration default of
+60 s for `runSameRoot`.
+
 Quiet-machine command:
 
 ```sh
