@@ -40,18 +40,6 @@ inductive InterpNode (F : Type u) [DecidableEq F]
       InterpNode F mul (leftPoints ++ rightPoints)
         (mulWith mul leftPoly rightPoly)
 
-private def interpSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
-
-private theorem interpSplit_pos (n : Nat) : 0 < interpSplit n := by
-  unfold interpSplit
-  exact Nat.pow_pos (by omega)
-
-private theorem interpSplit_lt (n : Nat) (hn : 2 ≤ n) : interpSplit n < n := by
-  have hm : n - 1 ≠ 0 := by omega
-  have hle : 2 ^ Nat.log2 (n - 1) ≤ n - 1 := Nat.log2_self_le hm
-  unfold interpSplit
-  omega
-
 /-- Build a count-balanced interpolation tree. -/
 private def buildInterpNode (mul : MulPlan F) :
     (points : List F) → points ≠ [] →
@@ -60,9 +48,9 @@ private def buildInterpNode (mul : MulPlan F) :
   | [a], _ => ⟨pointFactor a, .leaf a⟩
   | a :: b :: rest, _ =>
       let points := a :: b :: rest
-      let split := interpSplit points.length
-      have splitPos : 0 < split := interpSplit_pos points.length
-      have splitLt : split < points.length := interpSplit_lt points.length (by
+      let split := treeSplit points.length
+      have splitPos : 0 < split := treeSplit_pos points.length
+      have splitLt : split < points.length := treeSplit_lt points.length (by
         dsimp [points]
         simp)
       let leftPoints := points.take split
@@ -89,8 +77,8 @@ private def buildInterpNode (mul : MulPlan F) :
   decreasing_by
     all_goals
       simp only [List.length_take, List.length_drop, List.length_cons]
-      have hsplitPos := interpSplit_pos (rest.length + 1 + 1)
-      have hsplitLt := interpSplit_lt (rest.length + 1 + 1) (by omega)
+      have hsplitPos := treeSplit_pos (rest.length + 1 + 1)
+      have hsplitLt := treeSplit_lt (rest.length + 1 + 1) (by omega)
       omega
 
 /-- Combine weighted Lagrange numerators through the cached balanced shape. -/
@@ -276,32 +264,6 @@ private theorem combineNode_eval (mul : MulPlan F) {points : List F}
           InterpNode.eval_zero mul right rightPoints[i - leftPoints.length]
             (List.getElem_mem ..), Lean.Grind.Semiring.mul_zero]
         grind
-
-private theorem size_le_of_coeff_zero_above {p : DensePoly F} {N : Nat}
-    (hzero : ∀ i, N ≤ i → p.coeff i = 0) : p.size ≤ N := by
-  by_cases hle : p.size ≤ N
-  · exact hle
-  · have hpos : 0 < p.size := by omega
-    have hlast := coeff_last_ne_zero_of_pos_size p hpos
-    exact False.elim (hlast (hzero (p.size - 1) (by omega)))
-
-private theorem size_add_le_max (p q : DensePoly F) :
-    (p + q).size ≤ max p.size q.size := by
-  apply size_le_of_coeff_zero_above
-  intro i hi
-  rw [coeff_add_semiring,
-    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
-    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
-  exact Lean.Grind.Semiring.add_zero 0
-
-private theorem size_sub_le_max (p q : DensePoly F) :
-    (p - q).size ≤ max p.size q.size := by
-  apply size_le_of_coeff_zero_above
-  intro i hi
-  rw [coeff_sub_ring,
-    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
-    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
-  exact SubZeroLaw.sub_zero_zero
 
 private theorem InterpNode.poly_size (mul : MulPlan F) {points : List F}
     {poly : DensePoly F} (node : InterpNode F mul points poly) :

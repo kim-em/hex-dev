@@ -36,20 +36,6 @@ def cyclicModulus (n : Nat) : DensePoly R :=
 def negacyclicModulus (n : Nat) : DensePoly R :=
   monomial n 1 + 1
 
-private theorem size_sub_le_max (p q : DensePoly R) :
-    (p - q).size ≤ max p.size q.size := by
-  change (DensePoly.sub p q).size ≤ max p.size q.size
-  rw [sub_eq_subImpl]
-  unfold subImpl
-  exact Nat.le_trans (size_ofCoeffs_le _) (by simp)
-
-private theorem size_add_le_max (p q : DensePoly R) :
-    (p + q).size ≤ max p.size q.size := by
-  change (DensePoly.add p q).size ≤ max p.size q.size
-  rw [add_eq_addImpl]
-  unfold addImpl
-  exact Nat.le_trans (size_ofCoeffs_le _) (by simp)
-
 theorem size_cyclicModulus (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     (cyclicModulus (R := R) n).size = n + 1 := by
   have hn0 : n ≠ 0 := by omega
@@ -345,12 +331,6 @@ theorem mulCyclic_eq_modByMonic (plan : MulPlan R) (n : Nat) (hn : 0 < n)
         (cyclicModulus_monic n hn hone) := by
   unfold mulCyclic
   rw [ofCoeffs_cyclicCoeffs_eq_modByMonic n hn hone, mulWith_eq]
-
-def negacyclicResidue (n i : Nat) (c : R) : DensePoly R :=
-  if (i / n) % 2 = 0 then
-    monomial (i % n) c
-  else
-    monomial (i % n) (0 - c)
 
 private theorem monomial_neg (i : Nat) (c : R) :
     monomial i (0 - c) = (0 : DensePoly R) - monomial i c := by

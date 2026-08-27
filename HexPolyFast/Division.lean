@@ -58,14 +58,6 @@ private theorem foldRangeExtend (f : Nat → R) (m n : Nat) (hm : m ≤ n)
   have := List.mem_range.mp hj
   omega
 
-private theorem size_le_of_coeff_zero_above {p : DensePoly R} {N : Nat}
-    (h : ∀ i, N ≤ i → p.coeff i = 0) : p.size ≤ N := by
-  by_cases hle : p.size ≤ N
-  · exact hle
-  · have hpos : 0 < p.size := by omega
-    have hzero := h (p.size - 1) (by omega)
-    exact False.elim (coeff_last_ne_zero_of_pos_size p hpos hzero)
-
 /-- Reversing a `k`-coefficient series prefix converts its product's high
 coefficients into the corresponding low series convolution. -/
 theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)

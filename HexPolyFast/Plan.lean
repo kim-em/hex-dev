@@ -24,6 +24,38 @@ universe u
 
 attribute [local instance 1000] Lean.Grind.Semiring.ofNat
 
+variable {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
+
+/-- A polynomial whose coefficients vanish from `n` onward has size at most
+`n`. -/
+theorem size_le_of_coeff_zero_above {p : DensePoly R} {n : Nat}
+    (hzero : ∀ i, n ≤ i → p.coeff i = 0) : p.size ≤ n := by
+  by_cases hle : p.size ≤ n
+  · exact hle
+  · have hpos : 0 < p.size := by omega
+    have hlast := coeff_last_ne_zero_of_pos_size p hpos
+    exact False.elim (hlast (hzero (p.size - 1) (by omega)))
+
+/-- Addition cannot increase size beyond the larger operand. -/
+theorem size_add_le_max (p q : DensePoly R) :
+    (p + q).size ≤ max p.size q.size := by
+  apply size_le_of_coeff_zero_above
+  intro i hi
+  rw [coeff_add_semiring,
+    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
+    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
+  exact Lean.Grind.Semiring.add_zero 0
+
+/-- Subtraction cannot increase size beyond the larger operand. -/
+theorem size_sub_le_max (p q : DensePoly R) :
+    (p - q).size ≤ max p.size q.size := by
+  apply size_le_of_coeff_zero_above
+  intro i hi
+  rw [coeff_sub_ring,
+    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
+    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
+  exact SubZeroLaw.sub_zero_zero
+
 /-- A proof-carrying implementation of full, square, and clipped dense
 polynomial multiplication.  `slice lo len a b` stores coefficients beginning
 at degree `lo`, shifted down to degree zero. -/

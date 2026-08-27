@@ -122,13 +122,6 @@ def applyWith (plan : MulPlan F) (m : GcdStep F)
   (mulWith plan m.a00 a + mulWith plan m.a01 b,
     mulWith plan m.a10 a + mulWith plan m.a11 b)
 
-/-- Apply a transformation while materializing only the requested low
-coefficient range.  Half-gcd supplies the active input size as the bound. -/
-def applyLowWith (plan : MulPlan F) (len : Nat) (m : GcdStep F)
-    (a b : DensePoly F) : DensePoly F × DensePoly F :=
-  (mulLow plan len m.a00 a + mulLow plan len m.a01 b,
-    mulLow plan len m.a10 a + mulLow plan len m.a11 b)
-
 /-- Reconstruct a full application from its already-computed high-half
 application and one application to the low halves.  Half-gcd uses this to
 avoid applying the same recursive matrix to the full operands again. -/
@@ -176,17 +169,6 @@ private theorem add_mulLow_eq (plan : MulPlan F) (len : Nat)
       rw [← coeff_add_semiring]
       exact coeff_eq_zero_of_size_le (a * b + c * d) (by omega)
     grind
-
-/-- Clipped application is ordinary matrix application once the supplied
-bound covers both output polynomials. -/
-theorem applyLowWith_eq (plan : MulPlan F) (len : Nat) (m : GcdStep F)
-    (a b : DensePoly F)
-    (hfirst : (m.apply a b).1.size ≤ len)
-    (hsecond : (m.apply a b).2.size ≤ len) :
-    m.applyLowWith plan len a b = m.apply a b := by
-  apply Prod.ext
-  · exact add_mulLow_eq plan len m.a00 a m.a01 b hfirst
-  · exact add_mulLow_eq plan len m.a10 a m.a11 b hsecond
 
 /-- Clipped matrix composition is ordinary composition once the bound covers
 all four resulting entries. -/
@@ -496,23 +478,6 @@ private theorem sub_mul_eq_remainder {a b q r : DensePoly F}
   simp only [coeff_add_semiring, coeff_sub_ring] at hcoeff ⊢
   grind
 
-private theorem size_le_of_coeff_zero_above {p : DensePoly F} {n : Nat}
-    (hzero : ∀ i, n ≤ i → p.coeff i = 0) : p.size ≤ n := by
-  by_cases hle : p.size ≤ n
-  · exact hle
-  · have hpos : 0 < p.size := by omega
-    have hlast := coeff_last_ne_zero_of_pos_size p hpos
-    exact False.elim (hlast (hzero (p.size - 1) (by omega)))
-
-private theorem size_add_le_max (p q : DensePoly F) :
-    (p + q).size ≤ max p.size q.size := by
-  apply size_le_of_coeff_zero_above
-  intro i hi
-  rw [coeff_add_semiring,
-    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
-    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
-  exact Lean.Grind.Semiring.add_zero 0
-
 private theorem size_neg_le (p : DensePoly F) : (-p).size ≤ p.size := by
   apply size_le_of_coeff_zero_above
   intro i hi
@@ -669,44 +634,11 @@ theorem ExactQuotients.apply (plan : MulPlan F)
     (quotientStep plan qs).apply a b = (c, d) := by
   rw [apply_quotientStep, hexact.run]
 
-/-- Apply a proposed quotient sequence as one composed transformation without
-certifying it.  This operation is used only inside high-half prediction. -/
-def applyQuotients (plan : MulPlan F) (qs : List (DensePoly F))
-    (a b : DensePoly F) : DensePoly F × DensePoly F :=
-  GcdStep.applyWith plan (quotientStep plan qs) a b
-
-/-- Recursive high-half quotient prediction.  Its two recursive calls are on
-half the prediction fuel.  The first predicts the leading Euclidean block;
-one exact boundary division exposes the second leading block.  Predictions
-are deliberately untrusted until checked on the full operands. -/
-def halfGcdGuesses (plan : MulPlan F) :
-    Nat → DensePoly F → DensePoly F → List (DensePoly F)
-  | 0, _, _ => []
-  | fuel + 1, a, b =>
-      if b.size = 0 || b.size * 2 ≤ a.size then
-        []
-      else
-        let cut := a.size / 2
-        let first := halfGcdGuesses plan (fuel / 2) (high cut a) (high cut b)
-        let cd := applyQuotients plan first a b
-        if cd.2.size = 0 || cd.2.size * 2 ≤ a.size then
-          first
-        else
-          let qr := divModWith plan cd.1 cd.2
-          let cut₂ := cd.2.size / 2
-          let second := halfGcdGuesses plan (fuel / 2)
-            (high cut₂ cd.2) (high cut₂ qr.2)
-          first ++ qr.1 :: second
-termination_by fuel _ _ => fuel
-decreasing_by all_goals omega
-
 /-! Divide-and-conquer matrix engine.
 
-The quotient predictor above is useful as a small executable specification,
-but consuming its quotients one at a time repeats full-size coefficient
-updates.  The engine below is the actual half-gcd shape: recursive calls see
-only high halves; their already-computed high applications are reused while
-only the low halves are multiplied at the current recursion level. -/
+Recursive calls see only high halves; their already-computed high applications
+are reused while only the low halves are multiplied at the current recursion
+level. -/
 
 /-- Reduce a Euclidean pair through roughly half of the active degree.  The
 fuel is a totality guard; recursive calls receive half of it. -/
@@ -1706,43 +1638,6 @@ private theorem xgcdMatrixWith_eq (plan : MulPlan F)
   rw [hx]
   rw [hmatrix', quotientStep_a00, quotientStep_a01]
 
-/-- Extended Euclidean recursion with a queue of high-half quotient
-predictions.  Each recursive call consumes one ordinary Euclidean step, so
-the fuel convention is identical to `DensePoly.xgcdAux`. -/
-def xgcdAuxWith (plan : MulPlan F) :
-    List (DensePoly F) →
-      DensePoly F → DensePoly F → DensePoly F →
-      DensePoly F → DensePoly F → DensePoly F → Nat → XGCDResult F
-  | _, r₀, s₀, t₀, _, _, _, 0 =>
-      { gcd := r₀, left := s₀, right := t₀ }
-  | queued, r₀, s₀, t₀, r₁, s₁, t₁, fuel + 1 =>
-      if r₁.isZero then
-        { gcd := r₀, left := s₀, right := t₀ }
-      else
-        let guesses := if queued.isEmpty then
-          halfGcdGuesses plan (max r₀.size r₁.size) r₀ r₁
-        else queued
-        match guesses with
-        | q :: rest =>
-            let r := r₀ - mulWith plan q r₁
-            if r.degree?.getD 0 < r₁.degree?.getD 0 then
-              xgcdAuxWith plan rest
-                r₁ s₁ t₁ r
-                (s₀ - mulWith plan q s₁)
-                (t₀ - mulWith plan q t₁) fuel
-            else
-              let qr := divModWith plan r₀ r₁
-              xgcdAuxWith plan []
-                r₁ s₁ t₁ qr.2
-                (s₀ - mulWith plan qr.1 s₁)
-                (t₀ - mulWith plan qr.1 t₁) fuel
-        | [] =>
-            let qr := divModWith plan r₀ r₁
-            xgcdAuxWith plan []
-              r₁ s₁ t₁ qr.2
-              (s₀ - mulWith plan qr.1 s₁)
-              (t₀ - mulWith plan qr.1 t₁) fuel
-
 /-- Plan-driven half-gcd extended gcd. -/
 def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
   xgcdMatrixWith plan p q
@@ -1751,44 +1646,12 @@ def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
 def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
   (xgcdWith plan p q).gcd
 
-/-- One-sided result projection of the half-gcd engine. -/
+/-- One-sided result projection of the half-gcd engine.  It shares the full
+matrix computation with `xgcdWith`; this API omits the unused result field but
+does not promise a cheaper algorithm. -/
 def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
   let r := xgcdWith plan p q
   { gcd := r.gcd, left := r.left }
-
-private theorem xgcdAuxWith_eq (plan : MulPlan F)
-    (queued : List (DensePoly F))
-    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly F) (fuel : Nat) :
-    xgcdAuxWith plan queued r₀ s₀ t₀ r₁ s₁ t₁ fuel =
-      xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel := by
-  induction fuel generalizing queued r₀ s₀ t₀ r₁ s₁ t₁ with
-  | zero => rfl
-  | succ fuel ih =>
-      unfold xgcdAuxWith xgcdAux
-      split
-      · rfl
-      · rename_i hr
-        dsimp only
-        split
-        · rename_i q rest hguesses
-          split
-          · rename_i hsmall
-            have hqr := fieldCandidate_eq plan r₀ r₁ q hsmall
-            rw [hqr]
-            simpa only [mulWith_eq] using
-              ih rest r₁ s₁ t₁ (r₀ - mulWith plan q r₁)
-                (s₀ - mulWith plan q s₁) (t₀ - mulWith plan q t₁)
-          · rename_i hnot_small
-            rw [divModWith_eq]
-            simpa only [mulWith_eq] using
-              ih [] r₁ s₁ t₁ (_root_.Hex.DensePoly.divMod r₀ r₁).2
-                (s₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 s₁)
-                (t₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 t₁)
-        · rw [divModWith_eq]
-          simpa only [mulWith_eq] using
-            ih [] r₁ s₁ t₁ (_root_.Hex.DensePoly.divMod r₀ r₁).2
-              (s₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 s₁)
-              (t₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 t₁)
 
 /-- Half-gcd returns exactly the established extended-gcd result, including
 the raw gcd scaling and both Bezout coefficients. -/

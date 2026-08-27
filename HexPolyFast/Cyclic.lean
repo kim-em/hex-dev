@@ -220,14 +220,19 @@ theorem ofCoeffs_cyclicCoeffs (n : Nat) (hn : 0 < n) (p : DensePoly R) :
     rw [hrep]
   · simp
 
+/-- The signed residue of `c * x^i` modulo `x^n + 1`. -/
+@[expose]
+def negacyclicResidue (n i : Nat) (c : R) : DensePoly R :=
+  if (i / n) % 2 = 0 then
+    monomial (i % n) c
+  else
+    monomial (i % n) (0 - c)
+
 /-- The signed monomial contributed by coefficient `i` when reducing modulo
 `x^n + 1`. -/
 @[expose]
 def negacyclicTerm (n : Nat) (p : DensePoly R) (i : Nat) : DensePoly R :=
-  if (i / n) % 2 = 0 then
-    monomial (i % n) (p.coeff i)
-  else
-    monomial (i % n) (0 - p.coeff i)
+  negacyclicResidue n i (p.coeff i)
 
 private theorem ofCoeffs_set_sub (coeffs : Array R) (k : Nat) (c : R)
     (hk : k < coeffs.size) :
@@ -268,7 +273,7 @@ private theorem foldl_negacyclic_poly (n : Nat) (hn : 0 < n) (p : DensePoly R)
       have hstep :
           (ofCoeffs (addNegacyclicCoeff n p acc i) : DensePoly R) =
             ofCoeffs acc + negacyclicTerm n p i := by
-        unfold addNegacyclicCoeff negacyclicTerm
+        unfold addNegacyclicCoeff negacyclicTerm negacyclicResidue
         by_cases hparity : (i / n) % 2 = 0
         · rw [HexPoly.ite_eq_left hparity, HexPoly.ite_eq_left hparity]
           exact ofCoeffs_set_add acc (i % n) (p.coeff i) hk

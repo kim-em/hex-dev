@@ -173,13 +173,13 @@ private def branchNode (mul : MulPlan R) (hone : (1 : R) ≠ 0)
 
 /-- Root split used by adjacent-pair product levels: the largest power of two
 strictly below `n`. -/
-private def treeSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
+def treeSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
 
-private theorem treeSplit_pos (n : Nat) : 0 < treeSplit n := by
+theorem treeSplit_pos (n : Nat) : 0 < treeSplit n := by
   unfold treeSplit
   exact Nat.pow_pos (by omega)
 
-private theorem treeSplit_lt (n : Nat) (hn : 2 ≤ n) : treeSplit n < n := by
+theorem treeSplit_lt (n : Nat) (hn : 2 ≤ n) : treeSplit n < n := by
   have hm : n - 1 ≠ 0 := by omega
   have hle : 2 ^ Nat.log2 (n - 1) ≤ n - 1 :=
     Nat.log2_self_le hm
