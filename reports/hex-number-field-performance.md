@@ -229,9 +229,9 @@ and both newly separated certification phases at three outer trials:
 
 | target | ladder | verdict | cMin..cMax | worst spread |
 |---|---|---|---:|---:|
-| `runExactLadder` | 2, 3, 4, 5, 6 quadratic factors | inconclusive | 0.000142..0.0848 | 4.34% |
-| `runExactFactorLadder` | 2, 3, 4, 6, 8 | inconclusive | 1077..5179 | 7.63% |
-| `runCanonicalRepLadder` | 2, 3, 4, 6, 8 | inconclusive | 525.0..2575 | 13.18% |
+| `runExactLadder` | 2, 3, 4, 5, 6 quadratic factors | inconclusive | 0.000129..0.0834 | 5.10% |
+| `runExactFactorLadder` | 2, 3, 4, 6, 8 | inconclusive | 1042..5171 | 4.18% |
+| `runCanonicalRepLadder` | 2, 3, 4, 6, 8 | inconclusive | 512.1..2496 | 3.50% |
 
 All three remain in the faster-than-declared direction. The two phase models
 are textbook isolation envelopes rather than fits to these observations, and
@@ -688,7 +688,7 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
 | [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
-| [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `a20d30552`, clean tree | loaded, declining | `5f8c7f994f6d1f8a9fc0e469173fa9057bccd9c978ae6c0a42b4dd27e9d3841f` |
+| [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `1e33bedcd`, clean tree | loaded, declining | `aea98f8ed242fea6c1539fa166ab1416adf4a23c196c76ad7f051ab7fa3fbfac` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `93b9da05e`, clean tree | loaded | `0e756e3f8380be76e2da10acc047060103f15e507fb6e8b894e425c819e8c438` |
 
 Ladder numbers come from the commits named in the table. Across the first four
