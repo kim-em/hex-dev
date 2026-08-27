@@ -100,6 +100,16 @@ Newton-Kantorovich witness alone, `.pellet` for the Pellet witness alone, and
 fallback. The explicit single-form strategies let either certificate be
 selected or benchmarked on its own; callers with no such need pick the default.
 
+The precision is an integer lower bound on each returned square's `prec`, so
+its half-width is at most `2⁻ᵖʳᵉᶜ`. The driver also floors this target at the
+polynomial's separation precision; asking for a coarser or even negative
+precision never makes distinct roots overlap, and the returned squares may be
+finer than requested. For a nonzero simple-root polynomial every strategy
+succeeds by the companion completeness theorem. Multiple roots do not satisfy
+the precondition: callers that need them use {name}`Hex.isolateAll?`, whose
+successful output may contain Pellet clusters and whose `none` records failure
+to reach the certified emission condition within its structural fuel.
+
 Each returned atom is one square with its certificate. The certified region
 depends on which disjunct fired, so consumers rely only on the shared
 consequence: exactly one root lies in the certified region, and that region
@@ -180,8 +190,8 @@ tag := "hex-roots-refine"
 %%%
 
 The precision the driver reaches is only as fine as separating the roots
-required, floored at the target. To sharpen a single root without re-running
-the whole isolator, refine its atom directly:
+required, with the target as a lower bound. To sharpen a single root without
+re-running the whole isolator, refine its atom directly:
 
 {docstring Hex.DyadicRootIsolation.refineTo?}
 

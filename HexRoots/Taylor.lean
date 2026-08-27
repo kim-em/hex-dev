@@ -38,22 +38,27 @@ namespace GaussDyadic
   | 0 => ofInt 1
   | n + 1 => mul (pow z n) z
 
+/-- Zero is a right identity for Gaussian-dyadic addition. -/
 @[simp] theorem add_zero (z : GaussDyadic) : add z (0, 0) = z := by
   cases z
   simp [add]
 
+/-- Zero is a left identity for Gaussian-dyadic addition. -/
 @[simp] theorem zero_add (z : GaussDyadic) : add (0, 0) z = z := by
   cases z
   simp [add]
 
+/-- Gaussian-dyadic addition is associative. -/
 theorem add_assoc (x y z : GaussDyadic) : add (add x y) z = add x (add y z) := by
   cases x; cases y; cases z
   simp [add, Dyadic.add_assoc]
 
+/-- Gaussian-dyadic addition is commutative. -/
 theorem add_comm (x y : GaussDyadic) : add x y = add y x := by
   cases x; cases y
   simp [add, Dyadic.add_comm]
 
+/-- Reassociate two Gaussian-dyadic sums after exchanging their middle terms. -/
 theorem add_cross (x y z w : GaussDyadic) :
     add (add x y) (add z w) = add (add x z) (add y w) := by
   rw [add_assoc x y, ← add_assoc y z w, add_comm y z,
@@ -64,14 +69,17 @@ private theorem dyadic_sub_zero (x : Dyadic) : x - 0 = x := by
   rw [Rat.sub_eq_add_neg]
   simpa using Rat.add_zero x.toRat
 
+/-- Zero is right-absorbing for Gaussian-dyadic multiplication. -/
 @[simp] theorem mul_zero (z : GaussDyadic) : mul z (0, 0) = (0, 0) := by
   cases z
   simp [mul, dyadic_sub_zero]
 
+/-- Zero is left-absorbing for Gaussian-dyadic multiplication. -/
 @[simp] theorem zero_mul (z : GaussDyadic) : mul (0, 0) z = (0, 0) := by
   cases z
   simp [mul, dyadic_sub_zero]
 
+/-- One is a right identity for Gaussian-dyadic multiplication. -/
 @[simp] theorem mul_one (z : GaussDyadic) : mul z (ofInt 1) = z := by
   rcases z with ⟨x, y⟩
   unfold mul ofInt
@@ -79,6 +87,7 @@ private theorem dyadic_sub_zero (x : Dyadic) : x - 0 = x := by
   rw [h1]
   simp [Dyadic.mul_one, dyadic_sub_zero]
 
+/-- One is a left identity for Gaussian-dyadic multiplication. -/
 @[simp] theorem one_mul (z : GaussDyadic) : mul (ofInt 1) z = z := by
   rcases z with ⟨x, y⟩
   unfold mul ofInt
@@ -86,18 +95,21 @@ private theorem dyadic_sub_zero (x : Dyadic) : x - 0 = x := by
   rw [h1]
   simp [Dyadic.one_mul, dyadic_sub_zero]
 
+/-- Gaussian-dyadic multiplication distributes over addition on the left. -/
 theorem mul_add (x y z : GaussDyadic) : mul x (add y z) = add (mul x y) (mul x z) := by
   cases x; cases y; cases z
   apply Prod.ext <;>
     simp [mul, add, ← Dyadic.toRat_inj, Dyadic.toRat_add, Dyadic.toRat_sub,
       Dyadic.toRat_mul, Rat.sub_eq_add_neg, Rat.neg_add, Rat.mul_add] <;> ac_rfl
 
+/-- Gaussian-dyadic multiplication distributes over addition on the right. -/
 theorem add_mul (x y z : GaussDyadic) : mul (add x y) z = add (mul x z) (mul y z) := by
   cases x; cases y; cases z
   apply Prod.ext <;>
     simp [mul, add, ← Dyadic.toRat_inj, Dyadic.toRat_add, Dyadic.toRat_sub,
       Dyadic.toRat_mul, Rat.sub_eq_add_neg, Rat.neg_add, Rat.add_mul] <;> ac_rfl
 
+/-- Gaussian-dyadic multiplication is associative. -/
 theorem mul_assoc (x y z : GaussDyadic) : mul (mul x y) z = mul x (mul y z) := by
   cases x; cases y; cases z
   apply Prod.ext <;>
@@ -105,16 +117,20 @@ theorem mul_assoc (x y z : GaussDyadic) : mul (mul x y) z = mul x (mul y z) := b
       Dyadic.toRat_mul, Rat.sub_eq_add_neg, Rat.mul_add, Rat.add_mul,
       Rat.neg_add, Rat.mul_neg, Rat.neg_mul, Rat.mul_assoc] <;> ac_rfl
 
+/-- Gaussian-dyadic multiplication is commutative. -/
 theorem mul_comm (x y : GaussDyadic) : mul x y = mul y x := by
   cases x; cases y
   apply Prod.ext <;>
     simp [mul, Dyadic.mul_comm, Dyadic.add_comm]
 
+/-- The zeroth Gaussian-dyadic power is one. -/
 @[simp] theorem pow_zero (z : GaussDyadic) : pow z 0 = ofInt 1 := rfl
 
+/-- Characterization of a successor Gaussian-dyadic power. -/
 @[simp] theorem pow_succ (z : GaussDyadic) (n : Nat) :
     pow z (n + 1) = mul (pow z n) z := rfl
 
+/-- Adding natural scalars before scaling agrees with adding the scaled values. -/
 theorem nsmul_add (m n : Nat) (z : GaussDyadic) :
     nsmul (m + n) z = add (nsmul m z) (nsmul n z) := by
   have h : ofInt (m + n) = add (ofInt m) (ofInt n) := by
@@ -127,14 +143,17 @@ theorem nsmul_add (m n : Nat) (z : GaussDyadic) :
   have hi : (↑(m + n) : Int) = ↑m + ↑n := by omega
   rw [hi, h, add_mul]
 
+/-- Scaling a Gaussian dyadic by one leaves it unchanged. -/
 @[simp] theorem nsmul_one (z : GaussDyadic) : nsmul 1 z = z := by
   simp [nsmul]
 
+/-- A natural scalar can move across Gaussian-dyadic multiplication. -/
 theorem mul_nsmul (x y : GaussDyadic) (n : Nat) :
     mul x (nsmul n y) = nsmul n (mul x y) := by
   simp only [nsmul]
   rw [← mul_assoc, mul_comm x (ofInt n), mul_assoc]
 
+/-- Multiplication by `z` advances the power in a naturally scaled monomial. -/
 theorem mul_term (z a : GaussDyadic) (n r : Nat) :
     mul z (nsmul n (mul a (pow z r))) =
       nsmul n (mul a (pow z (r + 1))) := by
@@ -147,23 +166,15 @@ end GaussDyadic
 @[expose] def gaussSum (n : Nat) (f : Nat → GaussDyadic) : GaussDyadic :=
   (List.range n).foldl (fun s i => GaussDyadic.add s (f i)) (0, 0)
 
+/-- The empty Gaussian-dyadic sum is zero. -/
 @[simp] theorem gaussSum_zero (f : Nat → GaussDyadic) : gaussSum 0 f = (0, 0) := rfl
 
+/-- Split the last term from a Gaussian-dyadic sum. -/
 theorem gaussSum_succ (n : Nat) (f : Nat → GaussDyadic) :
     gaussSum (n + 1) f = GaussDyadic.add (gaussSum n f) (f n) := by
   simp [gaussSum, List.range_succ, List.foldl_append]
 
-theorem gaussSum_add (n : Nat) (f g : Nat → GaussDyadic) :
-    gaussSum n (fun i => GaussDyadic.add (f i) (g i)) =
-      GaussDyadic.add (gaussSum n f) (gaussSum n g) := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-      rw [gaussSum_succ, gaussSum_succ, gaussSum_succ, ih]
-      simp only [GaussDyadic.add_assoc]
-      rw [← GaussDyadic.add_assoc (gaussSum n g) (f n) (g n),
-        GaussDyadic.add_comm (gaussSum n g) (f n), GaussDyadic.add_assoc]
-
+/-- Left multiplication distributes over a Gaussian-dyadic sum. -/
 theorem mul_gaussSum (z : GaussDyadic) (n : Nat) (f : Nat → GaussDyadic) :
     GaussDyadic.mul z (gaussSum n f) =
       gaussSum n (fun i => GaussDyadic.mul z (f i)) := by
@@ -172,6 +183,7 @@ theorem mul_gaussSum (z : GaussDyadic) (n : Nat) (f : Nat → GaussDyadic) :
   | succ n ih =>
       rw [gaussSum_succ, GaussDyadic.mul_add, ih, gaussSum_succ]
 
+/-- Split the first term from a nonempty Gaussian-dyadic sum. -/
 theorem gaussSum_head (n : Nat) (f : Nat → GaussDyadic) :
     gaussSum (n + 1) f =
       GaussDyadic.add (f 0) (gaussSum n (fun i => f (i + 1))) := by
@@ -289,6 +301,8 @@ private theorem coeffStage_last (p : ZPoly) (z : GaussDyadic) (k : Nat)
   rw [this, taylorStage_one]
   simp
 
+/-- Loop invariant for one synthetic-division pass: entries from `k` onward
+    agree with the corresponding partial Taylor coefficients. -/
 private def AtStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
     (a : Array GaussDyadic) : Prop :=
   a.size = p.size ∧
@@ -370,8 +384,9 @@ private theorem pass_atStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
             have hj1new : p.size - 1 - r ≤ j + 1 := by
               dsimp [j]
               omega
-            rw [if_neg hjold, if_pos hj1new, ← coeffStage_step p z k j hj1lt]
-            rw [if_pos]
+            rw [_root_.ite_eq_right hjold, _root_.ite_eq_left hj1new,
+              ← coeffStage_step p z k j hj1lt]
+            rw [_root_.ite_eq_left]
             dsimp [j]
             omega
           · have hget : (step b r).getD i (0, 0) = b.getD i (0, 0) := by
@@ -384,15 +399,15 @@ private theorem pass_atStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
               dsimp [j] at hij
               omega
             split <;> rename_i h
-            · rw [if_pos (hiff.mpr h)]
-            · rw [if_neg (fun h' => h (hiff.mp h'))]
+            · rw [_root_.ite_eq_left (hiff.mpr h)]
+            · rw [_root_.ite_eq_right (fun h' => h (hiff.mp h'))]
   unfold Taylor.pass
   have hm := hloop m (Nat.le_refl m)
   constructor
   · exact hm.1
   · intro i hki hi
     rw [hm.2 i hki hi]
-    rw [if_pos]
+    rw [_root_.ite_eq_left]
     dsimp [m]
     omega
 
@@ -421,6 +436,8 @@ private theorem pass_getD_of_lt (n : Nat) (z : GaussDyadic) (a : Array GaussDyad
   unfold Taylor.pass
   exact hloop m (Nat.le_refl m)
 
+/-- Outer-loop invariant: entries before `k` are final, while the remaining
+    entries agree with stage `k` of synthetic division. -/
 private def FullStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
     (a : Array GaussDyadic) : Prop :=
   a.size = p.size ∧ ∀ i, i < p.size →
@@ -442,19 +459,19 @@ private theorem pass_fullStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
     constructor
     · exact ha.1
     · intro i hki hi
-      rw [ha.2 i hi, if_neg (by omega)]
+      rw [ha.2 i hi, _root_.ite_eq_right (by omega)]
   have hadv := pass_atStage p z k a hastage
   constructor
   · exact hadv.1
   · intro i hi
     by_cases hik : i < k
-    · rw [pass_getD_of_lt p.size z a hik, ha.2 i hi, if_pos hik,
-        if_pos (by omega)]
+    · rw [pass_getD_of_lt p.size z a hik, ha.2 i hi, _root_.ite_eq_left hik,
+        _root_.ite_eq_left (by omega)]
     · rw [hadv.2 i (by omega) hi]
       by_cases hEq : i = k
       · subst i
         simp
-      · rw [if_neg (by omega)]
+      · rw [_root_.ite_eq_right (by omega)]
 
 private theorem fold_fullStage (p : ZPoly) (z : GaussDyadic) : ∀ r, r ≤ p.size →
     FullStage p z r
@@ -504,11 +521,15 @@ private theorem coeffStage_final (p : ZPoly) (z : GaussDyadic) (k : Nat) :
   -- empty (`Nat` subtraction gives `0`), a no-op.
   (List.range n).foldl (init := a₀) (Taylor.pass n z)
 
+set_option genInjectivity false in
 /-- Exact Taylor coefficients indexed by the polynomial and centre they
     represent. The equality is proof-only; compiled values contain just the
-    coefficient array. -/
+    coefficient array. Equality is characterized by the subsingleton instance
+    below, so no constructor injectivity rule is generated. -/
 structure TaylorShift (p : ZPoly) (center : GaussDyadic) where
+  /-- The cached exact coefficient array. -/
   coeffs : Array GaussDyadic
+  /-- The cache contains the exact Taylor shift at its indexed centre. -/
   valid : coeffs = taylor p center
 
 namespace TaylorShift
@@ -561,8 +582,8 @@ theorem taylor_getD (p : ZPoly) (z : GaussDyadic) (k : Nat) :
   have hfull : FullStage p z p.size (taylor p z) := by
     simpa [taylor] using fold_fullStage p z p.size (Nat.le_refl _)
   by_cases hk : k < p.size
-  · rw [hfull.2 k hk, if_pos hk, if_pos hk, coeffStage_final]
-  · rw [if_neg hk, Array.getD_eq_getD_getElem?,
+  · rw [hfull.2 k hk, _root_.ite_eq_left hk, _root_.ite_eq_left hk, coeffStage_final]
+  · rw [_root_.ite_eq_right hk, Array.getD_eq_getD_getElem?,
       Array.getElem?_eq_none (by rw [taylor_size]; omega)]
     rfl
 

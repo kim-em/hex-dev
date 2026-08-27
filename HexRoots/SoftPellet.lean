@@ -50,7 +50,9 @@ graph. -/
 constructors below always produce a nonnegative radius; keeping that fact out
 of the structure leaves proof fields out of the hot path. -/
 structure CoeffBall where
+  /-- Rounded Gaussian-dyadic centre of the enclosure. -/
   center : GaussDyadic
+  /-- Nonnegative `L¹` error radius around `center`. -/
   radius : Dyadic
   deriving DecidableEq
 
@@ -178,6 +180,7 @@ out-of-range convolution terms are exact zero balls. -/
     if k = 0 then graeffeEven bits cs 0
     else CoeffBall.sub bits (graeffeEven bits cs k) (graeffeOdd bits cs (k - 1))
 
+/-- A Graeffe step preserves the number of stored coefficients. -/
 @[simp] theorem graeffe_size (bits : Nat) (cs : Array CoeffBall) :
     (graeffe bits cs).size = cs.size := by
   simp [graeffe]
@@ -209,11 +212,17 @@ isolation-ratio constants. -/
 iteration.  All six endpoints are stored explicitly because every radius,
 not merely the base radius, must be squared after roots are squared. -/
 structure SoftRadii where
+  /-- Lower endpoint for the base-radius interval. -/
   baseLo : Dyadic
+  /-- Upper endpoint for the base-radius interval. -/
   baseHi : Dyadic
+  /-- Lower endpoint for the doubled-radius interval. -/
   twoLo : Dyadic
+  /-- Upper endpoint for the doubled-radius interval. -/
   twoHi : Dyadic
+  /-- Lower endpoint for the quadrupled-radius interval. -/
   fourLo : Dyadic
+  /-- Upper endpoint for the quadrupled-radius interval. -/
   fourHi : Dyadic
   deriving DecidableEq
 
@@ -318,7 +327,8 @@ theorem softWitnessCheck_false {p : ZPoly} {s : DyadicSquare} {k : Nat}
   have hSeed (bits : Nat) :
       (TaylorShift.compute p s.center).softSeededWitness s k bits = false := by
     apply softGraeffeLoop_false
-    simpa [seededTaylorBalls, TaylorShift.compute, taylor_size] using h
+    simpa [seededTaylorBalls, TaylorShift.compute, TaylorShift.coeffs,
+      taylor_size] using h
   simp [softWitnessCheck, TaylorShift.softWitnessCheck, softPrecisions, hAt, hSeed]
 
 /-- Any valid cached shift gives the same adaptive soft witness as the public
@@ -523,7 +533,7 @@ theorem softRefinementCandidate?_sound {p : ZPoly} {s : DyadicSquare}
   unfold softRefinementCandidate? TaylorShift.softRefinementCandidate? at h
   by_cases hprec : s.prec < 32
   · have hs : softSeededCandidate? p s ks 64 = some k := by
-      rw [if_pos hprec] at h
+      rw [_root_.ite_eq_left hprec] at h
       change softSeededCandidate? p s ks 64 = some k at h
       exact h
     have hsound := softSeededCandidate?_sound hs
