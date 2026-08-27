@@ -22,6 +22,16 @@ DEFAULT_FIXTURE = (
     REPO_ROOT / "conformance-fixtures" / "HexPolyFast" / "polyfast.jsonl"
 )
 
+AUXILIARY_NTT_PRIMES = [
+    (167772161, 25),
+    (469762049, 26),
+    (754974721, 24),
+    (998244353, 23),
+    (1004535809, 21),
+    (1224736769, 24),
+    (2013265921, 27),
+]
+
 
 def _trim(values: list[Any]) -> list[Any]:
     out = list(values)
@@ -174,6 +184,24 @@ def _valid_ntt_plan(p: int, n: int, root: int) -> bool:
     if pow(root, n, p) != 1:
         return False
     return n == 1 or pow(root, n // 2, p) != 1
+
+
+def _shoup_value(twiddle: int, value: int, modulus: int) -> int:
+    word = 1 << 64
+    quotient = ((twiddle * word) // modulus * value) // word
+    return twiddle * value - quotient * modulus
+
+
+def _crt_selection(length: int, bound: int) -> dict[str, int] | None:
+    product = 1
+    count = 0
+    for modulus, max_log in AUXILIARY_NTT_PRIMES:
+        if length <= 1 << max_log:
+            product *= modulus
+            count += 1
+            if 2 * bound < product:
+                return {"count": count, "product": product}
+    return None
 
 
 def _series(cases: dict[str, dict[str, Any]], case: str) -> list[Fraction]:
@@ -359,6 +387,35 @@ def _check_result(result: dict[str, Any], cases: dict[str, dict[str, Any]]) -> N
         p = int(op.split("/")[1])
         if value != [x % p for x in _poly(cases, f"{case}/input")]:
             raise AssertionError("NTT round-trip mismatch")
+        return
+
+    if op.startswith("ntt_forward_butterfly/"):
+        _, p, twiddle = op.split("/")
+        p, twiddle = int(p), int(twiddle)
+        x, y = _poly(cases, f"{case}/input")
+        expected = [
+            (x + y) % (2 * p),
+            _shoup_value(twiddle, x + 2 * p - y, p),
+        ]
+        if value != expected:
+            raise AssertionError("forward butterfly raw-value mismatch")
+        return
+
+    if op.startswith("ntt_inverse_butterfly/"):
+        _, p, twiddle = op.split("/")
+        p, twiddle = int(p), int(twiddle)
+        x, y = _poly(cases, f"{case}/input")
+        reduced_x = x % (2 * p)
+        product = _shoup_value(twiddle, y, p)
+        expected = [reduced_x + product, reduced_x + 2 * p - product]
+        if value != expected:
+            raise AssertionError("inverse butterfly raw-value mismatch")
+        return
+
+    if op.startswith("crt_selection/"):
+        _, length, bound = op.split("/")
+        if value != _crt_selection(int(length), int(bound)):
+            raise AssertionError("CRT strict-bound selection mismatch")
         return
 
     if op.startswith("ntt_capacity/"):

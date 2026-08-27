@@ -6,8 +6,10 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexPolyFast
+import HexModArith.Ntt.Butterfly
 import HexModArith.Ntt.Catalogue
 import HexModArith.Ntt.Convolution
+import HexModArith.Ntt.CrtInput
 import HexPolyFp.NttMul
 import HexPolyZ.KroneckerMulti
 import HexPolyZ.NttMul
@@ -60,6 +62,15 @@ private def padeValue (p q : DensePoly Rat) : String :=
   "{\"p\":" ++ polyRatValue (ratCoeffs p) ++
     ",\"q\":" ++ polyRatValue (ratCoeffs q) ++ "}"
 
+private def natPairValue (left right : Nat) : String :=
+  "[" ++ toString left ++ "," ++ toString right ++ "]"
+
+private def selectionValue {n bound : Nat}
+    (selection : ZMod64.Ntt.CrtSelection n bound) : String :=
+  "{\"count\":" ++ toString selection.primes.length ++
+    ",\"product\":" ++
+      toString (selection.primes.map ZMod64.NttPrime.modulus).prod ++ "}"
+
 private structure MulCase where
   id : String
   left : List Int
@@ -78,7 +89,10 @@ private def mulCases : List MulCase := [
   { id := "mul/cutoff-31", left := oddCoeffs 31 3, right := oddCoeffs 33 11 },
   { id := "mul/cutoff-32", left := oddCoeffs 32 5, right := oddCoeffs 32 13 },
   { id := "mul/cutoff-33", left := oddCoeffs 33 7, right := oddCoeffs 31 17 },
-  { id := "mul/ratio-64", left := oddCoeffs 128 19, right := [-3, 5] }
+  { id := "mul/ratio-2", left := oddCoeffs 16 17, right := oddCoeffs 8 19 },
+  { id := "mul/ratio-4", left := oddCoeffs 16 19, right := oddCoeffs 4 23 },
+  { id := "mul/ratio-16", left := oddCoeffs 16 23, right := oddCoeffs 1 29 },
+  { id := "mul/ratio-64", left := oddCoeffs 64 29, right := [-3] }
 ]
 
 private def emitMulCase (c : MulCase) : IO Unit := do
@@ -237,6 +251,8 @@ private def emitPade : IO Unit := do
   emitPadeCase "pade/unit" unit 1 1
   emitPadeCase "pade/nonunit" nonunit 1 1
   emitPadeCase "pade/zero" zero 2 2
+  emitPadeCase "pade/numerator-constant" unit 0 1
+  emitPadeCase "pade/denominator-constant" unit 1 0
   emitPadeCase "pade/precision-zero" empty 2 2
 
 /-! Coefficient-owner kernels share this monorepo driver so the JSONL surface
@@ -272,7 +288,51 @@ private def emitFpInputs (id : String) (left right : List Nat) : IO Unit := do
   emitPolyFixture lib (id ++ "/left") (left.map Int.ofNat) (some 5)
   emitPolyFixture lib (id ++ "/right") (right.map Int.ofNat) (some 5)
 
+private def emitForwardButterfly (id : String) (value : Nat)
+    (hvalue : value < 2 * 5) : IO Unit := do
+  emitPolyFixture lib (id ++ "/input") [0, Int.ofNat value] (some 5)
+  let twiddle := ZMod64.NttTwiddle.ofValue (ZMod64.ofNat 5 2)
+  let x : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat 0 (by decide)
+  let y : ZMod64.NttRaw2 5 := ZMod64.Ntt.raw2OfNat value hvalue
+  let output := ZMod64.Ntt.forwardButterfly twiddle x y
+  emitResult lib id "ntt_forward_butterfly/5/2"
+    (natPairValue output.1.val.toNat output.2.val.toNat)
+
+private def emitInverseButterfly (id : String) (value : Nat)
+    (hvalue : value < 4 * 5) : IO Unit := do
+  emitPolyFixture lib (id ++ "/input") [0, Int.ofNat value] (some 5)
+  let twiddle := ZMod64.NttTwiddle.ofValue (ZMod64.ofNat 5 2)
+  let x : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat 0 (by decide)
+  let y : ZMod64.NttRaw4 5 := ZMod64.Ntt.raw4OfNat value hvalue
+  let output := ZMod64.Ntt.inverseButterfly twiddle x y
+  emitResult lib id "ntt_inverse_butterfly/5/2"
+    (natPairValue output.1.val.toNat output.2.val.toNat)
+
+private def emitButterflyBoundaries : IO Unit := do
+  emitForwardButterfly "ntt/butterfly-forward/zero" 0 (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/p-minus-one" 4 (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/p" 5 (by decide)
+  emitForwardButterfly "ntt/butterfly-forward/two-p-minus-one" 9 (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/zero" 0 (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/p-minus-one" 4 (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/p" 5 (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/two-p-minus-one" 9 (by decide)
+  emitInverseButterfly "ntt/butterfly-inverse/four-p-minus-one" 19 (by decide)
+
+private def emitCrtSelectionBoundaries : IO Unit := do
+  let first := ZMod64.nttPrimes[0]'(by decide)
+  let below := (first.modulus - 1) / 2
+  let above := (first.modulus + 1) / 2
+  for (id, bound) in [("below", below), ("above", above)] do
+    let selection := ZMod64.Ntt.CrtSelection.build? 1 bound
+    emitResult lib ("ntt/crt-bound/" ++ id) s!"crt_selection/1/{bound}"
+      (match selection with
+        | none => "null"
+        | some selected => selectionValue selected)
+
 private def emitNtt : IO Unit := do
+  emitButterflyBoundaries
+  emitCrtSelectionBoundaries
   let root2 := ZMod64.ofNat 5 4
   let plan2 := ZMod64.NttPlan.build? (p := 5) (n := 2) root2
   emitResult lib "ntt/plan-2" "ntt_plan/5/2/4" (boolValue plan2.isSome)
