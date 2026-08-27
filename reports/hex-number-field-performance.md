@@ -21,7 +21,7 @@ sites.
 |---|---|---|
 | `runQAdjoinAddLadder` | `QAdjoin` addition in `ℚ(2^(1/n))`, both operands dense and all-nonzero | `n` |
 | `runQAdjoinMulLadder` | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
-| `runQAdjoinInvLadder` | `QAdjoin` inversion by rational extended gcd against `X^n - 2` | `n * n * (Nat.log2 (n + 2) + 1)` |
+| `runQAdjoinInvLadder` | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
 | `runAddEliminantLadder` | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
 | `runLazyAddLadder` | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^n - 2` with `√3` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runExactLadder` | `AlgebraicRoot.exact?` on the first root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)`, with `n` quadratic factors | `exactFamilyComplexity n`, i.e. the BHKS `d^9 + d^7 h^2` at the fixture's actual degree and coefficient bit height |
@@ -155,7 +155,7 @@ runs below give the measurements; this table says which one counts.
 |---|---|---:|---|
 | `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
-| `runQAdjoinInvLadder` | inconclusive, slower | **+1.784** | single-root |
+| `runQAdjoinInvLadder` | inconclusive, faster | **-0.721** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
 | `runExactLadder` | inconclusive, faster | — | exactification audit |
@@ -170,11 +170,11 @@ Seven fit their declared models. The five that do not are §Concerns entries,
 each with a filed issue; none of them is a measurement artefact, and §Profile
 identifies the phase controlling each profiled end-to-end call.
 
-Seven parametric runs are committed: one original full-suite pass, two idle-host
+Eight parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
 fixture-corrected run plus the single-root run that supersede six of those,
 the exactification audit covering its two new phase ladders and replacement
-family, and the root-merge fix run. Both repaired root ladders extend to the
+family, the normalized inversion rerun, and the root-merge fix run. Both repaired root ladders extend to the
 two-octave range needed for `fitSlope`. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
 which.
@@ -205,9 +205,8 @@ spread at its top rung and `runAddEliminantLadder` 65% at `n = 128`.
 
 The **quiet run** therefore re-measures the ladders that fit inside a short
 window, at five outer trials, with the host idle (load average 1.5). Two of
-its six entries — `runAddEliminantLadder` and `runCommonPresentationLadder` —
-were later superseded by the fixture-corrected run below and are omitted from
-the table:
+its six entries — `runAddEliminantLadder`, `runCommonPresentationLadder`, and
+`runQAdjoinInvLadder` — were later superseded and are omitted from the table:
 
 ```sh
 .lake/build/bin/hexnumberfield_bench run \
@@ -227,7 +226,6 @@ Quiet run, worst per-rung spread now at or below 5.5%:
 |---|---|---|---:|---|---:|
 | `runQAdjoinAddLadder` | 4, 6, 8, 12, 16, 24 | **consistent** | -0.054 | 109.4..120.6 | 4.96% |
 | `runQAdjoinMulLadder` | 4, 6, 8, 12, 16, 24 | **consistent** | -0.009 | 467.5..473.6 | 3.51% |
-| `runQAdjoinInvLadder` | 4, 6, 8, 12, 16, 20 | inconclusive | **+1.038** | 473.4..1624.1 | 1.84% |
 | former `(X^n - 2)(X + 3)` exactification ladder | 2, 3, 4, 6, 8 | inconclusive | — | 2.014..174.6 | 5.49% |
 
 `runQAdjoinMulLadder`'s full-suite verdict was `inconclusive` at `+0.222`
@@ -253,9 +251,38 @@ after their fixture and scientific domains changed:
 | `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive | **+1.784** | 549.2..46288.9 | 2.93% |
 
 Addition remains linear through 128 and multiplication remains quadratic
-through 128. Inversion's monotone normalized cost grows even more clearly over
-the repaired range: the extended ladder strengthens the existing #9721
-finding rather than attributing the former ceiling to its fixture.
+through 128. The shipped inversion chain's monotone normalized cost grows even
+more clearly over the repaired range: the extended ladder strengthens the
+existing #9721 finding rather than attributing the former ceiling to its
+fixture.
+
+The **normalized inversion run** measures the repaired `QAdjoin.inv` at the
+same scientific schedule and five outer trials:
+
+```sh
+.lake/build/bin/hexnumberfield_bench run \
+  Hex.NumberFieldBench.runQAdjoinInvLadder \
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-number-field-qadjoin-inv-normalized.json
+```
+
+The old declaration charged `n² log n`, as though the chain's rational
+coefficient size contributed only the Brown-chain logarithmic proxy. Monic
+normalization puts numerator and denominator bit lengths under the standard
+`O(n log n)` subresultant/Hadamard bound. Multiplying that linear-limb proxy by
+the chain's `O(n²)` rational coefficient operations gives the corrected
+`n³ log n` bit-cost model.
+
+| target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
+|---|---|---|---:|---|---:|
+| `runQAdjoinInvLadder` | 4, 6, 8, 12, 16, 20 | inconclusive, faster | **-0.721** | 33.688..76.091 | 24.67% |
+
+The `n = 12` spread is one 419.1 µs outlier against four samples at
+335.4..339.6 µs; all other rungs have spread at or below 3.4%. Median time is
+716.8 µs at `n = 16` and 1.348 ms at `n = 20`, respectively 2.10× and 2.41×
+faster than the idle-host shipped-chain medians. The defect's direction has
+therefore reversed: the normalized chain lies comfortably inside the corrected
+upper bound rather than growing faster than its declaration.
 
 The **exactification audit run** measures the replacement end-to-end family
 at five outer trials and both newly separated certification phases at three:
@@ -585,25 +612,24 @@ consistent with the SPEC's declared expectation for this comparator — "the
 constant-factor gap is structural rather than algorithmic" — and it is why
 this comparator is `informational` rather than `gating`.
 
-For **inversion** the decline is real. Both sides do substantial work at
-every rung, and their exponents differ by a full power of `n`:
+For **inversion**, these comparator numbers describe the former unnormalized
+chain. Both sides did substantial work at every rung, and their fitted
+exponents differed materially:
 
 - Hex grows as `n^3.03`.
 - PARI's net cost grows as `n^1.73`, with net times 26.3, 47.7, 211.2, 208.4,
   246.2 and 215.1 us.
 
-This is a diverging trend rather than a constant-factor gap, so it sits
-against the comparator's declared expectation, and it points the same way as
-the internal ladder: `QAdjoin.inv` grows faster than its declared model, and
-it also grows faster than PARI's implementation of the same operation on the
-same inputs. The exponent difference should be read as indicative rather than
-precise — PARI's net cost jumps discontinuously between `n = 6` and `n = 8`,
-so a six-point fit through it is not a clean measurement of PARI's asymptotics.
-What survives that caveat is the direction and the fact that the ratio falls
-by more than a factor of eleven across the ladder, which is what coefficient
-swell in the unnormalised rational extended gcd predicts. Recorded against
-https://github.com/kim-em/hex-dev/issues/9721 rather than as a separate
-Concern.
+The diverging trend and ratio decline by more than a factor of three were what
+coefficient swell in the unnormalized rational extended gcd predicted, and
+they motivated https://github.com/kim-em/hex-dev/issues/9721. That
+implementation has now been replaced by the monic-normalized chain measured
+in §Verdicts, so these inversion ratios are retained as defect evidence, not
+as a current comparator verdict. A future full comparator rerun must replace
+them before drawing a new Hex/PARI trend. The old exponent difference was in
+any case only indicative: PARI's net cost jumps discontinuously between
+`n = 6` and `n = 8`, so a six-point fit through it is not a clean measurement
+of PARI's asymptotics.
 
 The `n = 6` and `n = 8` inversion rungs are non-monotone (0.794x then 1.539x)
 because PARI's own net cost jumps from 45.4 us to 208.4 us between them while
@@ -845,6 +871,7 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
+| [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `793f139d3`, clean tree | light load (1-minute average 22.8/96) | `4d46f7a61352b96a9a20abef70eacf9b164952f799fe4922a394a25a4a9dbcfe` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -870,17 +897,10 @@ the bench source rather than by a seed.
 
 ## Concerns
 
-`HexNumberField` remains at `done_through: 3`. Phase-4 exit criteria that do
-not pass, each tracked:
-
-- **`QAdjoin.inv` grows faster than any declared model absorbs.**
-  `runQAdjoinInvLadder` returns the slower-than-declared direction at
-  `beta = +1.784` through degree 96 on the idle host with monotone `C`, and
-  replaying the shipped `DensePoly.xgcdLeft` recursion shows its
-  rational entries reaching about `n^2.1` bits where a monic-normalised chain
-  stays near the `n log n` Hadamard bound.
-  https://github.com/kim-em/hex-dev/issues/9721 — bench-found: QAdjoin.inv's
-  rational extended gcd swells coefficients to Theta(n^2) bits.
+`HexNumberField` remains at `done_through: 3`. The `QAdjoin.inv` coefficient-
+swell concern is resolved by the monic-normalized chain and corrected bit-cost
+model recorded in §Verdicts. The remaining Phase-4 exit criteria that do not
+pass are each tracked:
 - **The advertised API surface is not fully registered.** Roughly thirty
   advertised compiled operations have no `setup_benchmark` or
   `setup_fixed_benchmark`, and `Roots.normEliminant` and `Roots.evalEliminant`
