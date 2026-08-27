@@ -31,6 +31,10 @@ Scientific registrations:
   construction included in the timed body.
 * `runDivModFastChecksum` and `runGcdFastChecksum`: Newton division and
   half-gcd through `FpPoly.fastPlan`, paired with the retained field routines.
+* `runFastPowChecksum`, `runFastFrobeniusChecksum`,
+  `runFastFrobeniusPowChecksum`, and `runFastComposeChecksum`: end-to-end
+  consumer candidates using `FpPoly.mulFast` with the retained monic
+  reduction.
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
@@ -365,32 +369,99 @@ def directMulInput257? (input : MulInput257) : Option DirectMulInput257 := do
 def prepDirectMulInput257 (n : Nat) : Option DirectMulInput257 :=
   directMulInput257? (prepMulInput257 n)
 
+/-- Reduce one fast-dispatch product with the retained monic long division. -/
+def mulModFast (left right modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) : FpPoly 65537 :=
+  modByMonic modulus (mulFast left right) hmonic
+
+/-- Reduce one schoolbook product with the retained monic long division. -/
+def mulModSchoolbook (left right modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) : FpPoly 65537 :=
+  modByMonic modulus (left * right) hmonic
+
+/-- One-shot schoolbook modular power reference. -/
+def powModSchoolbook (base modulus : FpPoly 65537)
+    (hmonic : DensePoly.Monic modulus) (exponent : Nat) : FpPoly 65537 :=
+  FpPoly.powModMonicAux modulus hmonic exponent
+    (modByMonic modulus base hmonic) 1
+
+/-- Square-and-multiply candidate using fast coefficient multiplication but
+the retained monic reduction. -/
+def powModFastAux (modulus : FpPoly 65537) (hmonic : DensePoly.Monic modulus) :
+    Nat → FpPoly 65537 → FpPoly 65537 → FpPoly 65537
+  | 0, _, acc => acc
+  | n + 1, base, acc =>
+      let acc' :=
+        if (n + 1) % 2 = 0 then acc else mulModFast acc base modulus hmonic
+      let base' := mulModFast base base modulus hmonic
+      powModFastAux modulus hmonic ((n + 1) / 2) base' acc'
+termination_by n => n
+decreasing_by
+  simpa using Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
+
+/-- One-shot fast-multiply modular power candidate. -/
+def powModFast (base modulus : FpPoly 65537) (hmonic : DensePoly.Monic modulus)
+    (exponent : Nat) : FpPoly 65537 :=
+  powModFastAux modulus hmonic exponent (modByMonic modulus base hmonic) 1
+
 /-- Benchmark target: compute `base^exponent mod modulus`. -/
 def runPowModMonicChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
-    powModMonic input.base (monicModulusLarge input.degree)
+    powModSchoolbook input.base (monicModulusLarge input.degree)
       (monicModulusLarge_monic input.degree)
       input.exponent
+
+/-- Benchmark candidate: modular power with fast multiplication. -/
+def runFastPowChecksum (input : ModInput) : UInt64 :=
+  checksumPoly <|
+    powModFast input.base (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) input.exponent
 
 /-- Benchmark target: compute a batch of `X^p mod modulus` calls. -/
 def runFrobeniusXModChecksum (input : FrobeniusBatchInput) : UInt64 :=
   (Array.range input.count).foldl
     (fun acc _ =>
       mixHash acc <| checksumPoly <|
-        frobeniusXMod (monicModulusLarge input.degree) (monicModulusLarge_monic input.degree))
+        powModSchoolbook X (monicModulusLarge input.degree)
+          (monicModulusLarge_monic input.degree) 65537)
+    0
+
+/-- Benchmark candidate: batched Frobenius with fast multiplication. -/
+def runFastFrobeniusChecksum (input : FrobeniusBatchInput) : UInt64 :=
+  (Array.range input.count).foldl
+    (fun acc _ =>
+      mixHash acc <| checksumPoly <|
+        powModFast X (monicModulusLarge input.degree)
+          (monicModulusLarge_monic input.degree) 65537)
     0
 
 /-- Benchmark target: compute `X^(p^k) mod modulus`. -/
 def runFrobeniusXPowModChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
-    frobeniusXPowMod (monicModulusLarge input.degree) (monicModulusLarge_monic input.degree)
-      input.exponent
+    powModSchoolbook X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) (65537 ^ input.exponent)
+
+/-- Benchmark candidate: high Frobenius power with fast multiplication. -/
+def runFastFrobeniusPowChecksum (input : ModInput) : UInt64 :=
+  checksumPoly <|
+    powModFast X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) (65537 ^ input.exponent)
 
 /-- Benchmark target: compute modular composition and checksum the result. -/
 def runComposeModMonicChecksum (input : ComposeInput) : UInt64 :=
-  checksumPoly <|
-    composeModMonic input.outer input.inner (monicModulusLarge input.degree)
-      (monicModulusLarge_monic input.degree)
+  let modulus := monicModulusLarge input.degree
+  let hmonic := monicModulusLarge_monic input.degree
+  checksumPoly <| input.outer.toArray.foldr
+    (fun coeff acc => modByMonic modulus (acc * input.inner + C coeff) hmonic)
+    0
+
+/-- Benchmark candidate: modular Horner composition with fast multiplication. -/
+def runFastComposeChecksum (input : ComposeInput) : UInt64 :=
+  let modulus := monicModulusLarge input.degree
+  let hmonic := monicModulusLarge_monic input.degree
+  checksumPoly <| input.outer.toArray.foldr
+    (fun coeff acc => modByMonic modulus (mulFast acc input.inner + C coeff) hmonic)
+    0
 
 /-- Benchmark target: multiply weighted square-free factors. -/
 def runWeightedProductChecksum (input : WeightedInput) : UInt64 :=
@@ -682,6 +753,18 @@ setup_benchmark runPowModMonicChecksum n => n * n * Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
+setup_benchmark runFastPowChecksum n => n * n * Nat.log2 (n + 1)
+  with prep := prepPowModInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "power", "fast-multiply", "fp65537"]
+  }
+
 /-
 This registration batches `n` fixed-prime Frobenius calls on dense degree-`n`
 monic moduli. Each call performs a constant number of quotient-ring
@@ -704,6 +787,19 @@ setup_benchmark runFrobeniusXModChecksum n => n * n * n
     slopeTolerance := 0.20
   }
 
+setup_benchmark runFastFrobeniusChecksum n => n * n * n
+  with prep := prepFrobeniusInput
+  where {
+    paramFloor := 16
+    paramCeiling := 80
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 80]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.20
+    tags := #["adoption", "frobenius", "fast-multiply", "fp65537"]
+  }
+
 /-
 Here both the modulus degree and Frobenius height scale with `n`. The exponent
 `65537^n` has Theta(n) bits, so the quotient-ring square-and-multiply loop performs
@@ -723,6 +819,18 @@ setup_benchmark runFrobeniusXPowModChecksum n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
+setup_benchmark runFastFrobeniusPowChecksum n => n * n * n
+  with prep := prepFrobeniusPowInput
+  where {
+    paramFloor := 16
+    paramCeiling := 64
+    paramSchedule := .custom #[16, 24, 32, 48, 64]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "frobenius-power", "fast-multiply", "fp65537"]
+  }
+
 /-
 Horner modular composition does one reduced multiplication per coefficient of
 the outer polynomial. With all reduced polynomials bounded by degree `n`, each
@@ -740,6 +848,18 @@ setup_benchmark runComposeModMonicChecksum n => n * n * n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runFastComposeChecksum n => n * n * n
+  with prep := prepComposeInput
+  where {
+    paramFloor := 32
+    paramCeiling := 192
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "composition", "fast-multiply", "fp65537"]
   }
 
 /-

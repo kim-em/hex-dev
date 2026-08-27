@@ -742,12 +742,29 @@ medians over `F_65537`; all result hashes agree:
 
 The one-shot plan paths lose on every rung from 8 through 2048, so the Fp,
 GFq, Berlekamp, and Berlekamp-Zassenhaus consumers retain their Euclidean
-division and gcd calls.  This rules out a wholesale substrate replacement;
-the composition, Frobenius, quotient-ring, and reconstruction paths still
-require their own end-to-end audit for other possible fast operations.
+division and gcd calls. This rules out a wholesale substrate replacement.
 Reproduce the screen with
 `lake exe hexpolyfp_bench compare Hex.FpPolyBench.runDivModChecksum Hex.FpPolyBench.runDivModFastChecksum --param-floor 8 --param-ceiling 2048 --param-schedule doubling --target-inner-nanos 1000000 --outer-trials 3 --signal-floor-multiplier 1 --max-seconds-per-call 10`
 and the analogous command naming `runGcdChecksum` and `runGcdFastChecksum`.
+
+The independent multiplication audit does produce winning downstream cells.
+`FpPoly.mulFast` uses schoolbook multiplication below 16 coefficients and the
+packed kernel above it; modular power switches its compiled loop from modulus
+size 18. Modular composition, GFq quotient multiplication and power, and the
+Rabin/Frobenius portion of Berlekamp select this dispatcher. Representative
+three-trial medians on the same host and toolchain are:
+
+| consumer | parameter | retained | selected |
+|---|---:|---:|---:|
+| `FpPoly.powModMonic` | 64 | 3.368 ms | 1.964 ms |
+| `FpPoly.composeModMonic` | 192 | 247.598 ms | 188.076 ms |
+| GFq quotient power | 128 | 9.359 ms | 6.688 ms |
+| Berlekamp Rabin test | 32 | 7.452 ms | 2.823 ms |
+
+All result hashes agree. The owning SPECs record the full schedules and exact
+reproduction commands. The remaining downstream adoption audit is the
+Berlekamp-Zassenhaus trial-product and integer-reassembly path; its division
+and gcd substrate decision is already the measured retention above.
 
 A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a

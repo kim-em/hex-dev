@@ -689,6 +689,11 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
 
 /-! # Total dispatch -/
 
+/-- Shorter-size threshold below which generic schoolbook multiplication beats
+the packed lazy-reduction setup.  The forced `F_257` and `F_65537` ladders both
+cross between 8 and 16 coefficients per operand. -/
+@[expose] def packedCutoff : Nat := 16
+
 /-- Shorter-size threshold below which the packed lazy-reduction kernel avoids
 auxiliary-plan construction.  The forced-kernel sweep over `F_65537` keeps
 packed multiplication ahead through `4096` coefficients per operand; CRT-NTT
@@ -704,7 +709,9 @@ auxiliary catalogue cannot serve a large request. -/
 lazy-reduction kernel; large products try auxiliary-prime NTTs and fall back
 to Karatsuba on normal catalogue exhaustion. -/
 def mulFast (left right : FpPoly p) : FpPoly p :=
-  if min left.size right.size < nttCrtCutoff then
+  if min left.size right.size < packedCutoff then
+    left * right
+  else if min left.size right.size < nttCrtCutoff then
     mulPacked left right
   else
     match mulNttCrt? left right with
@@ -717,11 +724,13 @@ theorem mulFast_eq (left right : FpPoly p) :
     mulFast left right = left * right := by
   unfold mulFast
   split
-  · exact mulPacked_eq left right
+  · rfl
   · split
-    · rename_i result hresult
-      exact mulNttCrt?_eq left right result hresult
-    · exact DensePoly.mulKaratsuba_eq karatsubaCutoff left right
+    · exact mulPacked_eq left right
+    · split
+      · rename_i result hresult
+        exact mulNttCrt?_eq left right result hresult
+      · exact DensePoly.mulKaratsuba_eq karatsubaCutoff left right
 
 /-- Coefficient-owner multiplication plan for generic fast algorithms.  Full
 products use `mulFast`, squaring and slices use the proved Karatsuba kernels. -/

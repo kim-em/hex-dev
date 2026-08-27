@@ -631,8 +631,8 @@ omit [ZMod64.PrimeModulus p] in
 of representatives modulo the selected Conway polynomial. -/
 @[simp, grind =] theorem repr_mul {h : Conway.SupportedEntry p n}
     (x y : GFq p n h) :
-    repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
-  rfl
+    repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) := by
+  exact GFqField.repr_mul x y
 
 omit [ZMod64.PrimeModulus p] in
 /-- The representative of a negation reduces from the negated representative. -/
@@ -876,8 +876,8 @@ omit [ZMod64.PrimeModulus p] in
 product of representatives modulo the selected committed Conway polynomial. -/
 @[simp, grind =] theorem repr_mul (x y : GFqC p n) :
     repr (x * y) =
-      GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x * repr y) :=
-  rfl
+      GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x * repr y) := by
+  exact GFq.repr_mul x y
 
 /-- The Frobenius endomorphism on the committed `GFqC p n` field. -/
 @[expose]
