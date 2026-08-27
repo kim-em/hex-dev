@@ -26,9 +26,10 @@ inductive PMinusOneResult where
   | whole
 deriving Repr, DecidableEq
 
-/-- Conservative smoothness cap inside the range where prime-table
-completeness follows directly from `q < primeTableBound`. -/
-def smoothBoundCap : Nat := primeTableBound - 1
+/-- Accepted stage-1 smoothness cap. It remains inside the complete table range,
+but is independent of later table-policy growth so search cost and retry-ladder
+coverage do not change as a side effect of a larger certification table. -/
+def smoothBoundCap : Nat := 9999
 
 /-- Clamp a requested stage-1 bound to the complete committed-table range. -/
 def smoothBound (bound : Nat) : Nat := min bound smoothBoundCap

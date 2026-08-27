@@ -65,8 +65,8 @@ private def isPrimeCases : List (String × Nat) :=
     ("strongpsp/2047", 2047), ("strongpsp/1373653", 1373653),
     ("strongpsp/25326001", 25326001), ("strongpsp/3215031751", 3215031751),
     ("fermat/257", 257), ("fermat/65537", 65537),
-    ("table/9973", 9973), ("trial/10007", 10007),
-    ("trial/99999989", 99999989),
+    ("table/99991", 99991), ("trial/100003", 100003),
+    ("cert/10000019", 10000019), ("cert/99999989", 99999989),
     ("cert/mersenne31", 2147483647),
     ("cert/mersenne31-succ2", 2147483649) ]
 
@@ -88,7 +88,7 @@ private def certCases : List (String × Nat × PrimeCert) :=
     ("reject/composite-factor", 7, .pock 7 [(2, 0, .small 4)]),
     ("reject/gcd-witness", 7, .pock 7 [(6, 0, .small 3)]),
     ("reject/nondividing", 11, .pock 11 [(2, 0, .small 7)]),
-    ("reject/table-miss", 10007, .small 10007),
+    ("reject/table-miss", 100003, .small 100003),
     ("reject/pock3-witness", 199,
       .pock3 199 9 2 7 [(3, 0, .small 2), (2, 0, .small 3)]),
     ("reject/pock3-odd-F", 199, .pock3 199 9 2 8 [(2, 0, .small 3)]),
@@ -115,7 +115,7 @@ order). -/
 private def segmentCases : List (String × Nat × Nat) :=
   [ ("basic/1-100", 1, 101),
     ("table/1-10000", 1, 10000),
-    ("straddle/9950-10050", 9950, 10050) ]
+    ("straddle/99950-100050", 99950, 100050) ]
 
 private def emitCase : IO Unit := do
   for (case, n) in isPrimeCases do

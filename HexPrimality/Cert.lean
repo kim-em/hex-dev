@@ -633,11 +633,11 @@ certificate of each kind (bound too small, composite claimed factor, failed
 gcd witness, factor not dividing `n - 1`). The checker's negative cases
 matter as much as its positive ones, and no oracle produces them. -/
 
-set_option maxRecDepth 10000   -- table walks in the guards below
+set_option maxRecDepth 100000   -- table walks in the guards below
 
 #guard checkPrime (.small 97) = true
 #guard checkPrime (.small 100) = false
-#guard checkPrime (.small 10007) = false  -- prime, but above the table bound
+#guard checkPrime (.small 100003) = false  -- prime, but above the table bound
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
 #guard checkPrime (.pock 2027 [(2, 0, .small 1013)]) = true

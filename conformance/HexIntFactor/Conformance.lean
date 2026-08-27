@@ -10,7 +10,7 @@ import HexIntFactor
 
 open Hex Hex.Nat
 
-set_option maxRecDepth 20000
+set_option maxRecDepth 100000
 
 private def raw12 : Factorization :=
   ⟨12, [⟨2, .small 2⟩, ⟨1, .small 3⟩]⟩
@@ -174,7 +174,7 @@ example :
 
 -- The subject is not a perfect power, but this exact split leaves a square
 -- cofactor. The same structural producer used for every popped search entry
--- detects it, and stack multiplicity scales both its known and residual powers.
+-- detects it, and stack multiplicity scales its table-certified factor.
 private def recursivePowerInput : Nat := 10009 * 10037 ^ 2
 private def recursivePowerCandidate : SmallCandidate :=
   (smallCandidate (recursivePowerInput / 10009)).scale 3
@@ -182,13 +182,14 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard (perfectPower? recursivePowerInput).isNone
 #guard recursivePowerInput / 10009 == 10037 ^ 2
 #guard recursivePowerCandidate.route == .perfectPower
-#guard recursivePowerCandidate.factors.isEmpty
-#guard recursivePowerCandidate.residualBase == 10037
+#guard recursivePowerCandidate.factors.map
+  (fun entry => (entry.prime, entry.exponent)) == [(10037, 6)]
+#guard recursivePowerCandidate.residualBase == 1
 #guard recursivePowerCandidate.residualExponent == 6
 -- Batched rho may return a composite divisor when two collisions share a
 -- batch. Seed 17 therefore changed the route count after batching; seed 1
 -- pins that count while the final checked factorization remains unchanged.
-#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
+#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes (2 ^ 20) (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes ((6 ^ 5) ^ 3) (Rand.ofSeed 1) == 1
@@ -206,12 +207,11 @@ private def nestedPowerCandidate : SmallCandidate :=
   [(2, 30), (3, 30)]
 #guard nestedPowerCandidate.residualBase == 1
 
--- Composite exponents reduce at both the initial and recursive boundaries:
--- `p^8` becomes `(p^4)^2`, then the popped `p^4` becomes `(p^2)^2` with
--- accumulated multiplicity four. The eventual split still restores exponent 8.
+-- A composite exponent reduces at the initial boundary; the enlarged table
+-- then certifies the base directly, still restoring exponent 8.
 private def iteratedPower : Nat := 10009 ^ 8
 
-#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 2
+#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 1
 #guard (match factor? iteratedPower (Rand.ofSeed 19) with
   | .ok (F, _) =>
       F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) == [(10009, 8)]
@@ -221,7 +221,8 @@ private def iteratedPower : Nat := 10009 ^ 8
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
-#guard smoothBoundCap == primeTableBound - 1
+#guard smoothBoundCap == 9999
+#guard smoothBoundCap < primeTableBound
 #guard smoothBound (primeTableBound + 1000) == smoothBoundCap
 
 example (n base bound : Nat) :
@@ -467,18 +468,16 @@ private def retainedCertInput : Nat := starvedInput * 1000037
 
 -- A stopped continuation includes successful earlier-part work and remains
 -- exactly accounted, even when every charged search subtotal happens to be zero.
-#guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
+#guard (match factorPowerWithRoute? 100003 4 .minus (Rand.ofSeed 1) (fuel := 0) with
   | .error failure =>
       failure.stop == .incomplete && failure.attempts == 0
   | .ok _ => false)
 
--- Here `Φ_19(2)` succeeds after eight charged attempts, `Φ_57(2)` stops
--- after twelve, and the generic continuation adds five more. This guards the
--- successful-part subtotal that the public pair-returning API intentionally
--- omits.
-#guard (match factorPowerWithRoute? 2 57 .minus (Rand.ofSeed 1) (fuel := 3) with
+-- A later stopped continuation retains the successful-part subtotal that the
+-- public pair-returning API intentionally omits.
+#guard (match factorPowerWithRoute? 2 128 .minus (Rand.ofSeed 1) (fuel := 3) with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 25
+      failure.stop == .incomplete && failure.attempts == 17
   | .ok _ => false)
 
 -- Degenerate split input uses the ordinary dispatcher, and the route tag makes

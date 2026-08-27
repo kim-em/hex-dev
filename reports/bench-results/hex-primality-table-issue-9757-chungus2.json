@@ -1,0 +1,321 @@
+{
+  "candidates": [
+    {
+      "batches": 4,
+      "bound": 10000,
+      "samples": [
+        {
+          "expected_native_readback": "1229,2,9973,5736396",
+          "generated_c_bytes": 70250,
+          "generation_wall_nanos": 1192793283,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": false,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 988956400,
+          "native_generated_c_bytes": 70844,
+          "native_link_diagnostic": "",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 739820672,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "1229,2,9973,5736396\n",
+          "native_run_wall_nanos": 3565196,
+          "native_static_array_object_bytes": 9856,
+          "olean_bytes": 275424,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 1452229322,
+          "source_bytes": 13122,
+          "source_sha256": "592d9337a932b135f1041711a434584c0de4a7c74fd172ce01150c92b9fa7f24",
+          "static_array_object_bytes": 9856,
+          "status": "ok"
+        },
+        {
+          "expected_native_readback": "1229,2,9973,5736396",
+          "generated_c_bytes": 70250,
+          "generation_wall_nanos": 1206047755,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": false,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 988494124,
+          "native_generated_c_bytes": 70844,
+          "native_link_diagnostic": "",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 752134190,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "1229,2,9973,5736396\n",
+          "native_run_wall_nanos": 3608510,
+          "native_static_array_object_bytes": 9856,
+          "olean_bytes": 275424,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 1466977730,
+          "source_bytes": 13122,
+          "source_sha256": "592d9337a932b135f1041711a434584c0de4a7c74fd172ce01150c92b9fa7f24",
+          "static_array_object_bytes": 9856,
+          "status": "ok"
+        },
+        {
+          "expected_native_readback": "1229,2,9973,5736396",
+          "generated_c_bytes": 70250,
+          "generation_wall_nanos": 1208987926,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": false,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 953365140,
+          "native_generated_c_bytes": 70844,
+          "native_link_diagnostic": "",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 711152929,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "1229,2,9973,5736396\n",
+          "native_run_wall_nanos": 3444417,
+          "native_static_array_object_bytes": 9856,
+          "olean_bytes": 275424,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 1424046767,
+          "source_bytes": 13122,
+          "source_sha256": "592d9337a932b135f1041711a434584c0de4a7c74fd172ce01150c92b9fa7f24",
+          "static_array_object_bytes": 9856,
+          "status": "ok"
+        }
+      ],
+      "sqrt_bound": 100
+    },
+    {
+      "batches": 14,
+      "bound": 100000,
+      "samples": [
+        {
+          "expected_native_readback": "9592,2,99991,454396537",
+          "generated_c_bytes": 599616,
+          "generation_wall_nanos": 2777752454,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": true,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 3612730652,
+          "native_generated_c_bytes": 447448,
+          "native_link_diagnostic": "/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-av8f7bcc/b100000-s0/Native.c:32:101: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 759243412,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "9592,2,99991,454396537\n",
+          "native_run_wall_nanos": 3558837,
+          "native_static_array_object_bytes": 76760,
+          "olean_bytes": 2105720,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 12741976441,
+          "source_bytes": 214056,
+          "source_sha256": "a12139235e0e021298543233fabbb6fabba6ee4d8a8ae732282711d7280ef33f",
+          "static_array_object_bytes": 76760,
+          "status": "ok"
+        },
+        {
+          "expected_native_readback": "9592,2,99991,454396537",
+          "generated_c_bytes": 599616,
+          "generation_wall_nanos": 2764514813,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": true,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 3654960785,
+          "native_generated_c_bytes": 447448,
+          "native_link_diagnostic": "/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-av8f7bcc/b100000-s1/Native.c:32:101: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 761390488,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "9592,2,99991,454396537\n",
+          "native_run_wall_nanos": 3568722,
+          "native_static_array_object_bytes": 76760,
+          "olean_bytes": 2105720,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 11640282062,
+          "source_bytes": 214056,
+          "source_sha256": "a12139235e0e021298543233fabbb6fabba6ee4d8a8ae732282711d7280ef33f",
+          "static_array_object_bytes": 76760,
+          "status": "ok"
+        },
+        {
+          "expected_native_readback": "9592,2,99991,454396537",
+          "generated_c_bytes": 599616,
+          "generation_wall_nanos": 2769972100,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": true,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": 0,
+          "native_codegen_wall_nanos": 3606928956,
+          "native_generated_c_bytes": 447448,
+          "native_link_diagnostic": "/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-av8f7bcc/b100000-s2/Native.c:32:101: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n",
+          "native_link_exit_code": 0,
+          "native_link_wall_nanos": 759611932,
+          "native_run_exit_code": 0,
+          "native_run_output_tail": "9592,2,99991,454396537\n",
+          "native_run_wall_nanos": 3533679,
+          "native_static_array_object_bytes": 76760,
+          "olean_bytes": 2105720,
+          "replay_exit_code": 0,
+          "replay_wall_nanos": 11808198515,
+          "source_bytes": 214056,
+          "source_sha256": "a12139235e0e021298543233fabbb6fabba6ee4d8a8ae732282711d7280ef33f",
+          "static_array_object_bytes": 76760,
+          "status": "ok"
+        }
+      ],
+      "sqrt_bound": 317
+    },
+    {
+      "batches": 42,
+      "bound": 1000000,
+      "samples": [
+        {
+          "diagnostic_output": "/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-av8f7bcc/b1000000-s0/Replay.lean:17:2: error: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\n/home/kim/worktrees/hex-dev/hex-dev-issue-9757/.lake/hex-primality-table-av8f7bcc/b1000000-s0/Replay.lean:8996:2: error: Expected type must not contain free variables\n  primeTable = (2 :: 3 :: bitsToList sieveStateFinal 1000000).toArray\n\nHint: Use the `+revert` option to automatically clean up and revert free variables\n",
+          "expected_native_readback": null,
+          "generated_c_bytes": 0,
+          "generation_wall_nanos": 118930471358,
+          "metadata_field_limit_bytes": 65535,
+          "metadata_field_overflow": false,
+          "native_codegen_diagnostic": "",
+          "native_codegen_exit_code": null,
+          "native_codegen_wall_nanos": 0,
+          "native_generated_c_bytes": 0,
+          "native_link_diagnostic": "",
+          "native_link_exit_code": null,
+          "native_link_wall_nanos": 0,
+          "native_run_exit_code": null,
+          "native_run_output_tail": "",
+          "native_run_wall_nanos": 0,
+          "native_static_array_object_bytes": 0,
+          "replay_exit_code": 1,
+          "replay_wall_nanos": 112482495593,
+          "source_bytes": 4877294,
+          "source_sha256": "1e9e53902eabd118910c5611d76291693b35dcbc12672af4c0b4405568013bb0",
+          "static_array_object_bytes": 0,
+          "status": "replay-failed"
+        }
+      ],
+      "sqrt_bound": 1000
+    },
+    {
+      "batches": 132,
+      "bound": 10000000,
+      "samples": [
+        {
+          "diagnostic_output": "",
+          "generation_exit_code": null,
+          "generation_wall_nanos": 300187386335,
+          "status": "generation-timeout"
+        }
+      ],
+      "sqrt_bound": 3163
+    }
+  ],
+  "config": {
+    "bounds": [
+      10000,
+      100000,
+      1000000,
+      10000000
+    ],
+    "max_sieve_bases_per_batch": 8,
+    "samples": 3,
+    "timeout_cleanup": "SIGKILL spawned process group",
+    "timeout_seconds": 300.0
+  },
+  "environment": {
+    "command": "scripts/bench/primality_table_sweep.py --samples 3 --output reports/bench-results/hex-primality-table-issue-9757-chungus2.json",
+    "commit": "41dd0d4c08252f956f68dde80d085e2242ff1418",
+    "dirty": false,
+    "dirty_status": "",
+    "hostname": "chungus2",
+    "lean": "Lean (version 4.34.0-rc2, x86_64-unknown-linux-gnu, commit 6a10ac8c22beadecabdbb0919c2b50214762f91d, Release)",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6",
+    "state_after": {
+      "affinity": [
+        2
+      ],
+      "cpu": 2,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_pressure": "some avg10=0.00 avg60=0.00 avg300=0.28 total=24690700247\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "load_average": [
+        1.53466796875,
+        2.486328125,
+        2.4990234375
+      ]
+    },
+    "state_before": {
+      "affinity": [
+        2
+      ],
+      "cpu": 2,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_pressure": "some avg10=3.46 avg60=2.48 avg300=0.77 total=24686573056\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "load_average": [
+        1.47314453125,
+        2.21826171875,
+        2.31982421875
+      ]
+    }
+  },
+  "measurement": "standard generator, fresh emitted replay, and linked native-literal readback",
+  "schema": "hex-primality-table-policy/2",
+  "summary": [
+    {
+      "batches": 4,
+      "bound": 10000,
+      "generated_c_bytes": 70250,
+      "generation_median_nanos": 1206047755,
+      "olean_bytes": 275424,
+      "replay_median_nanos": 1452229322,
+      "sample_count": 3,
+      "source_bytes": 13122,
+      "source_sha256": "592d9337a932b135f1041711a434584c0de4a7c74fd172ce01150c92b9fa7f24",
+      "sqrt_bound": 100,
+      "static_array_object_bytes": 9856,
+      "status": "ok"
+    },
+    {
+      "batches": 14,
+      "bound": 100000,
+      "generated_c_bytes": 599616,
+      "generation_median_nanos": 2769972100,
+      "olean_bytes": 2105720,
+      "replay_median_nanos": 11808198515,
+      "sample_count": 3,
+      "source_bytes": 214056,
+      "source_sha256": "a12139235e0e021298543233fabbb6fabba6ee4d8a8ae732282711d7280ef33f",
+      "sqrt_bound": 317,
+      "static_array_object_bytes": 76760,
+      "status": "ok"
+    },
+    {
+      "batches": 42,
+      "bound": 1000000,
+      "generated_c_bytes": 0,
+      "generation_median_nanos": 118930471358,
+      "olean_bytes": null,
+      "replay_median_nanos": 112482495593,
+      "sample_count": 1,
+      "source_bytes": 4877294,
+      "source_sha256": "1e9e53902eabd118910c5611d76291693b35dcbc12672af4c0b4405568013bb0",
+      "sqrt_bound": 1000,
+      "static_array_object_bytes": 0,
+      "status": "replay-failed"
+    },
+    {
+      "batches": 132,
+      "bound": 10000000,
+      "generated_c_bytes": null,
+      "generation_median_nanos": 300187386335,
+      "olean_bytes": null,
+      "replay_median_nanos": null,
+      "sample_count": 1,
+      "source_bytes": null,
+      "source_sha256": null,
+      "sqrt_bound": 3163,
+      "static_array_object_bytes": null,
+      "status": "generation-timeout"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ case: `isprime` verdicts against PARI's `isprime` (with python-flint's
 `segment` listings against PARI's `primes` over the interval, and
 `certcheck` verdicts against an independent Python reimplementation of
 the certificate checker, whose small-table leaf uses the table's proven
-semantics (prime and below `10^4`) with PARI supplying the primality.
+semantics (prime and below `10^5`) with PARI supplying the primality.
 On mismatch, writes a JSON failure record under `conformance-failures/`
 and exits non-zero so CI fails the job.
 
@@ -51,7 +51,7 @@ from scripts.oracle.common import (  # noqa: E402
 )
 
 # Mirrors `Hex.Nat.primeTableBound`.
-PRIME_TABLE_BOUND = 10000
+PRIME_TABLE_BOUND = 100000
 
 
 def _pari_version(pari) -> str:
