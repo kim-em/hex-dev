@@ -41,7 +41,17 @@ Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
 `Mod(a, m)^(-1)`) is the callable PARI surface matching `QAdjoin`
 multiplication and inversion. The `runQAdjoinMulPair*` / `runPariPolmodMul*`
-and `runQAdjoinInvPair*` / `runPariPolmodInv*` fixed rungs consume identical
+rungs run at `n = 4, 6, 8, 12, 16` and the `runQAdjoinInvPair*` /
+`runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12`: five rungs each rather than
+a doubling-only triple, because `SPEC/benchmarking.md` §Headline reports
+requires enough eligible rungs for the ratio's shape to be unambiguous, and
+both families cross the ratio 1 inside these ranges. The ladders stop there
+because `verify` is the CI smoke gate and builds every rung's fixture: rungs at
+`n = 20` and `n = 16` respectively cost 14.2 s and 4.9 s of certified-root
+construction each, which took this exe's share of the repo-wide bench-verify
+budget to 54 s against a 360 s cap that the run then hit exactly. Restoring
+them is part of the fixture fix tracked in issue 9727. The pairs consume
+identical
 deterministic inputs and hash the identical reduced rational coefficient
 vector, so `compare` joins them on result hashes. The PARI side runs through
 the persistent-subprocess driver `scripts/oracle/pari_bench_driver.py`
@@ -374,12 +384,28 @@ setup_fixed_benchmark runRoots where {
 private def xPowSubTwo (m : Nat) : ZPoly :=
   DensePoly.ofList ((-2 : Int) :: List.replicate (m - 1) 0 ++ [1])
 
-/-- Deterministic dense all-nonzero rational coefficients keyed by length
-and salt: alternating signs, growing numerators, denominator `i + 2`. -/
+/-- Deterministic dense all-nonzero rational coefficients keyed by length and
+salt: alternating signs, numerators cycling modulo 11 and denominators modulo
+6, so both are bounded independently of `len` and a ladder over `len` varies
+the modulus degree alone.
+
+The bound matters. The earlier form used numerator `±(i + salt + 1)` over
+denominator `i + 2`. Since `gcd (i + salt + 1) (i + 2) = gcd (salt - 1) (i + 2)`,
+coefficient `i` reduces to denominator `(i + 2) / gcd (i + 2) (salt - 1)`, and
+the common denominator is the lcm of those. For the fixed salts in use that
+lcm still has `Θ(len)` bit length — it differs from `lcm (2, …, len + 1)` only
+by the divisors of `salt - 1`, a constant. So a ladder built on it varied
+coefficient height together with degree: not the controlled one-parameter
+ladder [PLAN/Phase4.md](../../PLAN/Phase4.md) requires, and no bounded-height
+cost model could fit it.
+
+`prepAlgPolyInput` shares this helper for the same reason. -/
+private def denseRatCoeff (i salt : Nat) : Rat :=
+  let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
+  mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
+
 private def denseRatCoeffs (len salt : Nat) : Array Rat :=
-  (Array.range len).map fun i =>
-    let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
-    mkRat (sign * Int.ofNat (i + salt + 1)) (i + 2)
+  (Array.range len).map (denseRatCoeff · salt)
 
 /-- Deterministic refined isolation for a squarefree polynomial: run the
 bounded isolator at separation depth and take the first returned atom. -/
@@ -490,10 +516,18 @@ wall model is linear. -/
 setup_benchmark runQAdjoinAddLadder n => n
   with prep := prepFieldInput
   where {
+    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
+    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
+    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
+    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
+    -- n = 32, while the measured call is microseconds. 24 is the largest rung
+    -- reachable in a sane wallclock, not the largest the operation supports.
+    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
+    -- should rise once a cheaper certified-root construction exists.
     paramFloor := 4
-    paramCeiling := 32
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 24
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -507,10 +541,18 @@ the declared model is `n^2`. -/
 setup_benchmark runQAdjoinMulLadder n => n * n
   with prep := prepFieldInput
   where {
+    -- PROVISIONAL RANGE, not a scientific one. The fixture, not the timed
+    -- operation, bounds this ladder: `prepFieldInput` isolates all `n` complex
+    -- roots of `X^n - 2` at separation depth to take the first, costing 4.9 s
+    -- at n = 16, 30.8 s at n = 24, 61 s at n = 28 and over 11 minutes at
+    -- n = 32, while the measured call is microseconds. 24 is the largest rung
+    -- reachable in a sane wallclock, not the largest the operation supports.
+    -- Filed as https://github.com/kim-em/hex-dev/issues/9727; the ceiling
+    -- should rise once a cheaper certified-root construction exists.
     paramFloor := 4
-    paramCeiling := 32
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 24
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -526,10 +568,14 @@ arbitrary-precision operation constant-cost. -/
 setup_benchmark runQAdjoinInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
-    paramFloor := 3
-    paramCeiling := 12
-    paramSchedule := .custom #[3, 4, 6, 8, 12]
-    maxSecondsPerCall := 10.0
+    -- The fixture decides irreducibility of `X^n - 2` and isolates its roots
+    -- (1.3 s at n = 12, 4.9 s at n = 16); the cap covers that prelude so the
+    -- ladder reaches a range where coefficient growth, not the small-integer
+    -- regime, sets the cost.
+    paramFloor := 4
+    paramCeiling := 20
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 20]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -589,10 +635,15 @@ proxy used by the HexResultant registrations, so the declared wall model is
 setup_benchmark runAddEliminantLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepEliminantInput
   where {
+    -- The old `4 .. 64` schedule left three contributing rungs, all with
+    -- sub-millisecond calls, and its fitted `C` had not settled (178 .. 321,
+    -- beta = +0.258). Extending to 256 puts four decades of work under the
+    -- fit and flattens `C` to 144 .. 166 at beta = +0.015 against the same
+    -- declared model.
     paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 16, 32, 64]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 256
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -613,7 +664,10 @@ setup_benchmark runLazyAddLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
     paramFloor := 2
     paramCeiling := 10
     paramSchedule := .custom #[2, 3, 4, 6, 8, 10]
-    maxSecondsPerCall := 60.0
+    -- The top rung costs about 92 s per call; a 60 s cap truncated the ladder
+    -- there and left the verdict resting on the `C`-spread fallback instead of
+    -- a fitted slope.
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -725,7 +779,7 @@ def prepAlgPolyInput (n : Nat) : AlgPolyInput :=
   | some sqrt2 =>
     ⟨AlgebraicPoly.ofArray <| (Array.range (m + 1)).map fun i =>
       if i == 1 then sqrt2
-      else AlgebraicNumber.ofRat (mkRat (Int.ofNat (i + 1)) (i + 2))⟩
+      else AlgebraicNumber.ofRat (denseRatCoeff i 2)⟩
   | none => panic! "prepAlgPolyInput: √2 fixture failed"
 
 def runAlgebraicRootsLadder (input : AlgPolyInput) : UInt64 :=
@@ -751,9 +805,14 @@ the coefficient count. -/
 setup_benchmark runCommonPresentationLadder n => n
   with prep := prepAlgPolyInput
   where {
+    -- `presentation?` carries a fixed start-up cost (the generator's powers
+    -- and the first `extend?` shifts) worth roughly four coefficients, so the
+    -- bottom of the ladder is start-up dominated. The schedule keeps those
+    -- rungs — they are the range `runAlgebraicRootsLadder` actually calls this
+    -- at — and extends to 128 so the linear term dominates the fit.
     paramFloor := 2
-    paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 8, 16]
+    paramCeiling := 128
+    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128]
     maxSecondsPerCall := 60.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -772,10 +831,13 @@ derivation above (`O(d^3 * B^2)` with `tau, B = O(d log d)`), giving the same
 setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
-    paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 180.0
+    -- Degree 1 leaves the norm eliminant linear, so that rung measures the
+    -- Yun and embedding prelude rather than the degree-`2n` isolation the
+    -- model declares; the ladder starts at 2 and reaches 8.
+    paramFloor := 2
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    maxSecondsPerCall := 900.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -791,10 +853,13 @@ shape. -/
 setup_benchmark runAlgebraicRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepAlgPolyInput
   where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
-    maxSecondsPerCall := 60.0
+    -- The common-field embedding is linear in the coefficient count and costs
+    -- tens of milliseconds; below three coefficients it is comparable to the
+    -- root work the model declares, so the ladder starts at 3 and reaches 8.
+    paramFloor := 3
+    paramCeiling := 8
+    paramSchedule := .custom #[3, 4, 5, 6, 8]
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -817,10 +882,14 @@ private def ratCoeffsChecksum (coeffs : Array Rat) : UInt64 :=
     (hash coeffs.size)
 
 initialize mulPairRef4 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef6 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef8 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef12 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef16 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize invPairRef4 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef6 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef8 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef10 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef12 : IO.Ref (Option InvInput) ← IO.mkRef none
 
 private def getMulPair (ref : IO.Ref (Option FieldInput)) (n : Nat) :
@@ -858,10 +927,18 @@ def runQAdjoinMulPair4 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef4 4)
 def runPariPolmodMul4 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef4 4)
+def runQAdjoinMulPair6 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef6 6)
+def runPariPolmodMul6 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef6 6)
 def runQAdjoinMulPair8 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef8 8)
 def runPariPolmodMul8 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef8 8)
+def runQAdjoinMulPair12 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef12 12)
+def runPariPolmodMul12 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef12 12)
 def runQAdjoinMulPair16 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef16 16)
 def runPariPolmodMul16 : Unit → IO UInt64 := fun _ => do
@@ -871,14 +948,34 @@ def runQAdjoinInvPair4 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef4 4)
 def runPariPolmodInv4 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef4 4)
+def runQAdjoinInvPair6 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef6 6)
+def runPariPolmodInv6 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef6 6)
 def runQAdjoinInvPair8 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef8 8)
 def runPariPolmodInv8 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef8 8)
+def runQAdjoinInvPair10 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef10 10)
+def runPariPolmodInv10 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef10 10)
 def runQAdjoinInvPair12 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef12 12)
 def runPariPolmodInv12 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef12 12)
+
+/-- Per-call driver overhead for the PARI comparator: one `polmod`-family
+request whose PARI-side work is a constant `0`, so the measured time is the
+JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
+comparators §Process call requires this figure so the headline report can
+quote overhead-adjusted ratios. -/
+def runPariPolmodOverhead : Unit → IO UInt64 := fun _ => do
+  let result ← Hex.BenchOracle.Pari.runOp "polmod" "overhead" #[]
+  match result.getInt? with
+  | .ok value => return UInt64.ofNat value.toNat
+  | .error error =>
+    throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the
@@ -886,7 +983,10 @@ PARI side, spawns the persistent driver) outside the timed region, and the
 raised `minTotalSeconds` floor amortises steady-state work across the
 auto-tuned inner-repeat batch so per-rung ratios compare like with like. -/
 def pariCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 30.0, warmupFirstIter := true,
+  -- The cap covers the discarded `warmupFirstIter` call, which is where the
+  -- rung fixture is built: the certified root of `X^n - 2` costs 14.2 s at
+  -- n = 20. The timed calls themselves are microseconds.
+  { repeats := 5, maxSecondsPerCall := 120.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
@@ -895,8 +995,12 @@ the `runQAdjoinMulLadder` derivation). Identical inputs, identical reduced
 rational coefficient hash on both sides. -/
 setup_fixed_benchmark runQAdjoinMulPair4 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul4 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair6 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul6 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinMulPair8 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul8 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair12 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul12 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinMulPair16 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul16 where pariCompareConfig
 
@@ -905,10 +1009,20 @@ inversion against `QAdjoin` extended-gcd inversion (quadratic
 coefficient-operation surface; see the `runQAdjoinInvLadder` derivation). -/
 setup_fixed_benchmark runQAdjoinInvPair4 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv4 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair6 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv6 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair8 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv8 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair10 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv10 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair12 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv12 where pariCompareConfig
+
+/- Driver round-trip floor for the PARI comparator: no algorithmic work on
+either side, so this registration measures only the per-call request/reply
+cost that the headline report subtracts from the PARI wall times. -/
+setup_fixed_benchmark runPariPolmodOverhead where
+  { pariCompareConfig with expectedHash := some 0x0 }
 
 end Hex.NumberFieldBench
 
