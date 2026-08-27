@@ -547,6 +547,22 @@ oracle's independently computed decomposition with Lean's finite output.
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
 
+The required exactification input families are:
+
+- `exactification-selection`: the fixed enclosing polynomial
+  `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
+  multiple-candidate selection and canonical re-isolation without treating
+  the easy enclosing factorization as scaling evidence;
+- `exactification-certification`: degree-`n` candidates `X^n - 2` inside
+  `(X^n - 2)(X + 3)`, again pinned to the nonlinear factor, separately time
+  `AlgebraicRoot.exactFactor?` and the public
+  `AlgebraicNumber.canonicalRep?` phase; and
+- `exactification-factorization`: a growing product of distinct Eisenstein
+  quadratics extends the Berlekamp-Zassenhaus adversarial fixture, and the
+  end-to-end `exact?` target must show modular factorization, multifactor
+  Hensel lifting, and recombination in a profile before it counts as the
+  factorization family.
+
 ## External comparators
 
 **PARI/GP via cypari2** (https://pari.math.u-bordeaux.fr/, driven through

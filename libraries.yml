@@ -951,8 +951,12 @@ libraries:
           description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
         - name: lazy-arithmetic
           description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
-        - name: exactification
-          description: Factorization-lazy roots of (X^n - 2)(X + 3), so canonicalization always selects among at least two irreducible candidate factors.
+        - name: exactification-selection
+          description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
+        - name: exactification-certification
+          description: Degree-n X^n - 2 candidates inside (X^n - 2)(X + 3), with the enclosing root pinned to the candidate, separately exercising exactFactor? certification and public canonicalRep?.
+        - name: exactification-factorization
+          description: End-to-end exactification of a root of a growing product of distinct Eisenstein quadratics, exercising modular factorization, multifactor Hensel lifting, recombination, selection, and canonicalization.
         - name: fixed-field-roots
           description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
         - name: algebraic-poly-roots
