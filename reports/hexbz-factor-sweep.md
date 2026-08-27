@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `7bcb3861`
+  `62d17719`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -54,7 +54,7 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-7bcb3861-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-62d17719-chungus2.json`
   supplies Hex; SHA-256
   `d7c7f2876991bd5cc33f878df834d7f8e3821c8dc30264dff13c6f511e79d06f`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`

@@ -10,7 +10,7 @@
     "hostname": "chungus2",
     "exe_name": "factor_sweep",
     "lean_bench_version": null,
-    "git_commit": "7bcb3861c5ae5ee03e917f6cb420e94df508ff8b",
+    "git_commit": "62d17719af332c3e6721befd0a6bfe67d920ccf1",
     "git_dirty": false,
     "timestamp_unix_ms": 1787813535849,
     "timestamp_iso": "2026-08-27T06:52:15Z"
