@@ -266,13 +266,15 @@ all-atoms fast path in the full isolation driver. -/
     else none
   | none => none
 
-/-- Find the first atom among a round's certification attempts. Array order
-    makes the choice deterministic; clusters and failures are skipped. -/
-@[expose] def firstAtom? {p : ZPoly}
+/-- Find and refine the first atom among a round's certification attempts.
+    Array order makes the choice deterministic; clusters, failed
+    certifications, and atoms that fail to refine are skipped. -/
+@[expose] def firstRefinedAtom? {p : ZPoly} (target : Int)
+    (strategy : AtomStrategy)
     (tried : Array (Component × Option (Certified p))) :
     Option (DyadicRootIsolation p) :=
   tried.toList.findSome? fun t => match t.2 with
-    | some (.atom iso) => some iso
+    | some (.atom iso) => refineAtom? iso target strategy
     | _ => none
 
 /-- Refine every component of a one-atom search round. A certified cluster is
@@ -299,8 +301,8 @@ all-atoms fast path in the full isolation driver. -/
   | fuel + 1, work =>
     if work.isEmpty then none else
     let tried := IsolationLoop.attempts p strategy work
-    match firstAtom? tried with
-    | some iso => refineAtom? iso target strategy
+    match firstRefinedAtom? target strategy tried with
+    | some iso => some iso
     | none => findAtomLoop p target strategy fuel (nextAtomSearch tried)
 
 namespace IsolationLoop

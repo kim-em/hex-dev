@@ -381,7 +381,8 @@ private def xPowSubTwo (m : Nat) : ZPoly :=
 /-- Deterministic dense all-nonzero rational coefficients keyed by length and
 salt: alternating signs, numerators cycling modulo 11 and denominators modulo
 6, so both are bounded independently of `len` and a ladder over `len` varies
-the modulus degree alone.
+the modulus degree alone. Every denominator is in `1 .. 6`, so the reduced
+vector's common denominator divides `lcm(1, ..., 6) = 60`.
 
 The bound matters. The earlier form used numerator `±(i + salt + 1)` over
 denominator `i + 2`. Since `gcd (i + salt + 1) (i + 2) = gcd (salt - 1) (i + 2)`,
@@ -411,6 +412,11 @@ private def nthRootFloor (a n : Nat) : Nat :=
         if x ≤ y then x else go fuel y
     go (a.log2 + 2) (2 ^ ((a.log2 + n) / n))
 
+#guard nthRootFloor 2 1 == 2
+#guard nthRootFloor 16 2 == 4
+#guard nthRootFloor 17 2 == 4
+#guard nthRootFloor 4096 6 == 4
+
 /-- A Mahler-precision dyadic approximation to the positive real root of
 `X^n - 2`. Integer Newton iteration computes
 `⌊2^(1/n) * 2^q⌋` from `2^(qn+1)`, where `q = mahlerPrec p`; the subsequent
@@ -424,10 +430,19 @@ private def ladderRootSeed (p : ZPoly) (n : Nat) : DyadicSquare :=
 /-- Deterministically certify the positive real root from its untrusted dyadic
 approximation. The local single-atom search does not construct or refine the
 other complex roots. -/
-private def refinedOf? (p : ZPoly) :
+private def positiveBinomialRoot? (p : ZPoly) (n : Nat) :
     Option (RefinedIsolation p) :=
-  let n := p.degree?.getD 0
   isolateOne? p (mahlerPrec p : Int) (ladderRootSeed p n)
+
+/-- Deterministic refined isolation for a squarefree polynomial: run the
+bounded all-roots isolator at separation depth and take its first atom. This
+general constructor remains the fixture for ladders whose polynomial is not
+the binomial used to choose `ladderRootSeed`. -/
+private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
+    Option (RefinedIsolation p) := do
+  let isolations ← isolate p h (separationDepth p : Int)
+  let iso ← isolations[0]?
+  iso.toRefined?
 
 /-- Deterministic factorization-lazy root of a primitive positive-leading
 squarefree polynomial (the first isolated root). -/
@@ -436,7 +451,7 @@ private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
     if hlc : 0 < p.leadingCoeff then
       if hdeg : 0 < p.degree?.getD 0 then
         if hsf : HasOnlySimpleRoots p then
-          match refinedOf? p with
+          match refinedOf? p hsf with
           | some rep =>
             some { p := p, prim := hprim, pos_lc := hlc, pos_degree := hdeg
                    squarefree := hsf, x := SimpleRoot.mk rep, rep := rep
@@ -466,7 +481,7 @@ private instance : Inhabited FieldInput :=
 def prepFieldInput (n : Nat) : FieldInput :=
   let m := max n 2
   let p := xPowSubTwo m
-  match refinedOf? p with
+  match positiveBinomialRoot? p m with
   | some rep =>
     let x := SimpleRoot.mk rep
     { p := p, x := x
@@ -494,7 +509,7 @@ def prepInvInput (n : Nat) : InvInput :=
   let p := xPowSubTwo m
   if hirr : ZPoly.isIrreducible p = true then
     if hdeg : 0 < p.degree?.getD 0 then
-      match refinedOf? p with
+      match positiveBinomialRoot? p m with
       | some rep =>
         let x := SimpleRoot.mk rep
         { p := p, x := x
@@ -568,8 +583,9 @@ setup_benchmark runQAdjoinInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
     -- The degree-96 ceiling is set by the timed extended-gcd operation: its
-    -- measured call remains below the 10 s hard boundary there. The denser
-    -- upper schedule exposes coefficient growth beyond the small-degree regime.
+    -- measured call is about 3.25 s there, supplying an upper asymptotic rung
+    -- while remaining practical. The denser upper schedule exposes
+    -- coefficient growth beyond the small-degree regime.
     paramFloor := 4
     paramCeiling := 96
     paramSchedule := .custom #[4, 8, 16, 32, 48, 64, 96]

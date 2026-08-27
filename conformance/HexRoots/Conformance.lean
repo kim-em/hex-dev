@@ -298,6 +298,13 @@ squarefree fixtures return all atoms. -/
     | some r => 32 ≤ r.1.square.prec && discCovers r.1.square 1 0
     | none => false)
 
+-- The requested target is floored at Mahler precision, as required by
+-- `RefinedIsolation`, even when the caller asks for less.
+#guard
+  (match isolateOne? rat1 4 ⟨1, 0, 4⟩ with
+    | some r => mahlerPrec rat1 ≤ r.1.square.prec
+    | none => false)
+
 -- A region far from every root is exhausted without producing a certificate.
 #guard (isolateOne? rat1 32 ⟨100, 100, 4⟩).isNone
 

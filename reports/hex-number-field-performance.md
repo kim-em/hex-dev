@@ -42,9 +42,10 @@ comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 Every parametric fixture here — the arithmetic operands, and the
 `AlgebraicPoly` coefficients behind the common-field and algebraic-root
 ladders — builds coefficient `i` from one helper, `denseRatCoeff`, whose
-numerator cycles modulo 11 and denominator modulo 6. The reduced common
-denominator of a degree-`n` element therefore stays under six bits at every
-degree measured. The coefficient pattern has period 66, so it repeats in the
+numerator cycles modulo 11 and denominator modulo 6. Every denominator is in
+`1 .. 6`, so the reduced common denominator divides
+`lcm(1, ..., 6) = 60` and stays under six bits at every degree measured. The
+coefficient pattern has period 66, so it repeats in the
 degree-128 arithmetic rungs and the 128-coefficient `AlgebraicPoly` rungs;
 repetition does not change any coefficient's height, which is what these
 controlled one-parameter models depend on.
@@ -75,8 +76,9 @@ The addition and multiplication ladders consequently cover six doublings,
 `n = 4, 8, 16, 32, 64, 128`. Degree 128 is a common controlled domain whose
 timed multiplication remains in the millisecond regime. The inversion ladder
 covers `n = 4, 8, 16, 32, 48, 64, 96`; its ceiling is set by the timed extended
-gcd, which takes about 3.25 s there and remains below the 10 s per-call
-boundary. These are scientific operation ranges, not fixture-wallclock caps.
+gcd, which takes about 3.25 s there: a useful upper asymptotic rung that
+remains practical to sample. These are scientific operation ranges, not
+fixture-wallclock caps.
 
 ### Track assignment re-audit
 

@@ -25,10 +25,12 @@ polynomials with only simple roots: it starts from `Component.cauchy`, uses
 be an atom, pinning the degenerate inputs (nonzero constant to `some #[]`,
 zero polynomial to `none`).
 
-`isolateOne?` starts from a caller-selected square and returns the first atom
-found there, refined only to the precision needed by `SimpleRoot`. Its atom
-certificate says that one region contains exactly one simple root, so it does
-not pay for a complete pairwise-disjoint family.
+`isolateOne?` starts its search from a caller-selected square and returns the
+first atom found, refined only to the precision needed by `SimpleRoot`. Its
+atom certificate says that one region contains exactly one simple root, so it
+does not pay for a complete pairwise-disjoint family. The returned atom need
+not remain inside the seed: subdivision retains squares whose tests cannot yet
+discard them, and certification uses their circumscribed discs.
 -/
 namespace Hex
 
@@ -68,13 +70,15 @@ emission condition was not reached within that fuel bound. -/
       rs.mapM Certified.asAtom?
   else if p.size = 0 then none else some #[]
 
-/-- Find one simple root in a caller-selected square and refine its atom to at
+/-- Start a local search for one simple root from a caller-selected square and
+    refine its atom to at
     least `max atomPrec (mahlerPrec p)`. This is a deliberately local search:
     unlike {name}`Hex.isolate`, it neither certifies every root nor establishes
     pairwise disjointness against roots outside the returned atom. The
     self-contained {name}`Hex.AtomCertificate` is exactly the weaker fact
-    needed by {name}`Hex.SimpleRoot.mk`. `none` means the selected region was
-    exhausted or the bounded search did not find an atom. -/
+    needed by {name}`Hex.SimpleRoot.mk`. The returned atom is not promised to
+    lie inside `seed`; `seed` selects the initial search region. `none` means
+    the search was exhausted or the bounded search did not find an atom. -/
 @[expose] def isolateOne? (p : ZPoly) (atomPrec : Int) (seed : DyadicSquare)
     (strategy : AtomStrategy := .nkThenPellet) : Option (RefinedIsolation p) := do
   let target := max atomPrec (mahlerPrec p : Int)
