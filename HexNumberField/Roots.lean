@@ -208,16 +208,22 @@ def componentRoots? [ZPoly.CheckedIrreducible p]
   else
     none
 
-/-- Semantic equality of two lazy roots, using the fast common-polynomial path
-and exactifying only when their enclosing polynomials differ. -/
+/-- Semantic equality of two lazy roots. Equal enclosing polynomials use the
+isolation comparison directly; distinct polynomials are first tested for a
+nonconstant gcd over `Rat`. Coprime polynomials cannot share a root, so only
+the remaining shared-factor case exactifies both roots. -/
 @[expose]
 def sameValue? (a b : AlgebraicRoot) : Option Bool :=
   if hp : a.p = b.p then
     some ((hp ▸ a.rep).sameRoot b.rep)
-  else do
-    let a' ← a.exact?
-    let b' ← b.exact?
-    some (a' == b')
+  else
+    let common := DensePoly.gcd (ZPoly.toRatPoly a.p) (ZPoly.toRatPoly b.p)
+    if common.degree?.getD 0 = 0 then
+      some false
+    else do
+      let a' ← a.exact?
+      let b' ← b.exact?
+      some (a' == b')
 
 /-- Merge one root into a list, retaining the first representative of an
 existing semantic value and the incoming certified multiplicity. -/
