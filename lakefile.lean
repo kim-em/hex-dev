@@ -122,6 +122,7 @@ lean_lib HexNumberField where
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where
+  precompileModules := true
 
 lean_lib HexGFqRing where
 
