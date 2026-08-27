@@ -18,6 +18,13 @@ The compiled driver is `bench/HexPolyFast/Bench.lean`, built as
 `hexpolyfast_bench`. These are the declared models copied from its
 registrations.
 
+The division, product/remainder-tree, multipoint, interpolation, and Padé
+scientific fixtures use `ZMod64 65537`. This fixed-width prime field makes the
+registered coefficient-operation models observable without conflating them
+with growing integer numerators or rational denominators. The historical
+exact-arithmetic crossover cells below remain evidence for route selection;
+they answer a different question from these unit-cost asymptotic ladders.
+
 ### Full-and-clipped multiplication
 
 - `runSchoolbook`: `n ^ 2`
@@ -73,7 +80,7 @@ families.
 
 ### Multipoint
 
-- `runProductTree`: `n * (Nat.log2 n + 1)`
+- `runProductTree`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
 - `runRemainderTree`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
 - `runDirectEval`: `n ^ 2`
 - `runMultipointEval`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
@@ -103,13 +110,22 @@ commit `0aaa2af1f`. The two later regression targets
 `runKaratsubaRatioUnder2` and `runRemainderTree` passed focused verification at
 commit `6bf47916d`. The current registry has 47 parametric and 13 fixed targets
 (60 total); the newly wired `runFlintOverhead` passed focused verification.
-The fixed FLINT refresh below also passed every expected hash. The complete
-scientific slope export for all 47 parametric targets was not retained, so no
-blanket complexity verdict is claimed here.
+The fixed FLINT refresh below also passed every expected hash. A first complete
+diagnostic run is retained as
+`reports/bench-results/hex-poly-fast-scientific-6f0bbb5a-chungus2-cpu6.json`.
+It gave 24 consistent and 23 inconclusive verdicts. That run exposed two
+benchmark-design errors: `runProductTree` omitted its `M(n)` factor, and the
+exact `Int`/`Rat` division and tree fixtures increasingly measured
+coefficient-width growth. Those registrations now use the fixed-width field
+above, but a clean-tree replacement export for all 47 targets is still
+required, so no blanket complexity verdict is claimed here.
 
 The following within-Lean crossover cells are retained and traceable to the
 commits that introduced them. All commands use cold cache mode, three outer
-trials, deterministic fixtures, and `--signal-floor-multiplier 1`.
+trials, deterministic fixtures, and `--signal-floor-multiplier 1`. The
+division, multipoint, interpolation, and Padé commands describe the historical
+exact-arithmetic registrations and must be run from their named commits; the
+current registrations use `ZMod64 65537` for scientific scaling.
 
 ### Bounded series multiplication
 
@@ -265,8 +281,10 @@ does not satisfy that contract.
 
 ## Concerns
 
-- The full scientific slope export and per-registration verdicts for all 47
-  parametric targets have not been retained.
+- A clean-tree replacement for the diagnostic scientific export is missing.
+  The fixed-width fixture repair has focused passing verdicts, but the
+  cutoff-transition verdict windows and all 47 registrations still require a
+  single retained rerun.
 - The six required timed-region sampling profiles are missing.
 - The informational FLINT overhead target is wired, but its clean-tree timing
   and the resulting adjusted ladder ratios have not yet been retained.

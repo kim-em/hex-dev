@@ -88,6 +88,103 @@ instance : Hashable BinaryRat where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
 private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+private instance boundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+
+private abbrev Fp := ZMod64 65537
+
+private instance : Inhabited Fp := ⟨0⟩
+
+set_option maxRecDepth 8192 in
+private theorem prime65537 : Hex.Nat.Prime 65537 :=
+  Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
+
+private instance primeLarge : ZMod64.PrimeModulus 65537 :=
+  ZMod64.primeModulusOfPrime prime65537
+
+local instance : Div Fp where
+  div a b := a * b⁻¹
+
+private def fieldZpow (a : Fp) : Int → Fp
+  | .ofNat n => a ^ n
+  | .negSucc n => (a ^ (n + 1))⁻¹
+
+local instance : HPow Fp Int Fp := ⟨fieldZpow⟩
+
+private theorem field_inv_zero : (0 : Fp)⁻¹ = 0 := by
+  apply ZMod64.ext
+  apply UInt64.toNat_inj.mp
+  change (ZMod64.inv (0 : Fp)).toNat = (0 : Fp).toNat
+  rw [ZMod64.toNat_inv_def]
+  change (((HexArith.Int.extGcd 0 (Int.ofNat 65537)).2.1 % 65537).toNat % 65537 = 0)
+  have hs := HexArith.Int.extGcd_zero_left_s_ofNat 65537
+    (ZMod64.Bounds.pPos (p := 65537))
+  rw [hs]
+  simp
+
+private theorem field_inv_ne_zero {a : Fp} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
+  intro hinv
+  have hone := ZMod64.inv_mul_eq_one_of_ne_zero ha
+  change ZMod64.inv a = 0 at hinv
+  rw [hinv] at hone
+  have hzero : (0 : Fp) * a = 0 := by grind
+  rw [hzero] at hone
+  exact ZMod64.one_ne_zero hone.symm
+
+private theorem field_inv_inv (a : Fp) : (a⁻¹)⁻¹ = a := by
+  by_cases ha : a = 0
+  · subst a
+    rw [field_inv_zero]
+    exact field_inv_zero
+  · have hinv_ne := field_inv_ne_zero ha
+    have hleft : (a⁻¹)⁻¹ * a⁻¹ = (1 : Fp) :=
+      ZMod64.inv_mul_eq_one_of_ne_zero hinv_ne
+    have hright : a * a⁻¹ = (1 : Fp) :=
+      ZMod64.mul_inv_eq_one_of_ne_zero ha
+    have hprod : (((a⁻¹)⁻¹ - a) * a⁻¹) = (0 : Fp) := by
+      rw [Lean.Grind.Ring.sub_eq_add_neg, Lean.Grind.Semiring.right_distrib, hleft]
+      grind
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus hprod with
+      hdiff | hzero
+    · grind
+    · exact False.elim (hinv_ne hzero)
+
+local instance : Lean.Grind.Field Fp where
+  toCommRing := inferInstance
+  inv := ZMod64.inv
+  div := fun a b => a * b⁻¹
+  zpow := ⟨fieldZpow⟩
+  div_eq_mul_inv := by intros; rfl
+  zero_ne_one := fun h => ZMod64.one_ne_zero h.symm
+  inv_zero := field_inv_zero
+  mul_inv_cancel := by
+    intro a ha
+    exact ZMod64.mul_inv_eq_one_of_ne_zero ha
+  zpow_zero := by intro; simp [fieldZpow]
+  zpow_succ := by
+    intro a n
+    change a ^ (n + 1) = a ^ n * a
+    exact Lean.Grind.Semiring.pow_succ a n
+  zpow_neg := by
+    intro a n
+    cases n with
+    | ofNat m =>
+        cases m with
+        | zero =>
+            change fieldZpow a (-Int.ofNat 0) = (fieldZpow a (Int.ofNat 0))⁻¹
+            rw [show (-Int.ofNat 0) = Int.ofNat 0 by rfl]
+            simp [fieldZpow]
+            have h1ne : (1 : Fp) ≠ 0 := fun h => ZMod64.one_ne_zero h
+            have hinvOne := ZMod64.inv_mul_eq_one_of_ne_zero h1ne
+            rw [Lean.Grind.Semiring.mul_one] at hinvOne
+            exact hinvOne.symm
+        | succ m => rfl
+    | negSucc m =>
+        simp only [Int.neg_negSucc]
+        change a ^ (m + 1) = ((a ^ (m + 1))⁻¹)⁻¹
+        exact (field_inv_inv (a ^ (m + 1))).symm
+
+private instance : Hashable Fp where
+  hash value := hash value.toNat
 
 /-- Generic multiplication operands over the small word field `ZMod64 5`. -/
 structure BinaryMod where
@@ -154,6 +251,10 @@ def prepBalancedRat (n : Nat) : BinaryRat :=
 private def modCoeff (i salt : Nat) : ZMod64 5 :=
   ZMod64.ofNat 5 (((i + 3) * (salt + 11) + i * i) % 5)
 
+private def fieldCoeff (n i salt : Nat) : Fp :=
+  ZMod64.ofNat 65537 <|
+    ((i + 1) * (salt + 17) + (i + 3) * (i + 5) * 13 + n * 29) % 65537
+
 def prepBalancedMod (n : Nat) : BinaryMod :=
   { left := ofList ((List.range n).map fun i => modCoeff i 11)
     right := ofList ((List.range n).map fun i => modCoeff i 37) }
@@ -176,6 +277,9 @@ private def checksumRat (p : DensePoly Rat) : UInt64 :=
 
 private def checksumMod (p : DensePoly (ZMod64 5)) : UInt64 :=
   hashModPoly p
+
+private def checksumField (p : DensePoly Fp) : UInt64 :=
+  p.toArray.foldl (fun acc x => mixHash acc (hash x.toNat)) 0
 
 private def checksumSeries [Hashable R] (a : TSeries R n) : UInt64 :=
   a.coeffs.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
@@ -342,22 +446,22 @@ def runSeriesKaratsubaRat (input : SeriesRatInput) : UInt64 :=
     (seriesMulUpTo (karatsubaPlan 32) input.n input.left input.right)
 
 structure DivisionInput where
-  dividend : DensePoly Rat
-  divisor : DensePoly Rat
+  dividend : DensePoly Fp
+  divisor : DensePoly Fp
 
 instance : Hashable DivisionInput where
   hash input := mixHash (hash input.dividend.toArray) (hash input.divisor.toArray)
 
 /-- One dividend paired with a reciprocal plan prepared outside timing. -/
 structure CachedDivisionInput where
-  dividend : DensePoly Rat
-  plan : Option (DivPlan Rat)
+  dividend : DensePoly Fp
+  plan : Option (DivPlan Fp)
 
 /-- A fixed divisor reused across several dividends. -/
 structure RepeatedDivisionInput where
-  dividends : Array (DensePoly Rat)
-  divisor : DensePoly Rat
-  plan : Option (DivPlan Rat)
+  dividends : Array (DensePoly Fp)
+  divisor : DensePoly Fp
+  plan : Option (DivPlan Fp)
 
 instance : Hashable CachedDivisionInput where
   hash input := mixHash (hash input.dividend.toArray) <| match input.plan with
@@ -369,18 +473,18 @@ instance : Hashable RepeatedDivisionInput where
     (input.dividends.foldl (fun acc p => mixHash acc (hash p.toArray)) 0)
     (hash input.divisor.toArray)
 
-private def divisionDividend (n salt : Nat) : DensePoly Rat :=
-  ofList ((List.range (2 * n + 1)).map fun i => (coeff i salt : Rat))
+private def divisionDividend (n salt : Nat) : DensePoly Fp :=
+  ofList ((List.range (2 * n + 1)).map fun i => fieldCoeff n i salt)
 
-private def divisionDivisor (n : Nat) : DensePoly Rat :=
-  ofList (((List.range n).map fun i => (coeff i 47 : Rat)) ++ [1])
+private def divisionDivisor (n : Nat) : DensePoly Fp :=
+  ofList (((List.range n).map fun i => fieldCoeff n i 47) ++ [1])
 
 def prepDivision (n : Nat) : DivisionInput :=
   { dividend := divisionDividend n 31
     divisor := divisionDivisor n }
 
-private def cachedPlan? (divisor : DensePoly Rat) (capacity : Nat) :
-    Option (DivPlan Rat) :=
+private def cachedPlan? (divisor : DensePoly Fp) (capacity : Nat) :
+    Option (DivPlan Fp) :=
   if h : divisor = 0 then
     none
   else
@@ -400,8 +504,8 @@ def prepRepeatedDivision (n : Nat) : RepeatedDivisionInput :=
     divisor
     plan := cachedPlan? divisor capacity }
 
-private def checksumDiv (qr : DensePoly Rat × DensePoly Rat) : UInt64 :=
-  mixHash (checksumRat qr.1) (checksumRat qr.2)
+private def checksumDiv (qr : DensePoly Fp × DensePoly Fp) : UInt64 :=
+  mixHash (checksumField qr.1) (checksumField qr.2)
 
 def runLongDivision (input : DivisionInput) : UInt64 :=
   checksumDiv (divMod input.dividend input.divisor)
@@ -484,62 +588,63 @@ def runHalfGcdLeft (input : GcdInput) : UInt64 :=
   checksumXgcdLeft (xgcdLeftWith (karatsubaPlan 32) input.left input.right)
 
 structure ProductTreeInput where
-  leaves : Array (DensePoly Int)
+  leaves : Array (DensePoly Fp)
 
 instance : Hashable ProductTreeInput where
   hash input := input.leaves.foldl
     (fun acc p => mixHash acc (hash p.toArray)) 0
 
 def prepProductTree (n : Nat) : ProductTreeInput :=
-  { leaves := (List.range n).map (fun i => ofList [-(coeff i 59), 1]) |>.toArray }
+  { leaves := (List.range n).map
+      (fun i => pointFactor (ZMod64.ofNat 65537 i)) |>.toArray }
 
 def runProductTree (input : ProductTreeInput) : UInt64 :=
-  checksum (ProductTree.build (karatsubaPlan 32) input.leaves).root
+  checksumField (ProductTree.build (karatsubaPlan 32) input.leaves).root
 
 structure RemainderTreeInput where
-  points : Array Int
-  polynomial : DensePoly Int
+  points : Array Fp
+  polynomial : DensePoly Fp
 
 instance : Hashable RemainderTreeInput where
   hash input := mixHash (hash input.points) (hash input.polynomial.toArray)
 
 def prepRemainderTree (n : Nat) : RemainderTreeInput :=
-  { points := (List.range n).map
-      (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
-    polynomial := ofList ((List.range (2 * n)).map fun i => coeff i 73) }
+  { points := (List.range n).map (fun i => ZMod64.ofNat 65537 i) |>.toArray
+    polynomial := ofList ((List.range (2 * n)).map fun i => fieldCoeff n i 73) }
 
 /-- Construct a general cached remainder tree and traverse it once. -/
 def runRemainderTree (input : RemainderTreeInput) : UInt64 :=
-  let leaves : Array (MonicLeaf Int) := input.points.map fun point =>
+  let leaves : Array (MonicLeaf Fp) := input.points.map fun point =>
     { poly := pointFactor point
       monic := pointFactor_monic point
       ne := (pointFactor_monic point).neOfOneNe (by decide) }
   let tree := RemainderTree.build (karatsubaPlan 32) input.points.size leaves (by decide)
   match tree.remainders? input.polynomial with
   | none => 0
-  | some remainders => remainders.foldl (fun acc p => mixHash acc (checksum p)) 0
+  | some remainders =>
+      remainders.foldl (fun acc p => mixHash acc (checksumField p)) 0
 
 structure MultipointInput where
-  plan : EvalPlan Int
-  polynomial : DensePoly Int
+  plan : EvalPlan Fp
+  polynomial : DensePoly Fp
 
 instance : Hashable MultipointInput where
   hash input := mixHash (hash input.plan.points) (hash input.polynomial.toArray)
 
 /-- Several polynomials sharing one point/remainder-tree plan. -/
 structure MultipointBatchInput where
-  plan : EvalPlan Int
-  polynomials : Array (DensePoly Int)
+  plan : EvalPlan Fp
+  polynomials : Array (DensePoly Fp)
 
 instance : Hashable MultipointBatchInput where
   hash input := mixHash (hash input.plan.points) <|
     input.polynomials.foldl (fun acc p => mixHash acc (hash p.toArray)) 0
 
-private def evalPointsFor (n : Nat) : Array Int :=
-  (List.range n).map (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
+private def evalPointsFor (n : Nat) : Array Fp :=
+  (List.range n).map (fun i => ZMod64.ofNat 65537 i) |>.toArray
 
-private def evalPolynomial (n salt : Nat) : DensePoly Int :=
-  ofList ((List.range n).map fun i => coeff i salt)
+private def evalPolynomial (n salt : Nat) : DensePoly Fp :=
+  ofList ((List.range n).map fun i => fieldCoeff n i salt)
 
 def prepMultipoint (n : Nat) : MultipointInput :=
   let points := evalPointsFor n
@@ -551,7 +656,7 @@ def prepMultipointBatch (n : Nat) : MultipointBatchInput :=
   { plan := EvalPlan.build (karatsubaPlan 32) points
     polynomials := (Array.range 8).map fun i => evalPolynomial n (71 + i * 17) }
 
-private def checksumValues (values : Array Int) : UInt64 :=
+private def checksumValues (values : Array Fp) : UInt64 :=
   values.foldl (fun acc value => mixHash acc (hash value)) 0
 
 def runDirectEval (input : MultipointInput) : UInt64 :=
@@ -573,15 +678,15 @@ def runRepeatedMultipointEval (input : MultipointBatchInput) : UInt64 :=
     mixHash acc <| checksumValues (input.plan.eval polynomial)) 0
 
 structure InterpolationInput where
-  points : Array Rat
-  values : Array Rat
-  plan : Option (InterpPlan Rat)
+  points : Array Fp
+  values : Array Fp
+  plan : Option (InterpPlan Fp)
 
 instance : Hashable InterpolationInput where
   hash input := mixHash (hash input.points) (hash input.values)
 
 def prepInterpolation (n : Nat) : InterpolationInput :=
-  let points := (List.range n).map (fun (i : Nat) => (i : Rat)) |>.toArray
+  let points := (List.range n).map (fun i => ZMod64.ofNat 65537 i) |>.toArray
   let values := points.map fun x => x * x * x - 7 * x + 11
   { points
     values
@@ -589,18 +694,19 @@ def prepInterpolation (n : Nat) : InterpolationInput :=
 
 /-- Direct Lagrange interpolation, independently rebuilding every numerator
 and denominator. This is the executable comparator for the reusable plan. -/
-def directLagrange (points values : Array Rat) : DensePoly Rat :=
+def directLagrange (points values : Array Fp) : DensePoly Fp :=
   let n := min points.size values.size
   (List.range n).foldl (fun sum i =>
     let ai := points.getD i 0
-    let numerator := (List.range n).foldl (fun product j =>
-      if i = j then product else product * pointFactor (points.getD j 0)) 1
-    let denominator := (List.range n).foldl (fun product j =>
+    let numerator : DensePoly Fp := (List.range n).foldl (fun (product : DensePoly Fp) j =>
+      if i = j then product else DensePoly.mul product (pointFactor (points.getD j 0)))
+        (1 : DensePoly Fp)
+    let denominator : Fp := (List.range n).foldl (fun (product : Fp) j =>
       if i = j then product else product * (ai - points.getD j 0)) 1
-    sum + C (values.getD i 0 * denominator⁻¹) * numerator) 0
+    sum + C (values.getD i 0 * denominator⁻¹) * numerator) (0 : DensePoly Fp)
 
 def runDirectInterpolation (input : InterpolationInput) : UInt64 :=
-  checksumRat (directLagrange input.points input.values)
+  checksumField (directLagrange input.points input.values)
 
 def runPlannedInterpolation (input : InterpolationInput) : UInt64 :=
   match input.plan with
@@ -608,7 +714,7 @@ def runPlannedInterpolation (input : InterpolationInput) : UInt64 :=
   | some plan =>
       match plan.interpolate? input.values with
       | none => 0
-      | some p => checksumRat p
+      | some p => checksumField p
 
 def runColdInterpolation (input : InterpolationInput) : UInt64 :=
   match InterpPlan.build? (karatsubaPlan 32) input.points with
@@ -616,14 +722,15 @@ def runColdInterpolation (input : InterpolationInput) : UInt64 :=
   | some plan =>
       match plan.interpolate? input.values with
       | none => 0
-      | some p => checksumRat p
+      | some p => checksumField p
 
-/-- A diagonal `[n/n]` Padé problem at precision `2n+1`. The reciprocal
-integer coefficients make the reference Hankel system nonsingular while
-keeping the benchmark deterministic. -/
+/-- A diagonal `[n/n]` Padé problem over the fixed-width field `𝔽₆₅₅₃₇` at
+precision `2n+1`. Reciprocal integer coefficients keep the reference Hankel
+system nonsingular throughout the registered range without introducing
+coefficient-bit growth into the unit-cost complexity experiment. -/
 structure PadeInput where
   precision : Nat
-  series : TSeries Rat precision
+  series : TSeries Fp precision
   bound : Nat
 
 instance : Hashable PadeInput where
@@ -631,12 +738,12 @@ instance : Hashable PadeInput where
 
 def prepPade (n : Nat) : PadeInput :=
   { precision := 2 * n + 1
-    series := TSeries.ofFn fun i => (1 : Rat) / (i + 1)
+    series := TSeries.ofFn fun i => ((i + 1 : Nat) : Fp)⁻¹
     bound := n }
 
-/-- Gauss-Jordan elimination for a flat `n × (n+1)` augmented rational
-matrix. This intentionally does not use any polynomial Euclidean machinery. -/
-private def solveUniqueRat (n : Nat) (augmented : Array Rat) : Option (Array Rat) :=
+/-- Gauss-Jordan elimination for a flat `n × (n+1)` augmented field matrix.
+This intentionally does not use any polynomial Euclidean machinery. -/
+private def solveUniqueField (n : Nat) (augmented : Array Fp) : Option (Array Fp) :=
   if augmented.size != n * (n + 1) then none else Id.run do
     let width := n + 1
     let mut a := augmented
@@ -668,11 +775,11 @@ private def solveUniqueRat (n : Nat) (augmented : Array Rat) : Option (Array Rat
 /-- Classical normalized Padé construction: solve the `n × n` Hankel system
 for `q₁, …, qₙ` with `q₀ = 1`, then read the low product coefficients as the
 numerator. This is the independent linear-algebra benchmark reference. -/
-def directPade (input : PadeInput) : Option (DensePoly Rat × DensePoly Rat) :=
+def directPade (input : PadeInput) : Option (DensePoly Fp × DensePoly Fp) :=
   let n := input.bound
   let augmented := Id.run do
     let width := n + 1
-    let mut a : Array Rat := Array.replicate (n * width) 0
+    let mut a : Array Fp := Array.replicate (n * width) 0
     for row in [0:n] do
       let k := n + 1 + row
       for col in [0:n] do
@@ -680,18 +787,18 @@ def directPade (input : PadeInput) : Option (DensePoly Rat × DensePoly Rat) :=
         a := a.set! (row * width + col) (input.series.coeff (k - j))
       a := a.set! (row * width + n) (-input.series.coeff k)
     return a
-  match solveUniqueRat n augmented with
+  match solveUniqueField n augmented with
   | none => none
   | some qTail =>
-      let q : DensePoly Rat := ofList ((1 : Rat) :: qTail.toList)
-      let product := q * polyOfSeries input.series
-      let p : DensePoly Rat := ofList ((List.range (n + 1)).map product.coeff)
+      let q : DensePoly Fp := ofList ((1 : Fp) :: qTail.toList)
+      let product := DensePoly.mul q (polyOfSeries input.series)
+      let p : DensePoly Fp := ofList ((List.range (n + 1)).map product.coeff)
       some (p, q)
 
-private def checksumPadePair (result : Option (DensePoly Rat × DensePoly Rat)) : UInt64 :=
+private def checksumPadePair (result : Option (DensePoly Fp × DensePoly Fp)) : UInt64 :=
   match result with
   | none => 0
-  | some (p, q) => mixHash (checksumRat p) (checksumRat q)
+  | some (p, q) => mixHash (checksumField p) (checksumField q)
 
 def runLinearPade (input : PadeInput) : UInt64 :=
   checksumPadePair (directPade input)
@@ -699,7 +806,7 @@ def runLinearPade (input : PadeInput) : UInt64 :=
 def runHalfGcdPade (input : PadeInput) : UInt64 :=
   match pade? (karatsubaPlan 32) input.series input.bound input.bound with
   | none => 0
-  | some approx => mixHash (checksumRat approx.p) (checksumRat approx.q)
+  | some approx => mixHash (checksumField approx.p) (checksumField approx.q)
 
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
@@ -1062,7 +1169,7 @@ setup_benchmark runLongDivision n => n ^ 2
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["division", "long", "cold"]
+    tags := #["division", "long", "cold", "field-65537"]
   }
 
 /- Cost model: a cold Newton call includes reciprocal construction and three clipped
@@ -1077,7 +1184,7 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["division", "newton", "cold"]
+    tags := #["division", "newton", "cold", "field-65537"]
   }
 
 /- Cost model: reciprocal construction is hoisted into `prep`; the timed body
@@ -1091,7 +1198,7 @@ setup_benchmark runCachedDivision n => (n * Nat.sqrt n)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["division", "newton", "cached-divisor", "warm-plan"]
+    tags := #["division", "newton", "cached-divisor", "warm-plan", "field-65537"]
   }
 
 /- Eight dividends share one fixed reciprocal. This separates amortized plan
@@ -1105,7 +1212,7 @@ setup_benchmark runRepeatedNewtonDivision n => (8 * n * Nat.sqrt n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["division", "newton", "repeated", "cold-plan"]
+    tags := #["division", "newton", "repeated", "cold-plan", "field-65537"]
   }
 
 /-
@@ -1121,7 +1228,7 @@ setup_benchmark runRepeatedCachedDivision n => (8 * n * Nat.sqrt n)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["division", "newton", "repeated", "warm-plan"]
+    tags := #["division", "newton", "repeated", "warm-plan", "field-65537"]
   }
 
 /-
@@ -1218,10 +1325,10 @@ setup_benchmark runHalfGcdLeft n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   }
 
 /- A balanced product tree performs one multiplication per internal node over
-geometrically growing degrees, for `O(M(n) log n)` total work. The integer
-surrogate retains the logarithmic level count without assuming a particular
-coefficient-kernel exponent. -/
-setup_benchmark runProductTree n => n * (Nat.log2 n + 1)
+geometrically growing degrees, for `O(M(n) log n)` total work. With the
+Karatsuba plan used by this target, `n * sqrt n` represents `M(n)` and the
+remaining factor counts tree levels. -/
+setup_benchmark runProductTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
   with prep := prepProductTree
   where {
     paramFloor := 4
@@ -1230,7 +1337,7 @@ setup_benchmark runProductTree n => n * (Nat.log2 n + 1)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["product-tree", "karatsuba", "cold"]
+    tags := #["product-tree", "karatsuba", "cold", "field-65537"]
   }
 
 /- Construction and one traversal both follow the balanced
@@ -1244,7 +1351,8 @@ setup_benchmark runRemainderTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["remainder-tree", "karatsuba", "cold-plan", "general-monic"]
+    tags := #["remainder-tree", "karatsuba", "cold-plan", "general-monic",
+      "field-65537"]
   }
 
 /- Direct Horner evaluation visits all `n` coefficients independently at all
@@ -1258,7 +1366,7 @@ setup_benchmark runDirectEval n => n ^ 2
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["multipoint", "horner", "reused-plan"]
+    tags := #["multipoint", "horner", "reused-plan", "field-65537"]
   }
 
 /- With products and reciprocals prepared outside the timed call, the balanced
@@ -1272,7 +1380,7 @@ setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["multipoint", "remainder-tree", "reused-plan"]
+    tags := #["multipoint", "remainder-tree", "reused-plan", "field-65537"]
   }
 
 /- Cost model: product, reciprocal, and remainder trees are all constructed
@@ -1286,7 +1394,7 @@ setup_benchmark runColdMultipointEval n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["multipoint", "remainder-tree", "cold-plan"]
+    tags := #["multipoint", "remainder-tree", "cold-plan", "field-65537"]
   }
 
 /-
@@ -1302,7 +1410,7 @@ setup_benchmark runRepeatedDirectEval n => (8 * n ^ 2)
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["multipoint", "horner", "repeated", "reused-points"]
+    tags := #["multipoint", "horner", "repeated", "reused-points", "field-65537"]
   }
 
 /- Eight polynomials reuse one point-product plan. Each remainder-tree
@@ -1318,7 +1426,8 @@ setup_benchmark runRepeatedMultipointEval n =>
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["multipoint", "remainder-tree", "repeated", "reused-plan"]
+    tags := #["multipoint", "remainder-tree", "repeated", "reused-plan",
+      "field-65537"]
   }
 
 /- Direct Lagrange construction rebuilds `n` products of `n` linear factors;
@@ -1330,10 +1439,10 @@ setup_benchmark runDirectInterpolation n => n ^ 3
     paramFloor := 4
     paramCeiling := 1024
     paramSchedule := .custom #[4, 16, 32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 3.0
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["interpolation", "lagrange", "direct"]
+    tags := #["interpolation", "lagrange", "direct", "field-65537"]
   }
 
 /- With the distinct-point plan prepared outside the timed call, bottom-up
@@ -1348,7 +1457,7 @@ setup_benchmark runPlannedInterpolation n =>
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["interpolation", "product-tree", "reused-plan"]
+    tags := #["interpolation", "product-tree", "reused-plan", "field-65537"]
   }
 
 /- Distinct-point checking, derivative evaluation, inverses, and the product
@@ -1363,21 +1472,24 @@ setup_benchmark runColdInterpolation n =>
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["interpolation", "product-tree", "cold-plan"]
+    tags := #["interpolation", "product-tree", "cold-plan", "field-65537"]
   }
 
-/- Dense Gauss-Jordan elimination performs cubic rational arithmetic. The
-registered range is deliberately small because this is a reference path. -/
+/- Dense Gauss-Jordan elimination performs cubic fixed-field arithmetic. The
+verdict excludes matrices through 32, where the quadratic allocation and pivot
+scans dominate the cubic row-elimination loop, while retaining those rungs in
+the table as crossover evidence. -/
 setup_benchmark runLinearPade n => (n ^ 3)
   with prep := prepPade
   where {
     paramFloor := 1
-    paramCeiling := 128
-    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64, 128]
-    maxSecondsPerCall := 5.0
+    paramCeiling := 1024
+    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.5
     signalFloorMultiplier := 1.0
-    tags := #["pade", "linear-algebra", "reference"]
+    tags := #["pade", "linear-algebra", "reference", "field-65537"]
   }
 
 /- Padé delegates its Euclidean boundary search to the half-gcd engine, with
@@ -1391,7 +1503,7 @@ setup_benchmark runHalfGcdPade n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     maxSecondsPerCall := 5.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    tags := #["pade", "half-gcd", "normalized"]
+    tags := #["pade", "half-gcd", "normalized", "field-65537"]
   }
 
 /-! # Informational external comparators
