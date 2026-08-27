@@ -67,6 +67,40 @@ classical and lattice recombination, balanced and skewed degree patterns, and
 small/large coefficient regimes so a win in reassembly cannot hide a loss in
 prime selection or lifting.
 
+Every subset check and final product already uses the shared
+`Array.polyProduct` surface.  A BZ-shaped screen found that the Hensel
+product-tree count interval cannot be applied to arbitrary factors.  One warm
+discovery trial on `chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, measured:
+
+| family | factors | retained fold | forced tree |
+|---|---:|---:|---:|
+| degree-4, 64-bit lifted | 32 | 1.902 ms | 5.282 ms |
+| degree-4, 64-bit lifted | 128 | 62.041 ms | 506.904 ms |
+| degree-32, 128-bit reassembly | 32 | 116.793 ms | 642.608 ms |
+| skewed degree-256 plus linear | 64 | 7.671 ms | 5.162 ms |
+| skewed degree-256 plus linear | 128 | 21.470 ms | 387.616 ms |
+
+The skewed reversal makes a factor-count-only adoption unsafe.  The compiled
+dispatcher therefore restricts the tree to the measured small-linear Hensel
+domain and retains the fold for all three BZ families.  Three warm outer
+trials after applying that guard give these medians; all hashes agree:
+
+| family | factors | retained fold | selected dispatcher |
+|---|---:|---:|---:|
+| degree-4, 64-bit lifted | 128 | 55.729 ms | 55.870 ms |
+| degree-4, 64-bit lifted | 512 | 2.444 s | 2.458 s |
+| degree-32, 128-bit reassembly | 128 | 5.740 s | 5.758 s |
+| skewed degree-256 plus linear | 128 | 21.229 ms | 21.430 ms |
+| skewed degree-256 plus linear | 512 | 331.144 ms | 331.700 ms |
+
+Regenerate the final comparisons with `lake exe hexbz_bench compare
+Hex.BerlekampZassenhausBench.runTrialProductSchoolbookChecksum
+Hex.BerlekampZassenhausBench.runTrialProductChecksum --outer-trials 3` and the
+analogous `runReassemblyProduct*` and `runSkewProduct*` pairs.  The benchmark
+registrations carry their complete shared schedules.  `Array.polyProduct`
+remains specified as the ordered fold, and its `@[csimp]` theorem proves that
+the guarded compiled branch cannot alter BZ factor ordering or products.
+
 ## Normalization
 
 Every factorization method uses the same normalization:

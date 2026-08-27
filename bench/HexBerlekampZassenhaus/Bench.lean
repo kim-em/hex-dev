@@ -57,6 +57,16 @@ Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
   over encoded degree, root-height, Hensel-precision, and local-factor-count
   regimes.
 
+Fast-product adoption registrations:
+
+* `runTrialProductSchoolbookChecksum` vs `runTrialProductChecksum`: balanced
+  lifted-factor subset products with low factor degree and large coefficients.
+* `runReassemblyProductSchoolbookChecksum` vs
+  `runReassemblyProductChecksum`: balanced, higher-degree final integer
+  reassembly products.
+* `runSkewProductSchoolbookChecksum` vs `runSkewProductChecksum`: one large
+  factor followed by many linear factors, guarding the skewed-degree case.
+
 HO-2 adversarial fixed targets:
 
 * `runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
@@ -208,6 +218,11 @@ structure PrecisionLocalInput where
   localFactorCount : Nat
   poly : ZPoly
   localFactors : Array ZPoly
+  deriving Hashable
+
+/-- Prepared integer factors for one retained/production product comparison. -/
+structure ProductInput where
+  factors : Array ZPoly
   deriving Hashable
 
 /-- Encoding scale for benchmark parameters that vary degree and height. -/
@@ -369,6 +384,32 @@ def checksumNatArray (xs : Array Nat) : UInt64 :=
 def checksumZPolyArray (xs : Array ZPoly) : UInt64 :=
   xs.foldl (fun acc f => mixHash acc (checksumZPoly f)) 0
 
+/-- Deterministic monic dense integer factor with independently controlled
+degree and coefficient width. -/
+def denseZFactor (degree bits salt : Nat) : ZPoly :=
+  let scale := (2 : Int) ^ bits
+  DensePoly.ofCoeffs <|
+    ((Array.range degree).map fun i =>
+      scale * Int.ofNat ((i + 1) * (salt + 3) + i * i + 1) +
+        Int.ofNat (i + salt + 1)).push 1
+
+/-- BZ subset-product shape: many small-degree monic lifted factors whose
+non-leading coefficients have Hensel-sized magnitude. -/
+def prepTrialProductInput (count : Nat) : ProductInput :=
+  { factors := (Array.range count).map fun i => denseZFactor 4 64 (i + 11) }
+
+/-- Final-reassembly shape: balanced higher-degree factors at larger integer
+coefficient width. -/
+def prepReassemblyProductInput (count : Nat) : ProductInput :=
+  { factors := (Array.range count).map fun i => denseZFactor 32 128 (i + 29) }
+
+/-- Skewed trial-product shape: one already-large residual factor followed by
+many linear factors. -/
+def prepSkewProductInput (count : Nat) : ProductInput :=
+  let tail := (Array.range (count - 1)).map fun i =>
+    linearZFactor ((2 : Int) ^ 64 + Int.ofNat (i + 1))
+  { factors := if count = 0 then #[] else #[denseZFactor 256 64 47] ++ tail }
+
 /-- Stable checksum for optional fast-path factorization results. -/
 def checksumOptionFactorization : Option Factorization → UInt64
   | none => 0
@@ -412,6 +453,30 @@ def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
 /-- Shared-domain compare target: exact trial factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
+
+/-- Retained ordered schoolbook fold for a BZ subset-product fixture. -/
+def runTrialProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| input.factors.foldl (· * ·) 1
+
+/-- Production `Array.polyProduct` dispatcher on a BZ subset-product fixture. -/
+def runTrialProductChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| Array.polyProduct input.factors
+
+/-- Retained ordered schoolbook fold for final-reassembly factors. -/
+def runReassemblyProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| input.factors.foldl (· * ·) 1
+
+/-- Production `Array.polyProduct` dispatcher on final-reassembly factors. -/
+def runReassemblyProductChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| Array.polyProduct input.factors
+
+/-- Retained ordered schoolbook fold for a skewed BZ factor array. -/
+def runSkewProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| input.factors.foldl (· * ·) 1
+
+/-- Production `Array.polyProduct` dispatcher on a skewed BZ factor array. -/
+def runSkewProductChecksum (input : ProductInput) : UInt64 :=
+  checksumZPoly <| Array.polyProduct input.factors
 
 /-- Opaque IO boundary for fixed full-factorization benchmarks. -/
 @[noinline]
@@ -871,6 +936,84 @@ def bzPrecisionLocalComplexity (param : Nat) : Nat :=
   let k := precisionLocalPrecision param
   let r := precisionLocalFactorCount param
   n ^ 9 + n ^ 7 * h ^ 2 + r * n * n * Nat.log2 (k + 1)
+
+/-
+Each product family has a fixed per-factor degree. The retained left fold's
+accumulator degree grows linearly, so its schoolbook coefficient work sums to
+quadratic in the factor count. The production tree is compared on the same
+declared upper-bound model.
+-/
+setup_benchmark runTrialProductSchoolbookChecksum n => n * n
+  with prep := prepTrialProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 512
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "trial-product", "schoolbook", "reference"]
+  }
+
+setup_benchmark runTrialProductChecksum n => n * n
+  with prep := prepTrialProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 512
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "trial-product", "dispatch"]
+  }
+
+setup_benchmark runReassemblyProductSchoolbookChecksum n => n * n
+  with prep := prepReassemblyProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "reassembly", "schoolbook", "reference"]
+  }
+
+setup_benchmark runReassemblyProductChecksum n => n * n
+  with prep := prepReassemblyProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 128
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "reassembly", "dispatch"]
+  }
+
+setup_benchmark runSkewProductSchoolbookChecksum n => n * n
+  with prep := prepSkewProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 512
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
+  }
+
+setup_benchmark runSkewProductChecksum n => n * n
+  with prep := prepSkewProductInput
+  where {
+    paramFloor := 4
+    paramCeiling := 512
+    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #["adoption", "trial-product", "skewed", "dispatch"]
+  }
 
 /-
 Scientific split-family registration for the public combinator. The declared

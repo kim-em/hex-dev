@@ -762,9 +762,27 @@ three-trial medians on the same host and toolchain are:
 | Berlekamp Rabin test | 32 | 7.452 ms | 2.823 ms |
 
 All result hashes agree. The owning SPECs record the full schedules and exact
-reproduction commands. The remaining downstream adoption audit is the
-Berlekamp-Zassenhaus trial-product and integer-reassembly path; its division
-and gcd substrate decision is already the measured retention above.
+reproduction commands.
+
+The Berlekamp-Zassenhaus product audit is also complete.  Every subset trial
+and final reassembly already goes through the proof-backed
+`Array.polyProduct` dispatcher.  The balanced `ZPoly.fastPlan` tree loses on
+degree-4, 64-bit lifted factors (5.282 ms versus 1.902 ms for the retained fold
+at 32 factors, one warm discovery trial) and degree-32, 128-bit reassembly
+factors (642.608 ms versus 116.793 ms at 32).  A skewed family wins at 64
+factors but reverses sharply by 128 (387.616 ms versus 21.470 ms), so factor
+count alone is not a safe selector.
+
+The shared production dispatcher now admits the tree only for its measured
+Hensel domain: 8 through 1023 factors, each with at most two coefficients and
+maximum coefficient magnitude four.  BZ-shaped products retain the ordered
+fold.  Three warm outer trials on the same host and toolchain confirm the
+guarded dispatcher stays within measurement noise: 55.870 ms versus 55.729 ms
+at 128 degree-4 lifted factors, 5.758 s versus 5.740 s at 128 high-width
+reassembly factors, and 21.430 ms versus 21.229 ms at 128 skewed factors.  All
+result hashes agree; the BZ SPEC records the full ladders and reproduction
+commands.  Its division and gcd substrate decision is the measured retention
+above.
 
 A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a
