@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "139ea2fb4ebc76db6db4d0b08a236adf32ce7364",
+  "reason": "The inherited HexPolyFp precompileModules setting changes build and link availability without changing the factorization call graph, and this PR only adds the independent hexprimality_policy_probe executable declaration. Neither transition changes hexbz_factor_service or a library it imports."
+}
