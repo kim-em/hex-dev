@@ -708,19 +708,20 @@ each equation by reduction, and chains the equations to the final literal.
 This is PrimeCert's `run_sieve` architecture and is required here: a
 single enormous `decide +kernel` expression is not the scaling claim.
 
-**`primeTableBound = 10^4` is the accepted measured policy.** The controlled
+**`primeTableBound = 10^5` is the accepted measured policy.** The controlled
 fresh-module sweep runs the standard generator at `10^4`, `10^5`, `10^6`, and
-`10^7`, retaining generation/replay time, source/olean size, and the largest
-generated native object. The `10^4` replay is small and comfortably inside the
+`10^7`, retaining generation/replay time, source/olean/generated-C size, and
+native compile-and-readback results. The `10^5` replay is comfortably inside the
 "few minutes on the benchmark machine" budget that
 [hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed table.
-The next candidate is not a valid native artifact: its 9,592-entry literal
-requires a 76,760-byte static array object, exceeding the 65,535-byte runtime
-object-size field. At `10^6` replay also exhausts the default heartbeat budget,
-and `10^7` generation exceeds the five-minute command budget. Thus `10^4` is
-the largest candidate satisfying both build and runtime representation
-constraints, independently of whether the larger candidates' wall times alone
-would be acceptable. The raw samples and exact reproduction command are in
+Its 9,592-entry literal does make generated `leanc` warn that the static
+object-size metadata field truncates, but explicit native compilation succeeds
+and an executed readback checks the full length, endpoints, and checksum. That
+warning is therefore not treated as a failed representation constraint. At
+`10^6` fresh replay exhausts the default heartbeat budget, and `10^7`
+generation exceeds the five-minute command budget. Thus `10^5` is the largest
+candidate satisfying the stated fresh-build budget. The raw samples,
+environment provenance, and exact reproduction command are in
 `reports/bench-results/hex-primality-table-issue-9757-chungus2.json` and
 `scripts/bench/primality_table_sweep.py`.
 
@@ -809,12 +810,14 @@ theorem nextPrime?_spec {n r r' fuel p}
 ```
 
 `isPrime?` dispatches: table lookup below `primeTableBound`; trial division
-below the accepted `isPrimeTrialThreshold = 10^5`; `isProbablePrime` as a
-filter; then `primeCert?`. Trial wins through `5·10^4`, the certificate arm
-wins from `7·10^4`, and hard semiprimes favor the certificate arm at every
-rung. The accepted threshold is the first power of ten beyond that measured
-crossover, where the prime-case certificate time is 69% of trial time. This
-keeps a clear margin instead of encoding the noise-sensitive crossover itself.
+below the accepted `isPrimeTrialThreshold = 10^7`; `isProbablePrime` as a
+filter; then `primeCert?`. Fixed-shape primes cross earlier, but a Cunningham-
+chain prime near `10^6` still favors trial division while the corresponding
+adversarial prime near `10^7` favors the certificate arm; balanced semiprimes
+favor the certificate arm throughout the measured ladder. The accepted
+threshold is the first power of ten beyond the adversarial prime crossover.
+This selects a stable policy boundary rather than encoding the earlier,
+input-shape-sensitive fixed-prime crossover.
 A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
@@ -1059,18 +1062,21 @@ Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexPrimality/Bench.lean`. Both native and kernel suites, because
 the kernel side is the point of the library.
 
-Families:
+Policy-selection evidence, retained as input to but not a claim about Phase 4:
 
 - **Table verification**, the standard generator plus fresh emitted replay at
   `10^4`, `10^5`, `10^6`, and `10^7`. The controlled driver records every raw
   wall-time sample, source/olean/generated-C size, deterministic source hash,
-  and the generated native object's size. This is policy evidence rather than
-  a Phase-4 verdict; the committed raw record is reusable by that later report.
+  and native compile/readback result. The committed record is
+  `reports/bench-results/hex-primality-table-issue-9757-chungus2.json`.
 - **Decision dispatch**, counterbalanced warm native timings for exact trial
-  division and the production bounded certificate arm on prime/hard-
-  semiprime pairs from `10^4` through `10^6`. A deterministic independent
-  64-bit Miller–Rabin implementation checks both results before a sample is
-  accepted. Raw per-block timings are committed for later Phase-4 reuse.
+  division and the production bounded certificate arm on fixed primes,
+  Cunningham-chain primes, and balanced semiprimes from `10^4` through `10^7`.
+  A deterministic independent 64-bit Miller–Rabin implementation checks both
+  results before a sample is accepted. The committed raw record is
+  `reports/bench-results/hex-primality-policy-issue-9757-chungus2.json`.
+
+Families:
 - **Kernel replay**, `checkPrime` on certificates for primes of `31`,
   `61`, `123`, `256`, and `511` bits (the table-smooth ladder). Decides
   the `powModNat`-versus-Montgomery question under "Kernel exposure".

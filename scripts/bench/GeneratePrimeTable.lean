@@ -2,4 +2,4 @@
 generated regions in `HexPrimality/Table.lean`. -/
 import HexPrimality.SieveElab
 
-#rebuild_primeTable 10000 100 4
+#rebuild_primeTable 100000 317 14

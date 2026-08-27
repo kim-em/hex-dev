@@ -856,11 +856,11 @@ theorem primeCert?_composite {n : Nat} {r : Rand} {fuel : Nat}
     exact Internal.primeCertCounted?_composite herr hstop
   · cases hresult
 
-/-- Exact trial division handles inputs below `100000`. This first power of ten
-beyond the measured `50000`--`70000` crossover gives the bounded certificate
-route a clear prime-case margin; hard composites favor it throughout the
-measured ladder. -/
-def isPrimeTrialThreshold : Nat := 100000
+/-- Exact trial division handles inputs from `primeTableBound` to `10000000`.
+This first power of ten beyond the adversarial Cunningham-chain crossover gives
+the bounded certificate route a clear prime-case margin; hard composites favor
+it throughout the measured ladder. -/
+def isPrimeTrialThreshold : Nat := 10000000
 
 /-- The bounded decision: table below `primeTableBound`, exact trial
 division below `isPrimeTrialThreshold`, then certificate search. A failed
@@ -1003,9 +1003,9 @@ deterministic. -/
 #guard isPrime 1 = false
 #guard isPrime 2 = true
 #guard isPrime 9973 = true
-#guard isPrime 10007 = true          -- trial tier
-#guard isPrime 99991 = true          -- just below the trial threshold
-#guard isPrime 100003 = true         -- certificate tier
+#guard isPrime 99991 = true          -- table tier
+#guard isPrime 100003 = true         -- trial tier
+#guard isPrime 10000019 = true       -- certificate tier
 #guard isPrime 2147483647 = true     -- certificate tier (Mersenne 2^31 - 1)
 #guard isPrime 2147483649 = false    -- certificate tier, MR verdict
 #guard (match nextPrime? 90 (Rand.ofSeed 0) 8 with

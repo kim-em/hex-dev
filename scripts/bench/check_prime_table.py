@@ -9,6 +9,7 @@ the regions are intentionally outside the generated surface.
 
 from __future__ import annotations
 
+import argparse
 import difflib
 from pathlib import Path
 import subprocess
@@ -35,13 +36,51 @@ def regions(source: str, *, generated: bool) -> tuple[str, str]:
     return definitions, source[replay:replay_end].rstrip()
 
 
+def rewrite(source: str, generated: str) -> str:
+    """Replace only the two generator-owned regions in ``Table.lean``."""
+    start = source.index("@[expose]\ndef primeTableBound")
+    bound_end = source.index("\n", source.index("def primeTableBound", start))
+    table_start = source.index("@[expose]\ndef primeTable :", bound_end)
+    table_end = source.index("\n/-- Adjacent strict ascent", table_start)
+    replay_start = source.index("-- #rebuild_primeTable", table_end)
+    replay_end = source.index("\nprivate theorem mem_primeTable_iff_bits", replay_start)
+
+    generated_start = generated.index("@[expose]\ndef primeTableBound")
+    generated_bound_end = generated.index(
+        "\n", generated.index("def primeTableBound", generated_start)
+    )
+    generated_table_start = generated.index(
+        "@[expose]\ndef primeTable :", generated_bound_end
+    )
+    generated_replay_start = generated.index("-- #rebuild_primeTable", generated_table_start)
+    return (
+        source[:start]
+        + generated[generated_start:generated_bound_end]
+        + source[bound_end:table_start]
+        + generated[generated_table_start:generated_replay_start].rstrip()
+        + source[table_end:replay_start]
+        + generated[generated_replay_start:].rstrip()
+        + source[replay_end:]
+    )
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--write", action="store_true",
+        help="rewrite the generator-owned regions before checking",
+    )
+    args = parser.parse_args()
     generated = subprocess.run(
         ["lake", "env", "lean", str(GENERATOR.relative_to(ROOT))],
         cwd=ROOT, check=True, capture_output=True, text=True,
     ).stdout
+    source = TABLE.read_text()
+    if args.write:
+        source = rewrite(source, generated)
+        TABLE.write_text(source)
     expected = regions(generated, generated=True)
-    actual = regions(TABLE.read_text(), generated=False)
+    actual = regions(source, generated=False)
     labels = ("bound/table literal", "sieve replay")
     ok = True
     for label, want, got in zip(labels, expected, actual):

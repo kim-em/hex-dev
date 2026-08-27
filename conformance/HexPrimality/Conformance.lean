@@ -64,7 +64,7 @@ open Hex.Nat
 #guard isPrime 1729 = false      -- Carmichael
 #guard isPrime 3215031751 = false -- strong pseudoprime to 2, 3, 5, 7
 #guard isPrime 65537 = true
-#guard isPrime 10007 = true
+#guard isPrime 100003 = true
 
 -- Agreement with trial division on an initial segment.
 #guard (List.range 2000).all fun n => isPrime n == isPrimeTrial n
@@ -183,12 +183,14 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 
 -- Table and segments agree across the boundary.
 #guard (primesIn 0 100).size = 25
-#guard (primesIn 9950 10050).toList = [9967, 9973, 10007, 10009, 10037, 10039]
-#guard (primesIn 9950 10050).toList.all fun p => isTablePrime p == decide (p < 10000)
+#guard (primesIn 99950 100050).toList =
+  [99961, 99971, 99989, 99991, 100003, 100019, 100043, 100049]
+#guard (primesIn 99950 100050).toList.all fun p =>
+  isTablePrime p == decide (p < 100000)
 
 -- Next-prime search across the table edge.
-#guard (match nextPrime? 9973 (Hex.Rand.ofSeed 0) 64 with
-        | .ok (p, _) => p == 10007
+#guard (match nextPrime? 99991 (Hex.Rand.ofSeed 0) 64 with
+        | .ok (p, _) => p == 100003
         | .error _ => false)
 
 -- Sieve representation and a complete small-bound comparison with the
@@ -201,15 +203,22 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 
 -- Table bound edges, the largest entry, an above-bound prime, and empty
 -- segment behavior.
-#guard primeTable.size = 1229
+#guard primeTable.size = 9592
 #guard isTablePrime 2 = true
 #guard isTablePrime 3 = true
 #guard isTablePrime 4 = false
-#guard isTablePrime 9973 = true
-#guard isTablePrime 9999 = false
-#guard isTablePrime 10007 = false
+#guard isTablePrime 99991 = true
+#guard isTablePrime 99999 = false
+#guard isTablePrime 100003 = false
 #guard (primesIn 90 100).toList = [97]
 #guard primesIn 10 10 = #[]
+
+-- The bounded certificate arm exposes exhaustion, while the total convenience
+-- API takes its documented exact-trial fallback on the same input.
+#guard (match isPrime? 10000019 (Hex.Rand.ofSeed 10000019) 0 with
+  | .error _ => true
+  | .ok _ => false)
+#guard isPrime 10000019
 
 -- Every Mathlib-free elaborator syntax form, across the table and certificate
 -- tiers.
