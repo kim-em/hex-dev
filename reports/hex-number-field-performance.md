@@ -125,10 +125,31 @@ library as a whole.
 
 ## Verdicts
 
-Three parametric runs are committed: one full-suite pass and two idle-host
-re-measurements that between them cover all nine ladders. §Artefact
-traceability records the source commit and SHA-256 of each; no commit after
-`066f6fc29` changes compiled code any ladder number below was measured with.
+Authoritative verdict per ladder, and which committed run it comes from. The
+runs below give the measurements; this table says which one counts.
+
+| target | verdict | slope | from |
+|---|---|---:|---|
+| `runQAdjoinAddLadder` | **consistent** | -0.054 | quiet |
+| `runQAdjoinMulLadder` | **consistent** | -0.009 | quiet |
+| `runQAdjoinInvLadder` | inconclusive, slower | **+1.038** | quiet |
+| `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
+| `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
+| `runExactLadder` | inconclusive, faster | — | quiet |
+| `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
+| `runQAdjoinRootsLadder` | inconclusive, slower | — | quiet-heavy |
+| `runAlgebraicRootsLadder` | inconclusive, faster | — | fixture-corrected |
+
+Five fit their declared models. The four that do not are §Concerns entries,
+each with a filed issue; none of them is a measurement artefact, and §Profile
+shows that three are cases where the declared model names a phase that is not
+where the time goes.
+
+Four parametric runs are committed: one full-suite pass, two idle-host
+re-measurements that between them cover all nine ladders, and a
+fixture-corrected run that supersedes three of those. §Artefact traceability
+records the source commit and SHA-256 of each, and says which supersedes
+which.
 
 The **full-suite run** covers all nine ladders at three outer trials per rung:
 
