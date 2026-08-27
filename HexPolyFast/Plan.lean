@@ -66,6 +66,54 @@ theorem coeff_schoolbookSlice (lo len : Nat) (a b : DensePoly R) (i : Nat) :
     change (Zero.zero : R) = (Zero.zero : R)
     rfl
 
+/-- Fold one product diagonal. The left operand is the loop driver; callers
+put the shorter operand there. Indices outside the valid convolution diagonal
+perform no coefficient operation. -/
+@[expose]
+def schoolbookCoeff (a b : DensePoly R) (d : Nat) : R :=
+  (List.range a.size).foldl
+    (fun acc i =>
+      if d < i then acc
+      else if d - i < b.size then acc + a.coeff i * b.coeff (d - i)
+      else acc)
+    0
+
+/-- The direct diagonal kernel agrees with the schoolbook product fold. -/
+theorem schoolbookCoeff_eq_mulCoeffSum (a b : DensePoly R) (d : Nat) :
+    schoolbookCoeff a b d = mulCoeffSum a b d := by
+  rw [mulCoeffSum_eq_diagonal]
+  unfold schoolbookCoeff
+  have aux : ∀ (xs : List Nat) (acc : R),
+      xs.foldl
+          (fun acc i =>
+            if d < i then acc
+            else if d - i < b.size then acc + a.coeff i * b.coeff (d - i)
+            else acc)
+          acc =
+        xs.foldl (fun acc i => acc + diagonalMulCoeffTerm a b d i) acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc; rfl
+    | cons i xs ih =>
+        intro acc
+        rw [List.foldl_cons, List.foldl_cons]
+        unfold diagonalMulCoeffTerm
+        by_cases hdi : d < i
+        · rw [_root_.ite_eq_left hdi, _root_.ite_eq_left hdi]
+          change xs.foldl _ acc = xs.foldl _ (acc + 0)
+          rw [Lean.Grind.Semiring.add_zero]
+          exact ih acc
+        · rw [_root_.ite_eq_right hdi, _root_.ite_eq_right hdi]
+          by_cases hib : d - i < b.size
+          · rw [_root_.ite_eq_left hib]
+            exact ih _
+          · rw [_root_.ite_eq_right hib]
+            have hbzero : b.coeff (d - i) = 0 :=
+              coeff_eq_zero_of_size_le b (Nat.le_of_not_gt hib)
+            rw [hbzero, Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
+            exact ih acc
+  exact aux (List.range a.size) 0
+
 /-- Allocation-conscious runtime implementation of `schoolbookSlice`.
 Requests beyond the product support are discarded before entering the
 coefficient folds, and the shorter operand drives each diagonal fold. -/
@@ -78,9 +126,9 @@ def schoolbookSliceImpl (lo len : Nat) (a b : DensePoly R) : DensePoly R :=
   else
     let used := min len (a.size + b.size - 1 - lo)
     if a.size ≤ b.size then
-      ofList ((List.range used).map fun i => mulCoeffSum a b (lo + i))
+      ofList ((List.range used).map fun i => schoolbookCoeff a b (lo + i))
     else
-      ofList ((List.range used).map fun i => mulCoeffSum b a (lo + i))
+      ofList ((List.range used).map fun i => schoolbookCoeff b a (lo + i))
 
 /-- The bounded coefficient-fold implementation agrees with the semantic
 clipped product. -/
@@ -115,6 +163,7 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
           rw [_root_.ite_eq_left hil]
           rw [List.getD_eq_getElem?_getD]
           simp [hi]
+          rw [schoolbookCoeff_eq_mulCoeffSum]
           exact coeff_mul a b (lo + i)
         · rw [List.getD_eq_getElem?_getD]
           simp [hi]
@@ -133,6 +182,7 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
           rw [_root_.ite_eq_left hil]
           rw [List.getD_eq_getElem?_getD]
           simp [hi]
+          rw [schoolbookCoeff_eq_mulCoeffSum]
           rw [← coeff_mul b a (lo + i), mul_comm_poly]
         · rw [List.getD_eq_getElem?_getD]
           simp [hi]
