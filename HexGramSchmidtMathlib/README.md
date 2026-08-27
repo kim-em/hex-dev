@@ -42,7 +42,7 @@ open Hex
 
 # Functionality
 
-The proof-facing API splits into two parts.
+The proof-facing API splits into three parts.
 
 - The view `GramSchmidtMathlib.rowToEuclidean` from a rational dense row
   into `EuclideanSpace ℝ (Fin m)`, with its additivity, scaling, and

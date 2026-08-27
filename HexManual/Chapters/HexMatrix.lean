@@ -31,9 +31,10 @@ Mathlib correspondence in
 
 This library has the type, its arithmetic (the dot product, matrix-vector
 and matrix-matrix multiplication, transpose, the Gram matrix), and the
-elementary row and column operations. It depends on no other `hex`
-library. The determinant, row reduction, and integer determinant are
-separate libraries built on it: {ref "hex-determinant"}[HexDeterminant],
+elementary row and column operations. It depends only on
+{ref "hex-basic"}[HexBasic]. The determinant, row reduction, and integer
+determinant are separate libraries built on it:
+{ref "hex-determinant"}[HexDeterminant],
 {ref "hex-row-reduce"}[HexRowReduce], {ref "hex-bareiss"}[HexBareiss].
 
 The type and its operations are Mathlib-free. The

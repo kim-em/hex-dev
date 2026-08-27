@@ -243,14 +243,16 @@ Bareiss libraries and underpins `HexLLL`:
   operations ({name}`Hex.Matrix.rowAdd`, {name}`Hex.Matrix.rowSwap`) that the
   {ref "hex-gram-schmidt-updates"}[update formulas] reason about. The
   orthogonalization here is built entirely on that representation.
-* {ref "hex-row-reduce"}[HexRowReduce] supplies the row-space API used by
-  the rational kernel, while {ref "hex-determinant"}[HexDeterminant] and
+* {ref "hex-row-reduce"}[HexRowReduce] supplies
+  {name}`Hex.Matrix.IsRowReduced` and its row-echelon contracts, used by the
+  integer Bareiss-Gram invariant, while
+  {ref "hex-determinant"}[HexDeterminant] and
   {ref "hex-bareiss"}[HexBareiss] supply the determinant and fraction-free
   elimination layers used by the integer data.
-* `HexGramSchmidtMathlib` re-exports this executable theory as theorems
-  about Mathlib's {name}`LinearMap` and
-  Mathlib's {name}`_root_.Matrix` Gram-Schmidt. `HexGramSchmidt`
-  itself imports only `HexMatrix` and `Std`.
+* `HexGramSchmidtMathlib` re-expresses this executable theory as theorems
+  about Mathlib's {name}`InnerProductSpace.gramSchmidt` on
+  {name}`EuclideanSpace` and Mathlib's {name}`_root_.Matrix` determinants.
+  `HexGramSchmidt` itself is Mathlib-free.
 * `HexLLL` consumes the {ref "hex-gram-schmidt-core"}[integer data]
   (the Gram determinants and scaled coefficients) and the
   {ref "hex-gram-schmidt-updates"}[exact update formulas] to drive
