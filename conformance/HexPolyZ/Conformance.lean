@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexPolyZ.KroneckerMulti
+import HexPolyZ.NttMul
 import HexPolyZ.Mignotte
 import HexPolyZ.ExactDivision
 
@@ -23,6 +24,7 @@ Covered operations:
 - checked exact division and its ordered rejection prefilters
 - the one-, two-point, reciprocal, and four-point Kronecker-substitution
   kernels against the schoolbook loop
+- auxiliary-prime NTT multiplication with signed CRT reconstruction
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -363,6 +365,20 @@ private def multipointAgreesAsymmetric : Bool :=
         && (mulKS4 p q == p * q) && (mulKS4 q p == q * p)
 
 #guard multipointAgreesAsymmetric
+
+/-! # Auxiliary-prime NTT and CRT -/
+
+private def nttLeft : ZPoly := DensePoly.ofCoeffs #[1, -2, 3]
+private def nttRight : ZPoly := DensePoly.ofCoeffs #[4, 5]
+
+#guard mulNttCrt? nttLeft nttRight = some (nttLeft * nttRight)
+
+/-- A coefficient bound larger than the complete fixed catalogue product is
+rejected before any transform is attempted. -/
+private def nttTooWide : ZPoly :=
+  DensePoly.ofCoeffs #[Int.ofNat (2 ^ 256)]
+
+#guard (mulNttCrt? nttTooWide nttTooWide).isNone
 
 end ZPoly
 

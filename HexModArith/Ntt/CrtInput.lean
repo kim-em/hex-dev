@@ -215,6 +215,26 @@ def residueArray {n bound : Nat} {selection : CrtSelection n bound}
     images.residueArray.size = selection.moduli.size := by
   simp [residueArray, images.residues_length]
 
+/-- Each erased residue lane is congruent to the reference integer
+convolution at the corresponding selected modulus. -/
+theorem congr {n bound : Nat} {selection : CrtSelection n bound}
+    {left right : Array Int} (images : CrtImages selection left right)
+    (i : Fin selection.moduli.size) (j : Fin n) :
+    (intPadTo n
+        (intLinearConvolution left.toList right.toList)).getD j.val 0 %
+          (selection.moduli[i] : Int) =
+      (images.residueArray.getD i.val (Vector.replicate n 0))[j] %
+        (selection.moduli[i] : Int) := by
+  have hi : i.val < selection.primes.length := by
+    simpa using i.isLt
+  have hmod : selection.moduli[i] =
+      (selection.primes[i.val]'hi).modulus := by
+    change (selection.primes.map NttPrime.modulus)[i.val] = _
+    rw [List.getElem_map]
+  rw [hmod]
+  simpa [residueArray, Array.getD, hi] using
+    images.sound.getElem i.val hi j
+
 end CrtImages
 
 end Ntt

@@ -177,8 +177,11 @@ structure CrtPlan where
 namespace CrtPlan
 
 /-- Product of every modulus in a CRT plan. -/
-def modulus (plan : CrtPlan) : Nat :=
+@[expose] def modulus (plan : CrtPlan) : Nat :=
   plan.moduli.toList.prod
+
+theorem modulus_eq_prod (plan : CrtPlan) :
+    plan.modulus = plan.moduli.toList.prod := rfl
 
 /-- The root modulus of a validated plan is positive. -/
 theorem modulus_pos (plan : CrtPlan) : 0 < plan.modulus := by
