@@ -41,7 +41,12 @@ Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
 `Mod(a, m)^(-1)`) is the callable PARI surface matching `QAdjoin`
 multiplication and inversion. The `runQAdjoinMulPair*` / `runPariPolmodMul*`
-and `runQAdjoinInvPair*` / `runPariPolmodInv*` fixed rungs consume identical
+rungs run at `n = 4, 6, 8, 12, 16, 20` and the `runQAdjoinInvPair*` /
+`runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12, 16`: six rungs each rather
+than a doubling-only triple, because `SPEC/benchmarking.md` §Headline reports
+requires enough eligible rungs for the ratio's shape to be unambiguous, and
+both families cross the ratio 1 inside the measured range. The pairs consume
+identical
 deterministic inputs and hash the identical reduced rational coefficient
 vector, so `compare` joins them on result hashes. The PARI side runs through
 the persistent-subprocess driver `scripts/oracle/pari_bench_driver.py`
@@ -859,11 +864,17 @@ private def ratCoeffsChecksum (coeffs : Array Rat) : UInt64 :=
     (hash coeffs.size)
 
 initialize mulPairRef4 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef6 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef8 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef12 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize mulPairRef16 : IO.Ref (Option FieldInput) ← IO.mkRef none
+initialize mulPairRef20 : IO.Ref (Option FieldInput) ← IO.mkRef none
 initialize invPairRef4 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef6 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef8 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef10 : IO.Ref (Option InvInput) ← IO.mkRef none
 initialize invPairRef12 : IO.Ref (Option InvInput) ← IO.mkRef none
+initialize invPairRef16 : IO.Ref (Option InvInput) ← IO.mkRef none
 
 private def getMulPair (ref : IO.Ref (Option FieldInput)) (n : Nat) :
     IO FieldInput := do
@@ -900,27 +911,51 @@ def runQAdjoinMulPair4 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef4 4)
 def runPariPolmodMul4 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef4 4)
+def runQAdjoinMulPair6 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef6 6)
+def runPariPolmodMul6 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef6 6)
 def runQAdjoinMulPair8 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef8 8)
 def runPariPolmodMul8 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef8 8)
+def runQAdjoinMulPair12 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef12 12)
+def runPariPolmodMul12 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef12 12)
 def runQAdjoinMulPair16 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinMulLadder (← getMulPair mulPairRef16 16)
 def runPariPolmodMul16 : Unit → IO UInt64 := fun _ => do
   pariPolmodMul (← getMulPair mulPairRef16 16)
+def runQAdjoinMulPair20 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinMulLadder (← getMulPair mulPairRef20 20)
+def runPariPolmodMul20 : Unit → IO UInt64 := fun _ => do
+  pariPolmodMul (← getMulPair mulPairRef20 20)
 
 def runQAdjoinInvPair4 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef4 4)
 def runPariPolmodInv4 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef4 4)
+def runQAdjoinInvPair6 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef6 6)
+def runPariPolmodInv6 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef6 6)
 def runQAdjoinInvPair8 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef8 8)
 def runPariPolmodInv8 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef8 8)
+def runQAdjoinInvPair10 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef10 10)
+def runPariPolmodInv10 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef10 10)
 def runQAdjoinInvPair12 : Unit → IO UInt64 := fun _ => do
   return runQAdjoinInvLadder (← getInvPair invPairRef12 12)
 def runPariPolmodInv12 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef12 12)
+def runQAdjoinInvPair16 : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinInvLadder (← getInvPair invPairRef16 16)
+def runPariPolmodInv16 : Unit → IO UInt64 := fun _ => do
+  pariPolmodInv (← getInvPair invPairRef16 16)
 
 /-- Per-call driver overhead for the PARI comparator: one `polmod`-family
 request whose PARI-side work is a constant `0`, so the measured time is the
@@ -940,7 +975,10 @@ PARI side, spawns the persistent driver) outside the timed region, and the
 raised `minTotalSeconds` floor amortises steady-state work across the
 auto-tuned inner-repeat batch so per-rung ratios compare like with like. -/
 def pariCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 30.0, warmupFirstIter := true,
+  -- The cap covers the discarded `warmupFirstIter` call, which is where the
+  -- rung fixture is built: the certified root of `X^n - 2` costs 14.2 s at
+  -- n = 20. The timed calls themselves are microseconds.
+  { repeats := 5, maxSecondsPerCall := 120.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
@@ -949,20 +987,32 @@ the `runQAdjoinMulLadder` derivation). Identical inputs, identical reduced
 rational coefficient hash on both sides. -/
 setup_fixed_benchmark runQAdjoinMulPair4 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul4 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair6 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul6 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinMulPair8 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul8 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair12 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul12 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinMulPair16 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul16 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinMulPair20 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodMul20 where pariCompareConfig
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
 inversion against `QAdjoin` extended-gcd inversion (quadratic
 coefficient-operation surface; see the `runQAdjoinInvLadder` derivation). -/
 setup_fixed_benchmark runQAdjoinInvPair4 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv4 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair6 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv6 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair8 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv8 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair10 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv10 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair12 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv12 where pariCompareConfig
+setup_fixed_benchmark runQAdjoinInvPair16 where pariCompareConfig
+setup_fixed_benchmark runPariPolmodInv16 where pariCompareConfig
 
 /- Driver round-trip floor for the PARI comparator: no algorithmic work on
 either side, so this registration measures only the per-call request/reply
