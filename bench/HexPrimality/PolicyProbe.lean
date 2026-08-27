@@ -25,7 +25,7 @@ inductive Route where
 private def verdict : Route → Nat → Except String Bool
   | .trial, n => .ok (isPrimeTrial n)
   | .certificate, n =>
-      match Internal.primeCertDirect? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with
+      match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with
       | .ok _ => .ok true
       | .error f =>
           match f.stop with

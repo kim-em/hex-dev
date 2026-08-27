@@ -696,34 +696,6 @@ end
 
 namespace Internal
 
-/-- The certificate-search arm used to measure dispatch policy. It bypasses
-only the root table lookup; recursive factors still use `primeCertGo` and the
-committed table exactly as production certificate search does. The result is
-validated below before it crosses this measurement boundary. -/
-private def primeCertDirectGo (fuel n : Nat) (r : Rand) :
-    Except PrimeCertFailure (Counted PrimeCert) :=
-  match fuel with
-  | 0 => .error ⟨.exhausted, 0, r⟩
-  | fuel + 1 =>
-      if n < 2 then .error ⟨.composite, 0, r⟩
-      else
-        match defaultBases.find? (fun a => !(millerRabin n a)) with
-        | some _ => .error ⟨.composite, 0, r⟩
-        | none =>
-            let factored := partialFactor (n - 1) r (2 * n.log2 + 8)
-            match assembleGo fuel n factored.raw.factors [] factored.attempts
-                factored.rand with
-            | .error f => .error f
-            | .ok assembled =>
-                match certProduct (n - 1) assembled.value with
-                | none => .error ⟨.exhausted, assembled.attempts, assembled.rand⟩
-                | some F =>
-                    if n < F * F then
-                      .ok ⟨.pock n assembled.value, assembled.attempts,
-                        assembled.rand⟩
-                    else .ok ⟨mkPock3 n F assembled.value, assembled.attempts,
-                      assembled.rand⟩
-
 /-- A checked primality certificate together with the exact number of
 randomized rho restarts and witness candidates used to construct it. -/
 structure PrimeCertSuccess (n : Nat) where
@@ -743,19 +715,6 @@ def primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
       if hs : result.value.subject = n then
         if hv : checkPrime result.value = true then
           .ok ⟨⟨result.value, hs, hv⟩, result.attempts, result.rand⟩
-        else .error ⟨.exhausted, result.attempts, result.rand⟩
-      else .error ⟨.exhausted, result.attempts, result.rand⟩
-
-/-- Checked certificate search with the root table tier disabled. This is the
-controlled measurement arm for `isPrimeTrialThreshold`, not a decision API. -/
-def primeCertDirect? (n : Nat) (r : Rand) (fuel : Nat) :
-    Except PrimeCertFailure (CheckedPrimeCert n × Rand) :=
-  match primeCertDirectGo fuel n r with
-  | .error failure => .error failure
-  | .ok result =>
-      if hs : result.value.subject = n then
-        if hv : checkPrime result.value = true then
-          .ok (⟨result.value, hs, hv⟩, result.rand)
         else .error ⟨.exhausted, result.attempts, result.rand⟩
       else .error ⟨.exhausted, result.attempts, result.rand⟩
 

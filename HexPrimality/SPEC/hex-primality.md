@@ -1065,7 +1065,7 @@ Families:
   and the generated native object's size. This is policy evidence rather than
   a Phase-4 verdict; the committed raw record is reusable by that later report.
 - **Decision dispatch**, counterbalanced warm native timings for exact trial
-  division and the root-table-disabled bounded certificate arm on prime/hard-
+  division and the production bounded certificate arm on prime/hard-
   semiprime pairs from `10^4` through `10^6`. A deterministic independent
   64-bit Miller–Rabin implementation checks both results before a sample is
   accepted. Raw per-block timings are committed for later Phase-4 reuse.
