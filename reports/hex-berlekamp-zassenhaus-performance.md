@@ -47,6 +47,26 @@ record for cross-system evidence; `list` and `verify` run in CI on every PR.
 
 ## Verdicts
 
+All eight parametric registrations use **mode 2, one-sided upper-bound
+parametric**. Mode 1 does not apply: the public cascade chooses among prime
+plans, bounded classical recombination, CLD lattice recombination, exact
+fallbacks, and early exits from input-dependent intermediate structure, so no
+tight scaling law for these registered families can be derived in advance.
+The declared polynomial envelope is Corollary 5.3 of Belabas, van Hoeij,
+Klüners, and Steel,
+[*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
+`O(n^9 + n^7 h^2)` with classical arithmetic. The slow registrations add the
+exhaustive subset-count bound, and the precision/local-factor registration
+separates the Hensel contribution already covered in that analysis.
+
+The citation covers the work these families exercise. The profile attributes
+the time to the registered factorization cascade: candidate construction and
+discarding in the classical paths, subset-enumeration churn in the exact
+backstop, and big-integer lift/CLD work in the precision and degree-height
+paths. No profile is dominated by a phase outside that bound. Mode 3 is
+therefore inapplicable: a published one-parameter upper bound and families
+that exercise it are available.
+
 Parametric export at clean `f396965d`:
 `reports/bench-results/hex-berlekamp-zassenhaus-parametric-f396965d-chungus2.json`
 (SHA-256
@@ -54,14 +74,17 @@ Parametric export at clean `f396965d`:
 command `taskset -c 17 lake exe hexbz_bench run <eight parametric targets>
 --export-file ...`.
 
-All eight ladders report `inconclusive: looks faster than declared`, the same
+All eight ladders receive the current harness verdict `inconclusive: looks
+faster than declared`, the same
 status as the previous committed export
 (`hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`):
 the declared models are deliberately conservative upper envelopes over
 encoded degree/height/precision parameters (the smoke models bound the
 classical tier's worst dispatch, the `2^n` factor bounds the exact backstop),
 so observed cost growing strictly more slowly than the declared envelope is
-the expected direction. Representative top rungs: `runFactorChecksum`
+the expected direction. Under mode 2 each is a passing result, **within
+declared upper bound (observed faster)**; none is represented as *consistent
+with declared complexity*. Representative top rungs: `runFactorChecksum`
 3.595 ms at n=24, `runFactorFallbackProbeChecksum` 3.370 ms at n=24,
 `runFastPathPrecisionLocalChecksum` 899 µs at the 8_032_128_008 encoding.
 No ladder shows the slower-than-declared direction.

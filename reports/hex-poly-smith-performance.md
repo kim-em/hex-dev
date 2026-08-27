@@ -84,6 +84,22 @@ Scientific command:
 
 ## Verdicts
 
+This library is **mode 4, blocked**, except for the two passing mode-1
+registrations named below. `runChainSnf` and `runSmallField` use **mode 1,
+two-sided parametric**: their fixed-degree families independently leave the
+cubic matrix-update cost dominant, and both match that declaration.
+
+The other fourteen registrations do not currently admit any passing mode.
+Their declarations are algebraic-operation proxies that deliberately exclude
+the intermediate polynomial-degree and rational coefficient-bit growth
+measured by `growth`; they are therefore neither tight wall-time models for
+mode 1 nor published wall-time upper bounds for mode 2. The profiles confirm
+that this omitted expression swell dominates the dense and rational families.
+Mode 3 is not available merely to evade those results: these operations have
+stable parametric input families, and no canonical hard input with an absolute
+budget has been justified as a replacement. Their current harness results are
+findings, not upper-bound passes.
+
 `C` is per-call time divided by the declared model. The last column is the
 largest completed rung; `—` means the wallclock cap prevented a residual-slope
 fit.
@@ -259,9 +275,10 @@ in the table, and a 3,000,000,000 ns target duration.
 
 ## Concerns
 
-None. The dense and rational scientific verdicts are intentionally reported as
-inconclusive: the boundary-growth artifact and profiles attribute the departure
-from algebraic-operation proxies to intermediate degree and coefficient swell
-in the classical Euclidean kernel. The external comparators are informational,
-all hashes agree, and no unexplained correctness, wiring, or profiling concern
-remains.
+The library is blocked in mode 4. Fourteen parametric registrations lack a
+tight wall-time model or a cited upper bound that includes the measured
+intermediate degree and coefficient swell. The boundary-growth artifact and
+profiles localize the gap to the classical Euclidean kernel, but localization
+does not make the algebraic-operation proxies passing complexity claims. The
+external comparators are informational and all hashes agree; those facts do
+not discharge the missing model.

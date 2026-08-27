@@ -121,6 +121,28 @@ library as a whole.
 
 ## Verdicts
 
+The five passing ladders use **mode 1, two-sided parametric**: their adjacent
+derivations give the expected scaling of the intended algorithm on the
+controlled family before measurement. The remaining four parametric ladders
+leave the library **mode 4, blocked**:
+
+- `runQAdjoinInvLadder` and `runQAdjoinRootsLadder` are slower than their
+  declarations, so neither can pass mode 1 or the weaker one-sided test.
+- `runExactLadder` cannot use mode 2 even though the BHKS factorization bound
+  is published: the profile shows candidate re-isolation and canonicalisation
+  dominate while factorization is absent, so the cited bound does not cover
+  the measured phase.
+- `runAlgebraicRootsLadder` is faster than its declaration, but the declared
+  `n^5 log^2 n` is composed from a heuristic isolation estimate rather than a
+  published upper bound for this norm-eliminant family. It therefore cannot
+  use mode 2.
+
+The existing fixed registrations are canonical API and comparator checks; they
+do not supply the operation-specific rationale and absolute budgets needed to
+resolve these four ladders through mode 3. Their unresolved work remains
+tracked by the issues in §Concerns, so no model is fitted and no parametric
+failure is reclassified as a pass.
+
 Authoritative verdict per ladder, and which committed run it comes from. The
 runs below give the measurements; this table says which one counts.
 

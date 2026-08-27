@@ -13,6 +13,26 @@
 
 ## Verdicts
 
+`runNegSubChecksum` and `runFrobChecksum` use **mode 1, two-sided
+parametric**, and both pass. The other six use **mode 2, one-sided upper-bound
+parametric**. Mode 1 is unavailable for those six because the only committed
+certificate-backed family is the degree-2-through-8 ladder: fixed word-size
+representation, extended-gcd startup, and quotient-reduction overhead all
+remain visible there, so no tight wall-time scaling on the reachable family
+can be derived in advance. The declarations are instead the classical dense
+arithmetic bounds — linear coefficientwise addition, quadratic dense
+multiplication/reduction and extended gcd, and logarithmically many quadratic
+multiplications for exponentiation — as published in von zur Gathen and
+Gerhard, [*Modern Computer Algebra*, Chapter
+2](https://www.cambridge.org/core/books/abs/modern-computer-algebra/fundamental-algorithms/6BFEAADFCE768EAC759FE0294C257CDE).
+
+The profiles satisfy mode 2's phase test: reduction dominates construction,
+multiplication plus reduction dominates field multiplication, extended gcd
+dominates inversion/division, and the square-and-multiply chain dominates
+exponentiation. These are exactly the phases covered by the cited bounds and
+exercised by the registered inputs. Mode 3 is therefore inapplicable because
+a published one-parameter upper bound is available.
+
 Comparator wiring and smoke verdict run at worktree commit
 `728f2ca-dirty` on `carica` (Apple Silicon, macOS arm64), command:
 
@@ -56,12 +76,12 @@ parametric Hex targets plus the paired fixed Hex / FLINT
   complexity (`cMin=907.931, cMax=1339.909`,
   parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
 
-The remaining inconclusive verdicts are a calibration issue on the
-small certificate-backed ladder, not a blocker for the informational
-FLINT comparator. The Phase 4 comparator is now declared in
-`libraries.yml`, wired in `HexGFqField/Bench.lean`, and covered by the
-headline report; `HexGFqField.done_through` is therefore advanced to
-`4`.
+The six mode-2 registrations receive the current harness verdict
+`inconclusive` in the faster-than-declared direction on the post-warmup rungs.
+Each is therefore a passing **within declared upper bound (observed faster)**
+result, not a claim of consistency with the declared complexity. The
+comparator remains declared in `libraries.yml`, wired in
+`HexGFqField/Bench.lean`, and covered by this report.
 
 Smoke wiring was checked with:
 
@@ -280,4 +300,5 @@ calibration anchors: spawn_wall_ns=1780141979062884000, spawn_mono_ns=3300129766
 
 ## Concerns
 
-None.
+None. The two mode-1 registrations pass two-sided, and the six mode-2
+registrations pass only as distinctly reported one-sided upper-bound results.
