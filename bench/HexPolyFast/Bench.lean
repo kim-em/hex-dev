@@ -1395,8 +1395,8 @@ setup_benchmark runDirectEval n => n ^ 2
     tags := #["multipoint", "horner", "reused-plan", "field-65537"]
   }
 
-/- With products and reciprocals prepared outside the timed call, the balanced
-remainder traversal is a geometric `Θ(M(n))` sum under Karatsuba. -/
+/- Cost model: prepared products and reciprocals make the balanced remainder
+traversal a geometric `Θ(M(n))` sum under Karatsuba. -/
 setup_benchmark runMultipointEval n => karatsubaCost n
   with prep := prepMultipoint
   where {
@@ -1409,9 +1409,9 @@ setup_benchmark runMultipointEval n => karatsubaCost n
     tags := #["multipoint", "remainder-tree", "reused-plan", "field-65537"]
   }
 
-/- Product, reciprocal, and remainder trees are all constructed inside the
-timed call. Each is a geometric `Θ(M(n))` sum under the registered Karatsuba
-plan, and a constant number of such sums remains `Θ(M(n))`. -/
+/- Cost model: product, reciprocal, and remainder trees are constructed inside
+the timed call. Each is a geometric `Θ(M(n))` sum under the registered
+Karatsuba plan, and a constant number of such sums remains `Θ(M(n))`. -/
 setup_benchmark runColdMultipointEval n => karatsubaCost n
   with prep := prepMultipoint
   where {

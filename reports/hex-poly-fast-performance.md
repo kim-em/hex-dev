@@ -1,18 +1,16 @@
 # HexPolyFast Performance Report
 
-This report is the current audit snapshot for the active, unreleased
-`HexPolyFast` library. The implementation is recorded at `done_through: 3`;
-this document does not claim a Phase-4 exit.
+This report is the Phase-4 audit record for the active, unreleased
+`HexPolyFast` library.
 
 The retained scientific comparisons were measured on 2026-08-27 on
 `chungus2` (AMD EPYC 9455, Linux x86-64) with Lean `4.34.0-rc2`. Each table
 below names the commit that introduced the measurement and gives the exact
 command needed to refresh it. Inputs are deterministic and have no random
-seed. The current smoke and FLINT fixed-target refresh used binary revision
-`0aaa2af-dirty`; the only worktree change at that refresh was the
-content-preserving relocation of the library SPEC. The accepted scientific
-export uses clean revision `53ef234e9` pinned to logical CPU 2; CPU 2 and its
-SMT sibling 50 were both idle immediately after the run.
+seed. The accepted scientific export uses clean revision `53ef234e9` pinned
+to logical CPU 2; CPU 2 and its SMT sibling 50 were both idle immediately
+after the run. The accepted FLINT export uses clean revision `7dac5bd67`, and
+the profiles use clean binary revision `d620e128e`.
 
 ## Bench targets
 
@@ -294,9 +292,9 @@ reassembly products retain the ordered fold.
 
 ## Comparator ratios
 
-The declared informational comparator is **FLINT fmpz_poly and nmod_poly via
-python-flint**. The fixed targets use the persistent oracle process, runtime
-`IO.Ref` operands, one discarded warmup iteration, and expected hashes. They
+The declared informational comparator is FLINT fmpz_poly and nmod_poly via python-flint.
+The fixed targets use the persistent oracle process, runtime `IO.Ref` operands,
+one discarded warmup iteration, and expected hashes. They
 were refreshed at clean binary revision `7dac5bd67` on logical CPU 1 of
 `chungus2`. The retained export is
 `reports/bench-results/hex-poly-fast-flint-7dac5bd6-chungus2-cpu1.json`.
@@ -331,26 +329,80 @@ unexpected adverse trend.
 
 ## Profile
 
-No accepted timed-region sampling profiles have been retained for the six
-declared input families:
+One representative compiled case for every declared input family was sampled
+from clean binary revision
+`d620e128e6d140a89118856eb9bcc9a5bad7a337` on `chungus2` (AMD EPYC 9455
+48-Core Processor, x86-64, NixOS 26.11, Linux 6.12.100). The toolchain was
+Lean 4.34.0-rc2, lean-bench 0.1.0 at
+`fa30c2763cf523f3ac8e46dc3a1dad0845a40098`, samply 0.13.1 at 999 Hz, and
+lean-bench-samply at `9356baa2f5757ee40320a897bd284914d5bb9f5e`.
+Inputs are deterministic benchmark fixtures and use no random seed.
 
-- `full-and-clipped-multiplication`
-- `newton-division`
-- `half-gcd`
-- `multipoint`
-- `pade`
-- `coefficient-kernels`
+The exact command form was:
 
-The current lean-bench dependency exposes `profile NAME --profiler ...` and
-timed-region boundary records, and the host has `samply 0.13.1`. The filtering,
-symbolication, diagnostics, and analytical-summary step required by
-`SPEC/profiling.md` has not yet been run. An unfiltered whole-process profile
-does not satisfy that contract.
+```sh
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
+  scripts/profile/run_profile.sh .lake/build/bin/BENCH_EXE \
+  BENCH_NAME PARAM 5000000000
+```
+
+The six substitutions, developer-local filtered artefacts, hashes, and filter
+diagnostics are below. Raw profiles and symbol sidecars are not committed, as
+required by `SPEC/profiling.md`.
+
+| family / executable / target / parameter | filtered profile | SHA-256 | residual | timed | retained / rejected | off-thread | sensitivity |
+|---|---|---|---:|---:|---:|---:|---|
+| `full-and-clipped-multiplication` / `hexpolyfast_bench` / `runKaratsubaMod`, `n=1024` | `/tmp/hex-profile-runKaratsubaMod-1024.json.gz` | `b25cfe9d8f3736e0c7dc17da72fd0ad9e7abfbd7a832c4b5c162f7c5ae0fb207` | 1.164 ms | 2,782.7 ms | 2,770 / 8 | 0 | passed |
+| `newton-division` / `hexpolyfast_bench` / `runRepeatedCachedDivision`, `n=1024` | `/tmp/hex-profile-runRepeatedCachedDivision-1024.json.gz` | `4a039b37969580c96865a7cfd7580c58239091ef5ecdbcf4a301db5803c381e3` | 0.740 ms | 5,541.3 ms | 5,536 / 52 | 0 | passed |
+| `half-gcd` / `hexpolyfast_bench` / `runHalfGcd`, `n=2048` | `/tmp/hex-profile-runHalfGcd-2048.json.gz` | `f468d9b27a7c43e587af44371584f74c7fd0fe9e8895a01da71a376e645f2ec3` | 0.511 ms | 4,017.9 ms | 3,997 / 7 | 0 | passed |
+| `multipoint` / `hexpolyfast_bench` / `runRepeatedMultipointEval`, `n=2048` | `/tmp/hex-profile-runRepeatedMultipointEval-2048.json.gz` | `e98681adbe1155e262c3f2bcbe3843bf69d96f1b1a7e086b1f047d3f5b328eb5` | 0.589 ms | 4,260.2 ms | 4,256 / 78 | 0 | passed |
+| `pade` / `hexpolyfast_bench` / `runHalfGcdPade`, `n=1024` | `/tmp/hex-profile-runHalfGcdPade-1024.json.gz` | `710e4d414af9ccdd632d37e75c0a5b4ad80627b9bd3ab1be511b5e73800f37b6` | 0.550 ms | 5,071.7 ms | 5,051 / 7 | 0 | passed |
+| `coefficient-kernels` / `hexpolyfp_bench` / `runMulCrtNttChecksum`, `n=16384` | `/tmp/hex-profile-runMulCrtNttChecksum-16384.json.gz` | `dde646a088116e0c58f4a0b1114077435d05d7a3722da4f174b6c288bb9e19ca` | 0.915 ms | 4,450.3 ms | 4,430 / 15 | 0 | passed |
+
+The first case is the exact `nmod_poly` rung with the worst measured FLINT
+gap. The last case covers the downstream coefficient-owner route required by
+the SPEC: auxiliary-prime transforms followed by balanced CRT reconstruction.
+
+Leaf self-time, classified from samply's presymbolication sidecars with
+`scripts/profile/factor_sampling_profile.py` (SHA-256
+`95e4a9642473fe82ca8349724f924d991866f2db40d88921da61f1d98626a6fd`),
+was:
+
+| family | own code | GMP | allocation/free | Lean runtime | other | classified |
+|---|---:|---:|---:|---:|---:|---:|
+| full-and-clipped multiplication | 14.98% | 0.00% | 29.13% | 55.85% | 0.04% | 99.96% |
+| Newton division | 15.61% | 0.00% | 31.95% | 52.42% | 0.02% | 99.98% |
+| half-gcd | 7.43% | 0.03% | 22.77% | 69.68% | 0.10% | 99.90% |
+| multipoint | 13.56% | 0.00% | 34.63% | 51.69% | 0.12% | 99.88% |
+| Padé | 16.69% | 0.02% | 37.22% | 46.03% | 0.04% | 99.96% |
+| coefficient kernels | 25.28% | 11.26% | 27.36% | 29.14% | 6.95% | 93.05% |
+
+The dominant inclusive Hex costs map directly to registered targets:
+
+- Full multiplication: `runKaratsubaMod` covered 100.00%,
+  `mulKaratsubaBalanced` and `karatsubaPlan` 99.71%, `Raw.mulAux` 99.13%,
+  and the cutoff leaves in `Raw.schoolbook` 73.50%.
+- Newton division: `runRepeatedCachedDivision` covered 100.00%,
+  `DivPlan.divMod` 99.89%, `karatsubaPlan` 98.09%, and the quotient's full
+  and clipped Karatsuba products about half the profile each.
+- Half-gcd: `runHalfGcd` and `xgcdWith` covered 99.72%, `karatsubaPlan`
+  97.30%, `Raw.mulAux` 64.72%, and `GcdStep.applyWith` 61.35%.
+- Multipoint: `runRepeatedMultipointEval` and `EvalPlan.evalImpl` covered
+  99.95%, `DivPlan.divMod` 99.53%, and `karatsubaPlan` 94.08%.
+- Padé: `padeBoundary` covered 97.21%; `runHalfGcdPade`, `pade?`, and
+  `padeHomogeneous` each covered 97.13%; `reduceToMatrixResult` covered
+  97.11% and `karatsubaPlan` 94.61%.
+- Coefficient kernels: `FpPoly.mulNttCrt?` covered 76.73%, the registered
+  `runMulCrtNttChecksum` wrapper 75.44%, auxiliary-prime convolution and
+  image construction 62.55%, forward transforms 26.66%, plan construction
+  22.35%, and balanced vector CRT reconstruction 12.60%.
+
+The profiles have the predicted shapes. Fixed-width generic algorithms spend
+most leaf samples in Lean runtime and allocation beneath their registered
+Karatsuba/division/tree paths. The coefficient-specific route instead exposes
+the expected transform, GMP lift, allocation, and CRT costs. No dominant
+inclusive cost lies outside a registered benchmark target.
 
 ## Concerns
 
-- The six required timed-region sampling profiles are missing.
-
-These are evidence gaps, not known implementation failures. They keep the
-library below Phase 4 and must be resolved before `done_through` advances to
-4; until then this report is a precise handoff rather than a completion claim.
+None.
