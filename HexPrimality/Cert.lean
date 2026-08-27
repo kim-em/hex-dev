@@ -21,19 +21,19 @@ The Pocklington primality certificate, its kernel-replayable checker, and
 checker soundness.
 
 `PrimeCert` is one inductive: a stored-table leaf, the square-root
-Pocklington node, and the cube-root Brillhart-Lehmer-Selfridge node (whose
-arithmetic checks are a documented `false` stub until milestone 4, keeping
-its soundness case vacuous). The prime of each factor entry is not stored;
-it is read off as the child certificate's subject, which removes a
-redundancy an attacker could otherwise exploit.
+Pocklington node, and the cube-root Brillhart-Lehmer-Selfridge node. Both
+Pocklington arms check their arithmetic conditions and recursively replay
+every child certificate. The prime of each factor entry is not stored; it is
+read off as the child certificate's subject, which removes a redundancy an
+attacker could otherwise exploit.
 
-`checkPrime` and everything it calls are `@[expose]` and structurally
-recursive, so an accepted certificate replays by kernel reduction alone:
-the closure is `HexArith.powModNat` (the kernel-facing specification whose
-`@[csimp]` twin takes the Montgomery path at runtime), `Nat.gcd`,
-`Nat.mod`, and the table's binary search. `prime_of_checkPrime` is checker
-soundness; per the SPEC, no certificate-existence, checker-completeness, or
-search-completeness claim accompanies it.
+The checker-owned definitions are `@[expose]` and structurally recursive.
+An accepted certificate therefore replays by kernel reduction alone through
+`HexArith.powModNat` (the kernel-facing specification whose `@[csimp]` twin
+takes the Montgomery path at runtime), core `Nat.gcd` and `Nat.mod`, and the
+table's exposed binary search. `prime_of_checkPrime` proves soundness of both
+Pocklington arms; per the SPEC, no certificate-existence,
+checker-completeness, or search-completeness claim accompanies it.
 -/
 
 namespace Hex
