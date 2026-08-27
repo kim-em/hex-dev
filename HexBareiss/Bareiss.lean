@@ -949,7 +949,7 @@ variable {quot : R → R → R}
 
 /-- Bareiss elimination with row pivoting. If a column has no nonzero pivot,
 the elimination aborts and the determinant is zero. -/
-@[expose]
+@[expose, specialize quot]
 def pivotLoopWith (quot : R → R → R) (fuel : Nat)
     (state : BareissState R n) : BareissState R n :=
   match fuel with
@@ -1061,7 +1061,7 @@ theorem pivotLoopWith_of_regular_swap (fuel : Nat) (state : BareissState R n)
 /-- `bareissArrayStateWith` runs the matrix-level Bareiss elimination via `pivotLoopWith quot`
 and repackages the reduced result as a `BareissArrayState R`, storing the matrix
 row-by-row via `matrixToRows`. -/
-@[expose]
+@[expose, specialize quot]
 def bareissArrayStateWith (quot : R → R → R) (M : Matrix R n n) : BareissArrayState R :=
   let state := pivotLoopWith quot n
     { step := 0
@@ -1110,7 +1110,7 @@ def finish (state : BareissState R n) : BareissData R n :=
 
 /-- Bareiss elimination without pivoting. A zero pivot aborts and records the
 singular step. -/
-@[expose]
+@[expose, specialize quot]
 def noPivotLoopWith (quot : R → R → R) (fuel : Nat)
     (state : BareissState R n) : BareissState R n :=
   match fuel with
@@ -1458,7 +1458,7 @@ theorem bareissDataWith_eq_finish_pivotLoopWith (M : Matrix R n n) :
     rowsToMatrix_matrixToRows]
 
 /-- Determinant computed by the row-pivoted Bareiss algorithm. -/
-@[expose]
+@[expose, specialize quot]
 def bareissWith (quot : R → R → R) (M : Matrix R n n) : R :=
   let state := bareissArrayStateWith quot M
   bareissArrayDet state n

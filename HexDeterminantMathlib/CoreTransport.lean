@@ -1091,7 +1091,7 @@ private theorem cycleBehind_val_in (a m : Nat) (hm : a + m < n + 1)
 end OrderedFourShift
 
 private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
-    {R : Type u} [CommRing R] {n : Nat}
+    {R : Type u} {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p_t q : Fin (n + 3))
     (h1t : p1.val < p_t.val) (htq : p_t.val < q.val) :
     let h1q : p1.val < q.val := Nat.lt_trans h1t htq
@@ -1296,7 +1296,7 @@ theorem ordered_four_cofactorRowPairing_p3_p1_eq_pow_mul_nDet
   exact det_setRow_p1 B p1 p3 q (Nat.lt_trans h12 h23) h3qq
 
 private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
-    {R : Type u} [CommRing R] {n : Nat}
+    {R : Type u} {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p_t q : Fin (n + 3))
     (h1t : p1.val < p_t.val) (htq : p_t.val < q.val) :
     let h1q : p1.val < q.val := Nat.lt_trans h1t htq

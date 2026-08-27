@@ -38,6 +38,28 @@ covering both the magnitude and the sign of the determinant (Hex's row-pivoted
 Bareiss tracks the swap permutation parity; FLINT's multimodular CRT returns the
 signed determinant in the same convention).
 
+### Generic-coefficient regression gate
+
+The generic coefficient implementation retains `bareiss` as an `Int`
+specialization of `bareissWith`. The specialization annotations propagate the
+fixed exact quotient into the inner loop: generated C for the benchmark calls
+`lean_int_div_exact` directly and contains no closure application at the
+division site.
+
+Five-repeat medians on the same deterministic
+`structured-bareiss-determinant` inputs compared this branch with
+`origin/main` (`32ac5850a`). The observed determinant hashes agreed.
+
+| n | `origin/main` | generic branch | branch/base | limit |
+|---:|---:|---:|---:|---:|
+| 256 | 263.939 ms | 148.041 ms | 0.561x | 1.02x |
+| 384 | 825.551 ms | 512.178 ms | 0.620x | 1.02x |
+
+Both required rungs pass the no-regression ceiling. An additional same-binary
+comparison through a deliberately unspecialized quotient value was slower;
+that check confirms why the public `Int` specialization and its direct-call
+code-generation check are part of this gate.
+
 ## Comparator Ratios
 
 Input family `structured-bareiss-determinant`, declared complexity `n³`. Hex's

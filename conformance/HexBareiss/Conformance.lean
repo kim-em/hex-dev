@@ -73,6 +73,25 @@ shape `Matrix.bareiss M = Matrix.det M`. -/
 #guard (Matrix.bareissData singularInt).det = 0
 #guard (Matrix.bareissData pivotInt).rowSwaps = 1
 
+/- The generic coefficient path agrees with the retained integer surface and
+also runs over a non-integer exact-division carrier. -/
+
+#guard Matrix.bareissWith Matrix.exactDiv baseInt = Matrix.bareiss baseInt
+#guard (Matrix.bareissDataWith Matrix.exactDiv pivotInt).det =
+  (Matrix.bareissData pivotInt).det
+#guard (Matrix.bareissDataWith Matrix.exactDiv pivotInt).rowSwaps =
+  (Matrix.bareissData pivotInt).rowSwaps
+
+private def baseRat : Matrix Rat 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1 / 2
+    | 0, _ => 2 / 3
+    | 1, 0 => 3 / 4
+    | _, _ => 5 / 6
+
+#guard Matrix.bareissWith (fun a b : Rat => a / b) baseRat = Matrix.det baseRat
+
 /-!
 6×6 fixtures matching the SPEC `core` matrix-dimension band:
 
