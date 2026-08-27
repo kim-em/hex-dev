@@ -89,6 +89,7 @@ private def mulCases : List MulCase := [
   { id := "mul/cutoff-31", left := oddCoeffs 31 3, right := oddCoeffs 33 11 },
   { id := "mul/cutoff-32", left := oddCoeffs 32 5, right := oddCoeffs 32 13 },
   { id := "mul/cutoff-33", left := oddCoeffs 33 7, right := oddCoeffs 31 17 },
+  { id := "mul/ratio-under-2", left := oddCoeffs 128 31, right := oddCoeffs 80 37 },
   { id := "mul/ratio-2", left := oddCoeffs 16 17, right := oddCoeffs 8 19 },
   { id := "mul/ratio-4", left := oddCoeffs 16 19, right := oddCoeffs 4 23 },
   { id := "mul/ratio-16", left := oddCoeffs 16 23, right := oddCoeffs 1 29 },
@@ -129,6 +130,19 @@ private def emitSliceCase (c : SliceCase) : IO Unit := do
     (intPoly c.left) (intPoly c.right)
   emitResult lib c.id s!"slice/{c.lo}/{c.len}"
     (namedIntPolyValue "karatsuba" value)
+
+private def emitMiddle : IO Unit := do
+  let leftCoeffs := oddCoeffs 33 41
+  let rightCoeffs := oddCoeffs 17 43
+  let left := intPoly leftCoeffs
+  let right := intPoly rightCoeffs
+  let lo := right.size - 1
+  let len := left.size - right.size + 1
+  emitPolyFixture lib "middle/checked/left" leftCoeffs
+  emitPolyFixture lib "middle/checked/right" rightCoeffs
+  emitResult lib "middle/checked" s!"slice/{lo}/{len}"
+    (namedIntPolyValue "karatsuba"
+      (mulMiddleChecked (karatsubaPlan 32) left right))
 
 private structure RatPairCase where
   id : String
@@ -418,6 +432,7 @@ private def emitDispatch : IO Unit := do
 private def emitAll : IO Unit := do
   for c in mulCases do emitMulCase c
   for c in sliceCases do emitSliceCase c
+  emitMiddle
   for c in divisionCases do emitDivisionCase c
   for c in gcdCases do emitGcdCase c
   for c in cyclicCases do emitCyclicCase c

@@ -764,13 +764,6 @@ private def gcdMatrixResult (plan : MulPlan F) :
 termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
-/-- Internal divide-and-conquer implementation used by the public gcd and
-extended-gcd projections.  The active quotient trace below certifies that its
-first row is exactly the established extended-gcd coefficient pair. -/
-private def xgcdMatrixWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
-  let result := gcdMatrixResult plan (p.size + q.size + 1) p q
-  { gcd := result.gcd, left := result.matrix.a00, right := result.matrix.a01 }
-
 private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
     (hsmall : (a - mulWith plan q b).degree?.getD 0 < b.degree?.getD 0) :
     _root_.Hex.DensePoly.divMod a b = (q, a - mulWith plan q b) := by
@@ -1620,27 +1613,10 @@ private theorem quotientStep_a01 (plan : MulPlan F)
   simpa only [GcdStep.apply, mul_one_right_poly, hmulzero,
     zero_add] using h
 
-private theorem xgcdMatrixWith_eq (plan : MulPlan F)
-    (p q : DensePoly F) : xgcdMatrixWith plan p q = xgcd p q := by
-  unfold xgcdMatrixWith xgcd
-  let fuel := p.size + q.size + 1
-  let result := gcdMatrixResult plan fuel p q
-  change XGCDResult.mk result.gcd result.matrix.a00 result.matrix.a01 =
-    xgcdAux p 1 0 q 0 1 fuel
-  rcases gcdMatrixResult_exact plan fuel p q (by dsimp [fuel]; omega) with
-    ⟨qs, hactive, hmatrix, happly⟩
-  have hmatrix' : result.matrix = quotientStep plan qs := hmatrix
-  have hlen : qs.length ≤ fuel := by
-    have htrace := hactive.length_le rfl
-    dsimp [fuel]
-    omega
-  have hx := hactive.xgcdAux_eq rfl 1 0 0 1 fuel hlen
-  rw [hx]
-  rw [hmatrix', quotientStep_a00, quotientStep_a01]
-
 /-- Plan-driven half-gcd extended gcd. -/
 def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
-  xgcdMatrixWith plan p q
+  let result := gcdMatrixResult plan (p.size + q.size + 1) p q
+  { gcd := result.gcd, left := result.matrix.a00, right := result.matrix.a01 }
 
 /-- Gcd projection of the half-gcd engine. -/
 def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
@@ -1657,7 +1633,21 @@ def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
 the raw gcd scaling and both Bezout coefficients. -/
 theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
     xgcdWith plan p q = xgcd p q := by
-  exact xgcdMatrixWith_eq plan p q
+  unfold xgcdWith xgcd
+  let fuel := p.size + q.size + 1
+  let result := gcdMatrixResult plan fuel p q
+  change XGCDResult.mk result.gcd result.matrix.a00 result.matrix.a01 =
+    xgcdAux p 1 0 q 0 1 fuel
+  rcases gcdMatrixResult_exact plan fuel p q (by dsimp [fuel]; omega) with
+    ⟨qs, hactive, hmatrix, happly⟩
+  have hmatrix' : result.matrix = quotientStep plan qs := hmatrix
+  have hlen : qs.length ≤ fuel := by
+    have htrace := hactive.length_le rfl
+    dsimp [fuel]
+    omega
+  have hx := hactive.xgcdAux_eq rfl 1 0 0 1 fuel hlen
+  rw [hx]
+  rw [hmatrix', quotientStep_a00, quotientStep_a01]
 
 /-- Half-gcd returns exactly the established gcd. -/
 theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :

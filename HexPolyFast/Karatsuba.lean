@@ -184,8 +184,10 @@ def schoolbookCoeff (a b : Array R) (d : Nat) : R :=
 /-- Raw schoolbook multiplication with no normalization pass. -/
 def schoolbook (a b : Array R) : Array R :=
   if a.size = 0 || b.size = 0 then #[]
-  else
+  else if a.size ≤ b.size then
     Array.ofFn (n := a.size + b.size - 1) fun i => schoolbookCoeff a b i
+  else
+    Array.ofFn (n := a.size + b.size - 1) fun i => schoolbookCoeff b a i
 
 /-- Fuelled raw-array Karatsuba multiplication. -/
 def mulAux (cutoff : Nat) : Nat → Array R → Array R → Array R
@@ -240,23 +242,27 @@ def schoolbookSlice (lo len : Nat) (a b : Array R) : Array R :=
   if a.size = 0 || b.size = 0 then #[]
   else
     let used := min len (a.size + b.size - 1 - lo)
-    Array.ofFn (n := used) fun i => schoolbookCoeff a b (lo + i)
+    if a.size ≤ b.size then
+      Array.ofFn (n := used) fun i => schoolbookCoeff a b (lo + i)
+    else
+      Array.ofFn (n := used) fun i => schoolbookCoeff b a (lo + i)
 
 /-- Fuelled interval-pruned Karatsuba recursion over raw arrays. -/
 def sliceAux (cutoff : Nat) :
     Nat → Nat → Nat → Array R → Array R → Array R
   | 0, lo, len, a, b => schoolbookSlice lo len a b
   | fuel + 1, lo, len, a, b =>
-      if len = 0 then #[]
+      let used := min len (a.size + b.size - 1 - lo)
+      if used = 0 then #[]
       else if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
-        schoolbookSlice lo len a b
+        schoolbookSlice lo used a b
       else
         let k := (max a.size b.size + 1) / 2
         let a₀ := low k a
         let a₁ := high k a
         let b₀ := low k b
         let b₁ := high k b
-        let hi := lo + len
+        let hi := lo + used
         let base₀ := lo - k
         let base₁ := lo - k
         let base₂ := lo - 2 * k
@@ -264,7 +270,7 @@ def sliceAux (cutoff : Nat) :
         let z₁ := sliceAux cutoff fuel base₁ ((hi - k) - base₁)
           (add a₀ a₁) (add b₀ b₁)
         let z₂ := sliceAux cutoff fuel base₂ ((hi - k) - base₂) a₁ b₁
-        Array.ofFn (n := len) fun i =>
+        Array.ofFn (n := used) fun i =>
           let d := lo + i
           z₀.getD (d - base₀) 0 +
             (if k ≤ d then
@@ -449,6 +455,13 @@ theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
               exact ih acc
   exact aux (List.range (ofCoeffs a : DensePoly R).size) 0
 
+/-- Raw convolution diagonals are symmetric in their operands. -/
+theorem schoolbookCoeff_comm (a b : Array R) (d : Nat) :
+    schoolbookCoeff a b d = schoolbookCoeff b a d := by
+  rw [schoolbookCoeff_eq_dense, schoolbookCoeff_eq_dense,
+    schoolbookCoeff_eq_mulCoeffSum, schoolbookCoeff_eq_mulCoeffSum,
+    ← coeff_mul, ← coeff_mul, mul_comm_poly]
+
 /-- Raw schoolbook multiplication represents dense multiplication. -/
 theorem ofCoeffs_schoolbook (a b : Array R) :
     (ofCoeffs (schoolbook a b) : DensePoly R) = ofCoeffs a * ofCoeffs b := by
@@ -474,10 +487,10 @@ theorem ofCoeffs_schoolbook (a b : Array R) :
   · have ha : 0 < a.size := Nat.pos_of_ne_zero ha0
     have hb : 0 < b.size := Nat.pos_of_ne_zero hb0
     by_cases hi : i < a.size + b.size - 1
-    · simp [schoolbook, ha0, hb0, Array.getD, hi]
+    · simp [schoolbook, ha0, hb0, Array.getD, hi, schoolbookCoeff_comm]
       rw [schoolbookCoeff_eq_dense, schoolbookCoeff_eq_mulCoeffSum]
       exact (coeff_mul (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R) i).symm
-    · simp [schoolbook, ha0, hb0, Array.getD, hi]
+    · simp [schoolbook, ha0, hb0, Array.getD, hi, schoolbookCoeff_comm]
       have hpa : (ofCoeffs a : DensePoly R).size ≤ a.size := size_ofCoeffs_le a
       have hpb : (ofCoeffs b : DensePoly R).size ≤ b.size := size_ofCoeffs_le b
       by_cases hpzero : (ofCoeffs a : DensePoly R).size = 0
@@ -525,11 +538,13 @@ theorem coeff_ofCoeffs_schoolbookSlice (lo len : Nat) (a b : Array R) (i : Nat) 
     by_cases hi : i < used
     · have hilen : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
       rw [_root_.ite_eq_left hilen]
-      simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi]
+      simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi,
+        schoolbookCoeff_comm]
       rw [schoolbookCoeff_eq_dense, schoolbookCoeff_eq_mulCoeffSum]
       exact (coeff_mul (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R)
         (lo + i)).symm
-    · simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi]
+    · simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi,
+        schoolbookCoeff_comm]
       by_cases hilen : i < len
       · rw [_root_.ite_eq_left hilen]
         have hraw : a.size + b.size - 1 ≤ lo + i := by
@@ -920,17 +935,18 @@ def karatsubaSliceAux (cutoff : Nat) :
     Nat → Nat → Nat → DensePoly R → DensePoly R → DensePoly R
   | 0, lo, len, a, b => schoolbookSlice lo len a b
   | fuel + 1, lo, len, a, b =>
-      if len = 0 then
+      let used := min len (a.size + b.size - 1 - lo)
+      if used = 0 then
         0
       else if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
-        schoolbookSlice lo len a b
+        schoolbookSlice lo used a b
       else
         let k := (max a.size b.size + 1) / 2
         let a₀ := low k a
         let a₁ := high k a
         let b₀ := low k b
         let b₁ := high k b
-        let hi := lo + len
+        let hi := lo + used
         let base₀ := lo - k
         let base₁ := lo - k
         let base₂ := lo - 2 * k
@@ -939,7 +955,7 @@ def karatsubaSliceAux (cutoff : Nat) :
           ((hi - k) - base₁) (a₀ + a₁) (b₀ + b₁)
         let z₂ := karatsubaSliceAux cutoff fuel base₂
           ((hi - k) - base₂) a₁ b₁
-        ofList ((List.range len).map fun i =>
+        ofList ((List.range used).map fun i =>
           let d := lo + i
           z₀.coeff (d - base₀) +
             (if k ≤ d then
@@ -948,6 +964,37 @@ def karatsubaSliceAux (cutoff : Nat) :
                 z₂.coeff (d - k - base₂)
             else 0) +
             if 2 * k ≤ d then z₂.coeff (d - 2 * k - base₂) else 0)
+
+private theorem coeff_mul_zero_of_bounds (p q : DensePoly R)
+    (pBound qBound d : Nat) (hp : p.size ≤ pBound) (hq : q.size ≤ qBound)
+    (hd : pBound + qBound - 1 ≤ d) : (p * q).coeff d = 0 := by
+  by_cases hpzero : p.size = 0
+  · have hz : p = 0 := (size_eq_zero_iff p).mp hpzero
+    rw [hz, zero_mul, coeff_zero]
+  by_cases hqzero : q.size = 0
+  · have hz : q = 0 := (size_eq_zero_iff q).mp hqzero
+    rw [hz, mul_comm_poly, zero_mul, coeff_zero]
+  · have hsupp := size_mul_le p q
+    have hsum : p.size + q.size ≤ pBound + qBound := Nat.add_le_add hp hq
+    have hsub := Nat.sub_le_sub_right hsum 1
+    exact coeff_eq_zero_of_size_le _ (Nat.le_trans hsupp (Nat.le_trans hsub hd))
+
+private theorem clipped_ite_eq (p q : DensePoly R) (pBound qBound lo len i : Nat)
+    (hp : p.size ≤ pBound) (hq : q.size ≤ qBound) :
+    (if i < min len (pBound + qBound - 1 - lo) then
+        (p * q).coeff (lo + i) else 0) =
+      if i < len then (p * q).coeff (lo + i) else 0 := by
+  by_cases hilen : i < len
+  · rw [_root_.ite_eq_left hilen]
+    by_cases hiused : i < min len (pBound + qBound - 1 - lo)
+    · rw [_root_.ite_eq_left hiused]
+    · rw [_root_.ite_eq_right hiused]
+      symm
+      apply coeff_mul_zero_of_bounds p q pBound qBound (lo + i) hp hq
+      omega
+  · rw [_root_.ite_eq_right hilen]
+    have hiused : ¬i < min len (pBound + qBound - 1 - lo) := by omega
+    rw [_root_.ite_eq_right hiused]
 
 /-- Every fuelled interval recursion returns exactly the requested product
 coefficients. -/
@@ -959,16 +1006,20 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
   | zero => exact coeff_schoolbookSlice lo len a b i
   | succ fuel ih =>
       rw [karatsubaSliceAux]
-      by_cases hlenzero : len = 0
-      · rw [_root_.ite_eq_left hlenzero]
-        subst len
-        simp
-      rw [_root_.ite_eq_right hlenzero]
+      let used := min len (a.size + b.size - 1 - lo)
+      rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
+      by_cases husedzero : used = 0
+      · rw [_root_.ite_eq_left husedzero]
+        simpa [used, husedzero] using
+          clipped_ite_eq a b a.size b.size lo len i (by omega) (by omega)
+      rw [_root_.ite_eq_right husedzero]
       split
-      · exact coeff_schoolbookSlice lo len a b i
+      · rw [coeff_schoolbookSlice]
+        exact clipped_ite_eq a b a.size b.size lo len i (by omega) (by omega)
       · dsimp only
         rw [coeff_ofList]
-        by_cases hil : i < len
+        rw [← clipped_ite_eq a b a.size b.size lo len i (by omega) (by omega)]
+        by_cases hil : i < used
         · rw [List.getD_eq_getElem?_getD]
           simp only [List.getElem?_map, List.getElem?_range, hil,
             Option.map_some, Option.getD_some]
@@ -977,7 +1028,7 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
           let a₁ := high k a
           let b₀ := low k b
           let b₁ := high k b
-          let hi := lo + len
+          let hi := lo + used
           let base₀ := lo - k
           let base₁ := lo - k
           let base₂ := lo - 2 * k
@@ -1050,7 +1101,7 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
                   let a₁ := high k a
                   let b₀ := low k b
                   let b₁ := high k b
-                  let hi := lo + len
+                  let hi := lo + used
                   let base₀ := lo - k
                   let base₁ := lo - k
                   let base₂ := lo - 2 * k
@@ -1066,9 +1117,9 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
                         z₂.coeff (d - k - base₂)
                     else 0) +
                     if 2 * k ≤ d then z₂.coeff (d - 2 * k - base₂) else 0)
-                (List.range len)).length ≤ i := by simp; omega
+                (List.range used)).length ≤ i := by simp; omega
           rw [List.getD_eq_getElem?_getD]
-          simp [hil]
+          simp [used, hil]
           rfl
 
 /-- Raw interval recursion returns exactly the requested dense-product
@@ -1081,16 +1132,31 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
   | zero => exact Karatsuba.Raw.coeff_ofCoeffs_schoolbookSlice lo len a b i
   | succ fuel ih =>
       rw [Karatsuba.Raw.sliceAux]
-      by_cases hlenzero : len = 0
-      · rw [_root_.ite_eq_left hlenzero]
-        subst len
-        simp
-      rw [_root_.ite_eq_right hlenzero]
+      let used := min len (a.size + b.size - 1 - lo)
+      rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
+      by_cases husedzero : used = 0
+      · rw [_root_.ite_eq_left husedzero]
+        rw [coeff_ofCoeffs]
+        have hs := clipped_ite_eq (ofCoeffs a : DensePoly R)
+          (ofCoeffs b : DensePoly R) a.size b.size lo len i
+          (size_ofCoeffs_le a) (size_ofCoeffs_le b)
+        have hiused : ¬i < min len (a.size + b.size - 1 - lo) := by
+          rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
+          omega
+        rw [_root_.ite_eq_right hiused] at hs
+        have hzero : (Zero.zero : R) = 0 := rfl
+        rw [hzero]
+        exact hs
+      rw [_root_.ite_eq_right husedzero]
       split
-      · exact Karatsuba.Raw.coeff_ofCoeffs_schoolbookSlice lo len a b i
+      · rw [Karatsuba.Raw.coeff_ofCoeffs_schoolbookSlice]
+        exact clipped_ite_eq (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R)
+          a.size b.size lo len i (size_ofCoeffs_le a) (size_ofCoeffs_le b)
       · dsimp only
         rw [coeff_ofCoeffs]
-        by_cases hil : i < len
+        rw [← clipped_ite_eq (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R)
+          a.size b.size lo len i (size_ofCoeffs_le a) (size_ofCoeffs_le b)]
+        by_cases hil : i < used
         · rw [_root_.ite_eq_left hil]
           simp [Array.getD, hil]
           let k := (max a.size b.size + 1) / 2
@@ -1102,7 +1168,7 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
           let a₁ : DensePoly R := ofCoeffs ra₁
           let b₀ : DensePoly R := ofCoeffs rb₀
           let b₁ : DensePoly R := ofCoeffs rb₁
-          let hi := lo + len
+          let hi := lo + used
           let base₀ := lo - k
           let base₁ := lo - k
           let base₂ := lo - 2 * k
@@ -1207,7 +1273,7 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
             rw [_root_.ite_eq_left (by omega), _root_.ite_eq_left (by omega)] at hc
             grind
         · rw [_root_.ite_eq_right hil]
-          simp [Array.getD, hil]
+          simp [Array.getD, used, hil]
           rfl
 
 /-- Runtime interval-pruned Karatsuba recursion over raw coefficient arrays. -/

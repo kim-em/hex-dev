@@ -15,9 +15,10 @@ set_option backward.proofsInPublic true
 Reusable multipoint evaluation plans.
 
 The executable remainder tree stores one reciprocal plan for every proper
-node of the point-product tree.  Its capacity is the node width, which is the
-largest possible quotient length when reducing a parent remainder into that
-node.  Inputs larger than the point count use the total direct Horner fallback.
+node of the point-product tree. Its capacity is the sibling subtree width,
+which is the largest possible quotient length when reducing a parent remainder
+into that node. Inputs larger than the point count use the total direct Horner
+fallback.
 -/
 
 namespace Hex.DensePoly
@@ -234,9 +235,9 @@ theorem cachedNode_build_isSome (mul : MulPlan R) (points : Array R)
   simp [cachedNode, mulPlan, build, hone, hne]
   rfl
 
-/-- The observational product-tree view. Constructing an evaluation plan does
-not eagerly build this redundant level representation. -/
-def tree (plan : EvalPlan R) : ProductTree R :=
+/-- Rebuild the observational product-tree view. Constructing an evaluation
+plan does not eagerly build this redundant level representation. -/
+def treeView (plan : EvalPlan R) : ProductTree R :=
   ProductTree.build plan.mulPlan (plan.points.map pointFactor)
 
 /-- Specification of multipoint evaluation.  The compiled implementation

@@ -52,6 +52,12 @@ private def long : DensePoly Int :=
 
 private def short : DensePoly Int := ofList [2, -3]
 
+private def ratioUnder2Left : DensePoly Int :=
+  ofList ((List.range 128).map fun i => Int.ofNat (i % 17) - 8)
+
+private def ratioUnder2Right : DensePoly Int :=
+  ofList ((List.range 80).map fun i => Int.ofNat (i % 19) - 9)
+
 #guard mulKaratsuba 0 a b = a * b
 #guard mulKaratsuba 2 a b = a * b
 #guard mulKaratsuba 3 trailing b = trailing * b
@@ -59,6 +65,8 @@ private def short : DensePoly Int := ofList [2, -3]
 #guard squareKaratsuba 3 a = a * a
 #guard mulKaratsuba 2 long short = long * short
 #guard mulKaratsuba 2 short long = short * long
+#guard mulKaratsuba 32 ratioUnder2Left ratioUnder2Right =
+  ratioUnder2Left * ratioUnder2Right
 
 private def plan : MulPlan Int := karatsubaPlan 2
 
@@ -69,6 +77,10 @@ private def plan : MulPlan Int := karatsubaPlan 2
 #guard mulSlice plan 0 100 0 a = 0
 #guard mulSlice plan 0 100 a 0 = 0
 #guard mulSlice plan 0 2 long b = schoolbookSlice 0 2 long b
+#guard mulMiddleChecked plan a b =
+  schoolbookSlice (b.size - 1) (a.size - b.size + 1) a b
+#guard mulMiddleChecked plan b a = mulMiddleChecked plan a b
+#guard mulMiddleChecked plan 0 a = 0
 
 #guard (reverseSeries (C (1 : Int)) 2).coeffs.toArray.toList = [1, 0]
 #guard (polyOfSeries (reverseSeries a a.size)).coeff 0 = a.coeff 6
@@ -155,7 +167,7 @@ private def evalPoly : DensePoly Int := ofList [7, -4, 3, 2, -1]
 
 #guard evalPlan.size = evalPoints.size
 #guard evalPlan.points = evalPoints
-#guard evalPlan.tree.leaves = evalPoints.map (fun x => ofList [0 - x, 1])
+#guard evalPlan.treeView.leaves = evalPoints.map (fun x => ofList [0 - x, 1])
 #guard evalPlan.evalImpl evalPoly = evalPoints.map (evalPoly.eval ·)
 #guard evalPlan.evalImpl (ofList [1, 2, 3, 4, 5, 6, 7]) =
   evalPoints.map ((ofList [1, 2, 3, 4, 5, 6, 7] : DensePoly Int).eval ·)
@@ -171,12 +183,12 @@ private def remainderLeaves : Array (MonicLeaf Int) :=
     { poly := ofList [5, 1], monic := by rfl, ne := by decide }]
 
 private def remainderTree : RemainderTree Int :=
-  RemainderTree.build plan 8 remainderLeaves (by decide)
+  RemainderTree.build plan 2 remainderLeaves (by decide)
 
 #guard remainderTree.leaves = treeLeaves
 #guard remainderTree.remainders? a =
   some (remainderLeaves.map fun leaf => modByMonic a leaf.poly leaf.monic)
-#guard (RemainderTree.build plan 0 remainderLeaves (by decide)).remainders? a = none
+#guard (RemainderTree.build plan 1 remainderLeaves (by decide)).remainders? a = none
 #guard (RemainderTree.build plan 0 (#[] : Array (MonicLeaf Int))
   (by decide)).remainders? a = some #[]
 

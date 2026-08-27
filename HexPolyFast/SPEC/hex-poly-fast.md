@@ -368,8 +368,9 @@ structure GcdStep (R : Type u) [DecidableEq R] where
 
 Its invariant states that applying the transformation to the input pair gives
 the current Euclidean pair and that the second component has crossed the
-requested degree boundary. Recursive high-half calls use middle products;
-the finishing steps use `divModWith`.
+requested degree boundary. Recursive high-half reconstruction uses clipped
+products, while the finishing steps use `divModWith`. `mulMiddleChecked` is
+the separately exposed canonical middle-product primitive.
 
 Expose `gcdWith`, `xgcdWith`, and `xgcdLeftWith`. Their acceptance theorem is
 exact executable agreement with `DensePoly.gcd`, `DensePoly.xgcd`, and
@@ -391,20 +392,25 @@ by each node. Construction accepts general polynomial leaves; a point plan
 uses leaves `x - C point`.
 
 `RemainderTree` accepts an ordered array of proof-carrying nonzero monic
-leaves and caches a `DivPlan` of fixed reciprocal capacity at every balanced
-node. `remainders?` returns `none` when that capacity is insufficient at any
-node. On success, `remainders?_sound` supplies a `RemainderSpec`: the output
+leaves. Its root caches the caller-supplied reciprocal capacity; each proper
+node caches exactly the sibling-subtree degree, the largest quotient length
+that can reach it after its parent reduction. `remainders?` returns `none`
+when the input exceeds the root capacity. On success, `remainders?_sound`
+supplies a `RemainderSpec`: the output
 has one entry per leaf in the original order, each leaf divides the difference
 between the input and its result, and every result has size strictly below its
 leaf divisor. The empty tree succeeds with an empty result.
 
-`EvalPlan` stores the point sequence, its product tree, and the reciprocal
-plans needed by the remainder tree. Reusing it for another polynomial does
-not rebuild products or reciprocals:
+`EvalPlan` stores the point sequence and one indexed point-product tree carrying
+the reciprocal plans needed by evaluation and interpolation. Reusing it for
+another polynomial does not rebuild products or reciprocals. `treeView`
+explicitly rebuilds the separate level-oriented `ProductTree` observation when
+that representation is needed:
 
 ```lean
 def EvalPlan.build (mul : MulPlan R) (points : Array R) : EvalPlan R
 def EvalPlan.eval (plan : EvalPlan R) (f : DensePoly R) : Array R
+def EvalPlan.treeView (plan : EvalPlan R) : ProductTree R
 
 theorem EvalPlan.get_eval (plan : EvalPlan R) (f) (i) (hi : i < plan.size) :
     (plan.eval f)[i] = f.eval plan.points[i]

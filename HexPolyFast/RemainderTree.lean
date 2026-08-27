@@ -99,6 +99,10 @@ private structure BuiltRemainderNode (leaves : List (MonicLeaf R)) where
   leaves_eq : node.leaves = leaves
   wellFormed : node.WellFormed
 
+/-- Sum of leaf degrees, hence the degree of their monic product. -/
+private def leafDegreeSum (leaves : List (MonicLeaf R)) : Nat :=
+  leaves.foldl (fun degree leaf => degree + (leaf.poly.size - 1)) 0
+
 private def buildRemainderNode (mul : MulPlan R) (capacity : Nat)
     (hone : (1 : R) ≠ 0) :
     (leaves : List (MonicLeaf R)) → leaves ≠ [] →
@@ -118,13 +122,15 @@ private def buildRemainderNode (mul : MulPlan R) (capacity : Nat)
         simp)
       let leftLeaves := leaves.take split
       let rightLeaves := leaves.drop split
-      let left := buildRemainderNode mul capacity hone leftLeaves (by
+      let leftCapacity := leafDegreeSum rightLeaves
+      let rightCapacity := leafDegreeSum leftLeaves
+      let left := buildRemainderNode mul leftCapacity hone leftLeaves (by
         intro hnil
         have hz := congrArg List.length hnil
         dsimp [leftLeaves] at hz
         rw [List.length_take, Nat.min_eq_left (Nat.le_of_lt splitLt)] at hz
         omega)
-      let right := buildRemainderNode mul capacity hone rightLeaves (by
+      let right := buildRemainderNode mul rightCapacity hone rightLeaves (by
         intro hnil
         have hz := congrArg List.length hnil
         dsimp [rightLeaves] at hz
@@ -163,7 +169,8 @@ private def buildRemainderNode (mul : MulPlan R) (capacity : Nat)
       have hsplitLt := treeSplit_lt (rest.length + 1 + 1) (by omega)
       omega
 
-/-- An opaque balanced remainder tree with fixed reciprocal capacity. -/
+/-- An opaque balanced remainder tree whose root has fixed reciprocal capacity
+and whose proper nodes use the degree of their sibling subtree. -/
 structure RemainderTree (R : Type u) [DecidableEq R]
     [Lean.Grind.CommRing R] where
   private mulData : MulPlan R
@@ -177,8 +184,10 @@ structure RemainderTree (R : Type u) [DecidableEq R]
 
 namespace RemainderTree
 
-/-- Build a cached remainder tree. The empty leaf sequence is represented
-without an internal root. -/
+/-- Build a cached remainder tree. `capacity` is the reciprocal capacity of the
+root; every proper node derives the exact worst-case capacity it needs from its
+sibling subtree. The empty leaf sequence is represented without an internal
+root. -/
 def build (mul : MulPlan R) (capacity : Nat) (leaves : Array (MonicLeaf R))
     (hone : (1 : R) ≠ 0) : RemainderTree R :=
   if hempty : leaves.toList = [] then
@@ -210,7 +219,7 @@ def entries (tree : RemainderTree R) : Array (MonicLeaf R) :=
 /-- Number of leaf divisors. -/
 def size (tree : RemainderTree R) : Nat := tree.leavesData.size
 
-/-- Reciprocal capacity cached at every node. -/
+/-- Reciprocal capacity cached at the root. -/
 def capacity (tree : RemainderTree R) : Nat := tree.capacityData
 
 private def reduceNode? (node : RemainderNode R)
@@ -310,8 +319,8 @@ private theorem runNode?_sound {node : RemainderNode R}
                     (rightIH origin r hr rs hrs)
 
 /-- Compute all leaf remainders with the cached reciprocal plans. Returns
-`none` exactly when some node needs more reciprocal precision than the tree's
-fixed capacity. -/
+`none` exactly when the input needs more reciprocal precision than the root
+capacity. Proper-node capacities are sufficient by construction. -/
 def remainders? (tree : RemainderTree R) (p : DensePoly R) :
     Option (Array (DensePoly R)) :=
   match tree.nodeData with

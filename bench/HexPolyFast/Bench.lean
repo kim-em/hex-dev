@@ -138,6 +138,12 @@ def prepRatio2 (n : Nat) : Binary := prepRatio 2 n
 def prepRatio4 (n : Nat) : Binary := prepRatio 4 n
 def prepRatio16 (n : Nat) : Binary := prepRatio 16 n
 
+/-- A ratio just below 2:1 whose top Karatsuba subproblem has a cutoff-sized
+right operand and a much larger left operand. -/
+def prepRatioUnder2 (n : Nat) : Binary :=
+  { left := ofList ((List.range (2 * n)).map fun i => coeff i 61)
+    right := ofList ((List.range (n + 16)).map fun i => coeff i 67) }
+
 def prepSkew (n : Nat) : Binary :=
   prepRatio 64 n
 
@@ -190,6 +196,9 @@ def runKaratsubaRatio4 (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
 
 def runKaratsubaRatio16 (input : Binary) : UInt64 :=
+  checksum (mulWith (karatsubaPlan 32) input.left input.right)
+
+def runKaratsubaRatioUnder2 (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
 
 def runKaratsubaSquare (input : Binary) : UInt64 :=
@@ -477,6 +486,29 @@ def prepProductTree (n : Nat) : ProductTreeInput :=
 def runProductTree (input : ProductTreeInput) : UInt64 :=
   checksum (ProductTree.build (karatsubaPlan 32) input.leaves).root
 
+structure RemainderTreeInput where
+  points : Array Int
+  polynomial : DensePoly Int
+
+instance : Hashable RemainderTreeInput where
+  hash input := mixHash (hash input.points) (hash input.polynomial.toArray)
+
+def prepRemainderTree (n : Nat) : RemainderTreeInput :=
+  { points := (List.range n).map
+      (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
+    polynomial := ofList ((List.range (2 * n)).map fun i => coeff i 73) }
+
+/-- Construct a general cached remainder tree and traverse it once. -/
+def runRemainderTree (input : RemainderTreeInput) : UInt64 :=
+  let leaves : Array (MonicLeaf Int) := input.points.map fun point =>
+    { poly := pointFactor point
+      monic := pointFactor_monic point
+      ne := (pointFactor_monic point).neOfOneNe (by decide) }
+  let tree := RemainderTree.build (karatsubaPlan 32) input.points.size leaves (by decide)
+  match tree.remainders? input.polynomial with
+  | none => 0
+  | some remainders => remainders.foldl (fun acc p => mixHash acc (checksum p)) 0
+
 structure MultipointInput where
   plan : EvalPlan Int
   polynomial : DensePoly Int
@@ -758,6 +790,20 @@ setup_benchmark runKaratsubaRatio16 n => (n * Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-16"]
+  }
+
+/- The just-under-2:1 shape exposes cutoff leaves with highly unequal raw
+operand lengths while retaining the fixed-ratio Karatsuba cost model. -/
+setup_benchmark runKaratsubaRatioUnder2 n => (n * Nat.sqrt n)
+  with prep := prepRatioUnder2
+  where {
+    paramFloor := 64
+    paramCeiling := 8192
+    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "ratio-under-2", "cutoff-skew"]
   }
 
 /- Cost model: full-product-then-low extraction retains the full balanced
@@ -1175,6 +1221,20 @@ setup_benchmark runProductTree n => n * (Nat.log2 n + 1)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["product-tree", "karatsuba", "cold"]
+  }
+
+/- Construction and one traversal both follow the balanced
+`O(M(n) log n)` remainder-tree bound. -/
+setup_benchmark runRemainderTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
+  with prep := prepRemainderTree
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 16, 64, 256, 1024, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["remainder-tree", "karatsuba", "cold-plan", "general-monic"]
   }
 
 /- Direct Horner evaluation visits all `n` coefficients independently at all

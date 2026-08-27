@@ -224,12 +224,27 @@ node products while hiding the internal level representation.
 
 {docstring Hex.DensePoly.ProductTree.nodeProduct?}
 
+{name}`Hex.DensePoly.RemainderTree` caches a reciprocal plan at every node for
+an arbitrary ordered collection of nonzero monic divisors. The caller chooses
+only the root capacity; proper nodes derive the exact precision they need from
+their sibling subtree.
+
+{docstring Hex.DensePoly.MonicLeaf}
+
+{docstring Hex.DensePoly.RemainderTree.build}
+
+{docstring Hex.DensePoly.RemainderTree.remainders?}
+
+{docstring Hex.DensePoly.RemainderTree.remainders?_sound}
+
 {name}`Hex.DensePoly.EvalPlan` specializes the leaves to `x - a` and caches
 the reciprocal plans used by its remainder tree. Evaluation is total: inputs
 within capacity use the tree, and oversized inputs use direct pointwise
 evaluation.
 
 {docstring Hex.DensePoly.EvalPlan.build}
+
+{docstring Hex.DensePoly.EvalPlan.treeView}
 
 {docstring Hex.DensePoly.EvalPlan.eval}
 
