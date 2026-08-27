@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 9 controlled parametric targets and 34 fixed targets (43 total).
+registers 9 controlled parametric targets and 30 fixed targets (39 total).
 The adjacent comments in the driver derive each model from the work performed
 inside the timed function; the models below are copied from the registration
 sites.
@@ -29,12 +29,12 @@ sites.
 | `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on a dense degree-`n` polynomial with one `√2` coefficient | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 
-The 34 fixed registrations are nine canonical API cases (`runFixedMul`,
+The 30 fixed registrations are nine canonical API cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
-`runSelectAdd`, `runLazyAdd`, `runExact`, `runRoots`), twenty-four Lean/PARI
+`runSelectAdd`, `runLazyAdd`, `runExact`, `runRoots`), twenty Lean/PARI
 comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
-`n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
-`n = 4, 6, 8, 10, 12, 16`), and one external-driver overhead probe
+`n = 4, 6, 8, 12, 16` and `runQAdjoinInvPair` / `runPariPolmodInv` at
+`n = 4, 6, 8, 10, 12`), and one external-driver overhead probe
 (`runPariPolmodOverhead`).
 
 ### Fixture control
@@ -293,34 +293,34 @@ them.
 
 ### Fixed registrations
 
-All 34 fixed registrations agree across repeats, and all ten with a declared
+All 30 fixed registrations agree across repeats, and all ten with a declared
 `expectedHash` match it. Medians from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json):
 
 | fixed target | median | observed hash | expected |
 |---|---:|---|---|
-| `runFixedMul` | 40.378 us | `0xc319ee2337214e59` | match |
-| `runFixedInv` | 136.756 us | `0x1525969728101d06` | match |
-| `runFixedMinpoly` | 4.035 ms | `0xb1ed00ebc8d039e9` | match |
-| `runAddEliminant` | 5.802 us | `0xeb2eecad44116a79` | match |
-| `runIsolateAdd` | 9.569 ms | `0x4367ab34a73ea4ed` | match |
-| `runSelectAdd` | 9.737 ms | `0xb2956b93cac0235f` | match |
-| `runLazyAdd` | 9.650 ms | `0xb2956b93cac0235f` | match |
-| `runExact` | 1.325 ms | `0xafd3fbfd3a66fc82` | match |
-| `runRoots` | 917.475 us | `0x927e3f02f6eee94` | match |
-| `runPariPolmodOverhead` | 6.992 us | `0x0` | match |
+| `runFixedMul` | 39.844 us | `0xc319ee2337214e59` | match |
+| `runFixedInv` | 137.423 us | `0x1525969728101d06` | match |
+| `runFixedMinpoly` | 4.039 ms | `0xb1ed00ebc8d039e9` | match |
+| `runAddEliminant` | 5.754 us | `0xeb2eecad44116a79` | match |
+| `runIsolateAdd` | 9.649 ms | `0x4367ab34a73ea4ed` | match |
+| `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
+| `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
+| `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
+| `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
+| `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
-operation at 100 ms on the reference host. `runFixedMul` is 40.378 us and
-`runFixedInv` is 136.756 us, both about three orders inside that budget.
+operation at 100 ms on the reference host. `runFixedMul` is 39.844 us and
+`runFixedInv` is 137.423 us, both about three orders inside that budget.
 
 `runSelectAdd` and `runLazyAdd` produce the same hash and the same median to
 within 0.1%, which is the intended reading: the SPEC asks Phase 4 to separate
 eliminant construction, isolation and disambiguation, and the trio
-`runAddEliminant` (5.802 us), `runIsolateAdd` (9.569 ms) and `runSelectAdd`
-(9.737 ms) does that. Construction is three orders below isolation, and
-operation-ball disambiguation adds 168 us on top of isolation — under 2%.
-Isolation is the whole lazy-addition cost.
+`runAddEliminant` (5.754 us), `runIsolateAdd` (9.649 ms) and `runSelectAdd`
+(11.193 ms) does that. Construction is three orders below isolation, and
+operation-ball disambiguation adds 1.5 ms on top of isolation — about 16%.
+Isolation dominates the lazy-addition cost.
 
 ## Comparator ratios
 
@@ -343,8 +343,8 @@ check as well as a timing one.
 
 **Per-call overhead.** `runPariPolmodOverhead` issues one `polmod`-family
 request whose PARI-side work is a constant `0`, so it measures the JSON
-request/reply round trip alone. Its median is **6.992 us** (min 6.786 us,
-max 7.233 us across five repeats). Overhead is at most 22% of the PARI wall
+request/reply round trip alone. Its median is **7.126 us** (min 6.750 us,
+max 7.164 us across five repeats). Overhead is at most 22% of the PARI wall
 time on the smallest rung of either family and under 4% on the largest, so
 every rung clears the 50% floor `SPEC/benchmarking.md` sets for the eligible
 range, and every rung is far inside the 10 s hard ceiling and the 1 s soft
@@ -356,8 +356,16 @@ PARI-side polynomial construction charged to PARI.
 doubling-only schedule usually does not give enough eligible rungs to read a
 trend, and both families here cross the ratio 1 inside the measured range —
 a claim three points cannot support. The schedules are therefore densified
-with in-fill rungs: multiplication at `n = 4, 6, 8, 12, 16, 20` and inversion
-at `n = 4, 6, 8, 10, 12, 16`.
+with in-fill rungs: multiplication at `n = 4, 6, 8, 12, 16` and inversion at
+`n = 4, 6, 8, 10, 12`, each bracketing its crossover.
+
+They stop there because `verify` is the CI smoke gate and builds every rung's
+fixture. Rungs at `n = 20` and `n = 16` cost 14.2 s and 4.9 s of certified-root
+construction each, which took this exe's share of the repo-wide bench-verify
+budget to 54 s and the run to the 360 s hard cap exactly. Trimming them is a
+smoke-cost reduction, which `SPEC/benchmarking.md` §Anti-patterns permits, not
+a scientific-parameter reduction: these rungs carry no verdict. Restoring them
+is part of https://github.com/kim-em/hex-dev/issues/9727.
 
 Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 1 means Hex is faster.
@@ -366,40 +374,38 @@ Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 
 | n | Hex | PARI | driver overhead as share of PARI | canonical hash | raw ratio | adjusted ratio |
 |---:|---:|---:|---:|---|---:|---:|
-| 4 | 7.381 us | 31.441 us | 22.2% | `0xdbf17509eb46ddc0` | 4.260x | 3.312x |
-| 6 | 17.136 us | 40.860 us | 17.1% | `0x2cf024c7e6988530` | 2.384x | 1.976x |
-| 8 | 30.558 us | 49.411 us | 14.2% | `0x195da6835711d63` | 1.617x | 1.388x |
-| 12 | 67.700 us | 67.715 us | 10.3% | `0xffbc782c4aba338b` | 1.000x | 0.897x |
-| 16 | 120.723 us | 86.243 us | 8.1% | `0x5e40c901cf3a60b9` | 0.714x | 0.656x |
-| 20 | 189.755 us | 104.261 us | 6.7% | `0xa6b61e5f0a5bbec9` | 0.549x | 0.513x |
+| 4 | 7.399 us | 39.058 us | 18.2% | `0xdbf17509eb46ddc0` | 5.279x | 4.316x |
+| 6 | 17.332 us | 40.824 us | 17.5% | `0x2cf024c7e6988530` | 2.355x | 1.944x |
+| 8 | 30.356 us | 57.391 us | 12.4% | `0x195da6835711d63` | 1.891x | 1.656x |
+| 12 | 67.972 us | 70.731 us | 10.1% | `0xffbc782c4aba338b` | 1.041x | 0.936x |
+| 16 | 120.729 us | 89.841 us | 7.9% | `0x5e40c901cf3a60b9` | 0.744x | 0.685x |
 
 ### QAdjoin inversion against PARI `Mod(a, m)^(-1)`
 
 | n | Hex | PARI | driver overhead as share of PARI | canonical hash | raw ratio | adjusted ratio |
 |---:|---:|---:|---:|---|---:|---:|
-| 4 | 20.067 us | 32.819 us | 21.3% | `0xb8302e29a4df3f41` | 1.635x | 1.287x |
-| 6 | 69.307 us | 52.366 us | 13.4% | `0xc80c3d019e0b9e4c` | 0.756x | 0.655x |
-| 8 | 141.262 us | 215.411 us | 3.2% | `0xd16df20a45d683c7` | 1.525x | 1.475x |
-| 10 | 252.025 us | 213.670 us | 3.3% | `0x7d0941f1c8c5f9e8` | 0.848x | 0.820x |
-| 12 | 486.945 us | 237.167 us | 2.9% | `0x7776688d262fc467` | 0.487x | 0.473x |
-| 16 | 1.504 ms | 484.207 us | 1.4% | `0x5820b68b7d69021d` | 0.322x | 0.317x |
+| 4 | 19.951 us | 33.460 us | 21.3% | `0xb8302e29a4df3f41` | 1.677x | 1.320x |
+| 6 | 69.026 us | 54.823 us | 13.0% | `0xc80c3d019e0b9e4c` | 0.794x | 0.691x |
+| 8 | 141.853 us | 218.302 us | 3.3% | `0xd16df20a45d683c7` | 1.539x | 1.489x |
+| 10 | 251.376 us | 215.512 us | 3.3% | `0x7d0941f1c8c5f9e8` | 0.857x | 0.829x |
+| 12 | 505.466 us | 253.295 us | 2.8% | `0x7776688d262fc467` | 0.501x | 0.487x |
 
 ### Trend
 
-Both ratios decline monotonically in the large: multiplication from 4.260x at
-`n = 4` to 0.549x at `n = 20`, crossing 1 almost exactly at `n = 12`
-(1.000x raw, 0.897x adjusted); inversion from 1.635x at `n = 4` to 0.322x at
-`n = 16`. The two declines have different causes, and only one of them is a
+Both ratios decline monotonically in the large: multiplication from 5.279x at
+`n = 4` to 0.744x at `n = 16`, crossing 1 just past `n = 12`
+(1.041x raw, 0.936x adjusted); inversion from 1.677x at `n = 4` to 0.501x at
+`n = 12`. The two declines have different causes, and only one of them is a
 statement about arithmetic.
 
 For **multiplication** the decline is PARI's fixed per-call marshalling being
 amortised, not an algorithmic-class difference. Fitting each side's growth
-across the six rungs, with the 6.992 us driver floor subtracted from PARI:
+across the six rungs, with the 7.126 us driver floor subtracted from PARI:
 
 - Hex grows as `n^2.01` — its declared `n^2` model, measured on the same
   inputs as the ladder.
-- PARI's net cost grows as `n^0.86`, and its net times are 24.4, 33.9, 42.4,
-  60.7, 79.3 and 97.3 us.
+- PARI's net cost grows as `n^0.72`, and its net times are 31.9, 33.7, 50.3,
+  63.6 and 82.7 us.
 
 A sub-linear exponent means PARI's `t_POLMOD` multiplication is not what is
 being timed: at these degrees the cost is building and reading back the
@@ -413,9 +419,9 @@ this comparator is `informational` rather than `gating`.
 For **inversion** the decline is real. Both sides do substantial work at
 every rung, and their exponents differ by a full power of `n`:
 
-- Hex grows as `n^3.02`.
-- PARI's net cost grows as `n^2.14`, with net times 25.8, 45.4, 208.4, 206.7,
-  230.2 and 477.2 us.
+- Hex grows as `n^2.86`.
+- PARI's net cost grows as `n^2.24`, with net times 26.3, 47.7, 211.2, 208.4
+  and 246.2 us.
 
 This is a diverging trend rather than a constant-factor gap, so it sits
 against the comparator's declared expectation, and it points the same way as
@@ -425,8 +431,8 @@ same inputs. The exponent difference should be read as indicative rather than
 precise — PARI's net cost jumps discontinuously between `n = 6` and `n = 8`,
 so a six-point fit through it is not a clean measurement of PARI's asymptotics.
 What survives that caveat is the direction and the fact that the ratio falls
-by a factor of five across the ladder, which is what coefficient swell in the
-unnormalised rational extended gcd predicts. Recorded against
+by more than a factor of three across the ladder, which is what coefficient
+swell in the unnormalised rational extended gcd predicts. Recorded against
 https://github.com/kim-em/hex-dev/issues/9721 rather than as a separate
 Concern.
 
@@ -521,7 +527,7 @@ call and both are inside the registered target. Nothing here is unattributed.
 
 The `runLazyAddLadder` derivation declares that isolation at separation depth
 dominates the eliminant resultant. It does: eliminant construction is the
-5.802 us `runAddEliminant` fixed case against a 46 s call, and 92% of the call
+5.754 us `runAddEliminant` fixed case against a 46 s call, and 92% of the call
 is inside `isolate`. This family's registered targets account for its cost.
 
 ### `exactification` — the declared phase is not the cost
@@ -592,12 +598,13 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-scientific.json`](bench-results/hex-number-field-phase4-scientific.json) | `066f6fc29` | loaded (load average 105 to 150) | `3948bbb7107d96e7af56edcf2497b52e2b2a34f4d89376b93cc477c0f8a6517d` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet.json`](bench-results/hex-number-field-phase4-scientific-quiet.json) | `066f6fc29` | idle (load average 1.5) | `186d25381ce87fa6c4f4d0b6d51c03eed8f865a120dd83a5ac278c8d34be6408` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
-| [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `116c260cd`, clean tree | idle | `922cf24a2fa1072bcb6cf447f586ccf240b882e611366a8b46c83750be929f47` |
+| [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
-only in two comments, and `116c260cd` only adds comparator registrations. The
+only in two comments, and `9ae125c67` only changes comparator registrations
+and their smoke cost. The
 fixture-corrected run is the exception and is the reason it exists — it
 supersedes the earlier `runAddEliminantLadder`, `runCommonPresentationLadder`
 and `runAlgebraicRootsLadder` numbers, and only those three. Four of the five
