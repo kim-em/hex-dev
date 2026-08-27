@@ -690,8 +690,10 @@ Mandatory edge families:
 
 Per [benchmarking](../benchmarking.md), the bench driver is
 `bench/HexPolyFast/Bench.lean`. It imports no Mathlib. Every dispatch family
-records both time and allocation counts and includes cells immediately below,
-at, and above the proposed crossover.
+records time and the memory fields supported by the benchmark harness
+(`peak_rss_kb` on Linux and `alloc_bytes` when the Lean runtime exposes an
+allocation counter), and includes cells immediately below, at, and above the
+proposed crossover.
 
 Required families:
 

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexModArith
 import HexPolyFast
 import LeanBench
 
@@ -75,6 +76,27 @@ structure Binary where
 instance : Hashable Binary where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
+/-- Generic multiplication operands over rational coefficients. -/
+structure BinaryRat where
+  left : DensePoly Rat
+  right : DensePoly Rat
+
+instance : Hashable BinaryRat where
+  hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
+
+private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+
+/-- Generic multiplication operands over the small word field `ZMod64 5`. -/
+structure BinaryMod where
+  left : DensePoly (ZMod64 5)
+  right : DensePoly (ZMod64 5)
+
+private def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
+  p.toArray.foldl (fun acc x => mixHash acc (hash x.toNat)) 0
+
+instance : Hashable BinaryMod where
+  hash input := mixHash (hashModPoly input.left) (hashModPoly input.right)
+
 /-- Fixed-precision integer-series operands used to compare the retained
 schoolbook `TSeries.mulUpTo` with the dependency-safe polynomial-plan path. -/
 structure SeriesIntInput where
@@ -103,9 +125,27 @@ def prepBalanced (n : Nat) : Binary :=
   { left := ofList ((List.range n).map fun i => coeff i 3)
     right := ofList ((List.range n).map fun i => coeff i 19) }
 
+def prepRatio (ratio n : Nat) : Binary :=
+  { left := ofList ((List.range (ratio * n)).map fun i => coeff i (5 + ratio))
+    right := ofList ((List.range n).map fun i => coeff i (23 + ratio)) }
+
+def prepRatio2 (n : Nat) : Binary := prepRatio 2 n
+def prepRatio4 (n : Nat) : Binary := prepRatio 4 n
+def prepRatio16 (n : Nat) : Binary := prepRatio 16 n
+
 def prepSkew (n : Nat) : Binary :=
-  { left := ofList ((List.range (64 * n)).map fun i => coeff i 5)
-    right := ofList ((List.range n).map fun i => coeff i 23) }
+  prepRatio 64 n
+
+def prepBalancedRat (n : Nat) : BinaryRat :=
+  { left := ofList ((List.range n).map fun i => (coeff i 7 : Rat))
+    right := ofList ((List.range n).map fun i => (coeff i 29 : Rat)) }
+
+private def modCoeff (i salt : Nat) : ZMod64 5 :=
+  ZMod64.ofNat 5 (((i + 3) * (salt + 11) + i * i) % 5)
+
+def prepBalancedMod (n : Nat) : BinaryMod :=
+  { left := ofList ((List.range n).map fun i => modCoeff i 11)
+    right := ofList ((List.range n).map fun i => modCoeff i 37) }
 
 def prepSeriesInt (n : Nat) : SeriesIntInput :=
   { n
@@ -120,6 +160,12 @@ def prepSeriesRat (n : Nat) : SeriesRatInput :=
 private def checksum (p : DensePoly Int) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
 
+private def checksumRat (p : DensePoly Rat) : UInt64 :=
+  p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
+
+private def checksumMod (p : DensePoly (ZMod64 5)) : UInt64 :=
+  hashModPoly p
+
 private def checksumSeries [Hashable R] (a : TSeries R n) : UInt64 :=
   a.coeffs.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
 
@@ -132,8 +178,58 @@ def runKaratsuba (input : Binary) : UInt64 :=
 def runKaratsubaSkew (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
 
+def runKaratsubaRatio2 (input : Binary) : UInt64 :=
+  checksum (mulWith (karatsubaPlan 32) input.left input.right)
+
+def runKaratsubaRatio4 (input : Binary) : UInt64 :=
+  checksum (mulWith (karatsubaPlan 32) input.left input.right)
+
+def runKaratsubaRatio16 (input : Binary) : UInt64 :=
+  checksum (mulWith (karatsubaPlan 32) input.left input.right)
+
 def runKaratsubaSquare (input : Binary) : UInt64 :=
   checksum (squareWith (karatsubaPlan 32) input.left)
+
+/-- Full Karatsuba product followed by extraction of its low half. -/
+def runFullThenLowInt (input : Binary) : UInt64 :=
+  checksum <| coeffSlice 0 input.left.size <|
+    mulWith (karatsubaPlan 32) input.left input.right
+
+/-- Direct low-half Karatsuba product. -/
+def runClippedLowInt (input : Binary) : UInt64 :=
+  checksum (mulLow (karatsubaPlan 32) input.left.size input.left input.right)
+
+def runSchoolbookRat (input : BinaryRat) : UInt64 :=
+  checksumRat (mulWith schoolbookPlan input.left input.right)
+
+def runKaratsubaRat (input : BinaryRat) : UInt64 :=
+  checksumRat (mulWith (karatsubaPlan 32) input.left input.right)
+
+def runKaratsubaSquareRat (input : BinaryRat) : UInt64 :=
+  checksumRat (squareWith (karatsubaPlan 32) input.left)
+
+def runFullThenLowRat (input : BinaryRat) : UInt64 :=
+  checksumRat <| coeffSlice 0 input.left.size <|
+    mulWith (karatsubaPlan 32) input.left input.right
+
+def runClippedLowRat (input : BinaryRat) : UInt64 :=
+  checksumRat (mulLow (karatsubaPlan 32) input.left.size input.left input.right)
+
+def runSchoolbookMod (input : BinaryMod) : UInt64 :=
+  checksumMod (mulWith schoolbookPlan input.left input.right)
+
+def runKaratsubaMod (input : BinaryMod) : UInt64 :=
+  checksumMod (mulWith (karatsubaPlan 32) input.left input.right)
+
+def runKaratsubaSquareMod (input : BinaryMod) : UInt64 :=
+  checksumMod (squareWith (karatsubaPlan 32) input.left)
+
+def runFullThenLowMod (input : BinaryMod) : UInt64 :=
+  checksumMod <| coeffSlice 0 input.left.size <|
+    mulWith (karatsubaPlan 32) input.left input.right
+
+def runClippedLowMod (input : BinaryMod) : UInt64 :=
+  checksumMod (mulLow (karatsubaPlan 32) input.left.size input.left input.right)
 
 /-- Retained semiring-generic bounded series multiplication. -/
 def runSeriesSchoolbookInt (input : SeriesIntInput) : UInt64 :=
@@ -211,9 +307,6 @@ def prepRepeatedDivision (n : Nat) : RepeatedDivisionInput :=
   { dividends
     divisor
     plan := cachedPlan? divisor capacity }
-
-private def checksumRat (p : DensePoly Rat) : UInt64 :=
-  p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
 
 private def checksumDiv (qr : DensePoly Rat × DensePoly Rat) : UInt64 :=
   mixHash (checksumRat qr.1) (checksumRat qr.2)
@@ -550,6 +643,216 @@ setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-64"]
+  }
+
+/- A fixed 2:1 shape performs two balanced Karatsuba blocks, preserving the
+`Theta(n^(log_2 3))` model in the shorter operand size. -/
+setup_benchmark runKaratsubaRatio2 n => n * Nat.sqrt n
+  with prep := prepRatio2
+  where {
+    paramFloor := 4
+    paramCeiling := 8192
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 8192]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "ratio-2"]
+  }
+
+/- A fixed 4:1 shape uses four shorter-size blocks, so its asymptotic model
+matches balanced Karatsuba up to that constant factor. -/
+setup_benchmark runKaratsubaRatio4 n => n * Nat.sqrt n
+  with prep := prepRatio4
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "ratio-4"]
+  }
+
+/- A fixed 16:1 shape uses sixteen shorter-size blocks and the same
+Karatsuba exponent in the registered parameter. -/
+setup_benchmark runKaratsubaRatio16 n => n * Nat.sqrt n
+  with prep := prepRatio16
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "ratio-16"]
+  }
+
+/- Full-product-then-low extraction retains the full balanced Karatsuba cost
+and is the within-Lean comparator for direct clipping over `Int`. -/
+setup_benchmark runFullThenLowInt n => n * Nat.sqrt n
+  with prep := prepBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "int", "full-then-low"]
+  }
+
+/- Direct low clipping skips irrelevant recursive branches while retaining
+the `O(M(n))` Karatsuba upper bound over `Int`. -/
+setup_benchmark runClippedLowInt n => n * Nat.sqrt n
+  with prep := prepBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "int", "clipped-low"]
+  }
+
+/- Rational schoolbook convolution performs one exact coefficient product per
+input pair, hence quadratic coefficient work. -/
+setup_benchmark runSchoolbookRat n => n ^ 2
+  with prep := prepBalancedRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "schoolbook", "rat", "balanced"]
+  }
+
+/- Balanced rational Karatsuba has the standard three-subproblem recurrence,
+represented by the integer-valued `n * sqrt n` surrogate. -/
+setup_benchmark runKaratsubaRat n => n * Nat.sqrt n
+  with prep := prepBalancedRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "rat", "balanced"]
+  }
+
+/- Specialized rational squaring follows the same recursive size recurrence
+as rational Karatsuba multiplication. -/
+setup_benchmark runKaratsubaSquareRat n => n * Nat.sqrt n
+  with prep := prepBalancedRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "rat", "square"]
+  }
+
+/- Full rational multiplication followed by extraction is the direct
+comparator for the clipped rational path. -/
+setup_benchmark runFullThenLowRat n => n * Nat.sqrt n
+  with prep := prepBalancedRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "rat", "full-then-low"]
+  }
+
+/- Direct rational clipping retains the `O(M(n))` upper bound while avoiding
+irrelevant high product branches. -/
+setup_benchmark runClippedLowRat n => n * Nat.sqrt n
+  with prep := prepBalancedRat
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 45.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "rat", "clipped-low"]
+  }
+
+/- Small-word-field schoolbook convolution performs quadratic coefficient
+work with constant-time `ZMod64 5` operations. -/
+setup_benchmark runSchoolbookMod n => n ^ 2
+  with prep := prepBalancedMod
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "schoolbook", "zmod5", "balanced"]
+  }
+
+/- Small-word-field Karatsuba follows the three-subproblem recurrence and uses
+the standard integer-valued surrogate. -/
+setup_benchmark runKaratsubaMod n => n * Nat.sqrt n
+  with prep := prepBalancedMod
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "zmod5", "balanced"]
+  }
+
+/- Specialized `ZMod64 5` squaring has the same recursive size recurrence as
+the generic Karatsuba product. -/
+setup_benchmark runKaratsubaSquareMod n => n * Nat.sqrt n
+  with prep := prepBalancedMod
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "zmod5", "square"]
+  }
+
+/- Full small-word-field multiplication followed by extraction is the
+within-Lean comparator for direct clipping. -/
+setup_benchmark runFullThenLowMod n => n * Nat.sqrt n
+  with prep := prepBalancedMod
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "zmod5", "full-then-low"]
+  }
+
+/- Direct `ZMod64 5` clipping avoids high recursive branches while retaining
+the `O(M(n))` upper bound. -/
+setup_benchmark runClippedLowMod n => n * Nat.sqrt n
+  with prep := prepBalancedMod
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "zmod5", "clipped-low"]
   }
 
 /- The lower library deliberately retains its weak semiring schoolbook API.
