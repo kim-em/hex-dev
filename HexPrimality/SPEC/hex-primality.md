@@ -852,14 +852,17 @@ design principle 8's third remedy again.
 ```
 primality n         -- term: Hex.Nat.Prime n
 primality           -- tactic: closes a `Hex.Nat.Prime e` goal
+primality n         -- tactic: adds `this : Hex.Nat.Prime n`
+primality h : n     -- tactic: adds `h : Hex.Nat.Prime n`
 ```
 
 Following `factor_poly` and `irreducibility` in hex-berlekamp: the
-search runs at elaboration time as untrusted compiled code, and the
-emitted term is `prime_of_checkPrime (c := literalCert) (by decide +kernel)`
-with the inductive certificate reified by its constructors. The kernel replays only
-`checkPrime`, which is `O(k log n)` modular multiplications on
-GMP-backed `Nat`, and never the search.
+search runs at elaboration time as untrusted compiled code. The emitted
+term applies `prime_of_checkPrimeAt` to the requested numeral, the inductive
+certificate reified by its constructors, and one `Eq.refl true` slot. The
+kernel reduces the subject-equality and `checkPrime` Boolean in that slot, so
+it replays `O(k log n)` modular multiplications on GMP-backed `Nat`, and never
+the search.
 
 For reproducible syntax with no seed argument, the elaborator uses
 `Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded,
@@ -947,9 +950,11 @@ a large integer rather than an array write. **Whether a compiled
 `ByteArray` sieve would beat it is a benchmark hypothesis, not a
 theorem** -- compiled `Nat` bit operations are big-integer operations
 too. The two are nonetheless different products and the SPEC keeps them
-apart: the bitset sieve exists to verify the committed table in the
-kernel, and `primesIn` for runtime use is the array version. The
-"segment generation" bench family below measures both.
+apart: the bitset sieve exists to verify the committed table in the kernel,
+while `primesIn` is the unrestricted trial-division range/filter route whose
+result is converted to an `Array`. The "segment generation" bench family
+below measures `primesIn`; the bitset sieve is priced by the "table
+verification" family's module-elaboration cost.
 
 ## Conformance
 
