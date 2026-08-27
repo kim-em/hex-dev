@@ -856,21 +856,24 @@ theorem primeCert?_composite {n : Nat} {r : Rand} {fuel : Nat}
     exact Internal.primeCertCounted?_composite herr hstop
   · cases hresult
 
-/-- Exact trial division handles inputs from `primeTableBound` to `10000000`.
-This first power of ten beyond the measured Cunningham-chain crossover avoids
-encoding a noisy input-specific crossing point; hard composites favor the
-bounded certificate route throughout the measured ladder. -/
-def isPrimeTrialThreshold : Nat := 10000000
+/-- After Miller--Rabin filtering, exact trial division handles inputs from
+`primeTableBound` to `6000000`. This round boundary lies between the measured
+Cunningham-chain rungs where trial last wins (near `5 · 10^6`) and certificate
+search first wins (near `6 · 10^6`). -/
+def isPrimeTrialThreshold : Nat := 6000000
 
-/-- The bounded decision: table below `primeTableBound`, exact trial
-division below `isPrimeTrialThreshold`, then certificate search. A failed
-base or a table/trial miss returns a certified `false`; an accepted
-certificate returns `true`; an exhausted search is an error rather than an
-unbounded computation. -/
+/-- The bounded decision: table below `primeTableBound`, Miller--Rabin
+composite filtering, exact trial division below `isPrimeTrialThreshold`, then
+certificate search. A failed base or a table/trial miss returns a certified
+`false`; an accepted certificate returns `true`; an exhausted search is an
+error rather than an unbounded computation. -/
 def isPrime? (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeDecisionFailure (Bool × Rand) :=
   if n < primeTableBound then .ok (isTablePrime n, r)
-  else if n < isPrimeTrialThreshold then .ok (isPrimeTrial n, r)
+  else if n < isPrimeTrialThreshold then
+    match defaultBases.find? (fun a => !(millerRabin n a)) with
+    | some _ => .ok (false, r)
+    | none => .ok (isPrimeTrial n, r)
   else
     match primeCert? n r fuel with
     | .ok (_, r') => .ok (true, r')
@@ -897,10 +900,22 @@ theorem isPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {b : Bool}
   · rw [if_neg ht] at h
     by_cases htrial : n < isPrimeTrialThreshold
     · rw [if_pos htrial] at h
-      injection h with h
-      injection h with hb hr
-      subst hb
-      exact ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
+      split at h
+      · rename_i a hfind
+        have ha : millerRabin n a = false := by
+          have hnot := List.find?_some hfind
+          simpa using hnot
+        injection h with h
+        injection h with hb hr
+        subst hb
+        constructor
+        · intro hfalse
+          cases hfalse
+        · exact fun hp => absurd hp (not_prime_of_millerRabin_false ha)
+      · injection h with h
+        injection h with hb hr
+        subst hb
+        exact ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
     · rw [if_neg htrial] at h
       split at h
       · rename_i cert r2 hok

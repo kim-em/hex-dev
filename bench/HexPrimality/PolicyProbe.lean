@@ -5,11 +5,11 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality
-import Lean
 
 /-!
-A deliberately small native timing probe for the `isPrimeTrial` versus
-`primeCert?` dispatch policy.  The controlled, counterbalanced runner lives in
+A deliberately small native timing probe for the production
+Miller--Rabin-plus-`isPrimeTrial` arm versus `primeCert?` dispatch policy. The
+controlled, counterbalanced runner lives in
 `scripts/bench/primality_policy_sweep.py`; keeping the clock here excludes
 process startup from the measured interval.
 -/
@@ -23,7 +23,10 @@ inductive Route where
   | certificate
 
 private def verdict : Route → Nat → Except String Bool
-  | .trial, n => .ok (isPrimeTrial n)
+  | .trial, n =>
+      match defaultBases.find? (fun a => !(millerRabin n a)) with
+      | some _ => .ok false
+      | none => .ok (isPrimeTrial n)
   | .certificate, n =>
       match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with
       | .ok _ => .ok true
@@ -67,11 +70,9 @@ def run (args : List String) : IO UInt32 := do
     | .error e => throw <| IO.userError e
     | .ok checksum => pure checksum
   let stop ← IO.monoNanosNow
-  let natJson (value : Nat) := Lean.Json.num (Lean.JsonNumber.fromNat value)
-  IO.println <| (Lean.Json.mkObj
-    [("route", Lean.Json.str routeArg), ("n", natJson n),
-     ("repeats", natJson repeats), ("total_nanos", natJson (stop - start)),
-     ("checksum", natJson checksum)]).compress
+  IO.println <| "{" ++
+    s!"\"route\":\"{routeArg}\",\"n\":{n},\"repeats\":{repeats}," ++
+    s!"\"total_nanos\":{stop - start},\"checksum\":{checksum}" ++ "}"
   return 0
 
 end Hex.PrimalityPolicyProbe

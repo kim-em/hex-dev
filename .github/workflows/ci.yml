@@ -182,6 +182,8 @@ jobs:
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
         run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+      - name: Verify deterministic HexPrimality table regeneration
+        run: python3 scripts/bench/check_prime_table.py
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \

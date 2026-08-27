@@ -2,8 +2,9 @@
 """Controlled crossover measurement for HexPrimality decision dispatch.
 
 The native probe times inside one process, after an untimed warmup, so process
-startup is excluded.  This runner alternates the trial and bounded-certificate
-arms in AB/BA blocks, retains every raw timing, and checks both answers with an
+startup is excluded. This runner alternates the production middle arm
+(Miller--Rabin rejection followed by trial division) and bounded-certificate
+arm in AB/BA blocks, retains every raw timing, and checks both answers with an
 independent deterministic Miller--Rabin implementation valid below ``2^64``.
 
 Scientific run::
@@ -25,6 +26,7 @@ import os
 import platform
 from pathlib import Path
 import shlex
+import signal
 import socket
 import statistics
 import subprocess
@@ -39,20 +41,8 @@ except ModuleNotFoundError:  # imported as ``scripts.bench.*`` by unit tests
 ROOT = Path(__file__).resolve().parents[2]
 PROBE = ROOT / ".lake" / "build" / "bin" / "hexprimality_policy_probe"
 CASES = (
-    ("prime-10k", 10_007, True, "fixed-prime"),
-    ("semiprime-10k", 10_403, False, "balanced-semiprime"),       # 101 * 103
-    ("prime-15k", 15_013, True, "fixed-prime"),
-    ("semiprime-15k", 14_351, False, "balanced-semiprime"),       # 113 * 127
-    ("prime-20k", 20_011, True, "fixed-prime"),
-    ("semiprime-20k", 20_711, False, "balanced-semiprime"),       # 139 * 149
-    ("prime-30k", 30_011, True, "fixed-prime"),
-    ("semiprime-30k", 29_893, False, "balanced-semiprime"),       # 167 * 179
-    ("prime-50k", 50_021, True, "fixed-prime"),
-    ("semiprime-50k", 47_897, False, "balanced-semiprime"),       # 211 * 227
-    ("prime-70k", 70_001, True, "fixed-prime"),
-    ("semiprime-70k", 70_747, False, "balanced-semiprime"),       # 263 * 269
     ("prime-100k", 100_003, True, "fixed-prime"),
-    ("semiprime-100k", 99_221, False, "balanced-semiprime"),      # 313 * 317
+    ("semiprime-100k", 104_927, False, "balanced-semiprime"),     # 317 * 331
     ("prime-150k", 150_001, True, "fixed-prime"),
     ("semiprime-150k", 148_987, False, "balanced-semiprime"),     # 383 * 389
     ("prime-300k", 300_007, True, "fixed-prime"),
@@ -60,8 +50,14 @@ CASES = (
     ("prime-1m", 1_000_003, True, "fixed-prime"),
     ("prime-chain4-1m", 1_014_719, True, "cunningham-chain"),
     ("semiprime-1m", 1_005_973, False, "balanced-semiprime"),     # 997 * 1009
+    ("prime-chain3-2m", 2_002_919, True, "cunningham-chain"),
     ("prime-3m", 3_000_017, True, "fixed-prime"),
+    ("prime-chain3-3m", 3_003_167, True, "cunningham-chain"),
     ("semiprime-3m", 2_999_743, False, "balanced-semiprime"),     # 1723 * 1741
+    ("prime-chain3-4m", 4_005_839, True, "cunningham-chain"),
+    ("prime-chain3-5m", 5_011_967, True, "cunningham-chain"),
+    ("prime-chain3-6m", 6_007_559, True, "cunningham-chain"),
+    ("prime-chain3-8m", 8_001_047, True, "cunningham-chain"),
     ("prime-10m", 10_000_019, True, "fixed-prime"),
     ("prime-chain3-10m", 10_050_959, True, "cunningham-chain"),
     ("semiprime-10m", 10_001_653, False, "balanced-semiprime"),   # 3109 * 3217
@@ -132,12 +128,27 @@ def lean_version() -> str:
     ).stdout.strip()
 
 
-def run_arm(route: str, n: int, repeats: int) -> dict:
-    proc = subprocess.run(
-        [str(PROBE), route, str(n), str(repeats)], cwd=ROOT,
-        check=True, capture_output=True, text=True,
+def run_checked(command: list[str], timeout: float) -> str:
+    proc = subprocess.Popen(
+        command, cwd=ROOT, text=True, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, start_new_session=True,
     )
-    row = json.loads(proc.stdout)
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        proc.communicate()
+        raise RuntimeError(f"command timed out after {timeout}s: {shlex.join(command)}")
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"command failed ({proc.returncode}): {shlex.join(command)}\n{stdout}{stderr}"
+        )
+    return stdout
+
+
+def run_arm(route: str, n: int, repeats: int, timeout: float) -> dict:
+    output = run_checked([str(PROBE), route, str(n), str(repeats)], timeout)
+    row = json.loads(output)
     row["per_call_nanos"] = row["total_nanos"] / repeats
     return row
 
@@ -166,7 +177,7 @@ def summarize(record: dict) -> list[dict]:
 
 
 def print_report(record: dict) -> None:
-    print("| case | n | trial | certificate | cert / trial |")
+    print("| case | n | MR + trial | certificate | cert / trial |")
     print("|---|---:|---:|---:|---:|")
     for row in record.get("summary") or summarize(record):
         print(
@@ -182,6 +193,8 @@ def main() -> int:
     parser.add_argument("--repeats", type=int, default=200)
     parser.add_argument("--cpu", default="auto",
                         help="logical CPU to pin, or auto for an idle core")
+    parser.add_argument("--timeout", type=float, default=30.0,
+                        help="per build/probe command timeout in seconds")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--allow-dirty", action="store_true")
@@ -192,8 +205,8 @@ def main() -> int:
         return 0
     if args.output is None:
         parser.error("--output is required unless --report is used")
-    if args.rounds < 6 or args.rounds % 2 != 0 or args.repeats < 1:
-        parser.error("--rounds must be even and at least 6; repeats must be positive")
+    if args.rounds < 6 or args.rounds % 2 != 0 or args.repeats < 1 or args.timeout <= 0:
+        parser.error("--rounds must be even and at least 6; repeats/timeout must be positive")
     dirty = git(["status", "--porcelain", "--untracked-files=all"])
     if dirty and not args.allow_dirty:
         parser.error("worktree is dirty; commit first or use --allow-dirty for diagnostics")
@@ -201,7 +214,8 @@ def main() -> int:
     cpu = idle_core.resolve(args.cpu)
     idle_core.pin_self(cpu)
     state_before = host_state(cpu)
-    subprocess.run(["lake", "build", "hexprimality_policy_probe"], cwd=ROOT, check=True)
+    run_checked(["lake", "build", "hexprimality_policy_probe"],
+                max(300.0, args.timeout))
     cases = []
     for name, n, expected, family in CASES:
         oracle = is_prime_64(n)
@@ -210,7 +224,9 @@ def main() -> int:
         blocks = []
         for block in range(args.rounds):
             order = ("trial", "certificate") if block % 2 == 0 else ("certificate", "trial")
-            measured = {route: run_arm(route, n, args.repeats) for route in order}
+            measured = {
+                route: run_arm(route, n, args.repeats, args.timeout) for route in order
+            }
             want = args.repeats if expected else 0
             if any(measured[route]["checksum"] != want for route in order):
                 raise RuntimeError(f"Hex routes disagree with independent oracle at {n}")
@@ -220,8 +236,8 @@ def main() -> int:
         print(f"measured {name}", file=sys.stderr)
 
     record = {
-        "schema": "hex-primality-decision-policy/1",
-        "measurement": "warm in-process wall time; counterbalanced process order",
+        "schema": "hex-primality-decision-policy/2",
+        "measurement": "warm MR-filtered-trial versus certificate wall time; counterbalanced process order",
         "oracle": "deterministic Miller-Rabin bases for unsigned 64-bit integers",
         "environment": {
             "hostname": socket.gethostname(), "platform": platform.platform(),
@@ -231,6 +247,9 @@ def main() -> int:
             "state_before": state_before, "state_after": host_state(cpu),
         },
         "config": {"rounds": args.rounds, "repeats": args.repeats,
+                   "timeout_seconds": args.timeout,
+                   "build_timeout_seconds": max(300.0, args.timeout),
+                   "timeout_cleanup": "SIGKILL spawned process group",
                    "block_orders": ["AB" if i % 2 == 0 else "BA"
                                     for i in range(args.rounds)]},
         "cases": cases,

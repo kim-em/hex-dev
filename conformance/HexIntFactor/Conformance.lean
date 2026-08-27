@@ -221,7 +221,8 @@ private def iteratedPower : Nat := 10009 ^ 8
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
-#guard smoothBoundCap == primeTableBound - 1
+#guard smoothBoundCap == 9999
+#guard smoothBoundCap < primeTableBound
 #guard smoothBound (primeTableBound + 1000) == smoothBoundCap
 
 example (n base bound : Nat) :
@@ -371,16 +372,16 @@ private def smoothThreeFuelTrace : Hex.Nat.Internal.SmoothSearch :=
 #guard smoothThreeFuelTrace.events.length == 3
 #guard smoothThreeFuelTrace.rand == Rand.ofSeed 4
 
--- A production-shaped p−1 miss consumes its four-attempt allocation, climbing
--- every scheduled power-of-eight bound before ECM receives the remainder.
+-- A production-shaped p−1 miss climbs through every scheduled bound and
+-- executes the cap-equality fall-through before ECM receives the remainder.
 private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
-  Hex.Nat.Internal.smoothSearch (200087 * 200723) (Rand.ofSeed 7) 8
+  Hex.Nat.Internal.smoothSearch (20123 * 20183) (Rand.ofSeed 7) 8
 
 #guard smoothCapTrace.events.take 4 == [
   .pMinusOne 2 64 .noFactor,
   .pMinusOne 2 512 .noFactor,
   .pMinusOne 2 4096 .noFactor,
-  .pMinusOne 2 32768 .noFactor]
+  .pMinusOne 2 smoothBoundCap .noFactor]
 
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0

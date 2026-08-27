@@ -4,8 +4,10 @@
 Each sample invokes the standard ``#rebuild_primeTable`` generator, checks that
 its emitted source is byte-identical to the other samples for that bound, then
 fresh-elaborates the emitted replay module and records source/olean size and raw
-wall times.  Candidate batches retain the committed table's maximum of eight
-sieve bases per kernel-replayed chunk.
+wall times. It separately code-generates, links, and executes a standalone
+program containing the same literal; that readback checks code generation,
+while the emitted sieve replay checks correctness. Candidate batches retain the
+committed table's maximum of eight sieve bases per kernel-replayed chunk.
 
 Scientific run::
 
@@ -107,6 +109,16 @@ def extract_emission(output: str) -> str:
     return "@[expose]\ndef primeTableBound" + output[at + len(marker):]
 
 
+def static_array_object_bytes(generated_c: bytes) -> int:
+    """Largest static array size assigned to Lean's 16-bit header field."""
+    lengths = [int(value) for value in re.findall(
+        rb"sizeof\(void\*\)\*([0-9]+)", generated_c
+    )]
+    return max(
+        (24 + struct.calcsize("P") * length for length in lengths), default=0
+    )
+
+
 def run_command(command: list[str], timeout: float) -> tuple[str, float, int | None]:
     start = time.monotonic_ns()
     proc = subprocess.Popen(
@@ -139,7 +151,7 @@ def one_sample(bound: int, timeout: float, directory: Path) -> tuple[dict, str |
             "status": "generation-timeout" if generation_code is None else "generation-failed",
             "generation_wall_nanos": generation_nanos,
             "generation_exit_code": generation_code,
-            "diagnostic_tail": output[-2000:],
+            "diagnostic_output": output,
         }, None)
     emission = extract_emission(output)
     replay = directory / "Replay.lean"
@@ -151,13 +163,7 @@ def one_sample(bound: int, timeout: float, directory: Path) -> tuple[dict, str |
         "public section\n\n"
         "namespace Hex.Nat\n"
         "set_option maxRecDepth 100000\n\n"
-        + emission + "\nend Hex.Nat\n\n"
-        "def main : IO Unit := do\n"
-        "  let table := Hex.Nat.primeTable\n"
-        "  let first := table[0]!\n"
-        "  let last := table[table.size - 1]!\n"
-        "  let checksum := table.foldl (fun acc n => acc + n) 0\n"
-        "  IO.println s!\"{table.size},{first},{last},{checksum}\"\n"
+        + emission + "\nend Hex.Nat\n"
     )
     olean = directory / "Replay.olean"
     c_source = directory / "Replay.c"
@@ -167,35 +173,61 @@ def one_sample(bound: int, timeout: float, directory: Path) -> tuple[dict, str |
     )
     source = replay.read_bytes()
     generated_c = c_source.read_bytes() if c_source.exists() else b""
-    static_array_lengths = [int(value) for value in re.findall(
-        rb"sizeof\(void\*\)\*([0-9]+)", generated_c
-    )]
     # `lean_array_object` is a 24-byte header on this 64-bit runtime; this is
     # the exact expression assigned to its 16-bit `m_cs_sz` field in generated C.
-    max_object_bytes = max(
-        (24 + struct.calcsize("P") * length for length in static_array_lengths),
-        default=0,
-    )
+    max_object_bytes = static_array_object_bytes(generated_c)
     status = ("ok" if replay_code == 0 else
               "replay-timeout" if replay_code is None else "replay-failed")
+    literal = None
+    if replay_code == 0:
+        literal = emission[emission.index("#[") : emission.index("]\n\n-- #rebuild") + 1]
+    native_source = directory / "Native.lean"
+    native_c = directory / "Native.c"
+    native_setup = directory / "Native.setup.json"
+    native_exe = directory / "Native"
+    native_codegen_output, native_codegen_nanos, native_codegen_code = "", 0, None
+    native_generated_c = b""
+    native_object_bytes = 0
     native_output, native_nanos, native_code = "", 0, None
     run_output, run_nanos, run_code = "", 0, None
     expected_readback = None
     if status == "ok":
+        native_source.write_text(
+            "set_option maxRecDepth 100000\n\n"
+            "def table : Array Nat :=\n  " + literal + "\n\n"
+            "def main : IO Unit := do\n"
+            "  let first := table[0]!\n"
+            "  let last := table[table.size - 1]!\n"
+            "  let checksum := table.foldl (fun acc n => acc + n) 0\n"
+            "  IO.println s!\"{table.size},{first},{last},{checksum}\"\n"
+        )
+        native_setup.write_text(json.dumps({
+            "plugins": [], "package": "Hex", "options": {},
+            "name": "Native", "isModule": False, "importArts": {}, "dynlibs": [],
+        }) + "\n")
+        native_codegen_output, native_codegen_nanos, native_codegen_code = run_command(
+            ["lake", "env", "lean", str(native_source), "-c", str(native_c),
+             "--setup", str(native_setup)], timeout
+        )
+        if native_codegen_code != 0:
+            status = ("native-codegen-timeout" if native_codegen_code is None else
+                      "native-codegen-failed")
+        else:
+            native_generated_c = native_c.read_bytes()
+            native_object_bytes = static_array_object_bytes(native_generated_c)
+            if native_object_bytes != max_object_bytes:
+                status = "native-layout-mismatch"
+    if status == "ok":
         native_output, native_nanos, native_code = run_command(
-            ["lake", "env", "leanc", "-c", str(c_source),
-             "-o", str(directory / "Replay.o")], timeout
+            ["lake", "env", "leanc", str(native_c), "-o", str(native_exe)], timeout
         )
         if native_code != 0:
-            status = ("native-compile-timeout" if native_code is None else
-                      "native-compile-failed")
+            status = ("native-link-timeout" if native_code is None else
+                      "native-link-failed")
     if status == "ok":
-        literal = emission[emission.index("#[") : emission.index("]\n\n-- #rebuild")]
         values = [int(value) for value in re.findall(r"\d+", literal)]
         expected_readback = f"{len(values)},{values[0]},{values[-1]},{sum(values)}"
-        run_output, run_nanos, run_code = run_command(
-            ["lake", "env", "lean", "--run", str(replay)], timeout
-        )
+        run_output, run_nanos, run_code = run_command([str(native_exe)], timeout)
         if run_code != 0:
             status = "native-run-timeout" if run_code is None else "native-run-failed"
         elif expected_readback not in run_output.splitlines():
@@ -205,13 +237,19 @@ def one_sample(bound: int, timeout: float, directory: Path) -> tuple[dict, str |
         "generation_wall_nanos": generation_nanos,
         "replay_wall_nanos": replay_nanos,
         "source_bytes": len(source), "generated_c_bytes": len(generated_c),
-        "max_runtime_object_bytes": max_object_bytes,
-        "runtime_object_limit_bytes": 65535,
+        "static_array_object_bytes": max_object_bytes,
+        "native_generated_c_bytes": len(native_generated_c),
+        "native_static_array_object_bytes": native_object_bytes,
+        "metadata_field_limit_bytes": 65535,
+        "metadata_field_overflow": max_object_bytes > 65535,
         "source_sha256": hashlib.sha256(source).hexdigest(),
         "replay_exit_code": replay_code,
-        "native_compile_wall_nanos": native_nanos,
-        "native_compile_exit_code": native_code,
-        "native_compile_diagnostic_tail": native_output[-2000:],
+        "native_codegen_wall_nanos": native_codegen_nanos,
+        "native_codegen_exit_code": native_codegen_code,
+        "native_codegen_diagnostic": native_codegen_output,
+        "native_link_wall_nanos": native_nanos,
+        "native_link_exit_code": native_code,
+        "native_link_diagnostic": native_output,
         "native_run_wall_nanos": run_nanos,
         "native_run_exit_code": run_code,
         "native_run_output_tail": run_output[-2000:],
@@ -219,10 +257,9 @@ def one_sample(bound: int, timeout: float, directory: Path) -> tuple[dict, str |
     }
     if olean.exists():
         artifact = olean.read_bytes()
-        row.update({"olean_bytes": len(artifact),
-                    "olean_sha256": hashlib.sha256(artifact).hexdigest()})
+        row["olean_bytes"] = len(artifact)
     if replay_code != 0:
-        row["diagnostic_tail"] = replay_output[-2000:]
+        row["diagnostic_output"] = replay_output
     return row, emission
 
 
@@ -244,7 +281,7 @@ def summarize(record: dict) -> list[dict]:
                 "source_bytes": samples[-1].get("source_bytes"),
                 "generated_c_bytes": samples[-1].get("generated_c_bytes"),
                 "olean_bytes": samples[-1].get("olean_bytes"),
-                "max_runtime_object_bytes": samples[-1].get("max_runtime_object_bytes"),
+                "static_array_object_bytes": samples[-1].get("static_array_object_bytes"),
                 "source_sha256": samples[-1].get("source_sha256"),
             })
             continue
@@ -259,7 +296,7 @@ def summarize(record: dict) -> list[dict]:
             "source_bytes": complete[0]["source_bytes"],
             "generated_c_bytes": complete[0]["generated_c_bytes"],
             "olean_bytes": complete[0]["olean_bytes"],
-            "max_runtime_object_bytes": complete[0]["max_runtime_object_bytes"],
+            "static_array_object_bytes": complete[0]["static_array_object_bytes"],
             "source_sha256": complete[0]["source_sha256"],
         })
     return rows
@@ -273,8 +310,8 @@ def print_report(record: dict) -> None:
             size = "--" if row["source_bytes"] is None else f"{row['source_bytes'] / 1024:.1f} KiB"
             olean_size = ("--" if row["olean_bytes"] is None else
                           f"{row['olean_bytes'] / 1024:.1f} KiB")
-            object_size = ("--" if row["max_runtime_object_bytes"] is None else
-                           str(row["max_runtime_object_bytes"]))
+            object_size = ("--" if row["static_array_object_bytes"] is None else
+                           str(row["static_array_object_bytes"]))
             replay = ("not measured" if row["replay_median_nanos"] is None else
                       f"{row['replay_median_nanos'] / 1e9:.3f} s")
             print(
@@ -290,7 +327,7 @@ def print_report(record: dict) -> None:
             f"{row['replay_median_nanos'] / 1e9:.3f} s | "
             f"{row['source_bytes'] / 1024:.1f} KiB | "
             f"{row['olean_bytes'] / 1024:.1f} KiB | "
-            f"{row['max_runtime_object_bytes']} |"
+            f"{row['static_array_object_bytes']} |"
         )
 
 
@@ -349,8 +386,8 @@ def main() -> int:
                                "batches": batches, "samples": samples})
             print(f"measured bound {bound}", file=sys.stderr)
     record = {
-        "schema": "hex-primality-table-policy/1",
-        "measurement": "standard generator plus fresh emitted replay module",
+        "schema": "hex-primality-table-policy/2",
+        "measurement": "standard generator, fresh emitted replay, and linked native-literal readback",
         "environment": {
             "hostname": socket.gethostname(), "platform": platform.platform(),
             "python": platform.python_version(), "commit": git(["rev-parse", "HEAD"]),
@@ -359,7 +396,9 @@ def main() -> int:
             "state_before": state_before, "state_after": host_state(cpu),
         },
         "config": {"bounds": bounds, "samples": args.samples,
-                   "timeout_seconds": args.timeout, "max_sieve_bases_per_batch": 8},
+                   "timeout_seconds": args.timeout,
+                   "timeout_cleanup": "SIGKILL spawned process group",
+                   "max_sieve_bases_per_batch": 8},
         "candidates": candidates,
     }
     record["summary"] = summarize(record)

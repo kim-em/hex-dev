@@ -615,10 +615,10 @@ without inverting the proof dependency, in three ways:
    lands, under the same dynamically validated proper-factor contract
    and resumable-failure shape: both libraries want it, and it widens
    `partialFactor`'s reach cheaply. Its public smoothness request is capped by
-   `smoothBound B = min B (primeTableBound - 1)`, so the committed table
-   contains every required prime and `pMinusOneStage1_bound` identifies every
-   larger request with that capped call. ECM stays downstream; curve
-   arithmetic is a real dependency, not a shared primitive.
+   `smoothBound B = min B 9999`, preserving the measured search budget while
+   remaining inside the complete committed table; `pMinusOneStage1_bound`
+   identifies every larger request with that capped call. ECM stays downstream;
+   curve arithmetic is a real dependency, not a shared primitive.
 3. **An optional search hook**, deferred until hex-int-factor exists to
    consume it. A `primeCert?With
    (factor : Nat → Rand → Nat → PartialFactors × Rand)` variant
@@ -715,15 +715,18 @@ native compile-and-readback results. The `10^5` replay is comfortably inside the
 "few minutes on the benchmark machine" budget that
 [hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed table.
 Its 9,592-entry literal does make generated `leanc` warn that the static
-object-size metadata field truncates, but explicit native compilation succeeds
-and an executed readback checks the full length, endpoints, and checksum. That
-warning is therefore not treated as a failed representation constraint. At
+object-size metadata field truncates, but a standalone program containing that
+literal is explicitly code-generated, linked, and executed; it reads back the
+full length, endpoints, and checksum. That warning is therefore recorded as
+metadata overflow but not treated as a failed representation constraint. At
 `10^6` fresh replay exhausts the default heartbeat budget, and `10^7`
 generation exceeds the five-minute command budget. Thus `10^5` is the largest
 candidate satisfying the stated fresh-build budget. The raw samples,
 environment provenance, and exact reproduction command are in
 `reports/bench-results/hex-primality-table-issue-9757-chungus2.json` and
-`scripts/bench/primality_table_sweep.py`.
+`scripts/bench/primality_table_sweep.py`. The standard committed-table
+regeneration check is `python3 scripts/bench/check_prime_table.py`; CI runs the
+same command after building the Hex libraries.
 
 `hotPathCandidates` in hex-berlekamp-zassenhaus becomes a view of
 `primeTable` restricted to `[3, 500]`, keeping its two existing
@@ -809,16 +812,15 @@ theorem nextPrime?_spec {n r r' fuel p}
     n < p ∧ Hex.Nat.Prime p ∧ ∀ q, n < q → q < p → ¬ Hex.Nat.Prime q
 ```
 
-`isPrime?` dispatches: table lookup below `primeTableBound`; trial division
-below the accepted `isPrimeTrialThreshold = 10^7`; `isProbablePrime` as a
-filter; then `primeCert?`. Fixed-shape primes cross earlier, but a Cunningham-
-chain prime near `10^6` still favors trial division while the corresponding
-adversarial prime near `10^7` favors the certificate arm; balanced semiprimes
-favor the certificate arm throughout the measured ladder. The accepted
-threshold is the first power of ten beyond the adversarial prime crossover.
-This selects a stable policy boundary rather than encoding the earlier,
-input-shape-sensitive fixed-prime crossover; at the adversarial `10^7` rung,
-certificate time is 0.924 times trial time.
+`isPrime?` dispatches: table lookup below `primeTableBound`; a Miller--Rabin
+composite filter; exact trial division below the accepted
+`isPrimeTrialThreshold = 6·10^6`; then `primeCert?`. Fixed-shape primes cross
+earlier, so the policy is set by Cunningham-chain primes: the MR-plus-trial arm
+wins at the measured `5,011,967` rung, while the bounded certificate arm wins
+at `6,007,559`. The accepted threshold is the round boundary between those two
+rungs. Balanced semiprimes are rejected by the shared Miller--Rabin filter at
+roughly the same cost on both arms, rather than being sent through full trial
+division up to the prime-case crossover.
 A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
@@ -1070,9 +1072,9 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
   wall-time sample, source/olean/generated-C size, deterministic source hash,
   and native compile/readback result. The committed record is
   `reports/bench-results/hex-primality-table-issue-9757-chungus2.json`.
-- **Decision dispatch**, counterbalanced warm native timings for exact trial
-  division and the production bounded certificate arm on fixed primes,
-  Cunningham-chain primes, and balanced semiprimes from `10^4` through `10^7`.
+- **Decision dispatch**, counterbalanced warm native timings for the production
+  Miller--Rabin-plus-trial arm and bounded certificate arm on fixed primes,
+  Cunningham-chain primes, and balanced semiprimes from `10^5` through `10^7`.
   A deterministic independent 64-bit Miller–Rabin implementation checks both
   results before a sample is accepted. The committed raw record is
   `reports/bench-results/hex-primality-policy-issue-9757-chungus2.json`.

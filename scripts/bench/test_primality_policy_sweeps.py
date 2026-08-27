@@ -33,6 +33,10 @@ class TableSweepTests(unittest.TestCase):
         self.assertIsNone(row["replay_median_nanos"])
         self.assertEqual(row["sample_count"], 1)
 
+    def test_static_array_header_size(self) -> None:
+        generated = b".m_cs_sz = sizeof(lean_array_object) + sizeof(void*)*9592"
+        self.assertEqual(table.static_array_object_bytes(generated), 76_760)
+
 
 class DecisionSweepTests(unittest.TestCase):
     def test_independent_oracle_classifies_committed_ladder(self) -> None:
@@ -42,6 +46,7 @@ class DecisionSweepTests(unittest.TestCase):
 
     def test_ladder_has_both_outcomes_and_adversarial_primes(self) -> None:
         self.assertEqual({expected for _, _, expected, _ in policy.CASES}, {False, True})
+        self.assertGreaterEqual(min(n for _, n, _, _ in policy.CASES), 100_000)
         chains = [n for _, n, expected, family in policy.CASES
                   if expected and family == "cunningham-chain"]
         self.assertGreaterEqual(len(chains), 2)

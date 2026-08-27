@@ -76,11 +76,15 @@ def main() -> int:
         cwd=ROOT, check=True, capture_output=True, text=True,
     ).stdout
     source = TABLE.read_text()
-    if args.write:
-        source = rewrite(source, generated)
-        TABLE.write_text(source)
-    expected = regions(generated, generated=True)
-    actual = regions(source, generated=False)
+    try:
+        if args.write:
+            source = rewrite(source, generated)
+            TABLE.write_text(source)
+        expected = regions(generated, generated=True)
+        actual = regions(source, generated=False)
+    except ValueError as error:
+        print(f"prime-table layout marker missing: {error}", file=sys.stderr)
+        return 2
     labels = ("bound/table literal", "sieve replay")
     ok = True
     for label, want, got in zip(labels, expected, actual):

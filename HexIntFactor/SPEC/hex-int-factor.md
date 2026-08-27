@@ -375,9 +375,9 @@ the implementation must distinguish: `g = 1` (increase `B`, retry, or
 fall through), `1 < g < n` (a factor), `g = n` (the exponent killed
 every component; retry with a different base or a smaller `B`).
 
-The public bound is explicit rather than aspirational. `smoothBoundCap` is
-the conservative cap `primeTableBound - 1`, inside the range where the
-committed table is certified to contain every prime at or below the bound, and
+The public bound is explicit rather than aspirational. `smoothBoundCap` is the
+accepted constant `9999`, inside the range where the committed table is
+certified complete but independent of later table growth, and
 `smoothBound B = min B smoothBoundCap`. Both the selected primes and their
 prime-power exponents use that same effective bound. In particular a request
 above the cap is not the former hybrid that omitted large primes while still
