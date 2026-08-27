@@ -25,32 +25,38 @@ with growing integer numerators or rational denominators. The historical
 exact-arithmetic crossover cells below remain evidence for route selection;
 they answer a different question from these unit-cost asymptotic ladders.
 
+`karatsubaCost n` is the finite-range recurrence used by every registration
+that invokes the cutoff-32 plan: it is `n²` through 32 and
+`3 * karatsubaCost ((n + 1) / 2) + n` above it. This is asymptotically
+`Θ(n^(log₂ 3))` and, unlike the former `n * sqrt n` proxy, models the retained
+31/32/33 transition rows directly.
+
 ### Full-and-clipped multiplication
 
 - `runSchoolbook`: `n ^ 2`
-- `runKaratsuba`: `n * Nat.sqrt n`
-- `runKaratsubaSquare`: `n * Nat.sqrt n`
-- `runKaratsubaSkew`: `n * Nat.sqrt n`
-- `runKaratsubaRatio2`: `n * Nat.sqrt n`
-- `runKaratsubaRatio4`: `n * Nat.sqrt n`
-- `runKaratsubaRatio16`: `n * Nat.sqrt n`
-- `runKaratsubaRatioUnder2`: `n * Nat.sqrt n`
-- `runFullThenLowInt`: `n * Nat.sqrt n`
-- `runClippedLowInt`: `n * Nat.sqrt n`
+- `runKaratsuba`: `karatsubaCost n`
+- `runKaratsubaSquare`: `karatsubaCost n`
+- `runKaratsubaSkew`: `karatsubaCost n`
+- `runKaratsubaRatio2`: `karatsubaCost n`
+- `runKaratsubaRatio4`: `karatsubaCost n`
+- `runKaratsubaRatio16`: `karatsubaCost n`
+- `runKaratsubaRatioUnder2`: `karatsubaCost n`
+- `runFullThenLowInt`: `karatsubaCost n`
+- `runClippedLowInt`: `karatsubaCost n`
 - `runSchoolbookRat`: `n ^ 2`
-- `runKaratsubaRat`: `n * Nat.sqrt n`
-- `runKaratsubaSquareRat`: `n * Nat.sqrt n`
-- `runFullThenLowRat`: `n * Nat.sqrt n`
-- `runClippedLowRat`: `n * Nat.sqrt n`
+- `runKaratsubaRat`: `karatsubaCost n`
+- `runKaratsubaSquareRat`: `karatsubaCost n`
+- `runFullThenLowRat`: `karatsubaCost n`
+- `runClippedLowRat`: `karatsubaCost n`
 - `runSchoolbookMod`: `n ^ 2`
-- `runKaratsubaMod`: `n * Nat.sqrt n`
-- `runKaratsubaSquareMod`: `n * Nat.sqrt n`
-- `runFullThenLowMod`: `n * Nat.sqrt n`
-- `runClippedLowMod`: `n * Nat.sqrt n`
+- `runKaratsubaMod`: `karatsubaCost n`
+- `runKaratsubaSquareMod`: `karatsubaCost n`
+- `runFullThenLowMod`: `karatsubaCost n`
+- `runClippedLowMod`: `karatsubaCost n`
 - `runSeriesSchoolbookInt`: `n ^ 2`
-- `runSeriesKaratsubaInt`: `n * Nat.sqrt n`
+- `runSeriesKaratsubaInt`: `karatsubaCost n`
 - `runSeriesSchoolbookRat`: `n ^ 2`
-- `runSeriesKaratsubaRat`: `n * Nat.sqrt n`
+- `runSeriesKaratsubaRat`: `karatsubaCost n`
 
 The fixed informational comparator targets are `runFlintOverhead`,
 `runLeanInt64`, `runFlintInt64`, `runLeanInt256`, `runFlintInt256`, `runLeanInt1024`,
@@ -64,38 +70,41 @@ families.
 ### Newton division
 
 - `runLongDivision`: `n ^ 2`
-- `runNewtonDivision`: `n * Nat.sqrt n`
-- `runCachedDivision`: `n * Nat.sqrt n`
-- `runRepeatedNewtonDivision`: `8 * n * Nat.sqrt n`
-- `runRepeatedCachedDivision`: `8 * n * Nat.sqrt n`
+- `runNewtonDivision`: `karatsubaCost n`
+- `runCachedDivision`: `karatsubaCost n`
+- `runRepeatedNewtonDivision`: `8 * karatsubaCost n`
+- `runRepeatedCachedDivision`: `8 * karatsubaCost n`
 - `runSkewLongDivision`: `n ^ 2`
-- `runSkewNewtonDivision`: `n * Nat.sqrt n`
+- `runSkewNewtonDivision`: `karatsubaCost n`
 
 ### Half-gcd
 
 - `runEuclideanXgcd`: `n ^ 2`
-- `runHalfGcd`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
-- `runHalfGcdSkew`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
-- `runHalfGcdLeft`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runHalfGcd`: `karatsubaCost n * (Nat.log2 n + 1)`
+- `runHalfGcdSkew`: `karatsubaCost n * (Nat.log2 n + 1)`
+- `runHalfGcdLeft`: `karatsubaCost n * (Nat.log2 n + 1)`
 
 ### Multipoint
 
-- `runProductTree`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
-- `runRemainderTree`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runProductTree`: `karatsubaCost n`
+- `runRemainderTree`: `karatsubaCost n`
 - `runDirectEval`: `n ^ 2`
-- `runMultipointEval`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
-- `runColdMultipointEval`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runMultipointEval`: `karatsubaCost n`
+- `runColdMultipointEval`: `karatsubaCost n`
 - `runRepeatedDirectEval`: `8 * n ^ 2`
-- `runRepeatedMultipointEval`:
-  `8 * n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runRepeatedMultipointEval`: `8 * karatsubaCost n`
 - `runDirectInterpolation`: `n ^ 3`
-- `runPlannedInterpolation`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
-- `runColdInterpolation`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runPlannedInterpolation`: `karatsubaCost n`
+- `runColdInterpolation`: `karatsubaCost n`
+
+The tree formulas are the tight models for this Karatsuba implementation:
+the per-level costs form a geometric sum. They satisfy the SPEC's more general
+`O(M(n) log n)` upper bounds.
 
 ### Pade
 
 - `runLinearPade`: `n ^ 3`
-- `runHalfGcdPade`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
+- `runHalfGcdPade`: `karatsubaCost n * (Nat.log2 n + 1)`
 
 The `coefficient-kernels` family is owned jointly by the forced Kronecker
 targets in `hexpolyz_bench`, the direct and CRT-NTT targets in

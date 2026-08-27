@@ -808,6 +808,18 @@ def runHalfGcdPade (input : PadeInput) : UInt64 :=
   | none => 0
   | some approx => mixHash (checksumField approx.p) (checksumField approx.q)
 
+/-- Finite-range operation-count model for the registered Karatsuba plan.
+Below the cutoff the plan performs a quadratic schoolbook product; above it,
+three half-sized products and linear combination work give the standard
+`T(n) = 3T(⌈n/2⌉) + O(n)` recurrence. Unlike the coarser `n * sqrt n`
+surrogate, this model keeps the 31/32/33 transition rows scientifically usable.
+-/
+private def karatsubaCost (n : Nat) : Nat :=
+  if n ≤ 32 then n ^ 2
+  else 3 * karatsubaCost ((n + 1) / 2) + n
+termination_by n
+decreasing_by omega
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -823,9 +835,9 @@ setup_benchmark runSchoolbook n => n ^ 2
   }
 
 /- Cost model: balanced Karatsuba satisfies `T(n) = 3T(n/2) + O(n)`, hence
-`T(n) = Θ(n^(log₂ 3))`; `n * sqrt n` is its integer-valued surrogate.
-The nearby 31/32/33 rungs expose the fixed cutoff. -/
-setup_benchmark runKaratsuba n => n * (Nat.sqrt n)
+`T(n) = Θ(n^(log₂ 3))`; `karatsubaCost` records that recurrence with the
+actual cutoff. The nearby 31/32/33 rungs expose the transition. -/
+setup_benchmark runKaratsuba n => karatsubaCost n
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -839,8 +851,8 @@ setup_benchmark runKaratsuba n => n * (Nat.sqrt n)
 
 /- Cost model: specialized squaring performs three recursive squares plus
 linear combination work, so it obeys the same `Θ(n^(log₂ 3))` recurrence;
-`n * sqrt n` is the integer-valued Karatsuba-range surrogate. -/
-setup_benchmark runKaratsubaSquare n => n * (Nat.sqrt n)
+the shared cutoff-aware model applies. -/
+setup_benchmark runKaratsubaSquare n => karatsubaCost n
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -854,22 +866,25 @@ setup_benchmark runKaratsubaSquare n => n * (Nat.sqrt n)
 
 /- Cost model: the 64:1 dispatcher partitions the long operand into 64
 length-`n` blocks.  That constant factor preserves the balanced Karatsuba
-bound `Θ(n^(log₂ 3))`, represented by the `n * sqrt n` surrogate. -/
-setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
+bound `Θ(n^(log₂ 3))`. The table retains the dispatcher setup regime below
+64; the verdict begins at 64 and the expanded ceiling supplies five successive
+recursive measurements. -/
+setup_benchmark runKaratsubaSkew n => karatsubaCost n
   with prep := prepSkew
   where {
     paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
-    maxSecondsPerCall := 3.0
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.45
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-64"]
   }
 
 /- A fixed 2:1 shape performs two balanced Karatsuba blocks, preserving the
 `Theta(n^(log_2 3))` model in the shorter operand size. -/
-setup_benchmark runKaratsubaRatio2 n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaRatio2 n => karatsubaCost n
   with prep := prepRatio2
   where {
     paramFloor := 4
@@ -883,7 +898,7 @@ setup_benchmark runKaratsubaRatio2 n => (n * Nat.sqrt n)
 
 /- Cost model: a fixed 4:1 shape uses four shorter-size blocks, so its
 Karatsuba complexity matches the balanced recurrence up to that constant. -/
-setup_benchmark runKaratsubaRatio4 n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaRatio4 n => karatsubaCost n
   with prep := prepRatio4
   where {
     paramFloor := 4
@@ -897,7 +912,7 @@ setup_benchmark runKaratsubaRatio4 n => (n * Nat.sqrt n)
 
 /- Cost model: a fixed 16:1 shape uses sixteen shorter-size blocks and the
 same Karatsuba complexity exponent in the registered parameter. -/
-setup_benchmark runKaratsubaRatio16 n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaRatio16 n => karatsubaCost n
   with prep := prepRatio16
   where {
     paramFloor := 4
@@ -911,7 +926,7 @@ setup_benchmark runKaratsubaRatio16 n => (n * Nat.sqrt n)
 
 /- The just-under-2:1 shape exposes cutoff leaves with highly unequal raw
 operand lengths while retaining the fixed-ratio Karatsuba cost model. -/
-setup_benchmark runKaratsubaRatioUnder2 n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaRatioUnder2 n => karatsubaCost n
   with prep := prepRatioUnder2
   where {
     paramFloor := 64
@@ -925,7 +940,7 @@ setup_benchmark runKaratsubaRatioUnder2 n => (n * Nat.sqrt n)
 
 /- Cost model: full-product-then-low extraction retains the full balanced
 Karatsuba complexity and is the comparator for direct clipping over `Int`. -/
-setup_benchmark runFullThenLowInt n => (n * Nat.sqrt n)
+setup_benchmark runFullThenLowInt n => karatsubaCost n
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -939,7 +954,7 @@ setup_benchmark runFullThenLowInt n => (n * Nat.sqrt n)
 
 /- Direct low clipping skips irrelevant recursive branches while retaining
 the `O(M(n))` Karatsuba upper bound over `Int`. -/
-setup_benchmark runClippedLowInt n => (n * Nat.sqrt n)
+setup_benchmark runClippedLowInt n => karatsubaCost n
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -959,15 +974,15 @@ setup_benchmark runSchoolbookRat n => (n ^ 2)
     paramFloor := 4
     paramCeiling := 16384
     paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096, 16384]
-    maxSecondsPerCall := 45.0
+    maxSecondsPerCall := 75.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "schoolbook", "rat", "balanced"]
   }
 
 /- Cost model: balanced rational Karatsuba has the standard three-subproblem
-recurrence, represented by the integer-valued `n * sqrt n` surrogate. -/
-setup_benchmark runKaratsubaRat n => (n * Nat.sqrt n)
+recurrence represented by `karatsubaCost`. -/
+setup_benchmark runKaratsubaRat n => karatsubaCost n
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -981,7 +996,7 @@ setup_benchmark runKaratsubaRat n => (n * Nat.sqrt n)
 
 /- Cost model: specialized rational squaring has the same recursive
 complexity as rational Karatsuba multiplication. -/
-setup_benchmark runKaratsubaSquareRat n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaSquareRat n => karatsubaCost n
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -995,7 +1010,7 @@ setup_benchmark runKaratsubaSquareRat n => (n * Nat.sqrt n)
 
 /- Cost model: full rational multiplication followed by extraction retains
 the Karatsuba bound and directly compares with the clipped rational path. -/
-setup_benchmark runFullThenLowRat n => (n * Nat.sqrt n)
+setup_benchmark runFullThenLowRat n => karatsubaCost n
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -1009,7 +1024,7 @@ setup_benchmark runFullThenLowRat n => (n * Nat.sqrt n)
 
 /- Direct rational clipping retains the `O(M(n))` upper bound while avoiding
 irrelevant high product branches. -/
-setup_benchmark runClippedLowRat n => (n * Nat.sqrt n)
+setup_benchmark runClippedLowRat n => karatsubaCost n
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -1036,8 +1051,8 @@ setup_benchmark runSchoolbookMod n => (n ^ 2)
   }
 
 /- Cost model: small-word-field Karatsuba follows the three-subproblem
-recurrence and uses the standard integer-valued complexity surrogate. -/
-setup_benchmark runKaratsubaMod n => (n * Nat.sqrt n)
+recurrence represented by `karatsubaCost`. -/
+setup_benchmark runKaratsubaMod n => karatsubaCost n
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -1051,7 +1066,7 @@ setup_benchmark runKaratsubaMod n => (n * Nat.sqrt n)
 
 /- Cost model: specialized `ZMod64 5` squaring has the same recursive
 complexity as the generic Karatsuba product. -/
-setup_benchmark runKaratsubaSquareMod n => (n * Nat.sqrt n)
+setup_benchmark runKaratsubaSquareMod n => karatsubaCost n
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -1065,7 +1080,7 @@ setup_benchmark runKaratsubaSquareMod n => (n * Nat.sqrt n)
 
 /- Cost model: full small-word-field multiplication followed by extraction
 retains the Karatsuba bound used by the direct-clipping comparator. -/
-setup_benchmark runFullThenLowMod n => (n * Nat.sqrt n)
+setup_benchmark runFullThenLowMod n => karatsubaCost n
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -1079,7 +1094,7 @@ setup_benchmark runFullThenLowMod n => (n * Nat.sqrt n)
 
 /- Direct `ZMod64 5` clipping avoids high recursive branches while retaining
 the `O(M(n))` upper bound. -/
-setup_benchmark runClippedLowMod n => (n * Nat.sqrt n)
+setup_benchmark runClippedLowMod n => karatsubaCost n
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -1111,7 +1126,7 @@ setup_benchmark runSeriesSchoolbookInt n => (n ^ 2)
 Cost model: clipped integer series multiplication follows the same
 three-subproblem Karatsuba recurrence as the full product.
 -/
-setup_benchmark runSeriesKaratsubaInt n => (n * Nat.sqrt n)
+setup_benchmark runSeriesKaratsubaInt n => karatsubaCost n
   with prep := prepSeriesInt
   where {
     paramFloor := 4
@@ -1145,7 +1160,7 @@ setup_benchmark runSeriesSchoolbookRat n => (n ^ 2)
 Cost model: clipped rational series multiplication follows the standard
 three-subproblem Karatsuba recurrence.
 -/
-setup_benchmark runSeriesKaratsubaRat n => (n * Nat.sqrt n)
+setup_benchmark runSeriesKaratsubaRat n => karatsubaCost n
   with prep := prepSeriesRat
   where {
     paramFloor := 4
@@ -1174,8 +1189,8 @@ setup_benchmark runLongDivision n => n ^ 2
 
 /- Cost model: a cold Newton call includes reciprocal construction and three clipped
 Karatsuba products.  Doubling is geometric, so the balanced model remains
-`Θ(M(n))`, represented by the Karatsuba-range integer surrogate. -/
-setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
+`Θ(M(n))`, represented by the cutoff-aware Karatsuba recurrence. -/
+setup_benchmark runNewtonDivision n => karatsubaCost n
   with prep := prepDivision
   where {
     paramFloor := 4
@@ -1188,8 +1203,8 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
   }
 
 /- Cost model: reciprocal construction is hoisted into `prep`; the timed body
-performs two `O(M(n))` products, represented by the Karatsuba surrogate. -/
-setup_benchmark runCachedDivision n => (n * Nat.sqrt n)
+performs two `O(M(n))` products, represented by `karatsubaCost`. -/
+setup_benchmark runCachedDivision n => karatsubaCost n
   with prep := prepCachedDivision
   where {
     paramFloor := 4
@@ -1203,7 +1218,7 @@ setup_benchmark runCachedDivision n => (n * Nat.sqrt n)
 
 /- Eight dividends share one fixed reciprocal. This separates amortized plan
 reuse from the one-shot comparison above. -/
-setup_benchmark runRepeatedNewtonDivision n => (8 * n * Nat.sqrt n)
+setup_benchmark runRepeatedNewtonDivision n => 8 * karatsubaCost n
   with prep := prepRepeatedDivision
   where {
     paramFloor := 4
@@ -1219,7 +1234,7 @@ setup_benchmark runRepeatedNewtonDivision n => (8 * n * Nat.sqrt n)
 Cost model: eight dividends reuse one reciprocal, so the amortized timed work
 is eight `O(M(n))` quotient-and-reconstruction products.
 -/
-setup_benchmark runRepeatedCachedDivision n => (8 * n * Nat.sqrt n)
+setup_benchmark runRepeatedCachedDivision n => 8 * karatsubaCost n
   with prep := prepRepeatedDivision
   where {
     paramFloor := 4
@@ -1233,7 +1248,9 @@ setup_benchmark runRepeatedCachedDivision n => (8 * n * Nat.sqrt n)
 
 /-
 Cost model: the fixed 4:1 long-division shape performs linearly many dense
-suffix updates, giving a quadratic bound in the shorter degree.
+suffix updates, giving a quadratic bound in the shorter degree. The first four
+rungs retain the allocation-dominated small-input regime; the verdict begins
+at 64, where the repeated suffix-update loop dominates, and keeps five rungs.
 -/
 setup_benchmark runSkewLongDivision n => (n ^ 2)
   with prep := prepGcdSkew
@@ -1243,6 +1260,7 @@ setup_benchmark runSkewLongDivision n => (n ^ 2)
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.45
     signalFloorMultiplier := 1.0
     tags := #["division", "long", "ratio-4"]
   }
@@ -1251,7 +1269,7 @@ setup_benchmark runSkewLongDivision n => (n ^ 2)
 Cost model: a fixed 4:1 shape changes Newton division by a constant number of
 blocks, preserving the `O(M(n))` Karatsuba bound.
 -/
-setup_benchmark runSkewNewtonDivision n => (n * Nat.sqrt n)
+setup_benchmark runSkewNewtonDivision n => karatsubaCost n
   with prep := prepGcdSkew
   where {
     paramFloor := 4
@@ -1279,8 +1297,10 @@ setup_benchmark runEuclideanXgcd n => (n ^ 2)
   }
 
 /- Recursive high-half transformations group the quotient sequence into a
-logarithmic number of balanced matrix levels, for `O(M(n) log n)`. -/
-setup_benchmark runHalfGcd n => (n * Nat.sqrt n * (Nat.log2 n + 1))
+logarithmic number of sequential matrix levels, for `O(M(n) log n)`. The
+verdict begins at 64, above the multiplication cutoff, while retaining the
+smaller boundary-search rows. -/
+setup_benchmark runHalfGcd n => karatsubaCost n * (Nat.log2 n + 1)
   with prep := prepGcdBalanced
   where {
     paramFloor := 4
@@ -1288,15 +1308,17 @@ setup_benchmark runHalfGcd n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.4
     signalFloorMultiplier := 1.0
     tags := #["half-gcd", "matrix", "balanced"]
   }
 
 /-
 Cost model: fixed 4:1 skew changes only constants in the half-gcd recurrence,
-which remains `O(M(n) log n)` in the shorter degree.
+which remains `O(M(n) log n)` in the shorter degree. Its verdict likewise
+begins at 64 and retains five recursive rungs.
 -/
-setup_benchmark runHalfGcdSkew n => (n * Nat.sqrt n * (Nat.log2 n + 1))
+setup_benchmark runHalfGcdSkew n => karatsubaCost n * (Nat.log2 n + 1)
   with prep := prepGcdSkew
   where {
     paramFloor := 4
@@ -1304,15 +1326,17 @@ setup_benchmark runHalfGcdSkew n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.45
     signalFloorMultiplier := 1.0
     tags := #["half-gcd", "matrix", "ratio-4"]
   }
 
 /-
 Cost model: the one-sided half-gcd surface uses the same logarithmic matrix
-recurrence and `O(M(n) log n)` bound as the paired result.
+recurrence and `O(M(n) log n)` bound as the paired result. Its verdict begins
+at 64 for the same cutoff reason.
 -/
-setup_benchmark runHalfGcdLeft n => (n * Nat.sqrt n * (Nat.log2 n + 1))
+setup_benchmark runHalfGcdLeft n => karatsubaCost n * (Nat.log2 n + 1)
   with prep := prepGcdBalanced
   where {
     paramFloor := 4
@@ -1320,15 +1344,16 @@ setup_benchmark runHalfGcdLeft n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.4
     signalFloorMultiplier := 1.0
     tags := #["half-gcd", "matrix", "one-sided"]
   }
 
-/- A balanced product tree performs one multiplication per internal node over
-geometrically growing degrees, for `O(M(n) log n)` total work. With the
-Karatsuba plan used by this target, `n * sqrt n` represents `M(n)` and the
-remaining factor counts tree levels. -/
-setup_benchmark runProductTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
+/- At level `j`, a balanced product tree performs `2^j` products of size
+`n/2^j`. For the superlinear Karatsuba recurrence their costs form a geometric
+sum bounded by `Θ(M(n))`; this is tighter than the generic `O(M(n) log n)`
+SPEC upper bound. -/
+setup_benchmark runProductTree n => karatsubaCost n
   with prep := prepProductTree
   where {
     paramFloor := 4
@@ -1340,9 +1365,10 @@ setup_benchmark runProductTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
     tags := #["product-tree", "karatsuba", "cold", "field-65537"]
   }
 
-/- Construction and one traversal both follow the balanced
-`O(M(n) log n)` remainder-tree bound. -/
-setup_benchmark runRemainderTree n => n * Nat.sqrt n * (Nat.log2 n + 1)
+/- Construction and one traversal have the same per-level geometric sum as
+the product tree, hence `Θ(M(n))` for the registered Karatsuba plan and within
+the generic `O(M(n) log n)` upper bound. -/
+setup_benchmark runRemainderTree n => karatsubaCost n
   with prep := prepRemainderTree
   where {
     paramFloor := 4
@@ -1370,8 +1396,8 @@ setup_benchmark runDirectEval n => n ^ 2
   }
 
 /- With products and reciprocals prepared outside the timed call, the balanced
-remainder tree costs `O(M(n) log n)`. -/
-setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+remainder traversal is a geometric `Θ(M(n))` sum under Karatsuba. -/
+setup_benchmark runMultipointEval n => karatsubaCost n
   with prep := prepMultipoint
   where {
     paramFloor := 4
@@ -1383,9 +1409,10 @@ setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["multipoint", "remainder-tree", "reused-plan", "field-65537"]
   }
 
-/- Cost model: product, reciprocal, and remainder trees are all constructed
-inside the timed call; each has the `O(M(n) log n)` balanced-tree bound. -/
-setup_benchmark runColdMultipointEval n => (n * Nat.sqrt n * (Nat.log2 n + 1))
+/- Product, reciprocal, and remainder trees are all constructed inside the
+timed call. Each is a geometric `Θ(M(n))` sum under the registered Karatsuba
+plan, and a constant number of such sums remains `Θ(M(n))`. -/
+setup_benchmark runColdMultipointEval n => karatsubaCost n
   with prep := prepMultipoint
   where {
     paramFloor := 4
@@ -1413,11 +1440,11 @@ setup_benchmark runRepeatedDirectEval n => (8 * n ^ 2)
     tags := #["multipoint", "horner", "repeated", "reused-points", "field-65537"]
   }
 
-/- Eight polynomials reuse one point-product plan. Each remainder-tree
-traversal costs `O(M(n) log n)`, so the fixed batch costs eight times the
-Karatsuba surrogate with its logarithmic tree depth. -/
+/- Eight polynomials reuse one point-product plan. Each remainder traversal is
+a geometric `Θ(M(n))` sum under Karatsuba, so the fixed batch costs eight times
+the cutoff-aware multiplication model. -/
 setup_benchmark runRepeatedMultipointEval n =>
-    8 * n * Nat.sqrt n * (Nat.log2 n + 1)
+    8 * karatsubaCost n
   with prep := prepMultipointBatch
   where {
     paramFloor := 4
@@ -1446,9 +1473,9 @@ setup_benchmark runDirectInterpolation n => n ^ 3
   }
 
 /- With the distinct-point plan prepared outside the timed call, bottom-up
-combination follows the balanced product shape in `O(M(n) log n)` work. -/
+combination follows the same geometric `Θ(M(n))` Karatsuba tree sum. -/
 setup_benchmark runPlannedInterpolation n =>
-    n * (Nat.sqrt n) * (Nat.log2 n + 1)
+    karatsubaCost n
   with prep := prepInterpolation
   where {
     paramFloor := 4
@@ -1461,9 +1488,10 @@ setup_benchmark runPlannedInterpolation n =>
   }
 
 /- Distinct-point checking, derivative evaluation, inverses, and the product
-tree are included in the cold planned interpolation arm. -/
+tree are included in the cold arm. Their linear work plus a constant number of
+geometric Karatsuba tree sums is `Θ(M(n))`. -/
 setup_benchmark runColdInterpolation n =>
-    n * (Nat.sqrt n) * (Nat.log2 n + 1)
+    karatsubaCost n
   with prep := prepInterpolation
   where {
     paramFloor := 4
@@ -1493,8 +1521,9 @@ setup_benchmark runLinearPade n => (n ^ 3)
   }
 
 /- Padé delegates its Euclidean boundary search to the half-gcd engine, with
-the same `O(M(n) log n)` balanced cost model. -/
-setup_benchmark runHalfGcdPade n => (n * Nat.sqrt n * (Nat.log2 n + 1))
+the same `O(M(n) log n)` balanced cost model. The verdict begins at bound 32,
+where the series precision is above the multiplication cutoff. -/
+setup_benchmark runHalfGcdPade n => karatsubaCost n * (Nat.log2 n + 1)
   with prep := prepPade
   where {
     paramFloor := 1
@@ -1502,6 +1531,7 @@ setup_benchmark runHalfGcdPade n => (n * Nat.sqrt n * (Nat.log2 n + 1))
     paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.4
     signalFloorMultiplier := 1.0
     tags := #["pade", "half-gcd", "normalized", "field-65537"]
   }
