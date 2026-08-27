@@ -10,7 +10,9 @@ below names the commit that introduced the measurement and gives the exact
 command needed to refresh it. Inputs are deterministic and have no random
 seed. The current smoke and FLINT fixed-target refresh used binary revision
 `0aaa2af-dirty`; the only worktree change at that refresh was the
-content-preserving relocation of the library SPEC.
+content-preserving relocation of the library SPEC. The accepted scientific
+export uses clean revision `53ef234e9` pinned to logical CPU 2; CPU 2 and its
+SMT sibling 50 were both idle immediately after the run.
 
 ## Bench targets
 
@@ -126,8 +128,60 @@ It gave 24 consistent and 23 inconclusive verdicts. That run exposed two
 benchmark-design errors: `runProductTree` omitted its `M(n)` factor, and the
 exact `Int`/`Rat` division and tree fixtures increasingly measured
 coefficient-width growth. Those registrations now use the fixed-width field
-above, but a clean-tree replacement export for all 47 targets is still
-required, so no blanket complexity verdict is claimed here.
+above. The clean replacement is
+`reports/bench-results/hex-poly-fast-scientific-53ef234e-chungus2-cpu2.json`.
+It contains all 47 parametric targets, no killed or budget-truncated row, and
+47 `consistent_with_declared_complexity` verdicts:
+
+| target | verdict | β |
+|:---|:---:|---:|
+| `runSchoolbook` | consistent | -0.017329 |
+| `runKaratsuba` | consistent | +0.011398 |
+| `runKaratsubaSquare` | consistent | +0.022580 |
+| `runKaratsubaSkew` | consistent | -0.053507 |
+| `runKaratsubaRatio2` | consistent | +0.037412 |
+| `runKaratsubaRatio4` | consistent | -0.005961 |
+| `runKaratsubaRatio16` | consistent | -0.043984 |
+| `runKaratsubaRatioUnder2` | consistent | -0.022320 |
+| `runFullThenLowInt` | consistent | +0.012376 |
+| `runClippedLowInt` | consistent | +0.107390 |
+| `runSchoolbookRat` | consistent | +0.001593 |
+| `runKaratsubaRat` | consistent | +0.012665 |
+| `runKaratsubaSquareRat` | consistent | +0.010736 |
+| `runFullThenLowRat` | consistent | +0.012852 |
+| `runClippedLowRat` | consistent | +0.116438 |
+| `runSchoolbookMod` | consistent | -0.011972 |
+| `runKaratsubaMod` | consistent | +0.039913 |
+| `runKaratsubaSquareMod` | consistent | +0.036096 |
+| `runFullThenLowMod` | consistent | +0.032657 |
+| `runClippedLowMod` | consistent | +0.130863 |
+| `runSeriesSchoolbookInt` | consistent | -0.039582 |
+| `runSeriesKaratsubaInt` | consistent | +0.092690 |
+| `runSeriesSchoolbookRat` | consistent | -0.005847 |
+| `runSeriesKaratsubaRat` | consistent | +0.106338 |
+| `runLongDivision` | consistent | -0.025721 |
+| `runNewtonDivision` | consistent | +0.025307 |
+| `runCachedDivision` | consistent | +0.031378 |
+| `runRepeatedNewtonDivision` | consistent | +0.074911 |
+| `runRepeatedCachedDivision` | consistent | +0.019557 |
+| `runSkewLongDivision` | consistent | -0.048722 |
+| `runSkewNewtonDivision` | consistent | -0.021356 |
+| `runEuclideanXgcd` | consistent | -0.105758 |
+| `runHalfGcd` | consistent | -0.084180 |
+| `runHalfGcdSkew` | consistent | +0.004696 |
+| `runHalfGcdLeft` | consistent | -0.077145 |
+| `runProductTree` | consistent | +0.041852 |
+| `runRemainderTree` | consistent | -0.034770 |
+| `runDirectEval` | consistent | +0.019097 |
+| `runMultipointEval` | consistent | -0.015919 |
+| `runColdMultipointEval` | consistent | -0.033578 |
+| `runRepeatedDirectEval` | consistent | +0.019778 |
+| `runRepeatedMultipointEval` | consistent | -0.004901 |
+| `runDirectInterpolation` | consistent | -0.081887 |
+| `runPlannedInterpolation` | consistent | +0.016068 |
+| `runColdInterpolation` | consistent | -0.011533 |
+| `runLinearPade` | consistent | -0.033612 |
+| `runHalfGcdPade` | consistent | -0.071212 |
 
 The following within-Lean crossover cells are retained and traceable to the
 commits that introduced them. All commands use cold cache mode, three outer
@@ -290,10 +344,6 @@ does not satisfy that contract.
 
 ## Concerns
 
-- A clean-tree replacement for the diagnostic scientific export is missing.
-  The fixed-width fixture repair has focused passing verdicts, but the
-  cutoff-transition verdict windows and all 47 registrations still require a
-  single retained rerun.
 - The six required timed-region sampling profiles are missing.
 - The informational FLINT overhead target is wired, but its clean-tree timing
   and the resulting adjusted ladder ratios have not yet been retained.
