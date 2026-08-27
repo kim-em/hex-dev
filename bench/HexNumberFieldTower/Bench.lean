@@ -1011,6 +1011,24 @@ setup_fixed_benchmark runPariNfFactor4 where pariCompareConfig
 setup_fixed_benchmark runTowerFactorPair6 where pariCompareConfig
 setup_fixed_benchmark runPariNfFactor6 where pariCompareConfig
 
+/-- Per-call driver overhead for the PARI comparator: one `nf`-family
+request whose PARI-side work is a constant `0`, so the measured time is the
+JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
+comparators §Process call requires this figure so the headline report can
+quote overhead-adjusted ratios. -/
+def runPariNfFactorOverhead : Unit → IO UInt64 := fun _ => do
+  let result ← Hex.BenchOracle.Pari.runOp "nf" "overhead" #[]
+  match result.getInt? with
+  | .ok value => return UInt64.ofNat value.toNat
+  | .error error =>
+    throw <| IO.userError s!"invalid PARI overhead reply: {error}"
+
+/- Driver round-trip floor for the PARI comparator: no algorithmic work on
+either side, so this registration measures only the per-call request/reply
+cost that the headline report subtracts from the PARI wall times. -/
+setup_fixed_benchmark runPariNfFactorOverhead where
+  { pariCompareConfig with expectedHash := some 0x0 }
+
 end Hex.NumberTowerBench
 
 def main (args : List String) : IO UInt32 :=
