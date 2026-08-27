@@ -13,7 +13,24 @@
 
 ## Verdicts
 
-Comparator wiring and smoke verdict run at worktree commit
+All eight parametric performance registrations use **mode 1, two-sided
+parametric**. Their adjacent
+derivations determine the expected family scaling before measurement:
+coefficientwise addition is linear, dense multiplication/reduction and
+extended gcd are quadratic, and exponentiation repeats quadratic
+multiplication logarithmically. The same certificate-backed degree-2-through-8
+family and fixed word-size representation underlie both the passing and
+inconclusive targets, so mode cannot honestly vary with the narrow-range
+harness result. Mode 2 is unavailable because tight models are derivable;
+mode 3 cannot replace an attainable mode-1 test whose present failure is
+schedule calibration rather than model existence.
+
+The 96 fixed registrations are comparator endpoints and canonical
+expected-hash checks. They make no complexity claim, have no mode, and do not
+replace the eight performance registrations.
+
+The only recorded verdict run is comparator wiring under smoke settings at
+worktree commit
 `728f2ca-dirty` on `carica` (Apple Silicon, macOS arm64), command:
 
 ```sh
@@ -56,12 +73,14 @@ parametric Hex targets plus the paired fixed Hex / FLINT
   complexity (`cMin=907.931, cMax=1339.909`,
   parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
 
-The remaining inconclusive verdicts are a calibration issue on the
-small certificate-backed ladder, not a blocker for the informational
-FLINT comparator. The Phase 4 comparator is now declared in
-`libraries.yml`, wired in `HexGFqField/Bench.lean`, and covered by the
-headline report; `HexGFqField.done_through` is therefore advanced to
-`4`.
+This dirty smoke run is not reproducible scientific evidence and cannot pass
+Phase 4. Its six inconclusive results indicate that the small
+certificate-backed ladder is miscalibrated; they are not mode-2 passes. The
+results do not block the
+informational FLINT comparator, but they do block Phase 4 until the family is
+re-tuned without fitting its models and rerun scientifically from a clean
+tree. The comparator remains declared in
+`libraries.yml`, wired in `HexGFqField/Bench.lean`, and covered by this report.
 
 Smoke wiring was checked with:
 
@@ -280,4 +299,10 @@ calibration anchors: spawn_wall_ns=1780141979062884000, spawn_mono_ns=3300129766
 
 ## Concerns
 
-None.
+Six mode-1 registrations remain inconclusive on the narrow
+certificate-backed ladder. The pre-policy report already identified this as
+miscalibration, and the ordered rule does not change it into a pass. No clean
+scientific run exists for any of the eight registrations.
+This finding and the rollback are recorded by
+[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
+issue follows after the policy lands.

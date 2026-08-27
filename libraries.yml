@@ -272,7 +272,7 @@ libraries:
   HexPolySmith:
     deps: [HexPoly, HexMatrix, HexDeterminant]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -509,7 +509,7 @@ libraries:
   HexGFqField:
     deps: [HexGFqRing, HexBerlekamp]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -552,7 +552,7 @@ libraries:
   HexHensel:
     deps: [HexPolyFp, HexPolyZ, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -595,7 +595,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -824,7 +824,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:

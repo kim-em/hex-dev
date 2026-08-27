@@ -6,11 +6,12 @@
 
 Phase 4 makes algorithmic complexity a first-class deliverable. By
 the end of Phase 4 every advertised compiled operation in the library's API
-has a textbook complexity model declared at its `setup_benchmark`
-registration and a benchmark family whose verdict is *consistent
-with declared complexity*; every advertised proof/tactic operation has the
-fresh-module evidence defined below. An *inconclusive* compiled verdict is not
-a Phase 4 exit; it is a finding that triggers a rollback per
+has the strongest applicable benchmark mode from
+[`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
+and a passing result in that mode; every advertised proof/tactic operation has
+the fresh-module evidence defined below. An *inconclusive* compiled verdict is not
+a Phase 4 exit unless it is the current harness wording for a documented,
+passing one-sided upper-bound result. A failing result triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
 and a fix at the rolled-back phase.
 
@@ -27,7 +28,7 @@ advertised operation to exactly one row.
 
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |
-| Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent textbook cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
+| Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent independent cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
 | Elaboration, proof-search tactics, emitted proof terms, or kernel checking | Externally timed fresh-module builds below an explicit `libraries.yml` `proof_probes` root, with matched import baselines, rotated raw samples, compiler/proof artefacts, and the trust/provenance record in `SPEC/benchmarking.md`. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
 
 A `mathlib: true` library with a separable compiled core is a **mixed**
@@ -46,8 +47,10 @@ For each library `HexFoo` advancing through Phase 4:
    It registers every compiled operation in the library's SPEC API surface
    with `setup_benchmark` (parametric) or
    `setup_fixed_benchmark` (canonical input). The complexity
-   expression in each `setup_benchmark` is the *textbook*
-   complexity, not the observed one. Proof-track operations instead have
+   expression in each `setup_benchmark` is the independently derived expected
+   family scaling for a two-sided registration or the cited published bound
+   for a one-sided registration, never a model read from observed timings.
+   Proof-track operations instead have
    named fresh-module probes and matched baselines under an explicit manifest
    `proof_probes` directory; those probes are not registrations.
 
@@ -110,19 +113,21 @@ For each library `HexFoo` advancing through Phase 4:
    compiled versus proof/tactic evidence and state each proof-track replacement
    explicitly.
 
-The PR description records, in one paragraph, any case where the
-declared complexity model differs from the canonical textbook
-complexity (e.g. amortised vs worst-case, randomised vs
-deterministic). This is the only "performance rationale" section
+The PR description records, in one paragraph, any case where the benchmark
+claim differs from the per-library SPEC's worst-case contract (for example,
+family-specific expected scaling, amortised versus worst-case, or randomised
+versus deterministic). This is the only "performance rationale" section
 required.
 
 ## Discipline
 
-- **Declare textbook complexity.** Not the observed complexity of
-  the current implementation. If the textbook is `O(n²)` and the
-  current code is `O(n³)`, declare `O(n²)`, run the benchmark, get
-  the inconclusive verdict, file the issue, roll back. The
-  benchmark's job is to reveal the gap, not to ratify it.
+- **Declare the intended algorithm's independently derived expected scaling on
+  the registered family.** Derive it before measurement and never read it off
+  observed timings. The adjacent derivation must explain how the family
+  relates to the per-library SPEC's worst-case bound. When a tight family model
+  is unavailable, work the ordered alternatives in
+  [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
+  rather than fitting the declaration to the current implementation.
 - **Use the assigned harness.** LeanBench is the sole compiled-code inner
   harness. The external fresh-build runner is permitted only for proof-track
   evidence and may not time compiled computation redundantly.
@@ -150,17 +155,28 @@ For library `hex-foo`, Phase 4 is done when:
   track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
   proof-track operation has the specified externally timed fresh-module probe;
-- every parametric registration declares a complexity model that
-  matches the SPEC's textbook complexity for that operation;
+- the headline report names the strongest applicable mode from
+  `SPEC/benchmarking.md`'s ordered rule for every performance-evidence
+  registration; fixed registrations used only as hash, comparator, or protocol
+  anchors are labelled as such and cannot satisfy operation coverage; every mode-1
+  parametric declaration matches the independently derived expected scaling
+  on its family, every
+  mode-2 declaration is a cited published upper bound covering the dominant
+  profiled phase, and every mode-3 registration has a canonical hard input and
+  meaningful absolute budget;
 - every new or changed parametric registration has an adjacent
   cost-model derivation comment, and every PR that changes a
   `setup_benchmark` complexity declaration includes an independent
   cost-model derivation in the commit message that made the change;
 - when a compiled track exists, `lake exe hexfoo_bench verify` succeeds under
   smoke settings, and
-  `lake exe hexfoo_bench run NAME` returns *consistent with declared
-  complexity* for every parametric registration at its scientific
-  settings;
+  `lake exe hexfoo_bench run NAME` returns a passing verdict for every
+  parametric registration's declared mode at its scientific settings; until
+  lean-bench has a one-sided mode, the headline report may translate a mode-2
+  harness result to the distinct passing result *within declared upper bound
+  (observed faster)* or *within declared upper bound (observed matching)*, as
+  its observed direction requires; a slower-than-declared observation fails
+  mode 2 and admits no translation;
 - every `compare` group named by the SPEC is registered and reports
   `allAgreed` on its declared common domain;
 - every comparator declared `gating` in `libraries.yml:
@@ -188,8 +204,10 @@ For library `hex-foo`, Phase 4 is done when:
   samples and provenance;
 - the headline report at `reports/<lib>-performance.md` exists with
   the five mandated subsections and full artefact traceability;
-- the headline report's §Concerns subsection is empty. A library
-  cannot **remain** at `done_through: 4` while any Concern is
+- the headline report's §Concerns subsection is empty. A passing mode-2 or
+  mode-3 registration is not itself a Concern merely because it makes a weaker
+  claim than mode 1; its report must contain the ordered-rule rationale. A
+  library cannot **remain** at `done_through: 4` while any Concern is
   unresolved; the orchestrator rolls back if this state is detected.
   The only resolution available to the orchestrator is to act on
   the HO issue tied to the Concern until the underlying problem is
@@ -251,5 +269,12 @@ issue with a checkbox per library; per-library follow-on issues
 are filed only when the audit identifies actual gaps. Libraries
 already passing all new criteria stay at `done_through: 4`
 unchanged.
+
+The ordered complexity-mode rule is likewise an audit reset. Its merge queues
+one umbrella audit of every library at `done_through ≥ 4`; existing passing
+two-sided registrations need no relabelling until their report is revised, but
+an inconclusive result or non-empty Concern is not grandfathered. The audit
+files per-library remediation issues only where the ordered rule exposes an
+actual gap, and applies the normal rollback rule there.
 
 Record completion by bumping `libraries.yml[L].done_through` to `4`.

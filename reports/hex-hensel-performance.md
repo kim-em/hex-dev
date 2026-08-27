@@ -4,19 +4,53 @@ Current at revision `0b95505b7c926911a9f487bac56676a8c7da48f6`, measured
 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0.
 All nine parametric targets were refreshed together from a clean worktree.
 
+## Bench targets
+
+The nine performance registrations and their declarations, copied from
+`bench/HexHensel/Bench.lean`, are:
+
+| registration | model | family |
+|---|---|---|
+| `runModPChecksum` | `n` | bridge operations |
+| `runLiftToZChecksum` | `n` | bridge operations |
+| `runReduceModPowChecksum` | `n` | bridge operations |
+| `runLinearHenselStepChecksum` | `n * n` | linear Hensel |
+| `runHenselLiftChecksum` | `n^2 k` through `liftLinearComplexity` | linear Hensel |
+| `runQuadraticHenselStepChecksum` | `n * n` | quadratic Hensel |
+| `runPolyProductChecksum` | `n * n` | multifactor lifting |
+| `runMultifactorLiftChecksum` | `n^2 k` through `liftLinearComplexity` | multifactor lifting |
+| `runMultifactorLiftQuadraticChecksum` | `n^2 log k` through `liftQuadraticComplexity` | multifactor lifting |
+
 ## Verdicts
+
+All nine parametric performance registrations use **mode 1, two-sided
+parametric**. Their models are
+derived from the intended linear or quadratic lifting algorithm on the
+registered degree/precision family, so mode 2's prerequisite — inability to
+derive a tight family model — does not hold. The six consistent results pass
+mode 1. The three inconclusive results are failed mode-1 results, so Phase 4 is
+blocked: the existing mixed schedules have not established the derived
+scaling, and no published bound plus dominant-phase attribution has been
+supplied for a one-sided reinterpretation. Mode 3 is not justified while the
+independently derived mode-1 models remain attainable on controlled
+degree/precision families. Mode 4 does not apply to these registrations
+because mode 1 is an honest claim; it simply has not passed.
+
+The fixed FLINT endpoints are comparator and protocol anchors. They make no
+complexity claim, have no mode, and do not replace the nine performance
+registrations.
 
 | Target | Model | Largest rung | Median | Verdict |
 |---|---|---:|---:|---|
-| Reduce mod `p` | `n` | 131072 | 9.601 ms | consistent |
-| Lift to `Z` | `n` | 131072 | 2.582 ms | consistent |
-| Reduce mod `p^k` | `n` | 131072 | 733.006 µs | consistent |
-| Linear step | `n²` | 512 | 15.568 ms | consistent |
-| Iterated linear lift | `n²k` | `(192,64)` | 145.374 ms | inconclusive |
-| Quadratic step | `n²` | 512 | 8.481 ms | consistent |
-| Product | `n²` | 1024 | 161.314 ms | consistent |
-| Linear multifactor | `n²k` | `(192,64)` | 147.330 ms | inconclusive |
-| Quadratic multifactor | `n² log k` | `(192,64)` | 48.711 ms | inconclusive |
+| `runModPChecksum` | `n` | 131072 | 9.601 ms | consistent |
+| `runLiftToZChecksum` | `n` | 131072 | 2.582 ms | consistent |
+| `runReduceModPowChecksum` | `n` | 131072 | 733.006 µs | consistent |
+| `runLinearHenselStepChecksum` | `n²` | 512 | 15.568 ms | consistent |
+| `runHenselLiftChecksum` | `n²k` | `(192,64)` | 145.374 ms | inconclusive |
+| `runQuadraticHenselStepChecksum` | `n²` | 512 | 8.481 ms | consistent |
+| `runPolyProductChecksum` | `n²` | 1024 | 161.314 ms | consistent |
+| `runMultifactorLiftChecksum` | `n²k` | `(192,64)` | 147.330 ms | inconclusive |
+| `runMultifactorLiftQuadraticChecksum` | `n² log k` | `(192,64)` | 48.711 ms | inconclusive |
 
 The packed verified kernels remain visible in the quadratic row: the
 degree-512 step is 15.2× faster than the 128.731 ms pre-kernel record. The new
@@ -36,7 +70,15 @@ Raw export:
 The covered input families are `bridge-operations`, `linear-hensel`,
 `quadratic-hensel`, and `multifactor-lifting`.
 
-## External Comparator Status
+## Profile
+
+No inclusive profile is recorded for the three failed mode-1 registrations.
+Before Phase 4 can be reclaimed, profile their largest completed rungs and
+separate schedule/encoding effects from a wrong implementation shape. That
+missing attribution evidence is part of the remediation, not grounds for a
+one-sided reinterpretation.
+
+## Comparator Ratios
 
 The declared comparator is `FLINT nmod_poly_hensel_lift_* via python-flint`.
 The five python-flint comparator exports from 2026-07-28 remain valid records
@@ -49,9 +91,15 @@ and is not a native-FLINT performance claim.
 
 ## Concerns
 
-- The `n²k` iterated-linear verdicts remain inconclusive on the mixed
-  degree/precision schedule.
+- The `n²k` iterated-linear mode-1 verdicts remain inconclusive on the mixed
+  degree/precision schedule, so Phase 4 is blocked.
 - The quadratic-multifactor model is now inconclusive because the optimized
   high-precision rung changes the observed ladder shape.
+- Inclusive profiles for the three failed top rungs have not yet separated a
+  schedule/encoding problem from an implementation-shape problem.
 - A current native-FLINT Hensel comparison still needs bindings that
   python-flint does not expose.
+
+The failed mode-1 verdicts and rollback are recorded by
+[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
+issue follows after the policy lands.

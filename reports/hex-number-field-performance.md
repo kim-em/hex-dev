@@ -94,13 +94,15 @@ adaptive working precision eventually reached by the isolator:
 | algebraic roots | 6 | 12 | 366,720 | 19 | 274 |
 | algebraic roots | 8 | 16 | 602,625 | 20 | 389 |
 
-This operation-specific assessment does not reclassify the three other
-registrations whose comments contain the HexRoots isolation proxy:
-`runExactFactorLadder` and `runCanonicalRepLadder` already remain open
-faster-than-envelope concerns under #9733, while `runQAdjoinRootsLadder` has a
-different repeated-component path repaired under #9724. Their heuristic
-isolation terms are not presented here as consequences of the BSSY theorem or
-as support for this fixed-mode decision.
+This operation-specific assessment does not resolve the three other
+registrations whose comments contain the HexRoots isolation proxy.
+`runExactFactorLadder` and `runCanonicalRepLadder` remain open
+faster-than-envelope concerns. The #9724 repair removed
+`runQAdjoinRootsLadder`'s repeated-component exactification pathology, but it
+did not establish the provenance of that ladder's declaration; the ordered
+rule therefore classifies it as mode 4 too. None of those heuristic isolation
+terms is presented here as a consequence of the BSSY theorem or as support for
+this fixed-mode decision.
 
 The current local `hexnumberfield_bench verify` invocation completes in 11.84 s
 on the reference host, below the per-library 30 s soft-warning threshold. Both
@@ -217,6 +219,45 @@ library as a whole.
 
 ## Verdicts
 
+Five ladders use **mode 1, two-sided parametric**:
+`runQAdjoinAddLadder`, `runQAdjoinMulLadder`, `runAddEliminantLadder`,
+`runCommonPresentationLadder`, and `runMergeRootListLadder`. Their adjacent
+derivations give the intended algorithms' expected scaling on the controlled
+families before measurement, and all five pass.
+
+`runLazyAddLadder` and `runAlgebraicRootsLadder` use **mode 3, fixed
+registration with an absolute budget**. The adjacent isolation-mode assessment
+records why modes 1 and 2 do not apply, identifies their canonical inputs, and
+sets 12 s and 15 s ceilings. Both fixed measurements and hashes pass. This
+deliberately gives up asymptotic detection for those two operations without
+changing their per-library worst-case contracts.
+
+The remaining five parametric ladders block Phase 4:
+
+- `runQAdjoinInvLadder` is faster than its conservative worst-case bit-cost
+  proxy. A tighter aggregate family model has not yet been derived, and the
+  proxy is not supplied as a published, cited mode-2 bound covering the
+  profiled chain. It is therefore mode 4, tracked by #9743.
+- `runQAdjoinRootsLadder` declares the same composed `n^5 log^2 n` heuristic
+  isolation estimate withdrawn from the two fixed registrations. Its
+  statistically matching harness result does not turn that heuristic into an
+  independently derived mode-1 model, and no published upper bound for this
+  norm-eliminant family supports mode 2. It is mode 4.
+- `runExactLadder` cannot use mode 2 even though the BHKS factorization bound
+  is published: the profile shows certification and candidate re-isolation
+  dominate, while factorization is only 18.64% of the end-to-end call. The
+  cited bound therefore does not cover the dominant measured phase.
+- `runExactFactorLadder` and `runCanonicalRepLadder` expose those dominant
+  certification phases, but their declarations add the same heuristic
+  isolation estimate rather than a published upper bound. They are also
+  mode 4.
+
+The other 35 fixed registrations are canonical API, comparator, and protocol
+checks. They make no complexity claim, have no mode, and do not replace the
+twelve performance registrations. The five unresolved registrations remain
+tracked by the issues in §Concerns, so no model is fitted and no parametric
+failure is reclassified as a pass.
+
 Authoritative verdict per ladder, and which committed run it comes from. The
 runs below give the measurements; this table says which one counts.
 
@@ -235,10 +276,13 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinRootsLadder` | **consistent** | -0.251 | root-merge fix |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
 
-Six parametric registrations fit their declared models. The four that do not
-are §Concerns entries,
-each with a filed issue; none of them is a measurement artefact, and §Profile
-identifies the phase controlling each profiled end-to-end call.
+Six parametric registrations receive a statistically matching two-sided
+harness verdict, but only the five named above have independently derived
+mode-1 claims. `runQAdjoinRootsLadder` matches a withdrawn heuristic isolation
+proxy and remains mode 4. The other four parametric ladders are faster than
+declared. None of these five blocked classifications is a measurement
+artefact, and §Profile identifies the phase controlling each profiled
+end-to-end call.
 For the normalized inversion chain specifically, the former
 slower-than-declared defect is fixed. The single-root fixture now carries the
 normalized chain through degree 96; its remaining faster-than-declared result
@@ -400,12 +444,15 @@ registered `signalFloorMultiplier := 1.0` disables the conservative default
 10× exclusion without timing parent-side startup as algorithm work.
 
 All three remain in the faster-than-declared direction. `canonicalRep?` uses
-the textbook isolation envelope; `exactFactor?` uses that envelope plus the
-BHKS factorization it invokes for its irreducibility guard; and the end-to-end
-model is BHKS evaluated at the fixture's actual degree and height. These are
-large monotone shape mismatches, quantified below, not constant-factor slack.
-Under the harness's current two-sided verdict none is a Phase-4 pass; issue
-9733 tracks the cross-library policy question without reclassifying this data.
+the declared heuristic isolation envelope; `exactFactor?` uses that envelope
+plus the BHKS factorization it invokes for its irreducibility guard; and the
+end-to-end model is BHKS evaluated at the fixture's actual degree and height.
+These are large monotone shape mismatches, quantified below, not
+constant-factor slack.
+Under the harness's current two-sided verdict none is a Phase-4 pass. The
+ordered rule classifies all three as mode 4 because the declarations do not
+cover the profiled dominant phases with independently derived tight models or
+published upper bounds.
 
 A second quiet run historically covered the three ladders too expensive to fit
 in the same window, at three outer trials, on the idle host. The two
@@ -548,8 +595,8 @@ are:
 
 The end-to-end replacement therefore exercises the missing phase but does not
 repair the model fit: its decline in `C` is larger than the former family's.
-That result remains an open finding, as required; issue 9733 asks what verdict
-an honest upper envelope should receive across Phase 4.
+That result remains an open finding, as required. The ordered rule classifies
+it as mode 4 until the model-provenance gap is repaired.
 
 (The historical exactification and lazy-addition figures are from the quiet
 runs, the repaired fixed-field-root figure is from the root-merge fix run,
@@ -1012,7 +1059,7 @@ pass are each tracked:
   nothing measures, so the Attribution rule is not satisfied.
   https://github.com/kim-em/hex-dev/issues/9722 — audit-found: HexNumberField's
   advertised API surface is not fully registered for Phase 4.
-- **The exactification ladders remain faster than their textbook envelopes.**
+- **The exactification ladders remain faster than their declared envelopes.**
   The end-to-end family now enters multifactor Hensel lifting and combination
   search, and the dominant certification phases have their own registrations.
   That fixes attribution, not fit: cMax/cMin is 664.357 for end-to-end
@@ -1021,5 +1068,13 @@ pass are each tracked:
   `inconclusive` in the faster-than-declared direction. This is explicitly an
   open shape mismatch; the two-sided upper-envelope policy is not being used
   to call it a pass.
-  https://github.com/kim-em/hex-dev/issues/9733 — audit-found: Phase 4 has no
-  rule for a model that is an upper bound.
+  https://github.com/kim-em/hex-dev/issues/9733 — the ordered-rule audit that
+  records this blocked classification until its focused remediation issue is
+  filed after the policy lands.
+- **`runQAdjoinRootsLadder` still uses the withdrawn heuristic isolation
+  proxy.** The statistically matching harness verdict does not validate the
+  composed `n^5 log^2 n` declaration. The sibling lazy-add and algebraic-roots
+  operations now use justified mode-3 fixed registrations, but this repeated-
+  component family has not yet been worked through the ordered rule on its own.
+  https://github.com/kim-em/hex-dev/issues/9733 records this classification
+  until its focused follow-up is filed after the policy merge.
