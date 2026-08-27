@@ -945,9 +945,9 @@ setup_benchmark runTowerFactorLadder n => tragerLadderModel n
   with prep := prepFactorInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
-    maxSecondsPerCall := 60.0
+    paramCeiling := 24
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -980,6 +980,8 @@ initialize factorPairRef2 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef3 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef4 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef6 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef8 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef12 : IO.Ref (Option FactorInput) ← IO.mkRef none
 
 private def getFactorPair (ref : IO.Ref (Option FactorInput)) (n : Nat) :
     IO FactorInput := do
@@ -1002,6 +1004,12 @@ def runPariNfFactor4 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 4
 def runTowerFactorPair6 : Unit → IO UInt64 := fun _ => do
   return towerFactorDegrees (← getFactorPair factorPairRef6 6)
 def runPariNfFactor6 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 6
+def runTowerFactorPair8 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef8 8)
+def runPariNfFactor8 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 8
+def runTowerFactorPair12 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef12 12)
+def runPariNfFactor12 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 12
 
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the
@@ -1024,6 +1032,10 @@ setup_fixed_benchmark runTowerFactorPair4 where pariCompareConfig
 setup_fixed_benchmark runPariNfFactor4 where pariCompareConfig
 setup_fixed_benchmark runTowerFactorPair6 where pariCompareConfig
 setup_fixed_benchmark runPariNfFactor6 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair8 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor8 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair12 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor12 where pariCompareConfig
 
 /-- Per-call driver overhead for the PARI comparator: one `nf`-family
 request whose PARI-side work is a constant `0`, so the measured time is the
