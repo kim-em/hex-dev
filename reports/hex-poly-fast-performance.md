@@ -1,8 +1,8 @@
 # HexPolyFast Performance Report
 
 This report is the current audit snapshot for the active, unreleased
-`HexPolyFast` library. The implementation is still recorded at
-`done_through: 0`; this document does not claim a Phase-4 exit.
+`HexPolyFast` library. The implementation is recorded at `done_through: 2`;
+this document does not claim a Phase-4 exit.
 
 The retained scientific comparisons were measured on 2026-08-27 on
 `chungus2` (AMD EPYC 9455, Linux x86-64) with Lean `4.34.0-rc2`. Each table
@@ -27,6 +27,7 @@ registrations.
 - `runKaratsubaRatio2`: `n * Nat.sqrt n`
 - `runKaratsubaRatio4`: `n * Nat.sqrt n`
 - `runKaratsubaRatio16`: `n * Nat.sqrt n`
+- `runKaratsubaRatioUnder2`: `n * Nat.sqrt n`
 - `runFullThenLowInt`: `n * Nat.sqrt n`
 - `runClippedLowInt`: `n * Nat.sqrt n`
 - `runSchoolbookRat`: `n ^ 2`
@@ -70,6 +71,7 @@ three repeats and an expected result hash.
 ### Multipoint
 
 - `runProductTree`: `n * (Nat.log2 n + 1)`
+- `runRemainderTree`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
 - `runDirectEval`: `n ^ 2`
 - `runMultipointEval`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
 - `runColdMultipointEval`: `n * Nat.sqrt n * (Nat.log2 n + 1)`
@@ -94,8 +96,10 @@ libraries that own the coefficient representation.
 ## Verdicts
 
 `lake exe hexpolyfast_bench list` and `verify` passed all 57 registrations at
-commit `0aaa2af1f`. The fixed FLINT refresh below also passed every expected
-hash. The complete scientific slope export for all 45 parametric targets was
+commit `0aaa2af1f`. The two later regression targets
+`runKaratsubaRatioUnder2` and `runRemainderTree` passed focused verification at
+commit `6bf47916d`. The fixed FLINT refresh below also passed every expected
+hash. The complete scientific slope export for all 47 parametric targets was
 not retained, so no blanket complexity verdict is claimed here.
 
 The following within-Lean crossover cells are retained and traceable to the

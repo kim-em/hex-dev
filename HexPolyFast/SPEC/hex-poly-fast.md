@@ -210,6 +210,8 @@ and assembles `z0 + x^k z1 + x^(2k) z2`. The recursion:
 - stops at an explicit cutoff, including cutoff zero;
 - handles odd sizes without padding an observable trailing zero;
 - normalizes only once at the public `DensePoly` boundary;
+- orders schoolbook base cases so the shorter operand drives the coefficient
+  loop;
 - uses uniquely owned arrays for assembly rather than repeated append;
 - has a specialized square recursion, reusing the two equal halves rather
   than rediscovering equality inside the generic product;
@@ -368,8 +370,10 @@ structure GcdStep (R : Type u) [DecidableEq R] where
 
 Its invariant states that applying the transformation to the input pair gives
 the current Euclidean pair and that the second component has crossed the
-requested degree boundary. Recursive high-half reconstruction uses clipped
-products, while the finishing steps use `divModWith`. `mulMiddleChecked` is
+requested degree boundary. Recursive calls operate on high halves;
+`applyFromHighWith` combines a cached high application with planned products
+of the low halves, and `composeLowWith` uses clipped products when composing
+transformations. The finishing steps use `divModWith`. `mulMiddleChecked` is
 the separately exposed canonical middle-product primitive.
 
 Expose `gcdWith`, `xgcdWith`, and `xgcdLeftWith`. Their acceptance theorem is
