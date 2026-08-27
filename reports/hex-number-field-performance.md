@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 12 controlled parametric targets and 35 fixed targets (47 total).
+registers 10 controlled parametric targets and 37 fixed targets (47 total).
 The adjacent comments in the driver derive each model from the work performed
 inside the timed function; the models below are copied from the registration
 sites.
@@ -23,22 +23,68 @@ sites.
 | `runQAdjoinMulLadder` | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
 | `runQAdjoinInvLadder` | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
 | `runAddEliminantLadder` | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
-| `runLazyAddLadder` | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^n - 2` with `√3` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
+| `runLazyAddLadder` | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | fixed canonical input, 12 s ceiling |
 | `runExactLadder` | `AlgebraicRoot.exact?` on the first root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)`, with `n` quadratic factors | `exactFamilyComplexity n`, i.e. the BHKS `d^9 + d^7 h^2` at the fixture's actual degree and coefficient bit height |
 | `runExactFactorLadder` | `AlgebraicRoot.exactFactor?` for the degree-`n` candidate `X^n - 2` inside `(X^n - 2)(X + 3)`, with the enclosing root pinned to that candidate | `exactFactorComplexity n`, i.e. BHKS factorization plus the `n ^ 5 log² n` isolation envelope |
 | `runCanonicalRepLadder` | `AlgebraicNumber.canonicalRep?` for the first root of `X^n - 2` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runCommonPresentationLadder` | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
 | `runMergeRootListLadder` | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
-| `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on a dense degree-`n` polynomial with one `√2` coefficient | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
+| `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | fixed canonical input, 15 s ceiling |
 
-The 35 fixed registrations are ten canonical API cases (`runFixedMul`,
+The 37 fixed registrations are twelve canonical API cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
-`runSelectAdd`, `runLazyAdd`, `runExact`, `runExactSelection`, `runRoots`), twenty-four Lean/PARI
+`runSelectAdd`, `runLazyAdd`, `runLazyAddLadder`, `runExact`,
+`runExactSelection`, `runRoots`, `runAlgebraicRootsLadder`), twenty-four Lean/PARI
 comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
 `n = 4, 6, 8, 10, 12, 16`), and one external-driver overhead probe
 (`runPariPolmodOverhead`).
+
+### Isolation benchmark mode
+
+The two isolation-dominated end-to-end registrations use the fixed mode. A
+two-sided expected scaling cannot be derived independently of their timings:
+the former `n⁵ log² n` expression substituted fixture assumptions into
+HexRoots' explicitly heuristic `O(d³ B²)` contract. It was not a complexity
+result for either operation.
+
+[Becker–Sagraloff–Sharma–Yap, Corollary 6](https://arxiv.org/abs/1509.06231) proves
+`Õ(d³ + d² tau)` bit operations for its `CIsolate` algorithm on a
+square-free integer polynomial of degree `d` and coefficient bit size below
+`tau`. The inputs here do satisfy that polynomial shape after
+`squareFreeCore`; the table below maps `d` and `tau` directly. The theorem does
+not provide a mode-2 upper bound for this executable, however. HexRoots differs
+from `CIsolate` in its bounded-precision front end with exact-dyadic fallback,
+speculative Newton acceptance, dual certificate routes, and conservative
+global completeness depth. No proof transfers BSSY's amortised complexity
+analysis across those changes. Profiling does show that this unmatched phase
+dominates: `isolate` accounts for 91.87% of `AlgebraicPoly.roots?` and 92% of
+the lazy-addition call.
+
+Mode 3 therefore applies: `n = 6` is a canonical hard point shared by both
+former schedules, gives degree-product and norm-eliminant degree 12, and stays
+practical in smoke verification. The registrations enforce absolute ceilings
+and expected hashes, and give up asymptotic detection for these two operations.
+The per-library SPEC retains the HexRoots isolation ceiling as its worst-case
+contract; changing the benchmark mode does not weaken that contract.
+
+The compiled `isolation-stats` command reproduces the input characterisation.
+`realised precision` is the exact `separationDepth` passed to `isolate`:
+
+| family | fixture parameter | degree after `squareFreeCore` | `coeffAbsMax` | `ceilLog2 coeffAbsMax` | realised precision |
+|---|---:|---:|---:|---:|---:|
+| lazy add | 2 | 4 | 10 | 4 | 36 |
+| lazy add | 3 | 6 | 36 | 6 | 64 |
+| lazy add | 4 | 8 | 180 | 8 | 99 |
+| lazy add | 6 | 12 | 1,998 | 11 | 186 |
+| lazy add | 8 | 16 | 20,520 | 15 | 314 |
+| lazy add | 10 | 20 | 272,565 | 19 | 480 |
+| algebraic roots | 3 | 6 | 900 | 10 | 84 |
+| algebraic roots | 4 | 8 | 22,920 | 15 | 148 |
+| algebraic roots | 5 | 10 | 366,720 | 19 | 228 |
+| algebraic roots | 6 | 12 | 366,720 | 19 | 274 |
+| algebraic roots | 8 | 16 | 602,625 | 20 | 389 |
 
 The four exactification registrations verify together in 1.052 s on the
 reference host, including the fixed case's warmup, against CI's 360 s hard cap
@@ -47,7 +93,7 @@ material threat to the existing verification budget.
 
 ### Fixture control
 
-Every parametric fixture here — the arithmetic operands, and the
+Every degree-varying fixture here — the arithmetic operands, and the
 `AlgebraicPoly` coefficients behind the common-field and algebraic-root
 ladders — builds coefficient `i` from one helper, `denseRatCoeff`, whose
 numerator cycles modulo 11 and denominator modulo 6. Every denominator is in
@@ -157,16 +203,17 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
 | `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
-| `runLazyAddLadder` | **consistent** | -0.123 | quiet-heavy |
+| `runLazyAddLadder` | **fixed: 4.560 s, hash match** | — | isolation fixed |
 | `runExactLadder` | inconclusive, faster | — | exactification audit |
 | `runExactFactorLadder` | inconclusive, faster | — | exactification audit |
 | `runCanonicalRepLadder` | inconclusive, faster | — | exactification audit |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
 | `runQAdjoinRootsLadder` | **consistent** | -0.251 | root-merge fix |
-| `runAlgebraicRootsLadder` | inconclusive, faster | — | fixture-corrected |
+| `runAlgebraicRootsLadder` | **fixed: 6.000 s, hash match** | — | isolation fixed |
 
-Seven fit their declared models. The five that do not are §Concerns entries,
+Six parametric registrations fit their declared models. The four that do not
+are §Concerns entries,
 each with a filed issue; none of them is a measurement artefact, and §Profile
 identifies the phase controlling each profiled end-to-end call.
 For the normalized inversion chain specifically, the former
@@ -175,14 +222,16 @@ normalized chain through degree 96; its remaining faster-than-declared result
 shows that the corrected `n³ log n` worst-case bit-cost bound is conservative
 on this family and is tracked by issue #9743.
 
-Eight parametric runs are committed: one original full-suite pass, two idle-host
+Eight historical parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
 fixture-corrected run plus the single-root run that supersede six of those,
 the exactification audit covering its two new phase ladders and replacement
 family, the normalized inversion rerun, and the root-merge fix run. Both repaired root ladders extend to the
 two-octave range needed for `fitSlope`. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
-which.
+which. The isolation fixed export supersedes the parametric verdicts for
+`runLazyAddLadder` and `runAlgebraicRootsLadder`; their earlier sweeps remain
+diagnostic evidence for withdrawing the unsupported model.
 
 The **original full-suite run** covers the nine registrations that existed at
 source commit `066f6fc29`, at three outer trials per rung:
@@ -335,8 +384,10 @@ large monotone shape mismatches, quantified below, not constant-factor slack.
 Under the harness's current two-sided verdict none is a Phase-4 pass; issue
 9733 tracks the cross-library policy question without reclassifying this data.
 
-A second quiet run covers the three ladders too expensive to fit in the same
-window, at three outer trials, on the idle host:
+A second quiet run historically covered the three ladders too expensive to fit
+in the same window, at three outer trials, on the idle host. The two
+isolation-dominated sweeps are retained as diagnostic evidence but are no
+longer registered parametrically:
 
 ```sh
 .lake/build/bin/hexnumberfield_bench run \
@@ -355,11 +406,11 @@ window, at three outer trials, on the idle host:
 
 The two root ladders reproduce the full-suite run almost exactly
 (`runQAdjoinRootsLadder` 1.134e6..2.016e6 against 1.176e6..2.013e6;
-`runAlgebraicRootsLadder` 80829..184738 against 80419..185225), so their
-verdicts do not depend on host conditions. `runLazyAddLadder` improves from
+`runAlgebraicRootsLadder` 80829..184738 against 80419..185225), so the
+historical verdicts do not depend on host conditions. `runLazyAddLadder` improved from
 `-0.300` to `-0.123` once the load-induced spike at its 113 s top rung is
-gone, so its consistent verdict is no longer marginal against its declared
-0.35 tolerance.
+gone. Its apparent pass was against the same unsupported composed model, so
+it did not justify retaining a parametric registration.
 
 Between the two quiet runs, every one of the nine ladders has an idle-host
 measurement, and the full-suite export is retained as the first pass.
@@ -395,11 +446,11 @@ trade: `runAddEliminantLadder` moves from `+0.015` over `16 .. 256` to
 `4 .. 128` against its declared 0.35 tolerance. Both still fit their unchanged
 declared models, now over ranges that include the degrees their callers use.
 
-`runAlgebraicRootsLadder` moves the other way. On the uncontrolled fixture its
+The former `runAlgebraicRootsLadder` sweep moved the other way. On the
+uncontrolled fixture its
 continuous-proxy slope was `-0.490`; with bounded coefficient height it is
 `-1.406`, because the old fixture's growing coefficients were inflating the
-large-`n` end. That is recorded as a finding, not as a pass —
-https://github.com/kim-em/hex-dev/issues/9728.
+large-`n` end. This finding motivated the fixed-mode analysis above.
 
 The **root-merge fix run** supersedes `runQAdjoinRootsLadder` from the heavy
 run and adds the phase target required by the Attribution rule:
@@ -434,8 +485,8 @@ fallback.
 ### Sensitivity to integer-log steps
 
 `fitSlope` rejects a log-log fit whose x-range is too narrow. `runExactLadder`
-and `runAlgebraicRootsLadder` span under two octaves because their top rungs
-already cost 0.3 s and 25 s per call. The harness then falls back to a
+and the former parametric `runAlgebraicRootsLadder` sweep span under two octaves
+because their top rungs already cost 0.3 s and 25 s per call. The harness then falls back to a
 multiplicative range check,
 `cMax / cMin ≤ max(narrowRangeNoiseFloor,
 exp(slopeTolerance · xRange))`. That check is
@@ -448,8 +499,9 @@ Recomputing `C` against a continuous asymptotic proxy — the same expression
 with real `log₂` in place of `Nat.log2` — separates that artefact from the
 residual. `Nat.log2` and real `log₂` are different functions at these rungs,
 so this is a sensitivity check and not a restatement of the declared model:
-the registrations are unchanged, and every official verdict quoted in this
-report is the harness's, computed against the registered integer model. The
+the registrations were unchanged during that diagnostic run, and every
+historical verdict quoted here is the harness's result for the then-registered
+integer model. The
 harness bound is reproduced in the table only to show the scale of the
 artefact, not as a verdict on the proxy.
 
@@ -485,19 +537,21 @@ Read as a sensitivity check. On the uncontrolled fixture most of
 height the residual is large under either evaluation and the step no longer
 explains it. `runExactLadder`'s declared envelope over-predicts by roughly
 four powers of `n` under either evaluation. It and
-`runAlgebraicRootsLadder` remain `inconclusive` on the harness's own verdict;
-nothing here reclassifies them. The repaired `runQAdjoinRootsLadder` smooth
+`runAlgebraicRootsLadder` was `inconclusive` on the harness's own verdict; it
+is now a fixed registration for the independent mode-selection reasons above.
+The repaired `runQAdjoinRootsLadder` smooth
 proxy remains within tolerance independently of the integer-log steps, which
 supports its official fitted verdict. The old fixed-field-root reading is
 retained in the archived export but superseded by the repaired run above.
 
 ### Fixed registrations
 
-All 35 fixed registrations agree across repeats, and all eleven with a declared
+All 37 fixed registrations agree across repeats, and all thirteen with a declared
 `expectedHash` match it. Medians come from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json),
 with `runExactSelection` in the
-[exactification fixed export](bench-results/hex-number-field-exactification-fixed.json):
+[exactification fixed export](bench-results/hex-number-field-exactification-fixed.json)
+and the two isolation cases in the isolation fixed exports:
 
 | fixed target | median | observed hash | expected |
 |---|---:|---|---|
@@ -508,9 +562,11 @@ with `runExactSelection` in the
 | `runIsolateAdd` | 9.649 ms | `0x4367ab34a73ea4ed` | match |
 | `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
 | `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
+| `runLazyAddLadder` | 4.560 s | `0x91175572810ff8e2` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
+| `runAlgebraicRootsLadder` | 6.000 s | `0x2fade2409323a752` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
@@ -753,10 +809,11 @@ call and both are inside the registered target. Nothing here is unattributed.
 | 86.32% | `Hex.Component.refineAll` / `IsolationLoop.next` |
 | 84.83% | `Hex.taylor` |
 
-The `runLazyAddLadder` derivation declares that isolation at separation depth
-dominates the eliminant resultant. It does: eliminant construction is the
-5.754 us `runAddEliminant` fixed case against a 46 s call, and 92% of the call
-is inside `isolate`. This family's registered targets account for its cost.
+The former parametric `runLazyAddLadder` derivation correctly identified
+isolation at separation depth as dominant, although its scaling model was not
+supported. Eliminant construction is the 5.754 us `runAddEliminant` fixed case
+against a 46 s call, and 92% of the call is inside `isolate`. The replacement
+fixed registration keeps this phase covered without making an asymptotic claim.
 
 ### `exactification-selection` — certification, not factorization evidence
 
@@ -883,6 +940,8 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
 | [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
+| [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | isolation fixed implementation worktree | idle | `051511fadf1b3917e195bac85605b2c48bbb99cb476140626adb7e43f9f6e90f` |
+| [`bench-results/hex-number-field-algebraic-roots-fixed.json`](bench-results/hex-number-field-algebraic-roots-fixed.json) | isolation fixed implementation worktree | idle | `aa9981df9471e78c954a234a161601b8b856f84915aaba7f4bc46860b65d70f2` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -890,9 +949,11 @@ only in two comments, and `9ae125c67` only changes comparator registrations
 and their smoke cost. The
 fixture-corrected run is the exception and is the reason it exists — it
 supersedes the earlier `runAddEliminantLadder`, `runCommonPresentationLadder`
-and `runAlgebraicRootsLadder` numbers, and only those three. The single-root
-run supersedes the earlier three fixed-field arithmetic ladders after their
-domains expanded. Four of the five
+and `runAlgebraicRootsLadder` numbers in that historical parametric run. The
+two isolation-fixed exports supersede the current timing and verdict for
+`runLazyAddLadder` and `runAlgebraicRootsLadder`. The single-root run supersedes
+the earlier three fixed-field arithmetic ladders after their domains expanded.
+Four of the five
 profiles were taken from the `066f6fc29` binary; the `algebraic-poly-roots`
 profile was re-taken after the fixture correction, and the hard-family
 exactification profile uses `a20d30552`. The root-merge-fix export supersedes
@@ -938,12 +999,3 @@ pass are each tracked:
   to call it a pass.
   https://github.com/kim-em/hex-dev/issues/9733 — audit-found: Phase 4 has no
   rule for a model that is an upper bound.
-- **`AlgebraicPoly.roots?` runs well inside its declared isolation envelope.**
-  With a height-controlled fixture the continuous-proxy slope is `-1.406`:
-  about `n^4.3` against a predicted `n^5.8`. Unlike the fixed-field ladder,
-  the profile confirms the cost is where the derivation says (isolation inside
-  `componentRoots?`, 91.45%), so the gap is in the bound rather than the
-  phase.
-  https://github.com/kim-em/hex-dev/issues/9728 — bench-found:
-  AlgebraicPoly.roots? runs about n^4.3 against a declared n^5 log^2 isolation
-  envelope.
