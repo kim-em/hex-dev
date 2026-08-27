@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 11 controlled parametric targets and 31 fixed targets (42 total).
+registers 11 controlled parametric targets and 35 fixed targets (46 total).
 The adjacent comments in the driver derive each model from the work performed
 inside the timed function; the models below are copied from the registration
 sites.
@@ -31,9 +31,9 @@ sites.
 | `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on a dense degree-`n` polynomial with one `√2` coefficient | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 
-The 31 fixed registrations are ten canonical API cases (`runFixedMul`,
+The 35 fixed registrations are ten canonical API cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
-`runSelectAdd`, `runLazyAdd`, `runExact`, `runExactSelection`, `runRoots`), twenty Lean/PARI
+`runSelectAdd`, `runLazyAdd`, `runExact`, `runExactSelection`, `runRoots`), twenty-four Lean/PARI
 comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
 `n = 4, 6, 8, 10, 12, 16`), and one external-driver overhead probe
@@ -89,7 +89,7 @@ the ceiling at six factors is fixture-cost forced. It is still sufficient for
 the profile to observe multifactor Hensel lifting and recombination, but the
 large residual against BHKS remains an open finding rather than a fitted pass.
 
-### A provisional range, flagged
+### Scientific arithmetic ranges
 
 The arithmetic fixtures now certify only the selected positive real root of
 `X^n - 2`. Integer Newton iteration supplies an untrusted Mahler-precision
@@ -168,10 +168,11 @@ Five fit their declared models. The six that do not are §Concerns entries,
 each with a filed issue; none of them is a measurement artefact, and §Profile
 identifies the phase controlling each profiled end-to-end call.
 
-Five parametric runs are committed: one original full-suite pass, two idle-host
+Six parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
-fixture-corrected run that supersedes three of those, plus the exactification
-audit covering the two new phase ladders and the replacement family. §Artefact traceability
+fixture-corrected run plus the single-root run that supersede six of those,
+and the exactification audit covering the two new phase ladders and the
+replacement family. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
 which.
 
@@ -229,6 +230,29 @@ Quiet run, worst per-rung spread now at or below 5.5%:
 `runQAdjoinMulLadder`'s full-suite verdict was `inconclusive` at `+0.222`
 solely because of the load spike at `n = 24`; on the idle host its `C` is flat
 to 1.3% across all six rungs.
+
+The **single-root run** refreshes all three fixed-field arithmetic ladders
+after their fixture and scientific domains changed:
+
+```sh
+.lake/build/bin/hexnumberfield_bench run \
+  Hex.NumberFieldBench.runQAdjoinAddLadder \
+  Hex.NumberFieldBench.runQAdjoinMulLadder \
+  Hex.NumberFieldBench.runQAdjoinInvLadder \
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-number-field-single-root.json
+```
+
+| target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
+|---|---|---|---:|---|---:|
+| `runQAdjoinAddLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.064 | 94.94..110.95 | 2.56% |
+| `runQAdjoinMulLadder` | 4, 8, 16, 32, 64, 128 | **consistent** | -0.018 | 449.10..470.35 | 5.86% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive | **+1.784** | 549.2..46288.9 | 2.93% |
+
+Addition remains linear through 128 and multiplication remains quadratic
+through 128. Inversion's monotone normalized cost grows even more clearly over
+the repaired range: the extended ladder strengthens the existing #9721
+finding rather than attributing the former ceiling to its fixture.
 
 The **exactification audit run** measures the replacement end-to-end family
 at five outer trials and both newly separated certification phases at three:
@@ -394,7 +418,7 @@ verdict; nothing here reclassifies them.
 
 ### Fixed registrations
 
-All 31 fixed registrations agree across repeats, and all eleven with a declared
+All 35 fixed registrations agree across repeats, and all eleven with a declared
 `expectedHash` match it. Medians come from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json),
 with `runExactSelection` in the
@@ -468,8 +492,10 @@ registered comparison domains now restore multiplication at `n = 20` and
 inversion at `n = 16`, giving six rungs in each family. The original five-rung
 comparator export supplies the first five rows and the committed
 [endpoint supplement](bench-results/hex-number-field-single-root-comparators.json)
-supplies the restored sixth rows. A full `verify` of all 43 registrations,
-including PARI, completes locally in 0.379 s.
+supplies the restored sixth rows. Before the three exactification registrations
+were added, a full `verify` of those 43 registrations, including PARI,
+completed locally in 0.379 s; the four exactification targets verify together
+in 1.052 s.
 
 Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 1 means Hex is faster.
@@ -608,9 +634,10 @@ all pass calibration, confidence and the ±5 ms sensitivity check:
 | `algebraic-poly-roots` | `runAlgebraicRootsLadder` n=6 | 5,965 / 9 | 0.633 ms | allocation 53.80%, GMP 30.76%, Lean runtime 12.04%, own code 0.54% | 97.14% |
 
 The rejected counts are the untimed fixture preludes, which the filtering
-postprocessor excludes by construction. `runQAdjoinMulLadder` rejects more
-samples than it retains because building its certified root of `X^16 - 2`
-costs 4.9 s against a 5 s timed region. The hard exactification fixture also
+postprocessor excludes by construction. The arithmetic profile predates the
+single-root repair, so its rejected samples include the former 4.9 s
+all-roots fixture; that prelude is outside the retained timed region. The hard
+exactification fixture also
 does substantial enclosing-polynomial isolation before its five timed
 regions; despite that large rejected prelude, its 4,426 retained samples,
 0.807 ms residual, and sensitivity comparison all pass the postprocessor's
@@ -743,6 +770,8 @@ finding rather than noise.
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
 | [`bench-results/hex-number-field-phase4-comparators.json`](bench-results/hex-number-field-phase4-comparators.json) | `9ae125c67`, clean tree | idle | `fd42dda533a345815205a0de1737f95cdd9a93e02ae355d78be31cb0bac62041` |
 | [`bench-results/hex-number-field-phase4-scientific-fixture-corrected.json`](bench-results/hex-number-field-phase4-scientific-fixture-corrected.json) | the fixture correction (this branch head) | idle | `6a176e351a46436d7c6ae47fff666f62c85b09c549d3d3866697ae3fded4fa6a` |
+| [`bench-results/hex-number-field-single-root.json`](bench-results/hex-number-field-single-root.json) | `4ae98f272`, clean tree | idle | `8fc1546f02fe7bf42c4f939ab0cefc07fe9cd2a1d00006350cbe50b71db508ba` |
+| [`bench-results/hex-number-field-single-root-comparators.json`](bench-results/hex-number-field-single-root-comparators.json) | `96e0fd7ee`, clean tree | idle | `1243e69ce4256f4470700b43aba55fcb8d6ba1d30faa5ff38b1ddea0803133d4` |
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 
