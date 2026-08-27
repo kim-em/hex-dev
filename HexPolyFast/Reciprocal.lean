@@ -85,7 +85,7 @@ theorem coeff_polyOfSeries_mul {n : Nat} (a b : TSeries R n)
     have := List.mem_range.mp hj
     omega
   unfold diagonalMulCoeffTerm
-  rw [_root_.if_neg (by omega), coeff_polyOfSeries_of_lt,
+  rw [_root_.ite_eq_right (by omega), coeff_polyOfSeries_of_lt,
     coeff_polyOfSeries_of_lt]
   all_goals omega
 

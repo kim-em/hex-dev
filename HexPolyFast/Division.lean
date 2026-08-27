@@ -94,7 +94,7 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     have hib : i < base := List.mem_range.mp hi
     unfold diagonalMulCoeffTerm
     have hid : i ≤ k + q.size - 2 - t := by omega
-    rw [_root_.if_neg (by omega)]
+    rw [_root_.ite_eq_right (by omega)]
     have hqi : q.size ≤ k + q.size - 2 - t - i := by
       dsimp [base] at hib
       omega
@@ -114,7 +114,7 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     intro j hj
     have hjs : j < q.size := List.mem_range.mp hj
     unfold diagonalMulCoeffTerm
-    rw [_root_.if_neg (by
+    rw [_root_.ite_eq_right (by
       dsimp [base]
       omega), coeff_reversePrefix]
     by_cases hjt : j ≤ t

@@ -444,16 +444,16 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
                 omega
               rw [_root_.ite_eq_left h2k, _root_.ite_eq_left h₂', he₂']
               simp only [_root_.ite_true]
-              rw [_root_.if_neg (by omega), _root_.if_neg (by omega)] at hc
+              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_right (by omega)] at hc
               grind
             · rw [_root_.ite_eq_right h2k]
               simp only [_root_.ite_true]
-              rw [_root_.if_neg (by omega), _root_.if_pos (by omega)] at hc
+              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_left (by omega)] at hc
               grind
           · have h2k : ¬2 * k ≤ lo + i := by omega
             rw [_root_.ite_eq_right hk, _root_.ite_eq_right h2k]
             simp only [_root_.ite_true]
-            rw [_root_.if_pos (by omega), _root_.if_pos (by omega)] at hc
+            rw [_root_.ite_eq_left (by omega), _root_.ite_eq_left (by omega)] at hc
             grind
         · have hlen :
               (List.map
