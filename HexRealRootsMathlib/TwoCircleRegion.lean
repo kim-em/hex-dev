@@ -114,7 +114,7 @@ theorem not_inTwoCircle_iff_mem_sector (a b : ℝ) (w : ℂ) (hw : w ≠ (b : �
   have hv0 : ((b : ℂ) - w) ≠ 0 := sub_ne_zero.mpr fun h => hw h.symm
   have hN0 : 0 < Complex.normSq ((b : ℂ) - w) := Complex.normSq_pos.mpr hv0
   unfold InTwoCircle
-  simp only [sector, Set.mem_setOf_eq]
+  simp only [sector, Set.mem_ofPred_eq]
   set s : ℂ := (w - (a : ℂ)) * (starRingEnd ℂ) ((b : ℂ) - w) with hsdef
   set N : ℝ := Complex.normSq ((b : ℂ) - w) with hNdef
   have hzeq : (w - (a : ℂ)) / ((b : ℂ) - w) = s / (N : ℂ) := by
@@ -210,9 +210,10 @@ example : ¬ InTwoCircle 0 2 0 := by
   simp only [InTwoCircle, seed_re, seed_im, not_or, not_lt]
   norm_num
 
-/-- The two disc centres `(a+b)/2 ± i·(b−a)/(2√3)`. -/
+/-- The upper disc centre `(a+b)/2 + i·(b−a)/(2√3)`. -/
 noncomputable def centrePos (a b : ℝ) : ℂ :=
   ((a + b) / 2 : ℝ) + Complex.I * ((b - a) / (2 * Real.sqrt 3) : ℝ)
+/-- The lower disc centre `(a+b)/2 − i·(b−a)/(2√3)`. -/
 noncomputable def centreNeg (a b : ℝ) : ℂ :=
   ((a + b) / 2 : ℝ) - Complex.I * ((b - a) / (2 * Real.sqrt 3) : ℝ)
 

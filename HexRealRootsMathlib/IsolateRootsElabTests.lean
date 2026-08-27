@@ -24,42 +24,42 @@ namespace HexRealRootsMathlib.ElabTests
 def x4m2 : ZPoly := DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]
 
 /-- Bare isolation of `x⁴ − 2` as a `ZPoly`. -/
-noncomputable def iso_zpoly := isolate_roots x4m2
+noncomputable def isoZPoly := isolate_roots x4m2
 
 /-- `x⁴ − 2` over `Polynomial ℝ`, bare. -/
-noncomputable def iso_real := isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
+noncomputable def isoReal := isolate_roots (X ^ 4 - 2 : Polynomial ℝ)
 
 /-- `x⁴ − 2`, every root refined to width `2^(-20)`. -/
-noncomputable def iso_w20 := isolate_roots (width := 2 ^ (-20 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ)
+noncomputable def isoW20 := isolate_roots (width := 2 ^ (-20 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ)
 
 /-- `x⁴ − 2`, width `1/1000`. -/
-noncomputable def iso_w1000 := isolate_roots (width := 1 / 1000) (X ^ 4 - 2 : Polynomial ℝ)
+noncomputable def isoW1000 := isolate_roots (width := 1 / 1000) (X ^ 4 - 2 : Polynomial ℝ)
 
 /-- `x⁴ − 2`, width `10^(-2)`. -/
-noncomputable def iso_w100 := isolate_roots (width := 10 ^ (-2 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ)
+noncomputable def isoW100 := isolate_roots (width := 10 ^ (-2 : ℤ)) (X ^ 4 - 2 : Polynomial ℝ)
 
 /-- `x⁴ − 2` as a `ZPoly`, refined to width `2^(-20)`. -/
-noncomputable def iso_zpoly_w20 := isolate_roots (width := 2 ^ (-20 : ℤ)) x4m2
+noncomputable def isoZPolyW20 := isolate_roots (width := 2 ^ (-20 : ℤ)) x4m2
 
 /-! # Coefficient rings -/
 
 /-- Wilkinson-6 `∏_{i=1}^{6}(x − i)` over `Polynomial ℤ`. -/
-noncomputable def iso_wilkinson :=
+noncomputable def isoWilkinson :=
   isolate_roots ((X - 1) * (X - 2) * (X - 3) * (X - 4) * (X - 5) * (X - 6) : Polynomial ℤ)
 
 /-- A `Polynomial ℚ` case: `2x² − 3x + 1 = (2x − 1)(x − 1)`. -/
-noncomputable def iso_rat := isolate_roots (2 * X ^ 2 - 3 * X + 1 : Polynomial ℚ)
+noncomputable def isoRat := isolate_roots (2 * X ^ 2 - 3 * X + 1 : Polynomial ℚ)
 
 /-! # Non-squarefree (exercises the core transport) -/
 
 /-- `(x − 1)²(x − 3)` over `Polynomial ℤ`: two distinct real roots. -/
-noncomputable def iso_nonsqfree :=
+noncomputable def isoNonsqfree :=
   isolate_roots ((X - 1) ^ 2 * (X - 3) : Polynomial ℤ)
 
 /-! # Nonzero constant -/
 
 /-- A nonzero constant has no real roots: the empty isolation. -/
-noncomputable def iso_const := isolate_roots (7 : Polynomial ℝ)
+noncomputable def isoConst := isolate_roots (7 : Polynomial ℝ)
 
 /-! # Consumption demos -/
 
@@ -210,7 +210,7 @@ example :
 /-- **Expected-type inference.** When the expected type pins the coefficient
 ring, the polynomial argument needs no type ascription: `X ^ 4 - 2` alone
 elaborates as a `Polynomial ℝ`. -/
-noncomputable def x4_inferred : Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
+noncomputable def x4Inferred : Hex.IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
   isolate_roots (X ^ 4 - 2)
 
 /-- A `ZPoly` argument still elaborates under an expected type (the ring hint
@@ -225,8 +225,8 @@ noncomputable example :
 computes an isolation's endpoints to their literals, so `unique_root` closes a
 concrete theorem with one `simpa`. -/
 example : ∃! x : ℝ, x ^ 4 - 2 = 0 ∧ (0 : ℝ) < x ∧ x ≤ 4 := by
-  simpa [x4_inferred] using x4_inferred.unique_root 1
+  simpa [x4Inferred] using x4Inferred.unique_root 1
 
 /-- The `ordered` field, consumed with bare `Nat` indices. -/
-example : (x4_inferred.intervals[0]).2 ≤ (x4_inferred.intervals[1]).1 := by
-  simpa using x4_inferred.ordered 0 1 (by decide)
+example : (x4Inferred.intervals[0]).2 ≤ (x4Inferred.intervals[1]).1 := by
+  simpa using x4Inferred.ordered 0 1 (by decide)

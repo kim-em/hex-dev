@@ -420,7 +420,7 @@ private theorem countP_roots_eq_sum (f : Polynomial ℝ) (p : ℝ → Prop)
   · ext x
     simp [Multiset.mem_toFinset, and_comm]
   · rw [Finset.mem_filter, Multiset.mem_toFinset] at hx
-    rw [Multiset.count_filter, if_pos hx.2]
+    rw [Multiset.count_filter, ite_eq_left hx.2]
 
 /-- **Windowed root-count correspondence over `ℝ`.** For `a < b`, `P ≠ 0`, and
 `natDegree P ≤ n`, the number of positive roots of the transform (with
@@ -618,11 +618,11 @@ private theorem countSignChanges_destutter' : ∀ (m : List ℝ) (a : ℝ), a �
       rw [Sturm.countSignChanges_cons_cons, List.map_cons]
       by_cases hsab : SignType.sign a ≠ SignType.sign b
       · rw [List.destutter'_cons_pos _ hsab, List.length_cons,
-          if_pos ((mul_neg_iff_sign_ne ha hb).mpr hsab), hIH, Nat.add_sub_cancel]
+          ite_eq_left ((mul_neg_iff_sign_ne ha hb).mpr hsab), hIH, Nat.add_sub_cancel]
         exact Nat.add_sub_cancel'
           (List.length_pos_of_ne_nil (List.destutter'_ne_nil _ _))
       · rw [List.destutter'_cons_neg _ hsab,
-          if_neg (fun h => hsab ((mul_neg_iff_sign_ne ha hb).mp h)), Nat.zero_add,
+          ite_eq_right (fun h => hsab ((mul_neg_iff_sign_ne ha hb).mp h)), Nat.zero_add,
           not_not.mp hsab]
         exact hIH
 
@@ -845,7 +845,7 @@ private theorem toPolyℝ_linear (u : Int) :
   | 0 => simp [Array.getD]
   | 1 => simp [Array.getD]
   | (k + 2) =>
-      rw [if_neg (by omega), if_neg (by omega), add_zero,
+      rw [ite_eq_right (by omega), ite_eq_right (by omega), add_zero,
         Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by simp), Option.getD_none]
       exact Int.cast_zero
 
@@ -861,7 +861,7 @@ private theorem toPolyℝ_cleared (p : Hex.ZPoly) (s : Nat) :
   rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofList,
     HexPolyMathlib.list_getD_map_range_zero, coeff_C_mul, comp_C_mul_X_coeff, coeff_toPolyℝ]
   by_cases hj : j < p.size
-  · rw [if_pos hj]
+  · rw [ite_eq_left hj]
     have hkey : ((2:ℝ) ^ (-(s:ℤ))) ^ j = ((2:ℝ) ^ (s * j))⁻¹ := by
       rw [zpow_neg, zpow_natCast, inv_pow, ← pow_mul]
     have hsplit : s * (p.size - 1) = s * (p.size - 1 - j) + s * j := by
@@ -870,7 +870,7 @@ private theorem toPolyℝ_cleared (p : Hex.ZPoly) (s : Nat) :
     push_cast
     have h2 : ((2:ℝ) ^ (s * j)) ≠ 0 := by positivity
     field_simp
-  · rw [if_neg hj, Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega),
+  · rw [ite_eq_right hj, Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega),
       show (Zero.zero : ℤ) = 0 from rfl, Int.cast_zero]
     ring
 
@@ -886,8 +886,8 @@ private theorem toPolyℝ_reversed (q : Hex.ZPoly) (n : Nat)
   rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofList,
     HexPolyMathlib.list_getD_map_range_zero, coeff_reflect]
   by_cases hj : j < n + 1
-  · rw [if_pos hj, revAt_le (by omega), coeff_toPolyℝ]
-  · rw [if_neg hj, revAt_eq_self_of_lt (by omega),
+  · rw [ite_eq_left hj, revAt_le (by omega), coeff_toPolyℝ]
+  · rw [ite_eq_right hj, revAt_eq_self_of_lt (by omega),
       Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]
     exact Int.cast_zero
 
@@ -949,7 +949,7 @@ private theorem toPolyℝ_mobiusSteps (p : Hex.ZPoly) (α β : Int) (s : Nat)
                 (p.size - 1 - i))))
           (Hex.DensePoly.ofCoeffs #[(1 : Int), 1]) := by
     unfold mobiusSteps
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
   have hdeg' : (toPolyℝ (Hex.ZPoly.dilate (α - β)
       (Hex.DensePoly.compose
         (Hex.DensePoly.ofList

@@ -186,7 +186,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
     have href : iso.refine1.interval = (⟨lo, m, hlm⟩ : Hex.DyadicInterval) := by
       show (Hex.RealRootIsolation.refine1 iso).interval = _
       unfold Hex.RealRootIsolation.refine1 Hex.RealRootIsolation.refine1With
-      rw [dif_pos hlm, dif_pos hCLraw]
+      rw [dite_eq_left hlm, dite_eq_left hCLraw]
       rfl
     have hCR : Hex.sturmCount p ⟨m, hi, hmh⟩ = 0 := by omega
     refine ⟨fun r hr => ?_, ?_⟩
@@ -209,7 +209,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
     have href : iso.refine1.interval = (⟨m, hi, hmh⟩ : Hex.DyadicInterval) := by
       show (Hex.RealRootIsolation.refine1 iso).interval = _
       unfold Hex.RealRootIsolation.refine1 Hex.RealRootIsolation.refine1With
-      rw [dif_pos hlm, dif_neg hCLraw_neg, dif_pos hmh, dif_pos hCRraw]
+      rw [dite_eq_left hlm, dite_eq_right hCLraw_neg, dite_eq_left hmh, dite_eq_left hCRraw]
       rfl
     refine ⟨fun r hr => ?_, ?_⟩
     · rw [href]
@@ -289,7 +289,7 @@ private theorem toReal_le_two_pow_ceilLog2Dyadic (x : Dyadic) (hx : 0 < Dyadic.t
     have hcl : Hex.ceilLog2Dyadic (Dyadic.ofOdd n k hn)
         = (Hex.ceilLog2Nat n.toNat : Int) - k := by
       show (if n ≤ 0 then (0 : Int) else (Hex.ceilLog2Nat n.toNat : Int) - k) = _
-      rw [if_neg (by omega)]
+      rw [ite_eq_right (by omega)]
     have hnle : (n : ℝ) ≤ (2 : ℝ) ^ (Hex.ceilLog2Nat n.toNat) := by
       have hnat := le_two_pow_ceilLog2Nat n.toNat
       have hcast : (n.toNat : ℝ) ≤ (2 : ℝ) ^ (Hex.ceilLog2Nat n.toNat) := by exact_mod_cast hnat
@@ -468,7 +468,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
            else none) := rfl
     by_cases h0 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
         = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
-    · refine ⟨#[], by rw [hunf, if_pos h0], by simp [h0], ?_, ?_, ?_⟩
+    · refine ⟨#[], by rw [hunf, ite_eq_left h0], by simp [h0], ?_, ?_, ?_⟩
       · intro i j hij; exact absurd i.isLt (by simp)
       · intro I hI; simp at hI
       · intro I hI; simp at hI
@@ -477,7 +477,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
       · have hraw : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
             - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 := by omega
         refine ⟨#[⟨⟨lo, hi, hlt⟩, hraw⟩],
-          by rw [hunf, if_neg h0, if_pos h1, dif_pos hlt, dif_pos hraw],
+          by rw [hunf, ite_eq_right h0, ite_eq_left h1, dite_eq_left hlt, dite_eq_left hraw],
           by simp [h1], ?_, ?_, ?_⟩
         · intro i j hij
           have hi1 : (i : ℕ) < 1 := i.isLt
@@ -530,7 +530,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
                | some right => some (left ++ right)) := rfl
     by_cases h0 : Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo
         = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
-    · refine ⟨#[], by rw [hunf, if_pos h0], by simp [h0], ?_, ?_, ?_⟩
+    · refine ⟨#[], by rw [hunf, ite_eq_left h0], by simp [h0], ?_, ?_, ?_⟩
       · intro i j hij; exact absurd i.isLt (by simp)
       · intro I hI; simp at hI
       · intro I hI; simp at hI
@@ -539,7 +539,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
       · have hraw : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
             - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi = 1 := by omega
         refine ⟨#[⟨⟨lo, hi, hlt⟩, hraw⟩],
-          by rw [hunf, if_neg h0, if_pos h1, dif_pos hlt, dif_pos hraw],
+          by rw [hunf, ite_eq_right h0, ite_eq_left h1, dite_eq_left hlt, dite_eq_left hraw],
           by simp [h1], ?_, ?_, ?_⟩
         · intro i j hij
           have hi1 : (i : ℕ) < 1 := i.isLt
@@ -582,7 +582,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
             ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) ((lo + hi) >>> (1 : Int)) :=
           sturmVarAt_le hdeg hp hmh
         refine ⟨left ++ right, ?_, ?_, ?_, ?_, ?_⟩
-        · rw [hunf, if_neg h0, if_neg h1, hLeq, hReq]
+        · rw [hunf, ite_eq_right h0, ite_eq_right h1, hLeq, hReq]
         · rw [Array.size_append, hLsize, hRsize]
           omega
         · -- The concatenation stays sorted: `left`'s uppers sit below the
@@ -623,7 +623,7 @@ theorem assemble?_isSome {chain : Array Hex.ZPoly}
     (hsize : arr.size = Hex.sturmVarNegInf chain - Hex.sturmVarPosInf chain) :
     (Hex.assemble? p chain hchain arr).isSome := by
   unfold Hex.assemble?
-  rw [dif_pos hord, dif_pos hsize]
+  rw [dite_eq_left hord, dite_eq_left hsize]
   rfl
 
 /-- `isolateSturm?` on positive-degree squarefree input is the top `sturmVisit`
@@ -639,7 +639,7 @@ private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
         | some arr => Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl arr) := by
   unfold Hex.isolateSturm?
   simp only [hd]
-  rw [if_pos hp]
+  rw [ite_eq_left hp]
   rfl
 
 /-! # Driver completeness -/

@@ -120,8 +120,8 @@ private lemma countP_deg_one {f : ℝ[X]} (hf : IsMonicOfDegree f 1) :
       rw [trailingCoeff_eq_coeff_zero hne, hcoeff]
     rw [htc, ← Multiset.cons_zero, Multiset.countP_cons, Multiset.countP_zero, zero_add]
     rcases lt_or_gt_of_ne hbz with h | h
-    · rw [if_pos (show (0 : ℝ) < -b by linarith), sign_neg h, if_neg (by decide)]
-    · rw [if_neg (show ¬ (0 : ℝ) < -b by linarith), sign_pos h, if_pos rfl]
+    · rw [ite_eq_left (show (0 : ℝ) < -b by linarith), sign_neg h, ite_eq_right (by decide)]
+    · rw [ite_eq_right (show ¬ (0 : ℝ) < -b by linarith), sign_pos h, ite_eq_left rfl]
 
 /-- A monic degree-two real polynomial with no real root has a positive trailing (constant)
 coefficient. -/
@@ -167,7 +167,7 @@ private lemma countP_deg_two {f : ℝ[X]} (hf : IsMonicOfDegree f 2) :
       rw [Multiset.eq_zero_iff_forall_notMem]
       exact fun x hx => hroot x (isRoot_of_mem_roots hx)
     rw [hroots, Multiset.countP_zero,
-      if_pos (sign_pos (trailingCoeff_pos_of_no_root hf hroot))]
+      ite_eq_left (sign_pos (trailingCoeff_pos_of_no_root hf hroot))]
 
 /-- Core (monic case): the number of positive roots of a monic real polynomial is congruent
 modulo two to the indicator of its trailing coefficient's sign. -/
@@ -249,8 +249,8 @@ theorem signVariations_modTwo {P : ℝ[X]} (hP : P ≠ 0) :
         rw [← hmc, he, coeff_zero]
       have hlctc : P.trailingCoeff = P.leadingCoeff := by
         simp only [trailingCoeff, leadingCoeff, hnt]
-      rw [he, signVariations_zero, leadingCoeff_zero, sign_zero, neg_zero, if_neg hslc, hlctc,
-        if_pos rfl]
+      rw [he, signVariations_zero, leadingCoeff_zero, sign_zero, neg_zero, ite_eq_right hslc, hlctc,
+        ite_eq_left rfl]
     · have hltd : P.eraseLead.natDegree < d := by
         rw [← hd]
         rcases eraseLead_natDegree_lt_or_eraseLead_eq_zero P with h' | h'
@@ -268,9 +268,8 @@ theorem signVariations_parity (P : ℝ[X]) (hP : P ≠ 0) :
     P.roots.countP (0 < ·) ≡ P.signVariations [MOD 2] :=
   (countP_pos_modTwo hP).trans (signVariations_modTwo hP).symm
 
-set_option linter.unusedVariables false in
 /-- No sign variations forces no positive roots. -/
-theorem countP_pos_eq_zero_of_signVariations_eq_zero {P : ℝ[X]} (hP : P ≠ 0)
+theorem countP_pos_eq_zero_of_signVariations_eq_zero {P : ℝ[X]}
     (h : P.signVariations = 0) : P.roots.countP (0 < ·) = 0 :=
   Nat.le_zero.mp (h ▸ roots_countP_pos_le_signVariations P)
 
