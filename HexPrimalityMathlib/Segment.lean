@@ -39,7 +39,8 @@ theorem primesIn_spec (lo hi : Nat) :
 
 /-- The `Finset` of primes below a bound inside the table's range is the
 filtered table. -/
-theorem filter_prime_range {bound : Nat} (h : bound ≤ primeTableBound) :
+theorem filter_prime_range [DecidablePred (_root_.Nat.Prime)]
+    {bound : Nat} (h : bound ≤ primeTableBound) :
     (Finset.range bound).filter _root_.Nat.Prime =
       (primeTable.toList.filter (fun p => p < bound)).toFinset := by
   ext n

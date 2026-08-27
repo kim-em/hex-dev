@@ -49,7 +49,7 @@ theorem isPrime_iff_natPrime {n : Nat} :
   isPrime_iff.trans prime_iff
 
 /-- A Miller-Rabin witness refutes `Nat.Prime`. -/
-theorem millerRabin_not_natPrime {n a : Nat}
+theorem millerRabin_refutes_natPrime {n a : Nat}
     (h : millerRabin n a = false) : ¬ _root_.Nat.Prime n :=
   fun hp => not_prime_of_millerRabin_false h (prime_iff.mpr hp)
 
