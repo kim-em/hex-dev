@@ -720,7 +720,7 @@ setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
 
 /- A fixed 2:1 shape performs two balanced Karatsuba blocks, preserving the
 `Theta(n^(log_2 3))` model in the shorter operand size. -/
-setup_benchmark runKaratsubaRatio2 n => n * Nat.sqrt n
+setup_benchmark runKaratsubaRatio2 n => (n * Nat.sqrt n)
   with prep := prepRatio2
   where {
     paramFloor := 4
@@ -732,9 +732,9 @@ setup_benchmark runKaratsubaRatio2 n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "ratio-2"]
   }
 
-/- A fixed 4:1 shape uses four shorter-size blocks, so its asymptotic model
-matches balanced Karatsuba up to that constant factor. -/
-setup_benchmark runKaratsubaRatio4 n => n * Nat.sqrt n
+/- Cost model: a fixed 4:1 shape uses four shorter-size blocks, so its
+Karatsuba complexity matches the balanced recurrence up to that constant. -/
+setup_benchmark runKaratsubaRatio4 n => (n * Nat.sqrt n)
   with prep := prepRatio4
   where {
     paramFloor := 4
@@ -746,9 +746,9 @@ setup_benchmark runKaratsubaRatio4 n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "ratio-4"]
   }
 
-/- A fixed 16:1 shape uses sixteen shorter-size blocks and the same
-Karatsuba exponent in the registered parameter. -/
-setup_benchmark runKaratsubaRatio16 n => n * Nat.sqrt n
+/- Cost model: a fixed 16:1 shape uses sixteen shorter-size blocks and the
+same Karatsuba complexity exponent in the registered parameter. -/
+setup_benchmark runKaratsubaRatio16 n => (n * Nat.sqrt n)
   with prep := prepRatio16
   where {
     paramFloor := 4
@@ -760,9 +760,9 @@ setup_benchmark runKaratsubaRatio16 n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "ratio-16"]
   }
 
-/- Full-product-then-low extraction retains the full balanced Karatsuba cost
-and is the within-Lean comparator for direct clipping over `Int`. -/
-setup_benchmark runFullThenLowInt n => n * Nat.sqrt n
+/- Cost model: full-product-then-low extraction retains the full balanced
+Karatsuba complexity and is the comparator for direct clipping over `Int`. -/
+setup_benchmark runFullThenLowInt n => (n * Nat.sqrt n)
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -776,7 +776,7 @@ setup_benchmark runFullThenLowInt n => n * Nat.sqrt n
 
 /- Direct low clipping skips irrelevant recursive branches while retaining
 the `O(M(n))` Karatsuba upper bound over `Int`. -/
-setup_benchmark runClippedLowInt n => n * Nat.sqrt n
+setup_benchmark runClippedLowInt n => (n * Nat.sqrt n)
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -790,7 +790,7 @@ setup_benchmark runClippedLowInt n => n * Nat.sqrt n
 
 /- Rational schoolbook convolution performs one exact coefficient product per
 input pair, hence quadratic coefficient work. -/
-setup_benchmark runSchoolbookRat n => n ^ 2
+setup_benchmark runSchoolbookRat n => (n ^ 2)
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -802,9 +802,9 @@ setup_benchmark runSchoolbookRat n => n ^ 2
     tags := #["multiplication", "schoolbook", "rat", "balanced"]
   }
 
-/- Balanced rational Karatsuba has the standard three-subproblem recurrence,
-represented by the integer-valued `n * sqrt n` surrogate. -/
-setup_benchmark runKaratsubaRat n => n * Nat.sqrt n
+/- Cost model: balanced rational Karatsuba has the standard three-subproblem
+recurrence, represented by the integer-valued `n * sqrt n` surrogate. -/
+setup_benchmark runKaratsubaRat n => (n * Nat.sqrt n)
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -816,9 +816,9 @@ setup_benchmark runKaratsubaRat n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "rat", "balanced"]
   }
 
-/- Specialized rational squaring follows the same recursive size recurrence
-as rational Karatsuba multiplication. -/
-setup_benchmark runKaratsubaSquareRat n => n * Nat.sqrt n
+/- Cost model: specialized rational squaring has the same recursive
+complexity as rational Karatsuba multiplication. -/
+setup_benchmark runKaratsubaSquareRat n => (n * Nat.sqrt n)
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -830,9 +830,9 @@ setup_benchmark runKaratsubaSquareRat n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "rat", "square"]
   }
 
-/- Full rational multiplication followed by extraction is the direct
-comparator for the clipped rational path. -/
-setup_benchmark runFullThenLowRat n => n * Nat.sqrt n
+/- Cost model: full rational multiplication followed by extraction retains
+the Karatsuba bound and directly compares with the clipped rational path. -/
+setup_benchmark runFullThenLowRat n => (n * Nat.sqrt n)
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -846,7 +846,7 @@ setup_benchmark runFullThenLowRat n => n * Nat.sqrt n
 
 /- Direct rational clipping retains the `O(M(n))` upper bound while avoiding
 irrelevant high product branches. -/
-setup_benchmark runClippedLowRat n => n * Nat.sqrt n
+setup_benchmark runClippedLowRat n => (n * Nat.sqrt n)
   with prep := prepBalancedRat
   where {
     paramFloor := 4
@@ -860,7 +860,7 @@ setup_benchmark runClippedLowRat n => n * Nat.sqrt n
 
 /- Small-word-field schoolbook convolution performs quadratic coefficient
 work with constant-time `ZMod64 5` operations. -/
-setup_benchmark runSchoolbookMod n => n ^ 2
+setup_benchmark runSchoolbookMod n => (n ^ 2)
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -872,9 +872,9 @@ setup_benchmark runSchoolbookMod n => n ^ 2
     tags := #["multiplication", "schoolbook", "zmod5", "balanced"]
   }
 
-/- Small-word-field Karatsuba follows the three-subproblem recurrence and uses
-the standard integer-valued surrogate. -/
-setup_benchmark runKaratsubaMod n => n * Nat.sqrt n
+/- Cost model: small-word-field Karatsuba follows the three-subproblem
+recurrence and uses the standard integer-valued complexity surrogate. -/
+setup_benchmark runKaratsubaMod n => (n * Nat.sqrt n)
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -886,9 +886,9 @@ setup_benchmark runKaratsubaMod n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "zmod5", "balanced"]
   }
 
-/- Specialized `ZMod64 5` squaring has the same recursive size recurrence as
-the generic Karatsuba product. -/
-setup_benchmark runKaratsubaSquareMod n => n * Nat.sqrt n
+/- Cost model: specialized `ZMod64 5` squaring has the same recursive
+complexity as the generic Karatsuba product. -/
+setup_benchmark runKaratsubaSquareMod n => (n * Nat.sqrt n)
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -900,9 +900,9 @@ setup_benchmark runKaratsubaSquareMod n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "zmod5", "square"]
   }
 
-/- Full small-word-field multiplication followed by extraction is the
-within-Lean comparator for direct clipping. -/
-setup_benchmark runFullThenLowMod n => n * Nat.sqrt n
+/- Cost model: full small-word-field multiplication followed by extraction
+retains the Karatsuba bound used by the direct-clipping comparator. -/
+setup_benchmark runFullThenLowMod n => (n * Nat.sqrt n)
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -916,7 +916,7 @@ setup_benchmark runFullThenLowMod n => n * Nat.sqrt n
 
 /- Direct `ZMod64 5` clipping avoids high recursive branches while retaining
 the `O(M(n))` upper bound. -/
-setup_benchmark runClippedLowMod n => n * Nat.sqrt n
+setup_benchmark runClippedLowMod n => (n * Nat.sqrt n)
   with prep := prepBalancedMod
   where {
     paramFloor := 4
@@ -931,7 +931,7 @@ setup_benchmark runClippedLowMod n => n * Nat.sqrt n
 /- The lower library deliberately retains its weak semiring schoolbook API.
 This registration measures that triangular convolution against the
 commutative-ring Karatsuba plan supplied above the dependency boundary. -/
-setup_benchmark runSeriesSchoolbookInt n => n ^ 2
+setup_benchmark runSeriesSchoolbookInt n => (n ^ 2)
   with prep := prepSeriesInt
   where {
     paramFloor := 4
@@ -944,7 +944,11 @@ setup_benchmark runSeriesSchoolbookInt n => n ^ 2
     tags := #["series-multiplication", "schoolbook", "int", "bounded"]
   }
 
-setup_benchmark runSeriesKaratsubaInt n => n * Nat.sqrt n
+/-
+Cost model: clipped integer series multiplication follows the same
+three-subproblem Karatsuba recurrence as the full product.
+-/
+setup_benchmark runSeriesKaratsubaInt n => (n * Nat.sqrt n)
   with prep := prepSeriesInt
   where {
     paramFloor := 4
@@ -957,7 +961,11 @@ setup_benchmark runSeriesKaratsubaInt n => n * Nat.sqrt n
     tags := #["series-multiplication", "karatsuba", "int", "bounded"]
   }
 
-setup_benchmark runSeriesSchoolbookRat n => n ^ 2
+/-
+Cost model: the retained rational series kernel forms every contributing
+coefficient pair, giving quadratic work in the truncation order.
+-/
+setup_benchmark runSeriesSchoolbookRat n => (n ^ 2)
   with prep := prepSeriesRat
   where {
     paramFloor := 4
@@ -970,7 +978,11 @@ setup_benchmark runSeriesSchoolbookRat n => n ^ 2
     tags := #["series-multiplication", "schoolbook", "rat", "bounded"]
   }
 
-setup_benchmark runSeriesKaratsubaRat n => n * Nat.sqrt n
+/-
+Cost model: clipped rational series multiplication follows the standard
+three-subproblem Karatsuba recurrence.
+-/
+setup_benchmark runSeriesKaratsubaRat n => (n * Nat.sqrt n)
   with prep := prepSeriesRat
   where {
     paramFloor := 4
@@ -1012,9 +1024,9 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     tags := #["division", "newton", "cold"]
   }
 
-/- Reciprocal construction is hoisted into `prep`; the timed body performs
-only the quotient low product and reconstruction product. -/
-setup_benchmark runCachedDivision n => n * Nat.sqrt n
+/- Cost model: reciprocal construction is hoisted into `prep`; the timed body
+performs two `O(M(n))` products, represented by the Karatsuba surrogate. -/
+setup_benchmark runCachedDivision n => (n * Nat.sqrt n)
   with prep := prepCachedDivision
   where {
     paramFloor := 4
@@ -1028,7 +1040,7 @@ setup_benchmark runCachedDivision n => n * Nat.sqrt n
 
 /- Eight dividends share one fixed reciprocal. This separates amortized plan
 reuse from the one-shot comparison above. -/
-setup_benchmark runRepeatedNewtonDivision n => 8 * n * Nat.sqrt n
+setup_benchmark runRepeatedNewtonDivision n => (8 * n * Nat.sqrt n)
   with prep := prepRepeatedDivision
   where {
     paramFloor := 4
@@ -1040,7 +1052,11 @@ setup_benchmark runRepeatedNewtonDivision n => 8 * n * Nat.sqrt n
     tags := #["division", "newton", "repeated", "cold-plan"]
   }
 
-setup_benchmark runRepeatedCachedDivision n => 8 * n * Nat.sqrt n
+/-
+Cost model: eight dividends reuse one reciprocal, so the amortized timed work
+is eight `O(M(n))` quotient-and-reconstruction products.
+-/
+setup_benchmark runRepeatedCachedDivision n => (8 * n * Nat.sqrt n)
   with prep := prepRepeatedDivision
   where {
     paramFloor := 4
@@ -1052,7 +1068,11 @@ setup_benchmark runRepeatedCachedDivision n => 8 * n * Nat.sqrt n
     tags := #["division", "newton", "repeated", "warm-plan"]
   }
 
-setup_benchmark runSkewLongDivision n => n ^ 2
+/-
+Cost model: the fixed 4:1 long-division shape performs linearly many dense
+suffix updates, giving a quadratic bound in the shorter degree.
+-/
+setup_benchmark runSkewLongDivision n => (n ^ 2)
   with prep := prepGcdSkew
   where {
     paramFloor := 4
@@ -1064,7 +1084,11 @@ setup_benchmark runSkewLongDivision n => n ^ 2
     tags := #["division", "long", "ratio-4"]
   }
 
-setup_benchmark runSkewNewtonDivision n => n * (Nat.sqrt n)
+/-
+Cost model: a fixed 4:1 shape changes Newton division by a constant number of
+blocks, preserving the `O(M(n))` Karatsuba bound.
+-/
+setup_benchmark runSkewNewtonDivision n => (n * Nat.sqrt n)
   with prep := prepGcdSkew
   where {
     paramFloor := 4
@@ -1079,7 +1103,7 @@ setup_benchmark runSkewNewtonDivision n => n * (Nat.sqrt n)
 /- The established extended Euclidean loop performs a linear number of
 remainder steps.  Over the fixed coefficient field, division and the Bezout
 updates have total quadratic degree cost. -/
-setup_benchmark runEuclideanXgcd n => n ^ 2
+setup_benchmark runEuclideanXgcd n => (n ^ 2)
   with prep := prepGcdBalanced
   where {
     paramFloor := 4
@@ -1093,7 +1117,7 @@ setup_benchmark runEuclideanXgcd n => n ^ 2
 
 /- Recursive high-half transformations group the quotient sequence into a
 logarithmic number of balanced matrix levels, for `O(M(n) log n)`. -/
-setup_benchmark runHalfGcd n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+setup_benchmark runHalfGcd n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   with prep := prepGcdBalanced
   where {
     paramFloor := 4
@@ -1105,7 +1129,11 @@ setup_benchmark runHalfGcd n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["half-gcd", "matrix", "balanced"]
   }
 
-setup_benchmark runHalfGcdSkew n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+/-
+Cost model: fixed 4:1 skew changes only constants in the half-gcd recurrence,
+which remains `O(M(n) log n)` in the shorter degree.
+-/
+setup_benchmark runHalfGcdSkew n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   with prep := prepGcdSkew
   where {
     paramFloor := 4
@@ -1117,7 +1145,11 @@ setup_benchmark runHalfGcdSkew n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["half-gcd", "matrix", "ratio-4"]
   }
 
-setup_benchmark runHalfGcdLeft n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+/-
+Cost model: the one-sided half-gcd surface uses the same logarithmic matrix
+recurrence and `O(M(n) log n)` bound as the paired result.
+-/
+setup_benchmark runHalfGcdLeft n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   with prep := prepGcdBalanced
   where {
     paramFloor := 4
@@ -1173,9 +1205,9 @@ setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["multipoint", "remainder-tree", "reused-plan"]
   }
 
-/- Product, reciprocal, and remainder trees are all constructed inside the
-timed call, exposing cold reusable-plan setup cost. -/
-setup_benchmark runColdMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+/- Cost model: product, reciprocal, and remainder trees are all constructed
+inside the timed call; each has the `O(M(n) log n)` balanced-tree bound. -/
+setup_benchmark runColdMultipointEval n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   with prep := prepMultipoint
   where {
     paramFloor := 4
@@ -1187,7 +1219,11 @@ setup_benchmark runColdMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     tags := #["multipoint", "remainder-tree", "cold-plan"]
   }
 
-setup_benchmark runRepeatedDirectEval n => 8 * n ^ 2
+/-
+Cost model: eight degree-`n` polynomials are each evaluated at `n` points by
+linear Horner scans, giving eight times the quadratic direct-evaluation work.
+-/
+setup_benchmark runRepeatedDirectEval n => (8 * n ^ 2)
   with prep := prepMultipointBatch
   where {
     paramFloor := 4
@@ -1259,7 +1295,7 @@ setup_benchmark runColdInterpolation n =>
 
 /- Dense Gauss-Jordan elimination performs cubic rational arithmetic. The
 registered range is deliberately small because this is a reference path. -/
-setup_benchmark runLinearPade n => n ^ 3
+setup_benchmark runLinearPade n => (n ^ 3)
   with prep := prepPade
   where {
     paramFloor := 1
@@ -1273,7 +1309,7 @@ setup_benchmark runLinearPade n => n ^ 3
 
 /- Padé delegates its Euclidean boundary search to the half-gcd engine, with
 the same `O(M(n) log n)` balanced cost model. -/
-setup_benchmark runHalfGcdPade n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+setup_benchmark runHalfGcdPade n => (n * Nat.sqrt n * (Nat.log2 n + 1))
   with prep := prepPade
   where {
     paramFloor := 1

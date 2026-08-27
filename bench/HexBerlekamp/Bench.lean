@@ -433,7 +433,11 @@ setup_benchmark runRabinTestChecksum n => n * n * n
     slopeTolerance := 0.35
   }
 
-setup_benchmark runRabinSchoolbookChecksum n => n * n * n
+/-
+The retained schoolbook Rabin path has the same cubic upper bound: its dense
+Frobenius remainder dominates the bounded gcd checks.
+-/
+setup_benchmark runRabinSchoolbookChecksum n => (n * n * n)
   with prep := prepLinearProductInput
   where {
     paramFloor := 8

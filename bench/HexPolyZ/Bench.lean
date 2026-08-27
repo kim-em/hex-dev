@@ -312,7 +312,9 @@ All seven registrations deliberately share both fixture and schedule, so
 forced-kernel crossover.  The rungs bracket the current size-24 entry into the
 KS family and the former size-256 CRT-NTT candidate boundary.
 -/
-setup_benchmark runMulSchoolbookChecksum n => n * n
+/- Cost model: schoolbook convolution forms a quadratic number of integer
+coefficient products in the balanced operand length. -/
+setup_benchmark runMulSchoolbookChecksum n => (n * n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -324,7 +326,9 @@ setup_benchmark runMulSchoolbookChecksum n => n * n
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulKS1Checksum n => n
+/- Cost model: at fixed coefficient width, the packed operand digit volume is
+linear in `n`; crossover measurements expose the underlying GMP regime. -/
+setup_benchmark runMulKS1Checksum n => (n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -336,7 +340,9 @@ setup_benchmark runMulKS1Checksum n => n
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulKS2Checksum n => n
+/- Cost model: two-way packing still has linear digit volume at fixed width;
+the measured ladder, rather than this proxy, resolves GMP multiplication. -/
+setup_benchmark runMulKS2Checksum n => (n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -348,7 +354,9 @@ setup_benchmark runMulKS2Checksum n => n
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulKS3Checksum n => n
+/- Cost model: three-way packing and unpacking traverse linear digit volume at
+fixed coefficient width, with GMP complexity measured by the crossover. -/
+setup_benchmark runMulKS3Checksum n => (n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -360,7 +368,9 @@ setup_benchmark runMulKS3Checksum n => n
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulKS4Checksum n => n
+/- Cost model: four-way packing preserves a linear fixed-width digit-volume
+proxy; the timed rungs capture the non-linear GMP product itself. -/
+setup_benchmark runMulKS4Checksum n => (n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -372,7 +382,9 @@ setup_benchmark runMulKS4Checksum n => n
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
+/- Cost model: a fixed auxiliary-prime count performs radix-two transforms
+with logarithmically many linear stages, giving `O(n log n)` work. -/
+setup_benchmark runMulCrtNttChecksum n => (n * Nat.log2 (n + 1))
   with prep := prepMul64Balanced
   where {
     paramFloor := 16
@@ -384,7 +396,9 @@ setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "width64"]
   }
 
-setup_benchmark runMulFastChecksum n => n
+/- Cost model: the dispatcher follows the selected packed family, so fixed
+coefficient width uses the same linear digit-volume work proxy. -/
+setup_benchmark runMulFastChecksum n => (n)
   with prep := prepMul64Balanced
   where {
     paramFloor := 16

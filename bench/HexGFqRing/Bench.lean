@@ -288,7 +288,11 @@ setup_benchmark runReduceModChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runReduceFastChecksum n => n * n
+/-
+Newton reduction is `O(M(n))`; the registered quadratic bound is conservative
+for the current dense finite-field multiplication substrate.
+-/
+setup_benchmark runReduceFastChecksum n => (n * n)
   with prep := prepReduceInput
   where {
     paramFloor := 32
@@ -345,7 +349,11 @@ setup_benchmark runMulChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runMulSchoolbookChecksum n => n * n
+/-
+The retained path performs quadratic dense multiplication followed by a
+degree-`n` reduction with the same quadratic bound.
+-/
+setup_benchmark runMulSchoolbookChecksum n => (n * n)
   with prep := prepBinaryInput
   where {
     paramFloor := 32
@@ -388,7 +396,11 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runPowSchoolbookChecksum n => n * n * Nat.log2 (n + 1)
+/-
+Binary powering performs logarithmically many retained quadratic quotient
+multiplications, giving `O(n^2 log n)` coefficient work.
+-/
+setup_benchmark runPowSchoolbookChecksum n => (n * n * Nat.log2 (n + 1))
   with prep := prepPowInput
   where {
     paramFloor := 32

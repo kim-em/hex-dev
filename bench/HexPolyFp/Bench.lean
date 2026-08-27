@@ -567,7 +567,9 @@ The `F_257` registrations form the small-modulus half of the target-modulus
 ladder.  All forced kernels share operands and rungs; the direct path reaches
 transform length `256` at `n = 128`, exactly the two-adic capacity of `257 - 1`.
 -/
-setup_benchmark runMulSchoolbook257Checksum n => n * n
+/- Cost model: schoolbook convolution forms a quadratic number of coefficient
+products in the balanced operand length. -/
+setup_benchmark runMulSchoolbook257Checksum n => (n * n)
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -579,7 +581,9 @@ setup_benchmark runMulSchoolbook257Checksum n => n * n
     tags := #["multiplication", "forced", "balanced", "fp257"]
   }
 
-setup_benchmark runMulPacked257Checksum n => n * n
+/- Cost model: packed multiplication is bounded conservatively by the
+quadratic schoolbook fallback on this finite ladder. -/
+setup_benchmark runMulPacked257Checksum n => (n * n)
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -591,7 +595,9 @@ setup_benchmark runMulPacked257Checksum n => n * n
     tags := #["multiplication", "forced", "balanced", "fp257"]
   }
 
-setup_benchmark runMulKaratsuba257Checksum n => n * Nat.sqrt n
+/- Cost model: the three-subproblem Karatsuba recurrence is represented by
+the integer-valued `n * sqrt n` surrogate. -/
+setup_benchmark runMulKaratsuba257Checksum n => (n * Nat.sqrt n)
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -603,7 +609,9 @@ setup_benchmark runMulKaratsuba257Checksum n => n * Nat.sqrt n
     tags := #["multiplication", "forced", "balanced", "fp257"]
   }
 
-setup_benchmark runMulDirectNtt257Checksum n => n * Nat.log2 (n + 1)
+/- Cost model: radix-two NTT has logarithmically many linear butterfly stages,
+giving `O(n log n)` work with the plan prepared outside the timed body. -/
+setup_benchmark runMulDirectNtt257Checksum n => (n * Nat.log2 (n + 1))
   with prep := prepDirectMulInput257
   where {
     paramFloor := 4
@@ -615,7 +623,9 @@ setup_benchmark runMulDirectNtt257Checksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "fp257", "warm-plan"]
   }
 
-setup_benchmark runMulCrtNtt257Checksum n => n * Nat.log2 (n + 1)
+/- Cost model: the fixed auxiliary-prime ladder performs a constant number of
+radix-two transforms, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulCrtNtt257Checksum n => (n * Nat.log2 (n + 1))
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -627,7 +637,9 @@ setup_benchmark runMulCrtNtt257Checksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "fp257"]
   }
 
-setup_benchmark runMulFast257Checksum n => n * n
+/- Cost model: the dispatcher is bounded conservatively by its retained
+quadratic schoolbook kernel across this crossover ladder. -/
+setup_benchmark runMulFast257Checksum n => (n * n)
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -644,7 +656,9 @@ Every warm registration uses the same deterministic operands and crossover
 rungs.  The direct target-modulus entry alone uses the dependently typed plan
 prepared outside the timed body; its cold companion exposes construction cost.
 -/
-setup_benchmark runMulSchoolbookChecksum n => n * n
+/- Cost model: schoolbook convolution forms a quadratic number of coefficient
+products in the balanced operand length. -/
+setup_benchmark runMulSchoolbookChecksum n => (n * n)
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -656,7 +670,9 @@ setup_benchmark runMulSchoolbookChecksum n => n * n
     tags := #["multiplication", "forced", "balanced", "fp65537"]
   }
 
-setup_benchmark runMulPackedChecksum n => n * n
+/- Cost model: packed multiplication is bounded conservatively by the
+quadratic schoolbook fallback while the measured rungs expose GMP regimes. -/
+setup_benchmark runMulPackedChecksum n => (n * n)
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -669,10 +685,10 @@ setup_benchmark runMulPackedChecksum n => n * n
     tags := #["multiplication", "forced", "balanced", "fp65537"]
   }
 
-/- `n * sqrt n` is the nearest integer-valued built-in model to
+/- Cost model: `n * sqrt n` is the nearest integer-valued built-in model to
 `n^(log_2 3)`; crossover comparison, rather than the slope verdict, is the
 purpose of this forced registration. -/
-setup_benchmark runMulKaratsubaChecksum n => n * Nat.sqrt n
+setup_benchmark runMulKaratsubaChecksum n => (n * Nat.sqrt n)
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -685,7 +701,9 @@ setup_benchmark runMulKaratsubaChecksum n => n * Nat.sqrt n
     tags := #["multiplication", "forced", "balanced", "fp65537"]
   }
 
-setup_benchmark runMulDirectNttChecksum n => n * Nat.log2 (n + 1)
+/- Cost model: radix-two NTT has logarithmically many linear butterfly stages,
+giving `O(n log n)` work with a reusable plan. -/
+setup_benchmark runMulDirectNttChecksum n => (n * Nat.log2 (n + 1))
   with prep := prepDirectMulInput
   where {
     paramFloor := 16
@@ -698,7 +716,9 @@ setup_benchmark runMulDirectNttChecksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "fp65537", "warm-plan"]
   }
 
-setup_benchmark runMulDirectNttColdChecksum n => n * Nat.log2 (n + 1)
+/- Cost model: cold plan construction and the transform each use linear work
+per logarithmic level, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulDirectNttColdChecksum n => (n * Nat.log2 (n + 1))
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -711,7 +731,9 @@ setup_benchmark runMulDirectNttColdChecksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "fp65537", "cold-plan"]
   }
 
-setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
+/- Cost model: the fixed auxiliary-prime ladder performs a constant number of
+radix-two transforms, preserving the `O(n log n)` bound. -/
+setup_benchmark runMulCrtNttChecksum n => (n * Nat.log2 (n + 1))
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -724,7 +746,9 @@ setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
     tags := #["multiplication", "forced", "balanced", "fp65537"]
   }
 
-setup_benchmark runMulFastChecksum n => n * n
+/- Cost model: the dispatcher is bounded conservatively by its retained
+quadratic schoolbook kernel across the full crossover ladder. -/
+setup_benchmark runMulFastChecksum n => (n * n)
   with prep := prepMulInput
   where {
     paramFloor := 16
@@ -753,7 +777,9 @@ setup_benchmark runPowModMonicChecksum n => n * n * Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runFastPowChecksum n => n * n * Nat.log2 (n + 1)
+/- Cost model: the fast path performs logarithmically many reduced products,
+each conservatively quadratic in the modulus degree. -/
+setup_benchmark runFastPowChecksum n => (n * n * Nat.log2 (n + 1))
   with prep := prepPowModInput
   where {
     paramFloor := 64
@@ -787,7 +813,9 @@ setup_benchmark runFrobeniusXModChecksum n => n * n * n
     slopeTolerance := 0.20
   }
 
-setup_benchmark runFastFrobeniusChecksum n => n * n * n
+/- Cost model: batching `n` Frobenius calls, each with a quadratic reduced
+multiplication bound, gives cubic work. -/
+setup_benchmark runFastFrobeniusChecksum n => (n * n * n)
   with prep := prepFrobeniusInput
   where {
     paramFloor := 16
@@ -819,7 +847,9 @@ setup_benchmark runFrobeniusXPowModChecksum n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runFastFrobeniusPowChecksum n => n * n * n
+/- Cost model: the exponent has linearly many bits and each reduced product is
+quadratic, giving a cubic conservative bound. -/
+setup_benchmark runFastFrobeniusPowChecksum n => (n * n * n)
   with prep := prepFrobeniusPowInput
   where {
     paramFloor := 16
@@ -850,7 +880,9 @@ setup_benchmark runComposeModMonicChecksum n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runFastComposeChecksum n => n * n * n
+/- Cost model: Horner composition performs linearly many conservatively
+quadratic reduced products, giving cubic work. -/
+setup_benchmark runFastComposeChecksum n => (n * n * n)
   with prep := prepComposeInput
   where {
     paramFloor := 32
@@ -928,7 +960,7 @@ setup_benchmark runDivModChecksum n => n * n
 /- Newton division has `O(M(n))` algebraic work.  With the currently selected
 packed Fp kernel below the NTT crossover, the conservative registered model is
 quadratic; the shared rungs and result hash gate any consumer adoption. -/
-setup_benchmark runDivModFastChecksum n => n * n
+setup_benchmark runDivModFastChecksum n => (n * n)
   with prep := prepDivModInput
   where {
     paramFloor := 8
@@ -961,7 +993,7 @@ setup_benchmark runGcdChecksum n => n * n
 /- Half-gcd performs `O(M(n) log n)` algebraic work.  The quadratic model is a
 conservative fit while `FpPoly.fastPlan` retains packed multiplication on this
 ladder; direct comparison with Euclid, not a slope claim, gates consumers. -/
-setup_benchmark runGcdFastChecksum n => n * n
+setup_benchmark runGcdFastChecksum n => (n * n)
   with prep := prepGcdInput
   where {
     paramFloor := 8

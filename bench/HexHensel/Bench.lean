@@ -668,7 +668,7 @@ Left-folding `n` linear factors grows the accumulator degree one step at a
 time, giving a quadratic total number of coefficient operations.  This is the
 explicit comparator retained on both sides of the product-tree interval.
 -/
-setup_benchmark runPolyProductFoldChecksum n => n * n
+setup_benchmark runPolyProductFoldChecksum n => (n * n)
   with prep := prepProductInput
   where {
     paramFloor := 128
@@ -687,7 +687,7 @@ linear leaves; `n * log² n` is the conservative integer-valued model.  This
 registration shares every fixture and rung with the retained left fold so its
 result hash and end-to-end crossover gate a compiled replacement.
 -/
-setup_benchmark runPolyProductTreeChecksum n => n * (Nat.log2 (n + 1) + 1) ^ 2
+setup_benchmark runPolyProductTreeChecksum n => (n * (Nat.log2 (n + 1) + 1) ^ 2)
   with prep := prepProductInput
   where {
     paramFloor := 128

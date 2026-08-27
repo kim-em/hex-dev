@@ -943,7 +943,7 @@ accumulator degree grows linearly, so its schoolbook coefficient work sums to
 quadratic in the factor count. The production tree is compared on the same
 declared upper-bound model.
 -/
-setup_benchmark runTrialProductSchoolbookChecksum n => n * n
+setup_benchmark runTrialProductSchoolbookChecksum n => (n * n)
   with prep := prepTrialProductInput
   where {
     paramFloor := 4
@@ -955,7 +955,11 @@ setup_benchmark runTrialProductSchoolbookChecksum n => n * n
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
 
-setup_benchmark runTrialProductChecksum n => n * n
+/-
+The dispatch trial product uses the same conservative quadratic upper bound as
+the retained left fold over fixed-degree factors.
+-/
+setup_benchmark runTrialProductChecksum n => (n * n)
   with prep := prepTrialProductInput
   where {
     paramFloor := 4
@@ -967,7 +971,11 @@ setup_benchmark runTrialProductChecksum n => n * n
     tags := #["adoption", "trial-product", "dispatch"]
   }
 
-setup_benchmark runReassemblyProductSchoolbookChecksum n => n * n
+/-
+With fixed factor degree and a growing accumulator, schoolbook reassembly sums
+linear per-step coefficient work to a quadratic bound in the factor count.
+-/
+setup_benchmark runReassemblyProductSchoolbookChecksum n => (n * n)
   with prep := prepReassemblyProductInput
   where {
     paramFloor := 4
@@ -979,7 +987,11 @@ setup_benchmark runReassemblyProductSchoolbookChecksum n => n * n
     tags := #["adoption", "reassembly", "schoolbook", "reference"]
   }
 
-setup_benchmark runReassemblyProductChecksum n => n * n
+/-
+The dispatch reassembly product is registered against the same conservative
+quadratic bound as its retained schoolbook comparator.
+-/
+setup_benchmark runReassemblyProductChecksum n => (n * n)
   with prep := prepReassemblyProductInput
   where {
     paramFloor := 4
@@ -991,7 +1003,11 @@ setup_benchmark runReassemblyProductChecksum n => n * n
     tags := #["adoption", "reassembly", "dispatch"]
   }
 
-setup_benchmark runSkewProductSchoolbookChecksum n => n * n
+/-
+One high-degree factor followed by linear factors leaves a growing accumulator;
+summing the schoolbook products gives a quadratic factor-count bound.
+-/
+setup_benchmark runSkewProductSchoolbookChecksum n => (n * n)
   with prep := prepSkewProductInput
   where {
     paramFloor := 4
@@ -1003,7 +1019,11 @@ setup_benchmark runSkewProductSchoolbookChecksum n => n * n
     tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
   }
 
-setup_benchmark runSkewProductChecksum n => n * n
+/-
+The skew dispatch path uses the retained fold's conservative quadratic bound so
+both implementations share a directly comparable work parameter.
+-/
+setup_benchmark runSkewProductChecksum n => (n * n)
   with prep := prepSkewProductInput
   where {
     paramFloor := 4
