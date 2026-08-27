@@ -297,6 +297,18 @@ libraries consume.
 The library is verified by building it. Executable conformance belongs to
 `hex-number-field`.
 
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `correspondence-only-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
+number-field arithmetic algorithm; it verifies the executable QAdjoin
+arithmetic, root isolation, and Yun decomposition implemented
+elsewhere. The computational performance owner is hex-number-field,
+where the arithmetic and root ladders and the PARI/GP comparator are
+measured.
+
 ## References
 
 - Cohen, H. *A Course in Computational Algebraic Number Theory.* Springer,
