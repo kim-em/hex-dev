@@ -446,6 +446,19 @@ private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
   let iso ← isolations[0]?
   iso.toRefined?
 
+/-- Select an enclosing-polynomial isolation that meets the first root of a
+candidate factor. This pins exactification fixtures to the intended factor
+rather than to the enclosing isolator's emission order. -/
+private def refinedFactor? (p q : ZPoly) (hp : HasOnlySimpleRoots p)
+    (hq : HasOnlySimpleRoots q) : Option (RefinedIsolation p) := do
+  let pIsolations ← isolate p hp (separationDepth p : Int)
+  let pRefined ← pIsolations.mapM DyadicRootIsolation.toRefined?
+  let qIsolations ← isolate q hq (separationDepth q : Int)
+  let qIsolation ← qIsolations[0]?
+  let qRefined ← qIsolation.toRefined?
+  pRefined.toList.find? fun rep =>
+    rep.1.square.discsMeet qRefined.1.square
+
 /-- Deterministic factorization-lazy root of a primitive positive-leading
 squarefree polynomial (the first isolated root). -/
 private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
@@ -459,6 +472,25 @@ private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
                    squarefree := hsf, x := SimpleRoot.mk rep, rep := rep
                    rep_mk := rfl }
           | none => none
+        else none
+      else none
+    else none
+  else none
+
+/-- Factorization-lazy root of `p` selected from the candidate factor `q`. -/
+private def mkFactorRoot? (p q : ZPoly) : Option AlgebraicRoot :=
+  if hprim : ZPoly.content p = 1 then
+    if hlc : 0 < p.leadingCoeff then
+      if hdeg : 0 < p.degree?.getD 0 then
+        if hsf : HasOnlySimpleRoots p then
+          if hq : HasOnlySimpleRoots q then
+            match refinedFactor? p q hsf hq with
+            | some rep =>
+              some { p := p, prim := hprim, pos_lc := hlc, pos_degree := hdeg
+                     squarefree := hsf, x := SimpleRoot.mk rep, rep := rep
+                     rep_mk := rfl }
+            | none => none
+          else none
         else none
       else none
     else none
@@ -691,26 +723,27 @@ setup_benchmark runLazyAddLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
 
 /-! # Exactification ladder -/
 
-/-- Prepared exactification fixture: the first isolated root of
-`(X^m - 2)(X + 3)`, so factor selection always faces at least two
-irreducible candidate factors. -/
-private structure ExactInput where
+/-- Prepared certification fixture: a root of `(X^m - 2)(X + 3)` pinned to
+the nonlinear candidate, so factor selection always succeeds independently
+of the enclosing isolator's emission order. -/
+private structure SelectionInput where
   root : Option AlgebraicRoot
-  factor : ZPoly
+  candidate : ZPoly
 
-private instance : Hashable ExactInput where
+private instance : Hashable SelectionInput where
   hash input := mixHash ((input.root.map rootChecksum).getD 0)
-    (polyChecksum input.factor)
+    (polyChecksum input.candidate)
 
-private instance : Inhabited ExactInput := ⟨⟨none, 0⟩⟩
+private instance : Inhabited SelectionInput := ⟨⟨none, 0⟩⟩
 
-def prepExactSelectionInput (n : Nat) : ExactInput :=
+def prepExactSelectionInput (n : Nat) : SelectionInput :=
   let factor := xPowSubTwo (max n 2)
-  ⟨mkLadderRoot? (factor * DensePoly.ofList [3, 1]), factor⟩
+  let enclosing := factor * DensePoly.ofList [3, 1]
+  ⟨mkFactorRoot? enclosing factor, factor⟩
 
-initialize exactSelectionRef : IO.Ref (Option ExactInput) ← IO.mkRef none
+initialize exactSelectionRef : IO.Ref (Option SelectionInput) ← IO.mkRef none
 
-private def getExactSelection : IO ExactInput := do
+private def getExactSelection : IO SelectionInput := do
   match ← exactSelectionRef.get with
   | some input => pure input
   | none =>
@@ -737,13 +770,13 @@ setup_fixed_benchmark runExactSelection where {
   expectedHash := some 0xd5512fda51bc6ff6
 }
 
-def runExactFactorLadder (input : ExactInput) : UInt64 :=
+def runExactFactorLadder (input : SelectionInput) : UInt64 :=
   match input.root with
   | some root =>
-    match root.exactFactor? input.factor with
+    match root.exactFactor? input.candidate with
     | some a => polyChecksum a.p
-    | none => 1
-  | none => 0
+    | none => panic! "runExactFactorLadder: exactFactor? failed"
+  | none => panic! "runExactFactorLadder: fixture preparation failed"
 
 private structure CanonicalInput where
   p : ZPoly
@@ -793,9 +826,21 @@ def exactFamilyComplexity (count : Nat) : Nat :=
   let height := coefficientBits p
   degree ^ 9 + degree ^ 7 * height ^ 2
 
+def exactFactorComplexity (n : Nat) : Nat :=
+  let log := Nat.log2 (n + 2)
+  n ^ 9 + n ^ 7 * log ^ 2 + n ^ 5 * log ^ 2
+
+private structure ExactInput where
+  root : Option AlgebraicRoot
+
+private instance : Hashable ExactInput where
+  hash input := (input.root.map rootChecksum).getD 0
+
+private instance : Inhabited ExactInput := ⟨⟨none⟩⟩
+
 def prepExactInput (n : Nat) : ExactInput :=
   let p := exactFactorFamily n
-  ⟨mkLadderRoot? p, p⟩
+  ⟨mkLadderRoot? p⟩
 
 def runExactLadder (input : ExactInput) : UInt64 :=
   match input.root with
@@ -827,13 +872,14 @@ setup_benchmark runExactLadder n => (exactFamilyComplexity n)
   }
 
 /- Cost model. `exactFactor?` certifies one degree-`n`, constant-height
-candidate: irreducibility checking, isolation to separation depth, refinement
-against the enclosing polynomial, selection, and canonical re-isolation. The
-two isolations dominate the lower-order scans. Applying the HexRoots
-state-of-practice isolation bound `~O(d^3 + d^2 tau)` with the implementation's
-working-precision proxy `O(d^3 B^2)` and `B = O(n log n)` gives the declared
-`n^5 log^2 n` wall shape. -/
-setup_benchmark runExactFactorLadder n => (n ^ 5 * (Nat.log2 (n + 2)) ^ 2)
+candidate. Its irreducibility guard invokes the public BZ factorization API,
+so the declaration includes the classical BHKS `n^9 + n^7 log^2 n` envelope.
+It then isolates to separation depth, refines against the enclosing
+polynomial, selects the matching root, and performs canonical re-isolation.
+Applying the HexRoots state-of-practice isolation bound `~O(d^3 + d^2 tau)`
+with the implementation's working-precision proxy `O(d^3 B^2)` and
+`B = O(n log n)` adds `n^5 log^2 n`. -/
+setup_benchmark runExactFactorLadder n => (exactFactorComplexity n)
   with prep := prepExactSelectionInput
   where {
     paramFloor := 2

@@ -177,7 +177,7 @@ def categorise(name: str) -> str:
     if base.startswith("private.Init.") or base.split(".")[0] in {
             "Array", "List", "Nat", "Int", "Rat", "Option", "String",
             "Vector", "Fin", "Prod", "UInt64", "Subarray", "Bool", "Std",
-            "IO", "Decidable"}:
+            "IO", "Decidable", "Dyadic"}:
         return "lean-runtime"
     return "other"
 
