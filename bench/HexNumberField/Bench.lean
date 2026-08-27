@@ -1072,7 +1072,7 @@ rational coefficient operations, while the same-polynomial comparisons are
 constant-time square intersection tests. Summed over all candidates, both
 parts are `O(n²)` coefficient/square operations. The fixture computes Yun,
 norm eliminants, isolation, and disambiguation before timing begins. -/
-setup_benchmark runMergeRootListLadder n => n * n
+setup_benchmark runMergeRootListLadder n => n ^ 2
   with prep := prepMergeRootsInput
   where {
     paramFloor := 2
