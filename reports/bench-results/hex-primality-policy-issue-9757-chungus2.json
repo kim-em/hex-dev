@@ -1,0 +1,3510 @@
+{
+  "cases": [
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 7018.46,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1403692
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4412.3,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 882460
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 7009.095,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1401819
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4389.21,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 877842
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 6859.02,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1371804
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4391.565,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 878313
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 7000.285,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1400057
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4346.75,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 869350
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 6840.15,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1368030
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4392.115,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 878423
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 6855.72,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1371144
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4360.82,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 872164
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 6785.865,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1357173
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 10007,
+            "per_call_nanos": 4401.73,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 880346
+          }
+        }
+      ],
+      "n": 10007,
+      "name": "prime-10k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 204.655,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40931
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 3991.52,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 798304
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 201.45,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40290
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 3989.32,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 797864
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 210.115,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 42023
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 3990.92,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 798184
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 200.845,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40169
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 4006.495,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 801299
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 203.405,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40681
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 4009.3,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 801860
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 204.005,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40801
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 3999.485,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 799897
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 232.045,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 46409
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 10403,
+            "per_call_nanos": 3987.365,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 797473
+          }
+        }
+      ],
+      "n": 10403,
+      "name": "semiprime-10k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9357.18,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1871436
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5389.095,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1077819
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9458.685,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1891737
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5400.21,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1080042
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9474.005,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1894801
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5593.395,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1118679
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9384.92,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1876984
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5183.99,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1036798
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9528.035,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1905607
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5417.44,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1083488
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 9624.83,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1924966
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5401.015,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1080203
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 11890.185,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2378037
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 15013,
+            "per_call_nanos": 5278.13,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1055626
+          }
+        }
+      ],
+      "n": 15013,
+      "name": "prime-15k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 203.95,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40790
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4485.255,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 897051
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 205.405,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41081
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4379.295,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 875859
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 200.945,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40189
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4419.255,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 883851
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 206.81,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41362
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4367.775,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 873555
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 202.4,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40480
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4397.52,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 879504
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 208.36,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41672
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4379.595,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 875919
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 202.8,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 40560
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 14351,
+            "per_call_nanos": 4427.67,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 885534
+          }
+        }
+      ],
+      "n": 14351,
+      "name": "semiprime-15k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10204.235,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2040847
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 6117.875,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1223575
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10409.49,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2081898
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 5979.37,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1195874
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10018.31,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2003662
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 5990.285,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1198057
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10317.055,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2063411
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 6182.17,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1236434
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10119.61,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2023922
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 6092.935,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1218587
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10169.085,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2033817
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 6062.84,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1212568
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 10283.655,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 2056731
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 20011,
+            "per_call_nanos": 6130.995,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1226199
+          }
+        }
+      ],
+      "n": 20011,
+      "name": "prime-20k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 209.71,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41942
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5769.71,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1153942
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 209.46,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41892
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5714.88,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1142976
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 206.51,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41302
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5742.57,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1148514
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 221.58,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44316
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5707.615,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1141523
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 207.855,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41571
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5617.635,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1123527
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 222.18,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44436
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5787.585,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1157517
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 209.21,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41842
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 20711,
+            "per_call_nanos": 5752.785,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1150557
+          }
+        }
+      ],
+      "n": 20711,
+      "name": "semiprime-20k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8628.6,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1725720
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7370.83,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1474166
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8604.715,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1720943
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7406.235,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1481247
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8621.285,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1724257
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7374.59,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1474918
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8637.865,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1727573
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7158.97,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1431794
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8627.995,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1725599
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7228.325,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1445665
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8688.64,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1737728
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7150.555,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1430111
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 8494.15,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1698830
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 30011,
+            "per_call_nanos": 7422.41,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1484482
+          }
+        }
+      ],
+      "n": 30011,
+      "name": "prime-30k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 205.355,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41071
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6585.07,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1317014
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 209.81,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41962
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6597.435,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1319487
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 216.52,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43304
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 7132.93,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1426586
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 208.91,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41782
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6611.255,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1322251
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 208.06,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41612
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6733.285,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1346657
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 212.92,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 42584
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6627.235,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1325447
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 212.265,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 42453
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 29893,
+            "per_call_nanos": 6647.61,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1329522
+          }
+        }
+      ],
+      "n": 29893,
+      "name": "semiprime-30k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9718.115,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1943623
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9126.24,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1825248
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9568.845,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1913769
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9127.34,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1825468
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9740.6,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1948120
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9064.895,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1812979
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9667.29,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1933458
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9043.665,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1808733
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9860.83,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1972166
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9685.265,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1937053
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9635.545,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1927109
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9134.95,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1826990
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9698.235,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1939647
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 50021,
+            "per_call_nanos": 9048.925,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1809785
+          }
+        }
+      ],
+      "n": 50021,
+      "name": "prime-50k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 209.865,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41973
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8574.315,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1714863
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 215.875,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43175
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8806.465,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1761293
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 209.41,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41882
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8698.755,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1739751
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 212.765,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 42553
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8606.715,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1721343
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 264.895,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 52979
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8539.62,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1707924
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 209.91,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 41982
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8700.805,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1740161
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 211.715,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 42343
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 47897,
+            "per_call_nanos": 8525.9,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 1705180
+          }
+        }
+      ],
+      "n": 47897,
+      "name": "semiprime-50k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8572.465,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1714493
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10803.325,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2160665
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8554.69,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1710938
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 11071.775,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2214355
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8581.23,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1716246
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10829.61,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2165922
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8567.96,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1713592
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10828.165,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2165633
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8515.885,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1703177
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10835.52,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2167104
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8573.87,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1714774
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10877.735,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2175547
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 8605.815,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1721163
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 70001,
+            "per_call_nanos": 10796.915,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2159383
+          }
+        }
+      ],
+      "n": 70001,
+      "name": "prime-70k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 221.18,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44236
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10387.01,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2077402
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 216.575,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43315
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10640.68,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2128136
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 219.575,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43915
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10665.42,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2133084
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 232.695,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 46539
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10808.535,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2161707
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 218.825,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43765
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10321.36,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2064272
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 219.88,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43976
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10595.92,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2119184
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 217.17,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43434
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 70747,
+            "per_call_nanos": 10401.88,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2080376
+          }
+        }
+      ],
+      "n": 70747,
+      "name": "semiprime-70k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8855.585,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1771117
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 13020.315,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2604063
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8910.52,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1782104
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 12929.68,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2585936
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8746.725,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1749345
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 13029.075,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2605815
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8892.695,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1778539
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 12828.98,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2565796
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8789.69,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1757938
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 12875.955,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2575191
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8874.865,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1774973
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 13137.835,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2627567
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 8797.15,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1759430
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 100003,
+            "per_call_nanos": 12844.355,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2568871
+          }
+        }
+      ],
+      "n": 100003,
+      "name": "prime-100k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 216.72,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43344
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12939.895,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2587979
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 216.325,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43265
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12469.5,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2493900
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 252.125,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 50425
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12500.69,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2500138
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 215.42,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43084
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12234.2,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2446840
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 216.22,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43244
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12224.43,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2444886
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 218.375,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 43675
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12253.075,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2450615
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 239.2,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 47840
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 99221,
+            "per_call_nanos": 12325.285,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 2465057
+          }
+        }
+      ],
+      "n": 99221,
+      "name": "semiprime-100k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8859.795,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1771959
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15935.29,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3187058
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8809.57,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1761914
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15761.48,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3152296
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8890.535,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1778107
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15876.7,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3175340
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8837.61,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1767522
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 16367.28,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3273456
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8916.275,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1783255
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15818.465,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3163693
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8798.4,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1759680
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15866.49,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3173298
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 8839.565,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1767913
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 150001,
+            "per_call_nanos": 15904.095,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3180819
+          }
+        }
+      ],
+      "n": 150001,
+      "name": "prime-150k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 223.435,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44687
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15616.37,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3123274
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 226.435,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 45287
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15272.905,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3054581
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 226.285,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 45257
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15256.485,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3051297
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 226.785,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 45357
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15922.32,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3184464
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 227.59,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 45518
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15333.445,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3066689
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 261.935,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 52387
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15981.255,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3196251
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 264.34,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 52868
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 148987,
+            "per_call_nanos": 15698.985,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 3139797
+          }
+        }
+      ],
+      "n": 148987,
+      "name": "semiprime-150k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9326.085,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1865217
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22287.01,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4457402
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9370.05,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1874010
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22117.81,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4423562
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9379.765,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1875953
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22106.64,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4421328
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9522.275,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1904455
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22265.63,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4453126
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9344.11,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1868822
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22031.485,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4406297
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9630.935,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1926187
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 22494.77,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4498954
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 9259.08,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 1851816
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 300007,
+            "per_call_nanos": 23708.065,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4741613
+          }
+        }
+      ],
+      "n": 300007,
+      "name": "prime-300k",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 223.33,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44666
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21620.92,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4324184
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 224.185,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44837
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21619.17,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4323834
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 220.625,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44125
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21643.605,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4328721
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 223.835,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44767
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 22068.635,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4413727
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 220.475,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44095
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21374.105,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4274821
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 222.98,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 44596
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21484.22,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4296844
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 225.685,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 45137
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 301337,
+            "per_call_nanos": 21311.565,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 4262313
+          }
+        }
+      ],
+      "n": 301337,
+      "name": "semiprime-300k",
+      "prime": false
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 20070.12,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 4014024
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 39534.795,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7906959
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 19313.1,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 3862620
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 41022.45,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 8204490
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 19606.185,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 3921237
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 41507.47,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 8301494
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 19641.635,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 3928327
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 39988.72,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7997744
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 20366.065,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 4073213
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 39339.755,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7867951
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 19592.71,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 3918542
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 39684.07,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7936814
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 19226.47,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 3845294
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 200,
+            "n": 1000003,
+            "per_call_nanos": 39811.86,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7962372
+          }
+        }
+      ],
+      "n": 1000003,
+      "name": "prime-1m",
+      "prime": true
+    },
+    {
+      "blocks": [
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 237.5,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 47500
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39816.215,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7963243
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 324.18,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 64836
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39468.845,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7893769
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 233.9,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 46780
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39320.825,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7864165
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 237.15,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 47430
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39457.08,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7891416
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 232.695,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 46539
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39480.765,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7896153
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 232.495,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 46499
+          },
+          "order": "BA",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39589.875,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7917975
+          }
+        },
+        {
+          "certificate": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 236.1,
+            "repeats": 200,
+            "route": "certificate",
+            "total_nanos": 47220
+          },
+          "order": "AB",
+          "trial": {
+            "checksum": 0,
+            "n": 1005973,
+            "per_call_nanos": 39206.055,
+            "repeats": 200,
+            "route": "trial",
+            "total_nanos": 7841211
+          }
+        }
+      ],
+      "n": 1005973,
+      "name": "semiprime-1m",
+      "prime": false
+    }
+  ],
+  "config": {
+    "block_orders": [
+      "AB",
+      "BA",
+      "AB",
+      "BA",
+      "AB",
+      "BA",
+      "AB"
+    ],
+    "repeats": 200,
+    "rounds": 7
+  },
+  "environment": {
+    "commit": "5c63c6a0fb3fa3e31f5cf0b15036f7e2ab808779",
+    "dirty": false,
+    "dirty_status": "",
+    "hostname": "chungus2",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6"
+  },
+  "measurement": "warm in-process wall time; counterbalanced process order",
+  "oracle": "deterministic Miller-Rabin bases for unsigned 64-bit integers",
+  "schema": "hex-primality-decision-policy/1",
+  "summary": [
+    {
+      "certificate": {
+        "max_nanos": 7018.46,
+        "median_nanos": 6859.02,
+        "min_nanos": 6785.865,
+        "samples_nanos": [
+          7018.46,
+          7009.095,
+          6859.02,
+          7000.285,
+          6840.15,
+          6855.72,
+          6785.865
+        ]
+      },
+      "certificate_over_trial": 1.561862342923309,
+      "n": 10007,
+      "name": "prime-10k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 4412.3,
+        "median_nanos": 4391.565,
+        "min_nanos": 4346.75,
+        "samples_nanos": [
+          4412.3,
+          4389.21,
+          4391.565,
+          4346.75,
+          4392.115,
+          4360.82,
+          4401.73
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 232.045,
+        "median_nanos": 204.005,
+        "min_nanos": 200.845,
+        "samples_nanos": [
+          204.655,
+          201.45,
+          210.115,
+          200.845,
+          203.405,
+          204.005,
+          232.045
+        ]
+      },
+      "certificate_over_trial": 0.05110960235699683,
+      "n": 10403,
+      "name": "semiprime-10k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 4009.3,
+        "median_nanos": 3991.52,
+        "min_nanos": 3987.365,
+        "samples_nanos": [
+          3991.52,
+          3989.32,
+          3990.92,
+          4006.495,
+          4009.3,
+          3999.485,
+          3987.365
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 11890.185,
+        "median_nanos": 9474.005,
+        "min_nanos": 9357.18,
+        "samples_nanos": [
+          9357.18,
+          9458.685,
+          9474.005,
+          9384.92,
+          9528.035,
+          9624.83,
+          11890.185
+        ]
+      },
+      "certificate_over_trial": 1.754377144592525,
+      "n": 15013,
+      "name": "prime-15k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 5593.395,
+        "median_nanos": 5400.21,
+        "min_nanos": 5183.99,
+        "samples_nanos": [
+          5389.095,
+          5400.21,
+          5593.395,
+          5183.99,
+          5417.44,
+          5401.015,
+          5278.13
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 208.36,
+        "median_nanos": 203.95,
+        "min_nanos": 200.945,
+        "samples_nanos": [
+          203.95,
+          205.405,
+          200.945,
+          206.81,
+          202.4,
+          208.36,
+          202.8
+        ]
+      },
+      "certificate_over_trial": 0.046378413287489303,
+      "n": 14351,
+      "name": "semiprime-15k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 4485.255,
+        "median_nanos": 4397.52,
+        "min_nanos": 4367.775,
+        "samples_nanos": [
+          4485.255,
+          4379.295,
+          4419.255,
+          4367.775,
+          4397.52,
+          4379.595,
+          4427.67
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 10409.49,
+        "median_nanos": 10204.235,
+        "min_nanos": 10018.31,
+        "samples_nanos": [
+          10204.235,
+          10409.49,
+          10018.31,
+          10317.055,
+          10119.61,
+          10169.085,
+          10283.655
+        ]
+      },
+      "certificate_over_trial": 1.6747651173038938,
+      "n": 20011,
+      "name": "prime-20k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 6182.17,
+        "median_nanos": 6092.935,
+        "min_nanos": 5979.37,
+        "samples_nanos": [
+          6117.875,
+          5979.37,
+          5990.285,
+          6182.17,
+          6092.935,
+          6062.84,
+          6130.995
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 222.18,
+        "median_nanos": 209.46,
+        "min_nanos": 206.51,
+        "samples_nanos": [
+          209.71,
+          209.46,
+          206.51,
+          221.58,
+          207.855,
+          222.18,
+          209.21
+        ]
+      },
+      "certificate_over_trial": 0.036474958076262026,
+      "n": 20711,
+      "name": "semiprime-20k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 5787.585,
+        "median_nanos": 5742.57,
+        "min_nanos": 5617.635,
+        "samples_nanos": [
+          5769.71,
+          5714.88,
+          5742.57,
+          5707.615,
+          5617.635,
+          5787.585,
+          5752.785
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 8688.64,
+        "median_nanos": 8627.995,
+        "min_nanos": 8494.15,
+        "samples_nanos": [
+          8628.6,
+          8604.715,
+          8621.285,
+          8637.865,
+          8627.995,
+          8688.64,
+          8494.15
+        ]
+      },
+      "certificate_over_trial": 1.1705594892298425,
+      "n": 30011,
+      "name": "prime-30k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 7422.41,
+        "median_nanos": 7370.83,
+        "min_nanos": 7150.555,
+        "samples_nanos": [
+          7370.83,
+          7406.235,
+          7374.59,
+          7158.97,
+          7228.325,
+          7150.555,
+          7422.41
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 216.52,
+        "median_nanos": 209.81,
+        "min_nanos": 205.355,
+        "samples_nanos": [
+          205.355,
+          209.81,
+          216.52,
+          208.91,
+          208.06,
+          212.92,
+          212.265
+        ]
+      },
+      "certificate_over_trial": 0.03165875361293209,
+      "n": 29893,
+      "name": "semiprime-30k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 7132.93,
+        "median_nanos": 6627.235,
+        "min_nanos": 6585.07,
+        "samples_nanos": [
+          6585.07,
+          6597.435,
+          7132.93,
+          6611.255,
+          6733.285,
+          6627.235,
+          6647.61
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 9860.83,
+        "median_nanos": 9698.235,
+        "min_nanos": 9568.845,
+        "samples_nanos": [
+          9718.115,
+          9568.845,
+          9740.6,
+          9667.29,
+          9860.83,
+          9635.545,
+          9698.235
+        ]
+      },
+      "certificate_over_trial": 1.0626758665123863,
+      "n": 50021,
+      "name": "prime-50k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 9685.265,
+        "median_nanos": 9126.24,
+        "min_nanos": 9043.665,
+        "samples_nanos": [
+          9126.24,
+          9127.34,
+          9064.895,
+          9043.665,
+          9685.265,
+          9134.95,
+          9048.925
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 264.895,
+        "median_nanos": 211.715,
+        "min_nanos": 209.41,
+        "samples_nanos": [
+          209.865,
+          215.875,
+          209.41,
+          212.765,
+          264.895,
+          209.91,
+          211.715
+        ]
+      },
+      "certificate_over_trial": 0.024598816156919334,
+      "n": 47897,
+      "name": "semiprime-50k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 8806.465,
+        "median_nanos": 8606.715,
+        "min_nanos": 8525.9,
+        "samples_nanos": [
+          8574.315,
+          8806.465,
+          8698.755,
+          8606.715,
+          8539.62,
+          8700.805,
+          8525.9
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 8605.815,
+        "median_nanos": 8572.465,
+        "min_nanos": 8515.885,
+        "samples_nanos": [
+          8572.465,
+          8554.69,
+          8581.23,
+          8567.96,
+          8515.885,
+          8573.87,
+          8605.815
+        ]
+      },
+      "certificate_over_trial": 0.7915765202994383,
+      "n": 70001,
+      "name": "prime-70k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 11071.775,
+        "median_nanos": 10829.61,
+        "min_nanos": 10796.915,
+        "samples_nanos": [
+          10803.325,
+          11071.775,
+          10829.61,
+          10828.165,
+          10835.52,
+          10877.735,
+          10796.915
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 232.695,
+        "median_nanos": 219.575,
+        "min_nanos": 216.575,
+        "samples_nanos": [
+          221.18,
+          216.575,
+          219.575,
+          232.695,
+          218.825,
+          219.88,
+          217.17
+        ]
+      },
+      "certificate_over_trial": 0.020722598887118814,
+      "n": 70747,
+      "name": "semiprime-70k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 10808.535,
+        "median_nanos": 10595.92,
+        "min_nanos": 10321.36,
+        "samples_nanos": [
+          10387.01,
+          10640.68,
+          10665.42,
+          10808.535,
+          10321.36,
+          10595.92,
+          10401.88
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 8910.52,
+        "median_nanos": 8855.585,
+        "min_nanos": 8746.725,
+        "samples_nanos": [
+          8855.585,
+          8910.52,
+          8746.725,
+          8892.695,
+          8789.69,
+          8874.865,
+          8797.15
+        ]
+      },
+      "certificate_over_trial": 0.6849036480407867,
+      "n": 100003,
+      "name": "prime-100k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 13137.835,
+        "median_nanos": 12929.68,
+        "min_nanos": 12828.98,
+        "samples_nanos": [
+          13020.315,
+          12929.68,
+          13029.075,
+          12828.98,
+          12875.955,
+          13137.835,
+          12844.355
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 252.125,
+        "median_nanos": 216.72,
+        "min_nanos": 215.42,
+        "samples_nanos": [
+          216.72,
+          216.325,
+          252.125,
+          215.42,
+          216.22,
+          218.375,
+          239.2
+        ]
+      },
+      "certificate_over_trial": 0.017583366226419917,
+      "n": 99221,
+      "name": "semiprime-100k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 12939.895,
+        "median_nanos": 12325.285,
+        "min_nanos": 12224.43,
+        "samples_nanos": [
+          12939.895,
+          12469.5,
+          12500.69,
+          12234.2,
+          12224.43,
+          12253.075,
+          12325.285
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 8916.275,
+        "median_nanos": 8839.565,
+        "min_nanos": 8798.4,
+        "samples_nanos": [
+          8859.795,
+          8809.57,
+          8890.535,
+          8837.61,
+          8916.275,
+          8798.4,
+          8839.565
+        ]
+      },
+      "certificate_over_trial": 0.5567633702217716,
+      "n": 150001,
+      "name": "prime-150k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 16367.28,
+        "median_nanos": 15876.7,
+        "min_nanos": 15761.48,
+        "samples_nanos": [
+          15935.29,
+          15761.48,
+          15876.7,
+          16367.28,
+          15818.465,
+          15866.49,
+          15904.095
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 264.34,
+        "median_nanos": 226.785,
+        "min_nanos": 223.435,
+        "samples_nanos": [
+          223.435,
+          226.435,
+          226.285,
+          226.785,
+          227.59,
+          261.935,
+          264.34
+        ]
+      },
+      "certificate_over_trial": 0.014522260935159707,
+      "n": 148987,
+      "name": "semiprime-150k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 15981.255,
+        "median_nanos": 15616.37,
+        "min_nanos": 15256.485,
+        "samples_nanos": [
+          15616.37,
+          15272.905,
+          15256.485,
+          15922.32,
+          15333.445,
+          15981.255,
+          15698.985
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 9630.935,
+        "median_nanos": 9370.05,
+        "min_nanos": 9259.08,
+        "samples_nanos": [
+          9326.085,
+          9370.05,
+          9379.765,
+          9522.275,
+          9344.11,
+          9630.935,
+          9259.08
+        ]
+      },
+      "certificate_over_trial": 0.4208302212872485,
+      "n": 300007,
+      "name": "prime-300k",
+      "prime": true,
+      "trial": {
+        "max_nanos": 23708.065,
+        "median_nanos": 22265.63,
+        "min_nanos": 22031.485,
+        "samples_nanos": [
+          22287.01,
+          22117.81,
+          22106.64,
+          22265.63,
+          22031.485,
+          22494.77,
+          23708.065
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 225.685,
+        "median_nanos": 223.33,
+        "min_nanos": 220.475,
+        "samples_nanos": [
+          223.33,
+          224.185,
+          220.625,
+          223.835,
+          220.475,
+          222.98,
+          225.685
+        ]
+      },
+      "certificate_over_trial": 0.010330183813717178,
+      "n": 301337,
+      "name": "semiprime-300k",
+      "prime": false,
+      "trial": {
+        "max_nanos": 22068.635,
+        "median_nanos": 21619.17,
+        "min_nanos": 21311.565,
+        "samples_nanos": [
+          21620.92,
+          21619.17,
+          21643.605,
+          22068.635,
+          21374.105,
+          21484.22,
+          21311.565
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 20366.065,
+        "median_nanos": 19606.185,
+        "min_nanos": 19226.47,
+        "samples_nanos": [
+          20070.12,
+          19313.1,
+          19606.185,
+          19641.635,
+          20366.065,
+          19592.71,
+          19226.47
+        ]
+      },
+      "certificate_over_trial": 0.4924709621705693,
+      "n": 1000003,
+      "name": "prime-1m",
+      "prime": true,
+      "trial": {
+        "max_nanos": 41507.47,
+        "median_nanos": 39811.86,
+        "min_nanos": 39339.755,
+        "samples_nanos": [
+          39534.795,
+          41022.45,
+          41507.47,
+          39988.72,
+          39339.755,
+          39684.07,
+          39811.86
+        ]
+      }
+    },
+    {
+      "certificate": {
+        "max_nanos": 324.18,
+        "median_nanos": 236.1,
+        "min_nanos": 232.495,
+        "samples_nanos": [
+          237.5,
+          324.18,
+          233.9,
+          237.15,
+          232.695,
+          232.495,
+          236.1
+        ]
+      },
+      "certificate_over_trial": 0.005981933345148559,
+      "n": 1005973,
+      "name": "semiprime-1m",
+      "prime": false,
+      "trial": {
+        "max_nanos": 39816.215,
+        "median_nanos": 39468.845,
+        "min_nanos": 39206.055,
+        "samples_nanos": [
+          39816.215,
+          39468.845,
+          39320.825,
+          39457.08,
+          39480.765,
+          39589.875,
+          39206.055
+        ]
+      }
+    }
+  ]
+}
