@@ -28,7 +28,7 @@ def regions(source: str, *, generated: bool) -> tuple[str, str]:
         split = source.index("\n-- #rebuild_primeTable", start)
         definitions = source[start:bound_end] + "\n\n" + source[table_start:split].rstrip()
         return definitions, source[split + 1:].rstrip()
-    split = source.index("\n#guard primeTable.size", start)
+    split = source.index("\n/-- Adjacent strict ascent", start)
     replay = source.index("-- #rebuild_primeTable", split)
     replay_end = source.index("\nprivate theorem mem_primeTable_iff_bits", replay)
     definitions = source[start:bound_end] + "\n\n" + source[table_start:split].rstrip()
