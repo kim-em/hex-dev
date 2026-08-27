@@ -93,9 +93,6 @@ parallel reformulation of them.
 
 ## Lean
 
-Before the first build in a fresh worktree, run `lake exe cache get`. Never
-compile Mathlib from source when the project cache is available.
-
 Check diagnostics after every step; don't continue past errors. Build
 via `lake build`, not `lean` directly. `native_decide` is banned (see
 SPEC).

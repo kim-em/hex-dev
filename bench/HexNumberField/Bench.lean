@@ -1068,20 +1068,20 @@ gcd against the linear component and `k` same-polynomial isolation comparisons.
 The gcd of a degree-`2n` norm eliminant and a linear polynomial takes `O(n)`
 rational coefficient operations. The eliminant coefficients have
 `O(n log n)`-bit height, represented here by one `log₂(n) + 1` limb-growth
-factor. The same-polynomial comparisons are constant-time square intersection
-tests, so the `n` cross-component gcds give the declared
-`n² (log₂(n + 2) + 1)` ceiling. The fixture computes Yun, norm eliminants,
-isolation, and disambiguation before timing begins. -/
+factor. The `Θ(n²)` same-polynomial comparisons are exact dyadic-square
+intersection tests whose coordinates have the same separation-depth bit scale,
+so they fit the same `n² (log₂(n + 2) + 1)` ceiling. The fixture computes Yun,
+norm eliminants, isolation, and disambiguation before timing begins. -/
 setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
   with prep := prepMergeRootsInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     -- The timed merge is sub-millisecond, but preparing its isolated component
-    -- roots is the same expensive prelude as the end-to-end ladder and reaches
-    -- about one minute at n = 8.
-    maxSecondsPerCall := 120.0
+    -- roots is the same expensive prelude as the end-to-end ladder. At n = 12
+    -- that prelude takes about six minutes, still within this whole-batch cap.
+    maxSecondsPerCall := 900.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
