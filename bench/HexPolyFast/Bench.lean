@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import Hex.BenchOracle.Flint
 import HexModArith
 import HexPolyFast
 import LeanBench
@@ -73,6 +74,8 @@ structure Binary where
   left : DensePoly Int
   right : DensePoly Int
 
+instance : Nonempty Binary := ⟨{ left := 0, right := 0 }⟩
+
 instance : Hashable Binary where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
@@ -90,6 +93,8 @@ private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 structure BinaryMod where
   left : DensePoly (ZMod64 5)
   right : DensePoly (ZMod64 5)
+
+instance : Nonempty BinaryMod := ⟨{ left := 0, right := 0 }⟩
 
 private def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x.toNat)) 0
@@ -230,6 +235,74 @@ def runFullThenLowMod (input : BinaryMod) : UInt64 :=
 
 def runClippedLowMod (input : BinaryMod) : UInt64 :=
   checksumMod (mulLow (karatsubaPlan 32) input.left.size input.left input.right)
+
+/-! The external comparisons are deliberately fixed informational targets:
+production dispatch remains gated by the parametric within-Lean pairs below. -/
+
+private def intPolyJson (p : DensePoly Int) : Lean.Json :=
+  Hex.BenchOracle.Flint.intsToJson p.toArray.toList
+
+private def modPolyJson (p : DensePoly (ZMod64 5)) : Lean.Json :=
+  Hex.BenchOracle.Flint.intsToJson <|
+    p.toArray.toList.map fun value => Int.ofNat value.toNat
+
+private def checksumIntList (coeffs : List Int) : UInt64 :=
+  coeffs.foldl (fun acc value => mixHash acc (hash value)) 0
+
+private def checksumModList (coeffs : List Int) : UInt64 :=
+  coeffs.foldl (fun acc value => mixHash acc (hash value.toNat)) 0
+
+/-- Informational FLINT `fmpz_poly.mul` comparator on the integer campaign. -/
+def runFlintInt (input : Binary) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "mul"
+    #[("a", intPolyJson input.left), ("b", intPolyJson input.right)]
+  return checksumIntList (← Hex.BenchOracle.Flint.jsonToInts result)
+
+/-- Informational FLINT `nmod_poly.mul` comparator on the small-field campaign. -/
+def runFlintMod (input : BinaryMod) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "nmod_poly" "mul"
+    #[("p", (5 : Lean.Json)), ("a", modPolyJson input.left),
+      ("b", modPolyJson input.right)]
+  return checksumModList (← Hex.BenchOracle.Flint.jsonToInts result)
+
+initialize intInput64 : IO.Ref Binary ← IO.mkRef (prepBalanced 64)
+initialize intInput256 : IO.Ref Binary ← IO.mkRef (prepBalanced 256)
+initialize intInput1024 : IO.Ref Binary ← IO.mkRef (prepBalanced 1024)
+initialize modInput64 : IO.Ref BinaryMod ← IO.mkRef (prepBalancedMod 64)
+initialize modInput256 : IO.Ref BinaryMod ← IO.mkRef (prepBalancedMod 256)
+initialize modInput1024 : IO.Ref BinaryMod ← IO.mkRef (prepBalancedMod 1024)
+
+def runLeanInt64 (_ : Unit) : IO UInt64 := do
+  let input ← intInput64.get
+  return runKaratsuba input
+def runFlintInt64 (_ : Unit) : IO UInt64 := do
+  runFlintInt (← intInput64.get)
+def runLeanInt256 (_ : Unit) : IO UInt64 := do
+  let input ← intInput256.get
+  return runKaratsuba input
+def runFlintInt256 (_ : Unit) : IO UInt64 := do
+  runFlintInt (← intInput256.get)
+def runLeanInt1024 (_ : Unit) : IO UInt64 := do
+  let input ← intInput1024.get
+  return runKaratsuba input
+def runFlintInt1024 (_ : Unit) : IO UInt64 := do
+  runFlintInt (← intInput1024.get)
+
+def runLeanMod64 (_ : Unit) : IO UInt64 := do
+  let input ← modInput64.get
+  return runKaratsubaMod input
+def runFlintMod64 (_ : Unit) : IO UInt64 := do
+  runFlintMod (← modInput64.get)
+def runLeanMod256 (_ : Unit) : IO UInt64 := do
+  let input ← modInput256.get
+  return runKaratsubaMod input
+def runFlintMod256 (_ : Unit) : IO UInt64 := do
+  runFlintMod (← modInput256.get)
+def runLeanMod1024 (_ : Unit) : IO UInt64 := do
+  let input ← modInput1024.get
+  return runKaratsubaMod input
+def runFlintMod1024 (_ : Unit) : IO UInt64 := do
+  runFlintMod (← modInput1024.get)
 
 /-- Retained semiring-generic bounded series multiplication. -/
 def runSeriesSchoolbookInt (input : SeriesIntInput) : UInt64 :=
@@ -1211,6 +1284,34 @@ setup_benchmark runHalfGcdPade n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     signalFloorMultiplier := 1.0
     tags := #["pade", "half-gcd", "normalized"]
   }
+
+/-! # Informational external comparators
+
+These paired rungs exercise both coefficient-specific FLINT families declared
+for this library. Equal hashes check that each pair observes the same product;
+their timings orient the report but never select a production cell. -/
+
+def leanCompareConfig (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 5.0, minTotalSeconds := 0.1,
+    expectedHash := some expected }
+
+def flintCompareConfig (expected : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 5.0, minTotalSeconds := 0.1,
+    warmupFirstIter := true, expectedHash := some expected }
+
+setup_fixed_benchmark runLeanInt64 where leanCompareConfig 0x53782e9490aaa3dc
+setup_fixed_benchmark runFlintInt64 where flintCompareConfig 0x53782e9490aaa3dc
+setup_fixed_benchmark runLeanInt256 where leanCompareConfig 0xbe8b7a83febcd762
+setup_fixed_benchmark runFlintInt256 where flintCompareConfig 0xbe8b7a83febcd762
+setup_fixed_benchmark runLeanInt1024 where leanCompareConfig 0x6ef7aab77683b9b7
+setup_fixed_benchmark runFlintInt1024 where flintCompareConfig 0x6ef7aab77683b9b7
+
+setup_fixed_benchmark runLeanMod64 where leanCompareConfig 0xe1daeb094754a969
+setup_fixed_benchmark runFlintMod64 where flintCompareConfig 0xe1daeb094754a969
+setup_fixed_benchmark runLeanMod256 where leanCompareConfig 0x213a5e318bc8404d
+setup_fixed_benchmark runFlintMod256 where flintCompareConfig 0x213a5e318bc8404d
+setup_fixed_benchmark runLeanMod1024 where leanCompareConfig 0xff668644139f6315
+setup_fixed_benchmark runFlintMod1024 where flintCompareConfig 0xff668644139f6315
 
 end Hex.PolyFastBench
 

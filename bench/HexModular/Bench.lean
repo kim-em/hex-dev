@@ -17,6 +17,8 @@ return compact hashes of their exact answers.
 
 * **Incremental CRT:** scalar and fixed-width vector accumulation over `k`
   pairwise-coprime prime powers of roughly 16--30 bits.
+* **Balanced batch CRT:** cold plan construction and warm scalar/vector
+  reconstruction over the same deterministic modulus and residue families.
 * **Vector CRT:** the coordinate count varies independently at a fixed CRT
   depth, making reuse of one extended gcd observable.
 * **Rational reconstruction:** early and full Euclidean runs on Fibonacci
@@ -133,6 +135,69 @@ def runVectorCrtWidth (input : VectorCrtInput) : UInt64 :=
 
 def runVectorCrtDepth (input : VectorCrtInput) : UInt64 :=
   runVectorCrt input
+
+/-- Prepared one-lane batch CRT input with all sibling inverses cached. -/
+structure BatchScalarInput where
+  plan : CrtPlan
+  residues : Array Int
+
+instance : Hashable BatchScalarInput where
+  hash input := input.residues.foldl
+    (fun acc value => mixWord acc (hashInt value)) (hash input.plan.moduli)
+
+/-- Build the balanced scalar plan outside the warm reconstruction target. -/
+def prepBatchScalar (count : Nat) : Option BatchScalarInput := do
+  let entries := (prepScalarCrt count).entries
+  let moduli := entries.map (·.2)
+  let plan ← CrtPlan.build? moduli
+  pure { plan, residues := entries.map (·.1) }
+
+/-- Benchmark target: validate moduli and construct the balanced CRT tree. -/
+def runCrtPlanBuild (input : ScalarCrtInput) : UInt64 :=
+  let built := CrtPlan.build? (input.entries.map (·.2))
+  hashOption (fun plan => mixWord (hash plan.modulus) (hash plan.moduli)) built
+
+/-- Benchmark target: warm balanced scalar reconstruction.  Its checksum is
+identical to the incremental scalar target on the shared residue family. -/
+def runBatchScalarCrt (input : Option BatchScalarInput) : UInt64 :=
+  match input with
+  | none => 0
+  | some prepared =>
+      hashOption
+        (fun value => mixWord (hash prepared.plan.modulus) (hashInt value))
+        (prepared.plan.reconstruct? prepared.residues)
+
+/-- Prepared many-lane batch CRT input with one shared balanced plan. -/
+structure BatchVectorInput where
+  width : Nat
+  plan : CrtPlan
+  residues : Array (Vector Int width)
+
+instance : Hashable BatchVectorInput where
+  hash input := input.residues.foldl
+    (fun acc row => row.foldl (fun inner value => mixWord inner (hashInt value)) acc)
+    (mixWord (hash input.width) (hash input.plan.moduli))
+
+def prepBatchVector (width depth : Nat) : Option BatchVectorInput := do
+  let input := prepVectorCrt width depth
+  let moduli := input.entries.map (·.2)
+  let plan ← CrtPlan.build? moduli
+  pure { width, plan, residues := input.entries.map (·.1) }
+
+/-- Fixed-depth convolution-width batch CRT fixture. -/
+def prepBatchVectorWidth (width : Nat) : Option BatchVectorInput :=
+  prepBatchVector width 16
+
+/-- Benchmark target: warm balanced vector reconstruction, reusing every
+tree inverse across all coefficient lanes. -/
+def runBatchVectorCrtWidth (input : Option BatchVectorInput) : UInt64 :=
+  match input with
+  | none => 0
+  | some prepared =>
+      hashOption
+        (fun values => values.foldl (fun acc value => mixWord acc (hashInt value))
+          (hash prepared.plan.modulus))
+        (prepared.plan.reconstructVec? prepared.residues)
 
 /-- Consecutive Fibonacci numbers after `steps` additions. -/
 def fibonacciPair (steps : Nat) : Nat × Nat :=
@@ -267,6 +332,36 @@ setup_benchmark runScalarCrt k => k * k
     outerTrials := 3
   }
 
+/- Building a `CrtPlan` validates the complete modulus set and precomputes a
+balanced product/inverse tree.  This cold target keeps construction separate
+from the warm reconstruction comparison. -/
+setup_benchmark runCrtPlanBuild k => k * k
+  with prep := prepScalarCrt
+  where {
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024,
+      2048, 4096]
+    maxSecondsPerCall := 12.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["crt", "balanced", "cold-plan"]
+  }
+
+/- With the plan already built, every scalar lane follows the balanced tree.
+The quadratic model is a conservative upper bound on the fixed-word modulus
+ladder and shares every rung with the incremental comparator. -/
+setup_benchmark runBatchScalarCrt k => k * k
+  with prep := prepBatchScalar
+  where {
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024,
+      2048, 4096]
+    maxSecondsPerCall := 12.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["crt", "balanced", "scalar", "warm-plan"]
+  }
+
 /- At fixed depth, `CrtVec.push` computes one inverse and performs a constant
 number of fixed-size multiply-adds per coordinate, hence `O(n)`. -/
 setup_benchmark runVectorCrtWidth n => n
@@ -279,6 +374,20 @@ setup_benchmark runVectorCrtWidth n => n
     verdictWarmupFraction := 0.6
     slopeTolerance := 0.25
     outerTrials := 3
+  }
+
+/- At fixed depth the cached balanced tree performs a constant number of
+fixed-size operations per coefficient lane, so reconstruction is linear in
+the convolution width. -/
+setup_benchmark runBatchVectorCrtWidth n => n
+  with prep := prepBatchVectorWidth
+  where {
+    paramSchedule := .custom #[1, 4, 16, 64, 256, 1024, 2048, 4096]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["crt", "balanced", "vector", "warm-plan"]
   }
 
 /- With width fixed, the vector accumulation has the same sum of linearly

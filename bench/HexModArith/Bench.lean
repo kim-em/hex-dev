@@ -29,6 +29,11 @@ Scientific registrations:
 * `runMontFromChecksum`: `MontCtx.fromMont`, `O(n)`.
 * `runBarrettCompareChain` / `runMontCompareChain`: common-domain
   Barrett/Montgomery multiplication comparison, `O(n)`.
+* `runCanonical*ButterflyChecksum` / `runRedundant*ButterflyChecksum`:
+  canonical-residue references against bounded Harvey butterflies, `O(n)`.
+* `runNttPlanBuildChecksum`, `runNttForwardColdChecksum`, and
+  `runNttForwardChecksum`: cold plan construction versus cold/warm transform
+  execution over the same radix-two length ladder.
 -/
 
 namespace Hex.ModArithBench
@@ -39,6 +44,13 @@ def benchModulus : Nat :=
 
 private instance benchBounds : ZMod64.Bounds benchModulus :=
   ⟨by decide, by decide⟩
+
+set_option maxRecDepth 8192 in
+private theorem benchPrime : Hex.Nat.Prime benchModulus :=
+  Hex.Nat.prime_of_bounded benchModulus 256 (by decide) (by decide) (by decide)
+
+private instance benchPrimeModulus : ZMod64.PrimeModulus benchModulus :=
+  ZMod64.primeModulusOfPrime benchPrime
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
   hash a := hash a.toNat
@@ -61,6 +73,10 @@ def montCtx : MontCtx benchModulus :=
   { modulus := benchModulusWord
     modulus_eq := by decide
     toUInt64Ctx := _root_.MontCtx.mk benchModulusWord (by decide) }
+
+/-- Deterministic wrapping mix for compact benchmark result summaries. -/
+def mixWord (acc x : UInt64) : UInt64 :=
+  acc * 0x9E3779B97F4A7C15 + x + 0xBF58476D1CE4E5B9
 
 /-- One prepared binary-operation sample. -/
 structure BinarySample where
@@ -101,6 +117,38 @@ structure MontInput where
   montResidues : Array (MontResidue benchModulus)
   deriving Hashable
 
+/-- One canonical input triple for forward and inverse butterfly comparisons. -/
+structure ButterflySample where
+  left : ZMod64 benchModulus
+  right : ZMod64 benchModulus
+  twiddle : ZMod64.NttTwiddle benchModulus
+
+instance : Hashable ButterflySample where
+  hash sample := mixWord (hash sample.left)
+    (mixWord (hash sample.right) (hash sample.twiddle.value))
+
+structure ButterflyInput where
+  samples : Array ButterflySample
+
+instance : Hashable ButterflyInput where
+  hash input := hash input.samples
+
+/-- Root and values needed by a cold transform-plan target. -/
+structure NttBuildInput where
+  length : Nat
+  root : ZMod64 benchModulus
+  values : Array (ZMod64 benchModulus)
+  deriving Hashable
+
+/-- The same values paired with a checked reusable transform plan. -/
+structure NttInput where
+  length : Nat
+  plan : ZMod64.NttPlan benchModulus length
+  values : Array (ZMod64 benchModulus)
+
+instance : Hashable NttInput where
+  hash input := mixWord (hash input.length) (hash input.values)
+
 /-- Deterministic representative generator, intentionally spanning many wraps. -/
 def rawValueAt (i salt : Nat) : Nat :=
   ((i + 1) * 1_103_515_245 +
@@ -111,10 +159,6 @@ def rawValueAt (i salt : Nat) : Nat :=
 /-- Deterministic residue generator. -/
 def residueAt (i salt : Nat) : ZMod64 benchModulus :=
   ZMod64.ofNat benchModulus (rawValueAt i salt)
-
-/-- Deterministic wrapping mix for compact benchmark result summaries. -/
-def mixWord (acc x : UInt64) : UInt64 :=
-  acc * 0x9E3779B97F4A7C15 + x + 0xBF58476D1CE4E5B9
 
 /-- Hot-loop multiplier for very fast checksum-style benchmarks. -/
 def checksumInnerRepeats : Nat :=
@@ -175,6 +219,26 @@ def prepMontInput (n : Nat) : MontInput :=
   let residues := (Array.range n).map fun i => residueAt i 181
   { residues := residues
     montResidues := residues.map montCtx.toMont }
+
+/-- Deterministic canonical butterfly inputs with precomputed Shoup values. -/
+def prepButterflyInput (n : Nat) : ButterflyInput :=
+  { samples := (Array.range n).map fun i =>
+      { left := residueAt i 211
+        right := residueAt i 223
+        twiddle := ZMod64.NttTwiddle.ofValue (residueAt i 227) } }
+
+/-- The element `3` has order `65536` modulo `65537`; its transform stride
+therefore gives the exact-order root for every registered radix-two length. -/
+def prepNttBuildInput (n : Nat) : NttBuildInput :=
+  { length := n
+    root := (ZMod64.ofNat benchModulus 3) ^ (65536 / n)
+    values := (Array.range n).map fun i => residueAt i 239 }
+
+/-- Build and retain a checked reusable plan outside the warm target. -/
+def prepNttInput (n : Nat) : Option NttInput := do
+  let input := prepNttBuildInput n
+  let plan ← ZMod64.NttPlan.build? (n := input.length) input.root
+  pure { length := input.length, plan, values := input.values }
 
 /-- One checksum pass constructing residues from natural representatives. -/
 def constructChecksumOnce (input : ConstructInput) (seed : UInt64) : UInt64 :=
@@ -303,6 +367,61 @@ def runBarrettCompareChain (input : MontInput) : UInt64 :=
 /-- Compare target: one Montgomery multiplication chain over the same residues. -/
 def runMontCompareChain (input : MontInput) : UInt64 :=
   runMontMulChain input
+
+/-- Canonical forward-butterfly reference. -/
+def runCanonicalForwardButterflyChecksum (input : ButterflyInput) : UInt64 :=
+  input.samples.foldl (fun acc sample =>
+    let left := sample.left + sample.right
+    let right := sample.twiddle.value * (sample.left - sample.right)
+    checksumZMod (checksumZMod acc left) right) 0
+
+/-- Bounded redundant-residue forward butterfly, normalized only for the
+shared observable checksum. -/
+def runRedundantForwardButterflyChecksum (input : ButterflyInput) : UInt64 :=
+  input.samples.foldl (fun acc sample =>
+    let output := ZMod64.Ntt.forwardButterfly sample.twiddle
+      (ZMod64.NttRaw2.ofZMod sample.left) (ZMod64.NttRaw2.ofZMod sample.right)
+    checksumZMod (checksumZMod acc output.1.normalize) output.2.normalize) 0
+
+/-- Canonical inverse-butterfly reference. -/
+def runCanonicalInverseButterflyChecksum (input : ButterflyInput) : UInt64 :=
+  input.samples.foldl (fun acc sample =>
+    let product := sample.twiddle.value * sample.right
+    checksumZMod (checksumZMod acc (sample.left + product))
+      (sample.left - product)) 0
+
+/-- Bounded redundant-residue inverse butterfly, normalized for comparison. -/
+def runRedundantInverseButterflyChecksum (input : ButterflyInput) : UInt64 :=
+  input.samples.foldl (fun acc sample =>
+    let output := ZMod64.Ntt.inverseButterfly sample.twiddle
+      (ZMod64.NttRaw4.ofZMod sample.left) (ZMod64.NttRaw4.ofZMod sample.right)
+    checksumZMod (checksumZMod acc output.1.normalize) output.2.normalize) 0
+
+/-- Force the complete checked twiddle tables to be observed after cold plan
+construction. -/
+def runNttPlanBuildChecksum (input : NttBuildInput) : UInt64 :=
+  match ZMod64.NttPlan.build? (n := input.length) input.root with
+  | none => 0
+  | some plan => mixWord (hash plan.forwardTwiddles.size)
+      (mixWord (hash plan.inverseTwiddles.size) (hash plan.root))
+
+/-- Warm forward transform with a pre-built plan. -/
+def runNttForwardChecksum (input : Option NttInput) : UInt64 :=
+  match input with
+  | none => 0
+  | some prepared =>
+      match ZMod64.Ntt.forward? prepared.plan prepared.values with
+      | none => 0
+      | some output => output.foldl checksumZMod 1
+
+/-- Cold forward transform including checked plan construction. -/
+def runNttForwardColdChecksum (input : NttBuildInput) : UInt64 :=
+  match ZMod64.NttPlan.build? (n := input.length) input.root with
+  | none => 0
+  | some plan =>
+      match ZMod64.Ntt.forward? plan input.values with
+      | none => 0
+      | some output => output.foldl checksumZMod 1
 
 setup_benchmark runConstructChecksum n => n
   with prep := prepConstructInput
@@ -434,6 +553,83 @@ setup_benchmark runMontCompareChain n => n
     paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 300000000
+  }
+
+setup_benchmark runCanonicalForwardButterflyChecksum n => n
+  with prep := prepButterflyInput
+  where {
+    paramSchedule := .custom #[64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "butterfly", "forward", "canonical", "reference"]
+  }
+
+setup_benchmark runRedundantForwardButterflyChecksum n => n
+  with prep := prepButterflyInput
+  where {
+    paramSchedule := .custom #[64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "butterfly", "forward", "redundant"]
+  }
+
+setup_benchmark runCanonicalInverseButterflyChecksum n => n
+  with prep := prepButterflyInput
+  where {
+    paramSchedule := .custom #[64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "butterfly", "inverse", "canonical", "reference"]
+  }
+
+setup_benchmark runRedundantInverseButterflyChecksum n => n
+  with prep := prepButterflyInput
+  where {
+    paramSchedule := .custom #[64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "butterfly", "inverse", "redundant"]
+  }
+
+setup_benchmark runNttPlanBuildChecksum n => n * (Nat.log2 n + 1)
+  with prep := prepNttBuildInput
+  where {
+    paramSchedule := .custom #[16, 64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "plan", "cold"]
+  }
+
+setup_benchmark runNttForwardChecksum n => n * (Nat.log2 n + 1)
+  with prep := prepNttInput
+  where {
+    paramSchedule := .custom #[16, 64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "transform", "forward", "warm-plan"]
+  }
+
+setup_benchmark runNttForwardColdChecksum n => n * (Nat.log2 n + 1)
+  with prep := prepNttBuildInput
+  where {
+    paramSchedule := .custom #[16, 64, 256, 1024, 4096, 16384, 65536]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+    tags := #["ntt", "transform", "forward", "cold-plan"]
   }
 
 end Hex.ModArithBench
