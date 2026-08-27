@@ -6,7 +6,7 @@ algorithm variants.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `7425e083`
+  `7bcb3861`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -22,7 +22,7 @@ session and Haskell-export builds completed before timed calls.
 
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64
 - CPU placement: harness and each service pinned to one core. The committed
-  external record used CPU 0; the current Hex record used verified-idle CPU 19.
+  external record used CPU 0; the current Hex record used verified-idle CPU 1.
   Other work shares this host, so regeneration selects a verified-idle core
   rather than assuming that CPU 0 is free; record the chosen core with any new
   result. The CPU 0/70 control in
@@ -46,7 +46,7 @@ session and Haskell-export builds completed before timed calls.
 - Cross-check: committed expected factor degrees where available, pairwise
   agreement otherwise
 
-The per-system protocol overheads were 19.148 us for Hex, 15.493 us for FLINT,
+The per-system protocol overheads were 21.933 us for Hex, 15.493 us for FLINT,
 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
 for Isabelle LLL. Reported service times do not subtract them.
 
@@ -54,9 +54,9 @@ for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-7425e083-hex-chungus2-cpu19.json`
+- `reports/bench-results/hexbz-factor-sweep-7bcb3861-chungus2.json`
   supplies Hex; SHA-256
-  `3c166d993e7847bac66667338407630d273e7d015472f09968719484e71bcef0`.
+  `d7c7f2876991bd5cc33f878df834d7f8e3821c8dc30264dff13c6f511e79d06f`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -74,7 +74,7 @@ above. All answering systems agree.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 383 | 9 | 267.797 us | 6.546 ms | 3.793 s |
+| Hex public factorization | 383 | 9 | 275.158 us | 6.603 ms | 3.815 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
