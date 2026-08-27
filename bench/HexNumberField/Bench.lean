@@ -617,10 +617,9 @@ setup_benchmark runQAdjoinInvLadder n =>
   n * n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepInvInput
   where {
-    -- The degree-96 ceiling is set by the timed extended-gcd operation: its
-    -- measured call is about 3.0 s there, supplying an upper asymptotic rung
-    -- while remaining practical. The denser upper schedule exposes
-    -- coefficient growth beyond the small-degree regime.
+    -- The single-root fixture removes the former setup bottleneck. The
+    -- degree-96 ceiling keeps scientific reruns practical while the denser
+    -- upper schedule exposes coefficient growth beyond the small-degree regime.
     paramFloor := 4
     paramCeiling := 96
     paramSchedule := .custom #[4, 8, 16, 32, 48, 64, 96]

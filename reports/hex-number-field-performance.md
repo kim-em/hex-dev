@@ -280,9 +280,14 @@ the chain's `O(n²)` rational coefficient operations gives the corrected
 The `n = 12` spread is one 419.1 µs outlier against four samples at
 335.4..339.6 µs; all other rungs have spread at or below 3.4%. Median time is
 716.8 µs at `n = 16` and 1.348 ms at `n = 20`, respectively 2.10× and 2.41×
-faster than the idle-host shipped-chain medians. The defect's direction has
-therefore reversed: the normalized chain lies comfortably inside the corrected
-upper bound rather than growing faster than its declaration.
+faster than the idle-host shipped-chain medians. At `n = 4`, normalization's
+extra scale passes instead cost 23.66 µs versus 19.98 µs, an 18% regression;
+the crossover is around `n = 6`. The result hashes match the superseded run at
+all six rungs, confirming identical reduced inverses. Against the complexity
+declaration, the defect's direction has therefore reversed: the normalized
+chain lies comfortably inside the corrected upper bound rather than growing
+faster than its declaration. This does not update the historical PARI ratio
+curve below, which needs a paired comparator rerun.
 
 The **exactification audit run** measures the replacement end-to-end family
 at five outer trials and both newly separated certification phases at three:

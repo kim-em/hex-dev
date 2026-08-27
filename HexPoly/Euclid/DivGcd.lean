@@ -1275,7 +1275,10 @@ def xgcdLeftMonicAux [One R] [Add R] [Sub R] [Mul R] [Div R]
 /-- One-sided extended gcd with monic remainder normalization, returning a
 gcd representative and the correspondingly scaled Bezout coefficient of the
 left input. Use {name}`xgcdLeft` when the exact unnormalized cofactor is part
-of the caller's contract. -/
+of the caller's contract. The normalization contract requires coefficient
+division to make `scale (1 / p.leadingCoeff) p` monic for nonzero `p`, as it
+does over a field; the field-level correctness theorems live in
+`HexPoly.Field`. -/
 @[expose]
 def xgcdLeftMonic [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : XGCDLeftResult R :=
