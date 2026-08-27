@@ -76,17 +76,32 @@ give the integer bound `B = k * (p - 1)^2`; auxiliary primes are accepted only
 when their product `P` satisfies the strict uniqueness condition `2*B < P`.
 `mulNtt?` and `mulNttCrt?` return `none` when no suitable length or sufficient
 catalogue product is available, and a `some` result is proved equal to
-`DensePoly.mul`. `mulFast` is total: it dispatches among packed schoolbook,
-generic Karatsuba, direct NTT, and CRT-NTT, falling back rather than exposing
-catalogue exhaustion.
+`DensePoly.mul`. Direct target-modulus NTT remains caller-planned because its
+availability depends on a `PrimeModulus` instance and a root of the required
+order. `mulFast` is total without those extra inputs: it uses packed
+schoolbook below the measured auxiliary crossover, then tries CRT-NTT and
+falls back to generic Karatsuba rather than exposing catalogue exhaustion.
+
+The committed `F_65537` balanced crossover uses three cold outer trials on
+`chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, with the benchmark executable
+built from this repository:
+
+| coefficients per operand | packed median | CRT-NTT median |
+|---:|---:|---:|
+| 4096 | 29.117 ms | 29.665 ms |
+| 8192 | 111.930 ms | 63.145 ms |
+
+Accordingly `nttCrtCutoff = 8192`. Regenerate the boundary samples with
+`lake exe hexpolyfp_bench compare Hex.FpPolyBench.runMulPackedChecksum Hex.FpPolyBench.runMulCrtNttChecksum --param-floor 4096 --param-ceiling 8192 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`.
 
 The same `FpPoly` plan drives fast division and half-gcd. Square-free
 decomposition, Frobenius/power reduction, modular composition, and quotient-
 ring consumers adopt those operations only at their measured crossover.
 `DensePoly.mul`, `mulPacked`, and every existing theorem remain compatible.
 
-Benchmarks sweep degree, target modulus, transform length, operand ratio,
-cold/warm plan use, and every dispatcher boundary. Conformance forces each
-kernel and checks it against `mulPacked`, schoolbook multiplication, and the
-existing FLINT oracle; an invalid direct root or insufficient CRT product is
-a required fallback case.
+Benchmarks include forced packed, schoolbook, Karatsuba, reusable-plan direct
+NTT, cold-plan direct NTT, CRT-NTT, and dispatcher entries. The remaining
+target-modulus and operand-ratio ladders are part of the broader
+hex-poly-fast calibration grid. Conformance forces the available kernels and
+checks them against schoolbook multiplication; an invalid direct root or
+insufficient CRT product is a required fallback case.

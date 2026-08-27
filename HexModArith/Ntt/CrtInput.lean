@@ -156,33 +156,34 @@ private def runPrimes? (n : Nat) (left right : Array Int) :
             | some tail => by
                 have hreference := prime.convolution?_eq_of_some n left right
                   coefficients hcoefficients
-                subst coefficients
-                let output :=
-                  (intPadTo n
-                    (intLinearConvolution left.toList right.toList)).toArray.map
-                      (fun value => Int.ofNat
-                        (@ZMod64.toNat prime.modulus prime.bounds
-                          (@ZMod64.intCast prime.modulus prime.bounds value)))
-                have houtputSize : output.size = n := hsize
-                let residue : Vector Int n := ⟨output, houtputSize⟩
+                let residue : Vector Int n := ⟨coefficients, hsize⟩
                 let reference := intPadTo n
                   (intLinearConvolution left.toList right.toList)
                 have hreferenceSize : reference.length = n := by
-                  simpa [reference] using hsize
+                  have hsizes := congrArg Array.size hreference
+                  simpa [reference, hsize] using hsizes.symm
                 have hhead : ∀ j : Fin n,
                     reference.getD j.val 0 % (prime.modulus : Int) =
                       residue[j] % (prime.modulus : Int) := by
                   intro j
-                  rw [← List.getElem_eq_getD (h := by
-                    simpa [hreferenceSize] using j.isLt) 0]
-                  change reference[j.val]'(by
-                      simpa [hreferenceSize] using j.isLt) %
-                        (prime.modulus : Int) =
-                    output[j.val]'(by simpa [houtputSize] using j.isLt) %
-                        (prime.modulus : Int)
-                  dsimp only [output]
-                  simp only [Array.getElem_map, List.getElem_toArray]
-                  apply (prime.residue_emod _).symm
+                  have hjcoeff : j.val < coefficients.size := by
+                    simpa [hsize] using j.isLt
+                  have hjreference : j.val < reference.length := by
+                    rw [hreferenceSize]
+                    exact j.isLt
+                  rw [show residue[j] = coefficients.getD j.val 0 by
+                    simp [residue, Array.getD_eq_getD_getElem?, hjcoeff]]
+                  have hcoeff := congrArg
+                    (fun values : Array Int => values.getD j.val 0) hreference
+                  rw [hcoeff]
+                  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map,
+                    List.getElem?_toArray]
+                  rw [List.getElem?_eq_getElem (by
+                    simpa [reference] using hjreference)]
+                  simp only [Option.map_some, Option.getD_some]
+                  rw [← List.getElem_eq_getD (h := hjreference) 0]
+                  simpa [reference] using
+                    (prime.residue_emod (reference[j.val]'hjreference)).symm
                 exact some ⟨residue :: tail.val,
                   .cons hhead tail.property.1, fun _ => hreferenceSize⟩
           else

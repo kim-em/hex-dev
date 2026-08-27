@@ -16,6 +16,11 @@ content and primitive-part wrappers, and the executable Mignotte-bound helpers.
 
 Scientific registrations:
 
+* `runMulSchoolbookChecksum`, `runMulKS1Checksum`, `runMulKS2Checksum`,
+  `runMulKS3Checksum`, `runMulKS4Checksum`, `runMulCrtNttChecksum`, and
+  `runMulFastChecksum`: forced integer multiplication kernels and the public
+  dispatcher on identical balanced 64-bit fixtures.
+
 * `runCongrPrefix`: finite-prefix coefficient congruence checking, `O(n)`.
 * `runCoprimeModPWitness`: finite-prefix Bezout witness checking, `O(n^2)`.
 * `runContent`: integer coefficient content, `O(n)`.
@@ -81,6 +86,12 @@ structure SqrtInput where
   values : Array Nat
   deriving Hashable
 
+/-- Prepared operands for forced multiplication-kernel comparisons. -/
+structure MulInput where
+  left : ZPoly
+  right : ZPoly
+  deriving Hashable
+
 /-- Deterministic nonzero-ish coefficient generator keyed by size, index, and salt. -/
 def coeffValue (n i salt : Nat) : Int :=
   let raw := ((i + 5) * (salt + 31) + (i + 1) * (i + 7) * 17 + n * 43) % 2003
@@ -90,6 +101,29 @@ def coeffValue (n i salt : Nat) : Int :=
 /-- Deterministic dense integer polynomial with `n` generated coefficients. -/
 def denseZPoly (n salt : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| (Array.range n).map fun i => coeffValue n i salt
+
+/-- Deterministic signed coefficient with exactly `width` bits when
+`0 < width`.  Keeping the width fixed isolates the GMP multiplication regime
+from the polynomial degree sweep. -/
+def coeffValueWidth (n i salt width : Nat) : Int :=
+  let base := 2 ^ (width - 1)
+  let span := max 1 (base / 2)
+  let jitter :=
+    ((i + 5) * (salt + 31) + (i + 1) * (i + 7) * 17 + n * 43) % span
+  let value := Int.ofNat (base + jitter)
+  if (i + salt) % 2 = 0 then value else -value
+
+/-- Dense integer polynomial with a controlled coefficient width. -/
+def denseZPolyWidth (n salt width : Nat) : ZPoly :=
+  DensePoly.ofCoeffs <|
+    (Array.range n).map fun i => coeffValueWidth n i salt width
+
+/-- Balanced 64-bit multiplication fixture.  This sits above the small-Int
+representation boundary and exercises every forced KS/CRT kernel on the same
+input. -/
+def prepMul64Balanced (n : Nat) : MulInput :=
+  { left := denseZPolyWidth n 101 64
+    right := denseZPolyWidth n 211 64 }
 
 /-- Deterministic integer polynomial whose coefficient content is nontrivial. -/
 def contentPoly (n salt : Nat) : ZPoly :=
@@ -239,6 +273,128 @@ def runCoeffL2NormBound (input : MignotteInput) : Nat :=
 /-- Benchmark target: compute the executable Mignotte coefficient bound. -/
 def runMignotteCoeffBound (input : MignotteInput) : Nat :=
   ZPoly.mignotteCoeffBound input.poly input.factorDegree input.coeffIndex
+
+/-- Benchmark target: forced schoolbook integer multiplication. -/
+def runMulSchoolbookChecksum (input : MulInput) : UInt64 :=
+  checksum (DensePoly.mulImpl input.left input.right)
+
+/-- Benchmark target: forced one-product Kronecker substitution. -/
+def runMulKS1Checksum (input : MulInput) : UInt64 :=
+  checksum (ZPoly.mulKroneckerAt 0 0 input.left input.right)
+
+/-- Benchmark target: forced two-product Kronecker substitution. -/
+def runMulKS2Checksum (input : MulInput) : UInt64 :=
+  checksum (ZPoly.mulKS2 input.left input.right)
+
+/-- Benchmark target: forced three-product Kronecker substitution. -/
+def runMulKS3Checksum (input : MulInput) : UInt64 :=
+  checksum (ZPoly.mulKS3 input.left input.right)
+
+/-- Benchmark target: forced four-product Kronecker substitution. -/
+def runMulKS4Checksum (input : MulInput) : UInt64 :=
+  checksum (ZPoly.mulKS4 input.left input.right)
+
+/-- Benchmark target: forced auxiliary-prime CRT-NTT multiplication.  A zero
+checksum marks a catalogue-capacity miss rather than silently timing a
+different kernel. -/
+def runMulCrtNttChecksum (input : MulInput) : UInt64 :=
+  match ZPoly.mulNttCrt? input.left input.right with
+  | some result => checksum result
+  | none => 0
+
+/-- Benchmark target: public integer multiplication dispatcher. -/
+def runMulFastChecksum (input : MulInput) : UInt64 :=
+  checksum (ZPoly.mulFast input.left input.right)
+
+/-
+All seven registrations deliberately share both fixture and schedule, so
+`lake exe hexpolyz_bench compare` checks result hashes while reporting the
+forced-kernel crossover.  The rungs bracket the current size-24 entry into the
+KS family and the former size-256 CRT-NTT candidate boundary.
+-/
+setup_benchmark runMulSchoolbookChecksum n => n * n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulKS1Checksum n => n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulKS2Checksum n => n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulKS3Checksum n => n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulKS4Checksum n => n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "width64"]
+  }
+
+setup_benchmark runMulFastChecksum n => n
+  with prep := prepMul64Balanced
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 23, 24, 25, 32, 64, 128, 255, 256, 257, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "dispatch", "balanced", "width64"]
+  }
 
 setup_benchmark runCongrPrefix n => n
   with prep := prepCongrInput

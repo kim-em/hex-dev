@@ -194,11 +194,26 @@ the balanced batch CRT owned by hex-modular. With `k = min p.size q.size`,
 reconstruction equal to each true signed coefficient. The operation returns
 `none` if the fixed catalogue cannot cover the transform length or bound.
 
-`ZPoly.mulFast` is total and dispatches among schoolbook, KS1/KS2/KS3/KS4,
-and CRT-NTT, falling back on catalogue exhaustion. Every forced kernel and the
-dispatcher are proved equal to `DensePoly.mul`. The resulting `ZPoly`
-multiplication plan can drive generic product trees and clipped products; no
-new `Mul ZPoly` instance is introduced.
+`ZPoly.mulFast` is total and dispatches among schoolbook and
+KS1/KS2/KS3/KS4. CRT-NTT remains a forced, proved kernel, but the current
+measured table contains no winning CRT cell: balanced 64-bit coefficients keep
+KS1 roughly an order of magnitude ahead through 16384 coefficients per
+operand, while wider coefficient products exhaust the current seven-prime
+catalogue. The explicit `useCrtNtt` table is therefore empty rather than
+sending production calls down an unmeasured slower path. Every forced kernel
+and the dispatcher are proved equal to `DensePoly.mul`.
+
+The committed comparison uses three cold outer trials on `chungus2` (AMD EPYC
+9455), Lean `4.34.0-rc2`:
+
+| coefficients per operand | KS1 median | CRT-NTT median |
+|---:|---:|---:|
+| 4096 | 8.697 ms | 95.680 ms |
+| 8192 | 18.290 ms | 196.697 ms |
+| 16384 | 36.558 ms | 415.974 ms |
+
+Regenerate it with `lake exe hexpolyz_bench compare Hex.PolyZBench.runMulKS1Checksum Hex.PolyZBench.runMulCrtNttChecksum --param-floor 4096 --param-ceiling 16384 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`. The resulting `ZPoly` multiplication plan can drive generic product trees
+and clipped products; no new `Mul ZPoly` instance is introduced.
 
 This stage adds dependencies on hex-poly-fast, hex-mod-arith, and hex-modular
 only after those libraries are active. Its conformance extends the current

@@ -690,9 +690,11 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
 /-! # Total dispatch -/
 
 /-- Shorter-size threshold below which the packed lazy-reduction kernel avoids
-auxiliary-plan construction.  Keeping the policy value named lets crossover
-benchmarks recalibrate it without changing the dispatcher proof. -/
-@[expose] def nttCrtCutoff : Nat := 128
+auxiliary-plan construction.  The forced-kernel sweep over `F_65537` keeps
+packed multiplication ahead through `4096` coefficients per operand; CRT-NTT
+is clearly ahead at `8192` and above.  Keeping the policy value named lets
+modulus-specific sweeps recalibrate it without changing the dispatcher proof. -/
+@[expose] def nttCrtCutoff : Nat := 8192
 
 /-- Leaf cutoff for the generic Karatsuba fallback used when the fixed
 auxiliary catalogue cannot serve a large request. -/

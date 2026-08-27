@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPolyFp.Frobenius
 import HexPolyFp.ModCompose
+import HexPolyFp.NttMul
 import HexPolyFp.SquareFree
 import LeanBench
 
@@ -18,6 +19,14 @@ the square-free/product benchmarks use `F_5`. Input construction is hoisted into
 `prep`; timed targets return compact checksums or decomposition summaries.
 
 Scientific registrations:
+
+* `runMulSchoolbookChecksum`, `runMulPackedChecksum`,
+  `runMulKaratsubaChecksum`, `runMulDirectNttChecksum`,
+  `runMulCrtNttChecksum`, and `runMulFastChecksum`: forced finite-field
+  multiplication kernels and the public dispatcher on identical `F_65537`
+  fixtures.  Direct NTT plan construction is hoisted into `prep`.
+* `runMulDirectNttColdChecksum`: the same direct NTT path with checked plan
+  construction included in the timed body.
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
@@ -62,6 +71,13 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
     · simp at hm
     · simp at hm
     · exact Or.inr rfl
+
+set_option maxRecDepth 8192 in
+private theorem prime_65537 : Hex.Nat.Prime 65537 :=
+  Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
+
+private instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
+  ZMod64.primeModulusOfPrime prime_65537
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
   hash a := hash a.toNat
@@ -113,6 +129,24 @@ structure GcdInput where
   f : FpPoly 65537
   g : FpPoly 65537
   deriving Hashable
+
+/-- Prepared operands shared by finite-field multiplication kernels. -/
+structure MulInput where
+  left : FpPoly 65537
+  right : FpPoly 65537
+  deriving Hashable
+
+/-- Multiplication operands paired with a checked reusable target-modulus NTT
+plan.  The plan length is retained as an index, so an ill-sized plan cannot be
+passed to the direct kernel. -/
+structure DirectMulInput where
+  length : Nat
+  plan : ZMod64.NttPlan 65537 length
+  left : FpPoly 65537
+  right : FpPoly 65537
+
+instance : Hashable DirectMulInput where
+  hash input := mixHash (hash input.left) (hash input.right)
 
 /-- Deterministic coefficient generator keyed by size, index, and salt. -/
 def coeffValueFive (n i salt : Nat) : ZMod64 5 :=
@@ -253,6 +287,25 @@ def prepGcdInput (n : Nat) : GcdInput :=
   { f := densePolyLarge (n + 1) 5
     g := densePolyLarge (n + 1) 9 }
 
+/-- Balanced dense multiplication fixture over the large benchmark prime. -/
+def prepMulInput (n : Nat) : MulInput :=
+  { left := densePolyLarge n 101
+    right := densePolyLarge n 211 }
+
+/-- Build the checked target-modulus plan for a prepared product.  The residue
+`3` has order `65536` modulo `65537`; exponentiating it by the transform stride
+derives the exact-order root checked by `NttPlan.build?`. -/
+def directMulInput? (input : MulInput) : Option DirectMulInput := do
+  let length := (input.left.size + input.right.size - 1).nextPowerOfTwo
+  let root : ZMod64 65537 :=
+    (ZMod64.ofNat 65537 3) ^ (65536 / length)
+  let plan ← ZMod64.NttPlan.build? (n := length) root
+  pure { length, plan, left := input.left, right := input.right }
+
+/-- Prepared reusable-plan direct NTT input. -/
+def prepDirectMulInput (n : Nat) : Option DirectMulInput :=
+  directMulInput? (prepMulInput n)
+
 /-- Benchmark target: compute `base^exponent mod modulus`. -/
 def runPowModMonicChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
@@ -296,6 +349,135 @@ def runDivModChecksum (input : DivModInput) : UInt64 :=
 /-- Benchmark target: Euclidean gcd over `F_p`, checksumming the result. -/
 def runGcdChecksum (input : GcdInput) : UInt64 :=
   checksumPoly <| DensePoly.gcd input.f input.g
+
+/-- Benchmark target: forced generic schoolbook multiplication. -/
+def runMulSchoolbookChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (DensePoly.mulImpl input.left input.right)
+
+/-- Benchmark target: forced packed lazy-reduction multiplication. -/
+def runMulPackedChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (mulPacked input.left input.right)
+
+/-- Benchmark target: forced generic Karatsuba multiplication. -/
+def runMulKaratsubaChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (DensePoly.mulKaratsuba FpPoly.karatsubaCutoff input.left input.right)
+
+/-- Benchmark target: direct target-modulus NTT with a plan reused from
+fixture preparation. -/
+def runMulDirectNttChecksum (input : Option DirectMulInput) : UInt64 :=
+  match input with
+  | none => 0
+  | some input =>
+      match mulNtt? input.plan input.left input.right with
+      | some result => checksumPoly result
+      | none => 0
+
+/-- Benchmark target: direct target-modulus NTT including checked plan
+construction in the timed body. -/
+def runMulDirectNttColdChecksum (input : MulInput) : UInt64 :=
+  runMulDirectNttChecksum (directMulInput? input)
+
+/-- Benchmark target: forced auxiliary-prime CRT-NTT multiplication. -/
+def runMulCrtNttChecksum (input : MulInput) : UInt64 :=
+  match mulNttCrt? input.left input.right with
+  | some result => checksumPoly result
+  | none => 0
+
+/-- Benchmark target: public finite-field multiplication dispatcher. -/
+def runMulFastChecksum (input : MulInput) : UInt64 :=
+  checksumPoly (mulFast input.left input.right)
+
+/-
+Every warm registration uses the same deterministic operands and crossover
+rungs.  The direct target-modulus entry alone uses the dependently typed plan
+prepared outside the timed body; its cold companion exposes construction cost.
+-/
+setup_benchmark runMulSchoolbookChecksum n => n * n
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+setup_benchmark runMulPackedChecksum n => n * n
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+/- `n * sqrt n` is the nearest integer-valued built-in model to
+`n^(log_2 3)`; crossover comparison, rather than the slope verdict, is the
+purpose of this forced registration. -/
+setup_benchmark runMulKaratsubaChecksum n => n * Nat.sqrt n
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+setup_benchmark runMulDirectNttChecksum n => n * Nat.log2 (n + 1)
+  with prep := prepDirectMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537", "warm-plan"]
+  }
+
+setup_benchmark runMulDirectNttColdChecksum n => n * Nat.log2 (n + 1)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537", "cold-plan"]
+  }
+
+setup_benchmark runMulCrtNttChecksum n => n * Nat.log2 (n + 1)
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "forced", "balanced", "fp65537"]
+  }
+
+setup_benchmark runMulFastChecksum n => n * n
+  with prep := prepMulInput
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 31, 32, 33, 64, 127, 128, 129, 256, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "dispatch", "balanced", "fp65537"]
+  }
 
 /-
 The modulus degree, reduced base degree, and exponent all scale with `n`.

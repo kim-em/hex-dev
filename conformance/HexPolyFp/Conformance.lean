@@ -138,10 +138,11 @@ private def fastLeft : FpPoly 5 :=
 private def fastRight : FpPoly 5 :=
   DensePoly.ofCoeffs (Array.replicate 128 2)
 
-#guard mulFast fastLeft fastRight = fastLeft * fastRight
+example : mulFast fastLeft fastRight = fastLeft * fastRight :=
+  mulFast_eq fastLeft fastRight
 
-#guard (DensePoly.mulWith fastPlan fastLeft fastRight).toArray ==
-  (fastLeft * fastRight).toArray
+example : DensePoly.mulWith fastPlan fastLeft fastRight = fastLeft * fastRight :=
+  DensePoly.mulWith_eq fastPlan fastLeft fastRight
 
 private def negacyclicPlanFive? : Option (ZMod64.Ntt.NegacyclicPlan 5 2) :=
   match ZMod64.NttPlan.build? (p := 5) (n := 2) (ZMod64.ofNat 5 4) with

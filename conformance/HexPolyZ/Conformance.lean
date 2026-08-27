@@ -395,7 +395,7 @@ private def dispatchPoly (size width : Nat) : ZPoly :=
 #guard selectKernel (dispatchPoly 24 64) (dispatchPoly 24 64) == .ks2
 #guard selectKernel (dispatchPoly 24 128) (dispatchPoly 24 128) == .ks3
 #guard selectKernel (dispatchPoly 24 256) (dispatchPoly 24 256) == .ks4
-#guard selectKernel (dispatchPoly 256 20) (dispatchPoly 256 20) == .crtNtt
+#guard selectKernel (dispatchPoly 256 20) (dispatchPoly 256 20) == .ks1
 
 private def dispatchLeft : ZPoly := dispatchPoly 256 20
 private def dispatchRight : ZPoly :=

@@ -343,6 +343,15 @@ def MulKernel.name : MulKernel → String
   | .ks4 => "ks4"
   | .crtNtt => "crt_ntt"
 
+/-- Whether the measured integer table contains a winning CRT-NTT cell.
+The balanced 64-bit sweep keeps KS1 roughly an order of magnitude ahead
+through `16384` coefficients per operand, while wider coefficients exhaust
+the present seven-prime catalogue.  The forced CRT benchmark remains
+available; a future expanded sweep can replace this empty table without
+touching correctness. -/
+@[expose] def useCrtNtt (_shorter _ratio _width : Nat) : Bool :=
+  false
+
 /-- Integer crossover policy, indexed by shorter size, operand ratio, and
 maximum coefficient width.  The forced-kernel benchmarks can recalibrate
 these isolated boundaries without affecting any correctness theorem. -/
@@ -356,7 +365,7 @@ def selectKernel (left right : ZPoly) : MulKernel :=
       .schoolbook
     else
       let ratio := max left.size right.size / shorter
-      if 256 ≤ shorter ∧ ratio ≤ 4 then
+      if useCrtNtt shorter ratio width then
         .crtNtt
       else if 256 ≤ width ∧ ratio ≤ 2 then
         .ks4
