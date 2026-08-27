@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 11 controlled parametric targets and 35 fixed targets (46 total).
+registers 12 controlled parametric targets and 35 fixed targets (47 total).
 The adjacent comments in the driver derive each model from the work performed
 inside the timed function; the models below are copied from the registration
 sites.
@@ -28,6 +28,7 @@ sites.
 | `runExactFactorLadder` | `AlgebraicRoot.exactFactor?` for the degree-`n` candidate `X^n - 2` inside `(X^n - 2)(X + 3)`, with the enclosing root pinned to that candidate | `exactFactorComplexity n`, i.e. BHKS factorization plus the `n ^ 5 log² n` isolation envelope |
 | `runCanonicalRepLadder` | `AlgebraicNumber.canonicalRep?` for the first root of `X^n - 2` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runCommonPresentationLadder` | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
+| `runMergeRootListLadder` | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree `n` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 | `runAlgebraicRootsLadder` | `AlgebraicPoly.roots?` on a dense degree-`n` polynomial with one `√2` coefficient | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
 
@@ -132,13 +133,13 @@ actions and the numeric casts); `AlgebraicRoot.isZero`,
 The Attribution rule adds profile-found phases that are not all advertised
 API. `runExactFactorLadder` and `runCanonicalRepLadder` now close the two
 exactification gaps: the original profile put 95.58% of `exact?` in
-`exactFactor?` and 47.39% in the nested `canonicalRep?`. The remaining root-API
-gaps are `Roots.mergeRootList` → `mergeRoot` → `sameValue?` (83.04% of
-`QAdjoin.roots?`) and `QAdjoin.Roots.componentRoots?` (91.45% of
-`AlgebraicPoly.roots?`). The two phases the
-`runQAdjoinRootsLadder` derivation singles out — `Roots.normEliminant` and
-`Roots.evalEliminant` — turn out not to be dominant on any profiled family,
-but they are separable and asymptotically significant, so they are owed
+`exactFactor?` and 47.39% in the nested `canonicalRep?`.
+`runMergeRootListLadder` likewise closes the duplicate-removal gap, which was
+83.04% of the original `QAdjoin.roots?` profile. The remaining root-API gap is
+`QAdjoin.Roots.componentRoots?`, at 91.45% of `AlgebraicPoly.roots?`.
+`Roots.normEliminant` and `Roots.evalEliminant` are not dominant on any
+profiled family, but they remain separable and asymptotically significant, so
+they are owed
 registrations too.
 
 These gaps are recorded in §Concerns. They do not affect any measurement
@@ -161,18 +162,20 @@ runs below give the measurements; this table says which one counts.
 | `runExactFactorLadder` | inconclusive, faster | — | exactification audit |
 | `runCanonicalRepLadder` | inconclusive, faster | — | exactification audit |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
-| `runQAdjoinRootsLadder` | inconclusive, slower | — | quiet-heavy |
+| `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
+| `runQAdjoinRootsLadder` | **consistent** | -0.251 | root-merge fix |
 | `runAlgebraicRootsLadder` | inconclusive, faster | — | fixture-corrected |
 
-Five fit their declared models. The six that do not are §Concerns entries,
+Seven fit their declared models. The five that do not are §Concerns entries,
 each with a filed issue; none of them is a measurement artefact, and §Profile
 identifies the phase controlling each profiled end-to-end call.
 
-Six parametric runs are committed: one original full-suite pass, two idle-host
+Seven parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
 fixture-corrected run plus the single-root run that supersede six of those,
-and the exactification audit covering the two new phase ladders and the
-replacement family. §Artefact traceability
+the exactification audit covering its two new phase ladders and replacement
+family, and the root-merge fix run. Both repaired root ladders extend to the
+two-octave range needed for `fitSlope`. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
 which.
 
@@ -360,12 +363,44 @@ continuous-proxy slope was `-0.490`; with bounded coefficient height it is
 large-`n` end. That is recorded as a finding, not as a pass —
 https://github.com/kim-em/hex-dev/issues/9728.
 
-### Reading the three ladders with no fitted slope
+The **root-merge fix run** supersedes `runQAdjoinRootsLadder` from the heavy
+run and adds the phase target required by the Attribution rule:
 
-`fitSlope` rejects a log-log fit whose x-range is too narrow, and these three
-ladders span under two octaves because their top rungs already cost 0.3 s,
-594 s and 25 s per call. The harness then falls back to a multiplicative
-range check, `cMax / cMin ≤ exp(slopeTolerance · xRange)`. That check is
+```sh
+.lake/build/bin/hexnumberfield_bench run \
+  Hex.NumberFieldBench.runMergeRootListLadder \
+  Hex.NumberFieldBench.runQAdjoinRootsLadder \
+  --outer-trials 3 \
+  --export-file \
+    reports/bench-results/hex-number-field-phase4-scientific-root-merge-fix.json
+```
+
+| target | ladder | verdict | cMin..cMax | worst spread |
+|---|---|---|---|---:|
+| `runMergeRootListLadder` | 2, 3, 4, 6, 8, 12 | **consistent** | 506.8..855.8 | 2.85% |
+| `runQAdjoinRootsLadder` | 2, 3, 4, 6, 8, 12 | **consistent** | 114733..224068 | 2.29% |
+
+The end-to-end medians are 29.772 ms, 174.503 ms, 917.784 ms, 8.029 s,
+37.577 s and 349.552 s. Against the superseded run's values through `n = 8`,
+the speedup grows from 4.2x at `n = 2` to 15.8x at `n = 8`. The isolated
+merge takes 8.904 µs through 492.960 µs. Its `n = 12` fixture takes about six
+minutes because norm-root construction is outside the timed kernel; the 900 s
+per-call cap permits that prelude without charging it to `mergeRootList`.
+
+The end-to-end registration retains its original `n⁵ log² n` derivation.
+After the optimization, `n = 12` is reachable within the existing per-call
+cap, so the post-warmup range spans two octaves and `fitSlope` can test that
+model directly instead of using the integer-log-sensitive narrow-range
+fallback.
+
+### Sensitivity to integer-log steps
+
+`fitSlope` rejects a log-log fit whose x-range is too narrow. `runExactLadder`
+and `runAlgebraicRootsLadder` span under two octaves because their top rungs
+already cost 0.3 s and 25 s per call. The harness then falls back to a
+multiplicative range check,
+`cMax / cMin ≤ max(narrowRangeNoiseFloor,
+exp(slopeTolerance · xRange))`. That check is
 sensitive to a discontinuity anywhere in the ladder, and
 `(Nat.log2 (n + 2)) ^ 2` supplies one: it is an integer step function, so the
 declared model jumps by 2.25x in a single rung — between `n = 5` and `n = 6`
@@ -380,12 +415,13 @@ report is the harness's, computed against the registered integer model. The
 harness bound is reproduced in the table only to show the scale of the
 artefact, not as a verdict on the proxy.
 
-| target | integer-log cMax/cMin | smooth-log cMax/cMin | bound | smooth-log slope |
+| target | integer-log cMax/cMin | smooth-log cMax/cMin | fallback bound | smooth-log slope |
 |---|---:|---:|---:|---:|
 | `runLazyAddLadder` | 1.683 | 1.199 | 1.524 | -0.028 |
-| former `(X^n - 2)(X + 3)` exactification ladder | 86.697 | 80.498 | 1.410 | **-4.145** |
-| `runQAdjoinRootsLadder` | 1.777 | 1.953 | 1.410 | **+0.675** |
-| `runAlgebraicRootsLadder` | 2.680 | 2.680 | 1.275 | **-1.406** |
+| former `(X^n - 2)(X + 3)` exactification ladder | 86.697 | 80.498 | 1.500 | **-4.145** |
+| `runQAdjoinRootsLadder`, before repair | 1.777 | 1.953 | 1.500 | **+0.675** |
+| `runQAdjoinRootsLadder`, repaired | 1.953 | 1.384 | — | -0.258 |
+| `runAlgebraicRootsLadder` | 2.680 | 2.680 | 1.500 | **-1.406** |
 
 The three new exactification registrations also have no fitted slope. Their
 official integer-model ratios, including the harness bound they must meet,
@@ -393,28 +429,29 @@ are:
 
 | target | cMax/cMin | bound | direction |
 |---|---:|---:|---|
-| `runExactLadder` | **664.357** | 1.275 | faster than declared |
-| `runExactFactorLadder` | **83.846** | 1.410 | faster than declared |
-| `runCanonicalRepLadder` | **4.945** | 1.410 | faster than declared |
+| `runExactLadder` | **664.357** | 1.500 | faster than declared |
+| `runExactFactorLadder` | **83.846** | 1.500 | faster than declared |
+| `runCanonicalRepLadder` | **4.945** | 1.500 | faster than declared |
 
 The end-to-end replacement therefore exercises the missing phase but does not
 repair the model fit: its decline in `C` is larger than the former family's.
 That result remains an open finding, as required; issue 9733 asks what verdict
 an honest upper envelope should receive across Phase 4.
 
-(Quiet-run figures, except `runAlgebraicRootsLadder`, which is the
-fixture-corrected run. The full-suite run gives -0.205, -4.143 and +0.641 for
-the first three, so none of those readings depends on host conditions.)
+(The historical exactification and lazy-addition figures are from the quiet
+runs, the repaired fixed-field-root figure is from the root-merge fix run,
+and `runAlgebraicRootsLadder` is from the fixture-corrected run.)
 
 Read as a sensitivity check. On the uncontrolled fixture most of
 `runAlgebraicRootsLadder`'s spread was the step; with bounded coefficient
 height the residual is large under either evaluation and the step no longer
-explains it. `runQAdjoinRootsLadder`'s does not shrink — its `C` is monotone under either
-evaluation, with spreads at or below 3.6%, and it deviates in the
-slower-than-declared direction. The former exactification ladder's declared envelope
-over-predicts by roughly four powers of `n` under either evaluation. Those
-historical registrations both returned `inconclusive` on the harness's own
-verdict; nothing here reclassifies them.
+explains it. `runExactLadder`'s declared envelope over-predicts by roughly
+four powers of `n` under either evaluation. It and
+`runAlgebraicRootsLadder` remain `inconclusive` on the harness's own verdict;
+nothing here reclassifies them. The repaired `runQAdjoinRootsLadder` smooth
+proxy remains within tolerance independently of the integer-log steps, which
+supports its official fitted verdict. The old fixed-field-root reading is
+retained in the archived export but superseded by the repaired run above.
 
 ### Fixed registrations
 
@@ -591,7 +628,8 @@ samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux x86-64,
 AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean 4.34.0-rc2, LeanBench
 0.1.0. The five original profiles use source commit `066f6fc29` (with the
 fixture-corrected algebraic-roots profile noted below); the replacement
-exactification profile uses `a20d30552`. Every fixture is
+exactification profile uses `a20d30552`, and the repaired fixed-field-roots
+profile uses implementation commit `4a827ea546`. Every fixture is
 deterministic and no fixture is randomised: the arithmetic operands come from
 `denseRatCoeffs` at salts 3 and 7 (and 5 for inversion), and the remaining
 families are the fixed polynomials named in the bench source. No runtime
@@ -613,6 +651,9 @@ scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
 # After replacing the exactification family:
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runExactLadder           6 5000000000
+# Re-run after the cross-component gcd guard:
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
+  Hex.NumberFieldBench.runQAdjoinRootsLadder    6 5000000000
 ```
 
 Each summary used
@@ -621,8 +662,9 @@ Raw filtered `*.json.gz` artefacts stay developer-local under `/tmp` as
 `SPEC/profiling.md` requires; their local paths are
 `/tmp/hex-profile-<target>-<param>.json.gz`.
 
-The original five family profiles and the replacement exactification profile
-all pass calibration, confidence and the ±5 ms sensitivity check:
+The original five family profiles, replacement exactification profile, and
+repaired fixed-field-roots profile all pass calibration, confidence and the
+±5 ms sensitivity check:
 
 | family | case | retained / rejected | calibration residual | leaf cost | classified |
 |---|---|---:|---:|---|---:|
@@ -631,6 +673,7 @@ all pass calibration, confidence and the ±5 ms sensitivity check:
 | `exactification-selection` | former `runExactLadder` n=8 | 5,334 / 488 | 0.574 ms | allocation 43.74%, GMP 29.04%, Lean runtime 18.77%, own code 1.78% | 93.33% |
 | `exactification-factorization` | `runExactLadder` n=6 | 4,426 / 11,330 | 0.807 ms | allocation 34.86%, GMP 10.85%, Lean runtime 43.20%, own code 9.60% | 98.51% |
 | `fixed-field-roots` | `runQAdjoinRootsLadder` n=6 | 97,109 / 7 | 0.325 ms | allocation 52.60%, GMP 33.21%, Lean runtime 11.54%, own code 0.42% | 97.77% |
+| `fixed-field-roots`, repaired | `runQAdjoinRootsLadder` n=6 | 9,353 / 10 | 0.616 ms | allocation 48.57%, GMP 33.55%, Lean runtime 14.06%, own code 0.71% | 96.89% |
 | `algebraic-poly-roots` | `runAlgebraicRootsLadder` n=6 | 5,965 / 9 | 0.633 ms | allocation 53.80%, GMP 30.76%, Lean runtime 12.04%, own code 0.54% | 97.14% |
 
 The rejected counts are the untimed fixture preludes, which the filtering
@@ -717,7 +760,7 @@ shape. Certification remains larger, which is why the phase registrations are
 still required, but factorization is no longer absent from the end-to-end
 evidence.
 
-### `fixed-field-roots` — 83% of the call is duplicate removal
+### `fixed-field-roots`, before the fix — 83% was duplicate removal
 
 | share | function |
 |---:|---|
@@ -737,7 +780,8 @@ went.
 
 The time goes to the final duplicate-removal pass. `mergeRoot` compares
 candidates with `sameValue?`, and `AlgebraicRoot` equality takes its slow path
-whenever the stored polynomials differ — the SPEC says so in §Equality and
+whenever the stored polynomials differ — the SPEC at that source commit said
+so in §Equality and
 zero: "Otherwise exactify both roots and use canonical `AlgebraicNumber`
 equality. The second path can factor twice and is not a fast arithmetic
 primitive." The family `g^2 * (X - 1)` produces two Yun components with
@@ -761,6 +805,32 @@ claims. The difference between this profile and the previous one is the
 cross-component merge, which is what makes the fixed-field family's residual a
 finding rather than noise.
 
+### `fixed-field-roots`, repaired — isolation is now the cost
+
+| share | function |
+|---:|---|
+| 92.96% | `Hex.QAdjoin.roots?` |
+| 92.94% | `Hex.QAdjoin.Roots.componentRoots?` |
+| 85.01% | `Hex.isolate` / `isolateLoop` |
+| 78.37% | `Hex.taylor` |
+| 7.52% | `Hex.retainZero?` |
+| 7.43% | `Hex.QAdjoin.Roots.evalBall?` |
+
+`mergeRootList`, `sameValue?`, and `AlgebraicRoot.exact?` no longer appear in
+the inclusive ranking. Distinct enclosing polynomials now take a rational gcd
+first; this family's linear and degree-`2n` component eliminants are coprime,
+so every cross-component comparison returns false without factorization,
+re-isolation, or canonicalization. The profile has moved from 83.04% merge /
+7.61% component construction to no measurable merge / 92.94% component
+construction. The phase named by the corrected ladder derivation is therefore
+the measured ceiling, not an inference from elapsed time.
+
+This family measures the new coprime-gcd exit that fixes the observed
+pathology. If distinct enclosing polynomials share a nonconstant factor,
+comparison still pays for the rational gcd before the existing two-root
+exactification fallback; that branch is semantically covered but is not a
+performance claim of this ladder.
+
 ## Artefact traceability
 
 | artefact | source commit | host state | SHA-256 |
@@ -774,6 +844,7 @@ finding rather than noise.
 | [`bench-results/hex-number-field-single-root-comparators.json`](bench-results/hex-number-field-single-root-comparators.json) | `96e0fd7ee`, clean tree | idle | `1243e69ce4256f4470700b43aba55fcb8d6ba1d30faa5ff38b1ddea0803133d4` |
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
+| [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
 
 Ladder numbers come from the commits named in the table. Across the first four
 the compiled ladder code is identical: `a2b70b949` differs from `066f6fc29`
@@ -786,7 +857,9 @@ run supersedes the earlier three fixed-field arithmetic ladders after their
 domains expanded. Four of the five
 profiles were taken from the `066f6fc29` binary; the `algebraic-poly-roots`
 profile was re-taken after the fixture correction, and the hard-family
-exactification profile uses `a20d30552`. Toolchain throughout:
+exactification profile uses `a20d30552`. The root-merge-fix export supersedes
+only `runQAdjoinRootsLadder` and introduces `runMergeRootListLadder`; its
+repaired profile comes from `4a827ea546`. Toolchain throughout:
 Lean 4.34.0-rc2, LeanBench 0.1.0, samply 0.13.1, cypari2 driving PARI through
 `scripts/oracle/pari_bench_driver.py`. Host throughout: `chungus2`, Linux
 x86-64, AMD EPYC 9455 48-Core Processor, 96 logical CPUs.
@@ -815,14 +888,6 @@ not pass, each tracked:
   nothing measures, so the Attribution rule is not satisfied.
   https://github.com/kim-em/hex-dev/issues/9722 — audit-found: HexNumberField's
   advertised API surface is not fully registered for Phase 4.
-- **`QAdjoin.roots?` is slower than its declared isolation ceiling, and the
-  declared phase is not the cost.** The ladder's `C` rises monotonically with
-  spreads at or below 3.6%, and the profile says why: 83.04% of a call is
-  duplicate removal through `mergeRootList` → `sameValue?` →
-  `AlgebraicRoot.exact?`, against 7.61% in `componentRoots?`, which is where
-  the norm eliminant and its isolation live.
-  https://github.com/kim-em/hex-dev/issues/9724 — bench-found: QAdjoin.roots?
-  is slower than its declared isolation model by ~n^0.64.
 - **The exactification ladders remain faster than their textbook envelopes.**
   The end-to-end family now enters multifactor Hensel lifting and combination
   search, and the dominant certification phases have their own registrations.

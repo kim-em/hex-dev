@@ -33,6 +33,8 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
   certification phases exposed by exactification;
 * `runExactLadder`: end-to-end exactification through a growing product of
   quadratic factors whose modular factorization requires recombination;
+* `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
+  components of the repeated-factor fixed-field family;
 * `runQAdjoinRootsLadder` / `runAlgebraicRootsLadder`: the two root APIs on
   non-degenerate inputs with a repeated factor (fixed field) and a
   `√2`-dependent coefficient (canonical coefficients);
@@ -951,6 +953,53 @@ def runQAdjoinRootsLadder (input : FieldRootsInput) : UInt64 :=
     | none => 1
   | none => 0
 
+/-- Prepared duplicate-removal fixture from the two Yun components of
+`prepFieldRootsInput`. Component root construction is intentionally outside
+the timed region; the timed kernel starts with the linear component and folds
+the degree-`m` component through `mergeRootList`, matching `QAdjoin.roots?`. -/
+private structure MergeRootsInput where
+  initial : List RootCount
+  candidates : Array RootCount
+
+private instance : Hashable MergeRootsInput where
+  hash input :=
+    input.candidates.foldl
+      (fun checksum root => mixHash checksum (rootChecksum root.root))
+      (input.initial.foldl
+        (fun checksum root => mixHash checksum (rootChecksum root.root))
+        (hash input.initial.length))
+
+private instance : Inhabited MergeRootsInput := ⟨⟨[], #[]⟩⟩
+
+def prepMergeRootsInput (n : Nat) : MergeRootsInput :=
+  let input := prepFieldRootsInput n
+  match input.checked with
+  | some ⟨inst⟩ =>
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
+    let componentRoots? := (QAdjoin.Roots.yun input.f).foldlM
+      (fun out component =>
+        if hm : 0 < component.2 then do
+          let roots ← QAdjoin.Roots.componentRoots? component.1 component.2 hm
+            sqrtTwoRep rfl
+          some (out.push roots)
+        else
+          none)
+      #[]
+    match componentRoots? with
+    | some roots =>
+      match roots.toList with
+      | [first, second] => ⟨first.toList, second⟩
+      | _ => panic! "prepMergeRootsInput: expected two Yun components"
+    | none => panic! "prepMergeRootsInput: component root construction failed"
+  | none => panic! "prepMergeRootsInput: irreducibility check failed"
+
+def runMergeRootListLadder (input : MergeRootsInput) : UInt64 :=
+  match input.candidates.foldlM
+      (fun roots candidate => QAdjoin.Roots.mergeRootList candidate roots)
+      input.initial with
+  | some roots => rootSetChecksum (.finite roots.toArray)
+  | none => 1
+
 /-- Prepared canonical-coefficient roots fixture: a dense degree-`m`
 `AlgebraicPoly` whose linear coefficient is `√2` and whose remaining
 coefficients are nonzero rationals, forcing a genuine common-field
@@ -1012,24 +1061,56 @@ setup_benchmark runCommonPresentationLadder n => n
     slopeTolerance := 0.35
   }
 
+/- Cost model. This is the duplicate-removal phase separated under the
+Attribution rule. The linear Yun component seeds the list, then `n` roots
+from the degree-`n` component are merged. Candidate `k` performs one rational
+gcd against the linear component and `k` same-polynomial isolation comparisons.
+The gcd of a degree-`2n` norm eliminant and a linear polynomial takes `O(n)`
+rational coefficient operations. The eliminant coefficients have
+`O(n log n)`-bit height, represented here by one `log₂(n) + 1` limb-growth
+factor. The `Θ(n²)` same-polynomial comparisons are exact dyadic-square
+intersection tests whose coordinates have the same separation-depth bit scale,
+so they fit the same `n² (log₂(n + 2) + 1)` ceiling. The fixture computes Yun,
+norm eliminants, isolation, and disambiguation before timing begins. -/
+setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
+  with prep := prepMergeRootsInput
+  where {
+    paramFloor := 2
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    -- The timed merge is sub-millisecond, but preparing its isolated component
+    -- roots is the same expensive prelude as the end-to-end ladder. At n = 12
+    -- that prelude takes about six minutes, still within this whole-batch cap.
+    maxSecondsPerCall := 900.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
 /- Cost model. Per SPEC §Complexity the root API runs Yun decomposition
-(`O(n^2)` field operations, lower order here) and one norm eliminant per
-squarefree component, then isolates and disambiguates. Disambiguation builds
-one shared double-resultant evaluation eliminant. Its evaluation-variable
-degree is at most `deg(p) * deg(e) = 4n` in this fixed-quadratic family, and it
-is not root-isolated. The degree-`d = 2n` norm eliminant's separation-depth
-isolation remains the declared ceiling exactly as in the lazy-addition
-derivation above (`O(d^3 * B^2)` with `tau, B = O(d log d)`), giving the same
-`n^5 log^2 n` wall shape. -/
+(`O(n²)` field operations, lower order here) and one norm eliminant per
+squarefree component, then isolates and disambiguates. The earlier profile of
+this exact family found only 7.61% of the call in `componentRoots?`, because
+cross-component duplicate removal repeatedly exactified the same roots. The
+rational-gcd guard measured by `runMergeRootListLadder` makes those coprime
+comparisons quadratic lower-order work. The repaired profile puts 92.94% in
+`componentRoots?` and 85.01% in `isolate`, so the degree-`d = 2n` norm
+eliminant's separation-depth isolation supplies the ceiling again. Following
+the original derivation, its `O(d³ B²)` isolation cost with
+`tau, B = O(d log d)` gives `O(d⁵ log² d)`. Constants in `d = 2n` drop out,
+giving `n⁵ log² n`. The shared double-resultant evaluation eliminant remains
+unisolated and was below profile resolution. -/
 setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
   with prep := prepFieldRootsInput
   where {
     -- Degree 1 leaves the norm eliminant linear, so that rung measures the
     -- Yun and embedding prelude rather than the degree-`2n` isolation the
-    -- model declares; the ladder starts at 2 and reaches 8.
+    -- model declares. With duplicate exactification removed, degree 12 is
+    -- reachable and gives the post-warmup ladder the two octaves needed for
+    -- `fitSlope` rather than the narrow-range fallback.
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 900.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0

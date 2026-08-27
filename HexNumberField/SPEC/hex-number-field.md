@@ -163,11 +163,17 @@ compare refined isolations with `sameRoot`.
 `AlgebraicRoot` uses two paths:
 
 1. If the stored polynomials agree, compare the refined isolations directly.
-2. Otherwise exactify both roots and use canonical `AlgebraicNumber` equality.
+2. Otherwise compute `gcd a.p b.p` over `ℚ`. If it is constant, the roots
+   cannot agree and comparison returns false without exactifying. If it is
+   nonconstant, exactify both roots and use canonical `AlgebraicNumber`
+   equality.
 
-The second path can factor twice and is not a fast arithmetic primitive. A future
-optimization may compare `gcd a.p b.p` and the two isolations without computing
-minimal polynomials, but it does not change the v1 semantics.
+The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
+primitive. The gcd guard prevents repeated factorization for coprime
+enclosing polynomials during cross-component root merging without changing
+the v1 semantics. It is a discriminator, not a constant-time operation:
+computing a rational gcd between two high-degree enclosing polynomials can
+itself incur coefficient growth.
 
 ```lean
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X

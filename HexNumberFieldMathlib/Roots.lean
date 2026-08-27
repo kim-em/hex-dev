@@ -128,6 +128,60 @@ private theorem transported_root {p q : ZPoly} (h : p = q)
   cases h
   rfl
 
+private theorem gcd_degree_zero_ne (a b : AlgebraicRoot)
+    (hdegree : (DensePoly.gcd (ZPoly.toRatPoly a.p)
+      (ZPoly.toRatPoly b.p)).degree?.getD 0 = 0) :
+    a.toComplex ≠ b.toComplex := by
+  intro hab
+  let f := HexPolyZMathlib.toPolyℚ a.p
+  let g := HexPolyZMathlib.toPolyℚ b.p
+  let common := DensePoly.gcd (ZPoly.toRatPoly a.p)
+    (ZPoly.toRatPoly b.p)
+  let raw := HexPolyMathlib.toPolynomial common
+  let normalized := EuclideanDomain.gcd f g
+  have haf : a.p ≠ 0 :=
+    HexRootsMathlib.RefinedIsolation.poly_ne_zero a.rep
+  have hbf : b.p ≠ 0 :=
+    HexRootsMathlib.RefinedIsolation.poly_ne_zero b.rep
+  have hf : f ≠ 0 := HexPolyZMathlib.toPolyℚ_ne_zero haf
+  have hg : g ≠ 0 := HexPolyZMathlib.toPolyℚ_ne_zero hbf
+  have hnormalized : normalized ≠ 0 := by
+    intro hzero
+    exact hf (EuclideanDomain.gcd_eq_zero_iff.mp hzero).1
+  have hassociated : Associated raw normalized := by
+    simpa [raw, normalized, common, f, g,
+      HexPolyZMathlib.toPolynomial_toRatPoly] using
+      (HexPolyMathlib.toPolynomial_gcd_associated
+        (ZPoly.toRatPoly a.p) (ZPoly.toRatPoly b.p))
+  have hraw : raw ≠ 0 := fun hzero =>
+    hnormalized (hassociated.eq_zero_iff.mp hzero)
+  have hcomp :
+      (algebraMap Rat ℂ).comp (Int.castRingHom Rat) =
+        Int.castRingHom ℂ := RingHom.ext_int _ _
+  have haRoot : f.eval₂ (algebraMap Rat ℂ) a.toComplex = 0 := by
+    rw [Polynomial.eval₂_eq_eval_map]
+    simpa [f, HexPolyZMathlib.toPolyℚ, HexRootsMathlib.toPolyℂ,
+      Polynomial.map_map, hcomp] using AlgebraicRoot.toComplex_isRoot a
+  have hbRoot : g.eval₂ (algebraMap Rat ℂ) a.toComplex = 0 := by
+    rw [hab]
+    rw [Polynomial.eval₂_eq_eval_map]
+    simpa [g, HexPolyZMathlib.toPolyℚ, HexRootsMathlib.toPolyℂ,
+      Polynomial.map_map, hcomp] using AlgebraicRoot.toComplex_isRoot b
+  have hnormalizedRoot :
+      normalized.eval₂ (algebraMap Rat ℂ) a.toComplex = 0 := by
+    exact Polynomial.eval₂_gcd_eq_zero haRoot hbRoot
+  have hrawRoot : raw.eval₂ (algebraMap Rat ℂ) a.toComplex = 0 := by
+    obtain ⟨c, hc⟩ := hassociated.symm.dvd
+    rw [hc, Polynomial.eval₂_mul, hnormalizedRoot, zero_mul]
+  have hpositive : 0 < raw.natDegree :=
+    Polynomial.natDegree_pos_of_eval₂_root hraw (algebraMap Rat ℂ)
+      hrawRoot fun x hx =>
+        (FaithfulSMul.algebraMap_injective Rat ℂ)
+          (by simpa using hx)
+  have hzero : raw.natDegree = 0 := by
+    simpa [raw, common, HexPolyMathlib.natDegree_toPolynomial] using hdegree
+  omega
+
 /-- A successful lazy-root comparison decides equality of represented complex
 values. -/
 theorem sameValue?_sound (a b : AlgebraicRoot) {same : Bool}
@@ -145,28 +199,38 @@ theorem sameValue?_sound (a b : AlgebraicRoot) {same : Bool}
       a.rep.root = b.rep.root
     rw [transported_root hp a.rep]
   next hp =>
-    obtain ⟨a', ha'⟩ := Option.isSome_iff_exists.mp
-      (AlgebraicRoot.exact?_isSome a)
-    obtain ⟨b', hb'⟩ := Option.isSome_iff_exists.mp
-      (AlgebraicRoot.exact?_isSome b)
-    simp only [ha', hb'] at h
-    have hsame : (a' == b') = same := Option.some.inj h
-    rw [← hsame, AlgebraicNumber.beq_iff,
-      AlgebraicRoot.exact?_sound a ha',
-      AlgebraicRoot.exact?_sound b hb']
+    dsimp only at h
+    split at h
+    next hdegree =>
+      have hsame : false = same := Option.some.inj h
+      rw [← hsame]
+      simp [gcd_degree_zero_ne a b hdegree]
+    next hdegree =>
+      obtain ⟨a', ha'⟩ := Option.isSome_iff_exists.mp
+        (AlgebraicRoot.exact?_isSome a)
+      obtain ⟨b', hb'⟩ := Option.isSome_iff_exists.mp
+        (AlgebraicRoot.exact?_isSome b)
+      simp only [ha', hb'] at h
+      have hsame : (a' == b') = same := Option.some.inj h
+      rw [← hsame, AlgebraicNumber.beq_iff,
+        AlgebraicRoot.exact?_sound a ha',
+        AlgebraicRoot.exact?_sound b hb']
 
-/-- Lazy-root comparison always succeeds, exactifying only when the enclosing
-polynomials differ. -/
+/-- Lazy-root comparison always succeeds, exactifying only when distinct
+enclosing polynomials have a nonconstant gcd. -/
 theorem sameValue?_isSome (a b : AlgebraicRoot) :
     (sameValue? a b).isSome := by
   rw [sameValue?]
   split
   · simp
-  · obtain ⟨a', ha'⟩ := Option.isSome_iff_exists.mp
-      (AlgebraicRoot.exact?_isSome a)
-    obtain ⟨b', hb'⟩ := Option.isSome_iff_exists.mp
-      (AlgebraicRoot.exact?_isSome b)
-    simp [ha', hb']
+  · dsimp only
+    split
+    · simp
+    · obtain ⟨a', ha'⟩ := Option.isSome_iff_exists.mp
+        (AlgebraicRoot.exact?_isSome a)
+      obtain ⟨b', hb'⟩ := Option.isSome_iff_exists.mp
+        (AlgebraicRoot.exact?_isSome b)
+      simp [ha', hb']
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
