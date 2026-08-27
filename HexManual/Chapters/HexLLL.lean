@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexLLL
+import HexLLLMathlib
 import HexMatrix
 
 open Verso.Genre Manual
@@ -95,6 +96,47 @@ row is within an explicit `δ`/`η`-dependent factor of the shortest nonzero
 lattice vector. This is the property downstream callers actually rely on.
 
 {docstring Hex.short_vector_bound_of_size_bound}
+
+# The Mathlib correspondence
+%%%
+tag := "hex-lll-mathlib"
+%%%
+
+`HexLLLMathlib` is the proof-facing bridge for the Mathlib-free executable
+library. It identifies the row lattice used by the reducer with a Mathlib
+`Submodule ℤ (Fin m → ℤ)`, transports reducedness and lattice preservation
+through both reduction paths, and states the short-vector guarantee with the
+norm on `EuclideanSpace ℝ (Fin m)`. Importing it does not replace or wrap the
+computational path: calls to {name}`Hex.lll` and {name}`Hex.lllNative` still run
+the same native Lean definitions from `HexLLL`.
+
+The generated submodule is characterized by the executable membership
+predicate, so a proof can cross the boundary in either direction with one
+rewrite.
+
+{docstring HexLLLMathlib.mem_latticeSubmodule_iff}
+
+Reduction preserves this submodule. The public-path theorem needs no
+independence hypothesis: same-lattice certification is valid independently of
+the reducedness and short-vector arguments that use independence.
+
+{docstring HexLLLMathlib.lll_mem_latticeSubmodule_iff}
+
+The integer row and integer function embeddings have explicit squared-norm
+characterizations. They connect the executable `Vector.normSq` quantity to the
+standard Euclidean norm without introducing a second lattice representation.
+
+{docstring HexLLLMathlib.norm_sq_intRowToEuclidean}
+
+{docstring HexLLLMathlib.norm_sq_intVectorToEuclidean}
+
+The headline theorem composes the reducedness proof, same-lattice result, and
+norm transport. Its hypotheses are exactly the public reducer's range
+conditions, nonempty and independent basis assumptions, and a nonzero vector
+in the input submodule; callers do not need to prove anything about the
+selected native or externally certified branch.
+
+{docstring HexLLLMathlib.lll_first_row_norm_sq_le}
 
 # Verified integer checkers
 %%%
