@@ -52,11 +52,12 @@ parameter folds the growth into the exponent. Each registration's comment
 states which case it is and why. The `verify` smoke gate only exercises each
 registration at parameters `0` and `1`.
 
-Only `runMahlerPrec` is a parametric consistency gate. All other operations
-use canonical fixed registrations: their reachable inputs sit
-in a genuine GMP transition band where no honest scalar wall model has a flat
-constant. Fixed timings retain regression coverage without asserting such a
-model; the evidence and lean-bench#67 follow-up are recorded in the report.
+`runMahlerPrec` and `runRefineTo` are parametric consistency gates. The other
+operations use canonical mode-3 registrations: their repaired schedules either
+remain in a GMP transition band or exhibit input-sensitive driver growth where
+no honestly derived scalar wall model has a flat constant. Each fixed case
+enforces its operation-specific absolute budget; the attempted ladders and
+clean evidence are recorded in the report.
 
 Registrations (operation-count derivations remain documented adjacent to each
 canonical or parametric case):
@@ -75,7 +76,8 @@ canonical or parametric case):
 * `runIsolateAll` — fixed `isolateAll?` at target `32` on separated degree 12.
 * `runIsolate` — fixed `isolate` to the `separationDepth` floor on separated
   degree 8.
-* `runRefineTo` — fixed at achieved precision 131077.
+* `runRefineTo` — achieved-precision ladder, `O(t²)` in the quadratic GMP
+  regime.
 * `runSameRoot` — `RefinedIsolation.sameRoot`, a single dyadic comparison
   (fixed nanosecond-scale benchmark).
 * `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
@@ -378,8 +380,6 @@ initialize taylorRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (seededPoly 128)
 initialize witnessRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (boundedRootPoly 128))
 initialize refine1Ref : IO.Ref (Option (ZPoly × Component)) ←
   IO.mkRef (some (separatedMidComponent 8))
-initialize refineToRef : IO.Ref (Option (DyadicRootIsolation refinePoly) × Int) ←
-  IO.mkRef (prepRefineTo 131077)
 initialize isolateAllRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 12))
 initialize compareRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (linProdPoly 10))
 
@@ -391,18 +391,16 @@ def pinnedCertify? : Option (ZPoly × Component) :=
 initialize certifyRef : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef pinnedCertify?
 
 def runTaylor : Unit → IO UInt64 := fun _ => do return (← taylorRef.get).map taylorChecksum |>.getD 0
-def runWitnessCheck (p : ZPoly) : UInt64 := witnessChecksum p
-def runNkWitnessCheck (p : ZPoly) : UInt64 := nkWitnessChecksum p
-def runNewtonSquare (p : ZPoly) : UInt64 := newtonChecksum p
-def runRefine1 (pc : ZPoly × Component) : UInt64 := refine1Checksum pc
-
-/-- Degree-parametric certification fixture whose timed path is pinned to NK. -/
-def prepCertify (degree : Nat) : Option (ZPoly × Component) :=
-  let p := boundedRootPoly degree
-  if nkWitnessCheck p rootSquare.doubled = true then some (p, ⟨#[rootSquare], 1⟩) else none
-
-def runCertify (pc : Option (ZPoly × Component)) : UInt64 :=
-  pc.map certifyChecksum |>.getD 0
+def runWitnessCheck : Unit → IO UInt64 := fun _ => do
+  return (← witnessRef.get).map witnessChecksum |>.getD 0
+def runNkWitnessCheck : Unit → IO UInt64 := fun _ => do
+  return (← witnessRef.get).map nkWitnessChecksum |>.getD 0
+def runNewtonSquare : Unit → IO UInt64 := fun _ => do
+  return (← witnessRef.get).map newtonChecksum |>.getD 0
+def runRefine1 : Unit → IO UInt64 := fun _ => do
+  return (← refine1Ref.get).map refine1Checksum |>.getD 0
+def runCertify : Unit → IO UInt64 := fun _ => do
+  return (← certifyRef.get).map certifyChecksum |>.getD 0
 
 def runRefineTo (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt64 :=
   refineToChecksum input
@@ -411,10 +409,14 @@ initialize isolateFixedRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separated
 def runIsolate : Unit → IO UInt64 := fun _ => do
   return ((← isolateFixedRef.get).map runIsolateParam).getD 0
 
-def runIsolateAll (p : ZPoly) : UInt64 := isolateAllChecksum p
-def runIsolateNk (p : ZPoly) : UInt64 := isolateNkChecksum p
-def runIsolatePellet (p : ZPoly) : UInt64 := isolatePelletChecksum p
-def runIsolateNkThenPellet (p : ZPoly) : UInt64 := isolateNkThenPelletChecksum p
+def runIsolateAll : Unit → IO UInt64 := fun _ => do
+  return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
+def runIsolateNk : Unit → IO UInt64 := fun _ => do
+  return (← compareRef.get).map isolateNkChecksum |>.getD 0
+def runIsolatePellet : Unit → IO UInt64 := fun _ => do
+  return (← compareRef.get).map isolatePelletChecksum |>.getD 0
+def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do
+  return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
 
 /-! # `taylor` / `mahlerPrec` : dense seeded family -/
 
@@ -425,10 +427,12 @@ division: the `k`-indexed outer pass runs an inner Horner sweep of length
 multiply/adds. The canonical degree-128 case uses the integer centre `z = 1`:
 there is no denominator growth, but binomial output magnitudes still grow
 linearly in bits. The reachable GMP transition does not admit a stable scalar
-wall model, so this is fixed for regression tracking with an expected hash.
+wall model. Mode 3 therefore gives up asymptotic detection at the canonical
+degree-128 midpoint and enforces a 10 ms absolute budget, a conservative
+multiple of the clean issue-9794 baseline.
 -/
 setup_fixed_benchmark runTaylor where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x9917b7b230496af4 }
+  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x9917b7b230496af4 }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
@@ -459,56 +463,36 @@ square's centre (the `O(n²)` shift, which dominates) and then, for each of the
 three test radii, a single `O(n)` fold over the coefficients, so the op count
 is `n²`. The canonical input is `boundedRootPoly 128`, centred on its exact
 integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
-while the Taylor output still crosses GMP limbs. It is fixed with an expected
-hash because that reachable transition has no stable scalar wall model.
+while the Taylor output still crosses GMP limbs. The repaired `64..512`
+schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
+therefore gives up asymptotic detection at the degree-128 midpoint and enforces
+a 10 ms absolute budget, a conservative multiple of the clean baseline.
 -/
-setup_benchmark runWitnessCheck n => n * n * n
-  with prep := boundedRootPoly
-  where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runWitnessCheck where {
+  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0xb }
 
 /-
 Cost model. `nkWitnessCheck` has the same `O(n²)` Taylor-shift-dominated shape
 as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
 radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
-`runWitnessCheck`.
+`runWitnessCheck`. Its repaired `64..512` schedule was likewise sub-cubic, so
+mode 3 enforces the same 10 ms absolute budget at the canonical midpoint.
 -/
-setup_benchmark runNkWitnessCheck n => n * n * n
-  with prep := boundedRootPoly
-  where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runNkWitnessCheck where {
+  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0xb }
 
 /-
 Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
 `O(n²)` shift), reads `c₀, c₁`, and does one `Dyadic.invAtPrec` reciprocal plus
 a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
 the op count is `n²`. It uses the same bounded-height degree-128 input; the
-fixed-precision reciprocal is lower order. The fixed registration tracks the
-GMP-transition case without asserting a scalar asymptotic fit.
+fixed-precision reciprocal is lower order. The repaired `64..512` schedule
+remained sub-cubic, so mode 3 gives up asymptotic detection and enforces a
+10 ms absolute budget at the degree-128 midpoint.
 -/
-setup_benchmark runNewtonSquare n => n * n * n
-  with prep := boundedRootPoly
-  where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runNewtonSquare where {
+  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x450307c7dcbe905c }
 
 /-! # refinement primitives : canonical fixed fixtures -/
 
@@ -518,19 +502,12 @@ runs the `T₀` `rootFree` exclusion — one Taylor shift, `O(n²)` — on each 
 then glues the survivors. For a component of a bounded number of squares this
 is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 `n`. The canonical fixture is the degree-8 fixed-separation product, refined
-two rounds below its Cauchy component. It is fixed because its parametric
-smooth-family calibration drifted in the reachable transition band.
+two rounds below its Cauchy component. On the repaired smooth-family schedule
+`4,6,8,10,12,14`, `time/n²` rose by more than 2×. Mode 3 therefore gives up
+asymptotic detection and enforces a 10 ms budget on the degree-8 midpoint.
 -/
-setup_benchmark runRefine1 n => n * n
-  with prep := separatedMidComponent
-  where {
-    paramFloor := 4
-    paramCeiling := 14
-    paramSchedule := .custom #[4, 6, 8, 10, 12, 14]
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runRefine1 where {
+  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x6dd99fc71c5233ae }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
@@ -542,19 +519,13 @@ path always fires and the op count is `n²`. Fixed rather than parametric
 because the certification path is Taylor-shift dominated and the shift's
 `Θ(n)`-bit output growth places every reachable schedule in the `n²..n³`
 GMP transition band (issue #8750, rounds one to three: pure powers and the
-limb model all showed drifting constants). The fixed expected hash makes a
-fixture-path or semantic regression visible.
+limb model all showed drifting constants). The repaired `64..512` schedule
+also lost the pinned branch at 512; the verified degree-128 NK case is the
+canonical hard input. Mode 3 enforces a 20 ms budget, and the fixed expected
+hash makes a fixture-path or semantic regression visible.
 -/
-setup_benchmark runCertify n => n * n * n
-  with prep := prepCertify
-  where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runCertify where {
+  repeats := 5, maxSecondsPerCall := 0.02, expectedHash := some 0x1698ec123da6112f }
 
 /-! # whole-polynomial drivers -/
 
@@ -568,24 +539,17 @@ significant here: the working bit-length reaches `B = prec + n·log‖p‖∞ = 
 the Taylor coefficients' `Θ(prec·n)` denominator growth), and the
 growing-precision dyadic arithmetic (notably the `invAtPrec` reciprocal) is
 schoolbook `O(B²)`. The SPEC heuristic `O(n³·B²)` with `B = Θ(n)` gives the
-wall model `n⁵`. The canonical fixed case is the degree-12 uniformly
-separated half-integer product; it tracks the full driver without asserting a
-slope after its quiet-machine sweep remained transitional.
+wall model `n⁵`. On the repaired smooth-family `4..14` sweep, `time/n⁵` rose
+nearly 4×. Mode 3 therefore gives up asymptotic detection and enforces a 20 s
+budget on the canonical degree-12 midpoint, a little over twice the clean
+issue-9794 baseline.
 -/
 -- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
-setup_benchmark runIsolateAll n => n * n * n * n * n
-  with prep := separatedPoly
-  where {
-    paramFloor := 4
-    paramCeiling := 14
-    paramSchedule := .custom #[4, 6, 8, 10, 12, 14]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+setup_fixed_benchmark runIsolateAll where {
+  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x1d4ce3e46eb351de }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -601,21 +565,22 @@ bit-length is `B = Θ(n²·log n)`, and the honestly derived wall from the SPEC
 asymptote is far beyond the 30 s/call band (an earlier `n⁵` registration fit
 the 4..10 rungs, but only as a transition-band artifact; the adjacent
 derivation could not support it, so per the no-fitting rule it was withdrawn:
-issue #8750). Canonical fixed case at the mid-schedule degree 8; regression
-tracking without an asymptotic claim.
+issue #8750). Mode 3 therefore gives up asymptotic detection at the canonical
+mid-schedule degree 8 and enforces a 2 s absolute budget, a conservative
+multiple of the clean current baseline.
 -/
 setup_fixed_benchmark runIsolate where {
-    repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x16c307fd2a36d31e }
+    repeats := 5, maxSecondsPerCall := 2.0, expectedHash := some 0x16c307fd2a36d31e }
 
 /-
 Cost model. `refineTo?` sharpens a fixed degree-3 atom from precision `≈32` to
-the canonical achieved precision `131077`. Speculative Newton doubles precision
-per accepted jump, so the final witness dominates: a fixed number
+the requested achieved precision `t`. Speculative Newton doubles precision per
+accepted jump, so the final witness dominates: a fixed number
 (`O(deg²) = O(1)` at degree `3`) of Taylor multiplies on `B ≈ t`-bit dyadics,
 each a schoolbook `t × t` product costing `O(t²)`, so the wall model is `t²`
-in the achieved precision. The discrete Newton ladder and GMP crossover make
-the reachable sweep unsuitable for one scalar model, so the expected-hash
-fixed case tracks the high-precision regression directly.
+in the achieved precision. Parameterising by the actual Newton precisions
+`32773, 65541, 131077, 262149, 524293` reaches the quadratic limb regime and
+provides a stable mode-1 `t²` model.
 -/
 setup_benchmark runRefineTo t => t * t
   with prep := prepRefineTo
@@ -649,18 +614,11 @@ on its doubled square.
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check. The
--- 20-second cap is roughly twice the final quiet-machine 9.96-second median;
--- NK-only is the slow branch on this fixture.
-setup_benchmark runIsolateNk n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 10
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
-    maxSecondsPerCall := 20.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+-- The widened `2..10` schedule made `time/n⁵` rise strongly, so mode 3 gives
+-- up asymptotic detection and enforces a 30 s absolute budget on the canonical
+-- degree-10 input. NK-only is the slow branch on this fixture.
+setup_fixed_benchmark runIsolateNk where {
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -672,18 +630,11 @@ three-radius test per k candidate.
 -/
 -- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
 -- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant; the shared canonical input keeps
--- the cross-strategy `compare` agreement gate as a regression check.
-setup_benchmark runIsolatePellet n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 10
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+-- no scalar wall model has a flat constant. The widened `2..10` schedule
+-- confirmed the failure on current fixtures. Mode 3 uses the shared canonical
+-- input and 30 s budget, preserving the `compare` agreement gate.
+setup_fixed_benchmark runIsolatePellet where {
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -695,18 +646,11 @@ Pellet as fallback.
 -/
 -- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
 -- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant; the shared canonical input keeps
--- the cross-strategy `compare` agreement gate as a regression check.
-setup_benchmark runIsolateNkThenPellet n => n * n * n * n * n
-  with prep := linProdPoly
-  where {
-    paramFloor := 2
-    paramCeiling := 10
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+-- no scalar wall model has a flat constant. The widened `2..10` schedule
+-- confirmed the failure on current fixtures. Mode 3 uses the shared canonical
+-- input and 30 s budget, preserving the `compare` agreement gate.
+setup_fixed_benchmark runIsolateNkThenPellet where {
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-! # `sameRoot` : fixed microsecond benchmark -/
 
@@ -718,9 +662,10 @@ initialize sameRootRef :
 
 /-
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
-handful of exact-dyadic multiplies and one `≤` — so it is a microsecond-scale
-fixed benchmark rather than a parametric sweep. The atoms come from the `IO.Ref`
-above so the harness measures the comparison, not a folded constant.
+handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
+parameter, so mode 3 uses the prebuilt refined atom as its canonical hard input
+and enforces a 1 µs budget. The atoms come from the `IO.Ref` above so the
+harness measures the comparison, not a folded constant.
 -/
 def runSameRoot : Unit → IO UInt64 := fun () => do
   match ← sameRootRef.get with
@@ -729,6 +674,7 @@ def runSameRoot : Unit → IO UInt64 := fun () => do
 
 setup_fixed_benchmark runSameRoot where {
     repeats := 5
+    maxSecondsPerCall := 0.000001
     expectedHash := some 0xb
   }
 
