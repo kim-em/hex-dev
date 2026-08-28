@@ -21,6 +21,8 @@ The fixed cases separate the costs requested by the library SPEC:
 * isolation-dominated lazy addition on the canonical degree-product-12 input;
 * exactification through an irrelevant enclosing factor;
 * repeated-root extraction over `ℚ(√2)`;
+* isolation-dominated repeated-root extraction on the canonical degree-6
+  repeated-component input over `ℚ(√2)`;
 * canonical-coefficient roots on the fixed dense degree-6 input with a
   `√2`-dependent coefficient.
 
@@ -36,8 +38,6 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
   quadratic factors whose modular factorization requires recombination;
 * `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
   components of the repeated-factor fixed-field family;
-* `runQAdjoinRootsLadder`: the fixed-field root API on a non-degenerate input
-  with a repeated factor;
 * `runCommonPresentationLadder`: the public common-field construction
   behind `AlgebraicPoly.roots?`, separated per the Attribution rule.
 
@@ -947,7 +947,7 @@ def prepFieldRootsInput (n : Nat) : FieldRootsInput :=
   else
     panic! "prepFieldRootsInput: irreducibility check failed"
 
-def runQAdjoinRootsLadder (input : FieldRootsInput) : UInt64 :=
+private def qAdjoinRootsChecksum (input : FieldRootsInput) : UInt64 :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
@@ -955,6 +955,19 @@ def runQAdjoinRootsLadder (input : FieldRootsInput) : UInt64 :=
     | some result => rootSetChecksum result
     | none => 1
   | none => 0
+
+initialize qAdjoinRootsLadderRef : IO.Ref (Option FieldRootsInput) ← IO.mkRef none
+
+private def getQAdjoinRootsLadderInput : IO FieldRootsInput := do
+  match ← qAdjoinRootsLadderRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepFieldRootsInput 6
+    qAdjoinRootsLadderRef.set (some input)
+    pure input
+
+def runQAdjoinRootsLadder : Unit → IO UInt64 := fun _ => do
+  return qAdjoinRootsChecksum (← getQAdjoinRootsLadderInput)
 
 /-- Prepared duplicate-removal fixture from the two Yun components of
 `prepFieldRootsInput`. Component root construction is intentionally outside
@@ -1156,35 +1169,24 @@ setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
     slopeTolerance := 0.35
   }
 
-/- Cost model. Per SPEC §Complexity the root API runs Yun decomposition
-(`O(n²)` field operations, lower order here) and one norm eliminant per
-squarefree component, then isolates and disambiguates. The earlier profile of
-this exact family found only 7.61% of the call in `componentRoots?`, because
-cross-component duplicate removal repeatedly exactified the same roots. The
-rational-gcd guard measured by `runMergeRootListLadder` makes those coprime
-comparisons quadratic lower-order work. The repaired profile puts 92.94% in
-`componentRoots?` and 85.01% in `isolate`, so the degree-`d = 2n` norm
-eliminant's separation-depth isolation supplies the ceiling again. Following
-the original derivation, its `O(d³ B²)` isolation cost with
-`tau, B = O(d log d)` gives `O(d⁵ log² d)`. Constants in `d = 2n` drop out,
-giving `n⁵ log² n`. The shared double-resultant evaluation eliminant remains
-unisolated and was below profile resolution. -/
-setup_benchmark runQAdjoinRootsLadder n => n ^ 5 * (Nat.log2 (n + 2)) ^ 2
-  with prep := prepFieldRootsInput
-  where {
-    -- Degree 1 leaves the norm eliminant linear, so that rung measures the
-    -- Yun and embedding prelude rather than the degree-`2n` isolation the
-    -- model declares. With duplicate exactification removed, degree 12 is
-    -- reachable and gives the post-warmup ladder the two octaves needed for
-    -- `fitSlope` rather than the narrow-range fallback.
-    paramFloor := 2
-    paramCeiling := 12
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
-    maxSecondsPerCall := 900.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+/- Fixed canonical case. `QAdjoin.roots?` runs Yun decomposition on
+`g^2 * (X - 1)` over `ℚ(√2)`, constructs the degree-12 norm eliminant of the
+dense degree-6 repeated component, isolates it at separation depth, and
+disambiguates its six roots. The repaired inclusive profile puts 92.94% of the
+call in `componentRoots?` and 85.01% in `isolate`. No tight scaling of the
+HexRoots executable on this family has been derived independently of timing,
+and BSSY's `Õ(d³ + d²·tau)` result analyzes `CIsolate`, not HexRoots' distinct
+driver. The former `n⁵ log² n` declaration instead composed HexRoots'
+heuristic isolation proxy and is not a mode-1 or mode-2 model. This
+project-internal canonical input is the repaired profile's `n = 6` case and
+tracks a 20 s absolute budget without asserting an asymptotic shape. The
+historical `Ladder` name is retained so committed exports continue to identify
+the same operation across the mode change. -/
+setup_fixed_benchmark runQAdjoinRootsLadder where {
+  repeats := 3
+  maxSecondsPerCall := 20.0
+  expectedHash := some 0x1b2a158c4b746671
+}
 
 initialize algebraicRootsLadderRef : IO.Ref (Option AlgPolyInput) ← IO.mkRef none
 
