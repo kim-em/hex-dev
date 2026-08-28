@@ -923,16 +923,10 @@ private structure FieldRootsInput where
   f : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot)
   checked : Option (PLift (ZPoly.CheckedIrreducible sqrtTwoPoly))
 
-private instance : Hashable FieldRootsInput where
-  hash input :=
-    input.f.toArray.foldl
-      (fun checksum coefficient => mixHash checksum (fixedChecksum coefficient))
-      (hash input.f.size)
-
 private instance : Inhabited FieldRootsInput :=
   ⟨⟨DensePoly.ofCoeffs #[], none⟩⟩
 
-def prepFieldRootsInput (n : Nat) : FieldRootsInput :=
+private def prepFieldRootsInput (n : Nat) : FieldRootsInput :=
   let m := max n 1
   let coeffs := (Array.range (m + 1)).map fun i =>
     QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
@@ -1079,6 +1073,20 @@ def algebraicRootsIsolationStats? (n : Nat) : Option IsolationStats := do
   else
     none
 
+/-- Parameters of the norm eliminant isolated for the dense repeated component
+of the fixed-field roots benchmark family. -/
+def fixedFieldRootsIsolationStats? (n : Nat) : Option IsolationStats :=
+  let input := prepFieldRootsInput n
+  match input.checked with
+  | some ⟨inst⟩ =>
+    letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
+    let component? := (QAdjoin.Roots.yun input.f).toList.find? fun component =>
+      component.1.degree?.getD 0 == max n 1
+    component?.map fun component =>
+      let eliminant := ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant component.1)
+      isolationStats n eliminant
+  | none => none
+
 #guard
   let stats := lazyAddIsolationStats 6
   stats.degree = 12 ∧ stats.coeffAbsMax = 1998 ∧
@@ -1089,6 +1097,13 @@ def algebraicRootsIsolationStats? (n : Nat) : Option IsolationStats := do
   | some stats =>
       stats.degree = 12 ∧ stats.coeffAbsMax = 366720 ∧
         stats.coeffBitHeight = 19 ∧ stats.isolationTarget = 274
+  | none => False
+
+#guard
+  match fixedFieldRootsIsolationStats? 6 with
+  | some stats =>
+      stats.degree = 12 ∧ stats.coeffAbsMax = 45480960 ∧
+        stats.coeffBitHeight = 26 ∧ stats.isolationTarget = 351
   | none => False
 
 private def printIsolationStatsRow (family : String) (stats : IsolationStats) : IO Unit :=
@@ -1105,6 +1120,12 @@ def printIsolationStats : IO Unit := do
     match algebraicRootsIsolationStats? n with
     | some stats => printIsolationStatsRow "algebraic-roots" stats
     | none => throw <| IO.userError s!"algebraic-roots fixture {n} did not have one Yun component"
+  for n in #[2, 3, 4, 6, 8, 12] do
+    match fixedFieldRootsIsolationStats? n with
+    | some stats => printIsolationStatsRow "fixed-field-roots" stats
+    | none =>
+      throw <| IO.userError
+        s!"fixed-field-roots fixture {n} did not have the repeated component"
 
 private def algebraicRootsChecksum (input : AlgPolyInput) : UInt64 :=
   match input.f.roots? with
@@ -1173,8 +1194,8 @@ setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
 `g^2 * (X - 1)` over `ℚ(√2)`, constructs the degree-12 norm eliminant of the
 dense degree-6 repeated component, isolates it at separation depth, and
 disambiguates its six roots. The repaired inclusive profile puts 92.94% of the
-call in `componentRoots?` and 85.01% in `isolate`. No tight scaling of the
-HexRoots executable on this family has been derived independently of timing,
+profiled process in `componentRoots?` and 85.01% in `isolate`. No tight
+scaling of the HexRoots executable on this family has been derived independently of timing,
 and BSSY's `Õ(d³ + d²·tau)` result analyzes `CIsolate`, not HexRoots' distinct
 driver. The former `n⁵ log² n` declaration instead composed HexRoots'
 heuristic isolation proxy and is not a mode-1 or mode-2 model. This

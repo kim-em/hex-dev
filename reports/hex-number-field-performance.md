@@ -5,9 +5,9 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the state of that evidence as measured. `libraries.yml`
-currently records `HexNumberField` at `done_through: 7`; the focused audit
-findings still tracked in §Concerns qualify that historical phase record.
+This snapshot records the state of that evidence as measured; it is **not** a
+Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
+`done_through: 3`. §Concerns says why.
 
 ## Bench targets
 
@@ -45,8 +45,9 @@ comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 
 The three isolation-dominated end-to-end registrations use the fixed-problem
 form described in [`SPEC/benchmarking.md` §Fixed-problem benchmarks](../SPEC/benchmarking.md#fixed-problem-benchmarks).
-The ordered assessments requested by issues #9728 and #9796 first ask for a two-sided
-expected scaling. None can be derived independently of the timings: the former
+The ordered assessments requested by [issue #9728](https://github.com/kim-em/hex-dev/issues/9728)
+and [issue #9796](https://github.com/kim-em/hex-dev/issues/9796) first ask for a
+two-sided expected scaling. None can be derived independently of the timings: the former
 `n⁵ log² n` expression substituted fixture assumptions into
 HexRoots' explicitly heuristic `O(d³ B²)` contract. It was not a complexity
 result for either operation.
@@ -63,10 +64,10 @@ from `CIsolate` in its bounded-precision front end with exact-dyadic fallback,
 speculative Newton acceptance, dual certificate routes, and conservative
 global completeness depth. No proof transfers BSSY's amortised complexity
 analysis across those changes. Profiling does show that this unmatched phase
-dominates: `isolate` accounts for 91.87% of `AlgebraicPoly.roots?`, 92% of
-the lazy-addition call, and 85.01% of the repaired repeated-component
-`QAdjoin.roots?` call; the latter spends 92.94% in the enclosing
-`componentRoots?` phase.
+dominates: `isolate` accounts for 91.87% of the profiled algebraic-roots
+process, 92% of the lazy-addition process, and 85.01% of the repaired
+fixed-field-roots process; the latter spends 92.94% of the profiled process in
+the enclosing `componentRoots?` phase.
 
 The fixed-problem option therefore applies. `n = 6` belongs to all three
 former schedules, gives degree-product or norm-eliminant degree 12, and stays
@@ -76,9 +77,12 @@ inclusive profile: Yun sees `g² * (X - 1)`, isolates the norm eliminant of the
 dense degree-6 component, and merges the separate linear component. These are
 project-internal canonical inputs; there is no comparator unit surface for
 any of the three certified APIs. The 12 s and 15 s sibling ceilings give
-2.5–2.6x headroom over their maximum clean repeats. The new 20 s
-`QAdjoin.roots?` ceiling is 2.46x the root-merge run's 8.114 s maximum and the
-fresh fixed run remains below it even under the recorded loaded-host state.
+2.5–2.6x headroom over their maximum clean repeats. The 20 s
+`QAdjoin.roots?` ceiling is 2.46x the clean root-merge run's 8.114 s maximum at
+the same `n = 6` input. After its warmup populates the `IO.Ref`, the fixed
+registration times the same checksum body as that historical rung. The loaded-
+host fixed export has a 13.272 s maximum, leaving 1.51x observed headroom; it
+is retained as a stress observation rather than used as the margin baseline.
 Full timing runs enforce the ceilings; merge-gating `verify` enforces the
 expected hashes. Asymptotic detection is explicitly given up for these three
 operations.
@@ -102,6 +106,12 @@ adaptive working precision eventually reached by the isolator:
 | algebraic roots | 5 | 10 | 366,720 | 19 | 228 |
 | algebraic roots | 6 | 12 | 366,720 | 19 | 274 |
 | algebraic roots | 8 | 16 | 602,625 | 20 | 389 |
+| fixed-field roots | 2 | 4 | 7,920 | 13 | 63 |
+| fixed-field roots | 3 | 6 | 15,520 | 14 | 104 |
+| fixed-field roots | 4 | 8 | 814,800 | 20 | 183 |
+| fixed-field roots | 6 | 12 | 45,480,960 | 26 | 351 |
+| fixed-field roots | 8 | 16 | 7,518,868,896 | 33 | 584 |
+| fixed-field roots | 12 | 24 | 1,972,110,460,320 | 41 | 1,082 |
 
 This operation-specific assessment does not resolve the two other
 registrations whose comments contain the HexRoots isolation proxy.
@@ -111,8 +121,10 @@ presented here as a consequence of the BSSY theorem or as support for this
 fixed-mode decision.
 
 The current local `hexnumberfield_bench verify` invocation completes in 23.23 s
-on the reference host, below the per-library 30 s soft-warning threshold. All
-three isolation fixed targets pass; the invocation reports only the twelve
+on the reference host: 77% of the per-library 30 s soft-warning threshold and
+6.5% of the repo-wide 360 s hard cap. The new fixed target adds about 11.4 s
+relative to the prior 11.84 s invocation. All three isolation fixed targets
+pass; the invocation reports only the twelve
 expected PARI comparator failures because `cypari2` is absent locally. Unlike
 the full timing path, `verify` runs each fixed body once and does not enforce
 its per-call ceiling, so its merge-gating role here is correctness and hash
@@ -275,7 +287,7 @@ runs below give the measurements; this table says which one counts.
 | `runCanonicalRepLadder` | inconclusive, faster | — | exactification audit |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
-| `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match** | — | QAdjoin roots fixed |
+| `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
 
 All five parametric registrations receiving a statistically matching
@@ -567,13 +579,15 @@ component input from that repaired family on a clean source commit:
     reports/bench-results/hex-number-field-qadjoin-roots-fixed.json
 ```
 
-The three repeats are 13.272 s, 11.108 s, and 10.305 s (median 11.108 s),
+The three loaded-host repeats are 13.272 s, 11.108 s, and 10.305 s
+(median 11.108 s),
 all below the enforced 20 s ceiling and all returning
 `0x1b2a158c4b746671`. The host's one-minute load average was 61.25 across 96
 logical CPUs immediately after the run; the result is therefore not used to
-tighten the budget derived from the earlier idle-host baseline. It is clean
-fixed-mode evidence that the canonical operation completes within that budget
-and preserves its expected result.
+tighten the budget derived from the earlier idle-host baseline. It is
+fixed-mode evidence from a clean source commit that the canonical operation
+completes within that budget under this loaded-host observation and preserves
+its expected result.
 
 ### Sensitivity to integer-log steps
 
@@ -660,7 +674,7 @@ and the three isolation cases in the isolation fixed exports:
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
-| `runQAdjoinRootsLadder` | 11.108 s | `0x1b2a158c4b746671` | match |
+| `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
 | `runAlgebraicRootsLadder` | 5.955 s | `0x2fade2409323a752` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
@@ -827,9 +841,10 @@ oracle participates in any profiled route.
 export LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runQAdjoinMulLadder     16 5000000000
+# Historical parametric invocations, before the corresponding fixed-mode
+# replacements (and, for exactification, the family replacement):
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runLazyAddLadder         8 5000000000
-# At source 066f6fc29, before the exactification-family replacement:
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runExactLadder           8 5000000000
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
@@ -1070,8 +1085,7 @@ the bench source rather than by a seed.
 
 ## Concerns
 
-`libraries.yml` records `HexNumberField` at `done_through: 7`; the open audit
-findings below qualify that recorded phase state. The `QAdjoin.inv`
+`libraries.yml` keeps `HexNumberField` at `done_through: 3`. The `QAdjoin.inv`
 coefficient-swell concern is resolved by the monic-normalized chain and
 corrected bit-cost model recorded in §Verdicts. The remaining Phase-4 exit
 criteria that do not pass are each tracked:
