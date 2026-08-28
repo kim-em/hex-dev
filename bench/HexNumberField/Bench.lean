@@ -88,6 +88,9 @@ private def squareChecksum (square : DyadicSquare) : UInt64 :=
 private def rootChecksum (a : AlgebraicRoot) : UInt64 :=
   mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
 
+private def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
+  mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
+
 private def ratChecksum (q : Rat) : UInt64 :=
   mixHash (hash q.num) (hash (q.den : Int))
 
@@ -779,9 +782,9 @@ private def exactFactorChecksum (input : SelectionInput) : UInt64 :=
   match input.root with
   | some root =>
     match root.exactFactor? input.candidate with
-    | some a => polyChecksum a.p
-    | none => panic! "runExactFactorLadder: exactFactor? failed"
-  | none => panic! "runExactFactorLadder: fixture preparation failed"
+    | some a => algebraicChecksum a
+    | none => 1
+  | none => 0
 
 private structure CanonicalInput where
   p : ZPoly
@@ -836,7 +839,7 @@ private def exactChecksum (input : ExactInput) : UInt64 :=
   match input.root with
   | some root =>
     match root.exact? with
-    | some a => polyChecksum a.p
+    | some a => algebraicChecksum a
     | none => 1
   | none => 0
 
@@ -920,19 +923,48 @@ private def canonicalHardInput : Option CanonicalInput :=
     some ⟨factorHardCandidate, hsf, canonicalHardRep, by decide⟩
   else none
 
-initialize exactHardInputRef : IO.Ref ExactInput ← IO.mkRef exactHardInput
-initialize factorHardInputRef : IO.Ref SelectionInput ← IO.mkRef factorHardInput
-initialize canonicalHardInputRef : IO.Ref (Option CanonicalInput) ←
-  IO.mkRef canonicalHardInput
+-- Tie the checked certificates to the top rungs of the archived families.
+#guard exactHardPoly == exactFactorFamily 6
+#guard factorHardCandidate == xPowSubTwo 8
+#guard factorHardPoly == factorHardCandidate * DensePoly.ofList [3, 1]
+#guard exactHardSquare.prec == 241
+#guard factorHardSquare.prec == 77
+#guard canonicalHardSquare.prec == 53
+
+initialize exactHardInputRef : IO.Ref (Option ExactInput) ← IO.mkRef none
+initialize factorHardInputRef : IO.Ref (Option SelectionInput) ← IO.mkRef none
+initialize canonicalHardInputRef : IO.Ref (Option (Option CanonicalInput)) ←
+  IO.mkRef none
+
+private def getExactHardInput : IO ExactInput := do
+  match ← exactHardInputRef.get with
+  | some input => pure input
+  | none =>
+    exactHardInputRef.set (some exactHardInput)
+    pure exactHardInput
+
+private def getFactorHardInput : IO SelectionInput := do
+  match ← factorHardInputRef.get with
+  | some input => pure input
+  | none =>
+    factorHardInputRef.set (some factorHardInput)
+    pure factorHardInput
+
+private def getCanonicalHardInput : IO (Option CanonicalInput) := do
+  match ← canonicalHardInputRef.get with
+  | some input => pure input
+  | none =>
+    canonicalHardInputRef.set (some canonicalHardInput)
+    pure canonicalHardInput
 
 def runExactLadder : Unit → IO UInt64 := fun _ => do
-  return exactChecksum (← exactHardInputRef.get)
+  return exactChecksum (← getExactHardInput)
 
 def runExactFactorLadder : Unit → IO UInt64 := fun _ => do
-  return exactFactorChecksum (← factorHardInputRef.get)
+  return exactFactorChecksum (← getFactorHardInput)
 
 def runCanonicalRepLadder : Unit → IO UInt64 := fun _ => do
-  return canonicalRepChecksum (← canonicalHardInputRef.get)
+  return canonicalRepChecksum (← getCanonicalHardInput)
 
 /- Mode 3. The clean historical sweeps tried factor count on the end-to-end
 family and candidate degree on both certification phases. They do not admit a
@@ -944,30 +976,33 @@ factorization bound also does not cover its profiled dominant phase.
 The three fixed inputs are the top completed rungs of those controlled sweeps.
 Six quadratic factors are the largest practical end-to-end case before fixture
 construction hits its setup cliff; degree eight is the largest audited
-certification case. The operation-specific ceilings below are measured-baseline
-budgets with more than three times the largest clean historical call, not the
-generic 30-second ladder timeout. The historical `Ladder` names are retained so
-the archived failed parametric evidence stays connected to these operations. -/
+certification case. Each zero-grace ceiling below is an enforced whole-child
+budget sized from measured startup, one untimed warmup, and the timed call or
+batch. They give about 2.3--3.1x total-process headroom on the reference host
+and do not reuse the generic 30-second ladder timeout. The historical `Ladder`
+names are retained so the archived failed parametric evidence stays connected
+to these operations. -/
 setup_fixed_benchmark runExactLadder where {
   repeats := 5
-  minTotalSeconds := 0.001
-  maxSecondsPerCall := 0.05
+  minTotalSeconds := 0.02
+  maxSecondsPerCall := 0.15
+  killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0xd9ab88f06a08dd9f
+  expectedHash := some 0x5bfd5b96f72b6002
 }
 
 setup_fixed_benchmark runExactFactorLadder where {
   repeats := 5
-  minTotalSeconds := 0.05
-  maxSecondsPerCall := 1.0
+  maxSecondsPerCall := 2.0
+  killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0xd5512fda51bc6ff6
+  expectedHash := some 0xe5c33ee70736a0fb
 }
 
 setup_fixed_benchmark runCanonicalRepLadder where {
   repeats := 5
-  minTotalSeconds := 0.05
-  maxSecondsPerCall := 0.5
+  maxSecondsPerCall := 1.1
+  killGraceMs := 0
   warmupFirstIter := true
   expectedHash := some 0x1d7ae08962f9292c
 }
