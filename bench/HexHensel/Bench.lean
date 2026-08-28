@@ -413,6 +413,16 @@ list is consumed in the order the driver supplies. -/
 def checksumIntCoeffs (coeffs : List Int) : UInt64 :=
   coeffs.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
 
+/-- Persistent FLINT framing and dispatch calibration without polynomial work. -/
+def runFlintOverhead (_ : Unit) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | .ok 0 => return 0
+  | .ok value =>
+      throw <| IO.userError s!"FLINT overhead result was {value}, expected zero"
+  | .error message =>
+      throw <| IO.userError s!"FLINT overhead result not integer: {message}"
+
 /-- Encode a `ZPoly` as a JSON coefficient list (ascending degree). -/
 def zPolyToFlintJson (p : ZPoly) : Lean.Json :=
   Hex.BenchOracle.Flint.intsToJson p.toArray.toList
@@ -881,70 +891,80 @@ report records raw and overhead-adjusted ratios at each rung and a trend
 across the ladder. The comparator is `informational` per
 `SPEC/Libraries/hex-hensel.md §"External comparators"`. -/
 
-setup_fixed_benchmark runLinearHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1 }
 
-setup_fixed_benchmark runQuadraticHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep160 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep160 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1,
+    warmupFirstIter := true }
 
-setup_fixed_benchmark runHenselLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintOverhead where
+  { flintCompareConfig with expectedHash := some 0x0 }
 
-setup_fixed_benchmark runMultiLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runLinearHenselStep64 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep64 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep128 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep128 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep192 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep192 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep256 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep256 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep384 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep384 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep512 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep512 where flintCompareConfig
 
-setup_fixed_benchmark runMultiLiftQ_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runQuadraticHenselStep64 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep64 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep160 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep160 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep192 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep192 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep256 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep256 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep384 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep384 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep512 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep512 where flintCompareConfig
+
+setup_fixed_benchmark runHenselLift_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n256_k8 where flintCompareConfig
+
+setup_fixed_benchmark runMultiLift_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n256_k8 where flintCompareConfig
+
+setup_fixed_benchmark runMultiLiftQ_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n256_k8 where flintCompareConfig
 
 end HenselBench
 end Hex
