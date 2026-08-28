@@ -110,7 +110,7 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -152,7 +152,7 @@ libraries:
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -176,7 +176,7 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -241,7 +241,7 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
   HexDeterminant:
     deps: [HexMatrix]
@@ -255,7 +255,7 @@ libraries:
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -374,7 +374,7 @@ libraries:
   HexGF2:
     deps: [HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -475,7 +475,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -506,7 +506,7 @@ libraries:
   HexPolyFp:
     deps: [HexPoly, HexModArith, HexPolyFast, HexModular]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -594,7 +594,7 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -605,7 +605,7 @@ libraries:
   HexGFq:
     deps: [HexGFqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -690,7 +690,7 @@ libraries:
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
@@ -730,12 +730,12 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
@@ -750,32 +750,32 @@ libraries:
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
@@ -809,7 +809,7 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
@@ -962,7 +962,7 @@ libraries:
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -992,7 +992,7 @@ libraries:
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:

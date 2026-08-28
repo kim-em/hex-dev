@@ -500,11 +500,12 @@ Processor, 96 logical CPUs, measurements pinned to preregistered CPU 13.
 
 ## Concerns
 
-None. The measurement defects surfaced while producing this evidence (the
+- [#9815](https://github.com/kim-em/hex-dev/issues/9815) tracks the failing
+  Trager envelope and the fixed component registrations' missing ordered-mode
+  evidence.
+
+The measurement defects surfaced while producing this evidence (the
 height-varying ladder fixture, the multiplication schedule ending inside its
 small-dimension transient, and fixed cases timing their lazily built
 fixtures) were repaired in the bench commits named in §Artefact traceability
-and every number above postdates the repairs; the Trager ladder's
-faster-than-envelope verdict is the expected direction for a declared
-worst-case model per §Verdicts, and no profiled dominant cost is
-unattributed.
+and every number above postdates the repairs; they are historical and resolved.

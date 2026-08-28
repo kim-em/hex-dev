@@ -434,6 +434,8 @@ was filed from this rerun.
 
 ## Concerns
 
+- [#9804](https://github.com/kim-em/hex-dev/issues/9804) tracks resolution
+  and policy-correct classification of both findings below.
 - The FLINT `fmpz_poly.compose` comparator pulls steadily ahead of
   `runComposeChecksum` across the eligible range: raw ratio
   `0.505x → 0.210x` from `n = 40` to `n = 64`, adjusted ratio

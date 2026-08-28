@@ -1068,13 +1068,12 @@ pass are each tracked:
   `inconclusive` in the faster-than-declared direction. This is explicitly an
   open shape mismatch; the two-sided upper-envelope policy is not being used
   to call it a pass.
-  https://github.com/kim-em/hex-dev/issues/9733 — the ordered-rule audit that
-  records this blocked classification until its focused remediation issue is
-  filed after the policy lands.
+  https://github.com/kim-em/hex-dev/issues/9795 — the focused remediation for
+  the exactification and certification models.
 - **`runQAdjoinRootsLadder` still uses the withdrawn heuristic isolation
   proxy.** The statistically matching harness verdict does not validate the
   composed `n^5 log^2 n` declaration. The sibling lazy-add and algebraic-roots
   operations now use justified mode-3 fixed registrations, but this repeated-
   component family has not yet been worked through the ordered rule on its own.
-  https://github.com/kim-em/hex-dev/issues/9733 records this classification
-  until its focused follow-up is filed after the policy merge.
+  https://github.com/kim-em/hex-dev/issues/9796 tracks the focused ordered-mode
+  remediation.

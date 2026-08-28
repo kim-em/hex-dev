@@ -32,4 +32,5 @@ additionally checks the executable span/nullspace API on committed examples.
 
 ## Concerns
 
-None. Row reduction is a correctness surface here, not a performance-tuned one.
+- [#9811](https://github.com/kim-em/hex-dev/issues/9811) tracks the missing
+  compiled performance evidence for the advertised row-reduction surface.

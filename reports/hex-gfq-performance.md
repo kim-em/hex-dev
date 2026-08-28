@@ -206,3 +206,6 @@ filtered profile:   /tmp/hex-profile-runPackedGenericSharedChecksum-256.json.gz
 ```
 
 ## Concerns
+
+- [#9814](https://github.com/kim-em/hex-dev/issues/9814) tracks the fixed
+  verdict surfaces' missing ordered modes, budgets, and expected hashes.
