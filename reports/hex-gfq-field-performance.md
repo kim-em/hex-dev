@@ -40,6 +40,9 @@ The 96 fixed registrations are comparator endpoints and canonical
 expected-hash checks. They make no complexity claim, have no mode, and do not
 replace the eight performance registrations.
 
+The declared input families are `dense-canonical-reduction`,
+`field-arithmetic`, `field-exponentiation`, and `field-inversion-division`.
+
 The clean scientific run at commit
 `97ff768e53567c607c2afb8942295314c35ed3b9` on `chungus2` (AMD EPYC 9455,
 Linux x86-64, Lean 4.34.0-rc2) used two direct harness invocations:
@@ -94,7 +97,7 @@ lake exe hexgfqfield_bench verify
 ```
 
 All 104 registrations passed at commit
-`9458872052e4e8b997a872de6ca14a3d06ae1697` on `chungus2`, using
+`fb1e5bed38960fd1ce941a2d94986439c7d61705` on `chungus2`, using
 python-flint 0.9.0 for the external fixed targets.
 
 ## Comparator Ratios
