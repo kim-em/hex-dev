@@ -32,10 +32,10 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
   fixed-field arithmetic in `ℚ(2^{1/n})` at growing modulus degree `n`;
 * `runAddEliminantLadder`: Brown-resultant sum-eliminant construction at
   growing first-operand degree;
-* `runExactFactorLadder` / `runCanonicalRepLadder`: the two separable
-  certification phases exposed by exactification;
-* `runExactLadder`: end-to-end exactification through a growing product of
-  quadratic factors whose modular factorization requires recombination;
+* `runExactFactorLadder` / `runCanonicalRepLadder`: fixed canonical cases for
+  the two separable certification phases exposed by exactification;
+* `runExactLadder`: fixed end-to-end exactification through six quadratic
+  factors whose modular factorization requires recombination;
 * `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
   components of the repeated-factor fixed-field family;
 * `runCommonPresentationLadder`: the public common-field construction
@@ -86,6 +86,9 @@ private def squareChecksum (square : DyadicSquare) : UInt64 :=
     (hash square.prec)
 
 private def rootChecksum (a : AlgebraicRoot) : UInt64 :=
+  mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
+
+private def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
   mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
 
 private def ratChecksum (q : Rat) : UInt64 :=
@@ -775,13 +778,13 @@ setup_fixed_benchmark runExactSelection where {
   expectedHash := some 0xd5512fda51bc6ff6
 }
 
-def runExactFactorLadder (input : SelectionInput) : UInt64 :=
+private def exactFactorChecksum (input : SelectionInput) : UInt64 :=
   match input.root with
   | some root =>
     match root.exactFactor? input.candidate with
-    | some a => polyChecksum a.p
-    | none => panic! "runExactFactorLadder: exactFactor? failed"
-  | none => panic! "runExactFactorLadder: fixture preparation failed"
+    | some a => algebraicChecksum a
+    | none => 1
+  | none => 0
 
 private structure CanonicalInput where
   p : ZPoly
@@ -803,7 +806,7 @@ def prepCanonicalInput (n : Nat) : Option CanonicalInput :=
     | none => none
   else none
 
-def runCanonicalRepLadder (input : Option CanonicalInput) : UInt64 :=
+private def canonicalRepChecksum (input : Option CanonicalInput) : UInt64 :=
   match input with
   | some input =>
     match AlgebraicNumber.canonicalRep? input.p input.squarefree input.rep
@@ -820,21 +823,6 @@ private def exactFactorFamily (count : Nat) : ZPoly :=
     (fun acc prime => acc * DensePoly.ofList [-prime, 0, 1])
     (1 : ZPoly)
 
-private def coefficientBits (p : ZPoly) : Nat :=
-  p.toArray.foldl
-    (fun bits coefficient =>
-      max bits (if coefficient = 0 then 0 else Nat.log2 coefficient.natAbs + 1)) 0
-
-def exactFamilyComplexity (count : Nat) : Nat :=
-  let p := exactFactorFamily count
-  let degree := p.degree?.getD 0
-  let height := coefficientBits p
-  degree ^ 9 + degree ^ 7 * height ^ 2
-
-def exactFactorComplexity (n : Nat) : Nat :=
-  let log := Nat.log2 (n + 2)
-  n ^ 9 + n ^ 7 * log ^ 2 + n ^ 5 * log ^ 2
-
 private structure ExactInput where
   root : Option AlgebraicRoot
 
@@ -847,71 +835,177 @@ def prepExactInput (n : Nat) : ExactInput :=
   let p := exactFactorFamily n
   ⟨mkLadderRoot? p⟩
 
-def runExactLadder (input : ExactInput) : UInt64 :=
+private def exactChecksum (input : ExactInput) : UInt64 :=
   match input.root with
   | some root =>
     match root.exact? with
-    | some a => polyChecksum a.p
+    | some a => algebraicChecksum a
     | none => 1
   | none => 0
 
-/- Cost model. Per SPEC §Complexity, exactification adds one
-Berlekamp-Zassenhaus factorization of an enclosing polynomial of degree `2n`
-plus factor-root selection. This family extends the BZ adversarial fixture
-`(X^2 - 2)(X^2 - 3)` with further irreducible quadratic factors, so modular
-factorization and Hensel lifting must feed a nontrivial combination search
-rather than take the irreducible or linear-factor fast paths. The declared
-model is the classical BHKS polynomial bound `d^9 + d^7 h^2` (the same shape
-the HexBerlekampZassenhaus registrations declare), evaluated at the enclosing
-polynomial's actual degree `d` and coefficient bit height `h`. -/
-setup_benchmark runExactLadder n => (exactFamilyComplexity n)
-  with prep := prepExactInput
-  where {
-    paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 5, 6]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+private def exactHardPoly : ZPoly :=
+  DensePoly.ofList
+    [30030, 0, -40361, 0, 20581, 0, -5102, 0, 652, 0, -41, 0, 1]
 
-/- Cost model. `exactFactor?` certifies one degree-`n`, constant-height
-candidate. Its irreducibility guard invokes the public BZ factorization API,
-so the declaration includes the classical BHKS `n^9 + n^7 log^2 n` envelope.
-It then isolates to separation depth, refines against the enclosing
-polynomial, selects the matching root, and performs canonical re-isolation.
-Applying the HexRoots state-of-practice isolation bound `~O(d^3 + d^2 tau)`
-with the implementation's working-precision proxy `O(d^3 B^2)` and
-`B = O(n log n)` adds `n^5 log^2 n`. -/
-setup_benchmark runExactFactorLadder n => (exactFactorComplexity n)
-  with prep := prepExactSelectionInput
-  where {
-    paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+private def exactHardSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec
+      (-101927323007384149321685952252207694872821825932799541131833833248670938989)
+      244,
+    0, 241⟩
 
-/- Cost model. `canonicalRep?` isolates a degree-`n`, constant-height
-irreducible polynomial at separation depth, refines every isolation, and finds
-the canonical disc matching the supplied root. With `B = O(n log n)`, the same
-HexRoots isolation proxy `O(n^3 B^2)` gives `n^5 log^2 n`; refinement and the
-linear selection scan are lower order. -/
-setup_benchmark runCanonicalRepLadder n => (n ^ 5 * (Nat.log2 (n + 2)) ^ 2)
-  with prep := prepCanonicalInput
-  where {
-    paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+private def exactHardRep : RefinedIsolation exactHardPoly :=
+  ⟨⟨exactHardSquare, .ofWitness (by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide)⟩,
+    by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide⟩
+
+private def exactHardInput : ExactInput :=
+  if hsf : HasOnlySimpleRoots exactHardPoly then
+    ⟨some
+      { p := exactHardPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsf
+        x := SimpleRoot.mk exactHardRep
+        rep := exactHardRep
+        rep_mk := rfl }⟩
+  else ⟨none⟩
+
+private def factorHardCandidate : ZPoly :=
+  DensePoly.ofList [-2, 0, 0, 0, 0, 0, 0, 0, 1]
+
+private def factorHardPoly : ZPoly :=
+  DensePoly.ofList [-6, -2, 0, 0, 0, 0, 0, 0, 3, 1]
+
+private def factorHardSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (-932209243062424318066219) 80,
+    Dyadic.ofIntWithPrec (-932209243062424318066219) 80, 77⟩
+
+private def factorHardRep : RefinedIsolation factorHardPoly :=
+  ⟨⟨factorHardSquare, .ofWitness (by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide)⟩,
+    by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide⟩
+
+private def factorHardInput : SelectionInput :=
+  if hsf : HasOnlySimpleRoots factorHardPoly then
+    ⟨some
+      { p := factorHardPoly
+        prim := by rfl
+        pos_lc := by decide
+        pos_degree := by decide
+        squarefree := hsf
+        x := SimpleRoot.mk factorHardRep
+        rep := factorHardRep
+        rep_mk := rfl },
+      factorHardCandidate⟩
+  else ⟨none, factorHardCandidate⟩
+
+private def canonicalHardSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (-55564000789071579) 56,
+    Dyadic.ofIntWithPrec (-55564000789071579) 56, 53⟩
+
+private def canonicalHardRep : RefinedIsolation factorHardCandidate :=
+  ⟨⟨canonicalHardSquare, .ofWitness (by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide)⟩,
+    by
+      set_option maxRecDepth 100000 in
+      set_option exponentiation.threshold 10000 in decide⟩
+
+private def canonicalHardInput : Option CanonicalInput :=
+  if hsf : HasOnlySimpleRoots factorHardCandidate then
+    some ⟨factorHardCandidate, hsf, canonicalHardRep, by decide⟩
+  else none
+
+-- Tie the checked certificates to the top rungs of the archived families.
+#guard exactHardPoly == exactFactorFamily 6
+#guard factorHardCandidate == xPowSubTwo 8
+#guard factorHardPoly == factorHardCandidate * DensePoly.ofList [3, 1]
+#guard exactHardSquare.prec == 241
+#guard factorHardSquare.prec == 77
+#guard canonicalHardSquare.prec == 53
+
+initialize exactHardInputRef : IO.Ref (Option ExactInput) ← IO.mkRef none
+initialize factorHardInputRef : IO.Ref (Option SelectionInput) ← IO.mkRef none
+initialize canonicalHardInputRef : IO.Ref (Option (Option CanonicalInput)) ←
+  IO.mkRef none
+
+private def getExactHardInput : IO ExactInput := do
+  match ← exactHardInputRef.get with
+  | some input => pure input
+  | none =>
+    exactHardInputRef.set (some exactHardInput)
+    pure exactHardInput
+
+private def getFactorHardInput : IO SelectionInput := do
+  match ← factorHardInputRef.get with
+  | some input => pure input
+  | none =>
+    factorHardInputRef.set (some factorHardInput)
+    pure factorHardInput
+
+private def getCanonicalHardInput : IO (Option CanonicalInput) := do
+  match ← canonicalHardInputRef.get with
+  | some input => pure input
+  | none =>
+    canonicalHardInputRef.set (some canonicalHardInput)
+    pure canonicalHardInput
+
+def runExactLadder : Unit → IO UInt64 := fun _ => do
+  return exactChecksum (← getExactHardInput)
+
+def runExactFactorLadder : Unit → IO UInt64 := fun _ => do
+  return exactFactorChecksum (← getFactorHardInput)
+
+def runCanonicalRepLadder : Unit → IO UInt64 := fun _ => do
+  return canonicalRepChecksum (← getCanonicalHardInput)
+
+/- Mode 3. The clean historical sweeps tried factor count on the end-to-end
+family and candidate degree on both certification phases. They do not admit a
+tight independently derived model: the executable all-roots isolator dominates
+certification, differs materially from the published CIsolate algorithm, and
+HexRoots documents only a heuristic complexity proxy. The end-to-end BHKS
+factorization bound also does not cover its profiled dominant phase.
+
+The three fixed inputs are the top completed rungs of those controlled sweeps.
+Six quadratic factors are the largest practical end-to-end case before fixture
+construction hits its setup cliff; degree eight is the largest audited
+certification case. Each zero-grace ceiling below is an enforced whole-child
+budget sized from measured startup, one untimed warmup, and the timed call or
+batch. They give about 2.3--3.1x total-process headroom on the reference host
+and do not reuse the generic 30-second ladder timeout. The historical `Ladder`
+names are retained so the archived failed parametric evidence stays connected
+to these operations. -/
+setup_fixed_benchmark runExactLadder where {
+  repeats := 5
+  minTotalSeconds := 0.02
+  maxSecondsPerCall := 0.2
+  killGraceMs := 0
+  warmupFirstIter := true
+  expectedHash := some 0x5bfd5b96f72b6002
+}
+
+setup_fixed_benchmark runExactFactorLadder where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  killGraceMs := 0
+  warmupFirstIter := true
+  expectedHash := some 0xe5c33ee70736a0fb
+}
+
+setup_fixed_benchmark runCanonicalRepLadder where {
+  repeats := 5
+  maxSecondsPerCall := 1.1
+  killGraceMs := 0
+  warmupFirstIter := true
+  expectedHash := some 0x1d7ae08962f9292c
+}
 
 /-! # Root-API ladders -/
 

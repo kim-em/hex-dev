@@ -582,15 +582,32 @@ The required exactification input families are:
   `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
   multiple-candidate selection and canonical re-isolation without treating
   the easy enclosing factorization as scaling evidence;
-- `exactification-certification`: degree-`n` candidates `X^n - 2` inside
-  `(X^n - 2)(X + 3)`, again pinned to the nonlinear factor, separately time
-  `AlgebraicRoot.exactFactor?` and the public
-  `AlgebraicNumber.canonicalRep?` phase; and
-- `exactification-factorization`: a growing product of distinct Eisenstein
-  quadratics extends the Berlekamp-Zassenhaus adversarial fixture, and the
-  end-to-end `exact?` target must show modular factorization, multifactor
-  Hensel lifting, and recombination in a profile before it counts as the
-  factorization family.
+- `exactification-certification`: fixed degree-eight certification cases use
+  `X^8 - 2` inside `(X^8 - 2)(X + 3)`, pinned to the nonlinear factor, to time
+  `AlgebraicRoot.exactFactor?`, and the same candidate in the public
+  `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
+  `coeffAbsMax = 6`, coefficient bit height 3, and certificate precision 77;
+  the candidate has degree 8, `coeffAbsMax = 2`, coefficient bit height 2, and
+  certificate precision 53. Their zero-grace whole-child budgets are 2 seconds
+  and 1.1 seconds respectively; and
+- `exactification-factorization`: the fixed end-to-end `exact?` case is the
+  first root of `∏ p∈{2,3,5,7,11,13}, (X² - p)`, the top completed rung of
+  the archived growing-factor-count sweep. It has degree 12,
+  `coeffAbsMax = 40361`, coefficient bit height 16, and certificate precision
+  241. Its zero-grace whole-child budget is 200 ms, including a 20 ms timed
+  batch after one untimed warmup.
+
+The certification and factorization sweeps are archived diagnostic evidence,
+not current parametric registrations. Inclusive profiling attributes the
+certification cases to root isolation (more than 95% inclusive) and the
+end-to-end case primarily to isolation (about 77%), with factorization only
+about 18%. The published BHKS bound therefore does not cover the controlling
+end-to-end phase, while the published BSSY bound concerns a different
+isolation algorithm. These three registrations are fixed absolute-budget
+checks and make no one-parameter scaling claim. Their static certificates are
+checked against the archived family shapes in the benchmark source; full
+timing runs enforce the budgets and merge-gating verification checks both the
+output polynomial and canonical isolating square.
 
 ## External comparators
 

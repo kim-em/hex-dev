@@ -12,7 +12,7 @@ Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 9 controlled parametric targets and 38 fixed targets (47 total).
+registers 6 controlled parametric targets and 41 fixed targets (47 total).
 The adjacent comments in the driver derive each parametric model or explain the
 fixed-mode choice. The contracts below are copied from the registration sites.
 
@@ -23,18 +23,19 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
 | `runAddEliminantLadder` | parametric | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
 | `runLazyAddLadder` | fixed | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | 12 s ceiling |
-| `runExactLadder` | parametric | `AlgebraicRoot.exact?` on the first root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)`, with `n` quadratic factors | `exactFamilyComplexity n`, i.e. the BHKS `d^9 + d^7 h^2` at the fixture's actual degree and coefficient bit height |
-| `runExactFactorLadder` | parametric | `AlgebraicRoot.exactFactor?` for the degree-`n` candidate `X^n - 2` inside `(X^n - 2)(X + 3)`, with the enclosing root pinned to that candidate | `exactFactorComplexity n`, i.e. BHKS factorization plus the `n ^ 5 log² n` isolation envelope |
-| `runCanonicalRepLadder` | parametric | `AlgebraicNumber.canonicalRep?` for the first root of `X^n - 2` | `n ^ 5 * (Nat.log2 (n + 2)) ^ 2` |
+| `runExactLadder` | fixed | `AlgebraicRoot.exact?` on the first certified root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)` | 200 ms whole-child ceiling, zero grace |
+| `runExactFactorLadder` | fixed | `AlgebraicRoot.exactFactor?` for `X^8 - 2` inside `(X^8 - 2)(X + 3)`, with a static certified enclosing root | 2 s whole-child ceiling, zero grace |
+| `runCanonicalRepLadder` | fixed | `AlgebraicNumber.canonicalRep?` for a static certified root of `X^8 - 2` | 1.1 s whole-child ceiling, zero grace |
 | `runCommonPresentationLadder` | parametric | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
 | `runMergeRootListLadder` | parametric | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | fixed | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree 6 | 20 s ceiling |
 | `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
 
-The 38 fixed registrations are thirteen canonical API cases (`runFixedMul`,
+The 41 fixed registrations are sixteen canonical API and fixed-problem cases (`runFixedMul`,
 `runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
 `runSelectAdd`, `runLazyAdd`, `runLazyAddLadder`, `runExact`,
-`runExactSelection`, `runRoots`, `runQAdjoinRootsLadder`,
+`runExactSelection`, `runExactLadder`, `runExactFactorLadder`,
+`runCanonicalRepLadder`, `runRoots`, `runQAdjoinRootsLadder`,
 `runAlgebraicRootsLadder`), twenty-four Lean/PARI
 comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
@@ -113,12 +114,30 @@ adaptive working precision eventually reached by the isolator:
 | fixed-field roots | 8 | 16 | 7,518,868,896 | 33 | 584 |
 | fixed-field roots | 12 | 24 | 1,972,110,460,320 | 41 | 1,082 |
 
-This operation-specific assessment does not resolve the two other
-registrations whose comments contain the HexRoots isolation proxy.
-`runExactFactorLadder` and `runCanonicalRepLadder` remain open
-faster-than-envelope concerns. None of their heuristic isolation terms is
-presented here as a consequence of the BSSY theorem or as support for this
-fixed-mode decision.
+The fixed exactification certificates are pinned separately because their
+stored precision can include refinement beyond the isolator's initial target:
+
+| fixed input | degree | `coeffAbsMax` | coefficient bit height | certificate precision |
+|---|---:|---:|---:|---:|
+| six-quadratic end-to-end polynomial | 12 | 40,361 | 16 | 241 |
+| `(X⁸ - 2)(X + 3)` enclosing polynomial | 9 | 6 | 3 | 77 |
+| `X⁸ - 2` canonical candidate | 8 | 2 | 2 | 53 |
+
+The same ordered assessment resolves the three exactification registrations.
+Their historical controlled sweeps are useful negative evidence: no stable
+two-sided model was found, and the declarations' `n⁵ log² n` terms were the
+same unproved HexRoots proxy. The current registrations therefore use the top
+completed sweep rungs as canonical hard fixed inputs. The harness enforces a
+deadline on the whole child, not directly on the reported operation median, so
+the budgets are sized against startup plus one untimed warmup plus the timed
+call or batch. With `killGraceMs := 0`, the 200 ms, 2 s, and 1.1 s declarations
+are the actual child deadlines. Against the measured 41.85 ms spawn floor and
+the largest clean operation calls they provide approximately 2.3x, 2.8x, and
+3.1x process-level headroom, respectively, and remain operation-specific
+rather than reusing the generic 30 s ladder timeout. The fast end-to-end case
+uses an at-least-20 ms timed batch instead of a single-shot reading. Static certified
+isolating regions and lazy warmup initialization keep fixture construction
+outside the timed batch without increasing every executable spawn's floor.
 
 The current local `hexnumberfield_bench verify` invocation completes in 23.23 s
 on the reference host: 77% of the per-library 30 s soft-warning threshold and
@@ -130,10 +149,10 @@ the full timing path, `verify` runs each fixed body once and does not enforce
 its per-call ceiling, so its merge-gating role here is correctness and hash
 stability.
 
-Separately, the four exactification registrations verify together in 1.052 s
-on the reference host, including the fixed case's warmup, against CI's 360 s hard cap
-for the whole bench suite. Their smoke-cost increase is therefore not a
-material threat to the existing verification budget.
+Separately, the four exactification registrations, including the pre-existing
+`runExactSelection`, verify well inside CI's 360 s hard cap for the whole bench
+suite. The three mode-3 registrations also pass their named local `verify`
+invocation with stable expected hashes.
 
 ### Fixture control
 
@@ -161,24 +180,34 @@ every rational operation single-limb, since the convolution accumulators grow
 by `O(log n)` bits. The declared `n^2` is a coefficient-operation count over
 the measured domain, where those accumulators stay within a machine word.
 
-The exactification inputs now separate three different claims. The fixed
+The exactification inputs separate three different claims. The fixed
 `runExactSelection` case retains `(X^8 - 2)(X + 3)` as evidence for inspecting
 more than one candidate, representative matching, and canonicalisation. The
-`exactification-certification` ladders pin that same nonlinear candidate at
-every rung, independently of the enclosing isolator's emission order; one
-times the full `exactFactor?` certification and the other isolates the public
-`canonicalRep?` phase. The parametric `runExactLadder` instead extends the BZ adversarial
-`(X² - 2)(X² - 3)` fixture to two through six quadratic factors. Its declared
-BHKS model reads the resulting polynomial's actual degree and coefficient bit
-height, so the schedule does not silently treat the growing coefficients as
-constant-height input.
+two certification registrations use the same degree-eight shapes; one times
+the full `exactFactor?` certification and the other isolates the public
+`canonicalRep?` phase. `runExactLadder` uses the BZ-adversarial top historical
+rung, the first root of the product of six distinct quadratics `X² - p`. All
+three roots and isolating regions are static checked certificates. Compile-time
+guards identify the handwritten polynomials with the archived family builders
+and pin certificate precisions 241, 77, and 53. On the first untimed warmup in
+each named child, lazy initialization checks squarefreeness but performs no root
+isolation or fixture search; other benchmark children pay no initialization
+cost.
 
-The next factor-count rung is not a millisecond extension of the registered
-range: a cold single call at `n = 7` spends 17.19 s in child setup before the
+The fixed data reproduce the archived top rungs exactly: the degree-12
+end-to-end polynomial is `∏_{p ∈ {2,3,5,7,11,13}} (X²-p)`; the
+degree-nine enclosing polynomial is `(X⁸-2)(X+3)`; and the public canonical
+case uses `X⁸-2`. Their original polynomial-only hashes and per-call timings
+agree with the archived rows. The current exactification checks strengthen the
+hash to include both the output polynomial and its canonical isolating square.
+
+The historical next factor-count rung is not a millisecond extension of the
+measured range: a cold single call at `n = 7` spends 17.19 s in child setup before the
 3.038 ms timed exactification, and `n = 8` crosses the 30 s setup cliff. Thus
-the ceiling at six factors is fixture-cost forced. It is still sufficient for
-the profile to observe multifactor Hensel lifting and recombination, but the
-large residual against BHKS remains an open finding rather than a fitted pass.
+the historical ceiling at six factors was fixture-cost forced. The fresh
+inclusive profile is used only to apportion the executable phases: it shows
+that certification and candidate re-isolation, rather than BHKS-covered
+factorization, control this end-to-end family.
 
 ### Scientific arithmetic ranges
 
@@ -244,33 +273,26 @@ Five ladders use **mode 1, two-sided parametric**:
 derivations give the intended algorithms' expected scaling on the controlled
 families before measurement, and all five pass.
 
-`runLazyAddLadder`, `runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder` use
-**mode 3, fixed registration with an absolute budget**. The adjacent
-isolation-mode assessment records why modes 1 and 2 do not apply, identifies
-their canonical inputs, and sets 12 s, 20 s, and 15 s ceilings. All three fixed
-measurements and hashes pass. This deliberately gives up asymptotic detection
-for those operations without changing their per-library worst-case contracts.
+`runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
+`runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
+`runAlgebraicRootsLadder` use **mode 3, fixed registration with an absolute
+budget**. The adjacent isolation-mode assessments record why modes 1 and 2 do
+not apply, identify their canonical inputs, and set 12 s, 200 ms, 2 s, 1.1 s,
+20 s, and 15 s whole-child ceilings. All fixed measurements and hashes pass.
+This deliberately gives up asymptotic detection for those operations without
+changing their per-library worst-case contracts.
 
-The remaining four parametric ladders block Phase 4:
+The remaining parametric ladder blocks Phase 4:
 
 - `runQAdjoinInvLadder` is faster than its conservative worst-case bit-cost
   proxy. A tighter aggregate family model has not yet been derived, and the
   proxy is not supplied as a published, cited mode-2 bound covering the
   profiled chain. It is therefore mode 4, tracked by #9743.
-- `runExactLadder` cannot use mode 2 even though the BHKS factorization bound
-  is published: the profile shows certification and candidate re-isolation
-  dominate, while factorization is only 18.64% of the end-to-end call. The
-  cited bound therefore does not cover the dominant measured phase.
-- `runExactFactorLadder` and `runCanonicalRepLadder` expose those dominant
-  certification phases, but their declarations add the same heuristic
-  isolation estimate rather than a published upper bound. They are also
-  mode 4.
-
 The other 35 fixed registrations are canonical API, comparator, and protocol
 checks. They make no complexity claim, have no mode, and do not replace the
-twelve performance registrations. The four unresolved registrations remain
-tracked by the issues in §Concerns, so no model is fitted and no parametric
-failure is reclassified as a pass.
+twelve performance registrations. The unresolved registration remains
+tracked by the issue in §Concerns, so no model is fitted and no historical
+parametric failure is reclassified as a pass.
 
 Authoritative verdict per ladder, and which committed run it comes from. The
 runs below give the measurements; this table says which one counts.
@@ -282,9 +304,9 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
-| `runExactLadder` | inconclusive, faster | — | exactification audit |
-| `runExactFactorLadder` | inconclusive, faster | — | exactification audit |
-| `runCanonicalRepLadder` | inconclusive, faster | — | exactification audit |
+| `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
+| `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
+| `runCanonicalRepLadder` | **fixed: 154.045 ms, hash match** | — | exactification mode 3 |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
@@ -294,9 +316,11 @@ All five parametric registrations receiving a statistically matching
 two-sided harness verdict have independently derived mode-1 claims. The former
 `runQAdjoinRootsLadder` sweep matched a withdrawn heuristic isolation proxy;
 its result remains diagnostic history and the fixed registration supersedes
-it. The other four parametric ladders are faster than declared. None of those
-four blocked classifications is a measurement artefact, and §Profile
-identifies the phase controlling each profiled end-to-end call.
+it. `runQAdjoinInvLadder` and the three archived exactification sweeps are
+faster than declared; the latter remain diagnostic evidence for why no
+parametric model was retained, while their current fixed registrations pass.
+None of those classifications is a measurement artefact, and §Profile
+identifies the controlling phases.
 For the normalized inversion chain specifically, the former
 slower-than-declared defect is fixed. The single-root fixture now carries the
 normalized chain through degree 96; its remaining faster-than-declared result
@@ -310,10 +334,10 @@ the exactification audit covering its two new phase ladders and replacement
 family, the normalized inversion rerun, and the root-merge fix run. Both repaired root ladders extend to the
 two-octave range needed for `fitSlope`. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
-which. The three isolation fixed exports supersede the parametric verdicts for
-`runLazyAddLadder`, `runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`;
-their earlier sweeps remain diagnostic evidence for withdrawing the
-unsupported model.
+which. The isolation fixed exports supersede the parametric verdicts for
+`runLazyAddLadder`, `runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`, and the exactification mode-3
+export supersedes the three exactification audit verdicts. Their earlier
+sweeps remain diagnostic evidence for withdrawing the unsupported models.
 
 The **original full-suite run** covers the nine registrations that existed at
 source commit `066f6fc29`, at three outer trials per rung:
@@ -452,22 +476,46 @@ change benchmark artefacts only.
 | `runExactFactorLadder` | 2, 3, 4, 6, 8 | inconclusive | 2.004..168.0 | 5.53% |
 | `runCanonicalRepLadder` | 2, 3, 4, 6, 8 | inconclusive | 515.8..2551 | 1.28% |
 
-The end-to-end per-call times are small, but the spawn-floor comparison is
-against each amplified child-side batch, not one call: its 32/64-repeat rows
-run for 53.36–95.37 ms against a 41.85 ms measured spawn floor. Thus the
-registered `signalFloorMultiplier := 1.0` disables the conservative default
-10× exclusion without timing parent-side startup as algorithm work.
+The historical end-to-end per-call times are small, but the spawn-floor
+comparison is against each amplified child-side batch, not one call: its
+32/64-repeat rows run for 53.36–95.37 ms against a 41.85 ms measured spawn
+floor. The former parametric registration used
+`signalFloorMultiplier := 1.0` to disable the conservative default 10×
+exclusion without timing parent-side startup as algorithm work; the current
+registration is fixed and does not carry that setting.
 
-All three remain in the faster-than-declared direction. `canonicalRep?` uses
+All three historical sweeps remain in the faster-than-declared direction. `canonicalRep?` uses
 the declared heuristic isolation envelope; `exactFactor?` uses that envelope
 plus the BHKS factorization it invokes for its irreducibility guard; and the
 end-to-end model is BHKS evaluated at the fixture's actual degree and height.
 These are large monotone shape mismatches, quantified below, not
 constant-factor slack.
-Under the harness's current two-sided verdict none is a Phase-4 pass. The
-ordered rule classifies all three as mode 4 because the declarations do not
-cover the profiled dominant phases with independently derived tight models or
-published upper bounds.
+Under the harness's two-sided verdict none is a parametric pass. The ordered
+rule therefore proceeds to mode 3: the current fixed registrations retain the
+hard top rungs without claiming that those withdrawn envelopes model scaling.
+
+The **exactification mode-3 run** is a clean five-trial measurement of those
+three fixed registrations at source `2df51cf4b`:
+
+```sh
+.lake/build/bin/hexnumberfield_bench run \
+  Hex.NumberFieldBench.runExactLadder \
+  Hex.NumberFieldBench.runExactFactorLadder \
+  Hex.NumberFieldBench.runCanonicalRepLadder \
+  --outer-trials 5 \
+  --export-file \
+    reports/bench-results/hex-number-field-exactification-mode3-2df51cf4b.json
+```
+
+| target | median | min..max | whole-child ceiling | observed hash |
+|---|---:|---:|---:|---|
+| `runExactLadder` | 1.878 ms | 1.871..1.885 ms | 200 ms | `0x5bfd5b96f72b6002` |
+| `runExactFactorLadder` | 308.643 ms | 306.667..310.988 ms | 2 s | `0xe5c33ee70736a0fb` |
+| `runCanonicalRepLadder` | 154.045 ms | 153.773..156.491 ms | 1.1 s | `0x1d7ae08962f9292c` |
+
+Every repeat completed, all repeat hashes agreed, and every expected hash
+matched. These budgets are enforced by the full timing path; `verify` checks
+the same inputs and hashes in smoke mode.
 
 A second quiet run historically covered the three ladders too expensive to fit
 in the same window, at three outer trials, on the idle host. The two
@@ -591,7 +639,7 @@ its expected result.
 
 ### Sensitivity to integer-log steps
 
-`fitSlope` rejects a log-log fit whose x-range is too narrow. `runExactLadder`
+`fitSlope` rejects a log-log fit whose x-range is too narrow. The historical `runExactLadder`
 and the former parametric `runAlgebraicRootsLadder` sweep span under two octaves
 because their top rungs already cost 0.3 s and 25 s per call. The harness then falls back to a
 multiplicative range check,
@@ -620,9 +668,8 @@ artefact, not as a verdict on the proxy.
 | `runQAdjoinRootsLadder`, repaired | 1.953 | 1.384 | — | -0.258 |
 | `runAlgebraicRootsLadder` | 2.680 | 2.680 | 1.500 | **-1.406** |
 
-The three new exactification registrations also have no fitted slope. Their
-official integer-model ratios, including the harness bound they must meet,
-are:
+The three historical exactification sweeps also have no fitted slope. Their
+integer-model ratios, including the harness bound they failed, are:
 
 | target | cMax/cMin | bound | direction |
 |---|---:|---:|---|
@@ -632,8 +679,8 @@ are:
 
 The end-to-end replacement therefore exercises the missing phase but does not
 repair the model fit: its decline in `C` is larger than the former family's.
-That result remains an open finding, as required. The ordered rule classifies
-it as mode 4 until the model-provenance gap is repaired.
+That result is retained as the evidence that modes 1 and 2 are unavailable.
+The current mode-3 registrations make no parametric fit claim.
 
 (The historical exactification and lazy-addition figures are from the quiet
 runs, the repaired fixed-field-root figure is from the root-merge fix run,
@@ -643,8 +690,8 @@ Read as a sensitivity check. On the uncontrolled fixture most of
 `runAlgebraicRootsLadder`'s spread was the step; with bounded coefficient
 height the residual is large under either evaluation and the step no longer
 explains it. `runExactLadder`'s declared envelope over-predicts by roughly
-four powers of `n` under either evaluation and remains `inconclusive` on the
-harness's own verdict.
+four powers of `n` under either evaluation and remains `inconclusive` in the
+archived parametric verdict.
 `runAlgebraicRootsLadder` was also inconclusive and is now a fixed registration
 for the independent selection reasons above.
 The repaired `runQAdjoinRootsLadder` smooth proxy remains within tolerance
@@ -654,11 +701,13 @@ fixed registration now supersedes that fitted verdict.
 
 ### Fixed registrations
 
-All 38 fixed registrations agree across repeats, and all fourteen with a declared
+All 41 fixed registrations agree across repeats, and all seventeen headline cases with a declared
 `expectedHash` match it. Medians come from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json),
 with `runExactSelection` in the
-[exactification fixed export](bench-results/hex-number-field-exactification-fixed.json)
+[exactification fixed export](bench-results/hex-number-field-exactification-fixed.json),
+the three mode-3 exactification cases in the
+[mode-3 export](bench-results/hex-number-field-exactification-mode3-2df51cf4b.json),
 and the three isolation cases in the isolation fixed exports:
 
 | fixed target | median | observed hash | expected |
@@ -673,6 +722,9 @@ and the three isolation cases in the isolation fixed exports:
 | `runLazyAddLadder` | 4.539 s | `0x91175572810ff8e2` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
+| `runExactLadder` | 1.878 ms | `0x5bfd5b96f72b6002` | match |
+| `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
+| `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
 | `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
 | `runAlgebraicRootsLadder` | 5.955 s | `0x2fade2409323a752` | match |
@@ -735,7 +787,8 @@ comparator export supplies the first five rows and the committed
 supplies the restored sixth rows. Before the three exactification registrations
 were added, a full `verify` of those 43 registrations, including PARI,
 completed locally in 0.379 s; the four exactification targets verify together
-in 1.052 s.
+well inside the suite's 360 s hard cap, and the three current mode-3 targets
+pass their named smoke verification.
 
 Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 1 means Hex is faster.
@@ -831,7 +884,8 @@ AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean 4.34.0-rc2, LeanBench
 0.1.0. The five original profiles use source commit `066f6fc29` (with the
 fixture-corrected algebraic-roots profile noted below); the replacement
 exactification profile uses `a20d30552`, and the repaired fixed-field-roots
-profile uses implementation commit `4a827ea546`. Every fixture is
+profile uses implementation commit `4a827ea546`. Fresh fixed exactification,
+certification, and canonical-representation profiles use `1e5cb8472`. Every fixture is
 deterministic and no fixture is randomised: the arithmetic operands come from
 `denseRatCoeffs` at salts 3 and 7 (and 5 for inversion), and the remaining
 families are the fixed polynomials named in the bench source. No runtime
@@ -857,7 +911,23 @@ scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
 # Re-run after the cross-component gcd guard:
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runQAdjoinRootsLadder    6 5000000000
+# Current fixed mode-3 registrations (fixed child dispatch, parameter label 0):
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
+  Hex.NumberFieldBench.runExactLadder            0 5000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
+  Hex.NumberFieldBench.runExactFactorLadder      0 5000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
+  Hex.NumberFieldBench.runCanonicalRepLadder     0 5000000000
 ```
+
+The profiling helper currently emits parametric child arguments. For these
+three local fixed runs only, its child argv used the harness's equivalent
+`--fixed --repeat-index 0 --min-total-nanos 5000000000` form, and the pinned
+`lean-bench` fixed child was instrumented with the same opt-in
+`withSidecarIfEnabled` wrapper already used by its parametric child. That
+instrumentation records boundaries only; it does not alter the benchmark body
+or the timed fixture. Both temporary tooling changes were removed after the
+profiles.
 
 Each summary used
 `python3 scripts/profile/summarize_profile.py --thread hexnumberfield_bench`.
@@ -865,9 +935,9 @@ Raw filtered `*.json.gz` artefacts stay developer-local under `/tmp` as
 `SPEC/profiling.md` requires; their local paths are
 `/tmp/hex-profile-<target>-<param>.json.gz`.
 
-The original five family profiles, replacement exactification profile, and
-repaired fixed-field-roots profile all pass calibration, confidence and the
-±5 ms sensitivity check:
+The original five family profiles, replacement exactification profile,
+repaired fixed-field-roots profile, and three current fixed exactification
+profiles all pass calibration, confidence and the ±5 ms sensitivity check:
 
 | family | case | retained / rejected | calibration residual | leaf cost | classified |
 |---|---|---:|---:|---|---:|
@@ -875,6 +945,9 @@ repaired fixed-field-roots profile all pass calibration, confidence and the
 | `lazy-arithmetic` | `runLazyAddLadder` n=8 | 25,651 / 153 | 0.293 ms | allocation 50.31%, GMP 32.79%, Lean runtime 13.61%, own code 0.58% | 97.28% |
 | `exactification-selection` | former `runExactLadder` n=8 | 5,334 / 488 | 0.574 ms | allocation 43.74%, GMP 29.04%, Lean runtime 18.77%, own code 1.78% | 93.33% |
 | `exactification-factorization` | `runExactLadder` n=6 | 4,426 / 11,330 | 0.807 ms | allocation 34.86%, GMP 10.85%, Lean runtime 43.20%, own code 9.60% | 98.51% |
+| `exactification-mode3` | fixed `runExactLadder` | 15,342 / 10 | 1.324 ms | allocation 37.28%, GMP 11.04%, Lean runtime 41.19%, own code 9.54% | 99.05% |
+| `exactification-certification-mode3` | fixed `runExactFactorLadder` | 9,975 / 339 | 0.858 ms | allocation 45.03%, GMP 28.81%, Lean runtime 24.41%, own code 1.61% | 99.87% |
+| `canonical-representation-mode3` | fixed `runCanonicalRepLadder` | 10,983 / 169 | 0.994 ms | allocation 43.29%, GMP 29.04%, Lean runtime 25.99%, own code 1.59% | 99.91% |
 | `fixed-field-roots` | `runQAdjoinRootsLadder` n=6 | 97,109 / 7 | 0.325 ms | allocation 52.60%, GMP 33.21%, Lean runtime 11.54%, own code 0.42% | 97.77% |
 | `fixed-field-roots`, repaired | `runQAdjoinRootsLadder` n=6 | 9,353 / 10 | 0.616 ms | allocation 48.57%, GMP 33.55%, Lean runtime 14.06%, own code 0.71% | 96.89% |
 | `algebraic-poly-roots` | `runAlgebraicRootsLadder` n=6 | 5,965 / 9 | 0.633 ms | allocation 53.80%, GMP 30.76%, Lean runtime 12.04%, own code 0.54% | 97.14% |
@@ -883,7 +956,7 @@ The rejected counts are the untimed fixture preludes, which the filtering
 postprocessor excludes by construction. The arithmetic profile predates the
 single-root repair, so its rejected samples include the former 4.9 s
 all-roots fixture; that prelude is outside the retained timed region. The hard
-exactification fixture also
+historical exactification fixture also
 does substantial enclosing-polynomial isolation before its five timed
 regions; despite that large rejected prelude, its 4,426 retained samples,
 0.807 ms residual, and sensitivity comparison all pass the postprocessor's
@@ -891,6 +964,11 @@ confidence checks. The categorizer counts the top-level compiled `Dyadic`
 helpers as Lean standard-library code, consistently with its existing
 `Int`, `Rat`, and collection handling; this accounts for the corrected 98.51%
 classification.
+
+The current fixed inputs require no isolator prelude. Their rejected samples
+are profiler startup and autotune gaps outside recorded timed regions; all
+three retain roughly ten thousand or more samples with sub-1.4 ms calibration
+residuals and pass the sensitivity check.
 
 "Own code" is under 2% in the original five profiles and 9.60% in the hard
 exactification family; most leaves are still GMP entry points,
@@ -943,26 +1021,39 @@ the declared envelope over-predicts by `n^4.14`. This family is now the fixed
 `runExactSelection` case, while `runExactFactorLadder` and
 `runCanonicalRepLadder` register the two dominant certification phases.
 
-### `exactification-factorization` — the declared phase is materially present
+### `exactification-mode3` — factorization is not controlling
 
 | share | function |
 |---:|---|
-| 82.58% | `Hex.AlgebraicRoot.exactFactor?` |
-| 76.41% | `Hex.isolate` / `isolateLoop` |
-| 38.00% | `Hex.AlgebraicNumber.canonicalRep?` |
-| **18.64%** | `Hex.ZPoly.factorize` |
-| 4.93% | `Hex.ZPoly.multifactorLiftQuadraticListImpl` |
-| 0.90% | `Hex.scanDirectCombinations` |
+| 83.01% | `Hex.AlgebraicRoot.exactFactor?` |
+| 77.19% | `Hex.isolate` / `isolateLoop` |
+| 38.53% | `Hex.AlgebraicNumber.canonicalRep?` |
+| **18.04%** | `Hex.ZPoly.factorize` |
 
-At six quadratic factors, all BZ calls together account for 18.64% of the
+At six quadratic factors, all BZ calls together account for 18.04% of the
 whole exactification call: that inclusive frame contains both the enclosing
-factorization and the candidate irreducibility checks. The nested 4.93%
-quadratic multifactor Hensel lift and 0.90% direct combination scan are
-specific evidence that the enclosing factorization itself performs genuine
-lifting and recombination rather than merely returning a convenient output
-shape. Certification remains larger, which is why the phase registrations are
-still required, but factorization is no longer absent from the end-to-end
-evidence.
+factorization and the candidate irreducibility checks. Certification and
+candidate re-isolation remain more than four times larger, so the published
+BHKS factorization bound cannot support mode 2 for this end-to-end family.
+
+### Fixed certification phases — isolation controls both
+
+| share | `runExactFactorLadder` | `runCanonicalRepLadder` |
+|---:|---:|---:|
+| registered operation | 95.77% | 96.27% |
+| `Hex.isolate` / `isolateLoop` | 95.46% | 96.27% |
+| `Hex.Component.refineAll` | 87.10% | 87.88% |
+| `Hex.exactRootFree` | 84.34% | 85.20% |
+| `Hex.taylor` | 77.35% | 78.18% |
+| nested `canonicalRep?` | 47.63% | 96.27% |
+
+These fresh profiles confirm the premise used before measurement: the
+executable all-roots isolator controls both certification operations. No
+published upper bound has been established for this executable, and its SPEC
+contract is explicitly heuristic. The old `n⁵ log² n` declarations therefore
+cannot become mode-2 claims merely because both operations are faster than
+them. The fixed hard cases preserve the controlling paths and enforce 2 s and
+1.1 s zero-grace whole-child budgets instead.
 
 ### `fixed-field-roots`, before the fix — 83% was duplicate removal
 
@@ -1050,6 +1141,7 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-single-root-comparators.json`](bench-results/hex-number-field-single-root-comparators.json) | `96e0fd7ee`, clean tree | idle | `1243e69ce4256f4470700b43aba55fcb8d6ba1d30faa5ff38b1ddea0803133d4` |
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
+| [`bench-results/hex-number-field-exactification-mode3-2df51cf4b.json`](bench-results/hex-number-field-exactification-mode3-2df51cf4b.json) | `2df51cf4b`, clean tree | idle | `d67c1e2993f0765153f4f15781eda8527c1a9138b8aa427365e69e327e4cecce` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
 | [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
 | [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | `768afcd35`, clean tree | idle | `1cdd1336923271709affc22c45bf178ef6cb73ec4080b796e312fd0e06a43048` |
@@ -1067,6 +1159,9 @@ three isolation-fixed exports supersede the current timing and verdict for
 `runLazyAddLadder`, `runQAdjoinRootsLadder`, and
 `runAlgebraicRootsLadder`. The single-root run supersedes
 the earlier three fixed-field arithmetic ladders after their domains expanded.
+The exactification mode-3 export supersedes the current verdicts for all three
+exactification registrations; the audit export remains their failed
+parametric evidence.
 Four of the five
 profiles were taken from the `066f6fc29` binary; the `algebraic-poly-roots`
 profile was re-taken after the fixture correction, and the hard-family
@@ -1074,7 +1169,15 @@ exactification profile uses `a20d30552`. The root-merge-fix export supersedes
 only `runQAdjoinRootsLadder` and introduces `runMergeRootListLadder`; its
 repaired profile comes from `4a827ea546`. The QAdjoin-roots fixed export then
 supersedes that target's parametric verdict without superseding its repair or
-profile evidence. Toolchain throughout:
+profile evidence.
+The three current fixed exactification profiles come from `1e5cb8472` with the
+instrumentation-only fixed-child sidecar hook described in §Profile.
+The follow-up at `2df51cf4b` leaves the certified inputs and exactification
+operations unchanged; it makes initialization lazy, strengthens result hashes,
+and corrects the whole-child budgets. The fresh timing export was repeated at
+that follow-up commit, while the phase attribution remains the immediately
+preceding operation-identical profile evidence.
+Toolchain throughout:
 Lean 4.34.0-rc2, LeanBench 0.1.0, samply 0.13.1, cypari2 driving PARI through
 `scripts/oracle/pari_bench_driver.py`. Host throughout: `chungus2`, Linux
 x86-64, AMD EPYC 9455 48-Core Processor, 96 logical CPUs.
@@ -1087,8 +1190,10 @@ the bench source rather than by a seed.
 
 `libraries.yml` keeps `HexNumberField` at `done_through: 3`. The `QAdjoin.inv`
 coefficient-swell concern is resolved by the monic-normalized chain and
-corrected bit-cost model recorded in §Verdicts. The remaining Phase-4 exit
-criteria that do not pass are each tracked:
+corrected bit-cost model recorded in §Verdicts. The exactification and
+QAdjoin-roots model concerns are resolved by their fixed registrations and
+profiles above. The remaining
+Phase-4 exit criteria that do not pass are each tracked:
 - **Normalized inversion stays below its worst-case bit-cost declaration.**
   The degree-96 single-root run returns `beta = -0.556` against `n³ log n`
   with spreads at or below 2.55%. The declaration charges every rational
@@ -1104,14 +1209,3 @@ criteria that do not pass are each tracked:
   nothing measures, so the Attribution rule is not satisfied.
   https://github.com/kim-em/hex-dev/issues/9722 — audit-found: HexNumberField's
   advertised API surface is not fully registered for Phase 4.
-- **The exactification ladders remain faster than their declared envelopes.**
-  The end-to-end family now enters multifactor Hensel lifting and combination
-  search, and the dominant certification phases have their own registrations.
-  That fixes attribution, not fit: cMax/cMin is 664.357 for end-to-end
-  exactification, 83.846 for `exactFactor?`, and 4.945 for `canonicalRep?`,
-  against bounds 1.275, 1.410, and 1.410. All three registrations remain
-  `inconclusive` in the faster-than-declared direction. This is explicitly an
-  open shape mismatch; the two-sided upper-envelope policy is not being used
-  to call it a pass.
-  https://github.com/kim-em/hex-dev/issues/9795 — the focused remediation for
-  the exactification and certification models.
