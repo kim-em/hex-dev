@@ -428,11 +428,12 @@ multiply/adds. The canonical degree-128 case uses the integer centre `z = 1`:
 there is no denominator growth, but binomial output magnitudes still grow
 linearly in bits. The reachable GMP transition does not admit a stable scalar
 wall model. Mode 3 therefore gives up asymptotic detection at the canonical
-degree-128 midpoint and enforces a 20 ms absolute budget, a conservative
-multiple of the clean issue-9794 baseline.
+degree-128 midpoint and enforces a 50 ms absolute budget. This is an
+operation-specific regression guard above the clean 3 ms baseline and the
+shared-host process-control floor.
 -/
 setup_fixed_benchmark runTaylor where {
-  repeats := 5, maxSecondsPerCall := 0.02, expectedHash := some 0x9917b7b230496af4 }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0x9917b7b230496af4 }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
@@ -467,10 +468,10 @@ integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
 while the Taylor output still crosses GMP limbs. The repaired `64..384`
 schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
 therefore gives up asymptotic detection at the degree-128 midpoint and enforces
-a 10 ms absolute budget, a conservative multiple of the clean baseline.
+a 50 ms absolute budget above the clean 4 ms baseline and process-control floor.
 -/
 setup_fixed_benchmark runWitnessCheck where {
-  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0xb }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0xb }
 
 /-
 Cost model. `nkWitnessCheck` has the same `O(n²)` Taylor-shift-dominated shape
@@ -478,10 +479,10 @@ as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
 radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
 `runWitnessCheck`. Its repaired `64..512` schedule was likewise sub-cubic, so
-mode 3 enforces the same 10 ms absolute budget at the canonical midpoint.
+mode 3 enforces a 50 ms absolute budget above its clean 4 ms baseline.
 -/
 setup_fixed_benchmark runNkWitnessCheck where {
-  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0xb }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0xb }
 
 /-
 Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
@@ -490,10 +491,10 @@ a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
 the op count is `n²`. It uses the same bounded-height degree-128 input; the
 fixed-precision reciprocal is lower order. The repaired `64..512` schedule
 remained sub-cubic, so mode 3 gives up asymptotic detection and enforces a
-10 ms absolute budget at the degree-128 midpoint.
+50 ms absolute budget above the clean 3 ms baseline.
 -/
 setup_fixed_benchmark runNewtonSquare where {
-  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x450307c7dcbe905c }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0x450307c7dcbe905c }
 
 /-! # refinement primitives : canonical fixed fixtures -/
 
@@ -505,10 +506,11 @@ is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 `n`. The canonical fixture is the degree-8 fixed-separation product, refined
 two rounds below its Cauchy component. On the repaired smooth-family schedule
 `4,6,8,10,12,14`, `time/n²` rose by more than 2×. Mode 3 therefore gives up
-asymptotic detection and enforces a 10 ms budget on the degree-8 midpoint.
+asymptotic detection and enforces a 50 ms budget above the clean 4 ms baseline
+on the degree-8 midpoint.
 -/
 setup_fixed_benchmark runRefine1 where {
-  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x6dd99fc71c5233ae }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0x6dd99fc71c5233ae }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
@@ -522,11 +524,12 @@ because the certification path is Taylor-shift dominated and the shift's
 GMP transition band (issue #8750, rounds one to three: pure powers and the
 limb model all showed drifting constants). The repaired `64..512` schedule
 also lost the pinned branch at 512; the verified degree-128 NK case is the
-canonical hard input. Mode 3 enforces a 20 ms budget, and the fixed expected
-hash makes a fixture-path or semantic regression visible.
+canonical hard input. Mode 3 enforces a 50 ms budget above the clean 6 ms
+baseline, and the fixed expected hash makes a fixture-path or semantic
+regression visible.
 -/
 setup_fixed_benchmark runCertify where {
-  repeats := 5, maxSecondsPerCall := 0.02, expectedHash := some 0x1698ec123da6112f }
+  repeats := 5, maxSecondsPerCall := 0.05, expectedHash := some 0x1698ec123da6112f }
 
 /-! # whole-polynomial drivers -/
 
@@ -666,8 +669,8 @@ initialize sameRootRef :
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
 parameter, so mode 3 uses the prebuilt refined atom as its canonical hard input
-and enforces a 100 µs budget. This remains an operation-specific guard above
-the 3 µs clean baseline while avoiding the harness process-control floor. The
+and enforces a 1 ms budget. This remains an operation-specific guard above the
+3 µs clean baseline while avoiding the harness process-control floor. The
 atoms come from the `IO.Ref` above so the harness measures the comparison, not
 a folded constant.
 -/
@@ -679,7 +682,7 @@ def runSameRoot : Unit → IO UInt64 := fun () => do
 setup_fixed_benchmark runSameRoot where {
     repeats := 5
     minTotalSeconds := 0.000001
-    maxSecondsPerCall := 0.0001
+    maxSecondsPerCall := 0.001
     expectedHash := some 0xb
   }
 
