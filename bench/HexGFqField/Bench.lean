@@ -787,108 +787,156 @@ certificate-checked `#[2, 3, 4, 5, 6, 8]` schedule so the headline report can
 record raw and overhead-adjusted ratios for every Phase-4 input family without
 adding larger certificate elaboration to the normal bench module. -/
 
-def runOfPoly2 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 2)
+/-- Read fixed Hex inputs through runtime state so the batching harness cannot
+turn the pure target into a compile-time constant. -/
+@[noinline] private def runFixed (f : α → UInt64) (input : IO.Ref α) : IO UInt64 := do
+  let value ← input.get
+  input.set value
+  return f value
+
+private instance : Inhabited OfPolyInput := ⟨prepOfPolyInput 2⟩
+private instance : Inhabited BinaryInput := ⟨prepBinaryInput 2⟩
+private instance : Inhabited PowInput := ⟨prepPowInput 2⟩
+private instance : Inhabited ZPowInput := ⟨prepZPowInput 2⟩
+private instance : Inhabited UnaryInput := ⟨prepUnaryInput 2⟩
+
+private initialize fixedOfPoly2 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 2)
+private initialize fixedOfPoly3 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 3)
+private initialize fixedOfPoly4 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 4)
+private initialize fixedOfPoly5 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 5)
+private initialize fixedOfPoly6 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 6)
+private initialize fixedOfPoly8 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 8)
+
+private initialize fixedBinary2 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 2)
+private initialize fixedBinary3 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 3)
+private initialize fixedBinary4 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 4)
+private initialize fixedBinary5 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 5)
+private initialize fixedBinary6 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 6)
+private initialize fixedBinary8 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 8)
+
+private initialize fixedPow2 : IO.Ref PowInput ← IO.mkRef (prepPowInput 2)
+private initialize fixedPow3 : IO.Ref PowInput ← IO.mkRef (prepPowInput 3)
+private initialize fixedPow4 : IO.Ref PowInput ← IO.mkRef (prepPowInput 4)
+private initialize fixedPow5 : IO.Ref PowInput ← IO.mkRef (prepPowInput 5)
+private initialize fixedPow6 : IO.Ref PowInput ← IO.mkRef (prepPowInput 6)
+private initialize fixedPow8 : IO.Ref PowInput ← IO.mkRef (prepPowInput 8)
+
+private initialize fixedZPow2 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 2)
+private initialize fixedZPow3 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 3)
+private initialize fixedZPow4 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 4)
+private initialize fixedZPow5 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 5)
+private initialize fixedZPow6 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 6)
+private initialize fixedZPow8 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 8)
+
+private initialize fixedUnary2 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 2)
+private initialize fixedUnary3 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 3)
+private initialize fixedUnary4 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 4)
+private initialize fixedUnary5 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 5)
+private initialize fixedUnary6 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 6)
+private initialize fixedUnary8 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 8)
+
+def runOfPoly2 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly2
 def runFlintOfPoly2 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 2)
-def runOfPoly3 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 3)
+def runOfPoly3 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly3
 def runFlintOfPoly3 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 3)
-def runOfPoly4 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 4)
+def runOfPoly4 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly4
 def runFlintOfPoly4 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 4)
-def runOfPoly5 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 5)
+def runOfPoly5 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly5
 def runFlintOfPoly5 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 5)
-def runOfPoly6 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 6)
+def runOfPoly6 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly6
 def runFlintOfPoly6 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 6)
-def runOfPoly8 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 8)
+def runOfPoly8 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly8
 def runFlintOfPoly8 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 8)
 
-def runAdd2 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 2)
+def runAdd2 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary2
 def runFlintAdd2 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 2)
-def runAdd3 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 3)
+def runAdd3 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary3
 def runFlintAdd3 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 3)
-def runAdd4 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 4)
+def runAdd4 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary4
 def runFlintAdd4 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 4)
-def runAdd5 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 5)
+def runAdd5 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary5
 def runFlintAdd5 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 5)
-def runAdd6 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 6)
+def runAdd6 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary6
 def runFlintAdd6 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 6)
-def runAdd8 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 8)
+def runAdd8 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary8
 def runFlintAdd8 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 8)
 
-def runMul2 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 2)
+def runMul2 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary2
 def runFlintMul2 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 2)
-def runMul3 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 3)
+def runMul3 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary3
 def runFlintMul3 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 3)
-def runMul4 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 4)
+def runMul4 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary4
 def runFlintMul4 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 4)
-def runMul5 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 5)
+def runMul5 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary5
 def runFlintMul5 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 5)
-def runMul6 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 6)
+def runMul6 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary6
 def runFlintMul6 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 6)
-def runMul8 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 8)
+def runMul8 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary8
 def runFlintMul8 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 8)
 
-def runNegSub2 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 2)
+def runNegSub2 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary2
 def runFlintNegSub2 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 2)
-def runNegSub3 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 3)
+def runNegSub3 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary3
 def runFlintNegSub3 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 3)
-def runNegSub4 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 4)
+def runNegSub4 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary4
 def runFlintNegSub4 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 4)
-def runNegSub5 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 5)
+def runNegSub5 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary5
 def runFlintNegSub5 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 5)
-def runNegSub6 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 6)
+def runNegSub6 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary6
 def runFlintNegSub6 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 6)
-def runNegSub8 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 8)
+def runNegSub8 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary8
 def runFlintNegSub8 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 8)
 
-def runPow2 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 2)
+def runPow2 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow2
 def runFlintPow2 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 2)
-def runPow3 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 3)
+def runPow3 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow3
 def runFlintPow3 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 3)
-def runPow4 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 4)
+def runPow4 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow4
 def runFlintPow4 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 4)
-def runPow5 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 5)
+def runPow5 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow5
 def runFlintPow5 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 5)
-def runPow6 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 6)
+def runPow6 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow6
 def runFlintPow6 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 6)
-def runPow8 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 8)
+def runPow8 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow8
 def runFlintPow8 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 8)
 
-def runInvDiv2 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 2)
+def runInvDiv2 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary2
 def runFlintInvDiv2 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 2)
-def runInvDiv3 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 3)
+def runInvDiv3 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary3
 def runFlintInvDiv3 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 3)
-def runInvDiv4 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 4)
+def runInvDiv4 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary4
 def runFlintInvDiv4 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 4)
-def runInvDiv5 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 5)
+def runInvDiv5 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary5
 def runFlintInvDiv5 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 5)
-def runInvDiv6 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 6)
+def runInvDiv6 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary6
 def runFlintInvDiv6 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 6)
-def runInvDiv8 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 8)
+def runInvDiv8 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary8
 def runFlintInvDiv8 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 8)
 
-def runZPow2 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 2)
+def runZPow2 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow2
 def runFlintZPow2 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 2)
-def runZPow3 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 3)
+def runZPow3 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow3
 def runFlintZPow3 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 3)
-def runZPow4 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 4)
+def runZPow4 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow4
 def runFlintZPow4 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 4)
-def runZPow5 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 5)
+def runZPow5 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow5
 def runFlintZPow5 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 5)
-def runZPow6 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 6)
+def runZPow6 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow6
 def runFlintZPow6 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 6)
-def runZPow8 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 8)
+def runZPow8 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow8
 def runFlintZPow8 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 8)
 
-def runFrob2 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 2)
+def runFrob2 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary2
 def runFlintFrob2 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 2)
-def runFrob3 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 3)
+def runFrob3 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary3
 def runFlintFrob3 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 3)
-def runFrob4 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 4)
+def runFrob4 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary4
 def runFlintFrob4 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 4)
-def runFrob5 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 5)
+def runFrob5 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary5
 def runFlintFrob5 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 5)
-def runFrob6 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 6)
+def runFrob6 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary6
 def runFlintFrob6 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 6)
-def runFrob8 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 8)
+def runFrob8 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary8
 def runFlintFrob8 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 8)
 
 /-
