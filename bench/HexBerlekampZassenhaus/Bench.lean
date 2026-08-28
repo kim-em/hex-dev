@@ -1090,7 +1090,7 @@ verdict. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
-    maxSecondsPerCall := 0.005
+    maxSecondsPerCall := 4.0
     expectedHash := some 0xdbadaf53f188eac1
   }
 
@@ -1098,7 +1098,7 @@ setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
 setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 0.1
+    maxSecondsPerCall := 0.005
     expectedHash := some 0xf31efeaecbf8fa27
   }
 
@@ -1109,7 +1109,7 @@ profile. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
-    maxSecondsPerCall := 0.02
+    maxSecondsPerCall := 4.0
     expectedHash := some 0x6125716b68ef63ab
   }
 
@@ -1118,7 +1118,7 @@ beyond the former short ladder. -/
 setup_fixed_benchmark runFactorSlowDegreeHeightChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.1
     expectedHash := some 0x0ed3a73af254827d
   }
 
@@ -1126,7 +1126,7 @@ setup_fixed_benchmark runFactorSlowDegreeHeightChecksum where {
 setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.02
     expectedHash := some 0x21b9063dace28489
   }
 
