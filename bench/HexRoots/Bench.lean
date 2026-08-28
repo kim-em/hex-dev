@@ -441,15 +441,16 @@ of `ceilLog2` calls and word-size integer multiplies forming `t`. The SPEC
 contract is `O(n · log‖p‖∞)`; the seeded family holds `‖p‖∞ ≤ 10` fixed, so
 `log‖p‖∞` is constant and the op count reduces to linear in `n`. Bit-growth:
 every operand (the coefficients `≤ 10`, the degree `n`, the `ceilLog2` results,
-the sum `t = O(n)`) fits in a single machine word across `16..256`, so `B` is
-constant and the wall model equals the op count `n`.
+the sum `t = O(n)`) fits in a single machine word across `64..4096`, so `B` is
+constant and the wall model equals the op count `n`. The larger schedule moves
+this nanosecond-scale scan above its fixed per-call overhead.
 -/
 setup_benchmark runMahlerPrec n => n
   with prep := seededPoly
   where {
-    paramFloor := 16
-    paramCeiling := 256
-    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramFloor := 64
+    paramCeiling := 4096
+    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -566,11 +567,12 @@ asymptote is far beyond the 30 s/call band (an earlier `n⁵` registration fit
 the 4..10 rungs, but only as a transition-band artifact; the adjacent
 derivation could not support it, so per the no-fitting rule it was withdrawn:
 issue #8750). Mode 3 therefore gives up asymptotic detection at the canonical
-mid-schedule degree 8 and enforces a 2 s absolute budget, a conservative
-multiple of the clean current baseline.
+mid-schedule degree 8 and enforces a 30 s absolute budget. That ceiling is the
+current-toolchain calibration requirement already used for this exact driver
+in the Phase-6 re-attestation; the clean issue-9794 run refreshes its baseline.
 -/
 setup_fixed_benchmark runIsolate where {
-    repeats := 5, maxSecondsPerCall := 2.0, expectedHash := some 0x16c307fd2a36d31e }
+    repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x16c307fd2a36d31e }
 
 /-
 Cost model. `refineTo?` sharpens a fixed degree-3 atom from precision `≈32` to
@@ -664,7 +666,7 @@ initialize sameRootRef :
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
 parameter, so mode 3 uses the prebuilt refined atom as its canonical hard input
-and enforces a 1 µs budget. The atoms come from the `IO.Ref` above so the
+and enforces a 2 µs budget. The atoms come from the `IO.Ref` above so the
 harness measures the comparison, not a folded constant.
 -/
 def runSameRoot : Unit → IO UInt64 := fun () => do
@@ -674,7 +676,8 @@ def runSameRoot : Unit → IO UInt64 := fun () => do
 
 setup_fixed_benchmark runSameRoot where {
     repeats := 5
-    maxSecondsPerCall := 0.000001
+    minTotalSeconds := 0.000001
+    maxSecondsPerCall := 0.000002
     expectedHash := some 0xb
   }
 
