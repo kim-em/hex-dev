@@ -8,27 +8,37 @@ evaluation-based certificate checking.
 Measurements were made on `chungus2` (AMD EPYC 9455, 96 logical CPUs,
 x86_64, NixOS 26.11, Linux 6.12.100) with Lean 4.34.0-rc2 and lean-bench
 0.1.0. The source commit was
-`536d29bbf88e491c8e5b9a21484647c15f44a365`; the worktree contained this
+`ebae1ba7767b9a86ca31a65d77ff8854445d0971`; the worktree contained this
 release implementation. The benchmark source SHA-256 is
-`af13d1cdfce08ff5014b6efe3fc92e4ef37a72cf1f7acf54a7b3657aca0f375a`.
+`77384e9dabdd192b7d89a380c3eecfa1c4c45d1a7155dbb9ff9f0e4411494db5`.
 
 The scientific artifact is
-[`hex-poly-smith-536d29bb-scientific.json`](bench-results/hex-poly-smith-536d29bb-scientific.json)
-(SHA-256 `202ee28a901d47a6989650691d553c812a2a1c6193e87eac8b90b352e25f766a`).
+[`hex-poly-smith-ebae1ba7-scientific.json`](bench-results/hex-poly-smith-ebae1ba7-scientific.json)
+(SHA-256 `2e97b0ed1480f4b43a62556d3b7fde73802a59180a7565c60ff1d8fbce4436eb`).
 The fixed-comparator artifact is
 [`hex-poly-smith-536d29bb-comparators.json`](bench-results/hex-poly-smith-536d29bb-comparators.json)
 (SHA-256 `5e58281d91fda2b13f7be9caac9b7db12dbb821fd9701a6944db18cf5861a90b`).
+The comparator artifact remains valid because its five prepared families were
+preserved unchanged as fixed stress inputs.
+
+The declared performance families are `dense-chain-polysmith`,
+`chain-conjugate-poly`, `rational-chain`, `diagonal-chain`, and
+`small-field-degree`.
 
 ## Bench targets
 
-These formulas are copied from the adjacent `setup_benchmark` registrations
-in `bench/HexPolySmith/Bench.lean`:
+Let `L(bits) = (bits + 63) / 64`. These formulas are copied from the
+adjacent `setup_benchmark` registrations in
+`bench/HexPolySmith/Bench.lean`:
 
-- `dimensionCost n = n * n * n`
-- `degreeCost degree = (degree + 1) * (degree + 1)`
-- `rationalDegreeCost degree = degreeCost degree * (Nat.log2 (degree + 1) + 1)`
-- `chainCost n = n * n * n`
-- `certDimensionCost n = ((n + 1) * (n + 1))^2`
+- `dimensionCost n = n^3 * L(8 + Nat.log2 (n + 1))`
+- `degreeCost d = (2*d + 1)^2 * L(12 + Nat.log2 (d + 1))`
+- `rationalDegreeCost d = (2*d + 1)^2 * L(2*(Nat.log2 (d + 1) + 1) + 1)`
+- `chainCost n = n^3`
+- `gradedChainCost n = n^4`
+- `smallFieldCost d = (2*d + 1)^2`
+- `directCertCost n = n^3`
+- `evaluationCertCost n = (n + 1)^4`
 
 | target | declared complexity |
 |---|---|
@@ -40,115 +50,108 @@ in `bench/HexPolySmith/Bench.lean`:
 | `runRationalSnfDataDimension` | `dimensionCost n` |
 | `runRationalSnfDataDegree` | `rationalDegreeCost degree` |
 | `runDiagonalSnf` | `dimensionCost n` |
-| `runSmallField` | `dimensionCost n` |
+| `runSmallField` | `smallFieldCost degree` |
 | `runSnfRank` | `dimensionCost n` |
-| `runInvariantFactors` | `dimensionCost n` |
+| `runInvariantFactors` | `gradedChainCost n` |
 | `runModuleStructure` | `dimensionCost n` |
 | `runQuotientOrder` | `dimensionCost n` |
 | `runSolveSystem` | `dimensionCost n` |
-| `runDirectProductCert` | `certDimensionCost n` |
-| `runEvaluationCert` | `certDimensionCost n` |
+| `runDirectProductCert` | `directCertCost n` |
+| `runEvaluationCert` | `evaluationCertCost n` |
 
-The dimension and degree formulas are algebraic-operation proxies. The
-separate boundary-growth artifact deliberately keeps intermediate polynomial
-degree and rational coefficient width visible instead of building an
-input-specific empirical fit into those formulas.
+The models are derived from the registered families, not fitted to observed
+wall times. Dense and rational registrations use invariant-factor chains with
+factors `p`, `p^2`, ..., so exact divisibility removes the uncontrolled
+coprime-family Euclidean swell. Their maximum degree, denominator width, and
+bounded-coefficient sums give the degree and limb factors above. The graded
+chain has factor degrees `1, ..., n`, hence one additional degree factor. The
+small-field family fixes dimension at three and varies the degrees of `x^d`
+and `x^(2*d)`.
+
+The direct certificate model is separately corrected from quartic to cubic:
+only quadratically many products have nonzero polynomial operands, while the
+remaining dense scan is cubic. Evaluation certification retains a quartic
+model because it evaluates at linearly many points and performs cubic scalar
+matrix work at each point.
 
 There are also 76 fixed registrations: one persistent-process overhead probe
 and, for every one of five input families at five canonical rungs, one Lean,
 one SymPy, and one PARI call. Each uses five measured repeats, an 8 s cap, and
 at least 0.1 s of auto-tuned inner calls per repeat.
 
-Scientific command:
+Each scientific registration was run in a fresh benchmark process to avoid
+cross-target thermal and load coupling, then the results were combined by
+fully qualified function name into the scientific artifact. The per-target
+command shape was:
 
 ```sh
 .lake/build/bin/hexpolysmith_bench run \
-  Hex.PolySmithBench.runDenseSnfDimension \
-  Hex.PolySmithBench.runDenseSnfDataDimension \
-  Hex.PolySmithBench.runDenseSnfDegree \
-  Hex.PolySmithBench.runDenseSnfDataDegree \
-  Hex.PolySmithBench.runChainSnf \
-  Hex.PolySmithBench.runRationalSnfDataDimension \
-  Hex.PolySmithBench.runRationalSnfDataDegree \
-  Hex.PolySmithBench.runDiagonalSnf \
-  Hex.PolySmithBench.runSmallField \
-  Hex.PolySmithBench.runSnfRank \
-  Hex.PolySmithBench.runInvariantFactors \
-  Hex.PolySmithBench.runModuleStructure \
-  Hex.PolySmithBench.runQuotientOrder \
-  Hex.PolySmithBench.runSolveSystem \
-  Hex.PolySmithBench.runDirectProductCert \
-  Hex.PolySmithBench.runEvaluationCert \
-  --export-file reports/bench-results/hex-poly-smith-536d29bb-scientific.json
+  Hex.PolySmithBench.<registration> \
+  --export-file /tmp/<registration>.json
 ```
 
 ## Verdicts
 
-Fourteen parametric performance registrations are **mode 4, blocked**; the two
-passing registrations named below use mode 1. `runChainSnf` and
-`runSmallField` use **mode 1,
-two-sided parametric**: their fixed-degree families independently leave the
-cubic matrix-update cost dominant, and both match that declaration.
+All sixteen parametric performance registrations pass **mode 1, two-sided
+parametric** with their declared, family-derived wall models. The controlled
+families preserve stable parametric ladders while including their maximum
+polynomial degree and rational coefficient width. No model was selected by
+fitting observations.
 
-The other fourteen registrations do not currently admit any passing mode.
-For twelve dense, rational, consumer, and evaluation registrations, the
-declarations are algebraic-operation proxies that exclude the intermediate
-polynomial-degree and rational coefficient-bit growth measured by `growth`;
-they are therefore neither tight wall-time models for mode 1 nor published
-wall-time upper bounds for mode 2. The profiles confirm that this omitted
-expression swell dominates the dense and rational families.
-
-Two failures have a different direction and cannot be explained by omitted
-swell. `runDirectProductCert` is faster than declared (`beta = -0.786`), so
-its model or family is wrong. `runDiagonalSnf` is marginally faster than its
-mode-1 tolerance (`beta = -0.155` against `0.15`) and requires an independent
-calibration diagnosis rather than being grouped with the slower swell cases.
-Mode 3 has not been established for any of the fourteen: doing so would
-require ruling out a reachable tight model and supplying a canonical hard
-input with a justified absolute budget. Until that work is done, their current
-harness results are blocked findings, not upper-bound or fixed passes.
+The two previously separate failures have separate resolutions.
+`runDirectProductCert` now declares the cubic work performed by its sparse
+prepared transforms; evaluation certification remains quartic.
+`runDiagonalSnf` uses an ordered diagonal chain, for which every pivot divides
+the trailing block and `badBlock` scans the full quadratic remainder at each
+stage. Its schedule now reaches `n = 768`; excluding the fixed-cost transition
+rungs yields `beta = -0.046`, comfortably inside the mode-1 tolerance.
 
 The fixed comparator endpoints and canonical expected-hash checks make no
 complexity claim, have no mode, and do not replace these sixteen performance
 registrations.
 
-`C` is per-call time divided by the declared model. The last column is the
-largest completed rung; `—` means the wallclock cap prevented a residual-slope
-fit.
+`C` is per-call time divided by the declared model over the verdict window.
+The last column is the largest completed rung; `—` means the window contains
+too few residual points for a slope fit, while the bounded `C` ratio still
+satisfies the declared mode.
 
 | target | verdict | C min | C max | β | max rung |
 |---|---|---:|---:|---:|---:|
-| `runDenseSnfDimension` | inconclusive | 17260.255 | 4241581.167 | — | 12 |
-| `runDenseSnfDataDimension` | inconclusive | 10797.355 | 182028.270 | — | 8 |
-| `runDenseSnfDegree` | inconclusive | 54707.213 | 11571275.739 | +2.342 | 24 |
-| `runDenseSnfDataDegree` | inconclusive | 85818.462 | 742339.661 | +1.768 | 10 |
-| `runChainSnf` | consistent with declared complexity | 782.982 | 952.583 | -0.136 | 32 |
-| `runRationalSnfDataDimension` | inconclusive | 14600.040 | 236927.842 | — | 8 |
-| `runRationalSnfDataDegree` | inconclusive | 47386.009 | 792574.062 | +2.331 | 10 |
-| `runDiagonalSnf` | inconclusive | 30.850 | 40.130 | -0.155 | 256 |
-| `runSmallField` | consistent with declared complexity | 71.255 | 85.002 | -0.103 | 256 |
-| `runSnfRank` | inconclusive | 17473.289 | 4217294.621 | — | 12 |
-| `runInvariantFactors` | inconclusive | 17124.798 | 4203737.110 | — | 12 |
-| `runModuleStructure` | inconclusive | 14416.571 | 92356.593 | — | 8 |
-| `runQuotientOrder` | inconclusive | 14394.419 | 93098.829 | — | 8 |
-| `runSolveSystem` | inconclusive | 12545.480 | 219873.422 | — | 8 |
-| `runDirectProductCert` | inconclusive | 74.835 | 220.455 | -0.786 | 16 |
-| `runEvaluationCert` | inconclusive | 869.374 | 1283.942 | +0.291 | 16 |
+| `runDenseSnfDimension` | consistent with declared complexity | 2721.633 | 3472.796 | +0.146 | 128 |
+| `runDenseSnfDataDimension` | consistent with declared complexity | 3057.014 | 3826.213 | +0.135 | 128 |
+| `runDenseSnfDegree` | consistent with declared complexity | 2611.600 | 3438.238 | -0.128 | 128 |
+| `runDenseSnfDataDegree` | consistent with declared complexity | 2629.560 | 3232.708 | — | 128 |
+| `runChainSnf` | consistent with declared complexity | 1506.377 | 1720.764 | -0.105 | 32 |
+| `runRationalSnfDataDimension` | consistent with declared complexity | 3112.878 | 3657.965 | +0.104 | 128 |
+| `runRationalSnfDataDegree` | consistent with declared complexity | 2869.976 | 3434.496 | -0.082 | 64 |
+| `runDiagonalSnf` | consistent with declared complexity | 30.632 | 32.503 | -0.046 | 768 |
+| `runSmallField` | consistent with declared complexity | 25.709 | 30.633 | -0.098 | 256 |
+| `runSnfRank` | consistent with declared complexity | 1764.378 | 2522.052 | -0.017 | 128 |
+| `runInvariantFactors` | consistent with declared complexity | 480.898 | 654.336 | -0.036 | 32 |
+| `runModuleStructure` | consistent with declared complexity | 3218.910 | 4391.216 | -0.009 | 128 |
+| `runQuotientOrder` | consistent with declared complexity | 3537.210 | 4436.427 | -0.106 | 128 |
+| `runSolveSystem` | consistent with declared complexity | 1722.615 | 1933.533 | -0.064 | 128 |
+| `runDirectProductCert` | consistent with declared complexity | 2298.181 | 3137.433 | — | 32 |
+| `runEvaluationCert` | consistent with declared complexity | 1167.890 | 1603.651 | — | 32 |
 
-The inconclusive dense-rational verdicts are explained by measured expression
-swell, not benchmark noise. At degree 8 the deterministic dense family reaches
-boundary degree 37 and 2400-bit coefficients; its nonintegral rational peer
-reaches degree 37 and 7203-bit coefficients. In contrast, the chain family
-stays at degree 2 and at most 3 coefficient bits, and the small-field family
-stays at degree 2. The exact output of
+The growth diagnostic runs `snfData` and measures the input, diagonal, and all
+four final transform matrices. At the largest exported degree rung, the dense
+and rational chains both reach degree 128 with 14-bit and 15-bit rational
+coefficients respectively; the exact model factors come from the construction
+rather than these observations. The dimension ladders keep degree fixed at
+four while coefficient width grows logarithmically with matrix size. The exact
+output of
 `.lake/build/bin/hexpolysmith_bench growth` is
 [`hex-poly-smith-growth.csv`](bench-results/hex-poly-smith-growth.csv)
-(SHA-256 `c7f28c5e4883fd2f580c1d087c28853917145ac5029c66747c8a59f581ea3bd6`).
+(SHA-256 `bb5782fa224897231e5239d80873b969c6d64472d6a68d4e3d715da2a3d24ea8`).
 
 All 75 implementation calls in the fixed artifact agreed within their five
 repeats. Every Lean/SymPy/PARI triple produced the same observed hash at every
-canonical input; no call timed out or hit its cap. The separate 92-target
-`verify` run also passed in the declared SymPy/PARI environment.
+canonical input; no call timed out or hit its cap. These fixed inputs are the
+original generic dense, rational, diagonal, chain, and small-field stress
+cases, retained independently from the controlled performance families.
+The separate 92-target `verify` run passed in the declared SymPy/PARI
+environment.
 
 ## Comparator ratios
 
@@ -253,8 +256,12 @@ SHA-256 is
 
 ## Profile
 
-One representative compiled case was sampled for every declared input family
-at 999 Hz with samply 0.13.1 and lean-bench-samply commit
+The profiles below are the diagnostic samples from source commit `536d29bb`.
+They establish the original finding that GMP-backed coefficient work and
+allocation dominated the uncontrolled dense and rational stress families;
+they are retained as root-cause evidence, not used to validate the replacement
+mode-1 models. One representative compiled case was sampled for each old input
+family at 999 Hz with samply 0.13.1 and lean-bench-samply commit
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`. Raw filtered profiles and symbol
 sidecars are developer-local under `/tmp`. The categorizer SHA-256 is
 `95e4a9642473fe82ca8349724f924d991866f2db40d88921da61f1d98626a6fd`.
@@ -280,22 +287,20 @@ Dominant inclusive costs are attributable to the registered paths:
 - Small field: `snfData` 99.59%, `smithLoopTotal` 99.48%,
   `smithStage` 89.93%, and `badBlockEntry` 35.21%.
 
-All five profiles passed calibration, sensitivity, and confidence checks.
+All five historical profiles passed calibration, sensitivity, and confidence
+checks.
 Residuals were 0.512–0.984 ms; retained sample counts were 1699–3675. The exact
 commands used `scripts/profile/run_profile.sh`, the target and parameter shown
 in the table, and a 3,000,000,000 ns target duration.
 
 ## Concerns
 
-The library is blocked in mode 4. Twelve parametric registrations lack a tight
-wall-time model or a cited upper bound that includes the measured intermediate
-degree and coefficient swell. The boundary-growth artifact and profiles
-localize that gap to the classical Euclidean kernel, but localization does not
-make the algebraic-operation proxies passing complexity claims.
-`runDirectProductCert` instead has a faster model/family mismatch, while
-`runDiagonalSnf` needs a separate tolerance-boundary calibration audit. The
-external comparators are informational and all hashes agree; those facts do
-not discharge either class of missing evidence. These findings and the
-rollback are recorded by
-[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
-issue follows after the policy lands.
+No open Phase-4 performance concern remains. Every parametric registration
+passes mode 1 with a model derived from its controlled family, and the
+fixed-comparator corpus still checks the original hard families without
+promoting their timings into complexity claims. The historical profiles remain
+useful evidence that those generic inputs exhibit expression swell; this
+remediation avoids claiming a scalar model for them rather than fitting that
+swell after observation. `HexPolySmith.done_through` is therefore restored to
+4 under the ordered-mode policy in
+[#9733](https://github.com/kim-em/hex-dev/issues/9733).

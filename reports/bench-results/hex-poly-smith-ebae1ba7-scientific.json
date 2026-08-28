@@ -1,0 +1,6849 @@
+{
+  "results": [
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 2683.701935,
+          "median_per_call_nanos": 2683.701935,
+          "max_per_call_nanos": 2683.701935
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 93910.902344,
+          "median_per_call_nanos": 93910.902344,
+          "max_per_call_nanos": 93910.902344
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 175323.972656,
+          "median_per_call_nanos": 175323.972656,
+          "max_per_call_nanos": 175323.972656
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 302325.890625,
+          "median_per_call_nanos": 302325.890625,
+          "max_per_call_nanos": 302325.890625
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 836376.078125,
+          "median_per_call_nanos": 836376.078125,
+          "max_per_call_nanos": 836376.078125
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1861861.6875,
+          "median_per_call_nanos": 1861861.6875,
+          "max_per_call_nanos": 1861861.6875
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 6503190,
+          "median_per_call_nanos": 6503190,
+          "max_per_call_nanos": 6503190
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 12717725.75,
+          "median_per_call_nanos": 12717725.75,
+          "max_per_call_nanos": 12717725.75
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 37623861,
+          "median_per_call_nanos": 37623861,
+          "max_per_call_nanos": 37623861
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 93558799,
+          "median_per_call_nanos": 93558799,
+          "max_per_call_nanos": 93558799
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 314799597,
+          "median_per_call_nanos": 314799597,
+          "max_per_call_nanos": 314799597
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 756156615,
+          "median_per_call_nanos": 756156615,
+          "max_per_call_nanos": 756156615
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 3072507265,
+          "median_per_call_nanos": 3072507265,
+          "max_per_call_nanos": 3072507265
+        }
+      ],
+      "spawn_floor_nanos": 62551332,
+      "slope": 0.145634,
+      "ratios": [
+        [
+          2,
+          11738.862793
+        ],
+        [
+          3,
+          6493.480469
+        ],
+        [
+          4,
+          4723.842041
+        ],
+        [
+          6,
+          3872.111473
+        ],
+        [
+          8,
+          3636.448608
+        ],
+        [
+          12,
+          3763.420139
+        ],
+        [
+          16,
+          3104.913513
+        ],
+        [
+          24,
+          2721.633464
+        ],
+        [
+          32,
+          2855.187958
+        ],
+        [
+          48,
+          2846.495199
+        ],
+        [
+          64,
+          2884.508572
+        ],
+        [
+          96,
+          3472.795574
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 87939545,
+          "status": "ok",
+          "result_hash": "0x5d878112cf4b6c0f",
+          "per_call_nanos": 2683.701935,
+          "peak_rss_kb": 61964,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 96164764,
+          "status": "ok",
+          "result_hash": "0x62ed890c2ca9227c",
+          "per_call_nanos": 93910.902344,
+          "peak_rss_kb": 61984,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 44882937,
+          "status": "ok",
+          "result_hash": "0x2427bacc172a766b",
+          "per_call_nanos": 175323.972656,
+          "peak_rss_kb": 62536,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 38697714,
+          "status": "ok",
+          "result_hash": "0xad12e7eadf949608",
+          "per_call_nanos": 302325.890625,
+          "peak_rss_kb": 62360,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 53528069,
+          "status": "ok",
+          "result_hash": "0x9ba25da88215b134",
+          "per_call_nanos": 836376.078125,
+          "peak_rss_kb": 64416,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 59579574,
+          "status": "ok",
+          "result_hash": "0x9c3091cad5f6800",
+          "per_call_nanos": 1861861.6875,
+          "peak_rss_kb": 63828,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 52025520,
+          "status": "ok",
+          "result_hash": "0xa2b0994bd0067878",
+          "per_call_nanos": 6503190,
+          "peak_rss_kb": 62612,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 101741806,
+          "status": "ok",
+          "result_hash": "0xffefb074ab3cb370",
+          "per_call_nanos": 12717725.75,
+          "peak_rss_kb": 62456,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 75247722,
+          "status": "ok",
+          "result_hash": "0xf548fab2c4ff0fe0",
+          "per_call_nanos": 37623861,
+          "peak_rss_kb": 62960,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 93558799,
+          "status": "ok",
+          "result_hash": "0xebee6718cf185850",
+          "per_call_nanos": 93558799,
+          "peak_rss_kb": 62624,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 314799597,
+          "status": "ok",
+          "result_hash": "0x44496c60c633c930",
+          "per_call_nanos": 314799597,
+          "peak_rss_kb": 63164,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 756156615,
+          "status": "ok",
+          "result_hash": "0xde55518e043b2210",
+          "per_call_nanos": 756156615,
+          "peak_rss_kb": 64172,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 3072507265,
+          "status": "ok",
+          "result_hash": "0x358658894816b2d0",
+          "per_call_nanos": 3072507265,
+          "peak_rss_kb": 63672,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 0,
+          "status": "killed_at_cap",
+          "result_hash": null,
+          "per_call_nanos": 0,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 0,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDenseSnfDimension",
+      "env": {
+        "timestamp_unix_ms": 1787880197136,
+        "timestamp_iso": "2026-08-28T01:23:17Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 100000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 2721.633464,
+      "c_max": 3472.795574,
+      "budget_truncated": false,
+      "advisories": [
+        "truncated_at_cap"
+      ]
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 4325.437378,
+          "median_per_call_nanos": 4325.437378,
+          "max_per_call_nanos": 4325.437378
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 108457.320312,
+          "median_per_call_nanos": 108457.320312,
+          "max_per_call_nanos": 108457.320312
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 236517.542969,
+          "median_per_call_nanos": 236517.542969,
+          "max_per_call_nanos": 236517.542969
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 378480.9375,
+          "median_per_call_nanos": 378480.9375,
+          "max_per_call_nanos": 378480.9375
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 931925.140625,
+          "median_per_call_nanos": 931925.140625,
+          "max_per_call_nanos": 931925.140625
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1409283.90625,
+          "median_per_call_nanos": 1409283.90625,
+          "max_per_call_nanos": 1409283.90625
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 6042854.1875,
+          "median_per_call_nanos": 6042854.1875,
+          "max_per_call_nanos": 6042854.1875
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 14928673.5,
+          "median_per_call_nanos": 14928673.5,
+          "max_per_call_nanos": 14928673.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 42260167,
+          "median_per_call_nanos": 42260167,
+          "max_per_call_nanos": 42260167
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 107626894,
+          "median_per_call_nanos": 107626894,
+          "max_per_call_nanos": 107626894
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 349349539,
+          "median_per_call_nanos": 349349539,
+          "max_per_call_nanos": 349349539
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 879885190,
+          "median_per_call_nanos": 879885190,
+          "max_per_call_nanos": 879885190
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 3385188826,
+          "median_per_call_nanos": 3385188826,
+          "max_per_call_nanos": 3385188826
+        }
+      ],
+      "spawn_floor_nanos": 75274031,
+      "slope": 0.135487,
+      "ratios": [
+        [
+          2,
+          13557.165039
+        ],
+        [
+          3,
+          8759.908999
+        ],
+        [
+          4,
+          5913.764648
+        ],
+        [
+          6,
+          4314.468244
+        ],
+        [
+          8,
+          2752.507629
+        ],
+        [
+          12,
+          3497.022099
+        ],
+        [
+          16,
+          3644.695679
+        ],
+        [
+          24,
+          3057.014395
+        ],
+        [
+          32,
+          3284.512146
+        ],
+        [
+          48,
+          3158.904252
+        ],
+        [
+          64,
+          3356.495628
+        ],
+        [
+          96,
+          3826.213499
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 70867966,
+          "status": "ok",
+          "result_hash": "0x6cdec7fc204e82d7",
+          "per_call_nanos": 4325.437378,
+          "peak_rss_kb": 62432,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 55530148,
+          "status": "ok",
+          "result_hash": "0xa0567815cbf29a17",
+          "per_call_nanos": 108457.320312,
+          "peak_rss_kb": 61976,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 60548491,
+          "status": "ok",
+          "result_hash": "0x9239ec06666a2bbe",
+          "per_call_nanos": 236517.542969,
+          "peak_rss_kb": 62092,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 48445560,
+          "status": "ok",
+          "result_hash": "0xbf02cce71ccd342e",
+          "per_call_nanos": 378480.9375,
+          "peak_rss_kb": 62088,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 59643209,
+          "status": "ok",
+          "result_hash": "0x75c78362189178a1",
+          "per_call_nanos": 931925.140625,
+          "peak_rss_kb": 62416,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 45097085,
+          "status": "ok",
+          "result_hash": "0x2eb29185cc78abd8",
+          "per_call_nanos": 1409283.90625,
+          "peak_rss_kb": 62044,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 96685667,
+          "status": "ok",
+          "result_hash": "0xaa9377a8dba1bfbb",
+          "per_call_nanos": 6042854.1875,
+          "peak_rss_kb": 62384,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 59714694,
+          "status": "ok",
+          "result_hash": "0x5c553b38440ad9f4",
+          "per_call_nanos": 14928673.5,
+          "peak_rss_kb": 62144,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 84520334,
+          "status": "ok",
+          "result_hash": "0x34cfc20eda632880",
+          "per_call_nanos": 42260167,
+          "peak_rss_kb": 62244,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 107626894,
+          "status": "ok",
+          "result_hash": "0x4a3f1f0fc957702d",
+          "per_call_nanos": 107626894,
+          "peak_rss_kb": 62608,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 349349539,
+          "status": "ok",
+          "result_hash": "0x76f92b4cf46546d4",
+          "per_call_nanos": 349349539,
+          "peak_rss_kb": 62940,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 879885190,
+          "status": "ok",
+          "result_hash": "0xae884c3b391fea6c",
+          "per_call_nanos": 879885190,
+          "peak_rss_kb": 63900,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 3385188826,
+          "status": "ok",
+          "result_hash": "0x2373ff2e70375856",
+          "per_call_nanos": 3385188826,
+          "peak_rss_kb": 66732,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 0,
+          "status": "killed_at_cap",
+          "result_hash": null,
+          "per_call_nanos": 0,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 0,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDenseSnfDataDimension",
+      "env": {
+        "timestamp_unix_ms": 1787880213648,
+        "timestamp_iso": "2026-08-28T01:23:33Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 100000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 3057.014395,
+      "c_max": 3826.213499,
+      "budget_truncated": false,
+      "advisories": [
+        "truncated_at_cap"
+      ]
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 95452.320312,
+          "median_per_call_nanos": 95452.320312,
+          "max_per_call_nanos": 95452.320312
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 183018.392578,
+          "median_per_call_nanos": 183018.392578,
+          "max_per_call_nanos": 183018.392578
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 279971.796875,
+          "median_per_call_nanos": 279971.796875,
+          "max_per_call_nanos": 279971.796875
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 405558.523438,
+          "median_per_call_nanos": 405558.523438,
+          "max_per_call_nanos": 405558.523438
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 754419.992188,
+          "median_per_call_nanos": 754419.992188,
+          "max_per_call_nanos": 754419.992188
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1169372.453125,
+          "median_per_call_nanos": 1169372.453125,
+          "max_per_call_nanos": 1169372.453125
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 1888303.71875,
+          "median_per_call_nanos": 1888303.71875,
+          "max_per_call_nanos": 1888303.71875
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 3724345.5625,
+          "median_per_call_nanos": 3724345.5625,
+          "max_per_call_nanos": 3724345.5625
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 8255209.75,
+          "median_per_call_nanos": 8255209.75,
+          "max_per_call_nanos": 8255209.75
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 14244301,
+          "median_per_call_nanos": 14244301,
+          "max_per_call_nanos": 14244301
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 31510493.5,
+          "median_per_call_nanos": 31510493.5,
+          "max_per_call_nanos": 31510493.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 50654296,
+          "median_per_call_nanos": 50654296,
+          "max_per_call_nanos": 50654296
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 121389756,
+          "median_per_call_nanos": 121389756,
+          "max_per_call_nanos": 121389756
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 172493560,
+          "median_per_call_nanos": 172493560,
+          "max_per_call_nanos": 172493560
+        }
+      ],
+      "spawn_floor_nanos": 99896930,
+      "slope": -0.12833,
+      "ratios": [
+        [
+          2,
+          7320.735703
+        ],
+        [
+          3,
+          5713.71014
+        ],
+        [
+          4,
+          5006.895351
+        ],
+        [
+          6,
+          4464.023622
+        ],
+        [
+          8,
+          4046.271464
+        ],
+        [
+          12,
+          3021.28595
+        ],
+        [
+          16,
+          3419.968377
+        ],
+        [
+          24,
+          3438.23813
+        ],
+        [
+          32,
+          3371.432189
+        ],
+        [
+          48,
+          3348.973695
+        ],
+        [
+          64,
+          3043.945436
+        ],
+        [
+          96,
+          3258.872882
+        ],
+        [
+          128,
+          2611.599873
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 97743176,
+          "status": "ok",
+          "result_hash": "0xbba3136d3690d36b",
+          "per_call_nanos": 95452.320312,
+          "peak_rss_kb": 61196,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 93705417,
+          "status": "ok",
+          "result_hash": "0x2427bacc172a766b",
+          "per_call_nanos": 183018.392578,
+          "peak_rss_kb": 61748,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 71672780,
+          "status": "ok",
+          "result_hash": "0x978fac157d36c9fc",
+          "per_call_nanos": 279971.796875,
+          "peak_rss_kb": 63836,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 103822982,
+          "status": "ok",
+          "result_hash": "0xa16f90b6c89cf718",
+          "per_call_nanos": 405558.523438,
+          "peak_rss_kb": 61588,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 96565759,
+          "status": "ok",
+          "result_hash": "0x14cc70a3416cc3cb",
+          "per_call_nanos": 754419.992188,
+          "peak_rss_kb": 62208,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 74839837,
+          "status": "ok",
+          "result_hash": "0x6ea63d130fdcab5c",
+          "per_call_nanos": 1169372.453125,
+          "peak_rss_kb": 64120,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 60425719,
+          "status": "ok",
+          "result_hash": "0x4c377abc6d2e4845",
+          "per_call_nanos": 1888303.71875,
+          "peak_rss_kb": 62216,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 59589529,
+          "status": "ok",
+          "result_hash": "0x8076c1cb0794d742",
+          "per_call_nanos": 3724345.5625,
+          "peak_rss_kb": 61804,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 66041678,
+          "status": "ok",
+          "result_hash": "0xa73884f4fabf9987",
+          "per_call_nanos": 8255209.75,
+          "peak_rss_kb": 61852,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 56977204,
+          "status": "ok",
+          "result_hash": "0x9d4e4573984b63a6",
+          "per_call_nanos": 14244301,
+          "peak_rss_kb": 62168,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 63020987,
+          "status": "ok",
+          "result_hash": "0x684d61405f604b0d",
+          "per_call_nanos": 31510493.5,
+          "peak_rss_kb": 62100,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 50654296,
+          "status": "ok",
+          "result_hash": "0x709eaac99a2848a7",
+          "per_call_nanos": 50654296,
+          "peak_rss_kb": 61488,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 121389756,
+          "status": "ok",
+          "result_hash": "0x913fe2962c3efe7",
+          "per_call_nanos": 121389756,
+          "peak_rss_kb": 61976,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 172493560,
+          "status": "ok",
+          "result_hash": "0xfb643d6e2a3f82bc",
+          "per_call_nanos": 172493560,
+          "peak_rss_kb": 62260,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDenseSnfDegree",
+      "env": {
+        "timestamp_unix_ms": 1787880230531,
+        "timestamp_iso": "2026-08-28T01:23:50Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 100000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "degreeCost degree",
+      "c_min": 2611.599873,
+      "c_max": 3438.23813,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 9,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 135815.884766,
+          "median_per_call_nanos": 135815.884766,
+          "max_per_call_nanos": 135815.884766
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 217352.402344,
+          "median_per_call_nanos": 217352.402344,
+          "max_per_call_nanos": 217352.402344
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 338555.871094,
+          "median_per_call_nanos": 338555.871094,
+          "max_per_call_nanos": 338555.871094
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 649090.882812,
+          "median_per_call_nanos": 649090.882812,
+          "max_per_call_nanos": 649090.882812
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 829101.609375,
+          "median_per_call_nanos": 829101.609375,
+          "max_per_call_nanos": 829101.609375
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1229285.046875,
+          "median_per_call_nanos": 1229285.046875,
+          "max_per_call_nanos": 1229285.046875
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 1905046.65625,
+          "median_per_call_nanos": 1905046.65625,
+          "max_per_call_nanos": 1905046.65625
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 3644809.4375,
+          "median_per_call_nanos": 3644809.4375,
+          "max_per_call_nanos": 3644809.4375
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 8006208,
+          "median_per_call_nanos": 8006208,
+          "max_per_call_nanos": 8006208
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 13004933,
+          "median_per_call_nanos": 13004933,
+          "max_per_call_nanos": 13004933
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 28909676.5,
+          "median_per_call_nanos": 28909676.5,
+          "max_per_call_nanos": 28909676.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 52329211,
+          "median_per_call_nanos": 52329211,
+          "max_per_call_nanos": 52329211
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 120415141,
+          "median_per_call_nanos": 120415141,
+          "max_per_call_nanos": 120415141
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 173679808,
+          "median_per_call_nanos": 173679808,
+          "max_per_call_nanos": 173679808
+        }
+      ],
+      "spawn_floor_nanos": 180838937,
+      "slope": null,
+      "ratios": [
+        [
+          2,
+          8694.096094
+        ],
+        [
+          3,
+          6909.303492
+        ],
+        [
+          4,
+          8013.467689
+        ],
+        [
+          6,
+          4905.926683
+        ],
+        [
+          8,
+          4253.581477
+        ],
+        [
+          12,
+          3048.07465
+        ],
+        [
+          16,
+          3346.932449
+        ],
+        [
+          24,
+          3334.530612
+        ],
+        [
+          32,
+          3078.090651
+        ],
+        [
+          48,
+          3072.555691
+        ],
+        [
+          64,
+          3144.595337
+        ],
+        [
+          96,
+          3232.708019
+        ],
+        [
+          128,
+          2629.559993
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 69537733,
+          "status": "ok",
+          "result_hash": "0xa762c501d359bd20",
+          "per_call_nanos": 135815.884766,
+          "peak_rss_kb": 62004,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 55642215,
+          "status": "ok",
+          "result_hash": "0x9239ec06666a2bbe",
+          "per_call_nanos": 217352.402344,
+          "peak_rss_kb": 64208,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 86670303,
+          "status": "ok",
+          "result_hash": "0xfc2891fdf8ec218a",
+          "per_call_nanos": 338555.871094,
+          "peak_rss_kb": 61008,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 83083633,
+          "status": "ok",
+          "result_hash": "0x72d439ef6b456beb",
+          "per_call_nanos": 649090.882812,
+          "peak_rss_kb": 62016,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 106125006,
+          "status": "ok",
+          "result_hash": "0xfb7fa652540757dc",
+          "per_call_nanos": 829101.609375,
+          "peak_rss_kb": 61480,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 78674243,
+          "status": "ok",
+          "result_hash": "0xac3851998ff8c1bf",
+          "per_call_nanos": 1229285.046875,
+          "peak_rss_kb": 62504,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 60961493,
+          "status": "ok",
+          "result_hash": "0x1da4775dce8fb04a",
+          "per_call_nanos": 1905046.65625,
+          "peak_rss_kb": 61820,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 58316951,
+          "status": "ok",
+          "result_hash": "0xc2f4c0af187b3954",
+          "per_call_nanos": 3644809.4375,
+          "peak_rss_kb": 62052,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 64049664,
+          "status": "ok",
+          "result_hash": "0x675a9aa3867b9017",
+          "per_call_nanos": 8006208,
+          "peak_rss_kb": 62124,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 52019732,
+          "status": "ok",
+          "result_hash": "0x276e7a79944ea8e2",
+          "per_call_nanos": 13004933,
+          "peak_rss_kb": 61656,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 57819353,
+          "status": "ok",
+          "result_hash": "0x7b59c0e9b753e01f",
+          "per_call_nanos": 28909676.5,
+          "peak_rss_kb": 62304,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 52329211,
+          "status": "ok",
+          "result_hash": "0xdbae7d1814b3a866",
+          "per_call_nanos": 52329211,
+          "peak_rss_kb": 62236,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 120415141,
+          "status": "ok",
+          "result_hash": "0x8a496538cc2f414d",
+          "per_call_nanos": 120415141,
+          "peak_rss_kb": 61980,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 173679808,
+          "status": "ok",
+          "result_hash": "0x80a9c7122b9ebe0b",
+          "per_call_nanos": 173679808,
+          "peak_rss_kb": 61824,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDenseSnfDataDegree",
+      "env": {
+        "timestamp_unix_ms": 1787880233616,
+        "timestamp_iso": "2026-08-28T01:23:53Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.75,
+        "target_inner_nanos": 100000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "degreeCost degree",
+      "c_min": 2629.559993,
+      "c_max": 3232.708019,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 4,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 2259.389084,
+          "median_per_call_nanos": 2259.389084,
+          "max_per_call_nanos": 2259.389084
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 39762.089844,
+          "median_per_call_nanos": 39762.089844,
+          "max_per_call_nanos": 39762.089844
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 84914.045898,
+          "median_per_call_nanos": 84914.045898,
+          "max_per_call_nanos": 84914.045898
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 153093.19873,
+          "median_per_call_nanos": 153093.19873,
+          "max_per_call_nanos": 153093.19873
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 454522.6875,
+          "median_per_call_nanos": 454522.6875,
+          "max_per_call_nanos": 454522.6875
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 868552.605469,
+          "median_per_call_nanos": 868552.605469,
+          "max_per_call_nanos": 868552.605469
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 2973481.054688,
+          "median_per_call_nanos": 2973481.054688,
+          "max_per_call_nanos": 2973481.054688
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 7024253.3125,
+          "median_per_call_nanos": 7024253.3125,
+          "max_per_call_nanos": 7024253.3125
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 21011169.96875,
+          "median_per_call_nanos": 21011169.96875,
+          "max_per_call_nanos": 21011169.96875
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 49360965.875,
+          "median_per_call_nanos": 49360965.875,
+          "max_per_call_nanos": 49360965.875
+        }
+      ],
+      "spawn_floor_nanos": 85642689,
+      "slope": -0.104701,
+      "ratios": [
+        [
+          2,
+          4970.261231
+        ],
+        [
+          3,
+          3144.964663
+        ],
+        [
+          4,
+          2392.08123
+        ],
+        [
+          6,
+          2104.271701
+        ],
+        [
+          8,
+          1696.391808
+        ],
+        [
+          12,
+          1720.764499
+        ],
+        [
+          16,
+          1714.905594
+        ],
+        [
+          24,
+          1519.905235
+        ],
+        [
+          32,
+          1506.377132
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 296142646,
+          "status": "ok",
+          "result_hash": "0xa61d6596f172397f",
+          "per_call_nanos": 2259.389084,
+          "peak_rss_kb": 60804,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 131072,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 325731040,
+          "status": "ok",
+          "result_hash": "0x6e7d66be076c60bc",
+          "per_call_nanos": 39762.089844,
+          "peak_rss_kb": 63588,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 347807932,
+          "status": "ok",
+          "result_hash": "0x6532e78bbb033abb",
+          "per_call_nanos": 84914.045898,
+          "peak_rss_kb": 61576,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 627069742,
+          "status": "ok",
+          "result_hash": "0x58ce26d953e6f5a8",
+          "per_call_nanos": 153093.19873,
+          "peak_rss_kb": 62124,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 465431232,
+          "status": "ok",
+          "result_hash": "0x96cbd4b6de68d54",
+          "per_call_nanos": 454522.6875,
+          "peak_rss_kb": 61572,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 444698934,
+          "status": "ok",
+          "result_hash": "0x863f40a7e3158fc0",
+          "per_call_nanos": 868552.605469,
+          "peak_rss_kb": 61664,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 380605575,
+          "status": "ok",
+          "result_hash": "0x7d321bec5ca055f8",
+          "per_call_nanos": 2973481.054688,
+          "peak_rss_kb": 61624,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 449552212,
+          "status": "ok",
+          "result_hash": "0xc71f7ffa8b4a3b10",
+          "per_call_nanos": 7024253.3125,
+          "peak_rss_kb": 61892,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 672357439,
+          "status": "ok",
+          "result_hash": "0xb3b30eb086b9c3e0",
+          "per_call_nanos": 21011169.96875,
+          "peak_rss_kb": 62184,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 394887727,
+          "status": "ok",
+          "result_hash": "0x5b94545e5c68f730",
+          "per_call_nanos": 49360965.875,
+          "peak_rss_kb": 62948,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runChainSnf",
+      "env": {
+        "timestamp_unix_ms": 1787880236488,
+        "timestamp_iso": "2026-08-28T01:23:56Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.5,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 32,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "chainCost n",
+      "c_min": 1506.377132,
+      "c_max": 1720.764499,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 4146.433029,
+          "median_per_call_nanos": 4146.433029,
+          "max_per_call_nanos": 4146.433029
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 105516.041748,
+          "median_per_call_nanos": 105516.041748,
+          "max_per_call_nanos": 105516.041748
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 227126.548828,
+          "median_per_call_nanos": 227126.548828,
+          "max_per_call_nanos": 227126.548828
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 402665.933594,
+          "median_per_call_nanos": 402665.933594,
+          "max_per_call_nanos": 402665.933594
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 1054081.380859,
+          "median_per_call_nanos": 1054081.380859,
+          "max_per_call_nanos": 1054081.380859
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 2177362.03125,
+          "median_per_call_nanos": 2177362.03125,
+          "max_per_call_nanos": 2177362.03125
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 6498530.140625,
+          "median_per_call_nanos": 6498530.140625,
+          "max_per_call_nanos": 6498530.140625
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 14027322.0625,
+          "median_per_call_nanos": 14027322.0625,
+          "max_per_call_nanos": 14027322.0625
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 43427136.625,
+          "median_per_call_nanos": 43427136.625,
+          "max_per_call_nanos": 43427136.625
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 102002777.75,
+          "median_per_call_nanos": 102002777.75,
+          "max_per_call_nanos": 102002777.75
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 350362682,
+          "median_per_call_nanos": 350362682,
+          "max_per_call_nanos": 350362682
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 857521560,
+          "median_per_call_nanos": 857521560,
+          "max_per_call_nanos": 857521560
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 3236333138,
+          "median_per_call_nanos": 3236333138,
+          "max_per_call_nanos": 3236333138
+        }
+      ],
+      "spawn_floor_nanos": 150551216,
+      "slope": 0.104029,
+      "ratios": [
+        [
+          2,
+          13189.505219
+        ],
+        [
+          3,
+          8412.094401
+        ],
+        [
+          4,
+          6291.655212
+        ],
+        [
+          6,
+          4880.006393
+        ],
+        [
+          8,
+          4252.660217
+        ],
+        [
+          12,
+          3760.723461
+        ],
+        [
+          16,
+          3424.639175
+        ],
+        [
+          24,
+          3141.430601
+        ],
+        [
+          32,
+          3112.877739
+        ],
+        [
+          48,
+          3168.065339
+        ],
+        [
+          64,
+          3271.18515
+        ],
+        [
+          96,
+          3657.964792
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 271740635,
+          "status": "ok",
+          "result_hash": "0x3dce04ca19923593",
+          "per_call_nanos": 4146.433029,
+          "peak_rss_kb": 62188,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 65536,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 432193707,
+          "status": "ok",
+          "result_hash": "0x6659145b0f583c2",
+          "per_call_nanos": 105516.041748,
+          "peak_rss_kb": 61972,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 465155172,
+          "status": "ok",
+          "result_hash": "0x5330445d2d7f6448",
+          "per_call_nanos": 227126.548828,
+          "peak_rss_kb": 62012,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 412329916,
+          "status": "ok",
+          "result_hash": "0x71b688360629374e",
+          "per_call_nanos": 402665.933594,
+          "peak_rss_kb": 61800,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 539689667,
+          "status": "ok",
+          "result_hash": "0xc2ae6316159e10ab",
+          "per_call_nanos": 1054081.380859,
+          "peak_rss_kb": 62056,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 278702340,
+          "status": "ok",
+          "result_hash": "0xc9adb0fd48d9c0b2",
+          "per_call_nanos": 2177362.03125,
+          "peak_rss_kb": 61228,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 415905929,
+          "status": "ok",
+          "result_hash": "0x883e2cbc62a2f3ed",
+          "per_call_nanos": 6498530.140625,
+          "peak_rss_kb": 61116,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 448874306,
+          "status": "ok",
+          "result_hash": "0x3b419ec8aab532ae",
+          "per_call_nanos": 14027322.0625,
+          "peak_rss_kb": 61896,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 347417093,
+          "status": "ok",
+          "result_hash": "0xdc180ad369cbe6ae",
+          "per_call_nanos": 43427136.625,
+          "peak_rss_kb": 61932,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 408011111,
+          "status": "ok",
+          "result_hash": "0x677e2090719c4824",
+          "per_call_nanos": 102002777.75,
+          "peak_rss_kb": 62204,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 350362682,
+          "status": "ok",
+          "result_hash": "0xa7e4d6d159e162d1",
+          "per_call_nanos": 350362682,
+          "peak_rss_kb": 63732,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 857521560,
+          "status": "ok",
+          "result_hash": "0x1341f3711681b4d8",
+          "per_call_nanos": 857521560,
+          "peak_rss_kb": 63136,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 3236333138,
+          "status": "ok",
+          "result_hash": "0xe99b5c46d6e4f884",
+          "per_call_nanos": 3236333138,
+          "peak_rss_kb": 66532,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 0,
+          "status": "killed_at_cap",
+          "result_hash": null,
+          "per_call_nanos": 0,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 0,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runRationalSnfDataDimension",
+      "env": {
+        "timestamp_unix_ms": 1787880242138,
+        "timestamp_iso": "2026-08-28T01:24:02Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 3112.877739,
+      "c_max": 3657.964792,
+      "budget_truncated": false,
+      "advisories": [
+        "truncated_at_cap"
+      ]
+    },
+    {
+      "verdict_dropped_leading": 6,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 132860.984619,
+          "median_per_call_nanos": 132860.984619,
+          "max_per_call_nanos": 132860.984619
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 222003.437988,
+          "median_per_call_nanos": 222003.437988,
+          "max_per_call_nanos": 222003.437988
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 316183.05957,
+          "median_per_call_nanos": 316183.05957,
+          "max_per_call_nanos": 316183.05957
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 462889.608398,
+          "median_per_call_nanos": 462889.608398,
+          "max_per_call_nanos": 462889.608398
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 775081.533203,
+          "median_per_call_nanos": 775081.533203,
+          "max_per_call_nanos": 775081.533203
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1113031.816406,
+          "median_per_call_nanos": 1113031.816406,
+          "max_per_call_nanos": 1113031.816406
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 2146518.625,
+          "median_per_call_nanos": 2146518.625,
+          "max_per_call_nanos": 2146518.625
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 3740166.65625,
+          "median_per_call_nanos": 3740166.65625,
+          "max_per_call_nanos": 3740166.65625
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 7472953.453125,
+          "median_per_call_nanos": 7472953.453125,
+          "max_per_call_nanos": 7472953.453125
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 13853725.21875,
+          "median_per_call_nanos": 13853725.21875,
+          "max_per_call_nanos": 13853725.21875
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 27003605.875,
+          "median_per_call_nanos": 27003605.875,
+          "max_per_call_nanos": 27003605.875
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 52078789.125,
+          "median_per_call_nanos": 52078789.125,
+          "max_per_call_nanos": 52078789.125
+        }
+      ],
+      "spawn_floor_nanos": 74521925,
+      "slope": -0.082221,
+      "ratios": [
+        [
+          2,
+          8880.13752
+        ],
+        [
+          3,
+          6452.715501
+        ],
+        [
+          4,
+          5714.686523
+        ],
+        [
+          6,
+          4586.281262
+        ],
+        [
+          8,
+          3851.321164
+        ],
+        [
+          12,
+          3434.4298
+        ],
+        [
+          16,
+          3434.49647
+        ],
+        [
+          24,
+          3112.433758
+        ],
+        [
+          32,
+          3278.988217
+        ],
+        [
+          48,
+          2869.97618
+        ],
+        [
+          64,
+          3129.54685
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 544198593,
+          "status": "ok",
+          "result_hash": "0x615945d2edc9f045",
+          "per_call_nanos": 132860.984619,
+          "peak_rss_kb": 61884,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 454663041,
+          "status": "ok",
+          "result_hash": "0x5330445d2d7f6448",
+          "per_call_nanos": 222003.437988,
+          "peak_rss_kb": 63364,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 323771453,
+          "status": "ok",
+          "result_hash": "0xba7c9399cde75260",
+          "per_call_nanos": 316183.05957,
+          "peak_rss_kb": 63092,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 473998959,
+          "status": "ok",
+          "result_hash": "0xecd5b3d27b42b134",
+          "per_call_nanos": 462889.608398,
+          "peak_rss_kb": 61048,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 396841745,
+          "status": "ok",
+          "result_hash": "0x86fb5d4887241348",
+          "per_call_nanos": 775081.533203,
+          "peak_rss_kb": 61604,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 284936145,
+          "status": "ok",
+          "result_hash": "0xfea32e676f0ae28d",
+          "per_call_nanos": 1113031.816406,
+          "peak_rss_kb": 60320,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 274754384,
+          "status": "ok",
+          "result_hash": "0xddb79a8b86856289",
+          "per_call_nanos": 2146518.625,
+          "peak_rss_kb": 61440,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 478741332,
+          "status": "ok",
+          "result_hash": "0xc649d0f36f53d687",
+          "per_call_nanos": 3740166.65625,
+          "peak_rss_kb": 60860,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 478269021,
+          "status": "ok",
+          "result_hash": "0xaaf87ff9aae9f11e",
+          "per_call_nanos": 7472953.453125,
+          "peak_rss_kb": 61696,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 443319207,
+          "status": "ok",
+          "result_hash": "0x1b26310f1a111904",
+          "per_call_nanos": 13853725.21875,
+          "peak_rss_kb": 61632,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 432057694,
+          "status": "ok",
+          "result_hash": "0x5dfba87dbbdd70c7",
+          "per_call_nanos": 27003605.875,
+          "peak_rss_kb": 61656,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 416630313,
+          "status": "ok",
+          "result_hash": "0x128191ba4cd977f4",
+          "per_call_nanos": 52078789.125,
+          "peak_rss_kb": 61840,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runRationalSnfDataDegree",
+      "env": {
+        "timestamp_unix_ms": 1787880262873,
+        "timestamp_iso": "2026-08-28T01:24:22Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 64,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "rationalDegreeCost degree",
+      "c_min": 2869.97618,
+      "c_max": 3434.49647,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 12,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 3743.132423,
+          "median_per_call_nanos": 3743.132423,
+          "max_per_call_nanos": 3743.132423
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 13021.131226,
+          "median_per_call_nanos": 13021.131226,
+          "max_per_call_nanos": 13021.131226
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 29940.946838,
+          "median_per_call_nanos": 29940.946838,
+          "max_per_call_nanos": 29940.946838
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 56821.329102,
+          "median_per_call_nanos": 56821.329102,
+          "max_per_call_nanos": 56821.329102
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 149403.735352,
+          "median_per_call_nanos": 149403.735352,
+          "max_per_call_nanos": 149403.735352
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 281615.322266,
+          "median_per_call_nanos": 281615.322266,
+          "max_per_call_nanos": 281615.322266
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 760978.888672,
+          "median_per_call_nanos": 760978.888672,
+          "max_per_call_nanos": 760978.888672
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 1589930.539062,
+          "median_per_call_nanos": 1589930.539062,
+          "max_per_call_nanos": 1589930.539062
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 4787835.875,
+          "median_per_call_nanos": 4787835.875,
+          "max_per_call_nanos": 4787835.875
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 10293002.8125,
+          "median_per_call_nanos": 10293002.8125,
+          "max_per_call_nanos": 10293002.8125
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 31258998.625,
+          "median_per_call_nanos": 31258998.625,
+          "max_per_call_nanos": 31258998.625
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 70837126.75,
+          "median_per_call_nanos": 70837126.75,
+          "max_per_call_nanos": 70837126.75
+        },
+        {
+          "relative_spread": 0,
+          "param": 192,
+          "ok_count": 1,
+          "min_per_call_nanos": 230053404,
+          "median_per_call_nanos": 230053404,
+          "max_per_call_nanos": 230053404
+        },
+        {
+          "relative_spread": 0,
+          "param": 256,
+          "ok_count": 1,
+          "min_per_call_nanos": 538201902,
+          "median_per_call_nanos": 538201902,
+          "max_per_call_nanos": 538201902
+        },
+        {
+          "relative_spread": 0,
+          "param": 384,
+          "ok_count": 1,
+          "min_per_call_nanos": 1753479491,
+          "median_per_call_nanos": 1753479491,
+          "max_per_call_nanos": 1753479491
+        },
+        {
+          "relative_spread": 0,
+          "param": 512,
+          "ok_count": 1,
+          "min_per_call_nanos": 4127108580,
+          "median_per_call_nanos": 4127108580,
+          "max_per_call_nanos": 4127108580
+        },
+        {
+          "relative_spread": 0,
+          "param": 768,
+          "ok_count": 1,
+          "min_per_call_nanos": 13875747368,
+          "median_per_call_nanos": 13875747368,
+          "max_per_call_nanos": 13875747368
+        }
+      ],
+      "spawn_floor_nanos": 38845592,
+      "slope": -0.04637,
+      "ratios": [
+        [
+          2,
+          467.891553
+        ],
+        [
+          4,
+          203.455175
+        ],
+        [
+          6,
+          138.615495
+        ],
+        [
+          8,
+          110.979158
+        ],
+        [
+          12,
+          86.460495
+        ],
+        [
+          16,
+          68.753741
+        ],
+        [
+          24,
+          55.047663
+        ],
+        [
+          32,
+          48.520829
+        ],
+        [
+          48,
+          43.292787
+        ],
+        [
+          64,
+          39.26469
+        ],
+        [
+          96,
+          35.331442
+        ],
+        [
+          128,
+          33.777774
+        ],
+        [
+          192,
+          32.503114
+        ],
+        [
+          256,
+          32.079333
+        ],
+        [
+          384,
+          30.967562
+        ],
+        [
+          512,
+          30.749355
+        ],
+        [
+          768,
+          30.631815
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 490619853,
+          "status": "ok",
+          "result_hash": "0x6e7d66be076c60bc",
+          "per_call_nanos": 3743.132423,
+          "peak_rss_kb": 62952,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 131072,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 426676428,
+          "status": "ok",
+          "result_hash": "0x58ce26d953e6f5a8",
+          "per_call_nanos": 13021.131226,
+          "peak_rss_kb": 62960,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 490552473,
+          "status": "ok",
+          "result_hash": "0x96cbd4b6de68d54",
+          "per_call_nanos": 29940.946838,
+          "peak_rss_kb": 60352,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 465480328,
+          "status": "ok",
+          "result_hash": "0x863f40a7e3158fc0",
+          "per_call_nanos": 56821.329102,
+          "peak_rss_kb": 60876,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 305978850,
+          "status": "ok",
+          "result_hash": "0x7d321bec5ca055f8",
+          "per_call_nanos": 149403.735352,
+          "peak_rss_kb": 60988,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 288374090,
+          "status": "ok",
+          "result_hash": "0xc71f7ffa8b4a3b10",
+          "per_call_nanos": 281615.322266,
+          "peak_rss_kb": 60700,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 389621191,
+          "status": "ok",
+          "result_hash": "0xb3b30eb086b9c3e0",
+          "per_call_nanos": 760978.888672,
+          "peak_rss_kb": 66748,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 407022218,
+          "status": "ok",
+          "result_hash": "0x5b94545e5c68f730",
+          "per_call_nanos": 1589930.539062,
+          "peak_rss_kb": 67064,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 306421496,
+          "status": "ok",
+          "result_hash": "0x72e5cb735f8a93d0",
+          "per_call_nanos": 4787835.875,
+          "peak_rss_kb": 66728,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 329376090,
+          "status": "ok",
+          "result_hash": "0x6a8a6e0379ee78f0",
+          "per_call_nanos": 10293002.8125,
+          "peak_rss_kb": 63880,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 500143978,
+          "status": "ok",
+          "result_hash": "0xe3e281504a4a09b0",
+          "per_call_nanos": 31258998.625,
+          "peak_rss_kb": 62528,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 283348507,
+          "status": "ok",
+          "result_hash": "0xe42a3dd391774b70",
+          "per_call_nanos": 70837126.75,
+          "peak_rss_kb": 68812,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 460106808,
+          "status": "ok",
+          "result_hash": "0x8fa2bee4961f9df0",
+          "per_call_nanos": 230053404,
+          "peak_rss_kb": 64544,
+          "part_of_verdict": true,
+          "param": 192,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 538201902,
+          "status": "ok",
+          "result_hash": "0x10e84b32dc6f7070",
+          "per_call_nanos": 538201902,
+          "peak_rss_kb": 64632,
+          "part_of_verdict": true,
+          "param": 256,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 1753479491,
+          "status": "ok",
+          "result_hash": "0x5e9b8f4740cd9570",
+          "per_call_nanos": 1753479491,
+          "peak_rss_kb": 66772,
+          "part_of_verdict": true,
+          "param": 384,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 4127108580,
+          "status": "ok",
+          "result_hash": "0x49065934f071ba70",
+          "per_call_nanos": 4127108580,
+          "peak_rss_kb": 70372,
+          "part_of_verdict": true,
+          "param": 512,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 13875747368,
+          "status": "ok",
+          "result_hash": "0x74b90804c9dc0470",
+          "per_call_nanos": 13875747368,
+          "peak_rss_kb": 80896,
+          "part_of_verdict": true,
+          "param": 768,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDiagonalSnf",
+      "env": {
+        "timestamp_unix_ms": 1787880559359,
+        "timestamp_iso": "2026-08-28T01:29:19Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.75,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            2,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128,
+            192,
+            256,
+            384,
+            512,
+            768
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 2,
+        "param_ceiling": 768,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 30,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 30.631815,
+      "c_max": 32.503114,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 10,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 13177.955078,
+          "median_per_call_nanos": 13177.955078,
+          "max_per_call_nanos": 13177.955078
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 15185.044434,
+          "median_per_call_nanos": 15185.044434,
+          "max_per_call_nanos": 15185.044434
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 16608.83606,
+          "median_per_call_nanos": 16608.83606,
+          "max_per_call_nanos": 16608.83606
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 19161.840607,
+          "median_per_call_nanos": 19161.840607,
+          "max_per_call_nanos": 19161.840607
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 24044.869141,
+          "median_per_call_nanos": 24044.869141,
+          "max_per_call_nanos": 24044.869141
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 37835.359985,
+          "median_per_call_nanos": 37835.359985,
+          "max_per_call_nanos": 37835.359985
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 45779.296265,
+          "median_per_call_nanos": 45779.296265,
+          "max_per_call_nanos": 45779.296265
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 62244.947266,
+          "median_per_call_nanos": 62244.947266,
+          "max_per_call_nanos": 62244.947266
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 127434.239746,
+          "median_per_call_nanos": 127434.239746,
+          "max_per_call_nanos": 127434.239746
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 227795.93457,
+          "median_per_call_nanos": 227795.93457,
+          "max_per_call_nanos": 227795.93457
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 333914.795898,
+          "median_per_call_nanos": 333914.795898,
+          "max_per_call_nanos": 333914.795898
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 483241.088867,
+          "median_per_call_nanos": 483241.088867,
+          "max_per_call_nanos": 483241.088867
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 1045903.347656,
+          "median_per_call_nanos": 1045903.347656,
+          "max_per_call_nanos": 1045903.347656
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 2023299.777344,
+          "median_per_call_nanos": 2023299.777344,
+          "max_per_call_nanos": 2023299.777344
+        },
+        {
+          "relative_spread": 0,
+          "param": 192,
+          "ok_count": 1,
+          "min_per_call_nanos": 3819565.65625,
+          "median_per_call_nanos": 3819565.65625,
+          "max_per_call_nanos": 3819565.65625
+        },
+        {
+          "relative_spread": 0,
+          "param": 256,
+          "ok_count": 1,
+          "min_per_call_nanos": 6765743.78125,
+          "median_per_call_nanos": 6765743.78125,
+          "max_per_call_nanos": 6765743.78125
+        }
+      ],
+      "spawn_floor_nanos": 70389837,
+      "slope": -0.097892,
+      "ratios": [
+        [
+          2,
+          607.401777
+        ],
+        [
+          3,
+          338.955838
+        ],
+        [
+          4,
+          236.565933
+        ],
+        [
+          6,
+          142.277332
+        ],
+        [
+          8,
+          130.918201
+        ],
+        [
+          12,
+          73.246874
+        ],
+        [
+          16,
+          57.157895
+        ],
+        [
+          24,
+          53.075485
+        ],
+        [
+          32,
+          53.916198
+        ],
+        [
+          48,
+          35.488872
+        ],
+        [
+          64,
+          29.039186
+        ],
+        [
+          96,
+          28.078696
+        ],
+        [
+          128,
+          30.633314
+        ],
+        [
+          192,
+          25.768701
+        ],
+        [
+          256,
+          25.708741
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 215907616,
+          "status": "ok",
+          "result_hash": "0xd3e98af958ee1702",
+          "per_call_nanos": 13177.955078,
+          "peak_rss_kb": 62908,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 248791768,
+          "status": "ok",
+          "result_hash": "0x1181a9e8d34a9196",
+          "per_call_nanos": 15185.044434,
+          "peak_rss_kb": 61452,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 544238340,
+          "status": "ok",
+          "result_hash": "0x6a2328f166a1937f",
+          "per_call_nanos": 16608.83606,
+          "peak_rss_kb": 63368,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 627895193,
+          "status": "ok",
+          "result_hash": "0x3cadbc5bedc30ea8",
+          "per_call_nanos": 19161.840607,
+          "peak_rss_kb": 61664,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 393951136,
+          "status": "ok",
+          "result_hash": "0xef5a1664e92d03e3",
+          "per_call_nanos": 24044.869141,
+          "peak_rss_kb": 61460,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 309947269,
+          "status": "ok",
+          "result_hash": "0x6a7e595d821df0c1",
+          "per_call_nanos": 37835.359985,
+          "peak_rss_kb": 61140,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 375023995,
+          "status": "ok",
+          "result_hash": "0x749c6c0a2b569a28",
+          "per_call_nanos": 45779.296265,
+          "peak_rss_kb": 61224,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 509910608,
+          "status": "ok",
+          "result_hash": "0x5cdd7fbab09181e4",
+          "per_call_nanos": 62244.947266,
+          "peak_rss_kb": 60764,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 260985323,
+          "status": "ok",
+          "result_hash": "0xb9acf0f5e18c6e78",
+          "per_call_nanos": 127434.239746,
+          "peak_rss_kb": 61176,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 466526074,
+          "status": "ok",
+          "result_hash": "0xee99056aacdf8d00",
+          "per_call_nanos": 227795.93457,
+          "peak_rss_kb": 61316,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 683857502,
+          "status": "ok",
+          "result_hash": "0xa1592b05a81ce2ea",
+          "per_call_nanos": 333914.795898,
+          "peak_rss_kb": 60840,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 494838875,
+          "status": "ok",
+          "result_hash": "0x28c665a6411e536c",
+          "per_call_nanos": 483241.088867,
+          "peak_rss_kb": 61536,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 267751257,
+          "status": "ok",
+          "result_hash": "0x3985fd1a2866cc8e",
+          "per_call_nanos": 1045903.347656,
+          "peak_rss_kb": 61272,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 517964743,
+          "status": "ok",
+          "result_hash": "0xc9bdb10fb9dc3ee9",
+          "per_call_nanos": 2023299.777344,
+          "peak_rss_kb": 61888,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 488904404,
+          "status": "ok",
+          "result_hash": "0xef05f2a0a68c1ce8",
+          "per_call_nanos": 3819565.65625,
+          "peak_rss_kb": 62860,
+          "part_of_verdict": true,
+          "param": 192,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 216503801,
+          "status": "ok",
+          "result_hash": "0x49ba2e727fd4f4b2",
+          "per_call_nanos": 6765743.78125,
+          "peak_rss_kb": 60884,
+          "part_of_verdict": true,
+          "param": 256,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runSmallField",
+      "env": {
+        "timestamp_unix_ms": 1787880309836,
+        "timestamp_iso": "2026-08-28T01:25:09Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.7,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128,
+            192,
+            256
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 256,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "smallFieldCost degree",
+      "c_min": 25.708741,
+      "c_max": 30.633314,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 1669.982727,
+          "median_per_call_nanos": 1669.982727,
+          "max_per_call_nanos": 1669.982727
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 65618.602661,
+          "median_per_call_nanos": 65618.602661,
+          "max_per_call_nanos": 65618.602661
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 152963.556641,
+          "median_per_call_nanos": 152963.556641,
+          "max_per_call_nanos": 152963.556641
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 259089.483887,
+          "median_per_call_nanos": 259089.483887,
+          "max_per_call_nanos": 259089.483887
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 785824.646484,
+          "median_per_call_nanos": 785824.646484,
+          "max_per_call_nanos": 785824.646484
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1412611.117188,
+          "median_per_call_nanos": 1412611.117188,
+          "max_per_call_nanos": 1412611.117188
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 4176627.53125,
+          "median_per_call_nanos": 4176627.53125,
+          "max_per_call_nanos": 4176627.53125
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 7894383.09375,
+          "median_per_call_nanos": 7894383.09375,
+          "max_per_call_nanos": 7894383.09375
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 34864851,
+          "median_per_call_nanos": 34864851,
+          "max_per_call_nanos": 34864851
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 60286246.25,
+          "median_per_call_nanos": 60286246.25,
+          "max_per_call_nanos": 60286246.25
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 252689697,
+          "median_per_call_nanos": 252689697,
+          "max_per_call_nanos": 252689697
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 462521091,
+          "median_per_call_nanos": 462521091,
+          "max_per_call_nanos": 462521091
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 2016597870,
+          "median_per_call_nanos": 2016597870,
+          "max_per_call_nanos": 2016597870
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 4605249248,
+          "median_per_call_nanos": 4605249248,
+          "max_per_call_nanos": 4605249248
+        }
+      ],
+      "spawn_floor_nanos": 84047602,
+      "slope": -0.0173,
+      "ratios": [
+        [
+          2,
+          8202.325333
+        ],
+        [
+          3,
+          5665.316913
+        ],
+        [
+          4,
+          4048.273186
+        ],
+        [
+          6,
+          3638.077067
+        ],
+        [
+          8,
+          2759.006088
+        ],
+        [
+          12,
+          2417.029821
+        ],
+        [
+          16,
+          1927.339622
+        ],
+        [
+          24,
+          2522.0523
+        ],
+        [
+          32,
+          1839.79023
+        ],
+        [
+          48,
+          2284.882243
+        ],
+        [
+          64,
+          1764.377941
+        ],
+        [
+          96,
+          2279.321594
+        ],
+        [
+          128,
+          2195.953964
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 437775952,
+          "status": "ok",
+          "result_hash": "0x1",
+          "per_call_nanos": 1669.982727,
+          "peak_rss_kb": 61044,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 262144,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 537547593,
+          "status": "ok",
+          "result_hash": "0x2",
+          "per_call_nanos": 65618.602661,
+          "peak_rss_kb": 61668,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 8192,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 313269364,
+          "status": "ok",
+          "result_hash": "0x3",
+          "per_call_nanos": 152963.556641,
+          "peak_rss_kb": 61200,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 530615263,
+          "status": "ok",
+          "result_hash": "0x4",
+          "per_call_nanos": 259089.483887,
+          "peak_rss_kb": 61228,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 402342219,
+          "status": "ok",
+          "result_hash": "0x6",
+          "per_call_nanos": 785824.646484,
+          "peak_rss_kb": 60576,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 723256892,
+          "status": "ok",
+          "result_hash": "0x8",
+          "per_call_nanos": 1412611.117188,
+          "peak_rss_kb": 63188,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 267304162,
+          "status": "ok",
+          "result_hash": "0xc",
+          "per_call_nanos": 4176627.53125,
+          "peak_rss_kb": 60856,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 505240518,
+          "status": "ok",
+          "result_hash": "0x10",
+          "per_call_nanos": 7894383.09375,
+          "peak_rss_kb": 61344,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 557837616,
+          "status": "ok",
+          "result_hash": "0x18",
+          "per_call_nanos": 34864851,
+          "peak_rss_kb": 61060,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 241144985,
+          "status": "ok",
+          "result_hash": "0x20",
+          "per_call_nanos": 60286246.25,
+          "peak_rss_kb": 61780,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 252689697,
+          "status": "ok",
+          "result_hash": "0x30",
+          "per_call_nanos": 252689697,
+          "peak_rss_kb": 62424,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 462521091,
+          "status": "ok",
+          "result_hash": "0x40",
+          "per_call_nanos": 462521091,
+          "peak_rss_kb": 65644,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 2016597870,
+          "status": "ok",
+          "result_hash": "0x60",
+          "per_call_nanos": 2016597870,
+          "peak_rss_kb": 65172,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 4605249248,
+          "status": "ok",
+          "result_hash": "0x80",
+          "per_call_nanos": 4605249248,
+          "peak_rss_kb": 70476,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runSnfRank",
+      "env": {
+        "timestamp_unix_ms": 1787880473384,
+        "timestamp_iso": "2026-08-28T01:27:53Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 1764.377941,
+      "c_max": 2522.0523,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 4,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 1276.44252,
+          "median_per_call_nanos": 1276.44252,
+          "max_per_call_nanos": 1276.44252
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 25511.643494,
+          "median_per_call_nanos": 25511.643494,
+          "max_per_call_nanos": 25511.643494
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 95785.427734,
+          "median_per_call_nanos": 95785.427734,
+          "max_per_call_nanos": 95785.427734
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 254433.644531,
+          "median_per_call_nanos": 254433.644531,
+          "max_per_call_nanos": 254433.644531
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 913700.363281,
+          "median_per_call_nanos": 913700.363281,
+          "max_per_call_nanos": 913700.363281
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 2349927.367188,
+          "median_per_call_nanos": 2349927.367188,
+          "max_per_call_nanos": 2349927.367188
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 13568301.53125,
+          "median_per_call_nanos": 13568301.53125,
+          "max_per_call_nanos": 13568301.53125
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 31516099,
+          "median_per_call_nanos": 31516099,
+          "max_per_call_nanos": 31516099
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 211618960.5,
+          "median_per_call_nanos": 211618960.5,
+          "max_per_call_nanos": 211618960.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 560819331,
+          "median_per_call_nanos": 560819331,
+          "max_per_call_nanos": 560819331
+        }
+      ],
+      "spawn_floor_nanos": 80099817,
+      "slope": -0.035912,
+      "ratios": [
+        [
+          2,
+          1594.477718
+        ],
+        [
+          3,
+          1182.536145
+        ],
+        [
+          4,
+          993.881424
+        ],
+        [
+          6,
+          705.015712
+        ],
+        [
+          8,
+          573.712736
+        ],
+        [
+          12,
+          654.335529
+        ],
+        [
+          16,
+          480.897507
+        ],
+        [
+          24,
+          637.836855
+        ],
+        [
+          32,
+          534.838992
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 334611748,
+          "status": "ok",
+          "result_hash": "0x6cc20d2a4d442314",
+          "per_call_nanos": 1276.44252,
+          "peak_rss_kb": 60752,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 262144,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 417982767,
+          "status": "ok",
+          "result_hash": "0x7d1ccd1f85966c33",
+          "per_call_nanos": 25511.643494,
+          "peak_rss_kb": 61492,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 392337112,
+          "status": "ok",
+          "result_hash": "0xa72a7cfc6e39b1ba",
+          "per_call_nanos": 95785.427734,
+          "peak_rss_kb": 60596,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 260540052,
+          "status": "ok",
+          "result_hash": "0xc8b835ce64d66e6e",
+          "per_call_nanos": 254433.644531,
+          "peak_rss_kb": 61140,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 233907293,
+          "status": "ok",
+          "result_hash": "0x3949d2b502112745",
+          "per_call_nanos": 913700.363281,
+          "peak_rss_kb": 60768,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 601581406,
+          "status": "ok",
+          "result_hash": "0xc61b0314543e4647",
+          "per_call_nanos": 2349927.367188,
+          "peak_rss_kb": 61260,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 434185649,
+          "status": "ok",
+          "result_hash": "0x9dd1c4b743f4e361",
+          "per_call_nanos": 13568301.53125,
+          "peak_rss_kb": 61640,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 504257584,
+          "status": "ok",
+          "result_hash": "0x1faaa2c5a707508e",
+          "per_call_nanos": 31516099,
+          "peak_rss_kb": 61652,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 423237921,
+          "status": "ok",
+          "result_hash": "0xa39cf06366d4dd4e",
+          "per_call_nanos": 211618960.5,
+          "peak_rss_kb": 62828,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 560819331,
+          "status": "ok",
+          "result_hash": "0x5d4be80e92015a96",
+          "per_call_nanos": 560819331,
+          "peak_rss_kb": 64168,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runInvariantFactors",
+      "env": {
+        "timestamp_unix_ms": 1787880334108,
+        "timestamp_iso": "2026-08-28T01:25:34Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.5,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 32,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "gradedChainCost n",
+      "c_min": 480.897507,
+      "c_max": 654.335529,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 4203.692764,
+          "median_per_call_nanos": 4203.692764,
+          "max_per_call_nanos": 4203.692764
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 162852.374023,
+          "median_per_call_nanos": 162852.374023,
+          "max_per_call_nanos": 162852.374023
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 314118.462891,
+          "median_per_call_nanos": 314118.462891,
+          "max_per_call_nanos": 314118.462891
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 479319.226562,
+          "median_per_call_nanos": 479319.226562,
+          "max_per_call_nanos": 479319.226562
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 1288775.722656,
+          "median_per_call_nanos": 1288775.722656,
+          "max_per_call_nanos": 1288775.722656
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 2609271.96875,
+          "median_per_call_nanos": 2609271.96875,
+          "max_per_call_nanos": 2609271.96875
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 9755780.21875,
+          "median_per_call_nanos": 9755780.21875,
+          "max_per_call_nanos": 9755780.21875
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 22296729.3125,
+          "median_per_call_nanos": 22296729.3125,
+          "max_per_call_nanos": 22296729.3125
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 60704171.5,
+          "median_per_call_nanos": 60704171.5,
+          "max_per_call_nanos": 60704171.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 128476222.75,
+          "median_per_call_nanos": 128476222.75,
+          "max_per_call_nanos": 128476222.75
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 355985698,
+          "median_per_call_nanos": 355985698,
+          "max_per_call_nanos": 355985698
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 1043601023,
+          "median_per_call_nanos": 1043601023,
+          "max_per_call_nanos": 1043601023
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 3798269580,
+          "median_per_call_nanos": 3798269580,
+          "max_per_call_nanos": 3798269580
+        }
+      ],
+      "spawn_floor_nanos": 95833072,
+      "slope": -0.008924,
+      "ratios": [
+        [
+          2,
+          20356.546753
+        ],
+        [
+          3,
+          11634.017144
+        ],
+        [
+          4,
+          7489.362915
+        ],
+        [
+          6,
+          5966.554272
+        ],
+        [
+          8,
+          5096.234314
+        ],
+        [
+          12,
+          5645.706145
+        ],
+        [
+          16,
+          5443.53743
+        ],
+        [
+          24,
+          4391.21611
+        ],
+        [
+          32,
+          3920.783165
+        ],
+        [
+          48,
+          3218.91003
+        ],
+        [
+          64,
+          3981.021969
+        ],
+        [
+          96,
+          4293.110691
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 550986418,
+          "status": "ok",
+          "result_hash": "0x2831b4f93d5df2d2",
+          "per_call_nanos": 4203.692764,
+          "peak_rss_kb": 60568,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 131072,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 333521662,
+          "status": "ok",
+          "result_hash": "0x9cd1c209f26acaa8",
+          "per_call_nanos": 162852.374023,
+          "peak_rss_kb": 62496,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 321657306,
+          "status": "ok",
+          "result_hash": "0x19628f1b3fb094be",
+          "per_call_nanos": 314118.462891,
+          "peak_rss_kb": 61684,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 490822888,
+          "status": "ok",
+          "result_hash": "0x8eaf30fee97ad347",
+          "per_call_nanos": 479319.226562,
+          "peak_rss_kb": 60796,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 659853170,
+          "status": "ok",
+          "result_hash": "0xd8af5331961b36ae",
+          "per_call_nanos": 1288775.722656,
+          "peak_rss_kb": 62604,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 333986812,
+          "status": "ok",
+          "result_hash": "0xe06840d6c1747ca1",
+          "per_call_nanos": 2609271.96875,
+          "peak_rss_kb": 61356,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 312184967,
+          "status": "ok",
+          "result_hash": "0xc84bcb99fde48835",
+          "per_call_nanos": 9755780.21875,
+          "peak_rss_kb": 61156,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 356747669,
+          "status": "ok",
+          "result_hash": "0x8943797003e853be",
+          "per_call_nanos": 22296729.3125,
+          "peak_rss_kb": 61224,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 242816686,
+          "status": "ok",
+          "result_hash": "0x5d201953c4acee20",
+          "per_call_nanos": 60704171.5,
+          "peak_rss_kb": 61472,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 513904891,
+          "status": "ok",
+          "result_hash": "0x496b101d7c93d53c",
+          "per_call_nanos": 128476222.75,
+          "peak_rss_kb": 61900,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 355985698,
+          "status": "ok",
+          "result_hash": "0x52cce1643f9fe3f2",
+          "per_call_nanos": 355985698,
+          "peak_rss_kb": 63436,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 1043601023,
+          "status": "ok",
+          "result_hash": "0x99f036336d977df",
+          "per_call_nanos": 1043601023,
+          "peak_rss_kb": 64064,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 3798269580,
+          "status": "ok",
+          "result_hash": "0x350905f9375bf7c7",
+          "per_call_nanos": 3798269580,
+          "peak_rss_kb": 65552,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 0,
+          "status": "killed_at_cap",
+          "result_hash": null,
+          "per_call_nanos": 0,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 0,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runModuleStructure",
+      "env": {
+        "timestamp_unix_ms": 1787880340709,
+        "timestamp_iso": "2026-08-28T01:25:40Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 3218.91003,
+      "c_max": 4391.21611,
+      "budget_truncated": false,
+      "advisories": [
+        "truncated_at_cap"
+      ]
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 5089.164505,
+          "median_per_call_nanos": 5089.164505,
+          "max_per_call_nanos": 5089.164505
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 158749.765625,
+          "median_per_call_nanos": 158749.765625,
+          "max_per_call_nanos": 158749.765625
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 251093.186523,
+          "median_per_call_nanos": 251093.186523,
+          "max_per_call_nanos": 251093.186523
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 512430.970703,
+          "median_per_call_nanos": 512430.970703,
+          "max_per_call_nanos": 512430.970703
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 1364451.21875,
+          "median_per_call_nanos": 1364451.21875,
+          "max_per_call_nanos": 1364451.21875
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 2433309.195312,
+          "median_per_call_nanos": 2433309.195312,
+          "max_per_call_nanos": 2433309.195312
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 8104751.703125,
+          "median_per_call_nanos": 8104751.703125,
+          "max_per_call_nanos": 8104751.703125
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 20939159.28125,
+          "median_per_call_nanos": 20939159.28125,
+          "max_per_call_nanos": 20939159.28125
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 61329164.5,
+          "median_per_call_nanos": 61329164.5,
+          "max_per_call_nanos": 61329164.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 130212811,
+          "median_per_call_nanos": 130212811,
+          "max_per_call_nanos": 130212811
+        },
+        {
+          "relative_spread": 0,
+          "param": 48,
+          "ok_count": 1,
+          "min_per_call_nanos": 474616822,
+          "median_per_call_nanos": 474616822,
+          "max_per_call_nanos": 474616822
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 927258422,
+          "median_per_call_nanos": 927258422,
+          "max_per_call_nanos": 927258422
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 3421965664,
+          "median_per_call_nanos": 3421965664,
+          "max_per_call_nanos": 3421965664
+        }
+      ],
+      "spawn_floor_nanos": 69894302,
+      "slope": -0.105808,
+      "ratios": [
+        [
+          2,
+          19843.720703
+        ],
+        [
+          3,
+          9299.747649
+        ],
+        [
+          4,
+          8006.733917
+        ],
+        [
+          6,
+          6316.903791
+        ],
+        [
+          8,
+          4752.557022
+        ],
+        [
+          12,
+          4690.249828
+        ],
+        [
+          16,
+          5112.099434
+        ],
+        [
+          24,
+          4436.42683
+        ],
+        [
+          32,
+          3973.779633
+        ],
+        [
+          48,
+          4291.601761
+        ],
+        [
+          64,
+          3537.210167
+        ],
+        [
+          96,
+          3867.781648
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 667046970,
+          "status": "ok",
+          "result_hash": "0xe32ef3a2224f3789",
+          "per_call_nanos": 5089.164505,
+          "peak_rss_kb": 61468,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 131072,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 650239040,
+          "status": "ok",
+          "result_hash": "0x4fb88fa58d7b6e88",
+          "per_call_nanos": 158749.765625,
+          "peak_rss_kb": 60576,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 514238846,
+          "status": "ok",
+          "result_hash": "0xaf338e1d6083527f",
+          "per_call_nanos": 251093.186523,
+          "peak_rss_kb": 61112,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 262364657,
+          "status": "ok",
+          "result_hash": "0x429529a737e3c373",
+          "per_call_nanos": 512430.970703,
+          "peak_rss_kb": 60780,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 349299512,
+          "status": "ok",
+          "result_hash": "0xbe9c23b13cd30b1",
+          "per_call_nanos": 1364451.21875,
+          "peak_rss_kb": 63580,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 311463577,
+          "status": "ok",
+          "result_hash": "0xff83ecf5d56c3bac",
+          "per_call_nanos": 2433309.195312,
+          "peak_rss_kb": 61188,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 518704109,
+          "status": "ok",
+          "result_hash": "0x5039a356a0387609",
+          "per_call_nanos": 8104751.703125,
+          "peak_rss_kb": 61788,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 670053097,
+          "status": "ok",
+          "result_hash": "0x5f28ca1c54dcb47a",
+          "per_call_nanos": 20939159.28125,
+          "peak_rss_kb": 61292,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 490633316,
+          "status": "ok",
+          "result_hash": "0x7b6ef291e54177b8",
+          "per_call_nanos": 61329164.5,
+          "peak_rss_kb": 61616,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 520851244,
+          "status": "ok",
+          "result_hash": "0xb5122ecc51bbc027",
+          "per_call_nanos": 130212811,
+          "peak_rss_kb": 61372,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 474616822,
+          "status": "ok",
+          "result_hash": "0x2a22e00db4f61ad5",
+          "per_call_nanos": 474616822,
+          "peak_rss_kb": 62028,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 927258422,
+          "status": "ok",
+          "result_hash": "0xec94ac4760090d88",
+          "per_call_nanos": 927258422,
+          "peak_rss_kb": 63224,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 3421965664,
+          "status": "ok",
+          "result_hash": "0xa2c9865111c80e8e",
+          "per_call_nanos": 3421965664,
+          "peak_rss_kb": 65780,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 0,
+          "status": "killed_at_cap",
+          "result_hash": null,
+          "per_call_nanos": 0,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 0,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runQuotientOrder",
+      "env": {
+        "timestamp_unix_ms": 1787880361031,
+        "timestamp_iso": "2026-08-28T01:26:01Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 3537.210167,
+      "c_max": 4436.42683,
+      "budget_truncated": false,
+      "advisories": [
+        "truncated_at_cap"
+      ]
+    },
+    {
+      "verdict_dropped_leading": 7,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0.125942,
+          "param": 1,
+          "ok_count": 3,
+          "min_per_call_nanos": 7676.204605,
+          "median_per_call_nanos": 8417.495834,
+          "max_per_call_nanos": 8736.320282
+        },
+        {
+          "relative_spread": 0.213765,
+          "param": 2,
+          "ok_count": 3,
+          "min_per_call_nanos": 90770.518799,
+          "median_per_call_nanos": 106943.38916,
+          "max_per_call_nanos": 113631.26709
+        },
+        {
+          "relative_spread": 0.258091,
+          "param": 3,
+          "ok_count": 3,
+          "min_per_call_nanos": 179679.394531,
+          "median_per_call_nanos": 187244.54541,
+          "max_per_call_nanos": 228005.560059
+        },
+        {
+          "relative_spread": 0.179785,
+          "param": 4,
+          "ok_count": 3,
+          "min_per_call_nanos": 286676.970703,
+          "median_per_call_nanos": 305453.196289,
+          "max_per_call_nanos": 341592.826172
+        },
+        {
+          "relative_spread": 0.151611,
+          "param": 6,
+          "ok_count": 3,
+          "min_per_call_nanos": 671003.570312,
+          "median_per_call_nanos": 716515.445312,
+          "max_per_call_nanos": 779635.113281
+        },
+        {
+          "relative_spread": 0.181467,
+          "param": 8,
+          "ok_count": 3,
+          "min_per_call_nanos": 1251786.109375,
+          "median_per_call_nanos": 1261194.121094,
+          "max_per_call_nanos": 1480651.59375
+        },
+        {
+          "relative_spread": 0.090053,
+          "param": 12,
+          "ok_count": 3,
+          "min_per_call_nanos": 3466395.96875,
+          "median_per_call_nanos": 3527047.335938,
+          "max_per_call_nanos": 3784017.351562
+        },
+        {
+          "relative_spread": 0.064279,
+          "param": 16,
+          "ok_count": 3,
+          "min_per_call_nanos": 8117754.53125,
+          "median_per_call_nanos": 8658803.046875,
+          "max_per_call_nanos": 8674330.625
+        },
+        {
+          "relative_spread": 0.30744,
+          "param": 24,
+          "ok_count": 3,
+          "min_per_call_nanos": 26210637.6875,
+          "median_per_call_nanos": 26729160.4375,
+          "max_per_call_nanos": 34428260.3125
+        },
+        {
+          "relative_spread": 0.067174,
+          "param": 32,
+          "ok_count": 3,
+          "min_per_call_nanos": 57234521.375,
+          "median_per_call_nanos": 60376774.25,
+          "max_per_call_nanos": 61290250.25
+        },
+        {
+          "relative_spread": 0.047927,
+          "param": 48,
+          "ok_count": 3,
+          "min_per_call_nanos": 188704169,
+          "median_per_call_nanos": 192219953.5,
+          "max_per_call_nanos": 197916632
+        },
+        {
+          "relative_spread": 0.07923,
+          "param": 64,
+          "ok_count": 3,
+          "min_per_call_nanos": 431374356,
+          "median_per_call_nanos": 458668196,
+          "max_per_call_nanos": 467714532
+        },
+        {
+          "relative_spread": 0.117177,
+          "param": 96,
+          "ok_count": 3,
+          "min_per_call_nanos": 1502431031,
+          "median_per_call_nanos": 1531580813,
+          "max_per_call_nanos": 1681897600
+        },
+        {
+          "relative_spread": 0.119086,
+          "param": 128,
+          "ok_count": 3,
+          "min_per_call_nanos": 3605116955,
+          "median_per_call_nanos": 3612584480,
+          "max_per_call_nanos": 4035324181
+        }
+      ],
+      "spawn_floor_nanos": 143721495,
+      "slope": -0.063535,
+      "ratios": [
+        [
+          2,
+          13367.923645
+        ],
+        [
+          3,
+          6934.983163
+        ],
+        [
+          4,
+          4772.706192
+        ],
+        [
+          6,
+          3317.201136
+        ],
+        [
+          8,
+          2463.269768
+        ],
+        [
+          12,
+          2041.115356
+        ],
+        [
+          16,
+          2113.965588
+        ],
+        [
+          24,
+          1933.533018
+        ],
+        [
+          32,
+          1842.552925
+        ],
+        [
+          48,
+          1738.099985
+        ],
+        [
+          64,
+          1749.680313
+        ],
+        [
+          96,
+          1731.116189
+        ],
+        [
+          128,
+          1722.614517
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 286271743,
+          "status": "ok",
+          "result_hash": "0x7edd2d5851fc7a5",
+          "per_call_nanos": 8736.320282,
+          "peak_rss_kb": 62360,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 551649007,
+          "status": "ok",
+          "result_hash": "0x7edd2d5851fc7a5",
+          "per_call_nanos": 8417.495834,
+          "peak_rss_kb": 60344,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 65536,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 503067745,
+          "status": "ok",
+          "result_hash": "0x7edd2d5851fc7a5",
+          "per_call_nanos": 7676.204605,
+          "peak_rss_kb": 60452,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 65536,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 438040122,
+          "status": "ok",
+          "result_hash": "0x3651a580a2ea015c",
+          "per_call_nanos": 106943.38916,
+          "peak_rss_kb": 61004,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 465433670,
+          "status": "ok",
+          "result_hash": "0x3651a580a2ea015c",
+          "per_call_nanos": 113631.26709,
+          "peak_rss_kb": 60464,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 371796045,
+          "status": "ok",
+          "result_hash": "0x3651a580a2ea015c",
+          "per_call_nanos": 90770.518799,
+          "peak_rss_kb": 61068,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 383476829,
+          "status": "ok",
+          "result_hash": "0x925ecc2daf5239ce",
+          "per_call_nanos": 187244.54541,
+          "peak_rss_kb": 61084,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 367983400,
+          "status": "ok",
+          "result_hash": "0x925ecc2daf5239ce",
+          "per_call_nanos": 179679.394531,
+          "peak_rss_kb": 61224,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 466955387,
+          "status": "ok",
+          "result_hash": "0x925ecc2daf5239ce",
+          "per_call_nanos": 228005.560059,
+          "peak_rss_kb": 61056,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 699582108,
+          "status": "ok",
+          "result_hash": "0xb5a34cfce276fb30",
+          "per_call_nanos": 341592.826172,
+          "peak_rss_kb": 60384,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 293557218,
+          "status": "ok",
+          "result_hash": "0xb5a34cfce276fb30",
+          "per_call_nanos": 286676.970703,
+          "peak_rss_kb": 61056,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 312784073,
+          "status": "ok",
+          "result_hash": "0xb5a34cfce276fb30",
+          "per_call_nanos": 305453.196289,
+          "peak_rss_kb": 60612,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 399173178,
+          "status": "ok",
+          "result_hash": "0xd06a4cd14cb0df25",
+          "per_call_nanos": 779635.113281,
+          "peak_rss_kb": 60352,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 343553828,
+          "status": "ok",
+          "result_hash": "0xd06a4cd14cb0df25",
+          "per_call_nanos": 671003.570312,
+          "peak_rss_kb": 60392,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 366855908,
+          "status": "ok",
+          "result_hash": "0xd06a4cd14cb0df25",
+          "per_call_nanos": 716515.445312,
+          "peak_rss_kb": 63484,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 320457244,
+          "status": "ok",
+          "result_hash": "0x2b824345d8c14514",
+          "per_call_nanos": 1251786.109375,
+          "peak_rss_kb": 63992,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 322865695,
+          "status": "ok",
+          "result_hash": "0x2b824345d8c14514",
+          "per_call_nanos": 1261194.121094,
+          "peak_rss_kb": 64956,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 379046808,
+          "status": "ok",
+          "result_hash": "0x2b824345d8c14514",
+          "per_call_nanos": 1480651.59375,
+          "peak_rss_kb": 63040,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 484354221,
+          "status": "ok",
+          "result_hash": "0xec4ad34187c8822b",
+          "per_call_nanos": 3784017.351562,
+          "peak_rss_kb": 63652,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 451462059,
+          "status": "ok",
+          "result_hash": "0xec4ad34187c8822b",
+          "per_call_nanos": 3527047.335938,
+          "peak_rss_kb": 61032,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 443698684,
+          "status": "ok",
+          "result_hash": "0xec4ad34187c8822b",
+          "per_call_nanos": 3466395.96875,
+          "peak_rss_kb": 60840,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 519536290,
+          "status": "ok",
+          "result_hash": "0xfe4e7c01a0ea3429",
+          "per_call_nanos": 8117754.53125,
+          "peak_rss_kb": 61244,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 554163395,
+          "status": "ok",
+          "result_hash": "0xfe4e7c01a0ea3429",
+          "per_call_nanos": 8658803.046875,
+          "peak_rss_kb": 60920,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 555157160,
+          "status": "ok",
+          "result_hash": "0xfe4e7c01a0ea3429",
+          "per_call_nanos": 8674330.625,
+          "peak_rss_kb": 63832,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 419370203,
+          "status": "ok",
+          "result_hash": "0x7a00056c92cc8f5d",
+          "per_call_nanos": 26210637.6875,
+          "peak_rss_kb": 61648,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 427666567,
+          "status": "ok",
+          "result_hash": "0x7a00056c92cc8f5d",
+          "per_call_nanos": 26729160.4375,
+          "peak_rss_kb": 61192,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 550852165,
+          "status": "ok",
+          "result_hash": "0x7a00056c92cc8f5d",
+          "per_call_nanos": 34428260.3125,
+          "peak_rss_kb": 61500,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 245161001,
+          "status": "ok",
+          "result_hash": "0xa2d35e6859a7fc66",
+          "per_call_nanos": 61290250.25,
+          "peak_rss_kb": 61520,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 483014194,
+          "status": "ok",
+          "result_hash": "0xa2d35e6859a7fc66",
+          "per_call_nanos": 60376774.25,
+          "peak_rss_kb": 61384,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 457876171,
+          "status": "ok",
+          "result_hash": "0xa2d35e6859a7fc66",
+          "per_call_nanos": 57234521.375,
+          "peak_rss_kb": 61228,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 8,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 384439907,
+          "status": "ok",
+          "result_hash": "0x111d2dcc62edd0b2",
+          "per_call_nanos": 192219953.5,
+          "peak_rss_kb": 65304,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 377408338,
+          "status": "ok",
+          "result_hash": "0x111d2dcc62edd0b2",
+          "per_call_nanos": 188704169,
+          "peak_rss_kb": 62496,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 395833264,
+          "status": "ok",
+          "result_hash": "0x111d2dcc62edd0b2",
+          "per_call_nanos": 197916632,
+          "peak_rss_kb": 61836,
+          "part_of_verdict": true,
+          "param": 48,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 467714532,
+          "status": "ok",
+          "result_hash": "0x651cdc9f91471c43",
+          "per_call_nanos": 467714532,
+          "peak_rss_kb": 67344,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 431374356,
+          "status": "ok",
+          "result_hash": "0x651cdc9f91471c43",
+          "per_call_nanos": 431374356,
+          "peak_rss_kb": 67140,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 458668196,
+          "status": "ok",
+          "result_hash": "0x651cdc9f91471c43",
+          "per_call_nanos": 458668196,
+          "peak_rss_kb": 64040,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 1502431031,
+          "status": "ok",
+          "result_hash": "0xcc992b564ac59458",
+          "per_call_nanos": 1502431031,
+          "peak_rss_kb": 66048,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 1681897600,
+          "status": "ok",
+          "result_hash": "0xcc992b564ac59458",
+          "per_call_nanos": 1681897600,
+          "peak_rss_kb": 65964,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 1531580813,
+          "status": "ok",
+          "result_hash": "0xcc992b564ac59458",
+          "per_call_nanos": 1531580813,
+          "peak_rss_kb": 66052,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 4035324181,
+          "status": "ok",
+          "result_hash": "0xe682a6b6a69cac9d",
+          "per_call_nanos": 4035324181,
+          "peak_rss_kb": 72812,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 1,
+          "total_nanos": 3612584480,
+          "status": "ok",
+          "result_hash": "0xe682a6b6a69cac9d",
+          "per_call_nanos": 3612584480,
+          "peak_rss_kb": 73852,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 2,
+          "total_nanos": 3605116955,
+          "status": "ok",
+          "result_hash": "0xe682a6b6a69cac9d",
+          "per_call_nanos": 3605116955,
+          "peak_rss_kb": 75408,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runSolveSystem",
+      "env": {
+        "timestamp_unix_ms": 1787880491063,
+        "timestamp_iso": "2026-08-28T01:28:11Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 128,
+        "outer_trials": 3,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "dimensionCost n",
+      "c_min": 1722.614517,
+      "c_max": 1933.533018,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 5,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 4872.810593,
+          "median_per_call_nanos": 4872.810593,
+          "max_per_call_nanos": 4872.810593
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 30456.167908,
+          "median_per_call_nanos": 30456.167908,
+          "max_per_call_nanos": 30456.167908
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 111415.097168,
+          "median_per_call_nanos": 111415.097168,
+          "max_per_call_nanos": 111415.097168
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 219921.818359,
+          "median_per_call_nanos": 219921.818359,
+          "max_per_call_nanos": 219921.818359
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 549929.30957,
+          "median_per_call_nanos": 549929.30957,
+          "max_per_call_nanos": 549929.30957
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 1229174.410156,
+          "median_per_call_nanos": 1229174.410156,
+          "max_per_call_nanos": 1229174.410156
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 5421483.5,
+          "median_per_call_nanos": 5421483.5,
+          "max_per_call_nanos": 5421483.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 9413348.25,
+          "median_per_call_nanos": 9413348.25,
+          "max_per_call_nanos": 9413348.25
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 37215374,
+          "median_per_call_nanos": 37215374,
+          "max_per_call_nanos": 37215374
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 92099053.5,
+          "median_per_call_nanos": 92099053.5,
+          "max_per_call_nanos": 92099053.5
+        }
+      ],
+      "spawn_floor_nanos": 147533279,
+      "slope": null,
+      "ratios": [
+        [
+          2,
+          3807.020988
+        ],
+        [
+          3,
+          4126.48508
+        ],
+        [
+          4,
+          3436.278412
+        ],
+        [
+          6,
+          2545.969026
+        ],
+        [
+          8,
+          2400.73127
+        ],
+        [
+          12,
+          3137.432581
+        ],
+        [
+          16,
+          2298.180725
+        ],
+        [
+          24,
+          2692.084346
+        ],
+        [
+          32,
+          2810.64006
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 319344515,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 4872.810593,
+          "peak_rss_kb": 61428,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 65536,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 498993855,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 30456.167908,
+          "peak_rss_kb": 60572,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 16384,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 456356238,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 111415.097168,
+          "peak_rss_kb": 62864,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 450399884,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 219921.818359,
+          "peak_rss_kb": 60780,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 563127613,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 549929.30957,
+          "peak_rss_kb": 60812,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 629337298,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 1229174.410156,
+          "peak_rss_kb": 61276,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 346974944,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 5421483.5,
+          "peak_rss_kb": 60716,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 602454288,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 9413348.25,
+          "peak_rss_kb": 61080,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 595445984,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 37215374,
+          "peak_rss_kb": 62404,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 368396214,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 92099053.5,
+          "peak_rss_kb": 63836,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runDirectProductCert",
+      "env": {
+        "timestamp_unix_ms": 1787880433830,
+        "timestamp_iso": "2026-08-28T01:27:13Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": false,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 32,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "directCertCost n",
+      "c_min": 2298.180725,
+      "c_max": 3137.432581,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 5,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 1,
+          "ok_count": 1,
+          "min_per_call_nanos": 11874.841614,
+          "median_per_call_nanos": 11874.841614,
+          "max_per_call_nanos": 11874.841614
+        },
+        {
+          "relative_spread": 0,
+          "param": 2,
+          "ok_count": 1,
+          "min_per_call_nanos": 73623.911621,
+          "median_per_call_nanos": 73623.911621,
+          "max_per_call_nanos": 73623.911621
+        },
+        {
+          "relative_spread": 0,
+          "param": 3,
+          "ok_count": 1,
+          "min_per_call_nanos": 223956.967285,
+          "median_per_call_nanos": 223956.967285,
+          "max_per_call_nanos": 223956.967285
+        },
+        {
+          "relative_spread": 0,
+          "param": 4,
+          "ok_count": 1,
+          "min_per_call_nanos": 541937.091797,
+          "median_per_call_nanos": 541937.091797,
+          "max_per_call_nanos": 541937.091797
+        },
+        {
+          "relative_spread": 0,
+          "param": 6,
+          "ok_count": 1,
+          "min_per_call_nanos": 2241117.414062,
+          "median_per_call_nanos": 2241117.414062,
+          "max_per_call_nanos": 2241117.414062
+        },
+        {
+          "relative_spread": 0,
+          "param": 8,
+          "ok_count": 1,
+          "min_per_call_nanos": 6527335.453125,
+          "median_per_call_nanos": 6527335.453125,
+          "max_per_call_nanos": 6527335.453125
+        },
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 33356109.5,
+          "median_per_call_nanos": 33356109.5,
+          "max_per_call_nanos": 33356109.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 16,
+          "ok_count": 1,
+          "min_per_call_nanos": 111167428.5,
+          "median_per_call_nanos": 111167428.5,
+          "max_per_call_nanos": 111167428.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 550640230,
+          "median_per_call_nanos": 550640230,
+          "max_per_call_nanos": 550640230
+        },
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 1901803473,
+          "median_per_call_nanos": 1901803473,
+          "max_per_call_nanos": 1901803473
+        }
+      ],
+      "spawn_floor_nanos": 62699680,
+      "slope": null,
+      "ratios": [
+        [
+          2,
+          908.937181
+        ],
+        [
+          3,
+          874.831903
+        ],
+        [
+          4,
+          867.099347
+        ],
+        [
+          6,
+          933.410002
+        ],
+        [
+          8,
+          994.868991
+        ],
+        [
+          12,
+          1167.890112
+        ],
+        [
+          16,
+          1331.011704
+        ],
+        [
+          24,
+          1409.638989
+        ],
+        [
+          32,
+          1603.651064
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 389114810,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 11874.841614,
+          "peak_rss_kb": 60800,
+          "part_of_verdict": true,
+          "param": 1,
+          "inner_repeats": 32768,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 301563542,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 73623.911621,
+          "peak_rss_kb": 60804,
+          "part_of_verdict": true,
+          "param": 2,
+          "inner_repeats": 4096,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 458663869,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 223956.967285,
+          "peak_rss_kb": 64196,
+          "part_of_verdict": true,
+          "param": 3,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 277471791,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 541937.091797,
+          "peak_rss_kb": 66612,
+          "part_of_verdict": true,
+          "param": 4,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 286863029,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 2241117.414062,
+          "peak_rss_kb": 66732,
+          "part_of_verdict": true,
+          "param": 6,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 417749469,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 6527335.453125,
+          "peak_rss_kb": 60972,
+          "part_of_verdict": true,
+          "param": 8,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 533697752,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 33356109.5,
+          "peak_rss_kb": 61160,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 444669714,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 111167428.5,
+          "peak_rss_kb": 61292,
+          "part_of_verdict": true,
+          "param": 16,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 550640230,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 550640230,
+          "peak_rss_kb": 66780,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 1901803473,
+          "status": "ok",
+          "result_hash": "0xb",
+          "per_call_nanos": 1901803473,
+          "peak_rss_kb": 63536,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.PolySmithBench.runEvaluationCert",
+      "env": {
+        "timestamp_unix_ms": 1787880535604,
+        "timestamp_iso": "2026-08-28T01:28:55Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+        "exe_name": "hexpolysmith_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.6,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 1,
+        "param_schedule": {
+          "params": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16,
+            24,
+            32
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 1,
+        "param_ceiling": 32,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "evaluationCertCost n",
+      "c_min": 1167.890112,
+      "c_max": 1603.651064,
+      "budget_truncated": false,
+      "advisories": []
+    }
+  ],
+  "lean_bench_version": "0.1.0",
+  "export_schema_version": 1,
+  "env": {
+    "timestamp_unix_ms": 1787880197136,
+    "timestamp_iso": "2026-08-28T01:23:17Z",
+    "platform_target": "x86_64-unknown-linux-gnu",
+    "os": "linux",
+    "lean_version": "4.34.0-rc2",
+    "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+    "lean_bench_version": "0.1.0",
+    "hostname": "chungus2",
+    "git_dirty": false,
+    "git_commit": "a423d9d5ebab368bae1ce6fc2482d3950864ecdb",
+    "exe_name": "hexpolysmith_bench",
+    "cpu_model": "AMD EPYC 9455 48-Core Processor",
+    "cpu_cores": 96,
+    "arch": "x86_64"
+  }
+}
