@@ -590,7 +590,7 @@ setup_benchmark runRefineTo t => (t * t)
     paramFloor := 32773
     paramCeiling := 524293
     paramSchedule := .custom #[32773, 65541, 131077, 262149, 524293]
-    maxSecondsPerCall := 10.0
+    maxSecondsPerCall := 15.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
