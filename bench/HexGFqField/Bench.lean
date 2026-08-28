@@ -13,9 +13,11 @@ import LeanBench
 Benchmark registrations for `hex-gfq-field`.
 
 This Phase 4 benchmark surface measures the executable finite-field wrapper over
-`F_7[x] / (f)`. Inputs use a small schedule of Conway-style irreducible
-moduli with certificate-checked Rabin witnesses; construction is hoisted
-through `prep`, and timed targets return compact polynomial checksums.
+`F_7[x] / (f)`. The smoke path uses small moduli with kernel-checked Rabin
+certificates. Larger scientific rungs use committed sparse trinomials whose
+Rabin tests run in compiled `prep`; the soundness theorem turns each successful
+test into the irreducibility witness required by `GFqField`. Construction is
+hoisted through `prep`, and timed targets return compact polynomial checksums.
 
 Scientific registrations:
 
@@ -412,6 +414,57 @@ private theorem m_p7_n8_irr : FpPoly.Irreducible m_p7_n8 :=
       m_p7_n8 m_p7_n8_monic m_p7_n8_certificate
       m_p7_n8_certificate_check)
 
+/-! ## Scientific-only runtime-checked moduli
+
+The high-degree trinomials below are checked for irreducibility during compiled
+benchmark preparation. This uses the same proven
+`rabinTest_imp_irreducible` route as the static certificates above, while
+avoiding the large kernel reductions that exhausted GitHub-hosted CI in
+PR #2790.
+-/
+
+/-- Sparse monic polynomial `x^n + x^k + constant` over `F_7`. -/
+private def sparseModulus (n k constant : Nat) : FpPoly 7 :=
+  DensePoly.ofCoeffs <| (Array.range (n + 1)).map fun i =>
+    if i = 0 then ZMod64.ofNat 7 constant
+    else if i = k ∨ i = n then 1 else 0
+
+private theorem sparseModulus_coeff_top {n k constant : Nat} (hn : 0 < n) :
+    (sparseModulus n k constant).coeff n = 1 := by
+  rw [sparseModulus, DensePoly.coeff_ofCoeffs,
+    Array.getD_eq_getD_getElem?, Array.getElem?_map]
+  have hlt : n < (Array.range (n + 1)).size := by simp
+  rw [Array.getElem?_eq_getElem hlt]
+  simp [Nat.ne_of_gt hn]
+
+private theorem sparseModulus_size {n k constant : Nat} (hn : 0 < n) :
+    (sparseModulus n k constant).size = n + 1 := by
+  apply Nat.le_antisymm
+  · exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
+  · apply Nat.succ_le_of_lt
+    by_contra hlt
+    have hzero := DensePoly.coeff_eq_zero_of_size_le
+      (sparseModulus n k constant) (Nat.le_of_not_gt hlt)
+    rw [sparseModulus_coeff_top hn] at hzero
+    exact (by decide : (1 : ZMod64 7) ≠ 0) hzero
+
+private theorem sparseModulus_degree {n k constant : Nat} (hn : 0 < n) :
+    FpPoly.degree (sparseModulus n k constant) = n := by
+  change (sparseModulus n k constant).degree?.getD 0 = n
+  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
+    rw [sparseModulus_size hn]
+    omega)]
+  simp [sparseModulus_size hn]
+
+private theorem sparseModulus_monic {n k constant : Nat} (hn : 0 < n) :
+    DensePoly.Monic (sparseModulus n k constant) := by
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by
+    rw [sparseModulus_size hn]
+    omega)]
+  rw [sparseModulus_size hn]
+  exact sparseModulus_coeff_top (n := n) (k := k) (constant := constant) hn
+
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
 parameter `n` and select the correct per-degree fixture. -/
@@ -419,6 +472,35 @@ private structure ModulusBundle where
   modulus : FpPoly 7
   pos : 0 < FpPoly.degree modulus
   irr : FpPoly.Irreducible modulus
+
+private instance : Inhabited ModulusBundle :=
+  ⟨⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩⟩
+
+/-- Run the Rabin test in compiled benchmark preparation and, on success,
+package its proven irreducibility result. This keeps large certificate
+reduction out of kernel elaboration while retaining checked field inputs. -/
+private def runtimeCheckedBundle (f : FpPoly 7) (hpos : 0 < FpPoly.degree f)
+    (hmonic : DensePoly.Monic f) : Option ModulusBundle :=
+  if h : Berlekamp.rabinTest f hmonic = true then
+    some ⟨f, hpos, Berlekamp.rabinTest_imp_irreducible f hmonic h⟩
+  else
+    none
+
+private def runtimeCheckedSparseBundle (n k constant : Nat) (hn : 0 < n) :
+    Option ModulusBundle :=
+  runtimeCheckedBundle (sparseModulus n k constant) (by
+      rw [sparseModulus_degree hn]
+      exact hn)
+    (sparseModulus_monic hn)
+
+/-- Require the scheduled sparse modulus to pass Rabin's test. A rejected
+fixture is a benchmark configuration error and must be visible rather than
+silently changing the field degree attached to the harness parameter. -/
+private def checkedSparseBundle (n k constant : Nat) (hn : 0 < n) :
+    ModulusBundle :=
+  match runtimeCheckedSparseBundle n k constant hn with
+  | some bundle => bundle
+  | none => panic! "scheduled GFqField modulus failed the Rabin test"
 
 /-- Look up the per-degree modulus fixture for benchmark parameter `n`.
 The match enumerates the union of `paramSchedule` entries used by the
@@ -432,7 +514,19 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 5 => ⟨m_p7_n5, m_p7_n5_pos, m_p7_n5_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
   | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
+  | 432 => checkedSparseBundle 432 54 3 (by omega)
+  | 600 => checkedSparseBundle 600 75 3 (by omega)
+  | 768 => checkedSparseBundle 768 96 3 (by omega)
+  | 936 => checkedSparseBundle 936 324 3 (by omega)
+  | 1216 => checkedSparseBundle 1216 144 3 (by omega)
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+
+/-- Degree 2 is a low-cost manual check. The scientific tail spans more than a
+factor of `e`, and every tail degree is congruent to `40` modulo `56`, so
+`densePoly` supplies the same coefficient pattern while fixed word and dispatch
+costs amortize. Harness verification uses parameters 0 and 1 independently of
+this schedule. -/
+private def scientificSchedule : Array Nat := #[2, 432, 600, 768, 936, 1216]
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly (f : FpPoly 7) : UInt64 :=
@@ -693,108 +787,156 @@ certificate-checked `#[2, 3, 4, 5, 6, 8]` schedule so the headline report can
 record raw and overhead-adjusted ratios for every Phase-4 input family without
 adding larger certificate elaboration to the normal bench module. -/
 
-def runOfPoly2 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 2)
+/-- Read fixed Hex inputs through runtime state so the batching harness cannot
+turn the pure target into a compile-time constant. -/
+@[noinline] private def runFixed (f : α → UInt64) (input : IO.Ref α) : IO UInt64 := do
+  let value ← input.get
+  input.set value
+  return f value
+
+private instance : Inhabited OfPolyInput := ⟨prepOfPolyInput 2⟩
+private instance : Inhabited BinaryInput := ⟨prepBinaryInput 2⟩
+private instance : Inhabited PowInput := ⟨prepPowInput 2⟩
+private instance : Inhabited ZPowInput := ⟨prepZPowInput 2⟩
+private instance : Inhabited UnaryInput := ⟨prepUnaryInput 2⟩
+
+private initialize fixedOfPoly2 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 2)
+private initialize fixedOfPoly3 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 3)
+private initialize fixedOfPoly4 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 4)
+private initialize fixedOfPoly5 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 5)
+private initialize fixedOfPoly6 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 6)
+private initialize fixedOfPoly8 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 8)
+
+private initialize fixedBinary2 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 2)
+private initialize fixedBinary3 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 3)
+private initialize fixedBinary4 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 4)
+private initialize fixedBinary5 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 5)
+private initialize fixedBinary6 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 6)
+private initialize fixedBinary8 : IO.Ref BinaryInput ← IO.mkRef (prepBinaryInput 8)
+
+private initialize fixedPow2 : IO.Ref PowInput ← IO.mkRef (prepPowInput 2)
+private initialize fixedPow3 : IO.Ref PowInput ← IO.mkRef (prepPowInput 3)
+private initialize fixedPow4 : IO.Ref PowInput ← IO.mkRef (prepPowInput 4)
+private initialize fixedPow5 : IO.Ref PowInput ← IO.mkRef (prepPowInput 5)
+private initialize fixedPow6 : IO.Ref PowInput ← IO.mkRef (prepPowInput 6)
+private initialize fixedPow8 : IO.Ref PowInput ← IO.mkRef (prepPowInput 8)
+
+private initialize fixedZPow2 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 2)
+private initialize fixedZPow3 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 3)
+private initialize fixedZPow4 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 4)
+private initialize fixedZPow5 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 5)
+private initialize fixedZPow6 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 6)
+private initialize fixedZPow8 : IO.Ref ZPowInput ← IO.mkRef (prepZPowInput 8)
+
+private initialize fixedUnary2 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 2)
+private initialize fixedUnary3 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 3)
+private initialize fixedUnary4 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 4)
+private initialize fixedUnary5 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 5)
+private initialize fixedUnary6 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 6)
+private initialize fixedUnary8 : IO.Ref UnaryInput ← IO.mkRef (prepUnaryInput 8)
+
+def runOfPoly2 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly2
 def runFlintOfPoly2 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 2)
-def runOfPoly3 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 3)
+def runOfPoly3 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly3
 def runFlintOfPoly3 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 3)
-def runOfPoly4 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 4)
+def runOfPoly4 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly4
 def runFlintOfPoly4 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 4)
-def runOfPoly5 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 5)
+def runOfPoly5 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly5
 def runFlintOfPoly5 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 5)
-def runOfPoly6 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 6)
+def runOfPoly6 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly6
 def runFlintOfPoly6 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 6)
-def runOfPoly8 : Unit → IO UInt64 := fun _ => return runOfPolyReprChecksum (prepOfPolyInput 8)
+def runOfPoly8 : Unit → IO UInt64 := fun _ => runFixed runOfPolyReprChecksum fixedOfPoly8
 def runFlintOfPoly8 : Unit → IO UInt64 := fun _ => runFlintOfPolyReprChecksum (prepOfPolyInput 8)
 
-def runAdd2 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 2)
+def runAdd2 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary2
 def runFlintAdd2 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 2)
-def runAdd3 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 3)
+def runAdd3 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary3
 def runFlintAdd3 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 3)
-def runAdd4 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 4)
+def runAdd4 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary4
 def runFlintAdd4 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 4)
-def runAdd5 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 5)
+def runAdd5 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary5
 def runFlintAdd5 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 5)
-def runAdd6 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 6)
+def runAdd6 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary6
 def runFlintAdd6 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 6)
-def runAdd8 : Unit → IO UInt64 := fun _ => return runAddChecksum (prepBinaryInput 8)
+def runAdd8 : Unit → IO UInt64 := fun _ => runFixed runAddChecksum fixedBinary8
 def runFlintAdd8 : Unit → IO UInt64 := fun _ => runFlintAddChecksum (prepBinaryInput 8)
 
-def runMul2 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 2)
+def runMul2 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary2
 def runFlintMul2 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 2)
-def runMul3 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 3)
+def runMul3 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary3
 def runFlintMul3 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 3)
-def runMul4 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 4)
+def runMul4 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary4
 def runFlintMul4 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 4)
-def runMul5 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 5)
+def runMul5 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary5
 def runFlintMul5 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 5)
-def runMul6 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 6)
+def runMul6 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary6
 def runFlintMul6 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 6)
-def runMul8 : Unit → IO UInt64 := fun _ => return runMulChecksum (prepBinaryInput 8)
+def runMul8 : Unit → IO UInt64 := fun _ => runFixed runMulChecksum fixedBinary8
 def runFlintMul8 : Unit → IO UInt64 := fun _ => runFlintMulChecksum (prepBinaryInput 8)
 
-def runNegSub2 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 2)
+def runNegSub2 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary2
 def runFlintNegSub2 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 2)
-def runNegSub3 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 3)
+def runNegSub3 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary3
 def runFlintNegSub3 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 3)
-def runNegSub4 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 4)
+def runNegSub4 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary4
 def runFlintNegSub4 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 4)
-def runNegSub5 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 5)
+def runNegSub5 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary5
 def runFlintNegSub5 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 5)
-def runNegSub6 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 6)
+def runNegSub6 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary6
 def runFlintNegSub6 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 6)
-def runNegSub8 : Unit → IO UInt64 := fun _ => return runNegSubChecksum (prepBinaryInput 8)
+def runNegSub8 : Unit → IO UInt64 := fun _ => runFixed runNegSubChecksum fixedBinary8
 def runFlintNegSub8 : Unit → IO UInt64 := fun _ => runFlintNegSubChecksum (prepBinaryInput 8)
 
-def runPow2 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 2)
+def runPow2 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow2
 def runFlintPow2 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 2)
-def runPow3 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 3)
+def runPow3 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow3
 def runFlintPow3 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 3)
-def runPow4 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 4)
+def runPow4 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow4
 def runFlintPow4 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 4)
-def runPow5 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 5)
+def runPow5 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow5
 def runFlintPow5 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 5)
-def runPow6 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 6)
+def runPow6 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow6
 def runFlintPow6 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 6)
-def runPow8 : Unit → IO UInt64 := fun _ => return runPowChecksum (prepPowInput 8)
+def runPow8 : Unit → IO UInt64 := fun _ => runFixed runPowChecksum fixedPow8
 def runFlintPow8 : Unit → IO UInt64 := fun _ => runFlintPowChecksum (prepPowInput 8)
 
-def runInvDiv2 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 2)
+def runInvDiv2 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary2
 def runFlintInvDiv2 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 2)
-def runInvDiv3 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 3)
+def runInvDiv3 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary3
 def runFlintInvDiv3 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 3)
-def runInvDiv4 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 4)
+def runInvDiv4 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary4
 def runFlintInvDiv4 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 4)
-def runInvDiv5 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 5)
+def runInvDiv5 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary5
 def runFlintInvDiv5 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 5)
-def runInvDiv6 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 6)
+def runInvDiv6 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary6
 def runFlintInvDiv6 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 6)
-def runInvDiv8 : Unit → IO UInt64 := fun _ => return runInvDivChecksum (prepBinaryInput 8)
+def runInvDiv8 : Unit → IO UInt64 := fun _ => runFixed runInvDivChecksum fixedBinary8
 def runFlintInvDiv8 : Unit → IO UInt64 := fun _ => runFlintInvDivChecksum (prepBinaryInput 8)
 
-def runZPow2 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 2)
+def runZPow2 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow2
 def runFlintZPow2 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 2)
-def runZPow3 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 3)
+def runZPow3 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow3
 def runFlintZPow3 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 3)
-def runZPow4 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 4)
+def runZPow4 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow4
 def runFlintZPow4 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 4)
-def runZPow5 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 5)
+def runZPow5 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow5
 def runFlintZPow5 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 5)
-def runZPow6 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 6)
+def runZPow6 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow6
 def runFlintZPow6 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 6)
-def runZPow8 : Unit → IO UInt64 := fun _ => return runZPowChecksum (prepZPowInput 8)
+def runZPow8 : Unit → IO UInt64 := fun _ => runFixed runZPowChecksum fixedZPow8
 def runFlintZPow8 : Unit → IO UInt64 := fun _ => runFlintZPowChecksum (prepZPowInput 8)
 
-def runFrob2 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 2)
+def runFrob2 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary2
 def runFlintFrob2 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 2)
-def runFrob3 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 3)
+def runFrob3 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary3
 def runFlintFrob3 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 3)
-def runFrob4 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 4)
+def runFrob4 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary4
 def runFlintFrob4 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 4)
-def runFrob5 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 5)
+def runFrob5 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary5
 def runFlintFrob5 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 5)
-def runFrob6 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 6)
+def runFrob6 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary6
 def runFlintFrob6 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 6)
-def runFrob8 : Unit → IO UInt64 := fun _ => return runFrobChecksum (prepUnaryInput 8)
+def runFrob8 : Unit → IO UInt64 := fun _ => runFixed runFrobChecksum fixedUnary8
 def runFlintFrob8 : Unit → IO UInt64 := fun _ => runFlintFrobChecksum (prepUnaryInput 8)
 
 /-
@@ -806,10 +948,11 @@ setup_benchmark runOfPolyReprChecksum n => n * n
   with prep := prepOfPolyInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -822,10 +965,11 @@ setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 2.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -838,10 +982,11 @@ setup_benchmark runMulChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -853,10 +998,11 @@ setup_benchmark runNegSubChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 2.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -869,27 +1015,29 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepPowInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
 /-
 Inversion computes one polynomial extended gcd against a degree-`n` modulus and
 reduces the inverse candidate. Division adds one quadratic field
-multiplication after that inverse. The wider doubling ladder keeps the small
+multiplication after that inverse. The wider custom ladder keeps the small
 extended-gcd constants from dominating the fitted quadratic slope.
 -/
 setup_benchmark runInvDivChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -902,10 +1050,11 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepZPowInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -918,118 +1067,130 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
   with prep := prepUnaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
 /-! # FLINT `fq_default` informational comparator fixed registrations -/
 
-setup_fixed_benchmark runOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+/-- The FLINT targets make one discarded call to start the persistent Python
+driver before timing, then amortise protocol overhead across a 200 ms timed
+batch. The pure closed Lean anchors retain isolated calls: batching those
+constant fixtures would allow the compiler to fold away their work. -/
+private def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runAdd2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+private def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0 }
 
-setup_fixed_benchmark runMul2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runOfPoly2 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly2 where flintCompareConfig
+setup_fixed_benchmark runOfPoly3 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly3 where flintCompareConfig
+setup_fixed_benchmark runOfPoly4 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly4 where flintCompareConfig
+setup_fixed_benchmark runOfPoly5 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly5 where flintCompareConfig
+setup_fixed_benchmark runOfPoly6 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly6 where flintCompareConfig
+setup_fixed_benchmark runOfPoly8 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly8 where flintCompareConfig
 
-setup_fixed_benchmark runNegSub2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runAdd2 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd2 where flintCompareConfig
+setup_fixed_benchmark runAdd3 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd3 where flintCompareConfig
+setup_fixed_benchmark runAdd4 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd4 where flintCompareConfig
+setup_fixed_benchmark runAdd5 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd5 where flintCompareConfig
+setup_fixed_benchmark runAdd6 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd6 where flintCompareConfig
+setup_fixed_benchmark runAdd8 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd8 where flintCompareConfig
 
-setup_fixed_benchmark runPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runMul2 where leanCompareConfig
+setup_fixed_benchmark runFlintMul2 where flintCompareConfig
+setup_fixed_benchmark runMul3 where leanCompareConfig
+setup_fixed_benchmark runFlintMul3 where flintCompareConfig
+setup_fixed_benchmark runMul4 where leanCompareConfig
+setup_fixed_benchmark runFlintMul4 where flintCompareConfig
+setup_fixed_benchmark runMul5 where leanCompareConfig
+setup_fixed_benchmark runFlintMul5 where flintCompareConfig
+setup_fixed_benchmark runMul6 where leanCompareConfig
+setup_fixed_benchmark runFlintMul6 where flintCompareConfig
+setup_fixed_benchmark runMul8 where leanCompareConfig
+setup_fixed_benchmark runFlintMul8 where flintCompareConfig
 
-setup_fixed_benchmark runInvDiv2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runNegSub2 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub2 where flintCompareConfig
+setup_fixed_benchmark runNegSub3 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub3 where flintCompareConfig
+setup_fixed_benchmark runNegSub4 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub4 where flintCompareConfig
+setup_fixed_benchmark runNegSub5 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub5 where flintCompareConfig
+setup_fixed_benchmark runNegSub6 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub6 where flintCompareConfig
+setup_fixed_benchmark runNegSub8 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub8 where flintCompareConfig
 
-setup_fixed_benchmark runZPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runPow2 where leanCompareConfig
+setup_fixed_benchmark runFlintPow2 where flintCompareConfig
+setup_fixed_benchmark runPow3 where leanCompareConfig
+setup_fixed_benchmark runFlintPow3 where flintCompareConfig
+setup_fixed_benchmark runPow4 where leanCompareConfig
+setup_fixed_benchmark runFlintPow4 where flintCompareConfig
+setup_fixed_benchmark runPow5 where leanCompareConfig
+setup_fixed_benchmark runFlintPow5 where flintCompareConfig
+setup_fixed_benchmark runPow6 where leanCompareConfig
+setup_fixed_benchmark runFlintPow6 where flintCompareConfig
+setup_fixed_benchmark runPow8 where leanCompareConfig
+setup_fixed_benchmark runFlintPow8 where flintCompareConfig
 
-setup_fixed_benchmark runFrob2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runInvDiv2 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv2 where flintCompareConfig
+setup_fixed_benchmark runInvDiv3 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv3 where flintCompareConfig
+setup_fixed_benchmark runInvDiv4 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv4 where flintCompareConfig
+setup_fixed_benchmark runInvDiv5 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv5 where flintCompareConfig
+setup_fixed_benchmark runInvDiv6 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv6 where flintCompareConfig
+setup_fixed_benchmark runInvDiv8 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv8 where flintCompareConfig
+
+setup_fixed_benchmark runZPow2 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow2 where flintCompareConfig
+setup_fixed_benchmark runZPow3 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow3 where flintCompareConfig
+setup_fixed_benchmark runZPow4 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow4 where flintCompareConfig
+setup_fixed_benchmark runZPow5 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow5 where flintCompareConfig
+setup_fixed_benchmark runZPow6 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow6 where flintCompareConfig
+setup_fixed_benchmark runZPow8 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow8 where flintCompareConfig
+
+setup_fixed_benchmark runFrob2 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob2 where flintCompareConfig
+setup_fixed_benchmark runFrob3 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob3 where flintCompareConfig
+setup_fixed_benchmark runFrob4 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob4 where flintCompareConfig
+setup_fixed_benchmark runFrob5 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob5 where flintCompareConfig
+setup_fixed_benchmark runFrob6 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob6 where flintCompareConfig
+setup_fixed_benchmark runFrob8 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob8 where flintCompareConfig
 
 end GFqFieldBench
 end Hex
