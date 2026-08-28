@@ -733,8 +733,11 @@ and the three isolation cases in the isolation fixed exports:
 The three root-representation hashes above were refreshed after HexRoots
 restored its bounded local finisher. Current-tree verification observes the
 new values consistently; the recorded medians remain those of the cited
-controlled exports because the HexNumberField operations and fixtures are
-unchanged.
+controlled exports because the timed HexNumberField operations are unchanged.
+The conformance emitter also reproduces the refreshed 51-record fixture:
+six box/result records carry the tighter dyadic representatives selected by
+the repaired HexRoots finisher. The HexNumberFieldTower emitter reproduces its
+existing 30-record fixture without changes.
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
 operation at 100 ms on the reference host. `runFixedMul` is 39.844 us and

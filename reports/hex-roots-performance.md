@@ -372,7 +372,10 @@ HexRoots conformance corpus. Its 56-case fixture was regenerated and replayed
 against python-flint with zero failures. The representation change propagates
 to three HexNumberField fixed hashes (`runRoots`, `runLazyAddLadder`, and
 `runAlgebraicRootsLadder`); their refreshed expectations match the same clean
-CI observations that exposed the fixture drift.
+CI observations that exposed the fixture drift. The downstream
+HexNumberField fixture was regenerated as well: six box/result records now
+carry the tighter representatives, while the HexNumberFieldTower emitter
+reproduces its existing 30-record fixture byte for byte.
 
 ### Superseded round-one verdict record
 
