@@ -30,11 +30,12 @@ Scientific registrations:
 * `runHenselPrecisionChecksum`: iterative linear lift at fixed degree, with
   the source-derived `O(k^3)` coefficient-bit upper bound.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
-* `runPolyProductChecksum`: public ordered-product dispatcher, with a
-  conservative `O(n^2)` upper bound.
-* `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
+* `runPolyProductChecksum`: public ordered-product dispatcher, with the
+  schoolbook coefficient-bit upper bound `O(n^4)`.
+* `runPolyProductFoldChecksum`: retained ordered left fold, with the
+  coefficient-bit upper bound `O(n^3)`.
 * `runPolyProductTreeChecksum`: the same ordered product through a balanced
-  tree and `ZPoly.fastPlan`, `O(M(n) log n)`.
+  tree and `ZPoly.fastPlan`, with the packed schoolbook upper bound `O(n^4)`.
 * `runMultifactorLiftChecksum`: two-factor ordered lift at fixed high precision,
   `O(n^2)` in the degree.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
@@ -165,6 +166,23 @@ Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1, for the basecase
 integer multiplication and division bounds. -/
 def quadraticPrecisionUpper (k : Nat) : Nat :=
   k ^ 2
+
+/-- Schoolbook coefficient-bit upper bound for the retained product fold.
+
+After `j` bounded linear factors, the accumulator has `O(j)` coefficients of
+`O(j)` bits. Multiplication by the next bounded linear factor therefore costs
+`O(j^2)` bit operations, and summing the fold gives `O(n^3)`. -/
+def productFoldUpper (n : Nat) : Nat :=
+  n ^ 3
+
+/-- Schoolbook coefficient-bit upper bound for the packed product tree.
+
+A subtree with `j` bounded linear leaves has `O(j)` coefficients of `O(j)`
+bits, so its Kronecker packing has `O(j^2)` bits. Schoolbook multiplication of
+the two packed integers is `O(j^4)`; the geometric tree sum is dominated by
+the root. This also bounds the public dispatcher across both branches. -/
+def productTreeUpper (n : Nat) : Nat :=
+  n ^ 4
 
 /-- Deterministic integer coefficient generator keyed by size, index, and salt. -/
 def zCoeffValue (n i salt : Nat) : Int :=
@@ -734,10 +752,12 @@ setup_benchmark runQuadraticHenselStepChecksum n => n * n
   }
 
 /-
-The public dispatcher is never slower asymptotically than its retained
-left-fold fallback, giving a conservative quadratic upper bound.
+The dispatcher selects either the retained fold or the packed product tree.
+The tree's schoolbook `O(n^4)` coefficient-bit bound covers both branches and
+is the mode-2 wall-clock claim; the former `n^2` declaration counted
+coefficient operations while omitting their linearly growing bit width.
 -/
-setup_benchmark runPolyProductChecksum n => n * n
+setup_benchmark runPolyProductChecksum n => productTreeUpper n
   with prep := prepProductInput
   where {
     paramFloor := 128
@@ -749,11 +769,12 @@ setup_benchmark runPolyProductChecksum n => n * n
   }
 
 /-
-Left-folding `n` linear factors grows the accumulator degree one step at a
-time, giving a quadratic total number of coefficient operations.  This is the
-explicit comparator retained on both sides of the product-tree interval.
+Left-folding grows both the accumulator degree and its coefficient bit width
+linearly. Step `j` therefore has the schoolbook `O(j^2)` coefficient-bit
+bound, whose sum is the mode-2 `O(n^3)` bound. This is the retained comparator
+on both sides of the product-tree interval.
 -/
-setup_benchmark runPolyProductFoldChecksum n => (n * n)
+setup_benchmark runPolyProductFoldChecksum n => productFoldUpper n
   with prep := prepProductInput
   where {
     paramFloor := 128
@@ -766,13 +787,14 @@ setup_benchmark runPolyProductFoldChecksum n => (n * n)
   }
 
 /-
-The balanced tree has `log n` levels and total work `O(M(n) log n)`.  The
-integer plan's packed multiplication is quasi-linear over these fixed-width
-linear leaves; `n * log² n` is the conservative integer-valued model.  This
-registration shares every fixture and rung with the retained left fold so its
-result hash and end-to-end crossover gate a compiled replacement.
+At a subtree of `j` bounded linear leaves, both degree and coefficient bit
+width are `O(j)`, so Kronecker packing has `O(j^2)` bits. Bounding the packed
+integer product by schoolbook multiplication gives `O(j^4)`; the geometric
+sum over the balanced tree is root-dominated. The registration therefore uses
+the mode-2 `O(n^4)` wall-clock bound and shares every fixture and rung with the
+retained fold for hash and crossover checks.
 -/
-setup_benchmark runPolyProductTreeChecksum n => (n * (Nat.log2 (n + 1) + 1) ^ 2)
+setup_benchmark runPolyProductTreeChecksum n => productTreeUpper n
   with prep := prepProductInput
   where {
     paramFloor := 128
