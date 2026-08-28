@@ -68,48 +68,6 @@ theorem CheckedPartialFactorization.pos {n : Nat}
   rw [← F.subject_eq]
   exact checkPartial_pos F.valid
 
-private theorem boundedPowMul_eq {bound q : Nat} :
-    ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
-      r = acc * q ^ e := by
-  intro e
-  induction e with
-  | zero =>
-      intro acc r h
-      unfold boundedPowMul at h
-      injection h with h
-      subst h
-      simp
-  | succ e ih =>
-      intro acc r h
-      unfold boundedPowMul at h
-      by_cases hb : bound < acc * q
-      · rw [if_pos hb] at h
-        cases h
-      · rw [if_neg hb] at h
-        rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
-          Nat.mul_comm q (q ^ e)]
-
-private theorem factorProduct_eq {bound : Nat} :
-    ∀ (l : List PrimePower) (acc r : Nat),
-      factorProduct bound l acc = some r →
-        r = acc * (l.map fun e => e.prime ^ e.exponent).prod := by
-  intro l
-  induction l with
-  | nil =>
-      intro acc r h
-      unfold factorProduct at h
-      injection h with h
-      subst h
-      simp
-  | cons e rest ih =>
-      intro acc r h
-      unfold factorProduct at h
-      split at h
-      · cases h
-      next acc' hp =>
-        rw [ih acc' r h, boundedPowMul_eq e.exponent acc acc' hp]
-        simp [Nat.mul_assoc]
-
 /-- Accepted partial data reconstructs its subject exactly. -/
 theorem checkPartial_prod {F : PartialFactorization}
     (h : checkPartial F = true) :
