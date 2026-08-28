@@ -1,14 +1,25 @@
 # HexRoots Performance Report
 
-**Phase 4 is not currently claimed for HexRoots.** The ordered-mode audit keeps
-the one honestly modelled helper sweep as a passing mode-1 registration, but
-the other thirteen fixed performance registrations do not yet satisfy mode 3.
-Several have reachable parametric models whose old schedules need repair; the
-remaining fixed candidates lack an enforced, operation-specific budget with
-current clean evidence. `libraries.yml` therefore records `done_through: 3`.
-This report records the evidence per
+**Phase 4 is claimed for HexRoots.** The ordered-mode remediation retains
+`runMahlerPrec` in mode 1, repairs `runRefineTo` into a second passing mode-1
+registration, and places the other twelve registrations in mode 3 only after
+the prescribed current-fixture parametric attempts failed. Each mode-3 site
+now names its canonical hard input and enforces an operation-specific ceiling.
+The preserved Phase-5--7 evidence was rechecked after this remediation, so
+`libraries.yml` records `done_through: 7`. This report records the evidence per
 [PLAN/Phase4.md](../PLAN/Phase4.md) and
 [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
+
+The clean ordered-mode experiment is
+`reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json`, recorded
+on quiet `chungus2` (AMD EPYC 9455 48-Core, 96 CPUs), Lean `4.34.0-rc2`,
+lean-bench `0.1.0`, with `git_dirty: false`. The clean-source selected-mode sweep is
+`reports/bench-results/hex-roots-df265f8-issue9794-final.json` on the same
+host and toolchain, supplemented by the all-repeat Taylor rerun
+`reports/bench-results/hex-roots-df265f8-issue9794-taylor.json`. All artifacts
+record the exact source commit and hashes. The two final-artifact SHA-256
+digests are `140293ea4bf326062ab4e0b15b31f4647aac21bba333ea064119e3291bc74278`
+and `cbba6702c12a19ec87cf78ce5207358259b70478ef0a1507c46f0677d834f7b3`.
 
 The original Phase-4 sweep is
 `reports/bench-results/hex-roots-973c2cd-round5.json`, recorded on quiet
@@ -130,23 +141,23 @@ optimization steps tracked by issue #8751.
 
 ## Bench Targets
 
-Parametric registrations:
+Mode-1 parametric registrations:
 
-- `runMahlerPrec`: `n` on seeded bounded-coefficient polynomials.
+- `runMahlerPrec`: `n` on seeded bounded-coefficient polynomials, degrees
+  `64, 128, 256, 512, 1024, 2048, 4096`.
+- `runRefineTo`: `t²` on the achieved-precision ladder
+  `32773, 65541, 131077, 262149, 524293`.
 
-Canonical fixed registrations (`repeats = 5`) are `runIsolate`
+Mode-3 fixed registrations (`repeats = 5`) are `runIsolate`
 (fixed-separation degree 8), `runTaylor` (seeded degree
 128, unit centre), `runWitnessCheck`, `runNkWitnessCheck`, and
 `runNewtonSquare` (bounded-height degree 128), `runRefine1` (degree 8),
 `runCertify` (degree-128 pinned NK branch), `runIsolateAll` (fixed-separation
-degree 12), `runRefineTo` (achieved precision 131077), the three strategy
-drivers (shared `linProdPoly 10`), and `runSameRoot`.
-
-The fixed split predates the ordered rule. It remains useful diagnostic and
-hash-regression coverage, but fixed registration alone is not a mode-3 pass.
-The audit below separates cases with reachable parametric models from genuine
-fixed-mode candidates; lean-bench#67 tracks structured op-count/operand-growth
-reporting for the GMP-transition cases.
+degree 12), the three strategy drivers (shared `linProdPoly 10`), and
+`runSameRoot`. Their adjacent registration comments give the cost derivation,
+failed stronger-mode route, hard input, measured baseline, and ceiling.
+lean-bench#67 continues to track structured op-count/operand-growth reporting
+for the GMP-transition cases.
 
 ### Superseded round-one target record
 
@@ -218,47 +229,51 @@ wall-time models. Which op-count models changed, and why:
 
 `runMahlerPrec` uses **mode 1, two-sided parametric**. Its linear family model
 is derived from the coefficient scan with bounded coefficient height, and the
-scientific verdict passes in both directions.
+scientific verdict passes in both directions. `runRefineTo` also uses **mode
+1, two-sided parametric**: parameterizing by the achieved Newton precision
+removes the raw-target staircase and makes the derived `t²` model measurable.
 
-The other thirteen fixed performance registrations are currently **mode 4,
-blocked**, under
+The other twelve registrations use **mode 3, enforced absolute ceilings**
+under
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
-The fixed split implemented in #8750 predates the ordered rule and does not by
-itself establish mode 3.
+Mode 1 was attempted first. The clean experimental artifact records:
 
-Ten registrations do not yet establish mode 3. The historical record either
-shows the proposed model passing on a sibling or target (`runNkWitnessCheck`,
-`runRefine1`, and `runIsolateNk`) or prescribes a schedule, family, or
-parameter repair for `runWitnessCheck`, `runNewtonSquare`, `runCertify`,
-`runIsolateAll`, `runRefineTo`, `runIsolatePellet`, and
-`runIsolateNkThenPellet`. The report does not record those attempts failing on
-the current fixtures, so the adjacent transition-band assertions are not yet
-enough to prove that no stable parametric model is reachable. A fixed
-registration may not replace those tests without that evidence.
+| registration or group | attempted current-fixture schedule/model | result |
+|---|---|---|
+| `runWitnessCheck` | degree `64..384`, `n³` | inconclusive, `β=-0.411` |
+| `runNkWitnessCheck` | degree `64..512`, `n³` | inconclusive, `β=-0.457` |
+| `runNewtonSquare` | degree `64..512`, `n³` | inconclusive, `β=-0.526` |
+| `runRefine1` | smooth separated degrees `4,6,8,10,12,14`, `n²` | inconclusive, normalized cost `23133..52721` |
+| `runCertify` | pinned-NK degree `64..384`, `n³` | inconclusive, normalized cost falls `3.139..1.533`; degree 512 no longer preserves the pinned branch and is excluded |
+| `runIsolateAll` | smooth separated degrees `4,6,8,10,12,14`, `n⁵` | inconclusive, normalized cost `11993..45791` |
+| `runRefineTo` | achieved precision `32773..524293`, `t²` | **consistent**, `β=-0.030`, promoted to mode 1 |
+| strategy trio | `linProdPoly` degrees `2,3,4,5,6,8,10`, `n⁵` | all inconclusive; NK `β=+1.696`, Pellet and combined exceed their experiment cap at 10 |
 
-`runTaylor` and `runIsolate` are mode-3 candidates because the reachable GMP
-transition lacks a stable scalar wall model for the former and the honestly
-derived `~n^7` isolation family is outside the usable wall-time band for the
-latter. `runSameRoot` likewise has no justified parametric model. None of the
-three currently has an independently sourced or enforced operation-specific
-absolute budget with clean current evidence; a generic per-call cap is not
-such a budget. Mode 2 is unavailable for all thirteen because no cited
-published bound covers these executable wall-time paths. They therefore stay
-blocked rather than being grandfathered as fixed passes. The per-library
-worst-case contracts remain unchanged.
+The repaired schedules therefore disprove a stable scalar wall model for nine
+of the ten outstanding fixed routes and recover the tenth as mode 1. The
+earlier Taylor experiments likewise put both `n²` and the eventual `n³`
+bit-cost model in the reachable GMP transition rather than a stable power-law
+band. For `runIsolate`, the honestly derived `~n⁷` family exceeds the usable
+30-second-per-call range; `runSameRoot` is one comparison with no meaningful
+size parameter. Mode 2 is unavailable because no published theorem bounds the
+wall time of these profiled executable paths. This exhausts stronger modes
+before selecting mode 3.
 
-Quiet-machine command:
+Quiet-machine commands:
 
 ```sh
-lake exe hexroots_bench run <all 14 registration names> \
-  --export-file reports/bench-results/hex-roots-973c2cd-round5.json
+taskset -c <idle-core> lake exe hexroots_bench run <ten repaired names> \
+  --export-file reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json
+taskset -c <idle-core> lake exe hexroots_bench run <all 14 registration names> \
+  --export-file reports/bench-results/hex-roots-df265f8-issue9794-final.json
 ```
 
-The single parametric verdict is consistent:
+The selected mode-1 verdicts are consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
-| `runMahlerPrec` | `n` | consistent | `β=-0.097`, `cMin=6.954`, `cMax=8.431` over `16..256` | `0xc83` |
+| `runMahlerPrec` | `n` | consistent | `β=+0.068`, `cMin=5.747`, `cMax=8.580` over `64..4096` | `0x10805` |
+| `runRefineTo` | `t²` | consistent | `β=-0.054`, `cMin=0.031247`, `cMax=0.035014` | `0x2e506b407cc9ff4b` at achieved precision 524293 (`0xd9e59c44612d0e21` at 131077) |
 
 (`runIsolate` was parametric at `n⁵` in the previous revision of this
 report and its `4..10` range check passed, but post-merge review showed
@@ -269,29 +284,30 @@ honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in the
 30 s/call band. Per the no-fitting rule the registration was demoted to
 a fixed case rather than kept on a fitted model; see issue #8750.)
 
-Historical fixed medians (all five repeats agreed on the shown hash at the
-export's source revision):
+The mode-3 ceilings are independent per operation and enforced by
+`maxSecondsPerCall`. The full artifact supplies five clean repeats for every
+fixed row except Taylor; the focused same-commit Taylor artifact supplies its
+five clean repeats. All clean repeats agreed on each hash:
 
-| registration | canonical input | median | hash |
-|---|---|---:|---|
-| `runIsolate` | fixed-separation degree 8 | 492.894 ms | `0x16c307fd2a36d31e` |
-| `runTaylor` | seeded degree 128, centre 1 | 2.170 ms | `0x9917b7b230496af4` |
-| `runWitnessCheck` | bounded-height degree 128 | 2.288 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 2.193 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 2.090 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 2.121 ms | `0x6dd99fc71c5233ae` |
-| `runCertify` | pinned-NK degree 128 | 4.311 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 8.541 s | `0x5e4b3fd1d798497a` (current registration expects `0x1d4ce3e46eb351de`) |
-| `runRefineTo` | achieved precision 131077 | 313.955 ms | `0x8dd3e4ee56489bf8` (current registration expects `0xd9e59c44612d0e21`) |
-| `runIsolateNk` | `linProdPoly 10` | 9.809 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 2.500 s | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 2.469 s | `0xda631bdf13415a4f` |
-| `runSameRoot` | fixed refined atom | 131 ns | `0xb` |
+| registration | canonical hard input | ceiling | clean median | hash |
+|---|---|---:|---:|---|
+| `runTaylor` | seeded degree 128, centre 1 | 50 ms | 2.379 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 50 ms | 3.091 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 50 ms | 2.890 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 50 ms | 3.308 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 50 ms | 2.487 ms | `0x6dd99fc71c5233ae` |
+| `runCertify` | pinned-NK degree 128 | 50 ms | 4.440 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 20 s | 8.691 s | `0x1d4ce3e46eb351de` |
+| `runIsolate` | fixed-separation degree 8 | 30 s | 2.472 s | `0x16c307fd2a36d31e` |
+| `runIsolateNk` | `linProdPoly 10` | 30 s | 9.539 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 30 s | 11.781 s | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 30 s | 14.881 s | `0xda631bdf13415a4f` |
+| `runSameRoot` | fixed refined atom | 1 ms | 4.637 µs | `0xb` |
 
-The dirty post-ratchet export matched the expected hashes at its source
-revision. Later output-shape changes updated the two expectations shown above,
-so this table is diagnostic history, not current clean mode-3 evidence; a
-remediation run must refresh it.
+The refreshed `runIsolateAll` hash is `0x1d4ce3e46eb351de`. The repaired
+`runRefineTo` ladder records `0xd9e59c44612d0e21` at the old fixed precision
+131077 and `0x2e506b407cc9ff4b` at its final rung, replacing both stale rows from
+the dirty post-ratchet export.
 
 ### Superseded round-one verdict record
 
@@ -358,8 +374,8 @@ lake exe hexroots_bench compare Hex.RootsBench.runIsolateNk Hex.RootsBench.runIs
 agreement: all functions agree on output
 ```
 
-The canonical artifact medians are NK `2.627 s`, Pellet `484.986 ms`, and
-NK-then-Pellet `501.670 ms`.
+The clean issue-9794 artifact medians are NK `9.539 s`, Pellet `11.781 s`, and
+NK-then-Pellet `14.881 s`.
 The independent round-four scaling experiment over degrees `2..10` is retained
 as informational dual-route data: normalized against `n⁵`, NK-only grew with
 residual `β=+0.991`, while Pellet-only and NK-then-Pellet were below that model
@@ -392,8 +408,9 @@ process. The measured per-call overhead
 (`complex_roots` on `x²−2`) is `1.111 µs`, below 5 % of comparator wall time at
 every rung, so no adjusted column is required. Data:
 `reports/bench-results/hex-roots-flint-round5.json`; diagnostic Lean values
-come from `hex-roots-isolate-diagnostic-round5.json`, and canonical fixed
-values from `hex-roots-973c2cd-round5.json`.
+come from `hex-roots-isolate-diagnostic-round5.json`. The FLINT inputs and
+hashes are unchanged, while the canonical Hex values below are refreshed from
+the clean issue-9794 artifact.
 
 Diagnostic ratio shape (unregistered `runIsolateParam` helper):
 
@@ -411,12 +428,12 @@ Final registered canonical points:
 
 | degree | Lean surface | hex | flint | ratio hex/flint |
 |---:|---|---:|---:|---:|
-| 8 | `runIsolate` | 492.894 ms | 215.234 µs | 2290.0 |
-| 12 | `runIsolateAll` | 8.541 s | 591.777 µs | 14433.2 |
+| 8 | `runIsolate` | 2.472 s | 215.234 µs | 11483.5 |
+| 12 | `runIsolateAll` | 8.691 s | 591.777 µs | 14686.7 |
 
 **Trend.** On the diagnostic ladder, apart from the degree-8 local dip, the
 ratio diverges from `112×` at degree 4 to `1470×` at degree 10; the
-equal-precision canonical `runIsolateAll` point is `14433×` at degree 12. That
+equal-precision canonical `runIsolateAll` point is `14687×` at degree 12. That
 direction is expected: the Lean drivers perform certified exact isolation
 with degree- and precision-dependent exact-dyadic work, while FLINT uses a
 structurally different multiprecision ball algorithm. No scalar asymptotic
@@ -547,14 +564,12 @@ closure-call unwinding fragments some inclusive attribution into an unresolved
 ## Historical Calibration Record
 
 The preceding Phase-3 audit blocked Phase 4 and kept `done_through` at `3`.
-Each item below is retained as historical evidence, together with its
-diagnosis and proposed resolution. The older fixed/parametric split treated
-these as resolved, but the ordered rule does not: schedule and family repairs
-must be attempted before mode 3 can replace a reachable parametric model.
-None is a wrong-asymptotic implementation bug that rolling back a `def` would
-fix; the resolutions are Phase-4 benchmark re-scaffolding (new schedules, a
-smooth driver family, an integer Taylor centre) plus a SPEC time-budget
-re-appraisal.
+Each item below is retained as historical evidence together with its diagnosis
+and then-current proposed resolution. The clean issue-9794 experiment above
+attempts those repairs under the ordered rule: only the achieved-precision
+`runRefineTo` route reaches a stable scalar model, while the remaining routes
+justify their now-enforced fixed ceilings. None was a wrong-asymptotic
+implementation bug that required rolling back an executable definition.
 
 1. **`runIsolate`, `runIsolateAll` inconclusive — seeded-family
    non-monotonicity.** At `n⁵` the residual is small (`β=+0.266` for
@@ -624,16 +639,20 @@ target.
 
 The two obsolete time-budget items were reality-anchored by #8762 and
 subsequently tightened by the Graeffe/soft-Pellet ratchet recorded at the top
-of this report. The transition-band and family/schedule items remain Phase-4
-work under the ordered rule.
+of this report. The transition-band and family/schedule items are resolved by
+the ordered-mode experiment and enforced ceilings above.
+
+## Phase 5--7 re-attestation
+
+The ordered-mode registration changes do not alter the public API, proof
+surface, conformance fixtures, or manual chapter. The preserved later-phase
+evidence was rechecked with a sorry-free scan of `HexRoots`, a successful
+`lake build HexRoots HexRealRoots HexConformance HexManual`, and the Phase-7,
+release-manifest, manual-split, published-trust-surface, Mathlib-free-bench,
+file-line-count, copyright, and DAG guards. The benchmark `verify` command and
+the explicit three-strategy comparison also pass. HexRoots is therefore
+re-attested through Phase 7 rather than stopping at the repaired Phase 4.
 
 ## Concerns
 
-Thirteen fixed performance registrations have no passing mode. Ten were made
-fixed before the report recorded the proposed schedule, family, or parameter
-repairs failing on the current fixtures. The other three lack justified,
-enforced absolute budgets and clean current evidence for mode 3; two hashes in
-the latest recorded dirty export also predate the current registration values.
-The rollback is recorded by
-[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
-issue follows after the policy lands.
+None.
