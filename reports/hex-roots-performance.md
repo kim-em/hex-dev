@@ -367,6 +367,13 @@ the dirty post-ratchet export. The `runIsolateAll` digest is unchanged from
 `main`'s post-#8839 output; the local-finisher repair changes timing, not this
 observable.
 
+The repaired finisher does select tighter dyadic representatives for the full
+HexRoots conformance corpus. Its 56-case fixture was regenerated and replayed
+against python-flint with zero failures. The representation change propagates
+to three HexNumberField fixed hashes (`runRoots`, `runLazyAddLadder`, and
+`runAlgebraicRootsLadder`); their refreshed expectations match the same clean
+CI observations that exposed the fixture drift.
+
 ### Superseded round-one verdict record
 
 Scientific run, one command, exporting

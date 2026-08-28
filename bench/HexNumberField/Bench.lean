@@ -376,7 +376,7 @@ separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x0927e3f02f6eee94
+  expectedHash := some 0x235b18400d87a46c
 }
 
 /-! # Parametric ladder fixtures -/
@@ -726,7 +726,7 @@ operation across the mode change. -/
 setup_fixed_benchmark runLazyAddLadder where {
   repeats := 3
   maxSecondsPerCall := 12.0
-  expectedHash := some 0x91175572810ff8e2
+  expectedHash := some 0xc544c942d8336f51
 }
 
 /-! # Exactification ladder -/
@@ -1331,7 +1331,7 @@ operation identity. -/
 setup_fixed_benchmark runAlgebraicRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 15.0
-  expectedHash := some 0x2fade2409323a752
+  expectedHash := some 0xb6a44b3ff493da5e
 }
 
 /-! # PARI `t_POLMOD` comparator pairs

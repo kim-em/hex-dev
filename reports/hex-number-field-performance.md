@@ -719,16 +719,22 @@ and the three isolation cases in the isolation fixed exports:
 | `runIsolateAdd` | 9.649 ms | `0x4367ab34a73ea4ed` | match |
 | `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
 | `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
-| `runLazyAddLadder` | 4.539 s | `0x91175572810ff8e2` | match |
+| `runLazyAddLadder` | 4.539 s | `0xc544c942d8336f51` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
 | `runExactLadder` | 1.878 ms | `0x5bfd5b96f72b6002` | match |
 | `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
 | `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
-| `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
+| `runRoots` | 1.069 ms | `0x235b18400d87a46c` | match |
 | `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
-| `runAlgebraicRootsLadder` | 5.955 s | `0x2fade2409323a752` | match |
+| `runAlgebraicRootsLadder` | 5.955 s | `0xb6a44b3ff493da5e` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
+
+The three root-representation hashes above were refreshed after HexRoots
+restored its bounded local finisher. Current-tree verification observes the
+new values consistently; the recorded medians remain those of the cited
+controlled exports because the HexNumberField operations and fixtures are
+unchanged.
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
 operation at 100 ms on the reference host. `runFixedMul` is 39.844 us and
