@@ -49,7 +49,11 @@ def replayInput (e : Nat) : Factorization :=
 def runReplay (e : Nat) : Nat :=
   if checkFactorization (replayInput e) then 1 else 0
 
-def runOrder (p : Nat) : Nat := orderOf 2 p
+def runOrder (p : Nat) : Nat := orderOf 3 p
+
+private def orderLadder : Array Nat := #[257, 1013, 4073, 16363, 65537]
+
+#guard orderLadder.all fun p => orderOf 3 p == p - 1
 
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
     (hacc : 0 < acc) : ∀ e : Nat,
@@ -211,15 +215,18 @@ setup_benchmark runReplay n => n
     targetInnerNanos := 100000000
   }
 
-/- `orderOf` scans candidate exponents up to the modulus and performs a bounded
-modular-power check at each step, so the declared worst-case model is linear. -/
+/- `orderOf` carries one bounded residue and performs one modular multiplication
+per candidate exponent. On every prime in this ladder, `3` has order `p - 1`,
+so each run exercises `p - 1` scan steps and the declared arithmetic-operation
+model is linear. -/
 setup_benchmark runOrder n => n
   where {
-    paramFloor := 7
+    paramFloor := 257
     paramCeiling := 65537
-    paramSchedule := .custom #[7, 31, 257, 65537]
+    paramSchedule := .custom orderLadder
     maxSecondsPerCall := 5.0
-    targetInnerNanos := 100000000
+    targetInnerNanos := 2500000000
+    outerTrials := 3
   }
 
 /- These targets are much faster per call than the route-search targets
