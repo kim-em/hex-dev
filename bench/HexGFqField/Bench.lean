@@ -13,9 +13,11 @@ import LeanBench
 Benchmark registrations for `hex-gfq-field`.
 
 This Phase 4 benchmark surface measures the executable finite-field wrapper over
-`F_7[x] / (f)`. Inputs use a small schedule of Conway-style irreducible
-moduli with certificate-checked Rabin witnesses; construction is hoisted
-through `prep`, and timed targets return compact polynomial checksums.
+`F_7[x] / (f)`. The smoke path uses small moduli with kernel-checked Rabin
+certificates. Larger scientific rungs use committed sparse trinomials whose
+Rabin tests run in compiled `prep`; the soundness theorem turns each successful
+test into the irreducibility witness required by `GFqField`. Construction is
+hoisted through `prep`, and timed targets return compact polynomial checksums.
 
 Scientific registrations:
 
@@ -412,6 +414,57 @@ private theorem m_p7_n8_irr : FpPoly.Irreducible m_p7_n8 :=
       m_p7_n8 m_p7_n8_monic m_p7_n8_certificate
       m_p7_n8_certificate_check)
 
+/-! ## Scientific-only runtime-checked moduli
+
+The high-degree trinomials below are checked for irreducibility during compiled
+benchmark preparation. This uses the same proven
+`rabinTest_imp_irreducible` route as the static certificates above, while
+avoiding the large kernel reductions that exhausted GitHub-hosted CI in
+PR #2790.
+-/
+
+/-- Sparse monic polynomial `x^n + x^k + constant` over `F_7`. -/
+private def sparseModulus (n k constant : Nat) : FpPoly 7 :=
+  DensePoly.ofCoeffs <| (Array.range (n + 1)).map fun i =>
+    if i = 0 then ZMod64.ofNat 7 constant
+    else if i = k ∨ i = n then 1 else 0
+
+private theorem sparseModulus_coeff_top {n k constant : Nat} (hn : 0 < n) :
+    (sparseModulus n k constant).coeff n = 1 := by
+  rw [sparseModulus, DensePoly.coeff_ofCoeffs,
+    Array.getD_eq_getD_getElem?, Array.getElem?_map]
+  have hlt : n < (Array.range (n + 1)).size := by simp
+  rw [Array.getElem?_eq_getElem hlt]
+  simp [Nat.ne_of_gt hn]
+
+private theorem sparseModulus_size {n k constant : Nat} (hn : 0 < n) :
+    (sparseModulus n k constant).size = n + 1 := by
+  apply Nat.le_antisymm
+  · exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
+  · apply Nat.succ_le_of_lt
+    by_contra hlt
+    have hzero := DensePoly.coeff_eq_zero_of_size_le
+      (sparseModulus n k constant) (Nat.le_of_not_gt hlt)
+    rw [sparseModulus_coeff_top hn] at hzero
+    exact (by decide : (1 : ZMod64 7) ≠ 0) hzero
+
+private theorem sparseModulus_degree {n k constant : Nat} (hn : 0 < n) :
+    FpPoly.degree (sparseModulus n k constant) = n := by
+  change (sparseModulus n k constant).degree?.getD 0 = n
+  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
+    rw [sparseModulus_size hn]
+    omega)]
+  simp [sparseModulus_size hn]
+
+private theorem sparseModulus_monic {n k constant : Nat} (hn : 0 < n) :
+    DensePoly.Monic (sparseModulus n k constant) := by
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by
+    rw [sparseModulus_size hn]
+    omega)]
+  rw [sparseModulus_size hn]
+  exact sparseModulus_coeff_top (n := n) (k := k) (constant := constant) hn
+
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
 parameter `n` and select the correct per-degree fixture. -/
@@ -419,6 +472,23 @@ private structure ModulusBundle where
   modulus : FpPoly 7
   pos : 0 < FpPoly.degree modulus
   irr : FpPoly.Irreducible modulus
+
+/-- Run the Rabin test in compiled benchmark preparation and, on success,
+package its proven irreducibility result. This keeps large certificate
+reduction out of kernel elaboration while retaining checked field inputs. -/
+private def runtimeCheckedBundle (f : FpPoly 7) (hpos : 0 < FpPoly.degree f)
+    (hmonic : DensePoly.Monic f) : Option ModulusBundle :=
+  if h : Berlekamp.rabinTest f hmonic = true then
+    some ⟨f, hpos, Berlekamp.rabinTest_imp_irreducible f hmonic h⟩
+  else
+    none
+
+private def runtimeCheckedSparseBundle (n k constant : Nat) (hn : 0 < n) :
+    Option ModulusBundle :=
+  runtimeCheckedBundle (sparseModulus n k constant) (by
+      rw [sparseModulus_degree hn]
+      exact hn)
+    (sparseModulus_monic hn)
 
 /-- Look up the per-degree modulus fixture for benchmark parameter `n`.
 The match enumerates the union of `paramSchedule` entries used by the
@@ -432,7 +502,23 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 5 => ⟨m_p7_n5, m_p7_n5_pos, m_p7_n5_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
   | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
+  | 432 => (runtimeCheckedSparseBundle 432 54 3 (by omega)).getD
+      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 600 => (runtimeCheckedSparseBundle 600 75 3 (by omega)).getD
+      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 768 => (runtimeCheckedSparseBundle 768 96 3 (by omega)).getD
+      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 936 => (runtimeCheckedSparseBundle 936 324 3 (by omega)).getD
+      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 1216 => (runtimeCheckedSparseBundle 1216 144 3 (by omega)).getD
+      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+
+/-- Degree 2 keeps the registration smoke-testable. The scientific tail spans
+more than a factor of `e`, and every degree is congruent to `40` modulo `56`,
+so `densePoly` supplies the same coefficient pattern while fixed word and
+dispatch costs amortize. -/
+private def scientificSchedule : Array Nat := #[2, 432, 600, 768, 936, 1216]
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly (f : FpPoly 7) : UInt64 :=
@@ -806,10 +892,11 @@ setup_benchmark runOfPolyReprChecksum n => n * n
   with prep := prepOfPolyInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -822,10 +909,11 @@ setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 2.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -838,10 +926,11 @@ setup_benchmark runMulChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -853,10 +942,11 @@ setup_benchmark runNegSubChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 2.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -869,10 +959,11 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepPowInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -886,10 +977,11 @@ setup_benchmark runInvDivChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -902,10 +994,11 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepZPowInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
@@ -918,10 +1011,11 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
   with prep := prepUnaryInput
   where {
     paramFloor := 2
-    paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
-    maxSecondsPerCall := 4.0
+    paramCeiling := 1216
+    paramSchedule := .custom scientificSchedule
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 200000000
+    outerTrials := 3
     signalFloorMultiplier := 1.0
   }
 
