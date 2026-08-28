@@ -1,41 +1,38 @@
 # HexHensel Performance Report
 
-All scientific and comparator measurements in this report use clean revision
-`c22f45d28e6ea06156c1018d99c02b6010fe59ba` on `chungus2` (AMD EPYC 9455,
-Linux 6.12.100 x86-64). Fixtures are deterministic and use `p = 5`; there is
-no random seed.
+Current implementation evidence was measured on `chungus2` (AMD EPYC 9455,
+Linux x86-64) with Lean 4.34.0-rc2. The scientific source revision is
+`20fca7f5a60d7f465f66591bb54e9ce94b88c84f`; later evidence commits change no
+executable source.
 
 ## Bench targets
 
-The declared expressions below are copied from the `setup_benchmark` sites in
-`bench/HexHensel/Bench.lean`.
+The nine Phase-4 operation registrations use mode 1 on branch-isolated degree
+families. The retained fold and balanced tree are additional parametric
+registrations required by the SPEC's product-crossover compare group.
 
-| registration | declared expression | isolated axis | input family |
+| registration | declaration | schedule | role / input family |
 |---|---|---|---|
-| `runModPChecksum` | `n` | degree | bridge-operations |
-| `runLiftToZChecksum` | `n` | degree | bridge-operations |
-| `runReduceModPowChecksum` | `n` | degree | bridge-operations |
-| `runLinearHenselStepChecksum` | `n * n` | degree, fixed exponent | linear-hensel |
-| `runHenselLiftChecksum` | `n * n` | degree, `k = 64` | linear-hensel |
-| `runHenselPrecisionChecksum` | `linearPrecisionUpper k` | precision, degree 128 | linear-hensel |
-| `runQuadraticHenselStepChecksum` | `n * n` | degree, fixed exponent | quadratic-hensel |
-| `runPolyProductChecksum` | `productTreeUpper n` | number of factors | multifactor-lifting |
-| `runPolyProductFoldChecksum` | `productFoldUpper n` | number of factors | multifactor-lifting |
-| `runPolyProductTreeChecksum` | `productTreeUpper n` | number of factors | multifactor-lifting |
-| `runMultifactorLiftChecksum` | `n * n` | degree, `k = 64` | multifactor-lifting |
-| `runMultifactorLiftQuadraticChecksum` | `n * n` | degree, `k = 64` | multifactor-lifting |
-| `runMultifactorPrecisionChecksum` | `linearPrecisionUpper k` | precision, degree 128 | multifactor-lifting |
-| `runQuadraticPrecisionChecksum` | `quadraticPrecisionUpper k` | precision, degree 128 | quadratic-hensel |
+| `runModPChecksum` | `n` | coefficient count | Phase 4 / bridge-operations |
+| `runLiftToZChecksum` | `n` | coefficient count | Phase 4 / bridge-operations |
+| `runReduceModPowChecksum` | `n` | coefficient count | Phase 4 / bridge-operations |
+| `runLinearHenselStepChecksum` | `n²` | degree | Phase 4 / linear-hensel |
+| `runHenselLiftChecksum` | `n²` | degree, `k = 64` | Phase 4 / linear-hensel |
+| `runQuadraticHenselStepChecksum` | `n²` | degree | Phase 4 / quadratic-hensel |
+| `runPolyProductChecksum` | `n²` | factors 1024--2048, retained branch | Phase 4 / multifactor-lifting |
+| `runMultifactorLiftChecksum` | `n²` | degree, `k = 64` | Phase 4 / multifactor-lifting |
+| `runMultifactorLiftQuadraticChecksum` | `n²` | degree, `k = 64` | Phase 4 / multifactor-lifting |
+| `runPolyProductFoldChecksum` | `n²` | factors 128--1024 | crossover diagnostic |
+| `runPolyProductTreeChecksum` | `productTreeUpper n = n⁴` | factors 128--1024 | crossover diagnostic |
 
-The two within-Lean compare groups use the complete common domains
-`n = 64, 80, 96, 128, 160, 192, 256, 384, 512` at `k = 64` and
-`k = 4, 8, 16, 32, 64, 128, 256` at degree 128. Both report that all functions
-agree at every common parameter. The 61 fixed registrations are comparator or
-protocol anchors only; they make no complexity claim and have no mode.
+The SPEC-named compare groups are:
+
+- `compare runPolyProductFoldChecksum runPolyProductTreeChecksum`;
+- `compare runMultifactorLiftChecksum runMultifactorLiftQuadraticChecksum`.
 
 ## Verdicts
 
-The scientific command was:
+The clean three-trial scientific command was:
 
 ```sh
 .lake/build/bin/hexhensel_bench run \
@@ -44,109 +41,120 @@ The scientific command was:
   Hex.HenselBench.runReduceModPowChecksum \
   Hex.HenselBench.runLinearHenselStepChecksum \
   Hex.HenselBench.runHenselLiftChecksum \
-  Hex.HenselBench.runHenselPrecisionChecksum \
   Hex.HenselBench.runQuadraticHenselStepChecksum \
   Hex.HenselBench.runPolyProductChecksum \
   Hex.HenselBench.runPolyProductFoldChecksum \
   Hex.HenselBench.runPolyProductTreeChecksum \
   Hex.HenselBench.runMultifactorLiftChecksum \
   Hex.HenselBench.runMultifactorLiftQuadraticChecksum \
-  Hex.HenselBench.runMultifactorPrecisionChecksum \
-  Hex.HenselBench.runQuadraticPrecisionChecksum \
   --outer-trials 3 \
-  --export-file reports/bench-results/hex-hensel-c22f45d2-headline-chungus2.json
+  --export-file reports/bench-results/hex-hensel-20fca7f5-headline-chungus2.json
 ```
 
-The clean 14-result export is
-`reports/bench-results/hex-hensel-c22f45d2-headline-chungus2.json`, SHA-256
-`20e041371cec11981415d73d12cc6d4bfd2fa6d6e9a1bd66c6f6897e7d916f28`.
-Every child completed and recorded `git_dirty=false`.
+The 11-result artifact has SHA-256
+`493e9cbc058f26058a4f268fc0ce8af3ba32981363badd94c24d8c45a9fd5420`.
+Every child completed at clean revision `20fca7f5`. One scheduler pause made
+the three-trial `runModPChecksum` top-rung spread 600%; its five-trial clean
+replacement was run with:
 
-| registration | mode | largest rung median | harness verdict and slope | Phase-4 result |
+```sh
+.lake/build/bin/hexhensel_bench run Hex.HenselBench.runModPChecksum \
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-hensel-699eff73-modp-confirm-chungus2.json
+```
+
+That artifact has SHA-256
+`2e3150837132bfb88d97d71245e4c0cefa1787ff840e1d3b74fed88fba1d0868`
+and supplies the `runModPChecksum` verdict below.
+
+| registration | mode | largest rung median | harness verdict | Phase-4 result |
 |---|---:|---:|---|---|
-| `runModPChecksum` | 1 | 12.552 ms | consistent, β=+0.119 | consistent with declared complexity |
-| `runLiftToZChecksum` | 1 | 2.636 ms | consistent, β=+0.006 | consistent with declared complexity |
-| `runReduceModPowChecksum` | 1 | 865.618 µs | consistent, β=+0.001 | consistent with declared complexity |
-| `runLinearHenselStepChecksum` | 1 | 15.132 ms | consistent, β=−0.035 | consistent with declared complexity |
-| `runHenselLiftChecksum` | 1 | 1.967 s | consistent, β=−0.046 | consistent with declared complexity |
-| `runHenselPrecisionChecksum` | 2 | 582.765 ms | inconclusive, β=−1.817, looks faster | within declared upper bound (observed faster) |
-| `runQuadraticHenselStepChecksum` | 1 | 8.727 ms | consistent, β=+0.091 | consistent with declared complexity |
-| `runPolyProductChecksum` | 2 | 157.451 ms | inconclusive, β=−1.287, looks faster | within declared upper bound (observed faster) |
-| `runPolyProductFoldChecksum` | 2 | 157.020 ms | inconclusive, β=−0.888, looks faster | within declared upper bound (observed faster) |
-| `runPolyProductTreeChecksum` | 2 | 158.452 ms | inconclusive, β=−1.286, looks faster | within declared upper bound (observed faster) |
-| `runMultifactorLiftChecksum` | 1 | 1.964 s | consistent, β=−0.051 | consistent with declared complexity |
-| `runMultifactorLiftQuadraticChecksum` | 1 | 278.471 ms | consistent, β=−0.139 | consistent with declared complexity |
-| `runMultifactorPrecisionChecksum` | 2 | 570.210 ms | inconclusive, β=−1.820, looks faster | within declared upper bound (observed faster) |
-| `runQuadraticPrecisionChecksum` | 2 | 47.132 ms | inconclusive, β=−1.084, looks faster | within declared upper bound (observed faster) |
+| `runModPChecksum` | 1 | 14.404 ms | consistent, β=+0.092 | consistent with declared complexity |
+| `runLiftToZChecksum` | 1 | 4.075 ms | consistent, β=−0.001 | consistent with declared complexity |
+| `runReduceModPowChecksum` | 1 | 1.225 ms | consistent, β=+0.033 | consistent with declared complexity |
+| `runLinearHenselStepChecksum` | 1 | 22.592 ms | consistent, β=−0.034 | consistent with declared complexity |
+| `runHenselLiftChecksum` | 1 | 2.888 s | consistent, β=−0.034 | consistent with declared complexity |
+| `runQuadraticHenselStepChecksum` | 1 | 9.453 ms | consistent, β=+0.096 | consistent with declared complexity |
+| `runPolyProductChecksum` | 1 | 1.043 s | consistent, narrow-range ratio test | consistent with declared complexity |
+| `runMultifactorLiftChecksum` | 1 | 2.924 s | consistent, β=−0.062 | consistent with declared complexity |
+| `runMultifactorLiftQuadraticChecksum` | 1 | 394.510 ms | consistent, β=−0.080 | consistent with declared complexity |
+| `runPolyProductFoldChecksum` | 1 | 209.052 ms | consistent, β=+0.099 | consistent with declared complexity |
+| `runPolyProductTreeChecksum` | 2 | 204.834 ms | inconclusive, β=−1.226, faster | within declared upper bound (observed faster) |
 
-Mode 1 applies where fixing precision leaves an independently derived tight
-coefficient-operation model. Mode 2 is necessary on the precision and product
-axes because coefficient widths grow with the parameter and the executable
-crosses GMP and Kronecker implementation regimes; no tight family-specific
-wall-clock model follows from the source. The upper bounds use the published
-schoolbook integer multiplication and division bounds in
-[Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1](https://members.loria.fr/PZimmermann/mca/pub226.html):
+Mode 1 is independently derived for every Phase-4 operation target. At fixed
+`k = 64`, each affected lift performs a constant number of dense corrections;
+both factor degrees grow linearly with `n`, so the tight degree model is `n²`.
+The public product ladder lies wholly at `n ≥ Array.treeProductLimit`, where
+the dispatcher selects the retained fold; adding one linear factor grows the
+accumulator degree by one, giving `1 + ... + n = O(n²)` coefficient work. The
+retained fold has the same derivation.
 
-- coefficients modulo `5^j` have `O(j)` bits; `O(k)` linear corrections with
-  `O(j²)` integer operations sum to `linearPrecisionUpper k = k³`;
-- exact quadratic lifting halves the exponent recursively, so the geometric
-  sum of `O(j²)` corrections is `quadraticPrecisionUpper k = k²`;
-- after `j` bounded linear factors, the fold accumulator has `O(j)`
-  coefficients of `O(j)` bits, giving `productFoldUpper n = n³` after summing;
-- a `j`-leaf subtree packs `O(j)` coefficients of `O(j)` bits into an
-  `O(j²)`-bit integer; schoolbook packed multiplication is `O(j⁴)`, and the
-  balanced-tree sum is root-dominated, giving `productTreeUpper n = n⁴`.
-
-These declarations were derived from representation and control flow before
-the final measurement; no observed slope was fitted. The profiles below show
-the cited multiplication/division phases dominating each mode-2 family.
-
-One isolated scheduler outlier inflated the full export's `runModPChecksum`
-largest-rung spread without changing its median or pass. A clean five-trial
-confirmation at the same commit gave β=+0.030 and a 9.980 ms largest-rung
-median. Its artifact is
-`reports/bench-results/hex-hensel-c22f45d2-modp-confirm-chungus2.json`,
-SHA-256
-`04ee257861d7f82ed8ea848455e68c40f9f38fffc8357eca46b22f8916ae4f43`.
+The balanced tree is mode 2. No tighter single family-specific model follows
+from the source: `ZPoly.fastPlan` dispatches among schoolbook and KS1--KS4 as
+node degree and coefficient width grow, while GMP independently changes its
+integer-multiplication kernel. At a `j`-leaf node, `O(j)` coefficients of
+`O(j)` bits pack into `O(j²)` bits. Composing the published schoolbook integer
+multiplication bound from Brent--Zimmermann, *Modern Computer Arithmetic*,
+Chapter 1, gives `O(j⁴)`, and the geometric tree sum is root-dominated. This is
+the report author's source composition of the published base bound, not a
+fitted exponent. The profile below confirms that the cited packed integer
+multiplication phase dominates.
 
 ### Diagnosis of issue #9741
 
-The three original failures were fixture/schedule failures, not an
-implementation defect on the isolated degree axis.
+The three failed verdicts were fixture and schedule defects, not an
+implementation defect on the intended degree family.
 
-- The old scalar encoding co-varied degree and precision, while its numeric
-  spacing was dominated by degree. It therefore did not isolate either
-  scaling claim, and the optimized high-precision rung introduced a second
-  implementation regime into the same regression.
-- The old iterative fixture kept one factor linear, so it did not exercise the
-  intended degree-growing correction products. The replacement uses dense
-  monic `g` and `q` and sets `h = g*q + 1`; `h - q*g = 1` proves coprimeness
-  while both factor degrees grow.
-- The error polynomial now has `g.size + h.size - 2` coefficients. Its degree
-  is strictly below `g*h`, so adding `5*e` preserves the monic leading
-  coefficient required by the lifting model.
+- The scalar encoding co-varied degree and precision, but its spacing was
+  dominated by degree. It therefore isolated neither component of the old
+  product model, and the high-precision rung changed arithmetic regimes inside
+  the same regression.
+- The old iterative fixture kept one factor linear. `denseCoprimePair` now
+  constructs dense monic `g` and `q` and sets `h = g*q + 1`; the identity
+  `h - q*g = 1` proves coprimeness modulo every prime while both factor degrees
+  grow.
+- The error has `g.size + h.size - 2` coefficients, so its degree is strictly
+  below `g*h`; adding `5*e` preserves the monic leading coefficient.
 
-With `k = 64` fixed, direct linear, linear multifactor, and quadratic
-multifactor lifting all pass their tight `n²` mode-1 verdicts. Their separate
-fixed-degree precision registrations pass the independently qualified mode-2
-upper bounds. The all-target rerun also exposed the product dispatcher's old
-`n²` declaration as a coefficient-operation count rather than a wall-clock
-bound; the coefficient-bit-aware product registrations above close that
-separate evidence gap.
+Fixing `k = 64` produces one controlled degree ladder for each failed target,
+and all three now pass their independently derived mode-1 `n²` verdicts. The
+public product's scientific ladder similarly stays in one dispatcher branch.
+
+The compare evidence was captured cleanly at `6bd274a2`:
+
+```sh
+.lake/build/bin/hexhensel_bench compare \
+  Hex.HenselBench.runPolyProductFoldChecksum \
+  Hex.HenselBench.runPolyProductTreeChecksum \
+  --param-floor 4 --param-ceiling 1024 --param-schedule doubling \
+  --cache-mode warm --outer-trials 3 --signal-floor-multiplier 1 \
+  --export-file reports/bench-results/hex-hensel-6bd274a2-product-compare-chungus2.json
+
+.lake/build/bin/hexhensel_bench compare \
+  Hex.HenselBench.runMultifactorLiftChecksum \
+  Hex.HenselBench.runMultifactorLiftQuadraticChecksum \
+  --cache-mode warm --outer-trials 3 --signal-floor-multiplier 1 \
+  --export-file reports/bench-results/hex-hensel-6bd274a2-lift-compare-chungus2.json
+```
+
+Both commands reported `all functions agree on common params`. The product
+artifact covers 4 through 1024 and has SHA-256
+`2ea5c4ae1e383998eaa84dfa2b44a3bed023e5d94a96fb0e794395701fc322e4`;
+the lift artifact covers 64 through 512 and has SHA-256
+`ceb27d06564b8ca199b7a96aeba21ecb7ad126f97355016c8e5da1eb655b2147`.
 
 ## Comparator ratios
 
-The declared informational comparator is
-`FLINT nmod_poly_hensel_lift_* via python-flint`. python-flint 0.9.0 does not
-bind those C entry points directly;
-the shared persistent driver emulates the same Newton-style schema with
-`fmpz_poly`, so the figures orient implementation work but do not gate Phase 4.
-Hex returns non-negative residues and the driver returns centred residues;
-each fixed registration's five observed hashes agree internally, but Hex and
-FLINT hashes are not expected to match across representations.
+The declared informational comparator is `FLINT fmpz_poly Newton-style Hensel emulation via python-flint`.
+python-flint 0.9.0 does not expose FLINT's native
+Hensel entry points; the persistent driver implements the same correction
+schema with `fmpz_poly`. These figures orient implementation work but do not
+gate Phase 4 and are not a native-FLINT Hensel performance claim. Hex returns
+non-negative residues while the driver returns centred residues, so each side
+checks its own stable hashes rather than cross-representation equality.
 
-The exact campaign selected all fixed registrations from the relinked binary
-and ran:
+The fixed-target code and fixtures have not changed since clean revision
+`c22f45d2`. Its campaign ran:
 
 ```sh
 mapfile -t names < <(.lake/build/bin/hexhensel_bench list | awk '/\[fixed\]/{print $1}')
@@ -154,15 +162,15 @@ uv run --with python-flint .lake/build/bin/hexhensel_bench run "${names[@]}" \
   --export-file reports/bench-results/hex-hensel-c22f45d2-flint-chungus2.json
 ```
 
-The 61-result clean export is
-`reports/bench-results/hex-hensel-c22f45d2-flint-chungus2.json`, SHA-256
+The 61-result export has SHA-256
 `725259756cef20dcb36946c8137085b6160cd4f9ec72b4acda9f341234bf20a7`.
 All points completed, all per-registration hashes agree, every FLINT target
 records `warmup_first_iter=true`, and every batch was amortised for at least
-0.1 s. The in-harness `runFlintOverhead` median is **6.198 µs**. It is at most
-3.66% of any FLINT median below, and all calls are below the 1 s soft ceiling,
-so all 30 paired rungs are eligible. `adjusted` subtracts 6.198 µs from FLINT
-before forming FLINT/Hex.
+0.1 s. The in-harness `runFlintOverhead` median is **6.198 µs**, at most 3.66%
+of any FLINT median below. `adjusted` subtracts that overhead before forming
+FLINT/Hex. Both endpoints include deterministic fixture construction inside
+their timed fixed-registration bodies, so these are symmetric end-to-end
+endpoint ratios rather than pure-kernel ratios.
 
 ### Linear single step
 
@@ -175,8 +183,8 @@ before forming FLINT/Hex.
 | 384 | 8.550 ms | 4.134 ms | 0.483× | 0.483× |
 | 512 | 15.005 ms | 5.298 ms | 0.353× | 0.353× |
 
-FLINT is faster throughout. The ratio falls through `n = 256`, then shows a
-representation/algorithm threshold at 384 and ends at 0.353×.
+FLINT is faster throughout. The ratio falls through `n = 256`, crosses a
+representation/algorithm threshold at 384, and ends at 0.353×.
 
 ### Quadratic single step
 
@@ -203,7 +211,7 @@ about 2.1× to 3.9× faster and finishes at 0.255×.
 | 192 | 22.112 ms | 15.071 ms | 0.682× | 0.681× |
 | 256 | 38.630 ms | 27.186 ms | 0.704× | 0.704× |
 
-The adjusted ratio stays in a narrow 0.599×–0.704× band, with FLINT's
+The adjusted ratio stays in a narrow 0.599×--0.704× band, with FLINT's
 emulation about 1.4× faster at the top rung.
 
 ### Linear multifactor lift at k = 8
@@ -217,8 +225,8 @@ emulation about 1.4× faster at the top rung.
 | 192 | 22.071 ms | 14.761 ms | 0.669× | 0.668× |
 | 256 | 38.992 ms | 26.181 ms | 0.671× | 0.671× |
 
-This mirrors the direct linear wrapper, as expected from the two-factor
-delegation: the adjusted ratio remains 0.575×–0.671×.
+This mirrors the direct linear wrapper: the adjusted ratio remains
+0.575×--0.671×.
 
 ### Quadratic multifactor lift at k = 8
 
@@ -232,58 +240,57 @@ delegation: the adjusted ratio remains 0.575×–0.671×.
 | 256 | 12.052 ms | 26.377 ms | 2.189× | 2.188× |
 
 After the smallest fixed-cost rung, Hex's production quadratic lifter remains
-about 1.9×–2.2× faster than the python-flint emulation.
+about 1.9×--2.2× faster than the python-flint emulation.
 
 ## Profile
 
-Profiles were captured from the same clean commit on the same host with
-LeanBench 0.1.0, samply 0.13.1 at 999 Hz, and lean-bench-samply commit
-`9356baa2f5757ee40320a897bd284914d5bb9f5e`. Raw Firefox Profiler artifacts
-remain developer-local under `/tmp` as required by `SPEC/profiling.md`.
-The exact commands were:
+Profiles were captured from clean revision
+`6bd274a2b6ffca5ed6c6a27f8e26dc039e1ce6b2` on `chungus2` with LeanBench
+0.1.0, samply 0.13.1 at 999 Hz, and lean-bench-samply revision
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`. There is no random seed. Raw
+Firefox Profiler files remain developer-local under `/tmp` as required by
+`SPEC/profiling.md`.
 
 ```sh
-LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
-  scripts/profile/run_profile.sh .lake/build/bin/hexhensel_bench \
-  Hex.HenselBench.runModPChecksum 131072 3000000000
-LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
-  scripts/profile/run_profile.sh .lake/build/bin/hexhensel_bench \
-  Hex.HenselBench.runHenselPrecisionChecksum 256 3000000000
-LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
-  scripts/profile/run_profile.sh .lake/build/bin/hexhensel_bench \
-  Hex.HenselBench.runQuadraticPrecisionChecksum 256 3000000000
-LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
-  scripts/profile/run_profile.sh .lake/build/bin/hexhensel_bench \
-  Hex.HenselBench.runPolyProductChecksum 1024 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runModPChecksum 131072 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runHenselLiftChecksum 512 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runQuadraticHenselStepChecksum 512 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runMultifactorLiftChecksum 512 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runMultifactorLiftQuadraticChecksum 512 3000000000
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
+  .lake/build/bin/hexhensel_bench Hex.HenselBench.runPolyProductTreeChecksum 1024 3000000000
 ```
 
-There is no random seed. Each row records leaf self-time categories; the
-inclusive ranking names the executable phase to which the cost is attributed.
-
-| input family and exact case | classified leaf cost | principal inclusive Hex functions |
+| family and exact case | classified leaf cost | principal inclusive Hex functions |
 |---|---|---|
-| bridge-operations: `runModPChecksum`, `n=131072` | allocation 42.99%, runtime 44.69%, own code 11.50%, other 0.81% (99.19%) | `runModPChecksum` 25.66%, `ZPoly.modP` 19.62%, checksum 13.86% |
-| linear-hensel: `runHenselPrecisionChecksum`, `k=256`, degree 128 | allocation 44.05%, runtime 21.99%, GMP 17.72%, own code 15.83%, other 0.41% (99.59%) | `henselLift` / `linearHenselStep` 96.63%, `DensePoly.mulImpl` 84.55%, division 6.61% |
-| quadratic-hensel: `runQuadraticPrecisionChecksum`, `k=256`, degree 128 | allocation 57.44%, GMP 29.58%, runtime 11.41%, own code 1.04%, other 0.52% (99.48%) | `henselLiftFactorsImpl` 92.95%, `liftExactImpl` 78.35%, bignum step 69.90%, modular division 63.88% |
-| multifactor-lifting: `runPolyProductChecksum`, `n=1024` | allocation 74.12%, GMP 18.48%, runtime 7.17%, other 0.22% (99.78%) | `runPolyProductChecksum` 97.42%, `DensePoly.mulImpl` 92.79% |
+| bridge-operations: `runModPChecksum`, `n=131072` | allocation 40.99%, runtime 46.49%, own 11.80%, other 0.72% (99.28%) | target 26.08%, `ZPoly.modP` 20.65%, checksum 12.44% |
+| linear-hensel: `runHenselLiftChecksum`, `n=512`, `k=64` | allocation 45.93%, runtime 30.80%, own 14.37%, GMP 8.55%, other 0.35% (99.65%) | target / `henselLift` / `linearHenselStep` 99.75%, `DensePoly.mulImpl` 91.10% |
+| quadratic-hensel: `runQuadraticHenselStepChecksum`, `n=512` | runtime 98.27%, allocation 1.23%, own 0.23%, other 0.27% (99.73%) | target 100%, `quadraticHenselStepWord?` 99.95%, division 1.23% |
+| multifactor-lifting: `runMultifactorLiftChecksum`, `n=512`, `k=64` | allocation 45.10%, runtime 25.73%, own 18.40%, GMP 9.96%, other 0.81% (99.19%) | target / `multifactorLiftList` 99.54%, `henselLift` 99.44%, `DensePoly.mulImpl` 90.65% |
+| multifactor-lifting: `runMultifactorLiftQuadraticChecksum`, `n=512`, `k=64` | allocation 54.31%, runtime 25.74%, GMP 17.12%, own 2.50%, other 0.32% (99.68%) | target 97.26%, `henselLiftFactorsImpl` 96.15%, modular division 69.49%, `liftExactImpl` 68.26% |
+| product crossover: `runPolyProductTreeChecksum`, `n=1024` | GMP 90.13%, allocation 8.93%, runtime 0.64%, own 0.11%, other 0.19% (99.81%) | `KS3.digits` 46.61%, target / product tree 45.33% / 44.95%, `mulKS4` 38.96% |
 
-The bridge profile attributes its cost to coefficient conversion, construction,
-and the registered checksum. The linear precision profile is dominated by the
-dense multiplication inside every linear correction, directly supporting the
-coefficient-bit upper bound. The quadratic precision profile is dominated by
-the exact bignum correction and modular division phases; its geometric
-precision recursion is therefore present rather than hidden in preparation.
-The product profile is dominated by the registered dense multiply path, with
-allocation and GMP accounting for 92.60% of leaf cost. No dominant timed phase
-is outside a registered target.
-
-Diagnostics quoted from the timed-region postprocessor:
+The two linear profiles have the same correction call graph and are dominated
+by the registered dense product, confirming that the multifactor wrapper adds
+no hidden phase. The quadratic single-step profile exercises the word path;
+the production quadratic multifactor profile attributes its larger-width work
+to exact lifting and modular division. The tree profile attributes 90.13% of
+leaf samples to GMP and its leading inclusive entries to KS packing/recovery,
+which is precisely the packed-integer phase covered by its mode-2 bound. No
+dominant timed cost falls outside a registered target.
 
 ```text
-bridge:    residual=0.305 ms; total timed=1370.982 ms; retained=1356; sensitivity ±5 ms=passed; confidence=passed
-linear:    residual=0.817 ms; total timed=2920.228 ms; retained=2906; sensitivity ±5 ms=passed; confidence=passed
-quadratic: residual=0.784 ms; total timed=3092.646 ms; retained=3076; sensitivity ±5 ms=passed; confidence=passed
-product:   residual=0.556 ms; total timed=2680.409 ms; retained=2678; sensitivity ±5 ms=passed; confidence=passed
+bridge:          residual=0.819 ms; timed=1269.481 ms; retained=1254; sensitivity ±5 ms=passed; confidence=passed
+linear:          residual=0.641 ms; timed=1988.583 ms; retained=1977; sensitivity ±5 ms=passed; confidence=passed
+quadratic step:  residual=0.861 ms; timed=2207.867 ms; retained=2197; sensitivity ±5 ms=passed; confidence=passed
+linear multi:    residual=0.565 ms; timed=1991.443 ms; retained=1978; sensitivity ±5 ms=passed; confidence=passed
+quadratic multi: residual=0.897 ms; timed=2530.202 ms; retained=2517; sensitivity ±5 ms=passed; confidence=passed
+product tree:    residual=0.809 ms; timed=2650.898 ms; retained=2654; sensitivity ±5 ms=passed; confidence=passed
 ```
 
 ## Concerns
