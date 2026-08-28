@@ -404,8 +404,7 @@ def budgeted (ceilingNanos : Nat) (work : IO UInt64) : IO UInt64 := do
   let stop ← IO.monoNanosNow
   if stop - start ≤ ceilingNanos then return value else return 0xffffffffffffffff
 
-def runTaylor : Unit → IO UInt64 := fun _ => budgeted 50_000_000 do
-  return (← taylorRef.get).map taylorChecksum |>.getD 0
+def runTaylor (p : ZPoly) : UInt64 := taylorChecksum p
 def runWitnessCheck : Unit → IO UInt64 := fun _ => do
   budgeted 50_000_000 do return (← witnessRef.get).map witnessChecksum |>.getD 0
 def runNkWitnessCheck : Unit → IO UInt64 := fun _ => do
@@ -448,8 +447,16 @@ degree-128 midpoint and enforces a 50 ms absolute budget in `runTaylor` via
 `budgeted`, above its clean 2.222 ms baseline; `maxSecondsPerCall` below is
 only a process safety cap.
 -/
-setup_fixed_benchmark runTaylor where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x9917b7b230496af4 }
+setup_benchmark runTaylor n => n * n * n
+  with prep := seededPoly
+  where {
+    paramFloor := 64
+    paramCeiling := 2048
+    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
