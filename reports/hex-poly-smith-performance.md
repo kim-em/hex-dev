@@ -68,6 +68,11 @@ degree by `3*d`; its binomial sums and rational denominator powers give the
 coefficient-width terms above. Fixed-degree dimension chains supplement this
 Euclidean evidence by isolating dense matrix traversal.
 
+The per-library SPEC separately retains the general operational worst-case
+bound in terms of total reductions, maximum intermediate degree, and maximum
+coefficient-limb width. These two-sided family models specialize that bound;
+they do not replace it.
+
 Direct certification uses dense degree-linear unimodular witnesses. Its matrix
 dot products perform cubic cells of degree-linear polynomial scans, including
 `acc + 0`, giving the quartic model. Evaluation certification checks exactly

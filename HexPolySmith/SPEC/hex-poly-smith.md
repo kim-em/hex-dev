@@ -187,6 +187,31 @@ supplemental dimension chains isolate dense matrix traversal at fixed degree.
 The original generic dense inputs remain fixed comparator stress cases; they do
 not make a parametric complexity claim.
 
+The general worst-case contract remains broader than those family-specific
+models. For a concrete `n × m` run, let `e` be the total number of nontrivial
+pair and block reductions, `D` the maximum intermediate polynomial degree, and
+`L` the maximum rational coefficient width in 64-bit limbs. The schoolbook
+kernel performs at most
+`O((e * (n + m) + min(n,m) * n * m) * D^2 * L^2 * (1 + log L))`
+word operations: reductions
+update one full row or column, every stage scans its trailing block, and dense
+polynomial multiplication/division is quadratic in degree, while rational
+normalization adds the standard logarithmic factor to schoolbook limb work.
+Rank, invariant-factor, module-structure, quotient-order, and solving
+postprocessing do not increase that bound. A dense direct certificate is
+`O(n^3 * D^2 * L^2 * (1 + log L))`; evaluation at `k` points is
+`O(k * (n^2 * D + n^3) * L^2 * (1 + log L))`. These are worst-case
+operational bounds, not the two-sided declarations for a particular benchmark
+family.
+
+The continuant degree families specialize the Smith bound more tightly:
+dimension is fixed, every Euclidean quotient is linear, and the remainder
+degrees decrease by one, so their coefficient scans sum quadratically rather
+than paying the general maximum-degree bound at every reduction. The dimension
+families instead fix `D` and keep `L` within the derived limb count, leaving the
+cubic trailing-matrix work dominant. Thus the mode-1 models are specializations
+of, not replacements for, the worst-case contract.
+
 The required within-Lean comparisons are:
 
 - `snf` against `snfData` on the same dimension and degree ladders;
