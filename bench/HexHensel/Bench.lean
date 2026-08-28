@@ -26,7 +26,9 @@ Scientific registrations:
 * `runReduceModPowChecksum`: coefficient reduction modulo `5^k`, `O(n)`.
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
 * `runHenselLiftChecksum`: iterative linear lift at fixed high precision,
-  `O(n^2 k)` with `k = 64`.
+  `O(n^2)` in the degree.
+* `runHenselPrecisionChecksum`: iterative linear lift at fixed degree, with
+  the source-derived `O(k^3)` coefficient-bit upper bound.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
 * `runPolyProductChecksum`: public ordered-product dispatcher, with a
   conservative `O(n^2)` upper bound.
@@ -34,15 +36,21 @@ Scientific registrations:
 * `runPolyProductTreeChecksum`: the same ordered product through a balanced
   tree and `ZPoly.fastPlan`, `O(M(n) log n)`.
 * `runMultifactorLiftChecksum`: two-factor ordered lift at fixed high precision,
-  `O(n^2 k)` with `k = 64`.
+  `O(n^2)` in the degree.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
-  `O(n^2 log k)` with `k = 64`.
+  `O(n^2)` in the degree.
+* `runMultifactorPrecisionChecksum`: linear multifactor lift at fixed degree,
+  with the source-derived `O(k^3)` coefficient-bit upper bound.
+* `runQuadraticPrecisionChecksum`: quadratic multifactor lift at fixed degree,
+  with the source-derived `O(k^2)` coefficient-bit upper bound.
 
 Compare groups:
 
 * `compare runMultifactorLiftChecksum runMultifactorLiftQuadraticChecksum`
-  checks the linear and quadratic multifactor lifters on the shared encoded
-  `(n, k)` fixture schedule.
+  checks the linear and quadratic multifactor lifters on the shared degree
+  schedule at `k = 64`.
+* `compare runMultifactorPrecisionChecksum runQuadraticPrecisionChecksum`
+  checks the same lifters on the shared precision schedule at fixed degree.
 
 Informational external comparators (FLINT `nmod_poly_hensel_lift_*` via the
 shared persistent-subprocess python-flint driver, per
@@ -137,17 +145,26 @@ def liftBenchDegree (param : Nat) : Nat :=
 def liftBenchPrecision (param : Nat) : Nat :=
   param % liftParamScale
 
-/-- Textbook cost model for linear lifting over encoded `(n, k)` parameters. -/
-def liftLinearComplexity (param : Nat) : Nat :=
-  let n := liftBenchDegree param
-  let k := liftBenchPrecision param
-  n * n * k
+/-- Schoolbook coefficient-bit upper bound for a fixed-degree linear lift.
 
-/-- Textbook cost model for quadratic lifting over encoded `(n, k)` parameters. -/
-def liftQuadraticComplexity (param : Nat) : Nat :=
-  let n := liftBenchDegree param
-  let k := liftBenchPrecision param
-  n * n * Nat.log2 (k + 1)
+At correction exponent `j`, canonical coefficients modulo `5^j` have `O(j)`
+bits. A dense step performs a fixed number of integer operations when degree
+is fixed, and schoolbook multiplication/division costs `O(j^2)` bit
+operations. Summing over the `O(k)` linear corrections gives `O(k^3)`; see
+Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1, for the basecase
+integer multiplication and division bounds. -/
+def linearPrecisionUpper (k : Nat) : Nat :=
+  k ^ 3
+
+/-- Schoolbook coefficient-bit upper bound for a fixed-degree quadratic lift.
+
+The exact-exponent recursion halves the exponent before each correction. A
+correction at exponent `j` costs `O(j^2)` in the schoolbook bound, and the
+geometric sum `k^2 + (k/2)^2 + ...` is `O(k^2)`; see
+Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1, for the basecase
+integer multiplication and division bounds. -/
+def quadraticPrecisionUpper (k : Nat) : Nat :=
+  k ^ 2
 
 /-- Deterministic integer coefficient generator keyed by size, index, and salt. -/
 def zCoeffValue (n i salt : Nat) : Int :=
@@ -238,7 +255,7 @@ steps. The shared pair and error salt match `prepMultifactorLiftInput`.
 -/
 def prepLinearInput (n : Nat) : LinearInput :=
   let (g, h) := denseCoprimePair n
-  let e := denseZPoly (g.size + h.size - 1) 67
+  let e := denseZPoly (g.size + h.size - 2) 67
   let f := g * h + DensePoly.scale (5 : Int) e
   let xgcd := ZPoly.normalizedXGCD 5 g h
   { f := f
@@ -251,6 +268,14 @@ def prepLinearInput (n : Nat) : LinearInput :=
 def prepLinearLiftInput (param : Nat) : LinearInput :=
   { prepLinearInput (liftBenchDegree param) with
     k := liftBenchPrecision param }
+
+/-- Degree fixture for iterative linear lifting at a fixed exponent. -/
+def prepLinearDegreeInput (n : Nat) : LinearInput :=
+  { prepLinearInput n with k := 64 }
+
+/-- Precision fixture for iterative linear lifting at a fixed degree. -/
+def prepLinearPrecisionInput (k : Nat) : LinearInput :=
+  { prepLinearInput 128 with k := k }
 
 /-- Per-parameter fixture for quadratic Hensel operations. -/
 def prepQuadraticInput (n : Nat) : QuadraticInput :=
@@ -274,7 +299,7 @@ def prepProductInput (n : Nat) : MultifactorInput :=
 def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
   let (g, h) := denseCoprimePair n
   let factors := #[g, h]
-  let e := denseZPoly (g.size + h.size - 1) 67
+  let e := denseZPoly (g.size + h.size - 2) 67
   { f := Array.polyProduct factors + DensePoly.scale (5 : Int) e
     factors := factors }
 
@@ -282,6 +307,14 @@ def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
 def prepMultifactorLiftPrecisionInput (param : Nat) : MultifactorInput :=
   { prepMultifactorLiftInput (liftBenchDegree param) with
     k := liftBenchPrecision param }
+
+/-- Degree fixture for multifactor lifting at a fixed exponent. -/
+def prepMultifactorDegreeInput (n : Nat) : MultifactorInput :=
+  { prepMultifactorLiftInput n with k := 64 }
+
+/-- Precision fixture for multifactor lifting at a fixed degree. -/
+def prepMultifactorPrecisionInput (k : Nat) : MultifactorInput :=
+  { prepMultifactorLiftInput 128 with k := k }
 
 /-- Benchmark target: reduce integer coefficients modulo `5`. -/
 def runModPChecksum (input : ConversionInput) : UInt64 :=
@@ -304,6 +337,10 @@ def runLinearHenselStepChecksum (input : LinearInput) : UInt64 :=
 def runHenselLiftChecksum (input : LinearInput) : UInt64 :=
   let r := ZPoly.henselLift 5 input.k input.f input.g input.h input.s input.t
   mixHash (checksumZPoly r.g) (checksumZPoly r.h)
+
+/-- Precision-axis surface for the direct linear lift. -/
+def runHenselPrecisionChecksum (input : LinearInput) : UInt64 :=
+  runHenselLiftChecksum input
 
 /-- Benchmark target: one quadratic Hensel correction step. -/
 def runQuadraticHenselStepChecksum (input : QuadraticInput) : UInt64 :=
@@ -331,6 +368,14 @@ def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
 /-- Benchmark target: production quadratic ordered multifactor lift. -/
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
+
+/-- Precision-axis surface for the linear multifactor lift. -/
+def runMultifactorPrecisionChecksum (input : MultifactorInput) : UInt64 :=
+  runMultifactorLiftChecksum input
+
+/-- Precision-axis surface for the quadratic multifactor lift. -/
+def runQuadraticPrecisionChecksum (input : MultifactorInput) : UInt64 :=
+  runMultifactorLiftQuadraticChecksum input
 
 /-! # FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
 
@@ -524,12 +569,12 @@ def runFlintQuadraticHenselStep512 : Unit → IO UInt64 := runFlintQuadraticHens
 -- per Newton step, so intermediate `fmpz_poly` operands blow up dramatically
 -- once `target_k ≥ 12` at moderate `n`. Empirical measurement (carica, Apple M2
 -- Ultra, fresh driver per call) shows the driver process consuming > 1 GB at
--- `(n = 32, k = 16)` and > 10 GB at `(n = 128, k = 16)`; the matching Hex
--- scientific parametric ladder runs to `(192, 64)` because Hex's coefficient
--- representation stays bounded. The FLINT comparator pair therefore cannot
--- mirror the full Hex schedule; the six paired rungs sit at `k = 8` with `n`
--- varying so the iterated-lift trend can be read against the per-call FLINT
--- driver floor.
+-- `(n = 32, k = 16)` and > 10 GB at `(n = 128, k = 16)`. The Hex scientific
+-- degree ladder reaches `(512, 64)` and its precision ladder reaches `(128,
+-- 256)` because Hex reduces coefficients after every correction. The FLINT
+-- comparator therefore cannot mirror either full schedule; the six paired
+-- rungs sit at `k = 8` with `n` varying so the degree trend remains visible
+-- against the per-call driver floor.
 def encLift32_8 : Nat := encodeLiftParam 32 8
 def encLift64_8 : Nat := encodeLiftParam 64 8
 def encLift96_8 : Nat := encodeLiftParam 96 8
@@ -641,28 +686,33 @@ setup_benchmark runLinearHenselStepChecksum n => n * n
   }
 
 /-
-The wrapper performs `k` linear correction steps over degree-`n` dense inputs.
-The scientific ladder fixes `k = 64`, the largest precision in the previous
-mixed schedule, and varies only `n` above the small-degree kernel-dispatch
-region. This keeps the encoded parameter a genuine one-dimensional degree
-ladder: lean-bench regresses residuals against the encoded `Nat`, so changing
-`k` several times at the same `n` does not define a valid scalar scaling
-experiment.
+At fixed exponent `k = 64`, the wrapper performs a constant number of linear
+corrections. Each correction performs dense products and divisions on factors
+whose degrees grow linearly with `n`, giving the tight degree model `O(n^2)`.
 -/
-setup_benchmark runHenselLiftChecksum param => liftLinearComplexity param
-  with prep := prepLinearLiftInput
+setup_benchmark runHenselLiftChecksum n => n * n
+  with prep := prepLinearDegreeInput
   where {
-    paramFloor := encodeLiftParam 144 64
-    paramCeiling := encodeLiftParam 400 64
-    paramSchedule := .custom #[
-      encodeLiftParam 144 64,
-      encodeLiftParam 160 64,
-      encodeLiftParam 192 64,
-      encodeLiftParam 224 64,
-      encodeLiftParam 256 64,
-      encodeLiftParam 320 64,
-      encodeLiftParam 384 64,
-      encodeLiftParam 400 64]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+At fixed degree, canonical coefficients at exponent `j` have `O(j)` bits.
+The loop performs `O(k)` dense corrections and a schoolbook integer operation
+on `j`-bit values costs `O(j^2)`, so summing the per-step bound gives the
+published-schoolbook mode-2 upper bound `O(k^3)`.
+-/
+setup_benchmark runHenselPrecisionChecksum k => linearPrecisionUpper k
+  with prep := prepLinearPrecisionInput
+  where {
+    paramFloor := 4
+    paramCeiling := 256
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -735,48 +785,65 @@ setup_benchmark runPolyProductTreeChecksum n => (n * (Nat.log2 (n + 1) + 1) ^ 2)
   }
 
 /-
-This two-factor fixture exercises the public ordered lift helper at the same
-fixed high precision as the direct linear wrapper; the delegated Hensel lift
-repeats a quadratic dense-polynomial correction `k` times.
+At fixed exponent `k = 64`, the two-factor public helper delegates to the same
+linear lift as the direct registration. Its normalized XGCD setup and each
+dense correction have the same quadratic degree bound.
 -/
-setup_benchmark runMultifactorLiftChecksum param => liftLinearComplexity param
-  with prep := prepMultifactorLiftPrecisionInput
+setup_benchmark runMultifactorLiftChecksum n => n * n
+  with prep := prepMultifactorDegreeInput
   where {
-    paramFloor := encodeLiftParam 144 64
-    paramCeiling := encodeLiftParam 400 64
-    paramSchedule := .custom #[
-      encodeLiftParam 144 64,
-      encodeLiftParam 160 64,
-      encodeLiftParam 192 64,
-      encodeLiftParam 224 64,
-      encodeLiftParam 256 64,
-      encodeLiftParam 320 64,
-      encodeLiftParam 384 64,
-      encodeLiftParam 400 64]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-The production path shares the fixed-`k` degree ladder with the linear lifter,
-but its binary lift uses only `ceil(log₂ k)` quadratic-doubling steps; the
-factor/Bezout correction products dominate each step.
+At fixed exponent `k = 64`, the production path performs a constant number of
+exact-exponent corrections. Dense factor, Bezout, and modular-division work at
+each correction is quadratic in the growing factor degree.
 -/
-setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComplexity param
-  with prep := prepMultifactorLiftPrecisionInput
+setup_benchmark runMultifactorLiftQuadraticChecksum n => n * n
+  with prep := prepMultifactorDegreeInput
   where {
-    paramFloor := encodeLiftParam 144 64
-    paramCeiling := encodeLiftParam 400 64
-    paramSchedule := .custom #[
-      encodeLiftParam 144 64,
-      encodeLiftParam 160 64,
-      encodeLiftParam 192 64,
-      encodeLiftParam 224 64,
-      encodeLiftParam 256 64,
-      encodeLiftParam 320 64,
-      encodeLiftParam 384 64,
-      encodeLiftParam 400 64]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+The fixed-degree linear multifactor path performs `O(k)` corrections on
+`O(k)`-bit coefficients. The same schoolbook argument as the direct wrapper
+gives the mode-2 upper bound `O(k^3)`.
+-/
+setup_benchmark runMultifactorPrecisionChecksum k => linearPrecisionUpper k
+  with prep := prepMultifactorPrecisionInput
+  where {
+    paramFloor := 4
+    paramCeiling := 256
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+The exact-exponent quadratic path halves the requested exponent recursively.
+A correction at exponent `j` has the schoolbook `O(j^2)` coefficient-bit
+bound, and summing that geometric sequence gives the mode-2 upper bound
+`O(k^2)`.
+-/
+setup_benchmark runQuadraticPrecisionChecksum k => quadraticPrecisionUpper k
+  with prep := prepMultifactorPrecisionInput
+  where {
+    paramFloor := 4
+    paramCeiling := 256
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
