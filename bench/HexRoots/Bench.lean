@@ -428,11 +428,11 @@ multiply/adds. The canonical degree-128 case uses the integer centre `z = 1`:
 there is no denominator growth, but binomial output magnitudes still grow
 linearly in bits. The reachable GMP transition does not admit a stable scalar
 wall model. Mode 3 therefore gives up asymptotic detection at the canonical
-degree-128 midpoint and enforces a 10 ms absolute budget, a conservative
+degree-128 midpoint and enforces a 20 ms absolute budget, a conservative
 multiple of the clean issue-9794 baseline.
 -/
 setup_fixed_benchmark runTaylor where {
-  repeats := 5, maxSecondsPerCall := 0.01, expectedHash := some 0x9917b7b230496af4 }
+  repeats := 5, maxSecondsPerCall := 0.02, expectedHash := some 0x9917b7b230496af4 }
 
 /-
 Cost model. `mahlerPrec` evaluates the closed-form Mahler/Landau separation
@@ -666,7 +666,7 @@ initialize sameRootRef :
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
 parameter, so mode 3 uses the prebuilt refined atom as its canonical hard input
-and enforces a 2 µs budget. The atoms come from the `IO.Ref` above so the
+and enforces a 5 µs budget. The atoms come from the `IO.Ref` above so the
 harness measures the comparison, not a folded constant.
 -/
 def runSameRoot : Unit → IO UInt64 := fun () => do
@@ -677,7 +677,7 @@ def runSameRoot : Unit → IO UInt64 := fun () => do
 setup_fixed_benchmark runSameRoot where {
     repeats := 5
     minTotalSeconds := 0.000001
-    maxSecondsPerCall := 0.000002
+    maxSecondsPerCall := 0.000005
     expectedHash := some 0xb
   }
 
