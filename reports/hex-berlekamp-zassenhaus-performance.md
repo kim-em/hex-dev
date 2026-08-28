@@ -7,7 +7,7 @@ diagnostics, not alternative public implementations.
 The mode-selection audit was run on `chungus2` (AMD EPYC 9455, NixOS 26.11,
 Linux x86-64). Clean parametric sweeps at revision `5b3efbc7` establish why
 the former modes fail. The clean `e51066e1` calibration fixes absolute budgets
-before the `f1d187ba` acceptance run, and the clean `a11f9e7b` inclusive audit
+before the `609465e8` acceptance run, and the clean inclusive audit below
 establishes phase attribution. All selected mode-3 registrations pass, but
 Phase 4 remains blocked because dependency `HexHensel` is still at Phase 3. The
 cross-system Hex record remains the clean revision `7425e083` run on
@@ -125,21 +125,21 @@ make every fixed check semantic as well as temporal.
 
 | Target/input | Clean median | Budget |
 |---|---:|---:|
-| public split, `smokeInput 24` | 3.737 ms | 50 ms |
-| historical fallback probe, degree 24 | 3.466 ms | 50 ms |
-| trial split, `smokeInput 8` | 5.411 ms | 800 ms |
+| public split, `smokeInput 24` | 3.702 ms | 50 ms |
+| historical fallback probe, degree 24 | 3.485 ms | 50 ms |
+| trial split, `smokeInput 8` | 4.422 ms | 800 ms |
 | public compare, `smokeInput 8` | 0.258 ms | 5 ms |
-| trial compare, `smokeInput 8` | 3.094 ms | 800 ms |
-| public degree/height `(6, 32)` | 0.174 ms | 5 ms |
-| trial degree/height `(4, 8)` | 1.028 ms | 100 ms |
-| precision/local `(8, 32, 128, 8)` | 1.031 ms | 20 ms |
-| lifted products, 64 factors (reference / dispatch) | 9.702 / 9.667 ms | 500 ms |
-| dense reassembly, 32 factors (reference / dispatch) | 113.738 / 113.470 ms | 1.2 s |
-| skew products, 256 factors (reference / dispatch) | 79.722 / 80.352 ms | 900 ms |
+| trial compare, `smokeInput 8` | 4.827 ms | 800 ms |
+| public degree/height `(6, 32)` | 0.173 ms | 5 ms |
+| trial degree/height `(4, 8)` | 2.153 ms | 100 ms |
+| precision/local `(8, 32, 128, 8)` | 1.015 ms | 20 ms |
+| lifted products, 64 factors (reference / dispatch) | 9.750 / 9.593 ms | 500 ms |
+| dense reassembly, 32 factors (reference / dispatch) | 113.207 / 112.627 ms | 1.2 s |
+| skew products, 256 factors (reference / dispatch) | 81.260 / 80.945 ms | 900 ms |
 
 The clean implementation-revision export
-`reports/bench-results/hex-berlekamp-zassenhaus-fixed-f1d187ba-chungus2.json`
-(SHA-256 `b2bc922b18f42c4313e65e1b93d8929d0af060bcc3b9ca26e02850124cfc5465`)
+`reports/bench-results/hex-berlekamp-zassenhaus-fixed-609465e8-chungus2.json`
+(SHA-256 `d85a1833610f92f4c07ab59ecbd6542a566eb26f2f7702904863b1202b13adb4`)
 records all fourteen mode-3 registrations passing the independently fixed
 budgets, with all five repeats successful, no budget truncation, and every
 expected hash matching. The
