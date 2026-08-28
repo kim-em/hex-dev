@@ -101,8 +101,8 @@ Gating external comparator:
   run the AFP comparator.
 * `runIsabelleSplitN{2,3,4,5}Checksum`,
   `runIsabelleDegreeHeight{D}x{H}Checksum`: per-rung verified-Isabelle pairs
-  for the parametric split-family and degree/height Lean targets, used to
-  build the `hex/isabelle` scaling ladders in
+  for the historical split-family and degree/height parametric audits, used
+  to build the retained `hex/isabelle` scaling ladders in
   `reports/hex-berlekamp-zassenhaus-performance.md`.
 * `runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`: per-input
   verified-Isabelle pairs for the HO-2 adversarial singletons (one new
@@ -728,8 +728,8 @@ def runIsabelleFactorBaselineChecksum : Unit → IO UInt64 := fun _ => do
 /--
 Per-rung verified-Isabelle BZ comparator targets on the deterministic split
 family `smokeInput n` for `n = 2, 3, 4, 5`. Each pairs with the corresponding
-rung of the parametric Lean `runFactorChecksum` registration to yield a
-`hex/isabelle` ratio at that rung; together they form the scaling ladder
+rung from the clean historical `runFactorChecksum` parametric audit to yield
+a `hex/isabelle` ratio at that rung; together they form the retained ladder
 required by `SPEC/Libraries/hex-berlekamp-zassenhaus.md §"External
 comparators"` headline-trend reporting.
 -/
@@ -754,9 +754,9 @@ Per-parameter verified-Isabelle BZ comparator targets on the encoded
 degree/height inputs `prepDegreeHeightInput param` for the rungs of
 `degreeHeightSchedule` (degree 3–6, height 2–32) and the additional
 smaller-degree rungs of `slowDegreeHeightSchedule` (degree 1–3). Each pairs
-with the corresponding rung of one of the parametric Lean
-`runFactorDegreeHeightChecksum` /
-`runFactorSlowDegreeHeightChecksum` registrations.
+with the corresponding rung from the clean historical
+`runFactorDegreeHeightChecksum` / `runFactorSlowDegreeHeightChecksum`
+parametric audits.
 -/
 def runIsabelleDegreeHeight3x2Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization
@@ -822,8 +822,8 @@ def runIsabelleAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ => do
 Per-rung verified-Isabelle BZ comparator targets on the cascade-trigger
 `prepFallbackProbeInput n = (X-1)(X-2)...(X-n)` family for each rung of
 `fallbackProbeSchedule = #[11, 12, 13, 15, 18, 22, 24]`. Each pairs with the
-corresponding rung of the parametric Lean `runFactorFallbackProbeChecksum`
-registration. The Isabelle reference factorisation on `(X-1)...(X-n)` is the
+corresponding rung from the clean historical `runFactorFallbackProbeChecksum`
+parametric audit. The Isabelle reference factorisation on `(X-1)...(X-n)` is the
 list of `n` distinct monic linears; this is the canonical-truth comparator the
 `bz-vs-isabelle-investigation.md` post-mortem documents Lean as failing to
 match on these rungs.
@@ -867,8 +867,8 @@ def runIsabelleFallbackProbeN24Checksum : Unit → IO UInt64 := fun _ => do
 /--
 Per-rung verified-Isabelle BZ comparator targets on the
 `prepPrecisionLocalInput param` polynomial at each rung of
-`precisionLocalSchedule`. Each pairs with the corresponding rung of the
-parametric Lean `runFastPathPrecisionLocalChecksum` registration.
+`precisionLocalSchedule`. Each pairs with the corresponding rung from the
+clean historical `runFastPathPrecisionLocalChecksum` parametric audit.
 
 The Lean target measures *fast-path setup* (multifactor lifting at the
 precision axis plus the modular split profile), not full factorisation, so
@@ -1215,9 +1215,9 @@ setup_fixed_benchmark runIsabelleFactorBaselineChecksum where {
   }
 
 /- Per-rung verified-Isabelle comparator registrations on `smokeInput n` for
-`n = 2, 3, 4, 5`. The matched Lean timings come from the parametric
-`runFactorChecksum` registration at the corresponding rung of
-`splitScientificSchedule`; together they form the per-rung `hex/isabelle`
+`n = 2, 3, 4, 5`. The matched Lean timings come from the clean historical
+`runFactorChecksum` parametric audit at the corresponding rung of
+`splitScientificSchedule`; together they form the retained `hex/isabelle`
 ratio ladder. Tagged `scheduled-hardware` so CI's `verify` does not invoke
 the AFP-extracted comparator. -/
 setup_fixed_benchmark runIsabelleSplitN2Checksum where {
