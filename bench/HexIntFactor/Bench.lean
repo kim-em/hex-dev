@@ -51,17 +51,21 @@ def runReplay (e : Nat) : Nat :=
 
 def runOrder (p : Nat) : Nat := orderOf 2 p
 
-private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q) : ∀ e : Nat,
+private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
+    (hacc : 0 < acc) : ∀ e : Nat,
     boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
   | 0 => by simp [boundedPowMul]
   | e + 1 => by
-      rw [boundedPowMul, ite_eq_right]
-      · simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
-          Nat.mul_left_comm] using boundedPowMul_exact q (acc * q) hq e
-      · have hpow : 0 < q ^ e := Nat.pow_pos hq
-        have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
-        exact Nat.not_lt_of_ge (by
-          simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle)
+      have hpow : 0 < q ^ e := Nat.pow_pos hq
+      have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
+      have hmul : acc * q ≤ acc * q ^ (e + 1) := by
+        simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle
+      rw [boundedPowMul, if_neg (Nat.ne_of_gt hacc),
+        if_neg (Nat.ne_of_gt hq),
+        if_pos ((Nat.le_div_iff_mul_le hq).2 hmul)]
+      simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
+        Nat.mul_left_comm] using
+        boundedPowMul_exact q (acc * q) hq (Nat.mul_pos hacc hq) e
 
 private def sigmaExponentInput (e : Nat) : CheckedFactorization (3 ^ (e + 1)) :=
   ⟨⟨3 ^ (e + 1), [⟨e + 1, .small 3⟩]⟩, rfl, by
@@ -71,7 +75,7 @@ private def sigmaExponentInput (e : Nat) : CheckedFactorization (3 ^ (e + 1)) :=
     · simp only [factorProduct, PrimePower.prime, PrimeCert.subject]
       have h : boundedPowMul (3 ^ (e + 1)) 3 1 (e + 1) =
           some (3 ^ (e + 1)) := by
-        simpa using boundedPowMul_exact 3 1 (by decide) (e + 1)
+        simpa using boundedPowMul_exact 3 1 (by decide) (by decide) (e + 1)
       rw [h]⟩
 
 structure SigmaExponentInput where
@@ -195,8 +199,9 @@ setup_benchmark runCyclotomic n => n * n
     targetInnerNanos := 100000000
   }
 
-/- `boundedPowMul` replays the single exponent one multiplication at a time,
-so a certificate with exponent `n` has linear arithmetic-operation cost. -/
+/- `boundedPowMul` replays the single exponent one guarded multiplication at a
+time, using one division to authorize each multiplication, so a certificate
+with exponent `n` has linear arithmetic-operation cost. -/
 setup_benchmark runReplay n => n
   where {
     paramFloor := 1

@@ -67,13 +67,18 @@ deriving Repr
 def PrimeCert.subject : PrimeCert → Nat
   | .small n | .pock n _ | .pock3 n _ _ _ _ => n
 
-/-- `acc * q ^ e`, aborting as soon as the running product exceeds `bound`,
-so an attacker-chosen enormous power is never constructed. -/
+/-- `acc * q ^ e`, checking each nonzero multiplication by division before
+constructing it. A zero accumulator or base returns zero immediately; otherwise
+the computation aborts as soon as the next product would exceed `bound`, so an
+attacker-chosen enormous power is never constructed. -/
 @[expose]
 def boundedPowMul (bound q : Nat) : Nat → Nat → Option Nat
   | acc, 0 => some acc
   | acc, e + 1 =>
-      if bound < acc * q then none else boundedPowMul bound q (acc * q) e
+      if acc = 0 then some 0
+      else if q = 0 then some 0
+      else if acc ≤ bound / q then boundedPowMul bound q (acc * q) e
+      else none
 
 /-- The factored part `F = ∏ qᵢ ^ (eᵢ + 1)` of a factor list, aborting as
 soon as the running product exceeds `bound`. -/
@@ -86,7 +91,7 @@ def certProduct (bound : Nat) : List (Nat × Nat × PrimeCert) → Option Nat
       | some pw =>
           match certProduct bound rest with
           | none => none
-          | some f => if bound < pw * f then none else some (pw * f)
+          | some f => boundedPowMul bound f pw 1
 
 /-- Structural check on the factor list: every claimed prime is at least
 `2`, and the claimed primes are pairwise distinct. -/
@@ -168,7 +173,8 @@ end
 
 /-! Accumulator lemmas -/
 
-private theorem boundedPowMul_eq {bound q : Nat} :
+/-- On success, the bounded accumulator computes the ordinary product. -/
+theorem boundedPowMul_eq {bound q : Nat} :
     ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
       r = acc * q ^ e := by
   intro e
@@ -182,12 +188,76 @@ private theorem boundedPowMul_eq {bound q : Nat} :
   | succ e ih =>
       intro acc r h
       unfold boundedPowMul at h
-      by_cases hb : bound < acc * q
-      · rw [if_pos hb] at h
-        cases h
-      · rw [if_neg hb] at h
-        rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
-          Nat.mul_comm q (q ^ e)]
+      by_cases ha : acc = 0
+      · rw [if_pos ha] at h
+        injection h with h
+        subst h
+        simp [ha]
+      · rw [if_neg ha] at h
+        by_cases hq : q = 0
+        · rw [if_pos hq] at h
+          injection h with h
+          subst h
+          simp [hq]
+        · rw [if_neg hq] at h
+          by_cases hb : acc ≤ bound / q
+          · rw [if_pos hb] at h
+            rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
+              Nat.mul_comm q (q ^ e)]
+          · rw [if_neg hb] at h
+            cases h
+
+/-- A successful bounded multiplication preserves the accumulator bound. The
+incoming bound is needed only for the zero-exponent case; every positive step
+establishes it before constructing the next accumulator. -/
+theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc ≤ bound)
+    (h : boundedPowMul bound q acc e = some r) : r ≤ bound := by
+  induction e generalizing acc r with
+  | zero =>
+      unfold boundedPowMul at h
+      injection h with h
+      simpa [h] using hacc
+  | succ e ih =>
+      unfold boundedPowMul at h
+      by_cases ha : acc = 0
+      · rw [if_pos ha] at h
+        injection h with h
+        subst h
+        exact Nat.zero_le _
+      · rw [if_neg ha] at h
+        by_cases hq : q = 0
+        · rw [if_pos hq] at h
+          injection h with h
+          subst h
+          exact Nat.zero_le _
+        · rw [if_neg hq] at h
+          by_cases hb : acc ≤ bound / q
+          · rw [if_pos hb] at h
+            exact ih ((Nat.le_div_iff_mul_le (Nat.pos_of_ne_zero hq)).mp hb) h
+          · rw [if_neg hb] at h
+            cases h
+
+/-- A successful certificate product is bounded when its initial accumulator
+`1` is bounded. -/
+theorem certProduct_le {bound : Nat} (hbound : 1 ≤ bound) :
+    ∀ (l : List (Nat × Nat × PrimeCert)) (F : Nat),
+      certProduct bound l = some F → F ≤ bound := by
+  intro l F h
+  cases l with
+  | nil =>
+      unfold certProduct at h
+      injection h with h
+      simpa [h] using hbound
+  | cons a rest =>
+      obtain ⟨a1, e, c⟩ := a
+      unfold certProduct at h
+      split at h
+      · cases h
+      next pw hpw =>
+        split at h
+        · cases h
+        next f hcp =>
+          exact boundedPowMul_le (boundedPowMul_le hbound hpw) h
 
 /-- The unbounded product the accumulator computes when it does not abort. -/
 private def certProd : List (Nat × Nat × PrimeCert) → Nat
@@ -215,13 +285,10 @@ private theorem certProduct_eq {bound : Nat} :
         split at h
         · cases h
         next f hcp =>
-          split at h
-          · cases h
-          · injection h with h
-            subst h
-            have h1 := boundedPowMul_eq (e + 1) 1 pw hpw
-            have h2 := ih f hcp
-            simp [certProd, h1, h2]
+          have h1 := boundedPowMul_eq (e + 1) 1 pw hpw
+          have h2 := ih f hcp
+          have h3 := boundedPowMul_eq 1 pw F h
+          simpa [certProd, h1, h2] using h3
 
 private theorem subjectsOk_cons {a : Nat × Nat × PrimeCert}
     {rest : List (Nat × Nat × PrimeCert)}
@@ -627,11 +694,11 @@ structure CheckedPrimeCert (n : Nat) where
 theorem CheckedPrimeCert.prime {n : Nat} (c : CheckedPrimeCert n) : Prime n :=
   c.subject_eq ▸ prime_of_checkPrime c.valid
 
-/-! Regression coverage: table leaves, an accepted single-factor node, an
-accepted two-factor node, an accepted two-level node, and one rejected
-certificate of each kind (bound too small, composite claimed factor, failed
-gcd witness, factor not dividing `n - 1`). The checker's negative cases
-matter as much as its positive ones, and no oracle produces them. -/
+/-! Regression coverage: table leaves, accepted single-factor, two-factor, and
+two-level nodes; explicit zero and truncating-division boundaries for bounded
+multiplication; and rejected certificates covering the arithmetic clauses and
+adversarial product inputs. The checker's negative cases matter as much as its
+positive ones, and no oracle produces them. -/
 
 set_option maxRecDepth 100000   -- table walks in the guards below
 
@@ -645,6 +712,16 @@ set_option maxRecDepth 100000   -- table walks in the guards below
 #guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor
 #guard checkPrime (.pock 7 [(6, 0, .small 3)]) = false       -- gcd witness fails
 #guard checkPrime (.pock 11 [(2, 0, .small 7)]) = false      -- 7 ∤ 10
+#guard boundedPowMul 0 0 1 1 = some 0                        -- zero base
+#guard boundedPowMul 0 5 0 1048576 = some 0                  -- zero accumulator
+#guard boundedPowMul 7 2 3 1 = some 6                        -- rounded bound accepts
+#guard boundedPowMul 7 2 4 1 = none                          -- next product is 8
+#guard checkPrime (.pock 7 [(2, 0, .small (2 ^ 4096))]) = false
+  -- huge child subject is rejected at the first guarded product step
+#guard checkPrime (.pock 97 [(5, 1048576, .small 2)]) = false
+  -- huge exponent aborts when its next bounded multiplication would cross 96
+#guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false
+  -- each factor fits under 30, but their next combined product would be 35
 -- Cube-root arm: n = 199 with F = 6 sits squarely in the cube-root regime
 -- (F² = 36 ≤ 199 < 847 = (F+1)(2F² + (r-1)F + 1), R = 33 = 2·6·2 + 9,
 -- discriminant 9² - 8·2 = 65 with witness 8² < 65 < 9²).

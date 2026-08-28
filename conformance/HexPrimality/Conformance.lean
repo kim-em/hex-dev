@@ -83,6 +83,10 @@ open Hex.Nat
   -- duplicate subjects: each entry alone passes its witness check
 #guard checkPrime (.pock 97 [(5, 1048576, .small 2)]) = false
   -- bounded-product abort on a huge exponent
+#guard checkPrime (.pock 7 [(2, 0, .small (2 ^ 4096))]) = false
+  -- huge child subject is rejected at the first guarded product step
+#guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false
+  -- each power fits under 30, but the combined product would cross the bound
 #guard checkPrime (.pock3 193 8 2 0 [(5, 0, .small 2), (5, 0, .small 3)]) = false
   -- cofactor R = 32 is even
 #guard checkPrime (.pock3 199 8 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = false

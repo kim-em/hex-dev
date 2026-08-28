@@ -266,8 +266,9 @@ def acceptPartial? (n : Nat) (hn : 0 < n) (raw : PartialFactorization)
     Except FactorFailure (CheckedPartialFactorization n × Rand) :=
   let fallback : PartialFactorization := ⟨n, [], n⟩
   have hf : checkPartial fallback = true := by
+    have hn0 : n ≠ 0 := Nat.ne_of_gt hn
     dsimp [fallback]
-    simp [checkPartial, checkEntries, factorProduct, boundedPowMul, hn]
+    simp [checkPartial, checkEntries, factorProduct, boundedPowMul, hn, hn0]
   let rejected : FactorFailure :=
     { stop := .rejected
       attempts

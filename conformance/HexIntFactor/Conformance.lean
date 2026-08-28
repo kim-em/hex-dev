@@ -69,6 +69,10 @@ example {n : Nat} (F : CheckedPartialFactorization n) :
 #guard !checkFactorization ⟨12, [⟨1, .small 2⟩, ⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨0, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 3⟩, ⟨2, .small 2⟩]⟩
+#guard !checkFactorization ⟨12, [⟨1048576, .small 2⟩]⟩
+  -- a huge exponent aborts before constructing the attacker-chosen power
+#guard !checkFactorization ⟨12, [⟨3, .small 2⟩, ⟨1, .small 3⟩]⟩
+  -- the next multiplication after 2³ crosses the subject bound
 
 #guard divisors checked1 == #[1]
 #guard numDivisors checked1 == 1
