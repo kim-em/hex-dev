@@ -214,9 +214,11 @@ setup_benchmark runOrder n => n
   where {
     paramFloor := 7
     paramCeiling := 65537
-    paramSchedule := .custom #[7, 31, 257, 65537]
+    paramSchedule := .custom #[7, 31, 127, 257, 1013, 4073, 16363, 65537]
     maxSecondsPerCall := 5.0
-    targetInnerNanos := 100000000
+    targetInnerNanos := 250000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- These targets are much faster per call than the route-search targets
