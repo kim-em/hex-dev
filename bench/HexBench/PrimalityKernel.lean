@@ -28,32 +28,45 @@ namespace HexBench.PrimalityKernel
 
 open Hex.Nat
 
+set_option maxRecDepth 100000
+
+/-- Canonical subjects for the linear structural-preflight replay probe. -/
+def longFactors : List (Nat × Nat × PrimeCert) :=
+  (List.range 1024).map fun i => (0, 0, .small (i + 2))
+
+theorem replayLongSubjects : subjectsOk longFactors = true := by
+  decide +kernel
+
+theorem rejectLateDuplicate :
+    subjectsOk (longFactors ++ [(0, 0, .small 1025)]) = false := by
+  decide +kernel
+
 def cert31 : PrimeCert :=
   .pock 2147483647
-    [(904659249, 0, .small 331), (1783259301, 0, .small 151),
-     (505209180, 0, .small 31), (447824900, 0, .small 11),
-     (1615909500, 0, .small 7), (1371693800, 1, .small 3),
-     (1745337962, 0, .small 2)]
+    [(1745337962, 0, .small 2), (1371693800, 1, .small 3),
+     (1615909500, 0, .small 7), (447824900, 0, .small 11),
+     (505209180, 0, .small 31), (1783259301, 0, .small 151),
+     (904659249, 0, .small 331)]
 
 def cert61 : PrimeCert :=
   .pock 1945555039024054273
-    [(110189291828549774, 2, .small 3), (891154892214722695, 55, .small 2)]
+    [(891154892214722695, 55, .small 2), (110189291828549774, 2, .small 3)]
 
 def cert123 : PrimeCert :=
   .pock 9304595970494411110326649421962412033
-    [(13757245211066428521, 0, .small 7),
-     (14072917602864530050, 119, .small 2)]
+    [(14072917602864530050, 119, .small 2),
+     (13757245211066428521, 0, .small 7)]
 
 def cert256 : PrimeCert :=
   .pock 93628759656736142393278101159368737990730026663232799828780155818898507169793
-    [(10451216379200822467, 0, .small 23),
+    [(8195237237126968763, 247, .small 2),
      (13757245211066428521, 1, .small 3),
-     (8195237237126968763, 247, .small 2)]
+     (10451216379200822467, 0, .small 23)]
 
 def cert511 : PrimeCert :=
   .pock 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033
-    [(10451216379200822467, 0, .small 127),
-     (13757245211066428521, 503, .small 2)]
+    [(13757245211066428521, 503, .small 2),
+     (10451216379200822467, 0, .small 127)]
 
 theorem replay31 : checkPrime cert31 = true := by decide +kernel
 

@@ -19,8 +19,9 @@ The `primality` term elaborator and tactic.
 the compiled certificate search runs at elaboration time as untrusted code,
 and the emitted term applies `prime_of_checkPrimeAt` to the reified
 certificate with an `Eq.refl true` slot, so the kernel replays only
-`checkPrime` — `O(K log n)` modular multiplications on the certificate data,
-never the search.
+`checkPrime` — `O(K log n)` modular and bounded ordinary multiplications,
+plus `O(K)` factor-subject comparisons, on the certificate data, never the
+search.
 
 Tactic forms: bare `primality` closes a `Hex.Nat.Prime e` goal for a
 numeral `e`; `primality n` adds `this : Hex.Nat.Prime n`;
@@ -88,9 +89,10 @@ meta def checkClosed (tactic : String) (e : Expr) : MetaM Unit := do
     throwError "{tactic}: the argument{indentExpr e}\
         \nmust not contain free or meta variables"
 
-/-- Bit-length ceiling on tactic inputs: the kernel replay is `O(K log n)`
-modular multiplications, and beyond this size certificate search itself is
-the bottleneck to fix first. -/
+/-- Bit-length ceiling on tactic inputs: the kernel replay uses
+`O(K log n)` modular and bounded ordinary multiplications plus `O(K)`
+factor-subject comparisons, and beyond this size certificate search itself
+is the bottleneck to fix first. -/
 meta def primalityBitBudget : Nat := 8192
 
 /-- Run the certificate search and emit the checked proof term with `head`

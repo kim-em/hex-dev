@@ -158,11 +158,10 @@ an external tool and replayed later:
 ```lean (name := certReplay)
 def certM31 : Hex.Nat.PrimeCert :=
   .pock 2147483647
-    [(904659249, 0, .small 331),
-     (1783259301, 0, .small 151),
-     (505209180, 0, .small 31), (447824900, 0, .small 11),
-     (1615909500, 0, .small 7), (1371693800, 1, .small 3),
-     (1745337962, 0, .small 2)]
+    [(1745337962, 0, .small 2), (1371693800, 1, .small 3),
+     (1615909500, 0, .small 7), (447824900, 0, .small 11),
+     (505209180, 0, .small 31), (1783259301, 0, .small 151),
+     (904659249, 0, .small 331)]
 
 theorem certM31_replays :
     Hex.Nat.checkPrime certM31 = true := by

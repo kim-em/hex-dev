@@ -639,8 +639,9 @@ mutual
 /-- One level of certificate search: verdict tiers first (size, table with
 its completeness, a Miller-Rabin witness scan), then `n - 1` is partially
 factored and every claimed prime-power entry becomes a certified child with
-a searched witness. The assembled node is validated by the public wrapper,
-never trusted from here. -/
+a searched witness. The candidate entries are sorted into the checker's
+canonical subject order, then the assembled node is validated by the public
+wrapper; neither the factorization nor this preprocessing is trusted. -/
 private def primeCertGo (fuel n : Nat) (r : Rand) :
     Except PrimeCertFailure (Counted PrimeCert) :=
   match fuel with
@@ -659,13 +660,15 @@ private def primeCertGo (fuel n : Nat) (r : Rand) :
                 factored.rand with
             | .error f => .error f
             | .ok assembled =>
-                match certProduct (n - 1) assembled.value with
+                let entries := assembled.value.mergeSort fun x y =>
+                  x.2.2.subject ≤ y.2.2.subject
+                match certProduct (n - 1) entries with
                 | none => .error ⟨.exhausted, assembled.attempts, assembled.rand⟩
                 | some F =>
                     if n < F * F then
-                      .ok ⟨.pock n assembled.value, assembled.attempts,
+                      .ok ⟨.pock n entries, assembled.attempts,
                         assembled.rand⟩
-                    else .ok ⟨mkPock3 n F assembled.value, assembled.attempts,
+                    else .ok ⟨mkPock3 n F entries, assembled.attempts,
                       assembled.rand⟩
 termination_by (fuel, 0)
 
