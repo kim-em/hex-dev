@@ -38,6 +38,10 @@ The `--entry` flag selects which library entry answers each request:
   recombination, and whichever fallback tier answers. Each phase runs the
   production function it names, in production order, so the counters and the
   times come from one execution rather than from a second factorization.
+* `precisionLocalPhaseProfile` — inclusive attribution of the precision/local
+  setup target: quadratic multifactor lifting, modular splitting, and the
+  lattice precision-cap calculation. The response explicitly records that
+  lattice basis reduction is not executed.
 * `retainedPrimeProbe` — counted counterfactual for issue #9153: how many
   proposal-traversal leaves the retained good primes' subset-degree bitsets
   would reject beyond the production degree check, and what consulting them
@@ -69,6 +73,8 @@ open Hex.BenchOracle.Flint (intsToJson)
 
 namespace HexBench.FactorService
 
+private instance boundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
+
 /-- Which library entry answers each request. -/
 inductive Entry where
   | factor
@@ -77,6 +83,7 @@ inductive Entry where
   | proposalTrace
   | proposalProfile
   | factorPhaseProfile
+  | precisionLocalPhaseProfile
   | obstructionProbe
   | retainedPrimeProbe
   | primeCounterfactual
@@ -94,6 +101,7 @@ def Entry.ofString? : String → Option Entry
   | "proposalTrace" => some .proposalTrace
   | "proposalProfile" => some .proposalProfile
   | "factorPhaseProfile" => some .factorPhaseProfile
+  | "precisionLocalPhaseProfile" => some .precisionLocalPhaseProfile
   | "obstructionProbe" => some .obstructionProbe
   | "retainedPrimeProbe" => some .retainedPrimeProbe
   | "primeCounterfactual" => some .primeCounterfactual
@@ -108,6 +116,7 @@ def Entry.ofString? : String → Option Entry
 def Entry.timed : Entry → Bool
   | .proposalProfile => true
   | .factorPhaseProfile => true
+  | .precisionLocalPhaseProfile => true
   | .obstructionProbe => true
   | .retainedPrimeProbe => true
   | .primeCounterfactual => true
@@ -129,6 +138,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
         factorizationOfFactors f proposal.factors
   | .proposalProfile, _ => none
   | .factorPhaseProfile, _ => none
+  | .precisionLocalPhaseProfile, _ => none
   | .obstructionProbe, _ => none
   | .retainedPrimeProbe, _ => none
   | .primeCounterfactual, _ => none
@@ -144,6 +154,14 @@ def parseCoeffs (line : String) : Except String (List Int) := do
   let cj ← j.getObjVal? "coeffs"
   let arr ← cj.getArr?
   arr.toList.mapM Json.getInt?
+
+/-- Parse the extra natural-number axes used by `precisionLocalPhaseProfile`. -/
+def parsePrecisionLocalFields (line : String) : Except String (Nat × Nat × Nat) := do
+  let j ← Json.parse line
+  let height ← (← j.getObjVal? "height").getNat?
+  let precision ← (← j.getObjVal? "precision").getNat?
+  let count ← (← j.getObjVal? "localFactorCount").getNat?
+  pure (height, precision, count)
 
 /-- Encode a total factorization as the protocol `result` object. -/
 def factorizationToJson (φ : Factorization) : Json :=
@@ -925,6 +943,40 @@ private def finishPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
       ((phases.push (phaseEntry "trial" trialStart trialStop)).push
         (phaseEntry "trialAssembly" trialAssemblyStart trialAssemblyStop))
       extras ψ trialReconstructs
+
+/-- Inclusive attribution of the precision/local benchmark body.
+
+The target prepares its local factors outside the timed region, exactly as the
+former `setup_benchmark ... with prep` registration did. It does not call the
+CLD lattice or a basis reducer; `latticeBasisReductionExecuted` makes that
+absence machine-readable rather than relying on a missing phase name. -/
+private def precisionLocalPhaseProfile (f : ZPoly) (height precision count : Nat) :
+    IO Json := do
+  let scale := Int.ofNat (height + 1)
+  let factors := (Array.range count).map fun i =>
+    DensePoly.ofCoeffs #[-scale * Int.ofNat (i + 1), 1]
+  let sink ← IO.mkRef 0
+  let m0 ← mark
+  let lifted := ZPoly.multifactorLiftQuadratic 31 precision f factors
+  observeNat sink lifted.size
+  let m1 ← mark
+  let split := modularFactorDegreesAt? f 31
+  observeNat sink (split.map (·.size) |>.getD 0)
+  let m2 ← mark
+  let cap := latticePrecisionCap f
+  observeNat sink cap
+  let m3 ← mark
+  return Json.mkObj
+    [ ("degree", natJson (f.degree?.getD 0)),
+      ("height", natJson height),
+      ("precision", natJson precision),
+      ("localFactorCount", natJson count),
+      ("latticeBasisReductionExecuted", Json.bool false),
+      ("phases", Json.mkObj
+        [ phaseEntry "henselLift" m0 m1,
+          phaseEntry "modularSplit" m1 m2,
+          phaseEntry "precisionCap" m2 m3,
+          phaseEntry "total" m0 m3 ]) ]
 
 /-- Phase-attributed profile of one production factorization.
 
@@ -2170,6 +2222,13 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
       let f := DensePoly.ofCoeffs coeffs.toArray
       if entry == .factorPhaseProfile then
         return replyOk (← factorPhaseProfile f)
+      if entry == .precisionLocalPhaseProfile then
+        match parsePrecisionLocalFields line with
+        | .error msg =>
+            return replyError
+              s!"expected natural height, precision, and localFactorCount: {msg}"
+        | .ok (height, precision, count) =>
+            return replyOk (← precisionLocalPhaseProfile f height precision count)
       if entry == .obstructionProbe then
         return replyOk (← factorPhaseProfile f (probe := true))
       else if entry == .retainedPrimeProbe then
@@ -2227,7 +2286,8 @@ def main (args : List String) : IO Unit := do
       throw <| IO.userError
         s!"unknown --entry {entryName}; expected \
           factor|factorLattice|factorTrace|proposalTrace|proposalProfile\
-          |factorPhaseProfile|primeCounterfactual|primeScout|kernelProfile\
+          |factorPhaseProfile|precisionLocalPhaseProfile|primeCounterfactual\
+          |primeScout|kernelProfile\
           |henselTreeProfile|quadraticNormProbe|quadraticNormCertificate"
   | some entry => runLoop entry
 

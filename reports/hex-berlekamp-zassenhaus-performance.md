@@ -4,104 +4,124 @@ This report describes the supported public integer-polynomial factorization
 entry point. Standalone classical and lattice entries remain development
 diagnostics, not alternative public implementations.
 
-The parametric and profile evidence is current at revision
-`f396965d439aeaffcb3f843d85998b23765a22b2`, measured 2026-08-22 on `chungus2`
-(AMD EPYC 9455, NixOS 26.11, Linux x86-64) on verified-idle core 17 selected
-by `scripts/bench/idle_core.py`. The cross-system Hex record was refreshed at
-clean revision `7425e083` on verified-idle core 19 selected by the same script;
-the external systems retain their 2026-08-01 same-protocol record on the same
-host. The committed 392-row corpus has SHA-256
+The mode-selection audit was run on `chungus2` (AMD EPYC 9455, NixOS 26.11,
+Linux x86-64). Clean parametric sweeps at revision `5b3efbc7` establish why
+the former modes fail; clean fixed-budget and inclusive-phase exports at the
+implementation revision establish the selected mode-3 passes. The
+cross-system Hex record remains the clean revision `7425e083` run on
+verified-idle core 19; the external systems retain their 2026-08-01
+same-protocol record on the same host. The committed 392-row corpus has SHA-256
 `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`. Services
 were persistent and warmed; each call had a ten-second cutoff; rows below one
 second used the median of five calls, and slower rows one call.
 
 ## Bench Targets
 
-The eight parametric registrations in
-`bench/HexBerlekampZassenhaus/Bench.lean` and the fixed adversarial ladder
-cover the six declared `phase4.input_families`, which are the coverage
-contract for this report:
+The fixed registrations in `bench/HexBerlekampZassenhaus/Bench.lean` and the
+adversarial ladder cover the six declared `phase4.input_families`, which are
+the coverage contract for this report:
 
-- `public-factor-combinator`: `runFactorChecksum` and `runFactorCompareChecksum`
-  (model `bzClassicalSmokeComplexity n`), the public `ZPoly.factorize`
-  cascade on deterministic split inputs.
-- `fallback-probe`: `runFactorFallbackProbeChecksum` (same model), the
-  explicit `(X-1)...(X-n)` cascade-trigger ladder.
+- `public-factor-combinator`: `runFactorChecksum` at `smokeInput 24` and
+  `runFactorCompareChecksum` at `smokeInput 8`, both using the public
+  `ZPoly.factorize` cascade.
+- `fallback-probe`: `runFactorFallbackProbeChecksum` at the canonical
+  degree-24 `(X-1)...(X-24)` cascade trigger.
 - `exhaustive-slow-backstop`: `runFactorSlowChecksum` and
-  `runFactorSlowCompareChecksum` (model `2 ^ n * bzClassicalSmokeComplexity n`),
-  the unconditional exact `factorTrial` backstop.
-- `degree-height-matrix`: `runFactorDegreeHeightChecksum` and
-  `runFactorSlowDegreeHeightChecksum` (encoded degree/height parameters).
-- `cld-fast-path`: `runFastPathPrecisionLocalChecksum` (model
-  `bzPrecisionLocalComplexity param`), the option-valued CLD `factorLattice`
-  precision/local-factor surfaces.
+  `runFactorSlowCompareChecksum` at `smokeInput 8`, the unconditional exact
+  `factorTrial` backstop.
+- `degree-height-matrix`: public factorization at `(degree, height) = (6, 32)`
+  and trial factorization at `(4, 8)`.
+- `cld-fast-path`: `runFastPathPrecisionLocalChecksum` at
+  `(degree, height, precision, local factors) = (8, 32, 128, 8)`. This is
+  fast-path setup, not a complete `factorLattice` call.
 - `ho2-adversarial-recombination`: the fixed `runFactorAdv*` ladder
   (`X^4 + 1`, `(X^2-2)(X^2-3)`, Swinnerton-Dyer SD3 with its pinned modular
   split, `Phi_15`) plus the fixed lattice entries
   `runFactorLatticeAdvSwinnertonDyerSD3/SD4Checksum`.
 
-The `runIsabelle*` fixed registrations are the scheduled-hardware pairing
+Six product-adoption targets are also fixed: the schoolbook and dispatch pairs
+at 64 lifted factors, 32 dense reassembly factors, and 256 skew factors. The
+`runIsabelle*` registrations are the scheduled-hardware pairing
 harness for the external comparator and carry the `[scheduled-hardware]` tag.
 The 392-row corpus sweep (`scripts/bench/factor_sweep.py`) is the source of
 record for cross-system evidence; `list` and `verify` run in CI on every PR.
 
-## Verdicts
+## Complexity-mode audit
 
-All eight parametric registrations are currently **mode 4, blocked**. Mode 1
-does not apply: the public cascade chooses among prime plans, bounded classical
-recombination, CLD lattice recombination, exact fallbacks, and early exits from
-input-dependent intermediate structure, so no tight scaling law for these
-registered families can be derived in advance.
+Every formerly parametric factor and product registration selects **mode 3**.
+Asymptotic regression detection is deliberately given up for these operations;
+the fixed targets detect absolute regressions on canonical hard inputs instead.
 
-Five registrations are candidates for mode 2 because their declarations use
-the polynomial bound in Corollary 5.9 of Belabas, van Hoeij, Klüners, and
-Steel,
-[*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
-`O(n^9 + n^7 h^2)` with classical arithmetic. The current profiles do not
-complete mode 2's dominant-phase test, however. They record leaf categories
-and symbols, not inclusive time by prime selection, Hensel lifting, classical
-recombination, and CLD. Allocation and Lean runtime dominate every category
-table, so this report cannot show that the phase covered by the cited bound is
-the phase controlling a registration.
+Mode 1 is unavailable for the five public/setup factor candidates. The public
+cascade selects input-dependent prime plans, proposal replay, classical
+recombination, CLD, trial fallback, and early exits, while the precision target
+times setup only. A clean sweep of all eight former factor registrations at
+`5b3efbc7` gives `inconclusive` in every case, recorded in
+`reports/bench-results/hex-berlekamp-zassenhaus-parametric-audit-5b3efbc7-chungus2.json`
+(SHA-256 `ecb6c3932abeadeacea757318297b136943c089215f3b2ed1dc7befd79cb0fc6`).
 
-The three `runFactorSlow*` registrations do not even have the right candidate
-citation. Their timed implementation is `factorTrial`, an exhaustive integer
-trial-division path, not the modular-factor subset recombination analysed by
-van Hoeij's
-[*Factoring polynomials and the knapsack problem*](https://doi.org/10.1006/jnth.2001.2763).
-The slow profile is led by integer-divisor/list construction and allocator
-work. Its declared `2^n` multiplier therefore lacks a published citation that
-covers the measured algorithm and dominant phase. Mode 3 has not been
-established: doing so would require an operation-specific canonical hard input
-and justified absolute budget, which the existing fixed adversarial checks do
-not provide. Until that work is attempted, the ladders remain blocked.
-The `runIsabelle*` fixed endpoints are comparator anchors: they make no
-complexity claim, have no mode, and cannot replace performance coverage.
+Mode 2 also fails. The available version of Belabas, van Hoeij, Klüners, and
+Steel, [*Factoring polynomials over global fields*](https://doi.org/10.5802/jtnb.655),
+states the `O(n^9 + n^7 h^2)` classical-arithmetic result as Corollary 5.3
+(the directive refers to Corollary 5.9) and identifies LLL basis reduction as
+the dominant step. Inclusive attribution of the top former rungs gives:
 
-Parametric export at clean `f396965d`:
-`reports/bench-results/hex-berlekamp-zassenhaus-parametric-f396965d-chungus2.json`
-(SHA-256
-`bf00fb6620902317bdb7a7bd070db99f0807ed240ed6c68b177fc2ebc28b52d0`),
-command `taskset -c 17 lake exe hexbz_bench run <eight parametric targets>
---export-file ...`.
+| Registration | Production route | Largest inclusive phases | Lattice basis reduction |
+|---|---|---|---|
+| `runFactorChecksum` | proposal replay | proposal 55%, prime walk 41% | not executed |
+| `runFactorFallbackProbeChecksum` | proposal replay | proposal 56%, prime walk 41% | not executed |
+| `runFactorCompareChecksum` | classical | Hensel 45%, prime walk 28%, recombination 15% | not executed |
+| `runFactorDegreeHeightChecksum` | classical | Hensel 50%, prime walk 26%, recombination 13% | not executed |
+| `runFastPathPrecisionLocalChecksum` | setup only | Hensel 76%, precision cap 23% | not executed |
 
-All eight ladders receive the current harness verdict `inconclusive: looks
-faster than declared`, the same
-status as the previous committed export
-(`hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`):
-the declared models are deliberately conservative upper envelopes over
-encoded degree/height/precision parameters. The ordered rule does not turn
-that direction into a pass without the missing citation-and-attribution
-evidence. Representative top rungs: `runFactorChecksum`
-3.595 ms at n=24, `runFactorFallbackProbeChecksum` 3.370 ms at n=24,
-`runFastPathPrecisionLocalChecksum` 899 µs at the 8_032_128_008 encoding.
-No ladder shows the slower-than-declared direction.
-For traceability of that direction, the fitted residual slopes are `-6.778`
-for `runFactorChecksum`, `-7.245` for `runFactorSlowDegreeHeightChecksum`, and
-`-5.821` for `runFastPathPrecisionLocalChecksum`; ladders too narrow for a fit
-still have falling normalized constants, for example
-`runFactorFallbackProbeChecksum` from `0.000106` after warmup to `0.000001` at
-the final rung.
+The clean inclusive export is generated by
+`scripts/bench/hexbz_complexity_audit.py`; it retains one whole median-total
+execution per case, so the phase shares are not assembled from different calls.
+No phase covered by the cited lattice analysis controls any measured family.
+
+The three slow targets time `factorTrial`, not modular-factor subset
+recombination. `positiveDivisors` and `integerRootCandidates` scan every integer
+through the absolute constant coefficient before the residual coefficient-vector
+search. Consequently `smokeInput n` scans through `(n+1)!`, and a degree/height
+input scans through `(height+1)^degree * degree!`; the former `2^n` declaration
+described a different algorithm. The short ladders also cross the quadratic
+integer-root shortcut, so no tight one-parameter family is justified.
+
+The six product ladders likewise have no passing parametric mode. Their clean
+audit at `5b3efbc7` is
+`reports/bench-results/hex-berlekamp-zassenhaus-product-parametric-audit-5b3efbc7-chungus2.json`
+(SHA-256 `b27cb9b71cdc4b43606eb706bba4c64c97948237a14200f1c98b536f96eff3f3`):
+the balanced and reassembly pairs grow about `n^(2.45..2.58)` against `n^2`,
+while the skew pair grows about `n^1.49`. The coefficient bit width grows with
+the product, so the old coefficient-operation argument does not derive a tight
+bit-complexity law.
+
+## Mode-3 budgets
+
+The independently fixed absolute budget is the verifier's established
+four-second per-call ceiling. It keeps every canonical operation inside the
+existing CI contract and is deliberately much wider than the clean medians so
+shared-runner scheduling noise does not masquerade as an algorithmic
+regression. Expected output hashes make the fixed checks semantic as well as
+temporal.
+
+| Target/input | Clean median | Budget |
+|---|---:|---:|
+| public split, `smokeInput 24` | 3.68 ms | 4 s |
+| fallback probe, degree 24 | 3.52 ms | 4 s |
+| trial split, `smokeInput 8` | 2.65 ms | 4 s |
+| public compare, `smokeInput 8` | 0.253 ms | 4 s |
+| trial compare, `smokeInput 8` | 2.55 ms | 4 s |
+| public degree/height `(6, 32)` | 0.171 ms | 4 s |
+| trial degree/height `(4, 8)` | 1.15 ms | 4 s |
+| precision/local `(8, 32, 128, 8)` | 1.05 ms | 4 s |
+| lifted products, 64 factors (both) | 9.6 ms | 4 s |
+| dense reassembly, 32 factors (both) | 112 ms | 4 s |
+| skew products, 256 factors (both) | 80 ms | 4 s |
+
+The implementation-revision fixed export records all fourteen passing mode-3
+registrations. The `runIsabelle*` fixed endpoints remain comparator anchors;
+they make no complexity claim and do not replace performance coverage.
 
 ## Comparator Ratios
 
@@ -186,7 +206,9 @@ changes production.
 
 ## Profile
 
-Sampling profiles were captured at clean `f396965d` for one representative
+The mode-selection evidence is the inclusive phase table above, not sampling
+leaf categories. Historical sampling profiles were captured at clean
+`f396965d` for one representative
 compiled case of each parametric family with samply 0.13.1 at interval
 1.001 ms (~999 Hz), through `scripts/profile/run_profile.sh`
 (lean-bench-samply orchestrator, timed-region filtered, target 3 s). The
@@ -203,7 +225,7 @@ leaf-cost categorisation is committed as
 | `degree-height-matrix`, 4x2 encoding (2087 samples) | 12.9% | 34.2% | 34.5% | 7.5% | 10.6% |
 | `fallback-probe`, n=8 (2989 samples) | 30.0% | 30.0% | 34.0% | 2.5% | 3.0% |
 
-The shape matches the algorithms: the cascade families are
+These secondary profiles match the algorithms: the cascade families are
 allocation-and-refcount dominated (the dispatcher builds and discards
 candidate structures; `mi_free`/`mi_malloc_small` lead every capture), GMP
 appears exactly where big-integer lift moduli and CLD bounds are computed
@@ -223,11 +245,10 @@ coverage for that family, not an omission.
 
 ## Concerns
 
-The eight parametric registrations have no passing mode. Five lack the
-inclusive dominant-phase attribution required for their candidate published
-upper bound; three slow registrations cite a modular-subset algorithm that the
-timed integer trial-division implementation does not run. The fixed
-adversarial checks do not supply budgeted mode-3 replacements. This finding
-and the rollback are recorded by
-[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
-issue follows after the policy lands.
+Mode 3 intentionally gives up asymptotic regression detection for the fourteen
+remediated registrations. The retained clean parametric exports document the
+families and can support a future mode-1 promotion if a tight bit-complexity
+model is independently derived. The fixed budgets are host-independent safety
+margins rather than optimization targets; sustained movement toward a cap
+should trigger a fresh clean baseline and input review, not an automatic budget
+increase.
