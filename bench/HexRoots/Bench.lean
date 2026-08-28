@@ -52,8 +52,8 @@ parameter folds the growth into the exponent. Each registration's comment
 states which case it is and why. The `verify` smoke gate only exercises each
 registration at parameters `0` and `1`.
 
-`runMahlerPrec` and `runRefineTo` are parametric consistency gates. The other
-operations use canonical mode-3 registrations: their repaired schedules either
+`runTaylor`, `runMahlerPrec`, and `runRefineTo` are parametric consistency
+gates. The other operations use canonical mode-3 registrations: their repaired schedules either
 remain in a GMP transition band or exhibit input-sensitive driver growth where
 no honestly derived scalar wall model has a flat constant. Each fixed case
 enforces its operation-specific absolute budget; the attempted ladders and
@@ -62,7 +62,8 @@ clean evidence are recorded in the report.
 Registrations (operation-count derivations remain documented adjacent to each
 canonical or parametric case):
 
-* `runTaylor` — fixed exact Taylor shift at seeded degree 128 and unit centre.
+* `runTaylor` — exact Taylor shift on seeded degrees `64..2048` at unit centre,
+  `O(n²)`.
 * `runWitnessCheck`, `runNkWitnessCheck` — Pellet and Newton-Kantorovich atom
   witnesses, `O(n²)` (Taylor shift dominates; integer centre, sub-word
   operands, flat band).
@@ -376,7 +377,6 @@ def prepRefineTo (target : Nat) : Option (DyadicRootIsolation refinePoly) × Int
 
 /-! # Canonical fixed inputs -/
 
-initialize taylorRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (seededPoly 128))
 initialize witnessRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (boundedRootPoly 128))
 initialize refine1Ref : IO.Ref (Option (ZPoly × Component)) ←
   IO.mkRef (some (separatedMidComponent 8))
@@ -405,32 +405,32 @@ def budgeted (ceilingNanos : Nat) (work : IO UInt64) : IO UInt64 := do
   if stop - start ≤ ceilingNanos then return value else return 0xffffffffffffffff
 
 def runTaylor (p : ZPoly) : UInt64 := taylorChecksum p
-def runWitnessCheck : Unit → IO UInt64 := fun _ => do
-  budgeted 50_000_000 do return (← witnessRef.get).map witnessChecksum |>.getD 0
-def runNkWitnessCheck : Unit → IO UInt64 := fun _ => do
-  budgeted 50_000_000 do return (← witnessRef.get).map nkWitnessChecksum |>.getD 0
-def runNewtonSquare : Unit → IO UInt64 := fun _ => do
-  budgeted 50_000_000 do return (← witnessRef.get).map newtonChecksum |>.getD 0
-def runRefine1 : Unit → IO UInt64 := fun _ => do
-  budgeted 50_000_000 do return (← refine1Ref.get).map refine1Checksum |>.getD 0
-def runCertify : Unit → IO UInt64 := fun _ => do
-  budgeted 50_000_000 do return (← certifyRef.get).map certifyChecksum |>.getD 0
+def runWitnessCheck : Unit → IO UInt64 := fun _ => budgeted 20_000_000 do
+  return (← witnessRef.get).map witnessChecksum |>.getD 0
+def runNkWitnessCheck : Unit → IO UInt64 := fun _ => budgeted 19_000_000 do
+  return (← witnessRef.get).map nkWitnessChecksum |>.getD 0
+def runNewtonSquare : Unit → IO UInt64 := fun _ => budgeted 18_000_000 do
+  return (← witnessRef.get).map newtonChecksum |>.getD 0
+def runRefine1 : Unit → IO UInt64 := fun _ => budgeted 18_000_000 do
+  return (← refine1Ref.get).map refine1Checksum |>.getD 0
+def runCertify : Unit → IO UInt64 := fun _ => budgeted 36_000_000 do
+  return (← certifyRef.get).map certifyChecksum |>.getD 0
 
 def runRefineTo (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt64 :=
   refineToChecksum input
 initialize isolateFixedRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 8))
 
 def runIsolate : Unit → IO UInt64 := fun _ => do
-  budgeted 2_000_000_000 do
+  budgeted 4_000_000_000 do
     return ((← isolateFixedRef.get).map runIsolateParam).getD 0
 
-def runIsolateAll : Unit → IO UInt64 := fun _ => budgeted 20_000_000_000 do
+def runIsolateAll : Unit → IO UInt64 := fun _ => budgeted 70_000_000_000 do
   return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
-def runIsolateNk : Unit → IO UInt64 := fun _ => budgeted 20_000_000_000 do
+def runIsolateNk : Unit → IO UInt64 := fun _ => budgeted 75_000_000_000 do
   return (← compareRef.get).map isolateNkChecksum |>.getD 0
-def runIsolatePellet : Unit → IO UInt64 := fun _ => budgeted 8_000_000_000 do
+def runIsolatePellet : Unit → IO UInt64 := fun _ => budgeted 20_000_000_000 do
   return (← compareRef.get).map isolatePelletChecksum |>.getD 0
-def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => budgeted 8_000_000_000 do
+def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => budgeted 20_000_000_000 do
   return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
 
 /-! # `taylor` / `mahlerPrec` : dense seeded family -/
@@ -439,13 +439,12 @@ def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => budgeted 8_000_000_0
 Cost model. `taylor` produces `p(X + z) = Σ cₖ Xᵏ` by repeated synthetic
 division: the `k`-indexed outer pass runs an inner Horner sweep of length
 `n − 1 − k`, so the total is `Σ_k (n − 1 − k) = O(n²)` exact Gaussian-dyadic
-multiply/adds. The canonical degree-128 case uses the integer centre `z = 1`:
-there is no denominator growth, but binomial output magnitudes still grow
-linearly in bits. The reachable GMP transition does not admit a stable scalar
-wall model. Mode 3 therefore gives up asymptotic detection at the canonical
-degree-128 midpoint and enforces a 50 ms absolute budget in `runTaylor` via
-`budgeted`, above its clean 2.222 ms baseline; `maxSecondsPerCall` below is
-only a process safety cap.
+multiply/adds. The seeded family uses the integer centre `z = 1`, so there is
+no denominator growth and multiplication by the centre is exact unit scaling.
+The current `64..2048` ladder is consistent with the quadratic wall model
+(`β=+0.118`); the conservative cubic bit-cost attempt is inconclusive because
+the same measurements are faster than it by `~n^0.882`. Mode 1 therefore uses
+the stronger measured `n²` model.
 -/
 setup_benchmark runTaylor n => n * n
   with prep := seededPoly
@@ -491,7 +490,7 @@ integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
 while the Taylor output still crosses GMP limbs. The repaired `64..384`
 schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
 therefore gives up asymptotic detection at the degree-128 midpoint and enforces
-a 50 ms body-scoped budget above its clean 2.362 ms baseline.
+a 20 ms body-scoped budget, 8.47× its clean 2.362 ms baseline.
 -/
 setup_fixed_benchmark runWitnessCheck where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
@@ -502,7 +501,8 @@ as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
 radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
 `runWitnessCheck`. Its repaired `64..512` schedule was likewise sub-cubic, so
-mode 3 enforces a 50 ms absolute budget above its clean 2.283 ms baseline.
+mode 3 gives up asymptotic detection and enforces a 19 ms absolute budget,
+8.32× its clean 2.283 ms baseline.
 -/
 setup_fixed_benchmark runNkWitnessCheck where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
@@ -514,7 +514,7 @@ a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
 the op count is `n²`. It uses the same bounded-height degree-128 input; the
 fixed-precision reciprocal is lower order. The repaired `64..512` schedule
 remained sub-cubic, so mode 3 gives up asymptotic detection and enforces a
-50 ms absolute budget above the clean 2.211 ms baseline.
+18 ms absolute budget, 8.14× the clean 2.211 ms baseline.
 -/
 setup_fixed_benchmark runNewtonSquare where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x450307c7dcbe905c }
@@ -529,8 +529,8 @@ is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 `n`. The canonical fixture is the degree-8 fixed-separation product, refined
 two rounds below its Cauchy component. On the repaired smooth-family schedule
 `4,6,8,10,12,14`, `time/n²` rose by more than 2×. Mode 3 therefore gives up
-asymptotic detection and enforces a 50 ms budget above the clean 2.134 ms baseline
-on the degree-8 midpoint.
+asymptotic detection and enforces an 18 ms budget, 8.43× the clean 2.134 ms
+baseline, on the degree-8 midpoint.
 -/
 setup_fixed_benchmark runRefine1 where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x6dd99fc71c5233ae }
@@ -547,9 +547,9 @@ because the certification path is Taylor-shift dominated and the shift's
 GMP transition band (issue #8750, rounds one to three: pure powers and the
 limb model all showed drifting constants). The repaired `64..512` schedule
 also lost the pinned branch at 512; the verified degree-128 NK case is the
-canonical hard input. Mode 3 enforces a 50 ms budget above the clean 4.413 ms
-baseline, and the fixed expected hash makes a fixture-path or semantic
-regression visible.
+canonical hard input. Mode 3 gives up asymptotic detection and enforces a
+36 ms budget, 8.16× the clean 4.413 ms baseline; the fixed expected hash makes
+a fixture-path or semantic regression visible.
 -/
 setup_fixed_benchmark runCertify where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x1698ec123da6112f }
@@ -569,11 +569,12 @@ coefficient height is
 `B = 32 + n·log ‖p‖∞` is `Θ(n²·log n)`. The independently derived wall model
 is therefore `~n⁷` (polylogarithms suppressed), not the earlier `n⁵` repair.
 The current `4,6,8,10,12,14` schedule is still inconclusive (`C` falls from
-392.544 to 208.586 across verdict rungs). Mode 3 uses degree 12 and a 20 s
-body-scoped budget, over twice its clean 8.480 s baseline.
+392.544 to 208.586 across verdict rungs). Mode 3 gives up asymptotic detection
+at degree 12 and uses a 70 s body-scoped budget, 8.25× its clean 8.480 s
+baseline, sized to remain stable on shared merge-gating runners.
 -/
 setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x5e4b3fd1d798497a }
+  repeats := 5, maxSecondsPerCall := 90.0, expectedHash := some 0x5e4b3fd1d798497a }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -586,15 +587,15 @@ the double-factorial constant term), so
 `separationDepth = O(n·log‖p‖∞) = Θ(n²·log n)`, the emission-level working
 bit-length is `B = Θ(n²·log n)`, and the honestly derived wall from the SPEC
 `O(n³·B²)` contract is `~n⁷` (polylogs suppressed per house convention). That
-asymptote is far beyond the 30 s/call band (an earlier `n⁵` registration fit
+asymptote is far beyond any usable per-call band (an earlier `n⁵` registration fit
 the 4..10 rungs, but only as a transition-band artifact; the adjacent
 derivation could not support it, so per the no-fitting rule it was withdrawn:
 issue #8750). Mode 3 therefore gives up asymptotic detection at the canonical
-mid-schedule degree 8 and enforces a 2 s body-scoped budget, a 4× margin over
-the clean current 0.498 s baseline after the local-finisher repair.
+mid-schedule degree 8 and enforces a 4 s body-scoped budget, 8.09× the clean
+494.712 ms median after the local-finisher repair.
 -/
 setup_fixed_benchmark runIsolate where {
-    repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x16c307fd2a36d31e }
+    repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0x16c307fd2a36d31e }
 
 /-
 Cost model. `refineTo?` sharpens a fixed degree-3 atom from precision `≈32` to
@@ -634,35 +635,39 @@ driver factor. Since `log ‖p‖∞ = Θ(n·log n)`, its working length
 `O(n³·B²)` gives the `~n⁷` wall model (polylogarithms suppressed); the NK-only
 strategy certifies each atom on its doubled square.
 The current `2,3,4,5,6,8,10` schedule remains inconclusive
-(`β=-0.460`, faster than declared). Mode 3 uses shared degree 10 and a 20 s
-body-scoped budget, about twice the clean 9.518 s baseline.
+(`β=-0.460`, faster than declared). Mode 3 gives up asymptotic detection at
+shared degree 10 and uses a 75 s body-scoped budget, 8.11× the clean 9.251 s
+median, sized for shared merge-gating runners.
 -/
 setup_fixed_benchmark runIsolateNk where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
+  repeats := 5, maxSecondsPerCall := 95.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
 the Pellet-only strategy runs the three-radius test per candidate count. The
-current shared schedule is inconclusive (`β=-1.168`); mode 3 uses degree 10
-and an 8 s body-scoped budget, about 3× the clean 2.660 s baseline.
+current shared schedule is inconclusive (`β=-1.168`); mode 3 gives up
+asymptotic detection at degree 10 and uses a 20 s body-scoped budget, 8.11×
+the clean 2.466 s median.
 -/
 setup_fixed_benchmark runIsolatePellet where {
-  repeats := 5, maxSecondsPerCall := 12.0, expectedHash := some 0xda631bdf13415a4f }
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-
 Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
 the default strategy tries NK first and Pellet as fallback. The current shared
-schedule is inconclusive (`β=-1.149`); mode 3 uses degree 10 and an 8 s
-body-scoped budget, over 3× the clean 2.471 s baseline.
+schedule is inconclusive (`β=-1.149`); mode 3 gives up asymptotic detection
+at degree 10 and uses a 20 s body-scoped budget, 8.12× the clean 2.462 s
+median.
 -/
 setup_fixed_benchmark runIsolateNkThenPellet where {
-  repeats := 5, maxSecondsPerCall := 12.0, expectedHash := some 0xda631bdf13415a4f }
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
 
 /-! # `sameRoot` : fixed microsecond benchmark -/
 
 /-- Coarse/fine representatives of the same root. The fine representative uses
 the canonical `runRefineTo` midpoint precision. This preparation is evaluated
-at child-process initialization, outside the timed benchmark body. -/
+at child-process initialization, outside the timed benchmark body; consequently
+it also raises every benchmark child's measured spawn floor by about 0.3 s. -/
 def hardSameRoot? : Option (RefinedIsolation refinePoly × RefinedIsolation refinePoly) :=
   refinedAtom?.bind fun coarse =>
     (coarse.refineTo? 131077).map fun fine => (coarse, fine.1)
@@ -676,7 +681,7 @@ initialize sameRootRef :
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
 parameter, so mode 3 uses two distinct representatives at the separation floor
 and precision 131077 as its canonical hard input. The 1 ms body-scoped budget
-is a measured-baseline ceiling above the clean 15.774 µs median; preparation
+is a measured-baseline ceiling above the clean 15.748 µs median; preparation
 is performed at process initialization. The `IO.Ref` prevents the comparison
 from being constant-folded.
 -/

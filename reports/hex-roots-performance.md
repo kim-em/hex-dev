@@ -2,7 +2,8 @@
 
 **Phase 4 is claimed for HexRoots.** The ordered-mode remediation retains
 `runMahlerPrec` in mode 1, repairs `runRefineTo` into a second passing mode-1
-registration, and selects mode 3 for the other twelve registrations only after
+registration, and promotes the repaired integer-centre `runTaylor` ladder to
+mode 1 as well. It selects mode 3 for the other eleven registrations only after
 the recorded current-fixture schedules fail to supply a stable scalar wall
 model. Every mode-3 benchmark names a canonical hard input and enforces its
 body-scoped ceiling independently of process startup. The preserved
@@ -24,12 +25,27 @@ lean-bench `0.1.0`, and `git_dirty: false`:
   `runIsolateAll` is the clean observation that identified the stale row.
 - `reports/bench-results/hex-roots-b29031d-issue9794-isolateall.json` is the focused clean rerun after
   refreshing that expectation; all five repeats agree and match.
+- `reports/bench-results/hex-roots-4016ee7-issue9794-taylor-n3.json` records the
+  current integer-centre cubic-bound attempt, which is inconclusive because the
+  ladder is faster than declared.
+- `reports/bench-results/hex-roots-ff0724c-issue9794-taylor-n2.json` records the
+  same current fixture passing the stronger quadratic mode-1 model.
 
 Their SHA-256 digests are respectively
 `3d74adb2e4821bad833217668ac413865918ef10d8bca1ce5aaf1646b14c1a63`,
 `bc17e25a3cb49a0027f2eb5a9f983357100fdf4f7dc076bd7a988f44c6e1c4b7`,
 `b027965f3a113a0f3731ddd3385cf344ad2899f215d050afcc023a6792e5f305`,
-and `8dac7b8607208062b6940563d98ff2f0255f82aae737606aad6e91ca7589a79b`.
+`8dac7b8607208062b6940563d98ff2f0255f82aae737606aad6e91ca7589a79b`,
+`1900396363b66efef68aeca1b9cd3af3ff4bf9c47152a271b9e6a4f5485c90b6`,
+and `e545b1d784c26f4ddb6698edfe327bf887a367c9bdcf9d48215423129aea3637`.
+
+The first four artifacts predate the final rebase. Their stamped source commits
+map to surviving, byte-identical relevant-source commits as follows:
+`f5bc99321ec → b5fca0ecded`, `f5685691f82 → e2e475f9023`,
+`6aab88becd8 → e28328f2d7f`, and `b29031d5383 → d77ea055645`.
+For each pair, the diff restricted to `HexRoots/`, `HexRootsMathlib/`, and
+`bench/HexRoots/Bench.lean` is empty; only the rebased ancestry differs. The
+two Taylor artifacts stamp surviving commits directly.
 
 The original Phase-4 sweep is
 `reports/bench-results/hex-roots-973c2cd-round5.json`, recorded on quiet
@@ -154,14 +170,15 @@ optimization steps tracked by issue #8751.
 
 Mode-1 parametric registrations:
 
+- `runTaylor`: `n²` on seeded bounded-coefficient polynomials at centre 1,
+  degrees `64, 128, 256, 512, 1024, 2048`.
 - `runMahlerPrec`: `n` on seeded bounded-coefficient polynomials, degrees
   `64, 128, 256, 512, 1024, 2048, 4096`.
 - `runRefineTo`: `t²` on the achieved-precision ladder
   `32773, 65541, 131077, 262149, 524293`.
 
 Mode-3 fixed registrations (`repeats = 5`) are `runIsolate`
-(fixed-separation degree 8), `runTaylor` (seeded degree
-128, unit centre), `runWitnessCheck`, `runNkWitnessCheck`, and
+(fixed-separation degree 8), `runWitnessCheck`, `runNkWitnessCheck`, and
 `runNewtonSquare` (bounded-height degree 128), `runRefine1` (degree 8),
 `runCertify` (degree-128 pinned NK branch), `runIsolateAll` (fixed-separation
 degree 12), the three strategy drivers (shared `linProdPoly 10`), and
@@ -203,74 +220,71 @@ whose atom `refineTo?`/`sameRoot` sharpen).
 
 ### Op-count-vs-wall reconciliation (Phase4.md performance rationale)
 
-The registration comments were retuned from pure exact-dyadic op-counts to
-wall-time models. Which op-count models changed, and why:
+The current registrations reconcile operation counts with each fixture's
+working-bit-length growth as follows:
 
-- **`runTaylor` stays `n²`.** The SPEC op-count is `n²` synthetic-division
-  multiply/adds. The fixed centre `1/4 + i/8 = 2^{−3}(2+i)` is *non-integer*,
-  so `z^{j−k}` carries denominator `2^{3(j−k)}` and the coefficients reach
-  `B = Θ(n)` bits; each inner op multiplies a `B`-bit operand by the fixed
-  `3`-bit centre (`O(B)`), giving an `n³` bit-cost asymptote. On the reachable
-  `16..256` (probed to `1024`) schedule the operands stay `≤ 48` GMP words —
-  the allocation-dominated transition band — so wall tracks `~n^{2.25}`, short
-  of the `n³` asymptote. `n²` is declared as the SPEC op-count; the residual is
-  a Concern (below).
-- **`runMahlerPrec`, `runWitnessCheck`, `runNkWitnessCheck`, `runNewtonSquare`,
-  `runRefine1`, `runCertify` stay at their op-counts (`n`, `n²`).** `mahlerPrec`
-  is word-size integer arithmetic (`B` constant). The witness/Newton/refine
-  primitives run on integer-centred `wilkinson-linprod` (no denominator growth,
-  integer Taylor coefficients of `O(n log n)` bits staying sub-word `≤ 44` bits
-  through `n = 16`) or on low-precision seeded mid-refinement components
-  (`O(n)`-bit coefficients staying sub-word through `n = 12`), so the operands
-  are flat and wall tracks the op count. The bit-growth sits in the constant.
-- **`runIsolateAll`, `runIsolate`, and the three compare-group targets changed
-  `n³ → n⁵`.** The SPEC contract is `O(n³·B²)` bit operations; the
-  whole-polynomial drivers reach a working bit-length `B = Θ(n)` (target
-  precision plus the seeded `n·log‖p‖∞` term plus the Taylor coefficients'
-  `Θ(prec·n)` denominator growth), and the growing-precision dyadic arithmetic
-  — notably the `invAtPrec` reciprocal — is schoolbook `O(B²)`. `O(n³·B²)` with
-  `B = Θ(n)` gives the `n⁵` wall model, folding the bit-growth into the
-  exponent because it is asymptotically significant here (unlike the flat-band
-  primitives above).
-- **`runRefineTo` stays `t²`.** At fixed degree the parameter is the target
-  precision `t`; the dominant final witness does a fixed number of `t × t`
-  schoolbook multiplies, `O(t²)`.
+- **`runTaylor` is `n²`.** Repeated synthetic division performs `O(n²)` exact
+  multiply/adds. The repaired centre is the integer `1`, so it introduces no
+  denominator growth and centre multiplication is unit scaling. A clean
+  `64..2048` attempt is consistent at `n²` (`β=+0.118`); the conservative
+  `n³` bit-cost attempt is inconclusive because the ladder is faster than
+  declared by `~n^0.882`.
+- **`runMahlerPrec` is `n`; the witness/Newton/refinement primitives have
+  `n²` operation shapes.** `mahlerPrec` remains word-sized on its bounded-height
+  family. The other reachable schedules cross GMP allocation/limb transitions,
+  so their honestly derived scalar models do not have stable constants and are
+  enforced in mode 3 instead.
+- **`runIsolateAll`, `runIsolate`, and the three compare-group drivers have a
+  `~n⁷` candidate wall model on their current families.** The SPEC supplies
+  `O(n³·B²)`. Both `separatedPoly n` and `linProdPoly n` have
+  `log‖p‖∞ = Θ(n log n)`, hence
+  `B = prec + n·log‖p‖∞ = Θ(n² log n)` at the isolation depth and the
+  wall candidate is `n⁷ log²n`. The report suppresses the polylogarithm as
+  `~n⁷`; every reachable schedule remains inconclusive, so none is fitted to a
+  lower transition-band power.
+- **`runRefineTo` is `t²`.** At fixed degree the achieved Newton precision `t`
+  parameterizes the actual work; the dominant final witness performs a fixed
+  number of `t × t` schoolbook products.
 
 ## Verdicts
 
-`runMahlerPrec` uses **mode 1, two-sided parametric**. Its linear family model
-is derived from the coefficient scan with bounded coefficient height, and the
-scientific verdict passes in both directions. `runRefineTo` also uses **mode
-1, two-sided parametric**: parameterizing by the achieved Newton precision
-removes the raw-target staircase and makes the derived `t²` model measurable.
+`runTaylor`, `runMahlerPrec`, and `runRefineTo` use **mode 1, two-sided
+parametric**. Taylor's integer-centre repair produces a passing quadratic wall
+model on `64..2048`. The Mahler-precision linear model is derived from the
+coefficient scan with bounded coefficient height and passes in both directions.
+For `runRefineTo`, parameterizing by the achieved Newton precision removes the
+raw-target staircase and makes the derived `t²` model measurable.
 
-The other twelve registrations use **mode 3, enforced absolute ceilings**
+The other eleven registrations use **mode 3, enforced absolute ceilings**
 under
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
 Mode 1 was attempted first. The clean experimental artifact records:
 
 | registration or group | attempted current-fixture schedule/model | result |
 |---|---|---|
+| `runTaylor` | integer-centre seeded degrees `64..2048`, first conservative `n³`, then stronger `n²` | `n³` inconclusive (`β=-0.882`); **`n²` consistent (`β=+0.118`)**, promoted to mode 1 |
 | `runWitnessCheck` | degree `64..384`, `n³` | inconclusive, `β=-0.411` |
 | `runNkWitnessCheck` | degree `64..512`, `n³` | inconclusive, `β=-0.457` |
 | `runNewtonSquare` | degree `64..512`, `n³` | inconclusive, `β=-0.526` |
 | `runRefine1` | smooth separated degrees `4,6,8,10,12,14`, `n²` | inconclusive, normalized cost `23133..52721` |
-| `runCertify` | pinned-NK degree `64..384`, `n³` | inconclusive, normalized cost falls `3.139..1.533`; degree 512 no longer preserves the pinned branch and is excluded |
+| `runCertify` | pinned-NK degree `64..384`, `n³` | inconclusive; excluding the dropped warmup rung, normalized cost on `96..384` is non-monotone `2.542 → 1.367 → 1.533`; at degree 512 `pinnedCertify?` returns `none` (hash `0x0`), so the artifact's headline slope/`cMin` include a degenerate rung and are not load-bearing |
 | `runIsolateAll` | smooth separated degrees `4,6,8,10,12,14`, corrected `~n⁷` | inconclusive, `C=392.544..208.586` on verdict rungs |
 | `runRefineTo` | achieved precision `32773..524293`, `t²` | **consistent**, `β=-0.030`, promoted to mode 1 |
 | strategy trio | `linProdPoly` degrees `2,3,4,5,6,8,10`, corrected `~n⁷` | all inconclusive: NK `β=-0.460`, Pellet `-1.168`, combined `-1.149`; hashes agree at every rung |
 
 The repaired schedules therefore rule out a stable scalar wall model for nine
 of the ten outstanding fixed routes and recover the tenth as mode 1. The
-earlier Taylor experiments likewise put both `n²` and the eventual `n³`
-bit-cost model in the reachable GMP transition rather than a stable power-law
-band. `runIsolate` has the same honestly derived `~n⁷` shape, but degree 8 is
+separate current-fixture Taylor repair recovers another mode-1 registration:
+the quadratic model passes, while the conservative cubic bound is observably
+too high. `runIsolate` has the same honestly derived `~n⁷` shape, but degree 8 is
 already the canonical mid-schedule hard case and extending far enough to reach
 the asymptote exceeds the usable per-call range. `runSameRoot` is one exact
 comparison with no meaningful family parameter. Mode 2 is unavailable because
 the published SPEC bounds bit operations rather than the profiled executable
 wall time, and no cited result covers the dominant transition-band behavior.
-This exhausts stronger modes before selecting mode 3.
+This exhausts stronger modes before selecting mode 3. For these eleven
+operations, asymptotic regression detection is given up; the enforced absolute
+ceiling is the performance gate.
 
 Quiet-machine commands:
 
@@ -284,50 +298,65 @@ taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
 taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
   <all 14 registration names> --export-file \
   reports/bench-results/hex-roots-6aab88b-issue9794-final.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  Hex.RootsBench.runTaylor --export-file \
+  reports/bench-results/hex-roots-4016ee7-issue9794-taylor-n3.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  Hex.RootsBench.runTaylor --export-file \
+  reports/bench-results/hex-roots-ff0724c-issue9794-taylor-n2.json
 ```
 
 The selected mode-1 verdicts are consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
+| `runTaylor` | `n²` | consistent | `β=+0.118`, `cMin=135.763`, `cMax=325.113` over `64..2048`; leading warmup rung dropped | `0x1f1070e211681de7` |
 | `runMahlerPrec` | `n` | consistent | `β=-0.007`, `cMin=5.461`, `cMax=6.633` over `64..4096` | `0x10805` |
-| `runRefineTo` | `t²` | consistent | `β=-0.071`, `cMin=0.017`, `cMax=0.019` | `0x482ae3757e2b9db3` at achieved precision 524293 (`0x8dd3e4ee56489bf8` at 131077) |
+| `runRefineTo` | `t²` | consistent | final sweep `β=-0.071`, `cMin=0.017`, `cMax=0.019`; leading warmup rung dropped (repair sweep `β=-0.030`) | `0x482ae3757e2b9db3` at achieved precision 524293 (`0x8dd3e4ee56489bf8` at 131077) |
 
 (`runIsolate` was parametric at `n⁵` in the previous revision of this
 report and its `4..10` range check passed, but post-merge review showed
 the adjacent derivation could not support `n⁵` on this family:
 `separatedPoly n` has `log ‖p‖∞ = Θ(n·log n)`, so the `separationDepth`
 floor makes the emission-level bit-length `B = Θ(n²·log n)` and the
-honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in the
-30 s/call band. Per the no-fitting rule the registration was demoted to
+honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in any usable
+per-call band. Per the no-fitting rule the registration was demoted to
 a fixed case rather than kept on a fitted model; see issue #8750.)
 
 The mode-3 ceilings are independent per operation and enforced inside the
 registered body by `budgeted`; returning its sentinel makes `expectedHash`
 fail. `maxSecondsPerCall` is deliberately only a child-process safety cap.
-The full artifact supplies five clean repeats for every fixed row. Its one
-stale `runIsolateAll` expectation is superseded by the focused clean rerun
-after refreshing the row. All clean repeats agreed on each observed hash:
+They are rounded operation-by-operation to at least 8× the clean pinned-core
+median so the absolute gate remains stable on shared merge-gating runners.
+The wrapper executes on every calibrated inner iteration; lean-bench checks the
+first iteration's hash, so a deterministic ceiling violation there carries the
+sentinel into verification. `runSameRoot`'s distinct fine representative is
+prepared in each child initializer, outside the timed body, raising every
+child's spawn floor by about 0.3 s without affecting the operation ceiling.
+The full artifact supplies five clean repeats for all eleven selected fixed
+rows; its stale `runIsolateAll` expectation is superseded by the focused clean
+rerun after refreshing the row. All clean repeats agreed on each observed hash:
 
 | registration | canonical hard input | ceiling | clean median | hash |
 |---|---|---:|---:|---|
-| `runTaylor` | seeded degree 128, centre 1 | 50 ms | 2.222 ms | `0x9917b7b230496af4` |
-| `runWitnessCheck` | bounded-height degree 128 | 50 ms | 2.362 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 50 ms | 2.283 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 50 ms | 2.211 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 50 ms | 2.134 ms | `0x6dd99fc71c5233ae` |
-| `runCertify` | pinned-NK degree 128 | 50 ms | 4.413 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 20 s | 8.480 s | `0x5e4b3fd1d798497a` |
-| `runIsolate` | fixed-separation degree 8 | 2 s | 494.712 ms | `0x16c307fd2a36d31e` |
-| `runIsolateNk` | `linProdPoly 10` | 20 s | 9.251 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 8 s | 2.466 s | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 8 s | 2.462 s | `0xda631bdf13415a4f` |
+| `runWitnessCheck` | bounded-height degree 128 | 20 ms | 2.362 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 19 ms | 2.283 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 18 ms | 2.211 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 18 ms | 2.134 ms | `0x6dd99fc71c5233ae` |
+| `runCertify` | pinned-NK degree 128 | 36 ms | 4.413 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 70 s | 8.480 s | `0x5e4b3fd1d798497a` |
+| `runIsolate` | fixed-separation degree 8 | 4 s | 494.712 ms | `0x16c307fd2a36d31e` |
+| `runIsolateNk` | `linProdPoly 10` | 75 s | 9.251 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 20 s | 2.466 s | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 20 s | 2.462 s | `0xda631bdf13415a4f` |
 | `runSameRoot` | distinct coarse/131077-bit representatives | 1 ms | 15.748 µs | `0xb` |
 
 The refreshed `runIsolateAll` hash is `0x5e4b3fd1d798497a`. The repaired
 `runRefineTo` ladder records `0x8dd3e4ee56489bf8` at the old fixed precision
 131077 and `0x482ae3757e2b9db3` at its final rung, replacing both stale rows from
-the dirty post-ratchet export.
+the dirty post-ratchet export. The `runIsolateAll` digest is unchanged from
+`main`'s post-#8839 output; the local-finisher repair changes timing, not this
+observable.
 
 ### Superseded round-one verdict record
 
