@@ -1031,13 +1031,14 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
 
 /-- The FLINT targets make one discarded call to start the persistent Python
 driver before timing, then amortise protocol overhead across a 200 ms timed
-batch. Matching Lean targets use the same batching floor. -/
+batch. The pure closed Lean anchors retain isolated calls: batching those
+constant fixtures would allow the compiler to fold away their work. -/
 private def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 private def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2 }
+  { repeats := 5, maxSecondsPerCall := 6.0 }
 
 setup_fixed_benchmark runOfPoly2 where leanCompareConfig
 setup_fixed_benchmark runFlintOfPoly2 where flintCompareConfig
