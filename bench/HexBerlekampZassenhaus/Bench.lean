@@ -993,7 +993,7 @@ setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 64-factor input (clean baseline 12.6 ms). -/
+/- Mode 3 on the same 64-factor input (clean calibration maximum 9.8 ms). -/
 setup_fixed_benchmark runTrialProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
@@ -1003,7 +1003,7 @@ setup_fixed_benchmark runTrialProductChecksum where {
   }
 
 /- Mode 3: 32 dense factors exercise large-coefficient reassembly without the
-next rung's one-second call (clean baseline 163 ms). -/
+next rung's one-second call (clean calibration maximum 112 ms). -/
 setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1012,7 +1012,7 @@ setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
     tags := #["adoption", "reassembly", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 32-factor reassembly input (clean baseline 129 ms). -/
+/- Mode 3 on the same 32-factor reassembly input (clean calibration maximum 113 ms). -/
 setup_fixed_benchmark runReassemblyProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1021,8 +1021,8 @@ setup_fixed_benchmark runReassemblyProductChecksum where {
     tags := #["adoption", "reassembly", "dispatch"]
   }
 
-/- Mode 3: 256 factors retain the skewed-degree stress shape (clean baseline
-114 ms). -/
+/- Mode 3: 256 factors retain the skewed-degree stress shape (clean calibration
+maximum 80 ms). -/
 setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1031,7 +1031,7 @@ setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
     tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 256-factor skew input (clean baseline 110 ms). -/
+/- Mode 3 on the same 256-factor skew input (clean calibration maximum 81 ms). -/
 setup_fixed_benchmark runSkewProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1041,7 +1041,7 @@ setup_fixed_benchmark runSkewProductChecksum where {
   }
 
 /- Mode 3: `smokeInput 24` is the largest clean audited split input (clean
-baseline 6.3 ms). -/
+calibration maximum 3.75 ms). -/
 setup_fixed_benchmark runFactorChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1049,8 +1049,8 @@ setup_fixed_benchmark runFactorChecksum where {
     expectedHash := some 0xaa37abf9a367da53
   }
 
-/- Mode 3: the degree-24 fallback probe is the largest canonical cascade
-trigger (clean baseline 5.9 ms). -/
+/- Mode 3: the degree-24 historical fallback probe is the largest audited
+proposal-replay input (clean calibration maximum 3.53 ms). -/
 setup_fixed_benchmark runFactorFallbackProbeChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1058,8 +1058,8 @@ setup_fixed_benchmark runFactorFallbackProbeChecksum where {
     expectedHash := some 0xa5c23a7af3e800c4
   }
 
-/- Mode 3: `smokeInput 8` forces the integer-root scan through `9!` candidates
-(clean baseline 4.1 ms). -/
+/- Mode 3: `smokeInput 8` forces the integer-root scan through `9!` candidates;
+the allocator-sensitive calibration calls ranged from 5.1 to 75.7 ms. -/
 setup_fixed_benchmark runFactorSlowChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
