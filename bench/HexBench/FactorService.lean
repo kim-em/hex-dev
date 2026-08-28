@@ -966,6 +966,20 @@ private def precisionLocalPhaseProfile (f : ZPoly) (height precision count : Nat
   let cap := latticePrecisionCap f
   observeNat sink cap
   let m3 ← mark
+  let liftedHash := lifted.foldl
+    (fun acc polynomial =>
+      mixHash acc (polynomial.toArray.foldl
+        (fun coefficientHash coefficient => mixHash coefficientHash (hash coefficient)) 0)) 0
+  let splitHash := match split with
+    | none => 0
+    | some degrees =>
+        mixHash 1 (degrees.foldl (fun acc degree => mixHash acc (hash degree)) 0)
+  let checksum :=
+    mixHash (hash precision) <|
+      mixHash (hash count) <|
+        mixHash liftedHash <| mixHash (hash cap) splitHash
+  observeNat sink checksum.toNat
+  let m4 ← mark
   return Json.mkObj
     [ ("degree", natJson (f.degree?.getD 0)),
       ("height", natJson height),
@@ -976,7 +990,8 @@ private def precisionLocalPhaseProfile (f : ZPoly) (height precision count : Nat
         [ phaseEntry "henselLift" m0 m1,
           phaseEntry "modularSplit" m1 m2,
           phaseEntry "precisionCap" m2 m3,
-          phaseEntry "total" m0 m3 ]) ]
+          phaseEntry "checksum" m3 m4,
+          phaseEntry "total" m0 m4 ]) ]
 
 /-- Phase-attributed profile of one production factorization.
 

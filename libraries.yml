@@ -618,7 +618,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -635,7 +635,7 @@ libraries:
         - name: degree-height-matrix
           description: Encoded degree/root-height split integer-polynomial matrix for the public cascade, lattice setup, and exact trial-backstop registrations.
         - name: fallback-probe
-          description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for `ZPoly.factorize`, covering prime selection and BHKS recombination together.
+          description: Historical fallback-probe inputs `(X-1)...(X-n)` for `ZPoly.factorize`; the current route exercises prime selection and proposal replay, and inclusive evidence records that no fallback or lattice reduction executes.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
   HexPrimality:

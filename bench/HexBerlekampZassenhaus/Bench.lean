@@ -977,16 +977,18 @@ def runSkewProductSchoolbookChecksum : Unit → IO UInt64 := fun _ =>
 def runSkewProductChecksum : Unit → IO UInt64 := fun _ =>
   productChecksumIO skewProductChecksum (prepSkewProductInput 256)
 
-/- All mode-3 targets below use the verifier's independently fixed four-second
-per-call ceiling. This keeps each canonical operation within the existing CI
-contract while tolerating shared-runner scheduling noise. -/
+/- The mode-3 ceilings below are operation-specific budgets derived from the
+clean `e51066e1` calibration export. Each is rounded upward to at least ten
+times that operation's largest observed call. The two byte-identical trial
+targets share the larger observed maximum because their allocator-heavy body
+showed process-state sensitivity. -/
 
 /- Mode 3: 64 lifted factors is the first sustained large-integer product
 regime (clean baseline 9.7 ms). -/
 setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.1
     expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
@@ -995,7 +997,7 @@ setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
 setup_fixed_benchmark runTrialProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.1
     expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "dispatch"]
   }
@@ -1005,7 +1007,7 @@ next rung's one-second call (clean baseline 163 ms). -/
 setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 1.2
     expectedHash := some 0x55cb88e8ce461b3d
     tags := #["adoption", "reassembly", "schoolbook", "reference"]
   }
@@ -1014,7 +1016,7 @@ setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
 setup_fixed_benchmark runReassemblyProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 1.2
     expectedHash := some 0x55cb88e8ce461b3d
     tags := #["adoption", "reassembly", "dispatch"]
   }
@@ -1024,7 +1026,7 @@ setup_fixed_benchmark runReassemblyProductChecksum where {
 setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.9
     expectedHash := some 0x5a3c3280f7b0e2ff
     tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
   }
@@ -1033,7 +1035,7 @@ setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
 setup_fixed_benchmark runSkewProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.9
     expectedHash := some 0x5a3c3280f7b0e2ff
     tags := #["adoption", "trial-product", "skewed", "dispatch"]
   }
@@ -1043,7 +1045,7 @@ baseline 6.3 ms). -/
 setup_fixed_benchmark runFactorChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.05
     expectedHash := some 0xaa37abf9a367da53
   }
 
@@ -1052,7 +1054,7 @@ trigger (clean baseline 5.9 ms). -/
 setup_fixed_benchmark runFactorFallbackProbeChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.05
     expectedHash := some 0xa5c23a7af3e800c4
   }
 
@@ -1061,7 +1063,7 @@ setup_fixed_benchmark runFactorFallbackProbeChecksum where {
 setup_fixed_benchmark runFactorSlowChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.8
     expectedHash := some 0x352456cfdef1ea82
   }
 
@@ -1069,7 +1071,7 @@ setup_fixed_benchmark runFactorSlowChecksum where {
 setup_fixed_benchmark runFactorCompareChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.005
     expectedHash := some 0x352456cfdef1ea82
   }
 
@@ -1077,7 +1079,7 @@ setup_fixed_benchmark runFactorCompareChecksum where {
 setup_fixed_benchmark runFactorSlowCompareChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.8
     expectedHash := some 0x352456cfdef1ea82
   }
 
@@ -1088,7 +1090,7 @@ verdict. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.005
     expectedHash := some 0xdbadaf53f188eac1
   }
 
@@ -1096,7 +1098,7 @@ setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
 setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.1
     expectedHash := some 0xf31efeaecbf8fa27
   }
 
@@ -1107,7 +1109,7 @@ profile. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 0.02
     expectedHash := some 0x6125716b68ef63ab
   }
 
