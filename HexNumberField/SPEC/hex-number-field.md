@@ -558,11 +558,15 @@ oracle's independently computed decomposition with Lean's finite output.
   `√2` coefficient must complete under 15 seconds; its single square-free norm
   eliminant has degree 12,
   `coeffAbsMax = 366720`, coefficient bit height 19, and isolation target 274.
+  `QAdjoin.roots?` on `g² * (X - 1)` over `ℚ(√2)`, with `g` the controlled
+  dense degree-6 repeated component, must complete under 20 seconds; its
+  square-free norm eliminant has degree 12, `coeffAbsMax = 45480960`,
+  coefficient bit height 26, and isolation target 351.
   These project-internal canonical inputs come from the shared `n = 6` rung of
-  the former schedules. Full timing runs check the ceilings; merge-gating smoke
-  verification checks the result hashes. The measured reference timings live
-  in the [performance report](../../reports/hex-number-field-performance.md).
-  Neither registration makes a one-parameter scaling claim.
+  the former schedules. Full timing runs check the ceilings; merge-gating
+  smoke verification checks the result hashes. The measured reference timings
+  live in the [performance report](../../reports/hex-number-field-performance.md).
+  None of the registrations makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
   selection. Root APIs add Yun decomposition, one norm eliminant, and one
   shared double-resultant evaluation eliminant per squarefree component. The
