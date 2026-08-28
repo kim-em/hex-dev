@@ -109,7 +109,9 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
     if not all(_check_cert(pari, ch) for _, _, ch in factors):
         return False
     subjects = [int(ch["n"]) for _, _, ch in factors]
-    if any(s < 2 for s in subjects) or len(set(subjects)) != len(subjects):
+    if any(s < 2 for s in subjects):
+        return False
+    if any(a >= b for a, b in zip(subjects, subjects[1:])):
         return False
     if n < 2 or n % 2 == 0:
         return False

@@ -48,7 +48,9 @@ while `PrimeCert` refers back to it does not elaborate.
 
 Each factor entry is a base `a`, an exponent `e` (stored off by one, so the
 exponent `e + 1` is positive by construction), and the child certificate for
-a prime `q`, read off as the child's subject. -/
+a prime `q`, read off as the child's subject. Factor lists in both Pocklington
+constructors must be in strictly ascending child-subject order for the checker
+to accept them. -/
 inductive PrimeCert where
   /-- `n` is an entry of the stored table. -/
   | small (n : Nat)
@@ -93,15 +95,20 @@ def certProduct (bound : Nat) : List (Nat × Nat × PrimeCert) → Option Nat
           | none => none
           | some f => boundedPowMul bound f pw 1
 
-/-- Structural check on the factor list: every claimed prime is at least
-`2`, and the claimed primes are pairwise distinct. -/
+/-- Continue the canonical factor-subject check above a strict lower bound. -/
 @[expose]
-def subjectsOk : List (Nat × Nat × PrimeCert) → Bool
+def subjectsAfter (lower : Nat) : List (Nat × Nat × PrimeCert) → Bool
   | [] => true
   | (_, _, c) :: rest =>
-      decide (2 ≤ c.subject) &&
-        !(rest.any fun x => x.2.2.subject == c.subject) &&
-        subjectsOk rest
+      decide (lower < c.subject) && subjectsAfter c.subject rest
+
+/-- Structural check on the factor list: every claimed prime is at least
+`2`, and the claimed primes are in strictly ascending order. The canonical
+order implies pairwise distinctness with one lower-bound subject comparison
+per entry. -/
+@[expose]
+def subjectsOk (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+  subjectsAfter 1 factors
 
 /-- The per-entry witness conditions: Fermat at the base, and the gcd
 condition at the reduced exponent. The gcd argument is written modularly:
@@ -114,7 +121,7 @@ def checkWitness (n q a : Nat) : Bool :=
     Nat.gcd ((HexArith.powModNat a ((n - 1) / q) n + n - 1) % n) n == 1
 
 /-- The arithmetic side of the square-root Pocklington node: `n` odd and at
-least `2`, well-formed distinct factor subjects, `F ∣ n - 1` with
+least `2`, canonical strictly ascending factor subjects, `F ∣ n - 1` with
 `n < F * F`, and every per-entry witness condition. Child certificates are
 checked separately by `checkPrime`. -/
 @[expose]
@@ -154,8 +161,9 @@ def checkPock3Arith (n r s w : Nat)
 
 mutual
 
-/-- Accept or reject a primality certificate. Structurally recursive and
-fully `@[expose]`d, so acceptance replays by kernel reduction alone. -/
+/-- Accept or reject a primality certificate. Pocklington factor lists are
+accepted only in strictly ascending child-subject order. Structurally recursive
+and fully `@[expose]`d, so acceptance replays by kernel reduction alone. -/
 @[expose]
 def checkPrime : PrimeCert → Bool
   | .small n => isTablePrime n
@@ -290,19 +298,49 @@ private theorem certProduct_eq {bound : Nat} :
           have h3 := boundedPowMul_eq 1 pw F h
           simpa [certProd, h1, h2] using h3
 
+private theorem subjectsAfter_spec :
+    ∀ (lower : Nat) (l : List (Nat × Nat × PrimeCert)),
+      subjectsAfter lower l = true →
+        (∀ x ∈ l, lower < x.2.2.subject) ∧
+          l.Pairwise (fun a b => a.2.2.subject < b.2.2.subject)
+  | _, [], _ => ⟨by simp, List.Pairwise.nil⟩
+  | lower, a :: rest, h => by
+      obtain ⟨a1, e, c⟩ := a
+      unfold subjectsAfter at h
+      rw [Bool.and_eq_true, decide_eq_true_iff] at h
+      have ih := subjectsAfter_spec c.subject rest h.2
+      refine ⟨?_, List.pairwise_cons.mpr ⟨ih.1, ih.2⟩⟩
+      intro x hx
+      rcases List.mem_cons.mp hx with rfl | hx
+      · exact h.1
+      · exact Nat.lt_trans h.1 (ih.1 x hx)
+
+private theorem subjectsAfter_mono {lower upper : Nat} (hlu : lower ≤ upper) :
+    ∀ (l : List (Nat × Nat × PrimeCert)), subjectsAfter upper l = true →
+      subjectsAfter lower l = true
+  | [], _ => by simp [subjectsAfter]
+  | a :: rest, h => by
+      obtain ⟨a1, e, c⟩ := a
+      unfold subjectsAfter at h ⊢
+      simp only [Bool.and_eq_true, decide_eq_true_iff] at h ⊢
+      exact ⟨Nat.lt_of_le_of_lt hlu h.1, h.2⟩
+
 private theorem subjectsOk_cons {a : Nat × Nat × PrimeCert}
     {rest : List (Nat × Nat × PrimeCert)}
     (h : subjectsOk (a :: rest) = true) :
     2 ≤ a.2.2.subject ∧ (∀ x ∈ rest, x.2.2.subject ≠ a.2.2.subject) ∧
       subjectsOk rest = true := by
   obtain ⟨a1, e, c⟩ := a
-  unfold subjectsOk at h
-  rw [Bool.and_eq_true, Bool.and_eq_true] at h
-  obtain ⟨⟨h2, hany⟩, hrest⟩ := h
-  rw [Bool.not_eq_true', List.any_eq_false] at hany
-  refine ⟨by simpa using h2, ?_, hrest⟩
-  intro x hx heq
-  exact hany x hx (by simpa using heq)
+  unfold subjectsOk subjectsAfter at h
+  rw [Bool.and_eq_true, decide_eq_true_iff] at h
+  have htail := subjectsAfter_spec c.subject rest h.2
+  refine ⟨?_, ?_, ?_⟩
+  · change 2 ≤ c.subject
+    omega
+  · intro x hx
+    exact Nat.ne_of_gt (htail.1 x hx)
+  · unfold subjectsOk
+    exact subjectsAfter_mono (by omega) rest h.2
 
 private theorem subjectsOk_forall :
     ∀ {l : List (Nat × Nat × PrimeCert)}, subjectsOk l = true →
@@ -694,19 +732,29 @@ structure CheckedPrimeCert (n : Nat) where
 theorem CheckedPrimeCert.prime {n : Nat} (c : CheckedPrimeCert n) : Prime n :=
   c.subject_eq ▸ prime_of_checkPrime c.valid
 
-/-! Regression coverage: table leaves, accepted single-factor, two-factor, and
-two-level nodes; explicit zero and truncating-division boundaries for bounded
-multiplication; and rejected certificates covering the arithmetic clauses and
-adversarial product inputs. The checker's negative cases matter as much as its
-positive ones, and no oracle produces them. -/
+/-! Regression coverage: table leaves, accepted Pocklington nodes, explicit
+zero and truncating-division boundaries for bounded multiplication, structural
+preflight on long canonical lists and late malformed entries, and rejected
+certificates covering the arithmetic clauses and adversarial products. The
+checker's negative cases matter as much as its positive ones, and no oracle
+produces them. -/
 
 set_option maxRecDepth 100000   -- table walks in the guards below
+
+/-- A long canonical factor list for the linear structural-preflight guards. -/
+private def longFactors : List (Nat × Nat × PrimeCert) :=
+  (List.range 2048).map fun i => (0, 0, .small (i + 2))
+
+#guard subjectsOk longFactors = true
+#guard subjectsOk (longFactors ++ [(0, 0, .small 2049)]) = false
 
 #guard checkPrime (.small 97) = true
 #guard checkPrime (.small 100) = false
 #guard checkPrime (.small 100003) = false  -- prime, but above the table bound
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
+#guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 3)]) = false
+  -- distinct but noncanonical subjects
 #guard checkPrime (.pock 2027 [(2, 0, .small 1013)]) = true
 #guard checkPrime (.pock 13 [(2, 0, .small 3)]) = false      -- F² ≤ n
 #guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor

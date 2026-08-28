@@ -72,6 +72,8 @@ open Hex.Nat
 -- Certificate checker: accepted shapes and one rejection per clause.
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
+#guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 3)]) = false
+  -- distinct but noncanonical subjects
 #guard checkPrime (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true
 #guard checkPrime (.pock 13 [(2, 0, .small 3)]) = false      -- F² ≤ n
 #guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor
