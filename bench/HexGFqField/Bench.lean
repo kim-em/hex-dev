@@ -473,6 +473,9 @@ private structure ModulusBundle where
   pos : 0 < FpPoly.degree modulus
   irr : FpPoly.Irreducible modulus
 
+private instance : Inhabited ModulusBundle :=
+  ⟨⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩⟩
+
 /-- Run the Rabin test in compiled benchmark preparation and, on success,
 package its proven irreducibility result. This keeps large certificate
 reduction out of kernel elaboration while retaining checked field inputs. -/
@@ -490,6 +493,15 @@ private def runtimeCheckedSparseBundle (n k constant : Nat) (hn : 0 < n) :
       exact hn)
     (sparseModulus_monic hn)
 
+/-- Require the scheduled sparse modulus to pass Rabin's test. A rejected
+fixture is a benchmark configuration error and must be visible rather than
+silently changing the field degree attached to the harness parameter. -/
+private def checkedSparseBundle (n k constant : Nat) (hn : 0 < n) :
+    ModulusBundle :=
+  match runtimeCheckedSparseBundle n k constant hn with
+  | some bundle => bundle
+  | none => panic! "scheduled GFqField modulus failed the Rabin test"
+
 /-- Look up the per-degree modulus fixture for benchmark parameter `n`.
 The match enumerates the union of `paramSchedule` entries used by the
 registrations below; any `n` outside that schedule falls back to a
@@ -502,22 +514,18 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 5 => ⟨m_p7_n5, m_p7_n5_pos, m_p7_n5_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
   | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
-  | 432 => (runtimeCheckedSparseBundle 432 54 3 (by omega)).getD
-      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
-  | 600 => (runtimeCheckedSparseBundle 600 75 3 (by omega)).getD
-      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
-  | 768 => (runtimeCheckedSparseBundle 768 96 3 (by omega)).getD
-      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
-  | 936 => (runtimeCheckedSparseBundle 936 324 3 (by omega)).getD
-      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
-  | 1216 => (runtimeCheckedSparseBundle 1216 144 3 (by omega)).getD
-      ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 432 => checkedSparseBundle 432 54 3 (by omega)
+  | 600 => checkedSparseBundle 600 75 3 (by omega)
+  | 768 => checkedSparseBundle 768 96 3 (by omega)
+  | 936 => checkedSparseBundle 936 324 3 (by omega)
+  | 1216 => checkedSparseBundle 1216 144 3 (by omega)
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
 
-/-- Degree 2 keeps the registration smoke-testable. The scientific tail spans
-more than a factor of `e`, and every degree is congruent to `40` modulo `56`,
-so `densePoly` supplies the same coefficient pattern while fixed word and
-dispatch costs amortize. -/
+/-- Degree 2 is a low-cost manual check. The scientific tail spans more than a
+factor of `e`, and every tail degree is congruent to `40` modulo `56`, so
+`densePoly` supplies the same coefficient pattern while fixed word and dispatch
+costs amortize. Harness verification uses parameters 0 and 1 independently of
+this schedule. -/
 private def scientificSchedule : Array Nat := #[2, 432, 600, 768, 936, 1216]
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
@@ -970,7 +978,7 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
 /-
 Inversion computes one polynomial extended gcd against a degree-`n` modulus and
 reduces the inverse candidate. Division adds one quadratic field
-multiplication after that inverse. The wider doubling ladder keeps the small
+multiplication after that inverse. The wider custom ladder keeps the small
 extended-gcd constants from dominating the fitted quadratic slope.
 -/
 setup_benchmark runInvDivChecksum n => n * n
@@ -1021,109 +1029,119 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
 
 /-! # FLINT `fq_default` informational comparator fixed registrations -/
 
-setup_fixed_benchmark runOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runOfPoly8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintOfPoly8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+/-- The FLINT targets make one discarded call to start the persistent Python
+driver before timing, then amortise protocol overhead across a 200 ms timed
+batch. Matching Lean targets use the same batching floor. -/
+private def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runAdd2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAdd8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAdd8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+private def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runMul2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMul8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMul8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runOfPoly2 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly2 where flintCompareConfig
+setup_fixed_benchmark runOfPoly3 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly3 where flintCompareConfig
+setup_fixed_benchmark runOfPoly4 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly4 where flintCompareConfig
+setup_fixed_benchmark runOfPoly5 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly5 where flintCompareConfig
+setup_fixed_benchmark runOfPoly6 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly6 where flintCompareConfig
+setup_fixed_benchmark runOfPoly8 where leanCompareConfig
+setup_fixed_benchmark runFlintOfPoly8 where flintCompareConfig
 
-setup_fixed_benchmark runNegSub2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runNegSub8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintNegSub8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runAdd2 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd2 where flintCompareConfig
+setup_fixed_benchmark runAdd3 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd3 where flintCompareConfig
+setup_fixed_benchmark runAdd4 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd4 where flintCompareConfig
+setup_fixed_benchmark runAdd5 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd5 where flintCompareConfig
+setup_fixed_benchmark runAdd6 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd6 where flintCompareConfig
+setup_fixed_benchmark runAdd8 where leanCompareConfig
+setup_fixed_benchmark runFlintAdd8 where flintCompareConfig
 
-setup_fixed_benchmark runPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runMul2 where leanCompareConfig
+setup_fixed_benchmark runFlintMul2 where flintCompareConfig
+setup_fixed_benchmark runMul3 where leanCompareConfig
+setup_fixed_benchmark runFlintMul3 where flintCompareConfig
+setup_fixed_benchmark runMul4 where leanCompareConfig
+setup_fixed_benchmark runFlintMul4 where flintCompareConfig
+setup_fixed_benchmark runMul5 where leanCompareConfig
+setup_fixed_benchmark runFlintMul5 where flintCompareConfig
+setup_fixed_benchmark runMul6 where leanCompareConfig
+setup_fixed_benchmark runFlintMul6 where flintCompareConfig
+setup_fixed_benchmark runMul8 where leanCompareConfig
+setup_fixed_benchmark runFlintMul8 where flintCompareConfig
 
-setup_fixed_benchmark runInvDiv2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runInvDiv8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintInvDiv8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runNegSub2 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub2 where flintCompareConfig
+setup_fixed_benchmark runNegSub3 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub3 where flintCompareConfig
+setup_fixed_benchmark runNegSub4 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub4 where flintCompareConfig
+setup_fixed_benchmark runNegSub5 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub5 where flintCompareConfig
+setup_fixed_benchmark runNegSub6 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub6 where flintCompareConfig
+setup_fixed_benchmark runNegSub8 where leanCompareConfig
+setup_fixed_benchmark runFlintNegSub8 where flintCompareConfig
 
-setup_fixed_benchmark runZPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runZPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintZPow8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runPow2 where leanCompareConfig
+setup_fixed_benchmark runFlintPow2 where flintCompareConfig
+setup_fixed_benchmark runPow3 where leanCompareConfig
+setup_fixed_benchmark runFlintPow3 where flintCompareConfig
+setup_fixed_benchmark runPow4 where leanCompareConfig
+setup_fixed_benchmark runFlintPow4 where flintCompareConfig
+setup_fixed_benchmark runPow5 where leanCompareConfig
+setup_fixed_benchmark runFlintPow5 where flintCompareConfig
+setup_fixed_benchmark runPow6 where leanCompareConfig
+setup_fixed_benchmark runFlintPow6 where flintCompareConfig
+setup_fixed_benchmark runPow8 where leanCompareConfig
+setup_fixed_benchmark runFlintPow8 where flintCompareConfig
 
-setup_fixed_benchmark runFrob2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob2 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob3 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob4 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob5 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob6 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFrob8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintFrob8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runInvDiv2 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv2 where flintCompareConfig
+setup_fixed_benchmark runInvDiv3 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv3 where flintCompareConfig
+setup_fixed_benchmark runInvDiv4 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv4 where flintCompareConfig
+setup_fixed_benchmark runInvDiv5 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv5 where flintCompareConfig
+setup_fixed_benchmark runInvDiv6 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv6 where flintCompareConfig
+setup_fixed_benchmark runInvDiv8 where leanCompareConfig
+setup_fixed_benchmark runFlintInvDiv8 where flintCompareConfig
+
+setup_fixed_benchmark runZPow2 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow2 where flintCompareConfig
+setup_fixed_benchmark runZPow3 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow3 where flintCompareConfig
+setup_fixed_benchmark runZPow4 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow4 where flintCompareConfig
+setup_fixed_benchmark runZPow5 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow5 where flintCompareConfig
+setup_fixed_benchmark runZPow6 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow6 where flintCompareConfig
+setup_fixed_benchmark runZPow8 where leanCompareConfig
+setup_fixed_benchmark runFlintZPow8 where flintCompareConfig
+
+setup_fixed_benchmark runFrob2 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob2 where flintCompareConfig
+setup_fixed_benchmark runFrob3 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob3 where flintCompareConfig
+setup_fixed_benchmark runFrob4 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob4 where flintCompareConfig
+setup_fixed_benchmark runFrob5 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob5 where flintCompareConfig
+setup_fixed_benchmark runFrob6 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob6 where flintCompareConfig
+setup_fixed_benchmark runFrob8 where leanCompareConfig
+setup_fixed_benchmark runFlintFrob8 where flintCompareConfig
 
 end GFqFieldBench
 end Hex

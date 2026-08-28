@@ -22,7 +22,11 @@ multiplication logarithmically. The scientific schedule is
 `#[2, 432, 600, 768, 936, 1216]`: degree 2 retains a smoke point, while the
 five-point verdict tail spans more than a factor of `e`. Every tail degree is
 `40 mod 56`, so the deterministic dense operands have the same coefficient
-pattern over `F_7`; only their degree changes.
+pattern over `F_7`; only their degree changes. The sparse modulus exponents are
+`(n,k) = (432,54), (600,75), (768,96), (936,324), (1216,144)`. The differing
+middle exponent at degree 936 produces a visible but verdict-safe constant
+bump (most clearly `69.209` versus `48.905..58.851` for inversion/division),
+so the evidence does not claim the moduli themselves have a uniform shape.
 
 The high-degree sparse trinomials are checked by `Berlekamp.rabinTest` during
 compiled benchmark preparation, and the proven implication from that check
@@ -64,7 +68,8 @@ and
 Both top-level and per-result environments record the full commit above and
 `git_dirty=false`. Splitting the registrations limits sustained host drift;
 each verdict is produced directly by the harness, with no row combination or
-post-processing.
+post-processing. The commands took approximately 15 and 9 minutes respectively;
+runtime Rabin checking is preparation cost and is excluded from timed rows.
 
 | Registration | Model | `cMin` | `cMax` | slope | degree-1216 hash |
 |---|---:|---:|---:|---:|---:|
@@ -88,7 +93,9 @@ Smoke wiring was checked with:
 lake exe hexgfqfield_bench verify
 ```
 
-`verify` passed all 104 registered benchmarks.
+All 104 registrations passed at commit
+`9458872052e4e8b997a872de6ca14a3d06ae1697` on `chungus2`, using
+python-flint 0.9.0 for the external fixed targets.
 
 ## Comparator Ratios
 
@@ -298,10 +305,5 @@ calibration anchors: spawn_wall_ns=1780141979062884000, spawn_mono_ns=3300129766
 
 ## Concerns
 
-Six mode-1 registrations remain inconclusive on the narrow
-certificate-backed ladder. The pre-policy report already identified this as
-miscalibration, and the ordered rule does not change it into a pass. No clean
-scientific run exists for any of the eight registrations.
-This finding and the rollback are recorded by
-[#9733](https://github.com/kim-em/hex-dev/issues/9733); a focused remediation
-issue follows after the policy lands.
+None. All eight mode-1 registrations pass on the clean scientific schedule,
+and the runtime checks make rejected high-degree modulus fixtures visible.
