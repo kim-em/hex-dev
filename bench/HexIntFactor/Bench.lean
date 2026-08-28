@@ -49,7 +49,7 @@ def replayInput (e : Nat) : Factorization :=
 def runReplay (e : Nat) : Nat :=
   if checkFactorization (replayInput e) then 1 else 0
 
-def runOrder (p : Nat) : Nat := orderOf 2 p
+def runOrder (p : Nat) : Nat := orderOf 3 p
 
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q) : ∀ e : Nat,
     boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
@@ -206,8 +206,10 @@ setup_benchmark runReplay n => n
     targetInnerNanos := 100000000
   }
 
-/- `orderOf` scans candidate exponents up to the modulus and performs a bounded
-modular-power check at each step, so the declared worst-case model is linear. -/
+/- `orderOf` carries one bounded residue and performs one modular multiplication
+per candidate exponent. On every prime in this ladder, `3` has order `p - 1`,
+so each run exercises `p - 1` scan steps and the declared arithmetic-operation
+model is linear. -/
 setup_benchmark runOrder n => n
   where {
     paramFloor := 7
