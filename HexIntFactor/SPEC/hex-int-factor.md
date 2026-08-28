@@ -1012,13 +1012,13 @@ the number of distinct primes, `B` a smoothness bound.
 | operation | cost | note |
 |---|---|---|
 | trailing-zero split | five bit operations on `b`-bit naturals | isolated-low-bit identity plus one shift; `O(b)` bit complexity |
-| perfect-power test | `O(b²)` bounded multiplications | the committed prime exponents plus only prime candidates above the table; a `k`th-root search has `O(b/k)` probes of a linear, early-aborting power loop |
+| perfect-power test | `O(b²)` bounded multiplication/division steps | the committed prime exponents plus only prime candidates above the table; a `k`th-root search has `O(b/k)` probes of a linear, early-aborting power loop |
 | trial division to `T` | `O(π(T))` divisions | `π(10^4) = 1229` |
 | Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
 | cyclotomic candidate table | `O(m + d²)` index work plus big-integer powers/products | `m` is the largest required index and `d` the number of its divisors; one ascending divisor-closed table is shared by all selected parts |
-| `checkFactorization` | `O(Σ eᵢ)` bounded multiplications plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts above the subject |
+| `checkFactorization` | `O(Σ eᵢ)` bounded multiplication/division steps plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts before constructing a product above the subject |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
 | `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
@@ -1027,8 +1027,8 @@ the number of distinct primes, `B` a smoothness bound.
 
 These are **arithmetic-operation counts on `Nat`** except where the table says
 bit complexity explicitly: the operands are big integers throughout,
-`boundedPowMul` uses up to `e` multiplications for `p^e`, and the divisor functions
-are `O(k)` only if the output's bit length is ignored. A bit-complexity
+`boundedPowMul` uses up to `e` divisions and `e` multiplications for `p^e`, and
+the divisor functions are `O(k)` only if the output's bit length is ignored. A bit-complexity
 model would have to name a multiplication cost and multiply through,
 and this SPEC does not attempt one.
 

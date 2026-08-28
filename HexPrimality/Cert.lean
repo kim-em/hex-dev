@@ -694,11 +694,11 @@ structure CheckedPrimeCert (n : Nat) where
 theorem CheckedPrimeCert.prime {n : Nat} (c : CheckedPrimeCert n) : Prime n :=
   c.subject_eq ▸ prime_of_checkPrime c.valid
 
-/-! Regression coverage: table leaves, an accepted single-factor node, an
-accepted two-factor node, an accepted two-level node, and one rejected
-certificate of each kind (bound too small, composite claimed factor, failed
-gcd witness, factor not dividing `n - 1`). The checker's negative cases
-matter as much as its positive ones, and no oracle produces them. -/
+/-! Regression coverage: table leaves, accepted single-factor, two-factor, and
+two-level nodes; explicit zero and truncating-division boundaries for bounded
+multiplication; and rejected certificates covering the arithmetic clauses and
+adversarial product inputs. The checker's negative cases matter as much as its
+positive ones, and no oracle produces them. -/
 
 set_option maxRecDepth 100000   -- table walks in the guards below
 
@@ -714,8 +714,10 @@ set_option maxRecDepth 100000   -- table walks in the guards below
 #guard checkPrime (.pock 11 [(2, 0, .small 7)]) = false      -- 7 ∤ 10
 #guard boundedPowMul 0 0 1 1 = some 0                        -- zero base
 #guard boundedPowMul 0 5 0 1048576 = some 0                  -- zero accumulator
+#guard boundedPowMul 7 2 3 1 = some 6                        -- rounded bound accepts
+#guard boundedPowMul 7 2 4 1 = none                          -- next product is 8
 #guard checkPrime (.pock 7 [(2, 0, .small (2 ^ 4096))]) = false
-  -- huge child subject is rejected before multiplying it by the accumulator
+  -- huge child subject is rejected at the first guarded product step
 #guard checkPrime (.pock 97 [(5, 1048576, .small 2)]) = false
   -- huge exponent aborts when its next bounded multiplication would cross 96
 #guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false

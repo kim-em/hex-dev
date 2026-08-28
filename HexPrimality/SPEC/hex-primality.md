@@ -356,9 +356,8 @@ arithmetic rejections before recursive certificate replay:
 2. The subjects `q` of the child certificates satisfy `2 ≤ q` and are
    pairwise distinct.
 3. `F = ∏ q^(e+1)` divides `n - 1`; each power is accumulated by a
-   bounded loop and the whole product aborts as soon as its running
-   value exceeds `n - 1`, rather than constructing an attacker-chosen
-   enormous power.
+   bounded loop that tests each nonzero step by division, and the whole
+   product aborts before constructing a running value above `n - 1`.
 4. `n < F * F`.
 5. For each `(a, e, child)`, with `q = child.subject`:
    `HexArith.powModNat a (n-1) n = 1 % n` and

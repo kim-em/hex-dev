@@ -113,9 +113,9 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
         return False
     if n < 2 or n % 2 == 0:
         return False
-    # Mirror `Hex.Nat.boundedPowMul`: accumulate one multiplication at a
-    # time and abort as soon as the running product exceeds `n - 1`, so an
-    # adversarial exponent is rejected without constructing a huge power.
+    # Match `Hex.Nat.certProduct`'s verdict: accumulate one multiplication at
+    # a time and reject when the total first exceeds `n - 1`. The Lean checker
+    # authorizes each multiplication before constructing it.
     F = 1
     for (_, e, ch) in factors:
         q = int(ch["n"])
