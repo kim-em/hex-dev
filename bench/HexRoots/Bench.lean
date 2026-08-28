@@ -391,21 +391,30 @@ def pinnedCertify? : Option (ZPoly × Component) :=
 initialize certifyRef : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef pinnedCertify?
 
 def runTaylor : Unit → IO UInt64 := fun _ => do return (← taylorRef.get).map taylorChecksum |>.getD 0
-def runWitnessCheck : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map witnessChecksum |>.getD 0
-def runNkWitnessCheck : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map nkWitnessChecksum |>.getD 0
-def runNewtonSquare : Unit → IO UInt64 := fun _ => do return (← witnessRef.get).map newtonChecksum |>.getD 0
-def runRefine1 : Unit → IO UInt64 := fun _ => do return (← refine1Ref.get).map refine1Checksum |>.getD 0
-def runCertify : Unit → IO UInt64 := fun _ => do return (← certifyRef.get).map certifyChecksum |>.getD 0
-def runRefineTo : Unit → IO UInt64 := fun _ => do return refineToChecksum (← refineToRef.get)
+def runWitnessCheck (p : ZPoly) : UInt64 := witnessChecksum p
+def runNkWitnessCheck (p : ZPoly) : UInt64 := nkWitnessChecksum p
+def runNewtonSquare (p : ZPoly) : UInt64 := newtonChecksum p
+def runRefine1 (pc : ZPoly × Component) : UInt64 := refine1Checksum pc
+
+/-- Degree-parametric certification fixture whose timed path is pinned to NK. -/
+def prepCertify (degree : Nat) : Option (ZPoly × Component) :=
+  let p := boundedRootPoly degree
+  if nkWitnessCheck p rootSquare.doubled = true then some (p, ⟨#[rootSquare], 1⟩) else none
+
+def runCertify (pc : Option (ZPoly × Component)) : UInt64 :=
+  pc.map certifyChecksum |>.getD 0
+
+def runRefineTo (input : Option (DyadicRootIsolation refinePoly) × Int) : UInt64 :=
+  refineToChecksum input
 initialize isolateFixedRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separatedPoly 8))
 
 def runIsolate : Unit → IO UInt64 := fun _ => do
   return ((← isolateFixedRef.get).map runIsolateParam).getD 0
 
-def runIsolateAll : Unit → IO UInt64 := fun _ => do return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
-def runIsolateNk : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkChecksum |>.getD 0
-def runIsolatePellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolatePelletChecksum |>.getD 0
-def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
+def runIsolateAll (p : ZPoly) : UInt64 := isolateAllChecksum p
+def runIsolateNk (p : ZPoly) : UInt64 := isolateNkChecksum p
+def runIsolatePellet (p : ZPoly) : UInt64 := isolatePelletChecksum p
+def runIsolateNkThenPellet (p : ZPoly) : UInt64 := isolateNkThenPelletChecksum p
 
 /-! # `taylor` / `mahlerPrec` : dense seeded family -/
 
@@ -453,8 +462,16 @@ integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
 while the Taylor output still crosses GMP limbs. It is fixed with an expected
 hash because that reachable transition has no stable scalar wall model.
 -/
-setup_fixed_benchmark runWitnessCheck where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
+setup_benchmark runWitnessCheck n => n * n * n
+  with prep := boundedRootPoly
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `nkWitnessCheck` has the same `O(n²)` Taylor-shift-dominated shape
@@ -463,8 +480,16 @@ radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
 `runWitnessCheck`.
 -/
-setup_fixed_benchmark runNkWitnessCheck where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
+setup_benchmark runNkWitnessCheck n => n * n * n
+  with prep := boundedRootPoly
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
@@ -474,8 +499,16 @@ the op count is `n²`. It uses the same bounded-height degree-128 input; the
 fixed-precision reciprocal is lower order. The fixed registration tracks the
 GMP-transition case without asserting a scalar asymptotic fit.
 -/
-setup_fixed_benchmark runNewtonSquare where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x450307c7dcbe905c }
+setup_benchmark runNewtonSquare n => n * n * n
+  with prep := boundedRootPoly
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-! # refinement primitives : canonical fixed fixtures -/
 
@@ -488,8 +521,16 @@ is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 two rounds below its Cauchy component. It is fixed because its parametric
 smooth-family calibration drifted in the reachable transition band.
 -/
-setup_fixed_benchmark runRefine1 where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x6dd99fc71c5233ae }
+setup_benchmark runRefine1 n => n * n
+  with prep := separatedMidComponent
+  where {
+    paramFloor := 4
+    paramCeiling := 14
+    paramSchedule := .custom #[4, 6, 8, 10, 12, 14]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
@@ -504,8 +545,16 @@ GMP transition band (issue #8750, rounds one to three: pure powers and the
 limb model all showed drifting constants). The fixed expected hash makes a
 fixture-path or semantic regression visible.
 -/
-setup_fixed_benchmark runCertify where {
-  repeats := 5, maxSecondsPerCall := 6.0, expectedHash := some 0x1698ec123da6112f }
+setup_benchmark runCertify n => n * n * n
+  with prep := prepCertify
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-! # whole-polynomial drivers -/
 
@@ -527,8 +576,16 @@ slope after its quiet-machine sweep remained transitional.
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
-setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x1d4ce3e46eb351de }
+setup_benchmark runIsolateAll n => n * n * n * n * n
+  with prep := separatedPoly
+  where {
+    paramFloor := 4
+    paramCeiling := 14
+    paramSchedule := .custom #[4, 6, 8, 10, 12, 14]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -560,8 +617,16 @@ in the achieved precision. The discrete Newton ladder and GMP crossover make
 the reachable sweep unsuitable for one scalar model, so the expected-hash
 fixed case tracks the high-precision regression directly.
 -/
-setup_fixed_benchmark runRefineTo where {
-  repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xd9e59c44612d0e21 }
+setup_benchmark runRefineTo t => t * t
+  with prep := prepRefineTo
+  where {
+    paramFloor := 32773
+    paramCeiling := 524293
+    paramSchedule := .custom #[32773, 65541, 131077, 262149, 524293]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-! # `compare` group : dual-route atom-certificate experiment
 
@@ -586,8 +651,16 @@ on its doubled square.
 -- the cross-strategy `compare` agreement gate as a regression check. The
 -- 20-second cap is roughly twice the final quiet-machine 9.96-second median;
 -- NK-only is the slow branch on this fixture.
-setup_fixed_benchmark runIsolateNk where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolateNk n => n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 20.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -601,8 +674,16 @@ three-radius test per k candidate.
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
-setup_fixed_benchmark runIsolatePellet where {
-  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolatePellet n => n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
@@ -616,8 +697,16 @@ Pellet as fallback.
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check.
-setup_fixed_benchmark runIsolateNkThenPellet where {
-  repeats := 5, maxSecondsPerCall := 8.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolateNkThenPellet n => n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-! # `sameRoot` : fixed microsecond benchmark -/
 
