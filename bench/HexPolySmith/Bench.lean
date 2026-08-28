@@ -14,11 +14,12 @@ import LeanBench
 Benchmark registrations for polynomial Smith form.
 
 The scientific families separate matrix dimension from polynomial degree and
-derive their boundary growth from known invariant-factor chains:
+derive their boundary growth from controlled chains and consecutive-remainder
+constructions:
 
 * `*Dimension` fixes base-factor degree at two (boundary degree four) and
   varies square dimension;
-* `*Degree` fixes dimension at three and varies polynomial degree;
+* `*Degree` fixes dimension at three and varies a continuant remainder chain;
 * `runChainSnf` uses known invariant-factor chains conjugated by deterministic
   unimodular matrices;
 * `runRational*` uses nonintegral rational coefficients;
@@ -161,10 +162,6 @@ private def conjugateDiagonal {n : Nat} (d : Vector (DensePoly Rat) n) :
 private def polyPow (p : DensePoly Rat) (exponent : Nat) : DensePoly Rat :=
   (List.range exponent).foldl (fun product _ => product * p) 1
 
-private def smallPolyPow (p : DensePoly (ZMod64 2)) (exponent : Nat) :
-    DensePoly (ZMod64 2) :=
-  (List.range exponent).foldl (fun product _ => product * p) 1
-
 private def smallMatrix (input : SmallInput) :
     Matrix (DensePoly (ZMod64 2)) input.dimension input.dimension :=
   Matrix.ofFn fun i j => (input.entries.getD i.val #[]).getD j.val 0
@@ -177,12 +174,6 @@ def prepDenseCompare (n : Nat) : Input :=
     if i.val % 2 = 0 then p else q
   { dimension := n, entries := rowsOfMatrix (conjugateDiagonal d) }
 
-/-- Dense comparator ladder with matrix dimension fixed at three. -/
-def prepDegreeCompare (degree : Nat) : Input :=
-  let d : Vector (DensePoly Rat) 3 := Vector.ofFn fun i =>
-    DensePoly.monicize (densePoly degree (37 + 19 * i.val) i.val (i.val + 1))
-  { dimension := 3, entries := rowsOfMatrix (conjugateDiagonal d) }
-
 def prepRationalCompare (degree : Nat) : Input :=
   let d : Vector (DensePoly Rat) 3 := Vector.ofFn fun i =>
     DensePoly.monicize (rationalPoly degree (53 + 23 * i.val) (i.val + 1) 2)
@@ -192,6 +183,17 @@ private def chainFactors (n : Nat) (p : DensePoly Rat) : Vector (DensePoly Rat) 
   let square := p * p
   Vector.ofFn fun i => if i.val = 0 then p else square
 
+private def continuantPair (steps : Nat) (quotient : DensePoly Rat) :
+    DensePoly Rat × DensePoly Rat :=
+  (List.range steps).foldl
+    (fun pair _ => (pair.2, quotient * pair.2 + pair.1)) (0, 1)
+
+private def continuantFactors (degree : Nat) (quotient : DensePoly Rat) :
+    Vector (DensePoly Rat) 3 :=
+  let pair := continuantPair (degree + 1) quotient
+  let product := pair.1 * pair.2
+  Vector.ofFn fun i => if i.val = 0 then pair.1 else if i.val = 1 then pair.2 else product
+
 /-- Dense dimension ladder whose invariant factors and boundary growth are
 known from construction. Polynomial degree is fixed at four and coefficient
 width grows only with the sum of at most `n` bounded coefficients. -/
@@ -199,27 +201,24 @@ def prepDenseDimension (n : Nat) : Input :=
   let p := DensePoly.monicize (densePoly 2 37 0 0)
   { dimension := n, entries := rowsOfMatrix (conjugateDiagonal (chainFactors n p)) }
 
-/-- Dense degree ladder whose factors are `p`, `p^2`, and `p^2`. Thus every
-boundary polynomial has degree at most twice the parameter, while bounded
-integer coefficients acquire only logarithmic bit width under convolution. -/
+/-- Dense degree ladder using consecutive continuants for quotient `x + 1`.
+The first two factors force `degree + 1` nontrivial Euclidean remainder steps;
+the third is their product, so the resulting invariant factors are controlled. -/
 def prepDenseDegree (degree : Nat) : Input :=
-  let p := DensePoly.monicize (densePoly degree 37 0 0)
-  { dimension := 3, entries := rowsOfMatrix (conjugateDiagonal (chainFactors 3 p)) }
+  let quotient := DensePoly.ofCoeffs #[1, 1]
+  { dimension := 3
+    entries := rowsOfMatrix (conjugateDiagonal (continuantFactors degree quotient)) }
 
 def prepRationalDimension (n : Nat) : Input :=
   let p := DensePoly.ofCoeffs #[1 / 4, -(1 / 4), 1]
   { dimension := n, entries := rowsOfMatrix (conjugateDiagonal (chainFactors n p)) }
 
-private def rationalChainPoly (degree : Nat) : DensePoly Rat :=
-  let coefficientBits := Nat.log2 (degree + 1) + 1
-  let denominator : Rat := (2 ^ coefficientBits : Nat)
-  DensePoly.ofCoeffs <| Array.ofFn (n := degree + 1) fun k =>
-    if k.val = degree then 1
-    else if k.val % 2 = 0 then 1 / denominator else -(1 / denominator)
-
 def prepRationalDegree (degree : Nat) : Input :=
-  let p := rationalChainPoly degree
-  { dimension := 3, entries := rowsOfMatrix (conjugateDiagonal (chainFactors 3 p)) }
+  let denominatorBits := Nat.log2 (degree + 1) + 1
+  let denominator : Rat := (2 ^ denominatorBits : Nat)
+  let quotient := DensePoly.ofCoeffs #[1 / denominator, 1]
+  { dimension := 3
+    entries := rowsOfMatrix (conjugateDiagonal (continuantFactors degree quotient)) }
 
 private def monomial (degree : Nat) : DensePoly Rat := DensePoly.monomial degree 1
 
@@ -228,11 +227,6 @@ def prepChain (n : Nat) : Input :=
   let square := base * base
   let d : Vector (DensePoly Rat) n := Vector.ofFn fun i =>
     if i.val = 0 then base else square
-  { dimension := n, entries := rowsOfMatrix (conjugateDiagonal d) }
-
-def prepGradedChain (n : Nat) : Input :=
-  let base := monomial 1
-  let d : Vector (DensePoly Rat) n := Vector.ofFn fun i => polyPow base (i.val + 1)
   { dimension := n, entries := rowsOfMatrix (conjugateDiagonal d) }
 
 def prepDiagonalCompare (n : Nat) : Input :=
@@ -244,12 +238,7 @@ def prepDiagonalCompare (n : Nat) : Input :=
   { dimension := n, entries := rowsOfMatrix (Matrix.diagMatrix d n n) }
 
 def prepDiagonal (n : Nat) : Input :=
-  let base := monomial 1
-  let square := base * base
-  let d : Vector (DensePoly Rat) n := Vector.ofFn fun i =>
-    let p := if i.val = 0 then base else square
-    DensePoly.scale ((i.val + 2 : Nat) : Rat) p
-  { dimension := n, entries := rowsOfMatrix (Matrix.diagMatrix d n n) }
+  prepDiagonalCompare n
 
 def prepSmallCompare (n : Nat) : SmallInput :=
   let x : DensePoly (ZMod64 2) := DensePoly.monomial 1 1
@@ -267,14 +256,17 @@ def prepSmallCompare (n : Nat) : SmallInput :=
 
 def prepSmall (degree : Nat) : SmallInput :=
   let x : DensePoly (ZMod64 2) := DensePoly.monomial 1 1
-  let p := smallPolyPow x degree
-  let square := p * p
+  let quotient := x + 1
+  let pair := (List.range (degree + 1)).foldl
+    (fun pair _ => (pair.2, quotient * pair.2 + pair.1))
+    ((0 : DensePoly (ZMod64 2)), (1 : DensePoly (ZMod64 2)))
+  let product := pair.1 * pair.2
   let upper : Matrix (DensePoly (ZMod64 2)) 3 3 :=
     Matrix.ofFn fun i j => if i.val ≤ j.val then 1 else 0
   let lower : Matrix (DensePoly (ZMod64 2)) 3 3 :=
     Matrix.ofFn fun i j => if j.val ≤ i.val then 1 else 0
   let d : Vector (DensePoly (ZMod64 2)) 3 := Vector.ofFn fun i =>
-    if i.val = 0 then p else square
+    if i.val = 0 then pair.1 else if i.val = 1 then pair.2 else product
   let A := upper * Matrix.diagMatrix d 3 3 * lower
   { dimension := 3
     entries := A.rows.toArray.map (fun row => row.toArray) }
@@ -305,16 +297,16 @@ private def lowerPolyUnitInv (n : Nat) : Matrix (DensePoly Rat) n n :=
   Matrix.ofFn fun i j =>
     if j.val ≤ i.val then polyPow negX (i.val - j.val) else 0
 
-/-- Certificate ladder with degree-two Smith factors and polynomial
-unimodular changes of basis. -/
+/-- Certificate ladder with dimension-linear Smith-factor degree and
+polynomial unimodular changes of basis. -/
 def prepCertDimension (n : Nat) : CertInput :=
-  let p := DensePoly.monicize (densePoly 2 71 0 0)
+  let p := DensePoly.monicize (densePoly n 71 0 0)
   let d : Vector (DensePoly Rat) n := Vector.ofFn fun _ => p
   let diagonal := Matrix.diagMatrix d n n
-  let left := upperPolyUnit n
-  let leftInv := upperPolyUnitInv n
-  let right := lowerPolyUnit n
-  let rightInv := lowerPolyUnitInv n
+  let left := upperPolyUnitInv n
+  let leftInv := upperPolyUnit n
+  let right := lowerPolyUnitInv n
+  let rightInv := lowerPolyUnit n
   let A := leftInv * diagonal * rightInv
   { dimension := n
     matrix := rowsOfMatrix A
@@ -387,7 +379,7 @@ def runDirectCert (input : CertInput) : Bool :=
 
 def runEvalCert (input : CertInput) : Bool :=
   let S := certSmith input
-  let pts : Vector Rat (2 * input.dimension + 4) :=
+  let pts : Vector Rat (3 * input.dimension + 2) :=
     Vector.ofFn fun i => (i.val : Rat)
   mulEqCertAt pts S.left (matrixOfRows input.dimension input.matrix)
     (matrixOfRows input.dimension input.intermediate)
@@ -613,22 +605,29 @@ private def coefficientLimbs (bits : Nat) : Nat := (bits + 63) / 64
 private def dimensionCost (n : Nat) : Nat :=
   n * n * n * coefficientLimbs (8 + Nat.log2 (n + 1))
 private def degreeCost (degree : Nat) : Nat :=
-  let boundaryDegree := 2 * degree
-  (boundaryDegree + 1) * (boundaryDegree + 1) *
-    coefficientLimbs (12 + Nat.log2 (degree + 1))
+  let boundaryDegree := 3 * degree
+  let boundaryBits := 4 * (degree + 1)
+  let coefficientCount := boundaryDegree + 1
+  coefficientCount * coefficientCount +
+    coefficientCount * coefficientLimbs boundaryBits
 private def rationalDegreeCost (degree : Nat) : Nat :=
-  let boundaryDegree := 2 * degree
-  let boundaryBits := 2 * (Nat.log2 (degree + 1) + 1) + 1
-  (boundaryDegree + 1) * (boundaryDegree + 1) * coefficientLimbs boundaryBits
+  let boundaryDegree := 3 * degree
+  let denominatorBits := Nat.log2 (degree + 1) + 1
+  let boundaryBits := 3 * (degree + 1) * (denominatorBits + 1)
+  let coefficientCount := boundaryDegree + 1
+  coefficientCount * coefficientCount * denominatorBits +
+    coefficientCount * coefficientLimbs boundaryBits
 private def chainCost (n : Nat) : Nat := n * n * n
-private def gradedChainCost (n : Nat) : Nat := n * n * n * n
 private def smallFieldCost (degree : Nat) : Nat :=
-  let boundaryDegree := 2 * degree
+  let boundaryDegree := 3 * degree
   (boundaryDegree + 1) * (boundaryDegree + 1)
-private def directCertCost (n : Nat) : Nat := n * n * n
-private def evaluationCertCost (n : Nat) : Nat :=
+private def directCertCost (n : Nat) : Nat :=
   let square := (n + 1) * (n + 1)
   square * square
+private def evaluationCertCost (n : Nat) : Nat :=
+  let points := 3 * n + 2
+  let scalarCost := (n + 1) * (n + 1) * (n + 1)
+  points * scalarCost
 
 /- The chain construction fixes boundary degree at four. Its bounded
 coefficients are summed at most `n` times, so the cubic dense matrix-update cost
@@ -660,10 +659,13 @@ setup_benchmark runDenseSnfDataDimension n => dimensionCost n
     signalFloorMultiplier := 1.0
   }
 
-/- At fixed dimension three, the factors are `p`, `p^2`, and `p^2`.
-Consequently the maximum degree is `2 * degree`, coefficient width is
-logarithmic, and classical dense polynomial arithmetic has the declared
-quadratic degree cost times its rational-limb count. -/
+/- At fixed dimension three, consecutive continuants for quotient `x + 1`
+force a linear Euclidean remainder chain. The product and extended transforms
+contain at most three continuant factors, hence boundary degree `3 * degree`;
+the binomial coefficient sums are bounded by `4 * (degree + 1)` bits. Summing
+the shrinking remainder scans gives the quadratic coefficient-count term; the
+linear scan of the largest transform coefficients contributes the separately
+derived limb term. -/
 setup_benchmark runDenseSnfDegree degree => degreeCost degree
   with prep := prepDenseDegree
   where {
@@ -676,15 +678,16 @@ setup_benchmark runDenseSnfDegree degree => degreeCost degree
     signalFloorMultiplier := 1.0
   }
 
-/- Transform accumulation preserves the same `2 * degree` boundary and changes
-only the constant in the fixed-dimension schoolbook model. -/
+/- Transform accumulation preserves the same consecutive-remainder chain and
+`3 * degree` boundary, changing only the constant in the fixed-dimension
+schoolbook model. -/
 setup_benchmark runDenseSnfDataDegree degree => degreeCost degree
   with prep := prepDenseDegree
   where {
     paramFloor := 1
     paramCeiling := 128
     paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-    verdictWarmupFraction := 0.75
+    verdictWarmupFraction := 0.6
     maxSecondsPerCall := 8.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -716,39 +719,45 @@ setup_benchmark runRationalSnfDataDimension n => dimensionCost n
     signalFloorMultiplier := 1.0
   }
 
-/- Every nonleading coefficient of `p` has denominator
-`2^(log2 (degree + 1) + 1)`. Squaring doubles that bit width, giving the
-independent limb factor in `rationalDegreeCost`; the boundary degree is exactly
-`2 * degree`. -/
+/- The quotient in the consecutive-remainder recurrence has denominator
+`2^(log2 (degree + 1) + 1)`. At most `degree + 1` recurrence factors occur in
+each continuant, and the extended transforms contain at most three continuant
+factors, giving `3 * (degree + 1) * (denominatorBits + 1)` boundary bits. Each
+step's exact quotient has the input denominator width, so the shrinking
+Euclidean scans give the quadratic coefficient-count term times
+`denominatorBits`; canonicalizing the largest transform adds the linear
+derived-limb term. The boundary degree is `3 * degree`. -/
 setup_benchmark runRationalSnfDataDegree degree => rationalDegreeCost degree
   with prep := prepRationalDegree
   where {
     paramFloor := 1
-    paramCeiling := 64
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]
+    paramCeiling := 128
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
     verdictWarmupFraction := 0.6
-    maxSecondsPerCall := 8.0
+    maxSecondsPerCall := 10.0
     signalFloorMultiplier := 1.0
   }
 
-/- The ordered diagonal chain makes every pivot divide the full trailing block.
-`badBlock` therefore scans all of that block at each stage; summing the
-quadratic trailing sizes gives the cubic dimension model. The larger warmup
-fraction excludes the independently diagnosed fixed-cost transition rungs. -/
+/- The deliberately unordered diagonal presentation puts degree-two entries
+before degree-one entries. `badBlock` scans the quadratic trailing block and
+finds a nondivisible entry, so `blockStep` is exercised before the next stage;
+summing the trailing-block work gives the cubic dimension model. The extended
+schedule separates this asymptotic regime from the fixed-cost transition. -/
 setup_benchmark runDiagonalSnf n => dimensionCost n
   with prep := prepDiagonal
   where {
     paramFloor := 2
     paramCeiling := 768
     paramSchedule := .custom #[2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768]
-    verdictWarmupFraction := 0.75
+    verdictWarmupFraction := 0.6
     maxSecondsPerCall := 30.0
     signalFloorMultiplier := 1.0
   }
 
-/- Dimension is fixed at three and the factors are `x^degree`, `x^(2*degree)`,
-and `x^(2*degree)`. With no coefficient growth, the schoolbook degree cost is
-quadratic. -/
+/- Dimension is fixed at three. Consecutive continuants for quotient `x + 1`
+force the Euclidean remainder chain over `ZMod64 2`; the extended transforms
+reach degree `3 * degree`. With fixed-width coefficients, summing its coefficient
+scans gives the quadratic degree cost. -/
 setup_benchmark runSmallField degree => smallFieldCost degree
   with prep := prepSmall
   where {
@@ -772,15 +781,15 @@ setup_benchmark runSnfRank n => dimensionCost n with prep := prepDenseDimension
     maxSecondsPerCall := 8.0
     signalFloorMultiplier := 1.0
   }
-/- The graded chain has factor degrees `1, ..., n`. Dense matrix updates are
-cubic and their polynomial scans add the linear maximum-degree factor; the
-rank-sized final projection is lower order. -/
-setup_benchmark runInvariantFactors n => gradedChainCost n with prep := prepGradedChain
+/- Invariant-factor projection runs the same transform-free Smith loop on the
+controlled dense dimension family and then maps over at most the rank, so its
+postprocessing is lower order than `dimensionCost`. -/
+setup_benchmark runInvariantFactors n => dimensionCost n with prep := prepDenseDimension
   where {
     paramFloor := 1
-    paramCeiling := 32
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
-    verdictWarmupFraction := 0.5
+    paramCeiling := 128
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+    verdictWarmupFraction := 0.6
     maxSecondsPerCall := 8.0
     signalFloorMultiplier := 1.0
   }
@@ -822,29 +831,31 @@ setup_benchmark runSolveSystem n => dimensionCost n with prep := prepSolve
     signalFloorMultiplier := 1.0
   }
 
-/- Although inverse-transform degrees grow linearly, only quadratically many
-products have nonzero polynomial operands; the remaining dense matrix scan is
-also cubic. Thus the direct checker has a cubic wall model. -/
+/- Inverse-transform degrees grow linearly. Even when a product is zero,
+`Matrix.dotProductImpl` performs `acc + 0`, whose dense-polynomial addition
+scans the degree-linear accumulator. Across cubic dot-product cells this gives
+the quartic direct-checker wall model. -/
 setup_benchmark runDirectProductCert n => directCertCost n with prep := prepCertDimension
   where {
     paramFloor := 1
-    paramCeiling := 32
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
-    verdictWarmupFraction := 0.6
-    maxSecondsPerCall := 8.0
+    paramCeiling := 96
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 80, 96]
+    verdictWarmupFraction := 0.4
+    maxSecondsPerCall := 30.0
     signalFloorMultiplier := 1.0
   }
 
-/- The evaluation checker uses linearly many points. At each point it evaluates
-quadratically many degree-linear polynomials and performs a cubic scalar matrix
-product, giving the quartic wall model. -/
+/- The evaluation checker uses exactly `3 * n + 2` points. At each point it
+evaluates quadratically many degree-linear polynomials and performs a cubic
+scalar matrix product. Both contributions are therefore the exact point count
+times cubic scalar work. -/
 setup_benchmark runEvaluationCert n => evaluationCertCost n with prep := prepCertDimension
   where {
     paramFloor := 1
-    paramCeiling := 32
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
-    verdictWarmupFraction := 0.6
-    maxSecondsPerCall := 8.0
+    paramCeiling := 48
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 40, 48]
+    verdictWarmupFraction := 0.4
+    maxSecondsPerCall := 20.0
     signalFloorMultiplier := 1.0
   }
 
@@ -943,16 +954,16 @@ private def printGrowth (family parameter : String) (sample : GrowthSample) : IO
 def growthReport : IO UInt32 := do
   IO.println "family,parameter,max_boundary_degree,max_boundary_coefficient_bits"
   for n in #[1, 2, 4, 8, 16, 32, 64] do
-    printGrowth "dense-chain-dimension" (toString n) (ratGrowth (prepDenseDimension n))
+    printGrowth "dense-polysmith-dimension" (toString n) (ratGrowth (prepDenseDimension n))
   for degree in #[1, 2, 4, 8, 16, 32, 64] do
-    printGrowth "dense-chain-degree" (toString degree) (ratGrowth (prepDenseDegree degree))
+    printGrowth "dense-polysmith-degree" (toString degree) (ratGrowth (prepDenseDegree degree))
   for n in #[1, 2, 4, 8, 16, 32] do
     printGrowth "chain-conjugate-poly" (toString n) (ratGrowth (prepChain n))
   for n in #[1, 2, 4, 8, 16, 32, 64] do
-    printGrowth "rational-chain-dimension" (toString n)
+    printGrowth "rational-polysmith-dimension" (toString n)
       (ratGrowth (prepRationalDimension n))
   for degree in #[1, 2, 4, 8, 16, 32, 64] do
-    printGrowth "rational-chain-degree" (toString degree)
+    printGrowth "rational-polysmith-degree" (toString degree)
       (ratGrowth (prepRationalDegree degree))
   for n in #[2, 4, 6, 8, 12, 16] do
     printGrowth "diagonal-polysmith" (toString n) (ratGrowth (prepDiagonal n))

@@ -167,18 +167,25 @@ diagonal. Transform matrices are checked in Lean because they are not unique.
 The benchmark suite is Mathlib-free. It controls matrix dimension and
 polynomial degree independently and covers these families:
 
-- deterministic dense rational polynomial matrices;
-- known invariant-factor chains conjugated by unimodular matrices;
-- rational coefficients that expose coefficient-bit growth;
-- diagonal matrix presentations;
-- `ZMod64 2` matrices, where evaluation-point supply is constrained.
+- `dense-polysmith`: controlled dimension chains and consecutive-remainder
+  degree ladders in dense rational presentations;
+- `chain-conjugate-poly`: known invariant-factor chains conjugated by
+  unimodular matrices;
+- `rational-polysmith`: fixed-denominator dimension chains and rational
+  consecutive-remainder degree ladders;
+- `diagonal-polysmith`: unordered diagonal presentations that require block
+  repair;
+- `small-field-degree`: consecutive-remainder degree ladders over `ZMod64 2`,
+  where evaluation-point supply is constrained.
 
 The Smith loop performs polynomial gcd/division plus dense row and column
-updates. Its mode-1 registrations use known invariant-factor chains whose
-boundary degree and rational coefficient width follow from construction. The
-wall models multiply dense matrix or schoolbook polynomial work by the derived
-64-bit limb count. The original generic dense inputs remain fixed comparator
-stress cases; they do not make a parametric complexity claim.
+updates. The degree registrations use consecutive continuants, so they force a
+linear Euclidean remainder chain instead of short-circuiting on divisibility.
+Their maximum transform degree, rational denominator width, and coefficient
+width follow from the recurrence and appear in the mode-1 wall models. The
+supplemental dimension chains isolate dense matrix traversal at fixed degree.
+The original generic dense inputs remain fixed comparator stress cases; they do
+not make a parametric complexity claim.
 
 The required within-Lean comparisons are:
 
