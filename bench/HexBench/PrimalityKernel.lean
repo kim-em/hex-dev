@@ -9,10 +9,12 @@ import HexPrimality
 /-!
 Kernel-replay probes for the `hex-primality` certificate checker.
 
-Each theorem replays `checkPrime` on a committed certificate by kernel
-reduction alone (`decide +kernel`), at the same 31/61/123/256/511-bit
-rungs the native bench prices with the compiled twin. This module is
-build-only: elaborating it measures the kernel side of the
+The certificate theorems replay `checkPrime` by kernel reduction alone
+(`decide +kernel`) at the same 31/61/123/256/511-bit rungs the native bench
+prices with the compiled twin. Two further theorems replay the structural
+preflight over 1024 entries, accepting canonical subjects and rejecting a
+duplicate in the final slot. This module is build-only: elaborating it
+measures the kernel side of the
 `powModNat`-versus-Montgomery split (the kernel takes the exposed `Nat`
 route; the compiled twin dispatches to Montgomery below the word bound),
 which is the SPEC's "kernel replay" bench family. Sweep it with a

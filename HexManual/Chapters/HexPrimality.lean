@@ -149,7 +149,8 @@ tag := "hex-primality-certs"
 The tactic is a convenience wrapper; the underlying objects are public.
 A certificate is plain data, and the checker is one structural Boolean
 function, so certificates can be built by hand, stored, or produced by
-an external tool and replayed later:
+an external tool and replayed later. Each Pocklington factor list must be in
+strictly ascending order of the child certificates' subjects:
 
 {docstring Hex.Nat.PrimeCert}
 

@@ -355,8 +355,8 @@ arithmetic rejections before recursive certificate replay:
 1. `2 ≤ n` and `n` is odd.
 2. The subjects `q` of the child certificates satisfy `2 ≤ q` and are
    in strictly ascending order. This canonical order implies pairwise
-   distinctness and is checked with one comparison between each pair of
-   adjacent entries.
+   distinctness and is checked with one lower-bound comparison per entry
+   (the first against `1`, then each later subject against its predecessor).
 3. `F = ∏ q^(e+1)` divides `n - 1`; each power is accumulated by a
    bounded loop that tests each nonzero step by division, and the whole
    product aborts before constructing a running value above `n - 1`.
@@ -381,7 +381,7 @@ from `F ∣ n - 1`, the certified complete factorization of `F`, and the
 per-prime conditions alone. The coprimality hypothesis belongs to the
 cube-root variant, not to this one.
 
-Step 2 is at most `k - 1` subject comparisons. Step 3 performs at most
+Step 2 is at most `k` subject comparisons. Step 3 performs at most
 `O(k log n)` bounded ordinary multiplications even on rejected input:
 because step 2 established `q ≥ 2`, each entry either finishes or exceeds
 the `n - 1` bound within `O(log n)` iterations. Step 5 is two modular
@@ -982,7 +982,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | successful `isPrime?` | front end plus certificate search | bounded by explicit fuel after the fixed front end |
 | `isPrime` worst case | `O(√n)` remainder tests | exact fallback after default search exhaustion |
 | `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
-| `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; bounded above by `O(K b)` when the root has bit length `b` |
+| `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
 | `primeCert?` | dominated by `partialFactor` | unbounded; fuel-limited |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
@@ -990,8 +990,9 @@ These are operation counts, not bit complexity; subject comparisons,
 divisions, gcds, and both kinds of multiplication operate on big integers,
 so a bit-complexity model would have to price each primitive. In particular,
 the canonical-order preflight removes the former quadratic number of subject
-comparisons on attacker-controlled rejected lists; it does not claim that a
-comparison of arbitrary-size `Nat` values has unit bit cost. The recursion
+comparisons on any pairwise-distinct list that passed structural preflight,
+whether it was accepted or rejected later; it does not claim that a comparison
+of arbitrary-size `Nat` values has unit bit cost. The recursion
 depth claim in an earlier draft -- that each `q` is "at most half the bit
 length" of `n` -- was
 wrong: `q` is at most about half the *value*, so the bit length drops
@@ -1045,8 +1046,10 @@ Cases that must be present:
   and three levels deep.
 - A **rejected** certificate of each kind: `F ≤ √n`, a composite listed
   as a factor, a base failing the gcd condition, a factor not dividing
-  `n - 1`. The checker's negative cases matter as much as its positive
-  ones and no oracle produces them, so these are constructed by hand.
+  `n - 1`, duplicate factor subjects, and distinct subjects outside the
+  canonical ascending order. The checker's negative cases matter as much as
+  its positive ones and no oracle produces them, so these are constructed by
+  hand.
 - Segments `[1, 100]`, `[1, 10^4]`, and one segment straddling
   `primeTableBound`, checking the table and the fallback agree across
   the boundary.

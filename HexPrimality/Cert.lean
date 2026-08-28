@@ -48,7 +48,9 @@ while `PrimeCert` refers back to it does not elaborate.
 
 Each factor entry is a base `a`, an exponent `e` (stored off by one, so the
 exponent `e + 1` is positive by construction), and the child certificate for
-a prime `q`, read off as the child's subject. -/
+a prime `q`, read off as the child's subject. Factor lists in both Pocklington
+constructors must be in strictly ascending child-subject order for the checker
+to accept them. -/
 inductive PrimeCert where
   /-- `n` is an entry of the stored table. -/
   | small (n : Nat)
@@ -102,8 +104,8 @@ def subjectsAfter (lower : Nat) : List (Nat × Nat × PrimeCert) → Bool
 
 /-- Structural check on the factor list: every claimed prime is at least
 `2`, and the claimed primes are in strictly ascending order. The canonical
-order implies pairwise distinctness while requiring only adjacent subject
-comparisons. -/
+order implies pairwise distinctness with one lower-bound subject comparison
+per entry. -/
 @[expose]
 def subjectsOk (factors : List (Nat × Nat × PrimeCert)) : Bool :=
   subjectsAfter 1 factors
@@ -159,8 +161,9 @@ def checkPock3Arith (n r s w : Nat)
 
 mutual
 
-/-- Accept or reject a primality certificate. Structurally recursive and
-fully `@[expose]`d, so acceptance replays by kernel reduction alone. -/
+/-- Accept or reject a primality certificate. Pocklington factor lists are
+accepted only in strictly ascending child-subject order. Structurally recursive
+and fully `@[expose]`d, so acceptance replays by kernel reduction alone. -/
 @[expose]
 def checkPrime : PrimeCert → Bool
   | .small n => isTablePrime n
@@ -750,6 +753,8 @@ private def longFactors : List (Nat × Nat × PrimeCert) :=
 #guard checkPrime (.small 100003) = false  -- prime, but above the table bound
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
+#guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 3)]) = false
+  -- distinct but noncanonical subjects
 #guard checkPrime (.pock 2027 [(2, 0, .small 1013)]) = true
 #guard checkPrime (.pock 13 [(2, 0, .small 3)]) = false      -- F² ≤ n
 #guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor

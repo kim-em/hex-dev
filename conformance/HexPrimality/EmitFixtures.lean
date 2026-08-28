@@ -74,10 +74,10 @@ private def isPrimeCases : List (String × Nat) :=
 levels deep plus the accepted cube-root node, and one rejected certificate
 per checker clause: the F-squared bound, composite and non-dividing
 factors, failed gcd witnesses, table misses, subjects below two and even
-subjects, duplicate subjects, the bounded-product abort, and for the
-cube-root arm the even-cofactor, decomposition, r-range, size-bound, and
-both strict witness-window conditions. No oracle produces the negatives,
-so they are constructed by hand. -/
+subjects, duplicate and noncanonically ordered subjects, the bounded-product
+abort, and for the cube-root arm the even-cofactor, decomposition, r-range,
+size-bound, and both strict witness-window conditions. No oracle produces the
+negatives, so they are constructed by hand. -/
 private def certCases : List (String × Nat × PrimeCert) :=
   [ ("accept/small", 97, .small 97),
     ("accept/pock1", 7, .pock 7 [(2, 0, .small 3)]),
@@ -85,6 +85,8 @@ private def certCases : List (String × Nat × PrimeCert) :=
     ("accept/deep", 2027, .pock 2027 [(2, 0, .small 1013)]),
     ("accept/pock3", 199, .pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]),
     ("reject/bound", 13, .pock 13 [(2, 0, .small 3)]),
+    ("reject/unsorted-subjects", 31,
+      .pock 31 [(3, 0, .small 5), (3, 0, .small 3)]),
     ("reject/composite-factor", 7, .pock 7 [(2, 0, .small 4)]),
     ("reject/gcd-witness", 7, .pock 7 [(6, 0, .small 3)]),
     ("reject/nondividing", 11, .pock 11 [(2, 0, .small 7)]),

@@ -76,6 +76,8 @@
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock3","op":"certcheck","value":true}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/bound","n":13,"cert":{"t":"pock","n":13,"f":[[2,0,{"t":"small","n":3}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/bound","op":"certcheck","value":false}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/unsorted-subjects","n":31,"cert":{"t":"pock","n":31,"f":[[3,0,{"t":"small","n":5}],[3,0,{"t":"small","n":3}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/reject/unsorted-subjects","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/composite-factor","n":7,"cert":{"t":"pock","n":7,"f":[[2,0,{"t":"small","n":4}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/composite-factor","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/gcd-witness","n":7,"cert":{"t":"pock","n":7,"f":[[6,0,{"t":"small","n":3}]]}}
