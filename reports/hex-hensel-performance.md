@@ -1,9 +1,8 @@
 # HexHensel Performance Report
 
 Current implementation evidence was measured on `chungus2` (AMD EPYC 9455,
-Linux x86-64) with Lean 4.34.0-rc2. The scientific source revision is
-`20fca7f5a60d7f465f66591bb54e9ce94b88c84f`; later evidence commits change no
-executable source.
+Linux x86-64) with Lean 4.34.0-rc2. The clean scientific and profile revision
+is `cdbe3acd8dcc8bf6b09f4c882ad4f371cb6fc5ea`.
 
 ## Bench targets
 
@@ -48,38 +47,27 @@ The clean three-trial scientific command was:
   Hex.HenselBench.runMultifactorLiftChecksum \
   Hex.HenselBench.runMultifactorLiftQuadraticChecksum \
   --outer-trials 3 \
-  --export-file reports/bench-results/hex-hensel-20fca7f5-headline-chungus2.json
+  --export-file reports/bench-results/hex-hensel-cdbe3acd-headline-chungus2.json
 ```
 
 The 11-result artifact has SHA-256
-`493e9cbc058f26058a4f268fc0ce8af3ba32981363badd94c24d8c45a9fd5420`.
-Every child completed at clean revision `20fca7f5`. One scheduler pause made
-the three-trial `runModPChecksum` top-rung spread 600%; its five-trial clean
-replacement was run with:
-
-```sh
-.lake/build/bin/hexhensel_bench run Hex.HenselBench.runModPChecksum \
-  --outer-trials 5 \
-  --export-file reports/bench-results/hex-hensel-699eff73-modp-confirm-chungus2.json
-```
-
-That artifact has SHA-256
-`2e3150837132bfb88d97d71245e4c0cefa1787ff840e1d3b74fed88fba1d0868`
-and supplies the `runModPChecksum` verdict below.
+`1426a1582a4c9e0715e3aaea1427d16e7c9ebd44925fbedb753e6dd86d1e105b`.
+Every child completed at clean revision `cdbe3acd`; all ten mode-1 rows pass,
+and the mode-2 tree row is faster than its upper bound.
 
 | registration | mode | largest rung median | harness verdict | Phase-4 result |
 |---|---:|---:|---|---|
-| `runModPChecksum` | 1 | 14.404 ms | consistent, β=+0.092 | consistent with declared complexity |
-| `runLiftToZChecksum` | 1 | 4.075 ms | consistent, β=−0.001 | consistent with declared complexity |
-| `runReduceModPowChecksum` | 1 | 1.225 ms | consistent, β=+0.033 | consistent with declared complexity |
-| `runLinearHenselStepChecksum` | 1 | 22.592 ms | consistent, β=−0.034 | consistent with declared complexity |
-| `runHenselLiftChecksum` | 1 | 2.888 s | consistent, β=−0.034 | consistent with declared complexity |
-| `runQuadraticHenselStepChecksum` | 1 | 9.453 ms | consistent, β=+0.096 | consistent with declared complexity |
-| `runPolyProductChecksum` | 1 | 1.043 s | consistent, narrow-range ratio test | consistent with declared complexity |
-| `runMultifactorLiftChecksum` | 1 | 2.924 s | consistent, β=−0.062 | consistent with declared complexity |
-| `runMultifactorLiftQuadraticChecksum` | 1 | 394.510 ms | consistent, β=−0.080 | consistent with declared complexity |
-| `runPolyProductFoldChecksum` | 1 | 209.052 ms | consistent, β=+0.099 | consistent with declared complexity |
-| `runPolyProductTreeChecksum` | 2 | 204.834 ms | inconclusive, β=−1.226, faster | within declared upper bound (observed faster) |
+| `runModPChecksum` | 1 | 10.129 ms | consistent, β=+0.048 | consistent with declared complexity |
+| `runLiftToZChecksum` | 1 | 2.626 ms | consistent, β=+0.007 | consistent with declared complexity |
+| `runReduceModPowChecksum` | 1 | 850.501 µs | consistent, β=−0.003 | consistent with declared complexity |
+| `runLinearHenselStepChecksum` | 1 | 14.995 ms | consistent, β=−0.044 | consistent with declared complexity |
+| `runHenselLiftChecksum` | 1 | 2.017 s | consistent, β=−0.038 | consistent with declared complexity |
+| `runQuadraticHenselStepChecksum` | 1 | 8.696 ms | consistent, β=+0.107 | consistent with declared complexity |
+| `runPolyProductChecksum` | 1 | 769.500 ms | consistent, narrow-range ratio test | consistent with declared complexity |
+| `runMultifactorLiftChecksum` | 1 | 1.987 s | consistent, β=−0.040 | consistent with declared complexity |
+| `runMultifactorLiftQuadraticChecksum` | 1 | 279.403 ms | consistent, β=−0.142 | consistent with declared complexity |
+| `runPolyProductFoldChecksum` | 1 | 159.845 ms | consistent, β=+0.118 | consistent with declared complexity |
+| `runPolyProductTreeChecksum` | 2 | 159.728 ms | inconclusive, β=−1.287, faster | within declared upper bound (observed faster) |
 
 Mode 1 is independently derived for every Phase-4 operation target. At fixed
 `k = 64`, each affected lift performs a constant number of dense corrections;
@@ -120,7 +108,7 @@ Fixing `k = 64` produces one controlled degree ladder for each failed target,
 and all three now pass their independently derived mode-1 `n²` verdicts. The
 public product's scientific ladder similarly stays in one dispatcher branch.
 
-The compare evidence was captured cleanly at `6bd274a2`:
+The compare evidence was captured cleanly at `cdbe3acd`:
 
 ```sh
 .lake/build/bin/hexhensel_bench compare \
@@ -128,20 +116,20 @@ The compare evidence was captured cleanly at `6bd274a2`:
   Hex.HenselBench.runPolyProductTreeChecksum \
   --param-floor 4 --param-ceiling 1024 --param-schedule doubling \
   --cache-mode warm --outer-trials 3 --signal-floor-multiplier 1 \
-  --export-file reports/bench-results/hex-hensel-6bd274a2-product-compare-chungus2.json
+  --export-file reports/bench-results/hex-hensel-cdbe3acd-product-compare-chungus2.json
 
 .lake/build/bin/hexhensel_bench compare \
   Hex.HenselBench.runMultifactorLiftChecksum \
   Hex.HenselBench.runMultifactorLiftQuadraticChecksum \
   --cache-mode warm --outer-trials 3 --signal-floor-multiplier 1 \
-  --export-file reports/bench-results/hex-hensel-6bd274a2-lift-compare-chungus2.json
+  --export-file reports/bench-results/hex-hensel-cdbe3acd-lift-compare-chungus2.json
 ```
 
 Both commands reported `all functions agree on common params`. The product
 artifact covers 4 through 1024 and has SHA-256
-`2ea5c4ae1e383998eaa84dfa2b44a3bed023e5d94a96fb0e794395701fc322e4`;
+`a73912f6b2f501863663bc358a4fd3c1041d8bde44c53ea9fc6e82d852c62128`;
 the lift artifact covers 64 through 512 and has SHA-256
-`ceb27d06564b8ca199b7a96aeba21ecb7ad126f97355016c8e5da1eb655b2147`.
+`911a2300a7a6f878b32fa79ce815386769b09c96b1f589593bef849a879d58e7`.
 
 ## Comparator ratios
 
@@ -245,7 +233,7 @@ about 1.9×--2.2× faster than the python-flint emulation.
 ## Profile
 
 Profiles were captured from clean revision
-`6bd274a2b6ffca5ed6c6a27f8e26dc039e1ce6b2` on `chungus2` with LeanBench
+`cdbe3acd8dcc8bf6b09f4c882ad4f371cb6fc5ea` on `chungus2` with LeanBench
 0.1.0, samply 0.13.1 at 999 Hz, and lean-bench-samply revision
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`. There is no random seed. Raw
 Firefox Profiler files remain developer-local under `/tmp` as required by
@@ -268,29 +256,29 @@ LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh \
 
 | family and exact case | classified leaf cost | principal inclusive Hex functions |
 |---|---|---|
-| bridge-operations: `runModPChecksum`, `n=131072` | allocation 40.99%, runtime 46.49%, own 11.80%, other 0.72% (99.28%) | target 26.08%, `ZPoly.modP` 20.65%, checksum 12.44% |
-| linear-hensel: `runHenselLiftChecksum`, `n=512`, `k=64` | allocation 45.93%, runtime 30.80%, own 14.37%, GMP 8.55%, other 0.35% (99.65%) | target / `henselLift` / `linearHenselStep` 99.75%, `DensePoly.mulImpl` 91.10% |
-| quadratic-hensel: `runQuadraticHenselStepChecksum`, `n=512` | runtime 98.27%, allocation 1.23%, own 0.23%, other 0.27% (99.73%) | target 100%, `quadraticHenselStepWord?` 99.95%, division 1.23% |
-| multifactor-lifting: `runMultifactorLiftChecksum`, `n=512`, `k=64` | allocation 45.10%, runtime 25.73%, own 18.40%, GMP 9.96%, other 0.81% (99.19%) | target / `multifactorLiftList` 99.54%, `henselLift` 99.44%, `DensePoly.mulImpl` 90.65% |
-| multifactor-lifting: `runMultifactorLiftQuadraticChecksum`, `n=512`, `k=64` | allocation 54.31%, runtime 25.74%, GMP 17.12%, own 2.50%, other 0.32% (99.68%) | target 97.26%, `henselLiftFactorsImpl` 96.15%, modular division 69.49%, `liftExactImpl` 68.26% |
-| product crossover: `runPolyProductTreeChecksum`, `n=1024` | GMP 90.13%, allocation 8.93%, runtime 0.64%, own 0.11%, other 0.19% (99.81%) | `KS3.digits` 46.61%, target / product tree 45.33% / 44.95%, `mulKS4` 38.96% |
+| bridge-operations: `runModPChecksum`, `n=131072` | runtime 51.60%, allocation 36.30%, own 11.46%, other 0.64% (99.36%) | target 23.56%, `ZPoly.modP` 19.15%, checksum 13.88% |
+| linear-hensel: `runHenselLiftChecksum`, `n=512`, `k=64` | allocation 51.29%, runtime 22.94%, own 18.39%, GMP 7.02%, other 0.35% (99.65%) | target / `henselLift` / `linearHenselStep` 99.65%, `DensePoly.mulImpl` 91.11% |
+| quadratic-hensel: `runQuadraticHenselStepChecksum`, `n=512` | runtime 98.46%, allocation 0.95%, own 0.36%, other 0.23% (99.77%) | target 100%, `quadraticHenselStepWord?` 99.95%, division 1.13% |
+| multifactor-lifting: `runMultifactorLiftChecksum`, `n=512`, `k=64` | allocation 48.56%, runtime 24.73%, own 19.28%, GMP 7.02%, other 0.40% (99.60%) | target / `multifactorLiftList` 99.65%, `henselLift` 99.56%, `DensePoly.mulImpl` 91.28% |
+| multifactor-lifting: `runMultifactorLiftQuadraticChecksum`, `n=512`, `k=64` | allocation 51.21%, runtime 25.53%, GMP 19.77%, own 3.05%, other 0.44% (99.56%) | target 96.92%, `henselLiftFactorsImpl` 95.80%, modular division 70.56%, `liftExactImpl` 67.25% |
+| product crossover: `runPolyProductTreeChecksum`, `n=1024` | GMP 89.37%, allocation 9.23%, runtime 0.89%, own 0.15%, other 0.37% (99.63%) | target 43.83%, product tree 43.65%, `KS3.digits` 43.42%, `mulKS4` 37.72% |
 
 The two linear profiles have the same correction call graph and are dominated
 by the registered dense product, confirming that the multifactor wrapper adds
 no hidden phase. The quadratic single-step profile exercises the word path;
 the production quadratic multifactor profile attributes its larger-width work
-to exact lifting and modular division. The tree profile attributes 90.13% of
+to exact lifting and modular division. The tree profile attributes 89.37% of
 leaf samples to GMP and its leading inclusive entries to KS packing/recovery,
 which is precisely the packed-integer phase covered by its mode-2 bound. No
 dominant timed cost falls outside a registered target.
 
 ```text
-bridge:          residual=0.819 ms; timed=1269.481 ms; retained=1254; sensitivity ±5 ms=passed; confidence=passed
-linear:          residual=0.641 ms; timed=1988.583 ms; retained=1977; sensitivity ±5 ms=passed; confidence=passed
-quadratic step:  residual=0.861 ms; timed=2207.867 ms; retained=2197; sensitivity ±5 ms=passed; confidence=passed
-linear multi:    residual=0.565 ms; timed=1991.443 ms; retained=1978; sensitivity ±5 ms=passed; confidence=passed
-quadratic multi: residual=0.897 ms; timed=2530.202 ms; retained=2517; sensitivity ±5 ms=passed; confidence=passed
-product tree:    residual=0.809 ms; timed=2650.898 ms; retained=2654; sensitivity ±5 ms=passed; confidence=passed
+bridge:          residual=0.994 ms; timed=1423.755 ms; retained=1405; sensitivity ±5 ms=passed; confidence=passed
+linear:          residual=0.229 ms; timed=1987.162 ms; retained=1979; sensitivity ±5 ms=passed; confidence=passed
+quadratic step:  residual=0.715 ms; timed=2226.530 ms; retained=2209; sensitivity ±5 ms=passed; confidence=passed
+linear multi:    residual=0.566 ms; timed=2530.941 ms; retained=2519; sensitivity ±5 ms=passed; confidence=passed
+quadratic multi: residual=0.967 ms; timed=2637.780 ms; retained=2617; sensitivity ±5 ms=passed; confidence=passed
+product tree:    residual=0.641 ms; timed=2701.336 ms; retained=2699; sensitivity ±5 ms=passed; confidence=passed
 ```
 
 ## Concerns
