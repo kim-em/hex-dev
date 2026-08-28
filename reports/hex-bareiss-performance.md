@@ -126,6 +126,8 @@ target. No unattributed dominant cost was observed.
 
 ## Concerns
 
+- [#9806](https://github.com/kim-em/hex-dev/issues/9806) tracks the expected
+  different-complexity-class finding's policy-correct reclassification.
 - The FLINT `fmpz_mat.det` comparator pulls steadily ahead of `runBareissDet`
   across the ladder: raw ratio `0.973x → 0.062x` from `n = 128` to `n = 512`,
   and within the eligible range the adjusted ratio drifts from `0.057x` to

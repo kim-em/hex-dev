@@ -886,6 +886,8 @@ within ~1.2–2.5× of raw fpLLL. The generators are structurally validated by
 
 ## Concerns
 
+- [#9808](https://github.com/kim-em/hex-dev/issues/9808) tracks completion of
+  the verified-Isabelle comparison ladders.
 - **The verified Isabelle certified-LLL series has only one committed point
   per family.** This is sufficient for the five-way plot legend and the
   bottom/shared-rung fast-check verdict above, but it does not yet provide a

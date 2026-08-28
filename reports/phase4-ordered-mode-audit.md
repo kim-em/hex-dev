@@ -1,9 +1,11 @@
 # Phase-4 Ordered-Mode Audit
 
-The current inventory contains 58 local libraries recorded at
-`done_through >= 4`. The ordered complexity-mode review finds 13 libraries
-with open Phase-4 evidence and 45 with no gap. All affected libraries are
-rolled back to `done_through: 3` in [`libraries.yml`](../libraries.yml).
+The pre-rollback inventory contains 58 local libraries recorded at
+`done_through >= 4`. The review finds 22 libraries with open Phase-4 evidence
+and 36 with no gap in the ordered-mode audit. All affected libraries are
+rolled back to `done_through: 3` in
+[`libraries.yml`](../libraries.yml) by PR
+[#9816](https://github.com/kim-em/hex-dev/pull/9816).
 
 The five libraries already rolled back directly by PR
 [#9769](https://github.com/kim-em/hex-dev/pull/9769) are outside the current
@@ -21,12 +23,12 @@ below because HexNumberFieldTower relies on it.
 
 | Library | Open evidence | Focused issue |
 | --- | --- | --- |
-| HexPoly | Two unresolved headline Concerns. | [#9804](https://github.com/kim-em/hex-dev/issues/9804) |
+| HexPoly | No multiplication comparator rung is eligible; the separate expected composition divergence is misfiled as a Concern and must move to the trend narrative. | [#9804](https://github.com/kim-em/hex-dev/issues/9804) |
 | HexMvPoly | The representation experiment remains unresolved under `## Concerns`. | [#9805](https://github.com/kim-em/hex-dev/issues/9805) |
 | HexMvGcd | Fixed shape/hash registrations are used as performance coverage without mode-3 budgets or ordered-mode exclusions. | [#9812](https://github.com/kim-em/hex-dev/issues/9812) |
 | HexRowReduce | Advertised compiled operations have conformance evidence but no performance mode. | [#9811](https://github.com/kim-em/hex-dev/issues/9811) |
 | HexBareiss | An unresolved informational-comparator finding remains under `## Concerns`. | [#9806](https://github.com/kim-em/hex-dev/issues/9806) |
-| HexGF2 | Two unresolved comparator/protocol findings remain under `## Concerns`. | [#9807](https://github.com/kim-em/hex-dev/issues/9807) |
+| HexGF2 | The addition comparison is marshalling-dominated; the separate expected NTL divergence is misfiled as a Concern and must move to the trend narrative. | [#9807](https://github.com/kim-em/hex-dev/issues/9807) |
 | HexLLL | The verified-Isabelle comparison has only one point per headline family. | [#9808](https://github.com/kim-em/hex-dev/issues/9808) |
 | HexPolyFp | Frobenius and GCD remain inconclusive; no ordered-mode rationale makes either a pass. | [#9809](https://github.com/kim-em/hex-dev/issues/9809) |
 | HexConway | Fixed Tier-1/Tier-2 checks lack mode-3 evidence, and the lookup verdict predates the current table. | [#9813](https://github.com/kim-em/hex-dev/issues/9813) |
@@ -34,6 +36,15 @@ below because HexNumberFieldTower relies on it.
 | HexMvPolyMathlib | All five proof-track threshold comparisons remain unresolved under `## Concerns`. | [#9810](https://github.com/kim-em/hex-dev/issues/9810) |
 | HexNumberField | The report remains blocked on incomplete API coverage and five registrations without passing modes. | [#9722](https://github.com/kim-em/hex-dev/issues/9722), [#9743](https://github.com/kim-em/hex-dev/issues/9743), [#9795](https://github.com/kim-em/hex-dev/issues/9795), [#9796](https://github.com/kim-em/hex-dev/issues/9796) |
 | HexNumberFieldTower | The Trager envelope fails mode 2's dominant-phase test, and fixed component anchors are used as coverage without mode-3 evidence. | [#9815](https://github.com/kim-em/hex-dev/issues/9815) |
+| HexRowReduceMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9817](https://github.com/kim-em/hex-dev/issues/9817) |
+| HexDeterminantMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9818](https://github.com/kim-em/hex-dev/issues/9818) |
+| HexBareissMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9819](https://github.com/kim-em/hex-dev/issues/9819) |
+| HexModArithMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9820](https://github.com/kim-em/hex-dev/issues/9820) |
+| HexGramSchmidtMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9821](https://github.com/kim-em/hex-dev/issues/9821) |
+| HexPolyZMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9822](https://github.com/kim-em/hex-dev/issues/9822) |
+| HexPolyZGcdMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9823](https://github.com/kim-em/hex-dev/issues/9823) |
+| HexLLLMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9824](https://github.com/kim-em/hex-dev/issues/9824) |
+| HexHenselMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9825](https://github.com/kim-em/hex-dev/issues/9825) |
 
 There is no valid manual mode-2 pass in the affected set.
 HexNumberFieldTower's candidate citation covers the BHKS factorization phase,
@@ -44,11 +55,15 @@ remaining inconclusive registrations as mode 4.
 
 ## Inspected with no gap
 
-The following headline reports contain passing two-sided registrations, no
+HexBasic has no SPEC API surface and therefore no performance-evidence
+registration to classify; the ordered-mode rule is vacuous for it. Its
+pre-existing report-shape omissions are outside this reset.
+
+The remaining headline reports contain passing two-sided registrations, no
 unresolved Concern, or explicitly resolved historical evidence. Their passing
 registrations remain unchanged:
 
-- [HexBasic](hex-basic-performance.md),
+- [HexBasic](hex-basic-performance.md) and
   [HexTruncatedSeries](hex-truncated-series-performance.md),
   [HexArith](hex-arith-performance.md),
   [HexPolyFast](hex-poly-fast-performance.md),
@@ -73,24 +88,16 @@ registrations remain unchanged:
   [HexRealRootsMathlib](hex-real-roots-mathlib-performance.md), and
   [HexRCF](hex-rcf-performance.md).
 
-The remaining 21 libraries are correspondence-only Mathlib layers. They have
+The remaining 12 libraries are correspondence-only Mathlib layers. They have
 no performance-evidence registration or proof probe of their own, declare no
-`phase4` block, and are exempt from a local headline report:
+`phase4` block, and carry the required `correspondence-only-layer` SPEC
+declaration, so they are exempt from a local headline report:
 
 - [HexPolySmithMathlib](../HexPolySmithMathlib/SPEC/hex-poly-smith-mathlib.md),
   [HexSparsePolyMathlib](../HexSparsePolyMathlib/SPEC/hex-sparse-poly-mathlib.md),
-  [HexRowReduceMathlib](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md),
-  [HexDeterminantMathlib](../HexDeterminantMathlib/SPEC/hex-determinant-mathlib.md),
-  [HexBareissMathlib](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md),
-  [HexModArithMathlib](../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md),
-  [HexGramSchmidtMathlib](../HexGramSchmidtMathlib/SPEC/hex-gram-schmidt-mathlib.md),
-  [HexPolyZMathlib](../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md),
-  [HexPolyZGcdMathlib](../HexPolyZGcdMathlib/SPEC/hex-poly-z-gcd-mathlib.md),
-  [HexLLLMathlib](../HexLLLMathlib/SPEC/hex-lll-mathlib.md),
   [HexHermiteMathlib](../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md),
   [HexSmithMathlib](../HexSmithMathlib/SPEC/hex-smith-mathlib.md),
   [HexPolyFpMathlib](../HexPolyFpMathlib/SPEC/hex-poly-fp-mathlib.md),
-  [HexHenselMathlib](../HexHenselMathlib/SPEC/hex-hensel-mathlib.md),
   [HexGF2Mathlib](../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md),
   [HexGFqMathlib](../HexGFqMathlib/SPEC/hex-gfq-mathlib.md),
   [HexTruncatedSeriesMathlib](../HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md),
