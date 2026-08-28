@@ -79,7 +79,7 @@ canonical or parametric case):
 * `runRefineTo` — achieved-precision ladder, `O(t²)` in the quadratic GMP
   regime.
 * `runSameRoot` — `RefinedIsolation.sameRoot`, a single dyadic comparison
-  (fixed nanosecond-scale benchmark).
+  (fixed microsecond-scale benchmark).
 * `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
   shared `linProdPoly 10`; all three must agree on the invariant hash.
 
@@ -464,7 +464,7 @@ square's centre (the `O(n²)` shift, which dominates) and then, for each of the
 three test radii, a single `O(n)` fold over the coefficients, so the op count
 is `n²`. The canonical input is `boundedRootPoly 128`, centred on its exact
 integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
-while the Taylor output still crosses GMP limbs. The repaired `64..512`
+while the Taylor output still crosses GMP limbs. The repaired `64..384`
 schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
 therefore gives up asymptotic detection at the degree-128 midpoint and enforces
 a 10 ms absolute budget, a conservative multiple of the clean baseline.
@@ -584,7 +584,7 @@ in the achieved precision. Parameterising by the actual Newton precisions
 `32773, 65541, 131077, 262149, 524293` reaches the quadratic limb regime and
 provides a stable mode-1 `t²` model.
 -/
-setup_benchmark runRefineTo t => t * t
+setup_benchmark runRefineTo t => (t * t)
   with prep := prepRefineTo
   where {
     paramFloor := 32773
@@ -616,7 +616,7 @@ on its doubled square.
 -- transition band at every reachable schedule (issue #8750, round four), so
 -- no scalar wall model has a flat constant; the shared canonical input keeps
 -- the cross-strategy `compare` agreement gate as a regression check. The
--- The widened `2..10` schedule made `time/n⁵` rise strongly, so mode 3 gives
+-- widened `2..10` schedule made `time/n⁵` rise strongly, so mode 3 gives
 -- up asymptotic detection and enforces a 30 s absolute budget on the canonical
 -- degree-10 input. NK-only is the slow branch on this fixture.
 setup_fixed_benchmark runIsolateNk where {
