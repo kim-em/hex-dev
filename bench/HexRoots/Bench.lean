@@ -445,7 +445,8 @@ there is no denominator growth, but binomial output magnitudes still grow
 linearly in bits. The reachable GMP transition does not admit a stable scalar
 wall model. Mode 3 therefore gives up asymptotic detection at the canonical
 degree-128 midpoint and enforces a 50 ms absolute budget in `runTaylor` via
-`budgeted`; `maxSecondsPerCall` below is only a process safety cap.
+`budgeted`, above its clean 2.222 ms baseline; `maxSecondsPerCall` below is
+only a process safety cap.
 -/
 setup_fixed_benchmark runTaylor where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x9917b7b230496af4 }
@@ -483,7 +484,7 @@ integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
 while the Taylor output still crosses GMP limbs. The repaired `64..384`
 schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
 therefore gives up asymptotic detection at the degree-128 midpoint and enforces
-a 50 ms body-scoped budget above its measured baseline.
+a 50 ms body-scoped budget above its clean 2.362 ms baseline.
 -/
 setup_fixed_benchmark runWitnessCheck where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
@@ -494,7 +495,7 @@ as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
 radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
 `runWitnessCheck`. Its repaired `64..512` schedule was likewise sub-cubic, so
-mode 3 enforces a 50 ms absolute budget above its clean 4 ms baseline.
+mode 3 enforces a 50 ms absolute budget above its clean 2.283 ms baseline.
 -/
 setup_fixed_benchmark runNkWitnessCheck where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0xb }
@@ -506,7 +507,7 @@ a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
 the op count is `n²`. It uses the same bounded-height degree-128 input; the
 fixed-precision reciprocal is lower order. The repaired `64..512` schedule
 remained sub-cubic, so mode 3 gives up asymptotic detection and enforces a
-50 ms absolute budget above the clean 3 ms baseline.
+50 ms absolute budget above the clean 2.211 ms baseline.
 -/
 setup_fixed_benchmark runNewtonSquare where {
   repeats := 5, maxSecondsPerCall := 4.0, expectedHash := some 0x450307c7dcbe905c }
@@ -521,7 +522,7 @@ is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 `n`. The canonical fixture is the degree-8 fixed-separation product, refined
 two rounds below its Cauchy component. On the repaired smooth-family schedule
 `4,6,8,10,12,14`, `time/n²` rose by more than 2×. Mode 3 therefore gives up
-asymptotic detection and enforces a 50 ms budget above the clean 4 ms baseline
+asymptotic detection and enforces a 50 ms budget above the clean 2.134 ms baseline
 on the degree-8 midpoint.
 -/
 setup_fixed_benchmark runRefine1 where {
@@ -530,7 +531,7 @@ setup_fixed_benchmark runRefine1 where {
 /-
 Cost model. `certify?` under the default `nkThenPellet` strategy first tries
 the Newton-Kantorovich witness on the doubled enclosing square: one
-`nkWitnessCheck` (`O(n²)`) and one speculative `newtonSquare` (`O(n²)`). On a
+`nkWitnessCheck` (`O(n²)`) and one speculative `newtonSquare` (`O(n²)`). The
 canonical bounded-height degree-128 component is pinned by checking
 `nkWitnessCheck p rootSquare.doubled = true` during initialization, so this NK
 path always fires and the op count is `n²`. Fixed rather than parametric
@@ -539,7 +540,7 @@ because the certification path is Taylor-shift dominated and the shift's
 GMP transition band (issue #8750, rounds one to three: pure powers and the
 limb model all showed drifting constants). The repaired `64..512` schedule
 also lost the pinned branch at 512; the verified degree-128 NK case is the
-canonical hard input. Mode 3 enforces a 50 ms budget above the clean 6 ms
+canonical hard input. Mode 3 enforces a 50 ms budget above the clean 4.413 ms
 baseline, and the fixed expected hash makes a fixture-path or semantic
 regression visible.
 -/
@@ -553,17 +554,16 @@ Cost model. `isolateAll?` refines the Cauchy component to disjoint certified
 atoms at target precision `32`. The op count is `n³`: up to `O(n)` components,
 each driven through `O(n)` subdivision levels of `O(n²)`-per-witness work
 amortised by the speculative Newton jumps. Bit-growth is asymptotically
-significant here: the working bit-length reaches `B = prec + n·log‖p‖∞ = Θ(n)`
-(precision `~32` at the certifying level, plus coefficient growth, and
-the Taylor coefficients' `Θ(prec·n)` denominator growth), and the
-growing-precision dyadic arithmetic (notably the `invAtPrec` reciprocal) is
-schoolbook `O(B²)`. On `separatedPoly n`, coefficient height is
+significant here: the SPEC working length is
+`B = prec + n·log‖p‖∞`, and growing-precision dyadic arithmetic (notably
+the `invAtPrec` reciprocal) is schoolbook `O(B²)`. On `separatedPoly n`,
+coefficient height is
 `log ‖p‖∞ = Θ(n·log n)`, so the SPEC working length
 `B = 32 + n·log ‖p‖∞` is `Θ(n²·log n)`. The independently derived wall model
 is therefore `~n⁷` (polylogarithms suppressed), not the earlier `n⁵` repair.
 The current `4,6,8,10,12,14` schedule is still inconclusive (`C` falls from
 392.544 to 208.586 across verdict rungs). Mode 3 uses degree 12 and a 20 s
-body-scoped budget, over twice its clean 8.340 s baseline.
+body-scoped budget, over twice its clean 8.480 s baseline.
 -/
 setup_fixed_benchmark runIsolateAll where {
   repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x5e4b3fd1d798497a }

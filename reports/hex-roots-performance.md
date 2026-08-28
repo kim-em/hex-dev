@@ -2,24 +2,34 @@
 
 **Phase 4 is claimed for HexRoots.** The ordered-mode remediation retains
 `runMahlerPrec` in mode 1, repairs `runRefineTo` into a second passing mode-1
-registration, and places the other twelve registrations in mode 3 only after
-the prescribed current-fixture parametric attempts failed. Each mode-3 site
-now names its canonical hard input and enforces an operation-specific ceiling.
-The preserved Phase-5--7 evidence was rechecked after this remediation, so
-`libraries.yml` records `done_through: 7`. This report records the evidence per
+registration, and selects mode 3 for the other twelve registrations only after
+the recorded current-fixture schedules fail to supply a stable scalar wall
+model. Every mode-3 benchmark names a canonical hard input and enforces its
+body-scoped ceiling independently of process startup. The preserved
+Phase-5--7 evidence was rechecked after this remediation, so `libraries.yml`
+records `done_through: 7`. This report records the evidence per
 [PLAN/Phase4.md](../PLAN/Phase4.md) and
 [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
 
-The clean ordered-mode experiment is
-`reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json`, recorded
-on quiet `chungus2` (AMD EPYC 9455 48-Core, 96 CPUs), Lean `4.34.0-rc2`,
-lean-bench `0.1.0`, with `git_dirty: false`. The clean-source selected-mode sweep is
-`reports/bench-results/hex-roots-df265f8-issue9794-final.json` on the same
-host and toolchain, supplemented by the all-repeat Taylor rerun
-`reports/bench-results/hex-roots-df265f8-issue9794-taylor.json`. All artifacts
-record the exact source commit and hashes. The two final-artifact SHA-256
-digests are `140293ea4bf326062ab4e0b15b31f4647aac21bba333ea064119e3291bc74278`
-and `cbba6702c12a19ec87cf78ce5207358259b70478ef0a1507c46f0677d834f7b3`.
+The clean ordered-mode artifacts were recorded on quiet `chungus2` (AMD EPYC
+9455 48-Core, 96 CPUs), pinned to an idle core, with Lean `4.34.0-rc2`,
+lean-bench `0.1.0`, and `git_dirty: false`:
+
+- `reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json` records the Taylor-kernel,
+  refinement, certification, and achieved-precision repair schedules.
+- `reports/bench-results/hex-roots-f568569-issue9794-n7.json` records the corrected `~n⁷`
+  `runIsolateAll` and strategy schedules plus shared-rung hash agreement.
+- `reports/bench-results/hex-roots-6aab88b-issue9794-final.json` records both passing mode-1 ladders
+  and five repeats of every fixed row; its expected-hash failure on
+  `runIsolateAll` is the clean observation that identified the stale row.
+- `reports/bench-results/hex-roots-b29031d-issue9794-isolateall.json` is the focused clean rerun after
+  refreshing that expectation; all five repeats agree and match.
+
+Their SHA-256 digests are respectively
+`3d74adb2e4821bad833217668ac413865918ef10d8bca1ce5aaf1646b14c1a63`,
+`bc17e25a3cb49a0027f2eb5a9f983357100fdf4f7dc076bd7a988f44c6e1c4b7`,
+`b027965f3a113a0f3731ddd3385cf344ad2899f215d050afcc023a6792e5f305`,
+and `8dac7b8607208062b6940563d98ff2f0255f82aae737606aad6e91ca7589a79b`.
 
 The original Phase-4 sweep is
 `reports/bench-results/hex-roots-973c2cd-round5.json`, recorded on quiet
@@ -81,19 +91,20 @@ stream (six curated plus fifty seeded) emitted in **308.82 s** and occupied
 140 KB; every case returned certificates rather than `none`, and python-flint
 replayed all 56 with zero failures.
 
-The post-review canonical fixed sweep also passes every digest. The changed local
-finisher output shape intentionally updates the `runIsolateAll` and
-`runRefineTo` hashes. Its driver medians are 3.41×–5.15× slower than the
-older round-five export: `runIsolate` 144.621→492.894 ms, `runIsolateAll`
-1.726→8.541 s, NK-only 2.627→9.809 s, Pellet-only 0.485→2.500 s, and
-combined 0.502→2.469 s. This is not hidden as a ratchet win. The historical
-artifact predates #8839's soundness-motivated global-normalization prefix; the
-NK-only executable path is unchanged by this branch, and temporarily restoring
-this branch's old outer-loop emission code still measured 9.664 s. The old
-8-second NK cap therefore no longer describes current `main`; 20 seconds is
-roughly 2× the current five-repeat median. The issue-8751 ratchet is the SPEC
-budget table above, whose fixed expression improves materially on the preceding
-checkpoint. The fixed table below records the current-tree medians and hashes.
+The ordered-mode audit found that the post-#8839 all-atoms finisher sent every
+atom directly through globally normalized refinement, bypassing the bounded
+lineage-local loop that made the Pellet-bearing paths fast. The finisher now
+tries the proven bounded local refinement first and retains complete normalized
+refinement as fallback. The final pairwise-disjointness check and the Mathlib
+coverage/readiness proofs cover both branches, so the repair restores the
+optimization without weakening the soundness-motivated fallback.
+
+On identical inputs and hashes, direct pinned measurements changed Pellet-only
+from about 10.128 s to 2.508 s, combined from 10.164 s to 2.462 s, and
+`runIsolate` from 2.923 s to 0.498 s. NK-only stayed near 9.2 s. The clean final
+five-repeat medians are `runIsolate` 0.495 s, `runIsolateAll` 8.480 s, NK-only
+9.251 s, Pellet-only 2.466 s, and combined 2.462 s. The fixed table below
+records the current medians, body-scoped budgets, and refreshed hashes.
 
 ## Taylor-shift reuse ratchet
 
@@ -245,35 +256,42 @@ Mode 1 was attempted first. The clean experimental artifact records:
 | `runNewtonSquare` | degree `64..512`, `n³` | inconclusive, `β=-0.526` |
 | `runRefine1` | smooth separated degrees `4,6,8,10,12,14`, `n²` | inconclusive, normalized cost `23133..52721` |
 | `runCertify` | pinned-NK degree `64..384`, `n³` | inconclusive, normalized cost falls `3.139..1.533`; degree 512 no longer preserves the pinned branch and is excluded |
-| `runIsolateAll` | smooth separated degrees `4,6,8,10,12,14`, `n⁵` | inconclusive, normalized cost `11993..45791` |
+| `runIsolateAll` | smooth separated degrees `4,6,8,10,12,14`, corrected `~n⁷` | inconclusive, `C=392.544..208.586` on verdict rungs |
 | `runRefineTo` | achieved precision `32773..524293`, `t²` | **consistent**, `β=-0.030`, promoted to mode 1 |
-| strategy trio | `linProdPoly` degrees `2,3,4,5,6,8,10`, `n⁵` | all inconclusive; NK `β=+1.696`, Pellet and combined exceed their experiment cap at 10 |
+| strategy trio | `linProdPoly` degrees `2,3,4,5,6,8,10`, corrected `~n⁷` | all inconclusive: NK `β=-0.460`, Pellet `-1.168`, combined `-1.149`; hashes agree at every rung |
 
-The repaired schedules therefore disprove a stable scalar wall model for nine
+The repaired schedules therefore rule out a stable scalar wall model for nine
 of the ten outstanding fixed routes and recover the tenth as mode 1. The
 earlier Taylor experiments likewise put both `n²` and the eventual `n³`
 bit-cost model in the reachable GMP transition rather than a stable power-law
-band. For `runIsolate`, the honestly derived `~n⁷` family exceeds the usable
-30-second-per-call range; `runSameRoot` is one comparison with no meaningful
-size parameter. Mode 2 is unavailable because no published theorem bounds the
-wall time of these profiled executable paths. This exhausts stronger modes
-before selecting mode 3.
+band. `runIsolate` has the same honestly derived `~n⁷` shape, but degree 8 is
+already the canonical mid-schedule hard case and extending far enough to reach
+the asymptote exceeds the usable per-call range. `runSameRoot` is one exact
+comparison with no meaningful family parameter. Mode 2 is unavailable because
+the published SPEC bounds bit operations rather than the profiled executable
+wall time, and no cited result covers the dominant transition-band behavior.
+This exhausts stronger modes before selecting mode 3.
 
 Quiet-machine commands:
 
 ```sh
-taskset -c <idle-core> lake exe hexroots_bench run <ten repaired names> \
-  --export-file reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json
-taskset -c <idle-core> lake exe hexroots_bench run <all 14 registration names> \
-  --export-file reports/bench-results/hex-roots-df265f8-issue9794-final.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  <repaired kernel names> --export-file \
+  reports/bench-results/hex-roots-f5bc993-issue9794-parametric.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  <corrected n7 isolation names> --export-file \
+  reports/bench-results/hex-roots-f568569-issue9794-n7.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  <all 14 registration names> --export-file \
+  reports/bench-results/hex-roots-6aab88b-issue9794-final.json
 ```
 
 The selected mode-1 verdicts are consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
-| `runMahlerPrec` | `n` | consistent | `β=+0.068`, `cMin=5.747`, `cMax=8.580` over `64..4096` | `0x10805` |
-| `runRefineTo` | `t²` | consistent | `β=-0.054`, `cMin=0.031247`, `cMax=0.035014` | `0x2e506b407cc9ff4b` at achieved precision 524293 (`0xd9e59c44612d0e21` at 131077) |
+| `runMahlerPrec` | `n` | consistent | `β=-0.007`, `cMin=5.461`, `cMax=6.633` over `64..4096` | `0x10805` |
+| `runRefineTo` | `t²` | consistent | `β=-0.071`, `cMin=0.017`, `cMax=0.019` | `0x482ae3757e2b9db3` at achieved precision 524293 (`0x8dd3e4ee56489bf8` at 131077) |
 
 (`runIsolate` was parametric at `n⁵` in the previous revision of this
 report and its `4..10` range check passed, but post-merge review showed
@@ -284,29 +302,31 @@ honestly derived wall from `O(n³·B²)` is `~n⁷`, unreachable in the
 30 s/call band. Per the no-fitting rule the registration was demoted to
 a fixed case rather than kept on a fitted model; see issue #8750.)
 
-The mode-3 ceilings are independent per operation and enforced by
-`maxSecondsPerCall`. The full artifact supplies five clean repeats for every
-fixed row except Taylor; the focused same-commit Taylor artifact supplies its
-five clean repeats. All clean repeats agreed on each hash:
+The mode-3 ceilings are independent per operation and enforced inside the
+registered body by `budgeted`; returning its sentinel makes `expectedHash`
+fail. `maxSecondsPerCall` is deliberately only a child-process safety cap.
+The full artifact supplies five clean repeats for every fixed row. Its one
+stale `runIsolateAll` expectation is superseded by the focused clean rerun
+after refreshing the row. All clean repeats agreed on each observed hash:
 
 | registration | canonical hard input | ceiling | clean median | hash |
 |---|---|---:|---:|---|
-| `runTaylor` | seeded degree 128, centre 1 | 50 ms | 2.379 ms | `0x9917b7b230496af4` |
-| `runWitnessCheck` | bounded-height degree 128 | 50 ms | 3.091 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 50 ms | 2.890 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 50 ms | 3.308 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 50 ms | 2.487 ms | `0x6dd99fc71c5233ae` |
-| `runCertify` | pinned-NK degree 128 | 50 ms | 4.440 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 20 s | 8.691 s | `0x1d4ce3e46eb351de` |
-| `runIsolate` | fixed-separation degree 8 | 30 s | 2.472 s | `0x16c307fd2a36d31e` |
-| `runIsolateNk` | `linProdPoly 10` | 30 s | 9.539 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 30 s | 11.781 s | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 30 s | 14.881 s | `0xda631bdf13415a4f` |
-| `runSameRoot` | fixed refined atom | 1 ms | 4.637 µs | `0xb` |
+| `runTaylor` | seeded degree 128, centre 1 | 50 ms | 2.222 ms | `0x9917b7b230496af4` |
+| `runWitnessCheck` | bounded-height degree 128 | 50 ms | 2.362 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 50 ms | 2.283 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 50 ms | 2.211 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 50 ms | 2.134 ms | `0x6dd99fc71c5233ae` |
+| `runCertify` | pinned-NK degree 128 | 50 ms | 4.413 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 20 s | 8.480 s | `0x5e4b3fd1d798497a` |
+| `runIsolate` | fixed-separation degree 8 | 2 s | 494.712 ms | `0x16c307fd2a36d31e` |
+| `runIsolateNk` | `linProdPoly 10` | 20 s | 9.251 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 8 s | 2.466 s | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 8 s | 2.462 s | `0xda631bdf13415a4f` |
+| `runSameRoot` | distinct coarse/131077-bit representatives | 1 ms | 15.748 µs | `0xb` |
 
-The refreshed `runIsolateAll` hash is `0x1d4ce3e46eb351de`. The repaired
-`runRefineTo` ladder records `0xd9e59c44612d0e21` at the old fixed precision
-131077 and `0x2e506b407cc9ff4b` at its final rung, replacing both stale rows from
+The refreshed `runIsolateAll` hash is `0x5e4b3fd1d798497a`. The repaired
+`runRefineTo` ladder records `0x8dd3e4ee56489bf8` at the old fixed precision
+131077 and `0x482ae3757e2b9db3` at its final rung, replacing both stale rows from
 the dirty post-ratchet export.
 
 ### Superseded round-one verdict record
@@ -374,13 +394,12 @@ lake exe hexroots_bench compare Hex.RootsBench.runIsolateNk Hex.RootsBench.runIs
 agreement: all functions agree on output
 ```
 
-The clean issue-9794 artifact medians are NK `9.539 s`, Pellet `11.781 s`, and
-NK-then-Pellet `14.881 s`.
-The independent round-four scaling experiment over degrees `2..10` is retained
-as informational dual-route data: normalized against `n⁵`, NK-only grew with
-residual `β=+0.991`, while Pellet-only and NK-then-Pellet were below that model
-at `β=-0.314` and `-0.382`. This reverses the simple constant-factor picture
-seen on the smaller integer-root ladder; no asymptotic conclusion is drawn.
+The clean issue-9794 medians are NK `9.251 s`, Pellet `2.466 s`, and
+NK-then-Pellet `2.462 s`. The bounded local-finisher repair therefore restores
+the Pellet-bearing routes' earlier ordering. The corrected scaling experiment
+over degrees `2..10` remains informational: normalized against the independently
+derived `~n⁷` model, NK, Pellet, and combined have residuals `-0.460`, `-1.168`,
+and `-1.149`. No asymptotic conclusion is drawn from this transition band.
 
 `HexRoots/SPEC/hex-roots.md` names python-flint (`fmpz_poly.complex_roots`, the
 ci-tier oracle) as the sole Phase-4 performance comparator. It is classified
@@ -428,12 +447,12 @@ Final registered canonical points:
 
 | degree | Lean surface | hex | flint | ratio hex/flint |
 |---:|---|---:|---:|---:|
-| 8 | `runIsolate` | 2.472 s | 215.234 µs | 11483.5 |
-| 12 | `runIsolateAll` | 8.691 s | 591.777 µs | 14686.7 |
+| 8 | `runIsolate` | 494.712 ms | 215.234 µs | 2298.5 |
+| 12 | `runIsolateAll` | 8.480 s | 591.777 µs | 14329.7 |
 
 **Trend.** On the diagnostic ladder, apart from the degree-8 local dip, the
 ratio diverges from `112×` at degree 4 to `1470×` at degree 10; the
-equal-precision canonical `runIsolateAll` point is `14687×` at degree 12. That
+equal-precision canonical `runIsolateAll` point is `14330×` at degree 12. That
 direction is expected: the Lean drivers perform certified exact isolation
 with degree- and precision-dependent exact-dyadic work, while FLINT uses a
 structurally different multiprecision ball algorithm. No scalar asymptotic
@@ -488,14 +507,11 @@ visible on this family at these degrees.
 
 `perf record -g -F 999` on the in-process `_child` batch runner
 (`hexroots_bench _child --bench <NAME> --param <N> --target-nanos 3000000000`),
-one representative case per `phase4.input_families` entry. The seeded and
-Wilkinson profiles are retained from the original `b08a66cce522` family audit
-at the parameters named in their headings; those families and inclusive kernel
-paths are unchanged even though their final registrations use different
-canonical parameters. The fixed-separation and refine-fixed families were
-re-profiled at their final canonical inputs on the rebased round-five tree;
-refine-fixed uses the final
-131077-bit precision. Leaf self-time is categorised across
+one representative case per `phase4.input_families` entry. The seeded profile
+is retained from the original family audit because that bounded-height path is
+unchanged. The fixed-separation, current degree-10 strategy, and refine-fixed
+profiles were refreshed after the local-finisher repair; refine-fixed uses
+achieved precision 131077. Leaf self-time is categorised across
 {own code, GMP, allocation, Lean runtime}; own code = `l_Hex_*`, `lp_Hex_*`,
 `l_Dyadic_*`, `l_GaussDyadic_*`, and the dyadic-mantissa integer leaves
 (`l_Int_*`). `perf.data` artefacts are developer-local under `/tmp` and are not
@@ -508,51 +524,45 @@ Leaf self-time: GMP 32.9 % (`__gmpz_init_set` 7.6 %, `__gmpz_cmp_si` 2.6 %,
 (`malloc` 7.5 %, `cfree` 7.1 %, `realloc`, `mi_*`), Lean runtime 22.7 %
 (`lean_dec_ref_cold`, `lean::mpz_to_int`, `lean::mpz::~mpz`), own code 19.0 %
 (`l_Dyadic_add` 3.8 %, `l_Dyadic_mul` 1.9 %, `l_Int_trailingZeros_aux`,
-`lp_Hex_…taylor`); 96.2 % classified. This is the growing-precision regime the
-`n⁵` model predicts: the working bit-length reaches multiple GMP words, so GMP
-big-integer arithmetic and its allocation/box-unbox traffic dominate, flowing
-inclusively through the registered `isolateAll?` → `taylor`/`witnessCheck`
-path.
+`lp_Hex_…taylor`); 96.2 % classified. The working bit-length reaches multiple
+GMP words, so big-integer arithmetic and its allocation/box-unbox traffic
+dominate, flowing inclusively through the registered `isolateAll?` →
+`taylor`/`witnessCheck` path. This establishes the growing-precision regime;
+the corrected family-specific wall derivation used for ordered-mode selection
+is `~n⁷`.
 
-### `fixed-separation-product` — fixed `runIsolate` at degree 8 (3822 samples)
+### `fixed-separation-product` — fixed `runIsolate` at degree 8 (3758 samples)
 
-Quiet-host `perf record -g -F 999` across twenty final canonical repeats
-(median `144.629 ms`, expected hash `0x16c307fd2a36d31e`). Leaf self-time is
-97.6 % classified: own dyadic/integer code 34.6 % (`Int.trailingZeros` 9.9 %,
-`Dyadic.add` 5.7 %, `Dyadic.mul` 3.1 %, shifts/Taylor folds), Lean runtime
-25.1 % (`lean_dec_ref_cold` 4.4 %, mpz box/unbox and reference counting), GMP
-19.3 % (`gmpz_init_set` 3.0 %, add/mul-2exp/realloc), and allocation 18.6 %
-(`free` 4.1 %, `malloc` 3.6 %, realloc and mimalloc); 2.3 % unresolved.
-Inclusive cost terminates in the registered fixed `runIsolate` driver; the
-mixture confirms that exact dyadic work, limb management, allocation, and
-runtime traffic all remain material. Artefact: developer-local
-`/tmp/hexroots-separated-n8.perf`.
+Quiet-host `perf record -g -F 999` across four final canonical repeats
+(`1.980 s` total, hash `0x16c307fd2a36d31e`) retained **3758 samples**. Leaf
+self-time is 97.5 % classified: GMP 33.6 % (`__gmpn_divrem_1` 6.5 %,
+`__gmpz_init_set` 6.3 %), Lean runtime 22.6 %, own dyadic/integer code 21.2 %
+(`Int.trailingZeros` 4.5 %, `Dyadic.add` 4.4 %, `Dyadic.mul` 2.9 %), and
+allocation 20.1 %; 2.6 % is other/unresolved. Inclusive cost terminates in the
+registered fixed `runIsolate` driver and exercises the restored bounded local
+finisher. Artefact: developer-local `/tmp/hexroots-9794-isolate.perf`.
 
-### `wilkinson-linprod` — `runIsolateNkThenPellet` at `n = 6` (2489 samples)
+### `wilkinson-linprod` — `runIsolateNkThenPellet` at `n = 10` (2755 samples)
 
-Leaf self-time: **own code 44.9 %** (`l_Int_trailingZeros_aux` 9.3 %,
-`l_Dyadic_add` 7.4 %, `l_Dyadic_mul` 5.3 %, `l_Dyadic_ofIntWithPrec` 3.0 %,
-`l_Int_shiftLeft`), GMP 19.3 % (`__gmpz_mul_2exp` 3.2 %), allocation 15.1 %,
-Lean runtime 17.6 %; 97.0 % classified. The own-code share is more than double
-the seeded family's, exactly the flat, sub-word band the `n²`/`n⁵`-op-count
-derivations claim for the integer-centred `linProdPoly`: operands stay small,
-so the actual `Dyadic` arithmetic (own code) dominates rather than GMP. The
-inclusive path is the registered `isolate`/compare-group driver.
+The current fixed canonical call took `2.421 s` and returned
+`0xda631bdf13415a4f`. Leaf self-time is 97.9 % classified: GMP 38.2 %
+(`__gmpn_divrem_1` 9.0 %, `__gmpz_init_set` 8.2 %), Lean runtime 23.3 %,
+allocation 22.2 %, and own dyadic/integer code 14.2 % (`Dyadic.add` 4.2 %,
+`Dyadic.mul` 2.1 %, `Int.shiftLeft` 1.8 %); 2.1 % is other/unresolved. The
+inclusive path is the registered combined strategy driver through the restored
+local finisher. Artefact: developer-local
+`/tmp/hexroots-9794-combined.perf`.
 
 ### `refine-fixed` — `runRefineTo` at achieved precision 131077 (~4000 samples)
 
-Final canonical fixed case, profiled across ten timed repeats and **4026
-retained samples** (median
-`316.658 ms`, matching expected hash `0x5eb22e5c1f4a7a5`). Leaf self-time is
-classified 98.6 % across the required categories: GMP 81.7 %, allocation
-8.0 %, Lean runtime 8.1 %, and own code 0.7 %; 1.6 % is unresolved. GMP is
-dominated by `__gmpn_divrem_1_x86_64` 65.3 % and
-`__gmpn_copyi_x86_64` 13.2 %. Allocation is led by `_int_malloc` 2.4 % and
-free/realloc helpers; individual own-code leaves are each below 0.5 %. The
-high-precision reciprocal/division is therefore the
-actual canonical bottleneck, inclusively terminating in the registered
-`refineTo?`. Artefact: developer-local
-`/tmp/hexroots-refineto-131077.perf`.
+The refreshed current profile covers two timed calls and **1270 retained
+samples** (`308.830 ms` per call, hash `0x8dd3e4ee56489bf8`). Leaf self-time is
+97.4 % classified: GMP 88.6 %, allocation 5.6 %, Lean runtime 2.6 %, and own
+code 0.6 %; 2.6 % is other/unresolved. GMP is dominated by
+`__gmpn_divrem_1_x86_64` 71.3 % and `__gmpn_copyi_x86_64` 15.0 %. The
+high-precision reciprocal/division is therefore the actual canonical
+bottleneck, inclusively terminating in registered `refineTo?`. Artefact:
+developer-local `/tmp/hexroots-9794-refineto.perf`.
 
 **Attribution rule.** Every dominant inclusive path terminates in a registered
 bench target (`isolateAll?`/`isolate`, `taylor`, `witnessCheck`/
@@ -646,8 +656,10 @@ the ordered-mode experiment and enforced ceilings above.
 
 The ordered-mode registration changes do not alter the public API, proof
 surface, conformance fixtures, or manual chapter. The preserved later-phase
-evidence was rechecked with a sorry-free scan of `HexRoots`, a successful
-`lake build HexRoots HexRealRoots HexConformance HexManual`, and the Phase-7,
+evidence was rechecked with a sorry-free scan of `HexRoots` and
+`HexRootsMathlib`, a successful
+`lake build HexRoots HexRootsMathlib HexRealRoots HexRoots.Conformance HexManual.Chapters.HexRoots`,
+and the Phase-7,
 release-manifest, manual-split, published-trust-surface, Mathlib-free-bench,
 file-line-count, copyright, and DAG guards. The benchmark `verify` command and
 the explicit three-strategy comparison also pass. HexRoots is therefore
