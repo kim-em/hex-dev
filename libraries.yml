@@ -295,7 +295,7 @@ libraries:
   HexPolySmith:
     deps: [HexPoly, HexMatrix, HexDeterminant]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -306,16 +306,16 @@ libraries:
           class: informational
           rationale: "PARI's polynomial-entry surface is square-only and does not match the full rectangular API, so it is retained as an informational cross-check."
       input_families:
-        - name: random-dense-polysmith
-          description: Deterministic dense nonsingular rational polynomial matrices across independent degree and dimension ladders.
+        - name: dense-polysmith
+          description: Dense rational presentations with a controlled dimension chain and a consecutive-remainder degree ladder that exercises the Euclidean kernel with derived boundary growth.
         - name: chain-conjugate-poly
           description: Known monic invariant-factor chains conjugated by deterministic unimodular matrices.
-        - name: rational-coefficients
-          description: Rational polynomial matrices exposing coefficient growth in addition to degree growth.
+        - name: rational-polysmith
+          description: Fixed-denominator dimension chains and a rational consecutive-remainder degree ladder with explicit denominator and transform-bit growth.
         - name: diagonal-polysmith
-          description: Diagonal polynomial presentations across a matrix-dimension ladder.
-        - name: small-field
-          description: ZMod64 2 inputs where evaluation certificates cannot obtain enough distinct field points.
+          description: Unordered diagonal polynomial presentations that exercise block repair across a matrix-dimension ladder.
+        - name: small-field-degree
+          description: A ZMod64 2 degree ladder at fixed dimension, where evaluation certificates cannot obtain enough distinct field points.
   HexPolySmithMathlib:
     deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
     mathlib: true
