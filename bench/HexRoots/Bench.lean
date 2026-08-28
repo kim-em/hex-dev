@@ -666,8 +666,10 @@ initialize sameRootRef :
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
 parameter, so mode 3 uses the prebuilt refined atom as its canonical hard input
-and enforces a 5 µs budget. The atoms come from the `IO.Ref` above so the
-harness measures the comparison, not a folded constant.
+and enforces a 100 µs budget. This remains an operation-specific guard above
+the 3 µs clean baseline while avoiding the harness process-control floor. The
+atoms come from the `IO.Ref` above so the harness measures the comparison, not
+a folded constant.
 -/
 def runSameRoot : Unit → IO UInt64 := fun () => do
   match ← sameRootRef.get with
@@ -677,7 +679,7 @@ def runSameRoot : Unit → IO UInt64 := fun () => do
 setup_fixed_benchmark runSameRoot where {
     repeats := 5
     minTotalSeconds := 0.000001
-    maxSecondsPerCall := 0.000005
+    maxSecondsPerCall := 0.0001
     expectedHash := some 0xb
   }
 
