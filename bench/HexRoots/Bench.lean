@@ -409,14 +409,10 @@ initialize isolateFixedRef : IO.Ref (Option ZPoly) ← IO.mkRef (some (separated
 def runIsolate : Unit → IO UInt64 := fun _ => do
   return ((← isolateFixedRef.get).map runIsolateParam).getD 0
 
-def runIsolateAll : Unit → IO UInt64 := fun _ => do
-  return (← isolateAllRef.get).map isolateAllChecksum |>.getD 0
-def runIsolateNk : Unit → IO UInt64 := fun _ => do
-  return (← compareRef.get).map isolateNkChecksum |>.getD 0
-def runIsolatePellet : Unit → IO UInt64 := fun _ => do
-  return (← compareRef.get).map isolatePelletChecksum |>.getD 0
-def runIsolateNkThenPellet : Unit → IO UInt64 := fun _ => do
-  return (← compareRef.get).map isolateNkThenPelletChecksum |>.getD 0
+def runIsolateAll (p : ZPoly) : UInt64 := isolateAllChecksum p
+def runIsolateNk (p : ZPoly) : UInt64 := isolateNkChecksum p
+def runIsolatePellet (p : ZPoly) : UInt64 := isolatePelletChecksum p
+def runIsolateNkThenPellet (p : ZPoly) : UInt64 := isolateNkThenPelletChecksum p
 
 /-! # `taylor` / `mahlerPrec` : dense seeded family -/
 
@@ -542,18 +538,21 @@ significant here: the working bit-length reaches `B = prec + n·log‖p‖∞ = 
 (precision `~32` at the certifying level, plus coefficient growth, and
 the Taylor coefficients' `Θ(prec·n)` denominator growth), and the
 growing-precision dyadic arithmetic (notably the `invAtPrec` reciprocal) is
-schoolbook `O(B²)`. The SPEC heuristic `O(n³·B²)` with `B = Θ(n)` gives the
-wall model `n⁵`. On the repaired smooth-family `4..14` sweep, `time/n⁵` rose
-nearly 4×. Mode 3 therefore gives up asymptotic detection and enforces a 20 s
-budget on the canonical degree-12 midpoint, a little over twice the clean
-issue-9794 baseline.
+schoolbook `O(B²)`. On `separatedPoly n`, coefficient height is
+`log ‖p‖∞ = Θ(n·log n)`, so the SPEC working length
+`B = 32 + n·log ‖p‖∞` is `Θ(n²·log n)`. The independently derived wall model
+is therefore `~n⁷` (polylogarithms suppressed), not the earlier `n⁵` repair.
 -/
--- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
--- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant; the shared canonical input keeps
--- the cross-strategy `compare` agreement gate as a regression check.
-setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 20.0, expectedHash := some 0x1d4ce3e46eb351de }
+setup_benchmark runIsolateAll n => n * n * n * n * n * n * n
+  with prep := separatedPoly
+  where {
+    paramFloor := 4
+    paramCeiling := 14
+    paramSchedule := .custom #[4, 6, 8, 10, 12, 14]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
@@ -608,54 +607,52 @@ reports `allAgreed`; a divergence would be a cross-strategy conformance failure.
 The wall model is `n⁵` (each is an `isolate` run), matching the drivers. -/
 
 /-
-Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
-subdivision/adoption rounds of O(n) witness checks at O(n) ops each), and the
-separation target's working bit-length `B = Θ(n log n)` enters the
-growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
-`O(n³·B²)` gives the `n⁵` wall model; the NK-only strategy certifies each atom
-on its doubled square.
+Cost model: one `isolate` run over `linProdPoly n`; the SPEC supplies the `n³`
+driver factor. Since `log ‖p‖∞ = Θ(n·log n)`, its working length
+`B = separationDepth + n·log ‖p‖∞` is `Θ(n²·log n)`. Thus
+`O(n³·B²)` gives the `~n⁷` wall model (polylogarithms suppressed); the NK-only
+strategy certifies each atom on its doubled square.
 -/
--- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
--- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant; the shared canonical input keeps
--- the cross-strategy `compare` agreement gate as a regression check. The
--- widened `2..10` schedule made `time/n⁵` rise strongly, so mode 3 gives
--- up asymptotic detection and enforces a 30 s absolute budget on the canonical
--- degree-10 input. NK-only is the slow branch on this fixture.
-setup_fixed_benchmark runIsolateNk where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolateNk n => n * n * n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
-Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
-subdivision/adoption rounds of O(n) witness checks at O(n) ops each), and the
-separation target's working bit-length `B = Θ(n log n)` enters the
-growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
-`O(n³·B²)` gives the `n⁵` wall model; the Pellet-only strategy runs the
-three-radius test per k candidate.
+Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
+the Pellet-only strategy runs the three-radius test per candidate count.
 -/
--- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
--- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant. The widened `2..10` schedule
--- confirmed the failure on current fixtures. Mode 3 uses the shared canonical
--- input and 30 s budget, preserving the `compare` agreement gate.
-setup_fixed_benchmark runIsolatePellet where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolatePellet n => n * n * n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
-Cost model: one `isolate` run over `linProdPoly n`; `n³` op count (n
-subdivision/adoption rounds of O(n) witness checks at O(n) ops each), and the
-separation target's working bit-length `B = Θ(n log n)` enters the
-growing-precision arithmetic as a schoolbook `O(B²)` per-op factor, so
-`O(n³·B²)` gives the `n⁵` wall model; the default strategy tries NK first,
-Pellet as fallback.
+Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
+the default strategy tries NK first and Pellet as fallback.
 -/
--- Fixed rather than parametric: the quiet-machine sweep stayed in the GMP
--- transition band at every reachable schedule (issue #8750, round four), so
--- no scalar wall model has a flat constant. The widened `2..10` schedule
--- confirmed the failure on current fixtures. Mode 3 uses the shared canonical
--- input and 30 s budget, preserving the `compare` agreement gate.
-setup_fixed_benchmark runIsolateNkThenPellet where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0xda631bdf13415a4f }
+setup_benchmark runIsolateNkThenPellet n => n * n * n * n * n * n * n
+  with prep := linProdPoly
+  where {
+    paramFloor := 2
+    paramCeiling := 10
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8, 10]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-! # `sameRoot` : fixed microsecond benchmark -/
 

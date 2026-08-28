@@ -652,6 +652,70 @@ theorem refineFastAtom_preserves {p : Hex.ZPoly}
                 simpa [hr0, hrs0] using hzr
       · simp at hrefine
 
+/-- Refining one successful atom in the all-atoms finisher reaches the
+requested precision, whether the bounded local pass succeeds or the complete
+fallback is needed. -/
+private theorem attemptReadyAtom {p : Hex.ZPoly} {c : Hex.Component}
+    {iso iso' : Hex.DyadicRootIsolation p} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    (hrefine : Hex.IsolationLoop.refineAttempt? target strategy
+      (c, some (.atom iso)) = some iso') :
+    target ≤ iso'.square.prec := by
+  simp only [Hex.IsolationLoop.refineAttempt?] at hrefine
+  split at hrefine
+  · rename_i hready
+    have hiso : iso = iso' := Option.some.inj hrefine
+    simpa [hiso] using hready
+  · cases hfast : Hex.refineFastAtom? iso target strategy with
+    | none =>
+      simp only [hfast, Option.orElse_none] at hrefine
+      exact refineAtom_ready hrefine
+    | some tau =>
+      simp only [hfast, Option.orElse_some] at hrefine
+      have htau : tau = iso' := Option.some.inj hrefine
+      subst iso'
+      exact refineFastAtom_ready hfast
+
+/-- Every successful all-atoms refinement attempt reaches the requested
+precision. -/
+theorem refineAttempt_ready {p : Hex.ZPoly}
+    {t : Hex.Component × Option (Hex.Certified p)}
+    {iso' : Hex.DyadicRootIsolation p} {target : Int}
+    {strategy : Hex.AtomStrategy}
+    (hrefine : Hex.IsolationLoop.refineAttempt? target strategy t = some iso') :
+    target ≤ iso'.square.prec := by
+  obtain ⟨c, result⟩ := t
+  cases result with
+  | none => simp [Hex.IsolationLoop.refineAttempt?] at hrefine
+  | some result =>
+    cases result with
+    | cluster cl => simp [Hex.IsolationLoop.refineAttempt?] at hrefine
+    | atom iso => exact attemptReadyAtom hrefine
+
+/-- Refining one successful atom in the all-atoms finisher preserves its
+semantic root across both the bounded local pass and the complete fallback. -/
+theorem refineAttempt_preserves {p : Hex.ZPoly} {c : Hex.Component}
+    {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
+    {iso iso' : Hex.DyadicRootIsolation p} {target : Int}
+    (hrefine : Hex.IsolationLoop.refineAttempt? target strategy
+      (c, some (.atom iso)) = some iso')
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hz : z ∈ Certified.region (.atom iso)) :
+    z ∈ Certified.region (.atom iso') := by
+  simp only [Hex.IsolationLoop.refineAttempt?] at hrefine
+  split at hrefine
+  · have hiso : iso = iso' := Option.some.inj hrefine
+    simpa [hiso] using hz
+  · cases hfast : Hex.refineFastAtom? iso target strategy with
+    | none =>
+      simp only [hfast, Option.orElse_none] at hrefine
+      exact refineAtom_preserves hcert hrefine hzroot hz
+    | some tau =>
+      simp only [hfast, Option.orElse_some] at hrefine
+      have htau : tau = iso' := Option.some.inj hrefine
+      subst iso'
+      exact refineFastAtom_preserves hcert hfast hzroot hz
+
 /-- The opportunistic all-atoms fast path returns atoms only. -/
 theorem finishAllAtoms_atoms {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy}
@@ -714,9 +778,7 @@ theorem finishAllAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
             have hiTried : i < tried.size := by omega
             have hmapGet := (array_mapM_some_get hmap).2 i hiTried hi
             rw [hget] at hmapGet
-            unfold Hex.IsolationLoop.refineAttempt? at hmapGet
-            split at hmapGet <;> try contradiction
-            exact refineAtom_ready hmapGet
+            exact refineAttempt_ready hmapGet
           · have harr :
                 (atoms.map Hex.Certified.atom).map (·.square) =
                   atoms.map (·.square) := by
@@ -775,10 +837,10 @@ theorem finishAllAtoms_covers {p : Hex.ZPoly} {target : Int}
                   have hiAtoms : i < atoms.size := by omega
                   have hmapGet := (array_mapM_some_get hmap).2 i hi hiAtoms
                   rw [hget] at hmapGet
-                  simp [Hex.IsolationLoop.refineAttempt?, htry] at hmapGet
+                  simp only [htry] at hmapGet
                   have hziso : z ∈ Certified.region (.atom iso) :=
                     hcert c (.atom iso) htry z hzroot hzc
-                  have hzrefined := refineAtom_preserves hcert hmapGet hzroot hziso
+                  have hzrefined := refineAttempt_preserves hcert hmapGet hzroot hziso
                   refine ⟨.atom atoms[i], ?_, hzrefined⟩
                   apply Array.mem_toList_iff.mpr
                   apply Array.mem_map_of_mem

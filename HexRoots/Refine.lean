@@ -307,12 +307,17 @@ path in the full isolation driver. -/
 
 namespace IsolationLoop
 
-/-- Refine the atom returned by one successful component attempt. -/
+/-- Refine the atom returned by one successful component attempt.
+Use the bounded lineage-local loop first, then fall back to complete normalized
+refinement when the local attempt cannot finish. -/
 @[expose] def refineAttempt? {p : ZPoly} (target : Int)
     (strategy : AtomStrategy) (t : Component × Option (Certified p)) :
     Option (DyadicRootIsolation p) :=
   match t.2 with
-  | some (.atom iso) => refineAtom? iso target strategy
+  | some (.atom iso) =>
+    if target ≤ iso.square.prec then some iso else
+    (refineFastAtom? iso target strategy).orElse fun _ =>
+      refineAtom? iso target strategy
   | _ => none
 
 /-- Strategy-parametric implementation of the all-atoms finishing pass. -/
