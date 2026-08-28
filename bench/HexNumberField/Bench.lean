@@ -988,7 +988,7 @@ setup_fixed_benchmark runExactLadder where {
   maxSecondsPerCall := 0.2
   killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0x5bfd5b96f72b6002
+  expectedHash := some 0xd0642a7d4df3da02
 }
 
 setup_fixed_benchmark runExactFactorLadder where {

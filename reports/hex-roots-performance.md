@@ -370,10 +370,10 @@ observable.
 The repaired finisher does select tighter dyadic representatives for the full
 HexRoots conformance corpus. Its 56-case fixture was regenerated and replayed
 against python-flint with zero failures. The representation change propagates
-to four HexNumberField fixed hashes (`runRoots`, `runLazyAddLadder`,
-`runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`); their refreshed
-expectations match current-tree verification and the CI observations that
-exposed the fixture drift. The downstream
+to five HexNumberField fixed hashes (`runExactLadder`, `runRoots`,
+`runLazyAddLadder`, `runQAdjoinRootsLadder`, and
+`runAlgebraicRootsLadder`); their refreshed expectations match current-tree
+verification and the CI observations that exposed the fixture drift. The downstream
 HexNumberField fixture was regenerated as well: six box/result records now
 carry the tighter representatives, while the HexNumberFieldTower emitter
 reproduces its existing 30-record fixture byte for byte.

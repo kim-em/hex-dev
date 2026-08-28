@@ -517,6 +517,11 @@ Every repeat completed, all repeat hashes agreed, and every expected hash
 matched. These budgets are enforced by the full timing path; `verify` checks
 the same inputs and hashes in smoke mode.
 
+The later HexRoots bounded-finisher repair leaves this operation and its
+budget unchanged but selects a tighter dyadic representative in the
+end-to-end `runExactLadder` result. Current-tree verification therefore uses
+`0xd0642a7d4df3da02`; the two phase-isolated hashes above remain unchanged.
+
 A second quiet run historically covered the three ladders too expensive to fit
 in the same window, at three outer trials, on the idle host. The two
 isolation-dominated sweeps are retained as diagnostic evidence but are no
@@ -722,7 +727,7 @@ and the three isolation cases in the isolation fixed exports:
 | `runLazyAddLadder` | 4.539 s | `0xc544c942d8336f51` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
-| `runExactLadder` | 1.878 ms | `0x5bfd5b96f72b6002` | match |
+| `runExactLadder` | 1.878 ms | `0xd0642a7d4df3da02` | match |
 | `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
 | `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
 | `runRoots` | 1.069 ms | `0x235b18400d87a46c` | match |
@@ -730,9 +735,9 @@ and the three isolation cases in the isolation fixed exports:
 | `runAlgebraicRootsLadder` | 5.955 s | `0xb6a44b3ff493da5e` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
-The four root-representation hashes above were refreshed after HexRoots
+The five root-representation hashes above were refreshed after HexRoots
 restored its bounded local finisher. Current-tree verification observes the
-new values consistently (`runLazyAddLadder`, `runRoots`,
+new values consistently (`runExactLadder`, `runLazyAddLadder`, `runRoots`,
 `runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`); the recorded medians
 remain those of the cited controlled exports because the timed HexNumberField
 operations are unchanged.
