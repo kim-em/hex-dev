@@ -1,0 +1,6 @@
+{
+  "path": "bench/HexBench/FactorService.lean",
+  "baseline_blob": "635c202971d2276a498505da9842deac1c833c9f",
+  "current_blob": "1478d5c42bf18c3bc50d344d83a40de48465e2ef",
+  "reason": "Adds the isolated precisionLocalPhaseProfile diagnostic entry, parser, and timing implementation. Entry.factor and its dispatch/call graph are unchanged, so this cannot affect the hex-factor corpus results."
+}

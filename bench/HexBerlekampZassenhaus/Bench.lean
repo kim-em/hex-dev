@@ -14,48 +14,43 @@ Phase 4 benchmark registrations for `hex-berlekamp-zassenhaus`.
 
 This module is the Phase 4 benchmark root for the BZ factorization API. It
 covers the public total cascade, the option-valued lattice tier, the exact
-trial backstop, the (degree, height) matrix, the (degree, height, precision,
-local-factor-count) fast-path setup surface, a shared-domain `compare` family,
-and the HO-2 adversarial recombination shapes. Comparator ratios and the
-headline performance report still depend on the scheduled-hardware runs and
-report reconciliation described in `SPEC/benchmarking.md`.
+trial backstop, canonical degree/height and precision/local-factor inputs, a
+shared-domain `compare` pair, product-adoption inputs, and the HO-2 adversarial
+recombination shapes. Comparator ratios and the headline performance report
+still depend on the scheduled-hardware runs and report reconciliation
+described in `SPEC/benchmarking.md`.
 
 The registration names are intentionally stable: CI and scheduled timing runs
 refer to these case names when checking that the benchmark harness still covers
-the public BZ API surface. Each `setup_benchmark` has an adjacent cost-model
-derivation comment.
+the public BZ API surface. Each fixed registration has an adjacent input and
+absolute-budget justification.
 
-Each family below is either a *scientific* schedule (verdict-eligible scaling)
-or a *fast* schedule (small fixed sweep used by `list` / `verify`); the
-per-target comment annotates which one.
+The factor and product targets below use mode 3. Their former parametric
+families could not justify a tight dominant-phase scaling model; the report
+retains those clean sweeps and explicitly records the loss of asymptotic
+regression detection.
 
-Split-family registrations (`prep := smokeInput`):
+Canonical split inputs:
 
-* `runFactorChecksum`: public `ZPoly.factorize` cascade on split inputs over the
-  scientific degree schedule
-  `splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`.
-* `runFactorSlowChecksum`: exact trial backstop on the fast schedule
-  `smokeSchedule = #[1, 2, 3, 4]`.
-* `runFactorFallbackProbeChecksum`: public `ZPoly.factorize` on the explicit
-  cascade-trigger split-degree schedule `fallbackProbeSchedule`.
+* `runFactorChecksum`: public `ZPoly.factorize` on `smokeInput 24`.
+* `runFactorSlowChecksum`: exact trial backstop on `smokeInput 8`.
+* `runFactorFallbackProbeChecksum`: public `ZPoly.factorize` on the
+  cascade-trigger `prepFallbackProbeInput 24`.
 
-Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
+Shared compare domain (`smokeInput 8`):
 
 * `runFactorCompareChecksum` vs `runFactorSlowCompareChecksum` checks the
   public cascade against exact trial factorization.
 
-Degree/height registrations (`prep := prepDegreeHeightInput`):
+Degree/height registrations:
 
-* `runFactorDegreeHeightChecksum`: public `ZPoly.factorize` over the scientific encoded
-  `degreeHeightSchedule`.
-* `runFactorSlowDegreeHeightChecksum`: bounded slow-path diagnostic on the
-  smallest-completing encoded subset `slowDegreeHeightSchedule`.
+* `runFactorDegreeHeightChecksum`: public `ZPoly.factorize` at `(6, 32)`.
+* `runFactorSlowDegreeHeightChecksum`: trial factorization at `(4, 8)`.
 
 Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
 
-* `runFastPathPrecisionLocalChecksum`: `verify`-budget-safe fast-path setup
-  over encoded degree, root-height, Hensel-precision, and local-factor-count
-  regimes.
+* `runFastPathPrecisionLocalChecksum`: `verify`-budget-safe fast-path setup at
+  `(degree, height, precision, local factors) = (8, 32, 128, 8)`.
 
 Fast-product adoption registrations:
 
@@ -106,8 +101,8 @@ Gating external comparator:
   run the AFP comparator.
 * `runIsabelleSplitN{2,3,4,5}Checksum`,
   `runIsabelleDegreeHeight{D}x{H}Checksum`: per-rung verified-Isabelle pairs
-  for the parametric split-family and degree/height Lean targets, used to
-  build the `hex/isabelle` scaling ladders in
+  for the historical split-family and degree/height parametric audits, used
+  to build the retained `hex/isabelle` scaling ladders in
   `reports/hex-berlekamp-zassenhaus-performance.md`.
 * `runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`: per-input
   verified-Isabelle pairs for the HO-2 adversarial singletons (one new
@@ -433,55 +428,65 @@ budget.
 def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
   mixHash (hash (latticePrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
-/-- Benchmark target: the public total factorization cascade. -/
-def runFactorChecksum (f : ZPoly) : UInt64 :=
+/-- Checksum the public total factorization cascade on one input. -/
+def factorChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (ZPoly.factorize f)
 
-/-- Benchmark target: public factorization on explicit fallback-prime probes. -/
+/-- Checksum public factorization on one explicit fallback-prime probe. -/
 @[noinline]
-def runFactorFallbackProbeChecksum (f : ZPoly) : UInt64 :=
-  runFactorChecksum f
+def fallbackProbeChecksum (f : ZPoly) : UInt64 :=
+  factorChecksum f
 
-/-- Benchmark target: the exact trial-division backstop. -/
-def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
+/-- Checksum the exact trial-division backstop on one input. -/
+def trialFactorChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
 
-/-- Shared-domain compare target: public factorization on deterministic splits. -/
-def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
+/-- Checksum public factorization for the shared fixed compare domain. -/
+def factorCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (ZPoly.factorize f)
 
-/-- Shared-domain compare target: exact trial factorization on deterministic splits. -/
-def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
+/-- Checksum trial factorization for the shared fixed compare domain. -/
+def trialCompareChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorTrial f)
 
 /-- Retained ordered schoolbook fold for a BZ subset-product fixture. -/
-def runTrialProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+def trialProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| input.factors.foldl (· * ·) 1
 
 /-- Production `Array.polyProduct` dispatcher on a BZ subset-product fixture. -/
-def runTrialProductChecksum (input : ProductInput) : UInt64 :=
+def trialProductChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| Array.polyProduct input.factors
 
 /-- Retained ordered schoolbook fold for final-reassembly factors. -/
-def runReassemblyProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+def reassemblyProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| input.factors.foldl (· * ·) 1
 
 /-- Production `Array.polyProduct` dispatcher on final-reassembly factors. -/
-def runReassemblyProductChecksum (input : ProductInput) : UInt64 :=
+def reassemblyProductChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| Array.polyProduct input.factors
 
 /-- Retained ordered schoolbook fold for a skewed BZ factor array. -/
-def runSkewProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
+def skewProductSchoolbookChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| input.factors.foldl (· * ·) 1
 
 /-- Production `Array.polyProduct` dispatcher on a skewed BZ factor array. -/
-def runSkewProductChecksum (input : ProductInput) : UInt64 :=
+def skewProductChecksum (input : ProductInput) : UInt64 :=
   checksumZPoly <| Array.polyProduct input.factors
 
 /-- Opaque IO boundary for fixed full-factorization benchmarks. -/
 @[noinline]
 def factorChecksumIO (f : ZPoly) : IO UInt64 :=
-  pure (runFactorChecksum f)
+  pure (factorChecksum f)
+
+/-- Opaque IO boundary for fixed trial-factorization benchmarks. -/
+@[noinline]
+def trialChecksumIO (f : ZPoly) : IO UInt64 :=
+  pure (trialFactorChecksum f)
+
+/-- Opaque IO boundary for fixed product benchmarks. -/
+@[noinline]
+def productChecksumIO (run : ProductInput → UInt64) (input : ProductInput) : IO UInt64 :=
+  pure (run input)
 
 /-- Opaque IO boundary for fixed fast-path-setup benchmarks. -/
 @[noinline]
@@ -545,19 +550,19 @@ extreme-`r` tail visible in `verify`.
 def runFactorLatticeAdvSwinnertonDyerSD4Checksum : Unit → IO UInt64 := fun _ =>
   latticeChecksumIO advSwinnertonDyerSD4
 
-/-- Benchmark target: public combinator over the degree/height matrix. -/
-def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
+/-- Checksum the public combinator on one degree/height input. -/
+def factorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (ZPoly.factorize input.poly)
 
-/-- Benchmark target: bounded slow-path diagnostic over small degree/height cases. -/
-def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
+/-- Checksum the trial backstop on one degree/height input. -/
+def trialDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (factorTrial input.poly)
 
 /--
 Benchmark target: `verify`-budget-safe fast-path setup over encoded degree,
 height, Hensel precision, and local-factor-count axes.
 -/
-def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
+def precisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
   let lifted :=
     ZPoly.multifactorLiftQuadratic 31 input.precision input.poly input.localFactors
   let splitProfile := modularFactorDegreesAt? input.poly 31
@@ -565,6 +570,11 @@ def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
     mixHash (hash input.localFactorCount) <|
       mixHash (checksumZPolyArray lifted) <|
         mixHash (hash (latticePrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
+
+/-- Opaque IO boundary for fixed precision/local setup benchmarks. -/
+@[noinline]
+def precisionLocalChecksumIO (input : PrecisionLocalInput) : IO UInt64 :=
+  pure (precisionLocalChecksum input)
 
 initialize isabelleBZBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 
@@ -718,8 +728,8 @@ def runIsabelleFactorBaselineChecksum : Unit → IO UInt64 := fun _ => do
 /--
 Per-rung verified-Isabelle BZ comparator targets on the deterministic split
 family `smokeInput n` for `n = 2, 3, 4, 5`. Each pairs with the corresponding
-rung of the parametric Lean `runFactorChecksum` registration to yield a
-`hex/isabelle` ratio at that rung; together they form the scaling ladder
+rung from the clean historical `runFactorChecksum` parametric audit to yield
+a `hex/isabelle` ratio at that rung; together they form the retained ladder
 required by `SPEC/Libraries/hex-berlekamp-zassenhaus.md §"External
 comparators"` headline-trend reporting.
 -/
@@ -744,9 +754,9 @@ Per-parameter verified-Isabelle BZ comparator targets on the encoded
 degree/height inputs `prepDegreeHeightInput param` for the rungs of
 `degreeHeightSchedule` (degree 3–6, height 2–32) and the additional
 smaller-degree rungs of `slowDegreeHeightSchedule` (degree 1–3). Each pairs
-with the corresponding rung of one of the parametric Lean
-`runFactorDegreeHeightChecksum` /
-`runFactorSlowDegreeHeightChecksum` registrations.
+with the corresponding rung from the clean historical
+`runFactorDegreeHeightChecksum` / `runFactorSlowDegreeHeightChecksum`
+parametric audits.
 -/
 def runIsabelleDegreeHeight3x2Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization
@@ -812,8 +822,8 @@ def runIsabelleAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ => do
 Per-rung verified-Isabelle BZ comparator targets on the cascade-trigger
 `prepFallbackProbeInput n = (X-1)(X-2)...(X-n)` family for each rung of
 `fallbackProbeSchedule = #[11, 12, 13, 15, 18, 22, 24]`. Each pairs with the
-corresponding rung of the parametric Lean `runFactorFallbackProbeChecksum`
-registration. The Isabelle reference factorisation on `(X-1)...(X-n)` is the
+corresponding rung from the clean historical `runFactorFallbackProbeChecksum`
+parametric audit. The Isabelle reference factorisation on `(X-1)...(X-n)` is the
 list of `n` distinct monic linears; this is the canonical-truth comparator the
 `bz-vs-isabelle-investigation.md` post-mortem documents Lean as failing to
 match on these rungs.
@@ -857,8 +867,8 @@ def runIsabelleFallbackProbeN24Checksum : Unit → IO UInt64 := fun _ => do
 /--
 Per-rung verified-Isabelle BZ comparator targets on the
 `prepPrecisionLocalInput param` polynomial at each rung of
-`precisionLocalSchedule`. Each pairs with the corresponding rung of the
-parametric Lean `runFastPathPrecisionLocalChecksum` registration.
+`precisionLocalSchedule`. Each pairs with the corresponding rung from the
+clean historical `runFastPathPrecisionLocalChecksum` parametric audit.
 
 The Lean target measures *fast-path setup* (multifactor lifting at the
 precision axis plus the modular split profile), not full factorisation, so
@@ -910,221 +920,167 @@ def runIsabellePrecisionLocalRung6Checksum : Unit → IO UInt64 := fun _ => do
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
-/-- HO-3's classical-arithmetic BHKS model over the fast-schedule degree parameter. -/
-def bzClassicalSmokeComplexity (n : Nat) : Nat :=
-  n ^ 9 + n ^ 7 * (Nat.log2 (n + 2)) ^ 2
+/-- Fixed mode-3 target: public cascade on the top audited split input. -/
+def runFactorChecksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO (smokeInput 24)
 
-/-- HO-3's classical-arithmetic BHKS model over encoded degree/height inputs. -/
-def bzClassicalDegreeHeightComplexity (param : Nat) : Nat :=
-  let n := degreeHeightDegree param
-  let h := Nat.log2 (degreeHeightHeight param + 2)
-  n ^ 9 + n ^ 7 * h ^ 2
+/-- Fixed mode-3 target: public cascade on the top fallback-prime probe. -/
+def runFactorFallbackProbeChecksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO (prepFallbackProbeInput 24)
 
-/-- Exponential slow-path model over encoded degree/height inputs. -/
-def bzSlowDegreeHeightComplexity (param : Nat) : Nat :=
-  let n := degreeHeightDegree param
-  2 ^ n * bzClassicalDegreeHeightComplexity param
+/-- Fixed mode-3 target: trial division on nine consecutive integer roots. -/
+def runFactorSlowChecksum : Unit → IO UInt64 := fun _ =>
+  trialChecksumIO (smokeInput 8)
 
-/--
-Classical setup model over encoded degree/height/precision/local-factor inputs:
-the BHKS dense recombination surface plus quadratic multifactor lifting's
-`r * n^2 * log k` contribution.
--/
-def bzPrecisionLocalComplexity (param : Nat) : Nat :=
-  let n := precisionLocalDegree param
-  let h := Nat.log2 (precisionLocalHeight param + 2)
-  let k := precisionLocalPrecision param
-  let r := precisionLocalFactorCount param
-  n ^ 9 + n ^ 7 * h ^ 2 + r * n * n * Nat.log2 (k + 1)
+/-- Fixed mode-3 public side of the shared `smokeInput 8` compare input. -/
+def runFactorCompareChecksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO (smokeInput 8)
 
-/-
-Each product family has a fixed per-factor degree. The retained left fold's
-accumulator degree grows linearly, so its schoolbook coefficient work sums to
-quadratic in the factor count. The production tree is compared on the same
-declared upper-bound model.
--/
-setup_benchmark runTrialProductSchoolbookChecksum n => (n * n)
-  with prep := prepTrialProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 512
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/-- Fixed mode-3 trial side of the shared `smokeInput 8` compare input. -/
+def runFactorSlowCompareChecksum : Unit → IO UInt64 := fun _ =>
+  trialChecksumIO (smokeInput 8)
+
+/-- Fixed mode-3 public factorization at degree six and root-height 32. -/
+def runFactorDegreeHeightChecksum : Unit → IO UInt64 := fun _ =>
+  factorChecksumIO (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly
+
+/-- Fixed mode-3 trial factorization at degree four and root-height eight. -/
+def runFactorSlowDegreeHeightChecksum : Unit → IO UInt64 := fun _ =>
+  trialChecksumIO (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly
+
+/-- Fixed mode-3 setup at `(degree, height, precision, factors) = (8, 32, 128, 8)`. -/
+def runFastPathPrecisionLocalChecksum : Unit → IO UInt64 := fun _ =>
+  precisionLocalChecksumIO
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 8 32 128 8))
+
+/-- Fixed product-adoption reference at 64 lifted factors. -/
+def runTrialProductSchoolbookChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO trialProductSchoolbookChecksum (prepTrialProductInput 64)
+
+/-- Fixed product-adoption dispatcher at 64 lifted factors. -/
+def runTrialProductChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO trialProductChecksum (prepTrialProductInput 64)
+
+/-- Fixed reassembly reference at 32 dense factors. -/
+def runReassemblyProductSchoolbookChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO reassemblyProductSchoolbookChecksum (prepReassemblyProductInput 32)
+
+/-- Fixed reassembly dispatcher at 32 dense factors. -/
+def runReassemblyProductChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO reassemblyProductChecksum (prepReassemblyProductInput 32)
+
+/-- Fixed skew-product reference at 256 factors. -/
+def runSkewProductSchoolbookChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO skewProductSchoolbookChecksum (prepSkewProductInput 256)
+
+/-- Fixed skew-product dispatcher at 256 factors. -/
+def runSkewProductChecksum : Unit → IO UInt64 := fun _ =>
+  productChecksumIO skewProductChecksum (prepSkewProductInput 256)
+
+/- The mode-3 ceilings below are operation-specific budgets derived from the
+clean `e51066e1` calibration export. Each is rounded upward to at least ten
+times that operation's largest observed call. The two byte-identical trial
+targets share the larger observed maximum because their allocator-heavy body
+showed process-state sensitivity. -/
+
+/- Mode 3: 64 lifted factors is the first sustained large-integer product
+regime (clean baseline 9.7 ms). -/
+setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.01
+    maxSecondsPerCall := 0.5
+    expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
 
-/-
-The dispatch trial product uses the same conservative quadratic upper bound as
-the retained left fold over fixed-degree factors.
--/
-setup_benchmark runTrialProductChecksum n => (n * n)
-  with prep := prepTrialProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 512
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3 on the same 64-factor input (clean calibration maximum 9.8 ms). -/
+setup_fixed_benchmark runTrialProductChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.01
+    maxSecondsPerCall := 0.5
+    expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "dispatch"]
   }
 
-/-
-With fixed factor degree and a growing accumulator, schoolbook reassembly sums
-linear per-step coefficient work to a quadratic bound in the factor count.
--/
-setup_benchmark runReassemblyProductSchoolbookChecksum n => (n * n)
-  with prep := prepReassemblyProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 128
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: 32 dense factors exercise large-coefficient reassembly without the
+next rung's one-second call (clean calibration maximum 112 ms). -/
+setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.05
+    maxSecondsPerCall := 1.2
+    expectedHash := some 0x55cb88e8ce461b3d
     tags := #["adoption", "reassembly", "schoolbook", "reference"]
   }
 
-/-
-The dispatch reassembly product is registered against the same conservative
-quadratic bound as its retained schoolbook comparator.
--/
-setup_benchmark runReassemblyProductChecksum n => (n * n)
-  with prep := prepReassemblyProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 128
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3 on the same 32-factor reassembly input (clean calibration maximum 113 ms). -/
+setup_fixed_benchmark runReassemblyProductChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.05
+    maxSecondsPerCall := 1.2
+    expectedHash := some 0x55cb88e8ce461b3d
     tags := #["adoption", "reassembly", "dispatch"]
   }
 
-/-
-One high-degree factor followed by linear factors leaves a growing accumulator;
-summing the schoolbook products gives a quadratic factor-count bound.
--/
-setup_benchmark runSkewProductSchoolbookChecksum n => (n * n)
-  with prep := prepSkewProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 512
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: 256 factors retain the skewed-degree stress shape (clean calibration
+maximum 80 ms). -/
+setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.05
+    maxSecondsPerCall := 0.9
+    expectedHash := some 0x5a3c3280f7b0e2ff
     tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
   }
 
-/-
-The skew dispatch path uses the retained fold's conservative quadratic bound so
-both implementations share a directly comparable work parameter.
--/
-setup_benchmark runSkewProductChecksum n => (n * n)
-  with prep := prepSkewProductInput
-  where {
-    paramFloor := 4
-    paramCeiling := 512
-    paramSchedule := .custom #[4, 7, 8, 9, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3 on the same 256-factor skew input (clean calibration maximum 81 ms). -/
+setup_fixed_benchmark runSkewProductChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.05
+    maxSecondsPerCall := 0.9
+    expectedHash := some 0x5a3c3280f7b0e2ff
     tags := #["adoption", "trial-product", "skewed", "dispatch"]
   }
 
-/-
-Scientific split-family registration for the public combinator. The declared
-cost model is the classical BHKS polynomial bound over the deterministic split
-degree. `smokeInput n` has degree `n + 1`, so the asymptotic model is represented
-with the same `n^9 + n^7 log^2 n` shape after dropping the constant offset;
-dense arithmetic/recombination dominates, while the separate degree/height,
-precision/local-factor, and adversarial registrations cover the other HO-3 axes.
--/
-setup_benchmark runFactorChecksum n => bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 2
-    paramCeiling := 24
-    paramSchedule := .custom splitScientificSchedule
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: `smokeInput 24` is the largest clean audited split input (clean
+calibration maximum 3.75 ms). -/
+setup_fixed_benchmark runFactorChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.05
+    expectedHash := some 0xaa37abf9a367da53
   }
 
-/-
-Scientific fallback-prime probe registration for the public combinator. The
-prepared fixture maps parameter `n` directly to the split degree of
-`(X-1)...(X-n)`, selecting the post-mortem cascade-trigger cases where
-prime-choice fallback and BHKS recombination shape interact. The declared model
-remains the classical BHKS polynomial bound over that degree:
-`n^9 + n^7 log^2 n`.
--/
-setup_benchmark runFactorFallbackProbeChecksum n => bzClassicalSmokeComplexity n
-  with prep := prepFallbackProbeInput
-  where {
-    paramFloor := 11
-    paramCeiling := 24
-    paramSchedule := .custom fallbackProbeSchedule
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: the degree-24 historical fallback probe is the largest audited
+proposal-replay input (clean calibration maximum 3.53 ms). -/
+setup_fixed_benchmark runFactorFallbackProbeChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.05
+    expectedHash := some 0xa5c23a7af3e800c4
   }
 
-/-
-Smoke-only registration for the exhaustive fallback. The declared cost model
-multiplies the classical BHKS polynomial bound by an exponential `2^n` search
-factor, matching the worst-case modular-factor-count bound that the full HO-3
-suite will exercise on adversarial fixtures.
--/
-setup_benchmark runFactorSlowChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom smokeSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: `smokeInput 8` forces the integer-root scan through `9!` candidates;
+the allocator-sensitive calibration calls ranged from 5.1 to 75.7 ms. -/
+setup_fixed_benchmark runFactorSlowChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.8
+    expectedHash := some 0x352456cfdef1ea82
   }
 
-/-
-Shared-domain compare registration for the public combinator. The domain is the
-same deterministic split family and `n = 1..4` schedule used by the fast-path
-timing targets. The declared cost model is the classical BHKS bound
-`bzClassicalSmokeComplexity n`, because this target runs the same public
-fast-with-slow-fallback factorization as `runFactorChecksum` over the same
-prepared inputs while making `compare` an intentional public-vs-exhaustive
-equivalence check rather than an accidental overlap.
--/
-setup_benchmark runFactorCompareChecksum n => bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom smokeSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3 public side of the shared `smokeInput 8` compare input. -/
+setup_fixed_benchmark runFactorCompareChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
+    expectedHash := some 0x352456cfdef1ea82
   }
 
-/-
-Shared-domain compare registration for the exhaustive backstop. It returns the
-same semantic factorization checksum as `runFactorCompareChecksum` on the same
-deterministic split inputs, while retaining the slow path's exponential search
-factor in the declared model.
--/
-setup_benchmark runFactorSlowCompareChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
-  with prep := smokeInput
-  where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom smokeSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3 trial side of the shared `smokeInput 8` compare input. -/
+setup_fixed_benchmark runFactorSlowCompareChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.8
+    expectedHash := some 0x352456cfdef1ea82
   }
 
 /- Fixed HO-2 adversarial target: `X^4 + 1`. This records one canonical
@@ -1138,21 +1094,12 @@ setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     expectedHash := some 0xdbadaf53f188eac1
   }
 
-/-
-This registration varies both public input degree and root-height through an
-encoded `(degree, height)` parameter. The declared model is the classical BHKS
-integer-polynomial factorization bound `O(n^9 + n^7 h^2)`, with `h` represented
-by `log2(height + 2)` for the deterministic split family.
--/
-setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightComplexity param
-  with prep := prepDegreeHeightInput
-  where {
-    paramFloor := encodeDegreeHeightParam 3 2
-    paramCeiling := encodeDegreeHeightParam 6 32
-    paramSchedule := .custom degreeHeightSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: `(degree, root-height) = (6, 32)` is the top audited matrix input. -/
+setup_fixed_benchmark runFactorDegreeHeightChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
+    expectedHash := some 0xf31efeaecbf8fa27
   }
 
 /- Fixed HO-2 adversarial lattice precision-cap setup target for `X^4 + 1`.
@@ -1166,39 +1113,21 @@ setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     expectedHash := some 0x6125716b68ef63ab
   }
 
-/-
-The slow diagnostic intentionally uses only the smallest completing
-degree/height subset: exhaustive recombination has an exponential dependence on
-the number of local factors, so the declared complexity is
-`O(2^n * (n^9 + n^7 h^2))`.
--/
-setup_benchmark runFactorSlowDegreeHeightChecksum param => bzSlowDegreeHeightComplexity param
-  with prep := prepDegreeHeightInput
-  where {
-    paramFloor := encodeDegreeHeightParam 1 2
-    paramCeiling := encodeDegreeHeightParam 3 8
-    paramSchedule := .custom slowDegreeHeightSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: `(degree, root-height) = (4, 8)` is the first nontrivial matrix case
+beyond the former short ladder. -/
+setup_fixed_benchmark runFactorSlowDegreeHeightChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.1
+    expectedHash := some 0x0ed3a73af254827d
   }
 
-/-
-Scientific fast-path setup registration for Phase 4. The encoded parameter
-carries `(degree, height, precision, localFactorCount)`; the timed target runs
-quadratic multifactor lifting at the requested precision and records the
-supported-prime modular split profile, avoiding pathological full lattice
-factorizations while exposing the `k` and `r` axes required by the BZ/Hensel specs.
--/
-setup_benchmark runFastPathPrecisionLocalChecksum param => bzPrecisionLocalComplexity param
-  with prep := prepPrecisionLocalInput
-  where {
-    paramFloor := encodePrecisionLocalParam 2 2 4 2
-    paramCeiling := encodePrecisionLocalParam 8 32 128 8
-    paramSchedule := .custom precisionLocalSchedule
-    maxSecondsPerCall := 4.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
+/- Mode 3: `(8, 32, 128, 8)` is the top precision/local-factor setup input. -/
+setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
+    repeats := 5
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.02
+    expectedHash := some 0x21b9063dace28489
   }
 
 /- Fixed HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. At the pinned fixture
@@ -1288,9 +1217,9 @@ setup_fixed_benchmark runIsabelleFactorBaselineChecksum where {
   }
 
 /- Per-rung verified-Isabelle comparator registrations on `smokeInput n` for
-`n = 2, 3, 4, 5`. The matched Lean timings come from the parametric
-`runFactorChecksum` registration at the corresponding rung of
-`splitScientificSchedule`; together they form the per-rung `hex/isabelle`
+`n = 2, 3, 4, 5`. The matched Lean timings come from the clean historical
+`runFactorChecksum` parametric audit at the corresponding rung of
+`splitScientificSchedule`; together they form the retained `hex/isabelle`
 ratio ladder. Tagged `scheduled-hardware` so CI's `verify` does not invoke
 the AFP-extracted comparator. -/
 setup_fixed_benchmark runIsabelleSplitN2Checksum where {
