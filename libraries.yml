@@ -579,18 +579,18 @@ libraries:
     status: active
     phase4:
       comparators:
-        - tool: "FLINT nmod_poly_hensel_lift_* via python-flint"
+        - tool: "FLINT fmpz_poly Newton-style Hensel emulation via python-flint"
           class: informational
-          rationale: "FLINT exposes a family of tuned C Hensel-lift entry points (`nmod_poly_hensel_lift_once_preinv`, `nmod_poly_hensel_lift`, `nmod_poly_hensel_continue_lift`) that perform the same Newton-style quadratic lift Hex implements through its linear / quadratic / multifactor surfaces. The constant-factor gap reflects FLINT's word-level operand tuning and its `preinv` precomputation that Hex doesn't currently exploit. The comparator is wired as a persistent-subprocess call via the shared python-flint driver from HO-20 (`scripts/oracle/flint_bench_driver.py`); python-flint does not bind the `nmod_poly_hensel_lift_*` C entry points directly, so the driver emulates the Newton-style schema via `fmpz_poly` arithmetic, which is what the recorded informational ratios measure. A future gating upgrade requires a separate SPEC PR identifying a narrower comparable kernel (e.g. single-step lift with preinv on canonical inputs) per SPEC/Libraries/hex-hensel.md §External comparators."
+          rationale: "The persistent python-flint driver from HO-20 (`scripts/oracle/flint_bench_driver.py`) emulates the same Newton-style correction schema through FLINT `fmpz_poly` arithmetic for the linear, quadratic, and two-factor multifactor Hensel surfaces. python-flint does not expose FLINT's native Hensel entry points, so this is an informational emulation ratio rather than a native-Hensel performance claim. The coefficient-conversion and ordered-product surfaces are structural layers over the polynomial libraries' declared comparators; see HexHensel/SPEC/hex-hensel.md §External comparators."
       input_families:
         - name: bridge-operations
           description: Coefficient reduction from Z[x] to F_5[x], canonical lifting from F_5[x] to Z[x], and reduction modulo a fixed power of 5 over deterministic dense integer and F_5 polynomial fixtures.
         - name: linear-hensel
-          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step, an iterated fixed-high-precision degree family, and a separate fixed-degree precision family.
+          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step and an iterated fixed-high-precision degree family.
         - name: quadratic-hensel
-          description: Quadratic Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step with full lifted Bezout updates and a separate fixed-degree precision family.
+          description: Quadratic Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step with full lifted Bezout updates.
         - name: multifactor-lifting
-          description: Ordered multifactor product with coefficient-bit-aware bounds, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures with degree and precision scaling isolated into separate families.
+          description: Ordered multifactor products on branch-isolated schedules, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures at fixed high precision.
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false

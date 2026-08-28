@@ -27,35 +27,28 @@ Scientific registrations:
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
 * `runHenselLiftChecksum`: iterative linear lift at fixed high precision,
   `O(n^2)` in the degree.
-* `runHenselPrecisionChecksum`: iterative linear lift at fixed degree, with
-  the source-derived `O(k^3)` coefficient-bit upper bound.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
-* `runPolyProductChecksum`: public ordered-product dispatcher, with the
-  schoolbook coefficient-bit upper bound `O(n^4)`.
-* `runPolyProductFoldChecksum`: retained ordered left fold, with the
-  coefficient-bit upper bound `O(n^3)`.
+* `runPolyProductChecksum`: public ordered-product dispatcher on its retained
+  fallback interval, `O(n^2)`.
+* `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
 * `runPolyProductTreeChecksum`: the same ordered product through a balanced
-  tree and `ZPoly.fastPlan`, with the packed schoolbook upper bound `O(n^4)`.
+  tree and `ZPoly.fastPlan`, with a packed schoolbook upper bound `O(n^4)`.
 * `runMultifactorLiftChecksum`: two-factor ordered lift at fixed high precision,
   `O(n^2)` in the degree.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
   `O(n^2)` in the degree.
-* `runMultifactorPrecisionChecksum`: linear multifactor lift at fixed degree,
-  with the source-derived `O(k^3)` coefficient-bit upper bound.
-* `runQuadraticPrecisionChecksum`: quadratic multifactor lift at fixed degree,
-  with the source-derived `O(k^2)` coefficient-bit upper bound.
 
 Compare groups:
 
+* `compare runPolyProductFoldChecksum runPolyProductTreeChecksum` checks the
+  retained fold and balanced tree on the SPEC's shared crossover ladder.
 * `compare runMultifactorLiftChecksum runMultifactorLiftQuadraticChecksum`
   checks the linear and quadratic multifactor lifters on the shared degree
   schedule at `k = 64`.
-* `compare runMultifactorPrecisionChecksum runQuadraticPrecisionChecksum`
-  checks the same lifters on the shared precision schedule at fixed degree.
 
-Informational external comparators (FLINT `nmod_poly_hensel_lift_*` via the
-shared persistent-subprocess python-flint driver, per
-`SPEC/Libraries/hex-hensel.md §"External comparators"` and
+Informational external comparators (FLINT `fmpz_poly` Newton-style Hensel
+emulation via the shared persistent-subprocess python-flint driver, per
+`HexHensel/SPEC/hex-hensel.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
 
 * `runFlintLinearHenselStepChecksum*` ↔ `runLinearHenselStepChecksum*`
@@ -145,35 +138,6 @@ def liftBenchDegree (param : Nat) : Nat :=
 /-- Decode the requested precision component from an encoded lift benchmark parameter. -/
 def liftBenchPrecision (param : Nat) : Nat :=
   param % liftParamScale
-
-/-- Schoolbook coefficient-bit upper bound for a fixed-degree linear lift.
-
-At correction exponent `j`, canonical coefficients modulo `5^j` have `O(j)`
-bits. A dense step performs a fixed number of integer operations when degree
-is fixed, and schoolbook multiplication/division costs `O(j^2)` bit
-operations. Summing over the `O(k)` linear corrections gives `O(k^3)`; see
-Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1, for the basecase
-integer multiplication and division bounds. -/
-def linearPrecisionUpper (k : Nat) : Nat :=
-  k ^ 3
-
-/-- Schoolbook coefficient-bit upper bound for a fixed-degree quadratic lift.
-
-The exact-exponent recursion halves the exponent before each correction. A
-correction at exponent `j` costs `O(j^2)` in the schoolbook bound, and the
-geometric sum `k^2 + (k/2)^2 + ...` is `O(k^2)`; see
-Brent--Zimmermann, *Modern Computer Arithmetic*, Chapter 1, for the basecase
-integer multiplication and division bounds. -/
-def quadraticPrecisionUpper (k : Nat) : Nat :=
-  k ^ 2
-
-/-- Schoolbook coefficient-bit upper bound for the retained product fold.
-
-After `j` bounded linear factors, the accumulator has `O(j)` coefficients of
-`O(j)` bits. Multiplication by the next bounded linear factor therefore costs
-`O(j^2)` bit operations, and summing the fold gives `O(n^3)`. -/
-def productFoldUpper (n : Nat) : Nat :=
-  n ^ 3
 
 /-- Schoolbook coefficient-bit upper bound for the packed product tree.
 
@@ -291,10 +255,6 @@ def prepLinearLiftInput (param : Nat) : LinearInput :=
 def prepLinearDegreeInput (n : Nat) : LinearInput :=
   { prepLinearInput n with k := 64 }
 
-/-- Precision fixture for iterative linear lifting at a fixed degree. -/
-def prepLinearPrecisionInput (k : Nat) : LinearInput :=
-  { prepLinearInput 128 with k := k }
-
 /-- Per-parameter fixture for quadratic Hensel operations. -/
 def prepQuadraticInput (n : Nat) : QuadraticInput :=
   let g := linearZFactor 43
@@ -330,10 +290,6 @@ def prepMultifactorLiftPrecisionInput (param : Nat) : MultifactorInput :=
 def prepMultifactorDegreeInput (n : Nat) : MultifactorInput :=
   { prepMultifactorLiftInput n with k := 64 }
 
-/-- Precision fixture for multifactor lifting at a fixed degree. -/
-def prepMultifactorPrecisionInput (k : Nat) : MultifactorInput :=
-  { prepMultifactorLiftInput 128 with k := k }
-
 /-- Benchmark target: reduce integer coefficients modulo `5`. -/
 def runModPChecksum (input : ConversionInput) : UInt64 :=
   checksumFpPoly <| ZPoly.modP 5 input.zpoly
@@ -355,10 +311,6 @@ def runLinearHenselStepChecksum (input : LinearInput) : UInt64 :=
 def runHenselLiftChecksum (input : LinearInput) : UInt64 :=
   let r := ZPoly.henselLift 5 input.k input.f input.g input.h input.s input.t
   mixHash (checksumZPoly r.g) (checksumZPoly r.h)
-
-/-- Precision-axis surface for the direct linear lift. -/
-def runHenselPrecisionChecksum (input : LinearInput) : UInt64 :=
-  runHenselLiftChecksum input
 
 /-- Benchmark target: one quadratic Hensel correction step. -/
 def runQuadraticHenselStepChecksum (input : QuadraticInput) : UInt64 :=
@@ -387,25 +339,19 @@ def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
 
-/-- Precision-axis surface for the linear multifactor lift. -/
-def runMultifactorPrecisionChecksum (input : MultifactorInput) : UInt64 :=
-  runMultifactorLiftChecksum input
-
-/-- Precision-axis surface for the quadratic multifactor lift. -/
-def runQuadraticPrecisionChecksum (input : MultifactorInput) : UInt64 :=
-  runMultifactorLiftQuadraticChecksum input
-
-/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
+/-! # FLINT `fmpz_poly` Hensel-emulation comparator surfaces
 
 Each of the five Hensel-lift Hex targets is paired with a corresponding
 call into the shared persistent-subprocess python-flint driver
 (`scripts/oracle/flint_bench_driver.py`, HO-20) via
-`Hex.BenchOracle.Flint.runOp` on the `nmod_poly_hensel` family. Hex normalises
+`Hex.BenchOracle.Flint.runOp` on the protocol's `nmod_poly_hensel` family. The
+driver implements the correction schema with `fmpz_poly`; python-flint does
+not expose FLINT's native Hensel entry points. Hex normalises
 lifted factors to non-negative residues in `[0, p^k)` while the driver returns
 centred residues in `(-p^k/2, p^k/2]`; the comparator checksum is computed
 directly on the FLINT-returned coefficient list and is therefore not expected
 to equal the Hex-side checksum at the same rung. The comparator is
-`informational` per `SPEC/Libraries/hex-hensel.md §"External comparators"`,
+`informational` per `HexHensel/SPEC/hex-hensel.md §"External comparators"`,
 so the headline report records wall-times only. -/
 
 /-- Stable checksum over an integer coefficient list returned by FLINT. The
@@ -730,23 +676,6 @@ setup_benchmark runHenselLiftChecksum n => n * n
   }
 
 /-
-At fixed degree, canonical coefficients at exponent `j` have `O(j)` bits.
-The loop performs `O(k)` dense corrections and a schoolbook integer operation
-on `j`-bit values costs `O(j^2)`, so summing the per-step bound gives the
-published-schoolbook mode-2 upper bound `O(k^3)`.
--/
-setup_benchmark runHenselPrecisionChecksum k => linearPrecisionUpper k
-  with prep := prepLinearPrecisionInput
-  where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 200000000
-    signalFloorMultiplier := 1.0
-  }
-
-/-
 The quadratic step performs dense factor and Bezout correction products over
 degree-`n` fixtures while the requested modulus size is fixed.
 -/
@@ -762,29 +691,29 @@ setup_benchmark runQuadraticHenselStepChecksum n => n * n
   }
 
 /-
-The dispatcher selects either the retained fold or the packed product tree.
-The tree's schoolbook `O(n^4)` coefficient-bit bound covers both branches and
-is the mode-2 wall-clock claim; the former `n^2` declaration counted
-coefficient operations while omitting their linearly growing bit width.
+The public dispatcher's scientific ladder lies wholly in the retained fallback
+interval (`n ≥ treeProductLimit`). Left-folding `n` linear factors grows the
+accumulator degree by one per step, so the total number of coefficient
+operations is the tight mode-1 model `O(n^2)`. The separate compare group
+measures the balanced-tree winning interval and the crossover at `n = 1024`.
 -/
-setup_benchmark runPolyProductChecksum n => productTreeUpper n
+setup_benchmark runPolyProductChecksum n => n * n
   with prep := prepProductInput
   where {
-    paramFloor := 128
-    paramCeiling := 1024
-    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    paramFloor := 1024
+    paramCeiling := 2048
+    paramSchedule := .custom #[1024, 1152, 1280, 1408, 1536, 1792, 2048]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-Left-folding grows both the accumulator degree and its coefficient bit width
-linearly. Step `j` therefore has the schoolbook `O(j^2)` coefficient-bit
-bound, whose sum is the mode-2 `O(n^3)` bound. This is the retained comparator
-on both sides of the product-tree interval.
+Left-folding `n` linear factors grows the accumulator degree one step at a
+time, giving a tight mode-1 quadratic total coefficient-operation count. This
+is the retained comparator on both sides of the product-tree interval.
 -/
-setup_benchmark runPolyProductFoldChecksum n => productFoldUpper n
+setup_benchmark runPolyProductFoldChecksum n => n * n
   with prep := prepProductInput
   where {
     paramFloor := 128
@@ -798,11 +727,13 @@ setup_benchmark runPolyProductFoldChecksum n => productFoldUpper n
 
 /-
 At a subtree of `j` bounded linear leaves, both degree and coefficient bit
-width are `O(j)`, so Kronecker packing has `O(j^2)` bits. Bounding the packed
-integer product by schoolbook multiplication gives `O(j^4)`; the geometric
-sum over the balanced tree is root-dominated. The registration therefore uses
-the mode-2 `O(n^4)` wall-clock bound and shares every fixture and rung with the
-retained fold for hash and crossover checks.
+width are `O(j)`, so Kronecker packing has `O(j^2)` bits. `ZPoly.fastPlan`
+then dispatches among schoolbook and KS1--KS4 kernels while GMP independently
+crosses integer-multiplication regimes, so no tight single family model follows
+from the source. Schoolbook multiplication of the packed integers gives the
+published mode-2 upper bound `O(j^4)`; the geometric tree sum is root-dominated.
+This registration shares every fixture and rung with the retained fold for
+hash and crossover checks.
 -/
 setup_benchmark runPolyProductTreeChecksum n => productTreeUpper n
   with prep := prepProductInput
@@ -848,48 +779,15 @@ setup_benchmark runMultifactorLiftQuadraticChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/-
-The fixed-degree linear multifactor path performs `O(k)` corrections on
-`O(k)`-bit coefficients. The same schoolbook argument as the direct wrapper
-gives the mode-2 upper bound `O(k^3)`.
--/
-setup_benchmark runMultifactorPrecisionChecksum k => linearPrecisionUpper k
-  with prep := prepMultifactorPrecisionInput
-  where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 200000000
-    signalFloorMultiplier := 1.0
-  }
+/-! # FLINT `fmpz_poly` Hensel-emulation comparator fixed registrations
 
-/-
-The exact-exponent quadratic path halves the requested exponent recursively.
-A correction at exponent `j` has the schoolbook `O(j^2)` coefficient-bit
-bound, and summing that geometric sequence gives the mode-2 upper bound
-`O(k^2)`.
--/
-setup_benchmark runQuadraticPrecisionChecksum k => quadraticPrecisionUpper k
-  with prep := prepMultifactorPrecisionInput
-  where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
-    maxSecondsPerCall := 6.0
-    targetInnerNanos := 200000000
-    signalFloorMultiplier := 1.0
-  }
-
-/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
-
-Each Hensel-lift Lean target is paired with the matching FLINT
-`nmod_poly_hensel` op via the shared persistent-subprocess driver. The pairs
+Each Hensel-lift Lean target is paired with the matching emulated
+`nmod_poly_hensel` protocol op via the shared persistent-subprocess driver. The pairs
 are registered as `setup_fixed_benchmark` rungs at the same parameter inside
 the existing eligible parametric range, six rungs per pair, so the headline
 report records raw and overhead-adjusted ratios at each rung and a trend
 across the ladder. The comparator is `informational` per
-`SPEC/Libraries/hex-hensel.md §"External comparators"`. -/
+`HexHensel/SPEC/hex-hensel.md §"External comparators"`. -/
 
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1 }
