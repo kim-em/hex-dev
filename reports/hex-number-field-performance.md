@@ -304,9 +304,9 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
-| `runExactLadder` | **fixed: 1.880 ms, hash match** | — | exactification mode 3 |
-| `runExactFactorLadder` | **fixed: 309.824 ms, hash match** | — | exactification mode 3 |
-| `runCanonicalRepLadder` | **fixed: 153.830 ms, hash match** | — | exactification mode 3 |
+| `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
+| `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
+| `runCanonicalRepLadder` | **fixed: 154.045 ms, hash match** | — | exactification mode 3 |
 | `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
@@ -495,7 +495,7 @@ rule therefore proceeds to mode 3: the current fixed registrations retain the
 hard top rungs without claiming that those withdrawn envelopes model scaling.
 
 The **exactification mode-3 run** is a clean five-trial measurement of those
-three fixed registrations at source `073dc6daa`:
+three fixed registrations at source `2df51cf4b`:
 
 ```sh
 .lake/build/bin/hexnumberfield_bench run \
@@ -504,14 +504,14 @@ three fixed registrations at source `073dc6daa`:
   Hex.NumberFieldBench.runCanonicalRepLadder \
   --outer-trials 5 \
   --export-file \
-    reports/bench-results/hex-number-field-exactification-mode3-073dc6daa.json
+    reports/bench-results/hex-number-field-exactification-mode3-2df51cf4b.json
 ```
 
 | target | median | min..max | whole-child ceiling | observed hash |
 |---|---:|---:|---:|---|
-| `runExactLadder` | 1.880 ms | 1.864..1.954 ms | 200 ms | `0x5bfd5b96f72b6002` |
-| `runExactFactorLadder` | 309.824 ms | 307.765..315.809 ms | 2 s | `0xe5c33ee70736a0fb` |
-| `runCanonicalRepLadder` | 153.830 ms | 153.581..153.901 ms | 1.1 s | `0x1d7ae08962f9292c` |
+| `runExactLadder` | 1.878 ms | 1.871..1.885 ms | 200 ms | `0x5bfd5b96f72b6002` |
+| `runExactFactorLadder` | 308.643 ms | 306.667..310.988 ms | 2 s | `0xe5c33ee70736a0fb` |
+| `runCanonicalRepLadder` | 154.045 ms | 153.773..156.491 ms | 1.1 s | `0x1d7ae08962f9292c` |
 
 Every repeat completed, all repeat hashes agreed, and every expected hash
 matched. These budgets are enforced by the full timing path; `verify` checks
@@ -707,7 +707,7 @@ All 41 fixed registrations agree across repeats, and all seventeen headline case
 with `runExactSelection` in the
 [exactification fixed export](bench-results/hex-number-field-exactification-fixed.json),
 the three mode-3 exactification cases in the
-[mode-3 export](bench-results/hex-number-field-exactification-mode3-073dc6daa.json),
+[mode-3 export](bench-results/hex-number-field-exactification-mode3-2df51cf4b.json),
 and the three isolation cases in the isolation fixed exports:
 
 | fixed target | median | observed hash | expected |
@@ -722,9 +722,9 @@ and the three isolation cases in the isolation fixed exports:
 | `runLazyAddLadder` | 4.539 s | `0x91175572810ff8e2` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
-| `runExactLadder` | 1.880 ms | `0x5bfd5b96f72b6002` | match |
-| `runExactFactorLadder` | 309.824 ms | `0xe5c33ee70736a0fb` | match |
-| `runCanonicalRepLadder` | 153.830 ms | `0x1d7ae08962f9292c` | match |
+| `runExactLadder` | 1.878 ms | `0x5bfd5b96f72b6002` | match |
+| `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
+| `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
 | `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
 | `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
 | `runAlgebraicRootsLadder` | 5.955 s | `0x2fade2409323a752` | match |
@@ -1141,7 +1141,7 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-single-root-comparators.json`](bench-results/hex-number-field-single-root-comparators.json) | `96e0fd7ee`, clean tree | idle | `1243e69ce4256f4470700b43aba55fcb8d6ba1d30faa5ff38b1ddea0803133d4` |
 | [`bench-results/hex-number-field-exactification-audit.json`](bench-results/hex-number-field-exactification-audit.json) | `e51768c1b` (end-to-end) / `b3249f4f8` (phases), clean trees | idle | `8b26157ac30a0ed58ef836e7abba04fa3aa2041e07f24a6b75e84c6aa89b41a8` |
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
-| [`bench-results/hex-number-field-exactification-mode3-073dc6daa.json`](bench-results/hex-number-field-exactification-mode3-073dc6daa.json) | `073dc6daa`, clean tree | idle | `ae353d6e65cc7ba980278dc56493bb67e0043a9f018f189f7f910e1e27bb136d` |
+| [`bench-results/hex-number-field-exactification-mode3-2df51cf4b.json`](bench-results/hex-number-field-exactification-mode3-2df51cf4b.json) | `2df51cf4b`, clean tree | idle | `d67c1e2993f0765153f4f15781eda8527c1a9138b8aa427365e69e327e4cecce` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
 | [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
 | [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | `768afcd35`, clean tree | idle | `1cdd1336923271709affc22c45bf178ef6cb73ec4080b796e312fd0e06a43048` |
@@ -1172,7 +1172,7 @@ supersedes that target's parametric verdict without superseding its repair or
 profile evidence.
 The three current fixed exactification profiles come from `1e5cb8472` with the
 instrumentation-only fixed-child sidecar hook described in §Profile.
-The follow-up at `073dc6daa` leaves the certified inputs and exactification
+The follow-up at `2df51cf4b` leaves the certified inputs and exactification
 operations unchanged; it makes initialization lazy, strengthens result hashes,
 and corrects the whole-child budgets. The fresh timing export was repeated at
 that follow-up commit, while the phase attribution remains the immediately
