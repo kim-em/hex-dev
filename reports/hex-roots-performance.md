@@ -30,6 +30,10 @@ lean-bench `0.1.0`, and `git_dirty: false`:
   ladder is faster than declared.
 - `reports/bench-results/hex-roots-ff0724c-issue9794-taylor-n2.json` records the
   same current fixture passing the stronger quadratic mode-1 model.
+- `reports/bench-results/hex-roots-28b965d-issue9794-postreview.json` is the
+  final all-registration sweep after promoting Taylor and widening the fixed
+  ceilings for shared-runner stability; all fourteen selected modes pass,
+  every fixed hash matches, and the strategy trio agrees.
 
 Their SHA-256 digests are respectively
 `3d74adb2e4821bad833217668ac413865918ef10d8bca1ce5aaf1646b14c1a63`,
@@ -37,7 +41,8 @@ Their SHA-256 digests are respectively
 `b027965f3a113a0f3731ddd3385cf344ad2899f215d050afcc023a6792e5f305`,
 `8dac7b8607208062b6940563d98ff2f0255f82aae737606aad6e91ca7589a79b`,
 `1900396363b66efef68aeca1b9cd3af3ff4bf9c47152a271b9e6a4f5485c90b6`,
-and `e545b1d784c26f4ddb6698edfe327bf887a367c9bdcf9d48215423129aea3637`.
+`e545b1d784c26f4ddb6698edfe327bf887a367c9bdcf9d48215423129aea3637`,
+and `16aa917569d20d145ad7ff99b8bd284c36b79ef4aa4f6872a24de4a700d91520`.
 
 The first four artifacts predate the final rebase. Their stamped source commits
 map to surviving, byte-identical relevant-source commits as follows:
@@ -45,7 +50,8 @@ map to surviving, byte-identical relevant-source commits as follows:
 `6aab88becd8 → e28328f2d7f`, and `b29031d5383 → d77ea055645`.
 For each pair, the diff restricted to `HexRoots/`, `HexRootsMathlib/`, and
 `bench/HexRoots/Bench.lean` is empty; only the rebased ancestry differs. The
-two Taylor artifacts stamp surviving commits directly.
+two Taylor artifacts and the final all-registration sweep stamp surviving
+commits directly.
 
 The original Phase-4 sweep is
 `reports/bench-results/hex-roots-973c2cd-round5.json`, recorded on quiet
@@ -118,8 +124,8 @@ optimization without weakening the soundness-motivated fallback.
 On identical inputs and hashes, direct pinned measurements changed Pellet-only
 from about 10.128 s to 2.508 s, combined from 10.164 s to 2.462 s, and
 `runIsolate` from 2.923 s to 0.498 s. NK-only stayed near 9.2 s. The clean final
-five-repeat medians are `runIsolate` 0.495 s, `runIsolateAll` 8.480 s, NK-only
-9.251 s, Pellet-only 2.466 s, and combined 2.462 s. The fixed table below
+five-repeat medians are `runIsolate` 0.496 s, `runIsolateAll` 8.521 s, NK-only
+9.187 s, Pellet-only 2.483 s, and combined 2.471 s. The fixed table below
 records the current medians, body-scoped budgets, and refreshed hashes.
 
 ## Taylor-shift reuse ratchet
@@ -226,7 +232,7 @@ working-bit-length growth as follows:
 - **`runTaylor` is `n²`.** Repeated synthetic division performs `O(n²)` exact
   multiply/adds. The repaired centre is the integer `1`, so it introduces no
   denominator growth and centre multiplication is unit scaling. A clean
-  `64..2048` attempt is consistent at `n²` (`β=+0.118`); the conservative
+  `64..2048` attempt is consistent at `n²` (`β=+0.110`); the conservative
   `n³` bit-cost attempt is inconclusive because the ladder is faster than
   declared by `~n^0.882`.
 - **`runMahlerPrec` is `n`; the witness/Newton/refinement primitives have
@@ -262,7 +268,7 @@ Mode 1 was attempted first. The clean experimental artifact records:
 
 | registration or group | attempted current-fixture schedule/model | result |
 |---|---|---|
-| `runTaylor` | integer-centre seeded degrees `64..2048`, first conservative `n³`, then stronger `n²` | `n³` inconclusive (`β=-0.882`); **`n²` consistent (`β=+0.118`)**, promoted to mode 1 |
+| `runTaylor` | integer-centre seeded degrees `64..2048`, first conservative `n³`, then stronger `n²` | `n³` inconclusive (`β=-0.882`); **`n²` consistent (`β=+0.110`)**, promoted to mode 1 |
 | `runWitnessCheck` | degree `64..384`, `n³` | inconclusive, `β=-0.411` |
 | `runNkWitnessCheck` | degree `64..512`, `n³` | inconclusive, `β=-0.457` |
 | `runNewtonSquare` | degree `64..512`, `n³` | inconclusive, `β=-0.526` |
@@ -304,15 +310,18 @@ taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
 taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
   Hex.RootsBench.runTaylor --export-file \
   reports/bench-results/hex-roots-ff0724c-issue9794-taylor-n2.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" lake exe hexroots_bench run \
+  <all 14 registration names> --export-file \
+  reports/bench-results/hex-roots-28b965d-issue9794-postreview.json
 ```
 
 The selected mode-1 verdicts are consistent:
 
 | registration | model | verdict | evidence | final hash |
 |---|---|---|---|---|
-| `runTaylor` | `n²` | consistent | `β=+0.118`, `cMin=135.763`, `cMax=325.113` over `64..2048`; leading warmup rung dropped | `0x1f1070e211681de7` |
-| `runMahlerPrec` | `n` | consistent | `β=-0.007`, `cMin=5.461`, `cMax=6.633` over `64..4096` | `0x10805` |
-| `runRefineTo` | `t²` | consistent | final sweep `β=-0.071`, `cMin=0.017`, `cMax=0.019`; leading warmup rung dropped (repair sweep `β=-0.030`) | `0x482ae3757e2b9db3` at achieved precision 524293 (`0x8dd3e4ee56489bf8` at 131077) |
+| `runTaylor` | `n²` | consistent | final sweep `β=+0.110`, `cMin=138.570`, `cMax=326.486` over `64..2048`; leading warmup rung dropped | `0x1f1070e211681de7` |
+| `runMahlerPrec` | `n` | consistent | final sweep `β=-0.000`, `cMin=5.705`, `cMax=6.553` over `64..4096` | `0x10805` |
+| `runRefineTo` | `t²` | consistent | final sweep `β=-0.070`, `cMin=0.017`, `cMax=0.019`; leading warmup rung dropped (repair sweep `β=-0.030`) | `0x482ae3757e2b9db3` at achieved precision 524293 (`0x8dd3e4ee56489bf8` at 131077) |
 
 (`runIsolate` was parametric at `n⁵` in the previous revision of this
 report and its `4..10` range check passed, but post-merge review showed
@@ -333,23 +342,23 @@ first iteration's hash, so a deterministic ceiling violation there carries the
 sentinel into verification. `runSameRoot`'s distinct fine representative is
 prepared in each child initializer, outside the timed body, raising every
 child's spawn floor by about 0.3 s without affecting the operation ceiling.
-The full artifact supplies five clean repeats for all eleven selected fixed
-rows; its stale `runIsolateAll` expectation is superseded by the focused clean
-rerun after refreshing the row. All clean repeats agreed on each observed hash:
+The final post-review artifact supplies five clean repeats for all eleven
+selected fixed rows after refreshing the `runIsolateAll` expectation. Every
+observed hash agrees across repeats and matches its registered expectation:
 
 | registration | canonical hard input | ceiling | clean median | hash |
 |---|---|---:|---:|---|
-| `runWitnessCheck` | bounded-height degree 128 | 20 ms | 2.362 ms | `0xb` |
-| `runNkWitnessCheck` | bounded-height degree 128 | 19 ms | 2.283 ms | `0xb` |
-| `runNewtonSquare` | bounded-height degree 128 | 18 ms | 2.211 ms | `0x450307c7dcbe905c` |
-| `runRefine1` | fixed-separation degree 8 | 18 ms | 2.134 ms | `0x6dd99fc71c5233ae` |
-| `runCertify` | pinned-NK degree 128 | 36 ms | 4.413 ms | `0x1698ec123da6112f` |
-| `runIsolateAll` | fixed-separation degree 12 | 70 s | 8.480 s | `0x5e4b3fd1d798497a` |
-| `runIsolate` | fixed-separation degree 8 | 4 s | 494.712 ms | `0x16c307fd2a36d31e` |
-| `runIsolateNk` | `linProdPoly 10` | 75 s | 9.251 s | `0xda631bdf13415a4f` |
-| `runIsolatePellet` | `linProdPoly 10` | 20 s | 2.466 s | `0xda631bdf13415a4f` |
-| `runIsolateNkThenPellet` | `linProdPoly 10` | 20 s | 2.462 s | `0xda631bdf13415a4f` |
-| `runSameRoot` | distinct coarse/131077-bit representatives | 1 ms | 15.748 µs | `0xb` |
+| `runWitnessCheck` | bounded-height degree 128 | 20 ms | 2.385 ms | `0xb` |
+| `runNkWitnessCheck` | bounded-height degree 128 | 19 ms | 2.291 ms | `0xb` |
+| `runNewtonSquare` | bounded-height degree 128 | 18 ms | 2.185 ms | `0x450307c7dcbe905c` |
+| `runRefine1` | fixed-separation degree 8 | 18 ms | 2.152 ms | `0x6dd99fc71c5233ae` |
+| `runCertify` | pinned-NK degree 128 | 36 ms | 4.498 ms | `0x1698ec123da6112f` |
+| `runIsolateAll` | fixed-separation degree 12 | 70 s | 8.521 s | `0x5e4b3fd1d798497a` |
+| `runIsolate` | fixed-separation degree 8 | 4 s | 495.557 ms | `0x16c307fd2a36d31e` |
+| `runIsolateNk` | `linProdPoly 10` | 75 s | 9.187 s | `0xda631bdf13415a4f` |
+| `runIsolatePellet` | `linProdPoly 10` | 20 s | 2.483 s | `0xda631bdf13415a4f` |
+| `runIsolateNkThenPellet` | `linProdPoly 10` | 20 s | 2.471 s | `0xda631bdf13415a4f` |
+| `runSameRoot` | distinct coarse/131077-bit representatives | 1 ms | 15.956 µs | `0xb` |
 
 The refreshed `runIsolateAll` hash is `0x5e4b3fd1d798497a`. The repaired
 `runRefineTo` ladder records `0x8dd3e4ee56489bf8` at the old fixed precision
@@ -423,8 +432,8 @@ lake exe hexroots_bench compare Hex.RootsBench.runIsolateNk Hex.RootsBench.runIs
 agreement: all functions agree on output
 ```
 
-The clean issue-9794 medians are NK `9.251 s`, Pellet `2.466 s`, and
-NK-then-Pellet `2.462 s`. The bounded local-finisher repair therefore restores
+The clean issue-9794 medians are NK `9.187 s`, Pellet `2.483 s`, and
+NK-then-Pellet `2.471 s`. The bounded local-finisher repair therefore restores
 the Pellet-bearing routes' earlier ordering. The corrected scaling experiment
 over degrees `2..10` remains informational: normalized against the independently
 derived `~n⁷` model, NK, Pellet, and combined have residuals `-0.460`, `-1.168`,
@@ -476,12 +485,12 @@ Final registered canonical points:
 
 | degree | Lean surface | hex | flint | ratio hex/flint |
 |---:|---|---:|---:|---:|
-| 8 | `runIsolate` | 494.712 ms | 215.234 µs | 2298.5 |
-| 12 | `runIsolateAll` | 8.480 s | 591.777 µs | 14329.7 |
+| 8 | `runIsolate` | 495.557 ms | 215.234 µs | 2302.4 |
+| 12 | `runIsolateAll` | 8.521 s | 591.777 µs | 14400.0 |
 
 **Trend.** On the diagnostic ladder, apart from the degree-8 local dip, the
 ratio diverges from `112×` at degree 4 to `1470×` at degree 10; the
-equal-precision canonical `runIsolateAll` point is `14330×` at degree 12. That
+equal-precision canonical `runIsolateAll` point is `14400×` at degree 12. That
 direction is expected: the Lean drivers perform certified exact isolation
 with degree- and precision-dependent exact-dyadic work, while FLINT uses a
 structurally different multiprecision ball algorithm. No scalar asymptotic
