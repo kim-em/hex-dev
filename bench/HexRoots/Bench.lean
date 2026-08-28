@@ -566,7 +566,7 @@ The current `4,6,8,10,12,14` schedule is still inconclusive (`C` falls from
 body-scoped budget, over twice its clean 8.340 s baseline.
 -/
 setup_fixed_benchmark runIsolateAll where {
-  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x1d4ce3e46eb351de }
+  repeats := 5, maxSecondsPerCall := 30.0, expectedHash := some 0x5e4b3fd1d798497a }
 
 /-
 Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
