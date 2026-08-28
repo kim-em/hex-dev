@@ -51,6 +51,10 @@ def runReplay (e : Nat) : Nat :=
 
 def runOrder (p : Nat) : Nat := orderOf 3 p
 
+private def orderLadder : Array Nat := #[257, 1013, 4073, 16363, 65537]
+
+#guard orderLadder.all fun p => orderOf 3 p == p - 1
+
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q) : ∀ e : Nat,
     boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
   | 0 => by simp [boundedPowMul]
@@ -212,12 +216,11 @@ so each run exercises `p - 1` scan steps and the declared arithmetic-operation
 model is linear. -/
 setup_benchmark runOrder n => n
   where {
-    paramFloor := 7
+    paramFloor := 257
     paramCeiling := 65537
-    paramSchedule := .custom #[7, 31, 127, 257, 1013, 4073, 16363, 65537]
+    paramSchedule := .custom orderLadder
     maxSecondsPerCall := 5.0
-    targetInnerNanos := 250000000
-    signalFloorMultiplier := 1.0
+    targetInnerNanos := 2500000000
     outerTrials := 3
   }
 

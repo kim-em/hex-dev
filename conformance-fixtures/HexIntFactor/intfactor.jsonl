@@ -110,6 +110,8 @@
 {"kind":"result","lib":"HexIntFactor","case":"order/primepower/2mod9","op":"order","value":6}
 {"kind":"order","lib":"HexIntFactor","case":"order/noncyclic/5mod8","base":5,"modulus":8}
 {"kind":"result","lib":"HexIntFactor","case":"order/noncyclic/5mod8","op":"order","value":2}
+{"kind":"order","lib":"HexIntFactor","case":"order/unreduced/10mod7","base":10,"modulus":7}
+{"kind":"result","lib":"HexIntFactor","case":"order/unreduced/10mod7","op":"order","value":6}
 {"kind":"cyclotomic","lib":"HexIntFactor","case":"cyclotomic/grid/2/1/minus","b":2,"n":1,"sign":"minus"}
 {"kind":"result","lib":"HexIntFactor","case":"cyclotomic/grid/2/1/minus","op":"cyclotomic","value":[[1,1]]}
 {"kind":"cyclotomic","lib":"HexIntFactor","case":"cyclotomic/grid/2/1/plus","b":2,"n":1,"sign":"plus"}

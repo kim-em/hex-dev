@@ -19,7 +19,8 @@ The multiplicative order of `a` modulo `n`, Mathlib-free.
 deliberate choice: `0 < orderOf a n` is the hypothesis that says "this is a
 real order", and every theorem below carries it. The scan carries the current
 power residue, reducing both it and the base before the next multiplication,
-so each candidate costs one multiplication of residues modulo `n`.
+so each candidate costs one multiplication of residues modulo `n`. Certificate
+checking uses only the theorems about this order and never evaluates the scan.
 -/
 
 namespace Hex
@@ -392,13 +393,9 @@ junk-input branch of the definition. -/
 #guard orderOf 4 15 = 2
 #guard orderOf 1 5 = 1
 #guard orderOf (7 * 2 ^ 100000 + 3) 7 = 6 -- large unreduced base
-#guard orderOf 3 31 = 30
-#guard orderOf 3 127 = 126
-#guard orderOf 3 257 = 256
-#guard orderOf 3 1013 = 1012
-#guard orderOf 3 4073 = 4072
-#guard orderOf 3 16363 = 16362
-#guard orderOf 3 65537 = 65536 -- benchmark ladder: order close to the modulus
+#guard orderOf 8 7 = 1  -- unreduced residue `1`
+#guard orderOf 13 7 = 2 -- unreduced residue `n - 1`
+#guard orderOf 3 257 = 256 -- order close to the modulus
 #guard orderOf 2 8 = 0   -- not coprime
 #guard orderOf (15 * 2 ^ 10000 + 5) 15 = 0 -- large unreduced nonunit
 #guard orderOf 0 5 = 0   -- not coprime
