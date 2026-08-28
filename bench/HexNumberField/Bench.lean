@@ -978,7 +978,7 @@ Six quadratic factors are the largest practical end-to-end case before fixture
 construction hits its setup cliff; degree eight is the largest audited
 certification case. Each zero-grace ceiling below is an enforced whole-child
 budget sized from measured startup, one untimed warmup, and the timed call or
-batch. They give about 2.3--3.1x total-process headroom on the reference host
+batch. They give about 2.0--3.1x total-process headroom on the reference host
 and do not reuse the generic 30-second ladder timeout. The historical `Ladder`
 names are retained so the archived failed parametric evidence stays connected
 to these operations. -/
