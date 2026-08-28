@@ -376,7 +376,7 @@ separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x0927e3f02f6eee94
+  expectedHash := some 0x235b18400d87a46c
 }
 
 /-! # Parametric ladder fixtures -/
@@ -726,7 +726,7 @@ operation across the mode change. -/
 setup_fixed_benchmark runLazyAddLadder where {
   repeats := 3
   maxSecondsPerCall := 12.0
-  expectedHash := some 0x91175572810ff8e2
+  expectedHash := some 0xc544c942d8336f51
 }
 
 /-! # Exactification ladder -/
@@ -988,7 +988,7 @@ setup_fixed_benchmark runExactLadder where {
   maxSecondsPerCall := 0.2
   killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0x5bfd5b96f72b6002
+  expectedHash := some 0xd0642a7d4df3da02
 }
 
 setup_fixed_benchmark runExactFactorLadder where {
@@ -1300,7 +1300,7 @@ the same operation across the mode change. -/
 setup_fixed_benchmark runQAdjoinRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 20.0
-  expectedHash := some 0x1b2a158c4b746671
+  expectedHash := some 0x63e9dd11895b2211
 }
 
 initialize algebraicRootsLadderRef : IO.Ref (Option AlgPolyInput) ← IO.mkRef none
@@ -1331,7 +1331,7 @@ operation identity. -/
 setup_fixed_benchmark runAlgebraicRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 15.0
-  expectedHash := some 0x2fade2409323a752
+  expectedHash := some 0xb6a44b3ff493da5e
 }
 
 /-! # PARI `t_POLMOD` comparator pairs

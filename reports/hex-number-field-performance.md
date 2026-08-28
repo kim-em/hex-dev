@@ -517,6 +517,11 @@ Every repeat completed, all repeat hashes agreed, and every expected hash
 matched. These budgets are enforced by the full timing path; `verify` checks
 the same inputs and hashes in smoke mode.
 
+The later HexRoots bounded-finisher repair leaves this operation and its
+budget unchanged but selects a tighter dyadic representative in the
+end-to-end `runExactLadder` result. Current-tree verification therefore uses
+`0xd0642a7d4df3da02`; the two phase-isolated hashes above remain unchanged.
+
 A second quiet run historically covered the three ladders too expensive to fit
 in the same window, at three outer trials, on the idle host. The two
 isolation-dominated sweeps are retained as diagnostic evidence but are no
@@ -719,16 +724,27 @@ and the three isolation cases in the isolation fixed exports:
 | `runIsolateAdd` | 9.649 ms | `0x4367ab34a73ea4ed` | match |
 | `runSelectAdd` | 11.193 ms | `0xb2956b93cac0235f` | match |
 | `runLazyAdd` | 9.899 ms | `0xb2956b93cac0235f` | match |
-| `runLazyAddLadder` | 4.539 s | `0x91175572810ff8e2` | match |
+| `runLazyAddLadder` | 4.539 s | `0xc544c942d8336f51` | match |
 | `runExact` | 1.421 ms | `0xafd3fbfd3a66fc82` | match |
 | `runExactSelection` | 308.418 ms | `0xd5512fda51bc6ff6` | match |
-| `runExactLadder` | 1.878 ms | `0x5bfd5b96f72b6002` | match |
+| `runExactLadder` | 1.878 ms | `0xd0642a7d4df3da02` | match |
 | `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
 | `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
-| `runRoots` | 1.069 ms | `0x927e3f02f6eee94` | match |
-| `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
-| `runAlgebraicRootsLadder` | 5.955 s | `0x2fade2409323a752` | match |
+| `runRoots` | 1.069 ms | `0x235b18400d87a46c` | match |
+| `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x63e9dd11895b2211` | match |
+| `runAlgebraicRootsLadder` | 5.955 s | `0xb6a44b3ff493da5e` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
+
+The five root-representation hashes above were refreshed after HexRoots
+restored its bounded local finisher. Current-tree verification observes the
+new values consistently (`runExactLadder`, `runLazyAddLadder`, `runRoots`,
+`runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`); the recorded medians
+remain those of the cited controlled exports because the timed HexNumberField
+operations are unchanged.
+The conformance emitter also reproduces the refreshed 51-record fixture:
+six box/result records carry the tighter dyadic representatives selected by
+the repaired HexRoots finisher. The HexNumberFieldTower emitter reproduces its
+existing 30-record fixture without changes.
 
 The SPEC's §Complexity and Phase 4 budgets caps a compiled degree-10 field
 operation at 100 ms on the reference host. `runFixedMul` is 39.844 us and
