@@ -25,17 +25,18 @@ Scientific registrations:
 * `runLiftToZChecksum`: canonical lift from `F_5[x]` to `Z[x]`, `O(n)`.
 * `runReduceModPowChecksum`: coefficient reduction modulo `5^k`, `O(n)`.
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
-* `runHenselLiftChecksum`: iterative linear lift over `(n, k)`, `O(n^2 k)`.
+* `runHenselLiftChecksum`: iterative linear lift at fixed high precision,
+  `O(n^2 k)` with `k = 64`.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
 * `runPolyProductChecksum`: public ordered-product dispatcher, with a
   conservative `O(n^2)` upper bound.
 * `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
 * `runPolyProductTreeChecksum`: the same ordered product through a balanced
   tree and `ZPoly.fastPlan`, `O(M(n) log n)`.
-* `runMultifactorLiftChecksum`: two-factor ordered lift over `(n, k)`,
-  `O(n^2 k)`.
+* `runMultifactorLiftChecksum`: two-factor ordered lift at fixed high precision,
+  `O(n^2 k)` with `k = 64`.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
-  `O(n^2 log k)`.
+  `O(n^2 log k)` with `k = 64`.
 
 Compare groups:
 
@@ -163,6 +164,22 @@ def fpCoeffValue (n i salt : Nat) : ZMod64 5 :=
 def denseZPoly (n salt : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| (Array.range n).map fun i => zCoeffValue n i salt
 
+/-- Deterministic dense monic integer polynomial of degree `n`. -/
+def denseMonicZPoly (n salt : Nat) : ZPoly :=
+  DensePoly.ofCoeffs <| ((Array.range n).map fun i => zCoeffValue n i salt).push 1
+
+/-- Dense monic factors that are coprime modulo every prime.
+
+Writing `h = g * q + 1` gives the explicit Bezout relation
+`h - q * g = 1`.  Both factor degrees grow with `n`, unlike the old
+linear-factor fixture, so the Hensel correction products exercise the declared
+quadratic degree scaling. -/
+def denseCoprimePair (n : Nat) : ZPoly × ZPoly :=
+  let d := max 2 (n / 2)
+  let g := denseMonicZPoly d 59
+  let q := denseMonicZPoly d 62
+  (g, g * q + 1)
+
 /-- Deterministic dense `F_5` polynomial with `n` generated coefficients. -/
 def denseFpPoly (n salt : Nat) : FpPoly 5 :=
   FpPoly.ofCoeffs <| (Array.range n).map fun i => fpCoeffValue n i salt
@@ -192,20 +209,36 @@ def prepConversionInput (n : Nat) : ConversionInput :=
   { zpoly := denseZPoly n 17
     fpoly := denseFpPoly n 23 }
 
-/-- Per-parameter fixture for linear Hensel operations.
+/-- Per-parameter fixture for a single linear Hensel correction.
 
-The factor error is built as a multiple of `5`, so the correction path is
-nontrivial while staying deterministic. The Bezout pair is computed via
-`normalizedXGCD` so that `s * gMod + t * hMod ≡ 1 (mod 5)`; the iterative
-linear lift relies on this precondition to keep the corrected `h` factor
-bounded in degree across all `k` steps. The shared salts `59 / 62 / 67`
-match `prepMultifactorLiftInput`, which already verifies coprimeness on
-the full scientific `n` ladder including `n = 192`.
--/
-def prepLinearInput (n : Nat) : LinearInput :=
+The linear factor keeps this registration on the same uniform quadratic
+single-step family used by its existing scientific and FLINT ladders. -/
+def prepLinearStepInput (n : Nat) : LinearInput :=
   let g := linearZFactor 59
   let h := denseZPoly (n + 1) 62
   let e := denseZPoly (n + 1) 67
+  let f := g * h + DensePoly.scale (5 : Int) e
+  let xgcd := ZPoly.normalizedXGCD 5 g h
+  { f := f
+    g := g
+    h := h
+    s := xgcd.left
+    t := xgcd.right
+    k := 1 }
+
+/-- Per-parameter fixture for iterated linear Hensel operations.
+
+The factor error is built as a multiple of `5`, so the correction path is
+nontrivial while staying deterministic. `denseCoprimePair` makes both factor
+degrees grow with `n` and supplies coprimeness by construction. The Bezout pair
+is computed via `normalizedXGCD` so that
+`s * gMod + t * hMod ≡ 1 (mod 5)`; the iterative linear lift relies on this
+precondition to keep the corrected factors bounded in degree across all `k`
+steps. The shared pair and error salt match `prepMultifactorLiftInput`.
+-/
+def prepLinearInput (n : Nat) : LinearInput :=
+  let (g, h) := denseCoprimePair n
+  let e := denseZPoly (g.size + h.size - 1) 67
   let f := g * h + DensePoly.scale (5 : Int) e
   let xgcd := ZPoly.normalizedXGCD 5 g h
   { f := f
@@ -239,11 +272,9 @@ def prepProductInput (n : Nat) : MultifactorInput :=
 
 /-- Per-parameter fixture for the two-factor multifactor lifting path. -/
 def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
-  let g := linearZFactor 59
-  -- Salt 62 keeps `h` coprime to `g` modulo 5 across the scientific ladder.
-  let h := denseZPoly (n + 1) 62
+  let (g, h) := denseCoprimePair n
   let factors := #[g, h]
-  let e := denseZPoly (n + 1) 67
+  let e := denseZPoly (g.size + h.size - 1) 67
   { f := Array.polyProduct factors + DensePoly.scale (5 : Int) e
     factors := factors }
 
@@ -423,9 +454,9 @@ each `runFlintFooAt` calls the FLINT comparator on the same fixture so
 wall-times are comparable in the same harness. -/
 
 def runLinearHenselStepChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runLinearHenselStepChecksum (prepLinearInput n)
+  return runLinearHenselStepChecksum (prepLinearStepInput n)
 def runFlintLinearHenselStepChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintLinearHenselStepChecksum (prepLinearInput n)
+  runFlintLinearHenselStepChecksum (prepLinearStepInput n)
 
 def runHenselLiftChecksumAt (param : Nat) : Unit → IO UInt64 := fun _ =>
   return runHenselLiftChecksum (prepLinearLiftInput param)
@@ -599,7 +630,7 @@ The linear step performs dense arithmetic against degree-`n` inputs, including
 a correction product whose operands both grow linearly with the fixture size.
 -/
 setup_benchmark runLinearHenselStepChecksum n => n * n
-  with prep := prepLinearInput
+  with prep := prepLinearStepInput
   where {
     paramFloor := 64
     paramCeiling := 512
@@ -610,24 +641,28 @@ setup_benchmark runLinearHenselStepChecksum n => n * n
   }
 
 /-
-The wrapper performs `k` linear correction steps over degree-`n` dense inputs;
-the single lean-bench parameter encodes `(n, k)` as `n * 1000 + k`, including
-Mignotte-sized precisions such as `42` on the scientific schedule.
+The wrapper performs `k` linear correction steps over degree-`n` dense inputs.
+The scientific ladder fixes `k = 64`, the largest precision in the previous
+mixed schedule, and varies only `n` above the small-degree kernel-dispatch
+region. This keeps the encoded parameter a genuine one-dimensional degree
+ladder: lean-bench regresses residuals against the encoded `Nat`, so changing
+`k` several times at the same `n` does not define a valid scalar scaling
+experiment.
 -/
 setup_benchmark runHenselLiftChecksum param => liftLinearComplexity param
   with prep := prepLinearLiftInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
+    paramFloor := encodeLiftParam 144 64
+    paramCeiling := encodeLiftParam 400 64
     paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+      encodeLiftParam 144 64,
+      encodeLiftParam 160 64,
+      encodeLiftParam 192 64,
+      encodeLiftParam 224 64,
+      encodeLiftParam 256 64,
+      encodeLiftParam 320 64,
+      encodeLiftParam 384 64,
+      encodeLiftParam 400 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -700,48 +735,48 @@ setup_benchmark runPolyProductTreeChecksum n => (n * (Nat.log2 (n + 1) + 1) ^ 2)
   }
 
 /-
-This two-factor fixture exercises the public ordered lift helper over encoded
-`(n, k)` parameters; the linear delegated Hensel lift repeats a quadratic
-dense-polynomial correction `k` times.
+This two-factor fixture exercises the public ordered lift helper at the same
+fixed high precision as the direct linear wrapper; the delegated Hensel lift
+repeats a quadratic dense-polynomial correction `k` times.
 -/
 setup_benchmark runMultifactorLiftChecksum param => liftLinearComplexity param
   with prep := prepMultifactorLiftPrecisionInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
+    paramFloor := encodeLiftParam 144 64
+    paramCeiling := encodeLiftParam 400 64
     paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+      encodeLiftParam 144 64,
+      encodeLiftParam 160 64,
+      encodeLiftParam 192 64,
+      encodeLiftParam 224 64,
+      encodeLiftParam 256 64,
+      encodeLiftParam 320 64,
+      encodeLiftParam 384 64,
+      encodeLiftParam 400 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-The production path shares the encoded `(n, k)` fixture with the linear lifter,
+The production path shares the fixed-`k` degree ladder with the linear lifter,
 but its binary lift uses only `ceil(log₂ k)` quadratic-doubling steps; the
 factor/Bezout correction products dominate each step.
 -/
 setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComplexity param
   with prep := prepMultifactorLiftPrecisionInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
+    paramFloor := encodeLiftParam 144 64
+    paramCeiling := encodeLiftParam 400 64
     paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+      encodeLiftParam 144 64,
+      encodeLiftParam 160 64,
+      encodeLiftParam 192 64,
+      encodeLiftParam 224 64,
+      encodeLiftParam 256 64,
+      encodeLiftParam 320 64,
+      encodeLiftParam 384 64,
+      encodeLiftParam 400 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
