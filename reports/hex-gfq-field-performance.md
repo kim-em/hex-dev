@@ -97,7 +97,7 @@ lake exe hexgfqfield_bench verify
 ```
 
 All 104 registrations passed at commit
-`fb1e5bed38960fd1ce941a2d94986439c7d61705` on `chungus2`, using
+`383a50fa457d0f6c0877e30fafe99df879c53200` on `chungus2`, using
 python-flint 0.9.0 for the external fixed targets.
 
 ## Comparator Ratios
