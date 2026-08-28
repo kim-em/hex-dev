@@ -14,78 +14,77 @@
 ## Verdicts
 
 All eight parametric performance registrations use **mode 1, two-sided
-parametric**. Their adjacent
-derivations determine the expected family scaling before measurement:
+parametric**. Their adjacent derivations determine the expected family scaling
+before measurement:
 coefficientwise addition is linear, dense multiplication/reduction and
 extended gcd are quadratic, and exponentiation repeats quadratic
-multiplication logarithmically. The same certificate-backed degree-2-through-8
-family and fixed word-size representation underlie both the passing and
-inconclusive targets, so mode cannot honestly vary with the narrow-range
-harness result. Mode 2 is unavailable because tight models are derivable;
-mode 3 cannot replace an attainable mode-1 test whose present failure is
-schedule calibration rather than model existence.
+multiplication logarithmically. The scientific schedule is
+`#[2, 432, 600, 768, 936, 1216]`: degree 2 retains a smoke point, while the
+five-point verdict tail spans more than a factor of `e`. Every tail degree is
+`40 mod 56`, so the deterministic dense operands have the same coefficient
+pattern over `F_7`; only their degree changes.
+
+The high-degree sparse trinomials are checked by `Berlekamp.rabinTest` during
+compiled benchmark preparation, and the proven implication from that check
+supplies each field's irreducibility witness. Ordinary elaboration still
+contains only the static degree-2-through-8 certificates. Thus `verify`, which
+uses parameters 0 and 1, does not generate or elaborate the scientific
+fixtures. The scientific registrations use three outer trials, warm-cache
+medians, a 120-second per-call cap, and the same schedule for all eight models.
 
 The 96 fixed registrations are comparator endpoints and canonical
 expected-hash checks. They make no complexity claim, have no mode, and do not
 replace the eight performance registrations.
 
-The only recorded verdict run is comparator wiring under smoke settings at
-worktree commit
-`728f2ca-dirty` on `carica` (Apple Silicon, macOS arm64), command:
+The clean scientific run at commit
+`97ff768e53567c607c2afb8942295314c35ed3b9` on `chungus2` (AMD EPYC 9455,
+Linux x86-64, Lean 4.34.0-rc2) used two direct harness invocations:
 
 ```sh
-lake exe hexgfqfield_bench run --filter GFqFieldBench.run \
-    --export-file reports/bench-results/hex-gfq-field-flint-fq-default.json \
-    --total-seconds 120
+lake exe hexgfqfield_bench run \
+  Hex.GFqFieldBench.runOfPolyReprChecksum \
+  Hex.GFqFieldBench.runNegSubChecksum \
+  Hex.GFqFieldBench.runPowChecksum \
+  Hex.GFqFieldBench.runInvDivChecksum \
+  Hex.GFqFieldBench.runFrobChecksum \
+  --export-file reports/bench-results/hex-gfq-field-scientific-core-9740.json
+
+lake exe hexgfqfield_bench run \
+  Hex.GFqFieldBench.runAddChecksum \
+  Hex.GFqFieldBench.runMulChecksum \
+  Hex.GFqFieldBench.runZPowChecksum \
+  --export-file reports/bench-results/hex-gfq-field-scientific-holdouts-9740.json
 ```
 
-Export artefact:
-`reports/bench-results/hex-gfq-field-flint-fq-default.json`, SHA-256
-`39b0314b311fb893b5def63aebfe1d5f10278fba42bd741120ecae067a3d023d`.
-The run completed all 104 registered benchmarks: the eight
-parametric Hex targets plus the paired fixed Hex / FLINT
-`fq_default` registrations over the certificate-checked
-`#[2, 3, 4, 5, 6, 8]` modulus ladder.
+The artefacts are unmodified exports from those commands. Their SHA-256 sums
+are respectively
+`2335f01b8c0d3b77adf858ce42eb836d56df2a1764ec75caef649bd93d34807f`
+and
+`9d047aa1c878e44e117a8a325fe945378545a8201d164423f165ed8db11f62bb`.
+Both top-level and per-result environments record the full commit above and
+`git_dirty=false`. Splitting the registrations limits sustained host drift;
+each verdict is produced directly by the harness, with no row combination or
+post-processing.
 
-- `Hex.GFqFieldBench.runOfPolyReprChecksum`: inconclusive
-  (`cMin=314.805, cMax=911.270`, parameters `2,3,4,5,6,8`,
-  final hash `0x82984efaad14453f`).
-- `Hex.GFqFieldBench.runAddChecksum`: inconclusive
-  (`cMin=81.158, cMax=127.371`, parameters `2,3,4,5,6,8`,
-  final hash `0x6457f0ed8c5c8ed2`).
-- `Hex.GFqFieldBench.runMulChecksum`: inconclusive
-  (`cMin=314.038, cMax=516.962`, parameters `2,3,4,5,6,8`,
-  final hash `0x4084079980228486`).
-- `Hex.GFqFieldBench.runNegSubChecksum`: consistent with declared
-  complexity (`cMin=376.422, cMax=469.543`,
-  parameters `2,3,4,6,8`,
-  final hash `0x98d27f45e383f912`).
-- `Hex.GFqFieldBench.runPowChecksum`: inconclusive
-  (`cMin=886.930, cMax=1341.691`, parameters `2,3,4,5,6,8`,
-  final hash `0x9cd46ad6ad57336b`).
-- `Hex.GFqFieldBench.runInvDivChecksum`: inconclusive
-  (`cMin=2181.290, cMax=3816.775`, parameters `2,3,4,5,6,8`,
-  final hash `0x1415615b9aa4bc17`).
-- `Hex.GFqFieldBench.runZPowChecksum`: inconclusive
-  (`cMin=1222.396, cMax=2002.587`, parameters `2,3,4,5,6,8`,
-  final hash `0xab98d3409e67fa7f`).
-- `Hex.GFqFieldBench.runFrobChecksum`: consistent with declared
-  complexity (`cMin=907.931, cMax=1339.909`,
-  parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
+| Registration | Model | `cMin` | `cMax` | slope | degree-1216 hash |
+|---|---:|---:|---:|---:|---:|
+| `runOfPolyReprChecksum` | `n * n` | 14.969 | 17.601 | +0.117 | `0x7d4ede102dccc098` |
+| `runAddChecksum` | `n` | 15.201 | 16.378 | +0.053 | `0x7104d75758a05e8b` |
+| `runMulChecksum` | `n * n` | 18.534 | 20.124 | +0.015 | `0xce29294f4da9426b` |
+| `runNegSubChecksum` | `n` | 65.493 | 69.065 | +0.047 | `0xe4ecaaefaae0627e` |
+| `runPowChecksum` | `n * n * Nat.log2 (n + 1)` | 40.441 | 41.488 | -0.026 | `0x330820cab12539dd` |
+| `runInvDivChecksum` | `n * n` | 48.905 | 69.209 | -0.037 | `0x7845bac0524b037c` |
+| `runZPowChecksum` | `n * n * Nat.log2 (n + 1)` | 49.974 | 52.785 | -0.054 | `0x4619a8eb8cf05b54` |
+| `runFrobChecksum` | `n * n * Nat.log2 7` | 46.266 | 47.960 | -0.003 | `0x736ff013e830511` |
 
-This dirty smoke run is not reproducible scientific evidence and cannot pass
-Phase 4. Its six inconclusive results indicate that the small
-certificate-backed ladder is miscalibrated; they are not mode-2 passes. The
-results do not block the
-informational FLINT comparator, but they do block Phase 4 until the family is
-re-tuned without fitting its models and rerun scientifically from a clean
-tree. The comparator remains declared in
-`libraries.yml`, wired in `HexGFqField/Bench.lean`, and covered by this report.
+Every registration is **consistent with declared complexity** under the
+mode-1 two-sided rule, so the Phase-4 gate passes. The informational FLINT
+comparator remains declared in `libraries.yml`, wired in
+`HexGFqField/Bench.lean`, and covered by this report's comparator section.
 
 Smoke wiring was checked with:
 
 ```sh
-lake exe hexgfqfield_bench list
 lake exe hexgfqfield_bench verify
 ```
 
