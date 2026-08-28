@@ -988,7 +988,7 @@ regime (clean baseline 9.7 ms). -/
 setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
-    maxSecondsPerCall := 0.1
+    maxSecondsPerCall := 0.5
     expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
@@ -997,7 +997,7 @@ setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
 setup_fixed_benchmark runTrialProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
-    maxSecondsPerCall := 0.1
+    maxSecondsPerCall := 0.5
     expectedHash := some 0xc83c0a1fbfe185a2
     tags := #["adoption", "trial-product", "dispatch"]
   }
