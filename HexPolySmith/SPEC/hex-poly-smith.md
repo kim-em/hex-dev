@@ -174,9 +174,11 @@ polynomial degree independently and covers these families:
 - `ZMod64 2` matrices, where evaluation-point supply is constrained.
 
 The Smith loop performs polynomial gcd/division plus dense row and column
-updates. The registrations therefore declare matrix-update cost models and
-report polynomial-degree and rational coefficient-bit growth separately; they
-do not claim a field-operation bound as a coefficient-bit complexity bound.
+updates. Its mode-1 registrations use known invariant-factor chains whose
+boundary degree and rational coefficient width follow from construction. The
+wall models multiply dense matrix or schoolbook polynomial work by the derived
+64-bit limb count. The original generic dense inputs remain fixed comparator
+stress cases; they do not make a parametric complexity claim.
 
 The required within-Lean comparisons are:
 
