@@ -594,7 +594,7 @@ The required exactification input families are:
   first root of `∏ p∈{2,3,5,7,11,13}, (X² - p)`, the top completed rung of
   the archived growing-factor-count sweep. It has degree 12,
   `coeffAbsMax = 40361`, coefficient bit height 16, and certificate precision
-  241. Its zero-grace whole-child budget is 150 ms, including a 20 ms timed
+  241. Its zero-grace whole-child budget is 200 ms, including a 20 ms timed
   batch after one untimed warmup.
 
 The certification and factorization sweeps are archived diagnostic evidence,

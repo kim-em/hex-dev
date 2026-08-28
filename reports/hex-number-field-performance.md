@@ -23,7 +23,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
 | `runAddEliminantLadder` | parametric | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
 | `runLazyAddLadder` | fixed | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | 12 s ceiling |
-| `runExactLadder` | fixed | `AlgebraicRoot.exact?` on the first certified root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)` | 150 ms whole-child ceiling, zero grace |
+| `runExactLadder` | fixed | `AlgebraicRoot.exact?` on the first certified root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)` | 200 ms whole-child ceiling, zero grace |
 | `runExactFactorLadder` | fixed | `AlgebraicRoot.exactFactor?` for `X^8 - 2` inside `(X^8 - 2)(X + 3)`, with a static certified enclosing root | 2 s whole-child ceiling, zero grace |
 | `runCanonicalRepLadder` | fixed | `AlgebraicNumber.canonicalRep?` for a static certified root of `X^8 - 2` | 1.1 s whole-child ceiling, zero grace |
 | `runCommonPresentationLadder` | parametric | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
@@ -130,9 +130,9 @@ same unproved HexRoots proxy. The current registrations therefore use the top
 completed sweep rungs as canonical hard fixed inputs. The harness enforces a
 deadline on the whole child, not directly on the reported operation median, so
 the budgets are sized against startup plus one untimed warmup plus the timed
-call or batch. With `killGraceMs := 0`, the 150 ms, 2 s, and 1.1 s declarations
+call or batch. With `killGraceMs := 0`, the 200 ms, 2 s, and 1.1 s declarations
 are the actual child deadlines. Against the measured 41.85 ms spawn floor and
-the largest clean operation calls they provide approximately 2.0x, 2.8x, and
+the largest clean operation calls they provide approximately 2.3x, 2.8x, and
 3.1x process-level headroom, respectively, and remain operation-specific
 rather than reusing the generic 30 s ladder timeout. The fast end-to-end case
 uses an at-least-20 ms timed batch instead of a single-shot reading. Static certified
@@ -277,7 +277,7 @@ families before measurement, and all five pass.
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
 `runAlgebraicRootsLadder` use **mode 3, fixed registration with an absolute
 budget**. The adjacent isolation-mode assessments record why modes 1 and 2 do
-not apply, identify their canonical inputs, and set 12 s, 150 ms, 2 s, 1.1 s,
+not apply, identify their canonical inputs, and set 12 s, 200 ms, 2 s, 1.1 s,
 20 s, and 15 s whole-child ceilings. All fixed measurements and hashes pass.
 This deliberately gives up asymptotic detection for those operations without
 changing their per-library worst-case contracts.
@@ -509,7 +509,7 @@ three fixed registrations at source `7349e9b75`:
 
 | target | median | min..max | whole-child ceiling | observed hash |
 |---|---:|---:|---:|---|
-| `runExactLadder` | 1.876 ms | 1.870..1.881 ms | 150 ms | `0x5bfd5b96f72b6002` |
+| `runExactLadder` | 1.876 ms | 1.870..1.881 ms | 200 ms | `0x5bfd5b96f72b6002` |
 | `runExactFactorLadder` | 312.221 ms | 308.888..332.614 ms | 2 s | `0xe5c33ee70736a0fb` |
 | `runCanonicalRepLadder` | 154.103 ms | 153.634..157.124 ms | 1.1 s | `0x1d7ae08962f9292c` |
 

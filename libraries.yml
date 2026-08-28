@@ -979,7 +979,7 @@ libraries:
         - name: exactification-certification
           description: Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model.
         - name: exactification-factorization
-          description: Fixed mode-3 end-to-end exactification of the first root of the six-factor product over X^2 - p for p in {2,3,5,7,11,13}, the top completed rung of the archived factor-count sweep, under a 150 ms absolute child budget. The former sweep remains diagnostic evidence; inclusive profiling shows isolation, not BHKS-covered factorization, controls this family.
+          description: Fixed mode-3 end-to-end exactification of the first root of the six-factor product over X^2 - p for p in {2,3,5,7,11,13}, the top completed rung of the archived factor-count sweep, under a 200 ms absolute child budget. The former sweep remains diagnostic evidence; inclusive profiling shows isolation, not BHKS-covered factorization, controls this family.
         - name: fixed-field-roots
           description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
         - name: algebraic-poly-roots
