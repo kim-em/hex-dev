@@ -847,7 +847,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -862,7 +862,7 @@ libraries:
         - name: wilkinson-linprod
           description: The canonical degree-10 product ∏(X−j), with roots 1..10; shared by the three fixed dual-route strategy regressions.
         - name: refine-fixed
-          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by fixed refineTo at achieved precision 131077 and sameRoot.
+          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by parametric refineTo on its achieved-precision ladder and by fixed sameRoot.
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
