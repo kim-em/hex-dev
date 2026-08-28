@@ -447,7 +447,7 @@ degree-128 midpoint and enforces a 50 ms absolute budget in `runTaylor` via
 `budgeted`, above its clean 2.222 ms baseline; `maxSecondsPerCall` below is
 only a process safety cap.
 -/
-setup_benchmark runTaylor n => n * n * n
+setup_benchmark runTaylor n => n * n
   with prep := seededPoly
   where {
     paramFloor := 64
