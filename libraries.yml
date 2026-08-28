@@ -586,11 +586,11 @@ libraries:
         - name: bridge-operations
           description: Coefficient reduction from Z[x] to F_5[x], canonical lifting from F_5[x] to Z[x], and reduction modulo a fixed power of 5 over deterministic dense integer and F_5 polynomial fixtures.
         - name: linear-hensel
-          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step and an iterated fixed-high-precision degree family.
+          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step, an iterated fixed-high-precision degree family, and a separate fixed-degree precision family.
         - name: quadratic-hensel
-          description: Single quadratic Hensel correction step on deterministic dense integer-polynomial fixtures with full lifted Bezout updates.
+          description: Quadratic Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step with full lifted Bezout updates and a separate fixed-degree precision family.
         - name: multifactor-lifting
-          description: Ordered multifactor product, linear ordered multifactor lifting, and the production quadratic ordered multifactor lifter on deterministic two-factor dense integer-polynomial fixtures, with lift scaling isolated at fixed high precision.
+          description: Ordered multifactor product with coefficient-bit-aware bounds, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures with degree and precision scaling isolated into separate families.
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
