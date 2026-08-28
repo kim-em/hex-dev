@@ -1300,7 +1300,7 @@ the same operation across the mode change. -/
 setup_fixed_benchmark runQAdjoinRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 20.0
-  expectedHash := some 0x1b2a158c4b746671
+  expectedHash := some 0x63e9dd11895b2211
 }
 
 initialize algebraicRootsLadderRef : IO.Ref (Option AlgPolyInput) ← IO.mkRef none

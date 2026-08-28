@@ -726,14 +726,16 @@ and the three isolation cases in the isolation fixed exports:
 | `runExactFactorLadder` | 308.643 ms | `0xe5c33ee70736a0fb` | match |
 | `runCanonicalRepLadder` | 154.045 ms | `0x1d7ae08962f9292c` | match |
 | `runRoots` | 1.069 ms | `0x235b18400d87a46c` | match |
-| `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x1b2a158c4b746671` | match |
+| `runQAdjoinRootsLadder` | 11.108 s (loaded host) | `0x63e9dd11895b2211` | match |
 | `runAlgebraicRootsLadder` | 5.955 s | `0xb6a44b3ff493da5e` | match |
 | `runPariPolmodOverhead` | 7.126 us | `0x0` | match |
 
-The three root-representation hashes above were refreshed after HexRoots
+The four root-representation hashes above were refreshed after HexRoots
 restored its bounded local finisher. Current-tree verification observes the
-new values consistently; the recorded medians remain those of the cited
-controlled exports because the timed HexNumberField operations are unchanged.
+new values consistently (`runLazyAddLadder`, `runRoots`,
+`runQAdjoinRootsLadder`, and `runAlgebraicRootsLadder`); the recorded medians
+remain those of the cited controlled exports because the timed HexNumberField
+operations are unchanged.
 The conformance emitter also reproduces the refreshed 51-record fixture:
 six box/result records carry the tighter dyadic representatives selected by
 the repaired HexRoots finisher. The HexNumberFieldTower emitter reproduces its
