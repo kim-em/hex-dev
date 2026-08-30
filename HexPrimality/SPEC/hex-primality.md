@@ -845,8 +845,8 @@ witness returns `.composite` at every fuel. Only a candidate at or above
 returns `.exhausted` without starting factorization, while a positive fuel
 begins one certificate node and passes its predecessor to every child. A table
 child can consequently close when that predecessor is zero, whereas a child
-that itself needs construction exhausts. Thus the fuel is the maximum number
-of constructed certificate nodes along a root-to-child path; it neither counts
+that itself needs construction exhausts. Thus the fuel bounds the number of
+constructed certificate nodes along any root-to-leaf path; it neither counts
 deterministic verdict work nor bounds the randomized attempt total within a
 node.
 
@@ -867,9 +867,9 @@ critical path, so `NextPrimeFailure` reports exhaustion with the attempt
 count and advanced state. The theorem records that a success is the
 *least* such prime.
 
-`primeCert?` distinguishes `PrimeCertStop.composite`, justified by trial
-division or a failed Miller-Rabin base, from `.exhausted`, which makes
-no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
+`primeCert?` distinguishes `PrimeCertStop.composite`, justified by the size
+check, table completeness, or a failed Miller-Rabin base, from `.exhausted`,
+which makes no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
 factored past a square root (or a cube root), and there are `n` for
 which that is out of reach. `PrimeCertFailure` retains the advanced state and
 exact attempt count because `partialFactor` runs Pollard rho.

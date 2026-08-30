@@ -141,7 +141,8 @@ open Hex.Nat
         success.rand == ((Hex.Rand.ofSeed 0).words 7).2
   | .error _ => false)
 
--- The bounded decision exposes the same zero/one-fuel boundary.
+-- The bounded decision remains fuel-insensitive below the table bound and
+-- exposes the reordered verdict/construction boundary above its trial cutoff.
 #guard (List.range 2).all fun fuel =>
   match isPrime? 4 (Hex.Rand.ofSeed 0) fuel with
   | .ok (verdict, r) => !verdict && r == Hex.Rand.ofSeed 0

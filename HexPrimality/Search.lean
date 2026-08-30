@@ -562,8 +562,8 @@ set_option maxRecDepth 10000 in
 
 /-- Why certificate search stopped without a certificate. -/
 inductive PrimeCertStop where
-  /-- The input is provably composite (trial, table completeness, or a
-  Miller-Rabin witness); the failure is a verdict. -/
+  /-- The input is provably composite (the size check, table completeness, or
+  a Miller-Rabin witness); the failure is a verdict. -/
   | composite
   /-- The search budget ran out; no primality claim either way. -/
   | exhausted
