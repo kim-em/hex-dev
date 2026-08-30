@@ -195,6 +195,7 @@ meta def elabPrimalityArgument (t : Syntax) : Term.TermElabM Expr := do
 `n`. -/
 syntax (name := primalityTerm) "primality" term:max : term
 
+/-- Elaborator for the Mathlib-free `primality n` term syntax. -/
 @[term_elab primalityTerm] meta def elabPrimality : Term.TermElab :=
   fun stx expectedType? => do
     match stx with
@@ -226,6 +227,7 @@ meta def goalPrime (goal : MVarId) : Tactic.TacticM Bool := do
 syntax (name := primalityTac)
   "primality" (atomic(ident " : "))? (term:max)? : tactic
 
+/-- Evaluator for the Mathlib-free `primality` tactic forms. -/
 @[tactic primalityTac] meta def evalPrimalityTac : Tactic.Tactic :=
   fun stx => do
     match stx with

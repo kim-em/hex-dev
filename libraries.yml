@@ -641,7 +641,7 @@ libraries:
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 2
     status: active
     phase4:
       comparators:
@@ -825,7 +825,7 @@ libraries:
     deps: [HexPrimality]
     mathlib: true
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
-    done_through: 0
+    done_through: 2
     status: active
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
