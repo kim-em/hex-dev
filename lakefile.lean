@@ -1203,6 +1203,10 @@ lean_exe hexprimality_policy_probe where
   srcDir := "bench"
   root := `HexPrimality.PolicyProbe
 
+lean_exe hexprimality_fuel_probe where
+  srcDir := "bench"
+  root := `HexPrimality.FuelProbe
+
 lean_exe hexintfactor_bench where
   srcDir := "bench"
   root := `HexIntFactor.Bench

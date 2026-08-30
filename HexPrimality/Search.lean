@@ -659,9 +659,12 @@ structure NextPrimeFailure where
   rand : Rand
 deriving Repr
 
-/-- Default fuel for the bounded decision path: recursion depth scales with
-the bit length. A starting point, to be revisited by the bench. -/
-def defaultPrimeFuel (n : Nat) : Nat := 2 * n.log2 + 16
+/-- Default fuel for the bounded decision path: one certificate-construction
+level per input bit. Above the deterministic tiers, every recursive child is a
+prime divisor of `n - 1`; for odd `n` it is at most `(n - 1) / 2`, so its bit
+length is strictly smaller. This is a conservative depth bound, not a claim
+that bounded factor or witness search finds every available certificate. -/
+def defaultPrimeFuel (n : Nat) : Nat := n.log2 + 1
 
 /-- A private non-dependent counted result. Public counted shapes remain
 specialized so their factor and indexed-certificate fields have stable names. -/

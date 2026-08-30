@@ -7,6 +7,7 @@ import unittest
 
 from scripts.bench import fresh_module_sweep
 from scripts.bench import primality_elab_sweep as elab
+from scripts.bench import primality_fuel_sweep as fuel
 from scripts.bench import primality_policy_sweep as policy
 from scripts.bench import primality_table_sweep as table
 
@@ -54,6 +55,35 @@ class DecisionSweepTests(unittest.TestCase):
         self.assertGreaterEqual(len(chains), 2)
         self.assertLess(min(chains), 2_000_000)
         self.assertGreater(max(chains), 10_000_000)
+
+
+class FuelSweepTests(unittest.TestCase):
+    def test_ladder_covers_required_search_families(self) -> None:
+        self.assertEqual(
+            {case.family for case in fuel.CASES},
+            {
+                "table-smooth",
+                "p-minus-one-friendly",
+                "recursively-certified",
+                "rho-friendly",
+                "honest-exhaustion",
+            },
+        )
+        self.assertEqual(
+            {case.minimum_fuel for case in fuel.CASES},
+            {None, 1, 2, 3},
+        )
+
+    def test_ladder_reaches_policy_rung_without_duplicates(self) -> None:
+        ladder = fuel.fuel_ladder(512)
+        self.assertEqual(ladder, tuple(sorted(set(ladder))))
+        self.assertIn(0, ladder)
+        self.assertIn(16, ladder)
+        self.assertIn(512, ladder)
+
+    def test_settled_default_is_one_fuel_per_input_bit(self) -> None:
+        search = (fuel.ROOT / "HexPrimality/Search.lean").read_text(encoding="utf-8")
+        self.assertIn("def defaultPrimeFuel (n : Nat) : Nat := n.log2 + 1", search)
 
 
 class ElaboratorSweepTests(unittest.TestCase):
@@ -112,7 +142,7 @@ class ElaboratorSweepTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("meta def primalityBitBudget : Nat := 512", core)
-        self.assertIn("meta def primalityFuelBudget : Nat := 1040", core)
+        self.assertIn("meta def primalityFuelBudget : Nat := 512", core)
         self.assertIn("meta def primalityRhoRestartBudget : Nat := 2", core)
         self.assertIn("meta def primalityRhoStepBudget : Nat := 1 <<< 15", core)
         self.assertIn("let fuel := primalityFuel n", core)
