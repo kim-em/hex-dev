@@ -509,9 +509,9 @@ hex-int-factor depends on hex-primality, because a factorization
 certificate has to prove its factors prime. hex-primality does **not**
 depend on hex-int-factor, because the factorization of `n - 1` it needs
 is search, not proof. To keep it that way, hex-primality owns the shared
-untrusted Brent-rho primitive and an internal `partialFactor`: trial
-division by the stored table followed by that primitive, with a fuel
-bound.
+untrusted Pollard `p − 1` and Brent-rho primitives and an internal
+`partialFactor`: trial division by the stored table, one bounded stage-1
+call, then rho, with a fuel bound.
 
 ```lean
 /-- Why a proper-factor search stopped without a factor. -/
@@ -544,6 +544,23 @@ def Internal.rhoFactorCounted? (n : Nat) (r : Rand) (fuel : Nat) :
 theorem Internal.rhoFactorCounted?_spec {n r fuel success}
     (h : Internal.rhoFactorCounted? n r fuel = .ok success) :
     1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n
+
+inductive PMinusOneResult where
+  | noFactor
+  | factor (value : Nat)
+  | whole
+
+structure PMinusOneAttempt where
+  result   : PMinusOneResult
+  attempts : Nat
+  rand     : Rand
+
+def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
+    PMinusOneAttempt
+
+theorem pMinusOneStage1Counted_spec
+    (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
 ```
 
 The compatible pair-returning API is backed by the counted internal result
@@ -554,6 +571,12 @@ choose that restart remain part of the same attempt. The ordinary
 `rhoFactor?` projection does not rerun the search or alter its final state.
 The deterministic even-input shortcut returns factor `2` with zero attempts
 and an unchanged generator because it runs no restart.
+
+The p−1 counted boundary records all three terminal gcd outcomes. Every call
+has `attempts = 1`; because stage 1 is deterministic, its returned `rand` is
+exactly the supplied state. Thus callers charge a semantic p−1 attempt without
+pretending it consumed a generator word. Both partial factorization and
+hex-int-factor consume this boundary directly.
 
 `rhoFactor?` validates range and divisibility before returning.
 Randomness and fuel affect only whether it finds a factor. The advanced
@@ -588,13 +611,26 @@ structure PartialFactors where
   factors  : List (Nat × Nat)
   residual : Nat
 
-private def partialFactor (n : Nat) (r : Rand) (fuel : Nat) :
-    PartialFactors × Rand
+private structure PartialSearch where
+  raw      : PartialFactors
+  rand     : Rand
+  attempts : Nat
 
-private theorem partialFactor_prod (n r fuel) (hn : 0 < n) :
-    (((partialFactor n r fuel).1.factors.map
-      (fun e => e.1 ^ e.2)).prod * (partialFactor n r fuel).1.residual) = n
+private def partialFactor (budget : PrimeCertBudget) (n : Nat)
+    (r : Rand) (fuel : Nat) : PartialSearch
+
+private theorem partialFactor_prod (budget n r fuel) :
+    prodPows (partialFactor budget n r fuel).raw.factors *
+      (partialFactor budget n r fuel).raw.residual = n
 ```
+
+After table division, positive fuel permits one stage-1 call on a composite
+cofactor, at base `2` and bound `64`. Zero fuel, a trivial cofactor, or a
+probable-prime cofactor skips that call. A proper factor seeds the rho
+worklist with the divisor and cofactor; `noFactor` and `whole` both retain the
+original cofactor unsplit. Rho then receives the same worklist-step fuel.
+Every actual p−1 call contributes exactly one to `PartialSearch.attempts` and
+leaves `PartialSearch.rand` unchanged.
 
 hex-int-factor reuses `rhoFactor?` rather than introducing a second rho.
 Brent's batched cycle detection and whole-modulus recovery are already
@@ -618,10 +654,10 @@ without inverting the proof dependency, in three ways:
    caller that factors `n - 1` better than `partialFactor` assembles
    the node itself and lets the checker decide. hex-int-factor needs
    exactly this to prove its own certificate's factors prime.
-2. **Shared stage-1 primitives sit here.** `rhoFactor?` does, and
-   Pollard `p − 1` stage 1 joins it beside rho when hex-int-factor
-   lands, under the same dynamically validated proper-factor contract
-   and resumable-failure shape: both libraries want it, and it widens
+2. **Shared stage-1 primitives sit here.** `rhoFactor?` and Pollard
+   `p − 1` stage 1 live beside each other, under the same dynamically
+   validated proper-factor contract and counted/resumable boundary. Both
+   libraries consume stage 1, and the fixed base-2/bound-64 call widens
    `partialFactor`'s reach cheaply. Its public smoothness request is capped by
    `smoothBound B = min B 9999`, preserving the measured search budget while
    remaining inside the complete committed table; `pMinusOneStage1_bound`
@@ -629,7 +665,7 @@ without inverting the proof dependency, in three ways:
    curve arithmetic is a real dependency, not a shared primitive.
 3. **An optional search hook**, deferred until hex-int-factor exists to
    consume it. A `primeCert?With
-   (factor : Nat → Rand → Nat → PartialFactors × Rand)` variant
+   (factor : Nat → Rand → Nat → PartialFactors × Rand × Nat)` variant
    parameterizes the untrusted search (defaulting to `partialFactor`),
    and the `primality` tactic and companion `norm_num` extension may
    additionally consult an elaboration-time extension that downstream
@@ -894,14 +930,15 @@ Euclid would make the total form available and is not on any consumer's
 critical path, so `NextPrimeFailure` reports exhaustion with the attempt
 counts and advanced state. The units are separate: `rejectedCandidates`
 counts only candidates conclusively proved composite, while `certAttempts`
-counts randomized certificate-search attempts consumed by the candidate
+counts certificate-search attempts consumed by the candidate
 whose decision exhausted. An undecided candidate is not included in
 `rejectedCandidates`. If the candidate window itself is exhausted,
 `certAttempts` is zero. In either case `rand` is the exact state after all
-reported randomized work, so a caller can replay or resume without losing
-work. Deterministic table lookup, trial division, and Miller--Rabin filtering
-do not contribute to `certAttempts`; in particular, every conclusively rejected
-candidate leaves both this count and `rand` unchanged. A failure with
+reported search work, so a caller can replay or resume without losing work.
+Deterministic p−1 calls contribute to `certAttempts` but leave `rand` unchanged;
+table lookup, trial division, and Miller--Rabin filtering contribute to
+neither. In particular, every conclusively rejected candidate leaves both this
+count and `rand` unchanged. A failure with
 `rejectedCandidates = fuel` exhausted the whole candidate window. Otherwise
 the undecided candidate is `n + 1 + rejectedCandidates`, so the two failure
 modes and the resumption point are recoverable from the call and its failure.
@@ -912,12 +949,13 @@ check, table completeness, or a failed Miller-Rabin base, from `.exhausted`,
 which makes no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
 factored past a square root (or a cube root), and there are `n` for
 which that is out of reach. `PrimeCertFailure` retains the advanced state and
-exact attempt count because `partialFactor` runs Pollard rho.
+exact attempt count because `partialFactor` runs Pollard p−1 and rho.
 `Internal.primeCertCounted?` also exposes that count on success, while
 `primeCert?` is its compatibility projection. Certificate metering counts
-every rho restart and every tried witness candidate, including successful
-ones, throughout recursive child construction; deterministic table lookup,
-Miller--Rabin filtering, and checker replay are not search attempts. Earlier
+every p−1 call, rho restart, and tried witness candidate, including successful
+ones, throughout recursive child construction. A p−1 call changes the count
+but not `rand`; table lookup, trial division, Miller--Rabin filtering, and
+checker replay are not search attempts. Earlier
 successful child and witness searches are accumulated before a later failure,
 and both entry points return the same advanced state without duplicate work.
 The failure propagates
@@ -955,8 +993,8 @@ certificate-construction depth. Partial factorization is bounded separately by
 `2 * n.log2 + 8` worklist
 steps at each certificate node and the rho restart/cycle allocation above. The
 fixed witness budget remains 32 candidates per factor entry. The exact attempt
-counter includes rho restarts and witness candidates and can therefore exceed
-the recursive fuel used at a node. Inputs above 512 bits are rejected before
+counter includes p−1 calls, rho restarts, and witness candidates and can
+therefore exceed the recursive fuel used at a node. Inputs above 512 bits are rejected before
 Miller--Rabin or certificate search. Search exhaustion reports the seed,
 selected recursive fuel, exact attempt count, and all enforced search maxima,
 and explicitly says that no total decision was attempted.
@@ -1070,7 +1108,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `isPrime` worst case | `O(√n)` remainder tests | exact fallback after default search exhaustion |
 | `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
-| `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
+| `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,
@@ -1307,7 +1345,7 @@ HexPrimality/
   MillerRabin.lean  -- millerRabin, isProbablePrime, the compositeness theorem
   Cert.lean         -- PrimeCert, CheckedPrimeCert, checkPrime, soundness
   Cert3.lean        -- the cube-root variant
-  Search.lean       -- rhoFactor?, partialFactor, primeCert?, isPrime?, isPrime, nextPrime?
+  Search.lean       -- p−1/rho partialFactor, primeCert?, isPrime?, nextPrime?
   Elab.lean         -- the primality tactic
 HexPrimality.lean
 ```

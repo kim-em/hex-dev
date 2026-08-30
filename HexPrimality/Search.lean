@@ -8,19 +8,21 @@ module
 
 public import HexPrimality.Cert
 public import HexPrimality.MillerRabin
+public import HexPrimality.PMinusOne
 public import HexPrimality.Table
 public import HexBasic.Rand
 -- For the `#guard` regression block only.
 meta import HexPrimality.Table
 meta import HexPrimality.Cert
 meta import HexPrimality.MillerRabin
+meta import HexPrimality.PMinusOne
 meta import HexArith.Montgomery.Context
 meta import HexBasic.Rand
 
 public section
 
 /-!
-Untrusted factor search: the shared Brent-rho primitive and the internal
+Untrusted factor search: the shared stage-1 primitives and the internal
 partial factorization behind certificate search.
 
 `rhoFactor?` validates range and divisibility before returning, so its one
@@ -36,10 +38,11 @@ Each restart uses Brent's power-of-two anchor schedule, accumulates at most
 an individual divisor. Restart draws exclude degenerate polynomials and
 fixed starting points before entering the bounded loop.
 
-`partialFactor` is internal: trial division by the committed table, then
-Brent rho over a worklist, with everything unsplittable multiplied into the
-residual. Its one theorem is the product invariant its certificate-search
-consumer needs; no primality and no completeness is claimed.
+`partialFactor` is internal: trial division by the committed table, one
+counted deterministic Pollard `p - 1` stage-1 call, then Brent rho over a
+worklist, with everything unsplittable multiplied into the residual. Its one
+theorem is the product invariant its certificate-search consumer needs; no
+primality and no completeness is claimed.
 -/
 
 namespace Hex
@@ -464,6 +467,51 @@ private theorem insertFactor_prod (p : Nat) :
         simp only [prodPows, ih]
         simp [Nat.mul_left_comm]
 
+/-- The certificate path spends at most one cheap stage-1 call per partial
+factorization, after table division and before rho. -/
+private def pMinusOneBase : Nat := 2
+private def pMinusOneBound : Nat := 64
+
+private structure PMinusOnePhase where
+  stack : List Nat
+  rand : Rand
+  attempts : Nat
+
+/-- Try the shared deterministic stage-1 primitive once on a composite table
+cofactor. Zero worklist fuel skips the call; trivial and probable-prime
+cofactors also go straight to the rho worklist. Every actual call is charged
+once through the shared counted boundary, while its random state is unchanged.
+Both failure outcomes retain the original cofactor unsplit. -/
+private def pMinusOnePhase (m : Nat) (r : Rand) : Nat → PMinusOnePhase
+  | 0 => ⟨[m], r, 0⟩
+  | _ + 1 =>
+      if m < 4 ∨ isProbablePrime m then ⟨[m], r, 0⟩
+      else
+        let attempt := pMinusOneStage1Counted m pMinusOneBase
+          pMinusOneBound r
+        match attempt.result with
+        | .factor d => ⟨[d, m / d], attempt.rand, attempt.attempts⟩
+        | .noFactor | .whole => ⟨[m], attempt.rand, attempt.attempts⟩
+
+private theorem pMinusOnePhase_prod (m : Nat) (r : Rand) (fuel : Nat) :
+    listProd (pMinusOnePhase m r fuel).stack = m := by
+  cases fuel with
+  | zero => simp [pMinusOnePhase, listProd]
+  | succ fuel =>
+      simp only [pMinusOnePhase]
+      by_cases hskip : m < 4 ∨ isProbablePrime m
+      · rw [if_pos hskip]
+        simp [listProd]
+      · rw [if_neg hskip]
+        split
+        · rename_i d hfactor
+          have hproper : 1 < d ∧ d < m ∧ d ∣ m := by
+            exact pMinusOneStage1Counted_spec hfactor
+          simp only [listProd]
+          rw [Nat.mul_one, Nat.mul_div_cancel' hproper.2.2]
+        · simp [listProd]
+        · simp [listProd]
+
 /-- Restart budget for each rho call inside the worklist. -/
 private def rhoRestartBudget : Nat := Internal.rhoRestartCap
 
@@ -566,16 +614,19 @@ private structure PartialSearch where
   rand : Rand
   attempts : Nat
 
-/-- Trial division by the committed table, then Brent rho over a worklist,
-with `fuel` bounding the worklist steps. Everything the search cannot split
-multiplies into the residual. Internal; certificate search is the only
-consumer, and hex-int-factor builds its own assembly over the counted rho
-adapter. -/
+/-- Trial division by the committed table, one base-2 stage-1 attempt at bound
+64 when fuel is positive and the cofactor is composite, then Brent rho over a
+worklist, with `fuel` bounding the worklist steps. Everything the search cannot
+split multiplies into the residual. Internal; certificate search is the only
+consumer, and hex-int-factor builds its own assembly over the counted search
+adapters. -/
 private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     (fuel : Nat) :
     PartialSearch :=
   let trial := trialGo primeTable.toList [] n
-  let phase := rhoPhase budget fuel [trial.2] trial.1 1 r 0
+  let smooth := pMinusOnePhase trial.2 r fuel
+  let phase := rhoPhase budget fuel smooth.stack trial.1 1 smooth.rand
+    smooth.attempts
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
 
 /-- The product invariant: the claimed powers times the residual recover the
@@ -587,8 +638,7 @@ private theorem partialFactor_prod (budget : PrimeCertBudget) (n : Nat)
   unfold partialFactor
   dsimp only
   rw [rhoPhase_prod]
-  simp only [listProd]
-  rw [Nat.mul_one, Nat.mul_one]
+  rw [pMinusOnePhase_prod]
   simpa [prodPows] using trialGo_prod primeTable.toList [] n
 
 /-! Regression coverage: the rho primitive on every result shape, and the
@@ -615,6 +665,30 @@ set_option maxRecDepth 10000 in
         pf.factors.foldl (fun a x => a * x.1 ^ x.2) 1 * pf.residual ==
           97 * 101 * 101)
 
+-- With rho disabled, the bounded p−1 phase splits this table-coprime
+-- cofactor into probable-prime worklist entries. The deterministic call is
+-- charged once and leaves the generator unchanged.
+private def pMinusOnePartial : PartialSearch :=
+  partialFactor ⟨0, 0⟩ (100549 * 100049) (Rand.ofSeed 17) 8
+
+#guard pMinusOnePartial.raw.residual == 1
+#guard pMinusOnePartial.attempts == 1
+#guard pMinusOnePartial.rand == Rand.ofSeed 17
+
+-- Gcd one and whole-modulus outcomes both fall through to the bounded rho
+-- worklist; with zero rho restarts they retain the original cofactor unsplit.
+private def pMinusOneMissPartial : PartialSearch :=
+  partialFactor ⟨0, 0⟩ (100049 * 100057) (Rand.ofSeed 18) 4
+private def pMinusOneWholePartial : PartialSearch :=
+  partialFactor ⟨0, 0⟩ (100549 * 100801) (Rand.ofSeed 19) 4
+
+#guard pMinusOneMissPartial.raw.residual == 100049 * 100057
+#guard pMinusOneMissPartial.attempts == 1
+#guard pMinusOneMissPartial.rand == Rand.ofSeed 18
+#guard pMinusOneWholePartial.raw.residual == 100549 * 100801
+#guard pMinusOneWholePartial.attempts == 1
+#guard pMinusOneWholePartial.rand == Rand.ofSeed 19
+
 /-! Certificate search and the decision API. -/
 
 /-- Why certificate search stopped without a certificate. -/
@@ -630,8 +704,9 @@ deriving Repr, DecidableEq
 structure PrimeCertFailure where
   /-- Why the search stopped. -/
   stop : PrimeCertStop
-  /-- Randomized attempts consumed by the complete invocation, including
-  successful subsearches completed before this failure. -/
+  /-- Search attempts consumed by the complete invocation, including
+  deterministic p−1 calls and successful subsearches completed before this
+  failure. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -651,9 +726,9 @@ structure NextPrimeFailure where
   /-- Candidates conclusively rejected as composite before exhaustion. An
   undecided candidate is not counted. -/
   rejectedCandidates : Nat
-  /-- Randomized certificate-search attempts consumed by the undecided
-  candidate. Deterministic table, trial-division, and Miller--Rabin work is
-  not counted. -/
+  /-- Certificate-search attempts consumed by the undecided candidate,
+  including deterministic p−1 calls. Table lookup, trial division, and
+  Miller--Rabin work are not counted. -/
   certAttempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -772,12 +847,12 @@ end
 
 namespace Internal
 
-/-- A checked primality certificate together with the exact number of
-randomized rho restarts and witness candidates used to construct it. -/
+/-- A checked primality certificate together with the exact number of p−1
+calls, randomized rho restarts, and witness candidates used to construct it. -/
 structure PrimeCertSuccess (n : Nat) where
   /-- Kernel-replayable checked certificate. -/
   cert : CheckedPrimeCert n
-  /-- Randomized attempts used throughout the recursive construction. -/
+  /-- Search attempts used throughout the recursive construction. -/
   attempts : Nat
   /-- Generator state after those attempts. -/
   rand : Rand
@@ -1092,7 +1167,7 @@ private theorem nextPrimeGo_spec (certFuel : Nat) :
 /-- Fuel-bounded least-prime-above search: a total form needs Euclid's
 theorem, which this tree does not carry Mathlib-free, so exhaustion is
 reported with separate counts for conclusively rejected candidates and
-randomized certificate-search attempts, plus the exact advanced state. On
+certificate-search attempts, plus the exact advanced state. On
 failure, `rejectedCandidates = fuel` means the candidate window was exhausted;
 otherwise the undecided candidate is `n + 1 + rejectedCandidates`. -/
 def nextPrime? (n : Nat) (r : Rand) (fuel : Nat) :

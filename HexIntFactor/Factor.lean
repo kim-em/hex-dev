@@ -99,12 +99,16 @@ structure SmoothSearch where
   factor : Option Nat
   /-- Generator state after every attempted randomized curve. -/
   rand : Rand
-  /-- Attempts in execution order; its length is the dispatcher's charge. -/
+  /-- Semantic p−1 calls and ECM curves executed. -/
+  attempts : Nat
+  /-- Attempts in execution order, retained for route diagnostics. -/
   events : List SmoothEvent
 deriving Repr, DecidableEq
 
 private structure SmoothPhase where
   factor : Option Nat
+  rand : Rand
+  attempts : Nat
   events : List SmoothEvent
 
 private def pMinusOneAttemptCap : Nat := 4
@@ -118,45 +122,48 @@ private def raiseSmoothBound (bound : Nat) : Nat :=
 private def lowerSmoothBound (bound : Nat) : Nat :=
   max 2 (bound / 8)
 
-private def pMinusOneGo (n : Nat) : Nat → Nat → Nat → SmoothPhase
-  | 0, _, _ => ⟨none, []⟩
-  | fuel + 1, baseIndex, bound =>
+private def pMinusOneGo (n : Nat) : Nat → Nat → Nat → Rand → SmoothPhase
+  | 0, _, _, r => ⟨none, r, 0, []⟩
+  | fuel + 1, baseIndex, bound, r =>
       match smoothBases[baseIndex]? with
-      | none => ⟨none, []⟩
+      | none => ⟨none, r, 0, []⟩
       | some base =>
-          let result := pMinusOneFactor n base bound
-          let event := SmoothEvent.pMinusOne base bound result
-          match result with
-          | .factor d => ⟨some d, [event]⟩
+          let attempt := pMinusOneFactorCounted n base bound r
+          let event := SmoothEvent.pMinusOne base bound attempt.result
+          match attempt.result with
+          | .factor d => ⟨some d, attempt.rand, attempt.attempts, [event]⟩
           | .noFactor =>
               let nextBound := raiseSmoothBound bound
-              if nextBound = bound then ⟨none, [event]⟩
+              if nextBound = bound then
+                ⟨none, attempt.rand, attempt.attempts, [event]⟩
               else
-                let rest := pMinusOneGo n fuel baseIndex nextBound
-                ⟨rest.factor, event :: rest.events⟩
+                let rest := pMinusOneGo n fuel baseIndex nextBound attempt.rand
+                ⟨rest.factor, rest.rand, attempt.attempts + rest.attempts,
+                  event :: rest.events⟩
           | .whole =>
               let rest := pMinusOneGo n fuel (baseIndex + 1)
-                (lowerSmoothBound bound)
-              ⟨rest.factor, event :: rest.events⟩
+                (lowerSmoothBound bound) attempt.rand
+              ⟨rest.factor, rest.rand, attempt.attempts + rest.attempts,
+                event :: rest.events⟩
 
 private def ecmGo (n : Nat) : Nat → Nat → Rand → SmoothSearch
-  | 0, _, r => ⟨none, r, []⟩
+  | 0, _, r => ⟨none, r, 0, []⟩
   | fuel + 1, bound, r =>
       let draw := r.next
       let sigma := 6 + draw.1.toNat % ecmSigmaRange
       let result := ecmStage1 n sigma bound
       let event := SmoothEvent.ecm sigma bound result
       match result with
-      | .factor d => ⟨some d, draw.2, [event]⟩
+      | .factor d => ⟨some d, draw.2, 1, [event]⟩
       | .noFactor =>
           let nextBound := raiseSmoothBound bound
-          if nextBound = bound then ⟨none, draw.2, [event]⟩
+          if nextBound = bound then ⟨none, draw.2, 1, [event]⟩
           else
             let rest := ecmGo n fuel nextBound draw.2
-            ⟨rest.factor, rest.rand, event :: rest.events⟩
+            ⟨rest.factor, rest.rand, rest.attempts + 1, event :: rest.events⟩
       | .whole =>
           let rest := ecmGo n fuel bound draw.2
-          ⟨rest.factor, rest.rand, event :: rest.events⟩
+          ⟨rest.factor, rest.rand, rest.attempts + 1, event :: rest.events⟩
 
 /-- Run the production p−1 base/bound ladder followed by randomized ECM
 curves. Gcd one raises the next bound. Whole modulus changes the p−1 base and
@@ -165,12 +172,13 @@ attempts are bounded by both `fuel` and `smoothAttemptCap`. -/
 def smoothSearch (n : Nat) (r : Rand) (fuel : Nat) : SmoothSearch :=
   let budget := min smoothAttemptCap fuel
   let p1 := pMinusOneGo n (min pMinusOneAttemptCap budget) 0
-    smoothInitialBound
+    smoothInitialBound r
   match p1.factor with
-  | some d => ⟨some d, r, p1.events⟩
+  | some d => ⟨some d, p1.rand, p1.attempts, p1.events⟩
   | none =>
-      let ecm := ecmGo n (budget - p1.events.length) smoothInitialBound r
-      ⟨ecm.factor, ecm.rand, p1.events ++ ecm.events⟩
+      let ecm := ecmGo n (budget - p1.attempts) smoothInitialBound p1.rand
+      ⟨ecm.factor, ecm.rand, p1.attempts + ecm.attempts,
+        p1.events ++ ecm.events⟩
 
 end Internal
 
@@ -231,13 +239,13 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
                       searchGo fuel ((d, multiplier) :: (m / d, multiplier) :: stack)
                         factors residual smooth.rand
                         (attempts + primeFailure.attempts + rhoFailure.attempts +
-                          smooth.events.length)
+                          smooth.attempts)
                         powerRoutes
                   | none =>
                       searchGo fuel stack factors (residual * m ^ multiplier)
                         smooth.rand
                         (attempts + primeFailure.attempts + rhoFailure.attempts +
-                          smooth.events.length)
+                          smooth.attempts)
                         powerRoutes
 
 private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat) :
@@ -304,7 +312,8 @@ state that produced it. -/
 structure FactorSuccess (n : Nat) where
   /-- Kernel-replayable checked factorization. -/
   factorization : CheckedFactorization n
-  /-- Randomized search attempts, including every successful subsearch. -/
+  /-- Search attempts, including deterministic p−1 calls and every
+  successful subsearch. -/
   attempts : Nat
   /-- Generator state after all randomized work. -/
   rand : Rand

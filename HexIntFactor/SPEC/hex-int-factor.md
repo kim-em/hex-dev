@@ -361,10 +361,23 @@ The integer-factor adapter re-exports that contract under its own route name,
 parallel to the rho and ECM adapters:
 
 ```lean
+def pMinusOneFactorCounted (n base bound : Nat) (r : Rand) :
+    PMinusOneAttempt
+
+theorem pMinusOneFactorCounted_spec
+    (h : (pMinusOneFactorCounted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+
 theorem pMinusOneFactor_spec
     (h : pMinusOneFactor n base bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n
 ```
+
+The dispatcher consumes `pMinusOneFactorCounted` directly. Every base/bound
+call has `attempts = 1` on `noFactor`, `factor`, and `whole`, and returns its
+input `Rand` unchanged. `SmoothSearch.attempts` accumulates this field and the
+ECM curve charges explicitly; the event list remains diagnostic evidence, not
+the source from which accounting is reconstructed.
 
 Stage 1 chooses `1 < a < n` and first checks `gcd(a,n)`: a gcd greater
 than `1` is necessarily a proper factor. Otherwise it computes
