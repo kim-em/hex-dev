@@ -51,6 +51,13 @@ open Lean Meta Elab Qq Mathlib.Meta.NormNum
 trial division; 25-bit and larger numerals use bounded certificate search. -/
 def natPrimeCertThreshold : Nat := 16777216
 
+/-- Restart budget for the opt-in negative `Nat.Prime` route. One
+deterministically seeded Brent-rho restart resolves the measured factor-found
+ladder through the supported input ceiling, while a balanced 512-bit semiprime
+exhausts in the fresh-module wall-clock budget. Additional restarts multiply
+that adversarial cost without changing the soundness contract. -/
+def natPrimeRhoBudget : Nat := 1
+
 theorem isNat_prime : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
   | _, _, ⟨rfl⟩, hp => by simpa using hp
@@ -81,7 +88,8 @@ verdicts at and above `natPrimeCertThreshold`. -/
         | .composite =>
             -- Keep the advertised negative contract factor-backed: the
             -- Miller--Rabin verdict selects this branch but is not emitted.
-            match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n') 16 with
+            match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n')
+                natPrimeRhoBudget with
             | .ok (d, _) =>
                 unless 1 < d && d < n' && n' % d == 0 do failure
                 let prf : Q(¬ _root_.Nat.Prime $nn) := deriveNotPrime n' d nn

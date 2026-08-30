@@ -17,9 +17,25 @@ open Hex.PrimalityTactic
 use_hex_primality_norm_num
 
 example : natPrimeCertThreshold = 16777216 := rfl
+example : natPrimeRhoBudget = 1 := rfl
+
+-- The documented seed deterministically finds the same proper factor on the
+-- first certificate-tier composite, while a prime input consumes exactly the
+-- accepted restart budget and reports exhaustion.
+#guard (match Hex.Nat.Internal.rhoFactorCounted? 16777217
+    (Hex.Rand.ofSeed 16777217) natPrimeRhoBudget with
+  | .ok success => success.factor == 97 && success.attempts == natPrimeRhoBudget
+  | .error _ => false)
+#guard (match Hex.Nat.Internal.rhoFactorCounted? 1000003
+    (Hex.Rand.ofSeed 1000003) natPrimeRhoBudget with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == natPrimeRhoBudget
+  | .ok _ => false)
+
 example : Nat.Prime 16777121 := by norm_num       -- last tested prime below the threshold
 example : Nat.Prime 16777259 := by norm_num       -- first prime above the threshold
 example : ¬ Nat.Prime 16777216 := by norm_num     -- the threshold itself
+example : ¬ Nat.Prime 16777217 := by norm_num     -- one seeded rho restart, factor 97
 example : Nat.Prime 2147483647 := by norm_num     -- certificate-backed positive proof
 example : Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 := by
   norm_num                                          -- exact 512-bit ceiling
