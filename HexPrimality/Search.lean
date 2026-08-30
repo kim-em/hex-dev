@@ -53,8 +53,10 @@ namespace Nat
 inductive RhoStop where
   /-- `n < 4`: no proper-factor search is meaningful. -/
   | invalidInput
-  /-- The attempt budget ran out. Includes prime inputs and any composite
-  for which no proper factor was found; makes no primality claim. -/
+  /-- A bounded search resource ran out: the restart allocation, a restart's
+  unbiased sampler or pair-rejection loop, or its Brent cycle budget. Includes
+  prime inputs and composites for which no proper factor was found; makes no
+  primality claim. -/
   | exhausted
 deriving Repr, DecidableEq
 
@@ -65,7 +67,9 @@ structure RhoFailure where
   /-- Why the search stopped. -/
   stop : RhoStop
   /-- Restart attempts consumed by this failing search alone; callers
-  running several searches accumulate their own totals. -/
+  running several searches accumulate their own totals. A draw that exhausts
+  its bounded sampler or pair-rejection loop counts as the one restart it was
+  trying to construct. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -174,27 +178,48 @@ private structure RhoDraw where
   c : Nat
   /-- Starting point below the modulus. -/
   start : Nat
-  /-- State after all accepted and rejected pair draws. -/
+  /-- State after all accepted, sampler-rejected, and pair-rejected draws. -/
   rand : Rand
   /-- Fixed-point pairs rejected before accepting this draw. -/
   rejections : Nat
 
-private def rhoDrawGo (n : Nat) : Nat → Nat → Rand → RhoDraw
-  | 0, rejections, r => ⟨1, 0, r, rejections⟩
+private structure RhoDrawFailure where
+  /-- State after every bounded-sampler and pair-rejection draw. -/
+  rand : Rand
+  /-- Fixed-point or degenerate pairs rejected before exhaustion. -/
+  rejections : Nat
+
+/-- Bounded retries for one unbiased natural-number sample. -/
+private def sampleFuel : Nat := 8
+
+/-- Bounded pair rejections within one semantic rho restart. -/
+private def rhoPairFuel : Nat := 8
+
+private def randErrorState (initial : Rand) : RandError → Rand
+  | .zeroBound => initial
+  | .exhausted _ r => r
+
+private def rhoDrawGo (n sampleFuel : Nat) :
+    Nat → Nat → Rand → Except RhoDrawFailure RhoDraw
+  | 0, rejections, r => .error ⟨r, rejections⟩
   | fuel + 1, rejections, r =>
-      let cDraw := r.next
-      let startDraw := cDraw.2.next
-      let c := cDraw.1.toNat % (n - 1) + 1
-      let start := startDraw.1.toNat % n
-      if c + 2 = n ∨ rhoNext n c start = start then
-        rhoDrawGo n fuel (rejections + 1) startDraw.2
-      else ⟨c, start, startDraw.2, rejections⟩
+      match r.nat (n - 1) sampleFuel with
+      | .error e => .error ⟨randErrorState r e, rejections⟩
+      | .ok cDraw =>
+          match cDraw.2.nat n sampleFuel with
+          | .error e => .error ⟨randErrorState cDraw.2 e, rejections⟩
+          | .ok startDraw =>
+              let c := cDraw.1 + 1
+              let start := startDraw.1
+              if c + 2 = n ∨ rhoNext n c start = start then
+                rhoDrawGo n sampleFuel fuel (rejections + 1) startDraw.2
+              else .ok ⟨c, start, startDraw.2, rejections⟩
 
 /-- Draw a nonzero polynomial offset, globally reject the degenerate
 `x ↦ x² - 2`, and reject other draws only when the chosen start is a fixed
 point. -/
-private def rhoDraw (n : Nat) (r : Rand) : RhoDraw :=
-  rhoDrawGo n 8 0 r
+private def rhoDraw (n : Nat) (r : Rand) : Except RhoDrawFailure RhoDraw :=
+  rhoDrawGo n sampleFuel rhoPairFuel 0 r
 
 namespace Internal
 
@@ -234,10 +259,15 @@ def rhoTrace (n c start fuel : Nat) : RhoTrace :=
   let result := brentGo n c fuel (brentStart start)
   ⟨result.factor, result.steps, result.gcds, result.recoveries⟩
 
-/-- Inspect the rejection count of the deterministic restart draw. -/
-def rhoDrawTrace (n : Nat) (r : Rand) : Nat × Nat × Nat :=
-  let draw := rhoDraw n r
-  (draw.c, draw.start, draw.rejections)
+/-- Inspect an exact bounded restart draw. The error carries the number of
+pair rejections and exact state after sampler or pair-rejection exhaustion;
+sampler-internal rejections do not increment the pair count. -/
+def rhoDrawTrace (n : Nat) (r : Rand) (pairFuel : Nat := 8)
+    (drawFuel : Nat := 8) :
+    Except (Nat × Rand) (Nat × Nat × Nat × Rand) :=
+  match rhoDrawGo n drawFuel pairFuel 0 r with
+  | .error failure => .error (failure.rejections, failure.rand)
+  | .ok draw => .ok (draw.c, draw.start, draw.rejections, draw.rand)
 
 end Internal
 
@@ -245,16 +275,18 @@ private def rhoTry (n innerFuel : Nat) : Nat → Nat → Rand →
     Except RhoFailure Internal.RhoSuccess
   | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
   | tries + 1, attempts, r =>
-      let draw := rhoDraw n r
-      match (brentGo n draw.c innerFuel (brentStart draw.start)).factor with
-      | some d =>
-          if 1 < d then
-            if d < n then
-              if n % d = 0 then .ok ⟨d, attempts + 1, draw.rand⟩
+      match rhoDraw n r with
+      | .error failure => .error ⟨.exhausted, attempts + 1, failure.rand⟩
+      | .ok draw =>
+          match (brentGo n draw.c innerFuel (brentStart draw.start)).factor with
+          | some d =>
+              if 1 < d then
+                if d < n then
+                  if n % d = 0 then .ok ⟨d, attempts + 1, draw.rand⟩
+                  else rhoTry n innerFuel tries (attempts + 1) draw.rand
+                else rhoTry n innerFuel tries (attempts + 1) draw.rand
               else rhoTry n innerFuel tries (attempts + 1) draw.rand
-            else rhoTry n innerFuel tries (attempts + 1) draw.rand
-          else rhoTry n innerFuel tries (attempts + 1) draw.rand
-      | none => rhoTry n innerFuel tries (attempts + 1) draw.rand
+          | none => rhoTry n innerFuel tries (attempts + 1) draw.rand
 
 namespace Internal
 
@@ -277,7 +309,8 @@ end Internal
 
 /-- A dynamically validated proper-factor candidate by batched Brent rho.
 `fuel` bounds restart attempts. Each restart draws a fresh polynomial and
-starting point, accumulates up to 32 differences per gcd, and replays a
+starting point through bounded unbiased sampling, accumulates up to 32
+differences per gcd, and replays a
 whole-modulus batch difference by difference. Its cycle budget is scaled to
 `n^(1/4)` and capped at `2^22` (see `rhoInnerFuel`), so exhaustion arrives
 rather than hangs when the smallest factor is out of rho's reach. Every
@@ -301,19 +334,20 @@ private theorem rhoTry_spec {n innerFuel : Nat} :
   | succ tries ih =>
       intro attempts r success h
       unfold rhoTry at h
-      dsimp only at h
       split at h
+      · cases h
       · split at h
         · split at h
           · split at h
-            · rename_i dd h1 h2 h3
-              injection h with h
-              subst h
-              exact ⟨h1, h2, Nat.dvd_of_mod_eq_zero h3⟩
+            · split at h
+              · rename_i dd h1 h2 h3
+                injection h with h
+                subst h
+                exact ⟨h1, h2, Nat.dvd_of_mod_eq_zero h3⟩
+              · exact ih _ _ h
             · exact ih _ _ h
           · exact ih _ _ h
         · exact ih _ _ h
-      · exact ih _ _ h
 
 /-- A rho success under explicit restart and cycle budgets is a validated
 proper factor. -/
@@ -766,17 +800,39 @@ private structure Counted (α : Type) where
 /-- Witness-search budget per factor entry. -/
 private def witnessBudget : Nat := 32
 
+/-- Draw one certificate witness base from the full interval `[2, n - 2]`.
+The bounded sampler may consume several words and rejected candidates while
+remaining one semantic witness attempt. -/
+private def witnessDraw (n : Nat) (r : Rand) (fuel : Nat) :
+    Except RandError (Nat × Rand) :=
+  match r.nat (n - 3) fuel with
+  | .error e => .error e
+  | .ok draw => .ok (draw.1 + 2, draw.2)
+
+namespace Internal
+
+/-- Inspect one bounded witness-base draw, including its exact advanced state. -/
+def witnessDrawTrace (n : Nat) (r : Rand) (drawFuel : Nat := 8) :
+    Except RandError (Nat × Rand) :=
+  witnessDraw n r drawFuel
+
+end Internal
+
 /-- Search a base for one factor entry, checking with the same compiled
-`checkWitness` the certificate checker replays. -/
+`checkWitness` the certificate checker replays. Sampler-internal rejections
+advance the state but remain within the one counted witness candidate; sampler
+exhaustion returns that exact state and counts the in-progress candidate. -/
 private def witnessGo (n q : Nat) :
     Nat → Nat → Rand → Except PrimeCertFailure (Counted Nat)
   | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
   | t + 1, attempts, r =>
-      let draw := r.next
-      let candidate := draw.1.toNat % (n - 3) + 2
-      if checkWitness n q candidate then
-        .ok ⟨candidate, attempts + 1, draw.2⟩
-      else witnessGo n q t (attempts + 1) draw.2
+      match witnessDraw n r sampleFuel with
+      | .error e =>
+          .error ⟨.exhausted, attempts + 1, randErrorState r e⟩
+      | .ok draw =>
+          if checkWitness n q draw.1 then
+            .ok ⟨draw.1, attempts + 1, draw.2⟩
+          else witnessGo n q t (attempts + 1) draw.2
 
 /-- Assemble the cube-root node for the factored part `F`: the cofactor
 decomposition `R = 2Fs + r` and the square-root witness for the
@@ -915,8 +971,12 @@ private theorem witnessGo_error_stop {n q : Nat} :
       intro attempts r f h
       dsimp only [witnessGo] at h
       split at h
-      · cases h
-      · exact ih _ _ h
+      · injection h with h
+        subst h
+        rfl
+      · split at h
+        · cases h
+        · exact ih _ _ h
 
 private theorem assembleGo_error_stop {budget : PrimeCertBudget} {fuel n : Nat} :
     ∀ (l : List (Nat × Nat)) (acc : List (Nat × Nat × PrimeCert))

@@ -32,6 +32,8 @@ Covered operations:
 Covered properties:
 - the total decision agrees with trial division on an initial segment
 - a `.composite` certificate-search verdict never contradicts `isPrime`
+- rho restart and certificate-witness draws span arbitrary-precision bounds
+  through unbiased bounded sampling and retain exact exhaustion states
 - next-prime exhaustion separates rejected candidates from certificate work
   and returns the exact advanced random state
 - accepted certificates replay; each rejection reason rejects
@@ -267,20 +269,20 @@ set_option maxRecDepth 10000 in
 
 -- This strong pseudoprime passes the fixed Miller--Rabin screen, then its
 -- first certificate witness search consumes all 32 candidates. The retained
--- total also includes the preceding p−1 call and four rho restarts.
+-- total also includes the preceding p−1 call and three rho restarts.
 #guard (match Internal.primeCertCounted? 3317044064679887385961981
     (Hex.Rand.ofSeed 0) 2 with
   | .error failure =>
-      failure.stop == .exhausted && failure.attempts == 37
+      failure.stop == .exhausted && failure.attempts == 36
   | .ok _ => false)
 
--- The elaborator's explicit rho allocation reaches a deterministic bounded
--- exhaustion on a non-smooth 512-bit probable-prime input.
+-- The elaborator's explicit rho allocation reaches a deterministic success
+-- on the committed 512-bit boundary prime.
 #guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15⟩
     9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
     (Hex.Rand.ofSeed 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177)
     (defaultPrimeFuel 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177) with
-  | .ok success => success.attempts == 32
+  | .ok success => success.attempts == 34
   | .error _ => false)
 
 -- The same allocation fails promptly when both bounded restarts miss.
@@ -289,7 +291,7 @@ set_option maxRecDepth 10000 in
     (Hex.Rand.ofSeed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123)
     (defaultPrimeFuel 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123) with
   | .error failure =>
-      failure.stop == .exhausted && failure.attempts == 12
+      failure.stop == .exhausted && failure.attempts == 10
   | .ok _ => false)
 
 -- Routine gcds are genuinely batched: this fixed restart performs 95
@@ -316,11 +318,71 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 #guard rhoRecoveryTrace.recoveries == 1
 
 -- Seed 213 first draws the fixed pair `(c, x) = (71, 61)` modulo 91; the
--- route rejects it and advances to a non-fixed pair.
-#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 213) == (37, 6, 1)
+-- route rejects it and advances to a non-fixed pair, consuming two words per
+-- pair but still belonging to one semantic restart.
+#guard (match Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 213) with
+  | .ok (c, start, rejections, r) =>
+      c == 37 && start == 6 && rejections == 1 &&
+        r == ((Hex.Rand.ofSeed 213).words 4).2
+  | .error _ => false)
 -- Seed 40 first draws the globally degenerate offset `c = n - 2` and then
 -- advances to the usable pair `(81, 74)`.
-#guard Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 40) == (81, 74, 1)
+#guard (match Hex.Nat.Internal.rhoDrawTrace 91 (Hex.Rand.ofSeed 40) with
+  | .ok (c, start, rejections, r) =>
+      c == 81 && start == 74 && rejections == 1 &&
+        r == ((Hex.Rand.ofSeed 40).words 4).2
+  | .error _ => false)
+
+-- An awkward non-power-of-two modulus above `2^64` draws both coordinates
+-- from its full advertised range rather than the first word-sized slice.
+private def wideDrawBound : Nat := 2 ^ 80 + 123
+
+#guard (match Hex.Nat.Internal.rhoDrawTrace wideDrawBound (Hex.Rand.ofSeed 0) with
+  | .ok (c, start, rejections, r) =>
+      decide (2 ^ 64 < c) && decide (c < wideDrawBound) &&
+        decide (2 ^ 64 < start) && decide (start < wideDrawBound) &&
+        rejections == 0 && r == ((Hex.Rand.ofSeed 0).words 4).2
+  | .error _ => false)
+
+#guard (match Hex.Nat.Internal.witnessDrawTrace wideDrawBound
+    (Hex.Rand.ofSeed 0) with
+  | .ok (candidate, r) =>
+      decide (2 ^ 64 < candidate) && decide (candidate < wideDrawBound - 1) &&
+        r == ((Hex.Rand.ofSeed 0).words 2).2
+  | .error _ => false)
+
+-- The first candidate for the near-half-word bound is in the incomplete top
+-- interval. One sampler try therefore exhausts after advancing exactly once.
+#guard (match Hex.Nat.Internal.rhoDrawTrace (2 ^ 63 + 2)
+    (Hex.Rand.ofSeed 0) (drawFuel := 1) with
+  | .error (rejections, r) =>
+      rejections == 0 && r == ((Hex.Rand.ofSeed 0).words 1).2
+  | .ok _ => false)
+
+#guard (match Hex.Nat.Internal.witnessDrawTrace (2 ^ 63 + 4)
+    (Hex.Rand.ofSeed 0) 1 with
+  | .error (.exhausted attempts r) =>
+      attempts == 1 && r == ((Hex.Rand.ofSeed 0).words 1).2
+  | _ => false)
+
+-- Giving the same semantic witness draw one more sampler try accepts the next
+-- word; the internal rejection changes only the exact state, not the candidate
+-- count owned by the caller.
+#guard (match Hex.Nat.Internal.witnessDrawTrace (2 ^ 63 + 4)
+    (Hex.Rand.ofSeed 0) 2 with
+  | .ok (candidate, r) =>
+      decide (2 ≤ candidate) && decide (candidate < 2 ^ 63 + 3) &&
+        r == ((Hex.Rand.ofSeed 0).words 2).2
+  | .error _ => false)
+
+-- All eight drawn pairs are degenerate for this seed. Exhaustion returns the
+-- state after those draws and charges the one restart under construction;
+-- no fabricated fallback pair enters Brent's loop.
+#guard (match Internal.rhoFactorCountedWith? 5 (Hex.Rand.ofSeed 72) 4 1 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 1 &&
+        failure.rand == ((Hex.Rand.ofSeed 72).words 16).2
+  | .ok _ => false)
 #guard Hex.Nat.Internal.rhoRestartCap == 8
 
 -- Miller-Rabin filter behaviour on the adversarial families.
@@ -433,7 +495,7 @@ example : True := by
 example : Hex.Nat.Prime 561 := primality 561
 
 /--
-error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 12 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
+error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 10 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 :=
