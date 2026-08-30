@@ -90,6 +90,7 @@ private meta def renderTable (primes : List Nat) : String := Id.run do
 module docstring. -/
 syntax (name := rebuildPrimeTable) "#rebuild_primeTable" num num num : command
 
+/-- Elaborate `#rebuild_primeTable` into the generated table and proof block. -/
 @[command_elab rebuildPrimeTable] meta def elabRebuildPrimeTable :
     CommandElab := fun stx => do
   match stx with

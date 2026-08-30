@@ -658,8 +658,9 @@ it too, for its primitive-root API. It belongs here, in
 
 ### Taking up downstream factoring advances
 
-hex-int-factor's stronger factorization reaches this library's search
-without inverting the proof dependency, in three ways:
+hex-int-factor's stronger factorization reaches, or is intended to reach, this
+library's search without inverting the proof dependency through two current
+routes and one deferred extension:
 
 1. **Certificate hand-off** (works today). `PrimeCert` is plain data
    and `checkPrime` accepts a certificate from any producer, so a
@@ -675,8 +676,9 @@ without inverting the proof dependency, in three ways:
    remaining inside the complete committed table; `pMinusOneStage1_bound`
    identifies every larger request with that capped call. ECM stays downstream;
    curve arithmetic is a real dependency, not a shared primitive.
-3. **An optional search hook**, deferred until hex-int-factor exists to
-   consume it. A `primeCert?With
+3. **An optional search hook**, not implemented. Issue #9848 tracks validation
+   of a concrete hex-int-factor consumer and the resulting API. The proposed
+   shape is a `primeCert?With
    (factor : Nat → Rand → Nat → PartialFactors × Rand × Nat)` variant
    parameterizes the untrusted search (defaulting to `partialFactor`),
    and the `primality` tactic and companion `norm_num` extension may
@@ -684,8 +686,9 @@ without inverting the proof dependency, in three ways:
    libraries register under a well-known declaration name (the
    `Hex.FactorTactic.Extension` / `extensionNames` pattern of
    `HexBerlekamp/PolynomialTactic.lean`, with its ABI-version guard),
-   so importing hex-int-factor transparently strengthens the tactic. This is the one route that
-   adds public API surface, which is why it waits for its consumer.
+   so importing hex-int-factor transparently strengthens the tactic. This is
+   the one route that adds public API surface; current integration consists
+   only of certificate hand-off and the shared p − 1/rho primitives above.
 
 Soundness is indifferent to all three: whatever finds the factors, the
 kernel replays `checkPrime`.
@@ -784,11 +787,13 @@ environment provenance, and exact reproduction command are in
 regeneration check is `python3 scripts/bench/check_prime_table.py`; CI runs the
 same command after building the Hex libraries.
 
-`hotPathCandidates` in hex-berlekamp-zassenhaus becomes a view of
-`primeTable` restricted to `[3, 500]`, keeping its two existing
-theorems as corollaries of the table's. That is the migration that
-proves the table is the right shape: if it cannot replace the 94-entry
-list without loss, it is not.
+`hotPathCandidates` in hex-berlekamp-zassenhaus is intended to become a view
+of `primeTable` restricted to `[3, 500]`, keeping its two existing theorems as
+corollaries of the table's. That migration is not implemented on current
+`main`: PR #9392 was parked because the released hex-berlekamp-zassenhaus
+cannot import HexPrimality until HexPrimality is published. Issue #9849 tracks
+the release-gated migration. Until it lands, neither this table nor core
+conformance claims that the downstream list consumes it.
 
 Two things that migration requires and an earlier draft of this SPEC
 left out. `hotPathCandidates` is a `List SmallPrimeCandidate`
@@ -1196,8 +1201,9 @@ Cases that must be present:
 - Segments `[1, 100]`, `[1, 10^4]`, and one segment straddling
   `primeTableBound`, checking the table and the fallback agree across
   the boundary.
-- The 94 `hotPathCandidates` entries, checking the migrated view has
-  the same contents in the same order.
+- After issue #9849 lands, the 94 `hotPathCandidates` entries, checking the
+  migrated view has the same contents in the same order. Current core
+  conformance does not import that unreleased downstream consumer.
 
 **Oracle choice.** PARI's `isprime`, `nextprime`, and `primes`
 through cypari2 cover the verdict surface, and cypari2 is already
@@ -1322,10 +1328,10 @@ boundary because the core consumers live below the companion.
 1. **The table and the sieve.** `sieve`, `sieve_testBit_iff` with its
    four hypotheses, the batched replay elaborator, `primeTable` with
    sortedness and both directions,
-   `isTablePrime`, `primesIn`, and the `hotPathCandidates` migration
-   with the `libraries.yml` amendment it forces. Independently useful,
-   and the only part of this SPEC with no dependency on the certificate
-   machinery.
+   `isTablePrime`, and `primesIn`. The release-gated `hotPathCandidates`
+   migration and the `libraries.yml` amendment it forces are tracked by
+   issue #9849. Independently useful, and the only part of this SPEC with no
+   dependency on the certificate machinery.
 
 2. **Miller-Rabin and the order.** `orderOf` with `orderOf_pos`,
    `coprime_of_pow_mod_eq_one`, `orderOf_dvd_of_pow_eq_one`, and
@@ -1408,6 +1414,6 @@ may add further uses, but the dependency does not depend on them.
   here because its only two consumers are this library's certificate
   search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.
-  Pollard `p − 1` stage 1 will join it here for the same two consumers
+  Pollard `p − 1` stage 1 has joined it here for the same two consumers
   (see "Taking up downstream factoring advances"), which sharpens the
   question rather than settling it.

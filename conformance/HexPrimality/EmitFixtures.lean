@@ -109,11 +109,10 @@ private def certCases : List (String × Nat × PrimeCert) :=
       .pock3 199 9 2 9 [(3, 0, .small 2), (2, 0, .small 3)]),
     ("reject/pock3-size", 43, .pock3 43 1 5 0 [(3, 0, .small 2)]) ]
 
-/-- The `segment` surface: the SPEC's `[1, 100]` and `[1, 10^4]`, one
-segment straddling `primeTableBound` (checking the table and the fallback
-agree across the boundary), and the migrated hot-path window (whose Lean
-value comes from `hotPathCandidates`, pinning the view's contents and
-order). -/
+/-- The `segment` surface: the SPEC's `[1, 100]` and `[1, 10^4]`, plus one
+segment straddling `primeTableBound` to check that the table and fallback
+agree across the boundary. The release-gated `hotPathCandidates` migration is
+tracked separately by issue #9849. -/
 private def segmentCases : List (String × Nat × Nat) :=
   [ ("basic/1-100", 1, 101),
     ("table/1-10000", 1, 10000),

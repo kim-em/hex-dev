@@ -1,0 +1,18 @@
+Independent Phase 2 skeptical review completed against
+HexPrimalityMathlib/SPEC/hex-primality-mathlib.md after the bridge contract and
+resource-policy blocker fixes.
+
+The review checked the direct `Hex.Nat.Prime`/`Nat.Prime` correspondence and
+all transports, preservation of Mathlib's sole global primality decision
+instance, the bare `Nat.Prime` `primality` handler, default Mathlib `norm_num`
+registration, module-local `use_hex_primality_norm_num` opt-in, disjoint trial
+and certificate thresholds, shared positive certificate budgets, and the
+one-restart bounded negative factor route. Positive terms replay the core
+checker; negative terms revalidate a proper factor before Mathlib constructs
+an independently checked proof; exhaustion declines without an unbounded
+fallback.
+
+Every advertised declaration has its intended body and route. No data-level
+placeholder, competing decision instance, axiom, sorry, `native_decide`,
+forbidden scaffold wording, or untracked deferred behavior remains. Phase 3
+and later acceptance are not attested by this token.

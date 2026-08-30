@@ -1,0 +1,20 @@
+Independent Phase 2 skeptical review completed against
+HexPrimality/SPEC/hex-primality.md after the certificate, dispatch, search,
+accounting, generation, and resource-policy blocker fixes.
+
+The review checked the stored table and kernel-replayed sieve, real binary
+lookup and unrestricted trial segment route, Miller--Rabin compositeness
+boundary, multiplicative order, both Pocklington checker arms, bounded product
+and canonical-subject preflights, deterministic-before-fuel dispatch, bounded
+multiword rho and witness sampling, counted p-minus-one integration, shared
+successful and failing search accounting, one-unit-per-bit default certificate
+fuel, total versus bounded decisions, least-next-prime accounting, and the
+checker-only proof term emitted by `primality`. Every advertised declaration
+has its intended body and route; no search result is trusted as a proof.
+
+No data-level placeholder, fake extern, native-type detour, axiom, sorry,
+`native_decide`, forbidden scaffold wording, or untracked implemented-surface
+gap remains. The optional downstream certificate-search hook and the
+release-gated Berlekamp--Zassenhaus table view are explicitly not implemented
+and are tracked by #9848 and #9849. Phase 3 and later acceptance are not
+attested by this token.
