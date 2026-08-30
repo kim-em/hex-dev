@@ -107,6 +107,8 @@ example {n base bound d : Nat} {r : Hex.Rand}
 -- Certificate checker: accepted shapes and one rejection per clause.
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
+#guard checkPrime
+    (.pock 4200127 [(2, 0, .pock 100003 [(2, 0, .small 2381)])]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 3)]) = false
   -- distinct but noncanonical subjects
 #guard checkPrime (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true

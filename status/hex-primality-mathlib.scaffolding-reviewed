@@ -1,6 +1,8 @@
-Independent Phase 2 skeptical review completed against
-HexPrimalityMathlib/SPEC/hex-primality-mathlib.md after the bridge contract and
-resource-policy blocker fixes.
+Phase 1 completion and an independent Phase 2 skeptical review were recorded
+against HexPrimalityMathlib/SPEC/hex-primality-mathlib.md after the bridge
+contract and resource-policy blocker fixes. Its direct dependency has completed
+Phase 1, and every implemented SPEC declaration has the intended signature and
+body.
 
 The review checked the direct `Hex.Nat.Prime`/`Nat.Prime` correspondence and
 all transports, preservation of Mathlib's sole global primality decision

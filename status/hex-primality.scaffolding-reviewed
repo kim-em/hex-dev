@@ -1,6 +1,8 @@
-Independent Phase 2 skeptical review completed against
-HexPrimality/SPEC/hex-primality.md after the certificate, dispatch, search,
-accounting, generation, and resource-policy blocker fixes.
+Phase 1 completion and an independent Phase 2 skeptical review were recorded
+against HexPrimality/SPEC/hex-primality.md after the certificate, dispatch,
+search, accounting, generation, and resource-policy blocker fixes. Both direct
+dependencies have completed Phase 1, every implemented SPEC declaration has
+the intended signature and body, and every deferred declaration is tracked.
 
 The review checked the stored table and kernel-replayed sieve, real binary
 lookup and unrestricted trial segment route, Miller--Rabin compositeness

@@ -47,7 +47,7 @@ search infrastructure rather than a checker primitive: `HexArith.extGcd`
 `@[extern]`. The namespace is `HexArith`, not `Hex`.
 
 `hex-berlekamp-zassenhaus` carries 94 candidate primes in
-`hotPathCandidates` (`HexBerlekampZassenhaus/PrimeSelection.lean:647`),
+`hotPathCandidates` (`HexBerlekampZassenhaus/PrimeSelection.lean:293`),
 each built by `smallPrimeCandidateOfTrial p (by decide) (by decide)`,
 covering every prime in `[3, 500]`. It proves both directions:
 `mem_hotPathCandidates_prime` (every entry is prime and in range) and
@@ -797,7 +797,7 @@ conformance claims that the downstream list consumes it.
 
 Two things that migration requires and an earlier draft of this SPEC
 left out. `hotPathCandidates` is a `List SmallPrimeCandidate`
-(`HexBerlekampZassenhaus/PrimeSelection.lean:519`), not a list of
+(`HexBerlekampZassenhaus/PrimeSelection.lean:170`), not a list of
 naturals: each entry bundles a `ZMod64.Bounds p` instance and a
 `Hex.Nat.Prime p` field, so the view is a proof-carrying map from table
 entries rather than a projection. And it makes `HexBerlekampZassenhaus`

@@ -70,8 +70,8 @@
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock1","op":"certcheck","value":true}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/pock2","n":31,"cert":{"t":"pock","n":31,"f":[[3,0,{"t":"small","n":3}],[3,0,{"t":"small","n":5}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock2","op":"certcheck","value":true}
-{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/deep","n":2027,"cert":{"t":"pock","n":2027,"f":[[2,0,{"t":"small","n":1013}]]}}
-{"kind":"result","lib":"HexPrimality","case":"certcheck/accept/deep","op":"certcheck","value":true}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/nested-pock","n":4200127,"cert":{"t":"pock","n":4200127,"f":[[2,0,{"t":"pock","n":100003,"f":[[2,0,{"t":"small","n":2381}]]}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/accept/nested-pock","op":"certcheck","value":true}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/pock3","n":199,"cert":{"t":"pock3","n":199,"r":9,"s":2,"w":8,"f":[[3,0,{"t":"small","n":2}],[2,0,{"t":"small","n":3}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock3","op":"certcheck","value":true}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/bound","n":13,"cert":{"t":"pock","n":13,"f":[[2,0,{"t":"small","n":3}]]}}
