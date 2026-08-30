@@ -310,7 +310,14 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimalityMathlib.ProofProbe.MathlibBaseline,
     `HexPrimalityMathlib.ProofProbe.Mathlib512,
     `HexPrimalityMathlib.ProofProbe.MathlibExhausted,
-    `HexPrimalityMathlib.ProofProbe.MathlibOverBudget]
+    `HexPrimalityMathlib.ProofProbe.MathlibOverBudget,
+    `HexPrimalityMathlib.ProofProbe.Negative25,
+    `HexPrimalityMathlib.ProofProbe.Negative32,
+    `HexPrimalityMathlib.ProofProbe.Negative64,
+    `HexPrimalityMathlib.ProofProbe.Negative64Null,
+    `HexPrimalityMathlib.ProofProbe.NegativeExhausted65,
+    `HexPrimalityMathlib.ProofProbe.Negative512,
+    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
