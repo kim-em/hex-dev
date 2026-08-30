@@ -344,7 +344,7 @@ checksum.
 
 ## Comparator Ratios
 
-The current implemented gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
+The current implemented gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `HexLLL/SPEC/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the in-process fpLLL FFI was wired later for the production certified path. The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65}` — per the post-#3657 §"Headline reports" densification rule.
 
 The certified external-dispatch SPEC also declares the gating comparator
 `verified Isabelle certified-LLL (JAR 2020 §7; svp_certified from the Zenodo 2636367 LLL_Basis_Reduction extraction, same archive as the native comparator)`.
@@ -352,70 +352,78 @@ The Hex certified path is now registered as fixed process-call targets:
 `runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum`
 and
 `runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55,60,65}Checksum`.
-Each target sends a `CERT\t` request to the persistent fpylll driver, receives a
-flat `(B', U, V)` payload, and runs `ExternalReducer.certifyFlat`, so the measured
-path is fpLLL candidate production plus the Lean checker. Paired
+Each target obtains a flat `(B', U, V)` payload through the in-process
+`fplll-ffi` shim and runs `ExternalReducer.certifyFlat`, so the measured path is
+fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.
 
-Random-bounded certified ladder export:
-`reports/bench-results/hex-lll-certified-c3d2fecb.json`,
-SHA-256 `c4439a4e06c1f61ee76717ebcc8f170cb643ea095d6765230b84a55204c44e29`.
-The harsh-cubic certified ladder runs two rungs further (to `n = 65`) and is
-measured in its own carica sweep:
-`reports/bench-results/hex-lll-certified-harsh-extended-1e6679ff.json`,
-SHA-256 `ccaec1be0a5209f63387a8b2af0f093274f06d6518323f631093ad82288ee6cb`;
-its `15..55` result hashes match the c3d2fecb export exactly.
-Both runs used `HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"` so
-the certified-path cost is fpLLL candidate production through `fplll-ffi`
-plus Lean's checker. All certified-path and checker-only rows had
-repeat-stable hashes. Candidate rejection rate was `0 %` across both runs
-(`0 / 34` random-bounded+harsh-cubic-to-55, `0 / 22` harsh-cubic `15..65`):
-every full certified target and every checker-only cached payload accepted.
+The current clean consolidated sweeps were recorded on `carica` (Apple M2
+Ultra, macOS) with `scripts/dev/run_lll_bench.sh random-bounded RandomBounded`
+at commit `5d16cb58f92bd69590b2439b89c83894d3798e4b` and
+`scripts/dev/run_lll_bench.sh harsh-cubic HarshCubic` at commit
+`674302291e3c04dbd7e6b4252056ef33859c2e39`. The commands load the pinned
+native Isabelle, certified Isabelle, and `fplll-ffi` oracles, run every target
+whose name contains the family filter, and record three warm outer repeats.
+The exports and measured certified-Isabelle process floors are:
+
+- `reports/bench-results/hex-lll-random-bounded-5d16cb58.json`, SHA-256
+  `202772082eab1ad7ac2393c42446029d807261d62bd645f95d22c66f152a0314`;
+  floor `reports/bench-results/hex-lll-random-bounded-floor-5d16cb58.json`,
+  SHA-256 `3807c7c168f9906a4f83b59f01bdb47e8525c9275362a7df927563037aa16961`.
+- `reports/bench-results/hex-lll-harsh-cubic-67430229.json`, SHA-256
+  `d8dde9f79a477ab9e5834c6c9031d9fca182ff0a25f9e6f96cbb22f0e6b3e0ba`;
+  floor `reports/bench-results/hex-lll-harsh-cubic-floor-67430229.json`,
+  SHA-256 `2101e94e4dce5c7f4c8aaf643db9b1aadbd0be6104006a7f754d4d5560310b72`.
+
+Both exports record `git_dirty=false`. All certified-path and checker-only rows
+have repeat-stable hashes. A rejected candidate makes the fixed target fail;
+all 11,896 timed certified calls completed, so the measured rejection rate is
+`0 / 11,896 = 0 %`.
 
 Lean-certified-vs-Lean-native random-bounded ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 30 | 15.14 ms | 4.23 ms | 0.2794 | 64.4 % |
-| 45 | 55.53 ms | 14.11 ms | 0.2541 | 60.5 % |
-| 60 | 142.01 ms | 32.66 ms | 0.2300 | 63.1 % |
-| 75 | 296.58 ms | 65.59 ms | 0.2212 | 60.3 % |
-| 90 | 495.68 ms | 112.71 ms | 0.2274 | 61.3 % |
-| 120 | 1.39 s | 274.10 ms | 0.1972 | 63.0 % |
-| 150 | 2.65 s | 565.88 ms | 0.2135 | 63.5 % |
-| 180 | 4.76 s | 954.40 ms | 0.2005 | 64.4 % |
+| 30 | 14.64 ms | 4.13 ms | 0.2819 | 64.3 % |
+| 45 | 50.97 ms | 13.54 ms | 0.2657 | 61.7 % |
+| 60 | 129.84 ms | 32.15 ms | 0.2476 | 62.5 % |
+| 75 | 287.53 ms | 65.61 ms | 0.2282 | 58.5 % |
+| 90 | 471.31 ms | 111.99 ms | 0.2376 | 61.2 % |
+| 120 | 1.22 s | 270.50 ms | 0.2209 | 63.5 % |
+| 150 | 2.45 s | 559.43 ms | 0.2287 | 63.6 % |
+| 180 | 4.36 s | 936.16 ms | 0.2149 | 66.5 % |
 
-Random-bounded trend: Lean certified sits at about `0.20..0.28×` Lean
+Random-bounded trend: Lean certified sits at about `0.21..0.28×` Lean
 native. The checker is the dominant certified-path component, accounting for
-`60..64 %` of the measured full path. The input-size predictor routes the
-random-bounded checker rungs `n ≤ 120` to the exact integer checker
+`59..67 %` of the measured full path. The input-size predictor routes the
+random-bounded checker rungs `n ≤ 150` to the exact integer checker
 (the operand bit growth on this family stays below the 128-bit interval
-working precision); rungs `n ≥ 150` dispatch to the fixed-precision
-enclosure pass, which is where the small absolute speedup at the top of
-the ladder comes from.
+working precision); `n = 180` dispatches to the fixed-precision enclosure
+pass, which is where the small absolute speedup at the top of the ladder comes
+from.
 
 Lean-certified-vs-Lean-native harsh-cubic ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 15 | 515 µs | 832 µs | 1.6148 | 89.1 % |
-| 20 | 1.67 ms | 2.29 ms | 1.3698 | 92.0 % |
-| 25 | 4.15 ms | 5.19 ms | 1.2517 | 99.0 % |
-| 30 | 9.53 ms | 8.14 ms | 0.8538 | 85.5 % |
-| 35 | 19.65 ms | 11.13 ms | 0.5666 | 89.0 % |
-| 40 | 39.44 ms | 14.77 ms | 0.3745 | 91.2 % |
-| 45 | 75.83 ms | 19.95 ms | 0.2631 | 95.0 % |
-| 50 | 135.80 ms | 27.55 ms | 0.2029 | 87.4 % |
-| 55 | 234.28 ms | 35.53 ms | 0.1516 | 88.1 % |
-| 60 | 381.56 ms | 45.38 ms | 0.1189 | 91.2 % |
-| 65 | 621.32 ms | 56.10 ms | 0.0903 | 98.1 % |
+| 15 | 494 µs | 879 µs | 1.7779 | 88.5 % |
+| 20 | 1.59 ms | 2.28 ms | 1.4354 | 86.9 % |
+| 25 | 4.05 ms | 5.22 ms | 1.2884 | 93.4 % |
+| 30 | 9.32 ms | 7.90 ms | 0.8479 | 86.8 % |
+| 35 | 19.36 ms | 10.98 ms | 0.5674 | 89.8 % |
+| 40 | 39.02 ms | 15.07 ms | 0.3862 | 89.9 % |
+| 45 | 73.48 ms | 20.43 ms | 0.2780 | 89.0 % |
+| 50 | 130.83 ms | 26.40 ms | 0.2018 | 89.6 % |
+| 55 | 234.98 ms | 33.34 ms | 0.1419 | 90.6 % |
+| 60 | 375.02 ms | 44.94 ms | 0.1198 | 89.2 % |
+| 65 | 602.42 ms | 58.61 ms | 0.0973 | 85.7 % |
 
 Harsh-cubic trend: Lean certified crosses below Lean native at `n = 30` and
-drops to **`0.090×` Lean native at `n = 65`** — an 11.1× speedup over the
-native body (`0.15×`, 6.6× at `n = 55`; the certified curve is still widening
+drops to **`0.097×` Lean native at `n = 65`** — a 10.3× speedup over the
+native body (`0.14×`, 7.0× at `n = 55`; the certified curve is still widening
 its lead at the top of the ladder). Checker-only cost accounts for the large
-majority of the full certified path (`≈85..99 %`); the candidate-production
+majority of the full certified path (`≈86..93 %`); the candidate-production
 remainder is small on this family, and its measured share is within run noise
 at the small rungs where it is sub-millisecond.
 The dispatched checker routes harsh-cubic above `n ≈ 25` to the
@@ -435,78 +443,60 @@ same Zenodo 2636367 archive as the native comparator:
 `runIsabelleCertified*NormSq` fixed targets for the random-bounded and
 harsh-cubic ladders.
 
-The random-bounded certified-vs-Isabelle-certified ladder, and the
-harsh-cubic ladder through `n = 55`, were measured in one run on
-`carica` (Apple M2 Ultra, macOS) at commit `c3d2fecb`, with both engines
-hosted in the same process schedule so those gating ratios share a host and
-candidate set. The harsh-cubic Hex-certified column above `n = 55` (and, for
-the consolidated `15..65` curve plotted in the figure, the whole harsh-cubic
-Hex-certified series) comes from the later same-host dedicated sweep
-`hex-lll-certified-harsh-extended-1e6679ff.json`, whose `15..55` result
-hashes match this run exactly; the harsh-cubic Isabelle-certified column is
-this run, which already ran to `n = 65`:
+Each consolidated family sweep measures the Hex-certified and
+Isabelle-certified targets on the same host and at the same clean commit. The
+matching process-floor export comes from the immediately following command:
 
 ```sh
-HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
-HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
-lake exe hexlll_bench run \
-  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum \
-  Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq{30,45,60,75,90,120,150,180} \
-  Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55}Checksum \
-  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq{15,20,25,30,35,40,45,50,55,60,65} \
-  --export-file reports/bench-results/hex-lll-certified-carica.json
+scripts/dev/run_lll_bench.sh random-bounded RandomBounded
+scripts/dev/run_lll_bench.sh harsh-cubic HarshCubic
 ```
 
-This export sources the random-bounded Lean-certified and both Isabelle-certified
-curves on the comparator plots. The harsh-cubic Lean-certified curve instead
-sources the dedicated `15..65` harsh-cubic sweep
-(`hex-lll-certified-harsh-extended-1e6679ff.json`), which extends that one series
-two rungs past this run; its `15..55` result hashes match this export exactly.
+The raw ratios below use the recorded wall times. The adjusted ratio subtracts
+the matching measured Isabelle-certified process floor (`20.561 ms` for
+random-bounded, `20.578 ms` for harsh-cubic) before dividing. A rung is
+eligible exactly when the floor is no more than 50% of its raw
+Isabelle-certified wall time and that time is below the 10-second ceiling.
 
 Certified-vs-Isabelle-certified random-bounded ratios:
 
-| `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
-|---:|---:|---:|---:|---:|
-| 30 | 4.23 ms | 31.54 ms | 0.134 | 7.46× |
-| 45 | 14.11 ms | 57.66 ms | 0.245 | 4.09× |
-| 60 | 32.66 ms | 105.86 ms | 0.309 | 3.24× |
-| 75 | 65.59 ms | 187.17 ms | 0.350 | 2.85× |
-| 90 | 112.71 ms | 307.73 ms | 0.366 | 2.73× |
-| 120 | 274.10 ms | 697.89 ms | 0.393 | 2.55× |
-| 150 | 565.88 ms | 1.34 s | 0.424 | 2.36× |
-| 180 | 954.40 ms | 2.36 s | 0.404 | 2.48× |
+| `n` | Hex certified | Isabelle certified | raw ratio | adjusted ratio | adjusted speedup | status |
+|---:|---:|---:|---:|---:|---:|:---|
+| 30 | 4.13 ms | 33.66 ms | 0.1226 | 0.3150 | 3.18× | floor-dominated |
+| 45 | 13.54 ms | 60.20 ms | 0.2250 | 0.3417 | 2.93× | eligible |
+| 60 | 32.15 ms | 107.05 ms | 0.3004 | 0.3718 | 2.69× | eligible |
+| 75 | 65.61 ms | 190.96 ms | 0.3436 | 0.3851 | 2.60× | eligible |
+| 90 | 111.99 ms | 308.58 ms | 0.3629 | 0.3888 | 2.57× | eligible |
+| 120 | 270.50 ms | 710.34 ms | 0.3808 | 0.3921 | 2.55× | eligible |
+| 150 | 559.43 ms | 1.35 s | 0.4146 | 0.4210 | 2.38× | eligible |
+| 180 | 936.16 ms | 2.36 s | 0.3974 | 0.4009 | 2.49× | eligible |
 
 Certified-vs-Isabelle-certified harsh-cubic ratios:
 
-| `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
-|---:|---:|---:|---:|---:|
-| 15 | 832 µs | 20.15 ms | 0.041 | 24.23× |
-| 20 | 2.29 ms | 24.03 ms | 0.095 | 10.51× |
-| 25 | 5.19 ms | 28.01 ms | 0.185 | 5.39× |
-| 30 | 8.14 ms | 38.24 ms | 0.213 | 4.70× |
-| 35 | 11.13 ms | 56.29 ms | 0.198 | 5.06× |
-| 40 | 14.77 ms | 90.02 ms | 0.164 | 6.10× |
-| 45 | 19.95 ms | 149.14 ms | 0.134 | 7.48× |
-| 50 | 27.55 ms | 243.26 ms | 0.113 | 8.83× |
-| 55 | 35.53 ms | 398.40 ms | 0.089 | 11.21× |
-| 60 | 45.38 ms | 628.55 ms | 0.072 | 13.85× |
-| 65 | 56.10 ms | 1.01 s | 0.055 | 18.08× |
+| `n` | Hex certified | Isabelle certified | raw ratio | adjusted ratio | adjusted speedup | status |
+|---:|---:|---:|---:|---:|---:|:---|
+| 15 | 879 µs | 23.00 ms | 0.0382 | 0.3628 | 2.76× | floor-dominated |
+| 20 | 2.28 ms | 25.65 ms | 0.0891 | 0.4504 | 2.22× | floor-dominated |
+| 25 | 5.22 ms | 31.35 ms | 0.1666 | 0.4848 | 2.06× | floor-dominated |
+| 30 | 7.90 ms | 41.02 ms | 0.1926 | 0.3864 | 2.59× | floor-dominated |
+| 35 | 10.98 ms | 58.70 ms | 0.1871 | 0.2882 | 3.47× | eligible |
+| 40 | 15.07 ms | 92.85 ms | 0.1623 | 0.2085 | 4.80× | eligible |
+| 45 | 20.43 ms | 145.25 ms | 0.1407 | 0.1639 | 6.10× | eligible |
+| 50 | 26.40 ms | 244.77 ms | 0.1078 | 0.1177 | 8.49× | eligible |
+| 55 | 33.34 ms | 396.61 ms | 0.0841 | 0.0887 | 11.28× | eligible |
+| 60 | 44.94 ms | 644.05 ms | 0.0698 | 0.0721 | 13.87× | eligible |
+| 65 | 58.61 ms | 995.02 ms | 0.0589 | 0.0601 | 16.63× | eligible |
 
-The Hex-certified column is the harsh-cubic `15..65` sweep
-(`hex-lll-certified-harsh-extended-1e6679ff.json`); the Isabelle-certified
-column is the carica export, which already ran to `n = 65`. Both certified
-ladders now share the full rung schedule.
-
-Gating verdict: **met at every shared rung.** Hex's certified path is faster
-than Isabelle's certified path across both families — by `2.36..7.46×` on
-random-bounded and `4.70..24.23×` on harsh-cubic, the harsh-cubic margin
-widest and still growing at the top rung (`18.08×` at `n = 65`). On
-random-bounded the margin is widest at small `n` (where Isabelle's per-request
-`fplll` subprocess fork dominates), narrows through the middle of the ladder,
-then plateaus at `~2.4×` on the top rungs. On harsh-cubic the margin widens
-above `n = 35` because the Hex enclosure checker scales `~n^2.8` while
-Isabelle's exact checker rides the `~n^4.6` slope of its exact integer
-Gram-Schmidt.
+Gating verdict: **met at every eligible rung.** The random-bounded adjusted
+ratio rises gently from `0.3417` at `n = 45` to about `0.40` on the upper
+rungs, then levels off: Hex remains `2.38..2.93×` faster across seven eligible
+points. The harsh-cubic adjusted ratio falls monotonically from `0.2882` at
+`n = 35` to `0.0601` at `n = 65`: Hex's lead grows from `3.47×` to `16.63×`
+across seven eligible points. The largest eligible rung therefore meets the
+declared gate for both families. The four bottom harsh-cubic rungs and bottom
+random-bounded rung remain in the table for completeness but do not support
+the verdict because the Isabelle per-request fork consumes more than half of
+their wall time.
 
 Architectural asymmetries for this ratio:
 
@@ -539,7 +529,7 @@ per-request `svp_certified` floor — the fixed fork + startup cost of one
 request, which Hex's in-process `fplll-ffi` path avoids. The floor is the
 committed `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2×2
 request, so its median is the floor with negligible `n`-dependent work),
-measured in the **same run** as the harsh-cubic ladder (~19.9 ms on `carica`)
+measured in the **same run** as the harsh-cubic ladder (~20.6 ms on `carica`)
 so it is a true lower bound under every rung. The comparator drops rungs whose
 raw time is within 15% of the floor (*floor-dominated*: the subtracted value is
 within the floor's own measurement noise), so bottom rungs such as harsh-cubic
@@ -552,19 +542,34 @@ The harsh-cubic plot shows the same five series, and this is the family where
 the certified path's lead matters most. The exact `d`/`ν` reducer rides the
 `~n^5.6` slope of its Θ(n⁴)-bit Gram-determinant state, while the certified path
 — which only checks an fpLLL candidate — stays in a much lower complexity class.
-The Lean-certified curve now runs the full `15..65` schedule (from
-`hex-lll-certified-harsh-extended-1e6679ff.json`), matching the native and
-Isabelle-certified curves rung for rung; it widens its lead over exact native
-across the new top rungs (`0.090×` at `n = 65`).
+The clean consolidated export runs the full `15..65` schedule, matching the
+native and Isabelle-certified curves rung for rung; Lean certified widens its
+lead over exact native across the top rungs (`0.097×` at `n = 65`).
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
 Here too the Isabelle-certified curve is adjusted down by its measured
 per-request `svp_certified` floor (the committed
-`runIsabelleCertifiedProcessFloorNormSq` benchmark, ~19.9 ms; see
+`runIsabelleCertifiedProcessFloorNormSq` benchmark, ~20.6 ms; see
 [§Per-call comparator overhead](#per-call-comparator-overhead)); as on the
 random-bounded figure, the ratio tables and scaling fits keep the raw
 medians.
+
+The figures were regenerated from the clean consolidated exports and their
+matching floor exports with:
+
+```sh
+python3 scripts/plots/hex-lll-comparator.py --family random-bounded \
+  --isabelle-floor reports/bench-results/hex-lll-random-bounded-floor-5d16cb58.json
+python3 scripts/plots/hex-lll-comparator.py --family harsh-cubic \
+  --isabelle-floor reports/bench-results/hex-lll-harsh-cubic-floor-67430229.json
+```
+
+The resulting SHA-256 digests are
+`61ff3d738f46655af42efc2377b8733c3f66174af281774dd955d1568deaf01f`
+for `hex-lll-comparator-random-bounded.svg` and
+`546b7c27ae5c668decef5dcbadcef764d6f364e8e7b54a9360b08e06c6ba7f4a`
+for `hex-lll-comparator-harsh-cubic.svg`.
 
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
@@ -578,24 +583,28 @@ class.
 
 ### Per-call comparator overhead
 
-Both gating and informational comparators are wired through the persistent-subprocess protocol described at the top of `HexLLL/Bench.lean`. The per-call protocol overhead, measured on the audit host, is:
+The external Isabelle and fpylll comparators use the persistent-subprocess
+protocol described at the top of `HexLLL/Bench.lean`; the production fpLLL
+path uses the in-process FFI described above. The per-call protocol overhead,
+measured on the audit host, is:
 
 - `Isabelle` (gating): **~9 µs** per steady-state request after the one-time GHC startup.
-- `Isabelle certified-LLL`: **~19.9 ms** per trivial end-to-end request through
-  persistent `svp_certified`; this includes the per-request `fplll` subprocess
-  and certificate/reducedness checks. This is now a committed, registered
-  measurement — `runIsabelleCertifiedProcessFloorNormSq` (a trivial 2×2
-  request), taken in the same run as the harsh-cubic Isabelle-certified ladder
-  — so the comparator plot subtracts a reproducible floor that is a true lower
-  bound under every rung, rather than a hardcoded constant; the earlier
-  audit-host figure was ~18.8 ms.
+- `Isabelle certified-LLL`: **20.561 ms** for random-bounded and **20.578 ms**
+  for harsh-cubic per trivial end-to-end request through persistent
+  `svp_certified`; this includes the per-request `fplll` subprocess and
+  certificate/reducedness checks. These are committed, registered
+  `runIsabelleCertifiedProcessFloorNormSq` measurements (a trivial 2×2
+  request), taken immediately after their matching family sweeps, so each plot
+  subtracts a reproducible floor rather than a hardcoded constant.
 - `fpLLL via fpylll` (informational): **~34 µs** per steady-state request after the one-time CPython + `import fpylll` startup.
 
-Both figures are below the 5 % overhead-to-measured-time floor that
-`SPEC/benchmarking.md` requires for honest ratios on the regenerated fixed
-comparator rungs. The process-call registrations set `minTotalSeconds := 1.0`,
-so each fixed child runs enough inner iterations to amortize its one-time
-GHC / CPython startup before reporting `total_nanos / inner_repeats`.
+The certified-Isabelle floor exceeds 5% on the lower and middle rungs, so the
+tables report both raw and adjusted ratios there and exclude rungs where it
+exceeds 50% from the gating verdict. The process-call registrations set
+`minTotalSeconds := 1.0`, so each fixed child runs enough inner iterations to
+amortize its one-time GHC startup before reporting
+`total_nanos / inner_repeats`; the separate per-request `fplll` fork remains
+and is removed only by the measured floor adjustment.
 
 ### Densified Lean + Isabelle sweep
 
@@ -716,7 +725,7 @@ Per the HO-18 issue body, the BZ family is reported for context only: its tiny m
 
 ### fpLLL via fplll-ffi (informational)
 
-`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational
+`HexLLL/SPEC/hex-lll.md` classifies the fpLLL comparator as informational
 and renames it to `fpLLL via fplll-ffi`: the SPEC now requires fpLLL to be
 measured through the in-process `fplll-ffi` FFI shim into `libfplll` (the
 same reducer the certified external-dispatch path resolves at runtime), not
@@ -886,12 +895,4 @@ within ~1.2–2.5× of raw fpLLL. The generators are structurally validated by
 
 ## Concerns
 
-- [#9808](https://github.com/kim-em/hex-dev/issues/9808) tracks completion of
-  the verified-Isabelle comparison ladders.
-- **The verified Isabelle certified-LLL series has only one committed point
-  per family.** This is sufficient for the five-way plot legend and the
-  bottom/shared-rung fast-check verdict above, but it does not yet provide a
-  full-ladder certified-vs-certified trend. The native `verified Isabelle LLL`
-  gate is closed on both headline families: random-bounded `n = 180` is Lean
-  `4.76 s` vs Isabelle `7.55 s`, ratio `0.6304`, and harsh-cubic `n = 65` is
-  Lean `621.32 ms` vs Isabelle `950.08 ms`, ratio `0.6540`.
+None.
