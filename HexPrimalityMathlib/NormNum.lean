@@ -32,9 +32,10 @@ division and sends every larger input to the bounded certificate route.
 Above the threshold, a positive verdict emits a reified Pocklington
 certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
 checker. A negative verdict emits a dynamically validated proper factor
-through Mathlib's `deriveNotPrime`. Its deterministic factor policy uses seed
-`n` and one Brent-rho restart capped at `2^16` cycle steps throughout the
-supported input range; the parity preflight does not consume a restart. If
+through Mathlib's `deriveNotPrime`. Its deterministic factor policy starts
+certificate search at seed `n` and resumes the returned state for one Brent-rho
+restart capped at `2^16` cycle steps throughout the supported input range; the
+current composite preflight consumes no draws, and parity consumes no restart. If
 bounded certificate or factor search is exhausted, both Hex extensions
 decline, rather than falling through to unbounded trial division.
 The certificate extension uses the same 512-bit input ceiling and 1040
@@ -94,7 +95,7 @@ verdicts at and above `natPrimeCertThreshold`. -/
             -- Keep the advertised negative contract factor-backed: the
             -- Miller--Rabin verdict selects this branch but is not emitted.
             match Hex.Nat.Internal.rhoFactorCountedWith? n'
-                (Hex.Rand.ofSeed n') natPrimeRhoRestartBudget
+                f.rand natPrimeRhoRestartBudget
                 natPrimeRhoStepBudget with
             | .ok success =>
                 let d := success.factor

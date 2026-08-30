@@ -23,6 +23,12 @@ example : natPrimeRhoStepBudget = 65536 := rfl
 -- The documented seed deterministically finds the same proper factor on the
 -- first certificate-tier composite. Parity consumes no restart, while the
 -- balanced ceiling semiprime consumes exactly the work budget and exhausts.
+#guard (match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget
+    16777217 (Hex.Rand.ofSeed 16777217) (primalityFuel 16777217) with
+  | .error failure =>
+      failure.stop == .composite && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 16777217
+  | .ok _ => false)
 #guard (match Hex.Nat.Internal.rhoFactorCountedWith? 16777217
     (Hex.Rand.ofSeed 16777217) natPrimeRhoRestartBudget
     natPrimeRhoStepBudget with
