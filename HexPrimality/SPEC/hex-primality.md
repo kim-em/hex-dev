@@ -995,13 +995,18 @@ policy with `use_hex_primality_norm_num`. Under that policy, numerals below
 `2^24` use a guarded alias of Mathlib's trial extension and larger positive
 proofs use the same 512-bit/1040-fuel/2-restart/32768-step Hex certificate
 policy as `primality`. After a fixed-tier composite verdict, negative proofs
-use a separate finite factor search of 16 restarts, each bounded by
-`rhoInnerFuel n`; a found factor is dynamically revalidated before proof
-emission, and exhaustion only declines the goal. It never starts total trial
-division. Above 512 bits the opt-in extension declines both positive and
-negative goals; `norm_num` reports an unsolved goal rather than silently
-restoring Mathlib's total trial decision. The opt-in erasure is local to the
-module and does not persist when that module is imported.
+use a separate factor search with one restart and at most `2^16` Brent cycle
+steps. This fixed work cap applies throughout the supported input range, so a
+small odd factor remains discoverable at 512 bits without scaling adversarial
+exhaustion with input width. The deterministic stream starts at
+`Rand.ofSeed n`; the parity preflight can return factor 2 without consuming the
+restart. A found factor is dynamically revalidated by `1 < d`, `d < n`, and
+`n % d = 0` before `deriveNotPrime` emits the proper-factor term. Exhaustion
+only declines the goal and never starts total trial division. Above 512 bits
+the opt-in extension declines both positive and negative goals; `norm_num`
+reports an unsolved goal rather than silently restoring Mathlib's total trial
+decision. The opt-in erasure is local to the module and does not persist when
+that module is imported.
 
 The `2^24` boundary comes from fresh one-goal modules on the pinned
 toolchain. Each arm was a fresh importing module containing only one

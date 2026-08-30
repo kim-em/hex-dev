@@ -33,8 +33,8 @@ Above the threshold, a positive verdict emits a reified Pocklington
 certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
 checker. A negative verdict emits a dynamically validated proper factor
 through Mathlib's `deriveNotPrime`. Its deterministic factor policy uses seed
-`n`, one Brent-rho restart through 64 bits, and zero restarts above 64 bits;
-the zero-restart route still retains `rhoFactor?`'s parity preflight. If
+`n` and one Brent-rho restart capped at `2^16` cycle steps throughout the
+supported input range; the parity preflight does not consume a restart. If
 bounded certificate or factor search is exhausted, both Hex extensions
 decline, rather than falling through to unbounded trial division.
 The certificate extension uses the same 512-bit input ceiling and 1040
@@ -53,19 +53,15 @@ open Lean Meta Elab Qq Mathlib.Meta.NormNum
 trial division; 25-bit and larger numerals use bounded certificate search. -/
 def natPrimeCertThreshold : Nat := 16777216
 
-/-- Largest bit width at which the opt-in negative `Nat.Prime` route runs a
-Brent-rho restart. Measured balanced 64-bit cases finish within the fresh-module
-wall-clock budget. A one-restart adversarial 82-bit case exceeded that budget,
-and the former 16-restart 512-bit search exceeded two minutes. -/
-def natPrimeRhoBitLimit : Nat := 64
+/-- Restart budget for the opt-in negative `Nat.Prime` route. One seeded draw
+preserves useful small-factor coverage without multiplying the bounded
+exhaustion cost. -/
+def natPrimeRhoRestartBudget : Nat := 1
 
-/-- Restart policy for the opt-in negative `Nat.Prime` route. Numerals through
-`natPrimeRhoBitLimit` get one deterministically seeded Brent-rho restart. Larger
-numerals get zero restarts, while retaining `rhoFactor?`'s zero-attempt parity
-preflight. Additional restarts multiply the adversarial exhaustion cost without
-changing the soundness contract. -/
-def natPrimeRhoBudget (n : Nat) : Nat :=
-  if n.log2 + 1 ≤ natPrimeRhoBitLimit then 1 else 0
+/-- Per-restart Brent cycle-step budget for the opt-in negative `Nat.Prime`
+route. The fixed cap bounds work independently of input width while retaining
+odd small-factor coverage through the supported 512-bit ceiling. -/
+def natPrimeRhoStepBudget : Nat := 1 <<< 16
 
 theorem isNat_prime : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
@@ -97,9 +93,11 @@ verdicts at and above `natPrimeCertThreshold`. -/
         | .composite =>
             -- Keep the advertised negative contract factor-backed: the
             -- Miller--Rabin verdict selects this branch but is not emitted.
-            match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n')
-                (natPrimeRhoBudget n') with
-            | .ok (d, _) =>
+            match Hex.Nat.Internal.rhoFactorCountedWith? n'
+                (Hex.Rand.ofSeed n') natPrimeRhoRestartBudget
+                natPrimeRhoStepBudget with
+            | .ok success =>
+                let d := success.factor
                 unless 1 < d && d < n' && n' % d == 0 do failure
                 let prf : Q(¬ _root_.Nat.Prime $nn) := deriveNotPrime n' d nn
                 return .isFalse q(isNat_not_prime $pn $prf)

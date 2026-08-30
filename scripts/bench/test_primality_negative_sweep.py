@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import unittest
 
+from scripts.bench import fresh_module_sweep
 from scripts.bench import primality_negative_sweep as negative
 
 
@@ -18,20 +19,22 @@ class NegativePolicySweepTests(unittest.TestCase):
             {"factor-found", "parity-factor-found", "exhausted"},
         )
 
-    def test_policy_rows_record_seed_and_scaled_restart_count(self) -> None:
+    def test_policy_rows_record_seed_and_fixed_work_budget(self) -> None:
         rows = [pair.metadata for pair in negative.SPEC.pairs if not pair.null_control]
         self.assertTrue(all(row["seed"] == "numeral" for row in rows))
-        self.assertEqual(
-            {row["rho_restarts"] for row in rows if row["bits"] <= 64}, {1}
-        )
-        self.assertEqual(
-            {row["rho_restarts"] for row in rows if row["bits"] > 64}, {0}
-        )
+        self.assertEqual({row["rho_restarts"] for row in rows}, {1})
+        self.assertEqual({row["rho_step_budget"] for row in rows}, {65536})
 
-    def test_null_controls_are_first_and_distinct(self) -> None:
-        first, second = negative.SPEC.pairs[:2]
-        self.assertTrue(first.null_control and second.null_control)
-        self.assertNotEqual(first.reference.module, second.reference.module)
+    def test_release_measurement_protocol_is_preregistered(self) -> None:
+        self.assertEqual(negative.SPEC.required_samples, 6)
+        self.assertEqual(negative.SPEC.max_pair_retries, 32)
+        self.assertTrue(negative.SPEC.absolute_only)
+        fresh_module_sweep.validate_spec(negative.SPEC)
+
+    def test_every_probe_is_wired_into_lake(self) -> None:
+        lakefile = (negative.ROOT / "lakefile.lean").read_text(encoding="utf-8")
+        for module in fresh_module_sweep.probe_modules(negative.SPEC):
+            self.assertIn(f"`{module}", lakefile, module)
 
 
 if __name__ == "__main__":

@@ -6,16 +6,11 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Exhaustion immediately above the rho-search bit boundary on
+/-! Odd factor-found probe immediately above 64 bits:
 `2^64 + 1 = 274177 * 67280421310721`. -/
 
 open Hex.PrimalityTactic
 
 use_hex_primality_norm_num
 
-/--
-error: unsolved goals
-⊢ ¬Nat.Prime 18446744073709551617
--/
-#guard_msgs in
 example : ¬ Nat.Prime 18446744073709551617 := by norm_num

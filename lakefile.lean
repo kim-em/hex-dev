@@ -315,8 +315,9 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimalityMathlib.ProofProbe.Negative32,
     `HexPrimalityMathlib.ProofProbe.Negative64,
     `HexPrimalityMathlib.ProofProbe.Negative64Null,
-    `HexPrimalityMathlib.ProofProbe.NegativeExhausted65,
+    `HexPrimalityMathlib.ProofProbe.Negative65,
     `HexPrimalityMathlib.ProofProbe.Negative512,
+    `HexPrimalityMathlib.ProofProbe.Negative512Odd,
     `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
 
 lean_lib HexIntFactorKernelProbe where

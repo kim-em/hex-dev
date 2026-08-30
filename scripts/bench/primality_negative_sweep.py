@@ -3,10 +3,12 @@
 
 Each candidate is a fresh importing module paired with the same import-only
 baseline.  The factor-found ladder spans the first certificate-tier width, a
-32-bit strong pseudoprime, the balanced 64-bit restart boundary, and the
-supported 512-bit ceiling's parity preflight.  The exhaustion rows cover the
-first zero-restart width and a balanced 512-bit semiprime; both must decline
-without trial division.
+32-bit strong pseudoprime, balanced 64-bit factors, the first width above it,
+and parity and odd-small-factor cases at the supported 512-bit ceiling.  A
+balanced 512-bit semiprime exercises bounded exhaustion without trial division.
+The release contract is the absolute fresh-module wall-clock budget; reference
+subtraction is retained only as diagnostic data because imports dominate the
+short factor-found cases.
 """
 
 from __future__ import annotations
@@ -31,8 +33,11 @@ NEGATIVE_25 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative25")
 NEGATIVE_32 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative32")
 NEGATIVE_64 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64")
 NEGATIVE_64_NULL = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64Null")
-EXHAUSTED_65 = ProbeModule("HexPrimalityMathlib.ProofProbe.NegativeExhausted65")
+NEGATIVE_65 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative65")
 NEGATIVE_512 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative512")
+NEGATIVE_512_ODD = ProbeModule(
+    "HexPrimalityMathlib.ProofProbe.Negative512Odd"
+)
 EXHAUSTED_512 = ProbeModule(
     "HexPrimalityMathlib.ProofProbe.NegativeExhausted512"
 )
@@ -45,6 +50,7 @@ def negative_pair(
     outcome: str,
     factor_bits: tuple[int, int],
     rho_restarts: int,
+    rho_step_budget: int,
 ) -> ProbePair:
     return ProbePair(
         name,
@@ -56,6 +62,7 @@ def negative_pair(
             "bits": bits,
             "factor_bits": list(factor_bits),
             "rho_restarts": rho_restarts,
+            "rho_step_budget": rho_step_budget,
             "seed": "numeral",
             "fresh_module_budget_ms": 10_000,
         },
@@ -80,24 +87,30 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         negative_pair(
-            "negative-25", NEGATIVE_25, 25, "factor-found", (7, 18), 1
+            "negative-25", NEGATIVE_25, 25, "factor-found", (7, 18), 1, 65536
         ),
         negative_pair(
-            "negative-32", NEGATIVE_32, 32, "factor-found", (8, 25), 1
+            "negative-32", NEGATIVE_32, 32, "factor-found", (8, 25), 1, 65536
         ),
         negative_pair(
-            "negative-64", NEGATIVE_64, 64, "factor-found", (32, 32), 1
+            "negative-64", NEGATIVE_64, 64, "factor-found", (32, 32), 1, 65536
         ),
         negative_pair(
-            "negative-exhausted-65",
-            EXHAUSTED_65,
+            "negative-65",
+            NEGATIVE_65,
             65,
-            "exhausted",
+            "factor-found",
             (19, 46),
-            0,
+            1,
+            65536,
         ),
         negative_pair(
-            "negative-512", NEGATIVE_512, 512, "parity-factor-found", (2, 511), 0
+            "negative-512", NEGATIVE_512, 512, "parity-factor-found",
+            (2, 511), 1, 65536
+        ),
+        negative_pair(
+            "negative-512-odd", NEGATIVE_512_ODD, 512, "factor-found",
+            (7, 506), 1, 65536
         ),
         negative_pair(
             "negative-exhausted-512",
@@ -105,7 +118,8 @@ SPEC = SweepSpec(
             512,
             "exhausted",
             (256, 256),
-            0,
+            1,
+            65536,
         ),
     ),
     probe_target="HexPrimalityElabProbe",
@@ -118,6 +132,7 @@ SPEC = SweepSpec(
     ),
     required_samples=6,
     max_pair_retries=32,
+    absolute_only=True,
 )
 
 

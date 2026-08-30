@@ -17,23 +17,45 @@ open Hex.PrimalityTactic
 use_hex_primality_norm_num
 
 example : natPrimeCertThreshold = 16777216 := rfl
-example : natPrimeRhoBitLimit = 64 := rfl
-example : natPrimeRhoBudget 16777217 = 1 := rfl
-example : natPrimeRhoBudget 18446744073709551616 = 0 := rfl
+example : natPrimeRhoRestartBudget = 1 := rfl
+example : natPrimeRhoStepBudget = 65536 := rfl
 
 -- The documented seed deterministically finds the same proper factor on the
--- first certificate-tier composite, while a prime input consumes exactly the
--- accepted restart budget and reports exhaustion.
-#guard (match Hex.Nat.Internal.rhoFactorCounted? 16777217
-    (Hex.Rand.ofSeed 16777217) (natPrimeRhoBudget 16777217) with
+-- first certificate-tier composite. Parity consumes no restart, while the
+-- balanced ceiling semiprime consumes exactly the work budget and exhausts.
+#guard (match Hex.Nat.Internal.rhoFactorCountedWith? 16777217
+    (Hex.Rand.ofSeed 16777217) natPrimeRhoRestartBudget
+    natPrimeRhoStepBudget with
   | .ok success =>
-      success.factor == 97 && success.attempts == natPrimeRhoBudget 16777217
+      success.factor == 97 && success.attempts == natPrimeRhoRestartBudget
   | .error _ => false)
-#guard (match Hex.Nat.Internal.rhoFactorCounted? 1000003
-    (Hex.Rand.ofSeed 1000003) (natPrimeRhoBudget 1000003) with
+#guard (match Hex.Nat.Internal.rhoFactorCountedWith? 18446744073709551616
+    (Hex.Rand.ofSeed 18446744073709551616) natPrimeRhoRestartBudget
+    natPrimeRhoStepBudget with
+  | .ok success => success.factor == 2 && success.attempts == 0
+  | .error _ => false)
+#guard (match Hex.Nat.Internal.rhoFactorCountedWith?
+    13407807926820848549984871491119855788235523322740973763876191939595871090961335127125233828880698995298214970593191507050244061726229325180256249012290513
+    (Hex.Rand.ofSeed
+      13407807926820848549984871491119855788235523322740973763876191939595871090961335127125233828880698995298214970593191507050244061726229325180256249012290513)
+    natPrimeRhoRestartBudget natPrimeRhoStepBudget with
   | .error failure =>
-      failure.stop == .exhausted && failure.attempts == natPrimeRhoBudget 1000003
+      failure.stop == .exhausted &&
+        failure.attempts == natPrimeRhoRestartBudget
   | .ok _ => false)
+#guard (match Hex.Nat.Internal.rhoFactorCountedWith?
+    10160604446909624364520940818952867768480456910917673106556136406570399304040109818357670366579606503796352267531946460412610364318428260037531749637423201
+    (Hex.Rand.ofSeed
+      10160604446909624364520940818952867768480456910917673106556136406570399304040109818357670366579606503796352267531946460412610364318428260037531749637423201)
+    natPrimeRhoRestartBudget natPrimeRhoStepBudget with
+  | .ok success =>
+      1 < success.factor &&
+        success.factor <
+          10160604446909624364520940818952867768480456910917673106556136406570399304040109818357670366579606503796352267531946460412610364318428260037531749637423201 &&
+        10160604446909624364520940818952867768480456910917673106556136406570399304040109818357670366579606503796352267531946460412610364318428260037531749637423201 %
+          success.factor == 0 &&
+        success.attempts == natPrimeRhoRestartBudget
+  | .error _ => false)
 
 example : Nat.Prime 16777121 := by norm_num       -- last tested prime below the threshold
 example : Nat.Prime 16777259 := by norm_num       -- first prime above the threshold
@@ -44,6 +66,7 @@ example : Nat.Prime 952169162576809026308438983856193076481360323908963454541664
   norm_num                                          -- exact 512-bit ceiling
 example : ¬ Nat.Prime 2147483649 := by norm_num   -- validated factor proof
 example : ¬ Nat.Prime 3215031751 := by norm_num   -- strong pseudoprime to bases 2, 3, 5, 7
+example : ¬ Nat.Prime 18446744073709551617 := by norm_num -- 65-bit odd factor search
 example : ¬ Nat.Prime 0 := by norm_num
 example : ¬ Nat.Prime 1 := by norm_num
 
