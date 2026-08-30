@@ -96,10 +96,10 @@ requires new end-to-end search, reification, and kernel-replay evidence. -/
 meta def primalityBitBudget : Nat := 512
 
 /-- Maximum recursive fuel passed to elaboration-time certificate search.
-The settled default is one unit per input bit, so the 512-unit cap matches the
-supported input ceiling and prevents later changes to the default from silently
-widening the tactic policy. -/
-meta def primalityFuelBudget : Nat := 512
+The settled default is one unit per input bit, so this is deliberately the same
+quantity as the supported input ceiling. Keeping the definitions linked prevents
+one policy boundary from changing without the other. -/
+meta def primalityFuelBudget : Nat := primalityBitBudget
 
 /-- Maximum Brent restarts at one partial-factor worklist entry on every
 elaboration-time certificate route. -/

@@ -144,8 +144,12 @@ def host_state(cpu: int) -> dict:
     model = "unknown"
     try:
         for block in Path("/proc/cpuinfo").read_text().split("\n\n"):
-            fields = dict(line.split(":", 1) for line in block.splitlines()
-                          if ":" in line)
+            fields = {
+                key.strip(): value
+                for line in block.splitlines()
+                if ":" in line
+                for key, value in (line.split(":", 1),)
+            }
             if fields.get("processor", "").strip() == str(cpu):
                 model = fields.get("model name", "unknown").strip()
                 break
@@ -312,8 +316,9 @@ def main() -> int:
         "schema": "hex-primality-fuel-policy-v1",
         "measurement": "warm native certificate search; counterbalanced fuel order",
         "acceptance": (
-            "successes replay checkPrime; expected depth thresholds are exact; "
-            "honest exhaustion consumes bounded work and makes no primality claim"
+            "the probe performs one untimed same-implementation checkPrime replay "
+            "for every success; expected depth thresholds are exact; honest "
+            "exhaustion consumes bounded work and makes no primality claim"
         ),
         "environment": {
             "hostname": socket.gethostname(),

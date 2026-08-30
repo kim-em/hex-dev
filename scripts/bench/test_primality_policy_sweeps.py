@@ -76,10 +76,7 @@ class FuelSweepTests(unittest.TestCase):
 
     def test_ladder_reaches_policy_rung_without_duplicates(self) -> None:
         ladder = fuel.fuel_ladder(512)
-        self.assertEqual(ladder, tuple(sorted(set(ladder))))
-        self.assertIn(0, ladder)
-        self.assertIn(16, ladder)
-        self.assertIn(512, ladder)
+        self.assertEqual(ladder, (0, 1, 2, 3, 4, 8, 16, 512))
 
     def test_settled_default_is_one_fuel_per_input_bit(self) -> None:
         search = (fuel.ROOT / "HexPrimality/Search.lean").read_text(encoding="utf-8")
@@ -142,7 +139,9 @@ class ElaboratorSweepTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("meta def primalityBitBudget : Nat := 512", core)
-        self.assertIn("meta def primalityFuelBudget : Nat := 512", core)
+        self.assertIn(
+            "meta def primalityFuelBudget : Nat := primalityBitBudget", core
+        )
         self.assertIn("meta def primalityRhoRestartBudget : Nat := 2", core)
         self.assertIn("meta def primalityRhoStepBudget : Nat := 1 <<< 15", core)
         self.assertIn("let fuel := primalityFuel n", core)

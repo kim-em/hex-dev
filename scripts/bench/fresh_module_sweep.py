@@ -289,6 +289,7 @@ def dependency_checkouts() -> dict[str, dict[str, object]]:
 
 
 def lean_processes() -> list[dict[str, object]]:
+    """Record concurrent Lake/Lean PIDs without retaining unrelated argv data."""
     proc = subprocess.run(
         ["ps", "-eo", "pid=,args="], capture_output=True, text=True, check=False
     )
@@ -301,8 +302,10 @@ def lean_processes() -> list[dict[str, object]]:
         if len(fields) != 2 or not fields[0].isdigit():
             continue
         pid, command = int(fields[0]), fields[1]
-        if pid != os.getpid() and pattern.search(command):
-            processes.append({"pid": pid, "command": command})
+        match = pattern.search(command)
+        if pid != os.getpid() and match is not None:
+            executable = Path(match.group(0).strip()).name
+            processes.append({"pid": pid, "command": executable})
     return processes
 
 

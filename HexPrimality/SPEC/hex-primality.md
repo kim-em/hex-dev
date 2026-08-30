@@ -866,13 +866,16 @@ deterministic verdict work nor bounds the randomized attempt total within a
 node.
 
 **`defaultPrimeFuel n = n.log2 + 1` is the settled depth policy.** This gives
-one construction unit per input bit. For an odd subject above the table, every
-recursive child is a prime divisor of `n - 1` and hence at most
-`(n - 1) / 2`, so its bit length is strictly smaller. The policy therefore
-covers the structurally possible depth without the former unexplained
-factor-of-two and additive margin. This is only a recursion-depth bound:
-partial factorization and witness search remain separately bounded and may
-honestly exhaust, so no certificate-search completeness is claimed.
+one construction unit per input bit. For an odd subject above the table, the
+partial-factor product invariant makes every positive-exponent child a factor
+of `n - 1`. A child that reaches construction is odd and therefore has a
+complementary factor of at least two, so its bit length is strictly smaller.
+The complete table closes inputs below 17 bits without construction; the
+structural maximum is consequently at most the input bit length minus 16.
+The settled policy retains those 16 spare units while removing the former
+unexplained factor-of-two and additive margin. This is only a recursion-depth
+bound: partial factorization and witness search remain separately bounded and
+may honestly exhaust, so no certificate-search completeness is claimed.
 
 `isPrime` is the pure total convenience API. It runs `isPrime?` with
 `defaultPrimeFuel n` from the reproducible seed `Rand.ofSeed n` and
@@ -944,9 +947,11 @@ For reproducible syntax with no seed argument, the elaborator uses
 bits, at most 512 recursive certificate-search fuel, at most 2 Brent restarts
 per partial-factor worklist entry, and at most 32768 Brent cycle steps per
 restart.** Every elaboration-time certificate route uses
-`primalityFuel n = min (defaultPrimeFuel n) 512`; at the exact 512-bit boundary
-the default contributes 512. The recursive fuel bounds certificate-construction
-depth. Partial factorization is bounded separately by `2 * n.log2 + 8` worklist
+`primalityFuel n = min (defaultPrimeFuel n) primalityFuelBudget`, where
+`primalityFuelBudget` is definitionally the 512-bit input ceiling. At the exact
+boundary the default contributes 512. The recursive fuel bounds
+certificate-construction depth. Partial factorization is bounded separately by
+`2 * n.log2 + 8` worklist
 steps at each certificate node and the rho restart/cycle allocation above. The
 fixed witness budget remains 32 candidates per factor entry. The exact attempt
 counter includes rho restarts and witness candidates and can therefore exceed
@@ -982,6 +987,9 @@ SMT-sibling interference checks remain hard gates for every accepted sample.
 The refreshed raw paired samples for the settled fuel policy and their host
 provenance are committed at
 `reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json`.
+The earlier ceiling-selection record remains at
+`reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json`;
+the refreshed record supersedes its timings for the current fuel policy.
 They reproduce with:
 
 ```bash
@@ -1252,9 +1260,14 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
   success thresholds are one, two, and three construction levels. Rungs above
   the threshold retain the same outcome and attempt count, while the selected
   one-unit-per-bit policy remains a conservative structural bound. Every
-  accepted result replays `checkPrime`; exhaustion makes no primality claim.
+  successful probe results receive an untimed same-implementation
+  `checkPrime` replay; exhaustion makes no primality claim.
   The runtime ceiling is the benchmark family's existing five seconds per
   native call, and the elaboration ceiling is ten seconds per fresh module.
+  The native ladder uses an idle pinned core and retains host snapshots but has
+  no interference rejection gate, so its outcome and attempt columns select
+  the policy while its wall times are indicative. The paired fresh-module
+  record enforces per-arm CPU and SMT-sibling interference gates.
   Raw counterbalanced samples and host provenance are in
   `reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json`; the
   refreshed paired elaboration samples are in

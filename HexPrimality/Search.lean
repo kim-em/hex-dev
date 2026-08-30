@@ -660,10 +660,12 @@ structure NextPrimeFailure where
 deriving Repr
 
 /-- Default fuel for the bounded decision path: one certificate-construction
-level per input bit. Above the deterministic tiers, every recursive child is a
-prime divisor of `n - 1`; for odd `n` it is at most `(n - 1) / 2`, so its bit
-length is strictly smaller. This is a conservative depth bound, not a claim
-that bounded factor or witness search finds every available certificate. -/
+level per input bit. Above the deterministic tiers, every recursive child that
+reaches construction is an odd factor from the product decomposition of
+`n - 1`; its complementary factor is at least two, so its bit length is
+strictly smaller. The complete table closes inputs below 17 bits without
+construction, leaving 16 spare units in this bound. This is not a claim that
+bounded factor or witness search finds every available certificate. -/
 def defaultPrimeFuel (n : Nat) : Nat := n.log2 + 1
 
 /-- A private non-dependent counted result. Public counted shapes remain

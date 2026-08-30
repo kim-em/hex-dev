@@ -28,30 +28,33 @@ private structure Observation where
   outcome : String
   attempts : Nat
   checksum : Nat
-  valid : Bool
 
 private def observe (allocation : Allocation) (n fuel : Nat) : Observation :=
   match Internal.primeCertCountedWith? (allocationBudget allocation) n
       (Hex.Rand.ofSeed n) fuel with
   | .ok success =>
-      let valid := success.cert.raw.subject == n && checkPrime success.cert.raw
       ⟨"success", success.attempts,
-        success.cert.raw.subject % 4294967296 + success.attempts, valid⟩
+        success.cert.raw.subject % 4294967296 + success.attempts⟩
   | .error failure =>
       match failure.stop with
-      | .composite => ⟨"composite", failure.attempts, failure.attempts + 1, true⟩
-      | .exhausted => ⟨"exhausted", failure.attempts, failure.attempts + 2, true⟩
+      | .composite => ⟨"composite", failure.attempts, failure.attempts + 1⟩
+      | .exhausted => ⟨"exhausted", failure.attempts, failure.attempts + 2⟩
 
-private def runBatch (allocation : Allocation) (n fuel repeats : Nat) :
+private def validate (allocation : Allocation) (n fuel : Nat) : Bool :=
+  match Internal.primeCertCountedWith? (allocationBudget allocation) n
+      (Hex.Rand.ofSeed n) fuel with
+  | .ok success =>
+      success.cert.raw.subject == n && checkPrime success.cert.raw
+  | .error _ => true
+
+private def runBatch (expected : Observation) (allocation : Allocation)
+    (n fuel repeats : Nat) :
     Except String Nat := do
-  let expected := observe allocation n fuel
-  if !expected.valid then
-    throw "certificate search returned an invalid success"
   let mut checksum := 0
   for _ in [0:repeats] do
     let current := observe allocation n fuel
     if current.outcome != expected.outcome ||
-        current.attempts != expected.attempts || !current.valid then
+        current.attempts != expected.attempts then
       throw "certificate search was not reproducible"
     checksum := checksum + current.checksum
   return checksum
@@ -79,15 +82,16 @@ def run (args : List String) : IO UInt32 := do
     IO.eprintln "REPEATS must be positive"
     return 2
   let observation := observe allocation n fuel
-  if !observation.valid then
+  -- Keep the same-implementation checker replay outside the timed region.
+  if !validate allocation n fuel then
     IO.eprintln "certificate search returned an invalid success"
     return 1
   -- One untimed call establishes the same warm native state for every rung.
-  match runBatch allocation n fuel 1 with
+  match runBatch observation allocation n fuel 1 with
   | .error e => IO.eprintln e; return 1
   | .ok _ => pure ()
   let start ← IO.monoNanosNow
-  let checksum ← match runBatch allocation n fuel repeats with
+  let checksum ← match runBatch observation allocation n fuel repeats with
     | .error e => throw <| IO.userError e
     | .ok checksum => pure checksum
   let stop ← IO.monoNanosNow
