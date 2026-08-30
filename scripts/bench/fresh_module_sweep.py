@@ -2582,6 +2582,7 @@ def run_cli(
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
             "max_null_robust_spread_ratio":
                 MAX_NULL_ROBUST_SPREAD_RATIO,
+            "absolute_only": spec.absolute_only,
             "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",
