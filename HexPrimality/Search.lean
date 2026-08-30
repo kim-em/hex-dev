@@ -629,9 +629,13 @@ deriving Repr
 
 /-- A resumable next-prime-search failure. -/
 structure NextPrimeFailure where
-  /-- Candidates conclusively rejected before the failure; the candidate
-  whose decision failed is not counted. -/
-  attempts : Nat
+  /-- Candidates conclusively rejected as composite before exhaustion. An
+  undecided candidate is not counted. -/
+  rejectedCandidates : Nat
+  /-- Randomized certificate-search attempts consumed by the undecided
+  candidate. Deterministic table, trial-division, and Miller--Rabin work is
+  not counted. -/
+  certAttempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
 deriving Repr
@@ -1017,16 +1021,17 @@ theorem isPrime_iff {n : Nat} : isPrime n = true ↔ Prime n := by
 
 private def nextPrimeGo (certFuel : Nat) :
     Nat → Nat → Nat → Rand → Except NextPrimeFailure (Nat × Rand)
-  | 0, _, attempts, r => .error ⟨attempts, r⟩
-  | steps + 1, m, attempts, r =>
+  | 0, _, rejectedCandidates, r => .error ⟨rejectedCandidates, 0, r⟩
+  | steps + 1, m, rejectedCandidates, r =>
       match isPrime? m r certFuel with
-      | .error f => .error ⟨attempts, f.rand⟩
+      | .error f => .error ⟨rejectedCandidates, f.attempts, f.rand⟩
       | .ok (true, r') => .ok (m, r')
-      | .ok (false, r') => nextPrimeGo certFuel steps (m + 1) (attempts + 1) r'
+      | .ok (false, r') =>
+          nextPrimeGo certFuel steps (m + 1) (rejectedCandidates + 1) r'
 
 private theorem nextPrimeGo_spec (certFuel : Nat) :
-    ∀ (steps m attempts : Nat) (r : Rand) {p : Nat} {r' : Rand},
-      nextPrimeGo certFuel steps m attempts r = .ok (p, r') →
+    ∀ (steps m rejectedCandidates : Nat) (r : Rand) {p : Nat} {r' : Rand},
+      nextPrimeGo certFuel steps m rejectedCandidates r = .ok (p, r') →
       m ≤ p ∧ Prime p ∧ ∀ q, m ≤ q → q < p → ¬ Prime q := by
   intro steps
   induction steps with
@@ -1059,7 +1064,10 @@ private theorem nextPrimeGo_spec (certFuel : Nat) :
 
 /-- Fuel-bounded least-prime-above search: a total form needs Euclid's
 theorem, which this tree does not carry Mathlib-free, so exhaustion is
-reported with the attempt count and advanced state. -/
+reported with separate counts for conclusively rejected candidates and
+randomized certificate-search attempts, plus the exact advanced state. On
+failure, `rejectedCandidates = fuel` means the candidate window was exhausted;
+otherwise the undecided candidate is `n + 1 + rejectedCandidates`. -/
 def nextPrime? (n : Nat) (r : Rand) (fuel : Nat) :
     Except NextPrimeFailure (Nat × Rand) :=
   nextPrimeGo fuel fuel (n + 1) 0 r

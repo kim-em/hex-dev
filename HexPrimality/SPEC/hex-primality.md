@@ -777,8 +777,9 @@ structure PrimeDecisionFailure where
   rand     : Rand
 
 structure NextPrimeFailure where
-  attempts : Nat
-  rand     : Rand
+  rejectedCandidates : Nat
+  certAttempts       : Nat
+  rand               : Rand
 
 def defaultPrimeFuel (n : Nat) : Nat
 
@@ -878,8 +879,20 @@ this tree has neither Mathlib-free; an earlier draft of this SPEC
 declared `nextPrime : Nat → Nat` with no account of either. Adding
 Euclid would make the total form available and is not on any consumer's
 critical path, so `NextPrimeFailure` reports exhaustion with the attempt
-count and advanced state. The theorem records that a success is the
-*least* such prime.
+counts and advanced state. The units are separate: `rejectedCandidates`
+counts only candidates conclusively proved composite, while `certAttempts`
+counts randomized certificate-search attempts consumed by the candidate
+whose decision exhausted. An undecided candidate is not included in
+`rejectedCandidates`. If the candidate window itself is exhausted,
+`certAttempts` is zero. In either case `rand` is the exact state after all
+reported randomized work, so a caller can replay or resume without losing
+work. Deterministic table lookup, trial division, and Miller--Rabin filtering
+do not contribute to `certAttempts`; in particular, every conclusively rejected
+candidate leaves both this count and `rand` unchanged. A failure with
+`rejectedCandidates = fuel` exhausted the whole candidate window. Otherwise
+the undecided candidate is `n + 1 + rejectedCandidates`, so the two failure
+modes and the resumption point are recoverable from the call and its failure.
+The theorem records that a success is the *least* such prime.
 
 `primeCert?` distinguishes `PrimeCertStop.composite`, justified by the size
 check, table completeness, or a failed Miller-Rabin base, from `.exhausted`,
