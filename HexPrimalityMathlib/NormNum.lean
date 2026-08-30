@@ -55,7 +55,8 @@ def natPrimeCertThreshold : Nat := 16777216
 
 /-- Largest bit width at which the opt-in negative `Nat.Prime` route runs a
 Brent-rho restart. Measured balanced 64-bit cases finish within the fresh-module
-wall-clock budget; adversarial exhaustion at 82 and 512 bits does not. -/
+wall-clock budget. A one-restart adversarial 82-bit case exceeded that budget,
+and the former 16-restart 512-bit search exceeded two minutes. -/
 def natPrimeRhoBitLimit : Nat := 64
 
 /-- Restart policy for the opt-in negative `Nat.Prime` route. Numerals through
