@@ -558,6 +558,122 @@ def prepInvInput (n : Nat) : InvInput :=
     else panic! "prepInvInput: degree check failed"
   else panic! "prepInvInput: irreducibility check failed"
 
+/-! ## Untimed normalized extended-gcd diagnostics -/
+
+private def natBitLength (n : Nat) : Nat :=
+  if n = 0 then 0 else n.log2 + 1
+
+private structure RatPolyBits where
+  numMax : Nat
+  denMax : Nat
+  total : Nat
+  limbs : Nat
+
+private def ratPolyBits (p : DensePoly Rat) : RatPolyBits :=
+  p.coeffs.foldl (init := { numMax := 0, denMax := 0, total := 0, limbs := 0 }) fun stats q =>
+    let numBits := natBitLength q.num.natAbs
+    let denBits := natBitLength q.den
+    { numMax := max stats.numMax numBits
+      denMax := max stats.denMax denBits
+      total := stats.total + numBits + denBits
+      limbs := stats.limbs + (numBits + 63) / 64 + (denBits + 63) / 64 }
+
+private structure InvChainStep where
+  index : Nat
+  dividendDegree : Nat
+  divisorDegree : Nat
+  remainderDegree : Nat
+  remainderNumMax : Nat
+  remainderDenMax : Nat
+  remainderBits : Nat
+  cofactorNumMax : Nat
+  cofactorDenMax : Nat
+  coefficientOps : Nat
+  bitWork : Nat
+  limbWork : Nat
+
+private def degreeD (p : DensePoly Rat) : Nat :=
+  p.degree?.getD 0
+
+/- Replay `xgcdLeftMonicAux` exactly, retaining diagnostics outside the timed
+benchmark. `coefficientOps` counts the scalar slots touched by normalization,
+long division, the one-sided Bezout product, and subtraction. `bitWork` sums
+the widths of the actual polynomial operands at this step; `limbWork` is the
+same sum after rounding each numerator and denominator to 64-bit limbs. Neither
+charges early operations the largest width reached later in the chain. -/
+private def invChainStepsAux (r₀ s₀ r₁ s₁ : DensePoly Rat) :
+    Nat → Nat → Array InvChainStep → Array InvChainStep
+  | 0, _, steps => steps
+  | fuel + 1, index, steps =>
+      if r₁.isZero then steps
+      else
+        let c := 1 / r₁.leadingCoeff
+        let r₁' := DensePoly.scale c r₁
+        let s₁' := DensePoly.scale c s₁
+        let qr := DensePoly.divMod r₀ r₁'
+        let product := qr.1 * s₁'
+        let nextS := s₀ - product
+        let remainderBits := ratPolyBits r₁'
+        let cofactorBits := ratPolyBits s₁'
+        let quotientBits := ratPolyBits qr.1
+        let nextRemainderBits := ratPolyBits qr.2
+        let nextCofactorBits := ratPolyBits nextS
+        let cNumBits := natBitLength c.num.natAbs
+        let cDenBits := natBitLength c.den
+        let cBits := cNumBits + cDenBits
+        let cLimbs := (cNumBits + 63) / 64 + (cDenBits + 63) / 64
+        let divisions :=
+          if r₀.size < r₁'.size then 0
+          else (r₀.size - r₁'.size + 1) * r₁'.size
+        let coefficientOps := r₁.size + s₁.size + divisions +
+          qr.1.size * s₁'.size + max s₀.size product.size
+        let normalizeWork := remainderBits.total + r₁.size * cBits +
+          cofactorBits.total + s₁.size * cBits
+        let divisionWork := r₁'.size * quotientBits.total +
+          (if r₀.size < r₁'.size then 0
+           else (r₀.size - r₁'.size + 1) * remainderBits.total) +
+          nextRemainderBits.total
+        let productWork := s₁'.size * quotientBits.total +
+          qr.1.size * cofactorBits.total
+        let subtractionWork := (ratPolyBits s₀).total +
+          (ratPolyBits product).total + nextCofactorBits.total
+        let normalizeLimbWork := remainderBits.limbs + r₁.size * cLimbs +
+          cofactorBits.limbs + s₁.size * cLimbs
+        let divisionLimbWork := r₁'.size * quotientBits.limbs +
+          (if r₀.size < r₁'.size then 0
+           else (r₀.size - r₁'.size + 1) * remainderBits.limbs) +
+          nextRemainderBits.limbs
+        let productLimbWork := s₁'.size * quotientBits.limbs +
+          qr.1.size * cofactorBits.limbs
+        let subtractionLimbWork := (ratPolyBits s₀).limbs +
+          (ratPolyBits product).limbs + nextCofactorBits.limbs
+        let step :=
+          { index := index
+            dividendDegree := degreeD r₀
+            divisorDegree := degreeD r₁'
+            remainderDegree := degreeD qr.2
+            remainderNumMax := remainderBits.numMax
+            remainderDenMax := remainderBits.denMax
+            remainderBits := remainderBits.total
+            cofactorNumMax := cofactorBits.numMax
+            cofactorDenMax := cofactorBits.denMax
+            coefficientOps := coefficientOps
+            bitWork := normalizeWork + divisionWork + productWork + subtractionWork
+            limbWork := normalizeLimbWork + divisionLimbWork + productLimbWork +
+              subtractionLimbWork }
+        invChainStepsAux r₁' s₁' qr.2 nextS fuel (index + 1) (steps.push step)
+
+private def invChainSteps (input : InvInput) : Array InvChainStep :=
+  invChainStepsAux input.a.coeffs (1 : DensePoly Rat)
+    (ZPoly.toRatPoly input.p) 0
+    (input.a.coeffs.size + (ZPoly.toRatPoly input.p).size + 1) 0 #[]
+
+private def printInvChainSteps : IO Unit := do
+  IO.println "n,step,dividend_degree,divisor_degree,next_remainder_degree,remainder_num_max,remainder_den_max,remainder_total_bits,cofactor_num_max,cofactor_den_max,coefficient_ops,bit_work,limb_work"
+  for n in #[4, 8, 16, 32, 48, 64, 96] do
+    for step in invChainSteps (prepInvInput n) do
+      IO.println s!"{n},{step.index},{step.dividendDegree},{step.divisorDegree},{step.remainderDegree},{step.remainderNumMax},{step.remainderDenMax},{step.remainderBits},{step.cofactorNumMax},{step.cofactorDenMax},{step.coefficientOps},{step.bitWork},{step.limbWork}"
+
 def runQAdjoinAddLadder (input : FieldInput) : UInt64 :=
   fixedChecksum (input.a + input.b)
 
@@ -570,6 +686,11 @@ def runQAdjoinInvLadder (input : InvInput) : UInt64 :=
     letI : ZPoly.CheckedIrreducible input.p := inst
     fixedChecksum input.a⁻¹
   | none => 0
+
+/-- Expected finite-word work of normalized inversion on the controlled
+bounded-height family. -/
+private def invLimbWork (n : Nat) : Nat :=
+  n * n * (n + 6)
 
 /- Cost model. `QAdjoin` addition adds the two reduced rational coefficient
 vectors coordinatewise: exactly `min` sizes rational additions plus a copy of
@@ -610,14 +731,24 @@ setup_benchmark runQAdjoinMulLadder n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model. Inversion runs the polynomial extended gcd of the degree-`(n-1)`
-element against the degree-`n` modulus over `ℚ`. Monic remainder normalization
-keeps the numerator and denominator bit lengths within the `O(n log n)`
-Hadamard bound. The Euclidean chain performs `O(n²)` rational coefficient
-operations, so charging linear work per coefficient limb gives the wallclock
-proxy `n² * (n log n) = n³ log n`. -/
-setup_benchmark runQAdjoinInvLadder n =>
-  n * n * n * (Nat.log2 (n + 2) + 1)
+/- Cost model. Inversion runs the monic-normalized polynomial extended gcd of
+the degree-`(n-1)` element against `X^n - 2` over `ℚ`. On this controlled
+bounded-height family the Euclidean chain drops one degree at every nonterminal
+step. Long division and the one-sided Bezout update consequently touch `Θ(n)`
+rational coefficient slots at each of `Θ(n)` steps.
+
+The untimed `qadjoin-inv-chain-stats` replay records each step's degrees and
+separate numerator/denominator widths. Summing the actual polynomial operands
+used by normalization, division, multiplication, and subtraction is cubic in
+bits on the scientific ladder. Rounding each integer to the 64-bit limbs used
+by the runtime gives 1372, 7693, 56086, 179136, 434458, and 1319965 units for
+`n = 8, 16, 32, 48, 64, 96`; divided by `n² * (n + 6)`, these are
+1.531, 1.366, 1.441, 1.440, 1.515, and 1.404. Thus `invLimbWork` is the
+independently derived finite-word expected-work proxy, not a timing fit.
+
+The general Hadamard argument still permits `O(n log n)`-bit coefficients and
+therefore the SPEC retains the conservative `O(n³ log n)` worst-case bound. -/
+setup_benchmark runQAdjoinInvLadder n => invLimbWork n
   with prep := prepInvInput
   where {
     -- The single-root fixture removes the former setup bottleneck. The
@@ -1512,5 +1643,8 @@ def main (args : List String) : IO UInt32 := do
   match args with
   | ["isolation-stats"] =>
       Hex.NumberFieldBench.printIsolationStats
+      return 0
+  | ["qadjoin-inv-chain-stats"] =>
+      Hex.NumberFieldBench.printInvChainSteps
       return 0
   | _ => LeanBench.Cli.dispatch args

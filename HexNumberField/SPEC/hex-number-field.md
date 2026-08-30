@@ -539,6 +539,12 @@ oracle's independently computed decomposition with Lean's finite output.
 
 - Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
   degree-10 field operation remains capped at 100 ms on the reference host.
+- Fixed-field inversion performs `O(n²)` rational coefficient operations.
+  Monic remainder normalization keeps numerator and denominator widths within
+  the `O(n log n)` subresultant/Hadamard bound, so inversion remains
+  `O(n³ log n)` in the conservative linear-bit-cost model. The controlled
+  bounded-height benchmark family uses a tighter aggregate finite-word proxy;
+  that expected-work registration does not weaken this worst-case contract.
 - A lazy binary operation has eliminant degree at most
   `deg(a.p) * deg(b.p)`. Its ceiling is the measured resultant cost plus the
   existing HexRoots ceiling at that eliminant degree. Do not promise a faster
