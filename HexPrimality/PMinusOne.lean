@@ -92,18 +92,9 @@ def pMinusOneStage1 (n base bound : Nat) : PMinusOneResult :=
 /-- One counted, resumable Pollard `p - 1` stage-1 attempt. The deterministic
 primitive consumes no generator words, but every call costs exactly one search
 attempt whether it returns `noFactor`, a proper factor, or `whole`. -/
-@[expose]
 def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
     PMinusOneAttempt :=
   ⟨pMinusOneStage1 n base bound, 1, r⟩
-
-@[simp]
-theorem pMinusOneStage1Counted_attempts (n base bound : Nat) (r : Rand) :
-    (pMinusOneStage1Counted n base bound r).attempts = 1 := rfl
-
-@[simp]
-theorem pMinusOneStage1Counted_rand (n base bound : Nat) (r : Rand) :
-    (pMinusOneStage1Counted n base bound r).rand = r := rfl
 
 /-- Requests beyond the complete prime-table range are exactly capped. -/
 theorem pMinusOneStage1_bound (n base bound : Nat) :

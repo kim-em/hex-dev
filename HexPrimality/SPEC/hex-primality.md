@@ -627,8 +627,10 @@ private theorem partialFactor_prod (budget n r fuel) :
 After table division, positive fuel permits one stage-1 call on a composite
 cofactor, at base `2` and bound `64`. Zero fuel, a trivial cofactor, or a
 probable-prime cofactor skips that call. A proper factor seeds the rho
-worklist with the divisor and cofactor; `noFactor` and `whole` both retain the
-original cofactor unsplit. Rho then receives the same worklist-step fuel.
+worklist with the divisor and cofactor; a probable-prime cofactor enters the
+factor list directly so rho does not repeat the same screen; `noFactor` and
+`whole` both retain the original cofactor unsplit. Rho then receives the same
+worklist-step fuel.
 Every actual p−1 call contributes exactly one to `PartialSearch.attempts` and
 leaves `PartialSearch.rand` unchanged.
 

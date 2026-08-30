@@ -51,6 +51,34 @@ Covered edge cases:
 
 open Hex.Nat
 
+-- The owner library pins all three terminal gcd outcomes at the shared
+-- counted boundary. Each call costs one attempt and preserves `Rand`.
+private def pMinusOneFound :=
+  pMinusOneStage1Counted 299 2 5 (Hex.Rand.ofSeed 11)
+private def pMinusOneMiss :=
+  pMinusOneStage1Counted 25 2 2 (Hex.Rand.ofSeed 12)
+private def pMinusOneWhole :=
+  pMinusOneStage1Counted 15 4 2 (Hex.Rand.ofSeed 13)
+
+#guard pMinusOneFound.result == .factor 13
+#guard pMinusOneFound.attempts == 1
+#guard pMinusOneFound.rand == Hex.Rand.ofSeed 11
+#guard pMinusOneMiss.result == .noFactor
+#guard pMinusOneMiss.attempts == 1
+#guard pMinusOneMiss.rand == Hex.Rand.ofSeed 12
+#guard pMinusOneWhole.result == .whole
+#guard pMinusOneWhole.attempts == 1
+#guard pMinusOneWhole.rand == Hex.Rand.ofSeed 13
+
+#guard smoothBoundCap == 9999
+#guard smoothBoundCap < primeTableBound
+#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+
+example {n base bound d : Nat} {r : Hex.Rand}
+    (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneStage1Counted_spec h
+
 -- Decision spot values.
 /-- info: true -/
 #guard_msgs in

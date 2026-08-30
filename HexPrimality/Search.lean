@@ -473,44 +473,57 @@ private def pMinusOneBase : Nat := 2
 private def pMinusOneBound : Nat := 64
 
 private structure PMinusOnePhase where
+  factors : List (Nat × Nat)
   stack : List Nat
   rand : Rand
   attempts : Nat
 
 /-- Try the shared deterministic stage-1 primitive once on a composite table
-cofactor. Zero worklist fuel skips the call; trivial and probable-prime
-cofactors also go straight to the rho worklist. Every actual call is charged
-once through the shared counted boundary, while its random state is unchanged.
-Both failure outcomes retain the original cofactor unsplit. -/
-private def pMinusOnePhase (m : Nat) (r : Rand) : Nat → PMinusOnePhase
-  | 0 => ⟨[m], r, 0⟩
+cofactor. Zero worklist fuel skips the call. Trivial cofactors go to the rho
+worklist, while probable primes enter the factor list directly so rho does not
+repeat the same screen. Every actual call is charged once through the shared
+counted boundary, while its random state is unchanged. Both failure outcomes
+retain the original cofactor unsplit. -/
+private def pMinusOnePhase (acc : List (Nat × Nat)) (m : Nat) (r : Rand) :
+    Nat → PMinusOnePhase
+  | 0 => ⟨acc, [m], r, 0⟩
   | _ + 1 =>
-      if m < 4 ∨ isProbablePrime m then ⟨[m], r, 0⟩
+      if m < 4 then ⟨acc, [m], r, 0⟩
+      else if isProbablePrime m then ⟨insertFactor m acc, [], r, 0⟩
       else
         let attempt := pMinusOneStage1Counted m pMinusOneBase
           pMinusOneBound r
         match attempt.result with
-        | .factor d => ⟨[d, m / d], attempt.rand, attempt.attempts⟩
-        | .noFactor | .whole => ⟨[m], attempt.rand, attempt.attempts⟩
+        | .factor d =>
+            ⟨acc, [d, m / d], attempt.rand, attempt.attempts⟩
+        | .noFactor | .whole =>
+            ⟨acc, [m], attempt.rand, attempt.attempts⟩
 
-private theorem pMinusOnePhase_prod (m : Nat) (r : Rand) (fuel : Nat) :
-    listProd (pMinusOnePhase m r fuel).stack = m := by
+private theorem pMinusOnePhase_prod (acc : List (Nat × Nat)) (m : Nat)
+    (r : Rand) (fuel : Nat) :
+    prodPows (pMinusOnePhase acc m r fuel).factors *
+        listProd (pMinusOnePhase acc m r fuel).stack =
+      prodPows acc * m := by
   cases fuel with
   | zero => simp [pMinusOnePhase, listProd]
   | succ fuel =>
       simp only [pMinusOnePhase]
-      by_cases hskip : m < 4 ∨ isProbablePrime m
-      · rw [if_pos hskip]
+      by_cases hsmall : m < 4
+      · rw [if_pos hsmall]
         simp [listProd]
-      · rw [if_neg hskip]
-        split
-        · rename_i d hfactor
-          have hproper : 1 < d ∧ d < m ∧ d ∣ m := by
-            exact pMinusOneStage1Counted_spec hfactor
-          simp only [listProd]
-          rw [Nat.mul_one, Nat.mul_div_cancel' hproper.2.2]
-        · simp [listProd]
-        · simp [listProd]
+      · rw [if_neg hsmall]
+        by_cases hprime : isProbablePrime m
+        · rw [if_pos hprime, insertFactor_prod]
+          simp [listProd, Nat.mul_comm]
+        · rw [if_neg hprime]
+          split
+          · rename_i d hfactor
+            have hproper : 1 < d ∧ d < m ∧ d ∣ m := by
+              exact pMinusOneStage1Counted_spec hfactor
+            simp only [listProd]
+            rw [Nat.mul_one, Nat.mul_div_cancel' hproper.2.2]
+          · simp [listProd]
+          · simp [listProd]
 
 /-- Restart budget for each rho call inside the worklist. -/
 private def rhoRestartBudget : Nat := Internal.rhoRestartCap
@@ -624,8 +637,8 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     (fuel : Nat) :
     PartialSearch :=
   let trial := trialGo primeTable.toList [] n
-  let smooth := pMinusOnePhase trial.2 r fuel
-  let phase := rhoPhase budget fuel smooth.stack trial.1 1 smooth.rand
+  let smooth := pMinusOnePhase trial.1 trial.2 r fuel
+  let phase := rhoPhase budget fuel smooth.stack smooth.factors 1 smooth.rand
     smooth.attempts
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
 
