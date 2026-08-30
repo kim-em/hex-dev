@@ -68,6 +68,7 @@ jobs:
           python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_hexrcf_proof_sweep.py
           python3 -m unittest scripts/bench/test_primality_policy_sweeps.py
+          python3 -m unittest scripts/bench/test_primality_negative_sweep.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py

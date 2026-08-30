@@ -32,11 +32,14 @@ division and sends every larger input to the bounded certificate route.
 Above the threshold, a positive verdict emits a reified Pocklington
 certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
 checker. A negative verdict emits a dynamically validated proper factor
-through Mathlib's `deriveNotPrime`. If bounded certificate or factor search
-is exhausted, both Hex extensions decline, rather than falling through to
-unbounded trial division. The certificate extension uses the same 512-bit
-input ceiling and 1040 recursive-fuel cap as the core and companion
-`primality` handlers.
+through Mathlib's `deriveNotPrime`. Its deterministic factor policy starts
+certificate search at seed `n` and resumes the returned state for one Brent-rho
+restart capped at `2^16` cycle steps throughout the supported input range; the
+current composite preflight consumes no draws, and parity consumes no restart. If
+bounded certificate or factor search is exhausted, both Hex extensions
+decline, rather than falling through to unbounded trial division.
+The certificate extension uses the same 512-bit input ceiling and 1040
+recursive-fuel cap as the core and companion `primality` handlers.
 
 The tactic handler registers on the same `primality` syntax kind as the
 Mathlib-free elaborator; registration order makes this handler run first,
@@ -50,6 +53,16 @@ open Lean Meta Elab Qq Mathlib.Meta.NormNum
 /-- The measured opt-in `norm_num` crossover. Numerals below `2^24` use
 trial division; 25-bit and larger numerals use bounded certificate search. -/
 def natPrimeCertThreshold : Nat := 16777216
+
+/-- Restart budget for the opt-in negative `Nat.Prime` route. One seeded draw
+preserves useful small-factor coverage without multiplying the bounded
+exhaustion cost. -/
+def natPrimeRhoRestartBudget : Nat := 1
+
+/-- Per-restart Brent cycle-step budget for the opt-in negative `Nat.Prime`
+route. The fixed cap bounds work independently of input width while retaining
+odd small-factor coverage through the supported 512-bit ceiling. -/
+def natPrimeRhoStepBudget : Nat := 1 <<< 16
 
 theorem isNat_prime : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
@@ -81,8 +94,11 @@ verdicts at and above `natPrimeCertThreshold`. -/
         | .composite =>
             -- Keep the advertised negative contract factor-backed: the
             -- Miller--Rabin verdict selects this branch but is not emitted.
-            match Hex.Nat.rhoFactor? n' (Hex.Rand.ofSeed n') 16 with
-            | .ok (d, _) =>
+            match Hex.Nat.Internal.rhoFactorCountedWith? n'
+                f.rand natPrimeRhoRestartBudget
+                natPrimeRhoStepBudget with
+            | .ok success =>
+                let d := success.factor
                 unless 1 < d && d < n' && n' % d == 0 do failure
                 let prf : Q(¬ _root_.Nat.Prime $nn) := deriveNotPrime n' d nn
                 return .isFalse q(isNat_not_prime $pn $prf)

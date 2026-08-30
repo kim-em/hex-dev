@@ -995,13 +995,52 @@ policy with `use_hex_primality_norm_num`. Under that policy, numerals below
 `2^24` use a guarded alias of Mathlib's trial extension and larger positive
 proofs use the same 512-bit/1040-fuel/2-restart/32768-step Hex certificate
 policy as `primality`. After a fixed-tier composite verdict, negative proofs
-use a separate finite factor search of 16 restarts, each bounded by
-`rhoInnerFuel n`; a found factor is dynamically revalidated before proof
-emission, and exhaustion only declines the goal. It never starts total trial
-division. Above 512 bits the opt-in extension declines both positive and
-negative goals; `norm_num` reports an unsolved goal rather than silently
-restoring Mathlib's total trial decision. The opt-in erasure is local to the
-module and does not persist when that module is imported.
+use a separate factor search with one restart and at most `2^16` Brent cycle
+steps. This fixed work cap applies throughout the supported input range, so a
+small odd factor remains discoverable at 512 bits without scaling adversarial
+exhaustion with input width. Certificate search starts at `Rand.ofSeed n` and
+the factor search resumes its returned state. The current root-composite
+preflight consumes no draws, so deterministic replay begins at that same seed;
+the parity preflight can return factor 2 without consuming the restart. A found
+factor is dynamically revalidated by `1 < d`, `d < n`, and
+`n % d = 0` before `deriveNotPrime` emits the proper-factor term. Exhaustion
+only declines the goal and never starts total trial division. Above 512 bits
+the opt-in extension declines both positive and negative goals; `norm_num`
+reports an unsolved goal rather than silently restoring Mathlib's total trial
+decision. The opt-in erasure is local to the module and does not persist when
+that module is imported.
+
+The negative policy is gated by a 10-second absolute fresh-module budget on
+the designated benchmark host. Six balanced samples per row gave these maximum
+raw candidate wall times; the raw bound includes Lake traversal, imports,
+compiled search, proper-factor validation, proof construction, and elaboration.
+
+| case | bits | outcome | maximum wall time |
+|---|---:|---|---:|
+| first certificate-tier composite | 25 | factor found | 3.137 s |
+| strong pseudoprime | 32 | factor found | 2.235 s |
+| balanced semiprime | 64 | factor found | 2.286 s |
+| `2^64 + 1` | 65 | factor found | 2.423 s |
+| even ceiling input | 512 | parity factor found | 2.131 s |
+| odd ceiling input with a 7-bit factor | 512 | factor found | 2.435 s |
+| balanced ceiling semiprime | 512 | exhausted | 3.318 s |
+
+The release contract is absolute-only: import-subtracted deltas remain in the
+record as diagnostics and need not resolve above the null envelope. The two
+null controls had robust spread/build ratios of 12.51% and 2.69%. All rows passed
+the absolute budget, and the designated-host protocol recorded no exceptions,
+violations, or exhausted sample pairs. The committed record is
+`reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json`.
+It reproduces with:
+
+```bash
+python3 scripts/bench/primality_negative_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --warm-timeout 600 --max-pair-retries 32 \
+  --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
+```
+
+`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
 
 The `2^24` boundary comes from fresh one-goal modules on the pinned
 toolchain. Each arm was a fresh importing module containing only one
