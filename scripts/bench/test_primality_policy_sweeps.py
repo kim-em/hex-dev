@@ -119,8 +119,18 @@ class ElaboratorSweepTests(unittest.TestCase):
         self.assertIn("unless withinPrimalityBudget n' do failure", companion)
         self.assertIn("unless withinPrimalityBudget n do", core)
         self.assertIn("let fuel := primalityFuel n'", companion)
-        self.assertNotRegex(core, r"\b(?:Hex\.Nat\.)?isPrime\s")
-        self.assertNotRegex(companion, r"\b(?:Hex\.Nat\.)?isPrime\s")
+        total_decision = (
+            r"\b(?:Hex\.Nat\.)?(?:isPrimeTrial|isPrime\?|isPrime)(?:\s|\()"
+        )
+        cert_handler = companion.split("def evalNatPrimeCert", 1)[1].split(
+            "/-- The `Nat.Prime` goal handler", 1
+        )[0]
+        tactic_handler = companion.split("def evalPrimalityTacNat", 1)[1].split(
+            "end Hex.PrimalityTactic", 1
+        )[0]
+        self.assertNotRegex(core, total_decision)
+        self.assertNotRegex(cert_handler, total_decision)
+        self.assertNotRegex(tactic_handler, total_decision)
 
 
 if __name__ == "__main__":

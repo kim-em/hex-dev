@@ -21,7 +21,7 @@ example : Nat.Prime 16777121 := by norm_num       -- last tested prime below the
 example : Nat.Prime 16777259 := by norm_num       -- first prime above the threshold
 example : ¬ Nat.Prime 16777216 := by norm_num     -- the threshold itself
 example : Nat.Prime 2147483647 := by norm_num     -- certificate-backed positive proof
-example : Nat.Prime 7859410849558636629901668462083065564472157552549398559549382574798817245167623606274731491674495881319278928590271730493130632966670828721041794742091777 := by
+example : Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 := by
   norm_num                                          -- exact 512-bit ceiling
 example : ¬ Nat.Prime 2147483649 := by norm_num   -- validated factor proof
 example : ¬ Nat.Prime 3215031751 := by norm_num   -- strong pseudoprime to bases 2, 3, 5, 7

@@ -96,6 +96,7 @@ class SweepSpec:
     required_samples: int | None = None
     max_pair_retries: int = DEFAULT_MAX_PAIR_RETRIES
     import_baseline_control: str | None = None
+    absolute_only: bool = False
 
 
 def parse_args(
@@ -767,6 +768,17 @@ def validate_spec(spec: SweepSpec) -> None:
             )
     if spec.required_samples is not None and spec.required_samples < 1:
         raise RuntimeError("fresh-module sweep required_samples must be positive")
+    if spec.absolute_only:
+        substantive = [pair for pair in spec.pairs if not pair.null_control]
+        if any("fresh_module_budget_ms" not in pair.metadata for pair in substantive):
+            raise RuntimeError(
+                "absolute-only sweep requires a fresh-module budget on every "
+                "substantive pair"
+            )
+        if any("tactic_budget_ms" in pair.metadata for pair in substantive):
+            raise RuntimeError(
+                "absolute-only sweep cannot declare a relative tactic budget"
+            )
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
     package_root = ROOT / ".lake" / "packages"
     for root_module in measured:
@@ -2176,10 +2188,7 @@ def validity_summary(
             issue for issue in observations["violations"]
             if issue not in issues
         )
-    requires_null_resolution = any(
-        not pair.null_control and "tactic_budget_ms" in pair.metadata
-        for pair in spec.pairs
-    )
+    requires_null_resolution = not spec.absolute_only
     if args.shared_host and requires_null_resolution:
         control_magnitudes = [
             int(results[pair.name]["build_magnitude_wall_nanos"])

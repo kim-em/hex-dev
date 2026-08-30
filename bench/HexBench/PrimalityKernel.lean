@@ -21,9 +21,9 @@ which is the SPEC's "kernel replay" bench family. Sweep it with a
 fresh-module build (delete this module's outputs and rebuild) rather than
 in-process timing.
 
-The certificates are the same table-smooth family the native bench uses:
-`n - 1 = k · 2^m` with `k` factoring over the committed table, so the
-shape is fixed and the exponentiation cost dominates.
+The certificates are the same fixed family the native bench uses. The lower
+rungs are table-smooth; the 512-bit policy rung contains the recursive
+certificate for the above-table factor `100297` discovered by bounded rho.
 -/
 
 namespace HexBench.PrimalityKernel
@@ -70,11 +70,16 @@ def cert511 : PrimeCert :=
     [(13757245211066428521, 503, .small 2),
      (10451216379200822467, 0, .small 127)]
 
-/-- The exact 512-bit elaborator-policy boundary: `2401 · 2^500 + 1`,
-with `2401 = 7^4`. -/
+/-- The exact 512-bit elaborator-policy boundary: `100297^22 · 2^146 + 1`.
+Its certificate records the above-table factor that the bounded rho search
+discovers. -/
 def cert512 : PrimeCert :=
-  .pock 7859410849558636629901668462083065564472157552549398559549382574798817245167623606274731491674495881319278928590271730493130632966670828721041794742091777
-    [(3, 499, .small 2), (2, 3, .small 7)]
+  .pock 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
+    [(12105408859821572020, 145, .small 2),
+     (2427313743710699239, 21,
+      .pock 100297
+        [(6478, 2, .small 2), (58864, 1, .small 3),
+         (35592, 0, .small 7), (37339, 0, .small 199)])]
 
 theorem replay31 : checkPrime cert31 = true := by decide +kernel
 

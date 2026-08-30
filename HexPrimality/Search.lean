@@ -872,12 +872,15 @@ private theorem primeCertGo_composite {budget : PrimeCertBudget} {fuel n : Nat}
               cases hstop
             · split at h <;> cases h
 
-/-- A counted `.composite` failure is a verdict: the input is not prime. -/
-theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
+/-- A budgeted counted `.composite` failure is a verdict: the input is not
+prime. The result is independent of the resource allocation because only the
+fixed size, table, and Miller--Rabin tiers can emit that stop reason. -/
+theorem Internal.primeCertCountedWith?_composite {budget : PrimeCertBudget}
+    {n : Nat} {r : Rand} {fuel : Nat}
     {f : PrimeCertFailure}
-    (hresult : Internal.primeCertCounted? n r fuel = .error f)
+    (hresult : Internal.primeCertCountedWith? budget n r fuel = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n := by
-  unfold Internal.primeCertCounted? Internal.primeCertCountedWith? at hresult
+  unfold Internal.primeCertCountedWith? at hresult
   split at hresult
   · rename_i f' herr
     injection hresult with h
@@ -892,6 +895,14 @@ theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
     · injection hresult with h
       subst h
       cases hstop
+
+/-- A counted `.composite` failure under the default allocation is a verdict:
+the input is not prime. -/
+theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
+    {f : PrimeCertFailure}
+    (hresult : Internal.primeCertCounted? n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n := by
+  exact Internal.primeCertCountedWith?_composite hresult hstop
 
 /-- A `.composite` failure is a verdict: the input is not prime. Justified
 by size, table completeness, or a failed Miller-Rabin base; never by

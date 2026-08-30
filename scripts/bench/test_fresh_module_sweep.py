@@ -1447,9 +1447,7 @@ class PairingTests(unittest.TestCase):
             sweep.ProbePair(
                 "expensive", module, module, {}, null_control=True
             ),
-            sweep.ProbePair(
-                "effect", module, module, {"tactic_budget_ms": 100}
-            ),
+            sweep.ProbePair("effect", module, module, {}),
         )
         spec = sweep.SweepSpec(
             description="control magnitudes",
@@ -1467,23 +1465,11 @@ class PairingTests(unittest.TestCase):
             ],
         )
         results = {
-            "cheap": {
-                "build_magnitude_wall_nanos": 1_000,
-                "null_robust_spread_ratio": 0.0,
-            },
-            "expensive": {
-                "build_magnitude_wall_nanos": 1_500,
-                "null_robust_spread_ratio": 0.0,
-            },
+            "cheap": {"build_magnitude_wall_nanos": 1_000},
+            "expensive": {"build_magnitude_wall_nanos": 1_500},
             "effect": {
                 "build_magnitude_wall_nanos": 1_250,
                 "resolution": "resolved",
-                "samples": [{
-                    "reference": {"wall_nanos": 1_000},
-                    "candidate": {"wall_nanos": 1_000},
-                }],
-                "budget_nanos": 100_000_000,
-                "budget_status": "passed",
             },
         }
         quality, issues = sweep.validity_summary(
@@ -1600,9 +1586,7 @@ class PairingTests(unittest.TestCase):
             sweep.ProbePair(
                 "null", module, module, {}, null_control=True
             ),
-            sweep.ProbePair(
-                "effect", module, candidate, {"tactic_budget_ms": 100}
-            ),
+            sweep.ProbePair("effect", module, candidate, {}),
         )
         spec = sweep.SweepSpec(
             description="null spread",
@@ -1645,6 +1629,7 @@ class PairingTests(unittest.TestCase):
             schema="test",
             measurement="test",
             output_stem="test",
+            absolute_only=True,
         )
         results = {
             "null": {
@@ -1664,6 +1649,44 @@ class PairingTests(unittest.TestCase):
 
 
 class HarnessValidationTests(unittest.TestCase):
+    def test_absolute_only_requires_every_absolute_budget(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        spec = sweep.SweepSpec(
+            description="invalid absolute-only sweep",
+            pairs=(sweep.ProbePair(
+                "effect", module, sweep.ProbeModule("Probe.Candidate"), {}
+            ),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            absolute_only=True,
+        )
+        with self.assertRaisesRegex(RuntimeError, "fresh-module budget"):
+            sweep.validate_spec(spec)
+
+    def test_absolute_only_rejects_relative_budget(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        spec = sweep.SweepSpec(
+            description="mixed absolute-only sweep",
+            pairs=(sweep.ProbePair(
+                "effect",
+                module,
+                sweep.ProbeModule("Probe.Candidate"),
+                {
+                    "fresh_module_budget_ms": 100,
+                    "tactic_budget_ms": 100,
+                },
+            ),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            absolute_only=True,
+        )
+        with self.assertRaisesRegex(RuntimeError, "relative tactic budget"):
+            sweep.validate_spec(spec)
+
     def test_shared_host_arguments_are_complete_and_exclusive(self) -> None:
         with mock.patch.object(sys, "stderr", new=io.StringIO()):
             with self.assertRaises(SystemExit):
