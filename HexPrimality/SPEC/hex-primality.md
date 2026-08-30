@@ -947,6 +947,9 @@ reference-subtracted tactic delta for this contract. This single end-to-end
 budget includes importing, compiled search, compiled self-check, reification,
 and kernel replay. Rejection and exhaustion may be indistinguishable from
 their import-only controls, but their absolute wall times remain budget-gated.
+The paired null controls remain in the record to classify those deltas; their
+spread is not a release gate for this absolute-only contract. Per-arm CPU and
+SMT-sibling interference checks remain hard gates for every accepted sample.
 The raw paired samples and host provenance are committed at
 `reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json`.
 They reproduce with:

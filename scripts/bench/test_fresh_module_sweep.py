@@ -1447,7 +1447,9 @@ class PairingTests(unittest.TestCase):
             sweep.ProbePair(
                 "expensive", module, module, {}, null_control=True
             ),
-            sweep.ProbePair("effect", module, module, {}),
+            sweep.ProbePair(
+                "effect", module, module, {"tactic_budget_ms": 100}
+            ),
         )
         spec = sweep.SweepSpec(
             description="control magnitudes",
@@ -1465,11 +1467,23 @@ class PairingTests(unittest.TestCase):
             ],
         )
         results = {
-            "cheap": {"build_magnitude_wall_nanos": 1_000},
-            "expensive": {"build_magnitude_wall_nanos": 1_500},
+            "cheap": {
+                "build_magnitude_wall_nanos": 1_000,
+                "null_robust_spread_ratio": 0.0,
+            },
+            "expensive": {
+                "build_magnitude_wall_nanos": 1_500,
+                "null_robust_spread_ratio": 0.0,
+            },
             "effect": {
                 "build_magnitude_wall_nanos": 1_250,
                 "resolution": "resolved",
+                "samples": [{
+                    "reference": {"wall_nanos": 1_000},
+                    "candidate": {"wall_nanos": 1_000},
+                }],
+                "budget_nanos": 100_000_000,
+                "budget_status": "passed",
             },
         }
         quality, issues = sweep.validity_summary(
@@ -1586,7 +1600,9 @@ class PairingTests(unittest.TestCase):
             sweep.ProbePair(
                 "null", module, module, {}, null_control=True
             ),
-            sweep.ProbePair("effect", module, candidate, {}),
+            sweep.ProbePair(
+                "effect", module, candidate, {"tactic_budget_ms": 100}
+            ),
         )
         spec = sweep.SweepSpec(
             description="null spread",
@@ -1608,6 +1624,43 @@ class PairingTests(unittest.TestCase):
         )
         self.assertFalse(quality)
         self.assertRegex("; ".join(issues), "robust null IQR/build ratio")
+
+    def test_absolute_budget_does_not_require_null_resolution(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pairs = (
+            sweep.ProbePair(
+                "null", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "absolute",
+                module,
+                sweep.ProbeModule("Probe.Candidate"),
+                {"fresh_module_budget_ms": 100},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        results = {
+            "null": {
+                "build_magnitude_wall_nanos": 1_000,
+                "null_robust_spread_ratio": 0.11,
+            },
+            "absolute": {
+                "resolution": "unresolved",
+                "fresh_module_budget_status": "passed",
+            },
+        }
+        quality, issues = sweep.validity_summary(
+            spec, sweep.parse_args("validity", []), results, None, []
+        )
+        self.assertTrue(quality)
+        self.assertEqual(issues, [])
 
 
 class HarnessValidationTests(unittest.TestCase):

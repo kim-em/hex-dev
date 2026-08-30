@@ -2176,7 +2176,11 @@ def validity_summary(
             issue for issue in observations["violations"]
             if issue not in issues
         )
-    if args.shared_host:
+    requires_null_resolution = any(
+        not pair.null_control and "tactic_budget_ms" in pair.metadata
+        for pair in spec.pairs
+    )
+    if args.shared_host and requires_null_resolution:
         control_magnitudes = [
             int(results[pair.name]["build_magnitude_wall_nanos"])
             for pair in spec.pairs
@@ -2191,19 +2195,20 @@ def validity_summary(
             issues.append(
                 "null-control build magnitudes are not sufficiently distinct"
             )
-    for pair in spec.pairs:
-        if not pair.null_control:
-            continue
-        spread_ratio = results[pair.name].get("null_robust_spread_ratio")
-        if (
-            spread_ratio is None
-            or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
-        ):
-            issues.append(
-                f"{pair.name}: robust null IQR/build ratio "
-                f"{spread_ratio!r} exceeds "
-                f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
-            )
+    if requires_null_resolution:
+        for pair in spec.pairs:
+            if not pair.null_control:
+                continue
+            spread_ratio = results[pair.name].get("null_robust_spread_ratio")
+            if (
+                spread_ratio is None
+                or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
+            ):
+                issues.append(
+                    f"{pair.name}: robust null IQR/build ratio "
+                    f"{spread_ratio!r} exceeds "
+                    f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
+                )
     for pair in spec.pairs:
         if pair.null_control:
             continue
