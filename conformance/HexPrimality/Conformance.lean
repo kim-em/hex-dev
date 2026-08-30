@@ -110,6 +110,59 @@ open Hex.Nat
         | .error f => f.stop == .composite
         | .ok _ => false)
 
+-- Fixed verdict tiers run before recursive certificate fuel and do not consume
+-- attempts or random state. A prime beyond the table still needs construction.
+#guard (List.range 2).all fun fuel =>
+  match primeCert? 4 (Hex.Rand.ofSeed 0) fuel with
+  | .error failure =>
+      failure.stop == .composite && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false
+#guard (List.range 2).all fun fuel =>
+  match primeCert? 97 (Hex.Rand.ofSeed 0) fuel with
+  | .ok (cert, r) =>
+      cert.raw.subject == 97 && checkPrime cert.raw && r == Hex.Rand.ofSeed 0
+  | .error _ => false
+#guard (List.range 2).all fun fuel =>
+  match primeCert? 2147483649 (Hex.Rand.ofSeed 0) fuel with
+  | .error failure =>
+      failure.stop == .composite && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false
+#guard (match primeCert? 2147483647 (Hex.Rand.ofSeed 0) 0 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false)
+#guard (match Internal.primeCertCounted? 2147483647
+    (Hex.Rand.ofSeed 0) 1 with
+  | .ok success =>
+      success.attempts == 7 &&
+        success.rand == ((Hex.Rand.ofSeed 0).words 7).2
+  | .error _ => false)
+
+-- The bounded decision exposes the same zero/one-fuel boundary.
+#guard (List.range 2).all fun fuel =>
+  match isPrime? 4 (Hex.Rand.ofSeed 0) fuel with
+  | .ok (verdict, r) => !verdict && r == Hex.Rand.ofSeed 0
+  | .error _ => false
+#guard (List.range 2).all fun fuel =>
+  match isPrime? 97 (Hex.Rand.ofSeed 0) fuel with
+  | .ok (verdict, r) => verdict && r == Hex.Rand.ofSeed 0
+  | .error _ => false
+#guard (List.range 2).all fun fuel =>
+  match isPrime? 2147483649 (Hex.Rand.ofSeed 0) fuel with
+  | .ok (verdict, r) => !verdict && r == Hex.Rand.ofSeed 0
+  | .error _ => false
+#guard (match isPrime? 2147483647 (Hex.Rand.ofSeed 0) 0 with
+  | .error failure =>
+      failure.attempts == 0 && failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false)
+#guard (match isPrime? 2147483647 (Hex.Rand.ofSeed 0) 1 with
+  | .ok (verdict, r) =>
+      verdict && r == ((Hex.Rand.ofSeed 0).words 7).2
+  | .error _ => false)
+
 -- Counted compatibility forms retain successful randomized work without
 -- changing the ordinary pair-returning entry points.
 #guard (match Internal.rhoFactorCounted? 9 (Hex.Rand.ofSeed 2) 8 with
@@ -123,23 +176,39 @@ open Hex.Nat
         success.rand == ((Hex.Rand.ofSeed 3).words 8).2
   | .error _ => false)
 
--- Fuel two certifies an earlier child and finds its witness before a later
--- recursive child exhausts. The failure retains that successful work.
+-- Fuel one resolves table children and finds their witnesses before a later
+-- child needs construction. The failure retains that successful work.
 #guard (match Internal.primeCertCounted? 1000003
-    (Hex.Rand.ofSeed 3) 2 with
+    (Hex.Rand.ofSeed 3) 1 with
   | .error failure =>
       failure.stop == .exhausted && failure.attempts == 2 &&
         failure.rand == ((Hex.Rand.ofSeed 3).words 2).2
   | .ok _ => false)
 
--- A deeper child consumes its own randomized subtotal before exhaustion;
--- the parent retains both its earlier witness and that child subtotal.
+-- One more level constructs the remaining child and completes the parent.
+#guard (match Internal.primeCertCounted? 1000003
+    (Hex.Rand.ofSeed 3) 2 with
+  | .ok success =>
+      success.attempts == 8 &&
+        success.rand == ((Hex.Rand.ofSeed 3).words 8).2
+  | .error _ => false)
+
+-- At fuel two, a deeper child consumes its randomized subtotal before
+-- exhaustion; the parent retains both its earlier witness and that subtotal.
 #guard (match Internal.primeCertCounted? 1000000007
-    (Hex.Rand.ofSeed 3) 3 with
+    (Hex.Rand.ofSeed 3) 2 with
   | .error failure =>
       failure.stop == .exhausted && failure.attempts == 7 &&
         failure.rand == ((Hex.Rand.ofSeed 3).words 7).2
   | .ok _ => false)
+
+-- Fuel three constructs that child and completes the parent.
+#guard (match Internal.primeCertCounted? 1000000007
+    (Hex.Rand.ofSeed 3) 3 with
+  | .ok success =>
+      success.attempts == 16 &&
+        success.rand == ((Hex.Rand.ofSeed 3).words 16).2
+  | .error _ => false)
 
 -- This strong pseudoprime passes the fixed Miller--Rabin screen, then its
 -- first certificate witness search consumes all 32 candidates. The retained

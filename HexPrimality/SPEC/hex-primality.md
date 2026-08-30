@@ -834,6 +834,22 @@ returns `.error` rather than falling into an unbounded computation. The
 indexed success prevents a certificate for one number from answering a
 request about another.
 
+Certificate fuel bounds construction depth after the fixed deterministic
+front end, not the front end itself. At every recursive `primeCert?` invocation,
+the size check, complete table lookup, and fixed Miller--Rabin base scan run
+before fuel is inspected; these tiers consume no attempts and leave `Rand`
+unchanged. Therefore a table prime can return its small certificate at fuel
+zero, and a composite proved by size, table completeness, or a Miller--Rabin
+witness returns `.composite` at every fuel. Only a candidate at or above
+`primeTableBound` that passes every fixed base needs construction fuel: zero
+returns `.exhausted` without starting factorization, while a positive fuel
+begins one certificate node and passes its predecessor to every child. A table
+child can consequently close when that predecessor is zero, whereas a child
+that itself needs construction exhausts. Thus the fuel is the maximum number
+of constructed certificate nodes along a root-to-child path; it neither counts
+deterministic verdict work nor bounds the randomized attempt total within a
+node.
+
 `isPrime` is the pure total convenience API. It runs `isPrime?` with
 `defaultPrimeFuel n` from the reproducible seed `Rand.ofSeed n` and
 falls back to `isPrimeTrial` only if the bounded path exhausts its fuel.

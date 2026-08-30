@@ -636,25 +636,29 @@ private def mkPock3 (n F : Nat) (entries : List (Nat × Nat × PrimeCert)) :
 
 mutual
 
-/-- One level of certificate search: verdict tiers first (size, table with
-its completeness, a Miller-Rabin witness scan), then `n - 1` is partially
-factored and every claimed prime-power entry becomes a certified child with
-a searched witness. The candidate entries are sorted into the checker's
-canonical subject order, then the assembled node is validated by the public
-wrapper; neither the factorization nor this preprocessing is trusted. -/
+/-- One level of certificate search. Size, the complete table tier, and the
+fixed Miller-Rabin witness scan run before fuel is inspected and leave attempts
+and random state unchanged. A survivor consumes one recursion-depth unit to
+begin construction; its children receive the predecessor, so table children
+can still close at depth zero while children needing construction cannot.
+Then `n - 1` is partially factored and every claimed prime-power entry becomes
+a certified child with a searched witness. The candidate entries are sorted
+into the checker's canonical subject order, then the assembled node is
+validated by the public wrapper; neither the factorization nor this
+preprocessing is trusted. -/
 private def primeCertGo (fuel n : Nat) (r : Rand) :
     Except PrimeCertFailure (Counted PrimeCert) :=
-  match fuel with
-  | 0 => .error ⟨.exhausted, 0, r⟩
-  | fuel + 1 =>
-      if n < 2 then .error ⟨.composite, 0, r⟩
-      else if n < primeTableBound then
-        if isTablePrime n then .ok ⟨.small n, 0, r⟩
-        else .error ⟨.composite, 0, r⟩
-      else
-        match defaultBases.find? (fun a => !(millerRabin n a)) with
-        | some _ => .error ⟨.composite, 0, r⟩
-        | none =>
+  if n < 2 then .error ⟨.composite, 0, r⟩
+  else if n < primeTableBound then
+    if isTablePrime n then .ok ⟨.small n, 0, r⟩
+    else .error ⟨.composite, 0, r⟩
+  else
+    match defaultBases.find? (fun a => !(millerRabin n a)) with
+    | some _ => .error ⟨.composite, 0, r⟩
+    | none =>
+        match fuel with
+        | 0 => .error ⟨.exhausted, 0, r⟩
+        | fuel + 1 =>
             let factored := partialFactor (n - 1) r (2 * n.log2 + 8)
             match assembleGo fuel n factored.raw.factors [] factored.attempts
                 factored.rand with
@@ -780,49 +784,46 @@ private theorem assembleGo_error_stop {fuel n : Nat} :
 private theorem primeCertGo_composite {fuel n : Nat} {r : Rand}
     {f : PrimeCertFailure} (h : primeCertGo fuel n r = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n := by
-  match fuel with
-  | 0 =>
-      unfold primeCertGo at h
-      injection h with h
-      subst h
-      cases hstop
-  | fuel + 1 =>
-      unfold primeCertGo at h
-      by_cases h2 : n < 2
-      · rw [if_pos h2] at h
+  unfold primeCertGo at h
+  by_cases h2 : n < 2
+  · rw [if_pos h2] at h
+    intro hp
+    have := hp.two_le
+    omega
+  · rw [if_neg h2] at h
+    by_cases htab : n < primeTableBound
+    · rw [if_pos htab] at h
+      by_cases hhit : isTablePrime n = true
+      · rw [if_pos hhit] at h
+        cases h
+      · rw [if_neg hhit] at h
         intro hp
-        have := hp.two_le
-        omega
-      · rw [if_neg h2] at h
-        by_cases htab : n < primeTableBound
-        · rw [if_pos htab] at h
-          by_cases hhit : isTablePrime n = true
-          · rw [if_pos hhit] at h
-            cases h
-          · rw [if_neg hhit] at h
-            intro hp
-            exact hhit (isTablePrime_iff.mpr (mem_primeTable_of_prime hp htab))
-        · rw [if_neg htab] at h
-          split at h
-          · rename_i a hfind
-            intro hp
-            have := List.find?_some hfind
-            rw [Bool.not_eq_true'] at this
-            exact absurd (millerRabin_eq_true_of_prime hp) (by
-              rw [this]
-              exact Bool.false_ne_true)
-          · dsimp only at h
-            split at h
-            · rename_i f' herr
-              injection h with h
+        exact hhit (isTablePrime_iff.mpr (mem_primeTable_of_prime hp htab))
+    · rw [if_neg htab] at h
+      split at h
+      · rename_i a hfind
+        intro hp
+        have := List.find?_some hfind
+        rw [Bool.not_eq_true'] at this
+        exact absurd (millerRabin_eq_true_of_prime hp) (by
+          rw [this]
+          exact Bool.false_ne_true)
+      · dsimp only at h
+        split at h
+        · injection h with h
+          subst h
+          cases hstop
+        · split at h
+          · rename_i f' herr
+            injection h with h
+            subst h
+            rw [assembleGo_error_stop _ _ _ _ herr] at hstop
+            cases hstop
+          · split at h
+            · injection h with h
               subst h
-              rw [assembleGo_error_stop _ _ _ _ herr] at hstop
               cases hstop
-            · split at h
-              · injection h with h
-                subst h
-                cases hstop
-              · split at h <;> cases h
+            · split at h <;> cases h
 
 /-- A counted `.composite` failure is a verdict: the input is not prime. -/
 theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
