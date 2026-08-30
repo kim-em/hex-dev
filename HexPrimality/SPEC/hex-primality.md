@@ -4,10 +4,11 @@ Kernel-checkable primality: a Miller-Rabin compositeness witness, a
 Pocklington certificate and its cube-root variant, a stored initial
 segment with a kernel-reducible sieve behind it, and the `primality`
 tactic that produces `Hex.Nat.Prime n` for a literal `n`. Mathlib-free.
-The companion `hex-primality-mathlib` relates the predicate to
-`Nat.Prime`, supplies
-the `norm_num` interoperation, and is where a dependency on an external
-Lean primality library may live.
+The companion
+[hex-primality-mathlib](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md)
+owns the `Nat.Prime` correspondence, transports, tactic registration, and
+opt-in `norm_num` policy. This SPEC remains the sole normative owner of the
+Mathlib-free search, certificate, checker, and core elaboration algorithms.
 
 This SPEC expands the "Better primality" entry in
 [future-work](../../SPEC/future-work.md). That entry's diagnosis is right -- the
@@ -1004,86 +1005,11 @@ python3 scripts/bench/primality_elab_sweep.py --samples 6 \
 above: it never calls the total `isPrime`, whose exact trial fallback is
 intentionally unbounded.
 
-The companion adds `Nat.Prime n` through that correspondence. Bare
-`primality` uses the certificate route directly. Pinned Mathlib's
-`Nat.Prime` `norm_num` extension was registered first, so ordinary imports
-retain Mathlib's trial-division behavior; the later Hex registration cannot
-transparently pre-empt it. A module explicitly opts into the supported Hex
-policy with `use_hex_primality_norm_num`. Under that policy, numerals below
-`2^24` use a guarded alias of Mathlib's trial extension and larger positive
-proofs use the same 512-bit/512-fuel/2-restart/32768-step Hex certificate
-policy as `primality`. After a fixed-tier composite verdict, negative proofs
-use a separate factor search with one restart and at most `2^16` Brent cycle
-steps. This fixed work cap applies throughout the supported input range, so a
-small odd factor remains discoverable at 512 bits without scaling adversarial
-exhaustion with input width. Certificate search starts at `Rand.ofSeed n` and
-the factor search resumes its returned state. The current root-composite
-preflight consumes no draws, so deterministic replay begins at that same seed;
-the parity preflight can return factor 2 without consuming the restart. A found
-factor is dynamically revalidated by `1 < d`, `d < n`, and
-`n % d = 0` before `deriveNotPrime` emits the proper-factor term. Exhaustion
-only declines the goal and never starts total trial division. Above 512 bits
-the opt-in extension declines both positive and negative goals; `norm_num`
-reports an unsolved goal rather than silently restoring Mathlib's total trial
-decision. The opt-in erasure is local to the module and does not persist when
-that module is imported.
-
-The negative policy is gated by a 10-second absolute fresh-module budget on
-the designated benchmark host. Six balanced samples per row gave these maximum
-raw candidate wall times; the raw bound includes Lake traversal, imports,
-compiled search, proper-factor validation, proof construction, and elaboration.
-
-| case | bits | outcome | maximum wall time |
-|---|---:|---|---:|
-| first certificate-tier composite | 25 | factor found | 3.137 s |
-| strong pseudoprime | 32 | factor found | 2.235 s |
-| balanced semiprime | 64 | factor found | 2.286 s |
-| `2^64 + 1` | 65 | factor found | 2.423 s |
-| even ceiling input | 512 | parity factor found | 2.131 s |
-| odd ceiling input with a 7-bit factor | 512 | factor found | 2.435 s |
-| balanced ceiling semiprime | 512 | exhausted | 3.318 s |
-
-The release contract is absolute-only: import-subtracted deltas remain in the
-record as diagnostics and need not resolve above the null envelope. The two
-null controls had robust spread/build ratios of 12.51% and 2.69%. All rows passed
-the absolute budget, and the designated-host protocol recorded no exceptions,
-violations, or exhausted sample pairs. The committed record is
-`reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json`.
-It reproduces with:
-
-```bash
-python3 scripts/bench/primality_negative_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-  --warm-timeout 600 --max-pair-retries 32 \
-  --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
-```
-
-`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
-
-The `2^24` boundary comes from fresh one-goal modules on the pinned
-toolchain. Each arm was a fresh importing module containing only one
-`Nat.Prime` example. The trial arm used the ordinary Mathlib registration;
-the certificate arm invoked the opt-in with the threshold temporarily set to
-zero. Representative wall times in seconds were:
-
-| numeral | trial division | certificate |
-|---:|---:|---:|
-| 100003 | 1.7 | 2.1 |
-| 300007 | 1.4 | 1.0 |
-| 1000003 | 1.6 | 1.7 |
-| 3000017 | 1.5 | 3.6 |
-| 10000019 | 3.1 | 3.4 |
-| 30000001 | 3.4 | 3.5 |
-| 33554467 | 2.4 | 1.7 |
-
-These are policy measurements rather than a Phase-4 performance verdict:
-they establish the crossover region while exposing that certificate search
-is input-dependent. Mathlib's generated trial proof also reaches the pinned
-default kernel recursion limit on the 31-bit Mersenne prime. Choosing the
-power-of-two boundary keeps the full 24-bit range on the simpler route and
-puts every 25-bit input on the bounded route. If certificate production or
-factor search exhausts, the guarded trial alias also declines at that tier;
-the opt-in never silently starts a large unbounded trial search.
+The companion consumes this positive-certificate policy without widening it.
+Its `Nat.Prime` registration and precedence rules, negative factor-search
+budget, decline behavior, and bridge proof-performance evidence are normative
+only in the
+[hex-primality-mathlib SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#natprime-elaboration-routes).
 
 ## Kernel exposure
 
@@ -1316,42 +1242,17 @@ to obtain in a separate checkout rather than a CI comparator.
 
 ## The Mathlib layer
 
-```lean
-theorem prime_iff {n : Nat} : Hex.Nat.Prime n ↔ Nat.Prime n
+The Mathlib-facing layer has its own
+[owned SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md). That
+document is normative for correspondence and segment transports, instance and
+elaborator registration, the `Nat.Prime` tactic and `norm_num` routes, bridge
+failure and resource semantics, and bridge conformance and proof-performance
+evidence. It links back here for the Mathlib-free algorithms and their positive
+certificate policy instead of restating them.
 
-theorem primeTable_spec : ∀ n < primeTableBound, n ∈ primeTable ↔ Nat.Prime n
-theorem primesIn_spec (lo hi) : ∀ n, n ∈ primesIn lo hi ↔ lo ≤ n ∧ n < hi ∧ Nat.Prime n
-```
-
-`prime_iff` is the whole correspondence, and it is one lemma: the two
-predicates are the same definition modulo Mathlib's `Irreducible`
-packaging, and `Nat.prime_def_lt` or `Nat.prime_def` closes it.
-Everything else transports along it.
-
-**No `DecidablePred Nat.Prime` instance.** Mathlib already declares
-`Nat.decidablePrime` with its own `@[csimp]` runtime twin
-(`Mathlib/Data/Nat/Prime/Defs.lean:162`, `:334`), so a second global
-instance would be a duplicate and would risk instance-selection churn.
-An earlier draft of this SPEC proposed one. What the companion offers
-instead is the tactic and the explicitly opted-in `norm_num` policy, which
-is where the scale actually helps.
-
-The companion also carries the opt-in `norm_num` extensions and command,
-the `Nat.Prime` form of the `primality` tactic, and the universally
-quantified segment statements ("every prime in `[1, x]` satisfies `P`")
-in the form a Mathlib consumer would state them, over
-`Finset.filter Nat.Prime`.
-
-**Where a PrimeCert dependency would go.** If the toolchains are
-aligned, `hex-primality-mathlib` may depend on PrimeCert and re-export
-`pock%` / `prime_cert%` for numerals beyond what this library's search
-reaches, exactly as hex-rcf's SPEC allows a Mathlib-side tactic to
-consume Mathlib-side infrastructure. That is an accelerator, never a
-substitute: the Mathlib-free `checkPrime` and its soundness theorem
-remain the tree's primality story, because every Mathlib-free consumer
--- hex-mod-arith's `PrimeModulus`, hex-berlekamp-zassenhaus's prime
-selection, hex-gfq's field construction -- lives below the companion and
-cannot see it.
+Any future Mathlib-side primality dependency belongs to that companion as an
+accelerator over this checker. It cannot replace this Mathlib-free proof
+boundary because the core consumers live below the companion.
 
 ## Milestones
 
