@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-namespace HexPrimality.ProofProbe
+namespace HexPrimalityMathlib.ProofProbe
 
 /-! End-to-end Mathlib elaboration at the exact 512-bit policy ceiling. -/
 
@@ -15,4 +15,4 @@ theorem mathlib512 : Nat.Prime 7859410849558636629901668462083065564472157552549
 
 #print axioms mathlib512
 
-end HexPrimality.ProofProbe
+end HexPrimalityMathlib.ProofProbe

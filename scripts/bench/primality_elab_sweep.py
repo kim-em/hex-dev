@@ -28,8 +28,8 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 CORE_BASELINE = ProbeModule("HexPrimality.ProofProbe.CoreBaseline")
 PROOF_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 CORE_512 = ProbeModule("HexPrimality.ProofProbe.Core512", PROOF_AXIOMS)
-MATHLIB_BASELINE = ProbeModule("HexPrimality.ProofProbe.MathlibBaseline")
-MATHLIB_512 = ProbeModule("HexPrimality.ProofProbe.Mathlib512", PROOF_AXIOMS)
+MATHLIB_BASELINE = ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibBaseline")
+MATHLIB_512 = ProbeModule("HexPrimalityMathlib.ProofProbe.Mathlib512", PROOF_AXIOMS)
 
 
 def policy_pair(
@@ -87,7 +87,7 @@ SPEC = SweepSpec(
             "mathlib",
             "exhausted",
             MATHLIB_BASELINE,
-            ProbeModule("HexPrimality.ProofProbe.MathlibExhausted"),
+            ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibExhausted"),
             82,
         ),
         policy_pair(
@@ -103,7 +103,7 @@ SPEC = SweepSpec(
             "mathlib",
             "over-budget",
             MATHLIB_BASELINE,
-            ProbeModule("HexPrimality.ProofProbe.MathlibOverBudget"),
+            ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibOverBudget"),
             513,
         ),
     ),
