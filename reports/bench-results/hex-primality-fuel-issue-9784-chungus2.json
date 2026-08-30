@@ -1,5 +1,5 @@
 {
-  "acceptance": "successes replay checkPrime; expected depth thresholds are exact; honest exhaustion consumes bounded work and makes no primality claim",
+  "acceptance": "the probe performs one untimed same-implementation checkPrime replay for every success; expected depth thresholds are exact; honest exhaustion consumes bounded work and makes no primality claim",
   "cases": [
     {
       "allocation": "production",
@@ -22,10 +22,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1415.6666666666667,
+            "per_call_nanos": 4390.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 4247
+            "total_nanos": 13170
           },
           {
             "allocation": "production",
@@ -37,10 +37,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1412.0,
+            "per_call_nanos": 7611.333333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 4236
+            "total_nanos": 22834
           },
           {
             "allocation": "production",
@@ -52,10 +52,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1412.0,
+            "per_call_nanos": 7164.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 4236
+            "total_nanos": 21492
           },
           {
             "allocation": "production",
@@ -67,10 +67,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1422.0,
+            "per_call_nanos": 4413.333333333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 4266
+            "total_nanos": 13240
           },
           {
             "allocation": "production",
@@ -82,10 +82,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1405.3333333333333,
+            "per_call_nanos": 4416.333333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 4216
+            "total_nanos": 13249
           },
           {
             "allocation": "production",
@@ -97,10 +97,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1445.6666666666667,
+            "per_call_nanos": 4353.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 4337
+            "total_nanos": 13059
           }
         ],
         "1": [
@@ -114,10 +114,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12889.0,
+            "per_call_nanos": 34818.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 38667
+            "total_nanos": 104455
           },
           {
             "allocation": "production",
@@ -129,10 +129,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12936.0,
+            "per_call_nanos": 63113.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 38808
+            "total_nanos": 189341
           },
           {
             "allocation": "production",
@@ -144,10 +144,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 11654.0,
+            "per_call_nanos": 59635.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 34962
+            "total_nanos": 178905
           },
           {
             "allocation": "production",
@@ -159,10 +159,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 14501.333333333334,
+            "per_call_nanos": 35088.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 43504
+            "total_nanos": 105266
           },
           {
             "allocation": "production",
@@ -174,10 +174,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12361.333333333334,
+            "per_call_nanos": 35195.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 37084
+            "total_nanos": 105587
           },
           {
             "allocation": "production",
@@ -189,10 +189,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 14104.333333333334,
+            "per_call_nanos": 35172.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 42313
+            "total_nanos": 105516
           }
         ],
         "16": [
@@ -206,10 +206,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12962.666666666666,
+            "per_call_nanos": 36187.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 38888
+            "total_nanos": 108561
           },
           {
             "allocation": "production",
@@ -221,10 +221,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12839.0,
+            "per_call_nanos": 35306.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 38517
+            "total_nanos": 105918
           },
           {
             "allocation": "production",
@@ -236,10 +236,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12815.666666666666,
+            "per_call_nanos": 35646.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 38447
+            "total_nanos": 106939
           },
           {
             "allocation": "production",
@@ -251,10 +251,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 13286.333333333334,
+            "per_call_nanos": 35062.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 39859
+            "total_nanos": 105186
           },
           {
             "allocation": "production",
@@ -266,10 +266,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12672.0,
+            "per_call_nanos": 35499.333333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 38016
+            "total_nanos": 106498
           },
           {
             "allocation": "production",
@@ -281,10 +281,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12792.333333333334,
+            "per_call_nanos": 35238.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 38377
+            "total_nanos": 105716
           }
         ],
         "2": [
@@ -298,10 +298,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12578.666666666666,
+            "per_call_nanos": 55749.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 37736
+            "total_nanos": 167248
           },
           {
             "allocation": "production",
@@ -313,10 +313,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12829.0,
+            "per_call_nanos": 53599.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 38487
+            "total_nanos": 160799
           },
           {
             "allocation": "production",
@@ -328,10 +328,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12231.333333333334,
+            "per_call_nanos": 59595.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 36694
+            "total_nanos": 178786
           },
           {
             "allocation": "production",
@@ -343,10 +343,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12251.333333333334,
+            "per_call_nanos": 37051.333333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 36754
+            "total_nanos": 111154
           },
           {
             "allocation": "production",
@@ -358,10 +358,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12745.666666666666,
+            "per_call_nanos": 35042.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 38237
+            "total_nanos": 105126
           },
           {
             "allocation": "production",
@@ -373,10 +373,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12915.666666666666,
+            "per_call_nanos": 35025.333333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 38747
+            "total_nanos": 105076
           }
         ],
         "3": [
@@ -390,10 +390,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12862.666666666666,
+            "per_call_nanos": 34581.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 38588
+            "total_nanos": 103744
           },
           {
             "allocation": "production",
@@ -405,10 +405,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12929.0,
+            "per_call_nanos": 36293.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 38787
+            "total_nanos": 108881
           },
           {
             "allocation": "production",
@@ -420,10 +420,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12862.333333333334,
+            "per_call_nanos": 38093.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 38587
+            "total_nanos": 114279
           },
           {
             "allocation": "production",
@@ -435,10 +435,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12775.666666666666,
+            "per_call_nanos": 35008.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 38327
+            "total_nanos": 105026
           },
           {
             "allocation": "production",
@@ -450,10 +450,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12228.333333333334,
+            "per_call_nanos": 35355.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 36685
+            "total_nanos": 106067
           },
           {
             "allocation": "production",
@@ -465,10 +465,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12251.666666666666,
+            "per_call_nanos": 35679.333333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 36755
+            "total_nanos": 107038
           }
         ],
         "31": [
@@ -482,10 +482,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12779.0,
+            "per_call_nanos": 42396.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 38337
+            "total_nanos": 127189
           },
           {
             "allocation": "production",
@@ -497,10 +497,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12952.333333333334,
+            "per_call_nanos": 36273.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 38857
+            "total_nanos": 108821
           },
           {
             "allocation": "production",
@@ -512,10 +512,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12879.0,
+            "per_call_nanos": 35973.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 38637
+            "total_nanos": 107920
           },
           {
             "allocation": "production",
@@ -527,10 +527,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12839.333333333334,
+            "per_call_nanos": 61100.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 38518
+            "total_nanos": 183302
           },
           {
             "allocation": "production",
@@ -542,10 +542,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 13323.0,
+            "per_call_nanos": 34935.333333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 39969
+            "total_nanos": 104806
           },
           {
             "allocation": "production",
@@ -557,10 +557,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12752.333333333334,
+            "per_call_nanos": 35659.333333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 38257
+            "total_nanos": 106978
           }
         ],
         "4": [
@@ -574,10 +574,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12765.666666666666,
+            "per_call_nanos": 34755.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 38297
+            "total_nanos": 104265
           },
           {
             "allocation": "production",
@@ -589,10 +589,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12532.0,
+            "per_call_nanos": 64385.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 37596
+            "total_nanos": 193157
           },
           {
             "allocation": "production",
@@ -604,10 +604,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12862.333333333334,
+            "per_call_nanos": 35963.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 38587
+            "total_nanos": 107889
           },
           {
             "allocation": "production",
@@ -619,10 +619,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12755.666666666666,
+            "per_call_nanos": 35395.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 38267
+            "total_nanos": 106187
           },
           {
             "allocation": "production",
@@ -634,10 +634,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12816.0,
+            "per_call_nanos": 34714.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 38448
+            "total_nanos": 104144
           },
           {
             "allocation": "production",
@@ -649,10 +649,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 13086.0,
+            "per_call_nanos": 35492.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 39258
+            "total_nanos": 106478
           }
         ],
         "8": [
@@ -666,10 +666,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12605.333333333334,
+            "per_call_nanos": 61444.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 37816
+            "total_nanos": 184333
           },
           {
             "allocation": "production",
@@ -681,10 +681,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 13149.333333333334,
+            "per_call_nanos": 36264.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 39448
+            "total_nanos": 108792
           },
           {
             "allocation": "production",
@@ -696,10 +696,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 12245.0,
+            "per_call_nanos": 36093.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 36735
+            "total_nanos": 108280
           },
           {
             "allocation": "production",
@@ -711,10 +711,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 14221.0,
+            "per_call_nanos": 34985.333333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 42663
+            "total_nanos": 104956
           },
           {
             "allocation": "production",
@@ -726,10 +726,10 @@
             "n": 2147483647,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 13179.333333333334,
+            "per_call_nanos": 34324.333333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 39538
+            "total_nanos": 102973
           },
           {
             "allocation": "production",
@@ -741,10 +741,10 @@
             "n": 2147483647,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 12682.0,
+            "per_call_nanos": 35238.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 38046
+            "total_nanos": 105716
           }
         ]
       }
@@ -770,10 +770,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 34100.666666666664,
+            "per_call_nanos": 109709.33333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 102302
+            "total_nanos": 329128
           },
           {
             "allocation": "production",
@@ -785,10 +785,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 34184.0,
+            "per_call_nanos": 108875.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 102552
+            "total_nanos": 326625
           },
           {
             "allocation": "production",
@@ -800,10 +800,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 35135.333333333336,
+            "per_call_nanos": 183719.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 105406
+            "total_nanos": 551157
           },
           {
             "allocation": "production",
@@ -815,10 +815,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 33579.666666666664,
+            "per_call_nanos": 105356.33333333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 100739
+            "total_nanos": 316069
           },
           {
             "allocation": "production",
@@ -830,10 +830,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 34791.666666666664,
+            "per_call_nanos": 189017.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 104375
+            "total_nanos": 567051
           },
           {
             "allocation": "production",
@@ -845,10 +845,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 34745.0,
+            "per_call_nanos": 110417.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 104235
+            "total_nanos": 331251
           }
         ],
         "1": [
@@ -862,10 +862,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43564.666666666664,
+            "per_call_nanos": 244385.66666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 130694
+            "total_nanos": 733157
           },
           {
             "allocation": "production",
@@ -877,10 +877,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44105.333333333336,
+            "per_call_nanos": 135280.66666666666,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 132316
+            "total_nanos": 405842
           },
           {
             "allocation": "production",
@@ -892,10 +892,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43855.0,
+            "per_call_nanos": 134513.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 131565
+            "total_nanos": 403539
           },
           {
             "allocation": "production",
@@ -907,10 +907,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 60693.333333333336,
+            "per_call_nanos": 138852.66666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 182080
+            "total_nanos": 416558
           },
           {
             "allocation": "production",
@@ -922,10 +922,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44008.666666666664,
+            "per_call_nanos": 137520.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 132026
+            "total_nanos": 412562
           },
           {
             "allocation": "production",
@@ -937,10 +937,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44065.333333333336,
+            "per_call_nanos": 136816.33333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 132196
+            "total_nanos": 410449
           }
         ],
         "16": [
@@ -954,10 +954,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44115.333333333336,
+            "per_call_nanos": 138415.33333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 132346
+            "total_nanos": 415246
           },
           {
             "allocation": "production",
@@ -969,10 +969,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44209.0,
+            "per_call_nanos": 139927.33333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 132627
+            "total_nanos": 419782
           },
           {
             "allocation": "production",
@@ -984,10 +984,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44532.666666666664,
+            "per_call_nanos": 138548.66666666666,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 133598
+            "total_nanos": 415646
           },
           {
             "allocation": "production",
@@ -999,10 +999,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43597.666666666664,
+            "per_call_nanos": 141733.66666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 130793
+            "total_nanos": 425201
           },
           {
             "allocation": "production",
@@ -1014,10 +1014,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 46705.666666666664,
+            "per_call_nanos": 202640.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 140117
+            "total_nanos": 607922
           },
           {
             "allocation": "production",
@@ -1029,10 +1029,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44559.333333333336,
+            "per_call_nanos": 235145.33333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 133678
+            "total_nanos": 705436
           }
         ],
         "2": [
@@ -1046,10 +1046,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 45277.0,
+            "per_call_nanos": 135150.33333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 135831
+            "total_nanos": 405451
           },
           {
             "allocation": "production",
@@ -1061,10 +1061,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43951.666666666664,
+            "per_call_nanos": 138532.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 131855
+            "total_nanos": 415596
           },
           {
             "allocation": "production",
@@ -1076,10 +1076,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44365.666666666664,
+            "per_call_nanos": 132723.66666666666,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 133097
+            "total_nanos": 398171
           },
           {
             "allocation": "production",
@@ -1091,10 +1091,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43751.666666666664,
+            "per_call_nanos": 139336.66666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 131255
+            "total_nanos": 418010
           },
           {
             "allocation": "production",
@@ -1106,10 +1106,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 45297.0,
+            "per_call_nanos": 139743.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 135891
+            "total_nanos": 419231
           },
           {
             "allocation": "production",
@@ -1121,10 +1121,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44462.666666666664,
+            "per_call_nanos": 135921.66666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 133388
+            "total_nanos": 407765
           }
         ],
         "3": [
@@ -1138,10 +1138,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44265.666666666664,
+            "per_call_nanos": 138719.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 132797
+            "total_nanos": 416157
           },
           {
             "allocation": "production",
@@ -1153,10 +1153,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 42693.333333333336,
+            "per_call_nanos": 136339.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 128080
+            "total_nanos": 409017
           },
           {
             "allocation": "production",
@@ -1168,10 +1168,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43841.666666666664,
+            "per_call_nanos": 140678.66666666666,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 131525
+            "total_nanos": 422036
           },
           {
             "allocation": "production",
@@ -1183,10 +1183,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43684.666666666664,
+            "per_call_nanos": 141069.33333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 131054
+            "total_nanos": 423208
           },
           {
             "allocation": "production",
@@ -1198,10 +1198,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43968.666666666664,
+            "per_call_nanos": 140258.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 131906
+            "total_nanos": 420774
           },
           {
             "allocation": "production",
@@ -1213,10 +1213,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43538.0,
+            "per_call_nanos": 134653.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 130614
+            "total_nanos": 403959
           }
         ],
         "4": [
@@ -1230,10 +1230,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43685.0,
+            "per_call_nanos": 137550.66666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 131055
+            "total_nanos": 412652
           },
           {
             "allocation": "production",
@@ -1245,10 +1245,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43848.333333333336,
+            "per_call_nanos": 137557.33333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 131545
+            "total_nanos": 412672
           },
           {
             "allocation": "production",
@@ -1260,10 +1260,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44102.0,
+            "per_call_nanos": 138458.66666666666,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 132306
+            "total_nanos": 415376
           },
           {
             "allocation": "production",
@@ -1275,10 +1275,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43451.0,
+            "per_call_nanos": 150463.33333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 130353
+            "total_nanos": 451390
           },
           {
             "allocation": "production",
@@ -1290,10 +1290,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43978.666666666664,
+            "per_call_nanos": 140461.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 131936
+            "total_nanos": 421385
           },
           {
             "allocation": "production",
@@ -1305,10 +1305,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43508.0,
+            "per_call_nanos": 135711.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 130524
+            "total_nanos": 407133
           }
         ],
         "61": [
@@ -1322,10 +1322,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 45544.333333333336,
+            "per_call_nanos": 133932.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 136633
+            "total_nanos": 401796
           },
           {
             "allocation": "production",
@@ -1337,10 +1337,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 44335.666666666664,
+            "per_call_nanos": 135991.33333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 133007
+            "total_nanos": 407974
           },
           {
             "allocation": "production",
@@ -1352,10 +1352,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44082.0,
+            "per_call_nanos": 142925.33333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 132246
+            "total_nanos": 428776
           },
           {
             "allocation": "production",
@@ -1367,10 +1367,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43210.666666666664,
+            "per_call_nanos": 140248.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 129632
+            "total_nanos": 420744
           },
           {
             "allocation": "production",
@@ -1382,10 +1382,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 47460.333333333336,
+            "per_call_nanos": 137797.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 142381
+            "total_nanos": 413393
           },
           {
             "allocation": "production",
@@ -1397,10 +1397,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 45951.333333333336,
+            "per_call_nanos": 137213.33333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 137854
+            "total_nanos": 411640
           }
         ],
         "8": [
@@ -1414,10 +1414,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44282.333333333336,
+            "per_call_nanos": 136325.33333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 132847
+            "total_nanos": 408976
           },
           {
             "allocation": "production",
@@ -1429,10 +1429,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43421.0,
+            "per_call_nanos": 227918.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 130263
+            "total_nanos": 683754
           },
           {
             "allocation": "production",
@@ -1444,10 +1444,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 43821.666666666664,
+            "per_call_nanos": 139807.33333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 131465
+            "total_nanos": 419422
           },
           {
             "allocation": "production",
@@ -1459,10 +1459,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43801.666666666664,
+            "per_call_nanos": 140932.33333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 131405
+            "total_nanos": 422797
           },
           {
             "allocation": "production",
@@ -1474,10 +1474,10 @@
             "n": 1945555039024054273,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 44436.0,
+            "per_call_nanos": 140194.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 133308
+            "total_nanos": 420584
           },
           {
             "allocation": "production",
@@ -1489,10 +1489,10 @@
             "n": 1945555039024054273,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 43521.333333333336,
+            "per_call_nanos": 137286.66666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 130564
+            "total_nanos": 411860
           }
         ]
       }
@@ -1518,10 +1518,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 114172.66666666667,
+            "per_call_nanos": 354742.6666666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 342518
+            "total_nanos": 1064228
           },
           {
             "allocation": "production",
@@ -1533,10 +1533,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 113782.33333333333,
+            "per_call_nanos": 375680.6666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 341347
+            "total_nanos": 1127042
           },
           {
             "allocation": "production",
@@ -1548,10 +1548,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 114603.33333333333,
+            "per_call_nanos": 359416.6666666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 343810
+            "total_nanos": 1078250
           },
           {
             "allocation": "production",
@@ -1563,10 +1563,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 113154.66666666667,
+            "per_call_nanos": 360151.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 339464
+            "total_nanos": 1080453
           },
           {
             "allocation": "production",
@@ -1578,10 +1578,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 113815.33333333333,
+            "per_call_nanos": 358071.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 341446
+            "total_nanos": 1074213
           },
           {
             "allocation": "production",
@@ -1593,10 +1593,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 114987.0,
+            "per_call_nanos": 827994.6666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 344961
+            "total_nanos": 2483984
           }
         ],
         "1": [
@@ -1610,10 +1610,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 280826.3333333333,
+            "per_call_nanos": 753390.6666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 842479
+            "total_nanos": 2260172
           },
           {
             "allocation": "production",
@@ -1625,10 +1625,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 286531.6666666667,
+            "per_call_nanos": 1288387.6666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 859595
+            "total_nanos": 3865163
           },
           {
             "allocation": "production",
@@ -1640,10 +1640,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277304.6666666667,
+            "per_call_nanos": 782303.3333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 831914
+            "total_nanos": 2346910
           },
           {
             "allocation": "production",
@@ -1655,10 +1655,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 281193.6666666667,
+            "per_call_nanos": 779879.6666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 843581
+            "total_nanos": 2339639
           },
           {
             "allocation": "production",
@@ -1670,10 +1670,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277868.6666666667,
+            "per_call_nanos": 791677.3333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 833606
+            "total_nanos": 2375032
           },
           {
             "allocation": "production",
@@ -1685,10 +1685,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 273445.3333333333,
+            "per_call_nanos": 1139850.3333333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 820336
+            "total_nanos": 3419551
           }
         ],
         "123": [
@@ -1702,10 +1702,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 276550.0,
+            "per_call_nanos": 797279.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 829650
+            "total_nanos": 2391837
           },
           {
             "allocation": "production",
@@ -1717,10 +1717,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 291846.0,
+            "per_call_nanos": 842325.6666666666,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 875538
+            "total_nanos": 2526977
           },
           {
             "allocation": "production",
@@ -1732,10 +1732,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 283921.3333333333,
+            "per_call_nanos": 750319.3333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 851764
+            "total_nanos": 2250958
           },
           {
             "allocation": "production",
@@ -1747,10 +1747,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 273679.3333333333,
+            "per_call_nanos": 790886.3333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 821038
+            "total_nanos": 2372659
           },
           {
             "allocation": "production",
@@ -1762,10 +1762,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 282525.6666666667,
+            "per_call_nanos": 785084.3333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 847577
+            "total_nanos": 2355253
           },
           {
             "allocation": "production",
@@ -1777,10 +1777,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 278199.0,
+            "per_call_nanos": 817372.3333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 834597
+            "total_nanos": 2452117
           }
         ],
         "16": [
@@ -1794,10 +1794,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 280836.6666666667,
+            "per_call_nanos": 777376.3333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 842510
+            "total_nanos": 2332129
           },
           {
             "allocation": "production",
@@ -1809,10 +1809,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 277167.6666666667,
+            "per_call_nanos": 788426.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 831503
+            "total_nanos": 2365278
           },
           {
             "allocation": "production",
@@ -1824,10 +1824,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 276540.0,
+            "per_call_nanos": 770980.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 829620
+            "total_nanos": 2312940
           },
           {
             "allocation": "production",
@@ -1839,10 +1839,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 280432.6666666667,
+            "per_call_nanos": 766683.6666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 841298
+            "total_nanos": 2300051
           },
           {
             "allocation": "production",
@@ -1854,10 +1854,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 279701.3333333333,
+            "per_call_nanos": 794925.6666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 839104
+            "total_nanos": 2384777
           },
           {
             "allocation": "production",
@@ -1869,10 +1869,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 279644.6666666667,
+            "per_call_nanos": 1274373.6666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 838934
+            "total_nanos": 3823121
           }
         ],
         "2": [
@@ -1886,10 +1886,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 275535.0,
+            "per_call_nanos": 800323.3333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 826605
+            "total_nanos": 2400970
           },
           {
             "allocation": "production",
@@ -1901,10 +1901,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 302375.0,
+            "per_call_nanos": 1289465.6666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 907125
+            "total_nanos": 3868397
           },
           {
             "allocation": "production",
@@ -1916,10 +1916,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 276750.3333333333,
+            "per_call_nanos": 767538.3333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 830251
+            "total_nanos": 2302615
           },
           {
             "allocation": "production",
@@ -1931,10 +1931,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 279728.3333333333,
+            "per_call_nanos": 767732.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 839185
+            "total_nanos": 2303196
           },
           {
             "allocation": "production",
@@ -1946,10 +1946,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 279227.3333333333,
+            "per_call_nanos": 770365.6666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 837682
+            "total_nanos": 2311097
           },
           {
             "allocation": "production",
@@ -1961,10 +1961,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 279965.0,
+            "per_call_nanos": 782884.3333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 839895
+            "total_nanos": 2348653
           }
         ],
         "3": [
@@ -1978,10 +1978,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277051.0,
+            "per_call_nanos": 769841.6666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 831153
+            "total_nanos": 2309525
           },
           {
             "allocation": "production",
@@ -1993,10 +1993,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 279484.6666666667,
+            "per_call_nanos": 1229964.3333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 838454
+            "total_nanos": 3689893
           },
           {
             "allocation": "production",
@@ -2008,10 +2008,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277628.3333333333,
+            "per_call_nanos": 760608.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 832885
+            "total_nanos": 2281824
           },
           {
             "allocation": "production",
@@ -2023,10 +2023,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 278135.6666666667,
+            "per_call_nanos": 775119.3333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 834407
+            "total_nanos": 2325358
           },
           {
             "allocation": "production",
@@ -2038,10 +2038,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277031.0,
+            "per_call_nanos": 796838.3333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 831093
+            "total_nanos": 2390515
           },
           {
             "allocation": "production",
@@ -2053,10 +2053,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 276176.3333333333,
+            "per_call_nanos": 775813.6666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 828529
+            "total_nanos": 2327441
           }
         ],
         "4": [
@@ -2070,10 +2070,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 277351.3333333333,
+            "per_call_nanos": 750349.6666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 832054
+            "total_nanos": 2251049
           },
           {
             "allocation": "production",
@@ -2085,10 +2085,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 277468.0,
+            "per_call_nanos": 1336044.6666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 832404
+            "total_nanos": 4008134
           },
           {
             "allocation": "production",
@@ -2100,10 +2100,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 276433.3333333333,
+            "per_call_nanos": 1291268.3333333333,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 829300
+            "total_nanos": 3873805
           },
           {
             "allocation": "production",
@@ -2115,10 +2115,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 278903.6666666667,
+            "per_call_nanos": 837278.3333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 836711
+            "total_nanos": 2511835
           },
           {
             "allocation": "production",
@@ -2130,10 +2130,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 273112.0,
+            "per_call_nanos": 846809.3333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 819336
+            "total_nanos": 2540428
           },
           {
             "allocation": "production",
@@ -2145,10 +2145,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 273749.3333333333,
+            "per_call_nanos": 763896.3333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 821248
+            "total_nanos": 2291689
           }
         ],
         "8": [
@@ -2162,10 +2162,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 279417.6666666667,
+            "per_call_nanos": 781098.3333333334,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 838253
+            "total_nanos": 2343295
           },
           {
             "allocation": "production",
@@ -2177,10 +2177,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 281317.3333333333,
+            "per_call_nanos": 1450845.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 843952
+            "total_nanos": 4352535
           },
           {
             "allocation": "production",
@@ -2192,10 +2192,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 278306.3333333333,
+            "per_call_nanos": 1126754.6666666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 834919
+            "total_nanos": 3380264
           },
           {
             "allocation": "production",
@@ -2207,10 +2207,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 280159.0,
+            "per_call_nanos": 784680.3333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 840477
+            "total_nanos": 2354041
           },
           {
             "allocation": "production",
@@ -2222,10 +2222,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 310036.3333333333,
+            "per_call_nanos": 799168.6666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 930109
+            "total_nanos": 2397506
           },
           {
             "allocation": "production",
@@ -2237,10 +2237,10 @@
             "n": 9304595970494411110326649421962412033,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 271846.3333333333,
+            "per_call_nanos": 775630.3333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 815539
+            "total_nanos": 2326891
           }
         ]
       }
@@ -2266,10 +2266,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 278589.6666666667,
+            "per_call_nanos": 901861.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 835769
+            "total_nanos": 2705583
           },
           {
             "allocation": "production",
@@ -2281,10 +2281,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 279668.0,
+            "per_call_nanos": 1381302.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 839004
+            "total_nanos": 4143906
           },
           {
             "allocation": "production",
@@ -2296,10 +2296,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 280786.3333333333,
+            "per_call_nanos": 1526173.3333333333,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 842359
+            "total_nanos": 4578520
           },
           {
             "allocation": "production",
@@ -2311,10 +2311,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 277992.3333333333,
+            "per_call_nanos": 966259.6666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 833977
+            "total_nanos": 2898779
           },
           {
             "allocation": "production",
@@ -2326,10 +2326,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 277324.6666666667,
+            "per_call_nanos": 1462605.6666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 831974
+            "total_nanos": 4387817
           },
           {
             "allocation": "production",
@@ -2341,10 +2341,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 280616.0,
+            "per_call_nanos": 1497587.6666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 841848
+            "total_nanos": 4492763
           }
         ],
         "1": [
@@ -2358,10 +2358,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 693438.3333333334,
+            "per_call_nanos": 2350933.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2080315
+            "total_nanos": 7052799
           },
           {
             "allocation": "production",
@@ -2373,10 +2373,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 666665.3333333334,
+            "per_call_nanos": 2973286.3333333335,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 1999996
+            "total_nanos": 8919859
           },
           {
             "allocation": "production",
@@ -2388,10 +2388,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 658700.3333333334,
+            "per_call_nanos": 2820670.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 1976101
+            "total_nanos": 8462010
           },
           {
             "allocation": "production",
@@ -2403,10 +2403,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 678836.6666666666,
+            "per_call_nanos": 1943665.6666666667,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2036510
+            "total_nanos": 5830997
           },
           {
             "allocation": "production",
@@ -2418,10 +2418,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 670524.3333333334,
+            "per_call_nanos": 1896756.3333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2011573
+            "total_nanos": 5690269
           },
           {
             "allocation": "production",
@@ -2433,10 +2433,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 668238.0,
+            "per_call_nanos": 1911034.3333333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2004714
+            "total_nanos": 5733103
           }
         ],
         "16": [
@@ -2450,10 +2450,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 670841.3333333334,
+            "per_call_nanos": 1901587.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2012524
+            "total_nanos": 5704761
           },
           {
             "allocation": "production",
@@ -2465,10 +2465,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 674403.6666666666,
+            "per_call_nanos": 1893645.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2023211
+            "total_nanos": 5680935
           },
           {
             "allocation": "production",
@@ -2480,10 +2480,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 691241.6666666666,
+            "per_call_nanos": 2946363.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2073725
+            "total_nanos": 8839089
           },
           {
             "allocation": "production",
@@ -2495,10 +2495,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 664799.0,
+            "per_call_nanos": 3008031.3333333335,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 1994397
+            "total_nanos": 9024094
           },
           {
             "allocation": "production",
@@ -2510,10 +2510,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 666705.3333333334,
+            "per_call_nanos": 1906290.6666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2000116
+            "total_nanos": 5718872
           },
           {
             "allocation": "production",
@@ -2525,10 +2525,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 671846.6666666666,
+            "per_call_nanos": 1841317.6666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2015540
+            "total_nanos": 5523953
           }
         ],
         "2": [
@@ -2542,10 +2542,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 668191.0,
+            "per_call_nanos": 1854236.6666666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2004573
+            "total_nanos": 5562710
           },
           {
             "allocation": "production",
@@ -2557,10 +2557,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 676379.6666666666,
+            "per_call_nanos": 2928409.6666666665,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2029139
+            "total_nanos": 8785229
           },
           {
             "allocation": "production",
@@ -2572,10 +2572,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 670397.6666666666,
+            "per_call_nanos": 2908286.6666666665,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2011193
+            "total_nanos": 8724860
           },
           {
             "allocation": "production",
@@ -2587,10 +2587,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 671883.0,
+            "per_call_nanos": 1990328.3333333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2015649
+            "total_nanos": 5970985
           },
           {
             "allocation": "production",
@@ -2602,10 +2602,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 673705.6666666666,
+            "per_call_nanos": 1868307.3333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2021117
+            "total_nanos": 5604922
           },
           {
             "allocation": "production",
@@ -2617,10 +2617,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 675121.0,
+            "per_call_nanos": 1921840.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2025363
+            "total_nanos": 5765520
           }
         ],
         "256": [
@@ -2634,10 +2634,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 677624.6666666666,
+            "per_call_nanos": 1895461.3333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2032874
+            "total_nanos": 5686384
           },
           {
             "allocation": "production",
@@ -2649,10 +2649,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 684839.0,
+            "per_call_nanos": 2093658.3333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2054517
+            "total_nanos": 6280975
           },
           {
             "allocation": "production",
@@ -2664,10 +2664,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 671526.0,
+            "per_call_nanos": 2949834.6666666665,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2014578
+            "total_nanos": 8849504
           },
           {
             "allocation": "production",
@@ -2679,10 +2679,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 679033.6666666666,
+            "per_call_nanos": 3368642.6666666665,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2037101
+            "total_nanos": 10105928
           },
           {
             "allocation": "production",
@@ -2694,10 +2694,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 671078.6666666666,
+            "per_call_nanos": 1954578.6666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2013236
+            "total_nanos": 5863736
           },
           {
             "allocation": "production",
@@ -2709,10 +2709,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 664088.0,
+            "per_call_nanos": 1866915.3333333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 1992264
+            "total_nanos": 5600746
           }
         ],
         "3": [
@@ -2726,10 +2726,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 669306.0,
+            "per_call_nanos": 2916335.3333333335,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2007918
+            "total_nanos": 8749006
           },
           {
             "allocation": "production",
@@ -2741,10 +2741,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 658773.6666666666,
+            "per_call_nanos": 2770846.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 1976321
+            "total_nanos": 8312538
           },
           {
             "allocation": "production",
@@ -2756,10 +2756,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 670701.3333333334,
+            "per_call_nanos": 2711428.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2012104
+            "total_nanos": 8134284
           },
           {
             "allocation": "production",
@@ -2771,10 +2771,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 682011.6666666666,
+            "per_call_nanos": 2132549.3333333335,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2046035
+            "total_nanos": 6397648
           },
           {
             "allocation": "production",
@@ -2786,10 +2786,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 682165.0,
+            "per_call_nanos": 1973630.6666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2046495
+            "total_nanos": 5920892
           },
           {
             "allocation": "production",
@@ -2801,10 +2801,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 685980.6666666666,
+            "per_call_nanos": 1872403.6666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2057942
+            "total_nanos": 5617211
           }
         ],
         "4": [
@@ -2818,10 +2818,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 671509.0,
+            "per_call_nanos": 1834317.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2014527
+            "total_nanos": 5502951
           },
           {
             "allocation": "production",
@@ -2833,10 +2833,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 672747.6666666666,
+            "per_call_nanos": 2887452.3333333335,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2018243
+            "total_nanos": 8662357
           },
           {
             "allocation": "production",
@@ -2848,10 +2848,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 666959.0,
+            "per_call_nanos": 2892636.6666666665,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2000877
+            "total_nanos": 8677910
           },
           {
             "allocation": "production",
@@ -2863,10 +2863,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 712961.0,
+            "per_call_nanos": 2684788.3333333335,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2138883
+            "total_nanos": 8054365
           },
           {
             "allocation": "production",
@@ -2878,10 +2878,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 690570.6666666666,
+            "per_call_nanos": 1977192.3333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2071712
+            "total_nanos": 5931577
           },
           {
             "allocation": "production",
@@ -2893,10 +2893,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 676890.6666666666,
+            "per_call_nanos": 1897147.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2030672
+            "total_nanos": 5691441
           }
         ],
         "8": [
@@ -2910,10 +2910,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 668892.0,
+            "per_call_nanos": 1862679.3333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2006676
+            "total_nanos": 5588038
           },
           {
             "allocation": "production",
@@ -2925,10 +2925,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 678656.3333333334,
+            "per_call_nanos": 1848785.3333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2035969
+            "total_nanos": 5546356
           },
           {
             "allocation": "production",
@@ -2940,10 +2940,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 666161.3333333334,
+            "per_call_nanos": 2841631.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 1998484
+            "total_nanos": 8524893
           },
           {
             "allocation": "production",
@@ -2955,10 +2955,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 677812.0,
+            "per_call_nanos": 3081830.6666666665,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2033436
+            "total_nanos": 9245492
           },
           {
             "allocation": "production",
@@ -2970,10 +2970,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 681140.3333333334,
+            "per_call_nanos": 1972361.6666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2043421
+            "total_nanos": 5917085
           },
           {
             "allocation": "production",
@@ -2985,10 +2985,10 @@
             "n": 93628759656736142393278101159368737990730026663232799828780155818898507169793,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 672403.6666666666,
+            "per_call_nanos": 3185861.6666666665,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2017211
+            "total_nanos": 9557585
           }
         ]
       }
@@ -3014,10 +3014,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1054.6666666666667,
+            "per_call_nanos": 3314.6666666666665,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 3164
+            "total_nanos": 9944
           },
           {
             "allocation": "production",
@@ -3029,10 +3029,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1071.6666666666667,
+            "per_call_nanos": 3368.3333333333335,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 3215
+            "total_nanos": 10105
           },
           {
             "allocation": "production",
@@ -3044,10 +3044,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1055.0,
+            "per_call_nanos": 5448.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 3165
+            "total_nanos": 16344
           },
           {
             "allocation": "production",
@@ -3059,10 +3059,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1051.6666666666667,
+            "per_call_nanos": 3418.3333333333335,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 3155
+            "total_nanos": 10255
           },
           {
             "allocation": "production",
@@ -3074,10 +3074,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1071.6666666666667,
+            "per_call_nanos": 5354.666666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 3215
+            "total_nanos": 16064
           },
           {
             "allocation": "production",
@@ -3089,10 +3089,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1071.3333333333333,
+            "per_call_nanos": 3295.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 3214
+            "total_nanos": 9885
           }
         ],
         "1": [
@@ -3106,10 +3106,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 10519.0,
+            "per_call_nanos": 32261.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 31557
+            "total_nanos": 96783
           },
           {
             "allocation": "production",
@@ -3121,10 +3121,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 9981.333333333334,
+            "per_call_nanos": 50551.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 29944
+            "total_nanos": 151655
           },
           {
             "allocation": "production",
@@ -3136,10 +3136,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 10592.333333333334,
+            "per_call_nanos": 53249.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 31777
+            "total_nanos": 159747
           },
           {
             "allocation": "production",
@@ -3151,10 +3151,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 10125.0,
+            "per_call_nanos": 33326.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 30375
+            "total_nanos": 99978
           },
           {
             "allocation": "production",
@@ -3166,10 +3166,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 10535.666666666666,
+            "per_call_nanos": 33022.333333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 31607
+            "total_nanos": 99067
           },
           {
             "allocation": "production",
@@ -3181,10 +3181,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 10659.0,
+            "per_call_nanos": 32895.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 31977
+            "total_nanos": 98687
           }
         ],
         "16": [
@@ -3198,10 +3198,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 21551.666666666668,
+            "per_call_nanos": 96867.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 64655
+            "total_nanos": 290601
           },
           {
             "allocation": "production",
@@ -3213,10 +3213,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20013.0,
+            "per_call_nanos": 61875.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 60039
+            "total_nanos": 185625
           },
           {
             "allocation": "production",
@@ -3228,10 +3228,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 20003.0,
+            "per_call_nanos": 59568.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 60009
+            "total_nanos": 178705
           },
           {
             "allocation": "production",
@@ -3243,10 +3243,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20090.0,
+            "per_call_nanos": 59211.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 60270
+            "total_nanos": 177633
           },
           {
             "allocation": "production",
@@ -3258,10 +3258,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19919.333333333332,
+            "per_call_nanos": 59935.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 59758
+            "total_nanos": 179807
           },
           {
             "allocation": "production",
@@ -3273,10 +3273,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20019.666666666668,
+            "per_call_nanos": 61254.333333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 60059
+            "total_nanos": 183763
           }
         ],
         "2": [
@@ -3290,10 +3290,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19946.333333333332,
+            "per_call_nanos": 100088.33333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 59839
+            "total_nanos": 300265
           },
           {
             "allocation": "production",
@@ -3305,10 +3305,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19959.666666666668,
+            "per_call_nanos": 92821.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 59879
+            "total_nanos": 278463
           },
           {
             "allocation": "production",
@@ -3320,10 +3320,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 20063.0,
+            "per_call_nanos": 58803.666666666664,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 60189
+            "total_nanos": 176411
           },
           {
             "allocation": "production",
@@ -3335,10 +3335,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20059.666666666668,
+            "per_call_nanos": 60242.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 60179
+            "total_nanos": 180728
           },
           {
             "allocation": "production",
@@ -3350,10 +3350,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 20013.0,
+            "per_call_nanos": 98746.33333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 60039
+            "total_nanos": 296239
           },
           {
             "allocation": "production",
@@ -3365,10 +3365,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19936.0,
+            "per_call_nanos": 60266.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 59808
+            "total_nanos": 180798
           }
         ],
         "20": [
@@ -3382,10 +3382,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19956.0,
+            "per_call_nanos": 63090.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 59868
+            "total_nanos": 189270
           },
           {
             "allocation": "production",
@@ -3397,10 +3397,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19832.666666666668,
+            "per_call_nanos": 60122.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 59498
+            "total_nanos": 180368
           },
           {
             "allocation": "production",
@@ -3412,10 +3412,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19822.666666666668,
+            "per_call_nanos": 60703.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 59468
+            "total_nanos": 182110
           },
           {
             "allocation": "production",
@@ -3427,10 +3427,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20076.333333333332,
+            "per_call_nanos": 61828.333333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 60229
+            "total_nanos": 185485
           },
           {
             "allocation": "production",
@@ -3442,10 +3442,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19816.0,
+            "per_call_nanos": 61404.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 59448
+            "total_nanos": 184214
           },
           {
             "allocation": "production",
@@ -3457,10 +3457,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20200.0,
+            "per_call_nanos": 59578.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 60600
+            "total_nanos": 178736
           }
         ],
         "3": [
@@ -3474,10 +3474,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19909.666666666668,
+            "per_call_nanos": 102979.33333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 59729
+            "total_nanos": 308938
           },
           {
             "allocation": "production",
@@ -3489,10 +3489,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20006.333333333332,
+            "per_call_nanos": 96479.66666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 60019
+            "total_nanos": 289439
           },
           {
             "allocation": "production",
@@ -3504,10 +3504,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19986.333333333332,
+            "per_call_nanos": 60569.666666666664,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 59959
+            "total_nanos": 181709
           },
           {
             "allocation": "production",
@@ -3519,10 +3519,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20046.333333333332,
+            "per_call_nanos": 61638.333333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 60139
+            "total_nanos": 184915
           },
           {
             "allocation": "production",
@@ -3534,10 +3534,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 20009.666666666668,
+            "per_call_nanos": 60149.333333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 60029
+            "total_nanos": 180448
           },
           {
             "allocation": "production",
@@ -3549,10 +3549,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20069.666666666668,
+            "per_call_nanos": 83443.66666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 60209
+            "total_nanos": 250331
           }
         ],
         "4": [
@@ -3566,10 +3566,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19208.333333333332,
+            "per_call_nanos": 100936.33333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 57625
+            "total_nanos": 302809
           },
           {
             "allocation": "production",
@@ -3581,10 +3581,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19939.333333333332,
+            "per_call_nanos": 63891.333333333336,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 59818
+            "total_nanos": 191674
           },
           {
             "allocation": "production",
@@ -3596,10 +3596,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19208.333333333332,
+            "per_call_nanos": 58096.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 57625
+            "total_nanos": 174289
           },
           {
             "allocation": "production",
@@ -3611,10 +3611,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19946.333333333332,
+            "per_call_nanos": 60806.666666666664,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 59839
+            "total_nanos": 182420
           },
           {
             "allocation": "production",
@@ -3626,10 +3626,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 20006.333333333332,
+            "per_call_nanos": 58810.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 60019
+            "total_nanos": 176432
           },
           {
             "allocation": "production",
@@ -3641,10 +3641,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 20353.666666666668,
+            "per_call_nanos": 108998.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 61061
+            "total_nanos": 326994
           }
         ],
         "8": [
@@ -3658,10 +3658,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 40229.666666666664,
+            "per_call_nanos": 95097.66666666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 120689
+            "total_nanos": 285293
           },
           {
             "allocation": "production",
@@ -3673,10 +3673,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19923.0,
+            "per_call_nanos": 60706.666666666664,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 59769
+            "total_nanos": 182120
           },
           {
             "allocation": "production",
@@ -3688,10 +3688,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 21428.666666666668,
+            "per_call_nanos": 59321.333333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 64286
+            "total_nanos": 177964
           },
           {
             "allocation": "production",
@@ -3703,10 +3703,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 19318.666666666668,
+            "per_call_nanos": 71509.66666666667,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 57956
+            "total_nanos": 214529
           },
           {
             "allocation": "production",
@@ -3718,10 +3718,10 @@
             "n": 1000003,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 19312.0,
+            "per_call_nanos": 59808.666666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 57936
+            "total_nanos": 179426
           },
           {
             "allocation": "production",
@@ -3733,10 +3733,10 @@
             "n": 1000003,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 21498.666666666668,
+            "per_call_nanos": 60162.333333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 64496
+            "total_nanos": 180487
           }
         ]
       }
@@ -3762,10 +3762,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1255.0,
+            "per_call_nanos": 4042.6666666666665,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 3765
+            "total_nanos": 12128
           },
           {
             "allocation": "production",
@@ -3777,10 +3777,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1272.0,
+            "per_call_nanos": 4116.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 3816
+            "total_nanos": 12348
           },
           {
             "allocation": "production",
@@ -3792,10 +3792,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1282.0,
+            "per_call_nanos": 4096.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 3846
+            "total_nanos": 12288
           },
           {
             "allocation": "production",
@@ -3807,10 +3807,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1265.0,
+            "per_call_nanos": 5608.333333333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 3795
+            "total_nanos": 16825
           },
           {
             "allocation": "production",
@@ -3822,10 +3822,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 1255.3333333333333,
+            "per_call_nanos": 5979.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 3766
+            "total_nanos": 17937
           },
           {
             "allocation": "production",
@@ -3837,10 +3837,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 1301.6666666666667,
+            "per_call_nanos": 5818.333333333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 3905
+            "total_nanos": 17455
           }
         ],
         "1": [
@@ -3854,10 +3854,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 11039.666666666666,
+            "per_call_nanos": 34564.666666666664,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 33119
+            "total_nanos": 103694
           },
           {
             "allocation": "production",
@@ -3869,10 +3869,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 11019.666666666666,
+            "per_call_nanos": 53943.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 33059
+            "total_nanos": 161829
           },
           {
             "allocation": "production",
@@ -3884,10 +3884,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 11049.666666666666,
+            "per_call_nanos": 35032.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 33149
+            "total_nanos": 105096
           },
           {
             "allocation": "production",
@@ -3899,10 +3899,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 10535.666666666666,
+            "per_call_nanos": 51039.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 31607
+            "total_nanos": 153117
           },
           {
             "allocation": "production",
@@ -3914,10 +3914,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 11119.666666666666,
+            "per_call_nanos": 53386.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 33359
+            "total_nanos": 160158
           },
           {
             "allocation": "production",
@@ -3929,10 +3929,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 11016.333333333334,
+            "per_call_nanos": 36974.666666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 33049
+            "total_nanos": 110924
           }
         ],
         "16": [
@@ -3946,10 +3946,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31627.0,
+            "per_call_nanos": 92110.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 94881
+            "total_nanos": 276330
           },
           {
             "allocation": "production",
@@ -3961,10 +3961,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31526.666666666668,
+            "per_call_nanos": 95912.33333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 94580
+            "total_nanos": 287737
           },
           {
             "allocation": "production",
@@ -3976,10 +3976,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31647.0,
+            "per_call_nanos": 94373.33333333333,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 94941
+            "total_nanos": 283120
           },
           {
             "allocation": "production",
@@ -3991,10 +3991,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31677.0,
+            "per_call_nanos": 137046.33333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 95031
+            "total_nanos": 411139
           },
           {
             "allocation": "production",
@@ -4006,10 +4006,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31527.0,
+            "per_call_nanos": 97494.66666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 94581
+            "total_nanos": 292484
           },
           {
             "allocation": "production",
@@ -4021,10 +4021,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31663.666666666668,
+            "per_call_nanos": 164240.33333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 94991
+            "total_nanos": 492721
           }
         ],
         "2": [
@@ -4038,10 +4038,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 20650.666666666668,
+            "per_call_nanos": 63771.333333333336,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 61952
+            "total_nanos": 191314
           },
           {
             "allocation": "production",
@@ -4053,10 +4053,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 22036.0,
+            "per_call_nanos": 102372.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 66108
+            "total_nanos": 307116
           },
           {
             "allocation": "production",
@@ -4068,10 +4068,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 20721.0,
+            "per_call_nanos": 63424.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 62163
+            "total_nanos": 190272
           },
           {
             "allocation": "production",
@@ -4083,10 +4083,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 20760.666666666668,
+            "per_call_nanos": 96700.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 62282
+            "total_nanos": 290100
           },
           {
             "allocation": "production",
@@ -4098,10 +4098,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 20640.666666666668,
+            "per_call_nanos": 109753.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 61922
+            "total_nanos": 329259
           },
           {
             "allocation": "production",
@@ -4113,10 +4113,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 20076.666666666668,
+            "per_call_nanos": 110370.33333333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 60230
+            "total_nanos": 331111
           }
         ],
         "3": [
@@ -4130,10 +4130,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31540.0,
+            "per_call_nanos": 93876.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 94620
+            "total_nanos": 281628
           },
           {
             "allocation": "production",
@@ -4145,10 +4145,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31423.333333333332,
+            "per_call_nanos": 176054.33333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 94270
+            "total_nanos": 528163
           },
           {
             "allocation": "production",
@@ -4160,10 +4160,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31426.666666666668,
+            "per_call_nanos": 96873.66666666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 94280
+            "total_nanos": 290621
           },
           {
             "allocation": "production",
@@ -4175,10 +4175,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31359.666666666668,
+            "per_call_nanos": 140041.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 94079
+            "total_nanos": 420123
           },
           {
             "allocation": "production",
@@ -4190,10 +4190,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31703.666666666668,
+            "per_call_nanos": 149284.66666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 95111
+            "total_nanos": 447854
           },
           {
             "allocation": "production",
@@ -4205,10 +4205,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31573.333333333332,
+            "per_call_nanos": 172529.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 94720
+            "total_nanos": 517587
           }
         ],
         "30": [
@@ -4222,10 +4222,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31296.333333333332,
+            "per_call_nanos": 92600.66666666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 93889
+            "total_nanos": 277802
           },
           {
             "allocation": "production",
@@ -4237,10 +4237,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31660.333333333332,
+            "per_call_nanos": 94366.66666666667,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 94981
+            "total_nanos": 283100
           },
           {
             "allocation": "production",
@@ -4252,10 +4252,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31576.666666666668,
+            "per_call_nanos": 99714.66666666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 94730
+            "total_nanos": 299144
           },
           {
             "allocation": "production",
@@ -4267,10 +4267,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31583.666666666668,
+            "per_call_nanos": 94800.33333333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 94751
+            "total_nanos": 284401
           },
           {
             "allocation": "production",
@@ -4282,10 +4282,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31440.0,
+            "per_call_nanos": 178191.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 94320
+            "total_nanos": 534573
           },
           {
             "allocation": "production",
@@ -4297,10 +4297,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31423.333333333332,
+            "per_call_nanos": 163512.66666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 94270
+            "total_nanos": 490538
           }
         ],
         "4": [
@@ -4314,10 +4314,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31573.666666666668,
+            "per_call_nanos": 92296.66666666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 94721
+            "total_nanos": 276890
           },
           {
             "allocation": "production",
@@ -4329,10 +4329,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31553.666666666668,
+            "per_call_nanos": 155777.66666666666,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 94661
+            "total_nanos": 467333
           },
           {
             "allocation": "production",
@@ -4344,10 +4344,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31466.666666666668,
+            "per_call_nanos": 95892.33333333333,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 94400
+            "total_nanos": 287677
           },
           {
             "allocation": "production",
@@ -4359,10 +4359,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31496.666666666668,
+            "per_call_nanos": 146374.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 94490
+            "total_nanos": 439122
           },
           {
             "allocation": "production",
@@ -4374,10 +4374,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 32912.0,
+            "per_call_nanos": 93879.33333333333,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 98736
+            "total_nanos": 281638
           },
           {
             "allocation": "production",
@@ -4389,10 +4389,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31246.333333333332,
+            "per_call_nanos": 99721.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 93739
+            "total_nanos": 299163
           }
         ],
         "8": [
@@ -4406,10 +4406,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31740.333333333332,
+            "per_call_nanos": 92173.33333333333,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 95221
+            "total_nanos": 276520
           },
           {
             "allocation": "production",
@@ -4421,10 +4421,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 32792.0,
+            "per_call_nanos": 128567.33333333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 98376
+            "total_nanos": 385702
           },
           {
             "allocation": "production",
@@ -4436,10 +4436,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31643.666666666668,
+            "per_call_nanos": 110547.33333333333,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 94931
+            "total_nanos": 331642
           },
           {
             "allocation": "production",
@@ -4451,10 +4451,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 32578.333333333332,
+            "per_call_nanos": 142798.33333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 97735
+            "total_nanos": 428395
           },
           {
             "allocation": "production",
@@ -4466,10 +4466,10 @@
             "n": 1000000007,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 31480.0,
+            "per_call_nanos": 98068.66666666667,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 94440
+            "total_nanos": 294206
           },
           {
             "allocation": "production",
@@ -4481,10 +4481,10 @@
             "n": 1000000007,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 31366.666666666668,
+            "per_call_nanos": 101600.66666666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 94100
+            "total_nanos": 304802
           }
         ]
       }
@@ -4510,10 +4510,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 790516.0,
+            "per_call_nanos": 3685993.3333333335,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2371548
+            "total_nanos": 11057980
           },
           {
             "allocation": "elaboration",
@@ -4525,10 +4525,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 763756.0,
+            "per_call_nanos": 3685299.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2291268
+            "total_nanos": 11055897
           },
           {
             "allocation": "elaboration",
@@ -4540,10 +4540,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 773397.0,
+            "per_call_nanos": 2508096.6666666665,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2320191
+            "total_nanos": 7524290
           },
           {
             "allocation": "elaboration",
@@ -4555,10 +4555,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 780454.3333333334,
+            "per_call_nanos": 2958057.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2341363
+            "total_nanos": 8874171
           },
           {
             "allocation": "elaboration",
@@ -4570,10 +4570,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 764029.6666666666,
+            "per_call_nanos": 2514399.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2292089
+            "total_nanos": 7543197
           },
           {
             "allocation": "elaboration",
@@ -4585,10 +4585,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 774134.6666666666,
+            "per_call_nanos": 2564623.6666666665,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2322404
+            "total_nanos": 7693871
           }
         ],
         "1": [
@@ -4602,10 +4602,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 3323262.0,
+            "per_call_nanos": 17778386.666666668,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 9969786
+            "total_nanos": 53335160
           },
           {
             "allocation": "elaboration",
@@ -4617,10 +4617,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 3341973.0,
+            "per_call_nanos": 11330287.333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 10025919
+            "total_nanos": 33990862
           },
           {
             "allocation": "elaboration",
@@ -4632,10 +4632,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 3364202.6666666665,
+            "per_call_nanos": 10912888.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 10092608
+            "total_nanos": 32738664
           },
           {
             "allocation": "elaboration",
@@ -4647,10 +4647,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 3327889.0,
+            "per_call_nanos": 11928494.333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 9983667
+            "total_nanos": 35785483
           },
           {
             "allocation": "elaboration",
@@ -4662,10 +4662,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 3359028.3333333335,
+            "per_call_nanos": 11248175.333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 10077085
+            "total_nanos": 33744526
           },
           {
             "allocation": "elaboration",
@@ -4677,10 +4677,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 3402693.0,
+            "per_call_nanos": 13434000.333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 10208079
+            "total_nanos": 40302001
           }
         ],
         "16": [
@@ -4694,10 +4694,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3901152.3333333335,
+            "per_call_nanos": 17241303.666666668,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11703457
+            "total_nanos": 51723911
           },
           {
             "allocation": "elaboration",
@@ -4709,10 +4709,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3931116.6666666665,
+            "per_call_nanos": 11669009.333333334,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11793350
+            "total_nanos": 35007028
           },
           {
             "allocation": "elaboration",
@@ -4724,10 +4724,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3942113.0,
+            "per_call_nanos": 16259781.333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11826339
+            "total_nanos": 48779344
           },
           {
             "allocation": "elaboration",
@@ -4739,10 +4739,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3939359.0,
+            "per_call_nanos": 13943002.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11818077
+            "total_nanos": 41829006
           },
           {
             "allocation": "elaboration",
@@ -4754,10 +4754,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3919853.0,
+            "per_call_nanos": 12191073.666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11759559
+            "total_nanos": 36573221
           },
           {
             "allocation": "elaboration",
@@ -4769,10 +4769,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3901763.3333333335,
+            "per_call_nanos": 12077475.333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11705290
+            "total_nanos": 36232426
           }
         ],
         "2": [
@@ -4786,10 +4786,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3883102.0,
+            "per_call_nanos": 18451852.333333332,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11649306
+            "total_nanos": 55355557
           },
           {
             "allocation": "elaboration",
@@ -4801,10 +4801,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3933670.6666666665,
+            "per_call_nanos": 15696422.666666666,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11801012
+            "total_nanos": 47089268
           },
           {
             "allocation": "elaboration",
@@ -4816,10 +4816,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3955012.0,
+            "per_call_nanos": 12242243.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11865036
+            "total_nanos": 36726729
           },
           {
             "allocation": "elaboration",
@@ -4831,10 +4831,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3937926.6666666665,
+            "per_call_nanos": 13678653.333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11813780
+            "total_nanos": 41035960
           },
           {
             "allocation": "elaboration",
@@ -4846,10 +4846,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3920908.3333333335,
+            "per_call_nanos": 12139557.333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11762725
+            "total_nanos": 36418672
           },
           {
             "allocation": "elaboration",
@@ -4861,10 +4861,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3914569.0,
+            "per_call_nanos": 13166720.666666666,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11743707
+            "total_nanos": 39500162
           }
         ],
         "3": [
@@ -4878,10 +4878,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3955793.3333333335,
+            "per_call_nanos": 19565844.666666668,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11867380
+            "total_nanos": 58697534
           },
           {
             "allocation": "elaboration",
@@ -4893,10 +4893,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3920404.0,
+            "per_call_nanos": 18329063.666666668,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11761212
+            "total_nanos": 54987191
           },
           {
             "allocation": "elaboration",
@@ -4908,10 +4908,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3919395.6666666665,
+            "per_call_nanos": 12603909.333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11758187
+            "total_nanos": 37811728
           },
           {
             "allocation": "elaboration",
@@ -4923,10 +4923,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3969436.6666666665,
+            "per_call_nanos": 13059308.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11908310
+            "total_nanos": 39177924
           },
           {
             "allocation": "elaboration",
@@ -4938,10 +4938,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3966442.3333333335,
+            "per_call_nanos": 12110841.666666666,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11899327
+            "total_nanos": 36332525
           },
           {
             "allocation": "elaboration",
@@ -4953,10 +4953,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3984689.6666666665,
+            "per_call_nanos": 17095561.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11954069
+            "total_nanos": 51286683
           }
         ],
         "4": [
@@ -4970,10 +4970,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3921075.0,
+            "per_call_nanos": 17645002.333333332,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11763225
+            "total_nanos": 52935007
           },
           {
             "allocation": "elaboration",
@@ -4985,10 +4985,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3918204.0,
+            "per_call_nanos": 17631846.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11754612
+            "total_nanos": 52895538
           },
           {
             "allocation": "elaboration",
@@ -5000,10 +5000,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3904527.3333333335,
+            "per_call_nanos": 13299925.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11713582
+            "total_nanos": 39899775
           },
           {
             "allocation": "elaboration",
@@ -5015,10 +5015,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3900541.3333333335,
+            "per_call_nanos": 12602914.333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11701624
+            "total_nanos": 37808743
           },
           {
             "allocation": "elaboration",
@@ -5030,10 +5030,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3928199.0,
+            "per_call_nanos": 12218157.333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11784597
+            "total_nanos": 36654472
           },
           {
             "allocation": "elaboration",
@@ -5045,10 +5045,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3950812.6666666665,
+            "per_call_nanos": 13902098.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11852438
+            "total_nanos": 41706294
           }
         ],
         "512": [
@@ -5062,10 +5062,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3948816.3333333335,
+            "per_call_nanos": 11884001.666666666,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11846449
+            "total_nanos": 35652005
           },
           {
             "allocation": "elaboration",
@@ -5077,10 +5077,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3931787.6666666665,
+            "per_call_nanos": 12231420.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11795363
+            "total_nanos": 36694260
           },
           {
             "allocation": "elaboration",
@@ -5092,10 +5092,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3964135.3333333335,
+            "per_call_nanos": 16131878.333333334,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11892406
+            "total_nanos": 48395635
           },
           {
             "allocation": "elaboration",
@@ -5107,10 +5107,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3972341.3333333335,
+            "per_call_nanos": 13232541.666666666,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11917024
+            "total_nanos": 39697625
           },
           {
             "allocation": "elaboration",
@@ -5122,10 +5122,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3959068.0,
+            "per_call_nanos": 12279448.333333334,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11877204
+            "total_nanos": 36838345
           },
           {
             "allocation": "elaboration",
@@ -5137,10 +5137,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3876672.6666666665,
+            "per_call_nanos": 12040594.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11630018
+            "total_nanos": 36121782
           }
         ],
         "8": [
@@ -5154,10 +5154,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3953279.3333333335,
+            "per_call_nanos": 17813512.333333332,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 11859838
+            "total_nanos": 53440537
           },
           {
             "allocation": "elaboration",
@@ -5169,10 +5169,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3923558.6666666665,
+            "per_call_nanos": 17930672.666666668,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 11770676
+            "total_nanos": 53792018
           },
           {
             "allocation": "elaboration",
@@ -5184,10 +5184,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3939993.0,
+            "per_call_nanos": 13666946.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 11819979
+            "total_nanos": 41000838
           },
           {
             "allocation": "elaboration",
@@ -5199,10 +5199,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3950612.3333333335,
+            "per_call_nanos": 12213914.333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 11851837
+            "total_nanos": 36641743
           },
           {
             "allocation": "elaboration",
@@ -5214,10 +5214,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "ascending",
             "outcome": "success",
-            "per_call_nanos": 3948739.3333333335,
+            "per_call_nanos": 12214532.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 11846218
+            "total_nanos": 36643596
           },
           {
             "allocation": "elaboration",
@@ -5229,10 +5229,10 @@
             "n": 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,
             "order": "descending",
             "outcome": "success",
-            "per_call_nanos": 3928716.3333333335,
+            "per_call_nanos": 17358484.333333332,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 11786149
+            "total_nanos": 52075453
           }
         ]
       }
@@ -5258,10 +5258,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 757423.3333333334,
+            "per_call_nanos": 3815909.3333333335,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 2272270
+            "total_nanos": 11447728
           },
           {
             "allocation": "elaboration",
@@ -5273,10 +5273,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 760431.3333333334,
+            "per_call_nanos": 2501606.6666666665,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 2281294
+            "total_nanos": 7504820
           },
           {
             "allocation": "elaboration",
@@ -5288,10 +5288,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 785538.0,
+            "per_call_nanos": 4042599.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 2356614
+            "total_nanos": 12127797
           },
           {
             "allocation": "elaboration",
@@ -5303,10 +5303,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 760200.6666666666,
+            "per_call_nanos": 2494766.6666666665,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 2280602
+            "total_nanos": 7484300
           },
           {
             "allocation": "elaboration",
@@ -5318,10 +5318,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 758264.3333333334,
+            "per_call_nanos": 3901025.6666666665,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 2274793
+            "total_nanos": 11703077
           },
           {
             "allocation": "elaboration",
@@ -5333,10 +5333,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 754979.6666666666,
+            "per_call_nanos": 2429830.3333333335,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 2264939
+            "total_nanos": 7289491
           }
         ],
         "1": [
@@ -5350,10 +5350,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 2897096.6666666665,
+            "per_call_nanos": 14943516.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 8691290
+            "total_nanos": 44830548
           },
           {
             "allocation": "elaboration",
@@ -5365,10 +5365,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 2923719.3333333335,
+            "per_call_nanos": 14211684.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 8771158
+            "total_nanos": 42635052
           },
           {
             "allocation": "elaboration",
@@ -5380,10 +5380,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 2926970.6666666665,
+            "per_call_nanos": 9784337.666666666,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 8780912
+            "total_nanos": 29353013
           },
           {
             "allocation": "elaboration",
@@ -5395,10 +5395,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 2879530.3333333335,
+            "per_call_nanos": 9703287.333333334,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 8638591
+            "total_nanos": 29109862
           },
           {
             "allocation": "elaboration",
@@ -5410,10 +5410,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 2994300.6666666665,
+            "per_call_nanos": 14056370.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 8982902
+            "total_nanos": 42169110
           },
           {
             "allocation": "elaboration",
@@ -5425,10 +5425,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 2892015.6666666665,
+            "per_call_nanos": 9327336.333333334,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 8676047
+            "total_nanos": 27982009
           }
         ],
         "16": [
@@ -5442,10 +5442,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18261669.333333332,
+            "per_call_nanos": 77330634.66666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 54785008
+            "total_nanos": 231991904
           },
           {
             "allocation": "elaboration",
@@ -5457,10 +5457,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18190247.0,
+            "per_call_nanos": 72720951.33333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 54570741
+            "total_nanos": 218162854
           },
           {
             "allocation": "elaboration",
@@ -5472,10 +5472,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18313199.333333332,
+            "per_call_nanos": 76314537.66666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 54939598
+            "total_nanos": 228943613
           },
           {
             "allocation": "elaboration",
@@ -5487,10 +5487,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18289951.333333332,
+            "per_call_nanos": 87902540.33333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 54869854
+            "total_nanos": 263707621
           },
           {
             "allocation": "elaboration",
@@ -5502,10 +5502,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18305331.0,
+            "per_call_nanos": 61482230.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 54915993
+            "total_nanos": 184446690
           },
           {
             "allocation": "elaboration",
@@ -5517,10 +5517,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18314638.0,
+            "per_call_nanos": 80282522.66666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 54943914
+            "total_nanos": 240847568
           }
         ],
         "2": [
@@ -5534,10 +5534,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18392543.666666668,
+            "per_call_nanos": 91005882.66666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 55177631
+            "total_nanos": 273017648
           },
           {
             "allocation": "elaboration",
@@ -5549,10 +5549,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18539685.333333332,
+            "per_call_nanos": 86078218.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 55619056
+            "total_nanos": 258234654
           },
           {
             "allocation": "elaboration",
@@ -5564,10 +5564,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 19203710.0,
+            "per_call_nanos": 65240934.333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 57611130
+            "total_nanos": 195722803
           },
           {
             "allocation": "elaboration",
@@ -5579,10 +5579,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18293646.666666668,
+            "per_call_nanos": 63122763.333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 54880940
+            "total_nanos": 189368290
           },
           {
             "allocation": "elaboration",
@@ -5594,10 +5594,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18382108.333333332,
+            "per_call_nanos": 62283835.666666664,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 55146325
+            "total_nanos": 186851507
           },
           {
             "allocation": "elaboration",
@@ -5609,10 +5609,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18286396.333333332,
+            "per_call_nanos": 65233667.0,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 54859189
+            "total_nanos": 195701001
           }
         ],
         "3": [
@@ -5626,10 +5626,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18358025.666666668,
+            "per_call_nanos": 91386046.66666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 55074077
+            "total_nanos": 274158140
           },
           {
             "allocation": "elaboration",
@@ -5641,10 +5641,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18369048.666666668,
+            "per_call_nanos": 59151440.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 55107146
+            "total_nanos": 177454320
           },
           {
             "allocation": "elaboration",
@@ -5656,10 +5656,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18220435.0,
+            "per_call_nanos": 67699380.66666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 54661305
+            "total_nanos": 203098142
           },
           {
             "allocation": "elaboration",
@@ -5671,10 +5671,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18274174.666666668,
+            "per_call_nanos": 89239353.0,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 54822524
+            "total_nanos": 267718059
           },
           {
             "allocation": "elaboration",
@@ -5686,10 +5686,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18602458.333333332,
+            "per_call_nanos": 62141928.333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 55807375
+            "total_nanos": 186425785
           },
           {
             "allocation": "elaboration",
@@ -5701,10 +5701,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18529537.0,
+            "per_call_nanos": 60483742.333333336,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 55588611
+            "total_nanos": 181451227
           }
         ],
         "4": [
@@ -5718,10 +5718,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18430129.333333332,
+            "per_call_nanos": 91668175.0,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 55290388
+            "total_nanos": 275004525
           },
           {
             "allocation": "elaboration",
@@ -5733,10 +5733,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18482870.666666668,
+            "per_call_nanos": 86206602.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 55448612
+            "total_nanos": 258619806
           },
           {
             "allocation": "elaboration",
@@ -5748,10 +5748,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18186287.666666668,
+            "per_call_nanos": 71741205.0,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 54558863
+            "total_nanos": 215223615
           },
           {
             "allocation": "elaboration",
@@ -5763,10 +5763,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18437667.333333332,
+            "per_call_nanos": 62701438.333333336,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 55313002
+            "total_nanos": 188104315
           },
           {
             "allocation": "elaboration",
@@ -5778,10 +5778,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18299195.0,
+            "per_call_nanos": 62690258.333333336,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 54897585
+            "total_nanos": 188070775
           },
           {
             "allocation": "elaboration",
@@ -5793,10 +5793,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18439339.666666668,
+            "per_call_nanos": 62277796.666666664,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 55318019
+            "total_nanos": 186833390
           }
         ],
         "512": [
@@ -5810,10 +5810,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18312955.333333332,
+            "per_call_nanos": 81883279.66666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 54938866
+            "total_nanos": 245649839
           },
           {
             "allocation": "elaboration",
@@ -5825,10 +5825,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18480614.333333332,
+            "per_call_nanos": 86666260.33333333,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 55441843
+            "total_nanos": 259998781
           },
           {
             "allocation": "elaboration",
@@ -5840,10 +5840,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18387069.0,
+            "per_call_nanos": 88211588.66666667,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 55161207
+            "total_nanos": 264634766
           },
           {
             "allocation": "elaboration",
@@ -5855,10 +5855,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18354287.0,
+            "per_call_nanos": 91119992.33333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 55062861
+            "total_nanos": 273359977
           },
           {
             "allocation": "elaboration",
@@ -5870,10 +5870,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18321177.666666668,
+            "per_call_nanos": 76035534.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 54963533
+            "total_nanos": 228106602
           },
           {
             "allocation": "elaboration",
@@ -5885,10 +5885,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18366905.333333332,
+            "per_call_nanos": 92638657.66666667,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 55100716
+            "total_nanos": 277915973
           }
         ],
         "8": [
@@ -5902,10 +5902,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18302029.333333332,
+            "per_call_nanos": 69258449.66666667,
             "repeats": 3,
             "round": 0,
-            "total_nanos": 54906088
+            "total_nanos": 207775349
           },
           {
             "allocation": "elaboration",
@@ -5917,10 +5917,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18334537.666666668,
+            "per_call_nanos": 65770924.0,
             "repeats": 3,
             "round": 1,
-            "total_nanos": 55003613
+            "total_nanos": 197312772
           },
           {
             "allocation": "elaboration",
@@ -5932,10 +5932,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18492321.666666668,
+            "per_call_nanos": 61728098.333333336,
             "repeats": 3,
             "round": 2,
-            "total_nanos": 55476965
+            "total_nanos": 185184295
           },
           {
             "allocation": "elaboration",
@@ -5947,10 +5947,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18306749.666666668,
+            "per_call_nanos": 73615047.33333333,
             "repeats": 3,
             "round": 3,
-            "total_nanos": 54920249
+            "total_nanos": 220845142
           },
           {
             "allocation": "elaboration",
@@ -5962,10 +5962,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "ascending",
             "outcome": "exhausted",
-            "per_call_nanos": 18338757.333333332,
+            "per_call_nanos": 60596460.0,
             "repeats": 3,
             "round": 4,
-            "total_nanos": 55016272
+            "total_nanos": 181789380
           },
           {
             "allocation": "elaboration",
@@ -5977,10 +5977,10 @@
             "n": 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123,
             "order": "descending",
             "outcome": "exhausted",
-            "per_call_nanos": 18422845.333333332,
+            "per_call_nanos": 72392694.33333333,
             "repeats": 3,
             "round": 5,
-            "total_nanos": 55268536
+            "total_nanos": 217178083
           }
         ]
       }
@@ -6016,7 +6016,7 @@
   },
   "environment": {
     "command": "scripts/bench/primality_fuel_sweep.py --rounds 6 --repeats 3 --output reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json",
-    "commit": "dd6aad61e140bac162f293995f5feadaa36b6c46",
+    "commit": "bd7f045535de3be9d57d7be16f57fb0ea286fe47",
     "dirty": false,
     "dirty_status": "",
     "hostname": "chungus2",
@@ -6025,28 +6025,28 @@
     "python": "3.14.6",
     "state_after": {
       "affinity": [
-        1
+        26
       ],
-      "cpu": 1,
-      "cpu_model": "unknown",
-      "cpu_pressure": "some avg10=1.39 avg60=3.34 avg300=2.92 total=29417455019\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu": 26,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_pressure": "some avg10=0.07 avg60=2.38 avg300=16.04 total=29614896786\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
       "load_average": [
-        47.4189453125,
-        41.5244140625,
-        36.67529296875
+        61.376953125,
+        104.57080078125,
+        79.77783203125
       ]
     },
     "state_before": {
       "affinity": [
-        1
+        26
       ],
-      "cpu": 1,
-      "cpu_model": "unknown",
-      "cpu_pressure": "some avg10=3.92 avg60=4.30 avg300=3.06 total=29416983616\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu": 26,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_pressure": "some avg10=0.12 avg60=6.00 avg300=19.54 total=29614632001\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
       "load_average": [
-        70.18701171875,
-        44.8388671875,
-        37.57958984375
+        70.4462890625,
+        115.35888671875,
+        81.3623046875
       ]
     }
   },
@@ -6064,65 +6064,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 1445.6666666666667,
-          "median_nanos": 1413.8333333333335,
-          "min_nanos": 1405.3333333333333,
+          "max_nanos": 7611.333333333333,
+          "median_nanos": 4414.833333333333,
+          "min_nanos": 4353.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 7,
           "fuel": 1,
-          "max_nanos": 14501.333333333334,
-          "median_nanos": 12912.5,
-          "min_nanos": 11654.0,
+          "max_nanos": 63113.666666666664,
+          "median_nanos": 35183.83333333333,
+          "min_nanos": 34818.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 2,
-          "max_nanos": 12915.666666666666,
-          "median_nanos": 12662.166666666666,
-          "min_nanos": 12231.333333333334,
+          "max_nanos": 59595.333333333336,
+          "median_nanos": 45325.5,
+          "min_nanos": 35025.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 3,
-          "max_nanos": 12929.0,
-          "median_nanos": 12819.0,
-          "min_nanos": 12228.333333333334,
+          "max_nanos": 38093.0,
+          "median_nanos": 35517.5,
+          "min_nanos": 34581.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 4,
-          "max_nanos": 13086.0,
-          "median_nanos": 12790.833333333332,
-          "min_nanos": 12532.0,
+          "max_nanos": 64385.666666666664,
+          "median_nanos": 35444.166666666664,
+          "min_nanos": 34714.666666666664,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 8,
-          "max_nanos": 14221.0,
-          "median_nanos": 12915.666666666668,
-          "min_nanos": 12245.0,
+          "max_nanos": 61444.333333333336,
+          "median_nanos": 35666.0,
+          "min_nanos": 34324.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 16,
-          "max_nanos": 13286.333333333334,
-          "median_nanos": 12827.333333333332,
-          "min_nanos": 12672.0,
+          "max_nanos": 36187.0,
+          "median_nanos": 35402.66666666667,
+          "min_nanos": 35062.0,
           "outcome": "success"
         },
         {
           "attempts": 7,
           "fuel": 31,
-          "max_nanos": 13323.0,
-          "median_nanos": 12859.166666666668,
-          "min_nanos": 12752.333333333334,
+          "max_nanos": 61100.666666666664,
+          "median_nanos": 36123.5,
+          "min_nanos": 34935.333333333336,
           "outcome": "success"
         }
       ]
@@ -6138,65 +6138,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 35135.333333333336,
-          "median_nanos": 34464.5,
-          "min_nanos": 33579.666666666664,
+          "max_nanos": 189017.0,
+          "median_nanos": 110063.16666666666,
+          "min_nanos": 105356.33333333333,
           "outcome": "exhausted"
         },
         {
           "attempts": 3,
           "fuel": 1,
-          "max_nanos": 60693.333333333336,
-          "median_nanos": 44037.0,
-          "min_nanos": 43564.666666666664,
+          "max_nanos": 244385.66666666666,
+          "median_nanos": 137168.5,
+          "min_nanos": 134513.0,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 2,
-          "max_nanos": 45297.0,
-          "median_nanos": 44414.166666666664,
-          "min_nanos": 43751.666666666664,
+          "max_nanos": 139743.66666666666,
+          "median_nanos": 137226.8333333333,
+          "min_nanos": 132723.66666666666,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 3,
-          "max_nanos": 44265.666666666664,
-          "median_nanos": 43763.166666666664,
-          "min_nanos": 42693.333333333336,
+          "max_nanos": 141069.33333333334,
+          "median_nanos": 139488.5,
+          "min_nanos": 134653.0,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 4,
-          "max_nanos": 44102.0,
-          "median_nanos": 43766.66666666667,
-          "min_nanos": 43451.0,
+          "max_nanos": 150463.33333333334,
+          "median_nanos": 138008.0,
+          "min_nanos": 135711.0,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 8,
-          "max_nanos": 44436.0,
-          "median_nanos": 43811.666666666664,
-          "min_nanos": 43421.0,
+          "max_nanos": 227918.0,
+          "median_nanos": 140001.0,
+          "min_nanos": 136325.33333333334,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 16,
-          "max_nanos": 46705.666666666664,
-          "median_nanos": 44370.83333333333,
-          "min_nanos": 43597.666666666664,
+          "max_nanos": 235145.33333333334,
+          "median_nanos": 140830.5,
+          "min_nanos": 138415.33333333334,
           "outcome": "success"
         },
         {
           "attempts": 3,
           "fuel": 61,
-          "max_nanos": 47460.333333333336,
-          "median_nanos": 44940.0,
-          "min_nanos": 43210.666666666664,
+          "max_nanos": 142925.33333333334,
+          "median_nanos": 137505.5,
+          "min_nanos": 133932.0,
           "outcome": "success"
         }
       ]
@@ -6212,65 +6212,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 114987.0,
-          "median_nanos": 113994.0,
-          "min_nanos": 113154.66666666667,
+          "max_nanos": 827994.6666666666,
+          "median_nanos": 359783.8333333334,
+          "min_nanos": 354742.6666666667,
           "outcome": "exhausted"
         },
         {
           "attempts": 6,
           "fuel": 1,
-          "max_nanos": 286531.6666666667,
-          "median_nanos": 279347.5,
-          "min_nanos": 273445.3333333333,
+          "max_nanos": 1288387.6666666667,
+          "median_nanos": 786990.3333333334,
+          "min_nanos": 753390.6666666666,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 2,
-          "max_nanos": 302375.0,
-          "median_nanos": 279477.8333333333,
-          "min_nanos": 275535.0,
+          "max_nanos": 1289465.6666666667,
+          "median_nanos": 776625.0,
+          "min_nanos": 767538.3333333334,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 3,
-          "max_nanos": 279484.6666666667,
-          "median_nanos": 277339.6666666666,
-          "min_nanos": 276176.3333333333,
+          "max_nanos": 1229964.3333333333,
+          "median_nanos": 775466.5,
+          "min_nanos": 760608.0,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 4,
-          "max_nanos": 278903.6666666667,
-          "median_nanos": 276892.3333333333,
-          "min_nanos": 273112.0,
+          "max_nanos": 1336044.6666666667,
+          "median_nanos": 842043.8333333334,
+          "min_nanos": 750349.6666666666,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 8,
-          "max_nanos": 310036.3333333333,
-          "median_nanos": 279788.3333333334,
-          "min_nanos": 271846.3333333333,
+          "max_nanos": 1450845.0,
+          "median_nanos": 791924.5,
+          "min_nanos": 775630.3333333334,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 16,
-          "max_nanos": 280836.6666666667,
-          "median_nanos": 279673.0,
-          "min_nanos": 276540.0,
+          "max_nanos": 1274373.6666666667,
+          "median_nanos": 782901.1666666667,
+          "min_nanos": 766683.6666666666,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 123,
-          "max_nanos": 291846.0,
-          "median_nanos": 280362.3333333334,
-          "min_nanos": 273679.3333333333,
+          "max_nanos": 842325.6666666666,
+          "median_nanos": 794082.6666666667,
+          "min_nanos": 750319.3333333334,
           "outcome": "success"
         }
       ]
@@ -6286,65 +6286,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 280786.3333333333,
-          "median_nanos": 279128.8333333334,
-          "min_nanos": 277324.6666666667,
+          "max_nanos": 1526173.3333333333,
+          "median_nanos": 1421953.8333333335,
+          "min_nanos": 901861.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 5,
           "fuel": 1,
-          "max_nanos": 693438.3333333334,
-          "median_nanos": 669381.1666666667,
-          "min_nanos": 658700.3333333334,
+          "max_nanos": 2973286.3333333335,
+          "median_nanos": 2147299.3333333335,
+          "min_nanos": 1896756.3333333333,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 2,
-          "max_nanos": 676379.6666666666,
-          "median_nanos": 672794.3333333333,
-          "min_nanos": 668191.0,
+          "max_nanos": 2928409.6666666665,
+          "median_nanos": 1956084.1666666665,
+          "min_nanos": 1854236.6666666667,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 3,
-          "max_nanos": 685980.6666666666,
-          "median_nanos": 676356.5,
-          "min_nanos": 658773.6666666666,
+          "max_nanos": 2916335.3333333335,
+          "median_nanos": 2421988.666666667,
+          "min_nanos": 1872403.6666666667,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 4,
-          "max_nanos": 712961.0,
-          "median_nanos": 674819.1666666666,
-          "min_nanos": 666959.0,
+          "max_nanos": 2892636.6666666665,
+          "median_nanos": 2330990.3333333335,
+          "min_nanos": 1834317.0,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 8,
-          "max_nanos": 681140.3333333334,
-          "median_nanos": 675107.8333333333,
-          "min_nanos": 666161.3333333334,
+          "max_nanos": 3185861.6666666665,
+          "median_nanos": 2406996.3333333335,
+          "min_nanos": 1848785.3333333333,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 16,
-          "max_nanos": 691241.6666666666,
-          "median_nanos": 671344.0,
-          "min_nanos": 664799.0,
+          "max_nanos": 3008031.3333333335,
+          "median_nanos": 1903938.8333333335,
+          "min_nanos": 1841317.6666666667,
           "outcome": "success"
         },
         {
           "attempts": 5,
           "fuel": 256,
-          "max_nanos": 684839.0,
-          "median_nanos": 674575.3333333333,
-          "min_nanos": 664088.0,
+          "max_nanos": 3368642.6666666665,
+          "median_nanos": 2024118.5,
+          "min_nanos": 1866915.3333333333,
           "outcome": "success"
         }
       ]
@@ -6360,65 +6360,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 1071.6666666666667,
-          "median_nanos": 1063.1666666666665,
-          "min_nanos": 1051.6666666666667,
+          "max_nanos": 5448.0,
+          "median_nanos": 3393.3333333333335,
+          "min_nanos": 3295.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 2,
           "fuel": 1,
-          "max_nanos": 10659.0,
-          "median_nanos": 10527.333333333332,
-          "min_nanos": 9981.333333333334,
+          "max_nanos": 53249.0,
+          "median_nanos": 33174.16666666667,
+          "min_nanos": 32261.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 6,
           "fuel": 2,
-          "max_nanos": 20063.0,
-          "median_nanos": 19986.333333333336,
-          "min_nanos": 19936.0,
+          "max_nanos": 100088.33333333333,
+          "median_nanos": 76543.5,
+          "min_nanos": 58803.666666666664,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 3,
-          "max_nanos": 20069.666666666668,
-          "median_nanos": 20008.0,
-          "min_nanos": 19909.666666666668,
+          "max_nanos": 102979.33333333333,
+          "median_nanos": 72541.0,
+          "min_nanos": 60149.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 4,
-          "max_nanos": 20353.666666666668,
-          "median_nanos": 19942.833333333332,
-          "min_nanos": 19208.333333333332,
+          "max_nanos": 108998.0,
+          "median_nanos": 62349.0,
+          "min_nanos": 58096.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 8,
-          "max_nanos": 40229.666666666664,
-          "median_nanos": 20675.833333333336,
-          "min_nanos": 19312.0,
+          "max_nanos": 95097.66666666667,
+          "median_nanos": 60434.5,
+          "min_nanos": 59321.333333333336,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 16,
-          "max_nanos": 21551.666666666668,
-          "median_nanos": 20016.333333333336,
-          "min_nanos": 19919.333333333332,
+          "max_nanos": 96867.0,
+          "median_nanos": 60595.0,
+          "min_nanos": 59211.0,
           "outcome": "success"
         },
         {
           "attempts": 6,
           "fuel": 20,
-          "max_nanos": 20200.0,
-          "median_nanos": 19894.333333333336,
-          "min_nanos": 19816.0,
+          "max_nanos": 63090.0,
+          "median_nanos": 61054.0,
+          "min_nanos": 59578.666666666664,
           "outcome": "success"
         }
       ]
@@ -6434,65 +6434,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 1301.6666666666667,
-          "median_nanos": 1268.5,
-          "min_nanos": 1255.0,
+          "max_nanos": 5979.0,
+          "median_nanos": 4862.166666666666,
+          "min_nanos": 4042.6666666666665,
           "outcome": "exhausted"
         },
         {
           "attempts": 1,
           "fuel": 1,
-          "max_nanos": 11119.666666666666,
-          "median_nanos": 11029.666666666666,
-          "min_nanos": 10535.666666666666,
+          "max_nanos": 53943.0,
+          "median_nanos": 44006.83333333333,
+          "min_nanos": 34564.666666666664,
           "outcome": "exhausted"
         },
         {
           "attempts": 3,
           "fuel": 2,
-          "max_nanos": 22036.0,
-          "median_nanos": 20685.833333333336,
-          "min_nanos": 20076.666666666668,
+          "max_nanos": 110370.33333333333,
+          "median_nanos": 99536.0,
+          "min_nanos": 63424.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 9,
           "fuel": 3,
-          "max_nanos": 31703.666666666668,
-          "median_nanos": 31483.333333333336,
-          "min_nanos": 31359.666666666668,
+          "max_nanos": 176054.33333333334,
+          "median_nanos": 144662.8333333333,
+          "min_nanos": 93876.0,
           "outcome": "success"
         },
         {
           "attempts": 9,
           "fuel": 4,
-          "max_nanos": 32912.0,
-          "median_nanos": 31525.166666666668,
-          "min_nanos": 31246.333333333332,
+          "max_nanos": 155777.66666666666,
+          "median_nanos": 97806.66666666666,
+          "min_nanos": 92296.66666666667,
           "outcome": "success"
         },
         {
           "attempts": 9,
           "fuel": 8,
-          "max_nanos": 32792.0,
-          "median_nanos": 31692.0,
-          "min_nanos": 31366.666666666668,
+          "max_nanos": 142798.33333333334,
+          "median_nanos": 106074.0,
+          "min_nanos": 92173.33333333333,
           "outcome": "success"
         },
         {
           "attempts": 9,
           "fuel": 16,
-          "max_nanos": 31677.0,
-          "median_nanos": 31637.0,
-          "min_nanos": 31526.666666666668,
+          "max_nanos": 164240.33333333334,
+          "median_nanos": 96703.5,
+          "min_nanos": 92110.0,
           "outcome": "success"
         },
         {
           "attempts": 9,
           "fuel": 30,
-          "max_nanos": 31660.333333333332,
-          "median_nanos": 31508.333333333336,
-          "min_nanos": 31296.333333333332,
+          "max_nanos": 178191.0,
+          "median_nanos": 97257.5,
+          "min_nanos": 92600.66666666667,
           "outcome": "success"
         }
       ]
@@ -6508,65 +6508,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 790516.0,
-          "median_nanos": 773765.8333333333,
-          "min_nanos": 763756.0,
+          "max_nanos": 3685993.3333333335,
+          "median_nanos": 2761340.333333333,
+          "min_nanos": 2508096.6666666665,
           "outcome": "exhausted"
         },
         {
           "attempts": 23,
           "fuel": 1,
-          "max_nanos": 3402693.0,
-          "median_nanos": 3350500.666666667,
-          "min_nanos": 3323262.0,
+          "max_nanos": 17778386.666666668,
+          "median_nanos": 11629390.833333334,
+          "min_nanos": 10912888.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 31,
           "fuel": 2,
-          "max_nanos": 3955012.0,
-          "median_nanos": 3927289.5,
-          "min_nanos": 3883102.0,
+          "max_nanos": 18451852.333333332,
+          "median_nanos": 13422687.0,
+          "min_nanos": 12139557.333333334,
           "outcome": "success"
         },
         {
           "attempts": 31,
           "fuel": 3,
-          "max_nanos": 3984689.6666666665,
-          "median_nanos": 3961117.8333333335,
-          "min_nanos": 3919395.6666666665,
+          "max_nanos": 19565844.666666668,
+          "median_nanos": 15077434.5,
+          "min_nanos": 12110841.666666666,
           "outcome": "success"
         },
         {
           "attempts": 31,
           "fuel": 4,
-          "max_nanos": 3950812.6666666665,
-          "median_nanos": 3919639.5,
-          "min_nanos": 3900541.3333333335,
+          "max_nanos": 17645002.333333332,
+          "median_nanos": 13601011.5,
+          "min_nanos": 12218157.333333334,
           "outcome": "success"
         },
         {
           "attempts": 31,
           "fuel": 8,
-          "max_nanos": 3953279.3333333335,
-          "median_nanos": 3944366.166666667,
-          "min_nanos": 3923558.6666666665,
+          "max_nanos": 17930672.666666668,
+          "median_nanos": 15512715.166666666,
+          "min_nanos": 12213914.333333334,
           "outcome": "success"
         },
         {
           "attempts": 31,
           "fuel": 16,
-          "max_nanos": 3942113.0,
-          "median_nanos": 3925484.833333333,
-          "min_nanos": 3901152.3333333335,
+          "max_nanos": 17241303.666666668,
+          "median_nanos": 13067037.833333332,
+          "min_nanos": 11669009.333333334,
           "outcome": "success"
         },
         {
           "attempts": 31,
           "fuel": 512,
-          "max_nanos": 3972341.3333333335,
-          "median_nanos": 3953942.166666667,
-          "min_nanos": 3876672.6666666665,
+          "max_nanos": 16131878.333333334,
+          "median_nanos": 12255434.166666668,
+          "min_nanos": 11884001.666666666,
           "outcome": "success"
         }
       ]
@@ -6582,65 +6582,65 @@
         {
           "attempts": 0,
           "fuel": 0,
-          "max_nanos": 785538.0,
-          "median_nanos": 759232.5,
-          "min_nanos": 754979.6666666666,
+          "max_nanos": 4042599.0,
+          "median_nanos": 3158758.0,
+          "min_nanos": 2429830.3333333335,
           "outcome": "exhausted"
         },
         {
           "attempts": 3,
           "fuel": 1,
-          "max_nanos": 2994300.6666666665,
-          "median_nanos": 2910408.0,
-          "min_nanos": 2879530.3333333335,
+          "max_nanos": 14943516.0,
+          "median_nanos": 11920353.833333332,
+          "min_nanos": 9327336.333333334,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 2,
-          "max_nanos": 19203710.0,
-          "median_nanos": 18387326.0,
-          "min_nanos": 18286396.333333332,
+          "max_nanos": 91005882.66666667,
+          "median_nanos": 65237300.66666667,
+          "min_nanos": 62283835.666666664,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 3,
-          "max_nanos": 18602458.333333332,
-          "median_nanos": 18363537.166666668,
-          "min_nanos": 18220435.0,
+          "max_nanos": 91386046.66666667,
+          "median_nanos": 64920654.5,
+          "min_nanos": 59151440.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 4,
-          "max_nanos": 18482870.666666668,
-          "median_nanos": 18433898.333333332,
-          "min_nanos": 18186287.666666668,
+          "max_nanos": 91668175.0,
+          "median_nanos": 67221321.66666667,
+          "min_nanos": 62277796.666666664,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 8,
-          "max_nanos": 18492321.666666668,
-          "median_nanos": 18336647.5,
-          "min_nanos": 18302029.333333332,
+          "max_nanos": 73615047.33333333,
+          "median_nanos": 67514686.83333334,
+          "min_nanos": 60596460.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 16,
-          "max_nanos": 18314638.0,
-          "median_nanos": 18297641.166666664,
-          "min_nanos": 18190247.0,
+          "max_nanos": 87902540.33333333,
+          "median_nanos": 76822586.16666667,
+          "min_nanos": 61482230.0,
           "outcome": "exhausted"
         },
         {
           "attempts": 11,
           "fuel": 512,
-          "max_nanos": 18480614.333333332,
-          "median_nanos": 18360596.166666664,
-          "min_nanos": 18312955.333333332,
+          "max_nanos": 92638657.66666667,
+          "median_nanos": 87438924.5,
+          "min_nanos": 76035534.0,
           "outcome": "exhausted"
         }
       ]
