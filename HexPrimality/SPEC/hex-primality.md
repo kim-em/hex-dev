@@ -934,7 +934,7 @@ They reproduce with:
 
 ```bash
 python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --shared-host --expected-host chungus2 --cpu 1 --timeout 30 \
   --warm-timeout 600 --max-pair-retries 32 \
   --output reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json
 ```
