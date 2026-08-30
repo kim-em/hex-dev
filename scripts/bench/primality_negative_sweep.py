@@ -2,10 +2,11 @@
 """Measure the opt-in ``Nat.Prime`` negative-result policy.
 
 Each candidate is a fresh importing module paired with the same import-only
-baseline.  The factor-found ladder spans the first certificate-tier width,
-ordinary machine integers, balanced 41/42-bit factors, and the supported
-512-bit ceiling.  The final pair records deterministic one-restart exhaustion
-on a balanced 512-bit semiprime and must decline without trial division.
+baseline.  The factor-found ladder spans the first certificate-tier width, a
+32-bit strong pseudoprime, the balanced 64-bit restart boundary, and the
+supported 512-bit ceiling's parity preflight.  The exhaustion rows cover the
+first zero-restart width and a balanced 512-bit semiprime; both must decline
+without trial division.
 """
 
 from __future__ import annotations
@@ -27,9 +28,10 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 
 BASELINE = ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibBaseline")
 NEGATIVE_25 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative25")
+NEGATIVE_32 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative32")
 NEGATIVE_64 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64")
-NEGATIVE_82 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative82")
-EXHAUSTED_83 = ProbeModule("HexPrimalityMathlib.ProofProbe.NegativeExhausted83")
+NEGATIVE_64_NULL = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64Null")
+EXHAUSTED_65 = ProbeModule("HexPrimalityMathlib.ProofProbe.NegativeExhausted65")
 NEGATIVE_512 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative512")
 EXHAUSTED_512 = ProbeModule(
     "HexPrimalityMathlib.ProofProbe.NegativeExhausted512"
@@ -71,27 +73,27 @@ SPEC = SweepSpec(
             null_control=True,
         ),
         ProbePair(
-            "negative-82-null",
-            NEGATIVE_82,
-            NEGATIVE_82,
-            {"outcome": "calibration-only", "bits": 82},
+            "negative-64-null",
+            NEGATIVE_64_NULL,
+            NEGATIVE_64_NULL,
+            {"outcome": "calibration-only", "bits": 64},
             null_control=True,
         ),
         negative_pair(
             "negative-25", NEGATIVE_25, 25, "factor-found", (7, 18), 1
         ),
         negative_pair(
+            "negative-32", NEGATIVE_32, 32, "factor-found", (8, 25), 1
+        ),
+        negative_pair(
             "negative-64", NEGATIVE_64, 64, "factor-found", (32, 32), 1
         ),
         negative_pair(
-            "negative-82", NEGATIVE_82, 82, "factor-found", (41, 42), 1
-        ),
-        negative_pair(
-            "negative-exhausted-83",
-            EXHAUSTED_83,
-            83,
+            "negative-exhausted-65",
+            EXHAUSTED_65,
+            65,
             "exhausted",
-            (3, 80),
+            (19, 46),
             0,
         ),
         negative_pair(

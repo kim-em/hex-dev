@@ -17,9 +17,9 @@ open Hex.PrimalityTactic
 use_hex_primality_norm_num
 
 example : natPrimeCertThreshold = 16777216 := rfl
-example : natPrimeRhoBitLimit = 82 := rfl
+example : natPrimeRhoBitLimit = 64 := rfl
 example : natPrimeRhoBudget 16777217 = 1 := rfl
-example : natPrimeRhoBudget 4835703278458516698824704 = 0 := rfl
+example : natPrimeRhoBudget 18446744073709551616 = 0 := rfl
 
 -- The documented seed deterministically finds the same proper factor on the
 -- first certificate-tier composite, while a prime input consumes exactly the

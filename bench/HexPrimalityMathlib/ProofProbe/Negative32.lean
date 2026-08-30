@@ -6,15 +6,10 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Exhaustion immediately above the rho-search bit boundary. -/
+/-! Factor-found probe on an adversarial 32-bit strong pseudoprime. -/
 
 open Hex.PrimalityTactic
 
 use_hex_primality_norm_num
 
-/--
-error: unsolved goals
-⊢ ¬Nat.Prime 4835703278458516698824705
--/
-#guard_msgs in
-example : ¬ Nat.Prime 4835703278458516698824705 := by norm_num
+example : ¬ Nat.Prime 3215031751 := by norm_num

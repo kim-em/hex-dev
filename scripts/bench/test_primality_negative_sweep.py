@@ -22,10 +22,10 @@ class NegativePolicySweepTests(unittest.TestCase):
         rows = [pair.metadata for pair in negative.SPEC.pairs if not pair.null_control]
         self.assertTrue(all(row["seed"] == "numeral" for row in rows))
         self.assertEqual(
-            {row["rho_restarts"] for row in rows if row["bits"] <= 82}, {1}
+            {row["rho_restarts"] for row in rows if row["bits"] <= 64}, {1}
         )
         self.assertEqual(
-            {row["rho_restarts"] for row in rows if row["bits"] > 82}, {0}
+            {row["rho_restarts"] for row in rows if row["bits"] > 64}, {0}
         )
 
     def test_null_controls_are_first_and_distinct(self) -> None:

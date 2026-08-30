@@ -52,9 +52,9 @@ trial division; 25-bit and larger numerals use bounded certificate search. -/
 def natPrimeCertThreshold : Nat := 16777216
 
 /-- Largest bit width at which the opt-in negative `Nat.Prime` route runs a
-Brent-rho restart. The measured 82-bit balanced case finishes within the
-fresh-module wall-clock budget; one restart at 512 bits does not. -/
-def natPrimeRhoBitLimit : Nat := 82
+Brent-rho restart. Measured balanced 64-bit cases finish within the fresh-module
+wall-clock budget; adversarial exhaustion at 82 and 512 bits does not. -/
+def natPrimeRhoBitLimit : Nat := 64
 
 /-- Restart policy for the opt-in negative `Nat.Prime` route. Numerals through
 `natPrimeRhoBitLimit` get one deterministically seeded Brent-rho restart. Larger

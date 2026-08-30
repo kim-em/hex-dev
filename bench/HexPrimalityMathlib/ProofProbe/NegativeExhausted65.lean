@@ -6,10 +6,15 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Adversarial factor-found probe with two balanced 41/42-bit factors. -/
+/-! Exhaustion immediately above the rho-search bit boundary. -/
 
 open Hex.PrimalityTactic
 
 use_hex_primality_norm_num
 
-example : ¬ Nat.Prime 3317044064772611591084773 := by norm_num
+/--
+error: unsolved goals
+⊢ ¬Nat.Prime 18446744073709551617
+-/
+#guard_msgs in
+example : ¬ Nat.Prime 18446744073709551617 := by norm_num
