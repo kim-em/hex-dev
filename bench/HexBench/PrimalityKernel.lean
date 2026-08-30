@@ -70,6 +70,12 @@ def cert511 : PrimeCert :=
     [(13757245211066428521, 503, .small 2),
      (10451216379200822467, 0, .small 127)]
 
+/-- The exact 512-bit elaborator-policy boundary: `2401 · 2^500 + 1`,
+with `2401 = 7^4`. -/
+def cert512 : PrimeCert :=
+  .pock 7859410849558636629901668462083065564472157552549398559549382574798817245167623606274731491674495881319278928590271730493130632966670828721041794742091777
+    [(3, 499, .small 2), (2, 3, .small 7)]
+
 theorem replay31 : checkPrime cert31 = true := by decide +kernel
 
 theorem replay61 : checkPrime cert61 = true := by decide +kernel
@@ -79,6 +85,8 @@ theorem replay123 : checkPrime cert123 = true := by decide +kernel
 theorem replay256 : checkPrime cert256 = true := by decide +kernel
 
 theorem replay511 : checkPrime cert511 = true := by decide +kernel
+
+theorem replay512 : checkPrime cert512 = true := by decide +kernel
 
 /-- The cube-root checker arm also replays through the kernel-facing closure. -/
 theorem replayPock3 :

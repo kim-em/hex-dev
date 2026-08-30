@@ -301,6 +301,17 @@ lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.PrimalityKernel]
 
+lean_lib HexPrimalityElabProbe where
+  srcDir := "bench"
+  globs := #[`HexPrimality.ProofProbe.CoreBaseline,
+    `HexPrimality.ProofProbe.Core512,
+    `HexPrimality.ProofProbe.CoreExhausted,
+    `HexPrimality.ProofProbe.CoreOverBudget,
+    `HexPrimality.ProofProbe.MathlibBaseline,
+    `HexPrimality.ProofProbe.Mathlib512,
+    `HexPrimality.ProofProbe.MathlibExhausted,
+    `HexPrimality.ProofProbe.MathlibOverBudget]
+
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.IntFactorKernel]

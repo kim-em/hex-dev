@@ -50,6 +50,21 @@ example : Nat.Prime 2147483647 := by norm_num
 example : Nat.Prime 2147483647 := by primality
 example : Hex.Nat.Prime 2147483647 := by primality
 example : Nat.Prime 65537 := by primality
+example : Nat.Prime 7859410849558636629901668462083065564472157552549398559549382574798817245167623606274731491674495881319278928590271730493130632966670828721041794742091777 := by
+  primality
+
+/--
+error: primality: certificate search for 3317044064679887385961981 exhausted after 35 attempts (seed 3317044064679887385961981, recursive fuel 178; policy maximum 1040 fuel at 512 bits); no total primality decision was attempted
+-/
+#guard_msgs in
+example : Nat.Prime 3317044064679887385961981 := by primality
+
+/--
+error: primality: input has 513 bits; the enforced policy supports at most 512 bits and 1040 recursive search fuel
+-/
+#guard_msgs in
+example : Nat.Prime 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 := by
+  primality
 
 /--
 error: primality: the goal

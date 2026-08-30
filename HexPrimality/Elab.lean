@@ -28,9 +28,10 @@ numeral `e`; `primality n` adds `this : Hex.Nat.Prime n`;
 `primality h : n` names it `h`.
 
 For reproducible syntax with no seed argument, the elaborator uses
-`Rand.ofSeed n` and `defaultPrimeFuel n`; the lower `primeCert?` API remains
-explicitly seeded, and diagnostics report the seed and fuel if certificate
-search exhausts its budget. The companion library may register an
+`Rand.ofSeed n` and `primalityFuel n`, the measured policy cap over
+`defaultPrimeFuel n`; the lower `primeCert?` API remains explicitly seeded,
+and diagnostics report the seed and fuel if certificate search exhausts its
+budget. The companion library may register an
 additional `@[tactic primalityTac]` handler for `Nat.Prime` goal shapes;
 handlers registered later run first and defer here by throwing
 `unsupportedSyntax`.
@@ -89,11 +90,36 @@ meta def checkClosed (tactic : String) (e : Expr) : MetaM Unit := do
     throwError "{tactic}: the argument{indentExpr e}\
         \nmust not contain free or meta variables"
 
-/-- Bit-length ceiling on tactic inputs: the kernel replay uses
-`O(K log n)` modular and bounded ordinary multiplications plus `O(K)`
-factor-subject comparisons, and beyond this size certificate search itself
-is the bottleneck to fix first. -/
-meta def primalityBitBudget : Nat := 8192
+/-- Supported bit-length ceiling for every elaboration-time certificate route.
+The 512-bit boundary is the largest measured fresh-module rung; changing it
+requires new end-to-end search, reification, and kernel-replay evidence. -/
+meta def primalityBitBudget : Nat := 512
+
+/-- Maximum recursive fuel passed to elaboration-time certificate search.
+At the supported bit ceiling `defaultPrimeFuel` is 1038; the round 1040 cap
+makes the resource bound explicit and prevents later changes to the default
+from silently widening the tactic policy. -/
+meta def primalityFuelBudget : Nat := 1040
+
+/-- The fuel selected by every elaboration-time certificate route. -/
+meta def primalityFuel (n : Nat) : Nat :=
+  min (Hex.Nat.defaultPrimeFuel n) primalityFuelBudget
+
+/-- Enforce the common input-size policy before any certificate search. -/
+meta def checkPrimalityPolicy (tactic : String) (n : Nat) : MetaM Unit := do
+  let bits := n.log2 + 1
+  if bits > primalityBitBudget then
+    throwError "{tactic}: input has {bits} bits; the enforced policy supports \
+        at most {primalityBitBudget} bits and {primalityFuelBudget} recursive \
+        search fuel"
+
+/-- Report bounded-search exhaustion without inviting an unbounded fallback. -/
+meta def throwPrimalityExhausted {α : Type} (tactic : String) (n attempts fuel : Nat) :
+    MetaM α :=
+  throwError "{tactic}: certificate search for {n} exhausted after {attempts} \
+      attempts (seed {n}, recursive fuel {fuel}; policy maximum \
+      {primalityFuelBudget} fuel at {primalityBitBudget} bits); no total \
+      primality decision was attempted"
 
 /-- Run the certificate search and emit the checked proof term with `head`
 applied to the subject, the reified certificate, and the `Eq.refl true`
@@ -107,10 +133,9 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
         \nevaluates to {n} but is not definitionally transparent to the \
         elaborator (an imported definition without `@[expose]`?); the kernel \
         could not check the emitted certificate against it"
-  if n.log2 + 1 > primalityBitBudget then
-    throwError "{tactic}: {n} has more than {primalityBitBudget} bits; \
-        raising `primalityBitBudget` is a separate, benchmarked change"
-  match Hex.Nat.primeCert? n (Hex.Rand.ofSeed n) (Hex.Nat.defaultPrimeFuel n) with
+  checkPrimalityPolicy tactic n
+  let fuel := primalityFuel n
+  match Hex.Nat.primeCert? n (Hex.Rand.ofSeed n) fuel with
   | .error f =>
       match f.stop with
       | .composite =>
@@ -122,10 +147,7 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
           | none =>
               throwError "{tactic}: {n} is not prime"
       | .exhausted =>
-          throwError "{tactic}: certificate search for {n} exhausted its \
-              budget after {f.attempts} attempts (seed {n}, fuel \
-              {Hex.Nat.defaultPrimeFuel n}); the factorization of n - 1 may \
-              be out of reach"
+          throwPrimalityExhausted tactic n f.attempts fuel
   | .ok (c, _) =>
       -- Untrusted-search self-check before emitting anything.
       unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do

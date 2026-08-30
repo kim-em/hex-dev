@@ -902,9 +902,46 @@ it replays `O(k log n)` modular multiplications on GMP-backed `Nat`, and never
 the search.
 
 For reproducible syntax with no seed argument, the elaborator uses
-`Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded,
-and diagnostics report the seed and attempts if certificate search
-exhausts its fuel.
+`Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded.
+
+**The supported elaboration policy is at most 512 input bits and at most 1040
+recursive certificate-search fuel.** Every elaboration-time certificate route
+uses `primalityFuel n = min (defaultPrimeFuel n) 1040`; at the exact 512-bit
+boundary the default contributes 1038. The fuel bounds recursive partial
+factorization and certificate construction, while the search's exact attempt
+counter also includes rho restarts and witness candidates and can therefore be
+larger than the recursive fuel. The fixed witness budget remains 32 candidates
+per factor entry. Inputs above 512 bits are rejected before Miller--Rabin or
+certificate search. Search exhaustion reports the seed, selected fuel, exact
+attempt count, and both policy maxima, and explicitly says that no total
+decision was attempted.
+
+The ceiling is the largest rung with both compiled and kernel evidence. The
+exact-boundary prime `2401 * 2^500 + 1` is 512 bits, is accepted by the core
+term elaborator and the companion's `Nat.Prime` tactic handler, and has a
+checker certificate in `HexPrimalityKernelProbe`. The native `runDecision`,
+`runCertSearch`, and `runChecker` families carry the same 512-bit rung. The
+paired fresh-module sweep also exercises the 82-bit strong pseudoprime
+`3317044064679887385961981`, which exhausts the production policy after 35
+attempts at fuel 178, and the 513-bit value `2^512`, which is rejected before
+search. Both core and companion routes have a 10-second absolute fresh-module
+wall-clock budget on the designated benchmark host; this single end-to-end
+budget includes importing, compiled search, compiled self-check, reification,
+and kernel replay rather than pretending those phases are independently timed.
+The raw paired samples and host provenance are committed at
+`reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json`.
+They reproduce with:
+
+```bash
+python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --warm-timeout 600 --max-pair-retries 32 \
+  --output reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json
+```
+
+`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
+`primality` calls only the bounded `primeCert?` route: it never calls the total
+`isPrime`, whose exact trial fallback is intentionally unbounded.
 
 The companion adds `Nat.Prime n` through that correspondence. Bare
 `primality` uses the certificate route directly. Pinned Mathlib's
@@ -913,7 +950,8 @@ retain Mathlib's trial-division behavior; the later Hex registration cannot
 transparently pre-empt it. A module explicitly opts into the supported Hex
 policy with `use_hex_primality_norm_num`. Under that policy, numerals below
 `2^24` use a guarded alias of Mathlib's trial extension and larger numerals
-use bounded Hex certificate search. The opt-in erasure is local to the
+use the same 512-bit/1040-fuel Hex certificate policy as `primality`. The
+opt-in erasure is local to the
 module and does not persist when that module is imported.
 
 The `2^24` boundary comes from fresh one-goal modules on the pinned
@@ -1112,7 +1150,7 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
 
 Families:
 - **Kernel replay**, `checkPrime` on certificates for primes of `31`,
-  `61`, `123`, `256`, and `511` bits (the table-smooth ladder). Decides
+  `61`, `123`, `256`, `511`, and `512` bits (the table-smooth ladder). Decides
   the `powModNat`-versus-Montgomery question under "Kernel exposure".
 - **Native decision**, bounded `isPrime?` across the same bit lengths.
   The total `isPrime` gets no separate row: it differs only on the
