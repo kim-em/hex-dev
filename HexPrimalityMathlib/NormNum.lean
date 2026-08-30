@@ -38,7 +38,7 @@ restart capped at `2^16` cycle steps throughout the supported input range; the
 current composite preflight consumes no draws, and parity consumes no restart. If
 bounded certificate or factor search is exhausted, both Hex extensions
 decline, rather than falling through to unbounded trial division.
-The certificate extension uses the same 512-bit input ceiling and 1040
+The certificate extension uses the same 512-bit input ceiling and 512
 recursive-fuel cap as the core and companion `primality` handlers.
 
 The tactic handler registers on the same `primality` syntax kind as the

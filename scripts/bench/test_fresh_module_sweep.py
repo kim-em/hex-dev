@@ -40,6 +40,26 @@ CALLER = Path(__file__)
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_concurrent_process_metadata_omits_unrelated_arguments(self) -> None:
+        completed = subprocess.CompletedProcess(
+            ["ps"],
+            0,
+            stdout=(
+                "123 bash -c /usr/bin/lake build --token secret\n"
+                "124 /opt/lean Source.lean --private detail\n"
+                "125 python unrelated.py\n"
+            ),
+            stderr="",
+        )
+        with mock.patch.object(sweep.subprocess, "run", return_value=completed):
+            self.assertEqual(
+                sweep.lean_processes(),
+                [
+                    {"pid": 123, "command": "lake"},
+                    {"pid": 124, "command": "lean"},
+                ],
+            )
+
     def test_transitive_local_sources_are_included(self) -> None:
         sources = set(sweep.provenance_sources(SPEC, CALLER))
         self.assertIn(
