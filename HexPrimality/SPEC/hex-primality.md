@@ -973,8 +973,9 @@ fresh-module sweep also exercises the non-smooth 512-bit probable-prime input
 `11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123`,
 which reaches bounded rho work in a recursive child and exhausts after 11
 attempts at fuel 512, and the 513-bit value `2^512`, which is rejected before
-search. Both core and companion routes have a 10-second absolute fresh-module
-wall-clock budget on the designated benchmark host. The harness compares the
+search. The core route has a 10-second absolute fresh-module wall-clock budget
+on the designated benchmark host; the companion route is gated identically
+under its own SPEC. The harness compares the
 largest raw candidate wall time in every substantive sample set against that
 budget and makes any failure invalidate `release_quality`; it does not use the
 reference-subtracted tactic delta for this contract. This single end-to-end
@@ -1291,8 +1292,9 @@ boundary because the core consumers live below the companion.
    soundness case, with the stored square-root witness replacing any
    in-checker integer square root.
 
-5. **The companion.** `prime_iff`, the transports, the explicit opt-in
-   `norm_num` policy, and the segment statements. Begins after milestone 1.
+5. **The companion.** The Mathlib-facing milestone is specified by the
+   [owned companion SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md).
+   Begins after milestone 1.
 
 ## File organisation
 
@@ -1308,12 +1310,10 @@ HexPrimality/
   Search.lean       -- rhoFactor?, partialFactor, primeCert?, isPrime?, isPrime, nextPrime?
   Elab.lean         -- the primality tactic
 HexPrimality.lean
-HexPrimalityMathlib/
-  Prime.lean        -- prime_iff and the transports
-  NormNum.lean      -- Nat.Prime tactic reach and opt-in norm_num policy
-  Segment.lean      -- Finset-level segment statements
-HexPrimalityMathlib.lean
 ```
+
+The companion's source, conformance, probe, and SPEC layout is owned by its
+[file-organization section](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#file-organization).
 
 `libraries.yml` gains:
 

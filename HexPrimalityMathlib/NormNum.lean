@@ -13,11 +13,12 @@ The `Nat.Prime` reach of the `primality` tactic and an explicitly opted-in
 certificate-backed `norm_num` policy.
 
 By default this module does not alter which extension handles
-`Nat.Prime`: pinned Mathlib's trial-division extension was registered first
-and remains first. A module opts into Hex's policy with the command
+`Nat.Prime`: pinned Mathlib's registered trial-division extension remains the
+selected route. A module opts into Hex's policy with the command
 `use_hex_primality_norm_num`. The command locally erases Mathlib's original
-registration, exposing the two extensions registered here: trial division
-below `natPrimeCertThreshold`, then certificate search at and above it.
+registration, exposing two disjointly guarded extensions registered here:
+trial division below `natPrimeCertThreshold` and certificate search at and
+above it. Their relative registration order is immaterial.
 The erasure does not survive an import, so every importing module makes its
 own choice.
 
@@ -42,8 +43,8 @@ The certificate extension uses the same 512-bit input ceiling and 512
 recursive-fuel cap as the core and companion `primality` handlers.
 
 The tactic handler registers on the same `primality` syntax kind as the
-Mathlib-free elaborator; registration order makes this handler run first,
-and it defers every non-`Nat.Prime` goal shape back.
+Mathlib-free elaborator. Both handlers defer on the other's predicate head, so
+dispatch does not depend on registration order.
 -/
 
 namespace Hex.PrimalityTactic

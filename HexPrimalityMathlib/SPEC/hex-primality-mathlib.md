@@ -2,7 +2,7 @@
 
 The Mathlib bridge for
 [hex-primality](../../HexPrimality/SPEC/hex-primality.md). It identifies
-`Hex.Nat.Prime` with Mathlib's `Nat.Prime`, transports the core decision,
+`Hex.Nat.Prime` with Mathlib's `Nat.Prime`, transports the total core decision,
 search, and initial-segment results, extends the bare `primality` tactic to
 `Nat.Prime` goals, and provides an explicit opt-in `Nat.Prime` `norm_num`
 policy.
@@ -71,6 +71,11 @@ No `DecidablePred Nat.Prime` instance is declared. Mathlib's
 proof transports and elaborator routes without creating instance-selection
 churn.
 
+The bounded `isPrime?` result has no separate Mathlib transport: no bridge API
+consumes its explicit `Rand` and fuel plumbing. Consumers that need the
+bounded verdict stay on the core API; the bridge transports only the total
+`isPrime` result and the proof-producing routes listed above.
+
 ## Initial-segment transports
 
 The committed table and range enumeration remain core data. This layer states
@@ -104,17 +109,18 @@ SPEC.
 
 ### Bare `primality`
 
-After importing this library, bare `primality` closes a goal whose target is
-definitionally `Nat.Prime n` for a closed natural-number numeral `n`. It uses
-the core certificate route and emits `natPrime_of_checkPrimeAt` applied to the
-reified certificate and a single reducible Boolean equality. Compiled search
-is untrusted; the elaborator first self-checks the certificate and the kernel
-then replays `checkPrime`.
+After importing this library, bare `primality` closes a goal whose target,
+after metavariable instantiation, is syntactically `Nat.Prime n` for a closed
+natural-number numeral `n`. It uses the core certificate route and emits
+`natPrime_of_checkPrimeAt` applied to the reified certificate and a single
+reducible Boolean equality. Compiled search is untrusted; the elaborator first
+self-checks the certificate and the kernel then replays `checkPrime`.
 
 The bridge registers its handler on the existing `primality` syntax kind.
-Later registration gives it first refusal. A goal with any other head is
-declined with `unsupportedSyntax`, after which the core handler continues to
-support `Hex.Nat.Prime`. The bridge does not replace the term form
+Both handlers defer on the other predicate's goal head, so dispatch does not
+depend on their registration order. A goal with any other head is declined
+with `unsupportedSyntax`, after which the core handler continues to support
+`Hex.Nat.Prime`. The bridge does not replace the term form
 `primality n`, nor the tactic forms `primality n` and `primality h : n` that
 introduce a hypothesis: those forms retain their core result type
 `Hex.Nat.Prime n`.
@@ -128,19 +134,43 @@ The bridge must not copy those constants or silently widen them.
 
 ### Default and opt-in `norm_num`
 
-An ordinary import leaves Mathlib's previously registered `Nat.Prime`
-extension first in precedence. Thus `norm_num` retains pinned Mathlib's
-trial-division behavior unless the current module contains:
+An ordinary import retains pinned Mathlib's registered `Nat.Prime` extension,
+as the default-registration conformance probe pins. Thus `norm_num` uses
+Mathlib's trial-division behavior unless the current module contains:
 
 ```lean
 use_hex_primality_norm_num
 ```
 
-The command locally removes Mathlib's original registration. It exposes a
-guarded alias of that extension for numerals below
-`natPrimeCertThreshold = 2^24`, followed by the Hex certificate extension at
-and above the threshold. Attribute erasure does not cross an import boundary:
+The command locally removes Mathlib's original registration. The two Hex
+extensions have disjoint threshold guards: the guarded Mathlib alias handles
+numerals below `natPrimeCertThreshold = 2^24`, while the certificate extension
+handles numerals at and above it. Their relative registration order is
+therefore immaterial. Attribute erasure does not cross an import boundary;
 each importing module must opt in independently.
+
+The threshold comes from fresh one-goal modules on the pinned toolchain. Each
+arm was a fresh importing module containing only one `Nat.Prime` example. The
+trial arm used the ordinary Mathlib registration; the certificate arm invoked
+the opt-in with the threshold temporarily set to zero. Representative wall
+times in seconds were:
+
+| numeral | trial division | certificate |
+|---:|---:|---:|
+| 100003 | 1.7 | 2.1 |
+| 300007 | 1.4 | 1.0 |
+| 1000003 | 1.6 | 1.7 |
+| 3000017 | 1.5 | 3.6 |
+| 10000019 | 3.1 | 3.4 |
+| 30000001 | 3.4 | 3.5 |
+| 33554467 | 2.4 | 1.7 |
+
+These are policy measurements rather than a Phase-4 performance verdict.
+They locate the crossover region while showing that certificate search is
+input-dependent. Mathlib's generated trial proof also exceeds the pinned
+default kernel recursion limit on the 31-bit Mersenne prime. The power-of-two
+boundary keeps every input of at most 24 bits on the simpler route and sends
+every 25-bit input to the bounded route.
 
 On the certificate tier, positive results use the same bounded search,
 compiled self-check, reification, and kernel replay as bare `primality`.
@@ -188,7 +218,7 @@ negative-factor search.
 | bare `primality`, over-budget numeral | reject before certificate search with the supported bit ceiling |
 | bare `primality`, open or non-numeral `Nat.Prime` target | report the closed-numeral requirement |
 | bridge handler, non-`Nat.Prime` target | decline so the core handler or another syntax handler can run |
-| default `norm_num` | preserve pinned Mathlib registration and behavior |
+| default `norm_num`, any numeral | preserve pinned Mathlib registration and its total trial-division behavior; no Hex bound applies |
 | opted-in `norm_num`, numeral below `2^24` | delegate to the guarded Mathlib trial extension |
 | opted-in `norm_num`, certificate-tier prime | emit the checked positive certificate proof |
 | opted-in `norm_num`, certificate-tier composite with a valid factor | emit the independently checked proper-factor proof |
@@ -198,8 +228,14 @@ An internal certificate self-check failure is never converted into a proof.
 Bare `primality` reports it as an internal error; the `norm_num` extension
 declines.
 
-The resource contract is a **10-second absolute wall-clock gate for a fresh
-importing module** on the designated benchmark host. It includes Lake
+Without the opt-in, the bounded Hex `norm_num` routes never run: the default
+route inherits Mathlib's total `minFac` cost on large inputs and its generated
+proof can exceed the pinned kernel recursion limit by 31 bits, as
+`Conformance.lean` pins. The bounded resource contract below applies to bare
+`primality` and to `norm_num` only after `use_hex_primality_norm_num`.
+
+That contract is a **10-second absolute wall-clock gate for a fresh importing
+module** on the designated benchmark host. It includes Lake
 traversal, imports, compiled search and self-check, term construction, and
 kernel replay. It is not an internal ten-second tactic timer and is not an
 import-subtracted delta. A benchmark timeout or an ordinary Lean resource
@@ -222,15 +258,38 @@ Fresh importing modules under
 shared positive policy; `MathlibBaseline` is their import control. The
 `Negative*` probes cover factor-found inputs at 25, 32, 64, 65, and 512 bits,
 both parity and odd-factor cases, plus balanced 512-bit exhaustion.
+`Negative64Null` is the elevated null control: it repeats balanced 64-bit
+negative proofs so host interference is visible above the import floor.
 
 The positive-route harness and evidence are shared with the core policy and
 are cited by the core SPEC. The bridge-specific negative harness is
 `scripts/bench/primality_negative_sweep.py`. Its designated-host record,
 `reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json`,
 contains six balanced samples per row. Every substantive row passes the
-10-second absolute gate; the maximum observed candidate wall times range from
-2.131 seconds to 3.318 seconds. Import-subtracted values remain diagnostic and
-need not resolve above the null envelope.
+10-second absolute gate:
+
+| case | bits | outcome | maximum wall time |
+|---|---:|---|---:|
+| first certificate-tier composite | 25 | factor found | 3.137 s |
+| strong pseudoprime | 32 | factor found | 2.235 s |
+| balanced semiprime | 64 | factor found | 2.286 s |
+| `2^64 + 1` | 65 | factor found | 2.423 s |
+| even ceiling input | 512 | parity factor found | 2.131 s |
+| odd ceiling input with a 7-bit factor | 512 | factor found | 2.435 s |
+| balanced ceiling semiprime | 512 | exhausted | 3.318 s |
+
+Import-subtracted values remain diagnostic and need not resolve above the null
+envelope. The baseline and elevated null controls had robust spread/build
+ratios of 12.51% and 2.69%, respectively. The record reproduces with:
+
+```bash
+python3 scripts/bench/primality_negative_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --warm-timeout 600 --max-pair-retries 32 \
+  --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
+```
+
+`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
 
 These probes are proof-performance evidence, not a claim that the layer is
 correspondence-only and exempt from review. Any change to registration,
