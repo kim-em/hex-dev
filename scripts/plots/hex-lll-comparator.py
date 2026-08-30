@@ -37,7 +37,7 @@ DEFAULT_ISABELLE_BOTTOM = (
 # checker, while the Isabelle-certified ladder is the full Lean+Isabelle
 # schedule (the Lean-certified export carries no Isabelle rows). Within
 # each series the rungs share a host and commit; the cross-series ratio
-# carries the cross-run caveat recorded in reports/hex-lll-scaling.md.
+# carries the cross-run caveat recorded in HexLLL/PERFORMANCE.md.
 DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-c3d2fecb.json"
 # The harsh-cubic Lean-certified ladder runs to n = 65, two rungs past the
 # random-bounded certified run; its export is the dedicated 15–65 harsh-cubic
