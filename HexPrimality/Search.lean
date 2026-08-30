@@ -153,14 +153,15 @@ private def brentGo (n c : Nat) : Nat → BrentState → BrentResult
             batchCount := batchCount', steps := state.steps + 1,
             gcds := state.gcds }
 
-/-- Inner iteration budget for one Brent restart: scaled past the expected
-`n^(1/4)` cycle length for small `n`, capped at `2^22` so one restart is
-bounded wall-clock at every input size. The cap still covers factors to
-about `2^44`, past rho's documented remit of roughly `10^12`; beyond it
-the honest outcome is a clean `exhausted`, not an inner loop whose budget
-outlives the caller. Runtime only, so `Nat.sqrt` is fine here. -/
+/-- Absolute Brent cycle-step cap for one restart. It covers factors to about
+`2^44`, past rho's documented remit of roughly `10^12`. -/
 private def rhoInnerFuelCap : Nat := 1 <<< 22
 
+/-- Inner iteration budget for one Brent restart: scaled past the expected
+`n^(1/4)` cycle length for small `n`, capped so one restart is bounded
+wall-clock at every input size. Beyond the cap the honest outcome is a clean
+`exhausted`, not an inner loop whose budget outlives the caller. Runtime only,
+so `Nat.sqrt` is fine here. -/
 private def rhoInnerFuel (n : Nat) : Nat :=
   min (16 * (Nat.sqrt (Nat.sqrt n) + 2)) rhoInnerFuelCap
 
@@ -196,6 +197,11 @@ namespace Internal
 
 /-- Shared maximum rho restart allocation for current worklist consumers. -/
 def rhoRestartCap : Nat := 8
+
+/-- Effective Brent cycle budget for each restart: the caller's allocation
+capped by the input-scaled production budget. -/
+def rhoRestartFuel (n innerFuel : Nat) : Nat :=
+  min (rhoInnerFuel n) innerFuel
 
 /-- A validated rho factor together with the exact number of restarts and
 the generator state after those restarts. -/
@@ -256,7 +262,7 @@ def rhoFactorCountedWith? (n : Nat) (r : Rand) (restarts innerFuel : Nat) :
   if n < 4 then .error ⟨.invalidInput, 0, r⟩
   else if n % 2 = 0 then .ok ⟨2, 0, r⟩
   else
-    let restartFuel := min (rhoInnerFuel n) innerFuel
+    let restartFuel := rhoRestartFuel n innerFuel
     rhoTry n restartFuel restarts 0 r
 
 /-- A counted rho search with the production per-restart cycle budget. -/
@@ -686,10 +692,11 @@ proof term); the public wrapper's `checkPrime` validation decides
 acceptance. -/
 private def mkPock3 (n F : Nat) (entries : List (Nat × Nat × PrimeCert)) :
     PrimeCert :=
-  .pock3 n ((n - 1) / F % (2 * F)) ((n - 1) / F / (2 * F))
-    (Nat.sqrt ((n - 1) / F % (2 * F) * ((n - 1) / F % (2 * F)) -
-      8 * ((n - 1) / F / (2 * F))))
-    entries
+  let cofactor := (n - 1) / F
+  let window := 2 * F
+  let r := cofactor % window
+  let s := cofactor / window
+  .pock3 n r s (Nat.sqrt (r * r - 8 * s)) entries
 
 mutual
 
@@ -813,8 +820,7 @@ private theorem witnessGo_error_stop {n q : Nat} :
       rfl
   | succ t ih =>
       intro attempts r f h
-      unfold witnessGo at h
-      dsimp only at h
+      dsimp only [witnessGo] at h
       split at h
       · cases h
       · exact ih _ _ h
