@@ -13,12 +13,20 @@ class NegativePolicySweepTests(unittest.TestCase):
         rows = [pair.metadata for pair in negative.SPEC.pairs if not pair.null_control]
         self.assertEqual(min(row["bits"] for row in rows), 25)
         self.assertEqual(max(row["bits"] for row in rows), 512)
-        self.assertEqual({row["outcome"] for row in rows}, {"factor-found", "exhausted"})
+        self.assertEqual(
+            {row["outcome"] for row in rows},
+            {"factor-found", "parity-factor-found", "exhausted"},
+        )
 
-    def test_every_policy_row_replays_one_seeded_restart(self) -> None:
+    def test_policy_rows_record_seed_and_scaled_restart_count(self) -> None:
         rows = [pair.metadata for pair in negative.SPEC.pairs if not pair.null_control]
-        self.assertTrue(all(row["rho_restarts"] == 1 for row in rows))
         self.assertTrue(all(row["seed"] == "numeral" for row in rows))
+        self.assertEqual(
+            {row["rho_restarts"] for row in rows if row["bits"] <= 82}, {1}
+        )
+        self.assertEqual(
+            {row["rho_restarts"] for row in rows if row["bits"] > 82}, {0}
+        )
 
     def test_null_controls_are_first_and_distinct(self) -> None:
         first, second = negative.SPEC.pairs[:2]

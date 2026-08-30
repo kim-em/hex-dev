@@ -29,6 +29,7 @@ BASELINE = ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibBaseline")
 NEGATIVE_25 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative25")
 NEGATIVE_64 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64")
 NEGATIVE_82 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative82")
+EXHAUSTED_83 = ProbeModule("HexPrimalityMathlib.ProofProbe.NegativeExhausted83")
 NEGATIVE_512 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative512")
 EXHAUSTED_512 = ProbeModule(
     "HexPrimalityMathlib.ProofProbe.NegativeExhausted512"
@@ -41,6 +42,7 @@ def negative_pair(
     bits: int,
     outcome: str,
     factor_bits: tuple[int, int],
+    rho_restarts: int,
 ) -> ProbePair:
     return ProbePair(
         name,
@@ -51,7 +53,7 @@ def negative_pair(
             "outcome": outcome,
             "bits": bits,
             "factor_bits": list(factor_bits),
-            "rho_restarts": 1,
+            "rho_restarts": rho_restarts,
             "seed": "numeral",
             "fresh_module_budget_ms": 10_000,
         },
@@ -75,11 +77,25 @@ SPEC = SweepSpec(
             {"outcome": "calibration-only", "bits": 82},
             null_control=True,
         ),
-        negative_pair("negative-25", NEGATIVE_25, 25, "factor-found", (7, 18)),
-        negative_pair("negative-64", NEGATIVE_64, 64, "factor-found", (32, 32)),
-        negative_pair("negative-82", NEGATIVE_82, 82, "factor-found", (41, 42)),
         negative_pair(
-            "negative-512", NEGATIVE_512, 512, "factor-found", (3, 510)
+            "negative-25", NEGATIVE_25, 25, "factor-found", (7, 18), 1
+        ),
+        negative_pair(
+            "negative-64", NEGATIVE_64, 64, "factor-found", (32, 32), 1
+        ),
+        negative_pair(
+            "negative-82", NEGATIVE_82, 82, "factor-found", (41, 42), 1
+        ),
+        negative_pair(
+            "negative-exhausted-83",
+            EXHAUSTED_83,
+            83,
+            "exhausted",
+            (3, 80),
+            0,
+        ),
+        negative_pair(
+            "negative-512", NEGATIVE_512, 512, "parity-factor-found", (2, 511), 0
         ),
         negative_pair(
             "negative-exhausted-512",
@@ -87,6 +103,7 @@ SPEC = SweepSpec(
             512,
             "exhausted",
             (256, 256),
+            0,
         ),
     ),
     probe_target="HexPrimalityElabProbe",
