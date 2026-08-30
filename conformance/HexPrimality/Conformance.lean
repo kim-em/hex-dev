@@ -21,6 +21,7 @@ Covered operations:
 - `Hex.Nat.primeCert?`
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
+- trial-division extraction route instrumentation
 - `Hex.Nat.millerRabin` / `Hex.Nat.isProbablePrime`
 - `Hex.Nat.sieve` and its residue-index mapping
 - `Hex.Nat.isTablePrime`
@@ -169,8 +170,20 @@ open Hex.Nat
 -- Counted compatibility forms retain successful randomized work without
 -- changing the ordinary pair-returning entry points.
 #guard (match Internal.rhoFactorCounted? 9 (Hex.Rand.ofSeed 2) 8 with
-  | .ok success => success.factor == 3 && success.attempts == 4
+  | .ok success =>
+      success.factor == 3 && success.attempts == 4 &&
+        success.rand == ((Hex.Rand.ofSeed 2).words 12).2
   | .error _ => false)
+
+-- Exercise a deep trial-extraction route and pin its exact valuation and
+-- cofactor. The source binding keeps this route linear independently of CSE.
+set_option maxRecDepth 10000 in
+#guard Hex.Nat.Internal.trialExtractTrace 2 (2 ^ 128) == (128, 1)
+
+-- Pin the composition of caller allocation with the input-scaled Brent cap.
+#guard Hex.Nat.Internal.rhoRestartFuel 9 (1 <<< 22) == 48
+#guard Hex.Nat.Internal.rhoRestartFuel (2 ^ 200) (1 <<< 22) == (1 <<< 22)
+#guard Hex.Nat.Internal.rhoRestartFuel 9 4 == 4
 
 #guard (match Internal.primeCertCounted? 1000003
     (Hex.Rand.ofSeed 3) 16 with

@@ -108,8 +108,8 @@ def millerRabin (n a : Nat) : Bool :=
   else if a % n = 0 then true
   else if 1 < Nat.gcd a n then false
   else
-    mrStrongTestCore n (oddSplit (n - 1)).1
-      (HexArith.powMod a (oddSplit (n - 1)).2 n)
+    let split := oddSplit (n - 1)
+    mrStrongTestCore n split.1 (HexArith.powMod a split.2 n)
 
 /-- The first 13 primes: sufficient witnesses for `n < 3.3 · 10^24` by
 Sorenson-Webster, a fact used only to decide what to try and never in a
