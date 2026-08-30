@@ -887,8 +887,12 @@ whose decision exhausted. An undecided candidate is not included in
 `certAttempts` is zero. In either case `rand` is the exact state after all
 reported randomized work, so a caller can replay or resume without losing
 work. Deterministic table lookup, trial division, and Miller--Rabin filtering
-do not contribute to `certAttempts`. The theorem records that a success is
-the *least* such prime.
+do not contribute to `certAttempts`; in particular, every conclusively rejected
+candidate leaves both this count and `rand` unchanged. A failure with
+`rejectedCandidates = fuel` exhausted the whole candidate window. Otherwise
+the undecided candidate is `n + 1 + rejectedCandidates`, so the two failure
+modes and the resumption point are recoverable from the call and its failure.
+The theorem records that a success is the *least* such prime.
 
 `primeCert?` distinguishes `PrimeCertStop.composite`, justified by the size
 check, table completeness, or a failed Miller-Rabin base, from `.exhausted`,

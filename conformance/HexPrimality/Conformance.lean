@@ -30,6 +30,8 @@ Covered operations:
 Covered properties:
 - the total decision agrees with trial division on an initial segment
 - a `.composite` certificate-search verdict never contradicts `isPrime`
+- next-prime exhaustion separates rejected candidates from certificate work
+  and returns the exact advanced random state
 - accepted certificates replay; each rejection reason rejects
 - the committed table window and the runtime segment listing agree
 - the small sieve agrees with trial division on every represented index
@@ -287,12 +289,13 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 #guard (match nextPrime? 90 (Hex.Rand.ofSeed 0) 8 with
   | .ok (p, _) => p == 97
   | .error _ => false)
-#guard (match nextPrime? 100000 (Hex.Rand.ofSeed 0) 4 with
+#guard (match nextPrime? 99991 (Hex.Rand.ofSeed 0) 16 with
   | .ok (p, _) => p == 100003
   | .error _ => false)
-#guard (match nextPrime? 10000000 (Hex.Rand.ofSeed 0) 32 with
-  | .ok (p, _) => p == 10000019
-  | .error _ => false)
+#guard (match nextPrime? 10000000 (Hex.Rand.ofSeed 0) 32,
+    isPrime? 10000019 (Hex.Rand.ofSeed 0) 32 with
+  | .ok (p, r), .ok (true, directRand) => p == 10000019 && r == directRand
+  | _, _ => false)
 
 -- Candidate-window exhaustion counts every proved-composite candidate but no
 -- certificate attempts, and deterministic decisions leave the seed unchanged.
@@ -302,14 +305,34 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
         failure.rand == Hex.Rand.ofSeed 0
   | .ok _ => false)
 
+-- Certificate-tier composite verdicts also consume no randomized work, so
+-- exhausting a window of them leaves the seed unchanged.
+#guard (match nextPrime? 10000000 (Hex.Rand.ofSeed 0) 4 with
+  | .error failure =>
+      failure.rejectedCandidates == 4 && failure.certAttempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false)
+
 -- The first candidate is undecided after nonzero randomized work. Its
 -- certificate attempts and exact advanced state are retained, but it is not
 -- counted as conclusively rejected.
-#guard (match nextPrime? 1000000006 (Hex.Rand.ofSeed 3) 2 with
-  | .error failure =>
+#guard (match nextPrime? 1000000006 (Hex.Rand.ofSeed 3) 2,
+    isPrime? 1000000007 (Hex.Rand.ofSeed 3) 2 with
+  | .error failure, .error decisionFailure =>
       failure.rejectedCandidates == 0 && failure.certAttempts == 7 &&
-        failure.rand == ((Hex.Rand.ofSeed 3).words 7).2
-  | .ok _ => false)
+        failure.certAttempts == decisionFailure.attempts &&
+        failure.rand == decisionFailure.rand
+  | _, _ => false)
+
+-- A preceding deterministic composite and a later undecided candidate retain
+-- both nonzero units without counting the undecided candidate as rejected.
+#guard (match nextPrime? 1000000005 (Hex.Rand.ofSeed 3) 2,
+    isPrime? 1000000007 (Hex.Rand.ofSeed 3) 2 with
+  | .error failure, .error decisionFailure =>
+      failure.rejectedCandidates == 1 && 0 < failure.certAttempts &&
+        failure.certAttempts == decisionFailure.attempts &&
+        failure.rand == decisionFailure.rand
+  | _, _ => false)
 
 -- Sieve representation and a complete small-bound comparison with the
 -- independent trial-division decision route.

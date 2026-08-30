@@ -1030,8 +1030,8 @@ private def nextPrimeGo (certFuel : Nat) :
           nextPrimeGo certFuel steps (m + 1) (rejectedCandidates + 1) r'
 
 private theorem nextPrimeGo_spec (certFuel : Nat) :
-    ∀ (steps m attempts : Nat) (r : Rand) {p : Nat} {r' : Rand},
-      nextPrimeGo certFuel steps m attempts r = .ok (p, r') →
+    ∀ (steps m rejectedCandidates : Nat) (r : Rand) {p : Nat} {r' : Rand},
+      nextPrimeGo certFuel steps m rejectedCandidates r = .ok (p, r') →
       m ≤ p ∧ Prime p ∧ ∀ q, m ≤ q → q < p → ¬ Prime q := by
   intro steps
   induction steps with
@@ -1065,7 +1065,9 @@ private theorem nextPrimeGo_spec (certFuel : Nat) :
 /-- Fuel-bounded least-prime-above search: a total form needs Euclid's
 theorem, which this tree does not carry Mathlib-free, so exhaustion is
 reported with separate counts for conclusively rejected candidates and
-randomized certificate-search attempts, plus the exact advanced state. -/
+randomized certificate-search attempts, plus the exact advanced state. On
+failure, `rejectedCandidates = fuel` means the candidate window was exhausted;
+otherwise the undecided candidate is `n + 1 + rejectedCandidates`. -/
 def nextPrime? (n : Nat) (r : Rand) (fuel : Nat) :
     Except NextPrimeFailure (Nat × Rand) :=
   nextPrimeGo fuel fuel (n + 1) 0 r
