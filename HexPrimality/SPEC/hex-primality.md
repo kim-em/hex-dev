@@ -568,9 +568,9 @@ The compatible pair-returning API is backed by the counted internal result
 returned by `Internal.rhoFactorCounted?`. One attempt is one semantic restart:
 its bounded sampling, any rejected pairs, and its Brent run, including the
 successful restart. Sampler-internal and pair rejections advance `rand` but do
-not add attempt units. If bounded sampling or the pair-rejection loop exhausts,
-the restart under construction counts once and the failure returns its exact
-advanced state. The ordinary
+not add attempt units. If bounded sampling or the pair-draw loop exhausts, the
+restart under construction counts once, retains its exact advanced state, and
+the next allocated restart continues from there. The ordinary
 `rhoFactor?` projection does not rerun the search or alter its final state.
 The deterministic even-input shortcut returns factor `2` with zero attempts
 and an unchanged generator because it runs no restart.
@@ -600,12 +600,13 @@ degenerate map `x ↦ x² - 2`; other offsets are rejected only with a start
 that makes a fixed point of `x ↦ x² + c`. Both coordinates use `Rand.nat`,
 which concatenates enough 64-bit words for the arbitrary-precision bound and
 rejects the incomplete top interval instead of reducing one word modulo the
-bound. Each coordinate sample has eight tries, and one semantic restart admits
-eight pair draws. Sampler exhaustion or eight rejected pairs returns
-`RhoStop.exhausted` with the exact state; no undrawn fallback pair is
-substituted. Each restart's inner work is bounded as well. Both current
-worklist consumers share an eight-restart cap before retaining the residual or
-trying later routes.
+bound. Each coordinate sample has 64 tries, and one semantic restart admits
+eight pair draws. Sampler exhaustion or eight rejected pairs ends that restart
+with the exact state; no undrawn fallback pair is substituted. The next
+allocated restart continues from that state, and exhaustion of the overall
+restart allocation returns `RhoStop.exhausted`. Each restart's inner work is
+bounded as well. Both current worklist consumers share an eight-restart cap
+before retaining the residual or trying later routes.
 
 `partialFactor` is **internal**, not part of the public API. An earlier
 draft exposed it with "no correctness theorem at all", which is safe
@@ -969,15 +970,15 @@ but not `rand`; table lookup, trial division, Miller--Rabin filtering, and
 checker replay are not search attempts. Earlier
 successful child and witness searches are accumulated before a later failure,
 and both entry points return the same advanced state without duplicate work.
-Rho coordinates and certificate witness bases use the same eight-try
+Rho coordinates and certificate witness bases use the same 64-try
 `Rand.nat` route over their full arbitrary-precision intervals. Rejected
 sampler candidates consume words and advance the returned state, but remain
 inside one counted rho restart or witness candidate. Exhausting that sampler
-counts the semantic attempt already under construction and returns
-`.exhausted` with the sampler's exact advanced state.
-The failure propagates
-rather than being papered over, which is
-design principle 8's third remedy again.
+counts the semantic attempt already under construction and continues the next
+candidate or restart from the sampler's exact advanced state. Exhausting that
+outer allocation returns `.exhausted` with the final state. The failure
+propagates rather than being papered over, which is design principle 8's third
+remedy again.
 
 ## The tactic
 
@@ -1020,13 +1021,13 @@ The ceiling is the largest rung with both compiled and kernel evidence. The
 exact-boundary prime `100297^22 * 2^146 + 1`, namely
 `9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177`, is 512 bits. Its table factors alone do not meet the
 Pocklington threshold: the accepted core and companion routes use bounded rho
-work to discover the above-table factor `100297`, finish after 33 counted
+work to discover the above-table factor `100297`, finish after 34 counted
 attempts, reify its recursive certificate, and replay it in the kernel. The
 same prepared certificate is checked by `HexPrimalityKernelProbe` and the
 native `runDecision`, `runCertSearch`, and `runChecker` families. The paired
 fresh-module sweep also exercises the non-smooth 512-bit probable-prime input
 `11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123`,
-which reaches bounded rho work in a recursive child and exhausts after 9
+which reaches bounded rho work in a recursive child and exhausts after 10
 attempts at fuel 512, and the 513-bit value `2^512`, which is rejected before
 search. The core route has a 10-second absolute fresh-module wall-clock budget
 on the designated benchmark host; the companion route is gated identically

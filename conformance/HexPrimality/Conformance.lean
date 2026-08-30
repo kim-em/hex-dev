@@ -355,8 +355,10 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 -- interval. One sampler try therefore exhausts after advancing exactly once.
 #guard (match Hex.Nat.Internal.rhoDrawTrace (2 ^ 63 + 2)
     (Hex.Rand.ofSeed 0) (drawFuel := 1) with
-  | .error (rejections, r) =>
-      rejections == 0 && r == ((Hex.Rand.ofSeed 0).words 1).2
+  | .error (.sample (.exhausted attempts sampleRand), rejections, r) =>
+      attempts == 1 && rejections == 0 &&
+        sampleRand == ((Hex.Rand.ofSeed 0).words 1).2 && r == sampleRand
+  | .error _ => false
   | .ok _ => false)
 
 #guard (match Hex.Nat.Internal.witnessDrawTrace (2 ^ 63 + 4)
@@ -376,13 +378,31 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
   | .error _ => false)
 
 -- All eight drawn pairs are degenerate for this seed. Exhaustion returns the
--- state after those draws and charges the one restart under construction;
--- no fabricated fallback pair enters Brent's loop.
-#guard (match Internal.rhoFactorCountedWith? 5 (Hex.Rand.ofSeed 72) 4 1 with
-  | .error failure =>
-      failure.stop == .exhausted && failure.attempts == 1 &&
-        failure.rand == ((Hex.Rand.ofSeed 72).words 16).2
+-- state after those draws; no fabricated fallback pair enters Brent's loop.
+#guard (match Hex.Nat.Internal.rhoDrawTrace 5 (Hex.Rand.ofSeed 72) with
+  | .error (.pairs, rejections, r) =>
+      rejections == 8 && r == ((Hex.Rand.ofSeed 72).words 16).2
+  | .error _ => false
   | .ok _ => false)
+
+-- The failed pair draw costs one restart, and the next allocated restart
+-- continues from its exact advanced state instead of forfeiting the search.
+#guard (match Internal.rhoFactorCountedWith? 5 (Hex.Rand.ofSeed 72) 2 1 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 2 &&
+        failure.rand == ((Hex.Rand.ofSeed 72).words 18).2
+  | .ok _ => false)
+
+-- A sampler stall likewise costs one witness candidate and advances into the
+-- next candidate. This exercises the counted search branch, not just its draw.
+#guard (match Hex.Nat.Internal.witnessSearchTrace (2 ^ 63 + 4) 2
+    (Hex.Rand.ofSeed 0) 2 (drawFuel := 1) with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 2 &&
+        failure.rand == ((Hex.Rand.ofSeed 0).words 2).2
+  | .ok _ => false)
+#guard Hex.Nat.Internal.sampleFuel == 64
+#guard Hex.Nat.Internal.rhoPairFuel == 8
 #guard Hex.Nat.Internal.rhoRestartCap == 8
 
 -- Miller-Rabin filter behaviour on the adversarial families.
