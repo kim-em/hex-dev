@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Factor-found probe at the supported 512-bit input ceiling. -/
+/-! Parity-factor probe at the supported 512-bit input ceiling (`2^511`). -/
 
 open Hex.PrimalityTactic
 

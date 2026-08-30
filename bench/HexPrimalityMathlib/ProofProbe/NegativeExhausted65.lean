@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Exhaustion immediately above the rho-search bit boundary. -/
+/-! Exhaustion immediately above the rho-search bit boundary on
+`2^64 + 1 = 274177 * 67280421310721`. -/
 
 open Hex.PrimalityTactic
 

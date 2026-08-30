@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Factor-found probe on an adversarial 32-bit strong pseudoprime. -/
+/-! Factor-found probe on the adversarial strong pseudoprime
+`3215031751 = 151 * 751 * 28351`. -/
 
 open Hex.PrimalityTactic
 

@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Factor-found probe at the first certificate-tier bit width. -/
+/-! Factor-found probe at the first certificate-tier bit width:
+`16777217 = 97 * 257 * 673`. -/
 
 open Hex.PrimalityTactic
 

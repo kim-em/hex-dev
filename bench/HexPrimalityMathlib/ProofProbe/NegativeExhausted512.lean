@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! One-restart exhaustion on a balanced 512-bit semiprime. -/
+/-! Zero-restart exhaustion on a balanced 512-bit semiprime: the product of
+the secp256k1 and NIST P-256 field primes. -/
 
 open Hex.PrimalityTactic
 

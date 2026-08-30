@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 import HexPrimalityMathlib
 
-/-! Factor-found probe on a balanced 64-bit semiprime. -/
+/-! Factor-found probe on the balanced semiprime
+`18446743979220271189 = 4294967279 * 4294967291`. -/
 
 open Hex.PrimalityTactic
 
