@@ -82,6 +82,15 @@ class ElaboratorSweepTests(unittest.TestCase):
         self.assertEqual(by_name["mathlib-512"].metadata["bits"], 512)
         self.assertEqual(by_name["core-over-budget"].metadata["bits"], 513)
         self.assertEqual(by_name["mathlib-over-budget"].metadata["bits"], 513)
+        self.assertEqual(by_name["core-exhausted"].metadata["bits"], 512)
+        self.assertEqual(by_name["mathlib-exhausted"].metadata["bits"], 512)
+
+    def test_each_route_has_a_null_control(self) -> None:
+        self.assertEqual(
+            {pair.metadata["route"] for pair in elab.SPEC.pairs
+             if pair.null_control},
+            {"core", "mathlib"},
+        )
 
     def test_release_measurement_protocol_is_preregistered(self) -> None:
         self.assertEqual(elab.SPEC.required_samples, 6)
@@ -104,11 +113,14 @@ class ElaboratorSweepTests(unittest.TestCase):
         )
         self.assertIn("meta def primalityBitBudget : Nat := 512", core)
         self.assertIn("meta def primalityFuelBudget : Nat := 1040", core)
+        self.assertIn("meta def primalityRhoRestartBudget : Nat := 2", core)
+        self.assertIn("meta def primalityRhoStepBudget : Nat := 1 <<< 15", core)
         self.assertIn("let fuel := primalityFuel n", core)
-        self.assertIn("if bits > primalityBitBudget then failure", companion)
+        self.assertIn("unless withinPrimalityBudget n' do failure", companion)
+        self.assertIn("unless withinPrimalityBudget n do", core)
         self.assertIn("let fuel := primalityFuel n'", companion)
-        self.assertNotIn("Hex.Nat.isPrime ", core)
-        self.assertNotIn("Hex.Nat.isPrime ", companion)
+        self.assertNotRegex(core, r"\b(?:Hex\.Nat\.)?isPrime\s")
+        self.assertNotRegex(companion, r"\b(?:Hex\.Nat\.)?isPrime\s")
 
 
 if __name__ == "__main__":

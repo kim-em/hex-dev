@@ -63,12 +63,12 @@ verdicts at and above `natPrimeCertThreshold`. -/
     let ⟨nn, pn⟩ ← deriveNat n _
     let n' := nn.natLit!
     if n' < natPrimeCertThreshold then failure
-    let bits := n'.log2 + 1
-    if bits > primalityBitBudget then failure
+    unless withinPrimalityBudget n' do failure
     let fuel := primalityFuel n'
-    match Hex.Nat.primeCert? n' (Hex.Rand.ofSeed n')
-        fuel with
-    | .ok (c, _) =>
+    match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget n'
+        (Hex.Rand.ofSeed n') fuel with
+    | .ok success =>
+        let c := success.cert
         -- Untrusted-search self-check before emitting anything.
         unless c.raw.subject == n' && Hex.Nat.checkPrime c.raw do failure
         let prf : Q(_root_.Nat.Prime $nn) :=

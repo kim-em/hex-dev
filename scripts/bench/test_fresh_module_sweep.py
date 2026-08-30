@@ -716,6 +716,41 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(summary["tactic"]["resolution"], "resolved")
         self.assertEqual(summary["tactic"]["budget_status"], "unresolved")
 
+    def test_summary_enforces_absolute_fresh_module_budget(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pair = sweep.ProbePair(
+            "absolute",
+            baseline,
+            candidate,
+            {"fresh_module_budget_ms": 100},
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {pair.name: [
+            {
+                "reference": {"wall_nanos": 20_000_000, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 90_000_000, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 70_000_000,
+            },
+            {
+                "reference": {"wall_nanos": 20_000_000, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 110_000_000, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 90_000_000,
+            },
+        ]}
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertEqual(summary["fresh_module_budget_nanos"], 100_000_000)
+        self.assertEqual(summary["max_candidate_wall_nanos"], 110_000_000)
+        self.assertEqual(summary["fresh_module_budget_status"], "failed")
+
     def test_one_sided_null_uses_zero_centred_envelope(self) -> None:
         module = sweep.ProbeModule("Probe.Baseline")
         candidate = sweep.ProbeModule("Probe.Candidate")
@@ -1501,6 +1536,35 @@ class PairingTests(unittest.TestCase):
             "; ".join(issues),
             "not resolvable under the admitted core-interference ceiling",
         )
+
+    def test_failed_fresh_module_budget_invalidates_record(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "absolute",
+            module,
+            sweep.ProbeModule("Probe.Candidate"),
+            {"fresh_module_budget_ms": 100},
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        args = sweep.parse_args("validity", [])
+        results = {
+            pair.name: {
+                "resolution": "resolved",
+                "fresh_module_budget_status": "failed",
+            }
+        }
+        quality, issues = sweep.validity_summary(
+            spec, args, results, None, []
+        )
+        self.assertFalse(quality)
+        self.assertIn("absolute: fresh-module budget failed", issues)
 
     def test_contention_violation_makes_release_quality_false(self) -> None:
         args = sweep.parse_args("validity", [])

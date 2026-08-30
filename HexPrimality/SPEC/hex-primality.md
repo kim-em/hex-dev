@@ -782,12 +782,22 @@ structure NextPrimeFailure where
 
 def defaultPrimeFuel (n : Nat) : Nat
 
+structure PrimeCertBudget where
+  rhoRestarts : Nat
+  rhoSteps    : Nat
+
+def defaultPrimeCertBudget : PrimeCertBudget
+
 structure Internal.PrimeCertSuccess (n : Nat) where
   cert     : CheckedPrimeCert n
   attempts : Nat
   rand     : Rand
 
 def Internal.primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+def Internal.primeCertCountedWith? (budget : PrimeCertBudget)
+    (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (Internal.PrimeCertSuccess n)
 
 theorem Internal.primeCertCounted?_composite {n r fuel f}
@@ -904,30 +914,39 @@ the search.
 For reproducible syntax with no seed argument, the elaborator uses
 `Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded.
 
-**The supported elaboration policy is at most 512 input bits and at most 1040
-recursive certificate-search fuel.** Every elaboration-time certificate route
-uses `primalityFuel n = min (defaultPrimeFuel n) 1040`; at the exact 512-bit
-boundary the default contributes 1038. The fuel bounds recursive partial
-factorization and certificate construction, while the search's exact attempt
-counter also includes rho restarts and witness candidates and can therefore be
-larger than the recursive fuel. The fixed witness budget remains 32 candidates
-per factor entry. Inputs above 512 bits are rejected before Miller--Rabin or
-certificate search. Search exhaustion reports the seed, selected fuel, exact
-attempt count, and both policy maxima, and explicitly says that no total
-decision was attempted.
+**The supported elaboration policy is at most 512 input bits, at most 1040
+recursive certificate-search fuel, at most 2 Brent restarts per partial-factor
+worklist entry, and at most 32768 Brent cycle steps per restart.** Every
+elaboration-time certificate route uses
+`primalityFuel n = min (defaultPrimeFuel n) 1040`; at the exact 512-bit boundary
+the default contributes 1038. The recursive fuel bounds certificate-construction
+depth. Partial factorization is bounded separately by `2 * n.log2 + 8` worklist
+steps at each certificate node and the rho restart/cycle allocation above. The
+fixed witness budget remains 32 candidates per factor entry. The exact attempt
+counter includes rho restarts and witness candidates and can therefore exceed
+the recursive fuel used at a node. Inputs above 512 bits are rejected before
+Miller--Rabin or certificate search. Search exhaustion reports the seed,
+selected recursive fuel, exact attempt count, and all enforced search maxima,
+and explicitly says that no total decision was attempted.
 
 The ceiling is the largest rung with both compiled and kernel evidence. The
 exact-boundary prime `2401 * 2^500 + 1` is 512 bits, is accepted by the core
 term elaborator and the companion's `Nat.Prime` tactic handler, and has a
 checker certificate in `HexPrimalityKernelProbe`. The native `runDecision`,
 `runCertSearch`, and `runChecker` families carry the same 512-bit rung. The
-paired fresh-module sweep also exercises the 82-bit strong pseudoprime
-`3317044064679887385961981`, which exhausts the production policy after 35
-attempts at fuel 178, and the 513-bit value `2^512`, which is rejected before
+paired fresh-module sweep also exercises the non-smooth 512-bit probable-prime
+input
+`11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123`,
+which reaches bounded rho work in a recursive child and exhausts after 11
+attempts at fuel 1038, and the 513-bit value `2^512`, which is rejected before
 search. Both core and companion routes have a 10-second absolute fresh-module
-wall-clock budget on the designated benchmark host; this single end-to-end
+wall-clock budget on the designated benchmark host. The harness compares the
+largest raw candidate wall time in every substantive sample set against that
+budget and makes any failure invalidate `release_quality`; it does not use the
+reference-subtracted tactic delta for this contract. This single end-to-end
 budget includes importing, compiled search, compiled self-check, reification,
-and kernel replay rather than pretending those phases are independently timed.
+and kernel replay. Rejection and exhaustion may be indistinguishable from
+their import-only controls, but their absolute wall times remain budget-gated.
 The raw paired samples and host provenance are committed at
 `reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json`.
 They reproduce with:
@@ -940,8 +959,9 @@ python3 scripts/bench/primality_elab_sweep.py --samples 6 \
 ```
 
 `lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
-`primality` calls only the bounded `primeCert?` route: it never calls the total
-`isPrime`, whose exact trial fallback is intentionally unbounded.
+`primality` calls only `primeCertCountedWith?` with the explicit allocation
+above: it never calls the total `isPrime`, whose exact trial fallback is
+intentionally unbounded.
 
 The companion adds `Nat.Prime n` through that correspondence. Bare
 `primality` uses the certificate route directly. Pinned Mathlib's
@@ -950,8 +970,10 @@ retain Mathlib's trial-division behavior; the later Hex registration cannot
 transparently pre-empt it. A module explicitly opts into the supported Hex
 policy with `use_hex_primality_norm_num`. Under that policy, numerals below
 `2^24` use a guarded alias of Mathlib's trial extension and larger numerals
-use the same 512-bit/1040-fuel Hex certificate policy as `primality`. The
-opt-in erasure is local to the
+use the same 512-bit/1040-fuel/2-restart/32768-step Hex certificate policy as
+`primality`. Above 512 bits the opt-in extension declines both positive and
+negative goals; `norm_num` reports an unsolved goal rather than silently
+restoring Mathlib's total trial decision. The opt-in erasure is local to the
 module and does not persist when that module is imported.
 
 The `2^24` boundary comes from fresh one-goal modules on the pinned
@@ -1037,7 +1059,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `isPrime` worst case | `O(√n)` remainder tests | exact fallback after default search exhaustion |
 | `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
-| `primeCert?` | dominated by `partialFactor` | unbounded; fuel-limited |
+| `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,

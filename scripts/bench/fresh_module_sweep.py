@@ -1874,6 +1874,20 @@ def summarize(
                 budget_status = "passed"
             result["budget_nanos"] = budget_nanos
             result["budget_status"] = budget_status
+        fresh_budget_ms = pair.metadata.get("fresh_module_budget_ms")
+        if fresh_budget_ms is not None:
+            fresh_budget_nanos = int(fresh_budget_ms) * 1_000_000
+            max_candidate_wall_nanos = max(
+                int(sample["candidate"]["wall_nanos"])
+                for sample in result["samples"]
+            )
+            result["fresh_module_budget_nanos"] = fresh_budget_nanos
+            result["max_candidate_wall_nanos"] = max_candidate_wall_nanos
+            result["fresh_module_budget_status"] = (
+                "failed"
+                if max_candidate_wall_nanos >= fresh_budget_nanos
+                else "passed"
+            )
     return summary
 
 
@@ -2235,6 +2249,14 @@ def validity_summary(
         status = results[pair.name].get("budget_status")
         if status != "passed":
             issue = f"{pair.name}: tactic budget {status}"
+            if issue not in issues:
+                issues.append(issue)
+    for pair in spec.pairs:
+        if "fresh_module_budget_ms" not in pair.metadata:
+            continue
+        status = results[pair.name].get("fresh_module_budget_status")
+        if status != "passed":
+            issue = f"{pair.name}: fresh-module budget {status}"
             if issue not in issues:
                 issues.append(issue)
     release_quality = (

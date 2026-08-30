@@ -3,9 +3,10 @@
 
 Every substantive probe is paired with the matching import-only module. The
 accepted probes exercise certificate search, compiled self-check, certificate
-reification, and kernel replay at the exact 512-bit ceiling. The other probes
-measure bounded exhaustion and rejection immediately above the ceiling; both
-must finish through the policy diagnostic without a total-decision fallback.
+reification, and kernel replay at the exact 512-bit ceiling. A non-smooth
+512-bit safe probable prime exercises bounded rho exhaustion at that same
+ceiling. Rejection immediately above it must occur before search. No failure
+route may fall through to a total decision.
 """
 
 from __future__ import annotations
@@ -70,6 +71,13 @@ SPEC = SweepSpec(
             {"route": "core", "outcome": "calibration-only", "bits": 512},
             null_control=True,
         ),
+        ProbePair(
+            "mathlib-baseline-null",
+            MATHLIB_BASELINE,
+            MATHLIB_BASELINE,
+            {"route": "mathlib", "outcome": "calibration-only", "bits": 0},
+            null_control=True,
+        ),
         policy_pair("core-512", "core", "accepted", CORE_BASELINE, CORE_512, 512),
         policy_pair(
             "mathlib-512", "mathlib", "accepted", MATHLIB_BASELINE, MATHLIB_512, 512
@@ -80,7 +88,7 @@ SPEC = SweepSpec(
             "exhausted",
             CORE_BASELINE,
             ProbeModule("HexPrimality.ProofProbe.CoreExhausted"),
-            82,
+            512,
         ),
         policy_pair(
             "mathlib-exhausted",
@@ -88,7 +96,7 @@ SPEC = SweepSpec(
             "exhausted",
             MATHLIB_BASELINE,
             ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibExhausted"),
-            82,
+            512,
         ),
         policy_pair(
             "core-over-budget",

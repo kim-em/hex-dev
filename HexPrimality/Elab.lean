@@ -101,25 +101,43 @@ makes the resource bound explicit and prevents later changes to the default
 from silently widening the tactic policy. -/
 meta def primalityFuelBudget : Nat := 1040
 
+/-- Maximum Brent restarts at one partial-factor worklist entry on every
+elaboration-time certificate route. -/
+meta def primalityRhoRestartBudget : Nat := 2
+
+/-- Maximum Brent cycle steps per restart on every elaboration-time
+certificate route. -/
+meta def primalityRhoStepBudget : Nat := 1 <<< 15
+
+/-- The explicit rho allocation shared by every elaboration-time route. -/
+meta def primalitySearchBudget : Hex.Nat.PrimeCertBudget :=
+  ⟨primalityRhoRestartBudget, primalityRhoStepBudget⟩
+
 /-- The fuel selected by every elaboration-time certificate route. -/
 meta def primalityFuel (n : Nat) : Nat :=
   min (Hex.Nat.defaultPrimeFuel n) primalityFuelBudget
 
+/-- Whether an input is admitted by the common elaboration policy. -/
+meta def withinPrimalityBudget (n : Nat) : Bool :=
+  decide (n.log2 + 1 ≤ primalityBitBudget)
+
 /-- Enforce the common input-size policy before any certificate search. -/
 meta def checkPrimalityPolicy (tactic : String) (n : Nat) : MetaM Unit := do
   let bits := n.log2 + 1
-  if bits > primalityBitBudget then
+  unless withinPrimalityBudget n do
     throwError "{tactic}: input has {bits} bits; the enforced policy supports \
-        at most {primalityBitBudget} bits and {primalityFuelBudget} recursive \
-        search fuel"
+        at most {primalityBitBudget} bits; raising the ceiling requires new \
+        end-to-end benchmark evidence"
 
 /-- Report bounded-search exhaustion without inviting an unbounded fallback. -/
 meta def throwPrimalityExhausted {α : Type} (tactic : String) (n attempts fuel : Nat) :
     MetaM α :=
   throwError "{tactic}: certificate search for {n} exhausted after {attempts} \
       attempts (seed {n}, recursive fuel {fuel}; policy maximum \
-      {primalityFuelBudget} fuel at {primalityBitBudget} bits); no total \
-      primality decision was attempted"
+      {primalityFuelBudget} fuel at {primalityBitBudget} bits, \
+      {primalityRhoRestartBudget} rho restarts with \
+      {primalityRhoStepBudget} steps each); no total primality decision was \
+      attempted"
 
 /-- Run the certificate search and emit the checked proof term with `head`
 applied to the subject, the reified certificate, and the `Eq.refl true`
@@ -135,7 +153,8 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
         could not check the emitted certificate against it"
   checkPrimalityPolicy tactic n
   let fuel := primalityFuel n
-  match Hex.Nat.primeCert? n (Hex.Rand.ofSeed n) fuel with
+  match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget n
+      (Hex.Rand.ofSeed n) fuel with
   | .error f =>
       match f.stop with
       | .composite =>
@@ -148,7 +167,8 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
               throwError "{tactic}: {n} is not prime"
       | .exhausted =>
           throwPrimalityExhausted tactic n f.attempts fuel
-  | .ok (c, _) =>
+  | .ok success =>
+      let c := success.cert
       -- Untrusted-search self-check before emitting anything.
       unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do
         throwError "{tactic}: internal error: the found certificate fails \
