@@ -716,6 +716,41 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(summary["tactic"]["resolution"], "resolved")
         self.assertEqual(summary["tactic"]["budget_status"], "unresolved")
 
+    def test_summary_enforces_absolute_fresh_module_budget(self) -> None:
+        baseline = sweep.ProbeModule("Probe.Baseline")
+        candidate = sweep.ProbeModule("Probe.Candidate")
+        pair = sweep.ProbePair(
+            "absolute",
+            baseline,
+            candidate,
+            {"fresh_module_budget_ms": 100},
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        rows = {pair.name: [
+            {
+                "reference": {"wall_nanos": 20_000_000, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 90_000_000, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 70_000_000,
+            },
+            {
+                "reference": {"wall_nanos": 20_000_000, "peak_rss_kb": None},
+                "candidate": {"wall_nanos": 110_000_000, "peak_rss_kb": None},
+                "signed_wall_delta_nanos": 90_000_000,
+            },
+        ]}
+        with mock.patch.object(sweep, "artifact_sizes", return_value={}):
+            summary = sweep.summarize(spec, rows)[pair.name]
+        self.assertEqual(summary["fresh_module_budget_nanos"], 100_000_000)
+        self.assertEqual(summary["max_candidate_wall_nanos"], 110_000_000)
+        self.assertEqual(summary["fresh_module_budget_status"], "failed")
+
     def test_one_sided_null_uses_zero_centred_envelope(self) -> None:
         module = sweep.ProbeModule("Probe.Baseline")
         candidate = sweep.ProbeModule("Probe.Candidate")
@@ -1502,6 +1537,35 @@ class PairingTests(unittest.TestCase):
             "not resolvable under the admitted core-interference ceiling",
         )
 
+    def test_failed_fresh_module_budget_invalidates_record(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pair = sweep.ProbePair(
+            "absolute",
+            module,
+            sweep.ProbeModule("Probe.Candidate"),
+            {"fresh_module_budget_ms": 100},
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=(pair,),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+        )
+        args = sweep.parse_args("validity", [])
+        results = {
+            pair.name: {
+                "resolution": "resolved",
+                "fresh_module_budget_status": "failed",
+            }
+        }
+        quality, issues = sweep.validity_summary(
+            spec, args, results, None, []
+        )
+        self.assertFalse(quality)
+        self.assertIn("absolute: fresh-module budget failed", issues)
+
     def test_contention_violation_makes_release_quality_false(self) -> None:
         args = sweep.parse_args("validity", [])
         observations = {"violations": ["sibling contention"]}
@@ -1545,8 +1609,84 @@ class PairingTests(unittest.TestCase):
         self.assertFalse(quality)
         self.assertRegex("; ".join(issues), "robust null IQR/build ratio")
 
+    def test_absolute_budget_does_not_require_null_resolution(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        pairs = (
+            sweep.ProbePair(
+                "null", module, module, {}, null_control=True
+            ),
+            sweep.ProbePair(
+                "absolute",
+                module,
+                sweep.ProbeModule("Probe.Candidate"),
+                {"fresh_module_budget_ms": 100},
+            ),
+        )
+        spec = sweep.SweepSpec(
+            description="absolute budget",
+            pairs=pairs,
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            absolute_only=True,
+        )
+        results = {
+            "null": {
+                "build_magnitude_wall_nanos": 1_000,
+                "null_robust_spread_ratio": 0.11,
+            },
+            "absolute": {
+                "resolution": "unresolved",
+                "fresh_module_budget_status": "passed",
+            },
+        }
+        quality, issues = sweep.validity_summary(
+            spec, sweep.parse_args("validity", []), results, None, []
+        )
+        self.assertTrue(quality)
+        self.assertEqual(issues, [])
+
 
 class HarnessValidationTests(unittest.TestCase):
+    def test_absolute_only_requires_every_absolute_budget(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        spec = sweep.SweepSpec(
+            description="invalid absolute-only sweep",
+            pairs=(sweep.ProbePair(
+                "effect", module, sweep.ProbeModule("Probe.Candidate"), {}
+            ),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            absolute_only=True,
+        )
+        with self.assertRaisesRegex(RuntimeError, "fresh-module budget"):
+            sweep.validate_spec(spec)
+
+    def test_absolute_only_rejects_relative_budget(self) -> None:
+        module = sweep.ProbeModule("Probe.Baseline")
+        spec = sweep.SweepSpec(
+            description="mixed absolute-only sweep",
+            pairs=(sweep.ProbePair(
+                "effect",
+                module,
+                sweep.ProbeModule("Probe.Candidate"),
+                {
+                    "fresh_module_budget_ms": 100,
+                    "tactic_budget_ms": 100,
+                },
+            ),),
+            probe_target="Probe",
+            schema="test",
+            measurement="test",
+            output_stem="test",
+            absolute_only=True,
+        )
+        with self.assertRaisesRegex(RuntimeError, "relative tactic budget"):
+            sweep.validate_spec(spec)
+
     def test_shared_host_arguments_are_complete_and_exclusive(self) -> None:
         with mock.patch.object(sys, "stderr", new=io.StringIO()):
             with self.assertRaises(SystemExit):

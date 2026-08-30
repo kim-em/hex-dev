@@ -34,7 +34,9 @@ certificate through `natPrime_of_checkPrimeAt`; the kernel replays only the
 checker. A negative verdict emits a dynamically validated proper factor
 through Mathlib's `deriveNotPrime`. If bounded certificate or factor search
 is exhausted, both Hex extensions decline, rather than falling through to
-unbounded trial division.
+unbounded trial division. The certificate extension uses the same 512-bit
+input ceiling and 1040 recursive-fuel cap as the core and companion
+`primality` handlers.
 
 The tactic handler registers on the same `primality` syntax kind as the
 Mathlib-free elaborator; registration order makes this handler run first,
@@ -61,9 +63,12 @@ verdicts at and above `natPrimeCertThreshold`. -/
     let ⟨nn, pn⟩ ← deriveNat n _
     let n' := nn.natLit!
     if n' < natPrimeCertThreshold then failure
-    match Hex.Nat.primeCert? n' (Hex.Rand.ofSeed n')
-        (Hex.Nat.defaultPrimeFuel n') with
-    | .ok (c, _) =>
+    unless withinPrimalityBudget n' do failure
+    let fuel := primalityFuel n'
+    match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget n'
+        (Hex.Rand.ofSeed n') fuel with
+    | .ok success =>
+        let c := success.cert
         -- Untrusted-search self-check before emitting anything.
         unless c.raw.subject == n' && Hex.Nat.checkPrime c.raw do failure
         let prf : Q(_root_.Nat.Prime $nn) :=

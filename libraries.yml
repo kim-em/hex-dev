@@ -824,6 +824,7 @@ libraries:
   HexPrimalityMathlib:
     deps: [HexPrimality]
     mathlib: true
+    proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
     done_through: 0
     status: active
   HexIntFactorMathlib:

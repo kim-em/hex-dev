@@ -424,6 +424,18 @@ so an isolated outlier can widen but never shrink the admission envelope.
 A control whose IQR exceeds 10% of its build magnitude invalidates release
 quality.
 
+A suite may instead preregister `absolute_only` when every substantive pair
+declares an absolute fresh-module wall-clock budget and no pair declares a
+reference-subtracted tactic budget. In that mode the raw candidate maximum,
+not a paired delta, is the release contract. Null controls remain in the
+artifact to describe and classify paired noise, but their IQR and relative
+build-magnitude coverage do not gate release quality because neither quantity
+can change the absolute conclusion. Dirty-state, provenance, timeout,
+frequency, per-arm CPU/SMT interference, and absolute-budget failures retain
+their ordinary fail-closed behavior. The harness rejects `absolute_only`
+manifests that omit an absolute budget from any substantive pair or add a
+relative tactic budget.
+
 The artifact interpolates control IQRs and conservative envelopes between
 representative build magnitudes. Outside the measured range it may scale a
 cheaper control upward by the build-time magnitude ratio, but never scales an

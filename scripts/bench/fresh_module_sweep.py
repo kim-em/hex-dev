@@ -96,6 +96,7 @@ class SweepSpec:
     required_samples: int | None = None
     max_pair_retries: int = DEFAULT_MAX_PAIR_RETRIES
     import_baseline_control: str | None = None
+    absolute_only: bool = False
 
 
 def parse_args(
@@ -767,6 +768,17 @@ def validate_spec(spec: SweepSpec) -> None:
             )
     if spec.required_samples is not None and spec.required_samples < 1:
         raise RuntimeError("fresh-module sweep required_samples must be positive")
+    if spec.absolute_only:
+        substantive = [pair for pair in spec.pairs if not pair.null_control]
+        if any("fresh_module_budget_ms" not in pair.metadata for pair in substantive):
+            raise RuntimeError(
+                "absolute-only sweep requires a fresh-module budget on every "
+                "substantive pair"
+            )
+        if any("tactic_budget_ms" in pair.metadata for pair in substantive):
+            raise RuntimeError(
+                "absolute-only sweep cannot declare a relative tactic budget"
+            )
     target = _ExeTarget(spec.probe_target, "", spec.src_dir)
     package_root = ROOT / ".lake" / "packages"
     for root_module in measured:
@@ -1874,6 +1886,20 @@ def summarize(
                 budget_status = "passed"
             result["budget_nanos"] = budget_nanos
             result["budget_status"] = budget_status
+        fresh_budget_ms = pair.metadata.get("fresh_module_budget_ms")
+        if fresh_budget_ms is not None:
+            fresh_budget_nanos = int(fresh_budget_ms) * 1_000_000
+            max_candidate_wall_nanos = max(
+                int(sample["candidate"]["wall_nanos"])
+                for sample in result["samples"]
+            )
+            result["fresh_module_budget_nanos"] = fresh_budget_nanos
+            result["max_candidate_wall_nanos"] = max_candidate_wall_nanos
+            result["fresh_module_budget_status"] = (
+                "failed"
+                if max_candidate_wall_nanos >= fresh_budget_nanos
+                else "passed"
+            )
     return summary
 
 
@@ -2162,7 +2188,8 @@ def validity_summary(
             issue for issue in observations["violations"]
             if issue not in issues
         )
-    if args.shared_host:
+    requires_null_resolution = not spec.absolute_only
+    if args.shared_host and requires_null_resolution:
         control_magnitudes = [
             int(results[pair.name]["build_magnitude_wall_nanos"])
             for pair in spec.pairs
@@ -2177,19 +2204,20 @@ def validity_summary(
             issues.append(
                 "null-control build magnitudes are not sufficiently distinct"
             )
-    for pair in spec.pairs:
-        if not pair.null_control:
-            continue
-        spread_ratio = results[pair.name].get("null_robust_spread_ratio")
-        if (
-            spread_ratio is None
-            or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
-        ):
-            issues.append(
-                f"{pair.name}: robust null IQR/build ratio "
-                f"{spread_ratio!r} exceeds "
-                f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
-            )
+    if requires_null_resolution:
+        for pair in spec.pairs:
+            if not pair.null_control:
+                continue
+            spread_ratio = results[pair.name].get("null_robust_spread_ratio")
+            if (
+                spread_ratio is None
+                or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
+            ):
+                issues.append(
+                    f"{pair.name}: robust null IQR/build ratio "
+                    f"{spread_ratio!r} exceeds "
+                    f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
+                )
     for pair in spec.pairs:
         if pair.null_control:
             continue
@@ -2235,6 +2263,14 @@ def validity_summary(
         status = results[pair.name].get("budget_status")
         if status != "passed":
             issue = f"{pair.name}: tactic budget {status}"
+            if issue not in issues:
+                issues.append(issue)
+    for pair in spec.pairs:
+        if "fresh_module_budget_ms" not in pair.metadata:
+            continue
+        status = results[pair.name].get("fresh_module_budget_status")
+        if status != "passed":
+            issue = f"{pair.name}: fresh-module budget {status}"
             if issue not in issues:
                 issues.append(issue)
     release_quality = (
@@ -2546,6 +2582,7 @@ def run_cli(
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
             "max_null_robust_spread_ratio":
                 MAX_NULL_ROBUST_SPREAD_RATIO,
+            "absolute_only": spec.absolute_only,
             "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import unittest
 
+from scripts.bench import fresh_module_sweep
+from scripts.bench import primality_elab_sweep as elab
 from scripts.bench import primality_policy_sweep as policy
 from scripts.bench import primality_table_sweep as table
 
@@ -52,6 +54,83 @@ class DecisionSweepTests(unittest.TestCase):
         self.assertGreaterEqual(len(chains), 2)
         self.assertLess(min(chains), 2_000_000)
         self.assertGreater(max(chains), 10_000_000)
+
+
+class ElaboratorSweepTests(unittest.TestCase):
+    def test_manifest_covers_both_routes_and_policy_outcomes(self) -> None:
+        substantive = [pair for pair in elab.SPEC.pairs if not pair.null_control]
+        self.assertEqual(
+            {(pair.metadata["route"], pair.metadata["outcome"])
+             for pair in substantive},
+            {
+                ("core", "accepted"),
+                ("mathlib", "accepted"),
+                ("core", "exhausted"),
+                ("mathlib", "exhausted"),
+                ("core", "over-budget"),
+                ("mathlib", "over-budget"),
+            },
+        )
+        self.assertEqual(
+            {pair.metadata["fresh_module_budget_ms"] for pair in substantive},
+            {10_000},
+        )
+
+    def test_boundary_is_accepted_at_512_and_rejected_at_513(self) -> None:
+        by_name = {pair.name: pair for pair in elab.SPEC.pairs}
+        self.assertEqual(by_name["core-512"].metadata["bits"], 512)
+        self.assertEqual(by_name["mathlib-512"].metadata["bits"], 512)
+        self.assertEqual(by_name["core-over-budget"].metadata["bits"], 513)
+        self.assertEqual(by_name["mathlib-over-budget"].metadata["bits"], 513)
+        self.assertEqual(by_name["core-exhausted"].metadata["bits"], 512)
+        self.assertEqual(by_name["mathlib-exhausted"].metadata["bits"], 512)
+
+    def test_each_route_has_a_null_control(self) -> None:
+        self.assertEqual(
+            {pair.metadata["route"] for pair in elab.SPEC.pairs
+             if pair.null_control},
+            {"core", "mathlib"},
+        )
+
+    def test_release_measurement_protocol_is_preregistered(self) -> None:
+        self.assertEqual(elab.SPEC.required_samples, 6)
+        self.assertEqual(elab.SPEC.max_pair_retries, 32)
+        self.assertEqual(
+            elab.SPEC.measurement,
+            "paired-fresh-module-olean-wall-robust-null-v2",
+        )
+        fresh_module_sweep.validate_spec(elab.SPEC)
+
+    def test_every_probe_is_wired_into_lake(self) -> None:
+        lakefile = (elab.ROOT / "lakefile.lean").read_text(encoding="utf-8")
+        for module in fresh_module_sweep.probe_modules(elab.SPEC):
+            self.assertIn(f"`{module}", lakefile, module)
+
+    def test_handlers_share_the_bounded_policy(self) -> None:
+        core = (elab.ROOT / "HexPrimality/Elab.lean").read_text(encoding="utf-8")
+        companion = (elab.ROOT / "HexPrimalityMathlib/NormNum.lean").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("meta def primalityBitBudget : Nat := 512", core)
+        self.assertIn("meta def primalityFuelBudget : Nat := 1040", core)
+        self.assertIn("meta def primalityRhoRestartBudget : Nat := 2", core)
+        self.assertIn("meta def primalityRhoStepBudget : Nat := 1 <<< 15", core)
+        self.assertIn("let fuel := primalityFuel n", core)
+        self.assertIn("unless withinPrimalityBudget n' do failure", companion)
+        self.assertIn("unless withinPrimalityBudget n do", core)
+        self.assertIn("let fuel := primalityFuel n'", companion)
+        total_decision = (
+            r"\b(?:Hex\.Nat\.)?(?:isPrimeTrial|isPrime\?|isPrime)(?:\s|\()"
+        )
+        cert_handler = companion.split("def evalNatPrimeCert", 1)[1].split(
+            "/-- The `Nat.Prime` goal handler", 1
+        )[0]
+        tactic_handler = companion.split("def evalPrimalityTacNat", 1)[1].split(
+            "end Hex.PrimalityTactic", 1
+        )[0]
+        self.assertNotRegex(core, total_decision)
+        self.assertNotRegex(cert_handler, total_decision)
+        self.assertNotRegex(tactic_handler, total_decision)
 
 
 if __name__ == "__main__":
