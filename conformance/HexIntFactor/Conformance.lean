@@ -477,11 +477,12 @@ private def retainedCertInput : Nat := starvedInput * 1000037
       failure.stop == .incomplete && failure.attempts == 0
   | .ok _ => false)
 
--- A later stopped continuation retains the successful-part subtotal that the
--- public pair-returning API intentionally omits.
+-- Table children close at residual depth zero, so the later stopped
+-- continuation includes their witness work in the successful-part subtotal
+-- that the public pair-returning API intentionally omits.
 #guard (match factorPowerWithRoute? 2 128 .minus (Rand.ofSeed 1) (fuel := 3) with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 17
+      failure.stop == .incomplete && failure.attempts == 21
   | .ok _ => false)
 
 -- Degenerate split input uses the ordinary dispatcher, and the route tag makes
