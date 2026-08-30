@@ -169,8 +169,14 @@ open Hex.Nat
 -- Counted compatibility forms retain successful randomized work without
 -- changing the ordinary pair-returning entry points.
 #guard (match Internal.rhoFactorCounted? 9 (Hex.Rand.ofSeed 2) 8 with
-  | .ok success => success.factor == 3 && success.attempts == 4
+  | .ok success =>
+      success.factor == 3 && success.attempts == 4 &&
+        success.rand == ((Hex.Rand.ofSeed 2).words 12).2
   | .error _ => false)
+
+-- Trial extraction is linear in the valuation. A duplicated recursive call
+-- tree cannot complete this high-power route within conformance's budget.
+#guard Hex.Nat.Internal.trialExtractTrace 2 (2 ^ 128) == (128, 1)
 
 #guard (match Internal.primeCertCounted? 1000003
     (Hex.Rand.ofSeed 3) 16 with
