@@ -20,7 +20,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 |---|---|---|---|
 | `runQAdjoinAddLadder` | parametric | `QAdjoin` addition in `ℚ(2^(1/n))`, both operands dense and all-nonzero | `n` |
 | `runQAdjoinMulLadder` | parametric | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
-| `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * n * (Nat.log2 (n + 2) + 1)` |
+| `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * (n + 7)` |
 | `runAddEliminantLadder` | parametric | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
 | `runLazyAddLadder` | fixed | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | 12 s ceiling |
 | `runExactLadder` | fixed | `AlgebraicRoot.exact?` on the first certified root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)` | 200 ms whole-child ceiling, zero grace |
@@ -222,7 +222,7 @@ The addition and multiplication ladders consequently cover six doublings,
 `n = 4, 8, 16, 32, 64, 128`. Degree 128 is a common controlled domain whose
 timed multiplication remains in the millisecond regime. The inversion ladder
 covers `n = 4, 8, 16, 32, 48, 64, 96`; its ceiling is set by the timed extended
-gcd, which takes about 3.0 s there: a useful upper asymptotic rung that
+gcd, which takes about 96 ms there: a useful upper asymptotic rung that
 remains practical to sample. These are scientific operation ranges, not
 fixture-wallclock caps.
 
@@ -267,11 +267,12 @@ library as a whole.
 
 ## Verdicts
 
-Five ladders use **mode 1, two-sided parametric**:
+Six ladders use **mode 1, two-sided parametric**:
 `runQAdjoinAddLadder`, `runQAdjoinMulLadder`, `runAddEliminantLadder`,
-`runCommonPresentationLadder`, and `runMergeRootListLadder`. Their adjacent
+`runQAdjoinInvLadder`, `runCommonPresentationLadder`, and
+`runMergeRootListLadder`. Their adjacent
 derivations give the intended algorithms' expected scaling on the controlled
-families before measurement, and all five pass.
+families before measurement, and all six pass.
 
 `runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
@@ -282,17 +283,10 @@ not apply, identify their canonical inputs, and set 12 s, 200 ms, 2 s, 1.1 s,
 This deliberately gives up asymptotic detection for those operations without
 changing their per-library worst-case contracts.
 
-The remaining parametric ladder blocks Phase 4:
-
-- `runQAdjoinInvLadder` is faster than its conservative worst-case bit-cost
-  proxy. A tighter aggregate family model has not yet been derived, and the
-  proxy is not supplied as a published, cited mode-2 bound covering the
-  profiled chain. It is therefore mode 4, tracked by #9743.
 The other 35 fixed registrations are canonical API, comparator, and protocol
 checks. They make no complexity claim, have no mode, and do not replace the
-twelve performance registrations. The unresolved registration remains
-tracked by the issue in §Concerns, so no model is fitted and no historical
-parametric failure is reclassified as a pass.
+twelve performance registrations. Historical parametric failures remain
+diagnostic evidence and are not reclassified as passes.
 
 Authoritative verdict per ladder, and which committed run it comes from. The
 runs below give the measurements; this table says which one counts.
@@ -301,7 +295,7 @@ runs below give the measurements; this table says which one counts.
 |---|---|---:|---|
 | `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
-| `runQAdjoinInvLadder` | inconclusive, faster | **-0.556** | normalized inversion |
+| `runQAdjoinInvLadder` | **consistent** | **-0.105** | aggregate inversion |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
@@ -312,26 +306,27 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
 
-All five parametric registrations receiving a statistically matching
-two-sided harness verdict have independently derived mode-1 claims. The former
+All six parametric registrations receiving a statistically matching
+two-sided harness verdict have models derived independently of timed results. The former
 `runQAdjoinRootsLadder` sweep matched a withdrawn heuristic isolation proxy;
 its result remains diagnostic history and the fixed registration supersedes
-it. `runQAdjoinInvLadder` and the three archived exactification sweeps are
-faster than declared; the latter remain diagnostic evidence for why no
-parametric model was retained, while their current fixed registrations pass.
+it. The former `runQAdjoinInvLadder` declaration and the three archived
+exactification sweeps were faster than declared; the latter remain diagnostic
+evidence for why no parametric model was retained, while their current fixed
+registrations pass.
 None of those classifications is a measurement artefact, and §Profile
 identifies the controlling phases.
-For the normalized inversion chain specifically, the former
-slower-than-declared defect is fixed. The single-root fixture now carries the
-normalized chain through degree 96; its remaining faster-than-declared result
-shows that the corrected `n³ log n` worst-case bit-cost bound is conservative
-on this family and is tracked by issue #9743.
+For the normalized inversion chain specifically, the single-root fixture now
+carries the repaired implementation through degree 96. Stepwise chain
+instrumentation supplies the tighter aggregate finite-word model that passes
+below; the SPEC separately retains the conservative `O(n³ log n)` worst-case
+bit-cost bound.
 
 Eight historical parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
 fixture-corrected run plus the single-root run that supersede six of those,
 the exactification audit covering its two new phase ladders and replacement
-family, the normalized inversion rerun, and the root-merge fix run. Both repaired root ladders extend to the
+family, the aggregate inversion rerun, and the root-merge fix run. Both repaired root ladders extend to the
 two-octave range needed for `fitSlope`. §Artefact traceability
 records the source commit and SHA-256 of each, and says which supersedes
 which. The isolation fixed exports supersede the parametric verdicts for
@@ -416,8 +411,9 @@ more clearly over the repaired range: the extended ladder strengthens the
 existing #9721 finding rather than attributing the former ceiling to its
 fixture.
 
-The **normalized inversion run** measures the repaired `QAdjoin.inv` at the
-same scientific schedule and five outer trials:
+The **aggregate inversion run** measures the repaired `QAdjoin.inv` at the
+same scientific schedule and five outer trials. The export path is retained
+from the normalized-chain repair whose timings this run supersedes:
 
 ```sh
 .lake/build/bin/hexnumberfield_bench run \
@@ -426,29 +422,61 @@ same scientific schedule and five outer trials:
   --export-file reports/bench-results/hex-number-field-qadjoin-inv-normalized.json
 ```
 
-The old declaration charged `n² log n`, as though the chain's rational
-coefficient size contributed only the Brown-chain logarithmic proxy. Monic
-normalization puts numerator and denominator bit lengths under the standard
-`O(n log n)` subresultant/Hadamard bound. Multiplying that linear-limb proxy by
-the chain's `O(n²)` rational coefficient operations gives the corrected
-`n³ log n` bit-cost model.
+The untimed diagnostic replays the exact `xgcdLeftMonicAux` recurrence on the
+same prepared input and emits one row per nonzero divisor:
+
+```sh
+.lake/build/bin/hexnumberfield_bench qadjoin-inv-chain-stats \
+  > reports/bench-results/hex-number-field-qadjoin-inv-chain.csv
+```
+
+Every nonterminal step drops the remainder degree by one. The diagnostic
+records separate peak numerator and denominator widths for the normalized
+divisor and cofactor, plus the next-remainder degree and an explicit zero flag.
+The two work columns are linear-width proxies over normalization, division,
+the one-sided Bezout product, and subtraction; `limb_work` applies the same
+charge after rounding each numerator and denominator to 64-bit runtime limbs.
+They do not model the gcd inside `Rat.normalize` or the superlinear cost of
+large-integer arithmetic.
+
+| n | nonzero steps | peak numerator bits | peak denominator bits | bit work / `n³` | limb work | limb work / `n²(n+7)` |
+|---:|---:|---:|---:|---:|---:|---:|
+| 4 | 5 | 16 | 16 | 50.750 | 345 | 1.960 |
+| 8 | 9 | 57 | 56 | 71.014 | 1,372 | 1.429 |
+| 16 | 17 | 118 | 121 | 78.527 | 7,693 | 1.307 |
+| 32 | 33 | 282 | 281 | 90.424 | 56,086 | 1.404 |
+| 48 | 49 | 426 | 429 | 91.279 | 179,136 | 1.414 |
+| 64 | 65 | 622 | 625 | 96.435 | 434,458 | 1.494 |
+| 96 | 97 | 926 | 922 | 89.383 | 1,319,965 | 1.391 |
+
+The controlled fixture's recorded widths are linear in `n`, so its `Θ(n²)`
+coefficient slots give a cubic linear-bit aggregate. Rounding each numerator
+and denominator up to a limb adds a quadratic lower-order term, giving the
+form `A*n³ + B*n²`. A least-squares decomposition of the deterministic counts
+over the verdict region `n = 8 .. 96` gives `A = 1.424`, `B = 9.563`, and
+`B/A = 6.72`; rounding that dimensionless transition yields the registered
+proxy `n²(n+7)`. Its limb-count residual slope is `+0.014` over that region
+and `-0.067` with the leading rung included. This calibration uses the untimed
+operation trace, not benchmark timings. The general Hadamard peak is still
+`O(n log n)` bits, so charging every one of the `O(n²)` coefficient operations
+that peak retains the separate conservative `O(n³ log n)` worst-case bound in
+the SPEC.
 
 | target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
 |---|---|---|---:|---|---:|
-| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | inconclusive, faster | **-0.556** | 15.532..64.047 | 2.55% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | **consistent** | **-0.105** | 101.594..136.841 | 0.99% |
 
-All seven rungs have five-trial spread at or below 2.55%. Median time is
-708.2 µs at `n = 16`, 4.686 ms at `n = 32`, 32.519 ms at `n = 64`, and
-96.194 ms at `n = 96`: respectively 2.09×, 4.31×, 14.73×, and 31.04× faster
+All seven rungs have five-trial spread at or below 0.99%. Median time is
+712.0 µs at `n = 16`, 4.683 ms at `n = 32`, 32.488 ms at `n = 64`, and
+96.438 ms at `n = 96`: respectively 2.08×, 4.31×, 14.74×, and 30.96× faster
 than the shipped-chain single-root medians. At `n = 4`, normalization's extra
-scale passes instead cost 23.58 µs versus 20.24 µs, a 16.5% regression; it is
+scale passes cost 23.79 µs versus 20.24 µs, a 17.5% regression; it is
 already 1.07× faster at `n = 8`. The result hashes match the superseded run at
 all seven rungs, confirming identical reduced inverses. Against the complexity
-declaration, the defect's direction has therefore reversed: the normalized
-chain lies inside the corrected worst-case upper bound rather than growing
-faster than its declaration. Issue #9743 tracks the remaining conservative
-gap without widening tolerance. This does not update the historical PARI ratio
-curve below, which needs a paired comparator rerun.
+declaration, the normalized chain is now consistent with the operation-trace-
+calibrated aggregate finite-word proxy. The slope tolerance remains unchanged.
+This does not update the historical PARI ratio curve below, which needs a
+paired comparator rerun.
 
 The **exactification audit run** measures the replacement end-to-end family
 at five outer trials and both newly separated certification phases at three:
@@ -1159,7 +1187,8 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-exactification-fixed.json`](bench-results/hex-number-field-exactification-fixed.json) | `b42dcf205`, clean tree | idle | `be2630c422f5da5defccffdc57a7087d05edfd3cbba7882dd81e119d4e978e8c` |
 | [`bench-results/hex-number-field-exactification-mode3-2df51cf4b.json`](bench-results/hex-number-field-exactification-mode3-2df51cf4b.json) | `2df51cf4b`, clean tree | idle | `d67c1e2993f0765153f4f15781eda8527c1a9138b8aa427365e69e327e4cecce` |
 | [`bench-results/hex-number-field-phase4-scientific-root-merge-fix.json`](bench-results/hex-number-field-phase4-scientific-root-merge-fix.json) | `8b6feb49c`, clean tree | idle | `c0dde1aed6c03d25871d5b846b62d70e864e525e48b50b8422899d66760f99ae` |
-| [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `cbb21d6eb`, clean tree | idle (1-minute load average 3.67/96) | `1783e6ec8c841ef39680c32fdea53058d0e241f010dbdf04d5e9a15efb061fce` |
+| [`bench-results/hex-number-field-qadjoin-inv-chain.csv`](bench-results/hex-number-field-qadjoin-inv-chain.csv) | `e3c3a03cb`, deterministic untimed replay | idle | `be5a0d89cc09877de5a58b54c085e671e4dd5efd4498e729762e1f4451b5179b` |
+| [`bench-results/hex-number-field-qadjoin-inv-normalized.json`](bench-results/hex-number-field-qadjoin-inv-normalized.json) | `e3c3a03cb`, clean tree; overwrites the #9721 normalized-run artefact | idle | `73783f7c455f225d25fc5ff13e0889cd0cc31c64a5ef452e7267e65a86be4080` |
 | [`bench-results/hex-number-field-lazy-add-fixed.json`](bench-results/hex-number-field-lazy-add-fixed.json) | `768afcd35`, clean tree | idle | `1cdd1336923271709affc22c45bf178ef6cb73ec4080b796e312fd0e06a43048` |
 | [`bench-results/hex-number-field-qadjoin-roots-fixed.json`](bench-results/hex-number-field-qadjoin-roots-fixed.json) | `18a7a33d5`, clean tree | loaded (1-minute load average 61.25/96) | `8d6896cd7e48d4b59b6636f7b77786a38ce85820e9e418ba6b6386c40ffbee16` |
 | [`bench-results/hex-number-field-algebraic-roots-fixed.json`](bench-results/hex-number-field-algebraic-roots-fixed.json) | `794f0ddf2`, clean tree | idle | `f5205917ef6c5095bbbaa820158e159472fb85752b7292d4b80f26b0cbb89c23` |
@@ -1206,18 +1235,11 @@ the bench source rather than by a seed.
 
 `libraries.yml` keeps `HexNumberField` at `done_through: 3`. The `QAdjoin.inv`
 coefficient-swell concern is resolved by the monic-normalized chain and
-corrected bit-cost model recorded in §Verdicts. The exactification and
+aggregate expected-work model recorded in §Verdicts; its conservative
+worst-case bit-cost bound remains in the SPEC. The exactification and
 QAdjoin-roots model concerns are resolved by their fixed registrations and
 profiles above. The remaining
 Phase-4 exit criteria that do not pass are each tracked:
-- **Normalized inversion stays below its worst-case bit-cost declaration.**
-  The degree-96 single-root run returns `beta = -0.556` against `n³ log n`
-  with spreads at or below 2.55%. The declaration charges every rational
-  coefficient operation the chain's peak Hadamard bit length, so a tighter
-  aggregate model needs stepwise coefficient-size evidence rather than a
-  wider tolerance.
-  https://github.com/kim-em/hex-dev/issues/9743 — bench-found: normalized
-  QAdjoin.inv stays below its conservative bit-cost model.
 - **The advertised API surface is not fully registered.** Roughly thirty
   advertised compiled operations have no `setup_benchmark` or
   `setup_fixed_benchmark`, and `Roots.normEliminant` and `Roots.evalEliminant`
