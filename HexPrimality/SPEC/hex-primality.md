@@ -1010,6 +1010,38 @@ reports an unsolved goal rather than silently restoring Mathlib's total trial
 decision. The opt-in erasure is local to the module and does not persist when
 that module is imported.
 
+The negative policy is gated by a 10-second absolute fresh-module budget on
+the designated benchmark host. Six balanced samples per row gave these maximum
+raw candidate wall times; the raw bound includes Lake traversal, imports,
+compiled search, proper-factor validation, proof construction, and elaboration.
+
+| case | bits | outcome | maximum wall time |
+|---|---:|---|---:|
+| first certificate-tier composite | 25 | factor found | 3.137 s |
+| strong pseudoprime | 32 | factor found | 2.235 s |
+| balanced semiprime | 64 | factor found | 2.286 s |
+| `2^64 + 1` | 65 | factor found | 2.423 s |
+| even ceiling input | 512 | parity factor found | 2.131 s |
+| odd ceiling input with a 7-bit factor | 512 | factor found | 2.435 s |
+| balanced ceiling semiprime | 512 | exhausted | 3.318 s |
+
+The release contract is absolute-only: import-subtracted deltas remain in the
+record as diagnostics and need not resolve above the null envelope. The two
+null controls had robust spread/build ratios of 12.51% and 2.69%. All rows passed
+the absolute budget, and the designated-host protocol recorded no exceptions,
+violations, or exhausted sample pairs. The committed record is
+`reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json`.
+It reproduces with:
+
+```bash
+python3 scripts/bench/primality_negative_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --warm-timeout 600 --max-pair-retries 32 \
+  --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
+```
+
+`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
+
 The `2^24` boundary comes from fresh one-goal modules on the pinned
 toolchain. Each arm was a fresh importing module containing only one
 `Nat.Prime` example. The trial arm used the ordinary Mathlib registration;
