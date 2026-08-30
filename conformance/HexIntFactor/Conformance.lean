@@ -225,6 +225,25 @@ private def iteratedPower : Nat := 10009 ^ 8
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
+-- Every terminal gcd outcome crosses the same counted boundary. A call costs
+-- one semantic attempt and deterministic stage 1 preserves the supplied state.
+private def pMinusOneFound :=
+  pMinusOneFactorCounted 299 2 5 (Rand.ofSeed 11)
+private def pMinusOneMiss :=
+  pMinusOneFactorCounted 25 2 2 (Rand.ofSeed 12)
+private def pMinusOneWhole :=
+  pMinusOneFactorCounted 15 4 2 (Rand.ofSeed 13)
+
+#guard pMinusOneFound.result == .factor 13
+#guard pMinusOneFound.attempts == 1
+#guard pMinusOneFound.rand == Rand.ofSeed 11
+#guard pMinusOneMiss.result == .noFactor
+#guard pMinusOneMiss.attempts == 1
+#guard pMinusOneMiss.rand == Rand.ofSeed 12
+#guard pMinusOneWhole.result == .whole
+#guard pMinusOneWhole.attempts == 1
+#guard pMinusOneWhole.rand == Rand.ofSeed 13
+
 #guard smoothBoundCap == 9999
 #guard smoothBoundCap < primeTableBound
 #guard smoothBound (primeTableBound + 1000) == smoothBoundCap
@@ -242,6 +261,11 @@ example {n base bound d : Nat}
     (h : pMinusOneFactor n base bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n :=
   pMinusOneFactor_spec h
+
+example {n base bound d : Nat} {r : Rand}
+    (h : (pMinusOneFactorCounted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneFactorCounted_spec h
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
@@ -331,6 +355,7 @@ private def smoothRetryTrace : Hex.Nat.Internal.SmoothSearch :=
   .ecm 242 64 .whole]
 #guard smoothRetryTrace.factor.isNone
 #guard smoothRetryTrace.events.length == Hex.Nat.Internal.smoothAttemptCap
+#guard smoothRetryTrace.attempts == smoothRetryTrace.events.length
 #guard smoothRetryTrace.rand == ((Rand.ofSeed 0).words 4).2
 #guard smoothRetryTrace ==
   Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
@@ -342,6 +367,7 @@ private def smoothPMinusOneTrace : Hex.Nat.Internal.SmoothSearch :=
 
 #guard smoothPMinusOneTrace.events == [.pMinusOne 2 64 (.factor 81)]
 #guard smoothPMinusOneTrace.factor == some 81
+#guard smoothPMinusOneTrace.attempts == 1
 #guard smoothPMinusOneTrace.rand == Rand.ofSeed 9
 
 private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
@@ -354,6 +380,7 @@ private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
   .pMinusOne 5 8 .noFactor,
   .ecm 181 64 (.factor 19)]
 #guard smoothEcmTrace.factor == some 19
+#guard smoothEcmTrace.attempts == smoothEcmTrace.events.length
 #guard smoothEcmTrace.rand == (Rand.ofSeed 0).next.2
 
 private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
@@ -361,6 +388,7 @@ private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
 
 #guard smoothZeroFuelTrace.events.isEmpty
 #guard smoothZeroFuelTrace.factor.isNone
+#guard smoothZeroFuelTrace.attempts == 0
 #guard smoothZeroFuelTrace.rand == Rand.ofSeed 4
 
 -- A smaller budget truncates the deterministic p−1 phase itself. It neither
@@ -373,6 +401,7 @@ private def smoothThreeFuelTrace : Hex.Nat.Internal.SmoothSearch :=
   .pMinusOne 3 8 .whole,
   .pMinusOne 5 2 .noFactor]
 #guard smoothThreeFuelTrace.factor.isNone
+#guard smoothThreeFuelTrace.attempts == 3
 #guard smoothThreeFuelTrace.events.length == 3
 #guard smoothThreeFuelTrace.rand == Rand.ofSeed 4
 

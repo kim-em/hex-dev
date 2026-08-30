@@ -19,6 +19,7 @@ Covered operations:
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
 - `Hex.Nat.primeCert?`
+- counted Pollard `p - 1` integration in certificate partial factorization
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
 - trial-division extraction route instrumentation
@@ -43,11 +44,40 @@ Covered edge cases:
   must not
 - base-specific strong pseudoprimes, which catch a truncated base list
 - prime squares and semiprimes with a factor just below the square root
+- a p−1-friendly certificate route with rho disabled
 - the certificate tier at `2^31 - 1` (deterministic: `n - 1` factors over
   the committed table)
 -/
 
 open Hex.Nat
+
+-- The owner library pins all three terminal gcd outcomes at the shared
+-- counted boundary. Each call costs one attempt and preserves `Rand`.
+private def pMinusOneFound :=
+  pMinusOneStage1Counted 299 2 5 (Hex.Rand.ofSeed 11)
+private def pMinusOneMiss :=
+  pMinusOneStage1Counted 25 2 2 (Hex.Rand.ofSeed 12)
+private def pMinusOneWhole :=
+  pMinusOneStage1Counted 15 4 2 (Hex.Rand.ofSeed 13)
+
+#guard pMinusOneFound.result == .factor 13
+#guard pMinusOneFound.attempts == 1
+#guard pMinusOneFound.rand == Hex.Rand.ofSeed 11
+#guard pMinusOneMiss.result == .noFactor
+#guard pMinusOneMiss.attempts == 1
+#guard pMinusOneMiss.rand == Hex.Rand.ofSeed 12
+#guard pMinusOneWhole.result == .whole
+#guard pMinusOneWhole.attempts == 1
+#guard pMinusOneWhole.rand == Hex.Rand.ofSeed 13
+
+#guard smoothBoundCap == 9999
+#guard smoothBoundCap < primeTableBound
+#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+
+example {n base bound d : Nat} {r : Hex.Rand}
+    (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneStage1Counted_spec h
 
 -- Decision spot values.
 /-- info: true -/
@@ -112,6 +142,15 @@ open Hex.Nat
 #guard (match primeCert? 2147483649 (Hex.Rand.ofSeed 0) 8 with
         | .error f => f.stop == .composite
         | .ok _ => false)
+
+-- Table division leaves `100549 · 100049`; base-2 stage 1 at bound 64
+-- splits it even with rho disabled. Acceptance still requires replay by the
+-- ordinary certificate checker.
+#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 20119653803
+    (Hex.Rand.ofSeed 17) (defaultPrimeFuel 20119653803) with
+  | .ok success =>
+      success.cert.raw.subject == 20119653803 && checkPrime success.cert.raw
+  | .error _ => false)
 
 -- Fixed verdict tiers run before recursive certificate fuel and do not consume
 -- attempts or random state. A prime beyond the table still needs construction.
@@ -228,11 +267,11 @@ set_option maxRecDepth 10000 in
 
 -- This strong pseudoprime passes the fixed Miller--Rabin screen, then its
 -- first certificate witness search consumes all 32 candidates. The retained
--- total also includes the preceding four partial-factor rho restarts.
+-- total also includes the preceding p−1 call and four rho restarts.
 #guard (match Internal.primeCertCounted? 3317044064679887385961981
     (Hex.Rand.ofSeed 0) 2 with
   | .error failure =>
-      failure.stop == .exhausted && failure.attempts == 36
+      failure.stop == .exhausted && failure.attempts == 37
   | .ok _ => false)
 
 -- The elaborator's explicit rho allocation reaches a deterministic bounded
@@ -241,7 +280,7 @@ set_option maxRecDepth 10000 in
     9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
     (Hex.Rand.ofSeed 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177)
     (defaultPrimeFuel 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177) with
-  | .ok success => success.attempts == 31
+  | .ok success => success.attempts == 32
   | .error _ => false)
 
 -- The same allocation fails promptly when both bounded restarts miss.
@@ -250,7 +289,7 @@ set_option maxRecDepth 10000 in
     (Hex.Rand.ofSeed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123)
     (defaultPrimeFuel 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123) with
   | .error failure =>
-      failure.stop == .exhausted && failure.attempts == 11
+      failure.stop == .exhausted && failure.attempts == 12
   | .ok _ => false)
 
 -- Routine gcds are genuinely batched: this fixed restart performs 95
@@ -394,7 +433,7 @@ example : True := by
 example : Hex.Nat.Prime 561 := primality 561
 
 /--
-error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 11 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
+error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 12 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 :=
