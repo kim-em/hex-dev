@@ -282,10 +282,34 @@ private def rhoRecoveryTrace : Hex.Nat.Internal.RhoTrace :=
 #guard (primesIn 99950 100050).toList.all fun p =>
   isTablePrime p == decide (p < 100000)
 
--- Next-prime search across the table edge.
-#guard (match nextPrime? 99991 (Hex.Rand.ofSeed 0) 64 with
-        | .ok (p, _) => p == 100003
-        | .error _ => false)
+-- Next-prime success returns the least prime across the table, trial, and
+-- certificate tiers.
+#guard (match nextPrime? 90 (Hex.Rand.ofSeed 0) 8 with
+  | .ok (p, _) => p == 97
+  | .error _ => false)
+#guard (match nextPrime? 100000 (Hex.Rand.ofSeed 0) 4 with
+  | .ok (p, _) => p == 100003
+  | .error _ => false)
+#guard (match nextPrime? 10000000 (Hex.Rand.ofSeed 0) 32 with
+  | .ok (p, _) => p == 10000019
+  | .error _ => false)
+
+-- Candidate-window exhaustion counts every proved-composite candidate but no
+-- certificate attempts, and deterministic decisions leave the seed unchanged.
+#guard (match nextPrime? 90 (Hex.Rand.ofSeed 0) 6 with
+  | .error failure =>
+      failure.rejectedCandidates == 6 && failure.certAttempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 0
+  | .ok _ => false)
+
+-- The first candidate is undecided after nonzero randomized work. Its
+-- certificate attempts and exact advanced state are retained, but it is not
+-- counted as conclusively rejected.
+#guard (match nextPrime? 1000000006 (Hex.Rand.ofSeed 3) 2 with
+  | .error failure =>
+      failure.rejectedCandidates == 0 && failure.certAttempts == 7 &&
+        failure.rand == ((Hex.Rand.ofSeed 3).words 7).2
+  | .ok _ => false)
 
 -- Sieve representation and a complete small-bound comparison with the
 -- independent trial-division decision route.
