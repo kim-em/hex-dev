@@ -221,6 +221,8 @@ from their represented leaf blocks.
 
 {docstring Hex.DensePoly.ProductTree.build}
 
+{docstring Hex.DensePoly.ProductTree.level?}
+
 {docstring Hex.DensePoly.ProductTree.root}
 
 {docstring Hex.DensePoly.ProductTree.nodeProduct?}

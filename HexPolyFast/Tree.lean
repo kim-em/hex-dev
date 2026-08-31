@@ -184,7 +184,8 @@ def levelCount (tree : ProductTree R) : Nat :=
 /-- Lawful multiplication plan used to build the tree. -/
 def plan (tree : ProductTree R) : MulPlan R := tree.planData
 
-/-- A balanced level reconstructed from the leaves, from leaves upward. -/
+/-- A balanced level reconstructed from the leaves, from leaves upward. The
+empty tree has the singleton level `[1]`. -/
 def level? (tree : ProductTree R) (i : Nat) : Option (Array (DensePoly R)) :=
   if i < tree.levelCount then
     some (buildLevel tree.planData i tree.leafData.toList |>.toArray)

@@ -414,8 +414,8 @@ leaf divisor. The empty tree succeeds with an empty result.
 `EvalPlan` stores the point sequence and one indexed point-product tree carrying
 the reciprocal plans needed by evaluation and interpolation. Reusing it for
 another polynomial does not rebuild products or reciprocals. `treeView`
-explicitly rebuilds the separate level-oriented `ProductTree` observation when
-that representation is needed:
+explicitly rebuilds the separate leaf-and-root `ProductTree` observation when
+it is needed; its balanced levels remain on-demand observations:
 
 ```lean
 def EvalPlan.build (mul : MulPlan R) (points : Array R) : EvalPlan R
@@ -427,13 +427,14 @@ theorem EvalPlan.get_eval (plan : EvalPlan R) (f) (i) (hi : i < plan.size) :
 ```
 
 The indexed point tree and general remainder tree deliberately remain separate.
-They share the count-balanced split and sibling-subtree capacity calculation,
-but their proof payloads differ: the point tree carries dependent point and
-product indices plus evaluation-at-root witnesses, while the general tree
-accepts arbitrary monic leaves and carries divisibility and well-formedness
-witnesses used by `RemainderSpec`. A common node representation would either
-lose those static invariants or require a more complicated abstraction without
-sharing their traversals.
+They share the count-balanced split and compute the same sibling-subtree
+capacity for linear point leaves, using point counts in the indexed tree and
+leaf-degree sums in the general tree. Their proof payloads differ: the point
+tree carries dependent point and product indices plus evaluation-at-root
+witnesses, while the general tree accepts arbitrary monic leaves and carries
+divisibility and well-formedness witnesses used by `RemainderSpec`. A common
+node representation would either lose those static invariants or require a
+more complicated abstraction without sharing their traversals.
 
 The cached remainder-tree path applies when `f.size <= plan.size`; this is the
 finite capacity determined when the plan is built. `EvalPlan.eval` remains

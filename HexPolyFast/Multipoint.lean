@@ -235,8 +235,8 @@ theorem cachedNode_build_isSome (mul : MulPlan R) (points : Array R)
   simp [cachedNode, mulPlan, build, hone, hne]
   rfl
 
-/-- Rebuild the observational product-tree view. Constructing an evaluation
-plan does not eagerly build this redundant level representation. -/
+/-- Rebuild the observational leaf-and-root product-tree view. Constructing an
+evaluation plan does not eagerly recompute this redundant product tree. -/
 def treeView (plan : EvalPlan R) : ProductTree R :=
   ProductTree.build plan.mulPlan (plan.points.map pointFactor)
 
