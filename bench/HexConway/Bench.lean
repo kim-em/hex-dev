@@ -13,39 +13,31 @@ Benchmark registrations for `hex-conway`.
 This Phase 4 slice covers the two implemented tiers: Tier 1 committed-table
 surfaces (imported Luebeck lookup and fixed irreducibility verification of
 selected entries) and Tier 2 divisor compatibility. It does not benchmark
-Tier 3 on-demand Conway search, which is unimplemented, nor Tier 2
-primitivity, which is likewise unimplemented.
+Tier 3 on-demand Conway search, which is unimplemented. Tier 2 primitivity is
+implemented but is not a separate advertised input family in this Phase 4
+slice.
 
 Scientific registrations:
 
-* `runLuebeckConwayPolynomialLookupChecksum`: look up every committed Luebeck
-  table key in the current Tier 1 slice, using the one-based table ordinal as
-  the benchmark parameter.
+* `runLuebeckConwayPolynomialLookupChecksum`: mode-1 affine lookup and checksum
+  over every committed Luebeck table key, using the one-based table ordinal to
+  recover the selected entry's degree.
 * `runConwayPolySupported_2_1Checksum`: fixed canonical measurement for the
   `SupportedEntry` recovery path, taken at `C(2, 1)`. Recovery itself reads the
   stored polynomial out of the witness in constant time, but the target also
   checksums the result, and that traversal is linear in the degree, so this
   measurement stands for `C(2, 1)` rather than for the committed table.
-* `runTier1Irreducibility_2_1Checksum`: Rabin irreducibility verification for
-  the canonical imported table entry `C(2, 1)`.
-* `runTier1Irreducibility_2_6Checksum`: Rabin irreducibility verification for
-  the low-prime higher-degree imported table entry `C(2, 6)`.
-* `runTier1Irreducibility_3_6Checksum`: Rabin irreducibility verification for
-  the odd-prime higher-degree imported table entry `C(3, 6)`.
-* `runTier1Irreducibility_5_6Checksum`: Rabin irreducibility verification for
-  the odd-prime higher-degree imported table entry `C(5, 6)`.
-* `runTier1Irreducibility_7_6Checksum`: Rabin irreducibility verification for
-  the odd-prime higher-degree imported table entry `C(7, 6)`.
-* `runTier1Irreducibility_11_6Checksum`: Rabin irreducibility verification for
-  the odd-prime higher-degree imported table entry `C(11, 6)`.
-* `runTier1Irreducibility_13_6Checksum`: Rabin irreducibility verification for
-  the odd-prime higher-degree imported table entry `C(13, 6)`.
-* `runTier2Compat_2_3_6Checksum`, `runTier2Compat_13_1_6Checksum`,
-  `runTier2Compat_2_4_8Checksum`: Tier 2 divisor-compatibility verification,
-  at the binary mid-degree pair, the largest odd-prime pair, and the deepest
-  binary pair respectively. Each runs the norm construction (`n / m`
-  Frobenius steps, one modular composition apiece) and then evaluates the
-  smaller Conway polynomial at the result.
+* `runTier1Irreducibility_13_6Checksum`: mode-3 Rabin irreducibility
+  verification for the hardest committed Tier 1 entry, `C(13, 6)`.
+* `runTier2Compat_13_1_6Checksum`: mode-3 divisor compatibility for the
+  deepest largest-prime committed pair, `C(13, 1)` inside `C(13, 6)`.
+
+The mode-3 ceilings are enabled only by `HEXCONWAY_ENFORCE_BUDGETS=1` during
+scientific runs, so the CI smoke gate never asserts hosted-runner timing. The
+remaining fixed Tier 1 and Tier 2 registrations are correctness/hash
+anchors for selected entries and make no complexity claim. The headline report
+records the failed controlled parameter ladders that rule out stronger modes
+for the two performance-evidence registrations.
 
 Fixed registrations are wrapped as `Unit → IO α` so the harness exercises
 them per-call rather than measuring a closed compile-time-folded constant
@@ -167,6 +159,24 @@ private initialize tier1_13_6Ref : IO.Ref (MonicPoly 13) ←
   IO.mkRef ⟨Conway.luebeckConwayPolynomial_13_6,
             Conway.luebeckConwayPolynomial_13_6_monic⟩
 
+/- `maxSecondsPerCall` bounds the whole child process, including startup. A
+scientific mode-3 run sets `HEXCONWAY_ENFORCE_BUDGETS=1`; only then does this
+wrapper time the operation body and throw on a ceiling violation. Throwing
+checks every auto-tuned invocation, including iterations whose result the
+harness discards. The CI `verify` smoke gate leaves the variable unset and
+therefore does not assert timing on a noisy hosted runner. -/
+def withBudget (name : String) (ceilingNanos : Nat) (work : IO Bool) : IO Bool := do
+  if (← IO.getEnv "HEXCONWAY_ENFORCE_BUDGETS") == some "1" then
+    let start ← IO.monoNanosNow
+    let value ← work
+    let elapsed := (← IO.monoNanosNow) - start
+    if ceilingNanos < elapsed then
+      throw <| IO.userError
+        s!"{name} exceeded its {ceilingNanos} ns operation budget: {elapsed} ns"
+    return value
+  else
+    work
+
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
 def runTier1Irreducibility_2_1Checksum : Unit → IO Bool := fun () => do
   let mp ← tier1_2_1Ref.get
@@ -199,8 +209,9 @@ def runTier1Irreducibility_11_6Checksum : Unit → IO Bool := fun () => do
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(13, 6)`. -/
 def runTier1Irreducibility_13_6Checksum : Unit → IO Bool := fun () => do
-  let mp ← tier1_13_6Ref.get
-  return Berlekamp.rabinTest mp.poly mp.monic
+  withBudget "Tier 1 C(13, 6) irreducibility" 2_000_000 do
+    let mp ← tier1_13_6Ref.get
+    return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- One committed Tier 2 divisor pair, carried through an `IO.Ref` so the
 workload is not constant-folded. -/
@@ -250,8 +261,9 @@ def runTier2Compat_2_3_6Checksum : Unit → IO Bool := fun () => do
 `C(13, 1)` inside `C(13, 6)`. This is the deepest Frobenius chain in the
 committed table: six factors. -/
 def runTier2Compat_13_1_6Checksum : Unit → IO Bool := fun () => do
-  let cp ← compat_13_1_6Ref.get
-  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
+  withBudget "Tier 2 C(13, 1) in C(13, 6) compatibility" 1_000_000 do
+    let cp ← compat_13_1_6Ref.get
+    return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
 /-- Benchmark target: Tier 2 compatibility for the deepest binary pair,
 `C(2, 4)` inside `C(2, 8)`. -/
@@ -259,17 +271,26 @@ def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Textbook model for finite committed-table lookup at a given table key. -/
-def tier1LookupComplexity (_ordinal : Nat) : Nat :=
-  1
+/-- Degree of the committed entry selected by a one-based table ordinal. -/
+def tier1LookupDegree (ordinal : Nat) : Nat :=
+  if ordinal ≤ 8 then ordinal
+  else if ordinal ≤ 14 then ordinal - 8
+  else if ordinal ≤ 20 then ordinal - 14
+  else if ordinal ≤ 26 then ordinal - 20
+  else if ordinal ≤ 32 then ordinal - 26
+  else ordinal - 32
+
+/-- Dispatch plus materialization and checksum cost for a committed lookup. -/
+def tier1LookupComplexity (ordinal : Nat) : Nat :=
+  tier1LookupDegree ordinal + 2
 
 /- Complexity derivation: Tier 1 is a committed finite database lookup keyed by
 `(p, n)`. The benchmark parameter is the one-based ordinal into the committed
-key set; for each key, the textbook table-lookup model performs one finite-key
-dispatch and materializes the stored coefficient row, whose degree is bounded
-by the committed Tier 1 slice in this registration. The model is constant in
-the ordinal — only `(p, n)` selects the row, never the ordinal directly — so
-the registration declares `tier1LookupComplexity _ := 1`. -/
+key set. A lookup performs one finite-key dispatch, materializes `n + 1`
+coefficients, and `checksumPoly` walks all `n + 1` coefficients. The linear
+walk dominates and the dispatch contributes a fixed term, so the registration
+uses the two-sided affine model `n + 2`, with `n` recovered from the generated
+table's six degree columns. -/
 setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     tier1LookupComplexity ordinal
   where {
@@ -283,7 +304,10 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     signalFloorMultiplier := 1.0
   }
 
-/- The fixed registrations declare an `expectedHash` so the harness fails on
+/- Except for the two canonical hard registrations annotated below, these
+fixed registrations are correctness/hash anchors, not Phase-4 performance
+evidence, and therefore have no complexity mode. They declare an
+`expectedHash` so the harness fails on
 silent value regressions: every Tier 1 irreducibility benchmark must report
 `true` (the Conway entries are irreducible by construction), and the
 `SupportedEntry` checksum must agree with its first observation. The
@@ -336,6 +360,9 @@ setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
+/- Mode 3: Rabin verification at `C(13, 6)`, the slowest committed Tier 1
+entry. The 2 ms operation-scoped ceiling and its measured-baseline margin are
+recorded in the headline report. Modes 1 and 2 are ruled out there as well. -/
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -348,6 +375,10 @@ setup_fixed_benchmark runTier2Compat_2_3_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
+/- Mode 3: compatibility of `C(13, 1)` inside `C(13, 6)`, the committed pair
+with both the largest prime and deepest six-factor Frobenius chain. The 1 ms
+operation-scoped ceiling and its measured-baseline margin are recorded in the
+headline report. Modes 1 and 2 are ruled out there as well. -/
 setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
