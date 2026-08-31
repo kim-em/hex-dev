@@ -219,7 +219,13 @@ hex-marshaling buffer grows linearly, so the ratio decays as the
 fixed-cost portion of the marshaling protocol amortises. The
 asymptote sits at the marshaling-throughput ratio of the protocol
 itself, not at the underlying `add` kernel ratio; this surface is
-not a useful audit signal for the `GF2Poly.add` implementation.
+not a useful audit signal for the `GF2Poly.add` implementation. This
+is an expected, non-gating protocol limitation: the rows preserve the
+comparator's declared addition scope, but are a protocol-throughput
+anchor rather than algorithmic performance evidence. Because NTL is
+an `informational` comparator and the remaining packed operations
+provide substantive same-input comparisons, binary framing is not a
+Phase-4 repair requirement.
 
 ### NTL `GF2X` `mul` vs `runMulChecksum`
 
@@ -340,6 +346,14 @@ NTL's `GCD` uses subquadratic GCD variants (half-gcd) that Hex's
 Euclidean reduction does not; the gap accelerates more sharply with
 `n` than `div` / `rem` because Hex's gcd inner loop iterates the
 linear-time long-division cost across `O(n)` reduction steps.
+
+Taken together, the `mul` / `div` / `rem` / `gcd` trends are expected,
+non-gating informational-comparator behavior. They match the SPEC's
+predeclared algorithm-class difference: NTL uses tuned Karatsuba/FFT,
+fast division, and subquadratic GCD kernels, while HexGF2 supplies the
+verified schoolbook packed-word surface. The divergence remains useful
+optimization orientation, but does not identify a defect in the
+evidence for the algorithms HexGF2 claims.
 
 ### Within-Lean packed-vs-generic comparison (retained from prior report)
 
@@ -491,32 +505,3 @@ domain — and the dominant timed work maps to the registered packed-gcd
 target.
 
 ## Concerns
-
-- [#9807](https://github.com/kim-em/hex-dev/issues/9807) tracks both the
-  expected-trend reclassification and the marshalling-dominated addition
-  evidence below.
-- NTL `GF2X` `mul` / `div` / `rem` / `gcd` show a diverging trend
-  against Hex `GF2Poly` across the eligible upper rungs of each
-  ladder. At `n = 2048` (mul) and `n = 1024–1536` (div / rem / gcd)
-  NTL spends `0.04x – 0.001x` of Hex's wall time on the same surface
-  after subtracting the 24 ms driver-startup overhead; the gap
-  accelerates with `n`. NTL's Karatsuba/FFT-tuned inner loops and
-  subquadratic GCD beat Hex's schoolbook packed-word reduction by
-  roughly two to three orders of magnitude in the upper eligible
-  range. This is the structural gap `SPEC/Libraries/hex-gf2.md
-  §"External comparators"`'s `informational` rationale named in
-  advance ("NTL ships hand-tuned word-level inner loops for
-  GF(2)[x]; Hex's `GF2Poly` is the verified packed-word algorithmic
-  surface"). The comparator is `informational`, so the divergence
-  does not produce a gating-goal verdict, but is recorded here per
-  `SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`
-  ("a diverging trend … is itself an audit-found Concern even when
-  the highest-rung verdict happens to pass").
-- The NTL `add` surface measurements are dominated by the
-  hex-marshaling round-trip cost across the bench-driver protocol;
-  NTL `GF2X` addition is sub-millisecond at every reported rung but
-  the wall time includes parsing the hex-encoded operand bytes
-  (linear in `n`). The reported `add` rows are kept for completeness;
-  they are not an audit signal for `GF2Poly.add`'s implementation.
-  A follow-up HO could rewire the driver to accept raw binary frames
-  instead of hex if the `add` comparator becomes load-bearing later.

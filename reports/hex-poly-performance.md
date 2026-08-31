@@ -179,8 +179,10 @@ because FLINT's algorithmic time is below the measurement floor at
 this density. This is the canonical
 `SPEC/benchmarking.md §"Comparator process overhead reported as
 algorithmic difference"` anti-pattern, recorded here in adjusted form
-rather than as a raw verdict; the comparator is `informational`, so
-no gating-goal verdict is required.
+rather than as a raw verdict. It is an expected, non-gating protocol
+limitation: the rows preserve the scope and measurement floor of the
+`informational` comparator, but do not support an algorithmic verdict
+and do not require comparator-protocol repair for Phase 4.
 
 ### FLINT `fmpz_poly.derivative` vs `runDerivativeChecksum`
 
@@ -221,10 +223,12 @@ follows the same monotone decline. Hex's `compose` uses Horner with
 schoolbook multiplication (`O(n⁴)` at the same dense composition
 inputs); FLINT composes via its own composition kernel and runs over
 ten times faster at `n = 64` (1.6 s vs 346 ms). This adverse trend
-is filed as the first Concern below — it does not change the
-`informational` classification, but it is the kind of structural gap
-the SPEC's `informational` rationale ("Hex schoolbook with declared
-Karatsuba crossover; FLINT FFT/Newton-style") was written to flag.
+is expected, non-gating informational-comparator behavior: it matches
+the different-complexity-class rationale in the SPEC (Hex Horner
+composition over schoolbook multiplication versus FLINT's faster
+composition kernels). It is retained as optimization orientation, not
+as evidence of a defect in HexPoly's declared schoolbook semantic
+foundation.
 
 ### FLINT `fmpz_poly.content` vs `runContent`
 
@@ -433,28 +437,3 @@ unattributable to a registered bench target, so no audit-found follow-up
 was filed from this rerun.
 
 ## Concerns
-
-- [#9804](https://github.com/kim-em/hex-dev/issues/9804) tracks resolution
-  and policy-correct classification of both findings below.
-- The FLINT `fmpz_poly.compose` comparator pulls steadily ahead of
-  `runComposeChecksum` across the eligible range: raw ratio
-  `0.505x → 0.210x` from `n = 40` to `n = 64`, adjusted ratio
-  `0.273x → 0.176x`. This is an adverse trend at the `n⁴` composition
-  surface. The comparator is `informational`, so this is recorded for
-  orientation rather than as a Phase-4 gate; the structural gap
-  matches `SPEC/Libraries/hex-poly.md §"External comparators"`'s
-  rationale (Hex schoolbook with declared Karatsuba crossover; FLINT
-  uses better-asymptotic composition kernels). A follow-up may file a
-  narrow HO against `DensePoly.compose` if a faster Hex composition
-  surface is wanted.
-- The `setup_fixed_benchmark` shape respawns the bench child per
-  repeat, so the FLINT median always includes one ~56 ms driver
-  startup. For the O(n²) `runMulChecksum` ladder this means no rung
-  is currently eligible — FLINT wall time sits near the startup floor
-  at every measured `n` and the adjusted ratios collapse to the
-  measurement floor. The headline ratios for `mul` are therefore
-  informational only; closing this gap would require either
-  amortising the persistent driver across measured inner repeats or
-  switching `fmpz_poly` to an FFI shim. Tracked here per
-  `SPEC/benchmarking.md §"Comparator process overhead reported as
-  algorithmic difference"`.

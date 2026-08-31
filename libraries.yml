@@ -114,7 +114,7 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -259,7 +259,7 @@ libraries:
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -379,7 +379,7 @@ libraries:
   HexGF2:
     deps: [HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
