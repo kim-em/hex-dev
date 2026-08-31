@@ -511,7 +511,7 @@ libraries:
   HexPolyFp:
     deps: [HexPoly, HexModArith, HexPolyFast, HexModular]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:

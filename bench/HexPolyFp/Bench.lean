@@ -801,8 +801,8 @@ setup_benchmark runFastPowChecksum n => (n * n * Nat.log2 (n + 1))
   }
 
 /-
-Cost model: this registration batches `n` fixed-prime Frobenius calls on dense degree-`n`
-monic moduli.  The family-specific model sums the squared active degree over
+Cost model: this batches `n` fixed-prime calls with reduced-base degree at most `n`
+modulo dense degree-`n + 1` monic moduli. The model sums squared active degree over
 the 17 squaring stages of `65537 = 2^16 + 1`: early stages grow as `2^k`, and
 the remaining stages stay at modulus degree `n`.  Multiplying that sum by the
 batch size accounts for the timed work without treating the decreasing number
@@ -822,8 +822,8 @@ setup_benchmark runFrobeniusXModChecksum n => frobeniusWork n
     slopeTolerance := 0.20
   }
 
-/- Cost model: the fast-multiplication candidate has the same 17-stage active-degree shape;
-the paired result hashes and timings determine whether to adopt it. -/
+/- Cost model: the fast candidate traverses the same 17-stage active-degree schedule;
+`frobeniusWork` is conservative and its ordered Phase-4 mode remains unresolved. -/
 setup_benchmark runFastFrobeniusChecksum n => frobeniusWork n
   with prep := prepFrobeniusInput
   where {
@@ -985,8 +985,10 @@ setup_benchmark runDivModFastChecksum n => (n * n)
 The prepared inputs are consecutive polynomial Fibonacci values.  They force
 exactly `n` Euclidean remainder steps with quotient `X`; each remainder-only
 division is linear in the current degree, so the decreasing-degree costs sum
-to `Theta(n^2)`.  This is the same plain-remainder substrate used by the BHKS
-separability test `gcd(f, f')`; the schedule matches the divMod rungs.
+to `Theta(n^2)`.  This fixture isolates worst-case Euclidean step scaling; its
+unit leading coefficients and monomial quotients do not assert the same
+constant factor as a generic separability input `gcd(f, f')`.  The schedule
+matches the divMod rungs.
 -/
 setup_benchmark runGcdChecksum n => n * n
   with prep := prepGcdInput

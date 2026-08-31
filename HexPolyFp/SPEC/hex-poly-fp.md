@@ -113,16 +113,21 @@ The same `FpPoly` plan drives fast division and half-gcd. One-shot Newton
 division and half-gcd lose to the retained finite-field algorithms through
 degree 2048, so square-free decomposition and gcd consumers keep those paths.
 Fast coefficient multiplication does win inside modular power, Frobenius, and
-composition. Representative three-trial warm medians over `F_65537` are:
+composition. The following three-trial warm medians over `F_65537` were
+refreshed from clean source revision
+`b439978767e42783c500e464ec38ed17b497ac8c`. The machine-readable records are
+[`pow`](../../reports/bench-results/hex-poly-fp-b439978-pow-compare.json),
+[`frobenius`](../../reports/bench-results/hex-poly-fp-b439978-frobenius-compare.json),
+and [`compose`](../../reports/bench-results/hex-poly-fp-b439978-compose-compare.json).
 
 | operation | parameter | schoolbook multiplication | fast multiplication |
 |---|---:|---:|---:|
-| modular power | 64 | 3.368 ms | 1.964 ms |
-| modular power | 512 | 285.679 ms | 137.058 ms |
-| batched Frobenius | 24 | 19.760 ms | 16.136 ms |
-| batched Frobenius | 80 | 533.441 ms | 314.078 ms |
-| modular composition | 48 | 4.164 ms | 3.284 ms |
-| modular composition | 192 | 247.598 ms | 188.076 ms |
+| modular power | 64 | 1.765 ms | 1.038 ms |
+| modular power | 512 | 147.724 ms | 72.513 ms |
+| batched Frobenius | 24 | 10.558 ms | 8.446 ms |
+| batched Frobenius | 80 | 291.952 ms | 166.828 ms |
+| modular composition | 48 | 4.181 ms | 3.678 ms |
+| modular composition | 192 | 249.535 ms | 189.995 ms |
 
 All hashes agree. Compiled modular power retains the schoolbook loop below
 modulus size 18 and otherwise uses `mulFast`; modular composition retains its
