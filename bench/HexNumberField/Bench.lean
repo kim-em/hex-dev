@@ -361,9 +361,13 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
   else
     fun _ => throw <| IO.userError "qadjoin/canonical: irreducibility failed"
 
-/- Krylov powers, first-dependence row reduction, normalization, isolation,
-and representative selection are all exercised at fixed defining degree two.
-The total wrapper adds only the constant-time checked-result projection. -/
+/- Mode 3. Krylov powers, first-dependence row reduction, normalization,
+isolation, and representative selection are all exercised at fixed defining
+degree two; varying that degree would change the public value's field rather
+than isolate a caller size parameter, and no executable isolator bound supplies
+a mode-2 ceiling. The total wrapper adds only the constant-time checked-result
+projection. Its 0.93 ms median plus the 43 ms spawn floor sits over 5x inside
+the 250 ms zero-grace whole-child budget. -/
 setup_fixed_benchmark runQAdjoinCanonical where {
   repeats := 3
   maxSecondsPerCall := 0.25
@@ -410,9 +414,13 @@ setup_fixed_benchmark runRoots where {
 /-! # Advertised fixed-degree API surface -/
 
 /- Mode-3 fixed assessments use a zero-grace whole-child ceiling and warm the
-lazy fixture once before measurement. The 250 ms default is over three times
-the measured 43 ms clean-spawn floor plus every default-class operation below;
-the few slower routes declare their own measured budgets adjacent to them. -/
+lazy fixture once before measurement. These APIs operate on fixed quadratic
+values; manufacturing a degree parameter changes their field and isolation
+problem rather than scaling the same public input, while no published bound
+covers the executable isolation/exactification route. The 250 ms default is
+over three times the measured 43 ms clean-spawn floor plus every default-class
+operation below; the few slower routes declare their own measured budgets
+adjacent to them. -/
 private def apiFixedConfig : LeanBench.FixedBenchmarkConfig := {
   repeats := 3
   maxSecondsPerCall := 0.25
@@ -1716,12 +1724,16 @@ def runComponentRoots : Unit → IO UInt64 :=
 It exercises the Brown norm resultant, double evaluation resultant, and
 complete certified component-root route. Separate fixed registrations expose
 both eliminants and the isolation-dominated `componentRoots?` phase without
-inventing a transfer of an external isolator's asymptotic bound. -/
+inventing a transfer of an external isolator's asymptotic bound. Their measured
+medians are 65 us, 43.5 ms, and 2.282 s; adding the 43 ms spawn floor, the
+250 ms, 300 ms, and 8 s zero-grace budgets each provide at least 3x headroom. -/
 setup_fixed_benchmark runNormEliminant where {
   apiFixedConfig with expectedHash := some 0xbd1f7b595e06cc7d
 }
 setup_fixed_benchmark runEvalEliminant where {
-  apiFixedConfig with expectedHash := some 0x38d1cf2583d846c2
+  apiFixedConfig with
+  maxSecondsPerCall := 0.3
+  expectedHash := some 0x38d1cf2583d846c2
 }
 setup_fixed_benchmark runComponentRoots where {
   apiFixedConfig with
