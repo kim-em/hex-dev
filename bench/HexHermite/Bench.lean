@@ -95,8 +95,8 @@ private def observe (M : Matrix Int n m) (peak : Nat) :
     GrowthState n m :=
   ⟨M, max peak (matrixBits M)⟩
 
-/-- Replay every elementary update selected by the production driver on a
-shadow matrix, observing coefficient growth after the update. -/
+/-- Replay every elementary update in the output-producing schedule selected
+by the production driver on a shadow matrix, observing growth after each one. -/
 private def growthAccumulator (A : Matrix Int n m) :
     Matrix.Hermite.Accumulator (GrowthState n m) n where
   init := ⟨A, matrixBits A⟩
@@ -302,6 +302,10 @@ def runCertPrepared (input : CertInput) : Bool :=
 #guard runShapePrepared (shapeInput 16)
 #guard runCertPrepared (certInput 8)
 #guard principalAgrees 16
+#guard (growthData (dense 8)).2.2
+#guard (growthData (deficient 8)).2.2
+#guard (growthData (tall 8)).2.2
+#guard (growthData (conjugate 8)).2.2
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
