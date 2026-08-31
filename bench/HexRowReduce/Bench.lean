@@ -173,9 +173,9 @@ private def basisMatrixSchedule : Array Nat := #[16, 24, 32, 48, 64]
 -- dominates allocation.
 private def preparedSpanSchedule : Array Nat := #[16, 24, 32, 48, 64, 96, 128, 192]
 private def preparedNullspaceSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
-private def preparedLinearSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
--- Keep the quadratic free-column scan below the runtime's large-allocation
--- transition; the batched timings already have ample signal at these sizes.
+-- Keep the prepared vector operations below the runtime's large-allocation
+-- transitions; the batched timings already have ample signal at these sizes.
+private def preparedLinearSchedule : Array Nat := #[128, 192, 256, 384, 512, 768]
 private def freeColsSchedule : Array Nat := #[64, 96, 128, 192, 256, 384, 512]
 
 /- Cost-model derivation: on dense `I + J`, all `n` pivots fire.  Each pivot
@@ -245,7 +245,7 @@ setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := denseReduced wher
 Each live entry performs constant-time pivot-column and matrix indexing on the
 prepared bounded-integer projection, so the family performs `Theta(n)` work. -/
 setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
-  paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedLinearSchedule
+  paramFloor := 128, paramCeiling := 768, paramSchedule := .custom preparedLinearSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
