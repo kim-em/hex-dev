@@ -58,6 +58,35 @@ class SyncReleasedTests(unittest.TestCase):
                 notes = sync_released.apply_paths(entry, clone)
             self.assertFalse((clone / "conformance").exists())
             self.assertIn("  remove conformance", notes)
+            with patch.object(sync_released, "REPO_ROOT", source):
+                notes = sync_released.apply_paths(entry, clone)
+            self.assertNotIn("  remove conformance", notes)
+
+    def test_apply_paths_rejects_symlinked_removal_parent(self) -> None:
+        with tempfile.TemporaryDirectory() as source_directory:
+            source = Path(source_directory)
+            (source / "HexBridge").mkdir()
+            clone = self.repo / "clone"
+            clone.mkdir()
+            outside = self.repo / "outside"
+            outside.mkdir()
+            (outside / "kept").write_text("keep\n", encoding="utf-8")
+            (clone / "linked").symlink_to(outside, target_is_directory=True)
+            entry = {
+                "lib": "HexBridge",
+                "readme": False,
+                "umbrella": False,
+                "spec": None,
+                "remove_paths": ["linked/kept"],
+            }
+            with (
+                patch.object(sync_released, "REPO_ROOT", source),
+                self.assertRaisesRegex(
+                    ValueError, "unsafe remove_paths destination escapes clone"
+                ),
+            ):
+                sync_released.apply_paths(entry, clone)
+            self.assertEqual((outside / "kept").read_text(), "keep\n")
 
     def test_removal_paths_rejects_unsafe_destinations(self) -> None:
         for path in (".", "..", "../outside", "/absolute"):

@@ -251,6 +251,27 @@ class CorrespondenceOnlyTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             libraries = self.correspondence_tree(root)
+            runtime_test = root / "HexBridge/RuntimeTests.lean"
+            runtime_test.write_text("#guard true\n", encoding="utf-8")
+            lakefile = root / "lakefile.lean"
+            lakefile.write_text(
+                "lean_lib HexReleaseTests where\n"
+                "  globs := #[`HexBridge.RuntimeTests].map Glob.one\n",
+                encoding="utf-8",
+            )
+            errors = check_correspondence_only(root, libraries, lakefile)
+            self.assertTrue(
+                any(
+                    "build-only module HexBridge.RuntimeTests contains a runtime check"
+                    in error
+                    for error in errors
+                ),
+                errors,
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            libraries = self.correspondence_tree(root)
             spec = root / "HexBridge/SPEC/hex-bridge.md"
             spec.write_text("# bridge\n", encoding="utf-8")
             errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
