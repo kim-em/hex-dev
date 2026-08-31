@@ -610,11 +610,13 @@ restart allocation returns `RhoStop.exhausted`. Each restart's inner work is
 bounded as well. Both current worklist consumers share an eight-restart cap
 before retaining the residual or trying later routes.
 
-`partialFactor` is **internal**, not part of the public API. An earlier
-draft exposed it with "no correctness theorem at all", which is safe
-only if every consumer checks everything, and its return type said
-nothing about what it had produced. It keeps the one theorem its
-certificate-search consumer needs:
+`partialFactor` itself is **internal**, not part of the public API. The stable
+extension boundary is instead an explicitly untrusted result carrying the
+candidate, resumed generator state, and semantic attempt count. A producer
+receives the complete fuel allocation for that invocation; it may return any
+candidate data, but only the final certificate checker can accept it. The
+built-in adapter remains the default route and retains the reconstruction
+theorem used internally:
 
 ```lean
 /-- Candidate partial factorization: bases with positive exponents, and
@@ -622,6 +624,15 @@ an unfactored residual. No primality and no completeness is claimed. -/
 structure PartialFactors where
   factors  : List (Nat × Nat)
   residual : Nat
+
+structure FactorSearchResult where
+  raw      : PartialFactors
+  rand     : Rand
+  attempts : Nat
+
+abbrev FactorSearch := Nat → Rand → Nat → FactorSearchResult
+
+def defaultFactorSearch (budget : PrimeCertBudget) : FactorSearch
 
 private structure PartialSearch where
   raw      : PartialFactors
@@ -678,19 +689,19 @@ routes and one deferred extension:
    remaining inside the complete committed table; `pMinusOneStage1_bound`
    identifies every larger request with that capped call. ECM stays downstream;
    curve arithmetic is a real dependency, not a shared primitive.
-3. **An optional search hook**, not implemented. Issue #9848 tracks validation
-   of a concrete hex-int-factor consumer and the resulting API. The proposed
-   shape is a `primeCert?With
-   (factor : Nat → Rand → Nat → PartialFactors × Rand × Nat)` variant
-   parameterizes the untrusted search (defaulting to `partialFactor`),
-   and the `primality` tactic and companion `norm_num` extension may
-   additionally consult an elaboration-time extension that downstream
-   libraries register under a well-known declaration name (the
-   `Hex.FactorTactic.Extension` / `extensionNames` pattern of
-   `HexBerlekamp/PolynomialTactic.lean`, with its ABI-version guard),
-   so importing hex-int-factor transparently strengthens the tactic. This is
-   the one route that adds public API surface; current integration consists
-   only of certificate hand-off and the shared p − 1/rho primitives above.
+3. **The optional search hook.** `primeCertWith?` and its counted internal
+   form parameterize certificate construction by `FactorSearch`; `primeCert?`
+   still selects `defaultFactorSearch` and stays on the original route.
+   `Hex.PrimalityTactic.SearchExtension` is ABI version 1. A downstream
+   registration names an ordinary compiled `FactorSearch` declaration; the
+   elaborator checks the registration type, ABI version, declaration presence,
+   and factor-declaration type before evaluation. Names are tried in the fixed
+   `searchExtensionNames` order, only after core exhaustion, resuming from the
+   core failure's `Rand`. Each route receives the same recursive,
+   partial-factor, witness, and rho allocations, and an exhausted diagnostic
+   sums every route's semantic attempts. Importing `HexIntFactor.Primality`
+   registers `Hex.Nat.intFactorSearch` without making hex-primality depend on
+   hex-int-factor.
 
 Soundness is indifferent to all three: whatever finds the factors, the
 kernel replays `checkPrime`.
@@ -857,6 +868,17 @@ def Internal.primeCertCountedWith? (budget : PrimeCertBudget)
     (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (Internal.PrimeCertSuccess n)
 
+def Internal.primeCertCountedUsing? (factor : FactorSearch)
+    (budget : PrimeCertBudget) (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+def primeCertWith? (factor : FactorSearch) (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (CheckedPrimeCert n × Rand)
+
+theorem primeCertWith?_composite {factor n r fuel f}
+    (hresult : primeCertWith? factor n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n
+
 theorem Internal.primeCertCountedWith?_composite {budget n r fuel f}
     (hresult : Internal.primeCertCountedWith? budget n r fuel = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n
@@ -987,6 +1009,13 @@ outer allocation returns `.exhausted` with the final state. The failure
 propagates rather than being papered over, which is design principle 8's third
 remedy again.
 
+`Internal.primeCertCountedUsing?` applies the same assembly and final
+`checkPrime` acceptance to any `FactorSearch`. The producer's factor claims,
+attempt count, and returned state are data, not evidence; malformed factors can
+only turn a possible success into `.exhausted`. `primeCertWith?_composite`
+retains the default API's verdict theorem because only the fixed size, complete
+table, and Miller--Rabin tiers can emit `.composite`.
+
 ## The tactic
 
 ```
@@ -1006,6 +1035,19 @@ the search.
 
 For reproducible syntax with no seed argument, the elaborator uses
 `Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded.
+
+After the fixed core route exhausts, the elaborator looks up registered search
+extensions in deterministic order and resumes each from the preceding route's
+advanced `Rand`. It never runs an extension after core success or a core
+`.composite` verdict. The concrete regression witness is the 81-bit prime
+`1208925821721293454442757 = 4 * 549755814367^2 + 1`: the core tactic
+allocation exhausts after 8 semantic attempts, while the registered
+HexIntFactor producer recognizes the squared factor and finishes a certificate.
+`lake build HexIntFactor.PrimalityConformance` is the untimed proof and
+accounting reproduction; it also pins the resumed states and extension
+subtotal. This route does not alter the established core proof-performance
+rungs because modules without the downstream registration execute exactly the
+same call as before.
 
 **The supported positive-certificate elaboration policy is at most 512 input
 bits, at most 512 recursive certificate-search fuel, at most 2 Brent restarts
@@ -1065,9 +1107,10 @@ python3 scripts/bench/primality_elab_sweep.py --samples 6 \
 ```
 
 `lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
-`primality` calls only `primeCertCountedWith?` with the explicit allocation
-above: it never calls the total `isPrime`, whose exact trial fallback is
-intentionally unbounded.
+`primality` first calls `primeCertCountedWith?` with the explicit allocation
+above, then calls `primeCertCountedUsing?` once per registered extension only
+after exhaustion. It never calls the total `isPrime`, whose exact trial
+fallback is intentionally unbounded.
 
 The companion consumes this positive-certificate policy without widening it.
 Its `Nat.Prime` registration and precedence rules, negative factor-search
@@ -1134,6 +1177,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
+| `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node, each with explicit fuel; the producer contract is bounded but its implementation supplies the cost model |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,

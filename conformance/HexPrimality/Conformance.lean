@@ -20,7 +20,7 @@ Covered operations:
 - `Hex.Nat.smoothBound` / `Hex.Nat.smoothBoundCap`
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
-- `Hex.Nat.primeCert?`
+- `Hex.Nat.primeCert?` / `Hex.Nat.primeCertWith?`
 - `Hex.Nat.pMinusOneStage1` and its counted, resumable form
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
@@ -39,6 +39,8 @@ Covered properties:
 - a `.composite` certificate-search verdict never contradicts `isPrime`
 - rho restart and certificate-witness draws span arbitrary-precision bounds
   through unbiased bounded sampling and retain exact exhaustion states
+- custom certificate-factor producers retain default compatibility, bounded
+  exhaustion, exact attempt accounting, and advanced random state
 - next-prime exhaustion separates rejected candidates from certificate work
   and returns the exact advanced random state
 - accepted certificates replay; each rejection reason rejects
@@ -176,6 +178,52 @@ example {n base bound d : Nat} {r : Hex.Rand}
 #guard (match primeCert? 2147483649 (Hex.Rand.ofSeed 0) 8 with
         | .error f => f.stop == .composite
         | .ok _ => false)
+
+private def emptyFactorSearch : FactorSearch := fun n r _fuel =>
+  ⟨⟨[], n⟩, (r.words 2).2, 2⟩
+
+private def squarePrime : Nat := 1208925821721293454442757
+
+private def squareFactor : Nat := 549755814367
+
+private def squareFactorSearch : FactorSearch := fun n r fuel =>
+  if n = squarePrime - 1 && fuel = 2 * squarePrime.log2 + 8 then
+    ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3⟩
+  else defaultFactorSearch defaultPrimeCertBudget n r fuel
+
+#guard (match Internal.primeCertCountedUsing? squareFactorSearch
+    defaultPrimeCertBudget squarePrime (Hex.Rand.ofSeed 5)
+      (defaultPrimeFuel squarePrime) with
+  | .ok success =>
+      success.cert.raw.subject == squarePrime &&
+        checkPrime success.cert.raw && success.attempts == 17 &&
+          success.rand == ((Hex.Rand.ofSeed 5).words 22).2
+  | .error _ => false)
+
+-- An exhausted producer's accounting and advanced state are retained even
+-- though its empty candidate cannot pass the final certificate checker.
+#guard (match primeCertWith? emptyFactorSearch 2147483647
+    (Hex.Rand.ofSeed 5) 1 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 2 &&
+        failure.rand == ((Hex.Rand.ofSeed 5).words 2).2
+  | .ok _ => false)
+
+example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
+    {failure : PrimeCertFailure}
+    (h : primeCertWith? factor n r fuel = .error failure)
+    (hstop : failure.stop = .composite) : ¬ Prime n :=
+  primeCertWith?_composite h hstop
+
+-- The explicit default producer is the compatibility route used by
+-- `primeCert?`; successful work and state are unchanged.
+#guard (match Internal.primeCertCountedUsing?
+    (defaultFactorSearch defaultPrimeCertBudget) defaultPrimeCertBudget
+      1000003 (Hex.Rand.ofSeed 3) 2 with
+  | .ok success =>
+      success.attempts == 8 &&
+        success.rand == ((Hex.Rand.ofSeed 3).words 8).2
+  | .error _ => false)
 
 -- Table division leaves `100549 · 100049`; base-2 stage 1 at bound 64
 -- splits it even with rho disabled. Acceptance still requires replay by the

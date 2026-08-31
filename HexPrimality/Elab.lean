@@ -41,6 +41,58 @@ namespace Hex.PrimalityTactic
 
 open Lean Meta Elab
 
+/-- ABI version of the downstream factor-search registration boundary. -/
+meta def searchExtensionVersion : Nat := 1
+
+/-- One downstream partial-factor producer available to elaboration-time
+certificate search. The version is checked before the function is used. -/
+meta structure SearchExtension where
+  version : Nat
+  factorName : Name
+
+/-- Well-known search-extension constants, checked in deterministic order.
+Adding or reordering an entry requires a HexPrimality release. -/
+meta def searchExtensionNames : List Name :=
+  [`HexIntFactor.PrimalityTactic.extension]
+
+private meta unsafe def evalSearchExtensionUnsafe (n : Name) :
+    MetaM SearchExtension :=
+  evalConst SearchExtension n
+
+@[implemented_by evalSearchExtensionUnsafe]
+private meta opaque evalSearchExtensionCore (n : Name) : MetaM SearchExtension
+
+private meta unsafe def evalFactorSearchUnsafe (n : Name) :
+    MetaM Hex.Nat.FactorSearch :=
+  evalConst Hex.Nat.FactorSearch n
+
+@[implemented_by evalFactorSearchUnsafe]
+private meta opaque evalFactorSearchCore (n : Name) :
+    MetaM Hex.Nat.FactorSearch
+
+/-- Registered factor-search extensions present in the environment. Each
+declaration's type and ABI version are checked before deterministic dispatch. -/
+meta def searchExtensions : MetaM (List SearchExtension) := do
+  let env ← getEnv
+  let mut found := []
+  for n in searchExtensionNames do
+    if let some info := env.find? n then
+      unless info.type.isConstOf ``SearchExtension do
+        throwError "primality: search extension {n} has unexpected type\
+            {indentExpr info.type}"
+      let ext ← evalSearchExtensionCore n
+      unless ext.version = searchExtensionVersion do
+        throwError "primality: search extension {n} uses ABI version \
+            {ext.version}; expected {searchExtensionVersion}"
+      let some factorInfo := env.find? ext.factorName
+        | throwError "primality: search extension {n} names missing factor \
+            declaration {ext.factorName}"
+      unless ← isDefEq factorInfo.type (mkConst ``Hex.Nat.FactorSearch) do
+        throwError "primality: factor declaration {ext.factorName} from \
+            extension {n} has unexpected type{indentExpr factorInfo.type}"
+      found := found ++ [ext]
+  return found
+
 /-- `Eq.refl true` as a raw proof slot: the kernel verifies the reified
 Bool equation by reduction alone. -/
 meta def reflTrue : Expr :=
@@ -153,27 +205,41 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
         could not check the emitted certificate against it"
   checkPrimalityPolicy tactic n
   let fuel := primalityFuel n
+  let emit (success : Hex.Nat.Internal.PrimeCertSuccess n) : MetaM Expr := do
+    let c := success.cert
+    -- Untrusted-search self-check before emitting anything.
+    unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do
+      throwError "{tactic}: internal error: the found certificate fails \
+          its own check; please report this"
+    return mkApp3 (mkConst head) nE (reifyPrimeCert c.raw) reflTrue
+  let composite : MetaM Expr := do
+    match Hex.Nat.defaultBases.find?
+        (fun a => !(Hex.Nat.millerRabin n a)) with
+    | some a =>
+        throwError "{tactic}: {n} is not prime \
+            (Miller-Rabin witness {a})"
+    | none =>
+        throwError "{tactic}: {n} is not prime"
   match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget n
       (Hex.Rand.ofSeed n) fuel with
   | .error f =>
       match f.stop with
-      | .composite =>
-          match Hex.Nat.defaultBases.find?
-              (fun a => !(Hex.Nat.millerRabin n a)) with
-          | some a =>
-              throwError "{tactic}: {n} is not prime \
-                  (Miller-Rabin witness {a})"
-          | none =>
-              throwError "{tactic}: {n} is not prime"
+      | .composite => composite
       | .exhausted =>
-          throwPrimalityExhausted tactic n f.attempts fuel
-  | .ok success =>
-      let c := success.cert
-      -- Untrusted-search self-check before emitting anything.
-      unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do
-        throwError "{tactic}: internal error: the found certificate fails \
-            its own check; please report this"
-      return mkApp3 (mkConst head) nE (reifyPrimeCert c.raw) reflTrue
+          let mut attempts := f.attempts
+          let mut r := f.rand
+          for ext in (← searchExtensions) do
+            let factor ← evalFactorSearchCore ext.factorName
+            match Hex.Nat.Internal.primeCertCountedUsing? factor
+                primalitySearchBudget n r fuel with
+            | .ok success => return ← emit success
+            | .error f =>
+                attempts := attempts + f.attempts
+                r := f.rand
+                if f.stop = .composite then
+                  return ← composite
+          throwPrimalityExhausted tactic n attempts fuel
+  | .ok success => emit success
 
 /-- `provePrimeWith` at the Mathlib-free wrapper: the proof term for
 `Hex.Nat.Prime n`. -/
