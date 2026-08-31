@@ -354,8 +354,10 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
       let input ← requireSome "qadjoin/canonical"
         (← canonicalQAdjoinRef.get)
       -- The total wrapper executes `toAlgebraicNumber?` and only projects its
-      -- certified result, so this one measurement covers both public forms.
-      return algebraicChecksum (input.toAlgebraicNumber sqrtTwoRep rfl)
+      -- certified result. Group the runtime structural equality decision here.
+      return mixHash
+        (algebraicChecksum (input.toAlgebraicNumber sqrtTwoRep rfl))
+        (hash (decide (input = input)))
   else
     fun _ => throw <| IO.userError "qadjoin/canonical: irreducibility failed"
 
@@ -363,7 +365,11 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
 and representative selection are all exercised at fixed defining degree two.
 The total wrapper adds only the constant-time checked-result projection. -/
 setup_fixed_benchmark runQAdjoinCanonical where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  repeats := 3
+  maxSecondsPerCall := 0.25
+  killGraceMs := 0
+  warmupFirstIter := true
+  expectedHash := some 0x6d24385fc39cc6fb
 }
 
 private def rootsInput : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
@@ -388,8 +394,7 @@ def runRoots : Unit → IO UInt64 :=
       ⟨hirred, by decide⟩
     fun _ => do
       let polynomial ← requireSome "roots" (← rootsRef.get)
-      let result ← requireSome "roots"
-        (QAdjoin.roots? polynomial sqrtTwoRep rfl)
+      let result := QAdjoin.roots polynomial sqrtTwoRep rfl
       return rootSetChecksum result
   else
     fun _ => throw <| IO.userError "roots: irreducibility check failed"
@@ -404,9 +409,26 @@ setup_fixed_benchmark runRoots where {
 
 /-! # Advertised fixed-degree API surface -/
 
-private def optionRootChecksum : Option AlgebraicRoot → UInt64
-  | some root => rootChecksum root
-  | none => 0
+/- Mode-3 fixed assessments use a zero-grace whole-child ceiling and warm the
+lazy fixture once before measurement. The 250 ms default is over three times
+the measured 43 ms clean-spawn floor plus every default-class operation below;
+the few slower routes declare their own measured budgets adjacent to them. -/
+private def apiFixedConfig : LeanBench.FixedBenchmarkConfig := {
+  repeats := 3
+  maxSecondsPerCall := 0.25
+  killGraceMs := 0
+  warmupFirstIter := true
+}
+
+/- Closed constant-time accessors are protocol/correctness anchors rather than
+performance evidence. They still pin their output and use the same strict
+whole-child mechanics so a registration cannot become vacuous. -/
+private def apiAnchorConfig : LeanBench.FixedBenchmarkConfig := {
+  repeats := 5
+  maxSecondsPerCall := 0.25
+  killGraceMs := 0
+  warmupFirstIter := true
+}
 
 private def optionAlgebraicChecksum : Option AlgebraicNumber → UInt64
   | some a => algebraicChecksum a
@@ -432,27 +454,40 @@ def runLazyNeg : Unit → IO UInt64 := fun _ => do
   let (a, _) ← requireSome "lazy/neg" (← lazyPairRef.get)
   return rootChecksum a.neg
 
-/- The total wrappers each execute their checked implementation and add only a
-constant-time `Option.getD` fallback. These fixed quadratic inputs separately
-attribute subtraction, product-eliminant, reciprocal, quotient-composition,
-and certificate-free reflection routes without asserting an isolation model. -/
-setup_fixed_benchmark runLazySub where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runLazyMul where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runLazyDiv where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runLazyInv where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runLazyNeg where { repeats := 5, maxSecondsPerCall := 1.0 }
+/- Subtraction, multiplication, division, and inversion execute their checked
+implementation through a total wrapper whose extra `Option.getD` projection
+is constant-time. Negation is directly certificate-free. These fixed quadratic
+inputs isolate the five public routes without asserting an isolation model. -/
+setup_fixed_benchmark runLazySub where
+  { apiFixedConfig with expectedHash := some 0x751dc56f8c0d0b2e }
+setup_fixed_benchmark runLazyMul where
+  { apiFixedConfig with expectedHash := some 0xab6b27ac2b367388 }
+setup_fixed_benchmark runLazyDiv where
+  { apiFixedConfig with expectedHash := some 0x1122363c42d4fe8d }
+setup_fixed_benchmark runLazyInv where
+  { apiFixedConfig with expectedHash := some 0x49c2d04def0370f2 }
+setup_fixed_benchmark runLazyNeg where
+  { apiAnchorConfig with expectedHash := some 0xb98e2baa3432a5d3 }
 
 private def canonicalPair? : Option (AlgebraicNumber × AlgebraicNumber) := do
   some (← sqrtTwo?.bind (fun root => root.exact?),
     ← sqrtThree?.bind (fun root => root.exact?))
 
 initialize canonicalPairRef : IO.Ref
-    (Option (AlgebraicNumber × AlgebraicNumber)) ← IO.mkRef canonicalPair?
+    (Option (AlgebraicNumber × AlgebraicNumber)) ← IO.mkRef none
 
-private def withCanonicalPair (case : String)
+private def getCanonicalPair : IO (AlgebraicNumber × AlgebraicNumber) := do
+  match ← canonicalPairRef.get with
+  | some pair => pure pair
+  | none =>
+    let pair ← requireSome "canonical-pair" canonicalPair?
+    canonicalPairRef.set (some pair)
+    pure pair
+
+private def withCanonicalPair (_case : String)
     (op : AlgebraicNumber → AlgebraicNumber → AlgebraicNumber) :
     Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome case (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return algebraicChecksum (op a b)
 
 def runAlgebraicAdd : Unit → IO UInt64 :=
@@ -468,48 +503,61 @@ def runAlgebraicDiv : Unit → IO UInt64 :=
   withCanonicalPair "algebraic/div" (fun a b => a / b)
 
 def runAlgebraicNeg : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "algebraic/neg" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return algebraicChecksum (-a)
 
 def runAlgebraicInv : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "algebraic/inv" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return algebraicChecksum a⁻¹
 
 /- Canonical arithmetic converts the fixed quadratic inputs to lazy roots,
 executes exactly the named lazy route, and exactifies its result. Each route is
 registered separately so an arithmetic regression is not hidden by a checksum
 combining unrelated operations. -/
-setup_fixed_benchmark runAlgebraicAdd where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAlgebraicSub where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAlgebraicMul where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAlgebraicDiv where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAlgebraicNeg where { repeats := 3, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAlgebraicInv where { repeats := 3, maxSecondsPerCall := 5.0 }
+setup_fixed_benchmark runAlgebraicAdd where
+  { apiFixedConfig with expectedHash := some 0xb2956b93cac0235f }
+setup_fixed_benchmark runAlgebraicSub where
+  { apiFixedConfig with expectedHash := some 0x751dc56f8c0d0b2e }
+setup_fixed_benchmark runAlgebraicMul where
+  { apiFixedConfig with expectedHash := some 0xab6b27ac2b367388 }
+setup_fixed_benchmark runAlgebraicDiv where
+  { apiFixedConfig with expectedHash := some 0x1122363c42d4fe8d }
+setup_fixed_benchmark runAlgebraicNeg where
+  { apiFixedConfig with expectedHash := some 0xfd13c19e59cd6f82 }
+setup_fixed_benchmark runAlgebraicInv where
+  { apiFixedConfig with expectedHash := some 0x49c2d04def0370f2 }
 
 initialize rationalInputRef : IO.Ref Rat ← IO.mkRef (7 / 5 : Rat)
 
 def runAlgebraicConstructors : Unit → IO UInt64 := fun _ => do
   let q ← rationalInputRef.get
   let direct := AlgebraicNumber.ofRat q
+  let adjoin := direct.toQAdjoin
   let natCast := (q.num.natAbs : AlgebraicNumber)
   let intCast := (q.num : AlgebraicNumber)
+  -- `One` and fallback `OfNat` are closed literal forms of the same `ofRat`
+  -- route; keep their values in the digest as correctness anchors while the
+  -- runtime-fed forms above measure the constructor.
+  let one := (1 : AlgebraicNumber)
   let ofNat := (4 : AlgebraicNumber)
   return mixHash (algebraicChecksum direct)
-    (mixHash (algebraicChecksum natCast)
-      (mixHash (algebraicChecksum intCast) (algebraicChecksum ofNat)))
+    (mixHash (fixedChecksum adjoin)
+      (mixHash (algebraicChecksum natCast)
+        (mixHash (algebraicChecksum intCast)
+          (mixHash (algebraicChecksum one) (algebraicChecksum ofNat)))))
 
 def runAlgebraicScalars : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "algebraic/scalars" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return mixHash (algebraicChecksum ((7 / 5 : Rat) • a))
     (mixHash (algebraicChecksum ((3 : Nat) • a))
       (algebraicChecksum ((-2 : Int) • a)))
 
 def runAlgebraicNatPow : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "algebraic/nat-pow" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return algebraicChecksum (a ^ (7 : Nat))
 
 def runAlgebraicIntPow : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "algebraic/int-pow" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return algebraicChecksum (a ^ (-5 : Int))
 
 /- `ofRat`, `NatCast`, `IntCast`, and the fallback `OfNat` all enter the same
@@ -519,32 +567,40 @@ their constant-time conversion to `Rat` before the same canonical product.
 Natural and negative integer powers are kept separate because the latter adds
 the public inverse route after repeated squaring. -/
 setup_fixed_benchmark runAlgebraicConstructors where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x4468729ce98284ed
 }
 setup_fixed_benchmark runAlgebraicScalars where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x1ce92fc1022809fb
 }
 setup_fixed_benchmark runAlgebraicNatPow where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xd753d52eb25eb5dd
 }
 setup_fixed_benchmark runAlgebraicIntPow where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x9feb9fb408e711ea
 }
 
+initialize zeroRepRef : IO.Ref (Option (RefinedIsolation ZPoly.X)) ←
+  IO.mkRef (some AlgebraicNumber.zeroRep)
+
+initialize zeroNumberRef : IO.Ref AlgebraicNumber ←
+  IO.mkRef AlgebraicNumber.zero
+
 def runZeroDecisions : Unit → IO UInt64 := fun _ => do
-  let zeroRep := AlgebraicNumber.zeroRep
-  let (root, _) ← requireSome "zero/decisions" (← lazyPairRef.get)
-  let canonical := AlgebraicNumber.zero
+  let zeroRep ← requireSome "zero/representative" (← zeroRepRef.get)
+  let canonical ← zeroNumberRef.get
+  let root := canonical.toRoot
   return mixHash (squareChecksum zeroRep.1.square)
     (mixHash (hash zeroRep.containsZero)
       (mixHash (hash root.isZero) (hash canonical.isZero)))
 
-/- `zeroRep` is a static certified accessor; `containsZero` is one exact
-closed-disc comparison; and the two public zero predicates add only polynomial
-coefficient/equality tests. Grouping these constant-time decisions avoids four
-ceremonial sub-microsecond registrations while executing every declaration. -/
+/- `zeroRep` is a closed certified accessor retained as a hash anchor. The
+runtime-fed representative and zero number execute `containsZero` and both
+public zero predicates, including the true `AlgebraicRoot.isZero` branch that
+reaches the containment test. Grouping these constant-time declarations avoids
+four ceremonial registrations; this target is a correctness/protocol anchor,
+not Phase-4 performance evidence. -/
 setup_fixed_benchmark runZeroDecisions where {
-  repeats := 10, maxSecondsPerCall := 1.0
+  apiAnchorConfig with expectedHash := some 0x071179c329e9a368
 }
 
 private structure AlgebraicPolyInput where
@@ -563,11 +619,22 @@ def prepAlgebraicPolyInput (n : Nat) : AlgebraicPolyInput :=
   let one := AlgebraicNumber.ofRat 1
   let zeros := Array.replicate (max n 1) AlgebraicNumber.zero
   let coefficients := #[one] ++ zeros
-  let dense := Array.replicate (max n 1) one
-  ⟨coefficients, AlgebraicPoly.ofArray dense, AlgebraicPoly.ofArray dense⟩
+  -- Build equal coefficient arrays independently, so the equality benchmark
+  -- cannot be discharged by pointer identity.
+  let leftDense := (Array.range (max n 1)).map fun _ => one
+  let rightDense := (Array.range (max n 1)).map fun _ => AlgebraicNumber.ofRat 1
+  ⟨coefficients, AlgebraicPoly.ofArray leftDense, AlgebraicPoly.ofArray rightDense⟩
 
 initialize algebraicPolyAccessorRef : IO.Ref (Option AlgebraicPolyInput) ←
-  IO.mkRef (some (prepAlgebraicPolyInput 8))
+  IO.mkRef none
+
+private def getAlgebraicPolyAccessorInput : IO AlgebraicPolyInput := do
+  match ← algebraicPolyAccessorRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepAlgebraicPolyInput 8
+    algebraicPolyAccessorRef.set (some input)
+    pure input
 
 def runAlgebraicPolyOfArray (input : AlgebraicPolyInput) : UInt64 :=
   let f := AlgebraicPoly.ofArray input.coefficients
@@ -607,17 +674,18 @@ setup_benchmark runAlgebraicPolyBeq n => n
   }
 
 def runAlgebraicPolyAccessors : Unit → IO UInt64 := fun _ => do
-  let input ← requireSome "algebraic-poly/accessors"
-    (← algebraicPolyAccessorRef.get)
+  let input ← getAlgebraicPolyAccessorInput
   let f := input.left
   return mixHash (algebraicChecksum (f.coeff 3))
-    (mixHash (hash f.size) (mixHash (hash f.degree?) (hash f.isZero)))
+    (mixHash (hash f.coeffs.size)
+      (mixHash (hash f.size) (mixHash (hash f.degree?) (hash f.isZero))))
 
-/- `coeff` is one `Array.getD`; `size`, `isZero`, and `degree?` are constant-
-time projections/branches on the stored normalized array. Their shared fixed
-registration executes each accessor without pretending they have a size law. -/
+/- `coeff` is one `Array.getD`; `coeffs`, `size`, `isZero`, and `degree?` are
+constant-time projections/branches on the stored normalized array. Their
+shared runtime-fed fixed registration is a correctness/protocol anchor rather
+than a performance claim. -/
 setup_fixed_benchmark runAlgebraicPolyAccessors where {
-  repeats := 10, maxSecondsPerCall := 1.0
+  apiAnchorConfig with expectedHash := some 0x256c50de964804d1
 }
 
 private structure MajorantInput where
@@ -635,21 +703,32 @@ def prepMajorantInput (n : Nat) : MajorantInput :=
 def runEvalMajorant (input : MajorantInput) : UInt64 :=
   hash (Disambiguation.evalMajorant input.f QAdjoin.ratAbsCeil sqrtTwoPoly)
 
-/- Cost model. `evalMajorant` performs one Horner-style recurrence per
-coefficient. With fixed `sqrtTwoPoly`, bounded coefficients, and a constant
-root bound, the state grows to `O(n)` bits; charging its `n` exact-Nat updates
-linearly in bit width gives the conservative `n²` proxy. -/
-setup_benchmark runEvalMajorant n => n * n
-  with prep := prepMajorantInput
-  where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+initialize majorantFixedRef : IO.Ref (Option MajorantInput) ← IO.mkRef none
+
+private def getMajorantFixedInput : IO MajorantInput := do
+  match ← majorantFixedRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepMajorantInput 4096
+    majorantFixedRef.set (some input)
+    pure input
+
+def runEvalMajorantFixed : Unit → IO UInt64 := fun _ => do
+  return runEvalMajorant (← getMajorantFixedInput)
+
+/- Mode 3. The independently derived `n²` linear-bit model was tested first:
+`evalMajorant` performs `n` exact-Nat recurrence steps on state whose bit width
+grows linearly. A 32-through-4096 sweep remained faster than that model by
+`n^0.689` after the small-Nat/GMP transition, so it supplies no honest
+two-sided wall model; no published bound covers this executable as a dominant
+profiled phase. The largest controlled input takes 6.0 ms. A 200 ms zero-grace
+whole-child budget includes lazy fixture setup, warmup, and more than 3x the
+43 ms clean spawn-floor-plus-operation baseline. -/
+setup_fixed_benchmark runEvalMajorantFixed where {
+  apiFixedConfig with
+  maxSecondsPerCall := 0.2
+  expectedHash := some 0xd906e705ab7ed934
+}
 
 /-! # Parametric ladder fixtures -/
 
@@ -812,14 +891,16 @@ private structure InvInput where
   rep : RefinedIsolation p
   rep_mk : SimpleRoot.mk rep = x
   a : QAdjoin p x
+  b : QAdjoin p x
   checked : Option (PLift (ZPoly.CheckedIrreducible p))
 
 private instance : Hashable InvInput where
-  hash input := mixHash (hash input.p.toArray) (fixedChecksum input.a)
+  hash input := mixHash (hash input.p.toArray)
+    (mixHash (fixedChecksum input.a) (fixedChecksum input.b))
 
 private instance : Inhabited InvInput :=
   ⟨{ p := sqrtTwoPoly, x := sqrtTwoRoot, rep := sqrtTwoRep, rep_mk := rfl,
-      a := fixedSqrtTwo, checked := none }⟩
+      a := fixedSqrtTwo, b := fixedSqrtTwo, checked := none }⟩
 
 def prepInvInput (n : Nat) : InvInput :=
   let m := max n 2
@@ -831,6 +912,7 @@ def prepInvInput (n : Nat) : InvInput :=
         let x := SimpleRoot.mk rep
         { p := p, x := x, rep := rep, rep_mk := rfl
           a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 5))
+          b := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 9))
           checked := some ⟨⟨hirr, hdeg⟩⟩ }
       | none => panic! "prepInvInput: isolation failed"
     else panic! "prepInvInput: degree check failed"
@@ -990,7 +1072,7 @@ def runQAdjoinDivLadder (input : InvInput) : UInt64 :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible input.p := inst
-    fixedChecksum (input.a / input.a)
+    fixedChecksum (input.a / input.b)
   | none => 0
 
 /- Cost model. `QAdjoin` addition adds the two reduced rational coefficient
@@ -1074,22 +1156,34 @@ setup_benchmark runQAdjoinMulLadder n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model. `QAdjoin.approx` performs one Horner pass over `n` rational
-coordinates. Its guard requests `O(n)` precision on this bounded-height,
-bounded-root family, so `n` dyadic multiply/add steps on `O(n)`-bit values give
-the conservative quadratic linear-bit proxy. Refinement and input construction
-are deterministic parts of the public operation and prep respectively. -/
-setup_benchmark runQAdjoinApproxLadder n => n * n
-  with prep := prepFieldInput
-  where {
-    paramFloor := 4
-    paramCeiling := 128
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128]
-    maxSecondsPerCall := 120.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+initialize qAdjoinApproxRef : IO.Ref (Option FieldInput) ← IO.mkRef none
+
+private def getQAdjoinApproxInput : IO FieldInput := do
+  match ← qAdjoinApproxRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepFieldInput 128
+    qAdjoinApproxRef.set (some input)
+    pure input
+
+def runQAdjoinApprox : Unit → IO UInt64 := fun _ => do
+  return runQAdjoinApproxLadder (← getQAdjoinApproxInput)
+
+/- Mode 3. The independently derived conservative bit model is `O(n⁴)`: the
+guard makes the refined root ball `O(n)` bits, exact Horner multiplication
+grows the accumulator to `O(n²)` bits, and the sum of schoolbook products is
+quartic. The controlled 4-through-128 sweep was faster by `n^2.262`, while the
+former quadratic proxy accelerated to a local exponent 2.55 at the top and
+was not a stable wall model. With no published bound for this exact-ball
+implementation, retain the 16.9 ms degree-128 case. Preparing its certified
+degree-128 field takes the whole clean child baseline to 2.03 s; a 7 s
+zero-grace whole-child budget is over 3x that observed baseline, including lazy
+setup and warmup rather than hiding them in process initialization. -/
+setup_fixed_benchmark runQAdjoinApprox where {
+  apiFixedConfig with
+  maxSecondsPerCall := 7.0
+  expectedHash := some 0xd65a5f2477fcfa3a
+}
 
 /- Cost model. Inversion runs the monic-normalized polynomial extended gcd of
 the degree-`(n-1)` element against `X^n - 2` over `ℚ`. On this controlled
@@ -1550,9 +1644,7 @@ private def qAdjoinRootsChecksum (input : FieldRootsInput) : UInt64 :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
-    match QAdjoin.roots? input.f sqrtTwoRep rfl with
-    | some result => rootSetChecksum result
-    | none => 1
+    rootSetChecksum (QAdjoin.roots input.f sqrtTwoRep rfl)
   | none => 0
 
 initialize qAdjoinRootsLadderRef : IO.Ref (Option FieldRootsInput) ← IO.mkRef none
@@ -1577,9 +1669,9 @@ private structure RootPhaseInput where
 private def rootPhaseInput? : Option RootPhaseInput :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
-    let input := prepFieldRootsInput 3
+    let input := prepFieldRootsInput 6
     match (QAdjoin.Roots.yun input.f).toList.find? fun component =>
-        component.1.degree?.getD 0 == 3 with
+        component.1.degree?.getD 0 == 6 with
     | some (f, multiplicity) =>
         if hm : 0 < multiplicity then
           let eliminant := ZPoly.squareFreeCore
@@ -1590,21 +1682,29 @@ private def rootPhaseInput? : Option RootPhaseInput :=
   else none
 
 initialize rootPhaseInputRef : IO.Ref (Option RootPhaseInput) ←
-  IO.mkRef rootPhaseInput?
+  IO.mkRef none
+
+private def getRootPhaseInput : IO RootPhaseInput := do
+  match ← rootPhaseInputRef.get with
+  | some input => pure input
+  | none =>
+    let input ← requireSome "roots/phase-input" rootPhaseInput?
+    rootPhaseInputRef.set (some input)
+    pure input
 
 def runNormEliminant : Unit → IO UInt64 := fun _ => do
-  let input ← requireSome "roots/norm-eliminant" (← rootPhaseInputRef.get)
+  let input ← getRootPhaseInput
   return polyChecksum (QAdjoin.Roots.normEliminant input.f)
 
 def runEvalEliminant : Unit → IO UInt64 := fun _ => do
-  let input ← requireSome "roots/eval-eliminant" (← rootPhaseInputRef.get)
+  let input ← getRootPhaseInput
   return polyChecksum (QAdjoin.Roots.evalEliminant input.f input.eliminant)
 
 def runComponentRoots : Unit → IO UInt64 :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
     fun _ => do
-      let input ← requireSome "roots/component" (← rootPhaseInputRef.get)
+      let input ← getRootPhaseInput
       let roots ← requireSome "roots/component" <|
         QAdjoin.Roots.componentRoots? input.f input.multiplicity
           input.multiplicity_pos sqrtTwoRep rfl
@@ -1612,20 +1712,21 @@ def runComponentRoots : Unit → IO UInt64 :=
   else
     fun _ => throw <| IO.userError "roots/component: irreducibility failed"
 
-/- The degree-three repeated component over the fixed quadratic field is the
-smallest dense member of the profiled root family that exercises the same
-Brown norm resultant, double evaluation resultant, and complete certified
-component-root route. Separate fixed registrations expose both eliminants and
-the isolation-dominated `componentRoots?` phase without inventing a transfer
-of an external isolator's asymptotic bound. -/
+/- The degree-six repeated component is the exact profiled root-family case.
+It exercises the Brown norm resultant, double evaluation resultant, and
+complete certified component-root route. Separate fixed registrations expose
+both eliminants and the isolation-dominated `componentRoots?` phase without
+inventing a transfer of an external isolator's asymptotic bound. -/
 setup_fixed_benchmark runNormEliminant where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xbd1f7b595e06cc7d
 }
 setup_fixed_benchmark runEvalEliminant where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x38d1cf2583d846c2
 }
 setup_fixed_benchmark runComponentRoots where {
-  repeats := 3, maxSecondsPerCall := 20.0
+  apiFixedConfig with
+  maxSecondsPerCall := 8.0
+  expectedHash := some 0x1ad4de1ea10497bd
 }
 
 /-- Prepared duplicate-removal fixture from the two Yun components of
@@ -1699,9 +1800,12 @@ def prepAlgPolyInput (n : Nat) : AlgPolyInput :=
       else AlgebraicNumber.ofRat (denseRatCoeff i 2)⟩
   | none => panic! "prepAlgPolyInput: √2 fixture failed"
 
+initialize signedShiftInputRef : IO.Ref Nat ← IO.mkRef 7
+
 def runCommonSignedDegree : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "common/signed-degree" (← canonicalPairRef.get)
-  return mixHash (hash (AlgebraicPoly.Common.signedShift 7))
+  let (a, _) ← getCanonicalPair
+  let shiftInput ← signedShiftInputRef.get
+  return mixHash (hash (AlgebraicPoly.Common.signedShift shiftInput))
     (hash (AlgebraicPoly.Common.degree a))
 
 def runCommonRational : Unit → IO UInt64 := fun _ => do
@@ -1709,19 +1813,19 @@ def runCommonRational : Unit → IO UInt64 := fun _ => do
   return optionAlgebraicChecksum (AlgebraicPoly.Common.rational? q)
 
 def runCommonAdd : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/add" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return optionAlgebraicChecksum (AlgebraicPoly.Common.add? a b)
 
 def runCommonMul : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/mul" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return optionAlgebraicChecksum (AlgebraicPoly.Common.mul? a b)
 
 def runCommonScale : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "common/scale" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return optionAlgebraicChecksum (AlgebraicPoly.Common.scale? 2 a)
 
 def runCommonShift : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/shift" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return optionAlgebraicChecksum (AlgebraicPoly.Common.shift? a b 1)
 
 private def shiftCandidateChecksum :
@@ -1731,21 +1835,21 @@ private def shiftCandidateChecksum :
   | none => 0
 
 def runCommonExtendStep : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/extend-step" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return match AlgebraicPoly.Common.extendShiftStep a b none 1 with
     | some candidate => shiftCandidateChecksum candidate
     | none => 0
 
 def runCommonExtendShift : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/extend-shift" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return shiftCandidateChecksum (AlgebraicPoly.Common.extendShift? a b)
 
 def runCommonExtend : Unit → IO UInt64 := fun _ => do
-  let (a, b) ← requireSome "common/extend" (← canonicalPairRef.get)
+  let (a, b) ← getCanonicalPair
   return optionAlgebraicChecksum (AlgebraicPoly.Common.extend? a b)
 
 def runCommonTrace : Unit → IO UInt64 := fun _ => do
-  let (a, _) ← requireSome "common/trace" (← canonicalPairRef.get)
+  let (a, _) ← getCanonicalPair
   return hash (AlgebraicPoly.Common.trace? 4 a)
 
 /- `signedShift` and `degree` are constant-time arithmetic/projections and are
@@ -1753,34 +1857,38 @@ grouped. The remaining fixed registrations each isolate one public checked
 canonical-construction route at quadratic input degree; no asymptotic claim is
 made for the isolation/exactification work they transitively perform. -/
 setup_fixed_benchmark runCommonSignedDegree where {
-  repeats := 10, maxSecondsPerCall := 1.0
+  apiAnchorConfig with expectedHash := some 0x77a094c0cc786289
 }
 setup_fixed_benchmark runCommonRational where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x69274ee3b78c157d
 }
 setup_fixed_benchmark runCommonAdd where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xb2956b93cac0235f
 }
 setup_fixed_benchmark runCommonMul where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xab6b27ac2b367388
 }
 setup_fixed_benchmark runCommonScale where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x9e5141110150d74a
 }
 setup_fixed_benchmark runCommonShift where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xb2956b93cac0235f
 }
 setup_fixed_benchmark runCommonExtendStep where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0x780a36b904a3800a
 }
 setup_fixed_benchmark runCommonExtendShift where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with
+  maxSecondsPerCall := 0.75
+  expectedHash := some 0x780a36b904a3800a
 }
 setup_fixed_benchmark runCommonExtend where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with
+  maxSecondsPerCall := 0.75
+  expectedHash := some 0xb2956b93cac0235f
 }
 setup_fixed_benchmark runCommonTrace where {
-  repeats := 10, maxSecondsPerCall := 1.0
+  apiAnchorConfig with expectedHash := some 0xad12ba043c7b5045
 }
 
 private structure CommonPowersInput where
@@ -1806,10 +1914,18 @@ private def commonPowersChecksum (input : CommonPowersInput) : UInt64 :=
   | none => 0
 
 initialize commonPowersRef : IO.Ref (Option CommonPowersInput) ←
-  IO.mkRef (some (prepCommonPowersInput 16))
+  IO.mkRef none
+
+private def getCommonPowersInput : IO CommonPowersInput := do
+  match ← commonPowersRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepCommonPowersInput 16
+    commonPowersRef.set (some input)
+    pure input
 
 def runCommonPowers : Unit → IO UInt64 := fun _ => do
-  let input ← requireSome "common/powers" (← commonPowersRef.get)
+  let input ← getCommonPowersInput
   return commonPowersChecksum input
 
 /- Fixed canonical case. A controlled exponent sweep is smooth through 16
@@ -1818,10 +1934,12 @@ at 32 as canonical multiplication encounters materially different coefficient
 shapes. No independently derived one-parameter wall model explains that cliff.
 The largest stable pre-cliff case, powers `1, gamma, ..., gamma^16` of the
 quadratic generator,
-therefore gives direct coverage with a five-second absolute ceiling without
-claiming asymptotic scaling. -/
+therefore gives direct coverage. The 38 ms median and 43 ms clean spawn floor
+fit under a 500 ms zero-grace whole-child budget with over a 6x margin. -/
 setup_fixed_benchmark runCommonPowers where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with
+  maxSecondsPerCall := 0.5
+  expectedHash := some 0x3187ce8732d0a00b
 }
 
 def runCommonPrimitive (input : AlgPolyInput) : UInt64 :=
@@ -1862,10 +1980,18 @@ private def coordinatesInput? : Option CoordinatesInput := do
   some ⟨gamma, gamma, powers⟩
 
 initialize coordinatesInputRef : IO.Ref (Option CoordinatesInput) ←
-  IO.mkRef coordinatesInput?
+  IO.mkRef none
+
+private def getCoordinatesInput : IO CoordinatesInput := do
+  match ← coordinatesInputRef.get with
+  | some input => pure input
+  | none =>
+    let input ← requireSome "common/coordinates-input" coordinatesInput?
+    coordinatesInputRef.set (some input)
+    pure input
 
 def runCommonCoordinates : Unit → IO UInt64 := fun _ => do
-  let input ← requireSome "common/coordinates" (← coordinatesInputRef.get)
+  let input ← getCoordinatesInput
   return match AlgebraicPoly.Common.coordinates?
       input.gamma input.a input.powers with
     | some coordinate => fixedChecksum coordinate
@@ -1876,7 +2002,7 @@ def runCommonCoordinates : Unit → IO UInt64 := fun _ => do
 validates it through `toAlgebraicNumber?`. Powers are precomputed so this
 registration isolates the advertised coordinate-recovery route. -/
 setup_fixed_benchmark runCommonCoordinates where {
-  repeats := 3, maxSecondsPerCall := 5.0
+  apiFixedConfig with expectedHash := some 0xb278d8da3cd861d6
 }
 
 /-- The integer-polynomial parameters that determine an isolation call. The
@@ -1973,9 +2099,7 @@ def printIsolationStats : IO Unit := do
         s!"fixed-field-roots fixture {n} did not have the repeated component"
 
 private def algebraicRootsChecksum (input : AlgPolyInput) : UInt64 :=
-  match input.f.roots? with
-  | some result => rootSetChecksum result
-  | none => 1
+  rootSetChecksum input.f.roots
 
 def runCommonPresentationLadder (input : AlgPolyInput) : UInt64 :=
   match AlgebraicPoly.Common.presentation? input.f.coeffs with
