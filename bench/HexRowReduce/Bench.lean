@@ -174,6 +174,9 @@ private def basisMatrixSchedule : Array Nat := #[16, 24, 32, 48, 64]
 private def preparedSpanSchedule : Array Nat := #[16, 24, 32, 48, 64, 96, 128, 192]
 private def preparedNullspaceSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
 private def preparedLinearSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
+-- Keep the quadratic free-column scan below the runtime's large-allocation
+-- transition; the batched timings already have ample signal at these sizes.
+private def freeColsSchedule : Array Nat := #[64, 96, 128, 192, 256, 384, 512]
 
 /- Cost-model derivation: on dense `I + J`, all `n` pivots fire.  Each pivot
 normalizes two length-`n` rows (echelon and transform) and eliminates up to
@@ -252,7 +255,7 @@ setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
 against the sorted pivot vector by a linear list-membership scan.  On the
 rank-`n / 2` prepared family the aggregate scan is `Theta(n^2)`. -/
 setup_benchmark runFreeCols n => n ^ 2 with prep := deficientReduced where {
-  paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedLinearSchedule
+  paramFloor := 64, paramCeiling := 512, paramSchedule := .custom freeColsSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
