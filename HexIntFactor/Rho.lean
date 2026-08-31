@@ -23,6 +23,19 @@ def rhoSplit? (n : Nat) (r : Rand) (fuel : Nat) :
 
 namespace Internal
 
+/-- Try the shared Brent-rho search with explicit restart and inner-step
+allocations, retaining its exact restart count. -/
+def rhoSplitCountedWith? (n : Nat) (r : Rand) (restarts innerFuel : Nat) :
+    Except RhoFailure RhoSuccess :=
+  rhoFactorCountedWith? n r restarts innerFuel
+
+/-- Every explicitly budgeted counted adapter success is a proper divisor. -/
+theorem rhoSplitCountedWith?_spec {n : Nat} {r : Rand}
+    {restarts innerFuel : Nat} {success : RhoSuccess}
+    (h : rhoSplitCountedWith? n r restarts innerFuel = .ok success) :
+    1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n :=
+  rhoFactorCountedWith?_spec h
+
 /-- Try the shared Brent-rho search while retaining its exact restart count. -/
 def rhoSplitCounted? (n : Nat) (r : Rand) (fuel : Nat) :
     Except RhoFailure RhoSuccess :=

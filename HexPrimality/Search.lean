@@ -417,6 +417,18 @@ structure PartialFactors where
   residual : Nat
 deriving Repr
 
+/-- Output of an untrusted partial-factor search used during certificate
+construction. The caller validates only the final `PrimeCert`; these fields
+carry search candidates and resumable resource accounting, not evidence. -/
+structure FactorSearchResult where
+  /-- Claimed factors and the unfactored residual. -/
+  raw : PartialFactors
+  /-- Generator state after every randomized attempt made by the search. -/
+  rand : Rand
+  /-- Semantic search attempts made by this invocation. -/
+  attempts : Nat
+deriving Repr
+
 /-- The product `∏ pᵢ ^ eᵢ` of a claimed factor list. -/
 private def prodPows : List (Nat × Nat) → Nat
   | [] => 1
@@ -589,6 +601,18 @@ structure PrimeCertBudget where
   rhoSteps : Nat
 deriving Repr, DecidableEq
 
+/-- Complete resource allocation for one untrusted partial-factor invocation.
+Nested primality checks receive `primeFuel` and `primeBudget`; the producer's
+own worklist receives `factorFuel`. -/
+structure FactorSearchBudget where
+  primeBudget : PrimeCertBudget
+  primeFuel : Nat
+  factorFuel : Nat
+deriving Repr, DecidableEq
+
+/-- A bounded, resumable, untrusted partial-factor producer. -/
+abbrev FactorSearch := FactorSearchBudget → Nat → Rand → FactorSearchResult
+
 /-- The production certificate-search rho allocation used by the public API. -/
 def defaultPrimeCertBudget : PrimeCertBudget :=
   ⟨rhoRestartBudget, 1 <<< 22⟩
@@ -691,6 +715,12 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
   let phase := rhoPhase budget fuel smooth.stack smooth.factors 1 smooth.rand
     smooth.attempts
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
+
+/-- The built-in partial-factor producer used by `primeCert?`. -/
+def defaultFactorSearch : FactorSearch :=
+  fun allocation n r =>
+    let result := partialFactor allocation.primeBudget n r allocation.factorFuel
+    ⟨result.raw, result.rand, result.attempts⟩
 
 /-- The product invariant: the claimed powers times the residual recover the
 input exactly. This is the one fact certificate search needs. -/
@@ -889,7 +919,8 @@ a certified child with a searched witness. The candidate entries are sorted
 into the checker's canonical subject order, then the assembled node is
 validated by the public wrapper; neither the factorization nor this
 preprocessing is trusted. -/
-private def primeCertGo (budget : PrimeCertBudget) (fuel n : Nat) (r : Rand) :
+private def primeCertGo (factor : FactorSearch) (budget : PrimeCertBudget)
+    (fuel n : Nat) (r : Rand) :
     Except PrimeCertFailure (Counted PrimeCert) :=
   if n < 2 then .error ⟨.composite, 0, r⟩
   else if n < primeTableBound then
@@ -902,8 +933,10 @@ private def primeCertGo (budget : PrimeCertBudget) (fuel n : Nat) (r : Rand) :
         match fuel with
         | 0 => .error ⟨.exhausted, 0, r⟩
         | fuel + 1 =>
-            let factored := partialFactor budget (n - 1) r (2 * n.log2 + 8)
-            match assembleGo budget fuel n factored.raw.factors []
+            let allocation : FactorSearchBudget :=
+              ⟨budget, fuel, 2 * n.log2 + 8⟩
+            let factored := factor allocation (n - 1) r
+            match assembleGo factor budget fuel n factored.raw.factors []
                 factored.attempts factored.rand with
             | .error f => .error f
             | .ok assembled =>
@@ -923,21 +956,22 @@ termination_by (fuel, 0)
 witness base per entry. A child failure is reported as exhaustion: the
 child's compositeness would only mean the untrusted factorization guessed
 wrong, never that `n` is composite. -/
-private def assembleGo (budget : PrimeCertBudget) (fuel n : Nat) :
+private def assembleGo (factor : FactorSearch) (budget : PrimeCertBudget)
+    (fuel n : Nat) :
     List (Nat × Nat) → List (Nat × Nat × PrimeCert) → Nat → Rand →
       Except PrimeCertFailure (Counted (List (Nat × Nat × PrimeCert)))
   | [], acc, attempts, r => .ok ⟨acc.reverse, attempts, r⟩
   | (q, e) :: rest, acc, attempts, r =>
-      if e = 0 then assembleGo budget fuel n rest acc attempts r
+      if e = 0 then assembleGo factor budget fuel n rest acc attempts r
       else
-        match primeCertGo budget fuel q r with
+        match primeCertGo factor budget fuel q r with
         | .error f => .error ⟨.exhausted, attempts + f.attempts, f.rand⟩
         | .ok child =>
             match witnessGo n q Internal.sampleFuel witnessBudget 0 child.rand with
             | .error f =>
                 .error ⟨f.stop, attempts + child.attempts + f.attempts, f.rand⟩
             | .ok witness =>
-                assembleGo budget fuel n rest
+                assembleGo factor budget fuel n rest
                   ((witness.value, e - 1, child.value) :: acc)
                   (attempts + child.attempts + witness.attempts) witness.rand
 termination_by l => (fuel, l.length + 1)
@@ -958,10 +992,11 @@ structure PrimeCertSuccess (n : Nat) where
 
 /-- Bounded certificate search with an explicit rho allocation, retaining
 exact successful-attempt metering. -/
-def primeCertCountedWith? (budget : PrimeCertBudget) (n : Nat) (r : Rand)
+def primeCertCountedUsing? (factor : FactorSearch) (budget : PrimeCertBudget)
+    (n : Nat) (r : Rand)
     (fuel : Nat) :
     Except PrimeCertFailure (PrimeCertSuccess n) :=
-  match primeCertGo budget fuel n r with
+  match primeCertGo factor budget fuel n r with
   | .error f => .error f
   | .ok result =>
       if hs : result.value.subject = n then
@@ -970,12 +1005,28 @@ def primeCertCountedWith? (budget : PrimeCertBudget) (n : Nat) (r : Rand)
         else .error ⟨.exhausted, result.attempts, result.rand⟩
       else .error ⟨.exhausted, result.attempts, result.rand⟩
 
+/-- Bounded certificate search with an explicit rho allocation, retaining
+exact successful-attempt metering and using the built-in factor producer. -/
+def primeCertCountedWith? (budget : PrimeCertBudget) (n : Nat) (r : Rand)
+    (fuel : Nat) :
+    Except PrimeCertFailure (PrimeCertSuccess n) :=
+  primeCertCountedUsing? defaultFactorSearch budget n r fuel
+
 /-- Bounded certificate search retaining exact successful-attempt metering. -/
 def primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (PrimeCertSuccess n) :=
   primeCertCountedWith? defaultPrimeCertBudget n r fuel
 
 end Internal
+
+/-- Bounded certificate search using an explicitly supplied, untrusted
+partial-factor producer. Only the returned `CheckedPrimeCert` is accepted;
+the producer's factors, accounting, and random state remain search data. -/
+def primeCertWith? (factor : FactorSearch) (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (CheckedPrimeCert n × Rand) :=
+  match Internal.primeCertCountedUsing? factor defaultPrimeCertBudget n r fuel with
+  | .error failure => .error failure
+  | .ok success => .ok (success.cert, success.rand)
 
 /-- Bounded certificate search. A success is a `CheckedPrimeCert`, so a
 certificate for one number can never answer a request about another; a
@@ -1006,10 +1057,11 @@ private theorem witnessGo_error_stop {n q drawFuel : Nat} :
         · cases h
         · exact ih _ _ h
 
-private theorem assembleGo_error_stop {budget : PrimeCertBudget} {fuel n : Nat} :
+private theorem assembleGo_error_stop {factor : FactorSearch}
+    {budget : PrimeCertBudget} {fuel n : Nat} :
     ∀ (l : List (Nat × Nat)) (acc : List (Nat × Nat × PrimeCert))
       (attempts : Nat) (r : Rand) {f : PrimeCertFailure},
-      assembleGo budget fuel n l acc attempts r = .error f →
+      assembleGo factor budget fuel n l acc attempts r = .error f →
         f.stop = .exhausted := by
   intro l
   induction l with
@@ -1034,9 +1086,10 @@ private theorem assembleGo_error_stop {budget : PrimeCertBudget} {fuel n : Nat} 
             exact hfstop
           next => exact ih _ _ _ h
 
-private theorem primeCertGo_composite {budget : PrimeCertBudget} {fuel n : Nat}
+private theorem primeCertGo_composite {factor : FactorSearch}
+    {budget : PrimeCertBudget} {fuel n : Nat}
     {r : Rand} {f : PrimeCertFailure}
-    (h : primeCertGo budget fuel n r = .error f)
+    (h : primeCertGo factor budget fuel n r = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n := by
   unfold primeCertGo at h
   by_cases h2 : n < 2
@@ -1079,15 +1132,16 @@ private theorem primeCertGo_composite {budget : PrimeCertBudget} {fuel n : Nat}
               cases hstop
             · split at h <;> cases h
 
-/-- A budgeted counted `.composite` failure is a verdict: the input is not
-prime. The result is independent of the resource allocation because only the
-fixed size, table, and Miller--Rabin tiers can emit that stop reason. -/
-theorem Internal.primeCertCountedWith?_composite {budget : PrimeCertBudget}
+/-- A counted `.composite` failure is a verdict for every factor producer and
+resource allocation because only the fixed size, table, and Miller--Rabin tiers
+can emit that stop reason. -/
+theorem Internal.primeCertCountedUsing?_composite {factor : FactorSearch}
+    {budget : PrimeCertBudget}
     {n : Nat} {r : Rand} {fuel : Nat}
     {f : PrimeCertFailure}
-    (hresult : Internal.primeCertCountedWith? budget n r fuel = .error f)
+    (hresult : Internal.primeCertCountedUsing? factor budget n r fuel = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n := by
-  unfold Internal.primeCertCountedWith? at hresult
+  unfold Internal.primeCertCountedUsing? at hresult
   split at hresult
   · rename_i f' herr
     injection hresult with h
@@ -1103,6 +1157,16 @@ theorem Internal.primeCertCountedWith?_composite {budget : PrimeCertBudget}
       subst h
       cases hstop
 
+/-- A budgeted counted `.composite` failure under the built-in factor producer
+is a verdict. -/
+theorem Internal.primeCertCountedWith?_composite {budget : PrimeCertBudget}
+    {n : Nat} {r : Rand} {fuel : Nat}
+    {f : PrimeCertFailure}
+    (hresult : Internal.primeCertCountedWith? budget n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n := by
+  unfold Internal.primeCertCountedWith? at hresult
+  exact Internal.primeCertCountedUsing?_composite hresult hstop
+
 /-- A counted `.composite` failure under the default allocation is a verdict:
 the input is not prime. -/
 theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
@@ -1110,6 +1174,19 @@ theorem Internal.primeCertCounted?_composite {n : Nat} {r : Rand} {fuel : Nat}
     (hresult : Internal.primeCertCounted? n r fuel = .error f)
     (hstop : f.stop = .composite) : ¬ Prime n := by
   exact Internal.primeCertCountedWith?_composite hresult hstop
+
+/-- A `.composite` failure is a verdict for every supplied factor producer. -/
+theorem primeCertWith?_composite {factor : FactorSearch} {n : Nat} {r : Rand}
+    {fuel : Nat} {f : PrimeCertFailure}
+    (hresult : primeCertWith? factor n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n := by
+  unfold primeCertWith? at hresult
+  split at hresult
+  · rename_i f' herr
+    injection hresult with h
+    subst h
+    exact Internal.primeCertCountedUsing?_composite herr hstop
+  · cases hresult
 
 /-- A `.composite` failure is a verdict: the input is not prime. Justified
 by size, table completeness, or a failed Miller-Rabin base; never by
