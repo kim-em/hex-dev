@@ -38,8 +38,8 @@ Scientific registrations:
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
-* `runFrobeniusXModChecksum`: a batch of `n` calls to `X^p mod f` on degree
-  `n` moduli, modeled by the 17 fixed-exponent squaring stages.
+* `runFrobeniusXModChecksum`: `X^p mod f` on degree-`n` moduli, modeled by
+  the 17 fixed-exponent squaring stages.
 * `runFrobeniusXPowModChecksum`: `X^(p^n) mod f`, `O(n^3)` for growing modulus
   degree and Frobenius exponent height.
 * `runComposeModMonicChecksum`: Horner modular composition, `O(n^3)`.
@@ -110,9 +110,8 @@ structure ModInput where
   exponent : Nat
   deriving Hashable
 
-/-- Prepared batched input for fixed-prime Frobenius. -/
-structure FrobeniusBatchInput where
-  count : Nat
+/-- Prepared input for fixed-prime Frobenius. -/
+structure FrobeniusInput where
   degree : Nat
   deriving Hashable
 
@@ -286,10 +285,9 @@ def prepPowModInput (n : Nat) : ModInput :=
     degree := n + 1
     exponent := n + 1 }
 
-/-- Per-parameter fixture for fixed-prime Frobenius batches. -/
-def prepFrobeniusInput (n : Nat) : FrobeniusBatchInput :=
-  { count := n
-    degree := n + 1 }
+/-- Per-parameter fixture for fixed-prime Frobenius. -/
+def prepFrobeniusInput (n : Nat) : FrobeniusInput :=
+  { degree := n + 1 }
 
 /-- Per-parameter fixture for Frobenius powers. -/
 def prepFrobeniusPowInput (n : Nat) : ModInput :=
@@ -329,17 +327,17 @@ def prepGcdInput (n : Nat) : GcdInput :=
   { f := pair.2
     g := pair.1 }
 
-/-- Family-specific work model for a batch of fixed-prime Frobenius calls.
+/-- Family-specific work model for fixed-prime Frobenius.
 
 The exponent `65537 = 2^16 + 1` gives 17 squaring stages.  Before reduction
 saturates at modulus degree `n`, stage `k` squares a polynomial of degree
 `min n (2^k)`; afterward every stage remains at degree `n`.  Schoolbook
 multiplication and monic reduction therefore have the same order as the sum
-of these squared active degrees, repeated for all `n` calls in the batch. -/
+of these squared active degrees. -/
 def frobeniusWork (n : Nat) : Nat :=
   (List.range 17).foldl (fun total k =>
     let degree := min n (2 ^ k)
-    total + n * degree * degree) 0
+    total + degree * degree) 0
 
 /-- Balanced dense multiplication fixture over the large benchmark prime. -/
 def prepMulInput (n : Nat) : MulInput :=
@@ -426,23 +424,17 @@ def runFastPowChecksum (input : ModInput) : UInt64 :=
     powModFast input.base (monicModulusLarge input.degree)
       (monicModulusLarge_monic input.degree) input.exponent
 
-/-- Benchmark target: compute a batch of `X^p mod modulus` calls. -/
-def runFrobeniusXModChecksum (input : FrobeniusBatchInput) : UInt64 :=
-  (Array.range input.count).foldl
-    (fun acc _ =>
-      mixHash acc <| checksumPoly <|
-        powModSchoolbook X (monicModulusLarge input.degree)
-          (monicModulusLarge_monic input.degree) 65537)
-    0
+/-- Benchmark target: compute `X^p mod modulus`. -/
+def runFrobeniusXModChecksum (input : FrobeniusInput) : UInt64 :=
+  checksumPoly <|
+    powModSchoolbook X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) 65537
 
-/-- Benchmark candidate: batched Frobenius with fast multiplication. -/
-def runFastFrobeniusChecksum (input : FrobeniusBatchInput) : UInt64 :=
-  (Array.range input.count).foldl
-    (fun acc _ =>
-      mixHash acc <| checksumPoly <|
-        powModFast X (monicModulusLarge input.degree)
-          (monicModulusLarge_monic input.degree) 65537)
-    0
+/-- Benchmark candidate: Frobenius with fast multiplication. -/
+def runFastFrobeniusChecksum (input : FrobeniusInput) : UInt64 :=
+  checksumPoly <|
+    powModFast X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) 65537
 
 /-- Benchmark target: compute `X^(p^k) mod modulus`. -/
 def runFrobeniusXPowModChecksum (input : ModInput) : UInt64 :=
@@ -801,14 +793,12 @@ setup_benchmark runFastPowChecksum n => (n * n * Nat.log2 (n + 1))
   }
 
 /-
-Cost model: this batches `n` fixed-prime calls with reduced-base degree at most `n`
-modulo dense degree-`n + 1` monic moduli. The model sums squared active degree over
-the 17 squaring stages of `65537 = 2^16 + 1`: early stages grow as `2^k`, and
-the remaining stages stay at modulus degree `n`.  Multiplying that sum by the
-batch size accounts for the timed work without treating the decreasing number
-of saturated stages as a constant.  The schedule starts at `n = 16`, above the
-small-kernel startup regime, and ends at `n = 80`, well below the four-second
-per-call cap on the reference host.
+Cost model: the reduced base has degree at most `n` modulo a dense degree-`n + 1`
+monic modulus. The model sums squared active degree over the 17 squaring stages
+of `65537 = 2^16 + 1`: early stages grow as `2^k`, and the remaining stages
+stay at degree `n`. Lean-bench supplies repetition outside the timed target.
+The schedule starts at `n = 16`, above the small-kernel startup regime, and
+ends at `n = 80`, below the four-second per-call cap on the reference host.
 -/
 setup_benchmark runFrobeniusXModChecksum n => frobeniusWork n
   with prep := prepFrobeniusInput
