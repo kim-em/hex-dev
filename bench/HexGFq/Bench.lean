@@ -229,7 +229,7 @@ setup_fixed_benchmark runPackedModulusChecksum where {
 }
 
 /-
-Mode 1. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
+Mode 1 cost model. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
 therefore has the alternating quotient with exactly `(n + 1) / 2` nonzero
 terms. Each term causes one single-word leading-term elimination. The model
 adds the two fixed stages, field packaging and representative projection.
@@ -301,7 +301,7 @@ setup_benchmark runGeneric28 n => n
   }
 
 /-
-Mode 1. `prepPacked8 n` is the fixed degree-eight modulus times the dense
+Mode 1 cost model. `prepPacked8 n` is the fixed degree-eight modulus times the dense
 quotient `1 + x + ... + x^(n-8)`. Its remainder is zero and uniqueness of
 division makes every one of the quotient's `n - 7` terms a leading-term
 elimination. Each elimination is single-word work. The model adds the same two
