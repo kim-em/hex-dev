@@ -153,7 +153,8 @@ The Tier 1 lookup profile was captured at commit
 `3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
 macOS 14.6.1, arm64), using `samply 0.13.1` at 999 Hz and the
 lean-bench-samply timed-region filter at commit
-`602da96df3537341b50de9add2f137b0a75a68df`:
+`602da96df3537341b50de9add2f137b0a75a68df`. The recorded `git_dirty=true`
+was caused by an unrelated pre-existing `.claude/CLAUDE.md` modification:
 
 ```sh
 scripts/profile/run_profile.sh \
