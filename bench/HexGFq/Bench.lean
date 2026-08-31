@@ -17,21 +17,21 @@ constructor and projection surface `hex-gfq` itself contributes; the modulus
 arithmetic underneath it is measured by `hex-gfq-field` and `hex-gf2`.
 
 The committed table is wider than what is exercised here: `hex-conway` commits
-36 generic entries (`p` in `2, 3, 5, 7, 11, 13`, `n` in `1` to `6`), all
-reachable through `GFq.CommittedEntry` instances, and this library exposes
-`GFq.PackedGF2Entry` instances for `n` in `1` to `6`. Sweeping the bench
-across that range is outstanding work, not a limit of the public API.
+the odd-prime entries for `n` in `1` to `6` and the binary entries for `n` in
+`1` to `8`, all reachable through `GFq.CommittedEntry` instances. This library
+also exposes `GFq.PackedGF2Entry` instances for binary degrees `1` to `8`.
 
-* `runGFqOfPolyReprChecksum`: generic `GFq.ofPoly` plus `GFq.repr` on a
-  degree-`n` binary representative, `O(n)` against the fixed linear modulus.
-* `runGF2qOfWordReprChecksum`: packed `GF2q.ofWord` plus `GF2q.repr` on the
-  committed single-word `GF2q 1` entry.
-* `runGF2qOfWordReprProfileChecksum`: the same packed constructor/projection
-  surface registered parametrically so timed-region-filtered profiling can
-  exercise it at a representative word input.
-* `runPackedGenericSharedChecksum`: packed and generic constructor/projection
-  checksums on the same binary representative family, `O(n)` on the generic
-  degree-`n` representative.
+* `runGeneric21`, `runGeneric28`, `runGeneric136`, and `runGenericC136`:
+  generic constructor/projection families with `O(n)` cost in the input
+  representative length against their fixed committed moduli.
+* `runPacked1` and `runPacked8`: constant-cost packed constructor/projection
+  families over independently generated single-word representatives.
+* `runShared21`: packed and generic constructor/projection checksums on the
+  same binary representative family, `O(n)` on the generic degree-`n`
+  representative.
+
+The two fixed registrations only anchor the selected modulus values by hash;
+they are not performance evidence for a constructor or projection operation.
 -/
 
 namespace Hex
@@ -101,22 +101,21 @@ structure SharedInput where
   word : UInt64
   deriving Hashable
 
-/-- Prepared generic constructor/projection input. -/
-def prepGFqInput (n : Nat) : FpPoly 2 :=
+/-- Prepared generic degree-one constructor/projection input. -/
+def prepGeneric21 (n : Nat) : FpPoly 2 :=
   binaryPoly n 11
 
 /-- Prepared packed constructor/projection input. -/
-def prepGF2qWordInput (n : Nat) : UInt64 :=
-  binaryWord n 37
+def prepPacked (n : Nat) : UInt64 :=
+  binaryWord 63 (37 + n)
 
 /-- Prepared shared-domain packed-vs-generic input. -/
-def prepSharedInput (n : Nat) : SharedInput :=
+def prepShared21 (n : Nat) : SharedInput :=
   { poly := binaryPoly n 59, word := binaryWord n 59 }
 
-/- The three fixed targets below were `(_ : Unit) → UInt64` over closed terms,
-which the compiler folds: each reported the same floor time regardless of what
-it named. They now follow the `Unit → IO α` shape this file's header
-prescribes, with inputs held in `IO.Ref`s. -/
+/- These fixed targets follow the `Unit → IO α` shape with inputs held in
+`IO.Ref`s so their expected hashes anchor runtime values rather than folded
+closed terms. They make no performance claim. -/
 
 private instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
 private instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
@@ -125,7 +124,6 @@ private instance : Nonempty GF2Poly := ⟨GF2q.modulus (n := 1)⟩
 private initialize genModulusRef : IO.Ref (FpPoly 2) ← IO.mkRef (GFq.modulus Entry21)
 private initialize packModulusRef : IO.Ref GF2Poly ← IO.mkRef (GF2q.modulus (n := 1))
 private initialize packLowerRef : IO.Ref UInt64 ← IO.mkRef (GF2q.lower (n := 1))
-private initialize wordRef : IO.Ref UInt64 ← IO.mkRef (binaryWord 63 37)
 
 /-- Benchmark target: selected generic Conway modulus checksum. -/
 def runGenericModulusChecksum : Unit → IO UInt64 := fun () => do
@@ -138,17 +136,12 @@ def runPackedModulusChecksum : Unit → IO UInt64 := fun () => do
   let lo ← packLowerRef.get
   return mixWord lo (checksumGF2Poly m)
 
-/-- Benchmark target: generic constructor plus representative projection. -/
-def runGFqOfPolyReprChecksum (g : FpPoly 2) : UInt64 :=
+/-- Benchmark target: generic degree-one constructor plus projection. -/
+def runGeneric21 (g : FpPoly 2) : UInt64 :=
   checksumPoly (GFq.repr (GFq.ofPoly Entry21 g : Generic21))
 
-/-- Benchmark target: packed constructor plus representative projection. -/
-def runGF2qOfWordReprChecksum : Unit → IO UInt64 := fun () => do
-  let w ← wordRef.get
-  return GF2q.repr (GF2q.ofWord (n := 1) w : Packed21)
-
-/-- Parametric profiling target for the packed constructor/projection surface. -/
-def runGF2qOfWordReprProfileChecksum (word : UInt64) : UInt64 :=
+/-- Benchmark target: packed degree-one constructor plus projection. -/
+def runPacked1 (word : UInt64) : UInt64 :=
   GF2q.repr (GF2q.ofWord (n := 1) word : Packed21)
 
 /-! # Degree beyond one
@@ -174,100 +167,62 @@ private abbrev Entry136 : Conway.SupportedEntry 13 6 :=
 private abbrev Generic136 : Type :=
   GFq 13 6 Entry136
 
-/- Inputs are threaded through `IO.Ref`s and the targets return `IO`, following
-the `Unit → IO α` pattern this file's header describes. Without that, the whole
-computation is a closed term and Lean folds it: the four targets below then all
-report the same floor time regardless of degree or prime, which is what the
-existing fixed targets in this file do. -/
+/-- Prepared generic binary input at the deepest committed degree. -/
+def prepGeneric28 (n : Nat) : FpPoly 2 :=
+  binaryPoly n 59
 
-private initialize poly28Ref : IO.Ref (FpPoly 2) ← IO.mkRef (binaryPoly 200 59)
-private initialize word8Ref : IO.Ref UInt64 ← IO.mkRef (binaryWord 200 37)
-private initialize poly136Ref : IO.Ref (FpPoly 13) ← IO.mkRef (oddPoly 13 40 41)
+/-- Prepared generic odd-prime input at the widest committed entry. -/
+def prepGeneric136 (n : Nat) : FpPoly 13 :=
+  oddPoly 13 n 41
 
 /-- Benchmark target: generic constructor plus projection at the deepest
 committed binary degree, where reduction modulo a degree-8 modulus runs. -/
-def runGFqOfPolyRepr_2_8_Checksum : Unit → IO UInt64 := fun () => do
-  let g ← poly28Ref.get
-  return checksumPoly (GFq.repr (GFq.ofPoly Entry28 g : Generic28))
+def runGeneric28 (g : FpPoly 2) : UInt64 :=
+  checksumPoly (GFq.repr (GFq.ofPoly Entry28 g : Generic28))
 
 /-- Benchmark target: packed constructor plus projection at degree 8. -/
-def runGF2qOfWordRepr_8_Checksum : Unit → IO UInt64 := fun () => do
-  let w ← word8Ref.get
-  return GF2q.repr (GF2q.ofWord (n := 8) w : Packed28)
+def runPacked8 (word : UInt64) : UInt64 :=
+  GF2q.repr (GF2q.ofWord (n := 8) word : Packed28)
 
 /-- Benchmark target: generic constructor plus projection at the largest
 committed odd-prime entry, `GF(13^6)`. This is the widest coefficient
 arithmetic in the table. -/
-def runGFqOfPolyRepr_13_6_Checksum : Unit → IO UInt64 := fun () => do
-  let g ← poly136Ref.get
-  return checksumPoly (GFq.repr (GFq.ofPoly Entry136 g : Generic136))
+def runGeneric136 (g : FpPoly 13) : UInt64 :=
+  checksumPoly (GFq.repr (GFq.ofPoly Entry136 g : Generic136))
 
 /-- Benchmark target: the ergonomic `GFqC` spelling, which resolves its
 committed entry by instance synthesis rather than taking it explicitly. Same
 work as the explicit form; this measures that the convenience costs nothing. -/
-def runGFqCOfPolyReprChecksum : Unit → IO UInt64 := fun () => do
-  let g ← poly136Ref.get
-  return checksumPoly (GFqC.repr (GFqC.ofPoly (p := 13) (n := 6) g))
+def runGenericC136 (g : FpPoly 13) : UInt64 :=
+  checksumPoly (GFqC.repr (GFqC.ofPoly (p := 13) (n := 6) g))
 
 /-- Benchmark target: packed and generic checksums on shared binary inputs. -/
-def runPackedGenericSharedChecksum (input : SharedInput) : UInt64 :=
+def runShared21 (input : SharedInput) : UInt64 :=
   let packed := GF2q.repr (GF2q.ofWord (n := 1) input.word : Packed21)
   let generic := checksumPoly (GFq.repr (GFq.ofPoly Entry21 input.poly : Generic21))
   mixWord packed generic
 
-setup_fixed_benchmark runGFqOfPolyRepr_2_8_Checksum where {
-  repeats := 5
-  maxSecondsPerCall := 2.0
-  expectedHash := none
-}
-
-setup_fixed_benchmark runGF2qOfWordRepr_8_Checksum where {
-  repeats := 5
-  maxSecondsPerCall := 2.0
-  expectedHash := none
-}
-
-setup_fixed_benchmark runGFqOfPolyRepr_13_6_Checksum where {
-  repeats := 5
-  maxSecondsPerCall := 2.0
-  expectedHash := none
-}
-
-setup_fixed_benchmark runGFqCOfPolyReprChecksum where {
-  repeats := 5
-  maxSecondsPerCall := 2.0
-  expectedHash := none
-}
-
 setup_fixed_benchmark runGenericModulusChecksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
-  expectedHash := none
+  expectedHash := some 0x3403d2eb08b5d5fc
 }
 
 setup_fixed_benchmark runPackedModulusChecksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
-  expectedHash := none
-}
-
-setup_fixed_benchmark runGF2qOfWordReprChecksum where {
-  repeats := 5
-  maxSecondsPerCall := 2.0
-  expectedHash := none
+  expectedHash := some 0x1ce80893b914478a
 }
 
 /-
-The fixed packed target above is the benchmark verdict surface. This
-parametric companion exposes the same committed `GF2q 1` operation through the
-profiling wrapper so timed-region sidecars can sample it across word inputs.
-The underlying `GF2q.ofWord`/`GF2q.repr` pair operates on a single packed word,
-so the declared cost model is `O(1)` in the parameter: the schedule only varies
-which word reaches `ofWord`/`repr` and does not scale the per-call work, which
-remains constant.
+Mode 1 cost model. `GF2q.ofWord` packages one `UInt64`, reduces a polynomial
+occupying one machine word by a fixed single-word modulus, and projects the
+resulting word.
+The schedule independently varies the representative, not its machine-word
+width, so the operation count is bounded by a constant and the model is `1`.
 -/
-setup_benchmark runGF2qOfWordReprProfileChecksum _n => 1
-  with prep := prepGF2qWordInput
+setup_benchmark runPacked1 _n => 1
+  with prep := prepPacked
   where {
     paramFloor := 1
     paramCeiling := 63
@@ -278,32 +233,101 @@ setup_benchmark runGF2qOfWordReprProfileChecksum _n => 1
   }
 
 /-
-For the committed `GFq 2 1` entry the selected modulus is linear, so reduction
-of an input representative scans its `n` coefficients and folds them modulo
-`x + 1`; `repr` is a projection of the stored canonical representative.
+Mode 1. For the committed `GFq 2 1` entry the selected modulus is linear, so
+reduction of an input representative scans its `n` coefficients and folds them
+modulo `x + 1`; `repr` is a projection of the stored canonical representative.
 -/
-setup_benchmark runGFqOfPolyReprChecksum n => n
-  with prep := prepGFqInput
+setup_benchmark runGeneric21 n => n
+  with prep := prepGeneric21
   where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
+    paramFloor := 64
+    paramCeiling := 4096
+    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-The shared checksum runs the public packed and generic constructor/projection
-surfaces on the same binary representative family. The generic degree-`n`
-representative scan dominates the fixed single-word packed projection.
+Mode 1. The shared checksum runs the public packed and generic
+constructor/projection surfaces on the same binary representative family. The
+generic degree-`n` representative scan dominates the constant packed
+projection.
 -/
-setup_benchmark runPackedGenericSharedChecksum n => n
-  with prep := prepSharedInput
+setup_benchmark runShared21 n => n
+  with prep := prepShared21
   where {
-    paramFloor := 4
-    paramCeiling := 256
-    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256]
+    paramFloor := 512
+    paramCeiling := 32768
+    paramSchedule := .custom #[512, 1024, 2048, 4096, 8192, 16384, 32768]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Mode 1. The compiled dense long-division loop makes at most `n` eliminations.
+Its degree scan only moves downward, for `O(n)` total scanning, and each
+elimination touches the fixed nine coefficients of the degree-8 modulus.
+Projection and its checksum touch at most eight coefficients, so the model is
+`n` in the input representative length.
+-/
+setup_benchmark runGeneric28 n => n
+  with prep := prepGeneric28
+  where {
+    paramFloor := 16
+    paramCeiling := 512
+    paramSchedule := .custom #[16, 32, 64, 128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Mode 1 cost model. The packed degree-8 constructor has the same constant
+machine-word shape as `runPacked1`: both its input and fixed modulus occupy one
+word, and projection reads the canonical word. The schedule varies only the
+input value.
+-/
+setup_benchmark runPacked8 _n => 1
+  with prep := prepPacked
+  where {
+    paramFloor := 1
+    paramCeiling := 63
+    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 63]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Mode 1. With the degree-6 modulus and base prime 13 fixed, the compiled dense
+long-division loop makes `O(n)` eliminations, each touching seven fixed-width
+residue coefficients. Projection and checksum are bounded by the fixed field
+degree, so the model is `n` in the input representative length.
+-/
+setup_benchmark runGeneric136 n => n
+  with prep := prepGeneric136
+  where {
+    paramFloor := 12
+    paramCeiling := 384
+    paramSchedule := .custom #[12, 24, 48, 96, 192, 288, 384]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Mode 1. `GFqC` resolves the same fixed `(13, 6)` entry at elaboration time and
+then executes the same constructor/projection path as `runGeneric136`, so the
+same independently derived linear model applies.
+-/
+setup_benchmark runGenericC136 n => n
+  with prep := prepGeneric136
+  where {
+    paramFloor := 12
+    paramCeiling := 384
+    paramSchedule := .custom #[12, 24, 48, 96, 192, 288, 384]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
