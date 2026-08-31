@@ -26,14 +26,15 @@ Scientific registrations:
   stored polynomial out of the witness in constant time, but the target also
   checksums the result, and that traversal is linear in the degree, so this
   measurement stands for `C(2, 1)` rather than for the committed table.
-* `Tier1.runIrreducibilityGF2`: Rabin irreducibility verification over the
-  controlled degree ladder `C(2, n)`, `n = 1..8`.
-* `Tier2.runCompatibilityGF2`: divisor-compatibility verification for
-  `C(2, 1)` inside `C(2, n)`, `n = 2..8`.
+* `runTier1Irreducibility_13_6Checksum`: mode-3 Rabin irreducibility
+  verification for the hardest committed Tier 1 entry, `C(13, 6)`.
+* `runTier2Compat_13_1_6Checksum`: mode-3 divisor compatibility for the
+  deepest largest-prime committed pair, `C(13, 1)` inside `C(13, 6)`.
 
-The fixed Tier 1 and Tier 2 registrations are correctness/hash anchors for
-selected entries and make no complexity claim. The two parametric ladders are
-the performance-evidence registrations for the advertised input families.
+The remaining fixed Tier 1 and Tier 2 registrations are correctness/hash
+anchors for selected entries and make no complexity claim. The headline report
+records the failed controlled parameter ladders that rule out stronger modes
+for the two performance-evidence registrations.
 
 Fixed registrations are wrapped as `Unit → IO α` so the harness exercises
 them per-call rather than measuring a closed compile-time-folded constant
@@ -155,6 +156,16 @@ private initialize tier1_13_6Ref : IO.Ref (MonicPoly 13) ←
   IO.mkRef ⟨Conway.luebeckConwayPolynomial_13_6,
             Conway.luebeckConwayPolynomial_13_6_monic⟩
 
+/- `maxSecondsPerCall` bounds the whole child process, including startup. This
+wrapper enforces the selected mode-3 budget around the operation itself and
+returns `false` on a ceiling violation, so the fixed registration's
+`expectedHash` turns the violation into a benchmark failure. -/
+def budgetedBool (ceilingNanos : Nat) (work : IO Bool) : IO Bool := do
+  let start ← IO.monoNanosNow
+  let value ← work
+  let stop ← IO.monoNanosNow
+  if stop - start ≤ ceilingNanos then return value else return false
+
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
 def runTier1Irreducibility_2_1Checksum : Unit → IO Bool := fun () => do
   let mp ← tier1_2_1Ref.get
@@ -187,8 +198,9 @@ def runTier1Irreducibility_11_6Checksum : Unit → IO Bool := fun () => do
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(13, 6)`. -/
 def runTier1Irreducibility_13_6Checksum : Unit → IO Bool := fun () => do
-  let mp ← tier1_13_6Ref.get
-  return Berlekamp.rabinTest mp.poly mp.monic
+  budgetedBool 2_000_000 do
+    let mp ← tier1_13_6Ref.get
+    return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- One committed Tier 2 divisor pair, carried through an `IO.Ref` so the
 workload is not constant-folded. -/
@@ -238,77 +250,15 @@ def runTier2Compat_2_3_6Checksum : Unit → IO Bool := fun () => do
 `C(13, 1)` inside `C(13, 6)`. This is the deepest Frobenius chain in the
 committed table: six factors. -/
 def runTier2Compat_13_1_6Checksum : Unit → IO Bool := fun () => do
-  let cp ← compat_13_1_6Ref.get
-  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
+  budgetedBool 1_000_000 do
+    let cp ← compat_13_1_6Ref.get
+    return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
 /-- Benchmark target: Tier 2 compatibility for the deepest binary pair,
 `C(2, 4)` inside `C(2, 8)`. -/
 def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
-
-namespace Tier1
-
-/-- The committed binary column, bundled with the monicity witnesses consumed
-by Rabin's test. Entry `n - 1` is `C(2, n)` for `n = 1..8`. -/
-private def gf2Entries : Array (MonicPoly 2) := #[
-  ⟨Conway.luebeckConwayPolynomial_2_1, Conway.luebeckConwayPolynomial_2_1_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_2, Conway.luebeckConwayPolynomial_2_2_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_3, Conway.luebeckConwayPolynomial_2_3_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_4, Conway.luebeckConwayPolynomial_2_4_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_5, Conway.luebeckConwayPolynomial_2_5_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_6, Conway.luebeckConwayPolynomial_2_6_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_7, Conway.luebeckConwayPolynomial_2_7_monic⟩,
-  ⟨Conway.luebeckConwayPolynomial_2_8, Conway.luebeckConwayPolynomial_2_8_monic⟩
-]
-
-/-- Rabin irreducibility verification for committed `C(2, n)`. -/
-def runIrreducibilityGF2 (n : Nat) : Bool :=
-  let default : MonicPoly 2 :=
-    ⟨Conway.luebeckConwayPolynomial_2_1, Conway.luebeckConwayPolynomial_2_1_monic⟩
-  let mp := gf2Entries.getD (n - 1) default
-  Berlekamp.rabinTest mp.poly mp.monic
-
-end Tier1
-
-namespace Tier2
-
-/-- Compatibility inputs for `C(2, 1)` inside `C(2, n)`. Entry `n - 2`
-corresponds to `n = 2..8`, and its Frobenius-factor count is `n`. -/
-private def gf2Pairs : Array (CompatPair 2) := #[
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 2 Conway.supportedEntry_2_2,
-    Conway.conwayPoly_monic 2 2 Conway.supportedEntry_2_2, 1, 2⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 3 Conway.supportedEntry_2_3,
-    Conway.conwayPoly_monic 2 3 Conway.supportedEntry_2_3, 1, 3⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 4 Conway.supportedEntry_2_4,
-    Conway.conwayPoly_monic 2 4 Conway.supportedEntry_2_4, 1, 4⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 5 Conway.supportedEntry_2_5,
-    Conway.conwayPoly_monic 2 5 Conway.supportedEntry_2_5, 1, 5⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 6 Conway.supportedEntry_2_6,
-    Conway.conwayPoly_monic 2 6 Conway.supportedEntry_2_6, 1, 6⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 7 Conway.supportedEntry_2_7,
-    Conway.conwayPoly_monic 2 7 Conway.supportedEntry_2_7, 1, 7⟩,
-  ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-    Conway.conwayPoly 2 8 Conway.supportedEntry_2_8,
-    Conway.conwayPoly_monic 2 8 Conway.supportedEntry_2_8, 1, 8⟩
-]
-
-/-- Check that `C(2, 1)` is compatible with committed `C(2, n)`. -/
-def runCompatibilityGF2 (n : Nat) : Bool :=
-  let default : CompatPair 2 :=
-    ⟨Conway.conwayPoly 2 1 Conway.supportedEntry_2_1,
-      Conway.conwayPoly 2 2 Conway.supportedEntry_2_2,
-      Conway.conwayPoly_monic 2 2 Conway.supportedEntry_2_2, 1, 2⟩
-  let cp := gf2Pairs.getD (n - 2) default
-  Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
-
-end Tier2
 
 /-- Textbook model for finite committed-table lookup at a given table key. -/
 def tier1LookupComplexity (_ordinal : Nat) : Nat :=
@@ -334,40 +284,9 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     signalFloorMultiplier := 1.0
   }
 
-/- Mode 1, two-sided parametric. At fixed `p = 2`, Rabin's test computes a
-degree-`n` Frobenius remainder and a bounded list of gcd checks. Dense modular
-polynomial arithmetic makes the Frobenius remainder cubic in `n`; this is the
-same independently derived model used by the underlying HexBerlekamp Rabin
-registration. The ladder uses every committed binary entry, so it measures the
-actual Tier 1 table family rather than a synthetic polynomial family. -/
-setup_benchmark Tier1.runIrreducibilityGF2 n => n * n * n where {
-  paramFloor := 1
-  paramCeiling := 8
-  paramSchedule := .custom #[1, 2, 3, 4, 5, 6, 7, 8]
-  maxSecondsPerCall := 2.0
-  targetInnerNanos := 100000000
-  signalFloorMultiplier := 1.0
-  slopeTolerance := 0.35
-}
-
-/- Mode 1, two-sided parametric. With `p = 2` and subfield degree `m = 1`,
-compatibility for `C(2, 1)` inside `C(2, n)` performs `n` norm-accumulator
-steps. Each step performs one dense degree-`n` modular composition, whose
-Horner walk contains `n` degree-`n` schoolbook modular products, hence cubic
-work per step and quartic work for the complete compatibility check. The
-coefficient width and prime are fixed throughout the committed ladder. -/
-setup_benchmark Tier2.runCompatibilityGF2 n => n * n * n * n where {
-  paramFloor := 2
-  paramCeiling := 8
-  paramSchedule := .custom #[2, 3, 4, 5, 6, 7, 8]
-  maxSecondsPerCall := 2.0
-  targetInnerNanos := 100000000
-  signalFloorMultiplier := 1.0
-  slopeTolerance := 0.35
-}
-
-/- These fixed registrations are correctness/hash anchors, not Phase-4
-performance evidence, and therefore have no complexity mode. They declare an
+/- Except for the two canonical hard registrations annotated below, these
+fixed registrations are correctness/hash anchors, not Phase-4 performance
+evidence, and therefore have no complexity mode. They declare an
 `expectedHash` so the harness fails on
 silent value regressions: every Tier 1 irreducibility benchmark must report
 `true` (the Conway entries are irreducible by construction), and the
@@ -421,6 +340,10 @@ setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
+/- Mode 3: Rabin verification at `C(13, 6)`, the slowest committed Tier 1
+entry. The 2 ms operation-scoped ceiling is 13.7× the clean 146.576 µs
+calibration maximum on `chungus2` and 2.46× the prior 812.958 µs `carica`
+median. Modes 1 and 2 are ruled out in the headline report. -/
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -433,6 +356,10 @@ setup_fixed_benchmark runTier2Compat_2_3_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
+/- Mode 3: compatibility of `C(13, 1)` inside `C(13, 6)`, the committed pair
+with both the largest prime and deepest six-factor Frobenius chain. The 1 ms
+operation-scoped ceiling is 11.5× the clean 87.061 µs calibration maximum.
+Modes 1 and 2 are ruled out in the headline report. -/
 setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
