@@ -34,9 +34,13 @@ that invokes the cutoff-32 plan: it is `n²` through 32 and
 ### Full-and-clipped multiplication
 
 - `runSchoolbook`: `n ^ 2`
+- `runSchoolbookList`: `n ^ 2`
+- `runSchoolbookLoop`: `n ^ 2`
 - `runKaratsuba`: `karatsubaCost n`
 - `runKaratsubaSquare`: `karatsubaCost n`
 - `runKaratsubaSkew`: `karatsubaCost n`
+- `runBlocksTail`: `karatsubaCost n`
+- `runBlocksOffset`: `karatsubaCost n`
 - `runKaratsubaRatio2`: `karatsubaCost n`
 - `runKaratsubaRatio4`: `karatsubaCost n`
 - `runKaratsubaRatio16`: `karatsubaCost n`
@@ -117,8 +121,9 @@ libraries that own the coefficient representation.
 `lake exe hexpolyfast_bench list` and `verify` passed all 57 registrations at
 commit `0aaa2af1f`. The two later regression targets
 `runKaratsubaRatioUnder2` and `runRemainderTree` passed focused verification at
-commit `6bf47916d`. The current registry has 47 parametric and 13 fixed targets
-(60 total); the newly wired `runFlintOverhead` passed focused verification.
+commit `6bf47916d`. The current registry has 51 parametric and 13 fixed targets
+(64 total); the raw schoolbook and blocked-multiplication comparator pairs and
+the newly wired `runFlintOverhead` passed focused verification.
 The fixed FLINT refresh below also passed every expected hash. A first complete
 diagnostic run is retained as
 `reports/bench-results/hex-poly-fast-scientific-6f0bbb5a-chungus2-cpu6.json`.
