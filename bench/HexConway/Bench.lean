@@ -13,8 +13,9 @@ Benchmark registrations for `hex-conway`.
 This Phase 4 slice covers the two implemented tiers: Tier 1 committed-table
 surfaces (imported Luebeck lookup and fixed irreducibility verification of
 selected entries) and Tier 2 divisor compatibility. It does not benchmark
-Tier 3 on-demand Conway search, which is unimplemented, nor Tier 2
-primitivity, which is likewise unimplemented.
+Tier 3 on-demand Conway search, which is unimplemented. Tier 2 primitivity is
+implemented but is not a separate advertised input family in this Phase 4
+slice.
 
 Scientific registrations:
 

@@ -2,34 +2,30 @@
 
 ## Bench Targets
 
-- `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: `tier1LookupComplexity ordinal`
-  (parameter domain widened from `1..36` to `1..38` when the binary column was
-  extended to degree 8; the verdict below predates that and needs a re-run on
-  `carica` before it can be cited for the current table)
-- `Hex.ConwayBench.runConwayPolySupported_2_1Checksum`: fixed canonical `SupportedEntry` recovery for `C(2, 1)`
-- `Hex.ConwayBench.runTier1Irreducibility_2_1Checksum`: fixed Rabin irreducibility check for imported `C(2, 1)`
-- `Hex.ConwayBench.runTier1Irreducibility_2_6Checksum`: fixed Rabin irreducibility check for imported `C(2, 6)`
-- `Hex.ConwayBench.runTier1Irreducibility_3_6Checksum`: fixed Rabin irreducibility check for imported `C(3, 6)`
-- `Hex.ConwayBench.runTier1Irreducibility_5_6Checksum`: fixed Rabin irreducibility check for imported `C(5, 6)`
-- `Hex.ConwayBench.runTier1Irreducibility_7_6Checksum`: fixed Rabin irreducibility check for imported `C(7, 6)`
-- `Hex.ConwayBench.runTier1Irreducibility_11_6Checksum`: fixed Rabin irreducibility check for imported `C(11, 6)`
-- `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: fixed Rabin irreducibility check for imported `C(13, 6)`
-- `Hex.ConwayBench.runTier2Compat_2_3_6Checksum`: fixed Tier 2 compatibility check for `C(2, 3)` inside `C(2, 6)`
-- `Hex.ConwayBench.runTier2Compat_2_4_8Checksum`: fixed Tier 2 compatibility check for `C(2, 4)` inside `C(2, 8)`
-- `Hex.ConwayBench.runTier2Compat_13_1_6Checksum`: fixed Tier 2 compatibility check for `C(13, 1)` inside `C(13, 6)`
+- `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: mode 1,
+  two-sided constant-time lookup by table ordinal, over all 38 committed keys.
+- `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: mode 3, fixed Rabin
+  verification of `C(13, 6)` under a 2 ms operation-scoped ceiling.
+- `Hex.ConwayBench.runTier2Compat_13_1_6Checksum`: mode 3, fixed compatibility
+  verification of `C(13, 1)` inside `C(13, 6)` under a 1 ms
+  operation-scoped ceiling.
+- `runConwayPolySupported_2_1Checksum`, the other six fixed Tier 1 checks, and
+  the other two fixed Tier 2 checks are expected-hash anchors. They make no
+  complexity claim and do not discharge performance coverage.
 
 `HexConway` now advertises two implemented tiers: the Tier 1 committed-table
 surface, and Tier 2 divisor compatibility. Both appear in
 `HexConway.phase4.input_families` as `tier1-committed-table` and
 `tier2-divisor-compatibility`. Tier 3 on-demand Conway search remains
-unimplemented and has no bench targets; Tier 2 primitivity is likewise
-unimplemented and is not covered by the `tier2-divisor-compatibility` family,
-which measures only the compatibility check.
+unimplemented and has no bench targets. Tier 2 primitivity is implemented, but
+the declared `tier2-divisor-compatibility` family measures only the
+compatibility check.
 
 ## Tier 2 divisor compatibility
 
-Measured on `chungus2` (Linux, x86_64, lean 4.33.0-rc1), five repeats each,
-medians:
+The earlier cross-case run on `chungus2` (Linux, x86_64, Lean 4.33.0-rc1),
+five repeats each, established which committed pair is the canonical hard
+case:
 
 | Target | Pair | Frobenius factors | Median |
 |---|---|---:|---:|
@@ -48,7 +44,8 @@ degree.
 The three targets span the axes that matter. `2_3_6` and `2_4_8` share the
 factor count and differ in degree, and the cost roughly doubles with degree.
 `13_1_6` has the deepest chain in the committed table at six factors, over the
-largest prime; it is the worst case and is still under 80 µs.
+largest prime; it is the worst case. The current scientific run below measures
+it at 76.065 µs under its enforced 1 ms ceiling.
 
 This is the runtime cost. The kernel-replay cost, which is what actually
 bounds the committed table, is separate: the fifty-two `decide`-discharged
@@ -107,59 +104,79 @@ the next measurement should start.
 
 ## Verdicts
 
-Scientific run at commit `e7bf7c23bbb5` on `carica` (Apple M2 Ultra,
-macOS 14.6.1), command:
+### Ordered mode selection
+
+The committed-table lookup remains mode 1. Its parameter is only an ordinal
+selecting a row from a finite generated table; the ordinal does not size the
+work, and the degree is bounded by the declared committed slice. The
+independently derived model is therefore constant in the ordinal. The current
+38-rung run passes in both directions.
+
+Tier 1 irreducibility and Tier 2 divisor compatibility select mode 3. Mode 1
+was attempted first on controlled families drawn entirely from the current
+committed table:
+
+- Tier 1 used all `C(2, n)`, `n = 1..8`. At fixed prime, Rabin's dense
+  Frobenius remainder supplies the independently derived cubic degree model
+  already used by HexBerlekamp. The current table is too short and its
+  polynomial/divisor shapes too discrete for a stable wall model: the run was
+  inconclusive, with `C` ranging from `32.529` to `195.888` on the verdict
+  rungs.
+- Tier 2 used compatibility of `C(2, 1)` inside `C(2, n)`, `n = 2..8`.
+  There are `n` norm-accumulator steps; each contains a dense degree-`n`
+  modular composition, giving the independently derived quartic model at fixed
+  coefficient width and prime. This run was also inconclusive, with `C`
+  ranging from `10.845` to `81.088`.
+
+The clean mode-selection artifact is
+`reports/bench-results/hex-conway-mode-audit-4896db30a-chungus2.json`
+(SHA-256 `744dc31aa02efa00ea10d2ae7c7e001a258105cc834c89c261758530356d4e3d`).
+These results rule out mode 1 without fitting a weaker exponent to the short
+transition range. Mode 2 is unavailable: HexConway has no external comparator,
+and no published wall-time upper bound covers the compiled Rabin or modular-
+composition phase that controls these registrations. The mathematical
+operation counts in the SPEC and source do not supply the cited, dominant-
+phase wall bound that mode 2 requires.
+
+Mode 3 deliberately gives up asymptotic regression detection for these two
+finite committed-table verification operations. The canonical hard inputs are
+`C(13, 6)` for Tier 1 and compatibility of `C(13, 1)` inside `C(13, 6)` for
+Tier 2: they combine the largest committed prime with degree 6, and the latter
+also has the deepest six-factor Frobenius chain. `budgetedBool` times only the
+registered operation and returns `false` on a ceiling violation; the required
+`expectedHash = hash true` therefore makes the 2 ms and 1 ms ceilings fail
+closed. `maxSecondsPerCall = 2 s` remains only the child-process safety cap.
+
+The Tier 1 ceiling is a measured-baseline ceiling with cross-machine margin:
+2 ms is 13.7× the clean 146.576 µs calibration maximum on `chungus2` and
+2.46× the earlier 812.958 µs median on `carica`. The Tier 2 ceiling is 1 ms,
+11.5× its clean 87.061 µs calibration maximum. Both are operation-specific
+regression gates rather than inherited harness defaults.
+
+### Current scientific run
+
+The clean acceptance run at commit `cf08a8247` on `chungus2` (AMD EPYC 9455,
+Linux x86-64, Lean 4.34.0-rc2) used:
 
 ```sh
 lake exe hexconway_bench run \
     Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
-    Hex.ConwayBench.runTier1Irreducibility_2_1Checksum \
-    Hex.ConwayBench.runTier1Irreducibility_2_6Checksum \
-    Hex.ConwayBench.runTier1Irreducibility_3_6Checksum \
-    Hex.ConwayBench.runTier1Irreducibility_5_6Checksum \
-    Hex.ConwayBench.runTier1Irreducibility_7_6Checksum \
-    Hex.ConwayBench.runTier1Irreducibility_11_6Checksum \
     Hex.ConwayBench.runTier1Irreducibility_13_6Checksum \
-    Hex.ConwayBench.runConwayPolySupported_2_1Checksum \
-    --export-file reports/bench-results/hex-conway-e7bf7c23bbb5.json
+    Hex.ConwayBench.runTier2Compat_13_1_6Checksum \
+    --export-file \
+      reports/bench-results/hex-conway-mode3-cf08a8247-chungus2.json
 ```
 
-The run used the committed deterministic Luebeck table slice for primes
-`2, 3, 5, 7, 11, 13` and degrees `1..6`; no random seeds are involved.
-The harness recorded `e7bf7c2-dirty` because this worktree carried an
-unrelated pre-existing `.claude/CLAUDE.md` modification. Export artefact:
-`reports/bench-results/hex-conway-e7bf7c23bbb5.json`, SHA-256
-`2d7ca6c152577adb9418b4cfe82b62714520fac56aa4b9ba931b97e4d6b5bd15`.
+The deterministic lookup run now includes ordinals 37 and 38, the `C(2, 7)`
+and `C(2, 8)` rows. It is **consistent with declared complexity** over all 38
+entries (`cMin=185.049`, `cMax=509.870`, `β=+0.130`); ordinal 38 measured
+481.347 ns and produced the expected final hash `0x837443a59caa5094`.
+Tier 1 measured a 127.283 µs median against its 2 ms ceiling, and Tier 2 a
+76.065 µs median against its 1 ms ceiling. All five repeats completed within
+their operation budgets and matched expected hash `0xb`.
 
-- `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: consistent
-  with declared complexity (`cMin=311.335, cMax=826.105, β=+0.029`,
-  parameters `1..36`, final hash `0x837443a59caa5094`).
-- `Hex.ConwayBench.runTier1Irreducibility_2_1Checksum`: fixed median
-  `8.042 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_2_6Checksum`: fixed median
-  `128.417 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_3_6Checksum`: fixed median
-  `248.750 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_5_6Checksum`: fixed median
-  `447.292 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_7_6Checksum`: fixed median
-  `616.667 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_11_6Checksum`: fixed median
-  `738.875 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: fixed median
-  `812.958 us`, hash `0xb`, expected hash matched.
-- `Hex.ConwayBench.runConwayPolySupported_2_1Checksum`: fixed median
-  `459 ns`, hash `0x8d105cfbb68da744`, expected hash matched.
-
-Smoke wiring was also checked at the same commit with:
-
-```sh
-python3 scripts/check_dag.py
-lake exe hexconway_bench list
-lake exe hexconway_bench verify
-```
-
-`verify` passed all nine registered benchmarks.
+The export artifact has SHA-256
+`3dbd2185ea916a7e9de02a2a7564f2639b772167e1d1ba904bb07e658995f30f`.
 
 ## Comparator Ratios
 
@@ -242,6 +259,3 @@ falls outside the registered bench target, so no Attribution-rule follow-up
 is required.
 
 ## Concerns
-
-- [#9813](https://github.com/kim-em/hex-dev/issues/9813) tracks the fixed
-  Tier-1/Tier-2 mode gap and the stale 36-entry lookup verdict.
