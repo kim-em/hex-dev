@@ -110,7 +110,7 @@ SPEC = SweepSpec(
         *case_pairs(511),
         *case_pairs(512),
     ),
-    probe_target="HexPrimalityElabProbe",
+    probe_target="HexPrimalityElabProbeScientific",
     schema="hexprimality-core-proof-probes-v1",
     measurement="paired-fresh-module-olean-wall-absolute-v1",
     output_stem="hexprimality-core-proof-probes",
