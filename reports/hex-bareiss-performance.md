@@ -104,8 +104,11 @@ once driver startup is subtracted, FLINT spends about 5% of Hex's wall time on
 the same determinant surface, widening as `n` grows. This is the structural gap
 named in advance by the `informational` rationale (FLINT uses multimodular
 reduction + CRT; Hex uses Bareiss fraction-free elimination). The comparator is
-`informational`, so the divergence is recorded for orientation rather than as a
-Phase-4 gate.
+`informational`, so this expected different-complexity-class divergence is
+recorded for optimization orientation rather than as a Phase-4 gate or an
+evidence defect. HexBareiss claims the specified fraction-free algorithm; a
+faster multimodular determinant would be a distinct optional surface, not a
+repair required by this report.
 
 ## Profile
 
@@ -125,17 +128,3 @@ The dominant inclusive costs all map to the registered `HexBareiss.Bench`
 target. No unattributed dominant cost was observed.
 
 ## Concerns
-
-- [#9806](https://github.com/kim-em/hex-dev/issues/9806) tracks the expected
-  different-complexity-class finding's policy-correct reclassification.
-- The FLINT `fmpz_mat.det` comparator pulls steadily ahead of `runBareissDet`
-  across the ladder: raw ratio `0.973x → 0.062x` from `n = 128` to `n = 512`,
-  and within the eligible range the adjusted ratio drifts from `0.057x` to
-  `0.049x` — FLINT spends roughly 5% of Hex's wall time on the same surface, and
-  the gap widens with `n`. The comparator is `informational`, so this is
-  recorded for orientation rather than as a Phase-4 gate; the structural gap
-  matches the rationale (FLINT multimodular reduction + CRT versus Hex's
-  fraction-free Bareiss elimination over `Int`). A follow-up may file a narrow
-  issue against `Hex.Matrix.bareiss` if a faster determinant surface is wanted
-  (for instance, a multimodular CRT path layered over the existing Bareiss
-  kernel as a Tier-2 fast path).
