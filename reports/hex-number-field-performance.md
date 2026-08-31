@@ -372,13 +372,13 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinNegLadder` | **consistent** | -0.045 | API-surface audit |
 | `runQAdjoinSmulLadder` | **consistent** | -0.016 | API-surface audit |
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
-| `runQAdjoinApprox` | **fixed: 16.843 ms, hash match** | — | API-surface fixed |
+| `runQAdjoinApprox` | **fixed: 16.868 ms, hash match** | — | API-surface fixed |
 | `runQAdjoinInvLadder` | **consistent** | **-0.105** | aggregate inversion |
 | `runQAdjoinDivLadder` | **consistent** | -0.116 | API-surface audit |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
 | `runAlgebraicPolyOfArray` | **consistent** | -0.060 | extended API-surface audit |
 | `runAlgebraicPolyBeq` | **consistent** | -0.009 | API-surface audit |
-| `runEvalMajorantFixed` | **fixed: 5.950 ms, hash match** | — | API-surface fixed |
+| `runEvalMajorantFixed` | **fixed: 5.914 ms, hash match** | — | API-surface fixed |
 | `runCommonPrimitive` | **consistent** | -0.052 | API-surface audit |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
@@ -430,9 +430,9 @@ verdicts are:
 The corresponding fixed export covers the 35 newly registered fixed targets;
 every target has a declared hash, every repeat agrees, and every observed hash
 matches. On the exact profiled degree-six component, the representative phase
-medians are 64.555 us for `runNormEliminant`, 43.502 ms for
-`runEvalEliminant`, and 2.282 s for `runComponentRoots`. The runtime-fed
-quadratic `runQAdjoinCanonical` conversion is 929 us. Sub-microsecond grouped
+medians are 64.285 us for `runNormEliminant`, 43.084 ms for
+`runEvalEliminant`, and 2.288 s for `runComponentRoots`. The runtime-fed
+quadratic `runQAdjoinCanonical` conversion is 924 us. Sub-microsecond grouped
 accessors are intentionally retained as fixed registrations: their inputs pass
 through `IO.Ref`, and the harness warning records that the genuine operation is
 smaller than its one-microsecond diagnostic floor.
@@ -1312,7 +1312,7 @@ performance claim of this ladder.
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
 | [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `e1545c9ea`, clean tree; all 13 current parametric registrations | idle | `be7327b225dded855ad8e9913e92092a8544650a6ae426299b50d444b36854ae` |
-| [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `d72b1003a`, clean tree; all 35 newly added fixed registrations | idle | `f4c5c8d36374fec577c40ee4401be3cb64b65f5defcb1409296c31f09a1d8716` |
+| [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `606245a2e`, clean tree; all 35 newly added fixed registrations | idle | `e7b2a1bcd0e62320de02a31175ebcf5d511201d68c962718e3b1d61a52db1218` |
 | [`bench-results/hex-number-field-api-model-review.json`](bench-results/hex-number-field-api-model-review.json) | `e7f5ed66b`, diagnostic audit tree before demotion | idle | `48ddca68217138efdeadcc1b5c7bde4d349b9c186fa396859809dfee9aabc320` |
 | [`bench-results/hex-number-field-api-surface-of-array.json`](bench-results/hex-number-field-api-surface-of-array.json) | `22e2f31a0`, superseded extended `ofArray` audit | idle | `2ae9e42471f1359eda7493843ab10c874417e5204346e2c4bc6f8045c6cc6ddc` |
 | [`bench-results/hex-number-field-phase4-scientific.json`](bench-results/hex-number-field-phase4-scientific.json) | `066f6fc29` | loaded (load average 105 to 150) | `3948bbb7107d96e7af56edcf2497b52e2b2a34f4d89376b93cc477c0f8a6517d` |
