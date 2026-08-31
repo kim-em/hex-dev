@@ -158,7 +158,7 @@ Because they did not complete the advertised gcd operation, the replacement
 suite removes them rather than treating a fast decline as coverage.
 
 The clean mode-3 export used commit
-`d28067003e663cee510aec078663eb2c374e055b` on the same host and toolchain:
+`393bc49257568c6ad7ab400d1ca709f631e14153` on the same host and toolchain:
 
 ```sh
 .lake/build/bin/hexmvgcd_bench run \
@@ -179,34 +179,34 @@ The clean mode-3 export used commit
   Hex.MvGcdBench.runSwell5 \
   Hex.MvGcdBench.Matrix.runRationalGcd5d5 \
   Hex.MvGcdBench.Matrix.runSquarefree3m1to5 \
-  --export-file /tmp/hex-mv-gcd-mode3-d2806700-chungus2.json
+  --export-file /tmp/hex-mv-gcd-mode3-393bc492-chungus2.json
 ```
 
 The stored 17-result export is
-`reports/bench-results/hex-mv-gcd-mode3-d2806700-chungus2.json`, with SHA-256
-`1d07e00a2a955b0e96e308d211e7f22e429498ece04238f6d565e49452daa680`.
+`reports/bench-results/hex-mv-gcd-mode3-393bc492-chungus2.json`, with SHA-256
+`a2d85b441031c462cc26d548cd68d290b976336c5ace2ac02f331c0718fafec0`.
 Its environment records `git_dirty = false`; every repeat completed, every
 repeat hash agreed, and all 17 expected hashes matched.
 
 | target | median | body budget |
 |---|---:|---:|
-| `runContentInFixed` | 0.571 ms | 10 ms |
-| `runPrimPartInFixed` | 0.701 ms | 15 ms |
-| `runGcdFixed` | 1.646 ms | 30 ms |
-| `runCofactorsFixed` | 1.657 ms | 60 ms |
-| `runIsCoprimeFixed` | 1.707 ms | 35 ms |
-| `runGcdListFixed` | 2.609 ms | 60 ms |
-| `runLcmFixed` | 1.725 ms | 35 ms |
-| `runSqfDecompFixed` | 132.309 ms | 1 s |
-| `runRadicalFixed` | 130.329 ms | 1 s |
-| `runIsSquarefreeFixed` | 135.299 ms | 1 s |
-| `Matrix.runDenseCoprime8` | 519.969 ms | 2 s |
-| `Matrix.runSparseCoprime8` | 488.527 ms | 2 s |
-| `Matrix.runDenseGcd5d5` | 21.723 s | 50 s |
-| `Matrix.runSparseStress5d16` | 1.861 s | 4 s |
-| `runSwell5` | 1.206 ms | 10 ms |
-| `Matrix.runRationalGcd5d5` | 4.679 s | 10 s |
-| `Matrix.runSquarefree3m1to5` | 3.222 s | 8 s |
+| `runContentInFixed` | 1.095 ms | 10 ms |
+| `runPrimPartInFixed` | 1.357 ms | 15 ms |
+| `runGcdFixed` | 3.529 ms | 30 ms |
+| `runCofactorsFixed` | 3.445 ms | 60 ms |
+| `runIsCoprimeFixed` | 3.360 ms | 35 ms |
+| `runGcdListFixed` | 5.092 ms | 60 ms |
+| `runLcmFixed` | 3.468 ms | 35 ms |
+| `runSqfDecompFixed` | 248.441 ms | 1 s |
+| `runRadicalFixed` | 247.776 ms | 1 s |
+| `runIsSquarefreeFixed` | 244.758 ms | 1 s |
+| `Matrix.runDenseCoprime8` | 558.816 ms | 2 s |
+| `Matrix.runSparseCoprime8` | 519.612 ms | 2 s |
+| `Matrix.runDenseGcd5d5` | 16.466 s | 50 s |
+| `Matrix.runSparseStress5d16` | 1.097 s | 4 s |
+| `runSwell5` | 0.736 ms | 10 ms |
+| `Matrix.runRationalGcd5d5` | 3.230 s | 10 s |
+| `Matrix.runSquarefree3m1to5` | 2.405 s | 8 s |
 
 The table reports lean-bench's whole-runner medians. Input preparation occurs
 before the internal body stopwatch, so these values conservatively include

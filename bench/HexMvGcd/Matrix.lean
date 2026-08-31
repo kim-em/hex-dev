@@ -140,7 +140,7 @@ tight wall model.  The old `2..8` arity grid was also invalid: `(f, f + 1)`
 fired the one-step-remainder prepass before route 1.  No cited bound covers
 image production plus certificate replay. Mode 3 pins genuine route-1 dense
 and sparse arity-8 inputs. Their 2 s ceilings exceed the worst clean
-calibration medians, 519.969 ms and 488.527 ms, by 3.85× and 4.09×. -/
+calibration medians, 558.816 ms and 519.612 ms, by 3.58× and 3.85×. -/
 setup_fixed_benchmark runDenseCoprime8 where
   mode3Config 0x9389fe94a31dd629 4.0
 setup_fixed_benchmark runSparseCoprime8 where
@@ -149,16 +149,15 @@ setup_fixed_benchmark runSparseCoprime8 where
 /- Brown's `O(D)` count omits the cost of every image gcd, interpolation, CRT,
 and checked replay.  The attempted `3d5, 3d10, 3d20, 4d5, 5d5` grid varies
 several of those costs at once, and no published bound covers this concrete
-pipeline. Mode 3 uses `5d5`; 50 s is 2.30× the worst clean calibration
-median of 21.723 s. -/
+pipeline. Mode 3 uses `5d5`; 50 s is 3.04× its clean 16.466 s median. -/
 setup_fixed_benchmark runDenseGcd5d5 where
   mode3Config 0xbd6798d21ee1b1e0 90.0
 
 /- The sparse family deliberately reaches the dispatcher and dense PRS
 fallback, for which the SPEC gives no useful bound.  Degree-only endpoints do
 not control coefficient swell, and the degree-4096 bounded declines measured
-no completed gcd. Mode 3 uses the complete `5d16` call; 4 s is 2.15× the
-worst clean calibration median of 1.861 s. -/
+no completed gcd. Mode 3 uses the complete `5d16` call; 4 s is 3.65× its
+clean 1.097 s median. -/
 setup_fixed_benchmark runSparseStress5d16 where
   mode3Config 0xbd6798d21ee1b1e0 20.0
 
@@ -166,15 +165,15 @@ setup_fixed_benchmark runSparseStress5d16 where
 integer-route probe costs are already unmodelled.  The attempted five-shape
 grid changes arity, dense size, and coefficient work together, and no cited
 upper bound covers the profiled rational producer. Mode 3 pins `5d5`; 10 s is
-2.11× the worst clean calibration median of 4.744 s. -/
+3.10× its clean 3.230 s median. -/
 setup_fixed_benchmark runRationalGcd5d5 where
   mode3Config 0xcb197b68a2a27c66 45.0
 
 /- Yun performs one dispatcher-dependent gcd per level and variable.  The
 attempted multiplicity patterns vary arity, factor count, and missing levels,
 so `n * M` probe count is not a wall model; no cited bound covers the gcd work.
-Mode 3 pins the hardest observed `3m1-to-5` input; 8 s is 2.48× the worst
-clean calibration median of 3.222 s. -/
+Mode 3 pins the hardest observed `3m1-to-5` input; 8 s is 3.33× its clean
+2.405 s median. -/
 setup_fixed_benchmark runSquarefree3m1to5 where
   mode3Config 0x664d8f4f4d3e40ef 20.0
 
