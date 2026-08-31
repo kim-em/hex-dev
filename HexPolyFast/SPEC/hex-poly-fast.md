@@ -405,8 +405,10 @@ uses leaves `x - C point`.
 leaves. Its root caches the caller-supplied reciprocal capacity; each proper
 node caches exactly the sibling-subtree degree, the largest quotient length
 that can reach it after its parent reduction. `remainders?` returns `none`
-when the input exceeds the root capacity. On success, `remainders?_sound`
-supplies a `RemainderSpec`: the output
+exactly when the root quotient length exceeds the caller-supplied capacity;
+`remainders?_isSome_of_capacity` proves that a capacity covering the input
+size above `rootDegree` makes every proper-node reduction succeed.
+On success, `remainders?_sound` supplies a `RemainderSpec`: the output
 has one entry per leaf in the original order, each leaf divides the difference
 between the input and its result, and every result has size strictly below its
 leaf divisor. The empty tree succeeds with an empty result.
