@@ -1214,9 +1214,23 @@ proof pays and is therefore the number that matters most.
 Families:
 
 - **Table-range inputs**, uniform below `10^8`, where trial division
-  finishes. The required property is that the dispatch overhead is
-  invisible on the case that dominates call volume.
-- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Route 1.
+  finishes. Compare output-agreeing wrappers around the public dispatch and
+  `trialFactors` on the same deterministic batch. Every batch member must
+  finish on both sides, and the public-dispatch median must be at most `1.25`
+  times the direct-trial median. This internal control, rather than an
+  external system with a different portfolio, determines whether dispatch
+  overhead is invisible on the case that dominates call volume.
+- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Report `factor?` and
+  `Internal.rhoSplitCountedWith?` on the same ladder and seed. The direct arm
+  receives `defaultPrimeCertBudget.rhoRestarts` and `.rhoSteps`, matching the
+  public dispatcher's allocation. Output-agreeing wrappers return the least
+  factor, reject an error rather than hashing its attempt count, and admit a
+  ratio only when both arms succeeded. The public-dispatch median must be at
+  most twice the matched direct-rho median at every admitted rung. This is the
+  internal Route-1 control for dispatch and certificate construction; rho's
+  own two-sided registration and profile diagnose its scaling and hot path.
+  These controls and their 80-bit top rung are Phase-4 obligations; the
+  smaller pre-Phase-4 registrations do not satisfy them.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, which is the
@@ -1243,14 +1257,37 @@ Families:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
 `p − 1`, and MPQS with tuned crossovers, and this library specifies
 neither SQUFOF nor MPQS, so a required ratio would check an algorithm
-that does not exist here. The written-down expectation is narrower: on
-the **table-range** and **balanced semiprime** families the ratio
-should be within a small constant, since both sides run the same two
-algorithms there, and a large ratio means the rho inner loop is wrong
-rather than that the dispatch is. GMP-ECM is **informational** on the
-unbalanced family for the same reason and with the same caveat. The
-PARI/python-flint oracle pairing is for conformance, not a performance
-requirement.
+that does not exist here. PARI does not expose a benchmark mode that restricts
+`factor` to Hex's trial-division-plus-rho portfolio, so its selected route must
+not be inferred from the input size or from a timing ratio. PARI `factor`
+covers the table, balanced, and power-form families. A widening PARI ratio is
+reported as the observed cost of the portfolio difference, while the table
+and balanced internal controls above diagnose Hex dispatch and certificate
+construction and the rho registration/profile diagnose rho.
+GMP-ECM stage 1 is likewise **informational** on the unbalanced family: the
+comparison fixes the curve and `B1`, disables stage 2, and uses one fixed
+persistent-subprocess batch shape. Ratios are recorded at every shared rung;
+the protocol overhead for that batch shape is recorded and subtracted, and
+the eligibility rule in
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md) marks which rungs may carry
+an interpretation. The PARI/python-flint oracle pairing is for conformance,
+not a performance requirement.
+
+The named factorization comparator suite has
+**no-comparable-surface-in-named-comparator** for kernel certificate replay,
+order/primitive-root computation, or generalized divisor sums: neither the
+PARI `factor` endpoint nor GMP-ECM exposes those operations. Their evidence is
+therefore the native/kernel registration and profile rather than an external
+ratio.
+
+Whether SQUFOF is worth adding remains a product question, not an inference
+from PARI's selected route. Deciding it requires a within-Lean SQUFOF
+prototype compared with rho on the balanced ladder. Until such an
+implementation exists, Phase 4 reports the current rho route honestly but
+does not manufacture a SQUFOF verdict from an external portfolio ratio.
+An external small-constant parity goal against PARI would be a new
+API-performance requirement and would require Hex to adopt the relevant
+missing portfolio.
 
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
@@ -1419,13 +1456,13 @@ state until those entries land.
 ## Open questions
 
 - **The default fuel schedule.** Stated above as a function of bit
-  length and not fixed. It should be set so that the 64-bit balanced
+  length and not fixed. It should be set so that the 80-bit balanced
   semiprime family finishes with margin, measured rather than guessed.
 - **Whether SQUFOF is worth adding.** It beats rho on 64-bit semiprimes
   by a useful constant and is a small algorithm, but it needs a
   continued-fraction development and its failure modes are subtler than
-  rho's. Worth revisiting if the balanced-semiprime family shows the
-  PARI ratio is dominated by that one range.
+  rho's. A decision requires a within-Lean prototype on the balanced ladder;
+  the PARI portfolio ratio cannot answer it.
 - **Whether Aurifeuillian factorizations belong in `cyclotomicSplit?`.**
   They are a finite family of identities rather than an algorithm, so
   adding them is a table. Worth doing once the `b^n ± 1` benchmark

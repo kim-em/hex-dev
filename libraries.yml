@@ -671,10 +671,10 @@ libraries:
       comparators:
         - tool: "PARI factor and GMP-ECM"
           class: informational
-          rationale: "PARI and GMP-ECM use broader algorithm portfolios; comparisons diagnose route constants but are not merge gates."
+          rationale: "This factorization-comparator suite has two scoped endpoints: PARI factor covers table, balanced, and power-form inputs but uses a broader portfolio with no trial-division-plus-rho-only mode; GMP-ECM stage 1 covers the unbalanced ECM family as a separately tuned C implementation. Their ratios are informational external context, while matched internal controls diagnose Hex dispatch and certificate construction and the rho registration/profile diagnose rho."
       input_families:
         - name: table-and-balanced-semiprimes
-          description: Table-range integers and balanced semiprimes through 64 bits for dispatch and rho.
+          description: Uniform table-range integers and balanced semiprimes through 80 bits, with same-input internal controls for public dispatch versus trial division or rho.
         - name: smooth-and-unbalanced-semiprimes
           description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
         - name: power-forms
