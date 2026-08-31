@@ -1,211 +1,162 @@
 # HexGFq Performance Report
 
+HexGFq passes Phase 4. All seven constructor/projection registrations use the
+strongest applicable mode, mode 1 (two-sided parametric), and pass at their
+scientific settings. The only retained fixed registrations are expected-hash
+anchors for the selected generic and packed Conway moduli; they are not
+performance evidence.
+
 ## Bench Targets
 
-- `Hex.GfqBench.runGenericModulusChecksum`: fixed benchmark for the selected generic Conway modulus helper.
-- `Hex.GfqBench.runPackedModulusChecksum`: fixed benchmark for the selected packed Conway modulus helper.
-- `Hex.GfqBench.runGF2qOfWordReprChecksum`: fixed benchmark for packed `GF2q.ofWord` plus `GF2q.repr` on the committed `GF2q 1` entry.
-- `Hex.GfqBench.runGF2qOfWordReprProfileChecksum`: parametric profiling companion for packed `GF2q.ofWord` plus `GF2q.repr` on the committed `GF2q 1` entry.
-- `Hex.GfqBench.runGFqOfPolyReprChecksum`: `n`, generic `GFq.ofPoly` plus `GFq.repr` on deterministic degree-`n` binary representatives for the committed `GFq 2 1` entry.
-- `Hex.GfqBench.runPackedGenericSharedChecksum`: `n`, shared packed/generic constructor-projection checksum on the same deterministic binary representative family.
-- `Hex.GfqBench.runGFqOfPolyRepr_2_8_Checksum`: fixed, generic constructor plus projection at `GFq 2 8`.
-- `Hex.GfqBench.runGF2qOfWordRepr_8_Checksum`: fixed, packed constructor plus projection at `GF2q 8`.
-- `Hex.GfqBench.runGFqOfPolyRepr_13_6_Checksum`: fixed, generic constructor plus projection at `GFq 13 6`.
-- `Hex.GfqBench.runGFqCOfPolyReprChecksum`: fixed, the ergonomic `GFqC` spelling at `(13, 6)`.
+- `Hex.GfqBench.runGeneric21`: `n`, generic constructor/projection at
+  `GFq 2 1` on deterministic binary representatives of length `n`.
+- `Hex.GfqBench.runPacked1`: `1`, packed constructor/projection at `GF2q 1`
+  on independently generated fixed-width words.
+- `Hex.GfqBench.runShared21`: `n`, packed and generic constructor/projection
+  on a shared binary representative family at degree one.
+- `Hex.GfqBench.runGeneric28`: `n`, generic constructor/projection at
+  `GFq 2 8` on deterministic binary representatives of length `n`.
+- `Hex.GfqBench.runPacked8`: `1`, packed constructor/projection at `GF2q 8`
+  on independently generated fixed-width words.
+- `Hex.GfqBench.runGeneric136`: `n`, explicit-entry generic
+  constructor/projection at `GFq 13 6` on deterministic representatives of
+  length `n`.
+- `Hex.GfqBench.runGenericC136`: `n`, instance-selected `GFqC 13 6`
+  constructor/projection on the same representative family.
+- `Hex.GfqBench.runGenericModulusChecksum`: fixed expected-hash anchor for the
+  selected generic degree-one Conway modulus; no performance claim.
+- `Hex.GfqBench.runPackedModulusChecksum`: fixed expected-hash anchor for the
+  selected packed degree-one Conway modulus and lower word; no performance
+  claim.
 
-## Degree beyond one
-
-The six targets above all sit at `GFq 2 1` and `GF2q 1`, where the modulus is
-linear and reduction is trivial. The four added targets reach the top of the
-committed range. Measured on `chungus2` (Linux, x86_64, lean 4.33.0-rc1), five
-repeats each, medians:
-
-| Target | Entry | Median |
-|---|---|---:|
-| `runGFqOfPolyRepr_2_8_Checksum` | `GFq 2 8` | 27.177 µs |
-| `runGF2qOfWordRepr_8_Checksum` | `GF2q 8` | 6.878 µs |
-| `runGFqOfPolyRepr_13_6_Checksum` | `GFq 13 6` | 6.579 µs |
-| `runGFqCOfPolyReprChecksum` | `GFqC 13 6` | 6.560 µs |
-
-Two readings. At degree 8 the packed representation is about four times faster
-than the generic one on the same field, which is the packed-vs-generic claim
-this library exists to support, now measured somewhere the modulus is not
-linear. And `GFqC` costs the same as the explicit-entry spelling to within
-noise, so resolving the committed entry by instance synthesis is free at
-runtime.
-
-**The older fixed targets were constant-folded, and are now fixed too.** They
-were `(_ : Unit) → UInt64` over closed terms, so the compiler folded them and
-each reported the same 21 ns floor whatever it named. That is how the problem
-was found: written the folded way, the four new targets also reported 21 ns
-each, across a 4000-fold spread in real work. All of them now use the
-`Unit → IO α` shape with inputs held in `IO.Ref`s, which this file's bench
-header prescribes. After the change:
-
-| Target | Before | After |
-|---|---:|---:|
-| `runGenericModulusChecksum` | 21 ns | 91 ns |
-| `runPackedModulusChecksum` | 21 ns | 47 ns |
-| `runGF2qOfWordReprChecksum` | 21 ns | 10.219 µs |
-
-The two modulus checksums really are cheap — they checksum a degree-1
-modulus — but they were not measuring even that before. The constructor and
-projection target was understating its cost by nearly three orders of
-magnitude.
+The generic models follow from the compiled dense long-division kernel. With
+the modulus degree and base prime fixed, its degree scan moves only downward,
+for `O(n)` total scanning, and it performs at most `n` eliminations, each over
+the fixed modulus width. Projection and checksum are bounded by the fixed field
+degree. The packed models are constant because the input, modulus, reduction,
+and projection all occupy one machine word; their parameter changes only the
+independently generated word value while `prepPacked` holds the high bit at 63.
+The shared model is linear because its generic scan dominates the constant
+packed route. These models were derived from the kernels before measurement.
 
 ## Verdicts
 
-Scientific run at commit `33b7f720dcce514b455e26d27c402b415c192cd8` on
-`carica` (Apple M2 Ultra, macOS 14.6.1), command:
+Scientific evidence was recorded from clean commit
+`3166b7e7428f7055d4f613f8514e0879e68f6e6d` on `chungus2` (AMD EPYC 9455,
+Linux x86_64, Lean 4.34.0-rc2) with deterministic inputs and no random seed:
 
 ```sh
-lake exe hexgfq_bench run Hex.GfqBench.runPackedGenericSharedChecksum Hex.GfqBench.runGFqOfPolyReprChecksum Hex.GfqBench.runGF2qOfWordReprChecksum Hex.GfqBench.runGenericModulusChecksum Hex.GfqBench.runPackedModulusChecksum --export-file reports/bench-results/hex-gfq-33b7f720dcce.json
+lake exe hexgfq_bench run \
+  Hex.GfqBench.runGeneric21 Hex.GfqBench.runPacked1 \
+  Hex.GfqBench.runShared21 Hex.GfqBench.runGeneric28 \
+  Hex.GfqBench.runPacked8 Hex.GfqBench.runGeneric136 \
+  Hex.GfqBench.runGenericC136 \
+  Hex.GfqBench.runGenericModulusChecksum \
+  Hex.GfqBench.runPackedModulusChecksum \
+  --export-file reports/bench-results/hex-gfq-3166b7e-issue9814.json
 ```
 
-The run used deterministic benchmark inputs from `HexGFq/Bench.lean`; random
-seeds are not involved. The harness recorded `33b7f72-dirty` because this
-worktree had an unrelated pre-existing `.claude/CLAUDE.md` modification.
-Export artefact: `reports/bench-results/hex-gfq-33b7f720dcce.json`.
+The export is
+`reports/bench-results/hex-gfq-3166b7e-issue9814.json`. Every performance
+registration selects mode 1, so there is no stronger preceding mode to rule
+out. All seven two-sided verdicts are **consistent with declared complexity**:
 
-- `Hex.GfqBench.runPackedGenericSharedChecksum`: consistent with declared
-  complexity (`β=-0.098`, parameters `4..256`, final hash
-  `0x1ce80893b9144788`).
-- `Hex.GfqBench.runGFqOfPolyReprChecksum`: consistent with declared
-  complexity (`β=-0.008`, parameters `4..256`, final hash
-  `0x0`).
-- `Hex.GfqBench.runGF2qOfWordReprChecksum`: fixed run, median `125 ns`, min
-  `41 ns`, max `167 ns`, observed hash `0x1`, expected hash matched.
-- `Hex.GfqBench.runGenericModulusChecksum`: fixed run, median `125 ns`, min
-  `125 ns`, max `417 ns`, observed hash `0x3403d2eb08b5d5fc`,
-  expected hash matched.
-- `Hex.GfqBench.runPackedModulusChecksum`: fixed run, median `208 ns`, min
-  `125 ns`, max `292 ns`, observed hash `0x1ce80893b914478a`,
-  expected hash matched.
+| registration | model | scientific ladder | `β` | top-rung time | top-rung hash |
+|---|---:|---:|---:|---:|---:|
+| `runGeneric21` | `n` | `64..4096` | `-0.046` | `136.311 µs` | `0x0` |
+| `runPacked1` | `1` | `1..63` | `+0.027` | `11.301 µs` | `0x0` |
+| `runShared21` | `n` | `512..32768` | `-0.017` | `2.275 ms` | `0xbf58476d1ce4e5b9` |
+| `runGeneric28` | `n` | `16..512` | `+0.045` | `82.062 µs` | `0xbf58476d1ce4e5ba` |
+| `runPacked8` | `1` | `1..63` | `+0.093` | `7.294 µs` | `0x32` |
+| `runGeneric136` | `n` | `12..384` | `+0.056` | `79.938 µs` | `0xc248316c3dea496b` |
+| `runGenericC136` | `n` | `12..384` | `+0.044` | `78.163 µs` | `0xc248316c3dea496b` |
 
-Smoke wiring was also checked with:
+The matching top-rung hashes and near-identical timings for `runGeneric136`
+and `runGenericC136` confirm that instance selection adds no runtime work.
+
+The two limited fixed anchors also pass. Their tiny bodies read runtime
+`IO.Ref`s and intentionally measure only modulus projection/checksumming; the
+sub-microsecond advisory therefore does not indicate missing performance
+coverage:
+
+| fixed hash anchor | median | range | observed / expected hash |
+|---|---:|---:|---:|
+| `runGenericModulusChecksum` | `94 ns` | `93..94 ns` | `0x3403d2eb08b5d5fc` |
+| `runPackedModulusChecksum` | `50 ns` | `49..52 ns` | `0x1ce80893b914478a` |
+
+Smoke wiring is checked separately with:
 
 ```sh
 lake exe hexgfq_bench list
 lake exe hexgfq_bench verify
 ```
 
-`verify` passed all five registered benchmarks at the same commit.
+All nine registrations pass `verify`.
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-gfq.md` does not name an external Phase-4 performance
-comparator for `HexGFq`. The meaningful internal common-domain comparison is
-covered by `Hex.GfqBench.runPackedGenericSharedChecksum`, which exercises the
-packed and generic p = 2 constructor/projection surfaces in one registered
-target and hashes their combined result. There are no external comparator
-ratios to record.
+`HexGFq/SPEC/hex-gfq.md` classifies this as a structural convenience layer and
+requires no external Phase-4 comparator. The underlying generic quotient-field
+arithmetic is compared with FLINT by HexGFqField, and the packed path is
+compared with NTL by HexGF2. The internal common-domain packed/generic route is
+covered by `runShared21`; there are no external HexGFq ratios to record.
 
 ## Profile
 
-Profiles were recorded with `scripts/profile/run_profile.sh`, which wraps
-`samply record --save-only --no-open --rate 999 --unstable-presymbolicate` and
-filters the Firefox Profiler JSON to the bench thread's `warm-loop` timed
-regions. The runs used commit `3bc24c50fbe57487776c433106894ee544a6d656` on
-`carica` (Apple M2 Ultra, arm64, macOS 14.6.1), Lean
-`leanprover/lean4:4.30.0-rc2`, lean-bench
-`91412dba8350c29ddf52c9ace56f8a3d2240b6c7`, samply `0.13.1`, and deterministic
-benchmark inputs from `HexGFq/Bench.lean`; random seeds are not involved. The
-harness recorded `git_dirty: true` because the profile-compatible packed target
-and the report were being edited in this worktree. The raw filtered
-`*.json.gz` artefacts are developer-local under `/tmp` and are not committed.
+The timed-region-filtered profiles were recorded at commit
+`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
+arm64, Lean 4.30.0-rc2) with `scripts/profile/run_profile.sh`. The registration
+renames in the current bench did not change the profiled target bodies:
+`runGFqOfPolyReprChecksum` became `runGeneric21`,
+`runGF2qOfWordReprProfileChecksum` became `runPacked1`, and
+`runPackedGenericSharedChecksum` became `runShared21`. Raw filtered profile
+files are developer-local under `/tmp`.
 
 ### `generic-constructor-projection`
 
-Command:
-
 ```sh
-scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runGFqOfPolyReprChecksum 256 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench \
+  Hex.GfqBench.runGFqOfPolyReprChecksum 256 5000000000
 ```
 
-Representative case: deterministic binary polynomial representative, parameter
-`n=256`, no seed. Leaf cost in the filtered profile was Lean runtime/Std 51.0%,
-Hex Lean code 38.7%, other compiler/system leaves 4.0%, allocation/free 3.6%,
-and GMP 2.7%. Inclusive Hex cost was led by
-`Hex.GfqBench.runGFqOfPolyReprChecksum` (99.9%), `GFqRing.reduceMod` (98.9%),
+At `n=256`, leaf cost was Lean runtime/Std 51.0%, Hex Lean code 38.7%, other
+compiler/system leaves 4.0%, allocation/free 3.6%, and GMP 2.7%. Inclusive Hex
+cost was led by the target (99.9%), `GFqRing.reduceMod` (98.9%),
 `DensePoly.divModArray` (86.0%), `DensePoly.divModArrayAux` (39.3%), and
-`DensePoly.arrayDegreeAux` (27.2%). The dominant work is the generic
-constructor's reduction modulo the committed Conway polynomial and maps to the
-registered generic constructor/projection target.
-
-Diagnostics:
-
-```text
-bench thread:       name='Thread <4847760>' tid=4847760
-regions:            9, total timed = 2907.6 ms
-expected samples:   ~2905 on bench thread
-retained samples:   2904 on bench thread (9 rejected outside windows)
-other-thread noise: 2 samples on non-bench threads within timed windows (informational)
-filtered profile:   /tmp/hex-profile-runGFqOfPolyReprChecksum-256.json.gz
-```
+`DensePoly.arrayDegreeAux` (27.2%). The dominant generic reduction is directly
+attributable to `runGeneric21` and the other generic registrations use the same
+fixed-modulus reduction kernel.
 
 ### `packed-constructor-projection`
 
-Command:
-
 ```sh
-scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runGF2qOfWordReprProfileChecksum 63 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench \
+  Hex.GfqBench.runGF2qOfWordReprProfileChecksum 63 5000000000
 ```
 
-Representative case: deterministic single-word packed representative,
-parameter `n=63`, no seed. This uses the parametric
-`runGF2qOfWordReprProfileChecksum` companion because lean-bench's fixed-child
-path does not emit timed-region sidecars; the measured operation is the same
-`GF2q.ofWord` plus `GF2q.repr` surface as the fixed
-`runGF2qOfWordReprChecksum` verdict target. Leaf cost was Lean runtime/Std
-39.5%, Hex Lean code 34.7%, allocation/free 15.0%, other compiler/system leaves
-10.8%, and GMP 0.1%. Inclusive Hex cost was led by `GF2n.reduce` (98.9%),
-`GF2Poly.packedReduceWord` (97.8%), `GF2Poly.mod` (97.6%), `GF2Poly.add`
-(27.6%), `GF2Poly.degree?` (22.1%), and `GF2Poly.divModAux` entries up to
-20.3%. The dominant packed reduction work is attributable to the registered
-packed constructor/projection family; no new audit-found issue is needed.
-
-Diagnostics:
-
-```text
-bench thread:       name='Thread <4847067>' tid=4847067
-regions:            12, total timed = 4264.9 ms
-expected samples:   ~4261 on bench thread
-retained samples:   4260 on bench thread (9 rejected outside windows)
-other-thread noise: 0 samples on non-bench threads within timed windows (informational)
-filtered profile:   /tmp/hex-profile-runGF2qOfWordReprProfileChecksum-63.json.gz
-```
+At the representative single-word input, leaf cost was Lean runtime/Std 39.5%,
+Hex Lean code 34.7%, allocation/free 15.0%, other compiler/system leaves 10.8%,
+and GMP 0.1%. Inclusive Hex cost was led by `GF2n.reduce` (98.9%),
+`GF2Poly.packedReduceWord` (97.8%), `GF2Poly.mod` (97.6%),
+`GF2Poly.add` (27.6%), and `GF2Poly.degree?` (22.1%). The packed reduction is
+directly attributable to `runPacked1`; `runPacked8` uses the same single-word
+kernel with a different committed modulus.
 
 ### `packed-generic-shared-bridge`
 
-Command:
-
 ```sh
-scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runPackedGenericSharedChecksum 256 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench \
+  Hex.GfqBench.runPackedGenericSharedChecksum 256 5000000000
 ```
 
-Representative case: shared deterministic binary representative, parameter
-`n=256`, no seed. Leaf cost was Lean runtime/Std 46.7%, Hex Lean code 40.4%,
-GMP 5.8%, allocation/free 3.6%, and other compiler/system leaves 3.6%.
-Inclusive Hex cost was led by `Hex.GfqBench.runPackedGenericSharedChecksum`
-(92.6%), `GFqRing.reduceMod` (92.2%), `DensePoly.divModArray` (87.9%),
-`DensePoly.divModArrayAux` (35.7%), `DensePoly.arrayDegreeAux` (24.1%), and the
-packed side through `GF2n.reduce` / `GF2Poly.packedReduceWord` at 6.8% / 6.7%.
-The profile shape matches the benchmark declaration: the generic degree-`n`
-representative scan dominates, while the fixed packed projection remains a
-small component of the shared bridge.
-
-Diagnostics:
-
-```text
-bench thread:       name='Thread <4848957>' tid=4848957
-regions:            8, total timed = 3876.2 ms
-expected samples:   ~3872 on bench thread
-retained samples:   3872 on bench thread (9 rejected outside windows)
-other-thread noise: 2 samples on non-bench threads within timed windows (informational)
-filtered profile:   /tmp/hex-profile-runPackedGenericSharedChecksum-256.json.gz
-```
+At `n=256`, leaf cost was Lean runtime/Std 46.7%, Hex Lean code 40.4%, GMP
+5.8%, allocation/free 3.6%, and other compiler/system leaves 3.6%. Inclusive
+Hex cost was led by the target (92.6%), `GFqRing.reduceMod` (92.2%),
+`DensePoly.divModArray` (87.9%), and the packed route through `GF2n.reduce` /
+`GF2Poly.packedReduceWord` at 6.8% / 6.7%. This directly confirms the shared
+family's declared attribution: the generic linear scan dominates the fixed
+packed projection.
 
 ## Concerns
 
-- [#9814](https://github.com/kim-em/hex-dev/issues/9814) tracks the fixed
-  verdict surfaces' missing ordered modes, budgets, and expected hashes.
+None.
