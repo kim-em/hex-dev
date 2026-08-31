@@ -141,10 +141,56 @@ The old bounded sparse probes all returned zero after a single Brown image.
 Because they did not complete the advertised gcd operation, the replacement
 suite removes them rather than treating a fast decline as coverage.
 
-The clean mode-3 command and measurements are recorded below after the final
-source commit:
+The clean mode-3 export used commit
+`d28067003e663cee510aec078663eb2c374e055b` on the same host and toolchain:
 
-<!-- ISSUE9812_MODE3_RESULTS -->
+```sh
+.lake/build/bin/hexmvgcd_bench run \
+  Hex.MvGcdBench.runContentInFixed \
+  Hex.MvGcdBench.runPrimPartInFixed \
+  Hex.MvGcdBench.runGcdFixed \
+  Hex.MvGcdBench.runCofactorsFixed \
+  Hex.MvGcdBench.runIsCoprimeFixed \
+  Hex.MvGcdBench.runGcdListFixed \
+  Hex.MvGcdBench.runLcmFixed \
+  Hex.MvGcdBench.runSqfDecompFixed \
+  Hex.MvGcdBench.runRadicalFixed \
+  Hex.MvGcdBench.runIsSquarefreeFixed \
+  Hex.MvGcdBench.Matrix.runDenseCoprime8 \
+  Hex.MvGcdBench.Matrix.runSparseCoprime8 \
+  Hex.MvGcdBench.Matrix.runDenseGcd5d5 \
+  Hex.MvGcdBench.Matrix.runSparseStress5d16 \
+  Hex.MvGcdBench.runSwell5 \
+  Hex.MvGcdBench.Matrix.runRationalGcd5d5 \
+  Hex.MvGcdBench.Matrix.runSquarefree3m1to5 \
+  --export-file /tmp/hex-mv-gcd-mode3-d2806700-chungus2.json
+```
+
+The stored 17-result export is
+`reports/bench-results/hex-mv-gcd-mode3-d2806700-chungus2.json`, with SHA-256
+`1d07e00a2a955b0e96e308d211e7f22e429498ece04238f6d565e49452daa680`.
+Its environment records `git_dirty = false`; every repeat completed, every
+repeat hash agreed, and all 17 expected hashes matched.
+
+| target | median | body budget |
+|---|---:|---:|
+| `runContentInFixed` | 0.571 ms | 10 ms |
+| `runPrimPartInFixed` | 0.701 ms | 15 ms |
+| `runGcdFixed` | 1.646 ms | 30 ms |
+| `runCofactorsFixed` | 1.657 ms | 60 ms |
+| `runIsCoprimeFixed` | 1.707 ms | 35 ms |
+| `runGcdListFixed` | 2.609 ms | 60 ms |
+| `runLcmFixed` | 1.725 ms | 35 ms |
+| `runSqfDecompFixed` | 132.309 ms | 1 s |
+| `runRadicalFixed` | 130.329 ms | 1 s |
+| `runIsSquarefreeFixed` | 135.299 ms | 1 s |
+| `Matrix.runDenseCoprime8` | 297.722 ms | 1 s |
+| `Matrix.runSparseCoprime8` | 257.226 ms | 1 s |
+| `Matrix.runDenseGcd5d5` | 12.193 s | 25 s |
+| `Matrix.runSparseStress5d16` | 992.345 ms | 4 s |
+| `runSwell5` | 0.719 ms | 10 ms |
+| `Matrix.runRationalGcd5d5` | 4.744 s | 5 s |
+| `Matrix.runSquarefree3m1to5` | 3.179 s | 4 s |
 
 ## Comparator Ratios
 
@@ -285,4 +331,7 @@ No dominant inclusive cost lies outside the corresponding registered target.
 
 ## Concerns
 
-None.
+None in HexMvGcd's own performance coverage. `libraries.yml` remains at phase
+3 because phase-4 promotion is dependency-coupled: `HexMvPoly`, `HexPoly`, and
+`HexPolyFp` are still below phase 4. Re-promotion must wait for those upstream
+entries rather than bypassing `scripts/check_phase4.py`.
