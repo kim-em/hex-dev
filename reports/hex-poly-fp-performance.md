@@ -1,14 +1,14 @@
 # HexPolyFp Performance Report
 
 This report records partial HexPolyFp Phase-4 evidence from clean source
-revision `9aee6e90e1ea76432e24562c9f0de3502b25eda7`, measured on 2026-08-31 on
+revision `5e7d93547984331e2db21178e7ff5deb636283e0`, measured on 2026-08-31 on
 `chungus2` (AMD EPYC 9455, Linux x86-64) with Lean 4.34.0-rc2 and lean-bench
 0.1.0. The repaired Frobenius and GCD ladders pass, but the library remains at
 Phase 3 because the concerns at the end of this report still block Phase 4.
 
 The scientific artifact is
-[`hex-poly-fp-9aee6e9-scientific.json`](bench-results/hex-poly-fp-9aee6e9-scientific.json)
-(SHA-256 `8d5835bdab5063b84c78b6ff9c9cef81cb715b700507d9b02335f1df0792ae9e`).
+[`hex-poly-fp-5e7d935-scientific.json`](bench-results/hex-poly-fp-5e7d935-scientific.json)
+(SHA-256 `4284ffba8e96d152daaaee3f8be9cc67821662e75f322c5a6deaaebdbbd9bf86`).
 It was produced with the committed scientific settings:
 
 ```sh
@@ -21,29 +21,30 @@ It was produced with the committed scientific settings:
   Hex.FpPolyBench.runPowModMonicChecksum \
   Hex.FpPolyBench.runDivModChecksum \
   Hex.FpPolyBench.runComposeModMonicChecksum \
-  --export-file reports/bench-results/hex-poly-fp-9aee6e9-scientific.json
+  --outer-trials 3 --signal-floor-multiplier 1 \
+  --export-file reports/bench-results/hex-poly-fp-5e7d935-scientific.json
 ```
 
 `lake exe hexpolyfp_bench verify` passed all 27 registrations.
 
-Three fresh within-Lean crossover comparisons were run at clean source
-revision `b439978767e42783c500e464ec38ed17b497ac8c` with three outer trials per
-rung. Their machine-readable records are:
+Five fresh within-Lean comparisons were run at the same clean revision with
+three outer trials per rung. Their machine-readable records are:
 
-- [`hex-poly-fp-b439978-pow-compare.json`](bench-results/hex-poly-fp-b439978-pow-compare.json),
-  SHA-256 `9e76761ca2e839d3c064603c15b7e10176e5c72ef9e34fc668a12843d48983b6`;
-- [`hex-poly-fp-b439978-frobenius-compare.json`](bench-results/hex-poly-fp-b439978-frobenius-compare.json),
-  SHA-256 `d5bb0b21664d84745f22f017ba87aad9b2618bccda9bf0641623a5c0c272a9b1`;
-- [`hex-poly-fp-b439978-compose-compare.json`](bench-results/hex-poly-fp-b439978-compose-compare.json),
-  SHA-256 `0ea5156135080fc09a3a2db98b3e98c92181b5e3422bee5aef2457d0a1a3096b`.
+- [`pow`](bench-results/hex-poly-fp-5e7d935-pow-compare.json), SHA-256
+  `0c51b6a8f4a0d20b2c836e51752514695dd6521a07c4fa038b2f7485f5050e3c`;
+- [`frobenius`](bench-results/hex-poly-fp-5e7d935-frobenius-compare.json),
+  SHA-256 `91a94e4e3a16f7fbca9b43f8ef1aa2a56411bef2d230bdda3787919ebe443a04`;
+- [`compose`](bench-results/hex-poly-fp-5e7d935-compose-compare.json), SHA-256
+  `d11ba6d166ca35f91b9c5b9c9514c5bbdd6b9c5975cbf3f2e8c6cf06c5b7586d`;
+- [`division`](bench-results/hex-poly-fp-5e7d935-divmod-compare.json), SHA-256
+  `d6d0d7c804c210e4f1adf7ceedb2342b6dbfb000853144e839843a3995357cab`;
+- [`gcd`](bench-results/hex-poly-fp-5e7d935-gcd-compare.json), SHA-256
+  `3d20aed3db57115c9e7ee79d9963b6441e13fd66c588af6a10cf7743471cb1f2`.
 
-They were produced by pairing
-`runPowModMonicChecksum`/`runFastPowChecksum`,
-`runFrobeniusXModChecksum`/`runFastFrobeniusChecksum`, and
-`runComposeModMonicChecksum`/`runFastComposeChecksum` with
+They pair each retained target with the correspondingly named fast target via
 `compare --outer-trials 3 --signal-floor-multiplier 1 --export-file FILE`.
-Each record has `git_dirty: false`, names the full source revision, and reports
-agreement on every common parameter.
+Each record has `git_dirty: false`, names the full source revision, and contains
+matching paired result hashes at every common parameter.
 
 ## Bench Targets
 
@@ -88,12 +89,13 @@ ordered-mode and scientific-verdict requirements. They remain open work.
 
 For the fixed-prime Frobenius family, the independently derived model is
 
-`frobeniusWork n = n * sum_{k=0}^{16} min(n, 2^k)^2`.
+`frobeniusWork n = sum_{k=0}^{16} min(n, 2^k)^2`.
 
 The exponent `65537 = 2^16 + 1` fixes the 17 squaring stages. Before reduction
 saturates, the active degree doubles; afterward it remains at the modulus
 degree. Schoolbook multiplication and monic reduction are quadratic in that
-active degree, and the target performs `n` calls.
+active degree. The target performs one `X^p mod f` operation; lean-bench, rather
+than a user-side loop, supplies the timed repetition needed for measurement.
 
 For GCD, the prepared pair consists of consecutive polynomial Fibonacci
 values defined by `F₀ = 0`, `F₁ = 1`, and `Fₖ₊₂ = X Fₖ₊₁ + Fₖ`. The Euclidean
@@ -128,18 +130,24 @@ The final column is the observed hash at the largest rung.
 
 | Target | Harness verdict | C min | C max | beta | Largest rung | Median | Hash |
 |---|---|---:|---:|---:|---:|---:|---|
-| `runFrobeniusXModChecksum` | consistent with declared complexity | 51.554 | 59.158 | -0.105 | 80 | 286.481 ms | `0xac1417f1a37c7f40` |
-| `runGcdChecksum` | consistent with declared complexity | 5.647 | 10.561 | -0.102 | 2048 | 24.282 ms | `0xfcd34e69b617ac7d` |
-| `runWeightedProductChecksum` | consistent with declared complexity | 38.007 | 39.487 | -0.003 | 4096 | 662.479 ms | `0x972bd3a6f2b6d429` |
-| `runSquareFreeDecompositionSummary` | consistent with declared complexity | 8.774 | 26.295 | -0.227 | 768 | 6.304 ms | `0x66ff822aca96ce87` |
-| `runFrobeniusXPowModChecksum` | consistent with declared complexity | 1244.558 | 1657.772 | narrow-window | 64 | 326.254 ms | `0x6b9763a45f6b5d11` |
-| `runPowModMonicChecksum` | consistent with declared complexity | 60.101 | 77.450 | -0.115 | 512 | 141.796 ms | `0x3f65c86be5e72dd5` |
-| `runDivModChecksum` | consistent with declared complexity | 14.323 | 22.769 | -0.070 | 2048 | 63.261 ms | `0x5e661a9702ea0fc1` |
-| `runComposeModMonicChecksum` | consistent with declared complexity | 35.615 | 39.439 | -0.071 | 192 | 252.081 ms | `0xee8f3ebaae233227` |
+| `runFrobeniusXModChecksum` | consistent with declared complexity | 52.529 | 59.547 | -0.098 | 80 | 3.649 ms | `0x106c087966cc5bdf` |
+| `runGcdChecksum` | consistent with declared complexity | 5.583 | 10.470 | -0.096 | 2048 | 25.179 ms | `0xfcd34e69b617ac7d` |
+| `runWeightedProductChecksum` | consistent with declared complexity | 38.116 | 39.398 | -0.010 | 4096 | 639.488 ms | `0x972bd3a6f2b6d429` |
+| `runSquareFreeDecompositionSummary` | consistent with declared complexity | 8.754 | 25.743 | -0.186 | 768 | 6.914 ms | `0x66ff822aca96ce87` |
+| `runFrobeniusXPowModChecksum` | consistent with declared complexity | 1273.111 | 1401.239 | narrow-window | 64 | 333.739 ms | `0x6b9763a45f6b5d11` |
+| `runPowModMonicChecksum` | consistent with declared complexity | 60.707 | 77.808 | -0.106 | 512 | 143.227 ms | `0x3f65c86be5e72dd5` |
+| `runDivModChecksum` | consistent with declared complexity | 14.046 | 22.295 | -0.084 | 2048 | 59.082 ms | `0x5e661a9702ea0fc1` |
+| `runComposeModMonicChecksum` | consistent with declared complexity | 34.355 | 38.110 | -0.069 | 192 | 243.163 ms | `0xee8f3ebaae233227` |
 
 No ladder was truncated by its wall-clock cap. The Frobenius model passes on
 the committed 16-through-80 schedule; the forced Euclidean family passes on
 the full 8-through-2048 schedule.
+
+`narrow-window` means lean-bench did not fit a slope for
+`runFrobeniusXPowModChecksum`: its 1.10-fold `C` range is below the configured
+1.5-fold narrow-range noise floor. The square-free row passes its declared
+0.30 slope tolerance, but its alternating input shape gives the weakest fit of
+the eight (`C` spans 2.94-fold); it remains tracked under Concerns.
 
 ## Comparator Ratios
 
@@ -150,27 +158,32 @@ counterparts for multiplication, division/remainder, GCD, modular power, and
 modular composition. The comparator still needs a scoped classification,
 wiring, overhead treatment, and measured ratios.
 
-The three refreshed within-Lean comparisons all reported agreement on every
-common parameter. Representative largest-rung medians are:
+The five refreshed within-Lean comparisons have matching result hashes at
+every common parameter. Representative largest-rung medians are:
 
-| Pair | Parameter | Schoolbook | Fast candidate | Schoolbook / fast | Agreement |
+| Pair | Parameter | Reference | Fast candidate | Reference / fast | Hashes |
 |---|---:|---:|---:|---:|---|
-| modular power | 512 | 147.724 ms | 72.513 ms | 2.037 | all agreed |
-| batched Frobenius | 80 | 291.952 ms | 166.828 ms | 1.750 | all agreed |
-| modular composition | 192 | 249.535 ms | 189.995 ms | 1.313 | all agreed |
+| modular power | 512 | 143.366 ms | 72.490 ms | 1.978 | match |
+| Frobenius `X^p mod f` | 80 | 3.626 ms | 1.982 ms | 1.829 | match |
+| modular composition | 192 | 244.029 ms | 187.687 ms | 1.300 | match |
+| division/remainder | 2048 | 58.198 ms | 237.784 ms | 0.245 | match |
+| GCD | 2048 | 23.736 ms | 286.842 ms | 0.083 | match |
 
-The remaining within-Lean implementation pairs have source-level equality
-guarantees, including `FpPoly.mulFast_eq`, `DensePoly.divModWith_eq`, and
-`DensePoly.gcdWith_eq`; the fast power and Horner loops reduce pointwise to
-`mulFast_eq`. These proofs establish semantic equality, but do not substitute
-for the missing scientific verdicts or required `compare` runs.
+Source-level guarantees including `FpPoly.mulFast_eq`,
+`DensePoly.divModWith_eq`, and `DensePoly.gcdWith_eq` independently establish
+the relevant semantic equalities; the fast power and Horner loops reduce
+pointwise to `mulFast_eq`. These proofs and matching hashes do not substitute
+for the unresolved scientific mode verdicts.
 
 ## Profile
 
 One representative case from each declared `phase4.input_families` family was
-sampled from the clean source revision above. The commands used the project
-wrapper with `samply 0.13.1` at 999 Hz and `lean-bench-samply` commit
-`9356baa2f5757ee40320a897bd284914d5bb9f5e`:
+sampled. The coefficient, composition, square-free, and GCD rows come from
+clean revision `9aee6e90e1ea76432e24562c9f0de3502b25eda7`; those target bodies and
+dependencies are unchanged. The corrected one-call Frobenius target was
+resampled at clean revision `5e7d93547984331e2db21178e7ff5deb636283e0`.
+The commands used the project wrapper with `samply 0.13.1` at 999 Hz and
+`lean-bench-samply` commit `9356baa2f5757ee40320a897bd284914d5bb9f5e`:
 
 ```sh
 scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
@@ -195,7 +208,7 @@ sensitivity checks.
 | Family / target | Samples | Timed | Residual | Own code | GMP | Allocation | Lean runtime | Other | Classified |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | coefficient-kernels / `runMulFastChecksum`, n=16384 | 1316 | 1326.7 ms | 0.695 ms | 22.72% | 11.55% | 30.09% | 30.02% | 5.62% | 94.38% |
-| quotient-powers / `runFrobeniusXModChecksum`, n=80 | 5139 | 5165.0 ms | 0.433 ms | 35.18% | 0% | 26.60% | 35.55% | 2.67% | 97.33% |
+| quotient-powers / `runFrobeniusXModChecksum`, n=80 | 3671 | 3691.5 ms | 1.496 ms | 35.58% | 0% | 24.54% | 37.37% | 2.51% | 97.49% |
 | modular-composition / `runComposeModMonicChecksum`, n=192 | 2216 | 2254.9 ms | 0.995 ms | 34.34% | 0% | 29.20% | 32.45% | 4.02% | 95.98% |
 | product-squarefree / `runSquareFreeDecompositionSummary`, n=768 | 1615 | 1627.4 ms | 0.926 ms | 35.60% | 0% | 27.00% | 30.53% | 6.87% | 93.13% |
 | euclidean-division-gcd / `runGcdChecksum`, n=2048 | 3065 | 3086.4 ms | 0.736 ms | 42.25% | 0% | 28.78% | 24.67% | 4.31% | 95.69% |
@@ -205,8 +218,8 @@ The coefficient-kernel profile places 75.30% of samples inclusively in
 forward path for 25.15%. These costs are covered by the forced NTT/CRT and
 public-dispatch registrations.
 
-The Frobenius profile places 99.90% in `FpPoly.powModMonicAux`, with
-`DensePoly.mulImpl` at 55.71% and monic reduction/division at 44.09%/43.98%.
+The Frobenius profile places 99.81% in `FpPoly.powModMonicAux`, with
+`DensePoly.mulImpl` at 55.38% and monic reduction/division at 44.32%/44.27%.
 This is precisely the multiplication-and-reduction work represented by
 `frobeniusWork` and registered by the quotient-power targets.
 
@@ -223,20 +236,22 @@ remainder chain, not fixture preparation or an unregistered phase.
 
 ## Concerns
 
-- Nineteen parametric forced-kernel, dispatcher, and fast-candidate
-  registrations still lack complete ordered-mode rationales and scientific
-  verdicts. Several declarations are explicitly conservative upper bounds and
-  therefore need the required mode-2 citation and dominant-phase rationale or
-  a different registration mode. In the fresh comparison,
-  `runFastFrobeniusChecksum` was inconclusive against `frobeniusWork`
-  (`beta = -0.330`, faster than declared), even though all result hashes
-  agreed.
-- The HexPolyFp SPEC and `libraries.yml` still lack the required scoped FLINT
-  comparator declaration, registration, and measured ratios. The existing
-  python-flint conformance oracle demonstrates that comparable `nmod_poly`
-  surfaces exist, so an absence declaration would not be accurate.
-- The polynomial-Fibonacci GCD result is `1` at every rung, so the current
-  result hash is parameter-independent. The exact fixture recurrence and
-  paired equality proof protect correctness, but a future registration audit
-  should mix an input checksum into both GCD targets before their compare
-  evidence is considered complete.
+- [#9809](https://github.com/kim-em/hex-dev/issues/9809): Nineteen parametric
+  forced-kernel, dispatcher, and fast-candidate registrations still need
+  complete ordered-mode rationales and scientific verdicts. The fresh fast
+  power, Frobenius, division, and GCD controls are inconclusive in the
+  faster-than-declared direction (`beta = -0.184`, `-0.362`, `-0.332`, and
+  `-0.449` respectively), despite matching paired hashes.
+- [#9809](https://github.com/kim-em/hex-dev/issues/9809): The HexPolyFp SPEC
+  and `libraries.yml` still lack the required scoped FLINT declaration,
+  registration, overhead treatment, and measured ratios. The python-flint
+  oracle demonstrates comparable `nmod_poly` surfaces, so absence would not be
+  accurate.
+- [#9809](https://github.com/kim-em/hex-dev/issues/9809): The
+  polynomial-Fibonacci GCD result is `1` at every rung, making the paired GCD
+  hash check vacuous. Both targets must mix the same input checksum before the
+  comparison can count as complete evidence.
+- [#9809](https://github.com/kim-em/hex-dev/issues/9809): The square-free
+  ladder passes its declared 0.30 tolerance but has the weakest fit of the
+  eight recorded mode-1 rows (`C` spans 2.94-fold in an alternating pattern),
+  so its family shape needs review during the full registration audit.
