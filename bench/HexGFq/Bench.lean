@@ -265,16 +265,16 @@ setup_benchmark runGeneric21 n => n
 
 /-
 Mode 1. The shared checksum runs the public packed and generic
-constructor/projection surfaces on the same binary representative family. The
-generic degree-`n` representative scan dominates the constant packed
-projection.
+constructor/projection surfaces on the same size-indexed binary family. The
+packed input saturates at degree 63, while on the registered `n ≥ 2048` ladder
+the generic degree-`n` representative scan dominates that fixed packed work.
 -/
 setup_benchmark runShared21 n => n
   with prep := prepShared21
   where {
-    paramFloor := 512
+    paramFloor := 2048
     paramCeiling := 32768
-    paramSchedule := .custom #[512, 1024, 2048, 4096, 8192, 16384, 32768]
+    paramSchedule := .custom #[2048, 4096, 8192, 12288, 16384, 24576, 32768]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -312,7 +312,7 @@ setup_benchmark runPacked8 n => 2 + packed8Steps n
   where {
     paramFloor := 8
     paramCeiling := 63
-    paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 63]
+    paramSchedule := .custom #[8, 13, 18, 27, 36, 45, 63]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
