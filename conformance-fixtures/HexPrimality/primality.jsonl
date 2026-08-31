@@ -64,6 +64,14 @@
 {"kind":"result","lib":"HexPrimality","case":"isprime/cert/mersenne31","op":"isprime","value":true}
 {"kind":"isprime","lib":"HexPrimality","case":"isprime/cert/mersenne31-succ2","n":2147483649}
 {"kind":"result","lib":"HexPrimality","case":"isprime/cert/mersenne31-succ2","op":"isprime","value":false}
+{"kind":"nextprime","lib":"HexPrimality","case":"nextprime/edge/zero","n":0}
+{"kind":"result","lib":"HexPrimality","case":"nextprime/edge/zero","op":"nextprime","value":2}
+{"kind":"nextprime","lib":"HexPrimality","case":"nextprime/table/after-90","n":90}
+{"kind":"result","lib":"HexPrimality","case":"nextprime/table/after-90","op":"nextprime","value":97}
+{"kind":"nextprime","lib":"HexPrimality","case":"nextprime/trial/after-99991","n":99991}
+{"kind":"result","lib":"HexPrimality","case":"nextprime/trial/after-99991","op":"nextprime","value":100003}
+{"kind":"nextprime","lib":"HexPrimality","case":"nextprime/cert/after-10000000","n":10000000}
+{"kind":"result","lib":"HexPrimality","case":"nextprime/cert/after-10000000","op":"nextprime","value":10000019}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/small","n":97,"cert":{"t":"small","n":97}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/small","op":"certcheck","value":true}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/pock1","n":7,"cert":{"t":"pock","n":7,"f":[[2,0,{"t":"small","n":3}]]}}

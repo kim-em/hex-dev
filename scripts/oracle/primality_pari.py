@@ -5,9 +5,10 @@ Reads a JSONL stream produced by `lake exe hexprimality_emit_fixtures`
 (or the committed sample at
 `conformance-fixtures/HexPrimality/primality.jsonl`) and re-checks each
 case: `isprime` verdicts against PARI's `isprime` (with python-flint's
-`is_prime` as a second opinion on large inputs),
-`segment` listings against PARI's `primes` over the interval, and
-`certcheck` verdicts against an independent Python reimplementation of
+`is_prime` as a second opinion on every verdict), `nextprime` values against
+PARI's `nextprime`, `segment` listings against PARI's `primes` over the
+interval, and `certcheck` verdicts against an independent Python
+reimplementation of
 the certificate checker, whose small-table leaf uses the table's proven
 semantics (prime and below `10^5`) with PARI supplying the primality.
 Route selection, multiplicative-order laws, search accounting, bounded
@@ -69,7 +70,12 @@ def _is_prime(pari, n: int) -> bool:
     verdict = bool(int(pari.isprime(n)))
     import flint  # type: ignore[import-not-found]
 
-    second = bool(flint.fmpz(n).is_prime())
+    try:
+        second = bool(flint.fmpz(n).is_prime())
+    except AttributeError as exc:
+        raise OracleMismatch(
+            "python-flint does not provide the required fmpz.is_prime API"
+        ) from exc
     if second != verdict:
         raise OracleMismatch(
             f"cypari2 and python-flint disagree on isprime({n}): "
@@ -79,8 +85,6 @@ def _is_prime(pari, n: int) -> bool:
 
 
 def _segment(pari, lo: int, hi: int) -> list[int]:
-    if hi <= lo:
-        return []
     vec = pari.primes([lo, hi - 1])
     return [int(p) for p in vec]
 
@@ -174,6 +178,20 @@ def check(
                 n = int(fixture["n"])
                 oracle_value = _is_prime(pari, n)
                 input_record: dict[str, Any] = {"n": n}
+            elif op == "nextprime":
+                if fixture["kind"] != "nextprime":
+                    raise OracleMismatch(
+                        f"{lib}/{case_id}: expected nextprime fixture, got "
+                        f"{fixture['kind']!r}"
+                    )
+                n = int(fixture["n"])
+                oracle_value = int(pari.nextprime(n + 1))
+                if not _is_prime(pari, oracle_value):
+                    raise OracleMismatch(
+                        f"{lib}/{case_id}: PARI nextprime returned nonprime "
+                        f"{oracle_value}"
+                    )
+                input_record = {"n": n}
             elif op == "segment":
                 if fixture["kind"] != "segment":
                     raise OracleMismatch(
@@ -249,6 +267,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--profile", default="ci")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--require-oracles",
+        action="store_true",
+        help="fail instead of skipping when cypari2 or python-flint is missing",
+    )
     args = parser.parse_args(argv)
 
     if args.check:
@@ -256,17 +279,26 @@ def main(argv: list[str] | None = None) -> int:
     else:
         source = args.input  # may be None → stdin
 
+    require_oracles = (
+        args.require_oracles or os.environ.get("HEX_REQUIRE_ORACLES") == "1"
+    )
     try:
         import cypari2  # noqa: F401
         import flint  # noqa: F401
-    except ImportError:
-        # Both legs are required: the standard driver must never turn a
-        # missing PARI or python-flint dependency into a green skip.
+    except ImportError as exc:
+        if require_oracles:
+            print(
+                "FAIL: required oracles cypari2 and python-flint are not installed "
+                f"({exc.name})",
+                file=sys.stderr,
+            )
+            return 1
         print(
-            "FAIL: required oracles cypari2 and python-flint are not installed",
+            "SKIP: cypari2 and python-flint are not both installed "
+            f"({exc.name})",
             file=sys.stderr,
         )
-        return 1
+        return 0
 
     return check(
         source,

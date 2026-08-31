@@ -105,6 +105,11 @@ for entry in "${ORACLES[@]}"; do
 
   oracle_args=()
   case "$oracle" in
+    *primality_pari.py)
+      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+        oracle_args=(--require-oracles)
+      fi
+      ;;
     *conway_luebeck.py)
       if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
         oracle_args=(--require-conway-polynomials)

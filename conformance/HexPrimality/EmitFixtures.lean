@@ -12,10 +12,10 @@ Deterministic fixture emission for `hex-primality`.
 
 Every case is fixed data (no randomness beyond the reproducible seeds baked
 into `isPrime`), so repeated runs emit identical JSONL and CI can diff the
-stream against the committed snapshot. The oracle recomputes each `isprime`
-verdict and `segment` listing with PARI, replays each `certcheck` with an
-independent Python reimplementation of the checker, and cross-checks large
-verdicts with python-flint.
+stream against the committed snapshot. The oracle recomputes each `isprime`,
+`nextprime`, and `segment` result with PARI, replays each `certcheck` with an
+independent Python reimplementation of the checker, and cross-checks every
+primality verdict with python-flint.
 
 Only operations for which the driver can independently recompute the result
 are emitted. Multiplicative order, p−1 and rho route selection, search
@@ -34,6 +34,17 @@ open Hex.Conformance.Emit
 open Hex.Nat (PrimeCert)
 
 private def lib : String := "HexPrimality"
+
+private def quote (s : String) : String := "\"" ++ s ++ "\""
+
+private def emitNextPrimeFixture (case : String) (n : Nat) : IO Unit := do
+  let line := "{\"kind\":\"nextprime\",\"lib\":" ++ quote lib ++
+    ",\"case\":" ++ quote case ++ ",\"n\":" ++ toString n ++ "}\n"
+  match (← IO.getEnv "HEX_FIXTURE_OUTPUT") with
+  | none => IO.print line
+  | some path =>
+      let handle ← IO.FS.Handle.mk path IO.FS.Mode.append
+      handle.putStr line
 
 mutual
 
@@ -76,6 +87,15 @@ private def isPrimeCases : List (String × Nat) :=
     ("cert/10000019", 10000019), ("cert/99999989", 99999989),
     ("cert/mersenne31", 2147483647),
     ("cert/mersenne31-succ2", 2147483649) ]
+
+/-- The `nextPrime?` value surface: the bottom edge, an ordinary table result,
+the table/trial boundary, and a certificate-tier result. The generator state
+and bounded failures remain core-only route properties. -/
+private def nextPrimeCases : List (String × Nat × Nat) :=
+  [ ("edge/zero", 0, 4),
+    ("table/after-90", 90, 16),
+    ("trial/after-99991", 99991, 16),
+    ("cert/after-10000000", 10000000, 32) ]
 
 /-- The `certcheck` surface: accepted certificates one, two, and three
 levels deep plus the accepted cube-root node, and one rejected certificate
@@ -131,6 +151,12 @@ private def emitCase : IO Unit := do
   for (case, n) in isPrimeCases do
     emitIsPrimeFixture lib s!"isprime/{case}" (Int.ofNat n)
     emitResult lib s!"isprime/{case}" "isprime" (boolValue (Hex.Nat.isPrime n))
+  for (case, n, fuel) in nextPrimeCases do
+    let case := s!"nextprime/{case}"
+    emitNextPrimeFixture case n
+    match Hex.Nat.nextPrime? n (Hex.Rand.ofSeed n) fuel with
+    | .ok (p, _) => emitResult lib case "nextprime" (toString p)
+    | .error _ => throw <| IO.userError (case ++ ": bounded search exhausted")
   for (case, n, cert) in certCases do
     emitCertCheckFixture lib s!"certcheck/{case}" (Int.ofNat n) (certJson cert)
     emitResult lib s!"certcheck/{case}" "certcheck"

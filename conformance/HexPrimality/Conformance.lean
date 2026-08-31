@@ -10,13 +10,14 @@ import HexPrimality
 Core conformance checks for the `hex-primality` decision, certificate, and
 segment surfaces.
 
-Oracle: PARI (via cypari2) recomputes `isprime` verdicts and `segment`
-listings and an independent Python reimplementation replays `certcheck`
-cases (`scripts/oracle/primality_pari.py`); python-flint is the second
-opinion on large verdicts.
+Oracle: PARI (via cypari2) recomputes `isprime`, `nextprime`, and `segment`
+results and an independent Python reimplementation replays `certcheck` cases
+(`scripts/oracle/primality_pari.py`); python-flint is the second opinion on
+every primality verdict used by the oracle.
 Mode: `required`
 Covered operations:
 - `Hex.Nat.orderOf`
+- `Hex.Nat.smoothBound` / `Hex.Nat.smoothBoundCap`
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
 - `Hex.Nat.primeCert?`
@@ -24,6 +25,7 @@ Covered operations:
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
 - trial-division extraction route instrumentation
+- sieve decoding through `Hex.Nat.bitsToList`
 - `Hex.Nat.millerRabin` / `Hex.Nat.isProbablePrime`
 - `Hex.Nat.sieve` and its residue-index mapping
 - `Hex.Nat.isTablePrime`
@@ -86,6 +88,8 @@ private def pMinusOneWhole :=
   pMinusOneStage1Counted 15 4 2 (Hex.Rand.ofSeed 13)
 
 #guard pMinusOneStage1 299 2 5 == .factor 13
+#guard pMinusOneStage1 25 2 2 == .noFactor
+-- Invalid inputs have the same public result without entering the gcd route.
 #guard pMinusOneStage1 3 2 5 == .noFactor
 #guard pMinusOneStage1 15 4 2 == .whole
 #guard pMinusOneFound.result == .factor 13
@@ -222,7 +226,11 @@ example {n base bound d : Nat} {r : Hex.Rand}
     (Hex.Rand.ofSeed 23) (defaultPrimeFuel 104929010073468929) with
   | .ok success =>
       match success.cert.raw with
-      | .pock3 n _ _ _ _ => n == 104929010073468929 && checkPrime success.cert.raw
+      | .pock3 n r s _ factors =>
+          n == 104929010073468929 &&
+            certProduct (n - 1) factors == some (2 ^ 20) &&
+            2 ^ 20 * 2 ^ 20 < n && r == 397121 && s == 47716 &&
+            checkPrime success.cert.raw
       | _ => false
   | .error _ => false)
 
@@ -272,8 +280,11 @@ example {n base bound d : Nat} {r : Hex.Rand}
         success.rand == ((Hex.Rand.ofSeed 2).words 12).2
   | .error _ => false)
 
--- Exercise a deep trial-extraction route and pin its exact valuation and
--- cofactor. The source binding keeps this route linear independently of CSE.
+-- Trial extraction covers a typical mixed cofactor, a non-dividing edge, and
+-- a deep adversarial valuation. The source binding keeps the last route linear
+-- independently of CSE.
+#guard Hex.Nat.Internal.trialExtractTrace 3 (3 ^ 7 * 10) == (7, 10)
+#guard Hex.Nat.Internal.trialExtractTrace 0 17 == (0, 17)
 set_option maxRecDepth 10000 in
 #guard Hex.Nat.Internal.trialExtractTrace 2 (2 ^ 128) == (128, 1)
 
@@ -481,6 +492,8 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 #guard isProbablePrime 97 = true
 #guard isProbablePrime 0 = false
 #guard isProbablePrime 3215031751 = false
+#guard isProbablePrime 2047 [2] = true
+#guard isProbablePrime 2047 [2, 3] = false
 #guard millerRabin 2047 2 = true
 #guard millerRabin 2047 3 = false
 
@@ -495,7 +508,7 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 -- certificate tiers.
 #guard (match nextPrime? 90 (Hex.Rand.ofSeed 0) 8 with
   | .ok (p, _) =>
-      p == 97 && (List.range' 91 6).all fun q => isPrime q == false
+      p == 97 && (List.range' 91 6).all fun q => isPrimeTrial q == false
   | .error _ => false)
 #guard (match nextPrime? 99991 (Hex.Rand.ofSeed 0) 16 with
   | .ok (p, _) => p == 100003
