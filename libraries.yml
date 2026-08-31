@@ -670,7 +670,7 @@ libraries:
           rationale: "PARI and GMP-ECM use broader algorithm portfolios; comparisons diagnose route constants but are not merge gates."
       input_families:
         - name: table-and-balanced-semiprimes
-          description: Table-range integers and balanced semiprimes through 64 bits for dispatch and rho.
+          description: Table-range integers and balanced semiprimes through 80 bits for dispatch and rho.
         - name: smooth-and-unbalanced-semiprimes
           description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
         - name: power-forms

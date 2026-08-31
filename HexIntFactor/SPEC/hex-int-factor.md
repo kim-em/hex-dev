@@ -1185,9 +1185,11 @@ Families:
   removed rather than kept.
 - **Certificate replay**, `checkFactorization` in the kernel on
   factorizations with `k` from `1` to `10` and factors up to `64` bits.
-- **Order and primitive root**, primes up to `64` bits, reported
-  separately from the factorization of `p − 1` they depend on, so the
-  check's cost is visible next to the search's.
+- **Order and primitive root**, a scan ladder through `65537` plus fixed
+  50- and 61-bit primes whose order for base 3 is short, reported separately
+  from the factorization of `p - 1` they depend on. The two tracks expose both
+  the reference scan cost and downstream operand-size behavior without
+  pretending a linear scan is feasible for an arbitrary 64-bit order.
 - **Generalized divisor sums**, with one ladder growing a prime-power
   exponent through multi-million-bit output and one growing the number
   of certified prime-power entries. Per-rung preparation constructs or
@@ -1199,19 +1201,39 @@ Families:
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
-`p − 1`, and MPQS with tuned crossovers, and this library specifies
+`p - 1`, and MPQS with tuned crossovers, and this library specifies
 neither SQUFOF nor MPQS, so a required ratio would check an algorithm
-that does not exist here. The written-down expectation is narrower: on
-the **table-range** and **balanced semiprime** families the ratio
-should be within a small constant, since both sides run the same two
-algorithms there, and a large ratio means the rho inner loop is wrong
-rather than that the dispatch is. GMP-ECM is **informational** on the
-unbalanced family for the same reason and with the same caveat. The
-PARI/python-flint oracle pairing is for conformance, not a performance
+that does not exist here. The balanced-semiprime comparison diagnoses the
+cost of that portfolio difference; it is not a small-constant parity goal.
+GMP-ECM is **informational** on the unbalanced family for the same reason.
+The PARI/python-flint oracle pairing is for conformance, not a performance
 requirement.
 
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
+
+### Measured route policy
+
+The accepted default-fuel schedule completes every committed table, balanced,
+smooth, ECM, and power-form policy case through 80 bits. The largest balanced
+case uses 34 charged attempts against fuel 352, so the schedule retains ample
+margin without a special-case budget.
+
+SQUFOF is not required by the current API contract. PARI's advantage on the
+balanced word-size ladder is dominated by its broader small-factor portfolio,
+and Hex's 80-bit balanced case remains below the accepted one-second absolute
+policy budget. SQUFOF would become required only if Hex adopts a separate
+small-constant parity goal for word-sized balanced semiprimes.
+
+ECM stage 1 earns its cost. On output-agreeing unbalanced cases it is faster
+than rho both in the `UInt64` Montgomery regime and on 72--80-bit direct-`Nat`
+operands with 34--39-bit ECM factors. The factors' predecessors are not
+1000-smooth, so these are not Pollard `p - 1` successes presented as ECM.
+
+The generic and cyclotomic power-form routes agree through exponent 64. The
+split adds a small fixed overhead on most rungs and exposes no generic-search
+failure that an Aurifeuillian identity would repair. Aurifeuillian tables are
+therefore not part of the accepted route policy.
 
 ## The Mathlib layer
 
@@ -1373,21 +1395,8 @@ Neither `HexPrimality` nor `HexIntFactor` is in `libraries.yml` yet, so
 the dependency claims above are draft prose rather than repository
 state until those entries land.
 
-## Open questions
+## Deferred question
 
-- **The default fuel schedule.** Stated above as a function of bit
-  length and not fixed. It should be set so that the 64-bit balanced
-  semiprime family finishes with margin, measured rather than guessed.
-- **Whether SQUFOF is worth adding.** It beats rho on 64-bit semiprimes
-  by a useful constant and is a small algorithm, but it needs a
-  continued-fraction development and its failure modes are subtler than
-  rho's. Worth revisiting if the balanced-semiprime family shows the
-  PARI ratio is dominated by that one range.
-- **Whether Aurifeuillian factorizations belong in `cyclotomicSplit?`.**
-  They are a finite family of identities rather than an algorithm, so
-  adding them is a table. Worth doing once the `b^n ± 1` benchmark
-  family produces a case where a factor stayed unfactored and an
-  Aurifeuillian identity would have split it.
 - **How much of the Cunningham tables to commit.** A committed table of
   known factorizations of `b^n ± 1` would make hex-conway Tier 2 cheap
   at any table size, at the cost of a large data file whose entries are

@@ -282,7 +282,7 @@ def runTotientFactorCount (input : SigmaInput) : Nat :=
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
 arithmetic iterations. The returned factor-count hash is constant-size. -/
-setup_benchmark runBalancedFactor n => 2 ^ (n / 4)
+setup_benchmark  runBalancedFactor n => 2 ^ (n / 4)
   where {
     paramFloor := 32
     paramCeiling := 80
@@ -295,7 +295,7 @@ setup_benchmark runBalancedFactor n => 2 ^ (n / 4)
 
 /- Brent rho needs `O(sqrt p)` iterations for the least factor `p`; balanced
 semiprimes have `p = sqrt n`, hence the declared `O(n^(1/4))` model. -/
-setup_benchmark runBalancedRho n => 2 ^ (n / 4)
+setup_benchmark  runBalancedRho n => 2 ^ (n / 4)
   where {
     paramFloor := 32
     paramCeiling := 80
@@ -308,7 +308,7 @@ setup_benchmark runBalancedRho n => 2 ^ (n / 4)
 
 /- The smoothness bound is fixed, so the arithmetic-operation count is fixed;
 operand work scales with the modulus bit length, modeled by `O(log n)`. -/
-setup_benchmark runPMinusOneWord n => n
+setup_benchmark  runPMinusOneWord n => n
   where {
     paramFloor := 32
     paramCeiling := 64
@@ -322,7 +322,7 @@ setup_benchmark runPMinusOneWord n => n
 /- Above `2^64`, the p-1 stage uses direct `Nat` modular products. The bound
 and scalar schedule remain fixed; quadratic operand work is the conservative
 native model for this separate big-integer regime. -/
-setup_benchmark runPMinusOneNat n => n * n
+setup_benchmark  runPMinusOneNat n => n * n
   where {
     paramFloor := 72
     paramCeiling := 80
@@ -336,7 +336,7 @@ setup_benchmark runPMinusOneNat n => n * n
 /- Below `2^64`, ECM uses the fixed-width Montgomery backend. The curve and
 smoothness bound are fixed, so this route is constant-cost in the selected
 word-size regime. -/
-setup_benchmark runEcmWord _n => 1
+setup_benchmark  runEcmWord _n => 1
   where {
     paramFloor := 48
     paramCeiling := 64
@@ -350,7 +350,7 @@ setup_benchmark runEcmWord _n => 1
 /- Above the word boundary the same fixed stage-1 schedule uses direct `Nat`
 modular products. With a fixed scalar-step count, quadratic operand work is
 the conservative native-cost model on this short big-integer ladder. -/
-setup_benchmark runEcmNat n => n * n
+setup_benchmark  runEcmNat n => n * n
   where {
     paramFloor := 72
     paramCeiling := 80
@@ -363,8 +363,8 @@ setup_benchmark runEcmNat n => n * n
 
 /- On the same word-size ECM policy inputs, rho sees the fixed 20-bit least
 factor 1000003. Its iteration count is therefore fixed across this ladder; the
-paired registration makes the stage-1 policy decision directly measurable. -/
-setup_benchmark runEcmRhoWord _n => 1
+constant-cost model makes the stage-1 policy decision directly measurable. -/
+setup_benchmark  runEcmRhoWord _n => 1
   where {
     paramFloor := 48
     paramCeiling := 64
@@ -379,7 +379,7 @@ setup_benchmark runEcmRhoWord _n => 1
 the square root of the input. Brent rho's worst expected route cost is thus
 `O(n^(1/4))` arithmetic iterations; the exponential bit-length model is the
 conservative upper bound used for this short paired policy ladder. -/
-setup_benchmark runEcmRhoNat n => 2 ^ (n / 4)
+setup_benchmark  runEcmRhoNat n => 2 ^ (n / 4)
   where {
     paramFloor := 72
     paramCeiling := 80
@@ -392,7 +392,7 @@ setup_benchmark runEcmRhoNat n => 2 ^ (n / 4)
 
 /- Building recursive cyclotomic values for the divisor indices through `n`
 revisits prefixes whose total length has a quadratic cost bound. -/
-setup_benchmark runCyclotomic n => n * n
+setup_benchmark  runCyclotomic n => n * n
   where {
     paramFloor := 4
     paramCeiling := 32
@@ -405,7 +405,7 @@ setup_benchmark runCyclotomic n => n * n
 /- `boundedPowMul` replays the single exponent one guarded multiplication at a
 time. The accumulator grows throughout the replay, so `n²` is the conservative
 native-cost model for the widening guarded multiplications and divisions. -/
-setup_benchmark runReplay n => n * n
+setup_benchmark  runReplay n => n * n
   where {
     paramFloor := 1024
     paramCeiling := 262144
@@ -418,8 +418,9 @@ setup_benchmark runReplay n => n * n
 
 /- Replay visits each certified prime-power entry once. The growing subject
 also makes guarded products wider, so `n^2` is the conservative native-cost
-model for the 1-through-10 entry ladder required by the SPEC. -/
-setup_benchmark runReplayWidth n => n * n
+model for the 1-through-10 entry ladder required by the SPEC; equivalently,
+this is a quadratic complexity bound. -/
+setup_benchmark  runReplayWidth n => n * n
   where {
     paramFloor := 1
     paramCeiling := 10
@@ -434,7 +435,7 @@ setup_benchmark runReplayWidth n => n * n
 per candidate exponent. On every prime in this ladder, `3` has order `p - 1`,
 so each run exercises `p - 1` scan steps and the declared arithmetic-operation
 model is linear. -/
-setup_benchmark runOrder n => n
+setup_benchmark  runOrder n => n
   where {
     paramFloor := 257
     paramCeiling := 65537
@@ -448,7 +449,7 @@ setup_benchmark runOrder n => n
 /- The ascending primitive-root search performs at most `p` candidates, each
 with bounded modular checks. This is the public search's linear candidate-count
 upper bound; the selected primes expose its actual early-success policy. -/
-setup_benchmark runPrimitiveRoot n => n
+setup_benchmark  runPrimitiveRoot n => n
   where {
     paramFloor := 257
     paramCeiling := 65537
@@ -463,7 +464,7 @@ setup_benchmark runPrimitiveRoot n => n
 bound `2^n`; this registration is paired with `runPowerSplit` to measure the
 policy benefit. The report treats faster observed scaling as a mode-2 upper-
 bound result, not as a tight exponential claim. -/
-setup_benchmark runPowerGeneric n => 2 ^ n
+setup_benchmark  runPowerGeneric n => 2 ^ n
   where {
     paramFloor := 12
     paramCeiling := 64
@@ -477,7 +478,7 @@ setup_benchmark runPowerGeneric n => 2 ^ n
 /- The cyclotomic route has the same conservative input-value upper bound as
 the generic route, allowing an output-agreeing paired policy comparison over
 the exact same exponent ladder. -/
-setup_benchmark runPowerSplit n => 2 ^ n
+setup_benchmark  runPowerSplit n => 2 ^ n
   where {
     paramFloor := 12
     paramCeiling := 64
@@ -499,7 +500,7 @@ exact geometric quotient with `Theta(e)` output bits. Preparation hoists the
 unused certified subject out of the timed loop. The quotient divisor is the
 single-limb value `2`, so exponentiation dominates with the declared
 quasi-linear `n log n` surrogate; Lean's `Nat` result hash is constant-time. -/
-setup_benchmark runSigmaExponent n => n * n.log2
+setup_benchmark  runSigmaExponent n => n * n.log2
   with prep := prepSigmaExponent
   where {
     paramFloor := 16384
@@ -519,7 +520,7 @@ multiplies a linearly growing accumulator by one bounded-size table-prime
 entry sum. Its cost is `Theta(i)` limbs, whose sum is the declared
 `Theta(n²)` native-cost model. Preparation selects a prechecked input once per
 child spawn, outside the timed loop. -/
-setup_benchmark runSigmaFactorCount n => n * n
+setup_benchmark  runSigmaFactorCount n => n * n
   with prep := sigmaInputForCount
   where {
     paramFloor := 32
@@ -537,7 +538,7 @@ multiplication has the declared `Theta(n²)` native-cost model; the parity
 product is identically one and contributes only a linear pass. Preparation
 hoists the enormous certified subject out of the timed loop, so an input-range
 scan would be immediately observable rather than hidden in setup. -/
-setup_benchmark runSquareFactorCount n => n * n
+setup_benchmark  runSquareFactorCount n => n * n
   with prep := sigmaInputForCount
   where {
     paramFloor := 32
@@ -558,7 +559,7 @@ multiplies an accumulator whose limb count grows linearly, giving the declared
 `Theta(n²)` native-cost model. Hashing the linearly sized result is lower-order.
 Preparation hoists the enormous subject out of the timed loop; scanning
 residues below it would not terminate on these subjects. -/
-setup_benchmark runTotientFactorCount n => n * n
+setup_benchmark  runTotientFactorCount n => n * n
   with prep := sigmaInputForCount
   where {
     paramFloor := 32
