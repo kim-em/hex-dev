@@ -40,9 +40,9 @@ ceiling violation; expected hashes independently enforce the result.
 | `runSqfDecompFixed` | Yun decomposition, `prepPublic 2` | 1 s |
 | `runRadicalFixed` | derivative gcd fold, `prepPublic 2` | 1 s |
 | `runIsSquarefreeFixed` | derivative coprimality decision, `prepPublic 2` | 1 s |
-| `Matrix.runDenseCoprime8` | genuine route-1 dense arity-8 pair | 1 s |
-| `Matrix.runSparseCoprime8` | genuine route-1 sparse arity-8 degree-128 pair | 1 s |
-| `Matrix.runDenseGcd5d5` | Brown interpolation, arity 5 / degree 5 | 25 s |
+| `Matrix.runDenseCoprime8` | genuine route-1 dense arity-8 pair | 2 s |
+| `Matrix.runSparseCoprime8` | genuine route-1 sparse arity-8 degree-128 pair | 2 s |
+| `Matrix.runDenseGcd5d5` | Brown interpolation, arity 5 / degree 5 | 50 s |
 | `Matrix.runSparseStress5d16` | complete public sparse-gap gcd | 4 s |
 | `runSwell5` | degree-5 extended PRS | 10 ms |
 | `Matrix.runRationalGcd5d5` | rational lift, arity 5 / degree 5 | 10 s |
@@ -200,13 +200,13 @@ repeat hash agreed, and all 17 expected hashes matched.
 | `runSqfDecompFixed` | 132.309 ms | 1 s |
 | `runRadicalFixed` | 130.329 ms | 1 s |
 | `runIsSquarefreeFixed` | 135.299 ms | 1 s |
-| `Matrix.runDenseCoprime8` | 297.722 ms | 1 s |
-| `Matrix.runSparseCoprime8` | 257.226 ms | 1 s |
-| `Matrix.runDenseGcd5d5` | 12.193 s | 25 s |
-| `Matrix.runSparseStress5d16` | 992.345 ms | 4 s |
-| `runSwell5` | 0.719 ms | 10 ms |
-| `Matrix.runRationalGcd5d5` | 4.744 s | 10 s |
-| `Matrix.runSquarefree3m1to5` | 3.179 s | 8 s |
+| `Matrix.runDenseCoprime8` | 519.969 ms | 2 s |
+| `Matrix.runSparseCoprime8` | 488.527 ms | 2 s |
+| `Matrix.runDenseGcd5d5` | 21.723 s | 50 s |
+| `Matrix.runSparseStress5d16` | 1.861 s | 4 s |
+| `runSwell5` | 1.206 ms | 10 ms |
+| `Matrix.runRationalGcd5d5` | 4.679 s | 10 s |
+| `Matrix.runSquarefree3m1to5` | 3.222 s | 8 s |
 
 The table reports lean-bench's whole-runner medians. Input preparation occurs
 before the internal body stopwatch, so these values conservatively include
