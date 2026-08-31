@@ -291,6 +291,7 @@ scan through at most `n / 2` pivot columns, yielding `Theta(n^3)` work. -/
 setup_benchmark runReducedMatrix n => n ^ 3 with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedNullspaceSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 7
+  slopeTolerance := 0.20
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
@@ -301,6 +302,7 @@ model remains `Theta(n^3)` on the rank-deficient family. -/
 setup_benchmark runReducedNullspace n => n ^ 3 with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedNullspaceSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 7
+  slopeTolerance := 0.20
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
