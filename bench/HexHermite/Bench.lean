@@ -88,106 +88,43 @@ private def matrixBits (M : Matrix Int n m) : Nat :=
 
 /-- Diagnostic state for the deliberately untimed entry-growth runner. -/
 private structure GrowthState (n m : Nat) where
-  result : Matrix.Hermite.Result Unit n m
+  matrix : Matrix Int n m
   peak : Nat
 
-private def observe (s : Matrix.Hermite.Result Unit n m) (peak : Nat) :
+private def observe (M : Matrix Int n m) (peak : Nat) :
     GrowthState n m :=
-  ⟨s, max peak (matrixBits s.matrix)⟩
+  ⟨M, max peak (matrixBits M)⟩
 
-private def growthClear (s : GrowthState n m) (col : Fin m)
-    (pivot found : Fin n) : GrowthState n m :=
-  let ops := Matrix.Hermite.formAccumulator n
-  let s := observe (Matrix.Hermite.swapStep ops s.result pivot found) s.peak
-  let s := (List.finRange n).foldl (fun s k =>
-    if pivot.val < k.val then
-      observe (Matrix.Hermite.gcdStep ops col pivot k s.result) s.peak
-    else s) s
-  let s := observe (Matrix.Hermite.signStep ops col pivot s.result) s.peak
-  (List.finRange n).foldl (fun s k =>
-    if k.val < pivot.val then
-      observe (Matrix.Hermite.reduceStep ops col pivot k s.result) s.peak
-    else s) s
+/-- Replay every elementary update in the output-producing schedule selected
+by the production driver on a shadow matrix, observing growth after each one. -/
+private def growthAccumulator (A : Matrix Int n m) :
+    Matrix.Hermite.Accumulator (GrowthState n m) n where
+  init := ⟨A, matrixBits A⟩
+  swap s i k := observe (Matrix.rowSwap s.matrix i k) s.peak
+  combine s i k a b c d :=
+    observe (Matrix.Hermite.combineRows s.matrix i k a b c d) s.peak
+  negate s i := observe (Matrix.rowScale s.matrix i (-1)) s.peak
+  add s src dst c := observe (Matrix.rowAdd s.matrix src dst c) s.peak
 
-private def growthColumn (s : GrowthState n m) (col : Fin m) : GrowthState n m :=
-  if hr : s.result.pivots.length < n then
-    let pivot : Fin n := ⟨s.result.pivots.length, hr⟩
-    match Matrix.Hermite.findPivot? s.result.matrix col s.result.pivots.length with
-    | none => s
-    | some found =>
-        let next := growthClear s col pivot found
-        { next with result := { next.result with pivots := next.result.pivots ++ [col] } }
-  else s
-
-private def growthNormalize (s : GrowthState n m) (col : Fin m)
-    (pivot : Fin n) : GrowthState n m :=
-  if s.result.matrix[(pivot, col)] = 0 then s else
-    let ops := Matrix.Hermite.formAccumulator n
-    let s := observe (Matrix.Hermite.signStep ops col pivot s.result) s.peak
-    (List.finRange n).foldl (fun s row =>
-      if row.val < pivot.val then
-        observe (Matrix.Hermite.reduceStep ops col pivot row s.result) s.peak
-      else s) s
-
-private def growthPrior (pivots : List (Fin m)) (row : Fin n)
-    (s : GrowthState n m) (pivot : Fin n) : GrowthState n m :=
-  if pivot.val < row.val then
-    if hp : pivot.val < pivots.length then
-      let col := pivots.get ⟨pivot.val, hp⟩
-      let next := Matrix.Hermite.gcdStep (Matrix.Hermite.formAccumulator n)
-        col pivot row s.result
-      growthNormalize (observe next s.peak) col pivot
-    else s
-  else s
-
-private def growthAdmit (pivots : List (Fin m)) (s : GrowthState n m)
-    (row : Fin n) : GrowthState n m :=
-  let s := (List.finRange n).foldl (growthPrior pivots row) s
-  if hp : row.val < pivots.length then
-    growthNormalize s (pivots.get ⟨row.val, hp⟩) row
-  else s
-
-private def principalGrowth (A : Matrix Int n m) : GrowthState n m :=
-  let profile := Matrix.Hermite.rankProfile A
-  let initial : GrowthState n m :=
-    { result :=
-        { matrix := A, pivots := profile.pivots
-          accumulator := (Matrix.Hermite.formAccumulator n).init }
-      peak := matrixBits A }
-  let permuted := profile.swaps.foldl (fun s swap =>
-    observe (Matrix.Hermite.swapStep (Matrix.Hermite.formAccumulator n)
-      s.result swap.1 swap.2) s.peak) initial
-  (List.finRange n).foldl (growthAdmit profile.pivots) permuted
-
-private def columnGrowth (A : Matrix Int n m) : GrowthState n m :=
-  let initial : GrowthState n m :=
-    { result :=
-        { matrix := A, pivots := []
-          accumulator := (Matrix.Hermite.formAccumulator n).init }
-      peak := matrixBits A }
-  (List.finRange m).foldl growthColumn initial
+private def growthRun (A : Matrix Int n m) :
+    Matrix.Hermite.Result (GrowthState n m) n m :=
+  Matrix.Hermite.checkedRun (growthAccumulator A) A
 
 /-- Scan the working matrix after every elementary update and return the peak
 coefficient bit-size. This runner is intentionally separate from timed
 benchmarks so instrumentation does not perturb ordinary timings. -/
 def peakBits (input : Input) : Nat :=
   let A := matrix input
-  let candidate := principalGrowth A
-  if Matrix.isHNFForm candidate.result.matrix candidate.result.pivots.length
-      candidate.result.pivotVector then
-    candidate.peak
-  else
-    (columnGrowth A).peak
+  (growthRun A).accumulator.peak
 
 /-- Peak-versus-output growth data, including a check that the instrumented
 schedule finishes at the public uninstrumented result. -/
 def growthData (input : Input) : Nat × Nat × Bool :=
   let A := matrix input
-  let candidate := principalGrowth A
-  let result := if Matrix.isHNFForm candidate.result.matrix candidate.result.pivots.length
-      candidate.result.pivotVector then candidate else columnGrowth A
+  let result := growthRun A
   let H := Matrix.hnf A
-  (result.peak, matrixBits H, result.result.matrix == H)
+  (result.accumulator.peak, matrixBits H,
+    result.matrix == H && result.accumulator.matrix == H)
 
 def runDense (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
 def runDeficient (input : Input) : UInt64 := checksum (Matrix.hnf (matrix input))
@@ -365,6 +302,10 @@ def runCertPrepared (input : CertInput) : Bool :=
 #guard runShapePrepared (shapeInput 16)
 #guard runCertPrepared (certInput 8)
 #guard principalAgrees 16
+#guard (growthData (dense 8)).2.2
+#guard (growthData (deficient 8)).2.2
+#guard (growthData (tall 8)).2.2
+#guard (growthData (conjugate 8)).2.2
 
 private def fixedMatrix : Matrix Int 8 8 := matrix (dense 8)
 
