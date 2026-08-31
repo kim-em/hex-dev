@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "56fc0746b9cf8cdd3f927c60cd98c5763ffccd52",
+  "reason": "Combines the inherited HexPolyFp precompileModules elaboration-time code-generation transition with removal of the ceremonial HexSparsePolyMathlib conformance and build-only runtime-check registrations. Neither changes HexPolyFp source, hexbz_factor_service, or the service runtime call graph."
+}

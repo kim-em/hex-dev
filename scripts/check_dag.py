@@ -33,6 +33,7 @@ OWNER_RE = re.compile(
     re.MULTILINE,
 )
 OWNER_NAME_RE = re.compile(r"`([A-Z][A-Za-z0-9_]*)`")
+RUNTIME_CHECK_RE = re.compile(r"^\s*#(?:eval|guard|reduce|run)\b")
 
 # Private constructors in these modules are an ordinary/public-import API
 # boundary. `import all` is a deliberate trusted-internals escape hatch, so
@@ -57,6 +58,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
     "HexPrimalityElabProbeScientific",
+    "HexPrimalityMathlibProofProbe",
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
@@ -247,6 +249,7 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
         for line in lake_text.splitlines()
         if (match := LEAN_EXE_RE.match(line))
     }
+    build_modules = lean_glob_modules(lakefile, UMBRELLA_BUILD_TARGETS)
     reachable = reachable_dependencies(libraries)
 
     for name, info in libraries.items():
@@ -293,6 +296,23 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                 f"{name} declares correspondence_only but a Lake target names "
                 f"{name}.Bench"
             )
+
+        for module in sorted(
+            module for module in build_modules if module.startswith(f"{name}.")
+        ):
+            module_path = root / Path(*module.split(".")).with_suffix(".lean")
+            if not module_path.is_file():
+                continue
+            for line_no, line in enumerate(
+                module_path.read_text(encoding="utf-8").splitlines(), start=1
+            ):
+                if RUNTIME_CHECK_RE.match(line):
+                    errors.append(
+                        f"{name} declares correspondence_only but build-only module "
+                        f"{module} contains a runtime check at "
+                        f"{module_path.relative_to(root)}:{line_no}"
+                    )
+                    break
 
         spec_dir = root / name / "SPEC"
         specs = sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []

@@ -187,10 +187,10 @@ libraries:
       comparators:
         - tool: FLINT fmpz_mpoly and fmpq_mpoly via python-flint
           class: informational
-          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition; FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement, so only the coprime-family expectation is like-for-like.
+          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition, but its coprime endpoints exercise Hex's one-step-remainder prepass rather than the modular route; FLINT also dispatches to Zippel and sparse Hensel routes outside this SPEC, so the rows are semantic and process-protocol anchors rather than meaningful Phase-4 ceilings.
         - tool: Singular gcd, quotient, and factorize
           class: informational
-          rationale: The persistent driver covers all seven families; Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+          rationale: The persistent driver covers all seven families, but the coprime endpoints exercise Hex's one-step-remainder prepass rather than the modular route and Singular has sparse routes outside this SPEC; its ratios diagnose representation and protocol coverage rather than supply Phase-4 ceilings.
       input_families:
         - name: coprime-pairs
           description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
@@ -600,7 +600,7 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -848,6 +848,16 @@ libraries:
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
     done_through: 2
     status: active
+    phase4:
+      input_families:
+        - name: proof-track-components
+          description: Matched fresh modules on a representative table-smooth 31-bit input and at the 512-bit ceiling separating numeral construction, committed certificate literals, production reification in the bridge emission context, bridge theorem and kernel replay, and full bare-primality elaboration while leaving shared certificate search with the core owner.
+        - name: threshold-routes
+          description: Opted-in norm_num proofs immediately below and above the 2^24 dispatch threshold, plus the accepted 512-bit certificate ceiling.
+        - name: negative-boundedness
+          description: Factor-found composites from 25 through 512 bits, including a strong pseudoprime, parity and odd-factor ceiling inputs, and balanced 512-bit bounded exhaustion.
+        - name: failure-policy
+          description: Fresh modules for certificate exhaustion and immediate 513-bit rejection, with unsupported and non-numeral goal shapes pinned by ordinary conformance.
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true

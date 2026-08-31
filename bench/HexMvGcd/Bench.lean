@@ -161,34 +161,34 @@ def runIsSquarefree (input : PublicInput) : UInt64 :=
 initialize public2 : IO.Ref PublicInput ← IO.mkRef (prepPublic 2)
 
 def runContentInFixed (_ : Unit) : IO UInt64 := do
-  return runContentIn (← public2.get)
+  Matrix.budgeted 10_000_000 do return runContentIn (← public2.get)
 
 def runPrimPartInFixed (_ : Unit) : IO UInt64 := do
-  return runPrimPartIn (← public2.get)
+  Matrix.budgeted 15_000_000 do return runPrimPartIn (← public2.get)
 
 def runGcdFixed (_ : Unit) : IO UInt64 := do
-  return runGcd (← public2.get)
+  Matrix.budgeted 30_000_000 do return runGcd (← public2.get)
 
 def runCofactorsFixed (_ : Unit) : IO UInt64 := do
-  return runCofactors (← public2.get)
+  Matrix.budgeted 60_000_000 do return runCofactors (← public2.get)
 
 def runIsCoprimeFixed (_ : Unit) : IO UInt64 := do
-  return runIsCoprime (← public2.get)
+  Matrix.budgeted 35_000_000 do return runIsCoprime (← public2.get)
 
 def runGcdListFixed (_ : Unit) : IO UInt64 := do
-  return runGcdList (← public2.get)
+  Matrix.budgeted 60_000_000 do return runGcdList (← public2.get)
 
 def runLcmFixed (_ : Unit) : IO UInt64 := do
-  return runLcm (← public2.get)
+  Matrix.budgeted 35_000_000 do return runLcm (← public2.get)
 
 def runSqfDecompFixed (_ : Unit) : IO UInt64 := do
-  return runSqfDecomp (← public2.get)
+  Matrix.budgeted 1_000_000_000 do return runSqfDecomp (← public2.get)
 
 def runRadicalFixed (_ : Unit) : IO UInt64 := do
-  return runRadical (← public2.get)
+  Matrix.budgeted 1_000_000_000 do return runRadical (← public2.get)
 
 def runIsSquarefreeFixed (_ : Unit) : IO UInt64 := do
-  return runIsSquarefree (← public2.get)
+  Matrix.budgeted 1_000_000_000 do return runIsSquarefree (← public2.get)
 
 def runDivExactFixed (_ : Unit) : IO UInt64 := do
   return runDivExact (← public2.get)
@@ -278,7 +278,7 @@ def runSwell3 (_ : Unit) : IO UInt64 := do
 def runSwell4 (_ : Unit) : IO UInt64 := do
   return runSwell (← swell4.get)
 
-def runSwell5 (_ : Unit) : IO UInt64 := do
+def runSwell5 (_ : Unit) : IO UInt64 := Matrix.budgeted 10_000_000 do
   return runSwell (← swell5.get)
 
 structure RationalInput where
@@ -408,55 +408,58 @@ setup_benchmark runToUnivariate n => n * Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-/- Named content and primitive part invoke recursive gcd production, for which
-the SPEC gives probe counts rather than a full runtime model. They therefore
-use canonical fixed registrations instead of invented asymptotics. -/
-setup_fixed_benchmark runContentInFixed where {
-  expectedHash := some 0xd1f9ea943ea7ea73
-}
-setup_fixed_benchmark runPrimPartInFixed where {
-  expectedHash := some 0x358b5704b57e7de5
-}
+def apiMode3Config (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 5.0, warmupFirstIter := true,
+    expectedHash := some expectedHash, tags := #[scheduledHardwareTag] }
 
-/- The public exact-division entry point is covered here on the same canonical
-input as the other wrappers. The cofactor-heavy family below carries its
-machine-operation model without constructing unrelated public results. -/
+/- `contentIn` and `primPartIn` perform recursive dispatcher calls whose probe
+costs are omitted by the SPEC. Degree, coefficient count, and recursive arity
+schedules therefore provide no independently derived scalar model, and no
+cited bound covers the profiled recursive gcd work. Mode 3 pins `prepPublic 2`;
+the 10/15 ms body ceilings are calibration-plus-margin gates. -/
+setup_fixed_benchmark runContentInFixed where
+  apiMode3Config 0xd1f9ea943ea7ea73
+setup_fixed_benchmark runPrimPartInFixed where
+  apiMode3Config 0x358b5704b57e7de5
+
+/- The public exact-division row is a hash anchor only. `runCofactor` below
+carries its independently derived mode-1 model. -/
 setup_fixed_benchmark runDivExactFixed where {
   expectedHash := some 0xeeadb45fd4afbeef
 }
 
-/- The public dispatcher, cofactor wrappers, list/lcm wrappers, and squarefree
-operations are route-dependent. Canonical fixed registrations cover their API
-surface; the isolated families below carry the scientific ladders. -/
-setup_fixed_benchmark runGcdFixed where {
-  expectedHash := some 0x01a55d7eea73bbb3
-}
-setup_fixed_benchmark runCofactorsFixed where {
-  expectedHash := some 0x0cc3e4fb6781af05
-}
-setup_fixed_benchmark runIsCoprimeFixed where {
-  expectedHash := some 0x000000000000000d
-}
-setup_fixed_benchmark runGcdListFixed where {
-  expectedHash := some 0x01a55d7eea73bbb3
-}
-setup_fixed_benchmark runLcmFixed where {
-  expectedHash := some 0x45d39921edcf59e0
-}
-setup_fixed_benchmark runSqfDecompFixed where {
-  expectedHash := some 0xc2c56dd345ace7ce
-}
-setup_fixed_benchmark runRadicalFixed where {
-  expectedHash := some 0x45d39921edcf59e0
-}
-setup_fixed_benchmark runIsSquarefreeFixed where {
-  expectedHash := some 0x000000000000000d
-}
+/- `gcd`, `cofactors`, `isCoprime`, `gcdList`, and `lcm` all inherit the
+dispatcher-dependent cost for which the SPEC supplies only route probe counts.
+Varying degree or support also changes the selected route and probe operands;
+there is no cited whole-dispatch upper bound. Mode 3 pins the shared canonical
+public input. Body ceilings are 30 ms for `gcd`, 60 ms for `cofactors`, 35 ms
+for `isCoprime`, 60 ms for `gcdList`, and 35 ms for `lcm`; the route-specific
+hard cases remain in `Matrix`. -/
+setup_fixed_benchmark runGcdFixed where
+  apiMode3Config 0x01a55d7eea73bbb3
+setup_fixed_benchmark runCofactorsFixed where
+  apiMode3Config 0x0cc3e4fb6781af05
+setup_fixed_benchmark runIsCoprimeFixed where
+  apiMode3Config 0x000000000000000d
+setup_fixed_benchmark runGcdListFixed where
+  apiMode3Config 0x01a55d7eea73bbb3
+setup_fixed_benchmark runLcmFixed where
+  apiMode3Config 0x45d39921edcf59e0
 
-/- The SPEC gives image-gcd probe counts, not full runtime models, for the
-route-dependent families. Canonical fixed cases record their costs without
-inventing asymptotics from degree alone. Phase 4 expands these representatives
-across the full arity and shape matrix named by the SPEC. -/
+/- `sqfDecomp` performs one dispatcher call per Yun level; `radical` and
+`isSquarefree` dispatch over the input and every derivative. Multiplicity,
+arity, and derivative support cannot be collapsed to a derived wall model, and
+no cited upper bound covers those gcds. Mode 3 uses `prepPublic 2` with 1 s
+body ceilings; the harder Yun pattern is independently gated in `Matrix`. -/
+setup_fixed_benchmark runSqfDecompFixed where
+  apiMode3Config 0xc2c56dd345ace7ce
+setup_fixed_benchmark runRadicalFixed where
+  apiMode3Config 0x45d39921edcf59e0
+setup_fixed_benchmark runIsSquarefreeFixed where
+  apiMode3Config 0x000000000000000d
+
+/- Family-level smoke/hash anchors.  The mode-3 operation evidence is in
+`Hex.MvGcdBench.Matrix`; these rows are intentionally not used as coverage. -/
 setup_fixed_benchmark runCoprimeFamilyFixed where {
   expectedHash := some 0x42905229134041e6
 }
@@ -467,21 +470,21 @@ setup_fixed_benchmark runSparseFixed where {
   expectedHash := some 0xb45fffc66bacdc5f
 }
 
-/- The extended PRS has no useful asymptotic bound in the SPEC. Fixed rungs
-record coefficient swell without asserting a false scaling model. -/
-setup_fixed_benchmark runSwell3 where {
-  expectedHash := some 0x9fac850485b60c86
-}
-setup_fixed_benchmark runSwell4 where {
-  expectedHash := some 0x9fac850485b60c86
-}
+/- The extended PRS has no useful asymptotic bound.  Degree and coefficient
+height jointly control swell, and the SPEC supplies neither a tight wall model
+nor a published bound for this implementation.  Mode 3 therefore uses the
+canonical degree-5 swell input and a 10 ms body-scoped budget, with the child
+process cap serving only as a safety bound. -/
 setup_fixed_benchmark runSwell5 where {
+  repeats := 3
+  maxSecondsPerCall := 2.0
+  warmupFirstIter := true
   expectedHash := some 0x9fac850485b60c86
+  tags := #[scheduledHardwareTag]
 }
 
-/- Denominator clearing and Yun's loop likewise inherit dispatcher-dependent
-gcd costs. Their fixed cases exercise the rational lift and repeated-factor
-paths without treating probe counts as machine-operation models. -/
+/- Denominator-clearing and Yun wrapper hash anchors. Their mode-3 operation
+evidence is registered on canonical hard inputs in `Matrix`. -/
 setup_fixed_benchmark runRationalFixed where {
   expectedHash := some 0xf6040a6b74bc3ff1
 }

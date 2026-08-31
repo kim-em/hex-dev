@@ -198,12 +198,23 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
     if entry.get("pins_only"):
         return notes
     lib = entry["lib"]
+    clone_root = clone.resolve()
     for dest_rel in removal_paths(entry):
         dest = clone / dest_rel
+        resolved_parent = dest.parent.resolve()
+        if (
+            resolved_parent != clone_root
+            and clone_root not in resolved_parent.parents
+        ):
+            raise ValueError(
+                f"unsafe remove_paths destination escapes clone: {dest_rel}"
+            )
         if dest.is_symlink() or dest.is_file():
             dest.unlink()
         elif dest.is_dir():
             shutil.rmtree(dest)
+        else:
+            continue
         notes.append(f"  remove {dest_rel}")
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
