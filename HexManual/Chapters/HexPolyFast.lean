@@ -233,7 +233,11 @@ their sibling subtree.
 
 {docstring Hex.DensePoly.RemainderTree.build}
 
+{docstring Hex.DensePoly.RemainderTree.rootDegree}
+
 {docstring Hex.DensePoly.RemainderTree.remainders?}
+
+{docstring Hex.DensePoly.RemainderTree.remainders?_isSome_of_capacity}
 
 {docstring Hex.DensePoly.RemainderTree.remainders?_sound}
 
