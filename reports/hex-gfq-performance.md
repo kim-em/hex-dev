@@ -88,7 +88,7 @@ both the registered ladder and fitted range are shown above. `runPacked8`
 produces six distinct hashes across seven rungs, so its result hash is an
 informative conformance signal rather than a constant zero. Every target uses
 `signalFloorMultiplier := 1.0`; the artifact records per-target spawn floors of
-24.7 to 88.4 ms, and every fitted rung clears its corresponding floor.
+24.7 to 88.4 ms, and the harness flags no rung as below its signal floor.
 
 The two fixed anchors also match their expected hashes:
 
