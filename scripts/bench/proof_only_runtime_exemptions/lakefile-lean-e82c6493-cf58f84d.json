@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+ "current_blob": "cf58f84d736d845c8f47cbf0054c19e88c1a9c5b",
+ "reason": "Adds the pinned lean-readme documentation checker as a dependency on top of main's inherited HexPolyFp precompileModules setting. The checker is required only by the README snippet targets, and precompilation changes build and link availability alone; hexbz_factor_service, its build flags, and every library it imports are unchanged."
+}
