@@ -1305,7 +1305,7 @@ acceptance, not a second compiled timing of the executable checker or search.
 | `isTablePrime` | compiled `runTableLookup` | batches of 256--8192 fixed-table lookups |
 | `orderOf` | compiled `runOrder` | committed primitive-root moduli 1009--32003 |
 | `pMinusOneStage1Counted` | compiled `runPMinusOne` | smoothness bounds 64--8192 on a fixed 61-bit prime |
-| `Internal.rhoFactorCounted?` | compiled `runRho` | balanced semiprimes with fixed seeds and least factors 1009--32003 |
+| `Internal.rhoFactorCounted?` | compiled `runRho` | balanced semiprimes with fixed seeds and least factors 100003--30000001, beyond the fixed gcd-batch floor |
 | `primesIn` | compiled `runSegment` | initial segments `10^3`--`3.2 * 10^4` |
 | `nextPrime?` | compiled `runNextPrime` | exact committed table-route gaps 4--64 |
 | input elaboration, production-search attribution, and emitted certificate literal | matched fresh modules | 31, 61, 123, 256, 511, and 512 bits |

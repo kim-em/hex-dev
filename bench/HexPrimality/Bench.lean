@@ -111,17 +111,17 @@ structure RhoInput where
 instance : Hashable RhoInput where
   hash input := hash input.n
 
-instance : Inhabited RhoInput := ⟨⟨1022117, 1⟩⟩
+instance : Inhabited RhoInput := ⟨⟨10011200327, 1⟩⟩
 
-/-- Balanced semiprimes with least factors from 1,009 through 32,003. -/
+/-- Balanced semiprimes with least factors from 100,003 through 30,000,001. -/
 def prepRho (factor : Nat) : RhoInput :=
   match factor with
-  | 1009 => ⟨1022117, 1⟩
-  | 2003 => ⟨4028033, 1⟩
-  | 4001 => ⟨16016003, 1⟩
-  | 8009 => ⟨64160099, 1⟩
-  | 16001 => ⟨256128007, 1⟩
-  | _ => ⟨1024384027, 1⟩
+  | 100003 => ⟨10011200327, 1⟩
+  | 300007 => ⟨90034800763, 1⟩
+  | 1000003 => ⟨1000120000351, 1⟩
+  | 3000017 => ⟨9000444002227, 1⟩
+  | 10000019 => ⟨100001400002299, 1⟩
+  | _ => ⟨900003300000109, 1⟩
 
 /-- Run the counted Brent-rho boundary, returning a checksum that forces the
 factor and exact semantic-attempt count. -/
@@ -130,7 +130,7 @@ def runRho (input : RhoInput) : Nat :=
   | .ok success => success.factor + success.attempts
   | .error failure => failure.attempts
 
-#guard (#[1009, 2003, 4001, 8009, 16001, 32003] : Array Nat).all fun p =>
+#guard (#[100003, 300007, 1000003, 3000017, 10000019, 30000001] : Array Nat).all fun p =>
   let input := prepRho p
   match Internal.rhoFactorCounted? input.n (Hex.Rand.ofSeed input.seed) 8 with
   | .ok success => 1 < success.factor && success.factor < input.n &&
@@ -283,9 +283,9 @@ setup_benchmark runSieve n => n * Nat.sqrt n
 lookups is therefore linear in `n`. -/
 setup_benchmark runTableLookup n => n
   where {
-    paramFloor := 256
-    paramCeiling := 8192
-    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
+    paramFloor := 4096
+    paramCeiling := 65536
+    paramSchedule := .custom #[4096, 8192, 16384, 32768, 65536]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -325,13 +325,14 @@ setup_benchmark runPMinusOne n => n
 /- Brent rho needs an expected `Theta(√p)` polynomial steps to expose a
 least factor `p`. The balanced semiprime ladder stays within one machine
 word, so modular arithmetic has fixed cost and `sqrt p` is the controlled
-expected-work model for the fixed seeds. -/
+expected-work model for the fixed seeds. The first rung starts above Brent's
+fixed-size gcd batch, avoiding a constant-overhead-only family. -/
 setup_benchmark runRho n => Nat.sqrt n
   with prep := prepRho
   where {
-    paramFloor := 1009
-    paramCeiling := 32003
-    paramSchedule := .custom #[1009, 2003, 4001, 8009, 16001, 32003]
+    paramFloor := 100003
+    paramCeiling := 30000001
+    paramSchedule := .custom #[100003, 300007, 1000003, 3000017, 10000019, 30000001]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
