@@ -859,6 +859,7 @@ libraries:
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 0
     status: active
   HexBerlekampZassenhausMathlib:

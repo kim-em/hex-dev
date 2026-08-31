@@ -51,9 +51,141 @@ def runReplay (e : Nat) : Nat :=
 
 def runOrder (p : Nat) : Nat := orderOf 3 p
 
+private def balancedInput : Nat → Nat
+  | 32 => 64553 * 66553
+  | 40 => 1047587 * 1049599
+  | 48 => 16776217 * 16778227
+  | 56 => 268434461 * 268436507
+  | 64 => 4294966297 * 4294968317
+  | 72 => 68719475767 * 68719477789
+  | 80 => 1099511626781 * 1099511628781
+  | _ => 64553 * 66553
+
+def runBalancedFactor (bits : Nat) : Nat := runFactor (balancedInput bits)
+
+def runBalancedRho (bits : Nat) : Nat := runRho (balancedInput bits)
+
+private def smoothInput : Nat → Nat
+  | 32 => 65537 * 65521
+  | 40 => 65537 * 8400967
+  | 48 => 65537 * 2147496017
+  | 56 => 65537 * 549755826233
+  | 64 => 65537 * 140737488367699
+  | 72 => 65537 * 36028797018976327
+  | 76 => 65537 * 576460752303435851
+  | 80 => 65537 * 9223372036854788173
+  | _ => 65537 * 65521
+
+def runPMinusOneWord (bits : Nat) : Nat := runPMinusOne (smoothInput bits)
+
+def runPMinusOneNat (bits : Nat) : Nat := runPMinusOne (smoothInput bits)
+
+/- The word cases have least factor 1000003. The `Nat` cases have successful
+ECM factors of 34, 37, and 39 bits. None has 1000-smooth predecessor, while the
+fixed Suyama curve used by `runEcm` succeeds. This keeps the ECM ladder distinct
+from a disguised p-1 success family and gives the arbitrary-precision backend
+factors large enough to distinguish it from rho. -/
+private def ecmInput : Nat → Nat
+  | 48 => 1000003 * 268435579
+  | 56 => 1000003 * 68719476901
+  | 64 => 1000003 * 17592186044591
+  | 72 => 8593846213 * 274878795833
+  | 76 => 68723605421 * 549756752147
+  | 80 => 274882253351 * 2199024243173
+  | _ => 1000003 * 268435579
+
+def runEcmWord (bits : Nat) : Nat := runEcm (ecmInput bits)
+
+def runEcmNat (bits : Nat) : Nat := runEcm (ecmInput bits)
+
+def runEcmRhoWord (bits : Nat) : Nat := runRho (ecmInput bits)
+
+def runEcmRhoNat (bits : Nat) : Nat := runRho (ecmInput bits)
+
+def runPowerSplit (e : Nat) : Nat :=
+  match factorPower? 2 e .minus (Hex.Rand.ofSeed e) with
+  | .ok (F, _) => F.raw.factors.length
+  | .error f => f.attempts
+
+def runPowerGeneric (e : Nat) : Nat :=
+  runFactor (powerTarget 2 e .minus)
+
+private def replayWidthInput (count : Nat) : Factorization :=
+  let factors := (primeTable.toList.take count).map fun p => ⟨1, .small p⟩
+  ⟨(factors.map fun entry => entry.prime).prod, factors⟩
+
+def runReplayWidth (count : Nat) : Bool :=
+  checkFactorization (replayWidthInput count)
+
+def runPrimitiveRoot (p : Nat) : Nat :=
+  match primeCert? p (Hex.Rand.ofSeed p) (defaultFuel p) with
+  | .error failure => failure.attempts
+  | .ok (pc, r) =>
+      match factor? (p - 1) r with
+      | .error failure => failure.attempts
+      | .ok (F, _) =>
+          match primitiveRoot? pc F p with
+          | none => 0
+          | some (g, _) => g
+
+private def defaultFuelInputs : Array Nat := #[
+  99999989,
+  balancedInput 32,
+  balancedInput 48,
+  balancedInput 64,
+  balancedInput 80,
+  smoothInput 64,
+  ecmInput 64,
+  powerTarget 2 32 .minus,
+  powerTarget 3 24 .plus
+]
+
+private def tableInputs : Array Nat := #[
+  2, 3, 97, 65521, 65537, 99991, 99999989,
+  97 * 101, 1009 * 1013, 65521 * 65537, 99991 * 100003
+]
+
+def runTableBatch (_ : Unit) : Array Nat := tableInputs.map runFactor
+
+def runDefaultFuelSchedule (_ : Unit) : Array Nat :=
+  defaultFuelInputs.map fun n =>
+    match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
+    | .ok success => 2 * success.attempts + 1
+    | .error failure => 2 * failure.attempts
+
+def reportDefaultFuel : IO UInt32 := do
+  for n in defaultFuelInputs do
+    match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
+    | .ok success =>
+        IO.println s!"{n},{defaultFuel n},success,{success.attempts}"
+    | .error failure =>
+        IO.println s!"{n},{defaultFuel n},failure,{failure.attempts}"
+  return 0
+
+def probeEcm (values : List String) : IO UInt32 := do
+  for value in values do
+    match value.toNat? with
+    | none => IO.eprintln s!"invalid natural: {value}"
+    | some n => IO.println s!"{n},{runEcm n}"
+  return 0
+
 private def orderLadder : Array Nat := #[257, 1013, 4073, 16363, 65537]
 
 #guard orderLadder.all fun p => orderOf 3 p == p - 1
+
+/- These 50- and 61-bit primes divide `3^64 - 1` and `3^176 - 1`,
+respectively. They exercise downstream-sized operands while keeping the
+otherwise linear reference order scan bounded. -/
+private def downstreamOrderPrimes : Array Nat := #[
+  926510094425921,
+  1363620137403810529
+]
+
+def runDownstreamOrder (_ : Unit) : Array Nat :=
+  downstreamOrderPrimes.map (orderOf 3)
+
+def runDownstreamPrimitiveRoot (_ : Unit) : Array Nat :=
+  downstreamOrderPrimes.map runPrimitiveRoot
 
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
     (hacc : 0 < acc) : ∀ e : Nat,
@@ -150,46 +282,112 @@ def runTotientFactorCount (input : SigmaInput) : Nat :=
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
 arithmetic iterations. The returned factor-count hash is constant-size. -/
-setup_benchmark runFactor n => Nat.sqrt (Nat.sqrt n)
+setup_benchmark runBalancedFactor n => 2 ^ (n / 4)
   where {
-    paramFloor := 1000
-    paramCeiling := 281474641166387
-    paramSchedule := .custom #[1009, 10403, 4292870399, 281474641166387]
+    paramFloor := 32
+    paramCeiling := 80
+    paramSchedule := .custom #[32, 40, 48, 56, 64, 72, 80]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Brent rho needs `O(sqrt p)` iterations for the least factor `p`; balanced
 semiprimes have `p = sqrt n`, hence the declared `O(n^(1/4))` model. -/
-setup_benchmark runRho n => Nat.sqrt (Nat.sqrt n)
+setup_benchmark runBalancedRho n => 2 ^ (n / 4)
   where {
-    paramFloor := 1000
-    paramCeiling := 18446744073709551615
-    paramSchedule := .custom #[4292870399, 281474641166387, 18446743979220271189]
+    paramFloor := 32
+    paramCeiling := 80
+    paramSchedule := .custom #[32, 40, 48, 56, 64, 72, 80]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- The smoothness bound is fixed, so the arithmetic-operation count is fixed;
 operand work scales with the modulus bit length, modeled by `O(log n)`. -/
-setup_benchmark runPMinusOne n => n.log2
+setup_benchmark runPMinusOneWord n => n
   where {
-    paramFloor := 15
-    paramCeiling := 10097063
-    paramSchedule := .custom #[15, 299, 1009 * 10007]
+    paramFloor := 32
+    paramCeiling := 64
+    paramSchedule := .custom #[32, 40, 48, 56, 64]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
-/- This stage-1 ladder fixes the curve and smoothness bound. Its scalar-step
-count is fixed while modular operand work grows with `log n`. -/
-setup_benchmark runEcm n => n.log2
+/- Above `2^64`, the p-1 stage uses direct `Nat` modular products. The bound
+and scalar schedule remain fixed; quadratic operand work is the conservative
+native model for this separate big-integer regime. -/
+setup_benchmark runPMinusOneNat n => n * n
   where {
-    paramFloor := 91
-    paramCeiling := 10403
-    paramSchedule := .custom #[91, 589, 10403]
+    paramFloor := 72
+    paramCeiling := 80
+    paramSchedule := .custom #[72, 76, 80]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Below `2^64`, ECM uses the fixed-width Montgomery backend. The curve and
+smoothness bound are fixed, so this route is constant-cost in the selected
+word-size regime. -/
+setup_benchmark runEcmWord _n => 1
+  where {
+    paramFloor := 48
+    paramCeiling := 64
+    paramSchedule := .custom #[48, 56, 64]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Above the word boundary the same fixed stage-1 schedule uses direct `Nat`
+modular products. With a fixed scalar-step count, quadratic operand work is
+the conservative native-cost model on this short big-integer ladder. -/
+setup_benchmark runEcmNat n => n * n
+  where {
+    paramFloor := 72
+    paramCeiling := 80
+    paramSchedule := .custom #[72, 76, 80]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- On the same word-size ECM policy inputs, rho sees the fixed 20-bit least
+factor 1000003. Its iteration count is therefore fixed across this ladder; the
+paired registration makes the stage-1 policy decision directly measurable. -/
+setup_benchmark runEcmRhoWord _n => 1
+  where {
+    paramFloor := 48
+    paramCeiling := 64
+    paramSchedule := .custom #[48, 56, 64]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Above the word boundary, the selected successful ECM factors grow toward
+the square root of the input. Brent rho's worst expected route cost is thus
+`O(n^(1/4))` arithmetic iterations; the exponential bit-length model is the
+conservative upper bound used for this short paired policy ladder. -/
+setup_benchmark runEcmRhoNat n => 2 ^ (n / 4)
+  where {
+    paramFloor := 72
+    paramCeiling := 80
+    paramSchedule := .custom #[72, 76, 80]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- Building recursive cyclotomic values for the divisor indices through `n`
@@ -201,18 +399,35 @@ setup_benchmark runCyclotomic n => n * n
     paramSchedule := .custom #[4, 8, 16, 24, 32]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
   }
 
 /- `boundedPowMul` replays the single exponent one guarded multiplication at a
-time, using one division to authorize each multiplication, so a certificate
-with exponent `n` has linear arithmetic-operation cost. -/
-setup_benchmark runReplay n => n
+time. The accumulator grows throughout the replay, so `n²` is the conservative
+native-cost model for the widening guarded multiplications and divisions. -/
+setup_benchmark runReplay n => n * n
   where {
-    paramFloor := 1
-    paramCeiling := 64
-    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 64]
+    paramFloor := 1024
+    paramCeiling := 262144
+    paramSchedule := .custom #[1024, 4096, 16384, 65536, 262144]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Replay visits each certified prime-power entry once. The growing subject
+also makes guarded products wider, so `n^2` is the conservative native-cost
+model for the 1-through-10 entry ladder required by the SPEC. -/
+setup_benchmark runReplayWidth n => n * n
+  where {
+    paramFloor := 1
+    paramCeiling := 10
+    paramSchedule := .custom #[1, 2, 4, 6, 8, 10]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
   }
 
 /- `orderOf` carries one bounded residue and performs one modular multiplication
@@ -226,6 +441,50 @@ setup_benchmark runOrder n => n
     paramSchedule := .custom orderLadder
     maxSecondsPerCall := 5.0
     targetInnerNanos := 2500000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- The ascending primitive-root search performs at most `p` candidates, each
+with bounded modular checks. This is the public search's linear candidate-count
+upper bound; the selected primes expose its actual early-success policy. -/
+setup_benchmark runPrimitiveRoot n => n
+  where {
+    paramFloor := 257
+    paramCeiling := 65537
+    paramSchedule := .custom orderLadder
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- Factoring `2^n - 1` without the structural split has the input-value upper
+bound `2^n`; this registration is paired with `runPowerSplit` to measure the
+policy benefit. The report treats faster observed scaling as a mode-2 upper-
+bound result, not as a tight exponential claim. -/
+setup_benchmark runPowerGeneric n => 2 ^ n
+  where {
+    paramFloor := 12
+    paramCeiling := 64
+    paramSchedule := .custom #[12, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
+
+/- The cyclotomic route has the same conservative input-value upper bound as
+the generic route, allowing an output-agreeing paired policy comparison over
+the exact same exponent ladder. -/
+setup_benchmark runPowerSplit n => 2 ^ n
+  where {
+    paramFloor := 12
+    paramCeiling := 64
+    paramSchedule := .custom #[12, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
     outerTrials := 3
   }
 
@@ -314,6 +573,30 @@ setup_benchmark runTotientFactorCount n => n * n
     outerTrials := 3
   }
 
+private def defaultFuelConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 3
+  maxSecondsPerCall := 10.0
+
+/- Absolute downstream policy case: the exact public `defaultFuel` schedule
+over table, balanced, smooth, ECM, and power-form inputs. The odd/even encoding
+retains success/failure together with the charged attempt count. -/
+setup_fixed_benchmark runDefaultFuelSchedule where defaultFuelConfig
+
+/- Absolute committed-table policy case. This covers prime lookup and small
+composite factorization independently of the growing balanced ladder. -/
+setup_fixed_benchmark runTableBatch where defaultFuelConfig
+
+/- Downstream-size order and primitive-root policy cases. Their chosen primes
+have short order for base 3, so this fixed track records operand-size behavior
+without pretending that the reference linear scan is feasible through 64 bits. -/
+setup_fixed_benchmark runDownstreamOrder where defaultFuelConfig
+
+setup_fixed_benchmark runDownstreamPrimitiveRoot where defaultFuelConfig
+
 end Hex.IntFactorBench
 
-def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 :=
+  match args with
+  | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel
+  | "ecm-probe" :: values => Hex.IntFactorBench.probeEcm values
+  | _ => LeanBench.Cli.dispatch args
