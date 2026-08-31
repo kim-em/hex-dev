@@ -537,6 +537,12 @@ oracle's independently computed decomposition with Lean's finite output.
 
 ## Complexity and Phase 4 budgets
 
+All advertised `HexNumberField` operations are Mathlib-free executable
+computations and therefore use the compiled Phase-4 evidence track. The
+current operation-to-registration assignment, including grouped constant-time
+accessors and total wrappers, is recorded in the
+[performance report](../../reports/hex-number-field-performance.md#track-assignment-re-audit).
+
 - Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
   degree-10 field operation remains capped at 100 ms on the reference host.
 - Fixed-field inversion performs `O(n²)` rational coefficient operations.

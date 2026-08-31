@@ -5,39 +5,46 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the state of that evidence as measured; it is **not** a
-Phase-4 completion claim. `libraries.yml` keeps `HexNumberField` at
-`done_through: 3`. §Concerns says why.
+This snapshot records the current measured evidence. `libraries.yml` still
+keeps `HexNumberField` at `done_through: 3`, but the compiled-surface coverage
+and Attribution-rule concerns found by the Phase-4 audit are closed here.
 
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 6 controlled parametric targets and 41 fixed targets (47 total).
+registers 15 controlled parametric targets and 74 fixed targets (89 total).
 The adjacent comments in the driver derive each parametric model or explain the
 fixed-mode choice. The contracts below are copied from the registration sites.
 
 | target | mode | operation and controlled input | model or ceiling |
 |---|---|---|---|
 | `runQAdjoinAddLadder` | parametric | `QAdjoin` addition in `ℚ(2^(1/n))`, both operands dense and all-nonzero | `n` |
+| `runQAdjoinSubLadder` | parametric | `QAdjoin` subtraction on the same controlled field family | `n` |
+| `runQAdjoinNegLadder` | parametric | coefficientwise `QAdjoin` negation | `n` |
+| `runQAdjoinSmulLadder` | parametric | rational scalar action on dense representatives | `n` |
 | `runQAdjoinMulLadder` | parametric | `QAdjoin` multiplication, then reduction modulo `X^n - 2` | `n * n` |
+| `runQAdjoinApproxLadder` | parametric | dyadic-ball evaluation of a dense representative at fixed precision | `n * n` |
 | `runQAdjoinInvLadder` | parametric | `QAdjoin` inversion by monic-normalized rational extended gcd against `X^n - 2` | `n * n * (n + 7)` |
+| `runQAdjoinDivLadder` | parametric | inversion followed by multiplication on the controlled field family | `n * n * (n + 7)` |
 | `runAddEliminantLadder` | parametric | `ZPoly.addEliminant (X^n - 2) (X^2 - 3)`, the Brown sum-eliminant resultant | `n * n * (Nat.log2 (n + 2) + 1)` |
 | `runLazyAddLadder` | fixed | end-to-end `AlgebraicRoot.add?` pairing the first root of `X^6 - 2` with `√3` | 12 s ceiling |
 | `runExactLadder` | fixed | `AlgebraicRoot.exact?` on the first certified root of `∏_{p ∈ [2,3,5,7,11,13]} (X² - p)` | 200 ms whole-child ceiling, zero grace |
 | `runExactFactorLadder` | fixed | `AlgebraicRoot.exactFactor?` for `X^8 - 2` inside `(X^8 - 2)(X + 3)`, with a static certified enclosing root | 2 s whole-child ceiling, zero grace |
 | `runCanonicalRepLadder` | fixed | `AlgebraicNumber.canonicalRep?` for a static certified root of `X^8 - 2` | 1.1 s whole-child ceiling, zero grace |
 | `runCommonPresentationLadder` | parametric | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
+| `runAlgebraicPolyOfArray` | parametric | normalized construction from an array with a zero suffix | `n` |
+| `runAlgebraicPolyBeq` | parametric | equality of equal dense coefficient arrays | `n` |
+| `runEvalMajorant` | parametric | exact majorant evaluation with bounded rational coefficients | `n * n` |
+| `runCommonPrimitive` | parametric | common primitive construction over `n + 1` coefficients | `n` |
 | `runMergeRootListLadder` | parametric | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | fixed | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree 6 | 20 s ceiling |
 | `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
+| advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, and `AlgebraicPoly.Common` primitives | adjacent absolute ceilings |
+| `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of a repeated degree-3 component over `ℚ(√2)` | 5 s, 5 s, and 20 s ceilings |
 
-The 41 fixed registrations are sixteen canonical API and fixed-problem cases (`runFixedMul`,
-`runFixedInv`, `runFixedMinpoly`, `runAddEliminant`, `runIsolateAdd`,
-`runSelectAdd`, `runLazyAdd`, `runLazyAddLadder`, `runExact`,
-`runExactSelection`, `runExactLadder`, `runExactFactorLadder`,
-`runCanonicalRepLadder`, `runRoots`, `runQAdjoinRootsLadder`,
-`runAlgebraicRootsLadder`), twenty-four Lean/PARI
-comparator rungs (`runQAdjoinMulPair` / `runPariPolmodMul` at
+The 74 fixed registrations comprise 49 internal API, phase, and fixed-problem
+cases, twenty-four Lean/PARI comparator rungs (`runQAdjoinMulPair` /
+`runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
 `n = 4, 6, 8, 10, 12, 16`), and one external-driver overhead probe
 (`runPariPolmodOverhead`).
@@ -139,10 +146,9 @@ uses an at-least-20 ms timed batch instead of a single-shot reading. Static cert
 isolating regions and lazy warmup initialization keep fixture construction
 outside the timed batch without increasing every executable spawn's floor.
 
-The current local `hexnumberfield_bench verify` invocation completes in 23.23 s
-on the reference host: 77% of the per-library 30 s soft-warning threshold and
-6.5% of the repo-wide 360 s hard cap. The new fixed target adds about 11.4 s
-relative to the prior 11.84 s invocation. All three isolation fixed targets
+The current local `hexnumberfield_bench verify` invocation completes in 7.79 s
+on the reference host: 26% of the per-library 30 s soft-warning threshold and
+2.2% of the repo-wide 360 s hard cap. All 77 internal and protocol targets
 pass; the invocation reports only the twelve
 expected PARI comparator failures because `cypari2` is absent locally. Unlike
 the full timing path, `verify` runs each fixed body once and does not enforce
@@ -233,60 +239,112 @@ kernel-checking surface, so every advertised operation belongs to the
 Mathlib-free compiled row of `PLAN/Phase4.md` §Evidence tracks and none of
 them is eligible for the fresh-module proof row.
 
-Re-auditing the SPEC's API-surface code blocks against the registrations
-above, the following advertised compiled operations have no registration:
-`QAdjoin.approx`; `QAdjoin` subtraction, negation, `Div` and the rational
-scalar actions; `QAdjoin.toAlgebraicNumber?` / `toAlgebraicNumber`;
-`AlgebraicNumber.zeroRep`; `AlgebraicRoot.sub?`, `mul?`,
-`div?`, `inv?` and `neg`; the whole of `AlgebraicNumber` arithmetic (`add`,
-`sub`, `mul`, `neg`, `inv`, `div`, `ofRat`, `Pow Nat`, `Pow Int`, the `SMul`
-actions and the numeric casts); `AlgebraicRoot.isZero`,
-`AlgebraicNumber.isZero` and `RefinedIsolation.containsZero`;
-`AlgebraicPoly.ofArray`, `coeff`, `size`, `degree?`, `isZero` and `beq`;
-`Disambiguation.evalMajorant`; and every member of the
-`Hex.AlgebraicPoly.Common` namespace below `presentation?` (`signedShift`,
-`rational?`, `add?`, `mul?`, `scale?`, `shift?`, `degree`, `extendShiftStep`,
-`extendShift?`, `extend?`, `primitive?`, `powers?`, `trace?`,
-`coordinates?`).
+The audit rechecked every declaration below in the current source: each is
+still public and performs runtime work. A target shown more than once is an
+intentional shared measurement only when the declarations use the same
+implementation route. In particular, a total wrapper calls its checked form
+and adds only a constant-time `Option.getD` projection.
 
-The Attribution rule adds profile-found phases that are not all advertised
-API. `runExactFactorLadder` and `runCanonicalRepLadder` now close the two
-exactification gaps: the original profile put 95.58% of `exact?` in
-`exactFactor?` and 47.39% in the nested `canonicalRep?`.
-`runMergeRootListLadder` likewise closes the duplicate-removal gap, which was
-83.04% of the original `QAdjoin.roots?` profile. The remaining root-API gap is
-`QAdjoin.Roots.componentRoots?`, at 91.45% of `AlgebraicPoly.roots?`.
-`Roots.normEliminant` and `Roots.evalEliminant` are not dominant on any
-profiled family, but they remain separable and asymptotically significant, so
-they are owed
-registrations too.
+| advertised declaration | registration | assignment |
+|---|---|---|
+| `QAdjoin.approx` | `runQAdjoinApproxLadder` | parametric, `n²` |
+| `QAdjoin.sub` | `runQAdjoinSubLadder` | parametric, `n` |
+| `QAdjoin.neg` | `runQAdjoinNegLadder` | parametric, `n` |
+| `QAdjoin.div` / `Div.div` | `runQAdjoinDivLadder` | parametric, `n²(n+7)` |
+| rational `SMul.smul` on `QAdjoin` | `runQAdjoinSmulLadder` | parametric, `n` |
+| `QAdjoin.toAlgebraicNumber?` | `runQAdjoinCanonical` | fixed quadratic conversion |
+| `QAdjoin.toAlgebraicNumber` | `runQAdjoinCanonical` | same checked conversion plus projection |
+| `AlgebraicRoot.add?` | `runLazyAdd` | fixed quadratic pair |
+| `AlgebraicRoot.add` | `runLazyAdd` | same checked route plus projection |
+| `AlgebraicRoot.sub?` | `runLazySub` | fixed quadratic pair |
+| `AlgebraicRoot.sub` | `runLazySub` | same checked route plus projection |
+| `AlgebraicRoot.mul?` | `runLazyMul` | fixed quadratic pair |
+| `AlgebraicRoot.mul` | `runLazyMul` | same checked route plus projection |
+| `AlgebraicRoot.div?` | `runLazyDiv` | fixed quadratic pair |
+| `AlgebraicRoot.div` | `runLazyDiv` | same checked route plus projection |
+| `AlgebraicRoot.inv?` | `runLazyInv` | fixed quadratic root |
+| `AlgebraicRoot.inv` | `runLazyInv` | same checked route plus projection |
+| `AlgebraicRoot.neg` | `runLazyNeg` | fixed reflection route |
+| `AlgebraicNumber.zeroRep` | `runZeroDecisions` | grouped fixed accessor/decisions |
+| `AlgebraicNumber.add` | `runAlgebraicAdd` | fixed canonical pair |
+| `AlgebraicNumber.sub` | `runAlgebraicSub` | fixed canonical pair |
+| `AlgebraicNumber.mul` | `runAlgebraicMul` | fixed canonical pair |
+| `AlgebraicNumber.div` | `runAlgebraicDiv` | fixed canonical pair |
+| `AlgebraicNumber.neg` | `runAlgebraicNeg` | fixed canonical input |
+| `AlgebraicNumber.inv` | `runAlgebraicInv` | fixed canonical input |
+| `AlgebraicNumber.ofRat` | `runAlgebraicConstructors` | grouped linear constructor route |
+| `NatCast.natCast` | `runAlgebraicConstructors` | same linear constructor route |
+| `IntCast.intCast` | `runAlgebraicConstructors` | same linear constructor route |
+| `OfNat.ofNat` | `runAlgebraicConstructors` | same linear constructor route |
+| `Pow.pow Nat` | `runAlgebraicNatPow` | fixed exponent 7 |
+| `Pow.pow Int` | `runAlgebraicIntPow` | fixed exponent -5, including inverse |
+| rational `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
+| natural `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
+| integer `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
+| `AlgebraicRoot.isZero` | `runZeroDecisions` | grouped fixed decision |
+| `AlgebraicNumber.isZero` | `runZeroDecisions` | grouped fixed decision |
+| `RefinedIsolation.containsZero` | `runZeroDecisions` | grouped fixed decision |
+| `AlgebraicPoly.ofArray` | `runAlgebraicPolyOfArray` | parametric, `n` |
+| `AlgebraicPoly.coeff` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
+| `AlgebraicPoly.size` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
+| `AlgebraicPoly.degree?` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
+| `AlgebraicPoly.isZero` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
+| `AlgebraicPoly.beq` | `runAlgebraicPolyBeq` | parametric, `n` |
+| `Disambiguation.evalMajorant` | `runEvalMajorant` | parametric, `n²` |
+| `Common.signedShift` | `runCommonSignedDegree` | grouped fixed arithmetic/accessor |
+| `Common.degree` | `runCommonSignedDegree` | grouped fixed arithmetic/accessor |
+| `Common.rational?` | `runCommonRational` | fixed canonical construction |
+| `Common.add?` | `runCommonAdd` | fixed canonical construction |
+| `Common.mul?` | `runCommonMul` | fixed canonical construction |
+| `Common.scale?` | `runCommonScale` | fixed canonical construction |
+| `Common.shift?` | `runCommonShift` | fixed canonical construction |
+| `Common.extendShiftStep` | `runCommonExtendStep` | fixed canonical construction |
+| `Common.extendShift?` | `runCommonExtendShift` | fixed canonical construction |
+| `Common.extend?` | `runCommonExtend` | fixed canonical construction |
+| `Common.primitive?` | `runCommonPrimitive` | parametric, `n` |
+| `Common.powers?` | `runCommonPowers` | fixed powers through exponent 16 |
+| `Common.trace?` | `runCommonTrace` | fixed accessor |
+| `Common.coordinates?` | `runCommonCoordinates` | fixed coordinate solve |
+| `QAdjoin.Roots.normEliminant` | `runNormEliminant` | fixed repeated degree-3 component |
+| `QAdjoin.Roots.evalEliminant` | `runEvalEliminant` | fixed repeated degree-3 component |
+| `QAdjoin.Roots.componentRoots?` | `runComponentRoots` | fixed repeated degree-3 component |
 
-These gaps are recorded in §Concerns. They do not affect any measurement
-below; they bound what the measurements are entitled to conclude about the
-library as a whole.
+The Attribution-rule phases are now explicit too. The existing
+`runExactFactorLadder` and `runCanonicalRepLadder` cover the 95.58% candidate
+re-isolation and 47.39% nested canonical-representation shares of the original
+`exact?` profile. `runMergeRootListLadder` covers the original roots profile's
+83.04% duplicate-removal share. The three new root-phase registrations cover
+`componentRoots?`—91.45% of the algebraic-polynomial-roots profile—and both
+separable eliminants. There is no unresolved compiled-surface or attribution
+gap.
 
 ## Verdicts
 
-Six ladders use **mode 1, two-sided parametric**:
+Fifteen ladders use **mode 1, two-sided parametric**:
 `runQAdjoinAddLadder`, `runQAdjoinMulLadder`, `runAddEliminantLadder`,
 `runQAdjoinInvLadder`, `runCommonPresentationLadder`, and
-`runMergeRootListLadder`. Their adjacent
+`runMergeRootListLadder`, plus the nine API-surface ladders for subtraction,
+negation, scalar multiplication, approximation, division,
+`AlgebraicPoly.ofArray`, `AlgebraicPoly.beq`, `evalMajorant`, and
+`Common.primitive?`. Their adjacent
 derivations give the intended algorithms' expected scaling on the controlled
-families before measurement, and all six pass.
+families before measurement, and all fifteen pass.
 
 `runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
-`runAlgebraicRootsLadder` use **mode 3, fixed registration with an absolute
-budget**. The adjacent isolation-mode assessments record why modes 1 and 2 do
+`runAlgebraicRootsLadder` and `runCommonPowers` use **mode 3, fixed
+registration with an absolute budget**. The adjacent isolation-mode
+assessments record why modes 1 and 2 do
 not apply, identify their canonical inputs, and set 12 s, 200 ms, 2 s, 1.1 s,
-20 s, and 15 s whole-child ceilings. All fixed measurements and hashes pass.
+20 s, 15 s, and 5 s whole-child ceilings. All fixed measurements and hashes pass.
 This deliberately gives up asymptotic detection for those operations without
 changing their per-library worst-case contracts.
 
-The other 35 fixed registrations are canonical API, comparator, and protocol
-checks. They make no complexity claim, have no mode, and do not replace the
-twelve performance registrations. Historical parametric failures remain
-diagnostic evidence and are not reclassified as passes.
+The other 67 fixed registrations are canonical API, separable-phase,
+comparator, and protocol checks. Their adjacent derivations justify a fixed
+input or grouped constant-time route; none makes an asymptotic claim.
+Historical parametric failures remain diagnostic evidence and are not
+reclassified as passes.
 
 Authoritative verdict per ladder, and which committed run it comes from. The
 runs below give the measurements; this table says which one counts.
@@ -294,9 +352,18 @@ runs below give the measurements; this table says which one counts.
 | target | verdict | slope | from |
 |---|---|---:|---|
 | `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
+| `runQAdjoinSubLadder` | **consistent** | -0.069 | API-surface audit |
+| `runQAdjoinNegLadder` | **consistent** | -0.045 | API-surface audit |
+| `runQAdjoinSmulLadder` | **consistent** | -0.016 | API-surface audit |
 | `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
+| `runQAdjoinApproxLadder` | **consistent** | -0.264 | API-surface audit |
 | `runQAdjoinInvLadder` | **consistent** | **-0.105** | aggregate inversion |
+| `runQAdjoinDivLadder` | **consistent** | -0.116 | API-surface audit |
 | `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
+| `runAlgebraicPolyOfArray` | **consistent** | -0.060 | extended API-surface audit |
+| `runAlgebraicPolyBeq` | **consistent** | -0.009 | API-surface audit |
+| `runEvalMajorant` | **consistent** | +0.175 | API-surface audit |
+| `runCommonPrimitive` | **consistent** | -0.052 | API-surface audit |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
 | `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
@@ -305,8 +372,9 @@ runs below give the measurements; this table says which one counts.
 | `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
+| `runCommonPowers` | **fixed: 35.441 ms, hashes agree** | — | API-surface fixed |
 
-All six parametric registrations receiving a statistically matching
+All fifteen parametric registrations receiving a statistically matching
 two-sided harness verdict have models derived independently of timed results. The former
 `runQAdjoinRootsLadder` sweep matched a withdrawn heuristic isolation proxy;
 its result remains diagnostic history and the fixed registration supersedes
@@ -314,6 +382,11 @@ it. The former `runQAdjoinInvLadder` declaration and the three archived
 exactification sweeps were faster than declared; the latter remain diagnostic
 evidence for why no parametric model was retained, while their current fixed
 registrations pass.
+The initial `Common.powers?` sweep was smooth through exponent 16, jumped from
+about 35 ms at 16 to 1.3 s at 24, and exceeded its 30 s child cap at 32.
+Because no independent one-parameter model explains that coefficient-shape
+cliff, the current target retains the largest stable pre-cliff case as a fixed
+absolute-budget registration rather than treating the failed sweep as a pass.
 None of those classifications is a measurement artefact, and §Profile
 identifies the controlling phases.
 For the normalized inversion chain specifically, the single-root fixture now
@@ -321,6 +394,33 @@ carries the repaired implementation through degree 96. Stepwise chain
 instrumentation supplies the tighter aggregate finite-word model that passes
 below; the SPEC separately retains the conservative `O(n³ log n)` worst-case
 bit-cost bound.
+
+The API-surface audit ran the new controlled ladders at three outer trials.
+`AlgebraicPoly.ofArray` was initially too close to fixed call overhead through
+256 entries, so its unchanged linear derivation was re-run on the extended
+4-through-2048 schedule where the suffix traversal is measurable. The final
+verdicts are:
+
+| target | schedule | model | verdict | slope |
+|---|---|---:|---|---:|
+| `runQAdjoinSubLadder` | 4..128, doubling | `n` | **consistent** | -0.069 |
+| `runQAdjoinNegLadder` | 4..128, doubling | `n` | **consistent** | -0.045 |
+| `runQAdjoinSmulLadder` | 4..128, doubling | `n` | **consistent** | -0.016 |
+| `runQAdjoinApproxLadder` | 4..128, doubling | `n²` | **consistent** | -0.264 |
+| `runQAdjoinDivLadder` | 4, 8, 16, 32, 48, 64, 96 | `n²(n+7)` | **consistent** | -0.116 |
+| `runAlgebraicPolyOfArray` | 4..2048, doubling | `n` | **consistent** | -0.060 |
+| `runAlgebraicPolyBeq` | 4..256, doubling | `n` | **consistent** | -0.009 |
+| `runEvalMajorant` | 4..256, doubling | `n²` | **consistent** | +0.175 |
+| `runCommonPrimitive` | 2..128, doubling | `n` | **consistent** | -0.052 |
+
+The corresponding fixed export covers the 33 newly registered fixed targets;
+all successful repeats agree on their result hashes. The representative phase
+medians are 8.042 us for `runNormEliminant`, 1.269 ms for
+`runEvalEliminant`, and 62.686 ms for `runComponentRoots`. The runtime-fed
+quadratic `runQAdjoinCanonical` conversion is 1.069 ms. Sub-microsecond grouped
+accessors are intentionally retained as fixed registrations: their inputs pass
+through `IO.Ref`, and the harness warning records that the genuine operation is
+smaller than its one-microsecond diagnostic floor.
 
 Eight historical parametric runs are committed: one original full-suite pass, two idle-host
 re-measurements that between them cover all nine ladders, and a
@@ -734,8 +834,9 @@ fixed registration now supersedes that fitted verdict.
 
 ### Fixed registrations
 
-All 41 fixed registrations agree across repeats, and all seventeen headline cases with a declared
-`expectedHash` match it. Medians come from the committed
+All 74 fixed registrations use deterministic inputs; repeats agree whenever
+the optional comparator dependency is present, and all seventeen headline
+cases with a declared `expectedHash` match it. Existing medians come from the committed
 [comparator export](bench-results/hex-number-field-phase4-comparators.json),
 with `runExactSelection` in the
 [exactification fixed export](bench-results/hex-number-field-exactification-fixed.json),
@@ -1144,6 +1245,11 @@ claims. The difference between this profile and the previous one is the
 cross-component merge, which is what makes the fixed-field family's residual a
 finding rather than noise.
 
+`runComponentRoots` now registers that dominant phase directly on a repeated
+degree-three component over the same quadratic field. Its companion
+`runNormEliminant` and `runEvalEliminant` targets expose the two separable
+resultants even though neither entered the dominant inclusive ranking.
+
 ### `fixed-field-roots`, repaired — isolation is now the cost
 
 | share | function |
@@ -1165,6 +1271,9 @@ construction. The phase named by the corrected ladder derivation is therefore
 the measured dominant cost, not an inference from elapsed time. The current
 fixed-mode rationale uses that attribution to identify what the canonical case
 exercises; it does not infer an asymptotic model from the profile.
+The `runComponentRoots` registration turns that attribution into a directly
+named fixed measurement rather than leaving it implicit inside the end-to-end
+roots target.
 
 This family measures the new coprime-gcd exit that fixes the observed
 pathology. If distinct enclosing polynomials share a nonconstant factor,
@@ -1176,6 +1285,9 @@ performance claim of this ladder.
 
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
+| [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `22e2f31a0`, audit working tree | idle | `0b99eb3cb4bd66bd8a764955b9bc3e36f4fb8c4b7e802504975a51c85f8d6835` |
+| [`bench-results/hex-number-field-api-surface-of-array.json`](bench-results/hex-number-field-api-surface-of-array.json) | `22e2f31a0`, extended audit working tree | idle | `2ae9e42471f1359eda7493843ab10c874417e5204346e2c4bc6f8045c6cc6ddc` |
+| [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `22e2f31a0`, audit working tree | idle | `3923f843525a436e45bfffa1a9d7130f959d9655ab0a37d7583297664ce83957` |
 | [`bench-results/hex-number-field-phase4-scientific.json`](bench-results/hex-number-field-phase4-scientific.json) | `066f6fc29` | loaded (load average 105 to 150) | `3948bbb7107d96e7af56edcf2497b52e2b2a34f4d89376b93cc477c0f8a6517d` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet.json`](bench-results/hex-number-field-phase4-scientific-quiet.json) | `066f6fc29` | idle (load average 1.5) | `186d25381ce87fa6c4f4d0b6d51c03eed8f865a120dd83a5ac278c8d34be6408` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |
@@ -1238,12 +1350,8 @@ coefficient-swell concern is resolved by the monic-normalized chain and
 aggregate expected-work model recorded in §Verdicts; its conservative
 worst-case bit-cost bound remains in the SPEC. The exactification and
 QAdjoin-roots model concerns are resolved by their fixed registrations and
-profiles above. The remaining
-Phase-4 exit criteria that do not pass are each tracked:
-- **The advertised API surface is not fully registered.** Roughly thirty
-  advertised compiled operations have no `setup_benchmark` or
-  `setup_fixed_benchmark`, and `Roots.normEliminant` and `Roots.evalEliminant`
-  are separable asymptotically significant phases of `QAdjoin.roots?` that
-  nothing measures, so the Attribution rule is not satisfied.
-  https://github.com/kim-em/hex-dev/issues/9722 — audit-found: HexNumberField's
-  advertised API surface is not fully registered for Phase 4.
+profiles above. The exact declaration-to-registration matrix in §Track
+assignment re-audit covers every advertised compiled operation, and the
+profile-found dominant phases plus both root eliminants have direct targets.
+There is no unresolved Phase-4 coverage or Attribution-rule concern in this
+report.
