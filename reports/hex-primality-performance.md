@@ -44,11 +44,11 @@ contains committed exact production-search witnesses, while
 ## Verdicts
 
 The compiled scientific record is
-`reports/bench-results/hex-primality-compiled-75ec0de4f-chungus2.json`
+`reports/bench-results/hex-primality-compiled-f2c153ebb-chungus2.json`
 (SHA-256
-`fb409f326d6f39395f0eae5a47e33d31bd0f069e535f01755268d95be06980ee`).
+`b7d06514c0c3e458241467f7d3791951750140f54a44619ebb334c185f4c45ac`).
 It was produced from pristine commit
-`75ec0de4f278da97e630da5162745e7890978167` on `chungus2`, an AMD EPYC
+`f2c153ebbdc084ff9510fe167d65d77e1afef898` on `chungus2`, an AMD EPYC
 9455 host, with Lean 4.34.0-rc2.  All rows passed their expected-result hashes.
 The exact command was:
 
@@ -71,7 +71,7 @@ taskset -c 22 lake exe hexprimality_bench run \
   Hex.PrimalityBench.runCertSearch512 \
   Hex.PrimalityBench.runChecker512 \
   Hex.PrimalityBench.runPock3Checker \
-  --export-file reports/bench-results/hex-primality-compiled-75ec0de4f-chungus2.json
+  --export-file reports/bench-results/hex-primality-compiled-f2c153ebb-chungus2.json
 ```
 
 The bit-size rows are mode 2.  A tight family-specific model is not derivable:
@@ -88,12 +88,12 @@ result is the distinct one-sided verdict **within declared upper bound
 
 | target | harness verdict | slope residual `beta` | largest-rung median |
 |---|---:|---:|---:|
-| `runMillerRabin` | inconclusive | -1.581 | 177.556 us |
-| `runProbablePrime` | inconclusive | -1.548 | 2.355 ms |
-| `runDecision` | inconclusive | -1.467 | 3.659 ms |
-| `runTotalDecision` | inconclusive | -1.463 | 3.625 ms |
-| `runCertSearch` | inconclusive | -1.471 | 3.629 ms |
-| `runChecker` | inconclusive | -0.506 | 611.109 us |
+| `runMillerRabin` | inconclusive | -1.557 | 175.397 us |
+| `runProbablePrime` | inconclusive | -1.575 | 2.255 ms |
+| `runDecision` | inconclusive | -1.476 | 3.571 ms |
+| `runTotalDecision` | inconclusive | -1.469 | 3.583 ms |
+| `runCertSearch` | inconclusive | -1.475 | 3.596 ms |
+| `runChecker` | inconclusive | -0.511 | 604.449 us |
 
 The remaining parametric registrations use mode 1, the strongest applicable
 mode, because each registration has a pre-measurement family-specific
@@ -102,19 +102,19 @@ complexity:
 
 | target | range | `beta` | largest-rung median |
 |---|---:|---:|---:|
-| `runSieve` | 1000--32000 | -0.415 | 2.820 ms |
-| `runTableLookup` | 4096--65536 | +0.019 | 5.405 ms |
-| `runOrder` | 1009--32003 | -0.003 | 135.674 us |
-| `runPMinusOne` | 64--8192 | -0.116 | 297.277 us |
-| `runRho` | 100003--30000001 least factor | +0.166 | 4.940 ms |
-| `runSegment` | 1000--32000 | -0.169 | 24.546 ms |
-| `runNextPrime` | gap 4--64 | -0.046 | 2.428 us |
+| `runSieve` | 1000--32000 | -0.423 | 2.707 ms |
+| `runTableLookup` | 4096--65536 | +0.017 | 5.197 ms |
+| `runOrder` | 1009--32003 | -0.003 | 135.393 us |
+| `runPMinusOne` | 64--8192 | -0.116 | 298.571 us |
+| `runRho` | 100003--30000001 least factor | +0.163 | 4.722 ms |
+| `runSegment` | 1000--32000 | -0.165 | 24.527 ms |
+| `runNextPrime` | gap 4--64 | -0.042 | 2.439 us |
 
 The 512-bit rho-backed route and sole Pocklington-3 shape have no honest
 one-parameter family, so modes 1 and 2 do not apply.  They use mode 3 absolute
 budgets.  Decision, search, and replay each have a 5 s budget; Pocklington-3
-has a 2 s budget.  Their medians were respectively 13.423 ms, 13.496 ms,
-677.945 us, and 623 ns, with all five samples and expected hashes agreeing.
+has a 2 s budget.  Their medians were respectively 13.407 ms, 13.448 ms,
+678.436 us, and 632 ns, with all five samples and expected hashes agreeing.
 
 The release-quality proof record is
 `reports/bench-results/hex-primality-core-proof-issue-9762-chungus2.json`
