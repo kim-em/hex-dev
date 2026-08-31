@@ -248,21 +248,22 @@ python3 scripts/bench/primality_primecert_compare.py \
 
 ## Profile
 
-Both declared families have inclusive profiles from pristine commit
-`5b86166ee`.  The filtered summaries are committed; raw profiler JSON remains
-developer-local.  Calibration, minimum sample count, and the +/-5 ms
-sensitivity checks all passed, with no samples on other threads inside timed
-windows.
+Both declared families have inclusive profiles.  Certificate search was
+profiled from pristine commit `ca6f6f9ca`; segment enumeration was profiled
+from pristine commit `5b86166ee`, whose segment path is unchanged.  The
+filtered summaries are committed; raw profiler JSON remains developer-local.
+Calibration, minimum sample count, and the +/-5 ms sensitivity checks all
+passed, with no samples on other threads inside timed windows.
 
-- `table-smooth-certificates`: `runCertSearch` at 511 bits retained 3,722
-  samples (8 rejected) over 3,751.55 ms.  Inclusive cost was
-  `primeCertCountedWith?` 84.98%, `millerRabin` 54.94%, `mrWitnessLoop`
-  40.68%, `powModNatGo` 24.83%, and `checkPrime` 14.05%.  Leaf attribution was
-  GMP 63.33%, allocation 26.63%, Lean runtime 7.31%, and library code 2.28%.
+- `table-smooth-certificates`: `runCertSearch` at 511 bits retained 3,656
+  samples (8 rejected) over 3,669.23 ms.  Inclusive cost was
+  `primeCertCountedUsing?` 85.28%, `millerRabin` 53.86%, `mrWitnessLoop`
+  39.91%, `powModNatGo` 25.96%, and `checkPrime` 14.91%.  Leaf attribution was
+  GMP 62.69%, allocation 27.32%, Lean runtime 6.51%, and library code 2.22%.
   Summary:
-  `reports/bench-results/hex-primality-profile-cert-5b86166ee-chungus2.json`
+  `reports/bench-results/hex-primality-profile-cert-ca6f6f9ca-chungus2.json`
   (SHA-256
-  `8833ea39a833138b909e30448682eea029135e126a8604fc5914dac70ae413dd`).
+  `1cdaf9ac3c358941eecd100572815cd530b85c7bef0980caa1fe72a2d70f9911`).
 - `segment-enumeration`: `runSegment` at 32,000 retained 3,076 samples (8
   rejected) over 3,094.64 ms.  Inclusive cost was `primesIn` 99.84% and
   `isPrimeTrialAux` 98.57%; leaf attribution was allocation 39.47%, GMP
@@ -280,6 +281,14 @@ LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9762 \
 LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9762 \
   scripts/profile/run_profile.sh .lake/build/bin/hexprimality_bench \
   Hex.PrimalityBench.runSegment 32000 5000000000
+python3 scripts/profile/summarize_profile.py \
+  /tmp/hex-profile-runCertSearch-511.json.gz \
+  --thread hexprimality_bench \
+  --output reports/bench-results/hex-primality-profile-cert-ca6f6f9ca-chungus2.json
+python3 scripts/profile/summarize_profile.py \
+  /tmp/hex-profile-runSegment-32000.json.gz \
+  --thread hexprimality_bench \
+  --output reports/bench-results/hex-primality-profile-segment-5b86166ee-chungus2.json
 ```
 
 ## Concerns
