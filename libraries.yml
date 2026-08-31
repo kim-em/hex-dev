@@ -671,7 +671,7 @@ libraries:
       comparators:
         - tool: "PARI factor and GMP-ECM"
           class: informational
-          rationale: "PARI uses a broader factorization portfolio and does not expose a trial-division-plus-rho-only benchmark mode; GMP-ECM is a separately tuned C implementation. Their ratios are reported as informational external context, while same-route internal controls diagnose Hex dispatch and rho."
+          rationale: "This factorization-comparator suite has two scoped endpoints: PARI factor covers table, balanced, and power-form inputs but uses a broader portfolio with no trial-division-plus-rho-only mode; GMP-ECM stage 1 covers the unbalanced ECM family as a separately tuned C implementation. Their ratios are informational external context, while matched internal controls diagnose Hex dispatch and certificate construction and the rho registration/profile diagnose rho."
       input_families:
         - name: table-and-balanced-semiprimes
           description: Uniform table-range integers and balanced semiprimes through 80 bits, with same-input internal controls for public dispatch versus trial division or rho.
