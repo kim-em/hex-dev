@@ -152,18 +152,6 @@ Request fields: ``rows`` (list of list of int).
 * ``snf`` — returns the nonnegative Smith diagonal in divisibility order via
   ``flint.fmpz_mat(rows).snf()``.
 
-### `fmpq_mat` (rational matrix)
-
-Request field ``rows`` is a list of rows whose entries are integers or
-``[numerator, denominator]`` pairs.
-
-* ``rref`` — returns the unique reduced row echelon form, rank, and pivot
-  columns.
-* ``nullspace`` — derives the canonical free-variable right-kernel basis from
-  that RREF, matching Hex's basis convention.
-* ``overhead`` — returns the empty RREF-shaped result without constructing a
-  matrix, calibrating the persistent JSON protocol.
-
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
 Request fields: ``p`` (prime), ``modulus`` (coefficient list of the
@@ -805,89 +793,6 @@ _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 # ---------------------------------------------------------------------
-# `fmpq_mat` (rational matrix)
-# ---------------------------------------------------------------------
-
-
-def _fmpq_entry(value: Any):
-    if isinstance(value, list):
-        if len(value) != 2:
-            raise ValueError("fmpq_mat rational entries must be [numerator, denominator]")
-        numerator, denominator = (int(part) for part in value)
-        if denominator == 0:
-            raise ValueError("fmpq_mat entry denominator is zero")
-        return flint.fmpq(numerator, denominator)  # type: ignore[union-attr]
-    return flint.fmpq(int(value))  # type: ignore[union-attr]
-
-
-def _fmpq_mat(req: dict[str, Any]):
-    rows = req["rows"]
-    return flint.fmpq_mat(  # type: ignore[union-attr]
-        [[_fmpq_entry(entry) for entry in row] for row in rows]
-    )
-
-
-def _fmpq_pair(value: Any) -> list[int]:
-    return [int(value.p), int(value.q)]
-
-
-def _fmpq_rows(matrix: Any) -> list[list[list[int]]]:
-    return [
-        [_fmpq_pair(matrix[row, column]) for column in range(matrix.ncols())]
-        for row in range(matrix.nrows())
-    ]
-
-
-def _fmpq_mat_rref(req: dict[str, Any]) -> dict[str, Any]:
-    form, rank = _fmpq_mat(req).rref()
-    rank = int(rank)
-    pivots: list[int] = []
-    for row in range(rank):
-        pivot = next(
-            (column for column in range(form.ncols()) if form[row, column] != 0),
-            None,
-        )
-        if pivot is None:
-            raise RuntimeError(f"fmpq_mat RREF row {row} has no pivot")
-        pivots.append(pivot)
-    return {"rank": rank, "pivots": pivots, "rows": _fmpq_rows(form)}
-
-
-def _fmpq_mat_nullspace(req: dict[str, Any]) -> dict[str, Any]:
-    form, rank_value = _fmpq_mat(req).rref()
-    rank = int(rank_value)
-    pivots: list[int] = []
-    for row in range(rank):
-        pivot = next(
-            (column for column in range(form.ncols()) if form[row, column] != 0),
-            None,
-        )
-        if pivot is None:
-            raise RuntimeError(f"fmpq_mat RREF row {row} has no pivot")
-        pivots.append(pivot)
-    free_columns = [column for column in range(form.ncols()) if column not in pivots]
-    basis: list[list[list[int]]] = []
-    for free_column in free_columns:
-        vector = [flint.fmpq(0) for _ in range(form.ncols())]  # type: ignore[union-attr]
-        vector[free_column] = flint.fmpq(1)  # type: ignore[union-attr]
-        for row, pivot in enumerate(pivots):
-            vector[pivot] = -form[row, free_column]
-        basis.append([_fmpq_pair(entry) for entry in vector])
-    return {"rank": rank, "basis": basis}
-
-
-def _fmpq_mat_overhead(_req: dict[str, Any]) -> dict[str, Any]:
-    return {"rank": 0, "pivots": [], "rows": []}
-
-
-_FMPQ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
-    "rref": _fmpq_mat_rref,
-    "nullspace": _fmpq_mat_nullspace,
-    "overhead": _fmpq_mat_overhead,
-}
-
-
-# ---------------------------------------------------------------------
 # `fq_default` (F_p[x] / m(x))
 # ---------------------------------------------------------------------
 
@@ -1113,7 +1018,6 @@ _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpq_series": _FMPQ_SERIES_OPS,
     "nmod_poly": _NMOD_POLY_OPS,
     "fmpz_mat": _FMPZ_MAT_OPS,
-    "fmpq_mat": _FMPQ_MAT_OPS,
     "fq_default": _FQ_DEFAULT_OPS,
     "nmod_poly_hensel": _NMOD_POLY_HENSEL_OPS,
     "rcf": _RCF_OPS,

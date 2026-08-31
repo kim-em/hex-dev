@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "89a7d413c38dbf6182877ae5e58ca51155dc66b7",
+  "reason": "Combines inherited build-target registrations with the independent hexrowreduce_bench registration. This changes no factorization source, hexbz_factor_service implementation, or factorization runtime call graph."
+}

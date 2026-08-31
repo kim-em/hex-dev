@@ -111,7 +111,7 @@ package into `E.nullspaceMatrix * c = v`.
 ## Complexity and benchmark contract
 
 For an `n × m` matrix of rank `r`, the executable Gauss--Jordan loop performs
-at most `r` pivot steps, and each step visits `O(nm)` entries across the
+at most `r` pivot steps, and each step visits `O(n(n + m))` entries across the
 echelon and transform updates.  Thus the field-operation bound is
 `O(rn(n + m))`; it is cubic for the fixed-aspect square families below.  This
 is an arithmetic-operation bound, not unrestricted bit complexity: exact
@@ -124,7 +124,9 @@ directly in mode 1:
 | --- | --- | --- |
 | `Matrix.rowReduce`, `Matrix.rowReduce_rank` | `dense-rational-rref` | `n³` |
 | `Matrix.spanCoeffs`, `Matrix.spanContains` | `dense-rational-rref` | `n³` |
+| `IsEchelonForm.echelonCoeffs` on prepared RREF | `rank-deficient-rational-nullspace` | `n` |
 | `IsEchelonForm.spanCoeffs`, `IsEchelonForm.spanContains` on prepared RREF | `dense-rational-rref` | `n²` |
+| `IsEchelonForm.freeCols` on prepared RREF | `rank-deficient-rational-nullspace` | `n²` |
 | `Matrix.nullspaceBasisMatrix`, `Matrix.nullspace` | `rank-deficient-rational-nullspace` | `n³` |
 | `IsRowReduced.nullspaceMatrix`, `IsRowReduced.nullspace` on prepared RREF | `rank-deficient-rational-nullspace` | `n³` |
 
@@ -140,18 +142,15 @@ the timed region, respectively.
 
 ## External comparators
 
-The named Phase-4 comparator is python-flint's `fmpq_mat.rref`, classified as
-**informational**.  Fixed anchors run persistent-process FLINT RREF on the same
-`I + J` inputs and derive the canonical free-variable nullspace basis from its
-unique RREF.  Exact result hashes must agree before timing is reported.  The
-ratio does not gate because Hex also accumulates and returns the row-operation
-transform, while python-flint's public RREF result omits it.  `spanCoeffs`
-returns a transform-dependent, noncanonical witness, and python-flint exposes
-no comparable callable result (`no-comparable-surface-in-named-comparator`).
+No external Phase-4 timing comparator is declared.  python-flint exposes
+FLINT's exact rational RREF, but the public Python interface must decode and
+encode every rational matrix entry for each request; that transport dominates
+the shared practical ladder and therefore cannot support a meaningful kernel
+ratio.  Moreover, Hex's `rowReduce` returns the complete row-operation
+transform while python-flint's RREF omits it, and `spanCoeffs` returns a
+transform-dependent witness with no canonical counterpart.
 
-The broader `rank`, `rowReduce`, and `nullspace` correctness surface remains
-cross-checked through `scripts/oracle/matrix_flint.py`, driven by
-`hexrowreduce_emit_fixtures`.  The Phase-4 persistent timing driver is
-`scripts/oracle/flint_bench_driver.py`; its fixed registrations are comparator
-and protocol anchors, not complexity evidence.  See
-`reports/hex-row-reduce-performance.md`.
+FLINT remains the independent correctness oracle for `rank`, `rowReduce`, and
+`nullspace` through `scripts/oracle/matrix_flint.py`, driven by
+`hexrowreduce_emit_fixtures`.  It is conformance evidence, not timing evidence.
+See `reports/hex-row-reduce-performance.md`.

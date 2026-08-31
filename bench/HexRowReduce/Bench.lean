@@ -5,8 +5,6 @@ Authors: Kim Morrison
 -/
 
 import HexRowReduce
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
 import LeanBench
 
 /-!
@@ -38,7 +36,7 @@ private def vectorChecksum {n : Nat} (v : Vector Rat n) : UInt64 :=
 private def matrixChecksum {n m : Nat} (M : Matrix Rat n m) : UInt64 :=
   M.rows.toArray.foldl
     (fun checksum row => mixHash checksum (vectorChecksum row))
-    (hash (n, m))
+    (hash n)
 
 instance : Hashable Input where
   hash input := mixHash (hash input.n) <|
@@ -129,18 +127,26 @@ def runSpanContains (input : Input) : UInt64 :=
   mixHash (vectorChecksum input.query) (hash (Matrix.spanContains input.matrix input.query))
 
 /-- Contract-level row-span coefficient construction on prepared RREF data. -/
-def runEchelonCoeffs (input : ReducedInput) : UInt64 :=
+def runEchelonSpanCoeffs (input : ReducedInput) : UInt64 :=
   match input.reduced.toIsEchelonForm.spanCoeffs input.query with
   | some coefficients => vectorChecksum coefficients
   | none => 0
 
 /-- Contract-level row-span membership on prepared RREF data. -/
-def runEchelonContains (input : ReducedInput) : Bool :=
+def runEchelonSpanContains (input : ReducedInput) : Bool :=
   input.reduced.toIsEchelonForm.spanContains input.query
+
+/-- Pivot-coordinate coefficient selection on prepared echelon data. -/
+def runEchelonCoeffs (input : ReducedInput) : UInt64 :=
+  vectorChecksum (input.reduced.toIsEchelonForm.echelonCoeffs input.query)
+
+/-- Sorted complement of the pivot columns on prepared echelon data. -/
+def runFreeCols (input : ReducedInput) : UInt64 :=
+  hash input.reduced.toIsEchelonForm.freeCols.toArray
 
 /-- The public nullspace basis-matrix wrapper on a rank-deficient matrix. -/
 def runNullspaceMatrix (input : Input) : UInt64 :=
-  matrixChecksum (Matrix.nullspaceBasisMatrix input.matrix)
+  hash (Matrix.nullspaceBasisMatrix input.matrix).data.toArray
 
 /-- The public vector-of-vectors nullspace wrapper on a rank-deficient matrix. -/
 def runNullspace (input : Input) : UInt64 :=
@@ -158,91 +164,6 @@ def runReducedNullspace (input : ReducedInput) : UInt64 :=
     (fun checksum vector => mixHash checksum (vectorChecksum vector))
     (hash input.n)
 
-private def natJson (value : Nat) : Lean.Json :=
-  Lean.Json.num (Lean.JsonNumber.fromNat value)
-
-private def ratJson (value : Rat) : Lean.Json :=
-  Lean.Json.arr #[
-    Lean.Json.num (Lean.JsonNumber.fromInt value.num),
-    Lean.Json.num (Lean.JsonNumber.fromNat value.den)]
-
-private def vectorJson {n : Nat} (vector : Vector Rat n) : Lean.Json :=
-  Lean.Json.arr (vector.toArray.map ratJson)
-
-private def matrixJson {n m : Nat} (matrix : Matrix Rat n m) : Lean.Json :=
-  Lean.Json.arr (matrix.rows.toArray.map vectorJson)
-
-private def rrefJson (input : Input) : Lean.Json :=
-  let result := Matrix.rowReduce input.matrix
-  Lean.Json.mkObj [
-    ("rank", natJson result.rank),
-    ("pivots", Lean.Json.arr (result.pivotCols.toArray.map fun pivot => natJson pivot.val)),
-    ("rows", matrixJson result.echelon)]
-
-private def nullspaceJson (input : Input) : Lean.Json :=
-  let basis := (Matrix.nullspace input.matrix).toArray
-  Lean.Json.mkObj [
-    ("rank", natJson (input.n - basis.size)),
-    ("basis", Lean.Json.arr (basis.map vectorJson))]
-
-/-- Hex-side fixed comparator endpoint for RREF and rank. -/
-def runHexRrefAt (n : Nat) : Unit → IO String := fun _ =>
-  return (rrefJson (dense n)).compress
-
-/-- python-flint `fmpq_mat.rref` endpoint on the same dense fixture. -/
-def runFlintRrefAt (n : Nat) : Unit → IO String := fun _ => do
-  let input := dense n
-  let result ← Hex.BenchOracle.Flint.runOp "fmpq_mat" "rref"
-    #[("rows", matrixJson input.matrix)]
-  return result.compress
-
-/-- Hex-side fixed comparator endpoint for the canonical nullspace basis. -/
-def runHexNullspaceAt (n : Nat) : Unit → IO String := fun _ =>
-  return (nullspaceJson (deficient n)).compress
-
-/-- python-flint RREF-derived nullspace endpoint on the same deficient fixture. -/
-def runFlintNullspaceAt (n : Nat) : Unit → IO String := fun _ => do
-  let input := deficient n
-  let result ← Hex.BenchOracle.Flint.runOp "fmpq_mat" "nullspace"
-    #[("rows", matrixJson input.matrix)]
-  return result.compress
-
-/-- Persistent-protocol overhead control: no matrix construction or FLINT
-operation. -/
-def runFlintOverhead (_ : Unit) : IO String := do
-  let result ← Hex.BenchOracle.Flint.runOp "fmpq_mat" "overhead" #[]
-  return result.compress
-
-def runHexRref8 : Unit → IO String := runHexRrefAt 8
-def runFlintRref8 : Unit → IO String := runFlintRrefAt 8
-def runHexRref12 : Unit → IO String := runHexRrefAt 12
-def runFlintRref12 : Unit → IO String := runFlintRrefAt 12
-def runHexRref16 : Unit → IO String := runHexRrefAt 16
-def runFlintRref16 : Unit → IO String := runFlintRrefAt 16
-def runHexRref24 : Unit → IO String := runHexRrefAt 24
-def runFlintRref24 : Unit → IO String := runFlintRrefAt 24
-def runHexRref32 : Unit → IO String := runHexRrefAt 32
-def runFlintRref32 : Unit → IO String := runFlintRrefAt 32
-def runHexRref48 : Unit → IO String := runHexRrefAt 48
-def runFlintRref48 : Unit → IO String := runFlintRrefAt 48
-def runHexRref64 : Unit → IO String := runHexRrefAt 64
-def runFlintRref64 : Unit → IO String := runFlintRrefAt 64
-
-def runHexNullspace8 : Unit → IO String := runHexNullspaceAt 8
-def runFlintNullspace8 : Unit → IO String := runFlintNullspaceAt 8
-def runHexNullspace12 : Unit → IO String := runHexNullspaceAt 12
-def runFlintNullspace12 : Unit → IO String := runFlintNullspaceAt 12
-def runHexNullspace16 : Unit → IO String := runHexNullspaceAt 16
-def runFlintNullspace16 : Unit → IO String := runFlintNullspaceAt 16
-def runHexNullspace24 : Unit → IO String := runHexNullspaceAt 24
-def runFlintNullspace24 : Unit → IO String := runFlintNullspaceAt 24
-def runHexNullspace32 : Unit → IO String := runHexNullspaceAt 32
-def runFlintNullspace32 : Unit → IO String := runFlintNullspaceAt 32
-def runHexNullspace48 : Unit → IO String := runHexNullspaceAt 48
-def runFlintNullspace48 : Unit → IO String := runFlintNullspaceAt 48
-def runHexNullspace64 : Unit → IO String := runHexNullspaceAt 64
-def runFlintNullspace64 : Unit → IO String := runFlintNullspaceAt 64
-
 private def schedule : Array Nat := #[8, 12, 16, 24, 32, 48, 64]
 private def basisMatrixSchedule : Array Nat := #[16, 24, 32, 48, 64]
 
@@ -252,6 +173,7 @@ private def basisMatrixSchedule : Array Nat := #[16, 24, 32, 48, 64]
 -- dominates allocation.
 private def preparedSpanSchedule : Array Nat := #[16, 24, 32, 48, 64, 96, 128, 192]
 private def preparedNullspaceSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
+private def preparedLinearSchedule : Array Nat := #[128, 192, 256, 384, 512, 768, 1024]
 
 /- Cost-model derivation: on dense `I + J`, all `n` pivots fire.  Each pivot
 normalizes two length-`n` rows (echelon and transform) and eliminates up to
@@ -299,7 +221,7 @@ setup_benchmark runSpanContains n => n ^ 3 with prep := dense where {
 /- Cost-model derivation: on prepared full-rank RREF data, `spanCoeffs` makes
 one dense transform-vector product and one residual row-combination check.
 Both visit `Theta(n^2)` entries; coefficient selection is linear. -/
-setup_benchmark runEchelonCoeffs n => n ^ 2 with prep := denseReduced where {
+setup_benchmark runEchelonSpanCoeffs n => n ^ 2 with prep := denseReduced where {
   paramFloor := 16, paramCeiling := 192, paramSchedule := .custom preparedSpanSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 3
   signalFloorMultiplier := 1.0
@@ -309,9 +231,29 @@ setup_benchmark runEchelonCoeffs n => n ^ 2 with prep := denseReduced where {
 /- Cost-model derivation: contract-level `spanContains` projects `isSome`
 from the same prepared `spanCoeffs` computation and is therefore
 `Theta(n^2)` on this family. -/
-setup_benchmark runEchelonContains n => n ^ 2 with prep := denseReduced where {
+setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := denseReduced where {
   paramFloor := 16, paramCeiling := 192, paramSchedule := .custom preparedSpanSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 3
+  signalFloorMultiplier := 1.0
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: `echelonCoeffs` constructs one length-`n` vector.
+Each live entry performs constant-time pivot-column and matrix indexing on the
+prepared bounded-integer projection, so the family performs `Theta(n)` work. -/
+setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
+  paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedLinearSchedule
+  targetInnerNanos := 1_000_000_000, outerTrials := 5
+  signalFloorMultiplier := 1.0
+  maxSecondsPerCall := 10.0
+}
+
+/- Cost-model derivation: `freeCols` filters all `n` columns and tests each
+against the sorted pivot vector by a linear list-membership scan.  On the
+rank-`n / 2` prepared family the aggregate scan is `Theta(n^2)`. -/
+setup_benchmark runFreeCols n => n ^ 2 with prep := deficientReduced where {
+  paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedLinearSchedule
+  targetInnerNanos := 1_000_000_000, outerTrials := 5
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
@@ -345,7 +287,7 @@ setup_benchmark runNullspace n => n ^ 3 with prep := deficient where {
 scan through at most `n / 2` pivot columns, yielding `Theta(n^3)` work. -/
 setup_benchmark runReducedMatrix n => n ^ 3 with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedNullspaceSchedule
-  targetInnerNanos := 200_000_000, outerTrials := 7
+  targetInnerNanos := 1_000_000_000, outerTrials := 7
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
@@ -355,86 +297,10 @@ construction and then extracts quadratically many entries as columns, so its
 model remains `Theta(n^3)` on the rank-deficient family. -/
 setup_benchmark runReducedNullspace n => n ^ 3 with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 1024, paramSchedule := .custom preparedNullspaceSchedule
-  targetInnerNanos := 200_000_000, outerTrials := 7
+  targetInnerNanos := 1_000_000_000, outerTrials := 7
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
-
-/-! The fixed registrations below are comparator and protocol anchors only;
-they make no complexity claim and do not replace the ten mode-1 registrations
-above.  Each Hex/python-flint pair returns the same canonical JSON string, so
-LeanBench's result hash checks exact RREF or nullspace-basis agreement at every
-shared rung. -/
-
-private def hexComparisonConfig : LeanBench.FixedBenchmarkConfig where
-  repeats := 5
-  minTotalSeconds := 0.1
-  maxSecondsPerCall := 8.0
-
-private def flintComparisonConfig : LeanBench.FixedBenchmarkConfig where
-  repeats := 5
-  minTotalSeconds := 0.1
-  maxSecondsPerCall := 8.0
-  warmupFirstIter := true
-
-setup_fixed_benchmark runFlintOverhead where
-  { flintComparisonConfig with expectedHash := some 0x84d361908b60d650 }
-setup_fixed_benchmark runHexRref8 where
-  { hexComparisonConfig with expectedHash := some 0x6ca6178de0126e10 }
-setup_fixed_benchmark runFlintRref8 where
-  { flintComparisonConfig with expectedHash := some 0x6ca6178de0126e10 }
-setup_fixed_benchmark runHexRref12 where
-  { hexComparisonConfig with expectedHash := some 0x3548b1dee30b7444 }
-setup_fixed_benchmark runFlintRref12 where
-  { flintComparisonConfig with expectedHash := some 0x3548b1dee30b7444 }
-setup_fixed_benchmark runHexRref16 where
-  { hexComparisonConfig with expectedHash := some 0xd6434cb7f79aa670 }
-setup_fixed_benchmark runFlintRref16 where
-  { flintComparisonConfig with expectedHash := some 0xd6434cb7f79aa670 }
-setup_fixed_benchmark runHexRref24 where
-  { hexComparisonConfig with expectedHash := some 0xab53897f9681f1ce }
-setup_fixed_benchmark runFlintRref24 where
-  { flintComparisonConfig with expectedHash := some 0xab53897f9681f1ce }
-setup_fixed_benchmark runHexRref32 where
-  { hexComparisonConfig with expectedHash := some 0x69bb3c6679a2cc4b }
-setup_fixed_benchmark runFlintRref32 where
-  { flintComparisonConfig with expectedHash := some 0x69bb3c6679a2cc4b }
-setup_fixed_benchmark runHexRref48 where
-  { hexComparisonConfig with expectedHash := some 0xa23e2013cacf6e4e }
-setup_fixed_benchmark runFlintRref48 where
-  { flintComparisonConfig with expectedHash := some 0xa23e2013cacf6e4e }
-setup_fixed_benchmark runHexRref64 where
-  { hexComparisonConfig with expectedHash := some 0x91317157ea95e9af }
-setup_fixed_benchmark runFlintRref64 where
-  { flintComparisonConfig with expectedHash := some 0x91317157ea95e9af }
-setup_fixed_benchmark runHexNullspace8 where
-  { hexComparisonConfig with expectedHash := some 0xd2e37217fbfa8544 }
-setup_fixed_benchmark runFlintNullspace8 where
-  { flintComparisonConfig with expectedHash := some 0xd2e37217fbfa8544 }
-setup_fixed_benchmark runHexNullspace12 where
-  { hexComparisonConfig with expectedHash := some 0x35220a3c9f4587fe }
-setup_fixed_benchmark runFlintNullspace12 where
-  { flintComparisonConfig with expectedHash := some 0x35220a3c9f4587fe }
-setup_fixed_benchmark runHexNullspace16 where
-  { hexComparisonConfig with expectedHash := some 0x0003b3f1256cc8a8 }
-setup_fixed_benchmark runFlintNullspace16 where
-  { flintComparisonConfig with expectedHash := some 0x0003b3f1256cc8a8 }
-setup_fixed_benchmark runHexNullspace24 where
-  { hexComparisonConfig with expectedHash := some 0xd57d96c775400424 }
-setup_fixed_benchmark runFlintNullspace24 where
-  { flintComparisonConfig with expectedHash := some 0xd57d96c775400424 }
-setup_fixed_benchmark runHexNullspace32 where
-  { hexComparisonConfig with expectedHash := some 0xe59fa635b61f86d7 }
-setup_fixed_benchmark runFlintNullspace32 where
-  { flintComparisonConfig with expectedHash := some 0xe59fa635b61f86d7 }
-setup_fixed_benchmark runHexNullspace48 where
-  { hexComparisonConfig with expectedHash := some 0x5c4539422fa584e4 }
-setup_fixed_benchmark runFlintNullspace48 where
-  { flintComparisonConfig with expectedHash := some 0x5c4539422fa584e4 }
-setup_fixed_benchmark runHexNullspace64 where
-  { hexComparisonConfig with expectedHash := some 0x60ac962101f19bc3 }
-setup_fixed_benchmark runFlintNullspace64 where
-  { flintComparisonConfig with expectedHash := some 0x60ac962101f19bc3 }
 
 end Hex.RowReduceBench
 

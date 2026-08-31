@@ -346,10 +346,10 @@ repos:
     lib: HexRowReduce
     umbrella: true
     spec: hex-row-reduce
-    bench: true
+    bench: false
     conformance: true
     fixtures: [HexRowReduce]
-    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    oracles: [matrix_flint.py, common.py]
     pins: [hex-basic, hex-matrix]
     lakefile: toml
 

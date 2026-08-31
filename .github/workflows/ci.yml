@@ -90,7 +90,6 @@ jobs:
           python3 -m pip install --user \
             python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
-          python3 -m unittest scripts/oracle/test_row_reduce_bench_driver.py
       - name: Verify factorization measurements and figures are current
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py

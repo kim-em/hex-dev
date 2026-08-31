@@ -245,18 +245,14 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
-      comparators:
-        - tool: "python-flint fmpq_mat RREF"
-          class: informational
-          rationale: "python-flint exposes FLINT's exact rational fmpq_mat.rref operation on the same dense rational matrices. The ratio is recorded for orientation rather than gating because Hex also accumulates and returns the row-operation transform, while python-flint's public RREF result omits it. The rank projection is included in the RREF result, and the canonical nullspace basis is derived from the unique RREF in the persistent driver; spanCoeffs returns a transform-dependent noncanonical witness and has no comparable callable result."
       input_families:
         - name: dense-rational-rref
           description: Dense square rational I + J matrices with a pivot in every column and nonzero elimination above and below every pivot, plus a known row-span member.
         - name: rank-deficient-rational-nullspace
-          description: Rank-and-nullity n / 2 rational matrices, using repeated I + J for public wrappers and an already-reduced sparse projection to isolate contract-level free-column and pivot-column nullspace construction.
+          description: Rank-and-nullity n / 2 rational matrices, using repeated I + J for public wrappers and an already-reduced sparse projection to isolate echelon coefficients, free columns, and contract-level nullspace construction.
   HexDeterminant:
     deps: [HexMatrix]
     mathlib: false
