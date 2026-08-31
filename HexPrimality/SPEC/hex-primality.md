@@ -1302,7 +1302,7 @@ acceptance, not a second compiled timing of the executable checker or search.
 | `checkPrime` | compiled `runChecker` plus fixed `runChecker512` | prepared certificates sharing the exact emitted literals with the proof track |
 | Pocklington-3 checker arm | fixed compiled `runPock3Checker` | the canonical 199 certificate |
 | `sieve` plus `bitsToList` | compiled `runSieve` | bounds `10^3`--`3.2 * 10^4` |
-| `isTablePrime` | compiled `runTableLookup` | batches of 256--8192 fixed-table lookups |
+| `isTablePrime` | compiled `runTableLookup` | batches of 4096--65536 fixed-table lookups |
 | `orderOf` | compiled `runOrder` | committed primitive-root moduli 1009--32003 |
 | `pMinusOneStage1Counted` | compiled `runPMinusOne` | smoothness bounds 64--8192 on a fixed 61-bit prime |
 | `Internal.rhoFactorCounted?` | compiled `runRho` | balanced semiprimes with fixed seeds and least factors 100003--30000001, beyond the fixed gcd-batch floor |
@@ -1321,6 +1321,24 @@ scientific modules are deliberately absent from the CI target; the existing
 boundary, exhaustion, and over-budget modules remain the single-job build
 smoke.
 
+The six bit-size registrations from `runMillerRabin` through `runChecker` use
+mode 2.  A tight family-specific model is unavailable because GMP changes
+multiplication algorithms across this range and the certificate tree shrinks
+by input-dependent amounts.  The published schoolbook bound is nevertheless
+applicable: binary powering performs `O(b)` multiplications of `b`-bit
+integers, each costing `O(b^2)`, hence `O(b^3)` per fixed number of witnesses
+or certificate levels (Brent and Zimmermann, *Modern Computer Arithmetic*,
+chapter 1).  The `table-smooth-certificates` ladder exercises the modular
+powering and certificate phases, and the inclusive profile below attributes
+the dominant cost to those paths.  Faster observations therefore mean
+"within declared upper bound (observed faster)", never a two-sided
+complexity match.  `runSieve`, `runTableLookup`, `runOrder`, `runPMinusOne`,
+`runRho`, `runSegment`, and `runNextPrime` use mode 1 with the family-specific
+derivations at their registrations.  The exact 512-bit rho-backed decision,
+search, and replay plus the sole Pocklington-3 constructor use mode 3 fixed
+budgets: their structurally distinct single boundary inputs do not admit an
+honest one-parameter family.
+
 **Comparators.** PARI `isprime` via cypari2 is **informational**: PARI
 uses BPSW plus APRCL and a Pocklington-style certificate only on
 request, so it is answering a different question by a different
@@ -1329,10 +1347,13 @@ PARI is the oracle and python-flint the second opinion; neither is a
 performance comparator. The right benchmarked
 comparison for the kernel side is **PrimeCert itself**, and it is
 `informational` for a reason worth stating: it is the closest prior art
-and the one number a reader will want, and it cannot be run in this
-repository until the toolchains agree. The pins are rechecked when the
-benchmark is implemented; while they differ, the comparison is a figure
-to obtain in a separate checkout rather than a CI comparator.
+and the one number a reader will want.  The comparison uses the same six
+certificate witnesses in a pinned separate checkout, rotates tool and arm
+order, and reports absolute fresh replay times because the toolchain pins
+differ (Hex uses Lean 4.34.0-rc2; PrimeCert uses Lean 4.33.0).  It is retained
+as scheduled-host information rather than a CI gate; see
+`reports/hex-primality-performance.md` and the committed raw comparator
+record named there.
 
 ## The Mathlib layer
 
@@ -1428,13 +1449,6 @@ may add further uses, but the dependency does not depend on them.
 
 ## Open questions
 
-- **Whether the sieve's correctness proof is worth its cost.** The
-  alternative is to commit the table with a per-entry `isPrimeTrial`
-  proof, as `hotPathCandidates` does today, which scales to perhaps
-  `10^4` and no further. The sieve's proof is the larger investment and
-  it is the only route past that bound. If milestone 1 stalls on the
-  proof, committing the table with per-entry proofs at `10^4` is a
-  complete and useful deliverable, and the sieve becomes milestone 6.
 - **Whether ECPP belongs on the roadmap at all.** It is the next order
   of magnitude and it is a large project with an elliptic-curve
   prerequisite this tree does not have.

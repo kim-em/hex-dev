@@ -647,7 +647,7 @@ libraries:
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexPrimality/ProofProbe]
     phase4:
