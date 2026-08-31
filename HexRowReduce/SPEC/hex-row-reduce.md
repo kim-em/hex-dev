@@ -73,6 +73,8 @@ def IsRowReduced.nullspaceMatrix [Ring R] (E : IsRowReduced M D) : Matrix R m (m
 def IsRowReduced.nullspace [Ring R] (E : IsRowReduced M D) : Vector (Vector R m) (m - D.rank)
 def Matrix.nullspace [Field R] [DecidableEq R] (M : Matrix R n m) :
     Vector (Vector R m) (m - rowReduce_rank)
+def Matrix.nullspaceBasisMatrix [Field R] [DecidableEq R] (M : Matrix R n m) :
+    Matrix R m (m - rowReduce_rank)
 ```
 
 **Key properties:**
@@ -106,11 +108,50 @@ with `colPartition` (free columns telescope to `v[freeCols[l]]`; pivot columns
 follow from `pivot_one` / `above_pivot_zero` / `below_pivot_zero` / `zero_row`);
 package into `E.nullspaceMatrix * c = v`.
 
+## Complexity and benchmark contract
+
+For an `n × m` matrix of rank `r`, the executable Gauss--Jordan loop performs
+at most `r` pivot steps, and each step visits `O(nm)` entries across the
+echelon and transform updates.  Thus the field-operation bound is
+`O(rn(n + m))`; it is cubic for the fixed-aspect square families below.  This
+is an arithmetic-operation bound, not unrestricted bit complexity: exact
+rational cost also depends on numerator and denominator growth.
+
+`bench/HexRowReduce/Bench.lean` registers every advertised executable surface
+directly in mode 1:
+
+| Operation | Controlled family | Declared wall model |
+| --- | --- | --- |
+| `Matrix.rowReduce`, `Matrix.rowReduce_rank` | `dense-rational-rref` | `n³` |
+| `Matrix.spanCoeffs`, `Matrix.spanContains` | `dense-rational-rref` | `n³` |
+| `IsEchelonForm.spanCoeffs`, `IsEchelonForm.spanContains` on prepared RREF | `dense-rational-rref` | `n²` |
+| `Matrix.nullspaceBasisMatrix`, `Matrix.nullspace` | `rank-deficient-rational-nullspace` | `n³` |
+| `IsRowReduced.nullspaceMatrix`, `IsRowReduced.nullspace` on prepared RREF | `rank-deficient-rational-nullspace` | `n³` |
+
+The dense family is `I + J`, so all pivots fire while intermediate rational
+heights stay bounded by `O(log n)` bits on the scheduled ladder.  The
+rank-deficient family repeats the rows and columns of `I + J` at half size,
+giving rank and nullity `n / 2`.  Prepared span targets exclude RREF and visit
+quadratically many entries.  Prepared nullspace targets use an already-reduced
+rank-`n / 2` projection to exclude RREF setup; constructing `Θ(n²)` output
+entries calls a pivot lookup that scans up to `n / 2` columns, giving the
+declared cubic model.  Preparation and result forcing are outside and inside
+the timed region, respectively.
+
 ## External comparators
 
-The `rank`, `rowReduce`, and `nullspace` operations are cross-checked for correctness
-against python-flint's `fmpz_mat` / `fmpq_mat` through the conformance oracle
-(`scripts/oracle/matrix_flint.py`, driven by `hexrowreduce_emit_fixtures`).
-There is no Phase-4 performance comparator: row reduction is an exact rational
-computation validated for correctness, not timed against an external tool. See
+The named Phase-4 comparator is python-flint's `fmpq_mat.rref`, classified as
+**informational**.  Fixed anchors run persistent-process FLINT RREF on the same
+`I + J` inputs and derive the canonical free-variable nullspace basis from its
+unique RREF.  Exact result hashes must agree before timing is reported.  The
+ratio does not gate because Hex also accumulates and returns the row-operation
+transform, while python-flint's public RREF result omits it.  `spanCoeffs`
+returns a transform-dependent, noncanonical witness, and python-flint exposes
+no comparable callable result (`no-comparable-surface-in-named-comparator`).
+
+The broader `rank`, `rowReduce`, and `nullspace` correctness surface remains
+cross-checked through `scripts/oracle/matrix_flint.py`, driven by
+`hexrowreduce_emit_fixtures`.  The Phase-4 persistent timing driver is
+`scripts/oracle/flint_bench_driver.py`; its fixed registrations are comparator
+and protocol anchors, not complexity evidence.  See
 `reports/hex-row-reduce-performance.md`.
