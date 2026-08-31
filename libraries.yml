@@ -515,12 +515,16 @@ libraries:
     status: active
     phase4:
       input_families:
+        - name: coefficient-kernels
+          description: Balanced `F_257` and `F_65537` operands covering forced schoolbook, packed, Karatsuba, direct-NTT, CRT-NTT, and public-dispatch multiplication routes.
         - name: quotient-powers
-          description: Dense `F_65537` quotient-ring exponentiation and Frobenius power fixtures with modulus degree and exponent height scaled together.
+          description: Dense `F_65537` quotient-ring exponentiation, fixed-prime Frobenius, and Frobenius-power fixtures with their active modulus degree or exponent height scaled by the parameter.
         - name: modular-composition
           description: Same-size dense `F_65537` Horner modular composition modulo deterministic monic moduli.
         - name: product-squarefree
           description: Deterministic `F_5` products of linear factors covering weighted product reconstruction and Yun square-free decomposition summaries.
+        - name: euclidean-division-gcd
+          description: Dense long-division inputs and consecutive polynomial-Fibonacci pairs forcing a full decreasing-degree Euclidean remainder chain over `F_65537`.
 
   # ---------- Finite-field quotient pipeline ----------
   HexGFqRing:
