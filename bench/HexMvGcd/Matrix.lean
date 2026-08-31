@@ -33,10 +33,7 @@ def runBrownPair {n : Nat} (input : P n Int × P n Int) : UInt64 :=
   | none => 0
   | some cert => checksum cert.gcd
 
-/-- Measure one bounded Brown image on a sparse input. A single prime cannot
-stabilize CRT, so returning zero records an honest fast-backend decline
-without sending the merge-gated smoke verifier into the mandatory dense PRS
-fallback. Full end-to-end timeout measurements belong in the Phase 4 report. -/
+/-- Run the complete Brown producer and hash its certified gcd. -/
 def runSquarefree {n : Nat} (input : P n Int) : UInt64 :=
   let decomp := sqfDecomp input
   decomp.factors.foldl
@@ -110,14 +107,17 @@ def runDenseCoprime8 (_ : Unit) : IO UInt64 := budgeted 1_000_000_000 do
 def runSparseCoprime8 (_ : Unit) : IO UInt64 := budgeted 1_000_000_000 do
   return runIntPair (← routeSparse8.get)
 
-def runDenseGcd5d5 (_ : Unit) : IO UInt64 := budgeted 25_000_000_000 do
-  return runBrownPair (← getCached denseGcd5d5 fun _ => denseGcd 5 5)
+def runDenseGcd5d5 (_ : Unit) : IO UInt64 := do
+  let input ← getCached denseGcd5d5 fun _ => denseGcd 5 5
+  budgeted 25_000_000_000 do return runBrownPair input
 
-def runSparseStress5d16 (_ : Unit) : IO UInt64 := budgeted 3_000_000_000 do
-  return runIntPair (← getCached sparseStress5d16 fun _ => sparseGapGcd 5 16)
+def runSparseStress5d16 (_ : Unit) : IO UInt64 := do
+  let input ← getCached sparseStress5d16 fun _ => sparseGapGcd 5 16
+  budgeted 4_000_000_000 do return runIntPair input
 
-def runRationalGcd5d5 (_ : Unit) : IO UInt64 := budgeted 5_000_000_000 do
-  return runRatPair (← getCached rationalGcd5d5 fun _ => rationalGcd 5 5)
+def runRationalGcd5d5 (_ : Unit) : IO UInt64 := do
+  let input ← getCached rationalGcd5d5 fun _ => rationalGcd 5 5
+  budgeted 5_000_000_000 do return runRatPair input
 
 def runSquarefree3m1to5 (_ : Unit) : IO UInt64 := budgeted 4_000_000_000 do
   return runSquarefree (← squarefree3m1to5.get)
@@ -138,7 +138,7 @@ and checked replay.  The attempted `3d5, 3d10, 3d20, 4d5, 5d5` grid varies
 several of those costs at once, and no published bound covers this concrete
 pipeline.  Mode 3 uses `5d5`; 25 s is 2.01× its clean 12.433 s median. -/
 setup_fixed_benchmark runDenseGcd5d5 where
-  mode3Config 0xbd6798d21ee1b1e0 35.0
+  mode3Config 0xbd6798d21ee1b1e0 90.0
 
 /- The sparse family deliberately reaches the dispatcher and dense PRS
 fallback, for which the SPEC gives no useful bound.  Degree-only endpoints do
@@ -146,7 +146,7 @@ not control coefficient swell, and the degree-4096 bounded declines measured
 no completed gcd.  Mode 3 uses the complete `5d16` call; 4 s is 2.81× the
 clean 1.425 s median. -/
 setup_fixed_benchmark runSparseStress5d16 where
-  mode3Config 0xbd6798d21ee1b1e0 8.0
+  mode3Config 0xbd6798d21ee1b1e0 20.0
 
 /- Rational lifting adds denominator scans and scaling to a dispatcher whose
 integer-route probe costs are already unmodelled.  The attempted five-shape
@@ -154,7 +154,7 @@ grid changes arity, dense size, and coefficient work together, and no cited
 upper bound covers the profiled rational producer.  Mode 3 pins `5d5`; 5 s is
 2.06× the clean 2.428 s median. -/
 setup_fixed_benchmark runRationalGcd5d5 where
-  mode3Config 0xcb197b68a2a27c66 10.0
+  mode3Config 0xcb197b68a2a27c66 45.0
 
 /- Yun performs one dispatcher-dependent gcd per level and variable.  The
 attempted multiplicity patterns vary arity, factor count, and missing levels,

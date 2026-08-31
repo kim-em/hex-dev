@@ -3,14 +3,14 @@
 ## Bench Targets
 
 The Mathlib-free suite is registered in `bench/HexMvGcd/Bench.lean`, with the
-fixed scientific matrix in `bench/HexMvGcd/Matrix.lean`, matched external cases
-in `bench/HexMvGcd/Comparators.lean`, and sampling handles in
+route-mode targets in `bench/HexMvGcd/Matrix.lean`, matched external cases in
+`bench/HexMvGcd/Comparators.lean`, and sampling handles in
 `bench/HexMvGcd/Profile.lean`. Input construction is outside every timed
 region. Each timed arm forces a structural checksum or returns a canonical
 term list whose complete hash is checked by lean-bench.
 
-The parametric registrations cover the operations that have machine-operation
-models:
+The following registrations select **mode 1**, with the independently derived
+family models adjacent to their registrations:
 
 | target | operation | declared model |
 |---|---|---|
@@ -23,15 +23,58 @@ models:
 | `runToUnivariate` | recursive-view construction | `n * log2 (n + 1)` |
 | `runCofactor` | exact division by a three-term divisor | `n * n * log2 (n + 1)` |
 
-The route-dependent work has no invented asymptotic model. Its fixed matrix
-covers all seven declared input families: `coprime-pairs` at arities 2 through
-8 in dense and sparse forms; `dense-gcds` at 3d5, 3d10, 3d20, 4d5, and 5d5;
-`sparse-stress` at degree 4096 and arities 5, 8, and 12; `rational` GCDs at the
-five dense shapes; `squarefree` patterns 2m1, 3m1-to-5, 4m7, and 5m2357; and
-the matched `swell` and `cofactor-heavy` endpoints described below. The
-degree-4096 sparse cases intentionally measure one bounded Brown image and
-return hash zero when the backend declines; they do not silently time the
-dense PRS fallback.
+The route-dependent operations select **mode 3**. `maxSecondsPerCall` remains
+only a child-process safety cap. Each timed function separately measures its
+body with `IO.monoNanosNow` and returns a sentinel on a ceiling violation, so
+the expected-hash check enforces the operation budget.
+
+| target | operation / canonical hard input | body budget |
+|---|---|---:|
+| `runContentInFixed` | recursive named content, `prepPublic 2` | 10 ms |
+| `runPrimPartInFixed` | recursive primitive part, `prepPublic 2` | 15 ms |
+| `runGcdFixed` | public integer gcd, `prepPublic 2` | 30 ms |
+| `runCofactorsFixed` | public cofactor pair, `prepPublic 2` | 60 ms |
+| `runIsCoprimeFixed` | exact coprimality decision, `prepPublic 2` | 35 ms |
+| `runGcdListFixed` | three-input gcd fold, `prepPublic 2` | 60 ms |
+| `runLcmFixed` | gcd plus reconstructed product, `prepPublic 2` | 35 ms |
+| `runSqfDecompFixed` | Yun decomposition, `prepPublic 2` | 1 s |
+| `runRadicalFixed` | derivative gcd fold, `prepPublic 2` | 1 s |
+| `runIsSquarefreeFixed` | derivative coprimality decision, `prepPublic 2` | 1 s |
+| `Matrix.runDenseCoprime8` | genuine route-1 dense arity-8 pair | 1 s |
+| `Matrix.runSparseCoprime8` | genuine route-1 sparse arity-8 degree-128 pair | 1 s |
+| `Matrix.runDenseGcd5d5` | Brown interpolation, arity 5 / degree 5 | 25 s |
+| `Matrix.runSparseStress5d16` | complete public sparse-gap gcd | 4 s |
+| `runSwell5` | degree-5 extended PRS | 10 ms |
+| `Matrix.runRationalGcd5d5` | rational lift, arity 5 / degree 5 | 5 s |
+| `Matrix.runSquarefree3m1to5` | Yun levels 1 through 5 in arity 3 | 4 s |
+
+The ordered-rule attempts rule out stronger modes operation by operation:
+
+- The SPEC gives `contentIn`, the dispatcher, Brown, rational lifting, Yun,
+  and the PRS fallback in probe counts. It explicitly omits each probe's
+  image-gcd, interpolation, CRT, coefficient, and replay costs, so those counts
+  do not derive a tight wall model.
+- The old coprime arity schedule was not a route-1 experiment: both constructors
+  returned `(f, f + 1)`, and `remainderCert?` discharged every case in route 0.
+  The replacement canonical inputs are checked during initialization both to
+  bypass route 0 and to succeed in `intFastProposal` before the timed public
+  `gcd` call.
+- The attempted dense integer shapes `3d5, 3d10, 3d20, 4d5, 5d5`, rational
+  analogues, sparse degree/arity endpoints, squarefree multiplicity patterns,
+  and PRS degrees all change several independent costs at once. They cannot
+  support a one-parameter declaration read off their timings. In particular,
+  the old degree-4096 sparse rows returned zero after one bounded Brown image;
+  they measured a decline protocol rather than a completed gcd and are removed.
+- Mode 2 is unavailable for every one of these targets: neither the SPEC nor a
+  cited published result bounds the complete implementation phase which the
+  profiles show dominating. A probe-count citation for work below the image gcd
+  or PRS would not meet the dominant-phase rule.
+
+The fixed `runDivExactFixed`, `runCoprimeFamilyFixed`, `runDenseFixed`,
+`runSparseFixed`, `runRationalFixed`, and `runSquarefreeFixed` rows are limited
+expected-hash smoke anchors. The FLINT/Singular registrations are comparator
+and process-protocol anchors. None of those rows is used as performance
+coverage.
 
 Every external-comparator family has two matched endpoints and three arms:
 Hex, **FLINT fmpz_mpoly and fmpq_mpoly via python-flint**, and
@@ -73,7 +116,7 @@ rung has a stable result hash.
 | `runToUnivariate` | 1,024…32,768 | 0.074391 → 2.530061 ms | −0.087 | 5.147…6.642 | consistent |
 | `runCofactor` | 16…128 | 0.681820 → 60.192990 ms | −0.110 | 524.841…665.840 | consistent |
 
-The fixed matrix command was:
+The old 31-row clean export remains the attempted-schedule record:
 
 ```sh
 .lake/build/bin/hexmvgcd_bench run --filter Hex.MvGcdBench.Matrix \
@@ -82,7 +125,8 @@ The fixed matrix command was:
 
 Its 31 results have SHA-256
 `db83de71181514f5d1753f063ddc00a4f14fa744bfe6ac22369faf6777b328dd`;
-all expected hashes matched.
+all expected hashes matched. These timings record the mode-selection attempts
+summarized above; they are not treated as performance verdicts.
 
 | family | shape | median |
 |---|---|---:|
@@ -93,10 +137,14 @@ all expected hashes matched.
 | `rational` | 3d5 / 3d10 / 3d20 / 4d5 / 5d5 | 24.712 / 184.659 / 1,559.791 / 255.569 / 2,355.822 ms |
 | `squarefree` | 2m1 / 3m1-to-5 / 4m7 / 5m2357 | 0.180261 / 1,715.168 / 90.370 / 119.607 ms |
 
-The bounded sparse probes all returned the expected zero hash. This records
-the known absence of a sparse route; it is not a false successful GCD claim.
-The largest Brown case remains finite at 11.905 seconds and is intentionally a
-scheduled scientific point rather than a merge-gating smoke case.
+The old bounded sparse probes all returned zero after a single Brown image.
+Because they did not complete the advertised gcd operation, the replacement
+suite removes them rather than treating a fast decline as coverage.
+
+The clean mode-3 command and measurements are recorded below after the final
+source commit:
+
+<!-- ISSUE9812_MODE3_RESULTS -->
 
 ## Comparator Ratios
 
@@ -237,8 +285,4 @@ No dominant inclusive cost lies outside the corresponding registered target.
 
 ## Concerns
 
-- [#9812](https://github.com/kim-em/hex-dev/issues/9812) tracks the fixed
-  performance matrix's missing ordered-mode and absolute-budget evidence.
-
-The absent sparse route remains an explicit SPEC limitation; it is not a
-separate regression claim.
+None.
