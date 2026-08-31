@@ -18,4 +18,3 @@ theorem result : Nat.Prime
 #print axioms result
 
 end PrimeCert.Comparator.Bit512
-

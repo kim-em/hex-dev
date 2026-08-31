@@ -13,4 +13,3 @@ theorem result : Nat.Prime 1945555039024054273 := prime_cert%
 #print axioms result
 
 end PrimeCert.Comparator.Bit61
-
