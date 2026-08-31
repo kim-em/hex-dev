@@ -278,7 +278,7 @@ def runSwell3 (_ : Unit) : IO UInt64 := do
 def runSwell4 (_ : Unit) : IO UInt64 := do
   return runSwell (← swell4.get)
 
-def runSwell5 (_ : Unit) : IO UInt64 := do
+def runSwell5 (_ : Unit) : IO UInt64 := Matrix.budgeted 10_000_000 do
   return runSwell (← swell5.get)
 
 structure RationalInput where
@@ -408,9 +408,9 @@ setup_benchmark runToUnivariate n => n * Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-/- Named content and primitive part invoke recursive gcd production, for which
-the SPEC gives probe counts rather than a full runtime model. They therefore
-use canonical fixed registrations instead of invented asymptotics. -/
+/- These fixed rows are expected-hash smoke anchors for the public wrappers.
+They make no performance claim; route-family registrations in `Matrix` carry
+the operation evidence and body-scoped budgets. -/
 setup_fixed_benchmark runContentInFixed where {
   expectedHash := some 0xd1f9ea943ea7ea73
 }
@@ -418,16 +418,14 @@ setup_fixed_benchmark runPrimPartInFixed where {
   expectedHash := some 0x358b5704b57e7de5
 }
 
-/- The public exact-division entry point is covered here on the same canonical
-input as the other wrappers. The cofactor-heavy family below carries its
-machine-operation model without constructing unrelated public results. -/
+/- The public exact-division row is likewise a hash anchor. `runCofactor`
+below carries its independently derived mode-1 model. -/
 setup_fixed_benchmark runDivExactFixed where {
   expectedHash := some 0xeeadb45fd4afbeef
 }
 
-/- The public dispatcher, cofactor wrappers, list/lcm wrappers, and squarefree
-operations are route-dependent. Canonical fixed registrations cover their API
-surface; the isolated families below carry the scientific ladders. -/
+/- Public dispatcher, list/lcm, and squarefree wrapper hash anchors.  They
+exercise wiring only and do not discharge performance coverage. -/
 setup_fixed_benchmark runGcdFixed where {
   expectedHash := some 0x01a55d7eea73bbb3
 }
@@ -453,10 +451,8 @@ setup_fixed_benchmark runIsSquarefreeFixed where {
   expectedHash := some 0x000000000000000d
 }
 
-/- The SPEC gives image-gcd probe counts, not full runtime models, for the
-route-dependent families. Canonical fixed cases record their costs without
-inventing asymptotics from degree alone. Phase 4 expands these representatives
-across the full arity and shape matrix named by the SPEC. -/
+/- Family-level smoke/hash anchors.  The mode-3 operation evidence is in
+`Hex.MvGcdBench.Matrix`; these rows are intentionally not used as coverage. -/
 setup_fixed_benchmark runCoprimeFamilyFixed where {
   expectedHash := some 0x42905229134041e6
 }
@@ -467,21 +463,21 @@ setup_fixed_benchmark runSparseFixed where {
   expectedHash := some 0xb45fffc66bacdc5f
 }
 
-/- The extended PRS has no useful asymptotic bound in the SPEC. Fixed rungs
-record coefficient swell without asserting a false scaling model. -/
-setup_fixed_benchmark runSwell3 where {
-  expectedHash := some 0x9fac850485b60c86
-}
-setup_fixed_benchmark runSwell4 where {
-  expectedHash := some 0x9fac850485b60c86
-}
+/- The extended PRS has no useful asymptotic bound.  Degree and coefficient
+height jointly control swell, and the SPEC supplies neither a tight wall model
+nor a published bound for this implementation.  Mode 3 therefore uses the
+canonical degree-5 swell input and a 10 ms body-scoped budget, with the child
+process cap serving only as a safety bound. -/
 setup_fixed_benchmark runSwell5 where {
+  repeats := 3
+  maxSecondsPerCall := 2.0
+  warmupFirstIter := true
   expectedHash := some 0x9fac850485b60c86
+  tags := #[scheduledHardwareTag]
 }
 
-/- Denominator clearing and Yun's loop likewise inherit dispatcher-dependent
-gcd costs. Their fixed cases exercise the rational lift and repeated-factor
-paths without treating probe counts as machine-operation models. -/
+/- Denominator-clearing and Yun wrapper hash anchors. Their mode-3 operation
+evidence is registered on canonical hard inputs in `Matrix`. -/
 setup_fixed_benchmark runRationalFixed where {
   expectedHash := some 0xf6040a6b74bc3ff1
 }

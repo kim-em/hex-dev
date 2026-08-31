@@ -69,6 +69,33 @@ def sparseCoprime (n degree : Nat) : P n Int × P n Int :=
         Int.ofNat (axis.val + 2))
   (left, left + 1)
 
+/-- A dense coprime pair which cannot be discharged by the unit-difference or
+one-step-remainder prepass.  Each side is a product of distinct primitive
+linear factors, and the two factor sets are disjoint. -/
+def denseRouteCoprime (n : Nat) : P n Int × P n Int :=
+  let left := (List.finRange n).foldl
+    (fun polynomial i =>
+      polynomial * (X i + C (Int.ofNat (i.val + 1)))) 1
+  let right := (List.finRange n).foldl
+    (fun polynomial i =>
+      polynomial * (X i + C (Int.ofNat (n + i.val + 2)))) 1
+  (left, right)
+
+/-- A high-degree, low-support coprime pair for the modular coprimality route.
+The unequal exponent and coefficient patterns avoid the route-0 shortcuts. -/
+def sparseRouteCoprime (n degree : Nat) : P n Int × P n Int :=
+  let left : P n Int := ofTerms <|
+    (Mono.zero, 1) :: (List.finRange n).map fun axis =>
+      (Hex.Vector.ofFn' fun i =>
+        if i = axis then degree + axis.val else 0,
+        Int.ofNat (axis.val + 2))
+  let right : P n Int := ofTerms <|
+    (Mono.zero, 2) :: (List.finRange n).map fun axis =>
+      (Hex.Vector.ofFn' fun i =>
+        if i = axis then degree + 2 * axis.val + 1 else 0,
+        Int.ofNat (2 * axis.val + 3))
+  (left, right)
+
 /-- A linear common factor involving every variable. -/
 def commonFactor (n : Nat) : P n Int :=
   (List.finRange n).foldl
