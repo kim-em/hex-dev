@@ -171,6 +171,34 @@ The native companion ratios are recorded separately in
 `reports/hex-mv-poly-performance.md`. They characterize compiled throughput
 but do not override the kernel-specific decision.
 
+### Representation decision
+
+The proof-track evidence here and the compiled evidence in
+`reports/hex-mv-poly-performance.md` support one representation decision while
+retaining distinct acceptance rules. The compiled suite is accepted against
+its declared complexity modes. This fresh-module suite decides whether to add
+a second, kernel-specialised representation: at least two workload families
+must have a conservative lower bound above 2× at the largest size fitting the
+budget.
+
+The committed release-quality sweep is complete and valid, but at the tested
+terminal rungs zero families clear the conservative threshold. The
+preregistered default for anything short of two passes is the existing single
+representation, so the resolved current decision is to retain `ExtTreeMap`.
+The unresolved threshold intervals do not leave the production choice
+unresolved; they mean that a positive case for the sorted form was not
+demonstrated.
+
+This decision does not establish that every sorted representation is slower.
+Mathlib `MvSparsePoly` is unavailable at the pinned revision, so the measured
+candidate is a canonical sorted-list proxy rather than upstream code. The
+terminal rungs are only the largest registered rungs, not the largest sizes
+that fit the 300-second per-module budget, so the sweep did not exercise the
+gate's strongest largest-size clause. Larger preregistered rungs, more
+samples, and preferably a quiescent host would be needed for a future positive
+replacement claim; they are not required to apply the current negative
+default.
+
 ## Profile
 
 Sampling profiles are not applicable. `HexMvPolyMathlib` has no compiled
@@ -190,24 +218,3 @@ complete pair attempts, retained six accepted samples for every pair, and
 reported no validity violation.
 
 ## Concerns
-
-[Issue #9810](https://github.com/kim-em/hex-dev/issues/9810) tracks the
-unresolved proof-track gate described below.
-
-The implementation milestone is complete, but all five terminal threshold
-comparisons remain statistically unresolved: their point estimates are not
-evidence that the conservative 2× threshold was crossed. Under the
-preregistered rule, zero families pass and the production library therefore
-remains a single `ExtTreeMap` representation.
-
-The unavailable upstream `Mathlib MvSparsePoly` remains an explicit comparator
-limitation. The current sorted proof-probe adapter is evidence, not production
-API, and the measured result does not justify promoting it. The terminal
-construction-controlled rungs are the largest registered rungs, but they
-finish well below the 300-second per-module budget and therefore are not the
-largest sizes that fit that budget. This capture does not exercise the
-strongest clause of the positive gate and cannot justify a second
-representation. Under the standing rule that anything short of two
-conservative passes leaves the single representation in place, the default
-remains `ExtTreeMap`. A future positive decision needs preregistered larger
-rungs, more samples, and preferably a quiescent host.

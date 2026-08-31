@@ -249,17 +249,37 @@ The five visualizations are:
 - [structural collisions](figures/hex-mv-poly-comparator-structural-collisions.svg)
 - [sum of squares](figures/hex-mv-poly-comparator-sum-of-squares-arithmetic.svg)
 
-Native ratios are informational rather than the representation gate. The
-release-quality kernel sweep measured construction-subtracted point ratios of
-5.216× for addition, 2.379× for cancellation, 2.890× for SOS, and 1.586× for
-structural collisions. The first three conservative intervals start at
-1.287×, 1.265×, and 1.477× respectively; addition and structural collisions
-are noise-limited. Collision-heavy multiplication has a 0.930× point estimate
-but its [0.359×, 2.329×] threshold interval remains unresolved. No family has
-a lower bound above 2×, so the predeclared two-family gate is not met. The
-decision and its robust null-envelope checks are recorded in
-[`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md):
-keep `ExtTreeMap` as the single production representation.
+### Representation decision
+
+The compiled ratios above and the proof-track measurements in
+[`hex-mv-poly-mathlib-performance.md`](hex-mv-poly-mathlib-performance.md)
+inform one representation decision, but have separate acceptance rules. The
+native suite must pass its declared complexity modes; its comparator ratios
+are informational and do not select the representation. The proof-track gate
+selects a second, kernel-specialised sorted representation only when at least
+two workload families have a conservative lower bound above 2× at the largest
+size fitting the budget.
+
+The complete release-quality proof sweep measured construction-subtracted
+point ratios of 5.216× for addition, 2.379× for cancellation, 2.890× for SOS,
+and 1.586× for structural collisions. The first three conservative intervals
+start at 1.287×, 1.265×, and 1.477× respectively; addition and structural
+collisions are noise-limited. Collision-heavy multiplication has a 0.930×
+point estimate but its [0.359×, 2.329×] threshold interval remains unresolved.
+At the tested terminal rungs, no family has a lower bound above 2×, so the
+predeclared two-family positive condition was not demonstrated. Under the
+preregistered rule that anything short of two passes leaves the existing
+representation standing, the resolved current decision is to retain
+`ExtTreeMap` as the single production representation.
+
+This is a negative replacement decision, not evidence that every sorted
+representation is slower. The candidate is a canonical sorted-list proxy
+because Mathlib `MvSparsePoly` is unavailable at the pinned revision, and the
+terminal rungs are only the largest registered rungs, not the largest sizes
+that fit the 300-second per-module budget. The sweep therefore did not
+exercise the gate's strongest largest-size clause. Those limitations constrain
+a future positive replacement claim but do not invalidate the current default
+decision.
 
 ## Profile
 
@@ -347,23 +367,3 @@ committed JSON exports, report tables, and five SVGs are therefore generated
 from the same corpus and are byte-identifiable by the hashes above.
 
 ## Concerns
-
-[Issue #9805](https://github.com/kim-em/hex-dev/issues/9805) tracks the
-unresolved representation experiment described below.
-
-The implementation milestone is complete. The representation experiment is
-not a positive performance result: all five terminal comparisons remain
-statistically unresolved. Under the predeclared gate, zero families pass.
-
-The Mathlib-native curve is explicitly a sorted-list proxy because
-`MvSparsePoly` is unavailable at the pinned revision, and CompPoly's fixed
-lexicographic comparator prevents exact comparator matching on every family.
-These are disclosed measurement limitations, not Hex implementation defects.
-
-The release-quality kernel gate does not justify a second representation.
-Within the single `ExtTreeMap` implementation, the addition profile identifies
-a promising optimization: a direct tree-cursor version of the existing
-ordered joint fold plus a linear tree builder. Such primitives belong in the
-reusable, Std-only `HexBasic/ExtTreeMap.lean` upstream-candidate layer.
-Coefficient combination and removal of zero coefficients remain `HexMvPoly`
-policy.
