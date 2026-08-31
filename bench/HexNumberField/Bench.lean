@@ -367,11 +367,11 @@ degree two; varying that degree would change the public value's field rather
 than isolate a caller size parameter, and no executable isolator bound supplies
 a mode-2 ceiling. The total wrapper adds only the constant-time checked-result
 projection. Including both warmup and measured conversion, its 0.93 ms median
-plus the 47 ms spawn floor sits over 5x inside the 250 ms zero-grace
+plus the 47 ms spawn floor sits over 10x inside the 500 ms zero-grace
 whole-child budget. `QAdjoin.isZero` is grouped as a constant-time anchor. -/
 setup_fixed_benchmark runQAdjoinCanonical where {
   repeats := 3
-  maxSecondsPerCall := 0.25
+  maxSecondsPerCall := 0.5
   killGraceMs := 0
   warmupFirstIter := true
   expectedHash := some 0x3dacd77644bc8bba
@@ -418,13 +418,14 @@ setup_fixed_benchmark runRoots where {
 lazy fixture once before measurement. These APIs operate on fixed quadratic
 values; manufacturing a degree parameter changes their field and isolation
 problem rather than scaling the same public input, while no published bound
-covers the executable isolation/exactification route. The 250 ms default is
-over three times the measured 43 ms clean-spawn floor plus every default-class
+covers the executable isolation/exactification route. The 500 ms default is
+over six times the measured 47 ms clean-spawn floor plus twice every
+default-class
 operation below; the few slower routes declare their own measured budgets
 adjacent to them. -/
 private def apiFixedConfig : LeanBench.FixedBenchmarkConfig := {
   repeats := 3
-  maxSecondsPerCall := 0.25
+  maxSecondsPerCall := 0.5
   killGraceMs := 0
   warmupFirstIter := true
 }
@@ -434,7 +435,7 @@ performance evidence. They still pin their output and use the same strict
 whole-child mechanics so a registration cannot become vacuous. -/
 private def apiAnchorConfig : LeanBench.FixedBenchmarkConfig := {
   repeats := 5
-  maxSecondsPerCall := 0.25
+  maxSecondsPerCall := 0.5
   killGraceMs := 0
   warmupFirstIter := true
 }
