@@ -555,6 +555,8 @@ structure PMinusOneAttempt where
   attempts : Nat
   rand     : Rand
 
+def pMinusOneStage1 (n base bound : Nat) : PMinusOneResult
+
 def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
     PMinusOneAttempt
 
@@ -1205,23 +1207,36 @@ Cases that must be present:
   migrated view has the same contents in the same order. Current core
   conformance does not import that unreleased downstream consumer.
 
-**Oracle choice.** PARI's `isprime`, `nextprime`, and `primes`
-through cypari2 cover the verdict surface, and cypari2 is already
-installed by the CI dependency step. Current PARI exposes certificates
-through `primecert`, not through the result of `isprime(n, 1)`;
-`primecert(n,,1)` requests its N-1 certificate form. The oracle validates
-that object with `primecertisvalid`, translates the cases satisfying this
-checker's `m = 1` hypotheses, and commits accepted translations as
-`certcheck` fixtures. Agreement on all `isprime` verdicts remains required
-even when PARI chooses another certificate form. python-flint's
-`fmpz.is_prime` is the second opinion on the large cases and is likewise
-already installed.
+**Oracle choice.** PARI's `isprime`, `nextprime`, and `primes` through
+cypari2 independently cover verdicts, next-prime results, and segments.
+Certificate fixtures are replayed by a separate Python implementation of the
+checker; PARI supplies every small-leaf primality verdict and independently
+confirms the subject of every accepted certificate. The rejected certificates
+are hand-constructed clause tests, so their independent evidence is agreement
+with that replay rather than a PARI certificate format. python-flint's
+`fmpz.is_prime` is a required second opinion on every primality verdict used by
+the oracle, including certificate leaves. Both dependencies are already
+installed by the CI dependency step.
 
 sympy is installed by CI alongside `python-flint`, `cypari2`, and
 `conway-polynomials` (an earlier draft of this SPEC said otherwise),
 but PARI plus python-flint already cover the verdict surface and the
 second opinion, so this SPEC uses that pair and adds no third
 dependency.
+
+**Mode: required.** The existing single-job oracle tail installs and preflights
+PARI/cypari2 and python-flint, diffs fresh deterministic emission against the
+committed snapshot, and fails if either the dependency or a comparison is
+unavailable. The all-oracle local sweep may record a missing dependency as a
+skip unless `HEX_REQUIRE_ORACLES=1` or `--require-oracles` selects this required
+profile. Fixtures are limited to results the oracle can recompute from the
+original input: verdicts, next-prime results, certificate-checker replay, and
+prime segments.
+Multiplicative-order laws, p−1 and Brent routes, exact search accounting and
+bounded failures, sieve representation, total fallback, and the term/tactic
+surface are covered by `HexPrimality.Conformance`; PARI cannot independently
+establish those implementation-level properties, so emitting them would add
+ceremony rather than independent evidence.
 
 ## Benchmarking
 

@@ -43,6 +43,8 @@ JSONL fixture record shape (one record per line):
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
                       "p": int, "n": int}``
+* ``nextprime``  — ``{"kind": "nextprime",  "lib": str, "case": str,
+                      "n": nonnegative int}``
 * ``symmod``     — ``{"kind": "symmod",     "lib": str, "case": str,
                       "a": int, "m": nonnegative int}``
 * ``crt``        — ``{"kind": "crt",        "lib": str, "case": str,
@@ -131,6 +133,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "ratrecon",
         "conway",
         "isprime",
+        "nextprime",
         "certcheck",
         "segment",
         "gfq_bridge",
@@ -632,6 +635,10 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     elif kind == "isprime":
         if not _is_int(record.get("n")) or record["n"] < 0:
             raise FixtureError(f"isprime.n must be a nonnegative int: {record!r}")
+    elif kind == "nextprime":
+        _exact_keys(record, {"kind", "lib", "case", "n"}, kind)
+        if not _is_nat(record.get("n")):
+            raise FixtureError(f"nextprime.n must be a nonnegative int: {record!r}")
     elif kind == "segment":
         for key in ("lo", "hi"):
             if not _is_int(record.get(key)) or record[key] < 0:
