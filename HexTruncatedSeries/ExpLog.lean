@@ -340,34 +340,42 @@ private theorem log_one_add [Lean.Grind.CommRing R]
   · intro i hi hip
     omega
 
-private theorem logUpTo_agree [Lean.Grind.CommRing R]
+/-- Bounded logarithm agrees with the full logarithm throughout the requested
+prefix. -/
+theorem logUpTo_agree [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] (m : Nat) (a : TSeries R n)
-    (ha : a.coeff 0 = 1) : Agree m (logUpTo m a) (log a) := by
-  intro i hi him
-  have hau : a.coeff 0 * 1 = 1 := by rw [ha]; grind
-  unfold log logUpTo
-  rw [coeff_ofFn _ i hi, if_pos him, coeff_ofFn _ i hi, if_pos hi,
-    coeff_truncate _ _ i hi, coeff_truncate _ _ i hi]
-  cases i with
-  | zero =>
-      rw [coeff_integrate _ 0 (by omega), coeff_integrate _ 0 (by omega)]
-      simp
-  | succ i =>
-      rw [coeff_integrate _ (i + 1) (by omega),
-        coeff_integrate _ (i + 1) (by omega)]
-      simp only [show i + 1 ≠ 0 by omega, if_false, Nat.add_sub_cancel]
-      rw [coeff_mulUpTo (m - 1) _ _ i (by omega), if_pos (by omega),
-        coeff_mulUpTo (n - 1) _ _ i (by omega), if_pos (by omega),
-        coeff_mul _ _ i (by omega), coeff_mul _ _ i (by omega)]
-      congr 1
-      unfold convCoeff
-      apply List.foldl_add_congr
-      intro j hj
-      have hj' : j < i + 1 := List.mem_range.mp hj
-      rw [coeff_truncate _ _ (i - j) (by omega),
-        coeff_truncate _ _ (i - j) (by omega),
-        coeff_invUpTo m a 1 hau (i - j) (by omega), if_pos (by omega),
-        coeff_invUpTo n a 1 hau (i - j) (by omega), if_pos (by omega)]
+    (ha : (a - 1).coeff 0 = 0) : Agree m (logUpTo m a) (log a) := by
+  by_cases hn : 0 < n
+  · have ha0 : a.coeff 0 = 1 := by
+      rw [coeff_sub a 1 0 hn, coeff_one 0 hn] at ha
+      grind
+    intro i hi him
+    have hau : a.coeff 0 * 1 = 1 := by rw [ha0]; grind
+    unfold log logUpTo
+    rw [coeff_ofFn _ i hi, if_pos him, coeff_ofFn _ i hi, if_pos hi,
+      coeff_truncate _ _ i hi, coeff_truncate _ _ i hi]
+    cases i with
+    | zero =>
+        rw [coeff_integrate _ 0 (by omega), coeff_integrate _ 0 (by omega)]
+        simp
+    | succ i =>
+        rw [coeff_integrate _ (i + 1) (by omega),
+          coeff_integrate _ (i + 1) (by omega)]
+        simp only [show i + 1 ≠ 0 by omega, if_false, Nat.add_sub_cancel]
+        rw [coeff_mulUpTo (m - 1) _ _ i (by omega), if_pos (by omega),
+          coeff_mulUpTo (n - 1) _ _ i (by omega), if_pos (by omega),
+          coeff_mul _ _ i (by omega), coeff_mul _ _ i (by omega)]
+        congr 1
+        unfold convCoeff
+        apply List.foldl_add_congr
+        intro j hj
+        have hj' : j < i + 1 := List.mem_range.mp hj
+        rw [coeff_truncate _ _ (i - j) (by omega),
+          coeff_truncate _ _ (i - j) (by omega),
+          coeff_invUpTo m a 1 hau (i - j) (by omega), if_pos (by omega),
+          coeff_invUpTo n a 1 hau (i - j) (by omega), if_pos (by omega)]
+  · intro i hi _
+    omega
 
 private theorem log_agree [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] (p : Nat) (hp : 0 < p) (a b : TSeries R n)
@@ -445,7 +453,7 @@ private theorem expStep_correct [Lean.Grind.CommRing R]
   have hfactor : Agree m factor (1 + e) := by
     have h := Agree.sub
       (Agree.add (Agree.refl m (C 1)) (Agree.refl m a))
-      (logUpTo_agree m y hy)
+      (logUpTo_agree m y (logArg y hy))
     have halg : C 1 + a - log y = 1 + e := by
       dsimp only [e]
       rw [C_one]
@@ -493,7 +501,7 @@ private theorem expStep_stable [Lean.Grind.CommRing R]
   have hfactor : Agree m factor (1 + e) := by
     have h := Agree.sub
       (Agree.add (Agree.refl m (C 1)) (Agree.refl m a))
-      (logUpTo_agree m y hy)
+      (logUpTo_agree m y (logArg y hy))
     have halg : C 1 + a - log y = 1 + e := by
       dsimp only [e]
       rw [C_one]

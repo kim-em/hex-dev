@@ -157,7 +157,7 @@ libraries:
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -516,12 +516,16 @@ libraries:
     status: active
     phase4:
       input_families:
+        - name: coefficient-kernels
+          description: Balanced `F_257` and `F_65537` operands covering forced schoolbook, packed, Karatsuba, direct-NTT, CRT-NTT, and public-dispatch multiplication routes.
         - name: quotient-powers
-          description: Dense `F_65537` quotient-ring exponentiation and Frobenius power fixtures with modulus degree and exponent height scaled together.
+          description: Dense `F_65537` quotient-ring exponentiation, fixed-prime Frobenius, and Frobenius-power fixtures with their active modulus degree or exponent height scaled by the parameter.
         - name: modular-composition
           description: Same-size dense `F_65537` Horner modular composition modulo deterministic monic moduli.
         - name: product-squarefree
           description: Deterministic `F_5` products of linear factors covering weighted product reconstruction and Yun square-free decomposition summaries.
+        - name: euclidean-division-gcd
+          description: Dense long-division inputs and consecutive polynomial-Fibonacci pairs forcing a full decreasing-degree Euclidean remainder chain over `F_65537`.
 
   # ---------- Finite-field quotient pipeline ----------
   HexGFqRing:
@@ -669,10 +673,10 @@ libraries:
       comparators:
         - tool: "PARI factor and GMP-ECM"
           class: informational
-          rationale: "PARI and GMP-ECM use broader algorithm portfolios; comparisons diagnose route constants but are not merge gates."
+          rationale: "This factorization-comparator suite has two scoped endpoints: PARI factor covers table, balanced, and power-form inputs but uses a broader portfolio with no trial-division-plus-rho-only mode; GMP-ECM stage 1 covers the unbalanced ECM family as a separately tuned C implementation. Their ratios are informational external context, while matched internal controls diagnose Hex dispatch and certificate construction and the rho registration/profile diagnose rho."
       input_families:
         - name: table-and-balanced-semiprimes
-          description: Table-range integers and balanced semiprimes through 64 bits for dispatch and rho.
+          description: Uniform table-range integers and balanced semiprimes through 80 bits, with same-input internal controls for public dispatch versus trial division or rho.
         - name: smooth-and-unbalanced-semiprimes
           description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
         - name: power-forms
@@ -697,7 +701,7 @@ libraries:
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:

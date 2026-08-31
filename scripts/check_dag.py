@@ -19,12 +19,16 @@ from libgraph import (
 )
 
 
-IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+(.+?)\s*$")
+IMPORT_RE = re.compile(
+    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(.+?)\s*$"
+)
 LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
 LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
 LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
 LEAN_EXE_RE = re.compile(r"^lean_exe\s+([A-Za-z0-9_]+)\b")
-QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-z0-9_.]+)\s*$")
+QUALIFIED_IMPORT_RE = re.compile(
+    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+([A-Za-z0-9_.]+)\s*$"
+)
 IMPORT_ALL_RE = re.compile(
     r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
 )

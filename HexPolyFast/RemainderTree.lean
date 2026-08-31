@@ -89,29 +89,56 @@ private inductive WellFormed : RemainderNode R → Prop where
       (left right : RemainderNode R)
       (hleft : left.WellFormed) (hright : right.WellFormed)
       (leftDvd : left.root.poly ∣ root.poly)
-      (rightDvd : right.root.poly ∣ root.poly) :
+      (rightDvd : right.root.poly ∣ root.poly)
+      (rootDegree : root.poly.size - 1 =
+        (left.root.poly.size - 1) + (right.root.poly.size - 1))
+      (leftCapacity : left.plan.capacity = right.root.poly.size - 1)
+      (rightCapacity : right.plan.capacity = left.root.poly.size - 1) :
       WellFormed (.branch root plan hplan left right)
 
 end RemainderNode
 
-private structure BuiltRemainderNode (leaves : List (MonicLeaf R)) where
-  node : RemainderNode R
-  leaves_eq : node.leaves = leaves
-  wellFormed : node.WellFormed
+private theorem foldlDegree_add (leaves : List (MonicLeaf R)) (a b : Nat) :
+    leaves.foldl (fun degree leaf => degree + (leaf.poly.size - 1)) (a + b) =
+      a + leaves.foldl (fun degree leaf => degree + (leaf.poly.size - 1)) b := by
+  induction leaves generalizing b with
+  | nil => simp
+  | cons leaf leaves ih =>
+      simp only [List.foldl_cons, Nat.add_assoc]
+      exact ih (b + (leaf.poly.size - 1))
 
 /-- Sum of leaf degrees, hence the degree of their monic product. -/
 private def leafDegreeSum (leaves : List (MonicLeaf R)) : Nat :=
   leaves.foldl (fun degree leaf => degree + (leaf.poly.size - 1)) 0
 
+private theorem leafDegreeSum_append (left right : List (MonicLeaf R)) :
+    leafDegreeSum (left ++ right) =
+      leafDegreeSum left + leafDegreeSum right := by
+  simp only [leafDegreeSum, List.foldl_append]
+  simpa using foldlDegree_add right
+    (left.foldl (fun degree leaf => degree + (leaf.poly.size - 1)) 0) 0
+
+private structure BuiltRemainderNode (capacity : Nat)
+    (leaves : List (MonicLeaf R)) where
+  node : RemainderNode R
+  leaves_eq : node.leaves = leaves
+  capacity_eq : node.plan.capacity = capacity
+  degree_eq : node.root.poly.size - 1 = leafDegreeSum leaves
+  wellFormed : node.WellFormed
+
 private def buildRemainderNode (mul : MulPlan R) (capacity : Nat)
     (hone : (1 : R) ≠ 0) :
     (leaves : List (MonicLeaf R)) → leaves ≠ [] →
-      BuiltRemainderNode leaves
+      BuiltRemainderNode capacity leaves
   | [], hne => False.elim (hne rfl)
   | [entry], _ =>
       let plan := DivPlan.ofMonic mul entry.poly entry.monic entry.ne capacity
       { node := .leaf entry plan (by simp [plan])
         leaves_eq := rfl
+        capacity_eq := by
+          change plan.capacity = capacity
+          simp [plan]
+        degree_eq := by simp [RemainderNode.root, leafDegreeSum]
         wellFormed := .leaf entry plan _ }
   | a :: b :: rest, _ =>
       let leaves := a :: b :: rest
@@ -151,16 +178,52 @@ private def buildRemainderNode (mul : MulPlan R) (capacity : Nat)
       have hrightDvd : right.node.root.poly ∣ root.poly := by
         refine ⟨left.node.root.poly, ?_⟩
         rw [hroot, mul_comm_poly]
+      have hleftCapacity :
+          left.node.plan.capacity = right.node.root.poly.size - 1 := by
+        rw [left.capacity_eq, right.degree_eq]
+      have hrightCapacity :
+          right.node.plan.capacity = left.node.root.poly.size - 1 := by
+        rw [right.capacity_eq, left.degree_eq]
       let node : RemainderNode R := .branch root plan (by simp [plan, root])
         left.node right.node
       have hsplit : leftLeaves ++ rightLeaves = leaves :=
         List.take_append_drop split leaves
+      have hdegree : root.poly.size - 1 = leafDegreeSum leaves := by
+        have hleftPos : 0 < left.node.root.poly.size := by
+          apply Nat.pos_of_ne_zero
+          intro hz
+          exact left.node.root.ne ((size_eq_zero_iff _).mp hz)
+        have hrightPos : 0 < right.node.root.poly.size := by
+          apply Nat.pos_of_ne_zero
+          intro hz
+          exact right.node.root.ne ((size_eq_zero_iff _).mp hz)
+        have hproduct := size_mul_of_top_ne left.node.root.poly
+          right.node.root.poly hleftPos hrightPos (by
+          rw [leadingCoeff_eq_one_of_monic left.node.root.monic,
+            leadingCoeff_eq_one_of_monic right.node.root.monic]
+          have hzero : (Zero.zero : R) = 0 := rfl
+          rw [hzero, Lean.Grind.Semiring.one_mul]
+          exact hone)
+        rw [hroot, hproduct]
+        rw [← hsplit, leafDegreeSum_append]
+        rw [← left.degree_eq, ← right.degree_eq]
+        omega
+      have hrootDegree : root.poly.size - 1 =
+          (left.node.root.poly.size - 1) +
+            (right.node.root.poly.size - 1) := by
+        rw [hdegree, ← hsplit, leafDegreeSum_append,
+          ← left.degree_eq, ← right.degree_eq]
       { node
         leaves_eq := by
           dsimp [node, RemainderNode.leaves]
           rw [left.leaves_eq, right.leaves_eq, hsplit]
+        capacity_eq := by
+          change plan.capacity = capacity
+          simp [plan]
+        degree_eq := hdegree
         wellFormed := .branch root plan _ left.node right.node
-          left.wellFormed right.wellFormed hleftDvd hrightDvd }
+          left.wellFormed right.wellFormed hleftDvd hrightDvd
+          hrootDegree hleftCapacity hrightCapacity }
   termination_by leaves => leaves.length
   decreasing_by
     all_goals
@@ -180,6 +243,10 @@ structure RemainderTree (R : Type u) [DecidableEq R]
   private nodeLeaves : ∀ node, nodeData = some node →
     node.leaves = leavesData.toList
   private nodeWellFormed : ∀ node, nodeData = some node → node.WellFormed
+  private nodeCapacity : ∀ node, nodeData = some node →
+    node.plan.capacity = capacityData
+  private nodeDegree : ∀ node, nodeData = some node →
+    node.root.poly.size - 1 = leafDegreeSum leavesData.toList
   private noNodeLeaves : nodeData = none → leavesData.toList = []
 
 namespace RemainderTree
@@ -197,6 +264,8 @@ def build (mul : MulPlan R) (capacity : Nat) (leaves : Array (MonicLeaf R))
       nodeData := none
       nodeLeaves := by intro node h; contradiction
       nodeWellFormed := by intro node h; contradiction
+      nodeCapacity := by intro node h; contradiction
+      nodeDegree := by intro node h; contradiction
       noNodeLeaves := by intro; exact hempty }
   else
     let built := buildRemainderNode mul capacity hone leaves.toList hempty
@@ -206,6 +275,8 @@ def build (mul : MulPlan R) (capacity : Nat) (leaves : Array (MonicLeaf R))
       nodeData := some built.node
       nodeLeaves := by intro node h; cases h; exact built.leaves_eq
       nodeWellFormed := by intro node h; cases h; exact built.wellFormed
+      nodeCapacity := by intro node h; cases h; exact built.capacity_eq
+      nodeDegree := by intro node h; cases h; exact built.degree_eq
       noNodeLeaves := by intro h; contradiction }
 
 /-- Leaf divisors in their original order. -/
@@ -221,6 +292,10 @@ def size (tree : RemainderTree R) : Nat := tree.leavesData.size
 
 /-- Reciprocal capacity cached at the root. -/
 def capacity (tree : RemainderTree R) : Nat := tree.capacityData
+
+/-- Degree of the root product, computed as the sum of the leaf degrees. -/
+def rootDegree (tree : RemainderTree R) : Nat :=
+  leafDegreeSum tree.leavesData.toList
 
 private def reduceNode? (node : RemainderNode R)
     (p : DensePoly R) : Option (DensePoly R) :=
@@ -278,6 +353,71 @@ private def runNode? : RemainderNode R →
       let rs ← runNode? right r
       pure (ls ++ rs)
 
+private theorem quotientLength_le_capacity (p q : DensePoly R) (hq : q ≠ 0)
+    {degree capacity : Nat} (hdegree : q.size - 1 = degree)
+    (hsize : p.size ≤ degree + capacity) :
+    quotientLength p q ≤ capacity := by
+  have hqsize : q.size ≠ 0 := by
+    intro hz
+    exact hq ((size_eq_zero_iff q).mp hz)
+  by_cases hp : p.size < q.size
+  · simp [quotientLength_eq, hp]
+  · rw [quotientLength_eq]
+    simp [hqsize, hp]
+    omega
+
+private theorem runNode?_exists {node : RemainderNode R}
+    (hwf : node.WellFormed) (p : DensePoly R)
+    (hcap : quotientLength p node.plan.divisor ≤ node.plan.capacity) :
+    ∃ results, runNode? node p = some results := by
+  induction hwf generalizing p with
+  | leaf entry plan hplan =>
+      let current : RemainderNode R := .leaf entry plan hplan
+      refine ⟨[current.plan.mod p hcap], ?_⟩
+      have hred : reduceNode? current p = some (current.plan.mod p hcap) := by
+        unfold reduceNode?
+        rw [_root_.dite_eq_left hcap]
+      simp [current, runNode?, hred]
+  | branch root plan hplan left right hleft hright leftDvd rightDvd
+      rootDegree leftCapacity rightCapacity leftIH rightIH =>
+      let current : RemainderNode R := .branch root plan hplan left right
+      let r := current.plan.mod p hcap
+      have hrsize : r.size ≤ root.poly.size - 1 := by
+        have hsize := current.plan.size_mod_le p hcap
+        simpa [r, current, hplan, RemainderNode.plan] using hsize
+      rw [rootDegree] at hrsize
+      have hleftPos : 0 < left.root.poly.size := by
+        apply Nat.pos_of_ne_zero
+        intro hz
+        exact left.root.ne ((size_eq_zero_iff _).mp hz)
+      have hrightPos : 0 < right.root.poly.size := by
+        apply Nat.pos_of_ne_zero
+        intro hz
+        exact right.root.ne ((size_eq_zero_iff _).mp hz)
+      have hleftCap :
+          quotientLength r left.plan.divisor ≤ left.plan.capacity := by
+        rw [left.plan_divisor, leftCapacity]
+        by_cases hr : r.size < left.root.poly.size
+        · simp [quotientLength_eq, hr]
+        · rw [quotientLength_eq]
+          simp [Nat.ne_of_gt hleftPos, hr]
+          omega
+      have hrightCap :
+          quotientLength r right.plan.divisor ≤ right.plan.capacity := by
+        rw [right.plan_divisor, rightCapacity]
+        by_cases hr : r.size < right.root.poly.size
+        · simp [quotientLength_eq, hr]
+        · rw [quotientLength_eq]
+          simp [Nat.ne_of_gt hrightPos, hr]
+          omega
+      rcases leftIH r hleftCap with ⟨ls, hls⟩
+      rcases rightIH r hrightCap with ⟨rs, hrs⟩
+      refine ⟨ls ++ rs, ?_⟩
+      have hred : reduceNode? current p = some r := by
+        unfold reduceNode?
+        rw [_root_.dite_eq_left hcap]
+      simp [current, runNode?, hred, hls, hrs]
+
 private theorem runNode?_sound {node : RemainderNode R}
     (hwf : node.WellFormed) (origin parent : DensePoly R)
     (hparent : node.root.poly ∣ origin - parent)
@@ -294,7 +434,8 @@ private theorem runNode?_sound {node : RemainderNode R}
           subst results
           have hs := reduceNode?_sound (.leaf entry plan hplan) parent r hred
           exact .cons ⟨dvd_sub_chain hparent hs.1, hs.2⟩ .nil
-  | branch root plan hplan left right hleft hright leftDvd rightDvd leftIH rightIH =>
+  | branch root plan hplan left right hleft hright leftDvd rightDvd
+      rootDegree leftCapacity rightCapacity leftIH rightIH =>
       cases hred : reduceNode? (.branch root plan hplan left right) parent with
       | none => simp [runNode?, hred] at hrun
       | some r =>
@@ -326,6 +467,29 @@ def remainders? (tree : RemainderTree R) (p : DensePoly R) :
   match tree.nodeData with
   | none => some #[]
   | some node => runNode? node p |>.map List.toArray
+
+/-- A caller-supplied root capacity covering the input above the root degree
+makes the entire traversal succeed. Every proper-node guard follows from the
+sibling-degree capacities recorded by construction. -/
+theorem remainders?_isSome_of_capacity (tree : RemainderTree R)
+    (p : DensePoly R) (hcap : p.size ≤ tree.rootDegree + tree.capacity) :
+    (tree.remainders? p).isSome := by
+  unfold remainders?
+  cases hnode : tree.nodeData with
+  | none => simp
+  | some node =>
+      have hrootCap :
+          quotientLength p node.plan.divisor ≤ node.plan.capacity := by
+        rw [tree.nodeCapacity node hnode]
+        exact quotientLength_le_capacity p node.plan.divisor
+          (degree := tree.rootDegree) (capacity := tree.capacity) (by
+          rw [node.plan_divisor]
+          exact node.root.ne) (by
+          rw [node.plan_divisor]
+          simpa [rootDegree] using tree.nodeDegree node hnode) hcap
+      rcases runNode?_exists (tree.nodeWellFormed node hnode) p hrootCap with
+        ⟨results, hresults⟩
+      simp [hresults]
 
 /-- Every successful traversal returns, in leaf order, the canonical-size
 remainder of the input modulo each leaf polynomial. -/

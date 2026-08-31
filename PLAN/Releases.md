@@ -178,13 +178,20 @@ In this monorepo, all bench and conformance drivers build in the shared root
 Lake graph. Published mirrors use the corresponding root and sidecar skeletons
 documented in `scripts/release/BOOTSTRAP.md`; the sync manages source and
 rewrites every lockfile but deliberately leaves those Lake skeletons intact.
+The mirrors' CI workflows are managed centrally in
+`scripts/release/released-ci.yml` and published by the same guarded sync.
 
 ### The publish mechanism
 
-Four pieces, under `scripts/release/` and `.github/workflows/`:
+Five pieces, under `scripts/release/` and `.github/workflows/`:
 
 - `released.yml` — a per-repo manifest: which paths to copy, which
   oracles to ship, and which upstream repos to pin, in dependency order.
+- `released-ci.yml` — the complete per-repository mirror workflows. Their
+  repository-specific build, conformance, oracle, and bench commands remain
+  explicit while cache setup and policy are uniform. The explicit cache covers
+  each root/sidecar build plus published Hex dependency builds, while excluding
+  the separately fetched Mathlib cache.
 - `sync_released.py` — the driver. For each repo it clones `main`,
   overwrites the managed paths from this tree, rewrites the cross-repo
   Lake revisions, and commits to `main`. `--dry-run` prints the planned
@@ -212,11 +219,12 @@ routes that repository's clone and push through that token, so a new library
 goes on whichever token has room. Publishing one takes three steps in this
 order:
 
-1. create the repository under `leanprover` and give it the un-managed Lake
-   and CI skeleton (`scripts/release/BOOTSTRAP.md`); the sync clones but never
-   creates;
+1. create the repository under `leanprover`, give it the un-managed Lake
+   skeleton, and add its managed CI workflow in hex-dev
+   (`scripts/release/BOOTSTRAP.md`); the sync clones but never creates;
 2. add that repository to the selected repositories of a token with room,
-   with `Contents: Read and write`, and have an organization owner approve
+   with `Contents: Read and write` and `Workflows: Read and write`, and have an
+   organization owner approve
    the request at
    https://github.com/organizations/leanprover/settings/personal-access-token-requests;
    find the current tokens under
@@ -249,14 +257,13 @@ the push returns `403 Permission to leanprover/<repo>.git denied`.
 before the first push and refuses to start, naming the repositories no token
 covers. A dry run does not preflight, using no token and pushing nothing.
 
-**What the preflight does not prove.** It checks that each repository is in
-some token's selection, and nothing stronger. `GET /repos` needs only
-`Metadata: read`, and the `permissions` it returns describe the authenticated
-user's role rather than that token's grants, so a token holding only
-`Contents: read` on a selected repository still looks fine to it. Nor does it
-know whether branch protection or a ruleset on a mirror's `main` would reject
-the push. Those failures still surface only at push time; the invariant the
-mirrors rely on is that `main` takes direct pushes from the release actor.
+**What the preflight does not prove.** Its receive-pack probe verifies that a
+token can push ordinary content to the selected repository. GitHub checks the
+separate `Workflows: write` permission only when a push changes a workflow, so
+that grant still has to be configured on every publishing token. Nor does the
+probe know whether branch protection or a ruleset on a mirror's `main` would
+reject the push. Those failures still surface only at push time; the invariant
+the mirrors rely on is that `main` takes direct pushes from the release actor.
 
 ### Baseline and the uncoordinated-commit guard
 
