@@ -271,11 +271,6 @@ def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Profile-only spelling of the canonical Tier 2 compatibility operation. -/
-def profileTier2Compat (_ : Nat) : IO Bool := do
-  let cp ← compat_13_1_6Ref.get
-  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
-
 /-- Degree of the committed entry selected by a one-based table ordinal. -/
 def tier1LookupDegree (ordinal : Nat) : Nat :=
   if ordinal ≤ 8 then ordinal
@@ -308,19 +303,6 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
-
-/- Profile-only registration for the canonical Tier 2 compatibility case.
-The one-point constant declaration is not performance evidence; it exists only
-at the clean source commit cited by the headline profile record and is removed
-after that profile is captured. -/
-setup_benchmark profileTier2Compat profileParam => profileParam - profileParam + 1 where {
-  paramFloor := 1
-  paramCeiling := 1
-  paramSchedule := .custom #[1]
-  maxSecondsPerCall := 2.0
-  targetInnerNanos := 1000000000
-  signalFloorMultiplier := 1.0
-}
 
 /- Except for the two canonical hard registrations annotated below, these
 fixed registrations are correctness/hash anchors, not Phase-4 performance
