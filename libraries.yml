@@ -846,6 +846,16 @@ libraries:
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
     done_through: 2
     status: active
+    phase4:
+      input_families:
+        - name: proof-track-components
+          description: Matched fresh modules on a representative table-smooth 31-bit input and at the 512-bit ceiling separating numeral construction, committed certificate literals, production reification in the bridge emission context, bridge theorem and kernel replay, and full bare-primality elaboration while leaving shared certificate search with the core owner.
+        - name: threshold-routes
+          description: Opted-in norm_num proofs immediately below and above the 2^24 dispatch threshold, plus the accepted 512-bit certificate ceiling.
+        - name: negative-boundedness
+          description: Factor-found composites from 25 through 512 bits, including a strong pseudoprime, parity and odd-factor ceiling inputs, and balanced 512-bit bounded exhaustion.
+        - name: failure-policy
+          description: Fresh modules for certificate exhaustion and immediate 513-bit rejection, with unsupported and non-numeral goal shapes pinned by ordinary conformance.
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
