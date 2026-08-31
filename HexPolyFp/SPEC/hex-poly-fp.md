@@ -109,20 +109,31 @@ built from this repository:
 Accordingly `nttCrtCutoff = 8192`. Regenerate the boundary samples with
 `lake exe hexpolyfp_bench compare Hex.FpPolyBench.runMulPackedChecksum Hex.FpPolyBench.runMulCrtNttChecksum --param-floor 4096 --param-ceiling 8192 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`.
 
-The same `FpPoly` plan drives fast division and half-gcd. One-shot Newton
-division and half-gcd lose to the retained finite-field algorithms through
-degree 2048, so square-free decomposition and gcd consumers keep those paths.
+The same `FpPoly` plan drives fast division and half-gcd. Fresh three-trial
+comparisons on the registered families show one-shot Newton division and
+half-gcd losing to the retained finite-field algorithms at every shared rung
+through degree 2048. At the largest rung, division is 58.198 ms retained versus
+237.784 ms Newton, while GCD is 23.736 ms Euclidean versus 286.842 ms half-gcd.
+The clean-source records are
+[`division`](../../reports/bench-results/hex-poly-fp-5e7d935-divmod-compare.json)
+and [`gcd`](../../reports/bench-results/hex-poly-fp-5e7d935-gcd-compare.json).
+Square-free decomposition and GCD consumers therefore keep the retained paths.
 Fast coefficient multiplication does win inside modular power, Frobenius, and
-composition. Representative three-trial warm medians over `F_65537` are:
+composition. The following three-trial warm medians over `F_65537` were
+refreshed from clean source revision
+`5e7d93547984331e2db21178e7ff5deb636283e0`. The machine-readable records are
+[`pow`](../../reports/bench-results/hex-poly-fp-5e7d935-pow-compare.json),
+[`frobenius`](../../reports/bench-results/hex-poly-fp-5e7d935-frobenius-compare.json),
+and [`compose`](../../reports/bench-results/hex-poly-fp-5e7d935-compose-compare.json).
 
 | operation | parameter | schoolbook multiplication | fast multiplication |
 |---|---:|---:|---:|
-| modular power | 64 | 3.368 ms | 1.964 ms |
-| modular power | 512 | 285.679 ms | 137.058 ms |
-| batched Frobenius | 24 | 19.760 ms | 16.136 ms |
-| batched Frobenius | 80 | 533.441 ms | 314.078 ms |
-| modular composition | 48 | 4.164 ms | 3.284 ms |
-| modular composition | 192 | 247.598 ms | 188.076 ms |
+| modular power | 64 | 1.779 ms | 0.990 ms |
+| modular power | 512 | 143.366 ms | 72.490 ms |
+| Frobenius `X^p mod f` | 24 | 0.430 ms | 0.309 ms |
+| Frobenius `X^p mod f` | 80 | 3.626 ms | 1.982 ms |
+| modular composition | 48 | 4.182 ms | 3.497 ms |
+| modular composition | 192 | 244.029 ms | 187.687 ms |
 
 All hashes agree. Compiled modular power retains the schoolbook loop below
 modulus size 18 and otherwise uses `mulFast`; modular composition retains its
@@ -132,7 +143,9 @@ the measured paths. Reproduce the comparisons with the paired
 `runPowModMonicChecksum`/`runFastPowChecksum`,
 `runFrobeniusXModChecksum`/`runFastFrobeniusChecksum`, and
 `runComposeModMonicChecksum`/`runFastComposeChecksum` targets and
-`--outer-trials 3`.
+`--outer-trials 3`. Reproduce the retained/candidate division and GCD results
+with the analogous `runDivModChecksum`/`runDivModFastChecksum` and
+`runGcdChecksum`/`runGcdFastChecksum` pairs.
 
 Benchmarks include forced packed, schoolbook, Karatsuba, reusable-plan direct
 NTT, cold-plan direct NTT, CRT-NTT, and dispatcher entries. The remaining

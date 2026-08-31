@@ -656,6 +656,8 @@ def Agree (p : Nat) (a b : TSeries R n) : Prop :=
 theorem sqrtUpTo_agree (m : Nat) (hr : r * r = a.coeff 0)
     (hv : ((1 + 1) * r) * v = 1) :
     Agree m (sqrtUpTo m a r v) (sqrtOfRoot a r v)
+theorem logUpTo_agree (m : Nat) (ha : (a - 1).coeff 0 = 0) :
+    Agree m (logUpTo m a) (log a)
 theorem expUpTo_agree (m : Nat) (ha : a.coeff 0 = 0) :
     Agree m (expUpTo m a) (exp a)
 theorem revUpTo_agree (m : Nat) (h0 : b.coeff 0 = 0)

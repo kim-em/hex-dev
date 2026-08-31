@@ -14,10 +14,11 @@ set_option backward.proofsInPublic true
 /-!
 Balanced product trees.
 
-The representation is private: clients observe the original leaves, the
-balanced levels, and the root product through the accessors below. Adjacent
-nodes are multiplied with the supplied lawful plan; an unpaired final node is
-carried to the next level unchanged.
+The representation is private: clients observe the original leaves, balanced
+levels, and the root product through the accessors below. The root is cached;
+level observations are reconstructed on demand. Adjacent nodes are multiplied
+with the supplied lawful plan; an unpaired final node is carried to the next
+level unchanged.
 -/
 
 namespace Hex.DensePoly
@@ -119,69 +120,77 @@ private theorem plannedProduct_pairProducts (plan : MulPlan R) :
                 ih rest.length (by simp at hlen; omega) rest rfl,
                 DensePoly.mul_assoc_poly]
 
-/-- Build all nonempty balanced levels and return their root. Fuel is only a
-totality guard; construction supplies the leaf count. -/
-private def buildLevels (plan : MulPlan R) :
-    Nat → List (DensePoly R) → List (List (DensePoly R)) × DensePoly R
-  | 0, xs => ([xs], plannedProduct plan xs)
-  | _ + 1, [] => ([[1]], 1)
-  | _ + 1, [p] => ([[p]], p)
+/-- Build the root of a balanced product tree. Fuel is only a totality guard;
+construction supplies the leaf count. -/
+private def buildRoot (plan : MulPlan R) :
+    Nat → List (DensePoly R) → DensePoly R
+  | 0, xs => plannedProduct plan xs
+  | _ + 1, [] => 1
+  | _ + 1, [p] => p
   | fuel + 1, p :: q :: rest =>
       let current := p :: q :: rest
       let next := pairProducts plan current
-      let built := buildLevels plan fuel next
-      (current :: built.1, built.2)
+      buildRoot plan fuel next
 
-private theorem buildLevels_root (plan : MulPlan R) : ∀ fuel xs,
-    (buildLevels plan fuel xs).2 = plannedProduct plan xs := by
+private theorem buildRoot_eq (plan : MulPlan R) : ∀ fuel xs,
+    buildRoot plan fuel xs = plannedProduct plan xs := by
   intro fuel
   induction fuel with
   | zero => intro xs; rfl
   | succ fuel ih =>
       intro xs
       cases xs with
-      | nil => simp [buildLevels, plannedProduct, mulWith_eq]
+      | nil => simp [buildRoot, plannedProduct, mulWith_eq]
       | cons p rest =>
           cases rest with
           | nil =>
-              simp [buildLevels, plannedProduct, mulWith_eq,
+              simp [buildRoot, plannedProduct, mulWith_eq,
                 DensePoly.mul_comm_poly (1 : DensePoly R) p,
                 DensePoly.mul_one_right_poly]
           | cons q rest =>
-              rw [buildLevels]
-              dsimp only
+              rw [buildRoot]
               rw [ih, plannedProduct_pairProducts]
 
-/-- An opaque balanced product tree. -/
+/-- Reconstruct one balanced level from the leaves. The empty tree uses the
+singleton level `[1]`. -/
+private def buildLevel (plan : MulPlan R) :
+    Nat → List (DensePoly R) → List (DensePoly R)
+  | 0, [] => [1]
+  | 0, xs => xs
+  | level + 1, xs => pairProducts plan (buildLevel plan level xs)
+
+/-- An opaque balanced product tree with a cached root and on-demand levels. -/
 structure ProductTree (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
   private planData : MulPlan R
   private leafData : Array (DensePoly R)
-  private levelData : Array (Array (DensePoly R))
   private rootData : DensePoly R
 
 namespace ProductTree
 
-/-- Build a balanced product tree. The empty tree has root `1` and one
-singleton internal level containing that root. -/
+/-- Build a balanced product tree without retaining intermediate levels. The
+empty tree has root `1` and one singleton level containing that root. -/
 def build (plan : MulPlan R) (leaves : Array (DensePoly R)) : ProductTree R :=
-  let built := buildLevels plan leaves.size leaves.toList
   { planData := plan
     leafData := leaves
-    levelData := (built.1.map List.toArray).toArray
-    rootData := built.2 }
+    rootData := buildRoot plan leaves.size leaves.toList }
 
 /-- The leaf sequence in its original order. -/
 def leaves (tree : ProductTree R) : Array (DensePoly R) := tree.leafData
 
-/-- Number of stored nonempty levels. -/
-def levelCount (tree : ProductTree R) : Nat := tree.levelData.size
+/-- Number of nonempty balanced levels, including the leaf and root levels. -/
+def levelCount (tree : ProductTree R) : Nat :=
+  if tree.leafData.size ≤ 1 then 1 else Nat.log2 (tree.leafData.size - 1) + 2
 
 /-- Lawful multiplication plan used to build the tree. -/
 def plan (tree : ProductTree R) : MulPlan R := tree.planData
 
-/-- A stored balanced level, from leaves upward. -/
+/-- A balanced level reconstructed from the leaves, from leaves upward. The
+empty tree has the singleton level `[1]`. -/
 def level? (tree : ProductTree R) (i : Nat) : Option (Array (DensePoly R)) :=
-  tree.levelData[i]?
+  if i < tree.levelCount then
+    some (buildLevel tree.planData i tree.leafData.toList |>.toArray)
+  else
+    none
 
 /-- The product represented by the root node. -/
 def root (tree : ProductTree R) : DensePoly R := tree.rootData
@@ -193,7 +202,7 @@ def nodeLeaves (tree : ProductTree R) (level index : Nat) : Array (DensePoly R) 
   let lo := index * width
   tree.leafData.extract lo (min tree.leafData.size (lo + width))
 
-/-- Product represented by a valid stored node. The observation is semantic:
+/-- Product represented by a valid balanced node. The observation is semantic:
 it folds exactly that node's leaf block, independently of the internal level
 layout. -/
 def nodeProduct? (tree : ProductTree R) (level index : Nat) : Option (DensePoly R) :=
@@ -227,7 +236,7 @@ theorem root_build (plan : MulPlan R) (leaves : Array (DensePoly R)) :
       leaves.toList.foldl (fun acc p => mulWith plan acc p) 1 := by
   unfold build root
   dsimp only
-  exact buildLevels_root plan leaves.size leaves.toList
+  exact buildRoot_eq plan leaves.size leaves.toList
 
 /-- The root is independent of the selected lawful multiplication kernel. -/
 theorem root_build_eq_foldl (plan : MulPlan R) (leaves : Array (DensePoly R)) :

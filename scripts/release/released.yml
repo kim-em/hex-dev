@@ -30,6 +30,10 @@
 #   conformance/<Lib>/ (if conformance)      -> conformance/<Lib>/
 #   conformance-fixtures/<f>/                -> conformance-fixtures/<f>/
 #   scripts/oracle/<o>                       -> scripts/oracle/<o>
+#   scripts/release/released-ci.yml[<repo>]  -> .github/workflows/ci.yml
+# The CI workflow is generated for every entry, including `pins_only`; its
+# per-repository build commands remain in released-ci.yml while the driver
+# applies the same divergence guard as every other managed path.
 # `test_modules` lists verification-only modules copied with the source but
 # intentionally absent from the public umbrella; released CI builds them via a
 # non-public `lean_lib` target.

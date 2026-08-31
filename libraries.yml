@@ -156,7 +156,7 @@ libraries:
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -186,10 +186,10 @@ libraries:
       comparators:
         - tool: FLINT fmpz_mpoly and fmpq_mpoly via python-flint
           class: informational
-          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition; FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement, so only the coprime-family expectation is like-for-like.
+          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition, but its coprime endpoints exercise Hex's one-step-remainder prepass rather than the modular route; FLINT also dispatches to Zippel and sparse Hensel routes outside this SPEC, so the rows are semantic and process-protocol anchors rather than meaningful Phase-4 ceilings.
         - tool: Singular gcd, quotient, and factorize
           class: informational
-          rationale: The persistent driver covers all seven families; Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+          rationale: The persistent driver covers all seven families, but the coprime endpoints exercise Hex's one-step-remainder prepass rather than the modular route and Singular has sparse routes outside this SPEC; its ratios diagnose representation and protocol coverage rather than supply Phase-4 ceilings.
       input_families:
         - name: coprime-pairs
           description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
@@ -515,12 +515,16 @@ libraries:
     status: active
     phase4:
       input_families:
+        - name: coefficient-kernels
+          description: Balanced `F_257` and `F_65537` operands covering forced schoolbook, packed, Karatsuba, direct-NTT, CRT-NTT, and public-dispatch multiplication routes.
         - name: quotient-powers
-          description: Dense `F_65537` quotient-ring exponentiation and Frobenius power fixtures with modulus degree and exponent height scaled together.
+          description: Dense `F_65537` quotient-ring exponentiation, fixed-prime Frobenius, and Frobenius-power fixtures with their active modulus degree or exponent height scaled by the parameter.
         - name: modular-composition
           description: Same-size dense `F_65537` Horner modular composition modulo deterministic monic moduli.
         - name: product-squarefree
           description: Deterministic `F_5` products of linear factors covering weighted product reconstruction and Yun square-free decomposition summaries.
+        - name: euclidean-division-gcd
+          description: Dense long-division inputs and consecutive polynomial-Fibonacci pairs forcing a full decreasing-degree Euclidean remainder chain over `F_65537`.
 
   # ---------- Finite-field quotient pipeline ----------
   HexGFqRing:
@@ -599,7 +603,7 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -695,7 +699,7 @@ libraries:
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:

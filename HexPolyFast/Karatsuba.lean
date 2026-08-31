@@ -174,6 +174,16 @@ def combine (k : Nat) (z₀ z₁ z₂ : Array R) : Array R :=
 
 /-- One schoolbook convolution diagonal over raw arrays. -/
 def schoolbookCoeff (a b : Array R) (d : Nat) : R :=
+  Id.run do
+    let mut acc := 0
+    for i in [0:a.size] do
+      acc := if d < i then acc
+        else if d - i < b.size then acc + a.getD i 0 * b.getD (d - i) 0
+        else acc
+    return acc
+
+/-- List-based specification of one raw schoolbook diagonal. -/
+private def schoolbookCoeffList (a b : Array R) (d : Nat) : R :=
   (List.range a.size).foldl
     (fun acc i =>
       if d < i then acc
@@ -226,16 +236,27 @@ def addShift (offset : Nat) (a b : Array R) : Array R :=
   Array.ofFn (n := max a.size (offset + b.size)) fun i =>
     a.getD i 0 + if offset ≤ i then b.getD (i - offset) 0 else 0
 
-/-- Fuelled unbalanced block multiplication over raw arrays. -/
-def blocks (cutoff blockSize : Nat) : Nat → Array R → Array R → Array R
-  | 0, long, short => mulAux cutoff (max long.size short.size) long short
-  | fuel + 1, long, short =>
-      if long.size = 0 then #[]
+/-- A raw coefficient segment, copied directly from the source array. -/
+private def segment (offset len : Nat) (a : Array R) : Array R :=
+  Array.ofFn (n := min len (a.size - offset)) fun i => a.getD (offset + i) 0
+
+/-- Fuelled unbalanced block multiplication from an offset in the long operand. -/
+private def blocksFrom (cutoff blockSize : Nat) :
+    Nat → Nat → Array R → Array R → Array R
+  | 0, offset, long, short =>
+      let tail := segment offset long.size long
+      mulAux cutoff (max tail.size short.size) tail short
+  | fuel + 1, offset, long, short =>
+      if long.size ≤ offset then #[]
       else
+        let head := segment offset blockSize long
         addShift blockSize
-          (mulAux cutoff (max (low blockSize long).size short.size)
-            (low blockSize long) short)
-          (blocks cutoff blockSize fuel (high blockSize long) short)
+          (mulAux cutoff (max head.size short.size) head short)
+          (blocksFrom cutoff blockSize fuel (offset + blockSize) long short)
+
+/-- Fuelled unbalanced block multiplication over raw arrays. -/
+def blocks (cutoff blockSize fuel : Nat) (long short : Array R) : Array R :=
+  blocksFrom cutoff blockSize fuel 0 long short
 
 /-- A clipped raw schoolbook product. -/
 def schoolbookSlice (lo len : Nat) (a b : Array R) : Array R :=
@@ -365,6 +386,13 @@ theorem ofCoeffs_high (k : Nat) (a : Array R) :
       simp [Array.getD, hiraw, hki, hz']
     · simp [Array.getD, hiraw]
 
+omit [DecidableEq R] in
+private theorem schoolbookCoeff_eq_list (a b : Array R) (d : Nat) :
+    schoolbookCoeff a b d = schoolbookCoeffList a b d := by
+  unfold schoolbookCoeff schoolbookCoeffList
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    ← List.range_eq_range']
+
 private theorem fold_schoolbook_extend (a b : Array R) (d extra : Nat) (acc : R) :
     (List.range ((ofCoeffs a : DensePoly R).size + extra)).foldl
         (fun acc i =>
@@ -403,7 +431,8 @@ private theorem fold_schoolbook_extend (a b : Array R) (d extra : Nat) (acc : R)
 theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
     schoolbookCoeff a b d =
       Hex.DensePoly.schoolbookCoeff (ofCoeffs a) (ofCoeffs b) d := by
-  unfold schoolbookCoeff Hex.DensePoly.schoolbookCoeff
+  rw [schoolbookCoeff_eq_list]
+  unfold schoolbookCoeffList Hex.DensePoly.schoolbookCoeff
   have hsize : (ofCoeffs a : DensePoly R).size ≤ a.size := size_ofCoeffs_le a
   have hsum : (ofCoeffs a : DensePoly R).size +
       (a.size - (ofCoeffs a : DensePoly R).size) = a.size := by omega
@@ -412,9 +441,9 @@ theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
   have aux : ∀ (xs : List Nat) (acc : R),
       xs.foldl
           (fun acc i =>
-            if d < i then acc
-            else if d - i < b.size then acc + a.getD i 0 * b.getD (d - i) 0
-            else acc)
+          if d < i then acc
+          else if d - i < b.size then acc + a.getD i 0 * b.getD (d - i) 0
+          else acc)
           acc =
         xs.foldl
           (fun acc i =>
@@ -639,6 +668,43 @@ theorem ofCoeffs_addShift (offset : Nat) (a b : Array R) :
       simp [Array.getD, n, hi, ha, hlt]
       grind
 
+omit [DecidableEq R] in
+private theorem segment_eq_low_high (offset len : Nat) (a : Array R) :
+    segment offset len a = low len (high offset a) := by
+  apply Array.ext
+  · simp [segment, low, high]
+  · intro i hi₁ hi₂
+    simp [segment, low, high] at hi₁ hi₂ ⊢
+    have hirem : i < a.size - offset := by omega
+    simp [hirem]
+
+omit [DecidableEq R] in
+private theorem segment_to_end (offset : Nat) (a : Array R) :
+    segment offset a.size a = high offset a := by
+  apply Array.ext
+  · simp [segment, high]
+  · intro i hi₁ hi₂
+    simp [segment, high]
+
+omit [DecidableEq R] in
+private theorem high_high (offset len : Nat) (a : Array R) :
+    high len (high offset a) = high (offset + len) a := by
+  apply Array.ext
+  · simp [high]
+    omega
+  · intro i hi₁ hi₂
+    simp [high] at hi₁ hi₂ ⊢
+    have hinner : len + i < a.size - offset := by omega
+    have hsource : offset + (len + i) < a.size := by omega
+    simp [hinner, hsource, Nat.add_assoc]
+
+omit [DecidableEq R] in
+private theorem high_zero (a : Array R) : high 0 a = a := by
+  apply Array.ext
+  · simp [high]
+  · intro i hi₁ hi₂
+    simp [high]
+
 /-- Raw Karatsuba recursion represents dense multiplication for every fuel. -/
 theorem ofCoeffs_mulAux (cutoff fuel : Nat) (a b : Array R) :
     (ofCoeffs (mulAux cutoff fuel a b) : DensePoly R) = ofCoeffs a * ofCoeffs b := by
@@ -668,25 +734,38 @@ theorem ofCoeffs_squareAux (cutoff fuel : Nat) (a : Array R) :
           ih, ih, ih, ofCoeffs_add, ofCoeffs_low, ofCoeffs_high]
         rw [karatsuba_combine, low_add_shift_high]
 
+/-- Raw block recursion from an offset represents the remaining dense product. -/
+private theorem ofCoeffs_blocksFrom (cutoff blockSize fuel offset : Nat)
+    (long short : Array R) :
+    (ofCoeffs (blocksFrom cutoff blockSize fuel offset long short) : DensePoly R) =
+      ofCoeffs (high offset long) * ofCoeffs short := by
+  induction fuel generalizing offset with
+  | zero =>
+      rw [blocksFrom, ofCoeffs_mulAux, segment_to_end]
+  | succ fuel ih =>
+      rw [blocksFrom]
+      split
+      · rename_i hempty
+        have hhigh : (ofCoeffs (high offset long) : DensePoly R) = 0 := by
+          apply (size_eq_zero_iff (ofCoeffs (high offset long) : DensePoly R)).mp
+          exact Nat.le_antisymm
+            (Nat.le_trans (size_ofCoeffs_le (high offset long)) (by
+              simp [high]
+              omega))
+            (Nat.zero_le _)
+        rw [hhigh, zero_mul]
+        rfl
+      · rw [ofCoeffs_addShift, ofCoeffs_mulAux, ih,
+          segment_eq_low_high, ← high_high, ofCoeffs_low, ofCoeffs_high,
+          ofCoeffs_high, ofCoeffs_high, ← shift_mul,
+          ← mul_add_left_poly, low_add_shift_high]
+
 /-- Raw block recursion represents dense multiplication for every fuel. -/
 theorem ofCoeffs_blocks (cutoff blockSize fuel : Nat) (long short : Array R) :
     (ofCoeffs (blocks cutoff blockSize fuel long short) : DensePoly R) =
       ofCoeffs long * ofCoeffs short := by
-  induction fuel generalizing long with
-  | zero => exact ofCoeffs_mulAux cutoff _ long short
-  | succ fuel ih =>
-      rw [blocks]
-      split
-      · rename_i hzero
-        have hlong : (ofCoeffs long : DensePoly R) = 0 := by
-          apply (size_eq_zero_iff (ofCoeffs long : DensePoly R)).mp
-          exact Nat.le_antisymm (Nat.le_trans (size_ofCoeffs_le long) (by omega))
-            (Nat.zero_le _)
-        rw [hlong, zero_mul]
-        rfl
-      · rw [ofCoeffs_addShift, ofCoeffs_mulAux, ih,
-          ofCoeffs_low, ofCoeffs_high, ← shift_mul,
-          ← mul_add_left_poly, low_add_shift_high]
+  unfold blocks
+  rw [ofCoeffs_blocksFrom, high_zero]
 
 end Karatsuba.Raw
 

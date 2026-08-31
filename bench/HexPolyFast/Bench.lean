@@ -284,14 +284,68 @@ private def checksumField (p : DensePoly Fp) : UInt64 :=
 private def checksumSeries [Hashable R] (a : TSeries R n) : UInt64 :=
   a.coeffs.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
 
+/-- List-backed comparator for one raw convolution diagonal. -/
+private def schoolbookCoeffList {R : Type u} [DecidableEq R]
+    [Lean.Grind.CommRing R] (a b : Array R) (d : Nat) : R :=
+  (List.range a.size).foldl
+    (fun acc i =>
+      if d < i then acc
+      else if d - i < b.size then acc + a.getD i 0 * b.getD (d - i) 0
+      else acc)
+    0
+
+/-- Raw schoolbook multiplication using the list-backed diagonal comparator. -/
+private def schoolbookList {R : Type u} [DecidableEq R]
+    [Lean.Grind.CommRing R] (a b : Array R) : Array R :=
+  if a.size = 0 || b.size = 0 then #[]
+  else if a.size ≤ b.size then
+    Array.ofFn (n := a.size + b.size - 1) fun i => schoolbookCoeffList a b i
+  else
+    Array.ofFn (n := a.size + b.size - 1) fun i => schoolbookCoeffList b a i
+
+/-- Suffix-copy comparator for raw blocked multiplication. -/
+private def blocksTail {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
+    (cutoff blockSize : Nat) : Nat → Array R → Array R → Array R
+  | 0, long, short =>
+      Karatsuba.Raw.mulAux cutoff (max long.size short.size) long short
+  | fuel + 1, long, short =>
+      if long.size = 0 then #[]
+      else
+        Karatsuba.Raw.addShift blockSize
+          (Karatsuba.Raw.mulAux cutoff
+            (max (Karatsuba.Raw.low blockSize long).size short.size)
+            (Karatsuba.Raw.low blockSize long) short)
+          (blocksTail cutoff blockSize fuel (Karatsuba.Raw.high blockSize long) short)
+
 def runSchoolbook (input : Binary) : UInt64 :=
   checksum (mulWith schoolbookPlan input.left input.right)
+
+/-- Raw schoolbook multiplication with a list allocated for each diagonal. -/
+def runSchoolbookList (input : Binary) : UInt64 :=
+  checksum (ofCoeffs (schoolbookList input.left.toArray input.right.toArray))
+
+/-- Raw schoolbook multiplication with an allocation-free index loop. -/
+def runSchoolbookLoop (input : Binary) : UInt64 :=
+  checksum (ofCoeffs
+    (Karatsuba.Raw.schoolbook input.left.toArray input.right.toArray))
 
 def runKaratsuba (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
 
 def runKaratsubaSkew (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
+
+/-- Raw unbalanced multiplication that copies every remaining suffix. -/
+def runBlocksTail (input : Binary) : UInt64 :=
+  checksum (ofCoeffs
+    (blocksTail 32 input.right.size input.left.size
+      input.left.toArray input.right.toArray))
+
+/-- Raw unbalanced multiplication that carries an offset into the long input. -/
+def runBlocksOffset (input : Binary) : UInt64 :=
+  checksum (ofCoeffs
+    (Karatsuba.Raw.blocks 32 input.right.size input.left.size
+      input.left.toArray input.right.toArray))
 
 def runKaratsubaRatio2 (input : Binary) : UInt64 :=
   checksum (mulWith (karatsubaPlan 32) input.left input.right)
@@ -834,6 +888,34 @@ setup_benchmark runSchoolbook n => n ^ 2
     tags := #["multiplication", "schoolbook", "balanced"]
   }
 
+/- Cost model: the list-backed raw comparator performs the same quadratic
+coefficient products while allocating one index list per output diagonal. -/
+setup_benchmark runSchoolbookList n => n ^ 2
+  with prep := prepBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "schoolbook", "raw", "list-diagonal"]
+  }
+
+/- Cost model: the raw index-loop implementation evaluates the same quadratic
+set of coefficient pairs without constructing diagonal index lists. -/
+setup_benchmark runSchoolbookLoop n => n ^ 2
+  with prep := prepBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "schoolbook", "raw", "index-loop"]
+  }
+
 /- Cost model: balanced Karatsuba satisfies `T(n) = 3T(n/2) + O(n)`, hence
 `T(n) = Θ(n^(log₂ 3))`; `karatsubaCost` records that recurrence with the
 actual cutoff. The nearby 31/32/33 rungs expose the transition. -/
@@ -880,6 +962,37 @@ setup_benchmark runKaratsubaSkew n => karatsubaCost n
     verdictWarmupFraction := 0.45
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-64"]
+  }
+
+/- Cost model: at fixed 64:1 skew, copying every remaining suffix adds linear
+work in the shorter size to the 64 balanced block products, so `karatsubaCost`
+remains the tight family model. -/
+setup_benchmark runBlocksTail n => karatsubaCost n
+  with prep := prepSkew
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.45
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "raw", "ratio-64", "suffix-copy"]
+  }
+
+/- Cost model: carrying an offset removes repeated suffix copies while retaining
+the same 64 balanced block products and cutoff-aware Karatsuba model. -/
+setup_benchmark runBlocksOffset n => karatsubaCost n
+  with prep := prepSkew
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 200000000
+    verdictWarmupFraction := 0.45
+    signalFloorMultiplier := 1.0
+    tags := #["multiplication", "karatsuba", "raw", "ratio-64", "offset"]
   }
 
 /- A fixed 2:1 shape performs two balanced Karatsuba blocks, preserving the

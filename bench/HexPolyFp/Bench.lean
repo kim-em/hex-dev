@@ -38,8 +38,8 @@ Scientific registrations:
 
 * `runPowModMonicChecksum`: quotient-ring square-and-multiply with a growing
   exponent, `O(n^2 log n)`.
-* `runFrobeniusXModChecksum`: a batch of `n` calls to `X^p mod f` on degree
-  `n` moduli, `O(n^3)`.
+* `runFrobeniusXModChecksum`: `X^p mod f` on degree-`n` moduli, modeled by
+  the 17 fixed-exponent squaring stages.
 * `runFrobeniusXPowModChecksum`: `X^(p^n) mod f`, `O(n^3)` for growing modulus
   degree and Frobenius exponent height.
 * `runComposeModMonicChecksum`: Horner modular composition, `O(n^3)`.
@@ -110,9 +110,8 @@ structure ModInput where
   exponent : Nat
   deriving Hashable
 
-/-- Prepared batched input for fixed-prime Frobenius. -/
-structure FrobeniusBatchInput where
-  count : Nat
+/-- Prepared input for fixed-prime Frobenius. -/
+structure FrobeniusInput where
   degree : Nat
   deriving Hashable
 
@@ -196,14 +195,6 @@ def densePolyFive (n salt : Nat) : FpPoly 5 :=
 /-- Deterministic dense polynomial over the large benchmark prime field. -/
 def densePolyLarge (n salt : Nat) : FpPoly 65537 :=
   ofCoeffs <| (Array.range n).map fun i => coeffValueLarge n i salt
-
-/-- Deterministic hash-mixed dense polynomial for gcd inputs.  Unlike
-`densePolyLarge`, changing the salt does not leave a low-degree difference
-between the two coefficient streams. -/
-def denseGcdPolyLarge (degree salt : Nat) : FpPoly 65537 :=
-  ofCoeffs <| ((Array.range degree).map fun i =>
-    ZMod64.ofNat 65537 <|
-      (mixHash (hash (degree, salt)) (hash (i, salt + 1))).toNat % 65537).push 1
 
 /-- Deterministic dense polynomial over `F_257`. -/
 def densePoly257 (n salt : Nat) : FpPoly 257 :=
@@ -294,10 +285,9 @@ def prepPowModInput (n : Nat) : ModInput :=
     degree := n + 1
     exponent := n + 1 }
 
-/-- Per-parameter fixture for fixed-prime Frobenius batches. -/
-def prepFrobeniusInput (n : Nat) : FrobeniusBatchInput :=
-  { count := n
-    degree := n + 1 }
+/-- Per-parameter fixture for fixed-prime Frobenius. -/
+def prepFrobeniusInput (n : Nat) : FrobeniusInput :=
+  { degree := n + 1 }
 
 /-- Per-parameter fixture for Frobenius powers. -/
 def prepFrobeniusPowInput (n : Nat) : ModInput :=
@@ -325,12 +315,29 @@ def prepDivModInput (n : Nat) : DivModInput :=
   { num := densePolyLarge (2 * n + 1) 17
     den := densePolyLarge (n + 1) 23 }
 
-/-- Per-parameter fixture for the Euclidean gcd remainder sequence: two
-independent degree-`n` polynomials, almost always coprime over `F_p`, so the
-remainder sequence has `Θ(n)` `divMod` steps. -/
+/-- Per-parameter fixture for the Euclidean gcd remainder sequence.
+
+Starting from `(F₀, F₁) = (0, 1)`, the recurrence
+`Fₖ₊₂ = X * Fₖ₊₁ + Fₖ` makes `(Fₙ₊₁, Fₙ)` a coprime consecutive pair whose
+Euclidean remainder sequence has exactly `n` degree-one quotient steps. -/
 def prepGcdInput (n : Nat) : GcdInput :=
-  { f := denseGcdPolyLarge n 5
-    g := denseGcdPolyLarge n 9 }
+  let pair := (List.range n).foldl
+    (fun state _ => (state.2, X * state.2 + state.1))
+    ((0 : FpPoly 65537), (1 : FpPoly 65537))
+  { f := pair.2
+    g := pair.1 }
+
+/-- Family-specific work model for fixed-prime Frobenius.
+
+The exponent `65537 = 2^16 + 1` gives 17 squaring stages.  Before reduction
+saturates at modulus degree `n`, stage `k` squares a polynomial of degree
+`min n (2^k)`; afterward every stage remains at degree `n`.  Schoolbook
+multiplication and monic reduction therefore have the same order as the sum
+of these squared active degrees. -/
+def frobeniusWork (n : Nat) : Nat :=
+  (List.range 17).foldl (fun total k =>
+    let degree := min n (2 ^ k)
+    total + degree * degree) 0
 
 /-- Balanced dense multiplication fixture over the large benchmark prime. -/
 def prepMulInput (n : Nat) : MulInput :=
@@ -417,23 +424,17 @@ def runFastPowChecksum (input : ModInput) : UInt64 :=
     powModFast input.base (monicModulusLarge input.degree)
       (monicModulusLarge_monic input.degree) input.exponent
 
-/-- Benchmark target: compute a batch of `X^p mod modulus` calls. -/
-def runFrobeniusXModChecksum (input : FrobeniusBatchInput) : UInt64 :=
-  (Array.range input.count).foldl
-    (fun acc _ =>
-      mixHash acc <| checksumPoly <|
-        powModSchoolbook X (monicModulusLarge input.degree)
-          (monicModulusLarge_monic input.degree) 65537)
-    0
+/-- Benchmark target: compute `X^p mod modulus`. -/
+def runFrobeniusXModChecksum (input : FrobeniusInput) : UInt64 :=
+  checksumPoly <|
+    powModSchoolbook X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) 65537
 
-/-- Benchmark candidate: batched Frobenius with fast multiplication. -/
-def runFastFrobeniusChecksum (input : FrobeniusBatchInput) : UInt64 :=
-  (Array.range input.count).foldl
-    (fun acc _ =>
-      mixHash acc <| checksumPoly <|
-        powModFast X (monicModulusLarge input.degree)
-          (monicModulusLarge_monic input.degree) 65537)
-    0
+/-- Benchmark candidate: Frobenius with fast multiplication. -/
+def runFastFrobeniusChecksum (input : FrobeniusInput) : UInt64 :=
+  checksumPoly <|
+    powModFast X (monicModulusLarge input.degree)
+      (monicModulusLarge_monic input.degree) 65537
 
 /-- Benchmark target: compute `X^(p^k) mod modulus`. -/
 def runFrobeniusXPowModChecksum (input : ModInput) : UInt64 :=
@@ -792,16 +793,14 @@ setup_benchmark runFastPowChecksum n => (n * n * Nat.log2 (n + 1))
   }
 
 /-
-This registration batches `n` fixed-prime Frobenius calls on dense degree-`n`
-monic moduli. Each call performs a constant number of quotient-ring
-square-and-multiply steps with quadratic dense multiplication/reduction, so the
-batch is cubic. The schedule starts at `n = 16` because below that the
-constant-bit-length of `p = 65537` (17 bits of square-and-multiply work per
-call) is comparable to the modulus degree and the `n³` asymptote has not
-dominated; the largest rung `n = 80` keeps per-call wall time well under the
-four-second cap on the reference host.
+Cost model: the reduced base has degree at most `n` modulo a dense degree-`n + 1`
+monic modulus. The model sums squared active degree over the 17 squaring stages
+of `65537 = 2^16 + 1`: early stages grow as `2^k`, and the remaining stages
+stay at degree `n`. Lean-bench supplies repetition outside the timed target.
+The schedule starts at `n = 16`, above the small-kernel startup regime, and
+ends at `n = 80`, below the four-second per-call cap on the reference host.
 -/
-setup_benchmark runFrobeniusXModChecksum n => n * n * n
+setup_benchmark runFrobeniusXModChecksum n => frobeniusWork n
   with prep := prepFrobeniusInput
   where {
     paramFloor := 16
@@ -813,9 +812,9 @@ setup_benchmark runFrobeniusXModChecksum n => n * n * n
     slopeTolerance := 0.20
   }
 
-/- Cost model: batching `n` Frobenius calls, each with a quadratic reduced
-multiplication bound, gives cubic work. -/
-setup_benchmark runFastFrobeniusChecksum n => (n * n * n)
+/- Cost model: the fast candidate traverses the same 17-stage active-degree schedule;
+`frobeniusWork` is conservative and its ordered Phase-4 mode remains unresolved. -/
+setup_benchmark runFastFrobeniusChecksum n => frobeniusWork n
   with prep := prepFrobeniusInput
   where {
     paramFloor := 16
@@ -973,11 +972,13 @@ setup_benchmark runDivModFastChecksum n => (n * n)
   }
 
 /-
-The Euclidean gcd of two independent degree-`n` polynomials over `F_p` is a
-remainder sequence of `Theta(n)` `divMod` steps whose degrees shrink by one each
-step, so the cost is quadratic, `O(n^2)` coefficient operations. This is the
-substrate under the BHKS separability test `gcd(f, f')`; the schedule matches
-the divMod rungs.
+The prepared inputs are consecutive polynomial Fibonacci values.  They force
+exactly `n` Euclidean remainder steps with quotient `X`; each remainder-only
+division is linear in the current degree, so the decreasing-degree costs sum
+to `Theta(n^2)`.  This fixture isolates worst-case Euclidean step scaling; its
+unit leading coefficients and monomial quotients do not assert the same
+constant factor as a generic separability input `gcd(f, f')`.  The schedule
+matches the divMod rungs.
 -/
 setup_benchmark runGcdChecksum n => n * n
   with prep := prepGcdInput

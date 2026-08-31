@@ -8,10 +8,12 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
+    check_ci_workflows,
     check_phase_admission,
     parse_sync_baseline,
     published_repositories,
@@ -91,6 +93,68 @@ class Phase7AdmissionTests(unittest.TestCase):
     def test_malformed_baseline_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "malformed baseline entry"):
             parse_sync_baseline('{"hex-example": "short"}', "test baseline")
+
+
+class ReleasedCiTests(unittest.TestCase):
+    @staticmethod
+    def workflow() -> str:
+        from scripts.release.sync_released import released_ci_workflows
+
+        return released_ci_workflows()["hex-basic"]
+
+    def check(self, workflow: str) -> None:
+        entries = [{"repo": "leanprover/hex-example"}]
+        with patch(
+            "scripts.release.check_released_manifest.released_ci_workflows",
+            return_value={"hex-example": workflow},
+        ):
+            check_ci_workflows(entries)
+
+    def test_workflow_set_must_match_manifest(self) -> None:
+        entries = [{"repo": "leanprover/hex-example"}]
+        with (
+            patch(
+                "scripts.release.check_released_manifest.released_ci_workflows",
+                return_value={"hex-other": "name: CI\n"},
+            ),
+            self.assertRaisesRegex(ValueError, "differs from the release manifest"),
+        ):
+            check_ci_workflows(entries)
+
+    def test_complete_workflow_is_accepted(self) -> None:
+        self.check(self.workflow())
+
+    def test_restore_and_save_paths_must_match(self) -> None:
+        workflow = self.workflow()
+        marker = "            .lake/packages/hex-test-kit/.lake/build\n"
+        head, tail = workflow.rsplit(marker, 1)
+        with self.assertRaisesRegex(ValueError, "run-unique save key"):
+            self.check(
+                head + "            .lake/packages/HexOther/.lake/build\n" + tail
+            )
+
+    def test_restore_prefix_must_match_unique_key(self) -> None:
+        workflow = self.workflow().replace(
+            "restore-keys: |\n            lake-build-",
+            "restore-keys: |\n            wrong-build-",
+            1,
+        )
+        with self.assertRaisesRegex(ValueError, "run-unique save key"):
+            self.check(workflow)
+
+    def test_main_run_must_not_be_cancelled(self) -> None:
+        workflow = self.workflow().replace(
+            "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}",
+            "cancel-in-progress: true",
+            1,
+        )
+        with self.assertRaisesRegex(ValueError, "terminal cache save"):
+            self.check(workflow)
+
+    def test_main_push_trigger_is_required(self) -> None:
+        workflow = self.workflow().replace("branches: [main]", "branches: [dev]", 1)
+        with self.assertRaisesRegex(ValueError, "main pushes"):
+            self.check(workflow)
 
 
 if __name__ == "__main__":

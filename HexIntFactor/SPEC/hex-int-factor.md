@@ -65,11 +65,13 @@ with the cube-root variant). hex-primality owns a minimal untrusted
 becomes a real factorization suite. The dependency runs upward --
 hex-int-factor depends on hex-primality, never the reverse -- because a
 factorization certificate has to prove its factors prime while a
-certificate search needs no proof at all. The reverse flow -- this
-library's advances improving hex-primality's search -- has three
-sanctioned routes (certificate hand-off, shared stage-1 primitives
-sited upstream, an optional search hook), recorded in hex-primality's
-"Taking up downstream factoring advances".
+certificate search needs no proof at all. The reverse flow -- this library's
+advances improving hex-primality's search -- has three sanctioned routes
+(certificate hand-off, shared stage-1 primitives sited upstream, and the
+registered search hook), recorded in hex-primality's "Taking up downstream
+factoring advances". `HexIntFactor.Primality` supplies the hook without
+reversing the dependency: it projects this library's checked complete result
+or checked partial snapshot into hex-primality's untrusted factor-search data.
 
 **The maximal order needs it.** [future-work](../../SPEC/future-work.md)'s
 "Ring of integers" entry names the squarefree part of the polynomial
@@ -268,6 +270,10 @@ structure FactorFailure where
   culprit  : Option PartialFactorization := none
 
 def defaultFuel (n : Nat) : Nat
+
+def Internal.factorCountedWith? (budget : PrimeCertBudget)
+    (primeFuel : Nat) (n : Nat) (r : Rand) (fuel : Nat) :
+    Except FactorFailure (Internal.FactorSuccess n)
 
 def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
     Except FactorFailure (CheckedFactorization n × Rand)
@@ -599,6 +605,42 @@ search attempts. Counted internal success shapes preserve these totals across
 continuations without changing the compatible public pair-returning APIs.
 Success returns the state alongside the checked data, so a caller never
 repeats a failed random stream accidentally.
+
+### The primality-search adapter
+
+```lean
+def intFactorSearch : FactorSearch
+
+public meta def HexIntFactor.PrimalityTactic.extension :
+    Hex.PrimalityTactic.SearchExtension
+```
+
+`intFactorSearch allocation n r` runs `factorCountedWith?` with exactly the
+supplied recursive-primality, rho-restart, rho-step, and factor-worklist
+allocations. The dispatcher additionally bounds its p−1/ECM continuation to
+eight attempts per worklist entry. Complete checked factorizations become
+factor/exponent pairs with residual one. Incomplete searches expose the last
+checker-accepted snapshot. Checker rejection degrades to the trivial saved
+snapshot, while the zero-input case alone has no snapshot and becomes the
+honest empty candidate with residual `n`. The factor certificates themselves
+are erased at this boundary because hex-primality recursively constructs its
+own `PrimeCert`; that repeated construction is an accepted search cost, and the
+final `checkPrime`, not this projection, remains the acceptance boundary.
+Attempts and `Rand` are copied exactly from the dispatcher result.
+
+The version-1 registration stores the name of the ordinary compiled adapter,
+not a meta closure over it. Hex-primality checks that name and type before
+evaluation and tries it only after its own route exhausts. The deterministic
+81-bit witness `1208925821721293454442757 = 4 * 549755814367^2 + 1` validates
+the consumer: core search exhausts, while this library's perfect-power route
+returns `[(2, 2), (549755814367, 2)]` with residual one and certificate search
+finishes from the core route's advanced state. Zero-fuel conformance retains
+only `[(2, 2)]`, residual `549755814367^2`, zero attempts, and the unchanged
+state. `lake build HexIntFactor.PrimalityConformance` pins these route,
+accounting, composite-diagnostic, and proof-elaboration facts. The registered
+route's bounded exhaustion at the 512-bit policy ceiling is also reproduced by
+`HexIntFactor.ProofProbe.PrimalityExhausted` in
+`lake build HexPrimalityElabProbe` and reports the combined 33 attempts.
 
 The cyclotomic wrapper uses the internal `factorCounted?` result, which carries
 the exact attempt count on success without changing the public pair-returning
@@ -1362,6 +1404,7 @@ HexIntFactor/
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?
+  Primality.lean    -- untrusted primality-search adapter and registration
 HexIntFactor.lean
 HexIntFactorMathlib/
   Factorization.lean -- factorization_eq, factors_eq and consequences

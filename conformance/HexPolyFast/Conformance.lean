@@ -268,12 +268,19 @@ private def singletonTree : ProductTree Int :=
 #guard (tree.level? 1).map Array.size = some 3
 #guard (tree.level? 2).map Array.size = some 2
 #guard (tree.level? 3).map Array.size = some 1
+#guard tree.level? 1 = some #[treeLeaves.getD 0 0 * treeLeaves.getD 1 0,
+  treeLeaves.getD 2 0 * treeLeaves.getD 3 0, treeLeaves.getD 4 0]
+#guard tree.level? 3 = some #[tree.root]
 #guard tree.nodeProduct? 1 0 = some (treeLeaves.getD 0 0 * treeLeaves.getD 1 0)
 #guard tree.nodeProduct? 1 2 = some (treeLeaves.getD 4 0)
 #guard emptyTree.leaves = #[]
 #guard emptyTree.root = 1
+#guard emptyTree.levelCount = 1
+#guard emptyTree.level? 0 = some #[1]
 #guard singletonTree.leaves = #[a]
 #guard singletonTree.root = a
+#guard singletonTree.levelCount = 1
+#guard singletonTree.level? 0 = some #[a]
 
 private def evalPoints : Array Int := #[-3, 0, 2, 5, 9]
 private def evalPlan : EvalPlan Int := EvalPlan.build plan evalPoints

@@ -23,7 +23,7 @@ type. As with `ofCoeffs`, trailing zero coefficients are removed.
 - O(1) degree, O(1) coefficient access
 
 **Operations:**
-- Addition, subtraction, multiplication. `mul` is the schoolbook
+- Addition, negation, subtraction, multiplication. `mul` is the schoolbook
   convolution and is the specification at every coefficient type; the
   subquadratic kernel is coefficient-specific and therefore lives
   downstream (`Hex.ZPoly.mulKronecker` in `hex-poly-z`). The planned

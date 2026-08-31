@@ -74,6 +74,22 @@ example (c : TSeries Int 8) (k : Nat) :
       k < 8 ∧ c.coeff k ≠ 0 ∧ ∀ i, i < k → c.coeff i = 0 := by
   exact valuation?_eq_some_iff c k
 
+/-- Bounded square-root lifting exposes its prefix contract downstream. -/
+example (c : TSeries Rat 8) (r v : Rat)
+    (hr : r * r = c.coeff 0) (hv : ((1 + 1) * r) * v = 1) :
+    Agree 5 (sqrtUpTo 5 c r v) (sqrtOfRoot c r v) := by
+  exact sqrtUpTo_agree 5 c r v hr hv
+
+/-- Bounded logarithm exposes its prefix contract downstream. -/
+example (c : TSeries Rat 8) (h0 : (c - 1).coeff 0 = 0) :
+    Agree 5 (logUpTo 5 c) (log c) := by
+  exact logUpTo_agree 5 c h0
+
+/-- Bounded exponential exposes its prefix contract downstream. -/
+example (c : TSeries Rat 8) (h0 : c.coeff 0 = 0) :
+    Agree 5 (expUpTo 5 c) (exp c) := by
+  exact expUpTo_agree 5 c h0
+
 /-- Bounded reversion agrees with the full Newton result throughout the
 requested prefix. -/
 example (c : TSeries Int 8) (v : Int)

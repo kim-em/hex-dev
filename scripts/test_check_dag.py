@@ -8,9 +8,41 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from check_dag import check_correspondence_only, check_sealed_import_all
+from check_dag import (
+    check_correspondence_only,
+    check_sealed_import_all,
+    import_roots,
+    parse_imports,
+)
 from check_phase4 import check_headline_reports
 from libgraph import LibraryInfo, load_libraries
+
+
+class MetaImportTest(unittest.TestCase):
+    def test_meta_imports_are_edges(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "HexOwner.lean"
+            path.write_text(
+                "public meta import HexDependency.Tactic\n"
+                "meta import HexDependency.Runtime\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                parse_imports(path),
+                ["HexDependency.Tactic", "HexDependency.Runtime"],
+            )
+            self.assertEqual(
+                import_roots("public meta import HexDependency.Tactic"),
+                ["HexDependency"],
+            )
+            self.assertEqual(
+                import_roots("meta import HexDependency.Runtime"),
+                ["HexDependency"],
+            )
+            self.assertEqual(
+                import_roots("meta public import HexDependency.Invalid"), []
+            )
 
 
 class SealedImportAllTest(unittest.TestCase):

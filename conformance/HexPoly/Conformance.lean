@@ -13,13 +13,14 @@ Oracle: none
 Mode: always
 Covered operations:
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
-- basic executable arithmetic (`scale`, `shift`, `add`, `sub`, `mul`, `eval`, `compose`, `derivative`)
+- basic executable arithmetic (`scale`, `shift`, `add`, `neg`, `sub`, `mul`, `eval`, `compose`, `derivative`)
 - Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)
 - integer content helpers (`content`, `primitivePart`)
 - polynomial CRT witness construction (`polyCRT`)
 Covered properties:
 - normalization removes trailing zeros from committed raw coefficient inputs
 - dense structural equality matches additive identity and commutativity checks on committed fixtures
+- negation is the additive inverse and an involution, and subtraction agrees with adding the negation
 - scaling by zero and shifting zero collapse back to the normalized zero polynomial
 - multiplication by the constant polynomial `1` preserves committed inputs
 - Horner evaluation, polynomial composition, and formal derivative agree with committed
@@ -31,8 +32,8 @@ Covered properties:
 - `content` times `primitivePart` reconstructs committed integer polynomials
 - `polyCRT` witnesses reduce to both prescribed residues modulo committed coprime monic factors
 Covered edge cases:
-- the zero polynomial encoded with all-zero trailing coefficients
-- sparse polynomials with internal zeros but nonzero leading terms
+- the zero polynomial encoded with all-zero trailing coefficients, including under negation
+- sparse polynomials with internal zeros and stripped trailing zeros, including under negation
 - shifted and scaled monomials that exercise normalization after arithmetic
 - evaluation, composition, and differentiation of zero, constant, and sparse inputs
 - Euclidean division with zero dividend, exact division, and non-monic divisors with
@@ -219,12 +220,25 @@ private def crtWitness : DensePoly Rat :=
 #guard polyTypical + (0 : DensePoly Int) = polyTypical
 #guard polyTypical + polyFromListTypical = polyFromListTypical + polyTypical
 
+-- Typical: mixed-sign coefficients with a degree-12 leading term.
+/-- info: [-3, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1] -/
+#guard_msgs in #eval! (-polyTypical).toArray.toList
+-- Edge: the normalized zero polynomial remains zero.
+#guard -polyEdge = (0 : DensePoly Int)
+-- Adversarial: internal zeros and stripped trailing zeros must remain normalized.
+#guard (-polyAdversarial).toArray.toList =
+  [0, -4, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, -6]
+
+#guard polyTypical + (-polyTypical) = (0 : DensePoly Int)
+#guard -(-polyAdversarial) = polyAdversarial
+
 /-- info: [4, -5, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] -/
 #guard_msgs in #eval! (polyTypical - polyFromListTypical).toArray.toList
 
 #guard polyEdge - constEdge = (0 : DensePoly Int)
 #guard (polyAdversarial - monomialAdversarial).toArray.toList =
   [0, 4, 0, -5, 0, 0, 0, 0, 0, 0, 0, 0, 8]
+#guard polyTypical - polyFromListTypical = polyTypical + (-polyFromListTypical)
 
 /-- info: [-3, 15, 8, -10, -4, 0, 0, 0, 0, 0, 0, 0, -1, 5, 2] -/
 #guard_msgs in #eval! (polyTypical * polyFromListTypical).toArray.toList
