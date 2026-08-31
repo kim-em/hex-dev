@@ -113,11 +113,11 @@ def prepPacked (n : Nat) : UInt64 :=
 def packed1Steps (n : Nat) : Nat :=
   (Nat.min n 63 + 1) / 2
 
-/-- Prepared degree-eight input with a dense quotient and zero remainder. -/
+/-- Prepared degree-eight input with a dense quotient and a varying low remainder. -/
 def prepPacked8 (n : Nat) : UInt64 :=
   let hi := Nat.max 8 (Nat.min n 63)
   let quotient := GF2Poly.ofUInt64 (binaryWord (hi - 8))
-  ((GF2q.modulus (n := 8) * quotient).toWords).getD 0 0
+  ((GF2q.modulus (n := 8) * quotient).toWords).getD 0 0 ^^^ binaryWord (hi % 8)
 
 /-- Exact long-division step count for the prepared degree-eight family. -/
 def packed8Steps (n : Nat) : Nat :=
@@ -231,15 +231,15 @@ setup_fixed_benchmark runPackedModulusChecksum where {
 /-
 Mode 1 cost model. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
 therefore has the alternating quotient with exactly `(n + 1) / 2` nonzero
-terms. Each term causes one single-word leading-term elimination. The model
-adds the two fixed stages, field packaging and representative projection.
+terms. Each term causes one single-word leading-term elimination. The model adds
+field packaging and representative projection as two fixed abstract units.
 -/
 setup_benchmark runPacked1 n => 2 + packed1Steps n
   with prep := prepPacked
   where {
-    paramFloor := 1
+    paramFloor := 2
     paramCeiling := 63
-    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 63]
+    paramSchedule := .custom #[2, 4, 8, 16, 32, 63]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -291,9 +291,9 @@ Projection and its checksum touch at most eight coefficients, so the model is
 setup_benchmark runGeneric28 n => n
   with prep := prepGeneric28
   where {
-    paramFloor := 16
+    paramFloor := 32
     paramCeiling := 512
-    paramSchedule := .custom #[16, 32, 64, 128, 256, 384, 512]
+    paramSchedule := .custom #[32, 64, 128, 256, 384, 512]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -301,11 +301,11 @@ setup_benchmark runGeneric28 n => n
   }
 
 /-
-Mode 1 cost model. `prepPacked8 n` is the fixed degree-eight modulus times the dense
-quotient `1 + x + ... + x^(n-8)`. Its remainder is zero and uniqueness of
-division makes every one of the quotient's `n - 7` terms a leading-term
-elimination. Each elimination is single-word work. The model adds the same two
-fixed packaging/projection stages as `runPacked1`.
+Mode 1 cost model. `prepPacked8 n` is the degree-eight modulus times a dense
+quotient, plus a varying polynomial of degree less than 8. Uniqueness of
+division gives exactly `n - 7` single-word leading-term eliminations; the low
+remainder does not change the quotient. The model adds packaging and projection
+as the same two fixed abstract elimination units as `runPacked1`.
 -/
 setup_benchmark runPacked8 n => 2 + packed8Steps n
   with prep := prepPacked8
@@ -328,9 +328,9 @@ degree, so the model is `n` in the input representative length.
 setup_benchmark runGeneric136 n => n
   with prep := prepGeneric136
   where {
-    paramFloor := 12
+    paramFloor := 24
     paramCeiling := 384
-    paramSchedule := .custom #[12, 24, 48, 96, 192, 288, 384]
+    paramSchedule := .custom #[24, 48, 96, 192, 288, 384]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -345,9 +345,9 @@ same independently derived linear model applies.
 setup_benchmark runGenericC136 n => n
   with prep := prepGeneric136
   where {
-    paramFloor := 12
+    paramFloor := 24
     paramCeiling := 384
-    paramSchedule := .custom #[12, 24, 48, 96, 192, 288, 384]
+    paramSchedule := .custom #[24, 48, 96, 192, 288, 384]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
