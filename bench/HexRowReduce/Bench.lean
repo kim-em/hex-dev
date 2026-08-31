@@ -247,6 +247,7 @@ prepared bounded-integer projection, so the family performs `Theta(n)` work. -/
 setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 768, paramSchedule := .custom preparedLinearSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
+  slopeTolerance := 0.15
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
@@ -257,6 +258,7 @@ rank-`n / 2` prepared family the aggregate scan is `Theta(n^2)`. -/
 setup_benchmark runFreeCols n => n ^ 2 with prep := deficientReduced where {
   paramFloor := 64, paramCeiling := 512, paramSchedule := .custom freeColsSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
+  slopeTolerance := 0.15
   signalFloorMultiplier := 1.0
   maxSecondsPerCall := 10.0
 }
