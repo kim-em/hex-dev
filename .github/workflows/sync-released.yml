@@ -8,9 +8,10 @@ name: Sync released repos
 # to their `main`, and advances the baseline — one dispatch drives it all the way
 # through. The uncoordinated-commit guard skips any released repo whose `main` has
 # moved off the baseline, so out-of-band commits are never clobbered. Needs the
-# `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets (contents:write on the
-# released repos; the set is split across two fine-grained tokens because one
-# token caps its selected-repository list — the sync routes per repo).
+# `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets (Contents and Workflows:
+# read/write on the released repos; Workflows is required for managed CI files.
+# The set is split across two fine-grained tokens because one token caps its
+# selected-repository list — the sync routes per repo).
 
 on:
   workflow_dispatch:

@@ -168,15 +168,34 @@ def check_ci_workflows(entries: list[dict]) -> None:
             parsed = yaml.load(workflow, Loader=yaml.BaseLoader)
         except yaml.YAMLError as exc:
             fail(f"{entry['repo']}: managed CI is invalid YAML: {exc}")
+        triggers = parsed.get("on") if isinstance(parsed, dict) else None
+        push = triggers.get("push") if isinstance(triggers, dict) else None
+        if (
+            not isinstance(push, dict)
+            or push.get("branches") != ["main"]
+            or "pull_request" not in triggers
+        ):
+            fail(
+                f"{entry['repo']}: managed CI must run on main pushes and "
+                "pull requests"
+            )
+        concurrency = parsed.get("concurrency") if isinstance(parsed, dict) else None
+        if (
+            not isinstance(concurrency, dict)
+            or concurrency.get("group") != "${{ github.workflow }}-${{ github.ref }}"
+            or concurrency.get("cancel-in-progress")
+            != "${{ github.ref != 'refs/heads/main' }}"
+        ):
+            fail(
+                f"{entry['repo']}: managed CI must preserve main runs so their "
+                "terminal cache save can finish"
+            )
         jobs = parsed.get("jobs") if isinstance(parsed, dict) else None
         if not isinstance(jobs, dict) or not jobs:
             fail(f"{entry['repo']}: managed CI must define jobs")
-        required_paths = [".lake/build"]
-        if entry.get("bench"):
-            required_paths.append("bench/.lake/build")
-        if entry.get("conformance"):
-            required_paths.append("conformance/.lake/build")
         for job_name, job in jobs.items():
+            if not isinstance(job, dict) or "strategy" in job:
+                fail(f"{entry['repo']}: CI job {job_name} must not use a matrix")
             steps = job.get("steps") if isinstance(job, dict) else None
             if not isinstance(steps, list):
                 fail(f"{entry['repo']}: CI job {job_name} has no steps")
@@ -211,18 +230,54 @@ def check_ci_workflows(entries: list[dict]) -> None:
                 fail(f"{entry['repo']}: lean-action Mathlib cache must be disabled")
             restore_inputs = steps[restore_index].get("with", {})
             save_inputs = steps[save_index].get("with", {})
-            cached_paths = set(restore_inputs.get("path", "").splitlines())
-            if not set(required_paths) <= cached_paths:
+            required_paths = {
+                ".lake/build",
+                ".lake/packages/Hex*/.lake/build",
+                ".lake/packages/hex-test-kit/.lake/build",
+            }
+            if job_name == "build" and entry.get("bench"):
+                required_paths |= {
+                    "bench/.lake/build",
+                    "bench/.lake/packages/Hex*/.lake/build",
+                    "bench/.lake/packages/hex-test-kit/.lake/build",
+                }
+            if job_name == "build" and entry.get("conformance"):
+                required_paths |= {
+                    "conformance/.lake/build",
+                    "conformance/.lake/packages/Hex*/.lake/build",
+                    "conformance/.lake/packages/hex-test-kit/.lake/build",
+                }
+            cached_paths = {
+                path.strip()
+                for path in restore_inputs.get("path", "").splitlines()
+                if path.strip()
+            }
+            saved_paths = {
+                path.strip()
+                for path in save_inputs.get("path", "").splitlines()
+                if path.strip()
+            }
+            if cached_paths != required_paths:
                 fail(
-                    f"{entry['repo']}: CI job {job_name} cache omits "
-                    f"{sorted(set(required_paths) - cached_paths)}"
+                    f"{entry['repo']}: CI job {job_name} cache paths differ; "
+                    f"missing={sorted(required_paths - cached_paths)}, "
+                    f"extra={sorted(cached_paths - required_paths)}"
                 )
             key = restore_inputs.get("key", "")
+            restore_prefixes = [
+                prefix.strip()
+                for prefix in restore_inputs.get("restore-keys", "").splitlines()
+                if prefix.strip()
+            ]
             if (
                 key != save_inputs.get("key")
-                or "${{ github.run_id }}-${{ github.run_attempt }}" not in key
-                or not restore_inputs.get("restore-keys", "").endswith("-\n")
-                or "github.run_id" in restore_inputs.get("restore-keys", "")
+                or saved_paths != cached_paths
+                or len(restore_prefixes) != 1
+                or key
+                != restore_prefixes[0]
+                + "${{ github.run_id }}-${{ github.run_attempt }}"
+                or "${{ runner.os }}-${{ runner.arch }}" not in key
+                or "${{ hashFiles(" not in key
             ):
                 fail(
                     f"{entry['repo']}: CI job {job_name} cache must use a "
@@ -236,16 +291,12 @@ def check_ci_workflows(entries: list[dict]) -> None:
                 fail(
                     f"{entry['repo']}: CI job {job_name} must save only from main"
                 )
-        if "strategy:" in workflow or "matrix:" in workflow:
-            fail(f"{entry['repo']}: managed CI must not introduce a job matrix")
-
 
 def main() -> int:
     document = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     entries = document.get("repos") if isinstance(document, dict) else None
     if not isinstance(entries, list) or not entries:
         fail("released.yml must contain a non-empty repos list")
-    check_ci_workflows(entries)
 
     repo_names: set[str] = set()
     library_names: set[str] = set()
@@ -390,6 +441,8 @@ def main() -> int:
             fail(f"{repo}: lakefile must be 'lean' or 'toml'")
 
         seen_repos.add(short)
+
+    check_ci_workflows(entries)
 
     if len(aggregate_entries) != 1:
         fail(f"released.yml must contain exactly one pins_only aggregate; found {len(aggregate_entries)}")

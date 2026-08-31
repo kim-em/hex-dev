@@ -13,7 +13,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -30,6 +30,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -48,6 +50,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-test-kit: |
     name: CI
@@ -57,7 +61,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -74,6 +78,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -85,6 +91,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-arith: |
     name: CI
@@ -94,7 +102,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -115,8 +123,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -146,8 +160,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly: |
     name: CI
@@ -157,7 +177,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -174,8 +194,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -219,8 +245,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-mv-poly: |
     name: CI
@@ -230,7 +262,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -247,8 +279,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -287,8 +325,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-mod-arith: |
     name: CI
@@ -298,7 +342,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -319,8 +363,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -350,8 +400,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly-mathlib: |
     name: CI
@@ -361,7 +417,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -378,6 +434,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -395,6 +453,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-mv-poly-mathlib: |
     name: CI
@@ -404,7 +464,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -421,7 +481,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -450,7 +514,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly-fp: |
     name: CI
@@ -460,7 +528,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -483,8 +551,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -519,8 +593,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-sparse-poly: |
     name: CI
@@ -530,7 +610,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -547,8 +627,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -587,8 +673,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-sparse-poly-mathlib: |
     name: CI
@@ -598,7 +690,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -615,6 +707,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -643,6 +737,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly-z: |
     name: CI
@@ -652,7 +748,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -675,8 +771,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -711,8 +813,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-mod-arith-mathlib: |
     name: CI
@@ -722,7 +830,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -739,6 +847,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -752,6 +862,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly-fp-mathlib: |
     name: CI
@@ -761,7 +873,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -778,6 +890,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -791,6 +905,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gfq-ring: |
     name: CI
@@ -800,7 +916,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -823,8 +939,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -859,8 +981,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-hensel: |
     name: CI
@@ -870,7 +998,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -893,8 +1021,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -929,8 +1063,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-poly-z-mathlib: |
     name: CI
@@ -940,7 +1080,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -957,6 +1097,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -970,6 +1112,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-hensel-mathlib: |
     name: CI
@@ -979,7 +1123,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -996,6 +1140,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1009,6 +1155,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-roots: |
     name: CI
@@ -1018,7 +1166,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1041,8 +1189,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1077,8 +1231,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-real-roots: |
     name: CI
@@ -1088,7 +1248,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1111,8 +1271,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1147,8 +1313,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-roots-mathlib: |
     name: CI
@@ -1158,7 +1330,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1175,6 +1347,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1188,6 +1362,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-real-roots-mathlib: |
     name: CI
@@ -1197,7 +1373,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1214,7 +1390,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1233,7 +1413,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-matrix: |
     name: CI
@@ -1243,7 +1427,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1260,8 +1444,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1304,8 +1494,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-row-reduce: |
     name: CI
@@ -1315,7 +1511,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1332,7 +1528,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1360,7 +1560,11 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-berlekamp: |
     name: CI
@@ -1370,7 +1574,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1393,8 +1597,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1429,8 +1639,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-conway: |
     name: CI
@@ -1440,7 +1656,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1463,8 +1679,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1499,8 +1721,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gfq-field: |
     name: CI
@@ -1510,7 +1738,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1533,8 +1761,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1569,8 +1803,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gf2: |
     name: CI
@@ -1580,7 +1820,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1608,8 +1848,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1652,8 +1898,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gf2-mathlib: |
     name: CI
@@ -1663,7 +1915,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1680,6 +1932,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1693,6 +1947,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gfq: |
     name: CI
@@ -1702,7 +1958,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1725,8 +1981,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1765,8 +2027,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gfq-mathlib: |
     name: CI
@@ -1776,7 +2044,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1793,6 +2061,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1806,6 +2076,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-determinant: |
     name: CI
@@ -1815,7 +2087,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1834,8 +2106,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1868,8 +2146,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-bareiss: |
     name: CI
@@ -1879,7 +2163,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1896,8 +2180,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1927,8 +2217,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-matrix-mathlib: |
     name: CI
@@ -1938,7 +2234,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1955,6 +2251,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -1972,6 +2270,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-row-reduce-mathlib: |
     name: CI
@@ -1981,7 +2281,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -1998,6 +2298,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2015,6 +2317,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-determinant-mathlib: |
     name: CI
@@ -2024,7 +2328,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2041,6 +2345,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2058,6 +2364,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-bareiss-mathlib: |
     name: CI
@@ -2067,7 +2375,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2084,6 +2392,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2101,6 +2411,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-berlekamp-mathlib: |
     name: CI
@@ -2110,7 +2422,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2127,6 +2439,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2140,6 +2454,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gram-schmidt: |
     name: CI
@@ -2149,7 +2465,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2168,8 +2484,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2205,8 +2527,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-gram-schmidt-mathlib: |
     name: CI
@@ -2216,7 +2544,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2233,6 +2561,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2250,6 +2580,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-lll: |
     name: CI
@@ -2259,7 +2591,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2286,8 +2618,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2359,8 +2697,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
       # macOS job exists solely for the FFI dyld symbol-resolution cross-check
       # (the LLL external-reduction check); per SPEC/CI.md this is the one justified second runner.
@@ -2379,8 +2723,8 @@ workflows:
             with:
               path: |
                 .lake/build
-                bench/.lake/build
-                conformance/.lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2398,8 +2742,8 @@ workflows:
             with:
               path: |
                 .lake/build
-                bench/.lake/build
-                conformance/.lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-berlekamp-zassenhaus: |
     name: CI
@@ -2409,7 +2753,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2432,8 +2776,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2468,8 +2818,14 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
                 bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-lll-mathlib: |
     name: CI
@@ -2479,7 +2835,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2496,6 +2852,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2513,6 +2871,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-berlekamp-zassenhaus-mathlib: |
     name: CI
@@ -2522,7 +2882,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2539,6 +2899,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2552,6 +2914,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex: |
     name: CI
@@ -2561,7 +2925,7 @@ workflows:
       pull_request:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     jobs:
       build:
         runs-on: ubuntu-latest
@@ -2578,6 +2942,8 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
@@ -2595,4 +2961,6 @@ workflows:
             with:
               path: |
                 .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}

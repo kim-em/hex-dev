@@ -75,8 +75,9 @@ on the closest already released package. The initial `main` must contain:
   root module.
 
 Publication validates these declarations in the unmanaged Lake skeleton before
-copying source. A stale target name therefore stops the sync before it can
-partially update that repository.
+copying source. It also validates that every `scripts/ci` helper named by the
+managed workflow exists in the mirror. A stale target or missing helper
+therefore stops the sync before it can partially update that repository.
 
 Source, the umbrella module, README, SPEC, benchmarks, conformance drivers,
 fixtures, oracle helpers, and `.github/workflows/ci.yml` are managed by the
@@ -115,7 +116,11 @@ Do not add placeholder entries to `scripts/release/synced.json`. An absent
 baseline is how the first publish is distinguished; any truthy, incorrect SHA
 causes the uncoordinated-commit guard to skip the repository.
 
-After every skeleton exists on `main`:
+After every skeleton exists on `main`, ensure the fine-grained tokens behind
+`RELEASED_SYNC_PAT` and
+`RELEASED_SYNC_PAT_2` select every target repository and grant both
+`Contents: Read and write` and `Workflows: Read and write`; the latter is
+required because the sync publishes `.github/workflows/ci.yml`. Then:
 
 1. Run the local manifest check and the complete monorepo build.
 2. Dispatch `.github/workflows/sync-released.yml` with `dry_run=true`.

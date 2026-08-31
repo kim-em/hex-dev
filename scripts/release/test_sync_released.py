@@ -135,6 +135,49 @@ class SyncReleasedTests(unittest.TestCase):
                 {"repo": "leanprover/hex-example"}, self.repo / "clone"
             )
 
+    def test_pins_only_apply_overwrites_managed_ci(self) -> None:
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex: |\n    name: Managed CI\n", encoding="utf-8"
+        )
+        clone = self.repo / "clone"
+        workflow = clone / ".github" / "workflows" / "ci.yml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text("name: Old CI\n", encoding="utf-8")
+        with patch.object(sync_released, "RELEASED_CI", source):
+            notes = sync_released.apply_paths(
+                {"repo": "leanprover/hex", "pins_only": True}, clone
+            )
+        self.assertEqual(workflow.read_text(), "name: Managed CI\n")
+        self.assertEqual(
+            notes,
+            ["  scripts/release/released-ci.yml -> .github/workflows/ci.yml"],
+        )
+
+    def test_managed_ci_requires_unmanaged_helpers(self) -> None:
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n"
+            "  hex-example: |\n"
+            "    name: CI\n"
+            "    jobs:\n"
+            "      build:\n"
+            "        steps:\n"
+            "          - run: bash scripts/ci/check_example.sh\n",
+            encoding="utf-8",
+        )
+        entry = {"repo": "leanprover/hex-example"}
+        with (
+            patch.object(sync_released, "RELEASED_CI", source),
+            self.assertRaisesRegex(RuntimeError, "lacks CI helpers"),
+        ):
+            sync_released.validate_ci_helpers(entry, self.repo)
+        helper = self.repo / "scripts" / "ci" / "check_example.sh"
+        helper.parent.mkdir(parents=True)
+        helper.write_text("#!/bin/sh\n", encoding="utf-8")
+        with patch.object(sync_released, "RELEASED_CI", source):
+            sync_released.validate_ci_helpers(entry, self.repo)
+
     def test_direct_pins_rewrite_toml_and_lean(self) -> None:
         (self.repo / "lakefile.toml").write_text(
             '[[require]]\n'

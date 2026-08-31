@@ -23,7 +23,10 @@ Auth (non-dry-run): tokens from --token (repeatable) or the environment
 token caps its selected-repository list, so the published set is split across
 more than one token; for each target repository the preflight probes the
 tokens in order until one can push to it, and routes that repository's clone and
-push through that token. Dry-run clones over public https and never pushes.
+push through that token. Because the sync updates `.github/workflows/ci.yml`,
+each token also needs Workflows: read and write. The receive-pack preflight can
+verify Contents permission but not this separate workflow-file permission.
+Dry-run clones over public https and never pushes.
 
 Usage:
   python3 scripts/release/sync_released.py --dry-run
@@ -72,7 +75,8 @@ TOKEN_HELP = (
     "Follow the per-token reasons above: a repository reported without a\n"
     "write grant must be added to the selected repositories of one of the\n"
     "tokens behind the\n"
-    "RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read and write);\n"
+    "RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read and write;\n"
+    "Workflows: Read and write);\n"
     "a missing repository must be created first; an indeterminate reason (rate\n"
     "limit, network, credentials) calls for a retry or a token repair, not a\n"
     "selection change. The tokens are currently `hex-publishing` and\n"
@@ -284,8 +288,10 @@ def _receive_pack_status(repo: str, token: str) -> int:
 
     `GET <repo>.git/info/refs?service=git-receive-pack` is the handshake `git
     push` performs before sending anything, so it is authorized exactly like a
-    push (`Contents: write`) and has no side effects: 200 means this token can
-    push, 401/403 mean it cannot, 404 means the repository is not there.
+    content push (`Contents: write`) and has no side effects: 200 means this
+    token can push ordinary content, 401/403 mean it cannot, 404 means the
+    repository is not there. GitHub's separate Workflows permission is checked
+    only when a push changes `.github/workflows`.
     """
     auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
     request = urllib.request.Request(
@@ -308,7 +314,9 @@ def selection_check(repo: str, token: str) -> str | None:
     first token even when only a later token holds the write grant, and the
     failure then surfaces at push time, after earlier repositories were
     already published (this has actually bitten a first publish). The
-    receive-pack handshake is authorized exactly like the push itself.
+    receive-pack handshake is authorized like an ordinary content push. It
+    cannot preflight the separate Workflows permission needed when this sync
+    updates `.github/workflows/ci.yml`.
 
     A repository that does not exist answers 404; an anonymous metadata probe
     separates "missing" from anything odder. Any other status is reported as
@@ -351,8 +359,9 @@ def route_tokens(entries: list[dict], tokens: list[str]) -> tuple[dict[str, str]
     it, and every later clone and push uses the token routed here. A library
     released here
     but on no token's list would otherwise fail partway through, after earlier
-    repos were already published. The probe authorizes like the push itself;
-    see `selection_check`.
+    repos were already published. The probe authorizes ordinary content pushes;
+    the separate Workflows grant required by the managed CI update cannot be
+    preflighted this way. See `selection_check`.
     """
     routed: dict[str, str] = {}
     blocked: list[str] = []
@@ -479,6 +488,34 @@ def validate_skeleton(entry: dict, clone: Path) -> None:
                 f"released Lake file {lakefile} must define executable "
                 f"{executable} at {module}"
             )
+
+
+def validate_ci_helpers(entry: dict, clone: Path) -> None:
+    """Require every centrally managed CI helper to exist in the mirror.
+
+    Release workflows are managed here, while existing ``scripts/ci`` helpers
+    remain part of each mirror's skeleton. Validate that boundary before any
+    publication writes so a central workflow cannot point at a missing script.
+    """
+    short = entry["repo"].split("/", 1)[1]
+    workflow = released_ci_workflows()[short]
+    parsed = yaml.load(workflow, Loader=yaml.BaseLoader)
+    jobs = parsed.get("jobs", {}) if isinstance(parsed, dict) else {}
+    helpers: set[str] = set()
+    for job in jobs.values():
+        if not isinstance(job, dict):
+            continue
+        for step in job.get("steps", []):
+            command = step.get("run") if isinstance(step, dict) else None
+            if isinstance(command, str):
+                helpers.update(
+                    re.findall(r"scripts/ci/[A-Za-z0-9_.\-/]+", command)
+                )
+    missing = sorted(path for path in helpers if not (clone / path).is_file())
+    if missing:
+        raise RuntimeError(
+            f"released repository {entry['repo']} lacks CI helpers {missing}"
+        )
 
 
 def rewrite_external_pins(clone: Path,
@@ -831,6 +868,7 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
                 return False
             print(msg + " Overriding (--force).")
         validate_skeleton(entry, clone)
+        validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
         if not entry.get("pins_only"):
@@ -853,6 +891,15 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         for l in status.splitlines():
             print(f"    {l}")
         if dry_run:
+            workflow_diff = run(
+                ["git", "diff", "--", ".github/workflows/ci.yml"],
+                cwd=clone,
+                capture=True,
+            )
+            if workflow_diff:
+                print("  managed workflow diff:")
+                for line in workflow_diff.splitlines():
+                    print(f"    {line}")
             synced[short] = head  # stand-in so downstream pin previews resolve
             print("  DRY-RUN: not committing or pushing")
             return False
@@ -887,8 +934,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Publish released split repos from the monorepo.")
     ap.add_argument("--dry-run", action="store_true", help="print planned changes; do not push")
     ap.add_argument("--token", action="append", default=None,
-                    help="GitHub token with contents:write on (a subset of) the "
-                         "released repos; repeatable, tried in order per repo. "
+                    help="GitHub token with contents:write and workflows:write "
+                         "on (a subset of) the released repos; repeatable, "
+                         "tried in order per repo. "
                          "Defaults to $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ...")
     ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
     ap.add_argument("--force", action="store_true",
@@ -946,7 +994,8 @@ def main() -> int:
             f"token {index + 1}: {sum(1 for t in repo_token.values() if t == token)}"
             for index, token in enumerate(tokens))
         print(f"token preflight: all {len(targets)} target repositories are covered "
-              f"({per_slot}; the probe authorizes like the push itself, see selection_check)")
+              f"({per_slot}; Contents grants verified; Workflows grants are "
+              "checked by GitHub when workflow changes are pushed)")
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
