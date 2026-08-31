@@ -40,7 +40,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runQAdjoinRootsLadder` | fixed | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree 6 | 20 s ceiling |
 | `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
 | advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, and `AlgebraicPoly.Common` primitives | 250 ms default; 500/750 ms for measured slower routes, zero grace |
-| `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 250 ms, 300 ms, and 8 s whole-child ceilings, zero grace |
+| `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 1 s, 1.1 s, and 30 s whole-child ceilings, zero grace |
 
 The 76 fixed registrations comprise 51 internal API, phase, and fixed-problem
 cases, twenty-four Lean/PARI comparator rungs (`runQAdjoinMulPair` /
@@ -248,20 +248,26 @@ The audit rechecked every declaration below in the current source: each is
 still public, and each nontrivial route has evidence. Closed projections and
 literal constructors are explicitly identified as grouped correctness anchors
 instead of ceremonial performance targets. A target shown more than once is
-an intentional shared measurement only when the declarations use the same
-implementation route. In particular, a total wrapper calls its checked form
+an intentional shared measurement when declarations use the same implementation
+route or when unrelated closed constant-time operations are explicitly grouped
+as correctness anchors. In particular, a total wrapper calls its checked form
 and adds only a constant-time projection.
 
 | advertised declaration | registration | assignment |
 |---|---|---|
+| `QAdjoin.add` | `runQAdjoinAddLadder` | parametric, `n` |
 | `QAdjoin.approx` | `runQAdjoinApprox` | fixed degree 128; failed conservative-model audit |
 | `QAdjoin.sub` | `runQAdjoinSubLadder` | parametric, `n` |
 | `QAdjoin.neg` | `runQAdjoinNegLadder` | parametric, `n` |
+| `QAdjoin.mul` | `runQAdjoinMulLadder` | parametric, `n²` |
+| `QAdjoin.inv` / `Inv.inv` | `runQAdjoinInvLadder` | parametric aggregate proxy; model decision #9743 remains scoped separately |
 | `QAdjoin.div` / `Div.div` | `runQAdjoinDivLadder` | parametric, `n²(n+7)` |
 | rational `SMul.smul` on `QAdjoin` | `runQAdjoinSmulLadder` | parametric, `n` |
 | `QAdjoin.toAlgebraicNumber?` | `runQAdjoinCanonical` | fixed quadratic conversion |
 | `QAdjoin.toAlgebraicNumber` | `runQAdjoinCanonical` | same checked conversion plus projection |
 | `QAdjoin.instDecidableEq` | `runQAdjoinCanonical` | grouped runtime structural decision |
+| `QAdjoin.isZero` | `runQAdjoinCanonical` | grouped constant-time decision |
+| `QAdjoin` natural/integer powers | multiplication/inversion targets | repeated-squaring composition of registered routes |
 | `AlgebraicRoot.add?` | `runLazyAdd` | fixed quadratic pair |
 | `AlgebraicRoot.add` | `runLazyAdd` | same checked route plus projection |
 | `AlgebraicRoot.sub?` | `runLazySub` | fixed quadratic pair |
@@ -274,7 +280,9 @@ and adds only a constant-time projection.
 | `AlgebraicRoot.inv` | `runLazyInv` | same checked route plus projection |
 | `AlgebraicRoot.neg` | `runLazyNeg` | fixed reflection route |
 | `AlgebraicRoot.ofEliminant?` | lazy arithmetic targets | shared checked root-construction route |
+| `AlgebraicRoot.exact?` / `AlgebraicRoot.exact` | exactification targets | checked route and total projection |
 | `AlgebraicNumber.zeroRep` | `runZeroDecisions` | grouped fixed accessor/decisions |
+| `AlgebraicNumber.canonicalRep?` | `runCanonicalRepLadder` | fixed hard canonicalization case |
 | `AlgebraicNumber.add` | `runAlgebraicAdd` | fixed canonical pair |
 | `AlgebraicNumber.sub` | `runAlgebraicSub` | fixed canonical pair |
 | `AlgebraicNumber.mul` | `runAlgebraicMul` | fixed canonical pair |
@@ -293,6 +301,7 @@ and adds only a constant-time projection.
 | rational `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | natural `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | integer `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
+| `AlgebraicNumber.beq` / `BEq.beq` | `runAlgebraicPolyBeq` | coefficientwise canonical equality route |
 | `AlgebraicRoot.isZero` | `runZeroDecisions` | grouped fixed decision |
 | `AlgebraicNumber.isZero` | `runZeroDecisions` | grouped fixed decision |
 | `RefinedIsolation.containsZero` | `runZeroDecisions` | grouped fixed decision |
@@ -303,7 +312,7 @@ and adds only a constant-time projection.
 | `AlgebraicPoly.degree?` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
 | `AlgebraicPoly.isZero` | `runAlgebraicPolyAccessors` | grouped fixed accessor |
 | `AlgebraicPoly.beq` | `runAlgebraicPolyBeq` | parametric, `n` |
-| `Disambiguation.evalMajorant` | `runEvalMajorantFixed` | fixed length 4,096; failed conservative-model audit |
+| `Disambiguation.evalMajorant` | `runEvalMajorantFixed` | fixed length 4,096 with rational `valueBound`; failed conservative-model audit |
 | `Common.signedShift` | `runCommonSignedDegree` | grouped fixed arithmetic/accessor |
 | `Common.degree` | `runCommonSignedDegree` | grouped fixed arithmetic/accessor |
 | `Common.rational?` | `runCommonRational` | fixed canonical construction |
@@ -321,6 +330,7 @@ and adds only a constant-time projection.
 | `QAdjoin.Roots.normEliminant` | `runNormEliminant` | fixed repeated degree-6 component |
 | `QAdjoin.Roots.evalEliminant` | `runEvalEliminant` | fixed repeated degree-6 component |
 | `QAdjoin.Roots.componentRoots?` | `runComponentRoots` | fixed repeated degree-6 component |
+| `QAdjoin.Roots.sameValue?`, `mergeRoot`, `mergeRootList` | `runMergeRootListLadder` | parametric duplicate-removal route |
 | `QAdjoin.roots?` / `QAdjoin.roots` | root targets | the total target calls the checked route and projects |
 | `AlgebraicPoly.roots?` / `AlgebraicPoly.roots` | algebraic-root target | the total target calls the checked route and projects |
 
@@ -367,28 +377,28 @@ runs below give the measurements; this table says which one counts.
 
 | target | verdict | slope | from |
 |---|---|---:|---|
-| `runQAdjoinAddLadder` | **consistent** | -0.064 | single-root |
-| `runQAdjoinSubLadder` | **consistent** | -0.069 | API-surface audit |
-| `runQAdjoinNegLadder` | **consistent** | -0.045 | API-surface audit |
-| `runQAdjoinSmulLadder` | **consistent** | -0.016 | API-surface audit |
-| `runQAdjoinMulLadder` | **consistent** | -0.018 | single-root |
+| `runQAdjoinAddLadder` | **consistent** | -0.068 | current API-surface audit |
+| `runQAdjoinSubLadder` | **consistent** | -0.060 | current API-surface audit |
+| `runQAdjoinNegLadder` | **consistent** | -0.062 | current API-surface audit |
+| `runQAdjoinSmulLadder` | **consistent** | -0.015 | current API-surface audit |
+| `runQAdjoinMulLadder` | **consistent** | -0.021 | current API-surface audit |
 | `runQAdjoinApprox` | **fixed: 16.868 ms, hash match** | — | API-surface fixed |
-| `runQAdjoinInvLadder` | **consistent** | **-0.105** | aggregate inversion |
-| `runQAdjoinDivLadder` | **consistent** | -0.116 | API-surface audit |
-| `runAddEliminantLadder` | **consistent** | +0.115 | fixture-corrected |
-| `runAlgebraicPolyOfArray` | **consistent** | -0.060 | extended API-surface audit |
-| `runAlgebraicPolyBeq` | **consistent** | -0.009 | API-surface audit |
+| `runQAdjoinInvLadder` | **consistent** | **-0.101** | current API-surface audit |
+| `runQAdjoinDivLadder` | **consistent** | -0.091 | current API-surface audit |
+| `runAddEliminantLadder` | **consistent** | +0.142 | current API-surface audit |
+| `runAlgebraicPolyOfArray` | **consistent** | -0.072 | current API-surface audit |
+| `runAlgebraicPolyBeq` | **consistent** | -0.011 | current API-surface audit |
 | `runEvalMajorantFixed` | **fixed: 5.914 ms, hash match** | — | API-surface fixed |
-| `runCommonPrimitive` | **consistent** | -0.052 | API-surface audit |
+| `runCommonPrimitive` | **consistent** | -0.031 | current API-surface audit |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
 | `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
 | `runCanonicalRepLadder` | **fixed: 154.045 ms, hash match** | — | exactification mode 3 |
-| `runCommonPresentationLadder` | **consistent** | -0.245 | fixture-corrected |
-| `runMergeRootListLadder` | **consistent** | +0.139 | root-merge fix |
+| `runCommonPresentationLadder` | **consistent** | -0.169 | current API-surface audit |
+| `runMergeRootListLadder` | **consistent** | +0.193 | current API-surface audit |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
-| `runCommonPowers` | **fixed: 35.441 ms, hashes agree** | — | API-surface fixed |
+| `runCommonPowers` | **fixed: 34.373 ms, hash match** | — | API-surface fixed |
 
 All thirteen parametric registrations receiving a statistically matching
 two-sided harness verdict have models derived independently of timed results. The former
@@ -411,7 +421,8 @@ instrumentation supplies the tighter aggregate finite-word model that passes
 below; the SPEC separately retains the conservative `O(n³ log n)` worst-case
 bit-cost bound.
 
-The API-surface audit ran the new controlled ladders at three outer trials.
+The final clean-tree API-surface audit ran the controlled ladders once per rung;
+the earlier three-trial audit remains diagnostic history only.
 `AlgebraicPoly.ofArray` was initially too close to fixed call overhead through
 256 entries, so its unchanged linear derivation was re-run on the extended
 4-through-2048 schedule where the suffix traversal is measurable. The final
@@ -419,13 +430,13 @@ verdicts are:
 
 | target | schedule | model | verdict | slope |
 |---|---|---:|---|---:|
-| `runQAdjoinSubLadder` | 4..128, doubling | `n` | **consistent** | -0.069 |
-| `runQAdjoinNegLadder` | 4..128, doubling | `n` | **consistent** | -0.045 |
-| `runQAdjoinSmulLadder` | 4..128, doubling | `n` | **consistent** | -0.016 |
-| `runQAdjoinDivLadder` | 4, 8, 16, 32, 48, 64, 96 | `n²(n+7)` | **consistent** | -0.116 |
-| `runAlgebraicPolyOfArray` | 4..2048, doubling | `n` | **consistent** | -0.060 |
-| `runAlgebraicPolyBeq` | 4..256, doubling | `n` | **consistent** | -0.009 |
-| `runCommonPrimitive` | 2..128, doubling | `n` | **consistent** | -0.052 |
+| `runQAdjoinSubLadder` | 4..128, doubling | `n` | **consistent** | -0.060 |
+| `runQAdjoinNegLadder` | 4..128, doubling | `n` | **consistent** | -0.062 |
+| `runQAdjoinSmulLadder` | 4..128, doubling | `n` | **consistent** | -0.015 |
+| `runQAdjoinDivLadder` | 4, 8, 16, 32, 48, 64, 96 | `n²(n+7)` | **consistent** | -0.091 |
+| `runAlgebraicPolyOfArray` | 4..2048, doubling | `n` | **consistent** | -0.072 |
+| `runAlgebraicPolyBeq` | 4..256, doubling | `n` | **consistent** | -0.011 |
+| `runCommonPrimitive` | 2..128, doubling | `n` | **consistent** | -0.031 |
 
 The corresponding fixed export covers the 35 newly registered fixed targets;
 every target has a declared hash, every repeat agrees, and every observed hash
@@ -436,6 +447,14 @@ quadratic `runQAdjoinCanonical` conversion is 924 us. Sub-microsecond grouped
 accessors are intentionally retained as fixed registrations: their inputs pass
 through `IO.Ref`, and the harness warning records that the genuine operation is
 smaller than its one-microsecond diagnostic floor.
+
+Fixed medians exclude the untimed warmup and lazy fixture construction, but the
+zero-grace ceiling covers the whole child. Direct one-repeat parent invocations
+of `runNormEliminant`, `runEvalEliminant`, and `runComponentRoots` took 0.235 s,
+0.343 s, and 9.520 s respectively, including parent overhead. Their 1 s, 1.1 s,
+and 30 s child ceilings therefore retain at least 3x even that more conservative
+end-to-end observation; the degree-six component budget is not inferred from
+its 2.288 s reported operation median alone.
 
 The approximation and majorant registrations were deliberately demoted after
 a stricter model review. The conservative quartic approximation proxy is
@@ -1314,7 +1333,7 @@ performance claim of this ladder.
 | [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `e1545c9ea`, clean tree; all 13 current parametric registrations | idle | `be7327b225dded855ad8e9913e92092a8544650a6ae426299b50d444b36854ae` |
 | [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `606245a2e`, clean tree; all 35 newly added fixed registrations | idle | `e7b2a1bcd0e62320de02a31175ebcf5d511201d68c962718e3b1d61a52db1218` |
 | [`bench-results/hex-number-field-api-model-review.json`](bench-results/hex-number-field-api-model-review.json) | `e7f5ed66b`, diagnostic audit tree before demotion | idle | `48ddca68217138efdeadcc1b5c7bde4d349b9c186fa396859809dfee9aabc320` |
-| [`bench-results/hex-number-field-api-surface-of-array.json`](bench-results/hex-number-field-api-surface-of-array.json) | `22e2f31a0`, superseded extended `ofArray` audit | idle | `2ae9e42471f1359eda7493843ab10c874417e5204346e2c4bc6f8045c6cc6ddc` |
+| [`bench-results/hex-number-field-api-surface-of-array.json`](bench-results/hex-number-field-api-surface-of-array.json) | `22e2f31a0`, dirty audit tree; superseded by the clean current API-surface export | idle | `2ae9e42471f1359eda7493843ab10c874417e5204346e2c4bc6f8045c6cc6ddc` |
 | [`bench-results/hex-number-field-phase4-scientific.json`](bench-results/hex-number-field-phase4-scientific.json) | `066f6fc29` | loaded (load average 105 to 150) | `3948bbb7107d96e7af56edcf2497b52e2b2a34f4d89376b93cc477c0f8a6517d` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet.json`](bench-results/hex-number-field-phase4-scientific-quiet.json) | `066f6fc29` | idle (load average 1.5) | `186d25381ce87fa6c4f4d0b6d51c03eed8f865a120dd83a5ac278c8d34be6408` |
 | [`bench-results/hex-number-field-phase4-scientific-quiet-heavy.json`](bench-results/hex-number-field-phase4-scientific-quiet-heavy.json) | `a2b70b949` | idle | `71b42aaa8b45ce25f450f7b7ad8a0d537c9e2220bdddd8ab79fcb5cc51c477b3` |

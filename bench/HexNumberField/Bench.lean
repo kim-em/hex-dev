@@ -357,23 +357,24 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
       -- certified result. Group the runtime structural equality decision here.
       return mixHash
         (algebraicChecksum (input.toAlgebraicNumber sqrtTwoRep rfl))
-        (hash (decide (input = input)))
+        (mixHash (hash (decide (input = input))) (hash input.isZero))
   else
     fun _ => throw <| IO.userError "qadjoin/canonical: irreducibility failed"
 
-/- Mode 3. Krylov powers, first-dependence row reduction, normalization,
+/- Fixed assessment. Krylov powers, first-dependence row reduction, normalization,
 isolation, and representative selection are all exercised at fixed defining
 degree two; varying that degree would change the public value's field rather
 than isolate a caller size parameter, and no executable isolator bound supplies
 a mode-2 ceiling. The total wrapper adds only the constant-time checked-result
-projection. Its 0.93 ms median plus the 43 ms spawn floor sits over 5x inside
-the 250 ms zero-grace whole-child budget. -/
+projection. Including both warmup and measured conversion, its 0.93 ms median
+plus the 47 ms spawn floor sits over 5x inside the 250 ms zero-grace
+whole-child budget. `QAdjoin.isZero` is grouped as a constant-time anchor. -/
 setup_fixed_benchmark runQAdjoinCanonical where {
   repeats := 3
   maxSecondsPerCall := 0.25
   killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0x6d24385fc39cc6fb
+  expectedHash := some 0x3dacd77644bc8bba
 }
 
 private def rootsInput : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
@@ -413,7 +414,7 @@ setup_fixed_benchmark runRoots where {
 
 /-! # Advertised fixed-degree API surface -/
 
-/- Mode-3 fixed assessments use a zero-grace whole-child ceiling and warm the
+/- Fixed assessments use a zero-grace whole-child ceiling and warm the
 lazy fixture once before measurement. These APIs operate on fixed quadratic
 values; manufacturing a degree parameter changes their field and isolation
 problem rather than scaling the same public input, while no published bound
@@ -729,7 +730,10 @@ def runEvalMajorantFixed : Unit → IO UInt64 := fun _ => do
 grows linearly. A 32-through-4096 sweep remained faster than that model by
 `n^0.689` after the small-Nat/GMP transition, so it supplies no honest
 two-sided wall model; no published bound covers this executable as a dominant
-profiled phase. The largest controlled input takes 6.0 ms. A 200 ms zero-grace
+profiled phase. This fixture uses the public generic's cheap rational
+`valueBound`; production disambiguation additionally pays for QAdjoin or tower
+coordinate majorants, so this is API coverage rather than a proxy for that
+complete phase. The largest controlled input takes 6.0 ms. A 200 ms zero-grace
 whole-child budget includes lazy fixture setup, warmup, and more than 3x the
 43 ms clean spawn-floor-plus-operation baseline. -/
 setup_fixed_benchmark runEvalMajorantFixed where {
@@ -1118,8 +1122,9 @@ setup_benchmark runQAdjoinSubLadder n => n
   }
 
 /- Cost model. Negation maps rational negation over the `n` canonical
-coordinates and `reduce` only trims a zero suffix; bounded coefficient height
-makes the public `Neg` route linear in the modulus degree. -/
+coordinates. `QAdjoin.reduce` then rebuilds the degree-`n` rational modulus and
+runs `divMod`; the already reduced degree-`(n-1)` result makes that work linear.
+Bounded coefficient height therefore makes the public `Neg` route linear. -/
 setup_benchmark runQAdjoinNegLadder n => n
   with prep := prepFieldInput
   where {
@@ -1132,8 +1137,9 @@ setup_benchmark runQAdjoinNegLadder n => n
   }
 
 /- Cost model. Rational scalar action scales each of the `n` reduced
-coordinates by one fixed rational and then trims; the scalar and fixture
-heights are bounded, so this is `O(n)` word operations. -/
+coordinates by one fixed rational. The following `reduce` rebuilds the
+degree-`n` rational modulus and runs `divMod` on an already reduced result, also
+linear; bounded scalar and fixture heights give `O(n)` word operations. -/
 setup_benchmark runQAdjoinSmulLadder n => n
   with prep := prepFieldInput
   where {
@@ -1231,8 +1237,10 @@ setup_benchmark runQAdjoinInvLadder n => n * n * (n + 7)
 /- Cost model. Public division computes the divisor inverse through the same
 monic-normalized extended-gcd chain as `runQAdjoinInvLadder`, then performs one
 quadratic fixed-field multiplication. Thus `n²(n + 7)` remains the dominant
-finite-word proxy and this separate target ensures the `Div` composition is
-compiled and measured rather than inferred. -/
+finite-word proxy. The `+7` transition transfers by algorithm identity—the
+salt-9 divisor follows the same degree-dropping chain shape—rather than by a
+second timing calibration. This separate target ensures the `Div` composition
+is compiled and measured rather than inferred. -/
 setup_benchmark runQAdjoinDivLadder n => n * n * (n + 7)
   with prep := prepInvInput
   where {
@@ -1725,19 +1733,22 @@ It exercises the Brown norm resultant, double evaluation resultant, and
 complete certified component-root route. Separate fixed registrations expose
 both eliminants and the isolation-dominated `componentRoots?` phase without
 inventing a transfer of an external isolator's asymptotic bound. Their measured
-medians are 65 us, 43.5 ms, and 2.282 s; adding the 43 ms spawn floor, the
-250 ms, 300 ms, and 8 s zero-grace budgets each provide at least 3x headroom. -/
+medians are 64 us, 43.1 ms, and 2.288 s; adding the 47 ms spawn floor, the
+1 s, 1.1 s, and 30 s zero-grace budgets include lazy fixture construction,
+warmup, the measured batch, and at least 3x the observed whole-process margin. -/
 setup_fixed_benchmark runNormEliminant where {
-  apiFixedConfig with expectedHash := some 0xbd1f7b595e06cc7d
+  apiFixedConfig with
+  maxSecondsPerCall := 1.0
+  expectedHash := some 0xbd1f7b595e06cc7d
 }
 setup_fixed_benchmark runEvalEliminant where {
   apiFixedConfig with
-  maxSecondsPerCall := 0.3
+  maxSecondsPerCall := 1.1
   expectedHash := some 0x38d1cf2583d846c2
 }
 setup_fixed_benchmark runComponentRoots where {
   apiFixedConfig with
-  maxSecondsPerCall := 8.0
+  maxSecondsPerCall := 30.0
   expectedHash := some 0x1ad4de1ea10497bd
 }
 
