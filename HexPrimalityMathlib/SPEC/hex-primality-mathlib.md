@@ -264,6 +264,42 @@ both parity and odd-factor cases, plus balanced 512-bit exhaustion.
 `Negative64Null` is the elevated null control: it repeats balanced 64-bit
 negative proofs so host interference is visible above the import floor.
 
+The bridge-owned Phase-4 matrix adds `Baseline` and matched table-smooth 31-
+and 512-bit `Input`, `Literal`, `Reify`, `Replay`, and `Primality` modules. `NormNumTrial`,
+`NormNumThreshold`, and `NormNum512` cover the opted-in route immediately below
+and above the `2^24` boundary and at the supported ceiling. The paired runner is
+`scripts/bench/primality_mathlib_proof_sweep.py`; its release record is
+`reports/bench-results/hex-primality-mathlib-proof-probes-issue-9765-chungus2.json`.
+It does not add a bridge search probe: certificate search is byte-for-byte the
+core `primeCertCountedWith?` call and remains performance-owned by
+`HexPrimality`. The bridge matrix instead prices the core reifier in the
+bridge's emission context together with the bridge-owned wrapper construction,
+transport theorem, kernel replay, registration dispatch, and full elaboration.
+The reification rows include a second elaboration of the fixed certificate
+syntax and are therefore inclusive upper estimates rather than pure reifier
+micro-measurements. The replay rows force the same Boolean checker with
+`by decide +kernel`; they are replay proxies rather than byte-identical copies
+of the elaborator's emitted `Eq.refl true` witness.
+
+The same-input crossover measurements above establish the `2^24` policy. The
+Phase-4 matrix validates its selected endpoints: the opted-in trial arm just
+below the boundary had a 1.963 s median fresh-module cost, while the first
+tested certificate-tier prime had a 3.621 s median and remained far below the
+10 s gate. Because those rows use different numerals, their difference is not
+attributed to the route alone. At 512 bits, bare `primality` and opted-in
+`norm_num` had 3.777 s and 3.420 s medians; their difference is below the
+matched null envelope, so the choice between those public entry points is
+semantic rather than a claimed speed distinction. Keeping all inputs through
+24 bits on trial division uses the simpler route throughout the selected range,
+while the bounded certificate route is required above it to avoid Mathlib's
+unbounded trial behavior and 31-bit kernel-depth failure.
+
+There is `no-comparable-surface-in-named-comparator` for the bridge proof
+track. No external tool emits and kernel-checks the same `Nat.Prime` proof term
+through this registration, transport theorem, and pinned Lean kernel. The
+transported certificate search remains performance-owned by `HexPrimality`;
+it is not a second comparator for the bridge wrapper.
+
 The positive-route harness and evidence are shared with the core policy and
 are cited by the core SPEC. The bridge-specific negative harness is
 `scripts/bench/primality_negative_sweep.py`. Its designated-host record,
