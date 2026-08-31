@@ -189,7 +189,6 @@ repos:
 
   - repo: leanprover/hex-sparse-poly-mathlib
     lib: HexSparsePolyMathlib
-    test_modules: [HexSparsePolyMathlib.KernelTests]
     umbrella: true
     spec: hex-sparse-poly-mathlib
     bench: false

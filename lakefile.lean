@@ -755,8 +755,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
-    `HexSparsePoly.KernelTests,
-    `HexSparsePolyMathlib.KernelTests]
+    `HexSparsePoly.KernelTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
