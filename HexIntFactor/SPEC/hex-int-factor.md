@@ -1214,9 +1214,15 @@ proof pays and is therefore the number that matters most.
 Families:
 
 - **Table-range inputs**, uniform below `10^8`, where trial division
-  finishes. The required property is that the dispatch overhead is
-  invisible on the case that dominates call volume.
-- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Route 1.
+  finishes. Compare the public dispatch with `trialFactors` on the same
+  batch; this internal control, rather than an external system with a
+  different portfolio, determines whether dispatch overhead is invisible on
+  the case that dominates call volume.
+- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Report `factor?` and
+  `rhoSplit?` on the same ladder. Their ratio is the internal Route-1 control:
+  it separates dispatch and certificate construction from the rho split that
+  dominates both paths without assuming anything about an external system's
+  selected algorithm.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, which is the
@@ -1243,14 +1249,22 @@ Families:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
 `p − 1`, and MPQS with tuned crossovers, and this library specifies
 neither SQUFOF nor MPQS, so a required ratio would check an algorithm
-that does not exist here. The written-down expectation is narrower: on
-the **table-range** and **balanced semiprime** families the ratio
-should be within a small constant, since both sides run the same two
-algorithms there, and a large ratio means the rho inner loop is wrong
-rather than that the dispatch is. GMP-ECM is **informational** on the
-unbalanced family for the same reason and with the same caveat. The
-PARI/python-flint oracle pairing is for conformance, not a performance
-requirement.
+that does not exist here. PARI does not expose a benchmark mode that restricts
+`factor` to Hex's trial-division-plus-rho portfolio, so its selected route must
+not be inferred from the input size or from a timing ratio. A widening PARI
+ratio is reported as the observed cost of the portfolio difference, while the
+table and balanced internal controls above diagnose Hex dispatch and rho.
+GMP-ECM stage 1 is likewise **informational** on the unbalanced family: the
+comparison fixes the curve and `B1`, disables stage 2, and reports only rungs
+whose batched per-input protocol overhead satisfies the eligibility rule in
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md). The PARI/python-flint
+oracle pairing is for conformance, not a performance requirement.
+
+The balanced internal control and absolute policy budget decide whether
+SQUFOF work is required. An external small-constant parity goal against PARI
+would instead be a new API-performance requirement and would require Hex to
+adopt the relevant missing portfolio, not a reinterpretation of this
+informational comparison after measurement.
 
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
