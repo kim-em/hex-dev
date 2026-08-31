@@ -309,21 +309,6 @@ setup_fixed_benchmark runPacked8 where {
   expectedHash := some 0xc1
 }
 
-/- Experimental mode audit, removed after recording the clean scientific
-artifact. Exact-degree dense words make the independently derived attempted
-model linear in `n`, as explained above the fixed registration. -/
-setup_benchmark packed8 n => n
-  with prep := prepPacked
-  where {
-    paramFloor := 1
-    paramCeiling := 63
-    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 63]
-    maxSecondsPerCall := 2.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    outerTrials := 3
-  }
-
 /-
 Mode 1. With the degree-6 modulus and base prime 13 fixed, the compiled dense
 long-division loop makes `O(n)` eliminations, each touching seven fixed-width
