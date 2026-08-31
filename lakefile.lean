@@ -320,6 +320,36 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
     `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
 
+lean_lib HexPrimalityMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexPrimalityMathlib.ProofProbe.Support,
+    `HexPrimalityMathlib.ProofProbe.Baseline,
+    `HexPrimalityMathlib.ProofProbe.Input31,
+    `HexPrimalityMathlib.ProofProbe.Literal31,
+    `HexPrimalityMathlib.ProofProbe.Reify31,
+    `HexPrimalityMathlib.ProofProbe.Replay31,
+    `HexPrimalityMathlib.ProofProbe.Primality31,
+    `HexPrimalityMathlib.ProofProbe.Input512,
+    `HexPrimalityMathlib.ProofProbe.Literal512,
+    `HexPrimalityMathlib.ProofProbe.Reify512,
+    `HexPrimalityMathlib.ProofProbe.Replay512,
+    `HexPrimalityMathlib.ProofProbe.Primality512,
+    `HexPrimalityMathlib.ProofProbe.NormNumTrial,
+    `HexPrimalityMathlib.ProofProbe.NormNumThreshold,
+    `HexPrimalityMathlib.ProofProbe.NormNum512,
+    `HexPrimalityMathlib.ProofProbe.MathlibBaseline,
+    `HexPrimalityMathlib.ProofProbe.Mathlib512,
+    `HexPrimalityMathlib.ProofProbe.MathlibExhausted,
+    `HexPrimalityMathlib.ProofProbe.MathlibOverBudget,
+    `HexPrimalityMathlib.ProofProbe.Negative25,
+    `HexPrimalityMathlib.ProofProbe.Negative32,
+    `HexPrimalityMathlib.ProofProbe.Negative64,
+    `HexPrimalityMathlib.ProofProbe.Negative64Null,
+    `HexPrimalityMathlib.ProofProbe.Negative65,
+    `HexPrimalityMathlib.ProofProbe.Negative512,
+    `HexPrimalityMathlib.ProofProbe.Negative512Odd,
+    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
+
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.IntFactorKernel]
