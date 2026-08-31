@@ -25,15 +25,15 @@ also exposes `GFq.PackedGF2Entry` instances for binary degrees `1` to `8`.
 * `runGeneric21`, `runGeneric28`, `runGeneric136`, and `runGenericC136`:
   generic constructor/projection families with `O(n)` cost in the input
   representative length against their fixed committed moduli.
-* `runPacked1`: a packed constructor/projection family with a linear upper
-  bound in the exact input-word polynomial degree.
-* `runPacked8`: the packed degree-eight constructor/projection on the canonical
-  maximal-degree dense word, under a fixed absolute budget.
+* `runPacked1` and `runPacked8`: packed constructor/projection families whose
+  models count their exact leading-term eliminations plus fixed packaging and
+  projection work.
 * `runShared21`: packed and generic constructor/projection checksums on the
   same binary representative family, `O(n)` on the generic degree-`n`
   representative.
 
-The two fixed registrations only anchor the selected modulus values by hash;
+The fixed registrations `runGenericModulusChecksum` and
+`runPackedModulusChecksum` only anchor the selected modulus values by hash;
 they are not performance evidence for a constructor or projection operation.
 -/
 
@@ -71,14 +71,14 @@ def checksumPoly {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : UInt64 :=
 def checksumGF2Poly (f : GF2Poly) : UInt64 :=
   f.toWords.foldl mixWord 0
 
-/-- Binary coefficient generator keyed by representative size, index, and salt. -/
-def coeffBit (n i salt : Nat) : Bool :=
-  ((i + 1) * 9_176 + (salt + 3) * 1_021 + n * 29 + i * i * 17) % 5 < 2
+/-- Binary coefficient generator keyed by index and salt. -/
+def coeffBit (i salt : Nat) : Bool :=
+  ((i + 1) * 9_176 + (salt + 3) * 1_021 + i * i * 17) % 5 < 2
 
 /-- Deterministic dense binary representative with `n` scanned coefficients. -/
 def binaryPoly (n salt : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs <| (Array.range n).map fun i =>
-    if coeffBit n i salt then
+    if coeffBit i salt then
       ZMod64.ofNat 2 1
     else
       ZMod64.ofNat 2 0
@@ -109,6 +109,20 @@ def prepGeneric21 (n : Nat) : FpPoly 2 :=
 def prepPacked (n : Nat) : UInt64 :=
   binaryWord n
 
+/-- Exact long-division step count for the dense degree-one packed family. -/
+def packed1Steps (n : Nat) : Nat :=
+  (Nat.min n 63 + 1) / 2
+
+/-- Prepared degree-eight input with a dense quotient and zero remainder. -/
+def prepPacked8 (n : Nat) : UInt64 :=
+  let hi := Nat.max 8 (Nat.min n 63)
+  let quotient := GF2Poly.ofUInt64 (binaryWord (hi - 8))
+  ((GF2q.modulus (n := 8) * quotient).toWords).getD 0 0
+
+/-- Exact long-division step count for the prepared degree-eight family. -/
+def packed8Steps (n : Nat) : Nat :=
+  Nat.max 8 (Nat.min n 63) + 1 - 8
+
 /-- Prepared shared-domain packed-vs-generic input. -/
 def prepShared21 (n : Nat) : SharedInput :=
   { poly := binaryPoly n 59, word := binaryWord n }
@@ -124,7 +138,6 @@ private instance : Nonempty GF2Poly := ⟨GF2q.modulus (n := 1)⟩
 private initialize genModulusRef : IO.Ref (FpPoly 2) ← IO.mkRef (GFq.modulus Entry21)
 private initialize packModulusRef : IO.Ref GF2Poly ← IO.mkRef (GF2q.modulus (n := 1))
 private initialize packLowerRef : IO.Ref UInt64 ← IO.mkRef (GF2q.lower (n := 1))
-private initialize packInputRef : IO.Ref UInt64 ← IO.mkRef (binaryWord 63)
 
 /-- Benchmark target: selected generic Conway modulus checksum. -/
 def runGenericModulusChecksum : Unit → IO UInt64 := fun () => do
@@ -181,14 +194,9 @@ committed binary degree, where reduction modulo a degree-8 modulus runs. -/
 def runGeneric28 (g : FpPoly 2) : UInt64 :=
   checksumPoly (GFq.repr (GFq.ofPoly Entry28 g : Generic28))
 
-/-- Packed constructor plus projection at degree 8. -/
-def packed8 (word : UInt64) : UInt64 :=
+/-- Benchmark target: packed constructor plus projection at degree 8. -/
+def runPacked8 (word : UInt64) : UInt64 :=
   GF2q.repr (GF2q.ofWord (n := 8) word : Packed28)
-
-/-- Benchmark target: packed degree-eight constructor plus projection on the
-canonical maximal-degree dense word. -/
-def runPacked8 : Unit → IO UInt64 := fun () => do
-  return packed8 (← packInputRef.get)
 
 /-- Benchmark target: generic constructor plus projection at the largest
 committed odd-prime entry, `GF(13^6)`. This is the widest coefficient
@@ -221,14 +229,12 @@ setup_fixed_benchmark runPackedModulusChecksum where {
 }
 
 /-
-Mode 2 cost model. `prepPacked n` constructs a word of exact polynomial degree
-`n`. Reduction by the fixed degree-one modulus performs at most `n`
-leading-term eliminations; each scans and updates a single machine word, while
-projection is constant. This independently supplies a linear upper bound, but
-not a matching lower bound because cancellations can skip degrees. The report
-records the harness's faster-than-declared direction as a one-sided pass.
+Mode 1. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
+therefore has the alternating quotient with exactly `(n + 1) / 2` nonzero
+terms. Each term causes one single-word leading-term elimination. The model
+adds the two fixed stages, field packaging and representative projection.
 -/
-setup_benchmark runPacked1 n => n
+setup_benchmark runPacked1 n => 2 + packed1Steps n
   with prep := prepPacked
   where {
     paramFloor := 1
@@ -295,19 +301,23 @@ setup_benchmark runGeneric28 n => n
   }
 
 /-
-Mode 3. The honest mode-1 family varied the exact degree over the complete
-single-word range `1, 2, 4, 8, 16, 32, 63` with model `n`; its scientific
-verdict was inconclusive, and its positive residual slope also fails the same
-linear model as a mode-2 upper bound. The fixed input is the canonical dense
-word of maximal degree 63. The 100 µs budget is a conservative margin over the
-clean scientific baseline and is recorded in the performance report.
+Mode 1. `prepPacked8 n` is the fixed degree-eight modulus times the dense
+quotient `1 + x + ... + x^(n-8)`. Its remainder is zero and uniqueness of
+division makes every one of the quotient's `n - 7` terms a leading-term
+elimination. Each elimination is single-word work. The model adds the same two
+fixed packaging/projection stages as `runPacked1`.
 -/
-setup_fixed_benchmark runPacked8 where {
-  repeats := 5
-  maxSecondsPerCall := 0.0001
-  minTotalSeconds := 0.00001
-  expectedHash := some 0xc1
-}
+setup_benchmark runPacked8 n => 2 + packed8Steps n
+  with prep := prepPacked8
+  where {
+    paramFloor := 8
+    paramCeiling := 63
+    paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 63]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 3
+  }
 
 /-
 Mode 1. With the degree-6 modulus and base prime 13 fixed, the compiled dense
