@@ -244,7 +244,7 @@ setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := denseReduced wher
 /- Cost-model derivation: `echelonCoeffs` constructs one length-`n` vector.
 Each live entry performs constant-time pivot-column and matrix indexing on the
 prepared bounded-integer projection, so the family performs `Theta(n)` work. -/
-setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
+setup_benchmark runEchelonCoeffs n => (n) with prep := deficientReduced where {
   paramFloor := 128, paramCeiling := 768, paramSchedule := .custom preparedLinearSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
   slopeTolerance := 0.15
@@ -255,7 +255,7 @@ setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
 /- Cost-model derivation: `freeCols` filters all `n` columns and tests each
 against the sorted pivot vector by a linear list-membership scan.  On the
 rank-`n / 2` prepared family the aggregate scan is `Theta(n^2)`. -/
-setup_benchmark runFreeCols n => n ^ 2 with prep := deficientReduced where {
+setup_benchmark runFreeCols n => (n ^ 2) with prep := deficientReduced where {
   paramFloor := 64, paramCeiling := 512, paramSchedule := .custom freeColsSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5
   slopeTolerance := 0.15
