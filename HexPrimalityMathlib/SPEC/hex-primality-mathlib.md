@@ -250,7 +250,10 @@ use, default registration, module-local opt-in precedence, both sides of the
 `2^24` threshold, positive and negative certificate-tier results,
 deterministic seed/state replay, parity without a restart, exact negative
 exhaustion, the input ceiling, ordinary failure diagnostics, import-boundary
-locality, and preservation of `Nat.decidablePrime`.
+locality, and preservation of `Nat.decidablePrime`. The non-executable
+correspondence and segment theorem surfaces are instantiated against the exact
+inputs pinned by core conformance; bridge tests exercise their transport but
+do not rerun the core computation as nominally independent evidence.
 
 Fresh importing modules under
 `bench/HexPrimalityMathlib/ProofProbe/` own proof-production evidence. The
