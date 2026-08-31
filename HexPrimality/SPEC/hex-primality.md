@@ -1288,22 +1288,38 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
     --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
   ```
 
-Families:
-- **Kernel replay**, `checkPrime` on certificates for primes of `31`,
-  `61`, `123`, `256`, `511`, and `512` bits. The lower rungs are table-smooth;
-  the 512-bit rung includes the above-table factor `100297`. Decides the
-  `powModNat`-versus-Montgomery question under "Kernel exposure".
-- **Native decision**, bounded `isPrime?` across the same bit lengths.
-  The total `isPrime` gets no separate row: it differs only on the
-  exhausted-search path, where its exact trial-division fallback is
-  deliberately unbounded and would time out any row at these sizes.
-- **Certificate search**, `primeCert?` at the same sizes, reported
-  separately because its cost is dominated by `partialFactor` and is
-  therefore the family whose variance is largest and whose numbers say
-  the least about this library.
-- **Segment generation**, `primesIn` over ranges of `10^3` to
-  `3.2 * 10^4`, native only, capped by the CI bench-verify wallclock
-  budget rather than by the API.
+The Phase-4 evidence tracks are assigned below. Each advertised operation has
+exactly one owner. The proof rows measure theorem elaboration and kernel
+acceptance, not a second compiled timing of the executable checker or search.
+
+| advertised operation or surface | evidence owner | controlled family |
+|---|---|---|
+| `millerRabin` | compiled `runMillerRabin` | committed table-smooth primes, 31--511 bits |
+| `isProbablePrime` | compiled `runProbablePrime` | the same prime ladder, forcing all fixed bases |
+| `isPrime?` | compiled `runDecision` plus fixed `runDecision512` | table-smooth ladder plus the exact rho-backed 512-bit boundary |
+| total `isPrime` | compiled `runTotalDecision` | successful bounded-route ladder; the deliberately unbounded exhausted fallback is excluded |
+| `primeCert?` | compiled `runCertSearch` plus fixed `runCertSearch512` | rho-free ladder plus the structurally distinct rho-backed boundary |
+| `checkPrime` | compiled `runChecker` plus fixed `runChecker512` | prepared certificates sharing the exact emitted literals with the proof track |
+| Pocklington-3 checker arm | fixed compiled `runPock3Checker` | the canonical 199 certificate |
+| `sieve` plus `bitsToList` | compiled `runSieve` | bounds `10^3`--`3.2 * 10^4` |
+| `isTablePrime` | compiled `runTableLookup` | batches of 256--8192 fixed-table lookups |
+| `orderOf` | compiled `runOrder` | committed primitive-root moduli 1009--32003 |
+| `pMinusOneStage1Counted` | compiled `runPMinusOne` | smoothness bounds 64--8192 on a fixed 61-bit prime |
+| `Internal.rhoFactorCounted?` | compiled `runRho` | balanced semiprimes with fixed seeds and least factors 1009--32003 |
+| `primesIn` | compiled `runSegment` | initial segments `10^3`--`3.2 * 10^4` |
+| `nextPrime?` | compiled `runNextPrime` | exact committed table-route gaps 4--64 |
+| input elaboration, production-search attribution, and emitted certificate literal | matched fresh modules | 31, 61, 123, 256, 511, and 512 bits |
+| `prime_of_checkPrimeAt` theorem instantiation and kernel replay | matched fresh modules | the same exact emitted certificates and allowed axiom set |
+| Mathlib-free `primality` elaboration | matched fresh modules | the same size family, including the accepted 512-bit ceiling |
+
+All six proof sizes use an import-only baseline, separate input, search,
+literal, replay, and full-tactic modules. The external runner rotates the
+thirty substantive pairs, alternates pair orientation, includes baseline,
+123-bit, and 512-bit null controls, records source and artifact hashes plus
+axiom sets, and enforces a 10-second absolute fresh-module budget. The
+scientific modules are deliberately absent from the CI target; the existing
+boundary, exhaustion, and over-budget modules remain the single-job build
+smoke.
 
 **Comparators.** PARI `isprime` via cypari2 is **informational**: PARI
 uses BPSW plus APRCL and a Pocklington-style certificate only on

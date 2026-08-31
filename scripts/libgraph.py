@@ -236,10 +236,6 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             raise ValueError(f"{current_name} has malformed proof_probes")
         if len(proof_probes) != len(set(proof_probes)):
             raise ValueError(f"{current_name} has duplicate proof_probes entries")
-        if proof_probes and not mathlib:
-            raise ValueError(
-                f"{current_name} declares proof_probes but mathlib is false"
-            )
         if correspondence_only and proof_probes:
             raise ValueError(
                 f"{current_name} declares correspondence_only and proof_probes"

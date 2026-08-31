@@ -299,11 +299,12 @@ lean_lib HexBerlekampKernelProbe where
 
 lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
-  globs := #[`HexBench.PrimalityKernel]
+  globs := #[`HexPrimality.Inputs, `HexBench.PrimalityKernel]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.ProofProbe.CoreBaseline,
+  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+    `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
     `HexPrimality.ProofProbe.CoreOverBudget,
@@ -318,7 +319,7 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimalityMathlib.ProofProbe.Negative65,
     `HexPrimalityMathlib.ProofProbe.Negative512,
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
-    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
+    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512].map Glob.one
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"

@@ -329,7 +329,7 @@ measure.
 Elaboration, tactic execution, emitted proof terms, and ordinary kernel
 checking are measured only by an external runner building fresh Lean modules.
 The module sources live recursively below a directory listed in the owning
-`mathlib: true` library's `libraries.yml: proof_probes`. A path may reserve a
+library's `libraries.yml: proof_probes`. A path may reserve a
 not-yet-created directory for a stacked change, but when present it must be a
 directory below `bench/<Owner>/`, must resolve physically inside `bench/`, and
 must contain no symlinks. Reservations are staging-only: before a library may
@@ -893,10 +893,12 @@ hard invariants:
    `Hex*Mathlib.*` modules are not what this rule forbids — but per
    invariant (1) above, no bench imports them either.
 
-There is one narrow, non-computational exception. A `mathlib: true` library may
-declare recursive directory roots in `libraries.yml: proof_probes` for the
-fresh-module evidence specified above. No suffix or library flag grants an
-implicit exception, and files outside the exact declared roots remain ordinary
+There is one narrow, non-computational exception. Any library may declare
+recursive directory roots in `libraries.yml: proof_probes` for the fresh-module
+evidence specified above. A declaration owned by a `mathlib: true` library may
+import Mathlib; a declaration owned by a Mathlib-free library remains
+Mathlib-free. No suffix or library flag grants an implicit directory-wide
+exception, and files outside the exact declared roots remain ordinary
 Mathlib-free bench sources. A probe is not a LeanBench registration and must
 not import `LeanBench`, use `setup_benchmark` or `setup_fixed_benchmark`, define
 `main`, perform an in-process timing loop, or serve as the root of any
