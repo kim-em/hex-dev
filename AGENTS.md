@@ -44,9 +44,12 @@ near-mechanical copy):
 - `conformance/HexX/{Conformance,EmitFixtures}.lean` — conformance
   drivers (shared `conformance/` sub-project).
 - `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
+- `.github/workflows/ci.yml` — selected from the complete per-repository
+  workflows in `scripts/release/released-ci.yml`.
 
 The publish mechanism is `scripts/release/released.yml` (the per-repo
-managed-path + pin manifest), `scripts/release/sync_released.py` (the
+managed-path + pin manifest), `scripts/release/released-ci.yml` (the managed
+mirror CI workflows), `scripts/release/sync_released.py` (the
 driver; supports `--dry-run`), `scripts/release/synced.json` (the
 per-repo `main` baseline this monorepo corresponds to), and
 `.github/workflows/sync-released.yml` (manual dispatch, dry by default).
