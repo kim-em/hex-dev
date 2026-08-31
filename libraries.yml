@@ -156,7 +156,7 @@ libraries:
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -699,7 +699,7 @@ libraries:
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
