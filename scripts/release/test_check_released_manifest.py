@@ -8,10 +8,12 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
+    check_ci_workflows,
     check_phase_admission,
     parse_sync_baseline,
     published_repositories,
@@ -91,6 +93,19 @@ class Phase7AdmissionTests(unittest.TestCase):
     def test_malformed_baseline_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "malformed baseline entry"):
             parse_sync_baseline('{"hex-example": "short"}', "test baseline")
+
+
+class ReleasedCiTests(unittest.TestCase):
+    def test_workflow_set_must_match_manifest(self) -> None:
+        entries = [{"repo": "leanprover/hex-example"}]
+        with (
+            patch(
+                "scripts.release.check_released_manifest.released_ci_workflows",
+                return_value={"hex-other": "name: CI\n"},
+            ),
+            self.assertRaisesRegex(ValueError, "differs from the release manifest"),
+        ):
+            check_ci_workflows(entries)
 
 
 if __name__ == "__main__":

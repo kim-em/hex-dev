@@ -16,7 +16,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
-from release.sync_released import MANIFEST, managed_paths, removal_paths  # noqa: E402
+from release.sync_released import (  # noqa: E402
+    MANIFEST,
+    managed_paths,
+    released_ci_workflows,
+    removal_paths,
+)
 from release import aggregate_readme  # noqa: E402
 
 
@@ -146,11 +151,101 @@ def release_executables() -> dict[str, str]:
     return out
 
 
+def check_ci_workflows(entries: list[dict]) -> None:
+    """Require one complete, cache-safe managed workflow per released repo."""
+    workflows = released_ci_workflows()
+    expected = {entry["repo"].split("/", 1)[1] for entry in entries}
+    actual = set(workflows)
+    if actual != expected:
+        fail(
+            "released-ci.yml differs from the release manifest; "
+            f"missing={sorted(expected - actual)}, extra={sorted(actual - expected)}"
+        )
+    for entry in entries:
+        short = entry["repo"].split("/", 1)[1]
+        workflow = workflows[short]
+        try:
+            parsed = yaml.load(workflow, Loader=yaml.BaseLoader)
+        except yaml.YAMLError as exc:
+            fail(f"{entry['repo']}: managed CI is invalid YAML: {exc}")
+        jobs = parsed.get("jobs") if isinstance(parsed, dict) else None
+        if not isinstance(jobs, dict) or not jobs:
+            fail(f"{entry['repo']}: managed CI must define jobs")
+        required_paths = [".lake/build"]
+        if entry.get("bench"):
+            required_paths.append("bench/.lake/build")
+        if entry.get("conformance"):
+            required_paths.append("conformance/.lake/build")
+        for job_name, job in jobs.items():
+            steps = job.get("steps") if isinstance(job, dict) else None
+            if not isinstance(steps, list):
+                fail(f"{entry['repo']}: CI job {job_name} has no steps")
+            indexed = {
+                action: [
+                    index for index, step in enumerate(steps)
+                    if isinstance(step, dict) and step.get("uses") == action
+                ]
+                for action in (
+                    "leanprover/lean-action@v1",
+                    "actions/cache/restore@v4",
+                    "actions/cache/save@v4",
+                )
+            }
+            if any(len(indices) != 1 for indices in indexed.values()):
+                fail(
+                    f"{entry['repo']}: CI job {job_name} must contain one "
+                    "lean-action, cache restore, and cache save"
+                )
+            lean_index = indexed["leanprover/lean-action@v1"][0]
+            restore_index = indexed["actions/cache/restore@v4"][0]
+            save_index = indexed["actions/cache/save@v4"][0]
+            if not (lean_index < restore_index < save_index == len(steps) - 1):
+                fail(
+                    f"{entry['repo']}: CI job {job_name} must restore after "
+                    "setup and save only after every verification step"
+                )
+            lean_inputs = steps[lean_index].get("with", {})
+            if lean_inputs.get("use-github-cache") != "false":
+                fail(f"{entry['repo']}: lean-action GitHub cache must be disabled")
+            if lean_inputs.get("use-mathlib-cache") != "false":
+                fail(f"{entry['repo']}: lean-action Mathlib cache must be disabled")
+            restore_inputs = steps[restore_index].get("with", {})
+            save_inputs = steps[save_index].get("with", {})
+            cached_paths = set(restore_inputs.get("path", "").splitlines())
+            if not set(required_paths) <= cached_paths:
+                fail(
+                    f"{entry['repo']}: CI job {job_name} cache omits "
+                    f"{sorted(set(required_paths) - cached_paths)}"
+                )
+            key = restore_inputs.get("key", "")
+            if (
+                key != save_inputs.get("key")
+                or "${{ github.run_id }}-${{ github.run_attempt }}" not in key
+                or not restore_inputs.get("restore-keys", "").endswith("-\n")
+                or "github.run_id" in restore_inputs.get("restore-keys", "")
+            ):
+                fail(
+                    f"{entry['repo']}: CI job {job_name} cache must use a "
+                    "run-unique save key and stable restore prefix"
+                )
+            save_condition = steps[save_index].get("if", "")
+            if (
+                "github.event_name == 'push'" not in save_condition
+                or "github.ref == 'refs/heads/main'" not in save_condition
+            ):
+                fail(
+                    f"{entry['repo']}: CI job {job_name} must save only from main"
+                )
+        if "strategy:" in workflow or "matrix:" in workflow:
+            fail(f"{entry['repo']}: managed CI must not introduce a job matrix")
+
+
 def main() -> int:
     document = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     entries = document.get("repos") if isinstance(document, dict) else None
     if not isinstance(entries, list) or not entries:
         fail("released.yml must contain a non-empty repos list")
+    check_ci_workflows(entries)
 
     repo_names: set[str] = set()
     library_names: set[str] = set()
@@ -448,7 +543,7 @@ def main() -> int:
 
     print(
         f"release manifest: {len(entries) - 1} split repositories + "
-        f"1 aggregate; paths, pins, test targets, and topological constraints valid"
+        f"1 aggregate; paths, CI, pins, test targets, and topological constraints valid"
     )
     return 0
 

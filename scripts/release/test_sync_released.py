@@ -48,17 +48,32 @@ class SyncReleasedTests(unittest.TestCase):
             stale.mkdir(parents=True)
             (stale / "Conformance.lean").write_text("stale\n", encoding="utf-8")
             entry = {
+                "repo": "leanprover/hex-bridge",
                 "lib": "HexBridge",
                 "readme": False,
                 "umbrella": False,
                 "spec": None,
                 "remove_paths": ["conformance"],
             }
-            with patch.object(sync_released, "REPO_ROOT", source):
+            workflows = self.repo / "released-ci.yml"
+            workflows.write_text(
+                "workflows:\n  hex-bridge: |\n    name: CI\n", encoding="utf-8"
+            )
+            with (
+                patch.object(sync_released, "REPO_ROOT", source),
+                patch.object(sync_released, "RELEASED_CI", workflows),
+            ):
                 notes = sync_released.apply_paths(entry, clone)
             self.assertFalse((clone / "conformance").exists())
             self.assertIn("  remove conformance", notes)
-            with patch.object(sync_released, "REPO_ROOT", source):
+            self.assertEqual(
+                (clone / ".github" / "workflows" / "ci.yml").read_text(),
+                "name: CI\n",
+            )
+            with (
+                patch.object(sync_released, "REPO_ROOT", source),
+                patch.object(sync_released, "RELEASED_CI", workflows),
+            ):
                 notes = sync_released.apply_paths(entry, clone)
             self.assertNotIn("  remove conformance", notes)
 
@@ -73,14 +88,20 @@ class SyncReleasedTests(unittest.TestCase):
             (outside / "kept").write_text("keep\n", encoding="utf-8")
             (clone / "linked").symlink_to(outside, target_is_directory=True)
             entry = {
+                "repo": "leanprover/hex-bridge",
                 "lib": "HexBridge",
                 "readme": False,
                 "umbrella": False,
                 "spec": None,
                 "remove_paths": ["linked/kept"],
             }
+            workflows = self.repo / "released-ci.yml"
+            workflows.write_text(
+                "workflows:\n  hex-bridge: |\n    name: CI\n", encoding="utf-8"
+            )
             with (
                 patch.object(sync_released, "REPO_ROOT", source),
+                patch.object(sync_released, "RELEASED_CI", workflows),
                 self.assertRaisesRegex(
                     ValueError, "unsafe remove_paths destination escapes clone"
                 ),
@@ -94,6 +115,25 @@ class SyncReleasedTests(unittest.TestCase):
                 ValueError, "unsafe remove_paths entry"
             ):
                 sync_released.removal_paths({"remove_paths": [path]})
+
+    def test_released_ci_workflow_requires_complete_text_mapping(self) -> None:
+        source = self.repo / "released-ci.yml"
+        source.write_text("workflows:\n  hex-example: 42\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "map names to text"):
+            sync_released.released_ci_workflows(source)
+
+    def test_apply_ci_workflow_requires_repository_entry(self) -> None:
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex-other: |\n    name: CI\n", encoding="utf-8"
+        )
+        with (
+            patch.object(sync_released, "RELEASED_CI", source),
+            self.assertRaisesRegex(RuntimeError, "no managed CI workflow"),
+        ):
+            sync_released.apply_ci_workflow(
+                {"repo": "leanprover/hex-example"}, self.repo / "clone"
+            )
 
     def test_direct_pins_rewrite_toml_and_lean(self) -> None:
         (self.repo / "lakefile.toml").write_text(

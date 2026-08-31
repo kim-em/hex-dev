@@ -3,17 +3,17 @@
 
 For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
-  2. overwrites its *managed* paths from this monorepo,
+  2. overwrites its *managed* paths and centrally owned CI workflow,
   3. for managed-source repos, enables native Verso docstrings,
   4. copies the stable Lean toolchain and exact external dependency pins,
   5. rewrites cross-repo Hex pins in the repo's Lake files,
   6. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
-A `pins_only` entry (the `leanprover/hex` aggregate) skips steps 2-3 entirely: it
-manages no library source from the monorepo, so the sync only re-pins it (steps
-4-5) to the SHAs published this run. Listed last, after its upstreams, so its
-pins resolve to the freshly-pushed commits. Its one managed artifact is the
+A `pins_only` entry (the `leanprover/hex` aggregate) receives the managed CI
+workflow but no library source or Verso rewrite from the monorepo. The sync
+re-pins it to the SHAs published this run. Listed last, after its upstreams, its
+pins resolve to the freshly-pushed commits. Its other managed artifact is the
 README, rendered by `aggregate_readme.py` from a template plus the manifest's
 `component:` labels so the published library table cannot fall behind.
 
@@ -55,6 +55,7 @@ import aggregate_readme  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
+RELEASED_CI = REPO_ROOT / "scripts" / "release" / "released-ci.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
 TOOLCHAIN = REPO_ROOT / "lean-toolchain"
 # The `RELEASED_SYNC_PAT` / `RELEASED_SYNC_PAT_2` secrets hold the
@@ -114,14 +115,42 @@ def copy_file(src: Path, dest: Path) -> None:
     shutil.copy2(src, dest)
 
 
+def released_ci_workflows(path: Path | None = None) -> dict[str, str]:
+    """Load the complete managed CI workflow for every released repository."""
+    source = path or RELEASED_CI
+    document = yaml.safe_load(source.read_text(encoding="utf-8"))
+    workflows = document.get("workflows") if isinstance(document, dict) else None
+    if not isinstance(workflows, dict) or not workflows:
+        raise ValueError(f"{source}: workflows must be a non-empty mapping")
+    for repo, workflow in workflows.items():
+        if not isinstance(repo, str) or not isinstance(workflow, str):
+            raise ValueError(f"{source}: workflow entries must map names to text")
+        if not workflow.endswith("\n"):
+            raise ValueError(f"{source}: workflow for {repo} must end in a newline")
+    return workflows
+
+
+def apply_ci_workflow(entry: dict, clone: Path) -> str:
+    """Publish the selected central workflow into a released clone."""
+    short = entry["repo"].split("/")[-1]
+    workflows = released_ci_workflows()
+    if short not in workflows:
+        raise RuntimeError(f"no managed CI workflow for {entry['repo']}")
+    destination = clone / ".github" / "workflows" / "ci.yml"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(workflows[short], encoding="utf-8")
+    return "  scripts/release/released-ci.yml -> .github/workflows/ci.yml"
+
+
 def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     """Yield (src, dest_rel, is_dir) managed mappings for one repo entry.
 
     Sources are absolute monorepo paths; dest_rel is relative to the repo root.
     """
-    # Aggregate repos (e.g. leanprover/hex) manage no source from the monorepo:
+    # Aggregate repos (e.g. leanprover/hex) manage no library source:
     # their umbrella lakefile, umbrella .lean and README live only in the released
-    # repo. The sync just rewrites their cross-repo pins + manifest.
+    # repo. Their centrally owned CI workflow is applied separately by
+    # apply_ci_workflow; this function only describes library-source mappings.
     if entry.get("pins_only"):
         return []
     lib = entry["lib"]
@@ -195,6 +224,7 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
         rendered = aggregate_readme.render(manifest, REPO_ROOT / template)
         (clone / "README.md").write_text(rendered, encoding="utf-8")
         notes.append(f"  {template} + released.yml -> README.md (generated)")
+    notes.append(apply_ci_workflow(entry, clone))
     if entry.get("pins_only"):
         return notes
     lib = entry["lib"]
