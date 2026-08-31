@@ -1,51 +1,175 @@
 # HexPolyFp Performance Report
 
-Current at revision `f1ab9696cee5fac0cb8ea17bfdfd19caf63bd7c3`,
-measured 2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to
-CPU 0.
+This report records the current HexPolyFp Phase-4 evidence from clean source
+revision `9aee6e90e1ea76432e24562c9f0de3502b25eda7`, measured on 2026-08-31 on
+`chungus2` (AMD EPYC 9455, Linux x86-64) with Lean 4.34.0-rc2 and lean-bench
+0.1.0.
 
-The export records a clean worktree. It includes the exact inverse-cached
-finite-field remainder/GCD worker used by Berlekamp splitting and BZ prime
-selection; all eight ladders were refreshed rather than mixing revisions.
+The scientific artifact is
+[`hex-poly-fp-9aee6e9-scientific.json`](bench-results/hex-poly-fp-9aee6e9-scientific.json)
+(SHA-256 `8d5835bdab5063b84c78b6ff9c9cef81cb715b700507d9b02335f1df0792ae9e`).
+It was produced with the committed scientific settings:
+
+```sh
+.lake/build/bin/hexpolyfp_bench run \
+  Hex.FpPolyBench.runFrobeniusXModChecksum \
+  Hex.FpPolyBench.runGcdChecksum \
+  Hex.FpPolyBench.runWeightedProductChecksum \
+  Hex.FpPolyBench.runSquareFreeDecompositionSummary \
+  Hex.FpPolyBench.runFrobeniusXPowModChecksum \
+  Hex.FpPolyBench.runPowModMonicChecksum \
+  Hex.FpPolyBench.runDivModChecksum \
+  Hex.FpPolyBench.runComposeModMonicChecksum \
+  --export-file reports/bench-results/hex-poly-fp-9aee6e9-scientific.json
+```
+
+`lake exe hexpolyfp_bench verify` passed all 27 registrations.
+
+## Bench Targets
+
+These formulas are copied from the adjacent `setup_benchmark` registrations
+in `bench/HexPolyFp/Bench.lean`.
+
+| Target | Declared complexity |
+|---|---|
+| `runMulSchoolbook257Checksum` | `(n * n)` |
+| `runMulPacked257Checksum` | `(n * n)` |
+| `runMulKaratsuba257Checksum` | `(n * Nat.sqrt n)` |
+| `runMulDirectNtt257Checksum` | `(n * Nat.log2 (n + 1))` |
+| `runMulCrtNtt257Checksum` | `(n * Nat.log2 (n + 1))` |
+| `runMulFast257Checksum` | `(n * n)` |
+| `runMulSchoolbookChecksum` | `(n * n)` |
+| `runMulPackedChecksum` | `(n * n)` |
+| `runMulKaratsubaChecksum` | `(n * Nat.sqrt n)` |
+| `runMulDirectNttChecksum` | `(n * Nat.log2 (n + 1))` |
+| `runMulDirectNttColdChecksum` | `(n * Nat.log2 (n + 1))` |
+| `runMulCrtNttChecksum` | `(n * Nat.log2 (n + 1))` |
+| `runMulFastChecksum` | `(n * n)` |
+| `runPowModMonicChecksum` | `n * n * Nat.log2 (n + 1)` |
+| `runFastPowChecksum` | `(n * n * Nat.log2 (n + 1))` |
+| `runFrobeniusXModChecksum` | `frobeniusWork n` |
+| `runFastFrobeniusChecksum` | `frobeniusWork n` |
+| `runFrobeniusXPowModChecksum` | `n * n * n` |
+| `runFastFrobeniusPowChecksum` | `(n * n * n)` |
+| `runComposeModMonicChecksum` | `n * n * n` |
+| `runFastComposeChecksum` | `(n * n * n)` |
+| `runWeightedProductChecksum` | `n * n` |
+| `runSquareFreeDecompositionSummary` | `n * n` |
+| `runDivModChecksum` | `n * n` |
+| `runDivModFastChecksum` | `(n * n)` |
+| `runGcdChecksum` | `n * n` |
+| `runGcdFastChecksum` | `(n * n)` |
+
+The forced-kernel and fast-candidate registrations are paired within-Lean
+crossover controls. They are not used to discharge the eight operation-level
+performance claims below; their formulas describe the registered comparison
+ladders and their output hashes guard agreement between implementations.
+
+For the fixed-prime Frobenius family, the independently derived model is
+
+`frobeniusWork n = n * sum_{k=0}^{16} min(n, 2^k)^2`.
+
+The exponent `65537 = 2^16 + 1` fixes the 17 squaring stages. Before reduction
+saturates, the active degree doubles; afterward it remains at the modulus
+degree. Schoolbook multiplication and monic reduction are quadratic in that
+active degree, and the target performs `n` calls.
+
+For GCD, the prepared pair consists of consecutive polynomial Fibonacci
+values defined by `F₀ = 0`, `F₁ = 1`, and `Fₖ₊₂ = X Fₖ₊₁ + Fₖ`. The Euclidean
+chain has exactly `n` degree-one quotient steps. Each remainder-only division
+scans a polynomial of the current degree, so the decreasing-degree costs sum
+to `Theta(n^2)`. Neither model was inferred from the measured wall times.
 
 ## Verdicts
 
-| Target | Model | Largest rung | Median | Verdict |
-|---|---|---:|---:|---|
-| Frobenius `X` mod | `n³` | 80 | 297.287 ms | inconclusive |
-| GCD | `n²` | 256 | 43.570 µs | inconclusive; observed faster |
-| Weighted product | `n²` | 4096 | 668.277 ms | consistent |
-| Square-free decomposition | `n²` | 768 | 6.492 ms | consistent |
-| Frobenius power mod | `n³` | 64 | 337.743 ms | consistent |
-| Power mod monic | `n² log n` | 512 | 147.076 ms | consistent |
-| Division mod | `n²` | 256 | 998.410 µs | consistent |
-| Modular composition | `n³` | 192 | 376.752 ms | consistent |
+All eight operation-level registrations pass **mode 1, two-sided
+parametric**, the first and strongest applicable mode. Their expected scaling
+is derived from the registered family before measurement, so neither mode 2
+nor mode 3 is needed. The fixed-prime Frobenius and GCD repairs preserve the
+intended operations while replacing, respectively, an over-smoothed cubic
+proxy and an input family that did not force the stated Euclidean work.
 
-Raw export:
-`reports/bench-results/hex-poly-fp-f1ab9696-gcd-hensel-chungus2.json`
-(SHA-256
-`fcb72f342a3edb09cce09214101182765b9037e4ba12f46ea14e32360e8265c3`).
-`list` and `verify` passed.
+`C` is per-call time divided by the declared model over the verdict window.
+The final column is the observed hash at the largest rung.
 
-The current medians remain close to the preceding record. GCD improves by 3.4%
-at the degree-256 rung; unrelated rows move by at most 4.0%, consistent with
-same-host measurement variation rather than a broad substrate regression.
+| Target | Harness verdict | C min | C max | beta | Largest rung | Median | Hash |
+|---|---|---:|---:|---:|---:|---:|---|
+| `runFrobeniusXModChecksum` | consistent with declared complexity | 51.554 | 59.158 | -0.105 | 80 | 286.481 ms | `0xac1417f1a37c7f40` |
+| `runGcdChecksum` | consistent with declared complexity | 5.647 | 10.561 | -0.102 | 2048 | 24.282 ms | `0xfcd34e69b617ac7d` |
+| `runWeightedProductChecksum` | consistent with declared complexity | 38.007 | 39.487 | -0.003 | 4096 | 662.479 ms | `0x972bd3a6f2b6d429` |
+| `runSquareFreeDecompositionSummary` | consistent with declared complexity | 8.774 | 26.295 | -0.227 | 768 | 6.304 ms | `0x66ff822aca96ce87` |
+| `runFrobeniusXPowModChecksum` | consistent with declared complexity | 1244.558 | 1657.772 | narrow-window | 64 | 326.254 ms | `0x6b9763a45f6b5d11` |
+| `runPowModMonicChecksum` | consistent with declared complexity | 60.101 | 77.450 | -0.115 | 512 | 141.796 ms | `0x3f65c86be5e72dd5` |
+| `runDivModChecksum` | consistent with declared complexity | 14.323 | 22.769 | -0.070 | 2048 | 63.261 ms | `0x5e661a9702ea0fc1` |
+| `runComposeModMonicChecksum` | consistent with declared complexity | 35.615 | 39.439 | -0.071 | 192 | 252.081 ms | `0xee8f3ebaae233227` |
 
-## Comparator and Profile
+No ladder was truncated by its wall-clock cap. The Frobenius model passes on
+the committed 16-through-80 schedule; the forced Euclidean family passes on
+the full 8-through-2048 schedule.
 
-No external comparator is declared for this headline suite. FLINT comparisons
-for factorization layers are documented in the HexBerlekamp, HexHensel, and
-cross-system sweep reports. The timing ladders directly cover the input
-families `quotient-powers`, `modular-composition`, and `product-squarefree`;
-no sampling trace was collected.
+## Comparator Ratios
+
+HexPolyFp declares no external comparator in `libraries.yml`, so there is no
+external ratio or gating goal to report. The forced and fast registrations in
+the bench executable are within-Lean implementation comparisons, not external
+comparators; their common-parameter hashes are checked by the harness.
+
+## Profile
+
+One representative case from each declared `phase4.input_families` family was
+sampled from the clean source revision above. The commands used the project
+wrapper with `samply 0.13.1` at 999 Hz and `lean-bench-samply` commit
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`:
+
+```sh
+scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
+  Hex.FpPolyBench.runMulFastChecksum 16384 2000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
+  Hex.FpPolyBench.runFrobeniusXModChecksum 80 5000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
+  Hex.FpPolyBench.runComposeModMonicChecksum 192 2000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
+  Hex.FpPolyBench.runSquareFreeDecompositionSummary 768 2000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexpolyfp_bench \
+  Hex.FpPolyBench.runGcdChecksum 2048 5000000000
+```
+
+The deterministic fixtures use no random seed. Raw filtered Firefox Profiler
+artifacts remain developer-local at `/tmp/hex-profile-<target>-<param>.json.gz`,
+as required by `SPEC/profiling.md`. The postprocessor retained only bench-thread
+samples inside timed regions. Every run had zero other-thread samples in its
+timed windows and passed calibration, minimum-sample, and plus-or-minus 5 ms
+sensitivity checks.
+
+| Family / target | Samples | Timed | Residual | Own code | GMP | Allocation | Lean runtime | Other | Classified |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| coefficient-kernels / `runMulFastChecksum`, n=16384 | 1316 | 1326.7 ms | 0.695 ms | 22.72% | 11.55% | 30.09% | 30.02% | 5.62% | 94.38% |
+| quotient-powers / `runFrobeniusXModChecksum`, n=80 | 5139 | 5165.0 ms | 0.433 ms | 35.18% | 0% | 26.60% | 35.55% | 2.67% | 97.33% |
+| modular-composition / `runComposeModMonicChecksum`, n=192 | 2216 | 2254.9 ms | 0.995 ms | 34.34% | 0% | 29.20% | 32.45% | 4.02% | 95.98% |
+| product-squarefree / `runSquareFreeDecompositionSummary`, n=768 | 1615 | 1627.4 ms | 0.926 ms | 35.60% | 0% | 27.00% | 30.53% | 6.87% | 93.13% |
+| euclidean-division-gcd / `runGcdChecksum`, n=2048 | 3065 | 3086.4 ms | 0.736 ms | 42.25% | 0% | 28.78% | 24.67% | 4.31% | 95.69% |
+
+The coefficient-kernel profile places 75.30% of samples inclusively in
+`FpPoly.mulNttCrt?`; CRT image convolution accounts for 60.71%, and the NTT
+forward path for 25.15%. These costs are covered by the forced NTT/CRT and
+public-dispatch registrations.
+
+The Frobenius profile places 99.90% in `FpPoly.powModMonicAux`, with
+`DensePoly.mulImpl` at 55.71% and monic reduction/division at 44.09%/43.98%.
+This is precisely the multiplication-and-reduction work represented by
+`frobeniusWork` and registered by the quotient-power targets.
+
+The composition profile places 64.08% in monic reduction and 35.65% in dense
+multiplication beneath the registered Horner composition target. The
+product/square-free profile places 99.32% in `squareFreeDecomposition`, 95.23%
+in `yunFactorsWithLevel`, and 51.64% in `monicGcd`; its dominant GCD and exact
+division phases are covered by the square-free, GCD, and division targets.
+
+The forced-chain GCD profile places 100% in `DensePoly.gcdAuxImpl` and
+99.74% in `DensePoly.modImpl`, with `subtractScaledShiftStep` inclusive in
+95.07% of samples. The dominant cost is therefore the registered Euclidean
+remainder chain, not fixture preparation or an unregistered phase.
 
 ## Concerns
 
-- [#9809](https://github.com/kim-em/hex-dev/issues/9809) tracks the two
-  inconclusive registrations and missing profile evidence.
-- The GCD declaration remains deliberately conservative; observed scaling is
-  faster than `n²`.
-- Frobenius `X` remains inconclusive; division and modular composition are
-  consistent in the replacement run.
-- Modular composition and Frobenius powering remain the largest substrate
-  costs in these representative upper rungs.
+None.
