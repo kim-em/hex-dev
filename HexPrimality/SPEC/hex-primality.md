@@ -1223,6 +1223,17 @@ but PARI plus python-flint already cover the verdict surface and the
 second opinion, so this SPEC uses that pair and adds no third
 dependency.
 
+**Mode: required.** The existing single-job oracle tail installs and preflights
+PARI/cypari2 and python-flint, diffs fresh deterministic emission against the
+committed snapshot, and fails if either the dependency or a comparison is
+unavailable. Fixtures are limited to results the oracle can recompute from the
+original input: verdicts, certificate-checker replay, and prime segments.
+Multiplicative-order laws, p−1 and Brent routes, exact search accounting and
+bounded failures, sieve representation, total fallback, and the term/tactic
+surface are covered by `HexPrimality.Conformance`; PARI cannot independently
+establish those implementation-level properties, so emitting them would add
+ceremony rather than independent evidence.
+
 ## Benchmarking
 
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at

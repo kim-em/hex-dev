@@ -5,11 +5,15 @@ Reads a JSONL stream produced by `lake exe hexprimality_emit_fixtures`
 (or the committed sample at
 `conformance-fixtures/HexPrimality/primality.jsonl`) and re-checks each
 case: `isprime` verdicts against PARI's `isprime` (with python-flint's
-`is_prime` as a second opinion on large inputs where available),
+`is_prime` as a second opinion on large inputs),
 `segment` listings against PARI's `primes` over the interval, and
 `certcheck` verdicts against an independent Python reimplementation of
 the certificate checker, whose small-table leaf uses the table's proven
 semantics (prime and below `10^5`) with PARI supplying the primality.
+Route selection, multiplicative-order laws, search accounting, bounded
+failure state, sieve representation, and elaborator behavior are deliberately
+not emitted: PARI cannot independently establish those implementation-level
+properties, so `HexPrimality.Conformance` checks them directly instead.
 On mismatch, writes a JSON failure record under `conformance-failures/`
 and exits non-zero so CI fails the job.
 
@@ -63,19 +67,14 @@ def _pari_version(pari) -> str:
 
 def _is_prime(pari, n: int) -> bool:
     verdict = bool(int(pari.isprime(n)))
-    try:  # python-flint second opinion, where available
-        import flint  # type: ignore[import-not-found]
+    import flint  # type: ignore[import-not-found]
 
-        second = bool(flint.fmpz(n).is_prime())
-        if second != verdict:
-            raise OracleMismatch(
-                f"cypari2 and python-flint disagree on isprime({n}): "
-                f"{verdict} vs {second}"
-            )
-    except ImportError:
-        pass
-    except AttributeError:
-        pass
+    second = bool(flint.fmpz(n).is_prime())
+    if second != verdict:
+        raise OracleMismatch(
+            f"cypari2 and python-flint disagree on isprime({n}): "
+            f"{verdict} vs {second}"
+        )
     return verdict
 
 
@@ -259,12 +258,15 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         import cypari2  # noqa: F401
+        import flint  # noqa: F401
     except ImportError:
-        # Mirror the SPEC's `if_available` mode: a missing oracle is a
-        # skip, not a failure. CI installs cypari2 before this script
-        # runs; a failure here in CI means install failed.
-        print("SKIP: cypari2 not installed", file=sys.stderr)
-        return 0
+        # Both legs are required: the standard driver must never turn a
+        # missing PARI or python-flint dependency into a green skip.
+        print(
+            "FAIL: required oracles cypari2 and python-flint are not installed",
+            file=sys.stderr,
+        )
+        return 1
 
     return check(
         source,

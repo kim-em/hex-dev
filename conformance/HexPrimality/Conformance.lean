@@ -13,13 +13,14 @@ segment surfaces.
 Oracle: PARI (via cypari2) recomputes `isprime` verdicts and `segment`
 listings and an independent Python reimplementation replays `certcheck`
 cases (`scripts/oracle/primality_pari.py`); python-flint is the second
-opinion on large verdicts where available.
-Mode: `if_available`
+opinion on large verdicts.
+Mode: `required`
 Covered operations:
+- `Hex.Nat.orderOf`
 - `Hex.Nat.isPrime` / `Hex.Nat.isPrime?`
 - `Hex.Nat.checkPrime` on `PrimeCert` values
 - `Hex.Nat.primeCert?`
-- counted Pollard `p - 1` integration in certificate partial factorization
+- `Hex.Nat.pMinusOneStage1` and its counted, resumable form
 - `Hex.Nat.rhoFactor?`, its counted internal form, and batched-Brent route
   instrumentation
 - trial-division extraction route instrumentation
@@ -30,6 +31,8 @@ Covered operations:
 - `Hex.Nat.nextPrime?`
 - `primality` term and tactic forms
 Covered properties:
+- multiplicative order is positive exactly on the tested nontrivial coprime
+  inputs, reaches one, and is minimal
 - the total decision agrees with trial division on an initial segment
 - a `.composite` certificate-search verdict never contradicts `isPrime`
 - rho restart and certificate-witness draws span arbitrary-precision bounds
@@ -53,8 +56,28 @@ Covered edge cases:
 
 open Hex.Nat
 
--- The owner library pins all three terminal gcd outcomes at the shared
--- counted boundary. Each call costs one attempt and preserves `Rand`.
+-- Multiplicative order: a typical primitive root, both junk-value edges, and
+-- a base-2 pseudoprime whose proper order catches a Fermat-only implementation.
+#guard orderOf 3 7 == 6
+#guard orderOf 2 1 == 0
+#guard orderOf 6 9 == 0
+#guard orderOf 2 341 == 10
+#guard 2 ^ orderOf 2 341 % 341 == 1
+#guard (List.range (orderOf 2 341)).all fun k => k == 0 || 2 ^ k % 341 != 1
+
+-- The subject projection covers every public certificate constructor.
+#guard (PrimeCert.small 97).subject == 97
+#guard (PrimeCert.pock 101 []).subject == 101
+#guard (PrimeCert.pock3 103 0 0 0 []).subject == 103
+
+-- The depth and rho policies are executable API, not undocumented constants.
+#guard defaultPrimeFuel 0 == 1
+#guard defaultPrimeFuel 2 == 2
+#guard defaultPrimeFuel (2 ^ 128) == 129
+#guard defaultPrimeCertBudget == ⟨8, 1 <<< 22⟩
+
+-- Direct and counted p−1 calls pin all three terminal gcd outcomes. Each
+-- counted call costs one attempt and preserves `Rand`.
 private def pMinusOneFound :=
   pMinusOneStage1Counted 299 2 5 (Hex.Rand.ofSeed 11)
 private def pMinusOneMiss :=
@@ -62,6 +85,9 @@ private def pMinusOneMiss :=
 private def pMinusOneWhole :=
   pMinusOneStage1Counted 15 4 2 (Hex.Rand.ofSeed 13)
 
+#guard pMinusOneStage1 299 2 5 == .factor 13
+#guard pMinusOneStage1 3 2 5 == .noFactor
+#guard pMinusOneStage1 15 4 2 == .whole
 #guard pMinusOneFound.result == .factor 13
 #guard pMinusOneFound.attempts == 1
 #guard pMinusOneFound.rand == Hex.Rand.ofSeed 11
@@ -187,6 +213,19 @@ example {n base bound d : Nat} {r : Hex.Rand}
         success.rand == ((Hex.Rand.ofSeed 0).words 7).2
   | .error _ => false)
 
+-- Here `n - 1 = 2^20 * 100003 * 1000651`. With rho disabled, trial division
+-- supplies `F = 2^20` but leaves the table-coprime composite cofactor
+-- untouched. It is below the square-root Pocklington threshold and above the
+-- cube-root threshold, so search must construct a `pock3` node and the ordinary
+-- checker must replay it.
+#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 104929010073468929
+    (Hex.Rand.ofSeed 23) (defaultPrimeFuel 104929010073468929) with
+  | .ok success =>
+      match success.cert.raw with
+      | .pock3 n _ _ _ _ => n == 104929010073468929 && checkPrime success.cert.raw
+      | _ => false
+  | .error _ => false)
+
 -- The bounded decision remains fuel-insensitive below the table bound and
 -- exposes the reordered verdict/construction boundary above its trial cutoff.
 #guard (List.range 2).all fun fuel =>
@@ -197,6 +236,11 @@ example {n base bound d : Nat} {r : Hex.Rand}
   match isPrime? 97 (Hex.Rand.ofSeed 0) fuel with
   | .ok (verdict, r) => verdict && r == Hex.Rand.ofSeed 0
   | .error _ => false
+-- This prime is above the table and below the trial threshold. The unchanged
+-- state distinguishes the exact trial route from certificate construction.
+#guard (match isPrime? 100003 (Hex.Rand.ofSeed 0) 0 with
+  | .ok (verdict, r) => verdict && r == Hex.Rand.ofSeed 0
+  | .error _ => false)
 #guard (List.range 2).all fun fuel =>
   match isPrime? 2147483649 (Hex.Rand.ofSeed 0) fuel with
   | .ok (verdict, r) => !verdict && r == Hex.Rand.ofSeed 0
@@ -212,6 +256,16 @@ example {n base bound d : Nat} {r : Hex.Rand}
 
 -- Counted compatibility forms retain successful randomized work without
 -- changing the ordinary pair-returning entry points.
+#guard (match Internal.rhoFactorCounted? 3 (Hex.Rand.ofSeed 2) 8 with
+  | .error failure =>
+      failure.stop == .invalidInput && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 2
+  | .ok _ => false)
+#guard (match Internal.rhoFactorCounted? 8 (Hex.Rand.ofSeed 2) 8 with
+  | .ok success =>
+      success.factor == 2 && success.attempts == 0 &&
+        success.rand == Hex.Rand.ofSeed 2
+  | .error _ => false)
 #guard (match Internal.rhoFactorCounted? 9 (Hex.Rand.ofSeed 2) 8 with
   | .ok success =>
       success.factor == 3 && success.attempts == 4 &&
@@ -307,6 +361,14 @@ private def rhoBatchTrace : Hex.Nat.Internal.RhoTrace :=
 #guard (match rhoFactor? 100160063 (Hex.Rand.ofSeed 1) 8 with
   | .ok (d, _) => 1 < d && d < 100160063 && 100160063 % d == 0
   | .error _ => false)
+#guard (match rhoFactor? 3 (Hex.Rand.ofSeed 1) 8 with
+  | .error failure => failure.stop == .invalidInput
+  | .ok _ => false)
+#guard (match rhoFactor? 101 (Hex.Rand.ofSeed 1) 0 with
+  | .error failure =>
+      failure.stop == .exhausted && failure.attempts == 0 &&
+        failure.rand == Hex.Rand.ofSeed 1
+  | .ok _ => false)
 
 -- Collisions for 11 and 13 share the cycle-boundary batch, so the route
 -- returns their proper composite product rather than pretending it is prime.
@@ -408,8 +470,17 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 #guard Hex.Nat.Internal.rhoRestartCap == 8
 
 -- Miller-Rabin filter behaviour on the adversarial families.
+#guard millerRabin 0 2 = false
+#guard millerRabin 2 2 = true
+#guard millerRabin 4 3 = false
+#guard millerRabin 7 7 = true
+#guard millerRabin 21 3 = false
+#guard millerRabin 97 5 = true
 #guard isProbablePrime 561 = false
 #guard isProbablePrime 1373653 = false
+#guard isProbablePrime 97 = true
+#guard isProbablePrime 0 = false
+#guard isProbablePrime 3215031751 = false
 #guard millerRabin 2047 2 = true
 #guard millerRabin 2047 3 = false
 
@@ -423,7 +494,8 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 -- Next-prime success returns the least prime across the table, trial, and
 -- certificate tiers.
 #guard (match nextPrime? 90 (Hex.Rand.ofSeed 0) 8 with
-  | .ok (p, _) => p == 97
+  | .ok (p, _) =>
+      p == 97 && (List.range' 91 6).all fun q => isPrime q == false
   | .error _ => false)
 #guard (match nextPrime? 99991 (Hex.Rand.ofSeed 0) 16 with
   | .ok (p, _) => p == 100003
@@ -477,6 +549,8 @@ private def wideDrawBound : Nat := 2 ^ 80 + 123
 #guard numOfIndex (indexWidth 10000) ≥ 10000
 #guard (List.range (indexWidth 100)).all fun t =>
   t == 0 || ((sieve 100 10).testBit t == isPrimeTrial (numOfIndex t))
+#guard sieve 0 0 == 0
+#guard bitsToList (sieve 25 5) 25 == [5, 7, 11, 13, 17, 19, 23]
 
 -- Table bound edges, the largest entry, an above-bound prime, and empty
 -- segment behavior.

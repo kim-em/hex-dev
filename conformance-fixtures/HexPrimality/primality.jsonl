@@ -108,6 +108,8 @@
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-witness-high","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-size","n":43,"cert":{"t":"pock3","n":43,"r":1,"s":5,"w":0,"f":[[3,0,{"t":"small","n":2}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-size","op":"certcheck","value":false}
+{"kind":"segment","lib":"HexPrimality","case":"segment/edge/empty","lo":10,"hi":10}
+{"kind":"result","lib":"HexPrimality","case":"segment/edge/empty","op":"segment","value":[]}
 {"kind":"segment","lib":"HexPrimality","case":"segment/basic/1-100","lo":1,"hi":101}
 {"kind":"result","lib":"HexPrimality","case":"segment/basic/1-100","op":"segment","value":[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97]}
 {"kind":"segment","lib":"HexPrimality","case":"segment/table/1-10000","lo":1,"hi":10000}

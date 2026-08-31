@@ -15,7 +15,14 @@ into `isPrime`), so repeated runs emit identical JSONL and CI can diff the
 stream against the committed snapshot. The oracle recomputes each `isprime`
 verdict and `segment` listing with PARI, replays each `certcheck` with an
 independent Python reimplementation of the checker, and cross-checks large
-verdicts with python-flint where available.
+verdicts with python-flint.
+
+Only operations for which the driver can independently recompute the result
+are emitted. Multiplicative order, p−1 and rho route selection, search
+accounting and bounded failures, sieve bitsets, and elaborator behavior remain
+in `HexPrimality.Conformance`, where algebraic identities and route traces test
+them directly; emitting Lean's observations of those properties would create
+ceremonial fixtures rather than independent oracle evidence.
 
 The certificate serialization is
 `{"t":"small","n":N}` / `{"t":"pock","n":N,"f":[[a,e,child],…]}` /
@@ -115,7 +122,8 @@ segment straddling `primeTableBound` to check that the table and fallback
 agree across the boundary. The release-gated `hotPathCandidates` migration is
 tracked separately by issue #9849. -/
 private def segmentCases : List (String × Nat × Nat) :=
-  [ ("basic/1-100", 1, 101),
+  [ ("edge/empty", 10, 10),
+    ("basic/1-100", 1, 101),
     ("table/1-10000", 1, 10000),
     ("straddle/99950-100050", 99950, 100050) ]
 
