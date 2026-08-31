@@ -3,7 +3,8 @@
 ## Bench Targets
 
 - `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: mode 1,
-  two-sided constant-time lookup by table ordinal, over all 38 committed keys.
+  two-sided affine lookup/materialization/checksum cost over all 38 committed
+  table keys.
 - `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: mode 3, fixed Rabin
   verification of `C(13, 6)` under a 2 ms operation-scoped ceiling.
 - `Hex.ConwayBench.runTier2Compat_13_1_6Checksum`: mode 3, fixed compatibility
@@ -13,249 +14,191 @@
   the other two fixed Tier 2 checks are expected-hash anchors. They make no
   complexity claim and do not discharge performance coverage.
 
-`HexConway` now advertises two implemented tiers: the Tier 1 committed-table
-surface, and Tier 2 divisor compatibility. Both appear in
-`HexConway.phase4.input_families` as `tier1-committed-table` and
-`tier2-divisor-compatibility`. Tier 3 on-demand Conway search remains
-unimplemented and has no bench targets. Tier 2 primitivity is implemented, but
-the declared `tier2-divisor-compatibility` family measures only the
-compatibility check.
-
-## Tier 2 divisor compatibility
-
-The earlier cross-case run on `chungus2` (Linux, x86_64, Lean 4.33.0-rc1),
-five repeats each, established which committed pair is the canonical hard
-case:
-
-| Target | Pair | Frobenius factors | Median |
-|---|---|---:|---:|
-| `runTier2Compat_2_3_6Checksum` | `C(2, 3)` in `C(2, 6)` | 2 | 26.086 µs |
-| `runTier2Compat_2_4_8Checksum` | `C(2, 4)` in `C(2, 8)` | 2 | 48.880 µs |
-| `runTier2Compat_13_1_6Checksum` | `C(13, 1)` in `C(13, 6)` | 6 | 77.773 µs |
-
-For scale, the Tier 1 Rabin check on the same largest entry
-(`runTier1Irreducibility_13_6Checksum`) is 131.070 µs, and on `C(2, 6)` it is
-19.349 µs. So a compatibility check costs less than the irreducibility check
-for the same entry, which is the expected shape: compatibility runs `n / m`
-Frobenius steps at one modular composition apiece plus a final evaluation,
-while the Rabin test runs a pow chain over the maximal proper divisors of the
-degree.
-
-The three targets span the axes that matter. `2_3_6` and `2_4_8` share the
-factor count and differ in degree, and the cost roughly doubles with degree.
-`13_1_6` has the deepest chain in the committed table at six factors, over the
-largest prime; it is the worst case. The current scientific run below measures
-it at 76.065 µs under its enforced 1 ms ceiling.
-
-This is the runtime cost. The kernel-replay cost, which is what actually
-bounds the committed table, is separate: the fifty-two `decide`-discharged
-compatibility theorems together add about seventeen seconds to a
-`lake build HexConway`, against minutes for the Tier 1 certificates.
+`HexConway` advertises the implemented `tier1-committed-table` and
+`tier2-divisor-compatibility` input families. Tier 3 on-demand Conway search
+is unimplemented. Tier 2 primitivity exists, but is not a separate declared
+Phase-4 input family; the Tier 2 family here is specifically compatibility.
 
 ## Tier 1 proof budget
 
-`HexConway/SPEC/hex-conway.md` sizes the committed slice by proof-checking cost
-rather than by mathematical coverage: include as much of the Lübeck table as
-possible subject to the generated Tier 1 correctness theorems still checking in
-"only a few minutes". That cost is elaboration time, not runtime, so it is not
-one of the bench verdicts below; it is recorded here because it is the number
-that decides how wide the table may be.
+`HexConway/SPEC/hex-conway.md` sizes the committed slice by proof-checking cost:
+include as much of the Luebeck table as possible while the generated Tier 1
+correctness theorems still check in only a few minutes. That elaboration and
+kernel-replay cost is separate from runtime benchmarking.
 
-Method: delete `.lake/build/{lib/lean,ir}/HexConway`, then `lake build
-HexConway` on an otherwise warm dependency tree, reading the per-module times
-Lake reports. Single run per scope, so these are indicative rather than
-distributions. AMD EPYC 9455, Linux x86_64, Lean 4.33.0-rc1. This is not
-`carica`, so the figures are not comparable with the scientific runs below;
-they are useful only as a ratio between scopes.
+On a warm dependency tree, after deleting the built `HexConway` Lean and IR
+outputs, one `lake build HexConway` on AMD EPYC 9455, Linux x86-64, and Lean
+4.33.0-rc1 gave:
 
 | Scope | Entries | `Table` | `Certificates` | `Api` |
-|---|---|---|---|---|
-| `2:6, 3:6, 5:6, 7:6, 11:6, 13:6` | 36 | 2.6s | 28s | 2.8s |
-| `2:8, 3:6, 5:6, 7:6, 11:6, 13:6` | 38 | 2.7s | 31s | 3.0s |
+|---|---:|---:|---:|---:|
+| `2:6, 3:6, 5:6, 7:6, 11:6, 13:6` | 36 | 2.6 s | 28 s | 2.8 s |
+| `2:8, 3:6, 5:6, 7:6, 11:6, 13:6` | 38 | 2.7 s | 31 s | 3.0 s |
 
-Almost all of the cost is kernel `decide`: 37 certificate replays in
-`HexConway/Certificates.lean` at 8M heartbeats each, four of them at 20M, plus
-the degree-one check in `HexConway/Table.lean`. Adding `C(2, 7)` and `C(2, 8)`
-cost about 3s between them, so the binary column is cheap: its residues are
-single bits and its certificates are correspondingly small.
-
-Cost grows with both the prime and the degree, which is why the committed scope
-carries a maximum degree per prime rather than one bound for all of them,
-matching the `SLICE` in `scripts/oracle/update_luebeck_conway_cache.py`. The
-compiled Rabin checks in the verdicts below show the degree-6 spread across
-primes directly: `128.417 us` at `C(2, 6)` against `812.958 us` at `C(13, 6)`,
-a factor of about 6.3 that the kernel replay inherits.
-
-**What this measurement does and does not settle.** It settles that the
-committed scope is affordable: 31s against a "few minutes" rule leaves
-substantial headroom. It does not settle that degree 8 is the right frontier.
-The binary column was extended to 8 because `GF(2^8)` is the smallest field
-where the packed representation is interesting and because the cost was known
-to be small, not because degree 9 was measured and found too expensive. Calling
-this the budget-selected maximum would overstate it; it is an initial widening
-with the budget confirmed to accommodate it.
-
-Establishing the actual frontier means measuring successive candidates until
-the rule bites, per prime. That is now mechanical:
-`rebuild_luebeckConwayPolynomial?` regenerates the coefficient table and
-`#conway_entry_source` emits the per-entry literal, lemmas, and certificate for
-a cached pair. The odd-prime columns are where the cost is, so that is where
-the next measurement should start.
+These are single scope measurements, not distributions. They establish that
+the committed 38-entry scope remains affordable; they do not claim that degree
+8 is a measured maximal frontier. The binary column was extended to 8 because
+the proof cost was small and `GF(2^8)` is relevant to the packed
+representation. A true frontier study would measure successive candidates per
+prime.
 
 ## Verdicts
 
 ### Ordered mode selection
 
-The committed-table lookup remains mode 1. Its parameter is only an ordinal
-selecting a row from a finite generated table; the ordinal does not size the
-work, and the degree is bounded by the declared committed slice. The
-independently derived model is therefore constant in the ordinal. The current
-38-rung run passes in both directions.
+The committed lookup selects mode 1 with model `degree + 2`. An ordinal lookup
+performs fixed finite-key dispatch, materializes `degree + 1` coefficients, and
+`checksumPoly` walks those coefficients. The benchmark therefore recovers the
+entry degree from each ordinal and uses the independently derived affine model
+rather than calling the ordinal itself constant-sized. The 38-rung acceptance
+run passes in both directions.
 
-Tier 1 irreducibility and Tier 2 divisor compatibility select mode 3. Mode 1
-was attempted first on controlled families drawn entirely from the current
-committed table:
+Tier 1 irreducibility and Tier 2 compatibility select mode 3. Controlled mode-1
+ladders were attempted first from a clean source state at commit `bab1fa3c6`:
 
-- Tier 1 used all `C(2, n)`, `n = 1..8`. At fixed prime, Rabin's dense
-  Frobenius remainder supplies the independently derived cubic degree model
-  already used by HexBerlekamp. The current table is too short and its
-  polynomial/divisor shapes too discrete for a stable wall model: the run was
-  inconclusive, with `C` ranging from `32.529` to `195.888` on the verdict
-  rungs.
-- Tier 2 used compatibility of `C(2, 1)` inside `C(2, n)`, `n = 2..8`.
-  There are `n` norm-accumulator steps; each contains a dense degree-`n`
-  modular composition, giving the independently derived quartic model at fixed
-  coefficient width and prime. This run was also inconclusive, with `C`
-  ranging from `10.845` to `81.088`.
+- Tier 1 used `C(2, n)` for `n = 1..8`. At fixed prime, the Rabin test's
+  degree-many dense Frobenius/remainder work supplies a cubic degree model.
+  Five outer trials were inconclusive (`cMin=34.371`, `cMax=227.532`; beta
+  unavailable).
+- Tier 2 used compatibility of `C(2, 1)` inside `C(2, n)` for `n = 2..8`.
+  `normX` takes `n` Frobenius/product steps and each dense modular operation is
+  quadratic in degree, again giving a cubic model. Five outer trials were
+  inconclusive (`cMin=114.169`, `cMax=260.906`; beta unavailable).
 
-The clean mode-selection artifact is
-`reports/bench-results/hex-conway-mode-audit-4896db30a-chungus2.json`
-(SHA-256 `744dc31aa02efa00ea10d2ae7c7e001a258105cc834c89c261758530356d4e3d`).
-These results rule out mode 1 without fitting a weaker exponent to the short
-transition range. Mode 2 is unavailable: HexConway has no external comparator,
-and no published wall-time upper bound covers the compiled Rabin or modular-
-composition phase that controls these registrations. The mathematical
-operation counts in the SPEC and source do not supply the cited, dominant-
-phase wall bound that mode 2 requires.
+The clean audit artifact is
+`reports/bench-results/hex-conway-mode-audit-bab1fa3c6-chungus2.json`
+(SHA-256 `51ea7b4033f076be278b04c8dd4b1fe5c097a990b8869dcb6841420c58fae770`).
+The temporary ladder registrations exist at that cited commit and were removed
+after the audit because an inconclusive ladder cannot remain advertised as
+Phase-4 performance evidence. Their complete schedules and benchmark
+configuration remain in the commit and artifact.
 
-Mode 3 deliberately gives up asymptotic regression detection for these two
-finite committed-table verification operations. The canonical hard inputs are
-`C(13, 6)` for Tier 1 and compatibility of `C(13, 1)` inside `C(13, 6)` for
-Tier 2: they combine the largest committed prime with degree 6, and the latter
-also has the deepest six-factor Frobenius chain. `budgetedBool` times only the
-registered operation and returns `false` on a ceiling violation; the required
-`expectedHash = hash true` therefore makes the 2 ms and 1 ms ceilings fail
-closed. `maxSecondsPerCall = 2 s` remains only the child-process safety cap.
+Mode 2 is unavailable: HexConway has no external executable comparator and no
+published dominant-phase wall-time bound for compiled Rabin verification or
+modular composition. Mathematical operation counts alone do not provide the
+cited wall-time bound that mode 2 requires.
 
-The Tier 1 ceiling is a measured-baseline ceiling with cross-machine margin:
-2 ms is 13.7× the clean 146.576 µs calibration maximum on `chungus2` and
-2.46× the earlier 812.958 µs median on `carica`. The Tier 2 ceiling is 1 ms,
-11.5× its clean 87.061 µs calibration maximum. Both are operation-specific
-regression gates rather than inherited harness defaults.
+Mode 3 therefore uses the canonical hard committed inputs. `C(13, 6)` combines
+the largest committed prime with degree 6 for Tier 1. Compatibility of
+`C(13, 1)` inside `C(13, 6)` additionally uses the deepest six-factor
+Frobenius chain for Tier 2. With `HEXCONWAY_ENFORCE_BUDGETS=1`, `withBudget`
+times every auto-tuned invocation and throws immediately if the operation
+exceeds 2 ms or 1 ms. The scientific run sets this variable; CI `verify`
+deliberately leaves it unset so a noisy hosted runner does not assert timing.
+`expectedHash = hash true` separately fails correctness regressions, and
+`maxSecondsPerCall = 2 s` remains only the child-process safety cap.
+
+The current conservative margins use the largest per-call value in the clean
+acceptance run: the Tier 1 ceiling is 15.3 times 130.692 us, and the Tier 2
+ceiling is 13.0 times 77.218 us. No invocation threw, so the operation-scoped
+ceiling held throughout every auto-tuned batch, including iterations whose
+result is not retained as the repeat hash.
 
 ### Current scientific run
 
-The clean acceptance run at commit `cf08a8247` on `chungus2` (AMD EPYC 9455,
-Linux x86-64, Lean 4.34.0-rc2) used:
+The clean acceptance source commit is `ba8d354f8` on `chungus2` (AMD EPYC
+9455, Linux x86-64, Lean 4.34.0-rc2). It ran every HexConway registration with
+five outer trials for the parametric lookup and the registrations' five fixed
+repeats:
 
 ```sh
-lake exe hexconway_bench run \
-    Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
-    Hex.ConwayBench.runTier1Irreducibility_13_6Checksum \
-    Hex.ConwayBench.runTier2Compat_13_1_6Checksum \
-    --export-file \
-      reports/bench-results/hex-conway-mode3-cf08a8247-chungus2.json
+HEXCONWAY_ENFORCE_BUDGETS=1 \
+  ./.lake/build/bin/hexconway_bench run \
+  --filter Hex.ConwayBench --outer-trials 5 \
+  --export-file \
+    reports/bench-results/hex-conway-mode3-ba8d354f8-chungus2.json
 ```
 
-The deterministic lookup run now includes ordinals 37 and 38, the `C(2, 7)`
-and `C(2, 8)` rows. It is **consistent with declared complexity** over all 38
-entries (`cMin=185.049`, `cMax=509.870`, `β=+0.130`); ordinal 38 measured
-481.347 ns and produced the expected final hash `0x837443a59caa5094`.
-Tier 1 measured a 127.283 µs median against its 2 ms ceiling, and Tier 2 a
-76.065 µs median against its 1 ms ceiling. All five repeats completed within
-their operation budgets and matched expected hash `0xb`.
+The lookup is consistent with its declared affine complexity over all 38
+entries (`cMin=59.109`, `cMax=63.621`, `beta=-0.015`). Ordinal 38, `C(13, 6)`,
+had a 484 ns median; every row's hash agreed across its five trials.
 
-The export artifact has SHA-256
-`3dbd2185ea916a7e9de02a2a7564f2639b772167e1d1ba904bb07e658995f30f`.
+The fixed registrations measured:
+
+| Target suffix | Median | Maximum | Expected hash |
+|---|---:|---:|---:|
+| `runConwayPolySupported_2_1Checksum` | 87 ns | 87 ns | `0x8d105cfbb68da744` |
+| `runTier1Irreducibility_2_1Checksum` | 1.176 us | 1.217 us | `0xb` |
+| `runTier1Irreducibility_2_6Checksum` | 19.057 us | 19.375 us | `0xb` |
+| `runTier1Irreducibility_3_6Checksum` | 37.676 us | 38.821 us | `0xb` |
+| `runTier1Irreducibility_5_6Checksum` | 68.489 us | 70.289 us | `0xb` |
+| `runTier1Irreducibility_7_6Checksum` | 93.672 us | 98.116 us | `0xb` |
+| `runTier1Irreducibility_11_6Checksum` | 113.984 us | 115.828 us | `0xb` |
+| `runTier1Irreducibility_13_6Checksum` | 130.367 us | 130.692 us | `0xb` |
+| `runTier2Compat_2_3_6Checksum` | 25.698 us | 25.981 us | `0xb` |
+| `runTier2Compat_2_4_8Checksum` | 47.836 us | 49.098 us | `0xb` |
+| `runTier2Compat_13_1_6Checksum` | 75.997 us | 77.218 us | `0xb` |
+
+All repeats agreed with their expected hashes. The artifact is
+`reports/bench-results/hex-conway-mode3-ba8d354f8-chungus2.json` (SHA-256
+`9849ef75a1eb01ce0f902b8e560f7fe12ced86f33fe1fdb6c4999fa7384f3bc2`).
+
+`lake exe hexconway_bench verify` also passes all 12 shipped registrations.
+Verification is a deterministic registration/hash smoke gate; the scientific
+command above is the operation-budget evidence.
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-conway.md` does not name an external Phase-4
-performance comparator for the Tier 1 committed-table surface, so there
-are no `phase4.comparators` ratios to record. The Lübeck table is an input
-source rather than an executable comparator, and the current API surface has
-no alternative Tier 1 implementation to register as a `compare` group.
+`HexConway/SPEC/hex-conway.md` names no external Phase-4 performance comparator
+for the Tier 1 committed-table surface, so there are no
+`phase4.comparators` ratios. The Luebeck table is an input source, not an
+executable comparator, and the current API has no alternative Tier 1
+implementation to register as a `compare` group.
 
 ## Profile
 
-The `tier1-committed-table` profile was regenerated at commit
-`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
-macOS 14.6.1, arm64) with `samply 0.13.1` at a 999 Hz sampling rate,
-using the lean-bench-samply timed-region filter at commit
-`602da96df3537341b50de9add2f137b0a75a68df`. The harness reported
-`git_dirty=true` because this worktree carried an unrelated pre-existing
-`.claude/CLAUDE.md` modification. The filtered raw profile is
-developer-local at
-`/tmp/hex-profile-runLuebeckConwayPolynomialLookupChecksum-36.json.gz`
-and is not committed.
-
 ### `tier1-committed-table`
 
-Command:
+The Tier 1 lookup profile was captured at commit
+`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
+macOS 14.6.1, arm64), using `samply 0.13.1` at 999 Hz and the
+lean-bench-samply timed-region filter at commit
+`602da96df3537341b50de9add2f137b0a75a68df`:
 
 ```sh
 scripts/profile/run_profile.sh \
-    ./.lake/build/bin/hexconway_bench \
-    Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
-    36 1000000000
+  ./.lake/build/bin/hexconway_bench \
+  Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
+  36 1000000000
 ```
 
-Representative case: committed Luebeck table ordinal `36`, corresponding
-to `C(13, 6)`, no seed. Child row: `inner_repeats=1048576`,
-`per_call_nanos=876.204252`, `result_hash=0x837443a59caa5094`.
+The representative `C(13, 6)` case retained 924 bench-thread samples. Flat
+cost was 66.2% Lean runtime/outlined helpers, 26.3% allocation/free, and 7.5%
+Hex own code. Inclusive attribution was the registered lookup (57.9%), table
+lookup (57.4%), checksum (39.0%), and dense-polynomial trimming (10.0%). This
+is the expected stored-row materialization and checksum path; no attribution
+follow-up is needed.
 
-Diagnostics block:
+### `tier2-divisor-compatibility`
 
-```text
-=== lean-bench-samply filter diagnostics ===
-bench thread:       name='Thread <4419428>' tid=4419428
-regions:            14, total timed = 925.9 ms
-expected samples:   ~925 on bench thread
-retained samples:   924 on bench thread (10 rejected outside windows)
-other-thread noise: 1 samples on non-bench threads within timed windows (informational)
-filtered profile:   /tmp/hex-profile-runLuebeckConwayPolynomialLookupChecksum-36.json.gz
+The canonical Tier 2 profile was captured from clean commit `045ffb12e` on
+`chungus2` with `samply` at 999 Hz and lean-bench-samply commit
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`. The profile-only pure probe used a
+runtime-derived zero constant term at parameter one. This preserves the exact
+`C(13, 1)` in `C(13, 6)` operation while preventing native compilation from
+reducing the closed successful check. The probe was removed after capture and
+is not part of the shipped registration surface.
+
+```sh
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9813 \
+  scripts/profile/run_profile.sh \
+  ./.lake/build/bin/hexconway_bench \
+  Hex.ConwayBench.profileTier2Compat 1 1000000000
 ```
 
-The diagnostics JSON records the calibration anchors
-`spawn_anchor_wall_ns=1780141890664575000`,
-`spawn_anchor_mono_ns=329924577328833`,
-`sidecar_mono_anchor_ns=329925512083500`, and
-`samply_meta_start_time_ms=1780141890671.813`.
+The child ran 8192 inner repeats at 80.642 us per call with hash `0xb`.
+Filtering retained 654 of approximately 665 expected bench-thread samples,
+rejected 7 outside timed regions, found no other-thread samples in the windows,
+and passed both calibration (0.746 ms residual under the 5 ms limit) and the
+plus/minus 5 ms sensitivity test.
 
-Across the 924 retained bench-thread samples, flat leaf cost is:
-
-- Lean runtime / standard-library dispatch and compiler-outlined helper
-  frames: `612/924` samples (`66.2%`);
-- allocation / free, mostly `mi_malloc*`, `mi_free*`, and array allocation
-  paths: `243/924` (`26.3%`);
-- Hex own code: `69/924` (`7.5%`);
-- GMP big-integer arithmetic: `0/924`.
-
-The inclusive own-code ranking is
-`Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum` (`535/924`,
-57.9%) →
-`Hex.Conway.luebeckConwayPolynomial?` (`530/924`, 57.4%) →
-`Hex.ConwayBench.checksumLookup` (`360/924`, 39.0%) →
-`Hex.DensePoly.trimTrailingZeros` (`92/924`, 10.0%). Lower entries include
-`Hex.ConwayBench.checksumPoly` (`51/924`, 5.5%) and
-`Hex.Conway.luebeckConwayPolynomialOfCoeffs` (`45/924`, 4.9%).
-
-The dominant cost remains attributable to the registered
-`Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum` target. The
-profile is the expected tiny Tier 1 committed-table path: select the stored
-coefficient row for `C(13, 6)`, rebuild the small `FpPoly`, trim the dense
-polynomial representation, and checksum the result. No newly dominant cost
-falls outside the registered bench target, so no Attribution-rule follow-up
-is required.
+Flat samples were 32.42% allocation, 28.59% Lean/Hex own code, 34.56% Lean
+runtime, and 4.43% other. Inclusive Hex attribution was
+`Hex.Conway.compatCheck` (99.85%), `Hex.Conway.normX` (99.54%),
+`Hex.Conway.normAux` (90.21%), `Hex.FpPoly.composeModMonicImpl` (76.30%),
+`Hex.Conway.frobeniusIter` (75.99%), and `Hex.DensePoly.mulImpl` (48.32%). The
+dominant samples are therefore inside the registered compatibility operation,
+principally norm construction, modular composition, dense multiplication, and
+reduction. No attribution-rule follow-up is required.
 
 ## Concerns
