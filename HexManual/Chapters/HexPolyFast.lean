@@ -214,9 +214,10 @@ sequence; a checked fallback preserves exact executable behavior.
 tag := "hex-poly-fast-multipoint"
 %%%
 
-{name}`Hex.DensePoly.ProductTree` stores a balanced tree of nonempty levels.
-Its observations expose the original leaves, the root product, and individual
-node products while hiding the internal level representation.
+{name}`Hex.DensePoly.ProductTree` caches the root of a balanced tree without
+retaining its intermediate levels. Its observations expose the original
+leaves, reconstruct levels on demand, and compute individual node products
+from their represented leaf blocks.
 
 {docstring Hex.DensePoly.ProductTree.build}
 
