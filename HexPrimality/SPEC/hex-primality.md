@@ -613,10 +613,10 @@ before retaining the residual or trying later routes.
 `partialFactor` itself is **internal**, not part of the public API. The stable
 extension boundary is instead an explicitly untrusted result carrying the
 candidate, resumed generator state, and semantic attempt count. A producer
-receives the complete fuel allocation for that invocation; it may return any
-candidate data, but only the final certificate checker can accept it. The
-built-in adapter remains the default route and retains the reconstruction
-theorem used internally:
+receives the complete recursive, partial-factor, and rho allocation for that
+invocation; it may return any candidate data, but only the final certificate
+checker can accept it. The built-in adapter remains the default route and
+retains the reconstruction theorem used internally:
 
 ```lean
 /-- Candidate partial factorization: bases with positive exponents, and
@@ -630,9 +630,15 @@ structure FactorSearchResult where
   rand     : Rand
   attempts : Nat
 
-abbrev FactorSearch := Nat → Rand → Nat → FactorSearchResult
+structure FactorSearchBudget where
+  primeBudget : PrimeCertBudget
+  primeFuel   : Nat
+  factorFuel  : Nat
 
-def defaultFactorSearch (budget : PrimeCertBudget) : FactorSearch
+abbrev FactorSearch :=
+  FactorSearchBudget → Nat → Rand → FactorSearchResult
+
+def defaultFactorSearch : FactorSearch
 
 private structure PartialSearch where
   raw      : PartialFactors
@@ -698,10 +704,10 @@ routes and one deferred extension:
    and factor-declaration type before evaluation. Names are tried in the fixed
    `searchExtensionNames` order, only after core exhaustion, resuming from the
    core failure's `Rand`. Each route receives the same recursive,
-   partial-factor, witness, and rho allocations, and an exhausted diagnostic
-   sums every route's semantic attempts. Importing `HexIntFactor.Primality`
-   registers `Hex.Nat.intFactorSearch` without making hex-primality depend on
-   hex-int-factor.
+   partial-factor, witness, and rho allocations through `FactorSearchBudget`,
+   and an exhausted diagnostic sums every route's semantic attempts. Importing
+   `HexIntFactor.Primality` registers `Hex.Nat.intFactorSearch` without making
+   hex-primality depend on hex-int-factor.
 
 Soundness is indifferent to all three: whatever finds the factors, the
 kernel replays `checkPrime`.
@@ -1012,9 +1018,12 @@ remedy again.
 `Internal.primeCertCountedUsing?` applies the same assembly and final
 `checkPrime` acceptance to any `FactorSearch`. The producer's factor claims,
 attempt count, and returned state are data, not evidence; malformed factors can
-only turn a possible success into `.exhausted`. `primeCertWith?_composite`
-retains the default API's verdict theorem because only the fixed size, complete
-table, and Miller--Rabin tiers can emit `.composite`.
+only turn a possible success into `.exhausted`. A producer is required to honor
+the supplied `FactorSearchBudget`; the built-in and registered producers do so,
+while termination of an arbitrary caller-supplied function is intentionally
+outside the theorem boundary. `primeCertWith?_composite` retains the default
+API's verdict theorem because only the fixed size, complete table, and
+Miller--Rabin tiers can emit `.composite`.
 
 ## The tactic
 
@@ -1045,9 +1054,12 @@ allocation exhausts after 8 semantic attempts, while the registered
 HexIntFactor producer recognizes the squared factor and finishes a certificate.
 `lake build HexIntFactor.PrimalityConformance` is the untimed proof and
 accounting reproduction; it also pins the resumed states and extension
-subtotal. This route does not alter the established core proof-performance
-rungs because modules without the downstream registration execute exactly the
-same call as before.
+subtotal and the unchanged composite diagnostic. The 512-bit registered-route
+exhaustion case is pinned separately by
+`HexIntFactor.ProofProbe.PrimalityExhausted` in
+`lake build HexPrimalityElabProbe`: both routes finish bounded work and report
+33 accumulated attempts. Modules without the downstream registration execute
+exactly the same core call as before.
 
 **The supported positive-certificate elaboration policy is at most 512 input
 bits, at most 512 recursive certificate-search fuel, at most 2 Brent restarts
@@ -1059,12 +1071,14 @@ boundary the default contributes 512. The recursive fuel bounds
 certificate-construction depth. Partial factorization is bounded separately by
 `2 * n.log2 + 8` worklist
 steps at each certificate node and the rho restart/cycle allocation above. The
-fixed witness budget remains 32 candidates per factor entry. The exact attempt
-counter includes p−1 calls, rho restarts, and witness candidates and can
-therefore exceed the recursive fuel used at a node. Inputs above 512 bits are rejected before
+fixed witness budget remains 32 candidates per factor entry; the registered
+HexIntFactor producer additionally admits at most eight p−1/ECM attempts within
+each supplied worklist step. The exact attempt counter includes p−1 calls, rho
+restarts, ECM curves, and witness candidates and can therefore exceed the
+recursive fuel used at a node. Inputs above 512 bits are rejected before
 Miller--Rabin or certificate search. Search exhaustion reports the seed,
-selected recursive fuel, exact attempt count, and all enforced search maxima,
-and explicitly says that no total decision was attempted.
+selected recursive and root factor fuel, exact attempt count, and explicit rho
+maxima, and says that no total decision was attempted.
 
 The ceiling is the largest rung with both compiled and kernel evidence. The
 exact-boundary prime `100297^22 * 2^146 + 1`, namely
@@ -1177,7 +1191,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
-| `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node, each with explicit fuel; the producer contract is bounded but its implementation supplies the cost model |
+| `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node with explicit recursive, worklist, and rho allocations; the producer must honor the allocation and supplies its remaining cost model |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,

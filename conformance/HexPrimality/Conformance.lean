@@ -179,17 +179,18 @@ example {n base bound d : Nat} {r : Hex.Rand}
         | .error f => f.stop == .composite
         | .ok _ => false)
 
-private def emptyFactorSearch : FactorSearch := fun n r _fuel =>
+private def emptyFactorSearch : FactorSearch := fun _allocation n r =>
   ⟨⟨[], n⟩, (r.words 2).2, 2⟩
 
 private def squarePrime : Nat := 1208925821721293454442757
 
 private def squareFactor : Nat := 549755814367
 
-private def squareFactorSearch : FactorSearch := fun n r fuel =>
-  if n = squarePrime - 1 && fuel = 2 * squarePrime.log2 + 8 then
+private def squareFactorSearch : FactorSearch := fun allocation n r =>
+  if n = squarePrime - 1 &&
+      allocation.factorFuel = 2 * squarePrime.log2 + 8 then
     ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3⟩
-  else defaultFactorSearch defaultPrimeCertBudget n r fuel
+  else defaultFactorSearch allocation n r
 
 #guard (match Internal.primeCertCountedUsing? squareFactorSearch
     defaultPrimeCertBudget squarePrime (Hex.Rand.ofSeed 5)
@@ -218,8 +219,7 @@ example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
 -- The explicit default producer is the compatibility route used by
 -- `primeCert?`; successful work and state are unchanged.
 #guard (match Internal.primeCertCountedUsing?
-    (defaultFactorSearch defaultPrimeCertBudget) defaultPrimeCertBudget
-      1000003 (Hex.Rand.ofSeed 3) 2 with
+    defaultFactorSearch defaultPrimeCertBudget 1000003 (Hex.Rand.ofSeed 3) 2 with
   | .ok success =>
       success.attempts == 8 &&
         success.rand == ((Hex.Rand.ofSeed 3).words 8).2
@@ -652,7 +652,7 @@ example : True := by
 example : Hex.Nat.Prime 561 := primality 561
 
 /--
-error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 10 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
+error: primality: certificate search for 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 exhausted after 10 attempts (seed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123, recursive fuel 512, root factor fuel 1030; policy maximum 512 fuel at 512 bits, 2 rho restarts with 32768 steps each); no total primality decision was attempted
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123 :=

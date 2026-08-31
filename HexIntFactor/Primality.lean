@@ -31,11 +31,13 @@ private def factorPairs (entries : List PrimePower) : List (Nat × Nat) :=
   entries.map fun entry => (entry.prime, entry.exponent)
 
 /-- HexIntFactor's bounded search projected to HexPrimality's untrusted
-partial-factor callback. Complete results use residual one; incomplete and
-rejected results retain the last checker-accepted snapshot; zero has the
-honest empty candidate with residual zero. -/
-def intFactorSearch : FactorSearch := fun n r fuel =>
-  match Internal.factorCounted? n r fuel with
+partial-factor callback. Complete results use residual one; incomplete results
+retain the last checker-accepted snapshot. A rejected internal candidate
+degrades to the checker's trivial saved snapshot; only zero lacks a snapshot
+and returns the honest empty candidate with residual zero. -/
+def intFactorSearch : FactorSearch := fun allocation n r =>
+  match Internal.factorCountedWith? allocation.primeBudget
+      allocation.primeFuel n r allocation.factorFuel with
   | .ok success =>
       ⟨⟨factorPairs success.factorization.raw.factors, 1⟩,
         success.rand, success.attempts⟩

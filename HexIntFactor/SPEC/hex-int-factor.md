@@ -271,6 +271,10 @@ structure FactorFailure where
 
 def defaultFuel (n : Nat) : Nat
 
+def Internal.factorCountedWith? (budget : PrimeCertBudget)
+    (primeFuel : Nat) (n : Nat) (r : Rand) (fuel : Nat) :
+    Except FactorFailure (Internal.FactorSuccess n)
+
 def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
     Except FactorFailure (CheckedFactorization n × Rand)
 ```
@@ -611,14 +615,18 @@ public meta def HexIntFactor.PrimalityTactic.extension :
     Hex.PrimalityTactic.SearchExtension
 ```
 
-`intFactorSearch n r fuel` runs the counted dispatcher with exactly the
-supplied fuel. Complete checked factorizations become factor/exponent pairs
-with residual one. Incomplete or rejected searches expose only the last
-checker-accepted snapshot; absence of a snapshot becomes the honest empty
-candidate with residual `n`. The factor certificates themselves are erased at
-this boundary because hex-primality recursively constructs its own
-`PrimeCert`; the final `checkPrime`, not this projection, remains the acceptance
-boundary. Attempts and `Rand` are copied exactly from the dispatcher result.
+`intFactorSearch allocation n r` runs `factorCountedWith?` with exactly the
+supplied recursive-primality, rho-restart, rho-step, and factor-worklist
+allocations. The dispatcher additionally bounds its p−1/ECM continuation to
+eight attempts per worklist entry. Complete checked factorizations become
+factor/exponent pairs with residual one. Incomplete searches expose the last
+checker-accepted snapshot. Checker rejection degrades to the trivial saved
+snapshot, while the zero-input case alone has no snapshot and becomes the
+honest empty candidate with residual `n`. The factor certificates themselves
+are erased at this boundary because hex-primality recursively constructs its
+own `PrimeCert`; that repeated construction is an accepted search cost, and the
+final `checkPrime`, not this projection, remains the acceptance boundary.
+Attempts and `Rand` are copied exactly from the dispatcher result.
 
 The version-1 registration stores the name of the ordinary compiled adapter,
 not a meta closure over it. Hex-primality checks that name and type before
@@ -629,7 +637,10 @@ returns `[(2, 2), (549755814367, 2)]` with residual one and certificate search
 finishes from the core route's advanced state. Zero-fuel conformance retains
 only `[(2, 2)]`, residual `549755814367^2`, zero attempts, and the unchanged
 state. `lake build HexIntFactor.PrimalityConformance` pins these route,
-accounting, and proof-elaboration facts.
+accounting, composite-diagnostic, and proof-elaboration facts. The registered
+route's bounded exhaustion at the 512-bit policy ceiling is also reproduced by
+`HexIntFactor.ProofProbe.PrimalityExhausted` in
+`lake build HexPrimalityElabProbe` and reports the combined 33 attempts.
 
 The cyclotomic wrapper uses the internal `factorCounted?` result, which carries
 the exact attempt count on success without changing the public pair-returning

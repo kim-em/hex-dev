@@ -429,10 +429,6 @@ structure FactorSearchResult where
   attempts : Nat
 deriving Repr
 
-/-- A bounded, resumable, untrusted partial-factor producer. The supplied fuel
-is the complete allocation for this invocation. -/
-abbrev FactorSearch := Nat → Rand → Nat → FactorSearchResult
-
 /-- The product `∏ pᵢ ^ eᵢ` of a claimed factor list. -/
 private def prodPows : List (Nat × Nat) → Nat
   | [] => 1
@@ -605,6 +601,18 @@ structure PrimeCertBudget where
   rhoSteps : Nat
 deriving Repr, DecidableEq
 
+/-- Complete resource allocation for one untrusted partial-factor invocation.
+Nested primality checks receive `primeFuel` and `primeBudget`; the producer's
+own worklist receives `factorFuel`. -/
+structure FactorSearchBudget where
+  primeBudget : PrimeCertBudget
+  primeFuel : Nat
+  factorFuel : Nat
+deriving Repr, DecidableEq
+
+/-- A bounded, resumable, untrusted partial-factor producer. -/
+abbrev FactorSearch := FactorSearchBudget → Nat → Rand → FactorSearchResult
+
 /-- The production certificate-search rho allocation used by the public API. -/
 def defaultPrimeCertBudget : PrimeCertBudget :=
   ⟨rhoRestartBudget, 1 <<< 22⟩
@@ -709,9 +717,9 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
 
 /-- The built-in partial-factor producer used by `primeCert?`. -/
-def defaultFactorSearch (budget : PrimeCertBudget) : FactorSearch :=
-  fun n r fuel =>
-    let result := partialFactor budget n r fuel
+def defaultFactorSearch : FactorSearch :=
+  fun allocation n r =>
+    let result := partialFactor allocation.primeBudget n r allocation.factorFuel
     ⟨result.raw, result.rand, result.attempts⟩
 
 /-- The product invariant: the claimed powers times the residual recover the
@@ -925,7 +933,9 @@ private def primeCertGo (factor : FactorSearch) (budget : PrimeCertBudget)
         match fuel with
         | 0 => .error ⟨.exhausted, 0, r⟩
         | fuel + 1 =>
-            let factored := factor (n - 1) r (2 * n.log2 + 8)
+            let allocation : FactorSearchBudget :=
+              ⟨budget, fuel, 2 * n.log2 + 8⟩
+            let factored := factor allocation (n - 1) r
             match assembleGo factor budget fuel n factored.raw.factors []
                 factored.attempts factored.rand with
             | .error f => .error f
@@ -1000,7 +1010,7 @@ exact successful-attempt metering and using the built-in factor producer. -/
 def primeCertCountedWith? (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     (fuel : Nat) :
     Except PrimeCertFailure (PrimeCertSuccess n) :=
-  primeCertCountedUsing? (defaultFactorSearch budget) budget n r fuel
+  primeCertCountedUsing? defaultFactorSearch budget n r fuel
 
 /-- Bounded certificate search retaining exact successful-attempt metering. -/
 def primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :

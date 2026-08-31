@@ -307,6 +307,7 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
     `HexPrimality.ProofProbe.CoreOverBudget,
+    `HexIntFactor.ProofProbe.PrimalityExhausted,
     `HexPrimalityMathlib.ProofProbe.MathlibBaseline,
     `HexPrimalityMathlib.ProofProbe.Mathlib512,
     `HexPrimalityMathlib.ProofProbe.MathlibExhausted,

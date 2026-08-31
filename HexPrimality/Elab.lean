@@ -185,7 +185,8 @@ meta def checkPrimalityPolicy (tactic : String) (n : Nat) : MetaM Unit := do
 meta def throwPrimalityExhausted {α : Type} (tactic : String) (n attempts fuel : Nat) :
     MetaM α :=
   throwError "{tactic}: certificate search for {n} exhausted after {attempts} \
-      attempts (seed {n}, recursive fuel {fuel}; policy maximum \
+      attempts (seed {n}, recursive fuel {fuel}, root factor fuel \
+      {2 * n.log2 + 8}; policy maximum \
       {primalityFuelBudget} fuel at {primalityBitBudget} bits, \
       {primalityRhoRestartBudget} rho restarts with \
       {primalityRhoStepBudget} steps each); no total primality decision was \
@@ -236,6 +237,9 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
             | .error f =>
                 attempts := attempts + f.attempts
                 r := f.rand
+                -- A producer cannot issue this verdict directly; retain this
+                -- branch defensively for composites found while recursively
+                -- certifying the factors it supplied.
                 if f.stop = .composite then
                   return ← composite
           throwPrimalityExhausted tactic n attempts fuel

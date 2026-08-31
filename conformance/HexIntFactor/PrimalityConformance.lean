@@ -23,6 +23,9 @@ private def squareFuel : Nat := min (defaultPrimeFuel squarePrime) 512
 
 private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15⟩
 
+private def squareAllocation (factorFuel : Nat) : FactorSearchBudget :=
+  ⟨tacticBudget, squareFuel - 1, factorFuel⟩
+
 private def coreFailure : PrimeCertFailure :=
   match Internal.primeCertCountedWith? tacticBudget squarePrime squareSeed
       squareFuel with
@@ -39,8 +42,8 @@ private def coreFailure : PrimeCertFailure :=
 -- adapter exposes the checked aggregate as untrusted factor-search data and
 -- retains the producer's exact accounting and state.
 private def squareSearch : FactorSearchResult :=
-  intFactorSearch (squarePrime - 1) coreFailure.rand
-    (2 * squarePrime.log2 + 8)
+  intFactorSearch (squareAllocation (2 * squarePrime.log2 + 8))
+    (squarePrime - 1) coreFailure.rand
 
 #guard squareSearch.raw.factors == [(2, 2), (squareFactor, 2)]
 #guard squareSearch.raw.residual == 1
@@ -50,7 +53,7 @@ private def squareSearch : FactorSearchResult :=
 -- Zero fuel retains the checker-accepted structural progress without running
 -- a randomized continuation.
 private def squareSearchEmpty : FactorSearchResult :=
-  intFactorSearch (squarePrime - 1) squareSeed 0
+  intFactorSearch (squareAllocation 0) (squarePrime - 1) squareSeed
 
 #guard squareSearchEmpty.raw.factors == [(2, 2)]
 #guard squareSearchEmpty.raw.residual == squareFactor ^ 2
@@ -72,3 +75,9 @@ private def squareSearchEmpty : FactorSearchResult :=
 -- stronger route. The emitted proof still replays only `checkPrime`.
 example : Hex.Nat.Prime 1208925821721293454442757 :=
   primality 1208925821721293454442757
+
+-- Import-time registration does not disturb the core composite verdict or
+-- its concrete Miller--Rabin diagnostic.
+/-- error: primality: 561 is not prime (Miller-Rabin witness 2) -/
+#guard_msgs in
+example : Hex.Nat.Prime 561 := primality 561
