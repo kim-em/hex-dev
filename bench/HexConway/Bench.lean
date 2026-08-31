@@ -271,6 +271,17 @@ def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
+/- Profile-only spelling of Tier 2 compatibility. At parameter one the
+runtime-derived constant term is zero, so this is exactly the canonical
+workload, while its dependence on the runtime parameter prevents the native
+compiler from reducing the closed check before the sampler observes it. -/
+def profileTier2Compat (selector : Nat) : Bool :=
+  let small := Conway.conwayPoly 13 1 Conway.supportedEntry_13_1 +
+    DensePoly.C (ZMod64.ofNat 13 (selector - 1))
+  Conway.compatCheck small
+    (Conway.conwayPoly 13 6 Conway.supportedEntry_13_6)
+    (Conway.conwayPoly_monic 13 6 Conway.supportedEntry_13_6) 1 6
+
 /-- Degree of the committed entry selected by a one-based table ordinal. -/
 def tier1LookupDegree (ordinal : Nat) : Nat :=
   if ordinal ≤ 8 then ordinal
@@ -303,6 +314,19 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
+
+/- Profile-only registration for the canonical Tier 2 compatibility case.
+The one-point constant declaration is not performance evidence; it exists only
+at the clean source commit cited by the headline profile record and is removed
+after that profile is captured. -/
+setup_benchmark profileTier2Compat profileParam => profileParam - profileParam + 1 where {
+  paramFloor := 1
+  paramCeiling := 1
+  paramSchedule := .custom #[1]
+  maxSecondsPerCall := 2.0
+  targetInnerNanos := 1000000000
+  signalFloorMultiplier := 1.0
+}
 
 /- Except for the two canonical hard registrations annotated below, these
 fixed registrations are correctness/hash anchors, not Phase-4 performance
