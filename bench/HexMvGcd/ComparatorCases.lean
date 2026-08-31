@@ -86,9 +86,9 @@ def runFlintDense4d5 (_ : Unit) : IO Flint.IntTerms := do
 def runSingularDense4d5 (_ : Unit) : IO Flint.IntTerms := do
   singularInt (← dense4) (commonFactor 4)
 
-/-! Sparse-gap endpoints. The separate degree-4096 matrix cases measure one
-bounded Brown image; these smaller cases keep the complete public-GCD call
-finite for all three comparator implementations. -/
+/-! Sparse-gap endpoints. These smaller cases keep the complete public-GCD
+call finite for all three comparator implementations; the high endpoint is
+also the canonical mode-3 sparse-stress input. -/
 
 initialize sparse5d4 : IO.Ref (P 5 Int × P 5 Int) ←
   IO.mkRef (sparseGapGcd 5 4)
