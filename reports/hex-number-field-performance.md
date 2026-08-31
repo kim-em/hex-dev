@@ -380,28 +380,28 @@ runs below give the measurements; this table says which one counts.
 
 | target | verdict | slope | from |
 |---|---|---:|---|
-| `runQAdjoinAddLadder` | **consistent** | -0.068 | current API-surface audit |
-| `runQAdjoinSubLadder` | **consistent** | -0.060 | current API-surface audit |
-| `runQAdjoinNegLadder` | **consistent** | -0.062 | current API-surface audit |
-| `runQAdjoinSmulLadder` | **consistent** | -0.015 | current API-surface audit |
-| `runQAdjoinMulLadder` | **consistent** | -0.021 | current API-surface audit |
-| `runQAdjoinApprox` | **fixed: 16.786 ms, hash match** | — | API-surface fixed |
-| `runQAdjoinInvLadder` | **consistent** | **-0.101** | current API-surface audit |
-| `runQAdjoinDivLadder` | **consistent** | -0.091 | current API-surface audit |
-| `runAddEliminantLadder` | **consistent** | +0.142 | current API-surface audit |
-| `runAlgebraicPolyOfArray` | **consistent** | -0.072 | current API-surface audit |
-| `runAlgebraicPolyBeq` | **consistent** | -0.011 | current API-surface audit |
-| `runEvalMajorantFixed` | **fixed: 5.927 ms, hash match** | — | API-surface fixed |
-| `runCommonPrimitive` | **consistent** | -0.031 | current API-surface audit |
+| `runQAdjoinAddLadder` | **consistent** | -0.066 | current API-surface audit |
+| `runQAdjoinSubLadder` | **consistent** | -0.067 | current API-surface audit |
+| `runQAdjoinNegLadder` | **consistent** | -0.051 | current API-surface audit |
+| `runQAdjoinSmulLadder` | **consistent** | -0.019 | current API-surface audit |
+| `runQAdjoinMulLadder` | **consistent** | -0.015 | current API-surface audit |
+| `runQAdjoinApprox` | **fixed: 17.244 ms, hash match** | — | API-surface fixed |
+| `runQAdjoinInvLadder` | **consistent** | **-0.113** | current API-surface audit |
+| `runQAdjoinDivLadder` | **consistent** | -0.102 | current API-surface audit |
+| `runAddEliminantLadder` | **consistent** | +0.116 | current API-surface audit |
+| `runAlgebraicPolyOfArray` | **consistent** | -0.080 | current API-surface audit |
+| `runAlgebraicPolyBeq` | **consistent** | -0.008 | current API-surface audit |
+| `runEvalMajorantFixed` | **fixed: 5.968 ms, hash match** | — | API-surface fixed |
+| `runCommonPrimitive` | **consistent** | -0.029 | current API-surface audit |
 | `runLazyAddLadder` | **fixed: 4.539 s, hash match** | — | isolation fixed |
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
 | `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
 | `runCanonicalRepLadder` | **fixed: 154.045 ms, hash match** | — | exactification mode 3 |
-| `runCommonPresentationLadder` | **consistent** | -0.169 | current API-surface audit |
-| `runMergeRootListLadder` | **consistent** | +0.193 | current API-surface audit |
+| `runCommonPresentationLadder` | **consistent** | -0.171 | current API-surface audit |
+| `runMergeRootListLadder` | **consistent** | -0.281 | current three-trial root-merge audit |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
-| `runCommonPowers` | **fixed: 34.586 ms, hash match** | — | API-surface fixed |
+| `runCommonPowers` | **fixed: 34.734 ms, hash match** | — | API-surface fixed |
 
 All thirteen parametric registrations receiving a statistically matching
 two-sided harness verdict have models derived independently of timed results. The former
@@ -433,20 +433,27 @@ verdicts are:
 
 | target | schedule | model | verdict | slope |
 |---|---|---:|---|---:|
-| `runQAdjoinSubLadder` | 4..128, doubling | `n` | **consistent** | -0.060 |
-| `runQAdjoinNegLadder` | 4..128, doubling | `n` | **consistent** | -0.062 |
-| `runQAdjoinSmulLadder` | 4..128, doubling | `n` | **consistent** | -0.015 |
-| `runQAdjoinDivLadder` | 4, 8, 16, 32, 48, 64, 96 | `n²(n+7)` | **consistent** | -0.091 |
-| `runAlgebraicPolyOfArray` | 4..2048, doubling | `n` | **consistent** | -0.072 |
-| `runAlgebraicPolyBeq` | 4..256, doubling | `n` | **consistent** | -0.011 |
-| `runCommonPrimitive` | 2..128, doubling | `n` | **consistent** | -0.031 |
+| `runQAdjoinSubLadder` | 4..128, doubling | `n` | **consistent** | -0.067 |
+| `runQAdjoinNegLadder` | 4..128, doubling | `n` | **consistent** | -0.051 |
+| `runQAdjoinSmulLadder` | 4..128, doubling | `n` | **consistent** | -0.019 |
+| `runQAdjoinDivLadder` | 4, 8, 16, 32, 48, 64, 96 | `n²(n+7)` | **consistent** | -0.102 |
+| `runAlgebraicPolyOfArray` | 4..2048, doubling | `n` | **consistent** | -0.080 |
+| `runAlgebraicPolyBeq` | 4..256, doubling | `n` | **consistent** | -0.008 |
+| `runCommonPrimitive` | 2..128, doubling | `n` | **consistent** | -0.029 |
+
+The all-target post-rebase run had one noisy `runMergeRootListLadder` top rung
+(0.964 ms at `n = 12`) and therefore an inconclusive one-trial verdict. The
+focused clean-tree rerun uses three outer trials: the `n = 12` median is
+0.533 ms with 4.52% spread, and the ladder is consistent with slope -0.281.
+That focused result is authoritative for the merge target; the one-trial row is
+retained in the complete inventory rather than silently discarded.
 
 The corresponding fixed export covers the 35 newly registered fixed targets;
 every target has a declared hash, every repeat agrees, and every observed hash
 matches. On the exact profiled degree-six component, the representative phase
-medians are 64.448 us for `runNormEliminant`, 42.953 ms for
-`runEvalEliminant`, and 2.288 s for `runComponentRoots`. The runtime-fed
-quadratic `runQAdjoinCanonical` conversion is 924 us. Sub-microsecond grouped
+medians are 64.456 us for `runNormEliminant`, 43.384 ms for
+`runEvalEliminant`, and 2.315 s for `runComponentRoots`. The runtime-fed
+quadratic `runQAdjoinCanonical` conversion is 928 us. Sub-microsecond grouped
 accessors are intentionally retained as fixed registrations: their inputs pass
 through `IO.Ref`, and the harness warning records that the genuine operation is
 smaller than its one-microsecond diagnostic floor.
@@ -1333,8 +1340,9 @@ performance claim of this ladder.
 
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
-| [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `e1545c9ea`, clean tree; all 13 current parametric registrations | idle | `be7327b225dded855ad8e9913e92092a8544650a6ae426299b50d444b36854ae` |
-| [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `0643e1b90`, clean tree; all 35 newly added fixed registrations | idle | `279e657dd47ff12751cdb84b24102400be21a97d58845947b854e9c61469891e` |
+| [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `5010a63ba`, clean tree; all 13 current parametric registrations | variable scheduler load | `b0d0a48449f71a8b8cd7f924d8a1643c53a48e05936cfff6e440f7e6766f43a2` |
+| [`bench-results/hex-number-field-root-merge-current.json`](bench-results/hex-number-field-root-merge-current.json) | `2500076f9`, clean tree; authoritative three-trial merge rerun | variable scheduler load | `4c463ec14ed02a80fba3dc726458d3aad1822fb9cf6c6a31955756b2a09ccf0e` |
+| [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `c7cfc4de4`, clean tree; all 35 newly added fixed registrations | idle | `6d022a22bca113cdd64e9db2d9fe8e2112100bf0bbe270fbf289c87e47d799d0` |
 | [`bench-results/hex-number-field-api-model-review.json`](bench-results/hex-number-field-api-model-review.json) | `e7f5ed66b`, diagnostic audit tree before demotion | idle | `48ddca68217138efdeadcc1b5c7bde4d349b9c186fa396859809dfee9aabc320` |
 | [`bench-results/hex-number-field-api-surface-of-array.json`](bench-results/hex-number-field-api-surface-of-array.json) | `22e2f31a0`, dirty audit tree; superseded by the clean current API-surface export | idle | `2ae9e42471f1359eda7493843ab10c874417e5204346e2c4bc6f8045c6cc6ddc` |
 | [`bench-results/hex-number-field-phase4-scientific.json`](bench-results/hex-number-field-phase4-scientific.json) | `066f6fc29` | loaded (load average 105 to 150) | `3948bbb7107d96e7af56edcf2497b52e2b2a34f4d89376b93cc477c0f8a6517d` |
