@@ -20,6 +20,10 @@
 #     - draft: SPEC incomplete. Same orchestration treatment as planned.
 #       Required: done_through == 0.
 #   Active libraries depend only on active libraries (load-time invariant).
+# - correspondence_only (optional, default false): explicit classification for
+#   a mathlib bridge that owns no conformance, compiled benchmark, or
+#   proof-probe surface. Flagged libraries declare their computational
+#   conformance and performance owners in their per-library SPEC.
 # - Phase 0 (monorepo bootstrap) is global; its completion is observable
 #   by the existence of lakefile.lean, scripts/check_dag.py, etc., not
 #   by any field in this file.
@@ -319,6 +323,7 @@ libraries:
   HexPolySmithMathlib:
     deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
 
@@ -712,6 +717,7 @@ libraries:
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexMatrixMathlib:
@@ -730,11 +736,13 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexCharPolyMathlib:
@@ -750,16 +758,19 @@ libraries:
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexPolyZMathlib:
@@ -770,26 +781,31 @@ libraries:
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
+    correspondence_only: true
     # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
     # recorded here as they are established for this library in its own right,
     # not inherited from the library the code came from. Phase 2 is attested by
@@ -809,16 +825,19 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 3
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexPrimalityMathlib:
@@ -841,6 +860,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
 
@@ -867,6 +887,7 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexResultant:
@@ -958,6 +979,7 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexNumberField:
@@ -988,6 +1010,7 @@ libraries:
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexNumberFieldTower:
@@ -1012,6 +1035,7 @@ libraries:
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
+    correspondence_only: true
     done_through: 7
     status: active
   HexRealRoots:

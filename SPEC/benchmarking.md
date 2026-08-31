@@ -740,7 +740,8 @@ with a library-specific reason identifying exactly one of:
   tool does not expose this specific surface as a callable function
   (the tool builds it internally but doesn't surface it as user API).
 - **correspondence-only-layer** — the library is a correspondence-only
-  mathlib layer and therefore has zero bench targets (see
+  mathlib layer explicitly classified by `correspondence_only: true` in
+  `libraries.yml` and therefore has zero bench targets (see
   [§Mathlib-free benches](#mathlib-free-benches)), so there is no
   surface of its own to compare. The declaration names the
   computational performance owner or owners whose bench targets carry
@@ -1061,10 +1062,10 @@ single, scannable place a reviewer can land on to see whether
 Phase-4 coverage is real and what is known about the library's
 performance shape.
 
-A correspondence-only mathlib layer is the one exception: it has zero
-bench targets and no proof-track probes of its own, so it has nothing
-to report, and no headline report is required of it. Its performance
-evidence lives in the computational owners named by its
+A `libraries.yml` entry explicitly declaring `correspondence_only: true` is
+the one exception: it has zero bench targets and no proof-track probes of its
+own, so it has nothing to report, and no headline report is required of it.
+Its performance evidence lives in the computational owners named by its
 `correspondence-only-layer` declaration ([§Comparator
 naming](#comparator-naming)). A report already committed for such a
 library is a historical artefact and need not be deleted.

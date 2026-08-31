@@ -121,6 +121,7 @@ PHASE4_COMPARATOR_CLASSES = {"gating", "informational"}
 LIBRARY_FIELDS = {
     "deps",
     "mathlib",
+    "correspondence_only",
     "done_through",
     "status",
     "proof_probes",
@@ -156,6 +157,7 @@ class LibraryInfo:
     mathlib: bool
     done_through: int
     status: str
+    correspondence_only: bool = False
     proof_probes: tuple[str, ...] = ()
     phase4: Phase4Info | None = None
     external: str | None = None
@@ -203,6 +205,15 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         mathlib = current_fields["mathlib"]
         if not isinstance(mathlib, bool):
             raise ValueError(f"{current_name} has malformed mathlib flag")
+        correspondence_only = current_fields.get("correspondence_only", False)
+        if not isinstance(correspondence_only, bool):
+            raise ValueError(
+                f"{current_name} has malformed correspondence_only flag"
+            )
+        if correspondence_only and not mathlib:
+            raise ValueError(
+                f"{current_name} declares correspondence_only but mathlib is false"
+            )
         done_through = current_fields["done_through"]
         if not isinstance(done_through, int):
             raise ValueError(f"{current_name} has malformed done_through")
@@ -229,6 +240,10 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             raise ValueError(
                 f"{current_name} declares proof_probes but mathlib is false"
             )
+        if correspondence_only and proof_probes:
+            raise ValueError(
+                f"{current_name} declares correspondence_only and proof_probes"
+            )
         for probe in proof_probes:
             parts = Path(probe).parts
             if (
@@ -249,6 +264,10 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         phase4 = current_fields.get("phase4")
         if phase4 is not None and not isinstance(phase4, Phase4Info):
             raise ValueError(f"{current_name} has malformed phase4 block")
+        if correspondence_only and phase4 is not None:
+            raise ValueError(
+                f"{current_name} declares correspondence_only and a phase4 block"
+            )
         external = current_fields.get("external")
         if external is not None and not isinstance(external, str):
             raise ValueError(f"{current_name} has malformed external field")
@@ -258,6 +277,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             mathlib=mathlib,
             done_through=done_through,
             status=status,
+            correspondence_only=correspondence_only,
             proof_probes=tuple(proof_probes),
             phase4=phase4,
             external=external,

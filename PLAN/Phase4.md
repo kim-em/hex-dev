@@ -224,9 +224,10 @@ the criterion.
 
 The criteria above presuppose that the library advertises at least one
 operation in one of the two evidence tracks. A **correspondence-only
-mathlib layer** advertises zero: it is a `mathlib: true` library whose
-API is correspondence statements alone, with no compiled operation and
-no proof or tactic operation of its own.
+mathlib layer** advertises zero: it is a library explicitly classified by
+`mathlib: true` and `correspondence_only: true` whose API is correspondence
+statements alone, with no compiled operation and no proof or tactic operation
+of its own.
 [SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md#mathlib-free-benches)
 forbids it a `HexFooMathlib/Bench.lean`, a `HexFooMathlib/Bench/`
 directory, and a `lean_exe *mathlib*_bench` entry, so it has no
@@ -236,9 +237,10 @@ either. For such a library Phase 4 is done when:
 - the library's SPEC declares the external-comparator absence with the
   `correspondence-only-layer` reason from
   [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming),
-  naming the computational performance owner or owners whose bench
-  targets carry the evidence for the operations this layer transports;
-- `libraries.yml[L]` declares no `phase4` block, and no headline report
+  naming the computational conformance and performance owners whose targets
+  carry the evidence for the operations this layer transports;
+- `libraries.yml[L]` declares `correspondence_only: true` and no `phase4`
+  block, and no headline report
   at `reports/<lib>-performance.md` is required, per
   [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
   A report committed before the layer was classified may stay as a

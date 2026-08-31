@@ -1,5 +1,12 @@
 # hex-bareiss-mathlib (depends on hex-bareiss + hex-determinant-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexBareiss`
+Computational performance owner: `HexBareiss`
+
 Mathlib bridge for `hex-bareiss`: proves the row-pivoted Bareiss determinant
 correct against both Mathlib's determinant and our executable Leibniz
 determinant, via the no-pivot bordered-minor invariant and the determinant

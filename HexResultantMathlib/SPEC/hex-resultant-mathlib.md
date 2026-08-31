@@ -1,5 +1,12 @@
 # hex-resultant-mathlib (depends on hex-resultant + hex-poly-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexResultant`
+Computational performance owner: `HexResultant`
+
 Mathlib companion for `hex-resultant`. It proves both the chain-level facts used
 for early number-field soundness and the full agreement of the executable
 subresultant algorithm with `Polynomial.resultant`.

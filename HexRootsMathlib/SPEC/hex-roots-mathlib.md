@@ -1,5 +1,12 @@
 # hex-roots-mathlib (depends on hex-roots + hex-poly-z-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexRoots`
+Computational performance owner: `HexRoots`
+
 Mathlib companion for [hex-roots](../../HexRoots/SPEC/hex-roots.md). Proves **soundness**
 of the certified root isolation: every `DyadicRootIsolation` witness
 implies a unique simple complex root in its certified region (the

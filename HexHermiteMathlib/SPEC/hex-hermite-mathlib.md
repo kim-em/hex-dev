@@ -1,5 +1,12 @@
 # hex-hermite-mathlib (depends on hex-hermite + hex-row-reduce-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexHermite`
+Computational performance owner: `HexHermite`
+
 The Mathlib correspondence layer for the executable, Mathlib-free integer
 Hermite normal form in
 [hex-hermite](../../HexHermite/SPEC/hex-hermite.md). It identifies the row

@@ -55,7 +55,7 @@ def check_headline_reports(root: Path) -> tuple[int, str | None]:
             continue
         checked += 1
         report = root / "reports" / f"{report_slug(root, name)}-performance.md"
-        if info.mathlib and info.phase4 is None and not report.exists():
+        if info.correspondence_only:
             continue
         if not report.exists():
             return checked, f"{name}: missing Phase-4 headline report {report.relative_to(root)}"

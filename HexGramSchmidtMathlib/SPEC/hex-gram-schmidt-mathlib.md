@@ -1,5 +1,12 @@
 # hex-gram-schmidt-mathlib (depends on hex-gram-schmidt + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexGramSchmidt`, `HexBareiss`
+Computational performance owners: `HexGramSchmidt`, `HexBareiss`
+
 Proves that `GramSchmidt.Int.basis` corresponds to Mathlib's
 `gramSchmidt`. Mathlib's version works over inner product spaces and
 returns a family of vectors; ours returns a `Matrix Rat n m`. The

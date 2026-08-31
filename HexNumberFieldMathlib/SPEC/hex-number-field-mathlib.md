@@ -1,5 +1,12 @@
 # hex-number-field-mathlib (depends on hex-number-field + hex-resultant-mathlib + hex-berlekamp-zassenhaus-mathlib + hex-roots-mathlib + hex-poly-z-mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexNumberField`
+Computational performance owner: `HexNumberField`
+
 Mathlib companion for `hex-number-field`. It interprets the executable types in
 `ℂ` and proves fixed-field correspondence, canonicalization, factorization-lazy
 arithmetic, semantic equality, and completeness of the polynomial root APIs.
