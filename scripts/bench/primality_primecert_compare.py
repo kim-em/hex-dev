@@ -49,6 +49,18 @@ def module_outputs(directory: Path, module: str) -> list[Path]:
     return paths
 
 
+def host_snapshot() -> dict[str, object]:
+    processes = subprocess.run(
+        ["ps", "-eo", "args="], text=True, capture_output=True, check=False
+    ).stdout.splitlines()
+    return {
+        "load_average": list(os.getloadavg()),
+        "lake_lean_processes": sum(
+            " lake " in f" {line} " or "/bin/lean " in line for line in processes
+        ),
+    }
+
+
 def fresh_build(directory: Path, module: str, cpu: int) -> dict[str, object]:
     removed = module_outputs(directory, module)
     for path in removed:
@@ -56,9 +68,11 @@ def fresh_build(directory: Path, module: str, cpu: int) -> dict[str, object]:
     command = ["taskset", "-c", str(cpu), "lake", "build", f"+{module}:olean"]
     env = os.environ.copy()
     env["LEAN_NUM_THREADS"] = "1"
+    host_before = host_snapshot()
     start = time.perf_counter_ns()
     proc = subprocess.run(command, cwd=directory, env=env, text=True, capture_output=True)
     elapsed = time.perf_counter_ns() - start
+    host_after = host_snapshot()
     if proc.returncode != 0:
         raise RuntimeError(
             f"{' '.join(command)} failed in {directory}:\n{proc.stdout}{proc.stderr}"
@@ -69,6 +83,8 @@ def fresh_build(directory: Path, module: str, cpu: int) -> dict[str, object]:
         "command": command,
         "wall_nanos": elapsed,
         "olean_bytes": olean.stat().st_size,
+        "host_before": host_before,
+        "host_after": host_after,
         "stdout": proc.stdout,
         "stderr": proc.stderr,
     }
