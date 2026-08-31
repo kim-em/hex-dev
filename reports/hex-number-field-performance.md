@@ -146,9 +146,9 @@ uses an at-least-20 ms timed batch instead of a single-shot reading. Static cert
 isolating regions and lazy warmup initialization keep fixture construction
 outside the timed batch without increasing every executable spawn's floor.
 
-The current local `hexnumberfield_bench verify` invocation completes in 10.57 s
-on the reference host: 35% of the per-library 30 s soft-warning threshold and
-2.9% of the repo-wide 360 s hard cap. All 77 internal and protocol targets
+The current local `hexnumberfield_bench verify` invocation completes in 10.85 s
+on the reference host: 36% of the per-library 30 s soft-warning threshold and
+3.0% of the repo-wide 360 s hard cap. All 77 internal and protocol targets
 pass; the invocation reports only the twelve
 expected PARI comparator failures because `cypari2` is absent locally. Unlike
 the full timing path, `verify` runs each fixed body once and does not enforce
