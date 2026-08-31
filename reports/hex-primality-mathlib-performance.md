@@ -17,18 +17,30 @@ than a performance ranking.
 
 ## Bench Targets
 
-The bridge uses proof/tactic evidence in place of compiled targets. Its
-build-only root is `HexPrimalityMathlibProofProbe`; every measured module is a
-fresh importer of the same precompiled `ProofProbe.Support` module and no
-measured module imports another measured module.
+The bridge uses proof/tactic evidence in place of compiled targets. These
+fresh-module probes explicitly replace a LeanBench executable, `list`/`verify`
+entries, complexity verdicts, and timed-region sampling profiles. Its
+build-only root is `HexPrimalityMathlibProofProbe`. Every module in the new
+component matrix is a fresh importer of the same precompiled
+`ProofProbe.Support` module and no measured module imports another measured
+module; the inherited policy and negative modules import
+`HexPrimalityMathlib` directly.
 
 | evidence family | reference → candidate | what is included |
 |---|---|---|
-| `proof-track-components`, typical | `Baseline → Input31`; `Input31 → Literal31`; `Literal31 → Reify31`; `Literal31 → Replay31`; `Baseline → Primality31` | import, numeral input, emitted literal, production reification, bridge theorem plus kernel replay, and full bare tactic |
-| `proof-track-components`, ceiling | corresponding `*512` modules | the same decomposition at the exact accepted 512-bit ceiling |
+| `proof-track-components`, representative table-smooth 31-bit input | `Baseline → Input31`; `Input31 → Literal31`; `Literal31 → Reify31`; `Literal31 → Replay31`; `Baseline → Primality31` | import, numeral input, emitted literal, production reifier in its bridge emission context, bridge theorem plus kernel replay, and full bare tactic |
+| `proof-track-components`, ceiling | `Baseline → Input512`; `Input512 → Literal512`; `Literal512 → Reify512`; `Literal512 → Replay512`; `Baseline → Primality512` | the same decomposition at the exact accepted 512-bit ceiling |
 | `threshold-routes` | `Baseline → NormNumTrial`, `NormNumThreshold`, or `NormNum512` | full opted-in `norm_num` immediately below/above `2^24` and at 512 bits |
-| `negative-boundedness` | `MathlibBaseline → Negative*` | 25-, 32-, 64-, 65-, and 512-bit composites, parity and odd-factor ceiling inputs, and balanced exhaustion |
+| `negative-boundedness` | `MathlibBaseline → Negative25`, `Negative32`, `Negative64`, `Negative65`, `Negative512`, `Negative512Odd`, or `NegativeExhausted512`; `Negative64Null → Negative64Null` is the elevated control | 25-, 32-, 64-, 65-, and 512-bit composites, parity and odd-factor ceiling inputs, and balanced exhaustion |
 | `failure-policy` | `MathlibBaseline → MathlibExhausted/MathlibOverBudget` | bounded 512-bit exhaustion and rejection before search at 513 bits |
+
+The `Reify*` candidates deliberately re-elaborate the fixed certificate syntax
+before invoking the production `reifyPrimeCert` and checking definitional
+equality. Their deltas are therefore inclusive upper estimates for reification,
+not pure reifier micro-measurements. The `Replay*` rows use
+`by decide +kernel` to force the same Boolean checker through the bridge theorem;
+they are kernel-replay proxies rather than byte-identical replicas of the
+production elaborator's emitted `Eq.refl true` witness.
 
 Core certificate search is intentionally not timed a second time. Both public
 bridge entry points call the core-owned `primeCertCountedWith?` with the same
@@ -102,21 +114,28 @@ The independent negative record has candidate maxima of 3.137086 s at the
 the ceiling odd factor, and 3.317787 s for balanced ceiling exhaustion. The
 shared policy record gives a 3.026820 s maximum for accepted 512-bit
 `Nat.Prime`, 1.627793 s for bounded exhaustion, and 1.528474 s for immediate
-513-bit rejection. Unsupported, non-numeral, open, composite-bare-tactic, and
-unsolved opted-in failure shapes are pinned by
+513-bit rejection. Its accepted row is the same public operation as the new
+`primality-512` row measured in a separate run; the new component-matrix record
+and its 4.525258 s maximum are the release contract for this report.
+Unsupported, non-numeral, open, composite-bare-tactic, and unsolved opted-in
+failure shapes are pinned by
 `conformance/HexPrimalityMathlib/{Conformance,OptInConformance}.lean`; timing
 those deterministic diagnostic branches would not add a performance owner.
 
-Policy verdict: retain `natPrimeCertThreshold = 2^24`. The 24-bit trial arm is
-cheap and resolved certificate overhead appears immediately above the
-boundary; at larger inputs the bounded route supplies the required termination
-and kernel-depth behavior. At 512 bits, the 0.357 s difference between the
-`primality` and `norm_num` medians is below their approximately 0.9–1.0 s
-matched null envelopes, so neither wrapper is declared faster.
+Policy verdict: retain `natPrimeCertThreshold = 2^24`. The same-input crossover
+study in the SPEC, which ran trial and certificate routes separately on each
+numeral, locates the crossover region and establishes the boundary; this matrix
+validates the selected 24-bit trial and 25-bit certificate endpoints under the
+Phase-4 protocol rather than treating their different inputs as a causal route
+comparison. At larger inputs the bounded route supplies the required
+termination and kernel-depth behavior. At 512 bits, the 0.357 s difference
+between the `primality` and `norm_num` medians is below their approximately
+0.9–1.0 s matched null envelopes, so neither wrapper is declared faster.
 
 ## Comparator Ratios
 
-There is no honest external ratio for this proof track. PrimeCert is relevant
+The SPEC declares `no-comparable-surface-in-named-comparator` for this proof
+track: there is no honest external ratio. PrimeCert is relevant
 to the core certificate-search/checker report, but it uses a different Lean
 toolchain and does not exercise this repository's `Nat.Prime` registration,
 Mathlib `norm_num` dispatch, bridge theorem, or exact emitted proof term.
@@ -132,7 +151,8 @@ comparator ratio.
 
 ## Profile
 
-The primary artifact is
+Timed-region sampling does not apply to this proof track; the fresh-module
+record supplies the required profile evidence. The primary artifact is
 `reports/bench-results/hex-primality-mathlib-proof-probes-issue-9765-chungus2.json`,
 SHA-256 `7f202b08f1a7ebc5d7ae26cb4b2f6ba0e3b1d2e3123aed4c4565fd45b302f71c`.
 It records every build, process-accounting observation, rejected attempt,
@@ -158,9 +178,11 @@ delta`, in seconds.
 | `norm-num-threshold` | R→C; 1.860370564 / 3.727162895 / +1.866792331 | C→R; 1.844040628 / 3.430848547 / +1.586807919 | R→C; 1.714600777 / 4.118424787 / +2.403824010 | C→R; 1.893019081 / 3.514427031 / +1.621407950 | R→C; 1.859073672 / 3.268036029 / +1.408962357 | C→R; 2.213285501 / 4.229398244 / +2.016112743 |
 | `norm-num-512` | R→C; 2.119590726 / 3.426652449 / +1.307061723 | C→R; 1.714900795 / 3.312945980 / +1.598045185 | R→C; 1.824661189 / 4.539353512 / +2.714692323 | C→R; 1.921660914 / 3.413379397 / +1.491718483 | R→C; 1.822155894 / 3.346169009 / +1.524013115 | C→R; 1.913090095 / 4.324483598 / +2.411393503 |
 
-The import null has a 0.651839820 s signed span and 0.477601346 s
-zero-centred robust envelope at a 1.868470540 s build magnitude. The replay
-null has a 1.331380946 s span and 1.003241498 s envelope at 3.818077503 s.
+The import null has a 0.651839820 s signed span, -0.031628080 s median,
+0.477601346 s zero-centred robust envelope, and 9.17% relative robust spread at
+a 1.868470540 s build magnitude. The replay null has a 1.331380946 s span,
+-0.428000960 s median, 1.003241498 s envelope, and 5.28% relative robust spread
+at 3.818077503 s.
 Nulls are descriptive only: medians are not subtracted, envelopes do not widen
 the absolute gate, and they are not significance tests.
 
@@ -168,7 +190,7 @@ All theorem-bearing candidates reported exactly `[propext,
 Classical.choice, Quot.sound]`; import, input, literal, and reification-only
 modules reported no theorem axiom set. Candidate `.olean` sizes were 2,936 B
 for the baseline; 6,544–7,288 B for inputs; 49,072–53,768 B for literals and
-reification; 54,144–58,248 B for replay; 11,600–12,800 B for certificate-backed
+reification; 54,144–58,248 B for replay; 11,184–12,800 B for certificate-backed
 full tactics; and 787,408 B for the Mathlib trial proof. The artifact contains
 the corresponding `.ilean` and source sizes; this toolchain emitted no private
 or server sidecars for these modules.
@@ -184,6 +206,10 @@ no pair, observed no protocol violation, and was classified release-quality.
 The maximum admitted frequency spread was 1.1151%; the maximum quiet-window
 wait was 158.123 s. The timeout policy is fail-closed: a timed-out arm emits no
 proof and invalidates that row rather than changing tactic behavior.
+The measurement commit contains every measured source hash. Of those hashed
+inputs, the publishing commit changes only the SPEC, to record these results;
+the probe modules, runner, Lake target, bridge implementation, and imported
+dependencies remain byte-identical to the recorded sources.
 
 ## Concerns
 

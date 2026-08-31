@@ -849,7 +849,7 @@ libraries:
     phase4:
       input_families:
         - name: proof-track-components
-          description: Matched fresh modules at 31 and 512 bits separating numeral construction, committed certificate literals, production reification, bridge theorem and kernel replay, and full bare-primality elaboration while leaving shared certificate search with the core owner.
+          description: Matched fresh modules on a representative table-smooth 31-bit input and at the 512-bit ceiling separating numeral construction, committed certificate literals, production reification in the bridge emission context, bridge theorem and kernel replay, and full bare-primality elaboration while leaving shared certificate search with the core owner.
         - name: threshold-routes
           description: Opted-in norm_num proofs immediately below and above the 2^24 dispatch threshold, plus the accepted 512-bit certificate ceiling.
         - name: negative-boundedness
