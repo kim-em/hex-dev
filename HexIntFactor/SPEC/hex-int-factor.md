@@ -1260,11 +1260,12 @@ whose batched per-input protocol overhead satisfies the eligibility rule in
 [SPEC/benchmarking.md](../../SPEC/benchmarking.md). The PARI/python-flint
 oracle pairing is for conformance, not a performance requirement.
 
-The balanced internal control and absolute policy budget decide whether
-SQUFOF work is required. An external small-constant parity goal against PARI
-would instead be a new API-performance requirement and would require Hex to
-adopt the relevant missing portfolio, not a reinterpretation of this
-informational comparison after measurement.
+The balanced internal control and the Phase-4 one-second soft ceiling at the
+80-bit top rung decide whether SQUFOF work is required. An external
+small-constant parity goal against PARI would instead be a new
+API-performance requirement and would require Hex to adopt the relevant
+missing portfolio, not a reinterpretation of this informational comparison
+after measurement.
 
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
