@@ -127,7 +127,12 @@ coordination read-issue <N> --json body --jq .body
 ```bash
 git checkout -b agent/<first-8-chars-of-session-UUID>
 git rev-parse HEAD      # record starting commit
+lake exe cache get      # restore Mathlib oleans before any build
 ```
+
+In every fresh worktree, run `lake exe cache get` before the first build,
+even when the immediate target appears Mathlib-free. Never let Lake compile
+Mathlib from source when the project cache is available.
 
 **If the branch already exists** (common in reused worktrees): check for an
 open PR on it first (`gh pr list --head agent/<id>`). If a PR exists, create
@@ -270,7 +275,7 @@ in CI, which compiles from scratch). Fix it once with `lake build -R <target>`
 to reconfigure. **Caution:** `-R` may re-clone `mathlib` and wipe its cached
 oleans, after which a full build recompiles mathlib from source (hours). If you
 see it start building `Mathlib.*`, stop and run `lake exe cache get` to restore
-the oleans (download, never rebuild — see the global CLAUDE.md), then build only
+the oleans (download, never rebuild — see Step 2), then build only
 Hex targets. After reconfiguring once, plain `lake build` is a real incremental
 build again. Always confirm a green build shows `Build completed successfully
 (N jobs)` with `N` matching a real compile, not just the absence of `error:`.

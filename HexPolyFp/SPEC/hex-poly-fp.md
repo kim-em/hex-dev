@@ -76,17 +76,67 @@ give the integer bound `B = k * (p - 1)^2`; auxiliary primes are accepted only
 when their product `P` satisfies the strict uniqueness condition `2*B < P`.
 `mulNtt?` and `mulNttCrt?` return `none` when no suitable length or sufficient
 catalogue product is available, and a `some` result is proved equal to
-`DensePoly.mul`. `mulFast` is total: it dispatches among packed schoolbook,
-generic Karatsuba, direct NTT, and CRT-NTT, falling back rather than exposing
+`DensePoly.mul`. Direct target-modulus NTT remains caller-planned because its
+availability depends on a `PrimeModulus` instance and a root of the required
+order. `mulFast` is total without those extra inputs: it uses generic
+schoolbook multiplication below 16 coefficients in the shorter operand,
+packed lazy-reduction multiplication up to the auxiliary crossover, then
+tries CRT-NTT and falls back to generic Karatsuba rather than exposing
 catalogue exhaustion.
 
-The same `FpPoly` plan drives fast division and half-gcd. Square-free
-decomposition, Frobenius/power reduction, modular composition, and quotient-
-ring consumers adopt those operations only at their measured crossover.
-`DensePoly.mul`, `mulPacked`, and every existing theorem remain compatible.
+The schoolbook-to-packed boundary is shared by `F_257` and `F_65537`. Three
+warm outer trials on `chungus2` with Lean `4.34.0-rc2` give:
 
-Benchmarks sweep degree, target modulus, transform length, operand ratio,
-cold/warm plan use, and every dispatcher boundary. Conformance forces each
-kernel and checks it against `mulPacked`, schoolbook multiplication, and the
-existing FLINT oracle; an invalid direct root or insufficient CRT product is
-a required fallback case.
+| field | coefficients | schoolbook median | packed median |
+|---|---:|---:|---:|
+| `F_257` | 8 | 1.438 µs | 1.595 µs |
+| `F_257` | 16 | 4.787 µs | 3.718 µs |
+| `F_65537` | 8 | 1.464 µs | 1.603 µs |
+| `F_65537` | 16 | 4.802 µs | 3.769 µs |
+
+Thus `packedCutoff = 16`. Regenerate either field's boundary with
+`lake exe hexpolyfp_bench compare Hex.FpPolyBench.runMulSchoolbookChecksum Hex.FpPolyBench.runMulPackedChecksum --param-floor 8 --param-ceiling 16 --param-schedule doubling --outer-trials 3`, substituting the two `257` target names for the small field.
+
+The committed `F_65537` balanced crossover uses three cold outer trials on
+`chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, with the benchmark executable
+built from this repository:
+
+| coefficients per operand | packed median | CRT-NTT median |
+|---:|---:|---:|
+| 4096 | 29.117 ms | 29.665 ms |
+| 8192 | 111.930 ms | 63.145 ms |
+
+Accordingly `nttCrtCutoff = 8192`. Regenerate the boundary samples with
+`lake exe hexpolyfp_bench compare Hex.FpPolyBench.runMulPackedChecksum Hex.FpPolyBench.runMulCrtNttChecksum --param-floor 4096 --param-ceiling 8192 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`.
+
+The same `FpPoly` plan drives fast division and half-gcd. One-shot Newton
+division and half-gcd lose to the retained finite-field algorithms through
+degree 2048, so square-free decomposition and gcd consumers keep those paths.
+Fast coefficient multiplication does win inside modular power, Frobenius, and
+composition. Representative three-trial warm medians over `F_65537` are:
+
+| operation | parameter | schoolbook multiplication | fast multiplication |
+|---|---:|---:|---:|
+| modular power | 64 | 3.368 ms | 1.964 ms |
+| modular power | 512 | 285.679 ms | 137.058 ms |
+| batched Frobenius | 24 | 19.760 ms | 16.136 ms |
+| batched Frobenius | 80 | 533.441 ms | 314.078 ms |
+| modular composition | 48 | 4.164 ms | 3.284 ms |
+| modular composition | 192 | 247.598 ms | 188.076 ms |
+
+All hashes agree. Compiled modular power retains the schoolbook loop below
+modulus size 18 and otherwise uses `mulFast`; modular composition retains its
+schoolbook Horner loop below `packedCutoff`. The kernel-facing definitions and
+theorems remain schoolbook, with proved `@[csimp]` implementations selecting
+the measured paths. Reproduce the comparisons with the paired
+`runPowModMonicChecksum`/`runFastPowChecksum`,
+`runFrobeniusXModChecksum`/`runFastFrobeniusChecksum`, and
+`runComposeModMonicChecksum`/`runFastComposeChecksum` targets and
+`--outer-trials 3`.
+
+Benchmarks include forced packed, schoolbook, Karatsuba, reusable-plan direct
+NTT, cold-plan direct NTT, CRT-NTT, and dispatcher entries. The remaining
+target-modulus and operand-ratio ladders are part of the broader
+hex-poly-fast calibration grid. Conformance forces the available kernels and
+checks them against schoolbook multiplication; an invalid direct root or
+insufficient CRT product is a required fallback case.

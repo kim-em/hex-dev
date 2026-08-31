@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.Degree
+public import HexPolyFp.NttMul
 
 public section
 
@@ -50,6 +50,57 @@ decreasing_by
 def powModMonic (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
     FpPoly p :=
   powModMonicAux f hmonic n (modByMonic f base hmonic) 1
+
+/-- Modulus-size boundary for compiled fast-multiplication modular powers.
+Below this size the reduced operands stay in the schoolbook kernel range, so
+the retained loop also avoids repeated dispatcher checks. -/
+@[expose] def powFastCutoff : Nat := 18
+
+/-- Compiled square-and-multiply loop using the coefficient-owner dispatcher. -/
+def powModMonicFastAux
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    Nat → FpPoly p → FpPoly p → FpPoly p
+  | 0, _, acc => acc
+  | n + 1, base, acc =>
+      let acc' :=
+        if (n + 1) % 2 = 0 then acc
+        else modByMonic f (mulFast acc base) hmonic
+      let base' := modByMonic f (mulFast base base) hmonic
+      powModMonicFastAux f hmonic ((n + 1) / 2) base' acc'
+termination_by n => n
+decreasing_by
+  simpa using Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
+
+/-- Fast and schoolbook modular-power loops are extensionally identical. -/
+private theorem powModMonicFastAux_eq
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (n : Nat) (base acc : FpPoly p) :
+    powModMonicFastAux f hmonic n base acc =
+      powModMonicAux f hmonic n base acc := by
+  induction n, base, acc using powModMonicAux.induct f hmonic with
+  | case1 base acc =>
+      rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
+  | case2 n base acc acc' base' ih =>
+      rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
+      simp only [mulFast_eq]
+      exact ih
+
+/-- Compiled modular-power dispatcher.  Tiny moduli retain the reference loop;
+larger moduli use `mulFast` while retaining ordinary monic reduction. -/
+@[inline] def powModMonicImpl (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
+    FpPoly p :=
+  if f.size < powFastCutoff then
+    powModMonicAux f hmonic n (modByMonic f base hmonic) 1
+  else
+    powModMonicFastAux f hmonic n (modByMonic f base hmonic) 1
+
+/-- Register the measured dispatcher as the compiled implementation. -/
+@[csimp] theorem powModMonic_eq_impl : @powModMonic = @powModMonicImpl := by
+  funext p _ base f hmonic n
+  unfold powModMonic powModMonicImpl
+  split
+  · rfl
+  · exact (powModMonicFastAux_eq f hmonic n _ _).symm
 
 /-- The zeroth modular power is `1`. -/
 @[simp, grind =] theorem powModMonic_zero

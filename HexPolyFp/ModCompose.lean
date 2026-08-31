@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.Degree
+public import HexPolyFp.NttMul
 
 public section
 
@@ -70,9 +70,14 @@ registered `@[csimp]`). -/
 @[expose]
 def composeModMonicImpl (f g modulus : FpPoly p)
     (hmonic : DensePoly.Monic modulus) : FpPoly p :=
-  f.toArray.foldr
-    (fun coeff acc => modByMonic modulus (acc * g + C coeff) hmonic)
-    0
+  if modulus.size < packedCutoff then
+    f.toArray.foldr
+      (fun coeff acc => modByMonic modulus (acc * g + C coeff) hmonic)
+      0
+  else
+    f.toArray.foldr
+      (fun coeff acc => modByMonic modulus (mulFast acc g + C coeff) hmonic)
+      0
 
 /-- {name}`composeModMonicList` is the `List.foldr` of the modular Horner step. -/
 private theorem composeModMonicList_eq_foldr
@@ -94,8 +99,12 @@ theorem composeModMonic_eq_composeModMonicImpl
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic f g modulus hmonic = composeModMonicImpl f g modulus hmonic := by
   unfold composeModMonic composeModMonicImpl
-  rw [← Array.foldr_toList, ← composeModMonicList_eq_foldr]
-  rfl
+  split
+  · rw [← Array.foldr_toList, ← composeModMonicList_eq_foldr]
+    rfl
+  · simp only [mulFast_eq]
+    rw [← Array.foldr_toList, ← composeModMonicList_eq_foldr]
+    rfl
 
 /-- Register the `Array.foldr` loop as the compiled implementation of
 {name}`composeModMonic`. -/

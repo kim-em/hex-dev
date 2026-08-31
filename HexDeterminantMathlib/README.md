@@ -55,7 +55,10 @@ The proof-facing API connects the executable determinant to Mathlib:
   under an arbitrary row/column reindexing as
   `desnanot_jacobi_matrixEquiv_reindex`, in Hex minor terms as
   `desnanot_jacobi_deleteRowCol_endpoints`, and in the bordered-minor form
-  `desnanot_jacobi_borderedMinor` used by the Bareiss correctness proof.
+  `desnanot_jacobi_borderedMinor` used by the Bareiss correctness proof;
+- `exactQuot_borderedMinor_of_mul_eq`: cancellation of a known nonzero
+  bordered-minor factor through a caller-supplied exact quotient, with the
+  retained integer corollary `bareissExactDiv_borderedMinor_of_mul_eq`.
 
 Sylvester's determinant identity, the general statement that an `m × m` matrix
 of bordered minors has determinant `det A₀ ^ (m - 1) * det A`, is **not** proved

@@ -33,26 +33,98 @@ benchmark itself.
 
 ## The verdict-as-bug-trigger model
 
-Every benchmarked operation has a textbook complexity model declared
-*at the registration site* in the per-library `Bench.lean`. The
-benchmark harness ([§Harness](#harness-lean-bench)) fits the
-observed scaling against that model and emits one of two verdicts:
+Every parametric benchmark has a complexity claim declared *at the
+registration site* in the per-library `Bench.lean`. The benchmark harness
+([§Harness](#harness-lean-bench)) fits the observed scaling against that model.
+Its current two-sided mode emits one of two verdicts:
 
 - **consistent with declared complexity** — observed scaling matches
   the model within tolerance.
 - **inconclusive** — observed scaling does not match. The
   implementation is either wrong, or the model was misdeclared.
 
-The latter case is the **valuable** outcome of a benchmark run.
+The latter case is the **valuable** outcome of a two-sided benchmark run.
 "Everything looks consistent and within a small constant factor of
 the external comparator" is acceptable but unexciting; "the verdict
 came back inconclusive and the slope is `+0.4` over `n`" is the run
 that earned its keep.
 
-When a verdict is `inconclusive`, or when the verdict is consistent
-but the constant is wildly off an external reference — orders of
-magnitude, not a small constant factor — the response is mandatory
-and uniform:
+### Choosing the complexity claim
+
+Choose the first mode in this ordered list that the operation admits. This is
+not a menu. A report created or reconciled under this rule names the selected
+mode for every performance-evidence registration and explains why each
+stronger preceding mode does not apply. Existing passing two-sided
+registrations are mode 1 by default and need not be relabelled until their
+report is next revised.
+
+This ordering applies to registrations used as Phase-4 performance evidence
+for an operation. A fixed registration used only as an expected-hash anchor,
+an external-comparator endpoint, or protocol-overhead control makes no
+complexity claim and has no mode. The report labels that limited purpose
+explicitly, and such an anchor cannot discharge performance coverage for an
+advertised operation.
+
+1. **Two-sided parametric — the default.** Use this whenever the intended
+   algorithm's expected scaling on the registered input family can be derived
+   before measurement. Both directions gate: slower than declared means the
+   implementation is wrong, while faster than declared means the model or the
+   family is wrong.
+2. **One-sided upper-bound parametric.** Use this only when all three
+   conditions hold:
+   - no tight family-specific model can be derived, and the headline report
+     says why;
+   - the declared bound is published and cited, and the cited result covers
+     the phase that the profile shows dominating — a citation for work absent
+     from the profile is not evidence for the registration;
+   - the input family exercises that phase, as required by
+     [§The Attribution rule](#the-attribution-rule).
+
+   Slower than the bound fails. Faster than the bound passes and is reported
+   as **within declared upper bound (observed faster)**. This is visibly weaker
+   than a two-sided pass and is never rendered as *consistent with declared
+   complexity*. A matching observation is **within declared upper bound
+   (observed matching)**, not a two-sided consistency claim. lean-bench does
+   not yet have this registration mode; until
+   [lean-bench #70](https://github.com/kim-em/lean-bench/issues/70) lands, the
+   headline report records the harness verdict, the observed direction, and
+   the reason it is a passing upper-bound result.
+3. **Fixed registration with an absolute budget.** Use this only when no
+   stable one-parameter wall-time model is reachable and a canonical hard
+   input with a meaningful ceiling exists. The headline report states plainly
+   that asymptotic regression detection has been given up for this operation.
+   It also records the attempted parameterisations and schedules and explains
+   why each failed to yield a stable independently derived model. When a
+   comparator or external requirement supplies a meaningful ceiling, use it;
+   a measured baseline plus stated margin is the fallback only when neither is
+   available.
+   The budget is an operation-specific regression ceiling justified from a
+   comparator, a reference requirement, or a measured baseline plus stated
+   margin. A generic harness timeout or inherited `maxSecondsPerCall` default
+   is a safety cap, not an absolute budget. The scientific evidence recorded
+   in the report must show the canonical input completing within the budget;
+   the budget remains a Phase-4 gate even when the current harness only emits
+   the measurement rather than a distinct fixed-budget verdict.
+4. **Blocked.** If none of the preceding modes honestly applies, Phase 4 is
+   not done. Failure to characterise an operation's cost is a reason to stay
+   at the current phase, not a route to a fixed registration.
+
+Two guards make the ordering binding:
+
+- The operation's worst-case bound remains in its per-library SPEC regardless
+  of the benchmark mode. Mode 2 or 3 changes the test, never the documented
+  contract.
+- Mode 1 is not licence to fit observed timings. Its declaration is the
+  intended algorithm's independently derived expected scaling on the
+  registered family, derived before measurement and never read off observed
+  timings. The adjacent derivation explains how that family relates to the
+  per-library SPEC's worst-case bound.
+
+When a declared mode fails, or when a passing verdict has a constant wildly
+off an external reference — orders of magnitude, not a small constant factor
+— the response is mandatory and uniform. In particular, a faster-than-declared
+two-sided result fails, while that same direction passes only for a registration
+that independently qualified for mode 2 before measurement:
 
 1. **File a GitHub issue.** Use the bench-found-bug template in
    [PLAN/Conventions.md](../PLAN/Conventions.md#bench-found-and-conformance-found-issues).
@@ -140,9 +212,9 @@ Two registration forms:
 
 - **`setup_benchmark <fn> <param> => <complexity>`** for parametric
   sweeps. `<fn> : Nat → α`. `<complexity> : Nat → Nat` is the
-  textbook complexity (e.g. `n`, `n * n`, `n * Nat.log2 (n + 1)`,
-  `2 ^ n`). Optional `with prep := <prepFn>` clause hoists per-param
-  setup out of the timing loop, useful when the hot path takes
+  declared model for the selected parametric mode (e.g. `n`, `n * n`,
+  `n * Nat.log2 (n + 1)`, `2 ^ n`). Optional `with prep := <prepFn>`
+  hoists per-param setup out of the timing loop, useful when the hot path takes
   `σ → α` and `σ` is expensive to construct (random matrices,
   pre-canonicalised polynomials).
 - **`setup_fixed_benchmark <name>`** for absolute-time measurements
@@ -188,12 +260,13 @@ The CLI surface is `lake exe hexfoo_bench <subcommand>`:
   cleanly and emits a hash where one is expected. Used as a CI
   gate; see [§CI integration](#ci-integration).
 
-Per-library SPECs declare the complexity for each operation in their
-API surface. The textbook model is the contract; the benchmark
-checks observation against it. **Do not declare a complexity model
-that matches the buggy current code.** If the textbook model says
-`O(n²)` but the current implementation is `O(n³)`, declare `O(n²)`,
-let the verdict come back inconclusive, file the issue, roll back.
+Per-library SPECs declare the worst-case complexity contract for each
+operation in their API surface. A benchmark registration makes the strongest
+claim allowed by [§Choosing the complexity claim](#choosing-the-complexity-claim).
+**Do not declare a complexity model that matches the buggy current code.** If
+the intended algorithm has expected family scaling `O(n²)` but the current
+implementation is `O(n³)`, declare `O(n²)`, let the verdict fail, file the
+issue, and roll back.
 
 ### Adaptive ladder
 
@@ -246,10 +319,10 @@ fresh-module evidence below; it must not disguise elaboration or kernel time as
 compiled benchmark time.
 
 CPU profiling of compiled benchmark binaries is **in scope** and is
-a Phase-4 deliverable; see [profiling.md](profiling.md). A bench
-verdict of "consistent with declared complexity" only checks
-asymptotics; profiling is what attributes the constant factor and
-catches dominant costs that the registered targets do not measure.
+a Phase-4 deliverable; see [profiling.md](profiling.md). A passing parametric
+verdict only checks the selected asymptotic claim; profiling attributes the
+constant factor and catches dominant costs that the registered targets do not
+measure.
 
 ## Fresh-module proof evidence
 
@@ -350,6 +423,18 @@ of the Tukey-fence magnitude and the largest observed absolute signed delta,
 so an isolated outlier can widen but never shrink the admission envelope.
 A control whose IQR exceeds 10% of its build magnitude invalidates release
 quality.
+
+A suite may instead preregister `absolute_only` when every substantive pair
+declares an absolute fresh-module wall-clock budget and no pair declares a
+reference-subtracted tactic budget. In that mode the raw candidate maximum,
+not a paired delta, is the release contract. Null controls remain in the
+artifact to describe and classify paired noise, but their IQR and relative
+build-magnitude coverage do not gate release quality because neither quantity
+can change the absolute conclusion. Dirty-state, provenance, timeout,
+frequency, per-arm CPU/SMT interference, and absolute-budget failures retain
+their ordinary fail-closed behavior. The harness rejects `absolute_only`
+manifests that omit an absolute budget from any substantive pair or add a
+relative tactic budget.
 
 The artifact interpolates control IQRs and conservative envelopes between
 representative build magnitudes. Outside the measured range it may scale a
@@ -702,10 +787,16 @@ hard inputs, not parameter sweeps:
   `(2, 409)`,
 - computing a `GF(p^n)` inverse for fixed `(p, n)` and chosen element.
 
-Use `setup_fixed_benchmark` for these. The bench module's docstring
-records the canonical input, the source it came from, and the
-reference timing the project considers reasonable (typically: time
-on the same canonical input in a comparator like FLINT or fpLLL).
+For Phase-4 performance evidence, use `setup_fixed_benchmark` only through
+mode 3 of [§Choosing the complexity claim](#choosing-the-complexity-claim),
+after modes 1 and 2 have been ruled out. Fixed hash, comparator, and protocol
+anchors have the narrower non-performance role stated there and do not need a
+mode-3 justification. The bench module's adjacent comment or docstring records
+the canonical input, the source it came from, and the absolute budget,
+including the reference timing the project considers reasonable (typically:
+time on the same canonical input in a comparator like FLINT or fpLLL). The
+headline report repeats that budget and records the scientific measurement
+against it.
 Comparison against the comparator is then a `compare` invocation
 across two `setup_fixed_benchmark` registrations, one per
 implementation.
@@ -915,8 +1006,8 @@ Full timing runs (`lake exe hexfoo_bench run NAME` with a real
 budget) are not part of merge-gating CI. They run on a scheduled
 workflow or release-candidate workflow, on dedicated hardware where
 timing comparisons are meaningful. Each release names the libraries
-whose timing runs must succeed; a release is blocked by an
-inconclusive verdict or a comparator divergence even when proofs
+whose timing runs must succeed; a release is blocked by a failing verdict in
+the registration's declared mode or a comparator divergence even when proofs
 are complete.
 
 ## Reproducibility contract
@@ -985,10 +1076,19 @@ The report contains five subsections:
    registration sites. A mixed/proof library also lists every fresh-module
    probe, its matched baseline, and the generic requirements that probe
    replaces.
-2. **Verdicts.** Each parametric registration's verdict at
-   scientific settings ("consistent with declared complexity",
-   "inconclusive", with the verdict text). Each fixed registration's
-   median per-call time and observed-hash agreement. Proof-track entries report
+2. **Verdicts.** Each performance-evidence registration's selected mode, the
+   reasons the preceding stronger modes do not apply, and its result at
+   scientific settings. Fixed hash/comparator anchors instead name their
+   limited non-performance purpose. For a parametric performance registration
+   this includes the harness verdict ("consistent with
+   declared complexity", "inconclusive", with the verdict text); until the
+   one-sided harness mode lands, a mode-2 report also records the direction and
+   the distinct manual result *within declared upper bound (observed faster)*
+   or *within declared upper bound (observed matching)*.
+   Each mode-3 fixed registration records its absolute budget, median per-call
+   time, and observed-hash agreement. Fixed hash, comparator, and protocol
+   anchors record their median per-call time and observed-hash agreement but
+   do not acquire a performance budget. Proof-track entries report
    all raw rotated fresh-build samples and paired deltas, never a complexity
    verdict. When the sweep has null controls, their raw deltas, absolute and
    relative ranges, and medians precede the substantive proof deltas in
@@ -1146,11 +1246,11 @@ explicitly forbidden:
   exceed its wallclock cap at the declared range, the implementation
   is too slow at that range — file an issue, roll back, fix. Don't
   shrink the scientific settings to dodge the verdict.
-- **Declaring a complexity model that matches the buggy current
-  code instead of textbook.** The model is the contract. Observation
-  disagreeing with textbook is a finding; observation agreeing with
-  a buggy implementation that itself disagrees with textbook is a
-  cover-up.
+- **Declaring a complexity model that matches the buggy current code.** The
+  mode-1 model is the independently derived expected family scaling, and the
+  mode-2 model is a cited published bound. Observation disagreeing with the
+  applicable claim is a finding; changing that claim to agree with a buggy
+  implementation is a cover-up.
 - **Top-level `def` of proof-carrying context structures evaluated
   at module init.** A module-level `def ctx : BarrettCtx p := …`
   whose initializer transitively calls a heavy computation
@@ -1200,11 +1300,13 @@ explicitly forbidden:
   run on. CI treats exit 2 the same as a verdict mismatch: file an
   issue, roll back, fix. Don't shrink scientific settings to dodge
   the verdict.
-- **Treating an "inconclusive" verdict as a passing scientific run.**
-  Phase-4 exit criteria require either "consistent with declared
-  complexity" or a tracked finding-issue explaining the mismatch
-  ([PLAN/Phase4.md](../PLAN/Phase4.md) §Exit criteria). An
-  inconclusive verdict whose root cause is a too-narrow schedule
+- **Treating an "inconclusive" verdict as a passing two-sided scientific
+  run.** Phase-4 exit criteria require a passing verdict in the registration's
+  declared mode ([PLAN/Phase4.md](../PLAN/Phase4.md) §Exit criteria). A
+  faster-than-declared harness result is a pass only for a registration that
+  independently satisfies mode 2's citation-and-attribution conditions; the
+  report records the distinct upper-bound result while lean-bench #70 is open.
+  An inconclusive verdict whose root cause is a too-narrow schedule
   (rungs too close to the per-spawn floor, even when some survive
   the filter) is miscalibration, not a finding, and the registration
   must be re-tuned before the library advances through Phase 4.

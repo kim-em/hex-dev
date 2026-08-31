@@ -237,6 +237,8 @@ No dominant inclusive cost lies outside the corresponding registered target.
 
 ## Concerns
 
-None. The absent sparse route is an explicit SPEC limitation and is measured
-honestly by both the bounded degree-4096 declines and the matched end-to-end
-comparator gap; it is not a regression against a claimed Phase 4 goal.
+- [#9812](https://github.com/kim-em/hex-dev/issues/9812) tracks the fixed
+  performance matrix's missing ordered-mode and absolute-budget evidence.
+
+The absent sparse route remains an explicit SPEC limitation; it is not a
+separate regression claim.

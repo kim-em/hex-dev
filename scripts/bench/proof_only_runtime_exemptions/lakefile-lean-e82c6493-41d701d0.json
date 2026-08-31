@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "41d701d0f34ff9567fa3a4986b777573a4ce6cc5",
+  "reason": "Combines the inherited HexPolyFp precompileModules elaboration-time code-generation transition with the independent build-only HexPrimalityElabProbe registration. Neither changes HexPolyFp source, hexbz_factor_service, or the service's runtime call graph."
+}

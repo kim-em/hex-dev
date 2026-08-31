@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexModular.Crt
+public import HexModular.CrtPlan
 public import HexModular.Euclid
 public import HexModular.Loop
 public import HexModular.Recon

@@ -11,9 +11,10 @@ import LeanBench
 Benchmark registrations for `HexPrimality`.
 
 Three certificate families run over a fixed ladder of primes of 31, 61,
-123, 256, and 511 bits whose `n - 1` is `k · 2^m` with `k` factoring over
-the committed table, so partial factorization is deterministic trial
-division and no rho variance enters the decision or checker rows:
+123, 256, 511, and 512 bits. The lower rungs have `n - 1 = k · 2^m` with `k`
+factoring over the committed table. The 512-bit policy rung instead requires
+rho to discover the deterministic above-table factor `100297`; its prepared
+certificate keeps the checker row fixed:
 
 * `runDecision` runs the bounded decision `isPrime?` end to end;
 * `runCertSearch` runs `primeCert?` alone (the SPEC keeps this family
@@ -47,34 +48,43 @@ instance : Inhabited Input :=
 /-- The 31-bit rung: `2^31 - 1`. -/
 def cert31 : PrimeCert :=
   .pock 2147483647
-    [(904659249, 0, .small 331), (1783259301, 0, .small 151),
-     (505209180, 0, .small 31), (447824900, 0, .small 11),
-     (1615909500, 0, .small 7), (1371693800, 1, .small 3),
-     (1745337962, 0, .small 2)]
+    [(1745337962, 0, .small 2), (1371693800, 1, .small 3),
+     (1615909500, 0, .small 7), (447824900, 0, .small 11),
+     (505209180, 0, .small 31), (1783259301, 0, .small 151),
+     (904659249, 0, .small 331)]
 
 /-- The 61-bit rung: `27 · 2^56 + 1`. -/
 def cert61 : PrimeCert :=
   .pock 1945555039024054273
-    [(110189291828549774, 2, .small 3), (891154892214722695, 55, .small 2)]
+    [(891154892214722695, 55, .small 2), (110189291828549774, 2, .small 3)]
 
 /-- The 123-bit rung: `7 · 2^120 + 1`. -/
 def cert123 : PrimeCert :=
   .pock 9304595970494411110326649421962412033
-    [(13757245211066428521, 0, .small 7),
-     (14072917602864530050, 119, .small 2)]
+    [(14072917602864530050, 119, .small 2),
+     (13757245211066428521, 0, .small 7)]
 
 /-- The 256-bit rung: `207 · 2^248 + 1`. -/
 def cert256 : PrimeCert :=
   .pock 93628759656736142393278101159368737990730026663232799828780155818898507169793
-    [(10451216379200822467, 0, .small 23),
+    [(8195237237126968763, 247, .small 2),
      (13757245211066428521, 1, .small 3),
-     (8195237237126968763, 247, .small 2)]
+     (10451216379200822467, 0, .small 23)]
 
 /-- The 511-bit rung: `127 · 2^504 + 1`. -/
 def cert511 : PrimeCert :=
   .pock 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033
-    [(10451216379200822467, 0, .small 127),
-     (13757245211066428521, 503, .small 2)]
+    [(13757245211066428521, 503, .small 2),
+     (10451216379200822467, 0, .small 127)]
+
+/-- The exact 512-bit elaborator-policy boundary: `100297^22 · 2^146 + 1`. -/
+def cert512 : PrimeCert :=
+  .pock 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
+    [(12105408859821572020, 145, .small 2),
+     (2427313743710699239, 21,
+      .pock 100297
+        [(6478, 2, .small 2), (58864, 1, .small 3),
+         (35592, 0, .small 7), (37339, 0, .small 199)])]
 
 /-- Map a bit-size rung to its prepared input. -/
 def prepInput (bits : Nat) : Input :=
@@ -82,10 +92,11 @@ def prepInput (bits : Nat) : Input :=
   else if bits ≤ 61 then { n := 1945555039024054273, cert := cert61 }
   else if bits ≤ 123 then { n := cert123.subject, cert := cert123 }
   else if bits ≤ 256 then { n := cert256.subject, cert := cert256 }
-  else { n := cert511.subject, cert := cert511 }
+  else if bits ≤ 511 then { n := cert511.subject, cert := cert511 }
+  else { n := cert512.subject, cert := cert512 }
 
 private def sizeParams : Array Nat :=
-  #[31, 61, 123, 256, 511]
+  #[31, 61, 123, 256, 511, 512]
 
 -- Every rung's prepared certificate replays, and is about its own input.
 #guard sizeParams.all fun bits =>
@@ -125,7 +136,7 @@ setup_benchmark runDecision n => n * n * n
   with prep := prepInput
   where {
     paramFloor := 31
-    paramCeiling := 511
+    paramCeiling := 512
     paramSchedule := .custom sizeParams
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
@@ -133,15 +144,14 @@ setup_benchmark runDecision n => n * n * n
     slopeTolerance := 0.5
   }
 
-/- Certificate search adds witness search over the same exponentiation
-primitive, so the same cubic bit-cost proxy applies; the SPEC records
-that this family's numbers say the least about the library, and the
-fixed table-smooth inputs at least remove the rho variance. -/
+/- Certificate search adds witness and, at the 512-bit rung, rho search over
+the same arithmetic primitives, so the same cubic bit-cost proxy applies; the
+SPEC records that this family's numbers say the least about the library. -/
 setup_benchmark runCertSearch n => n * n * n
   with prep := prepInput
   where {
     paramFloor := 31
-    paramCeiling := 511
+    paramCeiling := 512
     paramSchedule := .custom sizeParams
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000
@@ -156,7 +166,7 @@ setup_benchmark runChecker n => n * n * n
   with prep := prepInput
   where {
     paramFloor := 31
-    paramCeiling := 511
+    paramCeiling := 512
     paramSchedule := .custom sizeParams
     maxSecondsPerCall := 5.0
     targetInnerNanos := 100000000

@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.BenchOracle.Flint
+import HexPolyFast.Tree
 import HexHensel.Multifactor
 import HexHensel.Quadratic
 import HexHensel.QuadraticMultifactor
@@ -24,23 +25,30 @@ Scientific registrations:
 * `runLiftToZChecksum`: canonical lift from `F_5[x]` to `Z[x]`, `O(n)`.
 * `runReduceModPowChecksum`: coefficient reduction modulo `5^k`, `O(n)`.
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
-* `runHenselLiftChecksum`: iterative linear lift over `(n, k)`, `O(n^2 k)`.
+* `runHenselLiftChecksum`: iterative linear lift at fixed high precision,
+  `O(n^2)` in the degree.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
-* `runPolyProductChecksum`: ordered product of `n` linear factors, `O(n^2)`.
-* `runMultifactorLiftChecksum`: two-factor ordered lift over `(n, k)`,
-  `O(n^2 k)`.
+* `runPolyProductChecksum`: public ordered-product dispatcher on its retained
+  fallback interval, `O(n^2)`.
+* `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
+* `runPolyProductTreeChecksum`: the same ordered product through a balanced
+  tree and `ZPoly.fastPlan`, with a packed schoolbook upper bound `O(n^4)`.
+* `runMultifactorLiftChecksum`: two-factor ordered lift at fixed high precision,
+  `O(n^2)` in the degree.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
-  `O(n^2 log k)`.
+  `O(n^2)` in the degree.
 
 Compare groups:
 
+* `compare runPolyProductFoldChecksum runPolyProductTreeChecksum` checks the
+  retained fold and balanced tree on the SPEC's shared crossover ladder.
 * `compare runMultifactorLiftChecksum runMultifactorLiftQuadraticChecksum`
-  checks the linear and quadratic multifactor lifters on the shared encoded
-  `(n, k)` fixture schedule.
+  checks the linear and quadratic multifactor lifters on the shared degree
+  schedule at `k = 64`.
 
-Informational external comparators (FLINT `nmod_poly_hensel_lift_*` via the
-shared persistent-subprocess python-flint driver, per
-`SPEC/Libraries/hex-hensel.md §"External comparators"` and
+Informational external comparators (FLINT `fmpz_poly` Newton-style Hensel
+emulation via the shared persistent-subprocess python-flint driver, per
+`HexHensel/SPEC/hex-hensel.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
 
 * `runFlintLinearHenselStepChecksum*` ↔ `runLinearHenselStepChecksum*`
@@ -131,17 +139,14 @@ def liftBenchDegree (param : Nat) : Nat :=
 def liftBenchPrecision (param : Nat) : Nat :=
   param % liftParamScale
 
-/-- Textbook cost model for linear lifting over encoded `(n, k)` parameters. -/
-def liftLinearComplexity (param : Nat) : Nat :=
-  let n := liftBenchDegree param
-  let k := liftBenchPrecision param
-  n * n * k
+/-- Schoolbook coefficient-bit upper bound for the packed product tree.
 
-/-- Textbook cost model for quadratic lifting over encoded `(n, k)` parameters. -/
-def liftQuadraticComplexity (param : Nat) : Nat :=
-  let n := liftBenchDegree param
-  let k := liftBenchPrecision param
-  n * n * Nat.log2 (k + 1)
+A subtree with `j` bounded linear leaves has `O(j)` coefficients of `O(j)`
+bits, so its Kronecker packing has `O(j^2)` bits. Schoolbook multiplication of
+the two packed integers is `O(j^4)`; the geometric tree sum is dominated by
+the root. This also bounds the public dispatcher across both branches. -/
+def productTreeUpper (n : Nat) : Nat :=
+  n ^ 4
 
 /-- Deterministic integer coefficient generator keyed by size, index, and salt. -/
 def zCoeffValue (n i salt : Nat) : Int :=
@@ -157,6 +162,22 @@ def fpCoeffValue (n i salt : Nat) : ZMod64 5 :=
 /-- Deterministic dense integer polynomial with `n` generated coefficients. -/
 def denseZPoly (n salt : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| (Array.range n).map fun i => zCoeffValue n i salt
+
+/-- Deterministic dense monic integer polynomial of degree `n`. -/
+def denseMonicZPoly (n salt : Nat) : ZPoly :=
+  DensePoly.ofCoeffs <| ((Array.range n).map fun i => zCoeffValue n i salt).push 1
+
+/-- Dense monic factors that are coprime modulo every prime.
+
+Writing `h = g * q + 1` gives the explicit Bezout relation
+`h - q * g = 1`.  Both factor degrees grow with `n`, unlike the old
+linear-factor fixture, so the Hensel correction products exercise the declared
+quadratic degree scaling. -/
+def denseCoprimePair (n : Nat) : ZPoly × ZPoly :=
+  let d := max 2 (n / 2)
+  let g := denseMonicZPoly d 59
+  let q := denseMonicZPoly d 62
+  (g, g * q + 1)
 
 /-- Deterministic dense `F_5` polynomial with `n` generated coefficients. -/
 def denseFpPoly (n salt : Nat) : FpPoly 5 :=
@@ -187,20 +208,36 @@ def prepConversionInput (n : Nat) : ConversionInput :=
   { zpoly := denseZPoly n 17
     fpoly := denseFpPoly n 23 }
 
-/-- Per-parameter fixture for linear Hensel operations.
+/-- Per-parameter fixture for a single linear Hensel correction.
 
-The factor error is built as a multiple of `5`, so the correction path is
-nontrivial while staying deterministic. The Bezout pair is computed via
-`normalizedXGCD` so that `s * gMod + t * hMod ≡ 1 (mod 5)`; the iterative
-linear lift relies on this precondition to keep the corrected `h` factor
-bounded in degree across all `k` steps. The shared salts `59 / 62 / 67`
-match `prepMultifactorLiftInput`, which already verifies coprimeness on
-the full scientific `n` ladder including `n = 192`.
--/
-def prepLinearInput (n : Nat) : LinearInput :=
+The linear factor keeps this registration on the same uniform quadratic
+single-step family used by its existing scientific and FLINT ladders. -/
+def prepLinearStepInput (n : Nat) : LinearInput :=
   let g := linearZFactor 59
   let h := denseZPoly (n + 1) 62
   let e := denseZPoly (n + 1) 67
+  let f := g * h + DensePoly.scale (5 : Int) e
+  let xgcd := ZPoly.normalizedXGCD 5 g h
+  { f := f
+    g := g
+    h := h
+    s := xgcd.left
+    t := xgcd.right
+    k := 1 }
+
+/-- Per-parameter fixture for iterated linear Hensel operations.
+
+The factor error is built as a multiple of `5`, so the correction path is
+nontrivial while staying deterministic. `denseCoprimePair` makes both factor
+degrees grow with `n` and supplies coprimeness by construction. The Bezout pair
+is computed via `normalizedXGCD` so that
+`s * gMod + t * hMod ≡ 1 (mod 5)`; the iterative linear lift relies on this
+precondition to keep the corrected factors bounded in degree across all `k`
+steps. The shared pair and error salt match `prepMultifactorLiftInput`.
+-/
+def prepLinearInput (n : Nat) : LinearInput :=
+  let (g, h) := denseCoprimePair n
+  let e := denseZPoly (g.size + h.size - 2) 67
   let f := g * h + DensePoly.scale (5 : Int) e
   let xgcd := ZPoly.normalizedXGCD 5 g h
   { f := f
@@ -213,6 +250,10 @@ def prepLinearInput (n : Nat) : LinearInput :=
 def prepLinearLiftInput (param : Nat) : LinearInput :=
   { prepLinearInput (liftBenchDegree param) with
     k := liftBenchPrecision param }
+
+/-- Degree fixture for iterative linear lifting at a fixed exponent. -/
+def prepLinearDegreeInput (n : Nat) : LinearInput :=
+  { prepLinearInput n with k := 64 }
 
 /-- Per-parameter fixture for quadratic Hensel operations. -/
 def prepQuadraticInput (n : Nat) : QuadraticInput :=
@@ -234,11 +275,9 @@ def prepProductInput (n : Nat) : MultifactorInput :=
 
 /-- Per-parameter fixture for the two-factor multifactor lifting path. -/
 def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
-  let g := linearZFactor 59
-  -- Salt 62 keeps `h` coprime to `g` modulo 5 across the scientific ladder.
-  let h := denseZPoly (n + 1) 62
+  let (g, h) := denseCoprimePair n
   let factors := #[g, h]
-  let e := denseZPoly (n + 1) 67
+  let e := denseZPoly (g.size + h.size - 2) 67
   { f := Array.polyProduct factors + DensePoly.scale (5 : Int) e
     factors := factors }
 
@@ -246,6 +285,10 @@ def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
 def prepMultifactorLiftPrecisionInput (param : Nat) : MultifactorInput :=
   { prepMultifactorLiftInput (liftBenchDegree param) with
     k := liftBenchPrecision param }
+
+/-- Degree fixture for multifactor lifting at a fixed exponent. -/
+def prepMultifactorDegreeInput (n : Nat) : MultifactorInput :=
+  { prepMultifactorLiftInput n with k := 64 }
 
 /-- Benchmark target: reduce integer coefficients modulo `5`. -/
 def runModPChecksum (input : ConversionInput) : UInt64 :=
@@ -279,6 +322,15 @@ def runQuadraticHenselStepChecksum (input : QuadraticInput) : UInt64 :=
 def runPolyProductChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPoly <| Array.polyProduct input.factors
 
+/-- Benchmark comparator: the retained ordered left fold without dispatch. -/
+def runPolyProductFoldChecksum (input : MultifactorInput) : UInt64 :=
+  checksumZPoly <| input.factors.foldl (· * ·) 1
+
+/-- Benchmark candidate: the same ordered product through a balanced tree and
+the proved integer fast-multiplication plan. -/
+def runPolyProductTreeChecksum (input : MultifactorInput) : UInt64 :=
+  checksumZPoly <| (DensePoly.ProductTree.build ZPoly.fastPlan input.factors).root
+
 /-- Benchmark target: ordered multifactor lift of two prepared factors. -/
 def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLift 5 input.k input.f input.factors
@@ -287,23 +339,35 @@ def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
   checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
 
-/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator surfaces
+/-! # FLINT `fmpz_poly` Hensel-emulation comparator surfaces
 
 Each of the five Hensel-lift Hex targets is paired with a corresponding
 call into the shared persistent-subprocess python-flint driver
 (`scripts/oracle/flint_bench_driver.py`, HO-20) via
-`Hex.BenchOracle.Flint.runOp` on the `nmod_poly_hensel` family. Hex normalises
+`Hex.BenchOracle.Flint.runOp` on the protocol's `nmod_poly_hensel` family. The
+driver implements the correction schema with `fmpz_poly`; python-flint does
+not expose FLINT's native Hensel entry points. Hex normalises
 lifted factors to non-negative residues in `[0, p^k)` while the driver returns
 centred residues in `(-p^k/2, p^k/2]`; the comparator checksum is computed
 directly on the FLINT-returned coefficient list and is therefore not expected
 to equal the Hex-side checksum at the same rung. The comparator is
-`informational` per `SPEC/Libraries/hex-hensel.md §"External comparators"`,
+`informational` per `HexHensel/SPEC/hex-hensel.md §"External comparators"`,
 so the headline report records wall-times only. -/
 
 /-- Stable checksum over an integer coefficient list returned by FLINT. The
 list is consumed in the order the driver supplies. -/
 def checksumIntCoeffs (coeffs : List Int) : UInt64 :=
   coeffs.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
+
+/-- Persistent FLINT framing and dispatch calibration without polynomial work. -/
+def runFlintOverhead (_ : Unit) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | .ok 0 => return 0
+  | .ok value =>
+      throw <| IO.userError s!"FLINT overhead result was {value}, expected zero"
+  | .error message =>
+      throw <| IO.userError s!"FLINT overhead result not integer: {message}"
 
 /-- Encode a `ZPoly` as a JSON coefficient list (ascending degree). -/
 def zPolyToFlintJson (p : ZPoly) : Lean.Json :=
@@ -409,9 +473,9 @@ each `runFlintFooAt` calls the FLINT comparator on the same fixture so
 wall-times are comparable in the same harness. -/
 
 def runLinearHenselStepChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runLinearHenselStepChecksum (prepLinearInput n)
+  return runLinearHenselStepChecksum (prepLinearStepInput n)
 def runFlintLinearHenselStepChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintLinearHenselStepChecksum (prepLinearInput n)
+  runFlintLinearHenselStepChecksum (prepLinearStepInput n)
 
 def runHenselLiftChecksumAt (param : Nat) : Unit → IO UInt64 := fun _ =>
   return runHenselLiftChecksum (prepLinearLiftInput param)
@@ -479,12 +543,12 @@ def runFlintQuadraticHenselStep512 : Unit → IO UInt64 := runFlintQuadraticHens
 -- per Newton step, so intermediate `fmpz_poly` operands blow up dramatically
 -- once `target_k ≥ 12` at moderate `n`. Empirical measurement (carica, Apple M2
 -- Ultra, fresh driver per call) shows the driver process consuming > 1 GB at
--- `(n = 32, k = 16)` and > 10 GB at `(n = 128, k = 16)`; the matching Hex
--- scientific parametric ladder runs to `(192, 64)` because Hex's coefficient
--- representation stays bounded. The FLINT comparator pair therefore cannot
--- mirror the full Hex schedule; the six paired rungs sit at `k = 8` with `n`
--- varying so the iterated-lift trend can be read against the per-call FLINT
--- driver floor.
+-- `(n = 32, k = 16)` and > 10 GB at `(n = 128, k = 16)`. The Hex scientific
+-- degree ladder reaches `(512, 64)` and its precision ladder reaches `(128,
+-- 256)` because Hex reduces coefficients after every correction. The FLINT
+-- comparator therefore cannot mirror either full schedule; the six paired
+-- rungs sit at `k = 8` with `n` varying so the degree trend remains visible
+-- against the per-call driver floor.
 def encLift32_8 : Nat := encodeLiftParam 32 8
 def encLift64_8 : Nat := encodeLiftParam 64 8
 def encLift96_8 : Nat := encodeLiftParam 96 8
@@ -585,7 +649,7 @@ The linear step performs dense arithmetic against degree-`n` inputs, including
 a correction product whose operands both grow linearly with the fixture size.
 -/
 setup_benchmark runLinearHenselStepChecksum n => n * n
-  with prep := prepLinearInput
+  with prep := prepLinearStepInput
   where {
     paramFloor := 64
     paramCeiling := 512
@@ -596,24 +660,16 @@ setup_benchmark runLinearHenselStepChecksum n => n * n
   }
 
 /-
-The wrapper performs `k` linear correction steps over degree-`n` dense inputs;
-the single lean-bench parameter encodes `(n, k)` as `n * 1000 + k`, including
-Mignotte-sized precisions such as `42` on the scientific schedule.
+At fixed exponent `k = 64`, the wrapper performs a constant number of linear
+corrections. Each correction performs dense products and divisions on factors
+whose degrees grow linearly with `n`, giving the tight degree model `O(n^2)`.
 -/
-setup_benchmark runHenselLiftChecksum param => liftLinearComplexity param
-  with prep := prepLinearLiftInput
+setup_benchmark runHenselLiftChecksum n => n * n
+  with prep := prepLinearDegreeInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
-    paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -635,10 +691,29 @@ setup_benchmark runQuadraticHenselStepChecksum n => n * n
   }
 
 /-
-Left-folding `n` linear factors grows the accumulator degree one step at a
-time, giving a quadratic total number of coefficient operations.
+The public dispatcher's scientific ladder lies wholly in the retained fallback
+interval (`n ≥ treeProductLimit`). Left-folding `n` linear factors grows the
+accumulator degree by one per step, so the total number of coefficient
+operations is the tight mode-1 model `O(n^2)`. The separate compare group
+measures the balanced-tree winning interval and the crossover at `n = 1024`.
 -/
 setup_benchmark runPolyProductChecksum n => n * n
+  with prep := prepProductInput
+  where {
+    paramFloor := 1024
+    paramCeiling := 2048
+    paramSchedule := .custom #[1024, 1152, 1280, 1408, 1536, 1792, 2048]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Left-folding `n` linear factors grows the accumulator degree one step at a
+time, giving a tight mode-1 quadratic total coefficient-operation count. This
+is the retained comparator on both sides of the product-tree interval.
+-/
+setup_benchmark runPolyProductFoldChecksum n => n * n
   with prep := prepProductInput
   where {
     paramFloor := 128
@@ -647,130 +722,147 @@ setup_benchmark runPolyProductChecksum n => n * n
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    tags := #["multifactor", "product", "left-fold", "retained"]
   }
 
 /-
-This two-factor fixture exercises the public ordered lift helper over encoded
-`(n, k)` parameters; the linear delegated Hensel lift repeats a quadratic
-dense-polynomial correction `k` times.
+At a subtree of `j` bounded linear leaves, both degree and coefficient bit
+width are `O(j)`, so Kronecker packing has `O(j^2)` bits. `ZPoly.fastPlan`
+then dispatches among schoolbook and KS1--KS4 kernels while GMP independently
+crosses integer-multiplication regimes, so no tight single family model follows
+from the source. Schoolbook multiplication of the packed integers gives the
+published mode-2 upper bound `O(j^4)`; the geometric tree sum is root-dominated.
+This registration shares every fixture and rung with the retained fold for
+hash and crossover checks.
 -/
-setup_benchmark runMultifactorLiftChecksum param => liftLinearComplexity param
-  with prep := prepMultifactorLiftPrecisionInput
+setup_benchmark runPolyProductTreeChecksum n => productTreeUpper n
+  with prep := prepProductInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
-    paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multifactor", "product", "balanced-tree", "candidate"]
+  }
+
+/-
+At fixed exponent `k = 64`, the two-factor public helper delegates to the same
+linear lift as the direct registration. Its normalized XGCD setup and each
+dense correction have the same quadratic degree bound.
+-/
+setup_benchmark runMultifactorLiftChecksum n => n * n
+  with prep := prepMultifactorDegreeInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-The production path shares the encoded `(n, k)` fixture with the linear lifter,
-but its binary lift uses only `ceil(log₂ k)` quadratic-doubling steps; the
-factor/Bezout correction products dominate each step.
+At fixed exponent `k = 64`, the production path performs a constant number of
+exact-exponent corrections. Dense factor, Bezout, and modular-division work at
+each correction is quadratic in the growing factor degree.
 -/
-setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComplexity param
-  with prep := prepMultifactorLiftPrecisionInput
+setup_benchmark runMultifactorLiftQuadraticChecksum n => n * n
+  with prep := prepMultifactorDegreeInput
   where {
-    paramFloor := encodeLiftParam 32 4
-    paramCeiling := encodeLiftParam 192 64
-    paramSchedule := .custom #[
-      encodeLiftParam 32 4,
-      encodeLiftParam 32 16,
-      encodeLiftParam 32 42,
-      encodeLiftParam 64 16,
-      encodeLiftParam 64 42,
-      encodeLiftParam 96 42,
-      encodeLiftParam 128 64,
-      encodeLiftParam 192 64]
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 80, 96, 128, 160, 192, 256, 384, 512]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
-/-! # FLINT `nmod_poly_hensel_lift_*` informational comparator fixed registrations
+/-! # FLINT `fmpz_poly` Hensel-emulation comparator fixed registrations
 
-Each Hensel-lift Lean target is paired with the matching FLINT
-`nmod_poly_hensel` op via the shared persistent-subprocess driver. The pairs
+Each Hensel-lift Lean target is paired with the matching emulated
+`nmod_poly_hensel` protocol op via the shared persistent-subprocess driver. The pairs
 are registered as `setup_fixed_benchmark` rungs at the same parameter inside
 the existing eligible parametric range, six rungs per pair, so the headline
 report records raw and overhead-adjusted ratios at each rung and a trend
 across the ladder. The comparator is `informational` per
-`SPEC/Libraries/hex-hensel.md §"External comparators"`. -/
+`HexHensel/SPEC/hex-hensel.md §"External comparators"`. -/
 
-setup_fixed_benchmark runLinearHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runLinearHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintLinearHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1 }
 
-setup_fixed_benchmark runQuadraticHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep160 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep160 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runQuadraticHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintQuadraticHenselStep512 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1,
+    warmupFirstIter := true }
 
-setup_fixed_benchmark runHenselLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runHenselLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintHenselLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintOverhead where
+  { flintCompareConfig with expectedHash := some 0x0 }
 
-setup_fixed_benchmark runMultiLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLift_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runLinearHenselStep64 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep64 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep128 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep128 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep192 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep192 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep256 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep256 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep384 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep384 where flintCompareConfig
+setup_fixed_benchmark runLinearHenselStep512 where leanCompareConfig
+setup_fixed_benchmark runFlintLinearHenselStep512 where flintCompareConfig
 
-setup_fixed_benchmark runMultiLiftQ_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n32_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n64_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n96_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n128_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n192_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMultiLiftQ_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMultiLiftQ_n256_k8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runQuadraticHenselStep64 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep64 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep160 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep160 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep192 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep192 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep256 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep256 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep384 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep384 where flintCompareConfig
+setup_fixed_benchmark runQuadraticHenselStep512 where leanCompareConfig
+setup_fixed_benchmark runFlintQuadraticHenselStep512 where flintCompareConfig
+
+setup_fixed_benchmark runHenselLift_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runHenselLift_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintHenselLift_n256_k8 where flintCompareConfig
+
+setup_fixed_benchmark runMultiLift_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLift_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLift_n256_k8 where flintCompareConfig
+
+setup_fixed_benchmark runMultiLiftQ_n32_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n32_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n64_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n64_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n96_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n96_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n128_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n128_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n192_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n192_k8 where flintCompareConfig
+setup_fixed_benchmark runMultiLiftQ_n256_k8 where leanCompareConfig
+setup_fixed_benchmark runFlintMultiLiftQ_n256_k8 where flintCompareConfig
 
 end HenselBench
 end Hex

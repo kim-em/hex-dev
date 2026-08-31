@@ -9,7 +9,7 @@ case: `isprime` verdicts against PARI's `isprime` (with python-flint's
 `segment` listings against PARI's `primes` over the interval, and
 `certcheck` verdicts against an independent Python reimplementation of
 the certificate checker, whose small-table leaf uses the table's proven
-semantics (prime and below `10^4`) with PARI supplying the primality.
+semantics (prime and below `10^5`) with PARI supplying the primality.
 On mismatch, writes a JSON failure record under `conformance-failures/`
 and exits non-zero so CI fails the job.
 
@@ -51,7 +51,7 @@ from scripts.oracle.common import (  # noqa: E402
 )
 
 # Mirrors `Hex.Nat.primeTableBound`.
-PRIME_TABLE_BOUND = 10000
+PRIME_TABLE_BOUND = 100000
 
 
 def _pari_version(pari) -> str:
@@ -109,13 +109,15 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
     if not all(_check_cert(pari, ch) for _, _, ch in factors):
         return False
     subjects = [int(ch["n"]) for _, _, ch in factors]
-    if any(s < 2 for s in subjects) or len(set(subjects)) != len(subjects):
+    if any(s < 2 for s in subjects):
+        return False
+    if any(a >= b for a, b in zip(subjects, subjects[1:])):
         return False
     if n < 2 or n % 2 == 0:
         return False
-    # Mirror `Hex.Nat.boundedPowMul`: accumulate one multiplication at a
-    # time and abort as soon as the running product exceeds `n - 1`, so an
-    # adversarial exponent is rejected without constructing a huge power.
+    # Match `Hex.Nat.certProduct`'s verdict: accumulate one multiplication at
+    # a time and reject when the total first exceeds `n - 1`. The Lean checker
+    # authorizes each multiplication before constructing it.
     F = 1
     for (_, e, ch) in factors:
         q = int(ch["n"])

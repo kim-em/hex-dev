@@ -118,7 +118,7 @@ def inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) : QAdjoin p x :=
   if a.isZero then
     0
   else
-    let r := DensePoly.xgcdLeft a.coeffs (ZPoly.toRatPoly p)
+    let r := DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)
     if r.gcd.size = 1 then
       let c := r.gcd.leadingCoeff
       if c = 0 then
@@ -258,11 +258,16 @@ private def nonmonicQuadratic : ZPoly := DensePoly.ofList [-1, 0, 2]
 
 #guard
     let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-    let r := DensePoly.xgcdLeft xPoly (ZPoly.toRatPoly nonmonicQuadratic)
+    let r := DensePoly.xgcdLeftMonic xPoly (ZPoly.toRatPoly nonmonicQuadratic)
     let candidate :=
       reduceCoeffs nonmonicQuadratic
         (DensePoly.scale r.gcd.leadingCoeff⁻¹ r.left)
-    candidate = DensePoly.ofList ([0, 2] : List Rat) &&
+    let raw := DensePoly.xgcdLeft xPoly (ZPoly.toRatPoly nonmonicQuadratic)
+    let rawCandidate :=
+      reduceCoeffs nonmonicQuadratic
+        (DensePoly.scale raw.gcd.leadingCoeff⁻¹ raw.left)
+    candidate = rawCandidate &&
+      candidate = DensePoly.ofList ([0, 2] : List Rat) &&
       reduceCoeffs nonmonicQuadratic (xPoly * candidate) = 1
 
 end Hex.QAdjoin

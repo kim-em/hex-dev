@@ -9,6 +9,13 @@ module
 public import HexModArith.Residue
 public import HexModArith.HotLoop
 public import HexModArith.Modulus
+public import HexModArith.Ntt.Butterfly
+public import HexModArith.Ntt.Catalogue
+public import HexModArith.Ntt.CrtInput
+public import HexModArith.Ntt.Convolution
+public import HexModArith.Ntt.Dft
+public import HexModArith.Ntt.Plan
+public import HexModArith.Ntt.Transform
 public import HexModArith.Prime
 public import HexModArith.Ring
 public import HexModArith.WordMod

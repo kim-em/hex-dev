@@ -20,6 +20,7 @@ BUILD_ONLY_LIBS = {
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
+    "HexPrimalityElabProbe",
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",

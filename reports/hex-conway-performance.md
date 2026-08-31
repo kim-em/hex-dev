@@ -242,3 +242,6 @@ falls outside the registered bench target, so no Attribution-rule follow-up
 is required.
 
 ## Concerns
+
+- [#9813](https://github.com/kim-em/hex-dev/issues/9813) tracks the fixed
+  Tier-1/Tier-2 mode gap and the stale 36-entry lookup verdict.

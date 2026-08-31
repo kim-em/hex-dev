@@ -35,6 +35,12 @@ pass, preserving Newton's logarithmic precision growth. If that pass cannot
 emit exactly one target-ready atom, `refineLoop` restarts from the original
 atom and uses the same globally reglued prefix as the full driver; subdivision
 can split even a single starting square into sibling survivor lineages.
+
+`findAtomLoop` starts instead from an uncertified caller-selected square. It
+stops as soon as any component certifies as an atom that can be refined to the
+target. The seed selects the initial search rather than imposing a containment
+postcondition. The returned certificate is self-contained, so this path needs
+neither all roots nor a pairwise-disjoint output family.
 -/
 namespace Hex
 
@@ -245,8 +251,8 @@ returns `none`, so callers can fall back without trusting this optimization. -/
     else none
   | none => none
 
-/-- Internal atom refiner shared by the public one-atom API and the
-all-atoms fast path in the full isolation driver. -/
+/-- Atom refiner shared by the local one-root search and the all-atoms fast
+path in the full isolation driver. -/
 @[expose] def refineAtom? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy) : Option (DyadicRootIsolation p) :=
   if target ≤ iso.square.prec then some iso else
@@ -260,14 +266,58 @@ all-atoms fast path in the full isolation driver. -/
     else none
   | none => none
 
+/-- Find and refine the first atom among a round's certification attempts.
+    Array order makes the choice deterministic; clusters, failed
+    certifications, and atoms that fail to refine are skipped. -/
+@[expose] def firstRefinedAtom? {p : ZPoly} (target : Int)
+    (strategy : AtomStrategy)
+    (tried : Array (Component × Option (Certified p))) :
+    Option (DyadicRootIsolation p) :=
+  tried.toList.findSome? fun t => match t.2 with
+    | some (.atom iso) => refineAtom? iso target strategy
+    | _ => none
+
+/-- Refine every component of a one-atom search round. A certified cluster is
+    re-entered through its tighter certified region when that makes progress;
+    otherwise it, and every failed component, is subdivided locally. -/
+@[expose] def nextAtomSearch {p : ZPoly}
+    (tried : Array (Component × Option (Certified p))) : Array Component :=
+  tried.flatMap fun t => match t with
+    | (c, some result) =>
+      let c' := result.toComponent
+      if c.prec < c'.prec then #[c'] else c.refine1 p
+    | (c, none) => c.refine1 p
+
+/-- Search a caller-selected region for one certified simple root, then refine
+    that atom to `target`. Unlike `isolateLoop`, this loop does not construct a
+    complete, pairwise-disjoint family: an atom certificate already states
+    that its own region contains exactly one simple root. Consequently a
+    successful result is sound without examining or refining any other root.
+    `none` means the region was exhausted or no atom was found within fuel. -/
+@[expose] def findAtomLoop (p : ZPoly) (target : Int)
+    (strategy : AtomStrategy) :
+    Nat → Array Component → Option (DyadicRootIsolation p)
+  | 0, _ => none
+  | fuel + 1, work =>
+    if work.isEmpty then none else
+    let tried := IsolationLoop.attempts p strategy work
+    match firstRefinedAtom? target strategy tried with
+    | some iso => some iso
+    | none => findAtomLoop p target strategy fuel (nextAtomSearch tried)
+
 namespace IsolationLoop
 
-/-- Refine the atom returned by one successful component attempt. -/
+/-- Refine the atom returned by one successful component attempt.
+Use the bounded lineage-local loop first, then fall back to complete normalized
+refinement when the local attempt cannot finish. -/
 @[expose] def refineAttempt? {p : ZPoly} (target : Int)
     (strategy : AtomStrategy) (t : Component × Option (Certified p)) :
     Option (DyadicRootIsolation p) :=
   match t.2 with
-  | some (.atom iso) => refineAtom? iso target strategy
+  | some (.atom iso) =>
+    if target ≤ iso.square.prec then some iso else
+    (refineFastAtom? iso target strategy).orElse fun _ =>
+      refineAtom? iso target strategy
   | _ => none
 
 /-- Strategy-parametric implementation of the all-atoms finishing pass. -/

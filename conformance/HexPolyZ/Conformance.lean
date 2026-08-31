@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.Kronecker
+import HexPolyZ.KroneckerMulti
+import HexPolyZ.NttMul
 import HexPolyZ.Mignotte
 import HexPolyZ.ExactDivision
 
@@ -21,7 +22,10 @@ Covered operations:
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
 - checked exact division and its ordered rejection prefilters
-- the Kronecker-substitution product kernel against the schoolbook loop
+- the one-, two-point, reciprocal, and four-point Kronecker-substitution
+  kernels against the schoolbook loop
+- auxiliary-prime NTT multiplication with signed CRT reconstruction
+- the integer kernel selector, total dispatcher, and generic multiplication plan
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
@@ -37,6 +41,8 @@ Covered properties:
   primitive-part extraction
 - exact divisors survive every prefilter, while degree, leading-coefficient,
   content, and evaluation obstructions reject before dense division
+- every integer dispatch-table cell is reachable, and the total dispatcher
+  agrees with schoolbook multiplication on its CRT-NTT route
 - Mignotte coefficient bounds equal `Nat.binom k j * coeffL2NormBound f`
 Covered edge cases:
 - zero polynomials and all-zero coefficient arrays
@@ -317,6 +323,12 @@ private def kernelAgrees : Bool :=
       (mulKroneckerAt 0 0 p q == p * q)
         && (mulKroneckerAt 0 0 q p == q * p)
         && (mulKronecker p q == p * q)
+        && (mulKS2 p q == p * q)
+        && (mulKS2 q p == q * p)
+        && (mulKS3 p q == p * q)
+        && (mulKS3 q p == q * p)
+        && (mulKS4 p q == p * q)
+        && (mulKS4 q p == q * p)
 
 #guard kernelAgrees
 
@@ -335,9 +347,64 @@ private def kernelAgreesOnBoundaries : Bool :=
     ([0, 1] : List Nat).all fun i =>
       let p := boundaryPoly k i
       let q := boundaryPoly (k + 1) (i + 1)
-      (mulKroneckerAt 0 0 p q == p * q) && (mulKronecker p q == p * q)
+      (mulKroneckerAt 0 0 p q == p * q)
+        && (mulKronecker p q == p * q)
+        && (mulKS2 p q == p * q)
+        && (mulKS3 p q == p * q)
+        && (mulKS4 p q == p * q)
 
 #guard kernelAgreesOnBoundaries
+
+/-- The multipoint kernels use the two operands' separate maxima, so strongly asymmetric
+coefficient widths and lengths are exercised explicitly in both orders. -/
+private def multipointAgreesAsymmetric : Bool :=
+  ([1, 2, 3, 7] : List Nat).all fun short =>
+    ([25, 64] : List Nat).all fun long =>
+      let p := kernelPoly short 1
+      let q := DensePoly.ofCoeffs ((List.range long).map fun i =>
+        kernelCoeff long i 9 * Int.ofNat (2 ^ 73)).toArray
+      (mulKS2 p q == p * q) && (mulKS2 q p == q * p)
+        && (mulKS3 p q == p * q) && (mulKS3 q p == q * p)
+        && (mulKS4 p q == p * q) && (mulKS4 q p == q * p)
+
+#guard multipointAgreesAsymmetric
+
+/-! # Auxiliary-prime NTT and CRT -/
+
+private def nttLeft : ZPoly := DensePoly.ofCoeffs #[1, -2, 3]
+private def nttRight : ZPoly := DensePoly.ofCoeffs #[4, 5]
+
+#guard mulNttCrt? nttLeft nttRight = some (nttLeft * nttRight)
+
+/-- A coefficient bound larger than the complete fixed catalogue product is
+rejected before any transform is attempted. -/
+private def nttTooWide : ZPoly :=
+  DensePoly.ofCoeffs #[Int.ofNat (2 ^ 256)]
+
+#guard (mulNttCrt? nttTooWide nttTooWide).isNone
+
+/-! # Total dispatch -/
+
+/-- Equal-sized operands at an exact coefficient-width boundary expose each
+non-schoolbook selector cell without coupling the fixture to kernel internals. -/
+private def dispatchPoly (size width : Nat) : ZPoly :=
+  DensePoly.ofCoeffs (Array.replicate size (Int.ofNat (2 ^ (width - 1))))
+
+#guard selectKernel (dispatchPoly 3 20) (dispatchPoly 3 20) == .schoolbook
+#guard selectKernel (dispatchPoly 24 20) (dispatchPoly 24 20) == .ks1
+#guard selectKernel (dispatchPoly 24 64) (dispatchPoly 24 64) == .ks2
+#guard selectKernel (dispatchPoly 24 128) (dispatchPoly 24 128) == .ks3
+#guard selectKernel (dispatchPoly 24 256) (dispatchPoly 24 256) == .ks4
+#guard selectKernel (dispatchPoly 256 20) (dispatchPoly 256 20) == .ks1
+
+private def dispatchLeft : ZPoly := dispatchPoly 256 20
+private def dispatchRight : ZPoly :=
+  DensePoly.ofCoeffs (Array.replicate 256 (-(Int.ofNat (2 ^ 19))))
+
+#guard mulFast dispatchLeft dispatchRight = dispatchLeft * dispatchRight
+
+#guard (DensePoly.mulWith fastPlan dispatchLeft dispatchRight).toArray ==
+  (dispatchLeft * dispatchRight).toArray
 
 end ZPoly
 

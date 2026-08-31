@@ -191,6 +191,9 @@ reported no validity violation.
 
 ## Concerns
 
+[Issue #9810](https://github.com/kim-em/hex-dev/issues/9810) tracks the
+unresolved proof-track gate described below.
+
 The implementation milestone is complete, but all five terminal threshold
 comparisons remain statistically unresolved: their point estimates are not
 evidence that the conservative 2× threshold was crossed. Under the

@@ -5,7 +5,9 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-bareiss` provides the executable fraction-free Bareiss determinant of a
-dense integer matrix, computed by Gaussian elimination with exact division.
+dense square matrix over a coefficient type with a caller-supplied exact
+quotient. Its retained `Int` entry points use a directly specialized,
+GMP-backed exact-division path.
 This library depends on [`hex-determinant`](https://github.com/leanprover/hex-determinant)
 and [`hex-matrix`](https://github.com/leanprover/hex-matrix). See
 [`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib) for the
@@ -36,29 +38,39 @@ def M : Matrix Int 3 3 := Matrix.ofFn fun i j => (i + 2 * j : Int)
 -- bareissData also records the row-swap count alongside the determinant.
 #eval (Matrix.bareissData M).det
 #eval (Matrix.bareissData M).rowSwaps
+
+-- The same implementation accepts another coefficient type and quotient.
+def Q : Matrix Rat 2 2 := Matrix.ofFn fun i j =>
+  if i = j then (2 : Rat) else 1
+
+#eval Matrix.bareissWith Hex.exactDiv Q
 ```
 
 # Functionality
 
-- `bareiss`: the determinant of a square `Int` matrix via fraction-free
-  Gaussian elimination with row pivoting;
-- `bareissData`: the same elimination, packaged as a `BareissData` record that
+- `bareissWith` and `bareissDataWith`: coefficient-generic fraction-free
+  Gaussian elimination with row pivoting and an explicit quotient operation;
+- `bareiss` and `bareissData`: the directly specialized `Int` entry points;
+- `bareissDataWith` packages the elimination as a `BareissData` record that
   carries the terminal matrix, the row-swap count, and any singular step, with
   `.det` reading off the signed determinant;
-- `bareissNoPivot` and `bareissNoPivotData`: the recurrence without pivot
-  search, for inputs whose leading pivots are already nonzero;
+- `bareissNoPivotWith` and `bareissNoPivotDataWith`, with retained `Int`
+  specializations `bareissNoPivot` and `bareissNoPivotData`: the recurrence
+  without pivot search, for inputs whose leading pivots are already nonzero;
 - `borderedMinor`: the bordered minors that the correctness development uses to
   track the elimination invariant.
 
-The division at each step is `Int.divExact` (GMP-backed `mpz_divexact`), which
-is always exact and carries its divisibility proof.
+The generic functions make their quotient operation explicit. The `Int`
+specialization calls the GMP-backed `lean_int_div_exact` primitive directly;
+exactness is certified separately by the correspondence proof, rather than by
+passing a divisibility proof through the executable loop.
 
 # Verification
 
 The Mathlib-free layer proves the structural properties of the algorithm: the
-exactness of each division, the sign contributed by row swaps, the bordered-minor
-entry formulas, and the agreement between the public `bareiss` value and the
-determinant encoded by `bareissData`.
+sign contributed by row swaps, the bordered-minor entry formulas, and the
+agreement between the public result and its packaged determinant data. The
+Mathlib bridge proves quotient exactness implies agreement with the determinant.
 
 The public determinant agrees with the encoded data, `bareiss_eq_bareissData_det`:
 

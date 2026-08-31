@@ -10,7 +10,7 @@ import HexIntFactor
 
 open Hex Hex.Nat
 
-set_option maxRecDepth 20000
+set_option maxRecDepth 100000
 
 private def raw12 : Factorization :=
   ⟨12, [⟨2, .small 2⟩, ⟨1, .small 3⟩]⟩
@@ -69,6 +69,10 @@ example {n : Nat} (F : CheckedPartialFactorization n) :
 #guard !checkFactorization ⟨12, [⟨1, .small 2⟩, ⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨0, .small 2⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 3⟩, ⟨2, .small 2⟩]⟩
+#guard !checkFactorization ⟨12, [⟨1048576, .small 2⟩]⟩
+  -- a huge exponent aborts before constructing the attacker-chosen power
+#guard !checkFactorization ⟨12, [⟨3, .small 2⟩, ⟨1, .small 3⟩]⟩
+  -- the next multiplication after 2³ crosses the subject bound
 
 #guard divisors checked1 == #[1]
 #guard numDivisors checked1 == 1
@@ -174,7 +178,7 @@ example :
 
 -- The subject is not a perfect power, but this exact split leaves a square
 -- cofactor. The same structural producer used for every popped search entry
--- detects it, and stack multiplicity scales both its known and residual powers.
+-- detects it, and stack multiplicity scales its table-certified factor.
 private def recursivePowerInput : Nat := 10009 * 10037 ^ 2
 private def recursivePowerCandidate : SmallCandidate :=
   (smallCandidate (recursivePowerInput / 10009)).scale 3
@@ -182,13 +186,14 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard (perfectPower? recursivePowerInput).isNone
 #guard recursivePowerInput / 10009 == 10037 ^ 2
 #guard recursivePowerCandidate.route == .perfectPower
-#guard recursivePowerCandidate.factors.isEmpty
-#guard recursivePowerCandidate.residualBase == 10037
+#guard recursivePowerCandidate.factors.map
+  (fun entry => (entry.prime, entry.exponent)) == [(10037, 6)]
+#guard recursivePowerCandidate.residualBase == 1
 #guard recursivePowerCandidate.residualExponent == 6
 -- Batched rho may return a composite divisor when two collisions share a
 -- batch. Seed 17 therefore changed the route count after batching; seed 1
 -- pins that count while the final checked factorization remains unchanged.
-#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 1
+#guard Hex.Nat.Internal.countPowerRoutes recursivePowerInput (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes 0 (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes (2 ^ 20) (Rand.ofSeed 1) == 0
 #guard Hex.Nat.Internal.countPowerRoutes ((6 ^ 5) ^ 3) (Rand.ofSeed 1) == 1
@@ -206,12 +211,11 @@ private def nestedPowerCandidate : SmallCandidate :=
   [(2, 30), (3, 30)]
 #guard nestedPowerCandidate.residualBase == 1
 
--- Composite exponents reduce at both the initial and recursive boundaries:
--- `p^8` becomes `(p^4)^2`, then the popped `p^4` becomes `(p^2)^2` with
--- accumulated multiplicity four. The eventual split still restores exponent 8.
+-- A composite exponent reduces at the initial boundary; the enlarged table
+-- then certifies the base directly, still restoring exponent 8.
 private def iteratedPower : Nat := 10009 ^ 8
 
-#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 2
+#guard Hex.Nat.Internal.countPowerRoutes iteratedPower (Rand.ofSeed 19) == 1
 #guard (match factor? iteratedPower (Rand.ofSeed 19) with
   | .ok (F, _) =>
       F.raw.factors.map (fun entry => (entry.prime, entry.exponent)) == [(10009, 8)]
@@ -221,7 +225,27 @@ private def iteratedPower : Nat := 10009 ^ 8
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
-#guard smoothBoundCap == primeTableBound - 1
+-- Every terminal gcd outcome crosses the same counted boundary. A call costs
+-- one semantic attempt and deterministic stage 1 preserves the supplied state.
+private def pMinusOneFound :=
+  pMinusOneFactorCounted 299 2 5 (Rand.ofSeed 11)
+private def pMinusOneMiss :=
+  pMinusOneFactorCounted 25 2 2 (Rand.ofSeed 12)
+private def pMinusOneWhole :=
+  pMinusOneFactorCounted 15 4 2 (Rand.ofSeed 13)
+
+#guard pMinusOneFound.result == .factor 13
+#guard pMinusOneFound.attempts == 1
+#guard pMinusOneFound.rand == Rand.ofSeed 11
+#guard pMinusOneMiss.result == .noFactor
+#guard pMinusOneMiss.attempts == 1
+#guard pMinusOneMiss.rand == Rand.ofSeed 12
+#guard pMinusOneWhole.result == .whole
+#guard pMinusOneWhole.attempts == 1
+#guard pMinusOneWhole.rand == Rand.ofSeed 13
+
+#guard smoothBoundCap == 9999
+#guard smoothBoundCap < primeTableBound
 #guard smoothBound (primeTableBound + 1000) == smoothBoundCap
 
 example (n base bound : Nat) :
@@ -237,6 +261,11 @@ example {n base bound d : Nat}
     (h : pMinusOneFactor n base bound = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n :=
   pMinusOneFactor_spec h
+
+example {n base bound d : Nat} {r : Rand}
+    (h : (pMinusOneFactorCounted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneFactorCounted_spec h
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
@@ -326,6 +355,7 @@ private def smoothRetryTrace : Hex.Nat.Internal.SmoothSearch :=
   .ecm 242 64 .whole]
 #guard smoothRetryTrace.factor.isNone
 #guard smoothRetryTrace.events.length == Hex.Nat.Internal.smoothAttemptCap
+#guard smoothRetryTrace.attempts == smoothRetryTrace.events.length
 #guard smoothRetryTrace.rand == ((Rand.ofSeed 0).words 4).2
 #guard smoothRetryTrace ==
   Hex.Nat.Internal.smoothSearch 11 (Rand.ofSeed 0) 8
@@ -337,6 +367,7 @@ private def smoothPMinusOneTrace : Hex.Nat.Internal.SmoothSearch :=
 
 #guard smoothPMinusOneTrace.events == [.pMinusOne 2 64 (.factor 81)]
 #guard smoothPMinusOneTrace.factor == some 81
+#guard smoothPMinusOneTrace.attempts == 1
 #guard smoothPMinusOneTrace.rand == Rand.ofSeed 9
 
 private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
@@ -349,6 +380,7 @@ private def smoothEcmTrace : Hex.Nat.Internal.SmoothSearch :=
   .pMinusOne 5 8 .noFactor,
   .ecm 181 64 (.factor 19)]
 #guard smoothEcmTrace.factor == some 19
+#guard smoothEcmTrace.attempts == smoothEcmTrace.events.length
 #guard smoothEcmTrace.rand == (Rand.ofSeed 0).next.2
 
 private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
@@ -356,6 +388,7 @@ private def smoothZeroFuelTrace : Hex.Nat.Internal.SmoothSearch :=
 
 #guard smoothZeroFuelTrace.events.isEmpty
 #guard smoothZeroFuelTrace.factor.isNone
+#guard smoothZeroFuelTrace.attempts == 0
 #guard smoothZeroFuelTrace.rand == Rand.ofSeed 4
 
 -- A smaller budget truncates the deterministic p−1 phase itself. It neither
@@ -368,6 +401,7 @@ private def smoothThreeFuelTrace : Hex.Nat.Internal.SmoothSearch :=
   .pMinusOne 3 8 .whole,
   .pMinusOne 5 2 .noFactor]
 #guard smoothThreeFuelTrace.factor.isNone
+#guard smoothThreeFuelTrace.attempts == 3
 #guard smoothThreeFuelTrace.events.length == 3
 #guard smoothThreeFuelTrace.rand == Rand.ofSeed 4
 
@@ -467,18 +501,17 @@ private def retainedCertInput : Nat := starvedInput * 1000037
 
 -- A stopped continuation includes successful earlier-part work and remains
 -- exactly accounted, even when every charged search subtotal happens to be zero.
-#guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
+#guard (match factorPowerWithRoute? 100003 4 .minus (Rand.ofSeed 1) (fuel := 0) with
   | .error failure =>
       failure.stop == .incomplete && failure.attempts == 0
   | .ok _ => false)
 
--- Here `Φ_19(2)` succeeds after eight charged attempts, `Φ_57(2)` stops
--- after twelve, and the generic continuation adds five more. This guards the
--- successful-part subtotal that the public pair-returning API intentionally
--- omits.
-#guard (match factorPowerWithRoute? 2 57 .minus (Rand.ofSeed 1) (fuel := 3) with
+-- Table children close at residual depth zero, so the later stopped
+-- continuation includes their witness work in the successful-part subtotal
+-- that the public pair-returning API intentionally omits.
+#guard (match factorPowerWithRoute? 2 128 .minus (Rand.ofSeed 1) (fuel := 3) with
   | .error failure =>
-      failure.stop == .incomplete && failure.attempts == 25
+      failure.stop == .incomplete && failure.attempts == 21
   | .ok _ => false)
 
 -- Degenerate split input uses the ordinary dispatcher, and the route tag makes

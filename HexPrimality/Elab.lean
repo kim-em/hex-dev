@@ -19,17 +19,19 @@ The `primality` term elaborator and tactic.
 the compiled certificate search runs at elaboration time as untrusted code,
 and the emitted term applies `prime_of_checkPrimeAt` to the reified
 certificate with an `Eq.refl true` slot, so the kernel replays only
-`checkPrime` — `O(K log n)` modular multiplications on the certificate data,
-never the search.
+`checkPrime` — `O(K log n)` modular and bounded ordinary multiplications,
+plus `O(K)` factor-subject comparisons, on the certificate data, never the
+search.
 
 Tactic forms: bare `primality` closes a `Hex.Nat.Prime e` goal for a
 numeral `e`; `primality n` adds `this : Hex.Nat.Prime n`;
 `primality h : n` names it `h`.
 
 For reproducible syntax with no seed argument, the elaborator uses
-`Rand.ofSeed n` and `defaultPrimeFuel n`; the lower `primeCert?` API remains
-explicitly seeded, and diagnostics report the seed and fuel if certificate
-search exhausts its budget. The companion library may register an
+`Rand.ofSeed n` and `primalityFuel n`, the measured policy cap over
+`defaultPrimeFuel n`; the lower `primeCert?` API remains explicitly seeded,
+and diagnostics report the seed and fuel if certificate search exhausts its
+budget. The companion library may register an
 additional `@[tactic primalityTac]` handler for `Nat.Prime` goal shapes;
 handlers registered later run first and defer here by throwing
 `unsupportedSyntax`.
@@ -88,10 +90,54 @@ meta def checkClosed (tactic : String) (e : Expr) : MetaM Unit := do
     throwError "{tactic}: the argument{indentExpr e}\
         \nmust not contain free or meta variables"
 
-/-- Bit-length ceiling on tactic inputs: the kernel replay is `O(K log n)`
-modular multiplications, and beyond this size certificate search itself is
-the bottleneck to fix first. -/
-meta def primalityBitBudget : Nat := 8192
+/-- Supported bit-length ceiling for every elaboration-time certificate route.
+The 512-bit boundary is the largest measured fresh-module rung; changing it
+requires new end-to-end search, reification, and kernel-replay evidence. -/
+meta def primalityBitBudget : Nat := 512
+
+/-- Maximum recursive fuel passed to elaboration-time certificate search.
+The settled default is one unit per input bit, so this is deliberately the same
+quantity as the supported input ceiling. Keeping the definitions linked prevents
+one policy boundary from changing without the other. -/
+meta def primalityFuelBudget : Nat := primalityBitBudget
+
+/-- Maximum Brent restarts at one partial-factor worklist entry on every
+elaboration-time certificate route. -/
+meta def primalityRhoRestartBudget : Nat := 2
+
+/-- Maximum Brent cycle steps per restart on every elaboration-time
+certificate route. -/
+meta def primalityRhoStepBudget : Nat := 1 <<< 15
+
+/-- The explicit rho allocation shared by every elaboration-time route. -/
+meta def primalitySearchBudget : Hex.Nat.PrimeCertBudget :=
+  ⟨primalityRhoRestartBudget, primalityRhoStepBudget⟩
+
+/-- The fuel selected by every elaboration-time certificate route. -/
+meta def primalityFuel (n : Nat) : Nat :=
+  min (Hex.Nat.defaultPrimeFuel n) primalityFuelBudget
+
+/-- Whether an input is admitted by the common elaboration policy. -/
+meta def withinPrimalityBudget (n : Nat) : Bool :=
+  decide (n.log2 + 1 ≤ primalityBitBudget)
+
+/-- Enforce the common input-size policy before any certificate search. -/
+meta def checkPrimalityPolicy (tactic : String) (n : Nat) : MetaM Unit := do
+  let bits := n.log2 + 1
+  unless withinPrimalityBudget n do
+    throwError "{tactic}: input has {bits} bits; the enforced policy supports \
+        at most {primalityBitBudget} bits; raising the ceiling requires new \
+        end-to-end benchmark evidence"
+
+/-- Report bounded-search exhaustion without inviting an unbounded fallback. -/
+meta def throwPrimalityExhausted {α : Type} (tactic : String) (n attempts fuel : Nat) :
+    MetaM α :=
+  throwError "{tactic}: certificate search for {n} exhausted after {attempts} \
+      attempts (seed {n}, recursive fuel {fuel}; policy maximum \
+      {primalityFuelBudget} fuel at {primalityBitBudget} bits, \
+      {primalityRhoRestartBudget} rho restarts with \
+      {primalityRhoStepBudget} steps each); no total primality decision was \
+      attempted"
 
 /-- Run the certificate search and emit the checked proof term with `head`
 applied to the subject, the reified certificate, and the `Eq.refl true`
@@ -105,10 +151,10 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
         \nevaluates to {n} but is not definitionally transparent to the \
         elaborator (an imported definition without `@[expose]`?); the kernel \
         could not check the emitted certificate against it"
-  if n.log2 + 1 > primalityBitBudget then
-    throwError "{tactic}: {n} has more than {primalityBitBudget} bits; \
-        raising `primalityBitBudget` is a separate, benchmarked change"
-  match Hex.Nat.primeCert? n (Hex.Rand.ofSeed n) (Hex.Nat.defaultPrimeFuel n) with
+  checkPrimalityPolicy tactic n
+  let fuel := primalityFuel n
+  match Hex.Nat.Internal.primeCertCountedWith? primalitySearchBudget n
+      (Hex.Rand.ofSeed n) fuel with
   | .error f =>
       match f.stop with
       | .composite =>
@@ -120,11 +166,9 @@ meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
           | none =>
               throwError "{tactic}: {n} is not prime"
       | .exhausted =>
-          throwError "{tactic}: certificate search for {n} exhausted its \
-              budget after {f.attempts} attempts (seed {n}, fuel \
-              {Hex.Nat.defaultPrimeFuel n}); the factorization of n - 1 may \
-              be out of reach"
-  | .ok (c, _) =>
+          throwPrimalityExhausted tactic n f.attempts fuel
+  | .ok success =>
+      let c := success.cert
       -- Untrusted-search self-check before emitting anything.
       unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do
         throwError "{tactic}: internal error: the found certificate fails \
@@ -151,6 +195,7 @@ meta def elabPrimalityArgument (t : Syntax) : Term.TermElabM Expr := do
 `n`. -/
 syntax (name := primalityTerm) "primality" term:max : term
 
+/-- Elaborator for the Mathlib-free `primality n` term syntax. -/
 @[term_elab primalityTerm] meta def elabPrimality : Term.TermElab :=
   fun stx expectedType? => do
     match stx with
@@ -182,6 +227,7 @@ meta def goalPrime (goal : MVarId) : Tactic.TacticM Bool := do
 syntax (name := primalityTac)
   "primality" (atomic(ident " : "))? (term:max)? : tactic
 
+/-- Evaluator for the Mathlib-free `primality` tactic forms. -/
 @[tactic primalityTac] meta def evalPrimalityTac : Tactic.Tactic :=
   fun stx => do
     match stx with
@@ -204,6 +250,8 @@ syntax (name := primalityTac)
           let ty ← inferType proof
           let (_, g) ← (← g.assert `this ty proof).intro1P
           return [g]
+    | `(tactic| primality $_h:ident :) =>
+        throwError "primality: expected a natural-number term after the colon"
     | `(tactic| primality $h:ident : $t:term) => do
         let proof ← Tactic.withMainContext do
           elabPrimalityArgument t
@@ -214,29 +262,3 @@ syntax (name := primalityTac)
     | _ => Elab.throwUnsupportedSyntax
 
 end Hex.PrimalityTactic
-
-/-! Elaboration tests: every syntax form across the table, trial, and
-certificate tiers, and the two failure messages. -/
-
-example : Hex.Nat.Prime 97 := primality 97
-example : Hex.Nat.Prime 9973 := primality 9973
-example : Hex.Nat.Prime 10007 := primality 10007
-example : Hex.Nat.Prime 2147483647 := primality 2147483647
-example : Hex.Nat.Prime 101 := by primality
-example : Hex.Nat.Prime 2147483647 := by primality
-example : True := by
-  primality 65537
-  primality fermat : 257
-  exact trivial
-
-/-- error: primality: 561 is not prime (Miller-Rabin witness 2) -/
-#guard_msgs in
-example : Hex.Nat.Prime 561 := primality 561
-
-/--
-error: primality: the goal
-  Hex.Nat.Prime (2 + 2)
-is not about a natural-number numeral
--/
-#guard_msgs in
-example : Hex.Nat.Prime (2 + 2) := by primality

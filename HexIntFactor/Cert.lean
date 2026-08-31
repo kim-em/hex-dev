@@ -76,28 +76,8 @@ structure CheckedFactorization (n : Nat) where
   /-- Full checker replay succeeds. -/
   valid : checkFactorization raw = true
 
-private theorem boundedPowMul_eq {bound q : Nat} :
-    ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
-      r = acc * q ^ e := by
-  intro e
-  induction e with
-  | zero =>
-      intro acc r h
-      unfold boundedPowMul at h
-      injection h with h
-      subst h
-      simp
-  | succ e ih =>
-      intro acc r h
-      unfold boundedPowMul at h
-      by_cases hb : bound < acc * q
-      · rw [if_pos hb] at h
-        cases h
-      · rw [if_neg hb] at h
-        rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
-          Nat.mul_comm q (q ^ e)]
-
-private theorem factorProduct_eq {bound : Nat} :
+/-- On success, the factor accumulator computes the ordinary product. -/
+theorem factorProduct_eq {bound : Nat} :
     ∀ (l : List PrimePower) (acc r : Nat),
       factorProduct bound l acc = some r →
         r = acc * (l.map fun e => e.prime ^ e.exponent).prod := by
@@ -117,6 +97,25 @@ private theorem factorProduct_eq {bound : Nat} :
       next acc' hp =>
         rw [ih acc' r h, boundedPowMul_eq e.exponent acc acc' hp]
         simp [Nat.mul_assoc]
+
+/-- A successful factor-list fold preserves the bound on its accumulator. -/
+theorem factorProduct_le {bound : Nat} :
+    ∀ (l : List PrimePower) (acc r : Nat), acc ≤ bound →
+      factorProduct bound l acc = some r → r ≤ bound := by
+  intro l
+  induction l with
+  | nil =>
+      intro acc r hacc h
+      unfold factorProduct at h
+      injection h with h
+      simpa [h] using hacc
+  | cons e rest ih =>
+      intro acc r hacc h
+      unfold factorProduct at h
+      split at h
+      · cases h
+      next acc' hp =>
+        exact ih acc' r (boundedPowMul_le hacc hp) h
 
 theorem checkEntries_positive : ∀ {l : List PrimePower},
     checkEntries l = true → ∀ e ∈ l, 0 < e.exponent := by

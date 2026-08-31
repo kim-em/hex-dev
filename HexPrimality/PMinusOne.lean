@@ -8,6 +8,7 @@ module
 
 public import HexPrimality.Table
 public import HexArith.Montgomery.Context
+public import HexBasic.Rand
 
 public section
 
@@ -26,9 +27,23 @@ inductive PMinusOneResult where
   | whole
 deriving Repr, DecidableEq
 
-/-- Conservative smoothness cap inside the range where prime-table
-completeness follows directly from `q < primeTableBound`. -/
-def smoothBoundCap : Nat := primeTableBound - 1
+/-- The result of one counted deterministic stage-1 call. A call is one
+attempt on every terminal gcd outcome. Pollard `p - 1` draws no randomness,
+so the returned generator is exactly the supplied state; carrying it here
+lets randomized callers resume through the same boundary as rho. -/
+structure PMinusOneAttempt where
+  /-- The terminal gcd outcome. -/
+  result : PMinusOneResult
+  /-- Semantic stage-1 calls executed; always one at this boundary. -/
+  attempts : Nat
+  /-- The unchanged generator state. -/
+  rand : Rand
+deriving Repr, DecidableEq
+
+/-- Accepted stage-1 smoothness cap. It remains inside the complete table range,
+but is independent of later table-policy growth so search cost and retry-ladder
+coverage do not change as a side effect of a larger certification table. -/
+def smoothBoundCap : Nat := 9999
 
 /-- Clamp a requested stage-1 bound to the complete committed-table range. -/
 def smoothBound (bound : Nat) : Nat := min bound smoothBoundCap
@@ -74,6 +89,13 @@ incomplete extension beyond the committed prime table. -/
 def pMinusOneStage1 (n base bound : Nat) : PMinusOneResult :=
   pMinusOneStage1Core n base (smoothBound bound)
 
+/-- One counted, resumable Pollard `p - 1` stage-1 attempt. The deterministic
+primitive consumes no generator words, but every call costs exactly one search
+attempt whether it returns `noFactor`, a proper factor, or `whole`. -/
+def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
+    PMinusOneAttempt :=
+  ⟨pMinusOneStage1 n base bound, 1, r⟩
+
 /-- Requests beyond the complete prime-table range are exactly capped. -/
 theorem pMinusOneStage1_bound (n base bound : Nat) :
     pMinusOneStage1 n base bound =
@@ -105,6 +127,13 @@ theorem pMinusOneStage1_spec {n base bound d : Nat}
           exact ⟨hvalid.1, hvalid.2.1,
             Nat.dvd_of_mod_eq_zero hvalid.2.2⟩
         · cases h
+
+/-- A proper factor returned through the counted boundary satisfies the same
+dynamically checked contract as the compatibility result. -/
+theorem pMinusOneStage1Counted_spec {n base bound d : Nat} {r : Rand}
+    (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n := by
+  exact pMinusOneStage1_spec h
 
 end Nat
 

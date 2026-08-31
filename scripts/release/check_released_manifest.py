@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
 import sys
 from pathlib import Path
+from typing import NoReturn
 
 import yaml
 
@@ -17,8 +20,81 @@ from release.sync_released import MANIFEST, managed_paths  # noqa: E402
 from release import aggregate_readme  # noqa: E402
 
 
-def fail(message: str) -> None:
+def fail(message: str) -> NoReturn:
     raise ValueError(message)
+
+
+def parse_sync_baseline(text: str, source: str) -> set[str]:
+    """Return repository names from a validated release-sync baseline."""
+    try:
+        document = json.loads(text)
+    except json.JSONDecodeError as error:
+        fail(f"{source}: invalid JSON: {error}")
+    if not isinstance(document, dict):
+        fail(f"{source}: sync baseline must be a JSON object")
+    published: set[str] = set()
+    for repo, revision in document.items():
+        if repo == "_comment":
+            continue
+        if (
+            not isinstance(repo, str)
+            or not isinstance(revision, str)
+            or re.fullmatch(r"[0-9a-f]{40}", revision) is None
+        ):
+            fail(f"{source}: malformed baseline entry {repo!r}: {revision!r}")
+        published.add(repo)
+    return published
+
+
+def published_repositories(repo_root: Path = REPO_ROOT) -> set[str]:
+    """Read the live publication ledger, falling back to its bootstrap seed."""
+    live_ref = "refs/remotes/origin/release-sync-baseline"
+    probe = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "--verify", "--quiet", live_ref],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode == 0:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "show", f"{live_ref}:synced.json"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            fail(
+                f"cannot read synced.json from {live_ref}: "
+                f"{result.stderr.strip()}"
+            )
+        return parse_sync_baseline(result.stdout, live_ref)
+
+    bootstrap = repo_root / "scripts" / "release" / "synced.json"
+    if not bootstrap.is_file():
+        fail(
+            "release-sync-baseline is unavailable and the bootstrap "
+            "scripts/release/synced.json does not exist"
+        )
+    return parse_sync_baseline(
+        bootstrap.read_text(encoding="utf-8"), str(bootstrap.relative_to(repo_root))
+    )
+
+
+def check_phase_admission(entries: list[dict], libraries: dict, published: set[str]) -> None:
+    """Require Phase 7 for entries that have never completed a real sync."""
+    for entry in entries:
+        lib = entry.get("lib")
+        if lib not in libraries:
+            continue
+        recorded = libraries[lib].done_through
+        repo = entry["repo"]
+        short = repo.split("/", 1)[1]
+        if recorded < 7 and short not in published:
+            fail(
+                f"{repo}: {lib} is recorded at done_through {recorded}; a new "
+                "released.yml entry requires the completed phase pipeline. "
+                "Finish Phase 7 or withdraw the entry until then"
+            )
 
 
 def release_test_modules() -> set[str]:
@@ -316,45 +392,12 @@ def main() -> int:
                 )
 
     libraries = load_libraries()
-    # A manifest entry is a publication commitment, and three entries in one
-    # week arrived with their implementation merges while the library's phase
-    # pipeline was still at 0 — each one broke every full sync on its empty
-    # repository until it was withdrawn by hand. A new entry may only exist
-    # once the library has completed the whole pipeline. The libraries below
-    # were already published before this rule existed and are grandfathered at
-    # the phase they had then: each may only move up (a regression fails), no
-    # library may join this list, and an entry leaves it by reaching Phase 7.
-    prepublished_floor = {
-        "HexPolyZMathlib": 6,
-        "HexMatrixMathlib": 6,
-        "HexRowReduceMathlib": 5,
-        "HexDeterminantMathlib": 5,
-        "HexBareissMathlib": 5,
-        "HexGramSchmidtMathlib": 6,
-        "HexLLLMathlib": 4,
-    }
-    graduated = sorted(
-        lib for lib in prepublished_floor
-        if lib in libraries and libraries[lib].done_through >= 7
-    )
-    if graduated:
-        fail(
-            "Phase-7 libraries must leave prepublished_floor: "
-            + ", ".join(graduated)
-        )
-    for entry in entries:
-        lib = entry.get("lib")
-        if lib not in libraries:
-            continue
-        recorded = libraries[lib].done_through
-        required = prepublished_floor.get(lib, 7)
-        if recorded < required:
-            fail(
-                f"{entry['repo']}: {lib} is recorded at done_through "
-                f"{recorded}; a released.yml entry requires done_through "
-                f"{required} ({'its grandfathered floor' if lib in prepublished_floor else 'the completed phase pipeline'}) "
-                "— finish the phases first, or withdraw the entry until then"
-            )
+    # Three entries once landed at phase 0 and broke every full sync against
+    # their empty split repositories. Phase 7 is therefore required for a new
+    # entry. Once the sync's live baseline proves that a repository has really
+    # been published, normal done_through rollback no longer removes it from
+    # the source-of-truth publication graph.
+    check_phase_admission(entries, libraries, published_repositories())
     closure = reachable_dependencies(libraries)
     repo_by_library = {
         entry["lib"]: entry["repo"].split("/", 1)[1]

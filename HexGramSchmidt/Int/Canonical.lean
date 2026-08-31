@@ -22,7 +22,7 @@ coefficient vector `coeff i` such that the represented row is
 each matrix entry in that trailing row is its inner product against the
 corresponding original row. -/
 structure BareissGramRowInvariant (b : Matrix Int n m)
-    (state : Matrix.BareissState n) where
+    (state : Matrix.BareissState Int n) where
   coeff : Fin n → Vector Int n
   coeff_supp : ∀ i k : Fin n, state.step ≤ i.val → i.val < k.val →
     (coeff i)[k] = 0
@@ -190,13 +190,13 @@ private theorem dot_vecMul_exactDiv_eq_of_eq_mul_right
 
 /-- Project the explicit coefficient witness for the row at index `i`. -/
 private def bareissGramRowInvariantCoeff
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n) : Vector Int n :=
   hinv.coeff i
 
 /-- `bareissGramRowInvariantCoeff_support` exposes the support vanishing condition for the projected Gram-row coefficient witness. -/
 private theorem bareissGramRowInvariantCoeff_support
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n)
     (hi : state.step ≤ i.val) :
     ∀ k : Fin n, i.val < k.val →
@@ -205,7 +205,7 @@ private theorem bareissGramRowInvariantCoeff_support
 
 /-- `bareissGramRowInvariantCoeff_row` identifies the projected Gram-row coefficient witness with the invariant's stored coefficient row. -/
 private theorem bareissGramRowInvariantCoeff_row
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n) :
     Matrix.vecMul (bareissGramRowInvariantCoeff hinv i) b =
       Matrix.vecMul (hinv.coeff i) b := rfl
@@ -214,7 +214,7 @@ private theorem bareissGramRowInvariantCoeff_row
 index `i`.  The functional shape mirrors the row update on the matrix side. -/
 @[expose]
 def bareissGramRowInvariantStepCoeff
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state)
     (hnext : state.step + 1 < n) (i : Fin n) (_hi : state.step + 1 ≤ i.val) :
     Vector Int n :=
@@ -231,7 +231,7 @@ Bareiss step.  The quotient vector is kept separate from
 integer divisibility witness before projecting back to the existing exact-div
 coefficient API. -/
 structure BareissGramRegularStepQuotient
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state)
     (hnext : state.step + 1 < n) (i : Fin n) (_hi : state.step + 1 ≤ i.val) where
   q : Fin n → Int
@@ -243,7 +243,7 @@ structure BareissGramRegularStepQuotient
           q a * state.prevPivot
 
 private theorem bareissGramRegularStepQuotient_stepCoeff_get
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     {hinv : BareissGramRowInvariant b state}
     {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
     (hprev : state.prevPivot ≠ 0)
@@ -254,7 +254,7 @@ private theorem bareissGramRegularStepQuotient_stepCoeff_get
   exact exactDiv_eq_of_eq_mul_right hprev (hq.coeff_num_eq_mul a)
 
 private theorem bareissGramRegularStepQuotient_stepCoeff_eq
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     {hinv : BareissGramRowInvariant b state}
     {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
     (hprev : state.prevPivot ≠ 0)
@@ -268,7 +268,7 @@ private theorem bareissGramRegularStepQuotient_stepCoeff_eq
       (hinv := hinv) (hnext := hnext) (i := i) (hi := hi) hprev hq af
 
 private theorem vecMul_bareissGramRegularStepQuotient
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     {hinv : BareissGramRowInvariant b state}
     {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
     (hprev : state.prevPivot ≠ 0)
@@ -278,7 +278,7 @@ private theorem vecMul_bareissGramRegularStepQuotient
   rw [bareissGramRegularStepQuotient_stepCoeff_eq hprev hq]
 
 theorem bareissGramRowInvariantStepCoeff_support
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hinv : BareissGramRowInvariant b state)
     (hnext : state.step + 1 < n) (i : Fin n) (hi : state.step + 1 ≤ i.val) :
     ∀ a : Fin n, i.val < a.val →
@@ -463,7 +463,7 @@ not depend on the state index, so transport is the identity at that
 projection. Used to discharge canonicity proofs after transporting an explicit
 intermediate state back to the `noPivotLoop fuel initial` form. -/
 theorem bareissGramRowInvariant_coeff_transport
-    {b : Matrix Int n m} {st1 st2 : Matrix.BareissState n}
+    {b : Matrix Int n m} {st1 st2 : Matrix.BareissState Int n}
     (h : st1 = st2) (x : BareissGramRowInvariant b st2) (i : Fin n) :
     (h ▸ x).coeff i = x.coeff i := by
   cases h
@@ -501,7 +501,7 @@ column, both sides zero), `j.val = state.step` (pivot column below the pivot,
 both sides zero), and `state.step < j.val` (trailing block, `exactDiv` of the
 Bareiss numerator). -/
 private theorem bareissGramRegularStep_entry_eq_dot
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     {hinv : BareissGramRowInvariant b state}
     {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
     (hprev : state.prevPivot ≠ 0)
@@ -606,7 +606,7 @@ invariant, provided the later loop proof supplies the exact-division entry
 relation for the fraction-free updated row combinations. -/
 @[expose]
 def bareissGramRowInvariant_regular_step
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {b : Matrix Int n m} {state : Matrix.BareissState Int n}
     (hnext : state.step + 1 < n)
     (_hp : state.matrix[state.step][state.step] ≠ 0)
     (hinv : BareissGramRowInvariant b state)
@@ -776,7 +776,7 @@ the initial step and the final step is zero below the pivot in the final
 matrix. Each such column was processed by a regular Bareiss step that cleared
 its sub-diagonal entries, and no later iteration touches them. -/
 private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) :
-    ∀ (state : Matrix.BareissState n),
+    ∀ (state : Matrix.BareissState Int n),
       (Matrix.noPivotLoop fuel state).singularStep = none →
       ∀ (k : Nat), state.step ≤ k →
         k < (Matrix.noPivotLoop fuel state).step →
@@ -796,7 +796,7 @@ private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) 
           rw [Matrix.noPivotLoop_of_singular f state hDone hp] at h_result_none
           simp at h_result_none
         · -- Regular branch.
-          let next : Matrix.BareissState n :=
+          let next : Matrix.BareissState Int n :=
             { step := state.step + 1
               matrix := Matrix.stepMatrix state.matrix state.step
                 state.matrix[state.step][state.step] state.prevPivot
@@ -988,7 +988,7 @@ succ-singular equation at the singular fixed-point without rewriting through
 dependent matrix-access proofs. -/
 private theorem bareissGramCanonicalCoeff_succ_singular_of_state_eq
     {n m : Nat} (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
-    {s : Matrix.BareissState n}
+    {s : Matrix.BareissState Int n}
     (h_state : Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) = s)
     (hDone : s.step + 1 < n)

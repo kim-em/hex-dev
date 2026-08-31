@@ -21,6 +21,17 @@ namespace Nat
 def pMinusOneFactor (n base bound : Nat) : PMinusOneResult :=
   pMinusOneStage1 n base bound
 
+/-- Counted adapter to the shared deterministic stage-1 attempt. -/
+def pMinusOneFactorCounted (n base bound : Nat) (r : Rand) :
+    PMinusOneAttempt :=
+  pMinusOneStage1Counted n base bound r
+
+/-- Every factor returned through the counted adapter is a proper divisor. -/
+theorem pMinusOneFactorCounted_spec {n base bound d : Nat} {r : Rand}
+    (h : (pMinusOneFactorCounted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n := by
+  exact pMinusOneStage1Counted_spec h
+
 /-- Every factor reported by the integer-factorization adapter is a proper
 divisor of its subject. -/
 theorem pMinusOneFactor_spec {n base bound d : Nat}

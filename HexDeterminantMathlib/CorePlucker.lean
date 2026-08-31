@@ -101,7 +101,7 @@ resulting permutation is the product of two disjoint cycles
 -/
 
 private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
-    {R : Type u} [CommRing R] {n : Nat}
+    {R : Type u} {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
     let h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
@@ -962,6 +962,37 @@ The remaining Mathlib-side recurrence proof can supply `hdesnanot` from the
 Desnanot-Jacobi identity; this lemma packages the resulting product identity
 as the `hexact` premise expected by `Hex.Matrix.stepMatrix_borderedMinor_update`.
 -/
+theorem exactQuot_borderedMinor_of_mul_eq [CommRing R]
+    (quot : R → R → R)
+    (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (prevPivot : R)
+    (hprev_ne : prevPivot ≠ 0)
+    (hdesnanot :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) * prevPivot =
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)) :
+    quot
+        (Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
+        prevPivot =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) := by
+  exact Hex.Matrix.exactQuot_borderedMinor_of_mul_eq quot hquot
+    source k hk hnext i j hi hj prevPivot hprev_ne hdesnanot
+
+/-- Integer compatibility specialization of `exactQuot_borderedMinor_of_mul_eq`. -/
 theorem bareissExactDiv_borderedMinor_of_mul_eq
     (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (prevPivot : Int)
@@ -986,8 +1017,8 @@ theorem bareissExactDiv_borderedMinor_of_mul_eq
           Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
             (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
         prevPivot =
-      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) := by
-  exact Hex.Matrix.bareissExactDiv_borderedMinor_of_mul_eq
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) :=
+  exactQuot_borderedMinor_of_mul_eq Hex.Matrix.exactDiv Int.mul_ediv_cancel
     source k hk hnext i j hi hj prevPivot hprev_ne hdesnanot
 
 /-- Cyclic shift on `Fin (k + 1)` mapping `0 ↦ k`, `r ↦ r - 1` for `r ≥ 1`.
@@ -1083,7 +1114,7 @@ private theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
 
 /-- Source-row index returned by `bareissDesnanotIndex k r.succ` from `r : Fin (k+1)`:
 `r.val` for interior `r.val < k`, `i` when `r.val = k`. -/
-private theorem source_row_of_succ [CommRing R]
+private theorem source_row_of_succ
     (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
     (r : Fin (k + 1)) :
     ∀ (c : Fin (k + 1)),
@@ -1120,7 +1151,7 @@ private theorem source_row_of_succ [CommRing R]
     rw [Hex.Matrix.borderedMinor_entry_last_last]
     simp [hr, hc]
 
-private theorem source_row_of_borderedMinor [CommRing R]
+private theorem source_row_of_borderedMinor
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n)
     (r c : Fin (k + 1)) :
     matrixEquiv (Hex.Matrix.borderedMinor source k hk i j) r c =
@@ -1137,7 +1168,7 @@ private theorem source_row_of_borderedMinor [CommRing R]
 the entry at `bareissDesnanotIndex k r.castSucc` lands in the interior of the
 `(k+2)` bordered minor: source row `k` for `r = 0`, source row `r.val - 1` for
 `r.val ≥ 1`. Same for columns. -/
-private theorem source_row_of_castSucc [CommRing R]
+private theorem source_row_of_castSucc
     (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
     (r c : Fin (k + 1)) :
     matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
@@ -1184,7 +1215,7 @@ private theorem source_row_of_castSucc [CommRing R]
     simp [hr, hc]
 
 /-- Mixed `succ`/`castSucc` source-row helper used for `M_1k`. -/
-private theorem source_row_of_succ_castSucc [CommRing R]
+private theorem source_row_of_succ_castSucc
     (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
     (r c : Fin (k + 1)) :
     matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
@@ -1229,7 +1260,7 @@ private theorem source_row_of_succ_castSucc [CommRing R]
     simp [hr, hc]
 
 /-- Mixed `castSucc`/`succ` source-row helper used for `M_k1`. -/
-private theorem source_row_of_castSucc_succ [CommRing R]
+private theorem source_row_of_castSucc_succ
     (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
     (r c : Fin (k + 1)) :
     matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
@@ -1302,7 +1333,7 @@ private theorem fin_n_cyclicShift_eq_castSucc_index (k : Nat) (hk : k < n)
 column yields the natural `(k+1)` bordered minor of `source` with the original
 pivot row/column position `⟨k, _⟩` (i.e. the leading prefix of `source` of size
 `k+1`), reindexed by the cyclic shift `bareissCyclicShift k`. -/
-private theorem M_kk_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+private theorem M_kk_eq_matrixEquiv_borderedMinor_submatrix
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
@@ -1329,7 +1360,7 @@ private theorem M_kk_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
 column yields the natural `(k+1)` bordered minor with trailing row `i` and
 trailing column position `⟨k, _⟩`, with columns reindexed by
 `bareissCyclicShift k`. -/
-private theorem M_1k_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+private theorem M_1k_eq_matrixEquiv_borderedMinor_submatrix
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
@@ -1354,7 +1385,7 @@ private theorem M_1k_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
 column 0 yields the natural `(k+1)` bordered minor with trailing row position
 `⟨k, _⟩` and trailing column `j`, with rows reindexed by
 `bareissCyclicShift k`. -/
-private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
@@ -1378,7 +1409,7 @@ private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
 /-- The interior `(k × k)` submatrix of the reindexed Bareiss bordered minor:
 deleting both row 0 and the last row (and similarly columns) leaves exactly
 `matrixEquiv (principalSubmatrix source k _)`. -/
-private theorem M_interior_eq_matrixEquiv_principalSubmatrix [CommRing R]
+private theorem M_interior_eq_matrixEquiv_principalSubmatrix
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
@@ -1415,7 +1446,7 @@ private theorem M_interior_eq_matrixEquiv_principalSubmatrix [CommRing R]
 /-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
 deleting row 0 and column 0 yields exactly `matrixEquiv` of the natural
 `(k+1)` bordered minor with the same trailing row `i` and column `j`. -/
-private theorem M11_eq_matrixEquiv_borderedMinor [CommRing R]
+private theorem M11_eq_matrixEquiv_borderedMinor
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix

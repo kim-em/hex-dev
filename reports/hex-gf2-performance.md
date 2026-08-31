@@ -492,6 +492,9 @@ target.
 
 ## Concerns
 
+- [#9807](https://github.com/kim-em/hex-dev/issues/9807) tracks both the
+  expected-trend reclassification and the marshalling-dominated addition
+  evidence below.
 - NTL `GF2X` `mul` / `div` / `rem` / `gcd` show a diverging trend
   against Hex `GF2Poly` across the eligible upper rungs of each
   ladder. At `n = 2048` (mul) and `n = 1024–1536` (div / rem / gcd)

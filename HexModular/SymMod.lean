@@ -44,6 +44,17 @@ theorem symMod_emod {a : Int} {m : Nat} (h : 0 < m) :
     simp only [Int.emod_emod]
   · exact Int.emod_emod _ _
 
+/-- Symmetric reduction is idempotent at every positive modulus. -/
+@[simp] theorem symMod_symMod {a : Int} {m : Nat} (h : 0 < m) :
+    symMod (symMod a m) m = symMod a m := by
+  change (if m = 0 then symMod a m else
+    let r := symMod a m % (m : Int)
+    if (m : Int) < 2 * r then r - m else r) = symMod a m
+  rw [ite_eq_right (Nat.ne_of_gt h)]
+  simp only
+  rw [symMod_emod h]
+  rw [symMod, ite_eq_right (Nat.ne_of_gt h)]
+
 /-- A symmetric representative has absolute value at most half its positive
 modulus, with the positive representative selected at an even tie. -/
 theorem symMod_le {a : Int} {m : Nat} (h : 0 < m) :

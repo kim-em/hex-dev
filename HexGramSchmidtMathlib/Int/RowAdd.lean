@@ -767,7 +767,7 @@ its `(k, k)` matrix entry equals the determinant of the `(k + 1)`-leading
 prefix of the source matrix. Stated with `k` as a free variable so that
 `subst` can replace the let-bound projection with a fresh name. -/
 private theorem bareissNoPivotInvariant_diag_eq
-    {n : Nat} (M : Matrix Int n n) (state : Matrix.BareissState n) (k : Nat)
+    {n : Nat} (M : Matrix Int n n) (state : Matrix.BareissState Int n) (k : Nat)
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (hsk : k = state.step) (hk : k < n) :
     state.matrix[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =

@@ -41,6 +41,8 @@ no sampling trace was collected.
 
 ## Concerns
 
+- [#9809](https://github.com/kim-em/hex-dev/issues/9809) tracks the two
+  inconclusive registrations and missing profile evidence.
 - The GCD declaration remains deliberately conservative; observed scaling is
   faster than `n²`.
 - Frobenius `X` remains inconclusive; division and modular composition are

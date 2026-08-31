@@ -44,7 +44,7 @@ The library transports the executable row-reduction data of an
 `Hex.Matrix R n m` to Mathlib's function-based matrix `matrixEquiv M`, then
 states the correspondence theorems:
 
-- `vectorEquiv_rowCombination`: an executable row combination transports to
+- `vectorEquiv_vecMul`: an executable row combination transports to
   Mathlib's `Fintype.linearCombination` over the rows of `matrixEquiv M`;
 - `spanCoeffs_eq_linearCombination` and `spanContains_iff_mem_span`: the
   executable span witnesses and the decidable span-membership test agree with

@@ -7,8 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexArith.Nat.Prime
--- For the `#guard` regression block only.
-meta import HexArith.Nat.Prime
 
 public section
 
@@ -676,17 +674,6 @@ theorem prime_mod_six {n : Nat} (hp : Prime n) (h5 : 5 ≤ n) :
     intro h
     rcases hp.2 3 (Nat.dvd_of_mod_eq_zero h) with h' | h' <;> omega
   omega
-
-/-! Regression coverage: the value map, the mask, and the sieve at a
-small bound against trial division. -/
-
-#guard (List.range 8).map numOfIndex = [1, 5, 7, 11, 13, 17, 19, 23]
-#guard indexWidth 10000 = 3333
-#guard numOfIndex (indexWidth 10000) ≥ 10000
--- The sieve at bound 100 (sqrt bound 10) agrees with trial division on
--- every represented index above 0.
-#guard (List.range (indexWidth 100)).all fun t =>
-  t == 0 || ((sieve 100 10).testBit t == isPrimeTrial (numOfIndex t))
 
 end Nat
 

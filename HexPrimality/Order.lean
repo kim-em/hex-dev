@@ -17,68 +17,75 @@ The multiplicative order of `a` modulo `n`, Mathlib-free.
 `orderOf a n` is the least `k > 0` with `a ^ k % n = 1 % n` when `1 < n` and
 `a` is coprime to `n`, and `0` on every other input. The junk value is a
 deliberate choice: `0 < orderOf a n` is the hypothesis that says "this is a
-real order", and every theorem below carries it. The order appears only in
-proofs (the Pocklington checker never computes it), so the bounded-search
-definition needs no efficiency and no kernel exposure.
+real order", and every theorem below carries it. The scan carries the current
+power residue, reducing both it and the base before the next multiplication,
+so each candidate costs one multiplication of residues modulo `n`. Certificate
+checking uses only the theorems about this order and never evaluates the scan.
 -/
 
 namespace Hex
 
 namespace Nat
 
-/-- First exponent `e` in `[k, k + fuel)` with `a ^ e % n = 1 % n`, and `0`
-if there is none. -/
-def orderOfAux (a n : Nat) : Nat → Nat → Nat
-  | 0, _ => 0
-  | fuel + 1, k => if a ^ k % n = 1 % n then k else orderOfAux a n fuel (k + 1)
+/-- Scan consecutive exponents while carrying the current power residue. -/
+private def orderOfAux (b n : Nat) : Nat → Nat → Nat → Nat
+  | 0, _, _ => 0
+  | fuel + 1, k, r =>
+      if r = 1 % n then k
+      else orderOfAux b n fuel (k + 1) (r * b % n)
 
 /-- Multiplicative order of `a` modulo `n`: the least `k > 0` with
 `a ^ k % n = 1 % n` when `1 < n` and `Nat.Coprime a n`, and `0` on every
 other input. -/
 def orderOf (a n : Nat) : Nat :=
-  if 1 < n ∧ Nat.Coprime a n then orderOfAux a n n 1 else 0
+  if 1 < n ∧ Nat.Coprime a n then orderOfAux (a % n) n n 1 (a % n) else 0
 
 private theorem orderOfAux_spec (a n : Nat) :
-    ∀ fuel k, orderOfAux a n fuel k ≠ 0 →
-      k ≤ orderOfAux a n fuel k ∧
-      a ^ orderOfAux a n fuel k % n = 1 % n ∧
-      ∀ j, k ≤ j → j < orderOfAux a n fuel k → a ^ j % n ≠ 1 % n := by
+    ∀ fuel k r, r = a ^ k % n → orderOfAux (a % n) n fuel k r ≠ 0 →
+      k ≤ orderOfAux (a % n) n fuel k r ∧
+      a ^ orderOfAux (a % n) n fuel k r % n = 1 % n ∧
+      ∀ j, k ≤ j → j < orderOfAux (a % n) n fuel k r → a ^ j % n ≠ 1 % n := by
   intro fuel
   induction fuel with
   | zero =>
-      intro k h
+      intro k r _ h
       simp [orderOfAux] at h
   | succ fuel ih =>
-      intro k h
+      intro k r hr h
       unfold orderOfAux at h ⊢
-      by_cases hk : a ^ k % n = 1 % n
+      by_cases hk : r = 1 % n
       · rw [if_pos hk] at h ⊢
-        exact ⟨Nat.le_refl _, hk, fun j hkj hjk => by omega⟩
+        exact ⟨Nat.le_refl _, hr ▸ hk, fun j hkj hjk => by omega⟩
       · rw [if_neg hk] at h ⊢
-        obtain ⟨hle, hpow, hmin⟩ := ih (k + 1) h
+        have hr' : r * (a % n) % n = a ^ (k + 1) % n := by
+          rw [hr, ← Nat.mul_mod, ← Nat.pow_succ]
+        obtain ⟨hle, hpow, hmin⟩ := ih (k + 1) _ hr' h
         refine ⟨by omega, hpow, ?_⟩
         intro j hkj hjlt
         rcases Nat.eq_or_lt_of_le hkj with rfl | hlt
-        · exact hk
+        · exact fun hpow => hk (hr.trans hpow)
         · exact hmin j hlt hjlt
 
 private theorem orderOfAux_ne_zero_of_witness (a n : Nat) :
-    ∀ fuel k, 0 < k → ∀ j, k ≤ j → j < k + fuel → a ^ j % n = 1 % n →
-      orderOfAux a n fuel k ≠ 0 := by
+    ∀ fuel k r, r = a ^ k % n → 0 < k →
+      ∀ j, k ≤ j → j < k + fuel → a ^ j % n = 1 % n →
+        orderOfAux (a % n) n fuel k r ≠ 0 := by
   intro fuel
   induction fuel with
   | zero =>
-      intro k hk j hkj hjb _
+      intro k r hr hk j hkj hjb _
       omega
   | succ fuel ih =>
-      intro k hk j hkj hjb hj
+      intro k r hr hk j hkj hjb hj
       unfold orderOfAux
-      by_cases hcase : a ^ k % n = 1 % n
+      by_cases hcase : r = 1 % n
       · rw [if_pos hcase]
         omega
       · rw [if_neg hcase]
-        have hne : j ≠ k := fun h => hcase (h ▸ hj)
-        exact ih (k + 1) (by omega) j (by omega) (by omega) hj
+        have hne : j ≠ k := fun h => hcase (hr.trans (h ▸ hj))
+        have hr' : r * (a % n) % n = a ^ (k + 1) % n := by
+          rw [hr, ← Nat.mul_mod, ← Nat.pow_succ]
+        exact ih (k + 1) _ hr' (by omega) j (by omega) (by omega) hj
 
 private theorem dvd_pow_self' (a : Nat) {k : Nat} (hk : k ≠ 0) : a ∣ a ^ k := by
   cases k with
@@ -133,7 +140,7 @@ theorem pow_pred_mod {p a : Nat} (hp : Prime p) (h : Nat.Coprime a p) :
   exact pow_mod_cancel h hfermat
 
 private theorem orderOf_eq_aux {a n : Nat} (h1 : 1 < n) (hcop : Nat.Coprime a n) :
-    orderOf a n = orderOfAux a n n 1 := by
+    orderOf a n = orderOfAux (a % n) n n 1 (a % n) := by
   unfold orderOf
   rw [if_pos ⟨h1, hcop⟩]
 
@@ -160,7 +167,7 @@ theorem orderOf_pow_mod {a n : Nat} (h : 0 < orderOf a n) :
   have h1 := one_lt_of_orderOf_pos h
   have hcop := coprime_of_orderOf_pos h
   rw [orderOf_eq_aux h1 hcop] at h ⊢
-  exact (orderOfAux_spec a n n 1 (by omega)).2.1
+  exact (orderOfAux_spec a n n 1 (a % n) (by simp) (by omega)).2.1
 
 /-- Minimality of a positive order among positive exponents. -/
 theorem orderOf_min {a n : Nat} (h : 0 < orderOf a n) :
@@ -169,7 +176,7 @@ theorem orderOf_min {a n : Nat} (h : 0 < orderOf a n) :
   have hcop := coprime_of_orderOf_pos h
   rw [orderOf_eq_aux h1 hcop] at h ⊢
   intro j hj hjlt
-  exact (orderOfAux_spec a n n 1 (by omega)).2.2 j (by omega) hjlt
+  exact (orderOfAux_spec a n n 1 (a % n) (by simp) (by omega)).2.2 j (by omega) hjlt
 
 /-- Distinct power residues below `d` force `d ≤ n`, by pigeonhole inside
 `List.range n`. -/
@@ -219,16 +226,17 @@ up to `n` therefore also finds it. -/
 theorem orderOf_pos_of_pow_eq_one {a n k : Nat} (h1 : 1 < n) (hk : 0 < k)
     (h : a ^ k % n = 1 % n) : 0 < orderOf a n := by
   have hcop := coprime_of_pow_mod_eq_one h1 hk h
-  have hne : orderOfAux a n k 1 ≠ 0 :=
-    orderOfAux_ne_zero_of_witness a n k 1 (by omega) k (by omega) (by omega) h
-  obtain ⟨hd1, hdpow, hdmin⟩ := orderOfAux_spec a n k 1 hne
-  have hdn : orderOfAux a n k 1 ≤ n :=
+  have hne : orderOfAux (a % n) n k 1 (a % n) ≠ 0 :=
+    orderOfAux_ne_zero_of_witness a n k 1 (a % n) (by simp) (by omega)
+      k (by omega) (by omega) h
+  obtain ⟨hd1, hdpow, hdmin⟩ := orderOfAux_spec a n k 1 (a % n) (by simp) hne
+  have hdn : orderOfAux (a % n) n k 1 (a % n) ≤ n :=
     le_of_least_pow_witness h1 hcop hdmin
-  have hne' : orderOfAux a n n 1 ≠ 0 :=
-    orderOfAux_ne_zero_of_witness a n n 1 (by omega) (orderOfAux a n k 1)
-      hd1 (by omega) hdpow
+  have hne' : orderOfAux (a % n) n n 1 (a % n) ≠ 0 :=
+    orderOfAux_ne_zero_of_witness a n n 1 (a % n) (by simp) (by omega)
+      (orderOfAux (a % n) n k 1 (a % n)) hd1 (by omega) hdpow
   rw [orderOf_eq_aux h1 hcop]
-  have := (orderOfAux_spec a n n 1 hne').1
+  have := (orderOfAux_spec a n n 1 (a % n) (by simp) hne').1
   omega
 
 /-- The order divides every exponent sending `a` to `1` modulo `n`. -/
@@ -360,13 +368,14 @@ repeat into a witness exponent. -/
 theorem orderOf_pos {a n : Nat} (h1 : 1 < n) (h : Nat.Coprime a n) :
     0 < orderOf a n := by
   rw [orderOf_eq_aux h1 h]
-  rcases Nat.eq_zero_or_pos (orderOfAux a n n 1) with hzero | hpos
+  rcases Nat.eq_zero_or_pos (orderOfAux (a % n) n n 1 (a % n)) with hzero | hpos
   · exfalso
     -- With no witness exponent in [1, n], all n + 1 residues
     -- a ^ 0 % n, …, a ^ n % n are pairwise distinct inside [0, n).
     have hnowit : ∀ j, 1 ≤ j → j < 1 + n → a ^ j % n ≠ 1 % n := by
       intro j h1j hjb hj
-      exact orderOfAux_ne_zero_of_witness a n n 1 (by omega) j h1j hjb hj hzero
+      exact orderOfAux_ne_zero_of_witness a n n 1 (a % n) (by simp) (by omega)
+        j h1j hjb hj hzero
     have hdist : ∀ i j, i < j → j < n + 1 → a ^ i % n ≠ a ^ j % n := by
       intro i j hij hjd heq
       exact hnowit (j - i) (by omega) (by omega)
@@ -383,7 +392,12 @@ junk-input branch of the definition. -/
 #guard orderOf 2 15 = 4
 #guard orderOf 4 15 = 2
 #guard orderOf 1 5 = 1
+#guard orderOf (7 * 2 ^ 100000 + 3) 7 = 6 -- large unreduced base
+#guard orderOf 8 7 = 1  -- unreduced residue `1`
+#guard orderOf 13 7 = 2 -- unreduced residue `n - 1`
+#guard orderOf 3 257 = 256 -- order close to the modulus
 #guard orderOf 2 8 = 0   -- not coprime
+#guard orderOf (15 * 2 ^ 10000 + 5) 15 = 0 -- large unreduced nonunit
 #guard orderOf 0 5 = 0   -- not coprime
 #guard orderOf 5 1 = 0   -- trivial modulus
 #guard orderOf 5 0 = 0   -- trivial modulus

@@ -846,7 +846,8 @@ theorem mul_inv_cancel
             rw [hinv]
     _ = GFqRing.reduceMod f
             (GFqRing.repr x.toQuotient * GFqRing.reduceMod f (invPoly x.toQuotient)) := by
-            rfl
+            simpa using GFqRing.repr_mul x.toQuotient
+              (GFqRing.ofPoly f hf (invPoly x.toQuotient))
     _ = GFqRing.reduceMod f (GFqRing.repr x.toQuotient * invPoly x.toQuotient) :=
         hmulReduce
     _ = GFqRing.reduceMod f 1 := hreduced
@@ -895,8 +896,9 @@ omit [ZMod64.PrimeModulus p] in
 @[simp, grind =] theorem repr_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
-    repr (x * y) = GFqRing.reduceMod f (repr x * repr y) :=
-  rfl
+    repr (x * y) = GFqRing.reduceMod f (repr x * repr y) := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact GFqRing.repr_mul x.toQuotient y.toQuotient
 
 omit [ZMod64.PrimeModulus p] in
 /-- The representative of a negation reduces from the negated representative. -/

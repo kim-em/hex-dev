@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Field.lean",
+ "baseline_blob": "c331f01c3221aca422f935b750c01dd30e953b5c",
+ "current_blob": "8ac3ae26451f08a616673fa95f18ac8ae3baff6f",
+ "reason": "Adds proof-only correctness theorems and private proof helpers for xgcdLeftMonic; compiled factorization code is unchanged."
+}

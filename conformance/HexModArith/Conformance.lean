@@ -5,6 +5,10 @@ Authors: Kim Morrison
 -/
 
 import HexModArith.HotLoop
+import HexModArith.Ntt.Catalogue
+import HexModArith.Ntt.Convolution
+import HexModArith.Ntt.CrtInput
+import HexModArith.Ntt.Transform
 import HexModArith.Prime
 import HexModArith.Ring
 
@@ -20,6 +24,8 @@ Covered operations:
 - natural and integer scalar multiplication
 - `BarrettCtx.mulMod`
 - `MontCtx.toMont`, `mulMont`, `fromMont`
+- `ZMod64.NttPlan.build?`, reusable Shoup twiddle tables, bounded butterflies,
+  radix-two transforms, and cyclic, ordinary, and negacyclic convolution
 
 Covered properties:
 - constructors and casts reduce representatives modulo the committed modulus
@@ -31,10 +37,20 @@ Covered properties:
 - Montgomery round-trips preserve standard residues and Montgomery hot-loop
   multiplication agrees with the core `ZMod64` multiplication contract
 - every checked result remains in canonical range through `toNat`
+- NTT plans validate power-of-two lengths and exact-order roots
+- the fixed NTT-prime catalogue supports its advertised length ladder and
+  rejects invalid or out-of-capacity requests
+- auxiliary-prime selection obtains a strict CRT bound and runs matching
+  signed integer convolutions at every selected modulus
+- Shoup multiplication and forward/inverse butterflies preserve their residues
+  while remaining in their advertised redundant ranges
+- checked NTT convolution agrees with direct cyclic, zero-padded ordinary, and
+  primitive-`2n` negacyclic products
 
 Covered edge cases:
 - modulus `1`
 - small prime modulus `7`
+- small prime modulus `5`, including a primitive fourth root
 - composite modulus `15`, including the exact non-coprime inverse convention
 - power-of-two modulus `16`
 - small Barrett-friendly moduli `2`, `7`, and `65535`
@@ -54,6 +70,7 @@ private abbrev MontWideMod : Nat := 65537
 private instance conformanceBoundsOne : Bounds 1 := ⟨by decide, by decide⟩
 private instance conformanceBoundsTwo : Bounds 2 := ⟨by decide, by decide⟩
 private instance conformanceBoundsThree : Bounds 3 := ⟨by decide, by decide⟩
+private instance conformanceBoundsFive : Bounds 5 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSeven : Bounds 7 := ⟨by decide, by decide⟩
 private instance conformanceBoundsFifteen : Bounds 15 := ⟨by decide, by decide⟩
 private instance conformanceBoundsSixteen : Bounds 16 := ⟨by decide, by decide⟩
@@ -84,6 +101,24 @@ private theorem conformancePrimeSeven : Hex.Nat.Prime 7 := by
 private instance conformancePrimeModulusSeven : PrimeModulus 7 :=
   primeModulusOfPrime conformancePrimeSeven
 
+private theorem conformancePrimeFive : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by
+      omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private instance conformancePrimeModulusFive : PrimeModulus 5 :=
+  primeModulusOfPrime conformancePrimeFive
+
 example {a : ZMod64 7} (ha : a ≠ 0) : ZMod64.inv a * a = 1 := by
   grind
 
@@ -94,6 +129,168 @@ example {a b : ZMod64 7} (h : a * b = 0) : a = 0 ∨ b = 0 := by
   grind
 
 end PrimeModulusAutomation
+
+/-! Reusable NTT plan validation and observations. -/
+
+#guard (NttPlan.build? (p := 7) (n := 0) (ofNat 7 1)).isNone
+#guard (NttPlan.build? (p := 7) (n := 4) (ofNat 7 6)).isNone
+#guard (NttPlan.build? (p := 7) (n := 2) (ofNat 7 1)).isNone
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      plan.root.toNat == 6 && plan.invRoot.toNat == 6 &&
+        plan.invLength.toNat == 4 &&
+        plan.forwardTwiddles.size == 2 &&
+        plan.forwardTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6] &&
+        plan.inverseTwiddles.map (fun twiddle => twiddle.value.toNat) == #[1, 6]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      match Ntt.forward? plan #[ofNat 7 3, ofNat 7 5] with
+      | none => false
+      | some transformed => transformed.map ZMod64.toNat == #[1, 5]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      match Ntt.forward? plan #[ofNat 7 3, ofNat 7 5] with
+      | none => false
+      | some transformed =>
+          match Ntt.inverse? plan transformed with
+          | none => false
+          | some values => values.map ZMod64.toNat == #[3, 5]
+
+#guard
+  match NttPlan.build? (p := 7) (n := 2) (ofNat 7 6) with
+  | none => false
+  | some plan =>
+      (Ntt.forward? plan #[ofNat 7 3]).isNone &&
+        (Ntt.inverse? plan #[ofNat 7 3]).isNone
+
+#guard nttPrimes.map NttPrime.modulus ==
+  [167772161, 469762049, 754974721, 998244353, 1004535809, 1224736769, 2013265921]
+
+#guard nttPrimes.map NttPrime.maxLog == [25, 26, 24, 23, 21, 24, 27]
+
+#guard
+  match nttPrimes with
+  | first :: _ =>
+      (first.plan? 8).isSome && (first.plan? 3).isNone &&
+        (first.plan? (2 ^ 26)).isNone
+  | [] => false
+
+#guard
+  match nttPrimes with
+  | first :: _ =>
+      first.convolution? 4 #[1, -2, 3] #[4, 5] ==
+        some #[4, Int.ofNat (first.modulus - 3), 2, 15]
+  | [] => false
+
+#guard
+  match nttPrimes with
+  | first :: _ => (first.convolution? 3 #[1] #[1]).isNone
+  | [] => false
+
+#guard
+  match Ntt.CrtSelection.build? 4 100 with
+  | none => false
+  | some selection =>
+      selection.primes.length == 1 &&
+        200 < selection.moduli.toList.prod
+
+#guard
+  match Ntt.CrtSelection.build? 4 100 with
+  | none => false
+  | some selection =>
+      match selection.images? #[1, -2, 3] #[4, 5] with
+      | none => false
+      | some images =>
+          match selection.primes, images.residues with
+          | prime :: [], residue :: [] =>
+              residue.toArray == #[4, Int.ofNat (prime.modulus - 3), 2, 15]
+          | _, _ => false
+
+/-- The largest advertised catalogue length is supported without constructing
+its enormous twiddle array during conformance elaboration. -/
+example :
+    ((nttPrimes[6]'(by decide)).plan? (2 ^ 27)).isSome = true := by
+  apply NttPrime.plan?_isSome_of_supported
+  · decide
+  · decide
+
+private def negacyclicPlanFive? : Option (Ntt.NegacyclicPlan 5 2) :=
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => none
+  | some transform =>
+      if hroot : transform.root = (ofNat 5 2) ^ 2 then
+        if horder : ExactOrder (ofNat 5 2) 4 then
+          some { transform, twist := ofNat 5 2, twist_order := horder, root_eq := hroot }
+        else none
+      else none
+
+#guard
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match Ntt.cyclic? plan #[ofNat 5 1, ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[3, 3]
+
+#guard
+  match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
+  | none => false
+  | some plan =>
+      match Ntt.ordinary? plan #[ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[1, 2]
+
+#guard
+  match negacyclicPlanFive? with
+  | none => false
+  | some plan =>
+      match Ntt.negacyclic? plan #[ofNat 5 1, ofNat 5 1] #[ofNat 5 1, ofNat 5 2] with
+      | none => false
+      | some result => result.map ZMod64.toNat == #[4, 3]
+
+private def nttTwiddleSeven : NttTwiddle 7 :=
+  NttTwiddle.ofValue (ofNat 7 6)
+
+private def nttForwardSeven : NttRaw2 7 × NttRaw2 7 :=
+  Ntt.forwardButterfly nttTwiddleSeven
+    (NttRaw2.ofZMod (ofNat 7 3)) (NttRaw2.ofZMod (ofNat 7 5))
+
+private def nttInverseSeven : NttRaw4 7 × NttRaw4 7 :=
+  Ntt.inverseButterfly nttTwiddleSeven
+    (NttRaw4.ofZMod (ofNat 7 1)) (NttRaw4.ofZMod (ofNat 7 2))
+
+private def nttForwardImplSeven : NttRaw2 7 × NttRaw2 7 :=
+  Ntt.forwardButterflyImpl nttTwiddleSeven
+    (NttRaw2.ofZMod (ofNat 7 3)) (NttRaw2.ofZMod (ofNat 7 5))
+
+private def nttInverseImplSeven : NttRaw4 7 × NttRaw4 7 :=
+  Ntt.inverseButterflyImpl nttTwiddleSeven
+    (NttRaw4.ofZMod (ofNat 7 1)) (NttRaw4.ofZMod (ofNat 7 2))
+
+#guard nttTwiddleSeven.precon.toNat = 6 * UInt64.word / 7
+#guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).val.toNat < 14
+#guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).normalize.toNat = 2
+#guard nttForwardSeven.1.val.toNat < 14
+#guard nttForwardSeven.2.val.toNat < 14
+#guard nttForwardSeven.1.normalize.toNat = 1
+#guard nttForwardSeven.2.normalize.toNat = 2
+#guard nttInverseSeven.1.val.toNat < 28
+#guard nttInverseSeven.2.val.toNat < 28
+#guard nttInverseSeven.1.normalize.toNat = 6
+#guard nttInverseSeven.2.normalize.toNat = 3
+#guard nttForwardImplSeven.1.val = nttForwardSeven.1.val
+#guard nttForwardImplSeven.2.val = nttForwardSeven.2.val
+#guard nttInverseImplSeven.1.val = nttInverseSeven.1.val
+#guard nttInverseImplSeven.2.val = nttInverseSeven.2.val
 
 section BasicConstructorAutomation
 

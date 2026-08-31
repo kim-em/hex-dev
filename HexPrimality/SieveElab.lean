@@ -44,6 +44,8 @@ private meta def renderChunk (width start size : Nat) (idx : Nat) : String :=
 
 private meta def renderChain (bound sqrtB width cnt : Nat)
     (plan : List (Nat × Nat)) : String := Id.run do
+  if plan.length == 1 then
+    return s!"private theorem sieve_eq_final : sieve {bound} {sqrtB} = sieveStateFinal := by\n  show sieveGoRange {width} 1 {cnt} (sieveInit {width}) = _\n  exact sieveChunk1\n"
   -- One line per rewrite group, matching the committed block: the size
   -- split, fold split, and chunk equation together, then the start-index
   -- fold on its own line; the final chunk closes the bracket.
@@ -66,7 +68,7 @@ private meta def renderChain (bound sqrtB width cnt : Nat)
     consumed := consumed + size
     idx := idx + 1
   let rws := String.intercalate "\n    " lines
-  return s!"private theorem sieve_eq_final : sieve {bound} {sqrtB} = sieveState{total} := by\n  show sieveGoRange {width} 1 {cnt} (sieveInit {width}) = _\n  rw [{rws}\n"
+  return s!"private theorem sieve_eq_final : sieve {bound} {sqrtB} = sieveStateFinal := by\n  show sieveGoRange {width} 1 {cnt} (sieveInit {width}) = _\n  rw [{rws}\n"
 
 private meta def renderTable (primes : List Nat) : String := Id.run do
   let mut linesAcc : List String := []
@@ -88,6 +90,7 @@ private meta def renderTable (primes : List Nat) : String := Id.run do
 module docstring. -/
 syntax (name := rebuildPrimeTable) "#rebuild_primeTable" num num num : command
 
+/-- Elaborate `#rebuild_primeTable` into the generated table and proof block. -/
 @[command_elab rebuildPrimeTable] meta def elabRebuildPrimeTable :
     CommandElab := fun stx => do
   match stx with
@@ -143,13 +146,15 @@ syntax (name := rebuildPrimeTable) "#rebuild_primeTable" num num num : command
       for state in states do
         out := out ++ s!"private def sieveState{idx} : Nat :=\n  {state}\n\n"
         idx := idx + 1
+      out := out ++ s!"private abbrev sieveStateFinal : Nat := \
+        sieveState{plan.length}\n\n"
       idx := 1
       for (s0, size) in plan do
         out := out ++ renderChunk width s0 size idx ++ "\n"
         idx := idx + 1
       out := out ++ renderChain bound sqrtB width cnt plan
       out := out ++ s!"\nprivate theorem primeTable_eq_bits :\n    \
-        primeTable = (2 :: 3 :: bitsToList sieveState{plan.length} \
+        primeTable = (2 :: 3 :: bitsToList sieveStateFinal \
         {bound}).toArray := by\n  decide +kernel\n"
       logInfo out
   | _ => throwUnsupportedSyntax

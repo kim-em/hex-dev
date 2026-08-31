@@ -4,10 +4,11 @@ Kernel-checkable primality: a Miller-Rabin compositeness witness, a
 Pocklington certificate and its cube-root variant, a stored initial
 segment with a kernel-reducible sieve behind it, and the `primality`
 tactic that produces `Hex.Nat.Prime n` for a literal `n`. Mathlib-free.
-The companion `hex-primality-mathlib` relates the predicate to
-`Nat.Prime`, supplies
-the `norm_num` interoperation, and is where a dependency on an external
-Lean primality library may live.
+The companion
+[hex-primality-mathlib](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md)
+owns the `Nat.Prime` correspondence, transports, tactic registration, and
+opt-in `norm_num` policy. This SPEC remains the sole normative owner of the
+Mathlib-free search, certificate, checker, and core elaboration algorithms.
 
 This SPEC expands the "Better primality" entry in
 [future-work](../../SPEC/future-work.md). That entry's diagnosis is right -- the
@@ -46,7 +47,7 @@ search infrastructure rather than a checker primitive: `HexArith.extGcd`
 `@[extern]`. The namespace is `HexArith`, not `Hex`.
 
 `hex-berlekamp-zassenhaus` carries 94 candidate primes in
-`hotPathCandidates` (`HexBerlekampZassenhaus/PrimeSelection.lean:647`),
+`hotPathCandidates` (`HexBerlekampZassenhaus/PrimeSelection.lean:293`),
 each built by `smallPrimeCandidateOfTrial p (by decide) (by decide)`,
 covering every prime in `[3, 500]`. It proves both directions:
 `mem_hotPathCandidates_prime` (every entry is prime and in range) and
@@ -354,11 +355,12 @@ arithmetic rejections before recursive certificate replay:
 
 1. `2 ≤ n` and `n` is odd.
 2. The subjects `q` of the child certificates satisfy `2 ≤ q` and are
-   pairwise distinct.
+   in strictly ascending order. This canonical order implies pairwise
+   distinctness and is checked with one lower-bound comparison per entry
+   (the first against `1`, then each later subject against its predecessor).
 3. `F = ∏ q^(e+1)` divides `n - 1`; each power is accumulated by a
-   bounded loop and the whole product aborts as soon as its running
-   value exceeds `n - 1`, rather than constructing an attacker-chosen
-   enormous power.
+   bounded loop that tests each nonzero step by division, and the whole
+   product aborts before constructing a running value above `n - 1`.
 4. `n < F * F`.
 5. For each `(a, e, child)`, with `q = child.subject`:
    `HexArith.powModNat a (n-1) n = 1 % n` and
@@ -380,10 +382,16 @@ from `F ∣ n - 1`, the certified complete factorization of `F`, and the
 per-prime conditions alone. The coprimality hypothesis belongs to the
 cube-root variant, not to this one.
 
-Step 5 is two modular exponentiations and one `Nat.gcd` per factor;
-step 3 is one bounded product and one division. So one level of the
-checker costs `O(k)` modular exponentiations for `k` factors, each
-`O(log n)` modular multiplications.
+Step 2 is at most `k` subject comparisons. Step 3 performs at most
+`O(k log n)` bounded ordinary multiplications even on rejected input:
+because step 2 established `q ≥ 2`, each entry either finishes or exceeds
+the `n - 1` bound within `O(log n)` iterations. Step 5 is two modular
+exponentiations, one division, and one `Nat.gcd` per factor. Thus one level
+costs `O(k log n)` modular multiplications, `O(k log n)` bounded ordinary
+multiplications, and `O(k)` subject comparisons, divisions, and gcds. The
+factor list comes from untrusted certificate data; search sorts its candidate
+list, but acceptance depends only on this kernel-replayed canonical-order
+check.
 
 ```lean
 theorem prime_of_checkPrime {c : PrimeCert} (h : checkPrime c = true) :
@@ -501,9 +509,9 @@ hex-int-factor depends on hex-primality, because a factorization
 certificate has to prove its factors prime. hex-primality does **not**
 depend on hex-int-factor, because the factorization of `n - 1` it needs
 is search, not proof. To keep it that way, hex-primality owns the shared
-untrusted Brent-rho primitive and an internal `partialFactor`: trial
-division by the stored table followed by that primitive, with a fuel
-bound.
+untrusted Pollard `p − 1` and Brent-rho primitives and an internal
+`partialFactor`: trial division by the stored table, one bounded stage-1
+call, then rho, with a fuel bound.
 
 ```lean
 /-- Why a proper-factor search stopped without a factor. -/
@@ -536,16 +544,42 @@ def Internal.rhoFactorCounted? (n : Nat) (r : Rand) (fuel : Nat) :
 theorem Internal.rhoFactorCounted?_spec {n r fuel success}
     (h : Internal.rhoFactorCounted? n r fuel = .ok success) :
     1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n
+
+inductive PMinusOneResult where
+  | noFactor
+  | factor (value : Nat)
+  | whole
+
+structure PMinusOneAttempt where
+  result   : PMinusOneResult
+  attempts : Nat
+  rand     : Rand
+
+def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
+    PMinusOneAttempt
+
+theorem pMinusOneStage1Counted_spec
+    (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
 ```
 
 The compatible pair-returning API is backed by the counted internal result
 `Internal.RhoSuccess`, whose `factor`, `attempts`, and `rand` fields are
-returned by `Internal.rhoFactorCounted?`. One attempt is one accepted restart
-draw and Brent run, including the successful restart; rejection draws used to
-choose that restart remain part of the same attempt. The ordinary
+returned by `Internal.rhoFactorCounted?`. One attempt is one semantic restart:
+its bounded sampling, any rejected pairs, and its Brent run, including the
+successful restart. Sampler-internal and pair rejections advance `rand` but do
+not add attempt units. If bounded sampling or the pair-draw loop exhausts, the
+restart under construction counts once, retains its exact advanced state, and
+the next allocated restart continues from there. The ordinary
 `rhoFactor?` projection does not rerun the search or alter its final state.
 The deterministic even-input shortcut returns factor `2` with zero attempts
 and an unchanged generator because it runs no restart.
+
+The p−1 counted boundary records all three terminal gcd outcomes. Every call
+has `attempts = 1`; because stage 1 is deterministic, its returned `rand` is
+exactly the supplied state. Thus callers charge a semantic p−1 attempt without
+pretending it consumed a generator word. Both partial factorization and
+hex-int-factor consume this boundary directly.
 
 `rhoFactor?` validates range and divisibility before returning.
 Randomness and fuel affect only whether it finds a factor. The advanced
@@ -563,9 +597,16 @@ replays just that batch one difference at a time; the caller accepts only
 a dynamically validated proper divisor. Each restart draws `c` from
 `[1, n - 1]` and a start from `[0, n - 1]`. It globally rejects the
 degenerate map `x ↦ x² - 2`; other offsets are rejected only with a start
-that makes a fixed point of `x ↦ x² + c`. The rejection loop and each
-restart's inner work are bounded. Both current worklist consumers share an
-eight-restart cap before retaining the residual or trying later routes.
+that makes a fixed point of `x ↦ x² + c`. Both coordinates use `Rand.nat`,
+which concatenates enough 64-bit words for the arbitrary-precision bound and
+rejects the incomplete top interval instead of reducing one word modulo the
+bound. Each coordinate sample has 64 tries, and one semantic restart admits
+eight pair draws. Sampler exhaustion or eight rejected pairs ends that restart
+with the exact state; no undrawn fallback pair is substituted. The next
+allocated restart continues from that state, and exhaustion of the overall
+restart allocation returns `RhoStop.exhausted`. Each restart's inner work is
+bounded as well. Both current worklist consumers share an eight-restart cap
+before retaining the residual or trying later routes.
 
 `partialFactor` is **internal**, not part of the public API. An earlier
 draft exposed it with "no correctness theorem at all", which is safe
@@ -580,13 +621,28 @@ structure PartialFactors where
   factors  : List (Nat × Nat)
   residual : Nat
 
-private def partialFactor (n : Nat) (r : Rand) (fuel : Nat) :
-    PartialFactors × Rand
+private structure PartialSearch where
+  raw      : PartialFactors
+  rand     : Rand
+  attempts : Nat
 
-private theorem partialFactor_prod (n r fuel) (hn : 0 < n) :
-    (((partialFactor n r fuel).1.factors.map
-      (fun e => e.1 ^ e.2)).prod * (partialFactor n r fuel).1.residual) = n
+private def partialFactor (budget : PrimeCertBudget) (n : Nat)
+    (r : Rand) (fuel : Nat) : PartialSearch
+
+private theorem partialFactor_prod (budget n r fuel) :
+    prodPows (partialFactor budget n r fuel).raw.factors *
+      (partialFactor budget n r fuel).raw.residual = n
 ```
+
+After table division, positive fuel permits one stage-1 call on a composite
+cofactor, at base `2` and bound `64`. Zero fuel, a trivial cofactor, or a
+probable-prime cofactor skips that call. A proper factor seeds the rho
+worklist with the divisor and cofactor; a probable-prime cofactor enters the
+factor list directly so rho does not repeat the same screen; `noFactor` and
+`whole` both retain the original cofactor unsplit. Rho then receives the same
+worklist-step fuel.
+Every actual p−1 call contributes exactly one to `PartialSearch.attempts` and
+leaves `PartialSearch.rand` unchanged.
 
 hex-int-factor reuses `rhoFactor?` rather than introducing a second rho.
 Brent's batched cycle detection and whole-modulus recovery are already
@@ -602,34 +658,37 @@ it too, for its primitive-root API. It belongs here, in
 
 ### Taking up downstream factoring advances
 
-hex-int-factor's stronger factorization reaches this library's search
-without inverting the proof dependency, in three ways:
+hex-int-factor's stronger factorization reaches, or is intended to reach, this
+library's search without inverting the proof dependency through two current
+routes and one deferred extension:
 
 1. **Certificate hand-off** (works today). `PrimeCert` is plain data
    and `checkPrime` accepts a certificate from any producer, so a
    caller that factors `n - 1` better than `partialFactor` assembles
    the node itself and lets the checker decide. hex-int-factor needs
    exactly this to prove its own certificate's factors prime.
-2. **Shared stage-1 primitives sit here.** `rhoFactor?` does, and
-   Pollard `p − 1` stage 1 joins it beside rho when hex-int-factor
-   lands, under the same dynamically validated proper-factor contract
-   and resumable-failure shape: both libraries want it, and it widens
+2. **Shared stage-1 primitives sit here.** `rhoFactor?` and Pollard
+   `p − 1` stage 1 live beside each other, under the same dynamically
+   validated proper-factor contract and counted/resumable boundary. Both
+   libraries consume stage 1, and the fixed base-2/bound-64 call widens
    `partialFactor`'s reach cheaply. Its public smoothness request is capped by
-   `smoothBound B = min B (primeTableBound - 1)`, so the committed table
-   contains every required prime and `pMinusOneStage1_bound` identifies every
-   larger request with that capped call. ECM stays downstream; curve
-   arithmetic is a real dependency, not a shared primitive.
-3. **An optional search hook**, deferred until hex-int-factor exists to
-   consume it. A `primeCert?With
-   (factor : Nat → Rand → Nat → PartialFactors × Rand)` variant
+   `smoothBound B = min B 9999`, preserving the measured search budget while
+   remaining inside the complete committed table; `pMinusOneStage1_bound`
+   identifies every larger request with that capped call. ECM stays downstream;
+   curve arithmetic is a real dependency, not a shared primitive.
+3. **An optional search hook**, not implemented. Issue #9848 tracks validation
+   of a concrete hex-int-factor consumer and the resulting API. The proposed
+   shape is a `primeCert?With
+   (factor : Nat → Rand → Nat → PartialFactors × Rand × Nat)` variant
    parameterizes the untrusted search (defaulting to `partialFactor`),
    and the `primality` tactic and companion `norm_num` extension may
    additionally consult an elaboration-time extension that downstream
    libraries register under a well-known declaration name (the
    `Hex.FactorTactic.Extension` / `extensionNames` pattern of
    `HexBerlekamp/PolynomialTactic.lean`, with its ABI-version guard),
-   so importing hex-int-factor transparently strengthens the tactic. This is the one route that
-   adds public API surface, which is why it waits for its consumer.
+   so importing hex-int-factor transparently strengthens the tactic. This is
+   the one route that adds public API surface; current integration consists
+   only of certificate hand-off and the shared p − 1/rho primitives above.
 
 Soundness is indifferent to all three: whatever finds the factors, the
 kernel replays `checkPrime`.
@@ -708,28 +767,37 @@ each equation by reduction, and chains the equations to the final literal.
 This is PrimeCert's `run_sieve` architecture and is required here: a
 single enormous `decide +kernel` expression is not the scaling claim.
 
-**`primeTableBound` is set by measurement, not chosen.** The bound is
-whatever keeps the table's own verification, generated source size, and
-incremental compile cost inside the "few minutes on
-the benchmark machine" budget that
-[hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed
-table, and the same rule applies for the same reason. The
-[future-work](../../SPEC/future-work.md) entry says timing targets belong in
-the SPEC that adopts the technique, measured in this repository, so
-this SPEC commits to the measurement and to the budget rule, and to no
-number. The bench family "table verification" below is the measurement;
-its multi-bound sweep is still pending, so the committed `10^4` stands
-on the budget rule alone.
+**`primeTableBound = 10^5` is the accepted measured policy.** The controlled
+fresh-module sweep runs the standard generator at `10^4`, `10^5`, `10^6`, and
+`10^7`, retaining generation/replay time, source/olean/generated-C size, and
+native compile-and-readback results. The `10^5` replay is comfortably inside the
+"few minutes on the benchmark machine" budget that
+[hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed table.
+Its 9,592-entry literal does make generated `leanc` warn that the static
+object-size metadata field truncates, but a standalone program containing that
+literal is explicitly code-generated, linked, and executed; it reads back the
+full length, endpoints, and checksum. That warning is therefore recorded as
+metadata overflow but not treated as a failed representation constraint. At
+`10^6` fresh replay exhausts the default heartbeat budget, and `10^7`
+generation exceeds the five-minute command budget. Thus `10^5` is the largest
+candidate satisfying the stated fresh-build budget. The raw samples,
+environment provenance, and exact reproduction command are in
+`reports/bench-results/hex-primality-table-issue-9757-chungus2.json` and
+`scripts/bench/primality_table_sweep.py`. The standard committed-table
+regeneration check is `python3 scripts/bench/check_prime_table.py`; CI runs the
+same command after building the Hex libraries.
 
-`hotPathCandidates` in hex-berlekamp-zassenhaus becomes a view of
-`primeTable` restricted to `[3, 500]`, keeping its two existing
-theorems as corollaries of the table's. That is the migration that
-proves the table is the right shape: if it cannot replace the 94-entry
-list without loss, it is not.
+`hotPathCandidates` in hex-berlekamp-zassenhaus is intended to become a view
+of `primeTable` restricted to `[3, 500]`, keeping its two existing theorems as
+corollaries of the table's. That migration is not implemented on current
+`main`: PR #9392 was parked because the released hex-berlekamp-zassenhaus
+cannot import HexPrimality until HexPrimality is published. Issue #9849 tracks
+the release-gated migration. Until it lands, neither this table nor core
+conformance claims that the downstream list consumes it.
 
 Two things that migration requires and an earlier draft of this SPEC
 left out. `hotPathCandidates` is a `List SmallPrimeCandidate`
-(`HexBerlekampZassenhaus/PrimeSelection.lean:519`), not a list of
+(`HexBerlekampZassenhaus/PrimeSelection.lean:170`), not a list of
 naturals: each entry bundles a `ZMod64.Bounds p` instance and a
 `Hex.Nat.Prime p` field, so the view is a proof-carrying map from table
 entries rather than a projection. And it makes `HexBerlekampZassenhaus`
@@ -763,10 +831,17 @@ structure PrimeDecisionFailure where
   rand     : Rand
 
 structure NextPrimeFailure where
-  attempts : Nat
-  rand     : Rand
+  rejectedCandidates : Nat
+  certAttempts       : Nat
+  rand               : Rand
 
 def defaultPrimeFuel (n : Nat) : Nat
+
+structure PrimeCertBudget where
+  rhoRestarts : Nat
+  rhoSteps    : Nat
+
+def defaultPrimeCertBudget : PrimeCertBudget
 
 structure Internal.PrimeCertSuccess (n : Nat) where
   cert     : CheckedPrimeCert n
@@ -775,6 +850,14 @@ structure Internal.PrimeCertSuccess (n : Nat) where
 
 def Internal.primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+def Internal.primeCertCountedWith? (budget : PrimeCertBudget)
+    (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+theorem Internal.primeCertCountedWith?_composite {budget n r fuel f}
+    (hresult : Internal.primeCertCountedWith? budget n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n
 
 theorem Internal.primeCertCounted?_composite {n r fuel f}
     (hresult : Internal.primeCertCounted? n r fuel = .error f)
@@ -805,13 +888,48 @@ theorem nextPrime?_spec {n r r' fuel p}
     n < p ∧ Hex.Nat.Prime p ∧ ∀ q, n < q → q < p → ¬ Hex.Nat.Prime q
 ```
 
-`isPrime?` dispatches: table lookup below `primeTableBound`; trial
-division below a measured second threshold; `isProbablePrime` as a
-filter; then `primeCert?`. A failed base returns a certified `false`, an
+`isPrime?` dispatches: table lookup below `primeTableBound`; a Miller--Rabin
+composite filter; exact trial division below the accepted
+`isPrimeTrialThreshold = 6·10^6`; then `primeCert?`. Fixed-shape primes cross
+earlier, so the policy is set by Cunningham-chain primes: the MR-plus-trial arm
+wins at the measured `5,011,967` rung, while the bounded certificate arm wins
+at `6,007,559`. The accepted threshold is the round boundary between those two
+rungs. Balanced semiprimes are rejected by the shared Miller--Rabin filter at
+roughly the same cost on both arms, rather than being sent through full trial
+division up to the prime-case crossover.
+A failed base returns a certified `false`, an
 accepted certificate returns `true`, and an exhausted certificate search
 returns `.error` rather than falling into an unbounded computation. The
 indexed success prevents a certificate for one number from answering a
 request about another.
+
+Certificate fuel bounds construction depth after the fixed deterministic
+front end, not the front end itself. At every recursive `primeCert?` invocation,
+the size check, complete table lookup, and fixed Miller--Rabin base scan run
+before fuel is inspected; these tiers consume no attempts and leave `Rand`
+unchanged. Therefore a table prime can return its small certificate at fuel
+zero, and a composite proved by size, table completeness, or a Miller--Rabin
+witness returns `.composite` at every fuel. Only a candidate at or above
+`primeTableBound` that passes every fixed base needs construction fuel: zero
+returns `.exhausted` without starting factorization, while a positive fuel
+begins one certificate node and passes its predecessor to every child. A table
+child can consequently close when that predecessor is zero, whereas a child
+that itself needs construction exhausts. Thus the fuel bounds the number of
+constructed certificate nodes along any root-to-leaf path; it neither counts
+deterministic verdict work nor bounds the randomized attempt total within a
+node.
+
+**`defaultPrimeFuel n = n.log2 + 1` is the settled depth policy.** This gives
+one construction unit per input bit. For an odd subject above the table, the
+partial-factor product invariant makes every positive-exponent child a factor
+of `n - 1`. A child that reaches construction is odd and therefore has a
+complementary factor of at least two, so its bit length is strictly smaller.
+The complete table closes inputs below 17 bits without construction; the
+structural maximum is consequently at most the input bit length minus 16.
+The settled policy retains those 16 spare units while removing the former
+unexplained factor-of-two and additive margin. This is only a recursion-depth
+bound: partial factorization and witness search remain separately bounded and
+may honestly exhaust, so no certificate-search completeness is claimed.
 
 `isPrime` is the pure total convenience API. It runs `isPrime?` with
 `defaultPrimeFuel n` from the reproducible seed `Rand.ofSeed n` and
@@ -827,51 +945,133 @@ this tree has neither Mathlib-free; an earlier draft of this SPEC
 declared `nextPrime : Nat → Nat` with no account of either. Adding
 Euclid would make the total form available and is not on any consumer's
 critical path, so `NextPrimeFailure` reports exhaustion with the attempt
-count and advanced state. The theorem records that a success is the
-*least* such prime.
+counts and advanced state. The units are separate: `rejectedCandidates`
+counts only candidates conclusively proved composite, while `certAttempts`
+counts certificate-search attempts consumed by the candidate
+whose decision exhausted. An undecided candidate is not included in
+`rejectedCandidates`. If the candidate window itself is exhausted,
+`certAttempts` is zero. In either case `rand` is the exact state after all
+reported search work, so a caller can replay or resume without losing work.
+Deterministic p−1 calls contribute to `certAttempts` but leave `rand` unchanged;
+table lookup, trial division, and Miller--Rabin filtering contribute to
+neither. In particular, every conclusively rejected candidate leaves both this
+count and `rand` unchanged. A failure with
+`rejectedCandidates = fuel` exhausted the whole candidate window. Otherwise
+the undecided candidate is `n + 1 + rejectedCandidates`, so the two failure
+modes and the resumption point are recoverable from the call and its failure.
+The theorem records that a success is the *least* such prime.
 
-`primeCert?` distinguishes `PrimeCertStop.composite`, justified by trial
-division or a failed Miller-Rabin base, from `.exhausted`, which makes
-no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
+`primeCert?` distinguishes `PrimeCertStop.composite`, justified by the size
+check, table completeness, or a failed Miller-Rabin base, from `.exhausted`,
+which makes no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
 factored past a square root (or a cube root), and there are `n` for
 which that is out of reach. `PrimeCertFailure` retains the advanced state and
-exact attempt count because `partialFactor` runs Pollard rho.
+exact attempt count because `partialFactor` runs Pollard p−1 and rho.
 `Internal.primeCertCounted?` also exposes that count on success, while
 `primeCert?` is its compatibility projection. Certificate metering counts
-every rho restart and every tried witness candidate, including successful
-ones, throughout recursive child construction; deterministic table lookup,
-Miller--Rabin filtering, and checker replay are not search attempts. Earlier
+every p−1 call, rho restart, and tried witness candidate, including successful
+ones, throughout recursive child construction. A p−1 call changes the count
+but not `rand`; table lookup, trial division, Miller--Rabin filtering, and
+checker replay are not search attempts. Earlier
 successful child and witness searches are accumulated before a later failure,
 and both entry points return the same advanced state without duplicate work.
-The failure propagates
-rather than being papered over, which is
-design principle 8's third remedy again.
+Rho coordinates and certificate witness bases use the same 64-try
+`Rand.nat` route over their full arbitrary-precision intervals. Rejected
+sampler candidates consume words and advance the returned state, but remain
+inside one counted rho restart or witness candidate. Exhausting that sampler
+counts the semantic attempt already under construction and continues the next
+candidate or restart from the sampler's exact advanced state. Exhausting that
+outer allocation returns `.exhausted` with the final state. The failure
+propagates rather than being papered over, which is design principle 8's third
+remedy again.
 
 ## The tactic
 
 ```
 primality n         -- term: Hex.Nat.Prime n
 primality           -- tactic: closes a `Hex.Nat.Prime e` goal
+primality n         -- tactic: adds `this : Hex.Nat.Prime n`
+primality h : n     -- tactic: adds `h : Hex.Nat.Prime n`
 ```
 
 Following `factor_poly` and `irreducibility` in hex-berlekamp: the
-search runs at elaboration time as untrusted compiled code, and the
-emitted term is `prime_of_checkPrime (c := literalCert) (by decide +kernel)`
-with the inductive certificate reified by its constructors. The kernel replays only
-`checkPrime`, which is `O(k log n)` modular multiplications on
-GMP-backed `Nat`, and never the search.
+search runs at elaboration time as untrusted compiled code. The emitted
+term applies `prime_of_checkPrimeAt` to the requested numeral, the inductive
+certificate reified by its constructors, and one `Eq.refl true` slot. The
+kernel reduces the subject-equality and `checkPrime` Boolean in that slot, so
+it replays `O(k log n)` modular multiplications on GMP-backed `Nat`, and never
+the search.
 
 For reproducible syntax with no seed argument, the elaborator uses
-`Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded,
-and diagnostics report the seed and attempts if certificate search
-exhausts its fuel.
+`Rand.ofSeed n`; the lower `primeCert?` API remains explicitly seeded.
 
-The companion adds `Nat.Prime n` through that correspondence, and
-registers a
-`norm_num` extension so `norm_num` picks it up on numerals too large
-for `Mathlib/Tactic/NormNum/Prime.lean`'s trial division. Which of the
-two runs on a given numeral is a threshold, and the threshold is
-measured, not assumed.
+**The supported positive-certificate elaboration policy is at most 512 input
+bits, at most 512 recursive certificate-search fuel, at most 2 Brent restarts
+per partial-factor worklist entry, and at most 32768 Brent cycle steps per
+restart.** Every elaboration-time certificate route uses
+`primalityFuel n = min (defaultPrimeFuel n) primalityFuelBudget`, where
+`primalityFuelBudget` is definitionally the 512-bit input ceiling. At the exact
+boundary the default contributes 512. The recursive fuel bounds
+certificate-construction depth. Partial factorization is bounded separately by
+`2 * n.log2 + 8` worklist
+steps at each certificate node and the rho restart/cycle allocation above. The
+fixed witness budget remains 32 candidates per factor entry. The exact attempt
+counter includes p−1 calls, rho restarts, and witness candidates and can
+therefore exceed the recursive fuel used at a node. Inputs above 512 bits are rejected before
+Miller--Rabin or certificate search. Search exhaustion reports the seed,
+selected recursive fuel, exact attempt count, and all enforced search maxima,
+and explicitly says that no total decision was attempted.
+
+The ceiling is the largest rung with both compiled and kernel evidence. The
+exact-boundary prime `100297^22 * 2^146 + 1`, namely
+`9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177`, is 512 bits. Its table factors alone do not meet the
+Pocklington threshold: the accepted core and companion routes use bounded rho
+work to discover the above-table factor `100297`, finish after 34 counted
+attempts, reify its recursive certificate, and replay it in the kernel. The
+same prepared certificate is checked by `HexPrimalityKernelProbe` and the
+native `runDecision`, `runCertSearch`, and `runChecker` families. The paired
+fresh-module sweep also exercises the non-smooth 512-bit probable-prime input
+`11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123`,
+which reaches bounded rho work in a recursive child and exhausts after 10
+attempts at fuel 512, and the 513-bit value `2^512`, which is rejected before
+search. The core route has a 10-second absolute fresh-module wall-clock budget
+on the designated benchmark host; the companion route is gated identically
+under its own SPEC. The harness compares the
+largest raw candidate wall time in every substantive sample set against that
+budget and makes any failure invalidate `release_quality`; it does not use the
+reference-subtracted tactic delta for this contract. This single end-to-end
+budget includes Lake startup and build-graph traversal, importing, compiled
+search, compiled self-check, reification, and kernel replay. Rejection and
+exhaustion may be indistinguishable from their import-only controls, but their
+absolute wall times remain budget-gated.
+The paired null controls remain in the record to classify those deltas; their
+spread is not a release gate for this absolute-only contract. Per-arm CPU and
+SMT-sibling interference checks remain hard gates for every accepted sample.
+The refreshed raw paired samples for the settled fuel policy and their host
+provenance are committed at
+`reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json`.
+The earlier ceiling-selection record remains at
+`reports/bench-results/hex-primality-elaborator-policy-issue-9779-chungus2.json`;
+the refreshed record supersedes its timings for the current fuel policy.
+They reproduce with:
+
+```bash
+python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+  --warm-timeout 600 --max-pair-retries 32 \
+  --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
+```
+
+`lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
+`primality` calls only `primeCertCountedWith?` with the explicit allocation
+above: it never calls the total `isPrime`, whose exact trial fallback is
+intentionally unbounded.
+
+The companion consumes this positive-certificate policy without widening it.
+Its `Nat.Prime` registration and precedence rules, negative factor-search
+budget, decline behavior, and bridge proof-performance evidence are normative
+only in the
+[hex-primality-mathlib SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#natprime-elaboration-routes).
 
 ## Kernel exposure
 
@@ -917,8 +1117,9 @@ hex-arith's kernel-reducible `isPrimeTrial`.
 
 ## Complexity
 
-`n` the input, `b = log₂ n` its bit length, `k` the number of prime
-factors in the certificate's factored part.
+`n` the input, `b = log₂ n` its bit length, `k` the number of factor
+entries at one certificate node, and `K` the total number of factor entries
+in the part of a certificate tree replayed before acceptance or rejection.
 
 | operation | cost | note |
 |---|---|---|
@@ -928,15 +1129,20 @@ factors in the certificate's factored part.
 | `isProbablePrime` | `O(13 b)` | fixed base list |
 | successful `isPrime?` | front end plus certificate search | bounded by explicit fuel after the fixed front end |
 | `isPrime` worst case | `O(√n)` remainder tests | exact fallback after default search exhaustion |
-| `checkPrime`, one Pocklington level | `O(k b)` modular multiplications | |
-| `checkPrime`, full tree | `O(K b)` modular multiplications | `K` = total factor entries over all nodes |
-| `primeCert?` | dominated by `partialFactor` | unbounded; fuel-limited |
+| `checkPrime`, one Pocklington level | `O(k b)` modular multiplications; `O(k b)` bounded ordinary multiplications; `O(k)` subject comparisons, divisions, and gcds | canonical subject preflight is linear on accepted and rejected lists |
+| `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
+| `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
-These are operation counts, not bit complexity; the operands are big
-integers and a bit-complexity model would have to name a multiplication
-cost and multiply through. The recursion depth claim in an earlier
-draft -- that each `q` is "at most half the bit length" of `n` -- was
+These are operation counts, not bit complexity; subject comparisons,
+divisions, gcds, and both kinds of multiplication operate on big integers,
+so a bit-complexity model would have to price each primitive. In particular,
+the canonical-order preflight removes the former quadratic number of subject
+comparisons on any pairwise-distinct list that passed structural preflight,
+whether it was accepted or rejected later; it does not claim that a comparison
+of arbitrary-size `Nat` values has unit bit cost. The recursion
+depth claim in an earlier draft -- that each `q` is "at most half the bit
+length" of `n` -- was
 wrong: `q` is at most about half the *value*, so the bit length drops
 by roughly one per level, and the depth is `O(b)` rather than
 `O(log b)`.
@@ -947,9 +1153,11 @@ a large integer rather than an array write. **Whether a compiled
 `ByteArray` sieve would beat it is a benchmark hypothesis, not a
 theorem** -- compiled `Nat` bit operations are big-integer operations
 too. The two are nonetheless different products and the SPEC keeps them
-apart: the bitset sieve exists to verify the committed table in the
-kernel, and `primesIn` for runtime use is the array version. The
-"segment generation" bench family below measures both.
+apart: the bitset sieve exists to verify the committed table in the kernel,
+while `primesIn` is the unrestricted trial-division range/filter route whose
+result is converted to an `Array`. The "segment generation" bench family
+below measures `primesIn`; the bitset sieve is priced by the "table
+verification" family's module-elaboration cost.
 
 ## Conformance
 
@@ -986,13 +1194,16 @@ Cases that must be present:
   and three levels deep.
 - A **rejected** certificate of each kind: `F ≤ √n`, a composite listed
   as a factor, a base failing the gcd condition, a factor not dividing
-  `n - 1`. The checker's negative cases matter as much as its positive
-  ones and no oracle produces them, so these are constructed by hand.
+  `n - 1`, duplicate factor subjects, and distinct subjects outside the
+  canonical ascending order. The checker's negative cases matter as much as
+  its positive ones and no oracle produces them, so these are constructed by
+  hand.
 - Segments `[1, 100]`, `[1, 10^4]`, and one segment straddling
   `primeTableBound`, checking the table and the fallback agree across
   the boundary.
-- The 94 `hotPathCandidates` entries, checking the migrated view has
-  the same contents in the same order.
+- After issue #9849 lands, the 94 `hotPathCandidates` entries, checking the
+  migrated view has the same contents in the same order. Current core
+  conformance does not import that unreleased downstream consumer.
 
 **Oracle choice.** PARI's `isprime`, `nextprime`, and `primes`
 through cypari2 cover the verdict surface, and cypari2 is already
@@ -1018,18 +1229,55 @@ Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexPrimality/Bench.lean`. Both native and kernel suites, because
 the kernel side is the point of the library.
 
-Families:
+Policy-selection evidence, retained as input to but not a claim about Phase 4:
 
-- **Table verification**, the batched kernel-replay cost and generated
-  artifact size of the committed table. Measured today only at the
-  committed `10^4` (2.2 s of module elaboration after the sieve swap);
-  the `10^5`-to-`10^7` sweep that would justify raising
-  `primeTableBound` is a pending `scripts/bench` fresh-module family,
-  and until it runs the committed bound is a floor chosen for safety,
-  not the sweep's output.
+- **Table verification**, the standard generator plus fresh emitted replay at
+  `10^4`, `10^5`, `10^6`, and `10^7`. The controlled driver records every raw
+  wall-time sample, source/olean/generated-C size, deterministic source hash,
+  and native compile/readback result. The committed record is
+  `reports/bench-results/hex-primality-table-issue-9757-chungus2.json`.
+- **Decision dispatch**, counterbalanced warm native timings for the production
+  Miller--Rabin-plus-trial arm and bounded certificate arm on fixed primes,
+  Cunningham-chain primes, and balanced semiprimes from `10^5` through `10^7`.
+  A deterministic independent 64-bit Miller–Rabin implementation checks both
+  results before a sample is accepted. The committed raw record is
+  `reports/bench-results/hex-primality-policy-issue-9757-chungus2.json`.
+- **Certificate depth fuel**, ascending/descending warm native ladders over
+  table-smooth primes at 31, 61, 123, and 256 bits; p-minus-one-friendly and
+  recursively certified primes requiring depths two and three; the rho-backed
+  512-bit boundary prime; and honest bounded exhaustion at 512 bits. The exact
+  success thresholds are one, two, and three construction levels. Rungs above
+  the threshold retain the same outcome and attempt count, while the selected
+  one-unit-per-bit policy remains a conservative structural bound. Every
+  successful probe results receive an untimed same-implementation
+  `checkPrime` replay; exhaustion makes no primality claim.
+  The runtime ceiling is the benchmark family's existing five seconds per
+  native call, and the elaboration ceiling is ten seconds per fresh module.
+  The native ladder uses an idle pinned core and retains host snapshots but has
+  no interference rejection gate, so its outcome and attempt columns select
+  the policy while its wall times are indicative. The paired fresh-module
+  record enforces per-arm CPU and SMT-sibling interference gates.
+  Raw counterbalanced samples and host provenance are in
+  `reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json`; the
+  refreshed paired elaboration samples are in
+  `reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json`.
+  These records are inputs to the later Phase-4 report rather than a separate
+  benchmark family to rerun.
+
+  ```bash
+  python3 scripts/bench/primality_fuel_sweep.py --rounds 6 --repeats 3 \
+    --output reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json
+  python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+    --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
+    --warm-timeout 600 --max-pair-retries 32 \
+    --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
+  ```
+
+Families:
 - **Kernel replay**, `checkPrime` on certificates for primes of `31`,
-  `61`, `123`, `256`, and `511` bits (the table-smooth ladder). Decides
-  the `powModNat`-versus-Montgomery question under "Kernel exposure".
+  `61`, `123`, `256`, `511`, and `512` bits. The lower rungs are table-smooth;
+  the 512-bit rung includes the above-table factor `100297`. Decides the
+  `powModNat`-versus-Montgomery question under "Kernel exposure".
 - **Native decision**, bounded `isPrime?` across the same bit lengths.
   The total `isPrime` gets no separate row: it differs only on the
   exhausted-search path, where its exact trial-division fallback is
@@ -1057,41 +1305,17 @@ to obtain in a separate checkout rather than a CI comparator.
 
 ## The Mathlib layer
 
-```lean
-theorem prime_iff {n : Nat} : Hex.Nat.Prime n ↔ Nat.Prime n
+The Mathlib-facing layer has its own
+[owned SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md). That
+document is normative for correspondence and segment transports, instance and
+elaborator registration, the `Nat.Prime` tactic and `norm_num` routes, bridge
+failure and resource semantics, and bridge conformance and proof-performance
+evidence. It links back here for the Mathlib-free algorithms and their positive
+certificate policy instead of restating them.
 
-theorem primeTable_spec : ∀ n < primeTableBound, n ∈ primeTable ↔ Nat.Prime n
-theorem primesIn_spec (lo hi) : ∀ n, n ∈ primesIn lo hi ↔ lo ≤ n ∧ n < hi ∧ Nat.Prime n
-```
-
-`prime_iff` is the whole correspondence, and it is one lemma: the two
-predicates are the same definition modulo Mathlib's `Irreducible`
-packaging, and `Nat.prime_def_lt` or `Nat.prime_def` closes it.
-Everything else transports along it.
-
-**No `DecidablePred Nat.Prime` instance.** Mathlib already declares
-`Nat.decidablePrime` with its own `@[csimp]` runtime twin
-(`Mathlib/Data/Nat/Prime/Defs.lean:162`, `:334`), so a second global
-instance would be a duplicate and would risk instance-selection churn.
-An earlier draft of this SPEC proposed one. What the companion offers
-instead is the tactic and the `norm_num` extension, which is where the
-scale actually helps.
-
-The companion also carries the `norm_num` extension, the `Nat.Prime`
-form of the `primality` tactic, and the universally quantified segment
-statements ("every prime in `[1, x]` satisfies `P`") in the form a
-Mathlib consumer would state them, over `Finset.filter Nat.Prime`.
-
-**Where a PrimeCert dependency would go.** If the toolchains are
-aligned, `hex-primality-mathlib` may depend on PrimeCert and re-export
-`pock%` / `prime_cert%` for numerals beyond what this library's search
-reaches, exactly as hex-rcf's SPEC allows a Mathlib-side tactic to
-consume Mathlib-side infrastructure. That is an accelerator, never a
-substitute: the Mathlib-free `checkPrime` and its soundness theorem
-remain the tree's primality story, because every Mathlib-free consumer
--- hex-mod-arith's `PrimeModulus`, hex-berlekamp-zassenhaus's prime
-selection, hex-gfq's field construction -- lives below the companion and
-cannot see it.
+Any future Mathlib-side primality dependency belongs to that companion as an
+accelerator over this checker. It cannot replace this Mathlib-free proof
+boundary because the core consumers live below the companion.
 
 ## Milestones
 
@@ -1104,10 +1328,10 @@ cannot see it.
 1. **The table and the sieve.** `sieve`, `sieve_testBit_iff` with its
    four hypotheses, the batched replay elaborator, `primeTable` with
    sortedness and both directions,
-   `isTablePrime`, `primesIn`, and the `hotPathCandidates` migration
-   with the `libraries.yml` amendment it forces. Independently useful,
-   and the only part of this SPEC with no dependency on the certificate
-   machinery.
+   `isTablePrime`, and `primesIn`. The release-gated `hotPathCandidates`
+   migration and the `libraries.yml` amendment it forces are tracked by
+   issue #9849. Independently useful, and the only part of this SPEC with no
+   dependency on the certificate machinery.
 
 2. **Miller-Rabin and the order.** `orderOf` with `orderOf_pos`,
    `coprime_of_pow_mod_eq_one`, `orderOf_dvd_of_pow_eq_one`, and
@@ -1130,8 +1354,9 @@ cannot see it.
    soundness case, with the stored square-root witness replacing any
    in-checker integer square root.
 
-5. **The companion.** `prime_iff`, the transports, the `norm_num`
-   extension, and the segment statements. Begins after milestone 1.
+5. **The companion.** The Mathlib-facing milestone is specified by the
+   [owned companion SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md).
+   Begins after milestone 1.
 
 ## File organisation
 
@@ -1144,15 +1369,13 @@ HexPrimality/
   MillerRabin.lean  -- millerRabin, isProbablePrime, the compositeness theorem
   Cert.lean         -- PrimeCert, CheckedPrimeCert, checkPrime, soundness
   Cert3.lean        -- the cube-root variant
-  Search.lean       -- rhoFactor?, partialFactor, primeCert?, isPrime?, isPrime, nextPrime?
+  Search.lean       -- p−1/rho partialFactor, primeCert?, isPrime?, nextPrime?
   Elab.lean         -- the primality tactic
 HexPrimality.lean
-HexPrimalityMathlib/
-  Prime.lean        -- prime_iff and the transports
-  NormNum.lean      -- the norm_num extension
-  Segment.lean      -- Finset-level segment statements
-HexPrimalityMathlib.lean
 ```
+
+The companion's source, conformance, probe, and SPEC layout is owned by its
+[file-organization section](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#file-organization).
 
 `libraries.yml` gains:
 
@@ -1174,9 +1397,6 @@ may add further uses, but the dependency does not depend on them.
 
 ## Open questions
 
-- **`primeTableBound`.** Set by the table-verification benchmark. Until
-  it is measured the table is built at `10^4`, which comfortably covers
-  every consumer in the tree today and is certain to fit the budget.
 - **Whether the sieve's correctness proof is worth its cost.** The
   alternative is to commit the table with a per-entry `isPrimeTrial`
   proof, as `hotPathCandidates` does today, which scales to perhaps
@@ -1190,16 +1410,10 @@ may add further uses, but the dependency does not depend on them.
   [future-work](../../SPEC/future-work.md) notes that Bhavik Mehta has elliptic
   curve computations in flight, which is the strongest argument for
   waiting rather than starting.
-- **How the `primality` tactic and `norm_num` should divide the range.**
-  Both will be available on the Mathlib side and both will answer small
-  numerals. A threshold is the obvious answer and the measurement is
-  cheap; whether `norm_num` should simply delegate everything above a
-  bound, or whether the two should stay independent, is a question
-  about Mathlib-side ergonomics rather than about this library.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
   search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.
-  Pollard `p − 1` stage 1 will join it here for the same two consumers
+  Pollard `p − 1` stage 1 has joined it here for the same two consumers
   (see "Taking up downstream factoring advances"), which sharpens the
   question rather than settling it.

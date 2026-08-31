@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "75bf17a1f3f2aa503ad2358dc57d9dd3c93b6830",
+  "reason": "Combines the inherited HexPolyFp precompileModules elaboration-time code-generation transition with additional build-only HexPrimalityElabProbe modules for the negative Nat.Prime policy. Neither changes HexPolyFp source, hexbz_factor_service, or the service runtime call graph."
+}

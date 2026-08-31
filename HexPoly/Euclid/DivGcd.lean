@@ -1253,6 +1253,37 @@ def xgcdLeft [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : XGCDLeftResult R :=
   xgcdLeftAux p 1 q 0 (p.size + q.size + 1)
 
+/-- Tail-recursive one-sided extended Euclidean algorithm that makes the
+current nonzero remainder monic before every division step. Its left Bezout
+coefficient is rescaled by the same unit, so the tracked identity is
+preserved while intermediate field coefficients remain normalized. -/
+@[expose]
+def xgcdLeftMonicAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ s₀ r₁ s₁ : DensePoly R) (fuel : Nat) : XGCDLeftResult R :=
+  match fuel with
+  | 0 => { gcd := r₀, left := s₀ }
+  | fuel + 1 =>
+      if _hr : r₁.isZero then
+        { gcd := r₀, left := s₀ }
+      else
+        let c := 1 / r₁.leadingCoeff
+        let r₁' := scale c r₁
+        let s₁' := scale c s₁
+        let qr := divMod r₀ r₁'
+        xgcdLeftMonicAux r₁' s₁' qr.2 (s₀ - qr.1 * s₁') fuel
+
+/-- One-sided extended gcd with monic remainder normalization, returning a
+gcd representative and the correspondingly scaled Bezout coefficient of the
+left input. Use {name}`xgcdLeft` when the exact unnormalized cofactor is part
+of the caller's contract. The normalization contract requires coefficient
+division to make `scale (1 / p.leadingCoeff) p` monic for nonzero `p`, as it
+does over a field; the field-level correctness theorems live in
+`HexPoly.Field`. -/
+@[expose]
+def xgcdLeftMonic [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : XGCDLeftResult R :=
+  xgcdLeftMonicAux p 1 q 0 (p.size + q.size + 1)
+
 /-- The one-sided and full extended algorithms return the same gcd. -/
 theorem xgcdLeftAux_gcd_eq [One R] [Add R] [Sub R] [Mul R] [Div R]
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) :

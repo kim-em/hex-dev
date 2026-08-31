@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+ "current_blob": "05075bd69e12dbb2924555e3e6a4a50b7232cf23",
+ "reason": "Marks HexPolyFp modules for native precompilation so downstream #guard evaluation can resolve the existing private lean_hex_fp_convolve wrapper. This changes only build and link availability; the Lean fallback, C extern, factorization call graph, and executable operation are unchanged."
+}

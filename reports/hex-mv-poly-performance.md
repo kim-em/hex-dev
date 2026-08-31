@@ -348,6 +348,9 @@ from the same corpus and are byte-identifiable by the hashes above.
 
 ## Concerns
 
+[Issue #9805](https://github.com/kim-em/hex-dev/issues/9805) tracks the
+unresolved representation experiment described below.
+
 The implementation milestone is complete. The representation experiment is
 not a positive performance result: all five terminal comparisons remain
 statistically unresolved. Under the predeclared gate, zero families pass.

@@ -110,7 +110,7 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -126,10 +126,33 @@ libraries:
           description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part operations.
         - name: polynomial-crt
           description: Coprime monic rational-polynomial moduli and residues for CRT witness construction.
+  HexPolyFast:
+    deps: [HexPoly, HexTruncatedSeries]
+    mathlib: false
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly and nmod_poly via python-flint
+          class: informational
+          rationale: "FLINT has independently tuned coefficient-specific dispatch; within-Lean agreement and crossover cells gate production selection."
+      input_families:
+        - name: full-and-clipped-multiplication
+          description: Balanced and unbalanced full, square, low, and middle products across crossover sizes.
+        - name: newton-division
+          description: One-shot and cached-divisor division against long division.
+        - name: half-gcd
+          description: Gcd, full xgcd, and one-sided xgcd across balanced and skewed degree pairs.
+        - name: multipoint
+          description: Cold and reused product/remainder trees for evaluation and interpolation.
+        - name: pade
+          description: Homogeneous and normalized Padé cases, including normalized failure.
+        - name: coefficient-kernels
+          description: Forced Kronecker and direct/CRT-NTT paths across degree, width, and modulus ladders.
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -153,7 +176,7 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -218,7 +241,7 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
   HexDeterminant:
     deps: [HexMatrix]
@@ -232,7 +255,7 @@ libraries:
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -272,7 +295,7 @@ libraries:
   HexPolySmith:
     deps: [HexPoly, HexMatrix, HexDeterminant]
     mathlib: false
-    done_through: 7
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -283,16 +306,16 @@ libraries:
           class: informational
           rationale: "PARI's polynomial-entry surface is square-only and does not match the full rectangular API, so it is retained as an informational cross-check."
       input_families:
-        - name: random-dense-polysmith
-          description: Deterministic dense nonsingular rational polynomial matrices across independent degree and dimension ladders.
+        - name: dense-polysmith
+          description: Dense rational presentations with a controlled dimension chain and a consecutive-remainder degree ladder that exercises the Euclidean kernel with derived boundary growth.
         - name: chain-conjugate-poly
           description: Known monic invariant-factor chains conjugated by deterministic unimodular matrices.
-        - name: rational-coefficients
-          description: Rational polynomial matrices exposing coefficient growth in addition to degree growth.
+        - name: rational-polysmith
+          description: Fixed-denominator dimension chains and a rational consecutive-remainder degree ladder with explicit denominator and transform-bit growth.
         - name: diagonal-polysmith
-          description: Diagonal polynomial presentations across a matrix-dimension ladder.
-        - name: small-field
-          description: ZMod64 2 inputs where evaluation certificates cannot obtain enough distinct field points.
+          description: Unordered diagonal polynomial presentations that exercise block repair across a matrix-dimension ladder.
+        - name: small-field-degree
+          description: A ZMod64 2 degree ladder at fixed dimension, where evaluation certificates cannot obtain enough distinct field points.
   HexPolySmithMathlib:
     deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
     mathlib: true
@@ -351,7 +374,7 @@ libraries:
   HexGF2:
     deps: [HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -372,7 +395,7 @@ libraries:
         - name: packed-vs-generic-comparison
           description: Shared deterministic GF(2) coefficient fixtures for cross-library comparisons of packed `GF2Poly` versus generic `FpPoly 2` polynomial gcd and Berlekamp-style Frobenius-column construction.
   HexPolyZ:
-    deps: [HexPoly, HexArith, HexBasic]
+    deps: [HexPoly, HexModArith, HexPolyFast, HexModular, HexArith, HexBasic]
     mathlib: false
     done_through: 7
     status: active
@@ -481,9 +504,9 @@ libraries:
         - name: knapsack
           description: "Rectangular d x (d+1) integer-relation bases (fplll gen_intrel / latticegen r), row i = [rand_b, e_{i+1}]; the only family with cols != rows, exercising the m>n ofBasis path. Also drives the success-vs-density recovery chart."
   HexPolyFp:
-    deps: [HexPoly, HexModArith]
+    deps: [HexPoly, HexModArith, HexPolyFast, HexModular]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -509,16 +532,16 @@ libraries:
   HexGFqField:
     deps: [HexGFqRing, HexBerlekamp]
     mathlib: false
-    done_through: 7
+    done_through: 4
     status: active
     phase4:
       comparators:
         - tool: FLINT fq_default via python-flint
           class: informational
-          rationale: "FLINT's fq_default finite-field arithmetic is a tuned C implementation over irreducible polynomial quotient fields; HexGFqField is the verified field wrapper over HexGFqRing with certificate-checked irreducible moduli. The ratio is recorded for orientation but is not a Phase-4 gate. Wired via the shared persistent-subprocess python-flint driver (`scripts/oracle/flint_bench_driver.py`) per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "FLINT's fq_default finite-field arithmetic is a tuned C implementation over irreducible polynomial quotient fields; HexGFqField is the verified field wrapper over HexGFqRing with Rabin-checked irreducible moduli. The ratio is recorded for orientation but is not a Phase-4 gate. Wired via the shared persistent-subprocess python-flint driver (`scripts/oracle/flint_bench_driver.py`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-canonical-reduction
-          description: Field construction from a dense polynomial through quotient-ring reduction modulo certificate-checked irreducible moduli over F7.
+          description: Field construction from a dense polynomial through quotient-ring reduction modulo Rabin-checked irreducible moduli over F7.
         - name: field-arithmetic
           description: Canonical field representatives over F7 quotients for addition, multiplication, negation, and subtraction.
         - name: field-exponentiation
@@ -552,26 +575,26 @@ libraries:
   HexHensel:
     deps: [HexPolyFp, HexPolyZ, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 4
     status: active
     phase4:
       comparators:
-        - tool: "FLINT nmod_poly_hensel_lift_* via python-flint"
+        - tool: "FLINT fmpz_poly Newton-style Hensel emulation via python-flint"
           class: informational
-          rationale: "FLINT exposes a family of tuned C Hensel-lift entry points (`nmod_poly_hensel_lift_once_preinv`, `nmod_poly_hensel_lift`, `nmod_poly_hensel_continue_lift`) that perform the same Newton-style quadratic lift Hex implements through its linear / quadratic / multifactor surfaces. The constant-factor gap reflects FLINT's word-level operand tuning and its `preinv` precomputation that Hex doesn't currently exploit. The comparator is wired as a persistent-subprocess call via the shared python-flint driver from HO-20 (`scripts/oracle/flint_bench_driver.py`); python-flint does not bind the `nmod_poly_hensel_lift_*` C entry points directly, so the driver emulates the Newton-style schema via `fmpz_poly` arithmetic, which is what the recorded informational ratios measure. A future gating upgrade requires a separate SPEC PR identifying a narrower comparable kernel (e.g. single-step lift with preinv on canonical inputs) per SPEC/Libraries/hex-hensel.md §External comparators."
+          rationale: "The persistent python-flint driver from HO-20 (`scripts/oracle/flint_bench_driver.py`) emulates the same Newton-style correction schema through FLINT `fmpz_poly` arithmetic for the linear, quadratic, and two-factor multifactor Hensel surfaces. python-flint does not expose FLINT's native Hensel entry points, so this is an informational emulation ratio rather than a native-Hensel performance claim. The coefficient-conversion and ordered-product surfaces are structural layers over the polynomial libraries' declared comparators; see HexHensel/SPEC/hex-hensel.md §External comparators."
       input_families:
         - name: bridge-operations
           description: Coefficient reduction from Z[x] to F_5[x], canonical lifting from F_5[x] to Z[x], and reduction modulo a fixed power of 5 over deterministic dense integer and F_5 polynomial fixtures.
         - name: linear-hensel
-          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering both a single correction step at fixed precision and the iterative wrapper over encoded (n, k) parameters including Mignotte-sized k.
+          description: Linear Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step and an iterated fixed-high-precision degree family.
         - name: quadratic-hensel
-          description: Single quadratic Hensel correction step on deterministic dense integer-polynomial fixtures with full lifted Bezout updates.
+          description: Quadratic Hensel lifting on deterministic dense integer-polynomial fixtures, covering a single correction step with full lifted Bezout updates.
         - name: multifactor-lifting
-          description: Ordered multifactor product, linear ordered multifactor lifting, and the production quadratic ordered multifactor lifter on deterministic two-factor dense integer-polynomial fixtures over encoded (n, k) parameters.
+          description: Ordered multifactor products on branch-isolated schedules, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures at fixed high precision.
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -582,7 +605,7 @@ libraries:
   HexGFq:
     deps: [HexGFqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       input_families:
@@ -595,7 +618,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 7
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -612,13 +635,13 @@ libraries:
         - name: degree-height-matrix
           description: Encoded degree/root-height split integer-polynomial matrix for the public cascade, lattice setup, and exact trial-backstop registrations.
         - name: fallback-probe
-          description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for `ZPoly.factorize`, covering prime selection and BHKS recombination together.
+          description: Historical fallback-probe inputs `(X-1)...(X-n)` for `ZPoly.factorize`; the current route exercises prime selection and proposal replay, and inclusive evidence records that no fallback or lattice reduction executes.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 2
     status: active
     phase4:
       comparators:
@@ -667,7 +690,7 @@ libraries:
   HexMvPolyMathlib:
     deps: [HexMvPoly, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
@@ -707,12 +730,12 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    done_through: 5
+    done_through: 3
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 3
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
@@ -727,32 +750,32 @@ libraries:
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 3
     status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
@@ -786,7 +809,7 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    done_through: 7
+    done_through: 3
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
@@ -801,7 +824,8 @@ libraries:
   HexPrimalityMathlib:
     deps: [HexPrimality]
     mathlib: true
-    done_through: 0
+    proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
+    done_through: 2
     status: active
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
@@ -839,7 +863,7 @@ libraries:
         - name: wilkinson-linprod
           description: The canonical degree-10 product ∏(X−j), with roots 1..10; shared by the three fixed dual-route strategy regressions.
         - name: refine-fixed
-          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by fixed refineTo at achieved precision 131077 and sameRoot.
+          description: The degree-3 polynomial (x−1)(x−2)(x+3), used by parametric refineTo on its achieved-precision ladder and by fixed sameRoot.
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
@@ -950,9 +974,13 @@ libraries:
         - name: qadjoin-arithmetic
           description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
         - name: lazy-arithmetic
-          description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
-        - name: exactification
-          description: Factorization-lazy roots of (X^n - 2)(X + 3), so canonicalization always selects among at least two irreducible candidate factors.
+          description: Sum-eliminant construction across the degree-varying family; a canonical end-to-end lazy addition pairing the first root of X^6 - 2 with sqrt(3) at degree product 12; plus the fixed isolation and operation-ball selection components. The archived performance sweep characterises degree products through the studied merge-facing ceiling 20 without retaining an unsupported asymptotic registration.
+        - name: exactification-selection
+          description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
+        - name: exactification-certification
+          description: Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model.
+        - name: exactification-factorization
+          description: Fixed mode-3 end-to-end exactification of the first root of the six-factor product over X^2 - p for p in {2,3,5,7,11,13}, the top completed rung of the archived factor-count sweep, under a 200 ms absolute child budget. The former sweep remains diagnostic evidence; inclusive profiling shows isolation, not BHKS-covered factorization, controls this family.
         - name: fixed-field-roots
           description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
         - name: algebraic-poly-roots
@@ -960,7 +988,7 @@ libraries:
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
@@ -984,7 +1012,7 @@ libraries:
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
   HexRealRoots:
     deps: [HexPolyZ]

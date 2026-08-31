@@ -24,6 +24,8 @@ Scientific registrations:
   `O(n^2)` for fixed small `p` (sparse `X^p mod f`).
 * `runRabinTestChecksum`: Rabin irreducibility test on a degree-`n` input,
   `O(n^3)`.
+* `runRabinSchoolbookChecksum`: retained Frobenius multiplication inside the
+  same Rabin gcd chain.
 * `runBerlekampFactorChecksum`: Berlekamp split-step factorization,
   `O(n^2)`.
 * `runDistinctDegreeChecksum`: distinct-degree factorization, `O(n^3)`.
@@ -250,9 +252,34 @@ def prepSplitInput (n : Nat) : SplitInput :=
 def runBerlekampMatrixChecksum (input : MonicInput) : UInt64 :=
   checksumMatrix <| berlekampMatrix input.poly input.monic
 
+/-- Retained schoolbook modular power used by the Rabin reference. -/
+def powSchoolbook (base modulus : FpPoly 5) (hmonic : DensePoly.Monic modulus)
+    (exponent : Nat) : FpPoly 5 :=
+  FpPoly.powModMonicAux modulus hmonic exponent
+    (FpPoly.modByMonic modulus base hmonic) 1
+
+/-- Rabin Frobenius difference with retained schoolbook multiplication. -/
+def frobDiffSchoolbook (f : FpPoly 5) (hmonic : DensePoly.Monic f) (k : Nat) :
+    FpPoly 5 :=
+  powSchoolbook FpPoly.X f hmonic (5 ^ k) - FpPoly.modByMonic f FpPoly.X hmonic
+
+/-- Retained Rabin test: schoolbook Frobenius powers and the unchanged
+Euclidean gcd chain. -/
+def rabinSchoolbook (f : FpPoly 5) (hmonic : DensePoly.Monic f) : Bool :=
+  let n := basisSize f
+  let witnesses := (maximalProperDivisors n).map fun d =>
+    (d, isUnitPolynomial (DensePoly.gcd f (frobDiffSchoolbook f hmonic d)))
+  decide (0 < n) &&
+    (frobDiffSchoolbook f hmonic n).isZero &&
+    witnesses.all Prod.snd
+
 /-- Benchmark target: run Rabin's irreducibility test. -/
 def runRabinTestChecksum (input : MonicInput) : UInt64 :=
   hash <| rabinTest input.poly input.monic
+
+/-- Benchmark reference: Rabin test with retained schoolbook Frobenius powers. -/
+def runRabinSchoolbookChecksum (input : MonicInput) : UInt64 :=
+  hash <| rabinSchoolbook input.poly input.monic
 
 /-- Benchmark target: run all `p` Berlekamp split candidates `gcd(f, h - c)` and
 checksum them together. The full sweep avoids the variable-cost early exit of
@@ -404,6 +431,23 @@ setup_benchmark runRabinTestChecksum n => n * n * n
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
+  }
+
+/-
+The retained schoolbook Rabin path has the same cubic upper bound: its dense
+Frobenius remainder dominates the bounded gcd checks.
+-/
+setup_benchmark runRabinSchoolbookChecksum n => (n * n * n)
+  with prep := prepLinearProductInput
+  where {
+    paramFloor := 8
+    paramCeiling := 64
+    paramSchedule := .custom #[8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+    tags := #["adoption", "rabin", "schoolbook", "reference", "fp5"]
   }
 
 /-

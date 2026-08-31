@@ -434,14 +434,16 @@ setup_fixed_benchmark runOfQAdjoin where {
 `D = 4` case isolates that linear operation from multiplication and inversion. -/
 setup_fixed_benchmark runAdd where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xd381defc58f22934
+  expectedHash := some 0xd381defc58f22934,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Schoolbook multiplication and recursive reduction visit `O(D^2)` pairs of
 coordinates before coefficient-size growth. -/
 setup_fixed_benchmark runMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xca888473e6359390
+  expectedHash := some 0xca888473e6359390,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Top-level extended gcd recursively invokes lower-tower division; unlike
@@ -449,7 +451,8 @@ multiplication, its cost depends on both tower dimension and height. This fixed
 `D = 4`, height-two case attributes recursive inversion separately. -/
 setup_fixed_benchmark runInv where {
   repeats := 5, maxSecondsPerCall := 2.0,
-  expectedHash := some 0xfdfda24536fdd084
+  expectedHash := some 0xfdfda24536fdd084,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Adjoining the fourth root factors a degree-four absolute presentation over
@@ -458,14 +461,16 @@ embedding, and validates the new level. This fixed case attributes that whole
 smart-constructor boundary. -/
 setup_fixed_benchmark runAdjoin where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xde9179e4f67a3948
+  expectedHash := some 0xde9179e4f67a3948,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Adjoining a root already represented in the base selects a linear factor
 and returns an identity extension instead of appending a redundant level. -/
 setup_fixed_benchmark runAdjoinIdentity where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0x51ddf5878af8a696
+  expectedHash := some 0x51ddf5878af8a696,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /-! # Trager factorization -/
@@ -562,7 +567,8 @@ bounded Trager search advances to a square-free one-level norm before gcd
 recovery. This isolates retry cost at base dimension two and input degree two. -/
 setup_fixed_benchmark runFactorRetry where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xf830f035fb69256e
+  expectedHash := some 0xf830f035fb69256e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Over `Q(sqrt(2), sqrt(3))`, `X^2 - 3` factors through the intermediate
@@ -570,7 +576,8 @@ field. The fixed dimension-four case measures recursive one-level norms and
 lower-field factorization instead of an invalid absolute-norm shortcut. -/
 setup_fixed_benchmark runFactorRecursive where {
   repeats := 3, maxSecondsPerCall := 10.0,
-  expectedHash := some 0xd13bbfca65f65898
+  expectedHash := some 0xd13bbfca65f65898,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Replay reconstruction, multiplicities, canonical order, and recursive
@@ -632,7 +639,8 @@ steps before collecting four simple roots. Dimension and input degree are both
 four, so this fixed case measures the complete degree-reducing outer loop. -/
 setup_fixed_benchmark runSplit where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0xd863bc339d467bf8
+  expectedHash := some 0xd863bc339d467bf8,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The shift-`+1` full-degree candidate performs the exact Euclidean gcd over
@@ -640,35 +648,40 @@ its degree-six primitive field and rejects the resulting nonlinear recovery.
 This isolates the fast flattening scan without invoking trace recovery. -/
 setup_fixed_benchmark runRecoverPair where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0x190011a8e6411c8e
+  expectedHash := some 0x190011a8e6411c8e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The two-candidate search first pays the rejected recovery gcd at shift
 `+1`, then repeats candidate formation and accepts the linear gcd at `-1`. -/
 setup_fixed_benchmark runRecoverSearch where {
   repeats := 1, maxSecondsPerCall := 60.0,
-  expectedHash := some 0xf696f44e1e1e7ef7
+  expectedHash := some 0xf696f44e1e1e7ef7,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- `basisImages` expands recovered generator coordinates into the complete
 mixed-radix tower basis. The candidate search is precomputed for attribution. -/
 setup_fixed_benchmark runBasisImages where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xb5d54195958fb61e
+  expectedHash := some 0xb5d54195958fb61e,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Certification checks the primitive relation and both coordinate maps on
 every tower basis vector for precomputed candidate images. -/
 setup_fixed_benchmark runCertifies where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x000000000000000b
+  expectedHash := some 0x000000000000000b,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- The public conversion closures are timed from a precomputed flattening;
 the checksum applies both directions to every dimension-four basis vector. -/
 setup_fixed_benchmark runCoordinateMaps where {
   repeats := 5, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xcc1b7720bfe3fc24
+  expectedHash := some 0xcc1b7720bfe3fc24,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Flattening the dimension-four two-level tower searches signed primitive
@@ -677,7 +690,8 @@ and verifies both coordinate maps. This covers the complete primitive-element
 path at the CI size bound. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 20.0,
-  expectedHash := some 0xcc1b7720bfe3fc24
+  expectedHash := some 0xcc1b7720bfe3fc24,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 
@@ -709,25 +723,33 @@ def runSMul : Unit → IO UInt64 := fun _ => do
 /- Coordinate subtraction, like addition, visits exactly `D` rational
 coordinates; this fixed `D = 4` case completes the linear-cost surface. -/
 setup_fixed_benchmark runSub where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0x098874a34dd4ec44,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Negation visits `D` coordinates with one rational negation each; the
 linear cost model matches addition. -/
 setup_fixed_benchmark runNeg where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0x2e1510498ed9e174,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Division composes recursive extended-gcd inversion with one `O(D^2)`
 multiplication/reduction; the inversion term dominates as in `runInv`. -/
 setup_fixed_benchmark runDiv where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0xe534ce65592907a8,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /- Rational scalar action multiplies each of the `D` coordinates by one
 rational, a linear-cost surface like addition. -/
 setup_fixed_benchmark runSMul where {
-  repeats := 5, maxSecondsPerCall := 2.0
+  repeats := 5, maxSecondsPerCall := 2.0,
+  expectedHash := some 0xcea4d21168dc712c,
+  warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
 /-! # Parametric dimension ladders -/
@@ -790,11 +812,19 @@ private instance : Hashable ElemInput where
 private instance : Inhabited ElemInput :=
   ⟨⟨rat, ofRat rat 1, ofRat rat 2⟩⟩
 
-/-- Deterministic dense all-nonzero mixed-radix coordinates. -/
+/-- Deterministic dense all-nonzero mixed-radix coordinates with bounded
+height: numerators cycle modulo 11 and denominators modulo 6, so every
+reduced common denominator divides `lcm(1, ..., 6) = 60` at every
+dimension. The previous denominator shape `i + 3` varied with the
+coordinate index, so the lcm of the vector's denominators had `Θ(D)` bit
+length and the ladders varied coefficient height together with dimension
+instead of holding it fixed as their one-parameter cost models require
+(the same correction `denseRatCoeff` records in the HexNumberField
+bench). -/
 private def ladderCoords (d salt : Nat) : Array Rat :=
   (Array.range d).map fun i =>
     let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
-    mkRat (sign * Int.ofNat (i + salt + 2)) (i + 3)
+    mkRat (sign * Int.ofNat ((i * 7 + salt * 3) % 11 + 1)) ((i * 5 + salt) % 6 + 1)
 
 def prepElemInput (n : Nat) : ElemInput :=
   let m := max n 1
@@ -836,14 +866,20 @@ setup_benchmark runTowerAddLadder n => n
 coordinates and reduces from the top generator downward, `O(D^2)` rational
 operations at dimension `D = 2n` (SPEC §Complexity: "Schoolbook
 multiplication and reduction cost O(D²)"). Bounded fixture heights make each
-rational operation `O(1)` words, so the declared wall model is quadratic. -/
+rational operation `O(1)` words, so the declared wall model is quadratic.
+The schedule extends through `n = 12` because the normalized cost has a
+small-dimension transient (per-element construction and the `O(D)` checksum
+walk weigh more against `D²` work at dimension four) that flattens from
+`n = 6` on; the raised per-call cap accommodates the untimed tower-fixture
+construction at `m = 8` and `m = 12`, whose `adjoin?` factors `X^m - 3`
+over `ℚ(√2)` outside the timed region. -/
 setup_benchmark runTowerMulLadder n => n * n
   with prep := prepElemInput
   where {
     paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 10.0
+    paramCeiling := 12
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -931,9 +967,9 @@ setup_benchmark runTowerFactorLadder n => tragerLadderModel n
   with prep := prepFactorInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
-    maxSecondsPerCall := 60.0
+    paramCeiling := 24
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
@@ -966,6 +1002,8 @@ initialize factorPairRef2 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef3 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef4 : IO.Ref (Option FactorInput) ← IO.mkRef none
 initialize factorPairRef6 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef8 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef12 : IO.Ref (Option FactorInput) ← IO.mkRef none
 
 private def getFactorPair (ref : IO.Ref (Option FactorInput)) (n : Nat) :
     IO FactorInput := do
@@ -988,6 +1026,12 @@ def runPariNfFactor4 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 4
 def runTowerFactorPair6 : Unit → IO UInt64 := fun _ => do
   return towerFactorDegrees (← getFactorPair factorPairRef6 6)
 def runPariNfFactor6 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 6
+def runTowerFactorPair8 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef8 8)
+def runPariNfFactor8 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 8
+def runTowerFactorPair12 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef12 12)
+def runPariNfFactor12 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 12
 
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the
@@ -1010,6 +1054,28 @@ setup_fixed_benchmark runTowerFactorPair4 where pariCompareConfig
 setup_fixed_benchmark runPariNfFactor4 where pariCompareConfig
 setup_fixed_benchmark runTowerFactorPair6 where pariCompareConfig
 setup_fixed_benchmark runPariNfFactor6 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair8 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor8 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair12 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor12 where pariCompareConfig
+
+/-- Per-call driver overhead for the PARI comparator: one `nf`-family
+request whose PARI-side work is a constant `0`, so the measured time is the
+JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
+comparators §Process call requires this figure so the headline report can
+quote overhead-adjusted ratios. -/
+def runPariNfFactorOverhead : Unit → IO UInt64 := fun _ => do
+  let result ← Hex.BenchOracle.Pari.runOp "nf" "overhead" #[]
+  match result.getInt? with
+  | .ok value => return UInt64.ofNat value.toNat
+  | .error error =>
+    throw <| IO.userError s!"invalid PARI overhead reply: {error}"
+
+/- Driver round-trip floor for the PARI comparator: no algorithmic work on
+either side, so this registration measures only the per-call request/reply
+cost that the headline report subtracts from the PARI wall times. -/
+setup_fixed_benchmark runPariNfFactorOverhead where
+  { pariCompareConfig with expectedHash := some 0x0 }
 
 end Hex.NumberTowerBench
 

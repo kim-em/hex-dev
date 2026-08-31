@@ -167,16 +167,50 @@ diagonal. Transform matrices are checked in Lean because they are not unique.
 The benchmark suite is Mathlib-free. It controls matrix dimension and
 polynomial degree independently and covers these families:
 
-- deterministic dense rational polynomial matrices;
-- known invariant-factor chains conjugated by unimodular matrices;
-- rational coefficients that expose coefficient-bit growth;
-- diagonal matrix presentations;
-- `ZMod64 2` matrices, where evaluation-point supply is constrained.
+- `dense-polysmith`: controlled dimension chains and consecutive-remainder
+  degree ladders in dense rational presentations;
+- `chain-conjugate-poly`: known invariant-factor chains conjugated by
+  unimodular matrices;
+- `rational-polysmith`: fixed-denominator dimension chains and rational
+  consecutive-remainder degree ladders;
+- `diagonal-polysmith`: unordered diagonal presentations that require block
+  repair;
+- `small-field-degree`: consecutive-remainder degree ladders over `ZMod64 2`,
+  where evaluation-point supply is constrained.
 
 The Smith loop performs polynomial gcd/division plus dense row and column
-updates. The registrations therefore declare matrix-update cost models and
-report polynomial-degree and rational coefficient-bit growth separately; they
-do not claim a field-operation bound as a coefficient-bit complexity bound.
+updates. The degree registrations use consecutive continuants, so they force a
+linear Euclidean remainder chain instead of short-circuiting on divisibility.
+Their maximum transform degree, rational denominator width, and coefficient
+width follow from the recurrence and appear in the mode-1 wall models. The
+supplemental dimension chains isolate dense matrix traversal at fixed degree.
+The original generic dense inputs remain fixed comparator stress cases; they do
+not make a parametric complexity claim.
+
+The general worst-case contract remains broader than those family-specific
+models. For a concrete `n × m` run, let `e` be the total number of nontrivial
+pair and block reductions, `D` the maximum intermediate polynomial degree, and
+`L` the maximum rational coefficient width in 64-bit limbs. The schoolbook
+kernel performs at most
+`O((e * (n + m) + min(n,m) * n * m) * D^2 * L^2 * (1 + log L))`
+word operations: reductions
+update one full row or column, every stage scans its trailing block, and dense
+polynomial multiplication/division is quadratic in degree, while rational
+normalization adds the standard logarithmic factor to schoolbook limb work.
+Rank, invariant-factor, module-structure, quotient-order, and solving
+postprocessing do not increase that bound. A dense direct certificate is
+`O(n^3 * D^2 * L^2 * (1 + log L))`; evaluation at `k` points is
+`O(k * (n^2 * D + n^3) * L^2 * (1 + log L))`. These are worst-case
+operational bounds, not the two-sided declarations for a particular benchmark
+family.
+
+The continuant degree families specialize the Smith bound more tightly:
+dimension is fixed, every Euclidean quotient is linear, and the remainder
+degrees decrease by one, so their coefficient scans sum quadratically rather
+than paying the general maximum-degree bound at every reduction. The dimension
+families instead fix `D` and keep `L` within the derived limb count, leaving the
+cubic trailing-matrix work dominant. Thus the mode-1 models are specializations
+of, not replacements for, the worst-case contract.
 
 The required within-Lean comparisons are:
 

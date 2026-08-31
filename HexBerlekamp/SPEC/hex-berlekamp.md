@@ -140,18 +140,29 @@ The emitted term contains:
 
 ## Fast-arithmetic adoption
 
-After [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), the Fp production
-plan is audited in the repeated Frobenius reductions, distinct-degree gcd
-chain, Rabin powers, and Berlekamp splits. Fast division and half-gcd must
-agree exactly with the existing `DensePoly` operations, so certificate shapes
-and checker theorems do not change.
+The Fp production plan is audited in repeated Frobenius reductions, the
+distinct-degree gcd chain, and Rabin powers. Fast multiplication reaches these
+consumers through the proved compiled `FpPoly.powModMonic` dispatcher, while
+the shared division/gcd screen keeps the current Euclidean gcd. Certificate
+shapes and checker theorems do not change.
 
-Adoption is decided by the complete operation benchmark, not by a standalone
-NTT or half-gcd microbenchmark. Small degrees retain packed multiplication and
-the current Euclidean gcd; larger cells may select direct or CRT-NTT,
-reciprocal division, and half-gcd. Every selected cell is recorded beside its
-retained baseline, including prime, degree, and whether a transform plan was
-reused.
+The complete Rabin operation benchmark compares the public test with the same
+test using the retained `FpPoly.powModMonicAux` schoolbook loop. Three warm
+outer trials on `chungus2`, Lean `4.34.0-rc2`, over `F_5` give:
+
+| input parameter | retained power | public Rabin path |
+|---:|---:|---:|
+| 8 | 171.472 µs | 127.475 µs |
+| 16 | 791.780 µs | 563.754 µs |
+| 32 | 7.452 ms | 2.823 ms |
+| 64 | 53.634 ms | 29.177 ms |
+
+All hashes agree. The production modular-power dispatcher keeps its tiny-input
+schoolbook branch and selects fast multiplication from modulus size 18; Rabin
+therefore gains without replacing its Euclidean gcd chain. Distinct-degree
+factorization inherits the same Frobenius dispatch and retained gcd decision.
+Reproduce the end-to-end screen with
+`lake exe hexberlekamp_bench compare Hex.BerlekampBench.runRabinSchoolbookChecksum Hex.BerlekampBench.runRabinTestChecksum --outer-trials 3`.
 
 ## Mathematical companion
 

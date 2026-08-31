@@ -166,7 +166,7 @@ repos:
     conformance: true
     fixtures: [HexPolyFp]
     oracles: [polyfp_flint.py, common.py]
-    pins: [hex-arith, hex-poly, hex-mod-arith]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
     lakefile: toml
 
   - repo: leanprover/hex-sparse-poly
@@ -205,7 +205,7 @@ repos:
     conformance: true
     fixtures: [HexPolyZ]
     oracles: [polyz_flint.py, common.py]
-    pins: [hex-basic, hex-arith, hex-poly]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
     lakefile: toml
 
   - repo: leanprover/hex-mod-arith-mathlib
@@ -227,7 +227,7 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-ring
@@ -239,7 +239,7 @@ repos:
     conformance: true
     fixtures: [HexGFqRing]
     oracles: [gfqring_flint.py, common.py]
-    pins: [hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
     lakefile: toml
 
   - repo: leanprover/hex-hensel
@@ -286,7 +286,7 @@ repos:
     conformance: true
     fixtures: [HexRoots]
     oracles: [roots_flint.py, common.py]
-    pins: [hex-basic, hex-arith, hex-poly, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots
@@ -299,7 +299,7 @@ repos:
     conformance: true
     fixtures: [HexRealRoots]
     oracles: [realroots_flint.py, common.py]
-    pins: [hex-basic, hex-arith, hex-poly, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
     lakefile: toml
 
   - repo: leanprover/hex-roots-mathlib

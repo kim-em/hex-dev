@@ -73,6 +73,52 @@ shape `Matrix.bareiss M = Matrix.det M`. -/
 #guard (Matrix.bareissData singularInt).det = 0
 #guard (Matrix.bareissData pivotInt).rowSwaps = 1
 
+/- The generic coefficient path agrees with the retained integer surface and
+also runs over a non-integer exact-division carrier. -/
+
+#guard Matrix.bareissWith Hex.exactDiv baseInt = Matrix.bareiss baseInt
+#guard (Matrix.bareissDataWith Hex.exactDiv pivotInt).det =
+  (Matrix.bareissData pivotInt).det
+#guard (Matrix.bareissDataWith Hex.exactDiv pivotInt).rowSwaps =
+  (Matrix.bareissData pivotInt).rowSwaps
+
+#synth Hex.ExactDivLaws Rat
+
+private def baseRat : Matrix Rat 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1 / 2
+    | 0, _ => 2 / 3
+    | 1, 0 => 3 / 4
+    | _, _ => 5 / 6
+
+private def pivotRat : Matrix Rat 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 0
+    | 0, _ => 2 / 3
+    | 1, 0 => 3 / 4
+    | _, _ => 5 / 6
+
+private def singularRat : Matrix Rat 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1 / 2
+    | 0, _ => 2 / 3
+    | 1, 0 => 1
+    | _, _ => 4 / 3
+
+private def emptyRat : Matrix Rat 0 0 := 0
+
+private def singletonRat : Matrix Rat 1 1 :=
+  Matrix.ofFn fun _ _ => 7 / 3
+
+#guard Matrix.bareissWith Hex.exactDiv baseRat = Matrix.det baseRat
+#guard Matrix.bareissWith Hex.exactDiv pivotRat = Matrix.det pivotRat
+#guard Matrix.bareissWith Hex.exactDiv singularRat = Matrix.det singularRat
+#guard Matrix.bareissWith Hex.exactDiv emptyRat = Matrix.det emptyRat
+#guard Matrix.bareissWith Hex.exactDiv singletonRat = Matrix.det singletonRat
+
 /-!
 6×6 fixtures matching the SPEC `core` matrix-dimension band:
 

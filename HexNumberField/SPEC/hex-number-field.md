@@ -163,11 +163,17 @@ compare refined isolations with `sameRoot`.
 `AlgebraicRoot` uses two paths:
 
 1. If the stored polynomials agree, compare the refined isolations directly.
-2. Otherwise exactify both roots and use canonical `AlgebraicNumber` equality.
+2. Otherwise compute `gcd a.p b.p` over `ℚ`. If it is constant, the roots
+   cannot agree and comparison returns false without exactifying. If it is
+   nonconstant, exactify both roots and use canonical `AlgebraicNumber`
+   equality.
 
-The second path can factor twice and is not a fast arithmetic primitive. A future
-optimization may compare `gcd a.p b.p` and the two isolations without computing
-minimal polynomials, but it does not change the v1 semantics.
+The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
+primitive. The gcd guard prevents repeated factorization for coprime
+enclosing polynomials during cross-component root merging without changing
+the v1 semantics. It is a discriminator, not a constant-time operation:
+computing a rational gcd between two high-degree enclosing polynomials can
+itself incur coefficient growth.
 
 ```lean
 def AlgebraicNumber.isZero (a : AlgebraicNumber) : Bool := a.p == X
@@ -187,7 +193,8 @@ delegating to the generic exact `DyadicSquare.discContains` geometry primitive.
 `QAdjoin p x` retains canonical reduced rational coordinates. Addition,
 subtraction, negation, multiplication modulo `p`, and rational scalar actions do
 not require irreducibility. Inversion requires
-`[ZPoly.CheckedIrreducible p]` and uses polynomial extended gcd over `ℚ`.
+`[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
+gcd over `ℚ` to control rational coefficient growth.
 The computational API supplies `Inv` and `Div`, with `0⁻¹ = 0`; the companion
 proves their field laws after converting the checked certificate to semantic
 irreducibility.
@@ -532,12 +539,43 @@ oracle's independently computed decomposition with Lean's finite output.
 
 - Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
   degree-10 field operation remains capped at 100 ms on the reference host.
+- Fixed-field inversion performs `O(n²)` rational coefficient operations.
+  Monic remainder normalization keeps numerator and denominator widths within
+  the `O(n log n)` subresultant/Hadamard bound, so inversion remains
+  `O(n³ log n)` in the conservative linear-bit-cost model. The controlled
+  bounded-height benchmark family exhibits linear coefficient widths across
+  its registered schedule, giving a cubic aggregate linear-bit proxy; rounding
+  coefficient components to machine limbs contributes a quadratic lower-order
+  term. That expected-work registration does not weaken this worst-case
+  contract.
 - A lazy binary operation has eliminant degree at most
   `deg(a.p) * deg(b.p)`. Its ceiling is the measured resultant cost plus the
   existing HexRoots ceiling at that eliminant degree. Do not promise a faster
   end-to-end time than root isolation itself.
-- Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
-  Larger cases are local until new measurements justify promotion.
+- Degree-product 20 is the largest studied merge-facing lazy arithmetic class,
+  but the merge-gating end-to-end regression uses the degree-product-12 input
+  below. The former sweep through 20 is retained as report evidence: its upper
+  rungs are too slow for smoke verification, and no honest one-parameter model
+  is available for them. Larger cases remain local until new measurements
+  justify promotion.
+- Isolation-dominated end-to-end regressions use canonical fixed inputs rather
+  than an asymptotic claim. On the reference host, lazy addition of the selected
+  roots of `X^6 - 2` and `X^2 - 3` must complete under 12 seconds; its
+  square-free sum eliminant has degree 12,
+  `coeffAbsMax = 1998`, coefficient bit height 11, and isolation target 186.
+  `AlgebraicPoly.roots?` on the controlled dense degree-6 polynomial with one
+  `√2` coefficient must complete under 15 seconds; its single square-free norm
+  eliminant has degree 12,
+  `coeffAbsMax = 366720`, coefficient bit height 19, and isolation target 274.
+  `QAdjoin.roots?` on `g² * (X - 1)` over `ℚ(√2)`, with `g` the controlled
+  dense degree-6 repeated component, must complete under 20 seconds; its
+  square-free norm eliminant has degree 12, `coeffAbsMax = 45480960`,
+  coefficient bit height 26, and isolation target 351.
+  These project-internal canonical inputs come from the shared `n = 6` rung of
+  the former schedules. Full timing runs check the ceilings; merge-gating
+  smoke verification checks the result hashes. The measured reference timings
+  live in the [performance report](../../reports/hex-number-field-performance.md).
+  None of the registrations makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
   selection. Root APIs add Yun decomposition, one norm eliminant, and one
   shared double-resultant evaluation eliminant per squarefree component. The
@@ -546,6 +584,39 @@ oracle's independently computed decomposition with Lean's finite output.
 
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
+
+The required exactification input families are:
+
+- `exactification-selection`: the fixed enclosing polynomial
+  `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
+  multiple-candidate selection and canonical re-isolation without treating
+  the easy enclosing factorization as scaling evidence;
+- `exactification-certification`: fixed degree-eight certification cases use
+  `X^8 - 2` inside `(X^8 - 2)(X + 3)`, pinned to the nonlinear factor, to time
+  `AlgebraicRoot.exactFactor?`, and the same candidate in the public
+  `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
+  `coeffAbsMax = 6`, coefficient bit height 3, and certificate precision 77;
+  the candidate has degree 8, `coeffAbsMax = 2`, coefficient bit height 2, and
+  certificate precision 53. Their zero-grace whole-child budgets are 2 seconds
+  and 1.1 seconds respectively; and
+- `exactification-factorization`: the fixed end-to-end `exact?` case is the
+  first root of `∏ p∈{2,3,5,7,11,13}, (X² - p)`, the top completed rung of
+  the archived growing-factor-count sweep. It has degree 12,
+  `coeffAbsMax = 40361`, coefficient bit height 16, and certificate precision
+  241. Its zero-grace whole-child budget is 200 ms, including a 20 ms timed
+  batch after one untimed warmup.
+
+The certification and factorization sweeps are archived diagnostic evidence,
+not current parametric registrations. Inclusive profiling attributes the
+certification cases to root isolation (more than 95% inclusive) and the
+end-to-end case primarily to isolation (about 77%), with factorization only
+about 18%. The published BHKS bound therefore does not cover the controlling
+end-to-end phase, while the published BSSY bound concerns a different
+isolation algorithm. These three registrations are fixed absolute-budget
+checks and make no one-parameter scaling claim. Their static certificates are
+checked against the archived family shapes in the benchmark source; full
+timing runs enforce the budgets and merge-gating verification checks both the
+output polynomial and canonical isolating square.
 
 ## External comparators
 

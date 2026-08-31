@@ -154,6 +154,51 @@ uses the fast entry point only where the end-to-end lift improves; small nodes
 retain the existing kernels. Product congruence, factor ordering, canonical
 coefficient ranges, and exact-division checks remain the public semantics.
 
+The ordered product dispatcher uses the balanced `ZPoly.fastPlan` tree for
+factor counts in `[8, 1024)` only when every factor has at most two
+coefficients and maximum coefficient magnitude at most four; it uses the
+retained left fold elsewhere.  The shape guard is part of the measured
+crossover policy, not a correctness precondition.  Three warm outer trials on
+`chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, measured the shared deterministic
+small-linear-factor fixtures as follows (medians):
+
+| factor count | left fold | balanced tree | selected |
+|---:|---:|---:|:---|
+| 4 | 365 ns | 431 ns | fold |
+| 8 | 1.160 us | 1.089 us | tree |
+| 128 | 1.873 ms | 326.336 us | tree |
+| 768 | 84.687 ms | 71.002 ms | tree |
+| 1024 | 157.023 ms | 159.296 ms | fold |
+
+Regenerate the table with `lake exe hexhensel_bench compare
+Hex.HenselBench.runPolyProductFoldChecksum
+Hex.HenselBench.runPolyProductTreeChecksum --param-floor 4 --param-ceiling
+1024 --param-schedule doubling --cache-mode warm --outer-trials 3
+--signal-floor-multiplier 1`.  The public `Array.polyProduct` remains the
+left-fold specification; a `@[csimp]` theorem proves the compiled dispatcher
+extensionally equal to it for every crossover-table and shape-guard choice.
+The BZ adoption audit records why larger-degree and wider-coefficient factors
+must not enter this count-only interval.
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| [FLINT `fmpz_poly`](https://flintlib.org/doc/fmpz_poly.html) Newton-style Hensel emulation via [python-flint](https://python-flint.readthedocs.io/) | informational | linear-step, iterated-linear, quadratic-step, and two-factor multifactor Hensel registrations |
+
+The persistent python-flint driver implements the same Newton-style correction
+schema with `fmpz_poly` arithmetic. python-flint does not expose FLINT's native
+Hensel entry points, so these ratios are explicitly an emulation comparison,
+not a native `fmpz_poly_hensel_lift_*` performance claim. It is informational
+because representation choices and the emulated orchestration differ from the
+Hex APIs; the ratios orient implementation work but do not gate Phase 4.
+
+The coefficient-conversion and ordered-product registrations declare
+external-comparator absence with the **structural-layer** reason. They measure
+composition over integer and finite-field polynomial operations owned by
+`hex-poly`, `hex-poly-z`, and `hex-poly-fast`; those libraries' declared FLINT
+comparators cover the underlying arithmetic rather than duplicating it here.
+
 ## Verification
 
 Changes must pass:

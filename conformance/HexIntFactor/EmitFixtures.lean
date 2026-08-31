@@ -117,6 +117,7 @@ def main : IO Unit := do
   emitOrder "nonprimitive/2mod7" 2 7
   emitOrder "primepower/2mod9" 2 9
   emitOrder "noncyclic/5mod8" 5 8
+  emitOrder "unreduced/10mod7" 10 7
   for b in [2, 3, 5, 7, 10] do
     for i in List.range 32 do
       emitCyclotomic b (i + 1) .minus
