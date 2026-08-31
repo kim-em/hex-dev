@@ -1,0 +1,16 @@
+module
+
+public import PrimeCert
+
+public section
+
+namespace PrimeCert.Comparator.Bit61
+
+theorem result : Nat.Prime 1945555039024054273 := prime_cert%
+  [small {2; 3},
+   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]
+
+#print axioms result
+
+end PrimeCert.Comparator.Bit61
+

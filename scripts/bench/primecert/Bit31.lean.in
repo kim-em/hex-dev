@@ -1,0 +1,16 @@
+module
+
+public import PrimeCert
+
+public section
+
+namespace PrimeCert.Comparator.Bit31
+
+theorem result : Nat.Prime 2147483647 := prime_cert%
+  [small {2; 3; 7; 11; 31; 151; 331},
+   pock (2147483647, 3, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]
+
+#print axioms result
+
+end PrimeCert.Comparator.Bit31
+

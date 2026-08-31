@@ -1,0 +1,20 @@
+module
+
+public import PrimeCert
+
+public section
+
+namespace PrimeCert.Comparator.Bit256
+
+theorem result : Nat.Prime
+    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=
+  prime_cert%
+    [small {2; 3; 23},
+     pock
+       (93628759656736142393278101159368737990730026663232799828780155818898507169793,
+        5, 2 ^ 248 * 3 ^ 2 * 23)]
+
+#print axioms result
+
+end PrimeCert.Comparator.Bit256
+
