@@ -410,7 +410,7 @@ setup_benchmark runToUnivariate n => n * Nat.log2 (n + 1)
 
 def apiMode3Config (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 5.0, warmupFirstIter := true,
-    expectedHash := some expectedHash }
+    expectedHash := some expectedHash, tags := #[scheduledHardwareTag] }
 
 /- `contentIn` and `primPartIn` perform recursive dispatcher calls whose probe
 costs are omitted by the SPEC. Degree, coefficient count, and recursive arity

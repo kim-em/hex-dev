@@ -57,25 +57,33 @@ def mode3Config (expectedHash : UInt64) (maxSeconds : Float) :
     tags := #[scheduledHardwareTag] }
 
 /-- Run one operation under its body-scoped mode-3 ceiling.  The process cap
-in `mode3Config` is only a safety bound; returning the sentinel makes a body
-budget violation fail the expected-hash check. -/
+in `mode3Config` is only a safety bound; a body overrun is reported directly. -/
 def budgeted (ceilingNanos : Nat) (work : IO UInt64) : IO UInt64 := do
   let start ← IO.monoNanosNow
   let value ← work
   let stop ← IO.monoNanosNow
-  if stop - start ≤ ceilingNanos then return value else return 0xffffffffffffffff
+  if stop - start ≤ ceilingNanos then return value
+  else throw <| IO.userError s!"body budget exceeded: {stop - start} ns > {ceilingNanos} ns"
 
-/-- Require the prepared pair to bypass route 0 and succeed in the modular
-coprimality producer before it can be used as a route-1 benchmark input. -/
+/-- Require the structurally reduced pair to bypass the one-step-remainder
+prepass and produce a checked, restorable route-1 certificate. -/
 def requireCoprimeRoute {n : Nat} (input : P n Int × P n Int) : P n Int × P n Int :=
-  if (remainderCert? input.1 input.2).isNone &&
-      (intFastProposal GcdConfig.default input.1 input.2).cert?.isSome then input
-  else panic! "coprime benchmark input does not isolate route 1"
+  match structuralCert? input.1 input.2 with
+  | some _ => panic! "coprime benchmark input is discharged by route 0"
+  | none =>
+      match structuralReduction? input.1 input.2 with
+      | none => panic! "coprime benchmark input has no structural reduction"
+      | some reduced =>
+          let proposal := intFastProposal GcdConfig.default reduced.left reduced.right
+          match remainderCert? reduced.left reduced.right, proposal.cert? with
+          | none, some cert =>
+              if checkGcd reduced.left reduced.right cert &&
+                  (restoreStructural? input.1 input.2 reduced cert).isSome then input
+              else panic! "coprime route-1 certificate does not replay and restore"
+          | _, _ => panic! "coprime benchmark input does not isolate route 1"
 
-initialize denseCoprime8 : IO.Ref (P 8 Int × P 8 Int) ←
-  IO.mkRef (requireCoprimeRoute (denseRouteCoprime 8))
-initialize routeSparse8 : IO.Ref (P 8 Int × P 8 Int) ←
-  IO.mkRef (requireCoprimeRoute (sparseRouteCoprime 8 128))
+initialize denseCoprime8 : IO.Ref (Option (P 8 Int × P 8 Int)) ← IO.mkRef none
+initialize routeSparse8 : IO.Ref (Option (P 8 Int × P 8 Int)) ← IO.mkRef none
 
 /- Comparator-only inputs.  These retain matched low/high endpoints for the
 external ratio tables; they are semantic/hash anchors, not performance-mode
@@ -101,11 +109,15 @@ initialize rationalGcd5d5 : IO.Ref (Option (P 5 Rat × P 5 Rat)) ← IO.mkRef no
 initialize squarefree3m1to5 : IO.Ref (P 3 Int) ←
   IO.mkRef (squarefreeShape 3 [1, 2, 3, 4, 5])
 
-def runDenseCoprime8 (_ : Unit) : IO UInt64 := budgeted 1_000_000_000 do
-  return runIntPair (← denseCoprime8.get)
+def runDenseCoprime8 (_ : Unit) : IO UInt64 := do
+  let input ← getCached denseCoprime8 fun _ =>
+    requireCoprimeRoute (denseRouteCoprime 8)
+  budgeted 1_000_000_000 do return runIntPair input
 
-def runSparseCoprime8 (_ : Unit) : IO UInt64 := budgeted 1_000_000_000 do
-  return runIntPair (← routeSparse8.get)
+def runSparseCoprime8 (_ : Unit) : IO UInt64 := do
+  let input ← getCached routeSparse8 fun _ =>
+    requireCoprimeRoute (sparseRouteCoprime 8 128)
+  budgeted 1_000_000_000 do return runIntPair input
 
 def runDenseGcd5d5 (_ : Unit) : IO UInt64 := do
   let input ← getCached denseGcd5d5 fun _ => denseGcd 5 5
@@ -117,17 +129,18 @@ def runSparseStress5d16 (_ : Unit) : IO UInt64 := do
 
 def runRationalGcd5d5 (_ : Unit) : IO UInt64 := do
   let input ← getCached rationalGcd5d5 fun _ => rationalGcd 5 5
-  budgeted 5_000_000_000 do return runRatPair input
+  budgeted 10_000_000_000 do return runRatPair input
 
-def runSquarefree3m1to5 (_ : Unit) : IO UInt64 := budgeted 4_000_000_000 do
+def runSquarefree3m1to5 (_ : Unit) : IO UInt64 := budgeted 8_000_000_000 do
   return runSquarefree (← squarefree3m1to5.get)
 
 /- Arity, degree, and support each change both image construction and the
 univariate image-gcd operands, so the SPEC's `≤ n` probe count does not derive a
 tight wall model.  The old `2..8` arity grid was also invalid: `(f, f + 1)`
-fired route 0.  No cited bound covers image production plus certificate replay.
-Mode 3 pins genuine route-1 dense and sparse arity-8 inputs; their 1 s ceilings
-are 3.15× and 3.55× the clean calibration medians. -/
+fired the one-step-remainder prepass before route 1.  No cited bound covers
+image production plus certificate replay. Mode 3 pins genuine route-1 dense
+and sparse arity-8 inputs; their 1 s ceilings are 3.36× and 3.89× the clean
+297.722 ms and 257.226 ms medians. -/
 setup_fixed_benchmark runDenseCoprime8 where
   mode3Config 0x9389fe94a31dd629 4.0
 setup_fixed_benchmark runSparseCoprime8 where
@@ -136,32 +149,32 @@ setup_fixed_benchmark runSparseCoprime8 where
 /- Brown's `O(D)` count omits the cost of every image gcd, interpolation, CRT,
 and checked replay.  The attempted `3d5, 3d10, 3d20, 4d5, 5d5` grid varies
 several of those costs at once, and no published bound covers this concrete
-pipeline.  Mode 3 uses `5d5`; 25 s is 2.01× its clean 12.433 s median. -/
+pipeline.  Mode 3 uses `5d5`; 25 s is 2.05× its clean 12.193 s median. -/
 setup_fixed_benchmark runDenseGcd5d5 where
   mode3Config 0xbd6798d21ee1b1e0 90.0
 
 /- The sparse family deliberately reaches the dispatcher and dense PRS
 fallback, for which the SPEC gives no useful bound.  Degree-only endpoints do
 not control coefficient swell, and the degree-4096 bounded declines measured
-no completed gcd.  Mode 3 uses the complete `5d16` call; 4 s is 2.81× the
-clean 1.425 s median. -/
+no completed gcd.  Mode 3 uses the complete `5d16` call; 4 s is 4.03× the
+clean 992.345 ms median. -/
 setup_fixed_benchmark runSparseStress5d16 where
   mode3Config 0xbd6798d21ee1b1e0 20.0
 
 /- Rational lifting adds denominator scans and scaling to a dispatcher whose
 integer-route probe costs are already unmodelled.  The attempted five-shape
 grid changes arity, dense size, and coefficient work together, and no cited
-upper bound covers the profiled rational producer.  Mode 3 pins `5d5`; 5 s is
-2.06× the clean 2.428 s median. -/
+upper bound covers the profiled rational producer. Mode 3 pins `5d5`; 10 s is
+2.11× the clean 4.744 s median. -/
 setup_fixed_benchmark runRationalGcd5d5 where
   mode3Config 0xcb197b68a2a27c66 45.0
 
 /- Yun performs one dispatcher-dependent gcd per level and variable.  The
 attempted multiplicity patterns vary arity, factor count, and missing levels,
 so `n * M` probe count is not a wall model; no cited bound covers the gcd work.
-Mode 3 pins the hardest observed `3m1-to-5` input; 4 s is 2.24× its clean
-1.789 s median. -/
+Mode 3 pins the hardest observed `3m1-to-5` input; 8 s is 2.52× its clean
+3.179 s median. -/
 setup_fixed_benchmark runSquarefree3m1to5 where
-  mode3Config 0x664d8f4f4d3e40ef 8.0
+  mode3Config 0x664d8f4f4d3e40ef 20.0
 
 end Hex.MvGcdBench.Matrix

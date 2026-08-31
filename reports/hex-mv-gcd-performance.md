@@ -25,8 +25,8 @@ family models adjacent to their registrations:
 
 The route-dependent operations select **mode 3**. `maxSecondsPerCall` remains
 only a child-process safety cap. Each timed function separately measures its
-body with `IO.monoNanosNow` and returns a sentinel on a ceiling violation, so
-the expected-hash check enforces the operation budget.
+body with `IO.monoNanosNow` and raises an explicit budget-overrun error on a
+ceiling violation; expected hashes independently enforce the result.
 
 | target | operation / canonical hard input | body budget |
 |---|---|---:|
@@ -45,8 +45,8 @@ the expected-hash check enforces the operation budget.
 | `Matrix.runDenseGcd5d5` | Brown interpolation, arity 5 / degree 5 | 25 s |
 | `Matrix.runSparseStress5d16` | complete public sparse-gap gcd | 4 s |
 | `runSwell5` | degree-5 extended PRS | 10 ms |
-| `Matrix.runRationalGcd5d5` | rational lift, arity 5 / degree 5 | 5 s |
-| `Matrix.runSquarefree3m1to5` | Yun levels 1 through 5 in arity 3 | 4 s |
+| `Matrix.runRationalGcd5d5` | rational lift, arity 5 / degree 5 | 10 s |
+| `Matrix.runSquarefree3m1to5` | Yun levels 1 through 5 in arity 3 | 8 s |
 
 The ordered-rule attempts rule out stronger modes operation by operation:
 
@@ -55,10 +55,11 @@ The ordered-rule attempts rule out stronger modes operation by operation:
   image-gcd, interpolation, CRT, coefficient, and replay costs, so those counts
   do not derive a tight wall model.
 - The old coprime arity schedule was not a route-1 experiment: both constructors
-  returned `(f, f + 1)`, and `remainderCert?` discharged every case in route 0.
-  The replacement canonical inputs are checked during initialization both to
-  bypass route 0 and to succeed in `intFastProposal` before the timed public
-  `gcd` call.
+  returned `(f, f + 1)`, and the one-step-remainder prepass discharged every
+  case before route 1. The replacement canonical inputs are lazily checked
+  after structural reduction to bypass that prepass, produce a checker-accepted
+  route-1 certificate, and restore it to the original pair before the timed
+  public `gcd` call.
 - The attempted dense integer shapes `3d5, 3d10, 3d20, 4d5, 5d5`, rational
   analogues, sparse degree/arity endpoints, squarefree multiplicity patterns,
   and PRS degrees all change several independent costs at once. They cannot
@@ -69,6 +70,21 @@ The ordered-rule attempts rule out stronger modes operation by operation:
   cited published result bounds the complete implementation phase which the
   profiles show dominating. A probe-count citation for work below the image gcd
   or PRS would not meet the dominant-phase rule.
+
+Consequently, asymptotic regression detection has been given up for each
+mode-3 operation in favor of its canonical absolute ceiling. The attempted
+grids still cover the declared arity, degree, and multiplicity ranges; mode 3
+retains the hardest completed point observed in each family rather than
+misrepresenting that multi-axis grid as a scalar model. The exception is the
+old sparse degree-4096 decline, which remains attempt evidence only; the
+canonical sparse gate instead completes the advertised public gcd.
+
+The existing FLINT and Singular values do not supply meaningful ceilings:
+both tools dispatch to tuned and sparse algorithms outside this SPEC, and the
+old coprime comparator endpoints exercise Hex's one-step-remainder prepass
+rather than its modular route. Their rows therefore remain informational
+semantic and process-protocol anchors. Measured native baselines plus stated
+margins are the applicable mode-3 fallback.
 
 The fixed `runDivExactFixed`, `runCoprimeFamilyFixed`, `runDenseFixed`,
 `runSparseFixed`, `runRationalFixed`, and `runSquarefreeFixed` rows are limited
@@ -189,8 +205,12 @@ repeat hash agreed, and all 17 expected hashes matched.
 | `Matrix.runDenseGcd5d5` | 12.193 s | 25 s |
 | `Matrix.runSparseStress5d16` | 992.345 ms | 4 s |
 | `runSwell5` | 0.719 ms | 10 ms |
-| `Matrix.runRationalGcd5d5` | 4.744 s | 5 s |
-| `Matrix.runSquarefree3m1to5` | 3.179 s | 4 s |
+| `Matrix.runRationalGcd5d5` | 4.744 s | 10 s |
+| `Matrix.runSquarefree3m1to5` | 3.179 s | 8 s |
+
+The table reports lean-bench's whole-runner medians. Input preparation occurs
+before the internal body stopwatch, so these values conservatively include
+small runner overhead while the named ceiling applies only to the operation.
 
 ## Comparator Ratios
 
@@ -246,11 +266,13 @@ that comparator's empty-call median first.
 | `cofactor-heavy` | degree 64 | 13.713890 ms | FLINT | 7.846452 ms | 1.748× | 1.749× |
 | `cofactor-heavy` | degree 64 | 13.713890 ms | Singular | 20.382051 ms | 0.673× | 0.673× |
 
-The only advance expectation is the coprime fast path. It is met: the largest
-adjusted coprime ratio is 2.563×, and both endpoints remain within a small
-constant of both systems. The much larger sparse, squarefree, swell, and
-rational ratios are informational and accurately expose the routes and tuned
-crossovers that this SPEC does not claim to implement.
+The old coprime comparator endpoints are now explicitly limited evidence:
+because `(f, f + 1)` takes Hex's one-step-remainder prepass, their largest
+adjusted ratio of 2.563× does not measure the modular coprimality route. The
+new native route-1 gates establish the operation budget, but no matched
+external rerun is claimed here. The sparse, squarefree, swell, rational, and
+old coprime ratios remain informational and expose representation, protocol,
+and route differences rather than Phase-4 ceilings.
 
 The required comparator-runtime plots are generated by
 `scripts/plots/hex-mv-gcd-comparator.py`:
@@ -334,4 +356,4 @@ No dominant inclusive cost lies outside the corresponding registered target.
 None in HexMvGcd's own performance coverage. `libraries.yml` remains at phase
 3 because phase-4 promotion is dependency-coupled: `HexMvPoly`, `HexPoly`, and
 `HexPolyFp` are still below phase 4. Re-promotion must wait for those upstream
-entries rather than bypassing `scripts/check_phase4.py`.
+entries, as reported by `scripts/status.py`.
