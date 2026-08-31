@@ -141,9 +141,10 @@ tree.
 Each library has up to three conformance-tree modules:
 
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
-  the `core` profile, specified above. Every library at
-  `done_through ≥ 2` has one, except a correspondence-only
-  `mathlib: true` layer, which must not (see §Banned anti-patterns and
+  the `core` profile, specified above. Every Mathlib-free library at
+  `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
+  an executable runtime contract; a layer explicitly classified by
+  `correspondence_only: true` must not (see §Banned anti-patterns and
   [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
@@ -323,9 +324,10 @@ MUST NOT appear in any `Conformance.lean`:
   theorem is `sorry`, delete the example. The example becomes
   meaningful only when the theorem it relies on has a real proof.
 
-- **Conformance files in correspondence-only `Hex*Mathlib` bridges.** Such
-  libraries are proof-only and have no executable runtime to conform to, so a
-  `HexFooMathlib/Conformance.lean` file should not exist. Any `#guard` or
+- **Conformance files in correspondence-only `Hex*Mathlib` bridges.** A bridge
+  with `correspondence_only: true` is proof-only and has no executable runtime
+  to conform to, so no conformance source or target owned by that bridge should
+  exist. Any `#guard` or
   `#eval` exercising the Mathlib-free executable belongs in the computational
   sibling (for example, checks on `Hex.Berlekamp.rabinTest` live in
   `HexBerlekamp/Conformance.lean`, never in
@@ -430,8 +432,9 @@ subsection. Default oracle assignments:
   (Lean ≡ PARI ≡ Lübeck). No random generation.
 
 The `-mathlib` libraries are not the primary target of external
-conformance testing. A correspondence-only layer among them has no
-`core` profile at all: its coverage is the coverage of the
+conformance testing. A layer explicitly classified by
+`correspondence_only: true` has no `core` profile at all: its coverage is the
+coverage of the
 computational owners it transports from, and a conformance module of
 its own is banned (see §Banned anti-patterns and
 [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).

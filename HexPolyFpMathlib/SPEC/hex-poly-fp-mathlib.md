@@ -1,5 +1,12 @@
 # hex-poly-fp-mathlib (depends on hex-poly-fp + hex-poly-mathlib + hex-mod-arith-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexPoly`, `HexPolyFp`
+Computational performance owners: `HexPoly`, `HexPolyFp`
+
 The crossing point between the executable prime-field polynomial tower and
 Mathlib's own polynomial type.
 

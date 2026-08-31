@@ -1,5 +1,12 @@
 # hex-number-field-tower-mathlib (depends on hex-number-field-tower + hex-number-field-mathlib + hex-resultant-mathlib + hex-berlekamp-zassenhaus-mathlib + hex-row-reduce-mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexNumberFieldTower`, `HexNumberField`
+Computational performance owners: `HexNumberFieldTower`, `HexNumberField`
+
 Mathlib companion for `hex-number-field-tower`. It interprets every validated
 tower as a finite extension of `ℚ` with a fixed embedding into `ℂ`, proves the
 coordinate field operations, and verifies Trager factorization, adjoining,

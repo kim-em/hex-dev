@@ -1,5 +1,12 @@
 # hex-hensel-mathlib (depends on hex-hensel + hex-poly-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexHensel`
+Computational performance owner: `HexHensel`
+
 Proves correctness of Hensel lifting algorithms and the uniqueness
 theorem for coprime polynomial factorization lifting.
 

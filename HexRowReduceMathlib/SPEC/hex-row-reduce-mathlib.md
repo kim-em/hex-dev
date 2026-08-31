@@ -1,5 +1,12 @@
 # hex-row-reduce-mathlib (depends on hex-row-reduce + hex-matrix-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexRowReduce`
+Computational performance owner: `HexRowReduce`
+
 Mathlib bridge for `hex-row-reduce`: connects our computable RREF / rank / span /
 nullspace machinery to Mathlib's noncomputable linear-algebra definitions, via
 the base `matrixEquiv` from `hex-matrix-mathlib`.

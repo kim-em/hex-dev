@@ -1,5 +1,12 @@
 # hex-sparse-poly-mathlib (depends on hex-sparse-poly + hex-poly-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexSparsePoly`, `HexPoly`
+Computational performance owners: `HexSparsePoly`, `HexPoly`
+
 The Mathlib correspondence layer for the canonical, Mathlib-free sparse
 univariate polynomials in
 [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md). It

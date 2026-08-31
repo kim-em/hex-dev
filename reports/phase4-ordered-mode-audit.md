@@ -89,9 +89,11 @@ registrations remain unchanged:
   [HexRCF](hex-rcf-performance.md).
 
 The remaining 12 libraries are correspondence-only Mathlib layers. They have
-no performance-evidence registration or proof probe of their own, declare no
-`phase4` block, and carry the required `correspondence-only-layer` SPEC
-declaration, so they are exempt from a local headline report:
+no performance-evidence registration or proof probe of their own, explicitly
+declare `correspondence_only: true`, declare no `phase4` block, and carry the
+required `correspondence-only-layer` SPEC declaration with computational
+conformance and performance owners, so they are exempt from a local headline
+report:
 
 - [HexPolySmithMathlib](../HexPolySmithMathlib/SPEC/hex-poly-smith-mathlib.md),
   [HexSparsePolyMathlib](../HexSparsePolyMathlib/SPEC/hex-sparse-poly-mathlib.md),

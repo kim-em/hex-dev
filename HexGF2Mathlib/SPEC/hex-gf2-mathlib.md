@@ -1,5 +1,12 @@
 # hex-gf2-mathlib (depends on hex-gf2 + hex-poly-fp + hex-gfq-field + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexGF2`, `HexGFqField`
+Computational performance owners: `HexGF2`, `HexGFqField`
+
 Relates hex-gf2's packed bitwise types to the generic finite field
 constructions, using Mathlib's `RingEquiv` so the results are accepted by
 Mathlib's equivalence APIs and compose with other `RingEquiv`s.

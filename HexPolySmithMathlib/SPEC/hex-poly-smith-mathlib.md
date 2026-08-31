@@ -1,5 +1,12 @@
 # hex-poly-smith-mathlib
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexPolySmith`
+Computational performance owner: `HexPolySmith`
+
 `hex-poly-smith-mathlib` is the Mathlib correspondence layer for
 `hex-poly-smith`. It depends on `hex-poly-smith`, `hex-poly-mathlib`,
 and `hex-matrix-mathlib`.

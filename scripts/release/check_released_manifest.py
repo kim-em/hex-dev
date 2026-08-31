@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
-from release.sync_released import MANIFEST, managed_paths  # noqa: E402
+from release.sync_released import MANIFEST, managed_paths, removal_paths  # noqa: E402
 from release import aggregate_readme  # noqa: E402
 
 
@@ -254,6 +254,17 @@ def main() -> int:
                 if destination in destinations:
                     fail(f"{repo}: duplicate managed destination {destination}")
                 destinations.add(destination)
+            removals = removal_paths(entry)
+            for removal in removals:
+                if any(
+                    removal == destination
+                    or removal in destination.parents
+                    or destination in removal.parents
+                    for destination in destinations
+                ):
+                    fail(
+                        f"{repo}: remove_paths entry {removal} overlaps a managed destination"
+                    )
             if entry.get("readme", True):
                 readme = REPO_ROOT / lib / "README.md"
                 text = readme.read_text(encoding="utf-8")

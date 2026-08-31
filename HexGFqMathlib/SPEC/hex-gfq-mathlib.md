@@ -1,5 +1,12 @@
 # hex-gfq-mathlib (depends on hex-gfq + hex-gf2-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexGFqField`, `HexGF2`, `HexGFq`, `HexConway`
+Computational performance owners: `HexGFqField`, `HexGF2`, `HexGFq`, `HexConway`
+
 Supplies the finiteness and cardinality layer for the quotient-field
 construction, the Mathlib `Field` instance on it, and the correspondence with
 Mathlib's `GaloisField`. It also builds on hex-conway's Tier 2 evidence twice
@@ -115,5 +122,5 @@ No external comparator is required.
 **Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
 arithmetic algorithm; it transports facts about constructions implemented
-elsewhere. The computational performance owners are hex-gfq-field and hex-gf2,
-where those constructions are measured.
+elsewhere. The computational performance owners are hex-gfq-field, hex-gf2,
+hex-gfq, and hex-conway, where those constructions are measured.

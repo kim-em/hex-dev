@@ -39,6 +39,33 @@ class SyncReleasedTests(unittest.TestCase):
             (self.repo / "bench" / "lean-toolchain").read_text(), expected)
         self.assertEqual(len(notes), 2)
 
+    def test_apply_paths_removes_obsolete_released_path(self) -> None:
+        with tempfile.TemporaryDirectory() as source_directory:
+            source = Path(source_directory)
+            (source / "HexBridge").mkdir()
+            clone = self.repo / "clone"
+            stale = clone / "conformance" / "HexBridge"
+            stale.mkdir(parents=True)
+            (stale / "Conformance.lean").write_text("stale\n", encoding="utf-8")
+            entry = {
+                "lib": "HexBridge",
+                "readme": False,
+                "umbrella": False,
+                "spec": None,
+                "remove_paths": ["conformance"],
+            }
+            with patch.object(sync_released, "REPO_ROOT", source):
+                notes = sync_released.apply_paths(entry, clone)
+            self.assertFalse((clone / "conformance").exists())
+            self.assertIn("  remove conformance", notes)
+
+    def test_removal_paths_rejects_unsafe_destinations(self) -> None:
+        for path in (".", "..", "../outside", "/absolute"):
+            with self.subTest(path=path), self.assertRaisesRegex(
+                ValueError, "unsafe remove_paths entry"
+            ):
+                sync_released.removal_paths({"remove_paths": [path]})
+
     def test_direct_pins_rewrite_toml_and_lean(self) -> None:
         (self.repo / "lakefile.toml").write_text(
             '[[require]]\n'

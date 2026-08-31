@@ -1,5 +1,12 @@
 # hex-truncated-series-mathlib (Mathlib correspondence for truncated series)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexTruncatedSeries`
+Computational performance owner: `HexTruncatedSeries`
+
 `hex-truncated-series-mathlib` is the correspondence-only companion to
 [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md).
 The core library owns the fixed-length coefficient representation and every

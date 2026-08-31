@@ -1,5 +1,12 @@
 # hex-smith-mathlib
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owner: `HexSmith`
+Computational performance owner: `HexSmith`
+
 `hex-smith-mathlib` is the Mathlib correspondence layer for the executable
 integer Smith normal form in `hex-smith`. It imports Mathlib; `hex-smith`
 remains Mathlib-free.

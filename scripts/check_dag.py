@@ -13,6 +13,7 @@ from libgraph import (
     load_lakefile_libs,
     load_libraries,
     may_import,
+    pascal_to_spec_path,
     reachable_dependencies,
     topological_order,
 )
@@ -22,10 +23,16 @@ IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+(.+?)\s*$")
 LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
 LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
 LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
+LEAN_EXE_RE = re.compile(r"^lean_exe\s+([A-Za-z0-9_]+)\b")
 QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-z0-9_.]+)\s*$")
 IMPORT_ALL_RE = re.compile(
     r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
 )
+OWNER_RE = re.compile(
+    r"^Computational (conformance|performance) owners?:\s*(.+)$",
+    re.MULTILINE,
+)
+OWNER_NAME_RE = re.compile(r"`([A-Z][A-Za-z0-9_]*)`")
 
 # Private constructors in these modules are an ordinary/public-import API
 # boundary. `import all` is a deliberate trusted-internals escape hatch, so
@@ -230,6 +237,125 @@ def check_sealed_import_all(root: Path, files: list[Path]) -> list[str]:
     return errors
 
 
+def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str]:
+    """Check repository-owned state for explicitly correspondence-only layers."""
+    errors: list[str] = []
+    lake_text = lakefile.read_text(encoding="utf-8")
+    exe_names = {
+        match.group(1)
+        for line in lake_text.splitlines()
+        if (match := LEAN_EXE_RE.match(line))
+    }
+    reachable = reachable_dependencies(libraries)
+
+    for name, info in libraries.items():
+        if not info.correspondence_only:
+            continue
+
+        conformance_dir = root / "conformance" / name
+        conformance_files = (
+            sorted(conformance_dir.rglob("*.lean"))
+            if conformance_dir.is_dir()
+            else []
+        )
+        if conformance_files:
+            errors.append(
+                f"{name} declares correspondence_only but owns conformance source "
+                f"{conformance_files[0].relative_to(root)}"
+            )
+        if re.search(
+            rf"`{re.escape(name)}\.[A-Za-z0-9_.]*Conformance\b", lake_text
+        ):
+            errors.append(
+                f"{name} declares correspondence_only but a Lake target names an owned "
+                "conformance module"
+            )
+
+        bench_dir = root / "bench" / name
+        bench_files = sorted(bench_dir.rglob("*.lean")) if bench_dir.is_dir() else []
+        if bench_files:
+            errors.append(
+                f"{name} declares correspondence_only but owns bench source "
+                f"{bench_files[0].relative_to(root)}"
+            )
+        normalized_name = re.sub(r"[^a-z0-9]", "", name.lower())
+        for exe_name in sorted(exe_names):
+            normalized_exe = re.sub(r"[^a-z0-9]", "", exe_name.lower())
+            if "bench" in normalized_exe and normalized_name in normalized_exe:
+                errors.append(
+                    f"{name} declares correspondence_only but owns compiled benchmark "
+                    f"target {exe_name}"
+                )
+                break
+        if re.search(rf"`{re.escape(name)}\.Bench(?:\b|\.)", lake_text):
+            errors.append(
+                f"{name} declares correspondence_only but a Lake target names "
+                f"{name}.Bench"
+            )
+
+        spec_dir = root / name / "SPEC"
+        specs = sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []
+        if len(specs) != 1:
+            errors.append(
+                f"{name} declares correspondence_only but has {len(specs)} library SPECs; "
+                "expected exactly one"
+            )
+            continue
+        spec = specs[0]
+        text = spec.read_text(encoding="utf-8")
+        if "correspondence-only-layer" not in text:
+            errors.append(
+                f"{name} declares correspondence_only but {spec.relative_to(root)} does "
+                "not declare correspondence-only-layer"
+            )
+        owners: dict[str, list[str]] = {}
+        for kind, body in OWNER_RE.findall(text):
+            owners.setdefault(kind, []).extend(OWNER_NAME_RE.findall(body))
+        for kind in ("conformance", "performance"):
+            names = owners.get(kind, [])
+            if not names:
+                errors.append(
+                    f"{name} declares correspondence_only but {spec.relative_to(root)} "
+                    f"does not identify computational {kind} owners"
+                )
+                continue
+            for owner in names:
+                if owner not in libraries:
+                    errors.append(
+                        f"{name} names unknown computational {kind} owner {owner}"
+                    )
+                    continue
+                if libraries[owner].mathlib:
+                    errors.append(
+                        f"{name} names mathlib bridge {owner} as a computational "
+                        f"{kind} owner"
+                    )
+                    continue
+                if not may_import(name, owner, libraries, reachable):
+                    errors.append(
+                        f"{name} names computational {kind} owner {owner} outside its "
+                        "dependency closure"
+                    )
+                if kind == "conformance":
+                    owner_conformance = (
+                        root / "conformance" / owner / "Conformance.lean"
+                    )
+                    if not owner_conformance.is_file():
+                        errors.append(
+                            f"{name} names computational conformance owner {owner} "
+                            "without a core conformance module"
+                        )
+                else:
+                    owner_slug = Path(pascal_to_spec_path(owner)).stem
+                    owner_report = root / "reports" / f"{owner_slug}-performance.md"
+                    if not owner_report.is_file():
+                        errors.append(
+                            f"{name} names computational performance owner {owner} "
+                            "without a headline report"
+                        )
+    return errors
+
+
 def import_roots(line: str) -> list[str]:
     match = IMPORT_RE.match(line.split("--", 1)[0].rstrip())
     if not match:
@@ -280,6 +406,7 @@ def main() -> int:
             )
 
     lakefile = root / "lakefile.lean"
+    errors.extend(check_correspondence_only(root, libraries, lakefile))
     build_roots = lean_exe_roots(lakefile) | lean_glob_modules(
         lakefile, UMBRELLA_BUILD_TARGETS
     )

@@ -1,5 +1,12 @@
 # hex-determinant-mathlib (depends on hex-determinant + hex-bareiss + hex-matrix-mathlib + Mathlib)
 
+## Correspondence-only classification
+
+This library is a `correspondence-only-layer`.
+
+Computational conformance owners: `HexDeterminant`, `HexBareiss`
+Computational performance owners: `HexDeterminant`, `HexBareiss`
+
 Mathlib layer for `hex-determinant`: proves that our executable Leibniz
 determinant corresponds to Mathlib's `Matrix.det`, assembles the Desnanot-Jacobi
 identity in the bordered-minor form the Bareiss correctness proof consumes, and

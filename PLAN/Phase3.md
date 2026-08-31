@@ -83,19 +83,24 @@ Reviewer checklist for Phase 3 PRs:
 ### Correspondence-only mathlib layers
 
 The criteria and checklist above presuppose an executable surface to
-conform to. A `mathlib: true` library whose API is correspondence
-statements alone, with no executable reifier, certificate checker, or
-tactic of its own, has no conformance module at all:
+conform to. A library explicitly classified by `mathlib: true` and
+`correspondence_only: true` whose API is correspondence statements alone,
+with no executable reifier, certificate checker, or tactic of its own, has no
+conformance module at all:
 `conformance/HexFooMathlib/Conformance.lean` must not exist, per
 [SPEC/testing.md §Banned anti-patterns](../SPEC/testing.md#banned-anti-patterns).
 For such a library Phase 3 is done when all of:
 
-1. `conformance/HexFooMathlib/Conformance.lean` is absent, and no
+1. `libraries.yml[L].correspondence_only` is `true`,
+   `conformance/HexFooMathlib/Conformance.lean` is absent, and no
    `HexConformance` glob in `lakefile.lean` names it.
    `scripts/conformance_targets.py` discovers targets by that
    filename, so the library is absent from the conformance CI list.
 
-2. The PR audits whatever checks the layer carried and cites, for each
+2. The library SPEC declares `correspondence-only-layer`, identifies the
+   computational owners on `Computational conformance owner(s):` and
+   `Computational performance owner(s):` lines, and the PR audits
+   whatever checks the layer carried and cites, for each
    operation the layer transports, the coverage that lives in the
    named computational owner or owners (more than one owner is normal,
    since a layer may transport operations from several Mathlib-free
