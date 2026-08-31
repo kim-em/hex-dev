@@ -307,6 +307,7 @@ lean_lib HexPrimalityElabProbe where
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
     `HexPrimality.ProofProbe.CoreOverBudget,
+    `HexIntFactor.ProofProbe.PrimalityExhausted,
     `HexPrimalityMathlib.ProofProbe.MathlibBaseline,
     `HexPrimalityMathlib.ProofProbe.Mathlib512,
     `HexPrimalityMathlib.ProofProbe.MathlibExhausted,
@@ -679,7 +680,8 @@ lean_lib HexConformance where
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
-    ++ #[`HexIntFactor.Conformance].map Glob.one
+    ++ #[`HexIntFactor.Conformance,
+      `HexIntFactor.PrimalityConformance].map Glob.one
 
     ++ #[`HexPolySmith.Conformance].map Glob.one
 

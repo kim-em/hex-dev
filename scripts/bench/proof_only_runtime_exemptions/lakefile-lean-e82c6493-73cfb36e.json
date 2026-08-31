@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "73cfb36eeee254eb1a4d2dddd78afd7b661a7a94",
+  "reason": "Combines the inherited HexPolyFp precompileModules build-only transition with registration of HexIntFactor primality conformance and its independent bounded-exhaustion proof probe. None changes HexPolyFp source, hexbz_factor_service, or the service runtime call graph."
+}

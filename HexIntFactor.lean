@@ -15,6 +15,8 @@ public import HexIntFactor.Small
 public import HexIntFactor.Factor
 public import HexIntFactor.Order
 public import HexIntFactor.PMinusOne
+public meta import HexIntFactor.Primality
+public import HexIntFactor.Primality
 public import HexIntFactor.Rho
 
 public section
