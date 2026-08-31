@@ -33,6 +33,8 @@
 # `test_modules` lists verification-only modules copied with the source but
 # intentionally absent from the public umbrella; released CI builds them via a
 # non-public `lean_lib` target.
+# `remove_paths` lists obsolete released-repo paths that the sync must delete.
+# Entries must be explicit relative paths and cannot overlap managed paths.
 # `build_modules` lists complete development umbrellas that the released Lake
 # skeleton must build separately from the curated public umbrella.
 # `executables` maps an unmanaged released executable name to its mathematical
@@ -187,10 +189,12 @@ repos:
 
   - repo: leanprover/hex-sparse-poly-mathlib
     lib: HexSparsePolyMathlib
+    test_modules: [HexSparsePolyMathlib.KernelTests]
     umbrella: true
     spec: hex-sparse-poly-mathlib
     bench: false
-    conformance: true
+    conformance: false
+    remove_paths: [conformance]
     fixtures: []
     oracles: []
     pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]

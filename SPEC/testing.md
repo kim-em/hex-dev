@@ -141,10 +141,10 @@ tree.
 Each library has up to three conformance-tree modules:
 
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
-  the `core` profile, specified above. Every library at
-  `done_through ≥ 2` has one, except a correspondence-only layer explicitly
-  classified by `mathlib: true` and `correspondence_only: true`, which must not
-  (see §Banned anti-patterns and
+  the `core` profile, specified above. Every Mathlib-free library at
+  `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
+  an executable runtime contract; a layer explicitly classified by
+  `correspondence_only: true` must not (see §Banned anti-patterns and
   [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence

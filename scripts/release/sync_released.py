@@ -170,6 +170,23 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     return out
 
 
+def removal_paths(entry: dict) -> list[Path]:
+    """Return validated released-repo paths explicitly scheduled for deletion."""
+    paths: list[Path] = []
+    for raw in entry.get("remove_paths") or []:
+        if not isinstance(raw, str):
+            raise ValueError("remove_paths entries must be strings")
+        path = Path(raw)
+        if path.is_absolute() or not path.parts or any(
+            part in {".", ".."} for part in path.parts
+        ):
+            raise ValueError(f"unsafe remove_paths entry: {raw!r}")
+        paths.append(path)
+    if len(paths) != len(set(paths)):
+        raise ValueError("remove_paths contains duplicate entries")
+    return paths
+
+
 def apply_paths(entry: dict, clone: Path) -> list[str]:
     notes: list[str] = []
     template = entry.get("readme_template")
@@ -181,6 +198,13 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
     if entry.get("pins_only"):
         return notes
     lib = entry["lib"]
+    for dest_rel in removal_paths(entry):
+        dest = clone / dest_rel
+        if dest.is_symlink() or dest.is_file():
+            dest.unlink()
+        elif dest.is_dir():
+            shutil.rmtree(dest)
+        notes.append(f"  remove {dest_rel}")
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
         if not src.exists():

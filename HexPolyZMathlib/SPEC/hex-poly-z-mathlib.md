@@ -4,6 +4,12 @@ Proves `DensePoly Int ≃+* Polynomial ℤ`, the Mignotte bound, and the
 Mathlib-side analytic polynomial inequalities over `Polynomial ℂ` that
 downstream integer-polynomial factorization needs.
 
+This library is deliberately not classified `correspondence_only`. Its public
+umbrella exports the `PolyParse` meta reifier used by `isolate_roots` and
+`factor_poly`, so it owns an executable elaboration surface rather than only
+transporting the Mathlib-free `HexPolyZ` API. It therefore needs ordinary
+Phase-3 conformance and Phase-4 evidence for that surface before advancing.
+
 **Mignotte bound, proof strategy.**
 
 Statement (needs `hf : f ≠ 0`; false otherwise since every polynomial

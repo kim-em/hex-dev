@@ -13,6 +13,7 @@ from libgraph import (
     load_lakefile_libs,
     load_libraries,
     may_import,
+    pascal_to_spec_path,
     reachable_dependencies,
     topological_order,
 )
@@ -245,6 +246,7 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
         for line in lake_text.splitlines()
         if (match := LEAN_EXE_RE.match(line))
     }
+    reachable = reachable_dependencies(libraries)
 
     for name, info in libraries.items():
         if not info.correspondence_only:
@@ -306,7 +308,9 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                 f"{name} declares correspondence_only but {spec.relative_to(root)} does "
                 "not declare correspondence-only-layer"
             )
-        owners = {kind: OWNER_NAME_RE.findall(body) for kind, body in OWNER_RE.findall(text)}
+        owners: dict[str, list[str]] = {}
+        for kind, body in OWNER_RE.findall(text):
+            owners.setdefault(kind, []).extend(OWNER_NAME_RE.findall(body))
         for kind in ("conformance", "performance"):
             names = owners.get(kind, [])
             if not names:
@@ -320,11 +324,35 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                     errors.append(
                         f"{name} names unknown computational {kind} owner {owner}"
                     )
-                elif libraries[owner].mathlib:
+                    continue
+                if libraries[owner].mathlib:
                     errors.append(
                         f"{name} names mathlib bridge {owner} as a computational "
                         f"{kind} owner"
                     )
+                    continue
+                if not may_import(name, owner, libraries, reachable):
+                    errors.append(
+                        f"{name} names computational {kind} owner {owner} outside its "
+                        "dependency closure"
+                    )
+                if kind == "conformance":
+                    owner_conformance = (
+                        root / "conformance" / owner / "Conformance.lean"
+                    )
+                    if not owner_conformance.is_file():
+                        errors.append(
+                            f"{name} names computational conformance owner {owner} "
+                            "without a core conformance module"
+                        )
+                else:
+                    owner_slug = Path(pascal_to_spec_path(owner)).stem
+                    owner_report = root / "reports" / f"{owner_slug}-performance.md"
+                    if not owner_report.is_file():
+                        errors.append(
+                            f"{name} names computational performance owner {owner} "
+                            "without a headline report"
+                        )
     return errors
 
 

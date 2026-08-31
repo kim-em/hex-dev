@@ -165,6 +165,12 @@ class CorrespondenceOnlyTest(unittest.TestCase):
 
     def correspondence_tree(self, root: Path) -> OrderedDict[str, LibraryInfo]:
         (root / "lakefile.lean").write_text("", encoding="utf-8")
+        core_conformance = root / "conformance" / "HexCore"
+        core_conformance.mkdir(parents=True)
+        (core_conformance / "Conformance.lean").write_text("", encoding="utf-8")
+        reports = root / "reports"
+        reports.mkdir()
+        (reports / "hex-core-performance.md").write_text("", encoding="utf-8")
         spec_dir = root / "HexBridge" / "SPEC"
         spec_dir.mkdir(parents=True)
         (spec_dir / "hex-bridge.md").write_text(
@@ -251,6 +257,52 @@ class CorrespondenceOnlyTest(unittest.TestCase):
             self.assertTrue(any("does not declare correspondence-only-layer" in e for e in errors))
             self.assertTrue(any("does not identify computational conformance owners" in e for e in errors))
             self.assertTrue(any("does not identify computational performance owners" in e for e in errors))
+
+    def test_repository_state_rejects_invalid_owners(self) -> None:
+        cases = {
+            "unknown": ("HexMissing", "unknown computational conformance owner"),
+            "mathlib": ("HexBridge", "mathlib bridge HexBridge"),
+        }
+        for label, (owner, message) in cases.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                libraries = self.correspondence_tree(root)
+                spec = root / "HexBridge/SPEC/hex-bridge.md"
+                text = spec.read_text(encoding="utf-8")
+                spec.write_text(
+                    text.replace(
+                        "Computational conformance owner: `HexCore`",
+                        f"Computational conformance owner: `{owner}`",
+                    ),
+                    encoding="utf-8",
+                )
+                errors = check_correspondence_only(
+                    root, libraries, root / "lakefile.lean"
+                )
+                self.assertTrue(any(message in error for error in errors), errors)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            libraries = self.correspondence_tree(root)
+            libraries["HexOther"] = LibraryInfo(
+                "HexOther", (), False, 4, "active"
+            )
+            other_conformance = root / "conformance" / "HexOther"
+            other_conformance.mkdir()
+            (other_conformance / "Conformance.lean").write_text("", encoding="utf-8")
+            (root / "reports/hex-other-performance.md").write_text("", encoding="utf-8")
+            spec = root / "HexBridge/SPEC/hex-bridge.md"
+            text = spec.read_text(encoding="utf-8")
+            spec.write_text(
+                text.replace("`HexCore`", "`HexOther`"), encoding="utf-8"
+            )
+            errors = check_correspondence_only(
+                root, libraries, root / "lakefile.lean"
+            )
+            self.assertTrue(
+                any("outside its dependency closure" in error for error in errors),
+                errors,
+            )
 
     def test_phase4_report_exemption_is_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
