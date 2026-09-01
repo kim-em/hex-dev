@@ -211,6 +211,8 @@ lean_lib HexMatrix where
 
 lean_lib HexGraph where
 
+lean_lib HexGraphIso where
+
 lean_lib HexCharPoly where
 
 lean_lib HexMinPoly where
