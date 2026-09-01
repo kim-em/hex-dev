@@ -228,6 +228,34 @@ and normalization behaviour differ, and gcd or division of sparse inputs
 usually becomes dense. Keep explicit conversions until several real consumers
 show which operations a common interface must support.
 
+### Fast multiplication in characteristic two, follow-ups
+
+Schönhage's radix-3 multiplication and its proved coefficient-operation
+bound are specified: the generic algorithm and triadic reference semantics
+as amendments to [hex-poly-fast](../HexPolyFast/SPEC/hex-poly-fast.md),
+the packed `F_2[x]` kernel and dispatch ladder as amendments to
+[hex-gf2](../HexGF2/SPEC/hex-gf2.md), and the operation counts in
+[hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md), the first `-cslib`
+companion. What remains future work:
+
+- Additive FFTs (Cantor's algorithm, Gao-Mateer) as an alternative
+  large-degree family for `F_2[x]` and `F_(2^k)[x]`, and the
+  wrapped-product splitting reconstruction of
+  Brent-Gaudry-Thomé-Zimmermann §3.3 that smooths the schedule staircase.
+- Instantiating the generic radix-3 plan for `F_(2^k)[x]` in the hex-gfq
+  family, where the word-prime NTT path is equally unavailable.
+- Integer Schönhage-Strassen multiplication. Hex integer arithmetic
+  currently delegates large products to GMP through Lean core, so this is
+  a verification project, not a performance one, and it needs its own
+  motivation before a SPEC.
+- A hex-gf2-cslib companion counting word operations of the packed kernel.
+  The existing bound counts coefficient operations of the generic
+  algorithm; one packed XOR performs 64 coefficient additions, so the
+  word-level statement is a separate theorem with its own cost model.
+- Extending the `-cslib` pattern to other libraries once a second
+  worthwhile bound is identified. Turing-machine-model complexity is out
+  of scope for the foreseeable future.
+
 ### Positive-characteristic multivariate squarefree decomposition
 
 Amend `hex-mv-gcd` with squarefree decomposition over perfect fields of

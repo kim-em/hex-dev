@@ -34,6 +34,13 @@
    bridge, transported along the equivalence so the operations stay the
    executable ones.
 
+   The same boundary applies to cslib, which itself depends on Mathlib.
+   Computational libraries are cslib-free; proved operation-count bounds
+   live in `-cslib` companion libraries (the first is
+   [hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md)), which are
+   proof-only and follow every build rule that applies to `-mathlib`
+   libraries.
+
 3. **Performant by default.** Dense array-backed representations, `UInt64`
    coefficients for `F_p`, Barrett/Montgomery reduction for modular
    arithmetic. New GMP `@[extern]` primitives where Lean's runtime
