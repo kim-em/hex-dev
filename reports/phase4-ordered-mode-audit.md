@@ -16,8 +16,9 @@ inventory: HexBerlekampZassenhaus
 ([#9741](https://github.com/kim-em/hex-dev/issues/9741)), and HexRoots
 ([#9794](https://github.com/kim-em/hex-dev/issues/9794)). HexNumberField was
 also reconciled and rolled back by #9769, but a later cluster bump restored it
-to 7 while its report still states that Phase 4 is blocked. It is included
-below because HexNumberFieldTower relies on it.
+to 7 before its focused repairs were complete. Its ordered-mode, API-coverage,
+and attribution findings are now resolved; it remains included below because
+HexNumberFieldTower relies on it.
 
 ## Findings and rollbacks
 
@@ -34,7 +35,7 @@ below because HexNumberFieldTower relies on it.
 | HexConway | Fixed Tier-1/Tier-2 checks lack mode-3 evidence, and the lookup verdict predates the current table. | [#9813](https://github.com/kim-em/hex-dev/issues/9813) |
 | HexGFq | Fixed constructor/projection verdict surfaces lack mode-3 evidence and expected hashes. | [#9814](https://github.com/kim-em/hex-dev/issues/9814) |
 | HexMvPolyMathlib | All five proof-track threshold comparisons remain unresolved under `## Concerns`. | [#9810](https://github.com/kim-em/hex-dev/issues/9810) |
-| HexNumberField | The report remains blocked on incomplete API coverage and five registrations without passing modes. | [#9722](https://github.com/kim-em/hex-dev/issues/9722), [#9743](https://github.com/kim-em/hex-dev/issues/9743), [#9795](https://github.com/kim-em/hex-dev/issues/9795), [#9796](https://github.com/kim-em/hex-dev/issues/9796) |
+| HexNumberField | Resolved: every advertised compiled operation is registered, all current modes pass, dominant profiled phases are attributed, and the report has no unresolved Concern. | [#9722](https://github.com/kim-em/hex-dev/issues/9722), [#9743](https://github.com/kim-em/hex-dev/issues/9743), [#9795](https://github.com/kim-em/hex-dev/issues/9795), [#9796](https://github.com/kim-em/hex-dev/issues/9796) |
 | HexNumberFieldTower | The Trager envelope fails mode 2's dominant-phase test, and fixed component anchors are used as coverage without mode-3 evidence. | [#9815](https://github.com/kim-em/hex-dev/issues/9815) |
 | HexRowReduceMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9817](https://github.com/kim-em/hex-dev/issues/9817) |
 | HexDeterminantMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9818](https://github.com/kim-em/hex-dev/issues/9818) |
@@ -50,8 +51,8 @@ There is no valid manual mode-2 pass in the affected set.
 HexNumberFieldTower's candidate citation covers the BHKS factorization phase,
 but the report attributes only 5.26% of the measured call to that phase.
 HexPolyFp supplies neither a mode-2 citation nor the required inclusive
-dominant-phase profile. HexNumberField's report already classifies its
-remaining inconclusive registrations as mode 4.
+dominant-phase profile. HexNumberField's former inconclusive registrations now
+have passing ordered modes and attributed profiles.
 
 ## Inspected with no gap
 

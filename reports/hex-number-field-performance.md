@@ -5,9 +5,10 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the current measured evidence. `libraries.yml` still
-keeps `HexNumberField` at `done_through: 3`, but the compiled-surface coverage
-and Attribution-rule concerns found by the Phase-4 audit are closed here.
+This snapshot records the complete Phase-4 evidence. `libraries.yml` records
+`HexNumberField` at `done_through: 4`; every direct dependency is also at Phase
+4 or later, every advertised compiled operation is registered, and every
+profiled dominant cost is attributed to a registration.
 
 ## Bench targets
 
@@ -263,7 +264,7 @@ and adds only a constant-time projection.
 | `QAdjoin.sub` | `runQAdjoinSubLadder` | parametric, `n` |
 | `QAdjoin.neg` | `runQAdjoinNegLadder` | parametric, `n` |
 | `QAdjoin.mul` | `runQAdjoinMulLadder` | parametric, `n²` |
-| `QAdjoin.inv` / `Inv.inv` | `runQAdjoinInvLadder` | parametric aggregate proxy; model decision #9743 remains scoped separately |
+| `QAdjoin.inv` / `Inv.inv` | `runQAdjoinInvLadder` | parametric, `n²(n+7)` aggregate finite-word proxy; the SPEC retains the conservative `O(n³ log n)` worst-case bit-cost bound |
 | `QAdjoin.div` / `Div.div` | `runQAdjoinDivLadder` | parametric, `n²(n+7)` |
 | rational `SMul.smul` on `QAdjoin` | `runQAdjoinSmulLadder` | parametric, `n` |
 | `QAdjoin.toAlgebraicNumber?` | `runQAdjoinCanonical` | fixed quadratic conversion |
@@ -386,7 +387,7 @@ runs below give the measurements; this table says which one counts.
 | `runQAdjoinSmulLadder` | **consistent** | -0.019 | current API-surface audit |
 | `runQAdjoinMulLadder` | **consistent** | -0.015 | current API-surface audit |
 | `runQAdjoinApprox` | **fixed: 17.244 ms, hash match** | — | API-surface fixed |
-| `runQAdjoinInvLadder` | **consistent** | **-0.113** | current API-surface audit |
+| `runQAdjoinInvLadder` | **consistent** | **-0.106** | Phase-4 completion rerun |
 | `runQAdjoinDivLadder` | **consistent** | -0.102 | current API-surface audit |
 | `runAddEliminantLadder` | **consistent** | +0.116 | current API-surface audit |
 | `runAlgebraicPolyOfArray` | **consistent** | -0.080 | current API-surface audit |
@@ -566,14 +567,15 @@ existing #9721 finding rather than attributing the former ceiling to its
 fixture.
 
 The **aggregate inversion run** measures the repaired `QAdjoin.inv` at the
-same scientific schedule and five outer trials. The export path is retained
-from the normalized-chain repair whose timings this run supersedes:
+same scientific schedule and five outer trials. The Phase-4 completion rerun
+supersedes the normalized-chain repair's earlier timing export:
 
 ```sh
 .lake/build/bin/hexnumberfield_bench run \
   Hex.NumberFieldBench.runQAdjoinInvLadder \
   --outer-trials 5 \
-  --export-file reports/bench-results/hex-number-field-qadjoin-inv-normalized.json
+  --export-file \
+    reports/bench-results/hex-number-field-phase4-final-inversion.json
 ```
 
 The untimed diagnostic replays the exact `xgcdLeftMonicAux` recurrence on the
@@ -618,19 +620,19 @@ the SPEC.
 
 | target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
 |---|---|---|---:|---|---:|
-| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | **consistent** | **-0.105** | 101.594..136.841 | 0.99% |
+| `runQAdjoinInvLadder` | 4, 8, 16, 32, 48, 64, 96 | **consistent** | **-0.106** | 101.713..137.605 | 1.85% |
 
-All seven rungs have five-trial spread at or below 0.99%. Median time is
-712.0 µs at `n = 16`, 4.683 ms at `n = 32`, 32.488 ms at `n = 64`, and
-96.438 ms at `n = 96`: respectively 2.08×, 4.31×, 14.74×, and 30.96× faster
+All seven rungs have five-trial spread at or below 1.85%. Median time is
+714.2 µs at `n = 16`, 4.720 ms at `n = 32`, 32.570 ms at `n = 64`, and
+96.551 ms at `n = 96`: respectively 2.07×, 4.28×, 14.70×, and 30.93× faster
 than the shipped-chain single-root medians. At `n = 4`, normalization's extra
-scale passes cost 23.79 µs versus 20.24 µs, a 17.5% regression; it is
-already 1.07× faster at `n = 8`. The result hashes match the superseded run at
+scale passes cost 24.12 µs versus 20.24 µs, a 19.2% regression; it is
+already 1.06× faster at `n = 8`. The result hashes match the superseded run at
 all seven rungs, confirming identical reduced inverses. Against the complexity
 declaration, the normalized chain is now consistent with the operation-trace-
 calibrated aggregate finite-word proxy. The slope tolerance remains unchanged.
-This does not update the historical PARI ratio curve below, which needs a
-paired comparator rerun.
+The paired PARI inversion registrations were rerun separately below so the
+comparator ratios also describe the normalized implementation.
 
 The **exactification audit run** measures the replacement end-to-end family
 at five outer trials and both newly separated certification phases at three:
@@ -963,14 +965,18 @@ check as well as a timing one.
 
 **Per-call overhead.** `runPariPolmodOverhead` issues one `polmod`-family
 request whose PARI-side work is a constant `0`, so it measures the JSON
-request/reply round trip alone. Its median is **7.126 us** (min 6.750 us,
-max 7.164 us across five repeats). Overhead is at most 22% of the PARI wall
-time on the smallest rung of either family and under 4% on the largest, so
+request/reply round trip alone. The multiplication export records **7.126 us**;
+the clean-tree inversion rerun records **7.063 us** (min 6.775 us, max 7.173
+us across five repeats). Overhead is at most 22% of the PARI wall
+time on the smallest rung of either family and under 10% on the largest rung
+of either family (9.9% for multiplication and 1.5% for inversion), so
 every rung clears the 50% floor `SPEC/benchmarking.md` sets for the eligible
 range, and every rung is far inside the 10 s hard ceiling and the 1 s soft
 target. Both raw and overhead-adjusted ratios are recorded below; the adjusted
 figure subtracts only that request/reply floor, leaving serialization and
-PARI-side polynomial construction charged to PARI.
+PARI-side polynomial construction charged to PARI. Each table uses its
+session-matched overhead probe: 7.126 us for the historical multiplication
+session and 7.063 us for the current inversion session.
 
 **Eligible range and rung density.** `SPEC/benchmarking.md` warns that a
 doubling-only schedule usually does not give enough eligible rungs to read a
@@ -982,9 +988,12 @@ and inversion at `n = 4, 6, 8, 10, 12, 16`, each bracketing its crossover.
 The local single-root fixture removes the former smoke-cost constraint. The
 registered comparison domains now restore multiplication at `n = 20` and
 inversion at `n = 16`, giving six rungs in each family. The original five-rung
-comparator export supplies the first five rows and the committed
+comparator export and the committed
 [endpoint supplement](bench-results/hex-number-field-single-root-comparators.json)
-supplies the restored sixth rows. Before the three exactification registrations
+supply the multiplication rows. The clean-tree
+[Phase-4 completion rerun](bench-results/hex-number-field-phase4-final-inversion-comparators.json)
+supplies all six normalized-inversion rows and the current overhead probe.
+Before the three exactification registrations
 were added, a full `verify` of those 43 registrations, including PARI,
 completed locally in 0.379 s; the four exactification targets verify together
 well inside the suite's 360 s hard cap, and the three current mode-3 targets
@@ -1008,20 +1017,21 @@ Ratios are quoted as PARI wall time divided by Hex wall time, so a value above
 
 | n | Hex | PARI | driver overhead as share of PARI | canonical hash | raw ratio | adjusted ratio |
 |---:|---:|---:|---:|---|---:|---:|
-| 4 | 19.951 us | 33.460 us | 21.3% | `0xb8302e29a4df3f41` | 1.677x | 1.320x |
-| 6 | 69.026 us | 54.823 us | 13.0% | `0xc80c3d019e0b9e4c` | 0.794x | 0.691x |
-| 8 | 141.853 us | 218.302 us | 3.3% | `0xd16df20a45d683c7` | 1.539x | 1.489x |
-| 10 | 251.376 us | 215.512 us | 3.3% | `0x7d0941f1c8c5f9e8` | 0.857x | 0.829x |
-| 12 | 505.466 us | 253.295 us | 2.8% | `0x7776688d262fc467` | 0.501x | 0.487x |
-| 16 | 1.478 ms | 222.231 us | 3.2% | `0x5820b68b7d69021d` | 0.150x | 0.146x |
+| 4 | 23.852 us | 33.126 us | 21.3% | `0xb8302e29a4df3f41` | 1.389x | 1.093x |
+| 6 | 65.904 us | 52.177 us | 13.5% | `0xc80c3d019e0b9e4c` | 0.792x | 0.685x |
+| 8 | 131.609 us | 214.185 us | 3.3% | `0xd16df20a45d683c7` | 1.627x | 1.574x |
+| 10 | 222.623 us | 212.071 us | 3.3% | `0x7d0941f1c8c5f9e8` | 0.953x | 0.921x |
+| 12 | 336.255 us | 236.367 us | 3.0% | `0x7776688d262fc467` | 0.703x | 0.682x |
+| 16 | 709.281 us | 479.138 us | 1.5% | `0x5820b68b7d69021d` | 0.676x | 0.666x |
 
 ### Trend
 
-Both ratios decline in the large: multiplication from 5.279x at `n = 4` to
-0.381x at `n = 20`, crossing 1 just past `n = 12` (1.041x raw, 0.936x
-adjusted); inversion from 1.677x at `n = 4` to 0.150x at `n = 16`. The two
-declines have different causes, and only one of them is a statement about
-arithmetic.
+Both ratios decline over their full measured ranges: multiplication from
+5.279x at `n = 4` to 0.381x at `n = 20`, crossing 1 just past `n = 12`
+(1.041x raw, 0.936x adjusted); normalized inversion from 1.389x at `n = 4`
+to 0.676x at `n = 16`, with the final raw crossover between `n = 8` and
+`n = 10`. The inversion curve remains non-monotone because PARI has a sharp
+cost step between `n = 6` and `n = 8`.
 
 For **multiplication** the decline is PARI's fixed per-call marshalling being
 amortised, not an algorithmic-class difference. Fitting each side's growth
@@ -1041,27 +1051,33 @@ consistent with the SPEC's declared expectation for this comparator — "the
 constant-factor gap is structural rather than algorithmic" — and it is why
 this comparator is `informational` rather than `gating`.
 
-For **inversion**, these comparator numbers describe the former unnormalized
-chain. Both sides did substantial work at every rung, and their fitted
-exponents differed materially:
+For **inversion**, the current numbers describe the same monic-normalized chain
+as the scientific ladder. Both sides do substantial work at every rung. A
+descriptive fit over this short crossover range gives:
 
-- Hex grows as `n^3.03`.
-- PARI's net cost grows as `n^1.73`, with net times 26.3, 47.7, 211.2, 208.4,
-  246.2 and 215.1 us.
+- Hex grows as `n^2.43`.
+- PARI's net cost grows as `n^2.13`, with net times 26.1, 45.1, 207.1, 205.0,
+  229.3 and 472.1 us.
 
-The diverging trend and ratio decline by more than a factor of three were what
-coefficient swell in the unnormalized rational extended gcd predicted, and
-they motivated https://github.com/kim-em/hex-dev/issues/9721. That
-implementation has now been replaced by the monic-normalized chain measured
-in §Verdicts, so these inversion ratios are retained as defect evidence, not
-as a current comparator verdict. A future full comparator rerun must replace
-them before drawing a new Hex/PARI trend. The old exponent difference was in
-any case only indicative: PARI's net cost jumps discontinuously between
-`n = 6` and `n = 8`, so a six-point fit through it is not a clean measurement
-of PARI's asymptotics.
+The Hex exponent is not a replacement complexity claim: these six small
+comparator rungs span the lower-order transition that the scientific
+`n²(n+7)` registration models explicitly, whereas that ladder continues to
+`n = 96`. The comparator fit is orientation only. At `n = 16`, normalized Hex
+inversion now takes 709.281 us instead of the former export's 1.478 ms while
+preserving the same canonical hash. This removes the obsolete pre-repair trend
+from the Phase-4 verdict without changing the SPEC's conservative
+`O(n³ log n)` worst-case statement.
 
-The `n = 6` and `n = 8` inversion rungs are non-monotone (0.794x then 1.539x)
-because PARI's own net cost jumps from 45.4 us to 208.4 us between them while
+The PARI endpoint also differs between sessions: the former endpoint
+supplement recorded 222.231 us at `n = 16`, below its own 253.295 us `n = 12`
+row, while the clean current inversion session records 479.138 us. The current
+row supersedes that non-monotone endpoint, but the descriptive `n^2.13` PARI
+fit and final crossover consequently remain sensitive to this endpoint and are
+not used as complexity evidence. Hash agreement fixes the compared value, not
+the external runtime's between-session variance.
+
+The `n = 6` and `n = 8` inversion rungs are non-monotone (0.792x then 1.627x)
+because PARI's own net cost jumps from 45.1 us to 207.1 us between them while
 Hex's rises smoothly; that is a PARI-side discontinuity and no claim here
 rests on those two points.
 
@@ -1081,7 +1097,8 @@ does expose.
 
 samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux x86-64,
 AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean 4.34.0-rc2, LeanBench
-0.1.0. The five original profiles use source commit `066f6fc29` (with the
+0.1.0. The normalized-inversion profile uses clean source commit `c94811435`.
+The five original profiles use source commit `066f6fc29` (with the
 fixture-corrected algebraic-roots profile noted below); the replacement
 exactification profile uses `a20d30552`, and the repaired fixed-field-roots
 profile uses implementation commit `4a827ea546`. Fresh fixed exactification,
@@ -1095,6 +1112,9 @@ oracle participates in any profiled route.
 export LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
   Hex.NumberFieldBench.runQAdjoinMulLadder     16 5000000000
+# Current monic-normalized inversion implementation:
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
+  Hex.NumberFieldBench.runQAdjoinInvLadder     64 5000000000
 # Historical parametric invocations, before the corresponding fixed-mode
 # replacements (and, for exactification, the family replacement):
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfield_bench \
@@ -1142,6 +1162,7 @@ profiles all pass calibration, confidence and the ±5 ms sensitivity check:
 | family | case | retained / rejected | calibration residual | leaf cost | classified |
 |---|---|---:|---:|---|---:|
 | `qadjoin-arithmetic` | `runQAdjoinMulLadder` n=16 | 3,938 / 4,750 | 0.755 ms | allocation 37.79%, GMP 37.51%, Lean runtime 23.72%, own code 0.74% | 99.75% |
+| `qadjoin-arithmetic`, normalized inversion | `runQAdjoinInvLadder` n=64 | 4,241 / 23 | 0.411 ms | allocation 19.52%, GMP 59.96%, Lean runtime 20.16%, own code 0.21% | 99.86% |
 | `lazy-arithmetic` | `runLazyAddLadder` n=8 | 25,651 / 153 | 0.293 ms | allocation 50.31%, GMP 32.79%, Lean runtime 13.61%, own code 0.58% | 97.28% |
 | `exactification-selection` | former `runExactLadder` n=8 | 5,334 / 488 | 0.574 ms | allocation 43.74%, GMP 29.04%, Lean runtime 18.77%, own code 1.78% | 93.33% |
 | `exactification-factorization` | `runExactLadder` n=6 | 4,426 / 11,330 | 0.807 ms | allocation 34.86%, GMP 10.85%, Lean runtime 43.20%, own code 9.60% | 98.51% |
@@ -1175,7 +1196,7 @@ exactification family; most leaves are still GMP entry points,
 `malloc`/`free`, or Lean runtime primitives reached from `Hex.*` frames. The
 inclusive ranking below identifies the hot paths.
 
-### `qadjoin-arithmetic` — attributes cleanly
+### `qadjoin-arithmetic` — both registered phases attribute cleanly
 
 | share | function |
 |---:|---|
@@ -1187,6 +1208,33 @@ This is exactly what the `runQAdjoinMulLadder` derivation describes: dense
 schoolbook multiplication of two degree-`(n-1)` operands, then reduction of the
 degree-`(2n-2)` product modulo `X^n - 2`. The two phases are 54% and 45% of the
 call and both are inside the registered target. Nothing here is unattributed.
+
+The fresh normalized-inversion profile records the other changed arithmetic
+route:
+
+| share | function |
+|---:|---|
+| 93.21% | `Hex.QAdjoin.inv` |
+| 93.11% | `Hex.DensePoly.xgcdLeftMonic` / `xgcdLeftMonicAux` |
+| 37.18% | `Hex.DensePoly.mulImpl` |
+| 25.89% | `Hex.DensePoly.divMod` / `divModArray` |
+| 25.61% | `Hex.DensePoly.subtractScaledShiftStep` |
+| 21.81% | `Hex.DensePoly.scaleImpl` |
+
+The monic-normalized extended-gcd chain is the whole registered
+`runQAdjoinInvLadder` operation. Its polynomial multiplication, division,
+subtraction, and normalization substeps therefore map directly to that target.
+GMP accounts for 59.96% of leaves, led by rational-normalization gcds, which is
+consistent with the report's explicit warning that the finite-word limb proxy
+does not model gcd internals. The profile exposes no dominant phase outside the
+registration, so the Attribution rule is satisfied without weakening the
+separate worst-case SPEC bound. On this controlled bounded-height family the
+omitted gcd internals scale within the aggregate proxy's unchanged tolerance;
+a slower-than-declared result or a residual slope outside that tolerance would
+fail mode 1 and reopen the finding. The raw local profile is
+`/tmp/hex-profile-runQAdjoinInvLadder-64.json.gz`; its 4.245 s timed region,
+4,241 retained samples, 0.411 ms calibration residual, confidence check, and
+±5 ms sensitivity check all pass.
 
 ### `lazy-arithmetic` — attributes to isolation, as declared
 
@@ -1336,10 +1384,19 @@ comparison still pays for the rational gcd before the existing two-root
 exactification fallback; that branch is semantically covered but is not a
 performance claim of this ladder.
 
-## Artefact traceability
+## Reproduction
+
+The exact scientific, comparator, and profiling commands appear with the
+corresponding evidence above. All fixtures are deterministic, so no seed is
+required. The table below pins the committed raw timing exports; sampling
+profiles remain developer-local as required by `SPEC/profiling.md`.
+
+### Artefact traceability
 
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
+| [`bench-results/hex-number-field-phase4-final-inversion.json`](bench-results/hex-number-field-phase4-final-inversion.json) | `c94811435`, clean tree; final five-trial normalized-inversion ladder | idle | `5365e22a76a261ff3807521823315e1fe0a3cd7a82d112b8cb49462da84629ff` |
+| [`bench-results/hex-number-field-phase4-final-inversion-comparators.json`](bench-results/hex-number-field-phase4-final-inversion-comparators.json) | `c94811435`, clean tree; current inversion pairs plus overhead | idle | `64b71bf96b66b0626defd7d7dbb6b89c9ea36c22f78c0c08af8acd562bf71699` |
 | [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `5010a63ba`, clean tree; all 13 current parametric registrations | variable scheduler load | `b0d0a48449f71a8b8cd7f924d8a1643c53a48e05936cfff6e440f7e6766f43a2` |
 | [`bench-results/hex-number-field-root-merge-current.json`](bench-results/hex-number-field-root-merge-current.json) | `2500076f9`, clean tree; authoritative three-trial merge rerun | variable scheduler load | `4c463ec14ed02a80fba3dc726458d3aad1822fb9cf6c6a31955756b2a09ccf0e` |
 | [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `c7cfc4de4`, clean tree; all 35 newly added fixed registrations | idle | `6d022a22bca113cdd64e9db2d9fe8e2112100bf0bbe270fbf289c87e47d799d0` |
@@ -1384,6 +1441,11 @@ only `runQAdjoinRootsLadder` and introduces `runMergeRootListLadder`; its
 repaired profile comes from `4a827ea546`. The QAdjoin-roots fixed export then
 supersedes that target's parametric verdict without superseding its repair or
 profile evidence.
+The Phase-4 completion inversion export supersedes the earlier normalized
+inversion timing export, while the final inversion-comparator export supersedes
+the pre-normalization inversion rows only; multiplication continues to use its
+original comparator artefacts. The clean `c94811435` inversion profile at
+`n = 64` refreshes attribution for the changed implementation.
 The three current fixed exactification profiles come from `1e5cb8472` with the
 instrumentation-only fixed-child sidecar hook described in §Profile.
 The follow-up at `2df51cf4b` leaves the certified inputs and exactification
@@ -1401,14 +1463,3 @@ random seed, so a rung is identified by its parameter and the salt named in
 the bench source rather than by a seed.
 
 ## Concerns
-
-`libraries.yml` keeps `HexNumberField` at `done_through: 3`. The `QAdjoin.inv`
-coefficient-swell concern is resolved by the monic-normalized chain and
-aggregate expected-work model recorded in §Verdicts; its conservative
-worst-case bit-cost bound remains in the SPEC. The exactification and
-QAdjoin-roots model concerns are resolved by their fixed registrations and
-profiles above. The exact declaration-to-registration matrix in §Track
-assignment re-audit covers every advertised compiled operation, and the
-profile-found dominant phases plus both root eliminants have direct targets.
-There is no unresolved Phase-4 coverage or Attribution-rule concern in this
-report.
