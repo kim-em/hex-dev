@@ -167,6 +167,32 @@ orientation. -/
   else
     none
 
+/-- Total edge-list builder over `Fin` pairs: the graph whose edges are
+the listed unordered pairs, collapsing duplicates in either orientation
+and dropping diagonal pairs. Beware that numeric literals in a
+`Fin n` pair wrap modulo `n`; use `ofEdges?` to range-check plain
+`Nat` input instead. -/
+@[expose] def ofEdges (edges : List (Fin n × Fin n)) : Graph n :=
+  ofRel fun i j => edges.any fun e => e.1 == i && e.2 == j
+
+private theorem any_pair_eq (edges : List (Fin n × Fin n)) (i j : Fin n) :
+    (edges.any fun e => e.1 == i && e.2 == j) = decide ((i, j) ∈ edges) := by
+  rw [Bool.eq_iff_iff, List.any_eq_true, decide_eq_true_iff]
+  constructor
+  · rintro ⟨⟨a, b⟩, he, hab⟩
+    simp only [Bool.and_eq_true, beq_iff_eq] at hab
+    obtain ⟨rfl, rfl⟩ := hab
+    exact he
+  · intro h
+    exact ⟨_, h, by simp⟩
+
+/-- The graph built by `ofEdges` has exactly the listed undirected
+edges, less the diagonal. -/
+@[simp] theorem adj_ofEdges (edges : List (Fin n × Fin n)) (i j : Fin n) :
+    (ofEdges edges).adj i j =
+      (i != j && (decide ((i, j) ∈ edges) || decide ((j, i) ∈ edges))) := by
+  rw [ofEdges, adj_ofRel, any_pair_eq, any_pair_eq]
+
 /-- `ofEdges?` succeeds exactly on well-formed inputs. -/
 theorem isSome_ofEdges? (n : Nat) (edges : List (Nat × Nat)) :
     (ofEdges? n edges).isSome = edges.all (validEdge n) := by
