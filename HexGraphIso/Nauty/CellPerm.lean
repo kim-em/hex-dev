@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Refine
 public import HexGraphIso.Nauty.Image
+public import HexGraphIso.Nauty.Equivariance
 
 public section
 
@@ -225,5 +226,223 @@ theorem splitCellLoop_spec {gRow : Nat} :
             (elem gRow ·) + 1) = k - (segN lab (c1.toNat + 1) k).countP
               (elem gRow ·) by omega]
         exact hright
+
+/-! # Cells as local runs -/
+
+/-- A maximal run of the partition at `level`: `len` positions from `a`,
+open on the inside and closed at both ends. -/
+@[expose] def IsCell (ptn : Array Nat) (level a len : Nat) : Prop :=
+  0 < len ∧ (a = 0 ∨ ptn[a - 1]! ≤ level) ∧
+    (∀ i, a ≤ i → i + 1 < a + len → ptn[i]! > level) ∧
+    ptn[a + len - 1]! ≤ level
+
+theorem cellEnd_go_interior {ptn : Array Nat} {level : Nat} :
+    ∀ (fuel j i : Nat), j ≤ i → i < cellEnd.go ptn level fuel j →
+      ptn[i]! > level
+  | 0, j, i, hj, hi => absurd hi (by rw [cellEnd.go]; omega)
+  | fuel + 1, j, i, hj, hi => by
+    rw [cellEnd.go] at hi
+    split at hi
+    · next h =>
+      rcases Decidable.em (i = j) with rfl | hne
+      · exact h
+      · exact cellEnd_go_interior fuel (j + 1) i (by omega) hi
+    · omega
+
+theorem cellEnd_go_end {ptn : Array Nat} {level : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    ∀ (fuel j : Nat), j < ptn.size → ptn.size ≤ fuel + j →
+      ptn[cellEnd.go ptn level fuel j]! ≤ level
+  | 0, j, hj, hf => absurd hf (by omega)
+  | fuel + 1, j, hj, hf => by
+    rw [cellEnd.go]
+    split
+    · next h =>
+      have hne : j ≠ ptn.size - 1 := by
+        intro hjeq
+        rw [hjeq] at h
+        omega
+      exact cellEnd_go_end hend fuel (j + 1) (by omega) (by omega)
+    · next h => omega
+
+/-- A cell of the partition, as reported by `cellEnd`, is a maximal
+run. -/
+theorem isCell_cellEnd {ptn : Array Nat} {level a : Nat}
+    (ha : a < ptn.size) (hstart : a = 0 ∨ ptn[a - 1]! ≤ level)
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    IsCell ptn level a (cellEnd ptn level a + 1 - a) := by
+  have hge : a ≤ cellEnd ptn level a := cellEnd_ge
+  have hlt : cellEnd ptn level a < ptn.size := cellEnd_lt ha hend
+  refine ⟨by omega, hstart, ?_, ?_⟩
+  · intro i hi hi2
+    rw [cellEnd] at hi2
+    exact cellEnd_go_interior (ptn.size - a) a i hi (by omega)
+  · rw [show a + (cellEnd ptn level a + 1 - a) - 1 = cellEnd ptn level a
+      by omega, cellEnd]
+    exact cellEnd_go_end hend _ _ ha (by omega)
+
+theorem cells_go_isCell {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
+    ∀ (fuel c1 : Nat), (c1 = 0 ∨ ptn[c1 - 1]! ≤ level) →
+      ∀ p ∈ cells.go ptn level nn fuel c1,
+        IsCell ptn level p.1 (p.2 + 1 - p.1)
+  | 0, _, _, p, hp => absurd hp (by simp [cells.go])
+  | fuel + 1, c1, hstart, p, hp => by
+    rw [cells.go] at hp
+    split at hp
+    · next h =>
+      simp only [List.mem_cons] at hp
+      rcases hp with rfl | hmem
+      · exact isCell_cellEnd (by omega) hstart hend
+      · refine cells_go_isCell hnn hend fuel _ ?_ p hmem
+        right
+        rw [show cellEnd ptn level c1 + 1 - 1 = cellEnd ptn level c1
+          by omega, cellEnd]
+        exact cellEnd_go_end hend _ _ (by omega) (by omega)
+    · exact absurd hp (by simp)
+
+/-- Every cell of the partition list is a maximal run. -/
+theorem cells_isCell {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
+    ∀ p ∈ cells ptn level nn, IsCell ptn level p.1 (p.2 + 1 - p.1) := by
+  intro p hp
+  rw [cells] at hp
+  exact cells_go_isCell hnn hend nn 0 (Or.inl rfl) p hp
+
+/-! # Cell-contents equivalence -/
+
+/-- The two labellings agree, as multisets, on every cell of the
+partition. -/
+@[expose] def cellsPerm (ptn : Array Nat) (level : Nat)
+    (lab lab' : Array Nat) : Prop :=
+  ∀ a len, IsCell ptn level a len → (segN lab a len).Perm (segN lab' a len)
+
+/-- On singleton cells, cell-equivalent labellings agree exactly. -/
+theorem cellsPerm_singleton {ptn : Array Nat} {level : Nat}
+    {lab lab' : Array Nat} (h : cellsPerm ptn level lab lab') {a : Nat}
+    (hc : IsCell ptn level a 1) : lab[a]! = lab'[a]! := by
+  have hp := h a 1 hc
+  rw [segN_cons, segN_zero, segN_cons, segN_zero] at hp
+  simpa using List.perm_singleton.mp hp
+
+/-- Splitting one cell at an interior boundary: the new partition's
+cells are the two halves of the split cell and the untouched old cells,
+so cell-contents equivalence follows from equivalence of the halves and
+of every disjoint old cell. -/
+theorem cellsPerm_set! {ptn : Array Nat} {level : Nat}
+    {lab lab' : Array Nat} {A lenA c : Nat}
+    (hcell : IsCell ptn level A lenA) (hsize : A + lenA ≤ ptn.size)
+    (hcA : A ≤ c) (hc2 : c + 1 < A + lenA)
+    (hL : (segN lab A (c + 1 - A)).Perm (segN lab' A (c + 1 - A)))
+    (hR : (segN lab (c + 1) (A + lenA - (c + 1))).Perm
+      (segN lab' (c + 1) (A + lenA - (c + 1))))
+    (hout : ∀ a len, IsCell ptn level a len →
+      a + len ≤ A ∨ A + lenA ≤ a →
+      (segN lab a len).Perm (segN lab' a len)) :
+    cellsPerm (ptn.set! c level) level lab lab' := by
+  obtain ⟨hlenA, hstartA, hintA, hendA⟩ := hcell
+  intro a len hc'
+  obtain ⟨hlen, hstart, hint, hend⟩ := hc'
+  have hcget : (ptn.set! c level)[c]! = level :=
+    Array.getElem!_set!_self _ _ _ (by omega)
+  rcases Nat.lt_or_ge c a with hca | hca
+  · -- the block lies right of the written boundary
+    rcases Decidable.em (a = c + 1) with heq | hne
+    · -- right half: show the block ends exactly at the old cell end
+      have hebound : a + len - 1 = A + lenA - 1 := by
+        rcases Nat.lt_trichotomy (a + len - 1) (A + lenA - 1) with
+          hlt | heq | hgt
+        · exfalso
+          have hi := hintA (a + len - 1) (by omega) (by omega)
+          rw [← Array.getElem!_set!_ne ptn c (a + len - 1) level
+            (by omega)] at hi
+          omega
+        · exact heq
+        · exfalso
+          have hi := hint (A + lenA - 1) (by omega) (by omega)
+          rw [Array.getElem!_set!_ne ptn c (A + lenA - 1) _
+            (by omega)] at hi
+          omega
+      have hleneq : len = A + lenA - (c + 1) := by omega
+      rw [heq, hleneq]
+      exact hR
+    · -- disjoint block right of the old cell
+      have haright : A + lenA ≤ a := by
+        rcases Nat.lt_or_ge a (A + lenA) with hlt | hge
+        · exfalso
+          have hi := hintA (a - 1) (by omega) (by omega)
+          have hb : (ptn.set! c level)[a - 1]! ≤ level := by
+            rcases hstart with h0 | hb
+            · omega
+            · exact hb
+          rw [Array.getElem!_set!_ne ptn c (a - 1) _ (by omega)] at hb
+          omega
+        · exact hge
+      refine hout a len ⟨hlen, ?_, ?_, ?_⟩ (Or.inr haright)
+      · rcases hstart with h0 | hb
+        · exact Or.inl h0
+        · right
+          rw [← Array.getElem!_set!_ne ptn c (a - 1) level (by omega)]
+          exact hb
+      · intro i hi hi2
+        have := hint i hi hi2
+        rw [Array.getElem!_set!_ne ptn c i _ (by omega)] at this
+        exact this
+      · rw [← Array.getElem!_set!_ne ptn c (a + len - 1) level (by omega)]
+        exact hend
+  · rcases Nat.lt_or_ge c (a + len) with hcin | hcout
+    · -- the written boundary lies inside the block: block ends at `c`
+      have hce : a + len - 1 = c := by
+        rcases Nat.lt_trichotomy (a + len - 1) c with hlt | heq | hgt
+        · omega
+        · exact heq
+        · exfalso
+          have hi := hint c (by omega) (by omega)
+          rw [hcget] at hi
+          omega
+      -- and starts at `A`
+      have hsa : a = A := by
+        rcases Nat.lt_trichotomy a A with hlt | heq | hgt
+        · exfalso
+          have hb : A ≥ 1 := by omega
+          have hi := hint (A - 1) (by omega) (by omega)
+          have hpb : ptn[A - 1]! ≤ level := by
+            rcases hstartA with h0 | hb'
+            · omega
+            · exact hb'
+          rw [Array.getElem!_set!_ne ptn c (A - 1) _ (by omega)] at hi
+          omega
+        · exact heq
+        · exfalso
+          have hi := hintA (a - 1) (by omega) (by omega)
+          have hb : (ptn.set! c level)[a - 1]! ≤ level := by
+            rcases hstart with h0 | hb
+            · omega
+            · exact hb
+          rw [Array.getElem!_set!_ne ptn c (a - 1) _ (by omega)] at hb
+          omega
+      rw [hsa, show len = c + 1 - A by omega]
+      exact hL
+    · -- disjoint block left of the written boundary
+      have haleft : a + len ≤ A := by
+        rcases Nat.lt_or_ge (a + len - 1) A with hlt | hge
+        · omega
+        · exfalso
+          have hi := hintA (a + len - 1) (by omega) (by omega)
+          rw [← Array.getElem!_set!_ne ptn c (a + len - 1) level
+            (by omega)] at hi
+          omega
+      refine hout a len ⟨hlen, ?_, ?_, ?_⟩ (Or.inl haleft)
+      · rcases hstart with h0 | hb
+        · exact Or.inl h0
+        · right
+          rw [← Array.getElem!_set!_ne ptn c (a - 1) level (by omega)]
+          exact hb
+      · intro i hi hi2
+        have := hint i hi hi2
+        rw [Array.getElem!_set!_ne ptn c i _ (by omega)] at this
+        exact this
+      · rw [← Array.getElem!_set!_ne ptn c (a + len - 1) level (by omega)]
+        exact hend
 
 end Hex.GraphIso.Nauty
