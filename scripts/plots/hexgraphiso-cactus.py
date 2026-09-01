@@ -136,13 +136,17 @@ def main() -> int:
     for family in families:
         rows = sorted((r for r in sweep if r["family"] == family),
                       key=lambda r: r["n"])
+        line, = ax_family.plot([r["n"] for r in rows],
+                               [r["hex_ns"] / 1e9 for r in rows],
+                               marker="o", markersize=3, label=family)
         ax_family.plot([r["n"] for r in rows],
-                       [r["hex_ns"] / 1e9 for r in rows],
-                       marker="o", markersize=3, label=family)
+                       [r["nauty_ns"] / 1e9 for r in rows],
+                       linestyle="--", linewidth=1, marker="o",
+                       markersize=2, color=line.get_color())
     ax_family.set_yscale("log")
     ax_family.set_xlabel("n (vertices)")
-    ax_family.set_ylabel("hex canonicalize time (s)")
-    ax_family.set_title("compiled canonicalize by family")
+    ax_family.set_ylabel("canonicalize time (s)")
+    ax_family.set_title("by family: hex (solid) vs nauty (dashed)")
     ax_family.grid(True, which="both", alpha=0.3)
     ax_family.legend(fontsize=8)
     canon_png = args.out_dir / "hexgraphiso-canon-cactus.png"

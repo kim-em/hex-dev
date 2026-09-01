@@ -26,10 +26,13 @@ tag := "hex-graph-iso-intro"
 %%%
 
 `HexGraphIso` computes canonical forms and isomorphisms of finite simple
-undirected graphs with ordered vertex colours, per
-`SPEC/Libraries/hex-graph-iso.md`. Two coloured graphs are isomorphic
-exactly when their canonical forms are equal
-({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`), and the
+undirected graphs with ordered vertex colours. The canonical labelling
+algorithm used in `HexGraphIso` is an exact translation of the
+[nauty](https://users.cecs.anu.edu.au/~bdm/nauty/) 2.9.3 algorithm into Lean. (We
+use conformance testing, rather than a theorem, to ensure they are
+identical, and prove our theorems about the Lean translation.) Two
+coloured graphs are isomorphic exactly when their canonical forms are
+equal ({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`), and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
 checked transporter, negative goals through a fully verified
@@ -62,18 +65,17 @@ open Hex Hex.GraphIso
 namespace HexGraphIsoChapterExample
 
 def petersen : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 def kneser52 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6),
-       (2, 8), (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]).getD
-      (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (2, 8), (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
+    coloring := Coloring.trivial 10 }
 
 -- The two canonical searches find an explicit vertex permutation
 -- between the two presentations; `checkIso` validates it.
@@ -96,11 +98,11 @@ the kernel replays that run.
 
 ```lean
 def prism5 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 ```
@@ -121,7 +123,7 @@ special-purpose lemma.
 ```lean
 def markPair (a b : Fin 10) : Coloring 10 2 :=
   (Coloring.ofVector? (Hex.Vector.ofFn' fun i =>
-    if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2 (by omega) (by omega))
+    if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
 
 -- 0-1 is an outer pentagon edge; 2-3 likewise; 0-2 is a non-edge.
 def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
@@ -200,7 +202,5 @@ example : IsEmpty (petersenDrawing ≃g pentagonalPrism) := by graph_iso
 end HexGraphIsoMathlibChapterExample
 ```
 
-Neither proof requires an external nauty installation: the pinned nauty
-source is the compatibility target of the conformance oracle, never a
-runtime dependency, and no proof path uses `native_decide` or introduces
-an axiom.
+Neither proof requires an external nauty installation, and no proof
+path uses `native_decide` or introduces an axiom.
