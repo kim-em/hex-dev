@@ -346,4 +346,56 @@ theorem countsOf_map (σ : Renaming n) {ctx ctx' : Ctx}
     hg.2.2 lab[cell1 + o]! (hlab _ hpos), ← image_and σ,
     popCount_image σ (Nat.lt_of_le_of_lt Nat.and_le_left hws) (image_lt σ _)]
 
+/-! # The window scan -/
+
+/-- The window-scan bookkeeping reads and writes only position-level
+fields, so it commutes with the labelling transport. -/
+theorem windowStep_mapSt (σ : Renaming n) (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) (st : RefineSt) :
+    windowStep level cell1 cell2 v c1 c2 maxcell (mapSt σ st) =
+      mapSt σ (windowStep level cell1 cell2 v c1 c2 maxcell st) := by
+  rw [windowStep, windowStep]
+  dsimp only [mapSt]
+  rcases Decidable.em (Int.ofNat (c2 - c1) > maxcell) with h1 | h1 <;>
+  rcases hB : (c1 != cell1) with _ | _ <;>
+  rcases hC : (c2 - c1 == 1) with _ | _ <;>
+  rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
+    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+
+theorem lab_windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
+    (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).lab = st.lab := by
+  rw [windowStep]
+  dsimp only
+  repeat' first | rfl | split
+
+theorem windowScan_map (σ : Renaming n) (level cell1 cell2 : Nat)
+    (counts : List Nat) :
+    ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      windowScan level cell1 cell2 counts values c1 maxcell (mapSt σ st) =
+        mapSt σ (windowScan level cell1 cell2 counts values c1 maxcell st)
+  | [], _, _, _ => rfl
+  | v :: vs, c1, maxcell, st => by
+    rw [windowScan, windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rw [windowStep_mapSt]
+      exact windowScan_map σ level cell1 cell2 counts vs _ _ _
+    · simp only [if_neg hm]
+      exact windowScan_map σ level cell1 cell2 counts vs c1 maxcell st
+
+/-- The window scan touches no labelling data. -/
+theorem lab_windowScan (level cell1 cell2 : Nat) (counts : List Nat) :
+    ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      (windowScan level cell1 cell2 counts values c1 maxcell st).lab =
+        st.lab
+  | [], _, _, _ => rfl
+  | v :: vs, c1, maxcell, st => by
+    rw [windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rw [lab_windowScan level cell1 cell2 counts vs _ _ _, lab_windowStep]
+    · simp only [if_neg hm]
+      exact lab_windowScan level cell1 cell2 counts vs c1 maxcell st
+
 end Hex.GraphIso.Nauty

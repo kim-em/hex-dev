@@ -186,6 +186,26 @@ cell order. -/
 @[expose] def multOf (counts : List Nat) (v : Nat) : Nat :=
   counts.countP (· == v)
 
+/-- One nonempty count group's bookkeeping in the window scan: code
+contribution, `maxpos` of the largest group so far, the group boundary
+with its active-set entry, and the new cell end. Touches no labelling
+data. -/
+@[expose] def windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
+    (st : RefineSt) : RefineSt :=
+  let st := { st with longcode := mash st.longcode (v + c1) }
+  let st :=
+    if Int.ofNat (c2 - c1) > maxcell then { st with maxpos := c1 } else st
+  let st :=
+    if c1 != cell1 then
+      let st := { st with
+        active := insert st.active c1
+        numcells := st.numcells + 1 }
+      if c2 - c1 == 1 then { st with hint := c1 } else st
+    else
+      st
+  if c2 ≤ cell2 then { st with ptn := st.ptn.set! (c2 - 1) level }
+  else st
+
 /-- The position scan over the count window `[bmin, bmax]`: register each
 nonempty group's boundary, code contribution, active-set entry, and the
 `maxpos` of the largest group. -/
@@ -193,27 +213,12 @@ nonempty group's boundary, code contribution, active-set entry, and the
     List Nat → Nat → Int → RefineSt → RefineSt
   | [], _, _, st => st
   | v :: vs, c1, maxcell, st =>
-    let m := multOf counts v
-    if m > 0 then
-      let c2 := c1 + m
-      let st := { st with longcode := mash st.longcode (v + c1) }
-      let (st, maxcell) :=
-        if Int.ofNat (c2 - c1) > maxcell then
-          ({ st with maxpos := c1 }, Int.ofNat (c2 - c1))
-        else
-          (st, maxcell)
-      let st :=
-        if c1 != cell1 then
-          let st := { st with
-            active := insert st.active c1
-            numcells := st.numcells + 1 }
-          if c2 - c1 == 1 then { st with hint := c1 } else st
-        else
-          st
-      let st :=
-        if c2 ≤ cell2 then { st with ptn := st.ptn.set! (c2 - 1) level }
-        else st
-      windowScan level cell1 cell2 counts vs c2 maxcell st
+    if multOf counts v > 0 then
+      windowScan level cell1 cell2 counts vs (c1 + multOf counts v)
+        (if Int.ofNat (multOf counts v) > maxcell then
+          Int.ofNat (multOf counts v)
+        else maxcell)
+        (windowStep level cell1 cell2 v c1 (c1 + multOf counts v) maxcell st)
     else
       windowScan level cell1 cell2 counts vs c1 maxcell st
 
