@@ -130,7 +130,7 @@ def validate_export(export: dict[str, object]) -> None:
                     f"{name}: only {ok_repeats}/{row['config']['repeats']} repeats completed"
                 )
             check = row["expected_hash_check"]
-            if check["status"] != "matched":
+            if check["status"] != "match":
                 failures.append(f"{name}: expected hash {check['status']}")
     for bits, _ in BALANCED:
         normal = result(export, f"runBalancedFactor{bits}")
