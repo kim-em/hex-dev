@@ -41,21 +41,21 @@ for either mode-3 family.
 ## Native artifact and harness verdicts
 
 The clean native artifact is
-`reports/bench-results/hex-int-factor-phase4-ecb06bcb-chungus2-cpu7.json`
+`reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json`
 (SHA-256
-`65bf567777a07e963f344befc70e7f41a0fe11882628b43729ae3ccd99d809d9`).
-It records source commit `ecb06bcb19222e1656cc7039c9abdace00da4ddb`,
+`547cb0b332f80c16de2e88d7c731d20fd4a80a5f5210fb15e2976434cdd1cd5c`).
+It records source commit `f80afaec0ab1e4791d95f17e130864f929aef523`,
 benchmark executable SHA-256
-`d0bd18eb6f48d3ef210f323e686932c56832df6c0c03214c7faa4c084ca1d4bf`,
+`6f2dfac812a7d9787bf3c8e440a26ed22e97c9ae0230ac2699a24ab16708b93e`,
 Lean 4.34.0-rc2, lean-bench 0.1.0, host `chungus2`, and CPU 7 affinity.
 
 | Target | Domain | Declared model | Exact verdict | Slope |
 |---|---:|---:|---|---:|
-| `runSquareFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | -0.145 |
-| `runReplay` | exponent 1024--262144 | `n * n` | `consistent_with_declared_complexity` | -0.017 |
+| `runSquareFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | -0.139 |
+| `runReplay` | exponent 1024--262144 | `n * n` | `consistent_with_declared_complexity` | -0.065 |
 | `runBalancedRho` | 32--80 bits | `2 ^ (n / 4)` | `consistent_with_declared_complexity` | n/a |
-| `runSigmaFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | 0.039 |
-| `runTotientFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | 0.101 |
+| `runSigmaFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | 0.038 |
+| `runTotientFactorCount` | 32--1024 entries | `n * n` | `consistent_with_declared_complexity` | 0.100 |
 | `runSigmaExponent` | 16384--4194304 | `n * n.log2` | `consistent_with_declared_complexity` | 0.150 |
 | `runOrder` | 257--1048589 | `n` | `consistent_with_declared_complexity` | -0.002 |
 
@@ -73,37 +73,37 @@ all other fixed rows use three.
 
 | Target | Exact harness result |
 |---|---|
-| `runPowerGenericBatch` | median 2.008 ms; expected hash match |
-| `runBalancedCompletion64` | median 4.527 ms; expected hash match |
-| `runBalancedFactor64` | median 193.084 ms; expected hash match |
-| `runPMinusOneBatch` | median 11.050 ms; expected hash match |
-| `runBalancedFactor72` | median 720.462 ms; expected hash match |
+| `runPowerGenericBatch` | median 2.030 ms; expected hash match |
+| `runBalancedCompletion64` | median 4.460 ms; expected hash match |
+| `runBalancedFactor64` | median 193.957 ms; expected hash match |
+| `runPMinusOneBatch` | median 11.067 ms; expected hash match |
+| `runBalancedFactor72` | median 716.677 ms; expected hash match |
 | `runEcm48` | median 0.060 ms; expected hash match |
-| `runEcmRhoBatch` | median 175.476 ms; expected hash match |
-| `runBalancedCompletion80` | median 4.730 ms; expected hash match |
-| `runBalancedFactor40` | median 6.440 ms; expected hash match |
-| `runPowerSplitBatch` | median 1.915 ms; expected hash match |
+| `runEcmRhoBatch` | median 175.199 ms; expected hash match |
+| `runBalancedCompletion80` | median 4.764 ms; expected hash match |
+| `runBalancedFactor40` | median 6.556 ms; expected hash match |
+| `runPowerSplitBatch` | median 1.921 ms; expected hash match |
 | `runDownstreamOrder` | median 0.001 ms; expected hash match |
-| `runBalancedFactor48` | median 13.355 ms; expected hash match |
+| `runBalancedFactor48` | median 13.399 ms; expected hash match |
 | `runTableTrial` | median 0.032 ms; expected hash match |
-| `runBalancedFactor56` | median 43.347 ms; expected hash match |
-| `runDefaultFuelSchedule` | median 921.422 ms; expected hash match |
-| `runCyclotomicBatch` | median 0.014 ms; expected hash match |
-| `runEcm72` | median 4.300 ms; expected hash match |
-| `runDownstreamPrimitiveRoot` | median 1.224 ms; expected hash match |
-| `runTableDispatch` | median 0.038 ms; expected hash match |
-| `runBalancedCompletion56` | median 3.797 ms; expected hash match |
+| `runBalancedFactor56` | median 43.405 ms; expected hash match |
+| `runDefaultFuelSchedule` | median 913.543 ms; expected hash match |
+| `runCyclotomicBatch` | median 0.013 ms; expected hash match |
+| `runEcm72` | median 4.248 ms; expected hash match |
+| `runDownstreamPrimitiveRoot` | median 1.190 ms; expected hash match |
+| `runTableDispatch` | median 0.037 ms; expected hash match |
+| `runBalancedCompletion56` | median 3.869 ms; expected hash match |
 | `runEcm56` | median 0.060 ms; expected hash match |
-| `runEcmBatch` | median 12.938 ms; expected hash match |
-| `runBalancedCompletion32` | median 1.242 ms; expected hash match |
-| `runBalancedFactor32` | median 0.620 ms; expected hash match |
-| `runBalancedFactor80` | median 3158.427 ms; expected hash match |
-| `runBalancedCompletion48` | median 3.776 ms; expected hash match |
-| `runEcm76` | median 4.274 ms; expected hash match |
+| `runEcmBatch` | median 12.742 ms; expected hash match |
+| `runBalancedCompletion32` | median 1.236 ms; expected hash match |
+| `runBalancedFactor32` | median 0.561 ms; expected hash match |
+| `runBalancedFactor80` | median 3127.039 ms; expected hash match |
+| `runBalancedCompletion48` | median 3.778 ms; expected hash match |
+| `runEcm76` | median 4.247 ms; expected hash match |
 | `runEcm64` | median 0.060 ms; expected hash match |
-| `runEcm80` | median 4.273 ms; expected hash match |
-| `runBalancedCompletion72` | median 4.464 ms; expected hash match |
-| `runBalancedCompletion40` | median 3.831 ms; expected hash match |
+| `runEcm80` | median 4.270 ms; expected hash match |
+| `runBalancedCompletion72` | median 4.577 ms; expected hash match |
+| `runBalancedCompletion40` | median 3.902 ms; expected hash match |
 
 ## Factorization decomposition and retained power route
 
@@ -121,13 +121,13 @@ both complete outputs agree.
 
 | bits | public route | public full | raw rho split | post-split completion | full / rho | full / (rho + completion) |
 |---:|---|---:|---:|---:|---:|---:|
-| 32 | table-complete | 0.620 ms | 0.112 ms | 1.242 ms | 5.534x | 0.458x |
-| 40 | rho-driven | 6.440 ms | 2.350 ms | 3.831 ms | 2.741x | 1.042x |
-| 48 | rho-driven | 13.355 ms | 9.298 ms | 3.776 ms | 1.436x | 1.022x |
-| 56 | rho-driven | 43.347 ms | 39.217 ms | 3.797 ms | 1.105x | 1.008x |
-| 64 | rho-driven | 193.084 ms | 181.835 ms | 4.527 ms | 1.062x | 1.036x |
-| 72 | rho-driven | 720.462 ms | 728.312 ms | 4.464 ms | 0.989x | 0.983x |
-| 80 | rho-driven | 3158.427 ms | 3207.515 ms | 4.730 ms | 0.985x | 0.983x |
+| 32 | table-complete | 0.561 ms | 0.111 ms | 1.236 ms | 5.035x | 0.417x |
+| 40 | rho-driven | 6.556 ms | 2.322 ms | 3.902 ms | 2.823x | 1.053x |
+| 48 | rho-driven | 13.399 ms | 9.144 ms | 3.778 ms | 1.465x | 1.037x |
+| 56 | rho-driven | 43.405 ms | 38.593 ms | 3.869 ms | 1.125x | 1.022x |
+| 64 | rho-driven | 193.957 ms | 182.306 ms | 4.460 ms | 1.064x | 1.039x |
+| 72 | rho-driven | 716.677 ms | 726.745 ms | 4.577 ms | 0.986x | 0.980x |
+| 80 | rho-driven | 3127.039 ms | 3200.147 ms | 4.764 ms | 0.977x | 0.976x |
 
 The two ratios are explanatory observations, not gates between unequal APIs.
 The 32-bit public operand is fully consumed by the committed prime table, so
@@ -139,14 +139,14 @@ and direct-rho generator trajectories differ. They do not define a second
 algorithm or support an inference about SQUFOF.
 
 The independent table control has identical canonical hashes: public dispatch
-is 0.038159 ms and direct trial division is 0.032235 ms, a 1.184x ratio under
+is 0.037249 ms and direct trial division is 0.031543 ms, a 1.181x ratio under
 the preregistered 1.25 gate.
 
 Generic and cyclotomic power factorization use the same target-derived seed,
 the same exponent set 12 through 80 (including 72 and 80), and canonical
 complete-factorization encodings. Both have hash `0x681a285cd74ea124` over
-seven repeats. The split/generic median ratio is 0.954, satisfying the
-preregistered `<= 0.98` retention rule by 2.6 percentage points, so the
+seven repeats. The split/generic median ratio is 0.946, satisfying the
+preregistered `<= 0.98` retention rule by 3.4 percentage points, so the
 specialized route remains. That margin is real but intentionally modest; the
 seven retained paired repeats make it visible rather than hiding it in one run.
 
@@ -178,42 +178,42 @@ up rather than retrofitting a slope:
 Budgets were preregistered from the preceding clean pinned-host diagnostic,
 rounded upward to coarse 10/20/50/100/200/500/750/2000/6000 ms ceilings. A
 10 ms resolution envelope is the minimum for sub-millisecond targets. The
-slowest target still has 90.0% clean-baseline headroom; all other targets have
-at least 111.4%. `margin` is `(budget / clean median - 1) * 100`.
+slowest target still has 91.9% clean-baseline headroom; all other targets have
+at least 109.9%. `margin` is `(budget / clean median - 1) * 100`.
 
 | Target | Clean median (ms) | Budget (ms) | Margin |
 |---|---:|---:|---:|
-| `runBalancedCompletion32` | 1.242 | 10 | 705.4% |
-| `runBalancedCompletion40` | 3.831 | 10 | 161.0% |
-| `runBalancedCompletion48` | 3.776 | 10 | 164.8% |
-| `runBalancedCompletion56` | 3.797 | 10 | 163.4% |
-| `runBalancedCompletion64` | 4.527 | 10 | 120.9% |
-| `runBalancedCompletion72` | 4.464 | 10 | 124.0% |
-| `runBalancedCompletion80` | 4.730 | 10 | 111.4% |
-| `runBalancedFactor32` | 0.620 | 10 | 1513.4% |
-| `runBalancedFactor40` | 6.440 | 50 | 676.4% |
-| `runBalancedFactor48` | 13.355 | 100 | 648.8% |
-| `runBalancedFactor56` | 43.347 | 200 | 361.4% |
-| `runBalancedFactor64` | 193.084 | 750 | 288.4% |
-| `runBalancedFactor72` | 720.462 | 2000 | 177.6% |
-| `runBalancedFactor80` | 3158.427 | 6000 | 90.0% |
-| `runCyclotomicBatch` | 0.014 | 10 | 72935.3% |
-| `runDefaultFuelSchedule` | 921.422 | 2000 | 117.1% |
-| `runDownstreamOrder` | 0.001 | 10 | 811588.3% |
-| `runDownstreamPrimitiveRoot` | 1.224 | 20 | 1534.4% |
-| `runEcm48` | 0.060 | 20 | 33348.7% |
-| `runEcm56` | 0.060 | 20 | 33216.7% |
-| `runEcm64` | 0.060 | 20 | 33070.8% |
-| `runEcm72` | 4.300 | 20 | 365.1% |
-| `runEcm76` | 4.274 | 20 | 367.9% |
-| `runEcm80` | 4.273 | 20 | 368.0% |
-| `runEcmBatch` | 12.938 | 100 | 672.9% |
-| `runEcmRhoBatch` | 175.476 | 500 | 184.9% |
-| `runPMinusOneBatch` | 11.050 | 100 | 805.0% |
-| `runPowerGenericBatch` | 2.008 | 20 | 896.1% |
-| `runPowerSplitBatch` | 1.915 | 20 | 944.1% |
-| `runTableDispatch` | 0.038 | 10 | 26106.1% |
-| `runTableTrial` | 0.032 | 10 | 30922.2% |
+| `runBalancedCompletion32` | 1.236 | 10 | 709.3% |
+| `runBalancedCompletion40` | 3.902 | 10 | 156.3% |
+| `runBalancedCompletion48` | 3.778 | 10 | 164.7% |
+| `runBalancedCompletion56` | 3.869 | 10 | 158.5% |
+| `runBalancedCompletion64` | 4.460 | 10 | 124.2% |
+| `runBalancedCompletion72` | 4.577 | 10 | 118.5% |
+| `runBalancedCompletion80` | 4.764 | 10 | 109.9% |
+| `runBalancedFactor32` | 0.561 | 10 | 1682.0% |
+| `runBalancedFactor40` | 6.556 | 50 | 662.7% |
+| `runBalancedFactor48` | 13.399 | 100 | 646.3% |
+| `runBalancedFactor56` | 43.405 | 200 | 360.8% |
+| `runBalancedFactor64` | 193.957 | 750 | 286.7% |
+| `runBalancedFactor72` | 716.677 | 2000 | 179.1% |
+| `runBalancedFactor80` | 3127.039 | 6000 | 91.9% |
+| `runCyclotomicBatch` | 0.013 | 10 | 74504.6% |
+| `runDefaultFuelSchedule` | 913.543 | 2000 | 118.9% |
+| `runDownstreamOrder` | 0.001 | 10 | 817561.5% |
+| `runDownstreamPrimitiveRoot` | 1.190 | 20 | 1580.7% |
+| `runEcm48` | 0.060 | 20 | 33352.6% |
+| `runEcm56` | 0.060 | 20 | 33246.7% |
+| `runEcm64` | 0.060 | 20 | 33101.1% |
+| `runEcm72` | 4.248 | 20 | 370.8% |
+| `runEcm76` | 4.247 | 20 | 371.0% |
+| `runEcm80` | 4.270 | 20 | 368.4% |
+| `runEcmBatch` | 12.742 | 100 | 684.8% |
+| `runEcmRhoBatch` | 175.199 | 500 | 185.4% |
+| `runPMinusOneBatch` | 11.067 | 100 | 803.6% |
+| `runPowerGenericBatch` | 2.030 | 20 | 885.0% |
+| `runPowerSplitBatch` | 1.921 | 20 | 941.4% |
+| `runTableDispatch` | 0.037 | 10 | 26746.4% |
+| `runTableTrial` | 0.032 | 10 | 31602.8% |
 
 These are collector assertions on CPU 7, not target-body assertions in
 `lake exe hexintfactor_bench verify`.
@@ -227,17 +227,17 @@ context rather than an internal rho or dispatch gate.
 
 | bits | Hex factor per call | PARI `factor` | Hex / PARI |
 |---:|---:|---:|---:|
-| 32 | 0.124 ms | 0.003 ms | 36.27x |
-| 40 | 1.288 ms | 0.006 ms | 219.81x |
-| 48 | 2.671 ms | 0.062 ms | 43.42x |
-| 56 | 8.669 ms | 0.135 ms | 64.33x |
-| 64 | 38.617 ms | 0.121 ms | 318.90x |
-| 72 | 144.092 ms | 0.182 ms | 793.28x |
-| 80 | 631.685 ms | 0.422 ms | 1497.33x |
+| 32 | 0.112 ms | 0.003 ms | 32.84x |
+| 40 | 1.311 ms | 0.006 ms | 223.76x |
+| 48 | 2.680 ms | 0.062 ms | 43.56x |
+| 56 | 8.681 ms | 0.135 ms | 64.42x |
+| 64 | 38.791 ms | 0.119 ms | 325.59x |
+| 72 | 143.335 ms | 0.184 ms | 780.72x |
+| 80 | 625.408 ms | 0.422 ms | 1482.45x |
 
 The low rungs are irregular because the implementations select different
-portfolios. From 48 through 80 bits the ratio grows sharply from 43.42x to
-1497.33x. The accompanying raw-rho profile attributes the Hex-side cost to the
+portfolios. From 48 through 80 bits the ratio grows sharply from 43.56x to
+1482.45x. The accompanying raw-rho profile attributes the Hex-side cost to the
 Brent loop, allocation, and GMP, while the wall ratio also includes an expected
 portfolio and algorithm-class divergence from PARI. It is useful orientation,
 not a standalone unresolved defect and not evidence for a particular
@@ -248,7 +248,7 @@ curve sigma 7, B1 1000, and B2 below B1 to disable stage 2. The explicit
 `parameterization:sigma` syntax removes any dependence on GMP-ECM's default;
 verbose probes report `sigma=0:7` for every operand. Every operand and the
 overhead control use the same persistent 256-input batch. The measured floor
-is 0.220 ms/input; a row is ratio-eligible only under the preregistered rule
+is 0.219 ms/input; a row is ratio-eligible only under the preregistered rule
 that this floor is at most 50% of raw time. Equal discovered factors do not
 imply equal stage-1 wall cost: a curve can reach a gcd checkpoint with the
 whole composite on one cofactor while yielding a nontrivial gcd on another.
@@ -256,12 +256,12 @@ Output reconstruction is checked even for ineligible rows.
 
 | bits | Hex ECM | GMP raw | adjusted | factor found | eligible | Hex / adjusted |
 |---:|---:|---:|---:|:---:|:---:|---:|
-| 48 | 0.060 ms | 0.484 ms | 0.264 ms | yes | yes | 0.23x |
-| 56 | 0.060 ms | 0.263 ms | 0.043 ms | yes | no | -- |
-| 64 | 0.060 ms | 0.365 ms | 0.145 ms | yes | no | -- |
-| 72 | 4.300 ms | 0.271 ms | 0.052 ms | no | no | -- |
-| 76 | 4.274 ms | 0.348 ms | 0.129 ms | yes | no | -- |
-| 80 | 4.273 ms | 0.378 ms | 0.158 ms | yes | no | -- |
+| 48 | 0.060 ms | 0.479 ms | 0.260 ms | yes | yes | 0.23x |
+| 56 | 0.060 ms | 0.258 ms | 0.040 ms | yes | no | -- |
+| 64 | 0.060 ms | 0.362 ms | 0.144 ms | yes | no | -- |
+| 72 | 4.248 ms | 0.269 ms | 0.051 ms | no | no | -- |
+| 76 | 4.247 ms | 0.346 ms | 0.128 ms | yes | no | -- |
+| 80 | 4.270 ms | 0.374 ms | 0.155 ms | yes | no | -- |
 
 Only the 48-bit row supports a ratio conclusion. No ratio is inferred from the
 five overhead-dominated rows.
@@ -361,10 +361,10 @@ lake build hexintfactor_bench HexIntFactorKernelProbe
 nix shell nixpkgs#pari nixpkgs#ecm --command \
   python3 scripts/bench/intfactor_phase4.py \
     --cpu 7 --rounds 7 --timeout 120 \
-    --output reports/bench-results/hex-int-factor-phase4-ecb06bcb-chungus2-cpu7.json
+    --output reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json
 nix shell nixpkgs#pari nixpkgs#ecm --command \
   python3 scripts/bench/intfactor_phase4.py --report \
-    reports/bench-results/hex-int-factor-phase4-ecb06bcb-chungus2-cpu7.json
+    reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json
 
 python3 scripts/bench/intfactor_kernel_replay.py \
   --samples 6 --shared-host --expected-host chungus2 --cpu 8 \
