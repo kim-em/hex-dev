@@ -341,8 +341,8 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 The Phase-4 fixed canonical cases use zero-grace whole-child ceilings derived
 from clean reference-host measurements plus stated margin: 0.5 s for the
 `Q(sqrt(2))` `ofQAdjoin` presentation, 3 s for adjoining the fourth root of two,
-0.5 s for identity adjoining, 2 s for factoring the degree-24 Selmer trinomial
-over `Q(sqrt(2))`, 0.5 s each for the bad-first-shift and recursive-relative
+1 s for identity adjoining, 2 s for factoring the degree-24 Selmer trinomial
+over `Q(sqrt(2))`, 0.5 s for the bad-first-shift case, 1 s for recursive-relative
 factorization branches, and 1 s each for the canonical quartic splitting and
 dimension-four flattening cases. These budgets do not replace the recurrence
 above; they are mode-3 regression ceilings for operations whose realised
