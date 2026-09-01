@@ -5,6 +5,7 @@ public import HexGraphIso.Colored
 public import HexGraphIso.Iso
 public import HexGraphIso.Lex
 public import HexGraphIso.Reference
+public import HexGraphIso.Canon
 
 public section
 
