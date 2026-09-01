@@ -209,6 +209,8 @@ lean_lib HexIntFactorMathlib where
 lean_lib HexMatrix where
   precompileModules := true
 
+lean_lib HexGraph where
+
 lean_lib HexCharPoly where
 
 lean_lib HexMinPoly where
