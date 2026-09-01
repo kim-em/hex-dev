@@ -22,6 +22,8 @@ arithmetic operations:
 - `factorization_entry`, `factorization_eq`, and
   `CheckedFactorization.factorization_eq` identify checked multiplicities with
   `Nat.factorization`;
+- `factorization_absent` pins zero multiplicity outside the listed prime
+  support;
 - `factors_eq` and `CheckedFactorization.primeFactorsList_eq` identify the
   canonical expanded prime list;
 - `divisors_eq`, `divisors_list_eq`, and `numDivisors_eq_card` identify the

@@ -55,14 +55,16 @@ def _factors(pari, n: int) -> list[list[int]] | str:
     return answer
 
 
-def _divisor_functions(pari, n: int) -> dict[str, int]:
+def _divisor_functions(pari, n: int) -> dict[str, int | list[int]]:
     factors = _factors(pari, n)
     assert isinstance(factors, list)
+    divisors = [int(d) for d in pari.divisors(n)]
     radical = math.prod(p for p, _ in factors)
     sqfpart = math.prod(p for p, e in factors if e % 2 == 1)
     sqdiv = math.prod(p ** (e // 2) for p, e in factors)
     return {
-        "tau": len(pari.divisors(n)),
+        "divisors": divisors,
+        "tau": len(divisors),
         "sigma0": int(pari.sigma(n, 0)),
         "sigma1": int(pari.sigma(n)),
         "sigma2": int(pari.sigma(n, 2)),

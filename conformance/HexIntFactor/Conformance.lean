@@ -244,6 +244,10 @@ example :
 #guard (trialFactors 0).1.isEmpty && (trialFactors 0).2 == 0
 #guard (trialFactors 12).1.map (fun e => (e.prime, e.exponent)) == [(2, 2), (3, 1)]
 #guard (trialFactors 12).2 == 1
+#guard (trialFactors 99991).1.map
+  (fun e => (e.prime, e.exponent)) == [(99991, 1)]
+#guard (trialFactors 99991).2 == 1
+#guard (trialFactors 100003).1.isEmpty && (trialFactors 100003).2 == 100003
 #guard (trialFactors 1000003).1.isEmpty && (trialFactors 1000003).2 == 1000003
 #guard (smallCandidate 97).route == .trial
 #guard (smallCandidate (2 ^ 20)).route == .twos

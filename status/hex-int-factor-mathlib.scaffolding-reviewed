@@ -1,13 +1,16 @@
-Phase 1 completion and an independent Phase 2 skeptical review were recorded
-against HexIntFactorMathlib/SPEC/hex-int-factor-mathlib.md after the checker
-projection, canonical factor-list, divisor, squarefree, and general order
-correspondence blockers were resolved. Both direct dependencies have completed
-Phase 1, and every implemented declaration has the intended signature and
-proof route.
+HexIntFactorMathlib/SPEC/hex-int-factor-mathlib.md was authored in this package
+to record the existing public correspondence API and its runtime boundary.
+An independent Phase 2 skeptical reviewer then checked that explicit contract
+against the source, the Mathlib APIs it transports, and downstream needs after
+the checker projection, canonical factor-list, divisor, squarefree, and general
+order correspondence blockers were resolved. Both direct dependencies have
+completed Phase 1, and every implemented declaration has the intended
+signature and proof route.
 
 The review checked pointwise multiplicity and canonical prime-list agreement,
-checked-data corollaries, divisor enumeration and count, totient, generalized
-divisor sum, prime support, radical and squarefree transports, the general
+zero multiplicity outside the listed prime support, checked-data corollaries,
+divisor enumeration and count, totient, generalized divisor sum, prime
+support, radical and squarefree transports, the general
 natural-order/unit-order correspondence, its nonunit case, and the checked
 certificate specialization. The bridge performs no factor or order search,
 replays no certificate, installs no competing decision instance, and owns no
