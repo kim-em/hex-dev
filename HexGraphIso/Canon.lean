@@ -162,7 +162,10 @@ transporter. Exhaustion is not evidence of non-isomorphism. -/
     (p : Perm n) : Option Bool :=
   if checkCost n ≤ replay.maxCheckerSteps then some (checkIso G H p) else none
 
-/-- Bounded canonicalization. `none` is exhaustion. -/
+set_option linter.unusedVariables false in
+/-- Bounded canonicalization. `none` is exhaustion. The replay limit is
+unused by the reference backing but part of the public signature: the
+production backing replays its certificate before returning. -/
 @[expose] def canon? (search : SearchLimits) (replay : ReplayLimits)
     (G : Colored n k) : Option (CanonResult n k) :=
   if searchCost n ≤ search.maxNodes then some (canonicalize G) else none

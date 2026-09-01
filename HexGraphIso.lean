@@ -6,6 +6,9 @@ public import HexGraphIso.Iso
 public import HexGraphIso.Lex
 public import HexGraphIso.Reference
 public import HexGraphIso.Canon
+public import HexGraphIso.Nauty.Bits
+public import HexGraphIso.Nauty.Refine
+public import HexGraphIso.Nauty.Search
 
 public section
 
