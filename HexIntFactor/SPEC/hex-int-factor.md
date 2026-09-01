@@ -1220,17 +1220,21 @@ Families:
   times the direct-trial median. This internal control, rather than an
   external system with a different portfolio, determines whether dispatch
   overhead is invisible on the case that dominates call volume.
-- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Report `factor?` and
-  `Internal.rhoSplitCountedWith?` on the same ladder and seed. The direct arm
-  receives `defaultPrimeCertBudget.rhoRestarts` and `.rhoSteps`, matching the
-  public dispatcher's allocation. Output-agreeing wrappers return the least
-  factor, reject an error rather than hashing its attempt count, and admit a
-  ratio only when both arms succeeded. The public-dispatch median must be at
-  most twice the matched direct-rho median at every admitted rung. This is the
-  internal Route-1 control for dispatch and certificate construction; rho's
-  own two-sided registration and profile diagnose its scaling and hot path.
-  These controls and their 80-bit top rung are Phase-4 obligations; the
-  smaller pre-Phase-4 registrations do not satisfy them.
+- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Compare normal dispatch
+  with rho forced at each composite split point through the same full search
+  pipeline. Both arms receive identical inputs, initial generator state, and
+  budgets, and both retain table/perfect-power preprocessing, recursive
+  completion, prime-certificate construction, and checked-factorization
+  acceptance. Output-agreeing wrappers return the same canonical complete
+  factorization and admit a ratio only when both arms succeed. The
+  normal-dispatch median must be at most `1.25` times the forced-rho median at
+  every admitted rung. The input ladder and seeds are fixed before replacement
+  evidence is collected. Direct `Internal.rhoSplitCountedWith?` is registered
+  separately against its two-sided `2^(bits/4)` model and profiled to diagnose
+  rho scaling and its hot path; because it returns only one divisor, its time
+  is not a denominator for the complete public API. These controls and their
+  80-bit top rung are Phase-4 obligations; the smaller pre-Phase-4
+  registrations do not satisfy them.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, which is the
