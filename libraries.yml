@@ -1072,13 +1072,13 @@ libraries:
           rationale: "PARI is a mature optimized C library whose nffactor runs over nfinit's absolute integral-basis presentation with maximal-order machinery, a structurally different pipeline from Hex's relative one-level Trager norms, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the factor? fixed registrations on shared Selmer trinomial inputs over Q(sqrt(2)), joined on the sorted factor degree/multiplicity multiset hash. Tower element arithmetic, adjoining, splitting, and flattening have no comparable PARI unit surface; the per-library SPEC declares those absences."
       input_families:
         - name: tower-coordinate-arithmetic
-          description: Mode-1 dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with bounded-height dense mixed-radix elements for affine coordinate operations, quadratic multiplication, and logarithmic-growth inversion and division.
+          description: Mode-1 dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with bounded-height dense mixed-radix elements for addition, subtraction, scalar action, quadratic multiplication, and logarithmic-growth inversion; canonical mode-3 cases cover negation and division after their ordered diagnostics fail.
         - name: trager-factorization
-          description: Canonical mode-3 factorization and checked replay of the degree-24 Selmer trinomial X^24 - X - 1 over Q(sqrt(2)); separate retry and recursive-relative cases are branch/hash anchors, while smaller rungs and PARI pairs are diagnostic or comparator evidence.
+          description: Canonical mode-3 factorization and checked replay of the degree-24 Selmer trinomial X^24 - X - 1 over Q(sqrt(2)), plus a mode-3 height-two recursive-relative factorization; the retry case is a branch/hash anchor, while smaller rungs and PARI pairs are diagnostic or comparator evidence.
         - name: adjoin-extend
-          description: Mode-1 affine checked-presentation construction plus canonical mode-3 fourth-root and identity adjoining after explicit degree-schedule diagnostics.
+          description: Mode-1 linear checked-presentation construction plus canonical mode-3 fourth-root and identity adjoining after explicit degree-schedule diagnostics.
         - name: split-flatten
-          description: Canonical mode-3 quartic splitting and two-level flattening, mode-1 cubic/quartic full-basis coordinate maps, and correctness/attribution anchors for recovery and certification components.
+          description: Canonical mode-3 quartic splitting, two-level flattening, and full-basis toPrimitive, mode-1 quartic full-basis fromPrimitive, and correctness/attribution anchors for recovery and certification components.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true

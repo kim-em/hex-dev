@@ -11,46 +11,45 @@ exit.
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberFieldTower/Bench.lean`.
-It registers ten controlled parametric targets and 38 fixed targets (48 total).
+It registers seven controlled parametric targets and 39 fixed targets (46 total).
 Registration comments derive each mode-1 model and record the attempted
 parameterization, canonical input, and independently chosen zero-grace ceiling
 for each mode-3 target.
 
 | target | controlled timed operation | mode-1 model |
 |---|---|---|
-| `runOfQAdjoinLadder` | checked rational presentation construction at degree `n` | `n + 1` |
-| `runTowerAddLadder`, `runTowerSubLadder`, `runTowerNegLadder`, `runTowerSMulLadder` | coordinatewise work in `ℚ(√2, 3^(1/n))`, dimension `D = 2n` | `n + 1` |
+| `runOfQAdjoinLadder` | checked rational presentation construction at degree `n` | `n` |
+| `runTowerAddLadder`, `runTowerSubLadder`, `runTowerSMulLadder` | coordinatewise work in `ℚ(√2, 3^(1/n))`, dimension `D = 2n` | `n` |
 | `runTowerMulLadder` | schoolbook convolution and recursive reduction | `n²` |
-| `runTowerInvLadder`, `runTowerDivLadder` | recursive extended gcd, with division adding one multiplication | `n²(log₂(n + 2) + 1)` |
-| `runToPrimitiveLadder` | apply `toPrimitive` to all `D` tower basis vectors | `n³` |
+| `runTowerInvLadder` | recursive extended gcd | `n²(log₂(n + 2) + 1)` |
 | `runFromPrimitiveLadder` | apply `fromPrimitive` to all `D` primitive basis vectors | `n⁴` |
 
-The affine model records fixed dispatch/result construction plus the linear
-coordinate walk; this matters on the finite scientific range. For the map
-closures, one `toPrimitive` application performs `Θ(D²)` work and all
-`D` basis vectors therefore take `Θ(D³)`. One `fromPrimitive` Horner
+For the map closures, one `toPrimitive` application performs `O(D²)` work
+and all `D` basis vectors therefore take `O(D³)`. One `fromPrimitive` Horner
 evaluation performs `D` tower operations of `Θ(D²)` each, hence
 `Θ(D³)` per vector and `Θ(D⁴)` for the full basis.
 
-The following six registrations are mode-3 performance evidence. Their
+The following ten registrations are mode-3 performance evidence. Their
 ceilings bound the inclusive child—startup, prepared/cached fixture, discarded
 warmup, auto-tuned batch, and measured calls—not merely an internal timer.
 
 | target | canonical input | zero-grace ceiling |
 |---|---|---:|
+| `runNeg` | coordinate negation in `ℚ(√2, √3)` | 1 s |
+| `runDiv` | division in `ℚ(√2, √3)` | 1 s |
+| `runToPrimitive` | full-basis forward map for `ℚ(√2, √3)` | 1 s |
 | `runAdjoin` | adjoin the fourth root of two to `ℚ(√2)` | 3 s |
 | `runAdjoinIdentity` | re-adjoin `√2` to `ℚ(√2)` | 1 s |
+| `runFactorRecursive` | factor over `ℚ(√2, √3)` through the intermediate field | 2 s |
 | `runTowerCheckFactorization` | checked replay of the degree-24 Selmer factorization | 2 s |
 | `runTowerFactorLadder` | `X^24 - X - 1` over `ℚ(√2)` | 2 s |
 | `runSplit` | `(X² - 2)(X² - 3)`, producing two genuine extensions | 1 s |
 | `runFlatten` | the dimension-four tower `ℚ(√2, √3)` | 1 s |
 
 All other fixed registrations are deliberately narrower evidence.
-`runOfQAdjoin` and the seven fixed arithmetic cases are expected-hash
+`runOfQAdjoin` and the fixed add/sub/mul/inv/smul cases are expected-hash
 anchors for mode-1-covered operations. `runFactorRetry` forces a real bad
-first shift and `runFactorRecursive` forces relative factorization through
-an intermediate level; both are branch/hash anchors covered inclusively by the
-canonical `factor?` mode-3 case. `runOneLevelNorm`, `runShiftSearch`,
+first shift and is a branch/hash anchor. `runOneLevelNorm`, `runShiftSearch`,
 `runFactorRat`, `runCheckFactorization`, `runBasisImages`,
 `runCertifies`, `runCoordinateMaps`, `runRecoverPair`, and
 `runRecoverSearch` are correctness or attribution anchors. The twelve
@@ -79,44 +78,44 @@ The factor family uses Selmer trinomials `X^n - X - 1` over `ℚ(√2)`.
 Rational coefficients make the shift-zero norm a square, so the canonical
 factor case genuinely retries before accepting a squarefree degree-48 norm,
 recursively factors it over `ℚ`, recovers factors by gcd, and checks the
-result. The explicit retry and two-level recursive anchors independently
-confirm both control-flow paths.
+result. The explicit retry anchor and independently budgeted height-two
+recursive case confirm both control-flow paths.
 
 ### Scientific ranges and host protocol
 
-Coordinatewise arithmetic, inversion, and division use
+Coordinatewise add/subtract/scalar multiplication and inversion use
 `n = 1, 2, 3, 4, 6`; multiplication extends through `8, 12`.
-Presentation construction uses `2, 3, 4, 6, 8, 12`; both map closures use
-`1, 2, 3, 4, 5, 6`. Every parametric rung uses a warm child-side batch
+Presentation construction uses `2, 3, 4, 6, 8, 12, 16, 24`, and the
+full-basis `fromPrimitive` closure uses `2, 3, 4, 5, 6, 9`. Every parametric
+rung uses a warm child-side batch
 auto-tuned to 100 ms and five independent outer trials. The explicit
 `signalFloorMultiplier := 1.0` is appropriate because process spawn is
 outside the timed body; the exports retain the spawn floor and every trial.
 
-The final common export was preregistered on logical CPU 19, with SMT sibling
-67. A three-second `/proc/stat` sample immediately before it measured 0.33%
-and 0.66% busy; load averages were 1.29, 2.23, and 6.13 on a 96-logical-CPU
-host. Both mode-1 and mode-3 commands were pinned with `taskset -c 19` and
-record `git_dirty: false`. The corrected constructor validation was also
-pinned to CPU 19; its three-second postflight sample measured 3.65% on both
-siblings.
+The final exports were pinned to logical CPU 19, with SMT sibling 67, and both
+record `git_dirty: false` at clean commit `ce03eb89b`. A three-second
+`/proc/stat` postflight sample measured 1.33% busy on each sibling; load
+averages were 1.28, 2.53, and 2.87 on a 96-logical-CPU host. This is a
+postflight protocol check, not a claim that the host was idle throughout.
 
 ```sh
 taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runOfQAdjoinLadder \
   Hex.NumberTowerBench.runTowerAddLadder \
   Hex.NumberTowerBench.runTowerSubLadder \
-  Hex.NumberTowerBench.runTowerNegLadder \
   Hex.NumberTowerBench.runTowerSMulLadder \
   Hex.NumberTowerBench.runTowerMulLadder \
   Hex.NumberTowerBench.runTowerInvLadder \
-  Hex.NumberTowerBench.runTowerDivLadder \
-  Hex.NumberTowerBench.runToPrimitiveLadder \
   Hex.NumberTowerBench.runFromPrimitiveLadder \
   --outer-trials 5 --export-file <mode1.json>
 
 taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runNeg \
+  Hex.NumberTowerBench.runDiv \
+  Hex.NumberTowerBench.runToPrimitive \
   Hex.NumberTowerBench.runAdjoin \
   Hex.NumberTowerBench.runAdjoinIdentity \
+  Hex.NumberTowerBench.runFactorRecursive \
   Hex.NumberTowerBench.runTowerCheckFactorization \
   Hex.NumberTowerBench.runTowerFactorLadder \
   Hex.NumberTowerBench.runSplit \
@@ -128,28 +127,17 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
 
 | target | schedule | verdict | normalized slope | worst spread |
 |---|---|---|---:|---:|
-| `runOfQAdjoinLadder` | 2, 3, 4, 6, 8, 12 | **consistent** | +0.008 | 6.6% |
-| `runTowerAddLadder` | 1, 2, 3, 4, 6 | **consistent** | +0.134 | 6.7% |
-| `runTowerSubLadder` | 1, 2, 3, 4, 6 | **consistent** | +0.131 | 4.6% |
-| `runTowerNegLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.100 | 6.5% |
-| `runTowerSMulLadder` | 1, 2, 3, 4, 6 | **consistent** | +0.176 | 4.5% |
-| `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.089 | 2.3% |
-| `runTowerInvLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.023 | 21.3% |
-| `runTowerDivLadder` | 1, 2, 3, 4, 6 | **consistent** | +0.241 | 3.3% |
-| `runToPrimitiveLadder` | 1, 2, 3, 4, 5, 6 | **consistent** | n.a.¹ | 3.9% |
-| `runFromPrimitiveLadder` | 1, 2, 3, 4, 5, 6 | **consistent** | n.a.¹ | 2.7% |
+| `runOfQAdjoinLadder` | 2, 3, 4, 6, 8, 12, 16, 24 | **consistent** | −0.119 | 3.03% |
+| `runTowerAddLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.076 | 2.72% |
+| `runTowerSubLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.072 | 2.25% |
+| `runTowerSMulLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.046 | 2.69% |
+| `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.096 | 3.96% |
+| `runTowerInvLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.041 | 6.45% |
+| `runFromPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **consistent** | −0.026 | 11.89% |
 
-¹ After the leading-rung exclusion, the exact catalog model gives a bounded
-normalization range but too few distinct logarithms for LeanBench to report a
-slope; the verdict is still the registered two-sided normalization verdict.
-
-The first five-trial presentation export normalized by `n` gave a stable
-β = −0.153, narrowly beyond the default ±0.15 gate. That export is retained as
-model-discovery evidence. Inspecting the measured constructor boundary exposes
-the missing fixed dispatch/structure/generator term, the same finite-range
-intercept already derived for coordinate operations. A fresh clean-commit run
-against the corrected `n + 1` model gives β = +0.008. No result was discarded,
-and the other nine results come from the original common export.
+These are the original source-derived models with LeanBench's default slope
+tolerance. No intercept was added and no tolerance was widened after seeing a
+measurement.
 
 ### Ordered mode-3 assessment
 
@@ -158,55 +146,72 @@ natural degree/factor-count parameter for every composite surface:
 
 | surface | attempted schedule and observed result | ordered-rule conclusion |
 |---|---|---|
+| negation | `n = 1, 2, 3, 4, 6, 8, 12` completed with β = −0.213; the dimension-32 rung hit the 300 s fixture cap | the linear transient did not stabilize over the executable certified-fixture range |
+| division | `n = 1, 2, 3, 4, 6, 8, 12` completed with β = +0.594 | division's added multiply changes the measured finite-range growth from inversion |
+| full-basis `toPrimitive` | `n = 2, 3, 4, 5, 6, 9` completed with β = +0.521 against the derived cubic model | the realized map construction/application mixture does not fit that model |
 | adjoin | degrees 2, 3, 4, 6, 8: 13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s; degree 12 hit 30 s | isolation, factor selection, and validation change dominance |
 | identity adjoin | degrees 2, 3, 4: 18.0 ms, 2.37 s, 1.68 s; degree 6 hit 30 s | branch-sensitive recovery is nonmonotone |
+| recursive relative factorization | Selmer degrees 2, 3, 4, 6 over a height-two tower completed with β = +0.636 against `n²` | the recursive level changes the gcd/resultant/replay mixture |
 | checked replay | degrees 2 through 24: 0.404 ms through 126.3 ms; linear residual +1.485 | squarefree, gcd, and replay work do not admit the candidate wall model |
 | factor | degrees 2 through 24; local exponents rise 0.80 to 4.48 | gcd/resultant/replay shares change with coefficient growth |
-| split | 1, 2, 3 quadratic factors: 19.5 ms, 68.3 ms, 1.89 s | repeated factor/isolate/adjoin phases change dominance |
+| split | factor-count 1 is excluded from the verdict; the eligible 2-to-3 jump is 68.3 ms to 1.89 s (27.7×) | repeated factor/isolate/adjoin phases change dominance |
 | flatten | top degrees 1, 2, 3, 4: 0.96 ms, 21.0 ms, 107.7 ms, 460.4 ms | eliminant/isolation/recovery phases change dominance |
 
-The coordinate-map diagnostic was likewise inconclusive against a linear
-model (9.28 µs, 174.6 µs, 1.04 ms, 3.23 ms at `n = 1..4`), but source
-inspection supplies stronger cubic/quartic full-basis models, which then pass.
-For the six remaining composites, no tight independently justified mode-1
-wall model emerged, and no published bound covers their inclusive dominant
+The diagnostics are retained executable measurements, not informal timing
+notes. For these ten surfaces, no tight independently justified mode-1 wall
+model emerged, and no published bound covers their inclusive dominant
 isolation/gcd/replay phase mixture. Mode 2 is therefore unavailable and the
 canonical mode-3 budgets are the next ordered choice.
 
-| target | five-repeat median | ceiling | result |
-|---|---:|---:|---|
-| `runAdjoin` | 312.299 ms | 3 s | hash match, under ceiling |
-| `runAdjoinIdentity` | 18.023 ms | 1 s | hash match, under ceiling |
-| `runTowerCheckFactorization` | 124.073 ms | 2 s | hash match, under ceiling |
-| `runTowerFactorLadder` | 248.941 ms | 2 s | hash match, under ceiling |
-| `runSplit` | 67.342 ms | 1 s | hash match, under ceiling |
-| `runFlatten` | 20.835 ms | 1 s | hash match, under ceiling |
+| target | per-call median | median auto-tuned batch | ceiling | result |
+|---|---:|---:|---:|---|
+| `runNeg` | 646 ns | 338.716 ms | 1 s | hash match, under ceiling |
+| `runDiv` | 79.042 µs | 323.760 ms | 1 s | hash match, under ceiling |
+| `runToPrimitive` | 13.914 µs | 227.983 ms | 1 s | hash match, under ceiling |
+| `runAdjoin` | 311.405 ms | 311.405 ms | 3 s | hash match, under ceiling |
+| `runAdjoinIdentity` | 18.084 ms | 289.345 ms | 1 s | hash match, under ceiling |
+| `runFactorRecursive` | 7.919 ms | 253.393 ms | 2 s | hash match, under ceiling |
+| `runTowerCheckFactorization` | 124.730 ms | 249.460 ms | 2 s | hash match, under ceiling |
+| `runTowerFactorLadder` | 249.758 ms | 249.758 ms | 2 s | hash match, under ceiling |
+| `runSplit` | 68.203 ms | 272.813 ms | 1 s | hash match, under ceiling |
+| `runFlatten` | 20.819 ms | 333.110 ms | 1 s | hash match, under ceiling |
 
 The ceilings were chosen from the completed diagnostic schedule and the
 canonical input before the final five-repeat export; the export directly
-checks the inclusive whole-child ceilings with zero grace.
+checks the inclusive whole-child ceilings with zero grace. The ceiling applies
+to the whole child, while the batch column shows the actual auto-tuned work
+performed in each measured repeat; the small per-call medians are not presented
+as the available budget headroom.
 
 ### Ordered Trager assessment
 
-The canonical profile uses one whole-thread denominator: 58.24% lies inside
+The canonical raw profile uses one whole-thread denominator: 58.24% lies inside
 `factor?`, while gcd occupies 47.28%, checked replay 29.40%, shift search
 29.63%, rational factorization 23.96%, resultant work 4.21%, recovery 3.60%,
-and `Hex.ZPoly.factorize` only 1.42%. Relative to the resolved `factor?`
-frame, integer factorization is therefore 1.42 / 58.24 = **2.44%**, while gcd
-is 47.28 / 58.24 = **81.18%**. The earlier filtered 5.26% number used a
-different denominator and is not compared directly.
+and `Hex.ZPoly.factorize` only 1.42%. The mechanical ratios against the resolved
+`factor?` frame are 1.42 / 58.24 = 2.44% for integer factorization and
+47.28 / 58.24 = 81.18% for gcd. They are useful only as attribution signals:
+roughly 40% of the raw capture is GMP stack-unwind truncation rather than
+process setup, so nonuniform missing ancestors can bias exact ratios. The
+conclusion does not depend on either renormalized percentage: integer
+factorization is a small whole-capture phase, while gcd alone dominates the
+resolved target frame. The earlier filtered 5.26% used another denominator and
+is not compared directly.
 
 Consequently the cited BHKS bound covers only a small integer-factorization
 subphase, not the inclusive dominant rational-polynomial gcd, resultant,
 shift, and executable replay work. It cannot justify mode 2. The degree-24
 Selmer trinomial is the top completed diagnostic rung and the canonical hard
-input for the enforced 2 s mode-3 ceiling. This selection preserves the
-SPEC's recurrence as a worst-case contract; it does not relabel that recurrence
-as a measured wall model.
+one-level input for the enforced 2 s mode-3 ceiling. The separate
+`runFactorRecursive` mode-3 case factors `X² - X - 1` over
+`ℚ(√2, √3)`, forcing a non-short-circuit recursive relative factorization
+through the intermediate field. This selection preserves the SPEC's recurrence
+as a worst-case contract; it does not relabel that recurrence as a measured
+wall model.
 
 ### Smoke cost
 
-The merge-facing `verify` command exercises all 48 registrations and keeps
+The merge-facing `verify` command exercises all 46 registrations and keeps
 the single-root fixture optimization, so comparator rungs remain inside the
 repo-wide smoke budget. With the cypari2 driver enabled it passes locally in
 14.1 s, down from about 45 s before the single-root fixture. No hash, oracle,
@@ -345,10 +350,12 @@ family. The fixed-only families (`trager-factorization`, `adjoin-extend`, and
 captures of the fixed-mode child over a long auto-tuned batch
 (`_child --bench <case> --fixed --min-total-nanos 5000000000`), analysed
 with the same categorizer. The adjoin/split/flatten target frames carry 95.71%,
-99.90%, and 97.93% of their respective threads, so their process setup share
-is under 5%. The refreshed factor target carries 58.23% of the whole thread
-and is still the single dominant frame; its phase percentages below are
-reported against that deliberately unfiltered denominator. Raw captures carry
+99.90%, and 97.93% of their respective threads. The refreshed factor target
+carries 58.23% of the whole thread and is still the single dominant resolved
+frame. Most of the remainder consists of GMP leaves whose ancestors were lost
+to stack-unwind truncation; it must not be labelled process setup. Its phase
+percentages below therefore retain the deliberately unfiltered denominator,
+and renormalized target-frame ratios are only qualitative. Raw captures carry
 no lean-bench-samply calibration/sensitivity diagnostics, which is the
 declared scope of fixed-family profile coverage.
 
@@ -400,7 +407,8 @@ share in the older degree-16 filtered capture and 29% whole-thread share here
 are the executable checked-replay guarantee the SPEC mandates
 (`Factorization.checked`). That deliberate structural cost, together with gcd
 and shift search, is why the BHKS-only envelope cannot serve as mode 2
-(§Ordered Trager assessment).
+(§Ordered Trager assessment). Because stack-unwind loss is nonuniform, none of
+these whole-capture shares is promoted to an exact within-target percentage.
 
 ### `adjoin-extend`: fixed-embedding selection dominates
 
@@ -444,20 +452,20 @@ captures.
 
 | artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
-| [common mode-1 export](bench-results/hex-number-field-tower-phase4-mode1-nine-and-constructor-diagnostic-d277c583-chungus2-cpu19.json) | clean `d277c583b`; nine final passes plus retained constructor model discovery | [CPU-19 preflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `9bea0ee7378b3cf8b71bccb200cdf09e92085b8806ef4d19bab704c25e92b793` |
-| [corrected constructor export](bench-results/hex-number-field-tower-phase4-final-ofq-e63e3a589-chungus2-cpu19.json) | clean `e63e3a589`; final affine constructor verdict | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | `f703055985a9b4f25b69bd954d7072f08b505896cc1625ad7ec98e102f55f65b` |
-| [final mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-d277c583-chungus2-cpu19.json) | clean `d277c583b`; six canonical budgets | [CPU-19 preflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `dcae0daaac0470764794b793606a005a83c845dd9af44a80f61ddad97e593f06` |
+| [final mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; seven source-derived model verdicts | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
+| [final mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; ten canonical budgets | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
+| [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean `959489aa2`; final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
+| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean `dd5ef5197`; final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | pre-rebase `b2ebf281b` (maps to `2a14b67a8`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
-| [CPU-19 preflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | measurement protocol | sampled CPU and SMT sibling | `cbb9ae6f454ed300d51e10dfb01f7454b568bde45b74e6a7b033b2b55b22c8d8` |
-| [constructor postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | measurement protocol | sampled CPU and SMT sibling | `79d70f64f57983dfed82d96732510106b5ae54aabe304c309d3e90c80f366738` |
+| [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | final measurement protocol | sampled CPU and SMT sibling | `f8a9d1d8294f59cf1bce18e02a2baae57728c87db24f5e96cc1c5c0e884a5a76` |
 | [canonical factor profile](bench-results/hex-number-field-tower-phase4-final-factor-profile-5d4cb88a-chungus2.json) | pre-rebase binary `5d4cb88ad`; algorithm source unchanged | unpinned shape capture | `f34c803bc741a92b9ac5b6040b107aa80c206f9a8b1d6515635ca6af5d3c9cf2` |
 | [factor degree diagnostic](bench-results/hex-number-field-tower-phase4-scientific-factor-7d6c0c50-chungus2-cpu13.json) | clean `7d6c0c50a`; rejects the former envelope | CPU 13 | `c0ae3da96fe41f36a87ed6665bf98cd1b2d4c9c209b541a7a0516cbdb28f9d30` |
 | [component anchors](bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json) | clean `3f23d6425`; hash/attribution only | CPU 13 | `1927e8268c5ac22a1df0e987db5dff878e7ccdcc448252d21b6ee6240689f156` |
 | [PARI pairs](bench-results/hex-number-field-tower-phase4-comparators-3f23d642-chungus2-cpu13.json) | clean `322f53b15`; identical comparator sources | CPU 13 | `5c60e35f20265683fff0eb01f397e3355957fcd0737f0ca21e7781a0b30f0a3f` |
 | [coordinate profile summaries](bench-results/hex-number-field-tower-profile-summaries-d9fc6d73-chungus2.json) | clean `d9fc6d73f` binary | unpinned shape capture | `31767bff125621d07391e151bc613a3a1c8ee7b74300a81fd7029af2198b505c` |
 
-The evidence added here comprises the single-root bounded-height fixtures, ten
-direct mode-1 surfaces, six independently budgeted mode-3 composites, the
+The evidence added here comprises the single-root bounded-height fixtures,
+seven direct mode-1 surfaces, ten independently budgeted mode-3 surfaces, the
 failed parameterizations that justify those selections, explicit retry and
 recursive-relative branch exercise, and an inclusive canonical factor profile.
 The component, protocol, hash, and comparator exports retain only their stated
@@ -472,14 +480,13 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 - `lake build HexNumberFieldTower HexNumberFieldTower.Conformance
   hexnumberfieldtower_emit_fixtures`: pass.
-- `lake exe hexnumberfieldtower_bench list`: 10 parametric plus 38 fixed
+- `lake exe hexnumberfieldtower_bench list`: 7 parametric plus 39 fixed
   registrations.
-- `lake exe hexnumberfieldtower_bench verify` with the cypari2 driver: all 48
+- `lake exe hexnumberfieldtower_bench verify` with the cypari2 driver: all 46
   pass in 14.1 s.
 - Emitted Tower fixtures match the committed JSONL byte for byte; the PARI
   oracle checks 9 cases with 0 failures.
-- `python3 scripts/check_phase4.py`: pass (54 headline reports, 8 changed
-  registrations).
+- `python3 scripts/check_phase4.py`: pass.
 - `python3 scripts/check_dag.py`: pass.
 
 ## Concerns
