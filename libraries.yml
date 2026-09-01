@@ -854,7 +854,7 @@ libraries:
     deps: [HexPrimality]
     mathlib: true
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
-    done_through: 2
+    done_through: 4
     status: active
     phase4:
       input_families:

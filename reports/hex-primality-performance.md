@@ -204,7 +204,8 @@ kernel-facing route; and Mathlib-free `primality` support through 512 bits with
 a 10 s fresh-module budget.  The SPEC records the derivations, boundary cases,
 and retained policy-selection evidence.
 
-Smoke wiring is reproduced with:
+The shared CI smoke gate includes this executable's `list` and `verify`
+commands. Its local reproduction is:
 
 ```sh
 lake build HexPrimality HexPrimalityKernelProbe

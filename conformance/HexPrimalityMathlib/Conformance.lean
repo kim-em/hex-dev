@@ -12,7 +12,7 @@ import Mathlib.Tactic.IntervalCases
 
 Oracle: none; the bridge-local elaboration checks construct kernel-checked
 proofs. Transport examples cite concrete cases from `HexPrimality.Conformance`
-(whose PARI oracle mode is `if_available`) rather than recomputing those cases
+(whose PARI oracle mode is `required`) rather than recomputing those cases
 as nominally independent bridge evidence.
 Mode: always.
 
