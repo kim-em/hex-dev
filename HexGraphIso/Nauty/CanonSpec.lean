@@ -23,7 +23,12 @@ The production search's canonical leaf realizes this maximum:
 - a node whose chain is dominated (`compCanon < 0`) can never supply the
   canonical leaf, and those are exactly the nodes where nauty's
   history-dependent `firsttc` hint applies, so the specification's
-  target-cell rule is the plain hint-free `targetcell`;
+  target-cell rule is hint-free; its nontrivial-join test reads the
+  cell's neighbour-count multiset (`joinTest`), which agrees with
+  nauty's first-vertex test on every equitable partition while being
+  invariant under renamings and within-cell reordering — the
+  certificate checker verifies agreement with the recorded target cell
+  on each replayed node;
 - the sentinel exceeds every real (cleaned) refinement code, which
   reproduces nauty's preference for shallower leaves on equal prefixes
   (`level < canonlevel` forcing `compCanon = 1`);
@@ -80,6 +85,70 @@ deriving Inhabited
 @[expose] def discreteAt (ptn : Array Nat) (level nn : Nat) : Bool :=
   (cells ptn level nn).all fun p => p.1 == p.2
 
+/-- The specification's nontrivial-join test: some member of the cell
+starting at `c1` has a neighbour in the splitter set, and some member
+misses part of it. Representative-independent, agreeing with nauty's
+first-vertex test on every equitable partition. -/
+@[expose] def joinTest (ctx : Ctx) (lab : Array Nat)
+    (wset c1 c2 : Nat) : Bool :=
+  (countsOf ctx lab wset c1 c2).any (fun c => decide (0 < c)) &&
+    (countsOf ctx lab wset c1 c2).any
+      (fun c => decide (c < popCount wset))
+
+@[expose] def specBestcellRow (ctx : Ctx) (lab ptn : Array Nat)
+    (level : Nat) (startArr : Array Nat) (workset v2 : Nat) :
+    List Nat → Array Nat → Array Nat
+  | [], bucket => bucket
+  | v1 :: rest, bucket =>
+    if joinTest ctx lab workset startArr[v1]!
+        (cellEnd ptn level startArr[v1]!) then
+      specBestcellRow ctx lab ptn level startArr workset v2 rest
+        ((bucket.set! v1 (bucket[v1]! + 1)).set! v2 (bucket[v2]! + 1))
+    else
+      specBestcellRow ctx lab ptn level startArr workset v2 rest bucket
+
+@[expose] def specBestcellRows (ctx : Ctx) (lab ptn : Array Nat)
+    (level : Nat) (startArr : Array Nat) :
+    List Nat → Array Nat → Array Nat
+  | [], bucket => bucket
+  | v2 :: rest, bucket =>
+    specBestcellRows ctx lab ptn level startArr rest
+      (specBestcellRow ctx lab ptn level startArr
+        (worksetOf lab startArr[v2]! (cellEnd ptn level startArr[v2]!))
+        v2 (List.range v2) bucket)
+
+/-- The specification's `bestcell`: nauty's rule with the join test on
+count multisets. -/
+@[expose] def specBestcell (ctx : Ctx) (lab ptn : Array Nat)
+    (level : Nat) : Nat :=
+  let starts := ((cells ptn level ctx.n).filter
+    fun (c1, c2) => c1 ≠ c2).map (·.1)
+  let nnt := starts.length
+  if nnt == 0 then
+    ctx.n
+  else
+    let startArr := starts.toArray
+    let bucket := specBestcellRows ctx lab ptn level startArr
+      (List.range' 1 (nnt - 1)) (Array.replicate nnt 0)
+    startArr[argmaxLoop bucket (List.range' 1 (nnt - 1)) 0 bucket[0]!]!
+
+/-- The specification's hint-free target cell. -/
+@[expose] def specTargetcell (ctx : Ctx) (lab ptn : Array Nat)
+    (level tcLevel : Nat) : Nat :=
+  if level ≤ tcLevel then
+    specBestcell ctx lab ptn level
+  else
+    match (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2) with
+    | some (c1, _) => c1
+    | none => 0
+
+/-- The specification's target cell with its contents and size. -/
+@[expose] def specMaketargetcell (ctx : Ctx) (lab ptn : Array Nat)
+    (level tcLevel : Nat) : Nat × Nat × Nat :=
+  let i := specTargetcell ctx lab ptn level tcLevel
+  let j := cellEnd ptn level (i + 1)
+  (i, worksetOf lab i j, j - i + 1)
+
 /-- The key of the maximal leaf of the unpruned search tree below one
 node. -/
 @[expose] def specNode (ctx : Ctx) (tcLevel : Nat) :
@@ -90,7 +159,7 @@ node. -/
     if discreteAt rs.ptn level ctx.n then
       ⟨[rs.longcode, codeSentinel], leafRows ctx rs.lab⟩
     else
-      let tcr := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
+      let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
       let children := (List.range tcr.2.2).map fun o =>
         let br := breakout rs.lab rs.ptn (level + 1) tcr.1 rs.lab[tcr.1 + o]!
         specNode ctx tcLevel fuel (level + 1) br.1 br.2.1 br.2.2
@@ -115,6 +184,207 @@ variable {n k : Nat}
 /-- The nauty-semantic canonical key of a coloured graph. -/
 @[expose] def canonSpecKey (G : Colored n k) : Key :=
   canonSpec n (rowsOf G) (initialPartition G).1 (initialPartition G).2
+
+/-! # Equivariance of the spec target-cell rule -/
+
+theorem joinTest_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) {lab : Array Nat} (hlab : LabOk lab n)
+    {wset : Nat} (hws : wset < 2 ^ n) {c1 c2 : Nat}
+    (h2 : c2 < lab.size) :
+    joinTest ctx' (lab.map σ.toFun) (image σ n wset) c1 c2 =
+      joinTest ctx lab wset c1 c2 := by
+  rw [joinTest, joinTest, countsOf_map σ hg hlab hws h2,
+    popCount_image σ hws (image_lt σ _)]
+
+theorem specBestcellRow_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) {lab ptn : Array Nat} {level : Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n) (hsp : ptn.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level) {startArr : Array Nat}
+    (hstart : ∀ v : Nat, startArr[v]! < n) {workset : Nat}
+    (hws : workset < 2 ^ n) (v2 : Nat) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      specBestcellRow ctx' (lab.map σ.toFun) ptn level startArr
+          (image σ n workset) v2 vs bucket =
+        specBestcellRow ctx lab ptn level startArr workset v2 vs bucket
+  | [], _ => rfl
+  | v1 :: rest, bucket => by
+    have hce : cellEnd ptn level startArr[v1]! < lab.size := by
+      have := cellEnd_lt (ptn := ptn) (level := level)
+        (i := startArr[v1]!) (by have := hstart v1; omega) hend
+      omega
+    rw [specBestcellRow, specBestcellRow,
+      joinTest_map σ hg hlab hws hce]
+    rcases hj : joinTest ctx lab workset startArr[v1]!
+        (cellEnd ptn level startArr[v1]!) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      exact specBestcellRow_map σ hg hlab hsl hsp hend hstart hws v2
+        rest bucket
+    · simp only [if_true]
+      exact specBestcellRow_map σ hg hlab hsl hsp hend hstart hws v2
+        rest _
+
+theorem specBestcellRows_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) {lab ptn : Array Nat} {level : Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n) (hsp : ptn.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level) {startArr : Array Nat}
+    (hstart : ∀ v : Nat, startArr[v]! < n) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      specBestcellRows ctx' (lab.map σ.toFun) ptn level startArr vs
+          bucket =
+        specBestcellRows ctx lab ptn level startArr vs bucket
+  | [], _ => rfl
+  | v2 :: rest, bucket => by
+    rw [specBestcellRows, specBestcellRows]
+    have hce : cellEnd ptn level startArr[v2]! < n := by
+      have := cellEnd_lt (ptn := ptn) (level := level)
+        (i := startArr[v2]!) (by have := hstart v2; omega) hend
+      omega
+    rw [worksetOf_map σ hlab (lo := startArr[v2]!)
+      (hi := cellEnd ptn level startArr[v2]!) (by omega)]
+    rw [specBestcellRow_map σ hg hlab hsl hsp hend hstart
+      (worksetOf_lt hlab (lo := startArr[v2]!)
+        (hi := cellEnd ptn level startArr[v2]!) (by omega)) v2
+      (List.range v2) bucket]
+    exact specBestcellRows_map σ hg hlab hsl hsp hend hstart rest _
+
+/-- The specification's `bestcell` is position-valued and invariant
+under a renaming. -/
+theorem specBestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    specBestcell ctx' (lab.map σ.toFun) ptn level =
+      specBestcell ctx lab ptn level := by
+  rw [specBestcell, specBestcell]
+  dsimp only
+  rw [hn', hn]
+  have hml : ∀ x ∈ ((cells ptn level n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1), x < n := by
+    intro x hx
+    rcases List.mem_map.mp hx with ⟨p, hp, rfl⟩
+    have hpc := List.mem_filter.mp hp
+    have hb := cells_bound (nn := n) (by omega) hend p hpc.1
+    have hle := cells_le p hpc.1
+    omega
+  rcases hnnt : ((((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
+      (·.1)).length == 0) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hlen0 : (((cells ptn level n).filter
+        fun (c1, c2) => c1 ≠ c2).map (·.1)).length ≠ 0 := by
+      simpa using hnnt
+    have hn0 : 0 < n := by
+      have hpos : 0 < (((cells ptn level n).filter
+          fun (c1, c2) => c1 ≠ c2).map (·.1)).length :=
+        Nat.pos_of_ne_zero hlen0
+      exact Nat.lt_of_le_of_lt (Nat.zero_le _)
+        (hml _ (List.getElem_mem hpos))
+    rw [specBestcellRows_map σ hg hlab hsl hsp hend
+      (getElem!_list_lt hml hn0)]
+  · simp only [if_true]
+
+/-- The specification's target cell is position-valued and invariant
+under a renaming. -/
+theorem specTargetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level tcLevel : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    specTargetcell ctx' (lab.map σ.toFun) ptn level tcLevel =
+      specTargetcell ctx lab ptn level tcLevel := by
+  rw [specTargetcell, specTargetcell]
+  rcases Decidable.em (level ≤ tcLevel) with hB | hB
+  · rw [if_pos hB, if_pos hB]
+    exact specBestcell_map σ hn hn' hg hlab hsl hsp hend
+  · rw [if_neg hB, if_neg hB, hn', hn]
+
+/-- The specification's target-cell data transports position and size
+unchanged and the cell set to its image. -/
+theorem specMaketargetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level tcLevel : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hi : specTargetcell ctx lab ptn level tcLevel + 1 < n) :
+    specMaketargetcell ctx' (lab.map σ.toFun) ptn level tcLevel =
+      ((specMaketargetcell ctx lab ptn level tcLevel).1,
+        image σ n (specMaketargetcell ctx lab ptn level tcLevel).2.1,
+        (specMaketargetcell ctx lab ptn level tcLevel).2.2) := by
+  rw [specMaketargetcell, specMaketargetcell]
+  rw [specTargetcell_map σ hn hn' hg hlab hsl hsp hend]
+  have hce : cellEnd ptn level
+      (specTargetcell ctx lab ptn level tcLevel + 1) < n := by
+    have := cellEnd_lt (ptn := ptn) (level := level)
+      (i := specTargetcell ctx lab ptn level tcLevel + 1) (by omega)
+      hend
+    omega
+  rw [worksetOf_map σ hlab
+    (lo := specTargetcell ctx lab ptn level tcLevel)
+    (hi := cellEnd ptn level
+      (specTargetcell ctx lab ptn level tcLevel + 1))
+    (by omega)]
+
+/-- The specification's `bestcell` returns a nonsingleton cell start
+when one exists. -/
+theorem specBestcell_mem {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
+    (hex : ((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2) ≠ []) :
+    specBestcell ctx lab ptn level ∈
+      ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2).map
+        (·.1) := by
+  have hlen : (((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1)).length ≠ 0 := by
+    rw [List.length_map]
+    intro h0
+    exact hex (List.length_eq_zero_iff.mp h0)
+  have hcond : ((((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) = false := by
+    simpa using hlen
+  simp only [specBestcell, hcond, Bool.false_eq_true, if_false]
+  refine argmax_start_mem (by simpa using hlen) _ _ _ ?_
+  intro j hj
+  have h1 := List.mem_range'_1.mp hj
+  have h2 : (((cells ptn level ctx.n).filter
+      fun x => decide (x.1 ≠ x.2)).map (·.1)).length ≠ 0 := by
+    simpa using hlen
+  omega
+
+/-- With a nonsingleton cell present, the specification's target cell
+is a nonsingleton cell start. -/
+theorem specTargetcell_nontrivial {ctx : Ctx} {lab ptn : Array Nat}
+    {level tcLevel : Nat}
+    (hex : ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2) :
+    ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2 ∧
+      specTargetcell ctx lab ptn level tcLevel = p.1 := by
+  have hfne : ((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2) ≠ [] := by
+    rcases hex with ⟨p, hpm, hpne⟩
+    intro hnil
+    have hmem : p ∈ ((cells ptn level ctx.n).filter
+        fun (c1, c2) => c1 ≠ c2) := by
+      rw [List.mem_filter]
+      exact ⟨hpm, by simpa using hpne⟩
+    rw [hnil] at hmem
+    cases hmem
+  rw [specTargetcell]
+  rcases Decidable.em (level ≤ tcLevel) with hB | hB
+  · rw [if_pos hB]
+    have hm := specBestcell_mem (lab := lab) hfne
+    rcases List.mem_map.mp hm with ⟨p, hpf, hp1⟩
+    have hpc := List.mem_filter.mp hpf
+    exact ⟨p, hpc.1, by simpa using hpc.2, hp1.symm⟩
+  · rw [if_neg hB]
+    rcases hf : (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2)
+      with _ | q
+    · rcases hex with ⟨p, hpm, hpne⟩
+      have := List.find?_eq_none.mp hf p hpm
+      simp [hpne] at this
+    · rw [hf]
+      dsimp only
+      rcases q with ⟨c1, c2⟩
+      refine ⟨(c1, c2), List.mem_of_find?_eq_some hf, ?_, rfl⟩
+      have := List.find?_some hf
+      simpa using this
 
 /-! # Equivariance -/
 
@@ -144,13 +414,13 @@ theorem specNode_map (σ : Renaming n) {ctx ctx' : Ctx}
     rw [hR] at hst
     rcases hdisc : discreteAt R.ptn level n with _ | _
     · simp only [Bool.false_eq_true, if_false]
-      obtain ⟨p, hpm, hpne, hptc⟩ := targetcell_nontrivial
+      obtain ⟨p, hpm, hpne, hptc⟩ := specTargetcell_nontrivial
         (lab := R.lab) (tcLevel := tcLevel)
         (by
           rw [discreteAt, List.all_eq_false] at hdisc
           rcases hdisc with ⟨q, hqm, hq⟩
           exact ⟨q, by rw [hn]; exact hqm, by simpa using hq⟩)
-      have htc1 : targetcell ctx R.lab R.ptn level tcLevel (-1) + 1 < n := by
+      have htc1 : specTargetcell ctx R.lab R.ptn level tcLevel + 1 < n := by
         have hb := cells_bound (nn := ctx.n)
           (by
             have h1 := hst.ptnSize
@@ -161,16 +431,16 @@ theorem specNode_map (σ : Renaming n) {ctx ctx' : Ctx}
         have h1 := hst.ptnSize
         rw [hptc]
         omega
-      rw [maketargetcell_map σ hn hn' hg hst.labOk hst.labSize hst.ptnSize
-        hst.ptnEnd htc1]
+      rw [specMaketargetcell_map σ hn hn' hg hst.labOk hst.labSize
+        hst.ptnSize hst.ptnEnd htc1]
       dsimp only
-      generalize hM : maketargetcell ctx R.lab R.ptn level tcLevel (-1) = M
-      have hM1 : M.1 = targetcell ctx R.lab R.ptn level tcLevel (-1) := by
+      generalize hM : specMaketargetcell ctx R.lab R.ptn level tcLevel = M
+      have hM1 : M.1 = specTargetcell ctx R.lab R.ptn level tcLevel := by
         rw [← hM]
         rfl
       have hM22 : M.2.2 = cellEnd R.ptn level
-          (targetcell ctx R.lab R.ptn level tcLevel (-1) + 1) -
-            targetcell ctx R.lab R.ptn level tcLevel (-1) + 1 := by
+          (specTargetcell ctx R.lab R.ptn level tcLevel + 1) -
+            specTargetcell ctx R.lab R.ptn level tcLevel + 1 := by
         rw [← hM]
         rfl
       have htc1' : M.1 + 1 < n := by
