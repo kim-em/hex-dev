@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "0a950f42f12ba2be2c54806c75670adf53544ee1",
+  "reason": "Combines the inherited, already-exempted HexPolyFp precompileModules and independent primality/row-reduce declarations with the HexIntFactor fresh-module proof-probe registrations. The new probe modules are build-only targets and do not change hexbz_factor_service, any library it imports, or its runtime call graph."
+}
