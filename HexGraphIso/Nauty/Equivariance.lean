@@ -1271,4 +1271,107 @@ theorem breakout_map (σ : Renaming n) {lab ptn : Array Nat}
       exact hlab k hks)
     hwit]
 
+/-! # Leaf keys -/
+
+theorem getElem!_replicate_zero (sz i : Nat) :
+    (Array.replicate sz (0 : Nat))[i]! = 0 := by
+  rcases Nat.lt_or_ge i sz with hi | hi
+  · rw [getElem!_pos _ _ (by rw [Array.size_replicate]; exact hi)]
+    simp
+  · rw [getElem!_neg _ _ (by rw [Array.size_replicate]; omega)]
+    rfl
+
+theorem invPerm_go_map (σ : Renaming n) {lab : Array Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n) :
+    ∀ (is : List Nat) (inv inv' : Array Nat), inv'.size = n →
+      inv.size = n →
+      (∀ v, v < n → inv'[σ.toFun v]! = inv[v]!) →
+      (∀ i ∈ is, i < lab.size) →
+      ∀ v, v < n →
+        (invPerm.go (lab.map σ.toFun) is inv')[σ.toFun v]! =
+          (invPerm.go lab is inv)[v]!
+  | [], _, _, _, _, hrel, _, v, hv => hrel v hv
+  | i :: rest, inv, inv', hsz, hsz2, hrel, his, v, hv => by
+    rw [invPerm.go, invPerm.go]
+    have hib : i < lab.size := his i (by simp)
+    rw [getElem!_map_of_lt σ.toFun lab hib]
+    refine invPerm_go_map σ hlab hsl rest (inv.set! lab[i]! i)
+      (inv'.set! (σ.toFun lab[i]!) i) (by rw [Array.size_set!]; exact hsz)
+      (by rw [Array.size_set!]; exact hsz2)
+      (fun u hu => ?_) (fun j hj => his j (by simp [hj])) v hv
+    rcases Decidable.em (lab[i]! = u) with he | he
+    · rw [he, Array.getElem!_set!_self _ _ _
+        (by rw [hsz]; exact (σ.maps u).mp hu),
+        Array.getElem!_set!_self _ _ _
+          (by rw [hsz2, ← he]; exact hlab i hib)]
+    · rw [Array.getElem!_set!_ne _ _ _ _
+        (fun hh => he (σ.inj _ _ hh)),
+        Array.getElem!_set!_ne _ _ _ _ he]
+      exact hrel u hu
+
+/-- The labelling inverse transports along a renaming. -/
+theorem invPerm_map (σ : Renaming n) {lab : Array Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n) :
+    ∀ v, v < n →
+      (invPerm (lab.map σ.toFun))[σ.toFun v]! = (invPerm lab)[v]! := by
+  intro v hv
+  rw [invPerm, invPerm, Array.size_map]
+  exact invPerm_go_map σ hlab hsl (List.range lab.size)
+    (Array.replicate lab.size 0) (Array.replicate lab.size 0)
+    (by rw [Array.size_replicate]; exact hsl)
+    (by rw [Array.size_replicate]; exact hsl)
+    (fun u _ => by rw [getElem!_replicate_zero, getElem!_replicate_zero])
+    (fun i hi => List.mem_range.mp hi) v hv
+
+/-- `permset` of an image under the transported map recovers `permset`
+of the original set. -/
+theorem permset_image (σ : Renaming n) (s : Nat) {perm perm' : Array Nat}
+    (hp : ∀ v, v < n → perm'[σ.toFun v]! = perm[v]!) :
+    permset (image σ n s) perm' n = permset s perm n := by
+  have hps : ∀ (x : Nat) (p : Array Nat),
+      permset x p n = image (fun v => p[v]!) n x := fun _ _ => rfl
+  rw [hps, hps]
+  refine Nat.eq_of_testBit_eq fun w => ?_
+  rw [testBit_image, testBit_image, Bool.eq_iff_iff, List.any_eq_true,
+    List.any_eq_true]
+  constructor
+  · rintro ⟨v, hv, hb⟩
+    simp only [Bool.and_eq_true, beq_iff_eq] at hb
+    have himg := testBit_image σ.toFun n s v
+    rw [hb.1] at himg
+    rcases List.any_eq_true.mp himg.symm with ⟨u, hu, hub⟩
+    simp only [Bool.and_eq_true, beq_iff_eq] at hub
+    refine ⟨u, hu, ?_⟩
+    simp only [Bool.and_eq_true, beq_iff_eq]
+    refine ⟨hub.1, ?_⟩
+    rw [← hp u (List.mem_range.mp hu), hub.2]
+    exact hb.2
+  · rintro ⟨u, hu, hub⟩
+    simp only [Bool.and_eq_true, beq_iff_eq] at hub
+    refine ⟨σ.toFun u,
+      List.mem_range.mpr ((σ.maps u).mp (List.mem_range.mp hu)), ?_⟩
+    simp only [Bool.and_eq_true, beq_iff_eq]
+    refine ⟨?_, ?_⟩
+    · rw [testBit_image_apply σ s (List.mem_range.mp hu)]
+      exact hub.1
+    · rw [hp u (List.mem_range.mp hu)]
+      exact hub.2
+
+/-- The leaf key rows: `g^lab` in nauty's row order. -/
+@[expose] def leafRows (ctx : Ctx) (lab : Array Nat) : List Nat :=
+  (List.range ctx.n).map fun i => permset ctx.g[lab[i]!]! (invPerm lab) ctx.n
+
+/-- The leaf key is invariant under a renaming: the transported
+labelling on the renamed graph induces the same adjacency rows. -/
+theorem leafRows_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n) :
+    leafRows ctx' (lab.map σ.toFun) = leafRows ctx lab := by
+  rw [leafRows, leafRows, hn', hn]
+  refine List.map_congr_left fun i hi => ?_
+  have hi' := List.mem_range.mp hi
+  rw [getElem!_map_of_lt σ.toFun lab (by omega),
+    hg.2.2 lab[i]! (hlab _ (by omega))]
+  exact permset_image σ _ (invPerm_map σ hlab hsl)
+
 end Hex.GraphIso.Nauty

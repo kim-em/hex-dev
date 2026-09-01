@@ -426,11 +426,12 @@ checking each edge from its lesser endpoint. -/
   return true
 
 /-- The inverse of a vertex list: `inv[lab[i]] = i`. -/
-@[expose] def invPerm (lab : Array Nat) : Array Nat := Id.run do
-  let mut inv : Array Nat := .replicate lab.size 0
-  for i in [0 : lab.size] do
-    inv := inv.set! lab[i]! i
-  return inv
+@[expose] def invPerm (lab : Array Nat) : Array Nat :=
+  go (List.range lab.size) (Array.replicate lab.size 0)
+where
+  go : List Nat → Array Nat → Array Nat
+    | [], inv => inv
+    | i :: rest, inv => go rest (inv.set! lab[i]! i)
 
 /-- nauty's `testcanlab`: compare `g^lab` with `canong` row by row in
 nauty's setword order. Returns the comparison and the number of leading
