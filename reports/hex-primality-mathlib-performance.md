@@ -44,7 +44,11 @@ production elaborator's emitted `Eq.refl true` witness.
 
 Core certificate search is intentionally not timed a second time. Both public
 bridge entry points call the core-owned `primeCertCountedWith?` with the same
-seed, fuel, and `PrimeCertBudget`; the shared search evidence is
+seed, fuel, and `PrimeCertBudget`. Its Phase-4 performance owners are
+`Hex.PrimalityBench.runCertSearch` and `runCertSearch512` in the core headline
+report, together with the matched `search` rows in
+`reports/bench-results/hex-primality-core-proof-issue-9762-chungus2.json`.
+The shared policy-selection evidence for the seed, fuel, and budget is
 `reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json` (SHA-256
 `0d772cb92479b0b8b8e0852491af42ec361bfb0cf02c729df79623001b8e7269`).
 The bridge's earlier complete policy evidence remains in

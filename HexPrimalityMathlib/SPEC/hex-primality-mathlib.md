@@ -29,6 +29,22 @@ Mathlib-side primality dependency or additional elaborator also belongs here;
 it must remain an accelerator over the core checker rather than a replacement
 for the Mathlib-free proof boundary.
 
+## Headline correctness theorem
+
+The bridge's headline correctness theorem is
+`Hex.Nat.isPrime_iff_natPrime`:
+
+```lean
+theorem Hex.Nat.isPrime_iff_natPrime {n : Nat} :
+    isPrime n = true ↔ Nat.Prime n
+```
+
+It is the end-to-end post-condition for the public total decision API: the
+Mathlib-free computation returns `true` exactly when Mathlib's predicate
+holds. The proof-producing tactic route terminates at the separately exposed
+`Hex.Nat.natPrime_of_checkPrimeAt`, whose Boolean premise is the
+kernel-replayed certificate check emitted by the elaborator.
+
 ## Correspondence and transports
 
 The whole predicate correspondence is:
@@ -254,6 +270,18 @@ locality, and preservation of `Nat.decidablePrime`. The non-executable
 correspondence and segment theorem surfaces are instantiated against the exact
 inputs pinned by core conformance; bridge tests exercise their transport but
 do not rerun the core computation as nominally independent evidence.
+
+The correspondence and segment declarations (`prime_iff`, the direct result
+transports, `primeTable_spec`, `primesIn_spec`, `filter_prime_range`, and
+`forall_prime_lt`) are structural theorems, not executable or proof-producing
+operations in either Phase-4 evidence track. Their proof bodies are compiled
+once into the bridge and applying them runs neither certificate search nor a
+bridge elaborator. The small conformance examples that rewrite with
+`filter_prime_range` deliberately test the theorem's semantics; the ensuing
+`Finset` reduction is consumer proof work over core-owned committed data, not
+a bridge operation. The hypotheses cap this table-facing API at
+`primeTableBound`. A future bridge tactic that performs this reduction would
+be a new proof-track operation and would require matched fresh-module evidence.
 
 Fresh importing modules under
 `bench/HexPrimalityMathlib/ProofProbe/` own proof-production evidence. The
