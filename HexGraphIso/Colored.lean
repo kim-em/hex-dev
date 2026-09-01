@@ -51,7 +51,7 @@ theorem ext_cells {c d : Coloring n k} (h : c.cells = d.cells) : c = d := by
     c = d := by
   refine ext_cells (Vector.ext fun i hi => h ⟨i, hi⟩)
 
-@[expose] instance : DecidableEq (Coloring n k) := fun c d =>
+instance : DecidableEq (Coloring n k) := fun c d =>
   if h : c.cells = d.cells then
     .isTrue (ext_cells h)
   else
@@ -105,7 +105,7 @@ namespace Colored
 
 variable {n k : Nat}
 
-@[expose] instance : DecidableEq (Colored n k) := fun G H =>
+instance : DecidableEq (Colored n k) := fun G H =>
   if h : G.graph = H.graph ∧ G.coloring = H.coloring then
     .isTrue (by cases G; cases H; cases h.1; cases h.2; rfl)
   else

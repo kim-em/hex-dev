@@ -122,11 +122,11 @@ theorem testBit_erase (s v w : Nat) :
     (erase s v).testBit w = (s.testBit w && !(v == w)) := by
   show (if s.testBit v then s ^^^ (1 <<< v) else s).testBit w = _
   rcases hb : s.testBit v with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     rcases Decidable.em (v = w) with rfl | hne
     · simp [hb]
     · simp [show (v == w) = false by simp [hne]]
-  · simp only [if_true]
+  · simp only [ite_true]
     rw [Nat.testBit_xor, testBit_one_shift]
     rcases Decidable.em (v = w) with rfl | hne
     · simp [hb]
@@ -135,11 +135,11 @@ theorem testBit_erase (s v w : Nat) :
 /-- The least set bit is a member. -/
 theorem testBit_lowBit : ∀ (s : Nat), s ≠ 0 → s.testBit (lowBit s) = true
   | s, hs => by
-    rw [lowBit_eq, if_neg hs]
+    rw [lowBit_eq, ite_eq_right hs]
     rcases Decidable.em (s % 2 = 1) with ho | ho
-    · rw [if_pos ho]
+    · rw [ite_eq_left ho]
       simp [Nat.testBit_zero, ho]
-    · rw [if_neg ho]
+    · rw [ite_eq_right ho]
       have hs2 : s / 2 ≠ 0 := by omega
       rw [Nat.add_comm 1 (lowBit (s / 2)), Nat.testBit_add_one]
       exact testBit_lowBit (s / 2) hs2
@@ -221,11 +221,11 @@ theorem testBit_image_foldl (σ : Nat → Nat) (s w : Nat) :
   | v :: l, t => by
     rw [List.foldl_cons, List.any_cons]
     rcases hb : s.testBit v with _ | _
-    · rw [if_neg (by simp [hb]), testBit_image_foldl σ s w l t]
-      simp [hb]
-    · rw [if_pos (by simp [hb]),
+    · rw [ite_eq_right (by simp), testBit_image_foldl σ s w l t]
+      simp
+    · rw [ite_eq_left (by simp),
         testBit_image_foldl σ s w l (insert t (σ v)), testBit_insert]
-      simp [hb, Bool.or_assoc]
+      simp [Bool.or_assoc]
 
 /-- Membership in an image. -/
 theorem testBit_image (σ : Nat → Nat) (n s w : Nat) :

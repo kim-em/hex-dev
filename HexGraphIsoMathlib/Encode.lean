@@ -107,6 +107,7 @@ two vertex types, conjugating by the chosen enumerations. -/
     V ≃ W :=
   eV.trans (p.toEquiv.trans eW.symm)
 
+omit [Fintype V] [Fintype W] in
 @[simp] theorem decodePerm_apply (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     (p : Hex.GraphIso.Perm n) (v : V) :
     decodePerm eV eW p v = eW.symm (p.get (eV v)) := rfl
@@ -174,9 +175,7 @@ theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
   refine (encode_iso_iff eV eV').mp (Colored.Isomorphic.intro
     { graphIso := (SimpleGraph.Iso.refl : G.graph ≃g G.graph)
       map_color := fun v => ?_ })
-  first
-  | rfl
-  | simp
+  rfl
 
 /-! # Cardinality and cell-size obstructions -/
 
@@ -185,6 +184,7 @@ theorem isEmpty_iso_of_card_ne (G : SimpleGraph V) (H : SimpleGraph W)
     (h : Fintype.card V ≠ Fintype.card W) : IsEmpty (G ≃g H) :=
   ⟨fun φ => h (Fintype.card_congr φ.toEquiv)⟩
 
+omit [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj] in
 /-- A colour-preserving isomorphism induces equal colour-class
 cardinalities. -/
 theorem card_color_class_eq (h : Colored.Iso G H) (c : Fin k)
@@ -193,6 +193,7 @@ theorem card_color_class_eq (h : Colored.Iso G H) (c : Fin k)
   refine Fintype.card_congr (Equiv.subtypeEquiv h.graphIso.toEquiv fun v => ?_)
   rw [show (h.graphIso.toEquiv v : W) = h.graphIso v from rfl, h.map_color v]
 
+omit [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj] in
 /-- Unequal ordered cell sizes forbid coloured isomorphism. -/
 theorem not_isomorphic_of_card_color_ne [DecidableEq (Fin k)] {c : Fin k}
     (h : Fintype.card {v // G.color v = c} ≠

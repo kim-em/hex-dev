@@ -36,7 +36,7 @@ kernel-reduce; the tactic obtains the list by reducing
   toFun v := ⟨l.idxOf v, hlen ▸ List.idxOf_lt_length_of_mem (hcompl v)⟩
   invFun i := l[i.val]'(hlen.symm ▸ i.isLt)
   left_inv v := List.getElem_idxOf (List.idxOf_lt_length_of_mem (hcompl v))
-  right_inv i := Fin.ext (hnodup.idxOf_getElem _ _)
+  right_inv _i := Fin.ext (hnodup.idxOf_getElem _ _)
 
 /-- The one-cell colouring of an uncoloured graph over a nonempty vertex
 type; the executable encoding of `G ≃g H` goals. -/

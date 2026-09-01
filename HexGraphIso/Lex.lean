@@ -129,7 +129,7 @@ theorem pairwise_insertLe {x : List Nat} {l : List (List Nat)}
   | cons y rest ih =>
     rw [insertLe]
     rcases hp : lexLe x y with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       rcases List.pairwise_cons.mp h with ⟨hy, hrest⟩
       refine List.pairwise_cons.mpr ⟨?_, ih hrest⟩
       intro z hz
@@ -139,7 +139,7 @@ theorem pairwise_insertLe {x : List Nat} {l : List (List Nat)}
         simp [hp] at this
         exact this
       · exact hy z hz
-    · simp only [if_true]
+    · simp only [ite_true]
       refine List.pairwise_cons.mpr ⟨?_, h⟩
       intro z hz
       rcases List.mem_cons.mp hz with rfl | hz

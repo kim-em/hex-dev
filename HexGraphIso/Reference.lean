@@ -66,7 +66,7 @@ theorem colorSortedCheck_iff (K : Colored n k) :
     · exact Or.inr (h i j hij)
     · exact Or.inl hij
 
-@[expose] instance (K : Colored n k) : Decidable (ColorSorted K) :=
+instance (K : Colored n k) : Decidable (ColorSorted K) :=
   if h : colorSortedCheck K then
     .isTrue ((colorSortedCheck_iff K).mp h)
   else

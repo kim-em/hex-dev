@@ -42,7 +42,7 @@ theorem getElem!_map_of_lt (f : Nat → Nat) (a : Array Nat) {i : Nat}
     (hi : i < a.size) : (a.map f)[i]! = f a[i]! := by
   rw [Array.getElem!_eq_getD, Array.getElem!_eq_getD, Array.getD,
     Array.getD]
-  rw [dif_pos (by simpa using hi), dif_pos hi]
+  rw [dite_eq_left (by simpa using hi), dite_eq_left hi]
   simp
 
 theorem map_set! (f : Nat → Nat) (a : Array Nat) (i : Nat) (x : Nat) :
@@ -75,7 +75,7 @@ theorem splitCellLoop_map (σ : Renaming n) {gRow : Nat} :
   | fuel + 1, lab, c1, c2, hlab, h1, h2 => by
     rw [splitCellLoop, splitCellLoop]
     rcases Decidable.em (c1 ≤ c2) with hle | hgt
-    · rw [if_pos hle, if_pos hle]
+    · rw [ite_eq_left hle, ite_eq_left hle]
       have hc1 : c1.toNat < lab.size := by omega
       have hc2 : c2.toNat < lab.size := by omega
       rw [getElem!_map_of_lt _ _ hc1]
@@ -83,14 +83,14 @@ theorem splitCellLoop_map (σ : Renaming n) {gRow : Nat} :
       rw [show elem (image σ n gRow) (σ.toFun lab[c1.toNat]!)
           = elem gRow lab[c1.toNat]! from testBit_image_apply σ gRow hlt]
       rcases hadj : elem gRow lab[c1.toNat]! with _ | _
-      · simp only [Bool.false_eq_true, if_false]
+      · simp only [Bool.false_eq_true, ite_false]
         rw [getElem!_map_of_lt _ _ hc2, ← map_set!, ← map_set!]
         exact splitCellLoop_map σ fuel _ c1 (c2 - 1)
           (labOk_set! (labOk_set! hlab (hlab _ hc2) _) hlt _)
           h1 (by rw [Array.size_set!, Array.size_set!]; omega)
-      · simp only [if_true]
+      · simp only [ite_true]
         exact splitCellLoop_map σ fuel lab (c1 + 1) c2 hlab (by omega) h2
-    · rw [if_neg hgt, if_neg hgt]
+    · rw [ite_eq_right hgt, ite_eq_right hgt]
       rfl
 
 /-- The final labelling of the two-pointer partition keeps its size and
@@ -104,11 +104,11 @@ theorem splitCellLoop_ok {gRow : Nat} :
   | fuel + 1, lab, c1, c2, hlab, h1, h2 => by
     rw [splitCellLoop]
     rcases Decidable.em (c1 ≤ c2) with hle | hgt
-    · rw [if_pos hle]
+    · rw [ite_eq_left hle]
       have hc1 : c1.toNat < lab.size := by omega
       have hc2 : c2.toNat < lab.size := by omega
       rcases hadj : elem gRow lab[c1.toNat]! with _ | _
-      · simp only [Bool.false_eq_true, if_false]
+      · simp only [Bool.false_eq_true, ite_false]
         have ih := splitCellLoop_ok (gRow := gRow) fuel
           ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat lab[c1.toNat]!)
           c1 (c2 - 1)
@@ -116,9 +116,9 @@ theorem splitCellLoop_ok {gRow : Nat} :
           h1 (by rw [Array.size_set!, Array.size_set!]; omega)
         rw [Array.size_set!, Array.size_set!] at ih
         exact ih
-      · simp only [if_true]
+      · simp only [ite_true]
         exact splitCellLoop_ok fuel lab (c1 + 1) c2 hlab (by omega) h2
-    · rw [if_neg hgt]
+    · rw [ite_eq_right hgt]
       exact ⟨rfl, hlab⟩
 
 /-! # State transport -/
@@ -137,16 +137,16 @@ theorem trivialSplit_mapSt (σ : Renaming n) (level cell1 cell2 : Nat)
   rw [trivialSplit, trivialSplit]
   dsimp only [mapSt]
   rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with hA | hA
-  · simp only [if_pos hA]
+  · simp only [ite_eq_left hA]
     rcases Decidable.em
         (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with hB | hB
-    · simp only [if_pos hB]
+    · simp only [ite_eq_left hB]
       rcases hC : (c1.toNat == cell2) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true]
-    · simp only [if_neg hB]
+        simp only [Bool.false_eq_true, ite_false, ite_true]
+    · simp only [ite_eq_right hB]
       rcases hD : (c2.toNat == cell1) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true]
-  · simp only [if_neg hA]
+        simp only [Bool.false_eq_true, ite_false, ite_true]
+  · simp only [ite_eq_right hA]
 
 /-- The split bookkeeping leaves the labelling untouched. -/
 theorem lab_trivialSplit (level cell1 cell2 : Nat) (c1 c2 : Int)
@@ -167,7 +167,7 @@ theorem trivialCell_map (σ : Renaming n) (level : Nat) {gRow : Nat}
       mapSt σ (trivialCell level gRow cell1 cell2 st) := by
   rw [trivialCell, trivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     dsimp only [mapSt]
     rw [splitCellLoop_map σ (cell2 - cell1 + 2) st.lab (Int.ofNat cell1)
       (Int.ofNat cell2) hlab (by simp only [Int.ofNat_eq_natCast]; omega)
@@ -176,7 +176,7 @@ theorem trivialCell_map (σ : Renaming n) (level : Nat) {gRow : Nat}
     exact trivialSplit_mapSt σ level cell1 cell2 _ _
       { st with lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
           (Int.ofNat cell1) (Int.ofNat cell2)).1 }
-  · simp only [if_true]
+  · simp only [ite_true]
 
 /-- One trivial-splitter cell keeps the labelling's size and range. -/
 theorem trivialCell_ok {level gRow cell1 cell2 : Nat} {st : RefineSt}
@@ -185,12 +185,12 @@ theorem trivialCell_ok {level gRow cell1 cell2 : Nat} {st : RefineSt}
       LabOk (trivialCell level gRow cell1 cell2 st).lab n := by
   rw [trivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     rw [lab_trivialSplit]
     exact splitCellLoop_ok (cell2 - cell1 + 2) st.lab (Int.ofNat cell1)
       (Int.ofNat cell2) hlab (by simp only [Int.ofNat_eq_natCast]; omega)
       (by simp only [Int.ofNat_eq_natCast]; omega)
-  · simp only [if_true]
+  · simp only [ite_true]
     exact ⟨trivial, hlab⟩
 
 /-! # Cell boundaries -/
@@ -360,7 +360,7 @@ theorem windowStep_mapSt (σ : Renaming n) (level cell1 cell2 v c1 c2 : Nat)
   rcases hB : (c1 != cell1) with _ | _ <;>
   rcases hC : (c2 - c1 == 1) with _ | _ <;>
   rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
-    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+    simp only [h1, h4, Bool.false_eq_true, ite_false, ite_true]
 
 theorem lab_windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
     (st : RefineSt) :
@@ -378,10 +378,10 @@ theorem windowScan_map (σ : Renaming n) (level cell1 cell2 : Nat)
   | v :: vs, c1, maxcell, st => by
     rw [windowScan, windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rw [windowStep_mapSt]
       exact windowScan_map σ level cell1 cell2 counts vs _ _ _
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact windowScan_map σ level cell1 cell2 counts vs c1 maxcell st
 
 /-- The window scan touches no labelling data. -/
@@ -393,9 +393,9 @@ theorem lab_windowScan (level cell1 cell2 : Nat) (counts : List Nat) :
   | v :: vs, c1, maxcell, st => by
     rw [windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rw [lab_windowScan level cell1 cell2 counts vs _ _ _, lab_windowStep]
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact lab_windowScan level cell1 cell2 counts vs c1 maxcell st
 
 /-! # The stable counting redistribution -/
@@ -469,8 +469,8 @@ theorem nontrivialFix_mapSt (σ : Renaming n) (cell1 : Nat)
   rw [nontrivialFix, nontrivialFix]
   dsimp only [mapSt]
   rcases Decidable.em (¬ elem st.active cell1 = true) with h | h
-  · simp only [if_pos h]
-  · simp only [if_neg h]
+  · simp only [ite_eq_left h]
+  · simp only [ite_eq_right h]
 
 theorem lab_nontrivialFix (cell1 : Nat) (st : RefineSt) :
     (nontrivialFix cell1 st).lab = st.lab := by
@@ -487,7 +487,7 @@ theorem nontrivialCell_map (σ : Renaming n) {ctx ctx' : Ctx}
       mapSt σ (nontrivialCell ctx level workset cell1 cell2 st) := by
   rw [nontrivialCell, nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     rw [countsOf_map σ hg hlab hws h2]
     have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
         cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
@@ -495,7 +495,7 @@ theorem nontrivialCell_map (σ : Renaming n) {ctx ctx' : Ctx}
     rw [hcounts] at hlen
     rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
         counts.foldl Nat.max (counts.headD 0)) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       have hne : cell1 ≤ cell2 := by
         rcases Decidable.em (cell1 ≤ cell2) with h | h
         · exact h
@@ -509,8 +509,8 @@ theorem nontrivialCell_map (σ : Renaming n) {ctx ctx' : Ctx}
         segmentOf_map σ (lab := st.lab) (cell1 := cell1) (counts := counts)
           (by omega),
         writeSegment_map σ, ← nontrivialFix_mapSt σ cell1]
-    · simp only [if_true]
-  · simp only [if_true]
+    · simp only [ite_true]
+  · simp only [ite_true]
 
 /-- One nontrivial-splitter cell keeps the labelling's size and
 range. -/
@@ -521,14 +521,14 @@ theorem nontrivialCell_ok {ctx : Ctx} {level workset cell1 cell2 : Nat}
       LabOk (nontrivialCell ctx level workset cell1 cell2 st).lab n := by
   rw [nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
         cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
     generalize hcounts : countsOf ctx st.lab workset cell1 cell2 = counts
     rw [hcounts] at hlen
     rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
         counts.foldl Nat.max (counts.headD 0)) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       have hne : cell1 ≤ cell2 := by
         rcases Decidable.em (cell1 ≤ cell2) with h | h
         · exact h
@@ -538,9 +538,9 @@ theorem nontrivialCell_ok {ctx : Ctx} {level workset cell1 cell2 : Nat}
       rw [lab_nontrivialFix, lab_windowScan level cell1 cell2 counts]
       exact writeSegment_ok _ st.lab cell1 hlab
         (segmentOf_mem hlab (by omega) _)
-    · simp only [if_true]
+    · simp only [ite_true]
       exact ⟨by trivial, hlab⟩
-  · simp only [if_true]
+  · simp only [ite_true]
     exact ⟨by trivial, hlab⟩
 
 /-! # The refinement-state invariant -/
@@ -567,7 +567,7 @@ theorem ptnEnd_set! {ptn : Array Nat} {level i : Nat}
     · rw [Array.getElem!_set!_self _ _ _ hlt]
       exact Nat.le_refl level
     · rw [Array.getElem!_eq_getD, Array.getD,
-        dif_neg (by rw [Array.size_set!]; omega)]
+        dite_eq_right (by rw [Array.size_set!]; omega)]
       exact Nat.zero_le level
   · rw [Array.getElem!_set!_ne _ _ _ _ hne]
     exact hend
@@ -603,20 +603,20 @@ theorem trivialSplit_stOk {level cell1 cell2 : Nat} {c1 c2 : Int}
       have := hA.2
       simp only [Int.ofNat_eq_natCast] at this
       omega
-    simp only [if_pos hA]
+    simp only [ite_eq_left hA]
     rcases Decidable.em
         (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with hB | hB
-    · simp only [if_pos hB]
+    · simp only [ite_eq_left hB]
       rcases hC : (c1.toNat == cell2) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        simp only [Bool.false_eq_true, ite_false, ite_true] <;>
         exact ⟨hsl, hlab, by rw [Array.size_set!]; exact hsp,
           insert_lt hact (by omega), ptnEnd_set! hend⟩
-    · simp only [if_neg hB]
+    · simp only [ite_eq_right hB]
       rcases hD : (c2.toNat == cell1) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        simp only [Bool.false_eq_true, ite_false, ite_true] <;>
         exact ⟨hsl, hlab, by rw [Array.size_set!]; exact hsp,
           insert_lt hact h1, ptnEnd_set! hend⟩
-  · simp only [if_neg hA]
+  · simp only [ite_eq_right hA]
     exact ⟨hsl, hlab, hsp, hact, hend⟩
 
 theorem trivialCell_stOk {level gRow cell1 cell2 : Nat} {st : RefineSt}
@@ -624,7 +624,7 @@ theorem trivialCell_stOk {level gRow cell1 cell2 : Nat} {st : RefineSt}
     StOk n level (trivialCell level gRow cell1 cell2 st) := by
   rw [trivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hsplit := splitCellLoop_ok (gRow := gRow) (cell2 - cell1 + 2) st.lab
       (Int.ofNat cell1) (Int.ofNat cell2) h.labOk
       (by simp only [Int.ofNat_eq_natCast]; omega)
@@ -635,7 +635,7 @@ theorem trivialCell_stOk {level gRow cell1 cell2 : Nat} {st : RefineSt}
     exact trivialSplit_stOk
       ⟨hsplit.1.trans h.labSize, hsplit.2, h.ptnSize, h.activeLt, h.ptnEnd⟩
       h1 h2
-  · simp only [if_true]
+  · simp only [ite_true]
     exact h
 
 /-! # Multiplicity sums -/
@@ -665,7 +665,7 @@ theorem sum_map_ite_zero {x : Nat} :
       subst he
       exact h (by simp)
     rw [hxb]
-    simp only [Bool.false_eq_true, if_false]
+    simp only [Bool.false_eq_true, ite_false]
     rw [sum_map_ite_zero (fun hm => h (List.mem_cons_of_mem _ hm))]
 
 theorem sum_map_ite_le {x : Nat} :
@@ -675,10 +675,10 @@ theorem sum_map_ite_le {x : Nat} :
   | a :: l, hnd => by
     rw [List.map_cons, List.sum_cons]
     rcases hax : (x == a) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       have := sum_map_ite_le (x := x) (List.nodup_cons.mp hnd).2
       omega
-    · simp only [if_true]
+    · simp only [ite_true]
       have hx : x = a := by simpa using hax
       subst hx
       rw [sum_map_ite_zero (List.nodup_cons.mp hnd).1]
@@ -762,10 +762,10 @@ theorem windowScan_stOk {level cell1 cell2 : Nat} {counts : List Nat}
         multOf counts v + (vs.map (multOf counts)).sum := by
       rw [List.map_cons, List.sum_cons]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       exact windowScan_stOk hc2 vs (c1 + multOf counts v) _ _
         (windowStep_stOk h (by omega)) (by omega)
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact windowScan_stOk hc2 vs c1 maxcell st h (by omega)
 
 theorem nontrivialFix_stOk {level cell1 : Nat} {st : RefineSt}
@@ -788,14 +788,14 @@ theorem nontrivialCell_stOk {ctx : Ctx} {level workset cell1 cell2 : Nat}
     StOk n level (nontrivialCell ctx level workset cell1 cell2 st) := by
   rw [nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
         cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
     generalize hcounts : countsOf ctx st.lab workset cell1 cell2 = counts
     rw [hcounts] at hlen
     rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
         counts.foldl Nat.max (counts.headD 0)) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       have hne : cell1 ≤ cell2 := by
         rcases Decidable.em (cell1 ≤ cell2) with hle | hgt
         · exact hle
@@ -818,9 +818,9 @@ theorem nontrivialCell_stOk {ctx : Ctx} {level workset cell1 cell2 : Nat}
           (by omega) (countValues counts))
       exact nontrivialFix_stOk
         ⟨hws.1.trans h.labSize, hws.2, hW.ptnSize, hW.activeLt, hW.ptnEnd⟩ h1
-    · simp only [if_true]
+    · simp only [ite_true]
       exact ⟨h.labSize, h.labOk, h.ptnSize, h.activeLt, h.ptnEnd⟩
-  · simp only [if_true]
+  · simp only [ite_true]
     exact h
 
 /-! # Cell starts -/
@@ -989,7 +989,7 @@ theorem refineStep_map (σ : Renaming n) {ctx ctx' : Ctx}
           (split1 + cellEnd st.ptn level split1) } :=
     ⟨h.labSize, h.labOk, h.ptnSize, erase_lt h.activeLt, h.ptnEnd⟩
   rcases hsp12 : (split1 == cellEnd st.ptn level split1) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     exact refineNontrivial_map σ hn hn' hg level split1
       (cellEnd st.ptn level split1) _ hstep
       (by
@@ -997,7 +997,7 @@ theorem refineStep_map (σ : Renaming n) {ctx ctx' : Ctx}
           (by have := h.ptnSize; omega) h.ptnEnd
         have := h.ptnSize
         omega)
-  · simp only [if_true]
+  · simp only [ite_true]
     exact refineTrivial_map σ hn hn' hg level split1
       { st with
         active := erase st.active split1
@@ -1031,14 +1031,14 @@ theorem refineLoop_map (σ : Renaming n) {ctx ctx' : Ctx}
       show (mapSt σ st).active = st.active from rfl,
       show (mapSt σ st).hint = st.hint from rfl, hn', hn]
     rcases Decidable.em (st.numcells < n) with hlt | hlt
-    · simp only [if_pos hlt]
+    · simp only [ite_eq_left hlt]
       rcases hps : pickSplit st.active st.hint with _ | s
       · rfl
       · dsimp only
         rw [refineStep_map σ hn hn' hg level s st h
           (pickSplit_lt h.activeLt hps)]
         exact refineLoop_map σ hn hn' hg level fuel _ (refineStep_stOk hn h)
-    · simp only [if_neg hlt]
+    · simp only [ite_eq_right hlt]
 
 /-- nauty's `refine` commutes with a vertex renaming: on the renamed
 graph with the transported labelling it produces the transported state,
@@ -1102,9 +1102,9 @@ theorem bestcellRow_map (σ : Renaming n) {ctx ctx' : Ctx}
     rcases Decidable.em ((workset &&& ctx.g[lab[startArr[v1]!]!]! != 0) = true ∧
         (workset != workset &&& ctx.g[lab[startArr[v1]!]!]!) = true) with
       hc | hc
-    · rw [if_pos hc, if_pos hc]
+    · rw [ite_eq_left hc, ite_eq_left hc]
       exact bestcellRow_map σ hg hlab hsl hstart hws v2 rest _
-    · rw [if_neg hc, if_neg hc]
+    · rw [ite_eq_right hc, ite_eq_right hc]
       exact bestcellRow_map σ hg hlab hsl hstart hws v2 rest bucket
 
 theorem bestcellRows_map (σ : Renaming n) {ctx ctx' : Ctx}
@@ -1159,7 +1159,7 @@ theorem bestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
     omega
   rcases hnnt : ((((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
       (·.1)).length == 0) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hlen0 : (((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
         (·.1)).length ≠ 0 := by
       simpa using hnnt
@@ -1171,7 +1171,7 @@ theorem bestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
         (hml _ (List.getElem_mem hpos))
     rw [bestcellRows_map σ hg hlab hsl hsp hend
       (getElem!_list_lt hml hn0)]
-  · simp only [if_true]
+  · simp only [ite_true]
 
 /-- nauty's `targetcell` is position-valued and invariant under a
 renaming. -/
@@ -1185,12 +1185,12 @@ theorem targetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
   rw [targetcell, targetcell]
   rcases Decidable.em (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
       (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level)) with hA | hA
-  · rw [if_pos hA, if_pos hA]
-  · rw [if_neg hA, if_neg hA]
+  · rw [ite_eq_left hA, ite_eq_left hA]
+  · rw [ite_eq_right hA, ite_eq_right hA]
     rcases Decidable.em (level ≤ tcLevel) with hB | hB
-    · rw [if_pos hB, if_pos hB]
+    · rw [ite_eq_left hB, ite_eq_left hB]
       exact bestcell_map σ hn hn' hg hlab hsl hsp hend
-    · rw [if_neg hB, if_neg hB, hn', hn]
+    · rw [ite_eq_right hB, ite_eq_right hB, hn', hn]
 
 /-- nauty's `maketargetcell` transports position and size unchanged and
 the target-cell set to its image. -/
@@ -1237,7 +1237,7 @@ theorem breakout_go_map (σ : Renaming n) {tv : Nat} :
         simp [he, hne]
     rw [hbeq]
     rcases hcase : (lab[i]! == tv) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       have hkne : k ≠ i := by
         intro hh
         subst hh
@@ -1248,7 +1248,7 @@ theorem breakout_go_map (σ : Renaming n) {tv : Nat} :
         ⟨k, by omega, by rw [Array.size_set!]; omega,
           by rw [Array.getElem!_set!_ne _ _ _ _ (fun hh => hkne hh.symm)]
              exact hkv⟩
-    · simp only [if_true]
+    · simp only [ite_true]
 
 /-- nauty's `breakout` commutes with a renaming: the labelling maps
 through, the partition and active set are position-level. -/
@@ -1420,7 +1420,7 @@ theorem bestcell_mem {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
   have hcond : ((((cells ptn level ctx.n).filter
       fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) = false := by
     simpa using hlen
-  simp only [bestcell, hcond, Bool.false_eq_true, if_false]
+  simp only [bestcell, hcond, Bool.false_eq_true, ite_false]
   refine argmax_start_mem (by simpa using hlen) _ _ _ ?_
   intro j hj
   have h1 := List.mem_range'_1.mp hj
@@ -1446,16 +1446,16 @@ theorem targetcell_nontrivial {ctx : Ctx} {lab ptn : Array Nat}
     rw [hnil] at this
     cases this
   rw [targetcell]
-  rw [if_neg (by
+  rw [ite_eq_right (by
     rintro ⟨h0, -⟩
     omega)]
   rcases Decidable.em (level ≤ tcLevel) with hB | hB
-  · rw [if_pos hB]
+  · rw [ite_eq_left hB]
     have hm := bestcell_mem (lab := lab) hfne
     rcases List.mem_map.mp hm with ⟨p, hpf, hp1⟩
     have hpc := List.mem_filter.mp hpf
     exact ⟨p, hpc.1, by simpa using hpc.2, hp1.symm⟩
-  · rw [if_neg hB]
+  · rw [ite_eq_right hB]
     rcases hf : (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2)
       with _ | q
     · rcases hex with ⟨p, hpm, hpne⟩

@@ -93,7 +93,7 @@ theorem ext_vec {p q : Perm n} (h : p.vec = q.vec) : p = q := by
   refine ext_vec (Vector.ext fun i hi => ?_)
   exact h ⟨i, hi⟩
 
-@[expose] instance : DecidableEq (Perm n) := fun p q =>
+instance : DecidableEq (Perm n) := fun p q =>
   if h : p.vec = q.vec then
     .isTrue (ext_vec h)
   else
@@ -262,7 +262,7 @@ namespace Label
 
 variable {n : Nat}
 
-@[expose] instance : DecidableEq (Label n) := fun l m =>
+instance : DecidableEq (Label n) := fun l m =>
   if h : l.perm = m.perm then
     .isTrue (by cases l; cases m; cases h; rfl)
   else

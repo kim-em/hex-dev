@@ -193,13 +193,13 @@ theorem testBit_lt_lowBit :
   | s, i, hi => by
     rw [lowBit_eq] at hi
     rcases Decidable.em (s = 0) with rfl | hs
-    · rw [if_pos rfl] at hi
+    · rw [ite_eq_left rfl] at hi
       omega
-    · rw [if_neg hs] at hi
+    · rw [ite_eq_right hs] at hi
       rcases Decidable.em (s % 2 = 1) with ho | ho
-      · rw [if_pos ho] at hi
+      · rw [ite_eq_left ho] at hi
         omega
-      · rw [if_neg ho] at hi
+      · rw [ite_eq_right ho] at hi
         rcases i with _ | j
         · simp only [Nat.testBit_zero]
           simp
@@ -277,7 +277,7 @@ theorem rowCmp_gt_intro {a c d : Nat} (hd : a.testBit d = true)
     · intro i hi
       rw [Nat.testBit_xor, hagree i hi]
       simp
-  rw [rowCmp, if_neg hne, hlow, if_pos hd]
+  rw [rowCmp, ite_eq_right hne, hlow, ite_eq_left hd]
 
 theorem rowCmp_eq_iff {a b : Nat} : rowCmp a b = .eq ↔ a = b := by
   rw [rowCmp]
@@ -289,9 +289,9 @@ theorem rowCmp_eq_iff {a b : Nat} : rowCmp a b = .eq ↔ a = b := by
 theorem rowCmp_gt_iff_lt {a b : Nat} :
     rowCmp a b = .gt ↔ rowCmp b a = .lt := by
   rcases Decidable.em (a = b) with rfl | hne
-  · rw [rowCmp, if_pos rfl]
+  · rw [rowCmp, ite_eq_left rfl]
     simp
-  · rw [rowCmp, if_neg hne, rowCmp, if_neg (Ne.symm hne),
+  · rw [rowCmp, ite_eq_right hne, rowCmp, ite_eq_right (Ne.symm hne),
       Nat.xor_comm b a]
     have hd := testBit_ne_at_lowBit_xor hne
     rcases ha : a.testBit (lowBit (a ^^^ b)) with _ | _ <;>
@@ -598,10 +598,10 @@ theorem specBestcellRow_map (σ : Renaming n) {ctx ctx' : Ctx}
       joinTest_map σ hg hlab hws hce]
     rcases hj : joinTest ctx lab workset startArr[v1]!
         (cellEnd ptn level startArr[v1]!) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       exact specBestcellRow_map σ hg hlab hsl hsp hend hstart hws v2
         rest bucket
-    · simp only [if_true]
+    · simp only [ite_true]
       exact specBestcellRow_map σ hg hlab hsl hsp hend hstart hws v2
         rest _
 
@@ -651,7 +651,7 @@ theorem specBestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
     omega
   rcases hnnt : ((((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
       (·.1)).length == 0) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hlen0 : (((cells ptn level n).filter
         fun (c1, c2) => c1 ≠ c2).map (·.1)).length ≠ 0 := by
       simpa using hnnt
@@ -663,7 +663,7 @@ theorem specBestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
         (hml _ (List.getElem_mem hpos))
     rw [specBestcellRows_map σ hg hlab hsl hsp hend
       (getElem!_list_lt hml hn0)]
-  · simp only [if_true]
+  · simp only [ite_true]
 
 /-- The specification's target cell is position-valued and invariant
 under a renaming. -/
@@ -676,9 +676,9 @@ theorem specTargetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
       specTargetcell ctx lab ptn level tcLevel := by
   rw [specTargetcell, specTargetcell]
   rcases Decidable.em (level ≤ tcLevel) with hB | hB
-  · rw [if_pos hB, if_pos hB]
+  · rw [ite_eq_left hB, ite_eq_left hB]
     exact specBestcell_map σ hn hn' hg hlab hsl hsp hend
-  · rw [if_neg hB, if_neg hB, hn', hn]
+  · rw [ite_eq_right hB, ite_eq_right hB, hn', hn]
 
 /-- The specification's target-cell data transports position and size
 unchanged and the cell set to its image. -/
@@ -722,7 +722,7 @@ theorem specBestcell_mem {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
   have hcond : ((((cells ptn level ctx.n).filter
       fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) = false := by
     simpa using hlen
-  simp only [specBestcell, hcond, Bool.false_eq_true, if_false]
+  simp only [specBestcell, hcond, Bool.false_eq_true, ite_false]
   refine argmax_start_mem (by simpa using hlen) _ _ _ ?_
   intro j hj
   have h1 := List.mem_range'_1.mp hj
@@ -750,12 +750,12 @@ theorem specTargetcell_nontrivial {ctx : Ctx} {lab ptn : Array Nat}
     cases hmem
   rw [specTargetcell]
   rcases Decidable.em (level ≤ tcLevel) with hB | hB
-  · rw [if_pos hB]
+  · rw [ite_eq_left hB]
     have hm := specBestcell_mem (lab := lab) hfne
     rcases List.mem_map.mp hm with ⟨p, hpf, hp1⟩
     have hpc := List.mem_filter.mp hpf
     exact ⟨p, hpc.1, by simpa using hpc.2, hp1.symm⟩
-  · rw [if_neg hB]
+  · rw [ite_eq_right hB]
     rcases hf : (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2)
       with _ | q
     · rcases hex with ⟨p, hpm, hpne⟩
@@ -804,10 +804,10 @@ theorem specBestcellRow_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
     rw [joinTest_perm (hcp _ _ hic)]
     rcases hj : joinTest ctx lab' workset startArr[v1]!
         (cellEnd ptn level startArr[v1]!) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       exact specBestcellRow_perm hcp hend hstart hstart2 workset v2
         rest bucket
-    · simp only [if_true]
+    · simp only [ite_true]
       exact specBestcellRow_perm hcp hend hstart hstart2 workset v2
         rest _
 
@@ -839,7 +839,7 @@ theorem specBestcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
   dsimp only
   rcases hnnt : ((((cells ptn level ctx.n).filter
       fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hml : ∀ x ∈ ((cells ptn level ctx.n).filter
         fun (c1, c2) => c1 ≠ c2).map (·.1),
         x < ptn.size ∧ (x = 0 ∨ ptn[x - 1]! ≤ level) := by
@@ -882,7 +882,7 @@ theorem specBestcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
       · rw [getElem!_neg _ _ (by omega)]
         exact Or.inl rfl
     rw [specBestcellRows_perm hcp hend hstart hstart2]
-  · simp only [if_true]
+  · simp only [ite_true]
 
 /-- The specification's target cell depends on the labelling only
 through cell contents. -/
@@ -893,9 +893,9 @@ theorem specTargetcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
       specTargetcell ctx lab' ptn level tcLevel := by
   rw [specTargetcell, specTargetcell]
   rcases Decidable.em (level ≤ tcLevel) with hB | hB
-  · rw [if_pos hB, if_pos hB]
+  · rw [ite_eq_left hB, ite_eq_left hB]
     exact specBestcell_perm hcp hnn hend
-  · rw [if_neg hB, if_neg hB]
+  · rw [ite_eq_right hB, ite_eq_right hB]
 
 /-! # Leaves and children under cell equivalence -/
 
@@ -904,7 +904,7 @@ theorem cells_go_cover {ptn : Array Nat} {level nn : Nat} :
       ∃ p ∈ cells.go ptn level nn fuel c1, p.1 ≤ i ∧ i ≤ p.2
   | 0, c1, i, hc, hi, hf => absurd hf (by omega)
   | fuel + 1, c1, i, hc, hi, hf => by
-    rw [cells.go, if_pos (by omega)]
+    rw [cells.go, ite_eq_left (by omega)]
     rcases Nat.le_total i (cellEnd ptn level c1) with hle | hle2
     · exact ⟨(c1, cellEnd ptn level c1), by simp, hc, hle⟩
     · rcases Nat.eq_or_lt_of_le hle2 with heq | hgt
@@ -1034,8 +1034,8 @@ theorem cellEnd_go_unique {ptn : Array Nat} {level : Nat} :
   | fuel + 1, start, e, hse, hint, he, hf => by
     rw [cellEnd.go]
     rcases Nat.eq_or_lt_of_le hse with rfl | hlt
-    · rw [if_neg (by omega)]
-    · rw [if_pos (hint start (Nat.le_refl start) hlt)]
+    · rw [ite_eq_right (by omega)]
+    · rw [ite_eq_left (hint start (Nat.le_refl start) hlt)]
       exact cellEnd_go_unique fuel (start + 1) e (by omega)
         (fun i h1 h2 => hint i (by omega) h2) he (by omega)
 
@@ -1076,7 +1076,7 @@ theorem specNode_map (σ : Renaming n) {ctx ctx' : Ctx}
     generalize hR : refine ctx level lab ptn active numcells = R
     rw [hR] at hst
     rcases hdisc : discreteAt R.ptn level n with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       obtain ⟨p, hpm, hpne, hptc⟩ := specTargetcell_nontrivial
         (lab := R.lab) (tcLevel := tcLevel)
         (by
@@ -1146,7 +1146,7 @@ theorem specNode_map (σ : Renaming n) {ctx ctx' : Ctx}
           show (R.ptn.set! M.1 (level + 1))[(R.ptn.set! M.1
               (level + 1)).size - 1]! ≤ level + 1
           exact ptnEnd_set! (Nat.le_succ_of_le hst.ptnEnd))
-    · simp only [if_true]
+    · simp only [ite_true]
       rw [leafRows_map σ hn hn' hg hst.labOk hst.labSize]
 
 /-! # Cell-contents invariance of the spec tree -/
@@ -1195,7 +1195,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
     rcases hdisc : discreteAt
         (refine ctx level lab ptn active numcells).ptn level ctx.n
         with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       obtain ⟨p, hpm, hpne, hptc⟩ := specTargetcell_nontrivial
         (lab := (refine ctx level lab ptn active numcells).lab)
         (tcLevel := tcLevel)
@@ -1642,7 +1642,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
           ⟨(refine ctx level lab ptn active numcells).longcode ::
             (keysMax c' cs').codes, (keysMax c' cs').rows⟩
       rw [keysMax_cons_perm hp2]
-    · simp only [if_true]
+    · simp only [ite_true]
       rw [leafRows_congr (lab := (refine ctx level lab ptn active
           numcells).lab)
         (lab' := (refine ctx level lab' ptn active numcells).lab)

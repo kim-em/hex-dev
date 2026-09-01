@@ -89,19 +89,19 @@ theorem count_sortedColorSeq (G : Colored n k) {c : Nat}
       · have hb : (m == c) = false := by
           simp
           omega
-        rw [hb, if_pos h, if_pos (by omega : c < m + 1)]
+        rw [hb, ite_eq_left h, ite_eq_left (by omega : c < m + 1)]
         simp
       · have hb : (c == c) = true := by simp
-        rw [hb, if_neg (by omega : ¬c < c),
-          if_pos (by omega : c < c + 1)]
+        rw [hb, ite_eq_right (by omega : ¬c < c),
+          ite_eq_left (by omega : c < c + 1)]
         simp
       · have hb : (m == c) = false := by
           simp
           omega
-        rw [hb, if_neg (by omega : ¬c < m),
-          if_neg (by omega : ¬c < m + 1)]
+        rw [hb, ite_eq_right (by omega : ¬c < m),
+          ite_eq_right (by omega : ¬c < m + 1)]
         simp
-  rw [hgen k, if_pos hc]
+  rw [hgen k, ite_eq_left hc]
 
 /-! # The form determined by a key -/
 
@@ -123,7 +123,7 @@ colours list `G`'s classes contiguously. -/
       rw [hb]
       rcases h1 : rows[i.val]!.testBit j.val with _ | _ <;>
         rcases h2 : rows[j.val]!.testBit i.val with _ | _ <;>
-        simp [h1, h2])
+        simp [*])
     (fun i => by simp)
   coloring :=
     { cells := Hex.Vector.ofFn' fun i =>
@@ -174,7 +174,7 @@ theorem colorList_formOfKey (G : Colored n k) (rows : List Nat) :
   have hlen := length_sortedColorSeq G
   refine List.ext_getElem (by simp [hlen]) fun i h1 h2 => ?_
   rw [List.length_map, List.length_range] at h1
-  rw [List.getElem_map, List.getElem_range, keyOf, dif_pos h1]
+  rw [List.getElem_map, List.getElem_range, keyOf, dite_eq_left h1]
   show ((formOfKey G rows).coloring.cells[(⟨i, h1⟩ : Fin n)]).val =
     (sortedColorSeq G)[i]
   rw [formOfKey]
@@ -234,7 +234,7 @@ theorem checkCanon_form_eq_formOfKey {G : Colored n k}
         have hkv : ∀ (K : Colored n k) (j : Nat) (hj : j < n),
             keyOf K j = (K.coloring.cells[j]'(by omega)).val := by
           intro K j hj
-          rw [keyOf, dif_pos hj]
+          rw [keyOf, dite_eq_left hj]
           rfl
         rw [hkv _ i (by omega), hkv _ (i + 1) (by omega)]
         exact hs
@@ -261,7 +261,7 @@ theorem checkCanon_form_eq_formOfKey {G : Colored n k}
           have := i.isLt
           omega)).val := by
       intro K
-      rw [keyOf, dif_pos i.isLt]
+      rw [keyOf, dite_eq_left i.isLt]
       rfl
     rw [hkv, hkv] at h1
     exact Fin.eq_of_val_eq h1

@@ -87,7 +87,7 @@ meta def matchColoredIso? (t : Expr) : MetaM (Option (Expr × Expr)) := do
   let t ← whnfR t
   if t.isAppOf ``Colored.Iso then
     let args := t.getAppArgs
-    if h : args.size ≥ 2 then
+    if _h : args.size ≥ 2 then
       return some (args[args.size - 2]!, args[args.size - 1]!)
   return none
 
@@ -96,7 +96,7 @@ meta def matchColoredIsomorphic? (t : Expr) : MetaM (Option (Expr × Expr)) := d
   let t ← whnfR t
   if t.isAppOf ``Colored.Isomorphic then
     let args := t.getAppArgs
-    if h : args.size ≥ 2 then
+    if _h : args.size ≥ 2 then
       return some (args[args.size - 2]!, args[args.size - 1]!)
   return none
 
@@ -170,7 +170,7 @@ meta def mkSide (colored : Bool) (g : Expr) : MetaM Side := do
     synthInstance (← mkAppM ``Fintype #[V])
   catch _ =>
     throwError "graph_iso: failed to synthesize `Fintype {indentExpr V}`"
-  let instEq ← try
+  let _instEq ← try
     synthInstance (← mkAppM ``DecidableEq #[V])
   catch _ =>
     throwError "graph_iso: failed to synthesize `DecidableEq {indentExpr V}`"

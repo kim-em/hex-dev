@@ -38,14 +38,14 @@ theorem testBit_foldl_step (f : Nat → Bool) (step : Nat → Nat → Nat)
     rw [List.foldl_cons, testBit_foldl_step f step hstep rest,
       List.contains_cons, hstep]
     rcases Decidable.em (j = t) with rfl | hne
-    · rcases hPt : f j with _ | _
-      · simp [hPt]
-      · simp [hPt, testBit_insert]
+    · rcases f j with _ | _
+      · simp
+      · simp [testBit_insert]
     · have hjt : (j == t) = false := by simp [hne]
       have htj : (t == j) = false := by simp [Ne.symm hne]
-      rcases hPj : f j with _ | _
-      · simp [hPj, hjt, htj]
-      · simp [hPj, testBit_insert, hjt, htj]
+      rcases f j with _ | _
+      · simp [htj]
+      · simp [testBit_insert, hjt, htj]
 
 /-- The Boolean adjacency test underlying `rowOf`. -/
 @[expose] def adjBit (G : Colored n k) (i j : Nat) : Bool :=
@@ -56,22 +56,22 @@ theorem testBit_rowOf (G : Colored n k) (i t : Nat) :
   rw [rowOf, testBit_foldl_step (adjBit G i) _ (fun row j => by
     rw [adjBit]
     rcases Decidable.em (i < n ∧ j < n) with h | h
-    · rw [dif_pos h, dif_pos h]
-    · rw [dif_neg h, dif_neg h]
+    · rw [dite_eq_left h, dite_eq_left h]
+    · rw [dite_eq_right h, dite_eq_right h]
       simp)]
   simp
 
 theorem testBit_rowOf_lt (G : Colored n k) {i t : Nat} (hi : i < n)
     (ht : t < n) :
     (rowOf G i).testBit t = G.graph.adj ⟨i, hi⟩ ⟨t, ht⟩ := by
-  rw [testBit_rowOf, adjBit, dif_pos ⟨hi, ht⟩]
-  simp [List.contains_iff_mem, List.mem_range, ht]
+  rw [testBit_rowOf, adjBit, dite_eq_left ⟨hi, ht⟩]
+  simp [List.mem_range, ht]
 
 theorem rowOf_lt (G : Colored n k) (i : Nat) : rowOf G i < 2 ^ n := by
   refine lt_two_pow_of_bits fun t ht => ?_
   rw [testBit_rowOf]
   have : (List.range n).contains t = false := by
-    simp [List.contains_iff_mem, List.mem_range]
+    simp [List.mem_range]
     omega
   rw [this]
   simp
@@ -95,25 +95,25 @@ identity above. -/
   inj a b hab := by
     rcases Decidable.em (a < n) with ha | ha <;>
       rcases Decidable.em (b < n) with hb | hb
-    · rw [dif_pos ha, dif_pos hb] at hab
+    · rw [dite_eq_left ha, dite_eq_left hb] at hab
       have := p.get_inj (Fin.eq_of_val_eq hab)
       exact congrArg Fin.val this
-    · rw [dif_pos ha, dif_neg hb] at hab
+    · rw [dite_eq_left ha, dite_eq_right hb] at hab
       exact absurd ((p.get ⟨a, ha⟩).isLt) (by omega)
-    · rw [dif_neg ha, dif_pos hb] at hab
+    · rw [dite_eq_right ha, dite_eq_left hb] at hab
       exact absurd ((p.get ⟨b, hb⟩).isLt) (by omega)
-    · rw [dif_neg ha, dif_neg hb] at hab
+    · rw [dite_eq_right ha, dite_eq_right hb] at hab
       exact hab
   maps v := by
     rcases Decidable.em (v < n) with h | h
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       exact ⟨fun _ => (p.get ⟨v, h⟩).isLt, fun _ => h⟩
-    · rw [dif_neg h]
+    · rw [dite_eq_right h]
 
 theorem renamingOf_lt (p : Perm n) {v : Nat} (hv : v < n) :
     renamingOf p v = (p.get ⟨v, hv⟩).val := by
   show (if h : v < n then (p.get ⟨v, h⟩).val else v) = _
-  rw [dif_pos hv]
+  rw [dite_eq_left hv]
 
 theorem rowsMap_of_isIso {G H : Colored n k} {p : Perm n}
     (h : IsIso G H p) :
@@ -163,13 +163,13 @@ theorem mem_colorClass {G : Colored n k} {c v : Nat} :
   constructor
   · rintro ⟨hv, hcond⟩
     rcases Decidable.em (v < n ∧ c < k) with h | h
-    · rw [dif_pos h] at hcond
+    · rw [dite_eq_left h] at hcond
       exact ⟨h.1, h.2, by simpa using hcond⟩
-    · rw [dif_neg h] at hcond
+    · rw [dite_eq_right h] at hcond
       cases hcond
   · rintro ⟨hv, hc, he⟩
     refine ⟨hv, ?_⟩
-    rw [dif_pos ⟨hv, hc⟩]
+    rw [dite_eq_left ⟨hv, hc⟩]
     exact beq_iff_eq.mpr he
 
 theorem nodup_colorClass (G : Colored n k) (c : Nat) :
@@ -263,7 +263,7 @@ theorem colorClass_eq_key {G : Colored n k} {c : Nat} (hc : c < k) :
   rw [colorClass]
   refine List.filter_congr fun v hv => ?_
   have hvn := List.mem_range.mp hv
-  rw [dif_pos ⟨hvn, hc⟩, keyOf, dif_pos hvn]
+  rw [dite_eq_left ⟨hvn, hc⟩, keyOf, dite_eq_left hvn]
   rcases Decidable.em ((G.coloring.cells[(⟨v, hvn⟩ : Fin n)]).val = c)
     with he | hne
   · rw [beq_iff_eq.mpr (Fin.eq_of_val_eq he), beq_iff_eq.mpr he]
@@ -288,7 +288,7 @@ theorem flatten_classes_perm (G : Colored n k) :
   rw [hmap]
   refine flatMap_filter_key_perm (keyOf G) k (List.range n)
     fun v hv => ?_
-  rw [keyOf, dif_pos (List.mem_range.mp hv)]
+  rw [keyOf, dite_eq_left (List.mem_range.mp hv)]
   exact (G.coloring.cells[(⟨v, List.mem_range.mp hv⟩ : Fin n)]).isLt
 
 /-! # The initial partition -/
@@ -335,7 +335,7 @@ theorem foldl_ends_congr :
     · exact foldl_ends_congr _ _ _ h.2
     · simp at h
     · simp at h
-    · simp only [List.isEmpty_cons, Bool.false_eq_true, if_false]
+    · simp only [List.isEmpty_cons, Bool.false_eq_true, ite_false]
       rw [h.1]
       exact foldl_ends_congr _ _ _ h.2
 
@@ -390,7 +390,7 @@ theorem foldl_ends_eq :
   | cl :: cls, acc, s => by
     rw [List.foldl_cons, endsOf, totalOf_cons]
     rcases hcl : cl.isEmpty with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       rw [foldl_ends_eq cls]
       simp [List.reverse_cons, List.append_assoc, Nat.add_assoc]
     · have hnil : cl = [] := by
@@ -398,7 +398,7 @@ theorem foldl_ends_eq :
         · rfl
         · simp at hcl
       subst hnil
-      simp only [if_true]
+      simp only [ite_true]
       rw [foldl_ends_eq cls]
       simp
 
@@ -427,7 +427,7 @@ theorem endsOf_ge :
     rw [endsOf] at h
     rcases hcl : cl.isEmpty with _ | _
     · rw [hcl] at h
-      simp only [Bool.false_eq_true, if_false] at h
+      simp only [Bool.false_eq_true, ite_false] at h
       rcases List.mem_cons.mp h with rfl | h
       · have : cl.length ≥ 1 := by
           rcases cl with _ | _
@@ -437,7 +437,7 @@ theorem endsOf_ge :
       · have := endsOf_ge cls (s + cl.length) e h
         omega
     · rw [hcl] at h
-      simp only [if_true] at h
+      simp only [ite_true] at h
       exact endsOf_ge cls s e h
 
 theorem endsOf_lt :
@@ -449,7 +449,7 @@ theorem endsOf_lt :
     rw [totalOf_cons]
     rcases hcl : cl.isEmpty with _ | _
     · rw [hcl] at h
-      simp only [Bool.false_eq_true, if_false] at h
+      simp only [Bool.false_eq_true, ite_false] at h
       rcases List.mem_cons.mp h with rfl | h
       · have : cl.length ≥ 1 := by
           rcases cl with _ | _
@@ -459,7 +459,7 @@ theorem endsOf_lt :
       · have := endsOf_lt cls (s + cl.length) e h
         omega
     · rw [hcl] at h
-      simp only [if_true] at h
+      simp only [ite_true] at h
       have := endsOf_lt cls s e h
       omega
 
@@ -471,7 +471,7 @@ theorem endsOf_last_mem :
     rw [endsOf]
     rw [totalOf_cons] at h ⊢
     rcases hcl : cl.isEmpty with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       rcases Nat.eq_zero_or_pos (totalOf cls) with hz | hpos
       · refine List.mem_cons.mpr (Or.inl ?_)
         omega
@@ -486,7 +486,7 @@ theorem endsOf_last_mem :
         · rfl
         · simp at hcl
       subst hnil
-      simp only [if_true]
+      simp only [ite_true]
       have := endsOf_last_mem cls s (by simpa using h)
       simpa using this
 
@@ -511,17 +511,17 @@ theorem getElem!_foldl_set0 :
   | e :: rest, a, q => by
     rw [List.foldl_cons, getElem!_foldl_set0 rest, Array.size_set!]
     rcases Decidable.em (q ∈ rest ∧ q < a.size) with h1 | h1
-    · rw [if_pos h1, if_pos ⟨List.mem_cons.mpr (Or.inr h1.1), h1.2⟩]
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1, ite_eq_left ⟨List.mem_cons.mpr (Or.inr h1.1), h1.2⟩]
+    · rw [ite_eq_right h1]
       rcases Decidable.em (q = e) with rfl | hne
       · rcases Nat.lt_or_ge q a.size with hq | hq
         · rw [Array.getElem!_set!_self _ _ _ hq,
-            if_pos ⟨List.mem_cons.mpr (Or.inl rfl), hq⟩]
-        · rw [if_neg (by omega),
+            ite_eq_left ⟨List.mem_cons.mpr (Or.inl rfl), hq⟩]
+        · rw [ite_eq_right (by omega),
             getElem!_neg _ _ (by rw [Array.size_set!]; omega),
             getElem!_neg _ _ (by omega)]
       · rw [Array.getElem!_set!_ne _ _ _ _ (fun he => hne he.symm)]
-        rw [if_neg (fun hc => h1 ⟨?_, hc.2⟩)]
+        rw [ite_eq_right (fun hc => h1 ⟨?_, hc.2⟩)]
         rcases List.mem_cons.mp hc.1 with he | hm
         · exact absurd he hne
         · exact hm
@@ -531,12 +531,12 @@ theorem getElem!_initPtn (n inf : Nat) (ends : List Nat) (q : Nat) :
       if q ∈ ends ∧ q < n then 0 else if q < n then inf else 0 := by
   rw [initPtn, getElem!_foldl_set0, Array.size_replicate]
   rcases Decidable.em (q ∈ ends ∧ q < n) with h | h
-  · rw [if_pos h, if_pos h]
-  · rw [if_neg h, if_neg h]
+  · rw [ite_eq_left h, ite_eq_left h]
+  · rw [ite_eq_right h, ite_eq_right h]
     rcases Nat.lt_or_ge q n with hq | hq
-    · rw [if_pos hq, getElem!_pos _ _ (by simpa using hq),
+    · rw [ite_eq_left hq, getElem!_pos _ _ (by simpa using hq),
         Array.getElem_replicate]
-    · rw [if_neg (by omega), getElem!_neg _ _ (by simpa using hq)]
+    · rw [ite_eq_right (by omega), getElem!_neg _ _ (by simpa using hq)]
       rfl
 
 theorem elem_foldl_active :
@@ -586,7 +586,7 @@ theorem endsOf_pairwise :
   | cl :: cls, s => by
     rw [endsOf]
     rcases hcl : cl.isEmpty with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       refine List.pairwise_cons.mpr ⟨fun e he => ?_,
         endsOf_pairwise cls (s + cl.length)⟩
       have := endsOf_ge cls (s + cl.length) e he
@@ -595,7 +595,7 @@ theorem endsOf_pairwise :
         · simp at hcl
         · simp
       omega
-    · simp only [if_true]
+    · simp only [ite_true]
       exact endsOf_pairwise cls s
 
 /-! # Aligning a partition cell with a colour class -/
@@ -617,7 +617,7 @@ theorem cell_align :
         · simp at hcl
         · simp
       rw [endsOf, hcl] at hend hstart hint
-      simp only [Bool.false_eq_true, if_false] at hend hstart hint
+      simp only [Bool.false_eq_true, ite_false] at hend hstart hint
       rcases List.mem_cons.mp hend with hehead | hetail
       · -- the cell ends at the head class's end
         have ha : a = s := by
@@ -660,7 +660,7 @@ theorem cell_align :
         · simp at hcl
       subst hnil
       rw [endsOf] at hend hstart hint
-      simp only [List.isEmpty_nil, if_true] at hend hstart hint
+      simp only [List.isEmpty_nil, ite_true] at hend hstart hint
       obtain ⟨pre, cl', suf, hsplit, hne, hoff, hl⟩ :=
         cell_align cls s a len hlen hstart hend hint
       refine ⟨[] :: pre, cl', suf, by rw [hsplit]; rfl, hne, ?_, hl⟩
@@ -745,7 +745,7 @@ theorem initial_cellsPerm {G H : Colored n k} {p : Perm n}
             (by omega)
           rw [htotG] at this
           simpa using this
-        rw [if_pos ⟨hmem, by omega⟩] at hi
+        rw [ite_eq_left ⟨hmem, by omega⟩] at hi
         omega
     have hend_mem : (a + len - 1) ∈ endsOf
         ((List.range k).map (colorClass G)) 0 := by
@@ -754,7 +754,7 @@ theorem initial_cellsPerm {G H : Colored n k} {p : Perm n}
           a + len - 1 < n) with hc | hc
       · rw [← hEnds]
         exact hc.1
-      · rw [if_neg hc, if_pos (by omega : a + len - 1 < n)] at hbend
+      · rw [ite_eq_right hc, ite_eq_left (by omega : a + len - 1 < n)] at hbend
         omega
     have hstart' : a = 0 ∨ (1 ≤ a ∧ (a - 1) ∈ endsOf
         ((List.range k).map (colorClass G)) 0) := by
@@ -769,14 +769,14 @@ theorem initial_cellsPerm {G H : Colored n k} {p : Perm n}
               a - 1 < n) with hc | hc
           · rw [← hEnds]
             exact hc.1
-          · rw [if_neg hc, if_pos (by omega : a - 1 < n)] at hval
+          · rw [ite_eq_right hc, ite_eq_left (by omega : a - 1 < n)] at hval
             omega
     have hint' : ∀ q, a ≤ q → q < a + len - 1 →
         q ∉ endsOf ((List.range k).map (colorClass G)) 0 := by
       intro q hq1 hq2 hq3
       have hi := hbint q hq1 (by omega)
       rw [getElem!_initPtn,
-        if_pos ⟨hEnds ▸ hq3, by omega⟩] at hi
+        ite_eq_left ⟨hEnds ▸ hq3, by omega⟩] at hi
       omega
     obtain ⟨pre, cl, suf, hsplit, hclne, hoff, hl⟩ :=
       cell_align ((List.range k).map (colorClass G)) 0 a len
@@ -855,7 +855,7 @@ theorem initial_cellsPerm {G H : Colored n k} {p : Perm n}
       · omega
       · exfalso
         have hi := hbint a (Nat.le_refl a) (by omega)
-        rw [getElem!_initPtn, if_neg (by omega), if_neg (by omega)]
+        rw [getElem!_initPtn, ite_eq_right (by omega), ite_eq_right (by omega)]
           at hi
         omega
     subst hlen1
@@ -893,7 +893,7 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
   · have hcond : ¬((n == 0) = true) := by
       simp
       omega
-    rw [canonSpec, canonSpec, if_neg hcond, if_neg hcond]
+    rw [canonSpec, canonSpec, ite_eq_right hcond, ite_eq_right hcond]
     have hsizeH := size_initialPartition H
     have hlabH := labOk_initialPartition H
     have hsizeG := size_initialPartition G
@@ -918,7 +918,7 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
       simpa using this
     have hend : (initPtn n (n + 2) (initialPartition G).2)[
         (initPtn n (n + 2) (initialPartition G).2).size - 1]! ≤ 1 := by
-      rw [hptnsize, getElem!_initPtn, if_pos ⟨hmemlast, by omega⟩]
+      rw [hptnsize, getElem!_initPtn, ite_eq_left ⟨hmemlast, by omega⟩]
       omega
     have hstarts : ∀ v : Nat,
         elem (initActive (initialPartition G).2) v = true →
@@ -934,7 +934,7 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
       · rcases h1 with ⟨e, he, rfl⟩
         right
         rw [getElem!_initPtn,
-          if_pos ⟨by simpa using he, by
+          ite_eq_left ⟨by simpa using he, by
             have := hboundEnds e he
             omega⟩]
         omega
@@ -945,13 +945,13 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
       rw [getElem!_initPtn]
       rcases Decidable.em (q ∈ (initialPartition G).2 ∧ q < n)
         with hc | hc
-      · rw [if_pos hc]
+      · rw [ite_eq_left hc]
         exact Or.inl (by omega)
-      · rw [if_neg hc]
+      · rw [ite_eq_right hc]
         rcases Nat.lt_or_ge q n with hq | hq
-        · rw [if_pos hq]
+        · rw [ite_eq_left hq]
           exact Or.inr rfl
-        · rw [if_neg (by omega)]
+        · rw [ite_eq_right (by omega)]
           exact Or.inl (by omega)
     have h1 := specNode_perm (ctx := { n := n, g := rowsOf H }) rfl
       100 n 1 (initialPartition H).1

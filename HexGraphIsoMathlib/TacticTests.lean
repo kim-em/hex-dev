@@ -25,9 +25,9 @@ open Hex.GraphIso.Mathlib SimpleGraph
 
 /-! # Cycles and paths on `Fin 5` through transparent constructors -/
 
-@[expose] def c5a : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j = i + 1
-@[expose] def c5b : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j = i + 2
-@[expose] def p5 : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j.val = i.val + 1
+def c5a : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j = i + 1
+def c5b : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j = i + 2
+def p5 : SimpleGraph (Fin 5) := SimpleGraph.fromRel fun i j => j.val = i.val + 1
 
 instance : DecidableRel c5a.Adj := fun _ _ =>
   decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
@@ -47,7 +47,7 @@ example : c5a ≃g c5b := by
 
 /-- The generalized Petersen presentation `G(5, 2)`: outer pentagon,
 inner star, spokes. -/
-@[expose] def petersenDrawing : SimpleGraph (Fin 10) where
+def petersenDrawing : SimpleGraph (Fin 10) where
   Adj i j :=
     (i.val < 5 ∧ j.val < 5 ∧
       (j.val = (i.val + 1) % 5 ∨ i.val = (j.val + 1) % 5)) ∨
@@ -62,7 +62,7 @@ instance : DecidableRel petersenDrawing.Adj := fun _ _ =>
 
 /-- The Kneser presentation `K(5, 2)`: two-element subsets of `Fin 5`,
 joined when disjoint. -/
-@[expose] def kneser52 : SimpleGraph {s : Finset (Fin 5) // s.card = 2} where
+def kneser52 : SimpleGraph {s : Finset (Fin 5) // s.card = 2} where
   Adj s t := Disjoint s.val t.val ∧ s ≠ t
   symm := ⟨by intro s t h; exact ⟨h.1.symm, h.2.symm⟩⟩
   loopless := ⟨by intro s h; exact h.2 rfl⟩
@@ -72,7 +72,7 @@ instance : DecidableRel kneser52.Adj := fun _ _ =>
 
 /-- The pentagonal prism: cubic on ten vertices like the Petersen graph,
 so degree refinement alone cannot separate them. -/
-@[expose] def pentagonalPrism : SimpleGraph (Fin 10) where
+def pentagonalPrism : SimpleGraph (Fin 10) where
   Adj i j :=
     (i.val < 5 ∧ j.val < 5 ∧
       (j.val = (i.val + 1) % 5 ∨ i.val = (j.val + 1) % 5)) ∨
@@ -98,7 +98,7 @@ example : ¬ Nonempty (c5a ≃g petersenDrawing) := by graph_iso
 
 /-! # Empty-graph goal shapes -/
 
-@[expose] def emptyG : SimpleGraph (Fin 0) := ⊥
+def emptyG : SimpleGraph (Fin 0) := ⊥
 instance : DecidableRel emptyG.Adj := fun v _ => v.elim0
 
 example : emptyG ≃g emptyG := by graph_iso
@@ -112,31 +112,31 @@ Two edge-marked and one nonedge-marked two-colourings of the six-cycle:
 `graph_iso` proves the edge-marked pair isomorphic and refutes the
 nonedge-marked colouring against either. -/
 
-@[expose] def c6 : SimpleGraph (Fin 6) :=
+def c6 : SimpleGraph (Fin 6) :=
   SimpleGraph.fromRel fun i j => j = i + 1
 
 instance : DecidableRel c6.Adj := fun _ _ =>
   decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
 
-@[expose] def mark (f : Fin 6 → Fin 2)
+def mark (f : Fin 6 → Fin 2)
     (h : Function.Surjective f) : Colored (Fin 6) 2 :=
   { graph := c6, color := f, onto := h }
 
-@[expose] def edgeMarkA : Colored (Fin 6) 2 :=
+def edgeMarkA : Colored (Fin 6) 2 :=
   mark (fun i => if i.val ≤ 1 then 0 else 1)
     (fun c => by
       match c with
       | 0 => exact ⟨0, by decide⟩
       | 1 => exact ⟨3, by decide⟩)
 
-@[expose] def edgeMarkB : Colored (Fin 6) 2 :=
+def edgeMarkB : Colored (Fin 6) 2 :=
   mark (fun i => if 3 ≤ i.val ∧ i.val ≤ 4 then 0 else 1)
     (fun c => by
       match c with
       | 0 => exact ⟨3, by decide⟩
       | 1 => exact ⟨0, by decide⟩)
 
-@[expose] def nonedgeMark : Colored (Fin 6) 2 :=
+def nonedgeMark : Colored (Fin 6) 2 :=
   mark (fun i => if i.val = 0 ∨ i.val = 3 then 0 else 1)
     (fun c => by
       match c with

@@ -84,7 +84,7 @@ theorem ext_adjMatrix {G H : Graph n} (h : G.adjMatrix = H.adjMatrix) : G = H :=
 theorem eq_iff_adj {G H : Graph n} : G = H ↔ ∀ i j, G.adj i j = H.adj i j :=
   ⟨fun h _ _ => h ▸ rfl, ext⟩
 
-@[expose] instance : DecidableEq (Graph n) := fun G H =>
+instance : DecidableEq (Graph n) := fun G H =>
   if h : G.adjMatrix.data = H.adjMatrix.data then
     .isTrue (ext_adjMatrix (Matrix.ext_data h))
   else
@@ -109,7 +109,7 @@ and removing loops: `i` and `j` are adjacent when `i ≠ j` and the
 relation holds in either direction. -/
 @[expose] def ofRel (f : Fin n → Fin n → Bool) : Graph n :=
   ofAdj (fun i j => i != j && (f i j || f j i))
-    (fun i j => by simp [bne_comm, Bool.or_comm, Bool.and_comm])
+    (fun i j => by simp [bne_comm, Bool.or_comm])
     (fun i => by simp)
 
 @[simp] theorem adj_ofRel (f : Fin n → Fin n → Bool) (i j : Fin n) :

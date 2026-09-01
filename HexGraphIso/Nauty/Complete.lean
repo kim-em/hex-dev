@@ -77,9 +77,9 @@ theorem certifyNode_not_autom {ctx : Ctx} (tcLevel : Nat) :
       · rcases hdisc : discreteAt (refine ctx level lab ptn active
             numcells).ptn level ctx.n with _ | _ <;>
           rw [hdisc] at h
-        · simp only [Bool.false_eq_true, if_false] at h
+        · simp only [Bool.false_eq_true, ite_false] at h
           exact CertNode.noConfusion h
-        · simp only [if_true] at h
+        · simp only [ite_true] at h
           exact CertNode.noConfusion h
       · exact CertNode.noConfusion h
 
@@ -176,7 +176,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
               ((List.range m).map fun j =>
                 childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).rows⟩ := by
           rw [specNode]
-          simp only [hdisc, Bool.false_eq_true, if_false]
+          simp only [hdisc, Bool.false_eq_true, ite_false]
           rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
             List.map_map]
           rfl
@@ -219,9 +219,9 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
           (fun i _ hi2 => hchildle i (by omega))
         refine ⟨a', ?_, ?_⟩
         · simp only [certifyNode, checkNode, hcmp, hdisc,
-            Bool.false_eq_true, if_false]
+            Bool.false_eq_true, ite_false]
           rw [hM1, hM22, hm]
-          rw [if_pos (by rw [List.length_map, List.length_range])]
+          rw [ite_eq_left (by rw [List.length_map, List.length_range])]
           simp only [Nat.zero_add] at ha'
           exact ha'
         · rw [hiff, hspec, ← hlc, key_cons_eq_iff, key_eta]
@@ -252,12 +252,12 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
             active numcells =
             ⟨[(refine ctx level lab ptn active numcells).longcode, codeSentinel],
               leafRows ctx (refine ctx level lab ptn active numcells).lab⟩ := by
-          rw [specNode, if_pos hdisc]
+          rw [specNode, ite_eq_left hdisc]
         rcases hkc : keyCmp ⟨[(refine ctx level lab ptn active numcells).longcode, codeSentinel],
             leafRows ctx (refine ctx level lab ptn active numcells).lab⟩ ⟨bc :: brest, brows⟩
             with _ | _ | _
         · refine ⟨false, ?_, ?_⟩
-          · simp only [certifyNode, checkNode, hcmp, hdisc, if_true,
+          · simp only [certifyNode, checkNode, hcmp, hdisc, ite_true,
               hkc]
           · refine ⟨fun hx => Bool.noConfusion hx, fun he => ?_⟩
             exfalso
@@ -265,7 +265,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
             rw [he, keyCmp_self] at hkc
             exact Ordering.noConfusion hkc
         · refine ⟨true, ?_, ?_⟩
-          · simp only [certifyNode, checkNode, hcmp, hdisc, if_true,
+          · simp only [certifyNode, checkNode, hcmp, hdisc, ite_true,
               hkc]
           · refine ⟨fun _ => ?_, fun _ => rfl⟩
             rw [hkey]
@@ -433,11 +433,11 @@ theorem checkKey_complete (G : Colored n k) :
       (canonSpecKey G) = true := by
   rw [checkKey]
   rcases Nat.eq_zero_or_pos n with rfl | hn0
-  · rw [if_pos (by rfl)]
+  · rw [ite_eq_left (by rfl)]
     rw [show canonSpecKey G = ⟨[], []⟩ from by
-      rw [canonSpecKey, canonSpec, if_pos (by rfl)]]
+      rw [canonSpecKey, canonSpec, ite_eq_left (by rfl)]]
     rfl
-  · rw [if_neg (by simp; omega)]
+  · rw [ite_eq_right (by simp; omega)]
     have hok := initial_nodeOk G hn0
     have hbc : 1 ≤ bcount (initPtn n (n + 2)
         (initialPartition G).2) 1 n := by
@@ -451,7 +451,7 @@ theorem checkKey_complete (G : Colored n k) :
         (initPtn n (n + 2) (initialPartition G).2)
         (initActive (initialPartition G).2)
         (initialPartition G).2.length := by
-      rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+      rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
     obtain ⟨rest, hrest⟩ : ∃ rest, (canonSpecKey G).codes =
         (refine { n := n, g := rowsOf G } 1 (initialPartition G).1
         (initPtn n (n + 2) (initialPartition G).2)
@@ -492,7 +492,7 @@ theorem checkKey_complete (G : Colored n k) :
 
 /-- All orderings of a list of vertices. -/
 @[expose] def permsOf (l : List Nat) : List (List Nat) :=
-  if h : l = [] then
+  if _h : l = [] then
     [[]]
   else
     l.attach.flatMap fun x =>
@@ -502,7 +502,7 @@ theorem checkKey_complete (G : Colored n k) :
     have := List.length_erase_of_mem x.property
     have hne : 0 < l.length := by
       rcases l with _ | _
-      · exact absurd rfl h
+      · exact absurd rfl _h
       · simp
     omega
 
@@ -522,7 +522,7 @@ theorem mem_permsOf : ∀ {cand l : List Nat}, cand.Perm l →
       intro he
       subst he
       cases hx
-    rw [permsOf, dif_neg hne]
+    rw [permsOf, dite_eq_right hne]
     refine List.mem_flatMap.mpr ⟨⟨x, hx⟩, by simp, ?_⟩
     exact List.mem_map.mpr ⟨rest, mem_permsOf hrest, rfl⟩
 
@@ -542,7 +542,7 @@ candidates. -/
 
 /-- `checkCanon` succeeds on the achieved leaf's labelling. -/
 theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
-    (hn0 : 0 < n) (hsz : llab.size = n)
+    (_hn0 : 0 < n) (hsz : llab.size = n)
     (hperm : llab.toList.Perm (List.range n))
     (hrows : (canonSpecKey G).rows =
       leafRows { n := n, g := rowsOf G } llab)
@@ -561,7 +561,7 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
     have hm : v ∈ llab.toList := by simpa using hv
     exact List.mem_range.mp (hperm.mem_iff.mp hm)
   rw [checkCanon]
-  rw [dif_pos (⟨hsz, hbound⟩ : llab.size = n ∧ ∀ v ∈ llab, v < n)]
+  rw [dite_eq_left (⟨hsz, hbound⟩ : llab.size = n ∧ ∀ v ∈ llab, v < n)]
   have hmapval : ((llab.attach.map fun v =>
       (⟨v.val, hbound v.val v.property⟩ : Fin n)).toList.map
       Fin.val) = llab.toList := by
@@ -594,7 +594,7 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
         (⟨v.val, hbound v.val v.property⟩ : Fin n), by
           simp [hsz]⟩ : Vector (Fin n) n) = some l := by
     rw [Label.ofVector?, Perm.ofVector?]
-    rw [dif_pos ⟨hnodupv, hcompl⟩]
+    rw [dite_eq_left ⟨hnodupv, hcompl⟩]
     exact ⟨_, rfl⟩
   rw [hl]
   have hcond : (checkKey G
@@ -621,11 +621,11 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
       obtain ⟨hv2, hc2⟩ := hcols (i + 1) (by omega)
       have hl1 : labColor G llab i =
           (sortedColorSeq G)[i]! := by
-        rw [labColor, dif_pos ⟨by omega, hv1⟩]
+        rw [labColor, dite_eq_left ⟨by omega, hv1⟩]
         exact hc1
       have hl2 : labColor G llab (i + 1) =
           (sortedColorSeq G)[i + 1]! := by
-        rw [labColor, dif_pos ⟨by omega, hv2⟩]
+        rw [labColor, dite_eq_left ⟨by omega, hv2⟩]
         exact hc2
       rw [hl1, hl2]
       -- sortedness of the colour sequence at adjacent positions
@@ -635,7 +635,7 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
       have := hp i (i + 1) (by omega) (by omega) (by omega)
       rw [getElem!_pos _ _ (by omega), getElem!_pos _ _ (by omega)]
       exact this
-  simp only [hcond, if_true]
+  simp only [hcond, ite_true]
   rfl
 
 /-- The exhaustive fallback finds a canonical result whenever the
@@ -660,7 +660,7 @@ theorem bruteCanon?_isSome (G : Colored n k) (hn0 : 0 < n) :
     (by show n + 1 ≤ 1 + n; omega) hbc
   have hkrows : (canonSpecKey G).rows =
       leafRows { n := n, g := rowsOf G } llab := by
-    rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+    rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
     exact hlrows
   have hperm := achieved_perm_range hlsz hn0 hlcp
   refine ⟨llab.toList, ?_, ?_⟩

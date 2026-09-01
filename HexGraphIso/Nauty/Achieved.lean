@@ -37,11 +37,11 @@ theorem cellEnd_go_le {ptn : Array Nat} {level j : Nat}
   | fuel + 1, i, hij, hf => by
     rw [cellEnd.go]
     rcases Decidable.em (ptn[i]! > level) with h | h
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
       rcases Nat.eq_or_lt_of_le hij with rfl | hlt
       · omega
       · exact cellEnd_go_le hj fuel (i + 1) (by omega) (by omega)
-    · rw [if_neg h]
+    · rw [ite_eq_right h]
       exact hij
 
 theorem cellEnd_le {ptn : Array Nat} {level i j : Nat} (hij : i ≤ j)
@@ -215,11 +215,11 @@ theorem RefInv.step {level : Nat} {lab0 ptn0 : Array Nat}
 /-- A cell of a boundary-richer partition sits inside a cell of the
 original. -/
 theorem subcell_of_grow {ptn0 ptnP : Array Nat} {level A lenA : Nat}
-    (hszp : ptn0.size = ptnP.size)
+    (_hszp : ptn0.size = ptnP.size)
     (hcellP : IsCell ptnP level A lenA)
     (hend0 : ptn0[ptn0.size - 1]! ≤ level)
     (hb : ∀ q : Nat, ptn0[q]! ≤ level → ptnP[q]! ≤ level)
-    (hA0 : A < ptn0.size) (hA : A + lenA ≤ ptn0.size) :
+    (hA0 : A < ptn0.size) (_hA : A + lenA ≤ ptn0.size) :
     ∃ c lenC, IsCell ptn0 level c lenC ∧ c ≤ A ∧
       A + lenA ≤ c + lenC := by
   obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover (ptn := ptn0)
@@ -381,8 +381,8 @@ theorem mem_countValues {counts : List Nat} {v : Nat}
     (counts.headD 0), List.mem_range.mpr (by omega), by omega⟩
 
 theorem segmentOf_perm (ctx : Ctx) (lab : Array Nat)
-    (workset cell1 cell2 : Nat) (hsz : cell2 < lab.size)
-    (h12 : cell1 ≤ cell2) :
+    (workset cell1 cell2 : Nat) (_hsz : cell2 < lab.size)
+    (_h12 : cell1 ≤ cell2) :
     (segmentOf lab cell1 (countsOf ctx lab workset cell1 cell2)
       (countValues (countsOf ctx lab workset cell1 cell2))).Perm
       (segN lab cell1 (cell2 + 1 - cell1)) := by
@@ -671,8 +671,8 @@ theorem countP_succ_le {p p' : Nat → Bool} :
 
 /-- Individualizing one vertex of a nontrivial cell adds a boundary. -/
 theorem bcount_breakout {ptn : Array Nat} {level tc nn : Nat}
-    (hvals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2)
-    (hlev : level + 1 < n + 2)
+    (_hvals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2)
+    (_hlev : level + 1 < n + 2)
     (htc : ptn[tc]! > level) (htcn : tc < nn) (htcs : tc < ptn.size) :
     bcount ptn level nn + 1 ≤
       bcount (ptn.set! tc (level + 1)) (level + 1) nn := by
@@ -771,7 +771,7 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
           (refine ctx level lab ptn active numcells).lab
           (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).rows⟩ := by
         rw [specNode]
-        simp only [hdisc, Bool.false_eq_true, if_false]
+        simp only [hdisc, Bool.false_eq_true, ite_false]
         rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
           List.map_map]
       -- the maximum is one of the children
@@ -935,7 +935,7 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
         exact hlrows
     · -- discrete: this node is the leaf
       refine ⟨(refine ctx level lab ptn active numcells).lab, hstR.labSize, hRinv.perm, ?_⟩
-      rw [specNode, if_pos hdisc]
+      rw [specNode, ite_eq_left hdisc]
 /-! # Positions, classes, and colours of the achieved leaf -/
 
 theorem segN_eq_toList {arr : Array Nat} {m : Nat}
@@ -960,7 +960,7 @@ theorem endsOf_append :
   | cl :: l1, l2, s => by
     rw [List.cons_append, endsOf, endsOf, totalOf_cons]
     rcases hcl : cl.isEmpty with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       rw [show s + (cl.length + totalOf l1) = s + cl.length +
         totalOf l1 from by omega,
         endsOf_append l1 l2 (s + cl.length), List.cons_append]
@@ -969,7 +969,7 @@ theorem endsOf_append :
         · rfl
         · simp at hcl
       subst hnil
-      simp only [if_true]
+      simp only [ite_true]
       rw [endsOf_append l1 l2 s]
       congr 2
       simp
@@ -1085,7 +1085,7 @@ theorem interval_isCell (G : Colored n k) {pre suf : List (List Nat)}
       · simp at hne
       · simp
     rw [hcl]
-    simp only [Bool.false_eq_true, if_false]
+    simp only [Bool.false_eq_true, ite_false]
     rw [show (0 : Nat) + totalOf pre = totalOf pre from by omega]
   refine ⟨hne, ?_, ?_, ?_⟩
   · rcases Nat.eq_zero_or_pos (totalOf pre) with h0 | hpos
@@ -1096,7 +1096,7 @@ theorem interval_isCell (G : Colored n k) {pre suf : List (List Nat)}
         refine List.mem_append.mpr (Or.inl ?_)
         have := endsOf_last_mem pre 0 hpos
         simpa using this
-      rw [getElem!_initPtn, if_pos ⟨hmem, by omega⟩]
+      rw [getElem!_initPtn, ite_eq_left ⟨hmem, by omega⟩]
       omega
   · intro q hq1 hq2
     have hqn : q < n := by omega
@@ -1110,15 +1110,15 @@ theorem interval_isCell (G : Colored n k) {pre suf : List (List Nat)}
         · omega
         · have := endsOf_ge suf _ q hm
           omega
-    rw [getElem!_initPtn, if_neg (fun hc => hnotmem hc.1),
-      if_pos hqn]
+    rw [getElem!_initPtn, ite_eq_right (fun hc => hnotmem hc.1),
+      ite_eq_left hqn]
     omega
   · have hmem : totalOf pre + cl.length - 1 ∈
         (initialPartition G).2 := by
       rw [hEnds]
       exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr
         (Or.inl rfl)))
-    rw [getElem!_initPtn, if_pos ⟨hmem, by omega⟩]
+    rw [getElem!_initPtn, ite_eq_left ⟨hmem, by omega⟩]
     omega
 
 /-- Positions of any labelling that fills the initial cells with the
@@ -1343,7 +1343,7 @@ theorem specCanon_iso (G : Colored n k) :
       (by show n + 1 ≤ 1 + n; omega) hbc
     have hkrows : (canonSpecKey G).rows =
         leafRows { n := n, g := rowsOf G } llab := by
-      rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+      rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
       exact hlrows
     obtain ⟨l, hag⟩ := label_of_perm_range hlsz
       (achieved_perm_range hlsz hn0 hlcp)

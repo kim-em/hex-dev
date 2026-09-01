@@ -44,11 +44,11 @@ unfolding `Decidable` instances. -/
 theorem checkIso_iff (G H : Colored n k) (p : Perm n) :
     checkIso G H p = true ↔ IsIso G H p := by
   rw [checkIso, Bool.and_eq_true, List.all_eq_true, List.all_eq_true]
-  simp only [List.mem_finRange, List.all_eq_true, beq_iff_eq, true_implies,
+  simp only [List.mem_finRange, List.all_eq_true, beq_iff_eq,
     forall_const]
   exact Iff.rfl
 
-@[expose] instance (G H : Colored n k) (p : Perm n) : Decidable (IsIso G H p) :=
+instance (G H : Colored n k) (p : Perm n) : Decidable (IsIso G H p) :=
   if h : checkIso G H p then
     .isTrue ((checkIso_iff G H p).mp h)
   else

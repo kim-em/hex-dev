@@ -49,7 +49,7 @@ theorem lowBit_go_congr :
     · rcases Decidable.em (s % 2 = 1) with ho | ho
       · simp [hs, ho]
       · have hlt : s / 2 < f₁ ∧ s / 2 < f₂ := by omega
-        simp only [beq_iff_eq, hs, ho, if_false]
+        simp only [beq_iff_eq, hs, ho, ite_false]
         rw [lowBit_go_congr f₁ (f₂ := f₂) hlt.1 hlt.2]
 
 /-- The unconditional unfolding of `lowBit`. -/
@@ -58,10 +58,10 @@ theorem lowBit_eq (s : Nat) :
       else 1 + lowBit (s / 2) := by
   rw [lowBit, lowBit, lowBit.go]
   rcases Decidable.em (s = 0) with rfl | hs
-  · simp [lowBit.go]
+  · simp
   · rcases Decidable.em (s % 2 = 1) with ho | ho
     · simp [hs, ho]
-    · simp only [beq_iff_eq, hs, ho, if_false]
+    · simp only [beq_iff_eq, hs, ho, ite_false]
       rw [lowBit_go_congr s (f₂ := s / 2 + 1) (by omega) (by omega)]
 
 /-- The number of set bits. Structurally recursive on an
@@ -83,7 +83,7 @@ theorem popCount_go_congr :
     rcases Decidable.em (s = 0) with rfl | hs
     · simp
     · have hlt : s / 2 < f₁ ∧ s / 2 < f₂ := by omega
-      simp only [beq_iff_eq, hs, if_false]
+      simp only [beq_iff_eq, hs, ite_false]
       rw [popCount_go_congr f₁ (f₂ := f₂) hlt.1 hlt.2]
 
 /-- The unconditional unfolding of `popCount`: also valid at zero. -/
@@ -92,7 +92,7 @@ theorem popCount_eq (s : Nat) :
   rw [popCount, popCount, popCount.go]
   rcases Decidable.em (s = 0) with rfl | hs
   · simp [popCount.go]
-  · simp only [beq_iff_eq, hs, if_false]
+  · simp only [beq_iff_eq, hs, ite_false]
     rw [popCount_go_congr s (f₂ := s / 2 + 1) (by omega) (by omega)]
 
 @[simp] theorem popCount_zero : popCount 0 = 0 := by

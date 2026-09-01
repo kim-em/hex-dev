@@ -411,7 +411,7 @@ theorem checkCanon_sorted {G : Colored n k} {cert : CertNode}
       have hbound : lab[j]! < n := by
         rw [← hag j hj]
         exact (res.label.get ⟨j, hj⟩).isLt
-      rw [labColor, dif_pos ⟨by omega, hbound⟩]
+      rw [labColor, dite_eq_left ⟨by omega, hbound⟩]
       congr 2
       exact Fin.eq_of_val_eq (hag j hj)
     rw [hcell i hi, hcell (i + 1) hi1]
@@ -461,7 +461,7 @@ theorem count_colorList_ge (K : Colored n k) {c : Nat} (hc : k ≤ c) :
   show ¬((keyOf K v == c) = true)
   intro hb
   have hbe : keyOf K v = c := by simpa using hb
-  rw [keyOf, dif_pos hvn] at hbe
+  rw [keyOf, dite_eq_left hvn] at hbe
   have := (K.coloring.cells[(⟨v, hvn⟩ : Fin n)]).isLt
   omega
 
@@ -504,7 +504,7 @@ theorem checkCanon_form_eq {G H : Colored n k}
       have hkv : ∀ (K : Colored n k) (j : Nat) (hj : j < n),
           keyOf K j = (K.coloring.cells[j]'(by omega)).val := by
         intro K j hj
-        rw [keyOf, dif_pos hj]
+        rw [keyOf, dite_eq_left hj]
         rfl
       rw [hkv _ i (by omega), hkv _ (i + 1) (by omega)]
       exact hs
@@ -513,7 +513,7 @@ theorem checkCanon_form_eq {G H : Colored n k}
       have hkv : ∀ (K : Colored n k) (j : Nat) (hj : j < n),
           keyOf K j = (K.coloring.cells[j]'(by omega)).val := by
         intro K j hj
-        rw [keyOf, dif_pos hj]
+        rw [keyOf, dite_eq_left hj]
         rfl
       rw [hkv _ i (by omega), hkv _ (i + 1) (by omega)]
       exact hs
@@ -536,7 +536,7 @@ theorem checkCanon_form_eq {G H : Colored n k}
           have := i.isLt
           omega)).val := by
       intro K
-      rw [keyOf, dif_pos i.isLt]
+      rw [keyOf, dite_eq_left i.isLt]
       rfl
     rw [hkv, hkv] at h1
     -- from value equality to Fin equality

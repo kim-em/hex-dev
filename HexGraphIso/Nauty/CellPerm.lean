@@ -90,20 +90,20 @@ theorem splitCellLoop_spec {gRow : Nat} :
   | 0, fuel, lab, c1, c2, h1, h2, hk, hf => by
     rcases fuel with _ | f
     · omega
-    rw [splitCellLoop, if_neg (by omega)]
+    rw [splitCellLoop, ite_eq_right (by omega)]
     refine ⟨by simp [segN_zero], by simp [segN_zero]; omega, rfl,
       fun j _ => rfl, by simp [segN_zero], by simp [segN_zero]⟩
   | k + 1, fuel, lab, c1, c2, h1, h2, hk, hf => by
     rcases fuel with _ | f
     · omega
-    rw [splitCellLoop, if_pos (by omega)]
+    rw [splitCellLoop, ite_eq_left (by omega)]
     have hc1s : c1.toNat < lab.size := by omega
     have hc2s : c2.toNat < lab.size := by omega
     have hS : segN lab c1.toNat (k + 1) =
         lab[c1.toNat]! :: segN lab (c1.toNat + 1) k := segN_cons lab _ k
     rcases hadj : elem gRow lab[c1.toNat]! with _ | _
     · -- non-adjacent head: swap the ends, recurse on `[c1, c2 - 1]`
-      simp only [Bool.false_eq_true, if_false]
+      simp only [Bool.false_eq_true, ite_false]
       obtain ⟨hp1, hp2, hsz, hout, hleft, hright⟩ :=
         splitCellLoop_spec (gRow := gRow) k f
         ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat lab[c1.toNat]!)
@@ -200,7 +200,7 @@ theorem splitCellLoop_spec {gRow : Nat} :
         refine (List.perm_append_singleton _ _).trans ?_
         exact (List.Perm.cons _ hright).trans hfn.symm
     · -- adjacent head: advance the left pointer
-      simp only [if_true]
+      simp only [ite_true]
       obtain ⟨hp1, hp2, hsz, hout, hleft, hright⟩ :=
         splitCellLoop_spec (gRow := gRow) k f lab (c1 + 1) c2 (by omega)
           h2 (by omega) (by omega)
@@ -489,17 +489,17 @@ theorem trivialSplit_setLab (level cell1 cell2 : Nat) (c1 c2 : Int)
   dsimp only
   rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
     hA | hA
-  · simp only [if_pos hA]
+  · simp only [ite_eq_left hA]
     rcases Decidable.em
         (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hB | hB
-    · simp only [if_pos hB]
+    · simp only [ite_eq_left hB]
       rcases hC : (c1.toNat == cell2) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true]
-    · simp only [if_neg hB]
+        simp only [Bool.false_eq_true, ite_false, ite_true]
+    · simp only [ite_eq_right hB]
       rcases hD : (c2.toNat == cell1) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true]
-  · simp only [if_neg hA]
+        simp only [Bool.false_eq_true, ite_false, ite_true]
+  · simp only [ite_eq_right hA]
 
 /-- Two maximal runs either coincide or are disjoint. -/
 theorem isCell_disjoint_or_eq {ptn : Array Nat} {level a len a' len' : Nat}
@@ -559,7 +559,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
       (trivialCell level gRow cell1 cell2 st).lab.size = st.lab.size := by
   rcases hc : (cell1 == cell2) with _ | _
   case true =>
-    rw [trivialCell, trivialCell, if_pos (by rw [hc]), if_pos (by rw [hc])]
+    rw [trivialCell, trivialCell, ite_eq_left (by rw [hc]), ite_eq_left (by rw [hc])]
     exact ⟨h, fun q _ => rfl, rfl, rfl⟩
   case false =>
   obtain ⟨hp1, hp2, hsz1, hout1, hleft1, hright1⟩ :=
@@ -595,7 +595,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
             cell1)).countP (elem gRow ·) : Int) - 1) st with
         lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
           (cell1 : Int) (cell2 : Int)).1 } := by
-    rw [trivialCell, if_neg (by rw [hc]; simp)]
+    rw [trivialCell, ite_eq_right (by rw [hc]; simp)]
     simp only [Int.ofNat_eq_natCast]
     rw [hp1, hp2, trivialSplit_setLab _ _ _ _ _ st]
   have e2 : trivialCell level gRow cell1 cell2 st' =
@@ -606,7 +606,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
             cell1)).countP (elem gRow ·) : Int) - 1) st with
         lab := (splitCellLoop gRow (cell2 - cell1 + 2) st'.lab
           (cell1 : Int) (cell2 : Int)).1 } := by
-    rw [trivialCell, if_neg (by rw [hc]; simp)]
+    rw [trivialCell, ite_eq_right (by rw [hc]; simp)]
     simp only [Int.ofNat_eq_natCast]
     rw [hp1', hp2', trivialSplit_setLab _ _ _ _ _ st', h.eq_setLab,
       trivialSplit_setLab _ _ _ _ _ st]
@@ -678,7 +678,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
           cell1)).countP (elem gRow ·) : Int) - 1) st).ptn =
         st.ptn.set! (cell1 + (segN st.lab cell1 (cell2 + 1 -
           cell1)).countP (elem gRow ·) - 1) level := by
-      rw [trivialSplit, if_pos hg,
+      rw [trivialSplit, ite_eq_left hg,
         show (((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
           cell1)).countP (elem gRow ·) : Int) - 1)).toNat =
           cell1 + (segN st.lab cell1 (cell2 + 1 - cell1)).countP
@@ -719,7 +719,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
         ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
           cell1)).countP (elem gRow ·) : Int) - 1) st).ptn =
         st.ptn := by
-      rw [trivialSplit, if_neg hg]
+      rw [trivialSplit, ite_eq_right hg]
     refine ⟨⟨rfl, rfl, rfl, rfl, rfl, rfl,
       by rw [hsz1', hsz1, h.labSize], ?_⟩,
       fun q _ => by dsimp only; rw [hptn],
@@ -1050,7 +1050,7 @@ theorem windowStep_setLab (level cell1 cell2 v c1 c2 : Nat)
   rcases hB : (c1 != cell1) with _ | _ <;>
   rcases hC : (c2 - c1 == 1) with _ | _ <;>
   rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
-    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+    simp only [h1, h4, Bool.false_eq_true, ite_false, ite_true]
 
 theorem windowScan_setLab (level cell1 cell2 : Nat) (counts : List Nat) :
     ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt)
@@ -1063,10 +1063,10 @@ theorem windowScan_setLab (level cell1 cell2 : Nat) (counts : List Nat) :
   | v :: vs, c1, maxcell, st, X => by
     rw [windowScan, windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rw [windowStep_setLab]
       exact windowScan_setLab level cell1 cell2 counts vs _ _ _ X
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact windowScan_setLab level cell1 cell2 counts vs c1 maxcell st X
 
 /-- The window scan reads the counts only through the multiplicities. -/
@@ -1080,9 +1080,9 @@ theorem windowScan_counts_congr (level cell1 cell2 : Nat)
   | v :: vs, c1, maxcell, st => by
     rw [windowScan, windowScan, hm v]
     rcases Decidable.em (multOf counts' v > 0) with hmv | hmv
-    · simp only [if_pos hmv]
+    · simp only [ite_eq_left hmv]
       rw [windowScan_counts_congr level cell1 cell2 hm vs _ _ _]
-    · simp only [if_neg hmv]
+    · simp only [ite_eq_right hmv]
       exact windowScan_counts_congr level cell1 cell2 hm vs c1 maxcell st
 
 /-- One window step's partition effect: the group end boundary, if it
@@ -1097,7 +1097,7 @@ theorem ptn_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
   rcases hB : (c1 != cell1) with _ | _ <;>
   rcases hC : (c2 - c1 == 1) with _ | _ <;>
   rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
-    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+    simp only [h1, h4, Bool.false_eq_true, ite_false, ite_true]
 
 /-! # Segment write-back -/
 
@@ -1180,13 +1180,13 @@ theorem zipIdx_filter_map_eq_filter (f : Nat → Nat) (v : Nat) :
       have := hget 0 (by simp)
       simpa using this
     rcases hfx : (f x == v) with _ | _
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       exact zipIdx_filter_map_eq_filter f v S (k + 1) get
         (fun j hj => by
           rw [show k + 1 + j = k + (j + 1) by omega]
           have := hget (j + 1) (by simp; omega)
           simpa using this)
-    · simp only [if_true, List.map_cons]
+    · simp only [ite_true, List.map_cons]
       refine List.cons_eq_cons.mpr ⟨hx, ?_⟩
       exact zipIdx_filter_map_eq_filter f v S (k + 1) get
         (fun j hj => by
@@ -1222,9 +1222,9 @@ theorem filter_filter_ne {f : Nat → Nat} {u v : Nat} (huv : u ≠ v)
   | cons x S ih =>
     rw [List.filter_cons]
     rcases hfv : (f x == v) with _ | _
-    · simp only [Bool.not_false, if_true]
+    · simp only [Bool.not_false, ite_true]
       rw [List.filter_cons, List.filter_cons, ih]
-    · simp only [Bool.not_true, Bool.false_eq_true, if_false]
+    · simp only [Bool.not_true, Bool.false_eq_true, ite_false]
       rw [List.filter_cons, ih]
       have hfu : (f x == u) = false := by
         simp only [beq_iff_eq] at hfv
@@ -1278,14 +1278,14 @@ theorem ptn_windowScan_outside (level cell1 cell2 : Nat)
   | v :: vs, c1acc, maxcell, st, hc1, q, hq => by
     rw [windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rw [ptn_windowScan_outside level cell1 cell2 counts vs _ _ _
         (by omega) q hq, ptn_windowStep_eq]
       split
       · next hle =>
         rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
       · rfl
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact ptn_windowScan_outside level cell1 cell2 counts vs _ _ _
         hc1 q hq
 
@@ -1297,13 +1297,13 @@ theorem ptn_windowScan_size (level cell1 cell2 : Nat) (counts : List Nat) :
   | v :: vs, c1acc, maxcell, st => by
     rw [windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rw [ptn_windowScan_size level cell1 cell2 counts vs _ _ _,
         ptn_windowStep_eq]
       split
       · rw [Array.size_set!]
       · rfl
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact ptn_windowScan_size level cell1 cell2 counts vs _ _ _
 
 /-- The window scan's boundary writes preserve cell-contents equivalence
@@ -1328,7 +1328,7 @@ theorem windowScan_region_perm (level cell1 cell2 : Nat)
       rw [← (hGperm u).length_eq]
       exact hGlen u
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       -- the group is nonempty, so the region reaches it
       have hlen0 := congrArg List.length hlayL
       rw [segN_length, List.flatMap_cons, List.length_append,
@@ -1361,7 +1361,7 @@ theorem windowScan_region_perm (level cell1 cell2 : Nat)
         (start + multOf counts v) maxcell st
       rcases Decidable.em (start + multOf counts v ≤ cell2) with
         hin | houtc
-      · rw [if_pos hin] at hptn1
+      · rw [ite_eq_left hin] at hptn1
         have hcellS := hcellR hstart2
         have hcp1 : cellsPerm (st.ptn.set!
             (start + multOf counts v - 1) level) level L L' := by
@@ -1405,7 +1405,7 @@ theorem windowScan_region_perm (level cell1 cell2 : Nat)
             rw [show cell2 + 1 - (start + multOf counts v) =
               cell2 + 1 - start - multOf counts v by omega]
             exact hrestL')
-      · rw [if_neg houtc] at hptn1
+      · rw [ite_eq_right houtc] at hptn1
         have hend : start + multOf counts v = cell2 + 1 := by omega
         refine windowScan_region_perm level cell1 cell2 counts gL gL'
           hGperm hGlen vs (start + multOf counts v) _ _
@@ -1425,7 +1425,7 @@ theorem windowScan_region_perm (level cell1 cell2 : Nat)
           rw [show cell2 + 1 - start - multOf counts v = 0 by omega,
             segN_zero] at this
           exact this
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       have hgv : gL v = [] :=
         List.length_eq_zero_iff.mp (by rw [hGlen v]; omega)
       have hgv' : gL' v = [] :=
@@ -1444,8 +1444,8 @@ theorem nontrivialFix_setLab (cell1 : Nat) (st : RefineSt)
   rw [nontrivialFix, nontrivialFix]
   dsimp only
   rcases Decidable.em (¬ elem st.active cell1 = true) with hcx | hcx
-  · simp only [if_pos hcx]
-  · simp only [if_neg hcx]
+  · simp only [ite_eq_left hcx]
+  · simp only [ite_eq_right hcx]
 
 theorem ptn_nontrivialFix (cell1 : Nat) (st : RefineSt) :
     (nontrivialFix cell1 st).ptn = st.ptn := by
@@ -1473,10 +1473,10 @@ theorem nontrivialCell_perm {ctx : Ctx} {level workset cell1 cell2 : Nat}
   rw [nontrivialCell, nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
   case true =>
-    rw [if_pos rfl, if_pos rfl]
+    rw [ite_eq_left rfl, ite_eq_left rfl]
     exact ⟨h, fun q _ => rfl, rfl, rfl⟩
   case false =>
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   have hseg : (segN st.lab cell1 (cell2 + 1 - cell1)).Perm
       (segN st'.lab cell1 (cell2 + 1 - cell1)) :=
     h.cells cell1 _ hcell
@@ -1502,12 +1502,12 @@ theorem nontrivialCell_perm {ctx : Ctx} {level workset cell1 cell2 : Nat}
       (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
         ((countsOf ctx st.lab workset cell1 cell2).headD 0)) with _ | _
   case true =>
-    rw [if_pos rfl, if_pos rfl]
+    rw [ite_eq_left rfl, ite_eq_left rfl]
     exact ⟨⟨h.ptn, h.active, h.numcells, h.hint, h.maxpos,
       by dsimp only; rw [h.longcode], h.labSize, h.cells⟩,
       fun q _ => rfl, rfl, rfl⟩
   case false =>
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   have hvals : countValues (countsOf ctx st'.lab workset cell1 cell2) =
       countValues (countsOf ctx st.lab workset cell1 cell2) := by
     rw [countValues, countValues, hbmin, hbmax]
@@ -1796,30 +1796,30 @@ theorem trivialSplit_starts {level cell1 cell2 : Nat} {c1 c2 : Int}
         · omega
         · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
           exact hb
-    simp only [if_pos hA]
+    simp only [ite_eq_left hA]
     rcases Decidable.em
         (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hBc | hBc
-    · simp only [if_pos hBc]
+    · simp only [ite_eq_left hBc]
       rcases hC : (c1.toNat == cell2) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        simp only [Bool.false_eq_true, ite_false, ite_true] <;>
         exact starts_insert hold (Or.inr hbound)
-    · simp only [if_neg hBc]
+    · simp only [ite_eq_right hBc]
       rcases hD : (c2.toNat == cell1) with _ | _ <;>
-        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        simp only [Bool.false_eq_true, ite_false, ite_true] <;>
         exact starts_insert hold hcs'
-  · simp only [if_neg hA]
+  · simp only [ite_eq_right hA]
     exact hst
 
 theorem trivialCell_starts {level gRow cell1 cell2 : Nat} {st : RefineSt}
     (hst : StartsOk level st)
     (hcellstart : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level)
     (hc12 : cell1 ≤ cell2) (hc2s : cell2 < st.ptn.size)
-    (h2 : cell2 < st.lab.size) :
+    (_h2 : cell2 < st.lab.size) :
     StartsOk level (trivialCell level gRow cell1 cell2 st) := by
   rw [trivialCell]
   rcases hc : (cell1 == cell2) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     obtain ⟨hp1, hp2, _, _, _, _⟩ :=
       splitCellLoop_spec (gRow := gRow) (cell2 + 1 - cell1)
         (cell2 - cell1 + 2) st.lab (Int.ofNat cell1) (Int.ofNat cell2)
@@ -1829,7 +1829,7 @@ theorem trivialCell_starts {level gRow cell1 cell2 : Nat} {st : RefineSt}
         (by omega)
     exact trivialSplit_starts hst hcellstart
       (by rw [hp1, hp2]) hc2s
-  · simp only [if_true]
+  · simp only [ite_true]
     exact hst
 
 theorem active_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
@@ -1842,7 +1842,7 @@ theorem active_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
   rcases hB : (c1 != cell1) with _ | _ <;>
   rcases hC : (c2 - c1 == 1) with _ | _ <;>
   rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
-    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+    simp only [h1, h4, Bool.false_eq_true, ite_false, ite_true]
 
 /-- Through the window scan, every active position keeps starting a
 cell: interior group starts follow the boundary written for the
@@ -1863,7 +1863,7 @@ theorem windowScan_starts (level cell1 cell2 : Nat) (counts : List Nat) :
         multOf counts v + (vs.map (multOf counts)).sum := by
       rw [List.map_cons, List.sum_cons]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       have hin : c1acc + multOf counts v ≤ cell2 + 1 := by omega
       have hptn1 := ptn_windowStep_eq level cell1 cell2 v c1acc
         (c1acc + multOf counts v) maxcell st
@@ -1896,10 +1896,10 @@ theorem windowScan_starts (level cell1 cell2 : Nat) (counts : List Nat) :
             · exact hb
         rcases hbc : (c1acc != cell1) with _ | _
         · rw [hbc] at hw
-          simp only [Bool.false_eq_true, if_false] at hw
+          simp only [Bool.false_eq_true, ite_false] at hw
           exact hold w hw
         · rw [hbc] at hw
-          simp only [if_true] at hw
+          simp only [ite_true] at hw
           refine starts_insert hold ?_ w hw
           rcases hacc with h1 | h1 | h1 | h1
           · exfalso
@@ -1925,7 +1925,7 @@ theorem windowScan_starts (level cell1 cell2 : Nat) (counts : List Nat) :
         · right
           right
           left
-          rw [hptn1, if_pos hle,
+          rw [hptn1, ite_eq_left hle,
             Array.getElem!_set!_self _ _ _ (by omega)]
           exact Nat.le_refl level
         · right
@@ -1937,7 +1937,7 @@ theorem windowScan_starts (level cell1 cell2 : Nat) (counts : List Nat) :
         · rw [Array.size_set!]
           exact hc2s
         · exact hc2s
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact windowScan_starts level cell1 cell2 counts vs c1acc maxcell
         st hst hacc (by omega) hc2s
 
@@ -1962,15 +1962,15 @@ theorem nontrivialCell_starts {ctx : Ctx}
     (hst : StartsOk level st)
     (hcellstart : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level)
     (hc12 : cell1 ≤ cell2) (hc2s : cell2 < st.ptn.size)
-    (h2 : cell2 < st.lab.size) :
+    (_h2 : cell2 < st.lab.size) :
     StartsOk level (nontrivialCell ctx level workset cell1 cell2 st) := by
   rw [nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
   case true =>
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact hst
   case false =>
-  rw [if_neg (by simp)]
+  rw [ite_eq_right (by simp)]
   split
   · exact hst
   · have hnd : (countValues (countsOf ctx st.lab workset cell1
@@ -2218,7 +2218,7 @@ theorem refineStep_perm {ctx : Ctx} {level split1 : Nat}
           (split1 + cellEnd st.ptn level split1) } :=
     ⟨rfl, rfl, h.numcells, h.hint, h.maxpos, rfl, h.labSize, h.cells⟩
   rcases hg : (split1 == cellEnd st.ptn level split1) with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     exact refineNontrivial_perm hbridge
       (by
         show st.ptn.size = st.lab.size
@@ -2230,7 +2230,7 @@ theorem refineStep_perm {ctx : Ctx} {level split1 : Nat}
         have := hOk.ptnSize
         omega)
       hOk.ptnEnd hcellS
-  · simp only [if_true]
+  · simp only [ite_true]
     have hone : IsCell st.ptn level split1 1 := by
       have heq : cellEnd st.ptn level split1 = split1 := by
         have := hg
@@ -2298,14 +2298,14 @@ theorem refineLoop_perm {ctx : Ctx} (hn : ctx.n = n) {level : Nat} :
   | fuel + 1, st, st', h, hOk, hst => by
     rw [refineLoop, refineLoop, h.numcells, h.active, h.hint]
     rcases Decidable.em (st.numcells < ctx.n) with hlt | hlt
-    · simp only [if_pos hlt]
+    · simp only [ite_eq_left hlt]
       rcases hps : pickSplit st.active st.hint with _ | s
       · exact h
       · exact refineLoop_perm hn fuel _ _
           (refineStep_perm h hOk hn hst (pickSplit_mem hps))
           (refineStep_stOk hn hOk)
           (refineStep_starts hOk hn hst)
-    · simp only [if_neg hlt]
+    · simp only [ite_eq_right hlt]
       exact h
 
 /-- nauty's `refine` depends on the ordered partition only through the
@@ -2367,7 +2367,7 @@ theorem ptn_windowScan_vals (level cell1 cell2 : Nat)
   | v :: vs, c1acc, maxcell, st, q => by
     rw [windowScan]
     rcases Decidable.em (multOf counts v > 0) with hm | hm
-    · simp only [if_pos hm]
+    · simp only [ite_eq_left hm]
       rcases ptn_windowScan_vals level cell1 cell2 counts vs _ _ _ q with
         he | he
       · rw [he, ptn_windowStep_eq]
@@ -2375,7 +2375,7 @@ theorem ptn_windowScan_vals (level cell1 cell2 : Nat)
         · exact getElem!_set!_cases st.ptn _ level q
         · exact Or.inl rfl
       · exact Or.inr he
-    · simp only [if_neg hm]
+    · simp only [ite_eq_right hm]
       exact ptn_windowScan_vals level cell1 cell2 counts vs _ _ _ q
 
 theorem ptn_nontrivialCell_vals (ctx : Ctx)

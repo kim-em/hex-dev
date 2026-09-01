@@ -200,7 +200,7 @@ theorem map_erase_inj {f : Fin n → Fin n}
         · rfl
         · exact absurd (beq_iff_eq.mpr (hinj x a (beq_iff_eq.mp hb)))
             (hxa ▸ Bool.false_ne_true)
-      simp only [hxa, hfxa, Bool.false_eq_true, if_false, List.map_cons,
+      simp only [hfxa, Bool.false_eq_true, ite_false, List.map_cons,
         map_erase_inj hinj a l]
     · have hxa' : x = a := beq_iff_eq.mp hxa
       subst hxa'
@@ -402,7 +402,7 @@ theorem inducedPerm_eq {φ : Perm n} {P Q : Cells n} (h : Compat φ P Q)
     intro i hi
     rw [Hex.Array.getElem_ofFn']
     exact (inducedFun P Q _).isLt
-  rw [dif_pos ⟨hsz, hbound⟩]
+  rw [dite_eq_left ⟨hsz, hbound⟩]
   have hvec : (Hex.Vector.ofFn' fun i : Fin n =>
       (⟨(Hex.Array.ofFn' fun v : Fin n => (inducedFun P Q v).val)[i.val]'(hsz.symm ▸ i.isLt),
         hbound i.val (hsz.symm ▸ i.isLt)⟩ : Fin n)) = φ.vec := by
@@ -412,7 +412,7 @@ theorem inducedPerm_eq {φ : Perm n} {P Q : Cells n} (h : Compat φ P Q)
     simp only [Hex.Array.getElem_ofFn']
     rw [inducedFun_eq h hdisc hcov]
     rfl
-  rw [hvec, Perm.ofVector?, dif_pos ⟨φ.nodup, φ.complete⟩]
+  rw [hvec, Perm.ofVector?, dite_eq_left ⟨φ.nodup, φ.complete⟩]
   simp only [Option.getD_some]
 
 /-! # The search verdicts -/

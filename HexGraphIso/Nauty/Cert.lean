@@ -96,7 +96,7 @@ theorem keyCmp_cons_eq (c : Nat) (cs cs' : List Nat)
       keyCmp ⟨cs, r⟩ ⟨cs', r'⟩ := by
   rw [keyCmp, keyCmp]
   have hcc : compare c c = Ordering.eq := by
-    simp [Nat.compare_eq_eq]
+    simp
   simp only [listCmp, hcc]
 
 /-! # Every spec key starts with the node's refinement code -/
@@ -109,7 +109,7 @@ theorem specNode_codes_head (ctx : Ctx) (tcLevel fuel level : Nat)
   rw [specNode]
   rcases hdisc : discreteAt (refine ctx level lab ptn active
       numcells).ptn level ctx.n with _ | _
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     obtain ⟨m, hm⟩ : ∃ m, (specMaketargetcell ctx
         (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn level
@@ -125,7 +125,7 @@ theorem specNode_codes_head (ctx : Ctx) (tcLevel fuel level : Nat)
             tcLevel, rfl⟩
     rw [hm, List.range_succ_eq_map, List.map_cons]
     exact ⟨_, rfl⟩
-  · simp only [if_true]
+  · simp only [ite_true]
     exact ⟨[codeSentinel], rfl⟩
 
 /-! # Automorphism transport between sibling subtrees -/
@@ -257,19 +257,19 @@ a permutation of `[0, n)` whose induced row transport fixes `g`. -/
   inj a b hab := by
     rcases Decidable.em (a < n) with ha | ha <;>
       rcases Decidable.em (b < n) with hb | hb
-    · rw [if_pos ha, if_pos hb] at hab
+    · rw [ite_eq_left ha, ite_eq_left hb] at hab
       exact hinj a b ha hb hab
-    · rw [if_pos ha, if_neg hb] at hab
+    · rw [ite_eq_left ha, ite_eq_right hb] at hab
       exact absurd (hbound a ha) (by omega)
-    · rw [if_neg ha, if_pos hb] at hab
+    · rw [ite_eq_right ha, ite_eq_left hb] at hab
       exact absurd (hbound b hb) (by omega)
-    · rw [if_neg ha, if_neg hb] at hab
+    · rw [ite_eq_right ha, ite_eq_right hb] at hab
       exact hab
   maps v := by
     rcases Decidable.em (v < n) with h | h
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
       exact ⟨fun _ => hbound v h, fun _ => h⟩
-    · rw [if_neg h]
+    · rw [ite_eq_right h]
 
 theorem checkAutom_sound {g γ : Array Nat} (hg : g.size = n)
     (h : checkAutom g γ n = true) :
@@ -296,17 +296,17 @@ theorem checkAutom_sound {g γ : Array Nat} (hg : g.size = n)
   refine ⟨renamingOfArray γ n hbound' hinj, fun v hv => ?_, hg, hg,
     fun v hv => ?_⟩
   · show (if v < n then γ[v]! else v) = γ[v]!
-    rw [if_pos hv]
+    rw [ite_eq_left hv]
   · have hrv := List.all_eq_true.mp hrows v (List.mem_range.mpr hv)
     have hrv' : g[γ[v]!]! = image (fun w => γ[w]!) n g[v]! := by
       simpa using hrv
     have hσv : renamingOfArray γ n hbound' hinj v = γ[v]! := by
       show (if v < n then γ[v]! else v) = γ[v]!
-      rw [if_pos hv]
+      rw [ite_eq_left hv]
     rw [hσv, hrv']
     exact (image_congr _ fun w hw => by
       show (if w < n then γ[w]! else w) = γ[w]!
-      rw [if_pos hw]).symm
+      rw [ite_eq_left hw]).symm
 
 /-- Executable check that two labellings fill each cell of `ptn` with
 the same vertices. -/
@@ -664,17 +664,17 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
           subst h'
           have hkey := keyCmp_eq_iff.mp hkc
           constructor
-          · rw [specNode, if_pos hdisc]
+          · rw [specNode, ite_eq_left hdisc]
             exact keyLe_of_eq hkey
           · intro _
-            rw [specNode, if_pos hdisc]
+            rw [specNode, ite_eq_left hdisc]
             exact hkey
         · -- keyCmp = .lt
           next hkc =>
           injection h with h'
           subst h'
           constructor
-          · rw [keyLe, specNode, if_pos hdisc, hkc]
+          · rw [keyLe, specNode, ite_eq_left hdisc, hkc]
             intro hx
             exact Ordering.noConfusion hx
           · intro hx
@@ -772,7 +772,7 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).rows⟩ := by
             rw [specNode]
-            simp only [hdiscf, Bool.false_eq_true, if_false]
+            simp only [hdiscf, Bool.false_eq_true, ite_false]
             rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
               List.map_map]
             rfl
@@ -1033,7 +1033,7 @@ theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
     refine foldl_active_lt _ _ (Nat.two_pow_pos n) hn0 hboundEnds ?_
     rw [hEnds]
     exact endsOf_pairwise _ 0
-  · rw [size_initPtn, getElem!_initPtn, if_pos ⟨hmemlast, by omega⟩]
+  · rw [size_initPtn, getElem!_initPtn, ite_eq_left ⟨hmemlast, by omega⟩]
     omega
   · intro v hv
     rw [initActive] at hv
@@ -1045,7 +1045,7 @@ theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
     · rcases h1 with ⟨e, he, rfl⟩
       right
       rw [getElem!_initPtn,
-        if_pos ⟨by simpa using he, by
+        ite_eq_left ⟨by simpa using he, by
           have := hboundEnds e he
           omega⟩]
       omega
@@ -1053,13 +1053,13 @@ theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
     rw [getElem!_initPtn]
     rcases Decidable.em (q ∈ (initialPartition G).2 ∧ q < n)
       with hc | hc
-    · rw [if_pos hc]
+    · rw [ite_eq_left hc]
       exact Or.inl (by omega)
-    · rw [if_neg hc]
+    · rw [ite_eq_right hc]
       rcases Nat.lt_or_ge q n with hq | hq
-      · rw [if_pos hq]
+      · rw [ite_eq_left hq]
         exact Or.inr rfl
-      · rw [if_neg (by omega)]
+      · rw [ite_eq_right (by omega)]
         exact Or.inl (by omega)
 
 /-- A successful certificate replay pins the nauty-semantic canonical
@@ -1068,13 +1068,13 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
     (h : checkKey G cert B = true) : canonSpecKey G = B := by
   rw [checkKey] at h
   rcases Nat.eq_zero_or_pos n with rfl | hn0
-  · rw [if_pos (by rfl)] at h
+  · rw [ite_eq_left (by rfl)] at h
     simp only [Bool.and_eq_true, beq_iff_eq] at h
-    rw [canonSpecKey, canonSpec, if_pos (by rfl)]
+    rw [canonSpecKey, canonSpec, ite_eq_left (by rfl)]
     rcases B with ⟨bc, br⟩
     simp only at h
     rw [h.1, h.2]
-  · rw [if_neg (by simp; omega)] at h
+  · rw [ite_eq_right (by simp; omega)] at h
     have heq := of_decide_eq_true h
     have hnode := checkNode_sound (ctx := { n := n, g := rowsOf G })
       rfl (size_rowsOf G) 100 B.rows n 1 (initialPartition G).1
@@ -1082,7 +1082,7 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
       (initActive (initialPartition G).2)
       (initialPartition G).2.length cert B.codes true heq
       (initial_nodeOk G hn0) (by show 1 + n ≤ n + 1; omega)
-    rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+    rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
     exact (hnode.2 rfl).trans (key_eta B)
 
 /-! # The untrusted producer -/
@@ -1177,13 +1177,13 @@ theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
     canonSpecKey G = B := by
   rw [certifyKey?] at h
   rcases Decidable.em ((n == 0) = true) with hz | hz
-  · rw [if_pos hz] at h
+  · rw [ite_eq_left hz] at h
     have hn0 : n = 0 := by simpa using hz
     subst hn0
     injection h with h'
     have hB : B = ⟨[], []⟩ := (congrArg Prod.snd h').symm
-    rw [hB, canonSpecKey, canonSpec, if_pos (by rfl)]
-  · rw [if_neg hz] at h
+    rw [hB, canonSpecKey, canonSpec, ite_eq_left (by rfl)]
+  · rw [ite_eq_right hz] at h
     replace h : (if checkKey G
         (certifyNode { n := n, g := rowsOf G } 100 n 1
         (initialPartition G).1
