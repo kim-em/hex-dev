@@ -9,7 +9,7 @@ Linux x86-64). Clean parametric sweeps at revision `5b3efbc7` establish why
 the former modes fail. The clean `e51066e1` calibration fixes absolute budgets
 before the initial `609465e8` acceptance run, and the clean inclusive audit
 below establishes phase attribution. A clean current-main acceptance run at
-`6a1a388d` reconfirms that all twenty-two selected mode-3 registrations pass.
+`b5cbd08d` reconfirms that all twenty-two selected mode-3 registrations pass.
 The direct dependencies are now through Phase 4 or later (`HexBerlekamp` 7,
 `HexHensel` 4, and `HexLLL` 7), so the Phase-4 dependency gate is met. The
 cross-system Hex record remains the clean revision `7425e083` run on
@@ -147,26 +147,26 @@ make every fixed check semantic as well as temporal.
 
 | Target/input | Clean median | Budget |
 |---|---:|---:|
-| public split, `smokeInput 24` | 3.738 ms | 50 ms |
-| historical fallback probe, degree 24 | 3.489 ms | 50 ms |
-| trial split, `smokeInput 8` | 2.319 ms | 800 ms |
-| public compare, `smokeInput 8` | 0.258 ms | 5 ms |
-| trial compare, `smokeInput 8` | 2.316 ms | 800 ms |
-| public degree/height `(6, 32)` | 0.173 ms | 5 ms |
-| trial degree/height `(4, 8)` | 0.794 ms | 100 ms |
-| precision/local `(8, 32, 128, 8)` | 1.019 ms | 20 ms |
-| lifted products, 64 factors (reference / dispatch) | 9.565 / 9.590 ms | 500 ms |
-| dense reassembly, 32 factors (reference / dispatch) | 112.124 / 112.377 ms | 1.2 s |
-| skew products, 256 factors (reference / dispatch) | 80.170 / 79.714 ms | 900 ms |
+| public split, `smokeInput 24` | 3.746 ms | 50 ms |
+| historical fallback probe, degree 24 | 3.486 ms | 50 ms |
+| trial split, `smokeInput 8` | 2.305 ms | 800 ms |
+| public compare, `smokeInput 8` | 0.259 ms | 5 ms |
+| trial compare, `smokeInput 8` | 2.296 ms | 800 ms |
+| public degree/height `(6, 32)` | 0.174 ms | 5 ms |
+| trial degree/height `(4, 8)` | 0.819 ms | 100 ms |
+| precision/local `(8, 32, 128, 8)` | 1.028 ms | 20 ms |
+| lifted products, 64 factors (reference / dispatch) | 9.620 / 9.615 ms | 500 ms |
+| dense reassembly, 32 factors (reference / dispatch) | 112.077 / 111.851 ms | 1.2 s |
+| skew products, 256 factors (reference / dispatch) | 79.759 / 79.758 ms | 900 ms |
 | `X^4 + 1`, public / fast setup | 0.033 / 0.017 ms | 5 / 5 ms |
 | `(X^2-2)(X^2-3)`, public | 0.033 ms | 5 ms |
-| `Phi_15`, public / fast setup | 0.083 / 0.020 ms | 5 / 5 ms |
-| SD3 modular split | 0.009 ms | 5 ms |
-| SD3 / SD4 full lattice | 1.579 / 29.933 ms | 25 / 400 ms |
+| `Phi_15`, public / fast setup | 0.084 / 0.019 ms | 5 / 5 ms |
+| SD3 modular split | 0.008 ms | 5 ms |
+| SD3 / SD4 full lattice | 1.601 / 29.985 ms | 25 / 400 ms |
 
 The clean current-main export
-`reports/bench-results/hex-berlekamp-zassenhaus-fixed-6a1a388d-chungus2.json`
-(SHA-256 `ce371f9959bbf0ebe87dbb2f3111e3c20dfc5d82e78d9cbf83840476def48cd6`)
+`reports/bench-results/hex-berlekamp-zassenhaus-fixed-b5cbd08d-chungus2.json`
+(SHA-256 `cc80ca3666b1ae090f25f8f7dc3b04835e3291787b5bcf1a6ff5c6f76434eb26`)
 records all twenty-two mode-3 registrations passing the independently fixed
 budgets, with all five repeats successful, no budget truncation, and every
 expected hash matching. The
@@ -201,7 +201,7 @@ taskset -c 1 .lake/build/bin/hexbz_bench run \
   Hex.BerlekampZassenhausBench.runFactorLatticeAdvSwinnertonDyerSD3Checksum \
   Hex.BerlekampZassenhausBench.runFactorLatticeAdvSwinnertonDyerSD4Checksum \
   --export-file \
-  reports/bench-results/hex-berlekamp-zassenhaus-fixed-6a1a388d-chungus2.json
+  reports/bench-results/hex-berlekamp-zassenhaus-fixed-b5cbd08d-chungus2.json
 ```
 
 ### Phase 5–7 re-attestation
@@ -219,7 +219,7 @@ declarations, native Lean execution, and Lean-checked irreducibility
 certificates. Production library source is byte-identical to that audited
 state; subsequent library-tree changes affect only the SPEC, README, and
 quickstart test. Against the previous committed mode-3 acceptance baseline
-`609465e8`, the fourteen shared medians range from `0.369x` to `1.010x`; there
+`609465e8`, the fourteen shared medians range from `0.380x` to `1.013x`; there
 is no performance regression. The eight adversarial registrations compare
 against their clean `0b95505b` baseline and remain within their independently
 fixed budgets.
