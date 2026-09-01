@@ -9,6 +9,7 @@ public import HexGraphIso.Canon
 public import HexGraphIso.Nauty.Bits
 public import HexGraphIso.Nauty.Refine
 public import HexGraphIso.Nauty.Image
+public import HexGraphIso.Nauty.Equivariance
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
