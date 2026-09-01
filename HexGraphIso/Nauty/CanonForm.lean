@@ -114,4 +114,187 @@ theorem not_isomorphic_of_certs {G H : Colored n k}
   not_isomorphic_of_key_ne (checkCanon_sound hG).1
     (checkCanon_sound hH).1 (checkDiff_sound hd)
 
+/-! # Correctness of the inverse labelling -/
+
+theorem invPerm_go_size (lab : Array Nat) :
+    ∀ (l : List Nat) (inv : Array Nat),
+      (invPerm.go lab l inv).size = inv.size
+  | [], _ => rfl
+  | i :: rest, inv => by
+    rw [invPerm.go, invPerm_go_size lab rest, Array.size_set!]
+
+theorem invPerm_go_untouched (lab : Array Nat) :
+    ∀ (l : List Nat) (inv : Array Nat) (w : Nat),
+      (∀ j ∈ l, lab[j]! ≠ w) →
+      (invPerm.go lab l inv)[w]! = inv[w]!
+  | [], _, _, _ => rfl
+  | j :: rest, inv, w, hl => by
+    rw [invPerm.go,
+      invPerm_go_untouched lab rest _ w
+        (fun j' hj' => hl j' (List.mem_cons.mpr (Or.inr hj'))),
+      Array.getElem!_set!_ne _ _ _ _
+        (hl j (List.mem_cons.mpr (Or.inl rfl)))]
+
+theorem invPerm_go_get (lab : Array Nat) :
+    ∀ (l : List Nat) (inv : Array Nat) (i : Nat), i ∈ l →
+      (∀ j ∈ l, lab[j]! = lab[i]! → j = i) →
+      lab[i]! < inv.size →
+      (invPerm.go lab l inv)[lab[i]!]! = i
+  | [], _, _, hi, _, _ => absurd hi (by simp)
+  | j :: rest, inv, i, hi, hinj, hsz => by
+    rw [invPerm.go]
+    rcases Decidable.em (i ∈ rest) with hir | hir
+    · exact invPerm_go_get lab rest _ i hir
+        (fun j' hj' => hinj j' (List.mem_cons.mpr (Or.inr hj')))
+        (by rw [Array.size_set!]; exact hsz)
+    · have hij : j = i := by
+        rcases List.mem_cons.mp hi with rfl | h
+        · rfl
+        · exact absurd h hir
+      subst hij
+      rw [invPerm_go_untouched lab rest _ _ (fun j' hj' he => by
+        have := hinj j' (List.mem_cons.mpr (Or.inr hj')) he
+        subst this
+        exact hir hj')]
+      exact Array.getElem!_set!_self _ _ _ hsz
+
+theorem invPerm_size (lab : Array Nat) :
+    (invPerm lab).size = lab.size := by
+  rw [invPerm, invPerm_go_size, Array.size_replicate]
+
+theorem getElem!_invPerm (lab : Array Nat)
+    (hinj : ∀ a b, a < lab.size → b < lab.size →
+      lab[a]! = lab[b]! → a = b)
+    {i : Nat} (hi : i < lab.size) (hv : lab[i]! < lab.size) :
+    (invPerm lab)[lab[i]!]! = i := by
+  rw [invPerm]
+  refine invPerm_go_get lab _ _ i (List.mem_range.mpr hi)
+    (fun j hj he => hinj j i (List.mem_range.mp hj) hi he) ?_
+  rw [Array.size_replicate]
+  exact hv
+
+theorem getElem!_invPerm_lt {lab : Array Nat} (hn0 : 0 < lab.size)
+    (v : Nat) : (invPerm lab)[v]! < lab.size := by
+  rw [invPerm]
+  have hgen : ∀ (l : List Nat) (inv : Array Nat),
+      (∀ j ∈ l, j < lab.size) →
+      (∀ w : Nat, inv[w]! < lab.size) →
+      ∀ w : Nat, (invPerm.go lab l inv)[w]! < lab.size := by
+    intro l
+    induction l with
+    | nil => intro inv _ hinv w; exact hinv w
+    | cons j rest ih =>
+      intro inv hl hinv w
+      rw [invPerm.go]
+      refine ih _ (fun j' hj' => hl j' (List.mem_cons.mpr
+        (Or.inr hj'))) (fun w' => ?_) w
+      rcases getElem!_set!_cases inv lab[j]! j w' with he | he
+      · rw [he]
+        exact hinv w'
+      · rw [he]
+        exact hl j (List.mem_cons.mpr (Or.inl rfl))
+  refine hgen _ _ (fun j hj => List.mem_range.mp hj) (fun w => ?_) v
+  rcases Nat.lt_or_ge w lab.size with hw | hw
+  · rw [getElem!_pos _ _ (by simpa using hw), Array.getElem_replicate]
+    exact hn0
+  · rw [getElem!_neg _ _ (by simpa using hw)]
+    exact hn0
+
+/-! # Leaf rows are the relabelled graph's rows -/
+
+theorem rowOf_relabel {G : Colored n k} {l : Label n}
+    {lab : Array Nat} (hsz : lab.size = n)
+    (hl : ∀ (i : Nat) (h : i < n), (l.get ⟨i, h⟩).val = lab[i]!)
+    {i : Nat} (hi : i < n) :
+    rowOf (G.relabel l) i =
+      permset (rowsOf G)[lab[i]!]! (invPerm lab) n := by
+  have hn0 : 0 < n := by omega
+  have hlabl : ∀ j, j < n → lab[j]! < n := fun j hj => by
+    rw [← hl j hj]
+    exact (l.get ⟨j, hj⟩).isLt
+  have hinj : ∀ a b, a < lab.size → b < lab.size →
+      lab[a]! = lab[b]! → a = b := by
+    intro a b ha hb he
+    rw [hsz] at ha hb
+    have hab : l.get ⟨a, ha⟩ = l.get ⟨b, hb⟩ :=
+      Fin.eq_of_val_eq (by rw [hl a ha, hl b hb, he])
+    exact congrArg Fin.val (l.perm.get_inj hab)
+  have hsurj : ∀ v, v < n → ∃ j, j < n ∧ lab[j]! = v := by
+    intro v hv
+    obtain ⟨w, hw⟩ := l.perm.get_surj ⟨v, hv⟩
+    refine ⟨w.val, w.isLt, ?_⟩
+    rw [← hl w.val w.isLt]
+    have hwe : (⟨w.val, w.isLt⟩ : Fin n) = w := Fin.eta w w.isLt
+    rw [hwe]
+    show (l.perm.get w).val = v
+    rw [hw]
+  have hps : permset (rowsOf G)[lab[i]!]! (invPerm lab) n =
+      image (fun v => (invPerm lab)[v]!) n (rowsOf G)[lab[i]!]! := rfl
+  rw [hps]
+  refine Nat.eq_of_testBit_eq fun t => ?_
+  rcases Nat.lt_or_ge t n with ht | ht
+  · rw [testBit_rowOf_lt (G.relabel l) hi ht, testBit_image]
+    rw [Colored.adj_relabel]
+    have hgi : l.get ⟨i, hi⟩ = ⟨lab[i]!, hlabl i hi⟩ :=
+      Fin.eq_of_val_eq (hl i hi)
+    have hgt : l.get ⟨t, ht⟩ = ⟨lab[t]!, hlabl t ht⟩ :=
+      Fin.eq_of_val_eq (hl t ht)
+    rw [hgi, hgt]
+    rcases hadj : G.graph.adj ⟨lab[i]!, hlabl i hi⟩
+        ⟨lab[t]!, hlabl t ht⟩ with _ | _
+    · -- no edge: no witness can fire
+      symm
+      rw [List.any_eq_false]
+      intro v hv
+      have hvn := List.mem_range.mp hv
+      simp only [Bool.and_eq_true, beq_iff_eq, not_and]
+      intro hbit hinv
+      -- v = lab[t]! since invPerm is injective on the range
+      obtain ⟨j, hj, hje⟩ := hsurj v hvn
+      have hjt : j = t := by
+        rw [← hje] at hinv
+        rw [getElem!_invPerm lab hinj (by omega)
+          (by rw [hje, hsz]; exact hvn)] at hinv
+        exact hinv
+      subst hjt
+      subst hje
+      rw [getElem!_rowsOf G (hlabl i hi),
+        testBit_rowOf_lt G (hlabl i hi) (hlabl j hj)] at hbit
+      rw [hadj] at hbit
+      cases hbit
+    · -- edge: the witness is lab[t]!
+      symm
+      rw [List.any_eq_true]
+      refine ⟨lab[t]!, List.mem_range.mpr (hlabl t ht), ?_⟩
+      simp only [Bool.and_eq_true, beq_iff_eq]
+      constructor
+      · rw [getElem!_rowsOf G (hlabl i hi),
+          testBit_rowOf_lt G (hlabl i hi) (hlabl t ht)]
+        exact hadj
+      · exact getElem!_invPerm lab hinj (by omega)
+          (by rw [hsz]; exact hlabl t ht)
+  · -- above the vertex range both sides are clear
+    rw [Nat.testBit_lt_two_pow
+      (Nat.lt_of_lt_of_le (rowOf_lt (G.relabel l) i)
+        (Nat.pow_le_pow_right (by omega) ht))]
+    symm
+    rw [testBit_image, List.any_eq_false]
+    intro v hv
+    simp only [Bool.and_eq_true, beq_iff_eq, not_and]
+    intro _ hinv
+    have := getElem!_invPerm_lt (lab := lab) (by omega) v
+    omega
+
+/-- The claimed labelling's leaf rows are exactly the rows of the
+relabelled graph. -/
+theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
+    {lab : Array Nat} (hsz : lab.size = n)
+    (hl : ∀ (i : Nat) (h : i < n), (l.get ⟨i, h⟩).val = lab[i]!) :
+    rowsOf (G.relabel l) =
+      (leafRows { n := n, g := rowsOf G } lab).toArray := by
+  rw [rowsOf, leafRows]
+  congr 1
+  refine List.map_congr_left fun i hi => ?_
+  exact rowOf_relabel hsz hl (List.mem_range.mp hi)
+
 end Hex.GraphIso.Nauty
