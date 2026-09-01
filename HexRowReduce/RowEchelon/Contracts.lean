@@ -128,6 +128,127 @@ Mathlib-free layer). -/
 def freeColsList (_E : IsEchelonForm M D) : List (Fin m) :=
   (List.finRange m).filter fun j => j ∉ D.pivotCols.toList
 
+/-- Linear merge used by the compiled implementation of `freeColsList`.
+
+The second list is a sorted sublist of the first.  Matching heads are
+discarded; otherwise the first head belongs to the complement.  Both recursive
+calls consume a column, and a matching call also consumes a pivot, so the loop
+is linear in the two input lengths. -/
+@[expose]
+def sortedComplement [DecidableEq α] : List α → List α → List α
+  | xs, [] => xs
+  | [], _ => []
+  | x :: xs, y :: ys =>
+      if x = y then
+        sortedComplement xs ys
+      else
+        x :: sortedComplement xs (y :: ys)
+
+private theorem sortedComplement_eq_filter [DecidableEq α]
+    {pivots cols : List α} (hsub : pivots.Sublist cols) (hnodup : cols.Nodup) :
+    sortedComplement cols pivots = cols.filter fun x => x ∉ pivots := by
+  induction hsub with
+  | slnil => simp [sortedComplement]
+  | @cons pivots cols x hsub ih =>
+      have hnot : x ∉ pivots := by
+        intro hx
+        exact (List.nodup_cons.mp hnodup).1 (hsub.subset hx)
+      cases pivots with
+      | nil =>
+          rw [sortedComplement]
+          symm
+          apply List.filter_eq_self.mpr
+          intro z hz
+          simp
+      | cons y ys =>
+          have hxy : x ≠ y := by
+            intro h
+            subst y
+            exact hnot (by simp)
+          rw [sortedComplement, if_neg hxy]
+          rw [ih (List.nodup_cons.mp hnodup).2]
+          rw [List.filter_cons]
+          have hp : (decide (x ∉ y :: ys) : Bool) = true := decide_eq_true hnot
+          rw [hp]
+          simp
+  | @cons_cons pivots cols x hsub ih =>
+      rw [sortedComplement, if_pos rfl, List.filter_cons_of_neg (by simp)]
+      rw [ih (List.nodup_cons.mp hnodup).2]
+      apply List.filter_congr
+      intro z hz
+      have hzx : z ≠ x := by
+        intro h
+        subst z
+        exact (List.nodup_cons.mp hnodup).1 hz
+      simp [hzx]
+
+private theorem pairwise_perm_eq {xs ys : List (Fin m)}
+    (hxs : List.Pairwise (fun a b : Fin m => a < b) xs)
+    (hys : List.Pairwise (fun a b : Fin m => a < b) ys)
+    (hperm : xs.Perm ys) : xs = ys := by
+  induction xs generalizing ys with
+  | nil => exact hperm.symm.eq_nil.symm
+  | cons x xs ih =>
+      cases ys with
+      | nil =>
+          have hlen := hperm.length_eq
+          simp at hlen
+      | cons y ys =>
+          have hxmem : x ∈ y :: ys := hperm.subset (by simp)
+          have hymem : y ∈ x :: xs := hperm.symm.subset (by simp)
+          have hxy : x = y := by
+            rcases List.mem_cons.mp hxmem with h | hx
+            · exact h
+            · rcases List.mem_cons.mp hymem with h | hy
+              · exact h.symm
+              · have hyx : y < x := (List.pairwise_cons.mp hys).1 x hx
+                have hxy : x < y := (List.pairwise_cons.mp hxs).1 y hy
+                omega
+          subst y
+          simp only [List.cons.injEq, true_and]
+          exact ih (List.pairwise_cons.mp hxs).2 (List.pairwise_cons.mp hys).2
+            hperm.cons_inv
+
+/-- Runtime implementation of `freeColsList`, merging the sorted pivot columns
+with the complete sorted column range. -/
+@[expose]
+def freeColsListImpl (E : IsEchelonForm M D) : List (Fin m) :=
+  sortedComplement (List.finRange m) D.pivotCols.toList
+
+private theorem pivotCols_sublist_finRange (E : IsEchelonForm M D) :
+    D.pivotCols.toList.Sublist (List.finRange m) := by
+  let p : Fin m → Bool := fun j => decide (j ∈ D.pivotCols.toList)
+  have hfilterPairs : List.Pairwise (fun a b : Fin m => a < b)
+      ((List.finRange m).filter p) := by
+    exact List.Pairwise.filter p (List.pairwise_lt_finRange m)
+  have hfilterNodup : ((List.finRange m).filter p).Nodup := by
+    rw [List.nodup_iff_pairwise_ne]
+    exact hfilterPairs.imp (fun hlt heq => by subst heq; omega)
+  have hperm : D.pivotCols.toList.Perm ((List.finRange m).filter p) := by
+    rw [List.perm_ext_iff_of_nodup E.pivotCols_nodup hfilterNodup]
+    intro a
+    constructor
+    · intro ha
+      rw [List.mem_filter]
+      exact ⟨List.mem_finRange a, show p a = true from by exact decide_eq_true ha⟩
+    · intro ha
+      rw [List.mem_filter] at ha
+      exact of_decide_eq_true ha.2
+  have heq : D.pivotCols.toList = (List.finRange m).filter p :=
+    pairwise_perm_eq E.pivotCols_pairwise hfilterPairs hperm
+  rw [heq]
+  exact List.filter_sublist
+
+/-- Register the linear merge as the compiled implementation of
+`freeColsList`.  The proof keeps the specification and all theorem-facing
+unfolding unchanged. -/
+@[csimp]
+theorem freeColsList_eq_impl : @freeColsList = @freeColsListImpl := by
+  funext R n m _ _ _ _ M D E
+  unfold freeColsList freeColsListImpl
+  exact (sortedComplement_eq_filter (E.pivotCols_sublist_finRange)
+    (List.nodup_finRange m)).symm
+
 /-- The number of free columns is the ambient column count minus the rank. -/
 theorem freeColsList_length (E : IsEchelonForm M D) :
     E.freeColsList.length = m - D.rank := by

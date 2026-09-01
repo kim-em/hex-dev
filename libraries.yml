@@ -246,8 +246,18 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpq_mat.rref rank via python-flint"
+          class: informational
+          rationale: "The rank result is identical and constant-size, so cached dense inputs permit a valid persistent-subprocess comparison. Full rowReduce is not paired because Hex additionally returns the row transform; nullspace and span witnesses have no native identical callable result in python-flint."
+      input_families:
+        - name: dense-rational-rref
+          description: Dense square rational I + J matrices with a pivot in every column and nonzero elimination above and below every pivot, plus a known row-span member.
+        - name: rank-deficient-rational-nullspace
+          description: Rank-and-nullity n / 2 rational matrices, using repeated I + J for public wrappers and an already-reduced sparse projection to isolate free columns, echelon coefficients, and contract-level nullspace construction.
   HexDeterminant:
     deps: [HexMatrix]
     mathlib: false

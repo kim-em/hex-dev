@@ -1530,6 +1530,9 @@ workflows:
                 .lake/build
                 .lake/packages/Hex*/.lake/build
                 .lake/packages/hex-test-kit/.lake/build
+                bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
                 conformance/.lake/packages/Hex*/.lake/build
                 conformance/.lake/packages/hex-test-kit/.lake/build
@@ -1547,11 +1550,20 @@ workflows:
             run: cd conformance && lake build
           - name: FLINT conformance oracle
             run: bash scripts/ci/run_oracles.sh
+          - name: Build + full bench verify (FLINT rank comparator)
+            env:
+              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
+              HEX_FLINT_BENCH_DRIVER: ${{ github.workspace }}/scripts/oracle/flint_bench_driver.py
+              HEX_FLINT_BENCH_PYTHON: python3
+            run: |
+              cd bench
+              lake build hexrowreduce_bench
+              bash ../scripts/ci/check_bench_verify_budget.sh hexrowreduce_bench
           - name: Assert Mathlib-free
             run: |
               if find . -type d -name mathlib | grep -q .; then
                 echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexRowReduce conformance 2>/dev/null; then
+              if grep -rqE '^import Mathlib' HexRowReduce conformance bench 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1562,6 +1574,9 @@ workflows:
                 .lake/build
                 .lake/packages/Hex*/.lake/build
                 .lake/packages/hex-test-kit/.lake/build
+                bench/.lake/build
+                bench/.lake/packages/Hex*/.lake/build
+                bench/.lake/packages/hex-test-kit/.lake/build
                 conformance/.lake/build
                 conformance/.lake/packages/Hex*/.lake/build
                 conformance/.lake/packages/hex-test-kit/.lake/build

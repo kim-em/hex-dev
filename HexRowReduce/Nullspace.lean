@@ -116,16 +116,28 @@ private theorem pivotIndex?_free_none (E : IsEchelonForm M D) (k : Fin (m - D.ra
   intro i
   exact E.pivotCols_disjoint_freeCols i k
 
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+/-- Reading the materialized pivot-row table agrees with `pivotIndex?`. -/
+@[simp] theorem pivotRows_get (j : Fin m) :
+    (Vector.ofFn fun j => pivotIndex? D j).get j = pivotIndex? D j := by
+  change (Vector.ofFn fun j => pivotIndex? D j)[j] = pivotIndex? D j
+  simp
+
 /-- Nullspace basis vectors assembled as columns indexed by the free variables. -/
 @[expose]
 def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     Matrix R m (m - D.rank) :=
   let freeCols := E.toIsEchelonForm.freeCols
+  -- Materialize the column-to-pivot-row lookup once.  `Matrix.ofFn` then
+  -- performs constant-time vector reads instead of scanning `pivotCols` for
+  -- every output entry.
+  let pivotRows : Vector (Option (Fin D.rank)) m :=
+    Vector.ofFn fun j => pivotIndex? D j
   Matrix.ofFn fun j k =>
     if hFree : j = freeCols.get k then
       1
     else
-      match pivotIndex? D j with
+      match pivotRows.get j with
       | some i =>
           -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i, freeCols.get k)]
       | none => 0
@@ -145,7 +157,7 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
   have hne : E.toIsEchelonForm.freeCols.get l ≠ E.toIsEchelonForm.freeCols.get k := by
     intro h
     exact hkl ((E.toIsEchelonForm.freeCols_injective h).symm)
-  simp [hne, pivotIndex?_free_none E.toIsEchelonForm l]
+  simp [hne, pivotRows_get, pivotIndex?_free_none E.toIsEchelonForm l]
 
 /-- In a pivot-column row, a nullspace-matrix entry is the negative RREF entry in
 the matching pivot row and free column. -/
@@ -154,7 +166,7 @@ the matching pivot row and free column. -/
     E.nullspaceMatrix[D.pivotCols.get i][k] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
   simp only [nullspaceMatrix, getElem_ofFn]
-  simp [E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
+  simp [pivotRows_get, E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
     pivotIndex?_pivot E.toIsEchelonForm i]
 
 /-- The individual nullspace basis vectors.

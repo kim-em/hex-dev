@@ -26,7 +26,7 @@ below because HexNumberFieldTower relies on it.
 | HexPoly | No multiplication comparator rung is eligible; the separate expected composition divergence is misfiled as a Concern and must move to the trend narrative. | [#9804](https://github.com/kim-em/hex-dev/issues/9804) |
 | HexMvPoly | The representation experiment remains unresolved under `## Concerns`. | [#9805](https://github.com/kim-em/hex-dev/issues/9805) |
 | HexMvGcd | Fixed shape/hash registrations are used as performance coverage without mode-3 budgets or ordered-mode exclusions. | [#9812](https://github.com/kim-em/hex-dev/issues/9812) |
-| HexRowReduce | Advertised compiled operations have conformance evidence but no performance mode. | [#9811](https://github.com/kim-em/hex-dev/issues/9811) |
+| HexRowReduce | Resolved: all advertised compiled operations have direct mode-1 coverage. | [#9811](https://github.com/kim-em/hex-dev/issues/9811) |
 | HexBareiss | An unresolved informational-comparator finding remains under `## Concerns`. | [#9806](https://github.com/kim-em/hex-dev/issues/9806) |
 | HexGF2 | The addition comparison is marshalling-dominated; the separate expected NTL divergence is misfiled as a Concern and must move to the trend narrative. | [#9807](https://github.com/kim-em/hex-dev/issues/9807) |
 | HexLLL | The verified-Isabelle comparison has only one point per headline family. | [#9808](https://github.com/kim-em/hex-dev/issues/9808) |
