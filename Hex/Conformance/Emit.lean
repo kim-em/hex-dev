@@ -222,6 +222,31 @@ def emitPolyFixtureWithModFactorDegrees (lib case : String) (coeffs : List Int)
     ("modFactorDegrees", jsonIntList degrees)
   ]
 
+/-- Emit a `graphiso` fixture record: a coloured graph together with the
+Lean-computed nauty-compatible canonical answer. `colors` is the colour
+of each vertex; `edges` lists the undirected edges as lexicographic
+`i < j` pairs; `canonLab` is the canonical label (old vertex at each new
+position); `canonTri` serializes the canonical upper-triangle adjacency
+bits in row-major order; `cellSizes` are the ordered colour-cell sizes;
+`numnodes` is the search-node counter. -/
+def emitGraphIsoFixture (lib case : String) (n k : Nat)
+    (colors : List Int) (edges : List (Int × Int)) (canonLab : List Int)
+    (canonTri : String) (cellSizes : List Int) (numnodes : Nat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",      jsonString "graphiso"),
+    ("schema",    jsonInt 1),
+    ("lib",       jsonString lib),
+    ("case",      jsonString case),
+    ("n",         jsonInt (Int.ofNat n)),
+    ("k",         jsonInt (Int.ofNat k)),
+    ("colors",    jsonIntList colors),
+    ("edges",     jsonIntMatrix (edges.map fun (a, b) => [a, b])),
+    ("canonLab",  jsonIntList canonLab),
+    ("canonTri",  jsonString canonTri),
+    ("cellSizes", jsonIntList cellSizes),
+    ("numnodes",  jsonInt (Int.ofNat numnodes))
+  ]
+
 /-- Emit a `matrix` fixture record. -/
 def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := do
   emitLine <| jsonObject [

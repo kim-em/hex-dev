@@ -93,6 +93,15 @@ jobs:
           python3 -m pip install --user \
             python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
+      # Content-addressed cache of the pinned nauty 2.9.3 tarball and the
+      # compiled oracle shim, keyed by the SPEC's SHA-256. The oracle
+      # driver verifies the hash on every run; the ANU URL stays the
+      # provenance source and cache-cold fallback.
+      - name: Restore pinned nauty source cache (graphiso oracle)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/hex-nauty
+          key: nauty-9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b-v1
       - name: Verify factorization measurements and figures are current
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py
