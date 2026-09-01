@@ -629,6 +629,14 @@ def runCoordinateMaps : Unit → IO UInt64 := fun _ => do
   let input ← getMapInput
   return flattenChecksum input.result
 
+def runToPrimitive : Unit → IO UInt64 := fun _ => do
+  let input ← getMapInput
+  let T := input.tower.extension.tower
+  return (List.range T.dim).foldl (fun checksum i =>
+    let basis := ofCoeffs T (Flatten.unitCoords T.dim i)
+    mixHash checksum (qAdjoinChecksum (input.result.toPrimitive basis)))
+    (hash T.dim)
+
 def runRecoverPair : Unit → IO UInt64 := fun _ => do
   let input ← getRecoveryInput
   match Flatten.recoverPairFast?
@@ -687,12 +695,22 @@ setup_fixed_benchmark runCertifies where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor for the conversion closures produced by `flatten?`.
-`runToPrimitiveLadder` and `runFromPrimitiveLadder` provide their mode-1
-performance coverage. -/
+/- Expected-hash anchor for both conversion closures produced by `flatten?`.
+It does not independently discharge their performance coverage. -/
 setup_fixed_benchmark runCoordinateMaps where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xcc1b7720bfe3fc24,
+  warmupFirstIter := true, minTotalSeconds := 0.2
+}
+
+/- Mode 3 for the public `toPrimitive` closure. The full-basis dimension
+schedule `4,6,8,10,12,18` rejects the independently derived cubic model with
+residual `+0.521` as coefficient growth takes over at the final rung. The
+dimension-four completed flattening is canonical; its 1 s zero-grace
+whole-child ceiling is the next ordered mode. -/
+setup_fixed_benchmark runToPrimitive where {
+  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  expectedHash := some 0xb5d54195958fb61e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
@@ -754,10 +772,13 @@ setup_fixed_benchmark runNeg where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runTowerDivLadder` supplies mode-1 performance
-coverage for this operation. -/
+/- Mode 3. Extending the height-two schedule through dimension 24 rejects the
+independently derived `n² log n` model with residual `+0.594`; coefficient
+growth in the divisor's Euclidean chain prevents a stable dimension-only wall
+model, and no published bound covers that measured growth. The dimension-four
+division is canonical and uses a 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runDiv where {
-  repeats := 5, maxSecondsPerCall := 2.0,
+  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xe534ce65592907a8,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -1024,21 +1045,6 @@ setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model. Division performs one recursive extended-gcd inversion followed
-by one quadratic multiplication/reduction. On this fixed-base family the
-`n^2 log n` inversion term dominates, giving the same independently derived
-wall model as `runTowerInvLadder`. -/
-setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
-  with prep := prepElemInput
-  where {
-    paramFloor := 1
-    paramCeiling := 12
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
-    maxSecondsPerCall := 300.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
-
 /-! # Trager factorization ladder -/
 
 /-- Ascending rational coefficients of the Selmer trinomial `X^m - X - 1`
@@ -1296,18 +1302,6 @@ def runFromPrimitiveLadder (input : MapLadderInput) : UInt64 :=
         mixHash checksum (elemChecksum (result.fromPrimitive primitive)))
         (hash input.tower.dim)
   | none => 0
-
-/- Cost model. The benchmark applies `toPrimitive` to all `D = 2n` tower
-basis vectors. Each application visits `D` precomputed images and performs
-`D` scalar multiplications/additions on length-`D` primitive coordinates,
-`Θ(D²)` work per vector and `Θ(D³)` for the full basis. -/
-setup_benchmark runToPrimitiveLadder n => n * n * n
-  with prep := prepMapLadderInput
-  where {
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
 
 /- Cost model. The benchmark applies `fromPrimitive` to all `D = 2n`
 primitive basis vectors. Horner evaluation takes `D` tower
