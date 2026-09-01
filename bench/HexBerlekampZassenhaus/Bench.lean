@@ -1083,7 +1083,7 @@ setup_fixed_benchmark runFactorSlowCompareChecksum where {
     expectedHash := some 0x352456cfdef1ea82
   }
 
-/- Mode 3: `X^4 + 1` records one canonical
+/- Mode 3 absolute bound: `X^4 + 1` records one canonical
 recombination shape where the integer polynomial is irreducible but splits
 modulo `5`. The clean `0b95505b` calibration maximum was 0.030 ms. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
@@ -1101,7 +1101,7 @@ setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     expectedHash := some 0xf31efeaecbf8fa27
   }
 
-/- Mode 3 lattice precision-cap setup for `X^4 + 1`, measuring the public
+/- Mode 3 absolute bound for lattice precision-cap setup on `X^4 + 1`, measuring the public
 precision cap plus the pinned `p = 5` modular split profile. The clean
 `0b95505b` calibration maximum was 0.021 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
@@ -1128,7 +1128,7 @@ setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
     expectedHash := some 0x21b9063dace28489
   }
 
-/- Mode 3: `(X^2 - 2)(X^2 - 3)` splits into four local linear factors at the
+/- Mode 3 absolute bound: `(X^2 - 2)(X^2 - 3)` splits into four local linear factors at the
 pinned fixture prime and recombines into two true quadratics. The clean
 `0b95505b` calibration maximum was 0.028 ms. -/
 setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
@@ -1138,7 +1138,7 @@ setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
     expectedHash := some 0x2939937eff41b345
   }
 
-/- Mode 3: `Phi_15` exercises the recombination hot path on a canonical
+/- Mode 3 absolute bound: `Phi_15` exercises the recombination hot path on a canonical
 degree-eight cyclotomic fixture. The clean `0b95505b` calibration maximum was
 0.089 ms. -/
 setup_fixed_benchmark runFactorAdvPhi15Checksum where {
@@ -1148,7 +1148,7 @@ setup_fixed_benchmark runFactorAdvPhi15Checksum where {
     expectedHash := some 0x0f794f386e54863f
   }
 
-/- Mode 3 fast-path setup for `Phi_15`, keeping the precision cap and pinned
+/- Mode 3 absolute bound for fast-path setup on `Phi_15`, keeping the precision cap and pinned
 `p = 31` eight-linear split visible without the public fallback combinator.
 The clean `0b95505b` calibration maximum was 0.026 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
@@ -1159,7 +1159,7 @@ setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
   }
 
 /-
-Mode 3: the Swinnerton-Dyer `SD_3` modular-split profile pins this canonical
+Mode 3 absolute bound: the Swinnerton-Dyer `SD_3` modular-split profile pins this canonical
 degree-eight polynomial at its conformance prime and records its eight linear
 local factors. The clean `0b95505b` calibration maximum was 0.009 ms.
 -/
@@ -1170,7 +1170,7 @@ setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
     expectedHash := some 0xe2da56484730f726
   }
 
-/- Mode 3: full `factorLattice` on Swinnerton-Dyer `SD_3`, certifying
+/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_3`, certifying
 irreducibility via the early-stop separation certificate (#8395). The clean
 `0b95505b` calibration maximum was 1.604 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
@@ -1180,7 +1180,7 @@ setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
     expectedHash := some 0xd91e58bd22915e00
   }
 
-/- Mode 3: full `factorLattice` on Swinnerton-Dyer `SD_4` (degree 16), the
+/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_4` (degree 16), the
 extreme-`r` tail case for the #8395 early stop. The clean `0b95505b`
 calibration maximum was 30.227 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {

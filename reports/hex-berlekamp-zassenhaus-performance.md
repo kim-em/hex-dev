@@ -9,7 +9,7 @@ Linux x86-64). Clean parametric sweeps at revision `5b3efbc7` establish why
 the former modes fail. The clean `e51066e1` calibration fixes absolute budgets
 before the initial `609465e8` acceptance run, and the clean inclusive audit
 below establishes phase attribution. A clean current-main acceptance run at
-`c5452076` reconfirms that all fourteen selected mode-3 registrations pass.
+`6a1a388d` reconfirms that all twenty-two selected mode-3 registrations pass.
 The direct dependencies are now through Phase 4 or later (`HexBerlekamp` 7,
 `HexHensel` 4, and `HexLLL` 7), so the Phase-4 dependency gate is met. The
 cross-system Hex record remains the clean revision `7425e083` run on
@@ -39,10 +39,11 @@ the coverage contract for this report:
 - `cld-fast-path`: `runFastPathPrecisionLocalChecksum` at
   `(degree, height, precision, local factors) = (8, 32, 128, 8)`. This is
   fast-path setup, not a complete `factorLattice` call.
-- `ho2-adversarial-recombination`: the fixed `runFactorAdv*` ladder
-  (`X^4 + 1`, `(X^2-2)(X^2-3)`, Swinnerton-Dyer SD3 with its pinned modular
-  split, `Phi_15`) plus the fixed lattice entries
-  `runFactorLatticeAdvSwinnertonDyerSD3/SD4Checksum`.
+- `ho2-adversarial-recombination`: `runFactorAdvX4Plus1Checksum`,
+  `runFactorAdvQuadSqrt2Sqrt3Checksum`, `runFactorAdvPhi15Checksum`,
+  `runFactorFastSetupAdvX4Plus1Checksum`, `runFactorFastSetupAdvPhi15Checksum`,
+  `runAdvSwinnertonDyerSD3ModularSplitChecksum`, and the full-lattice
+  `runFactorLatticeAdvSwinnertonDyerSD3/SD4Checksum` checks.
 
 Six product-adoption targets are also fixed: the schoolbook and dispatch pairs
 at 64 lifted factors, 32 dense reassembly factors, and 256 skew factors. The
@@ -55,7 +56,8 @@ record for cross-system evidence; `list` and `verify` run in CI on every PR.
 
 ### Complexity-mode audit
 
-Every formerly parametric factor and product registration selects **mode 3**.
+Every formerly parametric factor and product registration, together with the
+eight fixed adversarial performance registrations, selects **mode 3**.
 Asymptotic regression detection is deliberately given up for these operations;
 the fixed targets detect absolute regressions on canonical hard inputs instead.
 
@@ -90,6 +92,15 @@ different calls. The precision/local profile includes the result checksum as
 well as every computational phase. No phase covered by the cited lattice
 analysis controls any measured family.
 
+The inclusive command was
+`python3 scripts/bench/hexbz_complexity_audit.py --output
+reports/bench-results/hexbz-complexity-audit-2dbfd1d3-chungus2.json --cpu auto
+--warmup 1 --repeats 5 --cutoff 30`. The parametric exports use the eight factor
+or six product target names printed in their JSON, respectively, with
+`taskset -c "$(python3 scripts/bench/idle_core.py)"
+.lake/build/bin/hexbz_bench run ... --export-file <cited-path>`; their exact
+parameter schedules and runner configuration are embedded in every result.
+
 The three slow targets time `factorTrial`, not modular-factor subset
 recombination. `positiveDivisors` and `integerRootCandidates` scan every integer
 through the absolute constant coefficient before the residual coefficient-vector
@@ -119,6 +130,15 @@ at least ten times the calibration maximum. The lifted-product pair uses a
 byte-identical trial split/compare targets share the 800 ms budget derived from
 their worse 75.715 ms calibration maximum.
 
+The eight adversarial inputs use the earlier clean fixed calibration
+`reports/bench-results/hex-berlekamp-zassenhaus-fixed-0b95505b-gcd-hensel-chungus2.json`
+(SHA-256 `82ddd9e54cfafcfefc936ffeb1f1c8bb7e926e7545cd2b992ecfbc508e1ee78d`).
+That export predates budget selection and contains precisely the eight
+adversarial registrations, all successful with agreeing hashes. The six
+micro-check budgets round upward to 5 ms; the SD3 and SD4 full lattice budgets
+round upward to 25 ms and 400 ms. Every ceiling is at least ten times its
+calibration maximum.
+
 This margin admits allocator and shared-runner noise while still rejecting
 operation-specific order-of-magnitude regressions. The trial target's
 variability is part of the implementation being measured: `positiveDivisors`
@@ -127,26 +147,88 @@ make every fixed check semantic as well as temporal.
 
 | Target/input | Clean median | Budget |
 |---|---:|---:|
-| public split, `smokeInput 24` | 3.705 ms | 50 ms |
-| historical fallback probe, degree 24 | 3.474 ms | 50 ms |
-| trial split, `smokeInput 8` | 2.428 ms | 800 ms |
-| public compare, `smokeInput 8` | 0.255 ms | 5 ms |
-| trial compare, `smokeInput 8` | 2.455 ms | 800 ms |
-| public degree/height `(6, 32)` | 0.171 ms | 5 ms |
-| trial degree/height `(4, 8)` | 7.734 ms | 100 ms |
-| precision/local `(8, 32, 128, 8)` | 1.048 ms | 20 ms |
-| lifted products, 64 factors (reference / dispatch) | 9.575 / 9.518 ms | 500 ms |
-| dense reassembly, 32 factors (reference / dispatch) | 111.336 / 111.248 ms | 1.2 s |
-| skew products, 256 factors (reference / dispatch) | 79.941 / 79.751 ms | 900 ms |
+| public split, `smokeInput 24` | 3.738 ms | 50 ms |
+| historical fallback probe, degree 24 | 3.489 ms | 50 ms |
+| trial split, `smokeInput 8` | 2.319 ms | 800 ms |
+| public compare, `smokeInput 8` | 0.258 ms | 5 ms |
+| trial compare, `smokeInput 8` | 2.316 ms | 800 ms |
+| public degree/height `(6, 32)` | 0.173 ms | 5 ms |
+| trial degree/height `(4, 8)` | 0.794 ms | 100 ms |
+| precision/local `(8, 32, 128, 8)` | 1.019 ms | 20 ms |
+| lifted products, 64 factors (reference / dispatch) | 9.565 / 9.590 ms | 500 ms |
+| dense reassembly, 32 factors (reference / dispatch) | 112.124 / 112.377 ms | 1.2 s |
+| skew products, 256 factors (reference / dispatch) | 80.170 / 79.714 ms | 900 ms |
+| `X^4 + 1`, public / fast setup | 0.033 / 0.017 ms | 5 / 5 ms |
+| `(X^2-2)(X^2-3)`, public | 0.033 ms | 5 ms |
+| `Phi_15`, public / fast setup | 0.083 / 0.020 ms | 5 / 5 ms |
+| SD3 modular split | 0.009 ms | 5 ms |
+| SD3 / SD4 full lattice | 1.579 / 29.933 ms | 25 / 400 ms |
 
 The clean current-main export
-`reports/bench-results/hex-berlekamp-zassenhaus-fixed-c5452076-chungus2.json`
-(SHA-256 `37010c2543605d1759b9c3fee139b13e0d7333e2ea64f74fea797cee3d2553b3`)
-records all fourteen mode-3 registrations passing the independently fixed
+`reports/bench-results/hex-berlekamp-zassenhaus-fixed-6a1a388d-chungus2.json`
+(SHA-256 `ce371f9959bbf0ebe87dbb2f3111e3c20dfc5d82e78d9cbf83840476def48cd6`)
+records all twenty-two mode-3 registrations passing the independently fixed
 budgets, with all five repeats successful, no budget truncation, and every
 expected hash matching. The
 `runIsabelle*` fixed endpoints remain comparator anchors; they make no
 complexity claim and do not replace performance coverage.
+
+CPU 1 was returned idle with all SMT siblings idle immediately before the
+current run. Its exact command was:
+
+```sh
+taskset -c 1 .lake/build/bin/hexbz_bench run \
+  Hex.BerlekampZassenhausBench.runFactorChecksum \
+  Hex.BerlekampZassenhausBench.runFactorFallbackProbeChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowChecksum \
+  Hex.BerlekampZassenhausBench.runFactorCompareChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum \
+  Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
+  Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum \
+  Hex.BerlekampZassenhausBench.runTrialProductSchoolbookChecksum \
+  Hex.BerlekampZassenhausBench.runTrialProductChecksum \
+  Hex.BerlekampZassenhausBench.runReassemblyProductSchoolbookChecksum \
+  Hex.BerlekampZassenhausBench.runReassemblyProductChecksum \
+  Hex.BerlekampZassenhausBench.runSkewProductSchoolbookChecksum \
+  Hex.BerlekampZassenhausBench.runSkewProductChecksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum \
+  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum \
+  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum \
+  Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum \
+  Hex.BerlekampZassenhausBench.runFactorLatticeAdvSwinnertonDyerSD3Checksum \
+  Hex.BerlekampZassenhausBench.runFactorLatticeAdvSwinnertonDyerSD4Checksum \
+  --export-file \
+  reports/bench-results/hex-berlekamp-zassenhaus-fixed-6a1a388d-chungus2.json
+```
+
+### Phase 5–7 re-attestation
+
+The Phase-5 conformance evidence remains current: the clean 107-case FLINT
+oracle pass retained by `dfefdfac2` covers production source that has not
+changed since, a fresh `hexbz_emit_fixtures` emission is byte-identical to that
+committed fixture, and `bz_trace_gate.py` accepts all 55 production dispatch
+traces. The published trust-surface check also confirms zero `sorry`, `axiom`,
+or `native_decide` occurrences.
+
+The Phase-6 API audit from `2f43d702b` established clean Batteries docstring
+and theorem lint, complete public/non-obvious-helper docstrings, no dead
+declarations, native Lean execution, and Lean-checked irreducibility
+certificates. Production library source is byte-identical to that audited
+state; subsequent library-tree changes affect only the SPEC, README, and
+quickstart test. Against the previous committed mode-3 acceptance baseline
+`609465e8`, the fourteen shared medians range from `0.369x` to `1.010x`; there
+is no performance regression. The eight adversarial registrations compare
+against their clean `0b95505b` baseline and remain within their independently
+fixed budgets.
+
+For Phase 7, `check_phase7.py` confirms the reference chapter and anchored
+prime-splitting tutorial, both of which build in `HexManual`. The released
+manifest checker separately confirms the README shape, and
+`HexBerlekampZassenhaus.FactorTacticTests` build-checks its quickstart. The
+manual-split checker confirms the chapter remains in its published location.
 
 ## Comparator Ratios
 
@@ -259,24 +341,14 @@ the most allocator-bound (49.9%), consistent with its integer-candidate
 churn. No capture shows a dominant cost in a function the SPEC does not
 name as hot; no audit-found issue was filed from these captures.
 
-The `ho2-adversarial-recombination` family's registered cases are all fixed
-micro-checks (0.2 s timed floors over µs-ms bodies); the lean-bench child
-emits no timed-region sidecar for fixed dispatch, so the orchestrator cannot
-capture them. Its shape coverage is carried by the `public-factor-combinator`
+The `ho2-adversarial-recombination` family's registered cases are fixed checks
+with tuned timing floors over µs-ms bodies; the lean-bench child emits no
+timed-region sidecar for fixed dispatch, so the orchestrator cannot capture
+them. Its shape coverage is carried by the `public-factor-combinator`
 capture, which exercises the same production cascade code path, and its
 timing evidence by the fixed adversarial ladder in Verdicts and the
 committed dispatch baseline above. This is the declared scope of profile
 coverage for that family, not an omission.
-
-The preserved Phase 5–7 evidence was re-attested after the Phase-4 gate
-opened. The library remains free of `sorry`, `axiom`, and `native_decide`; its
-library, conformance, factorization-module, manual, tutorial, and README
-quickstart targets build on the pinned toolchain. The fourteen-target clean
-run above is the Phase-6 performance regression check against the independently
-fixed budgets. The Phase-7 structural checker confirms the reference chapter,
-the anchored prime-splitting tutorial, and the released-package README, while
-the release and manual-split checks confirm that those preserved artifacts are
-still wired into their published locations.
 
 ## Concerns
 
