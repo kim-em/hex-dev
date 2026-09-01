@@ -1088,7 +1088,7 @@ recombination shape where the integer polynomial is irreducible but splits
 modulo `5`. The clean `0b95505b` calibration maximum was 0.030 ms. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0xdbadaf53f188eac1
   }
@@ -1106,7 +1106,7 @@ precision cap plus the pinned `p = 5` modular split profile. The clean
 `0b95505b` calibration maximum was 0.021 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0x6125716b68ef63ab
   }
@@ -1133,7 +1133,7 @@ pinned fixture prime and recombines into two true quadratics. The clean
 `0b95505b` calibration maximum was 0.028 ms. -/
 setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0x2939937eff41b345
   }
@@ -1143,7 +1143,7 @@ degree-eight cyclotomic fixture. The clean `0b95505b` calibration maximum was
 0.089 ms. -/
 setup_fixed_benchmark runFactorAdvPhi15Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0x0f794f386e54863f
   }
@@ -1153,7 +1153,7 @@ setup_fixed_benchmark runFactorAdvPhi15Checksum where {
 The clean `0b95505b` calibration maximum was 0.026 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0xf58fd4dcfb9a609a
   }
@@ -1165,7 +1165,7 @@ local factors. The clean `0b95505b` calibration maximum was 0.009 ms.
 -/
 setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.001
     maxSecondsPerCall := 0.005
     expectedHash := some 0xe2da56484730f726
   }
@@ -1175,7 +1175,7 @@ irreducibility via the early-stop separation certificate (#8395). The clean
 `0b95505b` calibration maximum was 1.604 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
+    minTotalSeconds := 0.005
     maxSecondsPerCall := 0.025
     expectedHash := some 0xd91e58bd22915e00
   }
