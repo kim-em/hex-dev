@@ -34,12 +34,12 @@
    bridge, transported along the equivalence so the operations stay the
    executable ones.
 
-   The same boundary applies to cslib, which itself depends on Mathlib.
-   Computational libraries are cslib-free; proved operation-count bounds
-   live in `-cslib` companion libraries (the first is
-   [hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md)), which are
-   proof-only and follow every build rule that applies to `-mathlib`
-   libraries.
+   cslib also depends on Mathlib. A computational library therefore does not
+   import cslib. A planned `-cslib` proof library may import a computational
+   library and prove operation-count theorems for definitions in it. Such a
+   library has no executable API, conformance target, or benchmark target.
+   [hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md) specifies the first
+   instance of this pattern.
 
 3. **Performant by default.** Dense array-backed representations, `UInt64`
    coefficients for `F_p`, Barrett/Montgomery reduction for modular

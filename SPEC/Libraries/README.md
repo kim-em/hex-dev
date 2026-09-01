@@ -11,7 +11,7 @@
 - **hex-mv-hensel**: multivariate Hensel lifting against an evaluation ideal, with the coprimality witness, leading-coefficient contract, and reconstruction that Wang's EEZ factorization needs
 - **hex-mv-factor**: factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, with a checked product decomposition and a separate irreducibility certificate
 - **hex-truncated-series**: power series truncated at a precision fixed in the type, with Newton inversion, square root, `exp`, `log`, composition, and reversion
-- **hex-poly-fast**: explicit lawful multiplication plans, Karatsuba and clipped products, Schönhage's radix-3 multiplication with triadic reference semantics, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
+- **hex-poly-fast**: explicit lawful multiplication plans, Karatsuba and clipped products, planned Schönhage radix-3 multiplication with triadic reference semantics, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
@@ -31,7 +31,7 @@
 - **hex-modular-matrix**: multi-modular determinant, certified rank, and Dixon p-adic linear solving over `Q`
 - **hex-finite-field**: the Mathlib-free `F_q` interface (characteristic, degree, Frobenius, indexing), the generic `q`-power Frobenius and Frobenius matrix
 - **hex-poly-fp**: polynomials over `F_p`, Frobenius map, square-free decomposition, packed/NTT/CRT-NTT multiplication, lazy reduction for small p
-- **hex-gf2**: packed bitwise polynomials over `F_2` (XOR + CLMUL) with the schoolbook/Karatsuba/Schönhage multiplication ladder, `GF(2^n)` elements
+- **hex-gf2**: packed bitwise polynomials over `F_2` (XOR + CLMUL), a planned schoolbook/Karatsuba/Schönhage multiplication ladder, `GF(2^n)` elements
 - **hex-poly-z**: polynomials over `Z`, content/primitive part, Mignotte bound, multipoint Kronecker and CRT-NTT multiplication
 - **hex-poly-z-gcd**: modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division
 - **hex-cyclotomic**: dense integer cyclotomic polynomials from a checked factorization of the index, the divisor family, and the factorization of `x^n - 1`
@@ -100,15 +100,14 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
 
-**cslib companion libraries** (each depends on a computational library and
-on [cslib](https://github.com/leanprover/cslib), which itself depends on
-Mathlib; they prove operation-count bounds in cslib's query-complexity
-framework about the algorithms their computational owners execute):
+**cslib companion libraries** (planned proof-only libraries that depend on a
+computational library and on
+[cslib](https://github.com/leanprover/cslib), which itself depends on
+Mathlib):
 
-- **hex-poly-fast-cslib**: coefficient-operation bounds for the Karatsuba
-  dispatcher and Schönhage's radix-3 multiplication, with the
-  specialization and cost-obliviousness theorems that tie the counted
-  programs to the executable workers
+- **hex-poly-fast-cslib**: coefficient-operation bounds for the proof-facing
+  Karatsuba and Schönhage workers, including specialization and
+  cost-obliviousness theorems. The bounds exclude raw `@[csimp]` runtimes.
 
 ## Implementation dependencies
 
@@ -163,7 +162,7 @@ Each library with its immediate dependencies:
 - **hex-gfq-ring**: hex-poly-fp
 - **hex-gfq-field**: hex-gfq-ring, hex-berlekamp, hex-finite-field
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
-- **hex-gf2**: hex-basic, hex-poly, hex-poly-fast, hex-mod-arith, hex-finite-field
+- **hex-gf2**: hex-basic (specified additions: hex-finite-field, hex-poly, hex-poly-fast, hex-mod-arith)
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
 - **hex-summation**: hex-poly, hex-mv-poly, hex-resultant, hex-matrix, hex-row-reduce, hex-berlekamp-zassenhaus, hex-basic
 
@@ -213,8 +212,8 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-summation-mathlib**: hex-summation
 - **hex-graph-iso-mathlib**: hex-graph-iso
 
-cslib companion libraries (each also depends on cslib, and through it on
-Mathlib):
+cslib companion libraries (planned, each also depends on cslib and therefore
+on Mathlib):
 
 - **hex-poly-fast-cslib**: hex-poly-fast
 
@@ -518,22 +517,28 @@ hex-poly-z owns multipoint Kronecker and integer CRT-NTT dispatch. The complete
 boundary and staged dependency change are specified in
 [hex-poly-fast](../../HexPolyFast/SPEC/hex-poly-fast.md).
 
-hex-gf2 joins this corner the same way hex-poly-fp did: it moves above
-hex-poly-fast (and hex-mod-arith, for the `ZMod64 2` coefficient type) so it
-can own the packed Schönhage kernel for `F_2[x]`, whose correctness goes
-through the generic triadic algorithm:
+The planned hex-gf2 multiplication ladder adds dependencies on hex-poly,
+hex-poly-fast, and hex-mod-arith. HexGF2 will use `DensePoly (ZMod64 2)` to
+prove the packed Schönhage kernel correct against the generic triadic
+algorithm:
 
 ```text
-hex-poly-fast ──┐
-hex-mod-arith ──┼── hex-gf2
-hex-basic ──────┘
+hex-poly ───────────┐
+hex-poly-fast ──────┤
+hex-mod-arith ──────┼── hex-gf2
+hex-finite-field ───┤
+hex-basic ──────────┘
 ```
 
-Beside the Mathlib companions there is one cslib companion so far.
-`hex-poly-fast-cslib` depends on hex-poly-fast and cslib, and proves
-coefficient-operation bounds for the Karatsuba and Schönhage workers; like
-the `-mathlib` layers it is proof-only and sits outside the Mathlib-free
-build surface:
+`hex-poly-fast` depends on `hex-truncated-series`. Neither library is yet in
+[`scripts/release/released.yml`](../../scripts/release/released.yml). The
+released hex-gf2 mirror can add these dependencies only after
+hex-truncated-series and hex-poly-fast are published in dependency order.
+The monorepo build is not blocked by this release ordering.
+
+The planned `hex-poly-fast-cslib` library depends on hex-poly-fast and cslib.
+It proves coefficient-operation bounds for the proof-facing Karatsuba and
+Schönhage workers. It has no computational or benchmark target:
 
 ```text
 hex-poly-fast ── hex-poly-fast-cslib
@@ -662,10 +667,10 @@ for developments whose source-local move has not happened yet.
 - [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
 - [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion
 - [hex-truncated-series-mathlib](../../HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md): quotient-by-`X ^ n` equivalence and operation correspondence
-- [hex-poly-fast.md](../../HexPolyFast/SPEC/hex-poly-fast.md): explicit lawful multiplication plans, Karatsuba and clipped products, Schönhage's radix-3 multiplication with triadic reference semantics, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
-- [hex-poly-fast-cslib.md](hex-poly-fast-cslib.md) (planned): coefficient-operation bounds for the Karatsuba dispatcher and Schönhage's radix-3 multiplication, in cslib's query-complexity framework
+- [hex-poly-fast.md](../../HexPolyFast/SPEC/hex-poly-fast.md): explicit lawful multiplication plans, Karatsuba and clipped products, planned Schönhage radix-3 multiplication with triadic reference semantics, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
+- [hex-poly-fast-cslib.md](hex-poly-fast-cslib.md) (planned): coefficient-operation bounds for the proof-facing Karatsuba and Schönhage workers in cslib's query-complexity framework
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition, and packed/direct-NTT/CRT-NTT multiplication
-- [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2` with the schoolbook/Karatsuba/Schönhage multiplication ladder, `GF(2^n)` elements
+- [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, a planned schoolbook/Karatsuba/Schönhage multiplication ladder, `GF(2^n)` elements
 - [hex-gf2-mathlib](../../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md): `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - [hex-poly-fp-mathlib](../../HexPolyFpMathlib/SPEC/hex-poly-fp-mathlib.md): `FpPoly p ≃+* Polynomial (ZMod p)`, the crossing point to Mathlib's polynomial type
 - [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md): polynomials over `Z`, content/primitive part, Mignotte bound, multipoint Kronecker, and CRT-NTT multiplication

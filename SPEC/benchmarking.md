@@ -750,6 +750,12 @@ with a library-specific reason identifying exactly one of:
   the evidence for the operations it transports; more than one owner is
   normal, since a layer may transport operations from several
   Mathlib-free libraries.
+- **complexity-layer**: the library is explicitly classified by
+  `complexity_layer: true` in `libraries.yml`. It contains only definitions
+  and proofs used to establish operation bounds, so it has zero bench targets
+  and requires no headline performance report. The declaration names every
+  computational performance owner whose bench targets measure the analysed
+  operations.
 
 Generic "not applicable" is not a valid declaration. Unwired-but-
 required comparators are declared with the `blocked` state per

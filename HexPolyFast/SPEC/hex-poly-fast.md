@@ -81,9 +81,9 @@ In scope:
 - explicit lawful multiplication plans;
 - schoolbook and Karatsuba full products, squaring, unbalanced products, and
   arbitrary clipped products;
-- cyclic, negacyclic, and triadic products with positive length;
-- the fixed-length triadic carrier, the symbolic radix-3 transform, the
-  proof-carrying Schönhage schedule, and the Schönhage multiplication plan;
+- positive-length cyclic, negacyclic, and triadic products;
+- fixed-length triadic arithmetic, radix-3 transforms, checked parameter
+  schedules, and the Schönhage multiplication plan;
 - reversal and fixed-precision `TSeries` bridges;
 - Newton reciprocal precomputation and fast monic/field division;
 - half-gcd, gcd, full extended gcd, and one-sided extended gcd;
@@ -106,14 +106,12 @@ Out of scope:
 - changing `DensePoly.mul`, its `Mul` instance, or its minimal typeclass
   requirements;
 - a `PolyOps` abstraction over dense and sparse representations;
-- Toom-Cook before a measured gap remains between Karatsuba and the
-  coefficient-specific kernels. The Schönhage plan below is not subject to
-  this deferral: over coefficient rings with no suitable roots of unity
-  (`F_2` and its extensions), the word-prime radix-2 NTT path cannot be
-  instantiated, so no coefficient-specific kernel covers the regime the
-  radix-3 algorithm addresses, and the complexity-class gap against
-  NTL/gf2x is already recorded in
-  [hex-gf2 §External comparators](../../HexGF2/SPEC/hex-gf2.md);
+- Toom-Cook before measurements show a remaining gap between Karatsuba and
+  the coefficient-specific kernels. This deferral does not include the
+  Schönhage plan. The existing word-prime radix-2 NTT cannot be instantiated
+  directly over `F_2` or its extensions, and
+  [hex-gf2 §External comparators](../../HexGF2/SPEC/hex-gf2.md) records the
+  resulting complexity difference from NTL/gf2x;
 - additive FFTs (Cantor, Gao-Mateer) and the wrapped-product splitting
   reconstruction of Brent-Gaudry-Thomé-Zimmermann §3.3;
 - integer Schönhage-Strassen multiplication;
@@ -254,57 +252,61 @@ new algebraic semantics.
 
 ### Triadic products
 
-The triadic product is the ordinary product modulo `x^(2m) + x^m + 1`. It is
-the third reference family beside the cyclic and negacyclic folds, and it is
-the algebraic object of Schönhage's radix-3 multiplication algorithm: in the
-quotient by `x^(2m) + x^m + 1` the residue of `x` has multiplicative order
-`3m`, which supplies synthetic roots of unity over coefficient rings that
-have none of their own.
+For `0 < m`, the triadic product is ordinary multiplication reduced modulo
+`x^(2m) + x^m + 1`. It is the reference operation used by Schönhage's
+radix-3 algorithm.
 
-The reference fold maps input exponent `i` to `r = i % (3 * m)`. When
-`r < 2 * m` the coefficient is added at slot `r`. Otherwise
-`x^r = -x^(r - m) - x^(r - 2*m)`, so the coefficient is subtracted at slots
-`r - m` and `r - 2*m`. As with the other two families, a proof-taking API
-requires `0 < m`, checked forms return `none` at `m = 0`, and the theorems
-identify the fold with the canonical remainder modulo the monic
-`x^(2m) + x^m + 1` and bound its size by `2 * m`.
+The fold reduces an exponent `i` by setting `r = i % (3 * m)`. If
+`r < 2 * m`, it adds the coefficient to position `r`. Otherwise it uses
+
+```text
+x^r = -x^(r - m) - x^(r - 2 * m)
+```
+
+and subtracts the coefficient from positions `r - m` and `r - 2 * m`.
+The proof-taking operation accepts a proof of `0 < m`. The checked operation
+returns `none` when `m = 0`. Its agreement theorem identifies the result with
+the canonical remainder modulo the monic polynomial
+`x^(2m) + x^m + 1`, and its size theorem gives an upper bound of `2 * m`.
+
+In every commutative ring the residue of `x` satisfies `x^(3m) = 1` and
+`1 + x^m + x^(2m) = 0`. Exact order `3m`, the inequality `x^m ≠ 1`, and
+distinctness of the transform points are stated only with `[Nontrivial R]`.
 
 ### Schönhage's radix-3 algorithm
 
-The Schönhage plan computes full products through triadic products. It works
-over any commutative ring with an explicit inverse of three; over `F_2` and
-its extensions that witness is `1`, because three is odd. Subtraction is
-already required by Karatsuba, so the plan signature adds only the
-invertibility witness.
+The planned Schönhage multiplication reduces a full product to smaller
+triadic products. It applies to a commutative ring equipped with `inv3 : R`
+and a proof of `3 * inv3 = 1`. In characteristic two, `inv3` is `1`.
 
 **The fixed-length carrier.** Transform values are residues modulo
-`y^(2L) + y^L + 1` held at fixed shape:
+`y^(2L) + y^L + 1`. The carrier includes the positive-length condition:
 
 ```lean
 structure Triadic (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R]
     (L : Nat) where
+  length_pos : 0 < L
   coeffs : Vector R (2 * L)
 ```
 
-`Triadic` values are never normalized: trimming would make control flow
-depend on coefficient values and would break the fixed-shape invariants the
-transform relies on. The carrier has explicit addition, subtraction,
-multiplication by `y^j` for `0 <= j < 3 * L` (a fold of index shifts and
-sign flips with no ring multiplications), a full multiply-and-reduce that
-consumes a supplied plan, and conversions to and from `DensePoly`. Its
-agreement theorems identify each operation with the triadic reference fold
-of the corresponding polynomial operation. A bundled ring instance on
-`Triadic R L` is not required; the explicit operations carry the laws.
+Every operation preserves all `2 * L` positions. No transform operation trims
+trailing zero coefficients. The API provides addition, subtraction,
+multiplication by `y^j` for `j < 3 * L`, multiplication followed by triadic
+reduction using a supplied `MulPlan R`, and conversions to and from
+`DensePoly`. Multiplication by `y^j` uses index movement and additions or
+subtractions. It performs no coefficient multiplications. Each semantic
+theorem identifies an explicit carrier operation with the corresponding
+polynomial operation followed by the triadic fold. A ring instance for
+`Triadic R L` is optional because the algorithm uses the explicit operations.
 
-**The schedule.** Parameter selection is a proof-carrying structure, not
-arithmetic scattered through the recursion. For a target triadic product
-modulo `x^(2N) + x^N + 1`:
+**The schedule.** A schedule records the parameters for multiplication modulo
+`x^(2N) + x^N + 1`. Write `K = 3^k`.
 
 ```lean
 structure SchoenhageSchedule (N : Nat) where
-  k : Nat                -- transform radix exponent; K = 3^k
-  M : Nat                -- block length
-  L : Nat                -- inner carrier half-length
+  k : Nat
+  M : Nat
+  L : Nat
   k_pos : 0 < k
   blocks : N = 3 ^ k * M
   block_fits : M ≤ L
@@ -312,32 +314,51 @@ structure SchoenhageSchedule (N : Nat) where
   decreasing : L < N
 ```
 
-`blocks` splits the `2N`-coefficient representative into `2 * 3^k` blocks of
-length `M`. `aligned` makes the root exponent `L / 3^k` an integer, so the
-residue `ω = y^(L / 3^k)` of the inner carrier satisfies `ω^(3K) = y^(3L) = 1`
-with `ω^K = y^L ≠ 1`, and the identity `1 + ω^K + ω^(2K) = 0` needed by the
-transform's cancellations is exactly the defining relation of the carrier.
-The `2K` evaluation points are the powers `ω^j` with `j` not divisible by
-three; the transform reaches them as two radix-3 length-`K` transforms of
-`ω`-twisted block sequences, and every twiddle multiplication is a
-`mulByYPow` fold. `block_fits` makes the inner carrier hold each wrapped
-block sum exactly. `decreasing` is the strict-decrease fact that drives the
-well-founded recursion. `schedule? : Nat → Option (SchoenhageSchedule N)`
-chooses `k` so that `L` is near `sqrt N` (the balanced choice behind the
-`log log` recursion depth); correctness must not depend on which valid
-schedule is chosen, only on the fields above. `L` is in general not a
-multiple of the word size, and the packed kernel in hex-gf2 must not round
-it up to one (Brent-Gaudry-Thomé-Zimmermann §3.2).
+The equations `N = K * M`, `M ≤ L`, and `K ∣ L` are the parameter constraints
+used in Figure 3 of Brent, Gaudry, Thomé, and Zimmermann. They split a
+representative of length `2N` into `2K` blocks of length `M`, ensure that one
+block fits in the inner carrier, and make `L / K` integral. The strict
+inequality `L < N` proves termination.
 
-**The recursion.** One triadic product modulo `x^(2N) + x^N + 1` with a
-valid schedule reduces to `2 * 3^k` pointwise triadic products modulo
-`y^(2L) + y^L + 1`, glued by forward and inverse symbolic transforms whose
-twiddle multiplications are `mulByYPow` folds, plus the inverse scaling,
-which multiplies by powers of the inverse-of-three witness. Recursive calls
-multiply the pointwise operands through the same plan at half-length `L`;
-when `schedule?` returns `none` or the size is below the committed cutoff,
-the recursion delegates to a supplied base plan. Termination is by
-`decreasing`.
+Set `ω = y^(L / K)` in the inner triadic carrier. The general identities give
+`ω^(3K) = 1` and `1 + ω^K + ω^(2K) = 0`. With `[Nontrivial R]`, the exact-order
+and distinct-point theorems also give `ω^K ≠ 1`. The algorithm evaluates at
+the `2K` powers `ω^j` for which three does not divide `j`. It obtains these
+values from two twisted radix-3 transforms of length `K`. Every twiddle is a
+call to `mulByYPow`.
+
+Correctness uses only the fields of `SchoenhageSchedule`. Complexity also
+uses chooser theorems. There are constants and a threshold such that every
+sufficiently large requested product length `s` has `N` and `σ` with
+
+```text
+s ≤ 2 * N ≤ C0 * s
+schedule? N = some σ
+N ≤ cK0 * σ.K * σ.K
+σ.K * σ.K ≤ cK1 * N
+N ≤ cL0 * σ.L * σ.L
+σ.L * σ.L ≤ cL1 * N
+```
+
+where `σ.K = 3 ^ σ.k`. These inequalities place `K` and `L` within constant
+factors of `sqrt N`. The chooser also proves recursive completeness: if the
+`L` generated by a chosen schedule is above the committed base cutoff, then
+`schedule? L` returns a schedule satisfying the same balance inequalities.
+The packed implementation must retain the selected `L`. In general it is not
+a multiple of the machine-word width, as noted in §3.2 of the same paper.
+
+**The recursion.** For each operand, one triadic product modulo
+`x^(2N) + x^N + 1` computes the two twisted forward transforms described
+above. It then computes `2K` recursive pointwise products modulo
+`y^(2L) + y^L + 1` and applies the corresponding inverse transforms. Inverse
+scaling uses powers of `inv3`. A recursive call has half-length `L`.
+`decreasing` supplies the well-founded decrease. At or below the cutoff, the
+worker calls the supplied base multiplication.
+
+For an arbitrary valid schedule, one transform performs
+`O(K * L * k)` coefficient operations. The simplification to `O(N * k)` is
+valid only after applying the chooser's two-sided balance bounds. Schedule
+selection occurs once at each recursion level.
 
 **The public plan.**
 
@@ -346,26 +367,28 @@ def schoenhagePlan (base : MulPlan R) (cutoff : Nat)
     (inv3 : R) (inv3_spec : 3 * inv3 = 1) : MulPlan R
 ```
 
-The full product pads to the least scheduled `2N` with
-`a.size + b.size - 1 ≤ 2 * N`, computes the triadic product, and reads the
-ordinary product off the residue, which is exact because the true product
-has degree below the modulus degree. `square` is `mul a a` and `slice` is
-`coeffSlice` of the full product. Both choices are deliberate and accepted
-under the no-placeholder rule: a transform-based product computes every
-output coefficient at once, so a specialized square or slice saves at most a
-constant factor, and the Karatsuba plan's pruned slice remains the tool for
-clipped products in its own range. `mul_eq`, `square_eq`, and `coeff_slice`
-are the plan laws, stated as always against schoolbook semantics.
+For nonempty inputs, let `s = a.size + b.size - 1`. The padding chooser
+returns `N` and `σ` with `s ≤ 2N`. The plan embeds both inputs into the
+triadic problem, computes the residue, and returns its first `s`
+coefficients. Since the ordinary product has degree below `2N`, reduction by
+the degree-`2N` modulus does not change it.
+
+The plan defines `square a` as `mul a a` and defines `slice` by slicing the
+full product. A transform computes all output coefficients, so specialized
+versions can improve these operations only by a constant factor. The
+Karatsuba plan retains its pruned slice for sizes at which that plan is
+selected. The laws `mul_eq`, `square_eq`, and `coeff_slice` identify all three
+operations with the existing schoolbook semantics.
+
+Correctness holds for every lawful `base`. The operation-count theorem in
+hex-poly-fast-cslib fixes `base` to the counted Karatsuba worker and allows
+its constant to depend on the Karatsuba cutoff. Supplying another base plan
+preserves correctness but provides no operation bound.
 
 ### Operation-parametric workers
 
-The counted models of this library's algorithms, their cost-obliviousness
-properties, and their operation bounds are specified in
-[hex-poly-fast-cslib](../../SPEC/Libraries/hex-poly-fast-cslib.md). A bound
-proved about a program that merely returns the same polynomial would be
-vacuous, because every lawful plan returns the same polynomial. The
-faithfulness mechanism is that each counted algorithm body is written
-exactly once, parametric over a monad and its coefficient operations:
+The proof-facing Karatsuba and Schönhage definitions use workers that are
+parametric in coefficient operations:
 
 ```lean
 structure CoeffOps (m : Type → Type) (R : Type) where
@@ -381,16 +404,18 @@ def karatsubaWorker [Monad m] (ops : CoeffOps m R) (cutoff : Nat) :
 def schoenhageWorker [Monad m] (ops : CoeffOps m R) ... : m (Array R)
 ```
 
-The `idOps` instantiations are the executable definitions: the Karatsuba
-recursion and the Schönhage recursion of this SPEC are *defined as* their
-workers at `idOps`, so a theorem about a worker is a theorem about the
-algorithm this library performs, not about a parallel reformulation. The
-companion instantiates the same workers at a free-monad operations record
-and counts queries. Workers cover the public dispatch structure (cutoffs,
-the balanced and blocked Karatsuba paths, schedule selection), not only the
-balanced textbook recursion. The raw array runtimes remain connected by the
-existing output-equality `@[csimp]` theorems; operation counts are claims
-about the workers, and the SPEC does not claim them for the raw runtimes.
+The logical definitions are the `idOps` instantiations. The planned
+[hex-poly-fast-cslib](../../SPEC/Libraries/hex-poly-fast-cslib.md) companion
+instantiates the same workers with `FreeM (ArithQuery R)` and counts the
+resulting base-ring queries. The Karatsuba worker includes cutoff selection,
+balanced recursion, blocking, and unbalanced dispatch. The Schönhage worker
+includes padding, schedule selection, transforms, recursion, and its counted
+Karatsuba base.
+
+The raw array definitions used by the `@[csimp]` replacements remain related
+to the logical definitions by output equality only. The companion proves no
+trace or cost relation for those raw definitions. Its operation bounds apply
+to the operation-parametric workers, which are the proof-facing definitions.
 
 ## Reversal and truncated series
 
@@ -811,8 +836,8 @@ Let `M(n)` be the measured balanced multiplication cost of the selected plan.
 | unbalanced `m x n`, `m >= n` | `O(ceil(m/n) * M(n))` |
 | triadic reference fold | `O(n)` coefficient operations |
 | `Triadic.mulByYPow` | `O(L)` coefficient additions, no ring multiplications |
-| symbolic radix-3 transform | `O(K log K)` carrier additions and `mulByYPow` folds |
-| Schönhage full product | `O(n log n log log n)` coefficient operations |
+| one radix-3 transform | `O(K * L * log K)` coefficient operations |
+| Schönhage worker with counted Karatsuba base | `O(n log n log log n)` coefficient operations |
 | radix-2 NTT convolution | `O(n log n)` word operations |
 | reciprocal and division | `O(M(n))` |
 | half-gcd / extended gcd | `O(M(n) log n)` |
@@ -826,12 +851,13 @@ remainder-tree node, pads an unbalanced product to the longer size, or rebuilds
 an NTT root table inside each transform violates the SPEC even if it returns
 the correct polynomial.
 
-The Schönhage recursion adds its own body-shape constraints. The schedule is
-computed once per level, never inside the transform loops. Twiddle
-multiplications are `mulByYPow` folds; a twiddle implemented as a carrier
-product violates the SPEC. `Triadic` values are never trimmed or normalized
-between transform stages, and transform scratch is reused across butterflies
-at one level rather than allocated per butterfly.
+The Schönhage worker selects one schedule per recursion level. A transform
+uses `mulByYPow` for every twiddle and never substitutes a general carrier
+product. It retains the fixed `2L` coefficient positions between transform
+stages and reuses scratch storage within a level. The schedule chooser must
+prove bounded padding, balanced `K` and `L`, and recursive completeness. The
+operation bound is for the worker with its counted Karatsuba base. A lawful
+but uncounted base plan receives only the correctness theorem.
 
 ## Kernel exposure and trust
 
@@ -858,7 +884,7 @@ hexpolyfast_emit_fixtures` emits the committed
   the kernel selected by its public dispatcher;
 - `divmod`, `gcd`, `xgcd`, and `xgcd_left`;
 - `cyclic`, `negacyclic`, and `triadic`;
-- forced-Schönhage `mul` cases across schedule boundaries;
+- forced Schönhage multiplication on both sides of every schedule change;
 - `eval_many` and `interpolate`;
 - `pade` with the homogeneous relation and normalized success/failure;
 - NTT plan, round-trip, direct convolution, and CRT convolution cases;
@@ -877,10 +903,10 @@ Mandatory edge families:
 - operand ratios from balanced through at least 64:1;
 - empty, one-coefficient, last-coefficient, and wholly out-of-range slices;
 - positive and negative coefficients at every Kronecker digit bound;
-- triadic length `m = 1`, exponents in every residue class modulo `3 * m`,
-  and inputs whose reduction cancels a leading slot;
-- Schönhage sizes at the smallest schedulable `N`, at `M = L`, at an `L` not
-  divisible by the word size, and immediately below the base-plan cutoff;
+- triadic length `m = 1`, every residue class modulo `3 * m`, and cancellation
+  at the highest stored position;
+- Schönhage inputs at the smallest scheduled `N`, at `M = L`, at an `L` not
+  divisible by the word width, and immediately below the base cutoff;
 - NTT lengths `1`, `2`, the largest catalogue length, and one beyond it. The
   largest case is an allocation-free theorem check in the coefficient owner's
   conformance module; the executable stream calls `NttPrime.plan?` on the
@@ -906,9 +932,9 @@ Required families:
 
 - schoolbook, Karatsuba, square, and clipped products over `Int`, `Rat`, and
   small `ZMod64` fields, with degrees from 4 through at least 16384;
-- Schönhage against Karatsuba over `ZMod64 2`, with degrees extended until
-  the crossover is bracketed (the packed `GF2Poly` ladder is a hex-gf2
-  family);
+- the generic Schönhage worker against Karatsuba over `ZMod64 2`, with degrees
+  extended through their crossover. Packed `GF2Poly` comparisons belong to
+  hex-gf2;
 - balanced and unbalanced shapes, with ratios 1, 2, 4, 16, and 64;
 - KS1/KS2/KS3/KS4 over the current degree/coefficient-width grid, extended
   into the GMP Karatsuba, Toom, and FFT regimes;
@@ -1007,15 +1033,14 @@ Likewise, evaluation and interpolation soundness are stated directly with
 `DensePoly.eval`; a later Mathlib-facing consumer can rewrite through the
 existing equivalence.
 
-Proved operation-count theorems live in
-[hex-poly-fast-cslib](../../SPEC/Libraries/hex-poly-fast-cslib.md), a
-proof-only companion in the style of the `-mathlib` libraries: this
-computational library stays free of both Mathlib and cslib, and the
-companion models its algorithms in cslib's query-complexity framework and
-proves explicit coefficient-operation bounds about them. The executable
-complexity contracts here remain enforced by body shape and benchmarks; the
-companion's theorems are about the parametric workers this library exposes,
-not about the raw array runtimes.
+The planned
+[hex-poly-fast-cslib](../../SPEC/Libraries/hex-poly-fast-cslib.md) library
+proves coefficient-operation bounds for the operation-parametric Karatsuba
+and Schönhage workers. It imports cslib and Mathlib, while this library
+imports neither. The raw array definitions selected by `@[csimp]` have only
+output-equality theorems relating them to the workers, so the proved bounds do
+not apply to those raw definitions. Benchmarks and the structural constraints
+in this SPEC remain the evidence for their performance.
 
 ## Milestones
 
@@ -1040,22 +1065,22 @@ not about the raw array runtimes.
    conformance/benchmark families.
 9. **Adoption.** Audit the named consumers, switch only winning cells, update
    their owning SPECs and benchmarks, and keep the single-job CI topology.
-10. **Triadic references.** The triadic fold, its canonical-remainder law,
-    the fixed-length `Triadic` carrier, and the carrier agreement theorems.
-    Also `CoeffOps` and the refactor of the Karatsuba recursion and
-    dispatcher through `karatsubaWorker` at `idOps`, preserving every
-    existing theorem statement.
-11. **Schönhage plan.** The schedule structure and chooser, the symbolic
-    radix-3 transforms and their round-trip and convolution theorems, the
-    operation-parametric recursion worker, `schoenhagePlan`, and its plan
-    laws. The packed `F_2` kernel and its dispatch are hex-gf2 milestones;
-    the counted model and its bound are hex-poly-fast-cslib milestones.
+10. **Triadic arithmetic and workers.** Add the triadic fold, its remainder
+    theorem, the positive-length fixed carrier, and the carrier operation
+    theorems. Define `CoeffOps`. Express the proof-facing Karatsuba recursion
+    and dispatcher as `karatsubaWorker idOps` without changing their public
+    correctness statements.
+11. **Schönhage multiplication.** Add `SchoenhageSchedule`, the chooser with
+    bounded-padding and balance theorems, the radix-3 transforms, and their
+    round-trip and convolution theorems. Define `schoenhageWorker` and
+    `schoenhagePlan`, then prove the plan laws. HexGF2 owns the packed
+    implementation. HexPolyFastCslib owns the operation-count proof.
 
 No later milestone may be used to excuse a quadratic placeholder in an earlier
 one. In particular, milestone 3 implements Newton division with clipped
 products, milestone 4 implements an actual half-gcd recursion rather than
-renaming the Euclidean loop, and milestone 11 implements the square-rooting
-recursion rather than a single transform level over a quadratic base case.
+renaming the Euclidean loop, and milestone 11 recurses through balanced
+schedules until the Karatsuba cutoff.
 
 ## File organisation
 
@@ -1065,13 +1090,13 @@ HexPolyFast/
   Karatsuba.lean     -- full, square, unbalanced, and clipped recursion
   Cyclic.lean        -- cyclic and negacyclic reference operations
   CyclicRemainder.lean -- cyclic and negacyclic canonical remainder laws
-  Triadic.lean       -- triadic reference fold
-  TriadicRemainder.lean -- triadic canonical remainder law
+  Triadic.lean       -- positive-length triadic fold
+  TriadicRemainder.lean -- canonical remainder theorem
   Schoenhage/
-    Carrier.lean     -- fixed-length Triadic carrier and its operations
-    Schedule.lean    -- SchoenhageSchedule and schedule?
-    Transform.lean   -- symbolic radix-3 transforms
-    Plan.lean        -- parametric worker and schoenhagePlan
+    Carrier.lean     -- fixed-length carrier operations
+    Schedule.lean    -- schedules, chooser, padding, balance
+    Transform.lean   -- radix-3 transforms
+    Plan.lean        -- worker and lawful plan
   Reverse.lean       -- DensePoly/TSeries bridges
   Reciprocal.lean    -- plan-driven Newton inverse
   Division.lean      -- DivPlan and one-shot division
@@ -1141,10 +1166,10 @@ implementation changes actually land, never by this SPEC-only change.
   middle-product construction that the integer algorithm adapts; it does not
   add a limb-level integer primitive.
 - Arnold Schönhage, *Schnelle Multiplikation von Polynomen über Körpern der
-  Charakteristik 2*, Acta Informatica 7 (1977), 395-398. The radix-3
-  algorithm behind `schoenhagePlan`.
+  Charakteristik 2*, Acta Informatica 7 (1977), 395-398. This paper gives
+  the radix-3 multiplication used by `schoenhagePlan`.
 - Richard P. Brent, Pierrick Gaudry, Emmanuel Thomé, and Paul Zimmermann,
   [*Faster Multiplication in GF(2)[x]*](https://doi.org/10.1007/978-3-540-79456-1_10),
-  ANTS-VIII (2008), LNCS 5011, 153-166. §3.2 is the implementation reference
-  for the schedule constraints and for the warning that `L` is generally not
+  ANTS-VIII (2008), LNCS 5011, 153-166. Figure 3 supplies the constraints
+  `N = K * M`, `M ≤ L`, and `K ∣ L`. Section 3.2 notes that `L` need not be
   word-aligned.
