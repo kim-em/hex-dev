@@ -10,4 +10,12 @@ public import HexPrimality.ProofProbe.Support
 
 public section
 
-/-! Import-only baseline for the core `primality` fresh-module probes. -/
+namespace Hex.PrimalityProofProbe.Bit256
+
+open Hex.Nat Hex.PrimalityBench
+
+theorem result : Prime primalityInput256 := primality primalityInput256
+
+#print axioms result
+
+end Hex.PrimalityProofProbe.Bit256
