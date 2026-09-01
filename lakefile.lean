@@ -389,7 +389,19 @@ lean_lib HexPrimalityElabProbeScientific where
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
-  globs := #[`HexBench.IntFactorKernel]
+  globs := #[`HexBench.IntFactorKernel,
+    `HexIntFactor.ProofProbe.Support,
+    `HexIntFactor.ProofProbe.Baseline,
+    `HexIntFactor.ProofProbe.Replay1,
+    `HexIntFactor.ProofProbe.Replay2,
+    `HexIntFactor.ProofProbe.Replay3,
+    `HexIntFactor.ProofProbe.Replay4,
+    `HexIntFactor.ProofProbe.Replay5,
+    `HexIntFactor.ProofProbe.Replay6,
+    `HexIntFactor.ProofProbe.Replay7,
+    `HexIntFactor.ProofProbe.Replay8,
+    `HexIntFactor.ProofProbe.Replay9,
+    `HexIntFactor.ProofProbe.Replay10]
 
 lean_lib HexMvGcdKernelProbe where
   srcDir := "bench"

@@ -53,6 +53,25 @@ private def orderTwoModSeven : OrderCert :=
 private def corruptOrder : OrderCert :=
   ⟨2, 7, 2, ⟨2, [⟨1, .small 2⟩]⟩⟩
 
+/- The final entry is a 61-bit prime, so this 1-through-10 ladder exercises
+both table leaves and an above-table Pocklington certificate while keeping the
+factor subjects in canonical ascending order. -/
+private def cert61 : PrimeCert :=
+  .pock 1945555039024054273
+    [(891154892214722695, 55, .small 2),
+     (110189291828549774, 2, .small 3)]
+
+private def replayCerts : List PrimeCert :=
+  [.small 2, .small 3, .small 5, .small 7, .small 11,
+   .small 13, .small 17, .small 19, .small 23, cert61]
+
+private def replayFactors (count : Nat) : List PrimePower :=
+  (replayCerts.take count).map fun cert => ⟨1, cert⟩
+
+private def replayCase (count : Nat) : Factorization :=
+  let factors := replayFactors count
+  ⟨(factors.map (·.prime)).prod, factors⟩
+
 theorem factorizationValid : checkFactorization raw360 = true := by
   decide +kernel
 
@@ -60,6 +79,36 @@ theorem factorizationCorrupt : checkFactorization corruptProduct = false := by
   decide +kernel
 
 theorem factorizationPocklington : checkFactorization rawPock7 = true := by
+  decide +kernel
+
+theorem replay1 : checkFactorization (replayCase 1) = true := by
+  decide +kernel
+
+theorem replay2 : checkFactorization (replayCase 2) = true := by
+  decide +kernel
+
+theorem replay3 : checkFactorization (replayCase 3) = true := by
+  decide +kernel
+
+theorem replay4 : checkFactorization (replayCase 4) = true := by
+  decide +kernel
+
+theorem replay5 : checkFactorization (replayCase 5) = true := by
+  decide +kernel
+
+theorem replay6 : checkFactorization (replayCase 6) = true := by
+  decide +kernel
+
+theorem replay7 : checkFactorization (replayCase 7) = true := by
+  decide +kernel
+
+theorem replay8 : checkFactorization (replayCase 8) = true := by
+  decide +kernel
+
+theorem replay9 : checkFactorization (replayCase 9) = true := by
+  decide +kernel
+
+theorem replay10 : checkFactorization (replayCase 10) = true := by
   decide +kernel
 
 theorem orderValid : checkOrder orderTwoModSeven = true := by

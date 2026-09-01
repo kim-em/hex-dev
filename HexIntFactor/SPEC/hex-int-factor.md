@@ -295,6 +295,13 @@ prerequisite, specified there and sited in hex-basic.
 
 ### 0. Structural reductions, always applied
 
+The dispatcher removes powers of two first, then runs table trial division.
+When the table completely factors the odd cofactor, the gcd of the recovered
+multiplicities identifies a perfect power without a second root scan. Only a
+residual above the table reaches the general perfect-power detector. This
+ordering keeps the dominant small-input path linear in the committed table
+while preserving the same factorization and structural-route result.
+
 - **Powers of two**, by a dedicated trailing-zero count followed by one
   right shift. For positive `n`, the isolated lowest set bit is
   `n XOR (n AND (n - 1))`, so its `log₂` is exactly the multiplicity of two.
@@ -309,6 +316,8 @@ prerequisite, specified there and sited in hex-basic.
   full structural pipeline is reapplied to every popped search-stack entry,
   including recursive cofactors produced by a split; its exponent is multiplied
   by the entry's accumulated multiplicity before the result is merged.
+  On a table-complete input the recovered prime-power multiplicities supply
+  `k` directly; otherwise the general detector runs after table division.
   Strongly recommended rather than mathematically required: an earlier draft
   claimed Pollard `p − 1` and ECM "fail on prime powers, because the
   group they work in has no distinct primes to separate", and that is
@@ -319,7 +328,8 @@ prerequisite, specified there and sited in hex-basic.
   reasons to do it first.
 - **Small primes**, by trial division against hex-primality's
   `primeTable`. This is where most inputs finish and it is the only
-  route whose cost is predictable.
+  route whose cost is predictable. It precedes the general perfect-power root
+  search on the odd cofactor.
 
 ### 1. Pollard rho with Brent's cycle detection
 
@@ -1220,30 +1230,37 @@ Families:
   times the direct-trial median. This internal control, rather than an
   external system with a different portfolio, determines whether dispatch
   overhead is invisible on the case that dominates call volume.
-- **Balanced semiprimes** at 32, 48, 64, and 80 bits. Report `factor?` and
-  `Internal.rhoSplitCountedWith?` on the same ladder and seed. The direct arm
-  receives `defaultPrimeCertBudget.rhoRestarts` and `.rhoSteps`, matching the
-  public dispatcher's allocation. Output-agreeing wrappers return the least
-  factor, reject an error rather than hashing its attempt count, and admit a
-  ratio only when both arms succeeded. The public-dispatch median must be at
-  most twice the matched direct-rho median at every admitted rung. This is the
-  internal Route-1 control for dispatch and certificate construction; rho's
-  own two-sided registration and profile diagnose its scaling and hot path.
-  These controls and their 80-bit top rung are Phase-4 obligations; the
-  smaller pre-Phase-4 registrations do not satisfy them.
+- **Balanced semiprimes** at 32, 40, 48, 56, 64, 72, and 80 bits. Report three
+  distinct surfaces on the same five-seed ladder: the full public `factor?`
+  pipeline; direct `Internal.rhoSplitCountedWith?`, which returns only one
+  normalized divisor; and completion from that precomputed divisor and exact
+  advanced random state through factorization of both sides, canonical merge,
+  and final `checkFactorization` acceptance. The direct-rho target alone has
+  the two-sided `2^(bits/4)` model and profile. The other two are fixed targets
+  because certificate construction dominates different lower rungs. Their
+  output hashes must agree, but `full / rho` and
+  `full / (rho + completion)` are explanatory decompositions rather than
+  acceptance thresholds. Rho-first dispatch and rho-first dispatch with its
+  smooth fallback disabled are not distinct algorithms and are not compared.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
-- **`b^n ± 1`**, with and without the cyclotomic split, which is the
-  measurement that justifies the split existing.
+- **`b^n ± 1`**, with and without the cyclotomic split, on identical
+  target-derived seeds and canonical outputs for exponents through 80. Seven
+  fixed repeats must show `split / generic ≤ 0.98`, or the split must prevent a
+  generic failure on the admitted family, to justify the factorization route.
+  Otherwise that route is removed; the independently checked split constructor
+  is a separate API.
 - **Unbalanced semiprimes**, a small factor times a large one, where
   ECM is expected to win and rho is expected to as well -- reported
   together, because a route that never wins on any family should be
   removed rather than kept.
 - **Certificate replay**, `checkFactorization` in the kernel on
   factorizations with `k` from `1` to `10` and factors up to `64` bits.
-- **Order and primitive root**, primes up to `64` bits, reported
-  separately from the factorization of `p − 1` they depend on, so the
-  check's cost is visible next to the search's.
+- **Order and primitive root**, a scan ladder through `1048589` plus fixed
+  50- and 61-bit primes whose order for base 3 is short, reported separately
+  from the factorization of `p - 1` they depend on. The two tracks expose both
+  the reference scan cost and downstream operand-size behavior without
+  pretending a linear scan is feasible for an arbitrary 64-bit order.
 - **Generalized divisor sums**, with one ladder growing a prime-power
   exponent through multi-million-bit output and one growing the number
   of certified prime-power entries. Per-rung preparation constructs or
@@ -1255,7 +1272,7 @@ Families:
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
-`p − 1`, and MPQS with tuned crossovers, and this library specifies
+`p - 1`, and MPQS with tuned crossovers, and this library specifies
 neither SQUFOF nor MPQS, so a required ratio would check an algorithm
 that does not exist here. PARI does not expose a benchmark mode that restricts
 `factor` to Hex's trial-division-plus-rho portfolio, so its selected route must
@@ -1291,6 +1308,13 @@ missing portfolio.
 
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
+
+The proof-track replay is measured outside lean-bench with rotated paired
+fresh-module builds. A baseline imports the shared replay input; ten candidate
+modules add one `decide +kernel` theorem each for `k = 1..10`, with the final
+case containing a 61-bit Pocklington-certified factor. Compiled profiles cover
+one representative of every `libraries.yml` Phase-4 input family; proof-track
+fresh builds do not create an additional compiled-profile family.
 
 ## The Mathlib layer
 
@@ -1453,7 +1477,7 @@ Neither `HexPrimality` nor `HexIntFactor` is in `libraries.yml` yet, so
 the dependency claims above are draft prose rather than repository
 state until those entries land.
 
-## Open questions
+## Deferred question
 
 - **The default fuel schedule.** Stated above as a function of bit
   length and not fixed. It should be set so that the 80-bit balanced

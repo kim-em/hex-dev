@@ -277,7 +277,7 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard recursivePowerCandidate.factors.map
   (fun entry => (entry.prime, entry.exponent)) == [(10037, 6)]
 #guard recursivePowerCandidate.residualBase == 1
-#guard recursivePowerCandidate.residualExponent == 6
+#guard recursivePowerCandidate.residualExponent == 1
 -- Batched rho may return a composite divisor when two collisions share a
 -- batch. Seed 17 therefore changed the route count after batching; seed 1
 -- pins that count while the final checked factorization remains unchanged.

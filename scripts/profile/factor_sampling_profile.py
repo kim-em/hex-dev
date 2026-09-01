@@ -157,9 +157,12 @@ def _normalise(name: str) -> str:
 
 
 def categorise(name: str) -> str:
-    if name.startswith("Hex"):
-        return "lean-own-code"
     base = _normalise(name)
+    # Lean emits some namespace-private definitions under `_private.Hex...`.
+    # They are still repository code and must not fall into the residual
+    # `other` bucket merely because the compiler prepended `private.`.
+    if name.startswith("Hex") or base.startswith("private.Hex"):
+        return "lean-own-code"
     if any(token in base for token in _GMP):
         return "gmp"
     if any(base.startswith(token) or ("_" + token) in base for token in _ALLOC):

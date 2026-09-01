@@ -1,0 +1,5962 @@
+{
+  "benchmark_export": {
+    "env": {
+      "arch": "x86_64",
+      "cpu_cores": 96,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "exe_name": "hexintfactor_bench",
+      "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+      "git_dirty": false,
+      "hostname": "chungus2",
+      "lean_bench_version": "0.1.0",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_version": "4.34.0-rc2",
+      "os": "linux",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "timestamp_iso": "2026-09-01T06:51:51Z",
+      "timestamp_unix_ms": 1788245511585
+    },
+    "export_schema_version": 1,
+    "lean_bench_version": "0.1.0",
+    "results": [
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 72093.847168,
+        "c_min": 44452.092003,
+        "complexity_formula": "n * n",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 120,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 1024,
+          "param_floor": 32,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              32,
+              64,
+              128,
+              256,
+              512,
+              1024
+            ]
+          },
+          "signal_floor_multiplier": 10,
+          "slope_tolerance": 0.2,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:51:51Z",
+          "timestamp_unix_ms": 1788245511585
+        },
+        "function": "Hex.IntFactorBench.runSquareFactorCount",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70684,
+            "per_call_nanos": 110405182.25,
+            "result_hash": "0x6b15753040004000",
+            "status": "ok",
+            "total_nanos": 883241458,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71520,
+            "per_call_nanos": 110361881.875,
+            "result_hash": "0x6b15753040004000",
+            "status": "ok",
+            "total_nanos": 882895055,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71412,
+            "per_call_nanos": 110184500.25,
+            "result_hash": "0x6b15753040004000",
+            "status": "ok",
+            "total_nanos": 881476002,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71352,
+            "per_call_nanos": 295296398,
+            "result_hash": "0xe4018fa040004000",
+            "status": "ok",
+            "total_nanos": 590592796,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71244,
+            "per_call_nanos": 294261919.5,
+            "result_hash": "0xe4018fa040004000",
+            "status": "ok",
+            "total_nanos": 588523839,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70652,
+            "per_call_nanos": 296214088,
+            "result_hash": "0xe4018fa040004000",
+            "status": "ok",
+            "total_nanos": 592428176,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70992,
+            "per_call_nanos": 881727316,
+            "result_hash": "0x3c2aada040004000",
+            "status": "ok",
+            "total_nanos": 881727316,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70920,
+            "per_call_nanos": 877755008,
+            "result_hash": "0x3c2aada040004000",
+            "status": "ok",
+            "total_nanos": 877755008,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71500,
+            "per_call_nanos": 876925638,
+            "result_hash": "0x3c2aada040004000",
+            "status": "ok",
+            "total_nanos": 876925638,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71228,
+            "per_call_nanos": 3056158963,
+            "result_hash": "0xaedb205040004000",
+            "status": "ok",
+            "total_nanos": 3056158963,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71192,
+            "per_call_nanos": 3067892348,
+            "result_hash": "0xaedb205040004000",
+            "status": "ok",
+            "total_nanos": 3067892348,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70976,
+            "per_call_nanos": 3055982307,
+            "result_hash": "0xaedb205040004000",
+            "status": "ok",
+            "total_nanos": 3055982307,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71472,
+            "per_call_nanos": 11652849206,
+            "result_hash": "0x6c67b68040004000",
+            "status": "ok",
+            "total_nanos": 11652849206,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71496,
+            "per_call_nanos": 11726440944,
+            "result_hash": "0x6c67b68040004000",
+            "status": "ok",
+            "total_nanos": 11726440944,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71196,
+            "per_call_nanos": 11638915316,
+            "result_hash": "0x6c67b68040004000",
+            "status": "ok",
+            "total_nanos": 11638915316,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70932,
+            "per_call_nanos": 51305644203,
+            "result_hash": "0x55cdb02040004000",
+            "status": "ok",
+            "total_nanos": 51305644203,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70672,
+            "per_call_nanos": 51026915445,
+            "result_hash": "0x55cdb02040004000",
+            "status": "ok",
+            "total_nanos": 51026915445,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71240,
+            "per_call_nanos": 51311672173,
+            "result_hash": "0x55cdb02040004000",
+            "status": "ok",
+            "total_nanos": 51311672173,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            32,
+            107775.275269
+          ],
+          [
+            64,
+            72093.847168
+          ],
+          [
+            128,
+            53573.914062
+          ],
+          [
+            256,
+            46633.284958
+          ],
+          [
+            512,
+            44452.092003
+          ],
+          [
+            1024,
+            48928.875163
+          ]
+        ],
+        "slope": -0.138766,
+        "spawn_floor_nanos": 50374276,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 110405182.25,
+            "median_per_call_nanos": 110361881.875,
+            "min_per_call_nanos": 110184500.25,
+            "ok_count": 3,
+            "param": 32,
+            "relative_spread": 0.002
+          },
+          {
+            "max_per_call_nanos": 296214088,
+            "median_per_call_nanos": 295296398,
+            "min_per_call_nanos": 294261919.5,
+            "ok_count": 3,
+            "param": 64,
+            "relative_spread": 0.006611
+          },
+          {
+            "max_per_call_nanos": 881727316,
+            "median_per_call_nanos": 877755008,
+            "min_per_call_nanos": 876925638,
+            "ok_count": 3,
+            "param": 128,
+            "relative_spread": 0.00547
+          },
+          {
+            "max_per_call_nanos": 3067892348,
+            "median_per_call_nanos": 3056158963,
+            "min_per_call_nanos": 3055982307,
+            "ok_count": 3,
+            "param": 256,
+            "relative_spread": 0.003897
+          },
+          {
+            "max_per_call_nanos": 11726440944,
+            "median_per_call_nanos": 11652849206,
+            "min_per_call_nanos": 11638915316,
+            "ok_count": 3,
+            "param": 512,
+            "relative_spread": 0.007511
+          },
+          {
+            "max_per_call_nanos": 51311672173,
+            "median_per_call_nanos": 51305644203,
+            "min_per_call_nanos": 51026915445,
+            "ok_count": 3,
+            "param": 1024,
+            "relative_spread": 0.00555
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 0.068727,
+        "c_min": 0.057328,
+        "complexity_formula": "n * n",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 5,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 262144,
+          "param_floor": 1024,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              1024,
+              16384,
+              65536,
+              131072,
+              196608,
+              229376,
+              262144
+            ]
+          },
+          "signal_floor_multiplier": 10,
+          "slope_tolerance": 0.15,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:55:18Z",
+          "timestamp_unix_ms": 1788245718693
+        },
+        "function": "Hex.IntFactorBench.runReplay",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4096,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71016,
+            "per_call_nanos": 180152.45166,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 737904442,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4096,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70404,
+            "per_call_nanos": 181276.554199,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 742508766,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4096,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70976,
+            "per_call_nanos": 180113.60498,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 737745326,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71384,
+            "per_call_nanos": 18395493.53125,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 588655793,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71428,
+            "per_call_nanos": 18448858.59375,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 590363475,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71280,
+            "per_call_nanos": 18521943.15625,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 592702181,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71364,
+            "per_call_nanos": 257410184.5,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 1029640738,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70856,
+            "per_call_nanos": 257507561.25,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 1030030245,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71108,
+            "per_call_nanos": 257739845.75,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 1030959383,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 131072,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71240,
+            "per_call_nanos": 998308936,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 998308936,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 131072,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70564,
+            "per_call_nanos": 997831639,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 997831639,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 131072,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71232,
+            "per_call_nanos": 999200588,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 999200588,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 196608,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71280,
+            "per_call_nanos": 2220801096,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 2220801096,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 196608,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71072,
+            "per_call_nanos": 2225278714,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 2225278714,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 196608,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71240,
+            "per_call_nanos": 2223252001,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 2223252001,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 229376,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71108,
+            "per_call_nanos": 3016226796,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3016226796,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 229376,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70684,
+            "per_call_nanos": 3015213756,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3015213756,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 229376,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71008,
+            "per_call_nanos": 3018652806,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3018652806,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71580,
+            "per_call_nanos": 3948120214,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3948120214,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71432,
+            "per_call_nanos": 3943645454,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3943645454,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70928,
+            "per_call_nanos": 3938536524,
+            "result_hash": "0x1",
+            "status": "ok",
+            "total_nanos": 3938536524,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            1024,
+            0.171807
+          ],
+          [
+            16384,
+            0.068727
+          ],
+          [
+            65536,
+            0.059956
+          ],
+          [
+            131072,
+            0.058109
+          ],
+          [
+            196608,
+            0.057516
+          ],
+          [
+            229376,
+            0.057328
+          ],
+          [
+            262144,
+            0.057388
+          ]
+        ],
+        "slope": -0.064947,
+        "spawn_floor_nanos": 50415640,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 181276.554199,
+            "median_per_call_nanos": 180152.45166,
+            "min_per_call_nanos": 180113.60498,
+            "ok_count": 3,
+            "param": 1024,
+            "relative_spread": 0.006455
+          },
+          {
+            "max_per_call_nanos": 18521943.15625,
+            "median_per_call_nanos": 18448858.59375,
+            "min_per_call_nanos": 18395493.53125,
+            "ok_count": 3,
+            "param": 16384,
+            "relative_spread": 0.006854
+          },
+          {
+            "max_per_call_nanos": 257739845.75,
+            "median_per_call_nanos": 257507561.25,
+            "min_per_call_nanos": 257410184.5,
+            "ok_count": 3,
+            "param": 65536,
+            "relative_spread": 0.00128
+          },
+          {
+            "max_per_call_nanos": 999200588,
+            "median_per_call_nanos": 998308936,
+            "min_per_call_nanos": 997831639,
+            "ok_count": 3,
+            "param": 131072,
+            "relative_spread": 0.001371
+          },
+          {
+            "max_per_call_nanos": 2225278714,
+            "median_per_call_nanos": 2223252001,
+            "min_per_call_nanos": 2220801096,
+            "ok_count": 3,
+            "param": 196608,
+            "relative_spread": 0.002014
+          },
+          {
+            "max_per_call_nanos": 3018652806,
+            "median_per_call_nanos": 3016226796,
+            "min_per_call_nanos": 3015213756,
+            "ok_count": 3,
+            "param": 229376,
+            "relative_spread": 0.00114
+          },
+          {
+            "max_per_call_nanos": 3948120214,
+            "median_per_call_nanos": 3943645454,
+            "min_per_call_nanos": 3938536524,
+            "ok_count": 3,
+            "param": 262144,
+            "relative_spread": 0.00243
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 3051.89825,
+        "c_min": 2232.31139,
+        "complexity_formula": "2 ^ (n / 4)",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 5,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 80,
+          "param_floor": 32,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              32,
+              40,
+              48,
+              56,
+              64,
+              72,
+              80
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.15,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:55:58Z",
+          "timestamp_unix_ms": 1788245758313
+        },
+        "function": "Hex.IntFactorBench.runBalancedRho",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70784,
+            "per_call_nanos": 111517.537354,
+            "result_hash": "0xb7d211cc7fd8ca70",
+            "status": "ok",
+            "total_nanos": 913551666,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70664,
+            "per_call_nanos": 111269.289795,
+            "result_hash": "0xb7d211cc7fd8ca70",
+            "status": "ok",
+            "total_nanos": 911518022,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71148,
+            "per_call_nanos": 111452.025391,
+            "result_hash": "0xb7d211cc7fd8ca70",
+            "status": "ok",
+            "total_nanos": 913014992,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 40,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70756,
+            "per_call_nanos": 2343493.070312,
+            "result_hash": "0xc831f0900f4e63dd",
+            "status": "ok",
+            "total_nanos": 599934226,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 40,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71244,
+            "per_call_nanos": 2322275.40625,
+            "result_hash": "0xc831f0900f4e63dd",
+            "status": "ok",
+            "total_nanos": 594502504,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 40,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70716,
+            "per_call_nanos": 2292489.460938,
+            "result_hash": "0xc831f0900f4e63dd",
+            "status": "ok",
+            "total_nanos": 586877302,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 48,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70400,
+            "per_call_nanos": 9143547.453125,
+            "result_hash": "0x34d5d4b946546a14",
+            "status": "ok",
+            "total_nanos": 585187037,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 48,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70968,
+            "per_call_nanos": 8940402.890625,
+            "result_hash": "0x34d5d4b946546a14",
+            "status": "ok",
+            "total_nanos": 572185785,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 48,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71032,
+            "per_call_nanos": 9186007.734375,
+            "result_hash": "0x34d5d4b946546a14",
+            "status": "ok",
+            "total_nanos": 587904495,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 56,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71100,
+            "per_call_nanos": 38449363.6875,
+            "result_hash": "0xc47692712cc5800",
+            "status": "ok",
+            "total_nanos": 615189819,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 56,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71316,
+            "per_call_nanos": 39288051.875,
+            "result_hash": "0xc47692712cc5800",
+            "status": "ok",
+            "total_nanos": 628608830,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 56,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70992,
+            "per_call_nanos": 38592927.75,
+            "result_hash": "0xc47692712cc5800",
+            "status": "ok",
+            "total_nanos": 617486844,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71124,
+            "per_call_nanos": 182305554.75,
+            "result_hash": "0xc26a6415f99359c8",
+            "status": "ok",
+            "total_nanos": 729222219,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71316,
+            "per_call_nanos": 180252549,
+            "result_hash": "0xc26a6415f99359c8",
+            "status": "ok",
+            "total_nanos": 721010196,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71220,
+            "per_call_nanos": 182707397.75,
+            "result_hash": "0xc26a6415f99359c8",
+            "status": "ok",
+            "total_nanos": 730829591,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 72,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70864,
+            "per_call_nanos": 726745157,
+            "result_hash": "0xde10e4f3e87b2dd5",
+            "status": "ok",
+            "total_nanos": 726745157,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 72,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71156,
+            "per_call_nanos": 727793632,
+            "result_hash": "0xde10e4f3e87b2dd5",
+            "status": "ok",
+            "total_nanos": 727793632,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 72,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70840,
+            "per_call_nanos": 719438748,
+            "result_hash": "0xde10e4f3e87b2dd5",
+            "status": "ok",
+            "total_nanos": 719438748,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 80,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70856,
+            "per_call_nanos": 3200147259,
+            "result_hash": "0x2b555e833f70f913",
+            "status": "ok",
+            "total_nanos": 3200147259,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 80,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71312,
+            "per_call_nanos": 3214693773,
+            "result_hash": "0x2b555e833f70f913",
+            "status": "ok",
+            "total_nanos": 3214693773,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 80,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71064,
+            "per_call_nanos": 3117680382,
+            "result_hash": "0x2b555e833f70f913",
+            "status": "ok",
+            "total_nanos": 3117680382,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            32,
+            435.359474
+          ],
+          [
+            40,
+            2267.847076
+          ],
+          [
+            48,
+            2232.31139
+          ],
+          [
+            56,
+            2355.525375
+          ],
+          [
+            64,
+            2781.762005
+          ],
+          [
+            72,
+            2772.312763
+          ],
+          [
+            80,
+            3051.89825
+          ]
+        ],
+        "slope": null,
+        "spawn_floor_nanos": 50449952,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 111517.537354,
+            "median_per_call_nanos": 111452.025391,
+            "min_per_call_nanos": 111269.289795,
+            "ok_count": 3,
+            "param": 32,
+            "relative_spread": 0.002227
+          },
+          {
+            "max_per_call_nanos": 2343493.070312,
+            "median_per_call_nanos": 2322275.40625,
+            "min_per_call_nanos": 2292489.460938,
+            "ok_count": 3,
+            "param": 40,
+            "relative_spread": 0.021963
+          },
+          {
+            "max_per_call_nanos": 9186007.734375,
+            "median_per_call_nanos": 9143547.453125,
+            "min_per_call_nanos": 8940402.890625,
+            "ok_count": 3,
+            "param": 48,
+            "relative_spread": 0.026861
+          },
+          {
+            "max_per_call_nanos": 39288051.875,
+            "median_per_call_nanos": 38592927.75,
+            "min_per_call_nanos": 38449363.6875,
+            "ok_count": 3,
+            "param": 56,
+            "relative_spread": 0.021732
+          },
+          {
+            "max_per_call_nanos": 182707397.75,
+            "median_per_call_nanos": 182305554.75,
+            "min_per_call_nanos": 180252549,
+            "ok_count": 3,
+            "param": 64,
+            "relative_spread": 0.013466
+          },
+          {
+            "max_per_call_nanos": 727793632,
+            "median_per_call_nanos": 726745157,
+            "min_per_call_nanos": 719438748,
+            "ok_count": 3,
+            "param": 72,
+            "relative_spread": 0.011496
+          },
+          {
+            "max_per_call_nanos": 3214693773,
+            "median_per_call_nanos": 3200147259,
+            "min_per_call_nanos": 3117680382,
+            "ok_count": 3,
+            "param": 80,
+            "relative_spread": 0.030315
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 5278.096829,
+        "c_min": 4147.556351,
+        "complexity_formula": "n * n",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 20,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 1024,
+          "param_floor": 32,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              32,
+              64,
+              128,
+              256,
+              512,
+              1024
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.15,
+          "target_inner_nanos": 3000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:56:22Z",
+          "timestamp_unix_ms": 1788245782187
+        },
+        "function": "Hex.IntFactorBench.runSigmaFactorCount",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70788,
+            "per_call_nanos": 6349603.433594,
+            "result_hash": "0x656d9f9eca9fe00",
+            "status": "ok",
+            "total_nanos": 3250996958,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71276,
+            "per_call_nanos": 6372745.767578,
+            "result_hash": "0x656d9f9eca9fe00",
+            "status": "ok",
+            "total_nanos": 3262845833,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70828,
+            "per_call_nanos": 6358264.130859,
+            "result_hash": "0x656d9f9eca9fe00",
+            "status": "ok",
+            "total_nanos": 3255431235,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70996,
+            "per_call_nanos": 19717514.734375,
+            "result_hash": "0x69f3fa882b3be00",
+            "status": "ok",
+            "total_nanos": 2523841886,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71328,
+            "per_call_nanos": 19899307.492188,
+            "result_hash": "0x69f3fa882b3be00",
+            "status": "ok",
+            "total_nanos": 2547111359,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70836,
+            "per_call_nanos": 19818126.929688,
+            "result_hash": "0x69f3fa882b3be00",
+            "status": "ok",
+            "total_nanos": 2536720247,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71348,
+            "per_call_nanos": 67993983.71875,
+            "result_hash": "0x5faeafa55c1be00",
+            "status": "ok",
+            "total_nanos": 2175807479,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71340,
+            "per_call_nanos": 68141201.03125,
+            "result_hash": "0x5faeafa55c1be00",
+            "status": "ok",
+            "total_nanos": 2180518433,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70852,
+            "per_call_nanos": 67844704.375,
+            "result_hash": "0x5faeafa55c1be00",
+            "status": "ok",
+            "total_nanos": 2171030540,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70460,
+            "per_call_nanos": 271814253,
+            "result_hash": "0x1dbb24bcc861fe00",
+            "status": "ok",
+            "total_nanos": 2174514024,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71296,
+            "per_call_nanos": 272386656.625,
+            "result_hash": "0x1dbb24bcc861fe00",
+            "status": "ok",
+            "total_nanos": 2179093253,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71072,
+            "per_call_nanos": 271518861.75,
+            "result_hash": "0x1dbb24bcc861fe00",
+            "status": "ok",
+            "total_nanos": 2172150894,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70984,
+            "per_call_nanos": 1191661783,
+            "result_hash": "0xacc69f64df537e00",
+            "status": "ok",
+            "total_nanos": 2383323566,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70932,
+            "per_call_nanos": 1189583437.5,
+            "result_hash": "0xacc69f64df537e00",
+            "status": "ok",
+            "total_nanos": 2379166875,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70724,
+            "per_call_nanos": 1192668707,
+            "result_hash": "0xacc69f64df537e00",
+            "status": "ok",
+            "total_nanos": 2385337414,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71388,
+            "per_call_nanos": 5527749011,
+            "result_hash": "0x4119e3452e47be00",
+            "status": "ok",
+            "total_nanos": 5527749011,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70896,
+            "per_call_nanos": 5534485661,
+            "result_hash": "0x4119e3452e47be00",
+            "status": "ok",
+            "total_nanos": 5534485661,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71256,
+            "per_call_nanos": 5539997095,
+            "result_hash": "0x4119e3452e47be00",
+            "status": "ok",
+            "total_nanos": 5539997095,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            32,
+            6209.242315
+          ],
+          [
+            64,
+            4838.409895
+          ],
+          [
+            128,
+            4150.02342
+          ],
+          [
+            256,
+            4147.556351
+          ],
+          [
+            512,
+            4545.828945
+          ],
+          [
+            1024,
+            5278.096829
+          ]
+        ],
+        "slope": 0.038239,
+        "spawn_floor_nanos": 50272930,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 6372745.767578,
+            "median_per_call_nanos": 6358264.130859,
+            "min_per_call_nanos": 6349603.433594,
+            "ok_count": 3,
+            "param": 32,
+            "relative_spread": 0.00364
+          },
+          {
+            "max_per_call_nanos": 19899307.492188,
+            "median_per_call_nanos": 19818126.929688,
+            "min_per_call_nanos": 19717514.734375,
+            "ok_count": 3,
+            "param": 64,
+            "relative_spread": 0.009173
+          },
+          {
+            "max_per_call_nanos": 68141201.03125,
+            "median_per_call_nanos": 67993983.71875,
+            "min_per_call_nanos": 67844704.375,
+            "ok_count": 3,
+            "param": 128,
+            "relative_spread": 0.004361
+          },
+          {
+            "max_per_call_nanos": 272386656.625,
+            "median_per_call_nanos": 271814253,
+            "min_per_call_nanos": 271518861.75,
+            "ok_count": 3,
+            "param": 256,
+            "relative_spread": 0.003193
+          },
+          {
+            "max_per_call_nanos": 1192668707,
+            "median_per_call_nanos": 1191661783,
+            "min_per_call_nanos": 1189583437.5,
+            "ok_count": 3,
+            "param": 512,
+            "relative_spread": 0.002589
+          },
+          {
+            "max_per_call_nanos": 5539997095,
+            "median_per_call_nanos": 5534485661,
+            "min_per_call_nanos": 5527749011,
+            "ok_count": 3,
+            "param": 1024,
+            "relative_spread": 0.002213
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 5232.066955,
+        "c_min": 3864.86441,
+        "complexity_formula": "n * n",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 20,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 1024,
+          "param_floor": 32,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              32,
+              64,
+              128,
+              256,
+              512,
+              1024
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.2,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:57:22Z",
+          "timestamp_unix_ms": 1788245842032
+        },
+        "function": "Hex.IntFactorBench.runTotientFactorCount",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71380,
+            "per_call_nanos": 4536131.492188,
+            "result_hash": "0xde0ab5a62aee7e72",
+            "status": "ok",
+            "total_nanos": 580624831,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70456,
+            "per_call_nanos": 4502656.875,
+            "result_hash": "0xde0ab5a62aee7e72",
+            "status": "ok",
+            "total_nanos": 576340080,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71384,
+            "per_call_nanos": 4562372.890625,
+            "result_hash": "0xde0ab5a62aee7e72",
+            "status": "ok",
+            "total_nanos": 583983730,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70856,
+            "per_call_nanos": 16297021.796875,
+            "result_hash": "0x112446a3aef8358",
+            "status": "ok",
+            "total_nanos": 1043009395,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70856,
+            "per_call_nanos": 16293810.484375,
+            "result_hash": "0x112446a3aef8358",
+            "status": "ok",
+            "total_nanos": 1042803871,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 64,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70868,
+            "per_call_nanos": 16202038.046875,
+            "result_hash": "0x112446a3aef8358",
+            "status": "ok",
+            "total_nanos": 1036930435,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71276,
+            "per_call_nanos": 63321938.5,
+            "result_hash": "0x116c2cd47c909453",
+            "status": "ok",
+            "total_nanos": 1013151016,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70708,
+            "per_call_nanos": 63064555.75,
+            "result_hash": "0x116c2cd47c909453",
+            "status": "ok",
+            "total_nanos": 1009032892,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 128,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71408,
+            "per_call_nanos": 63425272.375,
+            "result_hash": "0x116c2cd47c909453",
+            "status": "ok",
+            "total_nanos": 1014804358,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71460,
+            "per_call_nanos": 257115540.75,
+            "result_hash": "0xa813009e14c0e810",
+            "status": "ok",
+            "total_nanos": 1028462163,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71136,
+            "per_call_nanos": 255924818.25,
+            "result_hash": "0xa813009e14c0e810",
+            "status": "ok",
+            "total_nanos": 1023699273,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70504,
+            "per_call_nanos": 256717130.25,
+            "result_hash": "0xa813009e14c0e810",
+            "status": "ok",
+            "total_nanos": 1026868521,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71072,
+            "per_call_nanos": 1170601016,
+            "result_hash": "0xa67c239c546a724a",
+            "status": "ok",
+            "total_nanos": 1170601016,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71296,
+            "per_call_nanos": 1168311293,
+            "result_hash": "0xa67c239c546a724a",
+            "status": "ok",
+            "total_nanos": 1168311293,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 512,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71292,
+            "per_call_nanos": 1166537734,
+            "result_hash": "0xa67c239c546a724a",
+            "status": "ok",
+            "total_nanos": 1166537734,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70944,
+            "per_call_nanos": 5486219839,
+            "result_hash": "0x2a1900811d3b1dc",
+            "status": "ok",
+            "total_nanos": 5486219839,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70816,
+            "per_call_nanos": 5489569830,
+            "result_hash": "0x2a1900811d3b1dc",
+            "status": "ok",
+            "total_nanos": 5489569830,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71436,
+            "per_call_nanos": 5485160258,
+            "result_hash": "0x2a1900811d3b1dc",
+            "status": "ok",
+            "total_nanos": 5485160258,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            32,
+            4429.81591
+          ],
+          [
+            64,
+            3977.981075
+          ],
+          [
+            128,
+            3864.86441
+          ],
+          [
+            256,
+            3917.192539
+          ],
+          [
+            512,
+            4456.753895
+          ],
+          [
+            1024,
+            5232.066955
+          ]
+        ],
+        "slope": 0.099626,
+        "spawn_floor_nanos": 50366508,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 4562372.890625,
+            "median_per_call_nanos": 4536131.492188,
+            "min_per_call_nanos": 4502656.875,
+            "ok_count": 3,
+            "param": 32,
+            "relative_spread": 0.013165
+          },
+          {
+            "max_per_call_nanos": 16297021.796875,
+            "median_per_call_nanos": 16293810.484375,
+            "min_per_call_nanos": 16202038.046875,
+            "ok_count": 3,
+            "param": 64,
+            "relative_spread": 0.005829
+          },
+          {
+            "max_per_call_nanos": 63425272.375,
+            "median_per_call_nanos": 63321938.5,
+            "min_per_call_nanos": 63064555.75,
+            "ok_count": 3,
+            "param": 128,
+            "relative_spread": 0.005697
+          },
+          {
+            "max_per_call_nanos": 257115540.75,
+            "median_per_call_nanos": 256717130.25,
+            "min_per_call_nanos": 255924818.25,
+            "ok_count": 3,
+            "param": 256,
+            "relative_spread": 0.004638
+          },
+          {
+            "max_per_call_nanos": 1170601016,
+            "median_per_call_nanos": 1168311293,
+            "min_per_call_nanos": 1166537734,
+            "ok_count": 3,
+            "param": 512,
+            "relative_spread": 0.003478
+          },
+          {
+            "max_per_call_nanos": 5489569830,
+            "median_per_call_nanos": 5486219839,
+            "min_per_call_nanos": 5485160258,
+            "ok_count": 3,
+            "param": 1024,
+            "relative_spread": 0.000804
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 69.160714,
+        "c_min": 37.39574,
+        "complexity_formula": "n * n.log2",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 20,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 4194304,
+          "param_floor": 16384,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              16384,
+              65536,
+              262144,
+              1048576,
+              4194304
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.2,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:57:54Z",
+          "timestamp_unix_ms": 1788245874987
+        },
+        "function": "Hex.IntFactorBench.runSigmaExponent",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71044,
+            "per_call_nanos": 5944062.171875,
+            "result_hash": "0xdbb1330c25000800",
+            "status": "ok",
+            "total_nanos": 760839958,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70832,
+            "per_call_nanos": 5941191.117188,
+            "result_hash": "0xdbb1330c25000800",
+            "status": "ok",
+            "total_nanos": 760472463,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70416,
+            "per_call_nanos": 5934261.46875,
+            "result_hash": "0xdbb1330c25000800",
+            "status": "ok",
+            "total_nanos": 759585468,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71108,
+            "per_call_nanos": 39212275.875,
+            "result_hash": "0x2e6db23094000800",
+            "status": "ok",
+            "total_nanos": 627396414,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71140,
+            "per_call_nanos": 39164826.8125,
+            "result_hash": "0x2e6db23094000800",
+            "status": "ok",
+            "total_nanos": 626637229,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 16,
+            "param": 65536,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70752,
+            "per_call_nanos": 39282722.1875,
+            "result_hash": "0x2e6db23094000800",
+            "status": "ok",
+            "total_nanos": 628523555,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71048,
+            "per_call_nanos": 240207809.25,
+            "result_hash": "0x144528c250000800",
+            "status": "ok",
+            "total_nanos": 960831237,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71296,
+            "per_call_nanos": 238356718,
+            "result_hash": "0x144528c250000800",
+            "status": "ok",
+            "total_nanos": 953426872,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 4,
+            "param": 262144,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70964,
+            "per_call_nanos": 238828442.25,
+            "result_hash": "0x144528c250000800",
+            "status": "ok",
+            "total_nanos": 955313769,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048576,
+            "part_of_verdict": true,
+            "peak_rss_kb": 72212,
+            "per_call_nanos": 1341365196,
+            "result_hash": "0xf9faa30940000800",
+            "status": "ok",
+            "total_nanos": 1341365196,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048576,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71452,
+            "per_call_nanos": 1347760926,
+            "result_hash": "0xf9faa30940000800",
+            "status": "ok",
+            "total_nanos": 1347760926,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048576,
+            "part_of_verdict": true,
+            "peak_rss_kb": 72212,
+            "per_call_nanos": 1342832793,
+            "result_hash": "0xf9faa30940000800",
+            "status": "ok",
+            "total_nanos": 1342832793,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 4194304,
+            "part_of_verdict": true,
+            "peak_rss_kb": 76996,
+            "per_call_nanos": 6381783304,
+            "result_hash": "0x764a8c2500000800",
+            "status": "ok",
+            "total_nanos": 6381783304,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 4194304,
+            "part_of_verdict": true,
+            "peak_rss_kb": 76164,
+            "per_call_nanos": 6385005726,
+            "result_hash": "0x764a8c2500000800",
+            "status": "ok",
+            "total_nanos": 6385005726,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 4194304,
+            "part_of_verdict": true,
+            "peak_rss_kb": 76152,
+            "per_call_nanos": 6373497343,
+            "result_hash": "0x764a8c2500000800",
+            "status": "ok",
+            "total_nanos": 6373497343,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            16384,
+            25.901538
+          ],
+          [
+            65536,
+            37.39574
+          ],
+          [
+            262144,
+            50.614345
+          ],
+          [
+            1048576,
+            64.031257
+          ],
+          [
+            4194304,
+            69.160714
+          ]
+        ],
+        "slope": 0.150023,
+        "spawn_floor_nanos": 50091270,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 5944062.171875,
+            "median_per_call_nanos": 5941191.117188,
+            "min_per_call_nanos": 5934261.46875,
+            "ok_count": 3,
+            "param": 16384,
+            "relative_spread": 0.00165
+          },
+          {
+            "max_per_call_nanos": 39282722.1875,
+            "median_per_call_nanos": 39212275.875,
+            "min_per_call_nanos": 39164826.8125,
+            "ok_count": 3,
+            "param": 65536,
+            "relative_spread": 0.003007
+          },
+          {
+            "max_per_call_nanos": 240207809.25,
+            "median_per_call_nanos": 238828442.25,
+            "min_per_call_nanos": 238356718,
+            "ok_count": 3,
+            "param": 262144,
+            "relative_spread": 0.007751
+          },
+          {
+            "max_per_call_nanos": 1347760926,
+            "median_per_call_nanos": 1342832793,
+            "min_per_call_nanos": 1341365196,
+            "ok_count": 3,
+            "param": 1048576,
+            "relative_spread": 0.004763
+          },
+          {
+            "max_per_call_nanos": 6385005726,
+            "median_per_call_nanos": 6381783304,
+            "min_per_call_nanos": 6373497343,
+            "ok_count": 3,
+            "param": 4194304,
+            "relative_spread": 0.001803
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 2217.155961,
+        "c_min": 2177.219039,
+        "complexity_formula": "n",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 5,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 3,
+          "param_ceiling": 1048589,
+          "param_floor": 257,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              257,
+              1013,
+              4073,
+              16363,
+              65537,
+              262193,
+              524309,
+              1048589
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.15,
+          "target_inner_nanos": 1261964234,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:58:26Z",
+          "timestamp_unix_ms": 1788245906979
+        },
+        "function": "Hex.IntFactorBench.runOrder",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2048,
+            "param": 257,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70960,
+            "per_call_nanos": 598938.071289,
+            "result_hash": "0x20000",
+            "status": "ok",
+            "total_nanos": 1226625170,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2048,
+            "param": 257,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71292,
+            "per_call_nanos": 599122.999023,
+            "result_hash": "0x20000",
+            "status": "ok",
+            "total_nanos": 1227003902,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2048,
+            "param": 257,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71004,
+            "per_call_nanos": 598043.552246,
+            "result_hash": "0x20000",
+            "status": "ok",
+            "total_nanos": 1224793195,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 1013,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71016,
+            "per_call_nanos": 2243025.900391,
+            "result_hash": "0x7e800",
+            "status": "ok",
+            "total_nanos": 1148429261,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 1013,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71332,
+            "per_call_nanos": 2245978.988281,
+            "result_hash": "0x7e800",
+            "status": "ok",
+            "total_nanos": 1149941242,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 512,
+            "param": 1013,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70836,
+            "per_call_nanos": 2247361.017578,
+            "result_hash": "0x7e800",
+            "status": "ok",
+            "total_nanos": 1150648841,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 4073,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71308,
+            "per_call_nanos": 8912192.84375,
+            "result_hash": "0x1fd000",
+            "status": "ok",
+            "total_nanos": 1140760684,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 4073,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71336,
+            "per_call_nanos": 8913168.109375,
+            "result_hash": "0x1fd000",
+            "status": "ok",
+            "total_nanos": 1140885518,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 4073,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71028,
+            "per_call_nanos": 8914110.445312,
+            "result_hash": "0x1fd000",
+            "status": "ok",
+            "total_nanos": 1141006137,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16363,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70728,
+            "per_call_nanos": 35682359.59375,
+            "result_hash": "0x7fd400",
+            "status": "ok",
+            "total_nanos": 1141835507,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16363,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70800,
+            "per_call_nanos": 35694604.03125,
+            "result_hash": "0x7fd400",
+            "status": "ok",
+            "total_nanos": 1142227329,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32,
+            "param": 16363,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71232,
+            "per_call_nanos": 35685064.875,
+            "result_hash": "0x7fd400",
+            "status": "ok",
+            "total_nanos": 1141922076,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 65537,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71260,
+            "per_call_nanos": 142839230,
+            "result_hash": "0x2000000",
+            "status": "ok",
+            "total_nanos": 1142713840,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 65537,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71316,
+            "per_call_nanos": 142844472.75,
+            "result_hash": "0x2000000",
+            "status": "ok",
+            "total_nanos": 1142755782,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8,
+            "param": 65537,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71044,
+            "per_call_nanos": 142797421.875,
+            "result_hash": "0x2000000",
+            "status": "ok",
+            "total_nanos": 1142379375,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 262193,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70836,
+            "per_call_nanos": 570712174.5,
+            "result_hash": "0x8006000",
+            "status": "ok",
+            "total_nanos": 1141424349,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 262193,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70676,
+            "per_call_nanos": 570865216.5,
+            "result_hash": "0x8006000",
+            "status": "ok",
+            "total_nanos": 1141730433,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 2,
+            "param": 262193,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71004,
+            "per_call_nanos": 570851591.5,
+            "result_hash": "0x8006000",
+            "status": "ok",
+            "total_nanos": 1141703183,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 524309,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70712,
+            "per_call_nanos": 1141761079,
+            "result_hash": "0x10002800",
+            "status": "ok",
+            "total_nanos": 1141761079,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 524309,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71304,
+            "per_call_nanos": 1142034254,
+            "result_hash": "0x10002800",
+            "status": "ok",
+            "total_nanos": 1142034254,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 524309,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71028,
+            "per_call_nanos": 1141766818,
+            "result_hash": "0x10002800",
+            "status": "ok",
+            "total_nanos": 1141766818,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048589,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71256,
+            "per_call_nanos": 2283430022,
+            "result_hash": "0x20001800",
+            "status": "ok",
+            "total_nanos": 2283430022,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048589,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70360,
+            "per_call_nanos": 2285353945,
+            "result_hash": "0x20001800",
+            "status": "ok",
+            "total_nanos": 2285353945,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1,
+            "param": 1048589,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71260,
+            "per_call_nanos": 2283655168,
+            "result_hash": "0x20001800",
+            "status": "ok",
+            "total_nanos": 2283655168,
+            "trial_index": 2
+          }
+        ],
+        "ratios": [
+          [
+            257,
+            2330.498332
+          ],
+          [
+            1013,
+            2217.155961
+          ],
+          [
+            4073,
+            2188.354557
+          ],
+          [
+            16363,
+            2180.838775
+          ],
+          [
+            65537,
+            2179.520424
+          ],
+          [
+            262193,
+            2177.219039
+          ],
+          [
+            524309,
+            2177.660155
+          ],
+          [
+            1048589,
+            2177.836281
+          ]
+        ],
+        "slope": -0.002061,
+        "spawn_floor_nanos": 52143062,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 599122.999023,
+            "median_per_call_nanos": 598938.071289,
+            "min_per_call_nanos": 598043.552246,
+            "ok_count": 3,
+            "param": 257,
+            "relative_spread": 0.001802
+          },
+          {
+            "max_per_call_nanos": 2247361.017578,
+            "median_per_call_nanos": 2245978.988281,
+            "min_per_call_nanos": 2243025.900391,
+            "ok_count": 3,
+            "param": 1013,
+            "relative_spread": 0.00193
+          },
+          {
+            "max_per_call_nanos": 8914110.445312,
+            "median_per_call_nanos": 8913168.109375,
+            "min_per_call_nanos": 8912192.84375,
+            "ok_count": 3,
+            "param": 4073,
+            "relative_spread": 0.000215
+          },
+          {
+            "max_per_call_nanos": 35694604.03125,
+            "median_per_call_nanos": 35685064.875,
+            "min_per_call_nanos": 35682359.59375,
+            "ok_count": 3,
+            "param": 16363,
+            "relative_spread": 0.000343
+          },
+          {
+            "max_per_call_nanos": 142844472.75,
+            "median_per_call_nanos": 142839230,
+            "min_per_call_nanos": 142797421.875,
+            "ok_count": 3,
+            "param": 65537,
+            "relative_spread": 0.000329
+          },
+          {
+            "max_per_call_nanos": 570865216.5,
+            "median_per_call_nanos": 570851591.5,
+            "min_per_call_nanos": 570712174.5,
+            "ok_count": 3,
+            "param": 262193,
+            "relative_spread": 0.000268
+          },
+          {
+            "max_per_call_nanos": 1142034254,
+            "median_per_call_nanos": 1141766818,
+            "min_per_call_nanos": 1141761079,
+            "ok_count": 3,
+            "param": 524309,
+            "relative_spread": 0.000239
+          },
+          {
+            "max_per_call_nanos": 2285353945,
+            "median_per_call_nanos": 2283655168,
+            "min_per_call_nanos": 2283430022,
+            "ok_count": 3,
+            "param": 1048589,
+            "relative_spread": 0.000842
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x681a285cd74ea124",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 7,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:01Z",
+          "timestamp_unix_ms": 1788245941708
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runPowerGenericBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 2093283,
+        "median_nanos": 2030369,
+        "min_nanos": 1955959,
+        "observed_hash": "0x681a285cd74ea124",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72416,
+            "repeat_index": 0,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1986645
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72344,
+            "repeat_index": 1,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1964552
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72204,
+            "repeat_index": 2,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1955959
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72060,
+            "repeat_index": 3,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 2093283
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72132,
+            "repeat_index": 4,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 2030369
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72204,
+            "repeat_index": 5,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 2033554
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72332,
+            "repeat_index": 6,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 2040845
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x6dc7828c846f9e2b",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:02Z",
+          "timestamp_unix_ms": 1788245942138
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion64",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4525789,
+        "median_nanos": 4460111,
+        "min_nanos": 4457888,
+        "observed_hash": "0x6dc7828c846f9e2b",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71488,
+            "repeat_index": 0,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 4525789
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72092,
+            "repeat_index": 1,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 4457888
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71924,
+            "repeat_index": 2,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 4460111
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x6dc7828c846f9e2b",
+          "max_seconds_per_call": 13.75,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:02Z",
+          "timestamp_unix_ms": 1788245942374
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor64",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 200163806,
+        "median_nanos": 193956645,
+        "min_nanos": 192695295,
+        "observed_hash": "0x6dc7828c846f9e2b",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72276,
+            "repeat_index": 0,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 193956645
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72120,
+            "repeat_index": 1,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 200163806
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71876,
+            "repeat_index": 2,
+            "result_hash": "0x6dc7828c846f9e2b",
+            "status": "ok",
+            "total_nanos": 192695295
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xf15e2d694e366d3a",
+          "max_seconds_per_call": 10.5,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:03Z",
+          "timestamp_unix_ms": 1788245943376
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runPMinusOneBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 11071631,
+        "median_nanos": 11067125,
+        "min_nanos": 10923512,
+        "observed_hash": "0xf15e2d694e366d3a",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70792,
+            "repeat_index": 0,
+            "result_hash": "0xf15e2d694e366d3a",
+            "status": "ok",
+            "total_nanos": 11071631
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70836,
+            "repeat_index": 1,
+            "result_hash": "0xf15e2d694e366d3a",
+            "status": "ok",
+            "total_nanos": 10923512
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70488,
+            "repeat_index": 2,
+            "result_hash": "0xf15e2d694e366d3a",
+            "status": "ok",
+            "total_nanos": 11067125
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2c5ab36c63d8144e",
+          "max_seconds_per_call": 20,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:03Z",
+          "timestamp_unix_ms": 1788245943638
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor72",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 722693510,
+        "median_nanos": 716677343,
+        "min_nanos": 715858939,
+        "observed_hash": "0x2c5ab36c63d8144e",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72416,
+            "repeat_index": 0,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 722693510
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71548,
+            "repeat_index": 1,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 715858939
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72348,
+            "repeat_index": 2,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 716677343
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xf4243",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:06Z",
+          "timestamp_unix_ms": 1788245946721
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm48",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 60109,
+        "median_nanos": 59786,
+        "min_nanos": 58856,
+        "observed_hash": "0xf4243",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71028,
+            "repeat_index": 0,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1913156
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71512,
+            "repeat_index": 1,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1883402
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71356,
+            "repeat_index": 2,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1923512
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x32066d5482493644",
+          "max_seconds_per_call": 12.5,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:06Z",
+          "timestamp_unix_ms": 1788245946963
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcmRhoBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 182597147,
+        "median_nanos": 175198580,
+        "min_nanos": 173301087,
+        "observed_hash": "0x32066d5482493644",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71008,
+            "repeat_index": 0,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 173301087
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70680,
+            "repeat_index": 1,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 182597147
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71232,
+            "repeat_index": 2,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 175198580
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x62b9a8e4f8df37af",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:07Z",
+          "timestamp_unix_ms": 1788245947898
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion80",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4860705,
+        "median_nanos": 4763631,
+        "min_nanos": 4752906,
+        "observed_hash": "0x62b9a8e4f8df37af",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72360,
+            "repeat_index": 0,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 4752906
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72364,
+            "repeat_index": 1,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 4860705
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71464,
+            "repeat_index": 2,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 4763631
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x73341ad461f040fb",
+          "max_seconds_per_call": 10.25,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:08Z",
+          "timestamp_unix_ms": 1788245948137
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor40",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 6570900,
+        "median_nanos": 6555608,
+        "min_nanos": 6450351,
+        "observed_hash": "0x73341ad461f040fb",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72092,
+            "repeat_index": 0,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 6555608
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72336,
+            "repeat_index": 1,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 6450351
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72424,
+            "repeat_index": 2,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 6570900
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x681a285cd74ea124",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 7,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:08Z",
+          "timestamp_unix_ms": 1788245948383
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runPowerSplitBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 1933195,
+        "median_nanos": 1920557,
+        "min_nanos": 1832466,
+        "observed_hash": "0x681a285cd74ea124",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72364,
+            "repeat_index": 0,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1920557
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71860,
+            "repeat_index": 1,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1887077
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72064,
+            "repeat_index": 2,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1848941
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71768,
+            "repeat_index": 3,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1933195
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72100,
+            "repeat_index": 4,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1922880
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72132,
+            "repeat_index": 5,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1832466
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72344,
+            "repeat_index": 6,
+            "result_hash": "0x681a285cd74ea124",
+            "status": "ok",
+            "total_nanos": 1928069
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x748bc67983cb604e",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:08Z",
+          "timestamp_unix_ms": 1788245948816
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runDownstreamOrder",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 1227,
+        "median_nanos": 1223,
+        "min_nanos": 1222,
+        "observed_hash": "0x748bc67983cb604e",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1024,
+            "peak_rss_kb": 71280,
+            "repeat_index": 0,
+            "result_hash": "0x748bc67983cb604e",
+            "status": "ok",
+            "total_nanos": 1252757
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1024,
+            "peak_rss_kb": 70616,
+            "repeat_index": 1,
+            "result_hash": "0x748bc67983cb604e",
+            "status": "ok",
+            "total_nanos": 1252236
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1024,
+            "peak_rss_kb": 71324,
+            "repeat_index": 2,
+            "result_hash": "0x748bc67983cb604e",
+            "status": "ok",
+            "total_nanos": 1257424
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xae563f6ab52a4a8b",
+          "max_seconds_per_call": 10.5,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:09Z",
+          "timestamp_unix_ms": 1788245949046
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor48",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 13595202,
+        "median_nanos": 13399012,
+        "min_nanos": 13294187,
+        "observed_hash": "0xae563f6ab52a4a8b",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72248,
+            "repeat_index": 0,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 13399012
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72320,
+            "repeat_index": 1,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 13595202
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71768,
+            "repeat_index": 2,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 13294187
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2e89d71edc0211cb",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:09Z",
+          "timestamp_unix_ms": 1788245949319
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runTableTrial",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 31905,
+        "median_nanos": 31543,
+        "min_nanos": 31414,
+        "observed_hash": "0x2e89d71edc0211cb",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 70908,
+            "repeat_index": 0,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 1009376
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71212,
+            "repeat_index": 1,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 1005270
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 64,
+            "peak_rss_kb": 71228,
+            "repeat_index": 2,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 2041937
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x386194db34d47118",
+          "max_seconds_per_call": 11,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:09Z",
+          "timestamp_unix_ms": 1788245949550
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor56",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 43991159,
+        "median_nanos": 43404639,
+        "min_nanos": 42997866,
+        "observed_hash": "0x386194db34d47118",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71924,
+            "repeat_index": 0,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 43404639
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72112,
+            "repeat_index": 1,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 43991159
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71472,
+            "repeat_index": 2,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 42997866
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xdeec635db1873394",
+          "max_seconds_per_call": 20,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:09Z",
+          "timestamp_unix_ms": 1788245949944
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runDefaultFuelSchedule",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 916262712,
+        "median_nanos": 913542540,
+        "min_nanos": 909890877,
+        "observed_hash": "0xdeec635db1873394",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72120,
+            "repeat_index": 0,
+            "result_hash": "0xdeec635db1873394",
+            "status": "ok",
+            "total_nanos": 909890877
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71756,
+            "repeat_index": 1,
+            "result_hash": "0xdeec635db1873394",
+            "status": "ok",
+            "total_nanos": 916262712
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72124,
+            "repeat_index": 2,
+            "result_hash": "0xdeec635db1873394",
+            "status": "ok",
+            "total_nanos": 913542540
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x6338245641c4c84e",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:13Z",
+          "timestamp_unix_ms": 1788245953831
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runCyclotomicBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 13763,
+        "median_nanos": 13404,
+        "min_nanos": 13344,
+        "observed_hash": "0x6338245641c4c84e",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 128,
+            "peak_rss_kb": 71284,
+            "repeat_index": 0,
+            "result_hash": "0x6338245641c4c84e",
+            "status": "ok",
+            "total_nanos": 1761691
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 128,
+            "peak_rss_kb": 70400,
+            "repeat_index": 1,
+            "result_hash": "0x6338245641c4c84e",
+            "status": "ok",
+            "total_nanos": 1715803
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 128,
+            "peak_rss_kb": 71328,
+            "repeat_index": 2,
+            "result_hash": "0x6338245641c4c84e",
+            "status": "ok",
+            "total_nanos": 1708152
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2003bafc5",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:14Z",
+          "timestamp_unix_ms": 1788245954065
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm72",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4264331,
+        "median_nanos": 4248237,
+        "min_nanos": 4213075,
+        "observed_hash": "0x2003bafc5",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71420,
+            "repeat_index": 0,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4248237
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71532,
+            "repeat_index": 1,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4264331
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70932,
+            "repeat_index": 2,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4213075
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xf53a7f8b2ec1ebc6",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:14Z",
+          "timestamp_unix_ms": 1788245954299
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runDownstreamPrimitiveRoot",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 1190174,
+        "median_nanos": 1189994,
+        "min_nanos": 1179138,
+        "observed_hash": "0xf53a7f8b2ec1ebc6",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72052,
+            "repeat_index": 0,
+            "result_hash": "0xf53a7f8b2ec1ebc6",
+            "status": "ok",
+            "total_nanos": 1190174
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72216,
+            "repeat_index": 1,
+            "result_hash": "0xf53a7f8b2ec1ebc6",
+            "status": "ok",
+            "total_nanos": 1189994
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72076,
+            "repeat_index": 2,
+            "result_hash": "0xf53a7f8b2ec1ebc6",
+            "status": "ok",
+            "total_nanos": 1179138
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2e89d71edc0211cb",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:14Z",
+          "timestamp_unix_ms": 1788245954522
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runTableDispatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 37485,
+        "median_nanos": 37249,
+        "min_nanos": 37153,
+        "observed_hash": "0x2e89d71edc0211cb",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71208,
+            "repeat_index": 0,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 1191986
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 70932,
+            "repeat_index": 1,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 1199539
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71192,
+            "repeat_index": 2,
+            "result_hash": "0x2e89d71edc0211cb",
+            "status": "ok",
+            "total_nanos": 1188913
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x386194db34d47118",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:14Z",
+          "timestamp_unix_ms": 1788245954751
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion56",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 3892801,
+        "median_nanos": 3868935,
+        "min_nanos": 3857448,
+        "observed_hash": "0x386194db34d47118",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72132,
+            "repeat_index": 0,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 3892801
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72392,
+            "repeat_index": 1,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 3857448
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72284,
+            "repeat_index": 2,
+            "result_hash": "0x386194db34d47118",
+            "status": "ok",
+            "total_nanos": 3868935
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xf4243",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:14Z",
+          "timestamp_unix_ms": 1788245954990
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm56",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 60427,
+        "median_nanos": 59976,
+        "min_nanos": 59973,
+        "observed_hash": "0xf4243",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 70980,
+            "repeat_index": 0,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1933666
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 70560,
+            "repeat_index": 1,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1919245
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71448,
+            "repeat_index": 2,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1919165
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x32066d5482493644",
+          "max_seconds_per_call": 10.5,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:15Z",
+          "timestamp_unix_ms": 1788245955225
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcmBatch",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 12783319,
+        "median_nanos": 12742188,
+        "min_nanos": 12723310,
+        "observed_hash": "0x32066d5482493644",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71076,
+            "repeat_index": 0,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 12742188
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71232,
+            "repeat_index": 1,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 12723310
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71080,
+            "repeat_index": 2,
+            "result_hash": "0x32066d5482493644",
+            "status": "ok",
+            "total_nanos": 12783319
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x1bf8f79828d53905",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:15Z",
+          "timestamp_unix_ms": 1788245955496
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion32",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 1258536,
+        "median_nanos": 1235572,
+        "min_nanos": 1187260,
+        "observed_hash": "0x1bf8f79828d53905",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71776,
+            "repeat_index": 0,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1187260
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72148,
+            "repeat_index": 1,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1258536
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71820,
+            "repeat_index": 2,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1235572
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x1bf8f79828d53905",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:15Z",
+          "timestamp_unix_ms": 1788245955719
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor32",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 583339,
+        "median_nanos": 561167,
+        "min_nanos": 558382,
+        "observed_hash": "0x1bf8f79828d53905",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 2,
+            "peak_rss_kb": 72088,
+            "repeat_index": 0,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1116765
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 2,
+            "peak_rss_kb": 71848,
+            "repeat_index": 1,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1166679
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 2,
+            "peak_rss_kb": 71544,
+            "repeat_index": 2,
+            "result_hash": "0x1bf8f79828d53905",
+            "status": "ok",
+            "total_nanos": 1122334
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x62b9a8e4f8df37af",
+          "max_seconds_per_call": 40,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:15Z",
+          "timestamp_unix_ms": 1788245955947
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedFactor80",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 3135915244,
+        "median_nanos": 3127038616,
+        "min_nanos": 3121292510,
+        "observed_hash": "0x62b9a8e4f8df37af",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71700,
+            "repeat_index": 0,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 3127038616
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71868,
+            "repeat_index": 1,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 3135915244
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72024,
+            "repeat_index": 2,
+            "result_hash": "0x62b9a8e4f8df37af",
+            "status": "ok",
+            "total_nanos": 3121292510
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xae563f6ab52a4a8b",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:28Z",
+          "timestamp_unix_ms": 1788245968641
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion48",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 3867823,
+        "median_nanos": 3778241,
+        "min_nanos": 3756709,
+        "observed_hash": "0xae563f6ab52a4a8b",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72424,
+            "repeat_index": 0,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 3756709
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72328,
+            "repeat_index": 1,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 3778241
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72084,
+            "repeat_index": 2,
+            "result_hash": "0xae563f6ab52a4a8b",
+            "status": "ok",
+            "total_nanos": 3867823
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2003bafc5",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:28Z",
+          "timestamp_unix_ms": 1788245968878
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm76",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4280785,
+        "median_nanos": 4246705,
+        "min_nanos": 4230190,
+        "observed_hash": "0x2003bafc5",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71408,
+            "repeat_index": 0,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4280785
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71352,
+            "repeat_index": 1,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4246705
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70964,
+            "repeat_index": 2,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4230190
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0xf4243",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:29Z",
+          "timestamp_unix_ms": 1788245969112
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm64",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 60753,
+        "median_nanos": 60239,
+        "min_nanos": 59683,
+        "observed_hash": "0xf4243",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71008,
+            "repeat_index": 0,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1944102
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71240,
+            "repeat_index": 1,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1927667
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 32,
+            "peak_rss_kb": 71196,
+            "repeat_index": 2,
+            "result_hash": "0xf4243",
+            "status": "ok",
+            "total_nanos": 1909861
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2003bafc5",
+          "max_seconds_per_call": 10.1,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:29Z",
+          "timestamp_unix_ms": 1788245969346
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runEcm80",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4291501,
+        "median_nanos": 4269729,
+        "min_nanos": 4252784,
+        "observed_hash": "0x2003bafc5",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70868,
+            "repeat_index": 0,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4269729
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 70868,
+            "repeat_index": 1,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4291501
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71180,
+            "repeat_index": 2,
+            "result_hash": "0x2003bafc5",
+            "status": "ok",
+            "total_nanos": 4252784
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x2c5ab36c63d8144e",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:29Z",
+          "timestamp_unix_ms": 1788245969580
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion72",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4630544,
+        "median_nanos": 4577084,
+        "min_nanos": 4565838,
+        "observed_hash": "0x2c5ab36c63d8144e",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72320,
+            "repeat_index": 0,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 4565838
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 71920,
+            "repeat_index": 1,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 4577084
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72368,
+            "repeat_index": 2,
+            "result_hash": "0x2c5ab36c63d8144e",
+            "status": "ok",
+            "total_nanos": 4630544
+          }
+        ]
+      },
+      {
+        "budget_truncated": false,
+        "config": {
+          "expected_hash": "0x73341ad461f040fb",
+          "max_seconds_per_call": 10.05,
+          "min_total_seconds": 0.001,
+          "repeats": 3,
+          "warmup": true,
+          "warmup_first_iter": false
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-01T06:59:29Z",
+          "timestamp_unix_ms": 1788245969816
+        },
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "function": "Hex.IntFactorBench.runBalancedCompletion40",
+        "hashable": true,
+        "hashes_agree": true,
+        "kind": "fixed",
+        "max_nanos": 4076743,
+        "median_nanos": 3901724,
+        "min_nanos": 3861714,
+        "observed_hash": "0x73341ad461f040fb",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72104,
+            "repeat_index": 0,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 3901724
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72364,
+            "repeat_index": 1,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 4076743
+          },
+          {
+            "alloc_bytes": null,
+            "error": null,
+            "inner_repeats": 1,
+            "peak_rss_kb": 72076,
+            "repeat_index": 2,
+            "result_hash": "0x73341ad461f040fb",
+            "status": "ok",
+            "total_nanos": 3861714
+          }
+        ]
+      }
+    ]
+  },
+  "comparisons": {
+    "gmp_ecm": [
+      {
+        "adjusted_nanos": 260394.7421875,
+        "bits": 48,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": true,
+          "max_nanos": 484878.43359375,
+          "median_nanos": 478947.33984375,
+          "min_nanos": 477722.31640625,
+          "output_example": [
+            1000003,
+            268435579
+          ],
+          "samples_nanos": [
+            482127.83203125,
+            478947.33984375,
+            482431.5625,
+            477722.31640625,
+            478790.30859375,
+            478243.953125,
+            484878.43359375
+          ]
+        },
+        "eligible": true,
+        "lean_nanos": 59786.0,
+        "lean_over_adjusted": 0.2295975698194031,
+        "n": 268436384306737,
+        "overhead_fraction": 0.4563186377181879
+      },
+      {
+        "adjusted_nanos": 39781.234375,
+        "bits": 56,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": true,
+          "max_nanos": 261006.46875,
+          "median_nanos": 258333.83203125,
+          "min_nanos": 257306.37109375,
+          "output_example": [
+            1000003,
+            68719476901
+          ],
+          "samples_nanos": [
+            261006.46875,
+            258333.83203125,
+            257306.37109375,
+            258165.26171875,
+            258475.95703125,
+            257945.5625,
+            259289.3515625
+          ]
+        },
+        "eligible": false,
+        "lean_nanos": 59976.0,
+        "lean_over_adjusted": 1.5076455253910155,
+        "n": 68719683059430703,
+        "overhead_fraction": 0.8460084222720478
+      },
+      {
+        "adjusted_nanos": 143724.52734375,
+        "bits": 64,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": true,
+          "max_nanos": 364225.171875,
+          "median_nanos": 362277.125,
+          "min_nanos": 359840.078125,
+          "output_example": [
+            1000003,
+            17592186044591
+          ],
+          "samples_nanos": [
+            363640.75,
+            360981.5,
+            361949.296875,
+            362277.125,
+            359840.078125,
+            364225.171875,
+            363127.33203125
+          ]
+        },
+        "eligible": false,
+        "lean_nanos": 60239.0,
+        "lean_over_adjusted": 0.4191281830130823,
+        "n": 17592238821149133773,
+        "overhead_fraction": 0.6032746275554935
+      },
+      {
+        "adjusted_nanos": 50554.1171875,
+        "bits": 72,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": false,
+          "max_nanos": 269703.5390625,
+          "median_nanos": 269106.71484375,
+          "min_nanos": 268443.58203125,
+          "output_example": [
+            2362258565959719996521
+          ],
+          "samples_nanos": [
+            268714.8046875,
+            268443.58203125,
+            269703.5390625,
+            269106.71484375,
+            269476.71875,
+            269116.26171875,
+            268781.69921875
+          ]
+        },
+        "eligible": false,
+        "lean_nanos": 4248237.0,
+        "lean_over_adjusted": 84.03345239406966,
+        "n": 2362258565959719996521,
+        "overhead_fraction": 0.8121410042969275
+      },
+      {
+        "adjusted_nanos": 127512.44921875,
+        "bits": 76,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": true,
+          "max_nanos": 349538.67578125,
+          "median_nanos": 346065.046875,
+          "min_nanos": 345720.9453125,
+          "output_example": [
+            8593846213,
+            4398046523483
+          ],
+          "samples_nanos": [
+            346010.4375,
+            349480.38671875,
+            346030.07421875,
+            349538.67578125,
+            346065.046875,
+            348070.2890625,
+            345720.9453125
+          ]
+        },
+        "eligible": false,
+        "lean_nanos": 4246705.0,
+        "lean_over_adjusted": 33.304238339228334,
+        "n": 37796135460432195119879,
+        "overhead_fraction": 0.6315361797725617
+      },
+      {
+        "adjusted_nanos": 155218.796875,
+        "bits": 80,
+        "ecm": {
+          "batch_repeats": 256,
+          "found_factor": true,
+          "max_nanos": 376966.28515625,
+          "median_nanos": 373771.39453125,
+          "min_nanos": 372853.546875,
+          "output_example": [
+            8593846213,
+            70368744190051
+          ],
+          "samples_nanos": [
+            372853.546875,
+            375967.03125,
+            376966.28515625,
+            374030.71875,
+            373449.3515625,
+            373771.39453125,
+            373268.8125
+          ]
+        },
+        "eligible": false,
+        "lean_nanos": 4269729.0,
+        "lean_over_adjusted": 27.50780888630696,
+        "n": 604738165771235538626863,
+        "overhead_fraction": 0.5847226429147654
+      }
+    ],
+    "gmp_ecm_overhead": {
+      "batch_repeats": 256,
+      "found_factor": false,
+      "max_nanos": 219093.359375,
+      "median_nanos": 218552.59765625,
+      "min_nanos": 217782.1171875,
+      "output_example": [
+        15
+      ],
+      "samples_nanos": [
+        218552.59765625,
+        218794.67578125,
+        219093.359375,
+        218877.69140625,
+        218006.5546875,
+        217782.1171875,
+        218316.89453125
+      ]
+    },
+    "pari": [
+      {
+        "bits": 32,
+        "lean_batch_nanos": 561167.0,
+        "lean_nanos": 112233.4,
+        "lean_over_pari": 32.83628617142857,
+        "lean_seed_count": 5,
+        "n": 4296195809,
+        "pari": {
+          "batch_repeats": 16384,
+          "max_nanos": 3417.96875,
+          "median_nanos": 3417.96875,
+          "min_nanos": 3356.93359375,
+          "samples_nanos": [
+            3417.96875,
+            3417.96875,
+            3417.96875,
+            3356.93359375,
+            3417.96875,
+            3417.96875,
+            3417.96875
+          ]
+        }
+      },
+      {
+        "bits": 40,
+        "lean_batch_nanos": 6555608.0,
+        "lean_nanos": 1311121.6,
+        "lean_over_pari": 223.76475306666669,
+        "lean_seed_count": 5,
+        "n": 1099546267613,
+        "pari": {
+          "batch_repeats": 16384,
+          "max_nanos": 5859.375,
+          "median_nanos": 5859.375,
+          "min_nanos": 5798.33984375,
+          "samples_nanos": [
+            5859.375,
+            5859.375,
+            5859.375,
+            5859.375,
+            5859.375,
+            5859.375,
+            5798.33984375
+          ]
+        }
+      },
+      {
+        "bits": 48,
+        "lean_batch_nanos": 13399012.0,
+        "lean_nanos": 2679802.4,
+        "lean_over_pari": 43.557423136507936,
+        "lean_seed_count": 5,
+        "n": 281475177027259,
+        "pari": {
+          "batch_repeats": 1024,
+          "max_nanos": 62500.0,
+          "median_nanos": 61523.4375,
+          "min_nanos": 61523.4375,
+          "samples_nanos": [
+            61523.4375,
+            61523.4375,
+            61523.4375,
+            61523.4375,
+            61523.4375,
+            61523.4375,
+            62500.0
+          ]
+        }
+      },
+      {
+        "bits": 56,
+        "lean_batch_nanos": 43404639.0,
+        "lean_nanos": 8680927.8,
+        "lean_over_pari": 64.41500048695653,
+        "lean_seed_count": 5,
+        "n": 72057609069267727,
+        "pari": {
+          "batch_repeats": 512,
+          "max_nanos": 134765.625,
+          "median_nanos": 134765.625,
+          "min_nanos": 132812.5,
+          "samples_nanos": [
+            134765.625,
+            132812.5,
+            134765.625,
+            134765.625,
+            132812.5,
+            134765.625,
+            134765.625
+          ]
+        }
+      },
+      {
+        "bits": 64,
+        "lean_batch_nanos": 193956645.0,
+        "lean_nanos": 38791329.0,
+        "lean_over_pari": 325.5927942295082,
+        "lean_seed_count": 5,
+        "n": 18446744168197812149,
+        "pari": {
+          "batch_repeats": 512,
+          "max_nanos": 121093.75,
+          "median_nanos": 119140.625,
+          "min_nanos": 119140.625,
+          "samples_nanos": [
+            119140.625,
+            119140.625,
+            119140.625,
+            121093.75,
+            121093.75,
+            121093.75,
+            119140.625
+          ]
+        }
+      },
+      {
+        "bits": 72,
+        "lean_batch_nanos": 716677343.0,
+        "lean_nanos": 143335468.6,
+        "lean_over_pari": 780.7208502468085,
+        "lean_seed_count": 5,
+        "n": 4722366488642080239163,
+        "pari": {
+          "batch_repeats": 512,
+          "max_nanos": 185546.875,
+          "median_nanos": 183593.75,
+          "min_nanos": 181640.625,
+          "samples_nanos": [
+            185546.875,
+            183593.75,
+            183593.75,
+            183593.75,
+            181640.625,
+            183593.75,
+            185546.875
+          ]
+        }
+      },
+      {
+        "bits": 80,
+        "lean_batch_nanos": 3127038616.0,
+        "lean_nanos": 625407723.2,
+        "lean_over_pari": 1482.4479364740741,
+        "lean_seed_count": 5,
+        "n": 1208925819625624289983961,
+        "pari": {
+          "batch_repeats": 128,
+          "max_nanos": 429687.5,
+          "median_nanos": 421875.0,
+          "min_nanos": 421875.0,
+          "samples_nanos": [
+            421875.0,
+            429687.5,
+            421875.0,
+            421875.0,
+            421875.0,
+            429687.5,
+            421875.0
+          ]
+        }
+      }
+    ]
+  },
+  "config": {
+    "gmp_ecm_batch_repeats": 256,
+    "gmp_ecm_command": "ecm -q -sigma 0:7 1000 1",
+    "gmp_ecm_overhead_input": 15,
+    "gmp_ecm_timing": "fixed persistent 256-input batch; B2 < B1 disables stage 2",
+    "pari_timing": "GP getwalltime around a calibrated in-process factor batch",
+    "rounds": 7,
+    "scientific_fixed_budget_nanos": {
+      "runBalancedCompletion32": 10000000,
+      "runBalancedCompletion40": 10000000,
+      "runBalancedCompletion48": 10000000,
+      "runBalancedCompletion56": 10000000,
+      "runBalancedCompletion64": 10000000,
+      "runBalancedCompletion72": 10000000,
+      "runBalancedCompletion80": 10000000,
+      "runBalancedFactor32": 10000000,
+      "runBalancedFactor40": 50000000,
+      "runBalancedFactor48": 100000000,
+      "runBalancedFactor56": 200000000,
+      "runBalancedFactor64": 750000000,
+      "runBalancedFactor72": 2000000000,
+      "runBalancedFactor80": 6000000000,
+      "runCyclotomicBatch": 10000000,
+      "runDefaultFuelSchedule": 2000000000,
+      "runDownstreamOrder": 10000000,
+      "runDownstreamPrimitiveRoot": 20000000,
+      "runEcm48": 20000000,
+      "runEcm56": 20000000,
+      "runEcm64": 20000000,
+      "runEcm72": 20000000,
+      "runEcm76": 20000000,
+      "runEcm80": 20000000,
+      "runEcmBatch": 100000000,
+      "runEcmRhoBatch": 500000000,
+      "runPMinusOneBatch": 100000000,
+      "runPowerGenericBatch": 20000000,
+      "runPowerSplitBatch": 20000000,
+      "runTableDispatch": 10000000,
+      "runTableTrial": 10000000
+    },
+    "timeout_seconds": 120.0
+  },
+  "control_audit": [
+    "table,success",
+    "balanced-32,success",
+    "balanced-40,success",
+    "balanced-48,success",
+    "balanced-56,success",
+    "balanced-64,success",
+    "balanced-72,success",
+    "balanced-80,success",
+    "power,success"
+  ],
+  "default_fuel_schedule": [
+    {
+      "attempts": 0,
+      "default_fuel": 120,
+      "n": 5999953,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 124,
+      "n": 11999921,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 128,
+      "n": 17999983,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 128,
+      "n": 23999947,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 128,
+      "n": 30000013,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 35999987,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 41999597,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 47999209,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 53999863,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 59999501,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 132,
+      "n": 66000017,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 136,
+      "n": 71999951,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 136,
+      "n": 77999983,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 136,
+      "n": 84000193,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 136,
+      "n": 89999939,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 136,
+      "n": 95999257,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 160,
+      "n": 4296195809,
+      "status": "success"
+    },
+    {
+      "attempts": 22,
+      "default_fuel": 192,
+      "n": 1099546267613,
+      "status": "success"
+    },
+    {
+      "attempts": 10,
+      "default_fuel": 224,
+      "n": 281475177027259,
+      "status": "success"
+    },
+    {
+      "attempts": 12,
+      "default_fuel": 256,
+      "n": 72057609069267727,
+      "status": "success"
+    },
+    {
+      "attempts": 23,
+      "default_fuel": 288,
+      "n": 18446744168197812149,
+      "status": "success"
+    },
+    {
+      "attempts": 21,
+      "default_fuel": 320,
+      "n": 4722366488642080239163,
+      "status": "success"
+    },
+    {
+      "attempts": 34,
+      "default_fuel": 352,
+      "n": 1208925819625624289983961,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 156,
+      "n": 4294049777,
+      "status": "success"
+    },
+    {
+      "attempts": 10,
+      "default_fuel": 188,
+      "n": 550574174279,
+      "status": "success"
+    },
+    {
+      "attempts": 7,
+      "default_fuel": 220,
+      "n": 140740446466129,
+      "status": "success"
+    },
+    {
+      "attempts": 8,
+      "default_fuel": 252,
+      "n": 36029347583832121,
+      "status": "success"
+    },
+    {
+      "attempts": 13,
+      "default_fuel": 284,
+      "n": 9223512775153889363,
+      "status": "success"
+    },
+    {
+      "attempts": 20,
+      "default_fuel": 316,
+      "n": 2361219270232651542599,
+      "status": "success"
+    },
+    {
+      "attempts": 20,
+      "default_fuel": 332,
+      "n": 37779508323710275366987,
+      "status": "success"
+    },
+    {
+      "attempts": 24,
+      "default_fuel": 348,
+      "n": 604472133179352252493901,
+      "status": "success"
+    },
+    {
+      "attempts": 21,
+      "default_fuel": 220,
+      "n": 268436384306737,
+      "status": "success"
+    },
+    {
+      "attempts": 26,
+      "default_fuel": 252,
+      "n": 68719683059430703,
+      "status": "success"
+    },
+    {
+      "attempts": 22,
+      "default_fuel": 284,
+      "n": 17592238821149133773,
+      "status": "success"
+    },
+    {
+      "attempts": 22,
+      "default_fuel": 316,
+      "n": 2362258565959719996521,
+      "status": "success"
+    },
+    {
+      "attempts": 33,
+      "default_fuel": 332,
+      "n": 37796135460432195119879,
+      "status": "success"
+    },
+    {
+      "attempts": 32,
+      "default_fuel": 348,
+      "n": 604738165771235538626863,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 76,
+      "n": 4095,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 92,
+      "n": 65535,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 108,
+      "n": 1048575,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 124,
+      "n": 16777215,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 140,
+      "n": 268435455,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 156,
+      "n": 4294967295,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 188,
+      "n": 1099511627775,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 220,
+      "n": 281474976710655,
+      "status": "success"
+    },
+    {
+      "attempts": 10,
+      "default_fuel": 252,
+      "n": 72057594037927935,
+      "status": "success"
+    },
+    {
+      "attempts": 6,
+      "default_fuel": 284,
+      "n": 18446744073709551615,
+      "status": "success"
+    },
+    {
+      "attempts": 0,
+      "default_fuel": 316,
+      "n": 4722366482869645213695,
+      "status": "success"
+    },
+    {
+      "attempts": 5,
+      "default_fuel": 348,
+      "n": 1208925819614629174706175,
+      "status": "success"
+    }
+  ],
+  "environment": {
+    "command": "scripts/bench/intfactor_phase4.py --cpu 7 --rounds 7 --timeout 120 --output reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json",
+    "commit": "f80afaec0ab1e4791d95f17e130864f929aef523",
+    "dirty": false,
+    "dirty_status": "",
+    "ecm_config": "Compilation options:\nIncluded GMP header files version 6.3.0\nGMP_NUMB_BITS = 64\nTuning parameters from x86_64/params.h\nGWNUM_VERSION undefined\nHAVE_SSE2 = 1\nHAVE___GMPN_ADD_NC undefined\nHAVE___GMPN_MOD_34LSUB1 = 1\nHAVE___GMPN_REDC_1 = 1\nUSE_ASM_REDC = 1\nWINDOWS64_ABI undefined\nWANT_ASSERT undefined\n_OPENMP undefined\nMPZMOD_THRESHOLD = 54\nREDC_THRESHOLD = 512\nMUL_NTT_THRESHOLD = 16384\nNTT_GFP_TWIDDLE_DIF_BREAKOVER = 17\nNTT_GFP_TWIDDLE_DIT_BREAKOVER = 17\nPREREVERTDIVISION_NTT_THRESHOLD = 32\nPOLYINVERT_NTT_THRESHOLD = 512\nPOLYEVALT_NTT_THRESHOLD = 512\nMPZSPV_NORMALISE_STRIDE = 512\nWITH_GPU undefined",
+    "hostname": "chungus2",
+    "kernel_source_sha256": "fad5c66186fd31c49793245df5052c1658ce38e0a3bbcec477f104b9cd9beb8f",
+    "lean": "Lean (version 4.34.0-rc2, x86_64-unknown-linux-gnu, commit 6a10ac8c22beadecabdbb0919c2b50214762f91d, Release)",
+    "lean_bench_sha256": "6f2dfac812a7d9787bf3c8e440a26ed22e97c9ae0230ac2699a24ab16708b93e",
+    "pari_version": "GP/PARI CALCULATOR Version 2.17.3 (released)",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6",
+    "state_after": {
+      "affinity": [
+        7
+      ],
+      "cpu": 7,
+      "cpu_model": "unknown",
+      "cpu_pressure": "some avg10=0.38 avg60=0.19 avg300=1.00 total=33844229653\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "load_average": [
+        2.81396484375,
+        2.34423828125,
+        2.36376953125
+      ]
+    },
+    "state_before": {
+      "affinity": [
+        7
+      ],
+      "cpu": 7,
+      "cpu_model": "unknown",
+      "cpu_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=33827480428\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "load_average": [
+        2.59814453125,
+        2.2275390625,
+        2.38671875
+      ]
+    }
+  },
+  "internal_controls": {
+    "balanced": [
+      {
+        "bits": 32,
+        "completion_nanos": 1235572.0,
+        "full_over_rho": 5.035054302793455,
+        "full_over_rho_plus_completion": 0.41659761772779835,
+        "hash": "0x1bf8f79828d53905",
+        "n": 4296195809,
+        "normal_nanos": 561167.0,
+        "public_route": "table-complete",
+        "rho_nanos": 111452.025391
+      },
+      {
+        "bits": 40,
+        "completion_nanos": 3901724.0,
+        "full_over_rho": 2.8229244396925197,
+        "full_over_rho_plus_completion": 1.053279020787985,
+        "hash": "0x73341ad461f040fb",
+        "n": 1099546267613,
+        "normal_nanos": 6555608.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 2322275.40625
+      },
+      {
+        "bits": 48,
+        "completion_nanos": 3778241.0,
+        "full_over_rho": 1.4654062953892808,
+        "full_over_rho_plus_completion": 1.0369316947577476,
+        "hash": "0xae563f6ab52a4a8b",
+        "n": 281475177027259,
+        "normal_nanos": 13399012.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 9143547.453125
+      },
+      {
+        "bits": 56,
+        "completion_nanos": 3868935.0,
+        "full_over_rho": 1.1246785753381978,
+        "full_over_rho_plus_completion": 1.022202894290124,
+        "hash": "0x386194db34d47118",
+        "n": 72057609069267727,
+        "normal_nanos": 43404639.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 38592927.75
+      },
+      {
+        "bits": 64,
+        "completion_nanos": 4460111.0,
+        "full_over_rho": 1.0639096832017951,
+        "full_over_rho_plus_completion": 1.0385026831410527,
+        "hash": "0x6dc7828c846f9e2b",
+        "n": 18446744168197812149,
+        "normal_nanos": 193956645.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 182305554.75
+      },
+      {
+        "bits": 72,
+        "completion_nanos": 4577084.0,
+        "full_over_rho": 0.9861467064444435,
+        "full_over_rho_plus_completion": 0.9799747673748104,
+        "hash": "0x2c5ab36c63d8144e",
+        "n": 4722366488642080239163,
+        "normal_nanos": 716677343.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 726745157.0
+      },
+      {
+        "bits": 80,
+        "completion_nanos": 4763631.0,
+        "full_over_rho": 0.9771546003720949,
+        "full_over_rho_plus_completion": 0.9757022030649969,
+        "hash": "0x62b9a8e4f8df37af",
+        "n": 1208925819625624289983961,
+        "normal_nanos": 3127038616.0,
+        "public_route": "rho-driven",
+        "rho_nanos": 3200147259.0
+      }
+    ],
+    "power": {
+      "generic_nanos": 2030369.0,
+      "hash": "0x681a285cd74ea124",
+      "split_nanos": 1920557.0,
+      "split_over_generic": 0.9459152498880745
+    },
+    "table": {
+      "dispatch_nanos": 37249.0,
+      "hash": "0x2e89d71edc0211cb",
+      "ratio": 1.1808959198554354,
+      "trial_nanos": 31543.0
+    }
+  },
+  "schema": "hex-int-factor-phase4/3"
+}
