@@ -13,6 +13,7 @@ public import HexGraphIso.Random
 public import HexGraphIso.Tactic
 public import HexGraphIso.Pairwise
 public import HexGraphIso.PairwiseSound
+public import HexGraphIso.Families
 
 public section
 

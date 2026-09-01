@@ -188,6 +188,31 @@ private def prism5 : Colored 10 1 :=
       checkIso petersen kneser52 ((rK.label.toPerm.inv).comp rP.label.toPerm)
   | _, _ => false
 
+/-! # Deterministic families -/
+
+-- colexicographic unranking of the pairs over `Fin 5`
+#guard (List.range 10).map (Families.unrankColex 5 2) ==
+  [[1, 0], [2, 0], [2, 1], [3, 0], [3, 1], [3, 2], [4, 0], [4, 1], [4, 2], [4, 3]]
+-- the Kneser graph K(5,2) is the Petersen graph
+#guard Families.choose 5 2 == 10
+#guard
+  (Nauty.runColored (Families.plain (Families.kneser 5 2) (by decide))).canong ==
+    (Nauty.runColored petersen).canong
+-- regularity spot checks: T(5) and Paley 13 are 6-regular, Q3 cubic
+#guard (Families.triangular 5).degree ⟨0, by decide⟩ == 6
+#guard (Families.paley 13).degree ⟨0, by omega⟩ == 6
+#guard (Families.hypercube 3).degree ⟨5, by decide⟩ == 3
+#guard (Families.grid 3 4).degree ⟨0, by decide⟩ == 2
+#guard (Families.copies 3 (Families.cycle 3)).degree ⟨4, by decide⟩ == 2
+#guard (Families.completeMultipartite [2, 3]).degree ⟨0, by decide⟩ == 3
+-- the verified pairwise decision agrees with the nauty search on a
+-- structured pair: C6 versus two triangles
+#guard
+  Pairwise.decideIso? {}
+    (Families.plain (Families.cycle 6) (by omega))
+    (Families.plain (Families.copies 2 (Families.cycle 3)) (by decide)) ==
+    some false
+
 /-! # The empty graph -/
 
 private def empty0 : Colored 0 0 :=

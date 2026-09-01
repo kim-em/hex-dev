@@ -104,6 +104,18 @@ theorem eq_iff_adj {G H : Graph n} : G = H ↔ ∀ i j, G.adj i j = H.adj i j :=
     (ofAdj f hs hi).adj i j = f i j := by
   rw [adj_eq_getElem, ofAdj, Matrix.getElem_ofFn]
 
+/-- Build a graph from an arbitrary Boolean relation by symmetrizing it
+and removing loops: `i` and `j` are adjacent when `i ≠ j` and the
+relation holds in either direction. -/
+@[expose] def ofRel (f : Fin n → Fin n → Bool) : Graph n :=
+  ofAdj (fun i j => i != j && (f i j || f j i))
+    (fun i j => by simp [bne_comm, Bool.or_comm, Bool.and_comm])
+    (fun i => by simp)
+
+@[simp] theorem adj_ofRel (f : Fin n → Fin n → Bool) (i j : Fin n) :
+    (ofRel f).adj i j = (i != j && (f i j || f j i)) :=
+  adj_ofAdj ..
+
 /-- The graph on `n` vertices with no edges. -/
 @[expose] def empty (n : Nat) : Graph n :=
   ofAdj (fun _ _ => false) (fun _ _ => rfl) (fun _ => rfl)
