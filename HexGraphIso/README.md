@@ -49,7 +49,16 @@ The planned stack, in dependency order:
    Equivariance makes the unordered tree and hence the maximum
    isomorphism-invariant, giving `iso_iff_canon_eq` for the
    nauty-semantic form; colour-sortedness and `relabel_label` come from
-   the partition-nest invariants.
+   the partition-nest invariants. One recorded subtlety: nauty's target
+   cell is history-dependent — `othernode` accepts the first path's
+   `firsttc[level]` as a hint while the refinement-code prefix matches,
+   and only falls back to `bestcell` otherwise — so the tree is not a
+   function of local node state alone. `canonSpec` must model the
+   hinted rule (target cell as a function of the node *and* the
+   first-path data), and the invariance proof must show that rule is
+   equivariant across isomorphic runs; pretending the rule is plain
+   `bestcell` would verify a different tree than the one the port
+   searches.
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex
