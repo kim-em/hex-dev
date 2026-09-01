@@ -28,8 +28,10 @@ mode-3 factorization case uses input degree 24 over the quadratic base.
 
 The parametric ladders carry the Phase-4 arithmetic evidence:
 
-* `runTower{Add,Sub,Neg,SMul,Mul,Inv,Div}Ladder`: coordinate arithmetic in
+* `runTower{Add,Sub,SMul,Mul,Inv,Div}Ladder`: coordinate arithmetic in
   the height-two tower `Q(sqrt(2), 3^{1/m})` at growing dimension `D = 2m`.
+  Negation uses a canonical fixed budget after its wider ladder reaches the
+  certified-fixture cap before the linear transient stabilizes.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,
@@ -1072,19 +1074,6 @@ def prepFactorInput (n : Nat) : FactorInput :=
   | some base => { tower := base.tower, f := selmerPoly m base.tower }
   | none => panic! "prepFactorInput: base tower fixture failed"
 
-def prepRecursiveFactorInput (n : Nat) : FactorInput :=
-  let m := max n 2
-  match twoLevel? () with
-  | some tower =>
-      { tower := tower.extension.tower
-        f := selmerPoly m tower.extension.tower }
-  | none => panic! "prepRecursiveFactorInput: two-level fixture failed"
-
-def runRecursiveFactorDiagnostic (input : FactorInput) : UInt64 :=
-  match factor? input.tower input.f with
-  | some result => factorChecksum result
-  | none => 1
-
 initialize factorCanonicalRef : IO.Ref (Option FactorInput) ← IO.mkRef none
 
 private def getFactorCanonicalInput : IO FactorInput := do
@@ -1328,26 +1317,6 @@ setup_benchmark runFromPrimitiveLadder n => n * n * n * n
   with prep := prepMapLadderInput
   where {
     paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-/- Temporary ordered-mode diagnostic for genuine height-two factorization. -/
-setup_benchmark runRecursiveFactorDiagnostic n => n
-  with prep := prepRecursiveFactorInput
-  where {
-    paramSchedule := .custom #[2, 3, 4, 6]
-    maxSecondsPerCall := 30.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-/- Temporary ordered-mode diagnostic for coordinate negation. -/
-setup_benchmark runTowerNegLadder n => n
-  with prep := prepElemInput
-  where {
-    paramFloor := 1
-    paramCeiling := 16
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16]
     maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1.0
   }
