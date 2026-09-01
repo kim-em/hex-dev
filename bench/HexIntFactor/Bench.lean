@@ -169,22 +169,26 @@ private opaque tableInputs : Array Nat := #[
 
 initialize tableInputsRef : IO.Ref (Array Nat) ← IO.mkRef tableInputs
 
+private def tableDispatch : IO (Array (List Nat)) := do
+  let inputs ← tableInputsRef.get
+  return inputs.map fun n =>
+    match factor? n (Hex.Rand.ofSeed n) with
+    | .ok (F, _) => encodeFactors F.raw.factors
+    | .error _ => []
+
+private def tableTrial : IO (Array (List Nat)) := do
+  let inputs ← tableInputsRef.get
+  return inputs.map fun n =>
+    let out := trialFactors n
+    if out.2 = 1 then encodeFactors out.1 else []
+
 @[noinline]
 def runTableDispatch (_ : Unit) : IO (Array (List Nat)) := do
-  budgeted 10000000 do
-    let inputs ← tableInputsRef.get
-    return inputs.map fun n =>
-      match factor? n (Hex.Rand.ofSeed n) with
-      | .ok (F, _) => encodeFactors F.raw.factors
-      | .error _ => []
+  budgeted 10000000 tableDispatch
 
 @[noinline]
 def runTableTrial (_ : Unit) : IO (Array (List Nat)) := do
-  budgeted 10000000 do
-    let inputs ← tableInputsRef.get
-    return inputs.map fun n =>
-      let out := trialFactors n
-      if out.2 = 1 then encodeFactors out.1 else []
+  budgeted 10000000 tableTrial
 
 private opaque balancedBits : Array Nat := #[32, 40, 48, 56, 64, 72, 80]
 private opaque smoothBits : Array Nat := #[32, 40, 48, 56, 64, 72, 76, 80]
@@ -340,9 +344,9 @@ def runDownstreamPrimitiveRoot (_ : Unit) : IO (Array Nat) := do
     return (← downstreamOrderPrimesRef.get).map runPrimitiveRoot
 
 def reportControls : IO UInt32 := do
-  let tableDispatch ← runTableDispatch ()
-  let tableTrial ← runTableTrial ()
-  let mut ok := tableDispatch == tableTrial && tableDispatch.all (!·.isEmpty)
+  let dispatchedTable ← tableDispatch
+  let trialTable ← tableTrial
+  let mut ok := dispatchedTable == trialTable && dispatchedTable.all (!·.isEmpty)
   let tableStatus := if ok then "success" else "failure"
   IO.println s!"table,{tableStatus}"
   for bits in balancedBits do
