@@ -31,6 +31,7 @@ deriving Repr, DecidableEq
 structure PartialSnapshot where
   /-- The retained partial factorization candidate. -/
   raw : PartialFactorization
+  /-- Successful replay of the retained partial factorization. -/
   valid : checkPartial raw = true
 deriving Repr
 

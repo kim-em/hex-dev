@@ -132,6 +132,16 @@ theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) :
     | inl ha => exact Nat.dvd_trans ha (Nat.dvd_mul_right a b)
     | inr hb => exact Nat.dvd_trans hb (Nat.dvd_mul_left b a)
 
+/-- A prime that divides a power divides its base. -/
+theorem dvd_of_dvd_pow {p a k : Nat} (hp : Hex.Nat.Prime p)
+    (h : p ∣ a ^ k) : p ∣ a := by
+  induction k with
+  | zero =>
+      exact absurd (Nat.dvd_one.mp h) hp.ne_one
+  | succ k ih =>
+      rw [Nat.pow_succ] at h
+      exact (hp.dvd_mul.mp h).elim ih id
+
 end Prime
 
 /-- Primality as a bounded search: for `p ≥ 2`, having only trivial divisors is

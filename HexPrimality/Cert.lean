@@ -381,21 +381,6 @@ private theorem checkChildren_forall :
 
 /-! Prime-power combination -/
 
-private theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
-    ∀ {k : Nat}, p ∣ a ^ k → p ∣ a := by
-  intro k
-  induction k with
-  | zero =>
-      intro h
-      rw [Nat.pow_zero] at h
-      exact absurd (Nat.dvd_one.mp h) (by have := hp.two_le; omega)
-  | succ k ih =>
-      intro h
-      rw [Nat.pow_succ] at h
-      rcases (hp.dvd_mul).mp h with h' | h'
-      · exact ih h'
-      · exact h'
-
 private theorem prime_eq_of_dvd {p q : Nat} (hp : Prime p) (hq : Prime q)
     (h : p ∣ q) : p = q := by
   rcases hq.2 p h with h1 | h1

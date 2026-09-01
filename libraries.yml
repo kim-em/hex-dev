@@ -681,7 +681,7 @@ libraries:
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexIntFactor/ProofProbe]
     phase4:
@@ -881,7 +881,7 @@ libraries:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]

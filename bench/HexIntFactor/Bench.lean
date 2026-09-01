@@ -467,9 +467,9 @@ private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
       have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
       have hmul : acc * q ≤ acc * q ^ (e + 1) := by
         simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle
-      rw [boundedPowMul, if_neg (Nat.ne_of_gt hacc),
-        if_neg (Nat.ne_of_gt hq),
-        if_pos ((Nat.le_div_iff_mul_le hq).2 hmul)]
+      rw [boundedPowMul, ite_eq_right (Nat.ne_of_gt hacc),
+        ite_eq_right (Nat.ne_of_gt hq),
+        ite_eq_left ((Nat.le_div_iff_mul_le hq).2 hmul)]
       simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
         Nat.mul_left_comm] using
         boundedPowMul_exact q (acc * q) hq (Nat.mul_pos hacc hq) e
