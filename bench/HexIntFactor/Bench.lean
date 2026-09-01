@@ -186,6 +186,13 @@ initialize balanced64Ref : IO.Ref Nat ← IO.mkRef 64
 initialize balanced72Ref : IO.Ref Nat ← IO.mkRef 72
 initialize balanced80Ref : IO.Ref Nat ← IO.mkRef 80
 
+initialize ecm48Ref : IO.Ref Nat ← IO.mkRef 48
+initialize ecm56Ref : IO.Ref Nat ← IO.mkRef 56
+initialize ecm64Ref : IO.Ref Nat ← IO.mkRef 64
+initialize ecm72Ref : IO.Ref Nat ← IO.mkRef 72
+initialize ecm76Ref : IO.Ref Nat ← IO.mkRef 76
+initialize ecm80Ref : IO.Ref Nat ← IO.mkRef 80
+
 private def readBalanced (ref : IO.Ref Nat)
     (run : Nat → α) (_ : Unit) : IO α := do
   return run (← ref.get)
@@ -205,6 +212,16 @@ private def readBalanced (ref : IO.Ref Nat)
 @[noinline] def runBalancedForced64 := readBalanced balanced64Ref runBalancedForced
 @[noinline] def runBalancedForced72 := readBalanced balanced72Ref runBalancedForced
 @[noinline] def runBalancedForced80 := readBalanced balanced80Ref runBalancedForced
+
+private def readEcm (ref : IO.Ref Nat) (_ : Unit) : IO Nat := do
+  return runEcm (ecmInput (← ref.get))
+
+@[noinline] def runEcm48 := readEcm ecm48Ref
+@[noinline] def runEcm56 := readEcm ecm56Ref
+@[noinline] def runEcm64 := readEcm ecm64Ref
+@[noinline] def runEcm72 := readEcm ecm72Ref
+@[noinline] def runEcm76 := readEcm ecm76Ref
+@[noinline] def runEcm80 := readEcm ecm80Ref
 
 @[noinline]
 def runPMinusOneBatch (_ : Unit) : Array Nat :=
@@ -586,6 +603,18 @@ setup_fixed_benchmark runEcmBatch where
   fixedConfig 0.1 0x32066d5482493644
 setup_fixed_benchmark runEcmRhoBatch where
   fixedConfig 0.5 0x32066d5482493644
+setup_fixed_benchmark runEcm48 where
+  fixedConfig 0.02 0x00000000000f4243
+setup_fixed_benchmark runEcm56 where
+  fixedConfig 0.02 0x00000000000f4243
+setup_fixed_benchmark runEcm64 where
+  fixedConfig 0.02 0x00000000000f4243
+setup_fixed_benchmark runEcm72 where
+  fixedConfig 0.02 0x00000002003bafc5
+setup_fixed_benchmark runEcm76 where
+  fixedConfig 0.02 0x00000002003bafc5
+setup_fixed_benchmark runEcm80 where
+  fixedConfig 0.02 0x00000002003bafc5
 
 /- Mode 3 for cyclotomic construction and power-form search: divisor shape and
 the deterministic factor-search route make exponent-only slopes unstable. The
