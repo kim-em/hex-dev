@@ -58,11 +58,12 @@ Informational external comparator:
   wall-time ratios on the packed polynomial operations over `GF(2)`
   (`add`, `mul`, `div` quotient, `rem` modular reduction, `gcd`). The
   comparator is classified `informational` in
-  `SPEC/Libraries/hex-gf2.md §"External comparators"`: NTL ships
-  hand-tuned word-level inner loops while Hex's `GF2Poly` is the
-  verified algorithmic surface, so the constant-factor gap is
-  structural; ratios are recorded for orientation but do not block
-  Phase 4.
+  `HexGF2/SPEC/hex-gf2.md §"External comparators"`. Addition is a
+  correctness/protocol anchor because hex serialization dominates the NTL
+  round trip. Multiplication, division, remainder, and GCD are the
+  performance surfaces: NTL uses asymptotically faster polynomial kernels
+  while Hex currently uses schoolbook multiplication, long division, and
+  Euclidean GCD. Ratios are recorded for orientation but do not block Phase 4.
 
 # NTL comparator-call protocol (persistent subprocess)
 
@@ -111,9 +112,11 @@ surfaces as an `IO.userError`.
 
 **Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns one
 fresh `hexgf2_bench` child process per measured repeat of a fixed
-benchmark, so each repeat starts with a cold `ntlChildRef`. The
-per-call protocol overhead figure shown in the headline report
-includes one process startup per fixed-benchmark repeat at this shape.
+benchmark, so each repeat starts with a cold `ntlChildRef`. Every NTL
+registration enables `warmupFirstIter`: the discarded call starts the
+driver before the timed region, then the timed inner-repeat batch reuses
+that child. The paired Hex registration uses the same `minTotalSeconds`
+floor so both medians have the same steady-state timing basis.
 -/
 
 namespace Hex.GF2Bench
@@ -600,12 +603,14 @@ def runNtlGcdAt (n : Nat) : Unit → IO UInt64 := fun _ =>
 registrations.
 
 Add ladder: in-fill of the parametric `[4096, 8192, 16384, 32768, 65536]`
-schedule pushed up to `262144` so NTL's per-call wall time clears the
-persistent-subprocess startup floor.
+schedule pushed up to `262144`. This is a correctness/protocol-throughput
+anchor rather than an algorithmic performance comparison because hex
+serialization dominates the NTL round trip.
 
 Mul/Div/Mod/Gcd ladders: in-fill of the parametric
-`[16, 24, 32, 48, 64, 96, 128]` schedule pushed up to `256` for the
-same reason. -/
+`[16, 24, 32, 48, 64, 96, 128]` schedule and upper rungs expose the
+different algorithm classes while retaining enough rungs below the headline
+report's ten-second eligibility ceiling. -/
 
 def runAdd4096 : Unit → IO UInt64 := runAddAt 4096
 def runNtlAdd4096 : Unit → IO UInt64 := runNtlAddAt 4096
@@ -950,137 +955,172 @@ setup_benchmark runGF2nPolyPowChecksum n => Nat.log2 (n + 1)
 Paired Hex/NTL `setup_fixed_benchmark` rungs feed the headline report's
 Comparator Ratios subsection at densified rungs of each SPEC-named
 parametric ladder. `lean-bench` reports each pair's observed hashes and
-median wall time; per `SPEC/Libraries/hex-gf2.md §"External
+median wall time; per `HexGF2/SPEC/hex-gf2.md §"External
 comparators"` the comparator is `informational` and no gating-goal
 verdict is required. -/
 
-setup_fixed_benchmark runAdd4096 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd4096 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd8192 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd8192 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd16384 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd16384 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd32768 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd32768 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd65536 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd65536 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd131072 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd131072 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runAdd262144 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlAdd262144 where { repeats := 5, maxSecondsPerCall := 5.0 }
+def ntlCompare5 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 5.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runMul16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMul128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMul192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMul192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMul256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMul256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMul384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMul384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMul512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runNtlMul512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runMul768 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runNtlMul768 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runMul1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlMul1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runMul1536 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlMul1536 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runMul2048 where { repeats := 3, maxSecondsPerCall := 30.0 }
-setup_fixed_benchmark runNtlMul2048 where { repeats := 3, maxSecondsPerCall := 30.0 }
+def leanCompare5 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 5.0, minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runDiv16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlDiv128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runDiv192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlDiv192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runDiv256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlDiv256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runDiv384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlDiv384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runDiv512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runNtlDiv512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runDiv768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlDiv768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runDiv1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlDiv1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
+def ntlCompare8 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 8.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runMod16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlMod128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runMod192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMod192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMod256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMod256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMod384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlMod384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runMod512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runNtlMod512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runMod768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlMod768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runMod1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlMod1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
+def leanCompare8 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 8.0, minTotalSeconds := 0.2 }
 
-setup_fixed_benchmark runGcd16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd16 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd24 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd32 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd48 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd64 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd96 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runNtlGcd128 where { repeats := 5, maxSecondsPerCall := 5.0 }
-setup_fixed_benchmark runGcd192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlGcd192 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runGcd256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlGcd256 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runGcd384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runNtlGcd384 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runGcd512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runNtlGcd512 where { repeats := 3, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runGcd768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlGcd768 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runGcd1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runNtlGcd1024 where { repeats := 3, maxSecondsPerCall := 20.0 }
-setup_fixed_benchmark runGcd1536 where { repeats := 3, maxSecondsPerCall := 30.0 }
-setup_fixed_benchmark runNtlGcd1536 where { repeats := 3, maxSecondsPerCall := 30.0 }
+def ntlCompare12 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 12.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+def leanCompare12 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2 }
+
+def ntlCompare20 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 20.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+def leanCompare20 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 20.0, minTotalSeconds := 0.2 }
+
+def ntlCompare30 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 30.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+def leanCompare30 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2 }
+
+setup_fixed_benchmark runAdd4096 where leanCompare5
+setup_fixed_benchmark runNtlAdd4096 where ntlCompare5
+setup_fixed_benchmark runAdd8192 where leanCompare5
+setup_fixed_benchmark runNtlAdd8192 where ntlCompare5
+setup_fixed_benchmark runAdd16384 where leanCompare5
+setup_fixed_benchmark runNtlAdd16384 where ntlCompare5
+setup_fixed_benchmark runAdd32768 where leanCompare5
+setup_fixed_benchmark runNtlAdd32768 where ntlCompare5
+setup_fixed_benchmark runAdd65536 where leanCompare5
+setup_fixed_benchmark runNtlAdd65536 where ntlCompare5
+setup_fixed_benchmark runAdd131072 where leanCompare5
+setup_fixed_benchmark runNtlAdd131072 where ntlCompare5
+setup_fixed_benchmark runAdd262144 where leanCompare5
+setup_fixed_benchmark runNtlAdd262144 where ntlCompare5
+
+setup_fixed_benchmark runMul16 where leanCompare5
+setup_fixed_benchmark runNtlMul16 where ntlCompare5
+setup_fixed_benchmark runMul24 where leanCompare5
+setup_fixed_benchmark runNtlMul24 where ntlCompare5
+setup_fixed_benchmark runMul32 where leanCompare5
+setup_fixed_benchmark runNtlMul32 where ntlCompare5
+setup_fixed_benchmark runMul48 where leanCompare5
+setup_fixed_benchmark runNtlMul48 where ntlCompare5
+setup_fixed_benchmark runMul64 where leanCompare5
+setup_fixed_benchmark runNtlMul64 where ntlCompare5
+setup_fixed_benchmark runMul96 where leanCompare5
+setup_fixed_benchmark runNtlMul96 where ntlCompare5
+setup_fixed_benchmark runMul128 where leanCompare5
+setup_fixed_benchmark runNtlMul128 where ntlCompare5
+setup_fixed_benchmark runMul192 where leanCompare8
+setup_fixed_benchmark runNtlMul192 where ntlCompare8
+setup_fixed_benchmark runMul256 where leanCompare8
+setup_fixed_benchmark runNtlMul256 where ntlCompare8
+setup_fixed_benchmark runMul384 where leanCompare8
+setup_fixed_benchmark runNtlMul384 where ntlCompare8
+setup_fixed_benchmark runMul512 where leanCompare12
+setup_fixed_benchmark runNtlMul512 where ntlCompare12
+setup_fixed_benchmark runMul768 where leanCompare12
+setup_fixed_benchmark runNtlMul768 where ntlCompare12
+setup_fixed_benchmark runMul1024 where leanCompare20
+setup_fixed_benchmark runNtlMul1024 where ntlCompare20
+setup_fixed_benchmark runMul1536 where leanCompare20
+setup_fixed_benchmark runNtlMul1536 where ntlCompare20
+setup_fixed_benchmark runMul2048 where leanCompare30
+setup_fixed_benchmark runNtlMul2048 where ntlCompare30
+
+setup_fixed_benchmark runDiv16 where leanCompare5
+setup_fixed_benchmark runNtlDiv16 where ntlCompare5
+setup_fixed_benchmark runDiv24 where leanCompare5
+setup_fixed_benchmark runNtlDiv24 where ntlCompare5
+setup_fixed_benchmark runDiv32 where leanCompare5
+setup_fixed_benchmark runNtlDiv32 where ntlCompare5
+setup_fixed_benchmark runDiv48 where leanCompare5
+setup_fixed_benchmark runNtlDiv48 where ntlCompare5
+setup_fixed_benchmark runDiv64 where leanCompare5
+setup_fixed_benchmark runNtlDiv64 where ntlCompare5
+setup_fixed_benchmark runDiv96 where leanCompare5
+setup_fixed_benchmark runNtlDiv96 where ntlCompare5
+setup_fixed_benchmark runDiv128 where leanCompare5
+setup_fixed_benchmark runNtlDiv128 where ntlCompare5
+setup_fixed_benchmark runDiv192 where leanCompare8
+setup_fixed_benchmark runNtlDiv192 where ntlCompare8
+setup_fixed_benchmark runDiv256 where leanCompare8
+setup_fixed_benchmark runNtlDiv256 where ntlCompare8
+setup_fixed_benchmark runDiv384 where leanCompare8
+setup_fixed_benchmark runNtlDiv384 where ntlCompare8
+setup_fixed_benchmark runDiv512 where leanCompare12
+setup_fixed_benchmark runNtlDiv512 where ntlCompare12
+setup_fixed_benchmark runDiv768 where leanCompare20
+setup_fixed_benchmark runNtlDiv768 where ntlCompare20
+setup_fixed_benchmark runDiv1024 where leanCompare20
+setup_fixed_benchmark runNtlDiv1024 where ntlCompare20
+
+setup_fixed_benchmark runMod16 where leanCompare5
+setup_fixed_benchmark runNtlMod16 where ntlCompare5
+setup_fixed_benchmark runMod24 where leanCompare5
+setup_fixed_benchmark runNtlMod24 where ntlCompare5
+setup_fixed_benchmark runMod32 where leanCompare5
+setup_fixed_benchmark runNtlMod32 where ntlCompare5
+setup_fixed_benchmark runMod48 where leanCompare5
+setup_fixed_benchmark runNtlMod48 where ntlCompare5
+setup_fixed_benchmark runMod64 where leanCompare5
+setup_fixed_benchmark runNtlMod64 where ntlCompare5
+setup_fixed_benchmark runMod96 where leanCompare5
+setup_fixed_benchmark runNtlMod96 where ntlCompare5
+setup_fixed_benchmark runMod128 where leanCompare5
+setup_fixed_benchmark runNtlMod128 where ntlCompare5
+setup_fixed_benchmark runMod192 where leanCompare8
+setup_fixed_benchmark runNtlMod192 where ntlCompare8
+setup_fixed_benchmark runMod256 where leanCompare8
+setup_fixed_benchmark runNtlMod256 where ntlCompare8
+setup_fixed_benchmark runMod384 where leanCompare8
+setup_fixed_benchmark runNtlMod384 where ntlCompare8
+setup_fixed_benchmark runMod512 where leanCompare12
+setup_fixed_benchmark runNtlMod512 where ntlCompare12
+setup_fixed_benchmark runMod768 where leanCompare20
+setup_fixed_benchmark runNtlMod768 where ntlCompare20
+setup_fixed_benchmark runMod1024 where leanCompare20
+setup_fixed_benchmark runNtlMod1024 where ntlCompare20
+
+setup_fixed_benchmark runGcd16 where leanCompare5
+setup_fixed_benchmark runNtlGcd16 where ntlCompare5
+setup_fixed_benchmark runGcd24 where leanCompare5
+setup_fixed_benchmark runNtlGcd24 where ntlCompare5
+setup_fixed_benchmark runGcd32 where leanCompare5
+setup_fixed_benchmark runNtlGcd32 where ntlCompare5
+setup_fixed_benchmark runGcd48 where leanCompare5
+setup_fixed_benchmark runNtlGcd48 where ntlCompare5
+setup_fixed_benchmark runGcd64 where leanCompare5
+setup_fixed_benchmark runNtlGcd64 where ntlCompare5
+setup_fixed_benchmark runGcd96 where leanCompare5
+setup_fixed_benchmark runNtlGcd96 where ntlCompare5
+setup_fixed_benchmark runGcd128 where leanCompare5
+setup_fixed_benchmark runNtlGcd128 where ntlCompare5
+setup_fixed_benchmark runGcd192 where leanCompare8
+setup_fixed_benchmark runNtlGcd192 where ntlCompare8
+setup_fixed_benchmark runGcd256 where leanCompare8
+setup_fixed_benchmark runNtlGcd256 where ntlCompare8
+setup_fixed_benchmark runGcd384 where leanCompare8
+setup_fixed_benchmark runNtlGcd384 where ntlCompare8
+setup_fixed_benchmark runGcd512 where leanCompare12
+setup_fixed_benchmark runNtlGcd512 where ntlCompare12
+setup_fixed_benchmark runGcd768 where leanCompare20
+setup_fixed_benchmark runNtlGcd768 where ntlCompare20
+setup_fixed_benchmark runGcd1024 where leanCompare20
+setup_fixed_benchmark runNtlGcd1024 where ntlCompare20
+setup_fixed_benchmark runGcd1536 where leanCompare30
+setup_fixed_benchmark runNtlGcd1536 where ntlCompare30
 
 end Hex.GF2Bench

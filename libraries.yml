@@ -120,7 +120,7 @@ libraries:
       comparators:
         - tool: "FLINT fmpz_poly via python-flint"
           class: informational
-          rationale: "FLINT tunes Karatsuba/Toom-Cook/FFT crossovers in fmpz_poly_mul and uses non-recursive Newton-style algorithms for division and GCD; Hex's implementation is schoolbook with the Karatsuba crossover named in the algorithm table. The constant-factor gap is structural, not algorithmic — the ratio is recorded for orientation but is not a Phase-4 gate. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "FLINT tunes Karatsuba/Toom-Cook/FFT crossovers in fmpz_poly_mul and other specialized integer-polynomial kernels, while HexPoly deliberately supplies the schoolbook semantic foundation and delegates faster algorithms to downstream libraries. Ratios are recorded for orientation rather than as Phase-4 gates. Wired via a warmed persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-int-arithmetic
           description: Deterministic dense integer polynomials for coefficientwise arithmetic, multiplication, derivative, and composition.
@@ -385,7 +385,7 @@ libraries:
       comparators:
         - tool: "NTL GF2X via persistent C++ subprocess driver"
           class: informational
-          rationale: "NTL ships hand-tuned word-level inner loops for GF(2)[x] (Karatsuba/FFT crossovers in mul, XOR-folding division, fast GCD); Hex's `GF2Poly` is the verified packed-word algorithmic surface. The constant-factor gap is structural rather than algorithmic — the ratios are recorded for orientation but are not a Phase-4 gate. Wired via a persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "NTL dispatches to Karatsuba/FFT multiplication, fast division and remainder, and half-GCD, while Hex uses packed schoolbook multiplication, long division and remainder, and Euclidean GCD; those performance ratios compare different complexity classes and are informational. Addition is retained only as a same-input correctness/protocol anchor because hex framing dominates its linear kernel. Wired via a warmed persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: packed-word-clmul
           description: Deterministic UInt64 sample pairs for pure-Lean and extern carry-less word multiplication chains.

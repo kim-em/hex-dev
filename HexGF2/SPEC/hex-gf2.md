@@ -227,13 +227,19 @@ proof budget.
 
 | Comparator | Class | Scope |
 |---|---|---|
-| NTL `GF2X` | informational | bench targets exercising packed-word GF(2)[x] arithmetic: addition, multiplication, division, GCD, modular reduction |
+| NTL `GF2X` | informational | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
 
 NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic:
-its inner loops are optimised at the word level for carry-less
-multiplication, XOR-folding division, and fast GCD. Hex's
-packed-word representation is the same algorithmic shape but
-the constant factors differ. The comparator is `informational`.
+its inner loops dispatch to Karatsuba/FFT multiplication, fast
+division and remainder, and half-GCD. Hex uses packed schoolbook
+multiplication, long division and remainder, and Euclidean GCD.
+Those operations therefore have different complexity classes at
+the upper end of the ladder; their ratios orient future optimization
+but do not gate Phase 4. Addition has the same linear packed-word
+kernel shape, but the hex-framed driver measures serialization rather
+than raw NTL addition, so its paired registrations are correctness and
+protocol anchors rather than performance evidence. The comparator is
+`informational`.
 
 The wiring pattern (process-call driver vs `@[extern]` C++ shim
 vs hybrid) is an implementation choice for the HO that wires
