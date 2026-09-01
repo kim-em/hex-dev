@@ -369,10 +369,16 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, compiled search constructs two canonical certificates
-and a difference certificate. It checks them once in the elaborator, then
-emits the literal data and an application of the checker soundness theorems.
-The kernel performs the decisive replay. No result relies on compiler trust.
+For a negative goal, the tactic replays the fully verified pairwise
+individualization-refinement decision (`decideIso?_not_isomorphic`)
+under `maxNodes`; the kernel performs the decisive replay of that
+structurally recursive decision. No result relies on compiler trust.
+The certificate route — two canonical certificates and a difference
+certificate through `checkCanon_sound` and
+`checkDiff_not_isomorphic` — is available on the public API for
+compiled callers; the pairwise replay is the tactic's kernel path
+because it replays one bounded decision rather than two full
+canonical replays.
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search
