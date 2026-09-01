@@ -946,6 +946,24 @@ def prepElemInput (n : Nat) : ElemInput :=
       b := ofCoeffs tower (ladderCoords d 7) }
   | none => panic! "prepElemInput: tower fixture failed"
 
+/-- A dense one-level fixture for coordinatewise operations. Its timed
+operation depends only on the coordinate-array length, so this preserves the
+same linear family while avoiding relative-extension work in the untimed
+fixture at the larger calibration rungs. -/
+def prepLinearElemInput (n : Nat) : ElemInput :=
+  let presentation := prepPresentationInput (max n 2)
+  let root := presentation.root
+  match presentation.checked with
+  | some ⟨checked⟩ =>
+      letI : ZPoly.CheckedIrreducible root.p := checked
+      let extension := ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk
+      let tower := extension.tower
+      let d := tower.dim
+      { tower := tower
+        a := ofCoeffs tower (ladderCoords d 3)
+        b := ofCoeffs tower (ladderCoords d 7) }
+  | none => panic! "prepLinearElemInput: tower fixture failed"
+
 def runTowerAddLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a + input.b)
 
@@ -966,6 +984,19 @@ def runTowerInvLadder (input : ElemInput) : UInt64 :=
 
 def runTowerDivLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a / input.b)
+
+/- Cost model. Negation maps rational negation over the `D = n` dense
+coordinate array. The one-level presentation changes only untimed fixture
+construction: the timed implementation sees the same fixed-height coordinate
+representation and performs exactly `Θ(n)` work. -/
+setup_benchmark runTowerNegLadder n => n
+  with prep := prepLinearElemInput
+  where {
+    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32, 48]
+    maxSecondsPerCall := 300.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /- Cost model. Coordinate addition adds the two mixed-radix coordinate
 vectors pointwise: exactly `D = 2n` bounded-height rational additions for the
@@ -1041,8 +1072,8 @@ setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepElemInput
   where {
     paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -1295,6 +1326,18 @@ def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
         mixHash checksum (qAdjoinChecksum (result.toPrimitive basis)))
         (hash input.tower.dim)
   | none => 0
+
+/- Cost model. Applying `toPrimitive` to one basis vector computes `D`
+trace pairings of length `D`, hence `Θ(D²)` rational operations; applying it
+to all `D = 2n` basis vectors gives `Θ(n³)` work. The extended rung is retained
+with five trials to distinguish stable growth from host interference. -/
+setup_benchmark runToPrimitiveLadder n => n * n * n
+  with prep := prepMapLadderInput
+  where {
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
 
 def runFromPrimitiveLadder (input : MapLadderInput) : UInt64 :=
   match input.result with
