@@ -2,7 +2,7 @@
 """Collect and render reproducible HexIntFactor Phase-4 evidence.
 
 All children run on one idle CPU. PARI uses calibrated in-process batches.
-GMP-ECM uses one fixed 256-input batch shape with sigma 7, B1 1000, and B2 1
+GMP-ECM uses one fixed 256-input batch shape with sigma 0:7, B1 1000, and B2 1
 (B2 < B1 disables stage 2) for both the overhead control and every operand.
 """
 
@@ -248,7 +248,7 @@ def measure_pari(gp: str, n: int, rounds: int, timeout: float) -> dict[str, obje
 def ecm_batch(ecm: str, n: int, timeout: float) -> tuple[float, list[list[int]]]:
     started = time.monotonic_ns()
     proc = subprocess.run(
-        [ecm, "-q", "-sigma", "7", "1000", "1"], cwd=ROOT,
+        [ecm, "-q", "-sigma", "0:7", "1000", "1"], cwd=ROOT,
         input=f"{n}\n" * ECM_BATCH, capture_output=True, text=True,
         timeout=timeout,
     )
@@ -380,8 +380,16 @@ def main() -> int:
     validate_export(export)
 
     control_output = run([str(BENCH), "control-audit"], timeout=120.0).stdout
-    if "failure" in control_output:
-        raise RuntimeError(f"control audit failed:\n{control_output}")
+    control_rows = [line.strip() for line in control_output.splitlines()
+                    if line.strip()]
+    expected_controls = ["table,success", *[
+        f"balanced-{bits},success" for bits, _ in BALANCED
+    ], "power,success"]
+    if control_rows != expected_controls:
+        raise RuntimeError(
+            "control audit did not return the exact expected rows:\n"
+            + control_output
+        )
     fuel_rows = []
     for line in run([str(BENCH), "default-fuel"], timeout=600.0).stdout.splitlines():
         n, fuel, status, attempts = line.split(",")
@@ -403,6 +411,7 @@ def main() -> int:
         balanced_rows.append({
             "bits": bits, "n": n, "normal_nanos": normal_batch_ns,
             "rho_nanos": rho_ns, "completion_nanos": completion_ns,
+            "public_route": "table-complete" if bits == 32 else "rho-driven",
             "full_over_rho": normal_batch_ns / rho_ns,
             "full_over_rho_plus_completion": normal_batch_ns /
                 (rho_ns + completion_ns),
@@ -457,14 +466,14 @@ def main() -> int:
         "config": {
             "rounds": args.rounds, "timeout_seconds": args.timeout,
             "pari_timing": "GP getwalltime around a calibrated in-process factor batch",
-            "gmp_ecm_command": f"{args.ecm} -q -sigma 7 1000 1",
+            "gmp_ecm_command": f"{args.ecm} -q -sigma 0:7 1000 1",
             "gmp_ecm_batch_repeats": ECM_BATCH,
             "gmp_ecm_overhead_input": 15,
             "gmp_ecm_timing": "fixed persistent 256-input batch; B2 < B1 disables stage 2",
             "scientific_fixed_budget_nanos": FIXED_BUDGET_NANOS,
         },
         "benchmark_export": export,
-        "control_audit": control_output.splitlines(),
+        "control_audit": control_rows,
         "internal_controls": {
             "table": {
                 "dispatch_nanos": table_dispatch, "trial_nanos": table_trial,

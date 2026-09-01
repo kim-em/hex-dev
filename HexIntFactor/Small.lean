@@ -137,7 +137,8 @@ def SmallCandidate.scale (candidate : SmallCandidate) (multiplier : Nat) :
   { factors := candidate.factors.map fun entry =>
       { entry with exponent := entry.exponent * multiplier }
     residualBase := candidate.residualBase
-    residualExponent := candidate.residualExponent * multiplier
+    residualExponent := if candidate.residualBase = 1 then 1
+      else candidate.residualExponent * multiplier
     route := candidate.route }
 
 private def exponentGcd : List PrimePower → Nat
@@ -157,7 +158,7 @@ private def oddCandidate (n : Nat) : SmallCandidate :=
     if 1 < exponent then
       { factors := out.1
         residualBase := 1
-        residualExponent := exponent
+        residualExponent := 1
         route := .perfectPower }
     else
       { factors := out.1

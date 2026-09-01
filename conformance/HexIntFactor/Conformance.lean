@@ -261,7 +261,6 @@ example :
 #guard (perfectPower? (2 ^ 10000)).isSome
 #guard perfectPower? (2 ^ 10009) == some (2, 10009)
 #guard (smallCandidate (3 ^ 13)).route == .perfectPower
-#guard (smallCandidate (3 ^ 15)).residualExponent == 15
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
 #guard (smallCandidate ((6 ^ 5) ^ 3)).route == .twosPower
 
@@ -278,7 +277,7 @@ private def recursivePowerCandidate : SmallCandidate :=
 #guard recursivePowerCandidate.factors.map
   (fun entry => (entry.prime, entry.exponent)) == [(10037, 6)]
 #guard recursivePowerCandidate.residualBase == 1
-#guard recursivePowerCandidate.residualExponent == 6
+#guard recursivePowerCandidate.residualExponent == 1
 -- Batched rho may return a composite divisor when two collisions share a
 -- batch. Seed 17 therefore changed the route count after batching; seed 1
 -- pins that count while the final checked factorization remains unchanged.

@@ -237,6 +237,9 @@ private def ecmInput : Nat → Nat
   | 80 => 8593846213 * 70368744190051
   | _ => 1000003 * 268435579
 
+def runEcmAt (bits : Nat) : Nat :=
+  runEcm (ecmInput bits)
+
 def runEcmRho (bits : Nat) : Nat :=
   let n := ecmInput bits
   rhoLeast n n
@@ -823,7 +826,7 @@ namespace Hex.IntFactorProfile
 
 @[noinline]
 private def runSmoothOnce (salt : Nat) : Nat :=
-  Hex.IntFactorBench.runEcmRho (80 + salt - salt)
+  Hex.IntFactorBench.runEcmAt (80 + salt - salt)
 
 def runSmooth (repeats : Nat) : Array Nat :=
   (List.range repeats).toArray.map runSmoothOnce
@@ -836,7 +839,8 @@ def runPower (repeats : Nat) : Array (List Nat) :=
   (List.range repeats).toArray.map runPowerOnce
 
 /- Cost model: each array entry performs the same committed 80-bit unbalanced
-rho split, so `n` entries perform exactly `n` copies of fixed work. -/
+ECM stage-1 call, so `n` entries perform exactly `n` copies of fixed work.
+The runtime salt blocks closed-term lifting while cancelling arithmetically. -/
 setup_benchmark runSmooth n => n where {
   paramFloor := 1
   paramCeiling := 4
