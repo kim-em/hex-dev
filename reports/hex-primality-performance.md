@@ -84,7 +84,8 @@ profile below confirms that modular powering and certificate construction
 dominate the registered family.  The two-sided harness therefore says
 `inconclusive` because it observes substantially faster scaling; the Phase-4
 result is the distinct one-sided verdict **within declared upper bound
-(observed faster)**.
+(observed faster)**.  This validates the conservative upper bound, not the
+exponent; it is deliberately weaker than a two-sided exponent validation.
 
 | target | harness verdict | slope residual `beta` | largest-rung median |
 |---|---:|---:|---:|
@@ -131,7 +132,10 @@ pair attempts and 1,388 preflight windows, exhausted no pair, recorded no
 validity exception, and classified the artifact `release_quality=true`.
 Every replay and tactic sample reported exactly
 `[propext, Classical.choice, Quot.sound]`; no other axiom appeared.  The
-largest absolute fresh build was 3.608 s, inside the 10 s budget.
+largest absolute fresh build was 3.608 s, inside the 10 s budget.  Thus the
+committed budget has 2.77x headroom on this host.  The full 512-bit scientific
+matrix is deliberately not a merge gate: CI owns only reduced structural
+smoke, as required by the Phase-4 measurement protocol.
 
 The null controls precede the substantive data.  Values below are the six raw
 signed candidate-minus-reference wall-time deltas in milliseconds, followed
@@ -235,8 +239,9 @@ These are absolute fresh-replay ratios, not baseline-subtracted numbers: under
 the shared host's high load, some baseline builds exceeded replay builds.
 Load-one ranged from 12.54 to 146.50 and concurrent Lake/Lean processes from 6
 to 123, all retained in the raw record.  Together with the differing
-toolchains, that makes the result useful evidence of parity within 12%, but
-not a release gate or a claim about incremental elaboration cost.
+toolchains, that makes the observed maximum deviation of 12% useful evidence
+of parity, but not a preregistered tolerance, release gate, or claim about
+incremental elaboration cost.
 
 The exact command was:
 
@@ -249,9 +254,9 @@ python3 scripts/bench/primality_primecert_compare.py \
 ## Profile
 
 Both declared families have inclusive profiles.  Certificate search was
-profiled from pristine commit `ca6f6f9ca`; segment enumeration was profiled
-from pristine commit `5b86166ee`, whose segment path is unchanged.  The
-filtered summaries are committed; raw profiler JSON remains developer-local.
+profiled from pristine commit `ca6f6f9ca`; segment enumeration was refreshed
+from pristine commit `4655d0530`.  The filtered summaries are committed; raw
+profiler JSON remains developer-local.
 Calibration, minimum sample count, and the +/-5 ms sensitivity checks all
 passed, with no samples on other threads inside timed windows.
 
@@ -264,13 +269,13 @@ passed, with no samples on other threads inside timed windows.
   `reports/bench-results/hex-primality-profile-cert-ca6f6f9ca-chungus2.json`
   (SHA-256
   `1cdaf9ac3c358941eecd100572815cd530b85c7bef0980caa1fe72a2d70f9911`).
-- `segment-enumeration`: `runSegment` at 32,000 retained 3,076 samples (8
-  rejected) over 3,094.64 ms.  Inclusive cost was `primesIn` 99.84% and
-  `isPrimeTrialAux` 98.57%; leaf attribution was allocation 39.47%, GMP
-  32.05%, library code 17.46%, and Lean runtime 10.40%.  Summary:
-  `reports/bench-results/hex-primality-profile-segment-5b86166ee-chungus2.json`
+- `segment-enumeration`: `runSegment` at 32,000 retained 3,135 samples (8
+  rejected) over 3,162.76 ms.  Inclusive cost was `primesIn` 99.97% and
+  `isPrimeTrialAux` 98.60%; leaf attribution was allocation 38.05%, GMP
+  33.88%, library code 15.47%, and Lean runtime 12.60%.  Summary:
+  `reports/bench-results/hex-primality-profile-segment-4655d0530-chungus2.json`
   (SHA-256
-  `e7dc808580ca594ce29241e0875c5ab527f2a2b9c9566c88a564c61ad8b03bad`).
+  `47484734a01844d77bc482c6006dedbe9b5f27842c178cd0647f03e9be02dfdc`).
 
 The exact commands were:
 
@@ -288,7 +293,7 @@ python3 scripts/profile/summarize_profile.py \
 python3 scripts/profile/summarize_profile.py \
   /tmp/hex-profile-runSegment-32000.json.gz \
   --thread hexprimality_bench \
-  --output reports/bench-results/hex-primality-profile-segment-5b86166ee-chungus2.json
+  --output reports/bench-results/hex-primality-profile-segment-4655d0530-chungus2.json
 ```
 
 ## Concerns
