@@ -108,6 +108,43 @@ leaves them. Returns the final `(lab, c1, c2)`. -/
     else
       (lab, c1, c2)
 
+/-- The position-level bookkeeping after a trivial split with final
+pointers `c1`, `c2`: record the new cell end, code, count, active entry,
+and hint. Touches no labelling data. -/
+@[expose] def trivialSplit (level cell1 cell2 : Nat) (c1 c2 : Int)
+    (st : RefineSt) : RefineSt :=
+  if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
+    if elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
+      if c1.toNat == cell2 then
+        { st with
+          ptn := st.ptn.set! c2.toNat level
+          longcode := mash st.longcode c2.toNat
+          numcells := st.numcells + 1
+          active := insert st.active c1.toNat
+          hint := c1.toNat }
+      else
+        { st with
+          ptn := st.ptn.set! c2.toNat level
+          longcode := mash st.longcode c2.toNat
+          numcells := st.numcells + 1
+          active := insert st.active c1.toNat }
+    else
+      if c2.toNat == cell1 then
+        { st with
+          ptn := st.ptn.set! c2.toNat level
+          longcode := mash st.longcode c2.toNat
+          numcells := st.numcells + 1
+          active := insert st.active cell1
+          hint := cell1 }
+      else
+        { st with
+          ptn := st.ptn.set! c2.toNat level
+          longcode := mash st.longcode c2.toNat
+          numcells := st.numcells + 1
+          active := insert st.active cell1 }
+  else
+    st
+
 /-- One cell's processing in the trivial-splitter pass: two-pointer
 partition by adjacency, then the split bookkeeping. -/
 @[expose] def trivialCell (level : Nat) (gRow : Nat) (cell1 cell2 : Nat)
@@ -115,25 +152,14 @@ partition by adjacency, then the split bookkeeping. -/
   if cell1 == cell2 then
     st
   else
-    let (lab, c1, c2) :=
-      splitCellLoop gRow (cell2 - cell1 + 2) st.lab
-        (Int.ofNat cell1) (Int.ofNat cell2)
-    let st := { st with lab }
-    if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
-      let c1 := c1.toNat
-      let c2 := c2.toNat
-      let st := { st with
-        ptn := st.ptn.set! c2 level
-        longcode := mash st.longcode c2
-        numcells := st.numcells + 1 }
-      if elem st.active cell1 ∨ c2 - cell1 ≥ cell2 - c1 then
-        let st := { st with active := insert st.active c1 }
-        if c1 == cell2 then { st with hint := c1 } else st
-      else
-        let st := { st with active := insert st.active cell1 }
-        if c2 == cell1 then { st with hint := cell1 } else st
-    else
-      st
+    trivialSplit level cell1 cell2
+      (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).2.1
+      (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).2.2
+      { st with
+        lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+          (Int.ofNat cell1) (Int.ofNat cell2)).1 }
 
 /-- One splitting pass of `refine` for the trivial splitter cell
 `{lab[split1]}`. The splitter row is captured before any cell is
