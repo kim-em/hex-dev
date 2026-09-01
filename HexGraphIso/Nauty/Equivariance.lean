@@ -1374,4 +1374,129 @@ theorem leafRows_map (σ : Renaming n) {ctx ctx' : Ctx}
     hg.2.2 lab[i]! (hlab _ (by omega))]
   exact permset_image σ _ (invPerm_map σ hlab hsl)
 
+/-! # `refine` state invariance and target-cell membership -/
+
+theorem refine_stOk {ctx : Ctx} (hn : ctx.n = n) {level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat}
+    (hsl : lab.size = n) (hlab : LabOk lab n) (hsp : ptn.size = n)
+    (hact : active < 2 ^ n) (hend : ptn[ptn.size - 1]! ≤ level) :
+    StOk n level (refine ctx level lab ptn active numcells) := by
+  rw [refine]
+  have h := refineLoop_stOk hn (4 * ctx.n + 8)
+    { lab, ptn, active, numcells, hint := 0, maxpos := 0,
+      longcode := numcells } ⟨hsl, hlab, hsp, hact, hend⟩
+  exact ⟨h.labSize, h.labOk, h.ptnSize, h.activeLt, h.ptnEnd⟩
+
+theorem argmaxLoop_lt {bucket : Array Nat} {bound : Nat} :
+    ∀ (is : List Nat) (v1 v2 : Nat), v1 < bound → (∀ i ∈ is, i < bound) →
+      argmaxLoop bucket is v1 v2 < bound
+  | [], _, _, h, _ => h
+  | i :: rest, v1, v2, h, his => by
+    rw [argmaxLoop]
+    split
+    · exact argmaxLoop_lt rest i _ (his i (by simp))
+        (fun j hj => his j (by simp [hj]))
+    · exact argmaxLoop_lt rest v1 v2 h (fun j hj => his j (by simp [hj]))
+
+theorem argmax_start_mem {L : List Nat} (hlen : L.length ≠ 0)
+    (B : Array Nat) (v2 : Nat) (is : List Nat)
+    (his : ∀ i ∈ is, i < L.length) :
+    (List.toArray L)[argmaxLoop B is 0 v2]! ∈ L := by
+  rw [List.getElem!_toArray]
+  have hidx : argmaxLoop B is 0 v2 < L.length :=
+    argmaxLoop_lt is 0 v2 (by omega) his
+  rw [getElem!_pos L (argmaxLoop B is 0 v2) hidx]
+  exact List.getElem_mem hidx
+
+/-- With a nonsingleton cell present, `bestcell` returns one of the
+nonsingleton cell starts. -/
+theorem bestcell_mem {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
+    (hex : ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2) ≠ []) :
+    bestcell ctx lab ptn level ∈
+      ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2).map (·.1) := by
+  have hlen : (((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1)).length ≠ 0 := by
+    rw [List.length_map]
+    intro h0
+    exact hex (List.length_eq_zero_iff.mp h0)
+  have hcond : ((((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) = false := by
+    simpa using hlen
+  simp only [bestcell, hcond, Bool.false_eq_true, if_false]
+  refine argmax_start_mem (by simpa using hlen) _ _ _ ?_
+  intro j hj
+  have h1 := List.mem_range'_1.mp hj
+  have h2 : (((cells ptn level ctx.n).filter
+      fun x => decide (x.1 ≠ x.2)).map (·.1)).length ≠ 0 := by
+    simpa using hlen
+  omega
+
+/-- With a nonsingleton cell present, the hint-free `targetcell` returns
+a nonsingleton cell start. -/
+theorem targetcell_nontrivial {ctx : Ctx} {lab ptn : Array Nat}
+    {level tcLevel : Nat}
+    (hex : ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2) :
+    ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2 ∧
+      targetcell ctx lab ptn level tcLevel (-1) = p.1 := by
+  have hfne : ((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2) ≠ [] := by
+    rcases hex with ⟨p, hpm, hpne⟩
+    intro hnil
+    have : p ∈ ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2) := by
+      rw [List.mem_filter]
+      exact ⟨hpm, by simpa using hpne⟩
+    rw [hnil] at this
+    cases this
+  rw [targetcell]
+  rw [if_neg (by
+    rintro ⟨h0, -⟩
+    omega)]
+  rcases Decidable.em (level ≤ tcLevel) with hB | hB
+  · rw [if_pos hB]
+    have hm := bestcell_mem (lab := lab) hfne
+    rcases List.mem_map.mp hm with ⟨p, hpf, hp1⟩
+    have hpc := List.mem_filter.mp hpf
+    exact ⟨p, hpc.1, by simpa using hpc.2, hp1.symm⟩
+  · rw [if_neg hB]
+    rcases hf : (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2)
+      with _ | q
+    · rcases hex with ⟨p, hpm, hpne⟩
+      have := List.find?_eq_none.mp hf p hpm
+      simp [hpne] at this
+    · rw [hf]
+      dsimp only
+      rcases q with ⟨c1, c2⟩
+      refine ⟨(c1, c2), List.mem_of_find?_eq_some hf, ?_, rfl⟩
+      have := List.find?_some hf
+      simpa using this
+
+/-! # Individualization state invariance -/
+
+theorem breakout_go_ok {tv : Nat} (hn0 : 0 < n) :
+    ∀ (fuel : Nat) (lab : Array Nat) (i prev : Nat), LabOk lab n →
+      prev < n →
+      (breakout.go tv fuel lab i prev).size = lab.size ∧
+        LabOk (breakout.go tv fuel lab i prev) n
+  | 0, _, _, _, hlab, _ => ⟨rfl, hlab⟩
+  | fuel + 1, lab, i, prev, hlab, hprev => by
+    rw [breakout.go]
+    have hnext : lab[i]! < n := by
+      rcases Nat.lt_or_ge i lab.size with h | h
+      · exact hlab i h
+      · rw [getElem!_neg _ _ (by omega)]
+        exact hn0
+    split
+    · exact ⟨by rw [Array.size_set!], labOk_set! hlab hprev i⟩
+    · have ih := breakout_go_ok (tv := tv) hn0 fuel (lab.set! i prev)
+        (i + 1) lab[i]! (labOk_set! hlab hprev i) hnext
+      rw [Array.size_set!] at ih
+      exact ih
+
+theorem breakout_ok {lab ptn : Array Nat} {level tc tv : Nat}
+    (hlab : LabOk lab n) (hn0 : 0 < n) (htv : tv < n) :
+    (breakout lab ptn level tc tv).1.size = lab.size ∧
+      LabOk (breakout lab ptn level tc tv).1 n := by
+  rw [breakout]
+  exact breakout_go_ok hn0 (lab.size + 1) lab tc tv hlab htv
+
 end Hex.GraphIso.Nauty

@@ -416,6 +416,15 @@ structure RunResult where
   canupdates : Nat
 deriving Inhabited, Repr
 
+/-- The initial `ptn` array: `inf` everywhere except `0` at each cell
+end. -/
+@[expose] def initPtn (n inf : Nat) (cellEnds : List Nat) : Array Nat :=
+  cellEnds.foldl (fun ptn e => ptn.set! e 0) (Array.replicate n inf)
+
+/-- The initial active set: one bit per cell start. -/
+@[expose] def initActive (cellEnds : List Nat) : Nat :=
+  (cellEnds.foldl (fun (p : Nat × Nat) e => (insert p.1 p.2, e + 1)) (0, 0)).1
+
 /-- Run the pinned dense-nauty canonical search on `n` vertices with
 adjacency rows `g` and the initial ordered partition `(lab0, cellEnds)`;
 `cellEnds` lists, in order, the last position of each colour cell. -/
@@ -434,18 +443,10 @@ def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
       canupdates := 1 }
   let inf := n + 2
   let ctx : Ctx := { n, g }
-  let mut ptn : Array Nat := .replicate n inf
-  for e in cellEnds do
-    ptn := ptn.set! e 0
-  let mut active := 0
-  let mut start := 0
-  for e in cellEnds do
-    active := insert active start
-    start := e + 1
   let st : SearchSt :=
     { lab := lab0
-      ptn
-      active
+      ptn := initPtn n inf cellEnds
+      active := initActive cellEnds
       orbits := .ofFn (n := n) fun i => i.val
       firstcode := .replicate (n + 2) 0
       canoncode := .replicate (n + 2) 0
