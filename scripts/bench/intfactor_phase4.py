@@ -71,6 +71,14 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def version_line(command: list[str]) -> str:
+    proc = run(command)
+    lines = (proc.stdout or proc.stderr).splitlines()
+    if not lines:
+        raise RuntimeError(f"version command returned no output: {shlex.join(command)}")
+    return lines[0].strip()
+
+
 def host_state(cpu: int) -> dict[str, object]:
     model = "unknown"
     for block in Path("/proc/cpuinfo").read_text().split("\n\n"):
@@ -371,7 +379,7 @@ def main() -> int:
             "lean": run(["lake", "env", "lean", "--version"]).stdout.strip(),
             "lean_bench_sha256": sha256(BENCH),
             "kernel_source_sha256": sha256(ROOT / "bench/HexBench/IntFactorKernel.lean"),
-            "pari_version": run([args.pari, "--version"]).stdout.splitlines()[0],
+            "pari_version": version_line([args.pari, "--version"]),
             "ecm_config": run([args.ecm, "-printconfig"]).stdout.strip(),
             "command": shlex.join(sys.argv),
             "state_before": before, "state_after": host_state(cpu),
