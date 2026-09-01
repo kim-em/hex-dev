@@ -59,9 +59,10 @@ jobs:
         run: |
           python3 -m unittest scripts/test_check_phase7.py
           python3 scripts/check_phase7.py
-      - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
+      - name: Run bench source lints (SPEC/benchmarking.md)
         run: |
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
+          python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
@@ -74,6 +75,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py
           python3 scripts/ci/check_benches_mathlib_free.py
+          python3 scripts/ci/check_persistent_flint_warmup.py
       - name: Verify conformance matrix invariant
         run: python3 scripts/conformance_targets.py --check
       - name: Validate committed PNT+ inventory (offline)

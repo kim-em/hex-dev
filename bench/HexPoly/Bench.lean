@@ -765,102 +765,112 @@ same parameter inside the densified eligible range so the headline
 report can record raw and overhead-adjusted ratios at each rung and a
 trend across the ladder. The comparator is `informational` per
 `SPEC/Libraries/hex-poly.md §"External comparators"`: no gating-goal
-verdict is required, the ratios are recorded for orientation. -/
+verdict is required, the ratios are recorded for orientation. Both arms discard
+one call and use the same 200 ms inner-batch floor, so driver startup and
+first-use effects are outside timing. -/
 
-setup_fixed_benchmark runAddChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAddChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAddChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAddChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAddChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runAddChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintAddChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
-setup_fixed_benchmark runSubChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runSubChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runSubChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runSubChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runSubChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runSubChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintSubChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
-setup_fixed_benchmark runMulChecksum128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum320 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum320 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum448 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum448 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runMulChecksum512 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintMulChecksum512 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runAddChecksum16384 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum16384 where flintCompareConfig
+setup_fixed_benchmark runAddChecksum32768 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum32768 where flintCompareConfig
+setup_fixed_benchmark runAddChecksum49152 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum49152 where flintCompareConfig
+setup_fixed_benchmark runAddChecksum65536 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum65536 where flintCompareConfig
+setup_fixed_benchmark runAddChecksum98304 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum98304 where flintCompareConfig
+setup_fixed_benchmark runAddChecksum131072 where leanCompareConfig
+setup_fixed_benchmark runFlintAddChecksum131072 where flintCompareConfig
 
-setup_fixed_benchmark runDerivativeChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDerivativeChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDerivativeChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDerivativeChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDerivativeChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDerivativeChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDerivativeChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runSubChecksum16384 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum16384 where flintCompareConfig
+setup_fixed_benchmark runSubChecksum32768 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum32768 where flintCompareConfig
+setup_fixed_benchmark runSubChecksum49152 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum49152 where flintCompareConfig
+setup_fixed_benchmark runSubChecksum65536 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum65536 where flintCompareConfig
+setup_fixed_benchmark runSubChecksum98304 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum98304 where flintCompareConfig
+setup_fixed_benchmark runSubChecksum131072 where leanCompareConfig
+setup_fixed_benchmark runFlintSubChecksum131072 where flintCompareConfig
 
-setup_fixed_benchmark runComposeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runComposeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintComposeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runMulChecksum128 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum128 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum192 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum192 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum256 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum256 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum320 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum320 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum384 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum384 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum448 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum448 where flintCompareConfig
+setup_fixed_benchmark runMulChecksum512 where leanCompareConfig
+setup_fixed_benchmark runFlintMulChecksum512 where flintCompareConfig
 
-setup_fixed_benchmark runContent16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runContent32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runContent49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runContent65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runContent98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runContent131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintContent131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDerivativeChecksum16384 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum16384 where flintCompareConfig
+setup_fixed_benchmark runDerivativeChecksum32768 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum32768 where flintCompareConfig
+setup_fixed_benchmark runDerivativeChecksum49152 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum49152 where flintCompareConfig
+setup_fixed_benchmark runDerivativeChecksum65536 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum65536 where flintCompareConfig
+setup_fixed_benchmark runDerivativeChecksum98304 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum98304 where flintCompareConfig
+setup_fixed_benchmark runDerivativeChecksum131072 where leanCompareConfig
+setup_fixed_benchmark runFlintDerivativeChecksum131072 where flintCompareConfig
 
-setup_fixed_benchmark runPrimitivePartChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum16384 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPrimitivePartChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum32768 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPrimitivePartChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum49152 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPrimitivePartChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum65536 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPrimitivePartChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum98304 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runPrimitivePartChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintPrimitivePartChecksum131072 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runComposeChecksum16 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum16 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum24 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum24 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum32 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum32 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum40 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum40 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum48 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum48 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum56 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum56 where flintCompareConfig
+setup_fixed_benchmark runComposeChecksum64 where leanCompareConfig
+setup_fixed_benchmark runFlintComposeChecksum64 where flintCompareConfig
+
+setup_fixed_benchmark runContent16384 where leanCompareConfig
+setup_fixed_benchmark runFlintContent16384 where flintCompareConfig
+setup_fixed_benchmark runContent32768 where leanCompareConfig
+setup_fixed_benchmark runFlintContent32768 where flintCompareConfig
+setup_fixed_benchmark runContent49152 where leanCompareConfig
+setup_fixed_benchmark runFlintContent49152 where flintCompareConfig
+setup_fixed_benchmark runContent65536 where leanCompareConfig
+setup_fixed_benchmark runFlintContent65536 where flintCompareConfig
+setup_fixed_benchmark runContent98304 where leanCompareConfig
+setup_fixed_benchmark runFlintContent98304 where flintCompareConfig
+setup_fixed_benchmark runContent131072 where leanCompareConfig
+setup_fixed_benchmark runFlintContent131072 where flintCompareConfig
+
+setup_fixed_benchmark runPrimitivePartChecksum16384 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum16384 where flintCompareConfig
+setup_fixed_benchmark runPrimitivePartChecksum32768 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum32768 where flintCompareConfig
+setup_fixed_benchmark runPrimitivePartChecksum49152 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum49152 where flintCompareConfig
+setup_fixed_benchmark runPrimitivePartChecksum65536 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum65536 where flintCompareConfig
+setup_fixed_benchmark runPrimitivePartChecksum98304 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum98304 where flintCompareConfig
+setup_fixed_benchmark runPrimitivePartChecksum131072 where leanCompareConfig
+setup_fixed_benchmark runFlintPrimitivePartChecksum131072 where flintCompareConfig
 
 end Hex.PolyBench
 
