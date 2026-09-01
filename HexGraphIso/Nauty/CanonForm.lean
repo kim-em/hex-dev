@@ -84,4 +84,34 @@ replay the best leaf to extract its labelling. -/
     | none => none
     | some lab => checkCanon G cert B lab
 
+/-! # The certificate-based negative decision -/
+
+/-- Executable disequality of two canonical keys: the lexicographic
+comparison finds the first differing entry. -/
+@[expose] def checkDiff (B1 B2 : Key) : Bool :=
+  keyCmp B1 B2 != Ordering.eq
+
+theorem checkDiff_sound {B1 B2 : Key} (h : checkDiff B1 B2 = true) :
+    B1 ≠ B2 := by
+  rw [checkDiff, bne_iff_ne, ne_eq] at h
+  intro he
+  exact h (keyCmp_eq_iff.mpr he)
+
+/-- Distinct spec keys separate isomorphism classes. -/
+theorem not_isomorphic_of_key_ne {G H : Colored n k} {BG BH : Key}
+    (hG : canonSpecKey G = BG) (hH : canonSpecKey H = BH)
+    (hne : BG ≠ BH) : ¬Isomorphic G H := fun hiso =>
+  hne (hG ▸ hH ▸ canonSpecKey_eq_of_isomorphic hiso)
+
+/-- Two checked certificates with differing keys prove
+non-isomorphism. -/
+theorem not_isomorphic_of_certs {G H : Colored n k}
+    {certG certH : CertNode} {BG BH : Key} {labG labH : Array Nat}
+    {resG resH : CanonResult n k}
+    (hG : checkCanon G certG BG labG = some resG)
+    (hH : checkCanon H certH BH labH = some resH)
+    (hd : checkDiff BG BH = true) : ¬Isomorphic G H :=
+  not_isomorphic_of_key_ne (checkCanon_sound hG).1
+    (checkCanon_sound hH).1 (checkDiff_sound hd)
+
 end Hex.GraphIso.Nauty
