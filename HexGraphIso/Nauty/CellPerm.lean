@@ -843,4 +843,197 @@ theorem refineTrivial_perm {ctx : Ctx} {level split1 : Nat}
         omega⟩)
     cells_pairwise
 
+/-! # Region-confined partition edits -/
+
+/-- Cell-contents equivalence after arbitrary partition edits confined
+to the interior of one old cell: every new cell either lies inside the
+edited region (equivalence supplied per new cell) or is an untouched
+old cell. -/
+theorem cellsPerm_of_region {ptn ptn' : Array Nat} {level : Nat}
+    {lab lab' : Array Nat} {A lenA : Nat}
+    (hcell : IsCell ptn level A lenA)
+    (hagree : ∀ q, q < A ∨ A + lenA - 1 ≤ q → ptn'[q]! = ptn[q]!)
+    (hin : ∀ x len', IsCell ptn' level x len' → A ≤ x →
+      x + len' ≤ A + lenA → (segN lab x len').Perm (segN lab' x len'))
+    (hout : ∀ x len', IsCell ptn level x len' →
+      x + len' ≤ A ∨ A + lenA ≤ x →
+      (segN lab x len').Perm (segN lab' x len')) :
+    cellsPerm ptn' level lab lab' := by
+  obtain ⟨hlenA, hstartA, hintA, hendA⟩ := hcell
+  intro a len hc'
+  obtain ⟨hlen, hstart, hint, hend⟩ := hc'
+  rcases Decidable.em (a + len ≤ A ∨ A + lenA ≤ a) with hdis | hmid
+  · -- disjoint: an untouched old cell
+    refine hout a len ⟨hlen, ?_, ?_, ?_⟩ hdis
+    · rcases hstart with h0 | hb
+      · exact Or.inl h0
+      · exact Or.inr (by rw [← hagree (a - 1) (by omega)]; exact hb)
+    · intro i hi1 hi2
+      rw [← hagree i (by omega)]
+      exact hint i hi1 hi2
+    · rw [← hagree (a + len - 1) (by omega)]
+      exact hend
+  · -- intersecting: contained in the edited region
+    have hAin : A ≤ a := by
+      rcases Nat.lt_or_ge a A with hlt | hge
+      · exfalso
+        have hb : ptn'[A - 1]! ≤ level := by
+          rcases hstartA with h0 | hb
+          · omega
+          · rw [hagree (A - 1) (by omega)]
+            exact hb
+        have := hint (A - 1) (by omega) (by omega)
+        omega
+      · exact hge
+    have hBin : a + len ≤ A + lenA := by
+      rcases Nat.lt_or_ge (A + lenA) (a + len) with hlt | hge
+      · exfalso
+        have hb : ptn'[A + lenA - 1]! ≤ level := by
+          rw [hagree (A + lenA - 1) (by omega)]
+          exact hendA
+        have := hint (A + lenA - 1) (by omega) (by omega)
+        omega
+      · exact hge
+    exact hin a len ⟨hlen, hstart, hint, hend⟩ hAin hBin
+
+/-! # Nontrivial-splitter ingredients -/
+
+theorem testBit_foldl_insert (lab : Array Nat) (lo : Nat) (v : Nat) :
+    ∀ (l : List Nat) (w : Nat),
+      ((l.foldl (fun w o => insert w lab[lo + o]!) w).testBit v) =
+        (w.testBit v || l.any fun o => lab[lo + o]! == v)
+  | [], w => by simp
+  | o :: l, w => by
+    rw [List.foldl_cons, List.any_cons,
+      testBit_foldl_insert lab lo v l (insert w lab[lo + o]!),
+      testBit_insert]
+    simp [Bool.or_assoc]
+
+/-- The splitter set holds exactly the segment's members. -/
+theorem testBit_worksetOf (lab : Array Nat) (lo hi v : Nat) :
+    (worksetOf lab lo hi).testBit v =
+      (segN lab lo (hi + 1 - lo)).any (· == v) := by
+  rw [worksetOf, testBit_foldl_insert, segN, List.any_map,
+    Nat.zero_testBit, Bool.false_or]
+  congr 1
+
+/-- Cell-equivalent segments give the same splitter set. -/
+theorem worksetOf_perm {lab lab' : Array Nat} {lo hi : Nat}
+    (h : (segN lab lo (hi + 1 - lo)).Perm (segN lab' lo (hi + 1 - lo))) :
+    worksetOf lab lo hi = worksetOf lab' lo hi := by
+  refine Nat.eq_of_testBit_eq fun v => ?_
+  rw [testBit_worksetOf, testBit_worksetOf, Bool.eq_iff_iff,
+    List.any_eq_true, List.any_eq_true]
+  exact ⟨fun ⟨x, hx, hp⟩ => ⟨x, h.mem_iff.mp hx, hp⟩,
+    fun ⟨x, hx, hp⟩ => ⟨x, h.mem_iff.mpr hx, hp⟩⟩
+
+/-- The neighbour counts are the segment mapped through the per-vertex
+count. -/
+theorem countsOf_eq_map (ctx : Ctx) (lab : Array Nat)
+    (workset cell1 cell2 : Nat) :
+    countsOf ctx lab workset cell1 cell2 =
+      (segN lab cell1 (cell2 + 1 - cell1)).map
+        fun v => popCount (workset &&& ctx.g[v]!) := by
+  rw [countsOf, segN, List.map_map]
+  exact List.map_congr_left fun o _ => rfl
+
+theorem foldl_min_le : ∀ (l : List Nat) (a : Nat), l.foldl Nat.min a ≤ a
+  | [], a => Nat.le_refl a
+  | x :: l, a =>
+    Nat.le_trans (foldl_min_le l (Nat.min a x)) (Nat.min_le_left a x)
+
+theorem foldl_min_le_mem :
+    ∀ (l : List Nat) (a x : Nat), x ∈ l → l.foldl Nat.min a ≤ x
+  | y :: l, a, x, hx => by
+    rw [List.foldl_cons]
+    rcases List.mem_cons.mp hx with rfl | hmem
+    · exact Nat.le_trans (foldl_min_le l (Nat.min a x))
+        (Nat.min_le_right a x)
+    · exact foldl_min_le_mem l (Nat.min a y) x hmem
+
+theorem foldl_min_choice :
+    ∀ (l : List Nat) (a : Nat), l.foldl Nat.min a = a ∨ l.foldl Nat.min a ∈ l
+  | [], a => Or.inl rfl
+  | x :: l, a => by
+    rw [List.foldl_cons]
+    rcases foldl_min_choice l (Nat.min a x) with heq | hmem
+    · rw [heq]
+      rcases Nat.le_total a x with hax | hax
+      · exact Or.inl (by rw [Nat.min_eq_min]; omega)
+      · exact Or.inr (by
+          rw [show Nat.min a x = x by rw [Nat.min_eq_min]; omega]
+          simp)
+    · exact Or.inr (by simp [hmem])
+
+/-- The running minimum seeded by the head is permutation-invariant. -/
+theorem foldl_min_headD_perm {l l' : List Nat} (h : l.Perm l') :
+    l.foldl Nat.min (l.headD 0) = l'.foldl Nat.min (l'.headD 0) := by
+  rcases l with _ | ⟨x, t⟩
+  · rw [List.nil_perm.mp h]
+  · rcases l' with _ | ⟨y, t'⟩
+    · exact absurd h (by simp)
+    · have hmem1 : (x :: t).foldl Nat.min ((x :: t).headD 0) ∈ x :: t := by
+        rcases foldl_min_choice (x :: t) ((x :: t).headD 0) with heq | hm
+        · rw [heq]
+          simp
+        · exact hm
+      have hmem2 : (y :: t').foldl Nat.min ((y :: t').headD 0) ∈
+          y :: t' := by
+        rcases foldl_min_choice (y :: t') ((y :: t').headD 0) with heq | hm
+        · rw [heq]
+          simp
+        · exact hm
+      exact Nat.le_antisymm
+        (foldl_min_le_mem _ _ _ (h.mem_iff.mpr hmem2))
+        (foldl_min_le_mem _ _ _ (h.mem_iff.mp hmem1))
+
+theorem foldl_max_ge : ∀ (l : List Nat) (a : Nat), a ≤ l.foldl Nat.max a
+  | [], a => Nat.le_refl a
+  | x :: l, a =>
+    Nat.le_trans (Nat.le_max_left a x) (foldl_max_ge l (Nat.max a x))
+
+theorem foldl_max_ge_mem :
+    ∀ (l : List Nat) (a x : Nat), x ∈ l → x ≤ l.foldl Nat.max a
+  | y :: l, a, x, hx => by
+    rw [List.foldl_cons]
+    rcases List.mem_cons.mp hx with rfl | hmem
+    · exact Nat.le_trans (Nat.le_max_right a x) (foldl_max_ge l _)
+    · exact foldl_max_ge_mem l (Nat.max a y) x hmem
+
+theorem foldl_max_choice :
+    ∀ (l : List Nat) (a : Nat), l.foldl Nat.max a = a ∨ l.foldl Nat.max a ∈ l
+  | [], a => Or.inl rfl
+  | x :: l, a => by
+    rw [List.foldl_cons]
+    rcases foldl_max_choice l (Nat.max a x) with heq | hmem
+    · rw [heq]
+      rcases Nat.le_total a x with hax | hax
+      · exact Or.inr (by
+          rw [show Nat.max a x = x by rw [Nat.max_eq_max]; omega]
+          simp)
+      · exact Or.inl (by rw [Nat.max_eq_max]; omega)
+    · exact Or.inr (by simp [hmem])
+
+/-- The running maximum seeded by the head is permutation-invariant. -/
+theorem foldl_max_headD_perm {l l' : List Nat} (h : l.Perm l') :
+    l.foldl Nat.max (l.headD 0) = l'.foldl Nat.max (l'.headD 0) := by
+  rcases l with _ | ⟨x, t⟩
+  · rw [List.nil_perm.mp h]
+  · rcases l' with _ | ⟨y, t'⟩
+    · exact absurd h (by simp)
+    · have hmem1 : (x :: t).foldl Nat.max ((x :: t).headD 0) ∈ x :: t := by
+        rcases foldl_max_choice (x :: t) ((x :: t).headD 0) with heq | hm
+        · rw [heq]
+          simp
+        · exact hm
+      have hmem2 : (y :: t').foldl Nat.max ((y :: t').headD 0) ∈
+          y :: t' := by
+        rcases foldl_max_choice (y :: t') ((y :: t').headD 0) with heq | hm
+        · rw [heq]
+          simp
+        · exact hm
+      exact Nat.le_antisymm
+        (foldl_max_ge_mem _ _ _ (h.mem_iff.mp hmem1))
+        (foldl_max_ge_mem _ _ _ (h.mem_iff.mpr hmem2))
+
 end Hex.GraphIso.Nauty
