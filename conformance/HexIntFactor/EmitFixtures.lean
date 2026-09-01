@@ -29,6 +29,9 @@ private def powersJson (entries : List PrimePower) : String :=
   "[" ++ String.intercalate "," (entries.map fun e =>
     "[" ++ toString e.prime ++ "," ++ toString e.exponent ++ "]") ++ "]"
 
+private def natsJson (values : Array Nat) : String :=
+  "[" ++ String.intercalate "," (values.toList.map toString) ++ "]"
+
 private def rejected (context : String) : IO α :=
   throw <| IO.userError (context ++ ": factorization candidate rejected")
 
@@ -57,7 +60,8 @@ private def emitDivisorFns (tag : String) (n : Nat) : IO Unit := do
       | .rejected => rejected case
       | .zero | .incomplete => pure "null"
     | .ok (F, _) =>
-        pure <| "{\"tau\":" ++ toString (numDivisors F) ++
+        pure <| "{\"divisors\":" ++ natsJson (divisors F) ++
+        ",\"tau\":" ++ toString (numDivisors F) ++
         ",\"sigma0\":" ++ toString (sigma F 0) ++
         ",\"sigma1\":" ++ toString (sigma F 1) ++
         ",\"sigma2\":" ++ toString (sigma F 2) ++

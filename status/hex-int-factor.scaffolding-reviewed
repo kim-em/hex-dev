@@ -1,0 +1,29 @@
+Phase 1 completion and an independent Phase 2 skeptical review were recorded
+against HexIntFactor/SPEC/hex-int-factor.md after all certificate, arithmetic,
+route, correspondence-boundary, and attempt-accounting blockers were resolved.
+Every direct dependency has completed Phase 1, and every implemented SPEC
+declaration has the intended signature and body.
+
+The review checked bounded complete and partial certificate replay, canonical
+prime support and multiplicity, factor-derived divisor functions, generalized
+divisor sums, totient and square decomposition, exact order certificates,
+primitive-root search, and Carmichael exponents. It also checked structural
+reductions on every recursive cofactor, complete perfect-power detection,
+table trial division, genuinely batched Brent rho, outcome-sensitive Pollard
+p-minus-one and ECM scheduling, corrected projective ECM arithmetic with a
+real word backend, single-pass cyclotomic splitting, checked aggregate
+acceptance, scoped rejection diagnostics, and exact successful and failing
+attempt totals.
+
+The current-main re-audit additionally checked the explicitly budgeted
+`factorCountedWith?` and rho adapters, the downstream `intFactorSearch`
+projection of checker-accepted complete and partial aggregates, and the
+versioned primality elaborator registration. The adapter remains an untrusted
+producer: its consumer constructs fresh prime certificates and accepts only
+after replaying `checkPrime`.
+
+Every advertised declaration has its intended body and route, and every search
+result crosses a complete or partial checker before entering the trusted API.
+No data-level placeholder, fake extern, native-type detour, axiom, sorry,
+`native_decide`, forbidden scaffold wording, or untracked implemented-surface
+gap remains. Phase 3 and later acceptance are not attested by this token.

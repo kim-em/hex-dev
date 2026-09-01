@@ -370,7 +370,10 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                             f"{name} names computational conformance owner {owner} "
                             "without a core conformance module"
                         )
-                else:
+                # Phase 3 requires the owner declaration, while the owner's
+                # headline report becomes evidence only at the bridge's
+                # Phase-4 exit.
+                elif info.done_through >= 4:
                     owner_slug = Path(pascal_to_spec_path(owner)).stem
                     owner_report = root / "reports" / f"{owner_slug}-performance.md"
                     if not owner_report.is_file():

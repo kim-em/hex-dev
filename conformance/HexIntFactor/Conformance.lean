@@ -6,7 +6,53 @@ Authors: Kim Morrison
 
 import HexIntFactor
 
-/-! Route-level and checker regression tests for integer factorization. -/
+/-!
+Core conformance for checked integer factorization, arithmetic consumers, and
+the factor-search routes.
+
+Oracle: PARI (via cypari2) independently recomputes factorization, divisor
+functions, orders, and cyclotomic values from the original inputs;
+python-flint independently recomputes every factorization
+(`scripts/oracle/intfactor_pari.py`).
+Mode: `required`
+Covered operations:
+- `checkFactorization`, `checkPartial`, `factor?`, `factorPartial?`, and the
+  explicitly budgeted `Internal.factorCountedWith?`
+- `defaultFuel`, structural reductions, table trial division, and exact-root
+  and perfect-power detection
+- `rhoSplit?`, `Internal.rhoSplitCountedWith?`, `pMinusOneFactor`,
+  `pMinusOneFactorCounted`, and `ecmStage1`
+- `intFactorSearch` and its checker-accepted complete/partial projection; the
+  registered elaborator extension is exercised in `PrimalityConformance.lean`
+- `powerTarget`, `cyclotomicSplit?`, `factorPowerWithRoute?`, and `factorPower?`
+- `divisors`, `numDivisors`, `sigmaEntry`, `sigma`, `totient`, `radical`,
+  `squarefreePart`, `squareDivisor`, and `isSquarefree`
+- `checkOrder`, `isPrimitiveRoot`, `primitiveRoot?`, `carmichaelPrimePower`,
+  and `carmichael`
+Covered properties:
+- accepted complete and partial certificates reconstruct their positive subject
+  with canonical positive prime-power entries
+- every successful split route returns a dynamically checked proper divisor
+- explicit nested budgets, route selection, retry accounting, random-state
+  advancement, and bounded failure reasons remain observable and distinct
+- cyclotomic parts multiply to the declared signed-power target and the public
+  projection preserves routed successes and failures
+- divisor enumeration is canonical, divisor functions satisfy their product
+  and sum laws, and square decomposition reconstructs the subject
+- accepted order certificates are minimal; primitive-root decisions agree with
+  exact order; Carmichael exponents annihilate units and contain their orders
+Covered edge cases:
+- zero and one subjects, empty factor lists, zero fuel, and invalid power forms
+- repeated, descending, composite, zero-exponent, wrong-product, and
+  attacker-sized factor entries
+- powers of two, nested perfect powers, recursive perfect-power cofactors, and
+  table-boundary residuals
+- rho exhaustion and all proper-factor / gcd-one / whole-modulus outcomes for
+  p-minus-one and ECM, on both word and arbitrary-precision backends
+- nonminimal order witnesses, modulus one, the prime two, non-generators, and
+  mixed two-adic/odd Carmichael factors
+- complete, partial, and zero-input primality-search projections
+-/
 
 open Hex Hex.Nat
 
@@ -17,6 +63,9 @@ private def raw12 : Factorization :=
 
 private def checked12 : CheckedFactorization 12 :=
   ⟨raw12, rfl, by decide⟩
+
+private def checked6 : CheckedFactorization 6 :=
+  ⟨⟨6, [⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩, rfl, by decide⟩
 
 private def checked1 : CheckedFactorization 1 :=
   ⟨⟨1, []⟩, rfl, by decide⟩
@@ -32,6 +81,15 @@ private def checked30 : CheckedFactorization 30 :=
 
 private def checked3600 : CheckedFactorization 3600 :=
   ⟨⟨3600, [⟨4, .small 2⟩, ⟨2, .small 3⟩, ⟨2, .small 5⟩]⟩, rfl, by decide⟩
+
+private def checkedPrime2 : CheckedPrimeCert 2 :=
+  ⟨.small 2, rfl, by decide⟩
+
+private def checkedPrime7 : CheckedPrimeCert 7 :=
+  ⟨.small 7, rfl, by decide⟩
+
+private def checkedPrime13 : CheckedPrimeCert 13 :=
+  ⟨.small 13, rfl, by decide⟩
 
 private def checkedPow64 : CheckedFactorization (2 ^ 64) :=
   ⟨⟨2 ^ 64, [⟨64, .small 2⟩]⟩, rfl, by decide⟩
@@ -63,6 +121,11 @@ example {n : Nat} (F : CheckedPartialFactorization n) :
     (fun a b => a.prime < b.prime) :=
   checkPartial_sorted F.valid
 
+#guard checkPartial checkedPartial60.raw
+#guard checkPartial ⟨1, [], 1⟩
+#guard !checkPartial ⟨60, [⟨2, .small 2⟩], 7⟩
+#guard !checkPartial ⟨60, [⟨1, .small 3⟩, ⟨2, .small 2⟩], 5⟩
+
 #guard checkFactorization raw12
 #guard !checkFactorization ⟨12, [⟨1, .small 4⟩, ⟨1, .small 3⟩]⟩
 #guard !checkFactorization ⟨12, [⟨1, .small 2⟩, ⟨1, .small 3⟩]⟩
@@ -89,6 +152,7 @@ example {n : Nat} (F : CheckedPartialFactorization n) :
 -- `sigmaEntry` remains total even for uncertified `PrimePower` values.
 #guard sigmaEntry ⟨3, .small 0⟩ 1 == 1
 #guard sigmaEntry ⟨3, .small 1⟩ 1 == 4
+#guard sigmaEntry ⟨2, .small 3⟩ 0 == 3
 #guard sigma checked1 0 == 1
 #guard sigma checked12 0 == 6
 #guard sigma checked12 1 == 28
@@ -142,13 +206,17 @@ example :
 #guard ((List.range 36).filter fun a => Nat.Coprime a 36).length !=
   ((List.range 6).filter fun a => Nat.Coprime a 6).length *
     ((List.range 6).filter fun a => Nat.Coprime a 6).length
+#guard radical checked1 == 1
 #guard radical checked12 == 6
+#guard radical checked30 == 30
+#guard radical checked10800 == 30
 #guard squarefreePart checked1 == 1
 #guard squareDivisor checked1 == 1
 #guard squarefreePart checked12 == 3
 #guard squareDivisor checked12 == 2
 #guard squarefreePart checked30 == 30
 #guard squareDivisor checked30 == 1
+#guard isSquarefree checked1
 #guard isSquarefree checked30
 #guard squarefreePart checked3600 == 1
 #guard squareDivisor checked3600 == 60
@@ -158,17 +226,37 @@ example :
 #guard squarefreePart checkedPow64 == 1
 #guard squareDivisor checkedPow64 == 2 ^ 32
 #guard !isSquarefree checked12
+#guard !isSquarefree checked3600
 
+-- Search budgets remain bit-length scaled at the empty, ordinary, and
+-- arbitrary-precision boundaries.
+#guard defaultFuel 0 == 32
+#guard defaultFuel 12 == 44
+#guard defaultFuel (2 ^ 64) == 288
+
+#guard removePower 3 81 10 == (4, 1)
+#guard removePower 3 14 10 == (0, 14)
+#guard removePower 1 12 10 == (0, 12)
 #guard splitTwos 0 == (0, 0)
 #guard splitTwos 99 == (0, 99)
 #guard splitTwos (2 ^ 20) == (20, 1)
 #guard splitTwos (3 * 2 ^ 20) == (20, 3)
 #guard (trialFactors 0).1.isEmpty && (trialFactors 0).2 == 0
+#guard (trialFactors 12).1.map (fun e => (e.prime, e.exponent)) == [(2, 2), (3, 1)]
+#guard (trialFactors 12).2 == 1
+#guard (trialFactors 99991).1.map
+  (fun e => (e.prime, e.exponent)) == [(99991, 1)]
+#guard (trialFactors 99991).2 == 1
+#guard (trialFactors 100003).1.isEmpty && (trialFactors 100003).2 == 100003
+#guard (trialFactors 1000003).1.isEmpty && (trialFactors 1000003).2 == 1000003
+#guard (smallCandidate 97).route == .trial
 #guard (smallCandidate (2 ^ 20)).route == .twos
 #guard (smallCandidate (2 ^ 20)).factors.map
   (fun entry => (entry.prime, entry.exponent)) == [(2, 20)]
 #guard exactRoot? 65025 2 == some 255
 #guard exactRoot? 759375 5 == some 15
+#guard exactRoot? 65026 2 == none
+#guard exactRoot? 81 1 == none
 #guard perfectPower? (2 ^ 9973) == some (2, 9973)
 #guard (perfectPower? (2 ^ 10000)).isSome
 #guard perfectPower? (2 ^ 10009) == some (2, 10009)
@@ -243,6 +331,10 @@ private def pMinusOneWhole :=
 #guard pMinusOneWhole.result == .whole
 #guard pMinusOneWhole.attempts == 1
 #guard pMinusOneWhole.rand == Rand.ofSeed 13
+
+#guard ecmBackend 0 == .natural
+#guard ecmBackend (2 ^ 64 - 1) == .word
+#guard ecmBackend (2 ^ 64) == .natural
 
 #guard smoothBoundCap == 9999
 #guard smoothBoundCap < primeTableBound
@@ -420,6 +512,31 @@ private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
 
+#guard (match rhoSplit? 91 (Rand.ofSeed 1) 0 with
+  | .error _ => true
+  | .ok _ => false)
+
+#guard (match rhoSplit? 97 (Rand.ofSeed 1) 16 with
+  | .error _ => true
+  | .ok _ => false)
+
+#guard (match Hex.Nat.Internal.rhoSplitCountedWith?
+    91 (Rand.ofSeed 1) 16 16 with
+  | .ok success =>
+      decide (1 < success.factor) && decide (success.factor < 91) &&
+        91 % success.factor == 0
+  | .error _ => false)
+
+#guard (match Hex.Nat.Internal.rhoSplitCountedWith?
+    91 (Rand.ofSeed 1) 0 16 with
+  | .error _ => true
+  | .ok _ => false)
+
+#guard (match Hex.Nat.Internal.rhoSplitCountedWith?
+    97 (Rand.ofSeed 1) 4 64 with
+  | .error _ => true
+  | .ok _ => false)
+
 #guard Hex.Nat.Internal.rhoRestartBudget 1000000 == 8
 #guard Hex.Nat.Internal.rhoRestartBudget 3 == 3
 
@@ -454,6 +571,9 @@ private def starvedInput : Nat := 1000003 * 1000033
 -- certificate work and the preceding split rather than dropping either.
 private def retainedCertInput : Nat := starvedInput * 1000037
 
+private def searchAllocation (factorFuel : Nat) : FactorSearchBudget :=
+  ⟨defaultPrimeCertBudget, 16, factorFuel⟩
+
 #guard (match factor? retainedCertInput (Rand.ofSeed 3) (fuel := 3) with
   | .error failure =>
       failure.stop == .incomplete &&
@@ -468,6 +588,44 @@ private def retainedCertInput : Nat := starvedInput * 1000037
   | .ok (F, _) => checkPartial F.raw && F.raw.residual == starvedInput
   | .error _ => false)
 
+#guard (match factorPartial? 12 (Rand.ofSeed 12) with
+  | .ok (F, _) => checkPartial F.raw && F.raw.residual == 1
+  | .error _ => false)
+
+#guard (match factorPartial? 0 (Rand.ofSeed 3) with
+  | .error failure => failure.stop == .zero && failure.attempts == 0
+  | .ok _ => false)
+
+#guard (match Hex.Nat.Internal.factorCountedWith? defaultPrimeCertBudget 16
+    12 (Rand.ofSeed 12) (defaultFuel 12) with
+  | .ok success => checkFactorization success.factorization.raw
+  | .error _ => false)
+
+#guard (match Hex.Nat.Internal.factorCountedWith? defaultPrimeCertBudget 16
+    0 (Rand.ofSeed 0) 0 with
+  | .error failure => failure.stop == .zero && failure.attempts == 0
+  | .ok _ => false)
+
+#guard (match Hex.Nat.Internal.factorCountedWith? defaultPrimeCertBudget 0
+    starvedInput (Rand.ofSeed 3) 0 with
+  | .error failure =>
+      failure.stop == .incomplete &&
+        match failure.snapshot with
+        | some saved => checkPartial saved.raw && saved.raw.residual == starvedInput
+        | none => false
+  | .ok _ => false)
+
+#guard let result :=
+    intFactorSearch (searchAllocation (defaultFuel 12)) 12 (Rand.ofSeed 12)
+  result.raw.factors == [(2, 2), (3, 1)] && result.raw.residual == 1
+
+#guard let result :=
+    intFactorSearch (searchAllocation 0) starvedInput (Rand.ofSeed 3)
+  result.raw.factors.isEmpty && result.raw.residual == starvedInput
+
+#guard let result := intFactorSearch (searchAllocation 0) 0 (Rand.ofSeed 0)
+  result.raw.factors.isEmpty && result.raw.residual == 0
+
 #guard (match factor? starvedInput (Rand.ofSeed 3) (fuel := 1) with
   | .error failure =>
       failure.stop == .incomplete && 0 < failure.attempts &&
@@ -477,7 +635,53 @@ private def retainedCertInput : Nat := starvedInput * 1000037
         | none => false
   | .ok _ => false)
 
-#guard checkOrder ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
+private def orderTwoModSeven : OrderCert :=
+  ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
+
+private def nonminimalOrder : OrderCert :=
+  ⟨2, 7, 6, checked6.raw⟩
+
+#guard checkOrder orderTwoModSeven
+#guard !checkOrder ⟨1, 1, 1, checked1.raw⟩
+#guard !checkOrder nonminimalOrder
+#guard checkOrder ⟨5, 8, 2, ⟨2, [⟨1, .small 2⟩]⟩⟩
+
+#guard isPrimitiveRoot checkedPrime2 checked1 1
+#guard isPrimitiveRoot checkedPrime7 checked6 3
+#guard !isPrimitiveRoot checkedPrime7 checked6 2
+#guard !isPrimitiveRoot checkedPrime7 checked6 7
+#guard isPrimitiveRoot checkedPrime13 checked12 2
+
+#guard (match primitiveRoot? checkedPrime2 checked1 1 with
+  | some (g, c) => g == 1 && c.raw.base == 1 && c.raw.modulus == 2 &&
+      c.raw.order == 1 && checkOrder c.raw
+  | none => false)
+
+#guard (primitiveRoot? checkedPrime7 checked6 0).isNone
+
+#guard (match primitiveRoot? checkedPrime7 checked6 2 with
+  | some (g, c) => g == 3 && c.raw.base == 3 && c.raw.modulus == 7 &&
+      c.raw.order == 6 && checkOrder c.raw
+  | none => false)
+
+#guard (match primitiveRoot? checkedPrime13 checked12 1 with
+  | some (g, c) => g == 2 && c.raw.order == 12 && checkOrder c.raw
+  | none => false)
+
+#guard carmichaelPrimePower ⟨1, .small 2⟩ == 1
+#guard carmichaelPrimePower ⟨6, .small 2⟩ == 16
+#guard carmichaelPrimePower ⟨3, .small 3⟩ == 18
+#guard carmichael checked1 == 1
+#guard carmichael checked30 == 4
+#guard carmichael checked64 == 16
+#guard carmichael checked10800 == 180
+#guard 7 ^ carmichael checked10800 % 10800 == 1
+#guard carmichael checked10800 % orderOf 7 10800 == 0
+
+#guard powerTarget 2 6 .minus == 63
+#guard powerTarget 2 6 .plus == 65
+#guard powerTarget 1 0 .minus == 0
+#guard powerTarget 1 0 .plus == 2
 
 #guard (match cyclotomicSplit? 2 6 .minus with
   | some parts => parts.map (·.value) == [1, 3, 7, 3]
@@ -485,6 +689,9 @@ private def retainedCertInput : Nat := starvedInput * 1000037
 #guard (match cyclotomicSplit? 2 6 .plus with
   | some parts => parts.map (·.value) == [5, 13]
   | none => false)
+
+#guard (cyclotomicSplit? 1 6 .minus).isNone
+#guard (cyclotomicSplit? 2 0 .plus).isNone
 
 -- The repeated factor `3` in the minus split is merged before checker replay.
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
@@ -498,6 +705,19 @@ private def retainedCertInput : Nat := starvedInput * 1000037
       route == .cyclotomic &&
         F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(5, 1), (13, 1)]
   | .error _ => false)
+
+#guard (match factorPower? 2 6 .minus (Rand.ofSeed 1) with
+  | .ok (F, _) =>
+      F.raw.factors.map (fun e => (e.prime, e.exponent)) == [(3, 2), (7, 1)]
+  | .error _ => false)
+
+#guard (match factorPower? 2 0 .plus (Rand.ofSeed 1) with
+  | .ok (F, _) => F.raw.subject == 2 && checkFactorization F.raw
+  | .error _ => false)
+
+#guard (match factorPower? 100003 4 .minus (Rand.ofSeed 1) (fuel := 0) with
+  | .error failure => failure.stop == .incomplete
+  | .ok _ => false)
 
 -- A stopped continuation includes successful earlier-part work and remains
 -- exactly accounted, even when every charged search subtotal happens to be zero.
