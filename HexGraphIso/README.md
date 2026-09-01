@@ -85,9 +85,15 @@ The planned stack, in dependency order:
    by extracting a vertex renaming from the isomorphism, transporting
    the adjacency rows (`rowsMap_of_isIso`), and showing the two initial
    labellings are cell-equivalent colour class by colour class at the
-   root partition. Remaining for this stage: the converse
-   (equal keys → isomorphic), read off from the leaf labelling of the
-   maximal key.
+   root partition. **The stage is complete: `specCanon`
+   (Nauty/SpecCanon.lean) is the total nauty-semantic canonical form
+   read off the key, `specCanon_iso` (Nauty/Achieved.lean) shows every
+   graph isomorphic to its form via the achieved leaf** — refine and
+   breakout preserve every ancestor cell's contents
+   (`refine_refInv`), boundary counting shows the search always
+   reaches a discrete leaf, and the achieved labelling is a genuine
+   colour-sorted relabelling — **so `iso_iff_specCanon_eq` gives the
+   full spec-level equivalence.**
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex

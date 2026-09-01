@@ -936,4 +936,440 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
     · -- discrete: this node is the leaf
       refine ⟨(refine ctx level lab ptn active numcells).lab, hstR.labSize, hRinv.perm, ?_⟩
       rw [specNode, if_pos hdisc]
+/-! # Positions, classes, and colours of the achieved leaf -/
+
+theorem segN_eq_toList {arr : Array Nat} {m : Nat}
+    (hsz : arr.size = m) : segN arr 0 m = arr.toList := by
+  refine List.ext_getElem (by rw [segN_length, Array.length_toList,
+    hsz]) fun i h1 h2 => ?_
+  rw [segN_length] at h1
+  have h3 := segN_getElem! arr 0 m i h1
+  rw [getElem!_pos _ _ (by rw [segN_length]; exact h1)] at h3
+  rw [h3]
+  show arr[0 + i]! = arr.toList[i]
+  rw [Array.getElem_toList, getElem!_pos _ _ (by omega)]
+  congr 1
+  omega
+
+theorem endsOf_append :
+    ∀ (l1 l2 : List (List Nat)) (s : Nat),
+      endsOf (l1 ++ l2) s = endsOf l1 s ++ endsOf l2 (s + totalOf l1)
+  | [], l2, s => by
+    rw [List.nil_append, endsOf]
+    simp [totalOf_nil]
+  | cl :: l1, l2, s => by
+    rw [List.cons_append, endsOf, endsOf, totalOf_cons]
+    rcases hcl : cl.isEmpty with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      rw [show s + (cl.length + totalOf l1) = s + cl.length +
+        totalOf l1 from by omega,
+        endsOf_append l1 l2 (s + cl.length), List.cons_append]
+    · have hnil : cl = [] := by
+        rcases cl with _ | _
+        · rfl
+        · simp at hcl
+      subst hnil
+      simp only [if_true]
+      rw [endsOf_append l1 l2 s]
+      congr 2
+      simp
+
+theorem pos_in_class :
+    ∀ (cls : List (List Nat)) (i : Nat), i < totalOf cls →
+      ∃ pre cl suf, cls = pre ++ cl :: suf ∧ totalOf pre ≤ i ∧
+        i < totalOf pre + cl.length
+  | [], i, hi => by
+    rw [totalOf_nil] at hi
+    omega
+  | cl :: rest, i, hi => by
+    rw [totalOf_cons] at hi
+    rcases Nat.lt_or_ge i cl.length with h | h
+    · exact ⟨[], cl, rest, rfl, by
+        rw [totalOf_nil]
+        omega, by
+        rw [totalOf_nil]
+        omega⟩
+    · obtain ⟨pre, cl', suf, hsplit, h1, h2⟩ :=
+        pos_in_class rest (i - cl.length) (by omega)
+      refine ⟨cl :: pre, cl', suf, by rw [hsplit]; rfl, ?_, ?_⟩
+      · rw [totalOf_cons]
+        omega
+      · rw [totalOf_cons]
+        omega
+
+theorem getElem!_append_block {l1 mid l2 : List Nat} {off : Nat}
+    (hoff : off < mid.length) :
+    (l1 ++ (mid ++ l2))[l1.length + off]! = mid[off]! := by
+  rw [getElem!_pos _ _ (by
+    rw [List.length_append, List.length_append]
+    omega)]
+  rw [List.getElem_append_right (by omega)]
+  rw [getElem_congr_idx (by omega : l1.length + off - l1.length =
+    off)]
+  rw [List.getElem_append_left hoff]
+  exact (getElem!_pos mid off hoff).symm
+
+/-- Within its block, the sorted colour sequence is constant. -/
+theorem sortedColorSeq_at (G : Colored n k) {c : Nat} (hc : c < k)
+    {off : Nat} (hoff : off < (colorClass G c).length) :
+    (sortedColorSeq G)[totalOf (((List.range k).map
+      (colorClass G)).take c) + off]! = c := by
+  have hck : c < (List.range k).length := by
+    rw [List.length_range]
+    exact hc
+  have hsplit : List.range k = (List.range k).take c ++
+      c :: (List.range k).drop (c + 1) := by
+    have hd := List.drop_eq_getElem_cons hck
+    rw [List.getElem_range] at hd
+    rw [← hd]
+    exact (List.take_append_drop c _).symm
+  have hlen : (((List.range k).take c).flatMap fun c' =>
+      List.replicate (colorClass G c').length c').length =
+      totalOf (((List.range k).map (colorClass G)).take c) := by
+    rw [List.length_flatMap, totalOf, ← List.map_take,
+      List.map_map]
+    congr 1
+    refine List.map_congr_left fun x _ => ?_
+    show (List.replicate (colorClass G x).length x).length =
+      (List.length ∘ colorClass G) x
+    rw [List.length_replicate]
+    rfl
+  have hmain : (((List.range k).take c ++
+      c :: (List.range k).drop (c + 1)).flatMap fun c' =>
+      List.replicate (colorClass G c').length
+        c')[totalOf (((List.range k).map (colorClass G)).take c) +
+        off]! = c := by
+    rw [List.flatMap_append, List.flatMap_cons, ← hlen,
+      getElem!_append_block (by
+        rw [List.length_replicate]
+        exact hoff)]
+    rw [getElem!_pos _ _ (by
+      rw [List.length_replicate]
+      exact hoff)]
+    exact List.getElem_replicate ..
+  rw [sortedColorSeq]
+  rw [show ((List.range k).flatMap fun c' =>
+    List.replicate (colorClass G c').length c') =
+    (((List.range k).take c ++
+      c :: (List.range k).drop (c + 1)).flatMap fun c' =>
+      List.replicate (colorClass G c').length c') from by
+    rw [← hsplit]]
+  exact hmain
+
+theorem totalOf_append :
+    ∀ (l1 l2 : List (List Nat)),
+      totalOf (l1 ++ l2) = totalOf l1 + totalOf l2
+  | [], l2 => by
+    rw [List.nil_append, totalOf_nil]
+    omega
+  | cl :: l1, l2 => by
+    rw [List.cons_append, totalOf_cons, totalOf_cons,
+      totalOf_append l1 l2]
+    omega
+
+/-- Each nonempty class occupies one cell of the initial partition. -/
+theorem interval_isCell (G : Colored n k) {pre suf : List (List Nat)}
+    {cl : List Nat}
+    (hsplit : (List.range k).map (colorClass G) = pre ++ cl :: suf)
+    (hne : 0 < cl.length) :
+    IsCell (initPtn n (n + 2) (initialPartition G).2) 1
+      (totalOf pre) cl.length := by
+  have htot := totalOf_classes G
+  rw [hsplit, totalOf_append, totalOf_cons] at htot
+  have hEnds : (initialPartition G).2 =
+      endsOf pre 0 ++ ((totalOf pre + cl.length - 1) ::
+        endsOf suf (totalOf pre + cl.length)) := by
+    rw [initialPartition_snd_eq, hsplit, endsOf_append, endsOf]
+    have hcl : cl.isEmpty = false := by
+      rcases cl with _ | _
+      · simp at hne
+      · simp
+    rw [hcl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [show (0 : Nat) + totalOf pre = totalOf pre from by omega]
+  refine ⟨hne, ?_, ?_, ?_⟩
+  · rcases Nat.eq_zero_or_pos (totalOf pre) with h0 | hpos
+    · exact Or.inl h0
+    · right
+      have hmem : totalOf pre - 1 ∈ (initialPartition G).2 := by
+        rw [hEnds]
+        refine List.mem_append.mpr (Or.inl ?_)
+        have := endsOf_last_mem pre 0 hpos
+        simpa using this
+      rw [getElem!_initPtn, if_pos ⟨hmem, by omega⟩]
+      omega
+  · intro q hq1 hq2
+    have hqn : q < n := by omega
+    have hnotmem : q ∉ (initialPartition G).2 := by
+      rw [hEnds]
+      intro hmem
+      rcases List.mem_append.mp hmem with hm | hm
+      · have := endsOf_lt pre 0 q hm
+        omega
+      · rcases List.mem_cons.mp hm with he | hm
+        · omega
+        · have := endsOf_ge suf _ q hm
+          omega
+    rw [getElem!_initPtn, if_neg (fun hc => hnotmem hc.1),
+      if_pos hqn]
+    omega
+  · have hmem : totalOf pre + cl.length - 1 ∈
+        (initialPartition G).2 := by
+      rw [hEnds]
+      exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr
+        (Or.inl rfl)))
+    rw [getElem!_initPtn, if_pos ⟨hmem, by omega⟩]
+    omega
+
+/-- Positions of any labelling that fills the initial cells with the
+initial contents carry the sorted colours. -/
+theorem achieved_position_colors {G : Colored n k}
+    {llab : Array Nat}
+    (hcp : cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
+      (initialPartition G).1 llab) :
+    ∀ (i : Nat), i < n → ∃ hv : llab[i]! < n,
+      (G.coloring.cells[(⟨llab[i]!, hv⟩ : Fin n)]).val =
+        (sortedColorSeq G)[i]! := by
+  intro i hi
+  have htot := totalOf_classes G
+  obtain ⟨pre, cl, suf, hsplit, hlo, hhi⟩ := pos_in_class
+    ((List.range k).map (colorClass G)) i (by omega)
+  have hlenG : ((List.range k).map (colorClass G)).length = k := by
+    simp
+  have hj : pre.length < k := by
+    have := congrArg List.length hsplit
+    rw [hlenG, List.length_append, List.length_cons] at this
+    omega
+  have hclG : cl = colorClass G pre.length := by
+    have h1 : ((List.range k).map (colorClass G))[pre.length]! =
+        cl := by
+      rw [hsplit]
+      exact getElem!_append_middle pre cl suf
+    have h2 : ((List.range k).map (colorClass G))[pre.length]! =
+        colorClass G pre.length := by
+      rw [getElem!_pos _ _ (by rw [hlenG]; exact hj),
+        List.getElem_map, List.getElem_range]
+    exact h1.symm.trans h2
+  have htake : ((List.range k).map (colorClass G)).take pre.length =
+      pre := by
+    rw [hsplit]
+    exact List.take_left
+  have hcell := interval_isCell G hsplit (by omega)
+  have hseg := hcp _ _ hcell
+  have hseg0 : segN (initialPartition G).1 (totalOf pre) cl.length =
+      cl := by
+    rw [initialPartition_fst, hsplit]
+    exact segN_flatten pre cl suf
+  have hmem : llab[i]! ∈ segN llab (totalOf pre) cl.length := by
+    rw [segN]
+    refine List.mem_map.mpr ⟨i - totalOf pre,
+      List.mem_range.mpr (by omega), ?_⟩
+    congr 1
+    omega
+  have hmem2 : llab[i]! ∈ colorClass G pre.length := by
+    rw [← hclG, ← hseg0]
+    exact hseg.mem_iff.mpr hmem
+  obtain ⟨hv, hc, he⟩ := mem_colorClass.mp hmem2
+  refine ⟨hv, ?_⟩
+  rw [he]
+  show pre.length = (sortedColorSeq G)[i]!
+  have hat := sortedColorSeq_at G hc
+    (off := i - totalOf pre) (by rw [← hclG]; omega)
+  rw [htake] at hat
+  rw [show totalOf pre + (i - totalOf pre) = i from by omega] at hat
+  exact hat.symm
+
+/-! # The achieved labelling is a genuine relabelling -/
+
+theorem achieved_perm_range {G : Colored n k} {llab : Array Nat}
+    (hsz : llab.size = n) (hn0 : 0 < n)
+    (hcp : cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
+      (initialPartition G).1 llab) :
+    llab.toList.Perm (List.range n) := by
+  have hok := initial_nodeOk G hn0
+  have hend1 : (initPtn n (n + 2)
+      (initialPartition G).2)[(initPtn n (n + 2)
+      (initialPartition G).2).size - 1]! ≤ 1 := hok.ptnEnd
+  have hwhole := segN_perm_tiled (ptnF := initPtn n (n + 2)
+    (initialPartition G).2) (levF := 1) hcp hend1 n 0 (by omega)
+    (by rw [size_initPtn]; omega) (Or.inl rfl)
+    (by
+      have h1 := hend1
+      rw [size_initPtn] at h1
+      rw [show (0 : Nat) + n - 1 = n - 1 from by omega]
+      exact h1)
+  rw [segN_eq_toList (size_initialPartition G),
+    segN_eq_toList hsz] at hwhole
+  refine hwhole.symm.trans ?_
+  rw [initialPartition_fst]
+  have hrt : ((((List.range k).map (colorClass G)).flatMap
+      id).toArray).toList =
+      ((List.range k).map (colorClass G)).flatMap id := by
+    simp
+  rw [hrt]
+  exact flatten_classes_perm G
+
+theorem label_of_perm_range {llab : Array Nat} (hsz : llab.size = n)
+    (hperm : llab.toList.Perm (List.range n)) :
+    ∃ l : Label n, ∀ (i : Nat) (hi : i < n),
+      (l.get ⟨i, hi⟩).val = llab[i]! := by
+  have hbound : ∀ (i : Nat), i < n → llab[i]! < n := by
+    intro i hi
+    have hm : llab[i]! ∈ llab.toList := by
+      rw [getElem!_pos _ _ (by omega)]
+      rw [← Array.getElem_toList (by
+        rw [Array.length_toList]
+        omega)]
+      exact List.getElem_mem _
+    exact List.mem_range.mp (hperm.mem_iff.mp hm)
+  have hlist : (Hex.Vector.ofFn' fun i : Fin n =>
+      (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n)).toList =
+      List.ofFn fun i : Fin n =>
+        (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n) := by
+    show ((List.ofFn _).toArray).toList = _
+    simp
+  have hmapval : (List.ofFn fun i : Fin n =>
+      (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n)).map Fin.val =
+      llab.toList := by
+    refine List.ext_getElem (by simp [hsz]) fun i h1 h2 => ?_
+    rw [List.getElem_map, List.getElem_ofFn]
+    show llab[i]! = llab.toList[i]
+    rw [Array.getElem_toList, getElem!_pos _ _ (by
+      rw [Array.length_toList] at h2
+      omega)]
+  have hnodup : (List.ofFn fun i : Fin n =>
+      (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n)).Nodup := by
+    have hmv : ((List.ofFn fun i : Fin n =>
+        (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n)).map
+        Fin.val).Nodup := by
+      rw [hmapval]
+      exact hperm.symm.nodup List.nodup_range
+    rw [List.nodup_iff_pairwise_ne, List.pairwise_map] at hmv
+    rw [List.nodup_iff_pairwise_ne]
+    exact hmv.imp fun h he => h (congrArg Fin.val he)
+  have hcomplete : ∀ i : Fin n, i ∈ (List.ofFn fun i : Fin n =>
+      (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n)) := by
+    intro i
+    have hm : i.val ∈ llab.toList :=
+      hperm.mem_iff.mpr (List.mem_range.mpr i.isLt)
+    rw [← hmapval] at hm
+    rcases List.mem_map.mp hm with ⟨x, hx, hxe⟩
+    exact (Fin.eq_of_val_eq hxe : x = i) ▸ hx
+  refine ⟨⟨⟨Hex.Vector.ofFn' fun i : Fin n =>
+    (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n), by
+      rw [hlist]
+      exact hnodup, by
+      intro i
+      rw [hlist]
+      exact hcomplete i⟩⟩, ?_⟩
+  intro i hi
+  show ((Hex.Vector.ofFn' fun i : Fin n =>
+    (⟨llab[i.val]!, hbound i.val i.isLt⟩ : Fin n))[(⟨i, hi⟩ :
+      Fin n)]).val = llab[i]!
+  simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn']
+
+/-- A form with a key's rows and the sorted colours is the form of
+that key. -/
+theorem form_eq_formOfKey {G F : Colored n k} {rows : List Nat}
+    (hrows : rowsOf F = rows.toArray)
+    (hcols : ∀ (i : Nat) (hi : i < n),
+      (F.coloring.cells[i]'(by omega)).val =
+        (sortedColorSeq G)[i]!) :
+    F = formOfKey G rows := by
+  refine Colored.ext ?_ ?_
+  · intro i j
+    have hadjL : F.graph.adj i j =
+        (rows[i.val]!).testBit j.val := by
+      have h1 : F.graph.adj i j =
+          ((rowsOf F)[i.val]!).testBit j.val := by
+        rw [getElem!_rowsOf _ i.isLt, testBit_rowOf_lt _ i.isLt
+          j.isLt]
+      rw [h1, hrows, List.getElem!_toArray]
+    have hadjLs : F.graph.adj j i =
+        (rows[j.val]!).testBit i.val := by
+      have h1 : F.graph.adj j i =
+          ((rowsOf F)[j.val]!).testBit i.val := by
+        rw [getElem!_rowsOf _ j.isLt, testBit_rowOf_lt _ j.isLt
+          i.isLt]
+      rw [h1, hrows, List.getElem!_toArray]
+    have hsym : (rows[j.val]!).testBit i.val =
+        (rows[i.val]!).testBit j.val := by
+      rw [← hadjL, ← hadjLs]
+      exact (Hex.Graph.adj_symm _ i j).symm
+    have hR : (formOfKey G rows).graph.adj i j =
+        ((rows[i.val]!).testBit j.val &&
+          (rows[j.val]!).testBit i.val && i.val != j.val) := by
+      simp only [formOfKey, Hex.Graph.adj_ofAdj]
+    rw [hadjL, hR, hsym]
+    rcases Decidable.em (i.val = j.val) with he | he
+    · have hii : i = j := Fin.eq_of_val_eq he
+      subst hii
+      have hL : F.graph.adj i i = false := Hex.Graph.adj_self _ i
+      rw [← hadjL, hL]
+      simp
+    · have hne : (i.val != j.val) = true := by simpa using he
+      rw [hne]
+      rcases hb : (rows[i.val]!).testBit j.val with _ | _ <;> simp
+  · intro i
+    refine Fin.eq_of_val_eq ?_
+    have h1 := hcols i.val i.isLt
+    have h2 : ((formOfKey G rows).coloring.cells[i]).val =
+        (sortedColorSeq G)[i.val]! := by
+      simp only [formOfKey, Fin.getElem_fin,
+        Hex.Vector.getElem_ofFn']
+    rw [h2]
+    exact h1
+
+/-- The total nauty-semantic canonical form is isomorphic to its
+input. -/
+theorem specCanon_iso (G : Colored n k) :
+    Isomorphic G (specCanon G) := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn0
+  · exact Isomorphic.intro (Perm.id 0)
+      (IsIso.intro (fun i => i.elim0) (fun i => i.elim0))
+  · have hok := initial_nodeOk G hn0
+    have hbc : 1 ≤ bcount (initPtn n (n + 2)
+        (initialPartition G).2) 1 n := by
+      refine bcount_pos_of_boundary (q := n - 1) (by omega) ?_
+      have h1 := hok.ptnEnd
+      rw [size_initPtn] at h1
+      exact h1
+    obtain ⟨llab, hlsz, hlcp, hlrows⟩ := specNode_achieved
+      (ctx := { n := n, g := rowsOf G }) rfl 100 n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length hok
+      (by show n + 1 ≤ 1 + n; omega) hbc
+    have hkrows : (canonSpecKey G).rows =
+        leafRows { n := n, g := rowsOf G } llab := by
+      rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+      exact hlrows
+    obtain ⟨l, hag⟩ := label_of_perm_range hlsz
+      (achieved_perm_range hlsz hn0 hlcp)
+    have hcols := achieved_position_colors hlcp
+    have hform : G.relabel l =
+        formOfKey G (canonSpecKey G).rows := by
+      refine form_eq_formOfKey ?_ ?_
+      · rw [rowsOf_relabel_eq_leafRows hlsz hag, hkrows]
+      · intro i hi
+        obtain ⟨hv, hc⟩ := hcols i hi
+        rw [Colored.cells_relabel G l i hi]
+        have hfg : l.get ⟨i, hi⟩ = ⟨llab[i]!, hv⟩ :=
+          Fin.eq_of_val_eq (hag i hi)
+        have hcg := congrArg (fun x : Fin n =>
+          (G.coloring.cells[x]).val) hfg
+        exact hcg.trans hc
+    rw [specCanon, ← hform]
+    exact isomorphic_relabel G l
+
+/-- Isomorphism is equivalent to equality of the nauty-semantic
+canonical forms. -/
+theorem iso_iff_specCanon_eq {G H : Colored n k} :
+    Isomorphic G H ↔ specCanon G = specCanon H := by
+  constructor
+  · exact specCanon_invariant
+  · intro he
+    exact (specCanon_iso G).trans (he ▸ (specCanon_iso H).symm)
+
 end Hex.GraphIso.Nauty
