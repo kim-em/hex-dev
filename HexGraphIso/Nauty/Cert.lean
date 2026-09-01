@@ -1230,4 +1230,34 @@ theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
       exact checkKey_sound hchk
     · cases h
 
+/-- Follow the best path through the spec tree to the labelling of
+the leaf achieving the claimed key. Untrusted: `checkCanon` validates
+the result. -/
+def bestLab? (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
+    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
+      Option (Array Nat)
+  | 0, _, _, _, _, _, _ => none
+  | fuel + 1, level, lab, ptn, active, numcells, bcodes =>
+    match bcodes with
+    | [] => none
+    | bc :: brest =>
+      let rs := refine ctx level lab ptn active numcells
+      if rs.longcode = bc then
+        if discreteAt rs.ptn level ctx.n then
+          if brest = [codeSentinel] &&
+              leafRows ctx rs.lab == brows then
+            some rs.lab
+          else
+            none
+        else
+          let tcr := specMaketargetcell ctx rs.lab rs.ptn level
+            tcLevel
+          (List.range tcr.2.2).findSome? fun o =>
+            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+              rs.lab[tcr.1 + o]!
+            bestLab? ctx tcLevel brows fuel (level + 1) br.1 br.2.1
+              br.2.2 (numcells + 1) brest
+      else
+        none
+
 end Hex.GraphIso.Nauty

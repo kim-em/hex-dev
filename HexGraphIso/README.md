@@ -108,9 +108,13 @@ The planned stack, in dependency order:
    the pair, so `certifyKey?_sound` needs no trust in the search
    (validated end to end against the naive `canonSpecKey` on small
    coloured graphs, and on `n = 12..16` families including Petersen
-   through the checker alone). Remaining for this stage: automorphism
-   prunes in the producer, and the `CanonResult`-level wrapper tying
-   the achieved leaf's labelling to the key.
+   through the checker alone). `checkCanon` (Nauty/CanonForm.lean) is
+   the `CanonResult`-level wrapper: it validates the replay, checks the
+   claimed labelling's leaf rows against the key, and packages the
+   relabelled form, with `checkCanon_sound` tying the result to
+   `canonSpecKey`; `certifyCanon?` chains the producer, the best-path
+   labelling replay (`bestLab?`), and the checked wrapper. Remaining
+   for this stage: automorphism prunes in the producer.
 4. **Switch.** Public `canonicalize` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;
