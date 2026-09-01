@@ -565,8 +565,10 @@ Two integration patterns:
     timed region, then reuses the file descriptors across the
     auto-tuned inner-repeat batch. This amortises one driver startup
     across the measured calls in that child; driver state is not
-    shared across outer repeats. Document the protocol and lifetime
-    in the bench module docstring.
+    shared across outer repeats. Fixed registrations using the shared
+    `Hex.BenchOracle.Flint` driver are checked by
+    `scripts/ci/check_persistent_flint_warmup.py`. Document the protocol
+    and lifetime in the bench module docstring.
   - **Per-call process spawn is acceptable only as a last resort.**
     FFI is preferred when feasible; persistent-subprocess is the
     fallback when FFI isn't viable. Per-call process spawn (the
