@@ -27,6 +27,15 @@ private def leastFactor (n : Nat) (factors : List PrimePower) : Nat :=
 private def encodeFactors (factors : List PrimePower) : List Nat :=
   factors.flatMap fun entry => [entry.prime, entry.exponent]
 
+private def budgeted (ceilingNanos : Nat) (work : IO α) : IO α := do
+  let start ← IO.monoNanosNow
+  let value ← work
+  let stop ← IO.monoNanosNow
+  if stop - start ≤ ceilingNanos then return value
+  else
+    throw <| IO.userError
+      s!"body budget exceeded: {stop - start} ns > {ceilingNanos} ns"
+
 private def factorFull (n seed : Nat) : List Nat :=
   match factor? n (Hex.Rand.ofSeed seed) with
   | .ok (F, _) => encodeFactors F.raw.factors
@@ -67,7 +76,11 @@ def replayInput (e : Nat) : Factorization :=
 def runReplay (e : Nat) : Nat :=
   if checkFactorization (replayInput e) then 1 else 0
 
-def runOrder (p : Nat) : Nat := orderOf 3 p
+@[noinline]
+private def runOrderOnce (p : Nat) : Nat := orderOf 3 p
+
+def runOrder (p : Nat) : Nat :=
+  (List.range 512).foldl (fun total _ => total + runOrderOnce p) 0
 
 private def balancedInput : Nat → Nat
   | 32 => 64553 * 66553
@@ -158,18 +171,20 @@ initialize tableInputsRef : IO.Ref (Array Nat) ← IO.mkRef tableInputs
 
 @[noinline]
 def runTableDispatch (_ : Unit) : IO (Array (List Nat)) := do
-  let inputs ← tableInputsRef.get
-  return inputs.map fun n =>
-    match factor? n (Hex.Rand.ofSeed n) with
-    | .ok (F, _) => encodeFactors F.raw.factors
-    | .error _ => []
+  budgeted 10000000 do
+    let inputs ← tableInputsRef.get
+    return inputs.map fun n =>
+      match factor? n (Hex.Rand.ofSeed n) with
+      | .ok (F, _) => encodeFactors F.raw.factors
+      | .error _ => []
 
 @[noinline]
 def runTableTrial (_ : Unit) : IO (Array (List Nat)) := do
-  let inputs ← tableInputsRef.get
-  return inputs.map fun n =>
-    let out := trialFactors n
-    if out.2 = 1 then encodeFactors out.1 else []
+  budgeted 10000000 do
+    let inputs ← tableInputsRef.get
+    return inputs.map fun n =>
+      let out := trialFactors n
+      if out.2 = 1 then encodeFactors out.1 else []
 
 private opaque balancedBits : Array Nat := #[32, 40, 48, 56, 64, 72, 80]
 private opaque smoothBits : Array Nat := #[32, 40, 48, 56, 64, 72, 76, 80]
@@ -194,27 +209,41 @@ initialize ecm76Ref : IO.Ref Nat ← IO.mkRef 76
 initialize ecm80Ref : IO.Ref Nat ← IO.mkRef 80
 
 private def readBalanced (ref : IO.Ref Nat)
-    (run : Nat → α) (_ : Unit) : IO α := do
-  return run (← ref.get)
+    (run : Nat → α) (ceilingNanos : Nat) (_ : Unit) : IO α :=
+  budgeted ceilingNanos do return run (← ref.get)
 
-@[noinline] def runBalancedFactor32 := readBalanced balanced32Ref runBalancedFactor
-@[noinline] def runBalancedFactor40 := readBalanced balanced40Ref runBalancedFactor
-@[noinline] def runBalancedFactor48 := readBalanced balanced48Ref runBalancedFactor
-@[noinline] def runBalancedFactor56 := readBalanced balanced56Ref runBalancedFactor
-@[noinline] def runBalancedFactor64 := readBalanced balanced64Ref runBalancedFactor
-@[noinline] def runBalancedFactor72 := readBalanced balanced72Ref runBalancedFactor
-@[noinline] def runBalancedFactor80 := readBalanced balanced80Ref runBalancedFactor
+@[noinline] def runBalancedFactor32 :=
+  readBalanced balanced32Ref runBalancedFactor 10000000
+@[noinline] def runBalancedFactor40 :=
+  readBalanced balanced40Ref runBalancedFactor 50000000
+@[noinline] def runBalancedFactor48 :=
+  readBalanced balanced48Ref runBalancedFactor 100000000
+@[noinline] def runBalancedFactor56 :=
+  readBalanced balanced56Ref runBalancedFactor 200000000
+@[noinline] def runBalancedFactor64 :=
+  readBalanced balanced64Ref runBalancedFactor 750000000
+@[noinline] def runBalancedFactor72 :=
+  readBalanced balanced72Ref runBalancedFactor 2000000000
+@[noinline] def runBalancedFactor80 :=
+  readBalanced balanced80Ref runBalancedFactor 6000000000
 
-@[noinline] def runBalancedForced32 := readBalanced balanced32Ref runBalancedForced
-@[noinline] def runBalancedForced40 := readBalanced balanced40Ref runBalancedForced
-@[noinline] def runBalancedForced48 := readBalanced balanced48Ref runBalancedForced
-@[noinline] def runBalancedForced56 := readBalanced balanced56Ref runBalancedForced
-@[noinline] def runBalancedForced64 := readBalanced balanced64Ref runBalancedForced
-@[noinline] def runBalancedForced72 := readBalanced balanced72Ref runBalancedForced
-@[noinline] def runBalancedForced80 := readBalanced balanced80Ref runBalancedForced
+@[noinline] def runBalancedForced32 :=
+  readBalanced balanced32Ref runBalancedForced 10000000
+@[noinline] def runBalancedForced40 :=
+  readBalanced balanced40Ref runBalancedForced 50000000
+@[noinline] def runBalancedForced48 :=
+  readBalanced balanced48Ref runBalancedForced 100000000
+@[noinline] def runBalancedForced56 :=
+  readBalanced balanced56Ref runBalancedForced 200000000
+@[noinline] def runBalancedForced64 :=
+  readBalanced balanced64Ref runBalancedForced 750000000
+@[noinline] def runBalancedForced72 :=
+  readBalanced balanced72Ref runBalancedForced 2000000000
+@[noinline] def runBalancedForced80 :=
+  readBalanced balanced80Ref runBalancedForced 6000000000
 
 private def readEcm (ref : IO.Ref Nat) (_ : Unit) : IO Nat := do
-  return runEcm (ecmInput (← ref.get))
+  budgeted 20000000 do return runEcm (ecmInput (← ref.get))
 
 @[noinline] def runEcm48 := readEcm ecm48Ref
 @[noinline] def runEcm56 := readEcm ecm56Ref
@@ -224,28 +253,34 @@ private def readEcm (ref : IO.Ref Nat) (_ : Unit) : IO Nat := do
 @[noinline] def runEcm80 := readEcm ecm80Ref
 
 @[noinline]
-def runPMinusOneBatch (_ : Unit) : Array Nat :=
-  smoothBits.map fun bits => runPMinusOne (smoothInput bits)
+def runPMinusOneBatch (_ : Unit) : IO (Array Nat) :=
+  budgeted 100000000 do
+    return smoothBits.map fun bits => runPMinusOne (smoothInput bits)
 
 @[noinline]
-def runEcmBatch (_ : Unit) : Array Nat :=
-  ecmBits.map fun bits => runEcm (ecmInput bits)
+def runEcmBatch (_ : Unit) : IO (Array Nat) :=
+  budgeted 100000000 do
+    return ecmBits.map fun bits => runEcm (ecmInput bits)
 
 @[noinline]
-def runEcmRhoBatch (_ : Unit) : Array Nat :=
-  ecmBits.map fun bits => rhoLeast (ecmInput bits) (ecmInput bits)
+def runEcmRhoBatch (_ : Unit) : IO (Array Nat) :=
+  budgeted 500000000 do
+    return ecmBits.map fun bits => rhoLeast (ecmInput bits) (ecmInput bits)
 
 @[noinline]
 def runCyclotomicBatch (_ : Unit) : IO (Array Nat) := do
-  return (← powerExponentsRef.get).map runCyclotomic
+  budgeted 10000000 do
+    return (← powerExponentsRef.get).map runCyclotomic
 
 @[noinline]
 def runPowerGenericBatch (_ : Unit) : IO (Array Nat) := do
-  return (← powerExponentsRef.get).map runPowerGeneric
+  budgeted 20000000 do
+    return (← powerExponentsRef.get).map runPowerGeneric
 
 @[noinline]
 def runPowerSplitBatch (_ : Unit) : IO (Array Nat) := do
-  return (← powerExponentsRef.get).map runPowerSplit
+  budgeted 20000000 do
+    return (← powerExponentsRef.get).map runPowerSplit
 
 private def defaultFuelInputs : Array Nat :=
   tableInputs ++
@@ -255,11 +290,12 @@ private def defaultFuelInputs : Array Nat :=
   powerExponents.map fun e => powerTarget 2 e .minus
 
 @[noinline]
-def runDefaultFuelSchedule (_ : Unit) : Array Nat :=
-  defaultFuelInputs.map fun n =>
-    match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
-    | .ok success => 2 * success.attempts + 1
-    | .error failure => 2 * failure.attempts
+def runDefaultFuelSchedule (_ : Unit) : IO (Array Nat) :=
+  budgeted 2000000000 do
+    return defaultFuelInputs.map fun n =>
+      match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
+      | .ok success => 2 * success.attempts + 1
+      | .error failure => 2 * failure.attempts
 
 def reportDefaultFuel : IO UInt32 := do
   for n in defaultFuelInputs do
@@ -277,7 +313,8 @@ def probeEcm (values : List String) : IO UInt32 := do
     | some n => IO.println s!"{n},{runEcm n}"
   return 0
 
-private def orderLadder : Array Nat := #[257, 1013, 4073, 16363, 65537]
+private def orderLadder : Array Nat :=
+  #[257, 1013, 4073, 16363, 65537, 262193, 524309, 1048589]
 
 #guard orderLadder.all fun p => orderOf 3 p == p - 1
 
@@ -294,11 +331,13 @@ initialize downstreamOrderPrimesRef : IO.Ref (Array Nat) ←
 
 @[noinline]
 def runDownstreamOrder (_ : Unit) : IO (Array Nat) := do
-  return (← downstreamOrderPrimesRef.get).map (orderOf 3)
+  budgeted 10000000 do
+    return (← downstreamOrderPrimesRef.get).map (orderOf 3)
 
 @[noinline]
 def runDownstreamPrimitiveRoot (_ : Unit) : IO (Array Nat) := do
-  return (← downstreamOrderPrimesRef.get).map runPrimitiveRoot
+  budgeted 20000000 do
+    return (← downstreamOrderPrimesRef.get).map runPrimitiveRoot
 
 def reportControls : IO UInt32 := do
   let tableDispatch ← runTableDispatch ()
@@ -352,7 +391,13 @@ instance : Hashable SigmaExponentInput where
 def prepSigmaExponent (e : Nat) : SigmaExponentInput :=
   ⟨_, sigmaExponentInput e⟩
 
-def runSigmaExponent (input : SigmaExponentInput) : Nat := sigma input.checked 1
+@[noinline]
+private def runSigmaExponentOnce (input : SigmaExponentInput) : Nat :=
+  sigma input.checked 1
+
+def runSigmaExponent (input : SigmaExponentInput) : Nat :=
+  (List.range 512).foldl
+    (fun total _ => total + runSigmaExponentOnce input) 0
 
 private def sigmaEntries : List PrimePower :=
   primeTable.toList.map fun p => ⟨32, .small p⟩
@@ -398,8 +443,13 @@ def sigmaInputForCount : Nat → SigmaInput
   | 1024 => sigmaInput1024
   | _ => sigmaInputDefault
 
-def runSigmaFactorCount (input : SigmaInput) : Nat :=
+@[noinline]
+private def runSigmaFactorCountOnce (input : SigmaInput) : Nat :=
   sigma input.checked 1
+
+def runSigmaFactorCount (input : SigmaInput) : Nat :=
+  (List.range 512).foldl
+    (fun total _ => total + runSigmaFactorCountOnce input) 0
 
 @[noinline]
 private def runSquareOnce (input : SigmaInput) : Nat :=
@@ -408,9 +458,14 @@ private def runSquareOnce (input : SigmaInput) : Nat :=
 def runSquareFactorCount (input : SigmaInput) : Nat :=
   (List.range 16384).foldl (fun total _ => total + runSquareOnce input) 0
 
+@[noinline]
+private def runTotientFactorCountOnce (input : SigmaInput) : Nat :=
+  totient input.checked
+
 def runTotientFactorCount (input : SigmaInput) : Nat × Nat :=
-  let value := totient input.checked
-  (value, value % 4294967291)
+  (List.range 512).foldl (fun total _ =>
+    let value := runTotientFactorCountOnce input
+    (total.1 + value, total.2 + value % 4294967291)) (0, 0)
 
 /- The matched direct arm runs Brent rho with the public dispatcher's restart
 and cycle-step allocation. Each balanced least factor has `bits / 2` bits, so
@@ -422,6 +477,7 @@ setup_benchmark runBalancedRho n => 2 ^ (n / 4)
     paramSchedule := .custom #[32, 40, 48, 56, 64, 72, 80]
     maxSecondsPerCall := 5.0
     targetInnerNanos := 1000000000
+    signalFloorMultiplier := 1.0
     outerTrials := 3
   }
 
@@ -443,14 +499,16 @@ setup_benchmark runReplay n => n * n
 /- `orderOf` carries one bounded residue and performs one modular multiplication
 per candidate exponent. On every prime in this ladder, `3` has order `p - 1`,
 so each run exercises `p - 1` scan steps and the declared arithmetic-operation
-model is linear. -/
+model is linear. A fixed 512-run hot loop raises three upper rungs above the
+single-spawn resolution floor without changing that model. -/
 setup_benchmark runOrder n => n
   where {
     paramFloor := 257
-    paramCeiling := 65537
+    paramCeiling := 1048589
     paramSchedule := .custom orderLadder
     maxSecondsPerCall := 5.0
     targetInnerNanos := 2500000000
+    signalFloorMultiplier := 1.0
     outerTrials := 3
   }
 
@@ -458,15 +516,18 @@ setup_benchmark runOrder n => n
 exact geometric quotient with `Theta(e)` output bits. Preparation hoists the
 unused certified subject out of the timed loop. The quotient divisor is the
 single-limb value `2`, so exponentiation dominates with the declared
-quasi-linear `n log n` surrogate; Lean's `Nat` result hash is constant-time. -/
+quasi-linear `n log n` surrogate. A fixed 512-run hot loop raises the upper
+three rungs above the single-spawn resolution floor without changing the
+model; Lean's `Nat` result hash is constant-time. -/
 setup_benchmark runSigmaExponent n => n * n.log2
   with prep := prepSigmaExponent
   where {
     paramFloor := 16384
     paramCeiling := 4194304
     paramSchedule := .custom #[16384, 65536, 262144, 1048576, 4194304]
-    maxSecondsPerCall := 5.0
+    maxSecondsPerCall := 20.0
     targetInnerNanos := 1000000000
+    signalFloorMultiplier := 1.0
     -- The multi-million-bit ladder crosses native multiplication regimes;
     -- 0.20 admits that finite-range transition without changing the model.
     slopeTolerance := 0.20
@@ -476,16 +537,18 @@ setup_benchmark runSigmaExponent n => n * n.log2
 /- Each certified entry has exponent 32. The `i`th sequential product step
 multiplies a linearly growing accumulator by one bounded-size table-prime
 entry sum. Its cost is `Theta(i)` limbs, whose sum is the declared
-`Theta(n²)` native-cost model. Preparation selects a prechecked input once per
-child spawn, outside the timed loop. -/
+`Theta(n²)` native-cost model. A fixed 512-run hot loop clears the single-spawn
+resolution floor without changing the model. Preparation selects a prechecked
+input once per child spawn, outside the timed loop. -/
 setup_benchmark runSigmaFactorCount n => n * n
   with prep := sigmaInputForCount
   where {
     paramFloor := 32
-    paramCeiling := 512
-    paramSchedule := .custom #[32, 64, 128, 256, 512]
-    maxSecondsPerCall := 5.0
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 20.0
     targetInnerNanos := 3000000000
+    signalFloorMultiplier := 1.0
     outerTrials := 3
   }
 
@@ -514,29 +577,33 @@ setup_benchmark runSquareFactorCount n => n * n
 /- Each prepared certificate has `n` fixed-exponent prime-power entries.
 `totient` builds one bounded-size contribution per entry, then sequentially
 multiplies an accumulator whose limb count grows linearly, giving the declared
-`Theta(n²)` native-cost model. The paired modular checksum prevents the low
-word of these highly even results from making every harness hash zero; its
-single division is lower-order. Preparation hoists the enormous subject out
-of the timed loop; scanning residues below it would not terminate on these
-subjects. -/
+`Theta(n²)` native-cost model. A fixed 512-run hot loop clears the single-spawn
+resolution floor without changing the model. The paired modular checksum
+prevents the low word of these highly even results from making every harness
+hash zero; its single division per repeat is lower-order. Preparation hoists
+the enormous subject out of the timed loop; scanning residues below it would
+not terminate on these subjects. -/
 setup_benchmark runTotientFactorCount n => n * n
   with prep := sigmaInputForCount
   where {
     paramFloor := 32
     paramCeiling := 1024
     paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 5.0
+    maxSecondsPerCall := 20.0
     targetInnerNanos := 1000000000
+    signalFloorMultiplier := 1.0
     -- The ladder crosses accumulator-width regimes; 0.20 admits that
     -- finite-range transition without changing the model.
     slopeTolerance := 0.20
     outerTrials := 3
   }
 
-private def fixedConfig (seconds : Float) (expected : UInt64) :
+private def fixedConfig (_bodySeconds : Float) (expected : UInt64) :
     LeanBench.FixedBenchmarkConfig where
   repeats := 3
-  maxSecondsPerCall := seconds
+  -- Body ceilings are timed inside each target. This process cap additionally
+  -- admits executable startup and fixed-harness autotuning on loaded hosts.
+  maxSecondsPerCall := 10.0
   expectedHash := some expected
 
 /- Protocol anchor, not performance evidence: the exact public `defaultFuel`
