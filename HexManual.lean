@@ -36,6 +36,7 @@ import HexManual.Chapters.FactorTactics
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexPrimality
+import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyZGcd
@@ -166,6 +167,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexPolyFast}
 
 {include 2 HexManual.Chapters.HexPrimality}
+
+{include 2 HexManual.Chapters.HexIntFactor}
 
 {include 2 HexManual.Chapters.HexModular}
 

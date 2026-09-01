@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntFactor.Divisors
+public import HexIntFactor.Cert
 public import HexPrimality.Order
 
 public section
@@ -19,9 +19,13 @@ namespace Nat
 
 /-- A raw witness that `base` has exactly `order` modulo `modulus`. -/
 structure OrderCert where
+  /-- Residue whose multiplicative order is claimed. -/
   base : Nat
+  /-- Modulus for the residue computation. -/
   modulus : Nat
+  /-- Claimed least positive exponent sending `base` to one. -/
   order : Nat
+  /-- Complete prime factorization of `order`. -/
   orderFac : Factorization
 deriving Repr
 
@@ -38,11 +42,13 @@ def checkOrder (c : OrderCert) : Bool :=
 
 /-- Order data accepted by the checker. -/
 structure CheckedOrderCert where
+  /-- Untrusted order certificate payload. -/
   raw : OrderCert
+  /-- Successful replay of every order check. -/
   valid : checkOrder raw = true
 
 /-- Characterisation of every condition replayed by the order checker. -/
-theorem checkOrder_iff {c : OrderCert} : checkOrder c = true ↔
+@[simp] theorem checkOrder_iff {c : OrderCert} : checkOrder c = true ↔
     1 < c.modulus ∧ 0 < c.order ∧ c.orderFac.subject = c.order ∧
       checkFactorization c.orderFac = true ∧
       HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus ∧
@@ -85,39 +91,6 @@ theorem checkOrder_pow_div_prime {c : OrderCert} (h : checkOrder c = true) :
         1 % c.modulus :=
   (checkOrder_iff.mp h).2.2.2.2.2
 
-private theorem prime_dvd_pow' {q a : Nat} (hq : Prime q) :
-    ∀ {k : Nat}, q ∣ a ^ k → q ∣ a := by
-  intro k
-  induction k with
-  | zero =>
-      intro h
-      simp only [Nat.pow_zero] at h
-      exact absurd (Nat.dvd_one.mp h) hq.ne_one
-  | succ k ih =>
-      intro h
-      rw [Nat.pow_succ] at h
-      exact (hq.dvd_mul.mp h).elim ih id
-
-private theorem prime_dvd_factorProduct {q : Nat} (hq : Prime q) :
-    ∀ {entries : List PrimePower},
-      (∀ e ∈ entries, Prime e.prime) →
-      q ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
-      ∃ e ∈ entries, e.prime = q := by
-  intro entries hprime hdvd
-  induction entries with
-  | nil =>
-      simp only [List.map_nil, List.prod_nil] at hdvd
-      exact absurd (Nat.dvd_one.mp hdvd) hq.ne_one
-  | cons e rest ih =>
-      simp only [List.map_cons, List.prod_cons] at hdvd
-      rcases hq.dvd_mul.mp hdvd with he | hr
-      · have he' : q ∣ e.prime := prime_dvd_pow' hq he
-        rcases (hprime e (by simp)).2 q he' with heq | heq
-        · exact absurd heq hq.ne_one
-        · exact ⟨e, by simp, heq.symm⟩
-      · obtain ⟨x, hx, heq⟩ := ih (fun x hx => hprime x (by simp [hx])) hr
-        exact ⟨x, by simp [hx], heq⟩
-
 private theorem factorProduct_dvd {d : Nat} :
     ∀ {entries : List PrimePower},
       (∀ e ∈ entries, Prime e.prime) →
@@ -136,7 +109,7 @@ private theorem factorProduct_dvd {d : Nat} :
       have hnot : ¬e.prime ∣ (rest.map fun x => x.prime ^ x.exponent).prod := by
         intro h
         obtain ⟨x, hx, heq⟩ :=
-          prime_dvd_factorProduct (hprime e (by simp)) htailPrime h
+          Internal.prime_mem_of_dvd_prod (hprime e (by simp)) htailPrime h
         have hlt := hsorted.1 x hx
         rw [heq] at hlt
         exact Nat.lt_irrefl _ hlt
@@ -194,7 +167,7 @@ def isPrimitiveRoot {p : Nat} (_pc : CheckedPrimeCert p)
   checkOrder ⟨g, p, p - 1, F.raw⟩
 
 /-- The checker criterion is exact. -/
-theorem isPrimitiveRoot_iff {p : Nat} {pc : CheckedPrimeCert p}
+@[simp] theorem isPrimitiveRoot_iff {p : Nat} {pc : CheckedPrimeCert p}
     {F : CheckedFactorization (p - 1)} {g : Nat} :
     isPrimitiveRoot pc F g = true ↔ orderOf g p = p - 1 := by
   constructor
@@ -297,7 +270,7 @@ private theorem pow_one_add (x r : Nat) :
       obtain ⟨t, ht⟩ := ih
       refine ⟨t + r + t * x, ?_⟩
       rw [Nat.pow_succ, ht]
-      simp only [Nat.add_mul, Nat.mul_add, Nat.one_mul, Nat.mul_one,
+      simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one,
         Nat.succ_mul]
       ac_rfl
 
@@ -414,15 +387,16 @@ private theorem powTwoPower {a e : Nat} (he : 0 < e)
   have ha2 : Nat.Coprime a 2 := Nat.Coprime.coprime_dvd_right hdiv ha
   have hodd := mod_two_eq_one ha2
   rcases Nat.eq_or_lt_of_le (show 1 ≤ e by omega) with rfl | he1
-  · simpa [hodd]
+  · simp [hodd]
   rcases Nat.eq_or_lt_of_le (show 2 ≤ e by omega) with rfl | he2
   · have h8 := oddSquareEight hodd
     have hrepr := one_add_of_mod (by decide : 1 < 8) (by simpa using h8)
     obtain ⟨t, ht⟩ := hrepr
-    simp only [if_neg (by decide : (2 : Nat) ≠ 1), if_pos]
+    simp only [ite_eq_right (by decide : (2 : Nat) ≠ 1), ite_eq_left]
     rw [ht, show 8 * t = 4 * (2 * t) by omega, Nat.add_mul_mod_self_left]
   · obtain ⟨j, rfl⟩ : ∃ j, e = j + 3 := ⟨e - 3, by omega⟩
-    rw [if_neg (by omega : j + 3 ≠ 1), if_neg (by omega : j + 3 ≠ 2)]
+    rw [ite_eq_right (by omega : j + 3 ≠ 1),
+      ite_eq_right (by omega : j + 3 ≠ 2)]
     rw [show j + 3 - 2 = j + 1 by omega]
     have hmod : 1 < 2 ^ (j + 3) :=
       Nat.one_lt_pow (by omega) (by decide)
@@ -435,7 +409,7 @@ private theorem powPrimePower (e : PrimePower) (hp : Prime e.prime)
       1 % e.prime ^ e.exponent := by
   by_cases hp2 : e.prime = 2
   · rw [hp2] at ha ⊢
-    simpa only [carmichaelPrimePower, hp2, if_pos] using powTwoPower he ha
+    simpa only [carmichaelPrimePower, hp2, ite_eq_left] using powTwoPower he ha
   · obtain ⟨j, hj⟩ : ∃ j, e.exponent = j + 1 := ⟨e.exponent - 1, by omega⟩
     rw [hj] at ha ⊢
     simpa [carmichaelPrimePower, hp2, hj] using
@@ -482,7 +456,7 @@ theorem pow_carmichael {n : Nat} (F : CheckedFactorization n)
     (a : Nat) (ha : Nat.Coprime a n) :
     a ^ carmichael F % n = 1 % n := by
   by_cases hn : n = 1
-  · simpa only [hn, Nat.mod_one]
+  · simp only [hn, Nat.mod_one]
   have hnPos : 0 < n := F.pos
   have hnOne : 1 < n := by omega
   have hlocal : ∀ e ∈ F.raw.factors,

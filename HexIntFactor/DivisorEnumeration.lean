@@ -64,18 +64,6 @@ private theorem mem_powers {p e acc x : Nat} :
   | zero => simp [powers]
   | succ e ih => simp [powers, ih, Nat.add_assoc]
 
-private theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
-    ∀ {k : Nat}, p ∣ a ^ k → p ∣ a := by
-  intro k
-  induction k with
-  | zero =>
-      intro h
-      exact absurd (Nat.dvd_one.mp h) hp.ne_one
-  | succ k ih =>
-      intro h
-      rw [Nat.pow_succ] at h
-      exact (hp.dvd_mul.mp h).elim ih id
-
 private theorem divisor_prime_power {p e d : Nat} (hp : Prime p)
     (hd : d ∣ p ^ e) : ∃ j, j ≤ e ∧ d = p ^ j := by
   induction e generalizing d with
@@ -91,7 +79,8 @@ private theorem divisor_prime_power {p e d : Nat} (hp : Prime p)
           have hdpos := Nat.pos_of_dvd_of_pos hd (Nat.pow_pos hp.pos)
           omega
         obtain ⟨q, hq, hqd⟩ := exists_prime_dvd hd2
-        have hqp : q ∣ p := prime_dvd_pow hq (Nat.dvd_trans hqd hd)
+        have hqp : q ∣ p :=
+          Internal.prime_dvd_pow hq (Nat.dvd_trans hqd hd)
         have hqpEq : q = p := by
           rcases hp.2 q hqp with hq1 | hqpEq
           · exact absurd hq1 hq.ne_one
@@ -115,26 +104,6 @@ private theorem mem_powers_one_iff {p e d : Nat} (hp : Prime p) :
     obtain ⟨j, hj, rfl⟩ := divisor_prime_power hp hd
     exact ⟨j, hj, by simp⟩
 
-private theorem prime_dvd_product {q : Nat} (hq : Prime q) :
-    ∀ (entries : List PrimePower),
-      (∀ e ∈ entries, Prime e.prime) →
-      q ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
-      ∃ e ∈ entries, e.prime = q := by
-  intro entries hprime hdvd
-  induction entries with
-  | nil =>
-      exact absurd (Nat.dvd_one.mp hdvd) hq.ne_one
-  | cons e rest ih =>
-      simp only [List.map_cons, List.prod_cons] at hdvd
-      rcases hq.dvd_mul.mp hdvd with he | hr
-      · have he' := prime_dvd_pow hq he
-        rcases (hprime e (by simp)).2 q he' with heq | heq
-        · exact absurd heq hq.ne_one
-        · exact ⟨e, by simp, heq.symm⟩
-      · obtain ⟨x, hx, heq⟩ := ih
-          (fun x hx => hprime x (by simp [hx])) hr
-        exact ⟨x, by simp [hx], heq⟩
-
 /-- The first prime power in a strictly ordered prime-power list is coprime to
 the product represented by the tail. -/
 theorem head_coprime {entry : PrimePower} {rest : List PrimePower}
@@ -149,7 +118,7 @@ theorem head_coprime {entry : PrimePower} {rest : List PrimePower}
   have hnot : ¬entry.prime ∣
       (rest.map fun e => e.prime ^ e.exponent).prod := by
     intro hd
-    obtain ⟨e, he, heq⟩ := prime_dvd_product hp rest htail hd
+    obtain ⟨e, he, heq⟩ := Internal.prime_mem_of_dvd_prod hp htail hd
     have hlt := (List.pairwise_cons.mp hsorted).1 e he
     rw [heq] at hlt
     exact Nat.lt_irrefl _ hlt

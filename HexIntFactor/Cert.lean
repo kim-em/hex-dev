@@ -98,24 +98,22 @@ theorem factorProduct_eq {bound : Nat} :
         rw [ih acc' r h, boundedPowMul_eq e.exponent acc acc' hp]
         simp [Nat.mul_assoc]
 
-/-- A successful factor-list fold preserves the bound on its accumulator. -/
-theorem factorProduct_le {bound : Nat} :
-    ∀ (l : List PrimePower) (acc r : Nat), acc ≤ bound →
-      factorProduct bound l acc = some r → r ≤ bound := by
-  intro l
-  induction l with
-  | nil =>
-      intro acc r hacc h
-      unfold factorProduct at h
-      injection h with h
-      simpa [h] using hacc
-  | cons e rest ih =>
-      intro acc r hacc h
-      unfold factorProduct at h
-      split at h
-      · cases h
-      next acc' hp =>
-        exact ih acc' r (boundedPowMul_le hacc hp) h
+namespace Internal
+
+/-- Characterize a successful factor-list fold followed by one bounded
+residual multiplication. This is the shared proof boundary for complete and
+partial factorization checkers. -/
+theorem factorProduct_parts {bound : Nat} {entries : List PrimePower}
+    {initial folded residual result : Nat}
+    (hfold : factorProduct bound entries initial = some folded)
+    (hresidual : boundedPowMul bound residual folded 1 = some result) :
+    folded = initial *
+        (entries.map fun e => e.prime ^ e.exponent).prod ∧
+      result = folded * residual := by
+  exact ⟨factorProduct_eq entries initial folded hfold,
+    by simpa using boundedPowMul_eq 1 folded result hresidual⟩
+
+end Internal
 
 theorem checkEntries_positive : ∀ {l : List PrimePower},
     checkEntries l = true → ∀ e ∈ l, 0 < e.exponent := by
@@ -216,7 +214,10 @@ theorem checkFactorization_sorted {F : Factorization}
     F.factors.Pairwise (fun a b => a.prime < b.prime) :=
   checkEntries_pairwise (checked_parts h).2.1
 
-private theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
+namespace Internal
+
+/-- A prime dividing a power divides its base. -/
+theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
     ∀ {k : Nat}, p ∣ a ^ k → p ∣ a := by
   intro k
   induction k with
@@ -230,6 +231,30 @@ private theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
       rcases (hp.dvd_mul).mp h with h | h
       · exact ih h
       · exact h
+
+/-- A prime dividing a product of certified prime powers is the base of one
+of the entries. Exponents need not be positive for this direction. -/
+theorem prime_mem_of_dvd_prod {q : Nat} (hq : Prime q) :
+    ∀ {entries : List PrimePower},
+      (∀ e ∈ entries, Prime e.prime) →
+      q ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
+      ∃ e ∈ entries, e.prime = q := by
+  intro entries hprime hdvd
+  induction entries with
+  | nil =>
+      exact absurd (Nat.dvd_one.mp hdvd) hq.ne_one
+  | cons e rest ih =>
+      simp only [List.map_cons, List.prod_cons] at hdvd
+      rcases hq.dvd_mul.mp hdvd with he | hrest
+      · have hbase := prime_dvd_pow hq he
+        rcases (hprime e (by simp)).2 q hbase with hq1 | heq
+        · exact absurd hq1 hq.ne_one
+        · exact ⟨e, by simp, heq.symm⟩
+      · obtain ⟨e, he, heq⟩ := ih
+          (fun e he => hprime e (by simp [he])) hrest
+        exact ⟨e, by simp [he], heq⟩
+
+end Internal
 
 private theorem prime_eq_of_dvd {p q : Nat} (hp : Prime p) (hq : Prime q)
     (h : p ∣ q) : p = q := by
@@ -259,7 +284,7 @@ private theorem prime_dvd_product_iff {q : Nat} (hq : Prime q) :
       constructor
       · intro h
         rcases h with h | h
-        · have hd := prime_dvd_pow hq h
+        · have hd := Internal.prime_dvd_pow hq h
           exact ⟨e, List.mem_cons_self, (prime_eq_of_dvd hq he hd).symm⟩
         · obtain ⟨x, hx, heq⟩ := h
           exact ⟨x, List.mem_cons_of_mem e hx, heq⟩
