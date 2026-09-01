@@ -237,6 +237,10 @@ private def ecmInput : Nat → Nat
   | 80 => 8593846213 * 70368744190051
   | _ => 1000003 * 268435579
 
+def runEcmRho (bits : Nat) : Nat :=
+  let n := ecmInput bits
+  rhoLeast n n
+
 @[noinline]
 def runPowerSplit (e : Nat) : List Nat :=
   let target := powerTarget 2 e .minus
@@ -809,6 +813,51 @@ setup_fixed_benchmark runDownstreamPrimitiveRoot where
   fixedConfig 0.02 0xf53a7f8b2ec1ebc6
 
 end Hex.IntFactorBench
+
+/- Attribution-only runners for representative mode-3 families whose
+scientific targets are fixed batches.  The parameter is an honest repetition
+count of one committed representative, so these registrations make the timed
+region available to the compiled profiler without inventing an asymptotic
+claim about the operand family. -/
+namespace Hex.IntFactorProfile
+
+@[noinline]
+private def runSmoothOnce (salt : Nat) : Nat :=
+  Hex.IntFactorBench.runEcmRho (80 + salt - salt)
+
+def runSmooth (repeats : Nat) : Array Nat :=
+  (List.range repeats).toArray.map runSmoothOnce
+
+@[noinline]
+private def runPowerOnce (salt : Nat) : List Nat :=
+  Hex.IntFactorBench.runPowerSplit (80 + salt - salt)
+
+def runPower (repeats : Nat) : Array (List Nat) :=
+  (List.range repeats).toArray.map runPowerOnce
+
+/- Cost model: each array entry performs the same committed 80-bit unbalanced
+rho split, so `n` entries perform exactly `n` copies of fixed work. -/
+setup_benchmark runSmooth n => n where {
+  paramFloor := 1
+  paramCeiling := 4
+  paramSchedule := .custom #[1, 2, 3, 4]
+  maxSecondsPerCall := 30.0
+  targetInnerNanos := 1000000000
+  outerTrials := 3
+}
+
+/- Cost model: each array entry performs the same committed exponent-80 power
+factorization, so `n` entries perform exactly `n` copies of fixed work. -/
+setup_benchmark runPower n => n where {
+  paramFloor := 1
+  paramCeiling := 4
+  paramSchedule := .custom #[1, 2, 3, 4]
+  maxSecondsPerCall := 30.0
+  targetInnerNanos := 1000000000
+  outerTrials := 3
+}
+
+end Hex.IntFactorProfile
 
 def main (args : List String) : IO UInt32 :=
   match args with
