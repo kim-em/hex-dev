@@ -125,6 +125,61 @@ theorem testBit_image (σ : Nat → Nat) (n s w : Nat) :
   rw [image, testBit_image_foldl]
   simp
 
+/-- A set whose bits all lie below `n` is bounded by `2 ^ n`. -/
+theorem lt_two_pow_of_bits {s n : Nat}
+    (h : ∀ i, n ≤ i → s.testBit i = false) : s < 2 ^ n := by
+  rcases Nat.lt_or_ge s (2 ^ n) with hlt | hge
+  · exact hlt
+  · rcases Nat.exists_ge_and_testBit_of_ge_two_pow hge with ⟨i, hi, hb⟩
+    rw [h i hi] at hb
+    exact absurd hb (by simp)
+
+/-- Inserting a vertex keeps a vertex set bounded. -/
+theorem insert_lt {s v n : Nat} (hs : s < 2 ^ n) (hv : v < n) :
+    insert s v < 2 ^ n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rw [testBit_insert,
+    Nat.testBit_lt_two_pow
+      (Nat.lt_of_lt_of_le hs (Nat.pow_le_pow_right (by omega) hi))]
+  simp [show v ≠ i by omega]
+
+@[simp] theorem image_zero (σ : Nat → Nat) (n : Nat) : image σ n 0 = 0 := by
+  refine Nat.eq_of_testBit_eq fun w => ?_
+  rw [testBit_image]
+  simp
+
+/-- An image is a vertex set. -/
+theorem image_lt {n : Nat} (σ : Renaming n) (s : Nat) :
+    image σ n s < 2 ^ n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rw [testBit_image, List.any_eq_false]
+  intro v hv
+  simp only [Bool.and_eq_true, beq_iff_eq, not_and]
+  intro _ heq
+  have := (σ.maps v).mp (List.mem_range.mp hv)
+  omega
+
+/-- Images commute with insertion of a vertex. -/
+theorem image_insert {n : Nat} (σ : Renaming n) (s : Nat) {v : Nat}
+    (hv : v < n) :
+    image σ n (insert s v) = insert (image σ n s) (σ v) := by
+  refine Nat.eq_of_testBit_eq fun w => ?_
+  rw [testBit_image, testBit_insert, testBit_image, Bool.eq_iff_iff,
+    Bool.or_eq_true, List.any_eq_true, List.any_eq_true]
+  constructor
+  · rintro ⟨u, hu, hb⟩
+    simp only [testBit_insert, Bool.and_eq_true, Bool.or_eq_true,
+      beq_iff_eq] at hb
+    rcases hb with ⟨hbu | huv, hw⟩
+    · exact Or.inl ⟨u, hu, by simp [hbu, hw]⟩
+    · right
+      simp [huv, hw]
+  · rintro (⟨u, hu, hb⟩ | hw)
+    · simp only [Bool.and_eq_true, beq_iff_eq] at hb
+      exact ⟨u, hu, by simp [testBit_insert, hb.1, hb.2]⟩
+    · simp only [beq_iff_eq] at hw
+      exact ⟨v, List.mem_range.mpr hv, by simp [testBit_insert, hw]⟩
+
 /-- Membership transports along a renaming. -/
 theorem testBit_image_apply {n : Nat} (σ : Renaming n) (s : Nat) {v : Nat}
     (hv : v < n) : (image σ n s).testBit (σ v) = s.testBit v := by

@@ -281,4 +281,69 @@ theorem refineTrivial_map (σ : Renaming n) {ctx ctx' : Ctx}
       have hb := cells_bound (nn := n) (by omega) hend p hp
       omega)
 
+/-! # The nontrivial-splitter pass: splitter set and counts -/
+
+theorem foldl_insert_map (σ : Renaming n) (lab : Array Nat)
+    (hlab : LabOk lab n) (lo : Nat) :
+    ∀ (l : List Nat) (w : Nat), (∀ o ∈ l, lo + o < lab.size) →
+      l.foldl (fun w o => insert w (lab.map σ.toFun)[lo + o]!)
+          (image σ n w) =
+        image σ n (l.foldl (fun w o => insert w lab[lo + o]!) w)
+  | [], _, _ => rfl
+  | o :: l, w, hb => by
+    rw [List.foldl_cons, List.foldl_cons,
+      getElem!_map_of_lt σ.toFun lab (hb o (by simp)),
+      ← image_insert σ w (hlab _ (hb o (by simp)))]
+    exact foldl_insert_map σ lab hlab lo l (insert w lab[lo + o]!)
+      (fun o' ho' => hb o' (by simp [ho']))
+
+/-- The splitter cell's vertex set transports to its image. -/
+theorem worksetOf_map (σ : Renaming n) {lab : Array Nat}
+    (hlab : LabOk lab n) {lo hi : Nat} (hhi : hi < lab.size) :
+    worksetOf (lab.map σ.toFun) lo hi = image σ n (worksetOf lab lo hi) := by
+  rw [worksetOf, worksetOf]
+  have h := foldl_insert_map σ lab hlab lo (List.range (hi + 1 - lo)) 0
+    (fun o ho => by
+      have := List.mem_range.mp ho
+      omega)
+  rw [image_zero] at h
+  exact h
+
+/-- The splitter cell's vertex set is a bounded vertex set. -/
+theorem worksetOf_lt {lab : Array Nat} (hlab : LabOk lab n)
+    {lo hi : Nat} (hhi : hi < lab.size) :
+    worksetOf lab lo hi < 2 ^ n := by
+  rw [worksetOf]
+  have hgen : ∀ (l : List Nat) (w : Nat), (∀ o ∈ l, lo + o < lab.size) →
+      w < 2 ^ n → l.foldl (fun w o => insert w lab[lo + o]!) w < 2 ^ n := by
+    intro l
+    induction l with
+    | nil => exact fun w _ hw => hw
+    | cons o l ih =>
+      intro w hb hw
+      rw [List.foldl_cons]
+      exact ih _ (fun o' ho' => hb o' (by simp [ho']))
+        (insert_lt hw (hlab _ (hb o (by simp))))
+  exact hgen (List.range (hi + 1 - lo)) 0
+    (fun o ho => by
+      have := List.mem_range.mp ho
+      omega)
+    (Nat.two_pow_pos n)
+
+/-- The neighbour counts into the splitter set are invariant under a
+renaming of graph, labelling, and splitter set. -/
+theorem countsOf_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g)
+    {lab : Array Nat} (hlab : LabOk lab n) {workset : Nat}
+    (hws : workset < 2 ^ n) {cell1 cell2 : Nat} (h2 : cell2 < lab.size) :
+    countsOf ctx' (lab.map σ.toFun) (image σ n workset) cell1 cell2 =
+      countsOf ctx lab workset cell1 cell2 := by
+  rw [countsOf, countsOf]
+  refine List.map_congr_left fun o ho => ?_
+  have hoo := List.mem_range.mp ho
+  have hpos : cell1 + o < lab.size := by omega
+  rw [getElem!_map_of_lt σ.toFun lab hpos,
+    hg.2.2 lab[cell1 + o]! (hlab _ hpos), ← image_and σ,
+    popCount_image σ (Nat.lt_of_le_of_lt Nat.and_le_left hws) (image_lt σ _)]
+
 end Hex.GraphIso.Nauty
