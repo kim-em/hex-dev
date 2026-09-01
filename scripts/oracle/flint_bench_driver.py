@@ -152,6 +152,14 @@ Request fields: ``rows`` (list of list of int).
 * ``snf`` — returns the nonnegative Smith diagonal in divisibility order via
   ``flint.fmpz_mat(rows).snf()``.
 
+### `fmpq_mat` (rational matrix)
+
+* ``rank_dense`` — returns the rank of the deterministic dense `I + J` square
+  matrix of dimension ``n``.  The matrix is cached by dimension, so a fixed
+  benchmark's warmup request pays construction and timed requests measure only
+  ``fmpq_mat.rref()`` plus the constant-size integer reply.
+* ``overhead`` — returns ``0`` without constructing a matrix.
+
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
 Request fields: ``p`` (prime), ``modulus`` (coefficient list of the
@@ -793,6 +801,36 @@ _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 # ---------------------------------------------------------------------
+# `fmpq_mat` (rational matrix)
+# ---------------------------------------------------------------------
+
+_FMPQ_DENSE_CACHE: dict[int, Any] = {}
+
+
+def _fmpq_mat_rank_dense(req: dict[str, Any]) -> int:
+    n = req.get("n")
+    if not isinstance(n, int) or isinstance(n, bool) or n < 0:
+        raise ValueError("fmpq_mat/rank_dense requires a nonnegative integer 'n'")
+    matrix = _FMPQ_DENSE_CACHE.get(n)
+    if matrix is None:
+        rows = [[2 if i == j else 1 for j in range(n)] for i in range(n)]
+        matrix = flint.fmpq_mat(rows)  # type: ignore[union-attr]
+        _FMPQ_DENSE_CACHE[n] = matrix
+    _rref, rank = matrix.rref()
+    return int(rank)
+
+
+def _fmpq_mat_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
+_FMPQ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "rank_dense": _fmpq_mat_rank_dense,
+    "overhead": _fmpq_mat_overhead,
+}
+
+
+# ---------------------------------------------------------------------
 # `fq_default` (F_p[x] / m(x))
 # ---------------------------------------------------------------------
 
@@ -1018,6 +1056,7 @@ _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpq_series": _FMPQ_SERIES_OPS,
     "nmod_poly": _NMOD_POLY_OPS,
     "fmpz_mat": _FMPZ_MAT_OPS,
+    "fmpq_mat": _FMPQ_MAT_OPS,
     "fq_default": _FQ_DEFAULT_OPS,
     "nmod_poly_hensel": _NMOD_POLY_HENSEL_OPS,
     "rcf": _RCF_OPS,

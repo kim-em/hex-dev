@@ -1062,6 +1062,10 @@ lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
 
+lean_exe hexrowreduce_bench where
+  srcDir := "bench"
+  root := `HexRowReduce.Bench
+
 lean_exe hexdeterminant_bench where
   srcDir := "bench"
   root := `HexDeterminant.Bench

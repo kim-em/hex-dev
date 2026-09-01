@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "efc2f4d758bef7676f48f7af3bc2a42dd5e42b01",
+  "reason": "Combines the inherited, already-exempted HexPolyFp precompileModules and HexPrimality proof-probe registrations with the independent hexrowreduce_bench executable declaration. The new target does not change hexbz_factor_service, any library it imports, or its runtime call graph."
+}

@@ -38,6 +38,25 @@ class PersistentFlintWarmupTests(unittest.TestCase):
         self.assertEqual(len(registrations), 1)
         self.assertEqual(failures, registrations)
 
+    def test_rejects_cold_ntl_registration(self) -> None:
+        registrations, failures = self.check_source(
+            "partial def requestNtlLineWithRetry (_ : String) (_ : Nat) := pure \"\"\n"
+            "def runNtl (_ : Unit) := requestNtlLineWithRetry \"ping\" 1\n"
+            "setup_fixed_benchmark runNtl where { repeats := 5 }\n"
+        )
+        self.assertEqual(len(registrations), 1)
+        self.assertEqual(failures, registrations)
+
+    def test_accepts_warm_ntl_registration(self) -> None:
+        registrations, failures = self.check_source(
+            "partial def requestNtlLineWithRetry (_ : String) (_ : Nat) := pure \"\"\n"
+            "def runNtl (_ : Unit) := requestNtlLineWithRetry \"ping\" 1\n"
+            "def config := { repeats := 5, warmupFirstIter := true }\n"
+            "setup_fixed_benchmark runNtl where config\n"
+        )
+        self.assertEqual(len(registrations), 1)
+        self.assertEqual(failures, [])
+
     def test_follows_adapter_and_named_config(self) -> None:
         registrations, failures = self.check_source(
             "def callFlint := Hex.BenchOracle.Flint.runOp \"x\" \"y\" #[]\n"

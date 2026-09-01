@@ -115,13 +115,13 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
         - tool: "FLINT fmpz_poly via python-flint"
           class: informational
-          rationale: "FLINT tunes Karatsuba/Toom-Cook/FFT crossovers in fmpz_poly_mul and uses non-recursive Newton-style algorithms for division and GCD; Hex's implementation is schoolbook with the Karatsuba crossover named in the algorithm table. The constant-factor gap is structural, not algorithmic — the ratio is recorded for orientation but is not a Phase-4 gate. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "FLINT tunes Karatsuba/Toom-Cook/FFT crossovers in fmpz_poly_mul and other specialized integer-polynomial kernels, while HexPoly deliberately supplies the schoolbook semantic foundation and delegates faster algorithms to downstream libraries. Ratios are recorded for orientation rather than as Phase-4 gates. Wired via a warmed persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-int-arithmetic
           description: Deterministic dense integer polynomials for coefficientwise arithmetic, multiplication, derivative, and composition.
@@ -246,8 +246,18 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpq_mat.rref rank via python-flint"
+          class: informational
+          rationale: "The rank result is identical and constant-size, so cached dense inputs permit a valid persistent-subprocess comparison. Full rowReduce is not paired because Hex additionally returns the row transform; nullspace and span witnesses have no native identical callable result in python-flint."
+      input_families:
+        - name: dense-rational-rref
+          description: Dense square rational I + J matrices with a pivot in every column and nonzero elimination above and below every pivot, plus a known row-span member.
+        - name: rank-deficient-rational-nullspace
+          description: Rank-and-nullity n / 2 rational matrices, using repeated I + J for public wrappers and an already-reduced sparse projection to isolate free columns, echelon coefficients, and contract-level nullspace construction.
   HexDeterminant:
     deps: [HexMatrix]
     mathlib: false
@@ -260,7 +270,7 @@ libraries:
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -380,13 +390,13 @@ libraries:
   HexGF2:
     deps: [HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
         - tool: "NTL GF2X via persistent C++ subprocess driver"
           class: informational
-          rationale: "NTL ships hand-tuned word-level inner loops for GF(2)[x] (Karatsuba/FFT crossovers in mul, XOR-folding division, fast GCD); Hex's `GF2Poly` is the verified packed-word algorithmic surface. The constant-factor gap is structural rather than algorithmic — the ratios are recorded for orientation but are not a Phase-4 gate. Wired via a persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "The measured NTL 11.6.0 build links gf2x 1.3.0; NTL's GF2X source uses tuned base cases and Karatsuba/gf2x multiplication, crossover-based division and remainder, and switches GCD to HalfGCD above its configured crossover, while Hex uses packed schoolbook multiplication, long division and remainder, and Euclidean GCD. Those performance ratios compare different algorithm classes and are informational. Addition is retained only as a same-input correctness/protocol anchor because hex framing dominates its linear kernel. Wired via a warmed persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: packed-word-clmul
           description: Deterministic UInt64 sample pairs for pure-Lean and extern carry-less word multiplication chains.
