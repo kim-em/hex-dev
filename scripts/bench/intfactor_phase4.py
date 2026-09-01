@@ -52,10 +52,15 @@ ECM_CASES = (
 
 def run(command: list[str], *, stdin: str | None = None,
         timeout: float = 60.0) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command, cwd=ROOT, input=stdin, check=True, capture_output=True,
-        text=True, timeout=timeout,
-    )
+    try:
+        return subprocess.run(
+            command, cwd=ROOT, input=stdin, check=True, capture_output=True,
+            text=True, timeout=timeout,
+        )
+    except subprocess.CalledProcessError as error:
+        sys.stderr.write(error.stdout or "")
+        sys.stderr.write(error.stderr or "")
+        raise
 
 
 def git(*args: str) -> str:

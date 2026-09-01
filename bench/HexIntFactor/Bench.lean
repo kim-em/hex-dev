@@ -406,7 +406,7 @@ private def runSquareOnce (input : SigmaInput) : Nat :=
   squareDivisor input.checked + squarefreePart input.checked
 
 def runSquareFactorCount (input : SigmaInput) : Nat :=
-  (List.range 8192).foldl (fun total _ => total + runSquareOnce input) 0
+  (List.range 16384).foldl (fun total _ => total + runSquareOnce input) 0
 
 def runTotientFactorCount (input : SigmaInput) : Nat × Nat :=
   let value := totient input.checked
@@ -492,7 +492,7 @@ setup_benchmark runSigmaFactorCount n => n * n
 /- Each prepared certificate has `n` entries of fixed exponent 32. The
 square-divisor accumulator grows linearly in limbs, so its sequential
 multiplication has the declared `Theta(n²)` native-cost model; the parity
-product is identically one and contributes only a linear pass. A fixed 8192-run
+product is identically one and contributes only a linear pass. A fixed 16384-run
 hot loop preserves that model while raising the operation above the child
 spawn-resolution floor. Preparation hoists the enormous certified subject out
 of the timed loop, so an input-range scan would be immediately observable
