@@ -94,7 +94,18 @@ The planned stack, in dependency order:
    dominance lemma, orbit and short-prune steps by checked automorphisms
    through the equivariance theorem — concluding
    `result.form = canonSpec G`. `certify?` instruments the `Nauty`
-   search as the untrusted producer.
+   search as the untrusted producer. **Status: `Nauty/Cert.lean`
+   defines `CertNode` (explored leaf/node, code prune, automorphism
+   prune) and the executable replay `checkNode`/`checkKey`, and proves
+   `checkKey_sound`: a successful replay pins `canonSpecKey G = B` for
+   the claimed best key `B`.** Each pruned sibling is justified either
+   by its recomputed refinement code falling below the best code at
+   that depth (`specNode_keyLe_of_code_lt`), or by a checked
+   automorphism (`checkAutom`/`checkCellsPerm`) mapping it onto an
+   earlier sibling (`specNode_autom`). Remaining for this stage: the
+   `certify?` producer instrumenting the search, and the
+   `CanonResult`-level wrapper tying the achieved leaf's labelling to
+   the key.
 4. **Switch.** Public `canonicalize` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;

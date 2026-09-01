@@ -713,7 +713,100 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
       · next hdisc =>
         split at h
         · next hlenc =>
-          sorry
+          have hdiscf : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n = false := by
+            rcases hd2 : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n with _ | _
+            · rfl
+            · exact absurd hd2 hdisc
+          have hstR := refine_stOk (ctx := ctx) hn (level := level)
+            (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
+            hok.act hok.ptnEnd
+          have hRvals : ∀ q : Nat,
+              (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨ (refine ctx level lab ptn active numcells).ptn[q]! = n + 2 := by
+            intro q
+            rcases ptn_refine_vals ctx level lab ptn active numcells q
+              with he | he
+            · rw [he]
+              exact hok.vals q
+            · rw [he]
+              exact Or.inl (Nat.le_refl level)
+          obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts
+            hn (tcLevel := tcLevel) (refine ctx level lab ptn active numcells).lab hstR.ptnSize hstR.ptnEnd
+            hdiscf
+          have hM1 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
+              tcLevel).1 = p.1 := hptc
+          have hM22 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
+              tcLevel).2.2 = p.2 + 1 - p.1 := by
+            show cellEnd (refine ctx level lab ptn active numcells).ptn level
+              (specTargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level tcLevel + 1) -
+              specTargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level tcLevel + 1 =
+              p.2 + 1 - p.1
+            rw [hptc, hce]
+            omega
+          rw [hM1] at h
+          have hchild := checkChildren_sound hn hgsz tcLevel brows
+            fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (p.2 + 1 - p.1) numcells
+            brest children 0 achieved h hstR.labSize hstR.labOk
+            hstR.ptnSize hstR.ptnEnd hRvals hicp (by omega)
+            (by rw [hlenc, hM22]; omega) (by omega)
+            (fun i hi => absurd hi (by omega))
+          have hlm : children.length = p.2 + 1 - p.1 := by
+            rw [hlenc, hM22]
+          have hlc : (refine ctx level lab ptn active numcells).longcode = bc := Nat.compare_eq_eq.mp heq
+          obtain ⟨m, hm⟩ : ∃ m, p.2 + 1 - p.1 = m + 1 :=
+            ⟨p.2 - p.1, by omega⟩
+          have hspec : specNode ctx tcLevel (fuel + 1) level lab ptn
+              active numcells =
+              ⟨(refine ctx level lab ptn active numcells).longcode ::
+                (keysMax (childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+                  ((List.range m).map fun j =>
+                    childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).codes,
+              (keysMax (childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+                ((List.range m).map fun j =>
+                  childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).rows⟩ := by
+            rw [specNode]
+            simp only [hdiscf, Bool.false_eq_true, if_false]
+            rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
+              List.map_map]
+            rfl
+          have hk := hchild.1 0 (Nat.le_refl 0) (by omega)
+          have hl : ∀ y ∈ (List.range m).map fun j =>
+              childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1),
+              keyLe y ⟨brest, brows⟩ := by
+            intro y hy
+            rcases List.mem_map.mp hy with ⟨j, hj, rfl⟩
+            have hjm := List.mem_range.mp hj
+            exact hchild.1 (j + 1) (by omega) (by omega)
+          constructor
+          · rw [hspec, hlc, keyLe, keyCmp_cons_eq, key_eta]
+            exact keysMax_le hk hl
+          · intro hx
+            obtain ⟨i, hi0, hilen, hik⟩ := hchild.2 hx
+            have him : i < m + 1 := by omega
+            have hb : (⟨brest, brows⟩ : Key) = childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0 ∨
+                (⟨brest, brows⟩ : Key) ∈ (List.range m).map fun j =>
+                  childKey ctx tcLevel fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1) := by
+              rcases Nat.eq_zero_or_pos i with rfl | hipos
+              · exact Or.inl hik.symm
+              · refine Or.inr (List.mem_map.mpr
+                  ⟨i - 1, List.mem_range.mpr (by omega), ?_⟩)
+                rw [show i - 1 + 1 = i from by omega]
+                exact hik
+            have hkm := keysMax_eq_of_le hk hl hb
+            rw [hspec, hlc, hkm]
         · cases h
 
 theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
@@ -822,7 +915,52 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
               rsPtn tc numcells o) ⟨brest, brows⟩ ∧
               (a = true → childKey ctx tcLevel fuel level rsLab rsPtn
                 tc numcells o = ⟨brest, brows⟩) := by
-            sorry
+            split at heq
+            · next hcond =>
+              injection heq with ha
+              simp only [Bool.and_eq_true, decide_eq_true_eq]
+                at hcond
+              obtain ⟨⟨ho'o, hAut⟩, hCells⟩ := hcond
+              rw [hn] at hAut hCells
+              obtain ⟨σ, hσeq, hσrows⟩ := checkAutom_sound hgsz hAut
+              have hoLen : o < lenT := by
+                have hl2 := hlen
+                simp only [List.length_cons] at hl2
+                omega
+              have ho'Len : o' < lenT := by omega
+              have hokc := childNodeOk hs hok hsp hend hvals hic
+                hrange hoLen
+              have hokc' := childNodeOk hs hok hsp hend hvals hic
+                hrange ho'Len
+              have hmapeq : ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map fun w => γ[w]!) =
+                  (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun :=
+                map_congr_of_labOk hokc.labOk
+                  (fun w hw => (hσeq w hw).symm)
+              rw [hmapeq] at hCells
+              have hcp := checkCellsPerm_sound
+                (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
+                (lab₂' := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun) (level := level + 1)
+                hokc.ptnSize hokc'.labSize
+                (by rw [Array.size_map]; exact hokc.labSize)
+                hokc.ptnEnd hCells
+              have hkeyeq : childKey ctx tcLevel fuel level rsLab
+                  rsPtn tc numcells o =
+                  childKey ctx tcLevel fuel level rsLab rsPtn tc
+                    numcells o' :=
+                specNode_autom hn hσrows tcLevel fuel (level + 1)
+                  (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1) (lab₂ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+                  (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (active := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2)
+                  (numcells := numcells + 1) hcp hokc'.labSize
+                  hokc.labSize hokc'.labOk hokc.labOk hokc.ptnSize
+                  hokc.act hokc.ptnEnd hokc.starts hokc.vals
+                  (by omega)
+              refine ⟨?_, ?_⟩
+              · rw [hkeyeq]
+                exact hprev o' ho'o
+              · rw [← ha]
+                intro hx
+                exact Bool.noConfusion hx
+            · cases heq
           have hrest := checkChildren_sound hn hgsz tcLevel brows
             fuel level rsLab rsPtn tc lenT numcells brest rest
             (o + 1) a' heq' hs hok hsp hend hvals hic hrange
@@ -869,5 +1007,82 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
       · exact fun _ _ hx => CertNode.noConfusion hx
 
 end
+
+/-! # Soundness at the root -/
+
+/-- The initial coloured-partition state is well formed. -/
+theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
+    NodeOk n 1 (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2) := by
+  have hEnds := initialPartition_snd_eq G
+  have htotG := totalOf_classes G
+  have hboundEnds : ∀ e ∈ (initialPartition G).2, e < n := by
+    intro e he
+    have := endsOf_lt _ 0 e (hEnds ▸ he)
+    omega
+  have hmemlast : n - 1 ∈ (initialPartition G).2 := by
+    rw [hEnds]
+    have := endsOf_last_mem ((List.range k).map (colorClass G)) 0
+      (by omega)
+    rw [htotG] at this
+    simpa using this
+  refine ⟨size_initialPartition G, labOk_initialPartition G,
+    size_initPtn n (n + 2) (initialPartition G).2, ?_, ?_, ?_, ?_⟩
+  · rw [initActive]
+    refine foldl_active_lt _ _ (Nat.two_pow_pos n) hn0 hboundEnds ?_
+    rw [hEnds]
+    exact endsOf_pairwise _ 0
+  · rw [size_initPtn, getElem!_initPtn, if_pos ⟨hmemlast, by omega⟩]
+    omega
+  · intro v hv
+    rw [initActive] at hv
+    rcases elem_foldl_active _ _ _ hv with h1 | h1 | h1
+    · rw [show elem ((0, 0) : Nat × Nat).1 v = Nat.testBit 0 v
+        from rfl, Nat.zero_testBit] at h1
+      cases h1
+    · exact Or.inl h1
+    · rcases h1 with ⟨e, he, rfl⟩
+      right
+      rw [getElem!_initPtn,
+        if_pos ⟨by simpa using he, by
+          have := hboundEnds e he
+          omega⟩]
+      omega
+  · intro q
+    rw [getElem!_initPtn]
+    rcases Decidable.em (q ∈ (initialPartition G).2 ∧ q < n)
+      with hc | hc
+    · rw [if_pos hc]
+      exact Or.inl (by omega)
+    · rw [if_neg hc]
+      rcases Nat.lt_or_ge q n with hq | hq
+      · rw [if_pos hq]
+        exact Or.inr rfl
+      · rw [if_neg (by omega)]
+        exact Or.inl (by omega)
+
+/-- A successful certificate replay pins the nauty-semantic canonical
+key. -/
+theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
+    (h : checkKey G cert B = true) : canonSpecKey G = B := by
+  rw [checkKey] at h
+  rcases Nat.eq_zero_or_pos n with rfl | hn0
+  · rw [if_pos (by rfl)] at h
+    simp only [Bool.and_eq_true, beq_iff_eq] at h
+    rw [canonSpecKey, canonSpec, if_pos (by rfl)]
+    rcases B with ⟨bc, br⟩
+    simp only at h
+    rw [h.1, h.2]
+  · rw [if_neg (by simp; omega)] at h
+    have heq := of_decide_eq_true h
+    have hnode := checkNode_sound (ctx := { n := n, g := rowsOf G })
+      rfl (size_rowsOf G) 100 B.rows n 1 (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length cert B.codes true heq
+      (initial_nodeOk G hn0) (by show 1 + n ≤ n + 1; omega)
+    rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+    exact (hnode.2 rfl).trans (key_eta B)
 
 end Hex.GraphIso.Nauty
