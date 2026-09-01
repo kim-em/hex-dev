@@ -27,40 +27,94 @@ only with a proof that no observable result changes.
 namespace Hex.GraphIso.Nauty
 
 /-- The index of the least set bit. Returns `0` for the empty set; callers
-guard on nonemptiness. -/
-def lowBit (s : Nat) : Nat :=
-  if h : s = 0 then
-    0
-  else if s % 2 = 1 then
-    0
-  else
-    1 + lowBit (s / 2)
-decreasing_by exact Nat.div_lt_self (Nat.pos_of_ne_zero h) (by omega)
+guard on nonemptiness. Structurally recursive on an always-sufficient
+fuel so the kernel can replay it. -/
+@[expose] def lowBit (s : Nat) : Nat :=
+  go (s + 1) s
+where
+  go : Nat → Nat → Nat
+    | 0, _ => 0
+    | fuel + 1, s =>
+      if s == 0 then 0
+      else if s % 2 == 1 then 0
+      else 1 + go fuel (s / 2)
 
-/-- The number of set bits. -/
-def popCount (s : Nat) : Nat :=
-  if h : s = 0 then
-    0
-  else
-    s % 2 + popCount (s / 2)
-decreasing_by exact Nat.div_lt_self (Nat.pos_of_ne_zero h) (by omega)
+theorem lowBit_go_congr :
+    ∀ (f₁ : Nat) {f₂ s : Nat}, s < f₁ → s < f₂ →
+      lowBit.go f₁ s = lowBit.go f₂ s
+  | f₁ + 1, f₂ + 1, s, h₁, h₂ => by
+    rw [lowBit.go, lowBit.go]
+    rcases Decidable.em (s = 0) with rfl | hs
+    · simp
+    · rcases Decidable.em (s % 2 = 1) with ho | ho
+      · simp [hs, ho]
+      · have hlt : s / 2 < f₁ ∧ s / 2 < f₂ := by omega
+        simp only [beq_iff_eq, hs, ho, if_false]
+        rw [lowBit_go_congr f₁ (f₂ := f₂) hlt.1 hlt.2]
+
+/-- The unconditional unfolding of `lowBit`. -/
+theorem lowBit_eq (s : Nat) :
+    lowBit s = if s = 0 then 0 else if s % 2 = 1 then 0
+      else 1 + lowBit (s / 2) := by
+  rw [lowBit, lowBit, lowBit.go]
+  rcases Decidable.em (s = 0) with rfl | hs
+  · simp [lowBit.go]
+  · rcases Decidable.em (s % 2 = 1) with ho | ho
+    · simp [hs, ho]
+    · simp only [beq_iff_eq, hs, ho, if_false]
+      rw [lowBit_go_congr s (f₂ := s / 2 + 1) (by omega) (by omega)]
+
+/-- The number of set bits. Structurally recursive on an
+always-sufficient fuel so the kernel can replay it. -/
+@[expose] def popCount (s : Nat) : Nat :=
+  go (s + 1) s
+where
+  go : Nat → Nat → Nat
+    | 0, _ => 0
+    | fuel + 1, s =>
+      if s == 0 then 0
+      else s % 2 + go fuel (s / 2)
+
+theorem popCount_go_congr :
+    ∀ (f₁ : Nat) {f₂ s : Nat}, s < f₁ → s < f₂ →
+      popCount.go f₁ s = popCount.go f₂ s
+  | f₁ + 1, f₂ + 1, s, h₁, h₂ => by
+    rw [popCount.go, popCount.go]
+    rcases Decidable.em (s = 0) with rfl | hs
+    · simp
+    · have hlt : s / 2 < f₁ ∧ s / 2 < f₂ := by omega
+      simp only [beq_iff_eq, hs, if_false]
+      rw [popCount_go_congr f₁ (f₂ := f₂) hlt.1 hlt.2]
+
+/-- The unconditional unfolding of `popCount`: also valid at zero. -/
+theorem popCount_eq (s : Nat) :
+    popCount s = s % 2 + popCount (s / 2) := by
+  rw [popCount, popCount, popCount.go]
+  rcases Decidable.em (s = 0) with rfl | hs
+  · simp [popCount.go]
+  · simp only [beq_iff_eq, hs, if_false]
+    rw [popCount_go_congr s (f₂ := s / 2 + 1) (by omega) (by omega)]
+
+@[simp] theorem popCount_zero : popCount 0 = 0 := by
+  rw [popCount, popCount.go]
+  simp
 
 /-- Membership test. -/
-@[inline] def elem (s v : Nat) : Bool :=
+@[expose, inline] def elem (s v : Nat) : Bool :=
   s.testBit v
 
 /-- Insertion. -/
-@[inline] def insert (s v : Nat) : Nat :=
+@[expose, inline] def insert (s v : Nat) : Nat :=
   s ||| (1 <<< v)
 
 /-- Deletion. -/
-@[inline] def erase (s v : Nat) : Nat :=
+@[expose, inline] def erase (s v : Nat) : Nat :=
   if s.testBit v then s ^^^ (1 <<< v) else s
 
 /-- The least element of `s` greater than `pos`, or `none`: nauty's
 `nextelement`, which iterates a set in ascending vertex order. `pos = none`
 starts from the least element. -/
-def nextElem (s : Nat) (pos : Option Nat) : Option Nat :=
+@[expose] def nextElem (s : Nat) (pos : Option Nat) : Option Nat :=
   let s' :=
     match pos with
     | none => s
@@ -68,13 +122,13 @@ def nextElem (s : Nat) (pos : Option Nat) : Option Nat :=
   if s' = 0 then none else some (lowBit s')
 
 /-- All elements of `s` below `n` in ascending order. -/
-def toList (s n : Nat) : List Nat :=
+@[expose] def toList (s n : Nat) : List Nat :=
   (List.range n).filter s.testBit
 
 /-- nauty's row order: rows are compared as packed setwords with vertex `0`
 most significant, so the least differing vertex decides and the row
 containing it is greater. -/
-def rowCmp (a b : Nat) : Ordering :=
+@[expose] def rowCmp (a b : Nat) : Ordering :=
   if a = b then
     .eq
   else if a.testBit (lowBit (a ^^^ b)) then
@@ -83,7 +137,7 @@ def rowCmp (a b : Nat) : Ordering :=
     .lt
 
 /-- The image of a vertex set under a vertex map: nauty's `permset`. -/
-def permset (s : Nat) (perm : Array Nat) (n : Nat) : Nat :=
+@[expose] def permset (s : Nat) (perm : Array Nat) (n : Nat) : Nat :=
   (List.range n).foldl
     (fun acc v => if s.testBit v then insert acc perm[v]! else acc) 0
 
