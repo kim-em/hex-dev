@@ -95,7 +95,9 @@ The base representation should not depend on matrices or permutation groups.
 All the graph algorithms above depend on `hex-graph`. The Hungarian algorithm
 uses the base bipartite representation but does not depend on Hopcroft-Karp.
 `hex-graph-iso` initially depends only on `hex-graph`. An implementation using
-stabilizer or orbit operations may add the permutation-group library.
+complete stabilizer or group operations may later add the permutation-group
+library. The first canonical-labelling release does not require that
+dependency.
 
 The initial representation uses sorted duplicate-free adjacency arrays. An
 edge-list builder checks bounds, removes duplicate edges, and freezes to that
@@ -182,10 +184,17 @@ biconditional: two finite graphs have equal canonical forms exactly when they
 are isomorphic. Checking a proposed relabelling proves only the forward
 isomorphism claim.
 
-`hex-graph-iso` should expose three results: one checked isomorphism when it
-exists, a canonical form, and generators for the automorphism group. Rather
-than enumerate every isomorphism between two graphs, return one transporter
-and the source automorphism group. The companion proves that every
+The first `hex-graph-iso` release exposes a canonical form, its canonical
+label, a checked isomorphism when one exists, and positive and negative
+`graph_iso` tactic proofs. The canonical-form theorem is for ordered-coloured
+graphs. Two such graphs are isomorphic exactly when their canonical forms are
+equal. The detailed computational and Mathlib-facing contracts are in
+[hex-graph-iso](Libraries/hex-graph-iso.md) and
+[hex-graph-iso-mathlib](Libraries/hex-graph-iso-mathlib.md).
+
+Complete automorphism-group generators are a later extension. Rather than
+enumerate every isomorphism between two graphs, that extension returns one
+transporter and the source automorphism group. It proves that every
 isomorphism is uniquely the transporter composed with an automorphism. A
 request for an explicit list expands that coset only under a caller-supplied
 cardinality budget. Automorphism-group completeness uses the same canonical

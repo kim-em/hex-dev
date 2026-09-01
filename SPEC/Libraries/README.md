@@ -23,6 +23,8 @@
 - **hex-poly-smith**: Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and the structure of a finitely generated `F[x]`-module
 - **hex-invariant-factors**: the ordered invariant factors of a square matrix from the polynomial Smith form of `xI - A`, including unit factors and the dimension-zero conventions
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
+- **hex-graph**: immutable finite simple directed and undirected graphs, checked construction, maps, subgraphs, traversal, and executable adjacency
+- **hex-graph-iso**: nauty-compatible canonical forms, canonical labels, checked transporters, and positive and negative `graph_iso` proofs for finite ordered-coloured simple graphs
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
 - **hex-padics**: fixed-precision approximations to `Z_p` and `Q_p`, with the valuation reported as a bound when that is all the data supports, precision-aware arithmetic, partial inversion and division, and exactification by rational reconstruction
@@ -96,6 +98,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
+- **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
 
 ## Implementation dependencies
 
@@ -123,6 +126,8 @@ Each library with its immediate dependencies:
 - **hex-smith**: hex-hermite
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-invariant-factors**: hex-poly-smith
+- **hex-graph**: hex-basic
+- **hex-graph-iso**: hex-graph
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
@@ -196,6 +201,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-gfq-mathlib**: hex-gfq, hex-gf2-mathlib
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
+- **hex-graph-iso-mathlib**: hex-graph-iso
 
 LLL is the recombination primitive used by Berlekamp-Zassenhaus: BZ
 encodes its lifted local factors as a lattice basis and calls
@@ -307,6 +313,19 @@ hex-min-poly ─── hex-min-poly-mathlib ─┘
 The algebraic graph has three independent roots: hex-poly, hex-arith,
 and hex-matrix. The module-boundary helpers in hex-basic are an
 additional utility root used across the graph.
+
+The graph-isomorphism pair is independent of the algebraic libraries.
+`hex-graph-iso` keeps private dense execution data but exposes only
+`hex-graph` values. Its Mathlib companion contains the finite `SimpleGraph`
+correspondence until another graph algorithm needs that conversion. The
+complete contracts are in [hex-graph-iso](hex-graph-iso.md) and
+[hex-graph-iso-mathlib](hex-graph-iso-mathlib.md).
+
+```
+hex-basic -- hex-graph -- hex-graph-iso -- hex-graph-iso-mathlib
+                                                |
+                                             Mathlib
+```
 
 ```
       hex-poly     hex-arith      hex-matrix
