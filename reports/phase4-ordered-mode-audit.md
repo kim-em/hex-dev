@@ -36,7 +36,7 @@ HexNumberFieldTower relies on it.
 | HexGFq | Fixed constructor/projection verdict surfaces lack mode-3 evidence and expected hashes. | [#9814](https://github.com/kim-em/hex-dev/issues/9814) |
 | HexMvPolyMathlib | All five proof-track threshold comparisons remain unresolved under `## Concerns`. | [#9810](https://github.com/kim-em/hex-dev/issues/9810) |
 | HexNumberField | Resolved: every advertised compiled operation is registered, all current modes pass, dominant profiled phases are attributed, and the report has no unresolved Concern. | [#9722](https://github.com/kim-em/hex-dev/issues/9722), [#9743](https://github.com/kim-em/hex-dev/issues/9743), [#9795](https://github.com/kim-em/hex-dev/issues/9795), [#9796](https://github.com/kim-em/hex-dev/issues/9796) |
-| HexNumberFieldTower | The Trager envelope fails mode 2's dominant-phase test, and fixed component anchors are used as coverage without mode-3 evidence. | [#9815](https://github.com/kim-em/hex-dev/issues/9815) |
+| HexNumberFieldTower | Resolved: seven arithmetic surfaces have derived passing mode-1 models; eight composed operations have canonical zero-grace mode-3 budgets; component, hash, protocol, and comparator anchors are explicitly excluded from performance coverage. | [#9665](https://github.com/kim-em/hex-dev/issues/9665) |
 | HexRowReduceMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9817](https://github.com/kim-em/hex-dev/issues/9817) |
 | HexDeterminantMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9818](https://github.com/kim-em/hex-dev/issues/9818) |
 | HexBareissMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9819](https://github.com/kim-em/hex-dev/issues/9819) |
@@ -48,8 +48,9 @@ HexNumberFieldTower relies on it.
 | HexHenselMathlib | The report-less correspondence-only exemption lacks the required SPEC declaration. | [#9825](https://github.com/kim-em/hex-dev/issues/9825) |
 
 There is no valid manual mode-2 pass in the affected set.
-HexNumberFieldTower's candidate citation covers the BHKS factorization phase,
-but the report attributes only 5.26% of the measured call to that phase.
+HexNumberFieldTower now rejects its former candidate mode 2 because BHKS
+covers only the integer-factorization phase (1.42% in the refreshed canonical
+inclusive profile) and uses a canonical mode-3 case instead.
 HexPolyFp supplies neither a mode-2 citation nor the required inclusive
 dominant-phase profile. HexNumberField's former inconclusive registrations now
 have passing ordered modes and attributed profiles.

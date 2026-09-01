@@ -1063,7 +1063,7 @@ libraries:
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -1074,7 +1074,7 @@ libraries:
         - name: tower-coordinate-arithmetic
           description: Dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with dense all-nonzero mixed-radix elements for addition, subtraction, negation, multiplication, recursive inversion, division, and rational scalar action.
         - name: trager-factorization
-          description: Selmer trinomials X^n - X - 1 over Q(sqrt(2)) whose rational coefficients force a genuine shift retry, plus the fixed rational, one-level retry, recursive two-level, and checked-replay cases.
+          description: The canonical mode-3 degree-24 Selmer trinomial X^24 - X - 1 over Q(sqrt(2)), whose rational coefficients force a genuine shift retry, plus fixed one-level retry and recursive two-level performance cases; the smaller Selmer rungs and rational/checked-replay components are comparator, correctness, and attribution anchors rather than performance modes.
         - name: adjoin-extend
           description: Fixed adjoining of a fourth root of two to Q(sqrt(2)), the identity re-adjoining case, and the one-level presentation constructor.
         - name: split-flatten
