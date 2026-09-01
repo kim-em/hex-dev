@@ -1036,4 +1036,403 @@ theorem foldl_max_headD_perm {l l' : List Nat} (h : l.Perm l') :
         (foldl_max_ge_mem _ _ _ (h.mem_iff.mp hmem1))
         (foldl_max_ge_mem _ _ _ (h.mem_iff.mpr hmem2))
 
+/-! # Window-scan structure -/
+
+/-- The window-scan bookkeeping never reads the labelling. -/
+theorem windowStep_setLab (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) (st : RefineSt) (X : Array Nat) :
+    windowStep level cell1 cell2 v c1 c2 maxcell { st with lab := X } =
+      { windowStep level cell1 cell2 v c1 c2 maxcell st with
+        lab := X } := by
+  rw [windowStep, windowStep]
+  dsimp only
+  rcases Decidable.em (Int.ofNat (c2 - c1) > maxcell) with h1 | h1 <;>
+  rcases hB : (c1 != cell1) with _ | _ <;>
+  rcases hC : (c2 - c1 == 1) with _ | _ <;>
+  rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
+    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+
+theorem windowScan_setLab (level cell1 cell2 : Nat) (counts : List Nat) :
+    ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt)
+      (X : Array Nat),
+      windowScan level cell1 cell2 counts values c1 maxcell
+          { st with lab := X } =
+        { windowScan level cell1 cell2 counts values c1 maxcell st with
+          lab := X }
+  | [], _, _, _, _ => rfl
+  | v :: vs, c1, maxcell, st, X => by
+    rw [windowScan, windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rw [windowStep_setLab]
+      exact windowScan_setLab level cell1 cell2 counts vs _ _ _ X
+    · simp only [if_neg hm]
+      exact windowScan_setLab level cell1 cell2 counts vs c1 maxcell st X
+
+/-- The window scan reads the counts only through the multiplicities. -/
+theorem windowScan_counts_congr (level cell1 cell2 : Nat)
+    {counts counts' : List Nat}
+    (hm : ∀ v, multOf counts v = multOf counts' v) :
+    ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      windowScan level cell1 cell2 counts values c1 maxcell st =
+        windowScan level cell1 cell2 counts' values c1 maxcell st
+  | [], _, _, _ => rfl
+  | v :: vs, c1, maxcell, st => by
+    rw [windowScan, windowScan, hm v]
+    rcases Decidable.em (multOf counts' v > 0) with hmv | hmv
+    · simp only [if_pos hmv]
+      rw [windowScan_counts_congr level cell1 cell2 hm vs _ _ _]
+    · simp only [if_neg hmv]
+      exact windowScan_counts_congr level cell1 cell2 hm vs c1 maxcell st
+
+/-- One window step's partition effect: the group end boundary, if it
+lies inside the cell. -/
+theorem ptn_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).ptn =
+      if c2 ≤ cell2 then st.ptn.set! (c2 - 1) level else st.ptn := by
+  rw [windowStep]
+  dsimp only
+  rcases Decidable.em (Int.ofNat (c2 - c1) > maxcell) with h1 | h1 <;>
+  rcases hB : (c1 != cell1) with _ | _ <;>
+  rcases hC : (c2 - c1 == 1) with _ | _ <;>
+  rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
+    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+
+/-! # Segment write-back -/
+
+theorem writeSegment_outside :
+    ∀ (seg : List Nat) (lab : Array Nat) (lo q : Nat),
+      q < lo ∨ lo + seg.length ≤ q →
+      (writeSegment lab lo seg)[q]! = lab[q]!
+  | [], _, _, _, _ => rfl
+  | x :: seg, lab, lo, q, hq => by
+    simp only [List.length_cons] at hq
+    rw [writeSegment,
+      writeSegment_outside seg _ (lo + 1) q (by omega),
+      Array.getElem!_set!_ne _ _ _ _ (by omega)]
+
+theorem writeSegment_size :
+    ∀ (seg : List Nat) (lab : Array Nat) (lo : Nat),
+      (writeSegment lab lo seg).size = lab.size
+  | [], _, _ => rfl
+  | x :: seg, lab, lo => by
+    rw [writeSegment, writeSegment_size seg _ (lo + 1), Array.size_set!]
+
+/-- Writing a segment and reading it back. -/
+theorem segN_writeSegment :
+    ∀ (seg : List Nat) (lab : Array Nat) (lo : Nat),
+      lo + seg.length ≤ lab.size →
+      segN (writeSegment lab lo seg) lo seg.length = seg
+  | [], _, _, _ => rfl
+  | x :: seg, lab, lo, hsz => by
+    simp only [List.length_cons] at hsz ⊢
+    rw [segN_cons, writeSegment]
+    refine List.cons_eq_cons.mpr ⟨?_, ?_⟩
+    · rw [writeSegment_outside seg _ (lo + 1) lo (by omega),
+        Array.getElem!_set!_self _ _ _ (by omega)]
+    · exact segN_writeSegment seg (lab.set! lo x) (lo + 1)
+        (by rw [Array.size_set!]; omega)
+
+/-! # Group decomposition -/
+
+theorem isCell_split_right {ptn : Array Nat} {level A lenA c : Nat}
+    (h : IsCell ptn level A lenA) (hc1 : A ≤ c) (hc2 : c + 1 < A + lenA)
+    (hcs : c < ptn.size) :
+    IsCell (ptn.set! c level) level (c + 1) (A + lenA - (c + 1)) := by
+  obtain ⟨hl, hs, hi, he⟩ := h
+  refine ⟨by omega, Or.inr ?_, ?_, ?_⟩
+  · rw [show c + 1 - 1 = c by omega, Array.getElem!_set!_self _ _ _ hcs]
+    exact Nat.le_refl level
+  · intro i hi1 hi2
+    rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    exact hi i (by omega) (by omega)
+  · rw [show c + 1 + (A + lenA - (c + 1)) - 1 = A + lenA - 1 by omega,
+      Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    exact he
+
+theorem flatMap_congr_mem {g g' : Nat → List Nat} :
+    ∀ (l : List Nat), (∀ a ∈ l, g a = g' a) →
+      l.flatMap g = l.flatMap g'
+  | [], _ => rfl
+  | x :: l, h => by
+    rw [List.flatMap_cons, List.flatMap_cons, h x (by simp),
+      flatMap_congr_mem l (fun a ha => h a (by simp [ha]))]
+
+theorem flatMap_perm_of_pointwise {g g' : Nat → List Nat} :
+    ∀ (vs : List Nat), (∀ v ∈ vs, (g v).Perm (g' v)) →
+      (vs.flatMap g).Perm (vs.flatMap g')
+  | [], _ => List.Perm.refl _
+  | v :: vs, h => by
+    rw [List.flatMap_cons, List.flatMap_cons]
+    exact (h v (by simp)).append
+      (flatMap_perm_of_pointwise vs fun u hu => h u (by simp [hu]))
+
+theorem zipIdx_filter_map_eq_filter (f : Nat → Nat) (v : Nat) :
+    ∀ (S : List Nat) (k : Nat) (get : Nat → Nat),
+      (∀ j, j < S.length → get (k + j) = S[j]!) →
+      ((((S.map f).zipIdx k).filter fun p => p.1 == v).map
+        fun p => get p.2) = S.filter fun x => f x == v
+  | [], _, _, _ => rfl
+  | x :: S, k, get, hget => by
+    rw [List.map_cons, List.zipIdx_cons, List.filter_cons, List.filter_cons]
+    have hx : get k = x := by
+      have := hget 0 (by simp)
+      simpa using this
+    rcases hfx : (f x == v) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      exact zipIdx_filter_map_eq_filter f v S (k + 1) get
+        (fun j hj => by
+          rw [show k + 1 + j = k + (j + 1) by omega]
+          have := hget (j + 1) (by simp; omega)
+          simpa using this)
+    · simp only [if_true, List.map_cons]
+      refine List.cons_eq_cons.mpr ⟨hx, ?_⟩
+      exact zipIdx_filter_map_eq_filter f v S (k + 1) get
+        (fun j hj => by
+          rw [show k + 1 + j = k + (j + 1) by omega]
+          have := hget (j + 1) (by simp; omega)
+          simpa using this)
+
+/-- The stable counting redistribution groups the segment by count
+value: with counts read off the segment, `segmentOf` is the
+concatenation of the value filters. -/
+theorem segmentOf_eq_flatMap (lab : Array Nat) (cell1 : Nat)
+    (S : List Nat) (f : Nat → Nat) (values : List Nat)
+    (hS : ∀ j, j < S.length → lab[cell1 + j]! = S[j]!) :
+    segmentOf lab cell1 (S.map f) values =
+      values.flatMap fun v => S.filter fun x => f x == v := by
+  rw [segmentOf]
+  refine congrArg values.flatMap ?_
+  funext v
+  exact zipIdx_filter_map_eq_filter f v S 0 (fun j => lab[cell1 + j]!)
+    (fun j hj => by rw [Nat.zero_add]; exact hS j hj)
+
+theorem segN_getElem! (lab : Array Nat) (lo len j : Nat) (hj : j < len) :
+    (segN lab lo len)[j]! = lab[lo + j]! := by
+  rw [segN, getElem!_pos _ _ (by rw [List.length_map, List.length_range]; exact hj),
+    List.getElem_map, List.getElem_range]
+
+theorem filter_filter_ne {f : Nat → Nat} {u v : Nat} (huv : u ≠ v)
+    (S : List Nat) :
+    (S.filter fun x => !(f x == v)).filter (fun x => f x == u) =
+      S.filter fun x => f x == u := by
+  induction S with
+  | nil => rfl
+  | cons x S ih =>
+    rw [List.filter_cons]
+    rcases hfv : (f x == v) with _ | _
+    · simp only [Bool.not_false, if_true]
+      rw [List.filter_cons, List.filter_cons, ih]
+    · simp only [Bool.not_true, Bool.false_eq_true, if_false]
+      rw [List.filter_cons, ih]
+      have hfu : (f x == u) = false := by
+        simp only [beq_iff_eq] at hfv
+        simp only [beq_eq_false_iff_ne, ne_eq]
+        omega
+      rw [hfu]
+      simp
+
+/-- Concatenating the value-filters over distinct values that cover the
+list recovers the list, as a multiset. -/
+theorem flatMap_filters_perm {f : Nat → Nat} :
+    ∀ (values S : List Nat), values.Nodup → (∀ x ∈ S, f x ∈ values) →
+      ((values.flatMap fun v => S.filter fun x => f x == v).Perm S)
+  | [], S, _, hcov => by
+    rcases S with _ | ⟨x, S⟩
+    · exact List.Perm.refl _
+    · exact absurd (hcov x (by simp)) (by simp)
+  | v :: values, S, hnd, hcov => by
+    rw [List.flatMap_cons]
+    have hrec := flatMap_filters_perm values
+      (S.filter fun x => !(f x == v)) (List.nodup_cons.mp hnd).2
+      (fun x hx => by
+        have hm := List.mem_filter.mp hx
+        have := hcov x hm.1
+        simp only [List.mem_cons] at this
+        rcases this with heq | hmem
+        · exfalso
+          have := hm.2
+          simp [heq] at this
+        · exact hmem)
+    have hcong : (values.flatMap fun u =>
+        (S.filter fun x => !(f x == v)).filter fun x => f x == u) =
+        values.flatMap fun u => S.filter fun x => f x == u := by
+      refine flatMap_congr_mem values fun u hu => ?_
+      refine filter_filter_ne (fun heq => ?_) S
+      subst heq
+      exact (List.nodup_cons.mp hnd).1 hu
+    rw [hcong] at hrec
+    exact (List.Perm.append (List.Perm.refl _) hrec).trans
+      (List.filter_append_perm _ S)
+
+/-! # Window writes preserve cell equivalence -/
+
+theorem ptn_windowScan_outside (level cell1 cell2 : Nat)
+    (counts : List Nat) :
+    ∀ (vs : List Nat) (c1acc : Nat) (maxcell : Int) (st : RefineSt),
+      cell1 ≤ c1acc → ∀ q, q < cell1 ∨ cell2 ≤ q →
+      (windowScan level cell1 cell2 counts vs c1acc maxcell
+        st).ptn[q]! = st.ptn[q]!
+  | [], _, _, _, _, _, _ => rfl
+  | v :: vs, c1acc, maxcell, st, hc1, q, hq => by
+    rw [windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rw [ptn_windowScan_outside level cell1 cell2 counts vs _ _ _
+        (by omega) q hq, ptn_windowStep_eq]
+      split
+      · next hle =>
+        rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+      · rfl
+    · simp only [if_neg hm]
+      exact ptn_windowScan_outside level cell1 cell2 counts vs _ _ _
+        hc1 q hq
+
+theorem ptn_windowScan_size (level cell1 cell2 : Nat) (counts : List Nat) :
+    ∀ (vs : List Nat) (c1acc : Nat) (maxcell : Int) (st : RefineSt),
+      (windowScan level cell1 cell2 counts vs c1acc maxcell
+        st).ptn.size = st.ptn.size
+  | [], _, _, _ => rfl
+  | v :: vs, c1acc, maxcell, st => by
+    rw [windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rw [ptn_windowScan_size level cell1 cell2 counts vs _ _ _,
+        ptn_windowStep_eq]
+      split
+      · rw [Array.size_set!]
+      · rfl
+    · simp only [if_neg hm]
+      exact ptn_windowScan_size level cell1 cell2 counts vs _ _ _
+
+/-- The window scan's boundary writes preserve cell-contents equivalence
+of the final labellings: each nonempty group becomes a cell whose two
+contents are permutations of matching value filters. -/
+theorem windowScan_region_perm (level cell1 cell2 : Nat)
+    (counts : List Nat) {L L' : Array Nat} (gL gL' : Nat → List Nat)
+    (hGperm : ∀ v, (gL v).Perm (gL' v))
+    (hGlen : ∀ v, (gL v).length = multOf counts v) :
+    ∀ (vs : List Nat) (start : Nat) (maxcell : Int) (st : RefineSt),
+      (start ≤ cell2 → IsCell st.ptn level start (cell2 + 1 - start)) →
+      cell2 < st.ptn.size →
+      cellsPerm st.ptn level L L' →
+      segN L start (cell2 + 1 - start) = vs.flatMap gL →
+      segN L' start (cell2 + 1 - start) = vs.flatMap gL' →
+      cellsPerm (windowScan level cell1 cell2 counts vs start
+        maxcell st).ptn level L L'
+  | [], _, _, _, _, _, hcp, _, _ => hcp
+  | v :: vs, start, maxcell, st, hcellR, hc2s, hcp, hlayL, hlayL' => by
+    rw [windowScan]
+    have hGlen' : ∀ u, (gL' u).length = multOf counts u := fun u => by
+      rw [← (hGperm u).length_eq]
+      exact hGlen u
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      -- the group is nonempty, so the region reaches it
+      have hlen0 := congrArg List.length hlayL
+      rw [segN_length, List.flatMap_cons, List.length_append,
+        hGlen v] at hlen0
+      have hlen0' := congrArg List.length hlayL'
+      rw [segN_length, List.flatMap_cons, List.length_append,
+        hGlen' v] at hlen0'
+      have hstart2 : start ≤ cell2 := by omega
+      have hsplitL : segN L start (cell2 + 1 - start) =
+          segN L start (multOf counts v) ++
+            segN L (start + multOf counts v)
+              (cell2 + 1 - start - multOf counts v) := by
+        rw [← segN_append]
+        congr 1
+        omega
+      have hsplitL' : segN L' start (cell2 + 1 - start) =
+          segN L' start (multOf counts v) ++
+            segN L' (start + multOf counts v)
+              (cell2 + 1 - start - multOf counts v) := by
+        rw [← segN_append]
+        congr 1
+        omega
+      obtain ⟨hchunkL, hrestL⟩ := List.append_inj
+        (hsplitL.symm.trans (by rw [hlayL, List.flatMap_cons]))
+        (by rw [segN_length, hGlen v])
+      obtain ⟨hchunkL', hrestL'⟩ := List.append_inj
+        (hsplitL'.symm.trans (by rw [hlayL', List.flatMap_cons]))
+        (by rw [segN_length, hGlen' v])
+      have hptn1 := ptn_windowStep_eq level cell1 cell2 v start
+        (start + multOf counts v) maxcell st
+      rcases Decidable.em (start + multOf counts v ≤ cell2) with
+        hin | houtc
+      · rw [if_pos hin] at hptn1
+        have hcellS := hcellR hstart2
+        have hcp1 : cellsPerm (st.ptn.set!
+            (start + multOf counts v - 1) level) level L L' := by
+          refine cellsPerm_set! hcellS (by omega) (by omega) (by omega)
+            ?_ ?_ (fun x len hx _ => hcp x len hx)
+          · rw [show start + multOf counts v - 1 + 1 - start =
+              multOf counts v by omega, hchunkL, hchunkL']
+            exact hGperm v
+          · rw [show start + multOf counts v - 1 + 1 =
+                start + multOf counts v by omega,
+              show start + (cell2 + 1 - start) -
+                (start + multOf counts v) =
+                cell2 + 1 - start - multOf counts v by omega,
+              hrestL, hrestL']
+            exact flatMap_perm_of_pointwise vs fun u _ => hGperm u
+        have hcell1 : start + multOf counts v ≤ cell2 →
+            IsCell (windowStep level cell1 cell2 v start
+              (start + multOf counts v) maxcell st).ptn level
+              (start + multOf counts v)
+              (cell2 + 1 - (start + multOf counts v)) := by
+          intro _
+          rw [hptn1]
+          have hs := isCell_split_right
+            (c := start + multOf counts v - 1) hcellS (by omega)
+            (by omega) (by omega)
+          rw [show start + multOf counts v - 1 + 1 =
+            start + multOf counts v by omega,
+            show start + (cell2 + 1 - start) -
+              (start + multOf counts v) =
+              cell2 + 1 - (start + multOf counts v) by omega] at hs
+          exact hs
+        refine windowScan_region_perm level cell1 cell2 counts gL gL'
+          hGperm hGlen vs (start + multOf counts v) _ _ hcell1
+          (by rw [hptn1, Array.size_set!]; exact hc2s)
+          (by rw [hptn1]; exact hcp1)
+          (by
+            rw [show cell2 + 1 - (start + multOf counts v) =
+              cell2 + 1 - start - multOf counts v by omega]
+            exact hrestL)
+          (by
+            rw [show cell2 + 1 - (start + multOf counts v) =
+              cell2 + 1 - start - multOf counts v by omega]
+            exact hrestL')
+      · rw [if_neg houtc] at hptn1
+        have hend : start + multOf counts v = cell2 + 1 := by omega
+        refine windowScan_region_perm level cell1 cell2 counts gL gL'
+          hGperm hGlen vs (start + multOf counts v) _ _
+          (fun hcon => absurd hcon (by omega))
+          (by rw [hptn1]; exact hc2s)
+          (by rw [hptn1]; exact hcp)
+          ?_ ?_
+        · rw [show cell2 + 1 - (start + multOf counts v) = 0 by omega,
+            segN_zero]
+          have := hrestL
+          rw [show cell2 + 1 - start - multOf counts v = 0 by omega,
+            segN_zero] at this
+          exact this
+        · rw [show cell2 + 1 - (start + multOf counts v) = 0 by omega,
+            segN_zero]
+          have := hrestL'
+          rw [show cell2 + 1 - start - multOf counts v = 0 by omega,
+            segN_zero] at this
+          exact this
+    · simp only [if_neg hm]
+      have hgv : gL v = [] :=
+        List.length_eq_zero_iff.mp (by rw [hGlen v]; omega)
+      have hgv' : gL' v = [] :=
+        List.length_eq_zero_iff.mp (by rw [hGlen' v]; omega)
+      exact windowScan_region_perm level cell1 cell2 counts gL gL'
+        hGperm hGlen vs start maxcell st hcellR hc2s hcp
+        (by rw [hlayL, List.flatMap_cons, hgv, List.nil_append])
+        (by rw [hlayL', List.flatMap_cons, hgv', List.nil_append])
+
 end Hex.GraphIso.Nauty
