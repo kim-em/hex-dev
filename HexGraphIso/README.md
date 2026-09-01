@@ -59,11 +59,24 @@ The planned stack, in dependency order:
    leaf, so the specification's target-cell rule is the plain hint-free
    `targetcell`; the sentinel convention reproduces nauty's preference
    for shallower leaves, and children are enumerated by cell position,
-   making equivariance pointwise. Remaining for this stage: invariance
-   of the spec under within-cell reordering of the initial labelling
-   (refine depends on an ordered partition only through its cell
-   contents), the graph-level `iso → equal keys` corollary, and the
-   converse via leaf-label permutation invariants.
+   making equivariance pointwise. **`refine_perm` (Nauty/CellPerm.lean)
+   proves the within-cell reordering invariance: refine depends on an
+   ordered partition only through the multiset of vertices in each
+   cell.** One further recorded subtlety: `bestcell`'s nontrivial-join
+   test reads the adjacency row of each cell's *first* vertex, so it is
+   representative-dependent and well defined only on equitable
+   partitions (where every representative gives the same verdict).
+   Rather than formalize equitability of refine outputs, the
+   specification's target-cell rule tests the cell's neighbour-count
+   multiset (`countsOf`-based), which agrees with nauty's rule on every
+   equitable state, is invariant under both renamings and within-cell
+   reordering, and lets the certificate checker verify agreement with
+   the recorded target cell on each replayed node — a decidable
+   per-node check in place of a global equitability theorem. Remaining
+   for this stage: switch the spec to the count-based rule and reprove
+   `specNode_map`, the key-order total-order lemmas for maximum
+   permutation-invariance, `specNode` invariance under cell-equivalent
+   labellings, and the graph-level `iso ↔ equal keys`.
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex
