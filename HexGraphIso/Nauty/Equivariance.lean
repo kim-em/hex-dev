@@ -768,4 +768,296 @@ theorem windowScan_stOk {level cell1 cell2 : Nat} {counts : List Nat}
     · simp only [if_neg hm]
       exact windowScan_stOk hc2 vs c1 maxcell st h (by omega)
 
+theorem nontrivialFix_stOk {level cell1 : Nat} {st : RefineSt}
+    (h : StOk n level st) (h1 : cell1 < n) :
+    StOk n level (nontrivialFix cell1 st) := by
+  rw [nontrivialFix]
+  split
+  · exact ⟨h.labSize, h.labOk, h.ptnSize,
+      erase_lt (insert_lt h.activeLt h1), h.ptnEnd⟩
+  · exact h
+
+theorem nodup_range_map_add (b k : Nat) :
+    ((List.range k).map fun x => b + x).Nodup := by
+  refine List.Pairwise.map _ ?_ List.pairwise_lt_range
+  intro a₁ a₂ hlt
+  omega
+
+theorem nontrivialCell_stOk {ctx : Ctx} {level workset cell1 cell2 : Nat}
+    {st : RefineSt} (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    StOk n level (nontrivialCell ctx level workset cell1 cell2 st) := by
+  rw [nontrivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
+        cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
+    generalize hcounts : countsOf ctx st.lab workset cell1 cell2 = counts
+    rw [hcounts] at hlen
+    rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
+        counts.foldl Nat.max (counts.headD 0)) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      have hne : cell1 ≤ cell2 := by
+        rcases Decidable.em (cell1 ≤ cell2) with hle | hgt
+        · exact hle
+        · have h0 : counts = [] := List.length_eq_zero_iff.mp (by omega)
+          rw [h0] at hbm
+          simp at hbm
+      generalize hvals : (List.range
+          (counts.foldl Nat.max (counts.headD 0) + 1 -
+            counts.foldl Nat.min (counts.headD 0))).map
+          (counts.foldl Nat.min (counts.headD 0) + ·) = values
+      have hnd : values.Nodup := by
+        rw [← hvals]
+        exact nodup_range_map_add _ _
+      have hsum := sum_multOf_le hnd counts
+      have hlsz := h.labSize
+      have hW := windowScan_stOk (level := level) (cell1 := cell1)
+        (counts := counts) h2 values cell1 (-1) st h (by omega)
+      rw [lab_windowScan level cell1 cell2 counts]
+      have hws := writeSegment_ok (segmentOf st.lab cell1 counts values)
+        st.lab cell1 h.labOk
+        (segmentOf_mem (cell1 := cell1) (counts := counts) h.labOk
+          (by omega) values)
+      exact nontrivialFix_stOk
+        ⟨hws.1.trans h.labSize, hws.2, hW.ptnSize, hW.activeLt, hW.ptnEnd⟩ h1
+    · simp only [if_true]
+      exact ⟨h.labSize, h.labOk, h.ptnSize, h.activeLt, h.ptnEnd⟩
+  · simp only [if_true]
+    exact h
+
+/-! # Cell starts -/
+
+theorem cellEnd_go_ge {ptn : Array Nat} {level : Nat} :
+    ∀ (fuel j : Nat), j ≤ cellEnd.go ptn level fuel j
+  | 0, j => Nat.le_refl j
+  | fuel + 1, j => by
+    rw [cellEnd.go]
+    split
+    · have := cellEnd_go_ge (ptn := ptn) (level := level) fuel (j + 1)
+      omega
+    · exact Nat.le_refl j
+
+theorem cellEnd_ge {ptn : Array Nat} {level i : Nat} :
+    i ≤ cellEnd ptn level i := by
+  rw [cellEnd]
+  exact cellEnd_go_ge _ _
+
+theorem cells_go_le {ptn : Array Nat} {level nn : Nat} :
+    ∀ (fuel c1 : Nat) (p : Nat × Nat),
+      p ∈ cells.go ptn level nn fuel c1 → p.1 ≤ p.2
+  | 0, _, p, hp => absurd hp (by simp [cells.go])
+  | fuel + 1, c1, p, hp => by
+    rw [cells.go] at hp
+    split at hp
+    · simp only [List.mem_cons] at hp
+      rcases hp with rfl | hmem
+      · exact cellEnd_ge
+      · exact cells_go_le fuel _ p hmem
+    · exact absurd hp (by simp)
+
+/-- Every cell of the partition starts no later than it ends. -/
+theorem cells_le {ptn : Array Nat} {level nn : Nat} :
+    ∀ p ∈ cells ptn level nn, p.1 ≤ p.2 := by
+  intro p hp
+  rw [cells] at hp
+  exact cells_go_le nn 0 p hp
+
+/-! # Splitting passes: state invariance -/
+
+theorem refineTrivial_go_stOk {level gRow : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt), StOk n level st →
+      (∀ p ∈ cs, p.1 < n ∧ p.2 < n) →
+      StOk n level (refineTrivial.go level gRow cs st)
+  | [], _, h, _ => h
+  | (c1, c2) :: rest, st, h, hcs => by
+    rw [refineTrivial.go]
+    exact refineTrivial_go_stOk rest _
+      (trivialCell_stOk h (hcs (c1, c2) (by simp)).1 (hcs (c1, c2) (by simp)).2)
+      (fun p hp => hcs p (List.mem_cons_of_mem _ hp))
+
+theorem refineTrivial_stOk {ctx : Ctx} {level split1 : Nat} {st : RefineSt}
+    (hn : ctx.n = n) (h : StOk n level st) :
+    StOk n level (refineTrivial ctx level split1 st) := by
+  rw [refineTrivial]
+  refine refineTrivial_go_stOk _ _ h fun p hp => ?_
+  have hb := cells_bound (nn := ctx.n)
+    (by have := h.ptnSize; omega) h.ptnEnd p hp
+  have hl := cells_le p hp
+  have := h.ptnSize
+  omega
+
+theorem refineNontrivial_go_stOk {ctx : Ctx} {level workset : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt), StOk n level st →
+      (∀ p ∈ cs, p.1 < n ∧ p.2 < n) →
+      StOk n level (refineNontrivial.go ctx level workset cs st)
+  | [], _, h, _ => h
+  | (c1, c2) :: rest, st, h, hcs => by
+    rw [refineNontrivial.go]
+    exact refineNontrivial_go_stOk rest _
+      (nontrivialCell_stOk h (hcs (c1, c2) (by simp)).1
+        (hcs (c1, c2) (by simp)).2)
+      (fun p hp => hcs p (List.mem_cons_of_mem _ hp))
+
+theorem refineNontrivial_stOk {ctx : Ctx} {level split1 split2 : Nat}
+    {st : RefineSt} (hn : ctx.n = n) (h : StOk n level st) :
+    StOk n level (refineNontrivial ctx level split1 split2 st) := by
+  rw [refineNontrivial]
+  dsimp only
+  refine refineNontrivial_go_stOk _ _
+    ⟨h.labSize, h.labOk, h.ptnSize, h.activeLt, h.ptnEnd⟩ fun p hp => ?_
+  have hb := cells_bound (nn := ctx.n)
+    (by have := h.ptnSize; omega) h.ptnEnd p hp
+  have hl := cells_le p hp
+  have := h.ptnSize
+  omega
+
+/-! # The nontrivial pass commutes with the transport -/
+
+theorem refineNontrivial_go_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) (level : Nat) {workset : Nat}
+    (hws : workset < 2 ^ n) :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt), LabOk st.lab n →
+      (∀ p ∈ cs, p.2 < st.lab.size) →
+      refineNontrivial.go ctx' level (image σ n workset) cs (mapSt σ st) =
+        mapSt σ (refineNontrivial.go ctx level workset cs st)
+  | [], _, _, _ => rfl
+  | (cell1, cell2) :: rest, st, hlab, hcs => by
+    rw [refineNontrivial.go, refineNontrivial.go]
+    rw [nontrivialCell_map σ hg level hws cell1 cell2 st hlab
+      (hcs (cell1, cell2) (by simp))]
+    exact refineNontrivial_go_map σ hg level hws rest
+      (nontrivialCell ctx level workset cell1 cell2 st)
+      (nontrivialCell_ok (ctx := ctx) hlab (hcs (cell1, cell2) (by simp))).2
+      (fun p hp => by
+        rw [(nontrivialCell_ok (ctx := ctx) (level := level)
+          (workset := workset) hlab (hcs (cell1, cell2) (by simp))).1]
+        exact hcs p (List.mem_cons_of_mem _ hp))
+
+/-- The nontrivial-splitter pass commutes with the labelling
+transport. -/
+theorem refineNontrivial_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    (level split1 split2 : Nat) (st : RefineSt) (h : StOk n level st)
+    (hs2 : split2 < n) :
+    refineNontrivial ctx' level split1 split2 (mapSt σ st) =
+      mapSt σ (refineNontrivial ctx level split1 split2 st) := by
+  rw [refineNontrivial, refineNontrivial]
+  dsimp only
+  rw [worksetOf_map σ h.labOk (lo := split1) (hi := split2)
+      (by have := h.labSize; omega), hn', hn]
+  exact refineNontrivial_go_map σ hg level
+    (worksetOf_lt h.labOk (lo := split1) (hi := split2)
+      (by have := h.labSize; omega))
+    (cells st.ptn level n)
+    { st with longcode := mash st.longcode (split2 - split1 + 1) }
+    h.labOk
+    (fun p hp =>
+      (show p.2 < st.lab.size by
+        have hb := cells_bound (nn := n)
+          (by have := h.ptnSize; omega) h.ptnEnd p hp
+        have := h.ptnSize
+        have := h.labSize
+        omega))
+
+/-! # Step, loop, and `refine` -/
+
+theorem refineStep_stOk {ctx : Ctx} {level split1 : Nat} {st : RefineSt}
+    (hn : ctx.n = n) (h : StOk n level st) :
+    StOk n level (refineStep ctx level split1 st) := by
+  rw [refineStep]
+  dsimp only
+  split
+  · exact refineTrivial_stOk hn
+      ⟨h.labSize, h.labOk, h.ptnSize, erase_lt h.activeLt, h.ptnEnd⟩
+  · exact refineNontrivial_stOk hn
+      ⟨h.labSize, h.labOk, h.ptnSize, erase_lt h.activeLt, h.ptnEnd⟩
+
+/-- One active-cell iteration commutes with the labelling transport. -/
+theorem refineStep_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    (level split1 : Nat) (st : RefineSt) (h : StOk n level st)
+    (hs1 : split1 < n) :
+    refineStep ctx' level split1 (mapSt σ st) =
+      mapSt σ (refineStep ctx level split1 st) := by
+  rw [refineStep, refineStep]
+  dsimp only
+  rw [show (mapSt σ st).active = st.active from rfl,
+    show (mapSt σ st).ptn = st.ptn from rfl,
+    show (mapSt σ st).longcode = st.longcode from rfl]
+  have hstep : StOk n level
+      { st with
+        active := erase st.active split1
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) } :=
+    ⟨h.labSize, h.labOk, h.ptnSize, erase_lt h.activeLt, h.ptnEnd⟩
+  rcases hsp12 : (split1 == cellEnd st.ptn level split1) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    exact refineNontrivial_map σ hn hn' hg level split1
+      (cellEnd st.ptn level split1) _ hstep
+      (by
+        have := cellEnd_lt (ptn := st.ptn) (level := level) (i := split1)
+          (by have := h.ptnSize; omega) h.ptnEnd
+        have := h.ptnSize
+        omega)
+  · simp only [if_true]
+    exact refineTrivial_map σ hn hn' hg level split1
+      { st with
+        active := erase st.active split1
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) }
+      h.labOk h.labSize h.ptnSize hs1 h.ptnEnd
+
+theorem refineLoop_stOk {ctx : Ctx} {level : Nat} (hn : ctx.n = n) :
+    ∀ (fuel : Nat) (st : RefineSt), StOk n level st →
+      StOk n level (refineLoop ctx level fuel st)
+  | 0, _, h => h
+  | fuel + 1, st, h => by
+    rw [refineLoop]
+    split
+    · rcases hps : pickSplit st.active st.hint with _ | s
+      · exact h
+      · exact refineLoop_stOk hn fuel _ (refineStep_stOk hn h)
+    · exact h
+
+/-- The active-cell loop commutes with the labelling transport. -/
+theorem refineLoop_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    (level : Nat) :
+    ∀ (fuel : Nat) (st : RefineSt), StOk n level st →
+      refineLoop ctx' level fuel (mapSt σ st) =
+        mapSt σ (refineLoop ctx level fuel st)
+  | 0, _, _ => rfl
+  | fuel + 1, st, h => by
+    rw [refineLoop, refineLoop]
+    rw [show (mapSt σ st).numcells = st.numcells from rfl,
+      show (mapSt σ st).active = st.active from rfl,
+      show (mapSt σ st).hint = st.hint from rfl, hn', hn]
+    rcases Decidable.em (st.numcells < n) with hlt | hlt
+    · simp only [if_pos hlt]
+      rcases hps : pickSplit st.active st.hint with _ | s
+      · rfl
+      · dsimp only
+        rw [refineStep_map σ hn hn' hg level s st h
+          (pickSplit_lt h.activeLt hps)]
+        exact refineLoop_map σ hn hn' hg level fuel _ (refineStep_stOk hn h)
+    · simp only [if_neg hlt]
+
+/-- nauty's `refine` commutes with a vertex renaming: on the renamed
+graph with the transported labelling it produces the transported state,
+with identical partition, active set, cell structure, and refinement
+code. This is the core of stage 1 of the certificate plan. -/
+theorem refine_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    (level : Nat) (lab ptn : Array Nat) (active numcells : Nat)
+    (hsl : lab.size = n) (hlab : LabOk lab n) (hsp : ptn.size = n)
+    (hact : active < 2 ^ n) (hend : ptn[ptn.size - 1]! ≤ level) :
+    refine ctx' level (lab.map σ.toFun) ptn active numcells =
+      mapSt σ (refine ctx level lab ptn active numcells) := by
+  rw [refine, refine]
+  rw [hn', hn]
+  rw [refineLoop_map σ hn hn' hg level (4 * n + 8)
+    { lab, ptn, active, numcells, hint := 0, maxpos := 0,
+      longcode := numcells }
+    ⟨hsl, hlab, hsp, hact, hend⟩]
+
 end Hex.GraphIso.Nauty

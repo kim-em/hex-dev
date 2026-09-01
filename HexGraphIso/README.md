@@ -39,10 +39,15 @@ The planned stack, in dependency order:
    of `refine`, with identical `ptn`, `active`, cell structure, and
    refinement codes; likewise `bestcell`/`targetcell` (position-valued)
    and `breakout`. Everything in `Nauty.Refine` reads the graph only
-   through `lab`, so the statements are exact; the work is commuting
-   lemmas for each imperative loop. The `PairwiseSound` development is
-   the proof-of-method: `Compat` transport there is the same argument
-   for a refinement chosen to make those inductions clean.
+   through `lab`, so the statements are exact. **Status: `refine_map`
+   in `Nauty/Equivariance.lean` proves this for the whole of `refine`**
+   (two-pointer partition, both splitting passes, window scan, stable
+   counting redistribution, active-cell loop), together with the
+   `StOk` state invariant that keeps every splitter and labelling
+   access in range. Remaining for this stage: the position-valued
+   helpers (`cheapautom`, `bestcell`, `targetcell`, `breakout`) and
+   the leaf comparison chain (`testcanlab`, `updatecan`, `isautom`)
+   at the search level.
 2. **`canonSpec`.** The unpruned search tree as a total function
    (well-founded on remaining cell count), and its leaf-key maximum
    `(code sequence with sentinel, colour values, adjacency bits)`.
