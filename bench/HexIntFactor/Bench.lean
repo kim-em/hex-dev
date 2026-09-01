@@ -503,7 +503,7 @@ setup_benchmark runSquareFactorCount n => n * n
     paramFloor := 32
     paramCeiling := 1024
     paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 60.0
+    maxSecondsPerCall := 120.0
     targetInnerNanos := 1000000000
     -- At 32..512 the early accumulator-width regimes gave an inconclusive
     -- slope. Extending to 1024 exposes convergence toward the n² model.
