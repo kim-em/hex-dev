@@ -543,4 +543,229 @@ theorem nontrivialCell_ok {ctx : Ctx} {level workset cell1 cell2 : Nat}
   · simp only [if_true]
     exact ⟨by trivial, hlab⟩
 
+/-! # The refinement-state invariant -/
+
+/-- The refinement-state invariant threaded through `refine`: labelling
+and partition are `n`-sized, labelling entries and active positions are
+in range, and the final partition position is closed at `level`. -/
+structure StOk (n level : Nat) (st : RefineSt) : Prop where
+  labSize : st.lab.size = n
+  labOk : LabOk st.lab n
+  ptnSize : st.ptn.size = n
+  activeLt : st.active < 2 ^ n
+  ptnEnd : st.ptn[st.ptn.size - 1]! ≤ level
+
+/-- Setting a partition position to the current level keeps the final
+position closed at that level. -/
+theorem ptnEnd_set! {ptn : Array Nat} {level i : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    (ptn.set! i level)[(ptn.set! i level).size - 1]! ≤ level := by
+  rw [Array.size_set!]
+  rcases Decidable.em (i = ptn.size - 1) with heq | hne
+  · subst heq
+    rcases Nat.lt_or_ge (ptn.size - 1) ptn.size with hlt | hge
+    · rw [Array.getElem!_set!_self _ _ _ hlt]
+      exact Nat.le_refl level
+    · rw [Array.getElem!_eq_getD, Array.getD,
+        dif_neg (by rw [Array.size_set!]; omega)]
+      exact Nat.zero_le level
+  · rw [Array.getElem!_set!_ne _ _ _ _ hne]
+    exact hend
+
+/-- A splitter chosen from a bounded active set is a vertex. -/
+theorem pickSplit_lt {active hint s : Nat} (ha : active < 2 ^ n) :
+    pickSplit active hint = some s → s < n := by
+  rw [pickSplit]
+  split
+  · next h =>
+    intro he
+    injection he with he
+    subst he
+    exact lt_of_testBit_of_lt ha h
+  · intro he
+    rcases hne : nextElem active (some hint) with _ | v
+    · rw [hne] at he
+      dsimp only at he
+      exact lt_of_testBit_of_lt ha (nextElem_mem he)
+    · rw [hne] at he
+      dsimp only at he
+      injection he with he
+      subst he
+      exact lt_of_testBit_of_lt ha (nextElem_mem hne)
+
+theorem trivialSplit_stOk {level cell1 cell2 : Nat} {c1 c2 : Int}
+    {st : RefineSt} (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    StOk n level (trivialSplit level cell1 cell2 c1 c2 st) := by
+  obtain ⟨hsl, hlab, hsp, hact, hend⟩ := h
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with hA | hA
+  · have hA2 : c1.toNat ≤ cell2 := by
+      have := hA.2
+      simp only [Int.ofNat_eq_natCast] at this
+      omega
+    simp only [if_pos hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with hB | hB
+    · simp only [if_pos hB]
+      rcases hC : (c1.toNat == cell2) with _ | _ <;>
+        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        exact ⟨hsl, hlab, by rw [Array.size_set!]; exact hsp,
+          insert_lt hact (by omega), ptnEnd_set! hend⟩
+    · simp only [if_neg hB]
+      rcases hD : (c2.toNat == cell1) with _ | _ <;>
+        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        exact ⟨hsl, hlab, by rw [Array.size_set!]; exact hsp,
+          insert_lt hact h1, ptnEnd_set! hend⟩
+  · simp only [if_neg hA]
+    exact ⟨hsl, hlab, hsp, hact, hend⟩
+
+theorem trivialCell_stOk {level gRow cell1 cell2 : Nat} {st : RefineSt}
+    (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    StOk n level (trivialCell level gRow cell1 cell2 st) := by
+  rw [trivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hsplit := splitCellLoop_ok (gRow := gRow) (cell2 - cell1 + 2) st.lab
+      (Int.ofNat cell1) (Int.ofNat cell2) h.labOk
+      (by simp only [Int.ofNat_eq_natCast]; omega)
+      (by
+        simp only [Int.ofNat_eq_natCast]
+        have := h.labSize
+        omega)
+    exact trivialSplit_stOk
+      ⟨hsplit.1.trans h.labSize, hsplit.2, h.ptnSize, h.activeLt, h.ptnEnd⟩
+      h1 h2
+  · simp only [if_true]
+    exact h
+
+/-! # Multiplicity sums -/
+
+theorem multOf_cons (x : Nat) (counts : List Nat) (v : Nat) :
+    multOf (x :: counts) v = multOf counts v + if x == v then 1 else 0 := by
+  rw [multOf, multOf, List.countP_cons]
+
+theorem sum_map_add (f g : Nat → Nat) :
+    ∀ l : List Nat,
+      (l.map fun v => f v + g v).sum = (l.map f).sum + (l.map g).sum
+  | [] => rfl
+  | x :: l => by
+    rw [List.map_cons, List.map_cons, List.map_cons, List.sum_cons,
+      List.sum_cons, List.sum_cons, sum_map_add f g l]
+    omega
+
+theorem sum_map_ite_zero {x : Nat} :
+    ∀ {l : List Nat}, x ∉ l →
+      (l.map fun v => if x == v then 1 else 0).sum = 0
+  | [], _ => rfl
+  | b :: l, h => by
+    rw [List.map_cons, List.sum_cons]
+    have hxb : (x == b) = false := by
+      simp only [beq_eq_false_iff_ne, ne_eq]
+      intro he
+      subst he
+      exact h (by simp)
+    rw [hxb]
+    simp only [Bool.false_eq_true, if_false]
+    rw [sum_map_ite_zero (fun hm => h (List.mem_cons_of_mem _ hm))]
+
+theorem sum_map_ite_le {x : Nat} :
+    ∀ {l : List Nat}, l.Nodup →
+      (l.map fun v => if x == v then 1 else 0).sum ≤ 1
+  | [], _ => by simp
+  | a :: l, hnd => by
+    rw [List.map_cons, List.sum_cons]
+    rcases hax : (x == a) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      have := sum_map_ite_le (x := x) (List.nodup_cons.mp hnd).2
+      omega
+    · simp only [if_true]
+      have hx : x = a := by simpa using hax
+      subst hx
+      rw [sum_map_ite_zero (List.nodup_cons.mp hnd).1]
+      omega
+
+theorem sum_map_zero : ∀ l : List Nat, (l.map fun _ => 0).sum = 0
+  | [] => rfl
+  | x :: l => by rw [List.map_cons, List.sum_cons, sum_map_zero l]
+
+/-- Over distinct count values, the group multiplicities sum to at most
+the cell size. -/
+theorem sum_multOf_le {l : List Nat} (hl : l.Nodup) :
+    ∀ counts : List Nat, (l.map (multOf counts)).sum ≤ counts.length
+  | [] => by
+    have h0 : l.map (multOf []) = l.map fun _ => 0 :=
+      List.map_congr_left fun v _ => by rw [multOf]; rfl
+    rw [h0, sum_map_zero]
+    exact Nat.zero_le _
+  | x :: counts => by
+    have hstep : l.map (multOf (x :: counts)) =
+        l.map fun v => multOf counts v + if x == v then 1 else 0 :=
+      List.map_congr_left fun v _ => multOf_cons x counts v
+    rw [hstep, sum_map_add, List.length_cons]
+    have h1 := sum_map_ite_le (x := x) hl
+    have h2 := sum_multOf_le hl counts
+    omega
+
+/-! # Window-scan state invariance -/
+
+theorem active_windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
+    (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).active = st.active ∨
+      (windowStep level cell1 cell2 v c1 c2 maxcell st).active =
+        insert st.active c1 := by
+  rw [windowStep]
+  dsimp only
+  repeat' first | exact Or.inl rfl | exact Or.inr rfl | split
+
+theorem ptn_windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
+    (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).ptn = st.ptn ∨
+      (windowStep level cell1 cell2 v c1 c2 maxcell st).ptn =
+        st.ptn.set! (c2 - 1) level := by
+  rw [windowStep]
+  dsimp only
+  repeat' first | exact Or.inl rfl | exact Or.inr rfl | split
+
+theorem windowStep_stOk {level cell1 cell2 v c1 c2 : Nat} {maxcell : Int}
+    {st : RefineSt} (h : StOk n level st) (hc1 : c1 < n) :
+    StOk n level (windowStep level cell1 cell2 v c1 c2 maxcell st) := by
+  obtain ⟨hsl, hlab, hsp, hact, hend⟩ := h
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · rw [lab_windowStep]
+    exact hsl
+  · rw [lab_windowStep]
+    exact hlab
+  · rcases ptn_windowStep level cell1 cell2 v c1 c2 maxcell st with hp | hp <;>
+      rw [hp]
+    · exact hsp
+    · rw [Array.size_set!]
+      exact hsp
+  · rcases active_windowStep level cell1 cell2 v c1 c2 maxcell st with
+      ha | ha <;> rw [ha]
+    · exact hact
+    · exact insert_lt hact hc1
+  · rcases ptn_windowStep level cell1 cell2 v c1 c2 maxcell st with hp | hp <;>
+      rw [hp]
+    · exact hend
+    · exact ptnEnd_set! hend
+
+theorem windowScan_stOk {level cell1 cell2 : Nat} {counts : List Nat}
+    (hc2 : cell2 < n) :
+    ∀ (values : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      StOk n level st →
+      c1 + (values.map (multOf counts)).sum ≤ cell2 + 1 →
+      StOk n level (windowScan level cell1 cell2 counts values c1 maxcell st)
+  | [], _, _, _, h, _ => h
+  | v :: vs, c1, maxcell, st, h, hsum => by
+    rw [windowScan]
+    have hsplit : (List.map (multOf counts) (v :: vs)).sum =
+        multOf counts v + (vs.map (multOf counts)).sum := by
+      rw [List.map_cons, List.sum_cons]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      exact windowScan_stOk hc2 vs (c1 + multOf counts v) _ _
+        (windowStep_stOk h (by omega)) (by omega)
+    · simp only [if_neg hm]
+      exact windowScan_stOk hc2 vs c1 maxcell st h (by omega)
+
 end Hex.GraphIso.Nauty

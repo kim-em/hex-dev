@@ -98,6 +98,115 @@ theorem testBit_insert (t x w : Nat) :
       rw [h2, hbeq]
       simp
 
+/-- The single-bit set. -/
+theorem testBit_one_shift (v w : Nat) :
+    Nat.testBit (1 <<< v) w = (v == w) := by
+  rw [Nat.testBit_shiftLeft]
+  rcases Decidable.em (v = w) with rfl | hne
+  · simp
+  · have hbeq : (v == w) = false := by simp [hne]
+    rcases Decidable.em (v ≤ w) with hle | hgt
+    · have hz : w - v ≠ 0 := by omega
+      have h1 : Nat.testBit 1 (w - v) = false := by
+        rcases hb : Nat.testBit 1 (w - v) with _ | _
+        · rfl
+        · exact absurd (Nat.testBit_one_eq_true_iff_self_eq_zero.mp hb) hz
+      rw [h1, hbeq]
+      simp
+    · have h2 : decide (v ≤ w) = false := by simp [hgt]
+      rw [h2, hbeq]
+      simp
+
+/-- Membership in a deletion. -/
+theorem testBit_erase (s v w : Nat) :
+    (erase s v).testBit w = (s.testBit w && !(v == w)) := by
+  show (if s.testBit v then s ^^^ (1 <<< v) else s).testBit w = _
+  rcases hb : s.testBit v with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    rcases Decidable.em (v = w) with rfl | hne
+    · simp [hb]
+    · simp [show (v == w) = false by simp [hne]]
+  · simp only [if_true]
+    rw [Nat.testBit_xor, testBit_one_shift]
+    rcases Decidable.em (v = w) with rfl | hne
+    · simp [hb]
+    · simp [show (v == w) = false by simp [hne]]
+
+/-- The least set bit is a member. -/
+theorem testBit_lowBit : ∀ (s : Nat), s ≠ 0 → s.testBit (lowBit s) = true
+  | s, hs => by
+    rw [lowBit_eq, if_neg hs]
+    rcases Decidable.em (s % 2 = 1) with ho | ho
+    · rw [if_pos ho]
+      simp [Nat.testBit_zero, ho]
+    · rw [if_neg ho]
+      have hs2 : s / 2 ≠ 0 := by omega
+      rw [Nat.add_comm 1 (lowBit (s / 2)), Nat.testBit_add_one]
+      exact testBit_lowBit (s / 2) hs2
+  termination_by s => s
+  decreasing_by omega
+
+/-- Any member of a bounded set is a vertex. -/
+theorem lt_of_testBit_of_lt {s v n : Nat} (hs : s < 2 ^ n)
+    (hv : s.testBit v = true) : v < n := by
+  rcases Nat.lt_or_ge v n with h | h
+  · exact h
+  · rw [Nat.testBit_lt_two_pow
+      (Nat.lt_of_lt_of_le hs (Nat.pow_le_pow_right (by omega) h))] at hv
+    cases hv
+
+/-- A set whose bits all lie below `n` is bounded by `2 ^ n`. -/
+theorem lt_two_pow_of_bits {s n : Nat}
+    (h : ∀ i, n ≤ i → s.testBit i = false) : s < 2 ^ n := by
+  rcases Nat.lt_or_ge s (2 ^ n) with hlt | hge
+  · exact hlt
+  · rcases Nat.exists_ge_and_testBit_of_ge_two_pow hge with ⟨i, hi, hb⟩
+    rw [h i hi] at hb
+    exact absurd hb (by simp)
+
+/-- Deletion keeps a vertex set bounded. -/
+theorem erase_lt {s v n : Nat} (hs : s < 2 ^ n) : erase s v < 2 ^ n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rw [testBit_erase, Nat.testBit_lt_two_pow
+    (Nat.lt_of_lt_of_le hs (Nat.pow_le_pow_right (by omega) hi))]
+  simp
+
+/-- `nextElem` yields members. -/
+theorem nextElem_mem {s : Nat} {pos : Option Nat} {v : Nat} :
+    nextElem s pos = some v → s.testBit v = true := by
+  rw [nextElem.eq_def]
+  rcases pos with _ | p
+  · dsimp only
+    split
+    · intro h
+      cases h
+    · next hs0 =>
+      intro h
+      injection h with h
+      subst h
+      exact testBit_lowBit s hs0
+  · dsimp only
+    split
+    · intro h
+      cases h
+    · next hs0 =>
+      intro h
+      injection h with h
+      subst h
+      have hmem := testBit_lowBit _ hs0
+      revert hmem
+      generalize lowBit ((s >>> (p + 1)) <<< (p + 1)) = w
+      intro hmem
+      rw [Nat.testBit_shiftLeft] at hmem
+      rcases Decidable.em (p + 1 ≤ w) with hle | hgt
+      · rw [Nat.testBit_shiftRight] at hmem
+        have hplus : p + 1 + (w - (p + 1)) = w := by omega
+        rw [hplus] at hmem
+        simp at hmem
+        exact hmem.2
+      · rw [show decide (p + 1 ≤ w) = false by simp [hgt]] at hmem
+        simp at hmem
+
 /-- The image of a vertex set under a renaming: one insertion per set
 bit below `n`. -/
 @[expose] def image (σ : Nat → Nat) (n s : Nat) : Nat :=
@@ -124,15 +233,6 @@ theorem testBit_image (σ : Nat → Nat) (n s w : Nat) :
       (List.range n).any fun v => s.testBit v && σ v == w := by
   rw [image, testBit_image_foldl]
   simp
-
-/-- A set whose bits all lie below `n` is bounded by `2 ^ n`. -/
-theorem lt_two_pow_of_bits {s n : Nat}
-    (h : ∀ i, n ≤ i → s.testBit i = false) : s < 2 ^ n := by
-  rcases Nat.lt_or_ge s (2 ^ n) with hlt | hge
-  · exact hlt
-  · rcases Nat.exists_ge_and_testBit_of_ge_two_pow hge with ⟨i, hi, hb⟩
-    rw [h i hi] at hb
-    exact absurd hb (by simp)
 
 /-- Inserting a vertex keeps a vertex set bounded. -/
 theorem insert_lt {s v n : Nat} (hs : s < 2 ^ n) (hv : v < n) :
