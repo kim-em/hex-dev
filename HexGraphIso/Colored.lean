@@ -37,7 +37,7 @@ structure Coloring (n k : Nat) where
 
 /-- `Vector.get` agrees with element access; core states no lemmas about
 `Vector.get`, so the `onto` field is used through this bridge. -/
-theorem _root_.Vector.get_eq_getElem {α : Type u} {m : Nat} (v : Vector α m) (i : Fin m) :
+theorem _root_.Hex.Vector.get_eq_getElem {α : Type u} {m : Nat} (v : Vector α m) (i : Fin m) :
     v.get i = v[i] := rfl
 
 namespace Coloring
@@ -76,14 +76,14 @@ set. -/
   cells := Hex.Vector.ofFn' fun _ => 0
   onto c := ⟨⟨0, h⟩, by
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
-    simp [Vector.get_eq_getElem, this]⟩
+    simp [Hex.Vector.get_eq_getElem, this]⟩
 
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
 @[expose] def mod (n k : Nat) (hk : 0 < k) (hkn : k ≤ n) : Coloring n k where
   cells := Hex.Vector.ofFn' fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
   onto c := by
     refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
-    rw [Vector.get_eq_getElem]
+    rw [Hex.Vector.get_eq_getElem]
     simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn']
     exact Fin.ext (Nat.mod_eq_of_lt c.isLt)
 
@@ -131,7 +131,7 @@ vertex `l[i]`, so `(relabel G l).graph.adj i j = G.graph.adj l[i] l[j]` and
         rcases l.perm.get_surj v with ⟨i, hi⟩
         subst hi
         refine ⟨i, ?_⟩
-        rw [Vector.get_eq_getElem] at hv ⊢
+        rw [Hex.Vector.get_eq_getElem] at hv ⊢
         simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn', Fin.eta]
         exact hv }
 

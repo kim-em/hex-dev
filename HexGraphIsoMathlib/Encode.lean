@@ -69,7 +69,7 @@ finite enumeration. -/
       onto := fun c => by
         rcases G.onto c with ⟨v, hv⟩
         refine ⟨e v, ?_⟩
-        rw [Vector.get_eq_getElem]
+        rw [Hex.Vector.get_eq_getElem]
         simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn', Fin.eta,
           Equiv.symm_apply_apply]
         exact hv }
