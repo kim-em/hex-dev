@@ -27,23 +27,9 @@ private def leastFactor (n : Nat) (factors : List PrimePower) : Nat :=
 private def encodeFactors (factors : List PrimePower) : List Nat :=
   factors.flatMap fun entry => [entry.prime, entry.exponent]
 
-private def budgeted (ceilingNanos : Nat) (work : IO α) : IO α := do
-  let start ← IO.monoNanosNow
-  let value ← work
-  let stop ← IO.monoNanosNow
-  if stop - start ≤ ceilingNanos then return value
-  else
-    throw <| IO.userError
-      s!"body budget exceeded: {stop - start} ns > {ceilingNanos} ns"
-
 private def factorFull (n seed : Nat) : List Nat :=
   match factor? n (Hex.Rand.ofSeed seed) with
   | .ok (F, _) => encodeFactors F.raw.factors
-  | .error _ => []
-
-private def factorRhoFull (n seed : Nat) : List Nat :=
-  match Internal.factorRhoCounted? n (Hex.Rand.ofSeed seed) with
-  | .ok success => encodeFactors success.factorization.raw.factors
   | .error _ => []
 
 private def rhoLeast (n seed : Nat) : Nat :=
@@ -93,9 +79,7 @@ private def balancedInput : Nat → Nat
   | _ => 64553 * 66553
 
 /- Multiple fixed seeds average randomized cycle length without changing the
-family. Normal dispatch and forced rho start from the same seed and execute the
-same full preprocessing, recursive completion, certificate construction, and
-acceptance pipeline. An empty encoding is a failed search and is rejected by
+family. An empty encoding is a failed search and is rejected by
 `control-audit`; successful encodings are canonical complete factorizations. -/
 private opaque balancedSeeds : Array Nat := #[0, 1, 2, 3, 4]
 
@@ -103,15 +87,131 @@ def runBalancedFactor (bits : Nat) : Array (List Nat) :=
   let n := balancedInput bits
   balancedSeeds.map fun salt => factorFull n (n + 104729 * salt)
 
-def runBalancedForced (bits : Nat) : Array (List Nat) :=
-  let n := balancedInput bits
-  balancedSeeds.map fun salt => factorRhoFull n (n + 104729 * salt)
-
 /- Raw rho intentionally returns only the normalized split factor. It is a
 scaling/profile target, not the denominator for full public factorization. -/
 def runBalancedRho (bits : Nat) : Array Nat :=
   let n := balancedInput bits
   balancedSeeds.map fun salt => rhoLeast n (n + 104729 * salt)
+
+structure CompletionInput where
+  target : Nat
+  factor : Nat
+  randState : UInt64
+
+private def completeSplit (input : CompletionInput) : List Nat :=
+  let r : Hex.Rand := ⟨input.randState⟩
+  match factor? input.factor r with
+  | .error _ => []
+  | .ok (left, r') =>
+      match factor? (input.target / input.factor) r' with
+      | .error _ => []
+      | .ok (right, _) =>
+          let factors := Internal.mergePowers
+            left.raw.factors right.raw.factors
+          let raw : Factorization := ⟨input.target, factors⟩
+          if checkFactorization raw then encodeFactors factors else []
+
+/- These fixtures are the successful direct-rho outputs for the exact balanced
+targets and five seeds above. Storing the normalized split and advanced state
+makes the completion target time only recursive factorization, certificate
+construction, canonical merging, and final checker acceptance. -/
+private opaque completion32 : Array CompletionInput := #[
+  ⟨4296195809, 64553, 4354685569233041163⟩,
+  ⟨4296195809, 66553, 4354685569233145892⟩,
+  ⟨4296195809, 66553, 4354685569233250621⟩,
+  ⟨4296195809, 66553, 4354685569233355350⟩,
+  ⟨4296195809, 64553, 4354685569233460079⟩]
+private opaque completion40 : Array CompletionInput := #[
+  ⟨1099546267613, 1047587, 4354686664483112967⟩,
+  ⟨1099546267613, 1049599, 4354686664483217696⟩,
+  ⟨1099546267613, 1047587, 4354686664483322425⟩,
+  ⟨1099546267613, 1049599, 4354686664483427154⟩,
+  ⟨1099546267613, 1049599, 4354686664483531883⟩]
+private opaque completion48 : Array CompletionInput := #[
+  ⟨281475177027259, 16778227, 4354967040113872613⟩,
+  ⟨281475177027259, 16776217, 4354967040113977342⟩,
+  ⟨281475177027259, 16778227, 4354967040114082071⟩,
+  ⟨281475177027259, 16776217, 4354967040114186800⟩,
+  ⟨281475177027259, 16776217, 4354967040114291529⟩]
+private opaque completion56 : Array CompletionInput := #[
+  ⟨72057609069267727, 268434461, 4426743174006113081⟩,
+  ⟨72057609069267727, 268434461, 4426743174006217810⟩,
+  ⟨72057609069267727, 268434461, 4426743174006322539⟩,
+  ⟨72057609069267727, 268434461, 4426743174006427268⟩,
+  ⟨72057609069267727, 268436507, 4426743174006531997⟩]
+private opaque completion64 : Array CompletionInput := #[
+  ⟨18446744168197812149, 4294968317, 8709371224361951241⟩,
+  ⟨18446744168197812149, 4294966297, 8709371224362055970⟩,
+  ⟨18446744168197812149, 4294966297, 8709371224362160699⟩,
+  ⟨18446744168197812149, 4294966297, 8709371224362265428⟩,
+  ⟨18446744168197812149, 4294968317, 8709371224362370157⟩]
+private opaque completion72 : Array CompletionInput := #[
+  ⟨4722366488642080239163, 68719477789, 8709376902308716175⟩,
+  ⟨4722366488642080239163, 68719475767, 8709376902308820904⟩,
+  ⟨4722366488642080239163, 68719475767, 8709376902308925633⟩,
+  ⟨4722366488642080239163, 68719475767, 8709376902309030362⟩,
+  ⟨4722366488642080239163, 68719477789, 8709376902309135091⟩]
+private opaque completion80 : Array CompletionInput := #[
+  ⟨1208925819625624289983961, 1099511628781, 8709382124988968493⟩,
+  ⟨1208925819625624289983961, 1099511628781, 8709382124989073222⟩,
+  ⟨1208925819625624289983961, 1099511628781, 8709382124989177951⟩,
+  ⟨1208925819625624289983961, 1099511628781, 8709382124989282680⟩,
+  ⟨1208925819625624289983961, 1099511628781, 8709382124989387409⟩]
+
+initialize completion32Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion32
+initialize completion40Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion40
+initialize completion48Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion48
+initialize completion56Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion56
+initialize completion64Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion64
+initialize completion72Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion72
+initialize completion80Ref : IO.Ref (Array CompletionInput) ← IO.mkRef completion80
+
+private def readCompletion (ref : IO.Ref (Array CompletionInput))
+    (_ : Unit) : IO (Array (List Nat)) := do
+  return (← ref.get).map completeSplit
+
+@[noinline] def runBalancedCompletion32 := readCompletion completion32Ref
+@[noinline] def runBalancedCompletion40 := readCompletion completion40Ref
+@[noinline] def runBalancedCompletion48 := readCompletion completion48Ref
+@[noinline] def runBalancedCompletion56 := readCompletion completion56Ref
+@[noinline] def runBalancedCompletion64 := readCompletion completion64Ref
+@[noinline] def runBalancedCompletion72 := readCompletion completion72Ref
+@[noinline] def runBalancedCompletion80 := readCompletion completion80Ref
+
+private def completionInputs : Nat → Array CompletionInput
+  | 32 => completion32
+  | 40 => completion40
+  | 48 => completion48
+  | 56 => completion56
+  | 64 => completion64
+  | 72 => completion72
+  | 80 => completion80
+  | _ => #[]
+
+private def completionMatchesRho (bits : Nat) : Bool :=
+  let n := balancedInput bits
+  (balancedSeeds.toList.zip (completionInputs bits).toList).all fun (salt, input) =>
+    let budget := defaultPrimeCertBudget
+    match Internal.rhoSplitCountedWith? n
+        (Hex.Rand.ofSeed (n + 104729 * salt))
+        budget.rhoRestarts budget.rhoSteps with
+    | .ok success =>
+        input.target == n && input.factor == success.factor &&
+          input.randState == success.rand.state
+    | .error _ => false
+
+def reportSplits : IO UInt32 := do
+  for bits in #[32, 40, 48, 56, 64, 72, 80] do
+    let n := balancedInput bits
+    for salt in #[0, 1, 2, 3, 4] do
+      let seed := n + 104729 * salt
+      let budget := defaultPrimeCertBudget
+      match Internal.rhoSplitCountedWith? n (Hex.Rand.ofSeed seed)
+          budget.rhoRestarts budget.rhoSteps with
+      | .ok success =>
+          IO.println s!"{bits},{salt},{n},{success.factor},{success.rand.state.toNat}"
+      | .error _ => IO.println s!"{bits},{salt},{n},failure,failure"
+  return 0
 
 private def smoothInput : Nat → Nat
   | 32 => 65537 * 65521
@@ -137,13 +237,17 @@ private def ecmInput : Nat → Nat
   | 80 => 8593846213 * 70368744190051
   | _ => 1000003 * 268435579
 
-def runPowerSplit (e : Nat) : Nat :=
-  match factorPower? 2 e .minus (Hex.Rand.ofSeed e) with
-  | .ok (F, _) => F.raw.factors.length
-  | .error f => f.attempts
+@[noinline]
+def runPowerSplit (e : Nat) : List Nat :=
+  let target := powerTarget 2 e .minus
+  match factorPower? 2 e .minus (Hex.Rand.ofSeed target) with
+  | .ok (F, _) => encodeFactors F.raw.factors
+  | .error _ => []
 
-def runPowerGeneric (e : Nat) : Nat :=
-  runFactorCount (powerTarget 2 e .minus)
+@[noinline]
+def runPowerGeneric (e : Nat) : List Nat :=
+  let target := powerTarget 2 e .minus
+  factorFull target target
 
 def runPrimitiveRoot (p : Nat) : Nat :=
   match primeCert? p (Hex.Rand.ofSeed p) (defaultFuel p) with
@@ -184,18 +288,21 @@ private def tableTrial : IO (Array (List Nat)) := do
 
 @[noinline]
 def runTableDispatch (_ : Unit) : IO (Array (List Nat)) := do
-  budgeted 10000000 tableDispatch
+  tableDispatch
 
 @[noinline]
 def runTableTrial (_ : Unit) : IO (Array (List Nat)) := do
-  budgeted 10000000 tableTrial
+  tableTrial
 
 private opaque balancedBits : Array Nat := #[32, 40, 48, 56, 64, 72, 80]
 private opaque smoothBits : Array Nat := #[32, 40, 48, 56, 64, 72, 76, 80]
 private opaque ecmBits : Array Nat := #[48, 56, 64, 72, 76, 80]
-private opaque powerExponents : Array Nat := #[12, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+private opaque powerExponents : Array Nat :=
+  #[12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80]
 
 initialize powerExponentsRef : IO.Ref (Array Nat) ← IO.mkRef powerExponents
+initialize smoothBitsRef : IO.Ref (Array Nat) ← IO.mkRef smoothBits
+initialize ecmBitsRef : IO.Ref (Array Nat) ← IO.mkRef ecmBits
 
 initialize balanced32Ref : IO.Ref Nat ← IO.mkRef 32
 initialize balanced40Ref : IO.Ref Nat ← IO.mkRef 40
@@ -213,41 +320,26 @@ initialize ecm76Ref : IO.Ref Nat ← IO.mkRef 76
 initialize ecm80Ref : IO.Ref Nat ← IO.mkRef 80
 
 private def readBalanced (ref : IO.Ref Nat)
-    (run : Nat → α) (ceilingNanos : Nat) (_ : Unit) : IO α :=
-  budgeted ceilingNanos do return run (← ref.get)
+    (run : Nat → α) (_ : Unit) : IO α := do
+  return run (← ref.get)
 
 @[noinline] def runBalancedFactor32 :=
-  readBalanced balanced32Ref runBalancedFactor 10000000
+  readBalanced balanced32Ref runBalancedFactor
 @[noinline] def runBalancedFactor40 :=
-  readBalanced balanced40Ref runBalancedFactor 50000000
+  readBalanced balanced40Ref runBalancedFactor
 @[noinline] def runBalancedFactor48 :=
-  readBalanced balanced48Ref runBalancedFactor 100000000
+  readBalanced balanced48Ref runBalancedFactor
 @[noinline] def runBalancedFactor56 :=
-  readBalanced balanced56Ref runBalancedFactor 200000000
+  readBalanced balanced56Ref runBalancedFactor
 @[noinline] def runBalancedFactor64 :=
-  readBalanced balanced64Ref runBalancedFactor 750000000
+  readBalanced balanced64Ref runBalancedFactor
 @[noinline] def runBalancedFactor72 :=
-  readBalanced balanced72Ref runBalancedFactor 2000000000
+  readBalanced balanced72Ref runBalancedFactor
 @[noinline] def runBalancedFactor80 :=
-  readBalanced balanced80Ref runBalancedFactor 6000000000
-
-@[noinline] def runBalancedForced32 :=
-  readBalanced balanced32Ref runBalancedForced 10000000
-@[noinline] def runBalancedForced40 :=
-  readBalanced balanced40Ref runBalancedForced 50000000
-@[noinline] def runBalancedForced48 :=
-  readBalanced balanced48Ref runBalancedForced 100000000
-@[noinline] def runBalancedForced56 :=
-  readBalanced balanced56Ref runBalancedForced 200000000
-@[noinline] def runBalancedForced64 :=
-  readBalanced balanced64Ref runBalancedForced 750000000
-@[noinline] def runBalancedForced72 :=
-  readBalanced balanced72Ref runBalancedForced 2000000000
-@[noinline] def runBalancedForced80 :=
-  readBalanced balanced80Ref runBalancedForced 6000000000
+  readBalanced balanced80Ref runBalancedFactor
 
 private def readEcm (ref : IO.Ref Nat) (_ : Unit) : IO Nat := do
-  budgeted 20000000 do return runEcm (ecmInput (← ref.get))
+  return runEcm (ecmInput (← ref.get))
 
 @[noinline] def runEcm48 := readEcm ecm48Ref
 @[noinline] def runEcm56 := readEcm ecm56Ref
@@ -258,33 +350,27 @@ private def readEcm (ref : IO.Ref Nat) (_ : Unit) : IO Nat := do
 
 @[noinline]
 def runPMinusOneBatch (_ : Unit) : IO (Array Nat) :=
-  budgeted 100000000 do
-    return smoothBits.map fun bits => runPMinusOne (smoothInput bits)
+  return (← smoothBitsRef.get).map fun bits => runPMinusOne (smoothInput bits)
 
 @[noinline]
 def runEcmBatch (_ : Unit) : IO (Array Nat) :=
-  budgeted 100000000 do
-    return ecmBits.map fun bits => runEcm (ecmInput bits)
+  return (← ecmBitsRef.get).map fun bits => runEcm (ecmInput bits)
 
 @[noinline]
 def runEcmRhoBatch (_ : Unit) : IO (Array Nat) :=
-  budgeted 500000000 do
-    return ecmBits.map fun bits => rhoLeast (ecmInput bits) (ecmInput bits)
+  return (← ecmBitsRef.get).map fun bits => rhoLeast (ecmInput bits) (ecmInput bits)
 
 @[noinline]
 def runCyclotomicBatch (_ : Unit) : IO (Array Nat) := do
-  budgeted 10000000 do
-    return (← powerExponentsRef.get).map runCyclotomic
+  return (← powerExponentsRef.get).map runCyclotomic
 
 @[noinline]
-def runPowerGenericBatch (_ : Unit) : IO (Array Nat) := do
-  budgeted 20000000 do
-    return (← powerExponentsRef.get).map runPowerGeneric
+def runPowerGenericBatch (_ : Unit) : IO (Array (List Nat)) := do
+  return (← powerExponentsRef.get).map runPowerGeneric
 
 @[noinline]
-def runPowerSplitBatch (_ : Unit) : IO (Array Nat) := do
-  budgeted 20000000 do
-    return (← powerExponentsRef.get).map runPowerSplit
+def runPowerSplitBatch (_ : Unit) : IO (Array (List Nat)) := do
+  return (← powerExponentsRef.get).map runPowerSplit
 
 private def defaultFuelInputs : Array Nat :=
   tableInputs ++
@@ -293,13 +379,15 @@ private def defaultFuelInputs : Array Nat :=
   ecmBits.map ecmInput ++
   powerExponents.map fun e => powerTarget 2 e .minus
 
+initialize defaultFuelInputsRef : IO.Ref (Array Nat) ←
+  IO.mkRef defaultFuelInputs
+
 @[noinline]
 def runDefaultFuelSchedule (_ : Unit) : IO (Array Nat) :=
-  budgeted 2000000000 do
-    return defaultFuelInputs.map fun n =>
-      match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
-      | .ok success => 2 * success.attempts + 1
-      | .error failure => 2 * failure.attempts
+  return (← defaultFuelInputsRef.get).map fun n =>
+    match Internal.factorCounted? n (Hex.Rand.ofSeed n) with
+    | .ok success => 2 * success.attempts + 1
+    | .error failure => 2 * failure.attempts
 
 def reportDefaultFuel : IO UInt32 := do
   for n in defaultFuelInputs do
@@ -335,13 +423,11 @@ initialize downstreamOrderPrimesRef : IO.Ref (Array Nat) ←
 
 @[noinline]
 def runDownstreamOrder (_ : Unit) : IO (Array Nat) := do
-  budgeted 10000000 do
-    return (← downstreamOrderPrimesRef.get).map (orderOf 3)
+  return (← downstreamOrderPrimesRef.get).map (orderOf 3)
 
 @[noinline]
 def runDownstreamPrimitiveRoot (_ : Unit) : IO (Array Nat) := do
-  budgeted 20000000 do
-    return (← downstreamOrderPrimesRef.get).map runPrimitiveRoot
+  return (← downstreamOrderPrimesRef.get).map runPrimitiveRoot
 
 def reportControls : IO UInt32 := do
   let dispatchedTable ← tableDispatch
@@ -351,11 +437,18 @@ def reportControls : IO UInt32 := do
   IO.println s!"table,{tableStatus}"
   for bits in balancedBits do
     let dispatched := runBalancedFactor bits
-    let forced := runBalancedForced bits
-    let success := dispatched == forced && dispatched.all (!·.isEmpty)
+    let completed := (completionInputs bits).map completeSplit
+    let success := dispatched == completed && dispatched.all (!·.isEmpty) &&
+      completionMatchesRho bits
     ok := ok && success
     let status := if success then "success" else "failure"
     IO.println s!"balanced-{bits},{status}"
+  let genericPower := powerExponents.map runPowerGeneric
+  let splitPower := powerExponents.map runPowerSplit
+  let powerSuccess := genericPower == splitPower && genericPower.all (!·.isEmpty)
+  ok := ok && powerSuccess
+  let powerStatus := if powerSuccess then "success" else "failure"
+  IO.println s!"power,{powerStatus}"
   return if ok then 0 else 1
 
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
@@ -602,26 +695,32 @@ setup_benchmark runTotientFactorCount n => n * n
     outerTrials := 3
   }
 
-private def fixedConfig (_bodySeconds : Float) (expected : UInt64) :
+private def fixedConfig (bodySeconds : Float) (expected : UInt64) :
     LeanBench.FixedBenchmarkConfig where
   repeats := 3
-  -- Body ceilings are timed inside each target. This process cap additionally
-  -- admits executable startup and fixed-harness autotuning on loaded hosts.
-  maxSecondsPerCall := 10.0
+  -- The scientific collector owns median budget assertions. This deliberately
+  -- generous process timeout keeps CI `verify` a correctness/bitrot gate.
+  maxSecondsPerCall := 10.0 + 5.0 * bodySeconds
+  expectedHash := some expected
+
+private def powerConfig (expected : UInt64) :
+    LeanBench.FixedBenchmarkConfig where
+  repeats := 7
+  maxSecondsPerCall := 10.1
   expectedHash := some expected
 
 /- Protocol anchor, not performance evidence: the exact public `defaultFuel`
 schedule over every committed table, balanced, smooth, ECM, and power-form
 input. The odd/even encoding retains success/failure and charged attempts. -/
 setup_fixed_benchmark runDefaultFuelSchedule where
-  fixedConfig 2.0 0x10f66a3116d80119
+  fixedConfig 2.0 0xdeec635db1873394
 
 /- Mode 3 for balanced dispatch. Its attempted five-seed 32--80-bit
 `2^(bits/4)` registration was inconclusive because certificate construction
 and primality checks dominate different lower rungs; the raw-rho registration
-above retains the stable asymptotic check. One fixed normal-policy and
-rho-only-policy target per rung preserves the preregistered full-pipeline
-ratio. Both arms return the same canonical checked-factorization encoding. -/
+above retains the stable asymptotic check. One fixed public-factor target per
+rung records the full pipeline, while the matched completion targets below
+start from precomputed rho outputs and isolate post-split work. -/
 setup_fixed_benchmark runBalancedFactor32 where
   fixedConfig 0.01 0x1bf8f79828d53905
 setup_fixed_benchmark runBalancedFactor40 where
@@ -636,21 +735,21 @@ setup_fixed_benchmark runBalancedFactor72 where
   fixedConfig 2.0 0x2c5ab36c63d8144e
 setup_fixed_benchmark runBalancedFactor80 where
   fixedConfig 6.0 0x62b9a8e4f8df37af
-setup_fixed_benchmark runBalancedForced32 where
-  fixedConfig 0.01 0x1bf8f79828d53905
-setup_fixed_benchmark runBalancedForced40 where
-  fixedConfig 0.05 0x73341ad461f040fb
-setup_fixed_benchmark runBalancedForced48 where
-  fixedConfig 0.1 0xae563f6ab52a4a8b
-setup_fixed_benchmark runBalancedForced56 where
-  fixedConfig 0.2 0x386194db34d47118
-setup_fixed_benchmark runBalancedForced64 where
-  fixedConfig 0.75 0x6dc7828c846f9e2b
-setup_fixed_benchmark runBalancedForced72 where
-  fixedConfig 2.0 0x2c5ab36c63d8144e
-setup_fixed_benchmark runBalancedForced80 where
-  fixedConfig 6.0 0x62b9a8e4f8df37af
 
+setup_fixed_benchmark runBalancedCompletion32 where
+  fixedConfig 0.01 0x1bf8f79828d53905
+setup_fixed_benchmark runBalancedCompletion40 where
+  fixedConfig 0.01 0x73341ad461f040fb
+setup_fixed_benchmark runBalancedCompletion48 where
+  fixedConfig 0.01 0xae563f6ab52a4a8b
+setup_fixed_benchmark runBalancedCompletion56 where
+  fixedConfig 0.01 0x386194db34d47118
+setup_fixed_benchmark runBalancedCompletion64 where
+  fixedConfig 0.01 0x6dc7828c846f9e2b
+setup_fixed_benchmark runBalancedCompletion72 where
+  fixedConfig 0.01 0x2c5ab36c63d8144e
+setup_fixed_benchmark runBalancedCompletion80 where
+  fixedConfig 0.01 0x62b9a8e4f8df37af
 /- Mode 3 for table dispatch: parameterising by integer value mixes unrelated
 factor shapes, so the deterministic uniform batch is the canonical workload.
 The headline report records the attempted mixed ladder and the batch's absolute
@@ -689,14 +788,15 @@ setup_fixed_benchmark runEcm80 where
 
 /- Mode 3 for cyclotomic construction and power-form search: divisor shape and
 the deterministic factor-search route make exponent-only slopes unstable. The
-fixed exponent batch is the canonical workload, and the generic/split pair is
-output-agreeing. Their operation-specific budgets live in the report. -/
+fixed 12--80-bit exponent batch is the canonical workload, and the generic/
+split pair uses identical seeds and returns matching canonical complete
+factorizations. Their operation-specific budgets live in the report. -/
 setup_fixed_benchmark runCyclotomicBatch where
-  fixedConfig 0.01 0x85f906cb15cbed85
+  fixedConfig 0.01 0x6338245641c4c84e
 setup_fixed_benchmark runPowerGenericBatch where
-  fixedConfig 0.02 0x6f7b3a0049fb90c3
+  powerConfig 0x681a285cd74ea124
 setup_fixed_benchmark runPowerSplitBatch where
-  fixedConfig 0.02 0x6f7b3a0049fb90c3
+  powerConfig 0x681a285cd74ea124
 
 /- Mode 3 downstream cases. The exact 50- and 61-bit primes have short base-3
 orders, so they test realistic operand sizes without pretending that the
@@ -714,5 +814,6 @@ def main (args : List String) : IO UInt32 :=
   match args with
   | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel
   | ["control-audit"] => Hex.IntFactorBench.reportControls
+  | ["split-probe"] => Hex.IntFactorBench.reportSplits
   | "ecm-probe" :: values => Hex.IntFactorBench.probeEcm values
   | _ => LeanBench.Cli.dispatch args

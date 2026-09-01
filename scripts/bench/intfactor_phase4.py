@@ -31,6 +31,7 @@ except ModuleNotFoundError:
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / ".lake" / "build" / "bin" / "hexintfactor_bench"
 ECM_BATCH = 256
+BALANCED_SEED_COUNT = 5
 BALANCED = (
     (32, 4_296_195_809),
     (40, 1_099_546_267_613),
@@ -48,6 +49,34 @@ ECM_CASES = (
     (76, 37_796_135_460_432_195_119_879),
     (80, 604_738_165_771_235_538_626_863),
 )
+FIXED_BUDGET_NANOS = {
+    "runDefaultFuelSchedule": 2_000_000_000,
+    "runTableDispatch": 10_000_000,
+    "runTableTrial": 10_000_000,
+    "runPMinusOneBatch": 100_000_000,
+    "runEcmBatch": 100_000_000,
+    "runEcmRhoBatch": 500_000_000,
+    "runEcm48": 20_000_000,
+    "runEcm56": 20_000_000,
+    "runEcm64": 20_000_000,
+    "runEcm72": 20_000_000,
+    "runEcm76": 20_000_000,
+    "runEcm80": 20_000_000,
+    "runCyclotomicBatch": 10_000_000,
+    "runPowerGenericBatch": 20_000_000,
+    "runPowerSplitBatch": 20_000_000,
+    "runDownstreamOrder": 10_000_000,
+    "runDownstreamPrimitiveRoot": 20_000_000,
+    **{
+        f"runBalancedFactor{bits}": budget
+        for bits, budget in (
+            (32, 10_000_000), (40, 50_000_000), (48, 100_000_000),
+            (56, 200_000_000), (64, 750_000_000),
+            (72, 2_000_000_000), (80, 6_000_000_000),
+        )
+    },
+    **{f"runBalancedCompletion{bits}": 10_000_000 for bits, _ in BALANCED},
+}
 
 
 def run(command: list[str], *, stdin: str | None = None,
@@ -120,6 +149,18 @@ def fixed_median(export: dict[str, object], short_name: str) -> float:
     return float(result(export, short_name)["median_nanos"])
 
 
+def param_median(export: dict[str, object], short_name: str, param: int) -> float:
+    row = result(export, short_name)
+    samples = [
+        float(point["per_call_nanos"])
+        for point in row["points"]
+        if point["status"] == "ok" and point["param"] == param
+    ]
+    if not samples:
+        raise RuntimeError(f"{short_name}: no successful samples at {param}")
+    return statistics.median(samples)
+
+
 def validate_export(export: dict[str, object]) -> None:
     rows = export["results"]
     assert isinstance(rows, list)
@@ -140,14 +181,19 @@ def validate_export(export: dict[str, object]) -> None:
             check = row["expected_hash_check"]
             if check["status"] != "match":
                 failures.append(f"{name}: expected hash {check['status']}")
+            short = name.rsplit(".", 1)[-1]
+            budget = FIXED_BUDGET_NANOS.get(short)
+            if budget is None:
+                failures.append(f"{name}: no registered scientific budget")
+            elif float(row["median_nanos"]) > budget:
+                failures.append(
+                    f"{name}: median {row['median_nanos']} ns > {budget} ns budget"
+                )
     for bits, _ in BALANCED:
         normal = result(export, f"runBalancedFactor{bits}")
-        forced = result(export, f"runBalancedForced{bits}")
-        if normal["observed_hash"] != forced["observed_hash"]:
-            failures.append(f"balanced-{bits}: output hashes differ")
-        ratio = float(normal["median_nanos"]) / float(forced["median_nanos"])
-        if ratio > 1.25:
-            failures.append(f"balanced-{bits}: normal/forced={ratio:.6f} > 1.25")
+        completion = result(export, f"runBalancedCompletion{bits}")
+        if normal["observed_hash"] != completion["observed_hash"]:
+            failures.append(f"balanced-{bits}: full/completion output hashes differ")
     table = fixed_median(export, "runTableDispatch")
     trial = fixed_median(export, "runTableTrial")
     if result(export, "runTableDispatch")["observed_hash"] != \
@@ -155,6 +201,15 @@ def validate_export(export: dict[str, object]) -> None:
         failures.append("table: output hashes differ")
     if table / trial > 1.25:
         failures.append(f"table: dispatch/trial={table / trial:.6f} > 1.25")
+    generic_power = result(export, "runPowerGenericBatch")
+    split_power = result(export, "runPowerSplitBatch")
+    if generic_power["observed_hash"] != split_power["observed_hash"]:
+        failures.append("power: output hashes differ")
+    power_ratio = float(split_power["median_nanos"]) / float(
+        generic_power["median_nanos"]
+    )
+    if power_ratio > 0.98:
+        failures.append(f"power: split/generic={power_ratio:.6f} > 0.98")
     if failures:
         raise RuntimeError("invalid scientific export:\n  " + "\n  ".join(failures))
 
@@ -249,12 +304,18 @@ def render(record: dict[str, object]) -> None:
             text = row["verdict"]
         print(f"| `{short}` | {text} |")
     controls = record["internal_controls"]
-    print("\n| bits | normal | forced rho | normal / forced |")
-    print("|---:|---:|---:|---:|")
+    print(
+        "\n| bits | full factor | raw rho split | completion | "
+        "full / rho | full / (rho + completion) |"
+    )
+    print("|---:|---:|---:|---:|---:|---:|")
     for row in controls["balanced"]:
         print(
             f"| {row['bits']} | {row['normal_nanos']/1e6:.3f} ms | "
-            f"{row['forced_nanos']/1e6:.3f} ms | {row['ratio']:.3f}x |"
+            f"{row['rho_nanos']/1e6:.3f} ms | "
+            f"{row['completion_nanos']/1e6:.3f} ms | "
+            f"{row['full_over_rho']:.3f}x | "
+            f"{row['full_over_rho_plus_completion']:.3f}x |"
         )
     print("\n| bits | Hex factor | PARI factor | Hex / PARI |")
     print("|---:|---:|---:|---:|")
@@ -335,17 +396,24 @@ def main() -> int:
     pari_rows = []
     for bits, n in BALANCED:
         normal = result(export, f"runBalancedFactor{bits}")
-        forced = result(export, f"runBalancedForced{bits}")
-        normal_ns = float(normal["median_nanos"])
-        forced_ns = float(forced["median_nanos"])
+        completion = result(export, f"runBalancedCompletion{bits}")
+        normal_batch_ns = float(normal["median_nanos"])
+        completion_ns = float(completion["median_nanos"])
+        rho_ns = param_median(export, "runBalancedRho", bits)
         balanced_rows.append({
-            "bits": bits, "n": n, "normal_nanos": normal_ns,
-            "forced_nanos": forced_ns, "ratio": normal_ns / forced_ns,
+            "bits": bits, "n": n, "normal_nanos": normal_batch_ns,
+            "rho_nanos": rho_ns, "completion_nanos": completion_ns,
+            "full_over_rho": normal_batch_ns / rho_ns,
+            "full_over_rho_plus_completion": normal_batch_ns /
+                (rho_ns + completion_ns),
             "hash": normal["observed_hash"],
         })
         pari = measure_pari(args.pari, n, args.rounds, args.timeout)
+        normal_ns = normal_batch_ns / BALANCED_SEED_COUNT
         pari_rows.append({
-            "bits": bits, "n": n, "lean_nanos": normal_ns, "pari": pari,
+            "bits": bits, "n": n, "lean_batch_nanos": normal_batch_ns,
+            "lean_seed_count": BALANCED_SEED_COUNT,
+            "lean_nanos": normal_ns, "pari": pari,
             "lean_over_pari": normal_ns / float(pari["median_nanos"]),
         })
         print(f"measured balanced-{bits}", file=sys.stderr)
@@ -370,8 +438,10 @@ def main() -> int:
 
     table_dispatch = fixed_median(export, "runTableDispatch")
     table_trial = fixed_median(export, "runTableTrial")
+    power_generic = fixed_median(export, "runPowerGenericBatch")
+    power_split = fixed_median(export, "runPowerSplitBatch")
     record = {
-        "schema": "hex-int-factor-phase4/2",
+        "schema": "hex-int-factor-phase4/3",
         "environment": {
             "hostname": socket.gethostname(), "platform": platform.platform(),
             "python": platform.python_version(), "commit": git("rev-parse", "HEAD"),
@@ -391,6 +461,7 @@ def main() -> int:
             "gmp_ecm_batch_repeats": ECM_BATCH,
             "gmp_ecm_overhead_input": 15,
             "gmp_ecm_timing": "fixed persistent 256-input batch; B2 < B1 disables stage 2",
+            "scientific_fixed_budget_nanos": FIXED_BUDGET_NANOS,
         },
         "benchmark_export": export,
         "control_audit": control_output.splitlines(),
@@ -401,6 +472,11 @@ def main() -> int:
                 "hash": result(export, "runTableDispatch")["observed_hash"],
             },
             "balanced": balanced_rows,
+            "power": {
+                "generic_nanos": power_generic, "split_nanos": power_split,
+                "split_over_generic": power_split / power_generic,
+                "hash": result(export, "runPowerGenericBatch")["observed_hash"],
+            },
         },
         "default_fuel_schedule": fuel_rows,
         "comparisons": {

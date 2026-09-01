@@ -173,6 +173,7 @@ example :
 #guard (perfectPower? (2 ^ 10000)).isSome
 #guard perfectPower? (2 ^ 10009) == some (2, 10009)
 #guard (smallCandidate (3 ^ 13)).route == .perfectPower
+#guard (smallCandidate (3 ^ 15)).residualExponent == 15
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
 #guard (smallCandidate ((6 ^ 5) ^ 3)).route == .twosPower
 

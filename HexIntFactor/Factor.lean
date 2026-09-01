@@ -182,10 +182,6 @@ def smoothSearch (n : Nat) (r : Rand) (fuel : Nat) : SmoothSearch :=
 
 end Internal
 
-private inductive SplitPolicy where
-  | dispatch
-  | rhoOnly
-
 private structure SearchState where
   factors : List PrimePower
   residual : Nat
@@ -193,8 +189,7 @@ private structure SearchState where
   attempts : Nat
   powerRoutes : Nat
 
-private def searchGo (policy : SplitPolicy) (budget : PrimeCertBudget)
-    (primeFuel : Nat) :
+private def searchGo (budget : PrimeCertBudget) (primeFuel : Nat) :
     Nat → List (Nat × Nat) → List PrimePower → Nat → Rand → Nat → Nat →
       SearchState
   | 0, stack, factors, residual, r, attempts, powerRoutes =>
@@ -208,8 +203,7 @@ private def searchGo (policy : SplitPolicy) (budget : PrimeCertBudget)
   | fuel + 1, (m, multiplier) :: stack, factors, residual, r, attempts,
       powerRoutes =>
       if m = 1 then
-        searchGo policy budget primeFuel fuel stack factors residual r attempts
-          powerRoutes
+        searchGo budget primeFuel fuel stack factors residual r attempts powerRoutes
       else
         -- Keep the full structural pipeline here: table-coprimality of stack
         -- entries is an invariant of the current producers, not of their type.
@@ -223,13 +217,12 @@ private def searchGo (policy : SplitPolicy) (budget : PrimeCertBudget)
         let m := candidate.residualBase
         let multiplier := candidate.residualExponent
         if m = 1 then
-          searchGo policy budget primeFuel fuel stack factors residual r attempts
-            powerRoutes
+          searchGo budget primeFuel fuel stack factors residual r attempts powerRoutes
         else
           match Internal.primeCertCountedWith? budget m r
               (min primeFuel (fuel + 1)) with
           | .ok certified =>
-              searchGo policy budget primeFuel fuel stack
+              searchGo budget primeFuel fuel stack
                 (Internal.insertPower ⟨multiplier, certified.cert.raw⟩ factors)
                 residual certified.rand (attempts + certified.attempts) powerRoutes
           | .error primeFailure =>
@@ -237,54 +230,45 @@ private def searchGo (policy : SplitPolicy) (budget : PrimeCertBudget)
                   (min budget.rhoRestarts (Internal.rhoRestartBudget (fuel + 1)))
                   budget.rhoSteps with
               | .ok split =>
-                  searchGo policy budget primeFuel fuel
+                  searchGo budget primeFuel fuel
                     ((split.factor, multiplier) ::
                       (m / split.factor, multiplier) :: stack)
                     factors residual split.rand
                     (attempts + primeFailure.attempts + split.attempts) powerRoutes
               | .error rhoFailure =>
-                  match policy with
-                  | .rhoOnly =>
-                      searchGo policy budget primeFuel fuel stack factors
-                        (residual * m ^ multiplier) rhoFailure.rand
-                        (attempts + primeFailure.attempts + rhoFailure.attempts)
+                  let smooth := Internal.smoothSearch m rhoFailure.rand (fuel + 1)
+                  match smooth.factor with
+                  | some d =>
+                      searchGo budget primeFuel fuel
+                        ((d, multiplier) :: (m / d, multiplier) :: stack) factors
+                        residual smooth.rand
+                        (attempts + primeFailure.attempts + rhoFailure.attempts +
+                          smooth.attempts)
                         powerRoutes
-                  | .dispatch =>
-                      let smooth :=
-                        Internal.smoothSearch m rhoFailure.rand (fuel + 1)
-                      match smooth.factor with
-                      | some d =>
-                          searchGo policy budget primeFuel fuel
-                            ((d, multiplier) ::
-                              (m / d, multiplier) :: stack)
-                            factors residual smooth.rand
-                            (attempts + primeFailure.attempts +
-                              rhoFailure.attempts + smooth.attempts)
-                            powerRoutes
-                      | none =>
-                          searchGo policy budget primeFuel fuel stack factors
-                            (residual * m ^ multiplier) smooth.rand
-                            (attempts + primeFailure.attempts +
-                              rhoFailure.attempts + smooth.attempts)
-                            powerRoutes
+                  | none =>
+                      searchGo budget primeFuel fuel stack factors
+                        (residual * m ^ multiplier) smooth.rand
+                        (attempts + primeFailure.attempts + rhoFailure.attempts +
+                          smooth.attempts)
+                        powerRoutes
 
 /-- Run the dispatcher with explicit budgets for nested primality and rho
 searches. The worklist and smooth-factor routes remain bounded by `fuel`. -/
-private def smallAttemptWith (policy : SplitPolicy) (budget : PrimeCertBudget)
-    (primeFuel : Nat) (n : Nat) (r : Rand) (fuel : Nat) :
+private def smallAttemptWith (budget : PrimeCertBudget) (primeFuel : Nat)
+    (n : Nat) (r : Rand) (fuel : Nat) :
     FactorAttempt n :=
   let candidate := smallCandidate n
   let powerRoutes := match candidate.route with
     | .trial | .twos => 0
     | .perfectPower | .twosPower => 1
-  let result := searchGo policy budget primeFuel fuel
+  let result := searchGo budget primeFuel fuel
     [(candidate.residualBase, candidate.residualExponent)]
     candidate.factors 1 r 0 powerRoutes
   ⟨⟨n, result.factors, result.residual⟩, rfl,
     result.rand, result.attempts, result.powerRoutes⟩
 
 private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat) : FactorAttempt n :=
-  smallAttemptWith .dispatch defaultPrimeCertBudget (fuel + 1) n r fuel
+  smallAttemptWith defaultPrimeCertBudget (fuel + 1) n r fuel
 
 namespace Internal
 
@@ -346,13 +330,12 @@ structure FactorSuccess (n : Nat) where
 
 /-- Complete factorization with explicit nested primality and rho budgets,
 retaining exact successful-attempt metering. -/
-private def factorCountedWithPolicy? (policy : SplitPolicy)
-    (budget : PrimeCertBudget) (primeFuel : Nat) (n : Nat) (r : Rand)
-    (fuel : Nat) :
+def factorCountedWith? (budget : PrimeCertBudget) (primeFuel : Nat) (n : Nat)
+    (r : Rand) (fuel : Nat) :
     Except FactorFailure (FactorSuccess n) :=
   if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
   else
-    let out := smallAttemptWith policy budget primeFuel n r fuel
+    let out := smallAttemptWith budget primeFuel n r fuel
     match acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw
         out.subject_eq out.rand out.attempts with
     | .error failure => .error failure
@@ -369,24 +352,10 @@ private def factorCountedWithPolicy? (policy : SplitPolicy)
             rand := r'
             snapshot := some ⟨F.raw, F.valid⟩ }
 
-/-- Complete factorization with explicit nested primality and rho budgets,
-retaining exact successful-attempt metering. -/
-def factorCountedWith? (budget : PrimeCertBudget) (primeFuel : Nat) (n : Nat)
-    (r : Rand) (fuel : Nat) :
-    Except FactorFailure (FactorSuccess n) :=
-  factorCountedWithPolicy? .dispatch budget primeFuel n r fuel
-
 /-- Complete factorization retaining exact successful-attempt metering. -/
 def factorCounted? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
     Except FactorFailure (FactorSuccess n) :=
   factorCountedWith? defaultPrimeCertBudget (fuel + 1) n r fuel
-
-/-- Complete factorization through the production pipeline, but stop rather
-than falling through to smooth routes when rho exhausts its allocation. This
-is a same-work route-policy control for the public dispatcher. -/
-def factorRhoCounted? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
-    Except FactorFailure (FactorSuccess n) :=
-  factorCountedWithPolicy? .rhoOnly defaultPrimeCertBudget (fuel + 1) n r fuel
 
 end Internal
 
