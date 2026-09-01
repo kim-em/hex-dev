@@ -2000,4 +2000,337 @@ theorem nontrivialCell_starts {ctx : Ctx}
         · omega
         · exact hb
 
+/-! # Passes, step, loop -/
+
+theorem StPerm.refl (level : Nat) (st : RefineSt) : StPerm level st st :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, fun _ _ _ => List.Perm.refl _⟩
+
+theorem pickSplit_mem {active hint s : Nat} :
+    pickSplit active hint = some s → elem active s = true := by
+  rw [pickSplit]
+  split
+  · next h =>
+    intro he
+    injection he with he
+    subst he
+    exact h
+  · intro he
+    rcases hne : nextElem active (some hint) with _ | v
+    · rw [hne] at he
+      dsimp only at he
+      exact nextElem_mem he
+    · rw [hne] at he
+      dsimp only at he
+      injection he with he
+      subst he
+      exact nextElem_mem hne
+
+theorem starts_erase {level : Nat} {st : RefineSt} {w : Nat}
+    (hst : StartsOk level st) :
+    StartsOk level { st with active := erase st.active w } := by
+  intro v hv
+  refine hst v ?_
+  rw [show elem ({ st with active := erase st.active w } :
+      RefineSt).active v = (erase st.active w).testBit v from rfl,
+    testBit_erase] at hv
+  simp only [Bool.and_eq_true] at hv
+  exact hv.1
+
+theorem refineTrivial_go_starts {level gRow : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt), StartsOk level st →
+      st.ptn.size = st.lab.size →
+      (∀ p ∈ cs, IsCell st.ptn level p.1 (p.2 + 1 - p.1) ∧
+        p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      StartsOk level (refineTrivial.go level gRow cs st)
+  | [], _, hst, _, _, _ => hst
+  | (c1, c2) :: rest, st, hst, hsz, hcs, hpair => by
+    rw [refineTrivial.go]
+    have hic := (hcs (c1, c2) (by simp)).1
+    have hc12 : c1 ≤ c2 := by
+      have := hic.1
+      omega
+    have h2 := (hcs (c1, c2) (by simp)).2
+    obtain ⟨-, hdiff, hpsz, hlsz⟩ := trivialCell_perm (gRow := gRow)
+      (StPerm.refl level st) hic hc12 h2 hsz
+    have hstep := trivialCell_starts (gRow := gRow) hst hic.2.1 hc12
+      (by omega) h2
+    have hrest := (List.pairwise_cons.mp hpair).1
+    exact refineTrivial_go_starts rest _ hstep
+      (by rw [hpsz, hlsz]; exact hsz)
+      (fun p hp => ⟨isCell_of_agree (hcs p (by simp [hp])).1
+          (fun q hq1 hq2 => hdiff q (Or.inr (by
+            have := hrest p hp
+            omega))),
+        by rw [hlsz]; exact (hcs p (by simp [hp])).2⟩)
+      (List.pairwise_cons.mp hpair).2
+
+theorem refineTrivial_starts {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hst : StartsOk level st)
+    (hsz : st.ptn.size = st.lab.size) (hnn : ctx.n ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    StartsOk level (refineTrivial ctx level split1 st) := by
+  rw [refineTrivial]
+  exact refineTrivial_go_starts _ _ hst hsz
+    (fun p hp => ⟨cells_isCell hnn hend p hp,
+      by
+        have := cells_bound hnn hend p hp
+        omega⟩)
+    cells_pairwise
+
+theorem refineNontrivial_go_perm {ctx : Ctx} {level workset : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st st' : RefineSt), StPerm level st st' →
+      st.ptn.size = st.lab.size →
+      (∀ p ∈ cs, IsCell st.ptn level p.1 (p.2 + 1 - p.1) ∧
+        p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      StPerm level (refineNontrivial.go ctx level workset cs st)
+        (refineNontrivial.go ctx level workset cs st') ∧
+      (refineNontrivial.go ctx level workset cs st).lab.size =
+        st.lab.size ∧
+      (refineNontrivial.go ctx level workset cs st).ptn.size =
+        st.ptn.size
+  | [], _, _, h, _, _, _ => ⟨h, rfl, rfl⟩
+  | (c1, c2) :: rest, st, st', h, hsz, hcs, hpair => by
+    rw [refineNontrivial.go, refineNontrivial.go]
+    have hic := (hcs (c1, c2) (by simp)).1
+    have hc12 : c1 ≤ c2 := by
+      have := hic.1
+      omega
+    have h2 := (hcs (c1, c2) (by simp)).2
+    obtain ⟨hstep, hdiff, hpsz, hlsz⟩ := nontrivialCell_perm
+      (ctx := ctx) (workset := workset) h hic hc12 h2 hsz
+    have hrest := (List.pairwise_cons.mp hpair).1
+    obtain ⟨hrec, hrsz, hrpsz⟩ := refineNontrivial_go_perm rest
+      (nontrivialCell ctx level workset c1 c2 st)
+      (nontrivialCell ctx level workset c1 c2 st') hstep
+      (by rw [hpsz, hlsz]; exact hsz)
+      (fun p hp => ⟨isCell_of_agree (hcs p (by simp [hp])).1
+          (fun q hq1 hq2 => hdiff q (Or.inr (by
+            have := hrest p hp
+            omega))),
+        by rw [hlsz]; exact (hcs p (by simp [hp])).2⟩)
+      (List.pairwise_cons.mp hpair).2
+    exact ⟨hrec, by rw [hrsz, hlsz], by rw [hrpsz, hpsz]⟩
+
+theorem refineNontrivial_go_starts {ctx : Ctx} {level workset : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt), StartsOk level st →
+      st.ptn.size = st.lab.size →
+      (∀ p ∈ cs, IsCell st.ptn level p.1 (p.2 + 1 - p.1) ∧
+        p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      StartsOk level (refineNontrivial.go ctx level workset cs st)
+  | [], _, hst, _, _, _ => hst
+  | (c1, c2) :: rest, st, hst, hsz, hcs, hpair => by
+    rw [refineNontrivial.go]
+    have hic := (hcs (c1, c2) (by simp)).1
+    have hc12 : c1 ≤ c2 := by
+      have := hic.1
+      omega
+    have h2 := (hcs (c1, c2) (by simp)).2
+    obtain ⟨-, hdiff, hpsz, hlsz⟩ := nontrivialCell_perm
+      (ctx := ctx) (workset := workset) (StPerm.refl level st) hic hc12
+      h2 hsz
+    have hstep := nontrivialCell_starts (ctx := ctx)
+      (workset := workset) hst hic.2.1 hc12 (by omega) h2
+    have hrest := (List.pairwise_cons.mp hpair).1
+    exact refineNontrivial_go_starts rest _ hstep
+      (by rw [hpsz, hlsz]; exact hsz)
+      (fun p hp => ⟨isCell_of_agree (hcs p (by simp [hp])).1
+          (fun q hq1 hq2 => hdiff q (Or.inr (by
+            have := hrest p hp
+            omega))),
+        by rw [hlsz]; exact (hcs p (by simp [hp])).2⟩)
+      (List.pairwise_cons.mp hpair).2
+
+theorem refineNontrivial_perm {ctx : Ctx} {level split1 split2 : Nat}
+    {st st' : RefineSt} (h : StPerm level st st')
+    (hsz : st.ptn.size = st.lab.size) (hnn : ctx.n ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hsc : IsCell st.ptn level split1 (split2 + 1 - split1)) :
+    StPerm level (refineNontrivial ctx level split1 split2 st)
+      (refineNontrivial ctx level split1 split2 st') := by
+  rw [refineNontrivial, refineNontrivial]
+  dsimp only
+  rw [show worksetOf st'.lab split1 split2 =
+      worksetOf st.lab split1 split2 from
+      (worksetOf_perm (h.cells split1 _ hsc)).symm,
+    h.ptn, h.longcode]
+  exact (refineNontrivial_go_perm (ctx := ctx)
+    (workset := worksetOf st.lab split1 split2) _
+    { st with longcode := mash st.longcode (split2 - split1 + 1) }
+    { st' with
+      ptn := st.ptn
+      longcode := mash st.longcode (split2 - split1 + 1) }
+    ⟨rfl, h.active, h.numcells, h.hint, h.maxpos, rfl, h.labSize,
+      h.cells⟩
+    hsz
+    (fun p hp => ⟨cells_isCell (by omega) hend p hp,
+      by
+        have := cells_bound (nn := ctx.n) (by omega) hend p hp
+        show p.2 < st.lab.size
+        omega⟩)
+    cells_pairwise).1
+
+theorem refineNontrivial_starts {ctx : Ctx} {level split1 split2 : Nat}
+    {st : RefineSt} (hst : StartsOk level st)
+    (hsz : st.ptn.size = st.lab.size) (hnn : ctx.n ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    StartsOk level (refineNontrivial ctx level split1 split2 st) := by
+  rw [refineNontrivial]
+  dsimp only
+  exact refineNontrivial_go_starts _
+    { st with longcode := mash st.longcode (split2 - split1 + 1) }
+    hst hsz
+    (fun p hp => ⟨cells_isCell hnn hend p hp,
+      by
+        have := cells_bound hnn hend p hp
+        show p.2 < st.lab.size
+        omega⟩)
+    cells_pairwise
+
+/-- One active-cell iteration preserves cell-contents equivalence. -/
+theorem refineStep_perm {ctx : Ctx} {level split1 : Nat}
+    {st st' : RefineSt} (h : StPerm level st st')
+    (hOk : StOk n level st) (hn : ctx.n = n)
+    (hst : StartsOk level st) (hmem : elem st.active split1 = true) :
+    StPerm level (refineStep ctx level split1 st)
+      (refineStep ctx level split1 st') := by
+  rw [refineStep, refineStep]
+  dsimp only
+  rw [h.active, h.ptn, h.longcode]
+  have hs1lt : split1 < st.ptn.size := by
+    have h1 := lt_of_testBit_of_lt hOk.activeLt hmem
+    have h2 := hOk.ptnSize
+    omega
+  have hcellS : IsCell st.ptn level split1
+      (cellEnd st.ptn level split1 + 1 - split1) :=
+    isCell_cellEnd hs1lt (hst split1 hmem) hOk.ptnEnd
+  have hbridge : StPerm level
+      { st with
+        active := erase st.active split1
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) }
+      { st' with
+        ptn := st.ptn
+        active := erase st.active split1
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) } :=
+    ⟨rfl, rfl, h.numcells, h.hint, h.maxpos, rfl, h.labSize, h.cells⟩
+  rcases hg : (split1 == cellEnd st.ptn level split1) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    exact refineNontrivial_perm hbridge
+      (by
+        show st.ptn.size = st.lab.size
+        have := hOk.ptnSize
+        have := hOk.labSize
+        omega)
+      (by
+        show ctx.n ≤ st.ptn.size
+        have := hOk.ptnSize
+        omega)
+      hOk.ptnEnd hcellS
+  · simp only [if_true]
+    have hone : IsCell st.ptn level split1 1 := by
+      have heq : cellEnd st.ptn level split1 = split1 := by
+        have := hg
+        simp only [beq_iff_eq] at this
+        omega
+      rw [show (1 : Nat) = cellEnd st.ptn level split1 + 1 - split1 by
+        omega]
+      exact hcellS
+    exact (refineTrivial_perm hbridge
+      (by
+        show st.ptn.size = st.lab.size
+        have := hOk.ptnSize
+        have := hOk.labSize
+        omega)
+      (by
+        show ctx.n ≤ st.ptn.size
+        have := hOk.ptnSize
+        omega)
+      hOk.ptnEnd hone).1
+
+theorem refineStep_starts {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hOk : StOk n level st) (hn : ctx.n = n)
+    (hst : StartsOk level st) :
+    StartsOk level (refineStep ctx level split1 st) := by
+  rw [refineStep]
+  dsimp only
+  have hst1 : StartsOk level
+      { st with
+        active := erase st.active split1
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) } := by
+    intro v hv
+    exact starts_erase (w := split1) hst v hv
+  split
+  · exact refineTrivial_starts hst1
+      (by
+        show st.ptn.size = st.lab.size
+        have := hOk.ptnSize
+        have := hOk.labSize
+        omega)
+      (by
+        show ctx.n ≤ st.ptn.size
+        have := hOk.ptnSize
+        omega)
+      hOk.ptnEnd
+  · exact refineNontrivial_starts hst1
+      (by
+        show st.ptn.size = st.lab.size
+        have := hOk.ptnSize
+        have := hOk.labSize
+        omega)
+      (by
+        show ctx.n ≤ st.ptn.size
+        have := hOk.ptnSize
+        omega)
+      hOk.ptnEnd
+
+/-- The active-cell loop preserves cell-contents equivalence. -/
+theorem refineLoop_perm {ctx : Ctx} (hn : ctx.n = n) {level : Nat} :
+    ∀ (fuel : Nat) (st st' : RefineSt), StPerm level st st' →
+      StOk n level st → StartsOk level st →
+      StPerm level (refineLoop ctx level fuel st)
+        (refineLoop ctx level fuel st')
+  | 0, _, _, h, _, _ => h
+  | fuel + 1, st, st', h, hOk, hst => by
+    rw [refineLoop, refineLoop, h.numcells, h.active, h.hint]
+    rcases Decidable.em (st.numcells < ctx.n) with hlt | hlt
+    · simp only [if_pos hlt]
+      rcases hps : pickSplit st.active st.hint with _ | s
+      · exact h
+      · exact refineLoop_perm hn fuel _ _
+          (refineStep_perm h hOk hn hst (pickSplit_mem hps))
+          (refineStep_stOk hn hOk)
+          (refineStep_starts hOk hn hst)
+    · simp only [if_neg hlt]
+      exact h
+
+/-- nauty's `refine` depends on the ordered partition only through the
+cell contents: cell-equivalent labellings refine to equal positions and
+codes with cell-equivalent labellings. -/
+theorem refine_perm {ctx : Ctx} (hn : ctx.n = n) {level : Nat}
+    {lab lab' ptn : Array Nat} {active numcells : Nat}
+    (hcp : cellsPerm ptn level lab lab') (hls : lab'.size = lab.size)
+    (hsl : lab.size = n) (hlab : LabOk lab n) (hsp : ptn.size = n)
+    (hact : active < 2 ^ n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hstarts : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ ptn[v - 1]! ≤ level) :
+    StPerm level (refine ctx level lab ptn active numcells)
+      (refine ctx level lab' ptn active numcells) := by
+  rw [refine, refine]
+  have hloop := refineLoop_perm hn (4 * ctx.n + 8)
+    { lab, ptn, active, numcells, hint := 0, maxpos := 0,
+      longcode := numcells }
+    { lab := lab', ptn, active, numcells, hint := 0, maxpos := 0,
+      longcode := numcells }
+    ⟨rfl, rfl, rfl, rfl, rfl, rfl, hls, hcp⟩
+    ⟨hsl, hlab, hsp, hact, hend⟩
+    (fun v hv => hstarts v hv)
+  exact ⟨hloop.ptn, hloop.active, hloop.numcells, hloop.hint,
+    hloop.maxpos, by dsimp only; rw [hloop.longcode, hloop.numcells],
+    hloop.labSize, hloop.cells⟩
+
 end Hex.GraphIso.Nauty
