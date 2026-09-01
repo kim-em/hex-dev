@@ -212,7 +212,7 @@ private theorem pairwise_perm_eq {xs ys : List (Fin m)}
 /-- Runtime implementation of `freeColsList`, merging the sorted pivot columns
 with the complete sorted column range. -/
 @[expose]
-def freeColsListImpl (E : IsEchelonForm M D) : List (Fin m) :=
+def freeColsListImpl (_E : IsEchelonForm M D) : List (Fin m) :=
   sortedComplement (List.finRange m) D.pivotCols.toList
 
 private theorem pivotCols_sublist_finRange (E : IsEchelonForm M D) :
