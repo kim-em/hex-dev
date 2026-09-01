@@ -281,20 +281,20 @@ does not introduce a visible replay cliff at this resolution.
 
 ## Five-family profile attribution
 
-All profiles use clean commit `32b264c5e18c70776b05964e4689fb71934bcb09`,
+All profiles use clean commit `97d3b1f292710ccdf502671d8d9c01d6ad09d74c`,
 `samply 0.13.1`, lean-bench-samply commit
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`, and the 999 Hz filtered timed-region
 protocol. Every profile has confidence `passed`, zero off-bench-thread samples,
-at least 2800 retained samples, calibration residual below 2 ms against the
+at least 3014 retained samples, calibration residual below 2 ms against the
 5 ms limit, and sensitivity verdict `passed`.
 
 | Declared family / representative | Profile SHA-256 | retained / residual | Leaf categories | Dominant inclusive path |
 |---|---|---:|---|---|
-| table-and-balanced-semiprimes: `runBalancedRho 80` | `425bc850c816b50db6c482c936565ac28ecae7b095de6285e87c8a6fdcc08940` | 3015 / 0.409 ms | allocation 68.52%, GMP 24.68%, runtime 5.54%, other 1.26% | `rhoLeast` / `rhoTry` / `brentGo` 95.22%; `rhoNext` 41.76% |
-| smooth-and-unbalanced-semiprimes: `IntFactorProfile.runSmooth 1` (80-bit unbalanced raw rho) | `612f17fb0922b1879ae93429da3896455e761fa396852f867fe4269a21416105` | 2800 / 0.755 ms | allocation 67.68%, GMP 26.32%, runtime 4.68%, other 1.32% | `rhoLeast` / `rhoTry` / `brentGo` 93.29%; `rhoNext` 37.82% |
-| power-forms: `IntFactorProfile.runPower 1` (exponent 80 split) | `9bf4154b76e23527b0549f2c7dc7908c577e6ae062814f2ca65f5e482aa02e49` | 4536 / 1.952 ms | Lean runtime 34.92%, Lean own code 23.54%, allocation 21.36%, other 18.50%, GMP 1.68% | trial division 88.34%; `removePower` 30.40%; `factorPower?` 14.51% |
-| certificate-replay-and-order: `runOrder 1048589` | `ff595a6eb6d94b0a0bb98548cd4112887a5e8158a8ad5582c12c46d8538fe595` | 6841 / 0.729 ms | other 99.90%, allocation 0.10% | `orderOf` 99.96%; `orderOfAux` 99.90% |
-| generalized-divisor-sums: `runSigmaExponent 4194304` | `3e3b5b796aa2fad723c306e09f25a08070e1fb3272502a8322caf42f4d434282` | 6368 / 0.057 ms | GMP 93.40%, other 6.33%, allocation 0.27% | `sigma` 74.64%; `sigmaEntry` 73.59% |
+| table-and-balanced-semiprimes: `runBalancedRho 80` | `1a39e495c5e97409b52039c70260889260ea1059ea262ae89d53289894507a83` | 3014 / 0.050 ms | allocation 68.12%, GMP 24.68%, runtime 5.11%, other 2.09% | `rhoLeast` / `rhoTry` / `brentGo` 93.56%; `rhoNext` 39.85% |
+| smooth-and-unbalanced-semiprimes: `IntFactorProfile.runSmooth 1` (80-bit unbalanced raw rho) | `d0eeacff924ccd8265d1bb6266e7c3ecdbce56b3a9a7a125c4f32be3e5d7b9cf` | 5514 / 0.746 ms | allocation 68.41%, GMP 25.01%, runtime 5.13%, other 1.45% | `rhoLeast` / `rhoTry` / `brentGo` 94.38%; `rhoNext` 38.79% |
+| power-forms: `IntFactorProfile.runPower 1` (exponent 80 split) | `aaaecc7c59a022f1105d9d672bc8298215b5620952cd7ff64f1cd95558d5619e` | 4563 / 1.505 ms | Lean runtime 35.04%, Lean own code 21.96%, other 20.91%, allocation 20.40%, GMP 1.69% | trial division 88.67%; `removePower` 28.14%; `factorPower?` 14.71% |
+| certificate-replay-and-order: `runOrder 1048589` | `31a09f8b9e37f3c6d9020d8fec92c0340f7e4a961b81e6720e2152d60f619d11` | 6842 / 0.223 ms | other 99.91%, allocation 0.09% | `orderOf` 100.00%; `orderOfAux` 99.91% |
+| generalized-divisor-sums: `runSigmaExponent 4194304` | `541ee2b206a3f40c2364b0b002deaad6b47485eccaab410b23ca92b457cab37b` | 6431 / 0.378 ms | GMP 93.28%, other 6.34%, allocation 0.37% | `sigma` 73.85%; `sigmaEntry` 72.83% |
 
 The two rho profiles independently attribute their dominant cost to allocation
 and GMP underneath the Brent loop. Power forms are instead dominated by trial
