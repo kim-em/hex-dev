@@ -239,6 +239,16 @@ theorem inv_comp (p q : Perm n) : (p.comp q).inv = q.inv.comp p.inv := by
 
 end Perm
 
+/-- Checked permutation construction from raw entries, for literal data
+emitted by tactics: entries must be in range, duplicate-free, and
+complete. -/
+@[expose] def permOfNatArray? (n : Nat) (a : Array Nat) : Option (Perm n) :=
+  if h : a.size = n ∧ ∀ i, (hi : i < a.size) → a[i] < n then
+    Perm.ofVector? (Hex.Vector.ofFn' fun i : Fin n =>
+      ⟨a[i.val]'(h.1.symm ▸ i.isLt), h.2 i.val (h.1.symm ▸ i.isLt)⟩)
+  else
+    none
+
 /-- A canonical-labelling result array in nauty's `canonlab` convention:
 `l[i]` is the old vertex placed at new position `i`. The underlying data is
 the same duplicate-free complete vertex array as `Perm`; the wrapper marks

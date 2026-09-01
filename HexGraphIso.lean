@@ -11,6 +11,8 @@ public import HexGraphIso.Nauty.Refine
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
+public import HexGraphIso.Pairwise
+public import HexGraphIso.PairwiseSound
 
 public section
 

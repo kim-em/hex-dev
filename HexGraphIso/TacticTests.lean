@@ -85,6 +85,19 @@ the same graph, and a cubic ten-vertex non-example.
 
 example : Isomorphic petersen kneser52 := by graph_iso
 
+/-- The pentagonal prism: also cubic on ten vertices, so degree
+refinement alone cannot separate it from the Petersen graph; the
+negative goal replays the verified pairwise decision in the kernel. -/
+@[expose] def prism5 : Colored 10 1 :=
+  { graph := (Graph.ofEdges? 10
+      [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+       (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
+    coloring := Coloring.trivial 10 (by omega) }
+
+set_option maxRecDepth 100000 in
+example : ¬ Isomorphic petersen prism5 := by graph_iso
+
 /-!
 Coloured goals at `n = 6`: ordered colours constrain isomorphisms.
 Colour `0` marks an adjacent pair of the six-cycle in the first two
@@ -154,5 +167,23 @@ the same stream. -/
     coloring := Coloring.trivial 12 (by omega) }
 
 example : Isomorphic g12 g12relabelled := by graph_iso
+
+/-- The recorded pair bitmask of the second corpus seed, giving the
+negative pair from the two recorded `G(12, 1/2)` seeds. -/
+@[expose] def mask12b : Nat := 61032603037995048816
+
+#guard mask12b == (Random.gnpMask ⟨Random.seed2⟩ 12).1
+
+@[expose] def g12b : Colored 12 1 :=
+  { graph := Graph.ofAdj
+      (fun i j => if i == j then false else
+        mask12b.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val)))
+      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
+        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
+      (fun i => by simp)
+    coloring := Coloring.trivial 12 (by omega) }
+
+set_option maxRecDepth 400000 in
+example : ¬ Isomorphic g12 g12b := by graph_iso
 
 end Hex.GraphIso.TacticTests

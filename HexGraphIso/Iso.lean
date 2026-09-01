@@ -63,7 +63,19 @@ theorem Isomorphic.intro {G H : Colored n k} (p : Perm n) (h : IsIso G H p) :
     Isomorphic G H :=
   ⟨p, h⟩
 
+theorem Isomorphic.elim {G H : Colored n k} (h : Isomorphic G H) :
+    ∃ p, IsIso G H p :=
+  h
+
 namespace IsIso
+
+theorem cells_eq {G H : Colored n k} {p : Perm n} (h : IsIso G H p) :
+    ∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i] :=
+  h.1
+
+theorem adj_eq {G H : Colored n k} {p : Perm n} (h : IsIso G H p) :
+    ∀ i j, H.graph.adj (p.get i) (p.get j) = G.graph.adj i j :=
+  h.2
 
 theorem refl (G : Colored n k) : IsIso G G (Perm.id n) :=
   ⟨fun i => by simp, fun i j => by simp⟩

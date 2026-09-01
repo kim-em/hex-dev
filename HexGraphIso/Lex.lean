@@ -90,6 +90,129 @@ theorem lexLe_antisymm {l m : List Nat} (h1 : lexLe l m) (h2 : lexLe m l) :
         · omega
         · rw [ih h1 h2]
 
+/-! # Sorting
+
+A structural insertion sort under `lexLe`. `List.mergeSort` is
+well-founded recursion, which the kernel cannot unfold; certificate and
+search replay need sorting that kernel-reduces. -/
+
+/-- Insert into a `lexLe`-sorted list, keeping it sorted. -/
+@[expose] def insertLe (x : List Nat) : List (List Nat) → List (List Nat)
+  | [] => [x]
+  | y :: rest => if lexLe x y then x :: y :: rest else y :: insertLe x rest
+
+/-- Structural insertion sort under `lexLe`. -/
+@[expose] def sortLe (l : List (List Nat)) : List (List Nat) :=
+  l.foldr insertLe []
+
+theorem perm_insertLe (x : List Nat) (l : List (List Nat)) :
+    List.Perm (insertLe x l) (x :: l) := by
+  induction l with
+  | nil => exact List.Perm.refl _
+  | cons y rest ih =>
+    rw [insertLe]
+    split
+    · exact List.Perm.refl _
+    · exact (ih.cons y).trans (List.Perm.swap x y rest)
+
+theorem perm_sortLe (l : List (List Nat)) : List.Perm (sortLe l) l := by
+  induction l with
+  | nil => exact List.Perm.refl _
+  | cons x rest ih =>
+    exact (perm_insertLe x (sortLe rest)).trans (ih.cons x)
+
+theorem pairwise_insertLe {x : List Nat} {l : List (List Nat)}
+    (h : l.Pairwise (lexLe · ·)) :
+    (insertLe x l).Pairwise (lexLe · ·) := by
+  induction l with
+  | nil => simp [insertLe]
+  | cons y rest ih =>
+    rw [insertLe]
+    rcases hp : lexLe x y with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      rcases List.pairwise_cons.mp h with ⟨hy, hrest⟩
+      refine List.pairwise_cons.mpr ⟨?_, ih hrest⟩
+      intro z hz
+      rcases List.mem_cons.mp ((perm_insertLe x rest).mem_iff.mp hz) with hzx | hz
+      · rw [hzx]
+        have := lexLe_total x y
+        simp [hp] at this
+        exact this
+      · exact hy z hz
+    · simp only [if_true]
+      refine List.pairwise_cons.mpr ⟨?_, h⟩
+      intro z hz
+      rcases List.mem_cons.mp hz with rfl | hz
+      · exact hp
+      · exact lexLe_trans hp (List.pairwise_cons.mp h |>.1 z hz)
+
+theorem pairwise_sortLe (l : List (List Nat)) :
+    (sortLe l).Pairwise (lexLe · ·) := by
+  induction l with
+  | nil => exact List.Pairwise.nil
+  | cons x rest ih => exact pairwise_insertLe ih
+
+/-- Two `lexLe`-sorted lists with the same multiset of entries are
+equal. With `perm_sortLe` and `pairwise_sortLe`, `sortLe` is therefore a
+canonical multiset representative: permuted inputs sort to the same
+list. -/
+theorem eq_of_perm_of_pairwise {l m : List (List Nat)}
+    (hp : List.Perm l m) (hl : l.Pairwise (lexLe · ·))
+    (hm : m.Pairwise (lexLe · ·)) : l = m := by
+  induction l generalizing m with
+  | nil => exact (hp.nil_eq).symm ▸ rfl
+  | cons x l ih =>
+    cases m with
+    | nil => exact absurd hp.symm.nil_eq (by simp)
+    | cons y m =>
+      have hxy : x = y := by
+        have hxm : x ∈ y :: m := hp.mem_iff.mp (List.mem_cons_self ..)
+        have hyl : y ∈ x :: l := hp.symm.mem_iff.mp (List.mem_cons_self ..)
+        rcases List.mem_cons.mp hxm with rfl | hxm
+        · rfl
+        · rcases List.mem_cons.mp hyl with rfl | hyl
+          · rfl
+          · have h1 := (List.pairwise_cons.mp hl).1 y hyl
+            have h2 := (List.pairwise_cons.mp hm).1 x hxm
+            exact lexLe_antisymm h1 h2
+      subst hxy
+      have hp' : List.Perm l m := hp.cons_inv
+      exact congrArg (x :: ·)
+        (ih hp' (List.pairwise_cons.mp hl).2 (List.pairwise_cons.mp hm).2)
+
+theorem sortLe_eq_of_perm {l m : List (List Nat)} (h : List.Perm l m) :
+    sortLe l = sortLe m :=
+  eq_of_perm_of_pairwise ((perm_sortLe l).trans (h.trans (perm_sortLe m).symm))
+    (pairwise_sortLe l) (pairwise_sortLe m)
+
+/-- Remove adjacent duplicates; on a sorted list this removes all
+duplicates. -/
+@[expose] def dedupAdj : List (List Nat) → List (List Nat)
+  | [] => []
+  | [x] => [x]
+  | x :: y :: rest =>
+    if x == y then dedupAdj (y :: rest) else x :: dedupAdj (y :: rest)
+
+@[simp] theorem mem_dedupAdj {a : List Nat} :
+    ∀ {l : List (List Nat)}, a ∈ dedupAdj l ↔ a ∈ l
+  | [] => by simp [dedupAdj]
+  | [x] => by simp [dedupAdj]
+  | x :: y :: rest => by
+    rw [dedupAdj]
+    split
+    · next hxy =>
+        have hxy := beq_iff_eq.mp hxy
+        subst hxy
+        rw [mem_dedupAdj (l := x :: rest)]
+        simp only [List.mem_cons]
+        constructor
+        · exact fun h => Or.inr h
+        · rintro (h | h)
+          · exact Or.inl h
+          · exact h
+    · next hxy =>
+        simp only [List.mem_cons, mem_dedupAdj (l := y :: rest)]
+
 /-! # Argmax fold -/
 
 variable {α : Type u} (key : α → List Nat)

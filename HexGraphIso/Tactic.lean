@@ -10,6 +10,8 @@ public import HexGraphIso.Canon
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
 public meta import Lean
+public import HexGraphIso.PairwiseSound
+public meta import HexGraphIso.PairwiseSound
 
 public section
 
@@ -28,27 +30,16 @@ For a positive goal, the compiled nauty-compatible search runs at
 elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through the replay-bounded `checkIso?` and
 its soundness theorem, so the kernel performs the decisive replay. For a
-negative goal, the kernel currently replays the bounded reference
-decision `isIso G H = false` through `isIso_eq_false_iff`; the
-certificate-based negative path replaces this replay before release, per
-SPEC/Libraries/hex-graph-iso.md § Canonical certificates, extending the
-feasible size without changing the trust story. Search exhaustion never
-closes a negative goal, and every failure leaves the goal unchanged and
-reports the phase and logical limit that failed. No path uses
-`native_decide` and no axiom is introduced.
+negative goal, the verified pairwise individualization-refinement
+decision `Pairwise.decideIso?` runs compiled first and is then replayed
+by the kernel under the same `maxNodes` budget, closing the goal through
+`Pairwise.decideIso?_not_isomorphic`. Search exhaustion never closes a
+negative goal, and every failure leaves the goal unchanged and reports
+the phase and logical limit that failed. No path uses `native_decide`
+and no axiom is introduced.
 -/
 
 namespace Hex.GraphIso
-
-/-- Checked permutation construction from raw entries, for literal data
-emitted by tactics: entries must be in range, duplicate-free, and
-complete. -/
-@[expose] def permOfNatArray? (n : Nat) (a : Array Nat) : Option (Perm n) :=
-  if h : a.size = n ∧ ∀ i, (hi : i < a.size) → a[i] < n then
-    Perm.ofVector? (Hex.Vector.ofFn' fun i : Fin n =>
-      ⟨a[i.val]'(h.1.symm ▸ i.isLt), h.2 i.val (h.1.symm ▸ i.isLt)⟩)
-  else
-    none
 
 theorem isomorphic_of_checkIso? {n k : Nat} {G H : Colored n k}
     {replay : ReplayLimits} {p : Perm n}
@@ -192,6 +183,12 @@ private meta unsafe def evalNatUnsafe (e : Expr) : MetaM Nat :=
 @[implemented_by evalNatUnsafe]
 private meta opaque evalNatCore (e : Expr) : MetaM Nat
 
+private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
+  evalExpr (Option Bool) (mkApp (mkConst ``Option [.zero]) (mkConst ``Bool)) e
+
+@[implemented_by evalOptBoolUnsafe]
+private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
+
 /-- Prove a `graph_iso` goal. -/
 meta def proveGraphIso (cfg : Config) (target : Expr) : MetaM Expr := do
   let (negative, nE, _kE, GE, HE) ← matchGoal target
@@ -199,32 +196,35 @@ meta def proveGraphIso (cfg : Config) (target : Expr) : MetaM Expr := do
     throwError "graph_iso: the goal contains metavariables; both graphs \
         must be closed terms"
   let n ← evalNatCore nE
-  let a ← evalColored GE
-  let b ← evalColored HE
-  let (transporter?, nodes) := rawFindIso a b
-  if nodes > cfg.maxNodes then
-    throwError "graph_iso: search exhausted: visited {nodes} nodes but \
-        maxNodes := {cfg.maxNodes}"
   if negative then
-    match transporter? with
-    | some _ =>
+    -- The verified pairwise individualization-refinement decision: run it
+    -- compiled first, then let the kernel replay the same bounded run.
+    let limitsE ← mkAppM ``SearchLimits.mk
+      #[mkNatLit cfg.maxNodes, mkNatLit cfg.maxCertNodes]
+    let decTerm ← mkAppM ``Pairwise.decideIso? #[limitsE, GE, HE]
+    match ← evalOptBoolCore decTerm with
+    | none =>
+        throwError "graph_iso: search exhausted: the pairwise decision ran \
+            out of nodes at maxNodes := {cfg.maxNodes}"
+    | some true =>
         throwError "graph_iso: the graphs are isomorphic; the negative goal \
             is not provable"
-    | none =>
-        -- Kernel replay of the bounded reference decision; the certificate
-        -- path will replace this replay (see the module docstring).
-        if searchCost n > cfg.maxNodes then
-          throwError "graph_iso: negative replay exhausted: the kernel \
-              replay enumerates {searchCost n} candidate labellings but \
-              maxNodes := {cfg.maxNodes}"
-        let isIsoTerm ← mkAppM ``isIso #[GE, HE]
-        let eqType ← mkAppM ``Eq #[isIsoTerm, mkConst ``Bool.false]
+    | some false =>
+        let someFalse ← mkAppOptM ``Option.some
+          #[mkConst ``Bool, mkConst ``Bool.false]
+        let eqType ← mkAppM ``Eq #[decTerm, someFalse]
         let checked ← mkDecideProof eqType
-        let proof ← mkAppM ``not_isomorphic_of_isIso_eq_false #[checked]
+        let proof ← mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
         unless ← isDefEq (← inferType proof) target do
           throwError "graph_iso: internal final proof mismatch"
         return proof
   else
+    let a ← evalColored GE
+    let b ← evalColored HE
+    let (transporter?, nodes) := rawFindIso a b
+    if nodes > cfg.maxNodes then
+      throwError "graph_iso: search exhausted: visited {nodes} nodes but \
+          maxNodes := {cfg.maxNodes}"
     match transporter? with
     | none =>
         throwError "graph_iso: the graphs are not isomorphic; the positive \
