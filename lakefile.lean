@@ -1021,6 +1021,10 @@ lean_exe hexgraphiso_emit_fixtures where
   srcDir := "conformance"
   root := `HexGraphIso.EmitFixtures
 
+lean_exe hexgraphiso_emit_campaign where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitCampaign
+
 lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
