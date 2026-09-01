@@ -110,11 +110,18 @@ The planned stack, in dependency order:
    coloured graphs, and on `n = 12..16` families including Petersen
    through the checker alone). `checkCanon` (Nauty/CanonForm.lean) is
    the `CanonResult`-level wrapper: it validates the replay, checks the
-   claimed labelling's leaf rows against the key, and packages the
-   relabelled form, with `checkCanon_sound` tying the result to
-   `canonSpecKey`; `certifyCanon?` chains the producer, the best-path
-   labelling replay (`bestLab?`), and the checked wrapper. Remaining
-   for this stage: automorphism prunes in the producer.
+   claimed labelling's leaf rows against the key and its colours
+   against the vertex order, and packages the relabelled form, with
+   `checkCanon_sound` tying the result to `canonSpecKey`;
+   `certifyCanon?` chains the producer, the best-path labelling replay
+   (`bestLab?`), and the checked wrapper. Checked forms are
+   key-determined (`checkCanon_rows`, `checkCanon_sorted`,
+   `checkCanon_form_eq` via the leafRows/relabel correspondence
+   `rowsOf_relabel_eq_leafRows`), which closes the certificate-based
+   decision in both directions: `isomorphic_of_certs` (same key, same
+   colour class sizes) and `not_isomorphic_of_certs` (`checkDiff` on
+   the keys). Remaining for this stage: automorphism prunes in the
+   producer.
 4. **Switch.** Public `canonicalize` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;

@@ -417,4 +417,154 @@ theorem checkCanon_sorted {G : Colored n k} {cert : CertNode}
     rw [hcell i hi, hcell (i + 1) hi1]
     exact hs
 
+/-! # Checked forms with equal keys are equal -/
+
+theorem pairwise_le_of_adjacent {f : Nat → Nat} {m : Nat}
+    (h : ∀ i, i + 1 < m → f i ≤ f (i + 1)) :
+    ((List.range m).map f).Pairwise (· ≤ ·) := by
+  have mono : ∀ d i, i + d < m → f i ≤ f (i + d) := by
+    intro d
+    induction d with
+    | zero => intro i _; exact Nat.le_refl _
+    | succ d ih =>
+      intro i hi
+      refine Nat.le_trans (ih i (by omega)) ?_
+      have h2 := h (i + d) (by omega)
+      rw [show i + (d + 1) = i + d + 1 from by omega]
+      exact h2
+  rw [List.pairwise_iff_getElem]
+  intro i j hi hj hij
+  rw [List.length_map, List.length_range] at hi hj
+  rw [List.getElem_map, List.getElem_map, List.getElem_range,
+    List.getElem_range]
+  have := mono (j - i) i (by omega)
+  rw [show i + (j - i) = j from by omega] at this
+  exact this
+
+/-- The colour value at each vertex, as a plain list. -/
+@[expose] def colorList (K : Colored n k) : List Nat :=
+  (List.range n).map (keyOf K)
+
+theorem count_colorList (K : Colored n k) {c : Nat} (hc : c < k) :
+    (colorList K).count c = (colorClass K c).length := by
+  rw [colorList, List.count_eq_countP, List.countP_map,
+    colorClass_eq_key hc, List.countP_eq_length_filter]
+  congr 1
+
+theorem count_colorList_ge (K : Colored n k) {c : Nat} (hc : k ≤ c) :
+    (colorList K).count c = 0 := by
+  rw [colorList, List.count_eq_countP, List.countP_map,
+    List.countP_eq_length_filter, List.length_eq_zero_iff,
+    List.filter_eq_nil_iff]
+  intro v hv
+  have hvn := List.mem_range.mp hv
+  show ¬((keyOf K v == c) = true)
+  intro hb
+  have hbe : keyOf K v = c := by simpa using hb
+  rw [keyOf, dif_pos hvn] at hbe
+  have := (K.coloring.cells[(⟨v, hvn⟩ : Fin n)]).isLt
+  omega
+
+theorem colorList_perm_of_lengths {G' H' G H : Colored n k}
+    (hG : Isomorphic G G') (hH : Isomorphic H H')
+    (hGH : ∀ c, c < k →
+      (colorClass G c).length = (colorClass H c).length) :
+    (colorList G').Perm (colorList H') := by
+  rw [List.perm_iff_count]
+  intro c
+  rcases Nat.lt_or_ge c k with hc | hc
+  · rw [count_colorList G' hc, count_colorList H' hc]
+    obtain ⟨p1, hp1⟩ := hG.elim
+    obtain ⟨p2, hp2⟩ := hH.elim
+    rw [length_colorClass_eq hp1 c, length_colorClass_eq hp2 c]
+    exact hGH c hc
+  · rw [count_colorList_ge G' hc, count_colorList_ge H' hc]
+
+/-- Two checked canonical forms with the same key and the same colour
+class sizes are equal. -/
+theorem checkCanon_form_eq {G H : Colored n k}
+    {certG certH : CertNode} {B : Key} {labG labH : Array Nat}
+    {resG resH : CanonResult n k}
+    (hG : checkCanon G certG B labG = some resG)
+    (hH : checkCanon H certH B labH = some resH)
+    (hlen : ∀ c, c < k →
+      (colorClass G c).length = (colorClass H c).length) :
+    resG.form = resH.form := by
+  have hrG := checkCanon_rows hG
+  have hrH := checkCanon_rows hH
+  have hadj : ∀ (K : Colored n k) (i j : Fin n),
+      K.graph.adj i j = ((rowsOf K)[i.val]!).testBit j.val := by
+    intro K i j
+    rw [getElem!_rowsOf K i.isLt, testBit_rowOf_lt K i.isLt j.isLt]
+  have hclG : colorList resG.form = colorList resH.form := by
+    refine List.Perm.eq_of_pairwise
+      (fun a b _ _ h1 h2 => Nat.le_antisymm h1 h2) ?_ ?_ ?_
+    · refine pairwise_le_of_adjacent fun i hi => ?_
+      have hs := checkCanon_sorted hG i hi
+      have hkv : ∀ (K : Colored n k) (j : Nat) (hj : j < n),
+          keyOf K j = (K.coloring.cells[j]'(by omega)).val := by
+        intro K j hj
+        rw [keyOf, dif_pos hj]
+        rfl
+      rw [hkv _ i (by omega), hkv _ (i + 1) (by omega)]
+      exact hs
+    · refine pairwise_le_of_adjacent fun i hi => ?_
+      have hs := checkCanon_sorted hH i hi
+      have hkv : ∀ (K : Colored n k) (j : Nat) (hj : j < n),
+          keyOf K j = (K.coloring.cells[j]'(by omega)).val := by
+        intro K j hj
+        rw [keyOf, dif_pos hj]
+        rfl
+      rw [hkv _ i (by omega), hkv _ (i + 1) (by omega)]
+      exact hs
+    · exact colorList_perm_of_lengths (checkCanon_sound hG).2.2.1
+        (checkCanon_sound hH).2.2.1 hlen
+  refine Colored.ext ?_ ?_
+  · intro i j
+    rw [hadj resG.form i j, hadj resH.form i j, hrG, hrH]
+  · intro i
+    have h1 := congrArg (fun l : List Nat => l[i.val]!) hclG
+    simp only [colorList] at h1
+    have hget : ∀ (K : Colored n k),
+        ((List.range n).map (keyOf K))[i.val]! = keyOf K i.val := by
+      intro K
+      rw [getElem!_pos _ _ (by simp [i.isLt]), List.getElem_map,
+        List.getElem_range]
+    rw [hget, hget] at h1
+    have hkv : ∀ (K : Colored n k),
+        keyOf K i.val = (K.coloring.cells[i.val]'(by
+          have := i.isLt
+          omega)).val := by
+      intro K
+      rw [keyOf, dif_pos i.isLt]
+      rfl
+    rw [hkv, hkv] at h1
+    -- from value equality to Fin equality
+    exact Fin.eq_of_val_eq h1
+
+/-! # The certificate-based positive decision -/
+
+/-- Executable equality of colour class sizes. -/
+@[expose] def cellSizesCheck (G H : Colored n k) : Bool :=
+  (List.range k).all fun c =>
+    (colorClass G c).length == (colorClass H c).length
+
+theorem cellSizesCheck_sound {G H : Colored n k}
+    (h : cellSizesCheck G H = true) :
+    ∀ c, c < k → (colorClass G c).length = (colorClass H c).length :=
+  fun c hc => by
+    simpa using List.all_eq_true.mp h c (List.mem_range.mpr hc)
+
+/-- Two checked certificates with the same key and matching colour
+class sizes prove isomorphism. -/
+theorem isomorphic_of_certs {G H : Colored n k}
+    {certG certH : CertNode} {B : Key} {labG labH : Array Nat}
+    {resG resH : CanonResult n k}
+    (hG : checkCanon G certG B labG = some resG)
+    (hH : checkCanon H certH B labH = some resH)
+    (hcs : cellSizesCheck G H = true) : Isomorphic G H := by
+  have hfe := checkCanon_form_eq hG hH (cellSizesCheck_sound hcs)
+  exact ((checkCanon_sound hG).2.2.1).trans
+    (hfe ▸ ((checkCanon_sound hH).2.2.1).symm)
+
 end Hex.GraphIso.Nauty
