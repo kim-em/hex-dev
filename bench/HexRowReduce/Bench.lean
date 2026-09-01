@@ -137,11 +137,12 @@ def runReducedNullspace (input : ReducedInput) : UInt64 :=
 
 private def cubicSchedule : Array Nat := #[8, 12, 16, 24, 32, 48, 64]
 private def spanSchedule : Array Nat := #[16, 24, 32, 48, 64, 96, 128, 192]
--- The runtime switches allocation regimes above these ladders.  The retained
--- ranges have stable normalized constants and, with two-second inner batches,
--- clear the default 10× per-spawn signal floor.
+-- Use one stable allocation regime per ladder.  The cheap prepared targets
+-- use two-second inner batches to clear the default 10× per-spawn signal floor.
 private def linearSchedule : Array Nat := #[128, 192, 256, 384, 512]
 private def quadraticSchedule : Array Nat := #[128, 192, 256, 384, 512, 768]
+private def publicMatrixSchedule : Array Nat := #[48, 56, 64, 72, 80, 96]
+private def quadraticVectorSchedule : Array Nat := #[256, 320, 384, 448, 512, 640, 768]
 
 /- Each of the four public wrappers performs dense Gauss--Jordan elimination:
 `n` pivots, `n` row updates, and `n` entries per update. -/
@@ -192,7 +193,7 @@ setup_benchmark runFreeCols n => n with prep := deficientReduced where {
 /- Public nullspace wrappers are dominated by the cubic RREF phase; their
 rank and nullity are both `n / 2`. -/
 setup_benchmark runNullspaceMatrix n => n ^ 3 with prep := deficient where {
-  paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
+  paramFloor := 48, paramCeiling := 96, paramSchedule := .custom publicMatrixSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
@@ -210,7 +211,7 @@ setup_benchmark runReducedMatrix n => n ^ 2 with prep := deficientReduced where 
 }
 
 setup_benchmark runReducedNullspace n => n ^ 2 with prep := deficientReduced where {
-  paramFloor := 128, paramCeiling := 768, paramSchedule := .custom quadraticSchedule
+  paramFloor := 256, paramCeiling := 768, paramSchedule := .custom quadraticVectorSchedule
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
 
