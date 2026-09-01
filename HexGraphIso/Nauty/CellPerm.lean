@@ -2333,4 +2333,248 @@ theorem refine_perm {ctx : Ctx} (hn : ctx.n = n) {level : Nat}
     hloop.maxpos, by dsimp only; rw [hloop.longcode, hloop.numcells],
     hloop.labSize, hloop.cells⟩
 
+/-! # All partition writes carry the current level -/
+
+theorem ptn_trivialSplit_vals (level cell1 cell2 : Nat) (c1 c2 : Int)
+    (st : RefineSt) (q : Nat) :
+    (trivialSplit level cell1 cell2 c1 c2 st).ptn[q]! = st.ptn[q]! ∨
+      (trivialSplit level cell1 cell2 c1 c2 st).ptn[q]! = level := by
+  rw [trivialSplit]
+  split
+  · split
+    · split <;> exact getElem!_set!_cases st.ptn _ level q
+    · split <;> exact getElem!_set!_cases st.ptn _ level q
+  · exact Or.inl rfl
+
+theorem ptn_trivialCell_vals (level gRow cell1 cell2 : Nat)
+    (st : RefineSt) (q : Nat) :
+    (trivialCell level gRow cell1 cell2 st).ptn[q]! = st.ptn[q]! ∨
+      (trivialCell level gRow cell1 cell2 st).ptn[q]! = level := by
+  rw [trivialCell]
+  split
+  · exact Or.inl rfl
+  · exact ptn_trivialSplit_vals level cell1 cell2 _ _ _ q
+
+theorem ptn_windowScan_vals (level cell1 cell2 : Nat)
+    (counts : List Nat) :
+    ∀ (vs : List Nat) (c1acc : Nat) (maxcell : Int) (st : RefineSt)
+      (q : Nat),
+      (windowScan level cell1 cell2 counts vs c1acc maxcell
+          st).ptn[q]! = st.ptn[q]! ∨
+        (windowScan level cell1 cell2 counts vs c1acc maxcell
+          st).ptn[q]! = level
+  | [], _, _, _, _ => Or.inl rfl
+  | v :: vs, c1acc, maxcell, st, q => by
+    rw [windowScan]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      rcases ptn_windowScan_vals level cell1 cell2 counts vs _ _ _ q with
+        he | he
+      · rw [he, ptn_windowStep_eq]
+        split
+        · exact getElem!_set!_cases st.ptn _ level q
+        · exact Or.inl rfl
+      · exact Or.inr he
+    · simp only [if_neg hm]
+      exact ptn_windowScan_vals level cell1 cell2 counts vs _ _ _ q
+
+theorem ptn_nontrivialCell_vals (ctx : Ctx)
+    (level workset cell1 cell2 : Nat) (st : RefineSt) (q : Nat) :
+    (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
+        st.ptn[q]! ∨
+      (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
+        level := by
+  rw [nontrivialCell]
+  split
+  · exact Or.inl rfl
+  · split
+    · exact Or.inl rfl
+    · rw [ptn_nontrivialFix]
+      exact ptn_windowScan_vals level cell1 cell2 _ _ _ _ _ q
+
+theorem ptn_refineTrivial_go_vals (level gRow : Nat) :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt) (q : Nat),
+      (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]! ∨
+        (refineTrivial.go level gRow cs st).ptn[q]! = level
+  | [], _, _ => Or.inl rfl
+  | (c1, c2) :: rest, st, q => by
+    rw [refineTrivial.go]
+    rcases ptn_refineTrivial_go_vals level gRow rest _ q with he | he
+    · rw [he]
+      exact ptn_trivialCell_vals level gRow c1 c2 st q
+    · exact Or.inr he
+
+theorem ptn_refineNontrivial_go_vals (ctx : Ctx) (level workset : Nat) :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt) (q : Nat),
+      (refineNontrivial.go ctx level workset cs st).ptn[q]! =
+          st.ptn[q]! ∨
+        (refineNontrivial.go ctx level workset cs st).ptn[q]! = level
+  | [], _, _ => Or.inl rfl
+  | (c1, c2) :: rest, st, q => by
+    rw [refineNontrivial.go]
+    rcases ptn_refineNontrivial_go_vals ctx level workset rest _ q with
+      he | he
+    · rw [he]
+      exact ptn_nontrivialCell_vals ctx level workset c1 c2 st q
+    · exact Or.inr he
+
+theorem ptn_refineStep_vals (ctx : Ctx) (level split1 : Nat)
+    (st : RefineSt) (q : Nat) :
+    (refineStep ctx level split1 st).ptn[q]! = st.ptn[q]! ∨
+      (refineStep ctx level split1 st).ptn[q]! = level := by
+  rw [refineStep]
+  dsimp only
+  split
+  · exact ptn_refineTrivial_go_vals level _ _ _ q
+  · rw [refineNontrivial]
+    dsimp only
+    exact ptn_refineNontrivial_go_vals ctx level _ _ _ q
+
+theorem ptn_refineLoop_vals (ctx : Ctx) (level : Nat) :
+    ∀ (fuel : Nat) (st : RefineSt) (q : Nat),
+      (refineLoop ctx level fuel st).ptn[q]! = st.ptn[q]! ∨
+        (refineLoop ctx level fuel st).ptn[q]! = level
+  | 0, _, _ => Or.inl rfl
+  | fuel + 1, st, q => by
+    rw [refineLoop]
+    split
+    · rcases hps : pickSplit st.active st.hint with _ | s
+      · exact Or.inl rfl
+      · rcases ptn_refineLoop_vals ctx level fuel
+          (refineStep ctx level s st) q with he | he
+        · rw [he]
+          exact ptn_refineStep_vals ctx level s st q
+        · exact Or.inr he
+    · exact Or.inl rfl
+
+/-- Every partition write in `refine` carries the current level. -/
+theorem ptn_refine_vals (ctx : Ctx) (level : Nat)
+    (lab ptn : Array Nat) (active numcells : Nat) (q : Nat) :
+    (refine ctx level lab ptn active numcells).ptn[q]! = ptn[q]! ∨
+      (refine ctx level lab ptn active numcells).ptn[q]! = level := by
+  rw [refine]
+  exact ptn_refineLoop_vals ctx level _ _ q
+
+/-! # Level transfer and individualization -/
+
+/-- With no partition value exactly `level + 1`, runs at `level` and
+`level + 1` coincide. -/
+theorem isCell_succ_iff {ptn : Array Nat} {level a len : Nat}
+    (hvals : ∀ q : Nat, ptn[q]! ≠ level + 1) :
+    IsCell ptn (level + 1) a len ↔ IsCell ptn level a len := by
+  constructor
+  · rintro ⟨hl, hs, hi, he⟩
+    refine ⟨hl, ?_, ?_, ?_⟩
+    · rcases hs with h0 | hb
+      · exact Or.inl h0
+      · right
+        have := hvals (a - 1)
+        omega
+    · intro i hi1 hi2
+      have := hi i hi1 hi2
+      omega
+    · have := hvals (a + len - 1)
+      omega
+  · rintro ⟨hl, hs, hi, he⟩
+    refine ⟨hl, ?_, ?_, ?_⟩
+    · rcases hs with h0 | hb
+      · exact Or.inl h0
+      · right
+        omega
+    · intro i hi1 hi2
+      have := hi i hi1 hi2
+      have := hvals i
+      omega
+    · omega
+
+theorem cellsPerm_succ {ptn : Array Nat} {level : Nat}
+    {lab lab' : Array Nat} (hvals : ∀ q : Nat, ptn[q]! ≠ level + 1)
+    (h : cellsPerm ptn level lab lab') :
+    cellsPerm ptn (level + 1) lab lab' :=
+  fun a len hic => h a len ((isCell_succ_iff hvals).mp hic)
+
+theorem breakout_go_size {tv : Nat} :
+    ∀ (fuel : Nat) (lab : Array Nat) (i prev : Nat),
+      (breakout.go tv fuel lab i prev).size = lab.size
+  | 0, _, _, _ => rfl
+  | fuel + 1, lab, i, prev => by
+    rw [breakout.go]
+    split
+    · rw [Array.size_set!]
+    · rw [breakout_go_size fuel _ (i + 1) _, Array.size_set!]
+
+theorem breakout_go_outside {tv : Nat} :
+    ∀ (fuel : Nat) (lab : Array Nat) (i prev q : Nat), q < i →
+      (breakout.go tv fuel lab i prev)[q]! = lab[q]!
+  | 0, _, _, _, _, _ => rfl
+  | fuel + 1, lab, i, prev, q, hq => by
+    rw [breakout.go]
+    split
+    · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    · rw [breakout_go_outside fuel _ (i + 1) _ q (by omega),
+        Array.getElem!_set!_ne _ _ _ _ (by omega)]
+
+theorem breakout_go_outside_right {tv : Nat} :
+    ∀ (fuel len : Nat) (lab : Array Nat) (i prev : Nat),
+      (∃ k, i ≤ k ∧ k < i + len ∧ k < lab.size ∧ lab[k]! = tv) →
+      ∀ q, i + len ≤ q →
+      (breakout.go tv fuel lab i prev)[q]! = lab[q]!
+  | 0, _, _, _, _, _, _, _ => rfl
+  | fuel + 1, len, lab, i, prev, ⟨k, hik, hkl, hks, hkv⟩, q, hq => by
+    rw [breakout.go]
+    split
+    · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    · next hne =>
+      simp only [beq_iff_eq] at hne
+      have hki : k ≠ i := by
+        intro h
+        rw [h] at hkv
+        exact hne hkv
+      rw [breakout_go_outside_right fuel (len - 1) _ (i + 1) _
+        ⟨k, by omega, by omega, by rw [Array.size_set!]; omega,
+          by rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]; exact hkv⟩
+        q (by omega),
+        Array.getElem!_set!_ne _ _ _ _ (by omega)]
+
+/-- Individualization rotates the target vertex to the front of the
+segment: the result is the incoming vertex followed by the segment with
+its first occurrence of `tv` erased. -/
+theorem breakout_go_seg {tv : Nat} :
+    ∀ (fuel len : Nat) (lab : Array Nat) (i prev : Nat),
+      (∃ k, i ≤ k ∧ k < i + len ∧ k < lab.size ∧ lab[k]! = tv) →
+      len ≤ fuel → i + len ≤ lab.size →
+      segN (breakout.go tv fuel lab i prev) i len =
+        prev :: (segN lab i len).erase tv
+  | fuel, 0, lab, i, prev, ⟨k, hik, hkl, _, _⟩, _, _ => by omega
+  | 0, len + 1, lab, i, prev, hw, hf, _ => by omega
+  | fuel + 1, len + 1, lab, i, prev, ⟨k, hik, hkl, hks, hkv⟩, hf,
+      hsz => by
+    rw [breakout.go]
+    have his : i < lab.size := by omega
+    split
+    · next heq =>
+      simp only [beq_iff_eq] at heq
+      rw [segN_cons, Array.getElem!_set!_self _ _ _ his,
+        segN_congr (fun o ho =>
+          Array.getElem!_set!_ne lab i _ prev (by omega)),
+        segN_cons lab i len, heq, List.erase_cons_head]
+    · next hne =>
+      simp only [beq_iff_eq] at hne
+      have hki : k ≠ i := by
+        intro h
+        rw [h] at hkv
+        exact hne hkv
+      rw [segN_cons,
+        breakout_go_outside fuel _ (i + 1) _ i (by omega),
+        Array.getElem!_set!_self _ _ _ his,
+        breakout_go_seg fuel len _ (i + 1) _
+          ⟨k, by omega, by omega, by rw [Array.size_set!]; omega,
+            by rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+               exact hkv⟩
+          (by omega) (by rw [Array.size_set!]; omega),
+        segN_congr (fun o ho =>
+          Array.getElem!_set!_ne lab i _ prev (by omega)),
+        segN_cons lab i len,
+        List.erase_cons_tail (by simp only [beq_iff_eq]; exact hne)]
+
 end Hex.GraphIso.Nauty

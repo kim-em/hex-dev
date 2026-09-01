@@ -176,7 +176,7 @@ adjacency rows `g` and initial ordered partition `(lab0, cellEnds)`. -/
   if n == 0 then
     ⟨[], []⟩
   else
-    specNode { n, g } 100 (n + 2) 1 lab0 (initPtn n (n + 2) cellEnds)
+    specNode { n, g } 100 n 1 lab0 (initPtn n (n + 2) cellEnds)
       (initActive cellEnds) cellEnds.length
 
 variable {n k : Nat}
