@@ -106,11 +106,46 @@ with `colPartition` (free columns telescope to `v[freeCols[l]]`; pivot columns
 follow from `pivot_one` / `above_pivot_zero` / `below_pivot_zero` / `zero_row`);
 package into `E.nullspaceMatrix * c = v`.
 
+## Complexity and benchmark contract
+
+For an `n × m` matrix of rank `r`, Gauss--Jordan reduction performs at most
+`r` pivot stages and visits `O(n(n + m))` entries per stage across the echelon
+and transform matrices.  The arithmetic-operation bound is therefore
+`O(rn(n + m))`, cubic on the fixed-aspect square benchmark families.  Exact
+rational bit cost additionally depends on numerator and denominator growth.
+
+The compiled implementation uses a proved linear sorted merge for the
+free-column complement.  Prepared nullspace construction materializes the
+column-to-pivot-row lookup once and then writes `m(m - r)` output entries with
+constant-time lookup per entry; its fixed-aspect bound is quadratic.
+
+`bench/HexRowReduce/Bench.lean` gives all 12 advertised executable operations
+direct mode-1 coverage:
+
+| Operations | Prepared state | Model |
+| --- | --- | --- |
+| `Matrix.rowReduce`, `Matrix.rowReduce_rank` | dense input | `n³` |
+| `Matrix.spanCoeffs`, `Matrix.spanContains` | dense input | `n³` |
+| `IsEchelonForm.spanCoeffs`, `IsEchelonForm.spanContains` | proved RREF | `n²` |
+| `IsEchelonForm.echelonCoeffs`, `IsEchelonForm.freeCols` | proved RREF | `n` |
+| `Matrix.nullspaceBasisMatrix`, `Matrix.nullspace` | deficient input | `n³` |
+| `IsRowReduced.nullspaceMatrix`, `IsRowReduced.nullspace` | proved RREF | `n²` |
+
+The dense family is `I + J`, so every pivot fires while coefficient heights
+remain controlled.  The deficient family has rank and nullity `n / 2`.
+Preparation is outside the timed region and result forcing is inside it.
+
 ## External comparators
 
-The `rank`, `rowReduce`, and `nullspace` operations are cross-checked for correctness
-against python-flint's `fmpz_mat` / `fmpq_mat` through the conformance oracle
-(`scripts/oracle/matrix_flint.py`, driven by `hexrowreduce_emit_fixtures`).
-There is no Phase-4 performance comparator: row reduction is an exact rational
-computation validated for correctness, not timed against an external tool. See
-`reports/hex-row-reduce-performance.md`.
+The identical constant-size rank result is compared informationally with
+python-flint's `fmpq_mat.rref()` through the shared persistent driver.  Both
+arms use the same dense `I + J` family; construction is cached during warmup,
+and each timed request returns only the integer rank.
+
+The remaining operations declare
+`no-comparable-surface-in-named-comparator`: Hex `rowReduce` returns the row
+transform that `fmpq_mat.rref()` omits; python-flint 0.9.0's `fmpq_mat` has no
+native nullspace callable; and span coefficients are transform-dependent
+witnesses.  A comparator-specific derived algorithm would not be the same
+callable surface.  Full RREF and nullspace correctness remain cross-checked by
+`scripts/oracle/matrix_flint.py`, driven by `hexrowreduce_emit_fixtures`.

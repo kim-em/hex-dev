@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekamp/PackedKernel.lean",
+  "baseline_blob": "806ed31de287bd0d5f9fe2fb0684c98cd4b38564",
+  "current_blob": "da9e18f854f1dee1fca29299aaa321aa3ae0e1bc",
+  "reason": "Rewrites a theorem proof through the new pivotRows_get bridge after nullspaceMatrix began using its prepared pivot-row table. The executable PackedKernel definitions and the factorization runtime call graph are unchanged."
+}

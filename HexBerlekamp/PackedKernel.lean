@@ -875,6 +875,7 @@ theorem nullspaceArray_eq {q : UInt32} (hq : q.toNat = p)
     by_cases hjf : (⟨j, hj⟩ : Fin m) = hE.toIsEchelonForm.freeCols.get ⟨k, hklt⟩
     · rw [ite_eq_left hjf, dite_eq_left hjf]
     · rw [ite_eq_right hjf, dite_eq_right hjf, pivotRowOf_eq (Matrix.rowReduce E) ⟨j, hj⟩]
+      rw [Matrix.IsRowReduced.pivotRows_get]
       cases hpi : Matrix.IsRowReduced.pivotIndex? (Matrix.rowReduce E) (⟨j, hj⟩ : Fin m) with
       | none => rfl
       | some i =>
