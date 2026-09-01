@@ -181,7 +181,7 @@ theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
 /-! # Cardinality and cell-size obstructions -/
 
 /-- Unequal vertex cardinalities forbid any graph isomorphism. -/
-theorem isEmpty_iso_of_card_ne {G : SimpleGraph V} {H : SimpleGraph W}
+theorem isEmpty_iso_of_card_ne (G : SimpleGraph V) (H : SimpleGraph W)
     (h : Fintype.card V ≠ Fintype.card W) : IsEmpty (G ≃g H) :=
   ⟨fun φ => h (Fintype.card_congr φ.toEquiv)⟩
 

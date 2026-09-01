@@ -86,7 +86,7 @@ def isoOfCheckIso? (eV : V ≃ Fin n) (eW : W ≃ Fin n)
   (coloredIsoOfCheckIso? eV eW replay p h).graphIso
 
 /-- Two graphs on empty vertex types are isomorphic. -/
-def isoOfCardZero {G : SimpleGraph V} {H : SimpleGraph W}
+def isoOfCardZero (G : SimpleGraph V) (H : SimpleGraph W)
     (hV : Fintype.card V = 0) (hW : Fintype.card W = 0) : G ≃g H where
   toEquiv := @Equiv.equivOfIsEmpty V W
     (Fintype.card_eq_zero_iff.mp hV) (Fintype.card_eq_zero_iff.mp hW)
@@ -95,9 +95,9 @@ def isoOfCardZero {G : SimpleGraph V} {H : SimpleGraph W}
     exact (Fintype.card_eq_zero_iff.mp hV).elim a
 
 /-- Two coloured graphs on empty vertex types are isomorphic. -/
-def coloredIsoOfCardZero {G : Colored V k} {H : Colored W k}
+def coloredIsoOfCardZero (G : Colored V k) (H : Colored W k)
     (hV : Fintype.card V = 0) (hW : Fintype.card W = 0) : Colored.Iso G H where
-  graphIso := isoOfCardZero hV hW
+  graphIso := isoOfCardZero G.graph H.graph hV hW
   map_color := fun v => ((Fintype.card_eq_zero_iff.mp hV).elim v)
 
 /-! # Negative entry points -/
@@ -142,19 +142,19 @@ theorem not_nonempty_iso_of_decideIso? (eV : V ≃ Fin n) (eW : W ≃ Fin n)
   fun ⟨φ⟩ => (isEmpty_iso_of_decideIso? eV eW hV hW limits h).elim φ
 
 /-- Unequal cardinalities refute nonemptiness of the isomorphism type. -/
-theorem not_nonempty_iso_of_card_ne {G : SimpleGraph V} {H : SimpleGraph W}
+theorem not_nonempty_iso_of_card_ne (G : SimpleGraph V) (H : SimpleGraph W)
     (h : Fintype.card V ≠ Fintype.card W) : ¬ Nonempty (G ≃g H) :=
-  fun ⟨φ⟩ => (isEmpty_iso_of_card_ne h).elim φ
+  fun ⟨φ⟩ => (isEmpty_iso_of_card_ne G H h).elim φ
 
 /-- Unequal cardinalities refute coloured isomorphism. -/
-theorem not_isomorphic_of_card_ne {G : Colored V k} {H : Colored W k}
+theorem not_isomorphic_of_card_ne (G : Colored V k) (H : Colored W k)
     (h : Fintype.card V ≠ Fintype.card W) : ¬ G.Isomorphic H := by
   intro hiso
   rcases hiso.elim with ⟨hiso⟩
   exact h (Fintype.card_congr hiso.graphIso.toEquiv)
 
-theorem isEmpty_coloredIso_of_card_ne {G : Colored V k} {H : Colored W k}
+theorem isEmpty_coloredIso_of_card_ne (G : Colored V k) (H : Colored W k)
     (h : Fintype.card V ≠ Fintype.card W) : IsEmpty (Colored.Iso G H) :=
-  ⟨fun hiso => not_isomorphic_of_card_ne h (Colored.Isomorphic.intro hiso)⟩
+  ⟨fun hiso => not_isomorphic_of_card_ne G H h (Colored.Isomorphic.intro hiso)⟩
 
 end Hex.GraphIso.Mathlib

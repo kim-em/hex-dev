@@ -258,7 +258,7 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
         else
           if shape.useNot then ``not_nonempty_iso_of_card_ne
           else ``isEmpty_iso_of_card_ne
-      return ← finish (← mkAppM name #[hne])
+      return ← finish (← mkAppM name #[shape.G, shape.H, hne])
     else
       throwError "graph_iso: the vertex types have cardinalities \
           {sG.card} and {sH.card}; the positive goal is not provable"
@@ -269,7 +269,7 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
     let h1 ← mkDecideProof z1
     let core ← mkAppM
       (if shape.colored then ``coloredIsoOfCardZero else ``isoOfCardZero)
-      #[h0, h1]
+      #[shape.G, shape.H, h0, h1]
     let proof ← if shape.wrap then
         if shape.colored then
           mkAppM ``Colored.Isomorphic.intro #[core]

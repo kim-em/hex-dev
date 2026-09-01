@@ -903,7 +903,8 @@ lean_lib HexCharPolyTests where
 -- the manifest's test_modules) at publication.
 @[default_target]
 lean_lib HexGraphIsoTests where
-  globs := #[`HexGraphIso.TacticTests].map Glob.one
+  globs := #[`HexGraphIso.TacticTests,
+    `HexGraphIsoMathlib.TacticTests].map Glob.one
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
