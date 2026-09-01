@@ -897,6 +897,135 @@ theorem specTargetcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
     exact specBestcell_perm hcp hnn hend
   · rw [if_neg hB, if_neg hB]
 
+/-! # Leaves and children under cell equivalence -/
+
+theorem cells_go_cover {ptn : Array Nat} {level nn : Nat} :
+    ∀ (fuel c1 i : Nat), c1 ≤ i → i < nn → nn ≤ fuel + c1 →
+      ∃ p ∈ cells.go ptn level nn fuel c1, p.1 ≤ i ∧ i ≤ p.2
+  | 0, c1, i, hc, hi, hf => absurd hf (by omega)
+  | fuel + 1, c1, i, hc, hi, hf => by
+    rw [cells.go, if_pos (by omega)]
+    rcases Nat.le_total i (cellEnd ptn level c1) with hle | hle2
+    · exact ⟨(c1, cellEnd ptn level c1), by simp, hc, hle⟩
+    · rcases Nat.eq_or_lt_of_le hle2 with heq | hgt
+      · exact ⟨(c1, cellEnd ptn level c1), by simp, hc, by omega⟩
+      · have hge : c1 ≤ cellEnd ptn level c1 := cellEnd_ge
+        obtain ⟨p, hpm, hp⟩ := cells_go_cover (ptn := ptn)
+          (level := level) fuel (cellEnd ptn level c1 + 1) i (by omega)
+          hi (by omega)
+        exact ⟨p, by simp [hpm], hp⟩
+
+theorem cells_cover {ptn : Array Nat} {level nn : Nat} (i : Nat)
+    (hi : i < nn) : ∃ p ∈ cells ptn level nn, p.1 ≤ i ∧ i ≤ p.2 := by
+  rw [cells]
+  exact cells_go_cover nn 0 i (Nat.zero_le i) hi (by omega)
+
+/-- On a discrete partition, cell-equivalent labellings agree
+pointwise. -/
+theorem discrete_pointwise {ptn : Array Nat} {level nn : Nat}
+    {lab lab' : Array Nat} (hcp : cellsPerm ptn level lab lab')
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hdisc : discreteAt ptn level nn = true) :
+    ∀ i, i < nn → lab[i]! = lab'[i]! := by
+  intro i hi
+  obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover i hi
+  have hsingle : p.1 = p.2 := by
+    rw [discreteAt, List.all_eq_true] at hdisc
+    have := hdisc p hpm
+    simpa using this
+  have hic1 : IsCell ptn level i 1 := by
+    have hic := cells_isCell hnn hend p hpm
+    rw [show p.2 + 1 - p.1 = 1 by omega] at hic
+    rw [show i = p.1 by omega]
+    exact hic
+  exact cellsPerm_singleton hcp hic1
+
+theorem invPerm_congr {lab lab' : Array Nat} (hsz : lab.size = lab'.size)
+    (h : ∀ i, i < lab.size → lab[i]! = lab'[i]!) :
+    invPerm lab = invPerm lab' := by
+  rw [invPerm, invPerm, hsz]
+  suffices hgo : ∀ (is : List Nat) (inv : Array Nat),
+      (∀ i ∈ is, i < lab.size) →
+      invPerm.go lab is inv = invPerm.go lab' is inv by
+    exact hgo _ _ (fun i hi => by
+      have := List.mem_range.mp hi
+      omega)
+  intro is
+  induction is with
+  | nil => exact fun inv _ => rfl
+  | cons i rest ih =>
+    intro inv hb
+    rw [invPerm.go, invPerm.go, h i (hb i (by simp))]
+    exact ih _ (fun j hj => hb j (by simp [hj]))
+
+theorem leafRows_congr {ctx : Ctx} {lab lab' : Array Nat}
+    (hsz : lab.size = lab'.size) (hnn : ctx.n ≤ lab.size)
+    (h : ∀ i, i < lab.size → lab[i]! = lab'[i]!) :
+    leafRows ctx lab = leafRows ctx lab' := by
+  rw [leafRows, leafRows, invPerm_congr hsz h]
+  refine List.map_congr_left fun i hi => ?_
+  rw [h i (by have := List.mem_range.mp hi; omega)]
+
+theorem range_map_eq_segN_map (lab : Array Nat) (lo len : Nat)
+    (F : Nat → Key) :
+    ((List.range len).map fun o => F lab[lo + o]!) =
+      (segN lab lo len).map F := by
+  rw [segN, List.map_map]
+  exact List.map_congr_left fun o _ => rfl
+
+theorem keysMax_mem : ∀ (l : List Key) (k : Key),
+    keysMax k l = k ∨ keysMax k l ∈ l
+  | [], _ => Or.inl rfl
+  | k' :: rest, k => by
+    rw [keysMax]
+    rcases keysMax_mem rest (keyMax k k') with he | hm
+    · rw [he]
+      rcases keyMax_mem k k' with h2 | h2
+      · exact Or.inl h2
+      · exact Or.inr (by rw [h2]; simp)
+    · exact Or.inr (by simp [hm])
+
+theorem keysMax_ge : ∀ (l : List Key) (k : Key) (y : Key),
+    (y = k ∨ y ∈ l) → keyCmp (keysMax k l) y ≠ .lt
+  | [], k, y, hy => by
+    rcases hy with rfl | hm
+    · rw [keysMax, keyCmp_self]
+      simp
+    · cases hm
+  | k' :: rest, k, y, hy => by
+    rw [keysMax]
+    rcases hy with rfl | hm
+    · exact keyCmp_ge_trans
+        (keysMax_ge rest (keyMax y k') (keyMax y k') (Or.inl rfl))
+        (keyMax_not_lt_left y k')
+    · rcases List.mem_cons.mp hm with rfl | hm2
+      · exact keyCmp_ge_trans
+          (keysMax_ge rest (keyMax k y) (keyMax k y) (Or.inl rfl))
+          (keyMax_not_lt_right k y)
+      · exact keysMax_ge rest (keyMax k k') y (Or.inr hm2)
+
+/-- The head-seeded key maximum is invariant under permutation of the
+whole list. -/
+theorem keysMax_cons_perm {c c' : Key} {cs cs' : List Key}
+    (h : (c :: cs).Perm (c' :: cs')) :
+    keysMax c cs = keysMax c' cs' := by
+  have hdir : ∀ {d d' : Key} {ds ds' : List Key},
+      (d :: ds).Perm (d' :: ds') →
+      keyCmp (keysMax d ds) (keysMax d' ds') ≠ .lt := by
+    intro d d' ds ds' hp
+    have hm' := keysMax_mem ds' d'
+    have hmem : keysMax d' ds' = d ∨ keysMax d' ds' ∈ ds := by
+      have hin : keysMax d' ds' ∈ d :: ds := hp.mem_iff.mpr (by
+        rcases hm' with he | hm2
+        · rw [he]
+          simp
+        · simp [hm2])
+      rcases List.mem_cons.mp hin with he | hm2
+      · exact Or.inl he
+      · exact Or.inr hm2
+    exact keysMax_ge ds d _ hmem
+  exact keyCmp_antisym (hdir h) (hdir h.symm)
+
 /-! # Equivariance -/
 
 /-- The unpruned search tree's maximal leaf key is invariant under a
