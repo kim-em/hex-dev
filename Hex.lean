@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import Hex.Conformance.Emit
 import Hex.BenchOracle.Flint
 import Hex.BenchOracle.Pari
+import Hex.BenchOracle.Nauty
 
 /-! Top-level helpers shared by the per-library `Hex<X>` packages.
 

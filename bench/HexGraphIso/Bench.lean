@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIso
+import Hex.BenchOracle.Nauty
 import LeanBench
 
 /-!
@@ -28,10 +29,19 @@ Scientific registrations:
   `n^n` candidate enumeration with quadratic per-candidate work; capped
   at the small sizes where the factorial-style enumeration is practical.
 
-The nauty-compatible search itself declares no polynomial model in `n`
-(SPEC/Libraries/hex-graph-iso.md § Benchmarks); its node-count-based
-registrations and the external nauty comparator shim belong to the
-scheduled performance stage, not this merge slice.
+The nauty-compatible search declares no polynomial model in `n`
+(SPEC/Libraries/hex-graph-iso.md § Benchmarks); the public operations
+backed by it, the certificate pipeline, and the pinned nauty
+comparator register as fixed benchmarks on committed circulant sizes:
+
+* `runHexCanon{8,12,16}` versus `runNautyCanon{8,12,16}`: the public
+  certificate-checked `canon` against the pinned nauty 2.9.3
+  comparator (persistent-subprocess driver over the conformance
+  oracle's hash-verified shim), joined on the canonical
+  upper-triangle bits.
+* `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
+* `runCertify12`, `runCertReplay12`: certificate generation and the
+  generation-plus-replay pipeline.
 -/
 
 namespace Hex.GraphIsoBench
@@ -127,6 +137,97 @@ setup_benchmark runReferenceCanon n => n ^ n * n * n
     paramSchedule := .custom #[2, 3, 4, 5, 6]
     maxSecondsPerCall := 5.0
   }
+
+/-! # Fixed benchmarks: public operations and the nauty comparator -/
+
+private def triBitsOf {n k : Nat} (K : Colored n k) : String :=
+  String.ofList <| (List.range n).flatMap fun i =>
+    ((List.range n).filter (fun j => i < j)).map fun j =>
+      if h : i < n ∧ j < n then
+        (if K.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then '1' else '0')
+      else '0'
+
+private def adjStrings {n k : Nat} (G : Colored n k) : List String :=
+  (List.range n).map fun i => String.ofList <| (List.range n).map fun j =>
+    if h : i < n ∧ j < n then
+      (if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then '1' else '0')
+    else '0'
+
+private def runHexCanonAt (m : Nat) (_ : Unit) : IO String :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return triBitsOf (canon G)
+  | none => return ""
+
+private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
+  match graphOf { n := m } with
+  | some ⟨m', G⟩ =>
+    let result ← Hex.BenchOracle.Nauty.canon m' 1
+      (List.replicate m' 0) (adjStrings G)
+    match result.getObjValAs? String "tri" with
+    | .ok tri => return tri
+    | .error e => throw (IO.userError s!"nauty canon: bad tri: {e}")
+  | none => return ""
+
+def runHexCanon8 : Unit → IO String := runHexCanonAt 8
+def runNautyCanon8 : Unit → IO String := runNautyCanonAt 8
+def runHexCanon12 : Unit → IO String := runHexCanonAt 12
+def runNautyCanon12 : Unit → IO String := runNautyCanonAt 12
+def runHexCanon16 : Unit → IO String := runHexCanonAt 16
+def runNautyCanon16 : Unit → IO String := runNautyCanonAt 16
+
+/-- The unpruned specification key on a factorially feasible size. -/
+def runSpecKey6 : Unit → IO Nat := fun _ =>
+  match graphOf { n := 6 } with
+  | some ⟨_, G⟩ =>
+    return (Nauty.canonSpecKey G).codes.foldl (· + ·) 0
+  | none => return 0
+
+def runIsIso12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return isIso G G
+  | none => return false
+
+def runFindIso12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return (findIso G G).isSome
+  | none => return false
+
+def runCertify12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return (certify? {} G).isSome
+  | none => return false
+
+def runCertReplay12 : Unit → IO String := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ =>
+    match certify? {} G with
+    | some cert =>
+      match checkCanon {} G cert with
+      | some res => return triBitsOf res.form
+      | none => return "replay-failed"
+    | none => return "certify-failed"
+  | none => return ""
+
+private def hexComparisonConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := 8.0
+
+private def externalComparisonConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := 8.0
+  warmupFirstIter := true
+
+setup_fixed_benchmark runHexCanon8 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon8 where externalComparisonConfig
+setup_fixed_benchmark runHexCanon12 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon12 where externalComparisonConfig
+setup_fixed_benchmark runHexCanon16 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon16 where externalComparisonConfig
+setup_fixed_benchmark runSpecKey6 where hexComparisonConfig
+setup_fixed_benchmark runIsIso12 where hexComparisonConfig
+setup_fixed_benchmark runFindIso12 where hexComparisonConfig
+setup_fixed_benchmark runCertify12 where hexComparisonConfig
+setup_fixed_benchmark runCertReplay12 where hexComparisonConfig
 
 end Hex.GraphIsoBench
 

@@ -591,7 +591,12 @@ The Mathlib-free benchmark driver registers:
 - public `canonicalize`, `findIso`, and `isIso`;
 - dense conversion, one complete refinement, relabelling, canonical graph
   comparison, certificate generation, and certificate replay;
-- the pinned nauty comparator through a benchmark-only FFI shim.
+- the pinned nauty comparator through a benchmark-only
+  persistent-subprocess driver over the conformance oracle's
+  hash-verified C shim (the process-call pattern of
+  [benchmarking.md](../benchmarking.md#external-comparators); the
+  build-time source acquisition the shim needs makes a static FFI
+  link unviable in a clean checkout).
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
