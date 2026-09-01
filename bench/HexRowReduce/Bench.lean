@@ -141,7 +141,6 @@ private def spanSchedule : Array Nat := #[16, 24, 32, 48, 64, 96, 128, 192]
 -- use two-second inner batches to clear the default 10× per-spawn signal floor.
 private def linearSchedule : Array Nat := #[128, 192, 256, 384, 512]
 private def quadraticSchedule : Array Nat := #[128, 192, 256, 384, 512, 768]
-private def publicMatrixSchedule : Array Nat := #[48, 56, 64, 72, 80, 96]
 private def quadraticVectorSchedule : Array Nat := #[256, 320, 384, 448, 512, 640, 768]
 
 /- Each of the four public wrappers performs dense Gauss--Jordan elimination:
@@ -202,7 +201,7 @@ setup_benchmark runFreeCols n => n with prep := Hex.RowReduceBench.deficientRedu
 rank and nullity are both `n / 2`. -/
 -- Cubic: public construction is dominated by RREF before basis materialization.
 setup_benchmark runNullspaceMatrix n => n ^ 3 with prep := Hex.RowReduceBench.deficient where {
-  paramFloor := 48, paramCeiling := 96, paramSchedule := .custom publicMatrixSchedule
+  paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 

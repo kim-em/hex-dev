@@ -82,17 +82,27 @@ ratios.
 
 | `n` | Lean rank median | FLINT median | FLINT minus overhead | raw Lean / FLINT | adjusted Lean / FLINT |
 |---:|---:|---:|---:|---:|---:|
-| 16 | 1.771 ms | 11.287 us | 4.129 us | 156.9× | 428.8× |
+| 16† | 1.771 ms | 11.287 us | 4.129 us | 156.9× | 428.8× |
 | 24 | 5.949 ms | 15.750 us | 8.592 us | 377.7× | 692.3× |
 | 32 | 13.987 ms | 22.038 us | 14.880 us | 634.7× | 940.0× |
 | 48 | 47.056 ms | 42.992 us | 35.834 us | 1094.5× | 1313.2× |
 | 64 | 111.623 ms | 77.369 us | 70.211 us | 1442.7× | 1589.8× |
 
+† At `n = 16`, protocol overhead is 63% of the FLINT wall time, so that rung
+is reported for completeness but excluded from the eligible comparator range.
+From the eligible `n = 24` rung through `n = 64`, the adjusted ratio increases
+monotonically from 692.3× to 1589.8×. The widening gap reflects the different
+measured regimes on this ladder: Hex follows cubic elimination, while the
+overhead-adjusted FLINT endpoint is still below its cubic asymptote.
+
 This comparison is informational rather than gating: FLINT executes optimized
 C/GMP kernels behind a Python call, while Hex exercises the generic Lean
-matrix and exact-rational stack. Rank is the only identical callable surface
-in the named comparator. RREF and nullspace values remain correctness-oracle
-surfaces, and the other eleven benchmark targets carry the exact absence tag
+matrix and exact-rational stack. The Hex rank arm also computes the row
+transform maintained by its shared `rowReduce` implementation, whereas FLINT's
+`rref()` omits that output, so the ratios overstate a like-for-like rank gap.
+Rank is the only identical callable result in the named comparator. RREF and
+nullspace values remain correctness-oracle surfaces, and the other eleven
+benchmark targets carry the exact absence tag
 `no-comparable-surface-in-named-comparator`.
 
 ## Profile
@@ -116,11 +126,16 @@ other. The committed summary is
 (SHA-256
 `fd722fdc6fd4e6914a0529fbc8353b99bec002fe26dc9a3dfa75092a3863ddfa`).
 
-For `runReducedMatrix`, inclusive samples attribute 42.83% to matrix
-materialization, 37.91% to `nullspaceMatrix`, 10.26% to row access, and 5.34%
-to the once-prepared pivot lookup. Leaf attribution is 39.02% library code,
-34.35% Lean runtime, 10.01% allocation/free, and 16.62% other. The committed
-summary is
+For `runReducedMatrix`, inclusive samples attribute 47.24% to the benchmark's
+result-forcing `matrixChecksum`, 42.83% to matrix materialization, 37.91% to
+`nullspaceMatrix`, 10.26% to row access, and 5.34% to the once-prepared pivot
+lookup. Result forcing is therefore a comparable share of the timed target,
+not preparation. The automatic leaf classifier assigns 39.02% to library
+code, 34.35% to Lean runtime, 10.01% to allocation/free, and 16.62% to other;
+the latter includes the explicitly identified core checksum leaves
+`instHashableRat.hash` (8.48%) and `Array.ofFn.go` (1.95%). Including those
+named core leaves gives explicit attribution for 93.81% of samples. The
+committed summary is
 `reports/bench-results/hex-row-reduce-profile-deficient-nullspace-f9fadac0c-chungus2.json`
 (SHA-256
 `5fd918be67df847920e5efb52d8693e4c013b7303bbed83bbf850cbcd236e583`).
