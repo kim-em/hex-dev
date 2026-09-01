@@ -18,8 +18,11 @@ scheduled profile as
 lake exe hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
 ```
 
-Only failures are retained as replay records (the oracle reports the
-failing case identifier).
+Records carry the public `canonicalize` answer (label and canonical
+upper-triangle bits) with the node count from the transcribed search,
+as in `HexGraphIso.EmitFixtures`, so the campaign pins the public
+surface against real nauty. Only failures are retained as replay
+records (the oracle reports the failing case identifier).
 -/
 
 namespace Hex.GraphIsoCampaign
@@ -40,30 +43,34 @@ private def pairList (n : Nat) : List (Nat × Nat) := Id.run do
 private def edgesOfMask (n mask : Nat) : List (Nat × Nat) :=
   ((pairList n).zipIdx.filter fun (_, t) => mask.testBit t).map (·.1)
 
-private def triOf (n : Nat) (canong : Array Nat) : String := Id.run do
-  let mut out := ""
-  for i in [0 : n] do
-    for j in [i + 1 : n] do
-      out := out.push (if (canong[i]! >>> j) &&& 1 == 1 then '1' else '0')
-  return out
+/-- Build the coloured graph through the public checked constructors. -/
+private def coloredOf? (n k : Nat) (colors : Array Nat)
+    (edges : List (Nat × Nat)) : Option (Colored n k) := do
+  let g ← Graph.ofEdges? n edges
+  if h : colors.size = n ∧ ∀ v ∈ colors, v < k then
+    let c ← Coloring.ofVector?
+      ⟨colors.attach.map fun v => (⟨v.val, h.2 v.val v.property⟩ : Fin k),
+        by simp [h.1]⟩
+    some { graph := g, coloring := c }
+  else
+    none
 
+/-- The upper-triangle adjacency bits of a coloured graph in row-major
+order. -/
+private def triBits {n k : Nat} (G : Colored n k) : String :=
+  String.ofList <| (List.finRange n).flatMap fun i =>
+    ((List.finRange n).filter fun j => decide (i.val < j.val)).map fun j =>
+      if G.graph.adj i j then '1' else '0'
+
+/-- Canonicalize through the public API and emit one campaign record:
+the label and upper-triangle bits are read off public `canonicalize`,
+the node count off the transcribed search. -/
 private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (edges : List (Nat × Nat)) : IO Unit := do
-  let mut rows : Array Nat := .replicate n 0
-  for (a, b) in edges do
-    rows := rows.set! a (rows[a]! ||| (1 <<< b))
-    rows := rows.set! b (rows[b]! ||| (1 <<< a))
-  let mut lab0 : Array Nat := #[]
-  let mut ends : List Nat := []
-  for c in [0 : k] do
-    let mut found := false
-    for v in [0 : n] do
-      if colors[v]! == c then
-        lab0 := lab0.push v
-        found := true
-    if found then
-      ends := (lab0.size - 1) :: ends
-  let r := Nauty.run n rows lab0 ends.reverse
+  let some G := coloredOf? n k colors edges
+    | throw (IO.userError s!"emit: case {case} rejected by the builders")
+  let res := canonicalize G
+  let r := Nauty.runColored G
   let mut sizes : Array Nat := .replicate k 0
   for v in [0 : n] do
     sizes := sizes.set! colors[v]! (sizes[colors[v]!]! + 1)
@@ -71,8 +78,8 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (colors.toList.map Int.ofNat)
     (edges.map fun (a, b) =>
       (Int.ofNat (Nat.min a b), Int.ofNat (Nat.max a b)))
-    (r.canonlab.toList.map Int.ofNat)
-    (triOf n r.canong)
+    ((List.finRange n).map fun i => Int.ofNat (res.label.get i).val)
+    (triBits res.form)
     (sizes.toList.map Int.ofNat)
     r.numnodes
 

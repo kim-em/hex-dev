@@ -130,7 +130,8 @@ is already symmetric. -/
 
 /-- The one-cell coloured graph of a family member; `n = 0` requires
 `k = 0`, so this is defined for positive `n`. -/
-@[expose] def plain {n : Nat} (G : Graph n) (h : 0 < n) : Colored n 1 :=
+@[expose] def plain {n : Nat} (G : Graph n)
+    (h : 0 < n := by first | omega | decide) : Colored n 1 :=
   { graph := G, coloring := Coloring.trivial n h }
 
 end Hex.GraphIso.Families

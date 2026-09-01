@@ -20,9 +20,14 @@ over the lexicographic `i < j` pair order; colour vectors are enumerated
 as base-`k` numerals with vertex `0` most significant. Pseudo-random
 cases use the SPEC's SplitMix64 corpus seeds.
 
-Each record carries the Lean-computed nauty-compatible canonical label,
-canonical upper-triangle bits, ordered cell sizes, and search-node count;
-the oracle recomputes all of them with the pinned external nauty.
+Each record carries the *public* answer: the canonical label and
+canonical upper-triangle bits are read off `canonicalize` (the
+certificate-checked production pipeline behind `canon` and `label`),
+with the coloured graph built through the public checked constructors.
+The search-node count comes from the transcribed search
+(`Nauty.runColored`). The oracle recomputes all of them with the pinned
+external nauty, so the campaign pins the public surface, not only the
+transcription.
 -/
 
 namespace Hex.GraphIsoEmit
@@ -44,35 +49,34 @@ private def pairList (n : Nat) : List (Nat × Nat) := Id.run do
 private def edgesOfMask (n mask : Nat) : List (Nat × Nat) :=
   ((pairList n).zipIdx.filter fun (_, t) => mask.testBit t).map (·.1)
 
-private def rowsOfEdges (n : Nat) (edges : List (Nat × Nat)) : Array Nat := Id.run do
-  let mut rows : Array Nat := .replicate n 0
-  for (a, b) in edges do
-    rows := rows.set! a (rows[a]! ||| (1 <<< b))
-    rows := rows.set! b (rows[b]! ||| (1 <<< a))
-  return rows
+/-- Build the coloured graph through the public checked constructors. -/
+private def coloredOf? (n k : Nat) (colors : Array Nat)
+    (edges : List (Nat × Nat)) : Option (Colored n k) := do
+  let g ← Graph.ofEdges? n edges
+  if h : colors.size = n ∧ ∀ v ∈ colors, v < k then
+    let c ← Coloring.ofVector?
+      ⟨colors.attach.map fun v => (⟨v.val, h.2 v.val v.property⟩ : Fin k),
+        by simp [h.1]⟩
+    some { graph := g, coloring := c }
+  else
+    none
 
-private def triOf (n : Nat) (canong : Array Nat) : String := Id.run do
-  let mut out := ""
-  for i in [0 : n] do
-    for j in [i + 1 : n] do
-      out := out.push (if (canong[i]! >>> j) &&& 1 == 1 then '1' else '0')
-  return out
+/-- The upper-triangle adjacency bits of a coloured graph in row-major
+order. -/
+private def triBits {n k : Nat} (G : Colored n k) : String :=
+  String.ofList <| (List.finRange n).flatMap fun i =>
+    ((List.finRange n).filter fun j => decide (i.val < j.val)).map fun j =>
+      if G.graph.adj i j then '1' else '0'
 
-/-- Run the nauty-compatible search and emit one fixture record. -/
+/-- Canonicalize through the public API and emit one fixture record: the
+label and upper-triangle bits are read off public `canonicalize`, the
+node count off the transcribed search. -/
 private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (edges : List (Nat × Nat)) : IO Unit := do
-  let rows := rowsOfEdges n edges
-  let mut lab0 : Array Nat := #[]
-  let mut ends : List Nat := []
-  for c in [0 : k] do
-    let mut found := false
-    for v in [0 : n] do
-      if colors[v]! == c then
-        lab0 := lab0.push v
-        found := true
-    if found then
-      ends := (lab0.size - 1) :: ends
-  let r := Nauty.run n rows lab0 ends.reverse
+  let some G := coloredOf? n k colors edges
+    | throw (IO.userError s!"emit: case {case} rejected by the builders")
+  let res := canonicalize G
+  let r := Nauty.runColored G
   let mut sizes : Array Nat := .replicate k 0
   for v in [0 : n] do
     let c := colors[v]!
@@ -81,8 +85,8 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (colors.toList.map Int.ofNat)
     (edges.map fun (a, b) =>
       (Int.ofNat (Nat.min a b), Int.ofNat (Nat.max a b)))
-    (r.canonlab.toList.map Int.ofNat)
-    (triOf n r.canong)
+    ((List.finRange n).map fun i => Int.ofNat (res.label.get i).val)
+    (triBits res.form)
     (sizes.toList.map Int.ofNat)
     r.numnodes
 

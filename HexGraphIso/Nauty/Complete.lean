@@ -704,9 +704,7 @@ theorem canonicalizeSpec_form (G : Colored n k) :
     rw [certifyCanon?] at hc
     split at hc
     · cases hc
-    · split at hc
-      · cases hc
-      · exact checkCanon_form hc
+    · exact checkCanon_form hc
 
 theorem canonicalizeSpec_relabel (G : Colored n k) :
     G.relabel (canonicalizeSpec G).label =
@@ -725,9 +723,7 @@ theorem canonicalizeSpec_relabel (G : Colored n k) :
     rw [certifyCanon?] at hc
     split at hc
     · cases hc
-    · split at hc
-      · cases hc
-      · exact (checkCanon_sound hc).2.1.symm
+    · exact (checkCanon_sound hc).2.1.symm
 
 theorem canonicalizeSpec_iso (G : Colored n k) :
     Isomorphic G (canonicalizeSpec G).form := by

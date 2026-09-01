@@ -49,9 +49,16 @@ The verification stack, bottom to top:
   fixture and the 32,788-case differential campaign against real
   nauty 2.9.3 (both re-verified after the functional
   `rowsOf`/`initialPartition` refactor).
-- New conformance guards: `rowsOf (canon G) == (runColored G).canong`
-  on the committed cases — the public certificate-checked form carries
-  nauty's canonical rows.
+- The fixture and campaign emitters now serialize the *public*
+  `canonicalize` answer (label and canonical bits), built through the
+  public checked constructors, so the whole corpus pins the public
+  surface — form and label — against real nauty, not only the
+  transcription. This caught and fixed a real divergence: the
+  certificate pipeline's label replay picked a different achieving
+  leaf than nauty on 1,346 of 6,028 fixture cases; the label source is
+  now the transcribed search's `canonlab` validated by `checkCanon`.
+- Conformance guards additionally pin
+  `rowsOf (canon G) == (runColored G).canong` on committed cases.
 - New bench comparator: `runHexCanon{8,12,16}` versus
   `runNautyCanon{8,12,16}` through an in-process FFI binding against
   the vendored nauty 2.9.3 source (`vendor/nauty-2.9.3`);
@@ -64,5 +71,6 @@ The verification stack, bottom to top:
 - The tactic's negative path remains the verified pairwise replay
   (SPEC text updated to record why); the certificate route is on the
   API for compiled callers.
-- `bestLab?` is untrusted and unproven by design: the exhaustive
-  fallback plus runtime validation carries totality.
+- The public label comes from the transcribed search's `canonlab`
+  (nauty's exact tie-breaking) validated by the trusted `checkCanon`;
+  the exhaustive fallback plus runtime validation carries totality.

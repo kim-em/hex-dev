@@ -344,6 +344,20 @@ inductive CertNode where
 
 mutual
 
+/-- The number of proof-rule records in a certificate tree. -/
+@[expose] def CertNode.size : CertNode → Nat
+  | .leaf | .codePrune | .autom _ _ => 1
+  | .node children => 1 + CertNode.sizeList children
+
+/-- The total record count of a list of certificate subtrees. -/
+@[expose] def CertNode.sizeList : List CertNode → Nat
+  | [] => 0
+  | c :: cs => c.size + CertNode.sizeList cs
+
+end
+
+mutual
+
 /-- Replay one node of the certificate. `⟨bcodes, brows⟩` is the
 claimed best key's suffix at this depth. Returns `none` if the replay
 fails, otherwise `some achieved` where `achieved` records whether this
@@ -1229,35 +1243,5 @@ theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
       rw [← hB]
       exact checkKey_sound hchk
     · cases h
-
-/-- Follow the best path through the spec tree to the labelling of
-the leaf achieving the claimed key. Untrusted: `checkCanon` validates
-the result. -/
-@[expose] def bestLab? (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
-      Option (Array Nat)
-  | 0, _, _, _, _, _, _ => none
-  | fuel + 1, level, lab, ptn, active, numcells, bcodes =>
-    match bcodes with
-    | [] => none
-    | bc :: brest =>
-      let rs := refine ctx level lab ptn active numcells
-      if rs.longcode = bc then
-        if discreteAt rs.ptn level ctx.n then
-          if brest = [codeSentinel] &&
-              leafRows ctx rs.lab == brows then
-            some rs.lab
-          else
-            none
-        else
-          let tcr := specMaketargetcell ctx rs.lab rs.ptn level
-            tcLevel
-          (List.range tcr.2.2).findSome? fun o =>
-            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
-              rs.lab[tcr.1 + o]!
-            bestLab? ctx tcLevel brows fuel (level + 1) br.1 br.2.1
-              br.2.2 (numcells + 1) brest
-      else
-        none
 
 end Hex.GraphIso.Nauty

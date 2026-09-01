@@ -147,19 +147,12 @@ theorem isIso_eq_false_iff (G H : Colored n k) :
 
 /-- Bounded isomorphism search. Outer `none` is exhaustion; `some none` is
 a completed non-isomorphism result; `some (some p)` is a found
-transporter. Exhaustion is not evidence of non-isomorphism. -/
+transporter. Exhaustion is not evidence of non-isomorphism. The
+conservative pre-check charges the worst case for each of the two
+canonicalizations. -/
 @[expose] def findIso? (search : SearchLimits) (G H : Colored n k) :
     Option (Option (Perm n)) :=
-  if searchCost n ≤ search.maxNodes then some (findIso G H) else none
-
-set_option linter.unusedVariables false in
-/-- Bounded canonicalization. `none` is exhaustion. The replay limit is
-part of the public signature: the production backing replays its
-certificate before returning; the conservative pre-check charges the
-worst case. -/
-@[expose] def canon? (search : SearchLimits) (replay : ReplayLimits)
-    (G : Colored n k) : Option (CanonResult n k) :=
-  if searchCost n ≤ search.maxNodes then some (canonicalize G) else none
+  if 2 * searchCost n ≤ search.maxNodes then some (findIso G H) else none
 
 namespace FindIso
 
@@ -182,16 +175,6 @@ theorem none_sound (search : SearchLimits) (G H : Colored n k)
 
 end FindIso
 
-theorem canon?_eq_some {search : SearchLimits} {replay : ReplayLimits}
-    {G : Colored n k} {result : CanonResult n k}
-    (h : canon? search replay G = some result) :
-    result.form = canon G ∧ G.relabel result.label = result.form := by
-  rw [canon?] at h
-  split at h
-  · rw [← Option.some.inj h]
-    exact ⟨rfl, relabel_label G⟩
-  · simp at h
-
 /-! # Canonical certificates -/
 
 /-- A canonical certificate: the replayed tree shape, the claimed best
@@ -205,30 +188,30 @@ structure CanonCert (n k : Nat) where
   /-- The labelling achieving the key. -/
   lab : Array Nat
 
-set_option linter.unusedVariables false in
 /-- Produce a canonical certificate from the branch-and-bound search.
-`none` on exhaustion of the conservative precharge or when the
-untrusted search fails its own validation. -/
+`none` on exhaustion or when the untrusted search fails its own
+validation. The conservative pre-check charges `maxNodes` the worst
+case; `maxCertNodes` is checked against the record count of the
+certificate actually produced. -/
 @[expose] def certify? (limits : SearchLimits) (G : Colored n k) :
     Option (CanonCert n k) :=
   if searchCost n ≤ limits.maxNodes then
     match Nauty.certifyKey? G with
     | none => none
     | some (cert, B) =>
-      match Nauty.bestLab? { n := n, g := Nauty.rowsOf G } 100 B.rows
-          n 1 (Nauty.initialPartition G).1
-          (Nauty.initPtn n (n + 2) (Nauty.initialPartition G).2)
-          (Nauty.initActive (Nauty.initialPartition G).2)
-          (Nauty.initialPartition G).2.length B.codes with
-      | none => none
-      | some lab => some ⟨cert, B, lab⟩
+      if cert.size ≤ limits.maxCertNodes then
+        some ⟨cert, B, (Nauty.runColored G).canonlab⟩
+      else
+        none
   else
     none
 
-/-- Replay a canonical certificate against the graph. -/
+/-- Replay a canonical certificate against the graph. The replay is
+charged one `checkCost n` per certificate record, plus one for the
+achieving-labelling validation. -/
 @[expose] def checkCanon (limits : ReplayLimits) (G : Colored n k)
     (cert : CanonCert n k) : Option (CanonResult n k) :=
-  if searchCost n ≤ limits.maxCheckerSteps then
+  if (cert.tree.size + 1) * checkCost n ≤ limits.maxCheckerSteps then
     Nauty.checkCanon G cert.tree cert.key cert.lab
   else
     none
@@ -253,6 +236,25 @@ theorem checkCanon_key {limits : ReplayLimits} {G : Colored n k}
   rw [checkCanon] at h
   split at h
   · exact (Nauty.checkCanon_sound h).1
+  · simp at h
+
+/-- Bounded canonicalization: certificate production under the search
+limits followed by replay under the replay limits, so every limit is
+consulted. `none` is exhaustion (or an untrusted-search failure); the
+unbounded `canonicalize` remains the total operation. -/
+@[expose] def canon? (search : SearchLimits) (replay : ReplayLimits)
+    (G : Colored n k) : Option (CanonResult n k) :=
+  match certify? search G with
+  | some cert => checkCanon replay G cert
+  | none => none
+
+theorem canon?_eq_some {search : SearchLimits} {replay : ReplayLimits}
+    {G : Colored n k} {result : CanonResult n k}
+    (h : canon? search replay G = some result) :
+    result.form = canon G ∧ G.relabel result.label = result.form := by
+  rw [canon?] at h
+  split at h
+  · exact checkCanon_sound h
   · simp at h
 
 /-! # Difference certificates -/

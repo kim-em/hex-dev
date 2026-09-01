@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert
+public import HexGraphIso.Nauty.Search
 
 public section
 
@@ -85,20 +86,17 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key}
       · cases h
   · cases h
 
-/-- Produce a checked `CanonResult`: run the certified key search and
-replay the best leaf to extract its labelling. -/
+/-- Produce a checked `CanonResult`: run the certified key search, then
+validate the transcribed search's canonical labelling against the
+checked key. The transcription supplies nauty's exact label
+tie-breaking (its first leaf achieving the final best); the trusted
+`checkCanon` replay validates it, so the label source stays
+untrusted. -/
 @[expose] def certifyCanon? (G : Colored n k) :
     Option (CanonResult n k) :=
   match certifyKey? G with
   | none => none
-  | some (cert, B) =>
-    match bestLab? { n := n, g := rowsOf G } 100 B.rows n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length B.codes with
-    | none => none
-    | some lab => checkCanon G cert B lab
+  | some (cert, B) => checkCanon G cert B (runColored G).canonlab
 
 /-! # The certificate-based negative decision -/
 

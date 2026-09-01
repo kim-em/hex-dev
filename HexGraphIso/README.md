@@ -119,8 +119,9 @@ The planned stack, in dependency order:
    claimed labelling's leaf rows against the key and its colours
    against the vertex order, and packages the relabelled form, with
    `checkCanon_sound` tying the result to `canonSpecKey`;
-   `certifyCanon?` chains the producer, the best-path labelling replay
-   (`bestLab?`), and the checked wrapper. Checked forms are
+   `certifyCanon?` chains the producer, the transcribed search's
+   canonical labelling (nauty's exact label tie-breaking, still an
+   untrusted source), and the checked wrapper. Checked forms are
    key-determined (`checkCanon_rows`, `checkCanon_sorted`,
    `checkCanon_form_eq` via the leafRows/relabel correspondence
    `rowsOf_relabel_eq_leafRows`), which closes the certificate-based

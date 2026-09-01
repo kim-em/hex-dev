@@ -17,7 +17,8 @@ Core conformance for `HexGraphIso`.
 - **Mode:** `required` for the external leg in release CI
   (`HEX_REQUIRE_ORACLES=1`); this module itself has no external
   dependency.
-- **Covered operations:** `Graph.ofEdges?`, `Graph.relabel`,
+- **Covered operations:** `Graph.ofEdges?`, `Graph.ofEdges`,
+  `Graph.relabel`,
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
   `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`, `canon`,
@@ -48,26 +49,33 @@ open Hex Hex.GraphIso
 -- duplicate and reversed edges collapse
 #guard
   (Graph.ofEdges? 3 [(0, 1), (1, 0), (0, 1)]) == (Graph.ofEdges? 3 [(0, 1)])
+-- the total `Fin`-pair builder agrees with the checked builder, drops
+-- diagonal pairs, and collapses duplicates in either orientation
+#guard
+  some (Graph.ofEdges [(0, 1), (1, 2)]) == Graph.ofEdges? 3 [(0, 1), (1, 2)]
+#guard Graph.ofEdges (n := 3) [(1, 1)] == Graph.empty 3
+#guard
+  Graph.ofEdges (n := 3) [(0, 1), (1, 0), (0, 1)] == Graph.ofEdges [(0, 1)]
 
 private def p3 : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (1, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2)]
+    coloring := Coloring.trivial 3 }
 
 private def p3' : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (0, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (0, 2)]
+    coloring := Coloring.trivial 3 }
 
 private def k3 : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (1, 2), (0, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2), (0, 2)]
+    coloring := Coloring.trivial 3 }
 
 private def c4 : Colored 4 1 :=
-  { graph := (Graph.ofEdges? 4 [(0, 1), (1, 2), (2, 3), (0, 3)]).getD (Graph.empty 4)
-    coloring := Coloring.trivial 4 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2), (2, 3), (0, 3)]
+    coloring := Coloring.trivial 4 }
 
 private def path4 : Colored 4 1 :=
-  { graph := (Graph.ofEdges? 4 [(0, 1), (1, 2), (2, 3)]).getD (Graph.empty 4)
-    coloring := Coloring.trivial 4 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2), (2, 3)]
+    coloring := Coloring.trivial 4 }
 
 /-! # Permutations and labels -/
 
@@ -110,12 +118,27 @@ private def rot3 : Perm 3 :=
 /-! # Bounded operations: exhaustion is `none`, never `false` -/
 
 #guard (findIso? { maxNodes := 0, maxCertNodes := 0 } p3 p3').isNone
+-- `findIso?` charges both canonicalizations: one worst case is not enough
+#guard (findIso? { maxNodes := searchCost 3 } p3 p3').isNone
 #guard (checkIso? { maxCheckerSteps := 0 } p3 p3' (Perm.id 3)).isNone
 #guard (canon? { maxNodes := 0, maxCertNodes := 0 } {} p3).isNone
+-- every limit is consulted: certificate-record and replay-step exhaustion
+#guard (canon? { maxCertNodes := 0 } {} p3).isNone
+#guard (canon? {} { maxCheckerSteps := 0 } p3).isNone
+#guard (certify? { maxCertNodes := 0 } p3).isNone
+#guard
+  match certify? {} p3 with
+  | some cert => (checkCanon { maxCheckerSteps := 0 } p3 cert).isNone
+  | none => false
 #guard (findIso? {} p3 p3') == some (findIso p3 p3')
 #guard
   match checkIso? {} p3 p3 (Perm.id 3) with
   | some b => b
+  | none => false
+-- within limits the bounded pipeline reproduces the total operation
+#guard
+  match canon? {} {} c4 with
+  | some res => res.form == canon c4 && (c4.relabel res.label == res.form)
   | none => false
 
 /-! # Reference and nauty-compatible agreement
@@ -164,26 +187,26 @@ same canonical form, and the pentagonal prism receives a different one
 although it is also cubic on ten vertices. -/
 
 private def petersen : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 /-- `K(5, 2)` on the lexicographic two-element subsets
 `01 02 03 04 12 13 14 23 24 34` of `Fin 5`, joined when disjoint. -/
 private def kneser52 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6), (2, 8),
-       (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
+    coloring := Coloring.trivial 10 }
 
 private def prism5 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 #guard (nautyForm petersen).isSome
 #guard nautyForm petersen == nautyForm kneser52
@@ -208,7 +231,7 @@ private def prism5 : Colored 10 1 :=
 -- the Kneser graph K(5,2) is the Petersen graph
 #guard Families.choose 5 2 == 10
 #guard
-  (Nauty.runColored (Families.plain (Families.kneser 5 2) (by decide))).canong ==
+  (Nauty.runColored (Families.plain (Families.kneser 5 2))).canong ==
     (Nauty.runColored petersen).canong
 -- regularity spot checks: T(5) and Paley 13 are 6-regular, Q3 cubic
 #guard (Families.triangular 5).degree ⟨0, by decide⟩ == 6
@@ -221,8 +244,8 @@ private def prism5 : Colored 10 1 :=
 -- structured pair: C6 versus two triangles
 #guard
   Pairwise.decideIso? {}
-    (Families.plain (Families.cycle 6) (by omega))
-    (Families.plain (Families.copies 2 (Families.cycle 3)) (by decide)) ==
+    (Families.plain (Families.cycle 6))
+    (Families.plain (Families.copies 2 (Families.cycle 3))) ==
     some false
 
 /-! # The empty graph -/

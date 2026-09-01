@@ -185,6 +185,10 @@ def canon? (search : SearchLimits) (replay : ReplayLimits)
 `maxCertNodes` counts every proof-rule record emitted. Replay work charges one
 step for each proof-rule record, vertex or permutation entry inspected, and
 dense adjacency word inspected. All counters use checked `Nat` arithmetic.
+An implementation may account conservatively — refuse up front by charging an
+upper bound on a counter, or charge whole-certificate record counts — provided
+accepted work never exceeds the declared budget; exhaustion may therefore be
+reported for inputs an exact counter would have admitted.
 For `findIso?`, outer `none` means exhaustion, `some none` is a completed
 non-isomorphism result, and `some (some p)` is a found transporter. For the
 other bounded operations, exhaustion also returns `none`. Exhaustion is not

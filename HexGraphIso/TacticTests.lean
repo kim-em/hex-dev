@@ -23,16 +23,16 @@ namespace Hex.GraphIso.TacticTests
 open Hex Hex.GraphIso
 
 def p3 : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (1, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2)]
+    coloring := Coloring.trivial 3 }
 
 def p3' : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (0, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (0, 2)]
+    coloring := Coloring.trivial 3 }
 
 def k3 : Colored 3 1 :=
-  { graph := (Graph.ofEdges? 3 [(0, 1), (1, 2), (0, 2)]).getD (Graph.empty 3)
-    coloring := Coloring.trivial 3 (by omega) }
+  { graph := Graph.ofEdges [(0, 1), (1, 2), (0, 2)]
+    coloring := Coloring.trivial 3 }
 
 example : Isomorphic p3 p3' := by graph_iso
 example : ¬ Isomorphic p3 k3 := by graph_iso
@@ -71,17 +71,17 @@ the same graph, and a cubic ten-vertex non-example.
 -/
 
 def petersen : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 def kneser52 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6), (2, 8),
-       (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
+    coloring := Coloring.trivial 10 }
 
 example : Isomorphic petersen kneser52 := by graph_iso
 
@@ -89,11 +89,11 @@ example : Isomorphic petersen kneser52 := by graph_iso
 refinement alone cannot separate it from the Petersen graph; the
 negative goal replays the verified pairwise decision in the kernel. -/
 def prism5 : Colored 10 1 :=
-  { graph := (Graph.ofEdges? 10
+  { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]).getD (Graph.empty 10)
-    coloring := Coloring.trivial 10 (by omega) }
+       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+    coloring := Coloring.trivial 10 }
 
 set_option maxRecDepth 100000 in
 example : ¬ Isomorphic petersen prism5 := by graph_iso
@@ -105,10 +105,9 @@ colourings and a non-adjacent pair in the third.
 -/
 
 def c6 : Graph 6 :=
-  (Graph.ofEdges? 6 [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5)]).getD
-    (Graph.empty 6)
+  Graph.ofEdges [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5)]
 
-def modFallback : Coloring 6 2 := Coloring.mod 6 2 (by omega) (by omega)
+def modFallback : Coloring 6 2 := Coloring.mod 6 2
 
 def edgeMarkA : Colored 6 2 :=
   ⟨c6, (Coloring.ofVector? #v[(0 : Fin 2), 0, 1, 1, 1, 1]).getD modFallback⟩
@@ -153,7 +152,7 @@ def g12 : Colored 12 1 :=
       (fun i j => by rcases Decidable.em (i = j) with h | h <;>
         simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
       (fun i => by simp)
-    coloring := Coloring.trivial 12 (by omega) }
+    coloring := Coloring.trivial 12 }
 
 def g12relabelled : Colored 12 1 :=
   { graph := Graph.ofAdj
@@ -164,7 +163,7 @@ def g12relabelled : Colored 12 1 :=
       (fun i j => by rcases Decidable.em (i = j) with h | h <;>
         simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
       (fun i => by simp)
-    coloring := Coloring.trivial 12 (by omega) }
+    coloring := Coloring.trivial 12 }
 
 example : Isomorphic g12 g12relabelled := by graph_iso
 
@@ -181,7 +180,7 @@ def g12b : Colored 12 1 :=
       (fun i j => by rcases Decidable.em (i = j) with h | h <;>
         simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
       (fun i => by simp)
-    coloring := Coloring.trivial 12 (by omega) }
+    coloring := Coloring.trivial 12 }
 
 set_option maxRecDepth 400000 in
 example : ¬ Isomorphic g12 g12b := by graph_iso

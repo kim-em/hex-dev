@@ -72,14 +72,16 @@ theorem isSome_ofVector? (v : Vector (Fin k) n) :
 
 /-- The constant zero colouring: the one-cell colouring of a nonempty vertex
 set. -/
-@[expose] def trivial (n : Nat) (h : 0 < n) : Coloring n 1 where
+@[expose] def trivial (n : Nat) (h : 0 < n := by first | omega | decide) :
+    Coloring n 1 where
   cells := Hex.Vector.ofFn' fun _ => 0
   onto c := ⟨⟨0, h⟩, by
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
     simp [Hex.Vector.get_eq_getElem, this]⟩
 
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
-@[expose] def mod (n k : Nat) (hk : 0 < k) (hkn : k ≤ n) : Coloring n k where
+@[expose] def mod (n k : Nat) (hk : 0 < k := by first | omega | decide)
+    (hkn : k ≤ n := by first | omega | decide) : Coloring n k where
   cells := Hex.Vector.ofFn' fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
   onto c := by
     refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
