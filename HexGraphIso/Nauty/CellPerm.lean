@@ -1435,4 +1435,291 @@ theorem windowScan_region_perm (level cell1 cell2 : Nat)
         (by rw [hlayL, List.flatMap_cons, hgv, List.nil_append])
         (by rw [hlayL', List.flatMap_cons, hgv', List.nil_append])
 
+/-! # The nontrivial-splitter cell -/
+
+theorem nontrivialFix_setLab (cell1 : Nat) (st : RefineSt)
+    (X : Array Nat) :
+    nontrivialFix cell1 { st with lab := X } =
+      { nontrivialFix cell1 st with lab := X } := by
+  rw [nontrivialFix, nontrivialFix]
+  dsimp only
+  rcases Decidable.em (¬ elem st.active cell1 = true) with hcx | hcx
+  · simp only [if_pos hcx]
+  · simp only [if_neg hcx]
+
+theorem ptn_nontrivialFix (cell1 : Nat) (st : RefineSt) :
+    (nontrivialFix cell1 st).ptn = st.ptn := by
+  rw [nontrivialFix]
+  split <;> rfl
+
+/-- One nontrivial-splitter cell preserves cell-contents equivalence:
+the positional results agree and the labellings stay cell-equivalent
+for the result's partition, which changes only strictly inside the
+processed cell. -/
+theorem nontrivialCell_perm {ctx : Ctx} {level workset cell1 cell2 : Nat}
+    {st st' : RefineSt} (h : StPerm level st st')
+    (hcell : IsCell st.ptn level cell1 (cell2 + 1 - cell1))
+    (hc12 : cell1 ≤ cell2) (h2 : cell2 < st.lab.size)
+    (hsz : st.ptn.size = st.lab.size) :
+    StPerm level (nontrivialCell ctx level workset cell1 cell2 st)
+      (nontrivialCell ctx level workset cell1 cell2 st') ∧
+    (∀ q : Nat, q < cell1 ∨ cell2 ≤ q →
+      (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
+        st.ptn[q]!) ∧
+    (nontrivialCell ctx level workset cell1 cell2 st).ptn.size =
+      st.ptn.size ∧
+    (nontrivialCell ctx level workset cell1 cell2 st).lab.size =
+      st.lab.size := by
+  rw [nontrivialCell, nontrivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  case true =>
+    rw [if_pos rfl, if_pos rfl]
+    exact ⟨h, fun q _ => rfl, rfl, rfl⟩
+  case false =>
+  simp only [Bool.false_eq_true, if_false]
+  have hseg : (segN st.lab cell1 (cell2 + 1 - cell1)).Perm
+      (segN st'.lab cell1 (cell2 + 1 - cell1)) :=
+    h.cells cell1 _ hcell
+  have hcm := countsOf_eq_map ctx st.lab workset cell1 cell2
+  have hcm' := countsOf_eq_map ctx st'.lab workset cell1 cell2
+  have hcp : (countsOf ctx st.lab workset cell1 cell2).Perm
+      (countsOf ctx st'.lab workset cell1 cell2) := by
+    rw [hcm, hcm']
+    exact hseg.map _
+  have hbmin : (countsOf ctx st'.lab workset cell1 cell2).foldl Nat.min
+      ((countsOf ctx st'.lab workset cell1 cell2).headD 0) =
+      (countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) :=
+    (foldl_min_headD_perm hcp).symm
+  have hbmax : (countsOf ctx st'.lab workset cell1 cell2).foldl Nat.max
+      ((countsOf ctx st'.lab workset cell1 cell2).headD 0) =
+      (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) :=
+    (foldl_max_headD_perm hcp).symm
+  rw [hbmin, hbmax]
+  rcases hbm : ((countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+      ((countsOf ctx st.lab workset cell1 cell2).headD 0) ==
+      (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0)) with _ | _
+  case true =>
+    rw [if_pos rfl, if_pos rfl]
+    exact ⟨⟨h.ptn, h.active, h.numcells, h.hint, h.maxpos,
+      by dsimp only; rw [h.longcode], h.labSize, h.cells⟩,
+      fun q _ => rfl, rfl, rfl⟩
+  case false =>
+  simp only [Bool.false_eq_true, if_false]
+  have hvals : countValues (countsOf ctx st'.lab workset cell1 cell2) =
+      countValues (countsOf ctx st.lab workset cell1 cell2) := by
+    rw [countValues, countValues, hbmin, hbmax]
+  rw [hvals]
+  have hW' : windowScan level cell1 cell2
+      (countsOf ctx st'.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1 cell2))
+      cell1 (-1) st' =
+      { windowScan level cell1 cell2
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st with
+        lab := st'.lab } := by
+    rw [← windowScan_counts_congr level cell1 cell2
+      (fun v => hcp.countP_eq _) _ _ _ st']
+    conv =>
+      lhs
+      rw [h.eq_setLab]
+    rw [windowScan_setLab]
+  rw [hW']
+  dsimp only
+  rw [lab_windowScan level cell1 cell2
+    (countsOf ctx st.lab workset cell1 cell2)]
+  rw [nontrivialFix_setLab cell1
+      (windowScan level cell1 cell2
+        (countsOf ctx st.lab workset cell1 cell2)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))
+        cell1 (-1) st)]
+  rw [nontrivialFix_setLab cell1
+      (windowScan level cell1 cell2
+        (countsOf ctx st.lab workset cell1 cell2)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))
+        cell1 (-1) st)
+      (writeSegment st'.lab cell1
+        (segmentOf st'.lab cell1
+          (countsOf ctx st'.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))]
+  -- layout facts for both written labellings
+  have hSEG : segmentOf st.lab cell1
+      (countsOf ctx st.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1 cell2)) =
+      (countValues (countsOf ctx st.lab workset cell1 cell2)).flatMap
+        fun v => (segN st.lab cell1 (cell2 + 1 - cell1)).filter
+          fun x => (popCount (workset &&& ctx.g[x]!)) == v := by
+    rw [hcm]
+    exact segmentOf_eq_flatMap st.lab cell1 _ _ _
+      (fun j hj => by
+        rw [segN_length] at hj
+        exact (segN_getElem! st.lab cell1 _ j hj).symm)
+  have hSEG' : segmentOf st'.lab cell1
+      (countsOf ctx st'.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1 cell2)) =
+      (countValues (countsOf ctx st.lab workset cell1 cell2)).flatMap
+        fun v => (segN st'.lab cell1 (cell2 + 1 - cell1)).filter
+          fun x => (popCount (workset &&& ctx.g[x]!)) == v := by
+    rw [hcm']
+    exact segmentOf_eq_flatMap st'.lab cell1 _ _ _
+      (fun j hj => by
+        rw [segN_length] at hj
+        exact (segN_getElem! st'.lab cell1 _ j hj).symm)
+  have hnd : (countValues (countsOf ctx st.lab workset cell1
+      cell2)).Nodup := by
+    rw [countValues]
+    exact nodup_range_map_add _ _
+  have hcov : ∀ x ∈ segN st.lab cell1 (cell2 + 1 - cell1),
+      popCount (workset &&& ctx.g[x]!) ∈
+        countValues (countsOf ctx st.lab workset cell1 cell2) := by
+    intro x hx
+    have hmemc : popCount (workset &&& ctx.g[x]!) ∈
+        countsOf ctx st.lab workset cell1 cell2 := by
+      rw [hcm]
+      exact List.mem_map.mpr ⟨x, hx, rfl⟩
+    have hlo := foldl_min_le_mem _
+      ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ hmemc
+    have hhi := foldl_max_ge_mem _
+      ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ hmemc
+    rw [countValues]
+    refine List.mem_map.mpr ⟨popCount (workset &&& ctx.g[x]!) -
+      (countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0),
+      List.mem_range.mpr (by omega), by omega⟩
+  have hcov' : ∀ x ∈ segN st'.lab cell1 (cell2 + 1 - cell1),
+      popCount (workset &&& ctx.g[x]!) ∈
+        countValues (countsOf ctx st.lab workset cell1 cell2) := by
+    intro x hx
+    exact hcov x (hseg.mem_iff.mpr hx)
+  have hflat : (((countValues (countsOf ctx st.lab workset cell1
+      cell2)).flatMap fun v => (segN st.lab cell1 (cell2 + 1 -
+        cell1)).filter fun x => (popCount (workset &&& ctx.g[x]!)) ==
+          v).Perm (segN st.lab cell1 (cell2 + 1 - cell1))) :=
+    flatMap_filters_perm _ _ hnd hcov
+  have hflat' : (((countValues (countsOf ctx st.lab workset cell1
+      cell2)).flatMap fun v => (segN st'.lab cell1 (cell2 + 1 -
+        cell1)).filter fun x => (popCount (workset &&& ctx.g[x]!)) ==
+          v).Perm (segN st'.lab cell1 (cell2 + 1 - cell1))) :=
+    flatMap_filters_perm _ _ hnd hcov'
+  have hSEGlen : (segmentOf st.lab cell1
+      (countsOf ctx st.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1
+        cell2))).length = cell2 + 1 - cell1 := by
+    rw [hSEG, hflat.length_eq, segN_length]
+  have hSEGlen' : (segmentOf st'.lab cell1
+      (countsOf ctx st'.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1
+        cell2))).length = cell2 + 1 - cell1 := by
+    rw [hSEG', hflat'.length_eq, segN_length]
+  have hlay : segN (writeSegment st.lab cell1
+      (segmentOf st.lab cell1 (countsOf ctx st.lab workset cell1 cell2)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))))
+      cell1 (cell2 + 1 - cell1) =
+      (countValues (countsOf ctx st.lab workset cell1 cell2)).flatMap
+        fun v => (segN st.lab cell1 (cell2 + 1 - cell1)).filter
+          fun x => (popCount (workset &&& ctx.g[x]!)) == v := by
+    rw [← hSEG, show cell2 + 1 - cell1 = (segmentOf st.lab cell1
+      (countsOf ctx st.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1
+        cell2))).length from hSEGlen.symm]
+    exact segN_writeSegment _ st.lab cell1 (by rw [hSEGlen]; omega)
+  have hlay' : segN (writeSegment st'.lab cell1
+      (segmentOf st'.lab cell1
+        (countsOf ctx st'.lab workset cell1 cell2)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))))
+      cell1 (cell2 + 1 - cell1) =
+      (countValues (countsOf ctx st.lab workset cell1 cell2)).flatMap
+        fun v => (segN st'.lab cell1 (cell2 + 1 - cell1)).filter
+          fun x => (popCount (workset &&& ctx.g[x]!)) == v := by
+    rw [← hSEG', show cell2 + 1 - cell1 = (segmentOf st'.lab cell1
+      (countsOf ctx st'.lab workset cell1 cell2)
+      (countValues (countsOf ctx st.lab workset cell1
+        cell2))).length from hSEGlen'.symm]
+    exact segN_writeSegment _ st'.lab cell1 (by
+      rw [hSEGlen']
+      have := h.labSize
+      omega)
+  -- the two written labellings are cell-equivalent for the old partition
+  have hLout : ∀ a len, IsCell st.ptn level a len →
+      a + len ≤ cell1 ∨ cell2 + 1 ≤ a →
+      (segN (writeSegment st.lab cell1
+        (segmentOf st.lab cell1
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))
+        a len).Perm
+      (segN (writeSegment st'.lab cell1
+        (segmentOf st'.lab cell1
+          (countsOf ctx st'.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))
+        a len) := by
+    intro a len hic hdis
+    have hLs : segN (writeSegment st.lab cell1
+        (segmentOf st.lab cell1
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))
+        a len = segN st.lab a len :=
+      segN_congr fun o ho => writeSegment_outside _ _ _ _
+        (by rw [hSEGlen]; omega)
+    have hRs : segN (writeSegment st'.lab cell1
+        (segmentOf st'.lab cell1
+          (countsOf ctx st'.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))
+        a len = segN st'.lab a len :=
+      segN_congr fun o ho => writeSegment_outside _ _ _ _
+        (by rw [hSEGlen']; omega)
+    rw [hLs, hRs]
+    exact h.cells a len hic
+  have hcp0 : cellsPerm st.ptn level
+      (writeSegment st.lab cell1
+        (segmentOf st.lab cell1
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))))
+      (writeSegment st'.lab cell1
+        (segmentOf st'.lab cell1
+          (countsOf ctx st'.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2)))) := by
+    intro a len hic
+    rcases isCell_disjoint_or_eq hic hcell with hd | hd | ⟨ha, hlen⟩
+    · exact hLout a len hic (Or.inr (by omega))
+    · exact hLout a len hic (Or.inl (by omega))
+    · subst ha
+      rw [hlen, hlay, hlay']
+      exact (flatMap_perm_of_pointwise _ fun v _ =>
+        hseg.filter _).trans (List.Perm.refl _)
+  refine ⟨⟨rfl, rfl, rfl, rfl, rfl, rfl,
+    by
+      dsimp only
+      rw [writeSegment_size, writeSegment_size]
+      exact h.labSize,
+    ?_⟩, ?_, ?_, ?_⟩
+  · -- cell equivalence for the result partition
+    dsimp only
+    rw [ptn_nontrivialFix]
+    refine windowScan_region_perm level cell1 cell2
+      (countsOf ctx st.lab workset cell1 cell2)
+      (fun v => (segN st.lab cell1 (cell2 + 1 - cell1)).filter
+        fun x => (popCount (workset &&& ctx.g[x]!)) == v)
+      (fun v => (segN st'.lab cell1 (cell2 + 1 - cell1)).filter
+        fun x => (popCount (workset &&& ctx.g[x]!)) == v)
+      (fun v => hseg.filter _)
+      (fun v => by
+        rw [← List.countP_eq_length_filter, hcm, multOf,
+          List.countP_map]
+        rfl)
+      (countValues (countsOf ctx st.lab workset cell1 cell2)) cell1
+      (-1) st (fun _ => hcell) (by omega) hcp0 hlay hlay'
+  · intro q hq
+    dsimp only
+    rw [ptn_nontrivialFix]
+    exact ptn_windowScan_outside level cell1 cell2 _ _ _ _ _
+      (Nat.le_refl cell1) q hq
+  · dsimp only
+    rw [ptn_nontrivialFix]
+    exact ptn_windowScan_size level cell1 cell2 _ _ _ _ _
+  · dsimp only
+    rw [writeSegment_size]
+
 end Hex.GraphIso.Nauty

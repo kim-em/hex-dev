@@ -802,22 +802,20 @@ theorem nontrivialCell_stOk {ctx : Ctx} {level workset cell1 cell2 : Nat}
         · have h0 : counts = [] := List.length_eq_zero_iff.mp (by omega)
           rw [h0] at hbm
           simp at hbm
-      generalize hvals : (List.range
-          (counts.foldl Nat.max (counts.headD 0) + 1 -
-            counts.foldl Nat.min (counts.headD 0))).map
-          (counts.foldl Nat.min (counts.headD 0) + ·) = values
-      have hnd : values.Nodup := by
-        rw [← hvals]
+      have hnd : (countValues counts).Nodup := by
+        rw [countValues]
         exact nodup_range_map_add _ _
       have hsum := sum_multOf_le hnd counts
       have hlsz := h.labSize
       have hW := windowScan_stOk (level := level) (cell1 := cell1)
-        (counts := counts) h2 values cell1 (-1) st h (by omega)
+        (counts := counts) h2 (countValues counts) cell1 (-1) st h
+        (by omega)
       rw [lab_windowScan level cell1 cell2 counts]
-      have hws := writeSegment_ok (segmentOf st.lab cell1 counts values)
+      have hws := writeSegment_ok
+        (segmentOf st.lab cell1 counts (countValues counts))
         st.lab cell1 h.labOk
         (segmentOf_mem (cell1 := cell1) (counts := counts) h.labOk
-          (by omega) values)
+          (by omega) (countValues counts))
       exact nontrivialFix_stOk
         ⟨hws.1.trans h.labSize, hws.2, hW.ptnSize, hW.activeLt, hW.ptnEnd⟩ h1
     · simp only [if_true]

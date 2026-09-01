@@ -244,23 +244,44 @@ Touches no labelling data. -/
   else
     st
 
+/-- The value window scanned by the nontrivial splitter: `bmin` to
+`bmax` inclusive. -/
+@[expose] def countValues (counts : List Nat) : List Nat :=
+  (List.range (counts.foldl Nat.max (counts.headD 0) + 1 -
+    counts.foldl Nat.min (counts.headD 0))).map
+    (counts.foldl Nat.min (counts.headD 0) + ·)
+
 /-- One cell's processing in the nontrivial-splitter pass. -/
 @[expose] def nontrivialCell (ctx : Ctx) (level : Nat) (workset cell1 cell2 : Nat)
     (st : RefineSt) : RefineSt :=
   if cell1 == cell2 then
     st
+  else if (countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+      ((countsOf ctx st.lab workset cell1 cell2).headD 0) ==
+      (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) then
+    { st with
+      longcode := mash st.longcode
+        ((countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+          ((countsOf ctx st.lab workset cell1 cell2).headD 0) + cell1) }
   else
-    let counts := countsOf ctx st.lab workset cell1 cell2
-    let bmin := counts.foldl Nat.min (counts.headD 0)
-    let bmax := counts.foldl Nat.max (counts.headD 0)
-    if bmin == bmax then
-      { st with longcode := mash st.longcode (bmin + cell1) }
-    else
-      let values := (List.range (bmax + 1 - bmin)).map (bmin + ·)
-      let st := windowScan level cell1 cell2 counts values cell1 (-1) st
-      nontrivialFix cell1
-        { st with
-          lab := writeSegment st.lab cell1 (segmentOf st.lab cell1 counts values) }
+    nontrivialFix cell1
+      { windowScan level cell1 cell2
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st with
+        lab := writeSegment
+            (windowScan level cell1 cell2
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1 cell2))
+              cell1 (-1) st).lab cell1
+            (segmentOf
+              (windowScan level cell1 cell2
+                (countsOf ctx st.lab workset cell1 cell2)
+                (countValues (countsOf ctx st.lab workset cell1 cell2))
+                cell1 (-1) st).lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1 cell2))) }
 
 /-- One splitting pass of `refine` for a nontrivial splitter cell
 `lab[split1..split2]`.
