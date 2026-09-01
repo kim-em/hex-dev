@@ -22,6 +22,21 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- The colour value at position `i` of a labelling. -/
+@[expose] def labColor (G : Colored n k) (lab : Array Nat) (i : Nat) :
+    Nat :=
+  if h : i < lab.size ∧ lab[i]! < n then
+    (G.coloring.cells[(⟨lab[i]!, h.2⟩ : Fin n)]).val
+  else
+    0
+
+/-- Positions list colours in nondecreasing order. -/
+@[expose] def colorSortedCheck (G : Colored n k) (lab : Array Nat) :
+    Bool :=
+  (List.range n).all fun i =>
+    decide (i + 1 = n) ||
+      decide (labColor G lab i ≤ labColor G lab (i + 1))
+
 /-- Validate a certificate together with the claimed canonical
 labelling: the replay must accept the key, and the labelling's leaf
 rows must be the key's rows. Returns the canonical form and label. -/
@@ -34,7 +49,8 @@ rows must be the key's rows. Returns the canonical form and label. -/
     | none => none
     | some l =>
       if checkKey G cert B &&
-          (B.rows == leafRows { n := n, g := rowsOf G } lab) then
+          (B.rows == leafRows { n := n, g := rowsOf G } lab) &&
+          colorSortedCheck G lab then
         some { form := G.relabel l, label := l }
       else
         none
@@ -62,7 +78,7 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key}
           rw [← h']
         have hlabel : res.label = l := by
           rw [← h']
-        refine ⟨checkKey_sound hcond.1, ?_, ?_, hcond.2⟩
+        refine ⟨checkKey_sound hcond.1.1, ?_, ?_, hcond.1.2⟩
         · rw [hform, hlabel]
         · rw [hform]
           exact isomorphic_relabel G l
@@ -296,5 +312,109 @@ theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
   congr 1
   refine List.map_congr_left fun i hi => ?_
   exact rowOf_relabel hsz hl (List.mem_range.mp hi)
+
+/-! # Determinism facts for checked forms -/
+
+theorem ofVector?_perm_vec {v : Vector (Fin n) n} {l : Label n}
+    (h : Label.ofVector? v = some l) : l.perm.vec = v := by
+  rw [Label.ofVector?, Perm.ofVector?] at h
+  split at h
+  · simp only [Option.map_some] at h
+    injection h with h'
+    rw [← h']
+  · simp at h
+
+/-- Everything a successful `checkCanon` establishes, with the label's
+entries pinned to the claimed array. -/
+theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
+    {lab : Array Nat} {res : CanonResult n k}
+    (h : checkCanon G cert B lab = some res) :
+    lab.size = n ∧
+    res.form = G.relabel res.label ∧
+    (∀ (i : Nat) (hi : i < n), (res.label.get ⟨i, hi⟩).val =
+      lab[i]!) ∧
+    checkKey G cert B = true ∧
+    B.rows = leafRows { n := n, g := rowsOf G } lab ∧
+    colorSortedCheck G lab = true := by
+  rw [checkCanon] at h
+  split at h
+  · next hwf =>
+    split at h
+    · cases h
+    · next l hl =>
+      split at h
+      · next hcond =>
+        injection h with h'
+        simp only [Bool.and_eq_true, beq_iff_eq] at hcond
+        have hvec := ofVector?_perm_vec hl
+        have hlabel : res.label = l := by rw [← h']
+        have hform : res.form = G.relabel l := by rw [← h']
+        refine ⟨hwf.1, by rw [hform, hlabel], ?_, hcond.1.1,
+          hcond.1.2, hcond.2⟩
+        intro i hi
+        rw [hlabel]
+        have hlen : i < l.perm.vec.toList.length := by
+          simpa using hi
+        show (l.perm.get ⟨i, hi⟩).val = lab[i]!
+        have h2 : l.perm.get ⟨i, hi⟩ = l.perm.vec.toList[i]'hlen :=
+          (Perm.get_toList l.perm ⟨i, hi⟩).symm
+        have h1 : l.perm.vec.toList =
+            (⟨lab.attach.map fun v =>
+              (⟨v.val, hwf.2 v.val v.property⟩ : Fin n), by
+                simp [hwf.1]⟩ : Vector (Fin n) n).toList :=
+          congrArg Vector.toList hvec
+        rw [h2, List.getElem_of_eq h1 hlen]
+        have hasz : i < (lab.attach.map fun v =>
+            (⟨v.val, hwf.2 v.val v.property⟩ : Fin n)).size := by
+          rw [Array.size_map, Array.size_attach]
+          omega
+        show (((lab.attach.map fun v =>
+          (⟨v.val, hwf.2 v.val v.property⟩ : Fin n))[i]'hasz)).val =
+          lab[i]!
+        rw [Array.getElem_map]
+        show (lab.attach[i]'(by rw [Array.size_attach]; omega)).val =
+          lab[i]!
+        rw [Array.getElem_attach]
+        exact (getElem!_pos lab i (by omega)).symm
+      · cases h
+  · cases h
+
+/-- The rows of a checked canonical form are the key's rows. -/
+theorem checkCanon_rows {G : Colored n k} {cert : CertNode} {B : Key}
+    {lab : Array Nat} {res : CanonResult n k}
+    (h : checkCanon G cert B lab = some res) :
+    rowsOf res.form = B.rows.toArray := by
+  obtain ⟨hsz, hform, hag, _, hrows, _⟩ := checkCanon_inv h
+  rw [hform, rowsOf_relabel_eq_leafRows hsz hag, hrows]
+
+/-- The colours of a checked canonical form are nondecreasing along
+the vertex order. -/
+theorem checkCanon_sorted {G : Colored n k} {cert : CertNode}
+    {B : Key} {lab : Array Nat} {res : CanonResult n k}
+    (h : checkCanon G cert B lab = some res) :
+    ∀ (i : Nat) (hi1 : i + 1 < n),
+      (res.form.coloring.cells[i]'(by omega)).val ≤
+        (res.form.coloring.cells[i + 1]'(by omega)).val := by
+  obtain ⟨hsz, hform, hag, _, _, hsort⟩ := checkCanon_inv h
+  intro i hi1
+  have hi : i < n := by omega
+  have hs := List.all_eq_true.mp hsort i (List.mem_range.mpr hi)
+  simp only [Bool.or_eq_true, decide_eq_true_eq] at hs
+  rcases hs with hs | hs
+  · omega
+  · have hcell : ∀ (j : Nat) (hj : j < n),
+        (res.form.coloring.cells[j]'(by omega)).val =
+          labColor G lab j := by
+      intro j hj
+      rw [hform]
+      rw [Colored.cells_relabel G res.label j hj]
+      have hbound : lab[j]! < n := by
+        rw [← hag j hj]
+        exact (res.label.get ⟨j, hj⟩).isLt
+      rw [labColor, dif_pos ⟨by omega, hbound⟩]
+      congr 2
+      exact Fin.eq_of_val_eq (hag j hj)
+    rw [hcell i hi, hcell (i + 1) hi1]
+    exact hs
 
 end Hex.GraphIso.Nauty
