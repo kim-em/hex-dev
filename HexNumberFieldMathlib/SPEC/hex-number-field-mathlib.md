@@ -4,8 +4,43 @@
 
 This library is a `correspondence-only-layer`.
 
-Computational conformance owner: `HexNumberField`
-Computational performance owner: `HexNumberField`
+Computational conformance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`, `HexPoly`, `HexRowReduce`, `HexMatrix`
+Computational performance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`, `HexPoly`, `HexRowReduce`, `HexMatrix`
+
+The complete public surface is correspondence-only. The library declares no
+`meta`, `partial`, `unsafe`, `IO`, syntax, macro, elaborator, tactic, reifier,
+or certificate-checker entry point. Its semantic maps, polynomial views, ring
+maps, equivalences, and field dictionaries are noncomputable. The
+field dictionaries pin every data field definitionally to the existing
+executable operations. `RootSet.totalMultiplicity` is the only
+bridge-originated ordinary definition with a data result: it is the linear
+structural fold used to state the root-result multiplicity theorem, not an
+advertised algebraic operation. The `LawfulBEq` and `DecidableEq` instances
+package the executable `AlgebraicNumber.beq` from `HexNumberField`. These
+result observers and law dictionaries introduce no independent algebraic
+algorithm, checker, reifier, proof generator, or kernel-cost surface.
+
+The transported operations and their computational owners are:
+
+| Transported surface | Computational owner | Owner evidence |
+| --- | --- | --- |
+| `QAdjoin` reduction, arithmetic, scalar actions, powers, inversion, approximation, and checked/total canonical conversion | `HexNumberField` | `conformance/HexNumberField/Conformance.lean`, `hexnumberfield_bench`, and `reports/hex-number-field-performance.md` |
+| Lazy and canonical algebraic-number equality, zero recognition, arithmetic, exactification, and field operations | `HexNumberField` | The same conformance target covers checked and total lazy operations, semantic equality, rational construction, casts, scalar actions, and powers; the same benchmark target registers the corresponding compiled surfaces. |
+| Yun decomposition, candidate disambiguation and merging, fixed-field roots, algebraic-coefficient roots, and common-field presentation (`rational?`, arithmetic and shifts, primitive search, powers, traces, coordinates, and `presentation?`) | `HexNumberField` | The root and algebraic-polynomial sections of the owner conformance target exercise the public pipelines, including common presentation transitively; the owner benchmark registers their components and end-to-end paths. |
+| Selected-root isolation and `RefinedIsolation.refineTo?`; dyadic-ball construction and arithmetic; radius, extent, membership, and square-intersection semantics | `HexRoots` | `conformance/HexRoots/Conformance.lean`, `hexroots_bench`, and `reports/hex-roots-performance.md` |
+| Executable bivariate resultants used by lazy eliminants and fixed-field norm/evaluation eliminants | `HexResultant` | `conformance/HexResultant/Conformance.lean`, `hexresultant_bench`, and `reports/hex-resultant-performance.md` |
+| Checked irreducibility and integer-polynomial factorization used by canonicalization and exactification | `HexBerlekampZassenhaus` | `conformance/HexBerlekampZassenhaus/Conformance.lean`, `hexbz_bench`, and `reports/hex-berlekamp-zassenhaus-performance.md` |
+| Integer-polynomial representation, normalization, and conversion transported into Mathlib polynomials throughout the bridge | `HexPolyZ` | `conformance/HexPolyZ/Conformance.lean`, `hexpolyz_bench`, and `reports/hex-poly-z-performance.md` |
+| Dense-polynomial Euclidean operations, composition, scaling, and coefficient transforms used by Yun, resultants, and presentation proofs | `HexPoly` | `conformance/HexPoly/Conformance.lean`, `hexpoly_bench`, and `reports/hex-poly-performance.md` |
+| `Matrix.spanCoeffs` used by common-field coordinate recovery | `HexRowReduce` | `conformance/HexRowReduce/Conformance.lean`, `hexrowreduce_bench`, and `reports/hex-row-reduce-performance.md` |
+| Matrix/vector construction, row access, multiplication, and conversion used by exactification and coordinate recovery | `HexMatrix` | `conformance/HexMatrix/Conformance.lean`, `hexmatrix_bench`, and `reports/hex-matrix-performance.md` |
+
+There is deliberately no `conformance/HexNumberFieldMathlib` or
+`bench/HexNumberFieldMathlib` source tree, no dedicated Lake conformance or
+benchmark target, no `proof_probes` registry root, and no
+`reports/hex-number-field-mathlib-performance.md`. Building the library checks
+its correspondence theorems and axiom-regression guards; those guards are not
+timed proof probes.
 
 Mathlib companion for `hex-number-field`. It interprets the executable types in
 `ℂ` and proves fixed-field correspondence, canonicalization, factorization-lazy
@@ -310,11 +345,11 @@ No external comparator is required.
 
 **Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-number-field arithmetic algorithm; it verifies the executable QAdjoin
-arithmetic, root isolation, and Yun decomposition implemented
-elsewhere. The computational performance owner is hex-number-field,
-where the arithmetic and root ladders and the PARI/GP comparator are
-measured.
+number-field arithmetic algorithm; it verifies operations implemented by the
+computational performance owners enumerated in the correspondence-only table
+above. Their own Phase-4 targets and reports carry the measurements and
+comparator decisions. In particular, `hex-number-field` measures the
+high-level arithmetic and root ladders and its PARI/GP comparator.
 
 ## References
 
