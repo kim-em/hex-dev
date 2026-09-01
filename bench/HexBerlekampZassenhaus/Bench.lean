@@ -1083,14 +1083,13 @@ setup_fixed_benchmark runFactorSlowCompareChecksum where {
     expectedHash := some 0x352456cfdef1ea82
   }
 
-/- Fixed HO-2 adversarial target: `X^4 + 1`. This records one canonical
+/- Mode 3 absolute bound: `X^4 + 1` records one canonical
 recombination shape where the integer polynomial is irreducible but splits
-modulo `5`; a fixed registration avoids a meaningless singleton scaling
-verdict. -/
+modulo `5`. The clean `0b95505b` calibration maximum was 0.030 ms. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0xdbadaf53f188eac1
   }
 
@@ -1102,14 +1101,13 @@ setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     expectedHash := some 0xf31efeaecbf8fa27
   }
 
-/- Fixed HO-2 adversarial lattice precision-cap setup target for `X^4 + 1`.
-A full lattice factorization exceeds the `verify` mode's one-call budget, so
-this measures the public precision cap plus the pinned `p = 5` modular split
-profile. -/
+/- Mode 3 absolute bound for lattice precision-cap setup on `X^4 + 1`, measuring the public
+precision cap plus the pinned `p = 5` modular split profile. The clean
+`0b95505b` calibration maximum was 0.021 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0x6125716b68ef63ab
   }
 
@@ -1130,64 +1128,65 @@ setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
     expectedHash := some 0x21b9063dace28489
   }
 
-/- Fixed HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. At the pinned fixture
-prime this splits into four local linear factors and recombines into two true
-quadratics. -/
+/- Mode 3 absolute bound: `(X^2 - 2)(X^2 - 3)` splits into four local linear factors at the
+pinned fixture prime and recombines into two true quadratics. The clean
+`0b95505b` calibration maximum was 0.028 ms. -/
 setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0x2939937eff41b345
   }
 
-/- Fixed HO-2 adversarial target: `Phi_15`. This degree-eight cyclotomic case
-exercises the recombination hot path on a canonical fixture. -/
+/- Mode 3 absolute bound: `Phi_15` exercises the recombination hot path on a canonical
+degree-eight cyclotomic fixture. The clean `0b95505b` calibration maximum was
+0.089 ms. -/
 setup_fixed_benchmark runFactorAdvPhi15Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 6.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0x0f794f386e54863f
   }
 
-/- Fixed HO-2 adversarial fast-path setup target for `Phi_15`. This keeps the
-fast-path precision cap and pinned `p = 31` eight-linear split visible without
-routing through the public fallback combinator. -/
+/- Mode 3 absolute bound for fast-path setup on `Phi_15`, keeping the precision cap and pinned
+`p = 31` eight-linear split visible without the public fallback combinator.
+The clean `0b95505b` calibration maximum was 0.026 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 6.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0xf58fd4dcfb9a609a
   }
 
 /-
-Fixed HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
-the CLD lattice tier on this degree-eight worst-case recombination input currently
-exceed the `verify`-mode budget, so this reduced registration pins the same
-canonical polynomial at the same conformance prime and records its eight-linear
-modular split profile while keeping SD3 visible to `list` and `verify`.
+Mode 3 absolute bound: the Swinnerton-Dyer `SD_3` modular-split profile pins this canonical
+degree-eight polynomial at its conformance prime and records its eight linear
+local factors. The clean `0b95505b` calibration maximum was 0.009 ms.
 -/
 setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    minTotalSeconds := 0.001
+    maxSecondsPerCall := 0.005
     expectedHash := some 0xe2da56484730f726
   }
 
-/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer `SD_3`,
-certifying irreducibility via the early-stop separation certificate (#8395). -/
+/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_3`, certifying
+irreducibility via the early-stop separation certificate (#8395). The clean
+`0b95505b` calibration maximum was 1.604 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
     repeats := 5
-    minTotalSeconds := 0.2
-    maxSecondsPerCall := 4.0
+    minTotalSeconds := 0.005
+    maxSecondsPerCall := 0.025
     expectedHash := some 0xd91e58bd22915e00
   }
 
-/- Fixed lattice-tier target: full `factorLattice` on Swinnerton-Dyer
-`SD_4` (degree 16), the extreme-`r` tail case for the #8395 early stop. -/
+/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_4` (degree 16), the
+extreme-`r` tail case for the #8395 early stop. The clean `0b95505b`
+calibration maximum was 30.227 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {
     repeats := 5
     minTotalSeconds := 0.2
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 0.4
     expectedHash := some 0x687e925fbe11193b
   }
 
