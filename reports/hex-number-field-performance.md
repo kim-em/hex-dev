@@ -624,10 +624,10 @@ the SPEC.
 
 All seven rungs have five-trial spread at or below 1.85%. Median time is
 714.2 µs at `n = 16`, 4.720 ms at `n = 32`, 32.570 ms at `n = 64`, and
-96.551 ms at `n = 96`: respectively 2.08×, 4.28×, 14.70×, and 30.92× faster
+96.551 ms at `n = 96`: respectively 2.07×, 4.28×, 14.70×, and 30.93× faster
 than the shipped-chain single-root medians. At `n = 4`, normalization's extra
-scale passes cost 23.79 µs versus 20.24 µs, a 17.5% regression; it is
-already 1.07× faster at `n = 8`. The result hashes match the superseded run at
+scale passes cost 24.12 µs versus 20.24 µs, a 19.2% regression; it is
+already 1.06× faster at `n = 8`. The result hashes match the superseded run at
 all seven rungs, confirming identical reduced inverses. Against the complexity
 declaration, the normalized chain is now consistent with the operation-trace-
 calibrated aggregate finite-word proxy. The slope tolerance remains unchanged.
@@ -968,12 +968,15 @@ request whose PARI-side work is a constant `0`, so it measures the JSON
 request/reply round trip alone. The multiplication export records **7.126 us**;
 the clean-tree inversion rerun records **7.063 us** (min 6.775 us, max 7.173
 us across five repeats). Overhead is at most 22% of the PARI wall
-time on the smallest rung of either family and under 4% on the largest, so
+time on the smallest rung of either family and under 10% on the largest rung
+of either family (9.9% for multiplication and 1.5% for inversion), so
 every rung clears the 50% floor `SPEC/benchmarking.md` sets for the eligible
 range, and every rung is far inside the 10 s hard ceiling and the 1 s soft
 target. Both raw and overhead-adjusted ratios are recorded below; the adjusted
 figure subtracts only that request/reply floor, leaving serialization and
-PARI-side polynomial construction charged to PARI.
+PARI-side polynomial construction charged to PARI. Each table uses its
+session-matched overhead probe: 7.126 us for the historical multiplication
+session and 7.063 us for the current inversion session.
 
 **Eligible range and rung density.** `SPEC/benchmarking.md` warns that a
 doubling-only schedule usually does not give enough eligible rungs to read a
@@ -1064,6 +1067,14 @@ inversion now takes 709.281 us instead of the former export's 1.478 ms while
 preserving the same canonical hash. This removes the obsolete pre-repair trend
 from the Phase-4 verdict without changing the SPEC's conservative
 `O(n³ log n)` worst-case statement.
+
+The PARI endpoint also differs between sessions: the former endpoint
+supplement recorded 222.231 us at `n = 16`, below its own 253.295 us `n = 12`
+row, while the clean current inversion session records 479.138 us. The current
+row supersedes that non-monotone endpoint, but the descriptive `n^2.13` PARI
+fit and final crossover consequently remain sensitive to this endpoint and are
+not used as complexity evidence. Hash agreement fixes the compared value, not
+the external runtime's between-session variance.
 
 The `n = 6` and `n = 8` inversion rungs are non-monotone (0.792x then 1.627x)
 because PARI's own net cost jumps from 45.1 us to 207.1 us between them while
@@ -1217,7 +1228,10 @@ GMP accounts for 59.96% of leaves, led by rational-normalization gcds, which is
 consistent with the report's explicit warning that the finite-word limb proxy
 does not model gcd internals. The profile exposes no dominant phase outside the
 registration, so the Attribution rule is satisfied without weakening the
-separate worst-case SPEC bound. The raw local profile is
+separate worst-case SPEC bound. On this controlled bounded-height family the
+omitted gcd internals scale within the aggregate proxy's unchanged tolerance;
+a slower-than-declared result or a residual slope outside that tolerance would
+fail mode 1 and reopen the finding. The raw local profile is
 `/tmp/hex-profile-runQAdjoinInvLadder-64.json.gz`; its 4.245 s timed region,
 4,241 retained samples, 0.411 ms calibration residual, confidence check, and
 ±5 ms sensitivity check all pass.
