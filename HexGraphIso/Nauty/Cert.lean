@@ -325,4 +325,138 @@ theorem checkCellsPerm_sound {ptn lab₁ lab₂' : Array Nat}
   have := List.all_eq_true.mp h p hp
   exact List.isPerm_iff.mp (by simpa using this)
 
+/-! # The certificate and its checker -/
+
+/-- One node of a canonical certificate: the shape of the pruned
+search tree the producer visited. Prune variants justify discarding a
+subtree; `node` lists one entry per position of the target cell. -/
+inductive CertNode where
+  /-- The replayed state is discrete; compare its leaf key with the
+  claimed best. -/
+  | leaf : CertNode
+  /-- The subtree's refinement code falls below the best code at this
+  depth. -/
+  | codePrune : CertNode
+  /-- `γ` maps this subtree onto the earlier sibling at offset `o`. -/
+  | autom (o : Nat) (γ : Array Nat) : CertNode
+  /-- Recurse into every position of the target cell. -/
+  | node (children : List CertNode) : CertNode
+
+mutual
+
+/-- Replay one node of the certificate. `⟨bcodes, brows⟩` is the
+claimed best key's suffix at this depth. Returns `none` if the replay
+fails, otherwise `some achieved` where `achieved` records whether this
+subtree attains the claimed best. Success certifies that every leaf
+key of the subtree is `≤` the claimed suffix. -/
+def checkNode (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
+    Nat → Nat → Array Nat → Array Nat → Nat → Nat → CertNode →
+      List Nat → Option Bool
+  | 0, _, _, _, _, _, _, _ => none
+  | fuel + 1, level, lab, ptn, active, numcells, cert, bcodes =>
+    match bcodes with
+    | [] => none
+    | bc :: brest =>
+      match cert with
+      | .autom _ _ => none
+      | .codePrune =>
+        if compare (refine ctx level lab ptn active
+            numcells).longcode bc = .lt then
+          some false
+        else
+          none
+      | .leaf =>
+        match compare (refine ctx level lab ptn active
+            numcells).longcode bc with
+        | .gt => none
+        | .lt => some false
+        | .eq =>
+          if discreteAt (refine ctx level lab ptn active
+              numcells).ptn level ctx.n then
+            match keyCmp
+              ⟨[(refine ctx level lab ptn active numcells).longcode,
+                codeSentinel],
+                leafRows ctx (refine ctx level lab ptn active
+                  numcells).lab⟩
+              ⟨bc :: brest, brows⟩ with
+            | .gt => none
+            | .eq => some true
+            | .lt => some false
+          else
+            none
+      | .node children =>
+        match compare (refine ctx level lab ptn active
+            numcells).longcode bc with
+        | .gt => none
+        | .lt => some false
+        | .eq =>
+          if discreteAt (refine ctx level lab ptn active
+              numcells).ptn level ctx.n then
+            none
+          else
+            if children.length = (specMaketargetcell ctx
+                (refine ctx level lab ptn active numcells).lab
+                (refine ctx level lab ptn active numcells).ptn level
+                  tcLevel).2.2 then
+              checkChildren ctx tcLevel brows fuel level
+                (refine ctx level lab ptn active numcells).lab
+                (refine ctx level lab ptn active numcells).ptn
+                (specMaketargetcell ctx
+                  (refine ctx level lab ptn active numcells).lab
+                  (refine ctx level lab ptn active numcells).ptn
+                  level tcLevel).1
+                numcells brest children 0
+            else
+              none
+
+/-- Replay the children of a node from offset `o` on. -/
+def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
+    (fuel level : Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
+    (brest : List Nat) : List CertNode → Nat → Option Bool
+  | [], _ => some false
+  | c :: rest, o =>
+    let sub : Option Bool :=
+      match c with
+      | .autom o' γ =>
+        if o' < o &&
+            checkAutom ctx.g γ ctx.n &&
+            checkCellsPerm
+              (breakout rsLab rsPtn (level + 1) tc
+                rsLab[tc + o]!).2.1
+              (breakout rsLab rsPtn (level + 1) tc
+                rsLab[tc + o']!).1
+              ((breakout rsLab rsPtn (level + 1) tc
+                rsLab[tc + o]!).1.map fun w => γ[w]!)
+              (level + 1) ctx.n then
+          some false
+        else
+          none
+      | _ =>
+        checkNode ctx tcLevel brows fuel (level + 1)
+          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+          (numcells + 1) c brest
+    match sub with
+    | none => none
+    | some a =>
+      match checkChildren ctx tcLevel brows fuel level rsLab rsPtn tc
+          numcells brest rest (o + 1) with
+      | none => none
+      | some a' => some (a || a')
+
+end
+
+/-- Replay a whole certificate against the claimed best key `B`. -/
+@[expose] def checkKey (G : Colored n k) (cert : CertNode) (B : Key) :
+    Bool :=
+  if n == 0 then
+    B.codes == [] && B.rows == []
+  else
+    checkNode { n := n, g := rowsOf G } 100 B.rows n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length cert B.codes = some true
+
 end Hex.GraphIso.Nauty
