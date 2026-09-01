@@ -27,7 +27,7 @@
 - `Hex.GF2Bench.runFp2BerlekampCompareChecksum`: `n * n`
 
 Paired Hex/NTL informational comparator fixed registrations (per
-`SPEC/Libraries/hex-gf2.md §"External comparators"` and
+`HexGF2/SPEC/hex-gf2.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
 
 - `runAdd{4096,8192,16384,32768,65536,131072,262144}` ↔
@@ -48,17 +48,19 @@ packed-word GF(2)[x] operations.
 
 ## Verdicts
 
-Scientific run at commit `85c88fcecc4955768ebcb787c4d14c59cdaed778` on
-`carica` (Apple M2 Ultra, macOS 14.6.1), running every registered
-hexgf2_bench target plus the 124 paired Hex/NTL fixed comparator rungs:
+The parametric verdicts below come from the scientific run at commit
+`85c88fcecc4955768ebcb787c4d14c59cdaed778` on `carica` (Apple M2 Ultra,
+macOS 14.6.1). That run included the then-current fixed registrations, but its
+fixed timings are superseded by the warmed `e44c4be1e` export in Comparator
+Ratios and are not reused here:
 
 ```sh
 lake exe hexgf2_bench run $(lake exe hexgf2_bench list | awk '/^  Hex\./ {print $1}') \
     --export-file reports/bench-results/hex-gf2-85c88fc.json
 ```
 
-The run used deterministic benchmark inputs from `HexGF2/Bench.lean` and
-`HexGF2Bench.lean`; random seeds are not involved. The harness recorded
+The run used deterministic benchmark inputs from `bench/HexGF2/Bench.lean`
+and `bench/HexGF2Bench.lean`; random seeds are not involved. The harness recorded
 `85c88fc-dirty` because this worktree carries the pod-managed
 `.claude/CLAUDE.md` change plus the in-flight HO-27 bench wiring.
 Export artefact: `reports/bench-results/hex-gf2-85c88fc.json`, SHA-256
@@ -116,13 +118,10 @@ Export artefact: `reports/bench-results/hex-gf2-85c88fc.json`, SHA-256
   complexity (`β=-0.018`, parameters `8..64`, final hash
   `0xc1fd68f0bfde229`).
 
-The 62 paired Hex/NTL fixed-comparator registrations also passed: each
-Hex target and its paired NTL call returned the same observed hash at
-every rung (every `setup_fixed_benchmark` pair appears as a
-`"hashes_agree": true` entry in the export). The agreement covers the
-add, mul, div quotient, rem, and gcd surfaces across the full ladder,
-confirming Hex's packed-word `GF2Poly` reduction and NTL's hand-tuned
-`GF2X` agree on every measured input.
+The repaired `e44c4be1e` comparator export described below contains all 124
+fixed registrations. Every registration has stable repeat hashes, and all 62
+Hex/NTL pairs agree on their observed hash across addition, multiplication,
+division quotient, remainder, and GCD.
 
 Smoke wiring was also checked with:
 
@@ -131,250 +130,165 @@ lake exe hexgf2_bench list
 lake exe hexgf2_bench verify
 ```
 
-`verify` passed all 147 registered benchmarks at the same commit
+`verify` passed all 147 registered benchmarks after the protocol repair
 (23 parametric + 124 paired fixed comparator rungs).
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-gf2.md §"External comparators"` names
-`NTL GF2X via persistent C++ subprocess driver` (matching
-`libraries.yml: HexGF2.phase4.comparators[0].tool`) as the
-`informational` external comparator for HexGF2, scoped to the five
-packed-word GF(2)[x] operations the SPEC text names: `add`, `mul`,
-`div` quotient, `rem` modular reduction, `gcd`. The comparator is wired
-through the persistent C++ subprocess driver
-(`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by
-`scripts/oracle/setup_gf2_ntl_driver.sh`); `HexGF2/Bench.lean` reuses
-the `Child.takeStdin` + `IO.Ref (Option NtlPersistentComparator)`
-pattern HexLLL HO-16 uses for the Isabelle comparator, with one driver
-spawned per `lake exe hexgf2_bench run` invocation and one
-fresh-spawned driver per measured `setup_fixed_benchmark` repeat.
+`HexGF2/SPEC/hex-gf2.md`, §"External comparators", names
+NTL GF2X via persistent C++ subprocess driver as an informational performance
+comparator for multiplication, division,
+remainder, and GCD. Addition is retained only as a same-input
+correctness/protocol anchor because hex serialization dominates its linear
+kernel.
 
-Pairings:
+The paired fixed registrations were rerun after the protocol and contract
+repair at commit `e44c4be1e80e26a244aeb40a5d01e046ad687ab5` on
+`chungus2` (AMD EPYC 9455, Linux x86_64), pinned to CPU 6:
 
-- `runNtlAdd*` ↔ `runAdd*` (NTL `add` against `GF2Poly.add`)
-- `runNtlMul*` ↔ `runMul*` (NTL `mul` against `GF2Poly.mul`)
-- `runNtlDiv*` ↔ `runDiv*` (NTL `DivRem` quotient against `GF2Poly.div`)
-- `runNtlMod*` ↔ `runMod*` (NTL `rem` against `GF2Poly.mod`)
-- `runNtlGcd*` ↔ `runGcd*` (NTL `GCD` against `GF2Poly.gcd`)
+```sh
+HEX_GF2_NTL_DRIVER=.cache/oracles/gf2-ntl/gf2_ntl_bench_driver
+lake exe hexgf2_bench list | awk '/\[fixed\]/{print $1}' |
+  xargs taskset -c 6 lake exe hexgf2_bench run \
+    --export-file reports/bench-results/hex-gf2-e44c4be-issue9804-warmed.json
+```
 
-`runXGcdChecksum`, `runShiftLeftChecksum`, `runShiftRightChecksum`,
-`runClmulChecksum` / `runPureClmulChecksum`, and the `runGF2n*` /
-`runGF2nPoly*` extension-field targets are out of scope of the
-SPEC-named comparator coverage and declare absence with the
-`structural-layer` reason per the same SPEC subsection.
+The export contains all 124 fixed registrations and 560 successful outer
+repeats. Every registration has internally stable hashes, and all 62 Hex/NTL
+pairs agree on their observed hash. The harness records `e44c4be-dirty` only
+because the freshly generated, untracked HexPoly export already existed when
+this run began; the source commit is the full `e44c4be1e...` recorded in the
+artifact. Its SHA-256 is
+`8c4cb4ab9177356317535fa96493d404e2f252c438c1c9b01fe1c8dbf1433689`.
 
-### Per-call overhead
+### Protocol overhead and eligibility
 
-NTL driver per-call overhead is measured by spawning the driver and
-sending one `ping` request (returns the constant `0` checksum after
-parsing the request line). Eleven trials on the audit host: median
-**24.247 ms**, min 23.398 ms, max 75.474 ms (the max is the cold-cache
-first spawn; subsequent spawns settle in the `23.4 – 26.6 ms` band).
-The post-startup steady-state per-request overhead is **~0.8 µs** as
-measured by piping 10000 `ping` requests through a single driver
-process (5 trials, median 32.6 ms total ⇒ ~7.6 µs per request including
-startup, so ~0.8 µs steady-state). The `setup_fixed_benchmark` shape
-spawns one bench child per measured repeat, so every NTL median below
-includes one ~24 ms driver startup. The `adjusted ratio` column
-subtracts the 24.2 ms overhead from the NTL median when positive, then
-divides by the Hex median. A rung is **eligible** under
-`SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"` when
-both (a) the 24.2 ms overhead is at most 50% of measured NTL wall time
-on that rung (i.e. wall ≥ 48.4 ms) and (b) per-call wall time is at
-most the 10 s hard ceiling.
+Every NTL registration sets `warmupFirstIter := true`. The discarded first
+call starts the driver, and the timed inner-repeat batch reuses it. The paired
+Hex registration uses the same `minTotalSeconds := 0.2` timing floor.
 
-The `add` surface is a special case: NTL `GF2X` addition is a 64-bit
-`memcpy + XOR` whose algorithmic cost is sub-millisecond at every
-fixture size in the eligible parametric range, so for `add` the NTL
-wall time at large rungs is dominated by **hex-input marshaling** (the
-driver protocol passes each `GF2Poly` as a hex-encoded byte string).
-The `add` rows are reported for completeness; the ratio there is
-between Hex's `GF2Poly.add` and NTL's `(parse hex) + add + (mix
-words)` round-trip, not against NTL's raw kernel. The mul/div/rem/gcd
-surfaces are bounded by NTL's algorithmic cost across the upper rungs
-and are the load-bearing comparator surfaces.
+Fresh one-request driver processes took 3 ms median over 11 trials. That
+one-time startup is excluded by the warmup. A 100000-request `ping` run took
+0.024 s median over five trials, an upper bound of 0.24 µs per steady-state
+round trip including shell-pipeline cost and amortized startup. The smallest
+NTL operation median below is 13.073 µs, so protocol overhead is at most 1.9%;
+no adjusted ratio is required by `SPEC/benchmarking.md`'s 5% rule.
 
-### NTL `GF2X` `add` vs `runAddChecksum`
+For performance tables, a row is eligible exactly when both observed medians
+are at most ten seconds and the protocol floor passes. The ratio is `NTL /
+Hex`; values below one mean NTL is faster.
 
-Input family `packed-bitwise-core`, declared complexity `n`. Hex's
-packed XOR against NTL's `GF2X` addition. NTL wall time is dominated
-by marshaling at every reported rung, so the eligibility flag is
-present but the ratios are informational rather than algorithmic.
+### Addition correctness/protocol anchor
 
-| n | Hex median | NTL median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 4096 | 548.937 µs | 48.661 ms | 88.646x | 44.561x | yes |
-| 8192 | 1.160 ms | 89.048 ms | 76.793x | 55.923x | yes |
-| 16384 | 2.278 ms | 81.154 ms | 35.628x | 25.004x | yes |
-| 32768 | 4.613 ms | 100.803 ms | 21.853x | 16.607x | yes |
-| 65536 | 9.255 ms | 152.564 ms | 16.484x | 13.869x | yes |
-| 131072 | 18.929 ms | 278.244 ms | 14.699x | 13.421x | yes |
-| 262144 | 37.390 ms | 462.044 ms | 12.357x | 11.710x | yes |
+| n | Hex median | NTL median | NTL / Hex | hashes agree |
+|---:|---:|---:|---:|:---:|
+| 4096 | 291.226 µs | 2.130 ms | 7.3128x | yes |
+| 8192 | 581.914 µs | 4.347 ms | 7.4696x | yes |
+| 16384 | 1.222 ms | 8.802 ms | 7.2047x | yes |
+| 32768 | 2.450 ms | 26.580 ms | 10.8469x | yes |
+| 65536 | 5.667 ms | 37.476 ms | 6.6129x | yes |
+| 131072 | 9.888 ms | 76.238 ms | 7.7105x | yes |
+| 262144 | 21.539 ms | 153.512 ms | 7.1270x | yes |
 
-Trend: adjusted ratio converges from `44.6x` at `n = 4096` toward
-`~12x` at `n = 262144` — Hex `GF2Poly.add` scales linearly in `n`,
-NTL's round-trip cost scales linearly in `n` because the
-hex-marshaling buffer grows linearly, so the ratio decays as the
-fixed-cost portion of the marshaling protocol amortises. The
-asymptote sits at the marshaling-throughput ratio of the protocol
-itself, not at the underlying `add` kernel ratio; this surface is
-not a useful audit signal for the `GF2Poly.add` implementation. This
-is an expected, non-gating protocol limitation: the rows preserve the
-comparator's declared addition scope, but are a protocol-throughput
-anchor rather than algorithmic performance evidence. Because NTL is
-an `informational` comparator and the remaining packed operations
-provide substantive same-input comparisons, binary framing is not a
-Phase-4 repair requirement.
+All seven pairs agree on the result hash. The NTL round trip stays in a
+roughly 6.6–10.9x band because parsing and emitting the hex-framed operands
+dominates `GF2X` addition. These rows establish protocol throughput and
+correctness only; they are not NTL addition-kernel performance evidence and
+carry no performance verdict.
 
-### NTL `GF2X` `mul` vs `runMulChecksum`
+### Multiplication performance
 
-Input family `packed-euclidean`, declared complexity `n²`. Hex's
-schoolbook packed-word multiplication (with Karatsuba crossover named
-in the algorithm table) against NTL's Karatsuba/FFT-tuned `GF2X` mul.
+| n | Hex median | NTL median | NTL / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16 | 14.757 µs | 13.073 µs | 0.8859x | yes |
+| 24 | 32.006 µs | 16.470 µs | 0.5146x | yes |
+| 32 | 57.524 µs | 20.830 µs | 0.3621x | yes |
+| 48 | 133.918 µs | 31.433 µs | 0.2347x | yes |
+| 64 | 222.701 µs | 41.170 µs | 0.1849x | yes |
+| 96 | 500.180 µs | 66.399 µs | 0.1328x | yes |
+| 128 | 870.983 µs | 89.242 µs | 0.1025x | yes |
+| 192 | 1.985 ms | 154.131 µs | 0.0777x | yes |
+| 256 | 3.538 ms | 201.789 µs | 0.0570x | yes |
+| 384 | 8.251 ms | 363.565 µs | 0.0441x | yes |
+| 512 | 15.395 ms | 471.484 µs | 0.0306x | yes |
+| 768 | 38.200 ms | 916.804 µs | 0.0240x | yes |
+| 1024 | 74.750 ms | 1.188 ms | 0.0159x | yes |
+| 1536 | 293.789 ms | 2.429 ms | 0.0083x | yes |
+| 2048 | 607.435 ms | 3.076 ms | 0.0051x | yes |
 
-| n | Hex median | NTL median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 42.580 µs | 49.178 ms | 1154.947x | 586.605x | yes |
-| 24 | 98.250 µs | 49.199 ms | 500.750x | 254.439x | yes |
-| 32 | 169.520 µs | 52.920 ms | 312.175x | 169.419x | yes |
-| 48 | 383.677 µs | 45.843 ms | 119.483x | 56.409x | no |
-| 64 | 663.270 µs | 56.851 ms | 85.713x | 49.227x | yes |
-| 96 | 1.458 ms | 45.963 ms | 31.518x | 14.924x | no |
-| 128 | 2.660 ms | 56.404 ms | 21.203x | 12.106x | yes |
-| 192 | 5.707 ms | 56.384 ms | 9.880x | 5.640x | yes |
-| 256 | 10.660 ms | 51.073 ms | 4.791x | 2.521x | yes |
-| 384 | 23.088 ms | 48.354 ms | 2.094x | 1.046x | no |
-| 512 | 41.078 ms | 43.688 ms | 1.064x | 0.474x | no |
-| 768 | 91.809 ms | 46.917 ms | 0.511x | 0.247x | no |
-| 1024 | 163.822 ms | 59.660 ms | 0.364x | 0.216x | yes |
-| 1536 | 369.000 ms | 58.325 ms | 0.158x | 0.092x | yes |
-| 2048 | 663.958 ms | 51.014 ms | 0.077x | 0.040x | yes |
+The ratio falls smoothly from 0.886x to 0.0051x across fifteen eligible
+rungs. That divergence is expected by the normative contract: NTL dispatches
+to Karatsuba/FFT kernels while Hex currently uses packed schoolbook
+multiplication. It is an informational optimization signal, not a Concern.
 
-Trend: raw ratio falls monotonically across the entire ladder from
-`1155x` at `n = 16` (Hex is fast, NTL is dominated by the ~25 ms
-startup floor) through unity at `n = 512` to `0.077x` at `n = 2048`
-(NTL is ~13x faster than Hex on wall time). Within the eligible rungs
-the adjusted ratio decays from `2.5x` at `n = 256` (Hex still ahead
-after subtracting startup) to `0.040x` at `n = 2048` (NTL spends ~4%
-of Hex's wall time on the same packed-word multiplication); NTL's
-asymptotic advantage is the Karatsuba/FFT crossover Hex's declared
-algorithm table does not exercise. Eligibility flips on and off in
-the mid-range because NTL's algorithmic work at intermediate `n` is
-right at the 24 ms overhead floor; the trend across the whole ladder
-is unambiguous despite the flicker.
+### Division performance
 
-### NTL `GF2X` `div` vs `runDivChecksum`
+| n | Hex median | NTL median | NTL / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16 | 948.173 µs | 20.573 µs | 0.0217x | yes |
+| 24 | 1.910 ms | 29.913 µs | 0.0157x | yes |
+| 32 | 3.170 ms | 39.690 µs | 0.0125x | yes |
+| 48 | 7.176 ms | 62.870 µs | 0.0088x | yes |
+| 64 | 12.107 ms | 85.316 µs | 0.0070x | yes |
+| 96 | 26.348 ms | 143.913 µs | 0.0055x | yes |
+| 128 | 45.595 ms | 195.661 µs | 0.0043x | yes |
+| 192 | 101.838 ms | 366.406 µs | 0.0036x | yes |
+| 256 | 183.389 ms | 487.403 µs | 0.0027x | yes |
+| 384 | 432.351 ms | 943.821 µs | 0.0022x | yes |
+| 512 | 765.782 ms | 1.218 ms | 0.0016x | yes |
+| 768 | 1.834 s | 2.521 ms | 0.0014x | yes |
+| 1024 | 3.355 s | 3.301 ms | 0.0010x | yes |
 
-Input family `packed-euclidean`, declared complexity `n²`. Hex's
-schoolbook long-division quotient against NTL's `DivRem` quotient.
+The ratio falls at every rung, from 0.0217x to 0.0010x over thirteen
+eligible points. This is the expected fast-division versus long-division
+difference declared in the SPEC.
 
-| n | Hex median | NTL median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 1.457 ms | 52.434 ms | 35.979x | 19.373x | yes |
-| 24 | 3.079 ms | 47.927 ms | 15.564x | 7.705x | no |
-| 32 | 5.341 ms | 46.015 ms | 8.616x | 4.085x | no |
-| 48 | 12.817 ms | 44.439 ms | 3.467x | 1.579x | no |
-| 64 | 22.156 ms | 58.975 ms | 2.662x | 1.570x | yes |
-| 96 | 49.152 ms | 55.987 ms | 1.139x | 0.647x | yes |
-| 128 | 84.926 ms | 53.182 ms | 0.626x | 0.341x | yes |
-| 192 | 189.075 ms | 54.157 ms | 0.286x | 0.158x | yes |
-| 256 | 346.675 ms | 49.657 ms | 0.143x | 0.073x | yes |
-| 384 | 786.856 ms | 47.118 ms | 0.060x | 0.029x | no |
-| 512 | 1.379 s | 74.954 ms | 0.054x | 0.037x | yes |
-| 768 | 3.263 s | 65.984 ms | 0.020x | 0.013x | yes |
-| 1024 | 6.094 s | 55.951 ms | 0.009x | 0.005x | yes |
+### Remainder performance
 
-Trend: NTL crosses Hex around `n = 96` and runs ~110x faster than
-Hex at the top eligible rung (`n = 1024`, adjusted ratio `0.005x`).
-NTL's faster long-division-style inner loop and the same Karatsuba/FFT
-crossover that helps `mul` dominate Hex's schoolbook divModAux at
-this regime.
+| n | Hex median | NTL median | NTL / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16 | 954.122 µs | 20.489 µs | 0.0215x | yes |
+| 24 | 1.908 ms | 29.941 µs | 0.0157x | yes |
+| 32 | 3.147 ms | 39.944 µs | 0.0127x | yes |
+| 48 | 7.175 ms | 62.573 µs | 0.0087x | yes |
+| 64 | 12.185 ms | 86.021 µs | 0.0071x | yes |
+| 96 | 25.902 ms | 144.624 µs | 0.0056x | yes |
+| 128 | 46.491 ms | 196.975 µs | 0.0042x | yes |
+| 192 | 101.618 ms | 401.089 µs | 0.0039x | yes |
+| 256 | 185.976 ms | 487.782 µs | 0.0026x | yes |
+| 384 | 413.494 ms | 942.284 µs | 0.0023x | yes |
+| 512 | 777.010 ms | 1.220 ms | 0.0016x | yes |
+| 768 | 2.180 s | 2.539 ms | 0.0012x | yes |
+| 1024 | 3.326 s | 3.287 ms | 0.0010x | yes |
 
-### NTL `GF2X` `rem` vs `runModChecksum`
+The thirteen-rung curve mirrors division and falls from 0.0215x to 0.0010x.
+NTL's fast remainder path and Hex's long remainder loop are explicitly
+different algorithm classes in the normative contract.
 
-Input family `packed-euclidean`, declared complexity `n²`. Hex's
-long-division remainder against NTL's `rem`.
+### GCD performance
 
-| n | Hex median | NTL median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 1.430 ms | 101.676 ms | 71.125x | 54.196x | yes |
-| 24 | 2.930 ms | 78.165 ms | 26.680x | 18.420x | yes |
-| 32 | 5.221 ms | 46.145 ms | 8.838x | 4.203x | no |
-| 48 | 12.808 ms | 52.985 ms | 4.137x | 2.247x | yes |
-| 64 | 21.870 ms | 62.706 ms | 2.867x | 1.761x | yes |
-| 96 | 48.692 ms | 60.164 ms | 1.236x | 0.739x | yes |
-| 128 | 83.643 ms | 69.950 ms | 0.836x | 0.547x | yes |
-| 192 | 190.078 ms | 63.461 ms | 0.334x | 0.207x | yes |
-| 256 | 336.862 ms | 46.923 ms | 0.139x | 0.067x | no |
-| 384 | 772.176 ms | 45.613 ms | 0.059x | 0.028x | no |
-| 512 | 1.391 s | 58.222 ms | 0.042x | 0.024x | yes |
-| 768 | 3.235 s | 61.285 ms | 0.019x | 0.011x | yes |
-| 1024 | 5.990 s | 64.377 ms | 0.011x | 0.007x | yes |
+| n | Hex median | NTL median | NTL / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16 | 3.136 ms | 16.123 µs | 0.0051x | yes |
+| 24 | 7.029 ms | 23.881 µs | 0.0034x | yes |
+| 32 | 13.463 ms | 34.599 µs | 0.0026x | yes |
+| 48 | 26.341 ms | 58.878 µs | 0.0022x | yes |
+| 64 | 46.656 ms | 92.917 µs | 0.0020x | yes |
+| 96 | 100.191 ms | 185.893 µs | 0.0019x | yes |
+| 128 | 181.476 ms | 301.839 µs | 0.0017x | yes |
+| 192 | 390.045 ms | 594.575 µs | 0.0015x | yes |
+| 256 | 741.485 ms | 962.572 µs | 0.0013x | yes |
+| 384 | 1.545 s | 2.981 ms | 0.0019x | yes |
+| 512 | 2.775 s | 4.364 ms | 0.0016x | yes |
+| 768 | 6.181 s | 9.386 ms | 0.0015x | yes |
+| 1024 | 11.057 s | 12.910 ms | 0.0012x | no |
+| 1536 | 26.511 s | 26.713 ms | 0.0010x | no |
 
-Trend: NTL crosses Hex around `n = 128` and runs ~140x faster than
-Hex at the top eligible rung (`n = 1024`, adjusted ratio `0.007x`).
-The shape mirrors `div`'s trend; NTL's `rem` shares the same fast
-DivRem path internally, while Hex's `mod` reuses the same `divModAux`
-schoolbook helper as `div`.
-
-### NTL `GF2X` `gcd` vs `runGcdChecksum`
-
-Input family `packed-euclidean`, declared complexity `n²`. Hex's
-Euclidean gcd (`xgcdAux`-driven) against NTL's `GCD`.
-
-| n | Hex median | NTL median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 2.749 ms | 45.145 ms | 16.424x | 7.620x | no |
-| 24 | 6.101 ms | 45.271 ms | 7.421x | 3.454x | no |
-| 32 | 10.395 ms | 52.601 ms | 5.060x | 2.732x | yes |
-| 48 | 23.311 ms | 49.539 ms | 2.125x | 1.087x | yes |
-| 64 | 40.480 ms | 46.713 ms | 1.154x | 0.556x | no |
-| 96 | 90.936 ms | 47.722 ms | 0.525x | 0.259x | no |
-| 128 | 162.311 ms | 44.503 ms | 0.274x | 0.125x | no |
-| 192 | 338.129 ms | 46.134 ms | 0.136x | 0.065x | no |
-| 256 | 619.762 ms | 58.074 ms | 0.094x | 0.055x | yes |
-| 384 | 1.391 s | 55.636 ms | 0.040x | 0.023x | yes |
-| 512 | 2.464 s | 48.641 ms | 0.020x | 0.010x | yes |
-| 768 | 5.486 s | 48.841 ms | 0.009x | 0.004x | yes |
-| 1024 | 9.984 s | 67.320 ms | 0.007x | 0.004x | yes |
-| 1536 | 22.459 s | 54.035 ms | 0.002x | 0.001x | yes |
-
-Trend: NTL crosses Hex around `n = 64` and runs ~1000x faster than
-Hex at the top eligible rung (`n = 1536`, adjusted ratio `0.001x`).
-NTL's `GCD` uses subquadratic GCD variants (half-gcd) that Hex's
-Euclidean reduction does not; the gap accelerates more sharply with
-`n` than `div` / `rem` because Hex's gcd inner loop iterates the
-linear-time long-division cost across `O(n)` reduction steps.
-
-Taken together, the `mul` / `div` / `rem` / `gcd` trends are expected,
-non-gating informational-comparator behavior. They match the SPEC's
-predeclared algorithm-class difference: NTL uses tuned Karatsuba/FFT,
-fast division, and subquadratic GCD kernels, while HexGF2 supplies the
-verified schoolbook packed-word surface. The divergence remains useful
-optimization orientation, but does not identify a defect in the
-evidence for the algorithms HexGF2 claims.
-
-### Within-Lean packed-vs-generic comparison (retained from prior report)
-
-Beyond the NTL informational comparator, the `hexgf2_bench` executable
-root registers a cross-library `GF2Poly` versus `FpPoly 2` comparison
-under the `packed-vs-generic-comparison` input family. Median per-call
-wallclocks at the top of each comparison ladder (`n = 64`, this run):
-
-- `runPackedGcdCompareChecksum`: 14.10 ms; `runFp2GcdCompareChecksum`:
-  1.412 s — packed is ~100x faster than the generic `FpPoly 2` path on
-  shared GF(2) coefficient inputs.
-- `runPackedBerlekampCompareChecksum`: 9.77 ms;
-  `runFp2BerlekampCompareChecksum`: 418.72 ms — packed is ~43x faster
-  on the Berlekamp-style Frobenius-column construction.
-
-Both ratios sit comfortably inside the "substantially faster than the
-generic `FpPoly 2` path (up to 64x for addition-heavy workloads)"
-claim in `SPEC/Libraries/hex-gf2.md`. The GCD ratio's overshoot of the
-SPEC's "up to 64x" headline reflects that the packed long-division
-inner loop is dominated by 64-bit XOR/shift word ops, while the
-generic `FpPoly 2` path pays per-bit `ZMod64`-wrapped arithmetic.
+The eligible curve contains twelve rungs and ends at `n = 768`. It falls
+from 0.0051x into an upper-ladder 0.0013–0.0019x band, consistent with NTL
+half-GCD against Hex's Euclidean GCD. The `n = 1024` and `n = 1536` Hex
+medians exceed the ten-second hard ceiling and are explicitly ineligible;
+they are retained only to show where the measured ladder crosses the limit.
 
 ## Profile
 

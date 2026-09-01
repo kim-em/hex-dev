@@ -20,16 +20,18 @@
 
 ## Verdicts
 
-Scientific run at commit `b9d853c58f9f85c24c451e7f30890a215759a196` on
-`carica` (Apple M2 Ultra, macOS 14.6.1), running every registered
-parametric target plus every paired Lean/FLINT fixed comparator rung:
+The parametric verdicts below come from the scientific run at commit
+`b9d853c58f9f85c24c451e7f30890a215759a196` on `carica` (Apple M2 Ultra,
+macOS 14.6.1). That run included the then-current fixed registrations, but its
+fixed timings are superseded by the warmed `e44c4be1e` export in Comparator
+Ratios and are not reused here:
 
 ```sh
 lake exe hexpoly_bench run $(lake exe hexpoly_bench list | awk '/^  Hex\./ {print $1}') \
     --export-file reports/bench-results/hex-poly-b9d853c.json
 ```
 
-The run used deterministic benchmark inputs from `HexPoly/Bench.lean`; random
+The run used deterministic benchmark inputs from `bench/HexPoly/Bench.lean`; random
 seeds are not involved. The harness recorded `b9d853c-dirty` because this
 worktree had an unrelated pre-existing `.claude/CLAUDE.md` modification.
 Export artefact: `reports/bench-results/hex-poly-b9d853c.json`.
@@ -69,10 +71,9 @@ Export artefact: `reports/bench-results/hex-poly-b9d853c.json`.
 - `Hex.PolyBench.runDivModChecksum`: consistent with declared complexity
   (`β=-0.057`, parameters `64..512`, final hash `0x9afda056859428e`).
 
-The 88 paired Lean / FLINT fixed-comparator registrations also passed —
-each Lean target and its paired FLINT call returned the same observed
-hash at every rung (every `setup_fixed_benchmark` pair appears as a
-`"hashes_agree": true` entry in the export).
+The repaired `e44c4be1e` comparator export described below contains all 88
+paired fixed registrations. Every registration has stable repeat hashes, and
+each Lean/FLINT pair returns the same observed hash at every rung.
 
 Smoke wiring was also checked with:
 
@@ -81,190 +82,158 @@ lake exe hexpoly_bench list
 lake exe hexpoly_bench verify
 ```
 
-`verify` passed all 103 registered benchmarks at the same commit (15
+`verify` passed all 103 registered benchmarks after the protocol repair (15
 parametric + 88 paired fixed comparator rungs).
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-poly.md §"External comparators"` names
-`FLINT fmpz_poly via python-flint` (matching
-`libraries.yml: HexPoly.phase4.comparators[0].tool`) as the
-`informational` external comparator for HexPoly, scoped to every
-`setup_benchmark` registration on integer polynomial inputs. The comparator is wired through
-`Hex.BenchOracle.Flint.runOp` against the shared persistent-subprocess
-python-flint driver (`scripts/oracle/flint_bench_driver.py`, HO-20),
-which the bench module extends with `fmpz_poly` ops `sub`,
-`derivative`, `compose`, `content`, and `primitive_part` to cover
-every Hex target on `DensePoly Int`. The seven `setup_benchmark`
-registrations over `DensePoly Int`, paired one-to-one with their
-FLINT comparator, are: `runAddChecksum` ↔ `fmpz_poly.add`,
-`runSubChecksum` ↔ `fmpz_poly.sub`, `runMulChecksum` ↔
-`fmpz_poly.mul`, `runDerivativeChecksum` ↔ `fmpz_poly.derivative`,
-`runComposeChecksum` ↔ `fmpz_poly.compose`, `runContent` ↔
-`fmpz_poly.content`, `runPrimitivePartChecksum` ↔
-`fmpz_poly.primitive_part`. The remaining `setup_benchmark`
-registrations (`runEval`, the `F7` Euclidean targets
-`runDivChecksum`/`runModChecksum`/`runDivModChecksum`/`runModByMonicChecksum`/`runGcdChecksum`/`runXGcdChecksum`,
-and `runPolyCRTChecksum` over `Rat`) are not on integer polynomial
-inputs and so have no `fmpz_poly` pairing per the SPEC scope.
+`HexPoly/SPEC/hex-poly.md`, §"External comparators", names
+FLINT fmpz_poly via python-flint as the informational comparator for the seven
+integer-polynomial surfaces below. The non-integer registrations remain outside
+that declared scope.
 
-### Per-call overhead
+The paired fixed registrations were rerun after the protocol repair at commit
+`e44c4be1e80e26a244aeb40a5d01e046ad687ab5` on `chungus2` (AMD EPYC
+9455, Linux x86_64), pinned to CPU 6:
 
-FLINT per-call overhead is measured by timing one driver spawn plus
-one trivial `fmpz_poly.add` request (`/tmp/flint-overhead-measure.py`,
-11 spawns on the same host): median **56.3 ms**, min 54.3 ms. The
-`setup_fixed_benchmark` shape spawns one bench child per repeat, so
-every FLINT median below includes one driver startup. The `adjusted
-ratio` column subtracts this overhead from the FLINT median when
-positive, then divides by the Lean median. A rung is **eligible**
-under `SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`
-when (a) the 56.3 ms overhead is at most 50% of measured FLINT wall
-time on that rung and (b) per-call wall time is at most the 10 s hard
-ceiling.
+```sh
+PATH=/tmp/hex-9804-flint/bin:$PATH
+lake exe hexpoly_bench list | awk '/\[fixed\]/{print $1}' |
+  xargs taskset -c 6 lake exe hexpoly_bench run \
+    --export-file reports/bench-results/hex-poly-e44c4be-issue9804-warmed.json
+```
 
-### FLINT `fmpz_poly.add` vs `runAddChecksum`
+The export contains all 88 fixed registrations, 440 successful outer repeats,
+and no hash disagreement, either within a registration or between any Hex/FLINT
+pair. Its SHA-256 is
+`7018a2838fd969bdc16bbcc54746fcc1b653dd889ebf71029df2d613bbdfe9a7`.
 
-Input family `dense-int-arithmetic`, declared complexity `n`.
+### Protocol overhead and eligibility
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16384 | 1.992 ms | 67.537 ms | 33.911x | 5.642x | no |
-| 32768 | 4.018 ms | 77.961 ms | 19.405x | 5.391x | no |
-| 49152 | 5.914 ms | 89.435 ms | 15.123x | 5.603x | no |
-| 65536 | 7.898 ms | 101.139 ms | 12.805x | 5.677x | no |
-| 98304 | 11.899 ms | 128.186 ms | 10.772x | 6.041x | yes |
-| 131072 | 15.897 ms | 153.137 ms | 9.633x | 6.091x | yes |
+Each FLINT registration now sets `warmupFirstIter := true`. Its discarded
+first call starts python-flint; every timed inner-repeat batch reuses that
+process. The paired Hex registration uses the same `minTotalSeconds := 0.2`,
+so both sides report per-call medians on the same timing basis.
 
-Trend: raw ratios fall monotonically as `n` grows out of the startup
-regime. The two eligible rungs at the top of the ladder give a flat
-adjusted ratio around 6x — once driver startup is subtracted, FLINT
-spends about six times the wall time Hex does on this surface.
+Fresh one-request processes took 48 ms median over 11 trials. That is startup,
+reported separately and excluded by the warmup. A 100000-request
+`fmpz_poly.overhead` run took 0.357 s median over five trials, an upper bound
+of 3.57 µs per steady-state JSON round trip (it also includes shell-pipeline
+cost and amortized startup). The smallest FLINT median below is 128.351 µs, so
+protocol overhead is at most 2.8% on every rung. No adjusted ratio is required
+by `SPEC/benchmarking.md`'s 5% rule. Every median is also below the ten-second
+hard ceiling; all 44 pairs are eligible.
 
-### FLINT `fmpz_poly.sub` vs `runSubChecksum`
+The ratio in every table is `FLINT / Hex`. Values below one mean FLINT is
+faster.
 
-Input family `dense-int-arithmetic`, declared complexity `n`.
+### Addition
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16384 | 2.014 ms | 67.557 ms | 33.546x | 5.590x | no |
-| 32768 | 3.936 ms | 81.349 ms | 20.669x | 6.364x | no |
-| 49152 | 6.027 ms | 89.602 ms | 14.866x | 5.525x | no |
-| 65536 | 7.989 ms | 101.239 ms | 12.672x | 5.625x | no |
-| 98304 | 11.815 ms | 124.824 ms | 10.565x | 5.800x | yes |
-| 131072 | 15.737 ms | 146.586 ms | 9.315x | 5.737x | yes |
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16384 | 480.868 µs | 15.710 ms | 32.6709x | yes |
+| 32768 | 1.055 ms | 14.468 ms | 13.7197x | yes |
+| 49152 | 2.333 ms | 42.047 ms | 18.0218x | yes |
+| 65536 | 2.125 ms | 107.741 ms | 50.7038x | yes |
+| 98304 | 2.946 ms | 85.307 ms | 28.9570x | yes |
+| 131072 | 3.891 ms | 57.971 ms | 14.8970x | yes |
 
-Trend: same shape as `add`. Adjusted ratio is flat around 5.7x at the
-eligible rungs.
+Across six eligible rungs the ratio remains above one and fluctuates rather
+than moving monotonically; serialization and Python object construction
+dominate this coefficientwise kernel. The warmed data supports no adverse
+algorithmic trend.
 
-### FLINT `fmpz_poly.mul` vs `runMulChecksum`
+### Subtraction
 
-Input family `dense-int-arithmetic`, declared complexity `n²`
-(Hex schoolbook against FLINT's Karatsuba / Toom-Cook / FFT crossover).
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16384 | 686.232 µs | 6.984 ms | 10.1776x | yes |
+| 32768 | 1.715 ms | 15.734 ms | 9.1731x | yes |
+| 49152 | 2.027 ms | 21.252 ms | 10.4861x | yes |
+| 65536 | 3.317 ms | 29.786 ms | 8.9805x | yes |
+| 98304 | 3.168 ms | 43.183 ms | 13.6293x | yes |
+| 131072 | 7.037 ms | 57.361 ms | 8.1518x | yes |
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 128 | 239.7 µs | 54.253 ms | 226.382x | 0.0000x | no |
-| 192 | 537.9 µs | 55.806 ms | 103.742x | 0.0000x | no |
-| 256 | 931.2 µs | 56.402 ms | 60.567x | 0.109x | no |
-| 320 | 1.431 ms | 57.596 ms | 40.251x | 0.906x | no |
-| 384 | 2.117 ms | 54.737 ms | 25.854x | 0.0000x | no |
-| 448 | 2.800 ms | 56.092 ms | 20.033x | 0.0000x | no |
-| 512 | 3.676 ms | 56.152 ms | 15.277x | 0.0000x | no |
+The six-rung ratio stays in the 8.15–13.63x band with no directional
+divergence. This is the cleanest linear-kernel curve in the repaired run.
 
-No rung is eligible: at every measured `n`, FLINT's wall time is at or
-near the driver-spawn floor of ~55 ms and the per-call overhead is
-more than 50% of it. The raw ratio columns mostly read the process
-floor, not the algorithm. The adjusted ratios collapse to zero
-because FLINT's algorithmic time is below the measurement floor at
-this density. This is the canonical
-`SPEC/benchmarking.md §"Comparator process overhead reported as
-algorithmic difference"` anti-pattern, recorded here in adjusted form
-rather than as a raw verdict. It is an expected, non-gating protocol
-limitation: the rows preserve the scope and measurement floor of the
-`informational` comparator, but do not support an algorithmic verdict
-and do not require comparator-protocol repair for Phase 4.
+### Multiplication
 
-### FLINT `fmpz_poly.derivative` vs `runDerivativeChecksum`
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 128 | 227.101 µs | 166.407 µs | 0.7327x | yes |
+| 192 | 403.768 µs | 128.351 µs | 0.3179x | yes |
+| 256 | 675.534 µs | 171.051 µs | 0.2532x | yes |
+| 320 | 755.987 µs | 210.524 µs | 0.2785x | yes |
+| 384 | 1.550 ms | 458.585 µs | 0.2959x | yes |
+| 448 | 1.634 ms | 298.353 µs | 0.1826x | yes |
+| 512 | 1.971 ms | 340.564 µs | 0.1728x | yes |
 
-Input family `dense-int-arithmetic`, declared complexity `n`.
+FLINT is already faster at the bottom rung and its ratio falls from 0.733x to
+0.173x across the seven-rung ladder. This expected divergence matches the
+normative contract: FLINT tunes Karatsuba/Toom-Cook/FFT crossovers while
+HexPoly deliberately provides the schoolbook semantic foundation. It is an
+informational finding, not a Concern.
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16384 | 1.410 ms | 63.807 ms | 45.239x | 5.323x | no |
-| 32768 | 2.762 ms | 73.346 ms | 26.559x | 6.173x | no |
-| 49152 | 4.063 ms | 82.717 ms | 20.358x | 6.502x | no |
-| 65536 | 5.541 ms | 88.172 ms | 15.914x | 5.753x | no |
-| 98304 | 8.075 ms | 107.214 ms | 13.278x | 6.305x | no |
-| 131072 | 10.743 ms | 125.912 ms | 11.721x | 6.480x | yes |
+### Derivative
 
-Trend: only the top rung is eligible (the rest sit too close to the
-driver-startup floor). The adjusted ratio is flat around 6x once the
-overhead is subtracted, similar to `add`/`sub`.
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16384 | 368.015 µs | 5.224 ms | 14.1938x | yes |
+| 32768 | 905.000 µs | 21.939 ms | 24.2425x | yes |
+| 49152 | 1.696 ms | 15.751 ms | 9.2846x | yes |
+| 65536 | 1.242 ms | 21.159 ms | 17.0407x | yes |
+| 98304 | 3.486 ms | 31.609 ms | 9.0669x | yes |
+| 131072 | 2.449 ms | 80.256 ms | 32.7662x | yes |
 
-### FLINT `fmpz_poly.compose` vs `runComposeChecksum`
+The ratio is noisy but remains above one at all six eligible rungs and has no
+monotone adverse shape. The table records the full curve without turning the
+noise into an algorithmic claim.
 
-Input family `dense-int-arithmetic`, declared complexity `n⁴`
-(Hex Horner-with-schoolbook composition against FLINT's polynomial
-composition).
+### Composition
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16 | 5.034 ms | 56.853 ms | 11.295x | 0.110x | no |
-| 24 | 30.248 ms | 68.008 ms | 2.248x | 0.387x | no |
-| 32 | 95.952 ms | 84.457 ms | 0.880x | 0.293x | no |
-| 40 | 242.261 ms | 122.425 ms | 0.505x | 0.273x | yes |
-| 48 | 506.532 ms | 165.324 ms | 0.326x | 0.215x | yes |
-| 56 | 941.424 ms | 245.755 ms | 0.261x | 0.201x | yes |
-| 64 | 1.645 s | 346.081 ms | 0.210x | 0.176x | yes |
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16 | 5.239 ms | 2.488 ms | 0.4748x | yes |
+| 24 | 17.323 ms | 5.596 ms | 0.3230x | yes |
+| 32 | 64.778 ms | 16.332 ms | 0.2521x | yes |
+| 40 | 147.036 ms | 61.365 ms | 0.4173x | yes |
+| 48 | 539.800 ms | 65.241 ms | 0.1209x | yes |
+| 56 | 574.411 ms | 189.326 ms | 0.3296x | yes |
+| 64 | 1.021 s | 290.368 ms | 0.2843x | yes |
 
-Trend: FLINT pulls steadily ahead — raw ratio falls from 0.505x at the
-bottom eligible rung to 0.210x at the top, and the adjusted ratio
-follows the same monotone decline. Hex's `compose` uses Horner with
-schoolbook multiplication (`O(n⁴)` at the same dense composition
-inputs); FLINT composes via its own composition kernel and runs over
-ten times faster at `n = 64` (1.6 s vs 346 ms). This adverse trend
-is expected, non-gating informational-comparator behavior: it matches
-the different-complexity-class rationale in the SPEC (Hex Horner
-composition over schoolbook multiplication versus FLINT's faster
-composition kernels). It is retained as optimization orientation, not
-as evidence of a defect in HexPoly's declared schoolbook semantic
-foundation.
+FLINT is faster throughout. The seven eligible ratios fluctuate inside
+0.121–0.475x rather than steadily diverging at the upper end, so this run
+supports a stable informational advantage but no adverse trend beyond the
+declared downstream specialization boundary.
 
-### FLINT `fmpz_poly.content` vs `runContent`
+### Content
 
-Input family `integer-content`, declared complexity `n`.
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16384 | 1.917 ms | 2.876 ms | 1.5003x | yes |
+| 32768 | 4.389 ms | 9.369 ms | 2.1344x | yes |
+| 49152 | 4.060 ms | 13.913 ms | 3.4266x | yes |
+| 65536 | 5.364 ms | 9.788 ms | 1.8248x | yes |
+| 98304 | 8.107 ms | 14.592 ms | 1.8000x | yes |
+| 131072 | 17.850 ms | 20.373 ms | 1.1414x | yes |
 
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16384 | 2.992 ms | 59.236 ms | 19.796x | 0.981x | no |
-| 32768 | 5.787 ms | 63.267 ms | 10.932x | 1.204x | no |
-| 49152 | 8.961 ms | 70.187 ms | 7.832x | 1.550x | no |
-| 65536 | 11.687 ms | 72.602 ms | 6.212x | 1.395x | no |
-| 98304 | 17.792 ms | 81.817 ms | 4.599x | 1.434x | no |
-| 131072 | 24.146 ms | 89.923 ms | 3.724x | 1.393x | no |
+The ratio rises and then returns toward unity; across six eligible rungs there
+is no monotone divergence. Hex is faster at every measured input.
 
-Trend: no eligible rung — FLINT wall time stays near the startup floor
-at every measured `n`. The adjusted ratio is flat around 1.4x (FLINT
-slightly slower than Hex on the algorithmic component), but with
-overhead this large compared to the algorithmic time the comparison
-is informational only.
+### Primitive part
 
-### FLINT `fmpz_poly.primitive_part` vs `runPrimitivePartChecksum`
+| n | Hex median | FLINT median | FLINT / Hex | eligible |
+|---:|---:|---:|---:|:---:|
+| 16384 | 2.255 ms | 5.258 ms | 2.3321x | yes |
+| 32768 | 2.869 ms | 10.790 ms | 3.7606x | yes |
+| 49152 | 4.353 ms | 15.967 ms | 3.6677x | yes |
+| 65536 | 5.675 ms | 26.179 ms | 4.6134x | yes |
+| 98304 | 8.584 ms | 33.065 ms | 3.8517x | yes |
+| 131072 | 11.298 ms | 90.409 ms | 8.0024x | yes |
 
-Input family `integer-content`, declared complexity `n`.
-
-| n | Hex median | FLINT median | raw ratio | adjusted ratio | eligible |
-|---:|---:|---:|---:|---:|:---:|
-| 16384 | 3.724 ms | 64.655 ms | 17.360x | 2.243x | no |
-| 32768 | 7.209 ms | 73.646 ms | 10.216x | 2.406x | no |
-| 49152 | 10.857 ms | 80.647 ms | 7.428x | 2.243x | no |
-| 65536 | 14.475 ms | 90.605 ms | 6.259x | 2.370x | no |
-| 98304 | 21.528 ms | 106.981 ms | 4.969x | 2.354x | no |
-| 131072 | 28.949 ms | 124.305 ms | 4.294x | 2.349x | yes |
-
-Trend: only the top rung is eligible. Adjusted ratio is flat around
-2.3x — FLINT's primitive-part path (content + integer division) takes
-roughly twice the wall time Hex does once startup is subtracted.
+Hex is faster at all six rungs. The ratio broadly rises, with one mid-ladder
+dip, so the direction is favorable to Hex and creates no adverse finding.
 
 ## Profile
 
