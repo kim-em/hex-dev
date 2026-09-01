@@ -48,7 +48,7 @@ structure CheckedOrderCert where
   valid : checkOrder raw = true
 
 /-- Characterisation of every condition replayed by the order checker. -/
-@[simp] theorem checkOrder_iff {c : OrderCert} : checkOrder c = true ↔
+theorem checkOrder_iff {c : OrderCert} : checkOrder c = true ↔
     1 < c.modulus ∧ 0 < c.order ∧ c.orderFac.subject = c.order ∧
       checkFactorization c.orderFac = true ∧
       HexArith.powModNat c.base c.order c.modulus = 1 % c.modulus ∧
@@ -106,13 +106,8 @@ private theorem factorProduct_dvd {d : Nat} :
       have htailPrime : ∀ x ∈ rest, Prime x.prime := by
         intro x hx
         exact hprime x (by simp [hx])
-      have hnot : ¬e.prime ∣ (rest.map fun x => x.prime ^ x.exponent).prod := by
-        intro h
-        obtain ⟨x, hx, heq⟩ :=
-          Internal.prime_mem_of_dvd_prod (hprime e (by simp)) htailPrime h
-        have hlt := hsorted.1 x hx
-        rw [heq] at hlt
-        exact Nat.lt_irrefl _ hlt
+      have hnot := Internal.not_dvd_tail_prod (hprime e (by simp))
+        htailPrime (List.pairwise_cons.mpr hsorted)
       have hcop : Nat.Coprime (e.prime ^ e.exponent)
           (rest.map fun x => x.prime ^ x.exponent).prod :=
         ((hprime e (by simp)).coprime_of_not_dvd hnot).pow_left _

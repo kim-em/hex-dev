@@ -200,8 +200,9 @@ the generator.
 {docstring Hex.Nat.primitiveRoot?_spec}
 
 The Carmichael exponent is computed by taking the least common multiple of
-the prime-power exponents. Its correctness is stated both as a power law and
-as the divisibility bound on every multiplicative order.
+the Carmichael value of each certified prime power. Its correctness is stated
+both as a power law and as the divisibility bound on every multiplicative
+order.
 
 {docstring Hex.Nat.carmichael}
 

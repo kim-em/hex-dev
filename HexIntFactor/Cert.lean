@@ -216,22 +216,6 @@ theorem checkFactorization_sorted {F : Factorization}
 
 namespace Internal
 
-/-- A prime dividing a power divides its base. -/
-theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
-    ∀ {k : Nat}, p ∣ a ^ k → p ∣ a := by
-  intro k
-  induction k with
-  | zero =>
-      intro h
-      rw [Nat.pow_zero] at h
-      exact absurd (Nat.dvd_one.mp h) hp.ne_one
-  | succ k ih =>
-      intro h
-      rw [Nat.pow_succ] at h
-      rcases (hp.dvd_mul).mp h with h | h
-      · exact ih h
-      · exact h
-
 /-- A prime dividing a product of certified prime powers is the base of one
 of the entries. Exponents need not be positive for this direction. -/
 theorem prime_mem_of_dvd_prod {q : Nat} (hq : Prime q) :
@@ -246,13 +230,25 @@ theorem prime_mem_of_dvd_prod {q : Nat} (hq : Prime q) :
   | cons e rest ih =>
       simp only [List.map_cons, List.prod_cons] at hdvd
       rcases hq.dvd_mul.mp hdvd with he | hrest
-      · have hbase := prime_dvd_pow hq he
+      · have hbase := hq.dvd_of_dvd_pow he
         rcases (hprime e (by simp)).2 q hbase with hq1 | heq
         · exact absurd hq1 hq.ne_one
         · exact ⟨e, by simp, heq.symm⟩
       · obtain ⟨e, he, heq⟩ := ih
           (fun e he => hprime e (by simp [he])) hrest
         exact ⟨e, by simp [he], heq⟩
+
+/-- The first prime in a strictly ordered list of prime powers does not divide
+the product represented by its tail. -/
+theorem not_dvd_tail_prod {entry : PrimePower} {rest : List PrimePower}
+    (hp : Prime entry.prime) (htail : ∀ e ∈ rest, Prime e.prime)
+    (hsorted : (entry :: rest).Pairwise fun a b => a.prime < b.prime) :
+    ¬entry.prime ∣ (rest.map fun e => e.prime ^ e.exponent).prod := by
+  intro hdvd
+  obtain ⟨e, he, heq⟩ := prime_mem_of_dvd_prod hp htail hdvd
+  have hlt := (List.pairwise_cons.mp hsorted).1 e he
+  rw [heq] at hlt
+  exact Nat.lt_irrefl _ hlt
 
 end Internal
 
@@ -284,7 +280,7 @@ private theorem prime_dvd_product_iff {q : Nat} (hq : Prime q) :
       constructor
       · intro h
         rcases h with h | h
-        · have hd := Internal.prime_dvd_pow hq h
+        · have hd := hq.dvd_of_dvd_pow h
           exact ⟨e, List.mem_cons_self, (prime_eq_of_dvd hq he hd).symm⟩
         · obtain ⟨x, hx, heq⟩ := h
           exact ⟨x, List.mem_cons_of_mem e hx, heq⟩

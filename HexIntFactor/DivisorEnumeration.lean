@@ -79,8 +79,7 @@ private theorem divisor_prime_power {p e d : Nat} (hp : Prime p)
           have hdpos := Nat.pos_of_dvd_of_pos hd (Nat.pow_pos hp.pos)
           omega
         obtain ⟨q, hq, hqd⟩ := exists_prime_dvd hd2
-        have hqp : q ∣ p :=
-          Internal.prime_dvd_pow hq (Nat.dvd_trans hqd hd)
+        have hqp : q ∣ p := hq.dvd_of_dvd_pow (Nat.dvd_trans hqd hd)
         have hqpEq : q = p := by
           rcases hp.2 q hqp with hq1 | hqpEq
           · exact absurd hq1 hq.ne_one
@@ -115,13 +114,7 @@ theorem head_coprime {entry : PrimePower} {rest : List PrimePower}
   have htail : ∀ e ∈ rest, Prime e.prime := by
     intro e he
     exact hprime e (by simp [he])
-  have hnot : ¬entry.prime ∣
-      (rest.map fun e => e.prime ^ e.exponent).prod := by
-    intro hd
-    obtain ⟨e, he, heq⟩ := Internal.prime_mem_of_dvd_prod hp htail hd
-    have hlt := (List.pairwise_cons.mp hsorted).1 e he
-    rw [heq] at hlt
-    exact Nat.lt_irrefl _ hlt
+  have hnot := Internal.not_dvd_tail_prod hp htail hsorted
   exact (hp.coprime_of_not_dvd hnot).pow_left _
 
 /-- Generated values are exactly the divisors of the represented product. -/

@@ -687,14 +687,8 @@ private theorem squareRoot_dvd_entries : ∀ (entries : List PrimePower),
       simp only [List.map_cons, List.prod_cons] at hd ⊢
       apply squareRoot_dvd_primeProduct
         (hprime entry (by simp))
-        (by
-          intro hdvd
-          obtain ⟨e, he, heq⟩ := Internal.prime_mem_of_dvd_prod
-            (hprime entry (by simp))
-            (fun e he => hprime e (by simp [he])) hdvd
-          have hlt := (List.pairwise_cons.mp hsorted).1 e he
-          rw [heq] at hlt
-          exact Nat.lt_irrefl _ hlt)
+        (Internal.not_dvd_tail_prod (hprime entry (by simp))
+          (fun e he => hprime e (by simp [he])) hsorted)
         (fun c hc => ih
           (fun e he => hprime e (by simp [he]))
           (List.pairwise_cons.mp hsorted).2 c hc)
