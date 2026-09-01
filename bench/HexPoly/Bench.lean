@@ -765,18 +765,17 @@ same parameter inside the densified eligible range so the headline
 report can record raw and overhead-adjusted ratios at each rung and a
 trend across the ladder. The comparator is `informational` per
 `HexPoly/SPEC/hex-poly.md §"External comparators"`: no gating-goal
-verdict is required, the ratios are recorded for orientation. -/
+verdict is required, the ratios are recorded for orientation. Both arms discard
+one call and use the same 200 ms inner-batch floor, so driver startup and
+first-use effects are outside timing. -/
 
-/-- Timing shape for the persistent FLINT comparator. The discarded first
-iteration starts python-flint before the timed region; the inner-repeat floor
-then measures enough steady-state requests to amortise the protocol cost. -/
-def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
-    minTotalSeconds := 0.2 }
-
-/-- Matching inner-repeat floor for the in-process side of every FLINT pair. -/
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2 }
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
+
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 setup_fixed_benchmark runAddChecksum16384 where leanCompareConfig
 setup_fixed_benchmark runFlintAddChecksum16384 where flintCompareConfig

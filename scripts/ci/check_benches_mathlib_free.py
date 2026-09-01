@@ -16,10 +16,9 @@ The computational-benchmark invariants are:
      helper cannot silently import Mathlib.
 
 A narrow exception permits build-only proof-elaboration probes below explicit
-`proof_probes` paths owned by `mathlib: true` libraries in `libraries.yml`.
-Such files may import Mathlib, but may not import
-LeanBench, register a benchmark, define `main`, time work in-process, or
-serve as a `lean_exe` root.
+`proof_probes` paths in `libraries.yml`. Only paths owned by `mathlib: true`
+libraries may import Mathlib. No proof probe may import LeanBench, register a
+benchmark, define `main`, time work in-process, or serve as a `lean_exe` root.
 
 On any violation, exits 1 and prints (a) the offending root or
 file plus (b) for the import-graph case, the full import chain to
@@ -42,7 +41,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 from scripts.libgraph import _strip_comment as _strip_manifest_comment  # noqa: E402
-from scripts.libgraph import load_libraries  # noqa: E402
+from scripts.libgraph import LibraryInfo, load_libraries  # noqa: E402
 
 
 # Module name -> file path: `A.B.C` ↔ `A/B/C.lean` relative to repo root.
@@ -364,8 +363,9 @@ def _check_manifest_uniqueness(path: Path) -> None:
         )
 
 
-def _mathlib_probe_roots(repo_root: Path) -> tuple[Path, ...]:
-    """Return explicit manifest-owned roots admitted to the probe carveout."""
+@functools.cache
+def _probe_root_entries(repo_root: Path) -> tuple[tuple[LibraryInfo, Path], ...]:
+    """Validate and return every explicit manifest-owned proof-probe root."""
     manifest = repo_root / "libraries.yml"
     _check_manifest_uniqueness(manifest)
     libraries = load_libraries(manifest)
@@ -374,7 +374,6 @@ def _mathlib_probe_roots(repo_root: Path) -> tuple[Path, ...]:
         for info in libraries.values()
         for probe in info.proof_probes
     )
-    roots = tuple(root for _, root in entries)
     physical_bench = (repo_root / "bench").resolve()
     for owner, root in entries:
         if root.is_symlink() and not root.exists():
@@ -413,7 +412,19 @@ def _mathlib_probe_roots(repo_root: Path) -> tuple[Path, ...]:
                 f"Phase-4 library {owner.name} has empty proof probe root: "
                 f"{root}"
             )
-    return roots
+    return entries
+
+
+def _all_probe_roots(repo_root: Path) -> tuple[Path, ...]:
+    """Return every manifest-owned proof-probe root."""
+    return tuple(root for _, root in _probe_root_entries(repo_root))
+
+
+def _mathlib_probe_roots(repo_root: Path) -> tuple[Path, ...]:
+    """Return only roots admitted to the Mathlib import carveout."""
+    return tuple(
+        root for owner, root in _probe_root_entries(repo_root) if owner.mathlib
+    )
 
 
 def _is_mathlib_probe_path(path: Path, repo_root: Path,
@@ -470,8 +481,8 @@ def _undeclared_mathlib_bench_failures(
             failures.append(
                 f"  FORBIDDEN: undeclared bench source `{relative}` reaches "
                 f"Mathlib via:\n    {chain_str}\n"
-                f"  Declare an exact proof_probes path owned by a mathlib: "
-                f"true library, or keep the source Mathlib-free."
+                f"  Keep the source Mathlib-free, or (for a mathlib: true "
+                f"owner only) declare an exact proof_probes path."
             )
     return failures
 
@@ -621,7 +632,8 @@ def main() -> int:
     try:
         exe_targets = _parse_exe_targets(lakefile)
         _configured_source_roots(repo_root)
-        probe_roots = _mathlib_probe_roots(repo_root)
+        all_probe_roots = _all_probe_roots(repo_root)
+        mathlib_probe_roots = _mathlib_probe_roots(repo_root)
     except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
         print(f"FATAL: cannot resolve Lake module roots: {exc}", file=sys.stderr)
         return 2
@@ -640,20 +652,20 @@ def main() -> int:
 
     # The build-only proof-probe carveout is intentionally not an executable
     # or a second computational benchmark harness.
-    probe_files = _find_mathlib_probe_files(repo_root, probe_roots)
+    probe_files = _find_mathlib_probe_files(repo_root, all_probe_roots)
     for probe in probe_files:
         for source, violation in _probe_closure_violations(probe, repo_root):
             failures.append(
                 f"  FORBIDDEN: proof probe {probe.relative_to(repo_root)} "
                 f"reaches {source.relative_to(repo_root)}, which {violation}.\n"
-                f"  Mathlib proof probes must be build-only and externally "
+                f"  Proof probes must be build-only and externally "
                 f"timed; see SPEC/benchmarking.md §Mathlib-free benches."
             )
     for exe, target in sorted(exe_targets.items()):
-        probe = _probe_root_path(target, repo_root, probe_roots)
+        probe = _probe_root_path(target, repo_root, all_probe_roots)
         if probe is not None:
             failures.append(
-                f"  FORBIDDEN: executable `{exe}` is rooted at Mathlib proof "
+                f"  FORBIDDEN: executable `{exe}` is rooted at proof "
                 f"probe `{probe.relative_to(repo_root)}`.\n"
                 f"  Proof probes must remain build-only; see "
                 f"SPEC/benchmarking.md §Mathlib-free benches."
@@ -662,7 +674,9 @@ def main() -> int:
     # Files outside an explicit proof-probe root receive no exception merely
     # because their directory resembles a Mathlib library name. Scan every
     # bench source, including non-executable helpers, through its import graph.
-    failures.extend(_undeclared_mathlib_bench_failures(repo_root, probe_roots))
+    failures.extend(
+        _undeclared_mathlib_bench_failures(repo_root, mathlib_probe_roots)
+    )
 
     # Invariant 2: no bench-exe root reaches `Mathlib.*` via imports.
     for exe, target in sorted(bench_targets.items()):
@@ -683,17 +697,17 @@ def main() -> int:
             print(f, file=sys.stderr)
         print(
             "\nFix: keep executable computational benches Mathlib-free. "
-            "A Mathlib proof-elaboration probe may instead be a build-only "
-            "module under an explicit libraries.yml proof_probes path owned by "
-            "a mathlib: true library, with timing performed by an external "
-            "harness.",
+            "A proof-elaboration probe may instead be a build-only module "
+            "under an explicit libraries.yml proof_probes path, with timing "
+            "performed by an external harness. Only a mathlib: true owner "
+            "may import Mathlib there.",
             file=sys.stderr,
         )
         return 1
 
     print(f"check_benches_mathlib_free: OK "
           f"({len(bench_targets)} bench exe(s) checked, "
-          f"{len(probe_files)} build-only Mathlib proof probe(s) checked).")
+          f"{len(probe_files)} build-only proof probe(s) checked).")
     return 0
 
 

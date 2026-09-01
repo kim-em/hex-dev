@@ -329,7 +329,7 @@ measure.
 Elaboration, tactic execution, emitted proof terms, and ordinary kernel
 checking are measured only by an external runner building fresh Lean modules.
 The module sources live recursively below a directory listed in the owning
-`mathlib: true` library's `libraries.yml: proof_probes`. A path may reserve a
+library's `libraries.yml: proof_probes`. A path may reserve a
 not-yet-created directory for a stacked change, but when present it must be a
 directory below `bench/<Owner>/`, must resolve physically inside `bench/`, and
 must contain no symlinks. Reservations are staging-only: before a library may
@@ -565,8 +565,10 @@ Two integration patterns:
     timed region, then reuses the file descriptors across the
     auto-tuned inner-repeat batch. This amortises one driver startup
     across the measured calls in that child; driver state is not
-    shared across outer repeats. Document the protocol and lifetime
-    in the bench module docstring.
+    shared across outer repeats. Fixed registrations using the shared
+    `Hex.BenchOracle.Flint` driver are checked by
+    `scripts/ci/check_persistent_flint_warmup.py`. Document the protocol
+    and lifetime in the bench module docstring.
   - **Per-call process spawn is acceptable only as a last resort.**
     FFI is preferred when feasible; persistent-subprocess is the
     fallback when FFI isn't viable. Per-call process spawn (the
@@ -893,10 +895,12 @@ hard invariants:
    `Hex*Mathlib.*` modules are not what this rule forbids — but per
    invariant (1) above, no bench imports them either.
 
-There is one narrow, non-computational exception. A `mathlib: true` library may
-declare recursive directory roots in `libraries.yml: proof_probes` for the
-fresh-module evidence specified above. No suffix or library flag grants an
-implicit exception, and files outside the exact declared roots remain ordinary
+There is one narrow, non-computational exception. Any library may declare
+recursive directory roots in `libraries.yml: proof_probes` for the fresh-module
+evidence specified above. A declaration owned by a `mathlib: true` library may
+import Mathlib; a declaration owned by a Mathlib-free library remains
+Mathlib-free. No suffix or library flag grants an implicit directory-wide
+exception, and files outside the exact declared roots remain ordinary
 Mathlib-free bench sources. A probe is not a LeanBench registration and must
 not import `LeanBench`, use `setup_benchmark` or `setup_fixed_benchmark`, define
 `main`, perform an in-process timing loop, or serve as the root of any

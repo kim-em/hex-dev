@@ -176,34 +176,43 @@ headline report records raw and overhead-adjusted ratios at each rung
 and a trend across the ladder. The comparator is `informational` per
 `SPEC/Libraries/hex-bareiss.md §"External comparators"`: no
 gating-goal verdict is required; the ratios are recorded for
-orientation. -/
+orientation. Both arms discard one call and use the same 200 ms inner-batch
+floor, so driver startup and first-use effects are outside timing. -/
 
-setup_fixed_benchmark runBareissDet16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet96 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet96 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet128 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet192 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissGenericDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintBareissDet256 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runBareissDet320 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runFlintBareissDet320 where { repeats := 5, maxSecondsPerCall := 8.0 }
-setup_fixed_benchmark runBareissDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runBareissGenericDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runFlintBareissDet384 where { repeats := 5, maxSecondsPerCall := 12.0 }
-setup_fixed_benchmark runBareissDet512 where { repeats := 5, maxSecondsPerCall := 25.0 }
-setup_fixed_benchmark runFlintBareissDet512 where { repeats := 5, maxSecondsPerCall := 25.0 }
+def leanCompareConfig (maxSeconds : Float) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := maxSeconds, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
+
+def flintCompareConfig (maxSeconds : Float) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := maxSeconds, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
+
+setup_fixed_benchmark runBareissDet16 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet16 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet24 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet24 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet32 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet32 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet48 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet48 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet64 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet64 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet96 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet96 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet128 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet128 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet192 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet192 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet256 where leanCompareConfig 6.0
+setup_fixed_benchmark runBareissGenericDet256 where leanCompareConfig 6.0
+setup_fixed_benchmark runFlintBareissDet256 where flintCompareConfig 6.0
+setup_fixed_benchmark runBareissDet320 where leanCompareConfig 8.0
+setup_fixed_benchmark runFlintBareissDet320 where flintCompareConfig 8.0
+setup_fixed_benchmark runBareissDet384 where leanCompareConfig 12.0
+setup_fixed_benchmark runBareissGenericDet384 where leanCompareConfig 12.0
+setup_fixed_benchmark runFlintBareissDet384 where flintCompareConfig 12.0
+setup_fixed_benchmark runBareissDet512 where leanCompareConfig 25.0
+setup_fixed_benchmark runFlintBareissDet512 where flintCompareConfig 25.0
 
 end Hex.BareissBench
 

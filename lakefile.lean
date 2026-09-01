@@ -299,11 +299,12 @@ lean_lib HexBerlekampKernelProbe where
 
 lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
-  globs := #[`HexBench.PrimalityKernel]
+  globs := #[`HexPrimality.Inputs, `HexBench.PrimalityKernel]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.ProofProbe.CoreBaseline,
+  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+    `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
     `HexPrimality.ProofProbe.CoreOverBudget,
@@ -349,7 +350,42 @@ lean_lib HexPrimalityMathlibProofProbe where
     `HexPrimalityMathlib.ProofProbe.Negative65,
     `HexPrimalityMathlib.ProofProbe.Negative512,
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
-    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512]
+    `HexPrimalityMathlib.ProofProbe.NegativeExhausted512].map Glob.one
+
+lean_lib HexPrimalityElabProbeScientific where
+  srcDir := "bench"
+  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+    `HexPrimality.ProofProbe.CoreBaseline,
+    `HexPrimality.ProofProbe.Bit31.Input,
+    `HexPrimality.ProofProbe.Bit31.Search,
+    `HexPrimality.ProofProbe.Bit31.Literal,
+    `HexPrimality.ProofProbe.Bit31.Replay,
+    `HexPrimality.ProofProbe.Bit31.Tactic,
+    `HexPrimality.ProofProbe.Bit61.Input,
+    `HexPrimality.ProofProbe.Bit61.Search,
+    `HexPrimality.ProofProbe.Bit61.Literal,
+    `HexPrimality.ProofProbe.Bit61.Replay,
+    `HexPrimality.ProofProbe.Bit61.Tactic,
+    `HexPrimality.ProofProbe.Bit123.Input,
+    `HexPrimality.ProofProbe.Bit123.Search,
+    `HexPrimality.ProofProbe.Bit123.Literal,
+    `HexPrimality.ProofProbe.Bit123.Replay,
+    `HexPrimality.ProofProbe.Bit123.Tactic,
+    `HexPrimality.ProofProbe.Bit256.Input,
+    `HexPrimality.ProofProbe.Bit256.Search,
+    `HexPrimality.ProofProbe.Bit256.Literal,
+    `HexPrimality.ProofProbe.Bit256.Replay,
+    `HexPrimality.ProofProbe.Bit256.Tactic,
+    `HexPrimality.ProofProbe.Bit511.Input,
+    `HexPrimality.ProofProbe.Bit511.Search,
+    `HexPrimality.ProofProbe.Bit511.Literal,
+    `HexPrimality.ProofProbe.Bit511.Replay,
+    `HexPrimality.ProofProbe.Bit511.Tactic,
+    `HexPrimality.ProofProbe.Bit512.Input,
+    `HexPrimality.ProofProbe.Bit512.Search,
+    `HexPrimality.ProofProbe.Bit512.Literal,
+    `HexPrimality.ProofProbe.Bit512.Replay,
+    `HexPrimality.ProofProbe.Bit512.Tactic].map Glob.one
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"

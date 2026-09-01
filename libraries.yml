@@ -54,10 +54,11 @@
 #       See SPEC/benchmarking.md §"Anti-patterns" entry on best-case
 #       inputs and SPEC/profiling.md §"Coverage requirement".
 # - proof_probes (optional): explicit repository-relative paths below
-#   bench/<Library>/ containing build-only Mathlib proof-elaboration or
-#   kernel-replay probes. Only mathlib: true libraries may declare these.
-#   Files elsewhere in the same bench/<Library>/ tree remain ordinary
-#   computational-bench sources and receive no proof-probe exception. A path
+#   bench/<Library>/ containing build-only proof-elaboration or kernel-replay
+#   probes. Mathlib-free libraries may declare probes, but only mathlib: true
+#   owners receive an exception for Mathlib imports. Files elsewhere in the
+#   same bench/<Library>/ tree remain ordinary computational-bench sources. A
+#   path
 #   may reserve a not-yet-created directory for a later stacked change; once
 #   present it must be a directory resolving physically inside bench/ and its
 #   subtree must contain no symlinks. A done_through: 4 library may not retain
@@ -654,8 +655,9 @@ libraries:
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexPrimality/ProofProbe]
     phase4:
       comparators:
         - tool: "PrimeCert (b-mehta/PrimeCert kernel-replay primality certificates)"

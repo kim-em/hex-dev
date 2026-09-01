@@ -112,11 +112,11 @@ surfaces as an `IO.userError`.
 
 **Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns one
 fresh `hexgf2_bench` child process per measured repeat of a fixed
-benchmark, so each repeat starts with a cold `ntlChildRef`. Every NTL
-registration enables `warmupFirstIter`: the discarded call starts the
-driver before the timed region, then the timed inner-repeat batch reuses
-that child. The paired Hex registration uses the same `minTotalSeconds`
-floor so both medians have the same steady-state timing basis.
+benchmark, so each repeat starts with a cold `ntlChildRef`. Both registrations
+enable `warmupFirstIter`; on the NTL side the discarded call starts the driver
+before the timed region, then the timed inner-repeat batch reuses that child.
+Both sides also use the same `minTotalSeconds` floor, so their medians have the
+same warmed, steady-state timing basis.
 -/
 
 namespace Hex.GF2Bench
@@ -964,35 +964,40 @@ def ntlCompare5 : LeanBench.FixedBenchmarkConfig :=
     minTotalSeconds := 0.2 }
 
 def leanCompare5 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 5.0, minTotalSeconds := 0.2 }
+  { repeats := 5, maxSecondsPerCall := 5.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 def ntlCompare8 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 8.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 def leanCompare8 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 8.0, minTotalSeconds := 0.2 }
+  { repeats := 5, maxSecondsPerCall := 8.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 def ntlCompare12 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 12.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 def leanCompare12 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2 }
+  { repeats := 3, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 def ntlCompare20 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 20.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 def leanCompare20 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 20.0, minTotalSeconds := 0.2 }
+  { repeats := 3, maxSecondsPerCall := 20.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 def ntlCompare30 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 30.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
 
 def leanCompare30 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2 }
+  { repeats := 3, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
 
 setup_fixed_benchmark runAdd4096 where leanCompare5
 setup_fixed_benchmark runNtlAdd4096 where ntlCompare5
