@@ -1,0 +1,376 @@
+{
+  "allocation_share_percent": 10.01,
+  "classified_percent": 83.38,
+  "diagnostics": {
+    "bench_pid": 3229645,
+    "bench_thread_name": "hexrowreduce_bench",
+    "bench_thread_tid": "3229651",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": 0.7576742172241211,
+          "boundary_residual_trimmed_max_ms": 0.4953150749206543,
+          "hit_count": 1179,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 2,
+          "within_residual_limit": false
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.7576742172241211,
+      "residual_ms": 0.4953150749206543,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "absolute-monotonic-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.4953150749206543,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 1178.8,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 2,
+    "rejected_samples_bench_thread": 174,
+    "retained_samples_bench_thread": 1179,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1788227332050.677,
+    "samply_timestamp_mode": "absolute-monotonic-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 1179,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 198,
+              "name": "0xb78230",
+              "samples": 121
+            },
+            {
+              "function": 215,
+              "name": "0xb784d1",
+              "samples": 54
+            },
+            {
+              "function": 227,
+              "name": "0xb8e3c0",
+              "samples": 51
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 1179,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 198,
+              "name": "0xb78230",
+              "samples": 121
+            },
+            {
+              "function": 215,
+              "name": "0xb784d1",
+              "samples": 54
+            },
+            {
+              "function": 227,
+              "name": "0xb8e3c0",
+              "samples": 51
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 1175,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 198,
+              "name": "0xb78230",
+              "samples": 120
+            },
+            {
+              "function": 215,
+              "name": "0xb784d1",
+              "samples": 54
+            },
+            {
+              "function": 227,
+              "name": "0xb8e3c0",
+              "samples": 51
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 1179,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.008481764206955046,
+          "exchanged_samples": 10,
+          "failure_reasons": [],
+          "leaf_function_support_size": 181,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.03061905131092381,
+          "total_variation_distance": 0.003392705682782019,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 1175,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.005106382978723404,
+          "exchanged_samples": 6,
+          "failure_reasons": [],
+          "leaf_function_support_size": 180,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.02373232348314332,
+          "total_variation_distance": 0.0030086802735820135,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 2475132878868899,
+    "spawn_anchor_mono_ns": 2475132506813979,
+    "spawn_anchor_wall_ns": 1788227332049067824,
+    "stage": "complete",
+    "total_timed_ms": 1179.957875
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.RowReduceBench.runReducedMatrix",
+      "percent": 51.91
+    },
+    {
+      "function": "Hex.Matrix.ofFn",
+      "percent": 42.83
+    },
+    {
+      "function": "Hex.Matrix.IsRowReduced.nullspaceMatrix",
+      "percent": 37.91
+    },
+    {
+      "function": "Hex.Matrix.getRow",
+      "percent": 10.26
+    },
+    {
+      "function": "Hex.Matrix.IsRowReduced.pivotIndex?",
+      "percent": 5.34
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 10.01,
+    "lean-own-code": 39.02,
+    "lean-runtime": 34.35,
+    "other": 16.62
+  },
+  "profile": "/tmp/hex-profile-runReducedMatrix-768.json.gz",
+  "samples": 1179,
+  "symbols": "/tmp/hex-profile-runReducedMatrix-768.json.syms.json",
+  "top_inclusive": [
+    {
+      "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+      "percent": 100.0
+    },
+    {
+      "function": "lean::lthread::imp::_main(void*)",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexRowReduce.Bench.0_Hex.RowReduceBench.initFn_.lam_0.00_@.HexRowReduce.Bench.3564274215__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "fun_124075",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 100.0
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 100.0
+    },
+    {
+      "function": "start_thread",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+      "percent": 76.84
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 74.3
+    },
+    {
+      "function": "Hex.RowReduceBench.runReducedMatrix",
+      "percent": 51.91
+    },
+    {
+      "function": "_private.HexRowReduce.Bench.0_Hex.RowReduceBench.matrixChecksum",
+      "percent": 47.24
+    }
+  ],
+  "top_self": [
+    {
+      "function": "Hex.Matrix.IsRowReduced.nullspaceMatrix",
+      "percent": 23.92
+    },
+    {
+      "function": "Hex.Matrix.getRow",
+      "percent": 10.26
+    },
+    {
+      "function": "instHashableRat.hash",
+      "percent": 8.48
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 7.63
+    },
+    {
+      "function": "lean_array_push",
+      "percent": 6.53
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 5.77
+    },
+    {
+      "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "percent": 5.77
+    },
+    {
+      "function": "_private.HexRowReduce.Nullspace.0_Hex.Matrix.IsRowReduced.pivotIndexAux",
+      "percent": 5.26
+    },
+    {
+      "function": "mi_free",
+      "percent": 5.0
+    },
+    {
+      "function": "Hex.Matrix.ofFn",
+      "percent": 4.83
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 2.97
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 2.37
+    },
+    {
+      "function": "_private.HexRowReduce.Bench.0_Hex.RowReduceBench.matrixChecksum",
+      "percent": 2.37
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+      "percent": 1.95
+    },
+    {
+      "function": "lean_inc_heartbeat",
+      "percent": 1.87
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 13.57,
+      "symbol": "Hex.Matrix.IsRowReduced.nullspaceMatrix_.at_.00Hex.Matrix.nullspaceBasisMatrix_.at_.00Hex.RowReduceBench.runNullspaceMatrix.spec_0.spec_0_.redArg_.lam_1"
+    },
+    {
+      "percent": 10.35,
+      "symbol": "Hex.Matrix.IsRowReduced.nullspaceMatrix_.at_.00Hex.Matrix.nullspaceBasisMatrix_.at_.00Hex.RowReduceBench.runNullspaceMatrix.spec_0.spec_0_.redArg_.lam_1_.boxed"
+    },
+    {
+      "percent": 8.48,
+      "symbol": "instHashableRat.hash"
+    },
+    {
+      "percent": 7.63,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 6.53,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 6.02,
+      "symbol": "Hex.Matrix.getRow_.redArg_.lam_0"
+    },
+    {
+      "percent": 5.77,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 5.77,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 5.26,
+      "symbol": "_private.HexRowReduce.Nullspace.0_Hex.Matrix.IsRowReduced.pivotIndexAux_.redArg"
+    },
+    {
+      "percent": 5.0,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 4.83,
+      "symbol": "Hex.Matrix.ofFn_.redArg_.lam_0_.boxed"
+    },
+    {
+      "percent": 4.24,
+      "symbol": "Hex.Matrix.getRow_.redArg_.lam_0_.boxed"
+    },
+    {
+      "percent": 2.97,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 2.37,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 2.37,
+      "symbol": "_private.HexRowReduce.Bench.0_Hex.RowReduceBench.matrixChecksum"
+    }
+  ]
+}
