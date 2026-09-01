@@ -338,11 +338,20 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   validated linear-gcd recovery while scanning full-degree candidates, and
   applies exact trace pairing once if the maximum-degree fallback is needed.
 
-No standalone wall-clock ceiling is pinned before the first complete compiled
-implementation. Phase 4 records component timings, then sets each ceiling from
-the measured reference-host ceiling under the repository benchmarking policy.
-Merge-facing conformance is restricted to tower dimension at most 8 and input
-degree at most 4 until those measurements exist.
+The Phase-4 fixed canonical cases use zero-grace whole-child ceilings derived
+from clean reference-host measurements plus stated margin: 0.5 s for the
+`Q(sqrt(2))` `ofQAdjoin` presentation, 3 s for adjoining the fourth root of two,
+0.5 s for identity adjoining, 2 s for factoring the degree-24 Selmer trinomial
+over `Q(sqrt(2))`, 0.5 s each for the bad-first-shift and recursive-relative
+factorization branches, and 1 s each for the canonical quartic splitting and
+dimension-four flattening cases. These budgets do not replace the recurrence
+above; they are mode-3 regression ceilings for operations whose realised
+phase mixtures admit neither a tight family model nor a published bound
+covering the dominant executable phases.
+
+Merge-facing conformance remains restricted to tower dimension at most 8 and
+input degree at most 4; the degree-24 factorization case is scientific
+performance evidence, not a merge-facing conformance fixture.
 
 ## External comparators
 
