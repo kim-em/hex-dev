@@ -38,7 +38,7 @@ Paired Hex/NTL informational comparator fixed registrations (per
   `runNtlDiv{…}` (NTL `div` quotient)
 - `runMod{16,24,32,48,64,96,128,192,256,384,512,768,1024}` ↔
   `runNtlMod{…}` (NTL `rem` modular reduction)
-- `runGcd{16,24,32,48,64,96,128,192,256,384,512,768,1024,1536}` ↔
+- `runGcd{16,24,32,48,64,96,128,192,256,384,512,768}` ↔
   `runNtlGcd{…}` (NTL `gcd`)
 
 All paired Hex/NTL targets share their fixture prep (`prepBinaryInput`,
@@ -51,7 +51,7 @@ packed-word GF(2)[x] operations.
 The parametric verdicts below come from the scientific run at commit
 `85c88fcecc4955768ebcb787c4d14c59cdaed778` on `carica` (Apple M2 Ultra,
 macOS 14.6.1). That run included the then-current fixed registrations, but its
-fixed timings are superseded by the warmed `3c109a022` export in Comparator
+fixed timings are superseded by the warmed `f4f013c63` export in Comparator
 Ratios and are not reused here:
 
 ```sh
@@ -118,8 +118,8 @@ Export artefact: `reports/bench-results/hex-gf2-85c88fc.json`, SHA-256
   complexity (`β=-0.018`, parameters `8..64`, final hash
   `0xc1fd68f0bfde229`).
 
-The repaired `3c109a022` comparator export described below contains all 124
-fixed registrations. Every registration has stable repeat hashes, and all 62
+The repaired `f4f013c63` comparator export described below contains all 121
+fixed registrations. Every registration has stable repeat hashes, and all 60
 Hex/NTL pairs agree on their observed hash across addition, multiplication,
 division quotient, remainder, and GCD.
 
@@ -130,8 +130,9 @@ lake exe hexgf2_bench list
 lake exe hexgf2_bench verify
 ```
 
-`verify` passed all 147 registered benchmarks after the protocol repair
-(23 parametric + 124 paired fixed comparator rungs).
+`verify` passed all 144 registered benchmarks after the protocol repair
+(23 parametric + 120 paired fixed comparator rungs + one protocol-overhead
+case).
 
 ## Comparator Ratios
 
@@ -143,152 +144,151 @@ correctness/protocol anchor because hex serialization dominates its linear
 kernel.
 
 The paired fixed registrations were rerun after the protocol and contract
-repair at commit `3c109a02286578e8747092a4f2959b28c8af32f0` on
-`chungus2` (AMD EPYC 9455, Linux x86_64), pinned to CPU 1:
+repair at clean commit `f4f013c638460c621728e108c9b77988df8d2836` on
+`chungus2` (AMD EPYC 9455, Linux x86_64), pinned to CPU 4:
 
 ```sh
 HEX_GF2_NTL_DRIVER=.cache/oracles/gf2-ntl/gf2_ntl_bench_driver
 lake exe hexgf2_bench list | awk '/\[fixed\]/{print $1}' |
-  xargs taskset -c 1 lake exe hexgf2_bench run \
-    --export-file reports/bench-results/hex-gf2-3c109a0-issue9804-warmed.json
+  xargs taskset -c 4 lake exe hexgf2_bench run \
+    --export-file reports/bench-results/hex-gf2-f4f013c-issue9804-warmed.json
 ```
 
-The export contains all 124 fixed registrations and 560 successful outer
-repeats. Every registration has internally stable hashes, and all 62 Hex/NTL
+The export contains all 121 fixed registrations and 553 successful outer
+repeats. Every registration has internally stable hashes, and all 60 Hex/NTL
 pairs agree on their observed hash. The harness records a clean source tree at
 the full commit above. Its SHA-256 is
-`261a30f9493fd43c70337bc4e0c7eb7e5cba03904b16aa4e9c13c2cb4a9fb040`.
+`a5d3b8504871ca1a614fb0ad53e851dea50bca85b81422272e205d384f3c1011`.
 
 ### Protocol overhead and eligibility
 
 Both registrations in every Hex/NTL pair set `warmupFirstIter := true` and the
-same `minTotalSeconds := 0.2` timing floor. The discarded NTL call starts the
-driver, and the timed inner-repeat batch reuses it; warming both arms also keeps
-the harness treatment identical.
+same `minTotalSeconds := 0.2` timing floor, and fixture preparation is outside
+the timed closure. The discarded NTL call starts the driver, and the timed
+inner-repeat batch reuses it. Startup is therefore represented only by the
+discarded warmup and is not folded into the per-call overhead.
 
-Fresh one-request driver processes took 3 ms median over 11 trials. That
-one-time startup is excluded by the warmup. A 100000-request `ping` run took
-0.024 s median over five trials, an upper bound of 0.24 µs per steady-state
-round trip including shell-pipeline cost and amortized startup. The smallest
-NTL operation median below is 14.935 µs, so protocol overhead is at most 1.7%;
-no adjusted ratio is required by `SPEC/benchmarking.md`'s 5% rule.
+The registered synchronous `runNtlOverhead` case measures the steady-state
+trivial `ping` round trip through the same persistent driver at 2.682 µs. An
+adjusted ratio is shown wherever this exceeds 5% of the NTL operation median.
+The floor is below 50% of every retained comparator median.
 
 For performance tables, a row is eligible exactly when both observed medians
-are at most ten seconds and the protocol floor passes. The ratio is `NTL /
-Hex`; values below one mean NTL is faster.
+are at most ten seconds and the protocol floor passes. Rungs observed beyond
+the hard ceiling are removed rather than measured as diagnostics. The ratio is
+`NTL / Hex`; values below one mean the complete NTL process-call surface took
+less time.
 
 ### Addition correctness/protocol anchor
 
 | n | Hex median | NTL median | NTL / Hex | hashes agree |
 |---:|---:|---:|---:|:---:|
-| 4096 | 291.751 µs | 2.203 ms | 7.5500x | yes |
-| 8192 | 603.815 µs | 4.422 ms | 7.3238x | yes |
-| 16384 | 1.185 ms | 8.955 ms | 7.5539x | yes |
-| 32768 | 2.400 ms | 24.119 ms | 10.0492x | yes |
-| 65536 | 6.750 ms | 38.386 ms | 5.6870x | yes |
-| 131072 | 9.782 ms | 76.219 ms | 7.7919x | yes |
-| 262144 | 22.500 ms | 157.490 ms | 6.9996x | yes |
+| 4096 | 291.811 µs | 2.117 ms | 7.255x | yes |
+| 8192 | 590.751 µs | 4.314 ms | 7.302x | yes |
+| 16384 | 1.208 ms | 8.682 ms | 7.188x | yes |
+| 32768 | 2.384 ms | 18.098 ms | 7.592x | yes |
+| 65536 | 4.768 ms | 38.194 ms | 8.011x | yes |
+| 131072 | 18.263 ms | 75.392 ms | 4.128x | yes |
+| 262144 | 30.771 ms | 150.912 ms | 4.904x | yes |
 
 All seven pairs agree on the result hash. The NTL round trip stays in a
-roughly 5.7–10.1x band because parsing and emitting the hex-framed operands
+roughly 4.1–8.0x band because parsing and emitting the hex-framed operands
 dominates `GF2X` addition. These rows establish protocol throughput and
 correctness only; they are not NTL addition-kernel performance evidence and
 carry no performance verdict.
 
 ### Multiplication performance
 
-| n | Hex median | NTL median | NTL / Hex | eligible |
-|---:|---:|---:|---:|:---:|
-| 16 | 14.147 µs | 14.935 µs | 1.0557x | yes |
-| 24 | 30.553 µs | 17.106 µs | 0.5599x | yes |
-| 32 | 53.647 µs | 21.138 µs | 0.3940x | yes |
-| 48 | 131.408 µs | 32.854 µs | 0.2500x | yes |
-| 64 | 211.817 µs | 41.453 µs | 0.1957x | yes |
-| 96 | 472.463 µs | 68.182 µs | 0.1443x | yes |
-| 128 | 819.353 µs | 91.830 µs | 0.1121x | yes |
-| 192 | 1.884 ms | 156.118 µs | 0.0829x | yes |
-| 256 | 3.342 ms | 206.115 µs | 0.0617x | yes |
-| 384 | 12.843 ms | 370.453 µs | 0.0288x | yes |
-| 512 | 14.472 ms | 484.660 µs | 0.0335x | yes |
-| 768 | 35.464 ms | 926.592 µs | 0.0261x | yes |
-| 1024 | 72.737 ms | 1.213 ms | 0.0167x | yes |
-| 1536 | 270.692 ms | 2.405 ms | 0.0089x | yes |
-| 2048 | 583.371 ms | 3.106 ms | 0.0053x | yes |
+| n | Hex median | NTL median | NTL / Hex | adjusted | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 16 | 14.832 µs | 11.748 µs | 0.792x | 0.611x | yes |
+| 24 | 32.149 µs | 25.004 µs | 0.778x | 0.694x | yes |
+| 32 | 57.294 µs | 22.074 µs | 0.385x | 0.338x | yes |
+| 48 | 129.477 µs | 31.830 µs | 0.246x | 0.225x | yes |
+| 64 | 224.837 µs | 67.923 µs | 0.302x | — | yes |
+| 96 | 485.892 µs | 66.622 µs | 0.137x | — | yes |
+| 128 | 880.677 µs | 88.332 µs | 0.100x | — | yes |
+| 192 | 1.953 ms | 153.806 µs | 0.079x | — | yes |
+| 256 | 3.572 ms | 199.979 µs | 0.056x | — | yes |
+| 384 | 8.091 ms | 367.843 µs | 0.045x | — | yes |
+| 512 | 15.697 ms | 474.405 µs | 0.030x | — | yes |
+| 768 | 38.123 ms | 914.449 µs | 0.024x | — | yes |
+| 1024 | 73.379 ms | 1.184 ms | 0.016x | — | yes |
+| 1536 | 277.084 ms | 2.391 ms | 0.009x | — | yes |
+| 2048 | 620.656 ms | 3.071 ms | 0.005x | — | yes |
 
-After the smallest crossover rung, the ratio falls from 0.560x to 0.0053x
-across the remaining fourteen eligible rungs. That divergence is expected by
-the normative contract: NTL dispatches
-to Karatsuba/FFT kernels while Hex currently uses packed schoolbook
-multiplication. It is an informational optimization signal, not a Concern.
+The ratio falls overall from 0.792x to 0.005x. The measured NTL 11.6 build
+links gf2x 1.3; NTL's source selects tuned base, Karatsuba, and gf2x-backed
+multiplication paths while Hex currently uses packed schoolbook
+multiplication. This operation-specific divergence is informational, not a
+Concern.
 
 ### Division performance
 
-| n | Hex median | NTL median | NTL / Hex | eligible |
-|---:|---:|---:|---:|:---:|
-| 16 | 949.897 µs | 21.023 µs | 0.0221x | yes |
-| 24 | 1.930 ms | 30.391 µs | 0.0157x | yes |
-| 32 | 3.133 ms | 40.209 µs | 0.0128x | yes |
-| 48 | 7.201 ms | 63.647 µs | 0.0088x | yes |
-| 64 | 12.120 ms | 87.927 µs | 0.0073x | yes |
-| 96 | 26.007 ms | 146.748 µs | 0.0056x | yes |
-| 128 | 45.915 ms | 200.136 µs | 0.0044x | yes |
-| 192 | 101.962 ms | 367.402 µs | 0.0036x | yes |
-| 256 | 182.626 ms | 491.344 µs | 0.0027x | yes |
-| 384 | 644.711 ms | 952.526 µs | 0.0015x | yes |
-| 512 | 770.146 ms | 1.222 ms | 0.0016x | yes |
-| 768 | 1.843 s | 2.555 ms | 0.0014x | yes |
-| 1024 | 3.384 s | 3.326 ms | 0.0010x | yes |
+| n | Hex median | NTL median | NTL / Hex | adjusted | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 16 | 932.723 µs | 20.285 µs | 0.022x | 0.019x | yes |
+| 24 | 1.888 ms | 29.633 µs | 0.016x | 0.014x | yes |
+| 32 | 3.627 ms | 39.361 µs | 0.011x | 0.010x | yes |
+| 48 | 7.191 ms | 62.345 µs | 0.009x | — | yes |
+| 64 | 11.959 ms | 84.255 µs | 0.007x | — | yes |
+| 96 | 26.070 ms | 143.135 µs | 0.005x | — | yes |
+| 128 | 45.683 ms | 196.143 µs | 0.004x | — | yes |
+| 192 | 101.480 ms | 362.967 µs | 0.004x | — | yes |
+| 256 | 182.168 ms | 487.402 µs | 0.003x | — | yes |
+| 384 | 417.869 ms | 939.673 µs | 0.002x | — | yes |
+| 512 | 771.461 ms | 1.214 ms | 0.002x | — | yes |
+| 768 | 1.887 s | 2.523 ms | 0.001x | — | yes |
+| 1024 | 3.363 s | 3.279 ms | 0.001x | — | yes |
 
-The ratio falls overall from 0.0221x to 0.0010x over thirteen eligible points.
-This is the expected fast-division versus long-division difference declared
-in the SPEC.
+The ratio falls overall from 0.022x to 0.001x over thirteen eligible points.
+NTL switches to crossover division while Hex uses long division, matching the
+operation-specific contract.
 
 ### Remainder performance
 
-| n | Hex median | NTL median | NTL / Hex | eligible |
-|---:|---:|---:|---:|:---:|
-| 16 | 936.156 µs | 21.186 µs | 0.0226x | yes |
-| 24 | 1.897 ms | 30.331 µs | 0.0160x | yes |
-| 32 | 3.130 ms | 40.336 µs | 0.0129x | yes |
-| 48 | 7.083 ms | 63.729 µs | 0.0090x | yes |
-| 64 | 14.579 ms | 86.281 µs | 0.0059x | yes |
-| 96 | 26.243 ms | 147.200 µs | 0.0056x | yes |
-| 128 | 45.778 ms | 199.280 µs | 0.0044x | yes |
-| 192 | 101.968 ms | 406.432 µs | 0.0040x | yes |
-| 256 | 182.674 ms | 490.741 µs | 0.0027x | yes |
-| 384 | 420.261 ms | 953.493 µs | 0.0023x | yes |
-| 512 | 763.150 ms | 1.227 ms | 0.0016x | yes |
-| 768 | 1.884 s | 3.647 ms | 0.0019x | yes |
-| 1024 | 3.376 s | 3.317 ms | 0.0010x | yes |
+| n | Hex median | NTL median | NTL / Hex | adjusted | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 16 | 932.052 µs | 20.407 µs | 0.022x | 0.019x | yes |
+| 24 | 1.942 ms | 30.076 µs | 0.015x | 0.014x | yes |
+| 32 | 3.128 ms | 39.368 µs | 0.013x | 0.012x | yes |
+| 48 | 7.091 ms | 62.234 µs | 0.009x | — | yes |
+| 64 | 12.076 ms | 85.218 µs | 0.007x | — | yes |
+| 96 | 26.107 ms | 144.280 µs | 0.006x | — | yes |
+| 128 | 46.103 ms | 194.384 µs | 0.004x | — | yes |
+| 192 | 105.627 ms | 365.591 µs | 0.003x | — | yes |
+| 256 | 183.964 ms | 486.094 µs | 0.003x | — | yes |
+| 384 | 416.334 ms | 938.305 µs | 0.002x | — | yes |
+| 512 | 777.181 ms | 1.211 ms | 0.002x | — | yes |
+| 768 | 1.848 s | 2.515 ms | 0.001x | — | yes |
+| 1024 | 3.372 s | 3.261 ms | 0.001x | — | yes |
 
-The thirteen-rung curve mirrors division and falls from 0.0226x to 0.0010x.
-NTL's fast remainder path and Hex's long remainder loop are explicitly
+The thirteen-rung curve mirrors division and falls from 0.022x to 0.001x.
+NTL's crossover remainder path and Hex's long remainder loop are explicitly
 different algorithm classes in the normative contract.
 
 ### GCD performance
 
-| n | Hex median | NTL median | NTL / Hex | eligible |
-|---:|---:|---:|---:|:---:|
-| 16 | 3.014 ms | 21.724 µs | 0.0072x | yes |
-| 24 | 6.682 ms | 24.742 µs | 0.0037x | yes |
-| 32 | 11.828 ms | 46.241 µs | 0.0039x | yes |
-| 48 | 25.363 ms | 60.074 µs | 0.0024x | yes |
-| 64 | 56.467 ms | 93.555 µs | 0.0017x | yes |
-| 96 | 96.965 ms | 187.214 µs | 0.0019x | yes |
-| 128 | 173.725 ms | 303.576 µs | 0.0017x | yes |
-| 192 | 378.629 ms | 605.296 µs | 0.0016x | yes |
-| 256 | 858.788 ms | 956.362 µs | 0.0011x | yes |
-| 384 | 1.500 s | 2.994 ms | 0.0020x | yes |
-| 512 | 2.670 s | 4.400 ms | 0.0016x | yes |
-| 768 | 5.890 s | 9.330 ms | 0.0016x | yes |
-| 1024 | 10.674 s | 12.941 ms | 0.0012x | no |
-| 1536 | 24.851 s | 26.779 ms | 0.0011x | no |
+| n | Hex median | NTL median | NTL / Hex | adjusted | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 16 | 3.134 ms | 16.135 µs | 0.005x | 0.004x | yes |
+| 24 | 6.908 ms | 24.197 µs | 0.004x | 0.003x | yes |
+| 32 | 12.138 ms | 33.790 µs | 0.003x | 0.003x | yes |
+| 48 | 26.221 ms | 58.719 µs | 0.002x | — | yes |
+| 64 | 45.269 ms | 92.251 µs | 0.002x | — | yes |
+| 96 | 100.367 ms | 185.122 µs | 0.002x | — | yes |
+| 128 | 178.247 ms | 300.504 µs | 0.002x | — | yes |
+| 192 | 386.469 ms | 591.403 µs | 0.002x | — | yes |
+| 256 | 685.349 ms | 953.571 µs | 0.001x | — | yes |
+| 384 | 1.551 s | 2.981 ms | 0.002x | — | yes |
+| 512 | 2.780 s | 4.346 ms | 0.002x | — | yes |
+| 768 | 6.244 s | 9.309 ms | 0.001x | — | yes |
 
-The eligible curve contains twelve rungs and ends at `n = 768`. It falls
-from 0.0072x into an upper-ladder 0.0011–0.0020x band, consistent with NTL
-half-GCD against Hex's Euclidean GCD. The `n = 1024` and `n = 1536` Hex
-medians exceed the ten-second hard ceiling and are explicitly ineligible;
-they are retained only to show where the measured ladder crosses the limit.
+The twelve-rung curve ends at `n = 768`, below the hard ceiling, and falls
+from 0.005x into an upper-ladder 0.001–0.002x band. NTL 11.6 switches from its
+Euclidean base to `HalfGCD` above its crossover, while Hex retains Euclidean
+GCD. The former over-ceiling `n = 1024` and `n = 1536` registrations were
+removed rather than timed contrary to the benchmark contract.
 
 ## Profile
 

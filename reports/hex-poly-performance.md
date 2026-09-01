@@ -23,7 +23,7 @@
 The parametric verdicts below come from the scientific run at commit
 `b9d853c58f9f85c24c451e7f30890a215759a196` on `carica` (Apple M2 Ultra,
 macOS 14.6.1). That run included the then-current fixed registrations, but its
-fixed timings are superseded by the warmed `df1870458` export in Comparator
+fixed timings are superseded by the warmed `f4f013c63` export in Comparator
 Ratios and are not reused here:
 
 ```sh
@@ -71,8 +71,9 @@ Export artefact: `reports/bench-results/hex-poly-b9d853c.json`.
 - `Hex.PolyBench.runDivModChecksum`: consistent with declared complexity
   (`β=-0.057`, parameters `64..512`, final hash `0x9afda056859428e`).
 
-The repaired `df1870458` comparator export described below contains all 88
-paired fixed registrations. Every registration has stable repeat hashes, and
+The repaired `f4f013c63` comparator export described below contains all 88
+paired registrations plus the steady-state overhead registration. Every
+registration has stable repeat hashes, and
 each Lean/FLINT pair returns the same observed hash at every rung.
 
 Smoke wiring was also checked with:
@@ -82,8 +83,8 @@ lake exe hexpoly_bench list
 lake exe hexpoly_bench verify
 ```
 
-`verify` passed all 103 registered benchmarks after the protocol repair (15
-parametric + 88 paired fixed comparator rungs).
+`verify` passed all 104 registered benchmarks after the protocol repair (15
+parametric + 88 paired fixed comparator rungs + one protocol-overhead case).
 
 ## Comparator Ratios
 
@@ -92,38 +93,36 @@ FLINT fmpz_poly via python-flint as the informational comparator for the seven
 integer-polynomial surfaces below. The non-integer registrations remain outside
 that declared scope.
 
-The paired fixed registrations were rerun after the protocol repair at commit
-`df1870458a39ee328f054b5022721529f27ad1b4` on `chungus2` (AMD EPYC
-9455, Linux x86_64), pinned to CPU 6:
+The paired fixed registrations were rerun after the protocol repair at clean
+commit `f4f013c638460c621728e108c9b77988df8d2836` on `chungus2` (AMD
+EPYC 9455, Linux x86_64), pinned to CPU 1:
 
 ```sh
 PATH=/tmp/hex-9804-flint/bin:$PATH
 lake exe hexpoly_bench list | awk '/\[fixed\]/{print $1}' |
-  xargs taskset -c 6 lake exe hexpoly_bench run \
-    --export-file reports/bench-results/hex-poly-df18704-issue9804-warmed.json
+  xargs taskset -c 1 lake exe hexpoly_bench run \
+    --export-file reports/bench-results/hex-poly-f4f013c-issue9804-warmed.json
 ```
 
-The export contains all 88 fixed registrations, 440 successful outer repeats,
+The export contains all 89 fixed registrations, 445 successful outer repeats,
 and no hash disagreement, either within a registration or between any Hex/FLINT
 pair. Its SHA-256 is
-`28d1a79c2bdd58cba745350265564bab1eb0310cdaba39c7fd5d728ec9f5f96d`.
+`bed44804f48d11df6508d3ba6ced2b92c864e52fcc888c4a9683704a0a370896`.
 
 ### Protocol overhead and eligibility
 
 Both registrations in every Hex/FLINT pair set `warmupFirstIter := true` and
-`minTotalSeconds := 0.2`. The discarded FLINT call starts python-flint; every
-timed inner-repeat batch then reuses that process. Warming both arms also keeps
-the harness treatment identical, so both sides report per-call medians on the
-same timing basis.
+`minTotalSeconds := 0.2`, and fixture preparation is outside the timed closure.
+The discarded FLINT call starts python-flint; every timed inner-repeat batch
+then reuses that process. Startup is therefore represented only by the
+discarded warmup and is not folded into the per-call overhead.
 
-Fresh one-request processes took 48 ms median over 11 trials. That is startup,
-reported separately and excluded by the warmup. A 100000-request
-`fmpz_poly.overhead` run took 0.357 s median over five trials, an upper bound
-of 3.57 µs per steady-state JSON round trip (it also includes shell-pipeline
-cost and amortized startup). The smallest FLINT median below is 175.870 µs, so
-protocol overhead is at most 2.1% on every rung. No adjusted ratio is required
-by `SPEC/benchmarking.md`'s 5% rule. Every median is also below the ten-second
-hard ceiling; all 44 pairs are eligible.
+The registered synchronous `runFlintOverhead` case measures a steady-state
+trivial `fmpz_poly` request through the same persistent driver at 6.178 µs.
+This is 7.0% of the smallest FLINT median, so the multiplication `n = 128` row
+also reports the overhead-adjusted ratio required by `SPEC/benchmarking.md`.
+The overhead is below 50% of every comparator median, and every median is below
+the ten-second hard ceiling, so all 44 pairs are eligible.
 
 The ratio in every table is `FLINT / Hex`. Values below one mean FLINT is
 faster.
@@ -132,46 +131,47 @@ faster.
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16384 | 849.444 µs | 13.718 ms | 16.1499x | yes |
-| 32768 | 1.661 ms | 42.796 ms | 25.7699x | yes |
-| 49152 | 2.615 ms | 42.909 ms | 16.4075x | yes |
-| 65536 | 3.562 ms | 69.756 ms | 19.5853x | yes |
-| 98304 | 5.246 ms | 87.558 ms | 16.6916x | yes |
-| 131072 | 6.678 ms | 114.503 ms | 17.1456x | yes |
+| 16384 | 515.304 µs | 6.934 ms | 13.457x | yes |
+| 32768 | 1.011 ms | 14.212 ms | 14.060x | yes |
+| 49152 | 1.530 ms | 21.175 ms | 13.837x | yes |
+| 65536 | 2.077 ms | 28.445 ms | 13.698x | yes |
+| 98304 | 3.026 ms | 42.657 ms | 14.096x | yes |
+| 131072 | 4.158 ms | 59.036 ms | 14.198x | yes |
 
-Across six eligible rungs the ratio remains above one in a 16.15–25.77x band
-and does not grow with input size. Serialization and Python object construction
-dominate this coefficientwise kernel; the warmed data supports no adverse
-algorithmic trend.
+Across six eligible rungs the end-to-end ratio stays in a narrow 13.46–14.20x
+band. Hex encoding, JSON framing, and Python object construction materially
+contribute to this linear comparator surface, so these ratios characterize the
+declared process-call protocol rather than isolated addition kernels.
 
 ### Subtraction
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16384 | 892.424 µs | 14.566 ms | 16.3214x | yes |
-| 32768 | 1.756 ms | 29.985 ms | 17.0787x | yes |
-| 49152 | 2.609 ms | 44.201 ms | 16.9396x | yes |
-| 65536 | 3.717 ms | 63.784 ms | 17.1590x | yes |
-| 98304 | 5.792 ms | 86.193 ms | 14.8802x | yes |
-| 131072 | 7.165 ms | 126.389 ms | 17.6393x | yes |
+| 16384 | 517.977 µs | 7.590 ms | 14.653x | yes |
+| 32768 | 1.003 ms | 16.445 ms | 16.394x | yes |
+| 49152 | 1.566 ms | 30.323 ms | 19.359x | yes |
+| 65536 | 2.052 ms | 29.067 ms | 14.167x | yes |
+| 98304 | 3.105 ms | 44.225 ms | 14.241x | yes |
+| 131072 | 4.101 ms | 59.198 ms | 14.434x | yes |
 
-The six-rung ratio stays in the 14.88–17.64x band with no directional
-divergence. This is the cleanest linear-kernel curve in the repaired run.
+The six-rung end-to-end ratio stays in a 14.17–19.36x band without sustained
+growth. As for addition, serialization and object construction prevent a claim
+about the isolated subtraction kernels.
 
 ### Multiplication
 
-| n | Hex median | FLINT median | FLINT / Hex | eligible |
-|---:|---:|---:|---:|:---:|
-| 128 | 239.292 µs | 175.870 µs | 0.7350x | yes |
-| 192 | 549.693 µs | 237.844 µs | 0.4327x | yes |
-| 256 | 907.721 µs | 332.592 µs | 0.3664x | yes |
-| 320 | 1.438 ms | 409.964 µs | 0.2852x | yes |
-| 384 | 2.023 ms | 487.665 µs | 0.2410x | yes |
-| 448 | 3.007 ms | 591.334 µs | 0.1967x | yes |
-| 512 | 3.654 ms | 684.480 µs | 0.1873x | yes |
+| n | Hex median | FLINT median | FLINT / Hex | adjusted | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 128 | 129.271 µs | 88.029 µs | 0.681x | 0.633x | yes |
+| 192 | 276.046 µs | 139.425 µs | 0.505x | — | yes |
+| 256 | 504.299 µs | 175.638 µs | 0.348x | — | yes |
+| 320 | 789.907 µs | 217.740 µs | 0.276x | — | yes |
+| 384 | 1.088 ms | 248.783 µs | 0.229x | — | yes |
+| 448 | 1.745 ms | 291.683 µs | 0.167x | — | yes |
+| 512 | 1.910 ms | 349.189 µs | 0.183x | — | yes |
 
-FLINT is already faster at the bottom rung and its ratio falls from 0.735x to
-0.187x across the seven-rung ladder. This expected divergence matches the
+The ratio falls overall from 0.681x to 0.183x across the seven-rung ladder.
+This expected divergence matches the
 normative contract: FLINT tunes Karatsuba/Toom-Cook/FFT crossovers while
 HexPoly deliberately provides the schoolbook semantic foundation. It is an
 informational finding, not a Concern.
@@ -180,59 +180,62 @@ informational finding, not a Concern.
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16384 | 550.968 µs | 13.265 ms | 24.0756x | yes |
-| 32768 | 1.132 ms | 21.520 ms | 19.0055x | yes |
-| 49152 | 1.698 ms | 32.886 ms | 19.3659x | yes |
-| 65536 | 2.280 ms | 53.338 ms | 23.3952x | yes |
-| 98304 | 3.394 ms | 78.023 ms | 22.9913x | yes |
-| 131072 | 4.480 ms | 104.218 ms | 23.2653x | yes |
+| 16384 | 315.063 µs | 5.405 ms | 17.156x | yes |
+| 32768 | 634.103 µs | 10.203 ms | 16.091x | yes |
+| 49152 | 953.395 µs | 18.344 ms | 19.241x | yes |
+| 65536 | 1.313 ms | 22.443 ms | 17.089x | yes |
+| 98304 | 1.943 ms | 32.648 ms | 16.801x | yes |
+| 131072 | 3.898 ms | 41.994 ms | 10.772x | yes |
 
-The ratio remains above one in a 19.01–24.08x band at all six eligible rungs
-and has no monotone adverse shape.
+The end-to-end ratio is 10.77–19.24x across the six rungs. This linear surface
+is likewise protocol/serialization-sensitive and does not isolate derivative
+kernel performance.
 
 ### Composition
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16 | 5.532 ms | 2.578 ms | 0.4661x | yes |
-| 24 | 29.230 ms | 10.340 ms | 0.3537x | yes |
-| 32 | 100.891 ms | 30.016 ms | 0.2975x | yes |
-| 40 | 263.250 ms | 62.951 ms | 0.2391x | yes |
-| 48 | 538.001 ms | 117.141 ms | 0.2177x | yes |
-| 56 | 1.040 s | 192.114 ms | 0.1847x | yes |
-| 64 | 1.874 s | 299.471 ms | 0.1598x | yes |
+| 16 | 3.186 ms | 1.406 ms | 0.441x | yes |
+| 24 | 17.601 ms | 5.972 ms | 0.339x | yes |
+| 32 | 78.624 ms | 16.431 ms | 0.209x | yes |
+| 40 | 144.243 ms | 35.426 ms | 0.246x | yes |
+| 48 | 304.027 ms | 68.403 ms | 0.225x | yes |
+| 56 | 634.919 ms | 104.885 ms | 0.165x | yes |
+| 64 | 1.020 s | 163.363 ms | 0.160x | yes |
 
-FLINT is faster throughout and the seven eligible ratios fall from 0.466x to
-0.160x. This expected divergence is an informational result within the
+The seven eligible ratios fall overall from 0.441x to 0.160x. This expected
+divergence is an informational result within the
 declared downstream-specialization boundary, not a Concern.
 
 ### Content
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16384 | 2.339 ms | 4.964 ms | 2.1221x | yes |
-| 32768 | 4.645 ms | 9.988 ms | 2.1503x | yes |
-| 49152 | 6.968 ms | 14.565 ms | 2.0902x | yes |
-| 65536 | 9.571 ms | 19.603 ms | 2.0482x | yes |
-| 98304 | 13.983 ms | 29.551 ms | 2.1133x | yes |
-| 131072 | 17.804 ms | 46.344 ms | 2.6030x | yes |
+| 16384 | 1.355 ms | 2.469 ms | 1.822x | yes |
+| 32768 | 2.682 ms | 4.898 ms | 1.827x | yes |
+| 49152 | 4.100 ms | 7.366 ms | 1.797x | yes |
+| 65536 | 5.378 ms | 18.365 ms | 3.415x | yes |
+| 98304 | 8.152 ms | 14.998 ms | 1.840x | yes |
+| 131072 | 10.708 ms | 20.543 ms | 1.918x | yes |
 
-The ratio stays in a 2.05–2.60x band across six eligible rungs. Hex is faster
-at every measured input, with no adverse trend.
+The end-to-end ratio is 1.80–3.42x across the six rungs. Coefficient framing
+and Python construction are part of this declared process-call surface, so the
+table does not support an isolated content-kernel comparison.
 
 ### Primitive part
 
 | n | Hex median | FLINT median | FLINT / Hex | eligible |
 |---:|---:|---:|---:|:---:|
-| 16384 | 2.427 ms | 11.569 ms | 4.7668x | yes |
-| 32768 | 4.721 ms | 22.346 ms | 4.7332x | yes |
-| 49152 | 7.272 ms | 30.779 ms | 4.2328x | yes |
-| 65536 | 9.322 ms | 43.432 ms | 4.6590x | yes |
-| 98304 | 14.719 ms | 68.595 ms | 4.6603x | yes |
-| 131072 | 18.834 ms | 101.850 ms | 5.4077x | yes |
+| 16384 | 1.458 ms | 5.731 ms | 3.930x | yes |
+| 32768 | 2.874 ms | 11.203 ms | 3.899x | yes |
+| 49152 | 4.299 ms | 17.555 ms | 4.084x | yes |
+| 65536 | 5.699 ms | 21.812 ms | 3.827x | yes |
+| 98304 | 8.556 ms | 34.340 ms | 4.014x | yes |
+| 131072 | 11.309 ms | 42.363 ms | 3.746x | yes |
 
-Hex is faster at all six rungs. The ratio stays in a 4.23–5.41x band, so the
-direction is favorable to Hex and creates no adverse finding.
+The end-to-end ratio stays in a 3.75–4.08x band. Because the FLINT arm includes
+the declared process-call framing, this is protocol evidence and not a claim
+that Hex's primitive-part kernel is intrinsically faster.
 
 ## Profile
 
