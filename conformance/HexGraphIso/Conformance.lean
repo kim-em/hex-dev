@@ -137,6 +137,18 @@ private def sameVerdict {n k : Nat} (G H : Colored n k) : Bool :=
 #guard sameVerdict c4 path4
 #guard sameVerdict c4 c4
 
+-- the public canonical form now carries nauty's canonical rows: the
+-- certificate-checked `canon` and the transcribed search agree on the
+-- adjacency rows of the canonical representative
+private def canonRowsAgree {n k : Nat} (G : Colored n k) : Bool :=
+  Nauty.rowsOf (canon G) == (Nauty.runColored G).canong
+
+#guard canonRowsAgree p3
+#guard canonRowsAgree p3'
+#guard canonRowsAgree k3
+#guard canonRowsAgree c4
+#guard canonRowsAgree path4
+
 -- the nauty label is a genuine transporter to the nauty form
 #guard
   match Nauty.canonicalize? c4 with

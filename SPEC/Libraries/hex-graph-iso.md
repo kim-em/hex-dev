@@ -246,10 +246,11 @@ This definition has its own proofs of `relabel_label`, `canon_iso`, and
 later implementations. It is not used as a production fallback and is not
 required to return nauty's label or canonical form.
 
-The public `canon` name is not released until the nauty-compatible
-implementation is complete. Development stages may expose their functions in
-`Reference`, `Unpruned`, and `Internal` namespaces without changing the
-eventual public semantics.
+The public `canon` is backed by the certificate-checked nauty-semantic
+canonicalization: an untrusted branch-and-bound producer whose output is
+validated by the proven certificate replay, with a provably total
+exhaustive fallback. Development namespaces (`Reference`, `Nauty`)
+remain available as the cross-check and the transcription layer.
 
 ## nauty-compatible individualization and refinement
 

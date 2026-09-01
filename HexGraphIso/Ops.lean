@@ -192,4 +192,92 @@ theorem canon?_eq_some {search : SearchLimits} {replay : ReplayLimits}
     exact ⟨rfl, relabel_label G⟩
   · simp at h
 
+/-! # Canonical certificates -/
+
+/-- A canonical certificate: the replayed tree shape, the claimed best
+key, and the achieving labelling. Plain data; the checker recomputes
+partitions, codes, and comparisons from the graph. -/
+structure CanonCert (n k : Nat) where
+  /-- The pruned tree the producer visited. -/
+  tree : Nauty.CertNode
+  /-- The claimed canonical key. -/
+  key : Nauty.Key
+  /-- The labelling achieving the key. -/
+  lab : Array Nat
+
+set_option linter.unusedVariables false in
+/-- Produce a canonical certificate from the branch-and-bound search.
+`none` on exhaustion of the conservative precharge or when the
+untrusted search fails its own validation. -/
+@[expose] def certify? (limits : SearchLimits) (G : Colored n k) :
+    Option (CanonCert n k) :=
+  if searchCost n ≤ limits.maxNodes then
+    match Nauty.certifyKey? G with
+    | none => none
+    | some (cert, B) =>
+      match Nauty.bestLab? { n := n, g := Nauty.rowsOf G } 100 B.rows
+          n 1 (Nauty.initialPartition G).1
+          (Nauty.initPtn n (n + 2) (Nauty.initialPartition G).2)
+          (Nauty.initActive (Nauty.initialPartition G).2)
+          (Nauty.initialPartition G).2.length B.codes with
+      | none => none
+      | some lab => some ⟨cert, B, lab⟩
+  else
+    none
+
+/-- Replay a canonical certificate against the graph. -/
+@[expose] def checkCanon (limits : ReplayLimits) (G : Colored n k)
+    (cert : CanonCert n k) : Option (CanonResult n k) :=
+  if searchCost n ≤ limits.maxCheckerSteps then
+    Nauty.checkCanon G cert.tree cert.key cert.lab
+  else
+    none
+
+theorem checkCanon_sound {limits : ReplayLimits} {G : Colored n k}
+    {cert : CanonCert n k} {result : CanonResult n k}
+    (h : checkCanon limits G cert = some result) :
+    result.form = canon G ∧ G.relabel result.label = result.form := by
+  rw [checkCanon] at h
+  split at h
+  · refine ⟨?_, (Nauty.checkCanon_sound h).2.1.symm⟩
+    rw [Nauty.checkCanon_form h,
+      show canon G = Nauty.specCanon G from
+        Nauty.canonicalizeSpec_form G]
+  · simp at h
+
+/-- A checked certificate's key is the spec key. -/
+theorem checkCanon_key {limits : ReplayLimits} {G : Colored n k}
+    {cert : CanonCert n k} {result : CanonResult n k}
+    (h : checkCanon limits G cert = some result) :
+    Nauty.canonSpecKey G = cert.key := by
+  rw [checkCanon] at h
+  split at h
+  · exact (Nauty.checkCanon_sound h).1
+  · simp at h
+
+/-! # Difference certificates -/
+
+/-- A difference certificate: two canonical certificates whose keys
+differ at some position. -/
+structure DiffCert (n k : Nat) where
+  /-- The certificate for the left graph. -/
+  left : CanonCert n k
+  /-- The certificate for the right graph. -/
+  right : CanonCert n k
+
+/-- Verify the two canonical keys differ: the lexicographic comparison
+finds the first differing entry. -/
+@[expose] def checkDiff (d : DiffCert n k) : Bool :=
+  Nauty.checkDiff d.left.key d.right.key
+
+/-- Two checked certificates and a verified difference prove
+non-isomorphism. -/
+theorem checkDiff_not_isomorphic {l1 l2 : ReplayLimits}
+    {G H : Colored n k} {d : DiffCert n k} {r1 r2 : CanonResult n k}
+    (h1 : checkCanon l1 G d.left = some r1)
+    (h2 : checkCanon l2 H d.right = some r2)
+    (hd : checkDiff d = true) : ¬Isomorphic G H :=
+  Nauty.not_isomorphic_of_key_ne (checkCanon_key h1)
+    (checkCanon_key h2) (Nauty.checkDiff_sound hd)
+
 end Hex.GraphIso
