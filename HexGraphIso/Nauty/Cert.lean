@@ -349,7 +349,7 @@ claimed best key's suffix at this depth. Returns `none` if the replay
 fails, otherwise `some achieved` where `achieved` records whether this
 subtree attains the claimed best. Success certifies that every leaf
 key of the subtree is `≤` the claimed suffix. -/
-def checkNode (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
+@[expose] def checkNode (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → CertNode →
       List Nat → Option Bool
   | 0, _, _, _, _, _, _, _ => none
@@ -410,7 +410,7 @@ def checkNode (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
               none
 
 /-- Replay the children of a node from offset `o` on. -/
-def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
+@[expose] def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
     (fuel level : Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
     (brest : List Nat) : List CertNode → Nat → Option Bool
   | [], _ => some false
@@ -1091,7 +1091,7 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
 expressed at this node's depth. The incumbent prunes children whose
 refinement code falls below its code here. Untrusted: results are
 validated by `checkKey`. -/
-def searchNode (ctx : Ctx) (tcLevel : Nat) :
+@[expose] def searchNode (ctx : Ctx) (tcLevel : Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option Key → Key
   | 0, _, _, _, _, _, inc => inc.getD ⟨[], []⟩
   | fuel + 1, level, lab, ptn, active, numcells, inc =>
@@ -1128,7 +1128,7 @@ def searchNode (ctx : Ctx) (tcLevel : Nat) :
         | .eq => step (some ⟨brest, b.rows⟩)
 
 /-- Build the certificate tree for the final best key. Untrusted. -/
-def certifyNode (ctx : Ctx) (tcLevel : Nat) :
+@[expose] def certifyNode (ctx : Ctx) (tcLevel : Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
       CertNode
   | 0, _, _, _, _, _, _ => .codePrune
@@ -1233,7 +1233,7 @@ theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
 /-- Follow the best path through the spec tree to the labelling of
 the leaf achieving the claimed key. Untrusted: `checkCanon` validates
 the result. -/
-def bestLab? (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
+@[expose] def bestLab? (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
       Option (Array Nat)
   | 0, _, _, _, _, _, _ => none
