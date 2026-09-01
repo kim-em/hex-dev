@@ -1085,4 +1085,149 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
     rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
     exact (hnode.2 rfl).trans (key_eta B)
 
+/-! # The untrusted producer -/
+
+/-- Branch-and-bound maximum of the incumbent and this subtree's keys,
+expressed at this node's depth. The incumbent prunes children whose
+refinement code falls below its code here. Untrusted: results are
+validated by `checkKey`. -/
+def searchNode (ctx : Ctx) (tcLevel : Nat) :
+    Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option Key → Key
+  | 0, _, _, _, _, _, inc => inc.getD ⟨[], []⟩
+  | fuel + 1, level, lab, ptn, active, numcells, inc =>
+    let rs := refine ctx level lab ptn active numcells
+    let step : Option Key → Key := fun tail0 =>
+      if discreteAt rs.ptn level ctx.n then
+        let leafTail : Key := ⟨[codeSentinel], leafRows ctx rs.lab⟩
+        match tail0 with
+        | none => ⟨rs.longcode :: leafTail.codes, leafTail.rows⟩
+        | some t =>
+          let t' := keyMax t leafTail
+          ⟨rs.longcode :: t'.codes, t'.rows⟩
+      else
+        let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
+        let t := (List.range tcr.2.2).foldl
+          (fun (acc : Option Key) o =>
+            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+              rs.lab[tcr.1 + o]!
+            some (searchNode ctx tcLevel fuel (level + 1) br.1
+              br.2.1 br.2.2 (numcells + 1) acc))
+          tail0
+        match t with
+        | none => ⟨[], []⟩
+        | some t => ⟨rs.longcode :: t.codes, t.rows⟩
+    match inc with
+    | none => step none
+    | some b =>
+      match b.codes with
+      | [] => step none
+      | bc :: brest =>
+        match compare rs.longcode bc with
+        | .lt => b
+        | .gt => step none
+        | .eq => step (some ⟨brest, b.rows⟩)
+
+/-- Build the certificate tree for the final best key. Untrusted. -/
+def certifyNode (ctx : Ctx) (tcLevel : Nat) :
+    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
+      CertNode
+  | 0, _, _, _, _, _, _ => .codePrune
+  | fuel + 1, level, lab, ptn, active, numcells, bcodes =>
+    match bcodes with
+    | [] => .codePrune
+    | bc :: brest =>
+      let rs := refine ctx level lab ptn active numcells
+      match compare rs.longcode bc with
+      | .lt => .codePrune
+      | .gt => .codePrune
+      | .eq =>
+        if discreteAt rs.ptn level ctx.n then
+          .leaf
+        else
+          let tcr := specMaketargetcell ctx rs.lab rs.ptn level
+            tcLevel
+          .node ((List.range tcr.2.2).map fun o =>
+            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+              rs.lab[tcr.1 + o]!
+            certifyNode ctx tcLevel fuel (level + 1) br.1 br.2.1
+              br.2.2 (numcells + 1) brest)
+
+/-- Produce a checked canonical-key certificate: a branch-and-bound
+search finds the best key, the certificate is rebuilt against it, and
+the trusted `checkKey` replay validates the pair. -/
+def certifyKey? (G : Colored n k) : Option (CertNode × Key) :=
+  if n == 0 then
+    some (.leaf, ⟨[], []⟩)
+  else
+    let B := searchNode { n := n, g := rowsOf G } 100 n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length none
+    let cert := certifyNode { n := n, g := rowsOf G } 100 n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length B.codes
+    if checkKey G cert B then some (cert, B) else none
+
+/-- Every key a successful `certifyKey?` returns is the spec key. -/
+theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
+    {B : Key} (h : certifyKey? G = some (cert, B)) :
+    canonSpecKey G = B := by
+  rw [certifyKey?] at h
+  rcases Decidable.em ((n == 0) = true) with hz | hz
+  · rw [if_pos hz] at h
+    have hn0 : n = 0 := by simpa using hz
+    subst hn0
+    injection h with h'
+    have hB : B = ⟨[], []⟩ := (congrArg Prod.snd h').symm
+    rw [hB, canonSpecKey, canonSpec, if_pos (by rfl)]
+  · rw [if_neg hz] at h
+    replace h : (if checkKey G
+        (certifyNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length
+        (searchNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length none).codes)
+        (searchNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length none) = true then
+        some
+          ((certifyNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length
+        (searchNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length none).codes),
+           (searchNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length none))
+      else none) = some (cert, B) := h
+    split at h
+    · next hchk =>
+      injection h with h'
+      have hB : (searchNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length none) = B :=
+        congrArg Prod.snd h'
+      rw [← hB]
+      exact checkKey_sound hchk
+    · cases h
+
 end Hex.GraphIso.Nauty

@@ -102,10 +102,15 @@ The planned stack, in dependency order:
    by its recomputed refinement code falling below the best code at
    that depth (`specNode_keyLe_of_code_lt`), or by a checked
    automorphism (`checkAutom`/`checkCellsPerm`) mapping it onto an
-   earlier sibling (`specNode_autom`). Remaining for this stage: the
-   `certify?` producer instrumenting the search, and the
-   `CanonResult`-level wrapper tying the achieved leaf's labelling to
-   the key.
+   earlier sibling (`specNode_autom`). **`certifyKey?` is the untrusted
+   producer**: a branch-and-bound search finds the best key, the
+   certificate is rebuilt against it, and the trusted replay validates
+   the pair, so `certifyKey?_sound` needs no trust in the search
+   (validated end to end against the naive `canonSpecKey` on small
+   coloured graphs, and on `n = 12..16` families including Petersen
+   through the checker alone). Remaining for this stage: automorphism
+   prunes in the producer, and the `CanonResult`-level wrapper tying
+   the achieved leaf's labelling to the key.
 4. **Switch.** Public `canonicalize` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;
