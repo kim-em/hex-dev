@@ -2,186 +2,171 @@
 
 ## Scope and acceptance
 
-This is the Phase-4 headline report for `HexIntFactor`. It covers all five
-input families declared in `libraries.yml`: `table-and-balanced-semiprimes`,
-`smooth-and-unbalanced-semiprimes`, `power-forms`,
-`certificate-replay-and-order`, and `generalized-divisor-sums`.
+This is the Phase-4 report for `HexIntFactor`. It covers the five input
+families declared in `libraries.yml`: table and balanced semiprimes, smooth and
+unbalanced semiprimes, power forms, certificate replay and order, and
+generalized divisor sums. The declared comparator is **PARI factor and GMP-ECM**.
+It is informational because PARI uses a broader factorization
+portfolio and GMP-ECM is an independently tuned C implementation.
 
-The compiled track has 19 parametric targets and four fixed policy targets.
-Nine parametric targets satisfy their tight mode-1 models; ten intentionally
-use conservative mode-2 upper bounds. All fixed targets are mode 3 and have
-agreeing hashes. The `HexIntFactorMathlib` audit classifies that library as a
-`correspondence-only-layer`; it owns no separate computational benchmark or
-comparator, and names `HexIntFactor` as its computational performance owner.
+The compiled track contains seven parametric and 31 fixed targets. Every
+parametric target returned the exact harness verdict
+`consistent_with_declared_complexity`. Every fixed target completed all three
+repeats and returned `expected_hash_check.status = "match"`. The
+`HexIntFactorMathlib` audit classifies it as a `correspondence-only-layer` and
+names `HexIntFactor` as its computational performance owner.
 
 ## Bench targets
 
-| Evidence family | Targets | Track |
+| Family | Targets | Evidence |
 |---|---|---|
-| `table-and-balanced-semiprimes` | `runTableBatch`, `runBalancedFactor`, `runBalancedRho` | fixed table policy; parametric factor/rho |
-| `smooth-and-unbalanced-semiprimes` | `runPMinusOneWord`, `runPMinusOneNat`, `runEcmWord`, `runEcmNat`, `runEcmRhoWord`, `runEcmRhoNat` | parametric route and paired policy comparisons |
-| `power-forms` | `runCyclotomic`, `runPowerGeneric`, `runPowerSplit` | parametric structural and paired policy comparison |
-| `certificate-replay-and-order` | `runReplay`, `runReplayWidth`, `runOrder`, `runPrimitiveRoot`, `runDownstreamOrder`, `runDownstreamPrimitiveRoot` | parametric scan/replay plus fixed downstream operands |
-| `generalized-divisor-sums` | `runSigmaExponent`, `runSigmaFactorCount`, `runSquareFactorCount`, `runTotientFactorCount` | parametric certified inputs |
+| table and balanced semiprimes | `runTableDispatch`, `runTableTrial`, `runBalancedFactor{32..80}`, `runBalancedForced{32..80}`, `runBalancedRho` | fixed output-agreeing policy controls plus raw-rho scaling |
+| smooth and unbalanced semiprimes | `runPMinusOneBatch`, `runEcmBatch`, `runEcmRhoBatch`, `runEcm{48,56,64,72,76,80}` | fixed whole-family and per-rung route measurements |
+| power forms | `runCyclotomicBatch`, `runPowerGenericBatch`, `runPowerSplitBatch` | fixed structural and generic/split measurements |
+| certificate replay and order | `runReplay`, kernel `HexIntFactorKernelProbe`, `runOrder`, `runDownstreamOrder`, `runDownstreamPrimitiveRoot` | compiled scaling, kernel replay, and opaque fixed operands |
+| generalized divisor sums | `runSigmaExponent`, `runSigmaFactorCount`, `runSquareFactorCount`, `runTotientFactorCount` | prepared certified inputs with explicit models |
 | cross-family policy | `runDefaultFuelSchedule` | fixed exact public schedule |
 
-`runReplay` grows the exponent of one certified prime power; `runReplayWidth`
-grows the number of certified entries. Preparation for the divisor-function
-targets constructs or selects checked data outside the timed region. The ECM
-registrations are split at the `UInt64`/direct-`Nat` backend boundary. Every
-registration's adjacent source comment derives its declared model.
+The kernel replay target checks actual `checkFactorization` certificates for
+one through ten entries. Its last entry is a 61-bit prime with a committed
+Pocklington certificate, so the family reaches the required 64-bit operand
+class rather than merely widening a table-prime list.
 
-## Verdicts
+Fixed-target bodies enforce their absolute ceilings internally, independently
+of process startup: table 10 ms; balanced normal and forced 10, 50, 100, 200,
+750, 2000, and 6000 ms; p-1 100 ms; ECM batch 100 ms; ECM/rho batch 500 ms;
+each per-rung ECM target 20 ms; cyclotomic 10 ms; generic and split power forms
+20 ms; downstream order 10 ms; downstream primitive root 20 ms; and the
+default-fuel schedule 2000 ms. Opaque `IO.Ref` inputs and no-inline wrappers
+prevent closed-term lifting.
 
-The clean scientific artifact is
-`reports/bench-results/hex-int-factor-phase4-703d2f42-chungus2-cpu2.json`
-(SHA-256 `2ae86f6a5c348a6605028563ff726520b7b4d530ceac44a5bb9a7b71b841a798`).
-It was produced from clean commit
-`703d2f4203725857d61092f5342e981a305c1267`; the benchmark executable hash is
-`44c53cd33de691b82766ded78e49068b248af8f71b4120b28ff12305d38da620`.
+## Harness verdicts
 
-| Target | Domain | Declared model | Mode | Result |
-|---|---:|---:|---:|---|
-| `runSquareFactorCount` | 32--1024 entries | `n²` | 1 | consistent, slope -0.132 |
-| `runReplay` | exponent 1024--262144 | `n²` | 1 | consistent, slope -0.097 |
-| `runPMinusOneWord` | 32--64 bits | `n` | 1 | consistent |
-| `runBalancedFactor` | 32--80 bits | `2^(n/4)` | 2 | conservative rho upper bound |
-| `runReplayWidth` | 1--10 entries | `n²` | 2 | conservative widening-product bound |
-| `runPrimitiveRoot` | 257--65537 | `n` | 2 | candidate-count upper bound; observed early success |
-| `runPowerSplit` | exponent 12--64 | `2^n` | 2 | input-value upper bound |
-| `runCyclotomic` | exponent 4--32 | `n²` | 2 | recursive-prefix upper bound |
-| `runEcmNat` | 72--80 bits | `n²` | 1 | consistent |
-| `runEcmRhoWord` | 48--64 bits | `1` | 2 | fixed-factor expected-cost bound; seed-dependent spread |
-| `runEcmRhoNat` | 72--80 bits | `2^(n/4)` | 2 | worst expected rho upper bound |
-| `runBalancedRho` | 32--80 bits | `2^(n/4)` | 2 | worst expected rho upper bound |
-| `runPMinusOneNat` | 72--80 bits | `n²` | 1 | consistent |
-| `runSigmaFactorCount` | 32--512 entries | `n²` | 1 | consistent, slope -0.013 |
-| `runTotientFactorCount` | 32--1024 entries | `n²` | 1 | consistent, slope 0.132 |
-| `runPowerGeneric` | exponent 12--64 | `2^n` | 2 | input-value upper bound |
-| `runEcmWord` | 48--64 bits | `1` | 1 | consistent |
-| `runSigmaExponent` | 16384--4194304 | `n log n` | 1 | consistent, slope 0.159 |
-| `runOrder` | 257--65537 | `n` | 1 | consistent, slope -0.005 |
-| `runDownstreamOrder` | fixed 50/61-bit primes | fixed | 3 | 0.000021 ms median; hashes agree |
-| `runDownstreamPrimitiveRoot` | fixed 50/61-bit primes | fixed | 3 | 1.476 ms median; hashes agree |
-| `runTableBatch` | fixed table-range batch | fixed | 3 | 1.667 ms median; hashes agree |
-| `runDefaultFuelSchedule` | fixed cross-family schedule | fixed | 3 | 599.261 ms median; hashes agree |
+The clean artifact is
+`reports/bench-results/hex-int-factor-phase4-a30ecb84-chungus2-cpu7.json`
+(SHA-256 `222d101a061a9b12d73ea29b52407a92f275588efa023584efe9e299d8201f9f`).
+It records clean source commit
+`a30ecb84eba72538fbe1e582563ab2ef7d0725f6`, benchmark executable SHA-256
+`5336e03e7487fefe3e1f6e948f5bf1810c63750d80d107670c13175606b64b98`,
+Lean 4.34.0-rc2, host `chungus2`, and affinity to CPU 7.
 
-Mode 2 here is a positive manual upper-bound result, not a contrary verdict.
-The expected route costs depend on factor shape or deliberately overapproximate
-the input value; finite ladders need not make their normalized constants flat.
-No target exhibited scaling worse than its declared upper bound.
+| Target | Domain | Declared model | Exact verdict | Slope |
+|---|---:|---:|---|---:|
+| `runSquareFactorCount` | 32--1024 entries | `n²` | `consistent_with_declared_complexity` | -0.142 |
+| `runReplay` | exponent 1024--262144 | `n²` | `consistent_with_declared_complexity` | -0.065 |
+| `runBalancedRho` | 32--80 bits | `2^(n/4)` | `consistent_with_declared_complexity` | n/a |
+| `runSigmaFactorCount` | 32--1024 entries | `n²` | `consistent_with_declared_complexity` | 0.039 |
+| `runTotientFactorCount` | 32--1024 entries | `n²` | `consistent_with_declared_complexity` | 0.101 |
+| `runSigmaExponent` | 16384--4194304 | `n log n` | `consistent_with_declared_complexity` | 0.151 |
+| `runOrder` | 257--1048589 | `n` | `consistent_with_declared_complexity` | -0.002 |
 
-The exact default-fuel record reports success on all nine cases. The largest
-charged count is 34 attempts at the 80-bit balanced input with fuel 352;
-the 64-bit balanced case uses 23 of 288. The table-range, smooth, ECM, and two
-power-form cases likewise complete within their public default budget.
+No parametric run was budget-truncated and no leading rung was dropped from a
+verdict. The fixed control medians below are the headline policy evidence.
+
+| bits | normal full pipeline | forced-rho full pipeline | normal / forced | canonical hash agrees |
+|---:|---:|---:|---:|:---:|
+| 32 | 0.601 ms | 0.634 ms | 0.949x | yes |
+| 40 | 6.603 ms | 6.748 ms | 0.979x | yes |
+| 48 | 13.735 ms | 13.507 ms | 1.017x | yes |
+| 56 | 43.578 ms | 43.396 ms | 1.004x | yes |
+| 64 | 192.307 ms | 190.750 ms | 1.008x | yes |
+| 72 | 728.078 ms | 746.206 ms | 0.976x | yes |
+| 80 | 3148.246 ms | 3106.699 ms | 1.013x | yes |
+
+The paired arms use the same inputs, five fixed seeds, budgets, preprocessing,
+recursive completion, prime-certificate construction, and checked acceptance.
+All ratios satisfy the preregistered `normal / forced <= 1.25` gate. The table
+control also agrees on its canonical hash: public dispatch is 0.039 ms versus
+0.032 ms for direct trial division, a 1.202x ratio under its 1.25 gate.
+
+All 47 default-fuel cases through 80 bits succeeded. The maximum charge is 34
+attempts with fuel 352 on the 80-bit balanced input. The fixed default-fuel
+anchor took 921.689 ms and matched its expected hash.
+
+The generic and cyclotomic power-form batches both succeed with the same pinned
+result hash. Their medians are 1.526 and 1.529 ms respectively; this aggregate
+does not support adding more specialized identities or claiming a speedup.
 
 ## Comparator ratios
 
-Both external comparators are informational. PARI 2.17.3 times a calibrated
-`factor` batch inside one GP process. GMP-ECM 7.0.6 accepts a calibrated batch
-of inputs in one process with `B1=1000` and `sigma=7`; subtracting the median
-0.217 ms/input factorization-of-15 protocol floor avoids charging process
-startup to the algorithm.
+PARI 2.17.3 times a calibrated in-process `factor` batch. These ratios are
+context, not a rho or dispatch gate; the two implementations do not expose the
+same route portfolio.
 
-| bits | Hex balanced factor | PARI `factor` | Hex / PARI |
+| bits | Hex full factor | PARI `factor` | Hex / PARI |
 |---:|---:|---:|---:|
-| 32 | 0.127 ms | 0.003 ms | 37.07x |
-| 40 | 1.430 ms | 0.006 ms | 246.69x |
-| 48 | 1.700 ms | 0.062 ms | 27.63x |
-| 56 | 11.106 ms | 0.135 ms | 82.41x |
-| 64 | 47.116 ms | 0.121 ms | 389.09x |
-| 72 | 125.513 ms | 0.184 ms | 683.64x |
-| 80 | 534.988 ms | 0.422 ms | 1268.12x |
+| 32 | 0.601 ms | 0.003 ms | 175.90x |
+| 40 | 6.603 ms | 0.006 ms | 1126.93x |
+| 48 | 13.735 ms | 0.062 ms | 219.75x |
+| 56 | 43.578 ms | 0.135 ms | 323.36x |
+| 64 | 192.307 ms | 0.121 ms | 1588.08x |
+| 72 | 728.078 ms | 0.184 ms | 3965.70x |
+| 80 | 3148.246 ms | 0.430 ms | 7326.83x |
 
-The widening ratio is consistent with PARI's SQUFOF/tuned portfolio rather
-than a rho-parity claim. SQUFOF is not required for the present absolute API
-contract: the 80-bit balanced case remains below one second and the public
-fuel schedule completes with margin. It would be required for a future
-small-constant word-semiprime parity goal.
+GMP-ECM 7.0.6 uses exactly `ecm -q -sigma 7 1000 1`: the same curve and B1 as
+Hex, with B2 below B1 to disable stage 2. Every case and the input-15 overhead
+control use the same persistent 256-input batch. The protocol floor is 0.217
+ms/input; a row is ratio-eligible only when that floor is at most 50% of raw
+time. Factor reconstruction is checked even on ineligible rows.
 
-| bits | Hex ECM | GMP-ECM raw | GMP-ECM adjusted | Hex / adjusted |
-|---:|---:|---:|---:|---:|
-| 48 | 0.059 ms | 0.498 ms | 0.281 ms | 0.21x |
-| 56 | 0.060 ms | 0.261 ms | 0.044 ms | 1.36x |
-| 64 | 0.060 ms | 0.362 ms | 0.145 ms | 0.42x |
-| 72 | 4.218 ms | 0.348 ms | 0.131 ms | 32.25x |
-| 76 | 4.179 ms | 0.407 ms | 0.189 ms | 22.05x |
-| 80 | 4.144 ms | 0.410 ms | 0.193 ms | 21.52x |
+| bits | Hex ECM | GMP raw | adjusted | overhead | factor found | eligible | Hex / adjusted |
+|---:|---:|---:|---:|---:|:---:|:---:|---:|
+| 48 | 0.059 ms | 0.481 ms | 0.264 ms | 45.1% | yes | yes | 0.225x |
+| 56 | 0.060 ms | 0.259 ms | 0.042 ms | 83.7% | yes | no | -- |
+| 64 | 0.060 ms | 0.364 ms | 0.147 ms | 59.6% | yes | no | -- |
+| 72 | 4.322 ms | 0.270 ms | 0.053 ms | 80.3% | no | no | -- |
+| 76 | 4.323 ms | 0.349 ms | 0.132 ms | 62.1% | yes | no | -- |
+| 80 | 4.378 ms | 0.376 ms | 0.159 ms | 57.7% | yes | no | -- |
 
-The direct GMP comparison records the expected tuned-C constant gap above the
-word boundary. The internal output-agreeing compare is the route-policy test:
-Hex ECM takes 0.060--0.061 ms versus rho's 0.172--0.939 ms at 48--64 bits,
-and 4.14--4.20 ms versus 59.0--743.2 ms at 72--80 bits. ECM therefore earns
-its maintenance cost in both backends. All common-parameter hashes agree.
+Only the 48-bit row supports a ratio conclusion; the other five are reported
+without drawing one. This is intentionally narrower than subtracting a noisy
+process floor and presenting every adjusted value as comparable.
 
-The power-form compare also has agreeing hashes at every exponent 12--64.
-The split is close to the generic route at the expensive rungs and slightly
-slower elsewhere; no factorization failure appears. There is consequently no
-measured case for adding Aurifeuillian identities.
+## Profile attribution
 
-## Profile
+A fresh 999 Hz `samply 0.13.1` profile covers the separately registered raw-rho
+80-bit rung at commit `a30ecb84eba72538fbe1e582563ab2ef7d0725f6` using
+lean-bench-samply `9356baa2f5757ee40320a897bd284914d5bb9f5e`. It retained
+3053 samples over 3088.0 ms, rejected eight boundary samples, observed no
+off-thread noise, had 0.926 ms calibration residual, and passed the +/-5 ms
+sensitivity check. The raw profile SHA-256 is
+`580fca84c267736e6d9b20d7163376b72ffc2864f84b1f49db3b6e17e71e81c2`.
 
-Five clean, 999 Hz `samply 0.13.1` profiles cover the five declared input
-families. They use benchmark commit
-`406922122205bee2214d26ab4ee2a93ca6c1bd77`, lean-bench
-`fa30c2763cf523f3ac8e46dc3a1dad0845a40098`, and lean-bench-samply
-`9356baa2f5757ee40320a897bd284914d5bb9f5e`. Hardware was `chungus2`,
-x86-64 Linux 6.12.100 on an AMD EPYC 9455. Raw filtered profiles remain under
-`/tmp` and are not committed.
-
-| Family / representative | Leaf-cost split | Inclusive Hex ranking | Diagnostics | Raw SHA-256 |
-|---|---|---|---|---|
-| `table-and-balanced-semiprimes`: `runBalancedFactor 80` | allocation 67.96%, GMP 25.54%, runtime 4.87%, own 0.04%, other 1.59% | `factorCounted?`, `runFactor`, `factor?` each 93.50% | 4722 samples / 4739.9 ms; residual 0.564 ms; sensitivity passed | `d121506c933dd9ff0d1e859ff0e43a73dfcee07e90cb53b7d0ebcb1b36f6d9ed` |
-| `smooth-and-unbalanced-semiprimes`: `runEcmNat 80` | allocation 59.82%, GMP 32.36%, runtime 6.67%, other 1.14% | `runEcm`, `ecmStage1` each 93.81% | 4199 samples / 4238.1 ms; residual 1.500 ms; sensitivity passed | `0e524cbf0adbde2c012805f42ad6e37d662945c1b014b7de73ce021d1ada9ae5` |
-| `power-forms`: `runPowerSplit 64` | allocation 23.62%, GMP 0.89%, own 20.64%, runtime 25.67%; identified `lean_nat_log2` 22.73% and upstream `HexPrimality` trial 5.22%; 1.23% other | `removePower` 29.12%, `runPowerSplit` 14.15%, `factorPower?` 13.93%, `factorCounted?` 12.85% | 3159 samples / 3262.6 ms; residual 2.150 ms; sensitivity passed | `9dd73629a5339b2fdc6d203608932c5d14ae2b51edbcf9725e0de3b9e2c8c17e` |
-| `certificate-replay-and-order`: `runOrder 65537` | upstream Lean `orderOfAux` 99.70%, allocation 0.18%, GMP 0.02%, runtime 0.06%, other 0.04% | `orderOf` 99.76% | 5039 samples / 5071.9 ms; residual 1.197 ms; sensitivity passed | `36c65e325d4ee795a3dbb85e60019823b099f9cee7f9c4131654f9863f9494e3` |
-| `generalized-divisor-sums`: `runSigmaExponent 4194304` | GMP 90.59% including `mpn_mul_fft_internal`, allocation/kernel memory 4.38% including `madvise`, other 5.03% | `sigma` 77.41%, `sigmaEntry` 76.57% | 4537 samples / 4717.4 ms; residual 0.793 ms; sensitivity passed | `3646f194862bdd03ed4ebcd05455e5ef2c672a17249e3b04ae765148b44a2fc4` |
-
-The balanced and direct-`Nat` ECM profiles are dominated by allocation and GMP
-division/copy work, matching their widening modular-arithmetic paths. The
-power-form profile lands in small-route trial division, `removePower`, and
-`Nat.log2`; every dominant phase is represented by the power registrations.
-The order profile lands almost entirely in `HexPrimality.Order.orderOfAux`:
-that is the upstream implementation deliberately exercised by HexIntFactor's
-advertised order surface, not an unmeasured local phase. The sigma profile is
-dominated by GMP multiplication, including the FFT regime expected at the
-multi-million-bit rung. No profile exposes an unattributed dominant cost.
+Leaf costs are allocation 66.89%, GMP 25.52%, Lean runtime 5.90%, and other
+1.70% (98.30% classified). Inclusive samples put `rhoLeast`, `rhoTry`, and
+`brentGo` on 94.20% of samples; `rhoNext` is 40.22%. The dominant self costs
+are allocation/free paths, followed by GMP division and copy operations. This
+confirms that raw rho's hot path is allocation-heavy and keeps that diagnosis
+separate from the successful like-for-like full-pipeline control.
 
 ## Reproduction
 
-Build, wiring, and full scientific collection:
-
 ```sh
-lake build hexintfactor_bench
+lake build hexintfactor_bench HexIntFactorKernelProbe
 .lake/build/bin/hexintfactor_bench list
 .lake/build/bin/hexintfactor_bench verify
-python3 scripts/bench/intfactor_phase4.py \
-  --pari /nix/store/g4sv6kfhwyh176gipz6zc1m35sd2jycf-pari-2.17.3/bin/gp \
-  --ecm /nix/store/9cbg4dh5xm3ihbnm0s490vlz1kjx9936-ecm-7.0.6/bin/ecm \
-  --output reports/bench-results/hex-int-factor-phase4-703d2f42-chungus2-cpu2.json \
-  --cpu 2
-python3 scripts/bench/intfactor_phase4.py --report \
-  reports/bench-results/hex-int-factor-phase4-703d2f42-chungus2-cpu2.json
-```
-
-The collector pins itself and every child to CPU 2, records pre/post pressure,
-uses seven median rounds for each external comparator, preserves the full
-LeanBench exports for the ECM/rho and power compare groups, and records every
-default-fuel result and attempt count.
-
-Profiles used the following template, with the five `(TARGET, PARAM)` pairs
-shown in the profile table and `LEAN_BENCH_SAMPLY_HOME` pointing at commit
-`9356baa2f5757ee40320a897bd284914d5bb9f5e`:
-
-```sh
+.lake/build/bin/hexintfactor_bench control-audit
+.lake/build/bin/hexintfactor_bench default-fuel
+nix shell nixpkgs#pari nixpkgs#ecm --command \
+  python3 scripts/bench/intfactor_phase4.py \
+    --cpu 7 --rounds 7 --timeout 120 \
+    --output reports/bench-results/hex-int-factor-phase4-a30ecb84-chungus2-cpu7.json
+nix shell nixpkgs#pari nixpkgs#ecm --command \
+  python3 scripts/bench/intfactor_phase4.py --report \
+    reports/bench-results/hex-int-factor-phase4-a30ecb84-chungus2-cpu7.json
 LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9634 \
   scripts/profile/run_profile.sh \
-  .lake/build/bin/hexintfactor_bench TARGET PARAM 5000000000
+    .lake/build/bin/hexintfactor_bench \
+    Hex.IntFactorBench.runBalancedRho 80 5000000000
 python3 scripts/profile/summarize_profile.py \
-  /tmp/hex-profile-SHORT-PARAM.json.gz \
-  --thread hexintfactor_bench --top 15
+  /tmp/hex-profile-runBalancedRho-80.json.gz \
+  --thread hexintfactor_bench --top 20
 ```
+
+The artifact preserves the full benchmark export, all control and fuel rows,
+seven comparator rounds, the exact commands and versions, pre/post host state,
+and source/executable hashes. Raw profile files remain under `/tmp` rather than
+being committed.
 
 ## Concerns
 
