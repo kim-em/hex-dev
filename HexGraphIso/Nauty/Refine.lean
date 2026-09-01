@@ -235,6 +235,15 @@ value in ascending value order, keeping cell order within a group. -/
   | [] => lab
   | x :: rest => writeSegment (lab.set! cell1 x) (cell1 + 1) rest
 
+/-- The active-set fix after a nontrivial split: if the original cell was
+not active, activate the whole boundary except the largest fragment.
+Touches no labelling data. -/
+@[expose] def nontrivialFix (cell1 : Nat) (st : RefineSt) : RefineSt :=
+  if ¬ elem st.active cell1 then
+    { st with active := erase (insert st.active cell1) st.maxpos }
+  else
+    st
+
 /-- One cell's processing in the nontrivial-splitter pass. -/
 @[expose] def nontrivialCell (ctx : Ctx) (level : Nat) (workset cell1 cell2 : Nat)
     (st : RefineSt) : RefineSt :=
@@ -249,12 +258,9 @@ value in ascending value order, keeping cell order within a group. -/
     else
       let values := (List.range (bmax + 1 - bmin)).map (bmin + ·)
       let st := windowScan level cell1 cell2 counts values cell1 (-1) st
-      let st := { st with
-        lab := writeSegment st.lab cell1 (segmentOf st.lab cell1 counts values) }
-      if ¬ elem st.active cell1 then
-        { st with active := erase (insert st.active cell1) st.maxpos }
-      else
-        st
+      nontrivialFix cell1
+        { st with
+          lab := writeSegment st.lab cell1 (segmentOf st.lab cell1 counts values) }
 
 /-- One splitting pass of `refine` for a nontrivial splitter cell
 `lab[split1..split2]`.

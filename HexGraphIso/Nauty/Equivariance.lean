@@ -398,4 +398,149 @@ theorem lab_windowScan (level cell1 cell2 : Nat) (counts : List Nat) :
     · simp only [if_neg hm]
       exact lab_windowScan level cell1 cell2 counts vs c1 maxcell st
 
+/-! # The stable counting redistribution -/
+
+theorem countsOf_length (ctx : Ctx) (lab : Array Nat)
+    (workset cell1 cell2 : Nat) :
+    (countsOf ctx lab workset cell1 cell2).length = cell2 + 1 - cell1 := by
+  rw [countsOf]
+  simp
+
+theorem segmentOf_map (σ : Renaming n) {lab : Array Nat} {cell1 : Nat}
+    {counts : List Nat} (hlen : cell1 + counts.length ≤ lab.size)
+    (values : List Nat) :
+    segmentOf (lab.map σ.toFun) cell1 counts values =
+      (segmentOf lab cell1 counts values).map σ.toFun := by
+  rw [segmentOf, segmentOf, List.map_flatMap]
+  refine congrArg values.flatMap ?_
+  funext v
+  rw [List.map_map]
+  refine List.map_congr_left fun p hp => ?_
+  rcases p with ⟨c, j⟩
+  have hz := (List.mem_filter.mp hp).1
+  rw [List.mem_zipIdx_iff_getElem?] at hz
+  obtain ⟨hj, -⟩ := List.getElem?_eq_some_iff.mp hz
+  exact getElem!_map_of_lt σ.toFun lab (by omega)
+
+/-- Segment entries are labelling entries, hence vertices. -/
+theorem segmentOf_mem {lab : Array Nat} (hlab : LabOk lab n) {cell1 : Nat}
+    {counts : List Nat} (hlen : cell1 + counts.length ≤ lab.size)
+    (values : List Nat) : ∀ x ∈ segmentOf lab cell1 counts values, x < n := by
+  intro x hx
+  rw [segmentOf, List.mem_flatMap] at hx
+  rcases hx with ⟨v, hv, hx⟩
+  rw [List.mem_map] at hx
+  rcases hx with ⟨⟨c, j⟩, hp, rfl⟩
+  have hz := (List.mem_filter.mp hp).1
+  rw [List.mem_zipIdx_iff_getElem?] at hz
+  obtain ⟨hj, -⟩ := List.getElem?_eq_some_iff.mp hz
+  exact hlab _ (by omega)
+
+theorem writeSegment_map (σ : Renaming n) :
+    ∀ (seg : List Nat) (lab : Array Nat) (c1 : Nat),
+      writeSegment (lab.map σ.toFun) c1 (seg.map σ.toFun) =
+        (writeSegment lab c1 seg).map σ.toFun
+  | [], _, _ => rfl
+  | x :: seg, lab, c1 => by
+    rw [List.map_cons, writeSegment, writeSegment, ← map_set!]
+    exact writeSegment_map σ seg (lab.set! c1 x) (c1 + 1)
+
+theorem writeSegment_ok :
+    ∀ (seg : List Nat) (lab : Array Nat) (c1 : Nat), LabOk lab n →
+      (∀ x ∈ seg, x < n) →
+      (writeSegment lab c1 seg).size = lab.size ∧
+        LabOk (writeSegment lab c1 seg) n
+  | [], _, _, hlab, _ => ⟨rfl, hlab⟩
+  | x :: seg, lab, c1, hlab, hseg => by
+    rw [writeSegment]
+    have ih := writeSegment_ok seg (lab.set! c1 x) (c1 + 1)
+      (labOk_set! hlab (hseg x (by simp)) c1)
+      (fun y hy => hseg y (by simp [hy]))
+    rw [Array.size_set!] at ih
+    exact ih
+
+/-! # The nontrivial-splitter cell -/
+
+/-- The active-set fix reads and writes only position-level fields, so
+it commutes with the labelling transport. -/
+theorem nontrivialFix_mapSt (σ : Renaming n) (cell1 : Nat)
+    (st : RefineSt) :
+    nontrivialFix cell1 (mapSt σ st) = mapSt σ (nontrivialFix cell1 st) := by
+  rw [nontrivialFix, nontrivialFix]
+  dsimp only [mapSt]
+  rcases Decidable.em (¬ elem st.active cell1 = true) with h | h
+  · simp only [if_pos h]
+  · simp only [if_neg h]
+
+theorem lab_nontrivialFix (cell1 : Nat) (st : RefineSt) :
+    (nontrivialFix cell1 st).lab = st.lab := by
+  rw [nontrivialFix]
+  split <;> rfl
+
+/-- One nontrivial-splitter cell commutes with the labelling
+transport. -/
+theorem nontrivialCell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) (level : Nat) {workset : Nat}
+    (hws : workset < 2 ^ n) (cell1 cell2 : Nat) (st : RefineSt)
+    (hlab : LabOk st.lab n) (h2 : cell2 < st.lab.size) :
+    nontrivialCell ctx' level (image σ n workset) cell1 cell2 (mapSt σ st) =
+      mapSt σ (nontrivialCell ctx level workset cell1 cell2 st) := by
+  rw [nontrivialCell, nontrivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    rw [countsOf_map σ hg hlab hws h2]
+    have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
+        cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
+    generalize hcounts : countsOf ctx st.lab workset cell1 cell2 = counts
+    rw [hcounts] at hlen
+    rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
+        counts.foldl Nat.max (counts.headD 0)) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      have hne : cell1 ≤ cell2 := by
+        rcases Decidable.em (cell1 ≤ cell2) with h | h
+        · exact h
+        · have h0 : counts = [] := List.length_eq_zero_iff.mp (by omega)
+          rw [h0] at hbm
+          simp at hbm
+      rw [windowScan_map σ level cell1 cell2 counts (st := st),
+        show ∀ x : RefineSt, (mapSt σ x).lab = x.lab.map σ.toFun from
+          fun _ => rfl,
+        lab_windowScan level cell1 cell2 counts,
+        segmentOf_map σ (lab := st.lab) (cell1 := cell1) (counts := counts)
+          (by omega),
+        writeSegment_map σ, ← nontrivialFix_mapSt σ cell1]
+    · simp only [if_true]
+  · simp only [if_true]
+
+/-- One nontrivial-splitter cell keeps the labelling's size and
+range. -/
+theorem nontrivialCell_ok {ctx : Ctx} {level workset cell1 cell2 : Nat}
+    {st : RefineSt} (hlab : LabOk st.lab n) (h2 : cell2 < st.lab.size) :
+    (nontrivialCell ctx level workset cell1 cell2 st).lab.size =
+        st.lab.size ∧
+      LabOk (nontrivialCell ctx level workset cell1 cell2 st).lab n := by
+  rw [nontrivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hlen : (countsOf ctx st.lab workset cell1 cell2).length =
+        cell2 + 1 - cell1 := countsOf_length ctx st.lab workset cell1 cell2
+    generalize hcounts : countsOf ctx st.lab workset cell1 cell2 = counts
+    rw [hcounts] at hlen
+    rcases hbm : (counts.foldl Nat.min (counts.headD 0) ==
+        counts.foldl Nat.max (counts.headD 0)) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      have hne : cell1 ≤ cell2 := by
+        rcases Decidable.em (cell1 ≤ cell2) with h | h
+        · exact h
+        · have h0 : counts = [] := List.length_eq_zero_iff.mp (by omega)
+          rw [h0] at hbm
+          simp at hbm
+      rw [lab_nontrivialFix, lab_windowScan level cell1 cell2 counts]
+      exact writeSegment_ok _ st.lab cell1 hlab
+        (segmentOf_mem hlab (by omega) _)
+    · simp only [if_true]
+      exact ⟨by trivial, hlab⟩
+  · simp only [if_true]
+    exact ⟨by trivial, hlab⟩
+
 end Hex.GraphIso.Nauty
