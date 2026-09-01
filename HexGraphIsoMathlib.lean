@@ -8,6 +8,8 @@ module
 
 public import HexGraphIsoMathlib.Basic
 public import HexGraphIsoMathlib.Encode
+public import HexGraphIsoMathlib.TacticSupport
+public import HexGraphIsoMathlib.Tactic
 
 public section
 

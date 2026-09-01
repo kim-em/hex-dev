@@ -163,19 +163,17 @@ meta def permExpr (n : Nat) (p : Array Nat) : MetaM Expr := do
   mkAppM ``Option.getD #[opt, dflt]
 
 /-- Match `Isomorphic G H` (returning `(false, n, k, G, H)`) or
-`¬ Isomorphic G H` / `Isomorphic G H → False` (returning `true` first). -/
-meta def matchGoal (target : Expr) : MetaM (Bool × Expr × Expr × Expr × Expr) := do
+`¬ Isomorphic G H` (returning `true` first); `none` for other goals. -/
+meta def matchGoal? (target : Expr) : MetaM (Option (Bool × Expr × Expr × Expr × Expr)) := do
   let t ← whnfR target
   match_expr t with
-  | Isomorphic n k G H => return (false, n, k, G, H)
+  | Isomorphic n k G H => return some (false, n, k, G, H)
   | Not p =>
     let p ← whnfR p
     match_expr p with
-    | Isomorphic n k G H => return (true, n, k, G, H)
-    | _ => throwError "graph_iso: the goal is not an `Isomorphic` or \
-        `¬ Isomorphic` proposition over executable coloured graphs:{indentExpr target}"
-  | _ => throwError "graph_iso: the goal is not an `Isomorphic` or \
-      `¬ Isomorphic` proposition over executable coloured graphs:{indentExpr target}"
+    | Isomorphic n k G H => return some (true, n, k, G, H)
+    | _ => return none
+  | _ => return none
 
 private meta unsafe def evalNatUnsafe (e : Expr) : MetaM Nat :=
   evalExpr Nat (mkConst ``Nat) e
@@ -189,9 +187,41 @@ private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
 @[implemented_by evalOptBoolUnsafe]
 private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
 
-/-- Prove a `graph_iso` goal. -/
-meta def proveGraphIso (cfg : Config) (target : Expr) : MetaM Expr := do
-  let (negative, nE, _kE, GE, HE) ← matchGoal target
+/-- A `graph_iso` goal handler contributed by a downstream library.
+Importing a library that declares a `public meta def` of this type under
+one of the `extensionNames` extends the same `graph_iso` syntax to that
+library's goal shapes. -/
+meta structure Extension where
+  /-- Handle a goal, returning its proof term, or `none` when the goal
+  shape is not this extension's. -/
+  prove? : Config → Expr → MetaM (Option Expr)
+
+/-- Well-known extension constants, checked in order. -/
+meta def extensionNames : List Name :=
+  [`HexGraphIsoMathlib.Tactic.extension]
+
+private meta unsafe def evalExtensionUnsafe (n : Name) : MetaM Extension :=
+  evalConst Extension n
+
+@[implemented_by evalExtensionUnsafe]
+private meta opaque evalExtensionCore (n : Name) : MetaM Extension
+
+/-- All extensions present in the current environment, in lookup order. -/
+meta def extensions : MetaM (List Extension) := do
+  let env ← getEnv
+  let mut found := []
+  for nm in extensionNames do
+    if let some info := env.find? nm then
+      unless info.type.isConstOf ``Extension do
+        throwError "graph_iso: extension {nm} has unexpected \
+            type{indentExpr info.type}"
+      found := found ++ [← evalExtensionCore nm]
+  return found
+
+/-- Prove a `graph_iso` goal over executable coloured graphs. -/
+meta def proveGraphIso (cfg : Config) (target : Expr)
+    (parsed : Bool × Expr × Expr × Expr × Expr) : MetaM Expr := do
+  let (negative, nE, _kE, GE, HE) := parsed
   if (← instantiateMVars target).hasMVar then
     throwError "graph_iso: the goal contains metavariables; both graphs \
         must be closed terms"
@@ -271,7 +301,26 @@ open Lean Elab Lean.Elab.Tactic Meta in
   let goal ← getMainGoal
   goal.withContext do
     let target ← instantiateMVars (← goal.getType)
-    let proof ← Tactic.proveGraphIso cfg target
+    let proof ← do
+      match ← Tactic.matchGoal? target with
+      | some parsed => Tactic.proveGraphIso cfg target parsed
+      | none =>
+        let exts ← Tactic.extensions
+        let mut result : Option Expr := none
+        for ext in exts do
+          if result.isNone then
+            result ← ext.prove? cfg target
+        match result with
+        | some prf => pure prf
+        | none =>
+          if exts.isEmpty then
+            throwError "graph_iso: the goal is not an `Isomorphic` or \
+                `¬ Isomorphic` proposition over executable coloured \
+                graphs:{indentExpr target}\
+                \nFor `SimpleGraph` goals, import `HexGraphIsoMathlib`."
+          else
+            throwError "graph_iso: the goal is not a supported isomorphism \
+                proposition:{indentExpr target}"
     goal.assign proof
   replaceMainGoal []
 
