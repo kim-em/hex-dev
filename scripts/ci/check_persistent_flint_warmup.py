@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Require fixed users of the persistent FLINT driver to warm each child.
+"""Require fixed users of persistent comparator drivers to warm each child.
 
 The shared ``Hex.BenchOracle.Flint`` process is lazy and cached only within one
 LeanBench child.  A fixed registration that reaches ``runOp`` (possibly through
 local adapter definitions or an imported bench helper) must therefore use a
-configuration with ``warmupFirstIter := true``.  Otherwise every outer child
-charges Python and python-flint startup to its first timed batch.
+configuration with ``warmupFirstIter := true``.  The same requirement applies
+to the HexGF2 NTL driver. Otherwise every outer child charges external-driver
+startup to its first timed batch.
 
 This is deliberately a small source lint rather than a target-name allowlist:
 it follows Lean definition references from the driver call to registered fixed
@@ -45,8 +46,9 @@ _IDENT_RE = re.compile(
     r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*"
 )
 _DRIVER_CALL_RE = re.compile(
-    r"\bHex\.BenchOracle\.Flint\."
+    r"(?:\bHex\.BenchOracle\.Flint\."
     r"(?:runOp|runLine|sendRequest|sendRequestLine)\b"
+    r"|\brequestNtlLineWithRetry\b)"
 )
 _WARM_TRUE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*true\b")
 _WARM_FALSE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*false\b")
@@ -230,13 +232,13 @@ def main() -> int:
     registrations, failures = check(REPO_ROOT)
     if not registrations:
         print(
-            "Persistent FLINT fixed-benchmark warmup lint found no registrations; "
+            "Persistent-comparator warmup lint found no registrations; "
             "check the driver-call and registration parsers.",
             file=sys.stderr,
         )
         return 1
     if failures:
-        print("Persistent FLINT fixed-benchmark warmup lint failed:", file=sys.stderr)
+        print("Persistent-comparator warmup lint failed:", file=sys.stderr)
         for registration in failures:
             relative = registration.path.relative_to(REPO_ROOT)
             print(
@@ -253,7 +255,7 @@ def main() -> int:
 
     print(
         "check_persistent_flint_warmup: OK "
-        f"({len(registrations)} fixed persistent-FLINT registration(s) checked)."
+        f"({len(registrations)} fixed persistent-comparator registration(s) checked)."
     )
     return 0
 
