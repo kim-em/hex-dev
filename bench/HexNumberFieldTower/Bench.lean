@@ -472,11 +472,11 @@ setup_fixed_benchmark runAdjoin where {
 
 /- Mode 3 for the distinct identity branch. Degree does not parameterize the
 fixed-embedding selection and recovery work tightly, and no complete published
-bound applies. Re-adjoining `sqrt(2)` is the SPEC's canonical input. The 0.5 s
-zero-grace whole-child budget covers the historical 23.43 ms median, warmup,
-and the 0.2 s steady-state batch. -/
+bound applies. Re-adjoining `sqrt(2)` is the SPEC's canonical input. The 1 s
+zero-grace whole-child budget covers the measured 18.13 ms median, certified
+fixture construction, warmup, and the 0.2 s steady-state batch. -/
 setup_fixed_benchmark runAdjoinIdentity where {
-  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
+  repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0x51ddf5878af8a696,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -584,10 +584,10 @@ setup_fixed_benchmark runFactorRetry where {
 /- Mode 3 branch case. The same absence of a tight composed model and
 dominant-phase upper bound rules out modes 1 and 2. `X^2 - 3` over
 `Q(sqrt(2), sqrt(3))` is the SPEC's canonical recursive relative-factorization
-input. Its historical 7.632 ms median sets a 0.5 s zero-grace whole-child
-budget including warmup and the 0.2 s timed batch. -/
+input. Its measured 7.597 ms median sets a 1 s zero-grace whole-child budget
+including certified fixture construction, warmup, and the 0.2 s timed batch. -/
 setup_fixed_benchmark runFactorRecursive where {
-  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
+  repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xd13bbfca65f65898,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -920,8 +920,11 @@ setup_benchmark runTowerSubLadder n => n
   }
 
 /- Cost model. Negation visits exactly the `D = 2n` bounded-height rational
-coordinates, so its wall model is linear. -/
-setup_benchmark runTowerNegLadder n => n
+coordinates, then allocates the result wrapper and computes its checksum.  The
+coordinate work is linear while the latter work contributes a fixed intercept,
+so `n + 1` is the finite-range affine model (and remains asymptotically linear
+in `D`). -/
+setup_benchmark runTowerNegLadder n => n + 1
   with prep := prepElemInput
   where {
     paramFloor := 1
