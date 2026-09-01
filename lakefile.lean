@@ -1104,6 +1104,12 @@ lean_exe hexgraphiso_bench where
   srcDir := "bench"
   root := `HexGraphIso.Bench
 
+-- Local/scheduled per-instance sweep for the cactus plots
+-- (scripts/plots/hexgraphiso-cactus.py); not part of merge CI.
+lean_exe hexgraphiso_cactus where
+  srcDir := "bench"
+  root := `HexGraphIso.Cactus
+
 lean_exe hexrowreduce_bench where
   srcDir := "bench"
   root := `HexRowReduce.Bench
