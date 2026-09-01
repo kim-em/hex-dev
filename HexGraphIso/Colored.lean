@@ -78,6 +78,15 @@ set. -/
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
     simp [Vector.get_eq_getElem, this]⟩
 
+/-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
+@[expose] def mod (n k : Nat) (hk : 0 < k) (hkn : k ≤ n) : Coloring n k where
+  cells := Vector.ofFn fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
+  onto c := by
+    refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
+    rw [Vector.get_eq_getElem]
+    simp only [Fin.getElem_fin, Vector.getElem_ofFn]
+    exact Fin.ext (Nat.mod_eq_of_lt c.isLt)
+
 /-- The number of vertices with each colour. -/
 @[expose] def cellSizes (c : Coloring n k) : Vector Nat k :=
   Vector.ofFn fun j => ((List.finRange n).filter fun i => c.cells[i] == j).length

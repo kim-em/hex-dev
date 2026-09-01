@@ -234,11 +234,18 @@ theorem mem_candPairs {G : Colored n k} {l : Label n}
   rw [candPairs, List.mem_filterMap]
   exact ⟨l, mem_allLabels l, by rw [ite_eq_left h]⟩
 
-/-- The reference canonical form and its label. -/
+/-- The reference canonical form and its label: the `digits`-greatest
+entry of `candPairs`. The empty case is unreachable — the colour-sorting
+label always produces a candidate (`colorSorted_relabel_sortLabel`) — and
+`sortLabel` stays out of this executable path so the whole selection
+kernel-reduces (`List.mergeSort` is well-founded recursion, which the
+kernel cannot unfold). -/
 @[expose] def canonicalize (G : Colored n k) : CanonResult n k :=
-  let seed := (sortLabel G, G.relabel (sortLabel G))
-  let best := pick (fun pr => digits pr.2) seed (candPairs G)
-  { form := best.2, label := best.1 }
+  match candPairs G with
+  | [] => { form := G, label := Label.id n }
+  | seed :: rest =>
+    let best := pick (fun pr => digits pr.2) seed rest
+    { form := best.2, label := best.1 }
 
 /-- The reference canonical form. -/
 @[expose] def canon (G : Colored n k) : Colored n k :=
@@ -252,12 +259,22 @@ theorem mem_candPairs {G : Colored n k} {l : Label n}
 
 private theorem best_spec (G : Colored n k) :
     G.relabel (label G) = canon G ∧ ColorSorted (canon G) := by
-  rw [label, canon, canonicalize]
-  rcases pick_mem (fun pr : Label n × Colored n k => digits pr.2)
-      (sortLabel G, G.relabel (sortLabel G)) (candPairs G) with h | h
-  · rw [h]
-    exact ⟨rfl, colorSorted_relabel_sortLabel G⟩
-  · exact of_mem_candPairs h
+  rw [label, canon]
+  unfold canonicalize
+  split
+  · next hcp =>
+      exact absurd (mem_candPairs (colorSorted_relabel_sortLabel G))
+        (by rw [hcp]; exact List.not_mem_nil)
+  · next seed rest hcp =>
+      have hmem : pick (fun pr : Label n × Colored n k => digits pr.2) seed rest
+          ∈ candPairs G := by
+        rw [hcp]
+        rcases pick_mem (fun pr : Label n × Colored n k => digits pr.2) seed rest
+          with h | h
+        · rw [h]
+          exact List.mem_cons_self ..
+        · exact List.mem_cons_of_mem _ h
+      exact of_mem_candPairs hmem
 
 /-- Relabelling by the canonical label produces the canonical form. -/
 theorem relabel_label (G : Colored n k) : G.relabel (label G) = canon G :=
@@ -279,11 +296,15 @@ theorem le_digits_canon {G K : Colored n k} (hiso : Isomorphic G K)
     (hsorted : ColorSorted K) : lexLe (digits K) (digits (canon G)) := by
   rcases isomorphic_iff_exists_relabel.mp hiso with ⟨l, rfl⟩
   have hmem := mem_candPairs hsorted
-  have := le_pick (fun pr : Label n × Colored n k => digits pr.2)
-    (sortLabel G, G.relabel (sortLabel G)) (candPairs G)
-    (l, G.relabel l) (List.mem_cons_of_mem _ hmem)
-  rw [canon, canonicalize]
-  exact this
+  rw [canon]
+  unfold canonicalize
+  split
+  · next hcp =>
+      exact absurd hmem (by rw [hcp]; exact List.not_mem_nil)
+  · next seed rest hcp =>
+      rw [hcp] at hmem
+      exact le_pick (fun pr : Label n × Colored n k => digits pr.2) seed rest
+        (l, G.relabel l) hmem
 
 /-- Isomorphic coloured graphs have equal canonical forms. -/
 theorem canon_invariant {G H : Colored n k} (h : Isomorphic G H) :

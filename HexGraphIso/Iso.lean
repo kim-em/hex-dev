@@ -50,6 +50,10 @@ permutation transports one onto the other. -/
 def Isomorphic (G H : Colored n k) : Prop :=
   ∃ p, IsIso G H p
 
+theorem Isomorphic.intro {G H : Colored n k} (p : Perm n) (h : IsIso G H p) :
+    Isomorphic G H :=
+  ⟨p, h⟩
+
 namespace IsIso
 
 theorem refl (G : Colored n k) : IsIso G G (Perm.id n) :=
