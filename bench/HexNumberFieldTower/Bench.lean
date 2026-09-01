@@ -28,10 +28,11 @@ mode-3 factorization case uses input degree 24 over the quadratic base.
 
 The parametric ladders carry the Phase-4 arithmetic evidence:
 
-* `runTower{Add,Sub,SMul,Mul,Inv,Div}Ladder`: coordinate arithmetic in
+* `runTower{Add,Sub,SMul,Mul,Inv}Ladder`: coordinate arithmetic in
   the height-two tower `Q(sqrt(2), 3^{1/m})` at growing dimension `D = 2m`.
-  Negation uses a canonical fixed budget after its wider ladder reaches the
-  certified-fixture cap before the linear transient stabilizes.
+  Negation and division use canonical fixed budgets after their wider ladders
+  fail the source-derived models; full-basis `toPrimitive` does likewise,
+  while full-basis `fromPrimitive` retains its quartic ladder.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,
@@ -460,8 +461,8 @@ setup_fixed_benchmark runInv where {
 selection, factorization, isolation, and validation change dominance, so no
 stable independently derived wall model is reachable, and no published bound
 covers the dominant isolation phase. The canonical fourth-root extension of
-`Q(sqrt(2))` has a 312.299 ms median. Its 3 s zero-grace whole-child
-budget includes process startup, certified fixtures, warmup, and batch work. -/
+`Q(sqrt(2))` has a 311.405 ms per-call and whole-batch median. Its 3 s
+zero-grace whole-child budget includes startup and certified fixtures. -/
 setup_fixed_benchmark runAdjoin where {
   repeats := 3, maxSecondsPerCall := 3.0, killGraceMs := 0,
   expectedHash := some 0xde9179e4f67a3948,
@@ -472,8 +473,8 @@ setup_fixed_benchmark runAdjoin where {
 schedule `2,3,4,6,8,12` measured 18.0 ms, 2.37 s, 1.68 s, then hit a 30 s cap
 at degree 6: branch-sensitive embedding recovery is nonmonotone and supplies no
 stable independently derived model; no complete published bound applies.
-Re-adjoining `sqrt(2)` is canonical. Its 18.023 ms median and all
-inclusive child work fit a 1 s zero-grace ceiling. -/
+Re-adjoining `sqrt(2)` is canonical. Its 18.084 ms per-call median and
+289.345 ms batch median fit a 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runAdjoinIdentity where {
   repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0x51ddf5878af8a696,
@@ -582,7 +583,8 @@ setup_fixed_benchmark runFactorRetry where {
 candidate with residual `+0.645`: recursive norms, gcd, rational factorization,
 and replay change shares, and no published bound covers all phases. The
 irreducible `X² - X - 1` input over `ℚ(√2, √3)` is the smallest
-non-short-circuit canonical case; its 2 s ceiling covers the whole child. -/
+non-short-circuit canonical case. Its 7.919 ms per-call and 253.393 ms batch
+medians fit the 2 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runFactorRecursive where {
   repeats := 3, maxSecondsPerCall := 2.0, killGraceMs := 0,
   expectedHash := some 0xa0c08a951ecca91a,
@@ -655,8 +657,8 @@ def runRecoverSearch : Unit → IO UInt64 := fun _ => do
 measured 19.5 ms, 68.3 ms, and 1.89 s as repeated factorization, isolation,
 adjoining, and root collection change dominance. No tight independent wall
 model or published dominant-isolation bound applies. The canonical quartic
-performs two genuine extensions; its 67.342 ms median and inclusive
-child work fit a 1 s zero-grace ceiling. -/
+performs two genuine extensions; its 68.203 ms per-call and 272.813 ms batch
+medians fit a 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runSplit where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xd863bc339d467bf8,
@@ -706,8 +708,8 @@ setup_fixed_benchmark runCoordinateMaps where {
 /- Mode 3 for the public `toPrimitive` closure. The full-basis dimension
 schedule `4,6,8,10,12,18` rejects the independently derived cubic model with
 residual `+0.521` as coefficient growth takes over at the final rung. The
-dimension-four completed flattening is canonical; its 1 s zero-grace
-whole-child ceiling is the next ordered mode. -/
+dimension-four completed flattening is canonical; its 13.914 µs per-call and
+227.983 ms batch medians fit the 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runToPrimitive where {
   repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xb5d54195958fb61e,
@@ -718,8 +720,8 @@ setup_fixed_benchmark runToPrimitive where {
 `2,4,6,8`) measured 0.96 ms, 21.0 ms, 107.7 ms, and 460.4 ms while candidate
 enumeration, eliminants, isolation, recovery, and certification change
 dominance. No stable independent wall model or published dominant-isolation
-bound applies. The canonical dimension-four tower has a 20.835 ms median;
-inclusive child work fits a 1 s zero-grace ceiling. -/
+bound applies. The canonical dimension-four tower has a 20.819 ms per-call and
+333.110 ms batch median; inclusive work fits a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xcc1b7720bfe3fc24,
@@ -765,7 +767,7 @@ setup_fixed_benchmark runSub where {
 linear model (`β = -0.185`) before the dimension-32 certified fixture hits its
 300 s cap. No larger honest rung is reachable without timing fixture construction.
 The dimension-four two-level tower is the canonical merge-facing input; its
-zero-grace 1 s whole-child ceiling is the next ordered mode. -/
+338.716 ms batch median fits the 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runNeg where {
   repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0x2e1510498ed9e174,
@@ -776,7 +778,8 @@ setup_fixed_benchmark runNeg where {
 independently derived `n² log n` model with residual `+0.594`; coefficient
 growth in the divisor's Euclidean chain prevents a stable dimension-only wall
 model, and no published bound covers that measured growth. The dimension-four
-division is canonical and uses a 1 s zero-grace whole-child ceiling. -/
+division is canonical; its 79.042 µs per-call and 323.760 ms batch medians fit
+the 1 s zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runDiv where {
   repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xe534ce65592907a8,
@@ -1100,17 +1103,18 @@ def runTowerFactorLadder : Unit → IO UInt64 := fun _ => do
 SPEC's Trager/BHKS envelope, but its local exponents rose from 0.80 to 4.48
 as the dominant rational-polynomial gcd, resultant, and checked-replay shares
 changed with coefficient growth. That is not a stable independently derived
-family model. Integer factorization is 1.42% of the whole-thread capture and
-2.44% of the resolved `factor?` frame, while gcd is 81.18% of that frame;
-unwind loss is non-uniform, but either accounting excludes a BHKS-only mode 2
-bound for the dominant inclusive work.
+family model. Integer factorization is 1.42% of the whole-thread capture, while
+gcd alone is 47.28%; the target frame is 58.24%. Non-uniform GMP stack-unwind
+loss makes renormalized within-target ratios only qualitative, but the direct
+whole-capture shares already exclude a BHKS-only mode-2 bound for the dominant
+inclusive work.
 
 The degree-24 Selmer trinomial over `Q(sqrt(2))` is the top completed rung and
 the canonical hard input. Rational coefficients force a repeated shift-zero
 norm, followed by a genuine retry, recursive rational factorization of the
-accepted degree-48 norm, gcd recovery, and checked replay. Its historical
-248.941 ms median, plus process startup, fixture construction, and discarded
-warmup, fits a 2 s zero-grace whole-child budget. -/
+accepted degree-48 norm, gcd recovery, and checked replay. Its 249.758 ms
+per-call and whole-batch median, plus startup and fixture construction, fits a
+2 s zero-grace whole-child budget. -/
 setup_fixed_benchmark runTowerFactorLadder where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -1259,10 +1263,9 @@ def runTowerCheckFactorization : Unit → IO UInt64 := fun _ => do
 0.404 ms to 126.3 ms with a `+1.485` residual even against a linear candidate;
 its changing squarefree, Trager, gcd, and replay phases admit no independent
 tight wall model, and no published bound covers the dominant gcd/replay work.
-The degree-24 checked Selmer factorization is canonical. Its 126.3 ms
-diagnostic baseline and the independently chosen 2 s zero-grace whole-child
-ceiling leave room for startup, fixture factorization, warmup, and auto-tuned
-batch work; the final inclusive export validates that ceiling directly. -/
+The degree-24 checked Selmer factorization is canonical. Its 124.730 ms
+per-call and 249.460 ms batch medians fit the independently chosen 2 s
+zero-grace whole-child ceiling. -/
 setup_fixed_benchmark runTowerCheckFactorization where {
   repeats := 3, maxSecondsPerCall := 2.0, killGraceMs := 0,
   expectedHash := some 0x000000000000000b,

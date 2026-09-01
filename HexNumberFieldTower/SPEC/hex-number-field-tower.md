@@ -322,6 +322,19 @@ polynomial before returning. The accepted `γ` is already the canonical
 Sage is not an oracle. CI extends the existing single ubuntu job and does not add
 a matrix or a new workflow.
 
+### Phase-4 input families
+
+- `tower-coordinate-arithmetic`: bounded-height dense coordinates in the
+  height-two family `ℚ(√2, 3^(1/m))`, varying total tower dimension while
+  holding coefficient height fixed.
+- `trager-factorization`: Selmer trinomials over `ℚ(√2)` for the inclusive
+  retry/gcd/replay route, plus irreducible Selmer inputs over
+  `ℚ(√2, √3)` for genuine recursive relative factorization.
+- `adjoin-extend`: fixed-embedding adjoining and identity adjoining, with a
+  separate checked rational-presentation family.
+- `split-flatten`: repeated quartic splitting, primitive-element flattening,
+  recovery/certification adversaries, and completed coordinate maps.
+
 ## Complexity and Phase 4 budgets
 
 Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
@@ -339,22 +352,20 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 - `flatten?` computes primitive-element eliminants of degree at most `D`, uses
   validated linear-gcd recovery while scanning full-degree candidates, and
   applies exact trace pairing once if the maximum-degree fallback is needed.
-  Applying a completed flattening's `toPrimitive` map to a full tower basis
-  costs `O(D³)` rational operations; applying `fromPrimitive` to a full
-  primitive basis costs `O(D⁴)` with the current Horner/tower-arithmetic path.
+  One completed flattening `toPrimitive` application costs `O(D²)` rational
+  operations; one `fromPrimitive` application costs `O(D³)` with the current
+  Horner/tower-arithmetic path. The benchmark applies a map to all `D` basis
+  vectors, giving full-basis `O(D³)` and `O(D⁴)` registrations respectively.
 
 The Phase-4 fixed canonical cases use zero-grace whole-child ceilings derived
-from clean reference-host measurements plus stated margin: 3 s for adjoining
-the fourth root of two, 1 s for identity adjoining, 2 s each for factoring and
-checked replay of the degree-24 Selmer trinomial over `Q(sqrt(2))`, and 1 s
-each for canonical quartic splitting and dimension-four flattening. The
-presentation constructor, coordinate arithmetic, and both completed
-flattening maps instead have parametric models. The bad-first-shift and
-recursive-relative cases are branch/hash anchors covered inclusively by the
-canonical factorization budget. These budgets do not replace the recurrence
-above; they are mode-3 regression ceilings for operations whose realised
-phase mixtures admit neither a tight family model nor a published bound
-covering the dominant executable phases.
+from clean reference-host measurements plus stated margin. They cover
+adjoining, identity adjoining, negation, division, full-basis `toPrimitive`,
+one- and two-level factorization, checked replay, splitting, and flattening.
+The headline performance report owns the measured seconds and diagnostic
+schedules. These budgets do not replace the contracts above; they are mode-3
+regression ceilings for operations whose realised phase mixtures admit neither
+a tight family model nor a published bound covering the dominant executable
+phases.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
 input degree at most 4; the degree-24 factorization case is scientific
