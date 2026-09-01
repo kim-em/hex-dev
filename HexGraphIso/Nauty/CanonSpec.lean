@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.Equivariance
+public import HexGraphIso.Nauty.CellPerm
 
 public section
 
@@ -766,6 +767,135 @@ theorem specTargetcell_nontrivial {ctx : Ctx} {lab ptn : Array Nat}
       refine ⟨(c1, c2), List.mem_of_find?_eq_some hf, ?_, rfl⟩
       have := List.find?_some hf
       simpa using this
+
+/-! # Cell-contents invariance of the spec target-cell rule -/
+
+theorem joinTest_perm {ctx : Ctx} {lab lab' : Array Nat}
+    {wset c1 c2 : Nat}
+    (hseg : (segN lab c1 (c2 + 1 - c1)).Perm
+      (segN lab' c1 (c2 + 1 - c1))) :
+    joinTest ctx lab wset c1 c2 = joinTest ctx lab' wset c1 c2 := by
+  rw [joinTest, joinTest, countsOf_eq_map, countsOf_eq_map]
+  have hp := hseg.map fun v => popCount (wset &&& ctx.g[v]!)
+  have hany : ∀ p : Nat → Bool,
+      ((segN lab c1 (c2 + 1 - c1)).map
+        fun v => popCount (wset &&& ctx.g[v]!)).any p =
+      ((segN lab' c1 (c2 + 1 - c1)).map
+        fun v => popCount (wset &&& ctx.g[v]!)).any p := by
+    intro p
+    rw [Bool.eq_iff_iff, List.any_eq_true, List.any_eq_true]
+    exact ⟨fun ⟨x, hx, hpx⟩ => ⟨x, hp.mem_iff.mp hx, hpx⟩,
+      fun ⟨x, hx, hpx⟩ => ⟨x, hp.mem_iff.mpr hx, hpx⟩⟩
+  rw [hany, hany]
+
+theorem specBestcellRow_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
+    {level : Nat} (hcp : cellsPerm ptn level lab lab')
+    (hend : ptn[ptn.size - 1]! ≤ level) {startArr : Array Nat}
+    (hstart : ∀ v : Nat, startArr[v]! < ptn.size)
+    (hstart2 : ∀ v : Nat, startArr[v]! = 0 ∨
+      ptn[startArr[v]! - 1]! ≤ level) (workset v2 : Nat) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      specBestcellRow ctx lab ptn level startArr workset v2 vs bucket =
+        specBestcellRow ctx lab' ptn level startArr workset v2 vs bucket
+  | [], _ => rfl
+  | v1 :: rest, bucket => by
+    rw [specBestcellRow, specBestcellRow]
+    have hic := isCell_cellEnd (hstart v1) (hstart2 v1) hend
+    rw [joinTest_perm (hcp _ _ hic)]
+    rcases hj : joinTest ctx lab' workset startArr[v1]!
+        (cellEnd ptn level startArr[v1]!) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      exact specBestcellRow_perm hcp hend hstart hstart2 workset v2
+        rest bucket
+    · simp only [if_true]
+      exact specBestcellRow_perm hcp hend hstart hstart2 workset v2
+        rest _
+
+theorem specBestcellRows_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
+    {level : Nat} (hcp : cellsPerm ptn level lab lab')
+    (hend : ptn[ptn.size - 1]! ≤ level) {startArr : Array Nat}
+    (hstart : ∀ v : Nat, startArr[v]! < ptn.size)
+    (hstart2 : ∀ v : Nat, startArr[v]! = 0 ∨
+      ptn[startArr[v]! - 1]! ≤ level) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      specBestcellRows ctx lab ptn level startArr vs bucket =
+        specBestcellRows ctx lab' ptn level startArr vs bucket
+  | [], _ => rfl
+  | v2 :: rest, bucket => by
+    rw [specBestcellRows, specBestcellRows]
+    have hic := isCell_cellEnd (hstart v2) (hstart2 v2) hend
+    rw [worksetOf_perm (hcp _ _ hic),
+      specBestcellRow_perm hcp hend hstart hstart2 _ v2
+        (List.range v2) bucket]
+    exact specBestcellRows_perm hcp hend hstart hstart2 rest _
+
+/-- The specification's `bestcell` depends on the labelling only through
+cell contents. -/
+theorem specBestcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
+    {level : Nat} (hcp : cellsPerm ptn level lab lab')
+    (hnn : ctx.n ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
+    specBestcell ctx lab ptn level = specBestcell ctx lab' ptn level := by
+  rw [specBestcell, specBestcell]
+  dsimp only
+  rcases hnnt : ((((cells ptn level ctx.n).filter
+      fun (c1, c2) => c1 ≠ c2).map (·.1)).length == 0) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hml : ∀ x ∈ ((cells ptn level ctx.n).filter
+        fun (c1, c2) => c1 ≠ c2).map (·.1),
+        x < ptn.size ∧ (x = 0 ∨ ptn[x - 1]! ≤ level) := by
+      intro x hx
+      rcases List.mem_map.mp hx with ⟨p, hp, rfl⟩
+      have hpc := List.mem_filter.mp hp
+      have hb := cells_bound hnn hend p hpc.1
+      have hle := cells_le p hpc.1
+      have hic := cells_isCell hnn hend p hpc.1
+      exact ⟨by omega, hic.2.1⟩
+    have hlen0 : (((cells ptn level ctx.n).filter
+        fun (c1, c2) => c1 ≠ c2).map (·.1)).length ≠ 0 := by
+      simpa using hnnt
+    have hstart : ∀ v : Nat, ((((cells ptn level ctx.n).filter
+        fun (c1, c2) => c1 ≠ c2).map (·.1)).toArray)[v]! < ptn.size := by
+      intro v
+      rw [List.getElem!_toArray]
+      rcases Nat.lt_or_ge v (((cells ptn level ctx.n).filter
+          fun (c1, c2) => c1 ≠ c2).map (·.1)).length with hv | hv
+      · rw [getElem!_pos _ v hv]
+        exact (hml _ (List.getElem_mem hv)).1
+      · rw [getElem!_neg _ _ (by omega)]
+        have hpos : 0 < (((cells ptn level ctx.n).filter
+            fun (c1, c2) => c1 ≠ c2).map (·.1)).length :=
+          Nat.pos_of_ne_zero hlen0
+        have h1 := (hml _ (List.getElem_mem hpos)).1
+        show (0 : Nat) < ptn.size
+        omega
+    have hstart2 : ∀ v : Nat, ((((cells ptn level ctx.n).filter
+        fun (c1, c2) => c1 ≠ c2).map (·.1)).toArray)[v]! = 0 ∨
+        ptn[((((cells ptn level ctx.n).filter
+          fun (c1, c2) => c1 ≠ c2).map (·.1)).toArray)[v]! - 1]! ≤
+            level := by
+      intro v
+      rw [List.getElem!_toArray]
+      rcases Nat.lt_or_ge v (((cells ptn level ctx.n).filter
+          fun (c1, c2) => c1 ≠ c2).map (·.1)).length with hv | hv
+      · rw [getElem!_pos _ v hv]
+        exact (hml _ (List.getElem_mem hv)).2
+      · rw [getElem!_neg _ _ (by omega)]
+        exact Or.inl rfl
+    rw [specBestcellRows_perm hcp hend hstart hstart2]
+  · simp only [if_true]
+
+/-- The specification's target cell depends on the labelling only
+through cell contents. -/
+theorem specTargetcell_perm {ctx : Ctx} {lab lab' ptn : Array Nat}
+    {level tcLevel : Nat} (hcp : cellsPerm ptn level lab lab')
+    (hnn : ctx.n ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
+    specTargetcell ctx lab ptn level tcLevel =
+      specTargetcell ctx lab' ptn level tcLevel := by
+  rw [specTargetcell, specTargetcell]
+  rcases Decidable.em (level ≤ tcLevel) with hB | hB
+  · rw [if_pos hB, if_pos hB]
+    exact specBestcell_perm hcp hnn hend
+  · rw [if_neg hB, if_neg hB]
 
 /-! # Equivariance -/
 
