@@ -470,33 +470,38 @@ def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
 
 variable {n k : Nat}
 
-/-- The adjacency rows of a coloured graph. -/
-def rowsOf (G : Colored n k) : Array Nat := Id.run do
-  let mut rows : Array Nat := .replicate n 0
-  for i in [0 : n] do
-    let mut row := 0
-    for j in [0 : n] do
+/-- The adjacency row of one vertex of a coloured graph. -/
+@[expose] def rowOf (G : Colored n k) (i : Nat) : Nat :=
+  (List.range n).foldl
+    (fun row j =>
       if h : i < n ∧ j < n then
-        if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then
-          row := insert row j
-    rows := rows.set! i row
-  return rows
+        if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then insert row j else row
+      else row)
+    0
+
+/-- The adjacency rows of a coloured graph. -/
+@[expose] def rowsOf (G : Colored n k) : Array Nat :=
+  ((List.range n).map (rowOf G)).toArray
+
+/-- The vertices of one colour, in increasing order. -/
+@[expose] def colorClass (G : Colored n k) (c : Nat) : List Nat :=
+  (List.range n).filter fun v =>
+    if h : v < n ∧ c < k then
+      G.coloring.cells[(⟨v, h.1⟩ : Fin n)] == ⟨c, h.2⟩
+    else
+      false
 
 /-- The initial `lab` (vertices by increasing colour, then vertex) and the
 cell end positions of a coloured graph. -/
-def initialPartition (G : Colored n k) : Array Nat × List Nat := Id.run do
-  let mut lab : Array Nat := #[]
-  let mut ends : List Nat := []
-  for c in [0 : k] do
-    let mut found := false
-    for v in [0 : n] do
-      if h : v < n ∧ c < k then
-        if G.coloring.cells[(⟨v, h.1⟩ : Fin n)] == ⟨c, h.2⟩ then
-          lab := lab.push v
-          found := true
-    if found then
-      ends := (lab.size - 1) :: ends
-  return (lab, ends.reverse)
+@[expose] def initialPartition (G : Colored n k) : Array Nat × List Nat :=
+  let classes := (List.range k).map (colorClass G)
+  let lab := classes.flatMap id
+  let ends := (classes.foldl
+    (fun (acc : List Nat × Nat) cl =>
+      if cl.isEmpty then acc
+      else ((acc.2 + cl.length - 1) :: acc.1, acc.2 + cl.length))
+    ([], 0)).1
+  (lab.toArray, ends.reverse)
 
 /-- Run the nauty-compatible search on a coloured graph. -/
 def runColored (G : Colored n k) : RunResult :=
