@@ -72,11 +72,15 @@ The planned stack, in dependency order:
    equitable state, is invariant under both renamings and within-cell
    reordering, and lets the certificate checker verify agreement with
    the recorded target cell on each replayed node — a decidable
-   per-node check in place of a global equitability theorem. Remaining
-   for this stage: switch the spec to the count-based rule and reprove
-   `specNode_map`, the key-order total-order lemmas for maximum
-   permutation-invariance, `specNode` invariance under cell-equivalent
-   labellings, and the graph-level `iso ↔ equal keys`.
+   per-node check in place of a global equitability theorem. The spec
+   uses the count-based rule; `specNode_map` is proved against it, the
+   key order is a proven linear order (`keyCmp` equality/trichotomy/
+   transitivity with `keysMax` permutation-invariance), and
+   `specNode_perm` proves the spec tree invariant under
+   cell-equivalent labellings (same partition, each cell holding the
+   same vertex multiset), by induction on fuel through `refine_perm`,
+   target-cell agreement, and per-child breakout segments. Remaining
+   for this stage: the graph-level `iso ↔ equal keys`.
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex
