@@ -598,4 +598,386 @@ theorem endsOf_pairwise :
     · simp only [if_true]
       exact endsOf_pairwise cls s
 
+/-! # Aligning a partition cell with a colour class -/
+
+theorem cell_align :
+    ∀ (cls : List (List Nat)) (s a len : Nat),
+      1 ≤ len →
+      (a = s ∨ (1 ≤ a ∧ (a - 1) ∈ endsOf cls s)) →
+      (a + len - 1) ∈ endsOf cls s →
+      (∀ q, a ≤ q → q < a + len - 1 → q ∉ endsOf cls s) →
+      ∃ pre cl suf, cls = pre ++ cl :: suf ∧ cl.isEmpty = false ∧
+        a = s + totalOf pre ∧ len = cl.length
+  | [], s, a, len, _, _, hend, _ => by rw [endsOf] at hend; cases hend
+  | cl :: cls, s, a, len, hlen, hstart, hend, hint => by
+    rcases hcl : cl.isEmpty with _ | _
+    · -- head class nonempty
+      have hL : 1 ≤ cl.length := by
+        rcases cl with _ | _
+        · simp at hcl
+        · simp
+      rw [endsOf, hcl] at hend hstart hint
+      simp only [Bool.false_eq_true, if_false] at hend hstart hint
+      rcases List.mem_cons.mp hend with hehead | hetail
+      · -- the cell ends at the head class's end
+        have ha : a = s := by
+          rcases hstart with h | ⟨ha1, hmem⟩
+          · exact h
+          · rcases List.mem_cons.mp hmem with h | h
+            · omega
+            · have := endsOf_ge cls (s + cl.length) _ h
+              omega
+        refine ⟨[], cl, cls, rfl, hcl, by simpa [totalOf_nil] using ha,
+          by omega⟩
+      · -- the cell lies beyond the head class
+        have hge := endsOf_ge cls (s + cl.length) _ hetail
+        have ha : s + cl.length ≤ a := by
+          rcases Nat.lt_or_ge a (s + cl.length) with hlt | hge'
+          · exfalso
+            refine hint (s + cl.length - 1) (by omega) (by omega) ?_
+            exact List.mem_cons.mpr (Or.inl rfl)
+          · exact hge'
+        have hstart' : a = s + cl.length ∨
+            (1 ≤ a ∧ (a - 1) ∈ endsOf cls (s + cl.length)) := by
+          rcases hstart with h | ⟨ha1, hmem⟩
+          · omega
+          · rcases List.mem_cons.mp hmem with h | h
+            · left
+              omega
+            · exact Or.inr ⟨ha1, h⟩
+        have hint' : ∀ q, a ≤ q → q < a + len - 1 →
+            q ∉ endsOf cls (s + cl.length) := fun q hq1 hq2 hq3 =>
+          hint q hq1 hq2 (List.mem_cons.mpr (Or.inr hq3))
+        obtain ⟨pre, cl', suf, hsplit, hne, hoff, hl⟩ :=
+          cell_align cls (s + cl.length) a len hlen hstart' hetail hint'
+        refine ⟨cl :: pre, cl', suf, by rw [hsplit]; rfl, hne, ?_, hl⟩
+        rw [totalOf_cons]
+        omega
+    · -- head class empty: pass through
+      have hnil : cl = [] := by
+        rcases cl with _ | _
+        · rfl
+        · simp at hcl
+      subst hnil
+      rw [endsOf] at hend hstart hint
+      simp only [List.isEmpty_nil, if_true] at hend hstart hint
+      obtain ⟨pre, cl', suf, hsplit, hne, hoff, hl⟩ :=
+        cell_align cls s a len hlen hstart hend hint
+      refine ⟨[] :: pre, cl', suf, by rw [hsplit]; rfl, hne, ?_, hl⟩
+      rw [totalOf_cons]
+      simpa using hoff
+
+/-! # Extracting a class segment from the flattened labelling -/
+
+theorem getElem!_append_middle {α : Type} [Inhabited α]
+    (l₁ : List α) (c : α) (rest : List α) :
+    (l₁ ++ c :: rest)[l₁.length]! = c := by
+  rw [getElem!_pos _ _ (by
+    rw [List.length_append, List.length_cons]
+    omega)]
+  rw [List.getElem_append_right (Nat.le_refl _)]
+  rw [getElem_congr_idx
+    (by omega : l₁.length - l₁.length = 0)]
+  rfl
+
+theorem segN_toArray_middle :
+    ∀ (cl l₁ l₂ : List Nat),
+      segN ((l₁ ++ cl ++ l₂).toArray) l₁.length cl.length = cl
+  | [], l₁, l₂ => by rw [List.length_nil, segN_zero]
+  | c :: cl', l₁, l₂ => by
+    rw [List.length_cons, segN_cons]
+    congr 1
+    · rw [List.getElem!_toArray]
+      have hre : l₁ ++ (c :: cl') ++ l₂ = l₁ ++ c :: (cl' ++ l₂) := by
+        simp
+      rw [hre]
+      exact getElem!_append_middle l₁ c (cl' ++ l₂)
+    · have hre : l₁ ++ (c :: cl') ++ l₂ = (l₁ ++ [c]) ++ cl' ++ l₂ := by
+        simp
+      rw [hre, show l₁.length + 1 = (l₁ ++ [c]).length by simp]
+      exact segN_toArray_middle cl' (l₁ ++ [c]) l₂
+
+theorem segN_flatten (pre : List (List Nat)) (cl : List Nat)
+    (suf : List (List Nat)) :
+    segN (((pre ++ cl :: suf).flatMap id).toArray)
+      (totalOf pre) cl.length = cl := by
+  have hflat : (pre ++ cl :: suf).flatMap id =
+      pre.flatMap id ++ cl ++ suf.flatMap id := by
+    rw [List.flatMap_append, List.flatMap_cons, ← List.append_assoc]
+    rfl
+  have hpre : (pre.flatMap id).length = totalOf pre := by
+    rw [List.length_flatMap, totalOf]
+    congr 1
+  rw [hflat, ← hpre]
+  exact segN_toArray_middle cl (pre.flatMap id) (suf.flatMap id)
+
+theorem segN_map_of_le (f : Nat → Nat) (arr : Array Nat)
+    (lo len : Nat) (h : lo + len ≤ arr.size) :
+    segN (arr.map f) lo len = (segN arr lo len).map f := by
+  rw [segN, segN, List.map_map]
+  refine List.map_congr_left fun o ho => ?_
+  have hol := List.mem_range.mp ho
+  show (arr.map f)[lo + o]! = f arr[lo + o]!
+  exact getElem!_map_of_lt f arr (by omega)
+
+/-! # The initial states are cell-equivalent -/
+
+theorem initial_cellsPerm {G H : Colored n k} {p : Perm n}
+    (h : IsIso G H p) (hn0 : 0 < n) :
+    cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
+      (initialPartition H).1
+      ((initialPartition G).1.map (renamingOf p).toFun) := by
+  intro a len hcell
+  obtain ⟨hlen0, hbstart, hbint, hbend⟩ := hcell
+  have hEnds := initialPartition_snd_eq G
+  have htotG := totalOf_classes G
+  rcases Nat.lt_or_ge a n with han | han
+  · -- the cell lies inside the vertex range
+    have hain : a + len ≤ n := by
+      rcases Nat.lt_or_ge (a + len) (n + 1) with hle | hgt
+      · omega
+      · exfalso
+        have hi := hbint (n - 1) (by omega) (by omega)
+        rw [getElem!_initPtn] at hi
+        have hmem : n - 1 ∈ (initialPartition G).2 := by
+          rw [hEnds]
+          have := endsOf_last_mem ((List.range k).map (colorClass G)) 0
+            (by omega)
+          rw [htotG] at this
+          simpa using this
+        rw [if_pos ⟨hmem, by omega⟩] at hi
+        omega
+    have hend_mem : (a + len - 1) ∈ endsOf
+        ((List.range k).map (colorClass G)) 0 := by
+      rw [getElem!_initPtn] at hbend
+      rcases Decidable.em ((a + len - 1) ∈ (initialPartition G).2 ∧
+          a + len - 1 < n) with hc | hc
+      · rw [← hEnds]
+        exact hc.1
+      · rw [if_neg hc, if_pos (by omega : a + len - 1 < n)] at hbend
+        omega
+    have hstart' : a = 0 ∨ (1 ≤ a ∧ (a - 1) ∈ endsOf
+        ((List.range k).map (colorClass G)) 0) := by
+      rcases Decidable.em (a = 0) with rfl | ha0
+      · exact Or.inl rfl
+      · right
+        refine ⟨by omega, ?_⟩
+        rcases hbstart with h0 | hval
+        · exact absurd h0 ha0
+        · rw [getElem!_initPtn] at hval
+          rcases Decidable.em ((a - 1) ∈ (initialPartition G).2 ∧
+              a - 1 < n) with hc | hc
+          · rw [← hEnds]
+            exact hc.1
+          · rw [if_neg hc, if_pos (by omega : a - 1 < n)] at hval
+            omega
+    have hint' : ∀ q, a ≤ q → q < a + len - 1 →
+        q ∉ endsOf ((List.range k).map (colorClass G)) 0 := by
+      intro q hq1 hq2 hq3
+      have hi := hbint q hq1 (by omega)
+      rw [getElem!_initPtn,
+        if_pos ⟨hEnds ▸ hq3, by omega⟩] at hi
+      omega
+    obtain ⟨pre, cl, suf, hsplit, hclne, hoff, hl⟩ :=
+      cell_align ((List.range k).map (colorClass G)) 0 a len
+        (by omega) hstart' hend_mem hint'
+    have hlenG : ((List.range k).map (colorClass G)).length = k := by
+      simp
+    have hj : pre.length < k := by
+      have := congrArg List.length hsplit
+      rw [hlenG, List.length_append, List.length_cons] at this
+      omega
+    have hclG : cl = colorClass G pre.length := by
+      have h1 : ((List.range k).map (colorClass G))[pre.length]! =
+          cl := by
+        rw [hsplit]
+        exact getElem!_append_middle pre cl suf
+      have h2 : ((List.range k).map (colorClass G))[pre.length]! =
+          colorClass G pre.length := by
+        rw [getElem!_pos _ _ (by rw [hlenG]; exact hj),
+          List.getElem_map, List.getElem_range]
+      exact h1.symm.trans h2
+    -- transport the split to H's classes
+    have hjH : pre.length < ((List.range k).map (colorClass H)).length := by
+      simpa using hj
+    have hsplitH : (List.range k).map (colorClass H) =
+        ((List.range k).map (colorClass H)).take pre.length ++
+          colorClass H pre.length ::
+            ((List.range k).map (colorClass H)).drop (pre.length + 1) := by
+      have hd := List.drop_eq_getElem_cons hjH
+      rw [List.getElem_map, List.getElem_range] at hd
+      rw [← hd]
+      exact (List.take_append_drop pre.length _).symm
+    have hmapLen : ((List.range k).map (colorClass H)).map List.length =
+        ((List.range k).map (colorClass G)).map List.length := by
+      rw [List.map_map, List.map_map]
+      exact List.map_congr_left fun c _ => length_colorClass_eq h c
+    have htakePre : ((List.range k).map (colorClass G)).take pre.length =
+        pre := by
+      rw [hsplit]
+      exact List.take_left
+    have htot : totalOf (((List.range k).map
+        (colorClass H)).take pre.length) = totalOf pre := by
+      have h1 : List.map List.length (((List.range k).map
+          (colorClass H)).take pre.length) =
+          List.map List.length pre := by
+        rw [List.map_take, hmapLen, ← List.map_take, htakePre]
+      rw [totalOf, totalOf, h1]
+    have hlH : len = (colorClass H pre.length).length := by
+      rw [length_colorClass_eq h pre.length, ← hclG]
+      exact hl
+    have hsegH : segN (initialPartition H).1 a len =
+        colorClass H pre.length := by
+      rw [initialPartition_fst, hsplitH,
+        show a = totalOf (((List.range k).map
+          (colorClass H)).take pre.length) from by
+            rw [htot]
+            have := hoff
+            omega,
+        hlH]
+      exact segN_flatten _ _ _
+    have hsegG : segN ((initialPartition G).1.map
+        (renamingOf p).toFun) a len =
+        (colorClass G pre.length).map (renamingOf p).toFun := by
+      rw [segN_map_of_le _ _ _ _
+        (by rw [size_initialPartition]; omega)]
+      congr 1
+      rw [initialPartition_fst, hsplit,
+        show a = totalOf pre from by have := hoff; omega,
+        show len = cl.length from hl]
+      rw [segN_flatten]
+      exact hclG
+    rw [hsegH, hsegG]
+    exact colorClass_perm h pre.length
+  · -- the cell lies past the vertex range: a singleton of defaults
+    have hlen1 : len = 1 := by
+      rcases Nat.lt_or_ge len 2 with h2 | h2
+      · omega
+      · exfalso
+        have hi := hbint a (Nat.le_refl a) (by omega)
+        rw [getElem!_initPtn, if_neg (by omega), if_neg (by omega)]
+          at hi
+        omega
+    subst hlen1
+    rw [show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_cons,
+      segN_zero, segN_zero]
+    have h1 : (initialPartition H).1[a]! = 0 := by
+      rw [getElem!_neg _ _ (by rw [size_initialPartition]; omega)]
+      rfl
+    have h2 : ((initialPartition G).1.map (renamingOf p).toFun)[a]! =
+        0 := by
+      rw [getElem!_neg _ _
+        (by rw [Array.size_map, size_initialPartition]; omega)]
+      rfl
+    rw [h1, h2]
+
+/-! # The graph-level invariance -/
+
+theorem labOk_map_renaming (G : Colored n k) (p : Perm n) :
+    LabOk ((initialPartition G).1.map (renamingOf p).toFun) n := by
+  intro i hi
+  rw [Array.size_map, size_initialPartition] at hi
+  rw [getElem!_map_of_lt _ _ (by rw [size_initialPartition]; exact hi)]
+  exact ((renamingOf p).maps _).mp
+    (labOk_initialPartition G i (by rw [size_initialPartition]; exact hi))
+
+/-- Isomorphic coloured graphs have the same nauty-semantic canonical
+key. -/
+theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
+    (h : IsIso G H p) : canonSpecKey H = canonSpecKey G := by
+  simp only [canonSpecKey]
+  rw [cellEnds_eq h]
+  rcases Nat.eq_zero_or_pos n with hn0 | hn0
+  · subst hn0
+    simp [canonSpec]
+  · have hcond : ¬((n == 0) = true) := by
+      simp
+      omega
+    rw [canonSpec, canonSpec, if_neg hcond, if_neg hcond]
+    have hsizeH := size_initialPartition H
+    have hlabH := labOk_initialPartition H
+    have hsizeG := size_initialPartition G
+    have hlabG := labOk_initialPartition G
+    have hEnds := initialPartition_snd_eq G
+    have htotG := totalOf_classes G
+    have hptnsize := size_initPtn n (n + 2) (initialPartition G).2
+    have hboundEnds : ∀ e ∈ (initialPartition G).2, e < n := by
+      intro e he
+      have := endsOf_lt _ 0 e (hEnds ▸ he)
+      omega
+    have hact : initActive (initialPartition G).2 < 2 ^ n := by
+      rw [initActive]
+      refine foldl_active_lt _ _ (Nat.two_pow_pos n) hn0 hboundEnds ?_
+      rw [hEnds]
+      exact endsOf_pairwise _ 0
+    have hmemlast : n - 1 ∈ (initialPartition G).2 := by
+      rw [hEnds]
+      have := endsOf_last_mem ((List.range k).map (colorClass G)) 0
+        (by omega)
+      rw [htotG] at this
+      simpa using this
+    have hend : (initPtn n (n + 2) (initialPartition G).2)[
+        (initPtn n (n + 2) (initialPartition G).2).size - 1]! ≤ 1 := by
+      rw [hptnsize, getElem!_initPtn, if_pos ⟨hmemlast, by omega⟩]
+      omega
+    have hstarts : ∀ v : Nat,
+        elem (initActive (initialPartition G).2) v = true →
+        v = 0 ∨ (initPtn n (n + 2) (initialPartition G).2)[v - 1]! ≤
+          1 := by
+      intro v hv
+      rw [initActive] at hv
+      rcases elem_foldl_active _ _ _ hv with h1 | h1 | h1
+      · rw [show elem ((0, 0) : Nat × Nat).1 v = Nat.testBit 0 v
+          from rfl, Nat.zero_testBit] at h1
+        cases h1
+      · exact Or.inl h1
+      · rcases h1 with ⟨e, he, rfl⟩
+        right
+        rw [getElem!_initPtn,
+          if_pos ⟨by simpa using he, by
+            have := hboundEnds e he
+            omega⟩]
+        omega
+    have hvals : ∀ q : Nat,
+        (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 ∨
+        (initPtn n (n + 2) (initialPartition G).2)[q]! = n + 2 := by
+      intro q
+      rw [getElem!_initPtn]
+      rcases Decidable.em (q ∈ (initialPartition G).2 ∧ q < n)
+        with hc | hc
+      · rw [if_pos hc]
+        exact Or.inl (by omega)
+      · rw [if_neg hc]
+        rcases Nat.lt_or_ge q n with hq | hq
+        · rw [if_pos hq]
+          exact Or.inr rfl
+        · rw [if_neg (by omega)]
+          exact Or.inl (by omega)
+    have h1 := specNode_perm (ctx := { n := n, g := rowsOf H }) rfl
+      100 n 1 (initialPartition H).1
+      ((initialPartition G).1.map (renamingOf p).toFun)
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length
+      (initial_cellsPerm h hn0)
+      (by rw [Array.size_map, hsizeG, hsizeH])
+      hsizeH hlabH (labOk_map_renaming G p) hptnsize hact hend
+      hstarts hvals (by show 1 + n ≤ n + 1; omega)
+    have h2 := specNode_map (renamingOf p)
+      (ctx := { n := n, g := rowsOf G })
+      (ctx' := { n := n, g := rowsOf H })
+      rfl rfl (rowsMap_of_isIso h) 100 n 1 (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length
+      hsizeG hlabG hptnsize hact hend
+    exact h1.trans h2
+
+/-- Isomorphic coloured graphs have equal nauty-semantic canonical
+keys. -/
+theorem canonSpecKey_eq_of_isomorphic {G H : Colored n k}
+    (h : Isomorphic G H) : canonSpecKey G = canonSpecKey H := by
+  rcases h.elim with ⟨p, hp⟩
+  exact (canonSpecKey_eq_of_isIso hp).symm
+
 end Hex.GraphIso.Nauty

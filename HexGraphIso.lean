@@ -13,6 +13,7 @@ public import HexGraphIso.Nauty.Equivariance
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.CellPerm
+public import HexGraphIso.Nauty.SpecIso
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
 public import HexGraphIso.Pairwise

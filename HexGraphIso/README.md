@@ -79,8 +79,15 @@ The planned stack, in dependency order:
    `specNode_perm` proves the spec tree invariant under
    cell-equivalent labellings (same partition, each cell holding the
    same vertex multiset), by induction on fuel through `refine_perm`,
-   target-cell agreement, and per-child breakout segments. Remaining
-   for this stage: the graph-level `iso ↔ equal keys`.
+   target-cell agreement, and per-child breakout segments.
+   **`canonSpecKey_eq_of_isomorphic` (Nauty/SpecIso.lean) lifts both to
+   the graph level: isomorphic coloured graphs have equal spec keys**,
+   by extracting a vertex renaming from the isomorphism, transporting
+   the adjacency rows (`rowsMap_of_isIso`), and showing the two initial
+   labellings are cell-equivalent colour class by colour class at the
+   root partition. Remaining for this stage: the converse
+   (equal keys → isomorphic), read off from the leaf labelling of the
+   maximal key.
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex
