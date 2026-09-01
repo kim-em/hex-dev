@@ -185,6 +185,387 @@ variable {n k : Nat}
 @[expose] def canonSpecKey (G : Colored n k) : Key :=
   canonSpec n (rowsOf G) (initialPartition G).1 (initialPartition G).2
 
+/-! # The row order is a linear order -/
+
+theorem testBit_lt_lowBit :
+    ∀ (s i : Nat), i < lowBit s → s.testBit i = false
+  | s, i, hi => by
+    rw [lowBit_eq] at hi
+    rcases Decidable.em (s = 0) with rfl | hs
+    · rw [if_pos rfl] at hi
+      omega
+    · rw [if_neg hs] at hi
+      rcases Decidable.em (s % 2 = 1) with ho | ho
+      · rw [if_pos ho] at hi
+        omega
+      · rw [if_neg ho] at hi
+        rcases i with _ | j
+        · simp only [Nat.testBit_zero]
+          simp
+          omega
+        · rw [Nat.testBit_add_one]
+          exact testBit_lt_lowBit (s / 2) j (by omega)
+  termination_by s => s
+  decreasing_by omega
+
+theorem lowBit_eq_of {s d : Nat} (hd : s.testBit d = true)
+    (hlow : ∀ i, i < d → s.testBit i = false) : lowBit s = d := by
+  have hs0 : s ≠ 0 := by
+    intro h
+    rw [h] at hd
+    simp at hd
+  rcases Nat.lt_trichotomy (lowBit s) d with h | h | h
+  · exact absurd (testBit_lowBit s hs0) (by rw [hlow _ h]; simp)
+  · exact h
+  · exact absurd hd (by rw [testBit_lt_lowBit s d h]; simp)
+
+theorem testBit_eq_of_lt_lowBit_xor {a b i : Nat}
+    (hi : i < lowBit (a ^^^ b)) : a.testBit i = b.testBit i := by
+  have hx := testBit_lt_lowBit (a ^^^ b) i hi
+  rw [Nat.testBit_xor] at hx
+  rcases ha : a.testBit i with _ | _ <;>
+    rcases hb : b.testBit i with _ | _ <;> simp_all
+
+theorem xor_ne_zero_of_ne {a b : Nat} (hab : a ≠ b) : a ^^^ b ≠ 0 := by
+  intro h
+  refine hab (Nat.eq_of_testBit_eq fun i => ?_)
+  have hx := congrArg (fun s => Nat.testBit s i) h
+  simp only [Nat.testBit_xor, Nat.zero_testBit] at hx
+  rcases ha : a.testBit i with _ | _ <;>
+    rcases hb : b.testBit i with _ | _ <;> simp_all
+
+theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
+    a.testBit (lowBit (a ^^^ b)) ≠ b.testBit (lowBit (a ^^^ b)) := by
+  have hx := testBit_lowBit _ (xor_ne_zero_of_ne hab)
+  rw [Nat.testBit_xor] at hx
+  intro he
+  rw [he] at hx
+  simp at hx
+
+/-- Eliminate a strict row comparison. -/
+theorem rowCmp_gt_elim {a b : Nat} (h : rowCmp a b = .gt) :
+    a ≠ b ∧ a.testBit (lowBit (a ^^^ b)) = true ∧
+      b.testBit (lowBit (a ^^^ b)) = false := by
+  rw [rowCmp] at h
+  split at h
+  · cases h
+  · next hne =>
+    split at h
+    · next hbit =>
+      refine ⟨hne, hbit, ?_⟩
+      have := testBit_ne_at_lowBit_xor hne
+      rcases hb : b.testBit (lowBit (a ^^^ b)) with _ | _
+      · rfl
+      · exact absurd (hbit.trans hb.symm) this
+    · cases h
+
+/-- Introduce a strict row comparison from the least differing bit. -/
+theorem rowCmp_gt_intro {a c d : Nat} (hd : a.testBit d = true)
+    (hcd : c.testBit d = false)
+    (hagree : ∀ i, i < d → a.testBit i = c.testBit i) :
+    rowCmp a c = .gt := by
+  have hne : a ≠ c := by
+    intro h
+    rw [h] at hd
+    rw [hd] at hcd
+    cases hcd
+  have hlow : lowBit (a ^^^ c) = d := by
+    refine lowBit_eq_of ?_ ?_
+    · rw [Nat.testBit_xor, hd, hcd]
+      rfl
+    · intro i hi
+      rw [Nat.testBit_xor, hagree i hi]
+      simp
+  rw [rowCmp, if_neg hne, hlow, if_pos hd]
+
+theorem rowCmp_eq_iff {a b : Nat} : rowCmp a b = .eq ↔ a = b := by
+  rw [rowCmp]
+  split
+  · next h => simp [h]
+  · next h =>
+    split <;> simp [h]
+
+theorem rowCmp_gt_iff_lt {a b : Nat} :
+    rowCmp a b = .gt ↔ rowCmp b a = .lt := by
+  rcases Decidable.em (a = b) with rfl | hne
+  · rw [rowCmp, if_pos rfl]
+    simp
+  · rw [rowCmp, if_neg hne, rowCmp, if_neg (Ne.symm hne),
+      Nat.xor_comm b a]
+    have hd := testBit_ne_at_lowBit_xor hne
+    rcases ha : a.testBit (lowBit (a ^^^ b)) with _ | _ <;>
+      rcases hb : b.testBit (lowBit (a ^^^ b)) with _ | _ <;>
+        simp_all
+
+/-- The row order is transitive. -/
+theorem rowCmp_gt_trans {a b c : Nat} (h1 : rowCmp a b = .gt)
+    (h2 : rowCmp b c = .gt) : rowCmp a c = .gt := by
+  obtain ⟨hab, ha1, hb1⟩ := rowCmp_gt_elim h1
+  obtain ⟨hbc, hb2, hc2⟩ := rowCmp_gt_elim h2
+  rcases Nat.lt_trichotomy (lowBit (a ^^^ b)) (lowBit (b ^^^ c)) with
+    hlt | heq | hgt
+  · refine rowCmp_gt_intro ha1
+      (by rw [← testBit_eq_of_lt_lowBit_xor hlt]; exact hb1)
+      (fun i hi => ?_)
+    rw [testBit_eq_of_lt_lowBit_xor hi]
+    exact testBit_eq_of_lt_lowBit_xor (Nat.lt_trans hi hlt)
+  · exfalso
+    rw [heq] at hb1
+    rw [hb1] at hb2
+    cases hb2
+  · refine rowCmp_gt_intro
+      (by rw [testBit_eq_of_lt_lowBit_xor hgt]; exact hb2) hc2
+      (fun i hi => ?_)
+    rw [testBit_eq_of_lt_lowBit_xor (Nat.lt_trans hi hgt)]
+    exact testBit_eq_of_lt_lowBit_xor hi
+
+/-! # Lexicographic and key order -/
+
+section ListOrder
+
+variable {cmp : Nat → Nat → Ordering}
+
+theorem listCmp_eq_iff (heq : ∀ a b, cmp a b = .eq ↔ a = b) :
+    ∀ l1 l2 : List Nat, listCmp cmp l1 l2 = .eq ↔ l1 = l2
+  | [], [] => by simp [listCmp]
+  | [], _ :: _ => by simp [listCmp]
+  | _ :: _, [] => by simp [listCmp]
+  | a :: as, b :: bs => by
+    rw [listCmp]
+    rcases hc : cmp a b with _ | _ | _
+    · refine ⟨fun h => Ordering.noConfusion h, fun h => ?_⟩
+      injection h with h1 h2
+      rw [(heq a b).mpr h1] at hc
+      cases hc
+    · dsimp only
+      have hab := (heq a b).mp hc
+      subst hab
+      rw [listCmp_eq_iff heq as bs]
+      simp
+    · refine ⟨fun h => Ordering.noConfusion h, fun h => ?_⟩
+      injection h with h1 h2
+      rw [(heq a b).mpr h1] at hc
+      cases hc
+
+theorem listCmp_gt_iff_lt (heq : ∀ a b, cmp a b = .eq ↔ a = b)
+    (hgl : ∀ a b, cmp a b = .gt ↔ cmp b a = .lt) :
+    ∀ l1 l2 : List Nat,
+      listCmp cmp l1 l2 = .gt ↔ listCmp cmp l2 l1 = .lt
+  | [], [] => by simp [listCmp]
+  | [], _ :: _ => by simp [listCmp]
+  | _ :: _, [] => by simp [listCmp]
+  | a :: as, b :: bs => by
+    rw [listCmp, listCmp]
+    rcases hc : cmp a b with _ | _ | _
+    · rw [(hgl b a).mpr hc]
+      simp
+    · have hab := (heq a b).mp hc
+      have hba := (heq b a).mpr hab.symm
+      rw [hba]
+      dsimp only
+      exact listCmp_gt_iff_lt heq hgl as bs
+    · rw [(hgl a b).mp hc]
+      simp
+
+theorem listCmp_gt_trans (heq : ∀ a b, cmp a b = .eq ↔ a = b)
+    (htr : ∀ a b c, cmp a b = .gt → cmp b c = .gt → cmp a c = .gt) :
+    ∀ l1 l2 l3 : List Nat, listCmp cmp l1 l2 = .gt →
+      listCmp cmp l2 l3 = .gt → listCmp cmp l1 l3 = .gt
+  | [], l2, l3 => by
+    intro h1
+    rcases l2 with _ | ⟨b, bs⟩ <;> simp [listCmp] at h1
+  | _ :: _, [], l3 => by
+    intro _ h2
+    rcases l3 with _ | ⟨c, cs⟩ <;> simp [listCmp] at h2
+  | a :: as, b :: bs, [] => by
+    intro _ _
+    rfl
+  | a :: as, b :: bs, c :: cs => by
+    intro h1 h2
+    rw [listCmp] at h1 h2 ⊢
+    rcases hab : cmp a b with _ | _ | _ <;> rw [hab] at h1
+    · exact Ordering.noConfusion h1
+    · have hab' := (heq a b).mp hab
+      subst hab'
+      rcases hac : cmp a c with _ | _ | _ <;> rw [hac] at h2
+      · exact Ordering.noConfusion h2
+      · exact listCmp_gt_trans heq htr as bs cs h1 h2
+    · rcases hbc : cmp b c with _ | _ | _ <;> rw [hbc] at h2
+      · exact Ordering.noConfusion h2
+      · have hbc' := (heq b c).mp hbc
+        subst hbc'
+        rw [hab]
+      · rw [htr a b c hab hbc]
+
+end ListOrder
+
+theorem keyCmp_eq_iff {k1 k2 : Key} : keyCmp k1 k2 = .eq ↔ k1 = k2 := by
+  rw [keyCmp]
+  rcases hc : listCmp compare k1.codes k2.codes with _ | _ | _
+  · refine ⟨fun h => Ordering.noConfusion h, fun h => ?_⟩
+    rw [h, (listCmp_eq_iff (fun a b => Nat.compare_eq_eq) _ _).mpr
+      rfl] at hc
+    cases hc
+  · rw [listCmp_eq_iff (fun a b => rowCmp_eq_iff) k1.rows k2.rows]
+    have hcodes := (listCmp_eq_iff (fun a b => Nat.compare_eq_eq)
+      k1.codes k2.codes).mp hc
+    constructor
+    · intro hrows
+      cases k1
+      cases k2
+      simp only at hcodes hrows
+      rw [hcodes, hrows]
+    · intro h
+      rw [h]
+  · refine ⟨fun h => Ordering.noConfusion h, fun h => ?_⟩
+    rw [h, (listCmp_eq_iff (fun a b => Nat.compare_eq_eq) _ _).mpr
+      rfl] at hc
+    cases hc
+
+theorem keyCmp_gt_iff_lt {k1 k2 : Key} :
+    keyCmp k1 k2 = .gt ↔ keyCmp k2 k1 = .lt := by
+  rw [keyCmp, keyCmp]
+  have hnat : ∀ a b : Nat, compare a b = .gt ↔ compare b a = .lt := by
+    intro a b
+    rw [Nat.compare_eq_gt, Nat.compare_eq_lt]
+  rcases hc : listCmp compare k1.codes k2.codes with _ | _ | _
+  · have := (listCmp_gt_iff_lt (fun a b => Nat.compare_eq_eq) hnat
+      k2.codes k1.codes).mpr hc
+    rw [this]
+    simp
+  · have hcodes := (listCmp_eq_iff (fun a b => Nat.compare_eq_eq)
+      k1.codes k2.codes).mp hc
+    have hback : listCmp compare k2.codes k1.codes = .eq :=
+      (listCmp_eq_iff (fun a b => Nat.compare_eq_eq) _ _).mpr
+        hcodes.symm
+    rw [hback]
+    exact listCmp_gt_iff_lt (fun a b => rowCmp_eq_iff)
+      (fun a b => rowCmp_gt_iff_lt) k1.rows k2.rows
+  · have := (listCmp_gt_iff_lt (fun a b => Nat.compare_eq_eq) hnat
+      k1.codes k2.codes).mp hc
+    rw [this]
+    simp
+
+theorem keyCmp_gt_trans {k1 k2 k3 : Key} (h1 : keyCmp k1 k2 = .gt)
+    (h2 : keyCmp k2 k3 = .gt) : keyCmp k1 k3 = .gt := by
+  have hnattr : ∀ a b c : Nat, compare a b = .gt → compare b c = .gt →
+      compare a c = .gt := by
+    intro a b c ha hb
+    rw [Nat.compare_eq_gt] at ha hb ⊢
+    omega
+  rw [keyCmp] at h1 h2 ⊢
+  rcases hab : listCmp compare k1.codes k2.codes with _ | _ | _ <;>
+    rw [hab] at h1
+  · cases h1
+  · have hcodes := (listCmp_eq_iff (fun a b => Nat.compare_eq_eq)
+      _ _).mp hab
+    rcases hbc : listCmp compare k2.codes k3.codes with _ | _ | _ <;>
+      rw [hbc] at h2
+    · cases h2
+    · have hcodes2 := (listCmp_eq_iff (fun a b => Nat.compare_eq_eq)
+        _ _).mp hbc
+      rw [show listCmp compare k1.codes k3.codes = .eq from
+        (listCmp_eq_iff (fun a b => Nat.compare_eq_eq) _ _).mpr
+          (hcodes.trans hcodes2)]
+      exact listCmp_gt_trans (fun a b => rowCmp_eq_iff)
+        (fun a b c => rowCmp_gt_trans) k1.rows k2.rows k3.rows h1 h2
+    · rw [show listCmp compare k1.codes k3.codes = .gt from
+        hcodes ▸ hbc]
+  · rcases hbc : listCmp compare k2.codes k3.codes with _ | _ | _ <;>
+      rw [hbc] at h2
+    · cases h2
+    · have hcodes2 := (listCmp_eq_iff (fun a b => Nat.compare_eq_eq)
+        _ _).mp hbc
+      rw [show listCmp compare k1.codes k3.codes = .gt from
+        hcodes2 ▸ hab]
+    · rw [listCmp_gt_trans (fun a b => Nat.compare_eq_eq) hnattr
+        k1.codes k2.codes k3.codes hab hbc]
+
+theorem keyCmp_self (k : Key) : keyCmp k k = .eq := keyCmp_eq_iff.mpr rfl
+
+theorem keyCmp_ge_trans {k1 k2 k3 : Key} (h1 : keyCmp k1 k2 ≠ .lt)
+    (h2 : keyCmp k2 k3 ≠ .lt) : keyCmp k1 k3 ≠ .lt := by
+  rcases hc1 : keyCmp k1 k2 with _ | _ | _
+  · exact absurd hc1 h1
+  · rw [keyCmp_eq_iff.mp hc1]
+    exact h2
+  · rcases hc2 : keyCmp k2 k3 with _ | _ | _
+    · exact absurd hc2 h2
+    · rw [← keyCmp_eq_iff.mp hc2]
+      rw [hc1]
+      simp
+    · rw [keyCmp_gt_trans hc1 hc2]
+      simp
+
+theorem keyCmp_antisym {k1 k2 : Key} (h1 : keyCmp k1 k2 ≠ .lt)
+    (h2 : keyCmp k2 k1 ≠ .lt) : k1 = k2 := by
+  rcases hc : keyCmp k1 k2 with _ | _ | _
+  · exact absurd hc h1
+  · exact keyCmp_eq_iff.mp hc
+  · exact absurd (keyCmp_gt_iff_lt.mp hc) h2
+
+theorem keyMax_mem (x y : Key) : keyMax x y = x ∨ keyMax x y = y := by
+  rw [keyMax]
+  split
+  · exact Or.inr rfl
+  · exact Or.inl rfl
+
+theorem keyMax_not_lt_left (x y : Key) : keyCmp (keyMax x y) x ≠ .lt := by
+  rw [keyMax]
+  split
+  · next h =>
+    rw [keyCmp_gt_iff_lt.mpr h]
+    simp
+  · rw [keyCmp_self]
+    simp
+
+theorem keyMax_not_lt_right (x y : Key) :
+    keyCmp (keyMax x y) y ≠ .lt := by
+  rw [keyMax]
+  split
+  · rw [keyCmp_self]
+    simp
+  · next h =>
+    exact h
+
+/-- Folding the pairwise maximum is right-commutative, so the running
+maximum is permutation-invariant. -/
+theorem keyMax_comm2 (b a1 a2 : Key) :
+    keyMax (keyMax b a1) a2 = keyMax (keyMax b a2) a1 := by
+  have hge1 : ∀ x y z : Key, keyCmp (keyMax (keyMax x y) z) x ≠ .lt :=
+    fun x y z => keyCmp_ge_trans (keyMax_not_lt_left _ _)
+      (keyMax_not_lt_left _ _)
+  have hge2 : ∀ x y z : Key, keyCmp (keyMax (keyMax x y) z) y ≠ .lt :=
+    fun x y z => keyCmp_ge_trans (keyMax_not_lt_left _ _)
+      (keyMax_not_lt_right _ _)
+  have hge3 : ∀ x y z : Key, keyCmp (keyMax (keyMax x y) z) z ≠ .lt :=
+    fun x y z => keyMax_not_lt_right _ _
+  refine keyCmp_antisym ?_ ?_
+  · rcases keyMax_mem (keyMax b a2) a1 with hm | hm <;> rw [hm]
+    · rcases keyMax_mem b a2 with hm2 | hm2 <;> rw [hm2]
+      · exact hge1 b a1 a2
+      · exact hge3 b a1 a2
+    · exact hge2 b a1 a2
+  · rcases keyMax_mem (keyMax b a1) a2 with hm | hm <;> rw [hm]
+    · rcases keyMax_mem b a1 with hm2 | hm2 <;> rw [hm2]
+      · exact hge1 b a2 a1
+      · exact hge3 b a2 a1
+    · exact hge2 b a2 a1
+
+theorem keysMax_eq_foldl : ∀ (l : List Key) (k : Key),
+    keysMax k l = l.foldl keyMax k
+  | [], _ => rfl
+  | k' :: rest, k => by
+    rw [keysMax, List.foldl_cons]
+    exact keysMax_eq_foldl rest _
+
+/-- The running key maximum is invariant under permutation of the
+list. -/
+theorem keysMax_perm {l l' : List Key} (h : l.Perm l') (k : Key) :
+    keysMax k l = keysMax k l' := by
+  rw [keysMax_eq_foldl, keysMax_eq_foldl]
+  exact h.foldl_eq' (fun x _ y _ z => keyMax_comm2 z x y) k
+
 /-! # Equivariance of the spec target-cell rule -/
 
 theorem joinTest_map (σ : Renaming n) {ctx ctx' : Ctx}
