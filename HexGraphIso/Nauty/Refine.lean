@@ -108,90 +108,140 @@ def splitCellLoop (gRow : Nat) : Nat → Array Nat → Int → Int → (Array Na
     else
       (lab, c1, c2)
 
-/-- One splitting pass of `refine` for the trivial splitter cell
-`{lab[split1]}`. -/
-def refineTrivial (ctx : Ctx) (level split1 : Nat) (st : RefineSt) : RefineSt := Id.run do
-  let gRow := ctx.g[st.lab[split1]!]!
-  let mut st := st
-  for (cell1, cell2) in cells st.ptn level ctx.n do
-    if cell1 == cell2 then
-      continue
+/-- One cell's processing in the trivial-splitter pass: two-pointer
+partition by adjacency, then the split bookkeeping. -/
+def trivialCell (level : Nat) (gRow : Nat) (cell1 cell2 : Nat)
+    (st : RefineSt) : RefineSt :=
+  if cell1 == cell2 then
+    st
+  else
     let (lab, c1, c2) :=
-      splitCellLoop gRow (cell2 - cell1 + 2) st.lab (Int.ofNat cell1) (Int.ofNat cell2)
-    st := { st with lab }
+      splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+        (Int.ofNat cell1) (Int.ofNat cell2)
+    let st := { st with lab }
     if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
       let c1 := c1.toNat
       let c2 := c2.toNat
-      st := { st with
+      let st := { st with
         ptn := st.ptn.set! c2 level
         longcode := mash st.longcode c2
         numcells := st.numcells + 1 }
       if elem st.active cell1 ∨ c2 - cell1 ≥ cell2 - c1 then
-        st := { st with active := insert st.active c1 }
-        if c1 == cell2 then
-          st := { st with hint := c1 }
+        let st := { st with active := insert st.active c1 }
+        if c1 == cell2 then { st with hint := c1 } else st
       else
-        st := { st with active := insert st.active cell1 }
-        if c2 == cell1 then
-          st := { st with hint := cell1 }
-  return st
+        let st := { st with active := insert st.active cell1 }
+        if c2 == cell1 then { st with hint := cell1 } else st
+    else
+      st
+
+/-- One splitting pass of `refine` for the trivial splitter cell
+`{lab[split1]}`. The splitter row is captured before any cell is
+processed, as in nauty. -/
+def refineTrivial (ctx : Ctx) (level split1 : Nat) (st : RefineSt) : RefineSt :=
+  go (ctx.g[st.lab[split1]!]!) (cells st.ptn level ctx.n) st
+where
+  go (gRow : Nat) : List (Nat × Nat) → RefineSt → RefineSt
+    | [], st => st
+    | (cell1, cell2) :: rest, st => go gRow rest (trivialCell level gRow cell1 cell2 st)
+
+/-- The splitter cell's vertex set: the members of `lab[lo..hi]`. -/
+def worksetOf (lab : Array Nat) (lo hi : Nat) : Nat :=
+  (List.range (hi + 1 - lo)).foldl (fun w o => insert w lab[lo + o]!) 0
+
+/-- The neighbour counts of a cell's members into the splitter set, in
+cell order. -/
+def countsOf (ctx : Ctx) (lab : Array Nat) (workset cell1 cell2 : Nat) :
+    List Nat :=
+  (List.range (cell2 + 1 - cell1)).map fun o =>
+    popCount (workset &&& ctx.g[lab[cell1 + o]!]!)
+
+/-- The multiplicity of count value `v` in a count list. -/
+def multOf (counts : List Nat) (v : Nat) : Nat :=
+  counts.countP (· == v)
+
+/-- The position scan over the count window `[bmin, bmax]`: register each
+nonempty group's boundary, code contribution, active-set entry, and the
+`maxpos` of the largest group. -/
+def windowScan (level cell1 cell2 : Nat) (counts : List Nat) :
+    List Nat → Nat → Int → RefineSt → RefineSt
+  | [], _, _, st => st
+  | v :: vs, c1, maxcell, st =>
+    let m := multOf counts v
+    if m > 0 then
+      let c2 := c1 + m
+      let st := { st with longcode := mash st.longcode (v + c1) }
+      let (st, maxcell) :=
+        if Int.ofNat (c2 - c1) > maxcell then
+          ({ st with maxpos := c1 }, Int.ofNat (c2 - c1))
+        else
+          (st, maxcell)
+      let st :=
+        if c1 != cell1 then
+          let st := { st with
+            active := insert st.active c1
+            numcells := st.numcells + 1 }
+          if c2 - c1 == 1 then { st with hint := c1 } else st
+        else
+          st
+      let st :=
+        if c2 ≤ cell2 then { st with ptn := st.ptn.set! (c2 - 1) level }
+        else st
+      windowScan level cell1 cell2 counts vs c2 maxcell st
+    else
+      windowScan level cell1 cell2 counts vs c1 maxcell st
+
+/-- The stable counting sort of a cell segment: members grouped by count
+value in ascending value order, keeping cell order within a group. -/
+def segmentOf (lab : Array Nat) (cell1 : Nat) (counts : List Nat)
+    (values : List Nat) : List Nat :=
+  values.flatMap fun v =>
+    (counts.zipIdx.filter fun (c, _) => c == v).map fun (_, j) =>
+      lab[cell1 + j]!
+
+/-- Write a segment back at `cell1`. -/
+def writeSegment (lab : Array Nat) (cell1 : Nat) : List Nat → Array Nat
+  | [] => lab
+  | x :: rest => writeSegment (lab.set! cell1 x) (cell1 + 1) rest
+
+/-- One cell's processing in the nontrivial-splitter pass. -/
+def nontrivialCell (ctx : Ctx) (level : Nat) (workset cell1 cell2 : Nat)
+    (st : RefineSt) : RefineSt :=
+  if cell1 == cell2 then
+    st
+  else
+    let counts := countsOf ctx st.lab workset cell1 cell2
+    let bmin := counts.foldl Nat.min (counts.headD 0)
+    let bmax := counts.foldl Nat.max (counts.headD 0)
+    if bmin == bmax then
+      { st with longcode := mash st.longcode (bmin + cell1) }
+    else
+      let values := (List.range (bmax + 1 - bmin)).map (bmin + ·)
+      let st := windowScan level cell1 cell2 counts values cell1 (-1) st
+      let st := { st with
+        lab := writeSegment st.lab cell1 (segmentOf st.lab cell1 counts values) }
+      if ¬ elem st.active cell1 then
+        { st with active := erase (insert st.active cell1) st.maxpos }
+      else
+        st
 
 /-- One splitting pass of `refine` for a nontrivial splitter cell
 `lab[split1..split2]`.
 
 nauty's `bucket` scratch is reproduced semantically: the multiplicity
-window over `[bmin, bmax]` and the stable counting redistribution below
-give exactly the array contents nauty's incremental window zeroing and
+window over `[bmin, bmax]` and the stable counting redistribution give
+exactly the array contents nauty's incremental window zeroing and
 placement loop produce. -/
 def refineNontrivial (ctx : Ctx) (level split1 split2 : Nat) (st : RefineSt) :
-    RefineSt := Id.run do
-  let mut st := st
-  let mut workset := 0
-  for i in [split1 : split2 + 1] do
-    workset := insert workset st.lab[i]!
-  st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
-  for (cell1, cell2) in cells st.ptn level ctx.n do
-    if cell1 == cell2 then
-      continue
-    -- neighbour counts into the splitter, per cell position
-    let mut counts : Array Nat := #[]
-    for i in [cell1 : cell2 + 1] do
-      counts := counts.push (popCount (workset &&& ctx.g[st.lab[i]!]!))
-    let bmin := counts.foldl Nat.min counts[0]!
-    let bmax := counts.foldl Nat.max counts[0]!
-    if bmin == bmax then
-      st := { st with longcode := mash st.longcode (bmin + cell1) }
-      continue
-    -- multiplicity of each count value in the window
-    let mult := fun v => counts.foldl (fun a c => if c == v then a + 1 else a) 0
-    let mut c1 := cell1
-    let mut maxcell : Int := -1
-    for i in [bmin : bmax + 1] do
-      if mult i > 0 then
-        let c2 := c1 + mult i
-        st := { st with longcode := mash st.longcode (i + c1) }
-        if Int.ofNat (c2 - c1) > maxcell then
-          maxcell := Int.ofNat (c2 - c1)
-          st := { st with maxpos := c1 }
-        if c1 != cell1 then
-          st := { st with active := insert st.active c1, numcells := st.numcells + 1 }
-          if c2 - c1 == 1 then
-            st := { st with hint := c1 }
-        if c2 ≤ cell2 then
-          st := { st with ptn := st.ptn.set! (c2 - 1) level }
-        c1 := c2
-    -- stable counting sort of the cell segment by count value
-    let mut segment : Array Nat := #[]
-    for v in [bmin : bmax + 1] do
-      for j in [0 : counts.size] do
-        if counts[j]! == v then
-          segment := segment.push st.lab[cell1 + j]!
-    for j in [0 : segment.size] do
-      st := { st with lab := st.lab.set! (cell1 + j) segment[j]! }
-    if ¬ elem st.active cell1 then
-      st := { st with
-        active := erase (insert st.active cell1) st.maxpos }
-  return st
+    RefineSt :=
+  let workset := worksetOf st.lab split1 split2
+  let st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
+  go workset (cells st.ptn level ctx.n) st
+where
+  go (workset : Nat) : List (Nat × Nat) → RefineSt → RefineSt
+    | [], st => st
+    | (cell1, cell2) :: rest, st =>
+      go workset rest (nontrivialCell ctx level workset cell1 cell2 st)
 
 /-- One iteration of `refine`'s active-cell loop: remove the chosen
 splitter from the active set and perform its splitting pass. -/
