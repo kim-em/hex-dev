@@ -624,6 +624,10 @@ libraries:
           description: Packed GF2q constructor and representative projection on the committed single-word Conway entry GF2q 1.
         - name: packed-generic-shared-bridge
           description: Shared binary representative family exercising both packed GF2q and generic GFq constructor/projection paths on the common p = 2 API surface.
+        - name: deep-binary-constructor-projection
+          description: Generic GFq and packed GF2q constructor/projection paths at the deepest committed binary entry, GFq 2 8 and GF2q 8, on deterministic dense representatives.
+        - name: odd-prime-constructor-projection
+          description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the widest committed odd-prime entry, GFq 13 6, on deterministic dense representatives.
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
