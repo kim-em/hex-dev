@@ -229,9 +229,11 @@ proof budget.
 |---|---|---|
 | NTL `GF2X` | informational | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
 
-NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic:
-its inner loops dispatch to Karatsuba/FFT multiplication, fast
-division and remainder, and half-GCD. Hex uses packed schoolbook
+NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic. The measured
+NTL 11.6.0 build links gf2x 1.3.0 for large multiplication; NTL's `GF2X`
+source uses tuned base cases and Karatsuba/gf2x multiplication, crossover-based
+division and remainder, and switches its GCD to `HalfGCD` above the configured
+crossover. Hex uses packed schoolbook
 multiplication, long division and remainder, and Euclidean GCD.
 Those operations therefore have different complexity classes at
 the upper end of the ladder; their ratios orient future optimization

@@ -399,59 +399,83 @@ def runFlintPrimitivePartChecksum (input : ContentInput) : IO UInt64 := do
   let coeffs ← Hex.BenchOracle.Flint.jsonToInts result
   return checksumIntCoeffs coeffs
 
-/-! Per-rung wrappers for paired fixed-benchmark registrations. Each
-`runFooAt n` calls the Hex target on `prepFooInput n`; each
-`runFlintFooAt n` calls the FLINT comparator on the same prepared input
-so wall-times are comparable in the same harness. -/
+/-- Persistent FLINT framing and dispatch calibration without polynomial work. -/
+def runFlintOverhead (_ : Unit) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | .ok 0 => return 0
+  | .ok value =>
+      throw <| IO.userError s!"FLINT overhead result was {value}, expected zero"
+  | .error message =>
+      throw <| IO.userError s!"FLINT overhead result not integer: {message}"
+
+/-! Per-rung wrappers for paired fixed-benchmark registrations. Each wrapper
+captures `prepFooInput n` outside its returned timed closure, so the Hex target
+and FLINT comparator operate on the same prepared input without charging
+fixture construction to either arm. -/
 
 /-- Adapter thunk: build `prepBinaryInput n` and run the Hex addition checksum target. -/
-def runAddChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runAddChecksum (prepBinaryInput n)
+def runAddChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => return runAddChecksum input
 /-- Adapter thunk: build `prepBinaryInput n` and run the FLINT addition comparator. -/
-def runFlintAddChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintAddChecksum (prepBinaryInput n)
+def runFlintAddChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => runFlintAddChecksum input
 
 /-- Adapter thunk: build `prepBinaryInput n` and run the Hex subtraction checksum target. -/
-def runSubChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runSubChecksum (prepBinaryInput n)
+def runSubChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => return runSubChecksum input
 /-- Adapter thunk: build `prepBinaryInput n` and run the FLINT subtraction comparator. -/
-def runFlintSubChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintSubChecksum (prepBinaryInput n)
+def runFlintSubChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => runFlintSubChecksum input
 
 /-- Adapter thunk: build `prepBinaryInput n` and run the Hex multiplication checksum target. -/
-def runMulChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runMulChecksum (prepBinaryInput n)
+def runMulChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => return runMulChecksum input
 /-- Adapter thunk: build `prepBinaryInput n` and run the FLINT multiplication comparator. -/
-def runFlintMulChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintMulChecksum (prepBinaryInput n)
+def runFlintMulChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => runFlintMulChecksum input
 
 /-- Adapter thunk: build `prepUnaryInput n` and run the Hex derivative checksum target. -/
-def runDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runDerivativeChecksum (prepUnaryInput n)
+def runDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepUnaryInput n
+  fun _ => return runDerivativeChecksum input
 /-- Adapter thunk: build `prepUnaryInput n` and run the FLINT derivative comparator. -/
-def runFlintDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintDerivativeChecksum (prepUnaryInput n)
+def runFlintDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepUnaryInput n
+  fun _ => runFlintDerivativeChecksum input
 
 /-- Adapter thunk: build `prepComposeInput n` and run the Hex composition checksum target. -/
-def runComposeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runComposeChecksum (prepComposeInput n)
+def runComposeChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepComposeInput n
+  fun _ => return runComposeChecksum input
 /-- Adapter thunk: build `prepComposeInput n` and run the FLINT composition comparator. -/
-def runFlintComposeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintComposeChecksum (prepComposeInput n)
+def runFlintComposeChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepComposeInput n
+  fun _ => runFlintComposeChecksum input
 
 /-- Adapter thunk: build `prepContentInput n` and run the Hex content target. -/
-def runContentAt (n : Nat) : Unit → IO Int := fun _ =>
-  return runContent (prepContentInput n)
+def runContentAt (n : Nat) : Unit → IO Int :=
+  let input := prepContentInput n
+  fun _ => return runContent input
 /-- Adapter thunk: build `prepContentInput n` and run the FLINT content comparator. -/
-def runFlintContentAt (n : Nat) : Unit → IO Int := fun _ =>
-  runFlintContent (prepContentInput n)
+def runFlintContentAt (n : Nat) : Unit → IO Int :=
+  let input := prepContentInput n
+  fun _ => runFlintContent input
 
 /-- Adapter thunk: build `prepContentInput n` and run the Hex primitive-part checksum target. -/
-def runPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runPrimitivePartChecksum (prepContentInput n)
+def runPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepContentInput n
+  fun _ => return runPrimitivePartChecksum input
 /-- Adapter thunk: build `prepContentInput n` and run the FLINT primitive-part comparator. -/
-def runFlintPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runFlintPrimitivePartChecksum (prepContentInput n)
+def runFlintPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepContentInput n
+  fun _ => runFlintPrimitivePartChecksum input
 
 /-! Per-rung concrete bindings used by `setup_fixed_benchmark`. The rung
 ladders are densified inside the existing parametric ranges so the
@@ -776,6 +800,8 @@ def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
 def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2,
     warmupFirstIter := true }
+
+setup_fixed_benchmark runFlintOverhead where flintCompareConfig
 
 setup_fixed_benchmark runAddChecksum16384 where leanCompareConfig
 setup_fixed_benchmark runFlintAddChecksum16384 where flintCompareConfig

@@ -12,7 +12,7 @@ informational comparator.
 Paired Hex/FLINT informational comparator fixed registrations:
 `runBareissDet{16,24,32,48,64,96,128,192,256,320,384,512}` ↔
 `runFlintBareissDet{…}` (`fmpz_mat.det` via the shared persistent-subprocess
-python-flint driver, per `SPEC/Libraries/hex-bareiss.md §"External comparators"`
+python-flint driver, per `HexBareiss/SPEC/hex-bareiss.md §"External comparators"`
 and `SPEC/benchmarking.md §"External comparators" §"Process call"`). The named
 comparator is `FLINT fmpz_mat_det via python-flint` (matching
 `libraries.yml: HexBareiss.phase4.comparators[0].tool`).

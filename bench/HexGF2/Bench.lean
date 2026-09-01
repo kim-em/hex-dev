@@ -565,39 +565,53 @@ def runNtlModChecksum (input : BinaryInput) : IO UInt64 :=
 def runNtlGcdChecksum (input : BinaryInput) : IO UInt64 :=
   runNtlBinaryOp "gcd" input.lhs input.rhs
 
+/-- Persistent NTL framing and dispatch calibration without polynomial work. -/
+def runNtlOverhead (_ : Unit) : IO UInt64 := do
+  parseNtlHexReply (← requestNtlLineWithRetry "ping" 1)
+
 /-! # Per-rung wrappers for paired Hex/NTL fixed registrations
 
 The Hex parametric `setup_benchmark` ladders above own the algorithmic
-verdict; the per-rung wrappers below replay one rung of the prep
-function so paired `setup_fixed_benchmark` entries compare Hex and NTL
-on the same deterministic fixture per rung. Each `runHexFooAt n` is the
-Hex target lifted to `Unit → IO UInt64` so it shares a registration
+verdict. Each per-rung wrapper captures one prepared deterministic fixture
+outside its returned timed closure, so paired `setup_fixed_benchmark` entries
+compare only the Hex and NTL operations on the same input. Each `runHexFooAt n`
+is the Hex target lifted to `Unit → IO UInt64` so it shares a registration
 shape with its `runNtlFooAt n` counterpart. -/
 
-def runAddAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runAddChecksum (prepBinaryInput n)
-def runNtlAddAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runNtlAddChecksum (prepBinaryInput n)
+def runAddAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => return runAddChecksum input
+def runNtlAddAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => runNtlAddChecksum input
 
-def runMulAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runMulChecksum (prepBinaryInput n)
-def runNtlMulAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runNtlMulChecksum (prepBinaryInput n)
+def runMulAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => return runMulChecksum input
+def runNtlMulAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepBinaryInput n
+  fun _ => runNtlMulChecksum input
 
-def runDivAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runDivChecksum (prepDivInput n)
-def runNtlDivAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runNtlDivChecksum (prepDivInput n)
+def runDivAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepDivInput n
+  fun _ => return runDivChecksum input
+def runNtlDivAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepDivInput n
+  fun _ => runNtlDivChecksum input
 
-def runModAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runModChecksum (prepDivInput n)
-def runNtlModAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runNtlModChecksum (prepDivInput n)
+def runModAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepDivInput n
+  fun _ => return runModChecksum input
+def runNtlModAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepDivInput n
+  fun _ => runNtlModChecksum input
 
-def runGcdAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  return runGcdChecksum (prepGcdInput n)
-def runNtlGcdAt (n : Nat) : Unit → IO UInt64 := fun _ =>
-  runNtlGcdChecksum (prepGcdInput n)
+def runGcdAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepGcdInput n
+  fun _ => return runGcdChecksum input
+def runNtlGcdAt (n : Nat) : Unit → IO UInt64 :=
+  let input := prepGcdInput n
+  fun _ => runNtlGcdChecksum input
 
 /-! Per-rung concrete bindings used by the paired `setup_fixed_benchmark`
 registrations.
@@ -736,10 +750,6 @@ def runGcd512 : Unit → IO UInt64 := runGcdAt 512
 def runNtlGcd512 : Unit → IO UInt64 := runNtlGcdAt 512
 def runGcd768 : Unit → IO UInt64 := runGcdAt 768
 def runNtlGcd768 : Unit → IO UInt64 := runNtlGcdAt 768
-def runGcd1024 : Unit → IO UInt64 := runGcdAt 1024
-def runNtlGcd1024 : Unit → IO UInt64 := runNtlGcdAt 1024
-def runGcd1536 : Unit → IO UInt64 := runGcdAt 1536
-def runNtlGcd1536 : Unit → IO UInt64 := runNtlGcdAt 1536
 
 setup_benchmark runPureClmulChecksum n => n
   with prep := prepWordInput
@@ -967,6 +977,8 @@ def leanCompare5 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 5.0, minTotalSeconds := 0.2,
     warmupFirstIter := true }
 
+setup_fixed_benchmark runNtlOverhead where ntlCompare5
+
 def ntlCompare8 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 8.0, warmupFirstIter := true,
     minTotalSeconds := 0.2 }
@@ -997,24 +1009,6 @@ def ntlCompare30 : LeanBench.FixedBenchmarkConfig :=
 
 def leanCompare30 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2,
-    warmupFirstIter := true }
-
-/-- Measurement cap for the deliberately over-ceiling GCD diagnostics.
-The report still marks these rungs ineligible under its ten-second hard limit. -/
-def ntlCompare60 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 60.0, warmupFirstIter := true,
-    minTotalSeconds := 0.2 }
-
-def leanCompare60 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2,
-    warmupFirstIter := true }
-
-def ntlCompare120 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 120.0, warmupFirstIter := true,
-    minTotalSeconds := 0.2 }
-
-def leanCompare120 : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 3, maxSecondsPerCall := 120.0, minTotalSeconds := 0.2,
     warmupFirstIter := true }
 
 setup_fixed_benchmark runAdd4096 where leanCompare5
@@ -1141,9 +1135,5 @@ setup_fixed_benchmark runGcd512 where leanCompare12
 setup_fixed_benchmark runNtlGcd512 where ntlCompare12
 setup_fixed_benchmark runGcd768 where leanCompare20
 setup_fixed_benchmark runNtlGcd768 where ntlCompare20
-setup_fixed_benchmark runGcd1024 where leanCompare60
-setup_fixed_benchmark runNtlGcd1024 where ntlCompare60
-setup_fixed_benchmark runGcd1536 where leanCompare120
-setup_fixed_benchmark runNtlGcd1536 where ntlCompare120
 
 end Hex.GF2Bench

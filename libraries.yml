@@ -386,7 +386,7 @@ libraries:
       comparators:
         - tool: "NTL GF2X via persistent C++ subprocess driver"
           class: informational
-          rationale: "NTL dispatches to Karatsuba/FFT multiplication, fast division and remainder, and half-GCD, while Hex uses packed schoolbook multiplication, long division and remainder, and Euclidean GCD; those performance ratios compare different complexity classes and are informational. Addition is retained only as a same-input correctness/protocol anchor because hex framing dominates its linear kernel. Wired via a warmed persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
+          rationale: "The measured NTL 11.6.0 build links gf2x 1.3.0; NTL's GF2X source uses tuned base cases and Karatsuba/gf2x multiplication, crossover-based division and remainder, and switches GCD to HalfGCD above its configured crossover, while Hex uses packed schoolbook multiplication, long division and remainder, and Euclidean GCD. Those performance ratios compare different algorithm classes and are informational. Addition is retained only as a same-input correctness/protocol anchor because hex framing dominates its linear kernel. Wired via a warmed persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: packed-word-clmul
           description: Deterministic UInt64 sample pairs for pure-Lean and extern carry-less word multiplication chains.

@@ -106,17 +106,30 @@ def runFlintBareissDet (input : DetInput) : IO Int := do
   | Except.error msg =>
       throw <| IO.userError s!"FLINT fmpz_mat.det result not integer: {msg}"
 
-/-! Per-rung wrappers for paired fixed-benchmark registrations. Each
-`runBareissDetAt n` calls the Hex target on `prepDetInput n`; each
-`runFlintBareissDetAt n` calls the FLINT comparator on the same
-prepared input so wall-times are comparable in the same harness. -/
+/-- Persistent FLINT framing and dispatch calibration without matrix work. -/
+def runFlintOverhead (_ : Unit) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_mat" "overhead" #[]
+  match result.getInt? with
+  | .ok 0 => return 0
+  | .ok value =>
+      throw <| IO.userError s!"FLINT overhead result was {value}, expected zero"
+  | .error message =>
+      throw <| IO.userError s!"FLINT overhead result not integer: {message}"
 
-def runBareissDetAt (n : Nat) : Unit → IO Int := fun _ =>
-  return runBareissDet (prepDetInput n)
-def runBareissGenericDetAt (n : Nat) : Unit → IO Int := fun _ =>
-  return runBareissGenericDet (prepDetInput n)
-def runFlintBareissDetAt (n : Nat) : Unit → IO Int := fun _ =>
-  runFlintBareissDet (prepDetInput n)
+/-! Per-rung wrappers for paired fixed-benchmark registrations. Each wrapper
+captures `prepDetInput n` outside its returned timed closure, so the Hex target
+and FLINT comparator operate on the same prepared input without charging
+fixture construction to either arm. -/
+
+def runBareissDetAt (n : Nat) : Unit → IO Int :=
+  let input := prepDetInput n
+  fun _ => return runBareissDet input
+def runBareissGenericDetAt (n : Nat) : Unit → IO Int :=
+  let input := prepDetInput n
+  fun _ => return runBareissGenericDet input
+def runFlintBareissDetAt (n : Nat) : Unit → IO Int :=
+  let input := prepDetInput n
+  fun _ => runFlintBareissDet input
 
 /-! Per-rung concrete bindings used by `setup_fixed_benchmark`. The
 rung ladder densifies the parametric `[8, 12, 16]` schedule outward
@@ -174,7 +187,7 @@ shared persistent-subprocess driver. The pairs are registered as
 `setup_fixed_benchmark` rungs across a densified ladder so the
 headline report records raw and overhead-adjusted ratios at each rung
 and a trend across the ladder. The comparator is `informational` per
-`SPEC/Libraries/hex-bareiss.md §"External comparators"`: no
+`HexBareiss/SPEC/hex-bareiss.md §"External comparators"`: no
 gating-goal verdict is required; the ratios are recorded for
 orientation. Both arms discard one call and use the same 200 ms inner-batch
 floor, so driver startup and first-use effects are outside timing. -/
@@ -186,6 +199,8 @@ def leanCompareConfig (maxSeconds : Float) : LeanBench.FixedBenchmarkConfig :=
 def flintCompareConfig (maxSeconds : Float) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := maxSeconds, minTotalSeconds := 0.2,
     warmupFirstIter := true }
+
+setup_fixed_benchmark runFlintOverhead where flintCompareConfig 6.0
 
 setup_fixed_benchmark runBareissDet16 where leanCompareConfig 6.0
 setup_fixed_benchmark runFlintBareissDet16 where flintCompareConfig 6.0
