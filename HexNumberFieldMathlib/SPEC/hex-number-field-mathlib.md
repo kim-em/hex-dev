@@ -4,8 +4,38 @@
 
 This library is a `correspondence-only-layer`.
 
-Computational conformance owner: `HexNumberField`
-Computational performance owner: `HexNumberField`
+Computational conformance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`
+Computational performance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`
+
+The complete public surface is correspondence-only. The library declares no
+`meta`, `partial`, `unsafe`, `IO`, syntax, macro, elaborator, tactic, reifier,
+or certificate-checker entry point. Its semantic maps, polynomial views, ring
+maps, equivalences, and field dictionaries are noncomputable. The
+`LawfulBEq` and `DecidableEq` instances only package the executable
+`AlgebraicNumber.beq` from `HexNumberField`, while the field dictionaries pin
+every data field definitionally to the existing executable operations. The
+`RootSet` predicates and multiplicity observers are proof-side views of a root
+set already computed by `HexNumberField`; they do not construct, check, or
+reify algebraic data.
+
+The transported operations and their computational owners are:
+
+| Transported surface | Computational owner | Owner evidence |
+| --- | --- | --- |
+| `QAdjoin` reduction, arithmetic, scalar actions, powers, inversion, approximation, and checked/total canonical conversion | `HexNumberField` | `conformance/HexNumberField/Conformance.lean`, `hexnumberfield_bench`, and `reports/hex-number-field-performance.md` |
+| Lazy and canonical algebraic-number equality, zero recognition, arithmetic, exactification, and field operations | `HexNumberField` | The same conformance target covers checked and total lazy operations, semantic equality, rational construction, casts, scalar actions, and powers; the same benchmark target registers the corresponding compiled surfaces. |
+| Yun decomposition, candidate disambiguation and merging, fixed-field roots, algebraic-coefficient roots, and common-field presentation (`rational?`, arithmetic and shifts, primitive search, powers, traces, coordinates, and `presentation?`) | `HexNumberField` | The root and algebraic-polynomial sections of the owner conformance target exercise the public pipelines, including common presentation transitively; the owner benchmark registers their components and end-to-end paths. |
+| Selected-root isolation and `RefinedIsolation.refineTo?` | `HexRoots` | `conformance/HexRoots/Conformance.lean`, `hexroots_bench`, and `reports/hex-roots-performance.md` |
+| Executable bivariate resultants used by lazy eliminants and fixed-field norm/evaluation eliminants | `HexResultant` | `conformance/HexResultant/Conformance.lean`, `hexresultant_bench`, and `reports/hex-resultant-performance.md` |
+| Checked irreducibility and integer-polynomial factorization used by canonicalization and exactification | `HexBerlekampZassenhaus` | `conformance/HexBerlekampZassenhaus/Conformance.lean`, `hexbz_bench`, and `reports/hex-berlekamp-zassenhaus-performance.md` |
+| Integer-polynomial representation, normalization, and conversion transported into Mathlib polynomials throughout the bridge | `HexPolyZ` | `conformance/HexPolyZ/Conformance.lean`, `hexpolyz_bench`, and `reports/hex-poly-z-performance.md` |
+
+There is deliberately no `conformance/HexNumberFieldMathlib` or
+`bench/HexNumberFieldMathlib` source tree, no dedicated Lake conformance or
+benchmark target, no `proof_probes` registry root, and no
+`reports/hex-number-field-mathlib-performance.md`. Building the library checks
+its correspondence theorems and axiom-regression guards; those guards are not
+timed proof probes.
 
 Mathlib companion for `hex-number-field`. It interprets the executable types in
 `ℂ` and proves fixed-field correspondence, canonicalization, factorization-lazy

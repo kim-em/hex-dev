@@ -1,14 +1,26 @@
-HexNumberFieldMathlib Phase 3 was reviewed on 2026-08-26. The library is a
-proof-only correspondence layer with no executable reifier, certificate
-checker, tactic, or other runtime surface, so the absence of a dedicated
-Conformance module and HexConformance glob is intentional per
-SPEC/testing.md's ceremonial-bridge ban.
+HexNumberFieldMathlib satisfies the correspondence-only Phase-3/4 contract.
+The complete source, umbrella, import, SPEC, and public-declaration audit is
+recorded in HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md. It found no
+executable reifier, certificate checker, tactic, proof-producing operation, or
+independent kernel-cost surface. Semantic maps and structure transport are
+noncomputable; the law-bearing equality and field dictionaries reuse the
+executable operations of HexNumberField without replacing them.
 
-The executable surface it verifies (QAdjoin arithmetic, root isolation and
-disambiguation, approximation, Yun square-free decomposition) is exercised
-by conformance/HexNumberField/Conformance.lean and the python-flint oracle
-wired through scripts/ci/run_oracles.sh. The correspondence and
-completeness declarations here are proofs rather than executable
-destinations for conformance cases. Precedent:
-status/hex-roots-mathlib.conformance-reviewed and
-status/hex-truncated-series-mathlib.conformance-reviewed.
+The SPEC maps the transported surface to the computational conformance and
+performance owners HexNumberField, HexRoots, HexResultant,
+HexBerlekampZassenhaus, and HexPolyZ. Each owner has its dedicated
+conformance module and Phase-4 benchmark/report evidence. HexNumberField is
+recorded through Phase 4; the other four owners are recorded through Phase 7.
+The NumberField python-flint/PARI oracle is wired through
+scripts/ci/run_oracles.sh, and the lower-level owners carry their own oracle
+assignments.
+
+No conformance or bench source directory, Lake conformance or benchmark
+target, headline performance report, or proof-probe registry root exists for
+HexNumberFieldMathlib. Its build-enforced axiom guards check trust provenance;
+they are not timed proof probes. The explicit `correspondence_only: true`
+registry classification and the absence of ordinary Phase-4 metadata are
+therefore consistent. The later phase record remains valid: the library is
+still integrated in the build and release graph, its proof and documentation
+artifacts remain present, and its Phase-7 material is carried by the shared
+number-field manual chapter.
