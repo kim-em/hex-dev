@@ -7,9 +7,11 @@ diagnostics, not alternative public implementations.
 The mode-selection audit was run on `chungus2` (AMD EPYC 9455, NixOS 26.11,
 Linux x86-64). Clean parametric sweeps at revision `5b3efbc7` establish why
 the former modes fail. The clean `e51066e1` calibration fixes absolute budgets
-before the `609465e8` acceptance run, and the clean inclusive audit below
-establishes phase attribution. All selected mode-3 registrations pass, but
-Phase 4 remains blocked because dependency `HexHensel` is still at Phase 3. The
+before the initial `609465e8` acceptance run, and the clean inclusive audit
+below establishes phase attribution. A clean current-main acceptance run at
+`c5452076` reconfirms that all fourteen selected mode-3 registrations pass.
+The direct dependencies are now through Phase 4 or later (`HexBerlekamp` 7,
+`HexHensel` 4, and `HexLLL` 7), so the Phase-4 dependency gate is met. The
 cross-system Hex record remains the clean revision `7425e083` run on
 verified-idle core 19; the external systems retain their 2026-08-01
 same-protocol record on the same host. The committed 392-row corpus has SHA-256
@@ -125,21 +127,21 @@ make every fixed check semantic as well as temporal.
 
 | Target/input | Clean median | Budget |
 |---|---:|---:|
-| public split, `smokeInput 24` | 3.702 ms | 50 ms |
-| historical fallback probe, degree 24 | 3.485 ms | 50 ms |
-| trial split, `smokeInput 8` | 4.422 ms | 800 ms |
-| public compare, `smokeInput 8` | 0.258 ms | 5 ms |
-| trial compare, `smokeInput 8` | 4.827 ms | 800 ms |
-| public degree/height `(6, 32)` | 0.173 ms | 5 ms |
-| trial degree/height `(4, 8)` | 2.153 ms | 100 ms |
-| precision/local `(8, 32, 128, 8)` | 1.015 ms | 20 ms |
-| lifted products, 64 factors (reference / dispatch) | 9.750 / 9.593 ms | 500 ms |
-| dense reassembly, 32 factors (reference / dispatch) | 113.207 / 112.627 ms | 1.2 s |
-| skew products, 256 factors (reference / dispatch) | 81.260 / 80.945 ms | 900 ms |
+| public split, `smokeInput 24` | 3.705 ms | 50 ms |
+| historical fallback probe, degree 24 | 3.474 ms | 50 ms |
+| trial split, `smokeInput 8` | 2.428 ms | 800 ms |
+| public compare, `smokeInput 8` | 0.255 ms | 5 ms |
+| trial compare, `smokeInput 8` | 2.455 ms | 800 ms |
+| public degree/height `(6, 32)` | 0.171 ms | 5 ms |
+| trial degree/height `(4, 8)` | 7.734 ms | 100 ms |
+| precision/local `(8, 32, 128, 8)` | 1.048 ms | 20 ms |
+| lifted products, 64 factors (reference / dispatch) | 9.575 / 9.518 ms | 500 ms |
+| dense reassembly, 32 factors (reference / dispatch) | 111.336 / 111.248 ms | 1.2 s |
+| skew products, 256 factors (reference / dispatch) | 79.941 / 79.751 ms | 900 ms |
 
-The clean implementation-revision export
-`reports/bench-results/hex-berlekamp-zassenhaus-fixed-609465e8-chungus2.json`
-(SHA-256 `d85a1833610f92f4c07ab59ecbd6542a566eb26f2f7702904863b1202b13adb4`)
+The clean current-main export
+`reports/bench-results/hex-berlekamp-zassenhaus-fixed-c5452076-chungus2.json`
+(SHA-256 `37010c2543605d1759b9c3fee139b13e0d7333e2ea64f74fea797cee3d2553b3`)
 records all fourteen mode-3 registrations passing the independently fixed
 budgets, with all five repeats successful, no budget truncation, and every
 expected hash matching. The
@@ -266,15 +268,16 @@ timing evidence by the fixed adversarial ladder in Verdicts and the
 committed dispatch baseline above. This is the declared scope of profile
 coverage for that family, not an omission.
 
+The preserved Phase 5–7 evidence was re-attested after the Phase-4 gate
+opened. The library remains free of `sorry`, `axiom`, and `native_decide`; its
+library, conformance, factorization-module, manual, tutorial, and README
+quickstart targets build on the pinned toolchain. The fourteen-target clean
+run above is the Phase-6 performance regression check against the independently
+fixed budgets. The Phase-7 structural checker confirms the reference chapter,
+the anchored prime-splitting tutorial, and the released-package README, while
+the release and manual-split checks confirm that those preserved artifacts are
+still wired into their published locations.
+
 ## Concerns
 
-Phase 4 remains blocked by its dependency coupling: `HexHensel.done_through`
-is 3, while Phase 4 requires every dependency at 4 or above. Consequently this
-change leaves `HexBerlekampZassenhaus.done_through` at 3 and does not re-attest
-the preserved Phase-5–7 evidence. Once the dependency is eligible, the fourteen
-remediated registrations themselves have passing selected modes.
-
-Mode 3 intentionally gives up asymptotic regression detection for those
-registrations. The retained clean parametric exports document the failed
-families and can support a future mode-1 promotion if a tight bit-complexity
-model is independently derived.
+None.
