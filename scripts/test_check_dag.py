@@ -195,14 +195,17 @@ class CorrespondenceOnlyTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     load_libraries(manifest)
 
-    def correspondence_tree(self, root: Path) -> OrderedDict[str, LibraryInfo]:
+    def correspondence_tree(
+        self, root: Path, *, bridge_phase: int = 4, owner_report: bool = True
+    ) -> OrderedDict[str, LibraryInfo]:
         (root / "lakefile.lean").write_text("", encoding="utf-8")
         core_conformance = root / "conformance" / "HexCore"
         core_conformance.mkdir(parents=True)
         (core_conformance / "Conformance.lean").write_text("", encoding="utf-8")
         reports = root / "reports"
         reports.mkdir()
-        (reports / "hex-core-performance.md").write_text("", encoding="utf-8")
+        if owner_report:
+            (reports / "hex-core-performance.md").write_text("", encoding="utf-8")
         spec_dir = root / "HexBridge" / "SPEC"
         spec_dir.mkdir(parents=True)
         (spec_dir / "hex-bridge.md").write_text(
@@ -215,12 +218,33 @@ class CorrespondenceOnlyTest(unittest.TestCase):
         return OrderedDict(
             HexCore=LibraryInfo("HexCore", (), False, 4, "active"),
             HexBridge=LibraryInfo(
-                "HexBridge", ("HexCore",), True, 4, "active",
+                "HexBridge", ("HexCore",), True, bridge_phase, "active",
                 correspondence_only=True,
             ),
         )
 
-    def test_repository_state_accepts_clean_classification(self) -> None:
+    def test_phase3_accepts_performance_owner_without_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            libraries = self.correspondence_tree(
+                root, bridge_phase=3, owner_report=False
+            )
+            self.assertEqual(
+                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
+            )
+
+    def test_phase4_rejects_performance_owner_without_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            libraries = self.correspondence_tree(root, owner_report=False)
+            errors = check_correspondence_only(
+                root, libraries, root / "lakefile.lean"
+            )
+            self.assertTrue(
+                any("without a headline report" in error for error in errors), errors
+            )
+
+    def test_phase4_accepts_performance_owner_with_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             libraries = self.correspondence_tree(root)
