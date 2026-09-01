@@ -8,12 +8,12 @@ executable operations of HexNumberField without replacing them.
 
 The SPEC maps the transported surface to the computational conformance and
 performance owners HexNumberField, HexRoots, HexResultant,
-HexBerlekampZassenhaus, and HexPolyZ. Each owner has its dedicated
-conformance module and Phase-4 benchmark/report evidence. HexNumberField is
-recorded through Phase 4; the other four owners are recorded through Phase 7.
-The NumberField python-flint/PARI oracle is wired through
-scripts/ci/run_oracles.sh, and the lower-level owners carry their own oracle
-assignments.
+HexBerlekampZassenhaus, HexPolyZ, HexPoly, HexRowReduce, and HexMatrix. Each
+owner has its dedicated conformance module and Phase-4 benchmark/report
+evidence. HexNumberField, HexPoly, and HexRowReduce are recorded through Phase
+4; the other five owners are recorded through Phase 7. The NumberField
+python-flint/PARI oracle is wired through scripts/ci/run_oracles.sh, and the
+lower-level owners carry their own oracle assignments.
 
 No conformance or bench source directory, Lake conformance or benchmark
 target, headline performance report, or proof-probe registry root exists for
@@ -21,6 +21,7 @@ HexNumberFieldMathlib. Its build-enforced axiom guards check trust provenance;
 they are not timed proof probes. The explicit `correspondence_only: true`
 registry classification and the absence of ordinary Phase-4 metadata are
 therefore consistent. The later phase record remains valid: the library is
-still integrated in the build and release graph, its proof and documentation
+still integrated in the build and library graph, its proof and documentation
 artifacts remain present, and its Phase-7 material is carried by the shared
-number-field manual chapter.
+number-field manual chapter. The pair remains unreleased and is intentionally
+absent from the publish manifest.
