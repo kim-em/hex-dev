@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "ed22dbd4ad1035a7d9419a84284a4de60b7fa444",
+  "reason": "Combines the inherited HexPolyFp precompileModules build-only transition with expanded HexPrimality kernel and elaboration probe roots plus the independent HexPrimalityElabProbeScientific build-only root. None changes HexPolyFp source, hexbz_factor_service, or a library in the service runtime call graph."
+}

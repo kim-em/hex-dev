@@ -10,4 +10,10 @@ public import HexPrimality.ProofProbe.Support
 
 public section
 
-/-! Import-only baseline for the core `primality` fresh-module probes. -/
+namespace Hex.PrimalityProofProbe.Bit511
+
+open Hex.PrimalityBench
+
+def input : Nat := primalityInput511
+
+end Hex.PrimalityProofProbe.Bit511

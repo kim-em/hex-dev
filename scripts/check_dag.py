@@ -61,6 +61,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
+    "HexPrimalityElabProbeScientific",
     "HexPrimalityMathlibProofProbe",
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",

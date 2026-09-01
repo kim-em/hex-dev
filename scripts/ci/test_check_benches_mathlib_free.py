@@ -358,6 +358,32 @@ class BenchLintTests(unittest.TestCase):
             self.assertFalse(lint._is_mathlib_probe_path(probe, root, roots))
             self.assertEqual(lint._find_mathlib_probe_files(root, roots), [])
 
+    def test_mathlib_false_owner_may_declare_tracked_probes(self) -> None:
+        tmp, root = self.make_repo()
+        with tmp:
+            self.write(
+                root,
+                "libraries.yml",
+                "libraries:\n"
+                "  HexCore:\n"
+                "    deps: []\n"
+                "    mathlib: false\n"
+                "    done_through: 3\n"
+                "    status: active\n"
+                "    proof_probes: [bench/HexCore/ProofProbe]\n",
+            )
+            self.write(
+                root, "bench/HexCore/ProofProbe/Tactic.lean", "import Mathlib\n"
+            )
+            self.assertEqual(
+                lint._all_probe_roots(root),
+                (root / "bench/HexCore/ProofProbe",),
+            )
+            self.assertEqual(lint._mathlib_probe_roots(root), ())
+            failures = lint._undeclared_mathlib_bench_failures(root, ())
+            self.assertEqual(len(failures), 1)
+            self.assertIn("Tactic.lean", failures[0])
+
     def test_manifest_owned_probe_cannot_root_executable(self) -> None:
         tmp, root = self.make_repo()
         with tmp:
@@ -402,13 +428,6 @@ class BenchLintTests(unittest.TestCase):
 
     def test_malformed_probe_schema_fails_closed(self) -> None:
         cases = (
-            (
-                "    mathlib: false\n"
-                "    done_through: 3\n"
-                "    status: active\n"
-                "    proof_probes: [bench/HexRCF/ProofProbe]\n",
-                "mathlib is false",
-            ),
             (
                 "    mathlib: true\n"
                 "    done_through: 3\n"
