@@ -32,18 +32,27 @@ def IsIso (G H : Colored n k) (p : Perm n) : Prop :=
   (∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i]) ∧
     ∀ i j, H.graph.adj (p.get i) (p.get j) = G.graph.adj i j
 
-instance (G H : Colored n k) (p : Perm n) : Decidable (IsIso G H p) :=
-  inferInstanceAs (Decidable
-    ((∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i]) ∧
-      ∀ i j, H.graph.adj (p.get i) (p.get j) = G.graph.adj i j))
-
-/-- Executable isomorphism check, sound and complete for `IsIso`. -/
+/-- Executable isomorphism check, sound and complete for `IsIso`
+(`checkIso_iff`). A plain Boolean fold so the kernel replays it without
+unfolding `Decidable` instances. -/
 @[expose] def checkIso (G H : Colored n k) (p : Perm n) : Bool :=
-  decide (IsIso G H p)
+  ((List.finRange n).all fun i =>
+    H.coloring.cells[p.get i] == G.coloring.cells[i]) &&
+  (List.finRange n).all fun i => (List.finRange n).all fun j =>
+    H.graph.adj (p.get i) (p.get j) == G.graph.adj i j
 
 theorem checkIso_iff (G H : Colored n k) (p : Perm n) :
-    checkIso G H p = true ↔ IsIso G H p :=
-  decide_eq_true_iff
+    checkIso G H p = true ↔ IsIso G H p := by
+  rw [checkIso, Bool.and_eq_true, List.all_eq_true, List.all_eq_true]
+  simp only [List.mem_finRange, List.all_eq_true, beq_iff_eq, true_implies,
+    forall_const]
+  exact Iff.rfl
+
+@[expose] instance (G H : Colored n k) (p : Perm n) : Decidable (IsIso G H p) :=
+  if h : checkIso G H p then
+    .isTrue ((checkIso_iff G H p).mp h)
+  else
+    .isFalse fun hi => h ((checkIso_iff G H p).mpr hi)
 
 /-- Two coloured graphs are isomorphic when some colour-preserving forward
 permutation transports one onto the other. -/

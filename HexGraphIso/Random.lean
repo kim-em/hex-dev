@@ -35,13 +35,13 @@ structure Gen where
 deriving Inhabited
 
 /-- The first corpus seed. -/
-def seed1 : UInt64 := 0x243F6A8885A308D3
+@[expose] def seed1 : UInt64 := 0x243F6A8885A308D3
 
 /-- The second corpus seed. -/
-def seed2 : UInt64 := 0x13198A2E03707344
+@[expose] def seed2 : UInt64 := 0x13198A2E03707344
 
 /-- One SplitMix64 step: the next output and the advanced state. -/
-def next (g : Gen) : UInt64 × Gen :=
+@[expose] def next (g : Gen) : UInt64 × Gen :=
   let state := g.state + 0x9E3779B97F4A7C15
   let z := state
   let z := (z ^^^ (z >>> 30)) * 0xBF58476D1CE4E5B9
@@ -51,7 +51,7 @@ def next (g : Gen) : UInt64 × Gen :=
 /-- A uniform value below `m` by threshold rejection: draws are discarded
 while they lie at or above `2^64 - (2^64 % m)`, then reduced. `m = 0`
 returns `0` without consuming the stream. -/
-def nextBelow (g : Gen) (m : Nat) : Nat × Gen :=
+@[expose] def nextBelow (g : Gen) (m : Nat) : Nat × Gen :=
   if m = 0 then
     (0, g)
   else
@@ -70,7 +70,7 @@ where
 /-- The Erdős–Rényi graph `G(n, 1/2)`: one low bit per vertex pair
 `(i, j)`, `i < j`, in lexicographic order. Returns the adjacency bitmask
 over pairs in that order. -/
-def gnpMask (g : Gen) (n : Nat) : Nat × Gen := Id.run do
+@[expose] def gnpMask (g : Gen) (n : Nat) : Nat × Gen := Id.run do
   let mut mask := 0
   let mut t := 0
   let mut gen := g
@@ -84,7 +84,7 @@ def gnpMask (g : Gen) (n : Nat) : Nat × Gen := Id.run do
   return (mask, gen)
 
 /-- Fisher-Yates shuffle from the last position down. -/
-def shuffle (g : Gen) (a : Array Nat) : Array Nat × Gen := Id.run do
+@[expose] def shuffle (g : Gen) (a : Array Nat) : Array Nat × Gen := Id.run do
   let mut a := a
   let mut gen := g
   let n := a.size
@@ -98,7 +98,7 @@ def shuffle (g : Gen) (a : Array Nat) : Array Nat × Gen := Id.run do
 
 /-- A uniformly shuffled onto `k`-colouring of `n ≥ k` vertices: start
 from `i % k` and shuffle. -/
-def ontoColoring (g : Gen) (n k : Nat) : Array Nat × Gen :=
+@[expose] def ontoColoring (g : Gen) (n k : Nat) : Array Nat × Gen :=
   let base := Array.ofFn (n := n) fun i => i.val % k
   shuffle g base
 

@@ -51,7 +51,7 @@ theorem ext_cells {c d : Coloring n k} (h : c.cells = d.cells) : c = d := by
     c = d := by
   refine ext_cells (Vector.ext fun i hi => h ⟨i, hi⟩)
 
-instance : DecidableEq (Coloring n k) := fun c d =>
+@[expose] instance : DecidableEq (Coloring n k) := fun c d =>
   if h : c.cells = d.cells then
     .isTrue (ext_cells h)
   else
@@ -73,23 +73,23 @@ theorem isSome_ofVector? (v : Vector (Fin k) n) :
 /-- The constant zero colouring: the one-cell colouring of a nonempty vertex
 set. -/
 @[expose] def trivial (n : Nat) (h : 0 < n) : Coloring n 1 where
-  cells := Vector.ofFn fun _ => 0
+  cells := Hex.Vector.ofFn' fun _ => 0
   onto c := ⟨⟨0, h⟩, by
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
     simp [Vector.get_eq_getElem, this]⟩
 
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
 @[expose] def mod (n k : Nat) (hk : 0 < k) (hkn : k ≤ n) : Coloring n k where
-  cells := Vector.ofFn fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
+  cells := Hex.Vector.ofFn' fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
   onto c := by
     refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
     rw [Vector.get_eq_getElem]
-    simp only [Fin.getElem_fin, Vector.getElem_ofFn]
+    simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn']
     exact Fin.ext (Nat.mod_eq_of_lt c.isLt)
 
 /-- The number of vertices with each colour. -/
 @[expose] def cellSizes (c : Coloring n k) : Vector Nat k :=
-  Vector.ofFn fun j => ((List.finRange n).filter fun i => c.cells[i] == j).length
+  Hex.Vector.ofFn' fun j => ((List.finRange n).filter fun i => c.cells[i] == j).length
 
 end Coloring
 
@@ -100,11 +100,16 @@ structure Colored (n k : Nat) where
   graph : Graph n
   /-- The ordered vertex colouring. -/
   coloring : Coloring n k
-deriving DecidableEq
 
 namespace Colored
 
 variable {n k : Nat}
+
+@[expose] instance : DecidableEq (Colored n k) := fun G H =>
+  if h : G.graph = H.graph ∧ G.coloring = H.coloring then
+    .isTrue (by cases G; cases H; cases h.1; cases h.2; rfl)
+  else
+    .isFalse fun e => h (by cases e; exact ⟨rfl, rfl⟩)
 
 @[ext] theorem ext {G H : Colored n k}
     (hg : ∀ i j, G.graph.adj i j = H.graph.adj i j)
@@ -120,14 +125,14 @@ vertex `l[i]`, so `(relabel G l).graph.adj i j = G.graph.adj l[i] l[j]` and
 @[expose] def relabel (G : Colored n k) (l : Label n) : Colored n k where
   graph := G.graph.relabel fun i => l.get i
   coloring :=
-    { cells := Vector.ofFn fun i => G.coloring.cells[l.get i]
+    { cells := Hex.Vector.ofFn' fun i => G.coloring.cells[l.get i]
       onto := fun c => by
         rcases G.coloring.onto c with ⟨v, hv⟩
         rcases l.perm.get_surj v with ⟨i, hi⟩
         subst hi
         refine ⟨i, ?_⟩
         rw [Vector.get_eq_getElem] at hv ⊢
-        simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta]
+        simp only [Fin.getElem_fin, Hex.Vector.getElem_ofFn', Fin.eta]
         exact hv }
 
 @[simp] theorem adj_relabel (G : Colored n k) (l : Label n) (i j : Fin n) :
@@ -137,7 +142,7 @@ vertex `l[i]`, so `(relabel G l).graph.adj i j = G.graph.adj l[i] l[j]` and
 @[simp] theorem cells_relabel (G : Colored n k) (l : Label n) (i : Nat)
     (hi : i < n) :
     (G.relabel l).coloring.cells[i] = G.coloring.cells[l.get ⟨i, hi⟩] := by
-  show (Vector.ofFn fun j => G.coloring.cells[l.get j])[i] = _
+  show (Hex.Vector.ofFn' fun j => G.coloring.cells[l.get j])[i] = _
   simp
 
 @[simp] theorem relabel_id (G : Colored n k) : G.relabel (Label.id n) = G :=

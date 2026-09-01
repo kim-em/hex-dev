@@ -894,6 +894,14 @@ lean_lib HexCharPolyTests where
   globs := #[`HexCharPoly.CharPolyElabTests,
     `HexCharPolyMathlib.CharPolyElabTests]
 
+-- HexGraphIso is not yet a published split repository, so its
+-- verification-only tactic regressions stay separate from the
+-- release-manifest-backed target above; they rejoin HexReleaseTests (and
+-- the manifest's test_modules) at publication.
+@[default_target]
+lean_lib HexGraphIsoTests where
+  globs := #[`HexGraphIso.TacticTests].map Glob.one
+
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
 @[default_target]

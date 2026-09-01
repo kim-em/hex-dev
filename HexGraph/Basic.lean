@@ -84,11 +84,11 @@ theorem ext_adjMatrix {G H : Graph n} (h : G.adjMatrix = H.adjMatrix) : G = H :=
 theorem eq_iff_adj {G H : Graph n} : G = H ↔ ∀ i j, G.adj i j = H.adj i j :=
   ⟨fun h _ _ => h ▸ rfl, ext⟩
 
-instance : DecidableEq (Graph n) := fun G H =>
-  if h : G.adjMatrix = H.adjMatrix then
-    .isTrue (ext_adjMatrix h)
+@[expose] instance : DecidableEq (Graph n) := fun G H =>
+  if h : G.adjMatrix.data = H.adjMatrix.data then
+    .isTrue (ext_adjMatrix (Matrix.ext_data h))
   else
-    .isFalse fun e => h (congrArg Graph.adjMatrix e)
+    .isFalse fun e => h (congrArg (fun K : Graph n => K.adjMatrix.data) e)
 
 /-! # Construction -/
 

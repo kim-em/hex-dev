@@ -93,7 +93,7 @@ theorem ext_vec {p q : Perm n} (h : p.vec = q.vec) : p = q := by
   refine ext_vec (Vector.ext fun i hi => ?_)
   exact h ⟨i, hi⟩
 
-instance : DecidableEq (Perm n) := fun p q =>
+@[expose] instance : DecidableEq (Perm n) := fun p q =>
   if h : p.vec = q.vec then
     .isTrue (ext_vec h)
   else
@@ -122,9 +122,9 @@ theorem complete_ofFn_toList {f : Fin n → Fin n}
 /-- Build a permutation from an injective-and-surjective entry function. -/
 @[expose] def ofFn (f : Fin n → Fin n) (hinj : ∀ i j, f i = f j → i = j)
     (hsurj : ∀ i, ∃ j, f j = i) : Perm n where
-  vec := Vector.ofFn f
-  nodup := nodup_ofFn_toList hinj
-  complete := complete_ofFn_toList hsurj
+  vec := Hex.Vector.ofFn' f
+  nodup := by rw [Hex.Vector.ofFn'_eq_ofFn]; exact nodup_ofFn_toList hinj
+  complete := by rw [Hex.Vector.ofFn'_eq_ofFn]; exact complete_ofFn_toList hsurj
 
 @[simp] theorem get_ofFn (f : Fin n → Fin n) (hinj) (hsurj) (i : Fin n) :
     (ofFn f hinj hsurj).get i = f i := by
@@ -247,11 +247,16 @@ structure Label (n : Nat) where
   /-- The underlying bijection sending each new position to the old vertex
   placed there. -/
   perm : Perm n
-deriving DecidableEq
 
 namespace Label
 
 variable {n : Nat}
+
+@[expose] instance : DecidableEq (Label n) := fun l m =>
+  if h : l.perm = m.perm then
+    .isTrue (by cases l; cases m; cases h; rfl)
+  else
+    .isFalse fun e => h (congrArg Label.perm e)
 
 /-- The old vertex at new position `i`. -/
 @[inline, expose] def get (l : Label n) (i : Fin n) : Fin n :=

@@ -44,9 +44,9 @@ namespace Hex.GraphIso
 emitted by tactics: entries must be in range, duplicate-free, and
 complete. -/
 @[expose] def permOfNatArray? (n : Nat) (a : Array Nat) : Option (Perm n) :=
-  if h : a.size = n ∧ ∀ v ∈ a, v < n then
-    Perm.ofVector?
-      ⟨a.attach.map fun v => (⟨v.val, h.2 v.val v.property⟩ : Fin n), by simp [h.1]⟩
+  if h : a.size = n ∧ ∀ i, (hi : i < a.size) → a[i] < n then
+    Perm.ofVector? (Hex.Vector.ofFn' fun i : Fin n =>
+      ⟨a[i.val]'(h.1.symm ▸ i.isLt), h.2 i.val (h.1.symm ▸ i.isLt)⟩)
   else
     none
 

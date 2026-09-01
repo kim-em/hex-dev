@@ -44,9 +44,33 @@ satisfies this. -/
 def ColorSorted (K : Colored n k) : Prop :=
   ∀ i j : Fin n, i ≤ j → K.coloring.cells[i] ≤ K.coloring.cells[j]
 
-instance (K : Colored n k) : Decidable (ColorSorted K) :=
-  inferInstanceAs (Decidable
-    (∀ i j : Fin n, i ≤ j → K.coloring.cells[i] ≤ K.coloring.cells[j]))
+/-- Executable check for `ColorSorted`, a plain Boolean fold so the kernel
+replays it without unfolding quantifier instances. -/
+@[expose] def colorSortedCheck (K : Colored n k) : Bool :=
+  (List.finRange n).all fun i => (List.finRange n).all fun j =>
+    !(decide (i ≤ j)) || decide (K.coloring.cells[i] ≤ K.coloring.cells[j])
+
+theorem colorSortedCheck_iff (K : Colored n k) :
+    colorSortedCheck K = true ↔ ColorSorted K := by
+  rw [colorSortedCheck]
+  simp only [List.all_eq_true, List.mem_finRange, true_implies,
+    Bool.or_eq_true, Bool.not_eq_true', decide_eq_true_eq,
+    decide_eq_false_iff_not]
+  constructor
+  · intro h i j hij
+    rcases h i j with hn | hle
+    · exact absurd hij hn
+    · exact hle
+  · intro h i j
+    rcases Decidable.em (i ≤ j) with hij | hij
+    · exact Or.inr (h i j hij)
+    · exact Or.inl hij
+
+@[expose] instance (K : Colored n k) : Decidable (ColorSorted K) :=
+  if h : colorSortedCheck K then
+    .isTrue ((colorSortedCheck_iff K).mp h)
+  else
+    .isFalse fun hs => h ((colorSortedCheck_iff K).mpr hs)
 
 namespace Reference
 
@@ -55,7 +79,7 @@ variable {n k : Nat}
 /-! # Enumeration of labellings -/
 
 /-- Every list over `Fin n` of length `m`. -/
-def allLists (n : Nat) : Nat → List (List (Fin n))
+@[expose] def allLists (n : Nat) : Nat → List (List (Fin n))
   | 0 => [[]]
   | m + 1 => (List.finRange n).flatMap fun x => (allLists n m).map (x :: ·)
 
@@ -72,7 +96,7 @@ theorem mem_allLists {n m : Nat} (l : List (Fin n)) (h : l.length = m) :
     exact ⟨x, List.mem_finRange x, List.mem_map.mpr ⟨t, ih rfl, rfl⟩⟩
 
 /-- Every labelling of `n` vertices. -/
-def allLabels (n : Nat) : List (Label n) :=
+@[expose] def allLabels (n : Nat) : List (Label n) :=
   (allLists n n).filterMap fun l =>
     if h : l.length = n then
       Label.ofVector? ⟨l.toArray, by simp [h]⟩
@@ -215,7 +239,7 @@ theorem digits_inj {K K' : Colored n k} (h : digits K = digits K') : K = K' := b
 
 /-- Every labelling whose relabelled graph has contiguous colour cells,
 paired with that relabelled graph. -/
-def candPairs (G : Colored n k) : List (Label n × Colored n k) :=
+@[expose] def candPairs (G : Colored n k) : List (Label n × Colored n k) :=
   (allLabels n).filterMap fun l =>
     if ColorSorted (G.relabel l) then some (l, G.relabel l) else none
 
