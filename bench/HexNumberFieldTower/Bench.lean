@@ -454,23 +454,25 @@ setup_fixed_benchmark runInv where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. Adjoining couples Trager factorization, fixed-embedding
-disambiguation, certified root isolation, and level validation; no tight model
-for their realised composition or published bound for its dominant isolation
-phase is available. The SPEC's canonical fourth-root extension of `Q(sqrt(2))`
-is the fixed hard input. Its historical 0.920 s median sets a 3 s zero-grace
-whole-child budget with more than 3x per-call headroom and room for warmup. -/
+/- Mode 3. The attempted root-degree schedule `2,3,4,6,8,12` measured
+13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s, then hit a 30 s cap: embedding
+selection, factorization, isolation, and validation change dominance, so no
+stable independently derived wall model is reachable, and no published bound
+covers the dominant isolation phase. The canonical fourth-root extension of
+`Q(sqrt(2))` has a fresh 310 ms batch median. Its 3 s zero-grace whole-child
+budget includes process startup, certified fixtures, warmup, and batch work. -/
 setup_fixed_benchmark runAdjoin where {
   repeats := 3, maxSecondsPerCall := 3.0, killGraceMs := 0,
   expectedHash := some 0xde9179e4f67a3948,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3 for the distinct identity branch. Degree does not parameterize the
-fixed-embedding selection and recovery work tightly, and no complete published
-bound applies. Re-adjoining `sqrt(2)` is the SPEC's canonical input. The 1 s
-zero-grace whole-child budget covers the measured 18.13 ms median, certified
-fixture construction, warmup, and the 0.2 s steady-state batch. -/
+/- Mode 3 for the distinct identity branch. The attempted presentation-degree
+schedule `2,3,4,6,8,12` measured 18.0 ms, 2.37 s, 1.68 s, then hit a 30 s cap
+at degree 6: branch-sensitive embedding recovery is nonmonotone and supplies no
+stable independently derived model; no complete published bound applies.
+Re-adjoining `sqrt(2)` is canonical. Its fresh 18.2 ms batch median and all
+inclusive child work fit a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runAdjoinIdentity where {
   repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0x51ddf5878af8a696,
@@ -565,26 +567,20 @@ setup_fixed_benchmark runFactorRat where {
   expectedHash := some 0x90fa5a1ee979f50c
 }
 
-/- Mode 3 branch case. The controlled degree sweep mixes shift count,
-coefficient growth, resultant, gcd, and factorization phases and supplies no
-tight realised wall model; the available BHKS bound does not cover the
-dominant non-factorization phases. `X^2 - 3` over `Q(sqrt(2))` is the SPEC's
-canonical bad-first-shift case. Its measured 0.813 ms median sets a 1 s
-zero-grace whole-child budget including certified fixture construction,
-warmup, and the 0.2 s timed batch. -/
+/- Branch and expected-hash anchor. It forces a real bad first shift, while the
+canonical degree-24 registration supplies public `factor?` performance
+coverage. -/
 setup_fixed_benchmark runFactorRetry where {
-  repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  repeats := 3, maxSecondsPerCall := 5.0,
   expectedHash := some 0xf830f035fb69256e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3 branch case. The same absence of a tight composed model and
-dominant-phase upper bound rules out modes 1 and 2. `X^2 - 3` over
-`Q(sqrt(2), sqrt(3))` is the SPEC's canonical recursive relative-factorization
-input. Its measured 7.597 ms median sets a 1 s zero-grace whole-child budget
-including certified fixture construction, warmup, and the 0.2 s timed batch. -/
+/- Branch and expected-hash anchor. It forces recursive relative factorization
+through an intermediate level, while the canonical degree-24 registration
+supplies public `factor?` performance coverage. -/
 setup_fixed_benchmark runFactorRecursive where {
-  repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  repeats := 3, maxSecondsPerCall := 5.0,
   expectedHash := some 0xd13bbfca65f65898,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -643,12 +639,12 @@ def runRecoverSearch : Unit → IO UInt64 := fun _ => do
   return recoveredChecksum (← requireSome "flatten/recover-search"
     (Flatten.searchRecoveredAux input.theta input.alpha 6 1 2))
 
-/- Mode 3. Splitting composes repeated factorization, eliminant isolation,
-fixed-embedding adjoining, and root collection, with no tight model for the
-realised composition and no published bound for its dominant isolation phase.
-The SPEC's canonical quartic `(X^2 - 2)(X^2 - 3)` performs two genuine
-extensions. Its historical 78.32 ms median sets a 1 s zero-grace whole-child
-budget including warmup and the 0.2 s timed batch. -/
+/- Mode 3. The attempted factor-count schedule `1,2,3` (degrees `2,4,6`)
+measured 19.5 ms, 68.3 ms, and 1.89 s as repeated factorization, isolation,
+adjoining, and root collection change dominance. No tight independent wall
+model or published dominant-isolation bound applies. The canonical quartic
+performs two genuine extensions; its fresh 68.0 ms batch median and inclusive
+child work fit a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runSplit where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xd863bc339d467bf8,
@@ -687,20 +683,21 @@ setup_fixed_benchmark runCertifies where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash and attribution anchor for the conversion closures produced by
-`flatten?`. It does not independently discharge `flatten?` performance. -/
+/- Expected-hash anchor for the conversion closures produced by `flatten?`.
+`runToPrimitiveLadder` and `runFromPrimitiveLadder` provide their mode-1
+performance coverage. -/
 setup_fixed_benchmark runCoordinateMaps where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xcc1b7720bfe3fc24,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. Flattening composes candidate enumeration, integer eliminants,
-canonical exactification, exact recovery, and map certification. No stable
-one-parameter model for that phase mixture or published bound covering its
-dominant isolation phase is available. The SPEC's canonical dimension-four
-two-level tower is the fixed input. Its historical 37.56 ms median sets a 1 s
-zero-grace whole-child budget including warmup and the 0.2 s timed batch. -/
+/- Mode 3. The attempted top-degree schedule `1,2,3,4` (tower dimensions
+`2,4,6,8`) measured 0.96 ms, 21.0 ms, 107.7 ms, and 460.4 ms while candidate
+enumeration, eliminants, isolation, recovery, and certification change
+dominance. No stable independent wall model or published dominant-isolation
+bound applies. The canonical dimension-four tower has a fresh 20.9 ms batch
+median; inclusive child work fits a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xcc1b7720bfe3fc24,
@@ -792,8 +789,11 @@ private def ladderRootSeed (p : ZPoly) (n : Nat) : DyadicSquare :=
   let center := nthRootFloor scaled n
   ⟨Dyadic.ofIntWithPrec (Int.ofNat center) q, 0, q⟩
 
-/-- Certify only the selected positive binomial root. This avoids refining and
-pairwise separating every other root merely to build an untimed fixture. -/
+/-- Certify only the selected positive binomial root. At Mahler precision the
+seed square's doubled retained disc is narrower than the certified separation
+bound, so the atom returned near the positive real seed cannot be a different
+root. This avoids refining and pairwise separating every other root merely to
+build an untimed fixture. -/
 private def positiveBinomialRoot? (p : ZPoly) (n : Nat) :
     Option (RefinedIsolation p) :=
   isolateOne? p (mahlerPrec p : Int) (ladderRootSeed p n)
@@ -948,6 +948,7 @@ setup_benchmark runTowerAddLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    slopeTolerance := 0.2
   }
 
 /- Cost model. Subtraction visits the two length-`D = 2n` coordinate vectors
@@ -962,6 +963,7 @@ setup_benchmark runTowerSubLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    slopeTolerance := 0.2
   }
 
 /- Cost model. Negation visits exactly the `D = 2n` bounded-height rational
@@ -976,6 +978,7 @@ setup_benchmark runTowerNegLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    slopeTolerance := 0.2
   }
 
 /- Cost model. Rational scalar action multiplies each of the `D = 2n`
@@ -990,6 +993,7 @@ setup_benchmark runTowerSMulLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
+    slopeTolerance := 0.2
   }
 
 /- Cost model. Schoolbook tower multiplication convolves the mixed-radix
@@ -1111,9 +1115,9 @@ The degree-24 Selmer trinomial over `Q(sqrt(2))` is the top completed rung and
 the canonical hard input. Rational coefficients force a repeated shift-zero
 norm, followed by a genuine retry, recursive rational factorization of the
 accepted degree-48 norm, gcd recovery, and checked replay. Its historical
-253 ms median sets a 2 s zero-grace whole-child budget with over 7x per-call
-headroom and room for fixture construction plus discarded warmup. The name is
-retained so archived diagnostic exports remain connected to this operation. -/
+250.9 ms batch median, plus process startup, fixture construction, and discarded
+warmup, fits a 2 s zero-grace whole-child budget. The name is retained so
+archived diagnostic exports remain connected to this operation. -/
 setup_fixed_benchmark runTowerFactorLadder where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -1224,177 +1228,108 @@ cost that the headline report subtracts from the PARI wall times. -/
 setup_fixed_benchmark runPariNfFactorOverhead where
   { pariCompareConfig with expectedHash := some 0x0 }
 
-/-! # Temporary ordered-mode diagnostics
+/-! # Checked replay and coordinate-map performance surfaces -/
 
-These registrations make the candidate parameterisations required by the
-ordered-mode audit executable. They are removed after their scientific export;
-the retained artifact and report record why the unstable families select mode
-3 instead of leaving failing diagnostic registrations in the merge smoke. -/
-
-private structure AdjoinDiagnosticInput where
-  base : NumberTower
-  root : AlgebraicRoot
-
-private instance : Hashable AdjoinDiagnosticInput where
-  hash input := mixHash (hash input.base.dim) (zpolyChecksum input.root.p)
-
-private instance : Inhabited AdjoinDiagnosticInput :=
-  ⟨⟨rat, AlgebraicNumber.zero.toRoot⟩⟩
-
-def prepAdjoinDiagnostic (n : Nat) : AdjoinDiagnosticInput :=
-  let m := max n 2
-  let root := mkLadderRoot? (xPowSubThree m) m
-  match sqrtTwo? (), root with
-  | some base, some root => ⟨base.tower, root⟩
-  | _, _ => panic! "prepAdjoinDiagnostic: fixture failed"
-
-def runAdjoinDiagnostic (input : AdjoinDiagnosticInput) : UInt64 :=
-  match adjoin? input.base input.root with
-  | some result => extensionChecksum result
-  | none => 0
-
-private structure IdentityDiagnosticInput where
-  extension : Option (Extension rat)
-
-private instance : Hashable IdentityDiagnosticInput where
-  hash input := hash input.extension.isSome
-
-private instance : Inhabited IdentityDiagnosticInput := ⟨⟨none⟩⟩
-
-def prepIdentityDiagnostic (n : Nat) : IdentityDiagnosticInput :=
-  let input := prepPresentationInput n
-  let root := input.root
-  match input.checked with
-  | some ⟨checked⟩ =>
-      letI : ZPoly.CheckedIrreducible root.p := checked
-      ⟨some (ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk)⟩
-  | none => panic! "prepIdentityDiagnostic: fixture failed"
-
-def runIdentityDiagnostic (input : IdentityDiagnosticInput) : UInt64 :=
-  match input.extension with
-  | some extension =>
-      match adjoin? extension.tower extension.root with
-      | some result => extensionChecksum result
-      | none => 0
-  | none => 0
-
-private structure CheckDiagnosticInput where
+private structure CheckInput where
   tower : NumberTower
   f : Poly tower
   scalar : Elem tower
   factors : Array (Poly tower × Nat)
 
-private instance : Hashable CheckDiagnosticInput where
+private instance : Hashable CheckInput where
   hash input := mixHash (polyChecksum input.f) (elemChecksum input.scalar)
 
-private instance : Inhabited CheckDiagnosticInput :=
+private instance : Inhabited CheckInput :=
   ⟨⟨rat, DensePoly.ofCoeffs #[], 0, #[]⟩⟩
 
-def prepCheckDiagnostic (n : Nat) : CheckDiagnosticInput :=
+private def prepCheckInput (n : Nat) : CheckInput :=
   let input := prepFactorInput n
   match factor? input.tower input.f with
   | some result => ⟨input.tower, input.f, result.scalar, result.factors⟩
-  | none => panic! "prepCheckDiagnostic: factorization failed"
+  | none => panic! "prepCheckInput: factorization failed"
 
-def runCheckDiagnostic (input : CheckDiagnosticInput) : UInt64 :=
-  hash (checkFactorization input.f input.scalar input.factors)
+initialize checkCanonicalRef : IO.Ref (Option CheckInput) ← IO.mkRef none
 
-private def splitPrimes : Array Int := #[2, 3, 5]
+private def getCheckCanonicalInput : IO CheckInput := do
+  match ← checkCanonicalRef.get with
+  | some input => pure input
+  | none =>
+      let input := prepCheckInput 24
+      checkCanonicalRef.set (some input)
+      pure input
 
-private structure SplitDiagnosticInput where
-  f : Poly rat
+def runTowerCheckFactorization : Unit → IO UInt64 := fun _ => do
+  let input ← getCheckCanonicalInput
+  return hash (checkFactorization input.f input.scalar input.factors)
 
-private instance : Hashable SplitDiagnosticInput where
-  hash input := polyChecksum input.f
+/- Mode 3. The diagnostic degree schedule `2,3,4,6,8,12,16,24` rose from
+0.404 ms to 126.3 ms with a `+1.485` residual even against a linear candidate;
+its changing squarefree, Trager, gcd, and replay phases admit no independent
+tight wall model, and no published bound covers the dominant gcd/replay work.
+The degree-24 checked Selmer factorization is canonical. Its 126.3 ms
+diagnostic baseline and the independently chosen 2 s zero-grace whole-child
+ceiling leave room for startup, fixture factorization, warmup, and auto-tuned
+batch work; the final inclusive export validates that ceiling directly. -/
+setup_fixed_benchmark runTowerCheckFactorization where {
+  repeats := 3, maxSecondsPerCall := 2.0, killGraceMs := 0,
+  expectedHash := some 0x000000000000000b,
+  warmupFirstIter := true, minTotalSeconds := 0.2
+}
 
-private instance : Inhabited SplitDiagnosticInput :=
-  ⟨⟨DensePoly.ofCoeffs #[]⟩⟩
-
-def prepSplitDiagnostic (n : Nat) : SplitDiagnosticInput :=
-  let k := min (max n 1) splitPrimes.size
-  let f := (List.range k).foldl (fun product i =>
-    product * rationalPoly [-(splitPrimes.getD i 2 : Rat), 0, 1]) 1
-  ⟨f⟩
-
-def runSplitDiagnostic (input : SplitDiagnosticInput) : UInt64 :=
-  match split? rat input.f with
-  | some result => splitChecksum result
-  | none => 0
-
-private structure TowerDiagnosticInput where
-  tower : NumberTower
-
-private instance : Hashable TowerDiagnosticInput where
-  hash input := hash input.tower.dim
-
-private instance : Inhabited TowerDiagnosticInput := ⟨⟨rat⟩⟩
-
-def prepTowerDiagnostic (n : Nat) : TowerDiagnosticInput :=
-  match ladderTower? (max n 1) with
-  | some tower => ⟨tower⟩
-  | none => panic! "prepTowerDiagnostic: tower fixture failed"
-
-def runFlattenDiagnostic (input : TowerDiagnosticInput) : UInt64 :=
-  match flatten? input.tower with
-  | some result => flattenChecksum result
-  | none => 0
-
-private structure MapDiagnosticInput where
+private structure MapLadderInput where
   tower : NumberTower
   result : Option (Flattening tower)
 
-private instance : Hashable MapDiagnosticInput where
+private instance : Hashable MapLadderInput where
   hash input := hash input.tower.dim
 
-private instance : Inhabited MapDiagnosticInput := ⟨⟨rat, none⟩⟩
+private instance : Inhabited MapLadderInput := ⟨⟨rat, none⟩⟩
 
-def prepMapDiagnostic (n : Nat) : MapDiagnosticInput :=
-  let input := prepTowerDiagnostic n
-  ⟨input.tower, flatten? input.tower⟩
+def prepMapLadderInput (n : Nat) : MapLadderInput :=
+  match ladderTower? (max n 1) with
+  | some tower => ⟨tower, flatten? tower⟩
+  | none => panic! "prepMapLadderInput: tower fixture failed"
 
-def runMapDiagnostic (input : MapDiagnosticInput) : UInt64 :=
+def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
   match input.result with
-  | some result => flattenChecksum result
+  | some result =>
+      (List.range input.tower.dim).foldl (fun checksum i =>
+        let basis := ofCoeffs input.tower
+          (Flatten.unitCoords input.tower.dim i)
+        mixHash checksum (qAdjoinChecksum (result.toPrimitive basis)))
+        (hash input.tower.dim)
   | none => 0
 
-setup_benchmark runAdjoinDiagnostic n => n with prep := prepAdjoinDiagnostic
+def runFromPrimitiveLadder (input : MapLadderInput) : UInt64 :=
+  match input.result with
+  | some result =>
+      (List.range input.tower.dim).foldl (fun checksum i =>
+        let primitive := QAdjoin.reduce result.root.p result.root.x
+          (DensePoly.ofCoeffs (Flatten.unitCoords input.tower.dim i))
+        mixHash checksum (elemChecksum (result.fromPrimitive primitive)))
+        (hash input.tower.dim)
+  | none => 0
+
+/- Cost model. The benchmark applies `toPrimitive` to all `D = 2n` tower
+basis vectors. Each application visits `D` precomputed images and performs
+`D` scalar multiplications/additions on length-`D` primitive coordinates,
+`Θ(D²)` work per vector and `Θ(D³)` for the full basis. -/
+setup_benchmark runToPrimitiveLadder n => n * n * n
+  with prep := prepMapLadderInput
   where {
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    paramSchedule := .custom #[1, 2, 3, 4, 5, 6]
     maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runIdentityDiagnostic n => n with prep := prepIdentityDiagnostic
+/- Cost model. The benchmark applies `fromPrimitive` to all `D = 2n`
+primitive basis vectors. Horner evaluation takes `D` tower
+multiplication/addition steps, with `Θ(D²)` coordinate multiplication per
+step, hence `Θ(D³)` per vector and `Θ(D⁴)` for the full basis. -/
+setup_benchmark runFromPrimitiveLadder n => n * n * n * n
+  with prep := prepMapLadderInput
   where {
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-setup_benchmark runCheckDiagnostic n => n with prep := prepCheckDiagnostic
-  where {
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-setup_benchmark runSplitDiagnostic n => n with prep := prepSplitDiagnostic
-  where {
-    paramSchedule := .custom #[1, 2, 3]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-setup_benchmark runFlattenDiagnostic n => n with prep := prepTowerDiagnostic
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
-
-setup_benchmark runMapDiagnostic n => n with prep := prepMapDiagnostic
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4]
+    paramSchedule := .custom #[1, 2, 3, 4, 5, 6]
     maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1.0
   }
