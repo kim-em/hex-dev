@@ -4,101 +4,70 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-
 /-!
-# Shared nauty persistent-subprocess bench driver helper
+# nauty FFI bench comparator
 
-Lean-side companion to `scripts/oracle/nauty_bench_driver.py`. The
-driver builds the conformance oracle's C shim against the
-hash-verified pinned nauty 2.9.3 source once at startup; each request
-canonicalizes one coloured graph through it. It reuses the process
-framing type from the FLINT helper while retaining an independent
-cached child process.
+Lean binding for `Hex/BenchOracle/ffi/nauty_canon.c`, which links the
+vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` (unmodified files
+from the pinned archive; provenance in that directory's README) through
+the static library `hexnautyffi`. The C side runs the same pinned
+densenauty configuration as the conformance oracle shim
+`scripts/oracle/graphiso_nauty_shim.c`.
 
-Environment overrides:
-
-* `HEX_NAUTY_BENCH_DRIVER` — driver script path;
-* `HEX_NAUTY_BENCH_PYTHON` — Python command (default `python3`).
+Development-monorepo tooling only: the vendored nauty and this
+comparator support conformance and benchmarking here and are not part
+of any released Hex library.
 -/
 
 namespace Hex.BenchOracle.Nauty
 
-open Lean (Json JsonNumber)
+/-- One canonical-labelling answer from the pinned nauty 2.9.3:
+the canonical labelling, the canonical upper-triangle adjacency bits in
+row-major order as a `0`/`1` string, and the visited-node count. -/
+structure CanonResult where
+  lab : Array Nat
+  tri : String
+  nodes : Nat
+  deriving Repr
 
-private abbrev PersistentComparator :=
-  Hex.BenchOracle.Flint.PersistentComparator
-
-initialize nautyDriverRef : IO.Ref (Option PersistentComparator) ←
-  IO.mkRef none
-
-private def envOr (name : String) (default : String) : IO String := do
-  match (← IO.getEnv name) with
-  | some value => return value
-  | none => return default
-
-private def driverPath : IO String := do
-  if let some path ← IO.getEnv "HEX_NAUTY_BENCH_DRIVER" then
-    return path
-  let rootPath : System.FilePath := "scripts/oracle/nauty_bench_driver.py"
-  if ← rootPath.pathExists then
-    return rootPath.toString
-  return "../scripts/oracle/nauty_bench_driver.py"
-
-private def pythonCommand : IO String :=
-  envOr "HEX_NAUTY_BENCH_PYTHON" "python3"
-
-private def resolveDriver : IO PersistentComparator := do
-  if let some child ← nautyDriverRef.get then
-    return child
-  let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn
-    (← pythonCommand) #[← driverPath]
-  nautyDriverRef.set (some child)
-  return child
-
-private def sendRequestLine (line : String) : IO Json := do
-  let reply ←
-    try
-      (← resolveDriver).requestLine line
-    catch _ =>
-      nautyDriverRef.set none
-      (← resolveDriver).requestLine line
-  match Json.parse reply with
-  | .ok value => return value
-  | .error error =>
-    throw <| IO.userError
-      s!"nauty_bench_driver reply not valid JSON: {error}; reply: {reply}"
-
-private def resultOf (op : String) (reply : Json) : IO Json := do
-  match reply.getObjValAs? Bool "ok" with
-  | Except.ok true =>
-    match reply.getObjVal? "result" with
-    | Except.ok result => return result
-    | Except.error error =>
-      throw <| IO.userError
-        s!"nauty_bench_driver: missing result: {error}; reply: {reply.compress}"
-  | Except.ok false =>
-    let error := (reply.getObjValAs? String "error").toOption.getD
-      "(no error message)"
-    throw <| IO.userError s!"nauty_bench_driver: {op}: {error}"
-  | Except.error error =>
-    throw <| IO.userError
-      s!"nauty_bench_driver: reply missing/non-bool ok: {error}; reply: {reply.compress}"
+/-- Raw FFI call. Marshalling contract (kept in sync with
+`hex_nauty_canon` in `nauty_canon.c`): `colors` holds `n` colour bytes,
+`adj` holds `n * n` row-major `0`/`1` bytes, and the result packs `n`
+lab bytes, `n*(n-1)/2` upper-triangle `0`/`1` bytes, and the
+visited-node count as 8 little-endian bytes. `canon` validates the
+preconditions (`1 ≤ n ≤ 255`, `k ≤ n`, colour bytes below `k`). -/
+@[extern "hex_nauty_canon"]
+private opaque canonFFI (n k : USize) (colors adj : @& ByteArray) : ByteArray
 
 /-- Canonicalize one coloured graph through the pinned nauty
 comparator. `adj` lists each vertex's adjacency row as a `0`/`1`
-string; the result carries the canonical label, the canonical
-upper-triangle bits, and the visited-node count. -/
+string. -/
 def canon (n k : Nat) (colors : List Nat) (adj : List String) :
-    IO Json := do
-  let request := Json.mkObj
-    [("family", Json.str "nauty"), ("op", Json.str "canon"),
-     ("n", Json.num (JsonNumber.fromNat n)),
-     ("k", Json.num (JsonNumber.fromNat k)),
-     ("colors", Json.arr (colors.map fun c =>
-       Json.num (JsonNumber.fromNat c)).toArray),
-     ("adj", Json.arr (adj.map Json.str).toArray)]
-  let reply ← sendRequestLine request.compress
-  resultOf "canon" reply
+    IO CanonResult := do
+  unless 1 ≤ n && n ≤ 255 do
+    throw <| IO.userError s!"nauty canon: n = {n} out of range"
+  unless k ≤ n do
+    throw <| IO.userError s!"nauty canon: k = {k} exceeds n = {n}"
+  unless colors.length == n && colors.all (· < k) do
+    throw <| IO.userError "nauty canon: bad colour list"
+  unless adj.length == n && adj.all (·.length == n) do
+    throw <| IO.userError "nauty canon: bad adjacency rows"
+  let colorBytes := ByteArray.mk <| (colors.map (·.toUInt8)).toArray
+  let mut adjBytes := ByteArray.emptyWithCapacity (n * n)
+  for row in adj do
+    for c in row.toList do
+      adjBytes := adjBytes.push (if c == '1' then 1 else 0)
+  let out := canonFFI n.toUSize k.toUSize colorBytes adjBytes
+  let triLen := n * (n - 1) / 2
+  unless out.size == n + triLen + 8 do
+    throw <| IO.userError
+      s!"nauty canon: FFI reply has {out.size} bytes, expected {n + triLen + 8}"
+  let lab := (Array.range n).map fun i => (out.get! i).toNat
+  let tri := String.ofList <| (List.range triLen).map fun i =>
+    if out.get! (n + i) == 1 then '1' else '0'
+  let mut nodes := 0
+  for b in [0:8] do
+    nodes := nodes + (out.get! (n + triLen + b)).toNat <<< (8 * b)
+  return { lab, tri, nodes }
 
 end Hex.BenchOracle.Nauty

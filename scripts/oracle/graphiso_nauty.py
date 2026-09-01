@@ -3,19 +3,19 @@
 
 Rebuilds each original coloured graph from its fixture record and runs the
 pinned dense-nauty configuration through the project-owned C shim
-(``graphiso_nauty_shim.c``), compiled against the hash-verified nauty
-2.9.3 source. The oracle independently computes and compares the ordered
+(``graphiso_nauty_shim.c``), compiled against the vendored nauty 2.9.3
+source in ``vendor/nauty-2.9.3`` (unmodified files from the pinned
+archive, hash-recorded in that directory's README and version-controlled
+here). The oracle independently computes and compares the ordered
 colour-cell sizes, the canonical upper-triangle adjacency bits, and every
 entry of ``canonlab``; the Lean answer is never canonicalized before
 comparison. The visited-node counter is also compared, pinning the whole
 search traversal rather than only its result.
 
-The nauty tarball is restored from the content-addressed cache directory
-(``HEX_NAUTY_CACHE`` or ``~/.cache/hex-nauty``), keyed by its SHA-256; the
-ANU URL is the provenance source and a fallback download location, not the
-only cache-cold location. A missing artifact, hash mismatch, compile
-failure, nauty error, or output mismatch fails the run. The mirrored
-archive retains its ``COPYRIGHT`` and ``LICENSE-2.0.txt`` files.
+The compiled shim binary is cached in ``HEX_NAUTY_CACHE`` or
+``~/.cache/hex-nauty``, keyed by the SHA-256 of the shim source together
+with every vendored file it links, so a stale or foreign binary is never
+reused. A compile failure, nauty error, or output mismatch fails the run.
 """
 from __future__ import annotations
 
@@ -23,8 +23,6 @@ import hashlib
 import os
 import subprocess
 import sys
-import tarfile
-import urllib.request
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -39,61 +37,40 @@ from scripts.oracle.common import (  # noqa: E402
     read_fixtures,
 )
 
-NAUTY_URL = "https://users.cecs.anu.edu.au/~bdm/nauty/nauty2_9_3.tar.gz"
-NAUTY_SHA256 = "9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b"
 SHIM_SOURCE = Path(__file__).resolve().parent / "graphiso_nauty_shim.c"
 
 
 def _cache_dir() -> Path:
-    env = os.environ.get("HEX_NAUTY_CACHE")
-    if env:
-        return Path(env)
-    return Path.home() / ".cache" / "hex-nauty"
+    override = os.environ.get("HEX_NAUTY_CACHE")
+    base = Path(override) if override else Path.home() / ".cache" / "hex-nauty"
+    base.mkdir(parents=True, exist_ok=True)
+    return base
 
 
-def _fetch_tarball(cache: Path) -> Path:
-    cache.mkdir(parents=True, exist_ok=True)
-    tarball = cache / "nauty2_9_3.tar.gz"
-    if not tarball.exists():
-        print(f"graphiso oracle: downloading {NAUTY_URL}", file=sys.stderr)
-        with urllib.request.urlopen(NAUTY_URL, timeout=120) as resp:
-            tarball.write_bytes(resp.read())
-    digest = hashlib.sha256(tarball.read_bytes()).hexdigest()
-    if digest != NAUTY_SHA256:
-        tarball.unlink()
-        raise OracleMismatch(
-            f"nauty tarball SHA-256 mismatch: got {digest}, want {NAUTY_SHA256}"
-        )
-    return tarball
+VENDOR_DIR = REPO_ROOT / "vendor" / "nauty-2.9.3"
+VENDOR_SOURCES = ["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
+                  "naurng.c"]
+VENDOR_HEADERS = ["nauty.h", "naututil.h", "nausparse.h", "schreier.h",
+                  "naurng.h", "sorttemplates.c"]
 
 
 def _build_shim() -> Path:
     cache = _cache_dir()
-    shim_hash = hashlib.sha256(SHIM_SOURCE.read_bytes()).hexdigest()[:16]
-    shim = cache / f"graphiso_shim-{shim_hash}"
+    digest = hashlib.sha256()
+    digest.update(SHIM_SOURCE.read_bytes())
+    for name in VENDOR_SOURCES + VENDOR_HEADERS:
+        digest.update(name.encode())
+        digest.update((VENDOR_DIR / name).read_bytes())
+    shim = cache / f"graphiso_shim-{digest.hexdigest()[:16]}"
     if shim.exists():
         return shim
-    tarball = _fetch_tarball(cache)
-    src = cache / "nauty2_9_3"
-    if not (src / "nauty.h").exists():
-        with tarfile.open(tarball) as tf:
-            tf.extractall(cache)
     for required in ("COPYRIGHT", "LICENSE-2.0.txt"):
-        if not (src / required).exists():
-            raise OracleMismatch(f"nauty archive is missing {required}")
-    objs = ["nauty.o", "nautil.o", "naugraph.o", "schreier.o", "naurng.o"]
-    if not all((src / o).exists() for o in objs):
-        subprocess.run(
-            ["./configure", "--quiet"], cwd=src, check=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-        subprocess.run(
-            ["make"] + objs, cwd=src, check=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        if not (VENDOR_DIR / required).exists():
+            raise OracleMismatch(f"vendored nauty is missing {required}")
     subprocess.run(
-        ["cc", "-O2", "-I", str(src), "-o", str(shim), str(SHIM_SOURCE)]
-        + [str(src / o) for o in objs],
+        ["cc", "-O2", "-I", str(VENDOR_DIR), "-o", str(shim),
+         str(SHIM_SOURCE)]
+        + [str(VENDOR_DIR / src) for src in VENDOR_SOURCES],
         check=True,
     )
     return shim

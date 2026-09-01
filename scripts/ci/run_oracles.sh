@@ -79,7 +79,7 @@ ORACLES=(
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
   # Conway tables backed
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
-  # pinned external nauty 2.9.3 backed (hash-verified source, project shim)
+  # pinned external nauty 2.9.3 backed (vendored source, project shim)
   "HexGraphIso|hexgraphiso_emit_fixtures|scripts/oracle/graphiso_nauty.py|conformance-fixtures/HexGraphIso/graphiso.jsonl"
 )
 

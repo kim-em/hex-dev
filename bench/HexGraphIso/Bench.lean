@@ -36,9 +36,9 @@ comparator register as fixed benchmarks on committed circulant sizes:
 
 * `runHexCanon{8,12,16}` versus `runNautyCanon{8,12,16}`: the public
   certificate-checked `canon` against the pinned nauty 2.9.3
-  comparator (persistent-subprocess driver over the conformance
-  oracle's hash-verified shim), joined on the canonical
-  upper-triangle bits.
+  comparator (in-process FFI against the vendored source, via
+  `Hex.BenchOracle.Nauty`), joined on the canonical upper-triangle
+  bits.
 * `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
 * `runCertify12`, `runCertReplay12`: unbounded certificate generation
   and the generation-plus-replay pipeline (`Nauty.certifyKey?` and
@@ -168,9 +168,7 @@ private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
   | some ⟨m', G⟩ =>
     let result ← Hex.BenchOracle.Nauty.canon m' 1
       (List.replicate m' 0) (adjStrings G)
-    match result.getObjValAs? String "tri" with
-    | .ok tri => return tri
-    | .error e => throw (IO.userError s!"nauty canon: bad tri: {e}")
+    return result.tri
   | none => return ""
 
 def runHexCanon8 : Unit → IO String := runHexCanonAt 8
@@ -218,13 +216,10 @@ def runCanonAgree16 : Unit → IO String := fun _ => do
     let hexTri := triBitsOf (canon G)
     let result ← Hex.BenchOracle.Nauty.canon m 1
       (List.replicate m 0) (adjStrings G)
-    match result.getObjValAs? String "tri" with
-    | .ok nautyTri =>
-      unless hexTri == nautyTri do
-        throw (IO.userError
-          s!"canonical bits diverge from nauty: {hexTri} vs {nautyTri}")
-      return hexTri
-    | .error e => throw (IO.userError s!"nauty canon: bad tri: {e}")
+    unless hexTri == result.tri do
+      throw (IO.userError
+        s!"canonical bits diverge from nauty: {hexTri} vs {result.tri}")
+    return hexTri
   | none => return ""
 
 private def hexComparisonConfig : LeanBench.FixedBenchmarkConfig where

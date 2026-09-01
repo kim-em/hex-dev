@@ -53,8 +53,9 @@ The verification stack, bottom to top:
   on the committed cases — the public certificate-checked form carries
   nauty's canonical rows.
 - New bench comparator: `runHexCanon{8,12,16}` versus
-  `runNautyCanon{8,12,16}` through a persistent-subprocess driver over
-  the oracle's hash-verified shim; spot-checked bit-identical.
+  `runNautyCanon{8,12,16}` through an in-process FFI binding against
+  the vendored nauty 2.9.3 source (`vendor/nauty-2.9.3`);
+  `runCanonAgree16` fails `verify` on any divergence.
 
 ## Notes for future work
 

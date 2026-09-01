@@ -430,6 +430,11 @@ this SPEC was written:
   `9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b`;
 - manual: <https://users.cecs.anu.edu.au/~bdm/nauty/nug29.pdf>.
 
+The development monorepo vendors the dense-nauty subset of this archive at
+`vendor/nauty-2.9.3` (unmodified files; per-file hashes in that directory's
+README), so conformance and benchmarking build against the pinned source
+without a network fetch.
+
 The tarball's `nauty.c`, `nautil.c`, `naugraph.c`, and `nauty.h` are normative
 for implementation details. The manual and McKay and Piperno's
 [Practical graph isomorphism, II](https://arxiv.org/abs/1301.1493) explain the
@@ -473,13 +478,16 @@ nauty versions.
 
 The oracle follows [the project oracle protocol](../testing.md#adding-a-new-oracle).
 A Python JSONL driver rebuilds each original graph and partition and calls a
-small project-owned C program linked against the hash-verified nauty source.
-Merge CI restores the exact tarball from a project-controlled release asset or
-content-addressed cache keyed by the SHA-256. The ANU URL remains the provenance
-source and a fallback, not the only cache-cold download location. A missing
-artifact, hash mismatch, compile failure, nauty error, or output mismatch fails
-the run. The mirrored archive retains its `COPYRIGHT` and `LICENSE-2.0.txt`
-files. The production library never links nauty.
+small project-owned C program compiled against the vendored nauty source in
+`vendor/nauty-2.9.3`: unmodified files from the pinned archive,
+version-controlled in the development monorepo with per-file SHA-256 hashes
+recorded in that directory's README, alongside the upstream `COPYRIGHT` and
+`LICENSE-2.0.txt` (Apache 2.0) files. The compiled program is cached keyed by
+the SHA-256 of its source together with every vendored file it links. A
+compile failure, nauty error, or output mismatch fails the run. The vendored
+source and both nauty comparators are development tooling only: they are not
+managed paths of any released repository, and the production library never
+links nauty.
 
 Each record contains the original graph, colour vector, Hex canonical form,
 Hex label, search counters, and schema version. The oracle independently
@@ -597,12 +605,14 @@ The Mathlib-free benchmark driver registers:
 - public `canonicalize`, `findIso`, and `isIso`;
 - dense conversion, one complete refinement, relabelling, canonical graph
   comparison, certificate generation, and certificate replay;
-- the pinned nauty comparator through a benchmark-only
-  persistent-subprocess driver over the conformance oracle's
-  hash-verified C shim (the process-call pattern of
-  [benchmarking.md](../benchmarking.md#external-comparators); the
-  build-time source acquisition the shim needs makes a static FFI
-  link unviable in a clean checkout).
+- the pinned nauty comparator through a benchmark-only in-process FFI
+  binding (`Hex.BenchOracle.Nauty` over
+  `Hex/BenchOracle/ffi/nauty_canon.c`), statically linked against the
+  vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` — the FFI
+  pattern of
+  [benchmarking.md](../benchmarking.md#external-comparators). The
+  vendored source and the comparator are development-monorepo tooling
+  only and ship with no released library.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
