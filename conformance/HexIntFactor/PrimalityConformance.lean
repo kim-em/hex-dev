@@ -9,7 +9,24 @@ module
 public meta import HexIntFactor
 public import HexIntFactor
 
-/-! Downstream conformance for the HexIntFactor primality-search adapter. -/
+/-!
+Downstream conformance for the HexIntFactor primality-search adapter.
+
+Oracle: none; this module checks the adapter against the independently
+checker-accepted HexIntFactor aggregate and the HexPrimality consumer boundary.
+Mode: `always`
+Covered operations:
+- `intFactorSearch`, `Internal.primeCertCountedUsing?`, and the registered
+  `HexIntFactor.PrimalityTactic.extension`
+Covered properties:
+- complete and partial aggregates preserve factors, residual, attempt totals,
+  and random state across the untrusted adapter boundary
+- extension dispatch resumes from the core route's terminal state and emitted
+  proof terms replay `checkPrime`
+Covered edge cases:
+- zero factor fuel, core exhaustion, an 81-bit perfect-power witness, and a
+  composite input with a stable Miller--Rabin diagnostic
+-/
 
 open Hex Hex.Nat
 

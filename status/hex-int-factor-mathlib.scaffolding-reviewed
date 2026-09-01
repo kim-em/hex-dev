@@ -1,0 +1,21 @@
+Phase 1 completion and an independent Phase 2 skeptical review were recorded
+against HexIntFactorMathlib/SPEC/hex-int-factor-mathlib.md after the checker
+projection, canonical factor-list, divisor, squarefree, and general order
+correspondence blockers were resolved. Both direct dependencies have completed
+Phase 1, and every implemented declaration has the intended signature and
+proof route.
+
+The review checked pointwise multiplicity and canonical prime-list agreement,
+checked-data corollaries, divisor enumeration and count, totient, generalized
+divisor sum, prime support, radical and squarefree transports, the general
+natural-order/unit-order correspondence, its nonunit case, and the checked
+certificate specialization. The bridge performs no factor or order search,
+replays no certificate, installs no competing decision instance, and owns no
+reifier, tactic, oracle wrapper, conformance target, benchmark, or proof probe.
+Its explicit correspondence-only classification names `HexIntFactor` as the
+computational conformance and performance owner.
+
+Every advertised declaration has its intended body and route. No data-level
+placeholder, duplicate instance, axiom, sorry, `native_decide`, forbidden
+scaffold wording, or untracked executable surface remains. Phase 3 and later
+acceptance are not attested by this token.
