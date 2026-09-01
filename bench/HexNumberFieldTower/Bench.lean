@@ -22,19 +22,20 @@ The fixed cases expose the Phase-4 components named by the library SPEC:
 * splitting a quartic through two genuine extensions;
 * flattening a two-level tower to a primitive-element presentation.
 
-Every fixed case stays within tower dimension four and input degree four;
-the isolated recovery adversary uses absolute degree six.
+The component cases stay within tower dimension four and input degree four;
+the isolated recovery adversary uses absolute degree six, and the canonical
+mode-3 factorization case uses input degree 24 over the quadratic base.
 
-The parametric ladders carry the Phase-4 asymptotic evidence:
+The parametric ladders carry the Phase-4 arithmetic evidence:
 
-* `runTowerAddLadder` / `runTowerMulLadder` / `runTowerInvLadder`:
-  coordinate arithmetic in the height-two tower `Q(sqrt(2), 3^{1/m})` at
-  growing dimension `D = 2m`;
-* `runTowerFactorLadder`: Trager factorization over `Q(sqrt(2))` of the
-  degree-`n` Selmer trinomial `X^n - X - 1`, whose rational coefficients
-  force the shift-zero norm to repeat, exercising the bounded shift search,
-  a genuine one-level norm retry, the recursive rational factorization of
-  the accepted degree-`2n` norm, and gcd recovery.
+* `runTower{Add,Sub,Neg,SMul,Mul,Inv,Div}Ladder`: coordinate arithmetic in
+  the height-two tower `Q(sqrt(2), 3^{1/m})` at growing dimension `D = 2m`.
+
+`runTowerFactorLadder` retains its historical name but is a mode-3 fixed
+registration on the degree-24 Selmer trinomial. Its former sweep remains
+diagnostic evidence: the realised Trager route mixes coefficient-growth gcd,
+resultant, certificate, and integer-factorization phases and has no stable
+independently derived one-parameter wall model.
 
 Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): `nffactor` is the callable PARI surface matching tower
@@ -422,53 +423,60 @@ def runAdjoinIdentity : Unit → IO UInt64 := fun _ => do
   return extensionChecksum
     (← requireSome "adjoin/identity" (adjoin? base.tower base.root))
 
-/- Constructing the canonical one-level presentation normalizes the defining
-relation, installs the selected embedding, and certifies the tower boundary.
-Irreducibility and simple-root decisions are hoisted outside the timed body. -/
+/- Mode 3. `ofQAdjoin` consumes a dependent irreducibility certificate and a
+selected root region, so polynomial degree alone does not control its work and
+no published bound covers the complete checked constructor. The SPEC's
+canonical `Q(sqrt(2))` presentation is the fixed hard input. The 0.5 s
+zero-grace whole-child budget includes startup and is more than 100x the
+historical 0.504 us steady-state median. -/
 setup_fixed_benchmark runOfQAdjoin where {
-  repeats := 5, maxSecondsPerCall := 2.0,
+  repeats := 5, maxSecondsPerCall := 0.5, killGraceMs := 0,
   expectedHash := some 0x51ddf5878af8a696
 }
 
-/- Coordinate addition visits exactly `D` rational coordinates. This fixed
-`D = 4` case isolates that linear operation from multiplication and inversion. -/
+/- Expected-hash anchor only. `runTowerAddLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runAdd where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xd381defc58f22934,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Schoolbook multiplication and recursive reduction visit `O(D^2)` pairs of
-coordinates before coefficient-size growth. -/
+/- Expected-hash anchor only. `runTowerMulLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xca888473e6359390,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Top-level extended gcd recursively invokes lower-tower division; unlike
-multiplication, its cost depends on both tower dimension and height. This fixed
-`D = 4`, height-two case attributes recursive inversion separately. -/
+/- Expected-hash anchor only. `runTowerInvLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runInv where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xfdfda24536fdd084,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Adjoining the fourth root factors a degree-four absolute presentation over
-a dimension-two base, selects the quadratic relative factor using the fixed
-embedding, and validates the new level. This fixed case attributes that whole
-smart-constructor boundary. -/
+/- Mode 3. Adjoining couples Trager factorization, fixed-embedding
+disambiguation, certified root isolation, and level validation; no tight model
+for their realised composition or published bound for its dominant isolation
+phase is available. The SPEC's canonical fourth-root extension of `Q(sqrt(2))`
+is the fixed hard input. Its historical 0.920 s median sets a 3 s zero-grace
+whole-child budget with more than 3x per-call headroom and room for warmup. -/
 setup_fixed_benchmark runAdjoin where {
-  repeats := 3, maxSecondsPerCall := 10.0,
+  repeats := 3, maxSecondsPerCall := 3.0, killGraceMs := 0,
   expectedHash := some 0xde9179e4f67a3948,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Adjoining a root already represented in the base selects a linear factor
-and returns an identity extension instead of appending a redundant level. -/
+/- Mode 3 for the distinct identity branch. Degree does not parameterize the
+fixed-embedding selection and recovery work tightly, and no complete published
+bound applies. Re-adjoining `sqrt(2)` is the SPEC's canonical input. The 0.5 s
+zero-grace whole-child budget covers the historical 23.43 ms median, warmup,
+and the 0.2 s steady-state batch. -/
 setup_fixed_benchmark runAdjoinIdentity where {
-  repeats := 3, maxSecondsPerCall := 10.0,
+  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
   expectedHash := some 0x51ddf5878af8a696,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -539,49 +547,53 @@ def runCheckFactorization : Unit → IO UInt64 := fun _ => do
   let result ← getRepeatedFactor
   return hash (checkFactorization repeatedInput result.scalar result.factors)
 
-/- One Trager norm constructs the shifted outer polynomial and computes one
-Brown resultant over the lower rational tower. This is the retry loop's
-separable dominant inner operation. -/
+/- Attribution anchor for the separable one-level norm phase. It does not
+discharge public-operation performance coverage. -/
 setup_fixed_benchmark runOneLevelNorm where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0x98a9884aa98ddd32
 }
 
-/- The canonical retry input has a repeated shift-zero norm, so the bounded
-search computes another one-level norm at shift one and checks squarefreeness. -/
+/- Branch and attribution anchor: the canonical repeated shift-zero norm
+forces a real retry. It does not discharge public-operation performance
+coverage. -/
 setup_fixed_benchmark runShiftSearch where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0x0bb795ff2f22014a
 }
 
-/- Rational factorization separates Yun multiplicity for the degree-four
-square `(X^2 - 2)^2` and then performs one integer factorization. The fixed
-case is the base-case reference for the two Trager registrations below. -/
+/- Branch and expected-hash anchor for the rational Trager base case. It does
+not discharge the public `factor?` performance surface. -/
 setup_fixed_benchmark runFactorRat where {
   repeats := 3, maxSecondsPerCall := 5.0,
   expectedHash := some 0x90fa5a1ee979f50c
 }
 
-/- Over `Q(sqrt(2))`, the shift-zero norm of `X^2 - 3` is repeated, so the
-bounded Trager search advances to a square-free one-level norm before gcd
-recovery. This isolates retry cost at base dimension two and input degree two. -/
+/- Mode 3 branch case. The controlled degree sweep mixes shift count,
+coefficient growth, resultant, gcd, and factorization phases and supplies no
+tight realised wall model; the available BHKS bound does not cover the
+dominant non-factorization phases. `X^2 - 3` over `Q(sqrt(2))` is the SPEC's
+canonical bad-first-shift case. Its historical 0.824 ms median sets a 0.5 s
+zero-grace whole-child budget including warmup and the 0.2 s timed batch. -/
 setup_fixed_benchmark runFactorRetry where {
-  repeats := 3, maxSecondsPerCall := 10.0,
+  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
   expectedHash := some 0xf830f035fb69256e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Over `Q(sqrt(2), sqrt(3))`, `X^2 - 3` factors through the intermediate
-field. The fixed dimension-four case measures recursive one-level norms and
-lower-field factorization instead of an invalid absolute-norm shortcut. -/
+/- Mode 3 branch case. The same absence of a tight composed model and
+dominant-phase upper bound rules out modes 1 and 2. `X^2 - 3` over
+`Q(sqrt(2), sqrt(3))` is the SPEC's canonical recursive relative-factorization
+input. Its historical 7.632 ms median sets a 0.5 s zero-grace whole-child
+budget including warmup and the 0.2 s timed batch. -/
 setup_fixed_benchmark runFactorRecursive where {
-  repeats := 3, maxSecondsPerCall := 10.0,
+  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
   expectedHash := some 0xd13bbfca65f65898,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Replay reconstruction, multiplicities, canonical order, and recursive
-irreducibility for a precomputed rational factorization. -/
+/- Expected-hash and attribution anchor for checked replay. It does not
+discharge public-operation performance coverage. -/
 setup_fixed_benchmark runCheckFactorization where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0x000000000000000b
@@ -634,62 +646,66 @@ def runRecoverSearch : Unit → IO UInt64 := fun _ => do
   return recoveredChecksum (← requireSome "flatten/recover-search"
     (Flatten.searchRecoveredAux input.theta input.alpha 6 1 2))
 
-/- Splitting `(X^2 - 2)(X^2 - 3)` factors and performs two genuine adjoining
-steps before collecting four simple roots. Dimension and input degree are both
-four, so this fixed case measures the complete degree-reducing outer loop. -/
+/- Mode 3. Splitting composes repeated factorization, eliminant isolation,
+fixed-embedding adjoining, and root collection, with no tight model for the
+realised composition and no published bound for its dominant isolation phase.
+The SPEC's canonical quartic `(X^2 - 2)(X^2 - 3)` performs two genuine
+extensions. Its historical 78.32 ms median sets a 1 s zero-grace whole-child
+budget including warmup and the 0.2 s timed batch. -/
 setup_fixed_benchmark runSplit where {
-  repeats := 2, maxSecondsPerCall := 20.0,
+  repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xd863bc339d467bf8,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- The shift-`+1` full-degree candidate performs the exact Euclidean gcd over
-its degree-six primitive field and rejects the resulting nonlinear recovery.
-This isolates the fast flattening scan without invoking trace recovery. -/
+/- Branch and attribution anchor for a rejected exact-recovery gcd. It does
+not discharge public `flatten?` performance coverage. -/
 setup_fixed_benchmark runRecoverPair where {
   repeats := 2, maxSecondsPerCall := 20.0,
   expectedHash := some 0x190011a8e6411c8e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- The two-candidate search first pays the rejected recovery gcd at shift
-`+1`, then repeats candidate formation and accepts the linear gcd at `-1`. -/
+/- Branch and attribution anchor for a rejected then accepted recovery search.
+It does not discharge public `flatten?` performance coverage. -/
 setup_fixed_benchmark runRecoverSearch where {
   repeats := 1, maxSecondsPerCall := 60.0,
   expectedHash := some 0xf696f44e1e1e7ef7,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- `basisImages` expands recovered generator coordinates into the complete
-mixed-radix tower basis. The candidate search is precomputed for attribution. -/
+/- Attribution anchor for basis expansion from precomputed recovery data. It
+does not discharge public `flatten?` performance coverage. -/
 setup_fixed_benchmark runBasisImages where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xb5d54195958fb61e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Certification checks the primitive relation and both coordinate maps on
-every tower basis vector for precomputed candidate images. -/
+/- Correctness and attribution anchor for primitive-relation and coordinate-map
+certification. It does not discharge public `flatten?` performance coverage. -/
 setup_fixed_benchmark runCertifies where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0x000000000000000b,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- The public conversion closures are timed from a precomputed flattening;
-the checksum applies both directions to every dimension-four basis vector. -/
+/- Expected-hash and attribution anchor for the conversion closures produced by
+`flatten?`. It does not independently discharge `flatten?` performance. -/
 setup_fixed_benchmark runCoordinateMaps where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xcc1b7720bfe3fc24,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Flattening the dimension-four two-level tower searches signed primitive
-shifts, constructs a degree-four eliminant, performs exact linear recovery,
-and verifies both coordinate maps. This covers the complete primitive-element
-path at the CI size bound. -/
+/- Mode 3. Flattening composes candidate enumeration, integer eliminants,
+canonical exactification, exact recovery, and map certification. No stable
+one-parameter model for that phase mixture or published bound covering its
+dominant isolation phase is available. The SPEC's canonical dimension-four
+two-level tower is the fixed input. Its historical 37.56 ms median sets a 1 s
+zero-grace whole-child budget including warmup and the 0.2 s timed batch. -/
 setup_fixed_benchmark runFlatten where {
-  repeats := 2, maxSecondsPerCall := 20.0,
+  repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xcc1b7720bfe3fc24,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -720,32 +736,32 @@ def runSMul : Unit → IO UInt64 := fun _ => do
   let value := sqrtTwo + tower.extension.gen
   return elemChecksum ((mkRat 3 7) • value)
 
-/- Coordinate subtraction, like addition, visits exactly `D` rational
-coordinates; this fixed `D = 4` case completes the linear-cost surface. -/
+/- Expected-hash anchor only. `runTowerSubLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runSub where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x098874a34dd4ec44,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Negation visits `D` coordinates with one rational negation each; the
-linear cost model matches addition. -/
+/- Expected-hash anchor only. `runTowerNegLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runNeg where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x2e1510498ed9e174,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Division composes recursive extended-gcd inversion with one `O(D^2)`
-multiplication/reduction; the inversion term dominates as in `runInv`. -/
+/- Expected-hash anchor only. `runTowerDivLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runDiv where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xe534ce65592907a8,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Rational scalar action multiplies each of the `D` coordinates by one
-rational, a linear-cost surface like addition. -/
+/- Expected-hash anchor only. `runTowerSMulLadder` supplies mode-1 performance
+coverage for this operation. -/
 setup_fixed_benchmark runSMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xcea4d21168dc712c,
@@ -761,22 +777,38 @@ root field of `3` can contain is `ℚ(√3)`), so adjoining its first root to
 private def xPowSubThree (m : Nat) : ZPoly :=
   DensePoly.ofList ((-3 : Int) :: List.replicate (m - 1) 0 ++ [1])
 
-/-- Deterministic refined isolation for a squarefree polynomial: run the
-bounded isolator at separation depth and take the first returned atom. -/
-private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
-    Option (RefinedIsolation p) := do
-  let isolations ← isolate p h (separationDepth p : Int)
-  let iso ← isolations[0]?
-  iso.toRefined?
+/-- Floor the positive `n`th root of `a` by integer Newton iteration. -/
+private def nthRootFloor (a n : Nat) : Nat :=
+  if n = 0 then 0 else
+    let rec go : Nat → Nat → Nat
+      | 0, x => x
+      | fuel + 1, x =>
+        let y := ((n - 1) * x + a / x ^ (n - 1)) / n
+        if x ≤ y then x else go fuel y
+    go (a.log2 + 2) (2 ^ ((a.log2 + n) / n))
+
+/-- Mahler-precision untrusted approximation to the positive real root of
+`X^n - 3`. The local atom checker supplies the certificate. -/
+private def ladderRootSeed (p : ZPoly) (n : Nat) : DyadicSquare :=
+  let q := mahlerPrec p
+  let scaled := 3 * 2 ^ (q * n)
+  let center := nthRootFloor scaled n
+  ⟨Dyadic.ofIntWithPrec (Int.ofNat center) q, 0, q⟩
+
+/-- Certify only the selected positive binomial root. This avoids refining and
+pairwise separating every other root merely to build an untimed fixture. -/
+private def positiveBinomialRoot? (p : ZPoly) (n : Nat) :
+    Option (RefinedIsolation p) :=
+  isolateOne? p (mahlerPrec p : Int) (ladderRootSeed p n)
 
 /-- Deterministic factorization-lazy root of a primitive positive-leading
-squarefree polynomial (the first isolated root). -/
-private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
+squarefree binomial (the certified positive root). -/
+private def mkLadderRoot? (p : ZPoly) (n : Nat) : Option AlgebraicRoot :=
   if hprim : ZPoly.content p = 1 then
     if hlc : 0 < p.leadingCoeff then
       if hdeg : 0 < p.degree?.getD 0 then
         if hsf : HasOnlySimpleRoots p then
-          match refinedOf? p hsf with
+          match positiveBinomialRoot? p n with
           | some rep =>
             some { p := p, prim := hprim, pos_lc := hlc, pos_degree := hdeg
                    squarefree := hsf, x := SimpleRoot.mk rep, rep := rep
@@ -793,7 +825,7 @@ private def ladderTower? (m : Nat) : Option NumberTower := do
   if m ≤ 1 then
     pure base.tower
   else do
-    let root ← mkLadderRoot? (xPowSubThree m)
+    let root ← mkLadderRoot? (xPowSubThree m) m
     let extension ← adjoin? base.tower root
     pure extension.tower
 
@@ -839,11 +871,23 @@ def prepElemInput (n : Nat) : ElemInput :=
 def runTowerAddLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a + input.b)
 
+def runTowerSubLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (input.a - input.b)
+
+def runTowerNegLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (-input.a)
+
+def runTowerSMulLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (mkRat 3 5 • input.a)
+
 def runTowerMulLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a * input.b)
 
 def runTowerInvLadder (input : ElemInput) : UInt64 :=
   elemChecksum input.a⁻¹
+
+def runTowerDivLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (input.a / input.b)
 
 /- Cost model. Coordinate addition adds the two mixed-radix coordinate
 vectors pointwise: exactly `D = 2n` rational additions for the
@@ -852,6 +896,46 @@ O(D) rational operations"). Fixture coordinate heights are bounded, so each
 rational operation is `O(1)` words and the declared wall model is linear in
 the parameter. -/
 setup_benchmark runTowerAddLadder n => n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Subtraction visits the two length-`D = 2n` coordinate vectors
+pointwise. Bounded rational heights make the declared wall model linear. -/
+setup_benchmark runTowerSubLadder n => n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Negation visits exactly the `D = 2n` bounded-height rational
+coordinates, so its wall model is linear. -/
+setup_benchmark runTowerNegLadder n => n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Rational scalar action multiplies each of the `D = 2n`
+bounded-height coordinates by the fixed scalar `3/5`, so its wall model is
+linear. -/
+setup_benchmark runTowerSMulLadder n => n
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -903,6 +987,22 @@ setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
     slopeTolerance := 0.35
   }
 
+/- Cost model. Division performs one recursive extended-gcd inversion followed
+by one quadratic multiplication/reduction. On this fixed-base family the
+`n^2 log n` inversion term dominates, giving the same independently derived
+wall model as `runTowerInvLadder`. -/
+setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
 /-! # Trager factorization ladder -/
 
 /-- Ascending rational coefficients of the Selmer trinomial `X^m - X - 1`
@@ -938,42 +1038,43 @@ def prepFactorInput (n : Nat) : FactorInput :=
   | some base => { tower := base.tower, f := selmerPoly m base.tower }
   | none => panic! "prepFactorInput: base tower fixture failed"
 
-def runTowerFactorLadder (input : FactorInput) : UInt64 :=
-  match factor? input.tower input.f with
+initialize factorCanonicalRef : IO.Ref (Option FactorInput) ← IO.mkRef none
+
+private def getFactorCanonicalInput : IO FactorInput := do
+  match ← factorCanonicalRef.get with
+  | some input => pure input
+  | none =>
+    let input := prepFactorInput 24
+    factorCanonicalRef.set (some input)
+    pure input
+
+def runTowerFactorLadder : Unit → IO UInt64 := fun _ => do
+  let input ← getFactorCanonicalInput
+  return match factor? input.tower input.f with
   | some result => factorChecksum result
   | none => 1
 
-/-- Worst-case textbook cost model for one Trager step over the quadratic
-base at input degree `n`: the SPEC's shift recurrence tries at most
-`choose(d * m, 2) + 1 = choose(2n, 2) + 1 = O(n^2)` one-level norms, each a
-Brown resultant against the fixed quadratic level relation costing `O(n^2)`
-coefficient operations, and then recursively factors one accepted norm of
-degree `2n` over `ℚ`, whose classical BHKS bound `(2n)^9 + (2n)^7 log^2 (2n)`
-dominates the total. -/
-def tragerLadderModel (n : Nat) : Nat :=
-  let bigN := 2 * n
-  (bigN * (bigN - 1) / 2 + 1) * (n * n)
-    + bigN ^ 9 + bigN ^ 7 * (Nat.log2 (bigN + 2)) ^ 2
+/- Mode 3. The historical degree sweep `2,3,4,6,8,12,16,24` tried the
+SPEC's Trager/BHKS envelope, but its local exponents rose from 0.80 to 4.48
+as the dominant rational-polynomial gcd, resultant, and checked-replay shares
+changed with coefficient growth. That is not a stable independently derived
+family model. BHKS covers only the 5.26% integer-factorization share of the
+inclusive profile, so it cannot supply mode 2 either.
 
-/- Cost model. Declared per the SPEC's Trager recurrence, worst case: at
-`K(α)/K` with `d = deg m_α = 2` and component degree `m = n`, at most
-`choose(2n, 2) + 1` one-level norms (each an `O(n^2)`-operation Brown
-resultant against the quadratic relation), plus the recursive rational
-factorization of the accepted degree-`2n` norm at its classical BHKS bound —
-the dominant term. `tragerLadderModel` writes out exactly this sum. The
-deterministic Selmer family realises the retry (repeated shift-zero norm),
-the accepted squarefree norm, the base factorization, and gcd recovery. -/
-setup_benchmark runTowerFactorLadder n => tragerLadderModel n
-  with prep := prepFactorInput
-  where {
-    paramFloor := 2
-    paramCeiling := 24
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
-    maxSecondsPerCall := 120.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
-  }
+The degree-24 Selmer trinomial over `Q(sqrt(2))` is the top completed rung and
+the canonical hard input. Rational coefficients force a repeated shift-zero
+norm, followed by a genuine retry, recursive rational factorization of the
+accepted degree-48 norm, gcd recovery, and checked replay. Its historical
+253 ms median sets a 2 s zero-grace whole-child budget with over 7x per-call
+headroom and room for fixture construction plus discarded warmup. The name is
+retained so archived diagnostic exports remain connected to this operation. -/
+setup_fixed_benchmark runTowerFactorLadder where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  killGraceMs := 0
+  warmupFirstIter := true
+  expectedHash := some 0x3a7f4c606ce48b1b
+}
 
 /-! # PARI `nffactor` comparator pairs -/
 
