@@ -555,11 +555,12 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
       (trivialCell level gRow cell1 cell2 st') ∧
       (∀ q : Nat, q < cell1 ∨ cell2 ≤ q →
         (trivialCell level gRow cell1 cell2 st).ptn[q]! = st.ptn[q]!) ∧
-      (trivialCell level gRow cell1 cell2 st).ptn.size = st.ptn.size := by
+      (trivialCell level gRow cell1 cell2 st).ptn.size = st.ptn.size ∧
+      (trivialCell level gRow cell1 cell2 st).lab.size = st.lab.size := by
   rcases hc : (cell1 == cell2) with _ | _
   case true =>
     rw [trivialCell, trivialCell, if_pos (by rw [hc]), if_pos (by rw [hc])]
-    exact ⟨h, fun q _ => rfl, rfl⟩
+    exact ⟨h, fun q _ => rfl, rfl, rfl⟩
   case false =>
   obtain ⟨hp1, hp2, hsz1, hout1, hleft1, hright1⟩ :=
     splitCellLoop_spec (gRow := gRow) (cell2 + 1 - cell1)
@@ -686,7 +687,7 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
       · split <;> rfl
       · split <;> rfl
     refine ⟨⟨rfl, rfl, rfl, rfl, rfl, rfl,
-      by rw [hsz1', hsz1, h.labSize], ?_⟩, ?_, ?_⟩
+      by rw [hsz1', hsz1, h.labSize], ?_⟩, ?_, ?_, by dsimp only; rw [hsz1]⟩
     · dsimp only
       rw [hptn]
       refine cellsPerm_set! hcell (by omega) (by omega) (by omega)
@@ -722,7 +723,8 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
     refine ⟨⟨rfl, rfl, rfl, rfl, rfl, rfl,
       by rw [hsz1', hsz1, h.labSize], ?_⟩,
       fun q _ => by dsimp only; rw [hptn],
-      by dsimp only; rw [hptn]⟩
+      by dsimp only; rw [hptn],
+      by dsimp only; rw [hsz1]⟩
     dsimp only
     rw [hptn]
     intro a len hic
@@ -732,5 +734,113 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
     · subst ha
       rw [hlen]
       exact hwhole
+
+/-! # The trivial-splitter pass -/
+
+theorem cells_go_start {ptn : Array Nat} {level nn : Nat} :
+    ∀ (fuel c1 : Nat), ∀ p ∈ cells.go ptn level nn fuel c1, c1 ≤ p.1
+  | 0, _, p, hp => absurd hp (by simp [cells.go])
+  | fuel + 1, c1, p, hp => by
+    rw [cells.go] at hp
+    split at hp
+    · simp only [List.mem_cons] at hp
+      rcases hp with rfl | hmem
+      · exact Nat.le_refl _
+      · have h1 := cells_go_start fuel _ p hmem
+        have hge : c1 ≤ cellEnd ptn level c1 := cellEnd_ge
+        omega
+    · exact absurd hp (by simp)
+
+theorem cells_go_pairwise {ptn : Array Nat} {level nn : Nat} :
+    ∀ (fuel c1 : Nat),
+      (cells.go ptn level nn fuel c1).Pairwise fun p q => p.2 < q.1
+  | 0, _ => by
+    rw [cells.go]
+    exact List.Pairwise.nil
+  | fuel + 1, c1 => by
+    rw [cells.go]
+    split
+    · refine List.Pairwise.cons ?_ (cells_go_pairwise fuel _)
+      intro q hq
+      have h1 := cells_go_start fuel _ q hq
+      show cellEnd ptn level c1 < q.1
+      omega
+    · exact List.Pairwise.nil
+
+/-- The partition's cells are listed in strictly increasing position
+order. -/
+theorem cells_pairwise {ptn : Array Nat} {level nn : Nat} :
+    (cells ptn level nn).Pairwise fun p q => p.2 < q.1 := by
+  rw [cells]
+  exact cells_go_pairwise nn 0
+
+/-- A maximal run survives partition edits that avoid its closed
+neighbourhood. -/
+theorem isCell_of_agree {ptn ptn' : Array Nat} {level a len : Nat}
+    (h : IsCell ptn level a len)
+    (hagree : ∀ q, a - 1 ≤ q → q ≤ a + len - 1 → ptn'[q]! = ptn[q]!) :
+    IsCell ptn' level a len := by
+  obtain ⟨hl, hs, hi, he⟩ := h
+  refine ⟨hl, ?_, ?_, ?_⟩
+  · rcases hs with h0 | hb
+    · exact Or.inl h0
+    · exact Or.inr (by rw [hagree (a - 1) (by omega) (by omega)]; exact hb)
+  · intro i hi1 hi2
+    rw [hagree i (by omega) (by omega)]
+    exact hi i hi1 hi2
+  · rw [hagree (a + len - 1) (by omega) (by omega)]
+    exact he
+
+theorem refineTrivial_go_perm {level gRow : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st st' : RefineSt), StPerm level st st' →
+      st.ptn.size = st.lab.size →
+      (∀ p ∈ cs, IsCell st.ptn level p.1 (p.2 + 1 - p.1) ∧
+        p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      StPerm level (refineTrivial.go level gRow cs st)
+        (refineTrivial.go level gRow cs st') ∧
+      (refineTrivial.go level gRow cs st).lab.size = st.lab.size ∧
+      (refineTrivial.go level gRow cs st).ptn.size = st.ptn.size
+  | [], _, _, h, _, _, _ => ⟨h, rfl, rfl⟩
+  | (c1, c2) :: rest, st, st', h, hsz, hcs, hpair => by
+    rw [refineTrivial.go, refineTrivial.go]
+    obtain ⟨hstep, hdiff, hpsz, hlsz⟩ := trivialCell_perm
+      (gRow := gRow) h (hcs (c1, c2) (by simp)).1
+      (by
+        have h1 := (hcs (c1, c2) (by simp)).1.1
+        omega)
+      (hcs (c1, c2) (by simp)).2 hsz
+    have hrest := (List.pairwise_cons.mp hpair).1
+    obtain ⟨hrec, hrsz, hrpsz⟩ := refineTrivial_go_perm rest
+      (trivialCell level gRow c1 c2 st)
+      (trivialCell level gRow c1 c2 st') hstep
+      (by rw [hpsz, hlsz]; exact hsz)
+      (fun p hp => ⟨isCell_of_agree (hcs p (by simp [hp])).1
+          (fun q hq1 hq2 => hdiff q (Or.inr (by
+            have := hrest p hp
+            omega))),
+        by rw [hlsz]; exact (hcs p (by simp [hp])).2⟩)
+      (List.pairwise_cons.mp hpair).2
+    exact ⟨hrec, by rw [hrsz, hlsz], by rw [hrpsz, hpsz]⟩
+
+/-- The trivial-splitter pass preserves cell-contents equivalence. -/
+theorem refineTrivial_perm {ctx : Ctx} {level split1 : Nat}
+    {st st' : RefineSt} (h : StPerm level st st')
+    (hsz : st.ptn.size = st.lab.size) (hnn : ctx.n ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hsplit : IsCell st.ptn level split1 1) :
+    StPerm level (refineTrivial ctx level split1 st)
+      (refineTrivial ctx level split1 st') ∧
+    (refineTrivial ctx level split1 st).lab.size = st.lab.size ∧
+    (refineTrivial ctx level split1 st).ptn.size = st.ptn.size := by
+  rw [refineTrivial, refineTrivial, h.ptn,
+    show st'.lab[split1]! = st.lab[split1]! from
+      (cellsPerm_singleton h.cells hsplit).symm]
+  exact refineTrivial_go_perm (cells st.ptn level ctx.n) st st' h hsz
+    (fun p hp => ⟨cells_isCell hnn hend p hp,
+      by
+        have := cells_bound hnn hend p hp
+        omega⟩)
+    cells_pairwise
 
 end Hex.GraphIso.Nauty
