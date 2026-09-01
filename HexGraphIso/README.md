@@ -48,22 +48,22 @@ The planned stack, in dependency order:
    helpers (`cheapautom`, `bestcell`, `targetcell`, `breakout`) and
    the leaf comparison chain (`testcanlab`, `updatecan`, `isautom`)
    at the search level.
-2. **`canonSpec`.** The unpruned search tree as a total function
-   (well-founded on remaining cell count), and its leaf-key maximum
-   `(code sequence with sentinel, colour values, adjacency bits)`.
-   Equivariance makes the unordered tree and hence the maximum
-   isomorphism-invariant, giving `iso_iff_canon_eq` for the
-   nauty-semantic form; colour-sortedness and `relabel_label` come from
-   the partition-nest invariants. One recorded subtlety: nauty's target
-   cell is history-dependent — `othernode` accepts the first path's
-   `firsttc[level]` as a hint while the refinement-code prefix matches,
-   and only falls back to `bestcell` otherwise — so the tree is not a
-   function of local node state alone. `canonSpec` must model the
-   hinted rule (target cell as a function of the node *and* the
-   first-path data), and the invariance proof must show that rule is
-   equivariant across isomorphic runs; pretending the rule is plain
-   `bestcell` would verify a different tree than the one the port
-   searches.
+2. **`canonSpec`.** The unpruned search tree as a total function and
+   its leaf-key maximum. **Status: `Nauty/CanonSpec.lean` defines the
+   spec** (lexicographic keys: code chain with sentinel, then `g^lab`
+   rows in nauty's row order) **and proves `specNode_map`: the maximal
+   leaf key is invariant under a vertex renaming.** The recorded
+   hinted-target-cell subtlety resolved cleanly: the `firsttc` hint
+   applies exactly at nodes whose code chain is already dominated
+   (`compCanon < 0`), and such subtrees never supply the canonical
+   leaf, so the specification's target-cell rule is the plain hint-free
+   `targetcell`; the sentinel convention reproduces nauty's preference
+   for shallower leaves, and children are enumerated by cell position,
+   making equivariance pointwise. Remaining for this stage: invariance
+   of the spec under within-cell reordering of the initial labelling
+   (refine depends on an ordered partition only through its cell
+   contents), the graph-level `iso → equal keys` corollary, and the
+   converse via leaf-label permutation invariants.
 3. **Certificates.** `CanonCert` records the pruned tree the production
    search visited; `checkCanon` replays refinements deterministically
    and validates each pruning step — code-prefix comparisons by a lex

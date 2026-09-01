@@ -116,4 +116,104 @@ variable {n k : Nat}
 @[expose] def canonSpecKey (G : Colored n k) : Key :=
   canonSpec n (rowsOf G) (initialPartition G).1 (initialPartition G).2
 
+/-! # Equivariance -/
+
+/-- The unpruned search tree's maximal leaf key is invariant under a
+vertex renaming: on the renamed graph with the transported labelling,
+every node produces the same key. -/
+theorem specNode_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    (tcLevel : Nat) :
+    ∀ (fuel level : Nat) (lab ptn : Array Nat) (active numcells : Nat),
+      lab.size = n → LabOk lab n → ptn.size = n → active < 2 ^ n →
+      ptn[ptn.size - 1]! ≤ level →
+      specNode ctx' tcLevel fuel level (lab.map σ.toFun) ptn active
+          numcells =
+        specNode ctx tcLevel fuel level lab ptn active numcells
+  | 0, _, _, _, _, _, _, _, _, _, _ => rfl
+  | fuel + 1, level, lab, ptn, active, numcells, hsl, hlab, hsp, hact,
+      hend => by
+    rw [specNode, specNode,
+      refine_map σ hn hn' hg level lab ptn active numcells hsl hlab hsp
+        hact hend]
+    dsimp only
+    rw [hn', hn]
+    have hst := refine_stOk (ctx := ctx) hn (level := level)
+      (numcells := numcells) hsl hlab hsp hact hend
+    generalize hR : refine ctx level lab ptn active numcells = R
+    rw [hR] at hst
+    rcases hdisc : discreteAt R.ptn level n with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      obtain ⟨p, hpm, hpne, hptc⟩ := targetcell_nontrivial
+        (lab := R.lab) (tcLevel := tcLevel)
+        (by
+          rw [discreteAt, List.all_eq_false] at hdisc
+          rcases hdisc with ⟨q, hqm, hq⟩
+          exact ⟨q, by rw [hn]; exact hqm, by simpa using hq⟩)
+      have htc1 : targetcell ctx R.lab R.ptn level tcLevel (-1) + 1 < n := by
+        have hb := cells_bound (nn := ctx.n)
+          (by
+            have h1 := hst.ptnSize
+            have h2 := hn
+            omega)
+          hst.ptnEnd p hpm
+        have hl := cells_le p hpm
+        have h1 := hst.ptnSize
+        rw [hptc]
+        omega
+      rw [maketargetcell_map σ hn hn' hg hst.labOk hst.labSize hst.ptnSize
+        hst.ptnEnd htc1]
+      dsimp only
+      generalize hM : maketargetcell ctx R.lab R.ptn level tcLevel (-1) = M
+      have hM1 : M.1 = targetcell ctx R.lab R.ptn level tcLevel (-1) := by
+        rw [← hM]
+        rfl
+      have hM22 : M.2.2 = cellEnd R.ptn level
+          (targetcell ctx R.lab R.ptn level tcLevel (-1) + 1) -
+            targetcell ctx R.lab R.ptn level tcLevel (-1) + 1 := by
+        rw [← hM]
+        rfl
+      have htc1' : M.1 + 1 < n := by
+        rw [hM1]
+        exact htc1
+      have hjlt : cellEnd R.ptn level (M.1 + 1) < n := by
+        have h1 := cellEnd_lt (ptn := R.ptn) (level := level)
+          (i := M.1 + 1)
+          (by
+            have := hst.ptnSize
+            omega)
+          hst.ptnEnd
+        have h2 := hst.ptnSize
+        omega
+      have hjge : M.1 + 1 ≤ cellEnd R.ptn level (M.1 + 1) := cellEnd_ge
+      congr 1
+      refine List.map_congr_left fun o ho => ?_
+      have ho' := List.mem_range.mp ho
+      have hpos : M.1 + o < R.lab.size := by
+        have h1 := hst.labSize
+        rw [hM22, ← hM1] at ho'
+        omega
+      rw [getElem!_map_of_lt σ.toFun R.lab hpos,
+        breakout_map σ hst.labOk ⟨M.1 + o, by omega, hpos, rfl⟩]
+      dsimp only
+      exact specNode_map σ hn hn' hg tcLevel fuel (level + 1) _ _ _ _
+        (show ((breakout R.lab R.ptn (level + 1) M.1
+              R.lab[M.1 + o]!).1).size = n from
+          ((breakout_ok hst.labOk (by omega) (hst.labOk _ hpos)).1).trans
+            hst.labSize)
+        ((breakout_ok hst.labOk (by omega) (hst.labOk _ hpos)).2)
+        (by
+          show (R.ptn.set! M.1 (level + 1)).size = n
+          rw [Array.size_set!]
+          exact hst.ptnSize)
+        (by
+          show insert 0 M.1 < 2 ^ n
+          exact insert_lt (Nat.two_pow_pos n) (by omega))
+        (by
+          show (R.ptn.set! M.1 (level + 1))[(R.ptn.set! M.1
+              (level + 1)).size - 1]! ≤ level + 1
+          exact ptnEnd_set! (Nat.le_succ_of_le hst.ptnEnd))
+    · simp only [if_true]
+      rw [leafRows_map σ hn hn' hg hst.labOk hst.labSize]
+
 end Hex.GraphIso.Nauty

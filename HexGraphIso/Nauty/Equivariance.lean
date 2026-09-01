@@ -28,12 +28,12 @@ namespace Hex.GraphIso.Nauty
 variable {n : Nat}
 
 /-- `g'` holds the `σ`-images of the rows of `g`, both bounded. -/
-def RowsMap (σ : Renaming n) (g g' : Array Nat) : Prop :=
+@[expose] def RowsMap (σ : Renaming n) (g g' : Array Nat) : Prop :=
   g.size = n ∧ g'.size = n ∧
     ∀ v, v < n → g'[σ v]! = image σ n g[v]!
 
 /-- Every entry is a vertex. -/
-def LabOk (lab : Array Nat) (n : Nat) : Prop :=
+@[expose] def LabOk (lab : Array Nat) (n : Nat) : Prop :=
   ∀ i, i < lab.size → lab[i]! < n
 
 /-! # Array transport helpers -/
