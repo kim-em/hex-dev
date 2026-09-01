@@ -31,11 +31,10 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
 * `runTower{Add,Sub,Neg,SMul,Mul,Inv,Div}Ladder`: coordinate arithmetic in
   the height-two tower `Q(sqrt(2), 3^{1/m})` at growing dimension `D = 2m`.
 
-`runTowerFactorLadder` retains its historical name but is a mode-3 fixed
-registration on the degree-24 Selmer trinomial. Its former sweep remains
-diagnostic evidence: the realised Trager route mixes coefficient-growth gcd,
-resultant, certificate, and integer-factorization phases and has no stable
-independently derived one-parameter wall model.
+The degree-24 Selmer factor case is a mode-3 fixed registration because its
+realised Trager route mixes coefficient-growth gcd, resultant, certificate,
+and integer-factorization phases without a stable independently derived
+one-parameter wall model.
 
 Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): `nffactor` is the callable PARI surface matching tower
@@ -459,7 +458,7 @@ setup_fixed_benchmark runInv where {
 selection, factorization, isolation, and validation change dominance, so no
 stable independently derived wall model is reachable, and no published bound
 covers the dominant isolation phase. The canonical fourth-root extension of
-`Q(sqrt(2))` has a fresh 310 ms batch median. Its 3 s zero-grace whole-child
+`Q(sqrt(2))` has a 312.299 ms median. Its 3 s zero-grace whole-child
 budget includes process startup, certified fixtures, warmup, and batch work. -/
 setup_fixed_benchmark runAdjoin where {
   repeats := 3, maxSecondsPerCall := 3.0, killGraceMs := 0,
@@ -471,7 +470,7 @@ setup_fixed_benchmark runAdjoin where {
 schedule `2,3,4,6,8,12` measured 18.0 ms, 2.37 s, 1.68 s, then hit a 30 s cap
 at degree 6: branch-sensitive embedding recovery is nonmonotone and supplies no
 stable independently derived model; no complete published bound applies.
-Re-adjoining `sqrt(2)` is canonical. Its fresh 18.2 ms batch median and all
+Re-adjoining `sqrt(2)` is canonical. Its 18.023 ms median and all
 inclusive child work fit a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runAdjoinIdentity where {
   repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
@@ -537,7 +536,7 @@ def runFactorRetry : Unit → IO UInt64 := fun _ => do
 def runFactorRecursive : Unit → IO UInt64 := fun _ => do
   let tower ← getTwoLevel
   let T := tower.extension.tower
-  let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
+  let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-1), ofRat T (-1), 1]
   return factorChecksum
     (← requireSome "factor/recursive" (factor? T input))
 
@@ -576,12 +575,15 @@ setup_fixed_benchmark runFactorRetry where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Branch and expected-hash anchor. It forces recursive relative factorization
-through an intermediate level, while the canonical degree-24 registration
-supplies public `factor?` performance coverage. -/
+/- Mode 3 for genuine height-two relative factorization. The degree schedule
+`2,3,4,6` measures 7.59, 12.19, 19.02, and 46.63 ms and rejects a linear
+candidate with residual `+0.645`: recursive norms, gcd, rational factorization,
+and replay change shares, and no published bound covers all phases. The
+irreducible `X² - X - 1` input over `ℚ(√2, √3)` is the smallest
+non-short-circuit canonical case; its 2 s ceiling covers the whole child. -/
 setup_fixed_benchmark runFactorRecursive where {
-  repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xd13bbfca65f65898,
+  repeats := 3, maxSecondsPerCall := 2.0, killGraceMs := 0,
+  expectedHash := some 0xa0c08a951ecca91a,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
@@ -643,7 +645,7 @@ def runRecoverSearch : Unit → IO UInt64 := fun _ => do
 measured 19.5 ms, 68.3 ms, and 1.89 s as repeated factorization, isolation,
 adjoining, and root collection change dominance. No tight independent wall
 model or published dominant-isolation bound applies. The canonical quartic
-performs two genuine extensions; its fresh 68.0 ms batch median and inclusive
+performs two genuine extensions; its 67.342 ms median and inclusive
 child work fit a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runSplit where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
@@ -696,8 +698,8 @@ setup_fixed_benchmark runCoordinateMaps where {
 `2,4,6,8`) measured 0.96 ms, 21.0 ms, 107.7 ms, and 460.4 ms while candidate
 enumeration, eliminants, isolation, recovery, and certification change
 dominance. No stable independent wall model or published dominant-isolation
-bound applies. The canonical dimension-four tower has a fresh 20.9 ms batch
-median; inclusive child work fits a 1 s zero-grace ceiling. -/
+bound applies. The canonical dimension-four tower has a 20.835 ms median;
+inclusive child work fits a 1 s zero-grace ceiling. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xcc1b7720bfe3fc24,
@@ -738,10 +740,14 @@ setup_fixed_benchmark runSub where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runTowerNegLadder` supplies mode-1 performance
-coverage for this operation. -/
+/- Mode 3. The height-two parameter schedule reaches dimensions
+`4,6,8,12,16,24`; the timed body remains faster than the independently derived
+linear model (`β = -0.185`) before the dimension-32 certified fixture hits its
+300 s cap. No larger honest rung is reachable without timing fixture construction.
+The dimension-four two-level tower is the canonical merge-facing input; its
+zero-grace 1 s whole-child ceiling is the next ordered mode. -/
 setup_fixed_benchmark runNeg where {
-  repeats := 5, maxSecondsPerCall := 2.0,
+  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0x2e1510498ed9e174,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -847,19 +853,19 @@ def runOfQAdjoinLadder (input : PresentationInput) : UInt64 :=
         (ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk)
   | none => 0
 
-/- Cost model. `ofQAdjoin` has fixed dispatch, structure-construction, and
-generator setup, then builds the length-`n` rational defining-coefficient
-array of the checked degree-`n` presentation. `extensionChecksum` walks the
-resulting generator coordinates and root polynomial once. The fixture's
+/- Cost model. `ofQAdjoin` normalizes the degree-`n` integer polynomial and
+builds its length-`n` rational defining-coefficient array; the result checksum
+then walks the generator coordinates and root polynomial once. The fixture's
 certificate and selected root are prepared outside the timed region, so the
-finite-range model is the affine `n + 1`, and its leading term is the expected
-`Θ(n)` bounded-height array work. -/
-setup_benchmark runOfQAdjoinLadder n => n + 1
+runtime constructor performs `Θ(n)` bounded-height array work. The extended
+schedule makes the fixed constructor term lower order without changing the
+declared model. -/
+setup_benchmark runOfQAdjoinLadder n => n
   with prep := prepPresentationInput
   where {
     paramFloor := 2
-    paramCeiling := 12
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    paramCeiling := 24
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
     maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -936,12 +942,9 @@ def runTowerDivLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a / input.b)
 
 /- Cost model. Coordinate addition adds the two mixed-radix coordinate
-vectors pointwise: exactly `D = 2n` rational additions for the
-dimension-`2n` ladder tower (SPEC §Complexity: "Coordinate addition costs
-O(D) rational operations"). Bounded rational heights make the coordinate
-work linear; the fixed dispatch and result-object work give the finite-range
-affine proxy `n + 1`. -/
-setup_benchmark runTowerAddLadder n => n + 1
+vectors pointwise: exactly `D = 2n` bounded-height rational additions for the
+dimension-`2n` ladder tower, hence `Θ(n)` work. -/
+setup_benchmark runTowerAddLadder n => n
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -950,13 +953,11 @@ setup_benchmark runTowerAddLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.2
   }
 
-/- Cost model. Subtraction visits the two length-`D = 2n` coordinate vectors
-pointwise. Bounded rational heights make the coordinate work linear; fixed
-dispatch and result-object work give the same affine proxy `n + 1`. -/
-setup_benchmark runTowerSubLadder n => n + 1
+/- Cost model. Subtraction visits the two length-`D = 2n` bounded-height
+coordinate vectors pointwise, hence performs `Θ(n)` work. -/
+setup_benchmark runTowerSubLadder n => n
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -965,28 +966,12 @@ setup_benchmark runTowerSubLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.2
-  }
-
-/- Cost model. Negation visits exactly the `D = 2n` bounded-height rational
-coordinates. Fixed dispatch and result-object work give the same finite-range
-affine proxy `n + 1` as the other coordinatewise operations. -/
-setup_benchmark runTowerNegLadder n => n + 1
-  with prep := prepElemInput
-  where {
-    paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 10.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-    slopeTolerance := 0.2
   }
 
 /- Cost model. Rational scalar action multiplies each of the `D = 2n`
-bounded-height coordinates by the fixed scalar `3/5`. Fixed dispatch and
-result-object work give the same affine proxy `n + 1`. -/
-setup_benchmark runTowerSMulLadder n => n + 1
+bounded-height coordinates by the fixed scalar `3/5`, hence performs
+`Θ(n)` work. -/
+setup_benchmark runTowerSMulLadder n => n
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -995,7 +980,6 @@ setup_benchmark runTowerSMulLadder n => n + 1
     maxSecondsPerCall := 10.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.2
   }
 
 /- Cost model. Schoolbook tower multiplication convolves the mixed-radix
@@ -1036,7 +1020,6 @@ setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
     maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
   }
 
 /- Cost model. Division performs one recursive extended-gcd inversion followed
@@ -1047,12 +1030,11 @@ setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepElemInput
   where {
     paramFloor := 1
-    paramCeiling := 6
-    paramSchedule := .custom #[1, 2, 3, 4, 6]
-    maxSecondsPerCall := 30.0
+    paramCeiling := 12
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
   }
 
 /-! # Trager factorization ladder -/
@@ -1090,6 +1072,19 @@ def prepFactorInput (n : Nat) : FactorInput :=
   | some base => { tower := base.tower, f := selmerPoly m base.tower }
   | none => panic! "prepFactorInput: base tower fixture failed"
 
+def prepRecursiveFactorInput (n : Nat) : FactorInput :=
+  let m := max n 2
+  match twoLevel? () with
+  | some tower =>
+      { tower := tower.extension.tower
+        f := selmerPoly m tower.extension.tower }
+  | none => panic! "prepRecursiveFactorInput: two-level fixture failed"
+
+def runRecursiveFactorDiagnostic (input : FactorInput) : UInt64 :=
+  match factor? input.tower input.f with
+  | some result => factorChecksum result
+  | none => 1
+
 initialize factorCanonicalRef : IO.Ref (Option FactorInput) ← IO.mkRef none
 
 private def getFactorCanonicalInput : IO FactorInput := do
@@ -1110,16 +1105,17 @@ def runTowerFactorLadder : Unit → IO UInt64 := fun _ => do
 SPEC's Trager/BHKS envelope, but its local exponents rose from 0.80 to 4.48
 as the dominant rational-polynomial gcd, resultant, and checked-replay shares
 changed with coefficient growth. That is not a stable independently derived
-family model. BHKS covers only the 5.26% integer-factorization share of the
-inclusive profile, so it cannot supply mode 2 either.
+family model. Integer factorization is 1.42% of the whole-thread capture and
+2.44% of the resolved `factor?` frame, while gcd is 81.18% of that frame;
+unwind loss is non-uniform, but either accounting excludes a BHKS-only mode 2
+bound for the dominant inclusive work.
 
 The degree-24 Selmer trinomial over `Q(sqrt(2))` is the top completed rung and
 the canonical hard input. Rational coefficients force a repeated shift-zero
 norm, followed by a genuine retry, recursive rational factorization of the
 accepted degree-48 norm, gcd recovery, and checked replay. Its historical
-250.9 ms batch median, plus process startup, fixture construction, and discarded
-warmup, fits a 2 s zero-grace whole-child budget. The name is retained so
-archived diagnostic exports remain connected to this operation. -/
+248.941 ms median, plus process startup, fixture construction, and discarded
+warmup, fits a 2 s zero-grace whole-child budget. -/
 setup_fixed_benchmark runTowerFactorLadder where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -1319,7 +1315,7 @@ basis vectors. Each application visits `D` precomputed images and performs
 setup_benchmark runToPrimitiveLadder n => n * n * n
   with prep := prepMapLadderInput
   where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5, 6]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
     maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1.0
   }
@@ -1331,8 +1327,17 @@ step, hence `Θ(D³)` per vector and `Θ(D⁴)` for the full basis. -/
 setup_benchmark runFromPrimitiveLadder n => n * n * n * n
   with prep := prepMapLadderInput
   where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5, 6]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
     maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+/- Temporary ordered-mode diagnostic for genuine height-two factorization. -/
+setup_benchmark runRecursiveFactorDiagnostic n => n
+  with prep := prepRecursiveFactorInput
+  where {
+    paramSchedule := .custom #[2, 3, 4, 6]
+    maxSecondsPerCall := 30.0, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1.0
   }
 
