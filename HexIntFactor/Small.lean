@@ -140,22 +140,44 @@ def SmallCandidate.scale (candidate : SmallCandidate) (multiplier : Nat) :
     residualExponent := candidate.residualExponent * multiplier
     route := candidate.route }
 
-/-- Apply perfect-power reduction before table trial division to an odd
-cofactor. -/
+private def exponentGcd : List PrimePower → Nat
+  | [] => 0
+  | entry :: entries =>
+      entries.foldl (fun common next => Nat.gcd common next.exponent)
+        entry.exponent
+
+/-- Apply table trial division and perfect-power reduction to an odd cofactor.
+A complete table factorization exposes perfect powers directly through the gcd
+of its multiplicities, avoiding a redundant root search on the dominant small
+dispatch path while preserving the structural route classification. -/
 private def oddCandidate (n : Nat) : SmallCandidate :=
-  match perfectPower? n with
-  | some (base, exponent) =>
-      let out := trialFactors base
-      { factors := out.1.map fun e => { e with exponent := e.exponent * exponent }
-        residualBase := out.2
+  let out := trialFactors n
+  if out.2 = 1 then
+    let exponent := exponentGcd out.1
+    if 1 < exponent then
+      { factors := out.1
+        residualBase := 1
         residualExponent := exponent
         route := .perfectPower }
-  | none =>
-      let out := trialFactors n
+    else
       { factors := out.1
-        residualBase := out.2
+        residualBase := 1
         residualExponent := 1
         route := .trial }
+  else
+    match perfectPower? n with
+    | some (base, exponent) =>
+        let baseOut := trialFactors base
+        { factors := baseOut.1.map fun e =>
+            { e with exponent := e.exponent * exponent }
+          residualBase := baseOut.2
+          residualExponent := exponent
+          route := .perfectPower }
+    | none =>
+        { factors := out.1
+          residualBase := out.2
+          residualExponent := 1
+          route := .trial }
 
 /-- Remove the full power of two, then apply perfect-power reduction and table
 trial division to the odd cofactor. -/
