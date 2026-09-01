@@ -327,20 +327,20 @@ budget rather than a fine-grained slope.
 
 ## Five-family profile attribution
 
-All profiles use clean commit `97d3b1f292710ccdf502671d8d9c01d6ad09d74c`,
+All profiles use clean commit `60230acab60cf9d88694f04adcbb53f45be16ce5`,
 `samply 0.13.1`, lean-bench-samply commit
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`, and the 999 Hz filtered timed-region
 protocol. Every profile has confidence `passed`, zero off-bench-thread samples,
-at least 3014 retained samples, calibration residual below 2 ms against the
+at least 3017 retained samples, calibration residual below 1.02 ms against the
 5 ms limit, and sensitivity verdict `passed`.
 
 | Declared family / representative | Profile SHA-256 | retained / residual | Leaf categories | Dominant inclusive path |
 |---|---|---:|---|---|
-| table-and-balanced-semiprimes: `runBalancedRho 80` | `1a39e495c5e97409b52039c70260889260ea1059ea262ae89d53289894507a83` | 3014 / 0.050 ms | allocation 68.12%, GMP 24.68%, runtime 5.11%, other 2.09% | `rhoLeast` / `rhoTry` / `brentGo` 93.56%; `rhoNext` 39.85% |
-| smooth-and-unbalanced-semiprimes: `IntFactorProfile.runSmooth 1` (80-bit ECM stage 1) | pending clean recapture | pending | pending | pending |
-| power-forms: `IntFactorProfile.runPower 1` (exponent 80 split) | `aaaecc7c59a022f1105d9d672bc8298215b5620952cd7ff64f1cd95558d5619e` | 4563 / 1.505 ms | Lean runtime 35.04%, Lean own code 21.96%, other 20.91%, allocation 20.40%, GMP 1.69% | trial division 88.67%; `removePower` 28.14%; `factorPower?` 14.71% |
-| certificate-replay-and-order: `runOrder 1048589` | `31a09f8b9e37f3c6d9020d8fec92c0340f7e4a961b81e6720e2152d60f619d11` | 6842 / 0.223 ms | other 99.91%, allocation 0.09% | `orderOf` 100.00%; `orderOfAux` 99.91% |
-| generalized-divisor-sums: `runSigmaExponent 4194304` | `541ee2b206a3f40c2364b0b002deaad6b47485eccaab410b23ca92b457cab37b` | 6431 / 0.378 ms | GMP 93.28%, other 6.34%, allocation 0.37% | `sigma` 73.85%; `sigmaEntry` 72.83% |
+| table-and-balanced-semiprimes: `runBalancedRho 80` | `0f302a83ad1b2ca3fe7e9232b754f9302da020a536c3845628c5fbfbea27373a` | 3017 / 0.830 ms | allocation 69.04%, GMP 23.10%, runtime 6.03%, own code 1.82% | `rhoLeast` 96.82%; `rhoTry` / `brentGo` 96.78%; `rhoNext` 41.33% |
+| smooth-and-unbalanced-semiprimes: `IntFactorProfile.runSmooth 1` (80-bit ECM stage 1) | `04671a638cf525afaec0721ae6d71426bb90a194ecee43c84a0c439434a42395` | 4197 / 0.902 ms | allocation 62.16%, GMP 29.45%, runtime 6.29%, own code 1.72%, other 0.38% | `ecmStage1` / `ecmTraceCoreWith` 94.78%; `stageMultiply` / `stageGcdWith` 94.73% |
+| power-forms: `IntFactorProfile.runPower 1` (exponent 80 split) | `3d08bf402f5075ada318ae73c96e53d0ee9a7b80cee1c84418a8c17d82dffe9c` | 4367 / 1.016 ms | Lean runtime 39.71%, own code 38.36%, allocation 19.40%, GMP 1.85%, other 0.69% | trial division 88.64%; `removePower` 27.68%; `factorPower?` 14.40% |
+| certificate-replay-and-order: `runOrder 1048589` | `775547191ca640815f7cd5e38bcaec2d688e67ddbe51e6b46c44fc5525149001` | 6838 / 0.494 ms | own code 99.97%, GMP 0.01%, runtime 0.01% | `orderOfAux` 99.97%; `orderOf` 99.94% |
+| generalized-divisor-sums: `runSigmaExponent 4194304` | `4771280c0cc41fda3caf914c0581214ff461004ccf995bcda61bd98c3618fd6f` | 6457 / 0.174 ms | GMP 92.40%, other 7.19%, allocation 0.42% | `sigma` 74.00%; `sigmaEntry` 73.04% |
 
 The balanced rho profile attributes its dominant cost to allocation and GMP
 underneath the Brent loop. The smooth/unbalanced profile directly exercises
@@ -348,6 +348,12 @@ ECM stage 1 rather than duplicating rho. Power forms are dominated by trial
 division and exact-power removal, order by the repository's private compiled
 order scan, and the large-exponent sigma case by GMP arithmetic. No declared
 family is left with an unattributed dominant cost.
+
+The five analytical summaries are committed as
+`reports/bench-results/hex-int-factor-profile-{balanced,ecm,order,power,sigma}-60230acab-chungus2.json`.
+They retain the complete leaf-category tables, inclusive rankings, calibration
+diagnostics, sensitivity checks, and raw-profile paths; the SHA-256 values in
+the table identify the uncommitted compressed captures themselves.
 
 ## Reproduction
 
@@ -398,7 +404,9 @@ remain under `/tmp`; their content hashes above make each cited capture
 identifiable. The profiling orchestrator has SHA-256
 `ef0aabd98ef0dee35feb19696e006ef64849cba6140b433024d950c6c7c5e32e`;
 the summarizer has SHA-256
-`ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe`.
+`ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe`,
+and its shared categorizer has SHA-256
+`f5b5ebb676b6a59188cd59145c5bec78041ceba5845a4b8b819888a552b59069`.
 
 ## Concerns
 
