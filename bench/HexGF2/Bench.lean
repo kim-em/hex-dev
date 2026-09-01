@@ -999,6 +999,16 @@ def leanCompare30 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2,
     warmupFirstIter := true }
 
+/-- Measurement cap for the deliberately over-ceiling top GCD diagnostic.
+The report still marks this rung ineligible under its ten-second hard limit. -/
+def ntlCompare60 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 60.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+def leanCompare60 : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
+
 setup_fixed_benchmark runAdd4096 where leanCompare5
 setup_fixed_benchmark runNtlAdd4096 where ntlCompare5
 setup_fixed_benchmark runAdd8192 where leanCompare5
@@ -1125,7 +1135,7 @@ setup_fixed_benchmark runGcd768 where leanCompare20
 setup_fixed_benchmark runNtlGcd768 where ntlCompare20
 setup_fixed_benchmark runGcd1024 where leanCompare20
 setup_fixed_benchmark runNtlGcd1024 where ntlCompare20
-setup_fixed_benchmark runGcd1536 where leanCompare30
-setup_fixed_benchmark runNtlGcd1536 where ntlCompare30
+setup_fixed_benchmark runGcd1536 where leanCompare60
+setup_fixed_benchmark runNtlGcd1536 where ntlCompare60
 
 end Hex.GF2Bench
