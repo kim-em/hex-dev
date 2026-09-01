@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Canon
+public import HexGraphIso.Ops
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
 public meta import Lean

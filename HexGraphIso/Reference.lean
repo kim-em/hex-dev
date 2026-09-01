@@ -41,7 +41,7 @@ deriving DecidableEq
 /-- A coloured graph whose colour classes are contiguous in vertex order:
 the first cell occupies the least vertices, and so on. Every canonical form
 satisfies this. -/
-def ColorSorted (K : Colored n k) : Prop :=
+@[expose] def ColorSorted (K : Colored n k) : Prop :=
   ∀ i j : Fin n, i ≤ j → K.coloring.cells[i] ≤ K.coloring.cells[j]
 
 /-- Executable check for `ColorSorted`, a plain Boolean fold so the kernel

@@ -142,10 +142,14 @@ The planned stack, in dependency order:
    exhaustive fallback — `certifyNode_complete`/`checkKey_complete`
    show the checker accepts the honest certificate for the true key,
    and `bruteCanon?_isSome` finds the achieved leaf among all
-   labellings. Remaining: swapping the `Canon.lean` public surface
-   from the reference form to `canonicalizeSpec` and the tactic and
-   conformance follow-ups.
+   labellings. **The public surface has switched**:
+   `HexGraphIso/Ops.lean` defines `canonicalize`/`canon`/`label`/
+   `findIso`/`isIso` and the bounded operations backed by
+   `canonicalizeSpec`, reproving the whole theorem surface
+   (including `colorSorted_canon`); `Canon.lean` keeps the limit
+   structures and the replay-bounded `checkIso?`. The conformance
+   guards pass unchanged against the new backing.
 
-Until stage 4 lands, exact nauty compatibility of the public `canon` is
-withheld (the SPEC's staged-namespace allowance), and the released
-surface remains reference-backed.
+The public surface is now backed by the certificate-checked
+nauty-semantic canonicalization. `Reference` remains as an independent
+exhaustive cross-check.
