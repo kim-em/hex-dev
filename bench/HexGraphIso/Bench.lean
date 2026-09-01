@@ -40,8 +40,13 @@ comparator register as fixed benchmarks on committed circulant sizes:
   oracle's hash-verified shim), joined on the canonical
   upper-triangle bits.
 * `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
-* `runCertify12`, `runCertReplay12`: certificate generation and the
-  generation-plus-replay pipeline.
+* `runCertify12`, `runCertReplay12`: unbounded certificate generation
+  and the generation-plus-replay pipeline (`Nauty.certifyKey?` and
+  `Nauty.certifyCanon?`; the limit-gated public wrappers are covered
+  by conformance).
+* `runCanonAgree16`: the agreement check joining the two comparator
+  columns — `verify` fails if the public canonical bits ever diverge
+  from pinned nauty's.
 -/
 
 namespace Hex.GraphIsoBench
@@ -194,18 +199,32 @@ def runFindIso12 : Unit → IO Bool := fun _ =>
 
 def runCertify12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
-  | some ⟨_, G⟩ => return (certify? {} G).isSome
+  | some ⟨_, G⟩ => return (Nauty.certifyKey? G).isSome
   | none => return false
 
 def runCertReplay12 : Unit → IO String := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ =>
-    match certify? {} G with
-    | some cert =>
-      match checkCanon {} G cert with
-      | some res => return triBitsOf res.form
-      | none => return "replay-failed"
+    match Nauty.certifyCanon? G with
+    | some res => return triBitsOf res.form
     | none => return "certify-failed"
+  | none => return ""
+
+/-- The comparator agreement check: `verify` fails if the public
+canonical bits ever diverge from pinned nauty's. -/
+def runCanonAgree16 : Unit → IO String := fun _ => do
+  match graphOf { n := 16 } with
+  | some ⟨m, G⟩ =>
+    let hexTri := triBitsOf (canon G)
+    let result ← Hex.BenchOracle.Nauty.canon m 1
+      (List.replicate m 0) (adjStrings G)
+    match result.getObjValAs? String "tri" with
+    | .ok nautyTri =>
+      unless hexTri == nautyTri do
+        throw (IO.userError
+          s!"canonical bits diverge from nauty: {hexTri} vs {nautyTri}")
+      return hexTri
+    | .error e => throw (IO.userError s!"nauty canon: bad tri: {e}")
   | none => return ""
 
 private def hexComparisonConfig : LeanBench.FixedBenchmarkConfig where
@@ -228,6 +247,7 @@ setup_fixed_benchmark runIsIso12 where hexComparisonConfig
 setup_fixed_benchmark runFindIso12 where hexComparisonConfig
 setup_fixed_benchmark runCertify12 where hexComparisonConfig
 setup_fixed_benchmark runCertReplay12 where hexComparisonConfig
+setup_fixed_benchmark runCanonAgree16 where externalComparisonConfig
 
 end Hex.GraphIsoBench
 

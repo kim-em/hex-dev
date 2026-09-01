@@ -106,7 +106,10 @@ theorem count_sortedColorSeq (G : Colored n k) {c : Nat}
 /-! # The form determined by a key -/
 
 /-- The coloured graph whose adjacency is a key's rows and whose
-colours list `G`'s classes contiguously. -/
+colours list `G`'s classes contiguously. Arbitrary row bits are
+normalized into a simple graph: an edge needs the bit in both
+directions and the diagonal is dropped; on genuine keys, whose rows
+are symmetric and loopless, this is the identity. -/
 @[expose] def formOfKey (G : Colored n k) (rows : List Nat) :
     Colored n k where
   graph := Hex.Graph.ofAdj
