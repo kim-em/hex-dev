@@ -1,0 +1,6 @@
+{
+ "path": "HexArith/Nat/Prime.lean",
+ "baseline_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
+ "current_blob": "1bdbc0907db62e7a03c7c3b4a2e078d0541b6bb0",
+ "reason": "Adds only the proof theorem Prime.dvd_of_dvd_pow so IntFactor can share its prime-power divisor argument and delete duplicate proofs. No executable definition or factorization-service runtime path changes."
+}
