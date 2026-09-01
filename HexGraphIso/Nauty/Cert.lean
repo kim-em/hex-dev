@@ -415,7 +415,7 @@ def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
     (brest : List Nat) : List CertNode → Nat → Option Bool
   | [], _ => some false
   | c :: rest, o =>
-    let sub : Option Bool :=
+    match
       match c with
       | .autom o' γ =>
         if o' < o &&
@@ -437,7 +437,7 @@ def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
           (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
           (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
           (numcells + 1) c brest
-    match sub with
+    with
     | none => none
     | some a =>
       match checkChildren ctx tcLevel brows fuel level rsLab rsPtn tc
@@ -458,5 +458,416 @@ end
       (initPtn n (n + 2) (initialPartition G).2)
       (initActive (initialPartition G).2)
       (initialPartition G).2.length cert B.codes = some true
+
+/-! # Node invariants for the soundness induction -/
+
+/-- The well-formedness facts carried down the replayed tree. -/
+structure NodeOk (n level : Nat) (lab ptn : Array Nat)
+    (active : Nat) : Prop where
+  labSize : lab.size = n
+  labOk : LabOk lab n
+  ptnSize : ptn.size = n
+  act : active < 2 ^ n
+  ptnEnd : ptn[ptn.size - 1]! ≤ level
+  starts : ∀ v : Nat, elem active v = true →
+    v = 0 ∨ ptn[v - 1]! ≤ level
+  vals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2
+
+theorem key_eta (b : Key) : (⟨b.codes, b.rows⟩ : Key) = b := rfl
+
+theorem map_congr_of_labOk {f f' : Nat → Nat} {lab : Array Nat}
+    (hok : LabOk lab n) (h : ∀ w, w < n → f w = f' w) :
+    lab.map f = lab.map f' := by
+  refine Array.ext (by rw [Array.size_map, Array.size_map]) ?_
+  intro i hi hi'
+  rw [Array.size_map] at hi
+  rw [Array.getElem_map, Array.getElem_map]
+  refine h _ ?_
+  have h1 := hok i hi
+  have h2 : lab[i]! = lab[i] := getElem!_pos lab i hi
+  rw [h2] at h1
+  exact h1
+
+/-- The target cell of a live (non-discrete) replayed state. -/
+theorem targetcell_facts {ctx : Ctx} (hn : ctx.n = n)
+    {level tcLevel : Nat} (rsLab : Array Nat) {rsPtn : Array Nat}
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hdisc : discreteAt rsPtn level ctx.n = false) :
+    ∃ p : Nat × Nat,
+      specTargetcell ctx rsLab rsPtn level tcLevel = p.1 ∧
+      p.1 < p.2 ∧ p.2 < n ∧
+      IsCell rsPtn level p.1 (p.2 + 1 - p.1) ∧
+      cellEnd rsPtn level (p.1 + 1) = p.2 := by
+  obtain ⟨p, hpm, hpne, hptc⟩ := specTargetcell_nontrivial
+    (lab := rsLab) (tcLevel := tcLevel)
+    (by
+      rw [discreteAt, List.all_eq_false] at hdisc
+      rcases hdisc with ⟨q, hqm, hq⟩
+      exact ⟨q, hqm, by simpa using hq⟩)
+  have hple := cells_le p hpm
+  have hpb := cells_bound (nn := ctx.n) (by omega) hend p hpm
+  have hicp := cells_isCell (ptn := rsPtn) (by omega) hend p hpm
+  have hp12 : p.1 < p.2 := by omega
+  have hce : cellEnd rsPtn level (p.1 + 1) = p.2 := by
+    have h0 := cellEnd_of_isCell hicp (by omega) (by omega)
+    rw [show p.1 + (p.2 + 1 - p.1) - 1 = p.2 by omega] at h0
+    exact h0
+  exact ⟨p, hptc, hp12, by omega, hicp, hce⟩
+
+/-- The state after individualizing one target-cell vertex is again
+well formed at the next level. -/
+theorem childNodeOk {level tc lenT o : Nat} {rsLab rsPtn : Array Nat}
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) :
+    NodeOk n (level + 1)
+      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+      (rsPtn.set! tc (level + 1)) (insert 0 tc) := by
+  have hn0 : 0 < n := by omega
+  have htvlt : rsLab[tc + o]! < n := hok _ (by omega)
+  have hbo := breakout_ok (lab := rsLab) (ptn := rsPtn)
+    (level := level + 1) (tc := tc) (tv := rsLab[tc + o]!)
+    hok hn0 htvlt
+  refine ⟨hbo.1.trans hs, hbo.2, by rw [Array.size_set!]; exact hsp,
+    insert_lt (Nat.two_pow_pos n) (by omega), ?_, ?_, ?_⟩
+  · rw [Array.size_set!]
+    rcases getElem!_set!_cases rsPtn tc (level + 1)
+      (rsPtn.size - 1) with he | he
+    · rw [he]
+      exact Nat.le_trans hend (by omega)
+    · rw [he]
+      exact Nat.le_refl _
+  · intro w hw
+    have hb : Nat.testBit (insert 0 tc) w = true := hw
+    rw [testBit_insert, Nat.zero_testBit] at hb
+    simp only [Bool.false_or] at hb
+    have hwp : tc = w := by simpa using hb
+    subst hwp
+    rcases Nat.eq_zero_or_pos tc with h0 | hpos
+    · exact Or.inl h0
+    · right
+      rw [Array.getElem!_set!_ne _ _ _ _ (by omega : tc ≠ tc - 1)]
+      rcases hic.2.1 with h0 | hbd
+      · omega
+      · exact Nat.le_trans hbd (by omega)
+  · intro q
+    rcases getElem!_set!_cases rsPtn tc (level + 1) q with he | he
+    · rw [he]
+      rcases hvals q with h | h
+      · exact Or.inl (Nat.le_trans h (by omega))
+      · exact Or.inr h
+    · rw [he]
+      exact Or.inl (Nat.le_refl _)
+
+/-! # Soundness of the replay -/
+
+/-- The spec key of the `i`-th child of a replayed node. -/
+@[reducible] def childKey (ctx : Ctx) (tcLevel fuel level : Nat)
+    (rsLab rsPtn : Array Nat) (tc numcells i : Nat) : Key :=
+  specNode ctx tcLevel fuel (level + 1)
+    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).1
+    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.1
+    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.2
+    (numcells + 1)
+
+/-- A subtree whose refinement code falls below the best code at its
+depth is dominated. -/
+theorem specNode_keyLe_of_code_lt {ctx : Ctx} {level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat}
+    (tcLevel fuel : Nat) {bc : Nat} (brest brows : List Nat)
+    (hlt : (refine ctx level lab ptn active numcells).longcode < bc) :
+    keyLe (specNode ctx tcLevel (fuel + 1) level lab ptn active
+      numcells) ⟨bc :: brest, brows⟩ := by
+  obtain ⟨rest, hrest⟩ := specNode_codes_head ctx tcLevel fuel level
+    lab ptn active numcells
+  rw [keyLe]
+  have hk : specNode ctx tcLevel (fuel + 1) level lab ptn active
+      numcells = ⟨(refine ctx level lab ptn active
+        numcells).longcode :: rest,
+      (specNode ctx tcLevel (fuel + 1) level lab ptn active
+        numcells).rows⟩ := by
+    rw [← hrest]
+  rw [hk, keyCmp_cons_lt hlt]
+  intro hx
+  exact Ordering.noConfusion hx
+
+theorem step_assemble {key : Nat → Key} {Bt : Key} {o m : Nat}
+    {achieved a a' : Bool} (hach : achieved = (a || a'))
+    (hk : keyLe (key o) Bt) (hka : a = true → key o = Bt)
+    (hall : ∀ i, o + 1 ≤ i → i < o + 1 + m → keyLe (key i) Bt)
+    (hex : a' = true → ∃ i, o + 1 ≤ i ∧ i < o + 1 + m ∧
+      key i = Bt) :
+    (∀ i, o ≤ i → i < o + (m + 1) → keyLe (key i) Bt) ∧
+    (achieved = true → ∃ i, o ≤ i ∧ i < o + (m + 1) ∧
+      key i = Bt) := by
+  constructor
+  · intro i hi1 hi2
+    rcases Nat.eq_or_lt_of_le hi1 with rfl | h1
+    · exact hk
+    · exact hall i h1 (by omega)
+  · intro hx
+    rw [hach] at hx
+    rcases Bool.or_eq_true_iff.mp hx with hx1 | hx2
+    · exact ⟨o, Nat.le_refl o, by omega, hka hx1⟩
+    · obtain ⟨i, hi1, hi2, hi3⟩ := hex hx2
+      exact ⟨i, by omega, by omega, hi3⟩
+
+mutual
+
+theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (tcLevel : Nat) (brows : List Nat)
+    (fuel level : Nat) (lab ptn : Array Nat)
+    (active numcells : Nat) (cert : CertNode) (bcodes : List Nat)
+    (achieved : Bool)
+    (h : checkNode ctx tcLevel brows fuel level lab ptn active
+      numcells cert bcodes = some achieved)
+    (hok : NodeOk n level lab ptn active)
+    (hlf : level + fuel ≤ n + 1) :
+    keyLe (specNode ctx tcLevel fuel level lab ptn active numcells)
+      ⟨bcodes, brows⟩ ∧
+    (achieved = true →
+      specNode ctx tcLevel fuel level lab ptn active numcells =
+        ⟨bcodes, brows⟩) := by
+  rcases fuel with _ | fuel
+  · rw [checkNode] at h
+    cases h
+  rcases bcodes with _ | ⟨bc, brest⟩
+  · rw [checkNode] at h
+    cases h
+  rcases cert with _ | _ | ⟨o', γ⟩ | children
+  · -- leaf
+    rw [checkNode] at h
+    split at h
+    · cases h
+    · -- compare = .lt
+      next heq =>
+      injection h with h'
+      subst h'
+      refine ⟨specNode_keyLe_of_code_lt tcLevel fuel brest brows
+        (Nat.compare_eq_lt.mp heq), ?_⟩
+      intro hx
+      exact Bool.noConfusion hx
+    · -- compare = .eq
+      next heq =>
+      split at h
+      · -- discrete
+        next hdisc =>
+        have hlc : (refine ctx level lab ptn active
+            numcells).longcode = bc := Nat.compare_eq_eq.mp heq
+        split at h
+        · cases h
+        · -- keyCmp = .eq
+          next hkc =>
+          injection h with h'
+          subst h'
+          have hkey := keyCmp_eq_iff.mp hkc
+          constructor
+          · rw [specNode, if_pos hdisc]
+            exact keyLe_of_eq hkey
+          · intro _
+            rw [specNode, if_pos hdisc]
+            exact hkey
+        · -- keyCmp = .lt
+          next hkc =>
+          injection h with h'
+          subst h'
+          constructor
+          · rw [keyLe, specNode, if_pos hdisc, hkc]
+            intro hx
+            exact Ordering.noConfusion hx
+          · intro hx
+            exact Bool.noConfusion hx
+      · cases h
+  · -- codePrune
+    rw [checkNode] at h
+    split at h
+    · next heq =>
+      injection h with h'
+      subst h'
+      refine ⟨specNode_keyLe_of_code_lt tcLevel fuel brest brows
+        (Nat.compare_eq_lt.mp heq), ?_⟩
+      intro hx
+      exact Bool.noConfusion hx
+    · cases h
+  · -- autom at node position: invalid
+    rw [checkNode] at h
+    cases h
+  · -- node
+    rw [checkNode] at h
+    split at h
+    · cases h
+    · -- compare = .lt
+      next heq =>
+      injection h with h'
+      subst h'
+      refine ⟨specNode_keyLe_of_code_lt tcLevel fuel brest brows
+        (Nat.compare_eq_lt.mp heq), ?_⟩
+      intro hx
+      exact Bool.noConfusion hx
+    · -- compare = .eq
+      next heq =>
+      split at h
+      · cases h
+      · next hdisc =>
+        split at h
+        · next hlenc =>
+          sorry
+        · cases h
+
+theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (tcLevel : Nat) (brows : List Nat)
+    (fuel level : Nat) (rsLab rsPtn : Array Nat)
+    (tc lenT numcells : Nat) (brest : List Nat)
+    (certs : List CertNode) (o : Nat) (achieved : Bool)
+    (h : checkChildren ctx tcLevel brows fuel level rsLab rsPtn tc
+      numcells brest certs o = some achieved)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (hlen : o + certs.length ≤ lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hprev : ∀ i, i < o →
+      keyLe (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells
+        i) ⟨brest, brows⟩) :
+    (∀ i, o ≤ i → i < o + certs.length →
+      keyLe (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells
+        i) ⟨brest, brows⟩) ∧
+    (achieved = true → ∃ i, o ≤ i ∧ i < o + certs.length ∧
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells i =
+        ⟨brest, brows⟩) := by
+  rcases certs with _ | ⟨c, rest⟩
+  · rw [checkChildren] at h
+    injection h with h'
+    subst h'
+    refine ⟨fun i hi1 hi2 => ?_, fun hx => Bool.noConfusion hx⟩
+    simp only [List.length_nil] at hi2
+    omega
+  · -- one child then the rest
+    rcases c with _ | _ | ⟨o', γ⟩ | ch
+    · -- explored leaf child
+      rw [checkChildren] at h
+      split at h
+      · cases h
+      · next a heq =>
+        split at h
+        · cases h
+        · next a' heq' =>
+          injection h with h'
+          have hthis := checkNode_sound hn hgsz tcLevel brows fuel
+            (level + 1) _ _ _ _ _ _ a heq
+            (childNodeOk hs hok hsp hend hvals hic hrange
+              (by
+                have hl2 := hlen
+                simp only [List.length_cons] at hl2
+                omega))
+            (by omega)
+          have hrest := checkChildren_sound hn hgsz tcLevel brows
+            fuel level rsLab rsPtn tc lenT numcells brest rest
+            (o + 1) a' heq' hs hok hsp hend hvals hic hrange
+            (by simp only [List.length_cons] at hlen; omega) hlf
+            (fun i hi => by
+              rcases Nat.lt_or_ge i o with h1 | h1
+              · exact hprev i h1
+              · have hio : i = o := by omega
+                rw [hio]
+                exact hthis.1)
+          rw [show (CertNode.leaf :: rest : List CertNode).length =
+            rest.length + 1 from by simp]
+          exact step_assemble h'.symm hthis.1 hthis.2 hrest.1 hrest.2
+      · exact fun _ _ hx => CertNode.noConfusion hx
+    · -- code-pruned child
+      rw [checkChildren] at h
+      split at h
+      · cases h
+      · next a heq =>
+        split at h
+        · cases h
+        · next a' heq' =>
+          injection h with h'
+          have hthis := checkNode_sound hn hgsz tcLevel brows fuel
+            (level + 1) _ _ _ _ _ _ a heq
+            (childNodeOk hs hok hsp hend hvals hic hrange
+              (by
+                have hl2 := hlen
+                simp only [List.length_cons] at hl2
+                omega))
+            (by omega)
+          have hrest := checkChildren_sound hn hgsz tcLevel brows
+            fuel level rsLab rsPtn tc lenT numcells brest rest
+            (o + 1) a' heq' hs hok hsp hend hvals hic hrange
+            (by simp only [List.length_cons] at hlen; omega) hlf
+            (fun i hi => by
+              rcases Nat.lt_or_ge i o with h1 | h1
+              · exact hprev i h1
+              · have hio : i = o := by omega
+                rw [hio]
+                exact hthis.1)
+          rw [show (CertNode.codePrune :: rest : List CertNode).length =
+            rest.length + 1 from by simp]
+          exact step_assemble h'.symm hthis.1 hthis.2 hrest.1 hrest.2
+      · exact fun _ _ hx => CertNode.noConfusion hx
+    · -- automorphism-pruned child
+      rw [checkChildren] at h
+      split at h
+      · cases h
+      · next a heq =>
+        split at h
+        · cases h
+        · next a' heq' =>
+          injection h with h'
+          have hthis : keyLe (childKey ctx tcLevel fuel level rsLab
+              rsPtn tc numcells o) ⟨brest, brows⟩ ∧
+              (a = true → childKey ctx tcLevel fuel level rsLab rsPtn
+                tc numcells o = ⟨brest, brows⟩) := by
+            sorry
+          have hrest := checkChildren_sound hn hgsz tcLevel brows
+            fuel level rsLab rsPtn tc lenT numcells brest rest
+            (o + 1) a' heq' hs hok hsp hend hvals hic hrange
+            (by simp only [List.length_cons] at hlen; omega) hlf
+            (fun i hi => by
+              rcases Nat.lt_or_ge i o with h1 | h1
+              · exact hprev i h1
+              · have hio : i = o := by omega
+                rw [hio]
+                exact hthis.1)
+          rw [show (CertNode.autom o' γ :: rest).length =
+            rest.length + 1 from by simp]
+          exact step_assemble h'.symm hthis.1 hthis.2 hrest.1 hrest.2
+    · -- explored inner node child
+      rw [checkChildren] at h
+      split at h
+      · cases h
+      · next a heq =>
+        split at h
+        · cases h
+        · next a' heq' =>
+          injection h with h'
+          have hthis := checkNode_sound hn hgsz tcLevel brows fuel
+            (level + 1) _ _ _ _ _ _ a heq
+            (childNodeOk hs hok hsp hend hvals hic hrange
+              (by
+                have hl2 := hlen
+                simp only [List.length_cons] at hl2
+                omega))
+            (by omega)
+          have hrest := checkChildren_sound hn hgsz tcLevel brows
+            fuel level rsLab rsPtn tc lenT numcells brest rest
+            (o + 1) a' heq' hs hok hsp hend hvals hic hrange
+            (by simp only [List.length_cons] at hlen; omega) hlf
+            (fun i hi => by
+              rcases Nat.lt_or_ge i o with h1 | h1
+              · exact hprev i h1
+              · have hio : i = o := by omega
+                rw [hio]
+                exact hthis.1)
+          rw [show (CertNode.node ch :: rest : List CertNode).length =
+            rest.length + 1 from by simp]
+          exact step_assemble h'.symm hthis.1 hthis.2 hrest.1 hrest.2
+      · exact fun _ _ hx => CertNode.noConfusion hx
+
+end
 
 end Hex.GraphIso.Nauty
