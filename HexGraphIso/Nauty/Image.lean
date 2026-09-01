@@ -311,6 +311,27 @@ theorem image_and {n : Nat} (σ : Renaming n) (s t : Nat) :
     subst huv
     exact ⟨u, hu, by simp [Nat.testBit_and, hbv.1, hbu.1, hbv.2]⟩
 
+/-- Images of bounded sets are injective. -/
+theorem image_inj {n : Nat} (σ : Renaming n) {s t : Nat} (hs : s < 2 ^ n)
+    (ht : t < 2 ^ n) (h : image σ n s = image σ n t) : s = t := by
+  refine Nat.eq_of_testBit_eq fun v => ?_
+  rcases Nat.lt_or_ge v n with hv | hv
+  · rw [← testBit_image_apply σ s hv, ← testBit_image_apply σ t hv, h]
+  · rw [Nat.testBit_lt_two_pow
+      (Nat.lt_of_lt_of_le hs (Nat.pow_le_pow_right (by omega) hv)),
+      Nat.testBit_lt_two_pow
+        (Nat.lt_of_lt_of_le ht (Nat.pow_le_pow_right (by omega) hv))]
+
+/-- A bounded set has a null image exactly when it is empty. -/
+theorem image_eq_zero_iff {n : Nat} (σ : Renaming n) {s : Nat}
+    (hs : s < 2 ^ n) : image σ n s = 0 ↔ s = 0 := by
+  constructor
+  · intro h
+    exact image_inj σ hs (Nat.two_pow_pos n) (by rw [h, image_zero])
+  · intro h
+    subst h
+    exact image_zero σ.toFun n
+
 /-- Bit counts below `n` are preserved by a renaming. -/
 theorem bitCount_image {n : Nat} (σ : Renaming n) (s : Nat) :
     bitCount n (image σ n s) = bitCount n s := by

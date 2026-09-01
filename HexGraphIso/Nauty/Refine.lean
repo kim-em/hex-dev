@@ -330,36 +330,52 @@ where
       else
         (k, nnt)
 
+/-- One `v2` round of `bestcell`'s joined-cell count: bump the counts of
+`v2` and each earlier nonsingleton cell nontrivially joined to it. -/
+@[expose] def bestcellRow (ctx : Ctx) (lab startArr : Array Nat)
+    (workset v2 : Nat) : List Nat → Array Nat → Array Nat
+  | [], bucket => bucket
+  | v1 :: rest, bucket =>
+    -- `workset & ~gp ≠ 0` in nauty; `workset` holds only vertices, so
+    -- this equals `workset ≠ workset & gp`.
+    if workset &&& ctx.g[lab[startArr[v1]!]!]! != 0 ∧
+        workset != workset &&& ctx.g[lab[startArr[v1]!]!]! then
+      bestcellRow ctx lab startArr workset v2 rest
+        ((bucket.set! v1 (bucket[v1]! + 1)).set! v2 (bucket[v2]! + 1))
+    else
+      bestcellRow ctx lab startArr workset v2 rest bucket
+
+@[expose] def bestcellRows (ctx : Ctx) (lab ptn : Array Nat) (level : Nat)
+    (startArr : Array Nat) : List Nat → Array Nat → Array Nat
+  | [], bucket => bucket
+  | v2 :: rest, bucket =>
+    bestcellRows ctx lab ptn level startArr rest
+      (bestcellRow ctx lab startArr
+        (worksetOf lab startArr[v2]! (cellEnd ptn level startArr[v2]!))
+        v2 (List.range v2) bucket)
+
+/-- The position of the greatest count, first maximum winning. -/
+@[expose] def argmaxLoop (bucket : Array Nat) : List Nat → Nat → Nat → Nat
+  | [], v1, _ => v1
+  | i :: rest, v1, v2 =>
+    if bucket[i]! > v2 then
+      argmaxLoop bucket rest i bucket[i]!
+    else
+      argmaxLoop bucket rest v1 v2
+
 /-- nauty's `bestcell`: the first cell nontrivially joined to the greatest
 number of other nonsingleton cells, as a `lab` position; `n` when every
 cell is a singleton. -/
-@[expose] def bestcell (ctx : Ctx) (lab ptn : Array Nat) (level : Nat) : Nat := Id.run do
+@[expose] def bestcell (ctx : Ctx) (lab ptn : Array Nat) (level : Nat) : Nat :=
   let starts := ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2).map (·.1)
   let nnt := starts.length
   if nnt == 0 then
-    return ctx.n
-  let startArr := starts.toArray
-  let mut bucket : Array Nat := .replicate nnt 0
-  for v2 in [1 : nnt] do
-    let mut workset := 0
-    let c1 := startArr[v2]!
-    let c2 := cellEnd ptn level c1
-    for i in [c1 : c2 + 1] do
-      workset := insert workset lab[i]!
-    for v1 in [0 : v2] do
-      let gp := ctx.g[lab[startArr[v1]!]!]!
-      -- `workset & ~gp ≠ 0` in nauty; `workset` holds only vertices, so
-      -- this equals `workset ≠ workset & gp`.
-      if workset &&& gp != 0 ∧ workset != workset &&& gp then
-        bucket := bucket.set! v1 (bucket[v1]! + 1)
-        bucket := bucket.set! v2 (bucket[v2]! + 1)
-  let mut v1 := 0
-  let mut v2 := bucket[0]!
-  for i in [1 : nnt] do
-    if bucket[i]! > v2 then
-      v1 := i
-      v2 := bucket[i]!
-  return startArr[v1]!
+    ctx.n
+  else
+    let startArr := starts.toArray
+    let bucket := bestcellRows ctx lab ptn level startArr
+      (List.range' 1 (nnt - 1)) (Array.replicate nnt 0)
+    startArr[argmaxLoop bucket (List.range' 1 (nnt - 1)) 0 bucket[0]!]!
 
 /-- nauty's `targetcell` for the pinned undirected configuration. -/
 @[expose] def targetcell (ctx : Ctx) (lab ptn : Array Nat) (level tcLevel : Nat)
@@ -378,13 +394,10 @@ cell is a singleton. -/
 /-- nauty's `maketargetcell`: the chosen cell's position, contents, and
 size. -/
 @[expose] def maketargetcell (ctx : Ctx) (lab ptn : Array Nat) (level tcLevel : Nat)
-    (hint : Int) : Nat × Nat × Nat := Id.run do
+    (hint : Int) : Nat × Nat × Nat :=
   let i := targetcell ctx lab ptn level tcLevel hint
   let j := cellEnd ptn level (i + 1)
-  let mut tcell := 0
-  for p in [i : j + 1] do
-    tcell := insert tcell lab[p]!
-  return (i, tcell, j - i + 1)
+  (i, worksetOf lab i j, j - i + 1)
 
 /-- nauty's `breakout`: split `{tv}` off the front of the cell starting at
 `tc`, shifting the displaced vertices one place right, and make `tc` the

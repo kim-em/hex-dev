@@ -1060,4 +1060,215 @@ theorem refine_map (σ : Renaming n) {ctx ctx' : Ctx}
       longcode := numcells }
     ⟨hsl, hlab, hsp, hact, hend⟩]
 
+/-! # Target-cell selection -/
+
+theorem bestcellRow_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) {lab startArr : Array Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hstart : ∀ v : Nat, startArr[v]! < n) {workset : Nat}
+    (hws : workset < 2 ^ n) (v2 : Nat) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      bestcellRow ctx' (lab.map σ.toFun) startArr (image σ n workset) v2 vs
+          bucket =
+        bestcellRow ctx lab startArr workset v2 vs bucket
+  | [], _ => rfl
+  | v1 :: rest, bucket => by
+    rw [bestcellRow, bestcellRow]
+    rw [getElem!_map_of_lt σ.toFun lab (by have := hstart v1; omega),
+      hg.2.2 lab[startArr[v1]!]! (hlab _ (by have := hstart v1; omega)),
+      ← image_and σ]
+    have hand : workset &&& ctx.g[lab[startArr[v1]!]!]! < 2 ^ n :=
+      Nat.lt_of_le_of_lt Nat.and_le_left hws
+    have h1 : (image σ n (workset &&& ctx.g[lab[startArr[v1]!]!]!) != 0) =
+        (workset &&& ctx.g[lab[startArr[v1]!]!]! != 0) := by
+      rcases Decidable.em (workset &&& ctx.g[lab[startArr[v1]!]!]! = 0) with
+        hz | hz
+      · rw [hz, image_zero]
+      · have hnz : image σ n (workset &&& ctx.g[lab[startArr[v1]!]!]!) ≠ 0 :=
+          fun he => hz ((image_eq_zero_iff σ hand).mp he)
+        rw [Bool.eq_iff_iff]
+        simp [hz, hnz]
+    have h2 : (image σ n workset !=
+        image σ n (workset &&& ctx.g[lab[startArr[v1]!]!]!)) =
+        (workset != workset &&& ctx.g[lab[startArr[v1]!]!]!) := by
+      rcases Decidable.em (workset = workset &&& ctx.g[lab[startArr[v1]!]!]!)
+        with he | he
+      · rw [← he]
+        simp
+      · have hne : image σ n workset ≠
+            image σ n (workset &&& ctx.g[lab[startArr[v1]!]!]!) :=
+          fun hh => he (image_inj σ hws hand hh)
+        rw [Bool.eq_iff_iff]
+        simp [he, hne]
+    rw [h1, h2]
+    rcases Decidable.em ((workset &&& ctx.g[lab[startArr[v1]!]!]! != 0) = true ∧
+        (workset != workset &&& ctx.g[lab[startArr[v1]!]!]!) = true) with
+      hc | hc
+    · rw [if_pos hc, if_pos hc]
+      exact bestcellRow_map σ hg hlab hsl hstart hws v2 rest _
+    · rw [if_neg hc, if_neg hc]
+      exact bestcellRow_map σ hg hlab hsl hstart hws v2 rest bucket
+
+theorem bestcellRows_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hg : RowsMap σ ctx.g ctx'.g) {lab ptn : Array Nat} {level : Nat}
+    (hlab : LabOk lab n) (hsl : lab.size = n) (hsp : ptn.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level) {startArr : Array Nat}
+    (hstart : ∀ v : Nat, startArr[v]! < n) :
+    ∀ (vs : List Nat) (bucket : Array Nat),
+      bestcellRows ctx' (lab.map σ.toFun) ptn level startArr vs bucket =
+        bestcellRows ctx lab ptn level startArr vs bucket
+  | [], _ => rfl
+  | v2 :: rest, bucket => by
+    rw [bestcellRows, bestcellRows]
+    have hce : cellEnd ptn level startArr[v2]! < n := by
+      have := cellEnd_lt (ptn := ptn) (level := level) (i := startArr[v2]!)
+        (by have := hstart v2; omega) hend
+      omega
+    rw [worksetOf_map σ hlab (lo := startArr[v2]!)
+      (hi := cellEnd ptn level startArr[v2]!) (by omega)]
+    rw [bestcellRow_map σ hg hlab hsl hstart
+      (worksetOf_lt hlab (lo := startArr[v2]!)
+        (hi := cellEnd ptn level startArr[v2]!) (by omega)) v2 (List.range v2)
+      bucket]
+    exact bestcellRows_map σ hg hlab hsl hsp hend hstart rest _
+
+theorem getElem!_list_lt {l : List Nat} {m : Nat} (hml : ∀ x ∈ l, x < m)
+    (hm0 : 0 < m) (v : Nat) : l.toArray[v]! < m := by
+  rw [List.getElem!_toArray]
+  rcases Nat.lt_or_ge v l.length with hv | hv
+  · rw [getElem!_pos l v hv]
+    exact hml _ (List.getElem_mem hv)
+  · rw [getElem!_neg l v (by omega)]
+    exact hm0
+
+/-- nauty's `bestcell` is position-valued and invariant under a
+renaming. -/
+theorem bestcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level : Nat} (hend : ptn[ptn.size - 1]! ≤ level) :
+    bestcell ctx' (lab.map σ.toFun) ptn level = bestcell ctx lab ptn level := by
+  rw [bestcell, bestcell]
+  dsimp only
+  rw [hn', hn]
+  have hml : ∀ x ∈ ((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
+      (·.1), x < n := by
+    intro x hx
+    rcases List.mem_map.mp hx with ⟨p, hp, rfl⟩
+    have hpc := List.mem_filter.mp hp
+    have hb := cells_bound (nn := n) (by omega) hend p hpc.1
+    have hle := cells_le p hpc.1
+    omega
+  rcases hnnt : ((((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
+      (·.1)).length == 0) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    have hlen0 : (((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map
+        (·.1)).length ≠ 0 := by
+      simpa using hnnt
+    have hn0 : 0 < n := by
+      have hpos : 0 < (((cells ptn level n).filter
+          fun (c1, c2) => c1 ≠ c2).map (·.1)).length :=
+        Nat.pos_of_ne_zero hlen0
+      exact Nat.lt_of_le_of_lt (Nat.zero_le _)
+        (hml _ (List.getElem_mem hpos))
+    rw [bestcellRows_map σ hg hlab hsl hsp hend
+      (getElem!_list_lt hml hn0)]
+  · simp only [if_true]
+
+/-- nauty's `targetcell` is position-valued and invariant under a
+renaming. -/
+theorem targetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level tcLevel : Nat} {hint : Int}
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    targetcell ctx' (lab.map σ.toFun) ptn level tcLevel hint =
+      targetcell ctx lab ptn level tcLevel hint := by
+  rw [targetcell, targetcell]
+  rcases Decidable.em (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
+      (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level)) with hA | hA
+  · rw [if_pos hA, if_pos hA]
+  · rw [if_neg hA, if_neg hA]
+    rcases Decidable.em (level ≤ tcLevel) with hB | hB
+    · rw [if_pos hB, if_pos hB]
+      exact bestcell_map σ hn hn' hg hlab hsl hsp hend
+    · rw [if_neg hB, if_neg hB, hn', hn]
+
+/-- nauty's `maketargetcell` transports position and size unchanged and
+the target-cell set to its image. -/
+theorem maketargetcell_map (σ : Renaming n) {ctx ctx' : Ctx}
+    (hn : ctx.n = n) (hn' : ctx'.n = n) (hg : RowsMap σ ctx.g ctx'.g)
+    {lab ptn : Array Nat} (hlab : LabOk lab n) (hsl : lab.size = n)
+    (hsp : ptn.size = n) {level tcLevel : Nat} {hint : Int}
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hi : targetcell ctx lab ptn level tcLevel hint + 1 < n) :
+    maketargetcell ctx' (lab.map σ.toFun) ptn level tcLevel hint =
+      ((maketargetcell ctx lab ptn level tcLevel hint).1,
+        image σ n (maketargetcell ctx lab ptn level tcLevel hint).2.1,
+        (maketargetcell ctx lab ptn level tcLevel hint).2.2) := by
+  rw [maketargetcell, maketargetcell]
+  rw [targetcell_map σ hn hn' hg hlab hsl hsp hend]
+  have hce : cellEnd ptn level (targetcell ctx lab ptn level tcLevel hint + 1)
+      < n := by
+    have := cellEnd_lt (ptn := ptn) (level := level)
+      (i := targetcell ctx lab ptn level tcLevel hint + 1) (by omega) hend
+    omega
+  rw [worksetOf_map σ hlab
+    (lo := targetcell ctx lab ptn level tcLevel hint)
+    (hi := cellEnd ptn level (targetcell ctx lab ptn level tcLevel hint + 1))
+    (by omega)]
+
+/-! # Individualization -/
+
+theorem breakout_go_map (σ : Renaming n) {tv : Nat} :
+    ∀ (fuel : Nat) (lab : Array Nat) (i prev : Nat), LabOk lab n →
+      prev < n →
+      (∃ k, i ≤ k ∧ k < lab.size ∧ lab[k]! = tv) →
+      breakout.go (σ.toFun tv) fuel (lab.map σ.toFun) i (σ.toFun prev) =
+        (breakout.go tv fuel lab i prev).map σ.toFun
+  | 0, lab, i, prev, _, _, _ => rfl
+  | fuel + 1, lab, i, prev, hlab, hprev, ⟨k, hik, hks, hkv⟩ => by
+    rw [breakout.go, breakout.go]
+    have hi : i < lab.size := by omega
+    rw [getElem!_map_of_lt σ.toFun lab hi, ← map_set!]
+    have hbeq : (σ.toFun lab[i]! == σ.toFun tv) = (lab[i]! == tv) := by
+      rcases Decidable.em (lab[i]! = tv) with he | he
+      · simp [he]
+      · have hne : σ.toFun lab[i]! ≠ σ.toFun tv := fun hh => he (σ.inj _ _ hh)
+        rw [Bool.eq_iff_iff]
+        simp [he, hne]
+    rw [hbeq]
+    rcases hcase : (lab[i]! == tv) with _ | _
+    · simp only [Bool.false_eq_true, if_false]
+      have hkne : k ≠ i := by
+        intro hh
+        subst hh
+        simp only [beq_eq_false_iff_ne, ne_eq] at hcase
+        exact hcase hkv
+      exact breakout_go_map σ fuel (lab.set! i prev) (i + 1) lab[i]!
+        (labOk_set! hlab hprev i) (hlab i hi)
+        ⟨k, by omega, by rw [Array.size_set!]; omega,
+          by rw [Array.getElem!_set!_ne _ _ _ _ (fun hh => hkne hh.symm)]
+             exact hkv⟩
+    · simp only [if_true]
+
+/-- nauty's `breakout` commutes with a renaming: the labelling maps
+through, the partition and active set are position-level. -/
+theorem breakout_map (σ : Renaming n) {lab ptn : Array Nat}
+    {level tc tv : Nat} (hlab : LabOk lab n)
+    (hwit : ∃ k, tc ≤ k ∧ k < lab.size ∧ lab[k]! = tv) :
+    breakout (lab.map σ.toFun) ptn level tc (σ.toFun tv) =
+      ((breakout lab ptn level tc tv).1.map σ.toFun,
+        (breakout lab ptn level tc tv).2.1,
+        (breakout lab ptn level tc tv).2.2) := by
+  rw [breakout, breakout]
+  dsimp only
+  rw [Array.size_map]
+  rw [breakout_go_map σ (lab.size + 1) lab tc tv hlab
+    (by
+      rcases hwit with ⟨k, _, hks, hkv⟩
+      rw [← hkv]
+      exact hlab k hks)
+    hwit]
+
 end Hex.GraphIso.Nauty
