@@ -31,9 +31,9 @@ declared input families are `dense-rational-rref` and
 
 The scientific artifact is
 `reports/bench-results/hex-row-reduce-phase4-scientific.json` (SHA-256
-`eb27e8ef52ec63aa4678d608132aa6e1cd556f891ca75b917a886a69a7cfa1d5`).
+`ecc174e4ac710fa928f6e31464251ca5a0484d0ef3073992246af1f3e9a5e2f2`).
 It was recorded from pristine source commit
-`42342c7bb2883e51fd2d74f7f0dcbdc31c345a27` on `chungus2`, an AMD EPYC 9455
+`2471e6e6c81a370fdd218b97d296d9033683dd3b` on `chungus2`, an AMD EPYC 9455
 host running Lean 4.34.0-rc2 on x86-64 Linux. The exact command was:
 
 ```sh
@@ -52,18 +52,18 @@ passed.
 
 | target | model | fitted slope | normalized constant range | verdict |
 |---|---:|---:|---:|---|
-| `runReduce` | `n ^ 3` | -0.005 | 426.632–433.170 | pass |
-| `runRank` | `n ^ 3` | -0.009 | 426.197–435.077 | pass |
-| `runSpanCoeffs` | `n ^ 3` | -0.050 | 436.135–475.459 | pass |
-| `runSpanContains` | `n ^ 3` | -0.050 | 435.694–473.041 | pass |
-| `runEchelonSpanCoeffs` | `n ^ 2` | -0.013 | 453.992–467.313 | pass |
-| `runEchelonSpanContains` | `n ^ 2` | -0.010 | 454.556–469.030 | pass |
-| `runEchelonCoeffs` | `n` | — | 69.429–70.545 | pass |
-| `runFreeCols` | `n` | — | 11.782–12.122 | pass |
-| `runNullspaceMatrix` | `n ^ 3` | — | 155.758–158.224 | pass |
-| `runNullspace` | `n ^ 3` | -0.028 | 156.683–164.129 | pass |
-| `runReducedMatrix` | `n ^ 2` | +0.002 | 14.849–15.172 | pass |
-| `runReducedNullspace` | `n ^ 2` | — | 14.984–16.286 | pass |
+| `runReduce` | `n ^ 3` | -0.009 | 422.967–429.558 | pass |
+| `runRank` | `n ^ 3` | -0.008 | 421.775–427.618 | pass |
+| `runSpanCoeffs` | `n ^ 3` | -0.052 | 426.709–465.353 | pass |
+| `runSpanContains` | `n ^ 3` | -0.052 | 426.680–466.068 | pass |
+| `runEchelonSpanCoeffs` | `n ^ 2` | -0.006 | 453.532–467.502 | pass |
+| `runEchelonSpanContains` | `n ^ 2` | +0.093 | 458.100–731.123 | pass |
+| `runEchelonCoeffs` | `n` | — | 69.614–70.129 | pass |
+| `runFreeCols` | `n` | — | 11.586–11.974 | pass |
+| `runNullspaceMatrix` | `n ^ 3` | -0.026 | 155.269–162.348 | pass |
+| `runNullspace` | `n ^ 3` | -0.030 | 154.539–162.149 | pass |
+| `runReducedMatrix` | `n ^ 2` | -0.013 | 14.534–14.915 | pass |
+| `runReducedNullspace` | `n ^ 2` | — | 14.921–16.169 | pass |
 
 The compiled benchmark list contains 12 parametric and 11 fixed targets. All
 fixed repeats agreed and every expected result hash matched. The full verify
@@ -77,21 +77,21 @@ identical callable result is rank of the same dense rational `I + J` matrix:
 Lean calls the public `rank` API and FLINT calls `fmpq_mat.rref()` and returns
 only its integer rank. The FLINT driver caches input construction and leaves
 the cached matrix unchanged. A fixed O(1) endpoint measures the Python
-protocol overhead (7.158 us median), which is subtracted in the adjusted
+protocol overhead (7.080 us median), which is subtracted in the adjusted
 ratios.
 
 | `n` | Lean rank median | FLINT median | FLINT minus overhead | raw Lean / FLINT | adjusted Lean / FLINT |
 |---:|---:|---:|---:|---:|---:|
-| 16† | 1.771 ms | 11.287 us | 4.129 us | 156.9× | 428.8× |
-| 24 | 5.949 ms | 15.750 us | 8.592 us | 377.7× | 692.3× |
-| 32 | 13.987 ms | 22.038 us | 14.880 us | 634.7× | 940.0× |
-| 48 | 47.056 ms | 42.992 us | 35.834 us | 1094.5× | 1313.2× |
-| 64 | 111.623 ms | 77.369 us | 70.211 us | 1442.7× | 1589.8× |
+| 16† | 1.747 ms | 11.194 us | 4.114 us | 156.0× | 424.6× |
+| 24 | 5.902 ms | 15.691 us | 8.611 us | 376.1× | 685.4× |
+| 32 | 13.883 ms | 21.960 us | 14.880 us | 632.2× | 933.0× |
+| 48 | 46.549 ms | 42.745 us | 35.665 us | 1089.0× | 1305.2× |
+| 64 | 110.591 ms | 74.703 us | 67.623 us | 1480.4× | 1635.4× |
 
 † At `n = 16`, protocol overhead is 63% of the FLINT wall time, so that rung
 is reported for completeness but excluded from the eligible comparator range.
 From the eligible `n = 24` rung through `n = 64`, the adjusted ratio increases
-monotonically from 692.3× to 1589.8×. The widening gap reflects the different
+monotonically from 685.4× to 1635.4×. The widening gap reflects the different
 measured regimes on this ladder: Hex follows cubic elimination, while the
 overhead-adjusted FLINT endpoint is still below its cubic asymptote.
 
