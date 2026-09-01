@@ -1722,4 +1722,282 @@ theorem nontrivialCell_perm {ctx : Ctx} {level workset cell1 cell2 : Nat}
   · dsimp only
     rw [writeSegment_size]
 
+/-! # Active positions are cell starts -/
+
+/-- Every active position starts a cell of the partition at `level`. -/
+@[expose] def StartsOk (level : Nat) (st : RefineSt) : Prop :=
+  ∀ v : Nat, elem st.active v = true →
+    v = 0 ∨ st.ptn[v - 1]! ≤ level
+
+theorem getElem!_set!_cases (a : Array Nat) (i x q : Nat) :
+    (a.set! i x)[q]! = a[q]! ∨ (a.set! i x)[q]! = x := by
+  rcases Decidable.em (i = q) with rfl | hne
+  · rcases Nat.lt_or_ge i a.size with hlt | hge
+    · exact Or.inr (Array.getElem!_set!_self _ _ _ hlt)
+    · left
+      rw [getElem!_neg _ _ (by rw [Array.size_set!]; omega),
+        getElem!_neg _ _ (by omega)]
+  · exact Or.inl (Array.getElem!_set!_ne _ _ _ _ hne)
+
+theorem starts_insert {active : Nat} {ptnQ : Array Nat} {level w : Nat}
+    (hold : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ ptnQ[v - 1]! ≤ level)
+    (hw : w = 0 ∨ ptnQ[w - 1]! ≤ level) :
+    ∀ v : Nat, elem (insert active w) v = true →
+      v = 0 ∨ ptnQ[v - 1]! ≤ level := by
+  intro v hv
+  rw [show elem (insert active w) v = (insert active w).testBit v from
+    rfl, testBit_insert] at hv
+  rcases Bool.or_eq_true_iff.mp hv with hb | hb
+  · exact hold v hb
+  · have heq : w = v := by simpa using hb
+    rw [← heq]
+    exact hw
+
+/-- New actives after the trivial split start cells: the reused cell
+start, or the fresh boundary written one position earlier. -/
+theorem trivialSplit_starts {level cell1 cell2 : Nat} {c1 c2 : Int}
+    {st : RefineSt} (hst : StartsOk level st)
+    (hcellstart : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level)
+    (hc2eq : c2 = c1 - 1) (hc2s : cell2 < st.ptn.size) :
+    StartsOk level (trivialSplit level cell1 cell2 c1 c2 st) := by
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
+    hA | hA
+  · have hA' : cell1 ≤ c2.toNat ∧ c2.toNat + 1 ≤ cell2 ∧
+        c1.toNat = c2.toNat + 1 := by
+      obtain ⟨h1, h2⟩ := hA
+      simp only [Int.ofNat_eq_natCast] at h1 h2
+      omega
+    have hold : ∀ v : Nat, elem st.active v = true → v = 0 ∨
+        (st.ptn.set! c2.toNat level)[v - 1]! ≤ level := by
+      intro v hv
+      rcases hst v hv with h0 | hb
+      · exact Or.inl h0
+      · rcases getElem!_set!_cases st.ptn c2.toNat level (v - 1) with
+          he | he
+        · right
+          rw [he]
+          exact hb
+        · right
+          rw [he]
+          exact Nat.le_refl level
+    have hbound : (st.ptn.set! c2.toNat level)[c1.toNat - 1]! ≤
+        level := by
+      rw [show c1.toNat - 1 = c2.toNat by omega,
+        Array.getElem!_set!_self _ _ _ (by omega)]
+      exact Nat.le_refl level
+    have hcs' : cell1 = 0 ∨
+        (st.ptn.set! c2.toNat level)[cell1 - 1]! ≤ level := by
+      rcases Nat.eq_zero_or_pos cell1 with h0 | hpos
+      · exact Or.inl h0
+      · right
+        rcases hcellstart with h0 | hb
+        · omega
+        · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+          exact hb
+    simp only [if_pos hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+      hBc | hBc
+    · simp only [if_pos hBc]
+      rcases hC : (c1.toNat == cell2) with _ | _ <;>
+        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        exact starts_insert hold (Or.inr hbound)
+    · simp only [if_neg hBc]
+      rcases hD : (c2.toNat == cell1) with _ | _ <;>
+        simp only [Bool.false_eq_true, if_false, if_true] <;>
+        exact starts_insert hold hcs'
+  · simp only [if_neg hA]
+    exact hst
+
+theorem trivialCell_starts {level gRow cell1 cell2 : Nat} {st : RefineSt}
+    (hst : StartsOk level st)
+    (hcellstart : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level)
+    (hc12 : cell1 ≤ cell2) (hc2s : cell2 < st.ptn.size)
+    (h2 : cell2 < st.lab.size) :
+    StartsOk level (trivialCell level gRow cell1 cell2 st) := by
+  rw [trivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  · simp only [Bool.false_eq_true, if_false]
+    obtain ⟨hp1, hp2, _, _, _, _⟩ :=
+      splitCellLoop_spec (gRow := gRow) (cell2 + 1 - cell1)
+        (cell2 - cell1 + 2) st.lab (Int.ofNat cell1) (Int.ofNat cell2)
+        (by simp only [Int.ofNat_eq_natCast]; omega)
+        (by simp only [Int.ofNat_eq_natCast]; omega)
+        (by simp only [Int.ofNat_eq_natCast]; omega)
+        (by omega)
+    exact trivialSplit_starts hst hcellstart
+      (by rw [hp1, hp2]) hc2s
+  · simp only [if_true]
+    exact hst
+
+theorem active_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).active =
+      if c1 != cell1 then insert st.active c1 else st.active := by
+  rw [windowStep]
+  dsimp only
+  rcases Decidable.em (Int.ofNat (c2 - c1) > maxcell) with h1 | h1 <;>
+  rcases hB : (c1 != cell1) with _ | _ <;>
+  rcases hC : (c2 - c1 == 1) with _ | _ <;>
+  rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
+    simp only [h1, h4, Bool.false_eq_true, if_false, if_true]
+
+/-- Through the window scan, every active position keeps starting a
+cell: interior group starts follow the boundary written for the
+preceding group. -/
+theorem windowScan_starts (level cell1 cell2 : Nat) (counts : List Nat) :
+    ∀ (vs : List Nat) (c1acc : Nat) (maxcell : Int) (st : RefineSt),
+      StartsOk level st →
+      (c1acc = cell1 ∨ c1acc = 0 ∨ st.ptn[c1acc - 1]! ≤ level ∨
+        cell2 + 1 ≤ c1acc) →
+      c1acc + (vs.map (multOf counts)).sum ≤ cell2 + 1 →
+      cell2 < st.ptn.size →
+      StartsOk level
+        (windowScan level cell1 cell2 counts vs c1acc maxcell st)
+  | [], _, _, _, hst, _, _, _ => hst
+  | v :: vs, c1acc, maxcell, st, hst, hacc, hsum, hc2s => by
+    rw [windowScan]
+    have hsplit : (List.map (multOf counts) (v :: vs)).sum =
+        multOf counts v + (vs.map (multOf counts)).sum := by
+      rw [List.map_cons, List.sum_cons]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · simp only [if_pos hm]
+      have hin : c1acc + multOf counts v ≤ cell2 + 1 := by omega
+      have hptn1 := ptn_windowStep_eq level cell1 cell2 v c1acc
+        (c1acc + multOf counts v) maxcell st
+      have hact1 := active_windowStep_eq level cell1 cell2 v c1acc
+        (c1acc + multOf counts v) maxcell st
+      have hstepOk : StartsOk level (windowStep level cell1 cell2 v
+          c1acc (c1acc + multOf counts v) maxcell st) := by
+        intro w hw
+        rw [show elem (windowStep level cell1 cell2 v c1acc
+            (c1acc + multOf counts v) maxcell st).active w =
+            (windowStep level cell1 cell2 v c1acc
+              (c1acc + multOf counts v) maxcell st).active.testBit w
+            from rfl, hact1] at hw
+        have hold : ∀ u : Nat, elem st.active u = true → u = 0 ∨
+            (windowStep level cell1 cell2 v c1acc
+              (c1acc + multOf counts v) maxcell st).ptn[u - 1]! ≤
+                level := by
+          intro u hu
+          rcases hst u hu with h0 | hb
+          · exact Or.inl h0
+          · right
+            rw [hptn1]
+            split
+            · rcases getElem!_set!_cases st.ptn
+                (c1acc + multOf counts v - 1) level (u - 1) with he | he
+              · rw [he]
+                exact hb
+              · rw [he]
+                exact Nat.le_refl level
+            · exact hb
+        rcases hbc : (c1acc != cell1) with _ | _
+        · rw [hbc] at hw
+          simp only [Bool.false_eq_true, if_false] at hw
+          exact hold w hw
+        · rw [hbc] at hw
+          simp only [if_true] at hw
+          refine starts_insert hold ?_ w hw
+          rcases hacc with h1 | h1 | h1 | h1
+          · exfalso
+            simp only [bne_iff_ne, ne_eq] at hbc
+            exact hbc h1
+          · exact Or.inl h1
+          · right
+            rw [hptn1]
+            split
+            · rcases getElem!_set!_cases st.ptn
+                (c1acc + multOf counts v - 1) level (c1acc - 1) with
+                he | he
+              · rw [he]
+                exact h1
+              · rw [he]
+                exact Nat.le_refl level
+            · exact h1
+          · omega
+      refine windowScan_starts level cell1 cell2 counts vs
+        (c1acc + multOf counts v) _ _ hstepOk ?_ (by omega) ?_
+      · rcases Decidable.em (c1acc + multOf counts v ≤ cell2) with
+          hle | hgt
+        · right
+          right
+          left
+          rw [hptn1, if_pos hle,
+            Array.getElem!_set!_self _ _ _ (by omega)]
+          exact Nat.le_refl level
+        · right
+          right
+          right
+          omega
+      · rw [hptn1]
+        split
+        · rw [Array.size_set!]
+          exact hc2s
+        · exact hc2s
+    · simp only [if_neg hm]
+      exact windowScan_starts level cell1 cell2 counts vs c1acc maxcell
+        st hst hacc (by omega) hc2s
+
+theorem nontrivialFix_starts {level cell1 : Nat} {st : RefineSt}
+    (hst : StartsOk level st)
+    (hc : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level) :
+    StartsOk level (nontrivialFix cell1 st) := by
+  rw [nontrivialFix]
+  split
+  · intro w hw
+    have hw' : elem (insert st.active cell1) w = true := by
+      rw [show elem (erase (insert st.active cell1) st.maxpos) w =
+          (erase (insert st.active cell1) st.maxpos).testBit w from rfl,
+        testBit_erase] at hw
+      simp only [Bool.and_eq_true] at hw
+      exact hw.1
+    exact starts_insert hst hc w hw'
+  · exact hst
+
+theorem nontrivialCell_starts {ctx : Ctx}
+    {level workset cell1 cell2 : Nat} {st : RefineSt}
+    (hst : StartsOk level st)
+    (hcellstart : cell1 = 0 ∨ st.ptn[cell1 - 1]! ≤ level)
+    (hc12 : cell1 ≤ cell2) (hc2s : cell2 < st.ptn.size)
+    (h2 : cell2 < st.lab.size) :
+    StartsOk level (nontrivialCell ctx level workset cell1 cell2 st) := by
+  rw [nontrivialCell]
+  rcases hc : (cell1 == cell2) with _ | _
+  case true =>
+    rw [if_pos rfl]
+    exact hst
+  case false =>
+  rw [if_neg (by simp)]
+  split
+  · exact hst
+  · have hnd : (countValues (countsOf ctx st.lab workset cell1
+        cell2)).Nodup := by
+      rw [countValues]
+      exact nodup_range_map_add _ _
+    have hsum := sum_multOf_le hnd
+      (countsOf ctx st.lab workset cell1 cell2)
+    have hlen := countsOf_length ctx st.lab workset cell1 cell2
+    have hW : StartsOk level (windowScan level cell1 cell2
+        (countsOf ctx st.lab workset cell1 cell2)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))
+        cell1 (-1) st) :=
+      windowScan_starts level cell1 cell2 _ _ cell1 (-1) st hst
+        (Or.inl rfl) (by omega) hc2s
+    refine nontrivialFix_starts (fun w hw => ?_) ?_
+    · exact hW w hw
+    · rcases Nat.eq_zero_or_pos cell1 with h0 | hpos
+      · exact Or.inl h0
+      · right
+        rw [ptn_windowScan_outside level cell1 cell2
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st (Nat.le_refl cell1) (cell1 - 1)
+          (Or.inl (by omega))]
+        rcases hcellstart with h0 | hb
+        · omega
+        · exact hb
+
 end Hex.GraphIso.Nauty
