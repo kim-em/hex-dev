@@ -617,4 +617,323 @@ theorem refine_refInv {ctx : Ctx} {level : Nat}
     (RefInv.init level lab ptn active numcells)
   exact refInv_record h1 rfl rfl
 
+/-! # Boundary counting: the search always reaches its leaves -/
+
+/-- The number of positions carrying a boundary at `level`. -/
+@[expose] def bcount (ptn : Array Nat) (level nn : Nat) : Nat :=
+  (List.range nn).countP fun q => decide (ptn[q]! ≤ level)
+
+theorem bcount_le (ptn : Array Nat) (level nn : Nat) :
+    bcount ptn level nn ≤ nn := by
+  rw [bcount]
+  have := List.countP_le_length
+    (p := fun q => decide (ptn[q]! ≤ level)) (l := List.range nn)
+  rw [List.length_range] at this
+  exact this
+
+theorem bcount_mono {ptn ptn' : Array Nat} {level level' nn : Nat}
+    (h : ∀ q : Nat, ptn[q]! ≤ level → ptn'[q]! ≤ level') :
+    bcount ptn level nn ≤ bcount ptn' level' nn := by
+  rw [bcount, bcount]
+  refine List.countP_mono_left fun x _ hx => ?_
+  simp only [decide_eq_true_eq] at hx ⊢
+  exact h x hx
+
+theorem countP_succ_le {p p' : Nat → Bool} :
+    ∀ (l : List Nat), l.Nodup →
+      (∀ x ∈ l, p x = true → p' x = true) →
+      ∀ x0 ∈ l, p x0 = false → p' x0 = true →
+      l.countP p + 1 ≤ l.countP p'
+  | [], _, _, x0, hx0, _, _ => absurd hx0 (by simp)
+  | y :: l, hnd, himp, x0, hx0, hp0, hp'0 => by
+    rcases List.mem_cons.mp hx0 with rfl | hmem
+    · have hmono : l.countP p ≤ l.countP p' :=
+        List.countP_mono_left fun x hx hpx =>
+          himp x (List.mem_cons.mpr (Or.inr hx)) hpx
+      rw [List.countP_cons_of_neg (by simp [hp0]),
+        List.countP_cons_of_pos (by simp [hp'0])]
+      omega
+    · have hrec := countP_succ_le l (List.pairwise_cons.mp hnd).2
+        (fun x hx hpx => himp x (List.mem_cons.mpr (Or.inr hx)) hpx)
+        x0 hmem hp0 hp'0
+      rcases hpy : p y with _ | _
+      · rcases hp'y : p' y with _ | _
+        · rw [List.countP_cons_of_neg (by simp [hpy]),
+            List.countP_cons_of_neg (by simp [hp'y])]
+          omega
+        · rw [List.countP_cons_of_neg (by simp [hpy]),
+            List.countP_cons_of_pos (by simp [hp'y])]
+          omega
+      · rw [List.countP_cons_of_pos (by simp [hpy]),
+          List.countP_cons_of_pos (by
+            simp [himp y (List.mem_cons.mpr (Or.inl rfl)) hpy])]
+        omega
+
+/-- Individualizing one vertex of a nontrivial cell adds a boundary. -/
+theorem bcount_breakout {ptn : Array Nat} {level tc nn : Nat}
+    (hvals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2)
+    (hlev : level + 1 < n + 2)
+    (htc : ptn[tc]! > level) (htcn : tc < nn) (htcs : tc < ptn.size) :
+    bcount ptn level nn + 1 ≤
+      bcount (ptn.set! tc (level + 1)) (level + 1) nn := by
+  rw [bcount, bcount]
+  refine countP_succ_le (List.range nn) List.nodup_range ?_ tc
+    (List.mem_range.mpr htcn) (by simp; omega) ?_
+  · intro x _ hx
+    simp only [decide_eq_true_eq] at hx ⊢
+    have hne : tc ≠ x := by
+      intro he
+      rw [← he] at hx
+      omega
+    rw [Array.getElem!_set!_ne _ _ _ _ hne]
+    omega
+  · simp only [decide_eq_true_eq]
+    rw [Array.getElem!_set!_self _ _ _ htcs]
+    omega
+
+theorem bcount_pos_of_boundary {ptn : Array Nat} {level nn q : Nat}
+    (hq : q < nn) (hv : ptn[q]! ≤ level) :
+    1 ≤ bcount ptn level nn := by
+  rw [bcount]
+  refine List.countP_pos_iff.mpr ⟨q, List.mem_range.mpr hq, ?_⟩
+  simpa using hv
+
+/-! # The achieved leaf -/
+
+/-- The spec key's rows are the leaf rows of a labelling that fills
+every cell of this node's partition with the same vertices. -/
+theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
+    (tcLevel : Nat) :
+    ∀ (fuel level : Nat) (lab ptn : Array Nat)
+      (active numcells : Nat),
+      NodeOk n level lab ptn active →
+      n + 1 ≤ level + fuel →
+      level ≤ bcount ptn level n →
+      ∃ llab : Array Nat, llab.size = n ∧
+        cellsPerm ptn level lab llab ∧
+        (specNode ctx tcLevel fuel level lab ptn active
+          numcells).rows = leafRows ctx llab
+  | 0, level, lab, ptn, active, numcells, hok, hlfl, hbc => by
+    exfalso
+    have := bcount_le ptn level n
+    omega
+  | fuel + 1, level, lab, ptn, active, numcells, hok, hlfl, hbc => by
+    have hlevn : level ≤ n := by
+      have := bcount_le ptn level n
+      omega
+    have hstR := refine_stOk (ctx := ctx) hn (level := level)
+      (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
+      hok.act hok.ptnEnd
+    have hRvals : ∀ q : Nat,
+        (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨ (refine ctx level lab ptn active numcells).ptn[q]! = n + 2 := by
+      intro q
+      rcases ptn_refine_vals ctx level lab ptn active numcells q
+        with he | he
+      · rw [he]
+        exact hok.vals q
+      · rw [he]
+        exact Or.inl (Nat.le_refl level)
+    have hRinv := refine_refInv (ctx := ctx) (level := level)
+      (lab := lab) (ptn := ptn) (active := active)
+      (numcells := numcells) (by rw [hok.ptnSize]; omega)
+      (by rw [hok.labSize, hok.ptnSize]) hok.ptnEnd
+    rcases hdisc : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n with _ | _
+    · -- non-discrete: recurse into the maximal child
+      obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts hn
+        (tcLevel := tcLevel) (refine ctx level lab ptn active numcells).lab hstR.ptnSize hstR.ptnEnd hdisc
+      have hM1 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
+          tcLevel).1 = p.1 := hptc
+      have hM22 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
+          tcLevel).2.2 = p.2 + 1 - p.1 := by
+        show cellEnd (refine ctx level lab ptn active numcells).ptn level
+          (specTargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level tcLevel + 1) -
+          specTargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level tcLevel + 1 =
+          p.2 + 1 - p.1
+        rw [hptc, hce]
+        omega
+      obtain ⟨m, hm⟩ : ∃ m, p.2 + 1 - p.1 = m + 1 :=
+        ⟨p.2 - p.1, by omega⟩
+      have hspec : specNode ctx tcLevel (fuel + 1) level lab ptn
+          active numcells =
+          ⟨(refine ctx level lab ptn active numcells).longcode ::
+            (keysMax (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+              ((List.range m).map
+                ((fun o => childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).codes,
+          (keysMax (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+            ((List.range m).map
+              ((fun o => childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).rows⟩ := by
+        rw [specNode]
+        simp only [hdisc, Bool.false_eq_true, if_false]
+        rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
+          List.map_map]
+      -- the maximum is one of the children
+      have hmem : ∃ o, o < m + 1 ∧
+          keysMax (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+            ((List.range m).map ((fun o => childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ)) =
+          childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells o := by
+        rcases keysMax_mem ((List.range m).map fun j =>
+          childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1)) (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0) with he | he
+        · exact ⟨0, by omega, he⟩
+        · rcases List.mem_map.mp he with ⟨j, hj, hje⟩
+          exact ⟨j + 1, by
+            have := List.mem_range.mp hj
+            omega, hje.symm⟩
+      obtain ⟨o, hom, hkm⟩ := hmem
+      -- facts feeding the child recursion
+      have hicp1 : IsCell (refine ctx level lab ptn active numcells).ptn level p.1 (p.2 + 1 - p.1) := hicp
+      have hchildOk := childNodeOk (n := n) (level := level)
+        (tc := p.1) (lenT := p.2 + 1 - p.1) (o := o)
+        hstR.labSize hstR.labOk hstR.ptnSize hstR.ptnEnd hRvals
+        hicp1 (by omega) (by omega)
+      have hbcChild : level + 1 ≤
+          bcount ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1)) (level + 1) n := by
+        have h1 : bcount ptn level n ≤ bcount (refine ctx level lab ptn active numcells).ptn level n :=
+          bcount_mono hRinv.grow
+        have h2 := bcount_breakout (n := n)
+          (ptn := (refine ctx level lab ptn active numcells).ptn) (level := level) (tc := p.1) (nn := n)
+          hRvals (by omega)
+          (hicp.2.2.1 p.1 (Nat.le_refl p.1) (by omega))
+          (by omega) (by rw [hstR.ptnSize]; omega)
+        omega
+      obtain ⟨llab, hlsz, hlperm, hlrows⟩ := specNode_achieved hn
+        tcLevel fuel (level + 1)
+        (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1
+        (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.1
+        (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.2
+        (numcells + 1) hchildOk (by omega) hbcChild
+      refine ⟨llab, hlsz, ?_, ?_⟩
+      · -- chain the three reorder stages
+        have htv : (refine ctx level lab ptn active numcells).lab[p.1 + o]! ∈
+            segN (refine ctx level lab ptn active numcells).lab p.1 (p.2 + 1 - p.1) := by
+          rw [segN]
+          exact List.mem_map.mpr ⟨o, List.mem_range.mpr (by omega),
+            rfl⟩
+        have hwit : ∃ kL, p.1 ≤ kL ∧ kL < p.1 + (p.2 + 1 - p.1) ∧
+            kL < (refine ctx level lab ptn active numcells).lab.size ∧
+            (refine ctx level lab ptn active numcells).lab[kL]! = (refine ctx level lab ptn active numcells).lab[p.1 + o]! :=
+          ⟨p.1 + o, by omega, by omega,
+            by
+              have h1 := hstR.labSize
+              have h2 := hstR.ptnSize
+              omega,
+            rfl⟩
+        have hseg := breakout_go_seg (tv := (refine ctx level lab ptn active numcells).lab[p.1 + o]!)
+          ((refine ctx level lab ptn active numcells).lab.size + 1) (p.2 + 1 - p.1)
+          (refine ctx level lab ptn active numcells).lab p.1 (refine ctx level lab ptn active numcells).lab[p.1 + o]! hwit
+          (by
+            have h1 := hstR.labSize
+            have h2 := hstR.ptnSize
+            omega)
+          (by
+            have h1 := hstR.labSize
+            have h2 := hstR.ptnSize
+            omega)
+        have hs2 : cellsPerm (refine ctx level lab ptn active numcells).ptn level (refine ctx level lab ptn active numcells).lab
+            (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 := by
+          refine cellsPerm_of_confined (A := p.1)
+            (lenA := p.2 + 1 - p.1) hicp (Nat.le_refl p.1)
+            (Nat.le_refl _) ?_ ?_
+          · have hsg : segN (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 p.1 (p.2 + 1 - p.1) =
+                (refine ctx level lab ptn active numcells).lab[p.1 + o]! ::
+                (segN (refine ctx level lab ptn active numcells).lab p.1 (p.2 + 1 - p.1)).erase
+                  (refine ctx level lab ptn active numcells).lab[p.1 + o]! := by
+              rw [breakout]
+              exact hseg
+            rw [hsg]
+            exact List.perm_cons_erase htv
+          · intro q hq
+            rw [breakout]
+            rcases hq with hq | hq
+            · exact breakout_go_outside _ _ _ _ _ hq
+            · exact breakout_go_outside_right _ (p.2 + 1 - p.1) _
+                _ _ hwit _ hq
+        have hs2' : cellsPerm ptn level (refine ctx level lab ptn active numcells).lab (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 := by
+          refine cellsPerm_coarsen (ptnF := (refine ctx level lab ptn active numcells).ptn)
+            (by rw [hok.ptnSize, hstR.ptnSize])
+            (by rw [hstR.labSize, hstR.ptnSize])
+            ?_ hs2 hstR.ptnEnd hok.ptnEnd hRinv.grow
+          have hbo := breakout_ok (lab := (refine ctx level lab ptn active numcells).lab)
+            (ptn := (refine ctx level lab ptn active numcells).ptn) (level := level + 1) (tc := p.1)
+            (tv := (refine ctx level lab ptn active numcells).lab[p.1 + o]!) hstR.labOk (by omega)
+            (hstR.labOk _ (by
+              have h1 := hstR.labSize
+              have h2 := hstR.ptnSize
+              omega))
+          rw [hbo.1, hstR.labSize, hstR.ptnSize]
+        have hs3 : cellsPerm ptn level (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 llab := by
+          refine cellsPerm_coarsen (ptnF := (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.1)
+            (levF := level + 1) ?_ ?_ ?_ hlperm hchildOk.ptnEnd
+            hok.ptnEnd ?_
+          · show ptn.size =
+              ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1)).size
+            have h1 := hchildOk.ptnSize
+            have h2 := hok.ptnSize
+            omega
+          · show (breakout (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
+        (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1.size =
+              ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1)).size
+            have h1 := hchildOk.labSize
+            have h2 := hchildOk.ptnSize
+            omega
+          · show llab.size =
+              ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1)).size
+            have h1 := hchildOk.ptnSize
+            omega
+          · intro q hq
+            show ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1))[q]! ≤ level + 1
+            rcases getElem!_set!_cases (refine ctx level lab ptn active numcells).ptn p.1 (level + 1) q
+              with he | he
+            · rw [he]
+              exact Nat.le_trans (hRinv.grow q hq) (by omega)
+            · rw [he]
+              exact Nat.le_refl _
+        exact cellsPerm_trans hRinv.perm (cellsPerm_trans hs2' hs3)
+      · rw [hspec]
+        show (keysMax (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+          ((List.range m).map ((fun o => childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).lab
+          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).rows =
+          leafRows ctx llab
+        rw [hkm]
+        exact hlrows
+    · -- discrete: this node is the leaf
+      refine ⟨(refine ctx level lab ptn active numcells).lab, hstR.labSize, hRinv.perm, ?_⟩
+      rw [specNode, if_pos hdisc]
 end Hex.GraphIso.Nauty

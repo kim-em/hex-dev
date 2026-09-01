@@ -564,7 +564,7 @@ theorem childNodeOk {level tc lenT o : Nat} {rsLab rsPtn : Array Nat}
 /-! # Soundness of the replay -/
 
 /-- The spec key of the `i`-th child of a replayed node. -/
-@[reducible] def childKey (ctx : Ctx) (tcLevel fuel level : Nat)
+@[reducible, expose] def childKey (ctx : Ctx) (tcLevel fuel level : Nat)
     (rsLab rsPtn : Array Nat) (tc numcells i : Nat) : Key :=
   specNode ctx tcLevel fuel (level + 1)
     (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).1
