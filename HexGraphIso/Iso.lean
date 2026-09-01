@@ -69,6 +69,12 @@ theorem Isomorphic.elim {G H : Colored n k} (h : Isomorphic G H) :
 
 namespace IsIso
 
+theorem intro {G H : Colored n k} {p : Perm n}
+    (h1 : ∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i])
+    (h2 : ∀ i j, H.graph.adj (p.get i) (p.get j) = G.graph.adj i j) :
+    IsIso G H p :=
+  ⟨h1, h2⟩
+
 theorem cells_eq {G H : Colored n k} {p : Perm n} (h : IsIso G H p) :
     ∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i] :=
   h.1

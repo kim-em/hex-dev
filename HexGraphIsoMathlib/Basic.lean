@@ -61,12 +61,20 @@ isomorphism exists. -/
 def Colored.Isomorphic (G : Colored V k) (H : Colored W k) : Prop :=
   Nonempty (Colored.Iso G H)
 
+theorem Colored.Isomorphic.intro {G : Colored V k} {H : Colored W k}
+    (h : Colored.Iso G H) : Colored.Isomorphic G H :=
+  ⟨h⟩
+
+theorem Colored.Isomorphic.elim {G : Colored V k} {H : Colored W k}
+    (h : Colored.Isomorphic G H) : Nonempty (Colored.Iso G H) :=
+  h
+
 /-- Checked construction from a possibly non-onto colour map: `none`
 exactly when some colour below `k` is unused. -/
 def Colored.ofColor? [DecidableEq (Fin k)] (graph : SimpleGraph V)
     (color : V → Fin k) [DecidableEq V] : Option (Colored V k) :=
   if h : ∀ c : Fin k, ∃ v, color v = c then
-    some { graph, color, onto := h }
+    some { graph := graph, color := color, onto := h }
   else
     none
 
@@ -90,13 +98,17 @@ theorem Colored.ofColor?_eq_none_iff [DecidableEq (Fin k)] [DecidableEq V]
 zero-colour empty graph otherwise. The result is independent of any
 ordering of the vertices. -/
 def Colored.plain (graph : SimpleGraph V) : Sigma fun k => Colored V k :=
-  if h : Nonempty V then
-    ⟨1, { graph, color := fun _ => 0, onto := fun c => by
-      rcases h with ⟨v⟩
-      exact ⟨v, Subsingleton.elim _ _⟩ }⟩
+  if h : 0 < Fintype.card V then
+    ⟨1,
+      { graph := graph
+        color := fun _ => 0
+        onto := fun c => by
+          rcases Fintype.card_pos_iff.mp h with ⟨v⟩
+          exact ⟨v, Subsingleton.elim _ _⟩ }⟩
   else
-    ⟨0, { graph, color := fun v => absurd ⟨v⟩ h, onto := fun c => absurd c.pos (by
-      have : (0 : Nat) < 0 → False := by omega
-      exact fun hc => this hc) }⟩
+    ⟨0,
+      { graph := graph
+        color := fun v => absurd (Fintype.card_pos_iff.mpr ⟨v⟩) h
+        onto := fun c => absurd c.pos (by omega) }⟩
 
 end Hex.GraphIso.Mathlib
