@@ -423,14 +423,10 @@ def runAdjoinIdentity : Unit → IO UInt64 := fun _ => do
   return extensionChecksum
     (← requireSome "adjoin/identity" (adjoin? base.tower base.root))
 
-/- Mode 3. `ofQAdjoin` consumes a dependent irreducibility certificate and a
-selected root region, so polynomial degree alone does not control its work and
-no published bound covers the complete checked constructor. The SPEC's
-canonical `Q(sqrt(2))` presentation is the fixed hard input. The 0.5 s
-zero-grace whole-child budget includes startup and is more than 100x the
-historical 0.504 us steady-state median. -/
+/- Expected-hash anchor only. `runOfQAdjoinLadder` supplies mode-1 performance
+coverage for the public constructor. -/
 setup_fixed_benchmark runOfQAdjoin where {
-  repeats := 5, maxSecondsPerCall := 0.5, killGraceMs := 0,
+  repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x51ddf5878af8a696
 }
 
@@ -820,6 +816,53 @@ private def mkLadderRoot? (p : ZPoly) (n : Nat) : Option AlgebraicRoot :=
     else none
   else none
 
+/-- A checked rational presentation whose selected root remains runtime data. -/
+private structure PresentationInput where
+  root : AlgebraicRoot
+  checked : Option (PLift (ZPoly.CheckedIrreducible root.p))
+
+private instance : Hashable PresentationInput where
+  hash input := zpolyChecksum input.root.p
+
+private instance : Inhabited PresentationInput :=
+  ⟨⟨AlgebraicNumber.zero.toRoot, none⟩⟩
+
+def prepPresentationInput (n : Nat) : PresentationInput :=
+  let m := max n 2
+  let p := xPowSubThree m
+  match mkLadderRoot? p m with
+  | some root =>
+      if hirred : ZPoly.isIrreducible root.p = true then
+        ⟨root, some ⟨⟨hirred, root.pos_degree⟩⟩⟩
+      else
+        panic! "prepPresentationInput: irreducibility check failed"
+  | none => panic! "prepPresentationInput: root fixture failed"
+
+def runOfQAdjoinLadder (input : PresentationInput) : UInt64 :=
+  let root := input.root
+  match input.checked with
+  | some ⟨checked⟩ =>
+      letI : ZPoly.CheckedIrreducible root.p := checked
+      extensionChecksum
+        (ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk)
+  | none => 0
+
+/- Cost model. `ofQAdjoin` builds the length-`n` rational defining-coefficient
+array of the checked degree-`n` presentation, then `extensionChecksum` walks
+the resulting generator coordinates and root polynomial once. The fixture's
+certificate and selected root are prepared outside the timed region, so the
+runtime constructor performs `Θ(n)` bounded-height array work. -/
+setup_benchmark runOfQAdjoinLadder n => n
+  with prep := prepPresentationInput
+  where {
+    paramFloor := 2
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
 /-- The height-two ladder tower `ℚ(√2, 3^{1/m})` (just `ℚ(√2)` at `m = 1`). -/
 private def ladderTower? (m : Nat) : Option NumberTower := do
   let base ← sqrtTwo? ()
@@ -893,10 +936,10 @@ def runTowerDivLadder (input : ElemInput) : UInt64 :=
 /- Cost model. Coordinate addition adds the two mixed-radix coordinate
 vectors pointwise: exactly `D = 2n` rational additions for the
 dimension-`2n` ladder tower (SPEC §Complexity: "Coordinate addition costs
-O(D) rational operations"). Fixture coordinate heights are bounded, so each
-rational operation is `O(1)` words and the declared wall model is linear in
-the parameter. -/
-setup_benchmark runTowerAddLadder n => n
+O(D) rational operations"). Bounded rational heights make the coordinate
+work linear; the fixed dispatch and result-object work give the finite-range
+affine proxy `n + 1`. -/
+setup_benchmark runTowerAddLadder n => n + 1
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -908,8 +951,9 @@ setup_benchmark runTowerAddLadder n => n
   }
 
 /- Cost model. Subtraction visits the two length-`D = 2n` coordinate vectors
-pointwise. Bounded rational heights make the declared wall model linear. -/
-setup_benchmark runTowerSubLadder n => n
+pointwise. Bounded rational heights make the coordinate work linear; fixed
+dispatch and result-object work give the same affine proxy `n + 1`. -/
+setup_benchmark runTowerSubLadder n => n + 1
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -921,10 +965,8 @@ setup_benchmark runTowerSubLadder n => n
   }
 
 /- Cost model. Negation visits exactly the `D = 2n` bounded-height rational
-coordinates, then allocates the result wrapper and computes its checksum.  The
-coordinate work is linear while the latter work contributes a fixed intercept,
-so `n + 1` is the finite-range affine model (and remains asymptotically linear
-in `D`). -/
+coordinates. Fixed dispatch and result-object work give the same finite-range
+affine proxy `n + 1` as the other coordinatewise operations. -/
 setup_benchmark runTowerNegLadder n => n + 1
   with prep := prepElemInput
   where {
@@ -937,9 +979,9 @@ setup_benchmark runTowerNegLadder n => n + 1
   }
 
 /- Cost model. Rational scalar action multiplies each of the `D = 2n`
-bounded-height coordinates by the fixed scalar `3/5`, so its wall model is
-linear. -/
-setup_benchmark runTowerSMulLadder n => n
+bounded-height coordinates by the fixed scalar `3/5`. Fixed dispatch and
+result-object work give the same affine proxy `n + 1`. -/
+setup_benchmark runTowerSMulLadder n => n + 1
   with prep := prepElemInput
   where {
     paramFloor := 1
@@ -1181,6 +1223,181 @@ either side, so this registration measures only the per-call request/reply
 cost that the headline report subtracts from the PARI wall times. -/
 setup_fixed_benchmark runPariNfFactorOverhead where
   { pariCompareConfig with expectedHash := some 0x0 }
+
+/-! # Temporary ordered-mode diagnostics
+
+These registrations make the candidate parameterisations required by the
+ordered-mode audit executable. They are removed after their scientific export;
+the retained artifact and report record why the unstable families select mode
+3 instead of leaving failing diagnostic registrations in the merge smoke. -/
+
+private structure AdjoinDiagnosticInput where
+  base : NumberTower
+  root : AlgebraicRoot
+
+private instance : Hashable AdjoinDiagnosticInput where
+  hash input := mixHash (hash input.base.dim) (zpolyChecksum input.root.p)
+
+private instance : Inhabited AdjoinDiagnosticInput :=
+  ⟨⟨rat, AlgebraicNumber.zero.toRoot⟩⟩
+
+def prepAdjoinDiagnostic (n : Nat) : AdjoinDiagnosticInput :=
+  let m := max n 2
+  let root := mkLadderRoot? (xPowSubThree m) m
+  match sqrtTwo? (), root with
+  | some base, some root => ⟨base.tower, root⟩
+  | _, _ => panic! "prepAdjoinDiagnostic: fixture failed"
+
+def runAdjoinDiagnostic (input : AdjoinDiagnosticInput) : UInt64 :=
+  match adjoin? input.base input.root with
+  | some result => extensionChecksum result
+  | none => 0
+
+private structure IdentityDiagnosticInput where
+  extension : Option (Extension rat)
+
+private instance : Hashable IdentityDiagnosticInput where
+  hash input := hash input.extension.isSome
+
+private instance : Inhabited IdentityDiagnosticInput := ⟨⟨none⟩⟩
+
+def prepIdentityDiagnostic (n : Nat) : IdentityDiagnosticInput :=
+  let input := prepPresentationInput n
+  let root := input.root
+  match input.checked with
+  | some ⟨checked⟩ =>
+      letI : ZPoly.CheckedIrreducible root.p := checked
+      ⟨some (ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk)⟩
+  | none => panic! "prepIdentityDiagnostic: fixture failed"
+
+def runIdentityDiagnostic (input : IdentityDiagnosticInput) : UInt64 :=
+  match input.extension with
+  | some extension =>
+      match adjoin? extension.tower extension.root with
+      | some result => extensionChecksum result
+      | none => 0
+  | none => 0
+
+private structure CheckDiagnosticInput where
+  tower : NumberTower
+  f : Poly tower
+  scalar : Elem tower
+  factors : Array (Poly tower × Nat)
+
+private instance : Hashable CheckDiagnosticInput where
+  hash input := mixHash (polyChecksum input.f) (elemChecksum input.scalar)
+
+private instance : Inhabited CheckDiagnosticInput :=
+  ⟨⟨rat, DensePoly.ofCoeffs #[], 0, #[]⟩⟩
+
+def prepCheckDiagnostic (n : Nat) : CheckDiagnosticInput :=
+  let input := prepFactorInput n
+  match factor? input.tower input.f with
+  | some result => ⟨input.tower, input.f, result.scalar, result.factors⟩
+  | none => panic! "prepCheckDiagnostic: factorization failed"
+
+def runCheckDiagnostic (input : CheckDiagnosticInput) : UInt64 :=
+  hash (checkFactorization input.f input.scalar input.factors)
+
+private def splitPrimes : Array Int := #[2, 3, 5]
+
+private structure SplitDiagnosticInput where
+  f : Poly rat
+
+private instance : Hashable SplitDiagnosticInput where
+  hash input := polyChecksum input.f
+
+private instance : Inhabited SplitDiagnosticInput :=
+  ⟨⟨DensePoly.ofCoeffs #[]⟩⟩
+
+def prepSplitDiagnostic (n : Nat) : SplitDiagnosticInput :=
+  let k := min (max n 1) splitPrimes.size
+  let f := (List.range k).foldl (fun product i =>
+    product * rationalPoly [-(splitPrimes.getD i 2 : Rat), 0, 1]) 1
+  ⟨f⟩
+
+def runSplitDiagnostic (input : SplitDiagnosticInput) : UInt64 :=
+  match split? rat input.f with
+  | some result => splitChecksum result
+  | none => 0
+
+private structure TowerDiagnosticInput where
+  tower : NumberTower
+
+private instance : Hashable TowerDiagnosticInput where
+  hash input := hash input.tower.dim
+
+private instance : Inhabited TowerDiagnosticInput := ⟨⟨rat⟩⟩
+
+def prepTowerDiagnostic (n : Nat) : TowerDiagnosticInput :=
+  match ladderTower? (max n 1) with
+  | some tower => ⟨tower⟩
+  | none => panic! "prepTowerDiagnostic: tower fixture failed"
+
+def runFlattenDiagnostic (input : TowerDiagnosticInput) : UInt64 :=
+  match flatten? input.tower with
+  | some result => flattenChecksum result
+  | none => 0
+
+private structure MapDiagnosticInput where
+  tower : NumberTower
+  result : Option (Flattening tower)
+
+private instance : Hashable MapDiagnosticInput where
+  hash input := hash input.tower.dim
+
+private instance : Inhabited MapDiagnosticInput := ⟨⟨rat, none⟩⟩
+
+def prepMapDiagnostic (n : Nat) : MapDiagnosticInput :=
+  let input := prepTowerDiagnostic n
+  ⟨input.tower, flatten? input.tower⟩
+
+def runMapDiagnostic (input : MapDiagnosticInput) : UInt64 :=
+  match input.result with
+  | some result => flattenChecksum result
+  | none => 0
+
+setup_benchmark runAdjoinDiagnostic n => n with prep := prepAdjoinDiagnostic
+  where {
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runIdentityDiagnostic n => n with prep := prepIdentityDiagnostic
+  where {
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runCheckDiagnostic n => n with prep := prepCheckDiagnostic
+  where {
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12, 16, 24]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runSplitDiagnostic n => n with prep := prepSplitDiagnostic
+  where {
+    paramSchedule := .custom #[1, 2, 3]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runFlattenDiagnostic n => n with prep := prepTowerDiagnostic
+  where {
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
+setup_benchmark runMapDiagnostic n => n with prep := prepMapDiagnostic
+  where {
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
 
 end Hex.NumberTowerBench
 
