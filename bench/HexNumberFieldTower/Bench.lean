@@ -573,10 +573,11 @@ setup_fixed_benchmark runFactorRat where {
 coefficient growth, resultant, gcd, and factorization phases and supplies no
 tight realised wall model; the available BHKS bound does not cover the
 dominant non-factorization phases. `X^2 - 3` over `Q(sqrt(2))` is the SPEC's
-canonical bad-first-shift case. Its historical 0.824 ms median sets a 0.5 s
-zero-grace whole-child budget including warmup and the 0.2 s timed batch. -/
+canonical bad-first-shift case. Its measured 0.813 ms median sets a 1 s
+zero-grace whole-child budget including certified fixture construction,
+warmup, and the 0.2 s timed batch. -/
 setup_fixed_benchmark runFactorRetry where {
-  repeats := 3, maxSecondsPerCall := 0.5, killGraceMs := 0,
+  repeats := 3, maxSecondsPerCall := 1.0, killGraceMs := 0,
   expectedHash := some 0xf830f035fb69256e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
