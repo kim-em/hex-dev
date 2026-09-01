@@ -147,25 +147,25 @@ private def quadraticVectorSchedule : Array Nat := #[256, 320, 384, 448, 512, 64
 /- Each of the four public wrappers performs dense Gauss--Jordan elimination:
 `n` pivots, `n` row updates, and `n` entries per update. -/
 -- Cubic: `n` pivots times `n` row updates times `n` entries per update.
-setup_benchmark runReduce n => n ^ 3 with prep := dense where {
+setup_benchmark runReduce n => n ^ 3 with prep := Hex.RowReduceBench.dense where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
 -- Cubic: rank first performs the same dense Gauss--Jordan elimination.
-setup_benchmark runRank n => n ^ 3 with prep := dense where {
+setup_benchmark runRank n => n ^ 3 with prep := Hex.RowReduceBench.dense where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
 -- Cubic: the public wrapper is dominated by dense Gauss--Jordan elimination.
-setup_benchmark runSpanCoeffs n => n ^ 3 with prep := dense where {
+setup_benchmark runSpanCoeffs n => n ^ 3 with prep := Hex.RowReduceBench.dense where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
 -- Cubic: the public wrapper is dominated by dense Gauss--Jordan elimination.
-setup_benchmark runSpanContains n => n ^ 3 with prep := dense where {
+setup_benchmark runSpanContains n => n ^ 3 with prep := Hex.RowReduceBench.dense where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
@@ -173,13 +173,13 @@ setup_benchmark runSpanContains n => n ^ 3 with prep := dense where {
 /- Prepared span solving performs a transform-vector product and residual
 check, each visiting a square matrix. -/
 -- Quadratic: one transform-vector product and one square residual check.
-setup_benchmark runEchelonSpanCoeffs n => n ^ 2 with prep := denseReduced where {
+setup_benchmark runEchelonSpanCoeffs n => n ^ 2 with prep := Hex.RowReduceBench.denseReduced where {
   paramFloor := 16, paramCeiling := 192, paramSchedule := .custom spanSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
 -- Quadratic: one transform-vector product and one square residual check.
-setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := denseReduced where {
+setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := Hex.RowReduceBench.denseReduced where {
   paramFloor := 16, paramCeiling := 192, paramSchedule := .custom spanSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
@@ -187,13 +187,13 @@ setup_benchmark runEchelonSpanContains n => n ^ 2 with prep := denseReduced wher
 /- Prepared coefficient selection and the proved sorted-complement merge each
 traverse vectors/lists of length proportional to `n`. -/
 -- Linear: coefficient selection traverses vectors of length proportional to `n`.
-setup_benchmark runEchelonCoeffs n => n with prep := deficientReduced where {
+setup_benchmark runEchelonCoeffs n => n with prep := Hex.RowReduceBench.deficientReduced where {
   paramFloor := 128, paramCeiling := 512, paramSchedule := .custom linearSchedule
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
 
 -- Linear: the proved sorted-complement merge visits each column once.
-setup_benchmark runFreeCols n => n with prep := deficientReduced where {
+setup_benchmark runFreeCols n => n with prep := Hex.RowReduceBench.deficientReduced where {
   paramFloor := 128, paramCeiling := 512, paramSchedule := .custom linearSchedule
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
@@ -201,13 +201,13 @@ setup_benchmark runFreeCols n => n with prep := deficientReduced where {
 /- Public nullspace wrappers are dominated by the cubic RREF phase; their
 rank and nullity are both `n / 2`. -/
 -- Cubic: public construction is dominated by RREF before basis materialization.
-setup_benchmark runNullspaceMatrix n => n ^ 3 with prep := deficient where {
+setup_benchmark runNullspaceMatrix n => n ^ 3 with prep := Hex.RowReduceBench.deficient where {
   paramFloor := 48, paramCeiling := 96, paramSchedule := .custom publicMatrixSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
 
 -- Cubic: public construction is dominated by RREF before basis materialization.
-setup_benchmark runNullspace n => n ^ 3 with prep := deficient where {
+setup_benchmark runNullspace n => n ^ 3 with prep := Hex.RowReduceBench.deficient where {
   paramFloor := 8, paramCeiling := 64, paramSchedule := .custom cubicSchedule
   targetInnerNanos := 1_000_000_000, outerTrials := 5, maxSecondsPerCall := 10.0
 }
@@ -216,13 +216,13 @@ setup_benchmark runNullspace n => n ^ 3 with prep := deficient where {
 column-to-pivot lookup is prepared once, so each output entry is constant-time
 apart from rational access/negation. -/
 -- Quadratic: materialize `n * (n - r)` entries with `r = n / 2`.
-setup_benchmark runReducedMatrix n => n ^ 2 with prep := deficientReduced where {
+setup_benchmark runReducedMatrix n => n ^ 2 with prep := Hex.RowReduceBench.deficientReduced where {
   paramFloor := 128, paramCeiling := 768, paramSchedule := .custom quadraticSchedule
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
 
 -- Quadratic: materialize `n * (n - r)` vector entries with `r = n / 2`.
-setup_benchmark runReducedNullspace n => n ^ 2 with prep := deficientReduced where {
+setup_benchmark runReducedNullspace n => n ^ 2 with prep := Hex.RowReduceBench.deficientReduced where {
   paramFloor := 256, paramCeiling := 768, paramSchedule := .custom quadraticVectorSchedule
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
