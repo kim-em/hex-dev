@@ -1341,6 +1341,17 @@ setup_benchmark runRecursiveFactorDiagnostic n => n
     signalFloorMultiplier := 1.0
   }
 
+/- Temporary ordered-mode diagnostic for coordinate negation. -/
+setup_benchmark runTowerNegLadder n => n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 16
+    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12, 16]
+    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
+    signalFloorMultiplier := 1.0
+  }
+
 end Hex.NumberTowerBench
 
 def main (args : List String) : IO UInt32 :=
