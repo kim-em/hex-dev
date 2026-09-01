@@ -133,7 +133,18 @@ The planned stack, in dependency order:
    public `canon` nauty-compatible with the SPEC's theorems intact;
    `DiffCert`/`checkDiff` then give the certificate-based negative
    tactic path (two `checkCanon_sound` applications, `checkDiff`, and
-   `iso_iff_canon_eq`).
+   `iso_iff_canon_eq`). **Status: `canonicalizeSpec`
+   (Nauty/Complete.lean) is the total certificate-checked
+   canonicalization with the full theorem surface**
+   (`canonicalizeSpec_relabel`, `canonicalizeSpec_iso`,
+   `canonicalizeSpec_invariant`, `iso_iff_canonicalizeSpec_eq`): the
+   branch-and-bound producer runs first, then the provably total
+   exhaustive fallback — `certifyNode_complete`/`checkKey_complete`
+   show the checker accepts the honest certificate for the true key,
+   and `bruteCanon?_isSome` finds the achieved leaf among all
+   labellings. Remaining: swapping the `Canon.lean` public surface
+   from the reference form to `canonicalizeSpec` and the tactic and
+   conformance follow-ups.
 
 Until stage 4 lands, exact nauty compatibility of the public `canon` is
 withheld (the SPEC's staged-namespace allowance), and the released

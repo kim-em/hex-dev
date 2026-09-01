@@ -18,6 +18,7 @@ public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CanonForm
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved
+public import HexGraphIso.Nauty.Complete
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
 public import HexGraphIso.Pairwise

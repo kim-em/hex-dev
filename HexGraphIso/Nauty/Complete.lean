@@ -408,4 +408,342 @@ theorem certifyChildren_complete {ctx : Ctx} (hn : ctx.n = n)
   termination_by cnt _ _ _ _ _ _ _ _ _ _ _ _ => (fuel, cnt + 1)
 end
 
+/-! # Root-level completeness of the key check -/
+
+theorem specNode_codes_head' {ctx : Ctx} (tcLevel : Nat)
+    {fuel : Nat} (hfuel : 1 ≤ fuel) (level : Nat)
+    (lab ptn : Array Nat) (active numcells : Nat) :
+    ∃ rest, (specNode ctx tcLevel fuel level lab ptn active
+      numcells).codes =
+      (refine ctx level lab ptn active numcells).longcode ::
+        rest := by
+  obtain ⟨f', rfl⟩ : ∃ f', fuel = f' + 1 := ⟨fuel - 1, by omega⟩
+  exact specNode_codes_head ctx tcLevel f' level lab ptn active
+    numcells
+
+/-- The honest certificate for the true key always passes
+`checkKey`. -/
+theorem checkKey_complete (G : Colored n k) :
+    checkKey G
+      (certifyNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length (canonSpecKey G).codes)
+      (canonSpecKey G) = true := by
+  rw [checkKey]
+  rcases Nat.eq_zero_or_pos n with rfl | hn0
+  · rw [if_pos (by rfl)]
+    rw [show canonSpecKey G = ⟨[], []⟩ from by
+      rw [canonSpecKey, canonSpec, if_pos (by rfl)]]
+    rfl
+  · rw [if_neg (by simp; omega)]
+    have hok := initial_nodeOk G hn0
+    have hbc : 1 ≤ bcount (initPtn n (n + 2)
+        (initialPartition G).2) 1 n := by
+      refine bcount_pos_of_boundary (q := n - 1) (by omega) ?_
+      have h1 := hok.ptnEnd
+      rw [size_initPtn] at h1
+      exact h1
+    have hkeydef : canonSpecKey G =
+        specNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length := by
+      rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+    obtain ⟨rest, hrest⟩ : ∃ rest, (canonSpecKey G).codes =
+        (refine { n := n, g := rowsOf G } 1 (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length).longcode :: rest := by
+      rw [hkeydef]
+      exact specNode_codes_head' _ (by omega) _ _ _ _ _
+    have hkeyrec : (⟨(refine { n := n, g := rowsOf G } 1 (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length).longcode :: rest,
+        (canonSpecKey G).rows⟩ : Key) = canonSpecKey G := by
+      rw [← hrest, key_eta]
+    obtain ⟨a, ha, haiff⟩ := certifyNode_complete (n := n)
+      (ctx := { n := n, g := rowsOf G }) rfl (size_rowsOf G) 100
+      (canonSpecKey G).rows n 1 (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length
+      (refine { n := n, g := rowsOf G } 1 (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length).longcode rest hok
+      (by show n + 1 ≤ 1 + n; omega) hbc
+      (by
+        rw [hkeyrec]
+        exact keyLe_of_eq hkeydef.symm)
+    have hat : a = true := haiff.mpr (by
+      rw [hkeyrec]
+      exact hkeydef.symm)
+    rw [hat] at ha
+    refine decide_eq_true ?_
+    rw [hrest]
+    exact ha
+
+
+/-! # The exhaustive fallback always succeeds -/
+
+/-- All orderings of a list of vertices. -/
+@[expose] def permsOf (l : List Nat) : List (List Nat) :=
+  if h : l = [] then
+    [[]]
+  else
+    l.attach.flatMap fun x =>
+      (permsOf (l.erase x.val)).map (x.val :: ·)
+  termination_by l.length
+  decreasing_by
+    have := List.length_erase_of_mem x.property
+    have hne : 0 < l.length := by
+      rcases l with _ | _
+      · exact absurd rfl h
+      · simp
+    omega
+
+theorem mem_permsOf : ∀ {cand l : List Nat}, cand.Perm l →
+    cand ∈ permsOf l
+  | [], l, hperm => by
+    have hl : l = [] := (List.perm_nil.mp hperm.symm)
+    subst hl
+    rw [permsOf]
+    simp
+  | x :: rest, l, hperm => by
+    have hx : x ∈ l := hperm.mem_iff.mp (by simp)
+    have hrest : rest.Perm (l.erase x) := by
+      have := List.cons_perm_iff_perm_erase.mp hperm
+      exact this.2
+    have hne : l ≠ [] := by
+      intro he
+      subst he
+      cases hx
+    rw [permsOf, dif_neg hne]
+    refine List.mem_flatMap.mpr ⟨⟨x, hx⟩, by simp, ?_⟩
+    exact List.mem_map.mpr ⟨rest, mem_permsOf hrest, rfl⟩
+
+/-- Try every labelling; the checker keeps only canonical ones.
+Exponential, but provably total: the achieved leaf is among the
+candidates. -/
+@[expose] def bruteCanon? (G : Colored n k) :
+    Option (CanonResult n k) :=
+  (permsOf (List.range n)).findSome? fun cand =>
+    checkCanon G
+      (certifyNode { n := n, g := rowsOf G } 100 n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length (canonSpecKey G).codes)
+      (canonSpecKey G) cand.toArray
+
+/-- `checkCanon` succeeds on the achieved leaf's labelling. -/
+theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
+    (hn0 : 0 < n) (hsz : llab.size = n)
+    (hperm : llab.toList.Perm (List.range n))
+    (hrows : (canonSpecKey G).rows =
+      leafRows { n := n, g := rowsOf G } llab)
+    (hcols : ∀ (i : Nat), i < n → ∃ hv : llab[i]! < n,
+      (G.coloring.cells[(⟨llab[i]!, hv⟩ : Fin n)]).val =
+        (sortedColorSeq G)[i]!) :
+    (checkCanon G
+      (certifyNode { n := n, g := rowsOf G } 100 n 1
+      (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length (canonSpecKey G).codes)
+      (canonSpecKey G) llab).isSome := by
+  have hbound : ∀ v ∈ llab, v < n := by
+    intro v hv
+    have hm : v ∈ llab.toList := by simpa using hv
+    exact List.mem_range.mp (hperm.mem_iff.mp hm)
+  rw [checkCanon]
+  rw [dif_pos (⟨hsz, hbound⟩ : llab.size = n ∧ ∀ v ∈ llab, v < n)]
+  have hmapval : ((llab.attach.map fun v =>
+      (⟨v.val, hbound v.val v.property⟩ : Fin n)).toList.map
+      Fin.val) = llab.toList := by
+    refine List.ext_getElem (by simp [hsz]) fun i h1 h2 => ?_
+    rw [List.getElem_map, Array.getElem_toList, Array.getElem_map,
+      Array.getElem_attach]
+    exact (Array.getElem_toList _).symm
+  have hnodupv : ((llab.attach.map fun v =>
+      (⟨v.val, hbound v.val v.property⟩ : Fin n)) :
+      Array (Fin n)).toList.Nodup := by
+    have hmv : (((llab.attach.map fun v =>
+        (⟨v.val, hbound v.val v.property⟩ : Fin n)) :
+        Array (Fin n)).toList.map Fin.val).Nodup := by
+      rw [hmapval]
+      exact hperm.symm.nodup List.nodup_range
+    rw [List.nodup_iff_pairwise_ne, List.pairwise_map] at hmv
+    rw [List.nodup_iff_pairwise_ne]
+    exact hmv.imp fun h he => h (congrArg Fin.val he)
+  have hcompl : ∀ i : Fin n, i ∈ ((llab.attach.map fun v =>
+      (⟨v.val, hbound v.val v.property⟩ : Fin n)) :
+      Array (Fin n)).toList := by
+    intro i
+    have hm : i.val ∈ llab.toList :=
+      hperm.mem_iff.mpr (List.mem_range.mpr i.isLt)
+    rw [← hmapval] at hm
+    rcases List.mem_map.mp hm with ⟨x, hx, hxe⟩
+    exact (Fin.eq_of_val_eq hxe : x = i) ▸ hx
+  obtain ⟨l, hl⟩ : ∃ l, Label.ofVector?
+      (⟨llab.attach.map fun v =>
+        (⟨v.val, hbound v.val v.property⟩ : Fin n), by
+          simp [hsz]⟩ : Vector (Fin n) n) = some l := by
+    rw [Label.ofVector?, Perm.ofVector?]
+    rw [dif_pos ⟨hnodupv, hcompl⟩]
+    exact ⟨_, rfl⟩
+  rw [hl]
+  have hcond : (checkKey G
+      (certifyNode { n := n, g := rowsOf G } 100 n 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length (canonSpecKey G).codes)
+      (canonSpecKey G) &&
+      ((canonSpecKey G).rows ==
+        leafRows { n := n, g := rowsOf G } llab) &&
+      colorSortedCheck G llab) = true := by
+    refine (Bool.and_eq_true _ _).mpr ⟨(Bool.and_eq_true _ _).mpr
+      ⟨checkKey_complete G, beq_iff_eq.mpr hrows⟩, ?_⟩
+    rw [colorSortedCheck, List.all_eq_true]
+    intro i hi
+    have hin := List.mem_range.mp hi
+    refine (Bool.or_eq_true_iff).mpr ?_
+    rcases Decidable.em (i + 1 = n) with he | he
+    · exact Or.inl (by simpa using he)
+    · right
+      refine decide_eq_true ?_
+      obtain ⟨hv1, hc1⟩ := hcols i hin
+      obtain ⟨hv2, hc2⟩ := hcols (i + 1) (by omega)
+      have hl1 : labColor G llab i =
+          (sortedColorSeq G)[i]! := by
+        rw [labColor, dif_pos ⟨by omega, hv1⟩]
+        exact hc1
+      have hl2 : labColor G llab (i + 1) =
+          (sortedColorSeq G)[i + 1]! := by
+        rw [labColor, dif_pos ⟨by omega, hv2⟩]
+        exact hc2
+      rw [hl1, hl2]
+      -- sortedness of the colour sequence at adjacent positions
+      have hp := pairwise_sortedColorSeq G
+      rw [List.pairwise_iff_getElem] at hp
+      have hlen := length_sortedColorSeq G
+      have := hp i (i + 1) (by omega) (by omega) (by omega)
+      rw [getElem!_pos _ _ (by omega), getElem!_pos _ _ (by omega)]
+      exact this
+  simp only [hcond, if_true]
+  rfl
+
+/-- The exhaustive fallback finds a canonical result whenever the
+graph has vertices. -/
+theorem bruteCanon?_isSome (G : Colored n k) (hn0 : 0 < n) :
+    (bruteCanon? G).isSome := by
+  rw [bruteCanon?, List.findSome?_isSome_iff]
+  -- the achieved leaf supplies a passing candidate
+  have hok := initial_nodeOk G hn0
+  have hbc : 1 ≤ bcount (initPtn n (n + 2)
+      (initialPartition G).2) 1 n := by
+    refine bcount_pos_of_boundary (q := n - 1) (by omega) ?_
+    have h1 := hok.ptnEnd
+    rw [size_initPtn] at h1
+    exact h1
+  obtain ⟨llab, hlsz, hlcp, hlrows⟩ := specNode_achieved
+    (ctx := { n := n, g := rowsOf G }) rfl 100 n 1
+    (initialPartition G).1
+    (initPtn n (n + 2) (initialPartition G).2)
+    (initActive (initialPartition G).2)
+    (initialPartition G).2.length hok
+    (by show n + 1 ≤ 1 + n; omega) hbc
+  have hkrows : (canonSpecKey G).rows =
+      leafRows { n := n, g := rowsOf G } llab := by
+    rw [canonSpecKey, canonSpec, if_neg (by simp; omega)]
+    exact hlrows
+  have hperm := achieved_perm_range hlsz hn0 hlcp
+  refine ⟨llab.toList, ?_, ?_⟩
+  · exact mem_permsOf hperm
+  · have hrt : llab.toList.toArray = llab := by simp
+    rw [hrt]
+    exact checkCanon_of_achieved (G := G) hn0 hlsz hperm hkrows
+      (achieved_position_colors hlcp)
+
+/-! # Total certificate-checked canonicalization -/
+
+/-- Certificate-checked canonicalization: the branch-and-bound search
+first, the provably total exhaustive fallback second. The final arm
+is reachable only for `n = 0`, where it is correct. -/
+@[expose] def canonicalizeSpec (G : Colored n k) : CanonResult n k :=
+  match certifyCanon? G with
+  | some res => res
+  | none =>
+    match bruteCanon? G with
+    | some res => res
+    | none => { form := G, label := Label.id n }
+
+theorem canonicalizeSpec_form (G : Colored n k) :
+    (canonicalizeSpec G).form = specCanon G := by
+  rw [canonicalizeSpec]
+  rcases hc : certifyCanon? G with _ | res
+  · rcases hb : bruteCanon? G with _ | res2
+    · rcases Nat.eq_zero_or_pos n with rfl | hn0
+      · show G = specCanon G
+        exact Colored.ext (fun i j => i.elim0) (fun i => i.elim0)
+      · exfalso
+        have hs := bruteCanon?_isSome G hn0
+        rw [hb] at hs
+        simp at hs
+    · show res2.form = specCanon G
+      rw [bruteCanon?] at hb
+      obtain ⟨cand, hmem, hchk⟩ := List.exists_of_findSome?_eq_some
+        hb
+      exact checkCanon_form hchk
+  · show res.form = specCanon G
+    rw [certifyCanon?] at hc
+    split at hc
+    · cases hc
+    · split at hc
+      · cases hc
+      · exact checkCanon_form hc
+
+theorem canonicalizeSpec_relabel (G : Colored n k) :
+    G.relabel (canonicalizeSpec G).label =
+      (canonicalizeSpec G).form := by
+  rw [canonicalizeSpec]
+  rcases hc : certifyCanon? G with _ | res
+  · rcases hb : bruteCanon? G with _ | res2
+    · show G.relabel (Label.id n) = G
+      exact Colored.relabel_id G
+    · show G.relabel res2.label = res2.form
+      rw [bruteCanon?] at hb
+      obtain ⟨cand, hmem, hchk⟩ := List.exists_of_findSome?_eq_some
+        hb
+      exact (checkCanon_sound hchk).2.1.symm
+  · show G.relabel res.label = res.form
+    rw [certifyCanon?] at hc
+    split at hc
+    · cases hc
+    · split at hc
+      · cases hc
+      · exact (checkCanon_sound hc).2.1.symm
+
+theorem canonicalizeSpec_iso (G : Colored n k) :
+    Isomorphic G (canonicalizeSpec G).form := by
+  rw [canonicalizeSpec_form]
+  exact specCanon_iso G
+
+theorem canonicalizeSpec_invariant {G H : Colored n k}
+    (h : Isomorphic G H) :
+    (canonicalizeSpec G).form = (canonicalizeSpec H).form := by
+  rw [canonicalizeSpec_form, canonicalizeSpec_form]
+  exact specCanon_invariant h
+
+theorem iso_iff_canonicalizeSpec_eq {G H : Colored n k} :
+    Isomorphic G H ↔
+      (canonicalizeSpec G).form = (canonicalizeSpec H).form := by
+  rw [canonicalizeSpec_form, canonicalizeSpec_form]
+  exact iso_iff_specCanon_eq
+
 end Hex.GraphIso.Nauty
