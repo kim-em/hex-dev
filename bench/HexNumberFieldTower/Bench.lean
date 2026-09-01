@@ -847,12 +847,14 @@ def runOfQAdjoinLadder (input : PresentationInput) : UInt64 :=
         (ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk)
   | none => 0
 
-/- Cost model. `ofQAdjoin` builds the length-`n` rational defining-coefficient
-array of the checked degree-`n` presentation, then `extensionChecksum` walks
-the resulting generator coordinates and root polynomial once. The fixture's
+/- Cost model. `ofQAdjoin` has fixed dispatch, structure-construction, and
+generator setup, then builds the length-`n` rational defining-coefficient
+array of the checked degree-`n` presentation. `extensionChecksum` walks the
+resulting generator coordinates and root polynomial once. The fixture's
 certificate and selected root are prepared outside the timed region, so the
-runtime constructor performs `Θ(n)` bounded-height array work. -/
-setup_benchmark runOfQAdjoinLadder n => n
+finite-range model is the affine `n + 1`, and its leading term is the expected
+`Θ(n)` bounded-height array work. -/
+setup_benchmark runOfQAdjoinLadder n => n + 1
   with prep := prepPresentationInput
   where {
     paramFloor := 2
