@@ -127,8 +127,12 @@ def main() -> int:
     sweep = _read_jsonl(args.sweep)
     fig, (ax_cactus, ax_family) = plt.subplots(1, 2, figsize=(13, 5))
     _cactus(ax_cactus, {
-        "nauty 2.9.3 (C, FFI)": [r["nauty_ns"] / 1e9 for r in sweep],
-        "hex canonicalize (compiled)": [r["hex_ns"] / 1e9 for r in sweep],
+        "nauty 2.9.3 (C, no proof object)":
+            [r["nauty_ns"] / 1e9 for r in sweep],
+        "hex canonicalize (fast, conformance-pinned)":
+            [r["fast_ns"] / 1e9 for r in sweep],
+        "hex canonicalizeChecked (validated certificate)":
+            [r["checked_ns"] / 1e9 for r in sweep],
     }, len(sweep))
     ax_cactus.set_title("canonical labelling: cactus over "
                         f"{len(sweep)} family instances")
@@ -137,8 +141,12 @@ def main() -> int:
         rows = sorted((r for r in sweep if r["family"] == family),
                       key=lambda r: r["n"])
         line, = ax_family.plot([r["n"] for r in rows],
-                               [r["hex_ns"] / 1e9 for r in rows],
+                               [r["checked_ns"] / 1e9 for r in rows],
                                marker="o", markersize=3, label=family)
+        ax_family.plot([r["n"] for r in rows],
+                       [r["fast_ns"] / 1e9 for r in rows],
+                       linestyle=":", linewidth=1.4, marker="o",
+                       markersize=2, color=line.get_color())
         ax_family.plot([r["n"] for r in rows],
                        [r["nauty_ns"] / 1e9 for r in rows],
                        linestyle="--", linewidth=1, marker="o",
@@ -146,9 +154,15 @@ def main() -> int:
     ax_family.set_yscale("log")
     ax_family.set_xlabel("n (vertices)")
     ax_family.set_ylabel("canonicalize time (s)")
-    ax_family.set_title("by family: hex (solid) vs nauty (dashed)")
+    ax_family.set_title(
+        "by family: checked (solid), fast (dotted), nauty (dashed)")
     ax_family.grid(True, which="both", alpha=0.3)
     ax_family.legend(fontsize=8)
+    fig.text(0.5, 0.005,
+             "min of 5 reps after warmup, blackBox-sunk results, "
+             "doubled-batch scaling self-check; single machine, "
+             "compiled binaries only",
+             ha="center", fontsize=7, style="italic")
     canon_png = args.out_dir / "hexgraphiso-canon-cactus.png"
     fig.tight_layout()
     fig.savefig(canon_png, dpi=150)
@@ -171,9 +185,13 @@ def main() -> int:
     tactic_times = [cache[r["name"]] for r in pairs
                     if cache.get(r["name"]) is not None]
     _cactus(ax, {
-        "nauty 2.9.3 (C, FFI)": [r["nauty_ns"] / 1e9 for r in pairs],
-        "hex isIso (compiled)": [r["hex_ns"] / 1e9 for r in pairs],
-        "graph_iso tactic (kernel-checked)": tactic_times,
+        "nauty 2.9.3 (C, no proof object)":
+            [r["nauty_ns"] / 1e9 for r in pairs],
+        "hex isIso (fast, conformance-pinned)":
+            [r["fast_ns"] / 1e9 for r in pairs],
+        "hex isIsoChecked (validated certificate)":
+            [r["checked_ns"] / 1e9 for r in pairs],
+        "graph_iso tactic (kernel-checked proof)": tactic_times,
     }, len(pairs))
     positives = sum(1 for r in pairs if r["iso"])
     ax.set_title(f"isomorphism proof obligations: {positives} positive, "
