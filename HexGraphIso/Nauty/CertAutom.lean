@@ -54,6 +54,9 @@ producers. -/
 structure AutState where
   /-- Verified generators paired with their inverses. -/
   gens : Array (Array Nat × Array Nat) := #[]
+  /-- Bumped on every successful admission (including cap-slot
+  replacement), so per-node filter caches know when to refresh. -/
+  gen : Nat := 0
   /-- Union-find orbit array over vertices, for admission control. -/
   orbits : Array Nat := #[]
   /-- Number of orbit classes of `orbits`. -/
@@ -105,18 +108,24 @@ def AutState.admit (ctx : Ctx) (st : AutState) (γ : Array Nat) :
     return st
   if st.gens.any (fun p => p.1 == γ) then
     return st
-  unless checkAutom ctx.g γ ctx.n do
+  -- untrusted fast filter (nauty's edge-wise test); the trusted
+  -- checkAutom runs only when a record is emitted
+  unless γ.size == ctx.n &&
+      ((List.range ctx.n).all fun v => γ[v]! < ctx.n) &&
+      isautom ctx γ do
     return st
   let (orbits, numorbits) := orbjoin st.orbits γ ctx.n
   let grew := numorbits < st.numorbits
   if st.gens.size < genCap then
     return { st with
              gens := st.gens.push (γ, invPerm γ)
+             gen := st.gen + 1
              orbits := orbits
              numorbits := numorbits }
   if grew then
     return { st with
              gens := st.gens.set! (genCap - 1) (γ, invPerm γ)
+             gen := st.gen + 1
              orbits := orbits
              numorbits := numorbits }
   return st
@@ -135,6 +144,20 @@ def AutState.harvest (ctx : Ctx) (st : AutState) (lab : Array Nat) :
   if let some ref := st.refLeaf then
     st := st.admit ctx (composeOnto ref lab)
   return { st with prevLeaf := some lab }
+
+/-- The vertex bitset of every cell of the node's ordered partition. -/
+def cellMasks (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat) :
+    List Nat :=
+  (cells rsPtn level ctx.n).map fun p =>
+    (List.range (p.2 + 1 - p.1)).foldl
+      (fun m o => insert m rsLab[p.1 + o]!) 0
+
+/-- Does `γ` map every cell bitset onto itself? Since the cells
+partition the vertices and `γ` is a bijection, per-cell image equality
+is exactly setwise cell preservation. Untrusted fast filter. -/
+def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
+    Bool :=
+  masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
 
 /-- Does `γ` map every cell of the node's ordered partition onto
 itself setwise? Uses the checker's `checkCellsPerm`. -/
@@ -158,12 +181,16 @@ def childAutomOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
 
 /-- Search for a witness pruning target-cell offset `o` onto an
 earlier offset: breadth-first search from `v = rsLab[tc + o]` over the
-`respects`-filtered generators and their inverses, composing the
-witness along the path, accepting only a witness that satisfies the
-full checker predicate. -/
-def witness? (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
+filtered generators and their inverses, composing the witness along
+the path. The caller decides how to validate the returned witness:
+the key search may rely on the untrusted filters alone (a wrong skip
+is caught by the trusted replay), while certificate emission runs the
+literal checker predicate. -/
+def witness? (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
     Option (Nat × Array Nat) := Id.run do
+  if o == 0 || usable.isEmpty then
+    return none
   let v := rsLab[tc + o]!
   let mut queue : Array (Nat × Array Nat) := #[(v, Array.range ctx.n)]
   let mut seen : Nat := insert 0 v
@@ -178,9 +205,7 @@ def witness? (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
         if rsLab[tc + j]! == u then
           hit := some j
       match hit with
-      | some o' =>
-        if childAutomOk ctx rsLab rsPtn level tc o o' π then
-          return some (o', π)
+      | some o' => return some (o', π)
       | none => pure ()
       for (γ, γi) in usable do
         for f in [γ, γi] do
@@ -190,20 +215,41 @@ def witness? (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
             queue := queue.push (w, composePerm f π ctx.n)
   return none
 
-/-- One certified child entry: either the pruned record or the
-recursive subtree. -/
-private def isSkippable (ctx : Ctx) (rsLab rsPtn : Array Nat)
-    (level tc : Nat) (usable : Array (Array Nat × Array Nat))
-    (o : Nat) : Option (Nat × Array Nat) :=
-  if o == 0 then none else witness? ctx rsLab rsPtn level tc usable o
+/-- The per-node generator filter, cached against the admission
+generation: recompute only when generators were admitted since the
+cache was built (freezing at node entry would lose prunes from
+generators discovered under earlier children). -/
+def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
+    (cache : Option (Nat × Array (Array Nat × Array Nat))) :
+    Nat × Array (Array Nat × Array Nat) :=
+  match cache with
+  | some (cachedGen, u) =>
+    if cachedGen == st.gen then (cachedGen, u)
+    else (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
+  | none => (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
 
 /-- A candidate key with the leaf labelling achieving it. -/
 structure KeyAch where
   /-- The key, expressed at the current depth. -/
   key : Key
+  /-- The achieving key's rows as an array, for incremental leaf
+  comparison. -/
+  rowsArr : Array Nat := #[]
   /-- The achieving leaf labelling, kept absolute. Ties keep the first
   achiever. -/
   achiever : Option (Array Nat) := none
+
+/-- Compare a leaf labelling's rows against incumbent rows without
+materializing them: rows are generated one at a time in nauty's row
+order and the first difference decides. -/
+def cmpLeafRows (ctx : Ctx) (lab : Array Nat) (inc : Array Nat) :
+    Ordering := Id.run do
+  let ip := invPerm lab
+  for i in [0 : ctx.n] do
+    let c := rowCmp (permset ctx.g[lab[i]!]! ip ctx.n) inc[i]!
+    if c != .eq then
+      return c
+  return .eq
 
 /-- Branch-and-bound maximum of the incumbent and this subtree's keys,
 with automorphism skipping: a target-cell offset whose branch vertex
@@ -214,51 +260,60 @@ final answer. -/
 def searchNodeAutom (ctx : Ctx) (tcLevel : Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option KeyAch →
       AutState → KeyAch × AutState
-  | 0, _, _, _, _, _, inc, st => (inc.getD ⟨⟨[], []⟩, none⟩, st)
+  | 0, _, _, _, _, _, inc, st => (inc.getD ⟨⟨[], []⟩, #[], none⟩, st)
   | fuel + 1, level, lab, ptn, active, numcells, inc, st0 =>
     let st := st0.charge
     if st.exhausted then
-      (inc.getD ⟨⟨[], []⟩, none⟩, st)
+      (inc.getD ⟨⟨[], []⟩, #[], none⟩, st)
     else
       let rs := refine ctx level lab ptn active numcells
       let step : Option KeyAch → AutState → KeyAch × AutState :=
         fun tail0 st =>
         if discreteAt rs.ptn level ctx.n then
           let st := st.harvest ctx rs.lab
-          let leafTail : Key := ⟨[codeSentinel], leafRows ctx rs.lab⟩
+          let newLeaf : Unit → KeyAch × AutState := fun _ =>
+            let rows := leafRows ctx rs.lab
+            (⟨⟨rs.longcode :: [codeSentinel], rows⟩,
+              rows.toArray, some rs.lab⟩, st)
           match tail0 with
-          | none =>
-            (⟨⟨rs.longcode :: leafTail.codes, leafTail.rows⟩,
-              some rs.lab⟩, st)
+          | none => newLeaf ()
           | some t =>
-            if keyCmp leafTail t.key == .gt then
-              (⟨⟨rs.longcode :: leafTail.codes, leafTail.rows⟩,
-                some rs.lab⟩, st)
+            -- codes first; rows only on ties, generated incrementally
+            let ord := match listCmp compare [codeSentinel]
+                t.key.codes with
+              | .eq =>
+                if t.rowsArr.size == ctx.n then
+                  cmpLeafRows ctx rs.lab t.rowsArr
+                else
+                  keyCmp ⟨[codeSentinel], leafRows ctx rs.lab⟩ t.key
+              | c => c
+            if ord == .gt then
+              newLeaf ()
             else
               (⟨⟨rs.longcode :: t.key.codes, t.key.rows⟩,
-                t.achiever⟩, st)
+                t.rowsArr, t.achiever⟩, st)
         else
           let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-          let (t, st') := (List.range tcr.2.2).foldl
-            (fun (acc : Option KeyAch × AutState) o =>
-              let (t, st) := acc
-              let usable := st.gens.filter fun p =>
-                respects ctx rs.lab rs.ptn level p.1
-              match isSkippable ctx rs.lab rs.ptn level tcr.1
-                  usable o with
-              | some _ => (t, st)
+          let masks := cellMasks ctx rs.lab rs.ptn level
+          let (t, st', _) := (List.range tcr.2.2).foldl
+            (fun (acc : Option KeyAch × AutState ×
+                Option (Nat × Array (Array Nat × Array Nat))) o =>
+              let (t, st, cache) := acc
+              let cache' := usableGens ctx masks st cache
+              match witness? ctx rs.lab tcr.1 cache'.2 o with
+              | some _ => (t, st, some cache')
               | none =>
                 let br := breakout rs.lab rs.ptn (level + 1) tcr.1
                   rs.lab[tcr.1 + o]!
                 let (r, st') := searchNodeAutom ctx tcLevel fuel
                   (level + 1) br.1 br.2.1 br.2.2 (numcells + 1) t st
-                (some r, st'))
-            (tail0, st)
+                (some r, st', some cache'))
+            (tail0, st, none)
           match t with
-          | none => (⟨⟨[], []⟩, none⟩, st')
+          | none => (⟨⟨[], []⟩, #[], none⟩, st')
           | some t =>
-            (⟨⟨rs.longcode :: t.key.codes, t.key.rows⟩, t.achiever⟩,
-              st')
+            (⟨⟨rs.longcode :: t.key.codes, t.key.rows⟩, t.rowsArr,
+              t.achiever⟩, st')
       match inc with
       | none => step none st
       | some b =>
@@ -268,7 +323,8 @@ def searchNodeAutom (ctx : Ctx) (tcLevel : Nat) :
           match compare rs.longcode bc with
           | .lt => (b, st)
           | .gt => step none st
-          | .eq => step (some ⟨⟨brest, b.key.rows⟩, b.achiever⟩) st
+          | .eq =>
+            step (some ⟨⟨brest, b.key.rows⟩, b.rowsArr, b.achiever⟩) st
 
 /-- Build the certificate tree for the final best key, emitting
 `.autom` records for target-cell offsets reachable from an earlier
@@ -296,22 +352,31 @@ def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
           else
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level
               tcLevel
-            let (children, st') := (List.range tcr.2.2).foldl
-              (fun (acc : List CertNode × AutState) o =>
-                let (kids, st) := acc
-                let usable := st.gens.filter fun p =>
-                  respects ctx rs.lab rs.ptn level p.1
-                match isSkippable ctx rs.lab rs.ptn level tcr.1
-                    usable o with
-                | some (o', γ) => (.autom o' γ :: kids, st)
-                | none =>
+            let masks := cellMasks ctx rs.lab rs.ptn level
+            let (children, st', _) := (List.range tcr.2.2).foldl
+              (fun (acc : List CertNode × AutState ×
+                  Option (Nat × Array (Array Nat × Array Nat))) o =>
+                let (kids, st, cache) := acc
+                let cache' := usableGens ctx masks st cache
+                let descend : Unit → List CertNode × AutState ×
+                    Option (Nat × Array (Array Nat × Array Nat)) :=
+                  fun _ =>
                   let br := breakout rs.lab rs.ptn (level + 1) tcr.1
                     rs.lab[tcr.1 + o]!
                   let (child, st') := certifyNodeAutom ctx tcLevel
                     fuel (level + 1) br.1 br.2.1 br.2.2
                     (numcells + 1) brest st
-                  (child :: kids, st'))
-              ([], st)
+                  (child :: kids, st', some cache')
+                match witness? ctx rs.lab tcr.1 cache'.2 o with
+                | some (o', γ) =>
+                  -- emission runs the literal checker predicate once
+                  if childAutomOk ctx rs.lab rs.ptn level tcr.1 o o'
+                      γ then
+                    (.autom o' γ :: kids, st, some cache')
+                  else
+                    descend ()
+                | none => descend ())
+              ([], st, none)
             (.node children.reverse, st')
 
 /-- The two pruning passes, under an optional node budget (`none` is
