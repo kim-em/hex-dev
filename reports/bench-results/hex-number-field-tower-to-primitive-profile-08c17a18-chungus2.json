@@ -1,0 +1,61 @@
+{
+  "binary_commit": "08c17a18c2edcdd731fc05a027f1418858d8d1d6",
+  "case": "Hex.NumberTowerBench.runToPrimitiveLadder",
+  "classified_percent": 99.81,
+  "command": "LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench Hex.NumberTowerBench.runToPrimitiveLadder 9 5000000000",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "diagnostics": {
+    "calibration_residual_ms": 0.8629589080810547,
+    "confidence": "passed",
+    "rejected_samples_bench_thread": 69390,
+    "retained_samples_bench_thread": 4775,
+    "total_timed_ms": 4779.840932
+  },
+  "family": "split-flatten",
+  "host": "chungus2",
+  "inclusive_hex": [
+    {
+      "function": "Hex.NumberTowerBench.runToPrimitiveLadder",
+      "percent": 99.66
+    },
+    {
+      "function": "Hex.NumberTower.Flatten.toPrimitiveWith",
+      "percent": 65.51
+    },
+    {
+      "function": "Hex.QAdjoin.smul",
+      "percent": 36.98
+    },
+    {
+      "function": "_private.HexNumberFieldTower.Bench.0_Hex.NumberTowerBench.ratChecksum",
+      "percent": 30.18
+    },
+    {
+      "function": "Hex.QAdjoin.add",
+      "percent": 26.87
+    },
+    {
+      "function": "Hex.DensePoly.addImpl",
+      "percent": 25.4
+    },
+    {
+      "function": "Hex.DensePoly.divMod",
+      "percent": 1.36
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 50.07,
+    "gmp": 33.24,
+    "lean-own-code": 1.42,
+    "lean-runtime": 15.08,
+    "other": 0.19
+  },
+  "lean_bench_version": "0.1.0",
+  "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+  "method": "timed-region-filtered",
+  "os": "Linux x86_64 6.12.100",
+  "param": 9,
+  "samples": 4775,
+  "sampling_rate_hz": 999,
+  "samply": "0.13.1"
+}

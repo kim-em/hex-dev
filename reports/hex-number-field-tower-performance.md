@@ -325,9 +325,11 @@ level these units produce). The measurements above cover exactly the
 samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux
 x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
 4.34.0-rc2, and LeanBench 0.1.0. Every fixture is deterministic and no runtime
-oracle participates in any profiled route. The coordinate representatives
-retain the timed-region-filtered captures from binary `d9fc6d73f`; their
-algorithm code is unchanged. The factorization family was refreshed from the
+oracle participates in any profiled route. Multiplication and the earlier
+inversion family retain the timed-region-filtered captures from binary
+`d9fc6d73f`; their algorithm code is unchanged. Full-basis `toPrimitive` was
+refreshed from clean binary `08c17a18c` after its zero-coordinate repair. The
+factorization family was refreshed from the
 pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
 its canonical mode-3 degree-24 input. The commands were:
 
@@ -337,6 +339,8 @@ scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
   Hex.NumberTowerBench.runTowerMulLadder    12 5000000000
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
   Hex.NumberTowerBench.runTowerInvLadder     6 5000000000
+scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
+  Hex.NumberTowerBench.runToPrimitiveLadder  9 5000000000
 samply record --save-only --no-open --rate 999 --unstable-presymbolicate \
   -o /tmp/hex-profile-runTowerFactorMode3-5d4cb88a-fixedraw.json.gz -- \
   .lake/build/bin/hexnumberfieldtower_bench _child \
@@ -347,7 +351,7 @@ samply record --save-only --no-open --rate 999 --unstable-presymbolicate \
 Each summary used
 `python3 scripts/profile/summarize_profile.py --thread hexnumberfieldtower_bench`.
 Raw `*.json.gz` artefacts stay developer-local under `/tmp` as
-`SPEC/profiling.md` requires; the committed summaries artefact is listed in
+`SPEC/profiling.md` requires; the committed summary artefacts are listed in
 §Artefact traceability.
 
 The lean-bench child emits no timed-region sidecar for fixed dispatch, so
@@ -371,12 +375,13 @@ declared scope of fixed-family profile coverage.
 |---|---|---:|---:|---|---:|
 | `tower-coordinate-arithmetic` | `runTowerMulLadder` n=12 | 4,957 / 237,605 | 0.700 ms | allocation 39.72%, Lean runtime 31.07%, GMP 23.56%, own code 4.80% | 99.15% |
 | `tower-coordinate-arithmetic` | `runTowerInvLadder` n=6 | 4,943 / 2,854 | 0.542 ms | GMP 43.19%, allocation 34.86%, Lean runtime 19.97%, own code 1.60% | 99.62% |
+| `split-flatten` | `runToPrimitiveLadder` n=9 | 4,775 / 69,390 | 0.863 ms | allocation 50.07%, GMP 33.24%, Lean runtime 15.08%, own code 1.42% | 99.81% |
 | `trager-factorization` | `runTowerFactorLadder` degree 24 (raw fixed capture) | 16,325 / n.a. | n.a. | GMP 74.54%, Lean runtime 15.34%, allocation 9.21%, own code 0.78% | 99.87% |
 | `adjoin-extend` | `runAdjoin` (raw fixed capture) | 13,786 / n.a. | n.a. | allocation 46.44%, GMP 27.26%, Lean runtime 24.05%, own code 2.01% | 99.75% |
 | `split-flatten` | `runSplit` (raw fixed capture) | 9,985 / n.a. | n.a. | Lean runtime 40.01%, allocation 37.91%, GMP 13.52%, own code 7.83% | 99.27% |
 | `split-flatten` | `runFlatten` (raw fixed capture) | 18,762 / n.a. | n.a. | allocation 37.74%, Lean runtime 37.06%, GMP 20.47%, own code 4.47% | 99.74% |
 
-The two retained filtered captures pass calibration (residuals 0.54 to 0.70 ms
+The three retained filtered captures pass calibration (residuals 0.54 to 0.86 ms
 against the 5 ms limit), retained-sample minimums, and the ±5 ms
 sensitivity check. The large rejected count on the multiplication capture is
 the untimed `m = 12` tower-fixture prelude, excluded by construction.
@@ -451,8 +456,15 @@ integer eliminant of `θ + cα`) and the canonical exactification
 kernel (94.99%). The flattening components the search feeds are the
 registered `runBasisImages`, `runCertifies`, `runCoordinateMaps`,
 `runRecoverPair`, and `runRecoverSearch` cases; the eliminant/exactification
-kernels are HexNumberField surfaces with their own registered evidence. No
-capture shows a dominant cost in a function the SPEC does not name as part
+kernels are HexNumberField surfaces with their own registered evidence.
+
+The refreshed full-basis `toPrimitive` capture at dimension 18 retains 99.66%
+of samples in the target and 65.51% in `Flatten.toPrimitiveWith`; the exact
+result checksum accounts for 30.18%. Within the map, the remaining nonzero
+coordinates spend 36.98% in `QAdjoin.smul` and 26.87% in `QAdjoin.add`. This
+confirms that the repaired path still measures the advertised quotient-field
+map, while the eliminated zero-coordinate operations no longer dominate it.
+No capture shows a dominant cost in a function the SPEC does not name as part
 of the measured operation, and no audit-found issue was filed from these
 captures.
 
@@ -463,6 +475,7 @@ captures.
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
 | [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean `db22ebe6c`; original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
+| [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean `08c17a18c`; timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
 | [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean `8af758494`; checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean `959489aa2`; final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
 | [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean `dd5ef5197`; final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
