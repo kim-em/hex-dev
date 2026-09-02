@@ -451,6 +451,100 @@ unconditional claim is unsound: `certifyNodeAutom` emits
 The domination hypothesis for the traced key is exactly layer three
 (the transcription's leaf is the spec maximum).
 
+## The guarded-scan `forIn` technique
+
+The transcription-facing specifications — `isautom_sound` (edge
+preservation from an accepted permutation) and, downstream,
+`isPerm_of_trace` — reason about nested `forIn` loops over `[0, n)`
+with an early `return false`, a loop shape with no reasoning
+precedent in the tree. The reusable technique is a "guarded scan"
+whose state is `Option Bool × Unit`: it yields `(none, ())` while
+every element passes and is done with `(some false, ())` on the first
+failure, so the result flag is `none` exactly when every element
+passes (`forIn_scan_fst_cases`, `forIn_scan_fst_eq_none`), with
+`forIn_range_eq` and `id_run_scan` reducing the `[0, n)` range and the
+outer `Id` do-block. The lemma family is staged here for those
+consumers; connecting it to a concrete `isautom` obligation is the
+open step (the hand-abstracted scan body is definitionally equal to
+the desugaring but not `rw`-matchable to it, which needs either a
+direct `List.forIn` induction on the reduced hypothesis or a core
+`forIn`-to-`List.all` characterization).
+
+### Guarded-scan technique
+
+The scan state: `none` means "no failure yet", `some false` means
+"a failure was seen". The `Unit` mirrors `isautom`'s desugaring.-/
+
+/-- A guarded-scan body over state `Option Bool × Unit`: on the live
+state `(none, ())` it either yields `(none, ())` (the element passed)
+or is done with `(some false, ())` (the element failed). -/
+private def IsGate
+    (body : Option Bool × Unit → Id (ForInStep (Option Bool × Unit)))
+    (pass : Prop) [Decidable pass] : Prop :=
+  (pass → body (none, ()) = pure (ForInStep.yield (none, ()))) ∧
+  (¬ pass → body (none, ()) = pure (ForInStep.done (some false, ())))
+
+/-- A guarded scan's result flag is `none` or `some false`, never
+`some true`. -/
+private theorem forIn_scan_fst_cases {α : Type} (L : List α)
+    (b : α → Option Bool × Unit → Id (ForInStep (Option Bool × Unit)))
+    (p : α → Prop) [DecidablePred p]
+    (hgate : ∀ a, IsGate (b a) (p a)) :
+    (forIn L (none, ()) b : Id (Option Bool × Unit)).1 = none ∨
+      (forIn L (none, ()) b : Id (Option Bool × Unit)).1 = some false := by
+  induction L with
+  | nil => exact Or.inl rfl
+  | cons a as ih =>
+    rw [List.forIn_cons]
+    by_cases h : p a
+    · rw [(hgate a).1 h]
+      exact ih
+    · rw [(hgate a).2 h]
+      exact Or.inr rfl
+
+/-- A guarded scan's result flag is `none` exactly when every element
+passes. -/
+private theorem forIn_scan_fst_eq_none {α : Type} (L : List α)
+    (b : α → Option Bool × Unit → Id (ForInStep (Option Bool × Unit)))
+    (p : α → Prop) [DecidablePred p]
+    (hgate : ∀ a, IsGate (b a) (p a)) :
+    (forIn L (none, ()) b : Id (Option Bool × Unit)).1 = none ↔
+      ∀ a ∈ L, p a := by
+  induction L with
+  | nil => exact iff_of_true rfl (by simp)
+  | cons a as ih =>
+    rw [List.forIn_cons]
+    by_cases h : p a
+    · rw [(hgate a).1 h]
+      simp only [List.mem_cons, forall_eq_or_imp, h, true_and]
+      exact ih
+    · rw [(hgate a).2 h]
+      simp only [List.mem_cons, forall_eq_or_imp]
+      exact iff_of_false (by simp) (by simp [h])
+
+/-- Membership in `toList s n`. -/
+private theorem mem_toList {s n pos : Nat} :
+    pos ∈ toList s n ↔ pos < n ∧ s.testBit pos = true := by
+  rw [toList, List.mem_filter, List.mem_range]
+
+/-- `[:n]` unfolds to a `forIn` over `List.range n`. -/
+private theorem forIn_range_eq {β : Type} (n : Nat) (init : β)
+    (f : Nat → β → Id (ForInStep β)) :
+    (forIn [0:n] init f : Id β) = forIn (List.range n) init f := by
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  have hrange : List.range' [0:n].start [0:n].size [0:n].step
+      = List.range n := by simp [List.range_eq_range']
+  rw [hrange]
+
+/-- The outer `do` of `isautom` reduces to a match on the scan flag. -/
+private theorem id_run_scan (F : Id (Option Bool × Unit)) :
+    (do let __s ← F
+        match __s.fst with
+        | some r => pure r
+        | none => pure true : Id Bool).run
+      = match F.fst with | some r => r | none => true := rfl
+
+/-!
 **Residual gap to `certifyCanon?` totality.** With layers one and
 two, `(Nauty.certifyCanon? G).isSome` additionally needs:
 
