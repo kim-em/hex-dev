@@ -136,4 +136,62 @@ theorem refine_cellsReach {G : Colored n k} {ctx : Ctx} (hn : ctx.n = n)
     exact cellsPerm_trans hreach hcoar
   exact hinitStep
 
+/-- Individualization rotates the target vertex to the front of its
+cell, a permutation confined to that cell, so it preserves
+cell-content equivalence on the current partition. -/
+theorem breakout_cellsPerm {lab ptn : Array Nat} {level tc len o : Nat}
+    (hcell : IsCell ptn level tc len) (hsize : tc + len ≤ ptn.size)
+    (hlsz : lab.size = ptn.size) (ho : o < len) :
+    cellsPerm ptn level lab
+      (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+  have hsz : tc + len ≤ lab.size := by rw [hlsz]; exact hsize
+  have htvmem : lab[tc + o]! ∈ segN lab tc len := by
+    rw [segN]
+    exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
+  have hwit : ∃ kL, tc ≤ kL ∧ kL < tc + len ∧ kL < lab.size ∧
+      lab[kL]! = lab[tc + o]! :=
+    ⟨tc + o, by omega, by omega, by omega, rfl⟩
+  have hseg : segN (breakout lab ptn (level + 1) tc lab[tc + o]!).1
+      tc len = lab[tc + o]! :: (segN lab tc len).erase lab[tc + o]! := by
+    show segN (breakout.go lab[tc + o]! (lab.size + 1) lab tc
+      lab[tc + o]!) tc len = _
+    exact breakout_go_seg (lab.size + 1) len lab tc lab[tc + o]! hwit
+      (by omega) hsz
+  refine cellsPerm_of_confined (A := tc) (lenA := len) hcell
+    (Nat.le_refl tc) (Nat.le_refl _) ?_ ?_
+  · rw [hseg]
+    exact List.perm_cons_erase htvmem
+  · intro q hq
+    show (breakout.go lab[tc + o]! (lab.size + 1) lab tc
+      lab[tc + o]!)[q]! = lab[q]!
+    rcases hq with hq | hq
+    · exact breakout_go_outside _ _ _ _ _ hq
+    · exact breakout_go_outside_right _ len _ _ _ hwit _ hq
+
+/-- `breakout` preserves `CellsReach`: individualization permutes within
+one cell of the current partition, which refines the initial one, so
+cell-content equivalence coarsens and transfers. The second
+operation-level preservation lemma. -/
+theorem breakout_cellsReach {G : Colored n k} {lab ptn : Array Nat}
+    {level tc len o : Nat} (hn0 : 0 < n) (hreach : CellsReach G lab)
+    (hcell : IsCell ptn level tc len) (hsize : tc + len ≤ ptn.size)
+    (hlsz : lab.size = n) (hpsz : ptn.size = n) (ho : o < len)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hcoarse : ∀ q : Nat,
+      (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 → ptn[q]! ≤ level) :
+    CellsReach G (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+  have hok := initial_nodeOk G hn0
+  have hstep := breakout_cellsPerm hcell hsize (by rw [hlsz, hpsz]) ho
+  have hbsz : (breakout lab ptn (level + 1) tc lab[tc + o]!).1.size = n := by
+    rw [breakout]
+    rw [breakout_go_size, hlsz]
+  have hcoar : cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
+      lab (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+    refine cellsPerm_coarsen (ptnF := ptn) (levF := level)
+      (by rw [size_initPtn, hpsz]) (by rw [hlsz, hpsz])
+      (by rw [hbsz, hpsz]) hstep hend ?_ hcoarse
+    have := hok.ptnEnd
+    rwa [size_initPtn] at this ⊢
+  exact cellsPerm_trans hreach hcoar
+
 end Hex.GraphIso.Nauty
