@@ -242,6 +242,24 @@ private def controllerFor
   (Runtime.Controller.State.startWithin controllerLimits envelope
     RuntimeRuleConformance.measure runtime tree).toOption
 
+/-- Version-zero source target used to exercise initial evidence without any
+runtime chronology. Its fact is quoted through the ordinary opaque interval
+quoter. -/
+def initialInput : Proof.Input Hex.Interval :=
+  { RuntimeRuleConformance.input with
+    target := { node := { index := 0 }, fact := RuntimeRuleConformance.point 1 } }
+
+private def initialControllerFor
+    (assembly : RuntimeProof.Assembly Hex.Interval Rule.Runtime.Cause) :
+    Option (Runtime.Controller.State Hex.Interval Rule.Runtime.Cause (List Nat) Proof.Key) := do
+  let branch := (← liftOption RuntimeRuleConformance.branch?).down
+  let runtime ← (Runtime.State.startWithin RuntimeRuleConformance.runtimeLimits
+    assembly branch).toOption
+  let tree := (← liftOption ((Search.Result.startWithin terminalResultLimits
+    RuntimeRuleConformance.measure { index := 0 } branch).toOption)).down
+  (Runtime.Controller.State.startWithin controllerLimits envelope
+    RuntimeRuleConformance.measure runtime tree).toOption
+
 meta def checkedFor
     (registry : RuntimeEmit.Registry Hex.Interval
       (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat)) :
@@ -254,6 +272,48 @@ meta def checkedFor
   let lineage ← active.targetWithin terminalResultLimits
     RuntimeRuleConformance.measure { node := { index := 12 }, version := 1 }
   lineage.quoteWithin terminalAdapterLimits RuntimeRuleConformance.measure
+
+meta def initialLineageFor
+    (registry : RuntimeEmit.Registry Hex.Interval
+      (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+    (input : Proof.Input Hex.Interval := initialInput) :
+    Except RuntimeEmit.Error
+      (RuntimeEmit.Lineage Hex.Interval (Rule.semantics RuntimeRuleConformance.config)
+        Rule.Runtime.Cause (List Nat)) := do
+  let some controller := initialControllerFor registry.runtime.assembly
+    | throw .malformed
+  let active ← RuntimeEmit.Active.startWithin registry input controller
+  active.targetWithin terminalResultLimits RuntimeRuleConformance.measure
+    { node := { index := 0 }, version := 0 }
+
+meta def initialCheckedWith (limits : RuntimeProof.Limits) :
+    Except RuntimeEmit.Error
+      (RuntimeEmit.Checked Hex.Interval (Rule.semantics RuntimeRuleConformance.config)
+        Rule.Runtime.Cause (List Nat)) := do
+  let assembly ← Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
+      RuntimeRuleConformance.config RuntimeRuleConformance.program
+    |>.mapError fun _ => RuntimeEmit.Error.malformed
+  let registry ← RuntimeEmit.Registry.buildWithin
+    RuntimeRuleConformance.executableLimits emitLimits RuntimeRuleConformance.key assembly
+    (Rule.Runtime.quoter RuntimeRuleConformance.config)
+    #[Rule.Runtime.emitPackage RuntimeRuleConformance.config]
+  let lineage ← initialLineageFor registry
+  lineage.quoteWithin limits RuntimeRuleConformance.measure
+
+meta def initialTargetError (changed : Proof.Input Hex.Interval) :
+    Option RuntimeEmit.Error :=
+  match Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
+      RuntimeRuleConformance.config RuntimeRuleConformance.program with
+  | .error _ => some .malformed
+  | .ok assembly =>
+      match RuntimeEmit.Registry.buildWithin RuntimeRuleConformance.executableLimits
+          emitLimits RuntimeRuleConformance.key assembly
+          (Rule.Runtime.quoter RuntimeRuleConformance.config)
+          #[Rule.Runtime.emitPackage RuntimeRuleConformance.config] with
+      | .error error => some error
+      | .ok registry => match initialLineageFor registry changed with
+        | .error error => some error
+        | .ok _ => none
 
 meta def registryError
     (packages : Array
@@ -292,6 +352,33 @@ meta def emitWith (limits : RuntimeEmit.Limits)
   match ← emitResultWith limits package with
   | .error error => return .error error
   | .ok emitted => return .ok emitted.evidence
+
+meta def emitInitialWith (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
+  match initialCheckedWith terminalAdapterLimits with
+  | .error error => pure (.error error)
+  | .ok checked => checked.emitInitialTargetWithin limits
+
+meta def emitInitialReplayWith (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
+  match initialCheckedWith terminalAdapterLimits with
+  | .error error => pure (.error error)
+  | .ok checked => checked.emitResultWithin limits
+
+meta def emitComputedAsInitial (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
+  match Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
+      RuntimeRuleConformance.config RuntimeRuleConformance.program with
+  | .error _ => pure (.error .malformed)
+  | .ok assembly =>
+      match RuntimeEmit.Registry.buildWithin RuntimeRuleConformance.executableLimits
+          limits RuntimeRuleConformance.key assembly
+          (Rule.Runtime.quoter RuntimeRuleConformance.config)
+          #[Rule.Runtime.emitPackage RuntimeRuleConformance.config] with
+      | .error error => pure (.error error)
+      | .ok registry => match checkedFor registry with
+        | .error error => pure (.error error)
+        | .ok checked => checked.emitInitialTargetWithin limits
 
 meta def activeError (changed : Proof.Input Hex.Interval) : Option RuntimeEmit.Error :=
   match Rule.Runtime.buildEmitWithin RuntimeRuleConformance.executableLimits
@@ -375,6 +462,149 @@ theorem allBuiltins :
 /-- info: 'Hex.IntervalMathlib.RuntimeEmitConformance.allBuiltins' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms allBuiltins
+
+elab "runtime_emit_initial_canary" : tactic => do
+  let goal ← getMainGoal
+  let emitted ← match ← emitInitialWith emitLimits with
+    | .error error => throwError "initial-target emission failed: {repr error}"
+    | .ok emitted => pure emitted
+  let inputType ← mkAppM ``Proof.Input #[mkConst ``Hex.Interval]
+  unless ← isDefEq (← inferType emitted.input) inputType do
+    throwError "initial-target emitter returned an ill-typed proof input"
+  unless ← isDefEq emitted.input (mkConst ``initialInput) do
+    throwError "initial-target emitter changed its sealed input"
+  let target ← mkAppM ``Proof.Input.target #[emitted.input]
+  let fact ← withTransparency .reducible <|
+    whnf (← mkAppM ``Proof.NodeFact.fact #[target])
+  unless fact.getAppFn.constName? == some ``Rule.Runtime.Quote.getValue do
+    throwError "initial-target canary did not retain the opaque checked interval encoding"
+  let actual ← inferType emitted.evidence
+  unless ← isDefEq actual (← goal.getType) do
+    throwError "initial-target emitter returned the wrong Evidence claim"
+  goal.assign emitted.evidence
+  replaceMainGoal []
+
+/-- A checked opaque interval already present at version zero needs no runtime
+chronology or theorem schema authority. -/
+def initialEvidence : Proof.Evidence
+    ((Rule.semantics RuntimeRuleConformance.config).Entails initialInput.program
+      (Proof.initialBase initialInput) initialInput.target) := by
+  runtime_emit_initial_canary
+
+theorem initialTarget :
+    (Rule.semantics RuntimeRuleConformance.config).Entails initialInput.program
+      (Proof.initialBase initialInput) initialInput.target :=
+  initialEvidence.proof
+
+/-- info: 'Hex.Interval.Proof.initialTarget' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Proof.initialTarget
+
+/-- info: 'Hex.IntervalMathlib.RuntimeEmitConformance.initialTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms initialTarget
+
+elab "runtime_emit_initial_guards" : tactic => do
+  let expectCheckedError (label : String)
+      (actual : Except RuntimeEmit.Error
+        (RuntimeEmit.Checked Hex.Interval (Rule.semantics RuntimeRuleConformance.config)
+          Rule.Runtime.Cause (List Nat))) (expected : RuntimeEmit.Error) := do
+    match actual with
+    | .error error => unless error == expected do
+        throwError "{label}: expected {repr expected}, got {repr error}"
+    | .ok _ => throwError "{label}: unexpectedly admitted"
+  let expectEmitError (label : String)
+      (actual : Except RuntimeEmit.Error RuntimeEmit.Emitted)
+      (expected : RuntimeEmit.Error) := do
+    match actual with
+    | .error error => unless error == expected do
+        throwError "{label}: expected {repr expected}, got {repr error}"
+    | .ok _ => throwError "{label}: unexpectedly admitted"
+  let expectChecked (label : String)
+      (actual : Except RuntimeEmit.Error
+        (RuntimeEmit.Checked Hex.Interval (Rule.semantics RuntimeRuleConformance.config)
+          Rule.Runtime.Cause (List Nat))) := do
+    match actual with
+    | .ok _ => pure ()
+    | .error error => throwError "{label}: unexpectedly refused with {repr error}"
+  let minimalProof : Proof.Limits :=
+    { maxPackages := 1, maxSchemas := 11, maxBodyCells := 0,
+      maxDependencies := 0, maxChronology := 0 }
+  let minimalTree : Proof.TreeLimits :=
+    { maxNodes := 1, maxDepth := 0, maxBodyCells := 0, maxWork := 2 }
+  let minimalAdapter : RuntimeProof.Limits :=
+    { result := terminalAdapterLimits.result, proof := minimalProof, tree := minimalTree,
+      maxTransitions := 0, maxEvents := 0, maxStructuralCells := 0 }
+  expectChecked "exact singleton quotation limits" (initialCheckedWith minimalAdapter)
+  expectCheckedError "result node one-under"
+    (initialCheckedWith
+      { terminalAdapterLimits with
+        result := { terminalAdapterLimits.result with maxNodes := 0 } })
+    (.terminal (.runtimeProof (.malformed .tree)))
+  expectCheckedError "proof-tree node one-under"
+    (initialCheckedWith
+      { terminalAdapterLimits with
+        tree := { terminalAdapterLimits.tree with maxNodes := 0 } })
+    (.terminal (.runtimeProof (.proof .proofNodeLimit)))
+  -- The singleton root has depth zero, so no smaller depth exists. Its one
+  -- node plus one edge make proof work two; one-under pins the edge charge.
+  expectCheckedError "proof-tree edge-inclusive work one-under"
+    (initialCheckedWith
+      { terminalAdapterLimits with
+        tree := { terminalAdapterLimits.tree with maxWork := 1 } })
+    (.terminal (.runtimeProof (.proof .proofWorkLimit)))
+  let changedTarget :=
+    { initialInput with
+      target := { initialInput.target with fact := Hex.Interval.empty } }
+  unless initialTargetError changedTarget == some (.terminal .mismatch) do
+    throwError "mismatched version-zero target fact escaped public lineage correlation"
+  expectEmitError "computed chronology refusal"
+    (← emitComputedAsInitial emitLimits) .malformed
+  expectEmitError "emitter schema one-under"
+    (← emitInitialWith { emitLimits with maxSchemas := 10 }) (.resource .schemas)
+  expectEmitError "proof package one-under"
+    (← emitInitialWith
+      { emitLimits with proof := { emitLimits.proof with maxPackages := 0 } })
+    (.proofBuild .packageLimit)
+  expectEmitError "proof schema one-under"
+    (← emitInitialWith
+      { emitLimits with proof := { emitLimits.proof with maxSchemas := 10 } })
+    (.proofBuild .schemaLimit)
+  let minimalEmit : RuntimeEmit.Limits :=
+    { proof := minimalProof, maxSchemas := 11, maxChronology := 0,
+      maxExpressionCells := emitLimits.maxExpressionCells }
+  let emitted ← match ← emitInitialWith minimalEmit with
+    | .error error => throwError "empty chronology minimum refused: {repr error}"
+    | .ok emitted => pure emitted
+  let replayed ← match ← emitInitialReplayWith emitLimits with
+    | .error error => throwError "ordinary empty replay refused: {repr error}"
+    | .ok emitted => pure emitted
+  unless ← isDefEq emitted.input replayed.input do
+    throwError "initial-target and ordinary replay quoted different inputs"
+  unless ← isDefEq (← inferType emitted.evidence) (← inferType replayed.evidence) do
+    throwError "initial-target and ordinary replay emitted different claims"
+  let inputCells := RuntimeEmit.expressionCells emitted.input
+  let evidenceCells := RuntimeEmit.expressionCells emitted.evidence
+  if inputCells == 0 || evidenceCells ≤ inputCells then
+    throwError "initial-target expression accounting lost its two-stage boundary"
+  if RuntimeEmit.expressionCells replayed.evidence ≤ evidenceCells then
+    throwError "initial-target evidence did not stay smaller than empty replay"
+  expectEmitError "input expression one-under"
+    (← emitInitialWith { emitLimits with maxExpressionCells := inputCells - 1 })
+    (.resource .expression)
+  expectEmitError "evidence expression one-under"
+    (← emitInitialWith { emitLimits with maxExpressionCells := evidenceCells - 1 })
+    (.resource .expression)
+  -- The preceding failures must roll Meta state back: the same exact request
+  -- remains admissible after both expression-cap failures.
+  match ← emitInitialWith emitLimits with
+  | .error error => throwError "initial-target rollback failed: {repr error}"
+  | .ok _ => pure ()
+  let goal ← getMainGoal
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by runtime_emit_initial_guards
 
 elab "runtime_emit_registry_guards" : tactic => do
   let package := Rule.Runtime.emitPackage RuntimeRuleConformance.config

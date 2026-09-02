@@ -335,8 +335,50 @@ and final evidence separately cross it against their exact types. Both are
 independently charged against the expression cap in the same saved-state
 transaction before rollback; metavariables, synthetic placeholders, temporary
 declarations, or retained Meta-state leakage therefore cannot escape.
-`Checked.emitWithin` remains the evidence-only compatibility projection of that
-operation. There is no refutation or split expression emitter.
+
+`RuntimeEmit.Checked.emitInitialTargetWithin` is the narrower version-zero
+path. It admits only the sole root terminal with an empty chronology, no
+parent/side/seed edge, program version zero, fact version zero, and a target
+that is exactly the fact at the same index in the retained input. It quotes
+that input through the ordinary fact quoter, constructs the target-node and
+target-fact correlations as reflexivity terms, checks both exact equality
+types through `Proof.emitChecked`, and applies `Proof.initialTarget`. This
+theorem merely selects an existing `initialBase` assumption; neither the
+runtime token nor the fact representation supplies semantic authority.
+`Proof.initialTarget` is consequently a public tautological theorem with no
+resource limits: any caller that supplies its exact index, node, and fact
+equalities may use it directly. The emitter's limits bound only the checked
+reflection work needed to quote and correlate those terms. They do not grant,
+restrict, or otherwise contribute logical authority. The fast path revalidates
+the complete proof package/program registry under the caller's `Proof.Limits`,
+prepares and typechecks all quotation callbacks, and charges the input and
+final Evidence expressions independently. Its explicit program- and
+fact-version checks are defensive invariants currently implied by admission
+of a sole root with an empty chronology.
+
+For the built-in interval quoter, the same version-zero token also succeeds
+through `emitResultWithin`: its `getValue (ofRawWithin ...)` representation is
+reducible enough for the empty `Proof.replayWith` check. Conformance requires
+both emitters to quote definitionally equal inputs and Evidence claims. The
+initial-target path is therefore not a correctness workaround for the current
+built-in encoding. It is the smaller direct proof and does not require the
+fact domain's `DecidableEq` to reduce an opaque representation merely to
+rediscover that the exact target expression is the exact indexed initial fact.
+This distinction matters for checked quoters whose fact constructors expose
+semantic view theorems but deliberately keep their constructor bodies opaque.
+
+Retained result and proof-tree admission remains owned by
+`RuntimeEmit.Lineage.quoteWithin`, which constructs `Checked` only after
+`RuntimeProof.Limits.result` and `.tree` have accepted the entire tree and
+recipe. `RuntimeEmit.Limits` deliberately has no second tree-node, edge, or
+depth envelope. For the initial-target shape the admitted minimum is one tree
+node at depth zero; the recipe's one root edge is included in `proofWork`.
+Thus a caller cannot use the fast path to evade a smaller result-node,
+proof-node, depth, or edge-inclusive work limit: those limits must first
+produce the sealed `Checked` token.
+
+`Checked.emitWithin` remains the evidence-only compatibility projection of
+`emitResultWithin`. There is no refutation or split expression emitter.
 `Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
 the theorem in the world they quote, but a generic registry cannot prove that a
 caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
@@ -598,7 +640,15 @@ paired opaque-operation extension.
 `HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
 the sealed input/evidence pair for all eleven built-in rules, including repeated-input
 binary applications, and separately emits the mixed `sin (-x)` instance,
-equality, fact, and transport chronology. It rejects package-local/global
+equality, fact, and transport chronology. Its version-zero canary quotes a
+checked opaque interval directly from the initial base with no chronology; it
+also compares ordinary empty replay against the same token, requiring exact
+input/claim agreement and a strictly smaller direct Evidence expression. It
+pins computed-chronology refusal, the exact singleton tree/depth minimum,
+an exact mismatched-target-fact lineage refusal, result-node, proof-node,
+edge-inclusive work, proof-package, emitter-schema,
+input-expression, and evidence-expression limits, plus transactional rollback.
+It rejects package-local/global
 coverage errors, cross-package and input transplants, a wrong schema
 expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
 and exact one-under schema, chronology, body, dependency, input-expression, and
