@@ -208,6 +208,31 @@ private def prism5 : Colored 10 1 :=
        (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
     coloring := Coloring.trivial 10 }
 
+/-! # The automorphism-pruning certificate producer -/
+
+private def hasAutom : Nauty.CertNode → Bool
+  | .leaf | .codePrune => false
+  | .autom _ _ => true
+  | .node cs => go cs
+where go : List Nauty.CertNode → Bool
+  | [] => false
+  | c :: cs => hasAutom c || go cs
+
+-- pruning is live on a symmetric example: the validated certificate
+-- carries `.autom` records and stays near nauty's visited-node count
+-- (18 records at the time of pinning; the bound is deliberately loose)
+#guard
+  match Nauty.certifyKey? petersen with
+  | some (cert, _) => hasAutom cert && cert.size ≤ 36
+  | none => false
+-- the node-budgeted producer exhausts at zero and agrees within budget
+#guard (Nauty.certifyKeyBounded? 0 petersen).isNone
+#guard
+  match Nauty.certifyKeyBounded? 1000000 petersen,
+      Nauty.certifyKey? petersen with
+  | some (_, B1), some (_, B2) => Nauty.keyCmp B1 B2 == .eq
+  | _, _ => false
+
 #guard (nautyForm petersen).isSome
 #guard nautyForm petersen == nautyForm kneser52
 #guard nautyForm petersen != nautyForm prism5

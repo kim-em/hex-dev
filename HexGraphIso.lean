@@ -21,6 +21,7 @@ public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.CellPerm
 public import HexGraphIso.Nauty.SpecIso
 public import HexGraphIso.Nauty.Cert
+public import HexGraphIso.Nauty.CertAutom
 public import HexGraphIso.Nauty.CanonForm
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved

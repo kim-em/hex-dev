@@ -1166,82 +1166,24 @@ validated by `checkKey`. -/
             certifyNode ctx tcLevel fuel (level + 1) br.1 br.2.1
               br.2.2 (numcells + 1) brest)
 
-/-- Produce a checked canonical-key certificate: a branch-and-bound
-search finds the best key, the certificate is rebuilt against it, and
-the trusted `checkKey` replay validates the pair. -/
-def certifyKey? (G : Colored n k) : Option (CertNode × Key) :=
-  if n == 0 then
-    some (.leaf, ⟨[], []⟩)
-  else
-    let B := searchNode { n := n, g := rowsOf G } 100 n 1
-      (initialPartition G).1
-      (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
-      (initialPartition G).2.length none
-    let cert := certifyNode { n := n, g := rowsOf G } 100 n 1
-      (initialPartition G).1
-      (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
-      (initialPartition G).2.length B.codes
-    if checkKey G cert B then some (cert, B) else none
+/-- Validate a candidate certificate and key through the trusted
+`checkKey` replay, independently of the producer that built them. -/
+def validateKey? (G : Colored n k) (cand : CertNode) (Bc : Key) :
+    Option (CertNode × Key) :=
+  if checkKey G cand Bc then some (cand, Bc) else none
 
-/-- Every key a successful `certifyKey?` returns is the spec key. -/
-theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
-    {B : Key} (h : certifyKey? G = some (cert, B)) :
+/-- Whatever passes validation carries the spec key. -/
+theorem validateKey?_sound {G : Colored n k} {cand : CertNode}
+    {Bc : Key} {cert : CertNode} {B : Key}
+    (h : validateKey? G cand Bc = some (cert, B)) :
     canonSpecKey G = B := by
-  rw [certifyKey?] at h
-  rcases Decidable.em ((n == 0) = true) with hz | hz
-  · rw [ite_eq_left hz] at h
-    have hn0 : n = 0 := by simpa using hz
-    subst hn0
+  rw [validateKey?] at h
+  split at h
+  · next hchk =>
     injection h with h'
-    have hB : B = ⟨[], []⟩ := (congrArg Prod.snd h').symm
-    rw [hB, canonSpecKey, canonSpec, ite_eq_left (by rfl)]
-  · rw [ite_eq_right hz] at h
-    replace h : (if checkKey G
-        (certifyNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length
-        (searchNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length none).codes)
-        (searchNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length none) = true then
-        some
-          ((certifyNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length
-        (searchNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length none).codes),
-           (searchNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length none))
-      else none) = some (cert, B) := h
-    split at h
-    · next hchk =>
-      injection h with h'
-      have hB : (searchNode { n := n, g := rowsOf G } 100 n 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length none) = B :=
-        congrArg Prod.snd h'
-      rw [← hB]
-      exact checkKey_sound hchk
-    · cases h
+    have hB : Bc = B := congrArg Prod.snd h'
+    rw [← hB]
+    exact checkKey_sound hchk
+  · cases h
 
 end Hex.GraphIso.Nauty

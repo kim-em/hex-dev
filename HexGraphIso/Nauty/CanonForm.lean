@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert
+public import HexGraphIso.Nauty.CertAutom
 public import HexGraphIso.Nauty.Search
 
 public section

@@ -127,8 +127,13 @@ The planned stack, in dependency order:
    `rowsOf_relabel_eq_leafRows`), which closes the certificate-based
    decision in both directions: `isomorphic_of_certs` (same key, same
    colour class sizes) and `not_isomorphic_of_certs` (`checkDiff` on
-   the keys). Remaining for this stage: automorphism prunes in the
-   producer.
+   the keys). The untrusted producer (Nauty/CertAutom.lean) prunes by
+   refinement code and by automorphisms: generators are harvested from
+   aligned leaf pairs, self-checked with the checker's own predicates,
+   and composed per node to skip target-cell offsets reachable from an
+   earlier sibling, shrinking certificates on symmetric families from
+   thousands of records to within a small factor of nauty's
+   visited-node counts.
 4. **Switch.** Public `canonicalize` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;

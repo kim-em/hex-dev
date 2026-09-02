@@ -66,8 +66,9 @@ The verification stack, bottom to top:
 
 ## Notes for future work
 
-- The producer (`searchNode`) uses code pruning only; automorphism
-  prunes in the producer are an optimization, not a correctness need.
+- The producer prunes by code and by automorphisms (Nauty/CertAutom):
+  harvested-generator skipping validated by the unchanged checker.
+  Producer prunes are an optimization, not a correctness need.
 - The tactic's negative path remains the verified pairwise replay
   (SPEC text updated to record why); the certificate route is on the
   API for compiled callers.
