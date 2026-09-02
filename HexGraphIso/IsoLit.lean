@@ -198,7 +198,8 @@ literal instead of forcing `rowsOf`. -/
   if n == 0 then
     B.codes == [] && B.rows == []
   else
-    Nauty.checkNode { n := n, g := flatRows n flat } 100 B.rows n 1
+    Nauty.checkNode { n := n, g := flatRows n flat } 100 B.rows
+      (Nauty.validGammas (flatRows n flat) n cert) n 1
       (Nauty.initialPartition G).1
       (Nauty.initPtn n (n + 2) (Nauty.initialPartition G).2)
       (Nauty.initActive (Nauty.initialPartition G).2)

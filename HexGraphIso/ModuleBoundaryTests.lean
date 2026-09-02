@@ -117,7 +117,8 @@ example : (checkAutom rowsP (List.toArray [1, 0, 4, 3, 2, 6, 5, 9, 8, 7]) 10
     = true) := by kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 1 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows
+    (validGammas rowsP 10 probeCert) 1 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 -- core `Array.map` itself still stalls here (unexposed impl loop; see
@@ -135,16 +136,19 @@ example : (checkCellsPerm (initPtn 10 12 [9]) lab0 lab0 1 10 = true) := by
   kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 2 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows
+    (validGammas rowsP 10 probeCert) 2 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 set_option maxRecDepth 1000000 in
-example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 3 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows
+    (validGammas rowsP 10 probeCert) 3 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 4 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows
+    (validGammas rowsP 10 probeCert) 4 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = some true := by kdecide
 

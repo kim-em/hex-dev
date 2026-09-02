@@ -86,7 +86,8 @@ theorem certifyNode_not_autom {ctx : Ctx} (tcLevel : Nat) :
 mutual
 
 theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (tcLevel : Nat) (brows : List Nat) :
+    (hgsz : ctx.g.size = n) (tcLevel : Nat) (brows : List Nat)
+    (vgens : List (Array Nat)) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
       (active numcells : Nat) (bc : Nat) (brest : List Nat),
       NodeOk n level lab ptn active →
@@ -94,7 +95,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
       level ≤ bcount ptn level n →
       keyLe (specNode ctx tcLevel fuel level lab ptn active
         numcells) ⟨bc :: brest, brows⟩ →
-      ∃ a, checkNode ctx tcLevel brows fuel level lab ptn active
+      ∃ a, checkNode ctx tcLevel brows vgens fuel level lab ptn active
         numcells
         (certifyNode ctx tcLevel fuel level lab ptn active numcells
           (bc :: brest)) (bc :: brest) = some a ∧
@@ -212,7 +213,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
             (by rw [hstR.ptnSize]; omega)
           omega
         obtain ⟨a', ha', hiff⟩ := certifyChildren_complete hn hgsz
-          tcLevel brows fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1
+          tcLevel brows vgens fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1
           (p.2 + 1 - p.1) numcells brest (m + 1) 0
           hstR.labSize hstR.labOk hstR.ptnSize hstR.ptnEnd hRvals
           hicp (by omega) (by omega) (by omega) hbcChild
@@ -284,6 +285,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
 
 theorem certifyChildren_complete {ctx : Ctx} (hn : ctx.n = n)
     (hgsz : ctx.g.size = n) (tcLevel : Nat) (brows : List Nat)
+    (vgens : List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
     (tc lenT numcells : Nat) (brest : List Nat) :
     ∀ (cnt o : Nat),
@@ -297,7 +299,7 @@ theorem certifyChildren_complete {ctx : Ctx} (hn : ctx.n = n)
         (level + 1) n →
       (∀ i, o ≤ i → i < o + cnt →
         keyLe (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells i) ⟨brest, brows⟩) →
-      ∃ a, checkChildren ctx tcLevel brows fuel level rsLab rsPtn tc
+      ∃ a, checkChildren ctx tcLevel brows vgens fuel level rsLab rsPtn tc
         numcells brest
         ((List.range cnt).map fun j =>
           certifyNode ctx tcLevel fuel (level + 1)
@@ -343,12 +345,12 @@ theorem certifyChildren_complete {ctx : Ctx} (hn : ctx.n = n)
       rw [keyCmp]
       rfl
     · obtain ⟨a, ha, haiff⟩ := certifyNode_complete hn hgsz tcLevel
-        brows fuel (level + 1)
+        brows vgens fuel (level + 1)
         (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1 (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1 (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2 (numcells + 1) bc' brest'
         hchildOk (by omega) hbcC
         (hbnd o (Nat.le_refl o) (by omega))
       obtain ⟨a', ha', haiff'⟩ := certifyChildren_complete hn hgsz
-        tcLevel brows fuel level rsLab rsPtn tc lenT numcells
+        tcLevel brows vgens fuel level rsLab rsPtn tc lenT numcells
         (bc' :: brest') cnt (o + 1) hs hok hsp hend hvals hic hrange
         (by omega) hlf hbcC
         (fun i hi1 hi2 => hbnd i (by omega) (by omega))
@@ -469,7 +471,18 @@ theorem checkKey_complete (G : Colored n k) :
       rw [← hrest, key_eta]
     obtain ⟨a, ha, haiff⟩ := certifyNode_complete (n := n)
       (ctx := { n := n, g := rowsOf G }) rfl (size_rowsOf G) 100
-      (canonSpecKey G).rows n 1 (initialPartition G).1
+      (canonSpecKey G).rows
+      (validGammas (rowsOf G) n
+        (certifyNode { n := n, g := rowsOf G } 100 n 1
+          (initialPartition G).1
+          (initPtn n (n + 2) (initialPartition G).2)
+          (initActive (initialPartition G).2)
+          (initialPartition G).2.length
+          ((refine { n := n, g := rowsOf G } 1 (initialPartition G).1
+            (initPtn n (n + 2) (initialPartition G).2)
+            (initActive (initialPartition G).2)
+            (initialPartition G).2.length).longcode :: rest)))
+      n 1 (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
       (initActive (initialPartition G).2)
       (initialPartition G).2.length
