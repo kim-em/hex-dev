@@ -20,6 +20,14 @@ external compatibility specification. The first requirement is independent
 of nauty and remains a theorem even if a later release deliberately changes
 the compatibility target.
 
+The two requirements share one refinement-code coordinate system: the
+specification's tree, the certificate checker, and the transcribed search
+all seed a child node's refinement code with the parent's recomputed cell
+count, exactly as nauty does. The declarative characterization behind
+requirement 1 — the canonical key is the maximum leaf key of the unpruned
+tree — does not depend on that seeding choice; sharing it makes the
+search's recorded codes directly comparable with the checker's.
+
 ## Scope
 
 The first release includes:
@@ -322,7 +330,8 @@ The following behavior is fixed before adding pruning:
 
 1. Initial vertices occur in `(colour, original vertex)` order.
 2. Equitable refinement uses the same splitter order, count buckets, cell
-   order, and refinement-code arithmetic as dense nauty.
+   order, and refinement-code arithmetic as dense nauty, including seeding
+   each level's code with the current cell count.
 3. Target-cell selection reproduces `targetcell` and `bestcell` for the
    configured `tc_level`.
 4. Candidate vertices are individualized in the same order as nauty.

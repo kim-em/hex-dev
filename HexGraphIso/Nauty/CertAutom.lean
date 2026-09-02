@@ -263,7 +263,7 @@ revalidates everything. -/
                     rs.lab[tcr.1 + o]!
                   let (child, st') := certifyNodeAutom ctx tcLevel
                     fuel (level + 1) br.1 br.2.1 br.2.2
-                    (numcells + 1) brest st
+                    (rs.numcells + 1) brest st
                   (child :: kids, st', some cache')
                 match witness? ctx rs.lab tcr.1 cache'.2 o with
                 | some (o', γ) =>
@@ -276,34 +276,13 @@ revalidates everything. -/
               ([], st, none)
             (.node children.reverse, st')
 
-/-- The checker-coordinate refinement codes along the achieving
-labelling's path: at each node the achieving child is the vertex the
-leaf keeps at the target-cell start (breakout pins it there and later
-refinement never moves a singleton). The walk mirrors `checkNode`'s
-refine arguments, because the search's internal code chain uses the
-transcription's own numcells convention and cannot be reused.
-Untrusted; the replay recomputes everything. -/
-@[expose] def achieverCodes (ctx : Ctx) (tcLevel : Nat) (canonlab : Array Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat
-  | 0, _, _, _, _, _ => []
-  | fuel + 1, level, lab, ptn, active, numcells =>
-    let rs := refine ctx level lab ptn active numcells
-    if discreteAt rs.ptn level ctx.n then
-      [rs.longcode]
-    else
-      let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-      let br := breakout rs.lab rs.ptn (level + 1) tcr.1
-        canonlab[tcr.1]!
-      rs.longcode :: achieverCodes ctx tcLevel canonlab fuel
-        (level + 1) br.1 br.2.1 br.2.2 (numcells + 1)
-
 /-- Trace-driven candidate production, per the SPEC: the transcribed
 search runs once with tracing on, and the certificate pass translates
-its trace — the harvested generators and the achieving labelling,
-whose key is derived by `achieverCodes` and `leafRows` — into a
-certificate against that key. No second search runs; the node budget
-bounds the traced walk. Purely a candidate producer — nothing here is
-trusted. -/
+its trace — the harvested generators, the achieving labelling, and
+its recorded code chain (checker-valid, because spec and search share
+one code coordinate system) — into a certificate against that key.
+No second search runs; the node budget bounds the traced walk. Purely
+a candidate producer — nothing here is trusted. -/
 @[expose] def produceCand (G : Colored n k) (budget : Option Nat) :
     Option (CertNode × Key) :=
   let ctx : Ctx := { n := n, g := rowsOf G }
@@ -314,11 +293,7 @@ trusted. -/
     let st1 := tr.autos.foldl (fun st γ => st.admit ctx γ)
       (AutState.init n budget)
     let st2 := { st1 with refLeaf := some tr.result.canonlab }
-    let B : Key := ⟨achieverCodes ctx 100 tr.result.canonlab (n + 2) 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length ++ [codeSentinel],
+    let B : Key := ⟨tr.bestCodes ++ [codeSentinel],
       leafRows ctx tr.result.canonlab⟩
     let (cert, st3) := certifyNodeAutom ctx 100 n 1
       (initialPartition G).1

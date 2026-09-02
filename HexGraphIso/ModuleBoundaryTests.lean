@@ -92,9 +92,9 @@ private def probeGraph : Colored 10 1 :=
        (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
     coloring := Coloring.trivial 10 }
 
-private def probeCert : CertNode := (.node [(.node [(.node [.leaf, (.autom 0 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 0 (List.toArray [0, 1, 6, 9, 4, 5, 2, 8, 7, 3])), (.autom 2 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))]), (.autom 0 (List.toArray [0, 5, 7, 9, 4, 1, 8, 2, 6, 3])), (.autom 1 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))]), (.autom 0 (List.toArray [1, 0, 4, 3, 2, 6, 5, 9, 8, 7])), (.autom 1 (List.toArray [5, 0, 1, 6, 8, 7, 4, 2, 9, 3])), (.autom 2 (List.toArray [0, 4, 3, 2, 1, 5, 9, 8, 7, 6])), (.autom 1 (List.toArray [0, 5, 8, 6, 1, 4, 7, 3, 9, 2])), (.autom 4 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 2 (List.toArray [0, 1, 6, 9, 4, 5, 2, 8, 7, 3])), (.autom 3 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 7 (List.toArray [0, 1, 6, 9, 4, 5, 2, 8, 7, 3])), (.autom 8 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))])
+private def probeCert : CertNode := (.node [(.node [(.node [.leaf, (.autom 0 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 1 (List.toArray [0, 1, 6, 8, 5, 4, 2, 9, 3, 7])), (.autom 2 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))]), (.autom 0 (List.toArray [0, 4, 3, 8, 5, 1, 9, 2, 6, 7])), (.autom 1 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))]), (.autom 0 (List.toArray [1, 0, 4, 3, 2, 6, 5, 9, 8, 7])), (.autom 1 (List.toArray [4, 0, 1, 2, 3, 9, 5, 6, 7, 8])), (.autom 2 (List.toArray [0, 4, 3, 2, 1, 5, 9, 8, 7, 6])), (.autom 1 (List.toArray [0, 4, 3, 2, 1, 5, 9, 8, 7, 6])), (.autom 4 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 2 (List.toArray [0, 1, 6, 8, 5, 4, 2, 9, 3, 7])), (.autom 3 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8])), (.autom 3 (List.toArray [0, 1, 6, 8, 5, 4, 2, 9, 3, 7])), (.autom 8 (List.toArray [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]))])
 
-private def probeKey : Key := ⟨[128, 27412, 118, 125, 32767], [14, 49, 577, 385, 322, 642, 148, 104, 536, 292]⟩
+private def probeKey : Key := ⟨[128, 27412, 8, 53, 32767], [14, 49, 577, 385, 322, 642, 148, 104, 536, 292]⟩
 
 set_option maxRecDepth 1000000 in
 example : (refine { n := 10, g := rowsOf probeGraph } 1

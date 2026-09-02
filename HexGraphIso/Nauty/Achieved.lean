@@ -758,18 +758,18 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
           ⟨(refine ctx level lab ptn active numcells).longcode ::
             (keysMax (childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
               ((List.range m).map
                 ((fun o => childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).codes,
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells o) ∘ Nat.succ))).codes,
           (keysMax (childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
             ((List.range m).map
               ((fun o => childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).rows⟩ := by
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells o) ∘ Nat.succ))).rows⟩ := by
         rw [specNode]
         simp only [hdisc, Bool.false_eq_true, ite_false]
         rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
@@ -778,19 +778,19 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
       have hmem : ∃ o, o < m + 1 ∧
           keysMax (childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
             ((List.range m).map ((fun o => childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ)) =
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells o) ∘ Nat.succ)) =
           childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells o := by
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells o := by
         rcases keysMax_mem ((List.range m).map fun j =>
           childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1)) (childKey ctx tcLevel fuel level
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1)) (childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0) with he | he
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0) with he | he
         · exact ⟨0, by omega, he⟩
         · rcases List.mem_map.mp he with ⟨j, hj, hje⟩
           exact ⟨j + 1, by
@@ -824,7 +824,7 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
         (breakout (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.2
-        (numcells + 1) hchildOk (by omega) hbcChild
+        ((refine ctx level lab ptn active numcells).numcells + 1) hchildOk (by omega) hbcChild
       refine ⟨llab, hlsz, ?_, ?_⟩
       · -- chain the three reorder stages
         have htv : (refine ctx level lab ptn active numcells).lab[p.1 + o]! ∈
@@ -926,10 +926,10 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
       · rw [hspec]
         show (keysMax (childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
           ((List.range m).map ((fun o => childKey ctx tcLevel fuel level
           (refine ctx level lab ptn active numcells).lab
-          (refine ctx level lab ptn active numcells).ptn p.1 numcells o) ∘ Nat.succ))).rows =
+          (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells o) ∘ Nat.succ))).rows =
           leafRows ctx llab
         rw [hkm]
         exact hlrows

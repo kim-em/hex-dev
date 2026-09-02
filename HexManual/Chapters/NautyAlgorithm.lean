@@ -538,11 +538,11 @@ For the six-vertex path, the whole computation gives:
 #eval canonSpecKey NautyAlgorithmChapterExample.pathSix
 ```
 ```leanOutput pathKey
-{ codes := [27540, 56, 32767], rows := [16, 32, 24, 36, 5, 10] }
+{ codes := [27540, 68, 32767], rows := [16, 32, 24, 36, 5, 10] }
 ```
 
 The code list records the root refinement code `27540` from the worked
-example, the code `56` of the selected leaf's second refinement, and
+example, the code `68` of the selected leaf's second refinement, and
 the marker. The rows are the relabelled adjacency bitsets: row `0` is
 `16`, that is, bit `4`, so new vertex `0` is adjacent exactly to new
 vertex `4`.
