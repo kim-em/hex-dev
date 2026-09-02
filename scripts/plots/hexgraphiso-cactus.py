@@ -27,10 +27,13 @@ Usage:
     lake exe hexgraphiso_cactus        > sweep.jsonl
     lake exe hexgraphiso_cactus pairs  > pairs.jsonl
     python3 scripts/plots/hexgraphiso-cactus.py \
-        --sweep sweep.jsonl --pairs pairs.jsonl --out-dir plots/
+        --sweep sweep.jsonl --pairs pairs.jsonl
 
-The tactic leg re-runs Lean per pair (minutes); cached results land in
-``<out-dir>/tactic-times.json`` and are reused unless ``--retime``.
+Figures land in ``reports/figures/`` (the repo convention, published
+through the manual's ``extraFiles``). The tactic leg re-runs Lean per
+pair (minutes); cached results land in
+``<out-dir>/hexgraphiso-tactic-times.json`` and are reused unless
+``--retime``.
 """
 from __future__ import annotations
 
@@ -114,7 +117,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sweep", type=Path, required=True)
     parser.add_argument("--pairs", type=Path, required=True)
-    parser.add_argument("--out-dir", type=Path, default=Path("plots"))
+    parser.add_argument("--out-dir", type=Path,
+                        default=REPO_ROOT / "reports/figures")
     parser.add_argument("--tactic-timeout", type=float, default=120.0)
     parser.add_argument("--retime", action="store_true")
     args = parser.parse_args()
@@ -163,13 +167,13 @@ def main() -> int:
              "doubled-batch scaling self-check; single machine, "
              "compiled binaries only",
              ha="center", fontsize=7, style="italic")
-    canon_png = args.out_dir / "hexgraphiso-canon-cactus.png"
+    canon_png = args.out_dir / "hexgraphiso-canon-cactus.svg"
     fig.tight_layout()
-    fig.savefig(canon_png, dpi=150)
+    fig.savefig(canon_png)
     plt.close(fig)
 
     pairs = _read_jsonl(args.pairs)
-    cache_path = args.out_dir / "tactic-times.json"
+    cache_path = args.out_dir / "hexgraphiso-tactic-times.json"
     cache: dict[str, float | None] = {}
     if cache_path.exists() and not args.retime:
         cache = json.loads(cache_path.read_text())
@@ -196,9 +200,9 @@ def main() -> int:
     positives = sum(1 for r in pairs if r["iso"])
     ax.set_title(f"isomorphism proof obligations: {positives} positive, "
                  f"{len(pairs) - positives} negative")
-    pairs_png = args.out_dir / "hexgraphiso-pairs-cactus.png"
+    pairs_png = args.out_dir / "hexgraphiso-pairs-cactus.svg"
     fig.tight_layout()
-    fig.savefig(pairs_png, dpi=150)
+    fig.savefig(pairs_png)
     plt.close(fig)
 
     print(canon_png)
