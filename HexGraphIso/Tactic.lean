@@ -186,6 +186,23 @@ meta def kernelDecideProof (p : Expr) : MetaM Expr := do
   let h ← mkExpectedTypeHint refl eqType
   return mkApp3 (mkConst ``of_decide_eq_true) p inst h
 
+/-- The flat Bool literal of a raw graph's adjacency matrix, in
+row-major order. -/
+meta def rawFlat (r : Raw) : List Bool :=
+  (List.range r.n).flatMap fun i =>
+    (List.range r.n).map fun j => r.rows[i]!.testBit j
+
+/-- A `List Bool` literal expression. -/
+meta def boolListLit (bs : List Bool) : MetaM Expr :=
+  mkListLit (mkConst ``Bool) (bs.map fun bb =>
+    mkConst (if bb then ``Bool.true else ``Bool.false))
+
+/-- The expression `e.graph.adjMatrix.data.toList` for a coloured
+graph expression `e`: the tying side of a flat-literal equality. -/
+meta def matrixListSide (e : Expr) : MetaM Expr := do
+  mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
+    #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
+
 /-- Reify a certificate tree as a literal expression. -/
 meta partial def certNodeExpr : Nauty.CertNode → MetaM Expr
   | .leaf => return mkConst ``Nauty.CertNode.leaf
@@ -273,17 +290,29 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
       certH.size ≤ cfg.maxCertNodes &&
       steps ≤ cfg.maxCheckerSteps do
     return none
-  let mkCheck (graphE : Expr) (cert : Nauty.CertNode)
+  -- tie each side's flat matrix to a literal (one sequential kernel
+  -- evaluation per graph), so the replays run on rebuilt literal rows
+  -- instead of forcing `rowsOf` through per-probe flat-index walks
+  let a ← evalColored GE
+  let b ← evalColored HE
+  let LAe ← boolListLit (rawFlat a)
+  let LBe ← boolListLit (rawFlat b)
+  let hA ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
+  let hB ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
+  let mkCheck (graphE litE : Expr) (cert : Nauty.CertNode)
       (B : Nauty.Key) : MetaM Expr := do
-    let checkTerm ← mkAppM ``Nauty.checkKey
-      #[graphE, ← certNodeExpr cert, keyExpr B]
+    let checkTerm ← mkAppM ``checkKeyFlat
+      #[graphE, litE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
-  let hG ← mkCheck GE certG BG
-  let hH ← mkCheck HE certH BH
+  let hG ← mkCheck GE LAe certG BG
+  let hH ← mkCheck HE LBe certH BH
   let diffTerm ← mkAppM ``Nauty.checkDiff #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
-  let proof ← mkAppM ``Nauty.not_isomorphic_of_checkKeys #[hG, hH, hd]
+  let proof ← mkAppM ``not_isomorphic_of_checkKeysLit
+    #[hA, hB, hG, hH, hd]
   return some (proof, certG.size + certH.size)
 
 /-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
@@ -415,17 +444,8 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
               takes {checkCost n} steps but maxCheckerSteps := \
               {cfg.maxCheckerSteps}"
         let pE ← permExpr n p
-        let flatOf (r : Raw) : List Bool :=
-          (List.range n).flatMap fun i =>
-            (List.range n).map fun j => r.rows[i]!.testBit j
-        let boolLit (bs : List Bool) : MetaM Expr :=
-          mkListLit (mkConst ``Bool) (bs.map fun bb =>
-            mkConst (if bb then ``Bool.true else ``Bool.false))
         let natLit (xs : List Nat) : MetaM Expr :=
           mkListLit (mkConst ``Nat) (xs.map mkNatLit)
-        let graphSide (e : Expr) : MetaM Expr := do
-          mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
-            #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
         let kE := (← whnfD (← inferType GE)).getAppArgs[1]!
         let finVal (bound : Expr) : MetaM Expr :=
           mkAppOptM ``Fin.val #[some bound]
@@ -437,13 +457,13 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
             ← mkAppM ``Vector.toList #[← mkAppM ``Perm.vec #[pE]]]
         let tie (lhs rhs : Expr) : MetaM Expr := do
           kernelDecideProof (← mkAppM ``Eq #[lhs, rhs])
-        let hA ← tie (← graphSide GE) (← boolLit (flatOf a))
-        let hB ← tie (← graphSide HE) (← boolLit (flatOf b))
+        let hA ← tie (← matrixListSide GE) (← boolListLit (rawFlat a))
+        let hB ← tie (← matrixListSide HE) (← boolListLit (rawFlat b))
         let hcA ← tie (← cellSide GE) (← natLit a.colors.toList)
         let hcB ← tie (← cellSide HE) (← natLit b.colors.toList)
         let hp ← tie (← permSide) (← natLit p.toList)
         let chkTerm ← mkAppM ``checkIsoLit
-          #[mkNatLit n, ← boolLit (flatOf a), ← boolLit (flatOf b),
+          #[mkNatLit n, ← boolListLit (rawFlat a), ← boolListLit (rawFlat b),
             ← natLit a.colors.toList, ← natLit b.colors.toList,
             ← natLit p.toList]
         let hchk ← kernelDecideProof
