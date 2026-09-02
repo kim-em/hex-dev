@@ -14,9 +14,8 @@ public section
 The automorphism-pruning certificate producer. Everything here is
 untrusted: candidates are validated by `validateKey?` (the trusted
 `checkKey` replay), and every automorphism prune is self-checked with
-the checker's own predicates (`childAutomOk`, the literal conjunction
-replayed by `checkChildren`) before use, so a producer bug can only
-cost performance, never soundness. The honest code-prune producer
+the replay's cell-transport predicate (`childCellsOk`) before use, so
+a producer bug can only cost performance, never soundness. The honest code-prune producer
 `certifyNode` stays in `Cert` untouched; the completeness theorems and
 the exhaustive fallback (`Complete`) are stated about it and carry
 totality.
@@ -159,19 +158,22 @@ def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
     Bool :=
   masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
 
-/-- The literal `.autom` acceptance predicate of `checkChildren`,
-including the earlier-offset requirement: emitted records satisfy
-exactly what the trusted replay re-checks. -/
-def childAutomOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
+/-- The emission predicate for witness-composed automorphisms: the
+earlier-offset requirement and the replay's cell-transport check.
+The replay's `checkAutom` conjunct is deliberately not re-run at
+emission — every witness is a composition of generators the
+admission filter verified individually, a composition of
+automorphisms is an automorphism, and the trusted replay re-checks
+the whole conjunction regardless, so a composition bug costs a
+failed replay, never soundness. -/
+def childCellsOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
   decide (o' < o) &&
-  checkAutom ctx.g γ ctx.n &&
-  checkCellsPerm
-    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
-    ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map
-      fun w => γ[w]!)
-    (level + 1) ctx.n
+  (let bo := breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!
+   checkCellsPerm bo.2.1
+     (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
+     (bo.1.map fun w => γ[w]!)
+     (level + 1) ctx.n)
 
 /-- Search for a witness pruning target-cell offset `o` onto an
 earlier offset: breadth-first search from `v = rsLab[tc + o]` over the
@@ -265,8 +267,7 @@ def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
                   (child :: kids, st', some cache')
                 match witness? ctx rs.lab tcr.1 cache'.2 o with
                 | some (o', γ) =>
-                  -- emission runs the literal checker predicate once
-                  if childAutomOk ctx rs.lab rs.ptn level tcr.1 o o'
+                  if childCellsOk ctx rs.lab rs.ptn level tcr.1 o o'
                       γ then
                     (.autom o' γ :: kids, st, some cache')
                   else
