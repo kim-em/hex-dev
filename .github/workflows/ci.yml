@@ -273,6 +273,11 @@ jobs:
         id: conformance
         background: true
         env:
+          # Bench verify runs concurrently under a hard wallclock cap, so
+          # the oracle pool (and any emitter-internal parallelism) must
+          # leave it CPU headroom on the 4-vCPU runner.
+          HEX_ORACLE_JOBS: "2"
+          HEX_EMIT_JOBS: "2"
           # Missing comparator packages are release failures, not green skips.
           HEX_REQUIRE_ORACLES: "1"
         run: |
