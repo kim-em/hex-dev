@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.IsoLit
+public import HexGraphIso.NodeLit
 public import HexGraphIso.Separator
 public import HexGraph.Basic
 public meta import Lean
@@ -168,6 +169,10 @@ example : Hex.GraphIso.sepRootG probeGraph probeGraph = false := by
 -- kernel closure of flatRows/chunkRows/atD feeding checkNode
 set_option maxRecDepth 1000000 in
 example : Hex.GraphIso.checkKeyFlat probeGraph
+    probeGraph.graph.adjMatrix.data.toList probeCert probeKey
+    = true := by kdecide
+
+example : Hex.GraphIso.checkKeyLit probeGraph
     probeGraph.graph.adjMatrix.data.toList probeCert probeKey
     = true := by kdecide
 
