@@ -460,6 +460,27 @@ different tie-breaking, so agreement cannot be proven through that
 branch; the fallback must instead be proven unreachable, which is
 exactly `certifyCanon?_isSome`.
 
+The payoff is a total, non-`Option` surface. With
+`certifyCanon?_isSome` in hand the pipeline gains
+
+```lean
+def certifyCanon (G : Colored n k) : CanonResult n k :=
+  (Nauty.certifyCanon? G).get (certifyCanon?_isSome G)
+```
+
+and every fallback arm becomes provably dead: `canonicalizeChecked`
+drops its exhaustive fallback in favour of `certifyCanon`, totality
+transports to the transcription through
+`canonicalize?_eq_of_certifyCanon`, and the fast `canonicalize`
+becomes `(canonicalize? G).get` under that proof with no fallback
+match. Unconditional agreement `canonicalize G = canonicalizeChecked G`
+then holds on every input and the whole `Checked` theorem surface
+transports to the short names. At that point the two-tier split has
+no remaining justification and the public surface collapses to the
+short names; certificates and the replay checker remain as the proof
+layer behind the collapsed surface and for the `graph_iso` tactic,
+whose kernel obligations must stay certificate-sized.
+
 ## The Mathlib-free `graph_iso` tactic
 
 The library registers `graph_iso` for closed goals over executable
