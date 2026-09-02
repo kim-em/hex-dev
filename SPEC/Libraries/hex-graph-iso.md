@@ -401,6 +401,35 @@ Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
 input.
 
+### Trace-driven production
+
+The producer need not search. The transcribed search already makes
+every decision a certificate records (splits, refinement codes,
+target cells, discovered automorphisms, prune events) and discards
+them, so an implementation may have the transcription append its
+decisions to a trace and produce the certificate by translating that
+trace, instead of re-running a pruned search of its own. The trace is
+untrusted exactly as the producer is: the checker recomputes
+everything from the graph, and a wrong trace can only make validation
+fail, never accept a wrong answer. Constraints on such an
+implementation:
+
+- Recording must not alter the transcription's observable traversal
+  (the conformance-pinned node counts, forms, and labels).
+- Users of the fast tier who request no certificate must not pay for
+  tracing; the traced walk is a separate entry point or an opt-in of
+  the certificate pipeline.
+- The certificates emitted remain subject to the same replay and the
+  same size accounting as search-produced ones.
+
+This removes the duplicate search from the certificate pipeline; the
+replay then dominates its cost. It is an implementation option, not a
+requirement, and it composes with
+[Verified search refinement](#verified-search-refinement): with a
+trace-driven producer, layer four of that programme (the
+transcription selects the same leaf as the producer) collapses into
+layers one and two, since the producer's walk *is* the transcription's.
+
 ## Verified search refinement
 
 Unconditional agreement of the two public tiers is a refinement
