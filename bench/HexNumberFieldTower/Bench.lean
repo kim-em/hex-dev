@@ -964,6 +964,29 @@ def prepLinearElemInput (n : Nat) : ElemInput :=
         b := ofCoeffs tower (ladderCoords d 7) }
   | none => panic! "prepLinearElemInput: tower fixture failed"
 
+/-- A height-two arithmetic fixture `ℚ(3^(1/n), √2)` whose varying lower
+presentation is constructed directly and whose fixed quadratic top level is
+admitted through the public checked extension path. Inversion in the top
+quotient therefore performs genuine recursive inversion in the degree-`n`
+lower field without making degree-`n` relative factorization the fixture
+bottleneck. -/
+def prepRecursiveElemInput (n : Nat) : ElemInput :=
+  let presentation := prepPresentationInput (max n 2)
+  let root := presentation.root
+  match presentation.checked, sqrtTwo? () with
+  | some ⟨checked⟩, some sqrtTwo =>
+      letI : ZPoly.CheckedIrreducible root.p := checked
+      let base := ofQAdjoin (x := root.x) root.squarefree root.rep root.rep_mk
+      match adjoin? base.tower sqrtTwo.root with
+      | some extension =>
+          let tower := extension.tower
+          let d := tower.dim
+          { tower := tower
+            a := ofCoeffs tower (ladderCoords d 3)
+            b := ofCoeffs tower (ladderCoords d 7) }
+      | none => panic! "prepRecursiveElemInput: quadratic extension failed"
+  | _, _ => panic! "prepRecursiveElemInput: base fixture failed"
+
 def runTowerAddLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a + input.b)
 
@@ -1069,11 +1092,26 @@ overall. Rational coefficient growth along the Euclidean chain is modelled
 with the same logarithmic limb-growth proxy the HexResultant Brown-chain
 registrations use, giving the declared `n^2 log n` wall model. -/
 setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
-  with prep := prepElemInput
+  with prep := prepRecursiveElemInput
   where {
-    paramFloor := 1
+    paramFloor := 2
     paramCeiling := 12
-    paramSchedule := .custom #[1, 2, 3, 4, 6, 8, 12]
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Division performs the recursive inversion above followed by
+one `O(D²)` tower multiplication. The `n² log n` inversion term dominates on
+the same bounded-height `ℚ(3^(1/n), √2)` family; both operations consume the
+already checked height-two fixture outside the timed region. -/
+setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
+  with prep := prepRecursiveElemInput
+  where {
+    paramFloor := 2
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 30.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
