@@ -1,0 +1,73 @@
+{
+  "binary_commit": "8ea8d6819af75d1fc9ad9053ce682af4925167cb",
+  "case": "Hex.NumberTowerBench.runTowerInvLadder",
+  "classified_percent": 99.91,
+  "command": "LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench Hex.NumberTowerBench.runTowerInvLadder 12 5000000000",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "diagnostics": {
+    "calibration_residual_ms": 0.5087437629699707,
+    "confidence": "passed",
+    "rejected_samples_bench_thread": 66,
+    "retained_samples_bench_thread": 4257,
+    "total_timed_ms": 4267.925778
+  },
+  "family": "tower-coordinate-arithmetic",
+  "host": "chungus2",
+  "inclusive_hex": [
+    {
+      "function": "Hex.NumberTowerBench.runTowerInvLadder",
+      "percent": 91.68
+    },
+    {
+      "function": "Hex.NumberTower.inv",
+      "percent": 91.59
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.invCoords",
+      "percent": 91.59
+    },
+    {
+      "function": "Hex.DensePoly.xgcdLeftAux",
+      "percent": 85.46
+    },
+    {
+      "function": "Hex.DensePoly.divMod",
+      "percent": 63.61
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.mulCoords",
+      "percent": 57.58
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.addCoords",
+      "percent": 30.73
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.convolve",
+      "percent": 30.09
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.subCoords",
+      "percent": 23.96
+    },
+    {
+      "function": "Hex.NumberTower.Arithmetic.reduce",
+      "percent": 8.55
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 19.83,
+    "gmp": 58.73,
+    "lean-own-code": 0.61,
+    "lean-runtime": 20.74,
+    "other": 0.09
+  },
+  "lean_bench_version": "0.1.0",
+  "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+  "method": "timed-region-filtered",
+  "os": "Linux x86_64 6.12.100",
+  "param": 12,
+  "samples": 4257,
+  "sampling_rate_hz": 999,
+  "samply": "0.13.1"
+}

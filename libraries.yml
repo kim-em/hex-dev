@@ -1078,7 +1078,7 @@ libraries:
         - name: adjoin-extend
           description: Mode-1 linear checked-presentation construction plus canonical mode-3 fourth-root and identity adjoining after explicit degree-schedule diagnostics.
         - name: split-flatten
-          description: Canonical mode-3 quartic splitting and two-level flattening, passing mode-1 full-basis coordinate maps, and correctness/attribution anchors for recovery and certification components.
+          description: Canonical mode-3 quartic splitting and two-level flattening, passing mode-1 full-basis fromPrimitive, an unresolved sparse full-basis toPrimitive diagnostic, and correctness/attribution anchors for recovery and certification components.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true

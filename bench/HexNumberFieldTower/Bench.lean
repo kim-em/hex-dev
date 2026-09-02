@@ -583,8 +583,8 @@ setup_fixed_benchmark runFactorRetry where {
 }
 
 /- Mode 3 for genuine height-two relative factorization. The degree schedule
-`2,3,4,6` measures 7.59, 12.19, 19.02, and 46.63 ms and rejects a linear
-candidate with residual `+0.645`: recursive norms, gcd, rational factorization,
+`2,3,4,6` measures 7.598, 12.320, 18.591, and 46.578 ms and rejects a linear
+candidate with residual `+0.636`: recursive norms, gcd, rational factorization,
 and replay change shares, and no published bound covers all phases. The
 irreducible `X² - X - 1` input over `ℚ(√2, √3)` is the smallest
 non-short-circuit canonical case. Its 7.919 ms per-call and 253.393 ms batch
@@ -816,11 +816,11 @@ private def ladderRootSeed (p : ZPoly) (n : Nat) : DyadicSquare :=
   let center := nthRootFloor scaled n
   ⟨Dyadic.ofIntWithPrec (Int.ofNat center) q, 0, q⟩
 
-/-- Certify only the selected positive binomial root. At Mahler precision the
-seed square's doubled retained disc is narrower than the certified separation
-bound, so the atom returned near the positive real seed cannot be a different
-root. This avoids refining and pairwise separating every other root merely to
-build an untimed fixture. -/
+/-- Certify one simple binomial root from a seed near the positive real root.
+`isolateOne?` does not promise that the returned atom lies inside the seed, but
+the choice does not affect the presentation degree or timed arithmetic. This
+avoids refining and pairwise separating every other root merely to build an
+untimed fixture. -/
 private def positiveBinomialRoot? (p : ZPoly) (n : Nat) :
     Option (RefinedIsolation p) :=
   isolateOne? p (mahlerPrec p : Int) (ladderRootSeed p n)
@@ -1361,13 +1361,12 @@ def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
         (hash input.tower.dim)
   | none => 0
 
-/- Cost model. One `toPrimitive` call has the public `O(D²)` bound from a
-length-`D` linear combination of degree-`D` primitive coordinates. The
-implementation skips zero input coordinates, avoiding that dense arithmetic
-for this basis family, but the required structural checksum still traverses
-the `D` exact-rational output coefficients, whose integer representatives in
-the primitive presentation have `O(D)` limbs. Applying the closure to all
-`D = 2n` basis vectors therefore retains the original `Θ(n³)` wall model. -/
+/- Diagnostic only. One dense `toPrimitive` call has the public `O(D²)`
+rational-operation bound from a length-`D` linear combination of degree-`D`
+primitive coordinates. This basis family becomes sparse after the executable
+zero-coordinate optimization, so its statistical cubic verdict cannot
+discharge mode 1; the registration is retained to expose that behavior and
+the structural checksum cost. -/
 setup_benchmark runToPrimitiveLadder n => n * n * n
   with prep := prepMapLadderInput
   where {

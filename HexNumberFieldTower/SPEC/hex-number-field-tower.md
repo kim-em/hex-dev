@@ -353,10 +353,12 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 - `flatten?` computes primitive-element eliminants of degree at most `D`, uses
   validated linear-gcd recovery while scanning full-degree candidates, and
   applies exact trace pairing once if the maximum-degree fallback is needed.
-  One completed flattening `toPrimitive` application costs `O(D²)` rational
+  One dense flattening `toPrimitive` application costs `O(D²)` rational
   operations; one `fromPrimitive` application costs `O(D³)` with the current
-  Horner/tower-arithmetic path. The benchmark applies a map to all `D` basis
-  vectors, giving full-basis `O(D³)` and `O(D⁴)` registrations respectively.
+  Horner/tower-arithmetic path. Applying `fromPrimitive` to all `D` basis
+  vectors gives the registered `O(D⁴)` family. The current full-basis
+  `toPrimitive` diagnostic uses sparse unit vectors and does not exercise its
+  dense `O(D²)` bound after zero coordinates are skipped.
 
 The fixed canonical cases for adjoining, identity adjoining, one- and
 two-level factorization, checked replay, splitting, and flattening use
@@ -366,12 +368,12 @@ mode-3 regression ceilings for operations whose realised phase mixtures admit
 neither a tight family model nor a published bound covering the dominant
 executable phases.
 
-Full-basis `toPrimitive` retains its cubic mode-1 model after the executable
-map stops performing quotient-field arithmetic for zero coordinates. Negation,
-inversion, and division have no admissible current mode: their fixed
-dimension-four registrations are hash anchors, not performance evidence, and
-the headline report records the binding failed parametric verdicts. The
-library therefore remains at Phase 3.
+Full-basis `toPrimitive`, negation, inversion, and division have no admissible
+current mode. The forward-map optimization is valid, but its sparse unit-basis
+diagnostic no longer covers the dense public bound; its fixed registration and
+the dimension-four arithmetic registrations are hash anchors, not performance
+evidence. The headline report records the binding diagnostics, and the library
+therefore remains at Phase 3.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
 input degree at most 4; the degree-24 factorization case is scientific
