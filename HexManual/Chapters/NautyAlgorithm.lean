@@ -66,8 +66,8 @@ implementation computes the maximum described in part one" is a
 theorem, proved in Lean. The statement "the Lean implementation agrees
 with the C program" is not a theorem about anything; it is an empirical
 claim, supported by conformance tests that compare the two programs on
-large families of inputs. The chapter never treats the C program as a
-formal object.
+large families of inputs. The `HexGraphIso` library never treats the
+C program as a formal object.
 
 # Part one: the algorithm
 %%%
