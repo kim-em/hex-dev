@@ -1016,7 +1016,7 @@ theorem primeTable_sorted : primeTable.toList.Pairwise (· < ·) :=
 
 private theorem getD_eq {a : Array Nat} {i : Nat} (h : i < a.size) :
     a.getD i 0 = a[i] := by
-  rw [Array.getD_eq_getD_getElem?, Array.getD_getElem?, dif_pos h]
+  rw [Array.getD_eq_getD_getElem?, Array.getD_getElem?, dite_eq_left h]
 
 private theorem getD_le_getD {a : Array Nat}
     (hs : a.toList.Pairwise (· < ·)) {i j : Nat} (hij : i ≤ j)
@@ -1060,20 +1060,20 @@ private theorem binSearchGo_sound {a : Array Nat} {n : Nat} :
       intro lo hi hhi h
       unfold binSearchGo at h
       by_cases hlh : lo < hi
-      · rw [if_pos hlh] at h
+      · rw [ite_eq_left hlh] at h
         have hmid : (lo + hi) / 2 < a.size := by omega
         by_cases heq : a.getD ((lo + hi) / 2) 0 = n
         · have : a.getD ((lo + hi) / 2) 0 = a[(lo + hi) / 2] := by
             simp [Array.getD, hmid]
           rw [this] at heq
           exact heq ▸ Array.getElem_mem hmid
-        · rw [if_neg heq] at h
+        · rw [ite_eq_right heq] at h
           by_cases hlt : a.getD ((lo + hi) / 2) 0 < n
-          · rw [if_pos hlt] at h
+          · rw [ite_eq_left hlt] at h
             exact ih ((lo + hi) / 2 + 1) hi hhi h
-          · rw [if_neg hlt] at h
+          · rw [ite_eq_right hlt] at h
             exact ih lo ((lo + hi) / 2) (by omega) h
-      · rw [if_neg hlh] at h
+      · rw [ite_eq_right hlh] at h
         cases h
 
 private theorem binSearchGo_complete {a : Array Nat} {n : Nat}
@@ -1093,12 +1093,12 @@ private theorem binSearchGo_complete {a : Array Nat} {n : Nat}
         rw [Nat.pow_succ]; omega
       have hlh : lo < hi := by omega
       unfold binSearchGo
-      rw [if_pos hlh]
+      rw [ite_eq_left hlh]
       by_cases heq : a.getD ((lo + hi) / 2) 0 = n
-      · rw [if_pos heq]
-      · rw [if_neg heq]
+      · rw [ite_eq_left heq]
+      · rw [ite_eq_right heq]
         by_cases hlt : a.getD ((lo + hi) / 2) 0 < n
-        · rw [if_pos hlt]
+        · rw [ite_eq_left hlt]
           -- The target index is strictly above the midpoint: at or below it
           -- the sorted values are at most the midpoint value, which is < n.
           have hup : (lo + hi) / 2 < i := by
@@ -1107,7 +1107,7 @@ private theorem binSearchGo_complete {a : Array Nat} {n : Nat}
             · have := getD_le_getD hs h (by omega : (lo + hi) / 2 < a.size)
               omega
           exact ih ((lo + hi) / 2 + 1) hi i hhi (by omega) (by omega) hihi hval
-        · rw [if_neg hlt]
+        · rw [ite_eq_right hlt]
           -- Symmetrically the target index is strictly below the midpoint.
           have hdown : i < (lo + hi) / 2 := by
             rcases Nat.lt_or_ge i ((lo + hi) / 2) with h | h
@@ -1346,6 +1346,8 @@ role, so the range is unrestricted. -/
 def primesIn (lo hi : Nat) : Array Nat :=
   ((List.range' lo (hi - lo)).filter (fun n => decide (Prime n))).toArray
 
+/-- Membership in `primesIn lo hi` is exactly primality in the half-open
+interval `[lo, hi)`. -/
 theorem mem_primesIn {lo hi n : Nat} :
     n ∈ primesIn lo hi ↔ lo ≤ n ∧ n < hi ∧ Prime n := by
   unfold primesIn

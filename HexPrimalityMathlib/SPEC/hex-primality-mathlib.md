@@ -378,6 +378,7 @@ failure, resource, or evidence semantics.
 HexPrimalityMathlib/
   Prime.lean       -- prime_iff and core-result transports
   Segment.lean     -- table and range statements in Mathlib vocabulary
+  Policy.lean      -- opt-in norm_num thresholds and factor-search bounds
   NormNum.lean     -- Nat.Prime tactic handler and opt-in norm_num policy
   SPEC/
     hex-primality-mathlib.md

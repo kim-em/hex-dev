@@ -54,9 +54,9 @@ private theorem orderOfAux_spec (a n : Nat) :
       intro k r hr h
       unfold orderOfAux at h ⊢
       by_cases hk : r = 1 % n
-      · rw [if_pos hk] at h ⊢
+      · rw [ite_eq_left hk] at h ⊢
         exact ⟨Nat.le_refl _, hr ▸ hk, fun j hkj hjk => by omega⟩
-      · rw [if_neg hk] at h ⊢
+      · rw [ite_eq_right hk] at h ⊢
         have hr' : r * (a % n) % n = a ^ (k + 1) % n := by
           rw [hr, ← Nat.mul_mod, ← Nat.pow_succ]
         obtain ⟨hle, hpow, hmin⟩ := ih (k + 1) _ hr' h
@@ -79,9 +79,9 @@ private theorem orderOfAux_ne_zero_of_witness (a n : Nat) :
       intro k r hr hk j hkj hjb hj
       unfold orderOfAux
       by_cases hcase : r = 1 % n
-      · rw [if_pos hcase]
+      · rw [ite_eq_left hcase]
         omega
-      · rw [if_neg hcase]
+      · rw [ite_eq_right hcase]
         have hne : j ≠ k := fun h => hcase (hr.trans (h ▸ hj))
         have hr' : r * (a % n) % n = a ^ (k + 1) % n := by
           rw [hr, ← Nat.mul_mod, ← Nat.pow_succ]
@@ -142,14 +142,14 @@ theorem pow_pred_mod {p a : Nat} (hp : Prime p) (h : Nat.Coprime a p) :
 private theorem orderOf_eq_aux {a n : Nat} (h1 : 1 < n) (hcop : Nat.Coprime a n) :
     orderOf a n = orderOfAux (a % n) n n 1 (a % n) := by
   unfold orderOf
-  rw [if_pos ⟨h1, hcop⟩]
+  rw [ite_eq_left ⟨h1, hcop⟩]
 
 /-- A positive order certifies a nontrivial modulus. -/
 theorem one_lt_of_orderOf_pos {a n : Nat} (h : 0 < orderOf a n) : 1 < n := by
   by_cases hg : 1 < n ∧ Nat.Coprime a n
   · exact hg.1
   · unfold orderOf at h
-    rw [if_neg hg] at h
+    rw [ite_eq_right hg] at h
     omega
 
 /-- A positive order certifies coprimality. -/
@@ -158,7 +158,7 @@ theorem coprime_of_orderOf_pos {a n : Nat} (h : 0 < orderOf a n) :
   by_cases hg : 1 < n ∧ Nat.Coprime a n
   · exact hg.2
   · unfold orderOf at h
-    rw [if_neg hg] at h
+    rw [ite_eq_right hg] at h
     omega
 
 /-- A positive order is an exponent sending `a` to `1` modulo `n`. -/

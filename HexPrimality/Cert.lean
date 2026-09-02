@@ -197,22 +197,22 @@ theorem boundedPowMul_eq {bound q : Nat} :
       intro acc r h
       unfold boundedPowMul at h
       by_cases ha : acc = 0
-      · rw [if_pos ha] at h
+      · rw [ite_eq_left ha] at h
         injection h with h
         subst h
         simp [ha]
-      · rw [if_neg ha] at h
+      · rw [ite_eq_right ha] at h
         by_cases hq : q = 0
-        · rw [if_pos hq] at h
+        · rw [ite_eq_left hq] at h
           injection h with h
           subst h
           simp [hq]
-        · rw [if_neg hq] at h
+        · rw [ite_eq_right hq] at h
           by_cases hb : acc ≤ bound / q
-          · rw [if_pos hb] at h
+          · rw [ite_eq_left hb] at h
             rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
               Nat.mul_comm q (q ^ e)]
-          · rw [if_neg hb] at h
+          · rw [ite_eq_right hb] at h
             cases h
 
 /-- A successful bounded multiplication preserves the accumulator bound. The
@@ -228,21 +228,21 @@ theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc ≤ bound)
   | succ e ih =>
       unfold boundedPowMul at h
       by_cases ha : acc = 0
-      · rw [if_pos ha] at h
+      · rw [ite_eq_left ha] at h
         injection h with h
         subst h
         exact Nat.zero_le _
-      · rw [if_neg ha] at h
+      · rw [ite_eq_right ha] at h
         by_cases hq : q = 0
-        · rw [if_pos hq] at h
+        · rw [ite_eq_left hq] at h
           injection h with h
           subst h
           exact Nat.zero_le _
-        · rw [if_neg hq] at h
+        · rw [ite_eq_right hq] at h
           by_cases hb : acc ≤ bound / q
-          · rw [if_pos hb] at h
+          · rw [ite_eq_left hb] at h
             exact ih ((Nat.le_div_iff_mul_le (Nat.pos_of_ne_zero hq)).mp hb) h
-          · rw [if_neg hb] at h
+          · rw [ite_eq_right hb] at h
             cases h
 
 /-- A successful certificate product is bounded when its initial accumulator
