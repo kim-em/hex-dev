@@ -624,10 +624,16 @@ conformance testing, not a theorem.
 ### Part one: the algorithm in natural language
 
 The first part uses no Lean identifiers and no code blocks. Its
-audience is a reader who knows basic graph theory but not Lean and not
-nauty. The quality bar: a careful reader could reimplement the
-function from part one alone, and the reimplementation would agree
-with nauty 2.9.3 on every input. Content, in order:
+audience is a mathematician or computer scientist who knows basic
+graph theory but knows nothing about this algorithm, Lean, or nauty.
+Every term is defined before its first use: no vocabulary from the
+implementation (splitter, hint, code chain, active cell, dominated)
+may appear before the sentence that defines it, and every word keeps
+its ordinary meaning, per [SPEC/writing-style.md](../writing-style.md).
+The introduction previews the chapter in plain words only. The
+quality bar: a careful reader could reimplement the function from
+part one alone, and the reimplementation would agree with nauty 2.9.3
+on every input. Content, in order:
 
 1. The problem. Finite simple undirected graphs with ordered vertex
    colours, what a canonical form is (a function invariant under
@@ -636,7 +642,9 @@ with nauty 2.9.3 on every input. Content, in order:
    canonical forms exist. This chapter describes one particular
    choice.
 2. Ordered partitions and equitable refinement. Cells in a fixed
-   order, refinement of a cell by neighbour counts into another cell,
+   order, the initial ordered partition (colour classes in colour
+   order, each listing its vertices by increasing original vertex),
+   refinement of a cell by neighbour counts into another cell,
    the equitable fixed point, and the fact that refinement is
    isomorphism-equivariant. One worked example on a small graph
    (roughly five to seven vertices) showing an inequitable partition
@@ -659,9 +667,13 @@ with nauty 2.9.3 on every input. Content, in order:
    reimplement: the refinement-code accumulator arithmetic (nauty's
    `MASH`), the order in which pending splitter cells are processed,
    the stable redistribution of a split cell by neighbour count, the
-   target-cell rule (nauty's `bestcell` under the pinned
-   `tc_level = 100`), and the row order used when comparing relabelled
-   adjacency matrices.
+   separate single-vertex-splitter split (including the resulting
+   fragment order), which fragments of a split cell become pending and
+   which one is exempt (with the tie rules, which differ between the
+   two splits), exactly when a new singleton fragment becomes the
+   preferred next splitter, the target-cell rule (nauty's `bestcell`
+   under the pinned `tc_level = 100`), and the row order used when
+   comparing relabelled adjacency matrices.
 6. Pruning, briefly. The prunings the production search performs
    (first-path and best-path code comparison, discovered
    automorphisms, orbit pruning, short-prune), each with one or two
