@@ -30,9 +30,15 @@ undirected graphs with ordered vertex colours. The canonical labelling
 algorithm used in `HexGraphIso` is an exact translation of the
 [nauty](https://users.cecs.anu.edu.au/~bdm/nauty/) 2.9.3 algorithm into Lean. (We
 use conformance testing, rather than a theorem, to ensure they are
-identical, and prove our theorems about the Lean translation.) Two
-coloured graphs are isomorphic exactly when their canonical forms are
-equal ({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`), and the
+identical, and prove our theorems about the Lean translation.) The
+short names (`canonicalize`, `canon`, `label`, `isIso`) run that
+translation directly and are the fast surface for users who just want
+answers; the `Checked` surface (`canonicalizeChecked`, `canonChecked`,
+…) additionally validates every answer through a proven certificate
+checker and carries the theorems. Two coloured graphs are isomorphic
+exactly when their checked canonical forms are equal
+({name Hex.GraphIso.iso_iff_canonChecked_eq}`iso_iff_canonChecked_eq`),
+and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
 checked transporter, negative goals through a fully verified
@@ -154,7 +160,7 @@ definitional equality.
 
 {docstring Hex.GraphIso.Mathlib.encode}
 
-{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canon_eq}
+{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canonChecked_eq}
 
 ```lean
 open Hex.GraphIso.Mathlib

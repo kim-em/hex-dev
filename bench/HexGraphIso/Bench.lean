@@ -35,11 +35,16 @@ backed by it, the certificate pipeline, and the pinned nauty
 comparator register as fixed benchmarks on committed circulant sizes:
 
 * `runHexCanon{8,12,16}` versus `runNautyCanon{8,12,16}`: the public
-  certificate-checked `canon` against the pinned nauty 2.9.3
-  comparator (in-process FFI against the vendored source, via
-  `Hex.BenchOracle.Nauty`), joined on the canonical upper-triangle
-  bits.
-* `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
+  fast `canon` (the transcription surface; before the API flip this
+  series measured the certificate-checked pipeline — series break
+  noted) against the pinned nauty 2.9.3 comparator (in-process FFI
+  against the vendored source, via `Hex.BenchOracle.Nauty`), joined
+  on the canonical upper-triangle bits.
+* `runHexCanonChecked{8,12,16}`: the certificate-checked
+  `canonChecked` on the same instances — the explicit price of the
+  validated certificate.
+* `runIsIso12`, `runFindIso12`: the public fast isomorphism
+  decisions; `runIsIsoChecked12` the certificate-checked decision.
 * `runCertify12`, `runCertReplay12`: unbounded certificate generation
   and the generation-plus-replay pipeline (`Nauty.certifyKey?` and
   `Nauty.certifyCanon?`; the limit-gated public wrappers are covered
@@ -171,7 +176,15 @@ private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
     return result.tri
   | none => return ""
 
+private def runHexCanonCheckedAt (m : Nat) (_ : Unit) : IO String :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return triBitsOf (canonChecked G)
+  | none => return ""
+
 def runHexCanon8 : Unit → IO String := runHexCanonAt 8
+def runHexCanonChecked8 : Unit → IO String := runHexCanonCheckedAt 8
+def runHexCanonChecked12 : Unit → IO String := runHexCanonCheckedAt 12
+def runHexCanonChecked16 : Unit → IO String := runHexCanonCheckedAt 16
 def runNautyCanon8 : Unit → IO String := runNautyCanonAt 8
 def runHexCanon12 : Unit → IO String := runHexCanonAt 12
 def runNautyCanon12 : Unit → IO String := runNautyCanonAt 12
@@ -188,6 +201,11 @@ def runSpecKey6 : Unit → IO Nat := fun _ =>
 def runIsIso12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ => return isIso G G
+  | none => return false
+
+def runIsIsoChecked12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return isIsoChecked G G
   | none => return false
 
 def runFindIso12 : Unit → IO Bool := fun _ =>
@@ -236,9 +254,13 @@ setup_fixed_benchmark runNautyCanon8 where externalComparisonConfig
 setup_fixed_benchmark runHexCanon12 where hexComparisonConfig
 setup_fixed_benchmark runNautyCanon12 where externalComparisonConfig
 setup_fixed_benchmark runHexCanon16 where hexComparisonConfig
+setup_fixed_benchmark runHexCanonChecked8 where hexComparisonConfig
+setup_fixed_benchmark runHexCanonChecked12 where hexComparisonConfig
+setup_fixed_benchmark runHexCanonChecked16 where hexComparisonConfig
 setup_fixed_benchmark runNautyCanon16 where externalComparisonConfig
 setup_fixed_benchmark runSpecKey6 where hexComparisonConfig
 setup_fixed_benchmark runIsIso12 where hexComparisonConfig
+setup_fixed_benchmark runIsIsoChecked12 where hexComparisonConfig
 setup_fixed_benchmark runFindIso12 where hexComparisonConfig
 setup_fixed_benchmark runCertify12 where hexComparisonConfig
 setup_fixed_benchmark runCertReplay12 where hexComparisonConfig

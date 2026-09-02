@@ -9,7 +9,8 @@ Coloured graph canonical labelling per
   colourings, `IsIso`/`Isomorphic`, and the proven Boolean `checkIso`.
 - `Reference` — the factorially expensive reference canonical form with
   the full proof suite: `relabel_label`, `canon_iso`, `canon_invariant`,
-  `iso_iff_canon_eq`. The public operations in `Canon` are currently
+  `iso_iff_canon_eq` (in its own namespace). The public operations were
+  originally
   backed by it, so the public theorems are inherited.
 - `Nauty` — an exact executable transcription of the pinned nauty 2.9.3
   dense canonical search. Unverified; its evidence is the conformance
@@ -134,7 +135,7 @@ The planned stack, in dependency order:
    earlier sibling, shrinking certificates on symmetric families from
    thousands of records to within a small factor of nauty's
    visited-node counts.
-4. **Switch.** Public `canonicalize` becomes certificate-checked
+4. **Switch.** Public `canonicalizeChecked` becomes certificate-checked
    production search with the total `canonSpec` fallback, making the
    public `canon` nauty-compatible with the SPEC's theorems intact;
    `DiffCert`/`checkDiff` then give the certificate-based negative
@@ -149,9 +150,11 @@ The planned stack, in dependency order:
    show the checker accepts the honest certificate for the true key,
    and `bruteCanon?_isSome` finds the achieved leaf among all
    labellings. **The public surface has switched**:
-   `HexGraphIso/Ops.lean` defines `canonicalize`/`canon`/`label`/
-   `findIso`/`isIso` and the bounded operations backed by
-   `canonicalizeSpec`, reproving the whole theorem surface
+   `HexGraphIso/Ops.lean` defines the two-tier public surface: the
+   short names (`canonicalize`/`canon`/`label`/`findIso`/`isIso`) are
+   the fast transcription tier with structural theorems only, and the
+   `Checked` names are the certificate-checked tier backed by
+   `canonicalizeSpec`, carrying the whole theorem surface
    (including `colorSorted_canon`); `Canon.lean` keeps the limit
    structures and the replay-bounded `checkIso?`. The conformance
    guards pass unchanged against the new backing.

@@ -54,9 +54,10 @@ theorem isomorphic_of_checkIso? {n k : Nat} {G H : Colored n k}
     (h : checkIso? replay G H p = some true) : Isomorphic G H :=
   Isomorphic.intro p ((checkIso?_some h).mp rfl)
 
-theorem not_isomorphic_of_isIso_eq_false {n k : Nat} {G H : Colored n k}
-    (h : isIso G H = false) : ¬ Isomorphic G H :=
-  (isIso_eq_false_iff G H).mp h
+theorem not_isomorphic_of_isIsoChecked_eq_false {n k : Nat}
+    {G H : Colored n k} (h : isIsoChecked G H = false) :
+    ¬ Isomorphic G H :=
+  (isIsoChecked_eq_false_iff G H).mp h
 
 /-- The non-dependent runtime image of a coloured graph, so elaboration-time
 meta code can evaluate closed `Colored n k` terms without knowing `n` and

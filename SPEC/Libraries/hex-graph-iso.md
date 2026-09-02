@@ -148,20 +148,64 @@ The canonical result keeps its form and label together:
 structure CanonResult (n k : Nat) where
   form : Colored n k
   label : Label n
-
-def canonicalize (G : Colored n k) : CanonResult n k
-def canon (G : Colored n k) : Colored n k := (canonicalize G).form
-def label (G : Colored n k) : Label n := (canonicalize G).label
-
-def findIso (G H : Colored n k) : Option (Perm n)
-def isIso (G H : Colored n k) : Bool
 ```
 
-`canonicalize` is total. Termination follows from the strictly increasing
-number of singleton cells along each individualization path and finite
-branching. Its worst-case running time can still be factorial.
+The public surface has two tiers. The short names are the FAST tier:
+the checked-label transcription of the pinned nauty search, for users
+who want answers at transcription speed. The `Checked` names are the
+CERTIFIED tier: the same answer validated through the proven
+certificate checker, carrying the theorem surface.
 
-The resource-bounded surface separates search limits from replay limits:
+```lean
+-- fast tier: conformance-pinned, structural theorems only
+def canonicalize (G : Colored n k) : CanonResult n k
+def canonicalize? (G : Colored n k) : Option (CanonResult n k)
+def canon (G : Colored n k) : Colored n k := (canonicalize G).form
+def label (G : Colored n k) : Label n := (canonicalize G).label
+def findIso (G H : Colored n k) : Option (Perm n)
+def isIso (G H : Colored n k) : Bool
+
+-- certified tier: every theorem below is about these
+def canonicalizeChecked (G : Colored n k) : CanonResult n k
+def canonChecked (G : Colored n k) : Colored n k
+def labelChecked (G : Colored n k) : Label n
+def findIsoChecked (G H : Colored n k) : Option (Perm n)
+def isIsoChecked (G H : Colored n k) : Bool
+```
+
+Both tiers are total; termination follows from the strictly increasing
+number of singleton cells along each individualization path and finite
+branching, and worst-case running time can still be factorial. The
+fast `canonicalize` is the transcription with fallback to
+`canonicalizeChecked` on the transcription's malformed-label case,
+which conformance shows does not occur; `canonicalize?` observes the
+transcription alone (`none` exactly when `canonicalize` would fall
+back), and conformance asserts zero fallbacks on every committed case
+and the campaign. Agreement of the two tiers is a conformance
+obligation on every committed case and campaign case, not a theorem;
+provers use the certified tier.
+
+The fast tier still carries its structurally provable statements — the
+form is the relabelling by the label, and a found transporter is a
+genuine isomorphism:
+
+```lean
+theorem relabel_label (G : Colored n k) :
+    relabel G (label G) = canon G
+
+theorem findIso_sound (G H : Colored n k) (p : Perm n) :
+    findIso G H = some p -> IsIso G H p
+
+theorem isomorphic_of_isIso (G H : Colored n k) :
+    isIso G H = true -> Isomorphic G H
+```
+
+What the fast tier deliberately does NOT provide is completeness and
+canonical invariance: a `false`/`none` fast answer and the equality of
+fast forms under isomorphism are conformance-pinned only.
+
+The resource-bounded surface separates search limits from replay
+limits and belongs to the certified tier:
 
 ```lean
 structure SearchLimits where
@@ -194,23 +238,23 @@ non-isomorphism result, and `some (some p)` is a found transporter. For the
 other bounded operations, exhaustion also returns `none`. Exhaustion is not
 evidence of non-isomorphism.
 
-The required API theorems include:
+The required API theorems of the certified tier include:
 
 ```lean
-theorem relabel_label (G : Colored n k) :
-    relabel G (label G) = canon G
+theorem relabelChecked_label (G : Colored n k) :
+    relabel G (labelChecked G) = canonChecked G
 
-theorem canon_iso (G : Colored n k) :
-    Isomorphic G (canon G)
+theorem canonChecked_iso (G : Colored n k) :
+    Isomorphic G (canonChecked G)
 
-theorem canon_invariant {G H : Colored n k} :
-    Isomorphic G H -> canon G = canon H
+theorem canonChecked_invariant {G H : Colored n k} :
+    Isomorphic G H -> canonChecked G = canonChecked H
 
-theorem iso_iff_canon_eq (G H : Colored n k) :
-    Isomorphic G H <-> canon G = canon H
+theorem iso_iff_canonChecked_eq (G H : Colored n k) :
+    Isomorphic G H <-> canonChecked G = canonChecked H
 
-theorem findIso_isSome_iff (G H : Colored n k) :
-    (findIso G H).isSome = true <-> Isomorphic G H
+theorem findIsoChecked_isSome_iff (G H : Colored n k) :
+    (findIsoChecked G H).isSome = true <-> Isomorphic G H
 
 namespace FindIso
 
@@ -224,16 +268,16 @@ theorem none_sound (search : SearchLimits)
 
 end FindIso
 
-theorem isIso_eq_true_iff (G H : Colored n k) :
-    isIso G H = true <-> Isomorphic G H
+theorem isIsoChecked_eq_true_iff (G H : Colored n k) :
+    isIsoChecked G H = true <-> Isomorphic G H
 
-theorem isIso_eq_false_iff (G H : Colored n k) :
-    isIso G H = false <-> Not (Isomorphic G H)
+theorem isIsoChecked_eq_false_iff (G H : Colored n k) :
+    isIsoChecked G H = false <-> Not (Isomorphic G H)
 ```
 
 The biconditional compares canonical coloured graphs. It does not compare
-`label G` and `label H`: those arrays refer to different input vertex names
-and generally differ for isomorphic inputs.
+labels: those arrays refer to different input vertex names and generally
+differ for isomorphic inputs.
 
 ## Reference canonical form
 
@@ -245,8 +289,10 @@ serialized coloured adjacency matrix under an explicitly defined lexicographic
 order. The order compares cell sizes first and then upper-triangle adjacency
 bits in row-major order.
 
-This definition has its own proofs of `relabel_label`, `canon_iso`, and
-`iso_iff_canon_eq`. It is suitable for exhaustive small tests and for checking
+This definition has its own proofs of the relabelling, isomorphism, and
+biconditional theorems (the analogues of `relabelChecked_label`,
+`canonChecked_iso`, and `iso_iff_canonChecked_eq`). It is suitable for
+exhaustive small tests and for checking
 later implementations. It is not used as a production fallback and is not
 required to return nauty's label or canonical form.
 
@@ -340,7 +386,7 @@ output as untrusted and calls `checkCanon` before emitting anything.
 For a negative decision, `DiffCert` names the first differing field in the
 canonical encodings. `checkDiff` verifies the two encodings agree before that
 position and differ there. The proof is exactly the composition of two
-`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canon_eq`.
+`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canonChecked_eq`.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every

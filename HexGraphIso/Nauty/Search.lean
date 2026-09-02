@@ -516,7 +516,7 @@ def runColored (G : Colored n k) : RunResult :=
 `canonlab` and the relabelled coloured graph. `none` only if the raw
 search output fails the label check, which conformance shows does not
 occur. -/
-def canonicalize? (G : Colored n k) : Option (CanonResult n k) :=
+@[expose] def canonicalize? (G : Colored n k) : Option (CanonResult n k) :=
   let r := runColored G
   if h : r.canonlab.size = n ∧ ∀ v ∈ r.canonlab, v < n then
     let vec : Vector (Fin n) n :=
