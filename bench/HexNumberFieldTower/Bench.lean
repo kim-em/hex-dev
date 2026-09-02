@@ -28,11 +28,15 @@ mode-3 factorization case uses input degree 24 over the quadratic base.
 
 The parametric ladders carry the Phase-4 arithmetic evidence:
 
-* `runTower{Add,Sub,SMul,Mul,Inv}Ladder`: coordinate arithmetic in
-  the height-two tower `Q(sqrt(2), 3^{1/m})` at growing dimension `D = 2m`.
-  Negation and division use canonical fixed budgets after their wider ladders
-  fail the source-derived models; full-basis `toPrimitive` does likewise,
-  while full-basis `fromPrimitive` retains its quartic ladder.
+* `runTower{Add,Sub,Neg,SMul,Mul}Ladder`: coordinate arithmetic at growing
+  dimension with bounded coordinate height;
+* `runTower{Inv,Div}Ladder`: genuine recursive arithmetic in the height-two
+  family `Q(3^{1/m}, sqrt(2))`, with checked fixtures outside the timed body;
+* the completed `toPrimitive` and `fromPrimitive` basis maps.
+
+Negation, inversion, and division retain failed mode-1 registrations as
+binding diagnostics. They have no admissible fixed substitute, so the library
+remains at Phase 3 while those cost models are unresolved.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,
@@ -705,13 +709,10 @@ setup_fixed_benchmark runCoordinateMaps where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3 for the public `toPrimitive` closure. The full-basis dimension
-schedule `4,6,8,10,12,18` rejects the independently derived cubic model with
-residual `+0.521` as coefficient growth takes over at the final rung. The
-dimension-four completed flattening is canonical; its 13.914 µs per-call and
-227.983 ms batch medians fit the 1 s zero-grace whole-child ceiling. -/
+/- Expected-hash anchor only. `runToPrimitiveLadder` supplies mode-1
+performance coverage for the public closure. -/
 setup_fixed_benchmark runToPrimitive where {
-  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xb5d54195958fb61e,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -762,26 +763,20 @@ setup_fixed_benchmark runSub where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. The height-two parameter schedule reaches dimensions
-`4,6,8,12,16,24`; the timed body remains faster than the independently derived
-linear model (`β = -0.185`) before the dimension-32 certified fixture hits its
-300 s cap. No larger honest rung is reachable without timing fixture construction.
-The dimension-four two-level tower is the canonical merge-facing input; its
-338.716 ms batch median fits the 1 s zero-grace whole-child ceiling. -/
+/- Expected-hash anchor only. The linear ladder is retained as a failed
+mode-1 diagnostic; no canonical hard negation input gives this cheap operation
+a meaningful mode-3 ceiling. -/
 setup_fixed_benchmark runNeg where {
-  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x2e1510498ed9e174,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. Extending the height-two schedule through dimension 24 rejects the
-independently derived `n² log n` model with residual `+0.594`; coefficient
-growth in the divisor's Euclidean chain prevents a stable dimension-only wall
-model, and no published bound covers that measured growth. The dimension-four
-division is canonical; its 79.042 µs per-call and 323.760 ms batch medians fit
-the 1 s zero-grace whole-child ceiling. -/
+/- Expected-hash anchor only. The checked height-two ladder is retained as a
+failed mode-1 diagnostic; this dimension-four case is not a canonical hard
+input and therefore supplies no mode-3 evidence. -/
 setup_fixed_benchmark runDiv where {
-  repeats := 5, maxSecondsPerCall := 1.0, killGraceMs := 0,
+  repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xe534ce65592907a8,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
@@ -1084,13 +1079,14 @@ setup_benchmark runTowerMulLadder n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model. Inversion runs the extended gcd in the top quotient
-`K[y]/(m_top)` with `deg m_top = n` over the fixed quadratic base `K`:
-`O(n^2)` coefficient operations in `K`, each `O(1)` base-field operations
-at the fixed base dimension, so `O(n^2) = O(D^2)` rational operations
-overall. Rational coefficient growth along the Euclidean chain is modelled
-with the same logarithmic limb-growth proxy the HexResultant Brown-chain
-registrations use, giving the declared `n^2 log n` wall model. -/
+/- Cost model. Inversion runs extended gcd in the fixed quadratic top quotient
+over a degree-`n` lower field. Its coefficient operations invoke genuine
+recursive lower-field inversion, whose degree-`n` polynomial xgcd costs
+`O(n²)` rational operations; the same logarithmic limb-growth proxy used by
+the HexResultant Brown-chain registrations gives the declared `n² log n`
+wall model. The registration is retained even though its clean verdict is
+inconclusive: changing the tower order removed certification from the limiting
+path but did not make the intended model pass. -/
 setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
   with prep := prepRecursiveElemInput
   where {

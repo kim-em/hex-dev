@@ -324,9 +324,10 @@ a matrix or a new workflow.
 
 ### Phase-4 input families
 
-- `tower-coordinate-arithmetic`: bounded-height dense coordinates in the
-  height-two family `ℚ(√2, 3^(1/m))`, varying total tower dimension while
-  holding coefficient height fixed.
+- `tower-coordinate-arithmetic`: bounded-height dense coordinates in checked
+  presentations. Multiplication varies the top degree over `ℚ(√2)`;
+  inversion and division use `ℚ(3^(1/m), √2)` so the fixed quadratic top
+  quotient performs genuine recursive arithmetic in the varying lower field.
 - `trager-factorization`: Selmer trinomials over `ℚ(√2)` for the inclusive
   retry/gcd/replay route, plus irreducible Selmer inputs over
   `ℚ(√2, √3)` for genuine recursive relative factorization.
@@ -357,15 +358,20 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   Horner/tower-arithmetic path. The benchmark applies a map to all `D` basis
   vectors, giving full-basis `O(D³)` and `O(D⁴)` registrations respectively.
 
-The Phase-4 fixed canonical cases use zero-grace whole-child ceilings derived
-from clean reference-host measurements plus stated margin. They cover
-adjoining, identity adjoining, negation, division, full-basis `toPrimitive`,
-one- and two-level factorization, checked replay, splitting, and flattening.
-The headline performance report owns the measured seconds and diagnostic
-schedules. These budgets do not replace the contracts above; they are mode-3
-regression ceilings for operations whose realised phase mixtures admit neither
-a tight family model nor a published bound covering the dominant executable
-phases.
+The fixed canonical cases for adjoining, identity adjoining, one- and
+two-level factorization, checked replay, splitting, and flattening use
+zero-grace whole-child ceilings derived from clean reference-host measurements
+plus stated margin. These budgets do not replace the contracts above; they are
+mode-3 regression ceilings for operations whose realised phase mixtures admit
+neither a tight family model nor a published bound covering the dominant
+executable phases.
+
+Full-basis `toPrimitive` retains its cubic mode-1 model after the executable
+map stops performing quotient-field arithmetic for zero coordinates. Negation,
+inversion, and division have no admissible current mode: their fixed
+dimension-four registrations are hash anchors, not performance evidence, and
+the headline report records the binding failed parametric verdicts. The
+library therefore remains at Phase 3.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
 input degree at most 4; the degree-24 factorization case is scientific
