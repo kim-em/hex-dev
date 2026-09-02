@@ -77,13 +77,18 @@ tag := "nauty-algorithm-description"
 ## Coloured graphs and canonical forms
 
 The input is a finite simple undirected graph on vertices numbered `0`
-through `n - 1`, together with an ordered colouring: every vertex has
-one of the colours `0` through `k - 1`, and every colour is used at
-least once. An isomorphism between two such graphs is a bijection
-between their vertex sets that preserves both adjacency and colour: a
-vertex of colour `2` must be sent to a vertex of colour `2`. The
-colours are ordered in the sense that no isomorphism may exchange the
-roles of two colours.
+through `n - 1`, together with a colouring: every vertex has one of
+the colours `0` through `k - 1`, and every colour is used at least
+once. An isomorphism between two such graphs is a bijection between
+their vertex sets that preserves both adjacency and colour: a vertex
+of colour `2` must be sent to a vertex of colour `2`. Colours are
+labels, so exchanging two colours throughout a graph generally
+produces a different coloured graph, not another presentation of the
+same one. The numerical order of the colours plays no part in the
+notion of isomorphism. The algorithm does use it: the starting
+partition below places the colour classes in colour order, and the
+output keeps them in that order. This algorithmic use is what the
+library's documentation means when it calls the colours ordered.
 
 A canonical form is a function on coloured graphs with two properties:
 isomorphic inputs receive equal outputs, and every output is isomorphic
