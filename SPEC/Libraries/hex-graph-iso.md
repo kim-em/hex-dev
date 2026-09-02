@@ -413,6 +413,163 @@ installation. The Mathlib companion presents the same positive and negative
 claims through `SimpleGraph`. Its requirements are stated in
 [hex-graph-iso-mathlib.md](hex-graph-iso-mathlib.md#manual-example-with-mathlib).
 
+## Manual chapter: the nauty canonical labelling algorithm
+
+`HexManual/Chapters/NautyAlgorithm.lean` is a standalone manual chapter
+titled "The `nauty` canonical labelling algorithm". It appears in the
+table of contents directly after the `HexGraphIso` chapter, and the
+`HexGraphIso` introduction links to it. Its subject is the exact
+function this library computes: the canonical form and label returned
+by dense nauty 2.9.3 under the pinned configuration of the
+[compatibility target](#nauty-compatibility-target).
+
+### Purpose
+
+No published document specifies that function. The chapter opens by
+saying so, and by placing the three closest documents:
+
+- McKay's original paper (*Practical graph isomorphism*, 1981) gives
+  pseudocode detailed enough to reimplement, but it describes the
+  algorithm as of 1981, and later releases changed output-relevant
+  details.
+- Hartke and Radcliffe (*McKay's canonical graph labeling algorithm*,
+  2009) explain the ideas: the search tree, refinement, and why pruning
+  is sound. They deliberately omit the code-level choices that decide
+  which leaf wins.
+- McKay and Piperno (*Practical graph isomorphism, II*, 2014) and the
+  user's guide describe a framework parameterized over the refinement
+  function, the target-cell rule, and the node invariant. Every
+  instantiation yields a canonical form. None of these documents pins
+  the one `densenauty` returns.
+
+For exact output the C source is the only specification, and it
+interleaves the choices that determine the answer with pruning and
+storage reuse that provably do not. The chapter's central observation
+is that the two can be separated. The canonical form is characterized
+declaratively as the maximal leaf key of the unpruned
+individualization-refinement tree, and every pruning rule carries a
+Lean proof that it preserves the selected form and label. A complete
+specification therefore only has to describe the unpruned tree and the
+key order.
+
+The chapter states its epistemic status explicitly, mirroring the two
+correctness requirements at the top of this SPEC: agreement between
+the chapter's description and the Lean implementation is enforced by
+theorems and by the Verso build, while agreement between the Lean
+implementation and nauty 2.9.3 is an empirical claim established by
+conformance testing, not a theorem.
+
+### Part one: the algorithm in natural language
+
+The first part uses no Lean identifiers and no code blocks. Its
+audience is a reader who knows basic graph theory but not Lean and not
+nauty. The quality bar: a careful reader could reimplement the
+function from part one alone, and the reimplementation would agree
+with nauty 2.9.3 on every input. Content, in order:
+
+1. The problem. Finite simple undirected graphs with ordered vertex
+   colours, what a canonical form is (a function invariant under
+   isomorphism whose output is isomorphic to its input), why
+   isomorphism testing reduces to it, and why infinitely many valid
+   canonical forms exist. This chapter describes one particular
+   choice.
+2. Ordered partitions and equitable refinement. Cells in a fixed
+   order, refinement of a cell by neighbour counts into another cell,
+   the equitable fixed point, and the fact that refinement is
+   isomorphism-equivariant. One worked example on a small graph
+   (roughly five to seven vertices) showing an inequitable partition
+   refined to its equitable fixed point, with the intermediate splits
+   displayed.
+3. The individualization-refinement tree. When the equitable partition
+   is not discrete, choose a target cell, branch on each of its
+   vertices by splitting the chosen vertex into a singleton, and
+   refine again. Leaves are discrete partitions, and a discrete
+   partition is a labelling of the graph.
+4. The leaf key and the selection rule. Each node records a
+   refinement code, an integer digest of the refinement trace. A
+   leaf's key is its chain of codes, then a sentinel value, then the
+   adjacency rows of the relabelled graph. Keys compare
+   lexicographically, and the canonical labelling is the leaf with the
+   maximal key. The sentinel exceeds every real code, which is why a
+   shallower leaf beats a deeper one with an equal code prefix.
+5. The code-level choices. This is the content absent from the
+   literature, and each item must be described precisely enough to
+   reimplement: the refinement-code accumulator arithmetic (nauty's
+   `MASH`), the order in which pending splitter cells are processed,
+   the stable redistribution of a split cell by neighbour count, the
+   target-cell rule (nauty's `bestcell` under the pinned
+   `tc_level = 100`), and the row order used when comparing relabelled
+   adjacency matrices.
+6. Pruning, briefly. The prunings the production search performs
+   (first-path and best-path code comparison, discovered
+   automorphisms, orbit pruning, short-prune), each with one or two
+   sentences on the idea, and the statement that every one preserves
+   the selected form and label, so none is part of the specification.
+7. Scope. The function specified is dense nauty 2.9.3 under the pinned
+   option block, restated or summarized inline (a manual chapter
+   cannot assume the reader has this SPEC). Sparse nauty and Traces
+   compute different canonical forms, so "nauty's canonical form"
+   without those qualifiers does not name a single function.
+
+### Part two: the Lean implementation
+
+The second part revisits part one's concepts in the same order and
+attaches each to the Lean declarations, quoted through Verso so the
+prose cannot drift from the code. Requirements:
+
+- Every declaration named in prose uses the `{name}` role, and the
+  load-bearing definitions are included with `{docstring}`, per
+  [SPEC/writing-style.md](../writing-style.md). A rename or a
+  docstring change then fails `lake build HexManual`.
+- No hand-copied signatures or restated definition bodies. Where part
+  two needs to show a definition, it quotes the declaration.
+- The worked refinement example from part one is repeated as an
+  evaluated Lean example (`#eval` with checked output), so the hand
+  trace in part one is machine-checked against the implementation.
+
+The anchor declarations, by part-one concept (all in the
+`Hex.GraphIso.Nauty` namespace unless stated otherwise):
+
+| concept | declarations |
+| --- | --- |
+| refinement-code accumulator | `mash` |
+| equitable refinement | `refine`, `refineStep` |
+| target cell | `targetcell`, `bestcell` |
+| leaf key and order | `Key`, `keyCmp`, `codeSentinel` |
+| declarative canonical form | `canonSpecKey`, `specCanon` |
+| production leaf comparison | `testcanlab`, `updatecan` |
+| production entry point | `canonicalize?`, public `canonicalize` |
+| canonical-form theorems | `specCanon_iso`, `specCanon_invariant`, `iso_iff_specCanon_eq` |
+| checked results equal the spec | `checkCanon_form` |
+
+If a listed declaration is renamed or refactored, the chapter follows
+the code. The table above records the anchors at the time of writing,
+and the `{name}` roles are what keep the chapter honest.
+
+### Exclusions
+
+- No pruning internals beyond item 6 of part one. The preservation
+  theorems are cited, and the implementation is the reference.
+- No certificate or replay material beyond a cross-reference to the
+  `HexGraphIso` chapter, whose subject it is.
+- No claim, anywhere, that agreement with nauty is a theorem.
+- No process narrative, per
+  [SPEC/writing-style.md](../writing-style.md) and the project style
+  rules. The chapter describes the algorithm as it stands.
+
+### Citations
+
+The chapter cites, with full bibliographic data:
+
+- Brendan D. McKay, *Practical graph isomorphism*, Congressus
+  Numerantium 30 (1981), 45-87.
+- Stephen G. Hartke and A. J. Radcliffe, *McKay's canonical graph
+  labeling algorithm*, in Communicating Mathematics, Contemporary
+  Mathematics 479, AMS (2009), 99-111.
+- Brendan D. McKay and Adolfo Piperno, *Practical graph isomorphism,
+  II*, Journal of Symbolic Computation 60 (2014), 94-112.
+- The nauty and Traces User's Guide, version 2.9.3.
+
 ## nauty compatibility target
 
 The first compatibility target is nauty 2.9.3, the stable release current when
@@ -649,6 +806,11 @@ equivalent complete argument.
 
 ## References
 
+- Brendan D. McKay,
+  Practical graph isomorphism, Congressus Numerantium 30 (1981), 45-87.
+- Stephen G. Hartke and A. J. Radcliffe,
+  McKay's canonical graph labeling algorithm,
+  Communicating Mathematics, Contemporary Mathematics 479 (2009), 99-111.
 - Brendan D. McKay and Adolfo Piperno,
   [Practical graph isomorphism, II](https://arxiv.org/abs/1301.1493).
 - Brendan D. McKay and Adolfo Piperno,
