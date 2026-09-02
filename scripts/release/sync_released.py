@@ -166,6 +166,12 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     # conventional library source dir (minus its co-located SPEC/ and README.md)
     if not entry.get("paths"):
         out.append((REPO_ROOT / lib, Path(lib), True))
+    # Tight, explicitly mapped supporting files outside the conventional
+    # library/bench/conformance trees (for example a deterministic generator
+    # checker used by released CI).
+    for p in entry.get("extra_paths") or []:
+        src = REPO_ROOT / p["src"]
+        out.append((src, Path(p["dest"]), src.is_dir()))
     # root README, authored as <lib>/README.md, published to the repo root
     if entry.get("readme", True):
         out.append((REPO_ROOT / lib / "README.md", Path("README.md"), False))

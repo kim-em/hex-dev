@@ -77,6 +77,39 @@ class SyncReleasedTests(unittest.TestCase):
                 notes = sync_released.apply_paths(entry, clone)
             self.assertNotIn("  remove conformance", notes)
 
+    def test_apply_paths_copies_explicit_supporting_file(self) -> None:
+        with tempfile.TemporaryDirectory() as source_directory:
+            source = Path(source_directory)
+            (source / "HexExample").mkdir()
+            helper = source / "scripts" / "bench" / "check_example.py"
+            helper.parent.mkdir(parents=True)
+            helper.write_text("print('checked')\n", encoding="utf-8")
+            clone = self.repo / "clone"
+            workflows = self.repo / "released-ci.yml"
+            workflows.write_text(
+                "workflows:\n  hex-example: |\n    name: CI\n", encoding="utf-8"
+            )
+            entry = {
+                "repo": "leanprover/hex-example",
+                "lib": "HexExample",
+                "readme": False,
+                "umbrella": False,
+                "spec": None,
+                "extra_paths": [{
+                    "src": "scripts/bench/check_example.py",
+                    "dest": "scripts/bench/check_example.py",
+                }],
+            }
+            with (
+                patch.object(sync_released, "REPO_ROOT", source),
+                patch.object(sync_released, "RELEASED_CI", workflows),
+            ):
+                sync_released.apply_paths(entry, clone)
+            self.assertEqual(
+                (clone / "scripts" / "bench" / "check_example.py").read_text(),
+                "print('checked')\n",
+            )
+
     def test_apply_paths_rejects_symlinked_removal_parent(self) -> None:
         with tempfile.TemporaryDirectory() as source_directory:
             source = Path(source_directory)

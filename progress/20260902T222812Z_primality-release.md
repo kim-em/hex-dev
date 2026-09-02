@@ -13,23 +13,30 @@
   to the release graph, supplied their single-job CI workflows, and made the
   aggregate import both public umbrellas.
 - Bootstrapped the two empty repositories with unmanaged Lake/toolchain
-  skeletons. Live-baseline sync dry-runs validate every managed path and pin.
+  skeletons. Live-baseline sync dry-runs validate their managed paths and
+  existing cross-repository pin locations.
 - Locally passed the core/bridge builds and conformance modules, all 17
   benchmark verification cases, 63 PARI/python-flint oracle cases, the
   deterministic table check, Phase-4/7 checks, the trust scan, DAG checks, and
   release-manifest/manual-split checks.
+- Passed Mathlib's full `runLinter` suite on every core and bridge module. A
+  fresh 17-target compiled benchmark run reproduced the committed core
+  scaling verdicts and fixed-case timings, while the bridge's six-sample
+  rotated fresh-module regression kept every candidate below its 10-second
+  release gate (maximum 3.57 seconds).
 
 ## Current frontier
 
-The monorepo changes are ready for full CI and independent review. Managed
-source has not yet been published to either mirror; publication remains gated
-on a clean workflow dry-run and green PR state.
+The monorepo changes passed independent Opus review with no blocking soundness
+finding. Managed source has not yet been published to either mirror;
+publication remains gated on a clean workflow dry-run and green PR state.
 
 ## Next step
 
-Open the PR, run the independent Opus review while CI executes, address any
-findings, then publish the core, bridge, and aggregate pins through the release
-workflow and record the resulting `main` SHAs before merging.
+Publish the core and bridge through the release workflow and record their
+resulting `main` SHAs before merging. Updating the released aggregate's
+unmanaged Lake file and umbrella is deliberately excluded by issue #9891's
+no-hand-edit scope.
 
 ## Blockers
 

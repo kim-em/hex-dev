@@ -213,6 +213,8 @@ workflows:
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
           - name: Build library
             run: lake build HexPrimality
+          - name: Verify deterministic prime-table regeneration
+            run: python3 scripts/bench/check_prime_table.py
           - name: Build conformance sidecar
             run: |
               cd conformance
@@ -233,7 +235,7 @@ workflows:
             run: |
               if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexPrimality conformance/HexPrimality bench/HexPrimality 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPrimality conformance/HexPrimality bench/HexPrimality 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs

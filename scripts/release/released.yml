@@ -30,6 +30,7 @@
 #   conformance/<Lib>/ (if conformance)      -> conformance/<Lib>/
 #   conformance-fixtures/<f>/                -> conformance-fixtures/<f>/
 #   scripts/oracle/<o>                       -> scripts/oracle/<o>
+#   extra_paths entries                      -> their explicit destinations
 #   scripts/release/released-ci.yml[<repo>]  -> .github/workflows/ci.yml
 # The CI workflow is generated for every entry, including `pins_only`; its
 # per-repository build commands remain in released-ci.yml while the driver
@@ -111,6 +112,9 @@ repos:
     conformance: true
     fixtures: [HexPrimality]
     oracles: [primality_pari.py, common.py]
+    extra_paths:
+      - { src: "scripts/bench/GeneratePrimeTable.lean", dest: "scripts/bench/GeneratePrimeTable.lean" }
+      - { src: "scripts/bench/check_prime_table.py", dest: "scripts/bench/check_prime_table.py" }
     pins: [hex-basic, hex-arith]
     lakefile: toml
 
