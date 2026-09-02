@@ -72,11 +72,11 @@ structure AutState where
   exhausted : Bool := false
 
 /-- Fresh state over `nn` vertices. -/
-def AutState.init (nn : Nat) (budget : Option Nat := none) : AutState :=
+@[expose] def AutState.init (nn : Nat) (budget : Option Nat := none) : AutState :=
   { orbits := Array.range nn, numorbits := nn, budget }
 
 /-- Charge one node against the budget. -/
-def AutState.charge (st : AutState) : AutState :=
+@[expose] def AutState.charge (st : AutState) : AutState :=
   match st.budget with
   | none => st
   | some 0 => { st with exhausted := true }
@@ -84,24 +84,24 @@ def AutState.charge (st : AutState) : AutState :=
 
 /-- The permutation carrying labelling `ref` onto labelling `lab`:
 `γ[ref[i]] = lab[i]` (nauty's `workperm` composition). -/
-def composeOnto (ref lab : Array Nat) : Array Nat := Id.run do
+@[expose] def composeOnto (ref lab : Array Nat) : Array Nat := Id.run do
   let mut γ : Array Nat := .replicate ref.size 0
   for i in [0 : ref.size] do
     γ := γ.set! ref[i]! lab[i]!
   return γ
 
 /-- The composition `f ∘ π` as arrays over `[0, nn)`. -/
-def composePerm (f π : Array Nat) (nn : Nat) : Array Nat :=
+@[expose] def composePerm (f π : Array Nat) (nn : Nat) : Array Nat :=
   (Array.range nn).map fun x => f[π[x]!]!
 
-private def isIdentity (γ : Array Nat) (nn : Nat) : Bool :=
+@[expose] def isIdentity (γ : Array Nat) (nn : Nat) : Bool :=
   (List.range nn).all fun v => γ[v]! == v
 
 /-- Admit one candidate automorphism: reject the identity and
 duplicates, verify with the checker's own `checkAutom`, and store the
 inverse alongside. Admission past the cap overwrites the last slot,
 preferring generators that merge orbits. -/
-def AutState.admit (ctx : Ctx) (st : AutState) (γ : Array Nat) :
+@[expose] def AutState.admit (ctx : Ctx) (st : AutState) (γ : Array Nat) :
     AutState := Id.run do
   if isIdentity γ ctx.n then
     return st
@@ -132,7 +132,7 @@ def AutState.admit (ctx : Ctx) (st : AutState) (γ : Array Nat) :
 /-- Harvest generators at a leaf: compose the leaf labelling against
 the pass's first leaf, the previous leaf, and the fixed reference
 leaf. -/
-def AutState.harvest (ctx : Ctx) (st : AutState) (lab : Array Nat) :
+@[expose] def AutState.harvest (ctx : Ctx) (st : AutState) (lab : Array Nat) :
     AutState := Id.run do
   let mut st := st
   match st.firstLeaf with
@@ -145,7 +145,7 @@ def AutState.harvest (ctx : Ctx) (st : AutState) (lab : Array Nat) :
   return { st with prevLeaf := some lab }
 
 /-- The vertex bitset of every cell of the node's ordered partition. -/
-def cellMasks (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat) :
+@[expose] def cellMasks (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat) :
     List Nat :=
   (cells rsPtn level ctx.n).map fun p =>
     (List.range (p.2 + 1 - p.1)).foldl
@@ -154,7 +154,7 @@ def cellMasks (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat) :
 /-- Does `γ` map every cell bitset onto itself? Since the cells
 partition the vertices and `γ` is a bijection, per-cell image equality
 is exactly setwise cell preservation. Untrusted fast filter. -/
-def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
+@[expose] def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
     Bool :=
   masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
 
@@ -166,7 +166,7 @@ admission filter verified individually, a composition of
 automorphisms is an automorphism, and the trusted replay re-checks
 the whole conjunction regardless, so a composition bug costs a
 failed replay, never soundness. -/
-def childCellsOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
+@[expose] def childCellsOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
   decide (o' < o) &&
   (let bo := breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!
@@ -182,7 +182,7 @@ the path. The caller decides how to validate the returned witness:
 the key search may rely on the untrusted filters alone (a wrong skip
 is caught by the trusted replay), while certificate emission runs the
 literal checker predicate. -/
-def witness? (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
+@[expose] def witness? (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
     Option (Nat × Array Nat) := Id.run do
   if o == 0 || usable.isEmpty then
@@ -215,7 +215,7 @@ def witness? (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
 generation: recompute only when generators were admitted since the
 cache was built (freezing at node entry would lose prunes from
 generators discovered under earlier children). -/
-def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
+@[expose] def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
     (cache : Option (Nat × Array (Array Nat × Array Nat))) :
     Nat × Array (Array Nat × Array Nat) :=
   match cache with
@@ -228,7 +228,7 @@ def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
 `.autom` records for target-cell offsets reachable from an earlier
 offset through verified automorphisms. Untrusted; `checkKey`
 revalidates everything. -/
-def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
+@[expose] def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
       AutState → CertNode × AutState
   | 0, _, _, _, _, _, _, st => (.codePrune, st)
@@ -283,7 +283,7 @@ refinement never moves a singleton). The walk mirrors `checkNode`'s
 refine arguments, because the search's internal code chain uses the
 transcription's own numcells convention and cannot be reused.
 Untrusted; the replay recomputes everything. -/
-def achieverCodes (ctx : Ctx) (tcLevel : Nat) (canonlab : Array Nat) :
+@[expose] def achieverCodes (ctx : Ctx) (tcLevel : Nat) (canonlab : Array Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat
   | 0, _, _, _, _, _ => []
   | fuel + 1, level, lab, ptn, active, numcells =>
@@ -304,7 +304,7 @@ whose key is derived by `achieverCodes` and `leafRows` — into a
 certificate against that key. No second search runs; the node budget
 bounds the traced walk. Purely a candidate producer — nothing here is
 trusted. -/
-def produceCand (G : Colored n k) (budget : Option Nat) :
+@[expose] def produceCand (G : Colored n k) (budget : Option Nat) :
     Option (CertNode × Key) :=
   let ctx : Ctx := { n := n, g := rowsOf G }
   let tr := runColoredTraced G

@@ -40,7 +40,7 @@ instance {n : Nat} : CoeFun (Renaming n) (fun _ => Nat → Nat) :=
   ⟨Renaming.toFun⟩
 
 /-- The number of set bits below `n`. -/
-def bitCount (n s : Nat) : Nat :=
+@[expose] def bitCount (n s : Nat) : Nat :=
   (List.range n).countP s.testBit
 
 /-- `popCount` counts exactly the bits below any bound dominating the

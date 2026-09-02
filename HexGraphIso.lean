@@ -15,6 +15,7 @@ public import HexGraphIso.Canon
 public import HexGraphIso.Nauty.Bits
 public import HexGraphIso.Nauty.Refine
 public import HexGraphIso.Nauty.Image
+public import HexGraphIso.Nauty.PopCount
 public import HexGraphIso.Nauty.Equivariance
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonSpec
@@ -27,6 +28,7 @@ public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
 public import HexGraphIso.ModuleBoundaryTests
 public import HexGraphIso.Nauty.CanonForm
+public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved
 public import HexGraphIso.Nauty.Complete
