@@ -12,12 +12,13 @@ set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
 cd "$root"
-sha=$(git rev-parse --short=8 HEAD)
+fp=$(git ls-files -s -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
+  scripts/plots/hexgraphiso-cactus.py | sha256sum | cut -c1-12)
 host=$(hostname -s)
 
 lake build hexgraphiso_cactus
-sweep="reports/bench-results/hexgraphiso-cactus-$sha-$host.jsonl"
-pairs="reports/bench-results/hexgraphiso-pairs-$sha-$host.jsonl"
+sweep="reports/bench-results/hexgraphiso-cactus-$fp-$host.jsonl"
+pairs="reports/bench-results/hexgraphiso-pairs-$fp-$host.jsonl"
 .lake/build/bin/hexgraphiso_cactus > "$sweep"
 .lake/build/bin/hexgraphiso_cactus pairs > "$pairs"
 python3 scripts/plots/hexgraphiso-cactus.py \

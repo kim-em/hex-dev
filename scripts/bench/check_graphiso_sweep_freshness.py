@@ -2,13 +2,15 @@
 """Fail when the hex-graph-iso cactus figures no longer cover their source.
 
 The committed cactus sweep data under ``reports/bench-results/`` records
-in its filename the commit it was measured at
-(``hexgraphiso-cactus-<sha8>-<host>.jsonl`` plus the matching
-``hexgraphiso-pairs-...``). The published figures in ``reports/figures/``
-are rendered from that data. Whenever any source that changes what the
-sweep measures differs from the recorded commit, the figures are stale:
-regenerate everything with ``scripts/bench/graphiso_cactus_sweep.sh``
-and commit the new data and figures together with the code change.
+in its filename a content fingerprint of the source it measured
+(``hexgraphiso-cactus-<hash12>-<host>.jsonl`` plus the matching
+``hexgraphiso-pairs-...``): the hash of ``git ls-files -s`` over the
+relevant paths, so it survives squash merges and rebases, which rewrite
+commits but not content. The published figures in ``reports/figures/``
+are rendered from that data. Whenever the current relevant source has no
+matching sweep, the figures are stale: regenerate everything with
+``scripts/bench/graphiso_cactus_sweep.sh`` and commit the new data and
+figures together with the code change.
 
 The relevant-source set is deliberately tight (the hex-graph-iso
 implementation, its graph substrate, the sweep driver, and the plot
@@ -19,6 +21,7 @@ per-library benchmarks first.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 import re
 import subprocess
@@ -35,7 +38,7 @@ RELEVANT = (
     "scripts/plots/hexgraphiso-cactus.py",
 )
 
-SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{8,40})-[^.]+\.jsonl$")
+SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{12})-[^.]+\.jsonl$")
 
 REQUIRED_FIGURES = (
     "hexgraphiso-canon-cactus.svg",
@@ -44,48 +47,33 @@ REQUIRED_FIGURES = (
 )
 
 
-def git(*args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=ROOT, text=True, capture_output=True, check=False)
-    if result.returncode:
-        raise SystemExit(result.stderr.strip() or f"git {' '.join(args)} failed")
-    return result.stdout
+def relevant_hash() -> str:
+    """A content fingerprint of the relevant source, commit-independent."""
+    listing = subprocess.run(
+        ["git", "ls-files", "-s", "--", *RELEVANT],
+        cwd=ROOT, text=True, capture_output=True, check=True).stdout
+    return hashlib.sha256(listing.encode()).hexdigest()[:12]
 
 
 def main() -> int:
     errors: list[str] = []
+    current = relevant_hash()
 
-    sweeps: list[tuple[int, str, Path]] = []
+    fresh = None
     for path in sorted(RESULTS.glob("hexgraphiso-cactus-*.jsonl")):
         match = SWEEP_RE.match(path.name)
-        if not match:
-            continue
-        sha = match.group(1)
-        probe = subprocess.run(
-            ["git", "rev-parse", "--verify", f"{sha}^{{commit}}"],
-            cwd=ROOT, text=True, capture_output=True, check=False)
-        if probe.returncode:
-            errors.append(f"{path.name}: recorded commit {sha} is unknown")
-            continue
-        commit = probe.stdout.strip()
-        stamp = int(git("log", "-1", "--format=%ct", commit).strip())
-        sweeps.append((stamp, commit, path))
+        if match and match.group(1) == current:
+            pairs = path.with_name(path.name.replace("-cactus-", "-pairs-"))
+            if pairs.exists():
+                fresh = path
+            else:
+                errors.append(
+                    f"{pairs.name}: pairs data missing for {path.name}")
 
-    if not sweeps:
+    if fresh is None and not errors:
         errors.append(
-            "no hexgraphiso-cactus-<sha8>-<host>.jsonl sweep data under "
-            "reports/bench-results/")
-    else:
-        stamp, commit, path = max(sweeps)
-        pairs = path.with_name(path.name.replace("-cactus-", "-pairs-"))
-        if not pairs.exists():
-            errors.append(f"{pairs.name}: pairs data missing for {path.name}")
-        diff = git("diff", "--name-only", f"{commit}..HEAD", "--", *RELEVANT)
-        if diff.strip():
-            changed = ", ".join(diff.split())
-            errors.append(
-                f"cactus figures are stale: source differs from recorded "
-                f"commit {commit[:12]}: {changed}")
+            f"no sweep data matches the current relevant source "
+            f"(fingerprint {current}); the cactus figures are stale")
 
     for name in REQUIRED_FIGURES:
         if not (FIGURES / name).exists():
@@ -98,7 +86,8 @@ def main() -> int:
         print("regenerate with scripts/bench/graphiso_cactus_sweep.sh and "
               "commit the data and figures with the code change")
         return 1
-    print("hex-graph-iso cactus figures cover the current source")
+    print(f"hex-graph-iso cactus figures cover the current source "
+          f"({fresh.name})")
     return 0
 
 
