@@ -123,7 +123,7 @@ the shallow view of `specNode` the separator evaluates. -/
       let br := breakout rs.lab rs.ptn (level + 1) tcr.1
         rs.lab[tcr.1 + o]!
       (refine ctx (level + 1) br.1 br.2.1 br.2.2
-        (numcells + 1)).longcode
+        (rs.numcells + 1)).longcode
     (some rs.longcode,
       some ((List.range (tcr.2.2 - 1)).foldl
         (fun mx j => Nat.max mx (childHead (j + 1))) (childHead 0)))
@@ -182,7 +182,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).2.2
-          (numcells + 1)).codes =
+          ((refine ctx level lab ptn active numcells).numcells + 1)).codes =
         (refine ctx (level + 1)
           (breakout (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
@@ -217,7 +217,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).2.2
-          (numcells + 1)).longcode :: rest :=
+          ((refine ctx level lab ptn active numcells).numcells + 1)).longcode :: rest :=
       fun o => specNode_codes_head ctx 100 fuel (level + 1) _ _ _ _
     obtain ⟨restMax, hrestMax⟩ := sep_fold_eq mt _ _ hchild
     dsimp only

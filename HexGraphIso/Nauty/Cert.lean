@@ -488,7 +488,7 @@ connects them. -/
                           none
                       | _ =>
                         checkNode ctx tcLevel brows vgens fuel (level + 1)
-                          br.1 br.2.1 br.2.2 (numcells + 1) co.1 brest
+                          br.1 br.2.1 br.2.2 (rs.numcells + 1) co.1 brest
                     with
                     | none => none
                     | some a' => some (a || a'))
@@ -1017,18 +1017,18 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
           have hcc : checkChildren ctx tcLevel brows vgens fuel level
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn p.1
-              numcells brest children 0 = some achieved := by
+              (refine ctx level lab ptn active numcells).numcells brest children 0 = some achieved := by
             rcases hx : checkChildren ctx tcLevel brows vgens fuel level
                 (refine ctx level lab ptn active numcells).lab
                 (refine ctx level lab ptn active numcells).ptn p.1
-                numcells brest children 0 with _ | a2
+                (refine ctx level lab ptn active numcells).numcells brest children 0 with _ | a2
             · rw [hx] at h
               cases h
             · rw [hx] at h
               simp only [Bool.false_or] at h
               exact h
           have hchild := checkChildren_sound hn hgsz hv tcLevel brows
-            fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (p.2 + 1 - p.1) numcells
+            fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (p.2 + 1 - p.1) (refine ctx level lab ptn active numcells).numcells
             brest children 0 achieved hcc hstR.labSize hstR.labOk
             hstR.ptnSize hstR.ptnEnd hRvals hicp (by omega)
             (by rw [hlenc, hM22]; omega) (by omega)
@@ -1043,18 +1043,18 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
               ⟨(refine ctx level lab ptn active numcells).longcode ::
                 (keysMax (childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
                   ((List.range m).map fun j =>
                     childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).codes,
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1))).codes,
               (keysMax (childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
                 ((List.range m).map fun j =>
                   childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).rows⟩ := by
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1))).rows⟩ := by
             rw [specNode]
             simp only [hdiscf, Bool.false_eq_true, ite_false]
             rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
@@ -1064,7 +1064,7 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
           have hl : ∀ y ∈ (List.range m).map fun j =>
               childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1),
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1),
               keyLe y ⟨brest, brows⟩ := by
             intro y hy
             rcases List.mem_map.mp hy with ⟨j, hj, rfl⟩
@@ -1078,11 +1078,11 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
             have him : i < m + 1 := by omega
             have hb : (⟨brest, brows⟩ : Key) = childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells 0 ∨
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0 ∨
                 (⟨brest, brows⟩ : Key) ∈ (List.range m).map fun j =>
                   childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
-              (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1) := by
+              (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1) := by
               rcases Nat.eq_zero_or_pos i with rfl | hipos
               · exact Or.inl hik.symm
               · refine Or.inr (List.mem_map.mpr
@@ -1399,7 +1399,7 @@ validated by `checkKey`. -/
             let br := breakout rs.lab rs.ptn (level + 1) tcr.1
               rs.lab[tcr.1 + o]!
             some (searchNode ctx tcLevel fuel (level + 1) br.1
-              br.2.1 br.2.2 (numcells + 1) acc))
+              br.2.1 br.2.2 (rs.numcells + 1) acc))
           tail0
         match t with
         | none => ⟨[], []⟩
@@ -1438,7 +1438,7 @@ validated by `checkKey`. -/
             let br := breakout rs.lab rs.ptn (level + 1) tcr.1
               rs.lab[tcr.1 + o]!
             certifyNode ctx tcLevel fuel (level + 1) br.1 br.2.1
-              br.2.2 (numcells + 1) brest)
+              br.2.2 (rs.numcells + 1) brest)
 
 /-- Validate a candidate certificate and key through the trusted
 `checkKey` replay, independently of the producer that built them. -/

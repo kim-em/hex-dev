@@ -164,7 +164,7 @@ node. -/
       let children := (List.range tcr.2.2).map fun o =>
         let br := breakout rs.lab rs.ptn (level + 1) tcr.1 rs.lab[tcr.1 + o]!
         specNode ctx tcLevel fuel (level + 1) br.1 br.2.1 br.2.2
-          (numcells + 1)
+          (rs.numcells + 1)
       match children with
       | [] => ⟨[], []⟩
       | c :: cs =>
@@ -1170,7 +1170,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
     rw [specNode, specNode]
     have hR := refine_perm hn (level := level) (numcells := numcells)
       hcp hls hsl hlab hsp hact hend hstarts
-    rw [hR.ptn, hR.longcode]
+    rw [hR.ptn, hR.longcode, hR.numcells]
     have hstR := refine_stOk (ctx := ctx) hn (level := level)
       (numcells := numcells) hsl hlab hsp hact hend
     have hstR' := refine_stOk (ctx := ctx) hn (level := level)
@@ -1278,7 +1278,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (level + 1) p.1 v).2.1
             (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
-              (level + 1) p.1 v).2.2 (numcells + 1) =
+              (level + 1) p.1 v).2.2 ((refine ctx level lab ptn active numcells).numcells + 1) =
           specNode ctx tcLevel fuel (level + 1)
             (breakout (refine ctx level lab' ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
@@ -1288,7 +1288,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (level + 1) p.1 v).2.1
             (breakout (refine ctx level lab' ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
-              (level + 1) p.1 v).2.2 (numcells + 1) := by
+              (level + 1) p.1 v).2.2 ((refine ctx level lab ptn active numcells).numcells + 1) := by
         intro v hv
         -- position witnesses in both labellings
         have hwit : ∃ kL, p.1 ≤ kL ∧ kL < p.1 + (p.2 + 1 - p.1) ∧
@@ -1458,7 +1458,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (level + 1) p.1 v).1
           ((refine ctx level lab ptn active numcells).ptn.set! p.1
             (level + 1))
-          (insert 0 p.1) (numcells + 1)
+          (insert 0 p.1) ((refine ctx level lab ptn active numcells).numcells + 1)
           hccp
           (by rw [hokR.1, hokL.1, hstR'.labSize, hstR.labSize])
           (hokL.1.trans hstR.labSize)
@@ -1515,7 +1515,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
             (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.2
-            (numcells + 1)) =
+            ((refine ctx level lab ptn active numcells).numcells + 1)) =
           (segN (refine ctx level lab ptn active numcells).lab p.1
             (p.2 + 1 - p.1)).map (fun v =>
             specNode ctx tcLevel fuel (level + 1)
@@ -1528,7 +1528,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) := by
+              ((refine ctx level lab ptn active numcells).numcells + 1)) := by
         rw [segN, List.map_map]
         exact List.map_congr_left fun o _ => rfl
       have hchmapR : ((List.range (p.2 + 1 - p.1)).map fun o =>
@@ -1542,7 +1542,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
             (breakout (refine ctx level lab' ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 (refine ctx level lab' ptn active numcells).lab[p.1 + o]!).2.2
-            (numcells + 1)) =
+            ((refine ctx level lab ptn active numcells).numcells + 1)) =
           (segN (refine ctx level lab' ptn active numcells).lab p.1
             (p.2 + 1 - p.1)).map (fun v =>
             specNode ctx tcLevel fuel (level + 1)
@@ -1555,7 +1555,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab' ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) := by
+              ((refine ctx level lab ptn active numcells).numcells + 1)) := by
         rw [segN, List.map_map]
         exact List.map_congr_left fun o _ => rfl
       rw [hchmapL, hchmapR]
@@ -1571,7 +1571,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab' ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) =
+              ((refine ctx level lab ptn active numcells).numcells + 1)) =
           (segN (refine ctx level lab' ptn active numcells).lab p.1
             (p.2 + 1 - p.1)).map (fun v =>
             specNode ctx tcLevel fuel (level + 1)
@@ -1584,7 +1584,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) :=
+              ((refine ctx level lab ptn active numcells).numcells + 1)) :=
         List.map_congr_left fun v hv =>
           (hchild v (hTperm.mem_iff.mpr hv)).symm
       rw [hFeq]
@@ -1599,7 +1599,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1))
+              ((refine ctx level lab ptn active numcells).numcells + 1))
       rcases hLl : (segN (refine ctx level lab ptn active numcells).lab p.1
           (p.2 + 1 - p.1)).map (fun v =>
             specNode ctx tcLevel fuel (level + 1)
@@ -1612,7 +1612,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) with _ | ⟨c, cs⟩
+              ((refine ctx level lab ptn active numcells).numcells + 1)) with _ | ⟨c, cs⟩
       · exfalso
         have hlen := congrArg List.length hLl
         rw [List.length_map, segN_length] at hlen
@@ -1630,7 +1630,7 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
               (breakout (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn
               (level + 1) p.1 v).2.2
-              (numcells + 1)) with _ | ⟨c', cs'⟩
+              ((refine ctx level lab ptn active numcells).numcells + 1)) with _ | ⟨c', cs'⟩
       · exfalso
         have hlen := congrArg List.length hRl
         rw [List.length_map, segN_length] at hlen
@@ -1661,5 +1661,369 @@ theorem specNode_perm {ctx : Ctx} (hn : ctx.n = n) (tcLevel : Nat) :
             have h1 := hstR.labSize
             have h2 := hn
             omega))]
+
+/-! # Seed-independence of `refine`
+
+`refine` consumes its `numcells` argument only as the `longcode` seed
+and through `refineLoop`'s cell-count guard. Two runs whose seeds
+differ by `δ` therefore evolve the same labelling and partition: while
+both guards hold the runs are in lockstep, and once the larger seed
+trips the guard the partition is discrete (the guard-exit hypothesis of
+`refine_seed`), so every further step of the smaller-seed run touches
+only the active set and the code accumulator. The runs agree on `lab`,
+`ptn`, `hint` and `maxpos`, their cell counts differ by exactly `δ`,
+and their active sets agree whenever the exit partition is not
+discrete; only `longcode` and `numcells` carry the seed. -/
+
+/-- Refine states equal up to a `numcells` shift of `δ` and the
+`longcode` accumulator. -/
+structure SeedShift (δ : Nat) (st st' : RefineSt) : Prop where
+  lab : st'.lab = st.lab
+  ptn : st'.ptn = st.ptn
+  active : st'.active = st.active
+  hint : st'.hint = st.hint
+  maxpos : st'.maxpos = st.maxpos
+  numcells : st'.numcells = st.numcells + δ
+
+theorem seedShift_mk {δ : Nat} {l p : Array Nat}
+    {a nc hi mp lc nc' lc' : Nat} (h : nc' = nc + δ) :
+    SeedShift δ ⟨l, p, a, nc, hi, mp, lc⟩ ⟨l, p, a, nc', hi, mp, lc'⟩ :=
+  ⟨rfl, rfl, rfl, rfl, rfl, h⟩
+
+theorem trivialSplit_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (level cell1 cell2 : Nat) (c1 c2 : Int) :
+    SeedShift δ (trivialSplit level cell1 cell2 c1 c2 st)
+      (trivialSplit level cell1 cell2 c1 c2 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [trivialSplit, trivialSplit]
+  dsimp only
+  repeat' split
+  all_goals exact seedShift_mk (by omega)
+
+theorem trivialCell_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (level gRow cell1 cell2 : Nat) :
+    SeedShift δ (trivialCell level gRow cell1 cell2 st)
+      (trivialCell level gRow cell1 cell2 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [trivialCell, trivialCell]
+  dsimp only
+  split
+  · exact seedShift_mk (by omega)
+  · exact trivialSplit_seed (seedShift_mk rfl) level cell1 cell2 _ _
+
+theorem refineTrivial_go_seed {δ : Nat} (level gRow : Nat) :
+    ∀ (l : List (Nat × Nat)) (st st' : RefineSt), SeedShift δ st st' →
+      SeedShift δ (refineTrivial.go level gRow l st)
+        (refineTrivial.go level gRow l st')
+  | [], _, _, h => by
+    rw [refineTrivial.go, refineTrivial.go]
+    exact h
+  | (a, b) :: rest, st, st', h => by
+    rw [refineTrivial.go, refineTrivial.go]
+    exact refineTrivial_go_seed level gRow rest _ _
+      (trivialCell_seed h level gRow a b)
+
+theorem refineTrivial_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (ctx : Ctx) (level split1 : Nat) :
+    SeedShift δ (refineTrivial ctx level split1 st)
+      (refineTrivial ctx level split1 st') := by
+  rw [refineTrivial, refineTrivial, h.lab, h.ptn]
+  exact refineTrivial_go_seed level _ _ _ _ h
+
+theorem windowStep_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) :
+    SeedShift δ (windowStep level cell1 cell2 v c1 c2 maxcell st)
+      (windowStep level cell1 cell2 v c1 c2 maxcell st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [windowStep, windowStep]
+  dsimp only
+  repeat' split
+  all_goals first
+    | exact seedShift_mk rfl
+    | exact seedShift_mk (Nat.add_right_comm _ _ _)
+
+theorem windowScan_seed {δ : Nat} (level cell1 cell2 : Nat)
+    (counts : List Nat) :
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st st' : RefineSt),
+      SeedShift δ st st' →
+      SeedShift δ (windowScan level cell1 cell2 counts vs c1 maxcell st)
+        (windowScan level cell1 cell2 counts vs c1 maxcell st')
+  | [], _, _, _, _, h => by
+    rw [windowScan, windowScan]
+    exact h
+  | v :: vs, c1, maxcell, st, st', h => by
+    rw [windowScan, windowScan]
+    split
+    · exact windowScan_seed level cell1 cell2 counts vs _ _ _ _
+        (windowStep_seed h level cell1 cell2 v c1 _ maxcell)
+    · exact windowScan_seed level cell1 cell2 counts vs _ _ _ _ h
+
+theorem nontrivialFix_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (cell1 : Nat) :
+    SeedShift δ (nontrivialFix cell1 st) (nontrivialFix cell1 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [nontrivialFix, nontrivialFix]
+  dsimp only
+  repeat' split
+  all_goals exact seedShift_mk (by omega)
+
+theorem nontrivialCell_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (ctx : Ctx)
+    (level workset cell1 cell2 : Nat) :
+    SeedShift δ (nontrivialCell ctx level workset cell1 cell2 st)
+      (nontrivialCell ctx level workset cell1 cell2 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [nontrivialCell, nontrivialCell]
+  dsimp only
+  split
+  · exact seedShift_mk (by omega)
+  · split
+    · exact seedShift_mk (by omega)
+    · have hscan := windowScan_seed (δ := δ) level cell1 cell2
+        (countsOf ctx l' workset cell1 cell2)
+        (countValues (countsOf ctx l' workset cell1 cell2)) cell1 (-1)
+        ⟨l', p', a', nc, hi', mp', lc⟩ ⟨l', p', a', nc + δ, hi', mp', lc'⟩
+        (seedShift_mk rfl)
+      rw [hscan.lab]
+      refine nontrivialFix_seed ?_ cell1
+      exact ⟨rfl, hscan.ptn, hscan.active, hscan.hint, hscan.maxpos,
+        hscan.numcells⟩
+
+theorem refineNontrivial_go_seed {δ : Nat} (ctx : Ctx)
+    (level workset : Nat) :
+    ∀ (l : List (Nat × Nat)) (st st' : RefineSt), SeedShift δ st st' →
+      SeedShift δ (refineNontrivial.go ctx level workset l st)
+        (refineNontrivial.go ctx level workset l st')
+  | [], _, _, h => by
+    rw [refineNontrivial.go, refineNontrivial.go]
+    exact h
+  | (a, b) :: rest, st, st', h => by
+    rw [refineNontrivial.go, refineNontrivial.go]
+    exact refineNontrivial_go_seed ctx level workset rest _ _
+      (nontrivialCell_seed h ctx level workset a b)
+
+theorem refineNontrivial_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (ctx : Ctx) (level split1 split2 : Nat) :
+    SeedShift δ (refineNontrivial ctx level split1 split2 st)
+      (refineNontrivial ctx level split1 split2 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [refineNontrivial, refineNontrivial]
+  dsimp only
+  exact refineNontrivial_go_seed ctx level _ _ _ _ (seedShift_mk rfl)
+
+theorem refineStep_seed {δ : Nat} {st st' : RefineSt}
+    (h : SeedShift δ st st') (ctx : Ctx) (level split1 : Nat) :
+    SeedShift δ (refineStep ctx level split1 st)
+      (refineStep ctx level split1 st') := by
+  obtain ⟨l, p, a, nc, hi, mp, lc⟩ := st
+  obtain ⟨l', p', a', nc', hi', mp', lc'⟩ := st'
+  obtain ⟨hl, hp, ha, hh, hm, hn⟩ := h
+  dsimp only at hl hp ha hh hm hn
+  subst hl hp ha hh hm hn
+  rw [refineStep, refineStep]
+  dsimp only
+  split
+  · exact refineTrivial_seed (seedShift_mk rfl) ctx level split1
+  · exact refineNontrivial_seed (seedShift_mk rfl) ctx level split1 _
+
+/-! On a discrete partition every cell is a singleton, so both
+splitting passes fold over singleton cells and change nothing: a
+`refineStep` touches only the active set and the code accumulator. -/
+
+theorem cells_eq_of_discreteAt {ptn : Array Nat} {level nn : Nat}
+    (hdisc : discreteAt ptn level nn = true) :
+    ∀ q ∈ cells ptn level nn, (q.1 == q.2) = true := by
+  rw [discreteAt, List.all_eq_true] at hdisc
+  exact hdisc
+
+theorem refineTrivial_go_of_discrete (level gRow : Nat) :
+    ∀ (l : List (Nat × Nat)) (st : RefineSt),
+      (∀ q ∈ l, (q.1 == q.2) = true) →
+      refineTrivial.go level gRow l st = st
+  | [], _, _ => by rw [refineTrivial.go]
+  | (a, b) :: rest, st, hall => by
+    rw [refineTrivial.go, trivialCell,
+      ite_eq_left (hall (a, b) List.mem_cons_self)]
+    exact refineTrivial_go_of_discrete level gRow rest st
+      fun q hq => hall q (List.mem_cons_of_mem _ hq)
+
+theorem refineNontrivial_go_of_discrete (ctx : Ctx)
+    (level workset : Nat) :
+    ∀ (l : List (Nat × Nat)) (st : RefineSt),
+      (∀ q ∈ l, (q.1 == q.2) = true) →
+      refineNontrivial.go ctx level workset l st = st
+  | [], _, _ => by rw [refineNontrivial.go]
+  | (a, b) :: rest, st, hall => by
+    rw [refineNontrivial.go, nontrivialCell,
+      ite_eq_left (hall (a, b) List.mem_cons_self)]
+    exact refineNontrivial_go_of_discrete ctx level workset rest st
+      fun q hq => hall q (List.mem_cons_of_mem _ hq)
+
+theorem refineStep_of_discrete {ctx : Ctx} {level : Nat}
+    {st : RefineSt} (hdisc : discreteAt st.ptn level ctx.n = true)
+    (split1 : Nat) :
+    ∃ c, refineStep ctx level split1 st =
+      { st with active := erase st.active split1, longcode := c } := by
+  rw [refineStep]
+  dsimp only
+  split
+  · exact ⟨mash st.longcode (split1 + cellEnd st.ptn level split1), by
+      rw [refineTrivial]
+      exact refineTrivial_go_of_discrete level _ _ _
+        (cells_eq_of_discreteAt hdisc)⟩
+  · exact ⟨mash (mash st.longcode (split1 + cellEnd st.ptn level split1))
+        (cellEnd st.ptn level split1 - split1 + 1), by
+      rw [refineNontrivial]
+      dsimp only
+      exact refineNontrivial_go_of_discrete ctx level _ _ _
+        (cells_eq_of_discreteAt hdisc)⟩
+
+theorem refineLoop_of_discrete {ctx : Ctx} {level : Nat} :
+    ∀ (fuel : Nat) (st : RefineSt),
+      discreteAt st.ptn level ctx.n = true →
+      ∃ a c, refineLoop ctx level fuel st =
+        { st with active := a, longcode := c }
+  | 0, st, _ => ⟨st.active, st.longcode, by rw [refineLoop]⟩
+  | fuel + 1, st, hdisc => by
+    rw [refineLoop]
+    rcases Decidable.em (st.numcells < ctx.n) with hg | hg
+    · rw [ite_eq_left hg]
+      rcases hps : pickSplit st.active st.hint with _ | s
+      · exact ⟨st.active, st.longcode, rfl⟩
+      · obtain ⟨c₀, hstep⟩ := refineStep_of_discrete hdisc s
+        obtain ⟨a, c, hloop⟩ := refineLoop_of_discrete fuel
+          { st with active := erase st.active s, longcode := c₀ } hdisc
+        refine ⟨a, c, ?_⟩
+        show refineLoop ctx level fuel (refineStep ctx level s st) =
+          { st with active := a, longcode := c }
+        rw [hstep, hloop]
+    · rw [ite_eq_right hg]
+      exact ⟨st.active, st.longcode, rfl⟩
+
+/-- The exit relation of `refine_seed`: labelling, partition, hint and
+`maxpos` agree, cell counts differ by exactly the seed shift, and the
+active sets agree whenever the exit partition is not discrete. -/
+structure SeedExit (ctx : Ctx) (level δ : Nat) (st st' : RefineSt) :
+    Prop where
+  lab : st'.lab = st.lab
+  ptn : st'.ptn = st.ptn
+  hint : st'.hint = st.hint
+  maxpos : st'.maxpos = st.maxpos
+  numcells : st'.numcells = st.numcells + δ
+  active : discreteAt st'.ptn level ctx.n = false →
+    st'.active = st.active
+
+theorem refineLoop_seed {ctx : Ctx} {level δ : Nat} :
+    ∀ (fuel : Nat) (st st' : RefineSt), SeedShift δ st st' →
+      (ctx.n ≤ (refineLoop ctx level fuel st').numcells →
+        discreteAt (refineLoop ctx level fuel st').ptn level ctx.n =
+          true) →
+      SeedExit ctx level δ (refineLoop ctx level fuel st)
+        (refineLoop ctx level fuel st')
+  | 0, st, st', h, _ => by
+    rw [refineLoop, refineLoop]
+    exact ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells,
+      fun _ => h.active⟩
+  | fuel + 1, st, st', h, hd => by
+    rcases Decidable.em (st'.numcells < ctx.n) with hg' | hg'
+    · -- lockstep: both guards hold
+      have hg : st.numcells < ctx.n := by
+        have := h.numcells
+        omega
+      rcases hps : pickSplit st.active st.hint with _ | s
+      · have e1 : refineLoop ctx level (fuel + 1) st = st := by
+          rw [refineLoop, ite_eq_left hg, hps]
+        have e2 : refineLoop ctx level (fuel + 1) st' = st' := by
+          rw [refineLoop, ite_eq_left hg', h.active, h.hint, hps]
+        rw [e1, e2]
+        exact ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells,
+          fun _ => h.active⟩
+      · have e1 : refineLoop ctx level (fuel + 1) st =
+            refineLoop ctx level fuel (refineStep ctx level s st) := by
+          rw [refineLoop, ite_eq_left hg, hps]
+        have e2 : refineLoop ctx level (fuel + 1) st' =
+            refineLoop ctx level fuel (refineStep ctx level s st') := by
+          rw [refineLoop, ite_eq_left hg', h.active, h.hint, hps]
+        rw [e2] at hd
+        rw [e1, e2]
+        exact refineLoop_seed fuel _ _ (refineStep_seed h ctx level s) hd
+    · -- the shifted run exits via the guard
+      have e2 : refineLoop ctx level (fuel + 1) st' = st' := by
+        rw [refineLoop, ite_eq_right hg']
+      rw [e2] at hd ⊢
+      have hdisc' : discreteAt st'.ptn level ctx.n = true :=
+        hd (by omega)
+      have hdisc : discreteAt st.ptn level ctx.n = true := by
+        rw [h.ptn] at hdisc'
+        exact hdisc'
+      rcases Decidable.em (st.numcells < ctx.n) with hg | hg
+      · rcases hps : pickSplit st.active st.hint with _ | s
+        · have e1 : refineLoop ctx level (fuel + 1) st = st := by
+            rw [refineLoop, ite_eq_left hg, hps]
+          rw [e1]
+          exact ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells,
+            fun _ => h.active⟩
+        · have e1 : refineLoop ctx level (fuel + 1) st =
+              refineLoop ctx level fuel (refineStep ctx level s st) := by
+            rw [refineLoop, ite_eq_left hg, hps]
+          obtain ⟨c₀, hstep⟩ := refineStep_of_discrete hdisc s
+          obtain ⟨a, c, hloop⟩ := refineLoop_of_discrete fuel
+            { st with active := erase st.active s, longcode := c₀ }
+            hdisc
+          rw [e1, hstep, hloop]
+          refine ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells,
+            fun hfalse => ?_⟩
+          rw [hdisc'] at hfalse
+          cases hfalse
+      · have e1 : refineLoop ctx level (fuel + 1) st = st := by
+          rw [refineLoop, ite_eq_right hg]
+        rw [e1]
+        exact ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells,
+          fun _ => h.active⟩
+
+/-- Seed-independence of `refine`: two runs whose `numcells` seeds
+differ by `δ` produce the same `lab`, `ptn`, `hint` and `maxpos`, cell
+counts differing by exactly `δ`, and the same active set whenever the
+exit partition is not discrete; only `longcode` and `numcells` carry
+the seed. The hypothesis rules out a guard exit on a non-discrete
+partition; it holds whenever the larger seed is at most the true cell
+count of `(ptn, level)`, in particular for the counts the search
+maintains. -/
+theorem refine_seed {ctx : Ctx} {level : Nat} {lab ptn : Array Nat}
+    {active : Nat} (m δ : Nat)
+    (hd : ctx.n ≤ (refine ctx level lab ptn active (m + δ)).numcells →
+      discreteAt (refine ctx level lab ptn active (m + δ)).ptn level
+        ctx.n = true) :
+    SeedExit ctx level δ (refine ctx level lab ptn active m)
+      (refine ctx level lab ptn active (m + δ)) := by
+  have h := refineLoop_seed (ctx := ctx) (level := level)
+    (4 * ctx.n + 8) ⟨lab, ptn, active, m, 0, 0, m⟩
+    ⟨lab, ptn, active, m + δ, 0, 0, m + δ⟩ (seedShift_mk rfl) hd
+  exact ⟨h.lab, h.ptn, h.hint, h.maxpos, h.numcells, h.active⟩
 
 end Hex.GraphIso.Nauty

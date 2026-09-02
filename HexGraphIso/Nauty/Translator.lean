@@ -126,12 +126,7 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
     (initPtn n (n + 2) (initialPartition G).2)
     (initActive (initialPartition G).2)
     (initialPartition G).2.length
-    (achieverCodes { n := n, g := rowsOf G } 100
-        (runColoredTraced G).result.canonlab (n + 2) 1
-        (initialPartition G).1
-        (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
-        (initialPartition G).2.length ++ [codeSentinel])
+    ((runColoredTraced G).bestCodes ++ [codeSentinel])
     { (runColoredTraced G).autos.foldl
         (fun st γ => st.admit { n := n, g := rowsOf G } γ)
         (AutState.init n none) with
@@ -690,7 +685,7 @@ two, `(Nauty.certifyCanon? G).isSome` additionally needs:
   construction of `produceCand`'s key (definitional);
 * `colorSortedCheck G (runColored G).canonlab = true` — a property
   of the transcribed search's output labelling;
-* layer three — `⟨achieverCodes … ++ [codeSentinel], leafRows ctx canonlab⟩ = canonSpecKey G`,
+* layer three — `⟨tr.bestCodes ++ [codeSentinel], leafRows ctx canonlab⟩ = canonSpecKey G`,
   the maximality of the traced key, which also discharges the
   domination hypothesis above.
 -/

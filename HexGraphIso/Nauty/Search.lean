@@ -484,14 +484,18 @@ def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
     canupdates := st.canupdates }
 
 /-- A traced run: the transcribed search result together with every
-accepted automorphism, in discovery order — the trace the
-certificate translator consumes. The best key itself is derived from
-`canonlab` (its rows directly, its codes by replaying refinement down
-the achieving path), because the search's internal code chain uses
-the transcription's own numcells convention, not the checker's. -/
+accepted automorphism, in discovery order, and the best path's
+refinement codes — the trace the certificate translator consumes.
+The search's `canoncode` chain and the certificate checker use the
+same code coordinates (each child call is seeded with the parent's
+recomputed cell count), so the codes are read off the final state
+directly. -/
 structure TraceRun where
   result : RunResult
   autos : Array (Array Nat)
+  /-- The best leaf's refinement codes at levels `1 .. canonlevel`,
+  without the sentinel. -/
+  bestCodes : List Nat
 
 /-- `run` with tracing on: the identical traversal, additionally
 returning the trace. The untraced `run` above stays the production
@@ -510,7 +514,8 @@ def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
         maxlevel := 1
         tctotal := 0
         canupdates := 1 }
-      autos := #[] }
+      autos := #[]
+      bestCodes := [] }
   let inf := n + 2
   let ctx : Ctx := { n, g }
   let st : SearchSt :=
@@ -539,7 +544,9 @@ def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
       maxlevel := st.maxlevel
       tctotal := st.tctotal
       canupdates := st.canupdates }
-    autos := st.genTrace }
+    autos := st.genTrace
+    bestCodes := (List.range' 1 st.canonlevel).map
+      fun i => st.canoncode[i]! }
 
 variable {n k : Nat}
 

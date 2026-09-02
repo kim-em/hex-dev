@@ -170,22 +170,22 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
         have hspec : specNode ctx tcLevel (fuel + 1) level lab ptn
             active numcells =
             ⟨(refine ctx level lab ptn active numcells).longcode ::
-              (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+              (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
                 ((List.range m).map fun j =>
-                  childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).codes,
-            (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
+                  childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1))).codes,
+            (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
               ((List.range m).map fun j =>
-                childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1))).rows⟩ := by
+                childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1))).rows⟩ := by
           rw [specNode]
           simp only [hdisc, Bool.false_eq_true, ite_false]
           rw [hM1, hM22, hm, List.range_succ_eq_map, List.map_cons,
             List.map_map]
           rfl
-        have htail : keyLe (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
-            ((List.range m).map fun j => childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1)))
+        have htail : keyLe (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
+            ((List.range m).map fun j => childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1)))
             ⟨brest, brows⟩ := by
-          rw [← key_eta (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells 0)
-            ((List.range m).map fun j => childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1)))]
+          rw [← key_eta (keysMax (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0)
+            ((List.range m).map fun j => childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1)))]
           refine keyLe_cons_tail (c := bc) ?_
           rw [← hlc]
           have h1 := hle
@@ -194,7 +194,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
           rw [← hlc] at h1
           exact h1
         have hchildle : ∀ i, i < m + 1 →
-            keyLe (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells i) ⟨brest, brows⟩ := by
+            keyLe (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells i) ⟨brest, brows⟩ := by
           intro i hi
           refine keyLe_trans ?_ htail
           rcases Nat.eq_zero_or_pos i with rfl | hpos
@@ -214,7 +214,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
           omega
         obtain ⟨a', ha', hiff⟩ := certifyChildren_complete hn hgsz
           tcLevel brows vgens fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1
-          (p.2 + 1 - p.1) numcells brest (m + 1) 0
+          (p.2 + 1 - p.1) (refine ctx level lab ptn active numcells).numcells brest (m + 1) 0
           hstR.labSize hstR.labOk hstR.ptnSize hstR.ptnEnd hRvals
           hicp (by omega) (by omega) (by omega) hbcChild
           (fun i _ hi2 => hchildle i (by omega))
@@ -244,7 +244,7 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
                 exact hik
           · intro hkm
             rcases keysMax_mem ((List.range m).map fun j =>
-              childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells (j + 1)) (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 numcells 0) with he | he
+              childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1)) (childKey ctx tcLevel fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0) with he | he
             · exact ⟨0, by omega, by omega, by rw [← he]; exact hkm⟩
             · rcases List.mem_map.mp he with ⟨j, hj, hje⟩
               exact ⟨j + 1, by omega, by

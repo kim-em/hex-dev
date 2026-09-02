@@ -913,7 +913,7 @@ theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
                           none
                       | _ =>
                         checkNodeL ctx tcLevel brows vgens fuel (level + 1)
-                          br.1 br.2.1 br.2.2 (numcells + 1) co.1 brest
+                          br.1 br.2.1 br.2.2 (rs.numcells + 1) co.1 brest
                     with
                     | none => none
                     | some a' => some (a || a'))
@@ -985,7 +985,7 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
         rfl
       | node children =>
         have hih := checkNodeL_eq ctx tcLevel brows vgens fuel
-        have hfold : ∀ (rsLab rsPtn : Array Nat) (tc : Nat)
+        have hfold : ∀ (rsLab rsPtn : Array Nat) (tc m : Nat)
             (cs : List (CertNode × Nat)) (acc : Option Bool),
             cs.foldl
               (fun acc (co : CertNode × Nat) =>
@@ -1024,7 +1024,7 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
                         (breakoutL rsLab.toList rsPtn.toList
                           (level + 1) tc
                           (atD rsLab.toList (tc + co.2) 0)).2.2
-                        (numcells + 1) co.1 brest
+                        (m + 1) co.1 brest
                   with
                   | none => none
                   | some a' => some (a || a')) acc =
@@ -1059,11 +1059,11 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
                           rsLab[tc + co.2]!).2.1
                         (breakout rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).2.2
-                        (numcells + 1) co.1 brest
+                        (m + 1) co.1 brest
                   with
                   | none => none
                   | some a' => some (a || a')) acc := by
-          intro rsLab rsPtn tc cs
+          intro rsLab rsPtn tc m cs
           induction cs with
           | nil => intro acc; rfl
           | cons co rest ih =>
@@ -1100,6 +1100,7 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
                 (specMaketargetcell ctx (refine ctx level lab ptn
                   active numcells).lab (refine ctx level lab ptn
                   active numcells).ptn level tcLevel).1
+                (refine ctx level lab ptn active numcells).numcells
                 (children.zipIdx 0) (some false)
             · simp [hl]
           · simp only [hd, ite_true]
