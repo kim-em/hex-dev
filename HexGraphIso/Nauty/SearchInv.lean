@@ -673,4 +673,185 @@ theorem refine_bcount {ctx : Ctx} {level : Nat} {lab ptn : Array Nat}
           ctx.n :=
   (refine_freezeInv hnn hls hend).count
 
+/-! # Target-cell openness -/
+
+/-- A short boundary count exposes an open position. -/
+theorem exists_open_of_bcount_lt {ptn : Array Nat} {level : Nat} :
+    ∀ {nn : Nat}, bcount ptn level nn < nn →
+      ∃ q, q < nn ∧ ptn[q]! > level := by
+  intro nn
+  induction nn with
+  | zero => intro h; omega
+  | succ m ih =>
+    intro h
+    rw [bcount_succ] at h
+    rcases Decidable.em (ptn[m]! ≤ level) with hm | hm
+    · rw [ite_eq_left hm] at h
+      obtain ⟨q, hq1, hq2⟩ := ih (by omega)
+      exact ⟨q, by omega, hq2⟩
+    · exact ⟨m, by omega, by omega⟩
+
+/-- An open position lies in a nontrivial cell. -/
+theorem exists_nontrivial_cell_of_open {ptn : Array Nat}
+    {level nn : Nat} (hnn : nn ≤ ptn.size)
+    (hend : ptn[ptn.size - 1]! ≤ level) {q : Nat} (hq : q < nn)
+    (hopen : ptn[q]! > level) :
+    ∃ p ∈ cells ptn level nn, p.1 ≠ p.2 := by
+  obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover (ptn := ptn)
+    (level := level) (nn := nn) q hq
+  refine ⟨p, hpm, ?_⟩
+  intro he
+  have hic := cells_isCell hnn hend p hpm
+  have hq1 : q = p.1 := by omega
+  have hend1 := hic.2.2.2
+  rw [show p.1 + (p.2 + 1 - p.1) - 1 = p.2 from by omega] at hend1
+  rw [hq1, he] at hopen
+  omega
+
+/-- The executable target cell of a live state is an in-range
+nontrivial cell start, whatever the hint. -/
+theorem targetcell_open {ctx : Ctx} {lab ptn : Array Nat}
+    {level tcLevel : Nat} {hint : Int} (_hn1 : 1 ≤ level)
+    (hsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hex : ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2) :
+    ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2 ∧
+      targetcell ctx lab ptn level tcLevel hint = p.1 := by
+  rcases Decidable.em (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
+      (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level)) with hg | hg
+  · rw [targetcell, ite_eq_left hg]
+    obtain ⟨hpos, hopen, hstart⟩ := hg
+    have hlt : hint.toNat < ptn.size := by
+      rcases Nat.lt_or_ge hint.toNat ptn.size with h | h
+      · exact h
+      · rw [getElem!_neg _ _ (by omega)] at hopen
+        exact absurd hopen (Nat.not_lt.mpr (Nat.zero_le level))
+    obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover (ptn := ptn)
+      (level := level) (nn := ctx.n) hint.toNat (by omega)
+    have hic := cells_isCell (by omega) hend p hpm
+    have hstart' : hint.toNat = 0 ∨ ptn[hint.toNat - 1]! ≤ level := by
+      rcases hstart with h0 | hb
+      · left
+        have : hint = 0 := by simpa using h0
+        rw [this]
+        rfl
+      · exact Or.inr hb
+    have heq : p.1 = hint.toNat := by
+      rcases Nat.lt_or_ge p.1 hint.toNat with hlt1 | hge1
+      · exfalso
+        have hint1 : ptn[hint.toNat - 1]! > level := by
+          refine hic.2.2.1 (hint.toNat - 1) (by omega) ?_
+          omega
+        rcases hstart' with h0 | hb
+        · omega
+        · omega
+      · omega
+    refine ⟨p, hpm, ?_, heq.symm⟩
+    intro he
+    have hend1 := hic.2.2.2
+    rw [show p.1 + (p.2 + 1 - p.1) - 1 = p.2 from by omega] at hend1
+    rw [← he, heq] at hend1
+    omega
+  · have hgneg : ¬((-1 : Int) ≥ 0 ∧ ptn[(-1 : Int).toNat]! > level ∧
+        (((-1 : Int) == 0) = true ∨
+          ptn[(-1 : Int).toNat - 1]! ≤ level)) := by
+      rintro ⟨h0, -⟩
+      omega
+    have he : targetcell ctx lab ptn level tcLevel hint =
+        targetcell ctx lab ptn level tcLevel (-1) := by
+      rw [targetcell, targetcell, ite_eq_right hg,
+        ite_eq_right hgneg]
+    rw [he]
+    exact targetcell_nontrivial hex
+
+/-- The executable `maketargetcell` of a live state: an open
+nontrivial cell with its exact extent and contents. -/
+theorem maketargetcell_open {ctx : Ctx} {lab ptn : Array Nat}
+    {level tcLevel : Nat} {hint : Int} (hn1 : 1 ≤ level)
+    (hsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hlive : bcount ptn level ctx.n < ctx.n) :
+    ∃ tc len,
+      maketargetcell ctx lab ptn level tcLevel hint =
+        (tc, worksetOf lab tc (tc + len - 1), len) ∧
+      IsCell ptn level tc len ∧ 2 ≤ len ∧ tc + len ≤ ctx.n := by
+  obtain ⟨q, hqn, hqopen⟩ := exists_open_of_bcount_lt hlive
+  have hex := exists_nontrivial_cell_of_open (by omega) hend hqn
+    hqopen
+  obtain ⟨p, hpm, hpne, htc⟩ := targetcell_open (lab := lab)
+    (tcLevel := tcLevel) (hint := hint) hn1 hsz hend hex
+  have hple := cells_le p hpm
+  have hpb := cells_bound (nn := ctx.n) (by omega) hend p hpm
+  have hic := cells_isCell (by omega) hend p hpm
+  have hce : cellEnd ptn level (p.1 + 1) = p.2 := by
+    have h0 := cellEnd_of_isCell hic (by omega) (by omega)
+    rw [show p.1 + (p.2 + 1 - p.1) - 1 = p.2 from by omega] at h0
+    exact h0
+  refine ⟨p.1, p.2 + 1 - p.1, ?_, hic, by omega, by omega⟩
+  rw [maketargetcell, htc, hce,
+    show p.1 + (p.2 + 1 - p.1) - 1 = p.2 from by omega,
+    show p.2 - p.1 + 1 = p.2 + 1 - p.1 from by omega]
+
+/-! # The root boundary count -/
+
+theorem countP_eq_sum_map {α : Type} (p : α → Bool) :
+    ∀ l : List α,
+      l.countP p = (l.map fun x => if p x then 1 else 0).sum
+  | [] => rfl
+  | x :: l => by
+    rw [List.countP_cons, List.map_cons, List.sum_cons,
+      countP_eq_sum_map p l]
+    omega
+
+theorem countP_mem_range {nn : Nat} :
+    ∀ {l : List Nat}, l.Pairwise (· < ·) → (∀ e ∈ l, e < nn) →
+      (List.range nn).countP (fun q => decide (q ∈ l)) = l.length
+  | [], _, _ => by simp
+  | e :: l, hnd, hlt => by
+    obtain ⟨hlt', hnd'⟩ := List.pairwise_cons.mp hnd
+    rw [countP_eq_sum_map]
+    have hsplit : (List.range nn).map
+        (fun q => if decide (q ∈ e :: l) then 1 else 0) =
+        (List.range nn).map (fun q =>
+          (if e == q then 1 else 0) +
+          (if decide (q ∈ l) then 1 else 0)) := by
+      refine List.map_congr_left fun q _ => ?_
+      rcases Decidable.em (q = e) with rfl | hne
+      · have hnm : q ∉ l := fun hm => by
+          have := hlt' q hm
+          omega
+        simp [hnm]
+      · rcases Decidable.em (q ∈ l) with hm | hm
+        · simp [hm, hne, Ne.symm hne]
+        · simp [hm, hne, Ne.symm hne]
+    rw [hsplit, sum_map_add,
+      sum_map_indicator List.pairwise_lt_range
+        (List.mem_range.mpr (hlt e (by simp))),
+      ← countP_eq_sum_map,
+      countP_mem_range hnd' (fun x hx => hlt x (by simp [hx])),
+      List.length_cons]
+    omega
+
+/-- The initial partition's boundary count is its cell count. -/
+theorem bcount_initPtn {n k : Nat} (G : Colored n k) :
+    bcount (initPtn n (n + 2) (initialPartition G).2) 1 n =
+      (initialPartition G).2.length := by
+  have hEnds := initialPartition_snd_eq G
+  have hpw : (initialPartition G).2.Pairwise (· < ·) := by
+    rw [hEnds]
+    exact endsOf_pairwise _ 0
+  have hlt : ∀ e ∈ (initialPartition G).2, e < n := by
+    intro e he
+    have h1 := endsOf_lt _ 0 e (hEnds ▸ he)
+    have h2 := totalOf_classes G
+    omega
+  rw [bcount, ← countP_mem_range hpw hlt]
+  refine List.countP_congr fun q hq => ?_
+  have hqn := List.mem_range.mp hq
+  rw [getElem!_initPtn]
+  rcases Decidable.em (q ∈ (initialPartition G).2) with hm | hm
+  · rw [ite_eq_left ⟨hm, hqn⟩]
+    simp [hm]
+  · rw [ite_eq_right (fun hc => hm hc.1), ite_eq_left hqn,
+      decide_eq_false (p := n + 2 ≤ 1) (by omega),
+      decide_eq_false hm]
+
 end Hex.GraphIso.Nauty
