@@ -373,25 +373,32 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, the tactic kernel-replays the fully verified
-pairwise individualization-refinement decision
-(`decideIso?_not_isomorphic`) under `maxNodes`. A second kernel route
-is implemented and proven — certificate replay, closing through
-`not_isomorphic_of_checkKeys` with two Boolean `checkKey` checks and a
-`checkDiff` key comparison, its cost proportional to the pruned
-certificates rather than the search — together with cost-based route
-selection (offer the pairwise decision a node budget equivalent to the
-certificate replay's cost; measured with it enabled, the selection
-took the better route on every benchmarked pair, up to twice as fast
-on search-heavy negatives). The certificate route is currently
-disabled: the module-mode kernel rejects replay obligations beyond
-roughly eight vertices that non-module environments accept, an
-instance of unexposed core reduction closures under the module system
-(the mechanism of lean4 PRs #14270, #14988, #14989); it is to be
-re-enabled once the toolchain exposes the needed closures. Both routes
-share an irreducible kernel cost evaluating the goal's graph
-definitions themselves, so family-style definitions with expensive
-adjacency set a floor that neither route can undercut.
+For a negative goal, the tactic selects between two kernel routes by
+measured cost. The certificate route has the compiled search produce a
+canonical-key certificate for each graph; the kernel replays the two
+Boolean certificate checks and their key comparison, closing the goal
+through `not_isomorphic_of_checkKeys` (`checkKey` twice plus
+`checkDiff`, with no achieving labelling reified), and its replay cost
+scales with the certificate record counts. The pairwise route replays
+the fully verified individualization-refinement decision
+(`decideIso?_not_isomorphic`), and its replay cost scales with the
+nodes that search visits — small when refinement refutes the pair
+almost immediately, large when genuine search is needed. After
+producing both certificates the tactic offers the pairwise decision a
+node budget equivalent to the certificate replay's cost (one pairwise
+node kernel-replays for roughly four certificate records); whichever
+route fits closes the goal. When certificate production fails or a
+certificate exceeds the configured budgets, the full-budget pairwise
+replay is the fallback and anchors the exhaustion semantics. No result
+relies on compiler trust. Both routes share an irreducible kernel cost
+evaluating the goal's graph definitions themselves, so family-style
+definitions with expensive adjacency set a floor neither route can
+undercut. The certificate obligations replay only while their whole
+reduction closure stays exposed to the module-mode kernel; the
+regression ladder in `HexGraphIso/ModuleBoundaryTests.lean` pins that
+closure (it caught missing exposure on two refinement helpers and on
+core's `Array.map`, worked around per `HexBasic.OfFn` pending the
+upstream exposure fixes).
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search

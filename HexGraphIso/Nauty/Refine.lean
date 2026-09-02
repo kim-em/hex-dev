@@ -37,11 +37,11 @@ namespace Hex.GraphIso.Nauty
 /-- nauty's refinement-code accumulator step: `MASH(l, i)` from
 `naugraph.c`. All inputs are nonnegative positions, sizes, or counts, so
 `Nat` arithmetic reproduces the C `long` arithmetic exactly. -/
-@[inline] def mash (l i : Nat) : Nat :=
+@[expose, inline] def mash (l i : Nat) : Nat :=
   ((l ^^^ 0o65435) + i) &&& 0o77777
 
 /-- nauty's `CLEANUP` of an accumulated refinement code. -/
-@[inline] def cleanup (l : Nat) : Nat :=
+@[expose, inline] def cleanup (l : Nat) : Nat :=
   l % 0o77777
 
 /-- The graph as adjacency bitset rows, with the vertex count. -/

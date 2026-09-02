@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert
+public import HexBasic.OfFn
 
 public section
 
@@ -87,7 +88,7 @@ absorbing. -/
                             checkCellsPerm br.2.1
                               (breakout rs.lab rs.ptn (level + 1)
                                 tcr.1 rs.lab[tcr.1 + o']!).1
-                              (br.1.map fun w => γ[w]!)
+                              (Hex.Array.map' (fun w => γ[w]!) br.1)
                               (level + 1) ctx.n then
                           some false
                         else
@@ -130,7 +131,7 @@ theorem checkNodeF_fold_eq (ctx : Ctx) (tcLevel : Nat)
                     checkCellsPerm br.2.1
                       (breakout rsLab rsPtn (level + 1) tc
                         rsLab[tc + o']!).1
-                      (br.1.map fun w => γ[w]!)
+                      (Hex.Array.map' (fun w => γ[w]!) br.1)
                       (level + 1) ctx.n then
                   some false
                 else
@@ -166,7 +167,7 @@ theorem checkNodeF_fold_eq (ctx : Ctx) (tcLevel : Nat)
                       checkCellsPerm br.2.1
                         (breakout rsLab rsPtn (level + 1) tc
                           rsLab[tc + o']!).1
-                        (br.1.map fun w => γ[w]!)
+                        (Hex.Array.map' (fun w => γ[w]!) br.1)
                         (level + 1) ctx.n then
                     some false
                   else
@@ -188,6 +189,7 @@ theorem checkNodeF_fold_eq (ctx : Ctx) (tcLevel : Nat)
     | autom o' γ =>
       rw [checkChildren, List.zipIdx_cons, List.foldl_cons]
       simp only []
+      rw [Hex.Array.map'_eq_map]
       cases hc : (o' < o &&
           checkAutom ctx.g γ ctx.n &&
           checkCellsPerm

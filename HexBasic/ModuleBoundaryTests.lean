@@ -32,6 +32,14 @@ when the array/vector workarounds are eventually removed.
 
 namespace Hex.ModuleBoundaryTests
 
+/-! # `Array.map` (core implementation loop is not exposed) -/
+
+example : (Hex.Array.map' (fun w => w + 1) #[1, 2]) = #[2, 3] := by decide
+example : (Hex.Array.map' (fun w => w * 2) #[3]).toList = [6] := by
+  decide +kernel
+example : decide ((Hex.Array.map' (fun w => w + 1) #[0, 1]) = #[1, 2]) =
+    true := by rfl
+
 /-! # `Array` equality, both sides nonempty -/
 
 example : (#[0, 1] : Array Nat) ≠ #[1] := by decide

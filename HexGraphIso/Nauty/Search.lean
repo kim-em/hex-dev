@@ -35,7 +35,7 @@ before anything is trusted in a proof.
 namespace Hex.GraphIso.Nauty
 
 /-- The sentinel code above every real refinement code: nauty's `077777`. -/
-def codeSentinel : Nat := 0o77777
+@[expose] def codeSentinel : Nat := 0o77777
 
 /-- Search state: nauty's globals for one `nauty()` invocation. -/
 structure SearchSt where

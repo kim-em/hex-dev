@@ -31,11 +31,17 @@ For a positive goal, the compiled nauty-compatible search runs at
 elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through the replay-bounded `checkIso?` and
 its soundness theorem, so the kernel performs the decisive replay. For
-a negative goal, the kernel replays the fully verified pairwise
-decision `Pairwise.decideIso?` through
-`Pairwise.decideIso?_not_isomorphic` (a proven certificate route
-exists and is disabled pending toolchain support; see
-`proveNotIso`). Search exhaustion
+a negative goal, the tactic selects between two kernel routes by
+measured cost: certificate replay (two Boolean `checkKeyF` checks plus
+`checkDiff` through `Nauty.not_isomorphic_of_checkKeysF`, cost
+proportional to the pruned certificates the compiled search produces)
+and the fully verified pairwise decision `Pairwise.decideIso?`
+(replayed through `Pairwise.decideIso?_not_isomorphic`, cost
+proportional to the nodes its search visits). The pairwise decision is
+offered a node budget equivalent to the certificate replay's cost and
+wins exactly when refinement refutes the pair almost immediately; the
+full-budget pairwise replay is the fallback and exhaustion-semantics
+anchor when certificate production is unavailable. Search exhaustion
 never closes a negative goal, and every failure leaves the goal
 unchanged and reports the phase and logical limit that failed. No path
 uses `native_decide` and no axiom is introduced.
@@ -295,29 +301,33 @@ meta def proveNotIsoPairwise? (maxNodes maxCertNodes : Nat)
       some <$> mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
-graphs, by kernel-replaying the verified pairwise decision.
-
-The certificate route (`proveNotIsoCerts?`) is implemented, proven,
-and currently disabled: the module-mode kernel rejects certificate
-replay obligations beyond roughly eight vertices at module
-finalization — after elaboration, so no in-tactic probe can guard it —
-while non-module environments and the elaboration-time kernel accept
-the identical proofs. Measured with it enabled, cost-based route
-selection (offer the pairwise decision a node budget of a quarter of
-the total certificate record count, since one pairwise node
-kernel-replays for roughly four certificate records) took the better
-route on every benchmarked pair, up to twice as fast on search-heavy
-negatives. Re-enable by restoring the `proveNotIsoCerts?` dispatch
-below once the toolchain behaviour is resolved.
-
-Shared by the core negative branch and downstream extensions (the
-Mathlib layer calls it on the encodings). -/
+graphs. Route selection compares measured units: one pairwise node
+kernel-replays for roughly four certificate records (it refines both
+graphs and compares them), so after producing both certificates the
+tactic first offers the pairwise decision a node budget of a quarter
+of the total record count — pairs the refinement refutes almost
+immediately close through the small pairwise replay, and pairs needing
+genuine search close through the two certificate replays. The
+full-budget pairwise decision remains the fallback and
+exhaustion-semantics anchor when certificate production is unavailable.
+The certificate obligations replay only because their whole closure is
+exposed to the module-finalization kernel; the regression ladder in
+`HexGraphIso.ModuleBoundaryTests` pins that closure. Shared by the
+core negative branch and downstream extensions (the Mathlib layer
+calls it on the encodings). -/
 meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
-  match ← proveNotIsoPairwise? cfg.maxNodes cfg.maxCertNodes GE HE with
-  | some proof => return proof
+  match ← proveNotIsoCerts? cfg GE HE with
+  | some (proof, records) =>
+    match ← proveNotIsoPairwise? (min (records / 4) cfg.maxNodes)
+        cfg.maxCertNodes GE HE with
+    | some pairProof => return pairProof
+    | none => return proof
   | none =>
-    throwError "graph_iso: search exhausted: the pairwise decision ran \
-        out of nodes at maxNodes := {cfg.maxNodes}"
+    match ← proveNotIsoPairwise? cfg.maxNodes cfg.maxCertNodes GE HE with
+    | some proof => return proof
+    | none =>
+      throwError "graph_iso: search exhausted: the pairwise decision ran \
+          out of nodes at maxNodes := {cfg.maxNodes}"
 
 /-- A `graph_iso` goal handler contributed by a downstream library.
 Importing a library that declares a `public meta def` of this type under
