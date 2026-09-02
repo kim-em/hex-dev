@@ -109,6 +109,7 @@ repos:
     umbrella: true
     spec: hex-primality
     bench: true
+    bench_files: [HexPrimalityBench/Inputs.lean]
     conformance: true
     fixtures: [HexPrimality]
     oracles: [primality_pari.py, common.py]

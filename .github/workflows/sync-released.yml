@@ -25,6 +25,10 @@ on:
         type: string
         required: false
         default: ""
+      force:
+        description: "Override a reconciled uncoordinated-commit guard"
+        type: boolean
+        default: false
 
 concurrency:
   group: sync-released
@@ -67,6 +71,7 @@ jobs:
           args=()
           [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)
           [ -z "${{ inputs.only }}" ] || args+=(--only "${{ inputs.only }}")
+          [ "${{ inputs.force }}" = "true" ] && args+=(--force)
           python3 scripts/release/sync_released.py \
             --baseline /tmp/baseline.json "${args[@]}"
       - name: Publish advanced baseline

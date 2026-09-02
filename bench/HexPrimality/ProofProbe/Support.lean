@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexPrimality.Inputs
-public meta import HexPrimality.Inputs
+public import HexPrimalityBench.Inputs
+public meta import HexPrimalityBench.Inputs
 
 public section
 

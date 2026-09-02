@@ -332,11 +332,11 @@ lean_lib HexBerlekampKernelProbe where
 
 lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexBench.PrimalityKernel]
+  globs := #[`HexPrimalityBench.Inputs, `HexBench.PrimalityKernel]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+  globs := #[`HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
     `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
@@ -387,7 +387,7 @@ lean_lib HexPrimalityMathlibProofProbe where
 
 lean_lib HexPrimalityElabProbeScientific where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+  globs := #[`HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
     `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Bit31.Input,
     `HexPrimality.ProofProbe.Bit31.Search,
