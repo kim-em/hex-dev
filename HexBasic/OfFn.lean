@@ -85,7 +85,9 @@ only so that the kernel can reduce it. -/
 
 /-- An {name}`Array.map` equivalent that reduces in the kernel under the
 module system: core {name}`Array.map`'s implementation loop is not exposed,
-so `(a.map f)` stalls downstream exactly like {name}`Array.ofFn`. -/
+so `(a.map f)` stalls downstream exactly like {name}`Array.ofFn`.
+Retire once <https://github.com/leanprover/lean4/pull/14996> reaches the
+pinned toolchain. -/
 @[expose] def Array.map' {α : Type u} {β : Type v} (f : α → β)
     (a : Array α) : Array β :=
   (a.toList.map f).toArray
