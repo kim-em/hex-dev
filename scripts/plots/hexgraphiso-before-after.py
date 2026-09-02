@@ -5,8 +5,11 @@ Renders one figure overlaying two recorded sweeps (before faded and
 dashed, after solid), one panel per plot: the canonical-labelling
 cactus over the three compiled tiers, and the pair-decision cactus
 including the tactic leg when both tactic snapshots exist. Prints a
-markdown summary table (per-tier median ratio and worst instance) to
-stdout, ready to paste into a pull-request comment.
+markdown summary table to stdout, ready to paste into a pull-request
+comment. The table compares the sorted curves, not named instances:
+per layer, the rank-wise geometric-mean ratio (the vertical
+displacement of the cactus on the log axis), the total curve time,
+and the curve maxima.
 
 Usage:
 
@@ -22,7 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import statistics
+import math
 from pathlib import Path
 
 TIERS = [
@@ -54,17 +57,39 @@ def cactus(ax, rows: list[dict], key: str, label: str, color, solid: bool):
             label=f"{label} ({'after' if solid else 'before'})")
 
 
-def ratio_rows(before: list[dict], after: list[dict], key: str):
-    b = {r["name"]: r[key] for r in before if key in r}
-    a = {r["name"]: r[key] for r in after if key in r}
-    shared = sorted(set(b) & set(a))
-    ratios = [(a[n] / b[n], n) for n in shared if b[n] > 0]
-    if not ratios:
+def curve(rows: list[dict], key: str) -> list[float]:
+    return sorted(r[key] for r in rows if key in r and r[key] > 0)
+
+
+def curve_delta(before: list[float], after: list[float]):
+    """Cactus-level comparison: rank-wise geometric-mean ratio (the
+    vertical displacement of the sorted curve on the log axis), total
+    curve time, and the curve maxima."""
+    n = min(len(before), len(after))
+    if n == 0:
         return None
-    med = statistics.median(r for r, _ in ratios)
-    worst = max(ratios)
-    best = min(ratios)
-    return med, best, worst
+    shift = math.exp(sum(math.log(after[i] / before[i])
+                         for i in range(n)) / n)
+    return (shift, sum(before) / 1e9, sum(after) / 1e9,
+            before[-1] / 1e9, after[-1] / 1e9)
+
+
+def fmt_s(x: float) -> str:
+    if x >= 1:
+        return f"{x:.2f}s"
+    if x >= 1e-3:
+        return f"{x * 1e3:.1f}ms"
+    return f"{x * 1e6:.0f}us"
+
+
+def delta_line(label: str, before: list[float], after: list[float]):
+    d = curve_delta(before, after)
+    if d is None:
+        return None
+    shift, tot_b, tot_a, max_b, max_a = d
+    return (f"| {label} | {shift:.2f}x | "
+            f"{fmt_s(tot_b)} -> {fmt_s(tot_a)} | "
+            f"{fmt_s(max_b)} -> {fmt_s(max_a)} |")
 
 
 def main() -> int:
@@ -98,15 +123,14 @@ def main() -> int:
     ax.grid(True, which="both", alpha=0.3)
     ax.legend(fontsize=7)
 
-    lines = ["| layer | median after/before | best | worst |",
+    lines = ["| layer | curve shift (geo-mean) | total curve time "
+             "| slowest instance |",
              "|---|---|---|---|"]
     for key, label in TIERS[1:]:
-        r = ratio_rows(before, after, key)
-        if r:
-            med, best, worst = r
-            lines.append(f"| canonical {label} | {med:.2f}x | "
-                         f"{best[0]:.2f}x ({best[1]}) | "
-                         f"{worst[0]:.2f}x ({worst[1]}) |")
+        line = delta_line(f"canonical {label}",
+                          curve(before, key), curve(after, key))
+        if line:
+            lines.append(line)
 
     if have_pairs:
         bpairs, apairs = read_jsonl(bpairs_p), read_jsonl(apairs_p)
@@ -125,21 +149,16 @@ def main() -> int:
                          markersize=2.5, color="#2ca02c",
                          label=f"graph_iso tactic "
                                f"({'after' if solid else 'before'})")
-            shared = [n for n in btac if n in atac
-                      and btac[n] and atac[n]]
-            if shared:
-                ratios = sorted((atac[n] / btac[n], n) for n in shared)
-                med = statistics.median(r for r, _ in ratios)
-                lines.append(f"| graph_iso tactic | {med:.2f}x | "
-                             f"{ratios[0][0]:.2f}x ({ratios[0][1]}) | "
-                             f"{ratios[-1][0]:.2f}x ({ratios[-1][1]}) |")
+            bt = sorted(v * 1e9 for v in btac.values() if v)
+            at = sorted(v * 1e9 for v in atac.values() if v)
+            line = delta_line("graph_iso tactic", bt, at)
+            if line:
+                lines.append(line)
         for key, label in TIERS[1:]:
-            r = ratio_rows(bpairs, apairs, key)
-            if r:
-                med, best, worst = r
-                lines.append(f"| pairs {label} | {med:.2f}x | "
-                             f"{best[0]:.2f}x ({best[1]}) | "
-                             f"{worst[0]:.2f}x ({worst[1]}) |")
+            line = delta_line(f"pairs {label}",
+                              curve(bpairs, key), curve(apairs, key))
+            if line:
+                lines.append(line)
         ax2.set_yscale("log")
         ax2.set_xlabel("instances solved")
         ax2.set_title("isomorphism pairs")
