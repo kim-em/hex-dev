@@ -142,6 +142,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "rcf_sentence",
         "factor",
         "divisorfn",
+        "graphiso",
         "order",
         "cyclotomic",
     }
@@ -369,6 +370,39 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(
                 f"poly.modFactorDegrees requires modFactorPrime: {record!r}"
             )
+    elif kind == "graphiso":
+        n = record.get("n")
+        k = record.get("k")
+        if not _is_nat(n) or not _is_nat(k):
+            raise FixtureError(f"graphiso.n/k must be Nat: {record!r}")
+        colors = record.get("colors")
+        if not isinstance(colors, list) or len(colors) != n or not all(
+            isinstance(c, int) and 0 <= c < max(k, 1) for c in colors
+        ):
+            raise FixtureError(f"graphiso.colors must be n colours below k: {record!r}")
+        edges = record.get("edges")
+        if not isinstance(edges, list) or not all(
+            isinstance(e, list) and len(e) == 2
+            and all(isinstance(x, int) and 0 <= x < n for x in e)
+            and e[0] < e[1]
+            for e in edges
+        ):
+            raise FixtureError(f"graphiso.edges must be i<j pairs below n: {record!r}")
+        lab = record.get("canonLab")
+        if not isinstance(lab, list) or len(lab) != n or sorted(lab) != list(range(n)):
+            raise FixtureError(f"graphiso.canonLab must be a permutation of 0..n-1: {record!r}")
+        tri = record.get("canonTri")
+        if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
+            c not in "01" for c in tri
+        ):
+            raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
+        sizes = record.get("cellSizes")
+        if not isinstance(sizes, list) or len(sizes) != k or sum(sizes) != n or not all(
+            isinstance(s, int) and s > 0 for s in sizes
+        ):
+            raise FixtureError(f"graphiso.cellSizes must be k positive sizes summing to n: {record!r}")
+        if not _is_nat(record.get("numnodes")):
+            raise FixtureError(f"graphiso.numnodes must be Nat: {record!r}")
     elif kind == "matrix":
         rows = record.get("rows")
         if not isinstance(rows, list) or not all(

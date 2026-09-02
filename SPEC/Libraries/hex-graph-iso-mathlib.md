@@ -122,15 +122,15 @@ the tactic for `G ≃g H` goals.
 The principal Mathlib theorem states the coloured biconditional directly:
 
 ```lean
-theorem colored_iso_iff_canon_eq
+theorem colored_iso_iff_canonChecked_eq
     (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H <->
-      Hex.GraphIso.canon (encode eV G) =
-      Hex.GraphIso.canon (encode eW H)
+      Hex.GraphIso.canonChecked (encode eV G) =
+      Hex.GraphIso.canonChecked (encode eW H)
 ```
 
 It is proved by `encode_iso_iff` and the Mathlib-free
-`Hex.GraphIso.iso_iff_canon_eq`. The uncoloured theorem specializes this
+`Hex.GraphIso.iso_iff_canonChecked_eq`. The uncoloured theorem specializes this
 statement to the one-cell colouring.
 
 The library also proves:
@@ -269,14 +269,14 @@ Neither case runs canonical search.
 Otherwise the tactic:
 
 1. reifies both inputs with kernel-checked correspondence proofs;
-2. runs compiled canonical-certificate generation;
-3. checks both certificates and their first-difference certificate before
-   emission;
-4. emits the literal data and checker theorem applications;
-5. obtains executable non-isomorphism from
-   `Hex.GraphIso.iso_iff_canon_eq`;
-6. transports that theorem through `encode_iso_iff`;
-7. constructs `IsEmpty` or the requested negated `Nonempty` proposition.
+2. obtains executable non-isomorphism of the encodings from the shared
+   Mathlib-free negative engine, which selects by measured replay cost
+   between the certificate route and the verified pairwise decision
+   (per the core SPEC's tactic section);
+3. transports that result through the `not_encode_iso` bridge
+   theorems;
+4. constructs `IsEmpty` or the requested negated `Nonempty`
+   proposition.
 
 Search exhaustion and checker exhaustion are errors. They never select the
 negative branch.
@@ -366,7 +366,7 @@ comparison remain in the Mathlib-free benchmark driver.
 
 The Mathlib-facing release is complete only when:
 
-1. `encode_iso_iff` and `colored_iso_iff_canon_eq` have no unfinished proof.
+1. `encode_iso_iff` and `colored_iso_iff_canonChecked_eq` have no unfinished proof.
 2. Every supported positive goal constructs an explicit isomorphism checked
    by the kernel.
 3. Every supported negative goal ends in the Mathlib-free canonical-form

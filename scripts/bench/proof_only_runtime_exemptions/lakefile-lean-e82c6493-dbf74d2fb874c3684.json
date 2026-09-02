@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+ "current_blob": "dbf74d2fb874c3684ec46acd1f724f60767ff1b5",
+ "reason": "The pull-request merge of the graph-iso target registrations with main. Relative to the measurement baseline the factorization-relevant blocks change only by HexPolyFp precompileModules := true, already exempted on main as lakefile-lean-e82c6493-0a950f42; the graph-iso additions register new targets, which cannot alter how Lake builds the factorization service."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/ModuleBoundaryTests.lean",
+ "baseline_blob": "9d8fa52594b5923a74ee0d6f8f8c103d2dc92c9a",
+ "current_blob": "1d5cde78b8b5c3ca7dbef22780ec9a041d938c87",
+ "reason": "Adds kdecide module-boundary regression examples exercised at compile time only; the file contributes no executable code to the factorization service call graph."
+}

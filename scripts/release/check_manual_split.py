@@ -33,6 +33,7 @@ INCLUDE = re.compile(r"^\{include (?P<level>\d+) HexManual\.Chapters\.(?P<chapte
 CHAPTER_LIBRARIES = {
     "FactorTactics": ["HexBerlekampMathlib", "HexBerlekampZassenhausMathlib"],
     "HexSmith": ["HexSmith", "HexSmithMathlib"],
+    "NautyAlgorithm": ["HexGraphIso"],
 }
 
 # Include level: released chapters sit at the top level, unreleased ones are

@@ -148,20 +148,71 @@ The canonical result keeps its form and label together:
 structure CanonResult (n k : Nat) where
   form : Colored n k
   label : Label n
-
-def canonicalize (G : Colored n k) : CanonResult n k
-def canon (G : Colored n k) : Colored n k := (canonicalize G).form
-def label (G : Colored n k) : Label n := (canonicalize G).label
-
-def findIso (G H : Colored n k) : Option (Perm n)
-def isIso (G H : Colored n k) : Bool
 ```
 
-`canonicalize` is total. Termination follows from the strictly increasing
-number of singleton cells along each individualization path and finite
-branching. Its worst-case running time can still be factorial.
+The public surface has two tiers. The short names are the FAST tier:
+the checked-label transcription of the pinned nauty search, for users
+who want answers at transcription speed. The `Checked` names are the
+CERTIFIED tier: the same answer validated through the proven
+certificate checker, carrying the theorem surface.
 
-The resource-bounded surface separates search limits from replay limits:
+```lean
+-- fast tier: conformance-pinned, structural theorems only
+def canonicalize (G : Colored n k) : CanonResult n k
+def canonicalize? (G : Colored n k) : Option (CanonResult n k)
+def canon (G : Colored n k) : Colored n k := (canonicalize G).form
+def label (G : Colored n k) : Label n := (canonicalize G).label
+def findIso (G H : Colored n k) : Option (Perm n)
+def isIso (G H : Colored n k) : Bool
+
+-- certified tier: every theorem below is about these
+def canonicalizeChecked (G : Colored n k) : CanonResult n k
+def canonChecked (G : Colored n k) : Colored n k
+def labelChecked (G : Colored n k) : Label n
+def findIsoChecked (G H : Colored n k) : Option (Perm n)
+def isIsoChecked (G H : Colored n k) : Bool
+```
+
+Both tiers are total; termination follows from the strictly increasing
+number of singleton cells along each individualization path and finite
+branching, and worst-case running time can still be factorial. The
+fast `canonicalize` is the transcription with fallback to
+`canonicalizeChecked` on the transcription's malformed-label case,
+which conformance shows does not occur; `canonicalize?` observes the
+transcription alone (`none` exactly when `canonicalize` would fall
+back), and conformance asserts zero fallbacks on every committed case
+and the campaign. Agreement of the two tiers is a theorem under the
+hypothesis that the certificate replay accepts, which conformance
+pins on every committed case and campaign case; discharging the
+hypothesis universally is the refinement programme of
+[Verified search refinement](#verified-search-refinement). Provers
+use the certified tier.
+
+The fast tier still carries its structurally provable statements — the
+form is the relabelling by the label, and a found transporter is a
+genuine isomorphism:
+
+```lean
+theorem relabel_label (G : Colored n k) :
+    relabel G (label G) = canon G
+
+theorem findIso_sound (G H : Colored n k) (p : Perm n) :
+    findIso G H = some p -> IsIso G H p
+
+theorem isomorphic_of_isIso (G H : Colored n k) :
+    isIso G H = true -> Isomorphic G H
+
+theorem canonicalize_eq_canonicalizeChecked (G : Colored n k)
+    (h : (Nauty.certifyCanon? G).isSome) :
+    canonicalize G = canonicalizeChecked G
+```
+
+What the fast tier deliberately does NOT provide is completeness and
+canonical invariance: a `false`/`none` fast answer and the equality of
+fast forms under isomorphism are conformance-pinned only.
+
+The resource-bounded surface separates search limits from replay
+limits and belongs to the certified tier:
 
 ```lean
 structure SearchLimits where
@@ -185,28 +236,32 @@ def canon? (search : SearchLimits) (replay : ReplayLimits)
 `maxCertNodes` counts every proof-rule record emitted. Replay work charges one
 step for each proof-rule record, vertex or permutation entry inspected, and
 dense adjacency word inspected. All counters use checked `Nat` arithmetic.
+An implementation may account conservatively — refuse up front by charging an
+upper bound on a counter, or charge whole-certificate record counts — provided
+accepted work never exceeds the declared budget; exhaustion may therefore be
+reported for inputs an exact counter would have admitted.
 For `findIso?`, outer `none` means exhaustion, `some none` is a completed
 non-isomorphism result, and `some (some p)` is a found transporter. For the
 other bounded operations, exhaustion also returns `none`. Exhaustion is not
 evidence of non-isomorphism.
 
-The required API theorems include:
+The required API theorems of the certified tier include:
 
 ```lean
-theorem relabel_label (G : Colored n k) :
-    relabel G (label G) = canon G
+theorem relabelChecked_label (G : Colored n k) :
+    relabel G (labelChecked G) = canonChecked G
 
-theorem canon_iso (G : Colored n k) :
-    Isomorphic G (canon G)
+theorem canonChecked_iso (G : Colored n k) :
+    Isomorphic G (canonChecked G)
 
-theorem canon_invariant {G H : Colored n k} :
-    Isomorphic G H -> canon G = canon H
+theorem canonChecked_invariant {G H : Colored n k} :
+    Isomorphic G H -> canonChecked G = canonChecked H
 
-theorem iso_iff_canon_eq (G H : Colored n k) :
-    Isomorphic G H <-> canon G = canon H
+theorem iso_iff_canonChecked_eq (G H : Colored n k) :
+    Isomorphic G H <-> canonChecked G = canonChecked H
 
-theorem findIso_isSome_iff (G H : Colored n k) :
-    (findIso G H).isSome = true <-> Isomorphic G H
+theorem findIsoChecked_isSome_iff (G H : Colored n k) :
+    (findIsoChecked G H).isSome = true <-> Isomorphic G H
 
 namespace FindIso
 
@@ -220,16 +275,16 @@ theorem none_sound (search : SearchLimits)
 
 end FindIso
 
-theorem isIso_eq_true_iff (G H : Colored n k) :
-    isIso G H = true <-> Isomorphic G H
+theorem isIsoChecked_eq_true_iff (G H : Colored n k) :
+    isIsoChecked G H = true <-> Isomorphic G H
 
-theorem isIso_eq_false_iff (G H : Colored n k) :
-    isIso G H = false <-> Not (Isomorphic G H)
+theorem isIsoChecked_eq_false_iff (G H : Colored n k) :
+    isIsoChecked G H = false <-> Not (Isomorphic G H)
 ```
 
 The biconditional compares canonical coloured graphs. It does not compare
-`label G` and `label H`: those arrays refer to different input vertex names
-and generally differ for isomorphic inputs.
+labels: those arrays refer to different input vertex names and generally
+differ for isomorphic inputs.
 
 ## Reference canonical form
 
@@ -241,15 +296,20 @@ serialized coloured adjacency matrix under an explicitly defined lexicographic
 order. The order compares cell sizes first and then upper-triangle adjacency
 bits in row-major order.
 
-This definition has its own proofs of `relabel_label`, `canon_iso`, and
-`iso_iff_canon_eq`. It is suitable for exhaustive small tests and for checking
+This definition has its own proofs of the relabelling, isomorphism, and
+biconditional theorems (the analogues of `relabelChecked_label`,
+`canonChecked_iso`, and `iso_iff_canonChecked_eq`). It is suitable for
+exhaustive small tests and for checking
 later implementations. It is not used as a production fallback and is not
 required to return nauty's label or canonical form.
 
-The public `canon` name is not released until the nauty-compatible
-implementation is complete. Development stages may expose their functions in
-`Reference`, `Unpruned`, and `Internal` namespaces without changing the
-eventual public semantics.
+The public `canonChecked` is backed by the certificate-checked
+nauty-semantic canonicalization: an untrusted branch-and-bound producer
+whose output is validated by the proven certificate replay, with a
+provably total exhaustive fallback. The fast `canon` is the checked-label
+transcription of the same search. Development namespaces (`Reference`,
+`Nauty`) remain available as the cross-check and the transcription
+layer.
 
 ## nauty-compatible individualization and refinement
 
@@ -335,11 +395,157 @@ output as untrusted and calls `checkCanon` before emitting anything.
 For a negative decision, `DiffCert` names the first differing field in the
 canonical encodings. `checkDiff` verifies the two encodings agree before that
 position and differ there. The proof is exactly the composition of two
-`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canon_eq`.
+`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canonChecked_eq`.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
 input.
+
+### Trace-driven production
+
+The producer must not search. The transcribed search already makes
+every decision a certificate records (splits, refinement codes,
+target cells, discovered automorphisms, prune events) and discards
+them, so the certificate pipeline is required to have the
+transcription append its decisions to a trace and produce the
+certificate by translating that trace, instead of re-running a pruned
+search of its own. The trace is untrusted exactly as the producer is:
+the checker recomputes everything from the graph, and a wrong trace
+can only make validation fail, never accept a wrong answer.
+
+Requirements on the implementation:
+
+- Recording must not alter the transcription's observable traversal
+  (the conformance-pinned node counts, forms, and labels).
+- Users of the fast tier who request no certificate must not pay for
+  tracing; the traced walk is a separate entry point or an opt-in of
+  the certificate pipeline.
+- The certificates emitted remain subject to the same replay, the
+  same size accounting, and the same conformance size guards as
+  search-produced ones. The bounded producer bounds the traced walk
+  under the same node budget.
+- Adoption must not regress the certificate pipeline on the
+  benchmark instances: the stage profiler and the certificate-size
+  guards are the acceptance checks.
+
+The regression requirement is expected to hold by construction, and
+an implementation failing it indicates a translation defect rather
+than a cost inherent to the design: the translator reads the complete
+trace before emitting anything, so the final key, the full harvested
+generator set, and the whole tree shape are in hand at every emission
+decision, and the translator can emit certificates equivalent to
+search-produced ones. (Online emission during the walk lacks exactly
+this information and inflates certificates; a trace-driven translator
+is offline by construction.) Production cost then drops by the whole
+duplicate search, tracing adds a constant per visited node to the
+certificate path only, and replay cost is unchanged.
+
+Trace-driven production composes with
+[Verified search refinement](#verified-search-refinement): with a
+trace-driven producer, layer four of that programme (the
+transcription selects the same leaf as the producer) collapses into
+layers one and two, since the producer's walk *is* the transcription's.
+
+## Verified search refinement
+
+Unconditional agreement of the two public tiers is a refinement
+theorem: the pruned production search refines the declarative
+canonical form. This section records the decomposition. It is future
+work and not a release condition; no release waits on any layer of
+it.
+
+The proven starting point is the conditional agreement theorem of the
+fast tier, `canonicalize_eq_canonicalizeChecked` above. Both tiers
+construct their `CanonResult` from the same transcribed search output
+by the same checked construction, so the certified tier's per-run
+validation covers the fast answer whenever the single trusted replay
+accepts. Unconditional agreement therefore reduces to one
+proposition, totality of the certificate pipeline:
+
+```lean
+theorem certifyCanon?_isSome (G : Colored n k) :
+    (Nauty.certifyCanon? G).isSome
+```
+
+where `Nauty.certifyCanon?` is the unbudgeted producer followed by
+the single `checkCanon` replay of the transcription's labelling. The
+proposition decomposes into one totality lemma and three refinement
+layers, each independently useful:
+
+1. **Producer totality.** The unbudgeted producer always returns a
+   candidate: with no node budget the two-pass walk cannot exhaust.
+   Structural induction over the search tree.
+2. **The producer refines the checker.** Every certificate the
+   producer emits replays successfully. The second pass evaluates the
+   checker's own acceptance conditions against the final key before
+   emitting each record, so the obligation is that the producer's
+   state invariants justify those evaluations: admitted generators
+   are automorphisms, the witness search returns genuine group
+   elements, and the orbit and cell-mask bookkeeping is consistent.
+3. **The pruned search refines the unpruned tree.** The first pass's
+   selected key equals `canonSpecKey`, the maximum over the unpruned
+   individualization-refinement tree: automorphism and orbit pruning
+   discard only subtrees whose leaves are dominated. This layer
+   formalizes the classical soundness arguments (Hartke and
+   Radcliffe) and is the largest.
+4. **The transcription refines the producer.** The transcribed search
+   selects the same leaf as the producer, including the exact
+   tie-breaking. Under the required
+   [trace-driven production](#trace-driven-production) the producer's
+   walk *is* the transcription's, so this layer collapses into layers
+   one and two; it survives as a separate obligation only for a
+   search-based producer.
+
+The layers are design constraints as well as proof obligations, and
+each forces sharing that removes duplicated code:
+
+- Layer two should be discharged by construction: one per-node
+  acceptance predicate, evaluated by the producer at emission and by
+  the checker at replay, so their agreement is congruence on a shared
+  definition rather than a proof maintained against two parallel
+  spellings.
+- Layer three favours a single tree recursion parameterized by a
+  pruning policy, which the declarative form instantiates with the
+  empty policy and the production walk with the real one; the
+  refinement theorem then quantifies over policies instead of
+  relating two unrelated recursions.
+- The replay-monotonicity property inside layer two is what makes
+  single-pass certificate emission sound; in a trace-driven
+  translator it justifies the collapse of dominated subtrees before
+  emission.
+- Once the declarative form and these proofs carry the correctness
+  story, the `Reference` implementation's cross-check role reduces to
+  conformance testing on small cases.
+
+Label-level agreement is available only along the totality route. The
+checker
+pins a labelling's rows, not the labelling itself, and in the
+exhaustive fallback branch of `canonicalizeChecked` the selected
+label may be a different member of the automorphism coset with
+different tie-breaking, so agreement cannot be proven through that
+branch; the fallback must instead be proven unreachable, which is
+exactly `certifyCanon?_isSome`.
+
+The payoff is a total, non-`Option` surface. With
+`certifyCanon?_isSome` in hand the pipeline gains
+
+```lean
+def certifyCanon (G : Colored n k) : CanonResult n k :=
+  (Nauty.certifyCanon? G).get (certifyCanon?_isSome G)
+```
+
+and every fallback arm becomes provably dead: `canonicalizeChecked`
+drops its exhaustive fallback in favour of `certifyCanon`, totality
+transports to the transcription through
+`canonicalize?_eq_of_certifyCanon`, and the fast `canonicalize`
+becomes `(canonicalize? G).get` under that proof with no fallback
+match. Unconditional agreement `canonicalize G = canonicalizeChecked G`
+then holds on every input and the whole `Checked` theorem surface
+transports to the short names. At that point the two-tier split has
+no remaining justification and the public surface collapses to the
+short names; certificates and the replay checker remain as the proof
+layer behind the collapsed surface and for the `graph_iso` tactic,
+whose kernel obligations must stay certificate-sized.
 
 ## The Mathlib-free `graph_iso` tactic
 
@@ -368,10 +574,32 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, compiled search constructs two canonical certificates
-and a difference certificate. It checks them once in the elaborator, then
-emits the literal data and an application of the checker soundness theorems.
-The kernel performs the decisive replay. No result relies on compiler trust.
+For a negative goal, the tactic selects between two kernel routes by
+measured cost. The certificate route has the compiled search produce a
+canonical-key certificate for each graph; the kernel replays the two
+Boolean certificate checks and their key comparison, closing the goal
+through `not_isomorphic_of_checkKeys` (`checkKey` twice plus
+`checkDiff`, with no achieving labelling reified), and its replay cost
+scales with the certificate record counts. The pairwise route replays
+the fully verified individualization-refinement decision
+(`decideIso?_not_isomorphic`), and its replay cost scales with the
+nodes that search visits — small when refinement refutes the pair
+almost immediately, large when genuine search is needed. After
+producing both certificates the tactic offers the pairwise decision a
+node budget equivalent to the certificate replay's cost (one pairwise
+node kernel-replays for roughly four certificate records); whichever
+route fits closes the goal. When certificate production fails or a
+certificate exceeds the configured budgets, the full-budget pairwise
+replay is the fallback and anchors the exhaustion semantics. No result
+relies on compiler trust. Both routes share an irreducible kernel cost
+evaluating the goal's graph definitions themselves, so family-style
+definitions with expensive adjacency set a floor neither route can
+undercut. The certificate obligations replay only while their whole
+reduction closure stays exposed to the module-mode kernel; the
+regression ladder in `HexGraphIso/ModuleBoundaryTests.lean` pins that
+closure (it caught missing exposure on two refinement helpers and on
+core's `Array.map`, worked around per `HexBasic.OfFn` pending the
+upstream exposure fixes).
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search
@@ -413,6 +641,175 @@ installation. The Mathlib companion presents the same positive and negative
 claims through `SimpleGraph`. Its requirements are stated in
 [hex-graph-iso-mathlib.md](hex-graph-iso-mathlib.md#manual-example-with-mathlib).
 
+## Manual chapter: the nauty canonical labelling algorithm
+
+`HexManual/Chapters/NautyAlgorithm.lean` is a standalone manual chapter
+titled "The `nauty` canonical labelling algorithm". It appears in the
+table of contents directly after the `HexGraphIso` chapter, and the
+`HexGraphIso` introduction links to it. Its subject is the exact
+function this library computes: the canonical form and label returned
+by dense nauty 2.9.3 under the pinned configuration of the
+[compatibility target](#nauty-compatibility-target).
+
+### Purpose
+
+No published document specifies that function. The chapter opens by
+saying so, and by placing the three closest documents:
+
+- McKay's original paper (*Practical graph isomorphism*, 1981) gives
+  pseudocode detailed enough to reimplement, but it describes the
+  algorithm as of 1981, and later releases changed output-relevant
+  details.
+- Hartke and Radcliffe (*McKay's canonical graph labeling algorithm*,
+  2009) explain the ideas: the search tree, refinement, and why pruning
+  is sound. They deliberately omit the code-level choices that decide
+  which leaf wins.
+- McKay and Piperno (*Practical graph isomorphism, II*, 2014) and the
+  user's guide describe a framework parameterized over the refinement
+  function, the target-cell rule, and the node invariant. Every
+  instantiation yields a canonical form. None of these documents pins
+  the one `densenauty` returns.
+
+For exact output the C source is the only specification, and it
+interleaves the choices that determine the answer with pruning and
+storage reuse that provably do not. The chapter's central observation
+is that the two can be separated. The canonical form is characterized
+declaratively as the maximal leaf key of the unpruned
+individualization-refinement tree, and every pruning rule carries a
+Lean proof that it preserves the selected form and label. A complete
+specification therefore only has to describe the unpruned tree and the
+key order.
+
+The chapter states its epistemic status explicitly, mirroring the two
+correctness requirements at the top of this SPEC: agreement between
+the chapter's description and the Lean implementation is enforced by
+theorems and by the Verso build, while agreement between the Lean
+implementation and nauty 2.9.3 is an empirical claim established by
+conformance testing, not a theorem.
+
+### Part one: the algorithm in natural language
+
+The first part uses no Lean identifiers and no code blocks. Its
+audience is a mathematician or computer scientist who knows basic
+graph theory but knows nothing about this algorithm, Lean, or nauty.
+Every term is defined before its first use: no vocabulary from the
+implementation (splitter, hint, code chain, active cell, dominated)
+may appear before the sentence that defines it, and every word keeps
+its ordinary meaning, per [SPEC/writing-style.md](../writing-style.md).
+The introduction previews the chapter in plain words only. The
+quality bar: a careful reader could reimplement the function from
+part one alone, and the reimplementation would agree with nauty 2.9.3
+on every input. Content, in order:
+
+1. The problem. Finite simple undirected graphs with ordered vertex
+   colours, what a canonical form is (a function invariant under
+   isomorphism whose output is isomorphic to its input), why
+   isomorphism testing reduces to it, and why infinitely many valid
+   canonical forms exist. This chapter describes one particular
+   choice.
+2. Ordered partitions and equitable refinement. Cells in a fixed
+   order, the initial ordered partition (colour classes in colour
+   order, each listing its vertices by increasing original vertex),
+   refinement of a cell by neighbour counts into another cell,
+   the equitable fixed point, and the fact that refinement is
+   isomorphism-equivariant. One worked example on a small graph
+   (roughly five to seven vertices) showing an inequitable partition
+   refined to its equitable fixed point, with the intermediate splits
+   displayed.
+3. The individualization-refinement tree. When the equitable partition
+   is not discrete, choose a target cell, branch on each of its
+   vertices by splitting the chosen vertex into a singleton, and
+   refine again. Leaves are discrete partitions, and a discrete
+   partition is a labelling of the graph.
+4. The leaf key and the selection rule. Each node records a
+   refinement code, an integer digest of the refinement trace. A
+   leaf's key is its chain of codes, then a sentinel value, then the
+   adjacency rows of the relabelled graph. Keys compare
+   lexicographically, and the canonical labelling is the leaf with the
+   maximal key. The sentinel exceeds every real code, which is why a
+   shallower leaf beats a deeper one with an equal code prefix.
+5. The code-level choices. This is the content absent from the
+   literature, and each item must be described precisely enough to
+   reimplement: the refinement-code accumulator arithmetic (nauty's
+   `MASH`), the order in which pending splitter cells are processed,
+   the stable redistribution of a split cell by neighbour count, the
+   separate single-vertex-splitter split (including the resulting
+   fragment order), which fragments of a split cell become pending and
+   which one is exempt (with the tie rules, which differ between the
+   two splits), exactly when a new singleton fragment becomes the
+   preferred next splitter, the target-cell rule (nauty's `bestcell`
+   under the pinned `tc_level = 100`), and the row order used when
+   comparing relabelled adjacency matrices.
+6. Pruning, briefly. The prunings the production search performs
+   (first-path and best-path code comparison, discovered
+   automorphisms, orbit pruning, short-prune), each with one or two
+   sentences on the idea, and the statement that every one preserves
+   the selected form and label, so none is part of the specification.
+7. Scope. The function specified is dense nauty 2.9.3 under the pinned
+   option block, restated or summarized inline (a manual chapter
+   cannot assume the reader has this SPEC). Sparse nauty and Traces
+   compute different canonical forms, so "nauty's canonical form"
+   without those qualifiers does not name a single function.
+
+### Part two: the Lean implementation
+
+The second part revisits part one's concepts in the same order and
+attaches each to the Lean declarations, quoted through Verso so the
+prose cannot drift from the code. Requirements:
+
+- Every declaration named in prose uses the `{name}` role, and the
+  load-bearing definitions are included with `{docstring}`, per
+  [SPEC/writing-style.md](../writing-style.md). A rename or a
+  docstring change then fails `lake build HexManual`.
+- No hand-copied signatures or restated definition bodies. Where part
+  two needs to show a definition, it quotes the declaration.
+- The worked refinement example from part one is repeated as an
+  evaluated Lean example (`#eval` with checked output), so the hand
+  trace in part one is machine-checked against the implementation.
+
+The anchor declarations, by part-one concept (all in the
+`Hex.GraphIso.Nauty` namespace unless stated otherwise):
+
+| concept | declarations |
+| --- | --- |
+| refinement-code accumulator | `mash` |
+| equitable refinement | `refine`, `refineStep` |
+| target cell | `targetcell`, `bestcell` |
+| leaf key and order | `Key`, `keyCmp`, `codeSentinel` |
+| declarative canonical form | `canonSpecKey`, `specCanon` |
+| production leaf comparison | `testcanlab`, `updatecan` |
+| production entry point | `canonicalize?`, public `canonicalize` |
+| canonical-form theorems | `specCanon_iso`, `specCanon_invariant`, `iso_iff_specCanon_eq` |
+| checked results equal the spec | `checkCanon_form` |
+
+If a listed declaration is renamed or refactored, the chapter follows
+the code. The table above records the anchors at the time of writing,
+and the `{name}` roles are what keep the chapter honest.
+
+### Exclusions
+
+- No pruning internals beyond item 6 of part one. The preservation
+  theorems are cited, and the implementation is the reference.
+- No certificate or replay material beyond a cross-reference to the
+  `HexGraphIso` chapter, whose subject it is.
+- No claim, anywhere, that agreement with nauty is a theorem.
+- No process narrative, per
+  [SPEC/writing-style.md](../writing-style.md) and the project style
+  rules. The chapter describes the algorithm as it stands.
+
+### Citations
+
+The chapter cites, with full bibliographic data:
+
+- Brendan D. McKay, *Practical graph isomorphism*, Congressus
+  Numerantium 30 (1981), 45-87.
+- Stephen G. Hartke and A. J. Radcliffe, *McKay's canonical graph
+  labeling algorithm*, in Communicating Mathematics, Contemporary
+  Mathematics 479, AMS (2009), 99-111.
+- Brendan D. McKay and Adolfo Piperno, *Practical graph isomorphism,
+  II*, Journal of Symbolic Computation 60 (2014), 94-112.
+- The nauty and Traces User's Guide, version 2.9.3.
+
 ## nauty compatibility target
 
 The first compatibility target is nauty 2.9.3, the stable release current when
@@ -422,6 +819,11 @@ this SPEC was written:
 - SHA-256:
   `9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b`;
 - manual: <https://users.cecs.anu.edu.au/~bdm/nauty/nug29.pdf>.
+
+The development monorepo vendors the dense-nauty subset of this archive at
+`vendor/nauty-2.9.3` (unmodified files; per-file hashes in that directory's
+README), so conformance and benchmarking build against the pinned source
+without a network fetch.
 
 The tarball's `nauty.c`, `nautil.c`, `naugraph.c`, and `nauty.h` are normative
 for implementation details. The manual and McKay and Piperno's
@@ -466,13 +868,16 @@ nauty versions.
 
 The oracle follows [the project oracle protocol](../testing.md#adding-a-new-oracle).
 A Python JSONL driver rebuilds each original graph and partition and calls a
-small project-owned C program linked against the hash-verified nauty source.
-Merge CI restores the exact tarball from a project-controlled release asset or
-content-addressed cache keyed by the SHA-256. The ANU URL remains the provenance
-source and a fallback, not the only cache-cold download location. A missing
-artifact, hash mismatch, compile failure, nauty error, or output mismatch fails
-the run. The mirrored archive retains its `COPYRIGHT` and `LICENSE-2.0.txt`
-files. The production library never links nauty.
+small project-owned C program compiled against the vendored nauty source in
+`vendor/nauty-2.9.3`: unmodified files from the pinned archive,
+version-controlled in the development monorepo with per-file SHA-256 hashes
+recorded in that directory's README, alongside the upstream `COPYRIGHT` and
+`LICENSE-2.0.txt` (Apache 2.0) files. The compiled program is cached keyed by
+the SHA-256 of its source together with every vendored file it links. A
+compile failure, nauty error, or output mismatch fails the run. The vendored
+source and both nauty comparators are development tooling only: they are not
+managed paths of any released repository, and the production library never
+links nauty.
 
 Each record contains the original graph, colour vector, Hex canonical form,
 Hex label, search counters, and schema version. The oracle independently
@@ -590,7 +995,14 @@ The Mathlib-free benchmark driver registers:
 - public `canonicalize`, `findIso`, and `isIso`;
 - dense conversion, one complete refinement, relabelling, canonical graph
   comparison, certificate generation, and certificate replay;
-- the pinned nauty comparator through a benchmark-only FFI shim.
+- the pinned nauty comparator through a benchmark-only in-process FFI
+  binding (`Hex.BenchOracle.Nauty` over
+  `Hex/BenchOracle/ffi/nauty_canon.c`), statically linked against the
+  vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` — the FFI
+  pattern of
+  [benchmarking.md](../benchmarking.md#external-comparators). The
+  vendored source and the comparator are development-monorepo tooling
+  only and ship with no released library.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
@@ -649,6 +1061,11 @@ equivalent complete argument.
 
 ## References
 
+- Brendan D. McKay,
+  Practical graph isomorphism, Congressus Numerantium 30 (1981), 45-87.
+- Stephen G. Hartke and A. J. Radcliffe,
+  McKay's canonical graph labeling algorithm,
+  Communicating Mathematics, Contemporary Mathematics 479 (2009), 99-111.
 - Brendan D. McKay and Adolfo Piperno,
   [Practical graph isomorphism, II](https://arxiv.org/abs/1301.1493).
 - Brendan D. McKay and Adolfo Piperno,

@@ -81,4 +81,34 @@ only so that the kernel can reduce it. -/
 @[csimp] theorem Vector.ofFn'_eq_ofFn' : @Vector.ofFn' = @_root_.Vector.ofFn := by
   funext n α f; exact Vector.ofFn'_eq_ofFn f
 
+/-! # `Array.map` -/
+
+/-- An {name}`Array.map` equivalent that reduces in the kernel under the
+module system: core {name}`Array.map`'s implementation loop is not exposed,
+so `(a.map f)` stalls downstream exactly like {name}`Array.ofFn`.
+Retire once <https://github.com/leanprover/lean4/pull/14996> reaches the
+pinned toolchain. -/
+@[expose] def Array.map' {α : Type u} {β : Type v} (f : α → β)
+    (a : Array α) : Array β :=
+  (a.toList.map f).toArray
+
+@[simp] theorem Array.map'_eq_map {α : Type u} {β : Type v} (f : α → β)
+    (a : Array α) : Array.map' f a = a.map f := by
+  rw [Array.map', ← Array.toList_map, Array.toArray_toList]
+
+@[simp] theorem Array.size_map' {α : Type u} {β : Type v} (f : α → β)
+    (a : Array α) : (Array.map' f a).size = a.size := by
+  simp [Array.map']
+
+@[simp] theorem Array.getElem_map' {α : Type u} {β : Type v} (f : α → β)
+    (a : Array α) (i : Nat) (h : i < (Array.map' f a).size) :
+    (Array.map' f a)[i] = f (a[i]'(by simpa using h)) := by
+  simp [Array.map']
+
+/-- Compiled code uses the core {name}`Array.map`, which writes into an
+array in place when uniquely referenced; the {name}`List` route exists only
+so that the kernel can reduce it. -/
+@[csimp] theorem Array.map'_eq_map' : @Array.map' = @_root_.Array.map := by
+  funext α β f a; exact Array.map'_eq_map f a
+
 end Hex

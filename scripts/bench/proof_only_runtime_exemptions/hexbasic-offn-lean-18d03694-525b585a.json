@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/OfFn.lean",
+ "baseline_blob": "18d03694f74cf947a91ddb0fc1b413d02dd09e0a",
+ "current_blob": "525b585adac4213b07b34b2b5b6f08ef12e09f6c",
+ "reason": "Adds Hex.Array.map' (a List-route Array.map with a csimp implementation) and its lemmas for hex-graph-iso kernel replay paths. No existing declaration changes and the factorization call graph never mentions map', so the measured factorization service runtime is unchanged."
+}

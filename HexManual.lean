@@ -50,6 +50,8 @@ import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 import HexManual.Chapters.HexMinPoly
+import HexManual.Chapters.HexGraphIso
+import HexManual.Chapters.NautyAlgorithm
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.AESField
 import HexManual.Tutorials.AESModulus
@@ -195,3 +197,7 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexNumberFieldTower}
 
 {include 2 HexManual.Chapters.HexMinPoly}
+
+{include 2 HexManual.Chapters.HexGraphIso}
+
+{include 2 HexManual.Chapters.NautyAlgorithm}
