@@ -403,28 +403,44 @@ input.
 
 ### Trace-driven production
 
-The producer need not search. The transcribed search already makes
+The producer must not search. The transcribed search already makes
 every decision a certificate records (splits, refinement codes,
 target cells, discovered automorphisms, prune events) and discards
-them, so an implementation may have the transcription append its
-decisions to a trace and produce the certificate by translating that
-trace, instead of re-running a pruned search of its own. The trace is
-untrusted exactly as the producer is: the checker recomputes
-everything from the graph, and a wrong trace can only make validation
-fail, never accept a wrong answer. Constraints on such an
-implementation:
+them, so the certificate pipeline is required to have the
+transcription append its decisions to a trace and produce the
+certificate by translating that trace, instead of re-running a pruned
+search of its own. The trace is untrusted exactly as the producer is:
+the checker recomputes everything from the graph, and a wrong trace
+can only make validation fail, never accept a wrong answer.
+
+Requirements on the implementation:
 
 - Recording must not alter the transcription's observable traversal
   (the conformance-pinned node counts, forms, and labels).
 - Users of the fast tier who request no certificate must not pay for
   tracing; the traced walk is a separate entry point or an opt-in of
   the certificate pipeline.
-- The certificates emitted remain subject to the same replay and the
-  same size accounting as search-produced ones.
+- The certificates emitted remain subject to the same replay, the
+  same size accounting, and the same conformance size guards as
+  search-produced ones. The bounded producer bounds the traced walk
+  under the same node budget.
+- Adoption must not regress the certificate pipeline on the
+  benchmark instances: the stage profiler and the certificate-size
+  guards are the acceptance checks.
 
-This removes the duplicate search from the certificate pipeline; the
-replay then dominates its cost. It is an implementation option, not a
-requirement, and it composes with
+The regression requirement is expected to hold by construction, and
+an implementation failing it indicates a translation defect rather
+than a cost inherent to the design: the translator reads the complete
+trace before emitting anything, so the final key, the full harvested
+generator set, and the whole tree shape are in hand at every emission
+decision, and the translator can emit certificates equivalent to
+search-produced ones. (Online emission during the walk lacks exactly
+this information and inflates certificates; a trace-driven translator
+is offline by construction.) Production cost then drops by the whole
+duplicate search, tracing adds a constant per visited node to the
+certificate path only, and replay cost is unchanged.
+
+Trace-driven production composes with
 [Verified search refinement](#verified-search-refinement): with a
 trace-driven producer, layer four of that programme (the
 transcription selects the same leaf as the producer) collapses into
@@ -473,15 +489,36 @@ layers, each independently useful:
    formalizes the classical soundness arguments (Hartke and
    Radcliffe) and is the largest.
 4. **The transcription refines the producer.** The transcribed search
-   selects the same leaf as the producer's first pass, including the
-   exact tie-breaking. Either verify the imperative transcription
-   directly, or prove it extensionally equal to the functional
-   producer; the functional producer is the tractable target. An
-   implementation may instead redefine the fast tier over the
-   verified functional search and retire this layer in favour of the
-   conformance pin, at a measured speed cost.
+   selects the same leaf as the producer, including the exact
+   tie-breaking. Under the required
+   [trace-driven production](#trace-driven-production) the producer's
+   walk *is* the transcription's, so this layer collapses into layers
+   one and two; it survives as a separate obligation only for a
+   search-based producer.
 
-Label-level agreement is available only along this route. The checker
+The layers are design constraints as well as proof obligations, and
+each forces sharing that removes duplicated code:
+
+- Layer two should be discharged by construction: one per-node
+  acceptance predicate, evaluated by the producer at emission and by
+  the checker at replay, so their agreement is congruence on a shared
+  definition rather than a proof maintained against two parallel
+  spellings.
+- Layer three favours a single tree recursion parameterized by a
+  pruning policy, which the declarative form instantiates with the
+  empty policy and the production walk with the real one; the
+  refinement theorem then quantifies over policies instead of
+  relating two unrelated recursions.
+- The replay-monotonicity property inside layer two is what makes
+  single-pass certificate emission sound; in a trace-driven
+  translator it justifies the collapse of dominated subtrees before
+  emission.
+- Once the declarative form and these proofs carry the correctness
+  story, the `Reference` implementation's cross-check role reduces to
+  conformance testing on small cases.
+
+Label-level agreement is available only along the totality route. The
+checker
 pins a labelling's rows, not the labelling itself, and in the
 exhaustive fallback branch of `canonicalizeChecked` the selected
 label may be a different member of the automorphism coset with
