@@ -141,6 +141,41 @@ theorem not_nonempty_iso_of_decideIso? (eV : V ≃ Fin n) (eW : W ≃ Fin n)
       (encode eW (onecell H hW)) = some false) : ¬ Nonempty (G ≃g H) :=
   fun ⟨φ⟩ => (isEmpty_iso_of_decideIso? eV eW hV hW limits h).elim φ
 
+/-- Non-isomorphism of the encodings refutes coloured isomorphism:
+the route-agnostic form, taking whatever negative proof the tactic's
+shared engine produced. -/
+theorem not_isomorphic_of_not_encode_iso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
+    {G : Colored V k} {H : Colored W k}
+    [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]
+    (h : ¬ Hex.GraphIso.Isomorphic (encode eV G) (encode eW H)) :
+    ¬ G.Isomorphic H :=
+  fun hiso => h ((encode_iso_iff eV eW).mp hiso)
+
+theorem isEmpty_coloredIso_of_not_encode_iso (eV : V ≃ Fin n)
+    (eW : W ≃ Fin n) {G : Colored V k} {H : Colored W k}
+    [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]
+    (h : ¬ Hex.GraphIso.Isomorphic (encode eV G) (encode eW H)) :
+    IsEmpty (Colored.Iso G H) :=
+  ⟨fun hiso => not_isomorphic_of_not_encode_iso eV eW h
+    (Colored.Isomorphic.intro hiso)⟩
+
+theorem isEmpty_iso_of_not_encode_iso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
+    {G : SimpleGraph V} {H : SimpleGraph W}
+    [DecidableRel G.Adj] [DecidableRel H.Adj]
+    (hV : 0 < Fintype.card V) (hW : 0 < Fintype.card W)
+    (h : ¬ Hex.GraphIso.Isomorphic (encode eV (onecell G hV))
+      (encode eW (onecell H hW))) : IsEmpty (G ≃g H) :=
+  ⟨fun φ => not_isomorphic_of_not_encode_iso eV eW h
+    ((onecell_isomorphic_iff hV hW).mpr ⟨φ⟩)⟩
+
+theorem not_nonempty_iso_of_not_encode_iso (eV : V ≃ Fin n)
+    (eW : W ≃ Fin n) {G : SimpleGraph V} {H : SimpleGraph W}
+    [DecidableRel G.Adj] [DecidableRel H.Adj]
+    (hV : 0 < Fintype.card V) (hW : 0 < Fintype.card W)
+    (h : ¬ Hex.GraphIso.Isomorphic (encode eV (onecell G hV))
+      (encode eW (onecell H hW))) : ¬ Nonempty (G ≃g H) :=
+  fun ⟨φ⟩ => (isEmpty_iso_of_not_encode_iso eV eW hV hW h).elim φ
+
 /-- Unequal cardinalities refute nonemptiness of the isomorphism type. -/
 theorem not_nonempty_iso_of_card_ne (G : SimpleGraph V) (H : SimpleGraph W)
     (h : Fintype.card V ≠ Fintype.card W) : ¬ Nonempty (G ≃g H) :=

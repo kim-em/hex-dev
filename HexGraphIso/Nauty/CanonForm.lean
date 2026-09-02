@@ -129,6 +129,18 @@ theorem not_isomorphic_of_certs {G H : Colored n k}
   not_isomorphic_of_key_ne (checkCanon_sound hG).1
     (checkCanon_sound hH).1 (checkDiff_sound hd)
 
+/-- Two replayed key certificates with differing keys prove
+non-isomorphism: the Boolean form of `not_isomorphic_of_certs`, whose
+kernel obligation is two `checkKey` replays and one key comparison,
+with no achieving labelling required. -/
+theorem not_isomorphic_of_checkKeys {G H : Colored n k}
+    {certG certH : CertNode} {BG BH : Key}
+    (hG : checkKey G certG BG = true)
+    (hH : checkKey H certH BH = true)
+    (hd : checkDiff BG BH = true) : ¬Isomorphic G H :=
+  not_isomorphic_of_key_ne (checkKey_sound hG) (checkKey_sound hH)
+    (checkDiff_sound hd)
+
 /-! # Correctness of the inverse labelling -/
 
 theorem invPerm_go_size (lab : Array Nat) :

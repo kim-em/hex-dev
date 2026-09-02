@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Ops
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
+public meta import HexGraphIso.Nauty.CanonForm
 public meta import Lean
 public import HexGraphIso.PairwiseSound
 public meta import HexGraphIso.PairwiseSound
@@ -30,13 +31,20 @@ For a positive goal, the compiled nauty-compatible search runs at
 elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through the replay-bounded `checkIso?` and
 its soundness theorem, so the kernel performs the decisive replay. For a
-negative goal, the verified pairwise individualization-refinement
-decision `Pairwise.decideIso?` runs compiled first and is then replayed
-by the kernel under the same `maxNodes` budget, closing the goal through
-`Pairwise.decideIso?_not_isomorphic`. Search exhaustion never closes a
-negative goal, and every failure leaves the goal unchanged and reports
-the phase and logical limit that failed. No path uses `native_decide`
-and no axiom is introduced.
+negative goal, the primary path is the certificate route: compiled
+search produces a canonical-key certificate for each graph, and the
+kernel replays the two Boolean certificate checks and the key
+comparison, closing the goal through
+`Nauty.not_isomorphic_of_checkKeys`. When certificate production fails
+or a certificate exceeds the configured budgets, the tactic falls back
+to the fully verified pairwise individualization-refinement decision
+`Pairwise.decideIso?`, run compiled first and then replayed by the
+kernel under the same `maxNodes` budget through
+`Pairwise.decideIso?_not_isomorphic`; the fallback also anchors the
+exhaustion semantics. Search exhaustion never closes a negative goal,
+and every failure leaves the goal unchanged and reports the phase and
+logical limit that failed. No path uses `native_decide` and no axiom is
+introduced.
 -/
 
 namespace Hex.GraphIso
@@ -162,6 +170,21 @@ meta def permExpr (n : Nat) (p : Array Nat) : MetaM Expr := do
   let dflt ← mkAppM ``Perm.id #[mkNatLit n]
   mkAppM ``Option.getD #[opt, dflt]
 
+/-- Reify a certificate tree as a literal expression. -/
+meta partial def certNodeExpr : Nauty.CertNode → MetaM Expr
+  | .leaf => return mkConst ``Nauty.CertNode.leaf
+  | .codePrune => return mkConst ``Nauty.CertNode.codePrune
+  | .autom o γ =>
+    return mkApp2 (mkConst ``Nauty.CertNode.autom) (mkNatLit o) (toExpr γ)
+  | .node children => do
+    let elems ← children.mapM certNodeExpr
+    return mkApp (mkConst ``Nauty.CertNode.node)
+      (← mkListLit (mkConst ``Nauty.CertNode) elems)
+
+/-- Reify a canonical key as a literal expression. -/
+meta def keyExpr (B : Nauty.Key) : Expr :=
+  mkApp2 (mkConst ``Nauty.Key.mk) (toExpr B.codes) (toExpr B.rows)
+
 /-- Match `Isomorphic G H` (returning `(false, n, k, G, H)`) or
 `¬ Isomorphic G H` (returning `true` first); `none` for other goals. -/
 meta def matchGoal? (target : Expr) : MetaM (Option (Bool × Expr × Expr × Expr × Expr)) := do
@@ -186,6 +209,29 @@ private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
 
 @[implemented_by evalOptBoolUnsafe]
 private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
+
+/-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
+graphs via the kernel-replayed verified pairwise decision — the
+negative path's fallback and exhaustion-semantics anchor. Shared by the
+core negative branch and downstream extensions (the Mathlib layer calls
+it on the encodings). -/
+meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
+  let limitsE ← mkAppM ``SearchLimits.mk
+    #[mkNatLit cfg.maxNodes, mkNatLit cfg.maxCertNodes]
+  let decTerm ← mkAppM ``Pairwise.decideIso? #[limitsE, GE, HE]
+  match ← evalOptBoolCore decTerm with
+  | none =>
+      throwError "graph_iso: search exhausted: the pairwise decision ran \
+          out of nodes at maxNodes := {cfg.maxNodes}"
+  | some true =>
+      throwError "graph_iso: the graphs are isomorphic; the negative goal \
+          is not provable"
+  | some false =>
+      let someFalse ← mkAppOptM ``Option.some
+        #[mkConst ``Bool, mkConst ``Bool.false]
+      let eqType ← mkAppM ``Eq #[decTerm, someFalse]
+      let checked ← mkDecideProof eqType
+      mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
 
 /-- A `graph_iso` goal handler contributed by a downstream library.
 Importing a library that declares a `public meta def` of this type under
@@ -227,27 +273,10 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
         must be closed terms"
   let n ← evalNatCore nE
   if negative then
-    -- The verified pairwise individualization-refinement decision: run it
-    -- compiled first, then let the kernel replay the same bounded run.
-    let limitsE ← mkAppM ``SearchLimits.mk
-      #[mkNatLit cfg.maxNodes, mkNatLit cfg.maxCertNodes]
-    let decTerm ← mkAppM ``Pairwise.decideIso? #[limitsE, GE, HE]
-    match ← evalOptBoolCore decTerm with
-    | none =>
-        throwError "graph_iso: search exhausted: the pairwise decision ran \
-            out of nodes at maxNodes := {cfg.maxNodes}"
-    | some true =>
-        throwError "graph_iso: the graphs are isomorphic; the negative goal \
-            is not provable"
-    | some false =>
-        let someFalse ← mkAppOptM ``Option.some
-          #[mkConst ``Bool, mkConst ``Bool.false]
-        let eqType ← mkAppM ``Eq #[decTerm, someFalse]
-        let checked ← mkDecideProof eqType
-        let proof ← mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
-        unless ← isDefEq (← inferType proof) target do
-          throwError "graph_iso: internal final proof mismatch"
-        return proof
+    let proof ← proveNotIso cfg GE HE
+    unless ← isDefEq (← inferType proof) target do
+      throwError "graph_iso: internal final proof mismatch"
+    return proof
   else
     let a ← evalColored GE
     let b ← evalColored HE

@@ -34,7 +34,9 @@ example : ¬ Colored.Isomorphic CG CH := by graph_iso
 The reifier encodes both graphs along `Fintype.equivFin` and reuses the
 Mathlib-free machinery: positive goals emit a literal transporter and
 close through the kernel-replayed `checkIso?` and the decoding
-theorems; negative goals kernel-replay the verified pairwise decision;
+theorems; negative goals go through the shared negative engine
+(certificate replay first, the verified pairwise decision as fallback)
+and decode through the `not_encode_iso` bridge theorems;
 unequal cardinalities close immediately through `Fintype.card_congr`
 obstructions, and empty vertex types through the explicit empty
 isomorphism. The same three logical limits are accepted and are not
@@ -51,12 +53,6 @@ private meta unsafe def evalNatUnsafe (e : Expr) : MetaM Nat :=
 
 @[implemented_by evalNatUnsafe]
 private meta opaque evalNatCore (e : Expr) : MetaM Nat
-
-private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
-  evalExpr (Option Bool) (mkApp (mkConst ``Option [.zero]) (mkConst ``Bool)) e
-
-@[implemented_by evalOptBoolUnsafe]
-private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
 
 /-- The supported goal shapes. Each carries the two graph expressions;
 `colored` marks `Colored` goals, `negative` refuting shapes, `wrap`
@@ -281,36 +277,22 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
   let (encG, hposG) ← encodeSide shape.colored shape.G sG
   let (encH, hposH) ← encodeSide shape.colored shape.H sH
   if shape.negative then
-    let limitsE ← mkAppM ``SearchLimits.mk
-      #[mkNatLit cfg.maxNodes, mkNatLit cfg.maxCertNodes]
-    let decTerm ← mkAppM ``Pairwise.decideIso? #[limitsE, encG, encH]
-    match ← evalOptBoolCore decTerm with
-    | none =>
-        throwError "graph_iso: search exhausted: the pairwise decision ran \
-            out of nodes at maxNodes := {cfg.maxNodes}"
-    | some true =>
-        throwError "graph_iso: the graphs are isomorphic; the negative goal \
-            is not provable"
-    | some false =>
-        let someFalse ← mkAppOptM ``Option.some
-          #[mkConst ``Bool, mkConst ``Bool.false]
-        let eqType ← mkAppM ``Eq #[decTerm, someFalse]
-        let checked ← mkDecideProof eqType
-        let proof ← if shape.colored then
-            if shape.useNot then
-              mkAppM ``not_isomorphic_of_decideIso?
-                #[sG.equiv, sH.equiv, limitsE, checked]
-            else
-              mkAppM ``isEmpty_coloredIso_of_decideIso?
-                #[sG.equiv, sH.equiv, limitsE, checked]
-          else
-            if shape.useNot then
-              mkAppM ``not_nonempty_iso_of_decideIso?
-                #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, limitsE, checked]
-            else
-              mkAppM ``isEmpty_iso_of_decideIso?
-                #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, limitsE, checked]
-        return ← finish proof
+    let notIso ← Hex.GraphIso.Tactic.proveNotIso cfg encG encH
+    let proof ← if shape.colored then
+        if shape.useNot then
+          mkAppM ``not_isomorphic_of_not_encode_iso
+            #[sG.equiv, sH.equiv, notIso]
+        else
+          mkAppM ``isEmpty_coloredIso_of_not_encode_iso
+            #[sG.equiv, sH.equiv, notIso]
+      else
+        if shape.useNot then
+          mkAppM ``not_nonempty_iso_of_not_encode_iso
+            #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, notIso]
+        else
+          mkAppM ``isEmpty_iso_of_not_encode_iso
+            #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, notIso]
+    return ← finish proof
   else
     let a ← Hex.GraphIso.Tactic.evalColored encG
     let b ← Hex.GraphIso.Tactic.evalColored encH

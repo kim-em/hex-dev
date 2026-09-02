@@ -373,16 +373,22 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, the tactic replays the fully verified pairwise
-individualization-refinement decision (`decideIso?_not_isomorphic`)
-under `maxNodes`; the kernel performs the decisive replay of that
-structurally recursive decision. No result relies on compiler trust.
-The certificate route — two canonical certificates and a difference
-certificate through `checkCanon_sound` and
-`checkDiff_not_isomorphic` — is available on the public API for
-compiled callers; the pairwise replay is the tactic's kernel path
-because it replays one bounded decision rather than two full
-canonical replays.
+For a negative goal, the tactic's primary path is the certificate
+route: the compiled search produces a canonical-key certificate for
+each graph, and the kernel replays the two Boolean certificate checks
+and their key comparison, closing the goal through
+`not_isomorphic_of_checkKeys` (`checkKey` twice plus `checkDiff`, with
+no achieving labelling reified). When certificate production fails or
+a certificate exceeds the configured budgets, the tactic falls back to
+replaying the fully verified pairwise individualization-refinement
+decision (`decideIso?_not_isomorphic`) under `maxNodes`; the fallback
+also anchors the exhaustion semantics. No result relies on compiler
+trust. The pairwise replay was the original primary path; measurement
+retired it: kernel-replaying the pairwise search costs tens of seconds
+on twenty-vertex regular pairs, while certificate replay scales with
+certificate size once the producer emits automorphism prunes
+(code-prune-only certificates measured thousands of records against
+nauty's tens of visited nodes on the same graphs).
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search
