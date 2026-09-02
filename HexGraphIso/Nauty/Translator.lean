@@ -148,6 +148,32 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
   rw [hex]
   rfl
 
+/-! # Graph facts for `rowsOf`: dischargers for the row-set hypotheses
+
+The eventual `checkAutom_of_isautom` bridge is stated graph-agnostically
+over a row array with symmetry, looplessness, and per-row bounds; these
+lemmas discharge those hypotheses for `rowsOf G`. -/
+
+theorem rowsOf_bounded {k : Nat} (G : Colored n k) :
+    ∀ v, v < n → (rowsOf G)[v]! < 2 ^ n := by
+  intro v hv
+  rw [getElem!_rowsOf G hv]
+  exact rowOf_lt G v
+
+theorem rowsOf_symm {k : Nat} (G : Colored n k) :
+    ∀ i j, i < n → j < n →
+      ((rowsOf G)[i]!).testBit j = ((rowsOf G)[j]!).testBit i := by
+  intro i j hi hj
+  rw [getElem!_rowsOf G hi, getElem!_rowsOf G hj,
+    testBit_rowOf_lt G hi hj, testBit_rowOf_lt G hj hi,
+    G.graph.adj_symm ⟨i, hi⟩ ⟨j, hj⟩]
+
+theorem rowsOf_loopless {k : Nat} (G : Colored n k) :
+    ∀ i, i < n → ((rowsOf G)[i]!).testBit i = false := by
+  intro i hi
+  rw [getElem!_rowsOf G hi, testBit_rowOf_lt G hi hi,
+    G.graph.adj_self ⟨i, hi⟩]
+
 /-! # Layer two, foundation: `checkAutom` closure under composition -/
 
 theorem composePerm_getElem! (f π : Array Nat) {nn v : Nat}
@@ -372,7 +398,33 @@ bridges, as statements:
 * `checkAutom_of_isautom`: for a permutation `γ` of `[0, n)` with
   `isautom ctx γ = true`, `checkAutom ctx.g γ ctx.n = true` — the
   edges-to-edges injection on a finite edge set is a bijection, so
-  rows map onto rows.
+  rows map onto rows. Stated graph-agnostically it takes row-set
+  hypotheses (`γ` permutes and is bounded; `ctx.g` is symmetric,
+  loopless, and per-row `< 2 ^ n`) discharged for `rowsOf G` by
+  `rowsOf_symm`/`rowsOf_loopless`/`rowsOf_bounded` above.
+
+  Refined decomposition (this fork's findings — `checkAutom_of_isautom`
+  is itself directive-sized, not a session sub-step):
+
+  1. `isautom_sound`: the do-notation spec. `isautom` is a nested
+     `Std.Range.forIn` with early `return false` and there is no
+     spec-lemma precedent for that shape anywhere in the tree, so this
+     is a from-scratch loop-invariant proof yielding
+     `isautom ctx γ = true → ∀ i pos, i < n → pos < n → i < pos →
+     (g[i]!).testBit pos → (g[γ[i]!]!).testBit (γ[pos]!)`.
+  2. Forward inclusion (tractable given 1): `image (fun w => γ[w]!) n
+     g[v]! ⊆ g[γ[v]!]!` as a submask, from `isautom_sound` +
+     `rowsOf_symm` (to cover `pos < i`) + `rowsOf_loopless` (to rule
+     out `pos = i`) via `testBit_image`.
+  3. The counting core. Forward inclusion plus vertex-bijection does
+     NOT give the reverse inclusion; it needs the finite edge-set
+     cardinality argument, and none of its ingredients exist yet:
+     `popCount` monotonicity under submask, `submask + equal popCount
+     ⇒ equal` (both `< 2 ^ n`), and `∑_{v<n} popCount g[v]! =
+     ∑_{v<n} popCount g[γ[v]!]!` by reindexing `γ` over `[0, n)`. With
+     `popCount_image` (cardinality preserved by the `renamingOfArray`
+     of `γ`) these close the reverse inclusion. This sub-toolkit is
+     the bulk of the lemma and should be its own directive.
 
 With those, the store invariant follows by `foldl_preserves` over
 admissions, and witness validity (`witness?` returns only
