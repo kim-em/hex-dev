@@ -250,6 +250,10 @@ charge exceeds the limits); throws when the keys agree, because the
 goal is then unprovable. -/
 meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
     MetaM (Option (Expr × Nat)) := do
+  -- deliberately the VALIDATED bounded producer: the ~10ms compiled
+  -- validation guarantees every emitted kernel obligation replays
+  -- successfully — a bad candidate must fall back here, not surface as
+  -- a kernel rejection at module finalization
   let bounded (e : Expr) :
       MetaM (Option (Nauty.CertNode × Nauty.Key)) := do
     evalCertCore (← mkAppM ``Nauty.certifyKeyBounded?

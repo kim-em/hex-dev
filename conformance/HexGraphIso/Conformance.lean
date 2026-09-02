@@ -225,6 +225,12 @@ where go : List Nauty.CertNode → Bool
   match Nauty.certifyKey? petersen with
   | some (cert, _) => hasAutom cert && cert.size ≤ 36
   | none => false
+-- the single-replay pipeline accepts on the standard shapes
+#guard (Nauty.certifyCanon? p3).isSome
+#guard
+  match Nauty.certifyCanon? petersen with
+  | some r => r.form == canon petersen
+  | none => false
 -- the node-budgeted producer exhausts at zero and agrees within budget
 #guard (Nauty.certifyKeyBounded? 0 petersen).isNone
 #guard
@@ -281,6 +287,7 @@ private def empty0 : Colored 0 0 :=
 
 #guard isIso empty0 empty0
 #guard canon empty0 == empty0
+#guard (Nauty.certifyCanon? empty0).isSome
 #guard (Nauty.canonicalize? empty0).isSome
 
 end Hex.GraphIso.Conformance

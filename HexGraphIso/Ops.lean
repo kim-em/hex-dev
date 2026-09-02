@@ -189,14 +189,18 @@ structure CanonCert (n k : Nat) where
   lab : Array Nat
 
 /-- Produce a canonical certificate from the branch-and-bound search.
-`none` on exhaustion or when the untrusted search fails its own
-validation. The conservative pre-check charges `maxNodes` the worst
-case; `maxCertNodes` is checked against the record count of the
-certificate actually produced. -/
+`none` on exhaustion. The certificate is UNVALIDATED here — the
+producer/checker split puts the sole trusted replay in `checkCanon`,
+so a candidate a buggy producer would emit is rejected there rather
+than replayed twice. The conservative pre-check charges `maxNodes`
+the worst case; `maxCertNodes` is checked against the record count of
+the certificate actually produced. -/
 @[expose] def certify? (limits : SearchLimits) (G : Colored n k) :
     Option (CanonCert n k) :=
   if searchCost n ≤ limits.maxNodes then
-    match Nauty.certifyKey? G with
+    match
+      (if n == 0 then some ((.leaf : Nauty.CertNode), (⟨[], []⟩ : Nauty.Key))
+       else Nauty.produceCand G none) with
     | none => none
     | some (cert, B) =>
       if cert.size ≤ limits.maxCertNodes then

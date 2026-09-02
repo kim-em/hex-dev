@@ -88,15 +88,18 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key}
       · cases h
   · cases h
 
-/-- Produce a checked `CanonResult`: run the certified key search, then
-validate the transcribed search's canonical labelling against the
-checked key. The transcription supplies nauty's exact label
-tie-breaking (its first leaf achieving the final best); the trusted
-`checkCanon` replay validates it, so the label source stays
-untrusted. -/
+/-- Produce a checked `CanonResult`: run the untrusted key search and
+validate its candidate together with the transcribed search's
+canonical labelling in ONE trusted `checkCanon` replay (which contains
+the `checkKey` certificate replay — validating through `certifyKey?`
+first would replay the certificate twice). The transcription supplies
+nauty's exact label tie-breaking; every ingredient stays untrusted
+until the single replay accepts. -/
 @[expose] def certifyCanon? (G : Colored n k) :
     Option (CanonResult n k) :=
-  match certifyKey? G with
+  match
+    (if n == 0 then some ((.leaf : CertNode), (⟨[], []⟩ : Key))
+     else produceCand G none) with
   | none => none
   | some (cert, B) => checkCanon G cert B (runColored G).canonlab
 
