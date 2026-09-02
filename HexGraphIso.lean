@@ -31,6 +31,7 @@ public import HexGraphIso.ModuleBoundaryTests
 public import HexGraphIso.Nauty.CanonForm
 public import HexGraphIso.Nauty.TranscriptionInv
 public import HexGraphIso.Nauty.LeafFaithful
+public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved
