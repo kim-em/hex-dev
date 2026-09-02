@@ -15,8 +15,9 @@ paley61, kneser72, and circulant64 instances.
 Stages: `run` (transcribed search), `pass1` (producer search),
 `produce` (both producer passes), `ckey` (one trusted `checkKey`
 replay), `ckeyf` (the `checkKeyF` clone), `ccanon` (one `checkCanon`),
-`canon` (full public certificate-checked canonicalization), `stats`
-(work counters, no timing). No argument runs every stage.
+`canon` (the fast public tier), `canonchecked` (the full
+certificate-checked pipeline), `stats` (work counters, no timing). No
+argument runs every stage.
 
 Methodology notes (hard-won):
 - Never measure with `lake env lean` `#eval`: the interpreter is
@@ -105,6 +106,8 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
         else
           (match checkCanon inst.g1 c1 b1 (runColored inst.g1).canonlab with
             | some r => (rowsOf r.form).size | none => 0)
+    | "canonchecked" => timeLoop iters fun i =>
+        (rowsOf (canonicalizeChecked (pick i)).form).size
     | "stats" => do
         let r := runColored inst.g0
         IO.println s!"  {inst.name} stats: nauty-nodes={r.numnodes} \
@@ -117,7 +120,8 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
 
 private def stages : List String :=
-  ["run", "pass1", "produce", "ckey", "ckeyf", "ccanon", "canon", "stats"]
+  ["run", "pass1", "produce", "ckey", "ckeyf", "ccanon", "canon",
+   "canonchecked", "stats"]
 
 def main (args : List String) : IO Unit := do
   let todo := match args with
