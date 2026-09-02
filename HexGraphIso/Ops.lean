@@ -118,7 +118,9 @@ occur. Use this to observe whether `canonicalize` would fall back. -/
 label producing it, fast: the checked-label transcription, falling
 back to `canonicalizeChecked` on the transcription's never-observed
 malformed-label case (`canonicalize?` detects it). Agreement with the
-checked surface is conformance-pinned, not proven. -/
+checked surface is proven whenever the certificate replay accepts
+(`canonicalize_eq_canonicalizeChecked`) and conformance-pinned
+unconditionally. -/
 @[expose] def canonicalize (G : Colored n k) : CanonResult n k :=
   match Nauty.canonicalize? G with
   | some r => r

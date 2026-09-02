@@ -181,9 +181,12 @@ fast `canonicalize` is the transcription with fallback to
 which conformance shows does not occur; `canonicalize?` observes the
 transcription alone (`none` exactly when `canonicalize` would fall
 back), and conformance asserts zero fallbacks on every committed case
-and the campaign. Agreement of the two tiers is a conformance
-obligation on every committed case and campaign case, not a theorem;
-provers use the certified tier.
+and the campaign. Agreement of the two tiers is a theorem under the
+hypothesis that the certificate replay accepts, which conformance
+pins on every committed case and campaign case; discharging the
+hypothesis universally is the refinement programme of
+[Verified search refinement](#verified-search-refinement). Provers
+use the certified tier.
 
 The fast tier still carries its structurally provable statements — the
 form is the relabelling by the label, and a found transporter is a
@@ -198,6 +201,10 @@ theorem findIso_sound (G H : Colored n k) (p : Perm n) :
 
 theorem isomorphic_of_isIso (G H : Colored n k) :
     isIso G H = true -> Isomorphic G H
+
+theorem canonicalize_eq_canonicalizeChecked (G : Colored n k)
+    (h : (Nauty.certifyCanon? G).isSome) :
+    canonicalize G = canonicalizeChecked G
 ```
 
 What the fast tier deliberately does NOT provide is completeness and
@@ -296,11 +303,13 @@ exhaustive small tests and for checking
 later implementations. It is not used as a production fallback and is not
 required to return nauty's label or canonical form.
 
-The public `canon` is backed by the certificate-checked nauty-semantic
-canonicalization: an untrusted branch-and-bound producer whose output is
-validated by the proven certificate replay, with a provably total
-exhaustive fallback. Development namespaces (`Reference`, `Nauty`)
-remain available as the cross-check and the transcription layer.
+The public `canonChecked` is backed by the certificate-checked
+nauty-semantic canonicalization: an untrusted branch-and-bound producer
+whose output is validated by the proven certificate replay, with a
+provably total exhaustive fallback. The fast `canon` is the checked-label
+transcription of the same search. Development namespaces (`Reference`,
+`Nauty`) remain available as the cross-check and the transcription
+layer.
 
 ## nauty-compatible individualization and refinement
 
@@ -391,6 +400,65 @@ position and differ there. The proof is exactly the composition of two
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
 input.
+
+## Verified search refinement
+
+Unconditional agreement of the two public tiers is a refinement
+theorem: the pruned production search refines the declarative
+canonical form. This section records the decomposition. It is future
+work and not a release condition; no release waits on any layer of
+it.
+
+The proven starting point is the conditional agreement theorem of the
+fast tier, `canonicalize_eq_canonicalizeChecked` above. Both tiers
+construct their `CanonResult` from the same transcribed search output
+by the same checked construction, so the certified tier's per-run
+validation covers the fast answer whenever the single trusted replay
+accepts. Unconditional agreement therefore reduces to one
+proposition, totality of the certificate pipeline:
+
+```lean
+theorem certifyCanon?_isSome (G : Colored n k) :
+    (Nauty.certifyCanon? G).isSome
+```
+
+where `Nauty.certifyCanon?` is the unbudgeted producer followed by
+the single `checkCanon` replay of the transcription's labelling. The
+proposition decomposes into one totality lemma and three refinement
+layers, each independently useful:
+
+1. **Producer totality.** The unbudgeted producer always returns a
+   candidate: with no node budget the two-pass walk cannot exhaust.
+   Structural induction over the search tree.
+2. **The producer refines the checker.** Every certificate the
+   producer emits replays successfully. The second pass evaluates the
+   checker's own acceptance conditions against the final key before
+   emitting each record, so the obligation is that the producer's
+   state invariants justify those evaluations: admitted generators
+   are automorphisms, the witness search returns genuine group
+   elements, and the orbit and cell-mask bookkeeping is consistent.
+3. **The pruned search refines the unpruned tree.** The first pass's
+   selected key equals `canonSpecKey`, the maximum over the unpruned
+   individualization-refinement tree: automorphism and orbit pruning
+   discard only subtrees whose leaves are dominated. This layer
+   formalizes the classical soundness arguments (Hartke and
+   Radcliffe) and is the largest.
+4. **The transcription refines the producer.** The transcribed search
+   selects the same leaf as the producer's first pass, including the
+   exact tie-breaking. Either verify the imperative transcription
+   directly, or prove it extensionally equal to the functional
+   producer; the functional producer is the tractable target. An
+   implementation may instead redefine the fast tier over the
+   verified functional search and retire this layer in favour of the
+   conformance pin, at a measured speed cost.
+
+Label-level agreement is available only along this route. The checker
+pins a labelling's rows, not the labelling itself, and in the
+exhaustive fallback branch of `canonicalizeChecked` the selected
+label may be a different member of the automorphism coset with
+different tie-breaking, so agreement cannot be proven through that
+branch; the fallback must instead be proven unreachable, which is
+exactly `certifyCanon?_isSome`.
 
 ## The Mathlib-free `graph_iso` tactic
 
