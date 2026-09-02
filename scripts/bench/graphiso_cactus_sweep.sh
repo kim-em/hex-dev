@@ -10,6 +10,7 @@
 # check that keeps the figures honest.
 set -euo pipefail
 
+label="${1:-}"
 root=$(git rev-parse --show-toplevel)
 cd "$root"
 fp=$(git ls-files -s -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
@@ -30,7 +31,8 @@ cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
  "fingerprint": "$fp",
  "host": "$host",
  "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
- "describe": "$(git rev-parse --short=12 HEAD)"
+ "describe": "$(git rev-parse --short=12 HEAD)",
+ "label": "$label"
 }
 META
 echo "recorded $sweep, $pairs, tactic times, meta, and reports/figures/hexgraphiso-*.svg"
