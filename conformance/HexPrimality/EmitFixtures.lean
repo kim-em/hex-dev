@@ -37,14 +37,36 @@ private def lib : String := "HexPrimality"
 
 private def quote (s : String) : String := "\"" ++ s ++ "\""
 
-private def emitNextPrimeFixture (case : String) (n : Nat) : IO Unit := do
-  let line := "{\"kind\":\"nextprime\",\"lib\":" ++ quote lib ++
-    ",\"case\":" ++ quote case ++ ",\"n\":" ++ toString n ++ "}\n"
+private def emitRecord (line : String) : IO Unit := do
   match (← IO.getEnv "HEX_FIXTURE_OUTPUT") with
-  | none => IO.print line
+  | none => IO.print (line ++ "\n")
   | some path =>
       let handle ← IO.FS.Handle.mk path IO.FS.Mode.append
-      handle.putStr line
+      handle.putStr (line ++ "\n")
+
+/- Keep these three input-record emitters local. The released
+`hex-test-kit` pin predates the primality-specific convenience wrappers in
+`Hex.Conformance.Emit`. -/
+private def emitPrimality (case : String) (n : Int) : IO Unit :=
+  emitRecord <| "{\"kind\":\"isprime\",\"lib\":" ++ quote lib ++
+    ",\"case\":" ++ quote case ++ ",\"n\":" ++ toString n ++ "}"
+
+private def emitCertificate (case : String) (n : Int) (cert : String) : IO Unit :=
+  emitRecord <| "{\"kind\":\"certcheck\",\"lib\":" ++ quote lib ++
+    ",\"case\":" ++ quote case ++ ",\"n\":" ++ toString n ++
+    ",\"cert\":" ++ cert ++ "}"
+
+private def emitSegment (case : String) (lo hi : Int) : IO Unit :=
+  emitRecord <| "{\"kind\":\"segment\",\"lib\":" ++ quote lib ++
+    ",\"case\":" ++ quote case ++ ",\"lo\":" ++ toString lo ++
+    ",\"hi\":" ++ toString hi ++ "}"
+
+private def boolJson (b : Bool) : String := if b then "true" else "false"
+
+private def emitNextPrimeFixture (case : String) (n : Nat) : IO Unit := do
+  let line := "{\"kind\":\"nextprime\",\"lib\":" ++ quote lib ++
+    ",\"case\":" ++ quote case ++ ",\"n\":" ++ toString n ++ "}"
+  emitRecord line
 
 mutual
 
@@ -149,8 +171,8 @@ private def segmentCases : List (String × Nat × Nat) :=
 
 private def emitCase : IO Unit := do
   for (case, n) in isPrimeCases do
-    emitIsPrimeFixture lib s!"isprime/{case}" (Int.ofNat n)
-    emitResult lib s!"isprime/{case}" "isprime" (boolValue (Hex.Nat.isPrime n))
+    emitPrimality s!"isprime/{case}" (Int.ofNat n)
+    emitResult lib s!"isprime/{case}" "isprime" (boolJson (Hex.Nat.isPrime n))
   for (case, n, fuel) in nextPrimeCases do
     let case := s!"nextprime/{case}"
     emitNextPrimeFixture case n
@@ -158,11 +180,11 @@ private def emitCase : IO Unit := do
     | .ok (p, _) => emitResult lib case "nextprime" (toString p)
     | .error _ => throw <| IO.userError (case ++ ": bounded search exhausted")
   for (case, n, cert) in certCases do
-    emitCertCheckFixture lib s!"certcheck/{case}" (Int.ofNat n) (certJson cert)
+    emitCertificate s!"certcheck/{case}" (Int.ofNat n) (certJson cert)
     emitResult lib s!"certcheck/{case}" "certcheck"
-      (boolValue (Hex.Nat.checkPrime cert))
+      (boolJson (Hex.Nat.checkPrime cert))
   for (case, lo, hi) in segmentCases do
-    emitSegmentFixture lib s!"segment/{case}" (Int.ofNat lo) (Int.ofNat hi)
+    emitSegment s!"segment/{case}" (Int.ofNat lo) (Int.ofNat hi)
     emitResult lib s!"segment/{case}" "segment"
       (intListValue ((Hex.Nat.primesIn lo hi).toList.map Int.ofNat))
 
