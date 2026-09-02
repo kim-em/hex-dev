@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Basic.lean",
+ "baseline_blob": "6492f52a4273c8dcac0ebdc11b9f977b969c492f",
+ "current_blob": "76cf5715027bfc7994f51e734b5bcb74a94ca047",
+ "reason": "Marks the two Matrix GetElem instances @[expose] for module-system kernel reduction in downstream graph-isomorphism proofs. Exposure changes elaboration visibility only; the compiled instance code and every executable definition are unchanged."
+}

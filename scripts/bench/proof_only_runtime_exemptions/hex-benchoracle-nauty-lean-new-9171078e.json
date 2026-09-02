@@ -1,0 +1,6 @@
+{
+ "path": "Hex/BenchOracle/Nauty.lean",
+ "baseline_blob": null,
+ "current_blob": "9171078ec4ea01cf5d4c4892970b4915dfa9b02c",
+ "reason": "Adds the in-process pinned-nauty oracle helper for the hex-graph-iso benchmarks and conformance sweeps. No factorization code references it, so the measured factorization service runtime is unchanged."
+}
