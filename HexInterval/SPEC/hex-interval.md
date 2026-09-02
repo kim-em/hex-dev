@@ -257,9 +257,10 @@ Internal planners and certificates may still use plain data when their own
 checked boundary authenticates it; proof traces do not inherit the public
 value's proof field.
 
-The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
-preflighted raw, singleton, one-sided, and finite constructors. The first
-supported operations are resource-checked intersection, hull, negation,
+The initial supported slice exposes `view`, `empty`, `whole`, endpoint-cost
+preflighted raw, singleton, one-sided, and finite constructors, and a
+trusted-decoder-only unchecked closed constructor. The first supported
+operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
 natural power, outward regularization, and transactional splitting at a dyadic
 point.
@@ -270,6 +271,60 @@ examples use the fully qualified `Hex.Interval`, because Mathlib also has a
 root `Interval` type; the public namespace is itself revisitable before release
 if qualification proves awkward. Unless a block explicitly says otherwise,
 unqualified API sketches below are declarations inside `Hex.Interval`.
+
+Trusted representation decoders that already hold independently preflighted
+ordered dyadic endpoints also have a comparison-free closed constructor:
+
+```lean
+def ofOrderedBoundsUnchecked
+  (lower upper : Dyadic) (ordered : lower ≤ upper) : Interval
+
+theorem view_ofOrderedBoundsUnchecked
+    (lower upper : Dyadic) (ordered : lower ≤ upper) :
+  (ofOrderedBoundsUnchecked lower upper ordered).view =
+    .bounds (.finite lower false) (.finite upper false)
+
+theorem ordered_of_consistent
+    {lower upper : Dyadic}
+    (h : (Raw.bounds (.finite lower false)
+      (.finite upper false)).CutConsistent) :
+  lower ≤ upper
+
+theorem eq_ordered_ofRawWithin
+    {limit : EndpointLimit} {lower upper : Dyadic} {interval : Interval}
+    (ordered : lower ≤ upper)
+    (h : ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+  interval = ofOrderedBoundsUnchecked lower upper ordered
+
+theorem eq_ordered_of_betweenWithin
+    {limit : EndpointLimit} {lower upper : Dyadic} {interval : Interval}
+    (ordered : lower ≤ upper)
+    (h : betweenWithin limit lower false upper false = .ready interval) :
+  interval = ofOrderedBoundsUnchecked lower upper ordered
+```
+
+The `Unchecked` suffix is deliberate. This constructor neither checks endpoint
+height nor recomputes the comparison. Its trusted decoder must enforce both
+resource caps before producing `ordered`; in particular, it must not use an
+unbounded `decide` to manufacture that proof, because the decision itself may
+allocate an oversized dyadic alignment. Ordinary untrusted cuts still cross
+`ofRawWithin` or the corresponding `*Within` smart constructor.
+
+The total constructor is needed for emitted semantic proof terms: it lets an
+emitter quote the exact interval without also quoting a kernel reduction proof
+that a `BuildResult` is ready across a module boundary. Dynamic-range policy
+remains caller-owned and is discharged before quotation. The exact view
+theorem then lets an importing proof consume the closed cuts without unfolding
+the sealed constructor.
+
+This is a propositional quotation boundary, not a transparent executable
+encoding. The constructor remains opaque because its body uses the sealed
+private representation. A generic replay path whose `DecidableEq Interval`
+must reduce quoted facts therefore cannot compute through this constructor;
+such a path needs a separate kernel proof of the exact initial target/fact
+correspondence rather than treating the view theorem as definitional
+reduction.
 
 The public Mathlib companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
@@ -333,13 +388,17 @@ either internal candidate. Infinite ends do not carry meaningless closure
 flags. This invariant deliberately does not claim that, for example, `(0,1)`
 contains an integer.
 
-Exact `normalizeUnchecked` is only for trusted or already-preflighted inputs: comparing
-two finite dyadics may align their exponents by shifting a mantissa. The
+Exact `normalizeUnchecked` is only for trusted or already-preflighted inputs:
+comparing two finite dyadics may align their exponents by shifting a mantissa. The
 planner-facing `normalizeWithin` first computes endpoint height and alignment
 shift from constructor fields and returns a distinct `resourceLimit` result
 when either bound is exceeded. It never interprets a refused comparison as an
-empty interval or as consistent cuts. Every future public reifier, certificate
-decoder, and planner input path must use this resource-safe entry point.
+empty interval or as consistent cuts. Every ordinary untrusted public reifier,
+certificate decoder, and planner input path must use this resource-safe entry
+point. The sole exception is a trusted representation decoder that has already
+performed the same independent endpoint-height and comparison-cost preflight;
+it may then cross an explicitly named `*Unchecked` entry point such as
+`ofOrderedBoundsUnchecked`.
 
 The representation differs from IEEE 1788 set-based intervals in one
 important respect. IEEE intervals are closed as sets of finite real numbers,

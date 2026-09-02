@@ -24,7 +24,9 @@ public section
 data, propagation search, and replayable derivations.
 
 The public implementation exposes canonical exact intervals through a sealed
-representation, resource-safe smart constructors, and resource-checked
+representation, resource-safe smart constructors, an explicitly unchecked
+closed constructor for independently preflighted trusted representation decoders,
+and resource-checked
 intersection, hull, negation, addition, subtraction, multiplication, minimum,
 maximum, absolute value, natural power, outward regularization, reciprocal,
 division, and
