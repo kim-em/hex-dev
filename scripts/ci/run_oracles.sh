@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sequential oracle runner used by `.github/workflows/ci.yml`.
+# Parallel oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
 # ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
@@ -13,8 +13,12 @@
 # one tuple to ORACLES — do not introduce a new top-level CI job
 # (see SPEC/CI.md § Job-count budget).
 #
-# Exits non-zero on first failing library, with a clear marker
-# identifying which library failed.
+# Oracles are independent, so they run through a worker pool
+# (HEX_ORACLE_JOBS, default nproc) after one combined `lake build` of
+# every emit executable; per-library output is captured and printed in
+# tuple order. Exits non-zero if any library failed, with a clear
+# marker per failing library. Same-runner process parallelism is the
+# form SPEC/CI.md permits: it raises no runner count.
 
 set -uo pipefail
 
@@ -84,57 +88,101 @@ ORACLES=(
 )
 
 failed=0
+
+# One combined build of every emit executable: parallel `lake exe`
+# invocations would contend on the Lake build lock, and one build
+# parallelizes internally anyway.
+emits=()
 for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r _ emit _ _ <<<"$entry"
+  emits+=("$emit")
+done
+if ! lake build "${emits[@]}"; then
+  echo "FAIL: building emit executables" >&2
+  exit 1
+fi
+
+run_one() {
+  local entry="$1"
+  local lib emit oracle fixture
   IFS='|' read -r lib emit oracle fixture <<<"$entry"
+  local fresh="/tmp/${lib}-fresh.jsonl"
+  local log="/tmp/oracle-${lib}.log"
+  {
+    echo
+    echo "=========================================================="
+    echo ">>> $lib :: emit=$emit oracle=$oracle"
+    echo "=========================================================="
 
-  echo
-  echo "=========================================================="
-  echo ">>> $lib :: emit=$emit oracle=$oracle"
-  echo "=========================================================="
+    if ! ".lake/build/bin/$emit" >"$fresh"; then
+      echo "FAIL: $lib :: $emit exited non-zero"
+      return 1
+    fi
 
-  fresh="/tmp/${lib}-fresh.jsonl"
-  if ! lake exe "$emit" >"$fresh"; then
-    echo "FAIL: $lib :: lake exe $emit exited non-zero" >&2
-    failed=1
-    break
+    if ! diff -u "$fixture" "$fresh"; then
+      echo "FAIL: $lib :: fresh emission diverges from committed fixture"
+      return 1
+    fi
+
+    local oracle_args=()
+    case "$oracle" in
+      *primality_pari.py)
+        if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+          oracle_args=(--require-oracles)
+        fi
+        ;;
+      *conway_luebeck.py)
+        if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+          oracle_args=(--require-conway-polynomials)
+        else
+          # The committed Lübeck cache is always checked. Locally, add the
+          # package-backed leg when available and report a clean SKIP otherwise.
+          oracle_args=(--check-conway-polynomials)
+        fi
+        ;;
+    esac
+
+    if ! python3 "$oracle" "${oracle_args[@]}" <"$fresh"; then
+      echo "FAIL: $lib :: oracle $oracle reported a divergence"
+      return 1
+    fi
+
+    echo "OK: $lib"
+  } >"$log" 2>&1
+}
+
+jobs="${HEX_ORACLE_JOBS:-$(nproc)}"
+running=0
+declare -A lib_of_pid status_of
+reap() {
+  local done_pid st
+  if wait -n -p done_pid; then st=0; else st=$?; fi
+  status_of["${lib_of_pid[$done_pid]}"]=$st
+  running=$((running - 1))
+}
+for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r lib _ _ _ <<<"$entry"
+  run_one "$entry" &
+  lib_of_pid[$!]="$lib"
+  running=$((running + 1))
+  if [ "$running" -ge "$jobs" ]; then
+    reap
   fi
-
-  if ! diff -u "$fixture" "$fresh"; then
-    echo "FAIL: $lib :: fresh emission diverges from committed fixture" >&2
+done
+while [ "$running" -gt 0 ]; do
+  reap
+done
+for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r lib _ _ _ <<<"$entry"
+  if [ "${status_of[$lib]:-1}" -ne 0 ]; then
     failed=1
-    break
   fi
-
-  oracle_args=()
-  case "$oracle" in
-    *primality_pari.py)
-      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
-        oracle_args=(--require-oracles)
-      fi
-      ;;
-    *conway_luebeck.py)
-      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
-        oracle_args=(--require-conway-polynomials)
-      else
-        # The committed Lübeck cache is always checked. Locally, add the
-        # package-backed leg when available and report a clean SKIP otherwise.
-        oracle_args=(--check-conway-polynomials)
-      fi
-      ;;
-  esac
-
-  if ! python3 "$oracle" "${oracle_args[@]}" <"$fresh"; then
-    echo "FAIL: $lib :: oracle $oracle reported a divergence" >&2
-    failed=1
-    break
-  fi
-
-  echo "OK: $lib"
+  cat "/tmp/oracle-${lib}.log"
 done
 
 if [ "$failed" -ne 0 ]; then
   echo
-  echo "Conformance: oracle run failed; see preceding marker for the library." >&2
+  echo "Conformance: oracle run failed; see preceding markers for the libraries." >&2
   exit 1
 fi
 

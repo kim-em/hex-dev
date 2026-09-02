@@ -101,7 +101,15 @@ jobs:
       - name: Set up pinned Lean toolchain (no build)
         run: bash scripts/ci/setup_lean_toolchain.sh
       - name: Fetch Mathlib cache
-        run: lake exe cache get
+        # The cache endpoint flakes occasionally; a failed fetch costs a
+        # whole CI lap, so retry before giving up. The populated-cache
+        # hard-fail check below still rejects a triple failure.
+        run: |
+          for attempt in 1 2 3; do
+            lake exe cache get && break
+            echo "lake exe cache get failed (attempt $attempt); retrying in 30s"
+            sleep 30
+          done
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
