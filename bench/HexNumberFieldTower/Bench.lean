@@ -1327,10 +1327,13 @@ def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
         (hash input.tower.dim)
   | none => 0
 
-/- Cost model. Applying `toPrimitive` to one basis vector computes `D`
-trace pairings of length `D`, hence `Θ(D²)` rational operations; applying it
-to all `D = 2n` basis vectors gives `Θ(n³)` work. The extended rung is retained
-with five trials to distinguish stable growth from host interference. -/
+/- Cost model. One `toPrimitive` call has the public `O(D²)` bound from a
+length-`D` linear combination of degree-`D` primitive coordinates. The
+implementation skips zero input coordinates, avoiding that dense arithmetic
+for this basis family, but the required structural checksum still traverses
+the `D` exact-rational output coefficients, whose integer representatives in
+the primitive presentation have `O(D)` limbs. Applying the closure to all
+`D = 2n` basis vectors therefore retains the original `Θ(n³)` wall model. -/
 setup_benchmark runToPrimitiveLadder n => n * n * n
   with prep := prepMapLadderInput
   where {

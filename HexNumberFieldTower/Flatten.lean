@@ -281,8 +281,12 @@ def basisImages {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
 @[expose]
 def toPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
     (images : Array (QAdjoin p x)) (a : Elem T) : QAdjoin p x :=
-  (List.range T.dim).map
-    (fun i => (coeffs a).getD i 0 • images.getD i 0) |>.sum
+  (List.range T.dim).foldl
+    (fun value i =>
+      let coefficient := (coeffs a).getD i 0
+      if coefficient = 0 then value
+      else value + coefficient • images.getD i 0)
+    0
 
 /-- Evaluate a reduced primitive coordinate polynomial at its tower element. -/
 @[expose]
