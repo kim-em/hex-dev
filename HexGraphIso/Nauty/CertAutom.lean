@@ -27,7 +27,7 @@ leaf and the current best-achieving leaf, kept only when the checker's
 `checkAutom` accepts. A generator discovered at a divergence node
 respects that node's ordered partition and every coarser ancestor
 partition, so a single global store plus a per-node cell-respect
-filter (`respects`) makes deep discoveries reusable higher up. The
+filter (`respectsMasks`) makes deep discoveries reusable higher up. The
 per-node orbit walk (`witness?`) composes filtered generators by
 breadth-first search inside the target cell; this under-approximates
 the true partition stabilizer (products of individually non-respecting
@@ -159,12 +159,6 @@ def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
     Bool :=
   masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
 
-/-- Does `γ` map every cell of the node's ordered partition onto
-itself setwise? Uses the checker's `checkCellsPerm`. -/
-def respects (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat)
-    (γ : Array Nat) : Bool :=
-  checkCellsPerm rsPtn rsLab (rsLab.map fun w => γ[w]!) level ctx.n
-
 /-- The literal `.autom` acceptance predicate of `checkChildren`,
 including the earlier-offset requirement: emitted records satisfy
 exactly what the trusted replay re-checks. -/
@@ -228,104 +222,6 @@ def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
     else (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
   | none => (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
 
-/-- A candidate key with the leaf labelling achieving it. -/
-structure KeyAch where
-  /-- The key, expressed at the current depth. -/
-  key : Key
-  /-- The achieving key's rows as an array, for incremental leaf
-  comparison. -/
-  rowsArr : Array Nat := #[]
-  /-- The achieving leaf labelling, kept absolute. Ties keep the first
-  achiever. -/
-  achiever : Option (Array Nat) := none
-
-/-- Compare a leaf labelling's rows against incumbent rows without
-materializing them: rows are generated one at a time in nauty's row
-order and the first difference decides. -/
-def cmpLeafRows (ctx : Ctx) (lab : Array Nat) (inc : Array Nat) :
-    Ordering := Id.run do
-  let ip := invPerm lab
-  for i in [0 : ctx.n] do
-    let c := rowCmp (permset ctx.g[lab[i]!]! ip ctx.n) inc[i]!
-    if c != .eq then
-      return c
-  return .eq
-
-/-- Branch-and-bound maximum of the incumbent and this subtree's keys,
-with automorphism skipping: a target-cell offset whose branch vertex
-is reachable from an earlier offset through verified automorphisms is
-not descended (its key equals the earlier sibling's, which the
-accumulator already includes). Untrusted; `checkKey` validates the
-final answer. -/
-def searchNodeAutom (ctx : Ctx) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option KeyAch →
-      AutState → KeyAch × AutState
-  | 0, _, _, _, _, _, inc, st => (inc.getD ⟨⟨[], []⟩, #[], none⟩, st)
-  | fuel + 1, level, lab, ptn, active, numcells, inc, st0 =>
-    let st := st0.charge
-    if st.exhausted then
-      (inc.getD ⟨⟨[], []⟩, #[], none⟩, st)
-    else
-      let rs := refine ctx level lab ptn active numcells
-      let step : Option KeyAch → AutState → KeyAch × AutState :=
-        fun tail0 st =>
-        if discreteAt rs.ptn level ctx.n then
-          let st := st.harvest ctx rs.lab
-          let newLeaf : Unit → KeyAch × AutState := fun _ =>
-            let rows := leafRows ctx rs.lab
-            (⟨⟨rs.longcode :: [codeSentinel], rows⟩,
-              rows.toArray, some rs.lab⟩, st)
-          match tail0 with
-          | none => newLeaf ()
-          | some t =>
-            -- codes first; rows only on ties, generated incrementally
-            let ord := match listCmp compare [codeSentinel]
-                t.key.codes with
-              | .eq =>
-                if t.rowsArr.size == ctx.n then
-                  cmpLeafRows ctx rs.lab t.rowsArr
-                else
-                  keyCmp ⟨[codeSentinel], leafRows ctx rs.lab⟩ t.key
-              | c => c
-            if ord == .gt then
-              newLeaf ()
-            else
-              (⟨⟨rs.longcode :: t.key.codes, t.key.rows⟩,
-                t.rowsArr, t.achiever⟩, st)
-        else
-          let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-          let masks := cellMasks ctx rs.lab rs.ptn level
-          let (t, st', _) := (List.range tcr.2.2).foldl
-            (fun (acc : Option KeyAch × AutState ×
-                Option (Nat × Array (Array Nat × Array Nat))) o =>
-              let (t, st, cache) := acc
-              let cache' := usableGens ctx masks st cache
-              match witness? ctx rs.lab tcr.1 cache'.2 o with
-              | some _ => (t, st, some cache')
-              | none =>
-                let br := breakout rs.lab rs.ptn (level + 1) tcr.1
-                  rs.lab[tcr.1 + o]!
-                let (r, st') := searchNodeAutom ctx tcLevel fuel
-                  (level + 1) br.1 br.2.1 br.2.2 (numcells + 1) t st
-                (some r, st', some cache'))
-            (tail0, st, none)
-          match t with
-          | none => (⟨⟨[], []⟩, #[], none⟩, st')
-          | some t =>
-            (⟨⟨rs.longcode :: t.key.codes, t.key.rows⟩, t.rowsArr,
-              t.achiever⟩, st')
-      match inc with
-      | none => step none st
-      | some b =>
-        match b.key.codes with
-        | [] => step none st
-        | bc :: brest =>
-          match compare rs.longcode bc with
-          | .lt => (b, st)
-          | .gt => step none st
-          | .eq =>
-            step (some ⟨⟨brest, b.key.rows⟩, b.rowsArr, b.achiever⟩) st
-
 /-- Build the certificate tree for the final best key, emitting
 `.autom` records for target-cell offsets reachable from an earlier
 offset through verified automorphisms. Untrusted; `checkKey`
@@ -379,36 +275,59 @@ def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
               ([], st, none)
             (.node children.reverse, st')
 
-/-- The two pruning passes, under an optional node budget (`none` is
-unbounded): pass one finds the best key and harvests generators; pass
-two rebuilds the certificate against it with the achieving leaf as an
-extra harvest reference. Purely a candidate producer — nothing here is
+/-- The checker-coordinate refinement codes along the achieving
+labelling's path: at each node the achieving child is the vertex the
+leaf keeps at the target-cell start (breakout pins it there and later
+refinement never moves a singleton). The walk mirrors `checkNode`'s
+refine arguments, because the search's internal code chain uses the
+transcription's own numcells convention and cannot be reused.
+Untrusted; the replay recomputes everything. -/
+def achieverCodes (ctx : Ctx) (tcLevel : Nat) (canonlab : Array Nat) :
+    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat
+  | 0, _, _, _, _, _ => []
+  | fuel + 1, level, lab, ptn, active, numcells =>
+    let rs := refine ctx level lab ptn active numcells
+    if discreteAt rs.ptn level ctx.n then
+      [rs.longcode]
+    else
+      let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
+      let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+        canonlab[tcr.1]!
+      rs.longcode :: achieverCodes ctx tcLevel canonlab fuel
+        (level + 1) br.1 br.2.1 br.2.2 (numcells + 1)
+
+/-- Trace-driven candidate production, per the SPEC: the transcribed
+search runs once with tracing on, and the certificate pass translates
+its trace — the harvested generators and the achieving labelling,
+whose key is derived by `achieverCodes` and `leafRows` — into a
+certificate against that key. No second search runs; the node budget
+bounds the traced walk. Purely a candidate producer — nothing here is
 trusted. -/
 def produceCand (G : Colored n k) (budget : Option Nat) :
     Option (CertNode × Key) :=
   let ctx : Ctx := { n := n, g := rowsOf G }
-  let (bk, st1) := searchNodeAutom ctx 100 n 1
-    (initialPartition G).1
-    (initPtn n (n + 2) (initialPartition G).2)
-    (initActive (initialPartition G).2)
-    (initialPartition G).2.length none (AutState.init n budget)
-  if st1.exhausted then
+  let tr := runColoredTraced G
+  if budget.any fun b => decide (tr.result.numnodes > b) then
     none
   else
-    let st2 := { st1 with
-                 firstLeaf := none
-                 prevLeaf := none
-                 refLeaf := bk.achiever
-                 exhausted := false }
+    let st1 := tr.autos.foldl (fun st γ => st.admit ctx γ)
+      (AutState.init n budget)
+    let st2 := { st1 with refLeaf := some tr.result.canonlab }
+    let B : Key := ⟨achieverCodes ctx 100 tr.result.canonlab (n + 2) 1
+        (initialPartition G).1
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initActive (initialPartition G).2)
+        (initialPartition G).2.length ++ [codeSentinel],
+      leafRows ctx tr.result.canonlab⟩
     let (cert, st3) := certifyNodeAutom ctx 100 n 1
       (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
       (initActive (initialPartition G).2)
-      (initialPartition G).2.length bk.key.codes st2
+      (initialPartition G).2.length B.codes st2
     if st3.exhausted then
       none
     else
-      some (cert, bk.key)
+      some (cert, B)
 
 /-- The candidate pipeline plus trusted validation. -/
 def certifyKeyCore (G : Colored n k) (budget : Option Nat) :

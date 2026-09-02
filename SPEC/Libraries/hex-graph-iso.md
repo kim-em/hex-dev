@@ -1025,6 +1025,31 @@ verify` invocation inside its existing time limit. Hard families and full
 nauty timing comparisons run in the existing scheduled performance workflow
 on dedicated hardware.
 
+The published cactus figures must stay current with the code. The
+per-instance sweep data lives under `reports/bench-results/` keyed by
+the commit it was measured at, the figures under `reports/figures/`
+are rendered from it, and any change to hex-graph-iso implementation
+source must regenerate both in the same pull request
+(`scripts/bench/graphiso_cactus_sweep.sh` does the whole
+regeneration). `scripts/bench/check_graphiso_sweep_freshness.py` is
+the required check: it fails whenever the implementation, the graph
+substrate, the sweep driver, or the plot script differs from the
+recorded commit.
+
+Recorded sweeps accumulate: each regeneration adds its data,
+tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,
+label) under `reports/bench-results/` without removing predecessors.
+Every pull request that improves the measured performance of any
+layer (fast, checked, or tactic) posts a before/after comparison as a
+pull-request comment: `scripts/plots/hexgraphiso-before-after.py`
+renders the overlay figure and prints the per-layer markdown delta
+table from two recorded sweeps, the figure is committed under
+`reports/figures/` and embedded in the comment by its raw URL at the
+pull request's head commit.
+`scripts/plots/hexgraphiso-cactus-animation.py` assembles the
+accumulated sweeps, in recorded-date order with fixed axes, into
+`reports/figures/hexgraphiso-cactus-animation.gif`.
+
 The tactic has fresh-module probes for reification, compiled search, literal
 elaboration, kernel replay, and the complete tactic. Before release, the
 following cases must close within their logical limits:

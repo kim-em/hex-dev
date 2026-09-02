@@ -12,8 +12,9 @@ Stage-decomposition profiler for the canonicalization pipeline:
 data-dependent loop and prints nanoseconds per iteration, for the
 paley61, kneser72, and circulant64 instances.
 
-Stages: `run` (transcribed search), `pass1` (producer search),
-`produce` (both producer passes), `ckey` (one trusted `checkKey`
+Stages: `run` (transcribed search), `trace` (the traced search the
+certificate producer consumes), `produce` (trace plus certificate
+translation), `ckey` (one trusted `checkKey`
 replay), `ccanon` (one `checkCanon`),
 `canon` (the fast public tier), `canonchecked` (the full
 certificate-checked pipeline), `stats` (work counters, no timing). No
@@ -64,7 +65,7 @@ private def timeLoop (iters : Nat) (act : Nat → Nat) : IO Nat := do
 private def stageIters : String → Nat
   | "run" => 2000
   | "ckey" | "ccanon" => 200
-  | "pass1" | "produce" => 60
+  | "trace" | "produce" => 60
   | _ => 40
 
 private def runStage {n : Nat} (inst : Inst n) (stage : String)
@@ -78,13 +79,9 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
   let (c1, b1) := certs inst.g1
   let ns ← match stage with
     | "run" => timeLoop iters fun i => (runColored (pick i)).numnodes
-    | "pass1" => timeLoop iters fun i =>
-        let G := pick i
-        (searchNodeAutom { n := n, g := rowsOf G } 100 n 1
-          (initialPartition G).1 (initPtn n (n + 2) (initialPartition G).2)
-          (initActive (initialPartition G).2)
-          (initialPartition G).2.length none
-          (AutState.init n)).1.key.codes.length
+    | "trace" => timeLoop iters fun i =>
+        let tr := runColoredTraced (pick i)
+        tr.result.numnodes + tr.autos.size
     | "produce" => timeLoop iters fun i =>
         match produceCand (pick i) none with
         | some (c, _) => c.size
@@ -115,7 +112,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
 
 private def stages : List String :=
-  ["run", "pass1", "produce", "ckey", "ccanon", "canon",
+  ["run", "trace", "produce", "ckey", "ccanon", "canon",
    "canonchecked", "stats"]
 
 def main (args : List String) : IO Unit := do

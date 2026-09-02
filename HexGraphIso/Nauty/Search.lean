@@ -73,6 +73,12 @@ structure SearchSt where
   numgenerators : Nat := 0
   numbadleaves : Nat := 0
   maxlevel : Nat := 1
+  /-- When `tracing`, every accepted automorphism is also kept in
+  full (`genTrace`, discovery order) for the trace-driven certificate
+  producer; off by default, so the untraced search stores only the
+  bounded `(fix, mcr)` workspace pairs. -/
+  tracing : Bool := false
+  genTrace : Array (Array Nat) := #[]
 deriving Inhabited
 
 /-- Record an automorphism pair in the bounded workspace. -/
@@ -162,11 +168,15 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
   match code with
   | 0 => return (Int.ofNat level, st)
   | 1 =>
+    if st.tracing then
+      st := { st with genTrace := st.genTrace.push workperm }
     st := pushAuto st (fmperm workperm n)
     let (orbits, numorbits) := orbjoin st.orbits workperm n
     st := { st with orbits := orbits, numorbits := numorbits, numgenerators := st.numgenerators + 1 }
     return (Int.ofNat st.gcaFirst, st)
   | 2 =>
+    if st.tracing then
+      st := { st with genTrace := st.genTrace.push workperm }
     st := pushAuto st (fmperm workperm n)
     let save := st.numorbits
     let (orbits, numorbits) := orbjoin st.orbits workperm n
@@ -472,6 +482,64 @@ def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
     tctotal := st.tctotal
     canupdates := st.canupdates }
 
+/-- A traced run: the transcribed search result together with every
+accepted automorphism, in discovery order — the trace the
+certificate translator consumes. The best key itself is derived from
+`canonlab` (its rows directly, its codes by replaying refinement down
+the achieving path), because the search's internal code chain uses
+the transcription's own numcells convention, not the checker's. -/
+structure TraceRun where
+  result : RunResult
+  autos : Array (Array Nat)
+
+/-- `run` with tracing on: the identical traversal, additionally
+returning the trace. The untraced `run` above stays the production
+fast path. -/
+def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
+    (cellEnds : List Nat) : TraceRun := Id.run do
+  if n == 0 then
+    return {
+      result := {
+        canonlab := #[]
+        canong := #[]
+        numnodes := 1
+        numorbits := 0
+        numgenerators := 0
+        numbadleaves := 0
+        maxlevel := 1
+        tctotal := 0
+        canupdates := 1 }
+      autos := #[] }
+  let inf := n + 2
+  let ctx : Ctx := { n, g }
+  let st : SearchSt :=
+    { lab := lab0
+      ptn := initPtn n inf cellEnds
+      active := initActive cellEnds
+      orbits := .ofFn (n := n) fun i => i.val
+      firstcode := .replicate (n + 2) 0
+      canoncode := .replicate (n + 2) 0
+      firsttc := .replicate (n + 2) (-1)
+      firstlab := .replicate n 0
+      canonlab := .replicate n 0
+      canong := .replicate n 0
+      numorbits := n
+      tracing := true }
+  let (_, st) := firstPathNode ctx inf 100 (n + 2) 1 cellEnds.length st
+  let canong := updatecan ctx st.canong st.canonlab st.samerows
+  return {
+    result := {
+      canonlab := st.canonlab
+      canong := canong
+      numnodes := st.numnodes
+      numorbits := st.numorbits
+      numgenerators := st.numgenerators
+      numbadleaves := st.numbadleaves
+      maxlevel := st.maxlevel
+      tctotal := st.tctotal
+      canupdates := st.canupdates }
+    autos := st.genTrace }
+
 variable {n k : Nat}
 
 /-- The adjacency row of one vertex of a coloured graph. -/
@@ -511,6 +579,12 @@ cell end positions of a coloured graph. -/
 def runColored (G : Colored n k) : RunResult :=
   let (lab0, cellEnds) := initialPartition G
   run n (rowsOf G) lab0 cellEnds
+
+/-- Run the nauty-compatible search on a coloured graph with tracing
+on, for the trace-driven certificate producer. -/
+def runColoredTraced (G : Colored n k) : TraceRun :=
+  let (lab0, cellEnds) := initialPartition G
+  runTraced n (rowsOf G) lab0 cellEnds
 
 /-- The nauty-compatible canonical result: the checked label from
 `canonlab` and the relabelled coloured graph. `none` only if the raw
