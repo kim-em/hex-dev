@@ -25,7 +25,7 @@ settles the retained target lineage, and passes that sealed chronology through
 runtime success is never reflected into proof syntax.
 
 The current production subset is forward arithmetic over real local variables,
-the configured constant, natural power, precision, reciprocal, and division.
+exact dyadic literals, node-indexed natural power, precision, reciprocal, and division.
 Every computed arithmetic row is followed by the package's authenticated
 outward regularization row. The bare tactic uses precision `16`, hence the
 dyadic grid `2⁻¹⁶`; programmatic callers may supply another admitted precision.
@@ -87,20 +87,59 @@ theorem cons {value : ℝ} {source : Hex.Interval} {values : List ℝ}
 
 end Sources
 
+theorem initialNil {config : Rule.Config} {values : Nat → ℝ} : List.Forall₂
+    (fun row : Frontend.InitialRow => fun entry : Frontend.Entry =>
+      row.node = entry.node ∧
+        (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values)) [] [] :=
+  .nil
+
+theorem initialCons {config : Rule.Config} {values : Nat → ℝ}
+    {row : Frontend.InitialRow} {entry : Frontend.Entry}
+    {rows : List Frontend.InitialRow} {entries : List Frontend.Entry}
+    (node : row.node = entry.node)
+    (member : (row.fact.getD Hex.Interval.whole).Contains
+      (entry.term.eval config values))
+    (tail : List.Forall₂
+      (fun row : Frontend.InitialRow => fun entry : Frontend.Entry =>
+        row.node = entry.node ∧
+          (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+      rows entries) :
+    List.Forall₂
+      (fun row : Frontend.InitialRow => fun entry : Frontend.Entry =>
+        row.node = entry.node ∧
+          (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+      (row :: rows) (entry :: entries) :=
+  .cons ⟨node, member⟩ tail
+
+/-- Transport quoted row-by-row authority across the separately checked
+quotation of the frontend result and initial context. -/
+theorem initialCast {initial : Frontend.InitialContext} {config : Rule.Config}
+    {values : Nat → ℝ} {result : Frontend.Result}
+    {rows : List Frontend.InitialRow} {entries : List Frontend.Entry}
+    (rowsEq : initial.rows.toList = rows)
+    (entriesEq : result.entries.toList = entries)
+    (holds : List.Forall₂
+      (fun row : Frontend.InitialRow => fun entry : Frontend.Entry =>
+        row.node = entry.node ∧
+          (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+      rows entries) :
+    initial.Contains config values result := by
+  change List.Forall₂
+    (fun row entry => row.node = entry.node ∧
+      (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+    initial.rows.toList result.entries.toList
+  rw [rowsEq, entriesEq]
+  exact holds
+
 namespace Eval
 
 theorem source {config : Rule.Config} {values : Nat → ℝ} {index : Nat} {value : ℝ}
     (equal : values index = value) :
     (Frontend.Term.source index).eval config values = value := equal
 
-theorem constantMk {endpoint : EndpointLimit} {powerWork : Arithmetic.PowLimits}
-    {exponent : Nat} {precisionLimits : Arithmetic.PrecisionLimits}
-    {precision : Precision} {constant : Dyadic}
-    {extraMeanings : Array (Program.Meaning ℝ)} {values : Nat → ℝ} {value : ℝ}
-    (equal : toReal constant = value) :
-    Frontend.Term.constant.eval
-      { endpoint, powerWork, exponent, precisionLimits, precision, constant,
-        extraMeanings } values = value := by
+theorem dyadic {config : Rule.Config} {values : Nat → ℝ} {literal : Dyadic} {value : ℝ}
+    (equal : toReal literal = value) :
+    (Frontend.Term.dyadic literal).eval config values = value := by
   simpa [Frontend.Term.eval] using equal
 
 theorem neg {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
@@ -127,8 +166,9 @@ theorem mul {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend
   simp [Frontend.Term.eval, leftEq, rightEq]
 
 theorem pow {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {exponent : Nat}
     {value : ℝ} (equal : input.eval config values = value) :
-    (Frontend.Term.pow input).eval config values = value ^ config.exponent := by
+    (Frontend.Term.pow input exponent).eval config values = value ^ exponent := by
   simp [Frontend.Term.eval, equal]
 
 theorem abs {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
@@ -239,12 +279,6 @@ theorem dyadicLtIntCast {endpoint : Dyadic} {value : Int}
   change ((endpoint.toRat : ℝ) < ((value : Rat) : ℝ))
   exact_mod_cast h
 
-theorem toRealEqIntCast {endpoint : Dyadic} {value : Int}
-    (h : endpoint.toRat = (value : Rat)) :
-    toReal endpoint = (value : ℝ) := by
-  change ((endpoint.toRat : ℝ) = ((value : Rat) : ℝ))
-  exact_mod_cast h
-
 theorem lowerClosedFromClosed {endpoint : Dyadic} {value : Int} {x : ℝ}
     (order : (value : ℝ) ≤ toReal endpoint)
     (bound : (Lower.finite endpoint false).Contains x) : (value : ℝ) ≤ x :=
@@ -286,11 +320,11 @@ theorem upperOpenFromOpen {endpoint : Dyadic} {value : Int} {x : ℝ}
   bound.trans_le order
 
 theorem equalityOfMem {interval : Hex.Interval} {endpoint : Dyadic}
-    {value : Int} {x : ℝ}
+    {value x : ℝ}
     (shape : interval.view =
       .bounds (.finite endpoint false) (.finite endpoint false))
     (member : interval.Contains x)
-    (endpointEq : toReal endpoint = (value : ℝ)) : x = (value : ℝ) := by
+    (endpointEq : toReal endpoint = value) : x = value := by
   have bounds := And.intro
     (lowerOfMem shape member) (upperOfMem shape member)
   exact (le_antisymm bounds.2 bounds.1).trans endpointEq
@@ -310,10 +344,6 @@ theorem castUpperLe {actual x : ℝ} {value : Int}
 theorem castUpperLt {actual x : ℝ} {value : Int}
     (endpoint : actual = (value : ℝ)) :
     (x < actual ↔ x < (value : ℝ)) := by rw [endpoint]
-
-theorem castEquality {actual x : ℝ} {value : Int}
-    (endpoint : actual = (value : ℝ)) :
-    (x = actual ↔ x = (value : ℝ)) := by rw [endpoint]
 
 theorem lowerOfEqRight {actual x : ℝ} (equality : x = actual) : actual ≤ x :=
   equality.ge
@@ -388,6 +418,19 @@ meta def listExpr (type : Expr) (items : List Expr) : MetaM Expr := do
 meta def arrayExpr (type : Expr) (items : List Expr) : MetaM Expr := do
   mkAppM ``Array.mk #[← listExpr type items]
 
+meta def initialRowExpr (limit : EndpointLimit) (row : Frontend.InitialRow) : MetaM Expr := do
+  let fact ← match row.fact with
+    | none => pure (mkApp (mkConst ``Option.none [.zero]) (mkConst ``Hex.Interval))
+    | some value =>
+        mkAppM ``Option.some #[← intervalExpr limit value]
+  mkAppM ``Frontend.InitialRow.mk #[← mkAppM ``NodeId.mk #[mkNatLit row.node.index], fact]
+
+meta def initialContextExpr (limit : EndpointLimit)
+    (initial : Frontend.InitialContext) : MetaM Expr := do
+  let rows ← initial.rows.toList.mapM (initialRowExpr limit)
+  mkAppM ``Frontend.InitialContext.mk
+    #[← arrayExpr (mkConst ``Frontend.InitialRow) rows]
+
 meta def proofLimitsExpr (limits : Proof.Limits) : MetaM Expr := do
   mkAppM ``Proof.Limits.mk
     #[mkNatLit limits.maxPackages, mkNatLit limits.maxSchemas,
@@ -406,7 +449,9 @@ meta def frontendConfigExpr (config : Frontend.Config) : MetaM Expr := do
 
 meta def termExpr : Frontend.Term → MetaM Expr
   | .source index => mkAppM ``Frontend.Term.source #[mkNatLit index]
-  | .constant => pure (mkConst ``Frontend.Term.constant)
+  | .dyadic value => do
+      mkAppM ``Frontend.Term.dyadic #[← Rule.Runtime.Quote.dyadicExpr value]
+  | .natural value => mkAppM ``Frontend.Term.natural #[mkNatLit value]
   | .neg input => do mkAppM ``Frontend.Term.neg #[← termExpr input]
   | .add left right => do
       mkAppM ``Frontend.Term.add #[← termExpr left, ← termExpr right]
@@ -414,7 +459,8 @@ meta def termExpr : Frontend.Term → MetaM Expr
       mkAppM ``Frontend.Term.sub #[← termExpr left, ← termExpr right]
   | .mul left right => do
       mkAppM ``Frontend.Term.mul #[← termExpr left, ← termExpr right]
-  | .pow input => do mkAppM ``Frontend.Term.pow #[← termExpr input]
+  | .pow input exponent => do
+      mkAppM ``Frontend.Term.pow #[← termExpr input, mkNatLit exponent]
   | .abs input => do mkAppM ``Frontend.Term.abs #[← termExpr input]
   | .min left right => do
       mkAppM ``Frontend.Term.min #[← termExpr left, ← termExpr right]
@@ -424,6 +470,10 @@ meta def termExpr : Frontend.Term → MetaM Expr
   | .div left right => do
       mkAppM ``Frontend.Term.div #[← termExpr left, ← termExpr right]
   | .regularize input => do mkAppM ``Frontend.Term.regularize #[← termExpr input]
+
+meta def entryExpr (entry : Frontend.Entry) : MetaM Expr := do
+  mkAppM ``Frontend.Entry.mk
+    #[← termExpr entry.term, ← mkAppM ``NodeId.mk #[mkNatLit entry.node.index]]
 
 meta def resultExpr (config : Frontend.Config) (sourceCount : Nat)
     (term : Frontend.Term) : MetaM Expr := do
@@ -447,18 +497,16 @@ meta def defaultConfig : Frontend.Config :=
   { rule :=
       { endpoint := { maxEndpointHeight := 256, maxAlignmentShift := 256 }
         powerWork := { maxExponent := 64 }
-        exponent := 2
         precisionLimits :=
           { endpoint := { maxEndpointHeight := 256, maxAlignmentShift := 256 }
             maxPrecisionMagnitude := 64, maxPrecisionBits := 64
             maxTemporaryBits := 512 }
         -- The default working grid is `2⁻¹⁶`; integer-grid regularization loses
         -- elementary reciprocal facts such as `2⁻¹ + 2⁻¹ = 1`.
-        precision := 16
-        constant := 0 }
-    reify := { maxSources := 32, maxOperations := 13, maxNodes := 256, maxDepth := 32 }
+        precision := 16 }
+    reify := { maxSources := 32, maxOperations := 14, maxNodes := 256, maxDepth := 32 }
     proof :=
-      { maxPackages := 1, maxSchemas := 12, maxBodyCells := 1
+      { maxPackages := 1, maxSchemas := 11, maxBodyCells := 1
         maxDependencies := 2, maxChronology := 256 } }
 
 structure RuntimeLimits where
@@ -477,7 +525,7 @@ meta def runtimeLimits (config : Frontend.Config) : RuntimeLimits :=
   let structural := 64 + 8 * nodes + 16 * chronology
   let state : State.Limits :=
     { maxOperations := config.reify.maxOperations, maxNodes := nodes,
-      maxRules := 12, maxRegistryEntries := nodes + 32, maxReplayFormats := 12,
+      maxRules := 11, maxRegistryEntries := nodes + 32, maxReplayFormats := 11,
       maxArity := 2, maxScopeNodes := 0, maxApplications := nodes,
       maxQueueEntries := nodes, maxActions := chronology,
       maxMatcherVisits := 0, matcherBatchSize := 0,
@@ -514,7 +562,7 @@ meta def runtimeLimits (config : Frontend.Config) : RuntimeLimits :=
       maxTransitions := chronology, maxEvents := chronology,
       maxStructuralCells := structural }
   let emit : RuntimeEmit.Limits :=
-    { proof := config.proof, maxSchemas := 12, maxChronology := chronology,
+    { proof := config.proof, maxSchemas := 11, maxChronology := chronology,
       maxExpressionCells := structural * 1024 }
   { executable, runtime, search, result, envelope, controller, adapter, emit }
 
@@ -591,6 +639,21 @@ meta def binaryArguments? (expression : Expr) (name : Name) : Option (Expr × Ex
   if arguments.size < 2 then none else
   some (arguments[arguments.size - 2]!, arguments[arguments.size - 1]!)
 
+/-- Recognize only closed integer literals and a single literal division whose
+positive denominator is a power of two. This is deliberately not a rational
+projector over arbitrary expressions. -/
+meta def dyadicLiteral? (expression : Expr) : Option Dyadic :=
+  if let some value := intLiteral? expression then some (Dyadic.ofInt value)
+  else do
+    let (numeratorExpr, denominatorExpr) ← binaryArguments? expression ``HDiv.hDiv
+    let numerator ← intLiteral? numeratorExpr
+    let denominatorInt ← intLiteral? denominatorExpr
+    if denominatorInt ≤ 0 then none else
+    let denominator := denominatorInt.toNat
+    let shift := Nat.log2 denominator
+    if 2 ^ shift != denominator then none else
+    some ((Dyadic.ofInt numerator) >>> (shift : Int))
+
 meta def unaryArgument? (expression : Expr) (name : Name) : Option Expr := do
   if expression.getAppFn.constName? != some name then none else
   expression.getAppArgs.back?
@@ -605,11 +668,9 @@ meta def parseTermAux (config : Frontend.Config) (expression : Expr)
   | 0 => throwError "interval: expression exceeded the reification depth limit"
   | fuel + 1 => do
     ensureReal expression
-    if let some value := intLiteral? expression then
-      if Dyadic.ofInt value == config.rule.constant then
-        return state.computed .constant expression
-      else
-        throwError "interval: this real literal is not the configured constant"
+    if let some value := dyadicLiteral? expression then
+      let result := .dyadic value
+      return (result, state.record result expression)
     if let some input := unaryArgument? expression ``Neg.neg then
       let (term, state) ← parseTermAux config input state fuel
       let result := .neg term
@@ -641,10 +702,12 @@ meta def parseTermAux (config : Frontend.Config) (expression : Expr)
     if let some (input, exponent) := binaryArguments? expression ``HPow.hPow then
       let some value := natLiteral? exponent
         | throwError "interval: power exponent is not a natural literal"
-      unless value == config.rule.exponent do
-        throwError "interval: expected configured power {config.rule.exponent}, got {value}"
       let (term, state) ← parseTermAux config input state fuel
-      let result := .pow term
+      let exponentTerm := .natural value
+      let exponentReal ← mkAppOptM ``Nat.cast
+        #[some (mkConst ``Real), none, some (mkNatLit value)]
+      let state := state.record exponentTerm exponentReal
+      let result := .pow term value
       return state.computed result expression
     if let some input := unaryArgument? expression ``abs then
       let (term, state) ← parseTermAux config input state fuel
@@ -759,6 +822,10 @@ meta def realIntCast (value : Int) : MetaM Expr :=
   mkAppOptM ``Int.cast
     #[some (mkConst ``Real), none, some (mkIntLit value)]
 
+meta def realNatCast (value : Nat) : MetaM Expr :=
+  mkAppOptM ``Nat.cast
+    #[some (mkConst ``Real), none, some (mkNatLit value)]
+
 meta def normNumProof (proposition : Expr) : MetaM Expr := do
   let result ← Mathlib.Meta.NormNum.eval proposition
   unless result.expr.isConstOf ``True do
@@ -766,6 +833,15 @@ meta def normNumProof (proposition : Expr) : MetaM Expr := do
   let proof ← mkOfEqTrue (← result.getProof)
   let emitter : Proof.Emitter Expr := { emit := pure }
   Proof.emitChecked emitter proof proposition
+
+meta def dyadicProof (literal : Dyadic) (expression : Expr) : MetaM Expr := do
+  let quotedLiteral ← Rule.Runtime.Quote.dyadicExpr literal
+  let rational := literal.toRat
+  let quotient ← mkAppM ``HDiv.hDiv
+    #[← realIntCast rational.num, ← realNatCast rational.den]
+  let unfold ← mkAppM ``Rule.toReal_rat #[quotedLiteral]
+  let normalized ← normNumProof (← mkAppM ``Eq #[quotient, expression])
+  mkAppM ``Eq.trans #[unfold, normalized]
 
 meta def endpointProof (endpoint : Expr) (value : Int) : MetaM Expr := do
   let proposition ← mkAppM ``Eq #[endpoint, ← realIntCast value]
@@ -857,25 +933,13 @@ private meta def evalProofCached (config : Frontend.Config) (parsed : ParseState
         mkAppOptM ``Eval.source
           #[some ruleConfig, some values, some (mkNatLit index), some source,
             some lookupProof]
-    | .constant => do
-        let some value := intLiteral? expression
-          | throwError "interval: configured constant is not an integer literal"
-        let quotedConstant ← Rule.Runtime.Quote.dyadicExpr config.rule.constant
-        let rationalEq ← mkDecideProof (← mkAppM ``Eq
-          #[toExpr config.rule.constant.toRat, toExpr (value : Rat)])
-        let castEqual ← mkAppOptM ``toRealEqIntCast
-          #[some quotedConstant, some (mkIntLit value), some rationalEq]
-        let realCast ← realIntCast value
-        let literalEqual ← normNumProof (← mkAppM ``Eq #[realCast, expression])
-        let equal ← mkAppM ``Eq.trans #[castEqual, literalEqual]
-        mkAppOptM ``Eval.constantMk
-          #[some (← Rule.Runtime.Quote.endpointExpr config.rule.endpoint),
-            some (← Rule.Runtime.Quote.powLimitsExpr config.rule.powerWork),
-            some (mkNatLit config.rule.exponent),
-            some (← Rule.Runtime.Quote.precisionLimitsExpr config.rule.precisionLimits),
-            some (mkIntLit config.rule.precision), some quotedConstant,
-            some (← Rule.Runtime.Quote.emptyMeaningsExpr), some values, some expression,
-            some equal]
+    | .dyadic literal => do
+        let quotedLiteral ← Rule.Runtime.Quote.dyadicExpr literal
+        let equal ← dyadicProof literal expression
+        mkAppOptM ``Eval.dyadic
+          #[some ruleConfig, some values, some quotedLiteral, some expression, some equal]
+    | .natural _ =>
+        throwError "interval: internal natural row cannot be a real expression root"
     | .neg input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: negated term has no Lean expression"
@@ -930,7 +994,7 @@ private meta def evalProofCached (config : Frontend.Config) (parsed : ParseState
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
             some leftProof, some rightProof]
-    | .pow input => do
+    | .pow input exponent => do
         let some inputValue := parsed.expression? input
           | throwError "interval: powered term has no Lean expression"
         let (inputProof, nextCache) ←
@@ -938,7 +1002,7 @@ private meta def evalProofCached (config : Frontend.Config) (parsed : ParseState
         cache := nextCache
         mkAppOptM ``Eval.pow
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some inputProof]
+            some (mkNatLit exponent), some inputValue, some inputProof]
     | .abs input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: absolute-value term has no Lean expression"
@@ -1023,7 +1087,70 @@ meta def evalProof (config : Frontend.Config) (parsed : ParseState)
   let ruleConfig ← Rule.Runtime.Quote.configExpr config.rule
   return (← evalProofCached config parsed values ruleConfig {} term).1
 
-meta def runtimeKey : RuntimeProof.Key := { name := "interval-tactic", version := 1 }
+meta def runtimeKey : RuntimeProof.Key := { name := "interval-tactic", version := 2 }
+
+meta def initialHolds (config : Frontend.Config) (parsed : ParseState)
+    (reified : Frontend.Result) (initial : Frontend.InitialContext)
+    (sourceProofs : Array Expr) : MetaM Expr := do
+  let configExpr ← Rule.Runtime.Quote.configExpr config.rule
+  let valuesList ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
+  let values ← mkAppM ``Frontend.valuesAt #[valuesList]
+  let mut holds ← mkAppOptM ``initialNil #[some configExpr, some values]
+  for index in List.range reified.entries.size |>.reverse do
+    let some entry := reified.entries[index]?
+      | throwError "interval: initial entry escaped the reifier"
+    let some row := initial.rows[index]?
+      | throwError "interval: initial row escaped the reifier"
+    let rowExpr ← Quote.initialRowExpr config.rule.endpoint row
+    let entryExpr ← Quote.entryExpr entry
+    let member ← match entry.term with
+      | .source source =>
+          let some proof := sourceProofs[source]?
+            | throwError "interval: source proof escaped the source table"
+          pure proof
+      | .dyadic value =>
+          let some fact := row.fact
+            | throwError "interval: dyadic literal has no exact initial fact"
+          let factExpr ← Quote.intervalExpr config.rule.endpoint fact
+          let checked ← mkDecideProof (← mkAppM ``Eq
+            #[← mkAppM ``Rule.ready?
+                #[← mkAppM ``singletonWithin
+                  #[← Rule.Runtime.Quote.endpointExpr config.rule.endpoint,
+                    ← Rule.Runtime.Quote.dyadicExpr value]],
+              ← mkAppM ``Option.some #[factExpr]])
+          mkAppOptM ``Frontend.dyadic_contains
+            #[some configExpr, some values, some (← Rule.Runtime.Quote.dyadicExpr value),
+              some factExpr, some checked]
+      | .natural value =>
+          let some fact := row.fact
+            | throwError "interval: natural literal has no exact initial fact"
+          let factExpr ← Quote.intervalExpr config.rule.endpoint fact
+          let dyadic ← mkAppM ``Dyadic.ofInt #[mkIntLit value]
+          let checked ← mkDecideProof (← mkAppM ``Eq
+            #[← mkAppM ``Rule.ready? #[← mkAppM ``singletonWithin
+                #[← Rule.Runtime.Quote.endpointExpr config.rule.endpoint, dyadic]],
+              ← mkAppM ``Option.some #[factExpr]])
+          mkAppOptM ``Frontend.natural_contains
+            #[some configExpr, some values, some (mkNatLit value), some factExpr,
+              some checked]
+      | _ => do
+          let evaluated ← mkAppM ``Frontend.Term.eval
+            #[configExpr, values, ← Quote.termExpr entry.term]
+          mkAppM ``Frontend.whole_contains #[evaluated]
+    let rowNode ← mkAppM ``Frontend.InitialRow.node #[rowExpr]
+    let entryNode ← mkAppM ``Frontend.Entry.node #[entryExpr]
+    let node ← mkDecideProof (← mkAppM ``Eq #[rowNode, entryNode])
+    let rowFact ← mkAppM ``Frontend.InitialRow.fact #[rowExpr]
+    let selected ← mkAppM ``Option.getD #[rowFact, mkConst ``Hex.Interval.whole]
+    let evaluated ← mkAppM ``Frontend.Term.eval
+      #[configExpr, values, ← mkAppM ``Frontend.Entry.term #[entryExpr]]
+    let expectedMember ← mkAppM ``Hex.Interval.Contains #[selected, evaluated]
+    let emitter : Proof.Emitter Expr := { emit := pure }
+    let member ← Proof.emitChecked emitter member expectedMember
+    holds ← mkAppOptM ``initialCons
+      #[some configExpr, some values, some rowExpr, some entryExpr,
+        none, none, some node, some member, some holds]
+  pure holds
 
 meta def checkedValue (checked : Expr) : MetaM (Expr × Expr) := do
   let option ← mkAppM ``Except.toOption #[checked]
@@ -1036,6 +1163,7 @@ structure RuntimeResult (config : Rule.Config) where
     Rule.Runtime.Cause (List Nat)
   output : Hex.Interval
   chronology : Nat
+  initial : Frontend.InitialContext
 
 private meta def liftRuntimeExcept {ε α : Type} : Except ε α → Except ε (ULift.{1, 0} α)
   | .error error => .error error
@@ -1069,18 +1197,21 @@ private meta def stoppedMessage
 /-! Execute and settle the exact typed runtime chronology. Keeping this phase
 in `Except` permits its sealed `Type 1` handles to remain outside `MetaM`. -/
 meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
-    (sourceFacts : Array Hex.Interval) : Except String (RuntimeResult config.rule) := do
+    (initial : Frontend.InitialContext) : Except String (RuntimeResult config.rule) := do
   let limits := runtimeLimits config
   let registry ← Rule.Runtime.buildEmitWithin limits.executable limits.emit runtimeKey
       config.rule reified.program |>.mapError fun error =>
         s!"runtime registry failed: {repr error}"
-  let facts := reified.facts sourceFacts
+  let scope : Policy.ScopeId := { index := 0 }
+  let preflight := (← liftRuntimeExcept <|
+    (Frontend.inputInitialWithin config scope reified initial Hex.Interval.whole
+      |>.mapError fun error => s!"initial input failed: {repr error}")).down
+  let facts := preflight.facts
   let branch := (← liftRuntimeExcept <|
     (State.Branch.startWithin limits.executable.state reified.program facts
       |>.mapError fun error => s!"runtime branch failed: {repr error}")).down
   let runtime ← Runtime.State.startWithin limits.runtime registry.runtime.assembly branch
     |>.mapError fun error => s!"runtime start failed: {repr error}"
-  let scope : Policy.ScopeId := { index := 0 }
   let tree := (← liftRuntimeExcept <|
     (Search.Result.startWithin limits.result runtimeMeasure scope branch
       |>.mapError fun error => s!"retained tree start failed: {repr error}")).down
@@ -1099,7 +1230,7 @@ meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
   let some outputInterval := controller.runtime.branch.factAt? seen
     | throw "target fact escaped the runtime branch"
   let input := (← liftRuntimeExcept <|
-    (Frontend.inputWithin config scope reified sourceFacts outputInterval
+    (Frontend.inputInitialWithin config scope reified initial outputInterval
       |>.mapError fun error => s!"input construction failed: {repr error}")).down
   let active ← RuntimeEmit.Active.startWithin registry input controller
     |>.mapError fun error => s!"emitter start failed: {repr error}"
@@ -1107,13 +1238,13 @@ meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
     |>.mapError fun error => s!"target settlement failed: {repr error}"
   let checked ← RuntimeEmit.Lineage.quoteWithin limits.adapter runtimeMeasure lineage
     |>.mapError fun error => s!"retained quotation failed: {repr error}"
-  pure { checked, output := outputInterval, chronology := plan.length }
+  pure { checked, output := outputInterval, chronology := plan.length, initial }
 
 /-! Emit the checked runtime result and close its exact quoted input against
 the caller's source proofs. -/
 meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
     (term : Frontend.Term) (parsed : ParseState) (reified : Frontend.Result)
-    (sourceIntervals sourceProofs : Array Expr) (runtime : RuntimeResult config.rule) :
+    (sourceProofs : Array Expr) (runtime : RuntimeResult config.rule) :
     MetaM Bound := do
   let limits := runtimeLimits config
   let emitted : RuntimeEmit.Emitted ←
@@ -1125,7 +1256,7 @@ meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
   let resultExpr ← Quote.resultExpr config parsed.sources.size term
   let valuesListExpr ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
   let valuesExpr ← mkAppM ``Frontend.valuesAt #[valuesListExpr]
-  let sourceFactsExpr ← Quote.arrayExpr (mkConst ``Hex.Interval) sourceIntervals.toList
+  let initialExpr ← Quote.initialContextExpr config.rule.endpoint runtime.initial
   let modelCheck ← mkAppM ``Frontend.modelWithin #[configExpr, valuesExpr, resultExpr]
   let (_, modelSuccess) ← checkedValue modelCheck
   let model ← mkAppM ``Frontend.modelOfCheck #[modelCheck, modelSuccess]
@@ -1136,19 +1267,28 @@ meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
   let inputTargetNode ← mkAppM ``Proof.NodeFact.node #[inputTarget]
   let resultTarget ← mkAppM ``Frontend.Result.target #[resultExpr]
   let targetEq ← mkDecideProof (← mkAppM ``Eq #[inputTargetNode, resultTarget])
-  let sourceSizeExpr ← mkAppM ``Array.size #[sourceFactsExpr]
-  let resultSourceCount ← mkAppM ``Frontend.Result.sourceCount #[resultExpr]
-  let sourceSize ← mkDecideProof (← mkAppM ``Eq #[sourceSizeExpr, resultSourceCount])
   let inputFacts ← mkAppM ``Proof.Input.facts #[emitted.input]
-  let resultFacts ← mkAppM ``Frontend.Result.facts #[resultExpr, sourceFactsExpr]
-  let factsEq ← mkDecideProof (← mkAppM ``Eq #[inputFacts, resultFacts])
-  let mut holds := mkConst ``Sources.nil
-  for proof in sourceProofs.toList.reverse do
-    holds ← mkAppM ``Sources.cons #[proof, holds]
-  let sourceHolds ← mkAppM ``Frontend.SourcesContain.ofForall₂ #[holds]
-  let candidate ← mkAppM ``Frontend.closeSources
+  let initialFacts ← mkAppM ``Frontend.InitialContext.facts #[initialExpr]
+  let factsEq ← mkDecideProof (← mkAppM ``Eq #[inputFacts, initialFacts])
+  let holds ← initialHolds config parsed reified runtime.initial sourceProofs
+  let ruleConfigExpr ← Rule.Runtime.Quote.configExpr config.rule
+  let rowExprs ← runtime.initial.rows.toList.mapM
+    (Quote.initialRowExpr config.rule.endpoint)
+  let rowsExpr ← Quote.listExpr (mkConst ``Frontend.InitialRow) rowExprs
+  let entryExprs ← reified.entries.toList.mapM Quote.entryExpr
+  let entriesExpr ← Quote.listExpr (mkConst ``Frontend.Entry) entryExprs
+  let initialRows ← mkAppM ``Frontend.InitialContext.rows #[initialExpr]
+  let initialRowsList ← mkAppM ``Array.toList #[initialRows]
+  let rowsEq ← mkDecideProof (← mkAppM ``Eq #[initialRowsList, rowsExpr])
+  let resultEntries ← mkAppM ``Frontend.Result.entries #[resultExpr]
+  let resultEntriesList ← mkAppM ``Array.toList #[resultEntries]
+  let entriesEq ← mkDecideProof (← mkAppM ``Eq #[resultEntriesList, entriesExpr])
+  let initialHolds ← mkAppOptM ``initialCast
+    #[some initialExpr, some ruleConfigExpr, some valuesExpr, some resultExpr,
+      some rowsExpr, some entriesExpr, some rowsEq, some entriesEq, some holds]
+  let candidate ← mkAppM ``Frontend.closeInitial
     #[configExpr, resultExpr, valuesExpr, model, emitted.input, emitted.evidence,
-      programEq, targetEq, sourceFactsExpr, sourceSize, factsEq, sourceHolds]
+      programEq, targetEq, initialExpr, factsEq, initialHolds]
   let candidate ← mkAppM ``Eval.contains #[candidate, ← evalProof config parsed term]
   let canonicalExpr ← Quote.intervalExpr config.rule.endpoint runtime.output
   let canonicalExpected ← mkAppM ``Hex.Interval.Contains #[canonicalExpr, expression]
@@ -1166,7 +1306,6 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
     | .ok result => pure result
     | .error error => throwError "interval: reification failed: {repr error}"
   let mut sourceFacts : Array Hex.Interval := #[]
-  let mut sourceIntervals : Array Expr := #[]
   let mut sourceProofs : Array Expr := #[]
   for index in [0:parsed.sources.size] do
     let some source := parsed.sources[index]?
@@ -1174,19 +1313,21 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
     let some _ := reified.sourceNode? index
       | throwError "interval: selected source is absent from the target graph"
     let cuts ← collectCuts source
-    let (interval, intervalExpr, proof) ← sourceProof config source cuts
+    let (interval, _, proof) ← sourceProof config source cuts
     sourceFacts := sourceFacts.push interval
-    sourceIntervals := sourceIntervals.push intervalExpr
     sourceProofs := sourceProofs.push proof
-  match prepareRuntime config reified sourceFacts with
+  let initial ← match reified.seedInitialWithin config.rule sourceFacts with
+    | .ok initial => pure initial
+    | .error error => throwError "interval: initial facts failed: {repr error}"
+  match prepareRuntime config reified initial with
   | .error error => throwError "interval: {error}"
   | .ok runtime =>
-      emitBoundWith config expression term parsed reified sourceIntervals sourceProofs runtime
+      emitBoundWith config expression term parsed reified sourceProofs runtime
 
 inductive GoalKind where
   | lower (value : Int) (endpoint : Expr) (strict : Bool)
   | upper (value : Int) (endpoint : Expr) (strict : Bool)
-  | equality (value : Int) (endpoint : Expr) (flipped : Bool)
+  | equality (value : Dyadic) (endpoint : Expr) (flipped : Bool)
 
 structure Claim where
   expression : Expr
@@ -1214,13 +1355,13 @@ meta def parseClaim (target : Expr) : MetaM Claim := do
     if arguments.size < 2 then throwError "interval: malformed equality target"
     let left := arguments[arguments.size - 2]!
     let right := arguments[arguments.size - 1]!
-    if let some value := intLiteral? right then
+    if let some value := dyadicLiteral? right then
       ensureReal left
       return { expression := left, kind := .equality value right false }
-    if let some value := intLiteral? left then
+    if let some value := dyadicLiteral? left then
       ensureReal right
       return { expression := right, kind := .equality value left true }
-    throwError "interval: equality target needs an integer endpoint"
+    throwError "interval: equality target needs an exact dyadic endpoint"
   throwError "interval: expected a real inequality, equality, or conjunction"
 
 meta def ratIntCast (value : Int) : MetaM Expr :=
@@ -1291,18 +1432,10 @@ meta def closeClaim (config : Frontend.Config) (bound : Bound) (claim : Claim)
         | .finite left false, .finite right false =>
             unless left == right do
               throwError "interval: derived interval is not a singleton"
-            unless left.toRat == (value : Rat) do
+            unless left == value do
               throwError "interval: derived endpoint does not prove the requested target"
-            let equalityRat ← do
-              let proposition ← mkAppM ``Eq #[toExpr left.toRat, toExpr (value : Rat)]
-              mkDecideProof proposition
-            let endpointEq ← mkAppOptM ``toRealEqIntCast
-              #[some (← Quote.dyadicExpr left), some (mkIntLit value), some equalityRat]
-            let integerProof ← mkAppM ``equalityOfMem #[shape, bound.proof, endpointEq]
-            let targetEq ← endpointProof targetEndpoint value
-            let equivalence ← mkAppOptM ``castEquality
-              #[some targetEndpoint, some claim.expression, some (mkIntLit value), some targetEq]
-            let proof ← mkAppM ``Iff.mpr #[equivalence, integerProof]
+            let endpointEq ← dyadicProof left targetEndpoint
+            let proof ← mkAppM ``equalityOfMem #[shape, bound.proof, endpointEq]
             if flipped then mkAppM ``Eq.symm #[proof] else pure proof
         | _, _ => throwError "interval: derived interval is not a closed singleton"
   let emitter : Proof.Emitter Expr := { emit := pure }

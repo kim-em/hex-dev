@@ -12,7 +12,7 @@ import HexIntervalMathlib.RuntimeProofConformance
 # Typed runtime expression-emission conformance
 
 The theorem canary below is installed only from the expression returned by the
-sealed root-target runtime emitter. Its chronology contains all twelve built-in
+sealed root-target runtime emitter. Its chronology contains all eleven built-in
 arithmetic rules, including binary applications with repeated input nodes.
 The imported runtime-proof conformance owns the constructible action, body,
 proposed/installed fact, event-order, and event-role mutations before a checked
@@ -157,11 +157,11 @@ example : RuntimeEmit.Emitted :=
 end EmittedPrivateConstruction
 
 def emitLimits : RuntimeEmit.Limits :=
-  { proof := RuntimeRuleConformance.proofLimits, maxSchemas := 12, maxChronology := 12,
+  { proof := RuntimeRuleConformance.proofLimits, maxSchemas := 11, maxChronology := 11,
     maxExpressionCells := 1000000 }
 
 def policyLimits : Policy.Limits :=
-  { maxOffers := 12, maxBytes := 4096, maxPairs := 144, maxWork := 4096,
+  { maxOffers := 11, maxBytes := 4096, maxPairs := 144, maxWork := 4096,
     maxScore := 0 }
 
 def traceLimits : Trace.Limit :=
@@ -193,8 +193,14 @@ def quotedWhole : Hex.Interval :=
   Rule.Runtime.Quote.getValue
     (ofRawWithin RuntimeRuleConformance.endpoint (.bounds .unbounded .unbounded)) (by decide)
 
+def quotedTwo : Hex.Interval :=
+  Rule.Runtime.Quote.getValue
+    (ofRawWithin RuntimeRuleConformance.endpoint
+      (.bounds (.finite (RuntimeRuleConformance.d 2) false)
+        (.finite (RuntimeRuleConformance.d 2) false))) (by decide)
+
 def quotedFacts : Array Hex.Interval :=
-  #[quotedPoint, quotedWhole, quotedWhole, quotedWhole, quotedWhole, quotedWhole,
+  #[quotedPoint, quotedTwo, quotedWhole, quotedWhole, quotedWhole, quotedWhole,
     quotedWhole, quotedWhole, quotedWhole, quotedWhole, quotedWhole, quotedWhole,
     quotedWhole]
 
@@ -355,7 +361,7 @@ elab "runtime_emit_canary" : tactic => do
   goal.assign emitted.evidence
   replaceMainGoal []
 
-/-- All twelve built-in runtime actions are load-bearing in this evidence. -/
+/-- All eleven built-in runtime actions are load-bearing in this evidence. -/
 def allBuiltinsEvidence : Proof.Evidence
     ((Rule.semantics RuntimeRuleConformance.config).Entails input.program
       (Proof.initialBase input) input.target) := by
@@ -487,9 +493,9 @@ elab "runtime_emit_failure_guards" : tactic => do
   expect "schema expression transplant"
     (← emitWith emitLimits (replaceFirst package wrongSchema)) (.handleKey first.key)
   expect "schema count one-under"
-    (← emitWith { emitLimits with maxSchemas := 11 } package) (.resource .schemas)
+    (← emitWith { emitLimits with maxSchemas := 10 } package) (.resource .schemas)
   expect "chronology count one-under"
-    (← emitWith { emitLimits with maxChronology := 11 } package) (.resource .chronology)
+    (← emitWith { emitLimits with maxChronology := 10 } package) (.resource .chronology)
   expect "body count one-under"
     (← emitWith { emitLimits with proof :=
       { RuntimeRuleConformance.proofLimits with maxBodyCells := 0 } } package)

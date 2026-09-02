@@ -32,12 +32,18 @@ def ready (raw : Raw) : Hex.Interval :=
 def singleton (value : Int) : Hex.Interval :=
   ready (.bounds (.finite (d value) false) (.finite (d value) false))
 
+def singletonDyadic (value : Dyadic) : Hex.Interval :=
+  ready (.bounds (.finite value false) (.finite value false))
+
+def closed (lower upper : Dyadic) : Hex.Interval :=
+  ready (.bounds (.finite lower false) (.finite upper false))
+
 def config : Rule.Config :=
-  { endpoint, powerWork := { maxExponent := 8 }, exponent := 2,
+  { endpoint, powerWork := { maxExponent := 8 },
     precisionLimits :=
       { endpoint, maxPrecisionMagnitude := 64, maxPrecisionBits := 64,
         maxTemporaryBits := 128 },
-    precision := 0, constant := d 5 }
+    precision := 0 }
 
 def node (op : Nat) (args : List Nat) : Node :=
   { domain := realDomain, op := { index := op }, args := args.map fun index => { index } }
@@ -63,6 +69,9 @@ def seen (node : NodeId) (version : Nat := 0) : SeenVersion :=
 
 #guard program.check
 #guard Rule.operations == program.operations
+#guard Rule.operations.size == 14
+#guard Rule.registrations.size == 11
+#guard (Rule.package config).facts.size == 11
 
 def opaqueOp : Operation :=
   { key := { name := "conformance.opaque" }, inputs := [realDomain], output := realDomain }
@@ -83,6 +92,13 @@ def quotientFact := singleton 2
 def regularizedFact := singleton 2
 def combinedFact := singleton (-1)
 def finalFact := singleton 0
+def half : Dyadic := .ofIntWithPrec 1 1
+
+#guard closedNat? (singleton 2) == some 2
+#guard closedNat? (closed (d 1) (d 2)) == none
+#guard closedNat? (singletonDyadic half) == none
+#guard closedNat? (singleton (-1)) == none
+
 def initialFacts : Array Hex.Interval :=
   #[xFact, yFact, Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
     Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
@@ -109,10 +125,10 @@ def action (serial ruleIndex : Nat) (key : RuleKey) (kind : ActionKind)
 def addAction := action 0 1 addKey .forward sum [seen x, seen y]
 def subAction := action 1 2 subKey .forward difference [seen x, seen y]
 def mulAction := action 2 3 mulKey .forward product [seen sum 1, seen difference 1]
-def invAction := action 3 9 invKey .forward inverse [seen x]
-def divAction := action 4 10 divKey .forward quotient [seen y, seen x]
+def invAction := action 3 8 invKey .forward inverse [seen x]
+def divAction := action 4 9 divKey .forward quotient [seen y, seen x]
 def regularizeAction :=
-  action 5 11 regularizeKey .forward regularized [seen quotient 1]
+  action 5 10 regularizeKey .forward regularized [seen quotient 1]
 def combinedAction := action 6 1 addKey .forward combined [seen product 1, seen regularized 1]
 def finalAction := action 7 1 addKey .forward final [seen combined 1, seen inverse 1]
 
@@ -155,7 +171,7 @@ def branch : State.Branch Hex.Interval Rule.Cause :=
 #guard (Rule.quote branch).length == 8
 
 def proofLimits : Proof.Limits :=
-  { maxPackages := 1, maxSchemas := 12, maxBodyCells := 1,
+  { maxPackages := 1, maxSchemas := 11, maxBodyCells := 1,
     maxDependencies := 2, maxChronology := 8 }
 
 #guard
@@ -379,7 +395,7 @@ def dependencyShort : Proof.Limits := { proofLimits with maxDependencies := 1 }
       | .error .dependencyLimit => true
       | _ => false
 
-def schemaShort : Proof.Limits := { proofLimits with maxSchemas := 11 }
+def schemaShort : Proof.Limits := { proofLimits with maxSchemas := 10 }
 #guard
   match Rule.buildWithin schemaShort config program with
   | .error (.registry .schemaLimit) => true

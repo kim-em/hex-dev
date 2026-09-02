@@ -23,12 +23,10 @@ public import HexIntervalMathlib.Regularize
 # Built-in arithmetic proof rules
 
 This is the first supported arithmetic package for the generic proof replay
-boundary. A package fixes its endpoint, power, and precision resources, one
-natural exponent, and one dyadic constant. Every built-in power node in that
-package therefore uses the same exponent, and every built-in constant node
-uses the same value. Duplicate package registration and operation keys are
-rejected, so a second copy cannot supply another exponent or constant under
-the same stable keys.
+boundary. A package fixes its endpoint, power, and precision resources.
+Dyadic and natural literals are value-agnostic program rows whose exact values
+are authenticated by node-indexed initial facts. Power consumes both a real
+base and a natural-domain exponent row.
 Runtime search may propose facts and recipe bodies, but the package schemas
 recompute the public checked interval operation and prove its one-way real
 enclosure.
@@ -43,21 +41,18 @@ namespace Hex.Interval.Rule
 
 open Proof
 
-/-- Resources and the single natural exponent and dyadic constant owned by one
-immutable arithmetic package. The built-in power and constant operation keys
-cannot express multiple such parameters in the same registry. -/
+/-- Resources owned by one immutable arithmetic package. -/
 structure Config where
   endpoint : EndpointLimit
   powerWork : Arithmetic.PowLimits
-  exponent : Nat
   precisionLimits : Arithmetic.PrecisionLimits
   precision : Precision
-  constant : Dyadic
   /-- Authenticated meanings owned by independently assembled packages. They
   follow the stable built-in prefix and have no built-in rule authority. -/
   extraMeanings : Array (Program.Meaning ℝ) := #[]
 
 def realDomain : DomainId := { index := 0 }
+def natDomain : DomainId := { index := 1 }
 
 def sourceOp : Operation :=
   { key := { name := "hex.interval.source" }, inputs := [], output := realDomain }
@@ -70,26 +65,31 @@ def subOp : Operation :=
 def mulOp : Operation :=
   { key := { name := "hex.interval.mul" }, inputs := [realDomain, realDomain], output := realDomain }
 def powOp : Operation :=
-  { key := { name := "hex.interval.pow.nat" }, inputs := [realDomain], output := realDomain }
+  { key := { name := "hex.interval.pow.nat", version := 2 },
+    inputs := [realDomain, natDomain], output := realDomain }
 def absOp : Operation :=
   { key := { name := "hex.interval.abs" }, inputs := [realDomain], output := realDomain }
 def minOp : Operation :=
   { key := { name := "hex.interval.min" }, inputs := [realDomain, realDomain], output := realDomain }
 def maxOp : Operation :=
   { key := { name := "hex.interval.max" }, inputs := [realDomain, realDomain], output := realDomain }
-def constantOp : Operation :=
-  { key := { name := "hex.interval.constant" }, inputs := [], output := realDomain }
+def dyadicLiteralOp : Operation :=
+  { key := { name := "hex.interval.literal.dyadic", version := 1 },
+    inputs := [], output := realDomain }
 def invOp : Operation :=
   { key := { name := "hex.interval.inv" }, inputs := [realDomain], output := realDomain }
 def divOp : Operation :=
   { key := { name := "hex.interval.div" }, inputs := [realDomain, realDomain], output := realDomain }
 def regularizeOp : Operation :=
   { key := { name := "hex.interval.regularize" }, inputs := [realDomain], output := realDomain }
+def natLiteralOp : Operation :=
+  { key := { name := "hex.interval.literal.nat", version := 1 },
+    inputs := [], output := natDomain }
 
 /-- Exact operation order owned by the built-in package. -/
 def operations : Array Operation :=
-  #[sourceOp, negOp, addOp, subOp, mulOp, powOp, absOp, minOp, maxOp, constantOp,
-    invOp, divOp, regularizeOp]
+  #[sourceOp, negOp, addOp, subOp, mulOp, powOp, absOp, minOp, maxOp, dyadicLiteralOp,
+    invOp, divOp, regularizeOp, natLiteralOp]
 
 def sourceMeaning : Program.Meaning ℝ := { operation := sourceOp, relation := fun _ _ => True }
 def negMeaning : Program.Meaning ℝ :=
@@ -100,27 +100,31 @@ def subMeaning : Program.Meaning ℝ :=
   { operation := subOp, relation := fun xs z => ∃ x y, xs = [x, y] ∧ z = x - y }
 def mulMeaning : Program.Meaning ℝ :=
   { operation := mulOp, relation := fun xs z => ∃ x y, xs = [x, y] ∧ z = x * y }
-def powMeaning (exponent : Nat) : Program.Meaning ℝ :=
-  { operation := powOp, relation := fun xs z => ∃ x, xs = [x] ∧ z = x ^ exponent }
+def powMeaning : Program.Meaning ℝ :=
+  { operation := powOp
+    relation := fun xs z => ∃ base : ℝ, ∃ exponent : Nat,
+      xs = [base, (exponent : ℝ)] ∧ z = base ^ exponent }
 def absMeaning : Program.Meaning ℝ :=
   { operation := absOp, relation := fun xs z => ∃ x, xs = [x] ∧ z = |x| }
 def minMeaning : Program.Meaning ℝ :=
   { operation := minOp, relation := fun xs z => ∃ x y, xs = [x, y] ∧ z = min x y }
 def maxMeaning : Program.Meaning ℝ :=
   { operation := maxOp, relation := fun xs z => ∃ x y, xs = [x, y] ∧ z = max x y }
-def constantMeaning (value : Dyadic) : Program.Meaning ℝ :=
-  { operation := constantOp, relation := fun xs z => xs = [] ∧ z = toReal value }
+def dyadicLiteralMeaning : Program.Meaning ℝ :=
+  { operation := dyadicLiteralOp, relation := fun xs _ => xs = [] }
 def invMeaning : Program.Meaning ℝ :=
   { operation := invOp, relation := fun xs z => ∃ x, xs = [x] ∧ z = x⁻¹ }
 def divMeaning : Program.Meaning ℝ :=
   { operation := divOp, relation := fun xs z => ∃ x y, xs = [x, y] ∧ z = x / y }
 def regularizeMeaning : Program.Meaning ℝ :=
   { operation := regularizeOp, relation := fun xs z => ∃ x, xs = [x] ∧ z = x }
+def natLiteralMeaning : Program.Meaning ℝ :=
+  { operation := natLiteralOp, relation := fun xs _ => xs = [] }
 
 def builtinMeanings (config : Config) : Array (Program.Meaning ℝ) :=
   #[sourceMeaning, negMeaning, addMeaning, subMeaning, mulMeaning,
-    powMeaning config.exponent, absMeaning, minMeaning, maxMeaning,
-    constantMeaning config.constant, invMeaning, divMeaning, regularizeMeaning]
+    powMeaning, absMeaning, minMeaning, maxMeaning, dyadicLiteralMeaning,
+    invMeaning, divMeaning, regularizeMeaning, natLiteralMeaning]
 
 def meanings (config : Config) : Array (Program.Meaning ℝ) :=
   builtinMeanings config ++ config.extraMeanings
@@ -184,7 +188,6 @@ def powKey : RuleKey := { name := "hex.interval.rule.pow.nat" }
 def absKey : RuleKey := { name := "hex.interval.rule.abs" }
 def minKey : RuleKey := { name := "hex.interval.rule.min" }
 def maxKey : RuleKey := { name := "hex.interval.rule.max" }
-def constantKey : RuleKey := { name := "hex.interval.rule.constant" }
 def invKey : RuleKey := { name := "hex.interval.rule.inv" }
 def divKey : RuleKey := { name := "hex.interval.rule.div" }
 def regularizeKey : RuleKey := { name := "hex.interval.rule.regularize" }
@@ -204,12 +207,10 @@ def registrations : Array Registration :=
     binaryRegistration addKey addOp,
     binaryRegistration subKey subOp,
     binaryRegistration mulKey mulOp,
-    unaryRegistration powKey powOp,
+    binaryRegistration powKey powOp,
     unaryRegistration absKey absOp,
     binaryRegistration minKey minOp,
     binaryRegistration maxKey maxOp,
-    { key := constantKey, head := constantOp.key, kind := .forward,
-      watches := [], writes := [.result] },
     unaryRegistration invKey invOp,
     binaryRegistration divKey divOp,
     unaryRegistration regularizeKey regularizeOp]
@@ -251,15 +252,24 @@ theorem binaryRelation (config : Config) {valuation : NodeId → ℝ}
     subst meaning <;>
     simpa [addMeaning, subMeaning, mulMeaning, minMeaning, maxMeaning] using related
 
-theorem powRelation (config : Config) {valuation : NodeId → ℝ} {node input : NodeId}
+theorem powRelation (config : Config) {valuation : NodeId → ℝ}
+    {node base exponentNode : NodeId}
     (meaning : Program.MeaningAt (meanings config) valuation node
-      { domain := realDomain, op := { index := 5 }, args := [input] }) :
-    valuation node = valuation input ^ config.exponent := by
+      { domain := realDomain, op := { index := 5 }, args := [base, exponentNode] }) :
+    ∃ exponent : Nat, valuation exponentNode = (exponent : ℝ) ∧
+      valuation node = valuation base ^ exponent := by
   rcases meaning with ⟨meaning, found, related⟩
   rw [prefixMeaning config (index := 5) (by simp [builtinMeanings])] at found
   simp [builtinMeanings] at found
   subst meaning
-  simpa [powMeaning] using related
+  change ∃ input : ℝ, ∃ exponent : Nat,
+    [valuation base, valuation exponentNode] = [input, (exponent : ℝ)] ∧
+      valuation node = input ^ exponent at related
+  rcases related with ⟨input, exponent, arguments, output⟩
+  have baseEq : valuation base = input := (List.cons.inj arguments).1
+  have exponentEq : valuation exponentNode = (exponent : ℝ) :=
+    (List.cons.inj (List.cons.inj arguments).2).1
+  exact ⟨exponent, exponentEq, output.trans (congrArg (fun x => x ^ exponent) baseEq.symm)⟩
 
 theorem absRelation (config : Config) {valuation : NodeId → ℝ} {node input : NodeId}
     (meaning : Program.MeaningAt (meanings config) valuation node
@@ -270,16 +280,6 @@ theorem absRelation (config : Config) {valuation : NodeId → ℝ} {node input :
   simp [builtinMeanings] at found
   subst meaning
   simpa [absMeaning] using related
-
-theorem constantRelation (config : Config) {valuation : NodeId → ℝ} {node : NodeId}
-    (meaning : Program.MeaningAt (meanings config) valuation node
-      { domain := realDomain, op := { index := 9 }, args := [] }) :
-    valuation node = toReal config.constant := by
-  rcases meaning with ⟨meaning, found, related⟩
-  rw [prefixMeaning config (index := 9) (by simp [builtinMeanings])] at found
-  simp [builtinMeanings] at found
-  subst meaning
-  simpa [constantMeaning] using related
 
 theorem invRelation (config : Config) {valuation : NodeId → ℝ}
     {node input : NodeId}
@@ -323,6 +323,67 @@ theorem constant_mem {limit : EndpointLimit} {value : Dyadic} {result : Hex.Inte
   change result.view.Contains (toReal value)
   rw [view_singletonWithin_ready checked, contains_normalize]
   exact And.intro le_rfl le_rfl
+
+theorem toReal_ofInt (value : Int) :
+    toReal (Dyadic.ofInt value) = (value : ℝ) := by
+  change (((Dyadic.ofInt value).toRat : Rat) : ℝ) = (value : ℝ)
+  rw [show Dyadic.ofInt value = (value : Dyadic) by rfl, Dyadic.toRat_intCast]
+  norm_num
+
+/-- Expose a dyadic's exact rational numerator and denominator to the
+Mathlib-facing quotation layer. -/
+theorem toReal_rat (value : Dyadic) :
+    toReal value = (value.toRat.num : ℝ) / value.toRat.den := by
+  simp [toReal, Rat.cast_def]
+
+theorem eq_of_singletonValue {raw : Raw} {value : Dyadic} {x : ℝ}
+    (shape : raw.singletonValue? = some value) (member : raw.Contains x) :
+    x = toReal value := by
+  cases raw with
+  | empty => simp [Raw.singletonValue?] at shape
+  | bounds lower upper =>
+      cases lower with
+      | unbounded => simp [Raw.singletonValue?] at shape
+      | finite lower lowerStrict =>
+          cases upper with
+          | unbounded => simp [Raw.singletonValue?] at shape
+          | finite upper upperStrict =>
+              cases lowerStrict <;> cases upperStrict <;>
+                simp [Raw.singletonValue?] at shape member
+              rcases shape with ⟨rfl, rfl⟩
+              exact le_antisymm member.2 member.1
+
+/-- Decode exactly a closed singleton containing a nonnegative integer. -/
+def closedNat? (fact : Hex.Interval) : Option Nat := do
+  let value ← fact.view.singletonValue?
+  let rational := value.toRat
+  if rational.den = 1 then
+    if 0 ≤ rational.num then some rational.num.toNat else none
+  else none
+
+theorem closedNat?_sound {fact : Hex.Interval} {value : ℝ} {exponent : Nat}
+    (found : closedNat? fact = some exponent) (member : fact.Contains value) :
+    value = (exponent : ℝ) := by
+  unfold closedNat? at found
+  generalize shape : fact.view.singletonValue? = singleton at found
+  cases singleton with
+  | none => simp at found
+  | some dyadic =>
+      simp only [Option.bind_eq_bind, Option.bind_some] at found
+      split at found
+      · next denEq =>
+        split at found
+        · next numNonnegative =>
+          simp at found
+          subst exponent
+          have exact := eq_of_singletonValue shape member
+          rw [exact]
+          change ((dyadic.toRat : Rat) : ℝ) = ((dyadic.toRat.num.toNat : Nat) : ℝ)
+          rw [← Rat.num_div_den dyadic.toRat]
+          simp only [denEq, Nat.cast_one, div_one]
+          exact_mod_cast (Int.toNat_of_nonneg numNonnegative).symm
+        · simp at found
+      · simp at found
 
 -- Concrete schemas keep each semantic relation and checked public operation
 -- visible; an executable recipe tag alone never selects a theorem.
@@ -418,22 +479,35 @@ def maxSchema (config : Config) :=
 def powSchema (config : Config) : Proof.FactSchema (semantics config) :=
   { key := schemaKey powKey, Certificate := Unit, decode := exactBody 5
     prove := fun c _ => match c.assumptions with
-      | [a] =>
+      | [base, exponentFact] =>
         if hn : c.program.node? c.proposed.node = some
-            { domain := realDomain, op := { index := 5 }, args := [a.node] } then
-          match found : arithmeticReady?
-              (powWithin config.endpoint config.powerWork a.fact config.exponent) with
-          | some result =>
-              if equal : result = c.proposed.fact then
-                some ⟨by
-                  subst result
-                  intro v m hs
-                  have hm := powRelation config (nodeMeaning config m hn)
-                  change c.proposed.fact.Contains (v c.proposed.node)
-                  rw [hm]
-                  exact pow_mem_powWithin (arithmeticReady?_eq found) (by
-                    simpa [semantics, Proof.Semantics.ofMeanings] using hs a (by simp))⟩
-              else none
+            { domain := realDomain, op := { index := 5 },
+              args := [base.node, exponentFact.node] } then
+          match exponentFound : closedNat? exponentFact.fact with
+          | some exponent =>
+              match found : arithmeticReady?
+                  (powWithin config.endpoint config.powerWork base.fact exponent) with
+              | some result =>
+                  if equal : result = c.proposed.fact then
+                    some ⟨by
+                      subst result
+                      intro v m hs
+                      have baseMember : base.fact.Contains (v base.node) := by
+                        simpa [semantics, Proof.Semantics.ofMeanings] using hs base (by simp)
+                      have exponentMember : exponentFact.fact.Contains (v exponentFact.node) := by
+                        simpa [semantics, Proof.Semantics.ofMeanings] using
+                          hs exponentFact (by simp)
+                      have exponentValue := closedNat?_sound exponentFound exponentMember
+                      rcases powRelation config (nodeMeaning config m hn) with
+                        ⟨semanticExponent, semanticValue, outputValue⟩
+                      have exponentEq : semanticExponent = exponent := by
+                        apply Nat.cast_injective (R := ℝ)
+                        rw [← semanticValue, exponentValue]
+                      change c.proposed.fact.Contains (v c.proposed.node)
+                      rw [outputValue, exponentEq]
+                      exact pow_mem_powWithin (arithmeticReady?_eq found) baseMember⟩
+                  else none
+              | none => none
           | none => none
         else none
       | _ => none }
@@ -455,27 +529,6 @@ def absSchema (config : Config) : Proof.FactSchema (semantics config) :=
                   rw [hm]
                   exact abs_mem_absWithin (ready?_eq found) (by
                     simpa [semantics, Proof.Semantics.ofMeanings] using hs a (by simp))⟩
-              else none
-          | none => none
-        else none
-      | _ => none }
-
-def constantSchema (config : Config) : Proof.FactSchema (semantics config) :=
-  { key := schemaKey constantKey, Certificate := Unit, decode := exactBody 9
-    prove := fun c _ => match c.assumptions with
-      | [] =>
-        if hn : c.program.node? c.proposed.node = some
-            { domain := realDomain, op := { index := 9 }, args := [] } then
-          match found : ready? (singletonWithin config.endpoint config.constant) with
-          | some result =>
-              if equal : result = c.proposed.fact then
-                some ⟨by
-                  subst result
-                  intro v m _
-                  have hm := constantRelation config (nodeMeaning config m hn)
-                  change c.proposed.fact.Contains (v c.proposed.node)
-                  rw [hm]
-                  exact constant_mem (ready?_eq found)⟩
               else none
           | none => none
         else none
@@ -557,7 +610,7 @@ def package (config : Config) : Proof.Package (semantics config) :=
   { registrations
     facts := #[negSchema config, addSchema config, subSchema config, mulSchema config,
       powSchema config, absSchema config, minSchema config, maxSchema config,
-      constantSchema config, invSchema config, divSchema config,
+      invSchema config, divSchema config,
       regularizeSchema config] }
 
 inductive BuildError where

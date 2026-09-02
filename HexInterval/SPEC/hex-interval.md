@@ -117,7 +117,7 @@ runtime and proof registries, regenerates bounded deterministic offer
 snapshots, and iterates a replaceable policy over the sealed tree/session
 bundle. Its explicit `Controller.Package` conformance route still uses toy
 fact-event callbacks and autonomous application generators. Concrete built-in
-arithmetic is instead supplied by `HexIntervalMathlib.RuntimeRule`: its twelve
+arithmetic is instead supplied by `HexIntervalMathlib.RuntimeRule`: its eleven
 exact handlers generate runtime-owned applications and offers, execute under
 `HexInterval.RuntimeController`, and are jointly sealed against the `Rule`
 schemas by `RuntimeProof`. Raw `(role, schema, body)` quotations remain inert
@@ -125,8 +125,9 @@ until that proof adapter resolves and replays them. `Controller.Executable`
 remains a separate supported fact-only adapter and is not the public tactic's
 typed path.
 
-The first concrete supported theorem registry is the Mathlib arithmetic package for one
-configured constant and natural exponent plus public negation, addition,
+The first concrete supported theorem registry is the Mathlib arithmetic package
+with value-agnostic dyadic and natural literal rows, binary natural power, plus
+public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
 division, and regularization operations. `RuntimeProof` supports exact fact,
 equality, transport, and instance correlation, and `RuntimeController`
