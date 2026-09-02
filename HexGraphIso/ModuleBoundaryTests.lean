@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.IsoLit
+public import HexGraphIso.Separator
 public import HexGraph.Basic
 public meta import Lean
 
@@ -149,6 +150,15 @@ example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 4 1
 
 set_option maxRecDepth 1000000 in
 example : checkKey probeGraph probeCert probeKey = true := by kdecide
+
+/-- The separator closure kernel-reduces: the self-comparison of the
+probe graph evaluates both separator codes and their disagreement
+test to `false`. -/
+example : Hex.GraphIso.sepDiffG probeGraph probeGraph = false := by
+  kdecide
+
+example : Hex.GraphIso.sepRootG probeGraph probeGraph = false := by
+  kdecide
 
 -- the negative tactic route's flat-literal obligation: pins the
 -- kernel closure of flatRows/chunkRows/atD feeding checkNode
