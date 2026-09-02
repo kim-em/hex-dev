@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Ops
+public import HexGraphIso.IsoLit
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.CanonForm
@@ -390,17 +391,65 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
         throwError "graph_iso: the graphs are not isomorphic; the positive \
             goal is not provable"
     | some p =>
+        -- relabel-shaped positives close by `isomorphic_relabel` with
+        -- no kernel evaluation: peel definitions off `H` and match
+        let rec peel (e : Expr) : Nat → MetaM Expr
+          | 0 => return e
+          | fuel + 1 => do
+            if e.isAppOf ``Colored.relabel then return e
+            match ← unfoldDefinition? e with
+            | some e' => peel e' fuel
+            | none => return e
+        let HEr ← peel HE 8
+        if HEr.isAppOf ``Colored.relabel then
+          let args := HEr.getAppArgs
+          if args.size ≥ 2 then
+            let Gsub := args[args.size - 2]!
+            let lE := args[args.size - 1]!
+            if ← isDefEq Gsub GE then
+              let proof ← mkAppM ``isomorphic_relabel #[GE, lE]
+              if ← isDefEq (← inferType proof) target then
+                return proof
         if checkCost n > cfg.maxCheckerSteps then
           throwError "graph_iso: replay exhausted: checking the transporter \
               takes {checkCost n} steps but maxCheckerSteps := \
               {cfg.maxCheckerSteps}"
         let pE ← permExpr n p
-        let replayE ← mkAppM ``ReplayLimits.mk #[mkNatLit cfg.maxCheckerSteps]
-        let checkTerm ← mkAppM ``checkIso? #[replayE, GE, HE, pE]
-        let someTrue ← mkAppOptM ``Option.some #[mkConst ``Bool, mkConst ``Bool.true]
-        let eqType ← mkAppM ``Eq #[checkTerm, someTrue]
-        let checked ← kernelDecideProof eqType
-        let proof ← mkAppM ``isomorphic_of_checkIso? #[checked]
+        let flatOf (r : Raw) : List Bool :=
+          (List.range n).flatMap fun i =>
+            (List.range n).map fun j => r.rows[i]!.testBit j
+        let boolLit (bs : List Bool) : MetaM Expr :=
+          mkListLit (mkConst ``Bool) (bs.map fun bb =>
+            mkConst (if bb then ``Bool.true else ``Bool.false))
+        let natLit (xs : List Nat) : MetaM Expr :=
+          mkListLit (mkConst ``Nat) (xs.map mkNatLit)
+        let graphSide (e : Expr) : MetaM Expr := do
+          mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
+            #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
+        let kE := (← whnfD (← inferType GE)).getAppArgs[1]!
+        let finVal (bound : Expr) : MetaM Expr :=
+          mkAppOptM ``Fin.val #[some bound]
+        let cellSide (e : Expr) : MetaM Expr := do
+          mkAppM ``List.map #[← finVal kE, ← mkAppM ``Vector.toList
+            #[← mkAppM ``Coloring.cells #[← mkAppM ``Colored.coloring #[e]]]]
+        let permSide : MetaM Expr := do
+          mkAppM ``List.map #[← finVal (mkNatLit n),
+            ← mkAppM ``Vector.toList #[← mkAppM ``Perm.vec #[pE]]]
+        let tie (lhs rhs : Expr) : MetaM Expr := do
+          kernelDecideProof (← mkAppM ``Eq #[lhs, rhs])
+        let hA ← tie (← graphSide GE) (← boolLit (flatOf a))
+        let hB ← tie (← graphSide HE) (← boolLit (flatOf b))
+        let hcA ← tie (← cellSide GE) (← natLit a.colors.toList)
+        let hcB ← tie (← cellSide HE) (← natLit b.colors.toList)
+        let hp ← tie (← permSide) (← natLit p.toList)
+        let chkTerm ← mkAppM ``checkIsoLit
+          #[mkNatLit n, ← boolLit (flatOf a), ← boolLit (flatOf b),
+            ← natLit a.colors.toList, ← natLit b.colors.toList,
+            ← natLit p.toList]
+        let hchk ← kernelDecideProof
+          (← mkAppM ``Eq #[chkTerm, mkConst ``Bool.true])
+        let proof ← mkAppM ``isomorphic_of_checkIsoLit
+          #[hA, hB, hcA, hcB, hp, hchk]
         unless ← isDefEq (← inferType proof) target do
           throwError "graph_iso: internal final proof mismatch"
         return proof

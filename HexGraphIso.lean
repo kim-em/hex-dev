@@ -21,6 +21,7 @@ public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.CellPerm
 public import HexGraphIso.Nauty.CellPermLoop
 public import HexGraphIso.Nauty.SpecIso
+public import HexGraphIso.IsoLit
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
 public import HexGraphIso.ModuleBoundaryTests

@@ -48,6 +48,13 @@ theorem checkIso_iff (G H : Colored n k) (p : Perm n) :
     forall_const]
   exact Iff.rfl
 
+/-- Introduce `IsIso` from its two clauses; the definition is not
+exposed across module boundaries, so consumers use this. -/
+theorem IsIso.mk {G H : Colored n k} {p : Perm n}
+    (hc : ∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i])
+    (ha : ∀ i j, H.graph.adj (p.get i) (p.get j) = G.graph.adj i j) :
+    IsIso G H p := ⟨hc, ha⟩
+
 instance (G H : Colored n k) (p : Perm n) : Decidable (IsIso G H p) :=
   if h : checkIso G H p then
     .isTrue ((checkIso_iff G H p).mp h)
