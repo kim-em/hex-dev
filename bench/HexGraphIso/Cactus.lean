@@ -106,7 +106,7 @@ private def instances : List Inst := Id.run do
     if h : 0 < q then
       out := inst "paley" s!"paley{q}" (Families.paley q) h :: out
   let mut g : Random.Gen := ⟨Random.seed1⟩
-  for n in [10, 14, 18, 22, 26, 30] do
+  for n in [10, 14, 18, 22, 26, 30, 36, 42, 48, 56, 64, 80, 96] do
     let (mask, g') := Random.gnpMask g n
     g := g'
     if h : 0 < n then
