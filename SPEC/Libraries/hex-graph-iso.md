@@ -503,7 +503,11 @@ each forces sharing that removes duplicated code:
   acceptance predicate, evaluated by the producer at emission and by
   the checker at replay, so their agreement is congruence on a shared
   definition rather than a proof maintained against two parallel
-  spellings.
+  spellings. Emission may evaluate only the conjuncts that admission
+  does not already imply (today it skips the generator-automorphism
+  conjunct, which holds by closure over admitted generators); the
+  layer-two proof then composes the shared predicate with that
+  admission invariant.
 - Layer three favours a single tree recursion parameterized by a
   pruning policy, which the declarative form instantiates with the
   empty policy and the production walk with the real one; the
