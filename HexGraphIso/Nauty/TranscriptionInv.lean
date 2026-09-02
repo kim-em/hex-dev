@@ -98,4 +98,42 @@ theorem colorSortedCheck_of_cellsReach {G : Colored n k}
     rw [getElem!_pos _ _ (by omega), getElem!_pos _ _ (by omega)]
     exact this
 
+/-! # Operation-level preservation lemmas
+
+The two labelling-mutating search operations — `refine` and
+`breakout` — permute labels only within cells of the current partition,
+which refines the initial partition, so both preserve `CellsReach`.
+These are the reusable substrate the quartet induction assembles: each
+takes the threaded fact that the initial cell boundaries persist in the
+current partition (`hcoarse`) and preserves the clause. -/
+
+/-- `refine` preserves `CellsReach`: it reorders labels within cells of
+its own (finer) partition, and the initial boundaries persist, so
+cell-content equivalence transfers to the initial partition. -/
+theorem refine_cellsReach {G : Colored n k} {ctx : Ctx} (hn : ctx.n = n)
+    (hn0 : 0 < n) {lab ptn : Array Nat} {level active numcells : Nat}
+    (hreach : CellsReach G lab) (hlsz : lab.size = n) (hpsz : ptn.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hcoarse : ∀ q : Nat,
+      (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 → ptn[q]! ≤ level) :
+    CellsReach G (refine ctx level lab ptn active numcells).lab := by
+  have hok := initial_nodeOk G hn0
+  have hRinv := refine_refInv (ctx := ctx) (level := level) (lab := lab)
+    (ptn := ptn) (active := active) (numcells := numcells)
+    (Nat.le_of_eq (hn.trans hpsz.symm)) (by rw [hlsz, hpsz]) hend
+  -- `refine` reorders `lab` within its own partition's cells
+  have hstep : cellsPerm ptn level lab
+      (refine ctx level lab ptn active numcells).lab := hRinv.perm
+  -- transfer to the initial partition by coarsening
+  have hinitStep : CellsReach G (refine ctx level lab ptn active numcells).lab := by
+    have hcoar : cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
+        lab (refine ctx level lab ptn active numcells).lab := by
+      refine cellsPerm_coarsen (ptnF := ptn) (levF := level)
+        (by rw [size_initPtn, hpsz]) (by rw [hlsz, hpsz])
+        (by rw [hRinv.labSize, hlsz, hpsz]) hstep hend ?_ hcoarse
+      have := hok.ptnEnd
+      rwa [size_initPtn] at this ⊢
+    exact cellsPerm_trans hreach hcoar
+  exact hinitStep
+
 end Hex.GraphIso.Nauty
