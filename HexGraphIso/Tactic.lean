@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Ops
 public import HexGraphIso.IsoLit
+public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.CanonForm
@@ -243,6 +244,12 @@ private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
 @[implemented_by evalOptBoolUnsafe]
 private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
 
+private meta unsafe def evalBoolUnsafe (e : Expr) : MetaM Bool :=
+  evalExpr Bool (mkConst ``Bool) e
+
+@[implemented_by evalBoolUnsafe]
+private meta opaque evalBoolCore (e : Expr) : MetaM Bool
+
 private meta unsafe def evalCertUnsafe (e : Expr) :
     MetaM (Option (Nauty.CertNode × Nauty.Key)) := do
   evalExpr (Option (Nauty.CertNode × Nauty.Key))
@@ -335,6 +342,57 @@ meta def proveNotIsoPairwise? (maxNodes maxCertNodes : Nat)
       let checked ← kernelDecideProof eqType
       some <$> mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
 
+/-- The root-separator leg of the negative path: when the root
+refinement codes already differ (typical for irregular pairs), the
+kernel obligation is a single refinement per graph. Charged four
+nodes against `maxNodes`, so a zero budget disables it and keeps the
+exhaustion contract of the search legs. -/
+meta def proveNotIsoRoot? (cfg : Config) (GE HE : Expr) :
+    MetaM (Option Expr) := do
+  unless 4 <= cfg.maxNodes do
+    return none
+  unless (← evalBoolCore (← mkAppM ``sepRootG #[GE, HE])) do
+    return none
+  let a ← evalColored GE
+  let b ← evalColored HE
+  let LAe ← boolListLit (rawFlat a)
+  let LBe ← boolListLit (rawFlat b)
+  let hA ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
+  let hB ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
+  let sepTerm ← mkAppM ``sepRootLit #[GE, HE, LAe, LBe]
+  let hs ← kernelDecideProof
+    (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
+  return some (← mkAppM ``not_isomorphic_of_sepRootLit #[hA, hB, hs])
+
+/-- The two-code separator leg: kernel cost one refinement per graph
+plus one per root child, independent of certificate availability.
+Measured against the certificate replay it wins only when
+automorphism records do not collapse the certificate (the per-family
+kernel refinement depth decides, which route selection cannot see
+cheaply), so this leg runs after the certificate leg, as the rescue
+for pairs whose certificates are unavailable or over budget. Charged
+`2 * (n + 1)` nodes against `maxNodes`. -/
+meta def proveNotIsoSep? (cfg : Config) (GE HE : Expr) :
+    MetaM (Option Expr) := do
+  let a ← evalColored GE
+  unless 2 * (a.n + 1) <= cfg.maxNodes do
+    return none
+  unless (← evalBoolCore (← mkAppM ``sepDiffG #[GE, HE])) do
+    return none
+  let b ← evalColored HE
+  let LAe ← boolListLit (rawFlat a)
+  let LBe ← boolListLit (rawFlat b)
+  let hA ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
+  let hB ← kernelDecideProof
+    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
+  let sepTerm ← mkAppM ``sepDiffLit #[GE, HE, LAe, LBe]
+  let hs ← kernelDecideProof
+    (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
+  return some (← mkAppM ``not_isomorphic_of_sepDiffLit #[hA, hB, hs])
+
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
 graphs. Route selection compares measured units: one pairwise node
 kernel-replays for roughly four certificate records (it refines both
@@ -351,13 +409,18 @@ exposed to the module-finalization kernel; the regression ladder in
 core negative branch and downstream extensions (the Mathlib layer
 calls it on the encodings). -/
 meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
-  match ← proveNotIsoCerts? cfg GE HE with
+  match ← proveNotIsoRoot? cfg GE HE with
+  | some proof => return proof
+  | none => match ← proveNotIsoCerts? cfg GE HE with
   | some (proof, records) =>
     match ← proveNotIsoPairwise? (min (records / 4) cfg.maxNodes)
         cfg.maxCertNodes GE HE with
     | some pairProof => return pairProof
     | none => return proof
   | none =>
+    match ← proveNotIsoSep? cfg GE HE with
+    | some proof => return proof
+    | none =>
     match ← proveNotIsoPairwise? cfg.maxNodes cfg.maxCertNodes GE HE with
     | some proof => return proof
     | none =>
