@@ -222,8 +222,10 @@ theorem certifyNode_complete {ctx : Ctx} (hn : ctx.n = n)
             Bool.false_eq_true, ite_false]
           rw [hM1, hM22, hm]
           rw [ite_eq_left (by rw [List.length_map, List.length_range])]
+          rw [checkNode_children_eq]
           simp only [Nat.zero_add] at ha'
-          exact ha'
+          rw [ha']
+          simp
         · rw [hiff, hspec, ← hlc, key_cons_eq_iff, key_eta]
           constructor
           · rintro ⟨i, hi0, him, hik⟩

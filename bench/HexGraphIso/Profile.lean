@@ -14,7 +14,7 @@ paley61, kneser72, and circulant64 instances.
 
 Stages: `run` (transcribed search), `pass1` (producer search),
 `produce` (both producer passes), `ckey` (one trusted `checkKey`
-replay), `ckeyf` (the `checkKeyF` clone), `ccanon` (one `checkCanon`),
+replay), `ccanon` (one `checkCanon`),
 `canon` (the fast public tier), `canonchecked` (the full
 certificate-checked pipeline), `stats` (work counters, no timing). No
 argument runs every stage.
@@ -63,7 +63,7 @@ private def timeLoop (iters : Nat) (act : Nat → Nat) : IO Nat := do
 
 private def stageIters : String → Nat
   | "run" => 2000
-  | "ckey" | "ckeyf" | "ccanon" => 200
+  | "ckey" | "ccanon" => 200
   | "pass1" | "produce" => 60
   | _ => 40
 
@@ -94,11 +94,6 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
           (if checkKey inst.g0 c0 b0 then 1 else 0)
         else
           (if checkKey inst.g1 c1 b1 then 1 else 0)
-    | "ckeyf" => timeLoop iters fun i =>
-        if i % 2 == 0 then
-          (if checkKeyF inst.g0 c0 b0 then 1 else 0)
-        else
-          (if checkKeyF inst.g1 c1 b1 then 1 else 0)
     | "ccanon" => timeLoop iters fun i =>
         if i % 2 == 0 then
           (match checkCanon inst.g0 c0 b0 (runColored inst.g0).canonlab with
@@ -120,7 +115,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
 
 private def stages : List String :=
-  ["run", "pass1", "produce", "ckey", "ckeyf", "ccanon", "canon",
+  ["run", "pass1", "produce", "ckey", "ccanon", "canon",
    "canonchecked", "stats"]
 
 def main (args : List String) : IO Unit := do

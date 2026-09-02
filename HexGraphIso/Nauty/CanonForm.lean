@@ -8,7 +8,6 @@ module
 
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
-public import HexGraphIso.Nauty.CertFast
 public import HexGraphIso.Nauty.Search
 
 public section
@@ -166,16 +165,6 @@ theorem not_isomorphic_of_checkKeys {G H : Colored n k}
     (hd : checkDiff BG BH = true) : ¬Isomorphic G H :=
   not_isomorphic_of_key_ne (checkKey_sound hG) (checkKey_sound hH)
     (checkDiff_sound hd)
-
-/-- `not_isomorphic_of_checkKeys` over the fast replay: the kernel
-obligation the tactic emits. -/
-theorem not_isomorphic_of_checkKeysF {G H : Colored n k}
-    {certG certH : CertNode} {BG BH : Key}
-    (hG : checkKeyF G certG BG = true)
-    (hH : checkKeyF H certH BH = true)
-    (hd : checkDiff BG BH = true) : ¬Isomorphic G H :=
-  not_isomorphic_of_checkKeys (checkKeyF_eq G certG BG ▸ hG)
-    (checkKeyF_eq H certH BH ▸ hH) hd
 
 /-! # Correctness of the inverse labelling -/
 

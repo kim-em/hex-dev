@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.CertFast
+public import HexGraphIso.Nauty.Cert
 public import HexGraph.Basic
 public meta import Lean
 
@@ -115,7 +115,7 @@ example : (checkAutom rowsP (List.toArray [1, 0, 4, 3, 2, 6, 5, 9, 8, 7]) 10
     = true) := by kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNodeF { n := 10, g := rowsP } 100 probeKey.rows 1 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 1 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 -- core `Array.map` itself still stalls here (unexposed impl loop; see
@@ -133,20 +133,20 @@ example : (checkCellsPerm (initPtn 10 12 [9]) lab0 lab0 1 10 = true) := by
   kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNodeF { n := 10, g := rowsP } 100 probeKey.rows 2 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 2 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 set_option maxRecDepth 1000000 in
-example : checkNodeF { n := 10, g := rowsP } 100 probeKey.rows 3 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 3 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = none := by kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkNodeF { n := 10, g := rowsP } 100 probeKey.rows 4 1
+example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 4 1
     lab0 (initPtn 10 12 [9]) (initActive [9]) 1 probeCert
     probeKey.codes = some true := by kdecide
 
 set_option maxRecDepth 1000000 in
-example : checkKeyF probeGraph probeCert probeKey = true := by kdecide
+example : checkKey probeGraph probeCert probeKey = true := by kdecide
 
 end Hex.GraphIso.Nauty

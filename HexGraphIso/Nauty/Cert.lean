@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.SpecIso
+public import HexBasic.OfFn
 
 public section
 
@@ -356,13 +357,18 @@ mutual
 
 end
 
-mutual
-
 /-- Replay one node of the certificate. `⟨bcodes, brows⟩` is the
 claimed best key's suffix at this depth. Returns `none` if the replay
 fails, otherwise `some achieved` where `achieved` records whether this
 subtree attains the claimed best. Success certifies that every leaf
-key of the subtree is `≤` the claimed suffix. -/
+key of the subtree is `≤` the claimed suffix.
+
+One structural recursion (fuel-first, the child sweep an inline fold
+with `none` absorbing, the per-node `refine`/`breakout` results bound
+once with `let` for shared reduction), so certificate obligations
+reduce in any module's kernel. The `checkChildren` spelling of the
+child sweep below is the proof-layer view; `checkNode_children_eq`
+connects them. -/
 @[expose] def checkNode (ctx : Ctx) (tcLevel : Nat) (brows : List Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → CertNode →
       List Nat → Option Bool
@@ -371,27 +377,22 @@ key of the subtree is `≤` the claimed suffix. -/
     match bcodes with
     | [] => none
     | bc :: brest =>
+      let rs := refine ctx level lab ptn active numcells
       match cert with
       | .autom _ _ => none
       | .codePrune =>
-        if compare (refine ctx level lab ptn active
-            numcells).longcode bc = .lt then
+        if compare rs.longcode bc = .lt then
           some false
         else
           none
       | .leaf =>
-        match compare (refine ctx level lab ptn active
-            numcells).longcode bc with
+        match compare rs.longcode bc with
         | .gt => none
         | .lt => some false
         | .eq =>
-          if discreteAt (refine ctx level lab ptn active
-              numcells).ptn level ctx.n then
+          if discreteAt rs.ptn level ctx.n then
             match keyCmp
-              ⟨[(refine ctx level lab ptn active numcells).longcode,
-                codeSentinel],
-                leafRows ctx (refine ctx level lab ptn active
-                  numcells).lab⟩
+              ⟨[rs.longcode, codeSentinel], leafRows ctx rs.lab⟩
               ⟨bc :: brest, brows⟩ with
             | .gt => none
             | .eq => some true
@@ -399,34 +400,54 @@ key of the subtree is `≤` the claimed suffix. -/
           else
             none
       | .node children =>
-        match compare (refine ctx level lab ptn active
-            numcells).longcode bc with
+        match compare rs.longcode bc with
         | .gt => none
         | .lt => some false
         | .eq =>
-          if discreteAt (refine ctx level lab ptn active
-              numcells).ptn level ctx.n then
+          if discreteAt rs.ptn level ctx.n then
             none
           else
-            if children.length = (specMaketargetcell ctx
-                (refine ctx level lab ptn active numcells).lab
-                (refine ctx level lab ptn active numcells).ptn level
-                  tcLevel).2.2 then
-              checkChildren ctx tcLevel brows fuel level
-                (refine ctx level lab ptn active numcells).lab
-                (refine ctx level lab ptn active numcells).ptn
-                (specMaketargetcell ctx
-                  (refine ctx level lab ptn active numcells).lab
-                  (refine ctx level lab ptn active numcells).ptn
-                  level tcLevel).1
-                numcells brest children 0
+            let tcr := specMaketargetcell ctx rs.lab rs.ptn level
+              tcLevel
+            if children.length = tcr.2.2 then
+              (children.zipIdx 0).foldl
+                (fun acc (co : CertNode × Nat) =>
+                  match acc with
+                  | none => none
+                  | some a =>
+                    let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+                      rs.lab[tcr.1 + co.2]!
+                    match
+                      match co.1 with
+                      | .autom o' γ =>
+                        if o' < co.2 &&
+                            checkAutom ctx.g γ ctx.n &&
+                            checkCellsPerm br.2.1
+                              (breakout rs.lab rs.ptn (level + 1)
+                                tcr.1 rs.lab[tcr.1 + o']!).1
+                              (Hex.Array.map' (fun w => γ[w]!) br.1)
+                              (level + 1) ctx.n then
+                          some false
+                        else
+                          none
+                      | _ =>
+                        checkNode ctx tcLevel brows fuel (level + 1)
+                          br.1 br.2.1 br.2.2 (numcells + 1) co.1 brest
+                    with
+                    | none => none
+                    | some a' => some (a || a'))
+                (some false)
             else
               none
+  termination_by structural fuel => fuel
 
-/-- Replay the children of a node from offset `o` on. -/
-@[expose] def checkChildren (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
-    (fuel level : Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (brest : List Nat) : List CertNode → Nat → Option Bool
+/-- The child sweep of `checkNode` as its own recursion over the child
+list, from offset `o` on: the spelling the soundness induction
+consumes. -/
+@[expose] def checkChildren (ctx : Ctx) (tcLevel : Nat)
+    (brows : List Nat) (fuel level : Nat) (rsLab rsPtn : Array Nat)
+    (tc numcells : Nat) (brest : List Nat) :
+    List CertNode → Nat → Option Bool
   | [], _ => some false
   | c :: rest, o =>
     match
@@ -459,7 +480,181 @@ key of the subtree is `≤` the claimed suffix. -/
       | none => none
       | some a' => some (a || a')
 
-end
+/-- The inline child fold of `checkNode` agrees with the
+`checkChildren` spelling. -/
+theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
+    (brows : List Nat) (fuel level : Nat) (rsLab rsPtn : Array Nat)
+    (tc numcells : Nat) (brest : List Nat) :
+    ∀ (certs : List CertNode) (o : Nat) (a : Bool),
+      ((certs.zipIdx o).foldl
+        (fun acc (co : CertNode × Nat) =>
+          match acc with
+          | none => none
+          | some a =>
+            match
+              match co.1 with
+              | .autom o' γ =>
+                if o' < co.2 &&
+                    checkAutom ctx.g γ ctx.n &&
+                    checkCellsPerm
+                      (breakout rsLab rsPtn (level + 1) tc
+                        rsLab[tc + co.2]!).2.1
+                      (breakout rsLab rsPtn (level + 1) tc
+                        rsLab[tc + o']!).1
+                      (Hex.Array.map' (fun w => γ[w]!)
+                        (breakout rsLab rsPtn (level + 1) tc
+                          rsLab[tc + co.2]!).1)
+                      (level + 1) ctx.n then
+                  some false
+                else
+                  none
+              | _ =>
+                checkNode ctx tcLevel brows fuel (level + 1)
+                  (breakout rsLab rsPtn (level + 1) tc
+                    rsLab[tc + co.2]!).1
+                  (breakout rsLab rsPtn (level + 1) tc
+                    rsLab[tc + co.2]!).2.1
+                  (breakout rsLab rsPtn (level + 1) tc
+                    rsLab[tc + co.2]!).2.2
+                  (numcells + 1) co.1 brest
+            with
+            | none => none
+            | some a' => some (a || a'))
+        (some a)) =
+      (match checkChildren ctx tcLevel brows fuel level rsLab rsPtn tc
+          numcells brest certs o with
+      | none => none
+      | some a' => some (a || a'))
+  | [], o, a => by
+    rw [checkChildren]
+    simp [List.zipIdx_nil]
+  | c :: rest, o, a => by
+    have hnone : ∀ (tail : List (CertNode × Nat)),
+        tail.foldl
+          (fun acc (co : CertNode × Nat) =>
+            match acc with
+            | none => none
+            | some a =>
+              match
+                match co.1 with
+                | .autom o' γ =>
+                  if o' < co.2 &&
+                      checkAutom ctx.g γ ctx.n &&
+                      checkCellsPerm
+                        (breakout rsLab rsPtn (level + 1) tc
+                          rsLab[tc + co.2]!).2.1
+                        (breakout rsLab rsPtn (level + 1) tc
+                          rsLab[tc + o']!).1
+                        (Hex.Array.map' (fun w => γ[w]!)
+                          (breakout rsLab rsPtn (level + 1) tc
+                            rsLab[tc + co.2]!).1)
+                        (level + 1) ctx.n then
+                    some false
+                  else
+                    none
+                | _ =>
+                  checkNode ctx tcLevel brows fuel (level + 1)
+                    (breakout rsLab rsPtn (level + 1) tc
+                      rsLab[tc + co.2]!).1
+                    (breakout rsLab rsPtn (level + 1) tc
+                      rsLab[tc + co.2]!).2.1
+                    (breakout rsLab rsPtn (level + 1) tc
+                      rsLab[tc + co.2]!).2.2
+                    (numcells + 1) co.1 brest
+              with
+              | none => none
+              | some a' => some (a || a'))
+          none = none := by
+      intro tail
+      induction tail with
+      | nil => rfl
+      | cons hd tl tail_ih =>
+        rw [List.foldl_cons]
+        exact tail_ih
+    cases c with
+    | autom o' γ =>
+      rw [checkChildren, List.zipIdx_cons, List.foldl_cons]
+      simp only []
+      rw [Hex.Array.map'_eq_map]
+      cases hc : (o' < o &&
+          checkAutom ctx.g γ ctx.n &&
+          checkCellsPerm
+            (breakout rsLab rsPtn (level + 1) tc
+              rsLab[tc + o]!).2.1
+            (breakout rsLab rsPtn (level + 1) tc
+              rsLab[tc + o']!).1
+            ((breakout rsLab rsPtn (level + 1) tc
+              rsLab[tc + o]!).1.map fun w => γ[w]!)
+            (level + 1) ctx.n : Bool) with
+      | false =>
+        simp only [Bool.false_eq_true, ite_false]
+        exact hnone (rest.zipIdx (o + 1))
+      | true =>
+        simp only [ite_true]
+        rw [checkNode_children_eq ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) (a || false)]
+        generalize checkChildren ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) = res
+        cases res with
+        | none => rfl
+        | some a3 => simp
+    | leaf =>
+      rw [checkChildren, List.zipIdx_cons, List.foldl_cons] <;>
+        try (intro o2 g2 h2; exact CertNode.noConfusion h2)
+      simp only []
+      generalize checkNode ctx tcLevel brows fuel (level + 1)
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (numcells + 1) CertNode.leaf brest = cres
+      cases cres with
+      | none => exact hnone (rest.zipIdx (o + 1))
+      | some a2 =>
+        rw [checkNode_children_eq ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) (a || a2)]
+        generalize checkChildren ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) = res
+        cases res with
+        | none => rfl
+        | some a3 => simp [Bool.or_assoc]
+    | codePrune =>
+      rw [checkChildren, List.zipIdx_cons, List.foldl_cons] <;>
+        try (intro o2 g2 h2; exact CertNode.noConfusion h2)
+      simp only []
+      generalize checkNode ctx tcLevel brows fuel (level + 1)
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (numcells + 1) CertNode.codePrune brest = cres
+      cases cres with
+      | none => exact hnone (rest.zipIdx (o + 1))
+      | some a2 =>
+        rw [checkNode_children_eq ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) (a || a2)]
+        generalize checkChildren ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) = res
+        cases res with
+        | none => rfl
+        | some a3 => simp [Bool.or_assoc]
+    | node children =>
+      rw [checkChildren, List.zipIdx_cons, List.foldl_cons] <;>
+        try (intro o2 g2 h2; exact CertNode.noConfusion h2)
+      simp only []
+      generalize checkNode ctx tcLevel brows fuel (level + 1)
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (numcells + 1) (CertNode.node children) brest = cres
+      cases cres with
+      | none => exact hnone (rest.zipIdx (o + 1))
+      | some a2 =>
+        rw [checkNode_children_eq ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) (a || a2)]
+        generalize checkChildren ctx tcLevel brows fuel level rsLab
+          rsPtn tc numcells brest rest (o + 1) = res
+        cases res with
+        | none => rfl
+        | some a3 => simp [Bool.or_assoc]
 
 /-- Replay a whole certificate against the claimed best key `B`. -/
 @[expose] def checkKey (G : Colored n k) (cert : CertNode) (B : Key) :
@@ -725,6 +920,7 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
       split at h
       · cases h
       · next hdisc =>
+        simp only [] at h
         split at h
         · next hlenc =>
           have hdiscf : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n = false := by
@@ -756,10 +952,23 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
               p.2 + 1 - p.1
             rw [hptc, hce]
             omega
-          rw [hM1] at h
+          rw [checkNode_children_eq, hM1] at h
+          have hcc : checkChildren ctx tcLevel brows fuel level
+              (refine ctx level lab ptn active numcells).lab
+              (refine ctx level lab ptn active numcells).ptn p.1
+              numcells brest children 0 = some achieved := by
+            rcases hx : checkChildren ctx tcLevel brows fuel level
+                (refine ctx level lab ptn active numcells).lab
+                (refine ctx level lab ptn active numcells).ptn p.1
+                numcells brest children 0 with _ | a2
+            · rw [hx] at h
+              cases h
+            · rw [hx] at h
+              simp only [Bool.false_or] at h
+              exact h
           have hchild := checkChildren_sound hn hgsz tcLevel brows
             fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (p.2 + 1 - p.1) numcells
-            brest children 0 achieved h hstR.labSize hstR.labOk
+            brest children 0 achieved hcc hstR.labSize hstR.labOk
             hstR.ptnSize hstR.ptnEnd hRvals hicp (by omega)
             (by rw [hlenc, hM22]; omega) (by omega)
             (fun i hi => absurd hi (by omega))

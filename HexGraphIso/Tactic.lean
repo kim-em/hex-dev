@@ -32,8 +32,8 @@ elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through the replay-bounded `checkIso?` and
 its soundness theorem, so the kernel performs the decisive replay. For
 a negative goal, the tactic selects between two kernel routes by
-measured cost: certificate replay (two Boolean `checkKeyF` checks plus
-`checkDiff` through `Nauty.not_isomorphic_of_checkKeysF`, cost
+measured cost: certificate replay (two Boolean `checkKey` checks plus
+`checkDiff` through `Nauty.not_isomorphic_of_checkKeys`, cost
 proportional to the pruned certificates the compiled search produces)
 and the fully verified pairwise decision `Pairwise.decideIso?`
 (replayed through `Pairwise.decideIso?_not_isomorphic`, cost
@@ -274,7 +274,7 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
     return none
   let mkCheck (graphE : Expr) (cert : Nauty.CertNode)
       (B : Nauty.Key) : MetaM Expr := do
-    let checkTerm ← mkAppM ``Nauty.checkKeyF
+    let checkTerm ← mkAppM ``Nauty.checkKey
       #[graphE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
   let hG ← mkCheck GE certG BG
@@ -282,7 +282,7 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
   let diffTerm ← mkAppM ``Nauty.checkDiff #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
-  let proof ← mkAppM ``Nauty.not_isomorphic_of_checkKeysF #[hG, hH, hd]
+  let proof ← mkAppM ``Nauty.not_isomorphic_of_checkKeys #[hG, hH, hd]
   return some (proof, certG.size + certH.size)
 
 /-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
