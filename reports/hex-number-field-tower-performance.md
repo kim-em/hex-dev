@@ -328,7 +328,8 @@ x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
 oracle participates in any profiled route. Multiplication and the earlier
 inversion family retain the timed-region-filtered captures from binary
 `d9fc6d73f`; their algorithm code is unchanged. Full-basis `toPrimitive` was
-refreshed from clean binary `08c17a18c` after its zero-coordinate repair. The
+refreshed from clean pre-rebase binary `08c17a18c` (now `bcab4e402`) after its
+zero-coordinate repair. The
 factorization family was refreshed from the
 pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
 its canonical mode-3 degree-24 input. The commands were:
@@ -474,9 +475,9 @@ captures.
 |---|---|---|---|
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean `ce03eb89b`; retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
-| [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean `db22ebe6c`; original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
-| [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean `08c17a18c`; timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
-| [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean `8af758494`; checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
+| [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean pre-rebase `db22ebe6c` (now `8c5e38f39`); original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
+| [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean pre-rebase `08c17a18c` (now `bcab4e402`); timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
+| [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean `959489aa2`; final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
 | [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean `dd5ef5197`; final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | pre-rebase `b2ebf281b` (maps to `2a14b67a8`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
