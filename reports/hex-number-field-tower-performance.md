@@ -5,258 +5,241 @@ advertises is Mathlib-free executable computation, so all of its Phase-4
 evidence is ordinary LeanBench evidence and none of it is fresh-module proof
 evidence (`PLAN/Phase4.md` §Evidence tracks). This snapshot records that
 evidence as measured on the reference host; `libraries.yml` records the
-library's phase, and this report is the headline evidence for its Phase-4
-exit.
+library's phase. Four surfaces still lack an admissible ordered
+mode, so the library remains at Phase 3.
 
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberFieldTower/Bench.lean`.
-It registers 4 controlled parametric targets and 36 fixed targets (40 total).
-The adjacent comments in the driver derive each model from the work performed
-inside the timed function; the models below are copied from the registration
-sites.
+It registers ten controlled parametric targets and 39 fixed targets (49 total).
+Six parametric models supply admissible mode-1 evidence. Negation, inversion,
+division, and the sparse full-basis `toPrimitive` registration remain
+executable diagnostics without an admissible mode. Seven composite surfaces
+have independently justified mode-3 registrations.
 
-| target | operation and controlled input | declared model |
+| target | controlled timed operation | mode-1 model |
 |---|---|---|
-| `runTowerAddLadder` | coordinate addition in the height-two tower `ℚ(√2, 3^(1/n))` at dimension `D = 2n`, both operands dense and all-nonzero | `n` |
-| `runTowerMulLadder` | schoolbook tower multiplication and recursive top-down reduction at dimension `D = 2n` | `n * n` |
-| `runTowerInvLadder` | recursive extended-gcd inversion in the top quotient over the fixed quadratic base | `n * n * (Nat.log2 (n + 2) + 1)` |
-| `runTowerFactorLadder` | Trager factorization over `ℚ(√2)` of the degree-`n` Selmer trinomial `X^n - X - 1` | `tragerLadderModel n` |
+| `runOfQAdjoinLadder` | checked rational presentation construction at degree `n` | `n` |
+| `runTowerAddLadder`, `runTowerSubLadder`, `runTowerSMulLadder` | coordinatewise work in `ℚ(√2, 3^(1/n))`, dimension `D = 2n` | `n` |
+| `runTowerMulLadder` | schoolbook convolution and recursive reduction | `n²` |
+| `runFromPrimitiveLadder` | apply `fromPrimitive` to all `D` primitive basis vectors | `n⁴` |
 
-`tragerLadderModel` writes out the SPEC's worst-case Trager recurrence at
-`d = deg m_α = 2` and component degree `m = n`: the shift-count bound
-`tragerShiftCount(d, m) = choose(d * m, 2) + 1 = choose(2n, 2) + 1` one-level
-norms, each an `O(n^2)`-operation Brown resultant against the quadratic
-relation, plus the recursive rational factorization of the accepted
-degree-`2n` norm at its classical BHKS bound, the dominant term:
+One `fromPrimitive` Horner evaluation performs `D` tower operations of
+`Θ(D²)` each, hence `Θ(D³)` per vector and `Θ(D⁴)` for the full basis. A dense
+`toPrimitive` call has an `O(D²)` rational-operation bound, but the current
+full-basis diagnostic feeds it unit vectors. After the zero-coordinate repair,
+each call takes the sparse branch, so that diagnostic does not cover the dense
+public-operation bound and is not mode-1 evidence.
 
-```lean
-def tragerLadderModel (n : Nat) : Nat :=
-  let bigN := 2 * n
-  (bigN * (bigN - 1) / 2 + 1) * (n * n)
-    + bigN ^ 9 + bigN ^ 7 * (Nat.log2 (bigN + 2)) ^ 2
-```
+The following seven registrations are mode-3 performance evidence. Their
+ceilings bound the inclusive child—startup, prepared/cached fixture, discarded
+warmup, auto-tuned batch, and measured calls—not merely an internal timer.
 
-This is deliberately a conservative worst-case envelope, not a prediction of
-the deterministic family's realised cost; §Verdicts reads the measurement
-against it in that light.
+| target | canonical input | zero-grace ceiling |
+|---|---|---:|
+| `runAdjoin` | adjoin the fourth root of two to `ℚ(√2)` | 3 s |
+| `runAdjoinIdentity` | re-adjoin `√2` to `ℚ(√2)` | 1 s |
+| `runFactorRecursive` | factor over `ℚ(√2, √3)` through the intermediate field | 2 s |
+| `runTowerCheckFactorization` | checked replay of the degree-24 Selmer factorization | 2 s |
+| `runTowerFactorLadder` | `X^24 - X - 1` over `ℚ(√2)` | 2 s |
+| `runSplit` | `(X² - 2)(X² - 3)`, producing two genuine extensions | 1 s |
+| `runFlatten` | the dimension-four tower `ℚ(√2, √3)` | 1 s |
 
-The 36 fixed registrations are 23 Lean component cases covering the SPEC's
-Phase-4 components (`runOfQAdjoin`, `runAdd`, `runSub`, `runNeg`, `runMul`,
-`runInv`, `runDiv`, `runSMul`, `runAdjoin`, `runAdjoinIdentity`,
-`runOneLevelNorm`, `runShiftSearch`, `runFactorRat`, `runFactorRetry`,
-`runFactorRecursive`, `runCheckFactorization`, `runSplit`, `runFlatten`,
-`runBasisImages`, `runCertifies`, `runCoordinateMaps`, `runRecoverPair`,
-`runRecoverSearch`), twelve Lean/PARI comparator rungs
-(`runTowerFactorPair{2,3,4,6,8,12}` / `runPariNfFactor{2,3,4,6,8,12}`), and
-one external-driver overhead probe (`runPariNfFactorOverhead`). Every fixed
-registration declares an `expectedHash`.
+All other fixed registrations are deliberately narrower evidence.
+`runOfQAdjoin`, `runToPrimitive`, and the fixed arithmetic cases are
+expected-hash anchors; in particular, the cheap dimension-four `runNeg` and
+`runDiv` cases do not cover their unresolved performance surfaces.
+`runFactorRetry` forces a real bad first shift and is a branch/hash anchor.
+`runOneLevelNorm`, `runShiftSearch`,
+`runFactorRat`, `runCheckFactorization`, `runBasisImages`,
+`runCertifies`, `runCoordinateMaps`, `runRecoverPair`, and
+`runRecoverSearch` are correctness or attribution anchors. The twelve
+Lean/PARI registrations are comparator endpoints and
+`runPariNfFactorOverhead` is a protocol control. Hash agreement, branch
+exercise, attribution, protocol cost, and comparator agreement are never
+counted as performance modes.
 
 ### Fixture control
 
-The arithmetic ladders share one prep, `prepElemInput`, which builds the
-height-two tower `ℚ(√2, 3^(1/m))` (dimension `D = 2m`; `X^m - 3` is
-Eisenstein-irreducible and stays irreducible over `ℚ(√2)`) and two dense
-all-nonzero coordinate vectors from `ladderCoords`. As first registered,
-`ladderCoords` built coordinate `i` as `±(i + salt + 2) / (i + 3)`: a
-denominator varying with the coordinate index makes the lcm of the vector's
-denominators grow with `Θ(D)` bit length, so the ladders varied coefficient
-height together with dimension and could not test a fixed-height cost model.
-This is the same defect the HexNumberField report documents for its early
-fixtures, and it gets the same correction: numerators now cycle modulo 11 and
-denominators modulo 6, so every reduced common denominator divides
-`lcm(1, ..., 6) = 60` at every dimension and the declared `O(D)` / `O(D²)` /
-`O(D² log D)` wall models see fixed-height rational operations. The
-correction landed at `bc3778b79`; every number in this report postdates it.
+The add/subtract/negate/scalar/multiply and map ladders use checked
+presentations with bounded-height coordinates. Inversion and division use the
+height-two family `ℚ(3^(1/n), √2)`: the varying lower presentation is built
+directly, then the fixed quadratic top level is admitted through `adjoin?`.
+This keeps certification outside the timed body while forcing top-level xgcd
+to recurse into the degree-`n` lower field. Dense coordinate numerators cycle modulo 11 and
+denominators modulo 6, so every common denominator divides 60: dimension
+varies while coefficient height stays bounded. This replaces the former
+index-dependent denominators, whose least common multiple had growing bit
+length and invalidated a dimension-only model.
 
-The Trager ladder's Selmer trinomials `X^n - X - 1` (irreducible over `ℚ`
-for every `n ≥ 2`, and over `ℚ(√2)` because their Galois group leaves the
-root field without quadratic subfields) have rational coefficients, so the
-shift-zero one-level norm is the square `f²` and the bounded shift search
-always performs a genuine retry before accepting a squarefree norm. The same
-coefficient array feeds the PARI comparator requests, so both sides factor
-the identical input. Every fixture in this library is deterministic; no
-registration draws from a random seed.
+Fixture construction certifies just the positive root of `X^n - 3`.
+Integer Newton iteration supplies an untrusted Mahler-precision dyadic seed;
+HexRoots' `isolateOne?` certifies that the local region contains exactly one
+simple root. This avoids refining and pairwise separating all other roots for
+an untimed fixture. Certificates, checked irreducibility, adjoining, and
+flattening used to prepare inputs stay outside the timed operation.
 
-### Scientific ranges
+The factor family uses Selmer trinomials `X^n - X - 1` over `ℚ(√2)`.
+Rational coefficients make the shift-zero norm a square, so the canonical
+factor case genuinely retries before accepting a squarefree degree-48 norm,
+recursively factors it over `ℚ`, recovers factors by gcd, and checks the
+result. The explicit retry anchor and independently budgeted height-two
+recursive case confirm both control-flow paths.
 
-The addition and inversion ladders run at `n = 1, 2, 3, 4, 6` (dimension 2
-through 12), the range the library's merge-facing conformance bound (tower
-dimension at most 8, plus the dimension-12 asymptotic rung) makes meaningful.
-The multiplication schedule extends through `n = 8, 12` because its
-normalized cost has a small-dimension transient (per-element construction and
-the `O(D)` checksum walk weigh more against `D²` work at dimension four) that
-flattens from `n = 6` on; the short schedule ended inside the transient and
-produced a spurious `+0.17` residual against the quadratic model. The raised
-per-call cap accommodates the untimed tower construction at `m = 8` and
-`m = 12` in prep (its `adjoin?` factors `X^m - 3` over `ℚ(√2)` outside the
-timed region). The Trager schedule extends to
-`n = 2, 3, 4, 6, 8, 12, 16, 24` (norm degrees 4 through 48) so the family's
-local exponents are readable across three and a half octaves; its top rung
-times a 253 ms call against a 120 s cap.
+### Scientific ranges and host protocol
 
-All four parametric registrations set `signalFloorMultiplier := 1.0`. The
-justification tracks `SPEC/benchmarking.md` §Spawn-floor filter: every rung
-uses warm child-side inner repeats auto-tuned to the 100 ms
-`targetInnerNanos` floor, so each child-side timed batch is at least 100 ms
-against a measured 40.4 to 41.4 ms per-spawn floor, while the conservative
-default 10x multiplier would demand 400 ms batches and discard rungs without
-changing what is measured. JSON exports record `spawn_floor_nanos` alongside
-every row.
+Coordinatewise add/subtract/scalar multiplication use `n = 1, 2, 3, 4, 6`;
+multiplication extends through `8, 12`. The failed negation family uses
+`4, 6, 8, 12, 16, 24, 32, 48`, and the failed recursive inversion/division
+family uses `2, 3, 4, 6, 8, 12`.
+Presentation construction uses `2, 3, 4, 6, 8, 12, 16, 24`, and the
+two full-basis map closures use `2, 3, 4, 5, 6, 9`. Every parametric
+rung uses a warm child-side batch
+auto-tuned to 100 ms and five independent outer trials. The explicit
+`signalFloorMultiplier := 1.0` is appropriate because process spawn is
+outside the timed body; the exports retain the spawn floor and every trial.
 
-### Fixed-case timing discipline
+The final exports were pinned to logical CPU 19, with SMT sibling 67, and
+record clean source commits. A three-second
+`/proc/stat` postflight sample measured 1.33% busy on each sibling; load
+averages were 1.28, 2.53, and 2.87 on a 96-logical-CPU host. This is a
+postflight protocol check, not a claim that the host was idle throughout.
 
-A fixed repeat is one fresh child process, so a registration whose body reads
-a lazily cached `IO.Ref` fixture initially paid the fixture construction
-inside its first (and, at `inner_repeats = 1`, only) timed call: the
-coordinate arithmetic cases reported ~17 ms medians that were the two-level
-tower construction, not the `D = 4` coordinate operation, and the flattening
-component cases similarly reported their candidate-search fixtures. The
-repair (`3f23d6425`) adopts the shape the PARI pairs already documented:
-`warmupFirstIter` performs one discarded call that populates the
-process-local cache outside the timed region, and `minTotalSeconds := 0.2`
-amortises steady-state work across the auto-tuned inner-repeat batch. All
-fixed medians below postdate the repair.
+```sh
+taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runOfQAdjoinLadder \
+  Hex.NumberTowerBench.runTowerAddLadder \
+  Hex.NumberTowerBench.runTowerSubLadder \
+  Hex.NumberTowerBench.runTowerSMulLadder \
+  Hex.NumberTowerBench.runTowerMulLadder \
+  Hex.NumberTowerBench.runFromPrimitiveLadder \
+  --outer-trials 5 --export-file <mode1.json>
+
+taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runTowerNegLadder \
+  Hex.NumberTowerBench.runTowerInvLadder \
+  Hex.NumberTowerBench.runTowerDivLadder \
+  Hex.NumberTowerBench.runToPrimitiveLadder \
+  --outer-trials 5 --export-file <unresolved-diagnostics.json>
+
+taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runAdjoin \
+  Hex.NumberTowerBench.runAdjoinIdentity \
+  Hex.NumberTowerBench.runFactorRecursive \
+  Hex.NumberTowerBench.runTowerCheckFactorization \
+  Hex.NumberTowerBench.runTowerFactorLadder \
+  Hex.NumberTowerBench.runSplit \
+  Hex.NumberTowerBench.runFlatten \
+  --repeats 5 --export-file <mode3.json>
+```
+
+### Parametric verdicts
+
+| target | schedule | verdict | normalized slope | normalized-cost range | worst spread | artefact |
+|---|---|---|---:|---:|---:|---|
+| `runOfQAdjoinLadder` | 2, 3, 4, 6, 8, 12, 16, 24 | **consistent** | −0.119 | 165.08–211.08 | 3.03% | original mode-1 |
+| `runTowerAddLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.076 | 223.25–240.79 | 2.72% | original mode-1 |
+| `runTowerSubLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.072 | 223.97–240.34 | 2.25% | original mode-1 |
+| `runTowerSMulLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.046 | 300.38–316.54 | 2.69% | original mode-1 |
+| `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.096 | 3,866.98–4,394.58 | 3.96% | original mode-1 |
+| `runFromPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **consistent** | −0.026 | 8,393.62–8,775.98 | 11.89% | original mode-1 |
+| `runToPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | statistical pass, **inadmissible family** | +0.009 | 168.86–396.07 | 89.98% | repaired forward-map diagnostic |
+
+The first six rows use their original source-derived models with LeanBench's
+default slope tolerance. No intercept was added and no tolerance was widened
+after measurement. The last row is not counted as mode 1: its normalized cost
+falls through `n = 6` and then rises by 2.35× at `n = 9`, while the optimized
+unit-vector input skips the dense linear combination the public bound describes.
+
+### Ordered-mode assessment
+
+Before selecting absolute budgets, executable diagnostics attempted the
+natural degree/factor-count parameter for every composite surface:
+
+| surface | attempted schedule and observed result | ordered-rule conclusion |
+|---|---|---|
+| negation | the certified one-level schedule through dimension 48 gives β = −0.162 against linear | sub-microsecond fixed overhead can explain the weak negative slope, but no honest corrected model or canonical hard input is established: mode 4 |
+| inversion | the reordered checked height-two family `ℚ(3^(1/n), √2)` completes through `n = 12` but gives β = +0.522 against `n² log n` | removing relative-factorization fixture growth does not repair the timed model: mode 4 |
+| division | the same genuine-recursion family completes through `n = 12` but gives β = +0.748 against `n² log n`; the earlier tower order gave +0.594 | stable contrary evidence on two certified families: mode 4 |
+| full-basis `toPrimitive` | the original implementation gives β = +0.548/+0.521 against cubic; after zero coordinates skip quotient-field arithmetic, the sparse unit-vector diagnostic gives β = +0.009 but its normalized cost spans 168.86–396.07 | source defect fixed, but the best-case sparse family does not cover the dense bound: mode 4 |
+| adjoin | degrees 2, 3, 4, 6, 8: 13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s; degree 12 hit 30 s | isolation, factor selection, and validation change dominance |
+| identity adjoin | degrees 2, 3, 4: 18.0 ms, 2.37 s, 1.68 s; degree 6 hit 30 s | branch-sensitive recovery is nonmonotone |
+| recursive relative factorization | Selmer degrees 2, 3, 4, 6 over a height-two tower take 7.598, 12.320, 18.591, and 46.578 ms, giving β = +0.636 against the attempted linear model | the recursive level changes the gcd/resultant/replay mixture |
+| checked replay | degrees 2 through 24: 0.404 ms through 126.3 ms; linear residual +1.485 | squarefree, gcd, and replay work do not admit the candidate wall model |
+| factor | degrees 2 through 24; local exponents rise 0.80 to 4.48 | gcd/resultant/replay shares change with coefficient growth |
+| split | factor-count 1 is excluded from the verdict; the eligible 2-to-3 jump is 68.3 ms to 1.89 s (27.7×) | repeated factor/isolate/adjoin phases change dominance |
+| flatten | top degrees 1, 2, 3, 4: 0.96 ms, 21.0 ms, 107.7 ms, 460.4 ms | eliminant/isolation/recovery phases change dominance |
+
+The diagnostics are retained executable measurements, not informal timing
+notes. The first four rows cannot advance past mode 4: their cheap fixed
+dimension-four anchors are neither canonical hard inputs nor meaningful
+operation-specific ceilings. The remaining seven composite surfaces have no
+tight independently justified mode-1 model and no published bound covering
+their inclusive dominant isolation/gcd/replay mixture; their canonical
+mode-3 budgets are therefore the next ordered choice.
+
+| target | per-call median | median auto-tuned batch | ceiling | result |
+|---|---:|---:|---:|---|
+| `runAdjoin` | 311.405 ms | 311.405 ms | 3 s | hash match, under ceiling |
+| `runAdjoinIdentity` | 18.084 ms | 289.345 ms | 1 s | hash match, under ceiling |
+| `runFactorRecursive` | 7.919 ms | 253.393 ms | 2 s | hash match, under ceiling |
+| `runTowerCheckFactorization` | 124.730 ms | 249.460 ms | 2 s | hash match, under ceiling |
+| `runTowerFactorLadder` | 249.758 ms | 249.758 ms | 2 s | hash match, under ceiling |
+| `runSplit` | 68.203 ms | 272.813 ms | 1 s | hash match, under ceiling |
+| `runFlatten` | 20.819 ms | 333.110 ms | 1 s | hash match, under ceiling |
+
+These seven ceilings were chosen from the completed diagnostic schedule and the
+canonical input before the final five-repeat export; the export directly
+checks the inclusive whole-child ceilings with zero grace. The ceiling applies
+to the whole child, while the batch column shows the actual auto-tuned work
+performed in each measured repeat; the small per-call medians are not presented
+as the available budget headroom. In table order the whole-child ceiling to
+measured-batch margins are 9.63×, 3.46×, 7.89×, 8.02×, 8.01×, 3.67×,
+and 3.00×. The in-process `verify` command checks benchmark bodies and hashes,
+not these process-level deadlines; the inclusive ceilings are enforced by the
+recorded `run` export protocol.
+
+### Ordered Trager assessment
+
+The canonical raw profile uses one whole-thread denominator: 58.24% lies inside
+`factor?`, while gcd occupies 47.28%, checked replay 29.40%, shift search
+29.63%, rational factorization 23.96%, resultant work 4.21%, recovery 3.60%,
+and `Hex.ZPoly.factorize` only 1.42%. The mechanical ratios against the resolved
+`factor?` frame are 1.42 / 58.24 = 2.44% for integer factorization and
+47.28 / 58.24 = 81.18% for gcd. They are useful only as attribution signals:
+roughly 40% of the raw capture is GMP stack-unwind truncation rather than
+process setup, so nonuniform missing ancestors can bias exact ratios. The
+conclusion does not depend on either renormalized percentage: integer
+factorization is a small whole-capture phase, while gcd alone dominates the
+resolved target frame. The earlier filtered 5.26% used another denominator and
+is not compared directly.
+
+Consequently the cited BHKS bound covers only a small integer-factorization
+subphase, not the inclusive dominant rational-polynomial gcd, resultant,
+shift, and executable replay work. It cannot justify mode 2. The degree-24
+Selmer trinomial is the top completed diagnostic rung and the canonical hard
+one-level input for the enforced 2 s mode-3 ceiling. The separate
+`runFactorRecursive` mode-3 case factors `X² - X - 1` over
+`ℚ(√2, √3)`, forcing a non-short-circuit recursive relative factorization
+through the intermediate field. This selection preserves the SPEC's recurrence
+as a worst-case contract; it does not relabel that recurrence as a measured
+wall model.
 
 ### Smoke cost
 
-A full `lake exe hexnumberfieldtower_bench verify` of all 40 registrations,
-including the PARI pairs through the persistent driver, completes locally in
-28.7 s against CI's repo-wide hard cap, under the 30 s per-library soft
-warning. The cost is dominated by `runRecoverSearch`, whose smallest honest
-input (the degree-six recovery adversary) takes about 21 s per call plus a
-6 s fixture exactification; the remaining 39 registrations verify in about
-2 s combined.
-
-## Verdicts
-
-All measurements below follow the shared-host protocol: the logical CPU was
-preregistered as **CPU 13** (SMT sibling 61), verified idle immediately
-before each run by differencing `/proc/stat` over a 3 s window (worst
-observed: 2.3% busy on CPU 13, 0.7% on CPU 61) with `ps -eo pid,psr`
-confirming only kernel threads resident, and every bench invocation pinned
-with `taskset -c 13`. One-minute load average during the measurement windows
-was between 2.3 and 2.9 on 96 logical CPUs. `scripts/bench/idle_core.py` was
-consulted before pinning so concurrent measurements could not collide on the
-preregistered core.
-
-Three exports carry the parametric evidence:
-
-```sh
-taskset -c 13 .lake/build/bin/hexnumberfieldtower_bench run \
-  Hex.NumberTowerBench.runTowerFactorLadder \
-  --outer-trials 3 \
-  --export-file reports/bench-results/hex-number-field-tower-phase4-scientific-factor-7d6c0c50-chungus2-cpu13.json
-taskset -c 13 .lake/build/bin/hexnumberfieldtower_bench run \
-  Hex.NumberTowerBench.runTowerAddLadder \
-  Hex.NumberTowerBench.runTowerInvLadder \
-  --outer-trials 5 \
-  --export-file reports/bench-results/hex-number-field-tower-phase4-scientific-arith-7d6c0c50-chungus2-cpu13.json
-taskset -c 13 .lake/build/bin/hexnumberfieldtower_bench run \
-  Hex.NumberTowerBench.runTowerMulLadder \
-  --outer-trials 5 \
-  --export-file reports/bench-results/hex-number-field-tower-phase4-scientific-mul-7d6c0c50-chungus2-cpu13.json
-```
-
-| target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
-|---|---|---|---:|---|---:|
-| `runTowerAddLadder` | 1, 2, 3, 4, 6 | **consistent** | -0.082 | 222.4..240.8 | 8.40% |
-| `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.080 | 3653.5..4085.3 | 20.30% |
-| `runTowerInvLadder` | 1, 2, 3, 4, 6 | **consistent** | -0.029 | 8324.9..9583.4 | 3.66% |
-| `runTowerFactorLadder` | 2, 3, 4, 6, 8, 12, 16, 24 | inconclusive, faster | -6.506 | 0.000..0.110 | 7.81% |
-
-Representative medians: addition 1.335 µs at `n = 6` (dimension 12);
-multiplication 588.3 µs at `n = 12` (dimension 24); inversion 1.199 ms at
-`n = 6`; Trager factorization 253.0 ms at `n = 24` (norm degree 48). Result
-hashes agree across every trial at every rung in all three exports.
-
-The three arithmetic ladders fit their declared models. The multiplication
-fit spans `n = 2..12` after the harness's warmup trim drops `n = 1`; its
-normalized cost climbs 3251 to 4085 across the transient and is flat from
-`n = 6` on (4064 at `n = 8`, 4128 at `n = 12` in the pre-registration probe;
-4060 and 4085 in the committed export), which is what the extended schedule
-was added to expose. Its 20.30% worst spread is one outlier trial at
-`n = 4` (72.98 µs against four trials within 1.2% of 61.0 µs); the median is
-unaffected. Addition's 8.40% worst spread is likewise a single 766 ns trial
-at `n = 3`.
-
-`runTowerFactorLadder` reports `inconclusive: looks faster than declared by
-~n^6.5`, and that is the expected direction, the same reading the merged
-HexBerlekampZassenhaus report records for its deliberately conservative
-envelope models: observed cost growing strictly more slowly than a worst-case
-envelope is not a defect finding, and no ladder shows the slower-than-declared
-direction. Two mechanisms account for the gap, both visible in the data:
-
-- **Realised shift count.** The model charges the SPEC's proof-driven bound
-  `tragerShiftCount(2, n) = choose(2n, 2) + 1` one-level norms; the
-  deterministic Selmer family realises the mandatory retry (the repeated
-  shift-zero norm) and then accepts the first squarefree shifted norm, so the
-  realised count stays a small constant while the charged count grows as
-  `O(n²)`.
-- **BHKS envelope versus realised base factorization.** The model's dominant
-  `(2n)^9` term is the classical worst-case bound for rationally factoring
-  the accepted degree-`2n` norm; the §Profile capture at `n = 16` shows the
-  actual Berlekamp-Zassenhaus call (`Hex.ZPoly.factorize`) at 5.26% of the
-  timed call, with the measured cost concentrated in rational-polynomial gcd
-  and resultant machinery instead.
-
-The measured curve is informative about where the real asymptotics live: the
-local exponent between successive rungs climbs monotonically, 0.80 (2 to 3),
-1.27, 1.38, 1.88, 2.48, 3.23, and 4.48 (16 to 24), so the
-coefficient-growth-driven phases are becoming dominant well inside the
-measured range while remaining far below the envelope's ~n^9 top-rung
-behaviour. The envelope is not contradicted at any rung.
-
-### Fixed registrations
-
-Export (all 23 Lean component cases, clean `3f23d6425`):
-
-```sh
-taskset -c 13 .lake/build/bin/hexnumberfieldtower_bench run \
-  <the 23 Lean fixed targets> \
-  --export-file reports/bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json
-```
-
-All 23 observed hashes match their `expectedHash` declarations and agree
-across repeats.
-
-| fixed target | median | fixed target | median |
-|---|---:|---|---:|
-| `runOfQAdjoin` | 504 ns | `runFactorRat` | 73.6 µs |
-| `runAdd` | 511 ns | `runFactorRetry` | 823.5 µs |
-| `runSub` | 516 ns | `runFactorRecursive` | 7.632 ms |
-| `runNeg` | 654 ns | `runCheckFactorization` | 23.9 µs |
-| `runSMul` | 1.070 µs | `runSplit` | 78.32 ms |
-| `runMul` | 13.03 µs | `runFlatten` | 37.56 ms |
-| `runInv` | 64.31 µs | `runBasisImages` | 25.5 µs |
-| `runDiv` | 76.81 µs | `runCertifies` | 239.7 µs |
-| `runOneLevelNorm` | 34.1 µs | `runCoordinateMaps` | 173.2 µs |
-| `runShiftSearch` | 127.2 µs | `runRecoverPair` | 337.3 µs |
-| `runAdjoin` | 920.2 ms | `runRecoverSearch` | 20.84 s |
-| `runAdjoinIdentity` | 23.43 ms | | |
-
-The component decomposition reads as the SPEC intends. In the dimension-four
-tower, the linear-cost surface (add, sub, neg, scalar action) sits at 0.5 to
-1.1 µs, quadratic multiplication at 13 µs, recursive inversion at 64 µs, and
-division at 77 µs, consistent with inversion dominating one multiplication.
-On the factorization side, one one-level norm is 34 µs, the retry-exercising
-shift search 127 µs (roughly two norms plus squarefreeness checks, as
-derived), the rational base case 74 µs, the one-level retry case 823 µs, and
-the recursive dimension-four case 7.6 ms; checked replay of a precomputed
-factorization is 24 µs. Flattening decomposes into a 25.5 µs basis-image
-expansion, 240 µs certification, 173 µs coordinate maps, and a 337 µs
-fast-recovery gcd rejection, against 37.6 ms for the full two-level
-`flatten?`. The two deliberate heavyweights are `runAdjoin` (920 ms: adjoining
-a fourth root of two spends its time in fixed-embedding factor selection, see
-§Profile) and `runRecoverSearch` (20.8 s: the degree-six recovery adversary
-pays a full rejected candidate before accepting shift `-1`).
+The merge-facing `verify` command exercises all 49 registrations and keeps
+the single-root fixture optimization, so comparator rungs remain inside the
+repo-wide smoke budget. With the cypari2 driver enabled it passes locally.
+Inconclusive parametric diagnostics do not make `verify` fail: they are
+retained measurements, not accepted modes. No hash, oracle, or comparator
+check substitutes for the performance modes above.
 
 ## Comparator ratios
 
 The library SPEC declares one external comparator,
 **PARI/GP nffactor via cypari2**, class `informational`, scoped to the
-`factor?` bench targets.
-`nffactor(nfinit f, t)` is the callable PARI unit surface for factoring a
+`factor?` bench targets. `nffactor(nfinit f, t)` is the callable PARI unit
+surface for factoring a
 polynomial over a number field, the semantic task of `factor?` at one level.
 It is wired as a persistent-subprocess process call through
 `scripts/oracle/pari_bench_driver.py` and `Hex/BenchOracle/Pari.lean`
@@ -350,54 +333,66 @@ level these units produce). The measurements above cover exactly the
 
 samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux
 x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
-4.34.0-rc2, LeanBench 0.1.0, binary built from clean `d9fc6d73f` (identical
-compiled algorithm code to the export commits; the later `3f23d6425` changed
-only fixed-registration `where` configuration). Every fixture is
-deterministic and no runtime oracle participates in any profiled route. The
-parametric representatives ran through the lean-bench-samply orchestrator
-with timed-region filtering:
+4.34.0-rc2, and LeanBench 0.1.0. Every fixture is deterministic and no runtime
+oracle participates in any profiled route. Multiplication retains its earlier
+timed-region-filtered capture from binary `d9fc6d73f`; its algorithm code is
+unchanged. Recursive inversion was refreshed from clean binary `8ea8d6819`
+on the reordered genuine-recursion family. Full-basis `toPrimitive` was
+refreshed from clean pre-rebase binary `08c17a18c` (now `bcab4e402`) after its
+zero-coordinate repair. The
+factorization family was refreshed from the
+pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
+its canonical mode-3 degree-24 input. The commands were:
 
 ```sh
 export LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
   Hex.NumberTowerBench.runTowerMulLadder    12 5000000000
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
-  Hex.NumberTowerBench.runTowerInvLadder     6 5000000000
+  Hex.NumberTowerBench.runTowerInvLadder    12 5000000000
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
-  Hex.NumberTowerBench.runTowerFactorLadder 16 5000000000
+  Hex.NumberTowerBench.runToPrimitiveLadder  9 5000000000
+samply record --save-only --no-open --rate 999 --unstable-presymbolicate \
+  -o /tmp/hex-profile-runTowerFactorMode3-5d4cb88a-fixedraw.json.gz -- \
+  .lake/build/bin/hexnumberfieldtower_bench _child \
+  --bench Hex.NumberTowerBench.runTowerFactorLadder --fixed \
+  --min-total-nanos 5000000000 --repeat-index 0
 ```
 
 Each summary used
 `python3 scripts/profile/summarize_profile.py --thread hexnumberfieldtower_bench`.
-Raw filtered `*.json.gz` artefacts stay developer-local under `/tmp` as
-`SPEC/profiling.md` requires; the committed summaries artefact is listed in
+Raw `*.json.gz` artefacts stay developer-local under `/tmp` as
+`SPEC/profiling.md` requires; the committed summary artefacts are listed in
 §Artefact traceability.
 
 The lean-bench child emits no timed-region sidecar for fixed dispatch, so
-the orchestrator cannot capture fixed registrations; this is the same
-scope condition the merged HexBerlekampZassenhaus report records for its
-fixed-only family. The two fixed-only families (`adjoin-extend`,
+the orchestrator cannot filter fixed registrations; this is the same scope
+condition the merged HexBerlekampZassenhaus report records for its fixed-only
+family. The fixed-only families (`trager-factorization`, `adjoin-extend`, and
 `split-flatten`) are therefore covered by whole-bench-thread raw samply
 captures of the fixed-mode child over a long auto-tuned batch
 (`_child --bench <case> --fixed --min-total-nanos 5000000000`), analysed
-with the same categorizer. In each raw capture the registered case's own
-frame carries 95.7% or more of the thread's samples (95.71% for
-`runAdjoin`, 99.90% for `runSplit`, 97.93% for `runFlatten`), so process
-init and one-shot fixture construction contribute under 5% and the shape
-conclusions below do not depend on the missing filter; these captures carry
+with the same categorizer. The adjoin/split/flatten target frames carry 95.71%,
+99.90%, and 97.93% of their respective threads. The refreshed factor target
+carries 58.23% of the whole thread and is still the single dominant resolved
+frame. Most of the remainder consists of GMP leaves whose ancestors were lost
+to stack-unwind truncation; it must not be labelled process setup. Its phase
+percentages below therefore retain the deliberately unfiltered denominator,
+and renormalized target-frame ratios are only qualitative. Raw captures carry
 no lean-bench-samply calibration/sensitivity diagnostics, which is the
-declared scope of profile coverage for those two families, not an omission.
+declared scope of fixed-family profile coverage.
 
 | family | case | retained / rejected | calibration residual | leaf cost | classified |
 |---|---|---:|---:|---|---:|
 | `tower-coordinate-arithmetic` | `runTowerMulLadder` n=12 | 4,957 / 237,605 | 0.700 ms | allocation 39.72%, Lean runtime 31.07%, GMP 23.56%, own code 4.80% | 99.15% |
-| `tower-coordinate-arithmetic` | `runTowerInvLadder` n=6 | 4,943 / 2,854 | 0.542 ms | GMP 43.19%, allocation 34.86%, Lean runtime 19.97%, own code 1.60% | 99.62% |
-| `trager-factorization` | `runTowerFactorLadder` n=16 | 5,342 / 7 | 0.724 ms | GMP 54.02%, Lean runtime 24.35%, allocation 19.17%, own code 2.23% | 99.78% |
+| `tower-coordinate-arithmetic` | `runTowerInvLadder` n=12 | 4,257 / 66 | 0.509 ms | GMP 58.73%, Lean runtime 20.74%, allocation 19.83%, own code 0.61% | 99.91% |
+| `split-flatten` | `runToPrimitiveLadder` n=9 | 4,775 / 69,390 | 0.863 ms | allocation 50.07%, GMP 33.24%, Lean runtime 15.08%, own code 1.42% | 99.81% |
+| `trager-factorization` | `runTowerFactorLadder` degree 24 (raw fixed capture) | 16,325 / n.a. | n.a. | GMP 74.54%, Lean runtime 15.34%, allocation 9.21%, own code 0.78% | 99.87% |
 | `adjoin-extend` | `runAdjoin` (raw fixed capture) | 13,786 / n.a. | n.a. | allocation 46.44%, GMP 27.26%, Lean runtime 24.05%, own code 2.01% | 99.75% |
 | `split-flatten` | `runSplit` (raw fixed capture) | 9,985 / n.a. | n.a. | Lean runtime 40.01%, allocation 37.91%, GMP 13.52%, own code 7.83% | 99.27% |
 | `split-flatten` | `runFlatten` (raw fixed capture) | 18,762 / n.a. | n.a. | allocation 37.74%, Lean runtime 37.06%, GMP 20.47%, own code 4.47% | 99.74% |
 
-The three filtered captures pass calibration (residuals 0.54 to 0.72 ms
+The three retained filtered captures pass calibration (residuals 0.51 to 0.86 ms
 against the 5 ms limit), retained-sample minimums, and the ±5 ms
 sensitivity check. The large rejected count on the multiplication capture is
 the untimed `m = 12` tower-fixture prelude, excluded by construction.
@@ -410,32 +405,36 @@ registered target, 99.92% in `Hex.NumberTower.mul` →
 the recursive top-down `Arithmetic.reduce`/`reduceCoeffs` (58.34%/56.93%,
 overlapping inclusive shares). That is exactly the derivation at the
 registration site: mixed-radix convolution plus reduction by each monic
-defining polynomial. Inversion at dimension 12: 96.90% in
-`Hex.NumberTower.inv` → `Arithmetic.invCoords`, dominated by the extended
-gcd `Hex.DensePoly.xgcdLeftAux` (90.86%) whose inner work is tower
-multiplication (`mulCoords` 76.37%) and polynomial division
-(`DensePoly.divMod` 49.77%). Both phases named by the SPEC's arithmetic
+defining polynomial. Recursive inversion at dimension 24: 91.59% in
+`Hex.NumberTower.inv`/`Arithmetic.invCoords`, dominated by the extended
+gcd `Hex.DensePoly.xgcdLeftAux` (85.46%) whose inner work is polynomial
+division (`DensePoly.divMod` 63.61%) and tower multiplication
+(`mulCoords` 57.58%, with add/sub at 30.73%/23.96%). The capture verifies that
+the reordered family measures the intended recursive exact-field Euclidean
+chain. Both phases named by the SPEC's arithmetic
 section are the measured cost; nothing is unattributed.
 
 ### `trager-factorization`: certificate and gcd machinery, not BZ
 
-84.37% of retained samples are inside `Hex.NumberTower.factor?`
-(`factorSquarefree?` 81.60%); the remainder is harness and checksum
-scaffolding outside the Hex namespace. Within the call:
-`Hex.DensePoly.gcdAuxImpl` 54.08%, the replay/irreducibility certificate
-`Factor.check`/`Factor.isIrreducible` 41.39%/41.20%, the bounded shift
-search `Norm.findSquarefreeShiftAux` 40.72% with `Norm.isSquarefree` 25.95%,
-the rational base case `Factor.factorRat?` 28.83%, resultant machinery
-(`DensePoly.resultantOrdered` 10.88%), gcd recovery (`Factor.recover`
-10.20%), and the actual integer factorization `Hex.ZPoly.factorize` at
-5.26% (Hensel lift 2.55%, Berlekamp kernel 1.87%). Every named phase has a
+On the canonical degree-24 input, 58.24% of whole-thread samples are inside
+`Hex.NumberTower.factor?` (`factorSquarefree?` 57.57%). Inclusive shares of
+the same whole-thread denominator are `Hex.DensePoly.gcdAuxImpl` 47.28%, the
+replay/irreducibility certificate `Factor.check`/`Factor.isIrreducible`
+29.40%/29.37%, the bounded shift search `Norm.findSquarefreeShiftAux` 29.63%
+with `Norm.isSquarefree` 23.20%, the rational base case `Factor.factorRat?`
+23.96%, resultant machinery (`DensePoly.resultantOrdered` 4.21%), gcd
+recovery (`Factor.recover` 3.60%), and the actual integer factorization
+`Hex.ZPoly.factorize` at only 1.42%. Every named phase has a
 registered component case (`runOneLevelNorm`, `runShiftSearch`,
 `runFactorRat`, `runCheckFactorization`, and the ladder itself), and the
 underlying `DensePoly` gcd/resultant kernels carry their own asymptotic
 evidence in the upstream HexPoly/HexResultant reports. The 41% certificate
-share is the executable checked-replay guarantee the SPEC mandates
-(`Factorization.checked`); it is a deliberate structural cost, and it is
-half the reason the BHKS-dominated envelope over-predicts (§Verdicts).
+share in the older degree-16 filtered capture and 29% whole-thread share here
+are the executable checked-replay guarantee the SPEC mandates
+(`Factorization.checked`). That deliberate structural cost, together with gcd
+and shift search, is why the BHKS-only envelope cannot serve as mode 2
+(§Ordered Trager assessment). Because stack-unwind loss is nonuniform, none of
+these whole-capture shares is promoted to an exact within-target percentage.
 
 ### `adjoin-extend`: fixed-embedding selection dominates
 
@@ -470,42 +469,87 @@ integer eliminant of `θ + cα`) and the canonical exactification
 kernel (94.99%). The flattening components the search feeds are the
 registered `runBasisImages`, `runCertifies`, `runCoordinateMaps`,
 `runRecoverPair`, and `runRecoverSearch` cases; the eliminant/exactification
-kernels are HexNumberField surfaces with their own registered evidence. No
-capture shows a dominant cost in a function the SPEC does not name as part
+kernels are HexNumberField surfaces with their own registered evidence.
+
+The refreshed full-basis `toPrimitive` capture at dimension 18 retains 99.66%
+of samples in the target and 65.51% in `Flatten.toPrimitiveWith`; the exact
+result checksum accounts for 30.18%. Within the map, the remaining nonzero
+coordinates spend 36.98% in `QAdjoin.smul` and 26.87% in `QAdjoin.add`. This
+confirms that the repaired sparse path still measures the quotient-field map,
+while the eliminated zero-coordinate operations no longer dominate it. It
+also confirms why this unit-vector diagnostic is not dense mode-1 evidence:
+only one coordinate per call reaches the multiply/add path.
+No capture shows a dominant cost in a function the SPEC does not name as part
 of the measured operation, and no audit-found issue was filed from these
 captures.
 
 ### Artefact traceability
 
-| artefact | source commit | host state | SHA-256 |
+| artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
-| [`bench-results/hex-number-field-tower-phase4-scientific-factor-7d6c0c50-chungus2-cpu13.json`](bench-results/hex-number-field-tower-phase4-scientific-factor-7d6c0c50-chungus2-cpu13.json) | clean `7d6c0c50a` | idle, CPU 13 | `c0ae3da96fe41f36a87ed6665bf98cd1b2d4c9c209b541a7a0516cbdb28f9d30` |
-| [`bench-results/hex-number-field-tower-phase4-scientific-arith-7d6c0c50-chungus2-cpu13.json`](bench-results/hex-number-field-tower-phase4-scientific-arith-7d6c0c50-chungus2-cpu13.json) | clean `027f4f033` (identical bench sources to `7d6c0c50a`) | idle, CPU 13 | `01e8cd69ef48d6fd903532dc7844475e1a4b6a3e89953c2c5646d67ef24138cf` |
-| [`bench-results/hex-number-field-tower-phase4-scientific-mul-7d6c0c50-chungus2-cpu13.json`](bench-results/hex-number-field-tower-phase4-scientific-mul-7d6c0c50-chungus2-cpu13.json) | clean `d9fc6d73f` (identical bench sources to `7d6c0c50a`) | idle, CPU 13 | `e2aaeb97cc186923c21061f3733d897cbf02668fc26c92459025f96a5c049f40` |
-| [`bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json`](bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json) | clean `3f23d6425` | idle, CPU 13 | `1927e8268c5ac22a1df0e987db5dff878e7ccdcc448252d21b6ee6240689f156` |
-| [`bench-results/hex-number-field-tower-phase4-comparators-3f23d642-chungus2-cpu13.json`](bench-results/hex-number-field-tower-phase4-comparators-3f23d642-chungus2-cpu13.json) | clean `322f53b15` (identical bench sources to `3f23d6425`) | idle, CPU 13 | `5c60e35f20265683fff0eb01f397e3355957fcd0737f0ca21e7781a0b30f0a3f` |
-| [`bench-results/hex-number-field-tower-profile-summaries-d9fc6d73-chungus2.json`](bench-results/hex-number-field-tower-profile-summaries-d9fc6d73-chungus2.json) | binary from clean `d9fc6d73f` | unpinned (shape capture) | `31767bff125621d07391e151bc613a3a1c8ee7b74300a81fd7029af2198b505c` |
+| [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
+| [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
+| [superseded seven-case mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-d277c583-chungus2-cpu19.json) | clean pre-rebase `d277c583` (same patch now `c720b4aca`); earlier canonical-case calibration retained for provenance | [matching postflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `dcae0daaac0470764794b793606a005a83c845dd9af44a80f61ddad97e593f06` |
+| [constructor-only rerun](bench-results/hex-number-field-tower-phase4-final-ofq-e63e3a589-chungus2-cpu19.json) | clean pre-rebase `e63e3a589` (same patch now `77513c3b6`); passing constructor model | [matching postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | `f703055985a9b4f25b69bd954d7072f08b505896cc1625ad7ec98e102f55f65b` |
+| [extended ordered-mode diagnostic](bench-results/hex-number-field-tower-phase4-mode1-nine-and-constructor-diagnostic-d277c583-chungus2-cpu19.json) | clean pre-rebase `d277c583` (same patch now `c720b4aca`); superseded nine-case/constructor diagnostic | CPU 19 | `9bea0ee7378b3cf8b71bccb200cdf09e92085b8806ef4d19bab704c25e92b793` |
+| [d277 postflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | host state paired with the d277 exports | sampled CPU and SMT sibling | `cbb9ae6f454ed300d51e10dfb01f7454b568bde45b74e6a7b033b2b55b22c8d8` |
+| [e63 postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | host state paired with the constructor rerun | sampled CPU and SMT sibling | `79d70f64f57983dfed82d96732510106b5ae54aabe304c309d3e90c80f366738` |
+| [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean pre-rebase `db22ebe6c` (now `8c5e38f39`); original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
+| [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean pre-rebase `08c17a18c` (now `bcab4e402`); timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
+| [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
+| [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
+| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
+| [negation calibration](bench-results/hex-number-field-tower-opus-calibration-605abcb5-chungus2-cpu19.json) | clean pre-rebase `605abcb5` (same branch state now `2ed1aba5d`); registered linear diagnostic, β = −0.162 | CPU 19 | `360bcf931e5171183ae25ddba16d6ff3edbb820bab5d40fd4c0de1908919f5a8` |
+| [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | clean pre-rebase `b2ebf281b` (same patch now `eaa691fc9`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
+| [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | final measurement protocol | sampled CPU and SMT sibling | `f8a9d1d8294f59cf1bce18e02a2baae57728c87db24f5e96cc1c5c0e884a5a76` |
+| [canonical factor profile](bench-results/hex-number-field-tower-phase4-final-factor-profile-5d4cb88a-chungus2.json) | pre-rebase binary `5d4cb88ad` (same patch now `842043ebf`); algorithm source unchanged | unpinned shape capture | `f34c803bc741a92b9ac5b6040b107aa80c206f9a8b1d6515635ca6af5d3c9cf2` |
+| [factor degree diagnostic](bench-results/hex-number-field-tower-phase4-scientific-factor-7d6c0c50-chungus2-cpu13.json) | clean `7d6c0c50a`; rejects the former envelope | CPU 13 | `c0ae3da96fe41f36a87ed6665bf98cd1b2d4c9c209b541a7a0516cbdb28f9d30` |
+| [component anchors](bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json) | clean `3f23d6425`; hash/attribution only | CPU 13 | `1927e8268c5ac22a1df0e987db5dff878e7ccdcc448252d21b6ee6240689f156` |
+| [PARI pairs](bench-results/hex-number-field-tower-phase4-comparators-3f23d642-chungus2-cpu13.json) | clean `322f53b15`; identical comparator sources | CPU 13 | `5c60e35f20265683fff0eb01f397e3355957fcd0737f0ca21e7781a0b30f0a3f` |
+| [coordinate profile summaries](bench-results/hex-number-field-tower-profile-summaries-d9fc6d73-chungus2.json) | archived clean `d9fc6d73f` multiplication binary; captured multiplication source matches current `8ea8d6819` | unpinned shape capture | `31767bff125621d07391e151bc613a3a1c8ee7b74300a81fd7029af2198b505c` |
+| [refreshed recursive-inversion profile](bench-results/hex-number-field-tower-recursive-inversion-profile-8ea8d681-chungus2.json) | clean `8ea8d6819`; timed-region-filtered reordered family at dimension 24 | CPU 19 | `91e67ce7b3764578fec8d2bcf7011f1ec489399871937c04442e3a4e222bbe43` |
 
-The bench-source history inside this evidence set: `aa6151400` added the
-PARI driver overhead probe; `bc3778b79` fixed the bounded-height ladder
-fixture and extended the multiplication schedule; `7d6c0c50a` extended the
-Trager schedule and added the `n = 8, 12` comparator pairs; `3f23d6425`
-moved lazily built fixtures out of the fixed timed regions and completed the
-`expectedHash` coverage. Artifact-only commits between them change no bench
-source. Toolchain throughout: Lean 4.34.0-rc2 (`leanprover/lean4:v4.34.0-rc2`),
-LeanBench 0.1.0, samply 0.13.1, PARI 2.17.2 driven by cypari2 2.2.4 through
-`scripts/oracle/pari_bench_driver.py` (Python from `HEX_PARI_BENCH_PYTHON`).
-Host throughout: `chungus2`, Linux x86-64 6.12.100, AMD EPYC 9455 48-Core
-Processor, 96 logical CPUs, measurements pinned to preregistered CPU 13.
+The evidence added here comprises the single-root bounded-height fixtures,
+six passing mode-1 surfaces, seven independently budgeted mode-3 surfaces,
+four binding mode-4 diagnostics, explicit retry and recursive-relative branch
+exercise, and an inclusive canonical factor profile. The component, protocol,
+hash, and comparator exports retain only their stated roles. The unresolved
+surfaces prevent a Phase-4 exit.
+
+Toolchain: Lean 4.34.0-rc2, LeanBench 0.1.0, samply 0.13.1, PARI 2.17.2,
+and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
+48-Core Processor, 96 logical CPUs.
+
+## Verification
+
+- `lake build HexNumberFieldTower HexNumberFieldTower.Conformance
+  hexnumberfieldtower_emit_fixtures`: pass.
+- `lake exe hexnumberfieldtower_bench list`: 10 parametric plus 39 fixed
+  registrations.
+- `lake exe hexnumberfieldtower_bench verify`: all 49 registrations pass.
+- Emitted Tower fixtures match the committed JSONL byte for byte; the PARI
+  oracle checks 9 cases with 0 failures.
+- `python3 scripts/check_phase4.py`: pass.
+- `python3 scripts/check_dag.py`: pass.
 
 ## Concerns
 
-- [#9815](https://github.com/kim-em/hex-dev/issues/9815) tracks the failing
-  Trager envelope and the fixed component registrations' missing ordered-mode
-  evidence.
+These unresolved surfaces are tracked by #9665 and its parent #9815.
 
-The measurement defects surfaced while producing this evidence (the
-height-varying ladder fixture, the multiplication schedule ending inside its
-small-dimension transient, and fixed cases timing their lazily built
-fixtures) were repaired in the bench commits named in §Artefact traceability
-and every number above postdates the repairs; they are historical and resolved.
+- Negation has no admissible evidence mode: the registered linear diagnostic
+  gives β = −0.162, just outside the default two-sided gate. The
+  sub-microsecond fixture is vulnerable to fixed overhead, while no canonical
+  hard input gives the cheap coordinatewise operation a meaningful absolute
+  budget; this remains an unresolved diagnostic, not a substantive complexity
+  finding.
+- Recursive inversion rejects `n² log n` with β = +0.522 on a checked
+  height-two family whose fixture completes at every rung through `n = 12`.
+- Division rejects the same independently derived model with β = +0.748 on
+  that family, corroborating the earlier +0.594 failure in the opposite tower
+  order. No independently derived executable bit-cost model accounting for
+  exact-rational coefficient growth is currently recorded for either
+  operation.
+- `toPrimitive` now skips zero coordinates, but the registered full-basis
+  family consists of unit vectors. Its statistical cubic pass is a sparse
+  best-case result with a 2.35× normalized-cost range, not evidence for the
+  dense public-operation bound.

@@ -322,12 +322,28 @@ polynomial before returning. The accepted `γ` is already the canonical
 Sage is not an oracle. CI extends the existing single ubuntu job and does not add
 a matrix or a new workflow.
 
+### Phase-4 input families
+
+- `tower-coordinate-arithmetic`: bounded-height dense coordinates in checked
+  presentations. Multiplication varies the top degree over `ℚ(√2)`;
+  inversion and division use `ℚ(3^(1/m), √2)` so the fixed quadratic top
+  quotient performs genuine recursive arithmetic in the varying lower field.
+- `trager-factorization`: Selmer trinomials over `ℚ(√2)` for the inclusive
+  retry/gcd/replay route, plus irreducible Selmer inputs over
+  `ℚ(√2, √3)` for genuine recursive relative factorization.
+- `adjoin-extend`: fixed-embedding adjoining and identity adjoining, with a
+  separate checked rational-presentation family.
+- `split-flatten`: repeated quartic splitting, primitive-element flattening,
+  recovery/certification adversaries, and completed coordinate maps.
+
 ## Complexity and Phase 4 budgets
 
 Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 
-- Coordinate addition costs `O(D)` rational operations. Schoolbook
-  multiplication and reduction cost `O(D²)` before later fast-arithmetic work.
+- Coordinate addition, subtraction, negation, and rational scalar action cost
+  `O(D)` bounded-height rational operations. `ofQAdjoin` constructs and walks
+  `O(D)` presentation data. Schoolbook multiplication and reduction cost
+  `O(D²)` before later fast-arithmetic work.
 - A Trager step at `K(α)/K` tries at most
   `choose(deg(mα) * n, 2) + 1` one-level resultants, then recursively factors one
   accepted norm of degree at most `deg(mα) * n` over `K`. The base case performs
@@ -337,12 +353,31 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 - `flatten?` computes primitive-element eliminants of degree at most `D`, uses
   validated linear-gcd recovery while scanning full-degree candidates, and
   applies exact trace pairing once if the maximum-degree fallback is needed.
+  One dense flattening `toPrimitive` application costs `O(D²)` rational
+  operations; one `fromPrimitive` application costs `O(D³)` with the current
+  Horner/tower-arithmetic path. Applying `fromPrimitive` to all `D` basis
+  vectors gives the registered `O(D⁴)` family. The current full-basis
+  `toPrimitive` diagnostic uses sparse unit vectors and does not exercise its
+  dense `O(D²)` bound after zero coordinates are skipped.
 
-No standalone wall-clock ceiling is pinned before the first complete compiled
-implementation. Phase 4 records component timings, then sets each ceiling from
-the measured reference-host ceiling under the repository benchmarking policy.
-Merge-facing conformance is restricted to tower dimension at most 8 and input
-degree at most 4 until those measurements exist.
+The fixed canonical cases for adjoining, identity adjoining, one- and
+two-level factorization, checked replay, splitting, and flattening use
+zero-grace whole-child ceilings derived from clean reference-host measurements
+plus stated margin. These budgets do not replace the contracts above; they are
+mode-3 regression ceilings for operations whose realised phase mixtures admit
+neither a tight family model nor a published bound covering the dominant
+executable phases.
+
+Full-basis `toPrimitive`, negation, inversion, and division have no admissible
+current mode. The forward-map optimization is valid, but its sparse unit-basis
+diagnostic no longer covers the dense public bound; its fixed registration and
+the dimension-four arithmetic registrations are hash anchors, not performance
+evidence. The headline report records the binding diagnostics, and the library
+therefore remains at Phase 3.
+
+Merge-facing conformance remains restricted to tower dimension at most 8 and
+input degree at most 4; the degree-24 factorization case is scientific
+performance evidence, not a merge-facing conformance fixture.
 
 ## External comparators
 

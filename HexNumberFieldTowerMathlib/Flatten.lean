@@ -516,6 +516,30 @@ private theorem evalZPoly_candidate {T : NumberTower}
   rw [AlgebraicNumber.toRoot_toComplex, zpoly_eval_horner] at hroot
   exact hroot
 
+private theorem toPrimitiveFold_complex {T : NumberTower}
+    {p : ZPoly} {x : SimpleRoot p}
+    (images : Array (QAdjoin p x)) (a : Elem T)
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
+    (indices : List Nat) (initial : QAdjoin p x) :
+    QAdjoin.toComplex
+        (indices.foldl (fun value i =>
+          let coefficient := (coeffs a).getD i 0
+          if coefficient = 0 then value
+          else value + coefficient • images.getD i 0) initial) rep hrep =
+      QAdjoin.toComplex initial rep hrep +
+      (indices.map fun i =>
+        ((coeffs a).getD i 0 : ℂ) *
+          QAdjoin.toComplex (images.getD i 0) rep hrep).sum := by
+  induction indices generalizing initial with
+  | nil => simp
+  | cons i indices ih =>
+      simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+      by_cases hzero : (coeffs a).getD i 0 = 0
+      · rw [if_pos hzero]
+        simpa [hzero] using ih initial
+      · rw [if_neg hzero, ih, QAdjoin.map_add, QAdjoin.map_smul]
+        ring
+
 private theorem toPrimitiveWith_complex {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p}
     (images : Array (QAdjoin p x)) (a : Elem T)
@@ -525,12 +549,8 @@ private theorem toPrimitiveWith_complex {T : NumberTower}
         ((coeffs a).getD i 0 : ℂ) *
           QAdjoin.toComplex (images.getD i 0) rep hrep).sum := by
   unfold toPrimitiveWith
-  generalize List.range T.dim = indices
-  induction indices with
-  | nil => exact QAdjoin.map_zero rep hrep
-  | cons i indices ih =>
-      simp only [List.map_cons, List.sum_cons]
-      rw [QAdjoin.map_add, QAdjoin.map_smul, ih]
+  simpa [QAdjoin.map_zero] using
+    toPrimitiveFold_complex images a rep hrep (List.range T.dim) 0
 
 private theorem toPrimitiveWith_add {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p}
@@ -1632,38 +1652,40 @@ private theorem one_smul_qadjoin {p : ZPoly} {x : SimpleRoot p}
   rw [QAdjoin.map_smul]
   simp
 
-private theorem zero_smul_qadjoin {p : ZPoly} {x : SimpleRoot p}
-    [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) :
-    (0 : Rat) • a = 0 := by
-  let rep : RefinedIsolation p := Quot.out x
-  have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex ((0 : Rat) • a) rep hrep =
-    QAdjoin.toComplex (0 : QAdjoin p x) rep hrep
-  rw [QAdjoin.map_smul, QAdjoin.map_zero]
-  simp
+private theorem foldl_congr_mem {α β : Type} (xs : List α)
+    (f g : β → α → β) (initial : β)
+    (h : ∀ value a, a ∈ xs → f value a = g value a) :
+    xs.foldl f initial = xs.foldl g initial := by
+  induction xs generalizing initial with
+  | nil => rfl
+  | cons a xs ih =>
+      simp only [List.foldl_cons]
+      rw [h initial a (by simp)]
+      apply ih
+      intro value b hb
+      exact h value b (by simp [hb])
 
-private theorem sum_unit_range {p : ZPoly} {x : SimpleRoot p}
+private theorem fold_unit_range {p : ZPoly} {x : SimpleRoot p}
     [ZPoly.CheckedIrreducible p]
     (values : Nat → QAdjoin p x) (index count : Nat) :
-    ((List.range count).map fun i =>
-      (if index = i then (1 : Rat) else 0) • values i).sum =
+    (List.range count).foldl (fun value i =>
+      if index = i then value + (1 : Rat) • values i else value) 0 =
         if index < count then values index else 0 := by
   letI : Field (QAdjoin p x) := QAdjoin.field p x
   induction count with
   | zero => simp
   | succ count ih =>
-      rw [List.range_succ, List.map_append, List.sum_append, ih]
-      simp only [List.map_singleton, List.sum_singleton]
+      rw [List.range_succ, List.foldl_append, ih]
+      simp only [List.foldl_cons, List.foldl_nil]
       by_cases hlt : index < count
       · have hne : index ≠ count := by omega
         have hle : index ≤ count := Nat.le_of_lt hlt
-        simp [hlt, hne, hle, zero_smul_qadjoin]
+        simp [hlt, hne, hle]
       · by_cases heq : index = count
         · subst index
           simp [one_smul_qadjoin]
         · have hout : ¬ index < count + 1 := by omega
-          simp [hlt, heq, hout, zero_smul_qadjoin]
+          simp [hlt, heq, hout]
 
 private theorem toPrimitiveWith_unit {T : NumberTower} {p : ZPoly}
     {x : SimpleRoot p} (images : Array (QAdjoin p x))
@@ -1674,18 +1696,16 @@ private theorem toPrimitiveWith_unit {T : NumberTower} {p : ZPoly}
   unfold toPrimitiveWith
   rw [coeffs_ofCoeffs,
     normalizeCoeffs_eq_self T _ (by simp [unitCoords])]
-  have hmap :
-      (List.range T.dim).map
-          (fun i => (unitCoords T.dim index).getD i 0 •
-            images.getD i 0) =
-        (List.range T.dim).map
-          (fun i => (if index = i then (1 : Rat) else 0) •
-            images.getD i 0) := by
-    apply List.map_congr_left
-    intro i hi
-    rw [unitCoords_getD]
-    simp [List.mem_range.mp hi]
-  rw [hmap, sum_unit_range]
+  rw [foldl_congr_mem (List.range T.dim) _
+    (fun value i =>
+      if index = i then value + (1 : Rat) • images.getD i 0 else value) 0
+    (by
+      intro value i hi
+      rw [unitCoords_getD]
+      by_cases heq : index = i
+      · simp [List.mem_range.mp hi, heq]
+      · simp [List.mem_range.mp hi, heq])]
+  rw [fold_unit_range]
   simp [hindex]
 
 private theorem basisImages_complex (T : NumberTower)
