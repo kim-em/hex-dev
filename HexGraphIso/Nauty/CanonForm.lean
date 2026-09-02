@@ -103,6 +103,38 @@ until the single replay accepts. -/
   | none => none
   | some (cert, B) => checkCanon G cert B (runColored G).canonlab
 
+/-- A successful `checkCanon` on the transcribed search's own
+labelling forces the transcription to succeed with the same result:
+both build the `CanonResult` from `(runColored G).canonlab` by the
+same checked construction. -/
+theorem canonicalize?_eq_of_checkCanon {G : Colored n k}
+    {cert : CertNode} {B : Key} {res : CanonResult n k}
+    (h : checkCanon G cert B (runColored G).canonlab = some res) :
+    canonicalize? G = some res := by
+  rw [checkCanon] at h
+  rw [canonicalize?]
+  split at h
+  · next hb =>
+    rw [dite_eq_left hb]
+    split at h
+    · cases h
+    · next l hl =>
+      split at h
+      · injection h with h'
+        simp only [hl, Option.map_some, h']
+      · cases h
+  · cases h
+
+/-- Whenever the single trusted replay accepts (`certifyCanon?`
+succeeds), the fast transcription agrees with it exactly. -/
+theorem canonicalize?_eq_of_certifyCanon {G : Colored n k}
+    {res : CanonResult n k} (h : certifyCanon? G = some res) :
+    canonicalize? G = some res := by
+  rw [certifyCanon?] at h
+  split at h
+  · cases h
+  · exact canonicalize?_eq_of_checkCanon h
+
 /-! # The certificate-based negative decision -/
 
 /-- Executable disequality of two canonical keys: the lexicographic

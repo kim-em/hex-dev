@@ -151,6 +151,22 @@ theorem relabel_label (G : Colored n k) :
   · exact relabelChecked_label G
   · exact canonicalize?_relabel h
 
+/-- The fast and checked tiers agree whenever the certificate replay
+accepts, which is every observed run: both construct their result
+from the same transcribed search output, so the checked tier's
+per-run validation covers the fast answer too. Unconditional
+agreement would amount to verifying the pruned search itself; on the
+never-observed replay-rejection case the checked tier instead falls
+back to the exhaustive spec. -/
+theorem canonicalize_eq_canonicalizeChecked {G : Colored n k}
+    (h : (Nauty.certifyCanon? G).isSome) :
+    canonicalize G = canonicalizeChecked G := by
+  obtain ⟨res, hres⟩ := Option.isSome_iff_exists.mp h
+  have hfast := Nauty.canonicalize?_eq_of_certifyCanon hres
+  have hchecked : canonicalizeChecked G = res := by
+    rw [canonicalizeChecked, Nauty.canonicalizeSpec, hres]
+  rw [canonicalize, hfast, hchecked]
+
 /-- Find one isomorphism when the fast canonical forms agree: the
 forward transporter through the two labels. -/
 @[expose] def findIso (G H : Colored n k) : Option (Perm n) :=
