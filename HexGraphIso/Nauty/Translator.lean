@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.CertAutom
+public import HexGraphIso.Nauty.PopCount
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonForm
 
@@ -689,5 +690,253 @@ two, `(Nauty.certifyCanon? G).isSome` additionally needs:
   the maximality of the traced key, which also discharges the
   domination hypothesis above.
 -/
+
+/-! # Layer two, part b: `checkAutom` from the admission filter
+
+`AutState.admit` verifies candidates with `isautom` (upper-triangle
+edge preservation) rather than the replay's `checkAutom` (per-row
+image equality). For a permutation of a symmetric, loopless, bounded
+row array the two agree, by the finite counting argument: forward
+edge inclusion makes each transported row a submask of the target
+row, a renaming preserves per-row bit counts, and reindexing the
+total bit count by the permutation forces per-row equality. -/
+
+/-- Sums of `Nat` lists are permutation-invariant. -/
+private theorem sum_perm {l₁ l₂ : List Nat} (h : l₁.Perm l₂) :
+    l₁.sum = l₂.sum := by
+  rw [List.sum_eq_foldr, List.sum_eq_foldr]
+  exact h.foldr_eq' (fun x _ y _ z => by omega) 0
+
+/-- Mapped sums are monotone under pointwise domination. -/
+private theorem sum_map_le {f g : Nat → Nat} :
+    ∀ l : List Nat, (∀ x ∈ l, f x ≤ g x) →
+      (l.map f).sum ≤ (l.map g).sum
+  | [], _ => Nat.le_refl 0
+  | a :: l, h => by
+    rw [List.map_cons, List.map_cons, List.sum_cons, List.sum_cons]
+    have h1 := h a (List.mem_cons_self ..)
+    have h2 := sum_map_le l fun x hx => h x (List.mem_cons_of_mem a hx)
+    omega
+
+/-- Pointwise domination with a dominated total is pointwise
+equality. -/
+private theorem map_eq_of_le_of_sum_le {f g : Nat → Nat} :
+    ∀ l : List Nat, (∀ x ∈ l, f x ≤ g x) →
+      (l.map g).sum ≤ (l.map f).sum → ∀ x ∈ l, f x = g x
+  | [], _, _, _, hx => nomatch hx
+  | a :: l, hle, hsum, x, hx => by
+    rw [List.map_cons, List.map_cons, List.sum_cons, List.sum_cons]
+      at hsum
+    have h1 := hle a (List.mem_cons_self ..)
+    have h2 := sum_map_le l fun y hy => hle y (List.mem_cons_of_mem a hy)
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · omega
+    · exact map_eq_of_le_of_sum_le l
+        (fun y hy => hle y (List.mem_cons_of_mem a hy)) (by omega) x hx'
+
+/-- Layer two, part b, the counting bridge: for a permutation of
+`[0, n)`, the admission filter's `isautom` implies the replay's
+`checkAutom`, over any symmetric, loopless, per-row-bounded row
+array. The row hypotheses are discharged for `rowsOf G` by
+`rowsOf_symm`, `rowsOf_loopless`, and `rowsOf_bounded`; the
+permutation hypothesis is the transcription obligation
+(`isPerm_of_trace`), proven separately. -/
+theorem checkAutom_of_isautom {ctx : Ctx} {γ : Array Nat}
+    (hsz : γ.size = ctx.n)
+    (hperm : (((List.range ctx.n).map fun v => γ[v]!).isPerm
+      (List.range ctx.n)) = true)
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (haut : isautom ctx γ = true) :
+    checkAutom ctx.g γ ctx.n = true := by
+  have hbound : ∀ v, v < ctx.n → γ[v]! < ctx.n := by
+    intro v hv
+    have hmem : γ[v]! ∈ (List.range ctx.n).map fun v => γ[v]! :=
+      List.mem_map.mpr ⟨v, List.mem_range.mpr hv, rfl⟩
+    exact List.mem_range.mp
+      ((List.isPerm_iff.mp hperm).mem_iff.mp hmem)
+  have hnodup : (((List.range ctx.n).map fun v => γ[v]!)).Nodup :=
+    ((List.isPerm_iff.mp hperm).symm.nodup List.nodup_range)
+  have hinj : ∀ a b, a < ctx.n → b < ctx.n → γ[a]! = γ[b]! → a = b := by
+    intro a b ha hb' hab
+    have hga : ((List.range ctx.n).map fun v => γ[v]!)[a]! = γ[a]! := by
+      rw [getElem!_pos _ _ (by simpa using ha), List.getElem_map,
+        List.getElem_range]
+    have hgb : ((List.range ctx.n).map fun v => γ[v]!)[b]! = γ[b]! := by
+      rw [getElem!_pos _ _ (by simpa using hb'), List.getElem_map,
+        List.getElem_range]
+    exact (List.Nodup.getElem!_inj (by simpa using ha)
+      (by simpa using hb') hnodup).mp (by rw [hga, hgb]; exact hab)
+  have hσ : ∀ w, w < ctx.n →
+      (renamingOfArray γ ctx.n hbound hinj) w = γ[w]! := by
+    intro w hw
+    show (if w < ctx.n then γ[w]! else w) = γ[w]!
+    rw [ite_eq_left hw]
+  have himg : ∀ s, image (fun w => γ[w]!) ctx.n s =
+      image (renamingOfArray γ ctx.n hbound hinj) ctx.n s :=
+    fun s => image_congr s fun v hv => (hσ v hv).symm
+  have hia := (isautom_iff ctx γ).mp haut
+  have hedge : ∀ i pos, i < ctx.n → pos < ctx.n →
+      (ctx.g[i]!).testBit pos = true →
+      (ctx.g[γ[i]!]!).testBit γ[pos]! = true := by
+    intro i pos hi hpos hbit
+    rcases Nat.lt_trichotomy i pos with hlt | heq | hgt
+    · exact hia i hi pos (mem_toList.mpr ⟨hpos, hbit⟩) hlt
+    · subst heq
+      rw [hloop i hi] at hbit
+      exact Bool.noConfusion hbit
+    · have hbit' : (ctx.g[pos]!).testBit i = true := by
+        rw [← hsymm i pos hi hpos]
+        exact hbit
+      have h2 := hia pos hpos i (mem_toList.mpr ⟨hi, hbit'⟩) hgt
+      rw [hsymm (γ[i]!) (γ[pos]!) (hbound i hi) (hbound pos hpos)]
+      exact h2
+  have hsub : ∀ v, v < ctx.n →
+      image (fun w => γ[w]!) ctx.n ctx.g[v]! &&& ctx.g[γ[v]!]! =
+        image (fun w => γ[w]!) ctx.n ctx.g[v]! := by
+    intro v hv
+    refine submask_of_testBit fun w hw => ?_
+    rw [testBit_image] at hw
+    obtain ⟨u, hu, hc⟩ := List.any_eq_true.mp hw
+    simp only [Bool.and_eq_true, beq_iff_eq] at hc
+    rw [← hc.2]
+    exact hedge v u hv (List.mem_range.mp hu) hc.1
+  have hbc_img : ∀ s, bitCount ctx.n
+      (image (fun w => γ[w]!) ctx.n s) = bitCount ctx.n s := by
+    intro s
+    rw [himg, bitCount_image]
+  have hbc_le : ∀ v, v < ctx.n →
+      bitCount ctx.n ctx.g[v]! ≤ bitCount ctx.n ctx.g[γ[v]!]! := by
+    intro v hv
+    rw [← hbc_img ctx.g[v]!]
+    exact bitCount_le_of_submask (hsub v hv) ctx.n
+  have hsum : (((List.range ctx.n).map fun v =>
+      bitCount ctx.n ctx.g[γ[v]!]!)).sum =
+      (((List.range ctx.n).map fun v =>
+        bitCount ctx.n ctx.g[v]!)).sum := by
+    have hp : ((List.range ctx.n).map fun v =>
+        bitCount ctx.n ctx.g[γ[v]!]!).Perm
+        ((List.range ctx.n).map fun v => bitCount ctx.n ctx.g[v]!) := by
+      have hpm := (List.isPerm_iff.mp hperm).map
+        fun u => bitCount ctx.n ctx.g[u]!
+      rw [List.map_map] at hpm
+      exact hpm
+    exact sum_perm hp
+  have heq_bc := map_eq_of_le_of_sum_le (List.range ctx.n)
+    (fun v hv => hbc_le v (List.mem_range.mp hv)) (Nat.le_of_eq hsum)
+  have hrow : ∀ v, v < ctx.n →
+      image (fun w => γ[w]!) ctx.n ctx.g[v]! = ctx.g[γ[v]!]! := by
+    intro v hv
+    have himglt : image (fun w => γ[w]!) ctx.n ctx.g[v]! < 2 ^ ctx.n := by
+      rw [himg]
+      exact image_lt (renamingOfArray γ ctx.n hbound hinj) ctx.g[v]!
+    refine eq_of_submask_of_popCount_eq (hsub v hv) ?_ himglt
+      (hb _ (hbound v hv))
+    rw [popCount_eq_bitCount ctx.n _ himglt,
+      popCount_eq_bitCount ctx.n _ (hb _ (hbound v hv)),
+      hbc_img ctx.g[v]!]
+    exact heq_bc v (List.mem_range.mpr hv)
+  rw [checkAutom]
+  simp only [Bool.and_eq_true]
+  refine ⟨⟨⟨by simpa using hsz, ?_⟩, hperm⟩, ?_⟩
+  · exact List.all_eq_true.mpr fun v hv => by
+      simpa using hbound v (List.mem_range.mp hv)
+  · refine List.all_eq_true.mpr fun v hv => ?_
+    simp only [beq_iff_eq]
+    exact (hrow v (List.mem_range.mp hv)).symm
+
+/-! # Layer two, part b: the validated-store invariant
+
+Every generator pair the producer stores passes `checkAutom` — the
+stored generator via the admission filter's `isautom` plus the
+counting bridge, the stored inverse via `checkAutom_invPerm`. The
+permutation side of each candidate (`isPerm_of_trace`) is a
+transcription property proven separately; it enters as the open
+hypothesis on the admitted candidate. -/
+
+/-- The store invariant: every stored generator pair passes
+`checkAutom` in both components. -/
+def GensOk (ctx : Ctx) (st : AutState) : Prop :=
+  ∀ p ∈ st.gens, checkAutom ctx.g p.1 ctx.n = true ∧
+    checkAutom ctx.g p.2 ctx.n = true
+
+/-- Admission preserves the store invariant: the filter re-verifies
+size, bounds, and `isautom`, so with the candidate's permutation
+side (hypothesis `hγ`) the counting bridge validates the stored
+pair. -/
+theorem GensOk.admit {ctx : Ctx} {st : AutState} {γ : Array Nat}
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hγ : isautom ctx γ = true →
+      (((List.range ctx.n).map fun v => γ[v]!).isPerm
+        (List.range ctx.n)) = true)
+    (hst : GensOk ctx st) : GensOk ctx (st.admit ctx γ) := by
+  have hpair : ((γ.size == ctx.n &&
+        (List.range ctx.n).all fun v => decide (γ[v]! < ctx.n)) &&
+        isautom ctx γ) = true →
+      checkAutom ctx.g γ ctx.n = true ∧
+        checkAutom ctx.g (invPerm γ) ctx.n = true := by
+    intro hc
+    simp only [Bool.and_eq_true, beq_iff_eq] at hc
+    have hA := checkAutom_of_isautom hc.1.1 (hγ hc.2) hsymm hloop hb
+      hc.2
+    exact ⟨hA, checkAutom_invPerm hb hA⟩
+  rw [AutState.admit]
+  simp only [Id.run, pure]
+  repeat' split
+  all_goals intro p hp
+  all_goals first
+    | exact hst p hp
+    | · rename_i hc _
+        simp only at hp
+        rcases Array.mem_push.mp hp with hmem | rfl
+        · exact hst p hmem
+        · exact hpair hc
+    | · rename_i hc _ _
+        simp only at hp
+        rw [Array.mem_def, Array.set!_eq_setIfInBounds,
+          Array.toList_setIfInBounds] at hp
+        rcases List.mem_or_eq_of_mem_set hp with hmem | rfl
+        · exact hst p (Array.mem_def.mpr hmem)
+        · exact hpair hc
+
+/-- A fold preserves any invariant its step preserves on the list's
+elements. -/
+theorem foldl_preserves_mem {α σ : Type} (P : σ → Prop) (g : σ → α → σ) :
+    ∀ (l : List α), (∀ s a, a ∈ l → P s → P (g s a)) →
+      ∀ (s : σ), P s → P (l.foldl g s)
+  | [], _, _, hs => hs
+  | a :: t, h, s, hs => foldl_preserves_mem P g t
+      (fun s' a' ha' => h s' a' (List.mem_cons_of_mem a ha'))
+      (g s a) (h s a (List.mem_cons_self ..) hs)
+
+/-- The fresh store is trivially valid. -/
+theorem GensOk.init (ctx : Ctx) (nn : Nat) (budget : Option Nat) :
+    GensOk ctx (AutState.init nn budget) := by
+  intro p hp
+  simp [AutState.init] at hp
+
+/-- Layer two, part b, the validated-store invariant: an admission
+fold over candidates that are permutations whenever they pass the
+admission filter (the `isPerm_of_trace` obligation, hypothesis
+`hautos`) stores only `checkAutom`-valid generator pairs. -/
+theorem GensOk.foldl_admit {ctx : Ctx} {st : AutState}
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    {autos : List (Array Nat)}
+    (hautos : ∀ γ ∈ autos, isautom ctx γ = true →
+      (((List.range ctx.n).map fun v => γ[v]!).isPerm
+        (List.range ctx.n)) = true)
+    (hst : GensOk ctx st) :
+    GensOk ctx (autos.foldl (fun st γ => st.admit ctx γ) st) :=
+  foldl_preserves_mem (GensOk ctx) (fun st γ => st.admit ctx γ) autos
+    (fun _ γ hγ hs => GensOk.admit hsymm hloop hb (hautos γ hγ) hs)
+    st hst
 
 end Hex.GraphIso.Nauty

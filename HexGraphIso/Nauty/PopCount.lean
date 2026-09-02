@@ -33,6 +33,17 @@ these two comparison lemmas complete the set.
 
 namespace Hex.GraphIso.Nauty
 
+/-- The submask constructor: bitwise implication packages as `&&&`. -/
+theorem submask_of_testBit {a b : Nat}
+    (h : ∀ i, a.testBit i = true → b.testBit i = true) :
+    a &&& b = a := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and]
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · rw [h i ha]
+    rfl
+
 /-- The submask relation as a bitwise implication: if `a &&& b = a`
 then every set bit of `a` is a set bit of `b`. -/
 theorem testBit_of_submask {a b : Nat} (h : a &&& b = a) {i : Nat}
