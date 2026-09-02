@@ -1110,6 +1110,12 @@ lean_exe hexgraphiso_cactus where
   srcDir := "bench"
   root := `HexGraphIso.Cactus
 
+-- Stage-decomposition profiler for the canonicalization pipeline
+-- (local tool; see bench/HexGraphIso/Profile.lean for methodology).
+lean_exe hexgraphiso_profile where
+  srcDir := "bench"
+  root := `HexGraphIso.Profile
+
 lean_exe hexrowreduce_bench where
   srcDir := "bench"
   root := `HexRowReduce.Bench

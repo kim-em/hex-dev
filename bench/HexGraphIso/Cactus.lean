@@ -50,21 +50,38 @@ private def adjStrings {n : Nat} (G : Colored n 1) : List String :=
   (List.finRange n).map fun i => String.ofList <|
     (List.finRange n).map fun j => if G.graph.adj i j then '1' else '0'
 
+/-- Route every measured result through an opaque IO sink so the
+compiler cannot hoist or elide the timed computation (LeanBench's
+`blackBox` idiom). -/
+initialize sinkRef : IO.Ref Nat ← IO.mkRef 0
+
+@[noinline] def blackBox (a : Nat) : IO Unit :=
+  sinkRef.modify (· ^^^ a)
+
 private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
-  let mut sink := 0
   let w0 ← IO.monoNanosNow
-  sink ← act ()  -- warmup
+  blackBox (← act ())  -- warmup
   let w1 ← IO.monoNanosNow
   -- one timed repetition suffices once a single call costs a second
   let effReps := if w1 - w0 > 1000000000 then 1 else reps
   let mut best : Nat := 0
   for _ in [0 : effReps] do
     let t0 ← IO.monoNanosNow
-    sink ← act ()
+    blackBox (← act ())
     let t1 ← IO.monoNanosNow
     if best == 0 || t1 - t0 < best then
       best := t1 - t0
-  if sink == 42424242424242 then IO.eprintln "(unreachable)"
+  -- scaling self-check: a doubled batch must cost about double, or the
+  -- measurement is an artifact (hoisting, memoization) — warn loudly
+  if effReps > 1 && best > 20000 then
+    let t0 ← IO.monoNanosNow
+    blackBox (← act ())
+    blackBox (← act ())
+    let t1 ← IO.monoNanosNow
+    let two := t1 - t0
+    if two < best || two > 8 * best then
+      IO.eprintln s!"cactus: WARNING scaling self-check failed \
+        (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
   return best
 
 private def runInst (i : Inst) : IO Unit := do
