@@ -23,4 +23,14 @@ pairs="reports/bench-results/hexgraphiso-pairs-$fp-$host.jsonl"
 .lake/build/bin/hexgraphiso_cactus pairs > "$pairs"
 python3 scripts/plots/hexgraphiso-cactus.py \
   --sweep "$sweep" --pairs "$pairs" --retime
-echo "recorded $sweep, $pairs, and reports/figures/hexgraphiso-*.svg"
+cp reports/figures/hexgraphiso-tactic-times.json \
+  "reports/bench-results/hexgraphiso-tactic-$fp-$host.json"
+cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
+{
+ "fingerprint": "$fp",
+ "host": "$host",
+ "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+ "describe": "$(git rev-parse --short=12 HEAD)"
+}
+META
+echo "recorded $sweep, $pairs, tactic times, meta, and reports/figures/hexgraphiso-*.svg"
