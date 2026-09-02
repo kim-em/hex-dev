@@ -62,6 +62,7 @@ private def target : Int := 32
 private structure Case where
   id     : String
   coeffs : List Int
+deriving Inhabited
 
 /-- One step of the deterministic seed-`0xC0FFEE` coefficient stream. -/
 private def lcgNext (s : UInt64) : UInt64 :=
@@ -120,26 +121,49 @@ private def certValue {p : ZPoly} (rs : Array (Certified p)) : String :=
 /-- The `result.value` for a driver give-up. -/
 private def noneValue : String := "\"none\""
 
-/-- Emit the `poly` fixture and `isolateAll32` result for one case, returning
-    `true` when the driver returned `none`. -/
-private def emitCase (c : Case) : IO Bool := do
-  emitPolyFixture lib c.id c.coeffs
+/-- The expensive half of one case: the serialised `isolateAll32`
+outcome and the gave-up flag. Pure, so cases parallelise as tasks
+with the record stream still written in order by `main`. -/
+private def caseValue (c : Case) : String × Bool :=
   let p : ZPoly := DensePoly.ofCoeffs c.coeffs.toArray
-  let (value, gaveUp) :=
-    if h : 0 < p.degree?.getD 0 then
-      match isolateAll? p target #[Component.cauchy p h] with
-      | some rs => (certValue rs, false)
-      | none    => (noneValue, true)
-    else
-      (noneValue, true)
-  emitResult lib c.id "isolateAll32" value
-  pure gaveUp
+  if h : 0 < p.degree?.getD 0 then
+    match isolateAll? p target #[Component.cauchy p h] with
+    | some rs => (certValue rs, false)
+    | none    => (noneValue, true)
+  else
+    (noneValue, true)
 
 end Hex.RootsEmit
 
-open Hex.RootsEmit in
+open Hex.RootsEmit Hex.Conformance.Emit in
 def main : IO Unit := do
-  for c in cases do
-    if ← emitCase c then
+  -- The per-case isolation dominates the run (seconds per degree-20
+  -- case), so it is computed in parallel tasks while the records are
+  -- written strictly in case order, keeping the stream byte-identical
+  -- to sequential emission. The runtime's task pool bounds
+  -- concurrency at the hardware thread count; `HEX_EMIT_JOBS` caps
+  -- the number of outstanding tasks below that when set.
+  let jobs? := (← IO.getEnv "HEX_EMIT_JOBS").bind (·.toNat?)
+  let arr := (cases : List Case).toArray
+  let n := arr.size
+  let window := match jobs? with
+    | some j => min (max 1 j) n
+    | none => n
+  let mut tasks : Array (Option (Task (String × Bool))) := .replicate n none
+  let mut spawned := 0
+  while spawned < window do
+    let j := spawned
+    tasks := tasks.set! j (some (Task.spawn fun _ => caseValue arr[j]!))
+    spawned := spawned + 1
+  for i in [0:n] do
+    let c := arr[i]!
+    emitPolyFixture lib c.id c.coeffs
+    let (value, gaveUp) := (tasks[i]!.getD (Task.pure (noneValue, true))).get
+    emitResult lib c.id "isolateAll32" value
+    if gaveUp then
       IO.eprintln s!"hexroots_emit_fixtures: isolateAll? returned none for case {c.id}; \
         this is SPEC-noteworthy"
+    if spawned < n then
+      let j := spawned
+      tasks := tasks.set! j (some (Task.spawn fun _ => caseValue arr[j]!))
+      spawned := spawned + 1

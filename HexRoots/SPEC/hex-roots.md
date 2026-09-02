@@ -883,9 +883,13 @@ polynomials rarely have clustered roots.
   - 50 degree-20 polynomials with deterministic seed `0xC0FFEE` and
     coefficients in `[−10, 10]`, cross-checked against the python-flint
     oracle (below), plus the six curated atom/cluster cases retained for
-    explicit simple/multiple-root coverage. Fresh emission of the full stream
-    takes about 5.2 minutes on `chungus2`; at degree 20 the all-atoms local
-    finisher supplies the speedup, while the size-gated soft front end is idle.
+    explicit simple/multiple-root coverage. The emitter computes cases in
+    parallel tasks and writes records in case order, so the stream stays
+    byte-identical to sequential emission; fresh emission of the full
+    stream takes about 11 seconds on `chungus2` (about 4.8 CPU-minutes,
+    `HEX_EMIT_JOBS` caps the outstanding tasks). At degree 20 the
+    all-atoms local finisher supplies the per-case speedup, while the
+    size-gated soft front end is idle.
 - *local* (developer-driven):
   - Adversarial families cross-checked against MPSolve: Mignotte
     `(n, a)` for `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, the Wilkinson
