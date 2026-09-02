@@ -34,6 +34,7 @@ public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved
 public import HexGraphIso.Nauty.Complete
+public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Ops
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
