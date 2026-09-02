@@ -544,6 +544,144 @@ private theorem id_run_scan (F : Id (Option Bool × Unit)) :
         | none => pure true : Id Bool).run
       = match F.fst with | some r => r | none => true := rfl
 
+/-! ### The `isautom` specification -/
+
+/-- The outer loop body of `isautom`, spelled with the named core
+matcher so it is syntactically identical to the `do`-desugaring
+(restating it with `match` syntax would mint a fresh matcher the
+unifier rejects). -/
+private def isautomOuter (ctx : Ctx) (γ : Array Nat) (i : Nat)
+    (__s : Option Bool × Unit) : Id (ForInStep (Option Bool × Unit)) :=
+  have row := ctx.g[i]!
+  do
+  let __s ← forIn (toList row ctx.n) (none, ()) fun pos __s =>
+      if pos > i then
+        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          pure (ForInStep.done (some false, ()))
+        else pure (ForInStep.yield (none, ()))
+      else pure (ForInStep.yield (none, ()))
+  have __r : Option Bool × Unit := __s
+  Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit))) __r.fst
+    (fun r => pure (ForInStep.done (some r, ()))) fun _ =>
+    pure (ForInStep.yield (none, ()))
+
+private theorem isautom_eq_scan (ctx : Ctx) (γ : Array Nat) :
+    isautom ctx γ =
+      Break.runK.match_1 (fun _ => Bool)
+        (forIn (List.range ctx.n) (none, ())
+          (isautomOuter ctx γ) : Id (Option Bool × Unit)).fst
+        (fun r => r) (fun _ => true) := by
+  rw [isautom, forIn_range_eq]
+  rfl
+
+/-- The per-vertex pass condition of `isautom`'s outer loop. -/
+private def isautomPass (ctx : Ctx) (γ : Array Nat) (i : Nat) : Prop :=
+  ∀ pos ∈ toList ctx.g[i]! ctx.n,
+    pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true
+
+private instance (ctx : Ctx) (γ : Array Nat) (i : Nat) :
+    Decidable (isautomPass ctx γ i) :=
+  inferInstanceAs (Decidable (∀ pos ∈ _, _ → _ = true))
+
+private theorem isautomInner_gate (ctx : Ctx) (γ : Array Nat)
+    (i pos : Nat) :
+    IsGate
+      (fun __s => if pos > i then
+        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          pure (ForInStep.done (some false, ()))
+        else pure (ForInStep.yield (none, ()))
+      else pure (ForInStep.yield (none, ())))
+      (pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true) := by
+  constructor
+  · intro hp
+    by_cases hgt : pos > i
+    · rw [if_pos hgt, if_neg (by simpa using hp hgt)]
+    · rw [if_neg hgt]
+  · intro hp
+    rcases Decidable.not_imp_iff_and_not.mp hp with ⟨hgt, hne⟩
+    rw [if_pos hgt, if_pos (by simpa using hne)]
+
+private theorem isautomOuter_gate (ctx : Ctx) (γ : Array Nat) (i : Nat) :
+    IsGate (isautomOuter ctx γ i) (isautomPass ctx γ i) := by
+  have hcases := forIn_scan_fst_cases (toList ctx.g[i]! ctx.n)
+    (fun pos __s => if pos > i then
+        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          pure (ForInStep.done (some false, ()))
+        else pure (ForInStep.yield (none, ()))
+      else pure (ForInStep.yield (none, ())))
+    (fun pos => pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true)
+    (fun pos => isautomInner_gate ctx γ i pos)
+  have hiff := forIn_scan_fst_eq_none (toList ctx.g[i]! ctx.n)
+    (fun pos __s => if pos > i then
+        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          pure (ForInStep.done (some false, ()))
+        else pure (ForInStep.yield (none, ()))
+      else pure (ForInStep.yield (none, ())))
+    (fun pos => pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true)
+    (fun pos => isautomInner_gate ctx γ i pos)
+  constructor
+  · intro hp
+    show (do
+      let __s ← forIn (toList ctx.g[i]! ctx.n) (none, ()) _
+      have __r : Option Bool × Unit := __s
+      Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
+        __r.fst (fun r => pure (ForInStep.done (some r, ()))) fun _ =>
+        pure (ForInStep.yield (none, ())) : Id _) = _
+    have hnone : (forIn (toList ctx.g[i]! ctx.n) (none, ())
+        (fun pos __s => if pos > i then
+          if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+            pure (ForInStep.done (some false, ()))
+          else pure (ForInStep.yield (none, ()))
+        else pure (ForInStep.yield (none, ()))) :
+        Id (Option Bool × Unit)).fst = none := hiff.mpr hp
+    show Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
+      (forIn (toList ctx.g[i]! ctx.n) (none, ()) _ :
+        Id (Option Bool × Unit)).fst _ _ = _
+    rw [hnone]
+  · intro hp
+    have hsome : (forIn (toList ctx.g[i]! ctx.n) (none, ())
+        (fun pos __s => if pos > i then
+          if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+            pure (ForInStep.done (some false, ()))
+          else pure (ForInStep.yield (none, ()))
+        else pure (ForInStep.yield (none, ()))) :
+        Id (Option Bool × Unit)).fst = some false := by
+      rcases hcases with h | h
+      · exact absurd (hiff.mp h) hp
+      · exact h
+    show Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
+      (forIn (toList ctx.g[i]! ctx.n) (none, ()) _ :
+        Id (Option Bool × Unit)).fst _ _ = _
+    rw [hsome]
+
+/-- `isautom` returns `true` exactly when every edge maps to an edge
+under `γ`: the loop's specification, consumable with the `rowsOf`
+dischargers. -/
+theorem isautom_iff (ctx : Ctx) (γ : Array Nat) :
+    isautom ctx γ = true ↔
+      ∀ i < ctx.n, ∀ pos ∈ toList ctx.g[i]! ctx.n,
+        pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true := by
+  rw [isautom_eq_scan]
+  have hcases := forIn_scan_fst_cases (List.range ctx.n)
+    (isautomOuter ctx γ) (isautomPass ctx γ)
+    (isautomOuter_gate ctx γ)
+  have hiff := forIn_scan_fst_eq_none (List.range ctx.n)
+    (isautomOuter ctx γ) (isautomPass ctx γ)
+    (isautomOuter_gate ctx γ)
+  constructor
+  · intro h
+    intro i hi
+    refine (hiff.mp ?_) i (List.mem_range.mpr hi)
+    rcases hcases with hf | hf
+    · exact hf
+    · rw [hf] at h
+      exact absurd h (by simp)
+  · intro h
+    have hnone : (forIn (List.range ctx.n) (none, ())
+        (isautomOuter ctx γ) : Id (Option Bool × Unit)).fst = none :=
+      hiff.mpr fun i hi => h i (List.mem_range.mp hi)
+    rw [hnone]
+
 /-!
 **Residual gap to `certifyCanon?` totality.** With layers one and
 two, `(Nauty.certifyCanon? G).isSome` additionally needs:
