@@ -269,14 +269,16 @@ Neither case runs canonical search.
 Otherwise the tactic:
 
 1. reifies both inputs with kernel-checked correspondence proofs;
-2. runs compiled canonical-certificate generation;
-3. checks both certificates and their first-difference certificate before
-   emission;
-4. emits the literal data and checker theorem applications;
-5. obtains executable non-isomorphism from
-   `Hex.GraphIso.iso_iff_canon_eq`;
-6. transports that theorem through `encode_iso_iff`;
-7. constructs `IsEmpty` or the requested negated `Nonempty` proposition.
+2. obtains executable non-isomorphism of the encodings from the shared
+   Mathlib-free negative engine, which selects by measured replay cost
+   between the certificate route (compiled canonical-certificate
+   generation, both certificates and their first-difference
+   certificate checked before emission, literal data and checker
+   theorem applications emitted) and the verified pairwise decision;
+3. transports that result through the `not_encode_iso` bridge
+   theorems;
+4. constructs `IsEmpty` or the requested negated `Nonempty`
+   proposition.
 
 Search exhaustion and checker exhaustion are errors. They never select the
 negative branch.

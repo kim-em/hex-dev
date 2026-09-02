@@ -40,6 +40,9 @@ example : Isomorphic p3 p3' := by
   graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
 example : Isomorphic p3 p3' := by
   graph_iso (maxCheckerSteps := 10000000) (maxCertNodes := 200000)
+-- a zero certificate budget forces the negative path onto the
+-- pairwise fallback, which must still close the goal
+example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertNodes := 0)
 
 /-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
 #guard_msgs in

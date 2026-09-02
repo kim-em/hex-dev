@@ -373,22 +373,34 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, the tactic's primary path is the certificate
-route: the compiled search produces a canonical-key certificate for
-each graph, and the kernel replays the two Boolean certificate checks
-and their key comparison, closing the goal through
-`not_isomorphic_of_checkKeys` (`checkKey` twice plus `checkDiff`, with
-no achieving labelling reified). When certificate production fails or
-a certificate exceeds the configured budgets, the tactic falls back to
-replaying the fully verified pairwise individualization-refinement
-decision (`decideIso?_not_isomorphic`) under `maxNodes`; the fallback
-also anchors the exhaustion semantics. No result relies on compiler
-trust. The pairwise replay was the original primary path; measurement
-retired it: kernel-replaying the pairwise search costs tens of seconds
-on twenty-vertex regular pairs, while certificate replay scales with
-certificate size once the producer emits automorphism prunes
+For a negative goal, the tactic selects between two kernel routes by
+measured cost. The certificate route has the compiled search produce a
+canonical-key certificate for each graph; the kernel replays the two
+Boolean certificate checks and their key comparison, closing the goal
+through `not_isomorphic_of_checkKeys` (`checkKey` twice plus
+`checkDiff`, with no achieving labelling reified), and its replay cost
+scales with the certificate record counts. The pairwise route replays
+the fully verified individualization-refinement decision
+(`decideIso?_not_isomorphic`), and its replay cost scales with the
+nodes that search visits — small when refinement refutes the pair
+almost immediately, large when genuine search is needed. After
+producing both certificates the tactic offers the pairwise decision a
+node budget equivalent to the certificate replay's cost (one pairwise
+node kernel-replays for roughly four certificate records); whichever
+route fits closes the goal. When certificate production fails or a
+certificate exceeds the configured budgets, the full-budget pairwise
+replay is the fallback and anchors the exhaustion semantics. No result
+relies on compiler trust. The pairwise replay was the sole original
+path; measurement motivated the split: kernel-replaying the pairwise
+search costs tens of seconds on twenty-vertex regular pairs that need
+genuine search, while certificate replay stays proportional to the
+pruned certificates once the producer emits automorphism prunes
 (code-prune-only certificates measured thousands of records against
-nauty's tens of visited nodes on the same graphs).
+nauty's tens of visited nodes on the same graphs). Both routes also
+pay an irreducible kernel cost evaluating the goal's graph
+definitions themselves, so family-style definitions with expensive
+adjacency (combinatorial constructions) set a shared floor that
+neither route can undercut.
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search
