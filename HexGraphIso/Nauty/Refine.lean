@@ -175,6 +175,44 @@ where
     | [], st => st
     | (cell1, cell2) :: rest, st => go gRow rest (trivialCell level gRow cell1 cell2 st)
 
+/-- `refineTrivial` with the cell walk fused: boundaries come from a
+snapshot of the partition (`ptn0`), taken before the pass writes, so
+no `(start, end)` pair list is materialized. Runtime form of
+`refineTrivial`. -/
+@[expose] def refineTrivialFast (ctx : Ctx) (level split1 : Nat)
+    (st : RefineSt) : RefineSt :=
+  go (ctx.g[st.lab[split1]!]!) st.ptn ctx.n 0 st
+where
+  go (gRow : Nat) (ptn0 : Array Nat) : Nat → Nat → RefineSt → RefineSt
+    | 0, _, st => st
+    | fuel + 1, c1, st =>
+      if c1 < ctx.n then
+        let c2 := cellEnd ptn0 level c1
+        go gRow ptn0 fuel (c2 + 1) (trivialCell level gRow c1 c2 st)
+      else
+        st
+
+theorem refineTrivialFast_go_eq (ctx : Ctx) (level gRow : Nat)
+    (ptn0 : Array Nat) :
+    ∀ (fuel c1 : Nat) (st : RefineSt),
+      refineTrivialFast.go ctx level gRow ptn0 fuel c1 st =
+        refineTrivial.go level gRow
+          (cells.go ptn0 level ctx.n fuel c1) st
+  | 0, _, _ => by
+    rw [refineTrivialFast.go, cells.go, refineTrivial.go]
+  | fuel + 1, c1, st => by
+    rw [refineTrivialFast.go, cells.go]
+    rcases Decidable.em (c1 < ctx.n) with h | h
+    · rw [if_pos h, if_pos h, refineTrivial.go]
+      exact refineTrivialFast_go_eq ctx level gRow ptn0 fuel _ _
+    · rw [if_neg h, if_neg h, refineTrivial.go]
+
+@[csimp] theorem refineTrivial_eq_fast :
+    @refineTrivial = @refineTrivialFast := by
+  funext ctx level split1 st
+  rw [refineTrivial, refineTrivialFast, cells]
+  exact (refineTrivialFast_go_eq ctx level _ st.ptn ctx.n 0 st).symm
+
 /-- The splitter cell's vertex set: the members of `lab[lo..hi]`. -/
 @[expose] def worksetOf (lab : Array Nat) (lo hi : Nat) : Nat :=
   (List.range (hi + 1 - lo)).foldl (fun w o => insert w lab[lo + o]!) 0
@@ -304,6 +342,46 @@ where
     | [], st => st
     | (cell1, cell2) :: rest, st =>
       go workset rest (nontrivialCell ctx level workset cell1 cell2 st)
+
+/-- `refineNontrivial` with the cell walk fused over a partition
+snapshot, mirroring `refineTrivialFast`. Runtime form of
+`refineNontrivial`. -/
+@[expose] def refineNontrivialFast (ctx : Ctx) (level split1 split2 : Nat)
+    (st : RefineSt) : RefineSt :=
+  let workset := worksetOf st.lab split1 split2
+  let st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
+  go workset st.ptn ctx.n 0 st
+where
+  go (workset : Nat) (ptn0 : Array Nat) : Nat → Nat → RefineSt → RefineSt
+    | 0, _, st => st
+    | fuel + 1, c1, st =>
+      if c1 < ctx.n then
+        let c2 := cellEnd ptn0 level c1
+        go workset ptn0 fuel (c2 + 1)
+          (nontrivialCell ctx level workset c1 c2 st)
+      else
+        st
+
+theorem refineNontrivialFast_go_eq (ctx : Ctx) (level workset : Nat)
+    (ptn0 : Array Nat) :
+    ∀ (fuel c1 : Nat) (st : RefineSt),
+      refineNontrivialFast.go ctx level workset ptn0 fuel c1 st =
+        refineNontrivial.go ctx level workset
+          (cells.go ptn0 level ctx.n fuel c1) st
+  | 0, _, _ => by
+    rw [refineNontrivialFast.go, cells.go, refineNontrivial.go]
+  | fuel + 1, c1, st => by
+    rw [refineNontrivialFast.go, cells.go]
+    rcases Decidable.em (c1 < ctx.n) with h | h
+    · rw [if_pos h, if_pos h, refineNontrivial.go]
+      exact refineNontrivialFast_go_eq ctx level workset ptn0 fuel _ _
+    · rw [if_neg h, if_neg h, refineNontrivial.go]
+
+@[csimp] theorem refineNontrivial_eq_fast :
+    @refineNontrivial = @refineNontrivialFast := by
+  funext ctx level split1 split2 st
+  rw [refineNontrivial, refineNontrivialFast, cells]
+  exact (refineNontrivialFast_go_eq ctx level _ _ ctx.n 0 _).symm
 
 /-- One iteration of `refine`'s active-cell loop: remove the chosen
 splitter from the active set and perform its splitting pass. -/
