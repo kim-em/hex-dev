@@ -13,6 +13,12 @@ set -euo pipefail
 label="${1:-}"
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# The fingerprint reads the index, but the sweep measures the working
+# tree; stage the relevant paths first so an uncommitted change cannot
+# record under its predecessor's key (they are about to be committed
+# together with the data in any case).
+git add -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
+  scripts/plots/hexgraphiso-cactus.py
 fp=$(git ls-files -s -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
   scripts/plots/hexgraphiso-cactus.py | sha256sum | cut -c1-12)
 host=$(hostname -s)

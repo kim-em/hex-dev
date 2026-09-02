@@ -1043,6 +1043,12 @@ recorded commit.
 Recorded sweeps accumulate: each regeneration adds its data,
 tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,
 label) under `reports/bench-results/` without removing predecessors.
+A change to the instance corpus itself is a series break: it lands as
+its own pull request whose frame label says so, and curve comparisons
+(the before/after tables, the animation's fixed axes) are only
+meaningful between sweeps on the same corpus. The first such break
+adds the irregular negative pairs, whose absence had made every
+corpus negative regular and the separator tiers invisible.
 Every pull request that improves the measured performance of any
 layer (fast, checked, or tactic) posts a before/after comparison as a
 pull-request comment: `scripts/plots/hexgraphiso-before-after.py`

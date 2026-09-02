@@ -213,6 +213,29 @@ private def pairInstances : List PairInst := Id.run do
       (Families.kneser 7 2) (Families.johnson 7 2) h
       "Families.plain (Families.kneser 7 2)"
       "Families.plain (Families.johnson 7 2)" :: out
+  -- irregular negatives (added as a documented series break): distinct
+  -- degree multisets at matched size, so the root refinement separates
+  -- them and the tiered negative route's cheapest tier is exercised
+  if h : 0 < 3 * 4 then
+    out := negPair "irregular" "neg-grid3x4-vs-circulant12"
+      (Families.grid 3 4) (Families.circulant 12 [1, 2]) h
+      "Families.plain (Families.grid 3 4)"
+      "Families.plain (Families.circulant 12 [1, 2])" :: out
+  if h : 0 < 4 * 4 then
+    out := negPair "irregular" "neg-grid4x4-vs-q4"
+      (Families.grid 4 4) (Families.hypercube 4) h
+      "Families.plain (Families.grid 4 4)"
+      "Families.plain (Families.hypercube 4)" :: out
+  if h : 0 < 4 * 5 then
+    out := negPair "irregular" "neg-grid4x5-vs-k8-12"
+      (Families.grid 4 5) (Families.completeBipartite 8 12) h
+      "Families.plain (Families.grid 4 5)"
+      "Families.plain (Families.completeBipartite 8 12)" :: out
+  if h : 0 < 4 * 6 then
+    out := negPair "irregular" "neg-grid4x6-vs-2grid3x4"
+      (Families.grid 4 6) (Families.copies 2 (Families.grid 3 4)) h
+      "Families.plain (Families.grid 4 6)"
+      "Families.plain (Families.copies 2 (Families.grid 3 4))" :: out
   return out.reverse
 
 private def escape (s : String) : String :=
