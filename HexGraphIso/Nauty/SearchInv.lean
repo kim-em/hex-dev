@@ -854,4 +854,125 @@ theorem bcount_initPtn {n k : Nat} (G : Colored n k) :
       decide_eq_false (p := n + 2 ≤ 1) (by omega),
       decide_eq_false hm]
 
+/-! # The quartet invariants
+
+The per-node invariant (`SearchOk`) and per-call effect (`SearchOut`)
+of the transcribed search, with their composition toolkit. The
+quartet induction itself consumes these downstream. -/
+
+variable {n k : Nat}
+
+/-- The per-node invariant of the transcribed search at `level` with
+claimed cell count `numcells`. -/
+structure SearchOk (G : Colored n k) (level numcells : Nat)
+    (st : SearchSt) : Prop where
+  labSize : st.lab.size = n
+  ptnSize : st.ptn.size = n
+  reach : CellsReach G st.lab
+  init1 : ∀ q : Nat,
+    (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 →
+    st.ptn[q]! ≤ 1
+  vals : ∀ q : Nat, q < n → st.ptn[q]! ≤ level ∨ st.ptn[q]! = n + 2
+  count : numcells = bcount st.ptn level n
+  bc : level ≤ bcount st.ptn level n
+  canon : st.canonlab = Array.replicate n 0 ∨
+    (st.canonlab.size = n ∧ CellsReach G st.canonlab)
+
+/-- What a quartet call leaves behind: sizes kept, reachability kept,
+the partition preserved exactly wherever it is (or becomes) closed at
+`B`, the labelling permuted only within cells of the entry partition
+at `lev`, and `canonlab` kept or installed reached. -/
+structure SearchOut (G : Colored n k) (B lev : Nat)
+    (st st' : SearchSt) : Prop where
+  labSize : st'.lab.size = st.lab.size
+  ptnSize : st'.ptn.size = st.ptn.size
+  reach : CellsReach G st'.lab
+  low : ∀ q : Nat, st.ptn[q]! ≤ B ∨ st'.ptn[q]! ≤ B →
+    st'.ptn[q]! = st.ptn[q]!
+  perm : cellsPerm st.ptn lev st.lab st'.lab
+  canon : st'.canonlab = st.canonlab ∨
+    (st'.canonlab.size = n ∧ CellsReach G st'.canonlab)
+
+theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
+    {st : SearchSt} (hreach : CellsReach G st.lab) :
+    SearchOut G B lev st st :=
+  ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _, Or.inl rfl⟩
+
+/-- The exact-preservation clause fixes the boundary count. -/
+theorem bcount_eq_of_low {ptn ptn' : Array Nat} {lev : Nat}
+    (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →
+      ptn'[q]! = ptn[q]!) (nn : Nat) :
+    bcount ptn' lev nn = bcount ptn lev nn := by
+  rw [bcount, bcount]
+  refine List.countP_congr fun q _ => ?_
+  rcases Decidable.em (ptn[q]! ≤ lev) with h1 | h1
+  · rw [h q (Or.inl h1)]
+  · rcases Decidable.em (ptn'[q]! ≤ lev) with h2 | h2
+    · rw [h q (Or.inr h2)] at h2
+      exact absurd h2 h1
+    · rw [decide_eq_false h2, decide_eq_false h1]
+
+/-- The exact-preservation clause keeps cells intact. -/
+theorem isCell_of_low {ptn ptn' : Array Nat} {lev a len : Nat}
+    (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →
+      ptn'[q]! = ptn[q]!)
+    (hc : IsCell ptn lev a len) : IsCell ptn' lev a len := by
+  obtain ⟨h0, hstart, hint, hend⟩ := hc
+  refine ⟨h0, ?_, ?_, ?_⟩
+  · rcases hstart with h1 | h1
+    · exact Or.inl h1
+    · right
+      rw [h _ (Or.inl h1)]
+      exact h1
+  · intro i hi1 hi2
+    have hop := hint i hi1 hi2
+    rcases Decidable.em (ptn'[i]! ≤ lev) with h2 | h2
+    · rw [h i (Or.inr h2)] at h2
+      omega
+    · omega
+  · rw [h _ (Or.inl hend)]
+    exact hend
+
+/-- Under the level dichotomy, the boundary count is level-blind one
+step up. -/
+theorem bcount_succ_of_vals {ptn : Array Nat} {lev nn : Nat}
+    (hvals : ∀ q : Nat, q < nn → ptn[q]! ≤ lev ∨ ptn[q]! = nn + 2)
+    (hlev : lev + 1 < nn + 2) :
+    bcount ptn (lev + 1) nn = bcount ptn lev nn := by
+  rw [bcount, bcount]
+  refine List.countP_congr fun q hq => ?_
+  have hqn := List.mem_range.mp hq
+  rcases hvals q hqn with h | h
+  · rw [decide_eq_true (by omega : ptn[q]! ≤ lev + 1),
+      decide_eq_true h]
+  · rw [decide_eq_false (by omega), decide_eq_false (by omega)]
+
+/-- Compose two call effects at matching bounds. -/
+theorem SearchOut.trans {G : Colored n k} {B : Nat}
+    {st1 st2 st3 : SearchSt} (h12 : SearchOut G B B st1 st2)
+    (h23 : SearchOut G B B st2 st3) : SearchOut G B B st1 st3 := by
+  refine ⟨h23.labSize.trans h12.labSize,
+    h23.ptnSize.trans h12.ptnSize, h23.reach, ?_, ?_, ?_⟩
+  · intro q hq
+    rcases hq with h1 | h1
+    · rw [h23.low q (Or.inl (by rw [h12.low q (Or.inl h1)]; exact h1)),
+        h12.low q (Or.inl h1)]
+    · have h2 := h23.low q (Or.inr h1)
+      rw [h2] at h1
+      rw [h2, h12.low q (Or.inr h1)]
+  · refine cellsPerm_trans h12.perm ?_
+    intro a len hc
+    exact h23.perm a len (isCell_of_low h12.low hc)
+  · rcases h23.canon with h | h
+    · rw [h]
+      exact h12.canon
+    · exact Or.inr h
+
+/-- Weaken the preservation bound. -/
+theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
+    {st st' : SearchSt} (h : SearchOut G B lev st st')
+    (hB : B' ≤ B) : SearchOut G B' lev st st' :=
+  ⟨h.labSize, h.ptnSize, h.reach,
+    fun q hq => h.low q (by omega), h.perm, h.canon⟩
+
 end Hex.GraphIso.Nauty
