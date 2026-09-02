@@ -30,7 +30,10 @@ undirected graphs with ordered vertex colours. The canonical labelling
 algorithm used in `HexGraphIso` is an exact translation of the
 [nauty](https://users.cecs.anu.edu.au/~bdm/nauty/) 2.9.3 algorithm into Lean. (We
 use conformance testing, rather than a theorem, to ensure they are
-identical, and prove our theorems about the Lean translation.) The
+identical, and prove our theorems about the Lean translation.) The exact
+algorithm, including the output-relevant choices absent from the published
+literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
+labelling algorithm]. The
 short names (`canonicalize`, `canon`, `label`, `isIso`) run that
 translation directly and are the fast surface for users who just want
 answers; the `Checked` surface (`canonicalizeChecked`, `canonChecked`,
