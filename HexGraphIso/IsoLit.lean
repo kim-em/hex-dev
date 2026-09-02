@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Iso
+public import HexGraphIso.Nauty.CanonForm
 
 public section
 
@@ -138,5 +139,91 @@ theorem isomorphic_of_checkIsoLit {G H : Colored n k} {p : Perm n}
   · have h := hadj i.val i.isLt j.val j.isLt
     rw [hPL i, hPL j, hflat, hflat] at h
     exact h
+
+/-! # The literal-tie negative route
+
+The negative kernel obligation `checkKey G cert B = true` forces
+`rowsOf G`, whose per-entry adjacency probes walk the flat matrix
+from the front — the same quartic trap the positive route escaped.
+`checkKeyFlat` rebuilds the rows from the tied flat literal instead:
+the flat list is cut into rows once, sequentially, and each row
+bitset folds over its own short segment. -/
+
+theorem chunkRows_length (m : Nat) :
+    ∀ (r : Nat) (l : List Bool), (chunkRows r m l).length = r
+  | 0, _ => rfl
+  | r + 1, l => by
+    rw [chunkRows, List.length_cons, chunkRows_length m r]
+
+private theorem foldl_congr_mem {α β : Type} {f g : α → β → α} :
+    ∀ (l : List β), (∀ a b, b ∈ l → f a b = g a b) →
+      ∀ (a : α), l.foldl f a = l.foldl g a
+  | [], _, _ => rfl
+  | b :: l, h, a => by
+    rw [List.foldl_cons, List.foldl_cons, h a b List.mem_cons_self]
+    exact foldl_congr_mem l
+      (fun a' b' hb' => h a' b' (List.mem_cons_of_mem _ hb')) _
+
+/-- Adjacency rows rebuilt from the flat literal, priced for kernel
+reduction: the flat list is cut into rows once, and each row bitset
+folds over its own short segment instead of probing the flat list. -/
+@[expose] def flatRows (nn : Nat) (flat : List Bool) : Array Nat :=
+  ((chunkRows nn nn flat).map fun seg =>
+    (List.range nn).foldl
+      (fun row j => if atD seg j false then Nauty.insert row j else row)
+      0).toArray
+
+theorem flatRows_eq_rowsOf (G : Colored n k) :
+    flatRows n G.graph.adjMatrix.data.toList = Nauty.rowsOf G := by
+  rw [flatRows, Nauty.rowsOf]
+  refine congrArg List.toArray (List.ext_getElem ?_ ?_)
+  · rw [List.length_map, chunkRows_length, List.length_map,
+      List.length_range]
+  · intro i h1 h2
+    rw [List.length_map, chunkRows_length] at h1
+    rw [List.getElem_map, List.getElem_map, List.getElem_range,
+      ← atD_eq_getElem _ i (by rw [chunkRows_length]; exact h1),
+      Nauty.rowOf]
+    refine foldl_congr_mem _ (fun row j hj => ?_) 0
+    have hjn := List.mem_range.mp hj
+    rw [dite_eq_left (⟨h1, hjn⟩ : i < n ∧ j < n),
+      atD_chunk_flat (by simp) h1 hjn, Nat.mul_comm n i,
+      ← adj_eq_toList_flat G.graph ⟨i, h1⟩ ⟨j, hjn⟩]
+
+/-- `Nauty.checkKey` with the adjacency rows rebuilt from a flat
+literal: the negative route's kernel obligation, evaluating the tied
+literal instead of forcing `rowsOf`. -/
+@[expose] def checkKeyFlat (G : Colored n k) (flat : List Bool)
+    (cert : Nauty.CertNode) (B : Nauty.Key) : Bool :=
+  if n == 0 then
+    B.codes == [] && B.rows == []
+  else
+    Nauty.checkNode { n := n, g := flatRows n flat } 100 B.rows n 1
+      (Nauty.initialPartition G).1
+      (Nauty.initPtn n (n + 2) (Nauty.initialPartition G).2)
+      (Nauty.initActive (Nauty.initialPartition G).2)
+      (Nauty.initialPartition G).2.length cert B.codes = some true
+
+theorem checkKeyFlat_eq (G : Colored n k) (cert : Nauty.CertNode)
+    (B : Nauty.Key) :
+    checkKeyFlat G G.graph.adjMatrix.data.toList cert B =
+      Nauty.checkKey G cert B := by
+  rw [checkKeyFlat, Nauty.checkKey, flatRows_eq_rowsOf]
+
+/-- Tying equalities plus two flat-literal key certificates with
+differing keys prove non-isomorphism: the kernel evaluates each graph
+once into its literal, and both replays run on rebuilt literal
+rows. -/
+theorem not_isomorphic_of_checkKeysLit {G H : Colored n k}
+    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
+    {LA LB : List Bool}
+    (hA : G.graph.adjMatrix.data.toList = LA)
+    (hB : H.graph.adjMatrix.data.toList = LB)
+    (hG : checkKeyFlat G LA certG BG = true)
+    (hH : checkKeyFlat H LB certH BH = true)
+    (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
+  subst hA hB
+  rw [checkKeyFlat_eq] at hG hH
+  exact Nauty.not_isomorphic_of_checkKeys hG hH hd
 
 end Hex.GraphIso

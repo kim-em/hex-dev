@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert
+public import HexGraphIso.IsoLit
 public import HexGraph.Basic
 public meta import Lean
 
@@ -148,5 +149,12 @@ example : checkNode { n := 10, g := rowsP } 100 probeKey.rows 4 1
 
 set_option maxRecDepth 1000000 in
 example : checkKey probeGraph probeCert probeKey = true := by kdecide
+
+-- the negative tactic route's flat-literal obligation: pins the
+-- kernel closure of flatRows/chunkRows/atD feeding checkNode
+set_option maxRecDepth 1000000 in
+example : Hex.GraphIso.checkKeyFlat probeGraph
+    probeGraph.graph.adjMatrix.data.toList probeCert probeKey
+    = true := by kdecide
 
 end Hex.GraphIso.Nauty
