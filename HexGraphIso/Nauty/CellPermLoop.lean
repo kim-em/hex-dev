@@ -86,24 +86,6 @@ theorem ptn_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
 
 /-! # Segment write-back -/
 
-theorem writeSegment_outside :
-    ∀ (seg : List Nat) (lab : Array Nat) (lo q : Nat),
-      q < lo ∨ lo + seg.length ≤ q →
-      (writeSegment lab lo seg)[q]! = lab[q]!
-  | [], _, _, _, _ => rfl
-  | x :: seg, lab, lo, q, hq => by
-    simp only [List.length_cons] at hq
-    rw [writeSegment,
-      writeSegment_outside seg _ (lo + 1) q (by omega),
-      Array.getElem!_set!_ne _ _ _ _ (by omega)]
-
-theorem writeSegment_size :
-    ∀ (seg : List Nat) (lab : Array Nat) (lo : Nat),
-      (writeSegment lab lo seg).size = lab.size
-  | [], _, _ => rfl
-  | x :: seg, lab, lo => by
-    rw [writeSegment, writeSegment_size seg _ (lo + 1), Array.size_set!]
-
 /-- Writing a segment and reading it back. -/
 theorem segN_writeSegment :
     ∀ (seg : List Nat) (lab : Array Nat) (lo : Nat),
