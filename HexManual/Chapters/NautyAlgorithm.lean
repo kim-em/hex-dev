@@ -374,17 +374,28 @@ words needed for `n` bits. The pinned call supplies the ordered colour
 partition and pins the following options, several of which restate
 their default values:
 
-| option | value |
-| --- | --- |
-| `getcanon` (request a canonical graph and labelling) | `1` |
-| `digraph` (treat the graph as directed) | `FALSE` |
-| `defaultptn` (ignore the supplied partition) | `FALSE` |
-| `writeautoms`, `writemarkers` (print during the run) | `FALSE` |
-| `tc_level` (changeover depth for the target-cell rule) | `100` |
-| `userrefproc` and all other user callbacks | `NULL` |
-| `invarproc` (extra vertex invariant) | `NULL` |
-| `mininvarlevel`, `maxinvarlevel`, `invararg` | `0`, `1`, `0` |
-| `schreier` (use the Schreier-Sims machinery) | `FALSE` |
+:::table (header := true)
+* * option
+  * value
+* * `getcanon` (request a canonical graph and labelling)
+  * `1`
+* * `digraph` (treat the graph as directed)
+  * `FALSE`
+* * `defaultptn` (ignore the supplied partition)
+  * `FALSE`
+* * `writeautoms`, `writemarkers` (print during the run)
+  * `FALSE`
+* * `tc_level` (changeover depth for the target-cell rule)
+  * `100`
+* * `userrefproc` and all other user callbacks
+  * `NULL`
+* * `invarproc` (extra vertex invariant)
+  * `NULL`
+* * `mininvarlevel`, `maxinvarlevel`, `invararg`
+  * `0`, `1`, `0`
+* * `schreier` (use the Schreier-Sims machinery)
+  * `FALSE`
+:::
 
 Sparse nauty and Traces are different algorithms and can return
 different canonical forms for the same input. Without naming the dense
