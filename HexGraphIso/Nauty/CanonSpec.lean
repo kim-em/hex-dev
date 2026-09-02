@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.Equivariance
-public import HexGraphIso.Nauty.CellPerm
+public import HexGraphIso.Nauty.CellPermLoop
 
 public section
 

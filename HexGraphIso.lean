@@ -19,6 +19,7 @@ public import HexGraphIso.Nauty.Equivariance
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.CellPerm
+public import HexGraphIso.Nauty.CellPermLoop
 public import HexGraphIso.Nauty.SpecIso
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
