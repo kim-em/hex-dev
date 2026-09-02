@@ -11,6 +11,7 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Refine
+public import HexGraphIso.Nauty.Image
 public import HexGraphIso.Canon
 
 public section
@@ -550,6 +551,153 @@ variable {n k : Nat}
         if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then insert row j else row
       else row)
     0
+
+/-- `rowOf` without the `List.range` fold or the per-set-bit shifts:
+most-significant-first Horner accumulation over descending vertex
+numbers, allocation-free. -/
+def rowOfFast (G : Colored n k) (i : Nat) : Nat :=
+  if hi : i < n then go ⟨i, hi⟩ n (Nat.le_refl n) 0 else 0
+where
+  go (iv : Fin n) : (j : Nat) → j ≤ n → Nat → Nat
+  | 0, _, acc => acc
+  | j + 1, h, acc =>
+    go iv j (Nat.le_of_succ_le h)
+      (2 * acc + if G.graph.adj iv ⟨j, h⟩ then 1 else 0)
+
+private theorem rowOfFast_go_eq {G : Colored n k} (iv : Fin n) :
+    ∀ (j : Nat) (h : j ≤ n) (acc : Nat),
+      rowOfFast.go G iv j h acc =
+        acc * 2 ^ j + rowOfFast.go G iv j h 0
+  | 0, _, acc => by simp [rowOfFast.go]
+  | j + 1, h, acc => by
+    rw [rowOfFast.go, rowOfFast.go,
+      rowOfFast_go_eq iv j _ (2 * acc + _),
+      rowOfFast_go_eq iv j _ (2 * 0 + _)]
+    simp only [Nat.mul_zero, Nat.zero_add]
+    have hp : acc * 2 ^ (j + 1) = 2 * acc * 2 ^ j := by
+      rw [Nat.pow_succ, Nat.mul_comm 2 acc, Nat.mul_assoc,
+        Nat.mul_comm (2 ^ j) 2, ← Nat.mul_assoc]
+    rw [hp, Nat.add_mul]
+    omega
+
+private theorem rowOfFast_go_lt {G : Colored n k} (iv : Fin n) :
+    ∀ (j : Nat) (h : j ≤ n), rowOfFast.go G iv j h 0 < 2 ^ j
+  | 0, _ => Nat.zero_lt_one
+  | j + 1, h => by
+    rw [rowOfFast.go, rowOfFast_go_eq iv j]
+    have hz := rowOfFast_go_lt (G := G) iv j (Nat.le_of_succ_le h)
+    have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by
+      rw [Nat.pow_succ]; omega
+    rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
+    · simp only [ha, if_true]
+      omega
+    · rw [if_neg ha]
+      omega
+
+/-- The adjacency bit of `go`'s accumulator, by position. -/
+private theorem testBit_rowOfFast_go {G : Colored n k} (iv : Fin n) :
+    ∀ (j : Nat) (h : j ≤ n) (t : Nat),
+      (rowOfFast.go G iv j h 0).testBit t =
+        if ht : t < j then
+          G.graph.adj iv ⟨t, Nat.lt_of_lt_of_le ht h⟩
+        else
+          false
+  | 0, _, t => by simp [rowOfFast.go]
+  | j + 1, h, t => by
+    rw [rowOfFast.go, rowOfFast_go_eq iv j]
+    have hz := rowOfFast_go_lt (G := G) iv j (Nat.le_of_succ_le h)
+    have hih := testBit_rowOfFast_go (G := G) iv j
+      (Nat.le_of_succ_le h) t
+    have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by
+      rw [Nat.pow_succ]; omega
+    simp only [Nat.mul_zero, Nat.zero_add]
+    rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
+    · rw [if_pos ha, Nat.one_mul]
+      rcases Nat.lt_trichotomy t j with hlt | heq | hgt
+      · rw [Nat.testBit_two_pow_add_gt hlt, hih, dif_pos hlt,
+          dif_pos (by omega : t < j + 1)]
+      · subst heq
+        rw [Nat.testBit_two_pow_add_eq,
+          Nat.testBit_lt_two_pow hz, dif_pos (Nat.lt_succ_self t),
+          ha]
+        rfl
+      · have h2 : 2 ^ (j + 1) ≤ 2 ^ t :=
+          Nat.pow_le_pow_right (by omega) hgt
+        rw [Nat.testBit_lt_two_pow (by omega :
+            2 ^ j + rowOfFast.go G iv j (Nat.le_of_succ_le h) 0 <
+              2 ^ t), dif_neg (by omega)]
+    · rw [if_neg ha, Nat.zero_mul, Nat.zero_add, hih]
+      simp only [Bool.not_eq_true] at ha
+      rcases Nat.lt_trichotomy t j with hlt | heq | hgt
+      · rw [dif_pos hlt, dif_pos (by omega : t < j + 1)]
+      · subst heq
+        rw [dif_neg (by omega), dif_pos (Nat.lt_succ_self t), ha]
+      · rw [dif_neg (by omega), dif_neg (by omega)]
+
+/-- The adjacency bit of the `rowOf` fold, by position. -/
+private theorem testBit_rowOf_foldl {G : Colored n k} {i : Nat} :
+    ∀ (l : List Nat) (row0 t : Nat),
+      ((l.foldl (fun row j =>
+        if h : i < n ∧ j < n then
+          if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then insert row j else row
+        else row) row0).testBit t) =
+      (row0.testBit t || (l.contains t &&
+        (if h : i < n ∧ t < n then
+          (G.graph.adj ⟨i, h.1⟩ ⟨t, h.2⟩ : Bool)
+        else false)))
+  | [], row0, t => by simp
+  | j :: rest, row0, t => by
+    rw [List.foldl_cons, testBit_rowOf_foldl rest, List.contains_cons]
+    rcases Decidable.em (i < n ∧ j < n) with hij | hij
+    · rw [dif_pos hij]
+      rcases Decidable.em (G.graph.adj ⟨i, hij.1⟩ ⟨j, hij.2⟩ = true)
+        with ha | ha
+      · rw [if_pos ha, testBit_insert]
+        rcases Decidable.em (j = t) with heq | hne
+        · subst heq
+          rw [dif_pos hij, ha]
+          simp
+        · rw [beq_eq_false_iff_ne.mpr hne,
+            beq_eq_false_iff_ne.mpr (Ne.symm hne)]
+          simp [Bool.or_assoc]
+      · rw [if_neg ha]
+        rcases Decidable.em (j = t) with heq | hne
+        · subst heq
+          rw [dif_pos hij]
+          simp only [Bool.not_eq_true] at ha
+          rw [ha]
+          simp
+        · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
+          simp
+    · rw [dif_neg hij]
+      rcases Decidable.em (j = t) with heq | hne
+      · subst heq
+        rw [dif_neg hij]
+        simp
+      · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
+        simp
+
+@[csimp] theorem rowOf_eq_rowOfFast : @rowOf = @rowOfFast := by
+  funext n k G i
+  apply Nat.eq_of_testBit_eq
+  intro t
+  rw [rowOf, testBit_rowOf_foldl, rowOfFast]
+  rcases Decidable.em (i < n) with hi | hi
+  · rw [dif_pos hi, testBit_rowOfFast_go]
+    rcases Decidable.em (t < n) with htn | htn
+    · have hc : (List.range n).contains t = true := by
+        simp [htn]
+      rw [hc, dif_pos (⟨hi, htn⟩ : i < n ∧ t < n), dif_pos htn]
+      simp
+    · have hc : (List.range n).contains t = false := by
+        simp
+        omega
+      rw [hc, dif_neg htn,
+        dif_neg (fun h : i < n ∧ t < n => htn h.2)]
+      simp
+  · rw [dif_neg hi,
+      dif_neg (fun h : i < n ∧ t < n => hi h.1)]
+    simp [Nat.zero_testBit]
 
 /-- The adjacency rows of a coloured graph. -/
 @[expose] def rowsOf (G : Colored n k) : Array Nat :=
