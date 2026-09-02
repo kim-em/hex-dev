@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Ops
 public import HexGraphIso.IsoLit
+public import HexGraphIso.NodeLit
 public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
@@ -310,7 +311,7 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
     (← mkAppM ``Eq #[← matrixListSide HE, LBe])
   let mkCheck (graphE litE : Expr) (cert : Nauty.CertNode)
       (B : Nauty.Key) : MetaM Expr := do
-    let checkTerm ← mkAppM ``checkKeyFlat
+    let checkTerm ← mkAppM ``checkKeyLit
       #[graphE, litE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
   let hG ← mkCheck GE LAe certG BG
@@ -318,7 +319,7 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
   let diffTerm ← mkAppM ``Nauty.checkDiff #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
-  let proof ← mkAppM ``not_isomorphic_of_checkKeysLit
+  let proof ← mkAppM ``not_isomorphic_of_checkKeysL
     #[hA, hB, hG, hH, hd]
   return some (proof, certG.size + certH.size)
 
