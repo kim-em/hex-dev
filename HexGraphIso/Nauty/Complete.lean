@@ -561,7 +561,6 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
     have hm : v ∈ llab.toList := by simpa using hv
     exact List.mem_range.mp (hperm.mem_iff.mp hm)
   rw [checkCanon]
-  rw [dite_eq_left (⟨hsz, hbound⟩ : llab.size = n ∧ ∀ v ∈ llab, v < n)]
   have hmapval : ((llab.attach.map fun v =>
       (⟨v.val, hbound v.val v.property⟩ : Fin n)).toList.map
       Fin.val) = llab.toList := by
@@ -589,10 +588,9 @@ theorem checkCanon_of_achieved {G : Colored n k} {llab : Array Nat}
     rw [← hmapval] at hm
     rcases List.mem_map.mp hm with ⟨x, hx, hxe⟩
     exact (Fin.eq_of_val_eq hxe : x = i) ▸ hx
-  obtain ⟨l, hl⟩ : ∃ l, Label.ofVector?
-      (⟨llab.attach.map fun v =>
-        (⟨v.val, hbound v.val v.property⟩ : Fin n), by
-          simp [hsz]⟩ : Vector (Fin n) n) = some l := by
+  obtain ⟨l, hl⟩ : ∃ l, Label.ofArray? n llab = some l := by
+    rw [Label.ofArray?,
+      dite_eq_left (⟨hsz, hbound⟩ : llab.size = n ∧ ∀ v ∈ llab, v < n)]
     rw [Label.ofVector?, Perm.ofVector?]
     rw [dite_eq_left ⟨hnodupv, hcompl⟩]
     exact ⟨_, rfl⟩

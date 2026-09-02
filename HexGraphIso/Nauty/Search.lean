@@ -517,13 +517,7 @@ def runColored (G : Colored n k) : RunResult :=
 search output fails the label check, which conformance shows does not
 occur. -/
 @[expose] def canonicalize? (G : Colored n k) : Option (CanonResult n k) :=
-  let r := runColored G
-  if h : r.canonlab.size = n ∧ ∀ v ∈ r.canonlab, v < n then
-    let vec : Vector (Fin n) n :=
-      ⟨r.canonlab.attach.map fun v => (⟨v.val, h.2 v.val v.property⟩ : Fin n),
-        by simp [h.1]⟩
-    (Label.ofVector? vec).map fun l => { form := G.relabel l, label := l }
-  else
-    none
+  (Label.ofArray? n (runColored G).canonlab).map fun l =>
+    { form := G.relabel l, label := l }
 
 end Hex.GraphIso.Nauty

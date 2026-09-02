@@ -137,12 +137,9 @@ unconditionally. -/
 private theorem canonicalize?_relabel {G : Colored n k}
     {r : CanonResult n k} (h : Nauty.canonicalize? G = some r) :
     G.relabel r.label = r.form := by
-  rw [Nauty.canonicalize?] at h
-  split at h
-  · rw [Option.map_eq_some_iff] at h
-    obtain ⟨l, hl, hr⟩ := h
-    rw [← hr]
-  · cases h
+  rw [Nauty.canonicalize?, Option.map_eq_some_iff] at h
+  obtain ⟨l, hl, hr⟩ := h
+  rw [← hr]
 
 /-- Relabelling by the label produces the form: structurally for the
 transcription, by the checked theorem for the fallback. -/

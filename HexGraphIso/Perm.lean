@@ -314,6 +314,65 @@ position where `l` placed it. -/
     l.toPerm.get (l.get i) = i :=
   Perm.inv_get_get ..
 
+/-- Checked construction from a raw array of vertex numbers: `none`
+unless the array has length `n`, entries below `n`, and describes a
+permutation. -/
+@[expose] def ofArray? (n : Nat) (lab : Array Nat) : Option (Label n) :=
+  if h : lab.size = n ∧ ∀ v ∈ lab, v < n then
+    ofVector? ⟨lab.attach.map fun v =>
+      (⟨v.val, h.2 v.val v.property⟩ : Fin n), by simp [h.1]⟩
+  else
+    none
+
+theorem ofVector?_perm_vec {v : Vector (Fin n) n} {l : Label n}
+    (h : Label.ofVector? v = some l) : l.perm.vec = v := by
+  rw [Label.ofVector?, Perm.ofVector?] at h
+  split at h
+  · simp only [Option.map_some] at h
+    injection h with h'
+    rw [← h']
+  · simp at h
+
+theorem ofArray?_bounds {lab : Array Nat} {l : Label n}
+    (h : ofArray? n lab = some l) :
+    lab.size = n ∧ ∀ v ∈ lab, v < n := by
+  rw [ofArray?] at h
+  split at h
+  · assumption
+  · cases h
+
+/-- A checked labelling reads back the raw array entrywise. -/
+theorem ofArray?_get {lab : Array Nat} {l : Label n}
+    (h : ofArray? n lab = some l) (i : Nat) (hi : i < n) :
+    (l.get ⟨i, hi⟩).val = lab[i]! := by
+  rw [ofArray?] at h
+  split at h
+  · next hwf =>
+    have hvec := ofVector?_perm_vec h
+    show (l.perm.get ⟨i, hi⟩).val = lab[i]!
+    have hlen : i < l.perm.vec.toList.length := by simpa using hi
+    have h2 : l.perm.get ⟨i, hi⟩ = l.perm.vec.toList[i]'hlen :=
+      (Perm.get_toList l.perm ⟨i, hi⟩).symm
+    have h1 : l.perm.vec.toList =
+        (⟨lab.attach.map fun v =>
+          (⟨v.val, hwf.2 v.val v.property⟩ : Fin n), by
+            simp [hwf.1]⟩ : Vector (Fin n) n).toList :=
+      congrArg Vector.toList hvec
+    rw [h2, List.getElem_of_eq h1 hlen]
+    have hasz : i < (lab.attach.map fun v =>
+        (⟨v.val, hwf.2 v.val v.property⟩ : Fin n)).size := by
+      rw [Array.size_map, Array.size_attach]
+      omega
+    show (((lab.attach.map fun v =>
+      (⟨v.val, hwf.2 v.val v.property⟩ : Fin n))[i]'hasz)).val =
+      lab[i]!
+    rw [Array.getElem_map]
+    show (lab.attach[i]'(by rw [Array.size_attach]; omega)).val =
+      lab[i]!
+    rw [Array.getElem_attach]
+    exact (getElem!_pos lab i (by omega)).symm
+  · cases h
+
 end Label
 
 namespace Perm

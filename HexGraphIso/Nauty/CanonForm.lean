@@ -45,20 +45,15 @@ labelling: the replay must accept the key, and the labelling's leaf
 rows must be the key's rows. Returns the canonical form and label. -/
 @[expose] def checkCanon (G : Colored n k) (cert : CertNode) (B : Key)
     (lab : Array Nat) : Option (CanonResult n k) :=
-  if h : lab.size = n ∧ ∀ v ∈ lab, v < n then
-    match Label.ofVector? (⟨lab.attach.map fun v =>
-        (⟨v.val, h.2 v.val v.property⟩ : Fin n), by simp [h.1]⟩ :
-        Vector (Fin n) n) with
-    | none => none
-    | some l =>
-      if checkKey G cert B &&
-          (B.rows == leafRows { n := n, g := rowsOf G } lab) &&
-          colorSortedCheck G lab then
-        some { form := G.relabel l, label := l }
-      else
-        none
-  else
-    none
+  match Label.ofArray? n lab with
+  | none => none
+  | some l =>
+    if checkKey G cert B &&
+        (B.rows == leafRows { n := n, g := rowsOf G } lab) &&
+        colorSortedCheck G lab then
+      some { form := G.relabel l, label := l }
+    else
+      none
 
 /-- A successful `checkCanon` pins the spec key, exhibits the form as
 a relabelling, and keeps the form in the isomorphism class. -/
@@ -70,23 +65,21 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key}
       B.rows = leafRows { n := n, g := rowsOf G } lab := by
   rw [checkCanon] at h
   split at h
-  · split at h
-    · cases h
-    · next l hl =>
-      split at h
-      · next hcond =>
-        simp only [Bool.and_eq_true, beq_iff_eq] at hcond
-        injection h with h'
-        have hform : res.form = G.relabel l := by
-          rw [← h']
-        have hlabel : res.label = l := by
-          rw [← h']
-        refine ⟨checkKey_sound hcond.1.1, ?_, ?_, hcond.1.2⟩
-        · rw [hform, hlabel]
-        · rw [hform]
-          exact isomorphic_relabel G l
-      · cases h
   · cases h
+  · next l hl =>
+    split at h
+    · next hcond =>
+      simp only [Bool.and_eq_true, beq_iff_eq] at hcond
+      injection h with h'
+      have hform : res.form = G.relabel l := by
+        rw [← h']
+      have hlabel : res.label = l := by
+        rw [← h']
+      refine ⟨checkKey_sound hcond.1.1, ?_, ?_, hcond.1.2⟩
+      · rw [hform, hlabel]
+      · rw [hform]
+        exact isomorphic_relabel G l
+    · cases h
 
 /-- Produce a checked `CanonResult`: run the untrusted key search and
 validate its candidate together with the transcribed search's
@@ -114,16 +107,13 @@ theorem canonicalize?_eq_of_checkCanon {G : Colored n k}
   rw [checkCanon] at h
   rw [canonicalize?]
   split at h
-  · next hb =>
-    rw [dite_eq_left hb]
-    split at h
-    · cases h
-    · next l hl =>
-      split at h
-      · injection h with h'
-        simp only [hl, Option.map_some, h']
-      · cases h
   · cases h
+  · next l hl =>
+    rw [hl, Option.map_some]
+    split at h
+    · injection h with h'
+      rw [h']
+    · cases h
 
 /-- Whenever the single trusted replay accepts (`certifyCanon?`
 succeeds), the fast transcription agrees with it exactly. -/
@@ -372,15 +362,6 @@ theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
 
 /-! # Determinism facts for checked forms -/
 
-theorem ofVector?_perm_vec {v : Vector (Fin n) n} {l : Label n}
-    (h : Label.ofVector? v = some l) : l.perm.vec = v := by
-  rw [Label.ofVector?, Perm.ofVector?] at h
-  split at h
-  · simp only [Option.map_some] at h
-    injection h with h'
-    rw [← h']
-  · simp at h
-
 /-- Everything a successful `checkCanon` establishes, with the label's
 entries pinned to the claimed array. -/
 theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
@@ -395,46 +376,20 @@ theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
     colorSortedCheck G lab = true := by
   rw [checkCanon] at h
   split at h
-  · next hwf =>
-    split at h
-    · cases h
-    · next l hl =>
-      split at h
-      · next hcond =>
-        injection h with h'
-        simp only [Bool.and_eq_true, beq_iff_eq] at hcond
-        have hvec := ofVector?_perm_vec hl
-        have hlabel : res.label = l := by rw [← h']
-        have hform : res.form = G.relabel l := by rw [← h']
-        refine ⟨hwf.1, by rw [hform, hlabel], ?_, hcond.1.1,
-          hcond.1.2, hcond.2⟩
-        intro i hi
-        rw [hlabel]
-        have hlen : i < l.perm.vec.toList.length := by
-          simpa using hi
-        show (l.perm.get ⟨i, hi⟩).val = lab[i]!
-        have h2 : l.perm.get ⟨i, hi⟩ = l.perm.vec.toList[i]'hlen :=
-          (Perm.get_toList l.perm ⟨i, hi⟩).symm
-        have h1 : l.perm.vec.toList =
-            (⟨lab.attach.map fun v =>
-              (⟨v.val, hwf.2 v.val v.property⟩ : Fin n), by
-                simp [hwf.1]⟩ : Vector (Fin n) n).toList :=
-          congrArg Vector.toList hvec
-        rw [h2, List.getElem_of_eq h1 hlen]
-        have hasz : i < (lab.attach.map fun v =>
-            (⟨v.val, hwf.2 v.val v.property⟩ : Fin n)).size := by
-          rw [Array.size_map, Array.size_attach]
-          omega
-        show (((lab.attach.map fun v =>
-          (⟨v.val, hwf.2 v.val v.property⟩ : Fin n))[i]'hasz)).val =
-          lab[i]!
-        rw [Array.getElem_map]
-        show (lab.attach[i]'(by rw [Array.size_attach]; omega)).val =
-          lab[i]!
-        rw [Array.getElem_attach]
-        exact (getElem!_pos lab i (by omega)).symm
-      · cases h
   · cases h
+  · next l hl =>
+    split at h
+    · next hcond =>
+      injection h with h'
+      simp only [Bool.and_eq_true, beq_iff_eq] at hcond
+      have hlabel : res.label = l := by rw [← h']
+      have hform : res.form = G.relabel l := by rw [← h']
+      refine ⟨(Label.ofArray?_bounds hl).1, by rw [hform, hlabel],
+        ?_, hcond.1.1, hcond.1.2, hcond.2⟩
+      intro i hi
+      rw [hlabel]
+      exact Label.ofArray?_get hl i hi
+    · cases h
 
 /-- The rows of a checked canonical form are the key's rows. -/
 theorem checkCanon_rows {G : Colored n k} {cert : CertNode} {B : Key}
