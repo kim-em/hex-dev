@@ -81,6 +81,8 @@ def runDenseConvert (input : GraphInput) : Nat :=
   | some ⟨_, G⟩ => (Nauty.rowsOf G).foldl (· + ·) 0
   | none => 0
 
+/- Cost model: the conversion reads one adjacency bit for each of the
+n × n vertex pairs, so it is quadratic in n. -/
 setup_benchmark runDenseConvert n => n * n
   with prep := prepGraph
   where {
@@ -102,6 +104,10 @@ def runRefine (input : GraphInput) : Nat :=
     st.numcells + st.longcode
   | none => 0
 
+/- Cost model: one equitable refinement performs at most n splitting
+passes (each split creates a cell, and there are at most n), and each
+pass counts neighbours of up to n vertices against n-bit rows, so the
+worst case is cubic in n. -/
 setup_benchmark runRefine n => n * n * n
   with prep := prepGraph
   where {
@@ -123,6 +129,8 @@ def runRelabel (input : GraphInput) : Nat :=
       exact v.pos⟩
   | none => 0
 
+/- Cost model: relabelling rebuilds the n × n adjacency relation one
+entry at a time, so it is quadratic in n. -/
 setup_benchmark runRelabel n => n * n
   with prep := prepGraph
   where {
@@ -139,6 +147,9 @@ def runReferenceCanon (input : GraphInput) : Nat :=
       (fun a v => a + v.val) 0
   | none => 0
 
+/- Cost model: the reference form enumerates all cell-respecting
+labellings — at most n! ≤ n ^ n — and serializes an n × n adjacency
+matrix for each comparison, so the declared model is n ^ n · n². -/
 setup_benchmark runReferenceCanon n => n ^ n * n * n
   with prep := prepGraph
   where {
