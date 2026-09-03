@@ -370,11 +370,10 @@ theorem stPerm_self_flip {f : Nat → Nat} {S : Nat → Prop}
 
 /-! # The pair deviation -/
 
-/-- A deviation at a pair target under the first-branch shape: descents
-below its two children reach leaves with the same rows. -/
-theorem pair_deviation_leafRows {st : RefineSt}
-    {level tc level' : Nat} {U' : RefineSt}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+/-- The flip data at a pair target: a row-preserving self-symmetry of
+the node carrying one child's individualized vertex to the other's. -/
+theorem pair_flip_data {st : RefineSt} {level tc : Nat}
+    (hIt : IterOk ctx level st)
     (hgsz : ctx.g.size = ctx.n)
     (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
@@ -384,13 +383,10 @@ theorem pair_deviation_leafRows {st : RefineSt}
     (hP : (tc, tc + 1) ∈ cells st.ptn level ctx.n)
     (hOdd : ∀ q ∈ cells st.ptn level ctx.n, q.2 ≠ q.1 + 1 →
       (q.2 + 1 - q.1) % 2 = 1)
-    {a b : Nat} (ha : a < 2) (hb : b < 2) (hab : a ≠ b)
-    (hdesc : Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + a]!) level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
-    ∃ V', Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
-      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+    {a b : Nat} (ha : a < 2) (hb : b < 2) (hab : a ≠ b) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + b]! = σ.toFun st.lab[tc + a]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
@@ -475,6 +471,32 @@ theorem pair_deviation_leafRows {st : RefineSt}
           hfb hinvol).toFun st.lab[tc + 1]!
       rw [hat (tc + 1) (by rw [hpsz] at hbd; omega),
         pairFlip_second hpsz hend hIt.inj hbase hP]
+  exact ⟨renamingOfFlip (pairFlip ctx st.lab st.ptn level tc) ctx.n
+    hfb hinvol, hgmap, hsp, hvv⟩
+
+/-- A deviation at a pair target under the first-branch shape: descents
+below its two children reach leaves with the same rows. -/
+theorem pair_deviation_leafRows {st : RefineSt}
+    {level tc level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hP : (tc, tc + 1) ∈ cells st.ptn level ctx.n)
+    (hOdd : ∀ q ∈ cells st.ptn level ctx.n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1)
+    {a b : Nat} (ha : a < 2) (hb : b < 2) (hab : a ≠ b)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + a]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  obtain ⟨σ, hgmap, hsp, hvv⟩ := pair_flip_data hIt hgsz hg hsymm
+    hloop hE hP hOdd ha hb hab
   exact deviation_leafRows_self hIt hlvl hgmap hsp hP (by omega)
     (show a ≤ tc + 1 - tc by omega) (show b ≤ tc + 1 - tc by omega)
     hvv hdesc hdisc

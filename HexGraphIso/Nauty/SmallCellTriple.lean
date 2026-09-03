@@ -951,12 +951,11 @@ theorem deviation_leafRows_self {σ : Renaming ctx.n} {st : RefineSt}
   have hU0 := iterOk_child hIt hlvl hcell hne hoU
   exact descends_leafRows hg hdesc hU0 hsp' hdisc
 
-/-- A deviation at a triple target under the first-branch shape:
-descents below any two of its children reach leaves with the same
-rows. -/
-theorem triple_deviation_leafRows {st : RefineSt}
-    {level tc level' : Nat} {U' : RefineSt}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+/-- The flip data at a triple target: a row-preserving self-symmetry
+of the node carrying one child's individualized vertex to the
+other's. -/
+theorem triple_flip_data {st : RefineSt} {level tc : Nat}
+    (hIt : IterOk ctx level st)
     (hgsz : ctx.g.size = ctx.n)
     (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
@@ -966,13 +965,10 @@ theorem triple_deviation_leafRows {st : RefineSt}
     (hT : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
     (hsmall : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
       q.2 + 1 - q.1 ≤ 2)
-    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
-    (hdesc : Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + a]!) level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
-    ∃ V', Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
-      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + b]! = σ.toFun st.lab[tc + a]! := by
   have hd2 : tc + 2 < ctx.n := by
     have := cells_bound (by rw [hIt.ok.ptnSize]; omega)
       hIt.ok.ptnEnd _ hT
@@ -1052,6 +1048,32 @@ theorem triple_deviation_leafRows {st : RefineSt}
   have hvv : st.lab[tc + b]! =
       (renamingOfFlip f ctx.n hfb hinvol).toFun st.lab[tc + a]! :=
     hswapσ.1.symm
+  exact ⟨renamingOfFlip f ctx.n hfb hinvol, hgmap, hsp, hvv⟩
+
+/-- A deviation at a triple target under the first-branch shape:
+descents below any two of its children reach leaves with the same
+rows. -/
+theorem triple_deviation_leafRows {st : RefineSt}
+    {level tc level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hT : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
+    (hsmall : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+      q.2 + 1 - q.1 ≤ 2)
+    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + a]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  obtain ⟨σ, hgmap, hsp, hvv⟩ := triple_flip_data hIt hgsz hg hsymm
+    hloop hE hT hsmall ha hb hab
   exact deviation_leafRows_self hIt hlvl hgmap hsp hT (by omega)
     (show a ≤ tc + 2 - tc by omega) (show b ≤ tc + 2 - tc by omega)
     hvv hdesc hdisc
