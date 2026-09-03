@@ -67,6 +67,7 @@ HEX_PREFIXES = (
 
 HEX_PATHS = {
     "bench/HexBench/FactorService.lean",
+    "HexPrimality/Table.lean",
     "lakefile.lean",
     "lake-manifest.json",
     "lean-toolchain",

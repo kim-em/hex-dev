@@ -1167,6 +1167,9 @@ theorem choosePrimeDataAdaptive?_form
   obtain ⟨_, hzero, heq⟩ := hform
   exact ⟨hzero, heq⟩
 
+-- The candidate lists reduce through the committed prime table, whose 9,592
+-- entries exceed the default recursion-depth ceiling in this proof.
+set_option maxRecDepth 10000 in
 /--
 When `choosePrimeData? f` succeeds, the stored modular factor array is exactly
 the Berlekamp factor output for the monic modular image of the selected
