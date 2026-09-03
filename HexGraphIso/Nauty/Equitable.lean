@@ -42,10 +42,25 @@ argument: `popCount active + 2 * (n - numcells)` drops by at least
 one per pass, and starts at most `3 * n`, below the supplied
 `4 * n + 8`.
 
-This file proves the predicate layer and the per-cell postcondition
-of the trivial-splitter pass. The pass level, the loop invariant, the
-nontrivial-splitter pass, the fuel bound, and the cheapautom
-small-cell lemma remain.
+Proven so far: the predicate layer; the member-level `ConstOn`
+toolkit (disjoint-union count additivity, union and difference
+transport, splitter-set disjointness and window splitting); both
+splitting passes' postconditions, culminating in
+`refineStep_cell_const` — after one `refineStep`, every cell of the
+result has constant counts into the retired splitter's captured
+vertex set, uniformly across trivial and nontrivial splitters; and
+the certificate interface `CertInv`/`activeUnion`/`Saturated` with
+its collapse at exit (`equitable_of_certInv_exit`,
+`active_eq_zero_of_pickSplit_none`).
+
+Remaining for the fixpoint theorem: the preservation of `CertInv`
+across `refineStep` (consuming `refineStep_cell_const` for the
+retired splitter's subtraction, per-old-cell member permutations from
+the `RefInv` machinery for workset stability, and a characterization
+of the active set's evolution through the passes — the one piece with
+no existing machinery); the fuel potential
+`popCount active + 2 * (n - numcells)`; and on top of the fixpoint
+theorem the cheapautom small-cell lemma and the arm-2 assembly.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -1689,5 +1704,90 @@ theorem refineStep_cell_const {ctx : Ctx} {level split1 : Nat}
     · intro x hx
       obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hx
       exact hbval (a + o) (by omega) (by omega)
+
+/-! # The certificate invariant and its collapse at exit
+
+The loop invariant carries, for every inactive cell `D` and every
+cell `C`, a certificate set `V`: a union of active cells' splitter
+sets such that `C` has constant counts into `W_D ||| V`. The
+certificate is semantic (a bitset constrained to lie under the active
+union, saturated cell by cell) rather than a list of cells, which
+frees the preservation argument from fragment bookkeeping. When
+`pickSplit` finds nothing the active set is empty, `V` collapses to
+zero, and the invariant is exactly equitability. -/
+
+/-- The union of the active cells' splitter sets. -/
+def activeUnion (ctx : Ctx) (level : Nat) (st : RefineSt) : Nat :=
+  (cells st.ptn level ctx.n).foldl
+    (fun A p =>
+      if elem st.active p.1 then A ||| worksetOf st.lab p.1 p.2 else A) 0
+
+/-- Every cell's splitter set lies inside `V` or misses it. -/
+def Saturated (ctx : Ctx) (level : Nat) (st : RefineSt) (V : Nat) : Prop :=
+  ∀ p ∈ cells st.ptn level ctx.n,
+    worksetOf st.lab p.1 p.2 &&& V = 0 ∨
+    worksetOf st.lab p.1 p.2 &&& V = worksetOf st.lab p.1 p.2
+
+/-- The refinement loop's certificate invariant. -/
+def CertInv (ctx : Ctx) (level : Nat) (st : RefineSt) : Prop :=
+  ∀ p ∈ cells st.ptn level ctx.n, elem st.active p.1 = false →
+  ∀ c ∈ cells st.ptn level ctx.n,
+  ∃ V : Nat, V &&& activeUnion ctx level st = V ∧
+    Saturated ctx level st V ∧
+    ConstOn ctx (worksetOf st.lab p.1 p.2 ||| V)
+      (segN st.lab c.1 (c.2 + 1 - c.1))
+
+/-- An exhausted `pickSplit` means an empty active set. -/
+theorem active_eq_zero_of_pickSplit_none {active hint : Nat}
+    (h : pickSplit active hint = none) : active = 0 := by
+  rw [pickSplit] at h
+  rcases hmem : elem active hint with _ | _
+  · rw [ite_eq_right (by simp [hmem])] at h
+    rcases hn : nextElem active (some hint) with _ | v
+    · rw [hn] at h
+      dsimp only at h
+      rw [nextElem] at h
+      rcases Decidable.em (active = 0) with hz | hz
+      · exact hz
+      · rw [ite_eq_right hz] at h
+        cases h
+    · rw [hn] at h
+      dsimp only at h
+      cases h
+  · rw [ite_eq_left hmem] at h
+    cases h
+
+/-- With no active cells the active union vanishes. -/
+theorem activeUnion_eq_zero {ctx : Ctx} {level : Nat} {st : RefineSt}
+    (h : st.active = 0) : activeUnion ctx level st = 0 := by
+  rw [activeUnion]
+  have hgen : ∀ (l : List (Nat × Nat)),
+      l.foldl (fun A p =>
+        if elem st.active p.1 then A ||| worksetOf st.lab p.1 p.2
+        else A) 0 = 0 := by
+    intro l
+    induction l with
+    | nil => rfl
+    | cons x l ih =>
+      rw [List.foldl_cons, ite_eq_right (by
+        rw [h, elem, Nat.zero_testBit]
+        simp)]
+      exact ih
+  exact hgen _
+
+/-- At exit the certificate collapses and the invariant is
+equitability. -/
+theorem equitable_of_certInv_exit {ctx : Ctx} {level : Nat}
+    {st : RefineSt} (hinv : CertInv ctx level st)
+    (hact : st.active = 0) :
+    Equitable ctx level st.lab st.ptn := by
+  intro cd hcd de hde
+  have hde0 : elem st.active de.1 = false := by
+    rw [hact, elem, Nat.zero_testBit]
+  obtain ⟨V, hVau, _, hconst⟩ := hinv de hde hde0 cd hcd
+  rw [activeUnion_eq_zero hact, Nat.and_zero] at hVau
+  rw [← hVau, Nat.or_zero] at hconst
+  rw [splitDone_iff_constOn]
+  exact hconst
 
 end Hex.GraphIso.Nauty
