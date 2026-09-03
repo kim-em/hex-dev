@@ -3395,4 +3395,143 @@ theorem refineStep_state {ctx : Ctx} {level split1 nb : Nat}
   · exact nontrivial_state_of_fields (st := st) rfl rfl rfl rfl hok
       hnb hmem hs1
 
+/-! # Submask algebra and cell uniqueness for the certificate -/
+
+private theorem sub_or_xor {a b : Nat} (h : a &&& b = a) :
+    a ||| (b ^^^ a) = b := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_or, Nat.testBit_xor]
+  rcases hb : b.testBit i with _ | _
+  · rcases ha : a.testBit i with _ | _
+    · rfl
+    · rw [testBit_of_submask h ha] at hb
+      cases hb
+  · rcases ha : a.testBit i with _ | _ <;> rfl
+
+private theorem xor_and_self {a b : Nat} (h : a &&& b = a) :
+    (b ^^^ a) &&& a = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.testBit_xor, Nat.zero_testBit]
+  rcases ha : a.testBit i with _ | _
+  · simp
+  · rw [testBit_of_submask h ha]
+    simp
+
+private theorem xor_submask {a b : Nat} (h : a &&& b = a) :
+    (b ^^^ a) &&& b = b ^^^ a := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.testBit_xor]
+  rcases hb : b.testBit i with _ | _
+  · rcases ha : a.testBit i with _ | _
+    · rfl
+    · rw [testBit_of_submask h ha] at hb
+      cases hb
+  · rcases ha : a.testBit i with _ | _ <;> rfl
+
+private theorem and_zero_of_submask {a b c : Nat} (hab : a &&& b = a)
+    (hbc : b &&& c = 0) : a &&& c = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.zero_testBit]
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · have hb := testBit_of_submask hab ha
+    have := congrArg (fun x => x.testBit i) hbc
+    simp only [Nat.testBit_and, Nat.zero_testBit] at this
+    rw [hb, Bool.true_and] at this
+    rw [this]
+    rfl
+
+private theorem submask_or {a b c : Nat} (h : a &&& c = a) :
+    a &&& (b ||| c) = a := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.testBit_or]
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · rw [testBit_of_submask h ha, Bool.or_true]
+    rfl
+
+private theorem or_submask_of {a b c : Nat} (ha : a &&& c = a)
+    (hb : b &&& c = b) : (a ||| b) &&& c = a ||| b :=
+  submask_of_testBit fun i hi => by
+    rw [Nat.testBit_or] at hi
+    rcases h1 : a.testBit i with _ | _
+    · rw [h1, Bool.false_or] at hi
+      exact testBit_of_submask hb hi
+    · exact testBit_of_submask ha h1
+
+private theorem and_or_zero {a b c : Nat} (hab : a &&& b = 0)
+    (hac : a &&& c = 0) : a &&& (b ||| c) = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.testBit_or, Nat.zero_testBit]
+  have h1 := congrArg (fun x => x.testBit i) hab
+  have h2 := congrArg (fun x => x.testBit i) hac
+  simp only [Nat.testBit_and, Nat.zero_testBit] at h1 h2
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · rw [ha, Bool.true_and] at h1 h2
+    rw [h1, h2]
+    rfl
+
+private theorem and_comm_zero {a b : Nat} (h : a &&& b = 0) :
+    b &&& a = 0 := by
+  rw [Nat.and_comm]
+  exact h
+
+/-- Two maximal runs of the same partition are equal or disjoint. -/
+theorem isCell_disj_or_eq {ptn : Array Nat} {level a la b lb : Nat}
+    (ha : IsCell ptn level a la) (hb : IsCell ptn level b lb) :
+    (a = b ∧ la = lb) ∨ a + la ≤ b ∨ b + lb ≤ a := by
+  rcases Decidable.em (a + la ≤ b) with h1 | h1
+  · exact Or.inr (Or.inl h1)
+  · rcases Decidable.em (b + lb ≤ a) with h2 | h2
+    · exact Or.inr (Or.inr h2)
+    · refine Or.inl ?_
+      have hstart : a = b := by
+        rcases Nat.lt_trichotomy a b with hlt | heq | hgt
+        · exfalso
+          have hint := ha.2.2.1 (b - 1) (by omega) (by
+            have := hb.1
+            omega)
+          rcases hb.2.1 with h0 | hbd
+          · omega
+          · omega
+        · exact heq
+        · exfalso
+          have hint := hb.2.2.1 (a - 1) (by omega) (by
+            have := ha.1
+            omega)
+          rcases ha.2.1 with h0 | had
+          · omega
+          · omega
+      subst hstart
+      have hlen : la = lb := by
+        rcases Nat.lt_trichotomy la lb with hlt | heq | hgt
+        · exfalso
+          have hint := hb.2.2.1 (a + la - 1) (by
+            have := ha.1
+            omega) (by omega)
+          have hend := ha.2.2.2
+          omega
+        · exact heq
+        · exfalso
+          have hint := ha.2.2.1 (a + lb - 1) (by
+            have := hb.1
+            omega) (by omega)
+          have hend := hb.2.2.2
+          omega
+      exact ⟨rfl, hlen⟩
+
+/-- A nested window's splitter set is a submask of the enclosing
+one. -/
+private theorem worksetOf_nested {lab : Array Nat} {a b a' b' : Nat}
+    (h1 : a ≤ a') (h2 : b' ≤ b) (h3 : a' ≤ b') :
+    worksetOf lab a' b' &&& worksetOf lab a b =
+      worksetOf lab a' b' := by
+  refine submask_of_testBit fun v hv => ?_
+  have hm := elem_worksetOf.mp hv
+  refine elem_worksetOf.mpr ?_
+  obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hm
+  exact mem_segN_iff.mpr ⟨a' - a + o, by omega, by
+    rw [show a + (a' - a + o) = a' + o from by omega]⟩
+
 end Hex.GraphIso.Nauty
