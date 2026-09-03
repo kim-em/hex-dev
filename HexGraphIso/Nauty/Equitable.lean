@@ -3534,4 +3534,81 @@ private theorem worksetOf_nested {lab : Array Nat} {a b a' b' : Nat}
   exact mem_segN_iff.mpr ⟨a' - a + o, by omega, by
     rw [show a + (a' - a + o) = a' + o from by omega]⟩
 
+private theorem submask_trans {x y z : Nat} (h1 : x &&& y = x)
+    (h2 : y &&& z = y) : x &&& z = x :=
+  submask_of_testBit fun i hi =>
+    testBit_of_submask h2 (testBit_of_submask h1 hi)
+
+private theorem zero_of_and_submask {a u v : Nat} (h1 : a &&& u = 0)
+    (h2 : v &&& u = v) : a &&& v = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.zero_testBit]
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · rcases hv : v.testBit i with _ | _
+    · rfl
+    · have hu := testBit_of_submask h2 hv
+      have := congrArg (fun x => x.testBit i) h1
+      simp only [Nat.testBit_and, Nat.zero_testBit, ha, hu] at this
+      cases this
+
+private theorem submask_xor_of {x a b : Nat} (hxb : x &&& b = x)
+    (hxa : x &&& a = 0) : x &&& (b ^^^ a) = x :=
+  submask_of_testBit fun i hi => by
+    rw [Nat.testBit_xor, testBit_of_submask hxb hi,
+      show a.testBit i = false from by
+        have := congrArg (fun x => x.testBit i) hxa
+        simp only [Nat.testBit_and, Nat.zero_testBit, hi,
+          Bool.true_and] at this
+        exact this]
+    rfl
+
+private theorem submask_or_left {a b c : Nat} (h : a &&& b = a) :
+    a &&& (b ||| c) = a :=
+  submask_of_testBit fun _ hi => by
+    rw [Nat.testBit_or, testBit_of_submask h hi, Bool.true_or]
+
+private theorem lt_of_submask {a b n : Nat} (h : a &&& b = a)
+    (hb : b < 2 ^ n) : a < 2 ^ n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rcases ha : a.testBit i with _ | _
+  · rfl
+  · have := testBit_of_submask h ha
+    rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb
+      (Nat.pow_le_pow_right (by omega) hi))] at this
+    cases this
+
+private theorem or_lt_two_pow {a b n : Nat} (ha : a < 2 ^ n)
+    (hb : b < 2 ^ n) : a ||| b < 2 ^ n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rw [Nat.testBit_or,
+    Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le ha
+      (Nat.pow_le_pow_right (by omega) hi)),
+    Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb
+      (Nat.pow_le_pow_right (by omega) hi))]
+  rfl
+
+private theorem activeUnion_lt {level : Nat} {st : RefineSt}
+    (hlab : LabOk st.lab ctx.n) (hps : st.ptn.size = ctx.n)
+    (hls : st.lab.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    activeUnion ctx level st < 2 ^ ctx.n := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rcases hb : (activeUnion ctx level st).testBit i with _ | _
+  · rfl
+  · exfalso
+    obtain ⟨p, hp, _, hw⟩ := elem_activeUnion.mp hb
+    have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+      rw [← hps]
+      exact hend
+    have hbd := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn
+      p hp
+    have hlt := worksetOf_lt (n := ctx.n) (lab := st.lab) hlab
+      (lo := p.1) (hi := p.2) (by omega)
+    have h2 := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hlt
+      (Nat.pow_le_pow_right (by omega) hi))
+    have h3 : (worksetOf st.lab p.1 p.2).testBit i = true := hw
+    rw [h3] at h2
+    cases h2
+
 end Hex.GraphIso.Nauty
