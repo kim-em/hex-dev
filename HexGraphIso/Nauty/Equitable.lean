@@ -450,4 +450,363 @@ theorem constOn_single_of_adj {v : Nat} {ms : List Nat} {b : Bool}
     hsymm x v (hms x hx) hv, hsymm y v (hms y hy) hv,
     hconst x hx, hconst y hy]
 
+/-! # The trivial-splitter pass: block postconditions
+
+Each processed cell leaves its window as an adjacent block followed by
+a non-adjacent block, with the junction boundary written exactly when
+both blocks are nonempty. The pass-level induction then shows every
+final cell sits inside one block of its window. -/
+
+/-- The split bookkeeping's partition effect: one boundary at the
+final `c2` when the split is nontrivial, nothing otherwise. -/
+theorem trivialSplit_ptn_eq (level cell1 cell2 : Nat) (c1 c2 : Int)
+    (st : RefineSt) :
+    (trivialSplit level cell1 cell2 c1 c2 st).ptn =
+      if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
+        st.ptn.set! c2.toNat level
+      else
+        st.ptn := by
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
+    hA | hA
+  · rw [ite_eq_left hA, ite_eq_left hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+      hB | hB
+    · rw [ite_eq_left hB]
+      rcases (c1.toNat == cell2) with _ | _ <;> rfl
+    · rw [ite_eq_right hB]
+      rcases (c2.toNat == cell1) with _ | _ <;> rfl
+  · rw [ite_eq_right hA, ite_eq_right hA]
+
+/-- One processed cell of the trivial pass: sizes and the outside
+kept, and the window left as constant block(s) with the junction
+boundary written exactly in the two-block case. -/
+theorem trivialCell_effect {level gRow cell1 cell2 : Nat} {st : RefineSt}
+    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.lab.size) :
+    (trivialCell level gRow cell1 cell2 st).lab.size = st.lab.size ∧
+    (∀ j, j < cell1 ∨ cell2 < j →
+      (trivialCell level gRow cell1 cell2 st).lab[j]! = st.lab[j]!) ∧
+    (((trivialCell level gRow cell1 cell2 st).ptn = st.ptn ∧
+        ∃ b : Bool, ∀ p, cell1 ≤ p → p ≤ cell2 →
+          elem gRow (trivialCell level gRow cell1 cell2 st).lab[p]! = b) ∨
+      (∃ j, cell1 ≤ j ∧ j < cell2 ∧
+        (trivialCell level gRow cell1 cell2 st).ptn = st.ptn.set! j level ∧
+        (∀ p, cell1 ≤ p → p ≤ j →
+          elem gRow (trivialCell level gRow cell1 cell2 st).lab[p]! =
+            true) ∧
+        (∀ p, j < p → p ≤ cell2 →
+          elem gRow (trivialCell level gRow cell1 cell2 st).lab[p]! =
+            false))) := by
+  obtain ⟨hsize, houtside, hperm, htrue, hfalse⟩ :=
+    trivialCell_memConst (level := level) (gRow := gRow) (st := st)
+      h12 hsz
+  refine ⟨hsize, houtside, ?_⟩
+  obtain ⟨cnt, hcnt⟩ : ∃ c,
+      (segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) = c :=
+    ⟨_, rfl⟩
+  rw [hcnt] at htrue hfalse
+  have hcntle : cnt ≤ cell2 + 1 - cell1 := by
+    have := List.countP_le_length (l := segN st.lab cell1 (cell2 + 1 - cell1))
+      (p := (elem gRow ·))
+    rw [segN_length, hcnt] at this
+    exact this
+  have hptn : (trivialCell level gRow cell1 cell2 st).ptn =
+      if 1 ≤ cnt ∧ cnt ≤ cell2 - cell1 then
+        st.ptn.set! (cell1 + cnt - 1) level
+      else
+        st.ptn := by
+    rcases Decidable.em (cell1 = cell2) with rfl | hne
+    · have heq : trivialCell level gRow cell1 cell1 st = st := by
+        rw [trivialCell]
+        simp
+      rw [heq, ite_eq_right (by omega)]
+    · have heq : trivialCell level gRow cell1 cell2 st =
+          trivialSplit level cell1 cell2
+            (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+              (Int.ofNat cell1) (Int.ofNat cell2)).2.1
+            (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+              (Int.ofNat cell1) (Int.ofNat cell2)).2.2
+            { st with lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+                (Int.ofNat cell1) (Int.ofNat cell2)).1 } := by
+        rw [trivialCell]
+        simp [hne]
+      obtain ⟨hp1, hp2, _, _, _, _⟩ := splitCellLoop_spec
+        (gRow := gRow) (cell2 + 1 - cell1) (cell2 - cell1 + 2) st.lab
+        (Int.ofNat cell1) (Int.ofNat cell2)
+        (by simp only [Int.ofNat_eq_natCast]; omega)
+        (by
+          have : (cell2 : Int) < (st.lab.size : Int) := by
+            exact_mod_cast hsz
+          simpa using this)
+        (by
+          rw [show (Int.ofNat cell2 + 1 - Int.ofNat cell1) =
+            ((cell2 + 1 - cell1 : Nat) : Int) from by
+              simp only [Int.ofNat_eq_natCast]
+              omega])
+        (by omega)
+      have htn : (Int.ofNat cell1).toNat = cell1 := rfl
+      rw [htn] at hp1 hp2
+      rw [heq, trivialSplit_ptn_eq]
+      dsimp only
+      rw [hp1, hp2, hcnt]
+      rcases Decidable.em (1 ≤ cnt ∧ cnt ≤ cell2 - cell1) with hc | hc
+      · rw [ite_eq_left hc, ite_eq_left (by
+          constructor
+          · simp only [Int.ofNat_eq_natCast]
+            omega
+          · simp only [Int.ofNat_eq_natCast]
+            omega)]
+        congr 1
+        simp only [Int.ofNat_eq_natCast]
+        omega
+      · rw [ite_eq_right hc, ite_eq_right (by
+          intro ⟨hg1, hg2⟩
+          simp only [Int.ofNat_eq_natCast] at hg1 hg2
+          exact hc ⟨by omega, by omega⟩)]
+  rcases Decidable.em (1 ≤ cnt ∧ cnt ≤ cell2 - cell1) with hc | hc
+  · refine Or.inr ⟨cell1 + cnt - 1, by omega, by omega, ?_, ?_, ?_⟩
+    · rw [hptn, ite_eq_left hc]
+    · intro p hp1 hp2
+      have := htrue (p - cell1) (by omega)
+      rwa [show cell1 + (p - cell1) = p from by omega] at this
+    · intro p hp1 hp2
+      have := hfalse (p - cell1) (by omega) (by omega)
+      rwa [show cell1 + (p - cell1) = p from by omega] at this
+  · refine Or.inl ⟨by rw [hptn, ite_eq_right hc], ?_⟩
+    rcases Nat.eq_or_lt_of_le (Nat.zero_le cnt) with hz | hpos
+    · refine ⟨false, fun p hp1 hp2 => ?_⟩
+      have := hfalse (p - cell1) (by omega) (by omega)
+      rwa [show cell1 + (p - cell1) = p from by omega] at this
+    · have hfull : cnt = cell2 + 1 - cell1 := by omega
+      refine ⟨true, fun p hp1 hp2 => ?_⟩
+      have := htrue (p - cell1) (by omega)
+      rwa [show cell1 + (p - cell1) = p from by omega] at this
+
+/-- The trivial pass over a window list: sizes kept, everything
+outside the windows kept, and every window left as constant block(s)
+with a surviving junction boundary in the two-block case. -/
+theorem refineTrivial_go_blocks {level gRow : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      st.ptn.size = st.lab.size →
+      (refineTrivial.go level gRow cs st).lab.size = st.lab.size ∧
+      (∀ j, (∀ p ∈ cs, j < p.1 ∨ p.2 < j) →
+        (refineTrivial.go level gRow cs st).lab[j]! = st.lab[j]!) ∧
+      (∀ q, (∀ p ∈ cs, q < p.1 ∨ p.2 ≤ q) →
+        (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
+      (refineTrivial.go level gRow cs st).ptn.size = st.ptn.size ∧
+      (∀ p ∈ cs,
+        (∃ b : Bool, ∀ q, p.1 ≤ q → q ≤ p.2 →
+          elem gRow (refineTrivial.go level gRow cs st).lab[q]! = b) ∨
+        (∃ j, p.1 ≤ j ∧ j < p.2 ∧
+          (refineTrivial.go level gRow cs st).ptn[j]! = level ∧
+          (∀ q, p.1 ≤ q → q ≤ j →
+            elem gRow (refineTrivial.go level gRow cs st).lab[q]! =
+              true) ∧
+          (∀ q, j < q → q ≤ p.2 →
+            elem gRow (refineTrivial.go level gRow cs st).lab[q]! =
+              false)))
+  | [], st, _, _, _ => by
+    rw [refineTrivial.go]
+    exact ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, rfl, fun p hp =>
+      absurd hp (by simp)⟩
+  | (c1, c2) :: rest, st, hw, hpw, hlp => by
+    rw [refineTrivial.go]
+    obtain ⟨h12, hsz⟩ := hw (c1, c2) (List.mem_cons_self ..)
+    dsimp only at h12 hsz
+    obtain ⟨hsize, houtside, hblocks⟩ :=
+      trivialCell_effect (level := level) (gRow := gRow) (st := st)
+        h12 hsz
+    have hps1 : (trivialCell level gRow c1 c2 st).ptn.size =
+        st.ptn.size := by
+      rcases hblocks with ⟨he, _⟩ | ⟨j, _, _, he, _, _⟩
+      · rw [he]
+      · rw [he, Array.size_set!]
+    have hpout : ∀ q, q < c1 ∨ c2 ≤ q →
+        (trivialCell level gRow c1 c2 st).ptn[q]! = st.ptn[q]! := by
+      intro q hq
+      rcases hblocks with ⟨he, _⟩ | ⟨j, hj1, hj2, he, _, _⟩
+      · rw [he]
+      · rw [he, Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    obtain ⟨ih1, ih2, ih3, ih4, ih5⟩ :=
+      refineTrivial_go_blocks rest (trivialCell level gRow c1 c2 st)
+        (fun p hp => by
+          obtain ⟨hp1, hp2⟩ := hw p (List.mem_cons_of_mem _ hp)
+          exact ⟨hp1, by rw [hsize]; exact hp2⟩)
+        (List.pairwise_cons.mp hpw).2
+        (by rw [hps1, hsize]; exact hlp)
+    have hhead := (List.pairwise_cons.mp hpw).1
+    refine ⟨by rw [ih1, hsize], ?_, ?_, by rw [ih4, hps1], ?_⟩
+    · intro j hj
+      rw [ih2 j (fun p hp => hj p (List.mem_cons_of_mem _ hp)),
+        houtside j (by
+          have := hj (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro q hq
+      rw [ih3 q (fun p hp => hq p (List.mem_cons_of_mem _ hp)),
+        hpout q (by
+          have := hq (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro p hp
+      rcases List.mem_cons.mp hp with rfl | hmem
+      · have hlabkeep : ∀ q, c1 ≤ q → q ≤ c2 →
+            (refineTrivial.go level gRow rest
+              (trivialCell level gRow c1 c2 st)).lab[q]! =
+              (trivialCell level gRow c1 c2 st).lab[q]! := by
+          intro q hq1 hq2
+          exact ih2 q fun pr hpr => Or.inl (by
+            have := hhead pr hpr
+            simp only at this
+            omega)
+        rcases hblocks with ⟨_, b, hb⟩ | ⟨j, hj1, hj2, he, ht, hf⟩
+        · exact Or.inl ⟨b, fun q hq1 hq2 => by
+            rw [hlabkeep q hq1 hq2]
+            exact hb q hq1 hq2⟩
+        · refine Or.inr ⟨j, hj1, hj2, ?_, ?_, ?_⟩
+          · rw [ih3 j fun pr hpr => Or.inl (by
+              have := hhead pr hpr
+              simp only at this
+              omega),
+              he, Array.getElem!_set!_self _ _ _ (by
+                rw [hlp]
+                omega)]
+          · intro q hq1 hq2
+            rw [hlabkeep q hq1 (by omega)]
+            exact ht q hq1 hq2
+          · intro q hq1 hq2
+            rw [hlabkeep q (by omega) hq2]
+            exact hf q hq1 hq2
+      · exact ih5 p hmem
+
+/-- With the last in-range position closed, cell ends stay in
+range. -/
+theorem cells_end_lt_of_end {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hendn : ptn[nn - 1]! ≤ level) :
+    ∀ p ∈ cells ptn level nn, p.2 < nn := by
+  intro p hp
+  have hc := cells_isCell hnn hend p hp
+  have hle := cells_le p hp
+  have hstart := cells_go_ge (ptn := ptn) (level := level) (nn := nn)
+    nn 0 p (by rw [cells] at hp; exact hp)
+  rcases Nat.lt_or_ge p.2 nn with h | h
+  · exact h
+  · exfalso
+    have hn0 : 0 < nn := by
+      rcases Nat.eq_or_lt_of_le (Nat.zero_le nn) with hz | hp0
+      · rw [cells] at hp
+        rw [← hz] at hp
+        rw [cells.go] at hp
+        exact absurd hp (by simp)
+      · exact hp0
+    have hp1lt : p.1 < nn := by
+      rcases Nat.lt_or_ge p.1 nn with h1 | h1
+      · exact h1
+      · exfalso
+        rw [cells] at hp
+        have := cells_go_lt_aux hp h1
+        exact this
+    have hint := hc.2.2.1 (nn - 1) (by omega) (by omega)
+    omega
+where
+  cells_go_lt_aux {ptn : Array Nat} {level nn : Nat} {p : Nat × Nat} :
+    ∀ {fuel c1 : Nat}, p ∈ cells.go ptn level nn fuel c1 →
+      nn ≤ p.1 → False
+  | 0, _, hp, _ => absurd hp (by simp [cells.go])
+  | fuel + 1, c1, hp, hge => by
+    rw [cells.go] at hp
+    split at hp
+    · next h =>
+      simp only [List.mem_cons] at hp
+      rcases hp with rfl | hmem
+      · simp only at hge
+        omega
+      · have := cells_go_ge (ptn := ptn) (level := level) (nn := nn)
+          fuel _ p hmem
+        have hge2 := cellEnd_ge (ptn := ptn) (level := level) (i := c1)
+        exact cells_go_lt_aux hmem hge
+    · exact absurd hp (by simp)
+
+/-- After the trivial pass, every cell of the result within range is
+adjacency-constant to the captured splitter row. -/
+theorem refineTrivial_cell_adj {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hpsz : st.ptn.size = ctx.n)
+    (hlp : st.lab.size = st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    ∀ a len, IsCell (refineTrivial ctx level split1 st).ptn level a len →
+      a + len ≤ ctx.n →
+      ∃ b : Bool, ∀ q, a ≤ q → q < a + len →
+        elem (ctx.g[st.lab[split1]!]!)
+          (refineTrivial ctx level split1 st).lab[q]! = b := by
+  intro a len hcell halen
+  have hnn : ctx.n ≤ st.ptn.size := Nat.le_of_eq hpsz.symm
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    have h := hend
+    rw [hpsz] at h
+    exact h
+  have hwind : ∀ p ∈ cells st.ptn level ctx.n,
+      p.1 ≤ p.2 ∧ p.2 < st.lab.size := fun p hp =>
+    ⟨cells_le p hp, by
+      have := cells_end_lt_of_end hnn hend hendn p hp
+      omega⟩
+  obtain ⟨g1, g2, g3, g4, g5⟩ := refineTrivial_go_blocks
+    (level := level) (gRow := ctx.g[st.lab[split1]!]!)
+    (cells st.ptn level ctx.n) st hwind cells_pairwise hlp.symm
+  rw [refineTrivial] at hcell ⊢
+  have hpres : ∀ q : Nat, st.ptn[q]! ≤ level →
+      (refineTrivial.go level (ctx.g[st.lab[split1]!]!)
+        (cells st.ptn level ctx.n) st).ptn[q]! = st.ptn[q]! := by
+    intro q hq
+    refine g3 q fun p hp => ?_
+    rcases Nat.lt_or_ge q ctx.n with hqn | hqn
+    · obtain ⟨pc, hpcm, hpc1, hpc2⟩ := cells_cover q hqn
+      have hqend : q = pc.2 := by
+        have hic := cells_isCell hnn hend pc hpcm
+        rcases Nat.eq_or_lt_of_le hpc2 with he | hlt
+        · exact he
+        · exfalso
+          have := hic.2.2.1 q (by omega) (by
+            have := cells_le pc hpcm
+            omega)
+          omega
+      have hicp := cells_isCell hnn hend p hp
+      have hicpc := cells_isCell hnn hend pc hpcm
+      have hle_p := cells_le p hp
+      have hle_pc := cells_le pc hpcm
+      rcases isCell_disjoint_or_eq hicp hicpc with hd | hd | hd
+      · left
+        omega
+      · right
+        omega
+      · right
+        omega
+    · right
+      have := cells_end_lt_of_end hnn hend hendn p hp
+      omega
+  have hgrow : ∀ q : Nat, st.ptn[q]! ≤ level →
+      (refineTrivial.go level (ctx.g[st.lab[split1]!]!)
+        (cells st.ptn level ctx.n) st).ptn[q]! ≤ level := by
+    intro q hq
+    rw [hpres q hq]
+    exact hq
+  have hl0 : 0 < len := hcell.1
+  obtain ⟨c, lenC, hcC, hca, hcb⟩ := subcell_of_grow (ptn0 := st.ptn)
+    g4.symm hcell hend hgrow (by omega) (by omega)
+  have hmem : (c, c + lenC - 1) ∈ cells st.ptn level ctx.n :=
+    isCell_mem_cells hcC hnn hend (by omega)
+  have hlen0 := hcC.1
+  rcases g5 (c, c + lenC - 1) hmem with ⟨b, hb⟩ | ⟨j, hj1, hj2, hjlev, ht, hf⟩
+  · dsimp only at hb
+    exact ⟨b, fun q hq1 hq2 => hb q (by omega) (by omega)⟩
+  · dsimp only at hj1 hj2 hjlev ht hf
+    rcases Nat.lt_or_ge j a with hja | hja
+    · exact ⟨false, fun q hq1 hq2 => hf q (by omega) (by omega)⟩
+    · rcases Nat.lt_or_ge j (a + len - 1) with hjl | hjl
+      · exfalso
+        have := hcell.2.2.1 j (by omega) (by omega)
+        omega
+      · exact ⟨true, fun q hq1 hq2 => ht q (by omega) (by omega)⟩
+
 end Hex.GraphIso.Nauty
