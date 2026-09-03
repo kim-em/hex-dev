@@ -376,4 +376,515 @@ theorem shortprune_carried {g ptn lab : Array Nat}
   · rw [hW] at hR
     exact absurd hR (by simp)
 
+
+/-! # The explicit pairs: `fmperm` of an admitted generator
+
+The pair recorded for an explicit generator reads validly through the
+generator's forward powers: `fix` holds only fixed points, and a
+vertex left out of `mcr` is not the least element of its cycle, so
+some forward power carries it strictly down. The two loop
+characterizations below are proven against structural mirrors of the
+`fmperm` loops.
+-/
+
+/-- Forward iterates of a single array. -/
+private def iter (perm : Array Nat) (k v : Nat) : Nat :=
+  applyWord (List.replicate k perm) v
+
+private theorem iter_add (perm : Array Nat) (a b v : Nat) :
+    iter perm (a + b) v = iter perm b (iter perm a v) := by
+  show applyWord _ _ = _
+  rw [← List.replicate_append_replicate, applyWord_append]
+  rfl
+
+private theorem iter_cycle {perm : Array Nat} {m j : Nat}
+    (hm : iter perm m j = j) :
+    ∀ (q r : Nat), iter perm (q * m + r) j = iter perm r j
+  | 0, r => by rw [Nat.zero_mul, Nat.zero_add]
+  | q + 1, r => by
+    rw [Nat.succ_mul, Nat.add_assoc, Nat.add_comm m r,
+      ← Nat.add_assoc, iter_add, iter_cycle hm q r, ← iter_add,
+      Nat.add_comm r m, iter_add, hm]
+
+/-- Every vertex reaching `w` by iteration is itself an iterate of
+`w`, over a bounded injective array. -/
+private theorem iter_symm {perm : Array Nat} {nn : Nat}
+    (hb : ∀ v, v < nn → perm[v]! < nn)
+    (hinj : ∀ a b, a < nn → b < nn → perm[a]! = perm[b]! → a = b)
+    {j w a : Nat} (hj : j < nn) (ha : iter perm a j = w) :
+    ∃ c, iter perm c w = j := by
+  obtain ⟨m, hm0, hmraw⟩ :=
+    exists_applyWord_replicate_self (n := nn) hb hinj hj
+  have hm : iter perm m j = j := hmraw
+  have hcycle := iter_cycle (perm := perm) hm
+  have hrw : iter perm (a % m) j = w := by
+    have hthis := hcycle (a / m) (a % m)
+    have hq : a / m * m + a % m = a := by
+      rw [Nat.mul_comm]
+      exact Nat.div_add_mod a m
+    rw [hq] at hthis
+    rw [← hthis]
+    exact ha
+  refine ⟨m - a % m, ?_⟩
+  rw [← hrw, ← iter_add]
+  have hsum : a % m + (m - a % m) = m := by
+    have := Nat.mod_lt a hm0
+    omega
+  rw [hsum, hm]
+
+/-- `v` is the least element of its forward orbit. -/
+private def IsOrbMin (perm : Array Nat) (v : Nat) : Prop :=
+  ∀ k, v ≤ iter perm k v
+
+/-- The inner marking loop of `fmperm`, structurally. -/
+private def markCycle (perm : Array Nat) (i : Nat) :
+    List Nat → Array Bool → Nat → Array Bool × Nat
+  | [], seen, l => (seen, l)
+  | _ :: rest, seen, l =>
+    let seen' := seen.set! l true
+    if perm[l]! == i then (seen', perm[l]!)
+    else markCycle perm i rest seen' perm[l]!
+
+/-- The outer loop of `fmperm`, structurally, carrying the full
+state. -/
+private def fmpermGo (perm : Array Nat) (nn : Nat) :
+    List Nat → Nat → Nat → Array Bool → Nat × Nat × Array Bool
+  | [], fix, mcr, seen => (fix, mcr, seen)
+  | i :: rest, fix, mcr, seen =>
+    if perm[i]! == i then
+      fmpermGo perm nn rest (insert fix i) (insert mcr i) seen
+    else if seen[i]! then
+      fmpermGo perm nn rest fix mcr seen
+    else
+      fmpermGo perm nn rest fix (insert mcr i)
+        (markCycle perm i (List.range nn) seen i).1
+
+/-- The inner loop body, pinned as a definition so branch analysis
+happens on free variables. -/
+private def innerF (perm : Array Nat) (i : Nat) :
+    Nat → Array Bool × Nat → Id (ForInStep (Array Bool × Nat)) :=
+  fun _ s =>
+    have seen := s.fst
+    have l := s.snd
+    have seen := seen.set! l true
+    have l := perm[l]!
+    if (l == i) = true then pure (ForInStep.done (seen, l))
+    else pure (ForInStep.yield (seen, l))
+
+/-- The outer loop body, pinned as a definition. -/
+private def outerF (perm : Array Nat) (nn : Nat) :
+    Nat → Nat × Nat × Array Bool →
+      Id (ForInStep (Nat × Nat × Array Bool)) :=
+  fun i __s =>
+    have fix := __s.fst
+    have __s := __s.snd
+    have mcr := __s.fst
+    have seen := __s.snd
+    if (perm[i]! == i) = true then
+      have fix := insert fix i
+      have mcr := insert mcr i
+      pure (ForInStep.yield (fix, mcr, seen))
+    else
+      if ¬seen[i]! = true then
+        have l := i
+        do
+        let __s ← forIn [:nn] (seen, l) (innerF perm i)
+        have seen : Array Bool := __s.fst
+        have mcr : Nat := insert mcr i
+        pure (ForInStep.yield (fix, mcr, seen))
+      else pure (ForInStep.yield (fix, mcr, seen))
+
+private theorem forIn_range_eq {β : Type} (k : Nat) (init : β)
+    (f : Nat → β → Id (ForInStep β)) :
+    (forIn [:k] init f : Id β) = forIn (List.range k) init f := by
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  have hrange : List.range' [:k].start [:k].size [:k].step
+      = List.range k := by simp [List.range_eq_range']
+  rw [hrange]
+
+/-- The pinned body is the elaborated body. -/
+private theorem fmperm_pinned (perm : Array Nat) (nn : Nat) :
+    fmperm perm nn =
+      (do
+        let s ← forIn [:nn]
+          ((0 : Nat), (0 : Nat), Array.replicate nn false)
+          (outerF perm nn)
+        pure (s.fst, s.snd.fst) : Id (Nat × Nat)).run := rfl
+
+/-- Branch readings of the pinned inner body. -/
+private theorem innerF_done {perm : Array Nat} {i x cur : Nat}
+    {seen : Array Bool} (hc : (perm[cur]! == i) = true) :
+    innerF perm i x (seen, cur) =
+      pure (ForInStep.done (seen.set! cur true, perm[cur]!)) := by
+  show (if (perm[cur]! == i) = true then
+      pure (ForInStep.done (seen.set! cur true, perm[cur]!))
+    else pure (ForInStep.yield (seen.set! cur true, perm[cur]!))) = _
+  rw [ite_eq_left hc]
+
+private theorem innerF_step {perm : Array Nat} {i x cur : Nat}
+    {seen : Array Bool} (hc : (perm[cur]! == i) = false) :
+    innerF perm i x (seen, cur) =
+      pure (ForInStep.yield (seen.set! cur true, perm[cur]!)) := by
+  show (if (perm[cur]! == i) = true then
+      pure (ForInStep.done (seen.set! cur true, perm[cur]!))
+    else pure (ForInStep.yield (seen.set! cur true, perm[cur]!))) = _
+  rw [ite_eq_right (by
+    intro h
+    rw [hc] at h
+    exact Bool.noConfusion h)]
+
+/-- The inner loop is `markCycle`. -/
+private theorem forIn_innerF_eq (perm : Array Nat) (i : Nat) :
+    ∀ (l : List Nat) (seen : Array Bool) (cur : Nat),
+      (forIn l (seen, cur) (innerF perm i) :
+        Id (Array Bool × Nat)) =
+      markCycle perm i l seen cur
+  | [], _, _ => rfl
+  | x :: l, seen, cur => by
+    rw [List.forIn_cons, markCycle]
+    rcases hc : (perm[cur]! == i) with _ | _
+    · rw [innerF_step (x := x) hc,
+        ite_eq_right (fun h => Bool.noConfusion h)]
+      exact forIn_innerF_eq perm i l _ _
+    · rw [innerF_done (x := x) hc, ite_eq_left rfl]
+      rfl
+
+/-- Branch readings of the pinned outer body. -/
+private theorem outerF_fixed {perm : Array Nat} {nn i fix mcr : Nat}
+    {seen : Array Bool} (hc : (perm[i]! == i) = true) :
+    outerF perm nn i (fix, mcr, seen) =
+      pure (ForInStep.yield (insert fix i, insert mcr i, seen)) := by
+  show (if (perm[i]! == i) = true then
+      pure (ForInStep.yield (insert fix i, insert mcr i, seen))
+    else _) = _
+  rw [ite_eq_left hc]
+
+private theorem outerF_seen {perm : Array Nat} {nn i fix mcr : Nat}
+    {seen : Array Bool} (hc : (perm[i]! == i) = false)
+    (hs : seen[i]! = true) :
+    outerF perm nn i (fix, mcr, seen) =
+      pure (ForInStep.yield (fix, mcr, seen)) := by
+  show (if (perm[i]! == i) = true then
+      pure (ForInStep.yield (insert fix i, insert mcr i, seen))
+    else if ¬seen[i]! = true then _
+    else pure (ForInStep.yield (fix, mcr, seen))) = _
+  rw [ite_eq_right (by
+      intro h
+      rw [hc] at h
+      exact Bool.noConfusion h),
+    ite_eq_right (by
+      intro hn
+      exact hn (by rw [hs]))]
+
+private theorem outerF_unseen {perm : Array Nat} {nn i fix mcr : Nat}
+    {seen : Array Bool} (hc : (perm[i]! == i) = false)
+    (hs : seen[i]! = false) :
+    outerF perm nn i (fix, mcr, seen) =
+      (do
+        let s ← forIn [:nn] (seen, i) (innerF perm i)
+        pure (ForInStep.yield (fix, insert mcr i, s.fst)) :
+        Id (ForInStep (Nat × Nat × Array Bool))) := by
+  show (if (perm[i]! == i) = true then
+      pure (ForInStep.yield (insert fix i, insert mcr i, seen))
+    else if ¬seen[i]! = true then
+      (do
+        let s ← forIn [:nn] (seen, i) (innerF perm i)
+        pure (ForInStep.yield (fix, insert mcr i, s.fst)) :
+        Id (ForInStep (Nat × Nat × Array Bool)))
+    else pure (ForInStep.yield (fix, mcr, seen))) = _
+  rw [ite_eq_right (by
+      intro h
+      rw [hc] at h
+      exact Bool.noConfusion h),
+    ite_eq_left (by
+      intro h
+      rw [hs] at h
+      exact Bool.noConfusion h)]
+
+/-- The outer loop is `fmpermGo`. -/
+private theorem forIn_outerF_eq (perm : Array Nat) (nn : Nat) :
+    ∀ (l : List Nat) (fix mcr : Nat) (seen : Array Bool),
+      (forIn l (fix, mcr, seen) (outerF perm nn) :
+        Id (Nat × Nat × Array Bool)) =
+      fmpermGo perm nn l fix mcr seen
+  | [], _, _, _ => rfl
+  | i :: l, fix, mcr, seen => by
+    rw [List.forIn_cons, fmpermGo]
+    rcases hfx : (perm[i]! == i) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      rcases hsn : seen[i]! with _ | _
+      · rw [outerF_unseen hfx hsn,
+          ite_eq_right (fun h => Bool.noConfusion h),
+          forIn_range_eq, forIn_innerF_eq]
+        exact forIn_outerF_eq perm nn l _ _ _
+      · rw [outerF_seen hfx hsn, ite_eq_left rfl]
+        exact forIn_outerF_eq perm nn l _ _ _
+    · rw [outerF_fixed hfx, ite_eq_left rfl]
+      exact forIn_outerF_eq perm nn l _ _ _
+
+/-- `fmperm` computes its structural mirror. -/
+private theorem fmperm_eq_go (perm : Array Nat) (nn : Nat) :
+    fmperm perm nn =
+      ((fmpermGo perm nn (List.range nn) 0 0
+          (Array.replicate nn false)).1,
+        (fmpermGo perm nn (List.range nn) 0 0
+          (Array.replicate nn false)).2.1) := by
+  rw [fmperm_pinned]
+  show (let s := Id.run (forIn [:nn]
+      ((0 : Nat), (0 : Nat), Array.replicate nn false)
+      (outerF perm nn)); (s.fst, s.snd.fst)) = _
+  rw [forIn_range_eq, forIn_outerF_eq]
+  rfl
+
+
+/-! # Invariants of the mirrors -/
+
+private theorem iter_succ_right (perm : Array Nat) (a v : Nat) :
+    iter perm (a + 1) v = perm[iter perm a v]! := by
+  rw [iter_add]
+  show applyWord (List.replicate 1 perm) _ = _
+  rw [List.replicate_succ, List.replicate_zero, applyWord,
+    List.foldl_cons, List.foldl_nil]
+
+private theorem elem_insert_self (s w : Nat) :
+    elem (insert s w) w = true := by
+  show (insert s w).testBit w = true
+  rw [testBit_insert]
+  simp
+
+private theorem elem_insert_mono {s u : Nat} (w : Nat)
+    (hu : elem s u = true) : elem (insert s w) u = true := by
+  show (insert s w).testBit u = true
+  rw [testBit_insert]
+  exact (Bool.or_eq_true _ _).mpr (Or.inl hu)
+
+private theorem elem_insert_elim {s w u : Nat}
+    (hu : elem (insert s w) u = true) :
+    u = w ∨ elem s u = true := by
+  have : (s.testBit u || w == u) = true := by
+    rw [← testBit_insert]
+    exact hu
+  rcases (Bool.or_eq_true _ _).mp this with h | h
+  · exact Or.inr h
+  · exact Or.inl ((beq_iff_eq ..).mp h).symm
+
+private theorem markCycle_size {perm : Array Nat} {i : Nat} :
+    ∀ (l : List Nat) (seen : Array Bool) (cur : Nat),
+      (markCycle perm i l seen cur).1.size = seen.size
+  | [], _, _ => rfl
+  | x :: l, seen, cur => by
+    rw [markCycle]
+    rcases hc : (perm[cur]! == i) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      rw [markCycle_size l, Array.size_set!]
+    · rw [ite_eq_left rfl, Array.size_set!]
+
+/-- Marks added by the cycle walk lie on the forward orbit of `i`. -/
+private theorem markCycle_spec {perm : Array Nat} {i : Nat} :
+    ∀ (l : List Nat) (seen : Array Bool) (cur : Nat),
+      (∃ a, iter perm a i = cur) →
+      ∀ w, (markCycle perm i l seen cur).1[w]! = true →
+        seen[w]! = true ∨ ∃ a, iter perm a i = w
+  | [], _, _, _, _, hw => Or.inl hw
+  | x :: l, seen, cur, ⟨a, ha⟩, w, hw => by
+    rw [markCycle] at hw
+    have hset : ∀ u, (seen.set! cur true)[u]! = true →
+        seen[u]! = true ∨ ∃ b, iter perm b i = u := by
+      intro u hu
+      rcases Decidable.em (u = cur) with rfl | hne
+      · exact Or.inr ⟨a, ha⟩
+      · rw [Array.getElem!_set!_ne _ _ _ _
+          (fun h => hne h.symm)] at hu
+        exact Or.inl hu
+    rcases hc : (perm[cur]! == i) with _ | _
+    · rw [ite_eq_right (by
+        intro h
+        rw [hc] at h
+        exact Bool.noConfusion h)] at hw
+      have hnext : ∃ b, iter perm b i = perm[cur]! :=
+        ⟨a + 1, by rw [iter_succ_right, ha]⟩
+      rcases markCycle_spec l (seen.set! cur true) perm[cur]!
+          hnext w hw with hin | horb
+      · exact hset w hin
+      · exact Or.inr horb
+    · rw [ite_eq_left hc] at hw
+      exact hset w hw
+
+/-- The seen array only records unfixed starts and their orbits. -/
+private def SeenInv (perm : Array Nat) (i : Nat)
+    (seen : Array Bool) : Prop :=
+  ∀ w, seen[w]! = true →
+    ∃ j, j < i ∧ perm[j]! ≠ j ∧ ∃ a, iter perm a j = w
+
+/-- The outer mirror's combined invariant: `fix` holds only fixed
+points, and `mcr` holds every orbit minimum. -/
+private theorem fmpermGo_spec {perm : Array Nat} {nn : Nat}
+    (hb : ∀ v, v < nn → perm[v]! < nn)
+    (hinj : ∀ a b, a < nn → b < nn → perm[a]! = perm[b]! → a = b) :
+    ∀ (k i fix mcr : Nat) (seen : Array Bool),
+      i + k = nn → seen.size = nn →
+      SeenInv perm i seen →
+      (∀ u, elem fix u = true → u < nn ∧ perm[u]! = u) →
+      (∀ v, v < i → IsOrbMin perm v → elem mcr v = true) →
+      (∀ u, elem (fmpermGo perm nn (List.range' i k)
+          fix mcr seen).1 u = true → u < nn ∧ perm[u]! = u) ∧
+      (∀ v, v < nn → IsOrbMin perm v →
+        elem (fmpermGo perm nn (List.range' i k)
+          fix mcr seen).2.1 v = true)
+  | 0, i, fix, mcr, seen, hik, _, _, hfix, hmcr => by
+    refine ⟨fun u hu => hfix u hu, fun v hv hmin => ?_⟩
+    exact hmcr v (by omega) hmin
+  | k + 1, i, fix, mcr, seen, hik, hsz, hseen, hfix, hmcr => by
+    rw [List.range'_succ, fmpermGo]
+    have hilt : i < nn := by omega
+    rcases hfx : (perm[i]! == i) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      have hne : perm[i]! ≠ i := by
+        intro h
+        rw [(beq_iff_eq ..).mpr h] at hfx
+        exact Bool.noConfusion hfx
+      rcases hsn : seen[i]! with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+        refine fmpermGo_spec hb hinj k (i + 1) _ _ _
+          (by omega)
+          (by rw [markCycle_size, hsz])
+          ?_ hfix ?_
+        · intro w hw
+          rcases markCycle_spec (List.range nn) seen i
+              ⟨0, rfl⟩ w hw with hin | horb
+          · obtain ⟨j, hj, hjne, hreach⟩ := hseen w hin
+            exact ⟨j, by omega, hjne, hreach⟩
+          · exact ⟨i, by omega, hne, horb⟩
+        · intro v hv hmin
+          rcases Decidable.em (v = i) with rfl | hvne
+          · exact elem_insert_self ..
+          · exact elem_insert_mono _ (hmcr v (by omega) hmin)
+      · rw [ite_eq_left rfl]
+        refine fmpermGo_spec hb hinj k (i + 1) _ _ _
+          (by omega) hsz
+          (fun w hw => by
+            obtain ⟨j, hj, hjne, hreach⟩ := hseen w hw
+            exact ⟨j, by omega, hjne, hreach⟩)
+          hfix ?_
+        intro v hv hmin
+        rcases Decidable.em (v = i) with rfl | hvne
+        · exfalso
+          obtain ⟨j, hj, hjne, a, ha⟩ := hseen v hsn
+          obtain ⟨c, hc⟩ := iter_symm hb hinj (by omega) ha
+          have := hmin c
+          rw [hc] at this
+          omega
+        · exact hmcr v (by omega) hmin
+    · rw [ite_eq_left rfl]
+      have heq : perm[i]! = i := (beq_iff_eq ..).mp hfx
+      refine fmpermGo_spec hb hinj k (i + 1) _ _ _
+        (by omega) hsz
+        (fun w hw => by
+          obtain ⟨j, hj, hjne, hreach⟩ := hseen w hw
+          exact ⟨j, by omega, hjne, hreach⟩)
+        ?_ ?_
+      · intro u hu
+        rcases elem_insert_elim hu with rfl | hold
+        · exact ⟨hilt, heq⟩
+        · exact hfix u hold
+      · intro v hv hmin
+        rcases Decidable.em (v = i) with rfl | hvne
+        · exact elem_insert_self ..
+        · exact elem_insert_mono _ (hmcr v (by omega) hmin)
+
+private theorem applyWord_replicate_fixed {perm : Array Nat} {u : Nat}
+    (hfixed : perm[u]! = u) :
+    ∀ k, applyWord (List.replicate k perm) u = u
+  | 0 => rfl
+  | k + 1 => by
+    rw [applyWord_replicate_succ, hfixed,
+      applyWord_replicate_fixed hfixed k]
+
+/-- The spec instance at the root call of `fmperm`. -/
+private theorem fmpermGo_root {perm : Array Nat} {nn : Nat}
+    (hb : ∀ v, v < nn → perm[v]! < nn)
+    (hinj : ∀ a b, a < nn → b < nn → perm[a]! = perm[b]! → a = b) :
+    (∀ u, elem (fmpermGo perm nn (List.range nn) 0 0
+        (Array.replicate nn false)).1 u = true →
+      u < nn ∧ perm[u]! = u) ∧
+    (∀ v, v < nn → IsOrbMin perm v →
+      elem (fmpermGo perm nn (List.range nn) 0 0
+        (Array.replicate nn false)).2.1 v = true) := by
+  have hseen0 : SeenInv perm 0 (Array.replicate nn false) := by
+    intro w hw
+    rcases Decidable.em (w < nn) with hlt | hge
+    · rw [getElem!_pos _ _ (by simpa using hlt),
+        Array.getElem_replicate] at hw
+      exact Bool.noConfusion hw
+    · rw [getElem!_neg _ _ (by simpa using hge)] at hw
+      exact Bool.noConfusion hw
+  have hspec := fmpermGo_spec hb hinj nn 0 0 0
+    (Array.replicate nn false) (by omega) (by simp) hseen0
+    (fun u hu => absurd hu (by simp [elem]))
+    (fun v hv _ => absurd hv (by omega))
+  rw [show List.range' 0 nn = List.range nn from
+    List.range_eq_range'.symm] at hspec
+  exact hspec
+
+/-- `fix` of an `fmperm` pair holds only fixed points. -/
+theorem fmperm_fix {perm : Array Nat} {nn : Nat}
+    (hb : ∀ v, v < nn → perm[v]! < nn)
+    (hinj : ∀ a b, a < nn → b < nn → perm[a]! = perm[b]! → a = b)
+    {u : Nat} (hu : elem (fmperm perm nn).1 u = true) :
+    u < nn ∧ perm[u]! = u := by
+  rw [fmperm_eq_go] at hu
+  exact (fmpermGo_root hb hinj).1 u hu
+
+/-- A vertex left out of an `fmperm` pair's `mcr` is carried strictly
+down by a forward power of the generator. -/
+theorem fmperm_mcr {perm : Array Nat} {nn : Nat}
+    (hb : ∀ v, v < nn → perm[v]! < nn)
+    (hinj : ∀ a b, a < nn → b < nn → perm[a]! = perm[b]! → a = b)
+    {v : Nat} (hv : v < nn)
+    (hmcr : elem (fmperm perm nn).2 v = false) :
+    ∃ k, applyWord (List.replicate k perm) v < v := by
+  refine Classical.byContradiction fun hcon => ?_
+  have hmin : IsOrbMin perm v := by
+    intro k
+    have h' : ¬ applyWord (List.replicate k perm) v < v :=
+      fun hlt => hcon ⟨k, hlt⟩
+    show v ≤ applyWord (List.replicate k perm) v
+    omega
+  have hmem := (fmpermGo_root hb hinj).2 v hv hmin
+  rw [fmperm_eq_go] at hmcr
+  have hmcr' : elem (fmpermGo perm nn (List.range nn) 0 0
+      (Array.replicate nn false)).2.1 v = false := hmcr
+  rw [hmem] at hmcr'
+  exact Bool.noConfusion hmcr'
+
+/-- The `fmperm` pair of a checked, cell-stabilizing generator reads
+validly at the node: the realizers are the generator's forward
+powers. -/
+theorem pairOk_fmperm {g ptn lab perm : Array Nat} {level : Nat}
+    (hbg : ∀ v, v < n → g[v]! < 2 ^ n)
+    (hok : LabOk lab n) (hs : lab.size = n) (hsp : ptn.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hca : checkAutom g perm n = true)
+    (hstab : CellStab ptn level lab perm) :
+    PairOk g ptn lab level n (fmperm perm n).1 (fmperm perm n).2 := by
+  have hbp : ∀ v, v < n → perm[v]! < n := checkAutom_bound hca
+  have hinj : ∀ a b, a < n → b < n → perm[a]! = perm[b]! → a = b :=
+    checkAutom_inj hca
+  intro v hv hmcr
+  obtain ⟨k, hk⟩ := fmperm_mcr hbp hinj hv hmcr
+  obtain ⟨hcaw, hstabw, hact⟩ := wordPerm_spec hbg hok hsp hs hend
+    (S := [perm])
+    (fun γ hγ => by rw [List.mem_singleton.mp hγ]; exact hca)
+    (fun γ hγ => by rw [List.mem_singleton.mp hγ]; exact hstab)
+    (List.replicate k perm)
+    (fun γ hγ => List.mem_singleton.mpr
+      (List.eq_of_mem_replicate hγ))
+  refine ⟨wordPerm n (List.replicate k perm), hcaw, ?_, hstabw, ?_⟩
+  · intro u hu hfu
+    have hfixed := (fmperm_fix hbp hinj hfu).2
+    rw [hact u hu]
+    exact applyWord_replicate_fixed hfixed k
+  · rw [hact v hv]
+    exact hk
+
 end Hex.GraphIso.Nauty
