@@ -128,16 +128,31 @@ now precisely located:
    is path-determinism of the imperative descent, and no file builds
    it: the spec side has `specNode_codes_head`, but nothing states
    the transcription's descent as a function of its code path.
-2. **Seeding and preserving `FirstDescOk`.** The seed is the
-   degenerate descent at `firstterminal` (`firstlab` is the current
-   `lab`, both paths empty), which still needs `SubtreeOk` at that
-   node; a discrete node has `Equitable` by
-   `equitable_of_singletons` and `SmallShape` outright, so the seed
-   should follow from `IterOk` there. Preservation is the geometric
-   step: `childSt_eq_search_step` makes each imperative child step
-   definitionally a `DescPath.step`, and `maketargetcell_mem` gives
-   the step's cell hypotheses, so extending both descents in step is
-   bookkeeping rather than new mathematics.
+2. **Deriving `FirstDescOk` where the gate fires.** The seed is
+   proven (`firstterminal_firstDescOk`, on `subtreeOk_of_discrete`:
+   at a discrete node every cell is a singleton, which is
+   `SmallShape` outright and `Equitable` by
+   `equitable_of_singletons`, and every position carries a boundary,
+   so only `IterOk` is owed). The internal steps carry the clause:
+   the comparison step by frame (`otherNodePrep_firstDescOk`), and
+   the unwind whenever its clamp leaves the gate no wider than it
+   found it (`recover_firstDescOk`, whose side condition is the
+   unwind protocol's own bookkeeping).
+
+   What is *not* available is the clause as a `DomOk` field.
+   `firstDescOk_depth` shows why: same-target descents have equal
+   length, so a live gate forces the current labelling to be a leaf
+   at the first leaf's depth. An interior node the search passes with
+   the gate open has a strictly shorter path, so the clause is false
+   there. It must therefore be derived at the code-one gate, where
+   the arm's own discreteness supplies the depth, and that derivation
+   still owes the geometry: two descents from the gca whose target
+   projections agree. `flipData_of_subtreeOk` relates the gca's
+   children and `descPath_transport` carries a descent across that
+   relation preserving the projection, but concluding that the first
+   path's *actual* descent is the transported one is again the
+   path-determinism of obligation 1. The two obligations are one
+   piece of mathematics reached from two directions.
 
 With those two supplied, the mutual quartet induction on the
 `canonlab_cellsReach` skeleton (whose composite helpers
