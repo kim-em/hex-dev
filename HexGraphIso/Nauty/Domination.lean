@@ -96,27 +96,50 @@ induction's architecture per unwind mode:
   `cellStab_of_scatter` + `childKey_of_carried` at the loop's own
   node.
 
-Three obligations remain genuinely open before the mutual
-induction can close unconditionally, all external to this file:
+The three obligations this file once listed as external are all
+supplied now. The cheapautom subtree theorem is
+`descPath_leafRows_all` and its `leafRows_eq_of_descPaths` corollary;
+store-validity arm 2 is `genTraceOk_processnode` and
+`processnode_checkAutom`; the `(fix, mcr)` ledger is `AutosLedger`,
+whose `longprune_carried`/`shortprune_carried` meet
+`childKey_of_carried`'s hypotheses exactly. `DomOk` therefore carries
+both ledgers (`genTraceOk`, `autosOk`), both ride the internal steps
+by frame (`otherNodePrep_store`, `recover_store`,
+`firstterminal_store`, transported by `genTraceOk_of_eq` and
+`autosOk_of_eq`), and the admission event preserves store validity
+under the record outright
+(`genTraceOk_processnode_of_domOk`,`processnode_checkAutom_of_domOk`).
+Of the two row obligations those events leave, the row-tie one is
+local and proven (`rows_eq_of_testcanlab_tie`, from the record's
+store invariant), and the first-path one is reduced to a threadable
+clause: `FirstDescOk` records that a live gate comes with two
+same-target descents from one cheapautom-passing node, and
+`rows_eq_of_firstDescOk` turns that into the row equality.
 
-1. The `noncheaplevel - 1` arm of `pruneReturn` (fired whenever
-   `noncheaplevel ≤ save`) abandons loops at levels where the
-   machine may have re-agreed; its justification is the cheapautom
-   subtree theorem of the small-cell programme (`SmallCell.lean`
-   lineage): every leaf below a cheapautom-passing node realizes
-   an automorphism with the first leaf.
-2. The scan-free code-1 gate (`gcaFirst ≥ noncheaplevel`) admits a
-   scatter whose `checkAutom` validity is store-validity arm 2 —
-   the same programme.
-3. The `shortprune`/`longprune` target-cell filtering drops
-   vertices via the `(fix, mcr)` pairs of the `autos` store
-   (`fmperm`/`fmptn`); dominating those skips needs a ledger tying
-   each stored pair to a generator word or a cheapautom implicit
-   automorphism whose mcr semantics justify the drop. No branch
-   has built this layer; it is the one piece of the induction with
-   no existing machinery.
+Two obligations remain before the mutual induction can close, both
+now precisely located:
 
-With those three supplied, the mutual quartet induction on the
+1. **The code-1 depth clause.** `auto_keyMax` needs `cs = fs`, which
+   `firstCodeInv_eq_of_tied` supplies from a full agreement depth
+   plus `cs.length = fs.length`. `FirstCodeInv.elev_fs` gives
+   `cs.length ≤ fs.length` at a live gate; the reverse needs that
+   equal code prefixes force equal partitions, so a leaf discrete at
+   the current level makes the first path discrete there too. That
+   is path-determinism of the imperative descent, and no file builds
+   it: the spec side has `specNode_codes_head`, but nothing states
+   the transcription's descent as a function of its code path.
+2. **Seeding and preserving `FirstDescOk`.** The seed is the
+   degenerate descent at `firstterminal` (`firstlab` is the current
+   `lab`, both paths empty), which still needs `SubtreeOk` at that
+   node; a discrete node has `Equitable` by
+   `equitable_of_singletons` and `SmallShape` outright, so the seed
+   should follow from `IterOk` there. Preservation is the geometric
+   step: `childSt_eq_search_step` makes each imperative child step
+   definitionally a `DescPath.step`, and `maketargetcell_mem` gives
+   the step's cell hypotheses, so extending both descents in step is
+   bookkeeping rather than new mathematics.
+
+With those two supplied, the mutual quartet induction on the
 `canonlab_cellsReach` skeleton (whose composite helpers
 `recover_out`/`processnode_searchOk`/`canonlab_or_of` are public)
 threads `DomOk`, discharges leaf arms by `processnode_leaf`/
