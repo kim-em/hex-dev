@@ -2440,6 +2440,115 @@ theorem branch_step {numcells : Nat}
   rw [h2] at h1
   exact h1
 
+/-- Arrays with equal sizes and equal defaulted reads are equal. -/
+private theorem array_eq_of_getElem! {a b : Array Nat}
+    (hsz : a.size = b.size)
+    (h : ∀ q, q < a.size → a[q]! = b[q]!) : a = b := by
+  refine Array.ext hsz fun i hi hib => ?_
+  have hq := h i hi
+  rwa [getElem!_pos a i hi, getElem!_pos b i hib] at hq
+
+/-- At a discrete partition, cell-content agreement is pointwise
+agreement: the labellings of a `StPerm` pair coincide. -/
+theorem stPerm_lab_eq {level : Nat} {st st' : RefineSt}
+    (h : StPerm level st st')
+    (hdisc : ∀ q, q < st.ptn.size → st.ptn[q]! ≤ level)
+    (hsz : st.lab.size = st.ptn.size) : st'.lab = st.lab := by
+  refine array_eq_of_getElem! (by rw [h.labSize]) fun q hq => ?_
+  rw [h.labSize] at hq
+  have hc : IsCell st.ptn level q 1 := by
+    refine ⟨by omega, ?_, by omega, ?_⟩
+    · rcases Decidable.em (q = 0) with h0 | h0
+      · exact Or.inl h0
+      · exact Or.inr (hdisc (q - 1) (by omega))
+    · rw [show q + 1 - 1 = q by omega]
+      exact hdisc q (by omega)
+  exact (cellsPerm_singleton h.cells hc).symm
+
+/-- The leaf collapse: when the second child's refinement is discrete,
+the two children's leaf rows coincide -- the flip is absorbed by
+`leafRows_map`. -/
+theorem branch_leafRows {numcells : Nat}
+    (hgsz : ctx.g.size = ctx.n)
+    (hpsz : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hvals : ∀ q, q < ctx.n → ptn[q]! ≤ level ∨ level + 1 < ptn[q]!)
+    (hlab : LabOk lab ctx.n) (hinj : LabInj lab ctx.n)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hrows : ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]!)
+    (hcell : (tc, tc + 1) ∈ cells ptn level ctx.n)
+    (hStc : S tc)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
+    (hdisc : ∀ q, q < ctx.n →
+      (refine ctx (level + 1)
+        (breakout lab ptn (level + 1) tc lab[tc + 1]!).1
+        (ptn.set! tc (level + 1)) (insert 0 tc)
+        (numcells + 1)).ptn[q]! ≤ level + 1) :
+    leafRows ctx (refine ctx (level + 1)
+        (breakout lab ptn (level + 1) tc lab[tc + 1]!).1
+        (ptn.set! tc (level + 1)) (insert 0 tc)
+        (numcells + 1)).lab =
+      leafRows ctx (refine ctx (level + 1)
+        (breakout lab ptn (level + 1) tc lab[tc + 0]!).1
+        (ptn.set! tc (level + 1)) (insert 0 tc)
+        (numcells + 1)).lab := by
+  have htc1 : tc + 1 < ctx.n := target_end_lt hpsz hend hcell
+  have hinj' : LabInj lab lab.size := by rw [hlsz]; exact hinj
+  have hVsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 1]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hUsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 0]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hVok : LabOk (breakout lab ptn (level + 1) tc
+      lab[tc + 1]!).1 ctx.n := labOk_breakout hinj' (by omega) hlab
+  have hUok : LabOk (breakout lab ptn (level + 1) tc
+      lab[tc + 0]!).1 ctx.n := labOk_breakout hinj' (by omega) hlab
+  have hsz' : (ptn.set! tc (level + 1)).size = ctx.n := by
+    rw [Array.size_set!, hpsz]
+  have hend' : (ptn.set! tc (level + 1))[(ptn.set! tc
+      (level + 1)).size - 1]! ≤ level + 1 := by
+    rw [hsz', ← hpsz]
+    rcases Decidable.em (tc = ptn.size - 1) with rfl | hx
+    · rw [Array.getElem!_set!_self _ _ _ (by omega)]
+      omega
+    · rw [Array.getElem!_set!_ne _ _ _ _ hx]
+      omega
+  have hact : insert 0 tc < 2 ^ ctx.n := by
+    rw [insert, Nat.zero_or, Nat.shiftLeft_eq, Nat.one_mul]
+    exact Nat.pow_lt_pow_right (by omega) (by omega)
+  have hVstOk := refine_stOk (hn := rfl) hVsz hVok hsz' hact hend'
+    (numcells := numcells + 1)
+  have hUstOk := refine_stOk (hn := rfl) hUsz hUok hsz' hact hend'
+    (numcells := numcells + 1)
+  have hstep := branch_step (S := S) hgsz hpsz hlsz hend hvals hlab
+    hinj hfb hinvol hrows hcell hStc hSpair hSswap hSfix
+    (numcells := numcells)
+  have hlabeq := stPerm_lab_eq hstep
+    (by
+      intro q hq
+      rw [hVstOk.ptnSize] at hq
+      exact hdisc q hq)
+    (by rw [hVstOk.labSize, hVstOk.ptnSize])
+  have hlabeq' : (refine ctx (level + 1)
+      (breakout lab ptn (level + 1) tc lab[tc + 1]!).1
+      (ptn.set! tc (level + 1)) (insert 0 tc)
+      (numcells + 1)).lab =
+    (refine ctx (level + 1)
+      (breakout lab ptn (level + 1) tc lab[tc + 0]!).1
+      (ptn.set! tc (level + 1)) (insert 0 tc)
+      (numcells + 1)).lab.map
+        (renamingOfFlip f ctx.n hfb hinvol).toFun := hlabeq.symm
+  rw [hlabeq']
+  exact leafRows_map (renamingOfFlip f ctx.n hfb hinvol) rfl rfl
+    (rowsMap_of_flip_rows hgsz hfb hinvol hrows)
+    hUstOk.labOk hUstOk.labSize
+
 end Branch
 
 end Hex.GraphIso.Nauty
