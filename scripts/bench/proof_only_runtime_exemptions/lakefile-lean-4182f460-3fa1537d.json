@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "4182f460f5a07b6b5ad1a15b7f6c012b2e41efe4",
+  "current_blob": "3fa1537df2d40fc5c969a5fbf6f07f32460eea9d",
+  "reason": "Replaces the monorepo-local NautyFFI targets with an exact standalone package dependency used only by the explicitly built in-process conformance executable. No factorization library imports it, and it does not change hexbz_factor_service or its runtime call graph."
+}
