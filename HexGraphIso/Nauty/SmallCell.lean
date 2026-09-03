@@ -2013,4 +2013,69 @@ end Sizes
 
 end Descent
 
+/-! # The flip as a renaming
+
+The branch step transports one child's refinement to the other's
+through `refine_map`, which consumes a `Renaming` and a `RowsMap`.
+A bounded involution extends by the identity beyond the vertex range
+to a renaming, and `flip_rows`'s conclusion is exactly the rows-map
+fact for it. -/
+
+/-- A bounded involution, extended by the identity beyond the vertex
+range, as a renaming. -/
+@[expose] def renamingOfFlip (f : Nat → Nat) (n : Nat)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v) : Renaming n where
+  toFun v := if v < n then f v else v
+  inj a b hab := by
+    rcases Decidable.em (a < n) with ha | ha <;>
+      rcases Decidable.em (b < n) with hb | hb
+    · rw [ite_eq_left ha, ite_eq_left hb] at hab
+      have h2 := congrArg f hab
+      rw [hinvol a ha, hinvol b hb] at h2
+      exact h2
+    · rw [ite_eq_left ha, ite_eq_right hb] at hab
+      exact absurd (hfb a ha) (by omega)
+    · rw [ite_eq_right ha, ite_eq_left hb] at hab
+      exact absurd (hfb b hb) (by omega)
+    · rw [ite_eq_right ha, ite_eq_right hb] at hab
+      exact hab
+  maps v := by
+    rcases Decidable.em (v < n) with h | h
+    · rw [ite_eq_left h]
+      exact ⟨fun _ => hfb v h, fun _ => h⟩
+    · rw [ite_eq_right h]
+
+/-- The extended flip agrees with the flip on vertices. -/
+theorem renamingOfFlip_at {f : Nat → Nat} {n : Nat}
+    (hfb : ∀ v, v < n → f v < n) (hinvol : ∀ v, v < n → f (f v) = v)
+    {v : Nat} (hv : v < n) :
+    renamingOfFlip f n hfb hinvol v = f v := by
+  show (if v < n then f v else v) = f v
+  rw [ite_eq_left hv]
+
+/-- The involution of the flip extends to the renaming. -/
+theorem renamingOfFlip_invol {f : Nat → Nat} {n : Nat}
+    (hfb : ∀ v, v < n → f v < n) (hinvol : ∀ v, v < n → f (f v) = v)
+    {v : Nat} (hv : v < n) :
+    renamingOfFlip f n hfb hinvol (renamingOfFlip f n hfb hinvol v) =
+      v := by
+  rw [renamingOfFlip_at hfb hinvol hv,
+    renamingOfFlip_at hfb hinvol (hfb v hv)]
+  exact hinvol v hv
+
+/-- A row-preserving flip names a rows map of the graph onto
+itself: the packaging of `flip_rows`'s conclusion that `refine_map`
+consumes. -/
+theorem rowsMap_of_flip_rows {f : Nat → Nat}
+    (hgsz : ctx.g.size = ctx.n)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hrows : ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]!) :
+    RowsMap (renamingOfFlip f ctx.n hfb hinvol) ctx.g ctx.g := by
+  refine ⟨hgsz, hgsz, fun v hv => ?_⟩
+  rw [renamingOfFlip_at hfb hinvol hv, hrows v hv]
+  exact image_congr _ fun w hw =>
+    (renamingOfFlip_at hfb hinvol hw).symm
+
 end Hex.GraphIso.Nauty
