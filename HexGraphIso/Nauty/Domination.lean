@@ -53,17 +53,39 @@ first-key-dominated clause), `recover_machines` with the
 `recover_frames`/`otherNodePrep_frames` threading, and the
 `firstterminal_*` seeds for all four threads.
 
+The induction's statement layer is now also in place: the `DomOk`
+record (see its section comment for the two design decisions —
+incumbent-maximality is a conclusion shape in the `searchNode_eq`
+style, and unwinding-correctness is a loop obligation, not a stored
+clause), the path-prefix key algebra (`prefixKey` with its
+`keyMax`/`keysMax` distribution laws), the two `specNode` arm
+isolations (`specNode_discrete`, `specNode_internal` with
+`specChild`), and the leaf-guard agreement
+(`discreteAt_iff_bcount`, aligning the imperative `numcells == n`
+dispatch with the specification's `discreteAt` through
+`SearchOk.count`).
+
 What remains is the mutual quartet induction itself, on the
-`canonlab_cellsReach` skeleton (`SearchReach.lean`): a `DomOk`
-record bundling `SearchOk`, both machines, `CanongInv`, per-stored-
-generator `CellStab` (`Stabilize.lean`), the unwinding-correctness
-clause (consulting nodes sit above every joined generator's gca,
-driving `orbConn_of_ptr`/`childKey_of_orbPruned` at the two orbit
-prune sites, Search.lean:296 and :320), the first-key-dominated
-clause, and incumbent-maximality (`incKey` equals the `keysMax` of
-visited leaves; pruned subtrees dominated through the verdicts
-above), concluding at the root that the traced key is
-`canonSpecKey`.
+`canonlab_cellsReach` skeleton (`SearchReach.lean`, whose composite
+helpers `recover_out`/`processnode_searchOk`/`canonlab_or_of` are
+now public for it): per quartet function, thread `DomOk` and
+conclude in the `searchNode_eq` shape
+`incKey ctx bs' out.canonlab =
+  keyMax (incKey ctx bs st.canonlab) (prefixKey cs (specNode …))`,
+with `specNode_internal` decomposing the spec side into the child
+sweep, the `keysMax` fold literally matching the loop's threading,
+`keysMax_eq_of_le` absorbing early-unwound sibling suffixes, the
+leaf arms discharged by `processnode_leaf`/`processnode_leafFirst`/
+`processnode_auto` + `auto_keyMax` through
+`specNode_discrete`/`prefixKey_leafKey`, and the orbit skips by
+`childKey_of_orbPruned` + `orbConn_of_ptr` + `cellStab_of_scatter`
+(on the branch carrying `OrbJoin.lean`). The two return-protocol
+soundness arguments — the `pruneReturn` unwind absorbing sibling
+ranges through the frozen machine, and the gca returns through the
+generator arguments — are the induction's genuinely open
+obligations; everything else is assembled shelf. At the root,
+`specNode_achieved` closes the achieved direction and the induction
+the domination direction, giving `canonSpecKey G = tracedKey G`.
 -/
 
 namespace Hex.GraphIso.Nauty
