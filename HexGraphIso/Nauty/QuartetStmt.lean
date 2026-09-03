@@ -409,6 +409,47 @@ theorem keysMax_eq_of_repeats {l l' : List Key} {k : Key}
     · exact keyLe_keysMax (Or.inr hm)
     · exact keyLe_keysMax (Or.inr hy)
 
+/-- The same, with the two maxima seeded independently.
+
+The node and the loop do not share a seed: the node's maximum is seeded
+at its first child, and the loop's fold is seeded at whichever child it
+visited first. Treating both seeds as ordinary members is what lets the
+two be compared. -/
+theorem keysMax_eq_of_dominated' {k k' : Key} {l l' : List Key}
+    (hsub : ∀ x, (x = k' ∨ x ∈ l') → (x = k ∨ x ∈ l))
+    (hdom : ∀ x, (x = k ∨ x ∈ l) → keyLe x (keysMax k' l')) :
+    keysMax k l = keysMax k' l' :=
+  keyLe_antisym
+    (keysMax_le (hdom k (Or.inl rfl)) fun y hy => hdom y (Or.inr hy))
+    (keysMax_le (keyLe_keysMax (hsub k' (Or.inl rfl)))
+      fun y hy => keyLe_keysMax (hsub y (Or.inr hy)))
+
+/-- **The node's absorption equation from its loop's fold.**
+
+This is the algebra the node step performs, with the search abstracted
+away: the loop folded the children it visited into the incoming
+incumbent, and the node claims the incumbent absorbed the maximum over
+*all* its children. The two agree exactly when every child is dominated
+by the maximum over the visited ones, which is what the prune
+dischargers establish for the children the loop skipped.
+
+The incoming incumbent is handled uniformly, which is the point of
+carrying it as an `Option`: with nothing installed the fold's first
+child seeds the maximum, and with an incumbent present it is one more
+competitor. -/
+theorem node_absorbs_of_loop {inc : Option Key} {k0 e : Key}
+    {rest es : List Key}
+    (hsub : ∀ x, (x = e ∨ x ∈ es) → (x = k0 ∨ x ∈ rest))
+    (hdom : ∀ x, (x = k0 ∨ x ∈ rest) → keyLe x (keysMax e es)) :
+    (e :: es).foldl (fun acc kk => some (incMax acc kk)) inc =
+      some (incMax inc (keysMax k0 rest)) := by
+  rw [keysMax_eq_of_dominated' hsub hdom]
+  cases inc with
+  | none => rw [foldl_incMax_none]; rfl
+  | some b =>
+    rw [foldl_incMax_some, keysMax]
+    exact congrArg some (keysMax_keyMax es b e)
+
 /-! # The root assembly
 
 The corrected statement reaches the programme's target. The root call
