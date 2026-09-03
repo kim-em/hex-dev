@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCellExotic
+public import HexGraphIso.Nauty.SmallCellExotic2
 import all HexGraphIso.Nauty.Equitable
 
 public section
@@ -1473,5 +1473,306 @@ theorem pairFour_flip_data
       exact bitCnt_inj.mp (by omega)
 
 end FourCell
+
+/-! # The shape of a defect-four partition
+
+The excesses of the cells sum to the defect, so a defect of at most
+four bounds every cell at five members and leaves very little room
+beside a large cell. The four shapes the first guard branch misses are
+a lone four-cell, a lone five-cell, a four-cell beside a pair, and two
+triples, and each has its flip data above. -/
+
+section Shape
+
+private theorem exc_ge_one {q : Nat × Nat} :
+    ∀ (l : List (Nat × Nat)), q ∈ l →
+      (l.map fun p => p.2 - p.1).sum ≥ q.2 - q.1
+  | [], hq => absurd hq (by simp)
+  | a :: l, hq => by
+    rw [List.map_cons, List.sum_cons]
+    rcases List.mem_cons.mp hq with rfl | hmem
+    · omega
+    · have := exc_ge_one l hmem
+      omega
+
+private theorem exc_ge_two {q q' : Nat × Nat} :
+    ∀ (l : List (Nat × Nat)), q ∈ l → q' ∈ l → q ≠ q' →
+      (l.map fun p => p.2 - p.1).sum ≥ (q.2 - q.1) + (q'.2 - q'.1)
+  | [], hq, _, _ => absurd hq (by simp)
+  | a :: l, hq, hq', hne => by
+    rw [List.map_cons, List.sum_cons]
+    rcases List.mem_cons.mp hq with rfl | hmem
+    · have hq'l : q' ∈ l := by
+        rcases List.mem_cons.mp hq' with rfl | h
+        · exact absurd rfl hne
+        · exact h
+      have := exc_ge_one l hq'l
+      omega
+    · rcases List.mem_cons.mp hq' with rfl | hmem'
+      · have := exc_ge_one l hmem
+        omega
+      · have := exc_ge_two l hmem hmem' hne
+        omega
+
+private theorem exc_ge_three {q q' q'' : Nat × Nat} :
+    ∀ (l : List (Nat × Nat)), q ∈ l → q' ∈ l → q'' ∈ l →
+      q ≠ q' → q ≠ q'' → q' ≠ q'' →
+      (l.map fun p => p.2 - p.1).sum ≥
+        (q.2 - q.1) + (q'.2 - q'.1) + (q''.2 - q''.1)
+  | [], hq, _, _, _, _, _ => absurd hq (by simp)
+  | a :: l, hq, hq', hq'', hne, hne', hne'' => by
+    rw [List.map_cons, List.sum_cons]
+    rcases List.mem_cons.mp hq with rfl | hmem
+    · have h1 : q' ∈ l := by
+        rcases List.mem_cons.mp hq' with rfl | h
+        · exact absurd rfl hne
+        · exact h
+      have h2 : q'' ∈ l := by
+        rcases List.mem_cons.mp hq'' with rfl | h
+        · exact absurd rfl hne'
+        · exact h
+      have := exc_ge_two l h1 h2 hne''
+      omega
+    · rcases List.mem_cons.mp hq' with rfl | hmem'
+      · have h2 : q'' ∈ l := by
+          rcases List.mem_cons.mp hq'' with rfl | h
+          · exact absurd rfl hne''
+          · exact h
+        have := exc_ge_two l hmem h2 hne'
+        omega
+      · rcases List.mem_cons.mp hq'' with rfl | hmem''
+        · have := exc_ge_two l hmem hmem' hne
+          omega
+        · have := exc_ge_three l hmem hmem' hmem'' hne hne' hne''
+          omega
+
+private theorem sizes_split :
+    ∀ (l : List (Nat × Nat)), (∀ p ∈ l, p.1 ≤ p.2) →
+      (l.map fun p => p.2 + 1 - p.1).sum =
+        (l.map fun p => p.2 - p.1).sum + l.length
+  | [], _ => rfl
+  | a :: l, hwf => by
+    rw [List.map_cons, List.sum_cons, List.map_cons, List.sum_cons,
+      List.length_cons,
+      sizes_split l fun p hp => hwf p (List.mem_cons_of_mem _ hp)]
+    have := hwf a List.mem_cons_self
+    omega
+
+/-- The cells' excesses sum to the defect. -/
+theorem exc_sum_eq_defect {ptn : Array Nat} {level nn : Nat}
+    (hps : ptn.size = nn) (hend : ptn[ptn.size - 1]! ≤ level) :
+    ((cells ptn level nn).map fun p => p.2 - p.1).sum =
+      nn - (cells ptn level nn).length := by
+  have hwf : ∀ p ∈ cells ptn level nn, p.1 ≤ p.2 :=
+    fun p hp => cells_le p hp
+  have hsum : ((cells ptn level nn).map fun p =>
+      p.2 + 1 - p.1).sum = nn := by
+    rw [cells]
+    have h := cells_go_sizes_sum hps hend nn 0 (by omega)
+    rw [show nn - 0 = nn by omega] at h
+    exact h
+  have hsplit := sizes_split (cells ptn level nn) hwf
+  omega
+
+end Shape
+
+section Dispatch
+
+variable {st : RefineSt} {level tc te oU oV : Nat}
+
+set_option maxHeartbeats 1000000 in
+/-- Flip data at every cell of a partition whose defect is at most
+four. This is the shape the cheapautom guard's second branch admits;
+it dispatches to the pair and triple routes of the first branch
+together with the four exotic routes. -/
+theorem defect4_flip_data
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hdef : ctx.n - (cells st.ptn level ctx.n).length ≤ 4)
+    (hT : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hend := hIt.ok.ptnEnd
+  have hnn : ctx.n ≤ st.ptn.size := by rw [hpsz]; exact Nat.le_refl _
+  have hexc := exc_sum_eq_defect (nn := ctx.n) (level := level)
+    (ptn := st.ptn) hpsz hend
+  have hle : tc ≤ te := cells_le _ hT
+  have hsize5 : ∀ q ∈ cells st.ptn level ctx.n, q.2 - q.1 ≤ 4 := by
+    intro q hq
+    have := exc_ge_one (q := q) _ hq
+    omega
+  have hpair2 : ∀ q ∈ cells st.ptn level ctx.n,
+      ∀ q' ∈ cells st.ptn level ctx.n, q ≠ q' →
+        (q.2 - q.1) + (q'.2 - q'.1) ≤ 4 := by
+    intro q hq q' hq' hqq
+    have := exc_ge_two (q := q) (q' := q') _ hq hq' hqq
+    omega
+  have htri3 : ∀ q ∈ cells st.ptn level ctx.n,
+      ∀ q' ∈ cells st.ptn level ctx.n,
+      ∀ q'' ∈ cells st.ptn level ctx.n, q ≠ q' → q ≠ q'' → q' ≠ q'' →
+        (q.2 - q.1) + (q'.2 - q'.1) + (q''.2 - q''.1) ≤ 4 := by
+    intro q hq q' hq' q'' hq'' h1 h2 h3
+    have := exc_ge_three (q := q) (q' := q') (q'' := q'') _ hq hq'
+      hq'' h1 h2 h3
+    omega
+  have hT5 := hsize5 _ hT
+  have hs : te - tc = 1 ∨ te - tc = 2 ∨ te - tc = 3 ∨ te - tc = 4 := by
+    omega
+  rcases hs with hs | hs | hs | hs
+  · -- a pair target
+    have hte : te = tc + 1 := by omega
+    subst hte
+    have hTe : (Prod.snd (tc, tc + 1)) - (Prod.fst (tc, tc + 1)) = 1 :=
+      by omega
+    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+        3 ≤ q.2 - q.1) with ⟨C, hC, hCbig⟩ | hnobig
+    · -- a four-cell beside it: the exotic route
+      have hCle : C.1 ≤ C.2 := cells_le _ hC
+      have hCne : C ≠ (tc, tc + 1) := by
+        intro hcon
+        rw [hcon] at hCbig
+        omega
+      have hCex : C.2 - C.1 = 3 := by
+        have := hpair2 _ hC _ hT hCne
+        omega
+      have hCform : C = (C.1, C.1 + 3) := by
+        obtain ⟨ca, cb⟩ := C
+        simp only at hCex ⊢
+        have hcb : cb = ca + 3 := by omega
+        rw [hcb]
+      have hC' : (C.1, C.1 + 3) ∈ cells st.ptn level ctx.n :=
+        hCform ▸ hC
+      have hCP : C.1 ≠ tc := by
+        intro hcon
+        have heq := cells_eq_of_shared hnn hend hC' hT (j := tc)
+          (by omega) (by omega) (by omega) (by omega)
+        simp only [Prod.mk.injEq] at heq
+        omega
+      refine pairFour_flip_data hIt hgsz hg hsymm hloop hE hC' hT
+        hCP ?_ (by omega) (by omega) hne
+      intro q hq hqC hqP
+      rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
+      · exact heq.symm
+      · exfalso
+        have hCq : C ≠ q := fun hcon => hqC (by rw [← hcon, ← hCform])
+        have h3 := htri3 _ hC _ hT _ hq hCne hCq
+          (fun hcon => hqP hcon.symm)
+        omega
+    · -- no large cell: the first branch's pair route applies
+      refine pair_flip_data hIt hgsz hg hsymm hloop hE hT ?_
+        (by omega) (by omega) hne
+      intro q hq hqp
+      have hql := cells_le _ hq
+      have hq2 : q.2 - q.1 ≤ 2 := by
+        rcases Nat.lt_or_ge (q.2 - q.1) 3 with h | h
+        · omega
+        · exact absurd ⟨q, hq, h⟩ hnobig
+      omega
+  · -- a triple target
+    have hte : te = tc + 2 := by omega
+    subst hte
+    have hTe : (Prod.snd (tc, tc + 2)) - (Prod.fst (tc, tc + 2)) = 2 :=
+      by omega
+    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+        q ≠ (tc, tc + 2) ∧ q.2 - q.1 = 2) with ⟨D, hD, hDne, hDex⟩ |
+      hnotri
+    · -- two triples: the exotic route
+      have hDform : D = (D.1, D.1 + 2) := by
+        obtain ⟨da, db⟩ := D
+        simp only at hDex ⊢
+        have hdb : db = da + 2 := by omega
+        rw [hdb]
+      have hD' : (D.1, D.1 + 2) ∈ cells st.ptn level ctx.n :=
+        hDform ▸ hD
+      have hTD : tc ≠ D.1 := by
+        intro hcon
+        have heq := cells_eq_of_shared hnn hend hT hD' (j := tc)
+          (by omega) (by omega) (by omega) (by omega)
+        exact hDne (by rw [hDform, ← heq])
+      refine twoTriple_flip_data hIt hgsz hg hsymm hloop hE hT hD'
+        hTD ?_ (by omega) (by omega) hne
+      intro q hq hqT hqD
+      rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
+      · exact heq.symm
+      · exfalso
+        have hDq : D ≠ q := fun hcon => hqD (by rw [← hcon, ← hDform])
+        have h3 := htri3 _ hT _ hD _ hq (Ne.symm hDne) 
+          (fun hcon => hqT hcon.symm) hDq
+        omega
+    · -- a unique triple with everything else small
+      refine triple_flip_data hIt hgsz hg hsymm hloop hE hT ?_
+        (by omega) (by omega) hne
+      intro q hq hqT
+      have hql := cells_le _ hq
+      rcases Decidable.em (q.2 - q.1 = 2) with h2 | h2
+      · exact absurd ⟨q, hq, hqT, h2⟩ hnotri
+      · have := hpair2 _ hq _ hT hqT
+        omega
+  · -- a four-cell target
+    have hte : te = tc + 3 := by omega
+    subst hte
+    have hTe : (Prod.snd (tc, tc + 3)) - (Prod.fst (tc, tc + 3)) = 3 :=
+      by omega
+    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+        q ≠ (tc, tc + 3) ∧ q.1 < q.2) with ⟨P, hP, hPne, hPnt⟩ |
+      hnopair
+    · -- a pair beside it: the exotic route
+      have hPle := cells_le _ hP
+      have hPex : P.2 - P.1 = 1 := by
+        have := hpair2 _ hT _ hP (fun hcon => hPne hcon.symm)
+        omega
+      have hPform : P = (P.1, P.1 + 1) := by
+        obtain ⟨pa, pb⟩ := P
+        simp only at hPex ⊢
+        have hpb : pb = pa + 1 := by omega
+        rw [hpb]
+      have hP' : (P.1, P.1 + 1) ∈ cells st.ptn level ctx.n :=
+        hPform ▸ hP
+      have hCP : tc ≠ P.1 := by
+        intro hcon
+        have heq := cells_eq_of_shared hnn hend hT hP' (j := tc)
+          (by omega) (by omega) (by omega) (by omega)
+        simp only [Prod.mk.injEq] at heq
+        omega
+      refine fourPair_flip_data hIt hgsz hg hsymm hloop hE hT hP'
+        hCP ?_ (by omega) (by omega) hne
+      intro q hq hqT hqP
+      rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
+      · exact heq.symm
+      · exfalso
+        have hPq : P ≠ q := fun hcon => hqP (by rw [← hcon, ← hPform])
+        have h3 := htri3 _ hT _ hP _ hq (Ne.symm hPne)
+          (fun hcon => hqT hcon.symm) hPq
+        omega
+    · -- a lone four-cell
+      refine oneCell_flip_data hIt hgsz hg hsymm hloop hE hT
+        (by omega) ?_ (by omega) (by omega) hne
+      intro q hq hqT
+      rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
+      · exact heq.symm
+      · exact absurd ⟨q, hq, hqT, hlt⟩ hnopair
+  · -- a five-cell target: nothing else can be nontrivial
+    have hte : te = tc + 4 := by omega
+    subst hte
+    have hTe : (Prod.snd (tc, tc + 4)) - (Prod.fst (tc, tc + 4)) = 4 :=
+      by omega
+    refine oneCell_flip_data hIt hgsz hg hsymm hloop hE hT
+      (by omega) ?_ (by omega) (by omega) hne
+    intro q hq hqT
+    rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
+    · exact heq.symm
+    · exfalso
+      have := hpair2 _ hT _ hq (fun h => hqT h.symm)
+      omega
+
+end Dispatch
 
 end Hex.GraphIso.Nauty
