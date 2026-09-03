@@ -35,11 +35,11 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
 * one dense `toPrimitive` application and the completed `fromPrimitive`
   basis map.
 
-Negation is undergoing a source-derived larger-dimension validation after its
-exact-width result construction removed a redundant normalization copy.
-Inversion, division, and dense `toPrimitive` retain failed mode-1 registrations
-as binding diagnostics. They have no admissible fixed substitute, so the
-library remains at Phase 3 while those cost models are unresolved.
+Negation has source-derived linear evidence on a larger-dimension dense family
+after its exact-width result construction removed a redundant normalization
+copy. Inversion, division, and dense `toPrimitive` retain failed mode-1
+registrations as binding diagnostics. They have no admissible fixed substitute,
+so the library remains at Phase 3 while those cost models are unresolved.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,

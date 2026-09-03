@@ -372,12 +372,17 @@ mode-3 regression ceilings for operations whose realised phase mixtures admit
 neither a tight family model nor a published bound covering the dominant
 executable phases.
 
-Dense `toPrimitive`, negation, inversion, and division have no admissible
-current mode. The forward-map optimization is valid, but the dense family
-rejects the preregistered quadratic wall model because primitive-coordinate
-height is not controlled. The fixed unit-basis registration and the
-dimension-four arithmetic registrations are hash anchors, not performance
-evidence. The headline report records the binding diagnostics, and the library
+Negation has mode-1 evidence on dense bounded-height coordinate arrays at
+dimensions 128 through 448. The source-derived linear model covers one public
+negation plus structural result hashing; its exactly sized result constructor
+does not copy or normalize the coordinate array.
+
+Dense `toPrimitive`, inversion, and division have no admissible current mode.
+The forward-map optimization is valid, but the dense family rejects the
+preregistered quadratic wall model because primitive-coordinate height is not
+controlled. The fixed unit-basis registration and the dimension-four
+arithmetic registrations are hash anchors, not performance evidence. The
+headline report records the three binding diagnostics, and the library
 therefore remains at Phase 3.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
