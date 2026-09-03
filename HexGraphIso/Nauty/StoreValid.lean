@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Translator
+import all HexGraphIso.Nauty.Search
 
 public section
 
@@ -228,5 +229,185 @@ theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx}
   · refine List.all_eq_true.mpr fun v hv => ?_
     simp only [beq_iff_eq]
     exact htrans v (List.mem_range.mp hv)
+
+/-! # The admission event
+
+`processnode` is the only search step that grows `genTrace`. The
+lemmas below characterize the grown entry: the scatter loops become
+folds, and the event lemma ties each push to its admission guard, in
+the shape the run-level threading consumes together with the
+per-admission theorems above.
+-/
+
+private theorem id_run_eq {α : Type} (x : Id α) : x.run = x := rfl
+
+private theorem forIn_range_toList {β : Type} (n : Nat) (init : β)
+    (f : Nat → β → Id (ForInStep β)) :
+    (forIn [0:n] init f : Id β) = forIn (List.range n) init f := by
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  have hrange : List.range' [0:n].start [0:n].size [0:n].step
+      = List.range n := by simp [List.range_eq_range']
+  rw [hrange]
+
+private theorem forIn_scatter_eq (lab₁ lab₂ : Array Nat) :
+    ∀ (l : List Nat) (base : Array Nat),
+      (forIn l base (fun i r =>
+        pure (ForInStep.yield (r.set! lab₁[i]! lab₂[i]!))) :
+          Id (Array Nat)) =
+      l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base
+  | [], _ => rfl
+  | i :: l, base => by
+    rw [List.forIn_cons]
+    exact forIn_scatter_eq lab₁ lab₂ l _
+
+private theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
+    ∀ (l : List Nat) (base : Array Nat),
+      (l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base).size =
+        base.size
+  | [], _ => rfl
+  | i :: l, base => by
+    rw [List.foldl_cons, foldl_scatter_size lab₁ lab₂ l,
+      Array.size_set!]
+
+private theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
+    {nn : Nat}
+    (hinj : ∀ a b, a < nn → b < nn → lab₁[a]! = lab₁[b]! → a = b)
+    {base : Array Nat}
+    (hbb : ∀ i, i < nn → lab₁[i]! < base.size) :
+    ∀ {m : Nat}, m ≤ nn → ∀ {j : Nat}, j < m →
+      ((List.range m).foldl
+        (fun r i => r.set! lab₁[i]! lab₂[i]!) base)[lab₁[j]!]! =
+        lab₂[j]! := by
+  intro m
+  induction m with
+  | zero => intro _ j hj; omega
+  | succ p ih =>
+    intro hm j hj
+    rw [List.range_succ, List.foldl_append, List.foldl_cons,
+      List.foldl_nil]
+    rcases Decidable.em (j = p) with rfl | hne
+    · rw [Array.getElem!_set!_self _ _ _
+        (by rw [foldl_scatter_size]; exact hbb j (by omega))]
+    · have hlne : lab₁[p]! ≠ lab₁[j]! := fun h =>
+        hne (hinj j p (by omega) (by omega) h.symm)
+      rw [Array.getElem!_set!_ne _ _ _ _ hlne, ih (by omega) (by omega)]
+
+private theorem pushAuto_genTrace (st : SearchSt) (pair : Nat × Nat) :
+    (pushAuto st pair).genTrace = st.genTrace := by
+  rw [pushAuto]
+  split <;> rfl
+
+/-- `processnode`'s effect on the admitted-generator trace: either
+nothing is pushed, or exactly one scatter is pushed, connecting the
+first-path labelling (code 1, under its two-way guard) or the
+incumbent labelling (code 2, under the `testcanlab` equality on the
+freshly completed `canong`) to the current leaf labelling. The
+injectivity and bound hypotheses on the two base labellings are
+permutation facts the run-level invariant carries; the scatter
+equations feed `checkAutom_scatter_of_isautom` and, through
+`leafEvent_faithful`'s rows account,
+`checkAutom_scatter_of_leafRows_eq`. -/
+theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hinj₁ : ∀ a b, a < ctx.n → b < ctx.n →
+      st.firstlab[a]! = st.firstlab[b]! → a = b)
+    (hb₁ : ∀ i, i < ctx.n → st.firstlab[i]! < ctx.n)
+    (hinj₂ : ∀ a b, a < ctx.n → b < ctx.n →
+      st.canonlab[a]! = st.canonlab[b]! → a = b)
+    (hb₂ : ∀ i, i < ctx.n → st.canonlab[i]! < ctx.n) :
+    (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
+    ∃ γ, (processnode ctx level numcells st).2.genTrace =
+        st.genTrace.push γ ∧ γ.size = ctx.n ∧
+      ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∧
+          (st.noncheaplevel ≤ st.gcaFirst ∨ isautom ctx γ = true) ∨
+        (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!) ∧
+          st.compCanon = 0 ∧ st.canonlevel ≤ level ∧
+          (testcanlab ctx
+            (updatecan ctx st.canong st.canonlab st.samerows)
+            st.lab).1 = 0) := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    pushAuto_genTrace, ite_self]
+  simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq]
+  rcases Decidable.em (st.eqlevFirst ≠ level ∧ st.compCanon < 0)
+    with h1 | h1
+  · rw [ite_eq_left h1]
+    left
+    rfl
+  rw [ite_eq_right h1]
+  rcases Decidable.em ((numcells == ctx.n) = true) with h2 | h2
+  · rw [ite_eq_left h2]
+    rcases Decidable.em ((st.eqlevFirst == level) = true) with h3 | h3
+    · rw [ite_eq_left h3]
+      rcases Decidable.em (st.gcaFirst ≥ st.noncheaplevel ∨
+          isautom ctx ((List.range ctx.n).foldl
+            (fun r i => r.set! st.firstlab[i]! st.lab[i]!)
+            (Array.replicate ctx.n 0)) = true) with h4 | h4
+      · rw [ite_eq_left h4, ite_eq_right (by decide)]
+        right
+        refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, h4⟩⟩
+        · rw [foldl_scatter_size, Array.size_replicate]
+        · refine foldl_scatter_getElem hinj₁ (fun j hj => ?_)
+            (Nat.le_refl _) hi
+          rw [Array.size_replicate]
+          exact hb₁ j hj
+      · rw [ite_eq_right h4, ite_eq_left (by decide)]
+        rcases Decidable.em ((st.compCanon == 0) = true) with h5 | h5
+        · rw [ite_eq_left h5]
+          rcases Decidable.em (level < st.canonlevel) with h6 | h6
+          · rw [ite_eq_left h6, ite_eq_right (by decide)]
+            left
+            rfl
+          · rw [ite_eq_right h6]
+            rcases Decidable.em (((testcanlab ctx (updatecan ctx
+                st.canong st.canonlab st.samerows) st.lab).1 == 0) =
+                true) with h7 | h7
+            · rw [ite_eq_left h7]
+              right
+              refine ⟨_, rfl, ?_,
+                Or.inr ⟨fun i hi => ?_, by simpa using h5, by omega,
+                  by simpa using h7⟩⟩
+              · simp only [foldl_scatter_size, Array.size_replicate]
+              · refine foldl_scatter_getElem hinj₂ (fun j hj => ?_)
+                  (Nat.le_refl _) hi
+                simp only [foldl_scatter_size, Array.size_replicate]
+                exact hb₂ j hj
+            · rw [ite_eq_right h7]
+              left
+              rfl
+        · rw [ite_eq_right h5, ite_eq_right h5]
+          left
+          rfl
+    · rw [ite_eq_right h3, ite_eq_left (by decide)]
+      rcases Decidable.em ((st.compCanon == 0) = true) with h5 | h5
+      · rw [ite_eq_left h5]
+        rcases Decidable.em (level < st.canonlevel) with h6 | h6
+        · rw [ite_eq_left h6, ite_eq_right (by decide)]
+          left
+          rfl
+        · rw [ite_eq_right h6]
+          rcases Decidable.em (((testcanlab ctx (updatecan ctx
+              st.canong st.canonlab st.samerows) st.lab).1 == 0) =
+              true) with h7 | h7
+          · rw [ite_eq_left h7]
+            right
+            refine ⟨_, rfl, ?_,
+              Or.inr ⟨fun i hi => ?_, by simpa using h5, by omega,
+                by simpa using h7⟩⟩
+            · simp only [foldl_scatter_size, Array.size_replicate]
+            · refine foldl_scatter_getElem hinj₂ (fun j hj => ?_)
+                (Nat.le_refl _) hi
+              simp only [Array.size_replicate]
+              exact hb₂ j hj
+          · rw [ite_eq_right h7]
+            left
+            rfl
+      · rw [ite_eq_right h5, ite_eq_right h5]
+        left
+        rfl
+  · rw [ite_eq_right h2]
+    left
+    rfl
 
 end Hex.GraphIso.Nauty
