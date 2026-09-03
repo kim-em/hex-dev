@@ -174,24 +174,27 @@ copy:
 - `conformance/HexX/{Conformance,EmitFixtures}.lean` — conformance drivers.
 - `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
 
-In this monorepo, all bench and conformance drivers build in the shared root
-Lake graph. Published mirrors use the corresponding root and sidecar skeletons
-documented in `scripts/release/BOOTSTRAP.md`; the sync manages source and
-rewrites every lockfile but deliberately leaves those Lake skeletons intact.
-The mirrors' CI workflows are managed centrally in
+The first two lines are the product; a mirror receives them and nothing else,
+plus the library's README. The rest are development instruments: they build in
+this monorepo's shared root Lake graph, run in this monorepo's CI, and are
+never published. A mirror is therefore a single root Lake project, whose
+skeleton `scripts/release/BOOTSTRAP.md` documents; the sync manages source and
+rewrites the lockfile but deliberately leaves that skeleton intact. The
+mirrors' CI workflows are managed centrally in
 `scripts/release/released-ci.yml` and published by the same guarded sync.
 
 ### The publish mechanism
 
 Five pieces, under `scripts/release/` and `.github/workflows/`:
 
-- `released.yml` — a per-repo manifest: which paths to copy, which
-  oracles to ship, and which upstream repos to pin, in dependency order.
-- `released-ci.yml` — the complete per-repository mirror workflows. Their
-  repository-specific build, conformance, oracle, and bench commands remain
-  explicit while cache setup and policy are uniform. The explicit cache covers
-  each root/sidecar build plus published Hex dependency builds, while excluding
-  the separately fetched Mathlib cache.
+- `released.yml` — a per-repo manifest: which paths to copy, which obsolete
+  paths to delete, and which upstream repos to pin, in dependency order.
+- `released-ci.yml` — the complete per-repository mirror workflows. Each is one
+  ubuntu job that builds the published library and its regression target;
+  repository-specific build commands remain explicit while cache setup and
+  policy are uniform. The explicit cache covers the library build plus
+  published Hex dependency builds, while excluding the separately fetched
+  Mathlib cache.
 - `sync_released.py` — the driver. For each repo it clones `main`,
   overwrites the managed paths from this tree, rewrites the cross-repo
   Lake revisions, and commits to `main`. `--dry-run` prints the planned
@@ -200,9 +203,11 @@ Five pieces, under `scripts/release/` and `.github/workflows/`:
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
   default). One dispatch drives the whole publish.
 
+Each mirror's own CI runs on the sync's push, so a mirror whose published tree
+does not build reports it directly, on the commit that caused it.
+
 Rewriting the cross-repo revisions touches **every** lakefile and
-`lake-manifest.json` in a repo — the root and the `bench/` and
-`conformance/` sub-projects — updating both `rev` and `inputRev`. Lake
+`lake-manifest.json` in a repo, updating both `rev` and `inputRev`. Lake
 trusts the manifest, so a stale lockfile would otherwise rebuild against
 the old revision.
 

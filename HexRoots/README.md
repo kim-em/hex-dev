@@ -64,8 +64,8 @@ Reference material:
 - [SPEC](SPEC/hex-roots.md) — data model, algorithms, fuel, precision, and
   performance budgets.
 - The Hex manual chapter “HexRoots: certified complex-root isolation”.
-- `bench/HexRoots/` — deterministic degree and separation families.
-- `conformance/HexRoots/` — fixtures checked against python-flint.
+- The benchmark families and the python-flint conformance fixtures, in
+  [`hex-dev`](https://github.com/kim-em/hex-dev).
 
 # Contributing
 
