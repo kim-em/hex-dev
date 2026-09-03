@@ -918,8 +918,12 @@ vertices are unlabelled isomorphism classes and are not this fixture count.
 The scheduled and local campaign adds all 32,768 labelled graphs at `n = 6`,
 larger deterministic random cases, and the hard families below. These cases
 stream directly to the oracle. Only failures are retained as replay records.
-Conformance runs in the existing single Ubuntu job. It does not add a job,
-matrix, or workflow.
+`conformance/HexGraphIso/EmitCampaign.lean` is the emitter, and
+[reports/hex-graph-iso-campaign.md](../../reports/hex-graph-iso-campaign.md)
+records the current run: machine, date, toolchain, comparator version, case
+count, what was compared, runtime, and outcome. A campaign re-run replaces
+that report in place. Conformance runs in the existing single Ubuntu job. It
+does not add a job, matrix, or workflow.
 
 Property checks independent of nauty include:
 
@@ -1103,7 +1107,9 @@ The first release requires all of the following:
 3. `canon?_eq_some` and `checkCanon_sound` have the conclusions stated above.
 4. Every implemented prune has an answer-and-label preservation proof.
 5. The exhaustive merge fixture and extended `n = 6` campaign agree exactly
-   with nauty 2.9.3.
+   with nauty 2.9.3. The fixture leg runs in merge CI; the campaign leg is
+   recorded in
+   [reports/hex-graph-iso-campaign.md](../../reports/hex-graph-iso-campaign.md).
 6. The non-toy positive and negative tactic cases replay through the kernel.
 7. The benchmark driver reports every implementation stage and the nauty
    comparator without importing Mathlib.
