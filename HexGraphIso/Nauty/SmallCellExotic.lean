@@ -67,7 +67,7 @@ private theorem mapNodup {f : Nat → Nat}
 
 /-- A duplicate-free list included in a list of no greater length is a
 permutation of it. -/
-private theorem perm_of_nodup_subset :
+theorem perm_of_nodup_subset :
     ∀ (l₁ l₂ : List Nat), l₁.Nodup → (∀ x ∈ l₁, x ∈ l₂) →
       l₂.length ≤ l₁.length → l₁.Perm l₂
   | [], l₂, _, _, hlen => by
@@ -91,7 +91,7 @@ private theorem perm_of_nodup_subset :
     exact (hrec.cons a).trans hperm2.symm
 
 /-- Sums are invariant under permutation. -/
-private theorem sum_of_perm {l₁ l₂ : List Nat} (h : l₁.Perm l₂) :
+theorem sum_of_perm {l₁ l₂ : List Nat} (h : l₁.Perm l₂) :
     l₁.sum = l₂.sum := by
   induction h with
   | nil => rfl
@@ -158,7 +158,7 @@ where
           exact countP_zero_none t h0 x hmem
 
 /-- A permutation of `range k` from `k` distinct bounded values. -/
-private theorem range_perm_of_distinct {l : List Nat} {k : Nat}
+theorem range_perm_of_distinct {l : List Nat} {k : Nat}
     (hlen : l.length = k) (hnd : l.Nodup)
     (hbd : ∀ x ∈ l, x < k) : l.Perm (List.range k) :=
   perm_of_nodup_subset l (List.range k) hnd
@@ -167,7 +167,7 @@ private theorem range_perm_of_distinct {l : List Nat} {k : Nat}
 
 /-- A sum over `range k` rewritten through `k` distinct bounded
 indices. -/
-private theorem sum_range_of_distinct {l : List Nat} {k : Nat}
+theorem sum_range_of_distinct {l : List Nat} {k : Nat}
     (F : Nat → Nat) (hlen : l.length = k) (hnd : l.Nodup)
     (hbd : ∀ x ∈ l, x < k) :
     ((List.range k).map F).sum = (l.map F).sum :=
