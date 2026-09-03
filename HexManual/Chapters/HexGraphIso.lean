@@ -173,49 +173,49 @@ additionally validates every answer through the certificate checker.
 :::table (header := true)
 * * graph
   * vertices
-  * nauty
-  * fast
-  * checked
+  * nauty (ms)
+  * fast (ms)
+  * checked (ms)
 * * `Families.grid 5 5`
   * 25
-  * 14 µs
-  * 66 µs
-  * 0.25 ms
+  * 0.014
+  * 0.066
+  * 0.25
 * * `Families.grid 15 15`
   * 225
-  * 0.83 ms
-  * 14 ms
-  * 38 ms
+  * 0.83
+  * 14
+  * 38
 * * `Families.paley 29`
   * 29
-  * 19 µs
-  * 97 µs
-  * 0.88 ms
+  * 0.019
+  * 0.097
+  * 0.88
 * * `Families.paley 229`
   * 229
-  * 1.1 ms
-  * 29 ms
-  * 0.18 s
+  * 1.1
+  * 29
+  * 180
 * * `Families.latinSquare 5`
   * 25
-  * 19 µs
-  * 0.14 ms
-  * 0.80 ms
+  * 0.019
+  * 0.14
+  * 0.80
 * * `Families.latinSquare 13`
   * 169
-  * 0.77 ms
-  * 25 ms
-  * 0.10 s
+  * 0.77
+  * 25
+  * 100
 * * `Families.kneser 7 2`
   * 21
-  * 14 µs
-  * 0.12 ms
-  * 0.70 ms
+  * 0.014
+  * 0.12
+  * 0.70
 * * `Families.kneser 22 2`
   * 231
-  * 3.4 ms
-  * 0.21 s
-  * 1.0 s
+  * 3.4
+  * 210
+  * 1000
 :::
 
 Measured on chungus2, 2026-09-03, minimum over repeated runs;
