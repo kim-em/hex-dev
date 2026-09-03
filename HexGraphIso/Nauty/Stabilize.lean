@@ -172,4 +172,116 @@ theorem cellStab_refine {ctx : Ctx} (hn : ctx.n = n) {level : Nat}
   rw [← hlabeq]
   exact hcells
 
+private theorem cellStab_breakout_go {ptn lab labB γ : Array Nat}
+    {level tc len v : Nat} (hstab : CellStab ptn level lab γ)
+    (hcell : IsCell ptn level tc len) (hsize : tc + len ≤ ptn.size)
+    (hlsz : lab.size = ptn.size) (hlen2 : 2 ≤ len)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, ptn[q]! ≠ level + 1) (hfix : γ[v]! = v)
+    (hBsz : labB.size = lab.size)
+    (hseg : segN labB tc len = v :: (segN lab tc len).erase v)
+    (houtL : ∀ q, q < tc → labB[q]! = lab[q]!)
+    (houtR : ∀ q, tc + len ≤ q → labB[q]! = lab[q]!)
+    (htvmem : v ∈ segN lab tc len) :
+    cellsPerm (ptn.set! tc (level + 1)) (level + 1) labB
+      (labB.map fun w => γ[w]!) := by
+  have hsz : tc + len ≤ lab.size := by rw [hlsz]; exact hsize
+  have hsegd : segN labB tc ((len - 1) + 1) =
+      v :: (segN lab tc len).erase v := by
+    rw [show (len - 1) + 1 = len from by omega]
+    exact hseg
+  rw [segN_cons] at hsegd
+  have hhead : labB[tc]! = v := (List.cons.injEq _ _ _ _).mp hsegd |>.1
+  have htail : segN labB (tc + 1) (len - 1) =
+      (segN lab tc len).erase v :=
+    (List.cons.injEq _ _ _ _).mp hsegd |>.2
+  have hcellstab : (segN lab tc len).Perm
+      ((segN lab tc len).map fun w => γ[w]!) := by
+    have h := hstab tc len hcell
+    rwa [segN_map_of_le _ _ _ _ hsz] at h
+  refine cellsPerm_set! ((isCell_succ_iff hvals).mpr hcell) hsize
+    (Nat.le_refl tc) (by omega) ?_ ?_ ?_
+  · -- the individualized singleton, fixed by `γ`
+    rw [show tc + 1 - tc = 1 from by omega,
+      show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_cons,
+      segN_zero, segN_zero, hhead,
+      getElem!_map_of_lt _ _ (by rw [hBsz]; omega), hhead, hfix]
+  · -- the remainder cell, by head cancellation in the target cell
+    rw [show tc + len - (tc + 1) = len - 1 from by omega,
+      segN_map_of_le _ _ _ _ (by rw [hBsz]; omega), htail]
+    refine List.Perm.symm (List.Perm.cons_inv (a := v) ?_)
+    have h1 : (v :: ((segN lab tc len).erase v).map fun w => γ[w]!) =
+        ((v :: (segN lab tc len).erase v).map fun w => γ[w]!) := by
+      rw [List.map_cons, hfix]
+    rw [h1]
+    refine ((List.perm_cons_erase htvmem).symm.map _).trans ?_
+    exact hcellstab.symm.trans (List.perm_cons_erase htvmem)
+  · -- untouched cells, stabilized already at the coarser level
+    intro a len' hc' hdisj
+    have hc := (isCell_succ_iff hvals).mp hc'
+    rcases Nat.lt_or_ge a ptn.size with ha | ha
+    · have hbound : a + len' ≤ ptn.size := by
+        rcases Nat.lt_or_ge (a + len') (ptn.size + 1) with h1 | h1
+        · omega
+        · exfalso
+          have hi := hc.2.2.1 (ptn.size - 1) (by omega) (by omega)
+          omega
+      have hB : segN labB a len' = segN lab a len' :=
+        segN_congr fun o' ho' => by
+          rcases hdisj with hd | hd
+          · exact houtL _ (by omega)
+          · exact houtR _ (by omega)
+      rw [segN_map_of_le _ _ _ _ (by rw [hBsz, hlsz]; exact hbound),
+        hB]
+      have h := hstab a len' hc
+      rwa [segN_map_of_le _ _ _ _ (by rw [hlsz]; exact hbound)] at h
+    · have hlen0 := hc.1
+      have hlen1 : len' = 1 := by
+        rcases Nat.lt_or_ge len' 2 with h2 | h2
+        · omega
+        · exfalso
+          have hi := hc.2.2.1 a (Nat.le_refl a) (by omega)
+          rw [getElem!_neg _ _ (by omega)] at hi
+          have hd : (default : Nat) = 0 := rfl
+          omega
+      subst hlen1
+      rw [show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_cons,
+        segN_zero, segN_zero, getElem!_neg labB _ (by omega),
+        getElem!_neg (labB.map fun w => γ[w]!) _
+          (by rw [Array.size_map]; omega)]
+
+/-- A cell-stabilizing map fixing the individualized vertex still
+stabilizes the cells after individualization: the singleton is fixed
+outright, the remainder cell's stability follows from the target
+cell's by head cancellation, and every other cell is untouched. The
+individualization arm of descent propagation, paired with
+`cellStab_refine`. -/
+theorem cellStab_breakout {ptn lab γ : Array Nat}
+    {level tc len o : Nat} (hstab : CellStab ptn level lab γ)
+    (hcell : IsCell ptn level tc len) (hsize : tc + len ≤ ptn.size)
+    (hlsz : lab.size = ptn.size) (ho : o < len) (hlen2 : 2 ≤ len)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, ptn[q]! ≠ level + 1)
+    (hfix : γ[lab[tc + o]!]! = lab[tc + o]!) :
+    CellStab (breakout lab ptn (level + 1) tc lab[tc + o]!).2.1
+      (level + 1) (breakout lab ptn (level + 1) tc lab[tc + o]!).1
+      γ := by
+  have hsz : tc + len ≤ lab.size := by rw [hlsz]; exact hsize
+  have hwit : ∃ kL, tc ≤ kL ∧ kL < tc + len ∧ kL < lab.size ∧
+      lab[kL]! = lab[tc + o]! :=
+    ⟨tc + o, by omega, by omega, by omega, rfl⟩
+  show cellsPerm (ptn.set! tc (level + 1)) (level + 1)
+    (breakout.go lab[tc + o]! (lab.size + 1) lab tc lab[tc + o]!)
+    ((breakout.go lab[tc + o]! (lab.size + 1) lab tc
+      lab[tc + o]!).map fun w => γ[w]!)
+  refine cellStab_breakout_go hstab hcell hsize hlsz hlen2 hend hvals
+    hfix (breakout_go_size _ _ _ _)
+    (breakout_go_seg (lab.size + 1) len lab tc lab[tc + o]! hwit
+      (by omega) hsz)
+    (fun q hq => breakout_go_outside _ _ _ _ _ hq)
+    (fun q hq => breakout_go_outside_right _ len _ _ _ hwit _ hq)
+    (by
+      rw [segN]
+      exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩)
+
 end Hex.GraphIso.Nauty
