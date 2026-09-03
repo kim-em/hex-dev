@@ -189,7 +189,7 @@ fi
 # Exercise the independent Lean/native binding in process against the same
 # committed corpus. The executable is built by the shared build phase above;
 # this adds only the FFI calls (about 0.1 s locally), not another elaboration.
-if ! .lake/build/bin/nautyffi_tests; then
+if ! .lake/packages/NautyFFI/.lake/build/bin/nautyffi_tests; then
   echo "Conformance: in-process nauty-ffi fixture check failed." >&2
   exit 1
 fi
