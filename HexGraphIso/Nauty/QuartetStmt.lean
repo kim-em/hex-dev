@@ -200,4 +200,37 @@ as the shape the loop needs, not proved here. -/
     childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oCur =
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oFirst
 
+/-- The payload discharges, given the two position facts.
+
+The carrier clause holds at every position, so it holds at the
+ancestor's target position `tc`; the two hypotheses say what the two
+labellings hold there, namely the two paths' individualized vertices.
+`childKey_of_carried` then equates the two children's subtree keys.
+
+The position facts are the induction's to supply: they are the
+descent's own bookkeeping, not a property of this node. Everything
+else here is the node's well-formedness. -/
+theorem payloadAbsorbs_of_positions {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (tcLevel fuel level : Nat)
+    {rsLab rsPtn : Array Nat} {tc lenT numcells oFirst oCur : Nat}
+    {out : SearchSt}
+    (hstab : ∀ γ, checkAutom ctx.g γ ctx.n = true →
+      (∀ i, i < ctx.n → γ[out.firstlab[i]!]! = out.lab[i]!) →
+      CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (hoC : oCur < lenT) (hoF : oFirst < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1) (htc : tc < ctx.n)
+    (hfirst : out.firstlab[tc]! = rsLab[tc + oFirst]!)
+    (hcur : out.lab[tc]! = rsLab[tc + oCur]!) :
+    PayloadAbsorbs ctx tcLevel fuel level rsLab rsPtn tc numcells
+      oFirst oCur out := by
+  rintro ⟨γ, _, hAut, hmap⟩
+  refine childKey_of_carried hn hgsz hAut tcLevel fuel level
+    (hstab γ hAut hmap) hs hok hsp hend hvals hic hrange hoC hoF hlf ?_
+  have h := hmap tc htc
+  rwa [hfirst, hcur] at h
+
 end Hex.GraphIso.Nauty
