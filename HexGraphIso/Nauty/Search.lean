@@ -238,6 +238,7 @@ def shortprune (tcell : Nat) (st : SearchSt) : Nat :=
   | some (_, mcr) => tcell &&& mcr
   | none => tcell
 
+set_option maxHeartbeats 800000 in
 mutual
 
 /-- nauty's `firstpathnode`: produce a node on the leftmost path. Returns
@@ -325,6 +326,26 @@ def firstChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
       (nextElem tcell (some tv)) tcell index st
 termination_by (fuel, 1, cfuel)
 
+/-- The comparison bookkeeping of nauty's `othernode` between the
+refinement and the target-cell choice: the first-path level-code
+comparison and the best-so-far level-code comparison, exactly as the
+corresponding `othernode` lines perform them. -/
+def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt) :
+    SearchSt := Id.run do
+  let mut st := st
+  if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]! then
+    st := { st with eqlevFirst := level }
+  if st.eqlevCanon == Int.ofNat level - 1 then
+    if code < st.canoncode[level]! then
+      st := { st with compCanon := -1 }
+    else if code > st.canoncode[level]! then
+      st := { st with compCanon := 1 }
+    else
+      st := { st with compCanon := 0, eqlevCanon := Int.ofNat level }
+  if st.compCanon > (0 : Int) then
+    st := { st with canoncode := st.canoncode.set! level code }
+  return st
+
 /-- nauty's `othernode`: produce a node off the leftmost path. Returns the
 level to return to. -/
 def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
@@ -338,17 +359,7 @@ def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
     st := { st with lab := rs.lab, ptn := rs.ptn, active := rs.active }
     let numcells := rs.numcells
     let code := rs.longcode
-    if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]! then
-      st := { st with eqlevFirst := level }
-    if st.eqlevCanon == Int.ofNat level - 1 then
-      if code < st.canoncode[level]! then
-        st := { st with compCanon := -1 }
-      else if code > st.canoncode[level]! then
-        st := { st with compCanon := 1 }
-      else
-        st := { st with compCanon := 0, eqlevCanon := Int.ofNat level }
-    if st.compCanon > (0 : Int) then
-      st := { st with canoncode := st.canoncode.set! level code }
+    st := otherNodePrep level code st
     let mut tc : Int := -1
     let mut tcell : Nat := 0
     if numcells < n ∧ (st.eqlevFirst == level ∨ st.compCanon ≥ (0 : Int)) then
