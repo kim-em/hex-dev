@@ -125,6 +125,7 @@ repos:
     spec: hex-primality-mathlib
     bench: false
     conformance: true
+    conformance_files: [HexPrimalityMathlibConformance/OptIn.lean]
     fixtures: []
     oracles: []
     pins: [hex-basic, hex-arith, hex-primality]
