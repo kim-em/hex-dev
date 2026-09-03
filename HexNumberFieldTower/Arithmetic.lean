@@ -128,7 +128,8 @@ theorem coeffs_sub {T : NumberTower} (a b : Elem T) :
 /-- Coordinatewise additive inverse. -/
 @[expose]
 def neg {T : NumberTower} (a : Elem T) : Elem T :=
-  ofCoeffs T (Arithmetic.negCoords T.dim (coeffs a))
+  Internal.ofCoeffs T (Arithmetic.negCoords T.dim (coeffs a)) (by
+    simp [Arithmetic.negCoords])
 
 instance {T : NumberTower} : Neg (Elem T) := ⟨neg⟩
 
@@ -137,10 +138,7 @@ instance {T : NumberTower} : Neg (Elem T) := ⟨neg⟩
 theorem coeffs_neg {T : NumberTower} (a : Elem T) :
     coeffs (-a) = Arithmetic.negCoords T.dim (coeffs a) := by
   change coeffs (neg a) = _
-  unfold neg
-  rw [coeffs_ofCoeffs]
-  apply normalizeCoeffs_eq_self
-  simp [Arithmetic.negCoords]
+  simp [neg]
 
 /-- Coordinate subtraction is addition of the coordinatewise negation. -/
 theorem sub_eq_add_neg {T : NumberTower} (a b : Elem T) :

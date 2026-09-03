@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "role": "allocation-count diagnostic",
+  "source_commit": "86d54d9fad5c41a7b124875d800babf458c5a60b",
+  "instrumentation": "IO.getNumHeartbeats small-allocation counter around one public element negation and structural coordinate checksum",
+  "control": {
+    "description": "the same two counter reads around an empty measured body",
+    "small_allocations": [1, 1, 1, 1, 1]
+  },
+  "observations": [
+    {
+      "dimension": 128,
+      "dense_coordinate_count": 128,
+      "small_allocations": [131, 131, 131, 131, 131]
+    },
+    {
+      "dimension": 256,
+      "dense_coordinate_count": 256,
+      "small_allocations": [259, 259, 259, 259, 259]
+    }
+  ],
+  "interpretation": "Subtracting the one-allocation control gives D+2 allocations for each public negation and structural hash; the count grows with every dense coordinate and shows no shared or short-circuited result.",
+  "temporary_probe_retained_in_source": false
+}

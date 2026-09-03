@@ -35,7 +35,9 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
 * one dense `toPrimitive` application and the completed `fromPrimitive`
   basis map.
 
-Negation, inversion, division, and dense `toPrimitive` retain failed mode-1
+Negation has source-derived linear evidence on a larger-dimension dense family
+after its exact-width result construction removed a redundant normalization
+copy. Inversion, division, and dense `toPrimitive` retain failed mode-1
 registrations as binding diagnostics. They have no admissible fixed substitute,
 so the library remains at Phase 3 while those cost models are unresolved.
 
@@ -765,9 +767,8 @@ setup_fixed_benchmark runSub where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. The linear ladder is retained as a failed
-mode-1 diagnostic; no canonical hard negation input gives this cheap operation
-a meaningful mode-3 ceiling. -/
+/- Expected-hash anchor only. `runTowerNegLadder` supplies the parametric
+performance evidence for this operation. -/
 setup_fixed_benchmark runNeg where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x2e1510498ed9e174,
@@ -1006,15 +1007,30 @@ def runTowerDivLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a / input.b)
 
 /- Cost model. Negation maps rational negation over the `D = n` dense
-coordinate array. The one-level presentation changes only untimed fixture
-construction: the timed implementation sees the same fixed-height coordinate
-representation and performs exactly `Θ(n)` work. -/
+coordinate array, wraps the exactly sized result without copying it, and hashes
+every result coordinate. The one-level presentation changes only untimed
+fixture construction: the timed implementation sees the same fixed-height
+coordinate representation and performs exactly `Θ(n)` work.
+
+The pre-registered schedule starts at 128 because each `Array.ofFn` result has
+a 24-byte header and `8n` bytes of object slots: Lean's mimalloc fast-small
+path ends at 1024 bytes, hence at dimension 125. It stops at 448, before Lean's
+4096-byte small-object ceiling at dimension 509. Every rung therefore uses the
+same allocation route, while the larger dimensions make the fixed call and
+checksum setup lower order. `X^n - 3` remains Eisenstein at 3 at every listed
+degree, so these are supported checked one-level tower dimensions rather than
+rungs selected from candidate timings. The five-second inner window is the
+project's established inclusive-profile duration and amortizes allocator-page
+maintenance over hundreds of thousands of calls without making the operation
+count depend on `n`; outer trials remain independent child processes. -/
 setup_benchmark runTowerNegLadder n => n
   with prep := prepLinearElemInput
   where {
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32, 48]
+    paramFloor := 128
+    paramCeiling := 448
+    paramSchedule := .custom #[128, 160, 192, 256, 320, 384, 448]
     maxSecondsPerCall := 300.0
-    targetInnerNanos := 100000000
+    targetInnerNanos := 5000000000
     signalFloorMultiplier := 1.0
   }
 
