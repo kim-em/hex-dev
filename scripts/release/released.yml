@@ -483,40 +483,29 @@ repos:
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
     lakefile: lean
 
-  # `HexGraph` is a one-file graph representation with no SPEC, conformance,
-  # or bench surface of its own, and `hex-graph-iso` is its only consumer, so
-  # it rides into this repository through `extra_paths` rather than becoming a
-  # repository, a CI workflow, a token slot and an aggregate-README row of its
-  # own. The released skeleton declares `lean_lib HexGraph` beside
-  # `lean_lib HexGraphIso`, mirroring the monorepo lakefile. A second consumer
-  # of `HexGraph` is the trigger to promote it to `leanprover/hex-graph`; the
-  # source must not be duplicated across two mirrors.
+  # `HexGraph` is a one-file graph representation with no SPEC surface of its
+  # own, and `hex-graph-iso` is its only consumer, so it rides into this
+  # repository through `extra_paths` rather than becoming a repository, a CI
+  # workflow, a token slot and an aggregate-README row of its own. The released
+  # skeleton declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
+  # mirroring the monorepo lakefile. A second consumer of `HexGraph` is the
+  # trigger to promote it to `leanprover/hex-graph`; the source must not be
+  # duplicated across two mirrors.
   #
   # The pins are the published part of the closure `HexGraphIso` reaches:
-  # `HexBasic` directly, and `HexMatrix` through `HexGraph.Basic`.
+  # `HexBasic` directly, and `HexMatrix` through `HexGraph.Basic`. The
+  # vendored nauty source and both nauty comparators -- the shim behind
+  # `scripts/oracle/graphiso_nauty.py` and the in-process
+  # `Hex.BenchOracle.Nauty` binding -- stay in this monorepo with every other
+  # development instrument, so no pin here can drag `vendor/nauty-2.9.3` into
+  # the mirror and `leanprover/nauty-ffi` never becomes a dependency of the
+  # shipped library.
   - repo: leanprover/hex-graph-iso
     component: Graph canonical labelling
     lib: HexGraphIso
     test_modules: [HexGraphIso.TacticTests]
     umbrella: true
     spec: hex-graph-iso
-    # No bench sidecar and no oracle. hex-graph-iso/SPEC §Conformance is
-    # explicit that the vendored nauty source and both nauty comparators --
-    # the shim behind `scripts/oracle/graphiso_nauty.py` and the in-process
-    # `Hex.BenchOracle.Nauty` binding that `bench/HexGraphIso` registers as
-    # its gating comparator -- "are not managed paths of any released
-    # repository". Publishing either would drag `vendor/nauty-2.9.3` into the
-    # mirror. `leanprover/nauty-ffi` is not an escape hatch: it must not
-    # become a dependency of the shipped library. The mirror therefore keeps
-    # the self-contained half of the evidence: the oracle-free
-    # `HexGraphIso.Conformance` guards plus byte-identical regeneration of
-    # the committed fixture, both of which released CI runs. Flipping `bench`
-    # to true requires a shippable bench driver that does not import
-    # `Hex.BenchOracle.Nauty`.
-    bench: false
-    conformance: true
-    fixtures: [HexGraphIso]
-    oracles: []
     extra_paths:
       - { src: "HexGraph", dest: "HexGraph" }
       - { src: "HexGraph.lean", dest: "HexGraph.lean" }
@@ -528,10 +517,6 @@ repos:
     test_modules: [HexGraphIsoMathlib.TacticTests]
     umbrella: true
     spec: hex-graph-iso-mathlib
-    bench: false
-    conformance: false
-    fixtures: []
-    oracles: []
     pins: [hex-basic, hex-matrix, hex-graph-iso]
     lakefile: toml
 

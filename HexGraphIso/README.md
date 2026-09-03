@@ -99,11 +99,14 @@ rather than proved. Agreement of the two tiers is a theorem under the
 hypothesis that the certificate replay accepts
 (`canonicalize_eq_canonicalizeChecked`).
 
-Compatibility with nauty is a conformance property, not a theorem: the
-oracle in `scripts/oracle/graphiso_nauty.py` pins canonical labels, canonical
-bits, and visited-node counts against the real nauty 2.9.3 on the committed
-fixtures. See the [SPEC](SPEC/hex-graph-iso.md) for the exact trust,
-budget, and compatibility contracts.
+Compatibility with nauty is a conformance property, not a theorem: an oracle
+pins canonical labels, canonical bits, and visited-node counts against the
+real nauty 2.9.3 on committed fixtures. That suite, and the benchmarks that
+time this library against nauty, run in
+[`hex-dev`](https://github.com/kim-em/hex-dev); they need a vendored nauty
+build, which is why they are not part of this repository. See the
+[SPEC](SPEC/hex-graph-iso.md) for the exact trust, budget, and compatibility
+contracts.
 
 # Contributing
 

@@ -2130,28 +2130,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexGraph HexGraphIso HexGraphIsoTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance fixture regeneration
-            run: |
-              (cd conformance && lake exe hexgraphiso_emit_fixtures) > /tmp/hex-graph-iso-fresh.jsonl
-              diff -u conformance-fixtures/HexGraphIso/graphiso.jsonl /tmp/hex-graph-iso-fresh.jsonl
           - name: Assert Mathlib-free
             run: |
-              if find .lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGraph HexGraphIso conformance/HexGraphIso 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGraph HexGraphIso 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2161,11 +2149,7 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   hex-graph-iso-mathlib: |
     name: CI
@@ -2193,10 +2177,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
@@ -2212,8 +2195,7 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   hex: |
     name: CI
