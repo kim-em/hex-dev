@@ -1111,6 +1111,32 @@ lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
 
+-- The graph_iso fresh-module probes (SPEC/hex-graph-iso § Benchmarks and
+-- SPEC/hex-graph-iso-mathlib § Tests): build-only structural checks of the
+-- four release probe cases on each tactic route. The scheduled-only CFI
+-- pair has its own target so the merge build stays inside its budget.
+lean_lib HexGraphIsoProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support,
+    `HexGraphIso.ProofProbe.Baseline,
+    `HexGraphIso.ProofProbe.Positive12,
+    `HexGraphIso.ProofProbe.Negative12,
+    `HexGraphIso.ProofProbe.Coloured10Pos,
+    `HexGraphIso.ProofProbe.Coloured10Neg]
+
+lean_lib HexGraphIsoCfiProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support, `HexGraphIso.ProofProbe.Cfi]
+
+lean_lib HexGraphIsoMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIsoMathlib.ProofProbe.Support,
+    `HexGraphIsoMathlib.ProofProbe.MathlibBaseline,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive12,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative12]
+
 lean_exe hexgraphiso_bench where
   srcDir := "bench"
   root := `HexGraphIso.Bench

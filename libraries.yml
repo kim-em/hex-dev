@@ -449,13 +449,37 @@ libraries:
   HexGraphIso:
     deps: [HexBasic, HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexGraphIso/ProofProbe]
+    phase4:
+      comparators:
+        - tool: "nauty 2.9.3 (vendored source, in-process FFI through Hex.BenchOracle.Nauty)"
+          class: gating
+          goal: "Exact agreement of the canonical upper-triangle bits on every joined instance; conformance pins the visited-node counters, so both programs traverse the same search tree and every timing difference is a per-node constant factor rather than an algorithmic one. Per HexGraphIso/SPEC/hex-graph-iso.md §Benchmarks the first release sets no speed-ratio requirement, so the gating condition is result agreement and the measured ratio is reported without a threshold."
+      input_families:
+        - name: circulant-ladder
+          description: Deterministic coloured circulants on the {1, 2} and {1, 2, 4, 8} offset sets, carrying the four parametrised scientific registrations and the fixed public-operation and certificate sizes.
+        - name: random-gnp
+          description: G(n, 1/2) graphs of the recorded SplitMix64 corpus seeds, their Fisher-Yates relabellings, and the derived positive and negative decision pairs.
+        - name: strongly-regular
+          description: Paley, Latin-square, Johnson and Kneser graphs, refinement's hard cases, including the classic (25, 12, 5, 6) negative pair at shared parameters.
+        - name: grid-and-hypercube
+          description: Grids and hypercubes, the sparse families on which refinement discretizes quickly.
+        - name: decision-pairs
+          description: Positive and negative isomorphism pairs spanning cycle splittings, irregular cross-family negatives, and same-degree vertex-transitive negatives, carrying the two decision tiers and the kernel-checked tactic tier.
   HexGraphIsoMathlib:
     deps: [HexGraphIso]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexGraphIsoMathlib/ProofProbe]
+    phase4:
+      input_families:
+        - name: cross-type-goals
+          description: Generalized Petersen against Kneser at (5, 2) on genuinely different vertex types, and the same-family negative against the pentagonal prism, at n = 10.
+        - name: random-pair-transport
+          description: The recorded random n = 12 positive and negative pairs carried across the bridge as SimpleGraphs over Fin 12.
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
