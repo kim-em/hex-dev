@@ -528,4 +528,140 @@ theorem stPerm_child {σ : Renaming ctx.n} {V U : RefineSt}
   rw [hptn, hnum]
   exact h1
 
+/-! # Descents through the subtree -/
+
+/-- A descent: a sequence of individualize-and-refine steps, each at a
+nontrivial cell of the current partition. -/
+inductive Descends (ctx : Ctx) :
+    Nat → RefineSt → Nat → RefineSt → Prop where
+  | refl (level : Nat) (st : RefineSt) : Descends ctx level st level st
+  | step {level level' : Nat} {st st' : RefineSt} (tc e o : Nat)
+      (hlvl : level < ctx.n)
+      (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+      (ho : o ≤ e - tc)
+      (htail : Descends ctx (level + 1)
+        (childSt ctx level st tc st.lab[tc + o]!) level' st') :
+      Descends ctx level st level' st'
+
+/-- The node invariant holds along every descent. -/
+theorem descends_iterOk {level level' : Nat} {st st' : RefineSt}
+    (h : Descends ctx level st level' st')
+    (hok : IterOk ctx level st) : IterOk ctx level' st' := by
+  induction h with
+  | refl _ _ => exact hok
+  | step tc e o hlvl hcell hne ho htail ih =>
+    exact ih (iterOk_child hok hlvl hcell hne ho)
+
+/-- The bisimulation: a descent below one state mirrors below any
+state whose labelling is cell-equivalent up to a row-preserving
+renaming, ending in the transported relation. -/
+theorem descends_transport {σ : Renaming ctx.n}
+    (hg : RowsMap σ ctx.g ctx.g) :
+    ∀ {level level' : Nat} {U U' V : RefineSt},
+      Descends ctx level U level' U' → IterOk ctx level U →
+      StPerm level V (mapSt σ U) →
+      ∃ V', Descends ctx level V level' V' ∧
+        StPerm level' V' (mapSt σ U')
+  | _, _, _, _, V, .refl _ _, _, hsp => ⟨V, .refl _ _, hsp⟩
+  | level, level', U, U', V,
+      .step tc e o hlvl hcell hne ho htail, hU, hsp => by
+    have hV := iterOk_of_stPerm hU hsp
+    have hptn : U.ptn = V.ptn := hsp.ptn
+    have hpszV := hV.ok.ptnSize
+    have hendV := hV.ok.ptnEnd
+    have hcellV : (tc, e) ∈ cells V.ptn level ctx.n := by
+      rw [← hptn]
+      exact hcell
+    have hen : e < ctx.n := target_end_lt hpszV hendV hcellV
+    have hcellIsV : IsCell V.ptn level tc (e + 1 - tc) :=
+      cells_isCell (by omega) hendV _ hcellV
+    have hmemU : σ.toFun U.lab[tc + o]! ∈
+        segN (U.lab.map σ.toFun) tc (e + 1 - tc) := by
+      rw [segN_map (by rw [hU.ok.labSize]; omega)]
+      exact List.mem_map.mpr
+        ⟨U.lab[tc + o]!, mem_segN_iff.mpr ⟨o, by omega, rfl⟩, rfl⟩
+    have hcpT := hsp.cells tc (e + 1 - tc) hcellIsV
+    have hmemV : σ.toFun U.lab[tc + o]! ∈
+        segN V.lab tc (e + 1 - tc) := hcpT.mem_iff.mpr hmemU
+    obtain ⟨oV, hoVlt, hoVval⟩ := mem_segN_iff.mp hmemV
+    have hsp' := stPerm_child hg hsp hU hcell hne
+      (by omega) ho hoVval
+    have hUok' := iterOk_child hU hlvl hcell hne ho
+    obtain ⟨V', hdesc, hspL⟩ :=
+      descends_transport hg htail hUok' hsp'
+    exact ⟨V', .step tc e oV hlvl hcellV hne (by omega) hdesc, hspL⟩
+
+/-- The leaf collapse: a descent to a discrete state below one side
+mirrors below the other with equal leaf rows — the renaming is
+absorbed at the leaf. -/
+theorem descends_leafRows {σ : Renaming ctx.n}
+    (hg : RowsMap σ ctx.g ctx.g)
+    {level level' : Nat} {U U' V : RefineSt}
+    (h : Descends ctx level U level' U')
+    (hU : IterOk ctx level U) (hsp : StPerm level V (mapSt σ U))
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx level V level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  obtain ⟨V', hdesc, hspL⟩ := descends_transport hg h hU hsp
+  have hU' := descends_iterOk h hU
+  have hV' := iterOk_of_stPerm hU' hspL
+  have hptn : U'.ptn = V'.ptn := hspL.ptn
+  have hVdisc : ∀ q, q < V'.ptn.size → V'.ptn[q]! ≤ level' := by
+    intro q hq
+    rw [← hptn]
+    rw [hV'.ok.ptnSize] at hq
+    exact hdisc q hq
+  have hVsz : V'.lab.size = V'.ptn.size := by
+    rw [hV'.ok.labSize, hV'.ok.ptnSize]
+  have hlabeq := stPerm_lab_eq hspL hVdisc hVsz
+  have hlabeq' : U'.lab.map σ.toFun = V'.lab := hlabeq
+  have hlr : leafRows ctx V'.lab = leafRows ctx U'.lab := by
+    rw [← hlabeq']
+    exact leafRows_map σ rfl rfl hg hU'.ok.labOk hU'.ok.labSize
+  exact ⟨V', hdesc, hlr⟩
+
+/-! # The single-deviation theorem
+
+Gluing the branch step at the deviation level: any descent to a leaf
+below the first child of a pair target mirrors below the second child
+with equal leaf rows. -/
+
+/-- A deviation at a pair target: descents below the two children
+reach leaves with the same rows. -/
+theorem deviation_leafRows {S : Nat → Prop} {f : Nat → Nat}
+    {st : RefineSt} {level tc level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hgsz : ctx.g.size = ctx.n)
+    (hlvl : level < ctx.n)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hrows : ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]!)
+    (hcell : (tc, tc + 1) ∈ cells st.ptn level ctx.n)
+    (hStc : S tc)
+    (hSpair : ∀ p ∈ cells st.ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells st.ptn level ctx.n, S p.1 →
+      f st.lab[p.1]! = st.lab[p.1 + 1]! ∧
+        f st.lab[p.1 + 1]! = st.lab[p.1]!)
+    (hSfix : ∀ p ∈ cells st.ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f st.lab[p.1 + o]! = st.lab[p.1 + o]!)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + 0]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + 1]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  have hg : RowsMap (renamingOfFlip f ctx.n hfb hinvol) ctx.g ctx.g :=
+    rowsMap_of_flip_rows hgsz hfb hinvol hrows
+  have hstep := branch_step (S := S) hgsz hIt.ok.ptnSize
+    hIt.ok.labSize hIt.ok.ptnEnd hIt.valsWeak hIt.ok.labOk hIt.inj
+    hfb hinvol hrows hcell hStc hSpair hSswap hSfix
+    (numcells := st.numcells)
+  have hU0 : IterOk ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + 0]!) :=
+    iterOk_child hIt hlvl hcell (by omega) (by omega)
+  have hstep' : StPerm (level + 1)
+      (childSt ctx level st tc st.lab[tc + 1]!)
+      (mapSt (renamingOfFlip f ctx.n hfb hinvol)
+        (childSt ctx level st tc st.lab[tc + 0]!)) := hstep
+  exact descends_leafRows hg hdesc hU0 hstep' hdisc
+
 end Hex.GraphIso.Nauty
