@@ -1220,7 +1220,7 @@ maximal run is a member of the list, a run beyond the array bound is a
 phantom singleton, and no run crosses the bound. -/
 
 /-- Reads beyond the array bound default. -/
-private theorem getElem!_oob {arr : Array Nat} {q : Nat}
+theorem getElem!_oob {arr : Array Nat} {q : Nat}
     (h : arr.size ≤ q) : arr[q]! = 0 := by
   rw [Array.getElem!_eq_getD, Array.getD]
   split
@@ -1302,7 +1302,7 @@ theorem labOk_breakout {o n' : Nat}
         exact hlab i hi
 
 /-- Segments of a mapped array are mapped segments. -/
-private theorem segN_map {arr : Array Nat} {g : Nat → Nat}
+theorem segN_map {arr : Array Nat} {g : Nat → Nat}
     {lo len : Nat} (h : lo + len ≤ arr.size) :
     segN (arr.map g) lo len = (segN arr lo len).map g := by
   rw [segN, segN, List.map_map]
@@ -1575,7 +1575,7 @@ theorem branch_step {numcells : Nat}
   exact h1
 
 /-- Arrays with equal sizes and equal defaulted reads are equal. -/
-private theorem array_eq_of_getElem! {a b : Array Nat}
+theorem array_eq_of_getElem! {a b : Array Nat}
     (hsz : a.size = b.size)
     (h : ∀ q, q < a.size → a[q]! = b[q]!) : a = b := by
   refine Array.ext hsz fun i hi hib => ?_
