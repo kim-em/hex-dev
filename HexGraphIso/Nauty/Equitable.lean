@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.CellPerm
 public import HexGraphIso.Nauty.Achieved
 public import HexGraphIso.Nauty.SearchInv
+public import HexGraphIso.Nauty.PopCount
 
 public section
 
@@ -1789,5 +1790,377 @@ theorem equitable_of_certInv_exit {ctx : Ctx} {level : Nat}
   rw [← hVau, Nat.or_zero] at hconst
   rw [splitDone_iff_constOn]
   exact hconst
+
+/-! # Active-set bookkeeping
+
+The preservation proof tracks the active bitset through a splitting
+pass: membership under `insert`/`erase`, the splitter's membership
+from `pickSplit`, and the bit-count bookkeeping the fuel potential
+consumes. -/
+
+theorem elem_insert (w v u : Nat) :
+    elem (insert w v) u = (elem w u || v == u) := by
+  rw [elem, elem, testBit_insert]
+
+theorem elem_erase (w v u : Nat) :
+    elem (erase w v) u = (elem w u && !(v == u)) := by
+  rw [elem, elem, testBit_erase]
+
+theorem insert_of_elem {w v : Nat} (h : elem w v = true) :
+    insert w v = w := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [testBit_insert]
+  rcases Decidable.em (v = i) with rfl | hne
+  · rw [elem] at h
+    simp [h]
+  · simp [show (v == i) = false from by simp [hne]]
+
+private theorem bitCount_succ (n s : Nat) :
+    bitCount (n + 1) s = bitCount n s + (if s.testBit n then 1 else 0) := by
+  rw [bitCount, bitCount, List.range_succ, List.countP_append,
+    List.countP_cons, List.countP_nil]
+  rcases h : s.testBit n with _ | _ <;> simp
+
+private theorem bitCount_congr {n a b : Nat}
+    (h : ∀ i, i < n → a.testBit i = b.testBit i) :
+    bitCount n a = bitCount n b := by
+  induction n with
+  | zero => rfl
+  | succ m ih =>
+    rw [bitCount_succ, bitCount_succ, ih fun i hi => h i (by omega),
+      h m (by omega)]
+
+theorem bitCount_insert_le (n w v : Nat) :
+    bitCount n (insert w v) ≤ bitCount n w + 1 := by
+  induction n with
+  | zero => rw [bitCount, bitCount]; simp
+  | succ m ih =>
+    rw [bitCount_succ, bitCount_succ, testBit_insert]
+    rcases hv : (v == m) with _ | _
+    · rcases h : w.testBit m with _ | _ <;>
+        simp only [Bool.or_false, Bool.false_eq_true, ite_true,
+          ite_false] <;>
+        omega
+    · have hvm : v = m := by simpa using hv
+      rw [bitCount_congr (n := m) (b := w) fun i hi => by
+        rw [testBit_insert,
+          show (v == i) = false from by simp [show v ≠ i from by omega],
+          Bool.or_false]]
+      rcases h : w.testBit m with _ | _ <;>
+        simp only [Bool.or_true, Bool.false_eq_true, ite_true,
+          ite_false] <;>
+        omega
+
+theorem bitCount_erase_of_elem {n w v : Nat} (hv : v < n)
+    (h : elem w v = true) :
+    bitCount n (erase w v) + 1 = bitCount n w := by
+  rw [elem] at h
+  induction n with
+  | zero => omega
+  | succ m ih =>
+    rcases Decidable.em (v = m) with heq | hne
+    · rw [bitCount_succ, bitCount_succ, testBit_erase,
+        show (v == m) = true from by simp [heq], Bool.not_true,
+        Bool.and_false,
+        bitCount_congr (n := m) (b := w) fun i hi => by
+          rw [testBit_erase,
+            show (v == i) = false from by simp [show v ≠ i from by omega],
+            Bool.not_false, Bool.and_true],
+        show w.testBit m = true from heq ▸ h]
+      simp
+    · rw [bitCount_succ, bitCount_succ, testBit_erase,
+        show (v == m) = false from by simp [hne], Bool.not_false,
+        Bool.and_true]
+      have := ih (by omega)
+      omega
+
+theorem bitCount_erase_le (n w v : Nat) :
+    bitCount n (erase w v) ≤ bitCount n w := by
+  rcases hb : elem w v with _ | _
+  · rw [erase, show w.testBit v = false from hb]
+    simp
+  · rcases Nat.lt_or_ge v n with hv | hv
+    · have := bitCount_erase_of_elem hv hb
+      omega
+    · rw [bitCount_congr (b := w) fun i hi => by
+        rw [testBit_erase,
+          show (v == i) = false from by simp [show v ≠ i from by omega],
+          Bool.not_false, Bool.and_true]]
+      exact Nat.le_refl _
+
+/-! # Splitter-set stability across a pass
+
+The pass permutes members within each processed cell, so every cell's
+splitter set survives as a bitset. -/
+
+theorem worksetOf_congr_perm {lab lab' : Array Nat} {lo hi : Nat}
+    (hp : (segN lab lo (hi + 1 - lo)).Perm (segN lab' lo (hi + 1 - lo))) :
+    worksetOf lab lo hi = worksetOf lab' lo hi := by
+  refine Nat.eq_of_testBit_eq fun v => ?_
+  show elem (worksetOf lab lo hi) v = elem (worksetOf lab' lo hi) v
+  rcases hm : elem (worksetOf lab' lo hi) v with _ | _
+  · rcases hm2 : elem (worksetOf lab lo hi) v with _ | _
+    · rfl
+    · exact absurd (elem_worksetOf.mpr (hp.mem_iff.mp
+        (elem_worksetOf.mp hm2))) (by simp [hm])
+  · exact elem_worksetOf.mpr (hp.mem_iff.mpr (elem_worksetOf.mp hm))
+
+/-- Pointwise-permuted images have permuted concatenations. -/
+private theorem flatMap_perm {α : Type} {f g : α → List Nat} :
+    ∀ l : List α, (∀ x ∈ l, (f x).Perm (g x)) →
+      (l.flatMap f).Perm (l.flatMap g)
+  | [], _ => List.Perm.refl _
+  | x :: l, h => by
+    rw [List.flatMap_cons, List.flatMap_cons]
+    exact List.Perm.append (h x (List.mem_cons_self ..))
+      (flatMap_perm l fun y hy => h y (List.mem_cons_of_mem _ hy))
+
+/-- The whole labelling segment is the concatenation of the cell
+segments. -/
+private theorem segN_flatMap_cells_go {lab ptn : Array Nat}
+    {level nn : Nat} (hnn : nn ≤ ptn.size)
+    (hendn : ptn[nn - 1]! ≤ level) :
+    ∀ fuel c1, nn ≤ c1 + fuel →
+      (cells.go ptn level nn fuel c1).flatMap
+          (fun p => segN lab p.1 (p.2 + 1 - p.1)) =
+        segN lab c1 (nn - c1)
+  | 0, c1, hf => by
+    rw [cells.go, show nn - c1 = 0 from by omega, segN_zero,
+      List.flatMap_nil]
+  | fuel + 1, c1, hf => by
+    rw [cells.go]
+    rcases Decidable.em (c1 < nn) with hc | hc
+    · rw [ite_eq_left hc, List.flatMap_cons]
+      have hge : c1 ≤ cellEnd ptn level c1 := cellEnd_ge
+      have hle : cellEnd ptn level c1 ≤ nn - 1 :=
+        cellEnd_le (by omega) hendn (by omega)
+      rw [segN_flatMap_cells_go hnn hendn fuel (cellEnd ptn level c1 + 1)
+        (by omega),
+        show nn - c1 = (cellEnd ptn level c1 + 1 - c1) +
+          (nn - (cellEnd ptn level c1 + 1)) from by omega, segN_append,
+        show c1 + (cellEnd ptn level c1 + 1 - c1) =
+          cellEnd ptn level c1 + 1 from by omega]
+    · rw [ite_eq_right hc, show nn - c1 = 0 from by omega, segN_zero,
+        List.flatMap_nil]
+
+/-- Cell-contents equivalence permutes the whole labelling segment. -/
+theorem cellsPerm_segN_perm {lab lab' ptn : Array Nat} {level nn : Nat}
+    (h : cellsPerm ptn level lab lab') (hnn : nn ≤ ptn.size)
+    (hend : ptn[ptn.size - 1]! ≤ level) (hendn : ptn[nn - 1]! ≤ level) :
+    (segN lab 0 nn).Perm (segN lab' 0 nn) := by
+  have h1 := segN_flatMap_cells_go (lab := lab) hnn hendn nn 0 (by omega)
+  have h2 := segN_flatMap_cells_go (lab := lab') hnn hendn nn 0 (by omega)
+  rw [Nat.sub_zero] at h1 h2
+  rw [← h1, ← h2]
+  refine flatMap_perm _ fun p hp => ?_
+  exact h p.1 (p.2 + 1 - p.1)
+    (cells_isCell hnn hend p (by rw [cells]; exact hp))
+
+/-! # Injective labellings and disjoint cell members
+
+The certificate algebra rests on distinct cells having disjoint
+splitter sets, which needs the labelling injective on the vertex
+range; injectivity survives a pass because the pass permutes the
+whole segment. -/
+
+/-- The labelling is injective on the vertex range. -/
+def LabInj (lab : Array Nat) (nn : Nat) : Prop :=
+  ∀ i j, i < nn → j < nn → lab[i]! = lab[j]! → i = j
+
+private theorem countP_range_le_one {p : Nat → Bool} {n : Nat}
+    (h : ∀ i j, i < n → j < n → p i = true → p j = true → i = j) :
+    (List.range n).countP p ≤ 1 := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [List.range_succ, List.countP_append, List.countP_cons,
+      List.countP_nil]
+    rcases hp : p m with _ | _
+    · simp only [Bool.false_eq_true, ite_false]
+      have := ih fun i j hi hj hpi hpj =>
+        h i j (by omega) (by omega) hpi hpj
+      omega
+    · have hz : (List.range m).countP p = 0 := by
+        rw [List.countP_eq_zero]
+        intro a ha hpa
+        have ham := List.mem_range.mp ha
+        exact absurd (h a m (by omega) (by omega) hpa hp) (by omega)
+      simp [hz]
+
+private theorem two_le_countP_range {p : Nat → Bool} {n i j : Nat}
+    (hij : i < j) (hj : j < n) (hpi : p i = true) (hpj : p j = true) :
+    2 ≤ (List.range n).countP p := by
+  induction n with
+  | zero => omega
+  | succ m ih =>
+    rw [List.range_succ, List.countP_append, List.countP_cons,
+      List.countP_nil]
+    rcases Decidable.em (j = m) with heq | hne
+    · have h1 : 0 < (List.range m).countP p :=
+        List.countP_pos_iff.mpr ⟨i, List.mem_range.mpr (by omega), hpi⟩
+      rw [show p m = true from heq ▸ hpj]
+      simp only [ite_true]
+      omega
+    · have := ih (by omega)
+      omega
+
+/-- Injectivity transports across a whole-segment permutation. -/
+theorem labInj_of_perm {lab lab' : Array Nat} {nn : Nat}
+    (hp : (segN lab' 0 nn).Perm (segN lab 0 nn))
+    (h : LabInj lab nn) : LabInj lab' nn := by
+  intro i j hi hj he
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · exfalso
+    have h2 : 2 ≤ (segN lab' 0 nn).count lab'[j]! := by
+      rw [segN, List.count_eq_countP, List.countP_map]
+      refine two_le_countP_range hlt hj ?_ ?_ <;>
+        simp only [Function.comp_apply, Nat.zero_add] <;>
+        simp [he]
+    have h1 : (segN lab 0 nn).count lab'[j]! ≤ 1 := by
+      rw [segN, List.count_eq_countP, List.countP_map]
+      refine countP_range_le_one fun a b ha hb hpa hpb => ?_
+      simp only [Function.comp_apply, Nat.zero_add, beq_iff_eq] at hpa hpb
+      exact h a b ha hb (hpa.trans hpb.symm)
+    rw [hp.count_eq] at h2
+    omega
+  · rcases Nat.lt_or_ge j i with hlt | hge2
+    · exfalso
+      have h2 : 2 ≤ (segN lab' 0 nn).count lab'[i]! := by
+        rw [segN, List.count_eq_countP, List.countP_map]
+        refine two_le_countP_range hlt hi ?_ ?_ <;>
+          simp only [Function.comp_apply, Nat.zero_add] <;>
+          simp [he]
+      have h1 : (segN lab 0 nn).count lab'[i]! ≤ 1 := by
+        rw [segN, List.count_eq_countP, List.countP_map]
+        refine countP_range_le_one fun a b ha hb hpa hpb => ?_
+        simp only [Function.comp_apply, Nat.zero_add, beq_iff_eq]
+          at hpa hpb
+        exact h a b ha hb (hpa.trans hpb.symm)
+      rw [hp.count_eq] at h2
+      omega
+    · omega
+
+/-- Under an injective labelling, separated windows have disjoint
+members. -/
+theorem segments_disjoint_of_labInj {lab : Array Nat}
+    {nn a la b lb : Nat} (h : LabInj lab nn) (hab : a + la ≤ b)
+    (hbn : b + lb ≤ nn) :
+    ∀ v, v ∈ segN lab a la → v ∈ segN lab b lb → False := by
+  intro v hva hvb
+  obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hva
+  obtain ⟨o', ho', he⟩ := mem_segN_iff.mp hvb
+  have := h (b + o') (a + o) (by omega) (by omega) he
+  omega
+
+/-! # The active union as a membership test -/
+
+private theorem testBit_activeUnion_fold {level : Nat} {st : RefineSt} :
+    ∀ (l : List (Nat × Nat)) (A : Nat) (v : Nat),
+      (l.foldl (fun A p => if elem st.active p.1 then
+          A ||| worksetOf st.lab p.1 p.2 else A) A).testBit v =
+        (A.testBit v || l.any fun p =>
+          elem st.active p.1 && (worksetOf st.lab p.1 p.2).testBit v)
+  | [], A, v => by simp
+  | x :: l, A, v => by
+    rw [List.foldl_cons, List.any_cons]
+    rcases hP : elem st.active x.1 with _ | _
+    · rw [ite_eq_right (by simp),
+        testBit_activeUnion_fold (level := level) l A v]
+      simp
+    · rw [ite_eq_left (by simp),
+        testBit_activeUnion_fold (level := level) l _ v, Nat.testBit_or]
+      simp [Bool.or_assoc]
+
+/-- Membership in the active union: some active cell's splitter set
+holds the vertex. -/
+theorem elem_activeUnion {level : Nat} {st : RefineSt} {v : Nat} :
+    elem (activeUnion ctx level st) v = true ↔
+      ∃ p ∈ cells st.ptn level ctx.n, elem st.active p.1 = true ∧
+        elem (worksetOf st.lab p.1 p.2) v = true := by
+  rw [activeUnion, elem,
+    testBit_activeUnion_fold (level := level) (cells st.ptn level ctx.n)
+      0 v,
+    Nat.zero_testBit, Bool.false_or, List.any_eq_true]
+  constructor
+  · rintro ⟨p, hp, hpp⟩
+    rw [Bool.and_eq_true] at hpp
+    exact ⟨p, hp, hpp.1, hpp.2⟩
+  · rintro ⟨p, hp, h1, h2⟩
+    exact ⟨p, hp, by rw [h1, Bool.true_and]; exact h2⟩
+
+/-- An active cell's splitter set lies inside the active union. -/
+theorem workset_submask_activeUnion {level : Nat} {st : RefineSt}
+    {p : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
+    (ha : elem st.active p.1 = true) :
+    worksetOf st.lab p.1 p.2 &&& activeUnion ctx level st =
+      worksetOf st.lab p.1 p.2 :=
+  submask_of_testBit fun _ hi =>
+    elem_activeUnion.mpr ⟨p, hp, ha, hi⟩
+
+private theorem pairwise_rel_of_mem {α : Type} {R : α → α → Prop} :
+    ∀ {l : List α}, l.Pairwise R →
+      ∀ a ∈ l, ∀ b ∈ l, a = b ∨ R a b ∨ R b a
+  | [], _, a, ha, _, _ => absurd ha (by simp)
+  | x :: l, h, a, ha, b, hb => by
+    obtain ⟨hx, hl⟩ := List.pairwise_cons.mp h
+    rcases List.mem_cons.mp ha with rfl | ha' <;>
+      rcases List.mem_cons.mp hb with rfl | hb'
+    · exact Or.inl rfl
+    · exact Or.inr (Or.inl (hx b hb'))
+    · exact Or.inr (Or.inr (hx a ha'))
+    · exact pairwise_rel_of_mem hl a ha' b hb'
+
+/-- Distinct cells of an injective labelling have disjoint splitter
+sets. -/
+theorem worksetOf_cells_disjoint {level : Nat} {st : RefineSt}
+    (hinj : LabInj st.lab ctx.n) (hps : st.ptn.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    {p q : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
+    (hq : q ∈ cells st.ptn level ctx.n) (hne : p ≠ q) :
+    worksetOf st.lab p.1 p.2 &&& worksetOf st.lab q.1 q.2 = 0 := by
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hps]
+    exact hend
+  have hpb := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn p hp
+  have hqb := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn q hq
+  have hple := cells_le p hp
+  have hqle := cells_le q hq
+  rcases pairwise_rel_of_mem cells_pairwise p hp q hq with rfl | ho | ho
+  · exact absurd rfl hne
+  · exact worksetOf_disjoint fun v hv hv' =>
+      segments_disjoint_of_labInj hinj (by omega : p.1 + (p.2 + 1 - p.1) ≤ q.1)
+        (by omega) v hv hv'
+  · have h := worksetOf_disjoint (lab := st.lab) (lab' := st.lab)
+      (lo := q.1) (hi := q.2) (lo' := p.1) (hi' := p.2)
+      fun v hv hv' => segments_disjoint_of_labInj hinj
+        (by omega : q.1 + (q.2 + 1 - q.1) ≤ p.1) (by omega) v hv hv'
+    calc worksetOf st.lab p.1 p.2 &&& worksetOf st.lab q.1 q.2
+        = worksetOf st.lab q.1 q.2 &&& worksetOf st.lab p.1 p.2 :=
+          Nat.and_comm ..
+      _ = 0 := h
+
+/-- An inactive cell's splitter set misses the active union. -/
+theorem inactive_and_activeUnion {level : Nat} {st : RefineSt}
+    (hinj : LabInj st.lab ctx.n) (hps : st.ptn.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    {p : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
+    (ha : elem st.active p.1 = false) :
+    worksetOf st.lab p.1 p.2 &&& activeUnion ctx level st = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.zero_testBit]
+  rcases h1 : (worksetOf st.lab p.1 p.2).testBit i with _ | _
+  · rfl
+  · rcases h2 : (activeUnion ctx level st).testBit i with _ | _
+    · rfl
+    · obtain ⟨q, hq, hqa, hqi⟩ := elem_activeUnion.mp h2
+      have hne : p ≠ q := fun he => by
+        rw [he, hqa] at ha
+        cases ha
+      have := worksetOf_cells_disjoint hinj hps hend hp hq hne
+      have h3 := congrArg (fun x => x.testBit i) this
+      simp only [Nat.testBit_and, Nat.zero_testBit] at h3
+      rw [h1, show (worksetOf st.lab q.1 q.2).testBit i = true from hqi]
+        at h3
+      cases h3
 
 end Hex.GraphIso.Nauty
