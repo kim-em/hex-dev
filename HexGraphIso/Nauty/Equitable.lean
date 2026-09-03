@@ -3134,4 +3134,265 @@ theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
         · intro hact
           exact hI (by rw [hacteq]; exact hact)
 
+private theorem trivial_state_of_fields {ctx : Ctx}
+    {level split1 nb : Nat} {st R : RefineSt}
+    (hRa : R.active = erase st.active split1) (hRp : R.ptn = st.ptn)
+    (hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
+    (hok : StOk ctx.n level st) (hnb : ctx.n ≤ nb)
+    (hmem : elem st.active split1 = true) (hs1 : split1 < ctx.n) :
+    (bitCount nb (refineTrivial ctx level split1 R).active +
+        2 * st.numcells + 1 ≤
+      bitCount nb st.active +
+        2 * (refineTrivial ctx level split1 R).numcells) ∧
+    st.numcells ≤ (refineTrivial ctx level split1 R).numcells ∧
+    (∀ p ∈ cells st.ptn level ctx.n,
+      (elem st.active p.1 = true → p.1 ≠ split1 →
+        ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineTrivial ctx level split1
+            R).ptn[u - 1]! ≤ level) →
+          elem (refineTrivial ctx level split1 R).active u = true) ∧
+      ((elem st.active p.1 = false ∨ p.1 = split1) →
+        ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineTrivial ctx level split1
+            R).ptn[u - 1]! ≤ level) → u ≠ w →
+          elem (refineTrivial ctx level split1 R).active u = true)) := by
+  have hps := hok.ptnSize
+  have hls := hok.labSize
+  have hend := hok.ptnEnd
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hps]
+    exact hend
+  have hcbd := cells_end_lt_of_end (ptn := st.ptn) (level := level)
+    (Nat.le_of_eq hps.symm) hend hendn
+  have hopenc : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level := by
+    intro p hp q hq1 hq2
+    exact (cells_isCell (Nat.le_of_eq hps.symm) hend p hp).2.2.1 q hq1
+      (by
+        have := cells_le p hp
+        omega)
+  have herase : bitCount nb (erase st.active split1) + 1 =
+      bitCount nb st.active :=
+    bitCount_erase_of_elem (by omega) hmem
+  have hactconv : ∀ a : Nat, a ≠ split1 →
+      elem (erase st.active split1) a = elem st.active a := by
+    intro a ha
+    rw [elem_erase,
+      show (split1 == a) = false from by
+        simp only [beq_eq_false_iff_ne]
+        omega,
+      Bool.not_false, Bool.and_true]
+  rw [refineTrivial, hRp]
+  obtain ⟨g1, g2, g3, g4, g5, g6⟩ :=
+    refineTrivial_go_state (level := level)
+      (gRow := ctx.g[R.lab[split1]!]!) (nb := nb)
+      (cells st.ptn level ctx.n) R
+      (fun p hp => ⟨cells_le p hp, by
+        rw [hRl, hls]
+        exact hcbd p hp⟩)
+      cells_pairwise
+      (by rw [hRp, hRl]; omega)
+  rw [hRa] at g2 g4 g6
+  rw [hRn] at g4 g5
+  refine ⟨by omega, g5, ?_⟩
+  intro p hp
+  have hopen := hopenc p hp
+  have hle12 := cells_le p hp
+  rcases g6 p hp with ⟨hPu, hAu⟩ | ⟨j, x, hj1, hj2, hjl, hPo, hx,
+      himp, hax, hAo⟩
+  · constructor
+    · intro hact hne u hu1 hu2 hu3
+      rcases Decidable.em (u = p.1) with heq | hne2
+      · rw [heq, hAu p.1 (Nat.le_refl _) (by omega), hactconv p.1 hne]
+        exact hact
+      · have hb := hu3.resolve_left hne2
+        rw [hPu (u - 1) (by omega) (by omega), hRp] at hb
+        exact absurd hb (by
+          have := hopen (u - 1) (by omega) (by omega)
+          omega)
+    · intro hact
+      refine ⟨p.1, fun u hu1 hu2 hu3 hne2 => ?_⟩
+      have hb := hu3.resolve_left hne2
+      rw [hPu (u - 1) (by omega) (by omega), hRp] at hb
+      exact absurd hb (by
+        have := hopen (u - 1) (by omega) (by omega)
+        omega)
+  · have himp' : elem st.active p.1 = true → p.1 ≠ split1 →
+        x = j + 1 := by
+      intro hact hne
+      exact himp (by rw [hactconv p.1 hne]; exact hact)
+    constructor
+    · intro hact hne u hu1 hu2 hu3
+      have hxj := himp' hact hne
+      rcases Decidable.em (u = p.1) with heq | hne2
+      · rw [heq, hAo p.1 (Nat.le_refl _) (by omega) (by omega),
+          hactconv p.1 hne]
+        exact hact
+      · have hb := hu3.resolve_left hne2
+        rcases Decidable.em (u - 1 = j) with hej | hej
+        · rw [show u = x from by omega]
+          exact hax
+        · rw [hPo (u - 1) (by omega) (by omega) hej, hRp] at hb
+          exact absurd hb (by
+            have := hopen (u - 1) (by omega) (by omega)
+            omega)
+    · intro hact
+      rcases hx with hxa | hxb
+      · refine ⟨j + 1, fun u hu1 hu2 hu3 hne2 => ?_⟩
+        rcases Decidable.em (u = x) with heq | hne3
+        · rw [heq]
+          exact hax
+        · have hb := hu3.resolve_left (by omega)
+          rcases Decidable.em (u - 1 = j) with hej | hej
+          · exact absurd (show u = j + 1 from by omega) hne2
+          · rw [hPo (u - 1) (by omega) (by omega) hej, hRp] at hb
+            exact absurd hb (by
+              have := hopen (u - 1) (by omega) (by omega)
+              omega)
+      · refine ⟨p.1, fun u hu1 hu2 hu3 hne2 => ?_⟩
+        have hb := hu3.resolve_left hne2
+        rcases Decidable.em (u - 1 = j) with hej | hej
+        · rw [show u = x from by omega]
+          exact hax
+        · rw [hPo (u - 1) (by omega) (by omega) hej, hRp] at hb
+          exact absurd hb (by
+            have := hopen (u - 1) (by omega) (by omega)
+            omega)
+
+private theorem nontrivial_state_of_fields {ctx : Ctx}
+    {level split1 split2 nb : Nat} {st R : RefineSt}
+    (hRa : R.active = erase st.active split1) (hRp : R.ptn = st.ptn)
+    (_hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
+    (hok : StOk ctx.n level st) (hnb : ctx.n ≤ nb)
+    (hmem : elem st.active split1 = true) (hs1 : split1 < ctx.n) :
+    (bitCount nb (refineNontrivial ctx level split1 split2 R).active +
+        2 * st.numcells + 1 ≤
+      bitCount nb st.active +
+        2 * (refineNontrivial ctx level split1 split2 R).numcells) ∧
+    st.numcells ≤
+      (refineNontrivial ctx level split1 split2 R).numcells ∧
+    (∀ p ∈ cells st.ptn level ctx.n,
+      (elem st.active p.1 = true → p.1 ≠ split1 →
+        ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineNontrivial ctx level split1 split2
+            R).ptn[u - 1]! ≤ level) →
+          elem (refineNontrivial ctx level split1 split2
+            R).active u = true) ∧
+      ((elem st.active p.1 = false ∨ p.1 = split1) →
+        ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineNontrivial ctx level split1 split2
+            R).ptn[u - 1]! ≤ level) → u ≠ w →
+          elem (refineNontrivial ctx level split1 split2
+            R).active u = true)) := by
+  have hps := hok.ptnSize
+  have hend := hok.ptnEnd
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hps]
+    exact hend
+  have hcbd := cells_end_lt_of_end (ptn := st.ptn) (level := level)
+    (Nat.le_of_eq hps.symm) hend hendn
+  have hopenc : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level := by
+    intro p hp q hq1 hq2
+    exact (cells_isCell (Nat.le_of_eq hps.symm) hend p hp).2.2.1 q hq1
+      (by
+        have := cells_le p hp
+        omega)
+  have herase : bitCount nb (erase st.active split1) + 1 =
+      bitCount nb st.active :=
+    bitCount_erase_of_elem (by omega) hmem
+  have hactconv : ∀ a : Nat, a ≠ split1 →
+      elem (erase st.active split1) a = elem st.active a := by
+    intro a ha
+    rw [elem_erase,
+      show (split1 == a) = false from by
+        simp only [beq_eq_false_iff_ne]
+        omega,
+      Bool.not_false, Bool.and_true]
+  have hactsp : elem (erase st.active split1) split1 = false := by
+    rw [elem_erase]
+    simp
+  rw [refineNontrivial]
+  dsimp only
+  obtain ⟨R2, hR2⟩ : ∃ R2 : RefineSt, ({ R with
+      longcode := mash R.longcode (split2 - split1 + 1) } :
+        RefineSt) = R2 := ⟨_, rfl⟩
+  have hR2a : R2.active = erase st.active split1 := by
+    rw [← hR2]
+    exact hRa
+  have hR2p : R2.ptn = st.ptn := by
+    rw [← hR2]
+    exact hRp
+  have hR2n : R2.numcells = st.numcells := by
+    rw [← hR2]
+    exact hRn
+  rw [hR2, hRp]
+  obtain ⟨_, _, _, g4, g5, g6⟩ :=
+    refineNontrivial_go_state (ctx := ctx) (level := level)
+      (workset := worksetOf R.lab split1 split2) (nb := nb)
+      (cells R.ptn level ctx.n) R2
+      (fun p hp => by
+        rw [hRp] at hp
+        refine ⟨cells_le p hp, ?_, ?_⟩
+        · rw [hR2p, hps]
+          exact hcbd p hp
+        · have := hcbd p hp
+          omega)
+      (by rw [hRp]; exact cells_pairwise)
+      (fun p hp q hq1 hq2 => by
+        rw [hR2p]
+        rw [hRp] at hp
+        exact hopenc p hp q hq1 hq2)
+  rw [hR2a] at g4 g6
+  rw [hR2n] at g4 g5
+  rw [hRp] at g4 g5 g6
+  refine ⟨by omega, g5, ?_⟩
+  intro p hp
+  obtain ⟨hA, hI⟩ := g6 p hp
+  constructor
+  · intro hact hne u hu1 hu2 hu3
+    exact hA (by rw [hactconv p.1 hne]; exact hact) u hu1 hu2 hu3
+  · intro hact
+    refine hI ?_
+    rcases hact with hact | heq
+    · rcases Decidable.em (p.1 = split1) with heq2 | hne
+      · rw [heq2]
+        exact hactsp
+      · rw [hactconv p.1 hne]
+        exact hact
+    · rw [heq]
+      exact hactsp
+
+/-- One `refineStep`, the bookkeeping half: the potential drops
+strictly, and per old cell an active non-splitter cell activates every
+fragment start while any other cell leaves at most one start
+inactive. -/
+theorem refineStep_state {ctx : Ctx} {level split1 nb : Nat}
+    {st : RefineSt} (hok : StOk ctx.n level st)
+    (hnb : ctx.n ≤ nb) (hmem : elem st.active split1 = true)
+    (hs1 : split1 < ctx.n) :
+    (bitCount nb (refineStep ctx level split1 st).active +
+        2 * st.numcells + 1 ≤
+      bitCount nb st.active +
+        2 * (refineStep ctx level split1 st).numcells) ∧
+    st.numcells ≤ (refineStep ctx level split1 st).numcells ∧
+    (∀ p ∈ cells st.ptn level ctx.n,
+      (elem st.active p.1 = true → p.1 ≠ split1 →
+        ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineStep ctx level split1
+            st).ptn[u - 1]! ≤ level) →
+          elem (refineStep ctx level split1 st).active u = true) ∧
+      ((elem st.active p.1 = false ∨ p.1 = split1) →
+        ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ (refineStep ctx level split1
+            st).ptn[u - 1]! ≤ level) → u ≠ w →
+          elem (refineStep ctx level split1 st).active u = true)) := by
+  rw [refineStep]
+  dsimp only
+  split
+  · exact trivial_state_of_fields (st := st) rfl rfl rfl rfl hok hnb
+      hmem hs1
+  · exact nontrivial_state_of_fields (st := st) rfl rfl rfl rfl hok
+      hnb hmem hs1
+
 end Hex.GraphIso.Nauty
