@@ -94,6 +94,84 @@ workflows:
                 .lake/packages/Hex*/.lake/build
                 .lake/packages/hex-test-kit/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+  nauty-ffi: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library and fixture tests
+            run: lake build NautyFFI nautyffi_tests
+          - name: Run in-process fixture tests
+            run: .lake/build/bin/nautyffi_tests
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+      # nauty-ffi ships native code and explicitly supports macOS; this lane is
+      # the cross-platform C compilation and runtime check.
+      build-macos:
+        runs-on: macos-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library and fixture tests
+            run: lake build NautyFFI nautyffi_tests
+          - name: Run in-process fixture tests
+            run: .lake/build/bin/nautyffi_tests
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
   hex-arith: |
     name: CI
     on:
