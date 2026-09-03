@@ -121,4 +121,37 @@ theorem firstterminal_firsttc_neg {level : Nat} {st : SearchSt}
     (firstterminal level st).firsttc[level + 1]! = -1 := by
   rw [firstterminal_firsttc, Array.getElem!_set!_self _ _ _ h]
 
+/-! # Where target-cell agreement comes from
+
+`othernode` decides its target cell in two branches, and only one of
+them checks agreement with the first path.
+
+With `compCanon < 0` the node calls `maketargetcell` with the first
+path's own record as the hint and demotes `eqlevFirst` to `level - 1`
+when the chosen position differs from it, so agreement at that level is
+enforced by the search itself.
+
+With `compCanon` at least `0` the node calls `maketargetcell` with the
+hint `-1`, which is exactly what `firstPathNode` passes, and performs no
+check. The outer guard admits `eqlevFirst = level` here, so a live
+`eqlevFirst` in this branch carries no state-level witness of agreement.
+Agreement instead follows from the two nodes having equal partitions,
+through the congruence below, since the target-cell choice is a function
+of the partition and the hint.
+
+Target-cell agreement and partition agreement are therefore one
+level-by-level induction rather than two stages: agreement of the
+targets below a level gives equal partitions at it, and equal partitions
+at a level give agreement of the targets there. -/
+
+/-- The target-cell choice is a function of the labelling, the partition
+and the hint. This is the step that carries partition agreement into
+target agreement in the branch where `othernode` performs no check. -/
+theorem maketargetcell_congr {lab ptn lab' ptn' : Array Nat}
+    {level tcLevel : Nat} {hint : Int}
+    (hlab : lab = lab') (hptn : ptn = ptn') :
+    maketargetcell ctx lab ptn level tcLevel hint =
+      maketargetcell ctx lab' ptn' level tcLevel hint := by
+  rw [hlab, hptn]
+
 end Hex.GraphIso.Nauty
