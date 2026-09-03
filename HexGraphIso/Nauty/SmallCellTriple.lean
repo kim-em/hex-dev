@@ -1016,4 +1016,80 @@ theorem triple_deviation_leafRows {st : RefineSt}
     (show a ≤ tc + 2 - tc by omega) (show b ≤ tc + 2 - tc by omega)
     hvv hdesc hdisc
 
+/-! # The pair-matching closure
+
+The pair deviation needs the involution swapping every pair in the
+`PairMatch`-reachability closure of the target pair. This section
+defines the closure and proves the position facts its construction
+consumes: a cell is determined by its start, a pair start is never
+another pair's second position, and every closure member is a pair
+cell. -/
+
+section PairClosure
+
+variable {lab ptn : Array Nat} {level : Nat}
+
+/-- The `PairMatch`-reachability closure of a pair-cell start. -/
+inductive PairReach (ctx : Ctx) (lab ptn : Array Nat) (level : Nat)
+    (t : Nat) : Nat → Prop where
+  | base : PairReach ctx lab ptn level t t
+  | step {c e : Nat} : PairReach ctx lab ptn level t c →
+      (c, c + 1) ∈ cells ptn level ctx.n →
+      (e, e + 1) ∈ cells ptn level ctx.n →
+      PairMatch ctx.g lab[c]! lab[c + 1]! lab[e]! lab[e + 1]! →
+      PairReach ctx lab ptn level t e
+
+/-- A cell is determined by its start. -/
+theorem cells_eq_of_start {nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    {c e e' : Nat} (h1 : (c, e) ∈ cells ptn level nn)
+    (h2 : (c, e') ∈ cells ptn level nn) : e = e' := by
+  obtain ⟨-, -, he⟩ := (mem_cells_iff hnn hend).mp h1
+  obtain ⟨-, -, he'⟩ := (mem_cells_iff hnn hend).mp h2
+  rw [he, he']
+
+/-- A pair start is never another pair's second position. -/
+theorem pair_start_ne_second {nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    {c c' : Nat} (h1 : (c, c + 1) ∈ cells ptn level nn)
+    (h2 : (c', c' + 1) ∈ cells ptn level nn) : c ≠ c' + 1 := by
+  intro heq
+  obtain ⟨hlt', -, he'⟩ := (mem_cells_iff hnn hend).mp h2
+  obtain ⟨-, hstart, -⟩ := (mem_cells_iff hnn hend).mp h1
+  have hopen : ptn[c']! > level := by
+    have hIs := cells_isCell hnn hend _ h2
+    rw [show c' + 1 + 1 - c' = 2 by omega] at hIs
+    exact hIs.2.2.1 c' (Nat.le_refl _) (by omega)
+  rcases hstart with h0 | hcl
+  · omega
+  · rw [heq, show c' + 1 - 1 = c' by omega] at hcl
+    omega
+
+/-- Every member of the closure of a pair start is itself a pair-cell
+start. -/
+theorem pairReach_pair {t c : Nat}
+    (hroot : (t, t + 1) ∈ cells ptn level ctx.n)
+    (h : PairReach ctx lab ptn level t c) :
+    (c, c + 1) ∈ cells ptn level ctx.n := by
+  induction h with
+  | base => exact hroot
+  | step hr hc he hm ih => exact he
+
+/-- Distinct closure pairs occupy disjoint positions. -/
+theorem pair_cells_disj {nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    {c c' : Nat} (h1 : (c, c + 1) ∈ cells ptn level nn)
+    (h2 : (c', c' + 1) ∈ cells ptn level nn) (hne : c ≠ c') :
+    c + 2 ≤ c' ∨ c' + 2 ≤ c := by
+  have hIs1 := cells_isCell hnn hend _ h1
+  have hIs2 := cells_isCell hnn hend _ h2
+  rw [show c + 1 + 1 - c = 2 by omega] at hIs1
+  rw [show c' + 1 + 1 - c' = 2 by omega] at hIs2
+  rcases isCell_disj_or_eq hIs1 hIs2 with ⟨heq, -⟩ | hd | hd
+  · exact absurd heq hne
+  · exact Or.inl hd
+  · exact Or.inr hd
+
+end PairClosure
+
 end Hex.GraphIso.Nauty
