@@ -1650,4 +1650,33 @@ theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
     hinv hM (Nat.le_refl cs.length) K
   rwa [List.take_length] at h
 
+
+/-! # One child against its node's subtree key -/
+
+/-- A child's subtree key is dominated by its node's: the chain step
+of the generator-return absorption, walked from a skipped sibling up
+to the child of the loop that continues. -/
+theorem specChild_le_specNode {ctx : Ctx} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat} {len : Nat}
+    (cs : List Nat)
+    (hdisc : discreteAt (refine ctx level lab ptn active
+      numcells).ptn level ctx.n = false)
+    (hlen : (specMaketargetcell ctx
+        (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn level
+          tcLevel).2.2 = len + 1)
+    {o : Nat} (ho : o ≤ len) :
+    keyLe
+      (prefixKey (cs ++ [(refine ctx level lab ptn active
+          numcells).longcode])
+        (specChild ctx tcLevel fuel level lab ptn active numcells o))
+      (prefixKey cs
+        (specNode ctx tcLevel (fuel + 1) level lab ptn active
+          numcells)) := by
+  rw [specNode_internal cs hdisc hlen]
+  rcases o with _ | o'
+  · exact keyLe_keysMax (Or.inl rfl)
+  · refine keyLe_keysMax (Or.inr ?_)
+    exact List.mem_map.mpr ⟨o', List.mem_range.mpr (by omega), rfl⟩
+
 end Hex.GraphIso.Nauty
