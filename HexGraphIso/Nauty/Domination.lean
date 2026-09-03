@@ -1537,4 +1537,117 @@ structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
   firstKeyLe : keyLe (pathLeafKey ctx fs st.firstlab)
     (incKey ctx bs st.canonlab)
 
+/-! # Absorption of dominated sibling suffixes
+
+An early unwind abandons the remaining siblings of every loop
+strictly between the return level and the leaf. When the leaf event
+left the comparison machine frozen downward, the recorded divergence
+sits at level `eqlevCanon + 1`, and the `pruneReturn` forms that
+fire in that mode (`eqlevCanon` itself, or `allsamelevel - 1` above
+it) never return below the divergence; every abandoned loop's path
+prefix therefore still contains the divergence, so the whole subtree
+of every abandoned sibling compares below the incumbent and the key
+maximum absorbs the suffix locally, loop by loop. -/
+
+private theorem getElem!_take'' {l : List Nat} {m i : Nat}
+    (him : i < m) (hil : i < l.length) : (l.take m)[i]! = l[i]! := by
+  have hti : i < (l.take m).length := by
+    rw [List.length_take]
+    omega
+  rw [getElem!_pos (l.take m) i hti, getElem!_pos l i hil,
+    List.getElem_take]
+
+/-- A seeded maximum over dominated keys is the seed. -/
+theorem keysMax_absorb {b : Key} {l : List Key}
+    (h : ∀ y ∈ l, keyLe y b) : keysMax b l = b :=
+  keysMax_eq_of_le (keyLe_refl b) h (Or.inl rfl)
+
+/-- The frozen divergence survives truncation: with the divergence
+recorded at level `eqlevCanon + 1`, the path prefix down to any level
+at or beyond it still compares below the incumbent, whatever comes
+after. -/
+theorem codeInv_take_listCmp_lt {nn : Nat} {cs bs : List Nat}
+    {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
+    (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
+    {M : Nat} (hM : eqlevCanon.toNat < M) (hMcs : M ≤ cs.length)
+    (ext : List Nat) :
+    listCmp compare (cs.take M ++ ext) (bs ++ [codeSentinel]) =
+      .lt := by
+  rcases hinv.tri with ⟨hcc, -⟩ | ⟨j, hj1, hjL, hjm, hec, hpre, hcase⟩
+  · cases hcc
+  rcases hcase with ⟨-, hlt⟩ | ⟨hcc, -⟩
+  case inr => cases hcc
+  have hjM : j ≤ M := by
+    rw [hec] at hM
+    simp only [Int.ofNat_eq_natCast, Int.toNat_natCast] at hM
+    omega
+  refine listCmp_lt_of_prefix (j - 1) _ _
+    (by rw [List.length_append, List.length_take]; omega)
+    (by rw [List.length_append]; simp; omega)
+    (fun i hi => ?_) ?_
+  · rw [getElem!_append_left
+        (xs := cs.take M) (by rw [List.length_take]; omega),
+      getElem!_append_sentinel (by omega),
+      getElem!_take'' (by omega) (by omega)]
+    have hp := hpre (i + 1) (by omega) (by omega)
+    simpa using hp
+  · rw [getElem!_append_left
+        (xs := cs.take M) (by rw [List.length_take]; omega),
+      getElem!_append_sentinel (by omega),
+      getElem!_take'' (by omega) (by omega),
+      (by omega : j - 1 + 1 = j)]
+    exact hlt
+
+/-- The key-level truncated verdict: every subtree hanging below the
+truncated path is dominated once the machine froze downward at or
+above the truncation level. -/
+theorem frozen_take_keyCmp_lt {nn : Nat} {cs bs : List Nat}
+    {ctx : Ctx} {canoncode : Array Nat} {canonlevel : Nat}
+    {eqlevCanon : Int} {canonlab : Array Nat}
+    (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
+    {M : Nat} (hM : eqlevCanon.toNat < M) (hMcs : M ≤ cs.length)
+    (K : Key) :
+    keyCmp (prefixKey (cs.take M) K) (incKey ctx bs canonlab) =
+      .lt := by
+  rw [prefixKey, incKey, keyCmp]
+  show (match listCmp compare (cs.take M ++ K.codes)
+      (bs ++ [codeSentinel]) with
+    | .eq => listCmp rowCmp K.rows (leafRows ctx canonlab)
+    | .lt => .lt
+    | .gt => .gt) = .lt
+  rw [codeInv_take_listCmp_lt hinv hM hMcs K.codes]
+
+/-- `frozen_take_keyCmp_lt` in the `keyLe` form the absorption
+consumes. -/
+theorem frozen_take_keyLe {nn : Nat} {cs bs : List Nat}
+    {ctx : Ctx} {canoncode : Array Nat} {canonlevel : Nat}
+    {eqlevCanon : Int} {canonlab : Array Nat}
+    (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
+    {M : Nat} (hM : eqlevCanon.toNat < M) (hMcs : M ≤ cs.length)
+    (K : Key) :
+    keyLe (prefixKey (cs.take M) K) (incKey ctx bs canonlab) := by
+  show keyCmp _ _ ≠ .gt
+  rw [frozen_take_keyCmp_lt hinv hM hMcs K]
+  intro h
+  cases h
+
+/-- The whole-path instance: with the machine frozen downward, every
+subtree below the current path is dominated. -/
+theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+    {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
+    {canonlab : Array Nat}
+    (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
+    (K : Key) :
+    keyLe (prefixKey cs K) (incKey ctx bs canonlab) := by
+  have hM : eqlevCanon.toNat < cs.length := by
+    rcases hinv.tri with ⟨hcc, -⟩ |
+      ⟨j, hj1, hjL, hjm, hec, hpre, hcase⟩
+    · cases hcc
+    rw [hec]
+    simp only [Int.ofNat_eq_natCast, Int.toNat_natCast]
+    omega
+  have h := frozen_take_keyLe (ctx := ctx) (canonlab := canonlab)
+    hinv hM (Nat.le_refl cs.length) K
+  rwa [List.take_length] at h
+
 end Hex.GraphIso.Nauty
