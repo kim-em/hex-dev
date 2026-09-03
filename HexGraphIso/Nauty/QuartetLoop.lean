@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.QuartetStmt
 import all HexGraphIso.Nauty.Search
+import all HexGraphIso.Nauty.OrbJoin
 
 public section
 
@@ -321,5 +322,65 @@ theorem orbitStepSet_orbitClose_nn {nn : Nat} {gens : List (Array Nat)}
         orbitClose nn gens 0 s
       rw [show orbitClose nn gens 0 s = s from rfl, hs0,
         orbitStepSet_zero]
+
+
+/-! # Completeness
+
+The saturated set is closed under the generators, so it contains
+everything a word reaches, however long the word is. That is the
+converse of `orbitClose_sound`, and it is what turns the
+transcription's pointer test into the model's `orbPruned`. -/
+
+/-- The saturated set absorbs a whole word from any of its members. -/
+private theorem orbitClose_nn_word {nn : Nat} {gens : List (Array Nat)}
+    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : Nat}
+    (hs : s < 2 ^ nn) :
+    ∀ (w : List (Array Nat)), (∀ γ ∈ w, γ ∈ gens) →
+      ∀ (x : Nat), (orbitClose nn gens nn s).testBit x = true →
+        (orbitClose nn gens nn s).testBit (applyWord w x) = true
+  | [], _, _, hx => hx
+  | γ :: w, hw, x, hx => by
+    have hγ : γ ∈ gens := hw γ (List.mem_cons_self ..)
+    have hxn : x < nn :=
+      lt_of_testBit_of_lt (orbitClose_lt hb nn s hs) hx
+    have hstep : (orbitClose nn gens nn s).testBit γ[x]! = true := by
+      have := orbitStepSet_step (nn := nn) (gens := gens)
+        (s := orbitClose nn gens nn s) hγ hxn hx
+      rwa [orbitStepSet_orbitClose_nn hb hs] at this
+    exact orbitClose_nn_word hb hs w
+      (fun δ hδ => hw δ (List.mem_cons_of_mem _ hδ)) γ[x]! hstep
+
+/-- **The orbit closure is complete.** Anything a forward word reaches
+from `v` is in the closure of `{v}` at fuel `nn`. This is the converse
+of `orbitClose_sound`, and the direction the domination step needs. -/
+theorem orbitClose_of_wordConn {nn : Nat} {gens : List (Array Nat)}
+    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {v u : Nat}
+    (hv : v < nn) (h : WordConn gens v u) :
+    (orbitClose nn gens nn (insert 0 v)).testBit u = true := by
+  obtain ⟨w, hw, happ⟩ := h
+  have hins : insert 0 v < 2 ^ nn := by
+    refine lt_two_pow_of_bits fun i hi => ?_
+    rw [testBit_insert, Nat.zero_testBit]
+    have : v ≠ i := by omega
+    simp [this]
+  have hv0 : (orbitClose nn gens nn (insert 0 v)).testBit v = true := by
+    refine orbitClose_grows nn _ v ?_
+    rw [testBit_insert, Nat.zero_testBit]
+    simp
+  have := orbitClose_nn_word hb hins w hw v hv0
+  rwa [happ] at this
+
+/-- **The transcription's orbit test implies the model's prune.** An
+earlier sibling word-connected to this one makes `orbPruned` true, so
+`childKey_of_orbPruned` applies and the dropped child repeats a key
+the loop already folded in. -/
+theorem orbPruned_of_wordConn {nn : Nat} {gens : List (Array Nat)}
+    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {rsLab : Array Nat}
+    {tc o o' : Nat} (ho' : o' < o) (hv : rsLab[tc + o]! < nn)
+    (hconn : WordConn gens rsLab[tc + o]! rsLab[tc + o']!) :
+    orbPruned nn gens rsLab tc o = true := by
+  rw [orbPruned]
+  refine List.any_eq_true.mpr ⟨o', List.mem_range.mpr ho', ?_⟩
+  exact orbitClose_of_wordConn hb hv hconn
 
 end Hex.GraphIso.Nauty
