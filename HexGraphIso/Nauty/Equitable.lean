@@ -3536,7 +3536,7 @@ private theorem worksetOf_nested {lab : Array Nat} {a b a' b' : Nat}
 
 private theorem submask_trans {x y z : Nat} (h1 : x &&& y = x)
     (h2 : y &&& z = y) : x &&& z = x :=
-  submask_of_testBit fun i hi =>
+  submask_of_testBit fun _ hi =>
     testBit_of_submask h2 (testBit_of_submask h1 hi)
 
 private theorem zero_of_and_submask {a u v : Nat} (h1 : a &&& u = 0)
@@ -3610,5 +3610,517 @@ private theorem activeUnion_lt {level : Nat} {st : RefineSt}
     have h3 : (worksetOf st.lab p.1 p.2).testBit i = true := hw
     rw [h3] at h2
     cases h2
+
+private theorem sub_and_zero {x e d : Nat} (h1 : x &&& e = x)
+    (h2 : e &&& d = 0) : x &&& d = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.testBit_and, Nat.zero_testBit]
+  rcases hx : x.testBit i with _ | _
+  · rfl
+  · have he := testBit_of_submask h1 hx
+    have := congrArg (fun z => z.testBit i) h2
+    simp only [Nat.testBit_and, Nat.zero_testBit, he,
+      Bool.true_and] at this
+    rw [this]
+    rfl
+
+private theorem sub_or_cancel {x a b : Nat}
+    (h1 : x &&& (a ||| b) = x) (h2 : x &&& b = 0) : x &&& a = x :=
+  submask_of_testBit fun i hi => by
+    have hor := testBit_of_submask h1 hi
+    rw [Nat.testBit_or] at hor
+    rcases hb : b.testBit i with _ | _
+    · rw [hb, Bool.or_false] at hor
+      exact hor
+    · exfalso
+      have := congrArg (fun z => z.testBit i) h2
+      simp only [Nat.testBit_and, Nat.zero_testBit, hi, hb,
+        Bool.true_and] at this
+      cases this
+
+/-! # The certificate invariant survives one refinement step -/
+
+theorem certInv_refineStep {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hok : StOk ctx.n level st)
+    (hinj : LabInj st.lab ctx.n) (hstarts : StartsOk level st)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hmem : elem st.active split1 = true) (hs1 : split1 < ctx.n)
+    (hinv : CertInv ctx level st) :
+    CertInv ctx level (refineStep ctx level split1 st) := by
+  have hps := hok.ptnSize
+  have hls := hok.labSize
+  have hend := hok.ptnEnd
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hps]
+    exact hend
+  have hrok : StOk ctx.n level (refineStep ctx level split1 st) :=
+    refineStep_stOk rfl hok
+  have hRI : RefInv level st.lab st.ptn
+      (refineStep ctx level split1 st) :=
+    refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
+      (Nat.le_of_eq hps.symm) (hls.trans hps.symm) hend
+  obtain ⟨r, hr⟩ : ∃ r, refineStep ctx level split1 st = r := ⟨_, rfl⟩
+  rw [hr] at hrok hRI
+  have hcc := refineStep_cell_const (st := st) hok hsymm hs1
+  obtain ⟨_, _, hact3⟩ :=
+    refineStep_state (nb := ctx.n) (st := st) hok (Nat.le_refl _)
+      hmem hs1
+  rw [hr] at hcc hact3
+  rw [hr]
+  have hgrow := hRI.grow
+  have hperm := hRI.perm
+  have hrps := hrok.ptnSize
+  have hrend := hrok.ptnEnd
+  have hrendn : r.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hrps]
+    exact hrend
+  have hrinj : LabInj r.lab ctx.n :=
+    labInj_of_perm
+      (cellsPerm_segN_perm hperm (Nat.le_of_eq hps.symm) hend
+        hendn).symm hinj
+  have hIsCellOld := cells_isCell (ptn := st.ptn) (level := level)
+    (Nat.le_of_eq hps.symm) hend
+  have hcbd := cells_end_lt_of_end (ptn := st.ptn) (level := level)
+    (Nat.le_of_eq hps.symm) hend hendn
+  have hIsCellNew := cells_isCell (ptn := r.ptn) (level := level)
+    (Nat.le_of_eq hrps.symm) hrend
+  have hrcbd := cells_end_lt_of_end (ptn := r.ptn) (level := level)
+    (Nat.le_of_eq hrps.symm) hrend hrendn
+  have hdisjOld : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ q ∈ cells st.ptn level ctx.n, p ≠ q →
+      worksetOf st.lab p.1 p.2 &&& worksetOf st.lab q.1 q.2 = 0 :=
+    fun p hp q hq hne =>
+      worksetOf_cells_disjoint (st := st) hinj hps hend hp hq hne
+  have hdisjNew : ∀ p ∈ cells r.ptn level ctx.n,
+      ∀ q ∈ cells r.ptn level ctx.n, p ≠ q →
+      worksetOf r.lab p.1 p.2 &&& worksetOf r.lab q.1 q.2 = 0 :=
+    fun p hp q hq hne =>
+      worksetOf_cells_disjoint (st := r) hrinj hrps hrend hp hq hne
+  have hstartuniq : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ q ∈ cells st.ptn level ctx.n, p.1 = q.1 → p = q := by
+    intro p hp q hq he
+    rcases pairwise_rel_of_mem cells_pairwise p hp q hq with
+      h | h | h
+    · exact h
+    · have := cells_le p hp
+      omega
+    · have := cells_le q hq
+      omega
+  have hstartuniqR : ∀ p ∈ cells r.ptn level ctx.n,
+      ∀ q ∈ cells r.ptn level ctx.n, p.1 = q.1 → p = q := by
+    intro p hp q hq he
+    rcases pairwise_rel_of_mem cells_pairwise p hp q hq with
+      h | h | h
+    · exact h
+    · have := cells_le p hp
+      omega
+    · have := cells_le q hq
+      omega
+  have hws : ∀ D ∈ cells st.ptn level ctx.n,
+      worksetOf r.lab D.1 D.2 = worksetOf st.lab D.1 D.2 := by
+    intro D hD
+    exact (worksetOf_congr_perm (hperm D.1 (D.2 + 1 - D.1)
+      (hIsCellOld D hD))).symm
+  obtain ⟨S, hSm, hS1le, hS2ge⟩ := cells_cover (ptn := st.ptn)
+    (level := level) (nn := ctx.n) split1 hs1
+  have hS1 : S.1 = split1 := by
+    rcases Nat.eq_or_lt_of_le hS1le with he | hlt
+    · exact he
+    · exfalso
+      have hint := (hIsCellOld S hSm).2.2.1 (split1 - 1) (by omega)
+        (by
+          have := cells_le S hSm
+          omega)
+      rcases hstarts split1 hmem with h0 | hbd
+      · omega
+      · omega
+  have hsplit2 : cellEnd st.ptn level split1 = S.2 := by
+    rw [cellEnd]
+    refine cellEnd_go_unique _ split1 S.2 (by omega)
+      (fun i h1 h2 => (hIsCellOld S hSm).2.2.1 i (by omega) (by
+        have := cells_le S hSm
+        omega)) ?_ (by
+        have := hcbd S hSm
+        omega)
+    have h := (hIsCellOld S hSm).2.2.2
+    rw [show S.1 + (S.2 + 1 - S.1) - 1 = S.2 from by
+      have := cells_le S hSm
+      omega] at h
+    exact h
+  have hccS : ∀ a len, IsCell r.ptn level a len → a + len ≤ ctx.n →
+      ConstOn ctx (worksetOf st.lab S.1 S.2) (segN r.lab a len) := by
+    intro a len h1 h2
+    have := hcc a len h1 h2
+    rw [hsplit2, ← hS1] at this
+    exact this
+  have hparent : ∀ f ∈ cells r.ptn level ctx.n,
+      ∃ D ∈ cells st.ptn level ctx.n, D.1 ≤ f.1 ∧ f.2 ≤ D.2 := by
+    intro f hf
+    have hfle := cells_le f hf
+    have hfbd := hrcbd f hf
+    obtain ⟨c, lenC, hcC, hcle', hcge⟩ := subcell_of_grow
+      (ptn0 := st.ptn) (ptnP := r.ptn) (by omega)
+      (hIsCellNew f hf) hend hgrow (by omega) (by omega)
+    obtain ⟨D, hD, hD1, hD2⟩ := cells_cover (ptn := st.ptn)
+      (level := level) (nn := ctx.n) f.1 (by omega)
+    rcases isCell_disj_or_eq (hIsCellOld D hD) hcC with
+      ⟨he1, he2⟩ | hor | hor
+    · refine ⟨D, hD, by omega, ?_⟩
+      have hDle := cells_le D hD
+      omega
+    · exfalso
+      have hDle := cells_le D hD
+      omega
+    · exfalso
+      omega
+  have hstartfact : ∀ f ∈ cells r.ptn level ctx.n,
+      ∀ D ∈ cells st.ptn level ctx.n, D.1 ≤ f.1 →
+        (f.1 = D.1 ∨ r.ptn[f.1 - 1]! ≤ level) := by
+    intro f hf D hD hD1
+    rcases (hIsCellNew f hf).2.1 with h0 | hbd
+    · exact Or.inl (by omega)
+    · exact Or.inr hbd
+  have hmemW : ∀ (D : Nat × Nat) (pos : Nat) (v : Nat), D.1 ≤ pos →
+      pos ≤ D.2 → r.lab[pos]! = v →
+      elem (worksetOf r.lab D.1 D.2) v = true := by
+    intro D pos v h1 h2 hv
+    exact elem_worksetOf.mpr (mem_segN_iff.mpr ⟨pos - D.1, by omega,
+      by rw [show D.1 + (pos - D.1) = pos from by omega]; exact hv⟩)
+  have hcoverB : ∀ D ∈ cells st.ptn level ctx.n,
+      (elem st.active D.1 = false ∨ D.1 = split1) →
+      ∀ p' ∈ cells r.ptn level ctx.n, elem r.active p'.1 = false →
+        D.1 ≤ p'.1 → p'.2 ≤ D.2 →
+      ∀ v, elem (worksetOf r.lab D.1 D.2) v = true →
+        elem (worksetOf r.lab p'.1 p'.2) v = false →
+        elem (activeUnion ctx level r) v = true := by
+    intro D hD hcase p' hp' hpin hDp1 hDp2 v hv hvp
+    obtain ⟨w, hw⟩ := (hact3 D hD).2 hcase
+    have hp'le := cells_le p' hp'
+    have hp'w : p'.1 = w := by
+      rcases Decidable.em (p'.1 = w) with h | h
+      · exact h
+      · exfalso
+        have := hw p'.1 hDp1 (by omega)
+          (hstartfact p' hp' D hD hDp1) h
+        rw [hpin] at this
+        cases this
+    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (elem_worksetOf.mp hv)
+    have hDle := cells_le D hD
+    have hDbd := hcbd D hD
+    obtain ⟨f, hf, hf1, hf2⟩ := cells_cover (ptn := r.ptn)
+      (level := level) (nn := ctx.n) (D.1 + o) (by omega)
+    obtain ⟨E, hE, hE1, hE2⟩ := hparent f hf
+    have hED : E = D := by
+      rcases isCell_disj_or_eq (hIsCellOld E hE) (hIsCellOld D hD)
+        with ⟨he1, _⟩ | hor | hor
+      · exact hstartuniq E hE D hD he1
+      · exfalso
+        have := cells_le E hE
+        omega
+      · exfalso
+        have := cells_le E hE
+        omega
+    rw [hED] at hE1 hE2
+    rcases Decidable.em (f = p') with rfl | hfp
+    · exfalso
+      have := hmemW f (D.1 + o) v hf1 hf2 hvo
+      rw [hvp] at this
+      cases this
+    · have hfw : f.1 ≠ w := by
+        intro he
+        exact hfp (hstartuniqR f hf p' hp' (by omega))
+      have hfact : elem r.active f.1 = true := by
+        refine hw f.1 (by omega) (by
+          have := cells_le f hf
+          omega) ?_ hfw
+        rcases hstartfact f hf D hD hE1 with h | h
+        · exact Or.inl (by omega)
+        · exact Or.inr h
+      exact elem_activeUnion.mpr ⟨f, hf, hfact,
+        hmemW f (D.1 + o) v hf1 hf2 hvo⟩
+  have hcoverA : ∀ A ∈ cells st.ptn level ctx.n,
+      elem st.active A.1 = true → A.1 ≠ split1 →
+      worksetOf r.lab A.1 A.2 &&& activeUnion ctx level r =
+        worksetOf r.lab A.1 A.2 := by
+    intro A hA hact hne
+    refine submask_of_testBit fun v hv => ?_
+    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (elem_worksetOf.mp hv)
+    have hAle := cells_le A hA
+    have hAbd := hcbd A hA
+    obtain ⟨f, hf, hf1, hf2⟩ := cells_cover (ptn := r.ptn)
+      (level := level) (nn := ctx.n) (A.1 + o) (by omega)
+    obtain ⟨E, hE, hE1, hE2⟩ := hparent f hf
+    have hED : E = A := by
+      rcases isCell_disj_or_eq (hIsCellOld E hE) (hIsCellOld A hA)
+        with ⟨he1, _⟩ | hor | hor
+      · exact hstartuniq E hE A hA he1
+      · exfalso
+        have := cells_le E hE
+        omega
+      · exfalso
+        have := cells_le E hE
+        omega
+    rw [hED] at hE1 hE2
+    have hfact : elem r.active f.1 = true := by
+      refine (hact3 A hA).1 hact hne f.1 (by omega) (by
+        have := cells_le f hf
+        omega) ?_
+      rcases hstartfact f hf A hA hE1 with h | h
+      · exact Or.inl (by omega)
+      · exact Or.inr h
+    exact elem_activeUnion.mpr ⟨f, hf, hfact,
+      hmemW f (A.1 + o) v hf1 hf2 hvo⟩
+  have htrans : ∀ C ∈ cells st.ptn level ctx.n,
+      ∀ c' ∈ cells r.ptn level ctx.n, C.1 ≤ c'.1 → c'.2 ≤ C.2 →
+      ∀ x ∈ segN r.lab c'.1 (c'.2 + 1 - c'.1),
+        x ∈ segN st.lab C.1 (C.2 + 1 - C.1) := by
+    intro C hC c' hc' h1 h2 x hx
+    obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hx
+    refine (hperm C.1 (C.2 + 1 - C.1)
+      (hIsCellOld C hC)).mem_iff.mpr ?_
+    exact mem_segN_iff.mpr ⟨c'.1 - C.1 + o, by
+      have := cells_le c' hc'
+      omega, by
+      rw [show C.1 + (c'.1 - C.1 + o) = c'.1 + o from by omega]⟩
+  intro p' hp' hpin c' hc'
+  obtain ⟨Dp, hDpm, hDp1, hDp2⟩ := hparent p' hp'
+  obtain ⟨C, hCm, hC1, hC2⟩ := hparent c' hc'
+  have hp'le := cells_le p' hp'
+  have hc'le := cells_le c' hc'
+  have hc'bd := hrcbd c' hc'
+  have hccC : ConstOn ctx (worksetOf st.lab S.1 S.2)
+      (segN r.lab c'.1 (c'.2 + 1 - c'.1)) :=
+    hccS c'.1 (c'.2 + 1 - c'.1) (hIsCellNew c' hc') (by omega)
+  rcases Decidable.em (Dp.1 = split1) with hDS | hDS
+  · -- the parent is the splitter's cell
+    have hDpS : Dp = S := hstartuniq Dp hDpm S hSm (by omega)
+    have hsub : worksetOf r.lab p'.1 p'.2 &&&
+        worksetOf r.lab Dp.1 Dp.2 = worksetOf r.lab p'.1 p'.2 :=
+      worksetOf_nested hDp1 hDp2 (by omega)
+    refine ⟨worksetOf r.lab Dp.1 Dp.2 ^^^ worksetOf r.lab p'.1 p'.2,
+      ?_, ?_, ?_⟩
+    · refine submask_of_testBit fun v hv => ?_
+      have hvD := testBit_of_submask (xor_submask hsub) hv
+      have hvp : elem (worksetOf r.lab p'.1 p'.2) v = false := by
+        rcases hb : elem (worksetOf r.lab p'.1 p'.2) v with _ | _
+        · rfl
+        · exfalso
+          have h0 := xor_and_self hsub
+          have := congrArg (fun x => x.testBit v) h0
+          simp only [Nat.testBit_and, Nat.zero_testBit] at this
+          rw [hv] at this
+          have hb' : (worksetOf r.lab p'.1 p'.2).testBit v = true := hb
+          rw [hb'] at this
+          cases this
+      exact hcoverB Dp hDpm (Or.inr hDS) p' hp' hpin hDp1 hDp2 v
+        hvD hvp
+    · intro f hf
+      obtain ⟨E, hE, hE1, hE2⟩ := hparent f hf
+      rcases Decidable.em (f = p') with rfl | hfp
+      · refine Or.inl ?_
+        rw [Nat.and_comm]
+        exact xor_and_self hsub
+      · rcases Decidable.em (E = Dp) with rfl | hED
+        · refine Or.inr ?_
+          exact submask_xor_of (worksetOf_nested hE1 hE2 (by
+              have := cells_le f hf
+              omega))
+            (hdisjNew f hf p' hp' hfp)
+        · refine Or.inl ?_
+          have h1 : worksetOf r.lab f.1 f.2 &&&
+              worksetOf r.lab E.1 E.2 = worksetOf r.lab f.1 f.2 :=
+            worksetOf_nested hE1 hE2 (by
+              have := cells_le f hf
+              omega)
+          have h2 : worksetOf r.lab E.1 E.2 &&&
+              worksetOf r.lab Dp.1 Dp.2 = 0 := by
+            rw [hws E hE, hws Dp hDpm]
+            exact hdisjOld E hE Dp hDpm (by
+              intro he
+              exact hED (by rw [he]))
+          have h3 : worksetOf r.lab f.1 f.2 &&&
+              worksetOf r.lab Dp.1 Dp.2 = 0 := by
+            refine Nat.eq_of_testBit_eq fun i => ?_
+            rw [Nat.testBit_and, Nat.zero_testBit]
+            rcases hbf : (worksetOf r.lab f.1 f.2).testBit i with _ | _
+            · rfl
+            · have hbE := testBit_of_submask h1 hbf
+              have := congrArg (fun x => x.testBit i) h2
+              simp only [Nat.testBit_and, Nat.zero_testBit, hbE,
+                Bool.true_and] at this
+              rw [this]
+              rfl
+          exact zero_of_and_submask h3 (xor_submask hsub)
+    · have hor : worksetOf r.lab p'.1 p'.2 |||
+          (worksetOf r.lab Dp.1 Dp.2 ^^^ worksetOf r.lab p'.1 p'.2) =
+          worksetOf r.lab Dp.1 Dp.2 := sub_or_xor hsub
+      rw [hor, hws Dp hDpm, hDpS]
+      exact hccC
+  · -- the parent is any other cell; it must have been inactive
+    have hDpact : elem st.active Dp.1 = false := by
+      rcases hb : elem st.active Dp.1 with _ | _
+      · rfl
+      · exfalso
+        have := (hact3 Dp hDpm).1 hb hDS p'.1 hDp1 (by omega)
+          (hstartfact p' hp' Dp hDpm hDp1)
+        rw [hpin] at this
+        cases this
+    obtain ⟨V, hVau, hSat, hConst⟩ := hinv Dp hDpm hDpact C hCm
+    have hWD := hws Dp hDpm
+    have hp'sub : worksetOf r.lab p'.1 p'.2 &&&
+        worksetOf r.lab Dp.1 Dp.2 = worksetOf r.lab p'.1 p'.2 :=
+      worksetOf_nested hDp1 hDp2 (by omega)
+    have hp'subOld : worksetOf r.lab p'.1 p'.2 &&&
+        worksetOf st.lab Dp.1 Dp.2 = worksetOf r.lab p'.1 p'.2 := by
+      rw [← hWD]
+      exact hp'sub
+    have hWDau : worksetOf st.lab Dp.1 Dp.2 &&&
+        activeUnion ctx level st = 0 :=
+      inactive_and_activeUnion (st := st) hinj hps hend hDpm hDpact
+    have hWDV : worksetOf st.lab Dp.1 Dp.2 &&& V = 0 :=
+      zero_of_and_submask hWDau hVau
+    have hSDp : S ≠ Dp := by
+      intro he
+      rw [he] at hS1
+      exact hDS hS1
+    have hDpS : Dp ≠ S := fun he => hSDp he.symm
+    obtain ⟨V0, hV0V, hV0S, hV0deco⟩ : ∃ V0,
+        (V0 &&& V = V0) ∧
+        (V0 &&& worksetOf st.lab S.1 S.2 = 0) ∧
+        (V = V0 ∨ V0 ||| worksetOf st.lab S.1 S.2 = V) := by
+      rcases hSat S hSm with h0 | hsub2
+      · exact ⟨V, submask_of_testBit fun _ h => h, by
+          rw [Nat.and_comm]
+          exact h0, Or.inl rfl⟩
+      · refine ⟨V ^^^ worksetOf st.lab S.1 S.2, xor_submask hsub2,
+          xor_and_self hsub2, Or.inr ?_⟩
+        rw [Nat.or_comm]
+        exact sub_or_xor hsub2
+    have hp'V0 : worksetOf r.lab p'.1 p'.2 &&& V0 = 0 :=
+      zero_of_and_submask (sub_and_zero hp'subOld hWDV) hV0V
+    refine ⟨(worksetOf r.lab Dp.1 Dp.2 ^^^ worksetOf r.lab p'.1 p'.2)
+      ||| V0, ?_, ?_, ?_⟩
+    · refine or_submask_of ?_ ?_
+      · refine submask_of_testBit fun v hv => ?_
+        have hvD := testBit_of_submask (xor_submask hp'sub) hv
+        have hvp : elem (worksetOf r.lab p'.1 p'.2) v = false := by
+          rcases hb : elem (worksetOf r.lab p'.1 p'.2) v with _ | _
+          · rfl
+          · exfalso
+            have h0 := xor_and_self hp'sub
+            have := congrArg (fun z => z.testBit v) h0
+            simp only [Nat.testBit_and, Nat.zero_testBit] at this
+            rw [hv] at this
+            have hb' : (worksetOf r.lab p'.1 p'.2).testBit v =
+              true := hb
+            rw [hb'] at this
+            cases this
+        exact hcoverB Dp hDpm (Or.inl hDpact) p' hp' hpin hDp1 hDp2 v
+          hvD hvp
+      · refine submask_of_testBit fun v hv => ?_
+        have hvau : elem (activeUnion ctx level st) v = true :=
+          testBit_of_submask hVau (testBit_of_submask hV0V hv)
+        obtain ⟨A, hA, hAact, hAv⟩ := elem_activeUnion.mp hvau
+        rcases Decidable.em (A.1 = split1) with he | hne
+        · exfalso
+          have hAS : A = S := hstartuniq A hA S hSm (by omega)
+          rw [hAS] at hAv
+          have := congrArg (fun z => z.testBit v) hV0S
+          simp only [Nat.testBit_and, Nat.zero_testBit, hv,
+            Bool.true_and] at this
+          have hAv' : (worksetOf st.lab S.1 S.2).testBit v =
+            true := hAv
+          rw [hAv'] at this
+          cases this
+        · refine testBit_of_submask (hcoverA A hA hAact hne) ?_
+          rw [hws A hA]
+          exact hAv
+    · intro f hf
+      obtain ⟨E, hE, hE1, hE2⟩ := hparent f hf
+      have hfle := cells_le f hf
+      rcases Decidable.em (f = p') with rfl | hfp
+      · refine Or.inl ?_
+        refine and_or_zero ?_ hp'V0
+        rw [Nat.and_comm]
+        exact xor_and_self hp'sub
+      · rcases Decidable.em (E = Dp) with rfl | hEDp
+        · refine Or.inr ?_
+          exact submask_or_left (submask_xor_of
+            (worksetOf_nested hE1 hE2 (by omega))
+            (hdisjNew f hf p' hp' hfp))
+        · have hfE : worksetOf r.lab f.1 f.2 &&&
+              worksetOf st.lab E.1 E.2 = worksetOf r.lab f.1 f.2 := by
+            rw [← hws E hE]
+            exact worksetOf_nested hE1 hE2 (by omega)
+          have hfXP : worksetOf r.lab f.1 f.2 &&&
+              (worksetOf r.lab Dp.1 Dp.2 ^^^
+                worksetOf r.lab p'.1 p'.2) = 0 := by
+            refine zero_of_and_submask ?_ (xor_submask hp'sub)
+            rw [hWD]
+            exact sub_and_zero hfE (hdisjOld E hE Dp hDpm hEDp)
+          rcases Decidable.em (E = S) with rfl | hES
+          · refine Or.inl ?_
+            refine and_or_zero hfXP ?_
+            refine sub_and_zero hfE ?_
+            rw [Nat.and_comm]
+            exact hV0S
+          · rcases hSat E hE with h0 | hsub2
+            · refine Or.inl ?_
+              refine and_or_zero hfXP ?_
+              exact zero_of_and_submask (sub_and_zero hfE h0) hV0V
+            · refine Or.inr ?_
+              have hEV0 : worksetOf st.lab E.1 E.2 &&& V0 =
+                  worksetOf st.lab E.1 E.2 := by
+                rcases hV0deco with hdec | hdec
+                · rw [← hdec]
+                  exact hsub2
+                · refine sub_or_cancel (a := V0)
+                    (b := worksetOf st.lab S.1 S.2) ?_ ?_
+                  · rw [hdec]
+                    exact hsub2
+                  · exact hdisjOld E hE S hSm hES
+              exact submask_or (submask_trans hfE hEV0)
+    · have hb1 : worksetOf st.lab Dp.1 Dp.2 < 2 ^ ctx.n :=
+        worksetOf_lt (n := ctx.n) hok.labOk (by
+          have := hcbd Dp hDpm
+          omega)
+      have hb2 : V0 < 2 ^ ctx.n :=
+        lt_of_submask hV0V (lt_of_submask hVau
+          (activeUnion_lt (st := st) hok.labOk hps hls hend))
+      have hb3 : worksetOf st.lab S.1 S.2 < 2 ^ ctx.n :=
+        worksetOf_lt (n := ctx.n) hok.labOk (by
+          have := hcbd S hSm
+          omega)
+      have hConstC' : ConstOn ctx (worksetOf st.lab Dp.1 Dp.2 ||| V)
+          (segN r.lab c'.1 (c'.2 + 1 - c'.1)) :=
+        hConst.mono (htrans C hCm c' hc' hC1 hC2)
+      have hgoal : ConstOn ctx (worksetOf st.lab Dp.1 Dp.2 ||| V0)
+          (segN r.lab c'.1 (c'.2 + 1 - c'.1)) := by
+        rcases hV0deco with hdec | hdec
+        · rw [← hdec]
+          exact hConstC'
+        · have hd : (worksetOf st.lab Dp.1 Dp.2 ||| V0) &&&
+              worksetOf st.lab S.1 S.2 = 0 := by
+            rw [Nat.and_comm]
+            refine and_or_zero ?_ ?_
+            · rw [Nat.and_comm]
+              exact hdisjOld Dp hDpm S hSm hDpS
+            · rw [Nat.and_comm]
+              exact hV0S
+          refine ConstOn.of_or (n := ctx.n) hd
+            (or_lt_two_pow hb1 hb2) hb3 ?_ hccC
+          have hre : worksetOf st.lab Dp.1 Dp.2 ||| V0 |||
+              worksetOf st.lab S.1 S.2 =
+              worksetOf st.lab Dp.1 Dp.2 ||| V := by
+            rw [Nat.or_assoc, hdec]
+          rw [hre]
+          exact hConstC'
+      have hor : worksetOf r.lab p'.1 p'.2 |||
+          ((worksetOf r.lab Dp.1 Dp.2 ^^^ worksetOf r.lab p'.1 p'.2)
+            ||| V0) = worksetOf st.lab Dp.1 Dp.2 ||| V0 := by
+        rw [← Nat.or_assoc, sub_or_xor hp'sub, hWD]
+      rw [hor]
+      exact hgoal
 
 end Hex.GraphIso.Nauty
