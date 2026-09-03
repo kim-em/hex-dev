@@ -2357,6 +2357,89 @@ theorem branch_cellsPerm
         lab[tc + 0]!).1.map
           (renamingOfFlip f ctx.n hfb hinvol).toFun).size ≤ a)]
 
+/-- The branch step: the two children of a pair target cell refine to
+states with identical position-level fields whose labellings agree as
+cell contents after composing the first child with the flip. -/
+theorem branch_step {numcells : Nat}
+    (hgsz : ctx.g.size = ctx.n)
+    (hpsz : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hvals : ∀ q, q < ctx.n → ptn[q]! ≤ level ∨ level + 1 < ptn[q]!)
+    (hlab : LabOk lab ctx.n) (hinj : LabInj lab ctx.n)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hrows : ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]!)
+    (hcell : (tc, tc + 1) ∈ cells ptn level ctx.n)
+    (hStc : S tc)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!) :
+    StPerm (level + 1)
+      (refine ctx (level + 1)
+        (breakout lab ptn (level + 1) tc lab[tc + 1]!).1
+        (ptn.set! tc (level + 1)) (insert 0 tc) (numcells + 1))
+      (mapSt (renamingOfFlip f ctx.n hfb hinvol)
+        (refine ctx (level + 1)
+          (breakout lab ptn (level + 1) tc lab[tc + 0]!).1
+          (ptn.set! tc (level + 1)) (insert 0 tc)
+          (numcells + 1))) := by
+  have htc1 : tc + 1 < ctx.n := target_end_lt hpsz hend hcell
+  have hinj' : LabInj lab lab.size := by rw [hlsz]; exact hinj
+  have hto1 : tc + 1 < lab.size := by omega
+  have hto0 : tc + 0 < lab.size := by omega
+  have hVsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 1]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hUsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 0]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hVok : LabOk (breakout lab ptn (level + 1) tc
+      lab[tc + 1]!).1 ctx.n := labOk_breakout hinj' hto1 hlab
+  have hUok : LabOk (breakout lab ptn (level + 1) tc
+      lab[tc + 0]!).1 ctx.n := labOk_breakout hinj' hto0 hlab
+  have hsz' : (ptn.set! tc (level + 1)).size = ctx.n := by
+    rw [Array.size_set!, hpsz]
+  have hend' : (ptn.set! tc (level + 1))[(ptn.set! tc
+      (level + 1)).size - 1]! ≤ level + 1 := by
+    rw [hsz', ← hpsz]
+    rcases Decidable.em (tc = ptn.size - 1) with rfl | hx
+    · rw [Array.getElem!_set!_self _ _ _ (by omega)]
+      omega
+    · rw [Array.getElem!_set!_ne _ _ _ _ hx]
+      omega
+  have hact : insert 0 tc < 2 ^ ctx.n := by
+    rw [insert, Nat.zero_or, Nat.shiftLeft_eq, Nat.one_mul]
+    exact Nat.pow_lt_pow_right (by omega) (by omega)
+  have hstarts : ∀ v : Nat, elem (insert 0 tc) v = true →
+      v = 0 ∨ (ptn.set! tc (level + 1))[v - 1]! ≤ level + 1 := by
+    intro v hv
+    rw [elem_single] at hv
+    have hvtc : v = tc := of_decide_eq_true hv
+    subst hvtc
+    obtain ⟨-, hstart, -⟩ := (mem_cells_iff (by omega) hend).mp hcell
+    rcases Decidable.em (v = 0) with h00 | h00
+    · exact Or.inl h00
+    · rcases hstart with h0 | hcl
+      · exact Or.inl h0
+      · refine Or.inr ?_
+        rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+        omega
+  have hcp := branch_cellsPerm hpsz hlsz hend hvals hlab hinj hfb
+    hinvol hcell hStc hSpair hSswap hSfix
+  have h1 := refine_perm (hn := rfl) hcp
+    (by rw [Array.size_map, hUsz, hVsz])
+    hVsz hVok hsz' hact hend' hstarts
+    (numcells := numcells + 1)
+  have h2 := refine_map (renamingOfFlip f ctx.n hfb hinvol) rfl rfl
+    (rowsMap_of_flip_rows hgsz hfb hinvol hrows) (level + 1)
+    (breakout lab ptn (level + 1) tc lab[tc + 0]!).1
+    (ptn.set! tc (level + 1)) (insert 0 tc) (numcells + 1)
+    hUsz hUok hsz' hact hend'
+  rw [h2] at h1
+  exact h1
+
 end Branch
 
 end Hex.GraphIso.Nauty
