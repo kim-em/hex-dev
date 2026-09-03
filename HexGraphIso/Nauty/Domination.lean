@@ -1679,4 +1679,179 @@ theorem specChild_le_specNode {ctx : Ctx} {tcLevel fuel level : Nat}
   · refine keyLe_keysMax (Or.inr ?_)
     exact List.mem_map.mpr ⟨o', List.mem_range.mpr (by omega), rfl⟩
 
+
+/-! # The generator-return transport
+
+At the loop where a generator return lands (`gcaFirst` for a code-1
+admission, `gcaCanon` for a code-2 admission), the whole partially
+explored child subtree is absorbed at once: the admitted scatter is a
+checked automorphism that stabilizes the loop's cells and carries the
+guiding sibling's individualized vertex onto the current child's, so
+the two children's subtree keys are equal, and the guiding sibling's
+key is already folded into the incumbent. The abandoned intermediate
+loops below need no local justification in this mode; the return
+level being the gca is exactly what lets their whole enclosing child
+subtree be absorbed here. -/
+
+/-- A checked automorphism stabilizing the refined node's cells and
+carrying one target-cell vertex onto another identifies the two
+children's subtree keys. -/
+theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) {γ : Array Nat}
+    (hAut : checkAutom ctx.g γ ctx.n = true)
+    (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
+    {tc lenT numcells o o' : Nat}
+    (hstab : CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) (ho' : o' < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hcarry : γ[rsLab[tc + o']!]! = rsLab[tc + o]!) :
+    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
+  rcases Decidable.em (o = o') with rfl | hne
+  · rfl
+  rw [hn] at hAut
+  obtain ⟨σ, hσeq, hσrows⟩ := checkAutom_sound hgsz hAut
+  have hvO : rsLab[tc + o]! < n := hok _ (by omega)
+  have hvO' : rsLab[tc + o']! < n := hok _ (by omega)
+  have hσv : σ.toFun rsLab[tc + o']! = rsLab[tc + o]! := by
+    rw [hσeq _ hvO']
+    exact hcarry
+  obtain ⟨L, rfl⟩ : ∃ L, lenT = L + 1 := ⟨lenT - 1, by omega⟩
+  have hbsz : (breakout rsLab rsPtn (level + 1) tc
+      rsLab[tc + o']!).1.size = n := by
+    show (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
+      rsLab[tc + o']!).size = n
+    rw [breakout_go_size, hs]
+  have hsegO : segN (breakout rsLab rsPtn (level + 1) tc
+      rsLab[tc + o]!).1 tc (L + 1) =
+      rsLab[tc + o]! ::
+        (segN rsLab tc (L + 1)).erase rsLab[tc + o]! := by
+    show segN (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
+      rsLab[tc + o]!) tc (L + 1) = _
+    exact breakout_go_seg (rsLab.size + 1) (L + 1) rsLab tc
+      rsLab[tc + o]! ⟨tc + o, by omega, by omega, by omega, rfl⟩
+      (by omega) (by omega)
+  have hsegO' : segN (breakout rsLab rsPtn (level + 1) tc
+      rsLab[tc + o']!).1 tc (L + 1) =
+      rsLab[tc + o']! ::
+        (segN rsLab tc (L + 1)).erase rsLab[tc + o']! := by
+    show segN (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
+      rsLab[tc + o']!) tc (L + 1) = _
+    exact breakout_go_seg (rsLab.size + 1) (L + 1) rsLab tc
+      rsLab[tc + o']! ⟨tc + o', by omega, by omega, by omega, rfl⟩
+      (by omega) (by omega)
+  rw [segN_cons] at hsegO
+  rw [segN_cons] at hsegO'
+  injection hsegO with hheadO htailO
+  injection hsegO' with hheadO' htailO'
+  have hstabSeg : ∀ (a l : Nat), IsCell rsPtn level a l → a + l ≤ n →
+      (segN rsLab a l).Perm ((segN rsLab a l).map σ.toFun) := by
+    intro a l hicl hbnd
+    have h := hstab a l hicl
+    rw [segN_map_of_le _ _ _ _ (by omega)] at h
+    have hcg : (segN rsLab a l).map (fun w => γ[w]!) =
+        (segN rsLab a l).map σ.toFun := by
+      refine List.map_congr_left fun x hx => ?_
+      rw [segN] at hx
+      obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hx
+      have hilt := List.mem_range.mp hi
+      exact (hσeq _ (hok _ (by omega))).symm
+    rw [hcg] at h
+    exact h
+  have hicS : IsCell rsPtn (level + 1) tc (L + 1) :=
+    isCell_succ hvals (by omega) hic
+  have hend' : rsPtn[n - 1]! ≤ level := by
+    have h := hend
+    rwa [hsp] at h
+  have hcp : cellsPerm (rsPtn.set! tc (level + 1)) (level + 1)
+      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+      ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1.map
+        σ.toFun) := by
+    refine cellsPerm_set! hicS (by omega) (Nat.le_refl tc)
+      (by omega) ?_ ?_ ?_
+    · rw [show tc + 1 - tc = 1 by omega, segN_cons, segN_zero,
+        segN_cons, segN_zero, hheadO,
+        getElem!_map_of_lt σ.toFun _ (by rw [hbsz]; omega), hheadO',
+        hσv]
+    · rw [show tc + (L + 1) - (tc + 1) = L by omega, htailO,
+        segN_map_of_le _ _ _ _ (by rw [hbsz]; omega), htailO']
+      have hCstab := hstabSeg tc (L + 1) hic hrange
+      have hvoC : rsLab[tc + o]! ∈ segN rsLab tc (L + 1) := by
+        rw [segN]
+        exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
+      have hvo'C : rsLab[tc + o']! ∈ segN rsLab tc (L + 1) := by
+        rw [segN]
+        exact List.mem_map.mpr ⟨o', List.mem_range.mpr ho', rfl⟩
+      have h5 : ((segN rsLab tc (L + 1)).map σ.toFun).Perm
+          (rsLab[tc + o]! ::
+            ((segN rsLab tc (L + 1)).erase rsLab[tc + o']!).map
+              σ.toFun) := by
+        have h := (List.perm_cons_erase hvo'C).map σ.toFun
+        rw [List.map_cons, hσv] at h
+        exact h
+      exact ((List.perm_cons_erase hvoC).symm.trans
+        (hCstab.trans h5)).cons_inv
+    · intro a l hicA hdisj
+      have hlabOeq : segN (breakout rsLab rsPtn (level + 1) tc
+          rsLab[tc + o]!).1 a l = segN rsLab a l := by
+        refine segN_congr fun q hq => ?_
+        show (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
+          rsLab[tc + o]!)[a + q]! = rsLab[a + q]!
+        rcases hdisj with hd | hd
+        · exact breakout_go_outside _ _ _ _ _ (by omega)
+        · exact breakout_go_outside_right _ (L + 1) _ _ _
+            ⟨tc + o, by omega, by omega, by omega, rfl⟩ _ (by omega)
+      have hlabO'eq : segN (breakout rsLab rsPtn (level + 1) tc
+          rsLab[tc + o']!).1 a l = segN rsLab a l := by
+        refine segN_congr fun q hq => ?_
+        show (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
+          rsLab[tc + o']!)[a + q]! = rsLab[a + q]!
+        rcases hdisj with hd | hd
+        · exact breakout_go_outside _ _ _ _ _ (by omega)
+        · exact breakout_go_outside_right _ (L + 1) _ _ _
+            ⟨tc + o', by omega, by omega, by omega, rfl⟩ _ (by omega)
+      rcases Nat.lt_or_ge a n with han | han
+      · have hbnd : a + l ≤ n := by
+          rcases Nat.lt_or_ge (a + l) (n + 1) with h1 | h1
+          · omega
+          · exfalso
+            have hi := hicA.2.2.1 (n - 1) (by omega) (by omega)
+            omega
+        have hicL : IsCell rsPtn level a l :=
+          isCell_pred hvals (by omega) hicA
+        rw [hlabOeq,
+          segN_map_of_le _ _ _ _ (by rw [hbsz]; exact hbnd),
+          hlabO'eq]
+        exact hstabSeg a l hicL hbnd
+      · have hl1 : l = 1 := by
+          rcases Nat.lt_or_ge l 2 with h2 | h2
+          · have := hicA.1
+            omega
+          · exfalso
+            have hi := hicA.2.2.1 a (Nat.le_refl a) (by omega)
+            rw [getElem!_neg _ _ (by omega)] at hi
+            have hd : (default : Nat) = 0 := rfl
+            omega
+        subst hl1
+        rw [hlabOeq, segN_cons, segN_zero, segN_cons, segN_zero,
+          getElem!_neg rsLab a (by omega),
+          getElem!_neg ((breakout rsLab rsPtn (level + 1) tc
+              rsLab[tc + o']!).1.map σ.toFun) a
+            (by rw [Array.size_map, hbsz]; omega)]
+  have hokc := childNodeOk hs hok hsp hend hvals hic hrange ho
+  have hokc' := childNodeOk hs hok hsp hend hvals hic hrange ho'
+  exact (specNode_autom hn hσrows tcLevel fuel (level + 1)
+    (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+    (lab₂ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
+    (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).2.1)
+    (active := (breakout rsLab rsPtn (level + 1) tc
+      rsLab[tc + o']!).2.2)
+    (numcells := numcells + 1) hcp hokc.labSize hokc'.labSize
+    hokc.labOk hokc'.labOk hokc'.ptnSize hokc'.act hokc'.ptnEnd
+    hokc'.starts hokc'.vals (by omega)).symm
+
 end Hex.GraphIso.Nauty
