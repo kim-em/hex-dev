@@ -46,6 +46,7 @@ public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Nauty.SearchAutom
 public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
+public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Ops
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
