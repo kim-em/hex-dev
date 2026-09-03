@@ -9,6 +9,7 @@ import VersoManual
 -- Released libraries (dependency order).
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
+import HexManual.Chapters.HexPrimality
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexModArith
@@ -35,7 +36,6 @@ import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
-import HexManual.Chapters.HexPrimality
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
@@ -88,6 +88,8 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexBasic}
 
 {include 0 HexManual.Chapters.HexArith}
+
+{include 0 HexManual.Chapters.HexPrimality}
 
 {include 0 HexManual.Chapters.HexPoly}
 
@@ -167,8 +169,6 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexTruncatedSeries}
 
 {include 2 HexManual.Chapters.HexPolyFast}
-
-{include 2 HexManual.Chapters.HexPrimality}
 
 {include 2 HexManual.Chapters.HexIntFactor}
 

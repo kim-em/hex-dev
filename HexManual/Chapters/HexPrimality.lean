@@ -43,7 +43,7 @@ tag := "hex-primality-decide"
 %%%
 
 {name}`Hex.Nat.isPrime` is the total convenience decision: the committed
-table below `10^4`, exact trial division below `10^8`, and certificate
+table below `10^5`, exact trial division below `6 · 10^6`, and certificate
 search above.
 
 ```lean (name := isPrimeEval)
@@ -62,11 +62,15 @@ false
 
 {docstring Hex.Nat.isPrime}
 
+{docstring Hex.Nat.isPrime_iff}
+
 Callers that need a real time bound use the resumable form, which
 returns the advanced random state on failure instead of silently
 retrying:
 
 {docstring Hex.Nat.isPrime?}
+
+{docstring Hex.Nat.isPrime?_spec}
 
 Compositeness is filtered by Miller-Rabin before any certificate work
 begins. The test is deliberately not exposed to proofs — it appears
@@ -109,7 +113,7 @@ example : Hex.Nat.Prime 561 := primality 561
 primality: 561 is not prime (Miller-Rabin witness 2)
 ```
 
-# `Nat.Prime`, `norm_num`, and the companion
+# The Mathlib correspondence
 %%%
 tag := "hex-primality-mathlib"
 %%%
@@ -186,12 +190,14 @@ reused by hex-int-factor, and validates every factor it returns:
 
 {docstring Hex.Nat.rhoFactor?}
 
+{docstring Hex.Nat.rhoFactor?_spec}
+
 # The prime table and initial segments
 %%%
 tag := "hex-primality-table"
 %%%
 
-A committed table of the 1229 primes below `10^4` anchors the small
+A committed table of the 9,592 primes below `10^5` anchors the small
 end: membership is binary search, and both directions of correctness
 are proved against a kernel-replayed sieve run (the batched
 verification is regenerated, never hand-edited, via the
@@ -211,6 +217,8 @@ bound tied to the table:
 
 {docstring Hex.Nat.primesIn}
 
+{docstring Hex.Nat.mem_primesIn}
+
 # Reach
 %%%
 tag := "hex-primality-reach"
@@ -219,14 +227,24 @@ tag := "hex-primality-reach"
 What the certificate tier can do depends on how much of `n - 1` the
 untrusted search can factor:
 
-* Inputs whose `n - 1` is smooth or nearly so — Proth and Fermat
-  numbers, `k · 2^m + 1` generally — certify in milliseconds at
-  hundreds of bits, and kernel replay of a 511-bit certificate takes
-  about a second.
-* Random primes certify reliably to roughly 192 bits with the default
-  fuel; past 256 bits the rho factorization of `n - 1` dominates and
-  the search becomes hit-or-miss.
-* Negative answers are cheap whenever one of the thirteen fixed
-  Miller-Rabin bases refutes primality, which covers essentially every
-  composite in practice; a composite that survived all of them would
-  fall through to certificate search and fail slowly.
+* The supported elaboration ceiling is 512 bits. The release probes include
+  table-smooth certificates from 31 through 511 bits and a 512-bit certificate
+  whose search discovers an above-table factor with bounded rho work.
+* The bounded search reports exhaustion rather than claiming compositeness. A
+  separate 512-bit probable-prime probe exercises this path, while a 513-bit
+  input is rejected before search begins.
+* Negative answers are conclusive only when a size check, table lookup, exact
+  trial decision, or one of the thirteen fixed Miller-Rabin bases supplies a
+  witness. Passing all fixed bases is not itself a primality result.
+
+# Cross-references
+%%%
+tag := "hex-primality-cross-references"
+%%%
+
+* {ref "hex-arith"}[`HexArith`] supplies the Mathlib-free prime predicate,
+  modular exponentiation, gcd, and exact trial-division foundation.
+* {ref "hex-basic"}[`HexBasic`] supplies the explicit reproducible random state
+  used by every bounded randomized search.
+* {ref "hex-int-factor"}[`HexIntFactor`] reuses primality certificates and the
+  factor-search primitives to certify complete natural-number factorizations.

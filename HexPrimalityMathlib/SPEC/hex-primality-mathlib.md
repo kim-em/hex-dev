@@ -261,8 +261,8 @@ performance evidence rather than changing elaborator semantics.
 ## Conformance and proof-performance ownership
 
 The bridge owns `conformance/HexPrimalityMathlib/Conformance.lean` and
-`OptInConformance.lean`. Together they cover correspondence-facing tactic
-use, default registration, module-local opt-in precedence, both sides of the
+`conformance/HexPrimalityMathlibConformance/OptIn.lean`. Together they cover
+correspondence-facing tactic use, default registration, module-local opt-in precedence, both sides of the
 `2^24` threshold, positive and negative certificate-tier results,
 deterministic seed/state replay, parity without a restart, exact negative
 exhaustion, the input ceiling, ordinary failure diagnostics, import-boundary
@@ -378,6 +378,7 @@ failure, resource, or evidence semantics.
 HexPrimalityMathlib/
   Prime.lean       -- prime_iff and core-result transports
   Segment.lean     -- table and range statements in Mathlib vocabulary
+  Policy.lean      -- opt-in norm_num thresholds and factor-search bounds
   NormNum.lean     -- Nat.Prime tactic handler and opt-in norm_num policy
   SPEC/
     hex-primality-mathlib.md
@@ -385,6 +386,7 @@ HexPrimalityMathlib.lean
 
 conformance/HexPrimalityMathlib/
   Conformance.lean
-  OptInConformance.lean
+HexPrimalityMathlibConformance/
+  OptIn.lean
 bench/HexPrimalityMathlib/ProofProbe/
 ```

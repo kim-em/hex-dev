@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "4182f460f5a07b6b5ad1a15b7f6c012b2e41efe4",
+  "reason": "Combines the inherited HexPolyFp precompileModules build-only transition with renamed HexPrimality bench-support and HexPrimalityMathlib conformance-support modules. Those modules belong only to independent benchmark, proof-probe, and conformance targets; they do not change hexbz_factor_service, any library it imports, or its runtime call graph."
+}

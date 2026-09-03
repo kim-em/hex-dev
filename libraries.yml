@@ -680,7 +680,7 @@ libraries:
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexPrimality/ProofProbe]
     phase4:
@@ -880,7 +880,7 @@ libraries:
     deps: [HexPrimality]
     mathlib: true
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       input_families:

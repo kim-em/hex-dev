@@ -8,6 +8,8 @@ module
 
 public import HexBasic
 public import HexArith
+public import HexPrimality
+public import HexPrimalityMathlib
 public import HexPoly
 public import HexMvPoly
 public import HexModArith

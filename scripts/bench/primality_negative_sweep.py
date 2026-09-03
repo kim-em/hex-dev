@@ -128,7 +128,7 @@ SPEC = SweepSpec(
     output_stem="hex-primality-negative-policy",
     extra_sources=(
         Path("HexPrimalityMathlib/NormNum.lean"),
-        Path("conformance/HexPrimalityMathlib/OptInConformance.lean"),
+        Path("conformance/HexPrimalityMathlibConformance/OptIn.lean"),
     ),
     required_samples=6,
     max_pair_retries=32,

@@ -123,7 +123,8 @@ shared policy record gives a 3.026820 s maximum for accepted 512-bit
 and its 4.525258 s maximum are the release contract for this report.
 Unsupported, non-numeral, open, composite-bare-tactic, and unsolved opted-in
 failure shapes are pinned by
-`conformance/HexPrimalityMathlib/{Conformance,OptInConformance}.lean`; timing
+`conformance/HexPrimalityMathlib/Conformance.lean` and
+`conformance/HexPrimalityMathlibConformance/OptIn.lean`; timing
 those deterministic diagnostic branches would not add a performance owner.
 
 Policy verdict: retain `natPrimeCertThreshold = 2^24`. The same-input crossover
