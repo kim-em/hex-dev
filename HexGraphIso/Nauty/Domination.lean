@@ -1353,6 +1353,65 @@ theorem specNode_discrete {ctx : Ctx} {tcLevel fuel level : Nat}
   rw [specNode]
   simp only [hdisc, ite_true]
 
+/-- Prefixing a common code moves it into the path. -/
+theorem prefixKey_cons (cs : List Nat) (code : Nat) (K : Key) :
+    prefixKey cs ⟨code :: K.codes, K.rows⟩ =
+      prefixKey (cs ++ [code]) K := by
+  rw [prefixKey, prefixKey, List.append_assoc]
+  rfl
+
+/-- Prefixing distributes over the seeded list maximum. -/
+theorem prefixKey_keysMax :
+    ∀ (l : List Key) (b : Key) (cs : List Nat),
+      prefixKey cs (keysMax b l) =
+        keysMax (prefixKey cs b) (l.map (prefixKey cs))
+  | [], b, cs => by rw [keysMax, List.map_nil, keysMax]
+  | kk :: t, b, cs => by
+    rw [keysMax, List.map_cons, keysMax,
+      prefixKey_keysMax t (keyMax b kk) cs, prefixKey_keyMax]
+
+/-- One child key of a spec node: the subtree below individualizing
+the `o`-th target-cell vertex of the refined state. -/
+@[expose] def specChild (ctx : Ctx) (tcLevel fuel level : Nat)
+    (lab ptn : Array Nat) (active numcells : Nat) (o : Nat) : Key :=
+  let rs := refine ctx level lab ptn active numcells
+  let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
+  let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+    rs.lab[tcr.1 + o]!
+  specNode ctx tcLevel fuel (level + 1) br.1 br.2.1 br.2.2
+    (rs.numcells + 1)
+
+/-- The internal arm of `specNode`, isolated: at a non-discrete node
+the subtree key under the path prefix is the maximum of the
+children's keys under the path extended by the node's own code. -/
+theorem specNode_internal {ctx : Ctx} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat} {len : Nat}
+    (cs : List Nat)
+    (hdisc : discreteAt (refine ctx level lab ptn active
+      numcells).ptn level ctx.n = false)
+    (hlen : (specMaketargetcell ctx
+        (refine ctx level lab ptn active numcells).lab
+        (refine ctx level lab ptn active numcells).ptn level
+          tcLevel).2.2 = len + 1) :
+    prefixKey cs
+        (specNode ctx tcLevel (fuel + 1) level lab ptn active
+          numcells) =
+      keysMax
+        (prefixKey (cs ++ [(refine ctx level lab ptn active
+            numcells).longcode])
+          (specChild ctx tcLevel fuel level lab ptn active numcells
+            0))
+        ((List.range len).map fun o =>
+          prefixKey (cs ++ [(refine ctx level lab ptn active
+              numcells).longcode])
+            (specChild ctx tcLevel fuel level lab ptn active numcells
+              (o + 1))) := by
+  rw [specNode]
+  simp only [hdisc, Bool.false_eq_true, ite_false, hlen,
+    List.range_succ_eq_map, List.map_cons, List.map_map]
+  rw [prefixKey_cons, prefixKey_keysMax, List.map_map]
+  rfl
+
 /-! # The leaf-guard agreement
 
 The imperative search branches on `numcells == n` where the
