@@ -17,10 +17,15 @@ cd "$root"
 # tree; stage the relevant paths first so an uncommitted change cannot
 # record under its predecessor's key (they are about to be committed
 # together with the data in any case).
+# The pathspec must stay identical to RELEVANT in
+# scripts/bench/check_graphiso_sweep_freshness.py; SPEC and README are
+# excluded because documentation cannot affect measured performance.
 git add -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
-  scripts/plots/hexgraphiso-cactus.py
+  scripts/plots/hexgraphiso-cactus.py ':!HexGraphIso/SPEC' \
+  ':!HexGraphIso/README.md'
 fp=$(git ls-files -s -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
-  scripts/plots/hexgraphiso-cactus.py | sha256sum | cut -c1-12)
+  scripts/plots/hexgraphiso-cactus.py ':!HexGraphIso/SPEC' \
+  ':!HexGraphIso/README.md' | sha256sum | cut -c1-12)
 host=$(hostname -s)
 
 lake build hexgraphiso_cactus
