@@ -392,4 +392,124 @@ theorem descPath_deviation_self {σ : Renaming ctx.n} {st : RefineSt}
   have hU0 := iterOk_child hIt hlvl hcell hne hoU
   exact descPath_leafRows hg hdesc hU0 hsp' hdisc
 
+/-! # All leaves below a first-branch node have equal rows -/
+
+/-- Any two discrete descents below a first-branch node choosing the
+same target cells have equal leaf rows: equal choices recurse, and a
+differing choice is one pair or triple deviation glued to the
+transported deeper path. -/
+theorem descPath_leafRows_all
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (tcs : List Nat) :
+    ∀ {level : Nat} {st : RefineSt} {p₁ p₂ : List (Nat × Nat)}
+      {level₁ level₂ : Nat} {U V : RefineSt},
+      SubtreeOk ctx level st →
+      DescPath ctx level st p₁ level₁ U →
+      p₁.map Prod.fst = tcs →
+      (∀ q, q < ctx.n → U.ptn[q]! ≤ level₁) →
+      DescPath ctx level st p₂ level₂ V →
+      p₂.map Prod.fst = tcs →
+      (∀ q, q < ctx.n → V.ptn[q]! ≤ level₂) →
+      level₂ = level₁ ∧ leafRows ctx V.lab = leafRows ctx U.lab := by
+  induction tcs with
+  | nil =>
+    intro level st p₁ p₂ level₁ level₂ U V hS hU hp₁ hUd hV hp₂ hVd
+    have h1 : p₁ = [] := by
+      cases p₁ with
+      | nil => rfl
+      | cons a l => simp at hp₁
+    have h2 : p₂ = [] := by
+      cases p₂ with
+      | nil => rfl
+      | cons a l => simp at hp₂
+    subst h1
+    subst h2
+    obtain ⟨hl₁, hU'⟩ := descPath_nil hU
+    obtain ⟨hl₂, hV'⟩ := descPath_nil hV
+    subst hU'
+    subst hV'
+    exact ⟨by omega, rfl⟩
+  | cons tc tcs' ih =>
+    intro level st p₁ p₂ level₁ level₂ U V hS hU hp₁ hUd hV hp₂ hVd
+    cases p₁ with
+    | nil => exact absurd hp₁ (by simp)
+    | cons h₁ tl₁ =>
+    cases p₂ with
+    | nil => exact absurd hp₂ (by simp)
+    | cons h₂ tl₂ =>
+    obtain ⟨a₁, o₁⟩ := h₁
+    obtain ⟨a₂, o₂⟩ := h₂
+    rw [List.map_cons] at hp₁ hp₂
+    injection hp₁ with hh₁ ht₁
+    injection hp₂ with hh₂ ht₂
+    have ha₁ : tc = a₁ := hh₁.symm
+    subst ha₁
+    have ha₂ : tc = a₂ := hh₂.symm
+    subst ha₂
+    cases hU with
+    | step _ e₁ _ hlvl hcell₁ hne₁ ho₁ htail₁ =>
+    cases hV with
+    | step _ e₂ _ hlvl₂ hcell₂ hne₂ ho₂ htail₂ =>
+    have hpsz := hS.it.ok.ptnSize
+    have hend := hS.it.ok.ptnEnd
+    have hee : e₁ = e₂ := cells_eq_of_start (by omega) hend
+      hcell₁ hcell₂
+    subst hee
+    rcases Decidable.em (st.lab[tc + o₁]! = st.lab[tc + o₂]!) with
+      hval | hval
+    · -- the same child: recurse directly
+      rw [← hval] at htail₂
+      exact ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₁)
+        htail₁ ht₁ hUd htail₂ ht₂ hVd
+    · -- a deviation at this level, by the target's size
+      have hflip : ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+          StPerm level st (mapSt σ st) ∧
+          st.lab[tc + o₂]! = σ.toFun st.lab[tc + o₁]! := by
+        have hone : o₁ ≠ o₂ := fun h => hval (by rw [h])
+        rcases hS.small _ hcell₁ with hsz2 | ⟨hsz3, huniq⟩
+        · -- a pair target
+          have hsz2' : e₁ + 1 - tc ≤ 2 := hsz2
+          have hne₁' : tc < e₁ := hne₁
+          have he : e₁ = tc + 1 := by omega
+          subst he
+          have hOdd : ∀ q ∈ cells st.ptn level ctx.n,
+              q.2 ≠ q.1 + 1 → (q.2 + 1 - q.1) % 2 = 1 := by
+            intro q hq hqne
+            have hqle := cells_le _ hq
+            rcases hS.small _ hq with h2 | ⟨h3, -⟩
+            · have h1 : q.2 + 1 - q.1 = 1 := by omega
+              omega
+            · omega
+          exact pair_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
+            hcell₁ hOdd (by omega) (by omega) hone
+        · -- the triple target
+          have hsz3' : e₁ + 1 - tc = 3 := hsz3
+          have hne₁' : tc < e₁ := hne₁
+          have he : e₁ = tc + 2 := by omega
+          subst he
+          have hsmall' : ∀ q ∈ cells st.ptn level ctx.n,
+              q ≠ (tc, tc + 2) → q.2 + 1 - q.1 ≤ 2 := by
+            intro q hq hqne
+            rcases hS.small _ hq with h2 | ⟨h3, -⟩
+            · exact h2
+            · exact absurd (huniq q hq h3) hqne
+          exact triple_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
+            hcell₁ hsmall' (by omega) (by omega) hone
+      obtain ⟨σ, hgm, hspσ, hvv⟩ := hflip
+      obtain ⟨W, qW, hdescW, hqW, hlrW, hptnW⟩ :=
+        descPath_deviation_self hS.it hlvl hgm hspσ hcell₁ hne₁
+          ho₁ ho₂ hvv htail₁ hUd
+      have hWd : ∀ q, q < ctx.n → W.ptn[q]! ≤ level₁ := by
+        intro q hq
+        rw [hptnW]
+        exact hUd q hq
+      obtain ⟨hlev, hlr₂⟩ :=
+        ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₂)
+          hdescW (by rw [hqW, ht₁]) hWd htail₂ ht₂ hVd
+      exact ⟨hlev, hlr₂.trans hlrW⟩
+
 end Hex.GraphIso.Nauty
