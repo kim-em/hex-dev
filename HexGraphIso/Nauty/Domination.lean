@@ -746,4 +746,236 @@ theorem recover_machines {nn N inf : Nat} {cs bs fs : List Nat}
   · exact recover_codeInv hinv hle hlvl
   · exact recover_codeInv_reset hinv hlvl
 
+/-! # The first-path-agreeing leaf: the code-`1` gate -/
+
+/-- nauty's `workperm` at a first-path-agreeing leaf: the scatter of
+the current leaf's labelling over the first leaf's. -/
+@[expose] def firstScatter (n : Nat) (firstlab lab : Array Nat) :
+    Array Nat :=
+  (List.range n).foldl (fun w i => w.set! firstlab[i]! lab[i]!)
+    (Array.replicate n 0)
+
+private theorem forIn_range_eq3 {β : Type} (n : Nat) (init : β)
+    (f : Nat → β → Id (ForInStep β)) :
+    (forIn [0:n] init f : Id β) = forIn (List.range n) init f := by
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  have hrange : List.range' [0:n].start [0:n].size [0:n].step
+      = List.range n := by simp [List.range_eq_range']
+  rw [hrange]
+
+private theorem forIn_scatter_eq {flab lab : Array Nat} :
+    ∀ (l : List Nat) (w : Array Nat),
+      (forIn l w (fun i r =>
+        pure (ForInStep.yield (r.set! flab[i]! lab[i]!))) :
+          Id (Array Nat)) =
+      l.foldl (fun r i => r.set! flab[i]! lab[i]!) w
+  | [], _ => rfl
+  | i :: l, w => by
+    rw [List.forIn_cons, List.foldl_cons]
+    exact forIn_scatter_eq l _
+
+private theorem firstScatter_fold (n : Nat) (flab lab : Array Nat) :
+    (List.range n).foldl (fun w i => w.set! flab[i]! lab[i]!)
+      (Array.replicate n 0) = firstScatter n flab lab := rfl
+
+private theorem id_run_eq {α : Type} (x : Id α) : Id.run x = x := rfl
+
+private theorem pushAuto_orbits (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).orbits = st.orbits := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_numorbits (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).numorbits = st.numorbits := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_cosetindex (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).cosetindex = st.cosetindex := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_maxlevel (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).maxlevel = st.maxlevel := by
+  rw [pushAuto]; split <;> rfl
+
+/-- The code-`1` arm: a first-path-agreeing leaf passing the
+admission gate records a generator and unwinds to `gcaFirst` with
+the whole comparison state untouched. -/
+theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : st.gcaFirst ≥ st.noncheaplevel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (processnode ctx level numcells st).1 =
+      Int.ofNat st.gcaFirst ∧
+    (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
+    (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode = st.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel = st.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
+    (processnode ctx level numcells st).2.canong = st.canong ∧
+    (processnode ctx level numcells st).2.samerows = st.samerows := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+    simp [pruneReturn, hg, hnc, heq]
+    intro h1 h2
+    rcases hpass with h | h
+    · omega
+    · have h2' : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
+          = false := h2
+      rw [h] at h2'
+      cases h2'
+
+/-- A first-path-agreeing leaf failing the admission gate behaves,
+in the return level and the whole comparison state, exactly as the
+same state entered off the first path: the gate's only effect is the
+skipped generator. -/
+theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hnc : (numcells == ctx.n) = true)
+    (hfail1 : st.gcaFirst < st.noncheaplevel)
+    (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
+      = false) :
+    ((processnode ctx level numcells st).1 =
+        (processnode ctx level numcells
+          { st with eqlevFirst := level + 1 }).1 ∨
+      (processnode ctx level numcells st).1 =
+        Int.ofNat st.gcaFirst ∨
+      (processnode ctx level numcells st).1 =
+        Int.ofNat st.gcaCanon) ∧
+    (processnode ctx level numcells st).2.compCanon =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.compCanon ∧
+    (processnode ctx level numcells st).2.eqlevCanon =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.canonlab ∧
+    (processnode ctx level numcells st).2.canong =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.canong ∧
+    (processnode ctx level numcells st).2.samerows =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.samerows := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  have hge : ¬(st.gcaFirst ≥ st.noncheaplevel) := by omega
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode, processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex, pushAuto_maxlevel, pushAuto_gcaCanon, ite_self]
+    rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+    simp [pruneReturn, hg, hnc, heq, hge, hfail2, id_run_eq,
+      pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex]
+    repeat' split
+    all_goals first
+    | rfl
+    | exact Or.inl rfl
+    | exact Or.inr (Or.inl rfl)
+    | exact Or.inr (Or.inr rfl)
+    | omega
+    | (exfalso; omega)
+    | (intros
+       first
+       | rfl
+       | exact Or.inl rfl
+       | exact Or.inr (Or.inl rfl)
+       | exact Or.inr (Or.inr rfl)
+       | omega)
+
+/-- The leaf event at a first-path-agreeing leaf that fails the
+admission gate: identical to `processnode_leaf`, by the gate-failure
+reduction. -/
+theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
+    {cs bs : List Nat} {numcells : Nat} {st : SearchSt}
+    (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcsn : cs.length ≤ nn)
+    (heq : (st.eqlevFirst == cs.length) = true)
+    (hnc : (numcells == ctx.n) = true)
+    (hfail1 : st.gcaFirst < st.noncheaplevel)
+    (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
+      = false) :
+    ∃ bs' : List Nat,
+      incKey ctx bs'
+          (processnode ctx cs.length numcells st).2.canonlab =
+        keyMax (incKey ctx bs st.canonlab)
+          (pathLeafKey ctx cs st.lab) ∧
+      CanongInv ctx (processnode ctx cs.length numcells st).2.canong
+        (processnode ctx cs.length numcells st).2.canonlab
+        (processnode ctx cs.length numcells st).2.samerows ∧
+      (((processnode ctx cs.length numcells st).2.compCanon ≤ 0 ∧
+        CodeCmpInv nn cs bs'
+          (processnode ctx cs.length numcells st).2.canoncode
+          (processnode ctx cs.length numcells st).2.canonlevel
+          (processnode ctx cs.length numcells st).2.eqlevCanon
+          (processnode ctx cs.length numcells st).2.compCanon) ∨
+        ((processnode ctx cs.length numcells st).2.compCanon < 0 ∧
+          CodeCmpInv nn cs bs'
+            (processnode ctx cs.length numcells st).2.canoncode
+            (processnode ctx cs.length numcells st).2.canonlevel
+            (processnode ctx cs.length numcells st).2.eqlevCanon
+            0)) ∧
+      ((processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            st.eqlevCanon ∨
+        (processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            (Int.ofNat cs.length) ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaFirst ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaCanon) := by
+  have hef' : ¬(({ st with eqlevFirst := cs.length + 1 }.eqlevFirst
+      == cs.length) = true) := by simp
+  obtain ⟨bs', h1, h2, h3, h4⟩ := processnode_leaf
+    (st := { st with eqlevFirst := cs.length + 1 })
+    hcinv hginv hcsn hef' hnc
+  obtain ⟨e1, e2, e3, e4, e5, e6, e7, e8⟩ :=
+    processnode_gateFail_eq (level := cs.length) heq hnc hfail1
+      hfail2
+  refine ⟨bs', ?_, ?_, ?_, ?_⟩
+  · rw [e6]
+    exact h1
+  · rw [e7, e6, e8]
+    exact h2
+  · rw [e2, e3, e4, e5]
+    exact h3
+  · rcases e1 with he | he | he
+    · rw [he]
+      exact h4
+    · exact Or.inr (Or.inr (Or.inl he))
+    · exact Or.inr (Or.inr (Or.inr he))
+
+/-- The code-`1` skip is sound at key level: with the codes agreeing
+with the first path outright and the rows transported by the
+admitted automorphism, the leaf's key is the first leaf's key, and
+an incumbent dominating the first leaf absorbs it. -/
+theorem auto_keyMax {ctx : Ctx} {cs fs bs : List Nat}
+    {lab firstlab canonlab : Array Nat}
+    (hcs : cs = fs)
+    (hrows : leafRows ctx lab = leafRows ctx firstlab)
+    (hfirst : keyLe (pathLeafKey ctx fs firstlab)
+      (incKey ctx bs canonlab)) :
+    keyMax (incKey ctx bs canonlab) (pathLeafKey ctx cs lab) =
+      incKey ctx bs canonlab := by
+  have hkey : pathLeafKey ctx cs lab =
+      pathLeafKey ctx fs firstlab := by
+    rw [pathLeafKey, pathLeafKey, hcs, hrows]
+  rw [hkey]
+  exact keyMax_eq_left hfirst
+
 end Hex.GraphIso.Nauty
