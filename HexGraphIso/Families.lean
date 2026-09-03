@@ -15,11 +15,12 @@ Deterministic graph families for the conformance and benchmark corpus,
 per SPEC/Libraries/hex-graph-iso.md § Reproducible generators. Each
 generator documents its mathematical definition and its stable
 vertex-numbering rule; none uses randomness. This module carries the
-first slice — paths, cycles, circulants, complete multipartite graphs,
-repeated components, grids, hypercubes, Johnson, Kneser, triangular, and
-Paley graphs — with the incidence-geometry families (Latin squares,
-Hadamard matrices, projective planes) and the CFI, Miyazaki, and
-multipede instances to follow in the staged corpus.
+first slice — paths, cycles, circulants, generalized Petersen graphs,
+complete multipartite graphs, repeated components, grids, hypercubes,
+Johnson, Kneser, triangular, Paley, and cyclic Latin-square graphs —
+with the remaining incidence-geometry families (Hadamard matrices,
+projective planes) and the CFI, Miyazaki, and multipede instances to
+follow in the staged corpus.
 -/
 
 namespace Hex.GraphIso.Families
@@ -39,6 +40,16 @@ degenerates to the path. -/
 modulo `n` lies in the connection set (in either direction). -/
 @[expose] def circulant (n : Nat) (s : List Nat) : Graph n :=
   Graph.ofRel fun i j => s.contains ((n + j.val - i.val) % n)
+
+/-- The generalized Petersen graph `G(p, q)` on `2p` vertices: outer
+vertices `0..p-1` form a `p`-cycle, inner vertex `p+i` is adjacent to
+`p+((i+q) mod p)`, and the spoke edges join `i` to `p+i`. `G(5, 2)` is
+the Petersen graph and `G(5, 1)` the pentagonal prism. -/
+@[expose] def gpetersen (p q : Nat) : Graph (2 * p) :=
+  Graph.ofRel fun i j =>
+    (i.val < p && j.val < p && j.val == (i.val + 1) % p) ||
+    (p ≤ i.val && p ≤ j.val && j.val == p + ((i.val - p + q) % p)) ||
+    (i.val < p && j.val == i.val + p)
 
 /-- The complete multipartite graph over the given part sizes: vertices
 are numbered part by part in the given order, and two vertices are
