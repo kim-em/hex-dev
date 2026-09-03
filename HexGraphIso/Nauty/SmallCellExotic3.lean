@@ -607,8 +607,9 @@ pair, the four-cell splits into the two members met by the first and
 the two met by the second. A flip across that split has to carry the
 pair along, and the resulting map is the triple swap. -/
 
-/-- The triple-swap route at a four-cell beside a pair, with the
-chosen members on opposite sides of the matched split. -/
+/-- The triple-swap route at a four-cell beside a pair: the chosen
+members cross the pair coherently, as they do on opposite sides of a
+matched split. -/
 theorem fourPair_sw3
     (hIt : IterOk ctx level st)
     (hgsz : ctx.g.size = ctx.n)
@@ -625,14 +626,14 @@ theorem fourPair_sw3
     (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hw1 : w1 ≤ 3) (hw2 : w2 ≤ 3)
     (hUV : oU ≠ oV) (hUw1 : oU ≠ w1) (hUw2 : oU ≠ w2)
     (hVw1 : oV ≠ w1) (hVw2 : oV ≠ w2) (h12 : w1 ≠ w2)
-    (hUa : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 0]! = true)
-    (hUb : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 1]! = false)
-    (hVa : (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 0]! = false)
-    (hVb : (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 1]! = true)
-    (hXa : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 0]! = true)
-    (hXb : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 1]! = false)
-    (hYa : (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 0]! = false)
-    (hYb : (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 1]! = true) :
+    (hUV0 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 0]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 1]!)
+    (hUV1 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 1]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 0]!)
+    (hW0 : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 0]! =
+      (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 1]!)
+    (hW1 : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 1]! =
+      (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 0]!) :
     ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
@@ -816,11 +817,281 @@ theorem fourPair_sw3
     (f := sw3 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + w1]!
       st.lab[tc + w2]! st.lab[d2 + 0]! st.lab[d2 + 1]!)
     hIt hgsz hg (sw3_lt hOk) (fun w _ => sw3_invol hOk w)
-    (sw3_bits hsymm hloop hOk hfix hc1 hc2
-      (by rw [hUa, hVb]) (by rw [hUb, hVa])
-      (by rw [hXa, hYb]) (by rw [hXb, hYa])) hset
+    (sw3_bits hsymm hloop hOk hfix hc1 hc2 hUV0 hUV1 hW0 hW1) hset
   refine ⟨σ, hrm, hsp, ?_⟩
   rw [hat (tc + oU) (by omega), sw3_u]
+
+/-! # The dispatcher
+
+The cross-count between the four-cell and the pair is constant and at
+most two. Zero and two leave the pair unable to tell any two members
+apart; one splits the four-cell into two matched pairs, and the two
+chosen members are either on the same side, where the pair again sees
+no difference, or on opposite sides, where the pair travels with the
+flip. -/
+
+private theorem sum_range_succ₄ (f : Nat → Nat) (m : Nat) :
+    ((List.range (m + 1)).map f).sum =
+      ((List.range m).map f).sum + f m := by
+  rw [List.range_succ, List.map_append, List.sum_append]
+  simp
+
+private theorem sum_range_two₄ (f : Nat → Nat) :
+    ((List.range 2).map f).sum = f 0 + f 1 := by
+  rw [show (2 : Nat) = 1 + 1 from rfl, sum_range_succ₄,
+    show (1 : Nat) = 0 + 1 from rfl, sum_range_succ₄]
+  simp
+
+/-- Two distinct offsets below four leave two more. -/
+private theorem other_two {p q : Nat} (hp : p ≤ 3) (hq : q ≤ 3)
+    (hpq : p ≠ q) :
+    ∃ r s, r ≤ 3 ∧ s ≤ 3 ∧ p ≠ r ∧ p ≠ s ∧ q ≠ r ∧ q ≠ s ∧
+      r ≠ s := by
+  have hp3 : p = 0 ∨ p = 1 ∨ p = 2 ∨ p = 3 := by omega
+  have hq3 : q = 0 ∨ q = 1 ∨ q = 2 ∨ q = 3 := by omega
+  rcases hp3 with rfl | rfl | rfl | rfl <;>
+    rcases hq3 with rfl | rfl | rfl | rfl <;>
+    first
+      | exact absurd rfl hpq
+      | exact ⟨2, 3, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+      | exact ⟨1, 3, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+      | exact ⟨1, 2, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+      | exact ⟨0, 3, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+      | exact ⟨0, 2, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+      | exact ⟨0, 1, by omega, by omega, by omega, by omega,
+          by omega, by omega, by omega⟩
+
+set_option maxHeartbeats 1000000 in
+/-- The flip data at a four-cell target beside a pair, all other cells
+singletons. -/
+theorem fourPair_flip_data
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hCP : tc ≠ d2)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+      q ≠ (d2, d2 + 1) → q.2 = q.1)
+    (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hne : oU ≠ oV) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hinj := hIt.inj
+  have htn : tc + 3 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hdn : d2 + 1 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  obtain ⟨w1, w2, hw1, hw2, hUw1, hUw2, hVw1, hVw2, h12⟩ :=
+    other_two hoU hoV hne
+  have hnd : ([oU, oV, w1, w2] : List Nat).Nodup := by
+    simp [hne, hUw1, hUw2, hVw1, hVw2, h12]
+  have hbd : ∀ x ∈ ([oU, oV, w1, w2] : List Nat), x < 4 := by
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    · have : x = w2 := by
+        rcases List.mem_cons.mp hx with rfl | hx
+        · rfl
+        · exact absurd hx (by simp)
+      omega
+  -- the forward counts into the pair
+  have hfwd : ∀ o, o ≤ 3 →
+      popCount (worksetOf st.lab d2 (d2 + 1) &&&
+          ctx.g[st.lab[tc + o]!]!) =
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! := by
+    intro o ho
+    have h := count_into_cell hpsz hend hinj hlb hP
+      (hg _ (hlb (tc + o) (by omega)))
+    rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two₄] at h
+    exact h
+  -- the reverse counts into the four-cell
+  have hrev : ∀ q, q ≤ 1 →
+      popCount (worksetOf st.lab tc (tc + 3) &&&
+          ctx.g[st.lab[d2 + q]!]!) =
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + oU]! +
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + oV]! +
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + w1]! +
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + w2]! := by
+    intro q hq
+    have h := count_into_cell hpsz hend hinj hlb hC
+      (hg _ (hlb (d2 + q) (by omega)))
+    rw [show tc + 3 + 1 - tc = 4 by omega] at h
+    rw [h, sum_range_of_distinct _ (by simp) hnd hbd]
+    simp only [List.map_cons, List.map_nil, List.sum_cons,
+      List.sum_nil]
+    omega
+  -- forward constancy across the four-cell, reverse across the pair
+  have hfc : ∀ o o', o ≤ 3 → o' ≤ 3 →
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! =
+      bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + 1]! := by
+    intro o o' ho ho'
+    have h := hE _ hC _ hP o o' (by omega) (by omega)
+    rw [hfwd o ho, hfwd o' ho'] at h
+    exact h
+  have hrc := hE _ hP _ hC 0 1 (by omega) (by omega)
+  rw [hrev 0 (by omega), hrev 1 (by omega)] at hrc
+  -- the two directions agree termwise
+  have hsy : ∀ o q, o ≤ 3 → q ≤ 1 →
+      bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + o]! =
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! :=
+    fun o q ho hq => bitCnt_inj.mpr
+      (hsymm _ _ (hlb _ (by omega)) (hlb _ (by omega)))
+  have hle : ∀ o q : Nat,
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! ≤ 1 :=
+    fun o q => bitCnt_le_one _ _
+  -- the pair's view of the four members, in the two useful shapes
+  have hbit : ∀ o q, o ≤ 3 → q ≤ 1 →
+      ((ctx.g[st.lab[tc + o]!]!).testBit st.lab[d2 + q]! = true ↔
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! = 1) :=
+    fun o q ho hq => ⟨fun h => bitCnt_eq_one.mpr h,
+      fun h => bitCnt_eq_one.mp h⟩
+  have hPof : ∀ o o', o ≤ 3 → o' ≤ 3 →
+      (∀ q, q ≤ 1 →
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! =
+          bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + q]!) →
+      ∀ q, q ≤ 1 →
+        (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + o]! =
+          (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + o']! := by
+    intro o o' ho ho' h q hq
+    have h1 := hsy o q ho hq
+    have h2 := hsy o' q ho' hq
+    exact bitCnt_inj.mp (by rw [h1, h2]; exact h q hq)
+  -- the constant cross-count is zero, one or two
+  have hsum : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! = 0 ∨
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! = 1 ∨
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! = 2 := by
+    have := hle oU 0
+    have := hle oU 1
+    omega
+  have hUVc := hfc oU oV hoU hoV
+  have hUw1c := hfc oU w1 hoU hw1
+  have hUw2c := hfc oU w2 hoU hw2
+  rcases hsum with h0 | h1 | h2
+  · -- no edges between the two cells
+    refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+      hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
+    intro q hq
+    have e1 := hle oU 0
+    have e2 := hle oU 1
+    have e3 := hle oV 0
+    have e4 := hle oV 1
+    have e5 := hle w1 0
+    have e6 := hle w1 1
+    have e7 := hle w2 0
+    have e8 := hle w2 1
+    constructor
+    · exact hPof oU oV hoU hoV (fun q' hq' => by
+        rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+        q hq
+    · exact hPof w1 w2 hw1 hw2 (fun q' hq' => by
+        rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+        q hq
+  · -- each member meets exactly one of the pair
+    have hr0 : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+        bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[d2 + 0]! +
+        bitCnt ctx.g[st.lab[tc + w1]!]! st.lab[d2 + 0]! +
+        bitCnt ctx.g[st.lab[tc + w2]!]! st.lab[d2 + 0]! = 2 := by
+      have s1 := hsy oU 0 hoU (by omega)
+      have s2 := hsy oV 0 hoV (by omega)
+      have s3 := hsy w1 0 hw1 (by omega)
+      have s4 := hsy w2 0 hw2 (by omega)
+      have s5 := hsy oU 1 hoU (by omega)
+      have s6 := hsy oV 1 hoV (by omega)
+      have s7 := hsy w1 1 hw1 (by omega)
+      have s8 := hsy w2 1 hw2 (by omega)
+      omega
+    rcases Decidable.em
+        (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! =
+          bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[d2 + 0]!)
+      with hsame | hdiff
+    · -- the chosen members sit on the same side of the split
+      refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+        hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
+      intro q hq
+      have e1 := hle oU 0
+      have e2 := hle oU 1
+      have e3 := hle oV 0
+      have e4 := hle oV 1
+      have e5 := hle w1 0
+      have e6 := hle w1 1
+      have e7 := hle w2 0
+      have e8 := hle w2 1
+      constructor
+      · exact hPof oU oV hoU hoV (fun q' hq' => by
+          rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+          q hq
+      · exact hPof w1 w2 hw1 hw2 (fun q' hq' => by
+          rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+          q hq
+    · -- opposite sides: name the partner of each chosen member
+      have e1 := hle oU 0
+      have e2 := hle oU 1
+      have e3 := hle oV 0
+      have e4 := hle oV 1
+      have e5 := hle w1 0
+      have e6 := hle w1 1
+      have e7 := hle w2 0
+      have e8 := hle w2 1
+      have hVc := hfc oV w1 hoV hw1
+      rcases Decidable.em
+          (bitCnt ctx.g[st.lab[tc + w1]!]! st.lab[d2 + 0]! =
+            bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]!)
+        with hw1U | hw1V
+      · refine fourPair_sw3 hIt hgsz hg hsymm hloop hE hC hP hCP
+          hsing hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12
+          ?_ ?_ ?_ ?_ <;> exact bitCnt_inj.mp (by omega)
+      · refine fourPair_sw3 hIt hgsz hg hsymm hloop hE hC hP hCP
+          hsing hoU hoV hw2 hw1 hne hUw2 hUw1 hVw2 hVw1
+          (Ne.symm h12) ?_ ?_ ?_ ?_ <;>
+          exact bitCnt_inj.mp (by omega)
+  · -- every member meets both of the pair
+    refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+      hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
+    intro q hq
+    have e1 := hle oU 0
+    have e2 := hle oU 1
+    have e3 := hle oV 0
+    have e4 := hle oV 1
+    have e5 := hle w1 0
+    have e6 := hle w1 1
+    have e7 := hle w2 0
+    have e8 := hle w2 1
+    constructor
+    · exact hPof oU oV hoU hoV (fun q' hq' => by
+        rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+        q hq
+    · exact hPof w1 w2 hw1 hw2 (fun q' hq' => by
+        rcases (by omega : q' = 0 ∨ q' = 1) with rfl | rfl <;> omega)
+        q hq
 
 end FourCell
 
