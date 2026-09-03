@@ -22,11 +22,11 @@ size-three cells to coincide (the sharpened form of
 proves the triple analogues of the pair flip theory:
 
 * `triple_const`: the triple's members have identical bits at every
-  member of any other cell of size at most two — the count into a
+  member of any other cell of size at most two -- the count into a
   singleton is the adjacency bit, and the count into a pair is twice
   it by `pair_odd_eq`'s both-or-neither;
 * `triple_internal`: the induced graph on the triple is empty or
-  complete — the off-diagonal bits are all equal, by the three row-sum
+  complete -- the off-diagonal bits are all equal, by the three row-sum
   equalities of equitability (a one-regular graph on three vertices
   is impossible);
 * `triple_flip_rows`: the transposition of any two triple members,
@@ -34,11 +34,47 @@ proves the triple analogues of the pair flip theory:
   pair flip no matching closure is needed: every other cell is small,
   so the triple's relations to it are constant across the triple.
 
-Remaining on top of this file: the self-equivalence `StPerm` of a
-row-preserving flip and the generalized single-deviation theorem, the
-pair-closure involution construction, the all-leaves induction, the
-`noncheaplevel` event lemma and arm-2 assembly — plus the exotic
-defect-four configurations outside the first branch.
+This file also proves the counting pigeonhole (`labInj_surj`: an
+injective bounded labelling on `n` positions is surjective, the
+surjectivity hypothesis the flip theorems consume), the transposition's
+self-equivalence (`cellsPerm_self_tripleSwap`/`stPerm_self_tripleSwap`:
+the mapped labelling is cell-contents equivalent to the original), the
+generalized single-deviation theorem (`deviation_leafRows_self`: ANY
+row-preserving self-symmetry of a node carrying one child's
+individualized vertex to another's mirrors discrete descents with
+equal leaf rows -- the uniform door both pair and triple deviations
+enter), and its packaged triple instance (`triple_deviation_leafRows`,
+which constructs the concrete transposition and discharges every
+hypothesis from `IterOk` + equitability + the first-branch shape).
+The pair-matching closure `PairReach` and its position toolkit
+(start-determinacy, start-never-second, closure members are pairs,
+distinct pairs disjoint) close the file.
+
+Remaining on top of this file, in dependency order. (1) The
+pair-closure involution: define the swap of every `PairReach`-closure
+pair via `Classical.choose` on "some closure pair has this vertex as
+its first/second member" -- the position toolkit makes the witness
+unique (start-determinacy + `pair_start_ne_second` give the two
+existentials' exclusivity, `pair_cells_disj` gives distinctness of
+partners) -- then discharge the S-closure hypotheses of `flip_rows` and a
+`cellsPerm_self_pairFlip` (mirror of the triple one: closure pairs
+swap by `List.Perm.swap`, other cells are fixed because a member of a
+closure pair would place its position inside that pair's window), and
+package `pair_deviation_leafRows` through `deviation_leafRows_self`
+exactly as the triple instance. (2) The node invariant for the
+all-leaves induction: `IterOk` + `Equitable` + the first-branch shape
+(every cell size ≤ 3, one triple -- descends because `refine_frozen`
+keeps closed positions closed, so every child cell sits inside a
+parent cell and child triples are parent triples positionally) +
+`bcount` accuracy (`bcount_breakout_eq` + `refine_bcount`), with
+equitability descending by `equitable_breakout`. (3) The all-leaves
+induction: two descents with the same target-position path and
+discrete ends have equal leaf rows -- induction on the path; equal
+offsets recurse, distinct offsets glue a deviation (pair or triple by
+the target's size) and recurse below the second child on the
+transported path. (4) The `noncheaplevel` event lemma and the arm-2
+assembly in `StoreValid.lean`. (5) The exotic defect-four
+configurations outside the first branch, per the probe.
 -/
 
 namespace Hex.GraphIso.Nauty
