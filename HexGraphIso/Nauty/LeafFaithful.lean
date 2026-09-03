@@ -65,6 +65,19 @@ def CanongInv (ctx : Ctx) (canong canonlab : Array Nat)
   canong.size = ctx.n ∧
     ∀ i, i < samerows → canong[i]! = leafRow ctx canonlab i
 
+/-- The store size, projected out of the invariant. -/
+theorem canongInv_size {ctx : Ctx} {canong canonlab : Array Nat}
+    {samerows : Nat} (hinv : CanongInv ctx canong canonlab samerows) :
+    canong.size = ctx.n :=
+  hinv.1
+
+/-- The invariant with no rows recorded is the size fact alone: the
+form every fresh install re-seeds. -/
+theorem canongInv_zero {ctx : Ctx} {canong : Array Nat}
+    (canonlab : Array Nat) (hsz : canong.size = ctx.n) :
+    CanongInv ctx canong canonlab 0 :=
+  ⟨hsz, fun i hi => absurd hi (Nat.not_lt_zero i)⟩
+
 /-- A store satisfying the invariant at `ctx.n` holds the leaf rows
 of its incumbent as its row list. -/
 theorem rows_of_canongInv {ctx : Ctx} {canong canonlab : Array Nat}
