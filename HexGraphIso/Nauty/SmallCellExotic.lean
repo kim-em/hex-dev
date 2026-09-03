@@ -961,6 +961,139 @@ private theorem oneCell_sw2 {wa wb : Nat}
   refine ⟨σ, hrm, hsp, ?_⟩
   rw [hat (tc + oU) (by omega), sw2_u]
 
+private theorem nodup_erase :
+    ∀ {l : List Nat}, l.Nodup → ∀ a, (l.erase a).Nodup
+  | [], _, _ => by simp
+  | b :: t, hnd, a => by
+    rw [List.nodup_cons] at hnd
+    rcases Decidable.em (b = a) with rfl | hba
+    · rw [List.erase_cons_head]
+      exact hnd.2
+    · rw [List.erase_cons_tail (by simp only [beq_iff_eq]; exact hba),
+        List.nodup_cons]
+      refine ⟨fun hmem => ?_, nodup_erase hnd.2 a⟩
+      exact hnd.1 ((mem_erase_nodup hnd.2 a b).mp hmem).1
+
+private theorem nodup_subset_length :
+    ∀ (l r : List Nat), l.Nodup → (∀ x ∈ l, x ∈ r) →
+      l.length ≤ r.length
+  | [], r, _, _ => by simp
+  | a :: t, r, hnd, hsub => by
+    rw [List.nodup_cons] at hnd
+    have ha : a ∈ r := hsub a List.mem_cons_self
+    have hlen := (List.perm_cons_erase ha).length_eq
+    have hsub' : ∀ x ∈ t, x ∈ r.erase a := fun x hx =>
+      (List.mem_erase_of_ne (fun hcon => hnd.1
+        (by rw [← hcon]; exact hx))).mpr
+        (hsub x (List.mem_cons_of_mem _ hx))
+    have h := nodup_subset_length t (r.erase a) hnd.2 hsub'
+    simp only [List.length_cons] at hlen ⊢
+    omega
+
+set_option maxHeartbeats 1000000 in
+/-- In a five-member window, the member outside a crossed pair has
+equal bits at the pair: the pair's two row sums expand over the five
+named offsets, the crossed types cancel, and the shared internal bit
+cancels by symmetry. -/
+private theorem oneCell_wfix {wa wb wf : Nat}
+    (hIt : IterOk ctx level st)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hm : te + 1 - tc = 5)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hwa : wa ≤ te - tc) (hwb : wb ≤ te - tc) (hwf : wf ≤ te - tc)
+    (hab : wa ≠ wb) (haf : wa ≠ wf) (hbf : wb ≠ wf)
+    (hau : wa ≠ oU) (hav : wa ≠ oV) (hbu : wb ≠ oU) (hbv : wb ≠ oV)
+    (hfu : wf ≠ oU) (hfv : wf ≠ oV)
+    (htau : (ctx.g[st.lab[tc + wa]!]!).testBit st.lab[tc + oU]! =
+      true)
+    (htav : (ctx.g[st.lab[tc + wa]!]!).testBit st.lab[tc + oV]! =
+      false)
+    (htbu : (ctx.g[st.lab[tc + wb]!]!).testBit st.lab[tc + oU]! =
+      false)
+    (htbv : (ctx.g[st.lab[tc + wb]!]!).testBit st.lab[tc + oV]! =
+      true) :
+    (ctx.g[st.lab[tc + wf]!]!).testBit st.lab[tc + wa]! =
+      (ctx.g[st.lab[tc + wf]!]!).testBit st.lab[tc + wb]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  have hnd : ([oU, oV, wa, wb, wf] : List Nat).Nodup := by
+    simp only [List.nodup_cons, List.mem_cons,
+      List.not_mem_nil, List.nodup_nil]
+    refine ⟨?_, ?_, ?_, ?_, ?_⟩
+    · rintro (h | h | h | h | h) <;> omega
+    · rintro (h | h | h | h) <;> omega
+    · rintro (h | h | h) <;> omega
+    · rintro (h | h) <;> omega
+    · simp
+  have hbd : ∀ x ∈ ([oU, oV, wa, wb, wf] : List Nat),
+      x < te + 1 - tc := by
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    · have hxf : x = wf := by
+        rcases List.mem_cons.mp hx with rfl | hx
+        · rfl
+        · exact absurd hx (by simp)
+      omega
+  have hcic : ∀ o : Nat, o ≤ te - tc →
+      popCount (worksetOf st.lab tc te &&&
+          ctx.g[st.lab[tc + o]!]!) =
+        ((List.range (te + 1 - tc)).map fun w =>
+          bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w]!).sum := by
+    intro o ho
+    exact count_into_cell hpsz hend hinj hlb hC
+      (hg _ (hlb _ (by omega)))
+  have hrow := hE _ hC _ hC wa wb (by omega) (by omega)
+  rw [hcic wa hwa, hcic wb hwb, hm] at hrow
+  rw [sum_range_of_distinct _ (by simp) hnd
+      (by rw [← hm]; exact hbd),
+    sum_range_of_distinct _ (by simp) hnd
+      (by rw [← hm]; exact hbd)] at hrow
+  simp only [List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil] at hrow
+  have hloopa : bitCnt ctx.g[st.lab[tc + wa]!]! st.lab[tc + wa]! =
+      0 := bitCnt_eq_zero.mpr (hloop _ (hlb _ (by omega)))
+  have hloopb : bitCnt ctx.g[st.lab[tc + wb]!]! st.lab[tc + wb]! =
+      0 := bitCnt_eq_zero.mpr (hloop _ (hlb _ (by omega)))
+  have hsymab : bitCnt ctx.g[st.lab[tc + wa]!]! st.lab[tc + wb]! =
+      bitCnt ctx.g[st.lab[tc + wb]!]! st.lab[tc + wa]! :=
+    bitCnt_inj.mpr (hsymm _ _ (hlb _ (by omega)) (hlb _ (by omega)))
+  have h1 : bitCnt ctx.g[st.lab[tc + wa]!]! st.lab[tc + oU]! = 1 :=
+    bitCnt_eq_one.mpr htau
+  have h2 : bitCnt ctx.g[st.lab[tc + wa]!]! st.lab[tc + oV]! = 0 :=
+    bitCnt_eq_zero.mpr htav
+  have h3 : bitCnt ctx.g[st.lab[tc + wb]!]! st.lab[tc + oU]! = 0 :=
+    bitCnt_eq_zero.mpr htbu
+  have h4 : bitCnt ctx.g[st.lab[tc + wb]!]! st.lab[tc + oV]! = 1 :=
+    bitCnt_eq_one.mpr htbv
+  have hkey : bitCnt ctx.g[st.lab[tc + wa]!]! st.lab[tc + wf]! =
+      bitCnt ctx.g[st.lab[tc + wb]!]! st.lab[tc + wf]! := by
+    omega
+  have hbit := bitCnt_inj.mp hkey
+  rw [hsymm _ _ (hlb (tc + wf) (by omega)) (hlb (tc + wa) (by omega)),
+    hsymm _ _ (hlb (tc + wf) (by omega)) (hlb (tc + wb) (by omega))]
+  exact hbit
+
 end OneCell
 
 end Hex.GraphIso.Nauty
