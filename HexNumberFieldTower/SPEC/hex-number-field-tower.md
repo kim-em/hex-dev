@@ -375,7 +375,9 @@ executable phases.
 Negation has mode-1 evidence on dense bounded-height coordinate arrays at
 dimensions 128 through 448. The source-derived linear model covers one public
 negation plus structural result hashing; its exactly sized result constructor
-does not copy or normalize the coordinate array.
+does not copy or normalize the coordinate array. `Elem.mk` remains private;
+the checked constructor is exposed only as `Internal.ofCoeffs`, and requires a
+proof that the supplied array has exactly the tower dimension.
 
 Dense `toPrimitive`, inversion, and division have no admissible current mode.
 The forward-map optimization is valid, but the dense family rejects the

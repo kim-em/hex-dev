@@ -103,6 +103,9 @@ independent outer trials. Negation uses a five-second target and trial-major
 interleaving across its seven dimensions. The explicit
 `signalFloorMultiplier := 1.0` is appropriate because process spawn is
 outside the timed body; the exports retain the spawn floor and every trial.
+LeanBench drops the first of the seven ordered rungs from its slope fit, so the
+reported residual is fitted over dimensions 160 through 448; dimension 128 is
+retained as a measured allocation-regime and normalized-cost check.
 
 The original final exports were pinned to logical CPU 19, with SMT sibling 67.
 Immediately before the dense `toPrimitive` export, `scripts/bench/idle_core.py`
@@ -115,12 +118,21 @@ postflight sample measured 1.33% busy on each sibling; load averages were 1.28,
 not a claim that the host was idle throughout.
 
 The negation export used logical CPU 3 with SMT sibling 51. A continuous
-250 ms `/proc/stat`/runnable-process trace was intersected with LeanBench's 481
+250 ms `/proc/stat`/runnable-task trace was intersected with LeanBench's 481
 timed-loop regions from 35 PID-specific sidecars. It retained 136.213 seconds
 of timed work, found no foreign runnable sample on CPU 3, and measured 0.257223
 seconds of sibling activity: aggregate ratio 0.001888, below the pre-registered
-0.002 ceiling. A first attempt at the same committed schedule was rejected at
-0.003274 and is not an official export.
+0.002 ceiling. This monitor's numerator is precisely sampled sibling busy time
+plus the whole timed overlap of any sample in which a foreign runnable task is
+observed on the measurement CPU. It is deliberately conservative, but is not
+the process-CPU residual used by `fresh_module_sweep.py`; the shared numeric
+ceiling does not make those two diagnostics interchangeable.
+
+The run series used a finite one-retry bound. The first attempt at the same
+committed implementation and schedule was rejected at 0.003274; its timing
+export and telemetry are retained below. After an idle-core preflight, the one
+unchanged retry supplied the official export above. No further retry would
+have been admitted.
 
 ```sh
 taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
@@ -197,7 +209,18 @@ ends below the 4,096-byte small-object boundary at D=509, so every rung uses
 the same source-derived allocation route. A temporary `IO.getNumHeartbeats`
 diagnostic measured stable counter deltas D+3 (131 at D=128 and 259 at D=256),
 with a one-allocation measurement baseline, confirming D+2 operation
-allocations and no sharing or short circuit.
+allocations and no sharing or short circuit. The repeated counts and empty-body
+control are retained below rather than only described from a temporary probe.
+
+There were two distinct failures before the accepted run. The original small
+schedule (dimensions 4 through 48) produced β = −0.162 and motivated the
+source-based allocation-threshold audit. The preregistered seven-rung schedule
+then produced β = +0.414 with the old normalizing reconstruction and a 100 ms
+inner target. That result did not justify changing the model or schedule: the
+inclusive profile exposed the extra reconstruction traversal, the public
+implementation was repaired to use the proof-known exact width, and the
+five-second target was committed to amortize allocator-page maintenance. Only
+then was the official export collected.
 
 | surface | attempted schedule and observed result | ordered-rule conclusion |
 |---|---|---|
@@ -381,8 +404,10 @@ timed-region-filtered capture from binary `d9fc6d73f`; its algorithm code is
 unchanged. Recursive inversion was refreshed from clean binary `8ea8d6819`
 on the reordered genuine-recursion family. Dense `toPrimitive` was refreshed
 from clean pre-rebase commit `6a4911dbb` (now `1c7dc9c1a`) after its quadratic
-model failed. Negation was captured from clean pre-rebase binary `86d54d9fa`
-(same patch now `7db1a55be`)
+model failed. Negation was captured from clean pre-rebase binary `86d54d9fa`.
+Its negation registration and executable negation path match rebased commit
+`7db1a55be`; the benchmark file's unrelated dense-`toPrimitive` registration
+changed in an upstream commit during the rebase.
 at dimension 448 after exact-width construction removed the normalization
 copy. The factorization family was refreshed from the
 pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
@@ -464,7 +489,8 @@ chain. Both phases named by the SPEC's arithmetic
 section are the measured cost; nothing is unattributed.
 
 Negation at dimension 448 retains 98.93% of samples in the registered public
-target. Inclusive shares are 59.14% in `Array.ofFn`, 28.38% in
+target. Overlapping inclusive shares are 59.14% in the exact generated helper
+`_private.Init.Data.Array.Basic.0_Array.ofFn.go`, 28.38% in
 `Arithmetic.negCoords`, 22.97% in `Rat.neg`, and 13.22% in the structural
 coordinate checksum. Allocation accounts for 17.54% of leaf samples. The
 former `normalizeCoeffs` reconstruction copy is absent, confirming that the
@@ -561,6 +587,7 @@ captures.
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
 | [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts, with its sparse `runToPrimitiveLadder` block superseded by the dense export | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [negation calibration](bench-results/hex-number-field-tower-opus-calibration-605abcb5-chungus2-cpu19.json) | clean pre-rebase `605abcb5` (same branch state now `2ed1aba5d`); registered linear diagnostic, β = −0.162 | CPU 19 | `360bcf931e5171183ae25ddba16d6ff3edbb820bab5d40fd4c0de1908919f5a8` |
+| [preregistered 100 ms negation failure](bench-results/hex-number-field-tower-negation-preregistered-100ms-9e17fb58-chungus2-cpu19.json) | clean `9e17fb582`; the seven-rung schedule before exact-width reconstruction, β = +0.414 | CPU 19 | `1be091b9afc75190418d939f4476b2aed6b17846996474407d4f1df1a3f47354` |
 | [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | clean pre-rebase `b2ebf281b` (same patch now `eaa691fc9`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
 | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | final measurement protocol | sampled CPU and SMT sibling | `f8a9d1d8294f59cf1bce18e02a2baae57728c87db24f5e96cc1c5c0e884a5a76` |
 | [canonical factor profile](bench-results/hex-number-field-tower-phase4-final-factor-profile-5d4cb88a-chungus2.json) | pre-rebase binary `5d4cb88ad` (same patch now `842043ebf`); algorithm source unchanged | unpinned shape capture | `f34c803bc741a92b9ac5b6040b107aa80c206f9a8b1d6515635ca6af5d3c9cf2` |
@@ -571,6 +598,9 @@ captures.
 | [refreshed recursive-inversion profile](bench-results/hex-number-field-tower-recursive-inversion-profile-8ea8d681-chungus2.json) | clean `8ea8d6819`; timed-region-filtered reordered family at dimension 24 | CPU 19 | `91e67ce7b3764578fec8d2bcf7011f1ec489399871937c04442e3a4e222bbe43` |
 | [negation mode-1 export](bench-results/hex-number-field-tower-negation-linear-86d54d9fa-chungus2-cpu3.json) | clean pre-rebase `86d54d9fa` (same patch now `7db1a55be`); five trial-major repeats of the pre-registered dense schedule | CPU 3 | `c9c71a5cb9a54b82c4a9b88cf2ccc03f6f0f304639afb05085899aa256552edc` |
 | [negation core telemetry](bench-results/hex-number-field-tower-negation-telemetry-86d54d9fa-chungus2-cpu3.json) | continuous core/sibling trace filtered to 481 timed regions; ratio 0.001888 | CPU 3 and SMT sibling 51 | `6e8a3b36ce08a77f73cb5eb0fab18614c48ab7608270808b6a1a7c28c3e9eb45` |
+| [rejected negation export](bench-results/hex-number-field-tower-negation-linear-rejected-86d54d9fa-chungus2-cpu3.json) | first of at most two unchanged attempts; timing verdict passed but interference grade rejected the run | CPU 3 | `b1d8a568aec107fa57359d07610229bbcc1e38c22a76b147aa2ab4be8f0c324a` |
+| [rejected negation telemetry](bench-results/hex-number-field-tower-negation-telemetry-rejected-86d54d9fa-chungus2-cpu3.json) | 481 timed regions; interference ratio 0.003274 exceeded the 0.002 ceiling | CPU 3 and SMT sibling 51 | `0564f704333a9527e3bfd605326cd6d6d3104053b6b5aaa610790c88ef958357` |
+| [negation allocation counts](bench-results/hex-number-field-tower-negation-allocation-counts-86d54d9fa.json) | five repeated small-allocation counts at dimensions 128 and 256 plus an empty-body control | unpinned count diagnostic | `2c3c386e854dddf50ef021ce53cb908985400595f7c51ebae936ebbff38b0f85` |
 | [negation inclusive profile](bench-results/hex-number-field-tower-negation-profile-86d54d9fa-chungus2.json) | clean pre-rebase `86d54d9fa` (same patch now `7db1a55be`); timed-region-filtered dimension-448 public negation and hash | unpinned shape capture | `b69714a5a9e9dce3562ba0137c73e3e8ef30a7718c4caf595ff33bffc17493e0` |
 
 The evidence added here comprises the single-root bounded-height fixtures,

@@ -27,6 +27,15 @@ def sibling_set(cpu: int) -> set[int]:
     return siblings or {cpu}
 
 
+def cpu_counter(fields: list[int]) -> tuple[int, int]:
+    """Return busy and total ticks without double-counting Linux guest time."""
+    # Linux reports guest and guest_nice inside user and nice as well as in
+    # their own columns.  Sum only through steal to avoid double counting.
+    total = sum(fields[:8])
+    idle = fields[3] + (fields[4] if len(fields) > 4 else 0)
+    return total - idle, total
+
+
 def cpu_counters() -> dict[int, tuple[int, int]]:
     counters: dict[int, tuple[int, int]] = {}
     for line in Path("/proc/stat").read_text().splitlines():
@@ -34,10 +43,7 @@ def cpu_counters() -> dict[int, tuple[int, int]]:
             continue
         name, *fields_text = line.split()
         fields = [int(value) for value in fields_text]
-        cpu = int(name[3:])
-        total = sum(fields)
-        idle = fields[3] + (fields[4] if len(fields) > 4 else 0)
-        counters[cpu] = (total - idle, total)
+        counters[int(name[3:])] = cpu_counter(fields)
     return counters
 
 
@@ -69,6 +75,23 @@ def process_snapshot() -> dict[int, tuple[int, str, int, str]]:
             fields = text[close + 2 :].split()
             # After the closing parenthesis: state, ppid, ..., processor.
             result[pid] = (int(fields[1]), fields[0], int(fields[36]), comm)
+        except (FileNotFoundError, IndexError, PermissionError, ValueError):
+            continue
+    return result
+
+
+def task_snapshot() -> list[tuple[int, int, str, int, str]]:
+    """Return (tgid, tid, state, last_cpu, comm) for every visible task."""
+    result: list[tuple[int, int, str, int, str]] = []
+    for stat_path in Path("/proc").glob("[0-9]*/task/[0-9]*/stat"):
+        try:
+            text = stat_path.read_text()
+            close = text.rfind(")")
+            tid = int(text[: text.find(" ")])
+            comm = text[text.find("(") + 1 : close]
+            fields = text[close + 2 :].split()
+            tgid = int(stat_path.parts[-4])
+            result.append((tgid, tid, fields[0], int(fields[36]), comm))
         except (FileNotFoundError, IndexError, PermissionError, ValueError):
             continue
     return result
@@ -126,13 +149,78 @@ def load_timed_regions(paths: Iterable[Path]) -> tuple[list[tuple[int, int]], in
             record = json.loads(line)
             if record.get("kind") == "header":
                 saw_header = True
-            elif record.get("kind") == "region":
+            elif (
+                record.get("kind") == "region"
+                and record.get("label") in {"warm-loop", "cold-loop"}
+            ):
                 regions.append(
                     (int(record["mono_t0_ns"]), int(record["mono_t1_ns"]))
                 )
         if not saw_header:
             raise ValueError(f"timed-region sidecar has no header: {path}")
     return merge_regions(regions), path_count
+
+
+def interference_summary(
+    samples: Iterable[dict[str, object]],
+    measurement_cpu: int,
+    sibling_cpus: Iterable[int],
+    timed_regions_complete: bool,
+    threshold: float,
+) -> dict[str, object]:
+    """Compute the timed-region interference quantities and verdict."""
+    sample_list = list(samples)
+    sibling_busy_seconds = sum(
+        float(sample["busy_seconds"][str(cpu)]) * float(sample["timed_fraction"])
+        for sample in sample_list
+        for cpu in sibling_cpus
+    )
+    foreign_measurement_seconds = sum(
+        float(sample["timed_overlap_seconds"])
+        for sample in sample_list
+        if any(
+            int(task["cpu"]) == measurement_cpu
+            for task in sample["foreign_runnable"]
+        )
+    )
+    timed_wall_seconds = sum(
+        float(sample["timed_overlap_seconds"]) for sample in sample_list
+    )
+    aggregate_interference_seconds = (
+        sibling_busy_seconds + foreign_measurement_seconds
+    )
+    aggregate_interference_ratio: float | None = (
+        aggregate_interference_seconds / timed_wall_seconds
+        if timed_wall_seconds > 0
+        else None
+    )
+    foreign_samples = sum(
+        bool(sample["foreign_runnable"])
+        and float(sample["timed_overlap_seconds"]) > 0
+        for sample in sample_list
+    )
+    contaminated = (
+        not timed_regions_complete
+        or aggregate_interference_ratio is None
+        or aggregate_interference_ratio > threshold
+    )
+    return {
+        "timed_wall_seconds": round(timed_wall_seconds, 6),
+        "foreign_runnable_samples": foreign_samples,
+        "measurement_cpu_foreign_seconds_estimate": round(
+            foreign_measurement_seconds, 6
+        ),
+        "smt_sibling_busy_seconds": round(sibling_busy_seconds, 6),
+        "aggregate_core_interference_seconds": round(
+            aggregate_interference_seconds, 6
+        ),
+        "aggregate_core_interference_ratio": (
+            round(aggregate_interference_ratio, 6)
+            if aggregate_interference_ratio is not None
+            else None
+        ),
+        "contaminated": contaminated,
+    }
 
 
 def main() -> int:
@@ -155,8 +243,9 @@ def main() -> int:
     siblings = sibling_set(args.cpu)
     monitored = sorted(siblings | {args.cpu})
     monitor_affinity = os.sched_getaffinity(0) - set(monitored)
-    if monitor_affinity:
-        os.sched_setaffinity(0, monitor_affinity)
+    if not monitor_affinity:
+        parser.error("no CPU remains on which to run the telemetry monitor")
+    os.sched_setaffinity(0, monitor_affinity)
 
     started = utc_now()
     started_mono_ns = time.monotonic_ns()
@@ -180,9 +269,9 @@ def main() -> int:
         snapshot = process_snapshot()
         owned = descendants(process.pid, snapshot)
         foreign = [
-            {"pid": pid, "cpu": cpu, "comm": comm}
-            for pid, (_ppid, state, cpu, comm) in snapshot.items()
-            if state == "R" and cpu in monitored and pid not in owned
+            {"tgid": tgid, "tid": tid, "cpu": cpu, "comm": comm}
+            for tgid, tid, state, cpu, comm in task_snapshot()
+            if state == "R" and cpu in monitored and tgid not in owned
         ]
         samples.append(
             {
@@ -217,7 +306,15 @@ def main() -> int:
     sidecar_paths = sorted(
         args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl")
     )
-    timed_regions, sidecar_count = load_timed_regions(sidecar_paths)
+    timed_regions_error: str | None = None
+    try:
+        timed_regions, sidecar_count = load_timed_regions(sidecar_paths)
+    except (OSError, ValueError) as error:
+        # Preserve a fail-closed telemetry document even when a sidecar was
+        # truncated or malformed, so a long run leaves reviewable evidence.
+        timed_regions = []
+        sidecar_count = len(sidecar_paths)
+        timed_regions_error = str(error)
     for sample in samples:
         sample_start = int(sample["mono_t0_ns"])
         sample_end = int(sample["mono_t1_ns"])
@@ -229,44 +326,19 @@ def main() -> int:
         )
 
     sibling_cpus = sorted(set(monitored) - {args.cpu})
-    sibling_busy_seconds = sum(
-        float(sample["busy_seconds"][str(cpu)]) * float(sample["timed_fraction"])
-        for sample in samples
-        for cpu in sibling_cpus
-    )
-    foreign_measurement_seconds = sum(
-        float(sample["timed_overlap_seconds"])
-        for sample in samples
-        if any(
-            int(process["cpu"]) == args.cpu
-            for process in sample["foreign_runnable"]
-        )
-    )
     elapsed = (time.monotonic_ns() - started_mono_ns) / 1_000_000_000
-    timed_wall_seconds = sum(
-        float(sample["timed_overlap_seconds"]) for sample in samples
+    timed_regions_complete = (
+        timed_regions_error is None and sidecar_count > 0 and bool(timed_regions)
     )
-    aggregate_interference_seconds = (
-        sibling_busy_seconds + foreign_measurement_seconds
-    )
-    aggregate_interference_ratio: float | None = (
-        aggregate_interference_seconds / timed_wall_seconds
-        if timed_wall_seconds > 0
-        else None
-    )
-    foreign_samples = sum(
-        bool(sample["foreign_runnable"])
-        and float(sample["timed_overlap_seconds"]) > 0
-        for sample in samples
-    )
-    timed_regions_complete = sidecar_count > 0 and bool(timed_regions)
-    contaminated = (
-        not timed_regions_complete
-        or aggregate_interference_ratio is None
-        or aggregate_interference_ratio > args.max_core_interference_ratio
+    verdict = interference_summary(
+        samples,
+        args.cpu,
+        sibling_cpus,
+        timed_regions_complete,
+        args.max_core_interference_ratio,
     )
     document = {
-        "schema": 1,
+        "schema": 2,
         "command": command,
         "cpu": args.cpu,
         "smt_siblings": sibling_cpus,
@@ -275,6 +347,8 @@ def main() -> int:
         "ended_utc": utc_now(),
         "elapsed_seconds": round(elapsed, 3),
         "timed_region_sidecars": [str(path) for path in sidecar_paths],
+        "timed_region_sidecars_retained": True,
+        "timed_regions_error": timed_regions_error,
         "command_return_code": return_code,
         "thresholds": {
             "max_core_interference_ratio": args.max_core_interference_ratio,
@@ -284,28 +358,14 @@ def main() -> int:
             "timed_region_sidecar_count": sidecar_count,
             "timed_region_count_after_union": len(timed_regions),
             "timed_regions_complete": timed_regions_complete,
-            "timed_wall_seconds": round(timed_wall_seconds, 6),
-            "foreign_runnable_samples": foreign_samples,
-            "measurement_cpu_foreign_seconds_estimate": round(
-                foreign_measurement_seconds, 6
-            ),
-            "smt_sibling_busy_seconds": round(sibling_busy_seconds, 6),
-            "aggregate_core_interference_seconds": round(
-                aggregate_interference_seconds, 6
-            ),
-            "aggregate_core_interference_ratio": (
-                round(aggregate_interference_ratio, 6)
-                if aggregate_interference_ratio is not None
-                else None
-            ),
-            "contaminated": contaminated,
+            **verdict,
         },
         "samples": samples,
     }
     args.output.write_text(json.dumps(document, indent=2) + "\n")
     if return_code != 0:
         return return_code
-    if contaminated and args.fail_on_contamination:
+    if verdict["contaminated"] and args.fail_on_contamination:
         return 2
     return 0
 
