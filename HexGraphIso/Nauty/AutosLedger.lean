@@ -887,4 +887,333 @@ theorem pairOk_fmperm {g ptn lab perm : Array Nat} {level : Nat}
   · rw [hact v hv]
     exact hk
 
+
+/-! # The implicit pairs: `fmptn` of a cheapautom partition
+
+The pair recorded without a scan describes the partition at the
+cheapautom level: `fix` holds the singleton-cell vertices, and a
+vertex left out of `mcr` has a strictly smaller cellmate. The
+realizing automorphisms are the small-cell subtree theorem's, so
+`pairOk_fmptn` takes them as a hypothesis in exactly that shape.
+-/
+
+/-- The inner minimum scan of `fmptn`, structurally. -/
+private def minScan (lab : Array Nat) : List Nat → Nat → Nat
+  | [], m => m
+  | i :: rest, m =>
+    if lab[i]! < m then minScan lab rest lab[i]!
+    else minScan lab rest m
+
+/-- The outer loop of `fmptn`, structurally. -/
+private def fmptnGo (lab : Array Nat) (nn : Nat) :
+    List (Nat × Nat) → Nat → Nat → Nat × Nat
+  | [], fix, mcr => (fix, mcr)
+  | (c1, c2) :: rest, fix, mcr =>
+    if c1 == c2 then
+      fmptnGo lab nn rest (insert fix lab[c1]!) (insert mcr lab[c1]!)
+    else
+      fmptnGo lab nn rest fix (insert mcr
+        (minScan lab (List.range' (c1 + 1) (c2 + 1 - (c1 + 1)))
+          lab[c1]!))
+
+/-- The pinned inner body of `fmptn`. -/
+private def minF (lab : Array Nat) :
+    Nat → Nat → Id (ForInStep Nat) :=
+  fun i __s =>
+    have lmin := __s
+    if lab[i]! < lmin then
+      have lmin := lab[i]!
+      pure (ForInStep.yield lmin)
+    else pure (ForInStep.yield lmin)
+
+/-- The pinned outer body of `fmptn`. -/
+private def cellF (lab : Array Nat) :
+    Nat × Nat → Nat × Nat → Id (ForInStep (Nat × Nat)) :=
+  fun x __s =>
+    have fix := __s.fst
+    have mcr := __s.snd
+    match x with
+    | (c1, c2) =>
+      if (c1 == c2) = true then
+        have fix := insert fix lab[c1]!
+        have mcr := insert mcr lab[c1]!
+        pure (ForInStep.yield (fix, mcr))
+      else
+        have lmin := lab[c1]!
+        do
+        let __s ← forIn [c1 + 1 : c2 + 1] lmin (minF lab)
+        have lmin : Nat := __s
+        have mcr : Nat := insert mcr lmin
+        pure (ForInStep.yield (fix, mcr))
+
+private theorem fmptn_pinned (lab ptn : Array Nat) (level nn : Nat) :
+    fmptn lab ptn level nn =
+      (do
+        let s ← forIn (cells ptn level nn) ((0 : Nat), (0 : Nat))
+          (cellF lab)
+        pure (s.fst, s.snd) : Id (Nat × Nat)).run := rfl
+
+private theorem forIn_range_eq' {β : Type} (a b : Nat) (init : β)
+    (f : Nat → β → Id (ForInStep β)) :
+    (forIn [a:b] init f : Id β) =
+      forIn (List.range' a (b - a)) init f := by
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  have hrange : List.range' [a:b].start [a:b].size [a:b].step
+      = List.range' a (b - a) := by
+    show List.range' a ((b - a + 1 - 1) / 1) 1 = _
+    rw [Nat.add_sub_cancel, Nat.div_one]
+  rw [hrange]
+
+private theorem minF_lt {lab : Array Nat} {i m : Nat}
+    (hc : lab[i]! < m) :
+    minF lab i m = pure (ForInStep.yield lab[i]!) := by
+  show (if lab[i]! < m then pure (ForInStep.yield lab[i]!)
+    else pure (ForInStep.yield m)) = _
+  rw [ite_eq_left hc]
+
+private theorem minF_ge {lab : Array Nat} {i m : Nat}
+    (hc : ¬ lab[i]! < m) :
+    minF lab i m = pure (ForInStep.yield m) := by
+  show (if lab[i]! < m then pure (ForInStep.yield lab[i]!)
+    else pure (ForInStep.yield m)) = _
+  rw [ite_eq_right hc]
+
+/-- The inner loop is `minScan`. -/
+private theorem forIn_minF_eq (lab : Array Nat) :
+    ∀ (l : List Nat) (m : Nat),
+      (forIn l m (minF lab) : Id Nat) = minScan lab l m
+  | [], _ => rfl
+  | i :: l, m => by
+    rw [List.forIn_cons, minScan]
+    rcases Decidable.em (lab[i]! < m) with hc | hc
+    · rw [minF_lt hc, ite_eq_left hc]
+      exact forIn_minF_eq lab l _
+    · rw [minF_ge hc, ite_eq_right hc]
+      exact forIn_minF_eq lab l _
+
+private theorem cellF_single {lab : Array Nat} {c1 c2 fix mcr : Nat}
+    (hc : (c1 == c2) = true) :
+    cellF lab (c1, c2) (fix, mcr) =
+      pure (ForInStep.yield
+        (insert fix lab[c1]!, insert mcr lab[c1]!)) := by
+  show (if (c1 == c2) = true then
+      pure (ForInStep.yield
+        (insert fix lab[c1]!, insert mcr lab[c1]!))
+    else _) = _
+  rw [ite_eq_left hc]
+
+private theorem cellF_multi {lab : Array Nat} {c1 c2 fix mcr : Nat}
+    (hc : (c1 == c2) = false) :
+    cellF lab (c1, c2) (fix, mcr) =
+      (do
+        let s ← forIn [c1 + 1 : c2 + 1] lab[c1]! (minF lab)
+        pure (ForInStep.yield (fix, insert mcr s)) :
+        Id (ForInStep (Nat × Nat))) := by
+  show (if (c1 == c2) = true then
+      pure (ForInStep.yield
+        (insert fix lab[c1]!, insert mcr lab[c1]!))
+    else
+      (do
+        let s ← forIn [c1 + 1 : c2 + 1] lab[c1]! (minF lab)
+        pure (ForInStep.yield (fix, insert mcr s)) :
+        Id (ForInStep (Nat × Nat)))) = _
+  rw [ite_eq_right (by
+    intro h
+    rw [hc] at h
+    exact Bool.noConfusion h)]
+
+/-- The outer loop is `fmptnGo`. -/
+private theorem forIn_cellF_eq (lab : Array Nat) (nn : Nat) :
+    ∀ (l : List (Nat × Nat)) (fix mcr : Nat),
+      (forIn l (fix, mcr) (cellF lab) : Id (Nat × Nat)) =
+      fmptnGo lab nn l fix mcr
+  | [], _, _ => rfl
+  | (c1, c2) :: l, fix, mcr => by
+    rw [List.forIn_cons, fmptnGo]
+    rcases hc : (c1 == c2) with _ | _
+    · rw [cellF_multi hc, ite_eq_right (fun h => Bool.noConfusion h),
+        forIn_range_eq', forIn_minF_eq]
+      exact forIn_cellF_eq lab nn l _ _
+    · rw [cellF_single hc, ite_eq_left rfl]
+      exact forIn_cellF_eq lab nn l _ _
+
+/-- `fmptn` computes its structural mirror. -/
+private theorem fmptn_eq_go (lab ptn : Array Nat) (level nn : Nat) :
+    fmptn lab ptn level nn =
+      fmptnGo lab nn (cells ptn level nn) 0 0 := by
+  rw [fmptn_pinned]
+  show (let s := Id.run (forIn (cells ptn level nn)
+      ((0 : Nat), (0 : Nat)) (cellF lab)); (s.fst, s.snd)) = _
+  rw [forIn_cellF_eq lab nn]
+  rfl
+
+/-- The minimum scan attains a window value at or below its seed. -/
+private theorem minScan_spec {lab : Array Nat} :
+    ∀ (l : List Nat) (m : Nat),
+      (minScan lab l m = m ∨
+        ∃ i ∈ l, lab[i]! = minScan lab l m) ∧
+      minScan lab l m ≤ m ∧
+      ∀ i ∈ l, minScan lab l m ≤ lab[i]!
+  | [], m => ⟨Or.inl rfl, Nat.le_refl m, fun i hi => absurd hi (by simp)⟩
+  | i :: l, m => by
+    rw [minScan]
+    rcases Decidable.em (lab[i]! < m) with hc | hc
+    · rw [ite_eq_left hc]
+      obtain ⟨hmem, hle, hall⟩ := minScan_spec (lab := lab) l lab[i]!
+      refine ⟨?_, by omega, ?_⟩
+      · rcases hmem with heq | ⟨j, hj, hjeq⟩
+        · exact Or.inr ⟨i, List.mem_cons_self .., heq.symm⟩
+        · exact Or.inr ⟨j, List.mem_cons_of_mem _ hj, hjeq⟩
+      · intro j hj
+        rcases List.mem_cons.mp hj with rfl | hjl
+        · exact hle
+        · exact hall j hjl
+    · rw [ite_eq_right hc]
+      obtain ⟨hmem, hle, hall⟩ := minScan_spec (lab := lab) l m
+      refine ⟨?_, hle, ?_⟩
+      · rcases hmem with heq | ⟨j, hj, hjeq⟩
+        · exact Or.inl heq
+        · exact Or.inr ⟨j, List.mem_cons_of_mem _ hj, hjeq⟩
+      · intro j hj
+        rcases List.mem_cons.mp hj with rfl | hjl
+        · omega
+        · exact hall j hjl
+
+/-- `mcr` bits only accumulate through the outer mirror. -/
+private theorem fmptnGo_mcr_mono {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr x : Nat),
+      elem mcr x = true →
+      elem (fmptnGo lab nn l fix mcr).2 x = true
+  | [], _, _, _, hx => hx
+  | (c1, c2) :: l, fix, mcr, x, hx => by
+    rw [fmptnGo]
+    rcases hc : (c1 == c2) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      exact fmptnGo_mcr_mono l _ _ _ (elem_insert_mono _ hx)
+    · rw [ite_eq_left rfl]
+      exact fmptnGo_mcr_mono l _ _ _ (elem_insert_mono _ hx)
+
+/-- `fix` bits of the outer mirror come from singleton cells. -/
+private theorem fmptnGo_fix {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr u : Nat),
+      elem (fmptnGo lab nn l fix mcr).1 u = true →
+      elem fix u = true ∨ ∃ c, (c, c) ∈ l ∧ lab[c]! = u
+  | [], _, _, _, hu => Or.inl hu
+  | (c1, c2) :: l, fix, mcr, u, hu => by
+    rw [fmptnGo] at hu
+    rcases hc : (c1 == c2) with _ | _
+    · rw [hc, ite_eq_right (fun h => Bool.noConfusion h)] at hu
+      rcases fmptnGo_fix l _ _ _ hu with hold | ⟨c, hcl, hceq⟩
+      · exact Or.inl hold
+      · exact Or.inr ⟨c, List.mem_cons_of_mem _ hcl, hceq⟩
+    · rw [hc, ite_eq_left rfl] at hu
+      rcases fmptnGo_fix l _ _ _ hu with hold | ⟨c, hcl, hceq⟩
+      · rcases elem_insert_elim hold with rfl | hfx
+        · have heq12 : c1 = c2 := (beq_iff_eq ..).mp hc
+          subst heq12
+          exact Or.inr ⟨c1, List.mem_cons_self .., rfl⟩
+        · exact Or.inl hfx
+      · exact Or.inr ⟨c, List.mem_cons_of_mem _ hcl, hceq⟩
+
+/-- Every cell of the list deposits its window minimum in `mcr`. -/
+private theorem fmptnGo_cell {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr c1 c2 : Nat),
+      (c1, c2) ∈ l → c1 ≤ c2 →
+      ∃ m, elem (fmptnGo lab nn l fix mcr).2 m = true ∧
+        (∃ q, c1 ≤ q ∧ q ≤ c2 ∧ lab[q]! = m) ∧
+        (∀ q, c1 ≤ q → q ≤ c2 → m ≤ lab[q]!)
+  | [], _, _, _, _, hmem, _ => absurd hmem (by simp)
+  | (a1, a2) :: l, fix, mcr, c1, c2, hmem, hord => by
+    rw [fmptnGo]
+    rcases List.mem_cons.mp hmem with heq | htail
+    · have ha1 : a1 = c1 := (congrArg Prod.fst heq).symm
+      have ha2 : a2 = c2 := (congrArg Prod.snd heq).symm
+      subst ha1
+      subst ha2
+      rcases hc : (a1 == a2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+        obtain ⟨hmem', hle, hall⟩ :=
+          minScan_spec (lab := lab)
+            (List.range' (a1 + 1) (a2 + 1 - (a1 + 1))) lab[a1]!
+        refine ⟨minScan lab
+            (List.range' (a1 + 1) (a2 + 1 - (a1 + 1))) lab[a1]!,
+          fmptnGo_mcr_mono l _ _ _ (elem_insert_self ..), ?_, ?_⟩
+        · rcases hmem' with heq' | ⟨j, hj, hjeq⟩
+          · exact ⟨a1, Nat.le_refl _, hord, heq'.symm⟩
+          · have hjr := List.mem_range'_1.mp hj
+            exact ⟨j, by omega, by omega, hjeq⟩
+        · intro q hq1 hq2
+          rcases Decidable.em (q = a1) with rfl | hne
+          · exact hle
+          · exact hall q (List.mem_range'_1.mpr ⟨by omega, by omega⟩)
+      · rw [ite_eq_left rfl]
+        refine ⟨lab[a1]!,
+          fmptnGo_mcr_mono l _ _ _ (elem_insert_self ..),
+          ⟨a1, Nat.le_refl _, hord, rfl⟩, ?_⟩
+        intro q hq1 hq2
+        have heq12 : a1 = a2 := (beq_iff_eq ..).mp hc
+        have : q = a1 := by omega
+        rw [this]
+        exact Nat.le_refl _
+    · rcases hc : (a1 == a2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+        exact fmptnGo_cell l _ _ _ _ htail hord
+      · rw [ite_eq_left rfl]
+        exact fmptnGo_cell l _ _ _ _ htail hord
+
+/-- `fix` of an `fmptn` pair holds only singleton-cell vertices. -/
+theorem fmptn_fix {lab ptn : Array Nat} {level nn u : Nat}
+    (hu : elem (fmptn lab ptn level nn).1 u = true) :
+    ∃ c, (c, c) ∈ cells ptn level nn ∧ lab[c]! = u := by
+  rw [fmptn_eq_go] at hu
+  rcases fmptnGo_fix _ _ _ _ hu with h0 | h
+  · exact absurd h0 (by simp [elem])
+  · exact h
+
+/-- A vertex left out of an `fmptn` pair's `mcr` has a strictly
+smaller cellmate. -/
+theorem fmptn_mcr {lab ptn : Array Nat} {level nn c1 c2 p v : Nat}
+    (hcell : (c1, c2) ∈ cells ptn level nn)
+    (hp1 : c1 ≤ p) (hp2 : p ≤ c2) (hpv : lab[p]! = v)
+    (hmcr : elem (fmptn lab ptn level nn).2 v = false) :
+    ∃ q, c1 ≤ q ∧ q ≤ c2 ∧ lab[q]! < v := by
+  obtain ⟨m, hmem, ⟨q, hq1, hq2, hqm⟩, hall⟩ :=
+    fmptnGo_cell (nn := nn) (lab := lab)
+      (cells ptn level nn) 0 0 c1 c2 hcell
+      (cells_le (c1, c2) hcell)
+  rw [← fmptn_eq_go] at hmem
+  have hmv : m ≤ v := by
+    rw [← hpv]
+    exact hall p hp1 hp2
+  rcases Nat.lt_or_ge m v with hlt | hge
+  · exact ⟨q, hq1, hq2, by omega⟩
+  · have : m = v := by omega
+    rw [this] at hmem
+    rw [hmem] at hmcr
+    exact Bool.noConfusion hmcr
+
+/-- The `fmptn` pair reads validly given realizers for every
+non-minimal cell member: the small-cell subtree theorem's interface.
+`hreal` receives the vertex, its window, and a strictly smaller
+cellmate, and returns an automorphism fixing the pair's `fix` set. -/
+theorem pairOk_fmptn {g ptn lab labT ptnT : Array Nat}
+    {level lvlT nn : Nat}
+    (hcover : ∀ v, v < nn → ∃ p c1 c2,
+      (c1, c2) ∈ cells ptnT lvlT nn ∧ c1 ≤ p ∧ p ≤ c2 ∧
+        labT[p]! = v)
+    (hreal : ∀ v c1 c2, v < nn →
+      (c1, c2) ∈ cells ptnT lvlT nn →
+      (∃ p, c1 ≤ p ∧ p ≤ c2 ∧ labT[p]! = v) →
+      (∃ q, c1 ≤ q ∧ q ≤ c2 ∧ labT[q]! < v) →
+      ∃ γ : Array Nat, checkAutom g γ nn = true ∧
+        (∀ u, u < nn →
+          elem (fmptn labT ptnT lvlT nn).1 u = true → γ[u]! = u) ∧
+        CellStab ptn level lab γ ∧ γ[v]! < v) :
+    PairOk g ptn lab level nn (fmptn labT ptnT lvlT nn).1
+      (fmptn labT ptnT lvlT nn).2 := by
+  intro v hv hmcr
+  obtain ⟨p, c1, c2, hcell, hp1, hp2, hpv⟩ := hcover v hv
+  obtain ⟨q, hq1, hq2, hqlt⟩ := fmptn_mcr hcell hp1 hp2 hpv hmcr
+  exact hreal v c1 c2 hv hcell ⟨p, hp1, hp2, hpv⟩ ⟨q, hq1, hq2, hqlt⟩
+
 end Hex.GraphIso.Nauty
