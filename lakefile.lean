@@ -87,12 +87,25 @@ private def nautyBridgeOTarget (pkg : Package) : FetchM (Job FilePath) := do
       "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
     compileO oFile srcFile flags
 
+private def nautyBenchOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.c"
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString,
+      "-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
+    compileO oFile srcFile flags
+
 extern_lib nautyffi (pkg) := do
   let name := nameToStaticLib "nautyffi"
   let vendorTargets ← #["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
     "naurng.c"].mapM (nautyVendorOTarget pkg)
   let bridgeTarget ← nautyBridgeOTarget pkg
-  buildStaticLib (pkg.staticLibDir / name) (vendorTargets.push bridgeTarget)
+  let benchTarget ← nautyBenchOTarget pkg
+  buildStaticLib (pkg.staticLibDir / name)
+    ((vendorTargets.push bridgeTarget).push benchTarget)
 
 lean_lib Hex where
 

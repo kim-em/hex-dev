@@ -95,6 +95,7 @@ repos:
   # aggregate and is not a dependency or pin of hex-graph-iso.
   - repo: leanprover/nauty-ffi
     lib: NautyFFI
+    precompile_modules: true
     aggregate: false
     umbrella: true
     spec: null

@@ -13,9 +13,10 @@ the release pinned by
 [SPEC/Libraries/hex-graph-iso.md](../../SPEC/Libraries/hex-graph-iso.md).
 All files are unmodified copies from that archive. `nauty.h` and
 `naututil.h` are the `configure`-generated headers from an LP64
-Linux/glibc run of the archive's `./configure`; every substituted
-value is a plain POSIX/C11 capability shared by the Linux and macOS
-CI hosts (the `*-h.in` templates are included for comparison).
+Linux/glibc run of the archive's `./configure` (the `*-h.in` templates are
+included for comparison). The generated architecture hints affect only
+popcount selection: unsupported hosts, including macOS arm64, take nauty's
+portable software fallback with identical results.
 
 This directory is published verbatim into `leanprover/nauty-ffi`. It is not
 part of any released Hex library, and `nauty-ffi` is not a dependency of the

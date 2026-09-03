@@ -68,11 +68,13 @@ the separate Python-driven nauty shim oracle.
 
 ## Vendored nauty
 
-`vendor/nauty-2.9.3` contains unmodified files from
+`vendor/nauty-2.9.3` contains the minimal unmodified source subset from
 `https://users.cecs.anu.edu.au/~bdm/nauty/nauty2_9_3.tar.gz`. The archive's
 SHA-256 is
 `9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b`.
-The vendored directory records per-file hashes and configuration provenance.
+The two generated configuration headers are the output of running the
+archive's `configure` script; the vendored directory records that provenance
+and a SHA-256 for every file.
 
 nauty releases 2.6r3 and later, including 2.9.3, are Apache License 2.0. The
 upstream `COPYRIGHT` notice and `LICENSE-2.0.txt` from the pinned archive are

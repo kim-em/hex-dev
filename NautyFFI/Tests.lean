@@ -19,6 +19,10 @@ namespace NautyFFI.Tests
 
 open Lean
 
+@[extern "lean_nauty_canonicalize"]
+private opaque canonicalizeRaw
+    (n colorCount : USize) (colors adjacency : @& ByteArray) : ByteArray
+
 private def field (json : Json) (name : String) : Except String Json :=
   json.getObjVal? name
 
@@ -105,12 +109,26 @@ private def checkIsomorphismCases (petersen kneser prism : NautyFFI.Graph) :
   if ← NautyFFI.isIso petersen prism then
     throw "isIso accepted the Petersen graph/pentagonal prism pair"
 
+private def checkNativeGuards : Except String Unit := do
+  let missingBuffers := canonicalizeRaw 1 1 ByteArray.empty ByteArray.empty
+  if !missingBuffers.isEmpty then
+    throw "native call accepted undersized input buffers"
+  let outOfRangeColor := canonicalizeRaw 1 1
+    (ByteArray.mk #[1, 0, 0, 0]) (ByteArray.mk #[0])
+  if !outOfRangeColor.isEmpty then
+    throw "native call accepted an out-of-range colour"
+
 /-- Run the vendored nauty binding over every committed graph-isomorphism
 fixture and check the derived isomorphism API on named positive and negative
 pairs. -/
 def main : IO UInt32 := do
   let path := "conformance-fixtures/HexGraphIso/graphiso.jsonl"
   let contents ← IO.FS.readFile path
+  match checkNativeGuards with
+  | .error error =>
+      IO.eprintln s!"nauty-ffi tests: {error}"
+      return 1
+  | .ok () => pure ()
   let mut count := 0
   let mut petersen : Option NautyFFI.Graph := none
   let mut kneser : Option NautyFFI.Graph := none

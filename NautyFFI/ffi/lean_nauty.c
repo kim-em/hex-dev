@@ -3,9 +3,14 @@
  * hex-graph-iso. See NautyFFI/Basic.lean for the wire format.
  */
 #include <lean/lean.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "nauty.h"
+
+static lean_obj_res empty_result(void) {
+    return lean_alloc_sarray(1, 0, 0);
+}
 
 static uint32_t read_u32_le(uint8_t const *p) {
     return ((uint32_t)p[0]) |
@@ -24,6 +29,13 @@ static void write_u32_le(uint8_t *p, uint32_t value) {
 LEAN_EXPORT lean_obj_res lean_nauty_canonicalize(
         size_t n_in, size_t color_count_in,
         b_lean_obj_arg colors_obj, b_lean_obj_arg adjacency_obj) {
+    if (n_in == 0 || n_in > INT_MAX || color_count_in == 0 ||
+            color_count_in > n_in || n_in > SIZE_MAX / n_in ||
+            n_in > SIZE_MAX / 4 ||
+            lean_sarray_size(colors_obj) != 4 * n_in ||
+            lean_sarray_size(adjacency_obj) != n_in * n_in) {
+        return empty_result();
+    }
     int n = (int)n_in;
     int color_count = (int)color_count_in;
     uint8_t const *colors = lean_sarray_cptr(colors_obj);
@@ -38,7 +50,7 @@ LEAN_EXPORT lean_obj_res lean_nauty_canonicalize(
     int *orbits = malloc((size_t)n * sizeof(int));
     if (g == NULL || canong == NULL || lab == NULL || ptn == NULL || orbits == NULL) {
         free(g); free(canong); free(lab); free(ptn); free(orbits);
-        lean_internal_panic("nauty: allocation failed");
+        return empty_result();
     }
 
     DEFAULTOPTIONS_GRAPH(options);
@@ -68,9 +80,18 @@ LEAN_EXPORT lean_obj_res lean_nauty_canonicalize(
     for (int color = 0; color < color_count; ++color) {
         int start = position;
         for (int vertex = 0; vertex < n; ++vertex) {
-            if (read_u32_le(colors + 4 * (size_t)vertex) == (uint32_t)color) {
+            uint32_t vertex_color = read_u32_le(colors + 4 * (size_t)vertex);
+            if (vertex_color >= (uint32_t)color_count) {
+                free(g); free(canong); free(lab); free(ptn); free(orbits);
+                return empty_result();
+            }
+            if (vertex_color == (uint32_t)color) {
                 lab[position++] = vertex;
             }
+        }
+        if (position == start) {
+            free(g); free(canong); free(lab); free(ptn); free(orbits);
+            return empty_result();
         }
         for (int i = start; i < position; ++i) ptn[i] = 1;
         ptn[position - 1] = 0;
