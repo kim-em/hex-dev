@@ -10,7 +10,7 @@ Provenance: `https://users.cecs.anu.edu.au/~bdm/nauty/nauty2_9_3.tar.gz`,
 SHA-256
 `9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b`,
 the release pinned by
-[SPEC/Libraries/hex-graph-iso.md](../../SPEC/Libraries/hex-graph-iso.md).
+[HexGraphIso/SPEC/hex-graph-iso.md](../../HexGraphIso/SPEC/hex-graph-iso.md).
 All files are unmodified copies from that archive. `nauty.h` and
 `naututil.h` are the `configure`-generated headers from an LP64
 Linux/glibc run of the archive's `./configure` (the `*-h.in` templates are

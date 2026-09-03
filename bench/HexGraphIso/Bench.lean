@@ -30,7 +30,7 @@ Scientific registrations:
   at the small sizes where the factorial-style enumeration is practical.
 
 The nauty-compatible search declares no polynomial model in `n`
-(SPEC/Libraries/hex-graph-iso.md § Benchmarks); the public operations
+(HexGraphIso/SPEC/hex-graph-iso.md § Benchmarks); the public operations
 backed by it, the certificate pipeline, and the pinned nauty
 comparator register as fixed benchmarks on committed circulant sizes:
 

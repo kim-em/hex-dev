@@ -137,6 +137,10 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.FactorTactics}
 
+{include 0 HexManual.Chapters.HexGraphIso}
+
+{include 0 HexManual.Chapters.NautyAlgorithm}
+
 # Tutorials
 %%%
 tag := "tutorials"
@@ -198,6 +202,3 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexMinPoly}
 
-{include 2 HexManual.Chapters.HexGraphIso}
-
-{include 2 HexManual.Chapters.NautyAlgorithm}

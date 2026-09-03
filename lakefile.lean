@@ -874,7 +874,9 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
-    `HexSparsePoly.KernelTests]
+    `HexSparsePoly.KernelTests,
+    `HexGraphIso.TacticTests,
+    `HexGraphIsoMathlib.TacticTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
@@ -940,15 +942,6 @@ lean_lib HexSmithTests where
 lean_lib HexCharPolyTests where
   globs := #[`HexCharPoly.CharPolyElabTests,
     `HexCharPolyMathlib.CharPolyElabTests]
-
--- HexGraphIso is not yet a published split repository, so its
--- verification-only tactic regressions stay separate from the
--- release-manifest-backed target above; they rejoin HexReleaseTests (and
--- the manifest's test_modules) at publication.
-@[default_target]
-lean_lib HexGraphIsoTests where
-  globs := #[`HexGraphIso.TacticTests,
-    `HexGraphIsoMathlib.TacticTests].map Glob.one
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

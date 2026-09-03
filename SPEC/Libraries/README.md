@@ -318,8 +318,9 @@ The graph-isomorphism pair is independent of the algebraic libraries.
 `hex-graph-iso` keeps private dense execution data but exposes only
 `hex-graph` values. Its Mathlib companion contains the finite `SimpleGraph`
 correspondence until another graph algorithm needs that conversion. The
-complete contracts are in [hex-graph-iso](hex-graph-iso.md) and
-[hex-graph-iso-mathlib](hex-graph-iso-mathlib.md).
+complete contracts are in
+[hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) and
+[hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
 
 ```
 hex-basic -- hex-graph -- hex-graph-iso -- hex-graph-iso-mathlib

@@ -2104,6 +2104,116 @@ workflows:
                 .lake/build
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+  hex-graph-iso: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+                conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+          - name: Build library and release regressions
+            run: lake build HexGraph HexGraphIso HexGraphIsoTests
+          - name: Build conformance sidecar
+            run: |
+              cd conformance
+              lake build
+          - name: Conformance fixture regeneration
+            run: |
+              (cd conformance && lake exe hexgraphiso_emit_fixtures) > /tmp/hex-graph-iso-fresh.jsonl
+              diff -u conformance-fixtures/HexGraphIso/graphiso.jsonl /tmp/hex-graph-iso-fresh.jsonl
+          - name: Assert Mathlib-free
+            run: |
+              if find .lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGraph HexGraphIso conformance/HexGraphIso 2>/dev/null; then
+                echo "ERROR: a source file imports Mathlib"; exit 1; fi
+              echo "Mathlib-free OK"
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+                conformance/.lake/build
+                conformance/.lake/packages/Hex*/.lake/build
+                conformance/.lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  hex-graph-iso-mathlib: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+          - name: Fetch Mathlib cache
+            run: lake exe cache get
+          - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
+            run: |
+              set -o pipefail
+              lake build HexGraphIsoMathlib HexGraphIsoMathlibTests 2>&1 | tee build.log
+              if grep -qE 'Building Mathlib\b' build.log; then
+                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+                .lake/packages/hex-test-kit/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   hex: |
     name: CI

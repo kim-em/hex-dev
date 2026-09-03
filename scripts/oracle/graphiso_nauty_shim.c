@@ -6,7 +6,7 @@
  * The oracle uses 64-bit dense densenauty, m = SETWORDSNEEDED(n), and
  * DEFAULTOPTIONS_GRAPH, changing only the fields required for canonical
  * labelling and a caller-supplied partition, per
- * SPEC/Libraries/hex-graph-iso.md section "nauty compatibility target".
+ * HexGraphIso/SPEC/hex-graph-iso.md section "nauty compatibility target".
  *
  * Protocol (one case per request, n >= 1):
  *   stdin:  "n k" / colour[0..n-1] / n rows of n chars '0'/'1' / ...
