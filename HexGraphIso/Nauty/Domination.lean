@@ -1175,4 +1175,104 @@ theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
 
 end Frames
 
+/-! # The seed: `firstterminal` starts every thread -/
+
+section Seed
+
+private theorem ftF_firstlab (level : Nat) (st : SearchSt) :
+    (firstterminal level st).firstlab = st.lab := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_canonlab (level : Nat) (st : SearchSt) :
+    (firstterminal level st).canonlab = st.lab := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_canong (level : Nat) (st : SearchSt) :
+    (firstterminal level st).canong = st.canong := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_samerows (level : Nat) (st : SearchSt) :
+    (firstterminal level st).samerows = 0 := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_eqlevFirst (level : Nat) (st : SearchSt) :
+    (firstterminal level st).eqlevFirst = level := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_gcaFirst (level : Nat) (st : SearchSt) :
+    (firstterminal level st).gcaFirst = level := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_gcaCanon (level : Nat) (st : SearchSt) :
+    (firstterminal level st).gcaCanon = level := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_allsamelevel (level : Nat) (st : SearchSt) :
+    (firstterminal level st).allsamelevel = level := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_firstcode (level : Nat) (st : SearchSt) :
+    (firstterminal level st).firstcode =
+      st.firstcode.set! (level + 1) codeSentinel := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_lab (level : Nat) (st : SearchSt) :
+    (firstterminal level st).lab = st.lab := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+/-- `firstterminal` seeds the first-path machine: the just-installed
+first leaf agrees with itself at full depth. -/
+theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
+    {st : SearchSt}
+    (hsize : st.firstcode.size = nn + 2)
+    (hLnn : cs.length ≤ nn)
+    (hfc : ∀ i, 1 ≤ i → i ≤ cs.length →
+      st.firstcode[i]! = cs[i - 1]!)
+    (hclt : ∀ c ∈ cs, c < codeSentinel) :
+    FirstCodeInv nn cs cs
+      (firstterminal cs.length st).firstcode
+      (firstterminal cs.length st).eqlevFirst := by
+  rw [ftF_firstcode, ftF_eqlevFirst]
+  refine ⟨by rw [Array.size_set!]; exact hsize, hLnn, hclt,
+    fun i h1 h2 => ?_, ?_, Nat.le_refl _, Nat.le_refl _,
+    fun i h1 h2 => rfl⟩
+  · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    exact hfc i h1 h2
+  · rw [Array.getElem!_set!_self _ _ _ (by rw [hsize]; omega)]
+
+/-- `firstterminal` seeds the store invariant: the installed
+`canonlab` with `samerows = 0` is vacuously consistent. -/
+theorem firstterminal_canongInv {ctx : Ctx} {level : Nat}
+    {st : SearchSt} (hg : st.canong.size = ctx.n) :
+    CanongInv ctx (firstterminal level st).canong
+      (firstterminal level st).canonlab
+      (firstterminal level st).samerows := by
+  rw [ftF_canong, ftF_canonlab, ftF_samerows]
+  exact canongInv_zero st.lab hg
+
+/-- `firstterminal` seeds the domination clause: the incumbent is
+exactly the first leaf, so the first leaf's key is dominated
+reflexively. -/
+theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
+    {st : SearchSt} :
+    keyLe
+      (pathLeafKey ctx cs (firstterminal cs.length st).firstlab)
+      (incKey ctx cs (firstterminal cs.length st).canonlab) := by
+  rw [ftF_firstlab, ftF_canonlab]
+  show keyCmp _ _ ≠ .gt
+  rw [pathLeafKey, incKey, keyCmp_eq_iff.mpr rfl]
+  decide
+
+end Seed
+
 end Hex.GraphIso.Nauty
