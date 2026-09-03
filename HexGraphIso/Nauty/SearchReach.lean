@@ -271,8 +271,9 @@ private theorem nextElem_some_ne_zero {s : Nat} {pos : Option Nat}
 
 variable {n k : Nat}
 
-/-- `recover`'s effect in the loop's frame. -/
-private theorem recover_out {G : Colored n k} {level : Nat}
+/-- One `recover` step satisfies the exit contract at its own
+level. -/
+theorem recover_out {G : Colored n k} {level : Nat}
     {st : SearchSt} (hlev : level + 1 < n + 2)
     (hreach : CellsReach G st.lab) :
     SearchOut G level level st (recover n (n + 2) level st) := by
@@ -315,7 +316,7 @@ private theorem otherNodePrep_canonlab (level code : Nat)
 
 /-- `processnode` preserves the node invariant, installing at most a
 reached labelling. -/
-private theorem processnode_searchOk {G : Colored n k} {ctx : Ctx}
+theorem processnode_searchOk {G : Colored n k} {ctx : Ctx}
     {level nc pnl pnn : Nat} {st4 st5 : SearchSt}
     (hok4 : SearchOk G level nc st4)
     (hl : st5.lab = (processnode ctx pnl pnn st4).2.lab)
@@ -340,7 +341,7 @@ private theorem processnode_searchOk {G : Colored n k} {ctx : Ctx}
 set_option maxHeartbeats 3200000 in
 /-- Transport the `processnode` canonlab dichotomy along projection
 equations, keyed on the output state. -/
-private theorem canonlab_or_of {G : Colored n k} {ctx : Ctx}
+theorem canonlab_or_of {G : Colored n k} {ctx : Ctx}
     {pnl pnn : Nat} {st4 stO : SearchSt} {cl rl : Array Nat}
     (hO : stO.canonlab = (processnode ctx pnl pnn st4).2.canonlab)
     (hc : st4.canonlab = cl) (hl : st4.lab = rl)

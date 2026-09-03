@@ -35,6 +35,10 @@ public import HexGraphIso.Nauty.CodeFaithful
 public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.TraceAgree
 public import HexGraphIso.Nauty.StoreValid
+public import HexGraphIso.Nauty.SmallCell
+public import HexGraphIso.Nauty.SmallCellBranch
+public import HexGraphIso.Nauty.SmallCellIter
+public import HexGraphIso.Nauty.SmallCellTriple
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.SearchReach
@@ -46,6 +50,8 @@ public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Nauty.SearchAutom
 public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
+public import HexGraphIso.Nauty.AutosLedger
+public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
