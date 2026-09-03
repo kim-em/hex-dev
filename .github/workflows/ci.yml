@@ -195,13 +195,13 @@ jobs:
       # `.lake/build` (no recompilation) but cap the peak at whichever single
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
-        run: lake build NautyFFI ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Verify deterministic HexPrimality table regeneration
         run: python3 scripts/bench/check_prime_table.py
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
-            HexConformance nautyffi_tests hextruncatedseries_emit_fixtures \
+            HexConformance NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
             hexpolysmith_emit_fixtures \

@@ -1,8 +1,8 @@
 # Vendored nauty 2.9.3
 
 The minimal subset of Brendan McKay and Adolfo Piperno's nauty 2.9.3
-needed to build the `nauty-ffi` Lean package and the conformance oracle
-shim: the dense-nauty core (`nauty.c`, `nautil.c`,
+needed to build the monorepo's conformance oracle shim and benchmark
+comparator: the dense-nauty core (`nauty.c`, `nautil.c`,
 `naugraph.c`, `schreier.c`, `naurng.c`) with its headers, plus the
 upstream `COPYRIGHT` and `LICENSE-2.0.txt` (Apache 2.0).
 
@@ -18,9 +18,10 @@ included for comparison). The generated architecture hints affect only
 popcount selection: unsupported hosts, including macOS arm64, take nauty's
 portable software fallback with identical results.
 
-This directory is published verbatim into `leanprover/nauty-ffi`. It is not
-part of any released Hex library, and `nauty-ffi` is not a dependency of the
-shipped `hex-graph-iso` library.
+The standalone `leanprover/nauty-ffi` repository maintains its own copy of the
+same pinned files; this directory is not published there. It is not part of
+any released Hex library, and `nauty-ffi` is not a dependency of the shipped
+`hex-graph-iso` library.
 
 ## File hashes (SHA-256)
 
