@@ -74,11 +74,10 @@ structure SearchSt where
   numgenerators : Nat := 0
   numbadleaves : Nat := 0
   maxlevel : Nat := 1
-  /-- When `tracing`, every accepted automorphism is also kept in
-  full (`genTrace`, discovery order) for the trace-driven certificate
-  producer; off by default, so the untraced search stores only the
-  bounded `(fix, mcr)` workspace pairs. -/
-  tracing : Bool := false
+  /-- Every accepted automorphism is also kept in full (`genTrace`,
+  discovery order) for the trace-driven certificate producer, in
+  addition to the bounded `(fix, mcr)` workspace pairs; the
+  production `run` discards it. -/
   genTrace : Array (Array Nat) := #[]
 deriving Inhabited
 
@@ -169,15 +168,13 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
   match code with
   | 0 => return (Int.ofNat level, st)
   | 1 =>
-    if st.tracing then
-      st := { st with genTrace := st.genTrace.push workperm }
+    st := { st with genTrace := st.genTrace.push workperm }
     st := pushAuto st (fmperm workperm n)
     let (orbits, numorbits) := orbjoin st.orbits workperm n
     st := { st with orbits := orbits, numorbits := numorbits, numgenerators := st.numgenerators + 1 }
     return (Int.ofNat st.gcaFirst, st)
   | 2 =>
-    if st.tracing then
-      st := { st with genTrace := st.genTrace.push workperm }
+    st := { st with genTrace := st.genTrace.push workperm }
     st := pushAuto st (fmperm workperm n)
     let save := st.numorbits
     let (orbits, numorbits) := orbjoin st.orbits workperm n
@@ -508,9 +505,9 @@ structure TraceRun where
   without the sentinel. -/
   bestCodes : List Nat
 
-/-- `run` with tracing on: the identical traversal, additionally
-returning the trace. The untraced `run` above stays the production
-fast path. -/
+/-- `run`, additionally returning the trace: the identical traversal
+on the identical state, also reading off the recorded generators and
+the best path's codes. -/
 def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
     (cellEnds : List Nat) : TraceRun := Id.run do
   if n == 0 then
@@ -540,8 +537,7 @@ def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
       firstlab := .replicate n 0
       canonlab := .replicate n 0
       canong := .replicate n 0
-      numorbits := n
-      tracing := true }
+      numorbits := n }
   let (_, st) := firstPathNode ctx inf 100 (n + 2) 1 cellEnds.length st
   let canong := updatecan ctx st.canong st.canonlab st.samerows
   return {
@@ -746,8 +742,8 @@ def runColored (G : Colored n k) : RunResult :=
   let (lab0, cellEnds) := initialPartition G
   run n (rowsOf G) lab0 cellEnds
 
-/-- Run the nauty-compatible search on a coloured graph with tracing
-on, for the trace-driven certificate producer. -/
+/-- Run the nauty-compatible search on a coloured graph, returning
+the trace for the certificate producer. -/
 def runColoredTraced (G : Colored n k) : TraceRun :=
   let (lab0, cellEnds) := initialPartition G
   runTraced n (rowsOf G) lab0 cellEnds
