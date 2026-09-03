@@ -253,4 +253,143 @@ theorem subtreeOk_child {st : RefineSt} {level tc e o : Nat}
       ite_eq_left (by omega)] at hsplit
     omega
 
+/-! # Descents that record their paths
+
+The all-leaves induction compares two descents choosing the same
+target cell at every level but possibly different vertices. `DescPath`
+is `Descends` with the target-and-offset path recorded; the transport
+and leaf-collapse theorems mirror the `Descends` versions, additionally
+preserving the target projection of the path (the bisimulation reuses
+each step's target cell), which is what lets the induction recurse on
+the transported descent. -/
+
+/-- A descent recording its target-and-offset path. -/
+inductive DescPath (ctx : Ctx) :
+    Nat → RefineSt → List (Nat × Nat) → Nat → RefineSt → Prop where
+  | refl (level : Nat) (st : RefineSt) :
+      DescPath ctx level st [] level st
+  | step {level level' : Nat} {st st' : RefineSt}
+      {path : List (Nat × Nat)} (tc e o : Nat)
+      (hlvl : level < ctx.n)
+      (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+      (ho : o ≤ e - tc)
+      (htail : DescPath ctx (level + 1)
+        (childSt ctx level st tc st.lab[tc + o]!) path level' st') :
+      DescPath ctx level st ((tc, o) :: path) level' st'
+
+/-- Forgetting the path gives a plain descent. -/
+theorem DescPath.descends {level level' : Nat} {st st' : RefineSt}
+    {p : List (Nat × Nat)}
+    (h : DescPath ctx level st p level' st') :
+    Descends ctx level st level' st' := by
+  induction h with
+  | refl _ _ => exact .refl _ _
+  | step tc e o hlvl hcell hne ho htail ih =>
+    exact .step tc e o hlvl hcell hne ho ih
+
+/-- An empty path is the trivial descent. -/
+theorem descPath_nil {level level' : Nat} {st st' : RefineSt}
+    (h : DescPath ctx level st [] level' st') :
+    level' = level ∧ st' = st := by
+  cases h
+  exact ⟨rfl, rfl⟩
+
+/-- The path-preserving bisimulation: a descent below one state
+mirrors below any renamed-equivalent state along the same target
+cells. -/
+theorem descPath_transport {σ : Renaming ctx.n}
+    (hg : RowsMap σ ctx.g ctx.g) :
+    ∀ {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt},
+      DescPath ctx level U p level' U' → IterOk ctx level U →
+      StPerm level V (mapSt σ U) →
+      ∃ V' q, DescPath ctx level V q level' V' ∧
+        q.map Prod.fst = p.map Prod.fst ∧
+        StPerm level' V' (mapSt σ U')
+  | _, _, _, _, _, V, .refl _ _, _, hsp => ⟨V, [], .refl _ _, rfl, hsp⟩
+  | level, level', _, U, U', V,
+      .step tc e o hlvl hcell hne ho htail, hU, hsp => by
+    have hV := iterOk_of_stPerm hU hsp
+    have hptn : U.ptn = V.ptn := hsp.ptn
+    have hpszV := hV.ok.ptnSize
+    have hendV := hV.ok.ptnEnd
+    have hcellV : (tc, e) ∈ cells V.ptn level ctx.n := by
+      rw [← hptn]
+      exact hcell
+    have hen : e < ctx.n := target_end_lt hpszV hendV hcellV
+    have hcellIsV : IsCell V.ptn level tc (e + 1 - tc) :=
+      cells_isCell (by omega) hendV _ hcellV
+    have hmemU : σ.toFun U.lab[tc + o]! ∈
+        segN (U.lab.map σ.toFun) tc (e + 1 - tc) := by
+      rw [segN_map (by rw [hU.ok.labSize]; omega)]
+      exact List.mem_map.mpr
+        ⟨U.lab[tc + o]!, mem_segN_iff.mpr ⟨o, by omega, rfl⟩, rfl⟩
+    have hcpT := hsp.cells tc (e + 1 - tc) hcellIsV
+    have hmemV : σ.toFun U.lab[tc + o]! ∈
+        segN V.lab tc (e + 1 - tc) := hcpT.mem_iff.mpr hmemU
+    obtain ⟨oV, hoVlt, hoVval⟩ := mem_segN_iff.mp hmemV
+    have hsp' := stPerm_child hg hsp hU hcell hne
+      (by omega) ho hoVval
+    have hUok' := iterOk_child hU hlvl hcell hne ho
+    obtain ⟨V', q, hdesc, hq, hspL⟩ :=
+      descPath_transport hg htail hUok' hsp'
+    exact ⟨V', (tc, oV) :: q,
+      .step tc e oV hlvl hcellV hne (by omega) hdesc,
+      by rw [List.map_cons, List.map_cons, hq], hspL⟩
+
+/-- The path-preserving leaf collapse: a descent to a discrete state
+mirrors along the same target cells with equal leaf rows and the same
+final partition. -/
+theorem descPath_leafRows {σ : Renaming ctx.n}
+    (hg : RowsMap σ ctx.g ctx.g)
+    {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt}
+    (h : DescPath ctx level U p level' U')
+    (hU : IterOk ctx level U) (hsp : StPerm level V (mapSt σ U))
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V' q, DescPath ctx level V q level' V' ∧
+      q.map Prod.fst = p.map Prod.fst ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab ∧
+      V'.ptn = U'.ptn := by
+  obtain ⟨V', q, hdesc, hq, hspL⟩ := descPath_transport hg h hU hsp
+  have hU' := descends_iterOk h.descends hU
+  have hV' := iterOk_of_stPerm hU' hspL
+  have hptn : U'.ptn = V'.ptn := hspL.ptn
+  have hVdisc : ∀ z, z < V'.ptn.size → V'.ptn[z]! ≤ level' := by
+    intro z hz
+    rw [← hptn]
+    rw [hV'.ok.ptnSize] at hz
+    exact hdisc z hz
+  have hVsz : V'.lab.size = V'.ptn.size := by
+    rw [hV'.ok.labSize, hV'.ok.ptnSize]
+  have hlabeq := stPerm_lab_eq hspL hVdisc hVsz
+  have hlabeq' : U'.lab.map σ.toFun = V'.lab := hlabeq
+  have hlr : leafRows ctx V'.lab = leafRows ctx U'.lab := by
+    rw [← hlabeq']
+    exact leafRows_map σ rfl rfl hg hU'.ok.labOk hU'.ok.labSize
+  exact ⟨V', q, hdesc, hq, hlr, hptn.symm⟩
+
+/-- The path-preserving single-deviation door: a self-symmetry of the
+node carrying one child's individualized vertex to another's mirrors
+any discrete descent below the first child along the same target
+cells. -/
+theorem descPath_deviation_self {σ : Renaming ctx.n} {st : RefineSt}
+    {level tc e oU oV level' : Nat} {U' : RefineSt}
+    {p : List (Nat × Nat)}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hg : RowsMap σ ctx.g ctx.g)
+    (hsp : StPerm level st (mapSt σ st))
+    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (hvv : st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]!)
+    (hdesc : DescPath ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) p level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V' q, DescPath ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) q level' V' ∧
+      q.map Prod.fst = p.map Prod.fst ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab ∧
+      V'.ptn = U'.ptn := by
+  have hsp' := stPerm_child hg hsp hIt hcell hne hoV hoU hvv
+  have hU0 := iterOk_child hIt hlvl hcell hne hoU
+  exact descPath_leafRows hg hdesc hU0 hsp' hdisc
+
 end Hex.GraphIso.Nauty
