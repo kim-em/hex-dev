@@ -10,11 +10,13 @@ actual race. The implementation now takes a certificate whenever one is
 available and retains the full-budget pairwise decision as the fallback for
 certificate exhaustion.
 
-This change does not alter the selected route for any measured case: 52 use
-the root separator and 14 use certificates. Consequently the manual's quoted
-tactic timings do not need refreshing for this change; the small compiled
-pairwise probe that formerly preceded each selected certificate is removed,
-but the kernel proof term is unchanged.
+This change does not alter the selected kernel route for any measured case: 52
+use the root separator and 14 use certificates. It removes the small compiled
+pairwise probe that formerly preceded each selected certificate, while leaving
+the resulting proof term unchanged. The refreshed end-to-end measurements
+below record the new snapshot, but their single-run shifts do not isolate the
+cost of that probe. The manual's canonicalization table is unaffected, and its
+approximate ten-vertex tactic cost remains accurate.
 
 ## Method
 
@@ -105,15 +107,29 @@ comparison. It also shows that the closest cost-unit margin does not conceal a
 wall-clock pairwise win: on Kneser/Johnson, pairwise replay was more than six
 times slower.
 
-For full end-to-end context, the committed cactus snapshot
-`hexgraphiso-tactic-b4e80b4517b7-chungus2.json` records the selected-route
-tactic costs. The cycle ladder is 0.301, 0.538, 0.943, 1.416, 2.202, and 3.106
-seconds at `n = 6, 8, 10, 12, 14, 16`; the cubic circulant pair is 0.680 s,
-Kneser/Johnson is 7.189 s, and circ48/2circ24 is 88.317 s. The scheduled CFI
-fresh-module median is 33.899 s. The 61- and 96-vertex hard negatives remain
-beyond the recorded 120-second tactic frontier. These figures include tactic
-elaboration as well as kernel checking and are not substituted for the
-forced-route type-check measurements above.
+For full end-to-end context, the prescribed cactus retiming compares the
+pre-change `hexgraphiso-tactic-aa50f17f873a-chungus2.json` with the post-change
+`hexgraphiso-tactic-fc4ef29c4c1e-chungus2.json`. The cycle ladder at
+`n = 6, 8, 10, 12, 14, 16` changed from 0.280, 0.520, 0.899, 1.449, 2.111, and
+2.926 seconds to 0.261, 0.475, 0.879, 1.317, 1.990, and 2.731 seconds. The
+cubic circulant pair changed from 0.699 to 0.617 s, and Kneser/Johnson from
+6.910 to 6.235 s. Across the 13 ordinary completed negative cases the observed
+change was a 2% to 12% reduction. That range also contains five root-separator
+cases whose implementation did not change, so the single retiming cannot
+attribute the reduction to removing the race. The long circ48/2circ24 sample
+moved from 91.328 to 96.621 s (+5.8%), within the noise expected of a single
+near-timeout run; the 61- and 96-vertex hard negatives remained beyond the
+recorded 120-second tactic frontier. The scheduled CFI fresh-module median
+remains 33.899 s.
+
+These end-to-end figures include tactic elaboration as well as kernel checking
+and are not substituted for the forced-route type-check measurements above.
+They refresh the committed tactic timing artifact and cactus figures. They do
+not require edits to the manual's Performance table, which reports
+canonicalization rather than tactic replay; its separate approximate
+ten-vertex negative range of 0.3 to 1 second still covers the 0.617 and 0.879 s
+negative cases at that size. There is no isolated evidence of a material
+timing change that requires revising those manual claims.
 
 ## Decision
 
