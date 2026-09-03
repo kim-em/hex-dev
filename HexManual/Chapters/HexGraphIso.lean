@@ -56,22 +56,24 @@ dependency or part of the verified `HexGraphIso` library.
 
 {docstring Hex.GraphIso.canonicalize}
 
-{docstring Hex.GraphIso.Pairwise.search}
-
 # The Petersen graph three ways
 %%%
 tag := "hex-graph-iso-petersen"
 %%%
 
-The Petersen graph is the standard first nontrivial example: below it
-appears as the generalized Petersen presentation `G(5, 2)` — an outer
-pentagon `0..4`, an inner five-point star `5..9`, and spokes — and as
-the Kneser presentation `K(5, 2)`, whose vertices are the two-element
-subsets of a five-element set, listed in lexicographic order
-`01 02 03 04 12 13 14 23 24 34` and joined when disjoint. An outer
-pentagon edge becomes a pair of disjoint subsets sharing no element with
-its neighbour; the inner star and the spokes likewise map onto
-disjointness of the remaining pairs.
+The Petersen graph is the standard first nontrivial example, and the
+library's family generators construct it twice: as the generalized
+Petersen graph {name Hex.GraphIso.Families.gpetersen}`Families.gpetersen`
+`5 2`, an outer pentagon `0..4`, an inner five-point star `5..9`
+stepping by two, and spokes joining the rings; and as the Kneser graph
+{name Hex.GraphIso.Families.kneser}`Families.kneser` `5 2`, whose
+vertices are the two-element subsets of a five-element set in
+colexicographic order, joined when disjoint. The two families are
+unrelated at general parameters; that `G(5, 2)` and `K(5, 2)` are
+isomorphic is a coincidence special to these values, and proving it is
+the first example below. One explicit edge list shows the generalized
+Petersen numbering concretely, checked against the general
+construction.
 
 ```lean
 open Hex Hex.GraphIso
@@ -79,44 +81,44 @@ open Hex Hex.GraphIso
 namespace HexGraphIsoChapterExample
 
 def petersen : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
-       (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
-    coloring := Coloring.trivial 10 }
+  Families.plain (Families.gpetersen 5 2)
 
 def kneser52 : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6),
-       (2, 8), (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
-    coloring := Coloring.trivial 10 }
+  Families.plain (Families.kneser 5 2)
 
--- The two canonical searches find an explicit vertex permutation
--- between the two presentations; `checkIso` validates it.
+-- The generalized Petersen numbering, concretely.
+#guard Graph.ofEdges
+    [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+     (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
+     (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)] =
+  Families.gpetersen 5 2
+
+-- The two canonical searches find an explicit vertex
+-- permutation between the presentations; `checkIso`
+-- validates it.
 #guard
-  ((Nauty.canonicalize? petersen).bind fun rP =>
+  (((Nauty.canonicalize? petersen).bind fun rP =>
     (Nauty.canonicalize? kneser52).map fun rK =>
       checkIso petersen kneser52
-        ((rK.label.toPerm.inv).comp rP.label.toPerm)).getD false
+        ((rK.label.toPerm.inv).comp rP.label.toPerm))
+    == some true)
 
--- The tactic closes the positive goal through the kernel-replayed
--- transporter check.
+-- The tactic closes the positive goal through the
+-- kernel-replayed transporter check.
 example : Isomorphic petersen kneser52 := by graph_iso
 ```
 
-The pentagonal prism is the interesting negative companion: like the
-Petersen graph it has ten vertices, every one of degree three, so degree
-refinement alone does not settle the question. The verified pairwise
-decision individualizes a vertex, re-refines, and refutes every branch;
-the kernel replays that run.
+The pentagonal prism, `Families.gpetersen 5 1`, is the interesting
+negative companion: like the Petersen graph it has ten vertices, every
+one of degree three, so degree refinement alone does not settle the
+question. The verified pairwise decision individualizes a vertex,
+re-refines, and refutes every branch; the kernel replays that run.
+
+{docstring Hex.GraphIso.Pairwise.search}
 
 ```lean
 def prism5 : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
-       (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
-    coloring := Coloring.trivial 10 }
+  Families.plain (Families.gpetersen 5 1)
 
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 ```
@@ -151,6 +153,83 @@ example : ¬ Isomorphic edgeMarkB nonedgeMark := by graph_iso
 end HexGraphIsoChapterExample
 ```
 
+# Performance
+%%%
+tag := "hex-graph-iso-performance"
+%%%
+
+The Lean implementation runs the same algorithm as nauty in the
+strictest sense: conformance testing pins the visited-node counters, so
+both programs traverse exactly the same search tree on every input.
+Every timing difference is therefore a per-node constant factor of the
+implementation, never an algorithmic difference. The table shows that
+factor on four parametrised families from the benchmark corpus: grids,
+where refinement discretizes quickly; Paley graphs, refinement's hard
+case among the sparse families; and the dense Latin-square and Kneser
+graphs, where the factor is largest. The `fast` column is
+`canonicalize` and the `checked` column is `canonicalizeChecked`, which
+additionally validates every answer through the certificate checker.
+
+:::table (header := true)
+* * graph
+  * vertices
+  * nauty
+  * fast
+  * checked
+* * `Families.grid 5 5`
+  * 25
+  * 14 µs
+  * 66 µs
+  * 0.25 ms
+* * `Families.grid 15 15`
+  * 225
+  * 0.83 ms
+  * 14 ms
+  * 38 ms
+* * `Families.paley 29`
+  * 29
+  * 19 µs
+  * 97 µs
+  * 0.88 ms
+* * `Families.paley 229`
+  * 229
+  * 1.1 ms
+  * 29 ms
+  * 0.18 s
+* * `Families.latinSquare 5`
+  * 25
+  * 19 µs
+  * 0.14 ms
+  * 0.80 ms
+* * `Families.latinSquare 13`
+  * 169
+  * 0.77 ms
+  * 25 ms
+  * 0.10 s
+* * `Families.kneser 7 2`
+  * 21
+  * 14 µs
+  * 0.12 ms
+  * 0.70 ms
+* * `Families.kneser 22 2`
+  * 231
+  * 3.4 ms
+  * 0.21 s
+  * 1.0 s
+:::
+
+Measured on chungus2, 2026-09-03, minimum over repeated runs;
+regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On the
+ten-vertex examples of this chapter, the kernel-checked `graph_iso`
+proof costs roughly 20 to 30 milliseconds on a positive goal and 0.3
+to 1 seconds on a negative one. The gap between the `fast` and
+`checked` columns is the current price of certificate validation; the
+verified search refinement programme in the SPEC is expected to remove
+it, at which point the checked guarantees attach to the fast path
+itself and the `checked` column disappears. For breadth across the
+whole benchmark corpus, see the cactus plots in `reports/figures/` in
+the repository.
+
 # The Mathlib bridge
 %%%
 tag := "hex-graph-iso-mathlib"
@@ -158,11 +237,14 @@ tag := "hex-graph-iso-mathlib"
 
 `HexGraphIsoMathlib` relates the executable coloured graphs to Mathlib's
 {name}`SimpleGraph` and extends the same `graph_iso` syntax to closed
-ground `SimpleGraph` terms. The two presentations below deliberately
-have different vertex types — `Fin 10` and the two-element subsets of
-`Fin 5` — so the positive goal genuinely enumerates two unrelated finite
-types and returns a `SimpleGraph.Iso`, rather than recognizing a
-definitional equality.
+ground `SimpleGraph` terms. The two families below are parametrised and
+deliberately have different vertex types (`Fin 2 × Fin p`, a rim/spoke
+coordinate, for the generalized Petersen graph, and the two-element
+subsets of `Fin 5` for the Kneser graph), so the positive goal genuinely
+enumerates two unrelated finite types and returns a `SimpleGraph.Iso`,
+rather than recognizing a definitional equality. `graph_iso` is a
+decision procedure on closed ground instances, so the parameters must be
+literals at the use site.
 
 {docstring Hex.GraphIso.Mathlib.Colored}
 
@@ -175,43 +257,43 @@ open Hex.GraphIso.Mathlib
 
 namespace HexGraphIsoMathlibChapterExample
 
-def petersenDrawing : SimpleGraph (Fin 10) where
-  Adj i j :=
-    (i.val < 5 ∧ j.val < 5 ∧
-      (j.val = (i.val + 1) % 5 ∨ i.val = (j.val + 1) % 5)) ∨
-    (5 ≤ i.val ∧ 5 ≤ j.val ∧
-      (j.val = 5 + ((i.val + 2) % 5) ∨ i.val = 5 + ((j.val + 2) % 5))) ∨
-    (i.val < 5 ∧ j.val = i.val + 5) ∨ (j.val < 5 ∧ i.val = j.val + 5)
-  symm := ⟨by intro i j h; omega⟩
-  loopless := ⟨by intro i h; omega⟩
+def gpetersen (p q : Nat) :
+    SimpleGraph (Fin 2 × Fin p) where
+  Adj v w :=
+    v ≠ w ∧
+      ((v.1 = 0 ∧ w.1 = 0 ∧
+          (w.2.val = (v.2.val + 1) % p ∨
+            v.2.val = (w.2.val + 1) % p)) ∨
+       (v.1 = 1 ∧ w.1 = 1 ∧
+          (w.2.val = (v.2.val + q) % p ∨
+            v.2.val = (w.2.val + q) % p)) ∨
+       (v.1 ≠ w.1 ∧ v.2 = w.2))
+  symm := ⟨by
+    intro v w h
+    refine ⟨h.1.symm, ?_⟩
+    rcases h.2 with ⟨a, b, c⟩ | ⟨a, b, c⟩ | ⟨a, b⟩
+    · exact Or.inl ⟨b, a, c.symm⟩
+    · exact Or.inr (Or.inl ⟨b, a, c.symm⟩)
+    · exact Or.inr (Or.inr ⟨fun e => a e.symm, b.symm⟩)⟩
+  loopless := ⟨by intro v h; exact h.1 rfl⟩
 
-instance : DecidableRel petersenDrawing.Adj := fun _ _ =>
-  inferInstanceAs (Decidable (_ ∨ _))
+instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
+  fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
 
-def kneser52 : SimpleGraph {s : Finset (Fin 5) // s.card = 2} where
+def kneser (m r : Nat) :
+    SimpleGraph {s : Finset (Fin m) // s.card = r} where
   Adj s t := Disjoint s.val t.val ∧ s ≠ t
   symm := ⟨by intro s t h; exact ⟨h.1.symm, h.2.symm⟩⟩
   loopless := ⟨by intro s h; exact h.2 rfl⟩
 
-instance : DecidableRel kneser52.Adj := fun _ _ =>
-  inferInstanceAs (Decidable (_ ∧ _))
+instance (m r : Nat) : DecidableRel (kneser m r).Adj :=
+  fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
 
-def pentagonalPrism : SimpleGraph (Fin 10) where
-  Adj i j :=
-    (i.val < 5 ∧ j.val < 5 ∧
-      (j.val = (i.val + 1) % 5 ∨ i.val = (j.val + 1) % 5)) ∨
-    (5 ≤ i.val ∧ 5 ≤ j.val ∧
-      (j.val = 5 + ((i.val + 1) % 5) ∨ i.val = 5 + ((j.val + 1) % 5))) ∨
-    (i.val < 5 ∧ j.val = i.val + 5) ∨ (j.val < 5 ∧ i.val = j.val + 5)
-  symm := ⟨by intro i j h; omega⟩
-  loopless := ⟨by intro i h; omega⟩
+example : Nonempty (gpetersen 5 2 ≃g kneser 5 2) := by
+  graph_iso
 
-instance : DecidableRel pentagonalPrism.Adj := fun _ _ =>
-  inferInstanceAs (Decidable (_ ∨ _))
-
-example : Nonempty (petersenDrawing ≃g kneser52) := by graph_iso
-
-example : IsEmpty (petersenDrawing ≃g pentagonalPrism) := by graph_iso
+example : IsEmpty (gpetersen 5 2 ≃g gpetersen 5 1) := by
+  graph_iso
 
 end HexGraphIsoMathlibChapterExample
 ```
