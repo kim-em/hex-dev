@@ -121,7 +121,7 @@ labelling. -/
 def runRelabel (input : GraphInput) : Nat :=
   match graphOf input with
   | some ⟨n, G⟩ =>
-    let l := (permOfNatArray? n
+    let l := (Perm.ofNatArray? n
       (.ofFn fun i : Fin n => (i.val + 1) % n)).getD (Perm.id n) |>.toLabel
     (G.relabel l).graph.degree ⟨0, by
       have := G.coloring.onto 0

@@ -449,7 +449,7 @@ libraries:
   HexGraphIso:
     deps: [HexBasic, HexMatrix]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     proof_probes: [bench/HexGraphIso/ProofProbe]
     phase4:
@@ -471,7 +471,7 @@ libraries:
   HexGraphIsoMathlib:
     deps: [HexGraphIso]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
     proof_probes: [bench/HexGraphIsoMathlib/ProofProbe]
     phase4:

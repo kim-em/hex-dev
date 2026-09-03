@@ -393,7 +393,7 @@ theorem inducedFun_eq {φ : Perm n} {P Q : Cells n} (h : Compat φ P Q)
 theorem inducedPerm_eq {φ : Perm n} {P Q : Cells n} (h : Compat φ P Q)
     (hdisc : ∀ c ∈ P, c.length ≤ 1) (hcov : Covers P) :
     inducedPerm P Q = φ := by
-  unfold inducedPerm permOfNatArray?
+  unfold inducedPerm Perm.ofNatArray?
   have hsz : (Hex.Array.ofFn' fun v : Fin n => (inducedFun P Q v).val).size = n := by
     rw [Hex.Array.ofFn'_eq_ofFn, Array.size_ofFn]
   have hbound : ∀ i, (hi : i <

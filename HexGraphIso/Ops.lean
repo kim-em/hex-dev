@@ -222,6 +222,10 @@ permutation convention). -/
 @[expose] def isIsoChecked (G H : Colored n k) : Bool :=
   (findIsoChecked G H).isSome
 
+/-- Soundness of the certificate-checked search: any permutation it returns
+really is an isomorphism. This is the theorem to reach for after a successful
+`findIsoChecked`; it says nothing about the `none` case, for which see
+`findIsoChecked_isSome_iff`. -/
 theorem findIsoChecked_sound {G H : Colored n k} {p : Perm n}
     (h : findIsoChecked G H = some p) : IsIso G H p := by
   rw [findIsoChecked] at h
@@ -238,6 +242,9 @@ theorem findIsoChecked_sound {G H : Colored n k} {p : Perm n}
     exact h1.trans h2.symm
   · simp at h
 
+/-- Completeness of the certificate-checked search: it returns a permutation
+exactly when one exists. Together with `findIsoChecked_sound` this makes
+`findIsoChecked` a decision procedure rather than a one-sided test. -/
 theorem findIsoChecked_isSome_iff (G H : Colored n k) :
     (findIsoChecked G H).isSome = true ↔ Isomorphic G H := by
   rw [findIsoChecked]
@@ -247,10 +254,16 @@ theorem findIsoChecked_isSome_iff (G H : Colored n k) :
     simp only [Option.isSome_none, Bool.false_eq_true, false_iff]
     exact fun h => hc ((iso_iff_canonChecked_eq G H).mp h)
 
+/-- The certificate-checked decision answers `true` exactly on isomorphic
+pairs. -/
 theorem isIsoChecked_eq_true_iff (G H : Colored n k) :
     isIsoChecked G H = true ↔ Isomorphic G H :=
   findIsoChecked_isSome_iff G H
 
+/-- The certificate-checked decision answers `false` exactly on
+non-isomorphic pairs. This is the negative direction the `graph_iso` tactic
+needs, and it is a genuine refutation rather than a failure to find a
+witness. -/
 theorem isIsoChecked_eq_false_iff (G H : Colored n k) :
     isIsoChecked G H = false ↔ ¬Isomorphic G H := by
   rw [← isIsoChecked_eq_true_iff]
@@ -269,6 +282,9 @@ canonicalizations. -/
 
 namespace FindIso
 
+/-- A transporter returned by the bounded search is an isomorphism. The
+search limits do not weaken the guarantee: they decide only whether an
+answer is produced at all. -/
 theorem some_sound (search : SearchLimits) (G H : Colored n k) (p : Perm n)
     (h : findIso? search G H = some (some p)) : IsIso G H p := by
   rw [findIso?] at h
@@ -276,6 +292,10 @@ theorem some_sound (search : SearchLimits) (G H : Colored n k) (p : Perm n)
   · exact findIsoChecked_sound (Option.some.inj h)
   · simp at h
 
+/-- A completed non-isomorphism result from the bounded search refutes
+isomorphism. Note the shape: the hypothesis is the inner `none` under an
+outer `some`, so this is the completed-search case. Outer `none` is
+exhaustion and carries no information. -/
 theorem none_sound (search : SearchLimits) (G H : Colored n k)
     (h : findIso? search G H = some none) : ¬Isomorphic G H := by
   rw [findIso?] at h
@@ -333,6 +353,11 @@ achieving-labelling validation. -/
   else
     none
 
+/-- Soundness of certificate replay: a certificate that checks out yields the
+canonical form of `G` together with a labelling that reaches it. Replay is
+the kernel-facing half of the pipeline, so this is the theorem a proof term
+cites; the untrusted search that produced the certificate need not be
+believed. -/
 theorem checkCanon_sound {limits : ReplayLimits} {G : Colored n k}
     {cert : CanonCert n k} {result : CanonResult n k}
     (h : checkCanon limits G cert = some result) :
@@ -365,6 +390,10 @@ unbounded `canonicalize` remains the total operation. -/
   | some cert => checkCanon replay G cert
   | none => none
 
+/-- Soundness of bounded canonicalization: whenever the produce-then-replay
+pipeline returns a result, that result is the canonical form of `G` and its
+labelling reaches it. The conclusion matches `checkCanon_sound`, because
+exceeding either limit yields `none` rather than a weaker answer. -/
 theorem canon?_eq_some {search : SearchLimits} {replay : ReplayLimits}
     {G : Colored n k} {result : CanonResult n k}
     (h : canon? search replay G = some result) :
