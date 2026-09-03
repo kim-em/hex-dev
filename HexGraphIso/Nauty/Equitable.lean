@@ -1387,4 +1387,307 @@ theorem nontrivialCell_effect {ctx : Ctx} {level workset cell1 cell2 : Nat}
     have : q = q' := by omega
     rw [this]
 
+/-- The nontrivial pass over a window list: sizes and the outside
+kept, and within every window, positions connected by an open run of
+the result carry equal counts into the captured splitter set. -/
+theorem refineNontrivial_go_blocks {ctx : Ctx} {level workset : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      st.ptn.size = st.lab.size →
+      (∀ p ∈ cs, ∀ i, p.1 ≤ i → i < p.2 → st.ptn[i]! > level) →
+      (refineNontrivial.go ctx level workset cs st).lab.size =
+        st.lab.size ∧
+      (∀ j, (∀ p ∈ cs, j < p.1 ∨ p.2 < j) →
+        (refineNontrivial.go ctx level workset cs st).lab[j]! =
+          st.lab[j]!) ∧
+      (∀ q, (∀ p ∈ cs, q < p.1 ∨ p.2 ≤ q) →
+        (refineNontrivial.go ctx level workset cs st).ptn[q]! =
+          st.ptn[q]!) ∧
+      (refineNontrivial.go ctx level workset cs st).ptn.size =
+        st.ptn.size ∧
+      (∀ p ∈ cs, ∀ q q', p.1 ≤ q → q ≤ q' → q' ≤ p.2 →
+        (∀ i, q ≤ i → i < q' →
+          (refineNontrivial.go ctx level workset cs st).ptn[i]! >
+            level) →
+        popCount (workset &&&
+          ctx.g[(refineNontrivial.go ctx level workset cs st).lab[q]!]!) =
+        popCount (workset &&&
+          ctx.g[(refineNontrivial.go ctx level workset cs
+            st).lab[q']!]!))
+  | [], st, _, _, _, _ => by
+    rw [refineNontrivial.go]
+    exact ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, rfl, fun p hp =>
+      absurd hp (by simp)⟩
+  | (c1, c2) :: rest, st, hw, hpw, hlp, hfr => by
+    rw [refineNontrivial.go]
+    obtain ⟨h12, hsz⟩ := hw (c1, c2) (List.mem_cons_self ..)
+    dsimp only at h12 hsz
+    have hfr0 : ∀ i, c1 ≤ i → i < c2 → st.ptn[i]! > level := by
+      intro i hi1 hi2
+      exact hfr (c1, c2) (List.mem_cons_self ..) i hi1 hi2
+    obtain ⟨e1, e2, e3, e4, e5⟩ :=
+      nontrivialCell_effect (ctx := ctx) (level := level)
+        (workset := workset) (st := st) h12 hsz hlp hfr0
+    obtain ⟨ih1, ih2, ih3, ih4, ih5⟩ :=
+      refineNontrivial_go_blocks rest
+        (nontrivialCell ctx level workset c1 c2 st)
+        (fun p hp => by
+          obtain ⟨hp1, hp2⟩ := hw p (List.mem_cons_of_mem _ hp)
+          exact ⟨hp1, by rw [e1]; exact hp2⟩)
+        (List.pairwise_cons.mp hpw).2
+        (by rw [e4, e1]; exact hlp)
+        (fun p hp i hi1 hi2 => by
+          have hord := (List.pairwise_cons.mp hpw).1 p hp
+          simp only at hord
+          rw [e3 i (Or.inr (by omega))]
+          exact hfr p (List.mem_cons_of_mem _ hp) i hi1 hi2)
+    have hhead := (List.pairwise_cons.mp hpw).1
+    refine ⟨by rw [ih1, e1], ?_, ?_, by rw [ih4, e4], ?_⟩
+    · intro j hj
+      rw [ih2 j (fun p hp => hj p (List.mem_cons_of_mem _ hp)),
+        e2 j (by
+          have := hj (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro q hq
+      rw [ih3 q (fun p hp => hq p (List.mem_cons_of_mem _ hp)),
+        e3 q (by
+          have := hq (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro p hp q q' hq hqq hq' hopen
+      rcases List.mem_cons.mp hp with rfl | hmem
+      · dsimp only at hq hq' ⊢
+        have hlabkeep : ∀ r, c1 ≤ r → r ≤ c2 →
+            (refineNontrivial.go ctx level workset rest
+              (nontrivialCell ctx level workset c1 c2 st)).lab[r]! =
+              (nontrivialCell ctx level workset c1 c2 st).lab[r]! := by
+          intro r hr1 hr2
+          exact ih2 r fun pr hpr => Or.inl (by
+            have := hhead pr hpr
+            simp only at this
+            omega)
+        have hptnkeep : ∀ i, c1 ≤ i → i < c2 →
+            (refineNontrivial.go ctx level workset rest
+              (nontrivialCell ctx level workset c1 c2 st)).ptn[i]! =
+              (nontrivialCell ctx level workset c1 c2 st).ptn[i]! := by
+          intro i hi1 hi2
+          exact ih3 i fun pr hpr => Or.inl (by
+            have := hhead pr hpr
+            simp only at this
+            omega)
+        rw [hlabkeep q hq (by omega), hlabkeep q' (by omega) hq']
+        refine e5 q q' hq hqq hq' ?_
+        intro i hi1 hi2
+        rw [← hptnkeep i (by omega) (by omega)]
+        exact hopen i hi1 hi2
+      · refine ih5 p hmem q q' hq hqq hq' hopen
+
+/-- After the nontrivial pass, every cell of the result within range
+has constant counts into the captured splitter set. -/
+theorem refineNontrivial_cell_const {ctx : Ctx}
+    {level split1 split2 : Nat} {st : RefineSt}
+    (hpsz : st.ptn.size = ctx.n) (hlp : st.lab.size = st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    ∀ a len,
+      IsCell (refineNontrivial ctx level split1 split2 st).ptn level
+        a len →
+      a + len ≤ ctx.n →
+      ConstOn ctx (worksetOf st.lab split1 split2)
+        (segN (refineNontrivial ctx level split1 split2 st).lab a len) := by
+  intro a len hcell halen
+  have hnn : ctx.n ≤ st.ptn.size := Nat.le_of_eq hpsz.symm
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    have h := hend
+    rw [hpsz] at h
+    exact h
+  have hwind : ∀ p ∈ cells st.ptn level ctx.n,
+      p.1 ≤ p.2 ∧ p.2 < st.lab.size := fun p hp =>
+    ⟨cells_le p hp, by
+      have := cells_end_lt_of_end hnn hend hendn p hp
+      omega⟩
+  have hfrw : ∀ p ∈ cells st.ptn level ctx.n, ∀ i, p.1 ≤ i → i < p.2 →
+      st.ptn[i]! > level := by
+    intro p hp i hi1 hi2
+    have hic := cells_isCell hnn hend p hp
+    have hle := cells_le p hp
+    have := hic.2.2.1 i hi1 (by omega)
+    exact this
+  obtain ⟨g1, g2, g3, g4, g5⟩ := refineNontrivial_go_blocks
+    (ctx := ctx) (level := level)
+    (workset := worksetOf st.lab split1 split2)
+    (cells st.ptn level ctx.n)
+    { st with
+      longcode := mash st.longcode (split2 - split1 + 1) }
+    hwind cells_pairwise hlp.symm hfrw
+  rw [refineNontrivial] at hcell ⊢
+  dsimp only at hcell g1 g2 g3 g4 g5 ⊢
+  have hpres : ∀ q : Nat, st.ptn[q]! ≤ level →
+      (refineNontrivial.go ctx level (worksetOf st.lab split1 split2)
+        (cells st.ptn level ctx.n)
+        { st with
+          longcode := mash st.longcode (split2 - split1 + 1) }).ptn[q]! =
+        st.ptn[q]! := by
+    intro q hq
+    refine g3 q fun p hp => ?_
+    rcases Nat.lt_or_ge q ctx.n with hqn | hqn
+    · obtain ⟨pc, hpcm, hpc1, hpc2⟩ := cells_cover q hqn
+      have hqend : q = pc.2 := by
+        have hic := cells_isCell hnn hend pc hpcm
+        rcases Nat.eq_or_lt_of_le hpc2 with he | hlt
+        · exact he
+        · exfalso
+          have := hic.2.2.1 q (by omega) (by
+            have := cells_le pc hpcm
+            omega)
+          omega
+      have hicp := cells_isCell hnn hend p hp
+      have hicpc := cells_isCell hnn hend pc hpcm
+      have hle_p := cells_le p hp
+      have hle_pc := cells_le pc hpcm
+      rcases isCell_disjoint_or_eq hicp hicpc with hd | hd | hd
+      · left
+        omega
+      · right
+        omega
+      · right
+        omega
+    · right
+      have := cells_end_lt_of_end hnn hend hendn p hp
+      omega
+  have hgrow : ∀ q : Nat, st.ptn[q]! ≤ level →
+      (refineNontrivial.go ctx level (worksetOf st.lab split1 split2)
+        (cells st.ptn level ctx.n)
+        { st with
+          longcode := mash st.longcode
+            (split2 - split1 + 1) }).ptn[q]! ≤ level := by
+    intro q hq
+    rw [hpres q hq]
+    exact hq
+  have hl0 : 0 < len := hcell.1
+  obtain ⟨c, lenC, hcC, hca, hcb⟩ := subcell_of_grow (ptn0 := st.ptn)
+    g4.symm hcell hend hgrow (by omega) (by omega)
+  have hmem : (c, c + lenC - 1) ∈ cells st.ptn level ctx.n :=
+    isCell_mem_cells hcC hnn hend (by omega)
+  have hlen0 := hcC.1
+  intro x hx y hy
+  obtain ⟨ox, hox, rfl⟩ := mem_segN_iff.mp hx
+  obtain ⟨oy, hoy, rfl⟩ := mem_segN_iff.mp hy
+  have hrun : ∀ u u', a ≤ u → u ≤ u' → u' < a + len →
+      ∀ i, u ≤ i → i < u' →
+      (refineNontrivial.go ctx level (worksetOf st.lab split1 split2)
+        (cells st.ptn level ctx.n)
+        { st with
+          longcode := mash st.longcode
+            (split2 - split1 + 1) }).ptn[i]! > level := by
+    intro u u' hu huu hu' i hi1 hi2
+    exact hcell.2.2.1 i (by omega) (by omega)
+  rcases Nat.le_total (a + ox) (a + oy) with hxy | hxy
+  · exact g5 (c, c + lenC - 1) hmem (a + ox) (a + oy) (by
+      dsimp only
+      omega) hxy (by
+      dsimp only
+      omega)
+      (hrun (a + ox) (a + oy) (by omega) hxy (by omega))
+  · exact (g5 (c, c + lenC - 1) hmem (a + oy) (a + ox) (by
+      dsimp only
+      omega) hxy (by
+      dsimp only
+      omega)
+      (hrun (a + oy) (a + ox) (by omega) hxy (by omega))).symm
+
+/-! # One refinement step leaves every cell constant into the
+retired splitter -/
+
+theorem worksetOf_singleton (lab : Array Nat) (lo : Nat) :
+    worksetOf lab lo lo = insert 0 lab[lo]! := by
+  have h1 : lo + 1 - lo = 1 := by omega
+  rw [worksetOf, h1]
+  have h2 : List.range 1 = [0] := rfl
+  rw [h2, List.foldl_cons, List.foldl_nil, Nat.add_zero]
+
+/-- After one `refineStep`, every cell of the result within range has
+constant counts into the retired splitter's captured vertex set. -/
+theorem refineStep_cell_const {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hok : StOk ctx.n level st)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hs1 : split1 < ctx.n) :
+    ∀ a len, IsCell (refineStep ctx level split1 st).ptn level a len →
+      a + len ≤ ctx.n →
+      ConstOn ctx (worksetOf st.lab split1 (cellEnd st.ptn level split1))
+        (segN (refineStep ctx level split1 st).lab a len) := by
+  intro a len hcell halen
+  have hps : st.ptn.size = ctx.n := hok.ptnSize
+  have hls : st.lab.size = ctx.n := hok.labSize
+  have hend : st.ptn[st.ptn.size - 1]! ≤ level := hok.ptnEnd
+  rw [refineStep] at hcell ⊢
+  dsimp only at hcell ⊢
+  rcases hb : (split1 == cellEnd st.ptn level split1) with _ | _
+  · -- nontrivial splitter
+    rw [ite_eq_right (by simp [hb])] at hcell ⊢
+    have hconst := refineNontrivial_cell_const
+      (ctx := ctx) (level := level) (split1 := split1)
+      (split2 := cellEnd st.ptn level split1)
+      (st := { st with
+        active := erase st.active split1,
+        longcode := mash st.longcode
+          (split1 + cellEnd st.ptn level split1) })
+      (by dsimp only; omega)
+      (by dsimp only; omega)
+      (by dsimp only; exact hend)
+      a len hcell halen
+    exact hconst
+  · -- trivial splitter
+    rw [ite_eq_left hb] at hcell
+    rw [ite_eq_left (rfl : true = true)]
+    have hsp : cellEnd st.ptn level split1 = split1 :=
+      (beq_iff_eq.mp hb).symm
+    rw [hsp] at hcell ⊢
+    obtain ⟨bval, hbval⟩ := refineTrivial_cell_adj
+      (ctx := ctx) (level := level) (split1 := split1)
+      (st := { st with
+        active := erase st.active split1,
+        longcode := mash st.longcode (split1 + split1) })
+      (by dsimp only; omega)
+      (by dsimp only; omega)
+      (by dsimp only; exact hend)
+      a len hcell halen
+    have hok' : StOk ctx.n level { st with
+        active := erase st.active split1,
+        longcode := mash st.longcode (split1 + split1) } :=
+      ⟨hok.labSize, hok.labOk, hok.ptnSize,
+        erase_lt hok.activeLt, hok.ptnEnd⟩
+    have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+      have h := hend
+      rw [hps] at h
+      exact h
+    have hcs : ∀ p ∈ cells st.ptn level ctx.n,
+        p.1 < ctx.n ∧ p.2 < ctx.n := by
+      intro p hp
+      have h2 := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn
+        p hp
+      have h1 := cells_le p hp
+      exact ⟨by omega, h2⟩
+    have hokR := refineTrivial_go_stOk (n := ctx.n)
+      (level := level)
+      (gRow := ctx.g[st.lab[split1]!]!)
+      (cells st.ptn level ctx.n)
+      { st with
+        active := erase st.active split1,
+        longcode := mash st.longcode (split1 + split1) }
+      hok' hcs
+    have hokR' : StOk ctx.n level (refineTrivial ctx level split1
+        { st with
+          active := erase st.active split1,
+          longcode := mash st.longcode (split1 + split1) }) := hokR
+    rw [worksetOf_singleton]
+    refine constOn_single_of_adj (b := bval) hsymm
+      (hok.labOk split1 (by omega)) ?_ ?_
+    · intro x hx
+      obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hx
+      exact hokR'.labOk (a + o) (by rw [hokR'.labSize]; omega)
+    · intro x hx
+      obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hx
+      exact hbval (a + o) (by omega) (by omega)
+
 end Hex.GraphIso.Nauty
