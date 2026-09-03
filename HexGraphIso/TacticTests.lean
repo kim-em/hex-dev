@@ -13,8 +13,8 @@ public meta import HexGraphIso.Random
 
 /-!
 Regression tests for the Mathlib-free `graph_iso` tactic: positive and
-negative goals, coloured goals, the limit syntax, and the promised
-diagnostics. The kernel replays every closing proof; every failure case
+negative goals, coloured and uncoloured goals, the limit syntax, and
+the promised diagnostics. The kernel replays every closing proof; every failure case
 asserts its message and leaves the goal unchanged.
 -/
 
@@ -73,33 +73,64 @@ The Petersen pair at `n = 10`: two genuinely different presentations of
 the same graph, and a cubic ten-vertex non-example.
 -/
 
-def petersen : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
-       (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
-    coloring := Coloring.trivial 10 }
+def petersenG : Graph 10 :=
+  Graph.ofEdges
+    [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+     (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
+     (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
 
-def kneser52 : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6), (2, 8),
-       (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
-    coloring := Coloring.trivial 10 }
-
-example : Isomorphic petersen kneser52 := by graph_iso
+def kneser52G : Graph 10 :=
+  Graph.ofEdges
+    [(0, 7), (0, 8), (0, 9), (1, 5), (1, 6), (1, 9), (2, 4), (2, 6), (2, 8),
+     (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
 
 /-- The pentagonal prism: also cubic on ten vertices, so degree
 refinement alone cannot separate it from the Petersen graph; the
 negative goal replays the verified pairwise decision in the kernel. -/
-def prism5 : Colored 10 1 :=
-  { graph := Graph.ofEdges
-      [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
-       (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
-       (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
-    coloring := Coloring.trivial 10 }
+def prism5G : Graph 10 :=
+  Graph.ofEdges
+    [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+     (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
+     (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+
+def petersen : Colored 10 1 := petersenG.singleColor
+
+def kneser52 : Colored 10 1 := kneser52G.singleColor
+
+def prism5 : Colored 10 1 := prism5G.singleColor
+
+example : Isomorphic petersen kneser52 := by graph_iso
 
 set_option maxRecDepth 100000 in
 example : ¬ Isomorphic petersen prism5 := by graph_iso
+
+/-!
+The same pair stated on bare `Graph 10` values: the tactic colours both
+sides with the single colour zero and transports the conclusion back,
+so the uncoloured goals need no wrapping at the call.
+-/
+
+example : Graph.Isomorphic petersenG kneser52G := by graph_iso
+
+example : Graph.Isomorphic petersenG kneser52G := by
+  graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
+
+set_option maxRecDepth 100000 in
+example : ¬ Graph.Isomorphic petersenG prism5G := by graph_iso
+
+-- a zero certificate budget forces the uncoloured negative path onto
+-- the pairwise fallback, exactly as for the coloured goal
+set_option maxRecDepth 400000 in
+example : ¬ Graph.Isomorphic petersenG prism5G := by
+  graph_iso (maxCertNodes := 0)
+
+/-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
+#guard_msgs in
+example : Graph.Isomorphic petersenG prism5G := by graph_iso
+
+/-- error: graph_iso: the graphs are isomorphic; the negative goal is not provable -/
+#guard_msgs in
+example : ¬ Graph.Isomorphic petersenG kneser52G := by graph_iso
 
 /-!
 Coloured goals at `n = 6`: ordered colours constrain isomorphisms.

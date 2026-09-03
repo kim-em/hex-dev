@@ -102,7 +102,9 @@ Surjectivity matches nauty's partition representation, which has no empty
 cell. It also removes redundant colour counts from the public type.
 
 - The empty graph is represented with `n = 0` and `k = 0`.
-- A nonempty uncoloured graph uses `k = 1` and the constant zero vector.
+- A nonempty uncoloured graph uses `k = 1` and the constant zero vector,
+  built by `Graph.singleColor` (see
+  [The uncoloured surface](#the-uncoloured-surface)).
 - No value of `Colored n 0` exists when `n > 0`.
 
 The output colouring of a canonical form has contiguous cells in their
@@ -295,6 +297,110 @@ theorem Checked.isIso_eq_false_iff (G H : Colored n k) :
 The biconditional compares canonical coloured graphs. It does not compare
 labels: those arrays refer to different input vertex names and generally
 differ for isomorphic inputs.
+
+## The uncoloured surface
+
+Colours are the general input, but most callers hold a bare `Graph n`.
+The library therefore states isomorphism directly on `Graph n` and
+mirrors both tiers there, so an uncoloured caller neither builds a
+`Colored n 1` at the call nor unwraps one from the conclusion.
+
+```lean
+def Graph.singleColor (G : Graph n) (h : 0 < n) : Colored n 1
+
+def Graph.IsIso (G H : Graph n) (p : Perm n) : Prop :=
+  forall i j, H.adj (p i) (p j) = G.adj i j
+
+def Graph.Isomorphic (G H : Graph n) : Prop :=
+  Exists fun p => Graph.IsIso G H p
+```
+
+`n = 0` forces `k = 0`, so `Graph.singleColor` and every operation
+below take `0 < n`. The hypothesis is an auto-parameter discharged by
+`omega` or `decide`, so it is invisible at a concrete size.
+
+One equivalence carries the whole surface:
+
+```lean
+theorem Graph.isIso_singleColor_iff (G H : Graph n) (p : Perm n)
+    (h : 0 < n) :
+    IsIso (G.singleColor h) (H.singleColor h) p <-> Graph.IsIso G H p
+
+theorem Graph.isomorphic_singleColor_iff (G H : Graph n) (h : 0 < n) :
+    Isomorphic (G.singleColor h) (H.singleColor h) <->
+      Graph.Isomorphic G H
+```
+
+The colour clause of `IsIso` is vacuous at one colour, which is what
+makes this an equivalence rather than one implication. Every theorem
+of the uncoloured surface is transported along it rather than
+reproved, so the uncoloured operations make exactly the promises their
+coloured originals make.
+
+```lean
+-- fast tier
+def Graph.canon (G : Graph n) (h : 0 < n) : Graph n
+def Graph.label (G : Graph n) (h : 0 < n) : Label n
+def Graph.findIso (G H : Graph n) (h : 0 < n) : Option (Perm n)
+def Graph.isIso (G H : Graph n) (h : 0 < n) : Bool
+
+-- certified tier
+def Graph.Checked.canon (G : Graph n) (h : 0 < n) : Graph n
+def Graph.Checked.label (G : Graph n) (h : 0 < n) : Label n
+def Graph.Checked.findIso (G H : Graph n) (h : 0 < n) : Option (Perm n)
+def Graph.Checked.isIso (G H : Graph n) (h : 0 < n) : Bool
+```
+
+The canonical form is the underlying graph of the coloured canonical
+form, so the two agree by construction. The required uncoloured
+theorems mirror the coloured ones:
+
+```lean
+theorem Graph.relabel_label (G : Graph n) (h : 0 < n) :
+    G.relabel (Graph.label G h).get = Graph.canon G h
+
+theorem Graph.findIso_sound :
+    Graph.findIso G H h = some p -> Graph.IsIso G H p
+
+theorem Graph.isomorphic_of_isIso :
+    Graph.isIso G H h = true -> Graph.Isomorphic G H
+
+theorem Graph.Checked.relabel_label (G : Graph n) (h : 0 < n) :
+    G.relabel (Graph.Checked.label G h).get = Graph.Checked.canon G h
+
+theorem Graph.Checked.canon_iso (G : Graph n) (h : 0 < n) :
+    Graph.Isomorphic G (Graph.Checked.canon G h)
+
+theorem Graph.Checked.iso_iff_canon_eq (G H : Graph n) (h : 0 < n) :
+    Graph.Isomorphic G H <->
+      Graph.Checked.canon G h = Graph.Checked.canon H h
+
+theorem Graph.Checked.canon_invariant :
+    Graph.Isomorphic G H ->
+      Graph.Checked.canon G h = Graph.Checked.canon H h
+
+theorem Graph.Checked.findIso_sound :
+    Graph.Checked.findIso G H h = some p -> Graph.IsIso G H p
+
+theorem Graph.Checked.findIso_isSome_iff (G H : Graph n) (h : 0 < n) :
+    (Graph.Checked.findIso G H h).isSome = true <-> Graph.Isomorphic G H
+
+theorem Graph.Checked.isIso_eq_true_iff (G H : Graph n) (h : 0 < n) :
+    Graph.Checked.isIso G H h = true <-> Graph.Isomorphic G H
+
+theorem Graph.Checked.isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
+    Graph.Checked.isIso G H h = false <-> Not (Graph.Isomorphic G H)
+```
+
+`Isomorphic.graph` and `IsIso.graph` forget the colours of a coloured
+isomorphism at any `k`, and `Colored.ext_graph` recovers a `Colored n 1`
+from its graph. The uncoloured equivalence relation carries the usual
+`refl`, `symm` and `trans`.
+
+The uncoloured canonical form of a graph is the graph of its coloured
+canonical form, so the conformance fixtures, the benchmark corpus and
+the nauty compatibility target are stated on the coloured surface only;
+nothing about the uncoloured names needs separate pinning.
 
 ## Reference canonical form
 
@@ -565,7 +671,7 @@ whose kernel obligations must stay certificate-sized.
 ## The Mathlib-free `graph_iso` tactic
 
 The library registers `graph_iso` for closed goals over executable
-`Colored n k` values:
+`Colored n k` values and over executable `Graph n` values:
 
 ```lean
 example : Isomorphic G H := by
@@ -574,9 +680,21 @@ example : Isomorphic G H := by
 example : Not (Isomorphic G H) := by
   graph_iso
 
+example : Graph.Isomorphic G H := by
+  graph_iso
+
+example : Not (Graph.Isomorphic G H) := by
+  graph_iso
+
 example : Isomorphic G H := by
   graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
 ```
+
+An uncoloured goal is coloured with the single colour zero and its
+conclusion transported back through `Graph.isomorphic_singleColor_iff`,
+so both shapes run the same routes below. Both directions of that
+equivalence are proof terms, so the uncoloured route adds nothing to
+the kernel obligation beyond one decision of `0 < n`.
 
 The configuration syntax is the parenthesized named syntax shown above.
 Each of `maxNodes`, `maxCertNodes`, and `maxCheckerSteps` is optional, may
@@ -633,7 +751,10 @@ defines the following Mathlib-free graphs locally from their edge predicates:
   pairs;
 - the pentagonal prism on `Fin 10`.
 
-The chapter evaluates `findIso?` to display the explicit vertex permutation,
+The chapter states the positive and negative claims on bare `Graph 10`
+values, through `Graph.Isomorphic`, since neither claim mentions
+colours. It checks that the canonical searches compose into an explicit
+vertex transporter between the two presentations,
 then uses `graph_iso` to prove that the first two presentations are isomorphic.
 The text explains how an outer pentagon, inner star, and spokes become disjoint
 pairs. It then uses the same tactic to prove that the Petersen graph is not
@@ -642,7 +763,7 @@ interesting because both graphs have ten vertices and every vertex has degree
 three. Degree refinement alone does not settle it.
 
 The chapter also gives the Petersen graph three ordered two-colourings with
-identical cell sizes. Two colourings mark different edges as colour zero.
+identical cell sizes, which is where the coloured surface enters. Two colourings mark different edges as colour zero.
 `graph_iso` proves them isomorphic and returns a colour-preserving transporter.
 The third marks a nonadjacent pair as colour zero. `graph_iso` proves it is not
 isomorphic to either edge-marked colouring. This is the manual's compact

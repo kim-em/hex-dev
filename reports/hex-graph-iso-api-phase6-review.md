@@ -311,6 +311,27 @@ literal-valued variants, would read better. Left alone because getting the
 distinction right needs the same design pass as findings 1 and 2 rather than
 a mechanical rename.
 
+## Since this review
+
+Two further API changes landed with finding 1's namespace move, in the same
+pre-release window and touching the same SPEC section.
+
+`Families.plain` became `Graph.singleColor`. It takes a `Graph n` and returns
+`Colored n 1`, so it belongs on the receiver type rather than among the family
+generators, and it is now reachable by dot notation from any bare graph. The
+Mathlib layer's `Colored.plain` became `Colored.singleColor` so both layers use
+one word for the one-cell view.
+
+The uncoloured surface was added: `Graph.Isomorphic` and `Graph.IsIso` on
+`Graph n`, the fast and `Graph.Checked` operation tiers, their transported
+theorems, and `graph_iso` support for uncoloured goals. This closes an
+asymmetry the review did not name. The Mathlib layer already proved
+`Nonempty (G ≃g H)` for `SimpleGraph`s directly, so only the Mathlib-free
+surface, the one the library leads with, made an uncoloured caller wrap at
+every call and unwrap every conclusion. Nothing is reproved: every uncoloured
+theorem is transported along `Graph.isomorphic_singleColor_iff`, whose content
+is that the colour clause of `IsIso` is vacuous at one colour.
+
 ## In-flight surface
 
 Recorded, not acted on: `HexGraphIso/Nauty/`, 35 files, 1,035 public

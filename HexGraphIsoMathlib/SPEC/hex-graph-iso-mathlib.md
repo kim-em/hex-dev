@@ -115,7 +115,11 @@ array, but it cannot change the isomorphism verdict or the abstract
 
 For ordinary uncoloured graphs, analogous definitions omit the colour wrapper
 and use the one-cell executable colouring. These are the definitions used by
-the tactic for `G ≃g H` goals.
+the tactic for `G ≃g H` goals. The Mathlib-free library states the matching
+uncoloured surface on `Graph n` itself
+([hex-graph-iso.md § The uncoloured surface](../../HexGraphIso/SPEC/hex-graph-iso.md#the-uncoloured-surface)),
+so a caller who does not need Mathlib never wraps a graph in a colouring
+either.
 
 ## Mathematical correspondence
 
