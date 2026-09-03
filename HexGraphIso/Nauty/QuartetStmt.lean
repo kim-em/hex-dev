@@ -347,6 +347,68 @@ does not touch. It is stated as part of that induction rather than
 before it because a node's effect on `lab` is only defined through the
 recursion. -/
 
+/-! # From the loop's fold to the node's maximum
+
+`LoopConcl.full` is a left fold of `incMax` over the offsets the loop
+actually visited, and `specNode_internal` presents the node's key as a
+`keysMax` over *all* of them. Two facts bridge the two, and neither
+mentions the search: the fold is the maximum, and offsets dominated by
+a survivor can be dropped from a maximum.
+
+The second is what the orbit prune and the two sibling filters are
+for. `firstChildLoop` skips a child outright when its orbit
+representative is not itself (`Search.lean`, the `orbits` test), so the
+fold's list is a sublist of the node's children; `childKey_of_orbPruned`
+and `longprune_carried`/`shortprune_carried` say each skipped child's
+key repeats one that survived, which is exactly the hypothesis of
+`keysMax_eq_of_dominated`. -/
+
+/-- A fold of `incMax` from a present incumbent is the seeded
+maximum. -/
+theorem foldl_incMax_some : ∀ (l : List Key) (k : Key),
+    l.foldl (fun acc kk => some (incMax acc kk)) (some k) =
+      some (keysMax k l)
+  | [], _ => rfl
+  | k' :: rest, k => by
+    rw [List.foldl_cons, keysMax]
+    exact foldl_incMax_some rest (keyMax k k')
+
+/-- A fold of `incMax` from no incumbent is the maximum seeded by the
+first key folded in. -/
+theorem foldl_incMax_none (k : Key) (l : List Key) :
+    (k :: l).foldl (fun acc kk => some (incMax acc kk)) none =
+      some (keysMax k l) := by
+  rw [List.foldl_cons]
+  exact foldl_incMax_some l k
+
+/-- Keys dominated by what survives can be dropped from a maximum.
+
+This is the shape the skipped children need: `l` is every child of the
+node, `l'` the ones the loop visited, and the hypothesis is that each
+child's key is bounded by the maximum over the visited ones, which the
+prune dischargers supply by exhibiting a visited child with an equal
+key. -/
+theorem keysMax_eq_of_dominated {l l' : List Key} {k : Key}
+    (hsub : ∀ x ∈ l', x ∈ l)
+    (hdom : ∀ x ∈ l, keyLe x (keysMax k l')) :
+    keysMax k l = keysMax k l' :=
+  keyLe_antisym
+    (keysMax_le (keyLe_keysMax (Or.inl rfl)) hdom)
+    (keysMax_le (keyLe_keysMax (Or.inl rfl))
+      fun y hy => keyLe_keysMax (Or.inr (hsub y hy)))
+
+/-- The dominated-key hypothesis in the form the prune dischargers
+produce it: every child either survived or has the same key as one that
+did. -/
+theorem keysMax_eq_of_repeats {l l' : List Key} {k : Key}
+    (hsub : ∀ x ∈ l', x ∈ l)
+    (hrep : ∀ x ∈ l, x ∈ l' ∨ ∃ y ∈ l', x = y) :
+    keysMax k l = keysMax k l' :=
+  keysMax_eq_of_dominated hsub fun x hx => by
+    rcases hrep x hx with hm | ⟨y, hy, rfl⟩
+    · exact keyLe_keysMax (Or.inr hm)
+    · exact keyLe_keysMax (Or.inr hy)
+
 /-! # The root assembly
 
 The corrected statement reaches the programme's target. The root call
