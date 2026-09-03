@@ -231,13 +231,14 @@ of this report is that the shipped fast path is 6.7x to 17.0x nauty and the
 shipped verified path is a further 4.7x on top.
 
 Two caveats on the sweep. First, `python3 scripts/bench/check_graphiso_sweep_freshness.py`
-currently fails: the relevant-source fingerprint at branch HEAD is
-`7cf98fe44aab` and the newest recorded sweep is `b4e80b4517b7`, which
-corresponds to commit `1690b550b`. The release-preparation commits on this
-branch moved the SPEC and touched `HexGraphIso/Families.lean`, shifting the
-fingerprint without changing a measured code path; the branch needs one sweep
-regeneration before it lands, and these numbers are one plumbing commit behind
-HEAD. Second, the sweep's free-text label mentions a "gpetersen family" that is
+fails on this branch: the newest recorded sweep is `b4e80b4517b7`, which
+corresponds to commit `1690b550b`, and the branch's relevant-source
+fingerprint has moved past it. Nothing that moved it changes a measured code
+path: the release-preparation commits relocated the SPEC and touched
+`HexGraphIso/Families.lean`, and the Phase-6 commit added docstrings and
+renamed two declarations. The fingerprint is a source hash, so it moves anyway.
+The branch needs one sweep regeneration before it lands, and these numbers are
+measured one commit behind it. Second, the sweep's free-text label mentions a "gpetersen family" that is
 not in the corpus: the instance set is byte-identical to the preceding sweep
 `5059deb32f57`, so `b4e80b4517b7` is a re-measurement rather than a corpus
 change. The label is unvalidated free text and the corpus is what the data
