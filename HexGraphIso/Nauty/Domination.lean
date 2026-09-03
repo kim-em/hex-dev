@@ -1826,6 +1826,52 @@ theorem firstterminal_firstDescOk {ctx : Ctx} {level : Nat}
   exact ⟨r, r, r, [], [], level, level, hS, .refl _ _, .refl _ _, rfl,
     hdisc, hdisc, hlab, hlab⟩
 
+/-- The descent bookkeeping crosses a step that moves neither
+labelling nor the gate. -/
+theorem firstDescOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+    (hlab : st'.lab = st.lab) (hfl : st'.firstlab = st.firstlab)
+    (hgca : st'.gcaFirst = st.gcaFirst)
+    (hncl : st'.noncheaplevel = st.noncheaplevel)
+    (h : FirstDescOk ctx st) : FirstDescOk ctx st' := by
+  intro hgate
+  rw [hncl, hgca] at hgate
+  rw [hgca, hlab, hfl]
+  exact h hgate
+
+/-- The comparison step writes only the incumbent machine, so the
+descent bookkeeping crosses it by frame. -/
+theorem otherNodePrep_firstDescOk {ctx : Ctx} {level code : Nat}
+    {st : SearchSt} (h : FirstDescOk ctx st) :
+    FirstDescOk ctx (otherNodePrep level code st) :=
+  firstDescOk_of_eq (prepF_lab level code st)
+    (prepF_firstlab level code st) (prepF_gcaFirst level code st)
+    (prepF_noncheaplevel level code st) h
+
+private theorem recF_noncheaplevel (n inf level : Nat)
+    (st : SearchSt) :
+    (recover n inf level st).noncheaplevel =
+      if level < st.noncheaplevel then level + 1
+      else st.noncheaplevel := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.noncheaplevel, ite_self]
+
+/-- The unwind carries the descent bookkeeping. It writes neither
+labelling nor the gca, and its clamp leaves the gate no wider than it
+found it: returning to a level at or above the gca pushes
+`noncheaplevel` past the gca, and returning where the gate level is
+already at or below the return level does not move it. The side
+condition is the unwind protocol's own bookkeeping. -/
+theorem recover_firstDescOk {ctx : Ctx} {n inf level : Nat}
+    {st : SearchSt} (h : FirstDescOk ctx st)
+    (hlvl : st.gcaFirst ≤ level ∨ st.noncheaplevel ≤ level) :
+    FirstDescOk ctx (recover n inf level st) := by
+  intro hgate
+  rw [recF_noncheaplevel, recF_gcaFirst] at hgate
+  rw [recF_gcaFirst, recF_lab, recF_firstlab]
+  refine h ?_
+  rcases hlvl with hle | hle <;> split at hgate <;> omega
+
 /-! # Labelling facts of a reached state
 
 The row obligations and the scatter exits are stated over `LabOk`
