@@ -99,7 +99,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
           (match checkCanon inst.g1 c1 b1 (runColored inst.g1).canonlab with
             | some r => (rowsOf r.form).size | none => 0)
     | "canonchecked" => timeLoop iters fun i =>
-        (rowsOf (canonicalizeChecked (pick i)).form).size
+        (rowsOf (Checked.canonicalize (pick i)).form).size
     | "stats" => do
         let r := runColored inst.g0
         IO.println s!"  {inst.name} stats: nauty-nodes={r.numnodes} \

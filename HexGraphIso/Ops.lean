@@ -27,31 +27,41 @@ namespace Hex.GraphIso
 
 variable {n k : Nat}
 
+/-! # The certified surface
+
+`Hex.GraphIso.Checked` is the tier that carries the theorems: the same
+answer as the short names, validated through the proven certificate
+checker. The two tiers share one vocabulary, so `Checked.canon` is the
+certified twin of `canon` and `Checked.iso_iff_canon_eq` the certified
+biconditional. -/
+
+namespace Checked
+
 /-- Compute the certificate-checked canonical form of a coloured graph
 together with the label producing it: the untrusted search's answer is
 accepted only through the trusted replay, and every theorem below is
 proved about this surface. Total; worst-case cost is factorial. -/
-@[expose] def canonicalizeChecked (G : Colored n k) : CanonResult n k :=
+@[expose] def canonicalize (G : Colored n k) : CanonResult n k :=
   Nauty.canonicalizeSpec G
 
 /-- The certificate-checked canonical form. -/
-@[expose] def canonChecked (G : Colored n k) : Colored n k :=
-  (canonicalizeChecked G).form
+@[expose] def canon (G : Colored n k) : Colored n k :=
+  (canonicalize G).form
 
 /-- The label producing the certificate-checked canonical form. -/
-@[expose] def labelChecked (G : Colored n k) : Label n :=
-  (canonicalizeChecked G).label
+@[expose] def label (G : Colored n k) : Label n :=
+  (canonicalize G).label
 
 /-- Relabelling by the canonical label produces the canonical form. -/
-theorem relabelChecked_label (G : Colored n k) : G.relabel (labelChecked G) = canonChecked G :=
+theorem relabel_label (G : Colored n k) : G.relabel (label G) = canon G :=
   Nauty.canonicalizeSpec_relabel G
 
 /-- The canonical form has contiguous colour cells in their original
 order. -/
-theorem colorSorted_canonChecked (G : Colored n k) : ColorSorted (canonChecked G) := by
+theorem colorSorted_canon (G : Colored n k) : ColorSorted (canon G) := by
   rw [ColorSorted]
   intro i j hij
-  rw [show canonChecked G = Nauty.specCanon G from
+  rw [show canon G = Nauty.specCanon G from
     Nauty.canonicalizeSpec_form G]
   have hkv : ∀ (x : Fin n),
       ((Nauty.specCanon G).coloring.cells[x]).val =
@@ -79,21 +89,23 @@ theorem colorSorted_canonChecked (G : Colored n k) : ColorSorted (canonChecked G
     exact this
 
 /-- Every coloured graph is isomorphic to its canonical form. -/
-theorem canonChecked_iso (G : Colored n k) : Isomorphic G (canonChecked G) :=
+theorem canon_iso (G : Colored n k) : Isomorphic G (canon G) :=
   Nauty.canonicalizeSpec_iso G
 
 /-- Isomorphic coloured graphs have equal canonical forms. -/
-theorem canonChecked_invariant {G H : Colored n k} (h : Isomorphic G H) :
-    canonChecked G = canonChecked H :=
+theorem canon_invariant {G H : Colored n k} (h : Isomorphic G H) :
+    canon G = canon H :=
   Nauty.canonicalizeSpec_invariant h
 
 /-- Two coloured graphs are isomorphic exactly when their canonical forms
 are equal. The biconditional compares canonical coloured graphs, not the
 labels: label arrays refer to different input vertex names and generally
 differ for isomorphic inputs. -/
-theorem iso_iff_canonChecked_eq (G : Colored n k) (H : Colored n k) :
-    Isomorphic G H ↔ canonChecked G = canonChecked H :=
+theorem iso_iff_canon_eq (G : Colored n k) (H : Colored n k) :
+    Isomorphic G H ↔ canon G = canon H :=
   Nauty.iso_iff_canonicalizeSpec_eq
+
+end Checked
 
 /-! # The fast surface
 
@@ -102,7 +114,7 @@ checked-label transcription of nauty's search, total via fallback to
 the checked pipeline on the never-observed malformed-label case. No
 canonical-invariance theorem is stated here — that isomorphic graphs
 receive equal `canon` forms is pinned by conformance against real
-nauty and by the `canonicalize == canonicalizeChecked` agreement
+nauty and by the `canonicalize == Checked.canonicalize` agreement
 guards, not by a Lean proof; provers use the `Checked` surface. What
 is structurally provable is stated: the form is the relabelling by
 the label, and a found transporter is a genuine isomorphism. -/
@@ -116,15 +128,14 @@ occur. Use this to observe whether `canonicalize` would fall back. -/
 
 /-- Compute the canonical form of a coloured graph together with the
 label producing it, fast: the checked-label transcription, falling
-back to `canonicalizeChecked` on the transcription's never-observed
+back to `Checked.canonicalize` on the transcription's never-observed
 malformed-label case (`canonicalize?` detects it). Agreement with the
 checked surface is proven whenever the certificate replay accepts
-(`canonicalize_eq_canonicalizeChecked`) and conformance-pinned
-unconditionally. -/
+(`canonicalize_eq_checked`) and conformance-pinned unconditionally. -/
 @[expose] def canonicalize (G : Colored n k) : CanonResult n k :=
   match Nauty.canonicalize? G with
   | some r => r
-  | none => canonicalizeChecked G
+  | none => Checked.canonicalize G
 
 /-- The canonical form of a coloured graph. -/
 @[expose] def canon (G : Colored n k) : Colored n k :=
@@ -147,7 +158,7 @@ theorem relabel_label (G : Colored n k) :
     G.relabel (label G) = canon G := by
   rw [label, canon, canonicalize]
   rcases h : Nauty.canonicalize? G with _ | r
-  · exact relabelChecked_label G
+  · exact Checked.relabel_label G
   · exact canonicalize?_relabel h
 
 /-- The fast and checked tiers agree whenever the certificate replay
@@ -157,13 +168,13 @@ per-run validation covers the fast answer too. Unconditional
 agreement would amount to verifying the pruned search itself; on the
 never-observed replay-rejection case the checked tier instead falls
 back to the exhaustive spec. -/
-theorem canonicalize_eq_canonicalizeChecked {G : Colored n k}
+theorem canonicalize_eq_checked {G : Colored n k}
     (h : (Nauty.certifyCanon? G).isSome) :
-    canonicalize G = canonicalizeChecked G := by
+    canonicalize G = Checked.canonicalize G := by
   obtain ⟨res, hres⟩ := Option.isSome_iff_exists.mp h
   have hfast := Nauty.canonicalize?_eq_of_certifyCanon hres
-  have hchecked : canonicalizeChecked G = res := by
-    rw [canonicalizeChecked, Nauty.canonicalizeSpec, hres]
+  have hchecked : Checked.canonicalize G = res := by
+    rw [Checked.canonicalize, Nauty.canonicalizeSpec, hres]
   rw [canonicalize, hfast, hchecked]
 
 /-- Find one isomorphism when the fast canonical forms agree: the
@@ -175,7 +186,7 @@ forward transporter through the two labels. -/
     none
 
 /-- The fast Boolean isomorphism decision. `false` is
-conformance-pinned, not proven: use `isIsoChecked` where a `false`
+conformance-pinned, not proven: use `Checked.isIso` where a `false`
 answer must carry a proof. -/
 @[expose] def isIso (G H : Colored n k) : Bool :=
   (findIso G H).isSome
@@ -208,66 +219,70 @@ theorem isomorphic_of_isIso {G H : Colored n k}
 
 /-! # Isomorphism search -/
 
+namespace Checked
+
 /-- Find one isomorphism from `G` to `H` when one exists: the forward
 transporter through the two canonical forms, the canonical label of `H`
 composed with the inverse of the canonical label of `G` (in forward
 permutation convention). -/
-@[expose] def findIsoChecked (G H : Colored n k) : Option (Perm n) :=
-  if canonChecked G = canonChecked H then
-    some (((labelChecked H).toPerm.inv).comp ((labelChecked G).toPerm))
+@[expose] def findIso (G H : Colored n k) : Option (Perm n) :=
+  if canon G = canon H then
+    some (((label H).toPerm.inv).comp ((label G).toPerm))
   else
     none
 
 /-- The certificate-checked Boolean isomorphism decision. -/
-@[expose] def isIsoChecked (G H : Colored n k) : Bool :=
-  (findIsoChecked G H).isSome
+@[expose] def isIso (G H : Colored n k) : Bool :=
+  (findIso G H).isSome
 
 /-- Soundness of the certificate-checked search: any permutation it returns
 really is an isomorphism. This is the theorem to reach for after a successful
-`findIsoChecked`; it says nothing about the `none` case, for which see
-`findIsoChecked_isSome_iff`. -/
-theorem findIsoChecked_sound {G H : Colored n k} {p : Perm n}
-    (h : findIsoChecked G H = some p) : IsIso G H p := by
-  rw [findIsoChecked] at h
+`Checked.findIso`; it says nothing about the `none` case, for which see
+`Checked.findIso_isSome_iff`. -/
+theorem findIso_sound {G H : Colored n k} {p : Perm n}
+    (h : findIso G H = some p) : IsIso G H p := by
+  rw [findIso] at h
   split at h
   · rename_i hc
     injection h with h
     subst h
-    have h1 : IsIso G (canonChecked G) (labelChecked G).toPerm := by
-      rw [← relabelChecked_label G]
+    have h1 : IsIso G (canon G) (label G).toPerm := by
+      rw [← relabel_label G]
       exact isIso_relabel ..
-    have h2 : IsIso H (canonChecked G) (labelChecked H).toPerm := by
-      rw [hc, ← relabelChecked_label H]
+    have h2 : IsIso H (canon G) (label H).toPerm := by
+      rw [hc, ← relabel_label H]
       exact isIso_relabel ..
     exact h1.trans h2.symm
   · simp at h
 
 /-- Completeness of the certificate-checked search: it returns a permutation
-exactly when one exists. Together with `findIsoChecked_sound` this makes
-`findIsoChecked` a decision procedure rather than a one-sided test. -/
-theorem findIsoChecked_isSome_iff (G H : Colored n k) :
-    (findIsoChecked G H).isSome = true ↔ Isomorphic G H := by
-  rw [findIsoChecked]
+exactly when one exists. Together with `Checked.findIso_sound` this makes
+`Checked.findIso` a decision procedure rather than a one-sided test. -/
+theorem findIso_isSome_iff (G H : Colored n k) :
+    (findIso G H).isSome = true ↔ Isomorphic G H := by
+  rw [findIso]
   split
-  · simpa using (iso_iff_canonChecked_eq G H).mpr (by assumption)
+  · simpa using (iso_iff_canon_eq G H).mpr (by assumption)
   · rename_i hc
     simp only [Option.isSome_none, Bool.false_eq_true, false_iff]
-    exact fun h => hc ((iso_iff_canonChecked_eq G H).mp h)
+    exact fun h => hc ((iso_iff_canon_eq G H).mp h)
 
 /-- The certificate-checked decision answers `true` exactly on isomorphic
 pairs. -/
-theorem isIsoChecked_eq_true_iff (G H : Colored n k) :
-    isIsoChecked G H = true ↔ Isomorphic G H :=
-  findIsoChecked_isSome_iff G H
+theorem isIso_eq_true_iff (G H : Colored n k) :
+    isIso G H = true ↔ Isomorphic G H :=
+  findIso_isSome_iff G H
 
 /-- The certificate-checked decision answers `false` exactly on
 non-isomorphic pairs. This is the negative direction the `graph_iso` tactic
 needs, and it is a genuine refutation rather than a failure to find a
 witness. -/
-theorem isIsoChecked_eq_false_iff (G H : Colored n k) :
-    isIsoChecked G H = false ↔ ¬Isomorphic G H := by
-  rw [← isIsoChecked_eq_true_iff]
-  rcases h : isIsoChecked G H <;> simp
+theorem isIso_eq_false_iff (G H : Colored n k) :
+    isIso G H = false ↔ ¬Isomorphic G H := by
+  rw [← isIso_eq_true_iff]
+  rcases h : isIso G H <;> simp
+
+end Checked
 
 /-! # Bounded operations -/
 
@@ -278,7 +293,7 @@ conservative pre-check charges the worst case for each of the two
 canonicalizations. -/
 @[expose] def findIso? (search : SearchLimits) (G H : Colored n k) :
     Option (Option (Perm n)) :=
-  if 2 * searchCost n ≤ search.maxNodes then some (findIsoChecked G H) else none
+  if 2 * searchCost n ≤ search.maxNodes then some (Checked.findIso G H) else none
 
 namespace FindIso
 
@@ -289,7 +304,7 @@ theorem some_sound (search : SearchLimits) (G H : Colored n k) (p : Perm n)
     (h : findIso? search G H = some (some p)) : IsIso G H p := by
   rw [findIso?] at h
   split at h
-  · exact findIsoChecked_sound (Option.some.inj h)
+  · exact Checked.findIso_sound (Option.some.inj h)
   · simp at h
 
 /-- A completed non-isomorphism result from the bounded search refutes
@@ -301,7 +316,7 @@ theorem none_sound (search : SearchLimits) (G H : Colored n k)
   rw [findIso?] at h
   split at h
   · intro hiso
-    have := (findIsoChecked_isSome_iff G H).mpr hiso
+    have := (Checked.findIso_isSome_iff G H).mpr hiso
     rw [Option.some.inj h] at this
     simp at this
   · simp at h
@@ -361,12 +376,12 @@ believed. -/
 theorem checkCanon_sound {limits : ReplayLimits} {G : Colored n k}
     {cert : CanonCert n k} {result : CanonResult n k}
     (h : checkCanon limits G cert = some result) :
-    result.form = canonChecked G ∧ G.relabel result.label = result.form := by
+    result.form = Checked.canon G ∧ G.relabel result.label = result.form := by
   rw [checkCanon] at h
   split at h
   · refine ⟨?_, (Nauty.checkCanon_sound h).2.1.symm⟩
     rw [Nauty.checkCanon_form h,
-      show canonChecked G = Nauty.specCanon G from
+      show Checked.canon G = Nauty.specCanon G from
         Nauty.canonicalizeSpec_form G]
   · simp at h
 
@@ -397,7 +412,7 @@ exceeding either limit yields `none` rather than a weaker answer. -/
 theorem canon?_eq_some {search : SearchLimits} {replay : ReplayLimits}
     {G : Colored n k} {result : CanonResult n k}
     (h : canon? search replay G = some result) :
-    result.form = canonChecked G ∧ G.relabel result.label = result.form := by
+    result.form = Checked.canon G ∧ G.relabel result.label = result.form := by
   rw [canon?] at h
   split at h
   · exact checkCanon_sound h

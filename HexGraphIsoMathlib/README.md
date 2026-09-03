@@ -55,7 +55,7 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
   `encode_adj`, `encode_color`, and `encode_iso_iff` are the correspondence
   theorems, and `canon_encode_indep` shows the canonical form does not depend
   on the chosen enumeration.
-- `colored_iso_iff_canonChecked_eq` is the headline equivalence: Mathlib-side
+- `colored_iso_iff_canon_eq` is the headline equivalence: Mathlib-side
   isomorphism holds exactly when the executable certified canonical forms of
   the two encodings agree.
 - `graph_iso` gains `SimpleGraph` goals — `G ≃g H`, `Nonempty (G ≃g H)`,
@@ -77,12 +77,12 @@ theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
       Hex.GraphIso.Isomorphic (encode eV G) (encode eW H)
 
-theorem colored_iso_iff_canonChecked_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
+theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
-      canonChecked (encode eV G) = canonChecked (encode eW H)
+      Checked.canon (encode eV G) = Checked.canon (encode eW H)
 
 theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
-    canonChecked (encode eV G) = canonChecked (encode eV' G)
+    Checked.canon (encode eV G) = Checked.canon (encode eV' G)
 ```
 
 Use [`hex-graph-iso`](https://github.com/leanprover/hex-graph-iso) alone for

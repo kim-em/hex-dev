@@ -20,7 +20,7 @@ and the executable colour of `e v` is the original colour of `v`. The
 two directions of `encode_iso_iff` explicitly conjugate the executable
 permutation by the chosen equivalences; no enumeration is treated as
 canonical, and a different choice changes neither the isomorphism
-verdict nor `colored_iso_iff_canonChecked_eq`.
+verdict nor `colored_iso_iff_canon_eq`.
 -/
 
 namespace Hex.GraphIso
@@ -162,16 +162,16 @@ theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
 
 /-- The principal Mathlib-facing biconditional: two coloured graphs are
 isomorphic exactly when their encodings have equal canonical forms. -/
-theorem colored_iso_iff_canonChecked_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
+theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
-      canonChecked (encode eV G) = canonChecked (encode eW H) :=
-  (encode_iso_iff eV eW).trans (iso_iff_canonChecked_eq ..)
+      Checked.canon (encode eV G) = Checked.canon (encode eW H) :=
+  (encode_iso_iff eV eW).trans (Checked.iso_iff_canon_eq ..)
 
 /-- Equality of encoded canonical forms is independent of the chosen
 finite enumerations. -/
 theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
-    canonChecked (encode eV G) = canonChecked (encode eV' G) := by
-  refine canonChecked_invariant ?_
+    Checked.canon (encode eV G) = Checked.canon (encode eV' G) := by
+  refine Checked.canon_invariant ?_
   refine (encode_iso_iff eV eV').mp (Colored.Isomorphic.intro
     { graphIso := (SimpleGraph.Iso.refl : G.graph ≃g G.graph)
       map_color := fun v => ?_ })

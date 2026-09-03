@@ -41,7 +41,7 @@ comparator register as fixed benchmarks on committed circulant sizes:
   against the vendored source, via `Hex.BenchOracle.Nauty`), joined
   on the canonical upper-triangle bits.
 * `runHexCanonChecked{8,12,16}`: the certificate-checked
-  `canonChecked` on the same instances — the explicit price of the
+  `Checked.canon` on the same instances — the explicit price of the
   validated certificate.
 * `runIsIso12`, `runFindIso12`: the public fast isomorphism
   decisions; `runIsIsoChecked12` the certificate-checked decision.
@@ -189,7 +189,7 @@ private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
 
 private def runHexCanonCheckedAt (m : Nat) (_ : Unit) : IO String :=
   match graphOf { n := m } with
-  | some ⟨_, G⟩ => return triBitsOf (canonChecked G)
+  | some ⟨_, G⟩ => return triBitsOf (Checked.canon G)
   | none => return ""
 
 def runHexCanon8 : Unit → IO String := runHexCanonAt 8
@@ -216,7 +216,7 @@ def runIsIso12 : Unit → IO Bool := fun _ =>
 
 def runIsIsoChecked12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
-  | some ⟨_, G⟩ => return isIsoChecked G G
+  | some ⟨_, G⟩ => return Checked.isIso G G
   | none => return false
 
 def runFindIso12 : Unit → IO Bool := fun _ =>

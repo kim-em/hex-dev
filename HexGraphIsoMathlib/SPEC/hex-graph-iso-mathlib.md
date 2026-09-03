@@ -122,15 +122,15 @@ the tactic for `G ≃g H` goals.
 The principal Mathlib theorem states the coloured biconditional directly:
 
 ```lean
-theorem colored_iso_iff_canonChecked_eq
+theorem colored_iso_iff_canon_eq
     (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H <->
-      Hex.GraphIso.canonChecked (encode eV G) =
-      Hex.GraphIso.canonChecked (encode eW H)
+      Hex.GraphIso.Checked.canon (encode eV G) =
+      Hex.GraphIso.Checked.canon (encode eW H)
 ```
 
 It is proved by `encode_iso_iff` and the Mathlib-free
-`Hex.GraphIso.iso_iff_canonChecked_eq`. The uncoloured theorem specializes this
+`Hex.GraphIso.Checked.iso_iff_canon_eq`. The uncoloured theorem specializes this
 statement to the one-cell colouring.
 
 The library also proves:
@@ -366,7 +366,7 @@ comparison remain in the Mathlib-free benchmark driver.
 
 The Mathlib-facing release is complete only when:
 
-1. `encode_iso_iff` and `colored_iso_iff_canonChecked_eq` have no unfinished proof.
+1. `encode_iso_iff` and `colored_iso_iff_canon_eq` have no unfinished proof.
 2. Every supported positive goal constructs an explicit isomorphism checked
    by the kernel.
 3. Every supported negative goal ends in the Mathlib-free canonical-form

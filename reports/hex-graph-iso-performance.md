@@ -15,7 +15,7 @@ canonical search declares no polynomial model in `n`
 | `Hex.GraphIsoBench.runRelabel` | `n ^ 2` |
 | `Hex.GraphIsoBench.runReferenceCanon` | `n ^ n * n ^ 2` |
 | `Hex.GraphIsoBench.runHexCanon{8,12,16}` | fixed public fast `canon` at the committed sizes |
-| `Hex.GraphIsoBench.runHexCanonChecked{8,12,16}` | fixed certificate-checked `canonChecked` twins |
+| `Hex.GraphIsoBench.runHexCanonChecked{8,12,16}` | fixed certificate-checked `Checked.canon` twins |
 | `Hex.GraphIsoBench.runNautyCanon{8,12,16}` | fixed pinned-comparator column joined on the canonical bits |
 | `Hex.GraphIsoBench.runSpecKey6` | fixed reference canonical key at the exhaustive merge size |
 | `Hex.GraphIsoBench.runIsIso12` | fixed public fast isomorphism decision |
@@ -192,7 +192,7 @@ solving all 98:
 |---|---:|---:|---:|---:|
 | nauty | 71.306 us | 59.343 us | 3.379 ms | 1.00 |
 | hex fast (`canonicalize`) | 667.440 us | 338.672 us | 212.765 ms | 9.36 |
-| hex checked (`canonicalizeChecked`) | 3.165747 ms | 1.751888 ms | 1.030087 s | 44.40 |
+| hex checked (`Checked.canonicalize`) | 3.165747 ms | 1.751888 ms | 1.030087 s | 44.40 |
 
 The geometric-mean checked-over-fast ratio is **4.74**, ranging from 2.75 on
 `grid14x14` to 12.35 on `paley53`. Both extremes of the nauty ratio fall on the

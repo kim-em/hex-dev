@@ -135,7 +135,7 @@ def main() -> int:
             [r["nauty_ns"] / 1e9 for r in sweep],
         "hex canonicalize (fast, conformance-pinned)":
             [r["fast_ns"] / 1e9 for r in sweep],
-        "hex canonicalizeChecked (validated certificate)":
+        "hex Checked.canonicalize (validated certificate)":
             [r["checked_ns"] / 1e9 for r in sweep],
     }, len(sweep))
     ax_cactus.set_title("canonical labelling: cactus over "
@@ -193,7 +193,7 @@ def main() -> int:
             [r["nauty_ns"] / 1e9 for r in pairs],
         "hex isIso (fast, conformance-pinned)":
             [r["fast_ns"] / 1e9 for r in pairs],
-        "hex isIsoChecked (validated certificate)":
+        "hex Checked.isIso (validated certificate)":
             [r["checked_ns"] / 1e9 for r in pairs],
         "graph_iso tactic (kernel-checked proof)": tactic_times,
     }, len(pairs))

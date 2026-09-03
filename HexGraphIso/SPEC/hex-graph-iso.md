@@ -158,11 +158,13 @@ structure CanonResult (n k : Nat) where
   label : Label n
 ```
 
-The public surface has two tiers. The short names are the FAST tier:
-the checked-label transcription of the pinned nauty search, for users
-who want answers at transcription speed. The `Checked` names are the
-CERTIFIED tier: the same answer validated through the proven
-certificate checker, carrying the theorem surface.
+The public surface has two tiers. The names in `Hex.GraphIso` are the
+FAST tier: the checked-label transcription of the pinned nauty search,
+for users who want answers at transcription speed. The same names
+under `Hex.GraphIso.Checked` are the CERTIFIED tier: the same answer
+validated through the proven certificate checker, carrying the theorem
+surface. The two tiers share one vocabulary, so the certified twin of
+any fast operation is that operation's name under `Checked`.
 
 ```lean
 -- fast tier: conformance-pinned, structural theorems only
@@ -174,18 +176,18 @@ def findIso (G H : Colored n k) : Option (Perm n)
 def isIso (G H : Colored n k) : Bool
 
 -- certified tier: every theorem below is about these
-def canonicalizeChecked (G : Colored n k) : CanonResult n k
-def canonChecked (G : Colored n k) : Colored n k
-def labelChecked (G : Colored n k) : Label n
-def findIsoChecked (G H : Colored n k) : Option (Perm n)
-def isIsoChecked (G H : Colored n k) : Bool
+def Checked.canonicalize (G : Colored n k) : CanonResult n k
+def Checked.canon (G : Colored n k) : Colored n k
+def Checked.label (G : Colored n k) : Label n
+def Checked.findIso (G H : Colored n k) : Option (Perm n)
+def Checked.isIso (G H : Colored n k) : Bool
 ```
 
 Both tiers are total; termination follows from the strictly increasing
 number of singleton cells along each individualization path and finite
 branching, and worst-case running time can still be factorial. The
 fast `canonicalize` is the transcription with fallback to
-`canonicalizeChecked` on the transcription's malformed-label case,
+`Checked.canonicalize` on the transcription's malformed-label case,
 which conformance shows does not occur; `canonicalize?` observes the
 transcription alone (`none` exactly when `canonicalize` would fall
 back), and conformance asserts zero fallbacks on every committed case
@@ -210,9 +212,9 @@ theorem findIso_sound (G H : Colored n k) (p : Perm n) :
 theorem isomorphic_of_isIso (G H : Colored n k) :
     isIso G H = true -> Isomorphic G H
 
-theorem canonicalize_eq_canonicalizeChecked (G : Colored n k)
+theorem canonicalize_eq_checked (G : Colored n k)
     (h : (Nauty.certifyCanon? G).isSome) :
-    canonicalize G = canonicalizeChecked G
+    canonicalize G = Checked.canonicalize G
 ```
 
 What the fast tier deliberately does NOT provide is completeness and
@@ -256,20 +258,20 @@ evidence of non-isomorphism.
 The required API theorems of the certified tier include:
 
 ```lean
-theorem relabelChecked_label (G : Colored n k) :
-    relabel G (labelChecked G) = canonChecked G
+theorem Checked.relabel_label (G : Colored n k) :
+    relabel G (Checked.label G) = Checked.canon G
 
-theorem canonChecked_iso (G : Colored n k) :
-    Isomorphic G (canonChecked G)
+theorem Checked.canon_iso (G : Colored n k) :
+    Isomorphic G (Checked.canon G)
 
-theorem canonChecked_invariant {G H : Colored n k} :
-    Isomorphic G H -> canonChecked G = canonChecked H
+theorem Checked.canon_invariant {G H : Colored n k} :
+    Isomorphic G H -> Checked.canon G = Checked.canon H
 
-theorem iso_iff_canonChecked_eq (G H : Colored n k) :
-    Isomorphic G H <-> canonChecked G = canonChecked H
+theorem Checked.iso_iff_canon_eq (G H : Colored n k) :
+    Isomorphic G H <-> Checked.canon G = Checked.canon H
 
-theorem findIsoChecked_isSome_iff (G H : Colored n k) :
-    (findIsoChecked G H).isSome = true <-> Isomorphic G H
+theorem Checked.findIso_isSome_iff (G H : Colored n k) :
+    (Checked.findIso G H).isSome = true <-> Isomorphic G H
 
 namespace FindIso
 
@@ -283,11 +285,11 @@ theorem none_sound (search : SearchLimits)
 
 end FindIso
 
-theorem isIsoChecked_eq_true_iff (G H : Colored n k) :
-    isIsoChecked G H = true <-> Isomorphic G H
+theorem Checked.isIso_eq_true_iff (G H : Colored n k) :
+    Checked.isIso G H = true <-> Isomorphic G H
 
-theorem isIsoChecked_eq_false_iff (G H : Colored n k) :
-    isIsoChecked G H = false <-> Not (Isomorphic G H)
+theorem Checked.isIso_eq_false_iff (G H : Colored n k) :
+    Checked.isIso G H = false <-> Not (Isomorphic G H)
 ```
 
 The biconditional compares canonical coloured graphs. It does not compare
@@ -305,13 +307,13 @@ order. The order compares cell sizes first and then upper-triangle adjacency
 bits in row-major order.
 
 This definition has its own proofs of the relabelling, isomorphism, and
-biconditional theorems (the analogues of `relabelChecked_label`,
-`canonChecked_iso`, and `iso_iff_canonChecked_eq`). It is suitable for
+biconditional theorems (the analogues of `Checked.relabel_label`,
+`Checked.canon_iso`, and `Checked.iso_iff_canon_eq`). It is suitable for
 exhaustive small tests and for checking
 later implementations. It is not used as a production fallback and is not
 required to return nauty's label or canonical form.
 
-The public `canonChecked` is backed by the certificate-checked
+The public `Checked.canon` is backed by the certificate-checked
 nauty-semantic canonicalization: an untrusted branch-and-bound producer
 whose output is validated by the proven certificate replay, with a
 provably total exhaustive fallback. The fast `canon` is the checked-label
@@ -404,7 +406,7 @@ output as untrusted and calls `checkCanon` before emitting anything.
 For a negative decision, `DiffCert` names the first differing field in the
 canonical encodings. `checkDiff` verifies the two encodings agree before that
 position and differ there. The proof is exactly the composition of two
-`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canonChecked_eq`.
+`checkCanon_sound` applications, `checkDiff`, and `Checked.iso_iff_canon_eq`.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
@@ -464,7 +466,7 @@ work and not a release condition; no release waits on any layer of
 it.
 
 The proven starting point is the conditional agreement theorem of the
-fast tier, `canonicalize_eq_canonicalizeChecked` above. Both tiers
+fast tier, `canonicalize_eq_checked` above. Both tiers
 construct their `CanonResult` from the same transcribed search output
 by the same checked construction, so the certified tier's per-run
 validation covers the fast answer whenever the single trusted replay
@@ -533,7 +535,7 @@ each forces sharing that removes duplicated code:
 Label-level agreement is available only along the totality route. The
 checker
 pins a labelling's rows, not the labelling itself, and in the
-exhaustive fallback branch of `canonicalizeChecked` the selected
+exhaustive fallback branch of `Checked.canonicalize` the selected
 label may be a different member of the automorphism coset with
 different tie-breaking, so agreement cannot be proven through that
 branch; the fallback must instead be proven unreachable, which is
@@ -547,12 +549,12 @@ def certifyCanon (G : Colored n k) : CanonResult n k :=
   (Nauty.certifyCanon? G).get (certifyCanon?_isSome G)
 ```
 
-and every fallback arm becomes provably dead: `canonicalizeChecked`
+and every fallback arm becomes provably dead: `Checked.canonicalize`
 drops its exhaustive fallback in favour of `certifyCanon`, totality
 transports to the transcription through
 `canonicalize?_eq_of_certifyCanon`, and the fast `canonicalize`
 becomes `(canonicalize? G).get` under that proof with no fallback
-match. Unconditional agreement `canonicalize G = canonicalizeChecked G`
+match. Unconditional agreement `canonicalize G = Checked.canonicalize G`
 then holds on every input and the whole `Checked` theorem surface
 transports to the short names. At that point the two-tier split has
 no remaining justification and the public surface collapses to the

@@ -79,11 +79,11 @@ library: nauty's individualization-and-refinement algorithm, run in Lean
 and proved to agree with an exhaustive reference canonical form.
 
 The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
-`label` are the fast canonical labelling; `canonicalizeChecked`, `canonChecked`
-and `labelChecked` are the twins that additionally validate every answer
-through the certificate checker, with `canonicalize_eq_canonicalizeChecked`
+`label` are the fast canonical labelling; `Checked.canonicalize`, `Checked.canon`
+and `Checked.label` are the twins that additionally validate every answer
+through the certificate checker, with `canonicalize_eq_checked`
 identifying the two. `findIso`, `isIso` and their `Checked` twins decide
-isomorphism, and `iso_iff_canonChecked_eq` is the biconditional the whole
+isomorphism, and `Checked.iso_iff_canon_eq` is the biconditional the whole
 library exists to prove. `certify?`, `checkCanon` and `canon?` are the
 bounded produce-then-replay pipeline for proof terms, and `checkDiff` its
 negative counterpart. `Families` supplies the named deterministic graphs

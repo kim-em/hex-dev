@@ -40,7 +40,7 @@ def k3 : Colored 3 1 :=
   { graph := Graph.ofEdges [(0, 1), (1, 2), (0, 2)]
     coloring := Coloring.trivial 3 }
 
-#eval isIsoChecked p3 p3'
+#eval Checked.isIso p3 p3'
 
 example : Isomorphic p3 p3' := by graph_iso
 example : ¬ Isomorphic p3 k3 := by graph_iso
@@ -56,8 +56,8 @@ example : ¬ Isomorphic p3 k3 := by graph_iso
 - The public surface has two tiers. The short names `canonicalize`, `canon`,
   `label`, `findIso`, and `isIso` are the fast tier: the checked-label
   transcription of the pinned nauty search. The `Checked` names
-  `canonicalizeChecked`, `canonChecked`, `labelChecked`, `findIsoChecked`,
-  and `isIsoChecked` are the certified tier, validated through the proven
+  `Checked.canonicalize`, `Checked.canon`, `Checked.label`, `Checked.findIso`,
+  and `Checked.isIso` are the certified tier, validated through the proven
   certificate checker.
 - `findIso?`, `checkIso?`, and `canon?` are the resource-bounded certified
   operations. `SearchLimits` bounds the search (`maxNodes`, `maxCertNodes`)
@@ -80,16 +80,16 @@ checker and its proofs establish the result, so no theorem depends on the
 transcription being faithful to nauty.
 
 ```lean
-theorem iso_iff_canonChecked_eq (G : Colored n k) (H : Colored n k) :
-    Isomorphic G H ↔ canonChecked G = canonChecked H
+theorem Checked.iso_iff_canon_eq (G : Colored n k) (H : Colored n k) :
+    Isomorphic G H ↔ Checked.canon G = Checked.canon H
 
-theorem findIsoChecked_isSome_iff (G H : Colored n k) :
-    (findIsoChecked G H).isSome = true ↔ Isomorphic G H
+theorem Checked.findIso_isSome_iff (G H : Colored n k) :
+    (Checked.findIso G H).isSome = true ↔ Isomorphic G H
 
 theorem checkCanon_sound {limits : ReplayLimits} {G : Colored n k}
     {cert : CanonCert n k} {result : CanonResult n k}
     (h : checkCanon limits G cert = some result) :
-    result.form = canonChecked G ∧ G.relabel result.label = result.form
+    result.form = Checked.canon G ∧ G.relabel result.label = result.form
 ```
 
 The fast tier deliberately proves less: `relabel_label`, `findIso_sound`, and
@@ -97,7 +97,7 @@ The fast tier deliberately proves less: `relabel_label`, `findIso_sound`, and
 and invariance of the fast form under isomorphism are pinned by conformance
 rather than proved. Agreement of the two tiers is a theorem under the
 hypothesis that the certificate replay accepts
-(`canonicalize_eq_canonicalizeChecked`).
+(`canonicalize_eq_checked`).
 
 Compatibility with nauty is a conformance property, not a theorem: an oracle
 pins canonical labels, canonical bits, and visited-node counts against the

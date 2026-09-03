@@ -39,11 +39,11 @@ literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
 labelling algorithm]. The
 short names (`canonicalize`, `canon`, `label`, `isIso`) run that
 translation directly and are the fast surface for users who just want
-answers; the `Checked` surface (`canonicalizeChecked`, `canonChecked`,
+answers; the `Checked` surface (`Checked.canonicalize`, `Checked.canon`,
 …) additionally validates every answer through a proven certificate
 checker and carries the theorems. Two coloured graphs are isomorphic
 exactly when their checked canonical forms are equal
-({name Hex.GraphIso.iso_iff_canonChecked_eq}`iso_iff_canonChecked_eq`),
+({name Hex.GraphIso.Checked.iso_iff_canon_eq}`Checked.iso_iff_canon_eq`),
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
@@ -376,7 +376,7 @@ factor on four parametrised families from the benchmark corpus: grids,
 where refinement discretizes quickly; Paley graphs, refinement's hard
 case among the sparse families; and the dense Latin-square and Kneser
 graphs, where the factor is largest. The `fast` column is
-`canonicalize` and the `checked` column is `canonicalizeChecked`, which
+`canonicalize` and the `checked` column is `Checked.canonicalize`, which
 additionally validates every answer through the certificate checker.
 
 :::table (header := true)
@@ -459,7 +459,7 @@ literals at the use site.
 
 {docstring Hex.GraphIso.Mathlib.encode}
 
-{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canonChecked_eq}
+{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canon_eq}
 
 ```lean
 open Hex.GraphIso.Mathlib

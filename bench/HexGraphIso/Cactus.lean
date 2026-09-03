@@ -10,7 +10,7 @@ import Hex.BenchOracle.Nauty
 /-!
 Per-instance timing sweep over the deterministic graph families for the
 hex-graph-iso cactus plots: the fast public `canonicalize`, the
-certificate-checked `canonicalizeChecked`, and the pinned nauty 2.9.3
+certificate-checked `Checked.canonicalize`, and the pinned nauty 2.9.3
 FFI comparator on the same instances.
 
 Emits one JSON line per instance:
@@ -88,7 +88,7 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
 private def runInst (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let fastNs ← timeMinNs fun _ => pure (digest (canonicalize G))
-  let checkedNs ← timeMinNs fun _ => pure (digest (canonicalizeChecked G))
+  let checkedNs ← timeMinNs fun _ => pure (digest (Checked.canonicalize G))
   let colors := List.replicate n 0
   let adj := adjStrings G
   let nautyNs ← timeMinNs fun _ => do
@@ -294,12 +294,12 @@ private def escape (s : String) : String :=
 
 private def runPair (p : PairInst) : IO Unit := do
   let ⟨n, A, B⟩ := p.packed
-  unless isIso A B == p.iso && isIsoChecked A B == p.iso do
+  unless isIso A B == p.iso && Checked.isIso A B == p.iso do
     throw <| IO.userError s!"pair {p.name}: polarity mismatch"
   let fastNs ← timeMinNs fun _ =>
     pure (if isIso A B then 1 else 0)
   let checkedNs ← timeMinNs fun _ =>
-    pure (if isIsoChecked A B then 1 else 0)
+    pure (if Checked.isIso A B then 1 else 0)
   let colors := List.replicate n 0
   let adjA := adjStrings A
   let adjB := adjStrings B
