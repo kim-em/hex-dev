@@ -1353,6 +1353,64 @@ theorem specNode_discrete {ctx : Ctx} {tcLevel fuel level : Nat}
   rw [specNode]
   simp only [hdisc, ite_true]
 
+/-! # The leaf-guard agreement
+
+The imperative search branches on `numcells == n` where the
+specification branches on `discreteAt`; under the boundary-count
+accuracy the search invariant carries (`SearchOk.count`), the two
+guards agree. -/
+
+/-- Discreteness is exactly a full boundary count. -/
+theorem discreteAt_iff_bcount {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
+    discreteAt ptn level nn = true ↔ bcount ptn level nn = nn := by
+  have hnn' : nn ≤ ptn.size := Nat.le_of_eq hnn
+  constructor
+  · intro hdisc
+    have h : List.countP (fun q => decide (ptn[q]! ≤ level))
+        (List.range nn) = (List.range nn).length := by
+      refine List.countP_eq_length.mpr fun q hq => ?_
+      have hqn : q < nn := List.mem_range.mp hq
+      obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover (ptn := ptn)
+        (level := level) q hqn
+      have hsingle : p.1 = p.2 := by
+        have h := cells_eq_of_discreteAt hdisc p hpm
+        simpa using h
+      have hic := cells_isCell hnn' hend p hpm
+      have hq1 : p.1 = q := by omega
+      have hq2 : p.2 = q := by omega
+      rw [hq1, hq2] at hic
+      have hcl := hic.2.2.2
+      rw [show q + (q + 1 - q) - 1 = q from by omega] at hcl
+      simpa using hcl
+    rw [List.length_range] at h
+    rw [bcount]
+    exact h
+  · intro hb
+    have hb' : List.countP (fun q => decide (ptn[q]! ≤ level))
+        (List.range nn) = (List.range nn).length := by
+      rw [List.length_range]
+      rw [bcount] at hb
+      exact hb
+    have hall : ∀ q, q < nn → ptn[q]! ≤ level := by
+      intro q hq
+      have h := List.countP_eq_length.mp hb' q
+        (List.mem_range.mpr hq)
+      simpa using h
+    rw [discreteAt, List.all_eq_true]
+    intro p hpm
+    have hic := cells_isCell hnn' hend p hpm
+    have hle := cells_le p hpm
+    have hbnd := cells_bound hnn' hend p hpm
+    rcases Decidable.em (p.1 = p.2) with heq | hne
+    · simpa using heq
+    · exfalso
+      have hlt : p.1 < p.2 := by omega
+      have hint := hic.2.2.1 p.1 (Nat.le_refl _)
+        (by omega)
+      have := hall p.1 (by omega)
+      omega
+
 /-! # The `DomOk` record
 
 The per-node entry invariant of the maximality induction, at a node
