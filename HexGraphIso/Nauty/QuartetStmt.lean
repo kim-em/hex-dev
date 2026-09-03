@@ -257,6 +257,30 @@ theorem payloadAbsorbs_of_positions {ctx : Ctx} (hn : ctx.n = n)
   have h := hmap tc htc
   rwa [hfirst, hcur] at h
 
+/-! # The position facts: the step
+
+`payloadAbsorbs_of_positions` takes the two position facts as
+hypotheses because they are the descent's bookkeeping. Their base case
+is local and is proved here: individualizing offset `o` puts that
+offset's vertex at the target position.
+
+What the induction still owes is the transport of this from the child
+down to the leaf, namely that the descent below leaves the target
+position alone. That is two steps, neither built here: `refine` fixes a
+position whose cell is a singleton (`cellsPerm_singleton` against
+`refine_refInv`'s cell clause), and a deeper `breakout` misses it
+because its target cell is nontrivial and cells at a level are
+disjoint, so the singleton at `tc` is outside the rotated window. -/
+
+/-- Individualizing offset `o` puts that offset's vertex at the target
+position. -/
+theorem breakout_at_target {lab ptn : Array Nat} {level tc o : Nat}
+    (hinj : LabInj lab lab.size) (hto : tc + o < lab.size) :
+    (breakout lab ptn (level + 1) tc lab[tc + o]!).1[tc]! =
+      lab[tc + o]! := by
+  rw [breakout_lab_at hinj hto tc, if_neg (Nat.lt_irrefl tc),
+    if_pos rfl]
+
 /-! # The root assembly
 
 The corrected statement reaches the programme's target. The root call
