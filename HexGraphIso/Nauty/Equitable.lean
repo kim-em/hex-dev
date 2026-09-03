@@ -43,25 +43,29 @@ argument: `popCount active + 2 * (n - numcells)` drops by at least
 one per pass, and starts at most `3 * n`, below the supplied
 `4 * n + 8`.
 
-Proven so far: the predicate layer; the member-level `ConstOn`
-toolkit (disjoint-union count additivity, union and difference
-transport, splitter-set disjointness and window splitting); both
-splitting passes' postconditions, culminating in
-`refineStep_cell_const` — after one `refineStep`, every cell of the
-result has constant counts into the retired splitter's captured
-vertex set, uniformly across trivial and nontrivial splitters; and
-the certificate interface `CertInv`/`activeUnion`/`Saturated` with
-its collapse at exit (`equitable_of_certInv_exit`,
-`active_eq_zero_of_pickSplit_none`).
+Proven: the predicate layer; the member-level `ConstOn` toolkit
+(disjoint-union count additivity, union and difference transport,
+splitter-set disjointness and window splitting); both splitting
+passes' postconditions, culminating in `refineStep_cell_const`; the
+active-set bookkeeping of both passes (`refineTrivial_go_state`,
+`windowScan_active_state`, `nontrivialCell_outcome`,
+`refineNontrivial_go_state`) assembled into `refineStep_state` — the
+strict potential drop and the per-cell activation clauses (an active
+non-splitter cell activates every fragment start, any other cell
+leaves at most one start inactive); the certificate interface
+`CertInv`/`activeUnion`/`Saturated` with its collapse at exit; the
+injectivity and splitter-set structure (`LabInj` transport across the
+pass, `worksetOf_cells_disjoint`, `isCell_disj_or_eq`); the
+preservation theorem `certInv_refineStep`; and the fixpoint theorem
+`refine_equitable` — entering `refine` with an injective labelling,
+an active set of cell starts, an accurate cell count and the
+certificate invariant, the output partition is equitable. The
+certificate seed is vacuous at the root (every cell active) and is
+discharged at descent from the parent's equitability joined with the
+individualized singleton's splitter set.
 
-Remaining for the fixpoint theorem: the preservation of `CertInv`
-across `refineStep` (consuming `refineStep_cell_const` for the
-retired splitter's subtraction, per-old-cell member permutations from
-the `RefInv` machinery for workset stability, and a characterization
-of the active set's evolution through the passes — the one piece with
-no existing machinery); the fuel potential
-`popCount active + 2 * (n - numcells)`; and on top of the fixpoint
-theorem the cheapautom small-cell lemma and the arm-2 assembly.
+Remaining for the cheapautom arm on top of this fixpoint: the
+small-cell subtree lemma and the arm-2 assembly in StoreValid.lean.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -4122,5 +4126,184 @@ theorem certInv_refineStep {ctx : Ctx} {level split1 : Nat}
         rw [← Nat.or_assoc, sub_or_xor hp'sub, hWD]
       rw [hor]
       exact hgoal
+
+/-! # The fixpoint: refine's output is equitable -/
+
+private theorem labInj_refineStep {ctx : Ctx} {level split1 : Nat}
+    {st : RefineSt} (hok : StOk ctx.n level st)
+    (hinj : LabInj st.lab ctx.n) :
+    LabInj (refineStep ctx level split1 st).lab ctx.n := by
+  have hps := hok.ptnSize
+  have hend := hok.ptnEnd
+  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
+    rw [← hps]
+    exact hend
+  have hRI : RefInv level st.lab st.ptn
+      (refineStep ctx level split1 st) :=
+    refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
+      (Nat.le_of_eq hps.symm) (hok.labSize.trans hps.symm) hend
+  exact labInj_of_perm
+    (cellsPerm_segN_perm hRI.perm (Nat.le_of_eq hps.symm) hend
+      hendn).symm hinj
+
+private theorem bitCount_le_bound (n s : Nat) : bitCount n s ≤ n := by
+  rw [bitCount]
+  have := List.countP_le_length (l := List.range n) (p := s.testBit)
+  rw [List.length_range] at this
+  exact this
+
+/-- The refinement loop leaves the invariants intact and, given fuel
+above the potential, exits only discrete or with an exhausted active
+set. -/
+theorem refineLoop_certInv {ctx : Ctx} {level : Nat}
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u) :
+    ∀ (fuel : Nat) (st : RefineSt), StOk ctx.n level st →
+      LabInj st.lab ctx.n → StartsOk level st →
+      CertInv ctx level st →
+      bitCount ctx.n st.active + 2 * ctx.n ≤ fuel + 2 * st.numcells →
+      CertInv ctx level (refineLoop ctx level fuel st) ∧
+      (¬ (refineLoop ctx level fuel st).numcells < ctx.n ∨
+        (refineLoop ctx level fuel st).active = 0)
+  | 0, st, hok, hinj, hstarts, hinv, hpot => by
+    rw [refineLoop]
+    refine ⟨hinv, Or.inl ?_⟩
+    have := bitCount_le_bound ctx.n st.active
+    omega
+  | fuel + 1, st, hok, hinj, hstarts, hinv, hpot => by
+    rw [refineLoop]
+    rcases Decidable.em (st.numcells < ctx.n) with hlt | hlt
+    · rw [ite_eq_left hlt]
+      rcases hps : pickSplit st.active st.hint with _ | split1
+      · exact ⟨hinv, Or.inr (active_eq_zero_of_pickSplit_none hps)⟩
+      · have hmem := pickSplit_mem hps
+        have hs1 : split1 < ctx.n :=
+          pickSplit_lt (n := ctx.n) hok.activeLt hps
+        obtain ⟨hp1, hp2, _⟩ :=
+          refineStep_state (nb := ctx.n) (st := st) hok
+            (Nat.le_refl _) hmem hs1
+        exact refineLoop_certInv hsymm fuel
+          (refineStep ctx level split1 st)
+          (refineStep_stOk rfl hok)
+          (labInj_refineStep hok hinj)
+          (refineStep_starts hok rfl hstarts)
+          (certInv_refineStep hok hinj hstarts hsymm hmem hs1 hinv)
+          (by omega)
+    · rw [ite_eq_right hlt]
+      exact ⟨hinv, Or.inl hlt⟩
+
+/-- `refine`'s output partition is equitable: entering with a
+labelling that is injective on the vertex range, an active set of
+cell starts, an accurate cell count, and the certificate invariant
+(vacuous when every cell is active), the refinement loop can only
+exit discrete or with the active set exhausted, and either way the
+final partition is equitable. -/
+theorem refine_equitable {ctx : Ctx} {level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat}
+    (hls : lab.size = ctx.n) (hlab : LabOk lab ctx.n)
+    (hps : ptn.size = ctx.n) (halt : active < 2 ^ ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : LabInj lab ctx.n)
+    (hstarts : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ ptn[v - 1]! ≤ level)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hacc : bcount ptn level ctx.n = numcells)
+    (hinv : CertInv ctx level
+      { lab := lab, ptn := ptn, active := active,
+        numcells := numcells, hint := 0, maxpos := 0,
+        longcode := numcells }) :
+    Equitable ctx level
+      (refine ctx level lab ptn active numcells).lab
+      (refine ctx level lab ptn active numcells).ptn := by
+  rw [refine]
+  obtain ⟨st0, hst0⟩ : ∃ st0 : RefineSt,
+      RefineSt.mk lab ptn active numcells 0 0 numcells = st0 :=
+    ⟨_, rfl⟩
+  have hok0 : StOk ctx.n level st0 := by
+    rw [← hst0]
+    exact ⟨hls, hlab, hps, halt, by
+      show ptn[ptn.size - 1]! ≤ level
+      exact hend⟩
+  have hinj0 : LabInj st0.lab ctx.n := by
+    rw [← hst0]
+    exact hinj
+  have hstarts0 : StartsOk level st0 := by
+    rw [← hst0]
+    exact hstarts
+  have hinv0 : CertInv ctx level st0 := by
+    rw [← hst0]
+    exact hinv
+  have hpot : bitCount ctx.n st0.active + 2 * ctx.n ≤
+      (4 * ctx.n + 8) + 2 * st0.numcells := by
+    have := bitCount_le_bound ctx.n st0.active
+    omega
+  obtain ⟨hinvR, hexit⟩ := refineLoop_certInv hsymm (4 * ctx.n + 8)
+    st0 hok0 hinj0 hstarts0 hinv0 hpot
+  have hfrz : FreezeInv level ctx.n ptn numcells
+      (refineLoop ctx level (4 * ctx.n + 8) st0) := by
+    refine freezeInv_refineLoop hps.symm hend (4 * ctx.n + 8) st0 ?_
+    rw [← hst0]
+    refine ⟨rfl, ?_, fun _ _ => rfl, rfl⟩
+    show lab.size = ptn.size
+    rw [hls, hps]
+  rw [hst0]
+  obtain ⟨rl, hrl⟩ : ∃ rl : RefineSt,
+      refineLoop ctx level (4 * ctx.n + 8) st0 = rl := ⟨_, rfl⟩
+  rw [hrl] at hinvR hexit hfrz
+  rw [hrl]
+  show Equitable ctx level rl.lab rl.ptn
+  rcases hexit with hnc | hact
+  · -- discrete exit: the accurate count forces singleton cells
+    have hcount := hfrz.count
+    rw [hacc] at hcount
+    have hbc : ctx.n ≤ bcount rl.ptn level ctx.n := by omega
+    have hall : ∀ q, q < ctx.n → rl.ptn[q]! ≤ level := by
+      have hle := bcount_le rl.ptn level ctx.n
+      rw [bcount] at hbc
+      have hlen := List.countP_eq_length
+        (p := fun q => decide (rl.ptn[q]! ≤ level))
+        (l := List.range ctx.n)
+      have : (List.range ctx.n).countP
+          (fun q => decide (rl.ptn[q]! ≤ level)) =
+          (List.range ctx.n).length := by
+        rw [List.length_range]
+        have := List.countP_le_length
+          (p := fun q => decide (rl.ptn[q]! ≤ level))
+          (l := List.range ctx.n)
+        rw [List.length_range] at this
+        omega
+      intro q hq
+      have := (hlen.mp this) q (List.mem_range.mpr hq)
+      simpa using this
+    refine equitable_of_singletons fun cd hcd => ?_
+    have hic := cells_isCell (ptn := rl.ptn) (level := level)
+      (nn := ctx.n) (by
+        rw [hfrz.ptnSize, hps]
+        exact Nat.le_refl _) (by
+        have h1 := hfrz.frozen (ptn.size - 1) hend
+        rw [hfrz.ptnSize]
+        rw [h1]
+        exact hend) cd hcd
+    have hle := cells_le cd hcd
+    have hbd := cells_end_lt_of_end (ptn := rl.ptn) (level := level)
+      (by
+        rw [hfrz.ptnSize, hps]
+        exact Nat.le_refl _) (by
+        have h1 := hfrz.frozen (ptn.size - 1) hend
+        rw [hfrz.ptnSize]
+        rw [h1]
+        exact hend) (by
+        have h1 := hfrz.frozen (ptn.size - 1) hend
+        rw [show ptn.size - 1 = ctx.n - 1 from by rw [hps]] at h1
+        rw [h1]
+        exact (by rw [← hps]; exact hend)) cd hcd
+    rcases Nat.eq_or_lt_of_le hle with he | hlt2
+    · exact he.symm
+    · exfalso
+      have hint := hic.2.2.1 cd.1 (Nat.le_refl _) (by omega)
+      have := hall cd.1 (by omega)
+      omega
+  · exact equitable_of_certInv_exit hinvR hact
 
 end Hex.GraphIso.Nauty
