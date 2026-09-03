@@ -8,6 +8,9 @@ import VersoManual
 
 import HexGraphIsoMathlib
 import Mathlib.Data.Fintype.Powerset
+import Mathlib.Data.Fintype.Sum
+import Mathlib.Tactic.DeriveFintype
+import Mathlib.Tactic.FinCases
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -151,6 +154,212 @@ example : ¬ Isomorphic edgeMarkA nonedgeMark := by graph_iso
 example : ¬ Isomorphic edgeMarkB nonedgeMark := by graph_iso
 
 end HexGraphIsoChapterExample
+```
+
+# Latin-square isotopy as graph isomorphism
+%%%
+tag := "hex-graph-iso-latin-square"
+%%%
+
+The [nauty introduction](https://pallini.di.uniroma1.it/Introduction.html)
+begins from a broad principle: finite objects built from finite sets and
+relations can often be encoded as coloured graphs. Its Latin-square example
+asks about *isotopy*: two squares are isotopic when one can be obtained from
+the other by independently permuting the rows, the columns, and the symbols.
+
+Before mentioning graphs, we can state that question directly in Lean. We
+package the Latin property as bijectivity of every row and column, and define
+isotopy using three independent permutations.
+
+```lean
+open Hex.GraphIso.Mathlib
+
+namespace LatinSquareExample
+
+structure LatinSquare where
+  entry : Fin 3 → Fin 3 → Fin 3
+  rows : ∀ i, Function.Bijective (entry i)
+  columns : ∀ j, Function.Bijective (fun i => entry i j)
+
+def Isotopic (L M : LatinSquare) : Prop :=
+  ∃ r c s : Equiv.Perm (Fin 3),
+    ∀ i j, M.entry (r i) (c j) = s (L.entry i j)
+```
+
+The introduction illustrates the construction with exactly this square:
+
+```
+1 3 2
+2 1 3
+3 2 1
+```
+
+The definitions below use the zero-based elements of `Fin 3`. The second
+square is obtained by exchanging the first two rows and then exchanging the
+symbols 1 and 2.
+
+```lean
+def nautySquare : LatinSquare where
+  entry
+    | 0, 0 => 0 | 0, 1 => 2 | 0, 2 => 1
+    | 1, 0 => 1 | 1, 1 => 0 | 1, 2 => 2
+    | 2, 0 => 2 | 2, 1 => 1 | 2, 2 => 0
+  rows := by decide
+  columns := by decide
+
+def cyclicSquare : LatinSquare where
+  entry i j := ⟨(i + j) % 3, by omega⟩
+  rows := by decide
+  columns := by decide
+```
+
+Following the nauty introduction, we make a graph with four colours of
+vertices: one vertex for each row, column, symbol, and position. A position
+vertex is joined to its row, its column, and the symbol written there. The
+resulting graph has 18 vertices and 27 edges.
+
+```lean
+inductive Vertex
+  | row : Fin 3 → Vertex
+  | column : Fin 3 → Vertex
+  | symbol : Fin 3 → Vertex
+  | position : Fin 3 × Fin 3 → Vertex
+  deriving DecidableEq, Fintype
+
+private def incidence (L : LatinSquare)
+    (x y : Vertex) : Prop :=
+  match x, y with
+  | .position (i, _), .row i' => i = i'
+  | .position (_, j), .column j' => j = j'
+  | .position (i, j), .symbol k => L.entry i j = k
+  | _, _ => False
+
+private instance (L : LatinSquare) :
+    DecidableRel (incidence L) :=
+  fun x y => by
+    cases x <;> cases y <;>
+      simp only [incidence] <;> infer_instance
+
+private def graph (L : LatinSquare) :
+    SimpleGraph Vertex :=
+  SimpleGraph.fromRel (incidence L)
+
+private def color : Vertex → Fin 4
+  | .row _ => 0
+  | .column _ => 1
+  | .symbol _ => 2
+  | .position _ => 3
+
+def encode (L : LatinSquare) :
+    Hex.GraphIso.Mathlib.Colored Vertex 4 where
+  graph := graph L
+  color := color
+  onto := by decide
+
+private instance (L : LatinSquare) :
+    DecidableRel (encode L).graph.Adj :=
+  fun x y => by
+    change Decidable
+      (x ≠ y ∧ (incidence L x y ∨ incidence L y x))
+    infer_instance
+```
+
+It remains to justify the reduction. A colour-preserving graph isomorphism
+restricts to a permutation on each of the row, column, and symbol vertices.
+The three edges incident to a position vertex then force those permutations
+to satisfy the isotopy equation. The generic `componentPerm` extracts all
+three permutations, keeping the reflection proof itself short.
+
+```lean
+variable {L M : LatinSquare}
+
+private def component : Fin 3 → Fin 3 → Vertex
+  | 0 => Vertex.row
+  | 1 => Vertex.column
+  | 2 => Vertex.symbol
+
+private def index : Vertex → Fin 3
+  | .row i | .column i | .symbol i => i
+  | .position _ => 0
+
+private def componentMap
+    (f : (encode L).Iso (encode M))
+    (kind i : Fin 3) : Fin 3 :=
+  index (f.graphIso (component kind i))
+
+private theorem map_component
+    (f : (encode L).Iso (encode M))
+    (kind i : Fin 3) :
+    f.graphIso (component kind i) =
+      component kind (componentMap f kind i) := by
+  have hc := f.map_color (component kind i)
+  generalize h : f.graphIso (component kind i) = v
+    at hc ⊢
+  fin_cases kind <;> cases v <;>
+    simp_all [component, componentMap, index,
+      encode, color]
+
+private noncomputable def componentPerm
+    (f : (encode L).Iso (encode M)) (kind : Fin 3) :
+    Equiv.Perm (Fin 3) :=
+  Equiv.ofBijective (componentMap f kind) <| by
+    apply Function.Injective.bijective_of_finite
+    intro i j h
+    have hc : component kind i = component kind j := by
+      apply f.graphIso.injective
+      rw [map_component, map_component, h]
+    fin_cases kind <;> simpa [component] using hc
+
+private theorem map_entry
+    (f : (encode L).Iso (encode M)) (i j : Fin 3) :
+    M.entry (componentMap f 0 i) (componentMap f 1 j) =
+      componentMap f 2 (L.entry i j) := by
+  obtain ⟨p, hp⟩ : ∃ p,
+      f.graphIso (Vertex.position (i, j)) =
+        Vertex.position p := by
+    have hc := f.map_color (Vertex.position (i, j))
+    generalize h : f.graphIso (Vertex.position (i, j)) = v
+      at hc
+    cases v <;> simp_all [encode, color]
+  have hr := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj (.position (i, j)) (.row i) by
+      simp [graph, incidence])
+  have hc := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj (.position (i, j)) (.column j) by
+      simp [graph, incidence])
+  have hs := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj
+        (.position (i, j)) (.symbol (L.entry i j)) by
+      simp [graph, incidence])
+  rw [hp,
+    show Vertex.row i = component 0 i from rfl,
+    map_component] at hr
+  rw [hp,
+    show Vertex.column j = component 1 j from rfl,
+    map_component] at hc
+  rw [hp,
+    show Vertex.symbol (L.entry i j) =
+      component 2 (L.entry i j) from rfl,
+    map_component] at hs
+  simp [encode, graph, incidence, component] at hr hc hs
+  simpa [hr, hc] using hs
+
+theorem isotopic_of_isomorphic :
+    (encode L).Isomorphic (encode M) → Isotopic L M := by
+  rintro ⟨f⟩
+  exact ⟨componentPerm f 0, componentPerm f 1,
+    componentPerm f 2, map_entry f⟩
+```
+
+With that bridge established, the promised proof of a statement about Latin
+squares is just the reduction followed by `graph_iso`:
+
+```lean
+example : Isotopic nautySquare cyclicSquare := by
+  apply isotopic_of_isomorphic
+  graph_iso
+
+end LatinSquareExample
 ```
 
 # Performance
