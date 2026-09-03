@@ -710,4 +710,310 @@ theorem labInj_surj {lab : Array Nat} {n : Nat}
       fun u _ => bucket_le_one hinj n (Nat.le_refl _)
     omega
 
+/-! # The self-equivalence of a triple transposition
+
+A transposition of two triple members is a cell-contents permutation
+of the labelling against itself: the triple's window is swapped in
+place and every other cell is fixed pointwise. Packaged as `StPerm`
+against the renamed copy, it feeds the bisimulation, giving the
+single-deviation theorem at a triple target. -/
+
+section TripleSelf
+
+variable {lab ptn : Array Nat} {level d : Nat}
+
+/-- The mapped labelling is cell-contents equivalent to the original
+when the map transposes two members of one triple cell and fixes every
+other vertex. -/
+theorem cellsPerm_self_tripleSwap {σ : Renaming ctx.n}
+    (hps : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : LabInj lab ctx.n) (hlb : LabOk lab ctx.n)
+    (hT : (d, d + 2) ∈ cells ptn level ctx.n)
+    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
+    (hswap : σ.toFun lab[d + a]! = lab[d + b]! ∧
+      σ.toFun lab[d + b]! = lab[d + a]!)
+    (hfix : ∀ v, v < ctx.n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
+      σ.toFun v = v) :
+    cellsPerm ptn level lab (lab.map σ.toFun) := by
+  have hd2 : d + 2 < ctx.n := by
+    have := cells_bound (by omega) hend _ hT
+    omega
+  have hIsT : IsCell ptn level d 3 := by
+    have h := cells_isCell (by omega) hend _ hT
+    rw [show d + 2 + 1 - d = 3 by omega] at h
+    exact h
+  intro α len hIs
+  rcases Decidable.em (α < ctx.n) with han | han
+  · -- in range
+    have hcross : α + len ≤ ctx.n := by
+      have := isCell_no_cross hend hIs (by omega)
+      omega
+    have hmapAt : ∀ o, o < len →
+        (lab.map σ.toFun)[α + o]! = σ.toFun lab[α + o]! := by
+      intro o ho
+      exact getElem!_map_of_lt _ _ (by rw [hlsz]; omega)
+    rcases isCell_disj_or_eq hIs hIsT with ⟨heq1, heq2⟩ | hd1 | hd1
+    · -- the triple's own run: the window is swapped in place
+      subst heq2
+      rw [← heq1] at hswap hfix
+      have hα2 : α + 2 < ctx.n := by omega
+      have hval : ∀ w, w < 3 → σ.toFun lab[α + w]! =
+          if w = a then lab[α + b]!
+          else if w = b then lab[α + a]! else lab[α + w]! := by
+        intro w hw
+        rcases Decidable.em (w = a) with rfl | hwa
+        · rw [ite_eq_left rfl]
+          exact hswap.1
+        · rcases Decidable.em (w = b) with rfl | hwb
+          · rw [ite_eq_right hwa, ite_eq_left rfl]
+            exact hswap.2
+          · rw [ite_eq_right hwa, ite_eq_right hwb]
+            refine hfix _ (hlb _ (by rw [hlsz]; omega)) ?_ ?_
+            · intro hcon
+              have := hinj (α + w) (α + a) (by omega) (by omega) hcon
+              omega
+            · intro hcon
+              have := hinj (α + w) (α + b) (by omega) (by omega) hcon
+              omega
+      have hseg : segN lab α 3 =
+          lab[α]! :: lab[α + 1]! :: lab[α + 2]! :: [] := by
+        rw [show (3 : Nat) = 2 + 1 from rfl, segN_cons,
+          show (2 : Nat) = 1 + 1 from rfl, segN_cons,
+          show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_zero]
+      have hsegm : segN (lab.map σ.toFun) α 3 =
+          σ.toFun lab[α]! :: σ.toFun lab[α + 1]! ::
+            σ.toFun lab[α + 2]! :: [] := by
+        rw [show (3 : Nat) = 2 + 1 from rfl, segN_cons,
+          show (2 : Nat) = 1 + 1 from rfl, segN_cons,
+          show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_zero,
+          getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega),
+          getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega),
+          getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega)]
+      rw [hseg, hsegm]
+      have hv0 := hval 0 (by omega)
+      have hv1 := hval 1 (by omega)
+      have hv2 := hval 2 (by omega)
+      rw [Nat.add_zero] at hv0
+      have ha3 : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+      have hb3 : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+      rcases ha3 with rfl | rfl | rfl <;> rcases hb3 with rfl | rfl | rfl
+      · omega
+      · -- swap 0 1
+        rw [hv0, hv1, hv2, ite_eq_left rfl,
+          ite_eq_right (by omega), ite_eq_left rfl,
+          ite_eq_right (by omega), ite_eq_right (by omega),
+          Nat.add_zero]
+        exact List.Perm.swap _ _ _
+      · -- swap 0 2
+        rw [hv0, hv1, hv2, ite_eq_left rfl,
+          ite_eq_right (by omega), ite_eq_right (by omega),
+          ite_eq_right (by omega), ite_eq_left rfl, Nat.add_zero]
+        refine List.Perm.trans (List.Perm.cons _
+          (List.Perm.swap _ _ _)) ?_
+        refine List.Perm.trans (List.Perm.swap _ _ _) ?_
+        exact List.Perm.cons _ (List.Perm.swap _ _ _)
+      · -- swap 1 0
+        rw [hv0, hv1, hv2, ite_eq_right (by omega),
+          ite_eq_left rfl, ite_eq_left rfl,
+          ite_eq_right (by omega), ite_eq_right (by omega),
+          Nat.add_zero]
+        exact List.Perm.swap _ _ _
+      · omega
+      · -- swap 1 2
+        rw [hv0, hv1, hv2, ite_eq_right (by omega),
+          ite_eq_right (by omega), ite_eq_left rfl,
+          ite_eq_right (by omega), ite_eq_left rfl]
+        exact List.Perm.cons _ (List.Perm.swap _ _ _)
+      · -- swap 2 0
+        rw [hv0, hv1, hv2, ite_eq_right (by omega),
+          ite_eq_left rfl, ite_eq_right (by omega),
+          ite_eq_right (by omega), ite_eq_left rfl, Nat.add_zero]
+        refine List.Perm.trans (List.Perm.cons _
+          (List.Perm.swap _ _ _)) ?_
+        refine List.Perm.trans (List.Perm.swap _ _ _) ?_
+        exact List.Perm.cons _ (List.Perm.swap _ _ _)
+      · -- swap 2 1
+        rw [hv0, hv1, hv2, ite_eq_right (by omega),
+          ite_eq_right (by omega), ite_eq_left rfl,
+          ite_eq_left rfl, ite_eq_right (by omega)]
+        exact List.Perm.cons _ (List.Perm.swap _ _ _)
+      · omega
+    · -- a run left of the triple: every member is fixed
+      have hfixseg : segN (lab.map σ.toFun) α len = segN lab α len := by
+        refine segN_congr fun o ho => ?_
+        rw [getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega)]
+        refine hfix _ (hlb _ (by rw [hlsz]; omega)) ?_ ?_
+        · intro hcon
+          have := hinj (α + o) (d + a) (by omega) (by omega) hcon
+          omega
+        · intro hcon
+          have := hinj (α + o) (d + b) (by omega) (by omega) hcon
+          omega
+      rw [hfixseg]
+    · -- a run right of the triple: every member is fixed
+      have hfixseg : segN (lab.map σ.toFun) α len = segN lab α len := by
+        refine segN_congr fun o ho => ?_
+        rw [getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega)]
+        refine hfix _ (hlb _ (by rw [hlsz]; omega)) ?_ ?_
+        · intro hcon
+          have := hinj (α + o) (d + a) (by omega) (by omega) hcon
+          omega
+        · intro hcon
+          have := hinj (α + o) (d + b) (by omega) (by omega) hcon
+          omega
+      rw [hfixseg]
+  · -- beyond the bound: phantom singleton
+    have hlen1 : len = 1 := isCell_oob hIs (by omega)
+    rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
+    rw [getElem!_oob (by omega : lab.size ≤ α),
+      getElem!_oob (by rw [Array.size_map]; omega :
+        (lab.map σ.toFun).size ≤ α)]
+
+end TripleSelf
+
+/-- The transposition packaged as a state self-equivalence. -/
+theorem stPerm_self_tripleSwap {σ : Renaming ctx.n} {st : RefineSt}
+    {level d : Nat}
+    (hok : StOk ctx.n level st) (hinj : LabInj st.lab ctx.n)
+    (hT : (d, d + 2) ∈ cells st.ptn level ctx.n)
+    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
+    (hswap : σ.toFun st.lab[d + a]! = st.lab[d + b]! ∧
+      σ.toFun st.lab[d + b]! = st.lab[d + a]!)
+    (hfix : ∀ v, v < ctx.n → v ≠ st.lab[d + a]! →
+      v ≠ st.lab[d + b]! → σ.toFun v = v) :
+    StPerm level st (mapSt σ st) := by
+  refine ⟨rfl, rfl, rfl, rfl, rfl, rfl, ?_, ?_⟩
+  · show (st.lab.map σ.toFun).size = st.lab.size
+    rw [Array.size_map]
+  · show cellsPerm st.ptn level st.lab (st.lab.map σ.toFun)
+    exact cellsPerm_self_tripleSwap hok.ptnSize hok.labSize hok.ptnEnd
+      hinj hok.labOk hT ha hb hab hswap hfix
+
+/-- The generalized single-deviation theorem: a self-symmetry of the
+node carrying one child's individualized vertex to another's mirrors
+any discrete descent below the first child, with equal leaf rows. -/
+theorem deviation_leafRows_self {σ : Renaming ctx.n} {st : RefineSt}
+    {level tc e oU oV level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hg : RowsMap σ ctx.g ctx.g)
+    (hsp : StPerm level st (mapSt σ st))
+    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (hvv : st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]!)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  have hsp' := stPerm_child hg hsp hIt hcell hne hoV hoU hvv
+  have hU0 := iterOk_child hIt hlvl hcell hne hoU
+  exact descends_leafRows hg hdesc hU0 hsp' hdisc
+
+/-- A deviation at a triple target under the first-branch shape:
+descents below any two of its children reach leaves with the same
+rows. -/
+theorem triple_deviation_leafRows {st : RefineSt}
+    {level tc level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hT : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
+    (hsmall : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+      q.2 + 1 - q.1 ≤ 2)
+    {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + a]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  have hd2 : tc + 2 < ctx.n := by
+    have := cells_bound (by rw [hIt.ok.ptnSize]; omega)
+      hIt.ok.ptnEnd _ hT
+    rw [hIt.ok.ptnSize] at this
+    omega
+  have hlb' : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hIt.ok.labSize]; omega)
+  have hAn : st.lab[tc + a]! < ctx.n := hlb' (tc + a) (by omega)
+  have hBn : st.lab[tc + b]! < ctx.n := hlb' (tc + b) (by omega)
+  have hABne : st.lab[tc + a]! ≠ st.lab[tc + b]! := by
+    intro hcon
+    have := hIt.inj (tc + a) (tc + b) (by omega) (by omega) hcon
+    omega
+  -- the concrete transposition
+  refine ?_
+  let f : Nat → Nat := fun v =>
+    if v = st.lab[tc + a]! then st.lab[tc + b]!
+    else if v = st.lab[tc + b]! then st.lab[tc + a]! else v
+  have hswapf : f st.lab[tc + a]! = st.lab[tc + b]! ∧
+      f st.lab[tc + b]! = st.lab[tc + a]! := by
+    constructor
+    · show (if st.lab[tc + a]! = st.lab[tc + a]! then _ else _) = _
+      rw [ite_eq_left rfl]
+    · show (if st.lab[tc + b]! = st.lab[tc + a]! then _ else _) = _
+      rw [ite_eq_right (fun h => hABne h.symm), ite_eq_left rfl]
+  have hfixf : ∀ v, v < ctx.n → v ≠ st.lab[tc + a]! →
+      v ≠ st.lab[tc + b]! → f v = v := by
+    intro v _ hvA hvB
+    show (if v = st.lab[tc + a]! then _ else _) = _
+    rw [ite_eq_right hvA, ite_eq_right hvB]
+  have hfb : ∀ v, v < ctx.n → f v < ctx.n := by
+    intro v hv
+    rcases Decidable.em (v = st.lab[tc + a]!) with rfl | hvA
+    · rw [hswapf.1]
+      exact hBn
+    · rcases Decidable.em (v = st.lab[tc + b]!) with rfl | hvB
+      · rw [hswapf.2]
+        exact hAn
+      · rw [hfixf v hv hvA hvB]
+        exact hv
+  have hinvol : ∀ v, v < ctx.n → f (f v) = v := by
+    intro v hv
+    rcases Decidable.em (v = st.lab[tc + a]!) with rfl | hvA
+    · rw [hswapf.1, hswapf.2]
+    · rcases Decidable.em (v = st.lab[tc + b]!) with rfl | hvB
+      · rw [hswapf.2, hswapf.1]
+      · rw [hfixf v hv hvA hvB, hfixf v hv hvA hvB]
+  have hsurj := labInj_surj
+    (by rw [hIt.ok.labSize] ; exact Nat.le_refl _ : ctx.n ≤ _)
+    hIt.ok.labOk hIt.inj
+  have hrows := triple_flip_rows hE hIt.ok.ptnSize hIt.ok.ptnEnd
+    hIt.inj hlb' hsurj hg hsymm hloop hfb hinvol hT hsmall ha hb
+    hswapf hfixf
+  have hgmap := rowsMap_of_flip_rows hgsz hfb hinvol hrows
+  have hswapσ : (renamingOfFlip f ctx.n hfb hinvol).toFun
+        st.lab[tc + a]! = st.lab[tc + b]! ∧
+      (renamingOfFlip f ctx.n hfb hinvol).toFun
+        st.lab[tc + b]! = st.lab[tc + a]! := by
+    constructor
+    · rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun
+          st.lab[tc + a]! = f st.lab[tc + a]! from
+        renamingOfFlip_at hfb hinvol hAn]
+      exact hswapf.1
+    · rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun
+          st.lab[tc + b]! = f st.lab[tc + b]! from
+        renamingOfFlip_at hfb hinvol hBn]
+      exact hswapf.2
+  have hfixσ : ∀ v, v < ctx.n → v ≠ st.lab[tc + a]! →
+      v ≠ st.lab[tc + b]! →
+      (renamingOfFlip f ctx.n hfb hinvol).toFun v = v := by
+    intro v hv hvA hvB
+    rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun v = f v from
+      renamingOfFlip_at hfb hinvol hv]
+    exact hfixf v hv hvA hvB
+  have hsp := stPerm_self_tripleSwap hIt.ok hIt.inj hT ha hb hab
+    hswapσ hfixσ
+  have hvv : st.lab[tc + b]! =
+      (renamingOfFlip f ctx.n hfb hinvol).toFun st.lab[tc + a]! :=
+    hswapσ.1.symm
+  exact deviation_leafRows_self hIt hlvl hgmap hsp hT (by omega)
+    (show a ≤ tc + 2 - tc by omega) (show b ≤ tc + 2 - tc by omega)
+    hvv hdesc hdisc
+
 end Hex.GraphIso.Nauty
