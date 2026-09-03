@@ -10,7 +10,7 @@ Authors: Kim Morrison
 Lean binding for `Hex/BenchOracle/ffi/nauty_canon.c`, which links the
 vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` (unmodified files
 from the pinned archive; provenance in that directory's README) through
-the static library `nautyffi`. The C side runs the same pinned
+the static library `hexnautyffi`. The C side runs the same pinned
 densenauty configuration as the conformance oracle shim
 `scripts/oracle/graphiso_nauty_shim.c`.
 

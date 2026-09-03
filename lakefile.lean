@@ -98,8 +98,8 @@ private def nautyBenchOTarget (pkg : Package) : FetchM (Job FilePath) := do
       "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
     compileO oFile srcFile flags
 
-extern_lib nautyffi (pkg) := do
-  let name := nameToStaticLib "nautyffi"
+extern_lib hexnautyffi (pkg) := do
+  let name := nameToStaticLib "hexnautyffi"
   let vendorTargets ← #["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
     "naurng.c"].mapM (nautyVendorOTarget pkg)
   let bridgeTarget ← nautyBridgeOTarget pkg
