@@ -175,20 +175,36 @@ is public declarations plus non-obvious private helpers, not every helper.
 Recommended follow-up: `HexGraphIso Phase 6: make the NodeLit list mirror
 private`.
 
-### 3. The umbrella re-exports a test module
+### 3. The umbrella re-exports a test module, and so do two others
 
 `HexGraphIso.lean` `public import`s `HexGraphIso.ModuleBoundaryTests`, whose
 `kdecide` elaborator therefore becomes part of the released `HexGraphIso`
 tactic namespace. `kdecide` is a test instrument for checking module-boundary
 behaviour, not API, and it has no namespace guard.
 
-**Not fixed.** Removing the import changes what the published mirror builds,
-and the shipping shape of released repositories (specifically whether test and
-conformance sidecars ship at all) is under active reconsideration. Acting on
-this now risks colliding with that decision. The finding is real and small;
-it should be picked up together with, or immediately after, whatever the
-shipping-shape decision concludes. Recommended follow-up:
-`HexGraphIso Phase 6: keep ModuleBoundaryTests out of the umbrella`.
+**Not fixed, and the reason matters.** This is not a HexGraphIso deviation: it
+is the established repository convention. `HexBasic.lean:15` and
+`HexTruncatedSeries.lean:19` do exactly the same thing with their own
+`ModuleBoundaryTests`, and `HexGraphIso/Tactic.lean:419` cites the module by
+name as the pin on the tactic's import closure, which is a real documentation
+role. Changing it for this one library would make three libraries inconsistent
+and would weaken a check that exists on purpose.
+
+What is specific to HexGraphIso is the payload. The other two
+`ModuleBoundaryTests` modules declare no syntax at all; this one declares an
+`elab "kdecide" : tactic`, so it is the only case where the convention leaks a
+tactic name rather than a handful of private definitions. That is the part
+worth a decision.
+
+The decision belongs at the project level rather than in this review, since
+whatever is right for `kdecide` is right for the convention. The two shapes
+worth weighing: keep the umbrella import and give the elaborator a scoped or
+guarded name so it cannot be reached by accident, or move `ModuleBoundaryTests`
+out of every umbrella and into the `test_modules` mechanism that
+`scripts/release/released.yml` already provides, which reaches the mirror and
+is built by released CI without entering the public umbrella. The second is
+cleaner and the manifest already supports it. Recommended follow-up:
+`Project: decide whether ModuleBoundaryTests belongs in the public umbrellas`.
 
 ### 4. Docstring coverage below the Phase 6 rule
 
