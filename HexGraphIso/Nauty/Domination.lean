@@ -1755,6 +1755,77 @@ theorem rows_eq_of_firstDescOk {ctx : Ctx} {st : SearchSt}
   exact leafRows_eq_of_descPaths hgsz hgb hsymm hloop hS hU hV htcs
     hUd hVd
 
+/-! # Discreteness gives the node invariant
+
+`firstterminal` fires where the refinement is discrete. Every cell is
+then a singleton, which is `SmallShape` outright and `Equitable` by
+`equitable_of_singletons`, and every position carries a boundary, so
+the cell count is exact. The iteration invariant is the only content
+the run must supply. -/
+
+/-- A discrete partition has singleton cells. -/
+theorem cells_singleton_of_discrete {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hdisc : ∀ q, q < nn → ptn[q]! ≤ level) :
+    ∀ cd ∈ cells ptn level nn, cd.2 = cd.1 := by
+  intro cd hcd
+  obtain ⟨c, e⟩ := cd
+  obtain ⟨hlt, -, he⟩ := (mem_cells_iff hnn hend).mp hcd
+  simp only at he ⊢
+  rw [he, cellEnd_of_closed (by omega) (by have := hdisc c hlt; omega)]
+
+/-- A discrete partition carries a boundary at every position. -/
+theorem bcount_of_discrete {ptn : Array Nat} {level nn : Nat}
+    (hdisc : ∀ q, q < nn → ptn[q]! ≤ level) :
+    bcount ptn level nn = nn := by
+  rw [bcount, List.countP_eq_length.mpr, List.length_range]
+  intro q hq
+  exact decide_eq_true (hdisc q (List.mem_range.mp hq))
+
+/-- Singleton cells are the first-branch shape. -/
+theorem smallShape_of_discrete {ctx : Ctx} {ptn : Array Nat}
+    {level : Nat} (hnn : ctx.n ≤ ptn.size)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hdisc : ∀ q, q < ctx.n → ptn[q]! ≤ level) :
+    SmallShape ctx level ptn := by
+  intro q hq
+  exact Or.inl (by
+    rw [cells_singleton_of_discrete hnn hend hdisc q hq]; omega)
+
+/-- The node invariant at a discrete node: only the iteration
+invariant and the cell count are owed. -/
+theorem subtreeOk_of_discrete {ctx : Ctx} {level : Nat} {r : RefineSt}
+    (hIt : IterOk ctx level r)
+    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
+    (hnc : r.numcells = ctx.n) :
+    SubtreeOk ctx level r := by
+  have hpsz := hIt.ok.ptnSize
+  refine ⟨hIt, ?_, ?_, Or.inl ?_⟩
+  · exact equitable_of_singletons
+      (cells_singleton_of_discrete (by omega) hIt.ok.ptnEnd hdisc)
+  · rw [bcount_of_discrete hdisc, hnc]
+  · exact smallShape_of_discrete (by omega) hIt.ok.ptnEnd hdisc
+
+/-! # Seeding and framing the descent bookkeeping
+
+The seed is degenerate: `firstterminal` installs the current
+labelling as the first leaf, so both descents are the empty path from
+the node itself. The comparison step carries the clause by frame, and
+the unwind carries it whenever the gate it leaves behind is dead. -/
+
+/-- `firstterminal` seeds the descent bookkeeping: the leaf it
+installs is both descents, taken from the node by the empty path. -/
+theorem firstterminal_firstDescOk {ctx : Ctx} {level : Nat}
+    {st : SearchSt} {r : RefineSt}
+    (hS : SubtreeOk ctx level r)
+    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
+    (hlab : r.lab = st.lab) :
+    FirstDescOk ctx (firstterminal level st) := by
+  intro _
+  rw [ftF_gcaFirst, ftF_lab, ftF_firstlab]
+  exact ⟨r, r, r, [], [], level, level, hS, .refl _ _, .refl _ _, rfl,
+    hdisc, hdisc, hlab, hlab⟩
+
 /-! # Labelling facts of a reached state
 
 The row obligations and the scatter exits are stated over `LabOk`
