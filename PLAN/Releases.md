@@ -265,6 +265,54 @@ probe know whether branch protection or a ruleset on a mirror's `main` would
 reject the push. Those failures still surface only at push time; the invariant
 the mirrors rely on is that `main` takes direct pushes from the release actor.
 
+### Token inventory
+
+The authoritative source for each token's selected repositories is the
+GitHub UI (https://github.com/settings/personal-access-tokens); this
+inventory is the durable record of that state, kept current by rule:
+whoever widens a token records the change here in the same working
+session. A fine-grained token selects at most 50 repositories.
+Snapshot verified against the live tokens on 2026-09-03 (routing
+measured by a branch-only debug step on the sync workflow counting
+`route_tokens`' output; selections confirmed from the UI).
+
+`hex-publishing` carries every repository in `released.yml` except the
+four listed under `hex-publishing-2` below: 43 of 50.
+
+`hex-publishing-2` carries 44 of 50:
+
+- released: `hex-primality`, `hex-primality-mathlib`,
+  `hex-sparse-poly`, `hex-sparse-poly-mathlib`;
+- created for publication, not yet in `released.yml`:
+  `hex-resultant`, `hex-resultant-mathlib`, `hex-modular`,
+  `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
+  `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
+  `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
+  `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
+  `hex-cyclotomic-mathlib`, `hex-finite-field`,
+  `hex-finite-field-mathlib`, `hex-hermite`, `hex-hermite-mathlib`,
+  `hex-int-factor`, `hex-int-factor-mathlib`,
+  `hex-invariant-factors`, `hex-invariant-factors-mathlib`,
+  `hex-min-poly`, `hex-min-poly-mathlib`, `hex-modular-matrix`,
+  `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
+  `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
+  `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
+  `hex-truncated-series`, `hex-truncated-series-mathlib`,
+  `hex-char-poly`, `hex-char-poly-mathlib`, `hex-graph-iso`,
+  `hex-graph-iso-mathlib` (the last two pending organization-owner
+  approval).
+
+`hex-publishing-2` additionally holds organization-level permissions;
+`hex-publishing` holds none.
+
+With `hex-publishing-2` at 44, the next widening beyond six more
+repositories needs a third token (`hex-publishing-3`, a new
+`RELEASED_SYNC_PAT_3` secret, and one line in
+`.github/workflows/sync-released.yml` and `sync_released.py`'s token
+list). The sync's per-repository routing makes the split invisible to
+everything else.
+
+
 ### Baseline and the uncoordinated-commit guard
 
 The sync records, per repo, the `main` commit this monorepo was last
