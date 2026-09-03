@@ -139,4 +139,231 @@ theorem frozen_gt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
       .gt :=
   codeInv_keyCmp_gt hinv [codeSentinel] _ _
 
+/-! # `processnode` arm characterizations -/
+
+private theorem pushAuto_lab (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).lab = st.lab := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_ptn (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).ptn = st.ptn := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_compCanon (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).compCanon = st.compCanon := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_eqlevCanon (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).eqlevCanon = st.eqlevCanon := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_canoncode (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canoncode = st.canoncode := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_canonlevel (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canonlevel = st.canonlevel := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_canonlab (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canonlab = st.canonlab := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_canong (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canong = st.canong := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_samerows (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).samerows = st.samerows := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_eqlevFirst (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).eqlevFirst = st.eqlevFirst := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_gcaFirst (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).gcaFirst = st.gcaFirst := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_noncheaplevel (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).noncheaplevel = st.noncheaplevel := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_allsamelevel (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).allsamelevel = st.allsamelevel := by
+  rw [pushAuto]; split <;> rfl
+
+/-- The unwind level of the shared prune tail. -/
+@[expose] def pruneReturn (noncheaplevel allsamelevel : Nat)
+    (eqlevCanon : Int) : Int :=
+  let save : Int :=
+    if Int.ofNat allsamelevel > eqlevCanon then
+      Int.ofNat allsamelevel - 1
+    else
+      eqlevCanon
+  if Int.ofNat noncheaplevel ≤ save then
+    Int.ofNat noncheaplevel - 1
+  else
+    save
+
+/-- The pass arm: an internal node with no frozen-downward fast exit
+leaves the comparison state alone and returns its own level. -/
+theorem processnode_pass {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
+    (hnc : ¬((numcells == ctx.n) = true)) :
+    (processnode ctx level numcells st).1 = Int.ofNat level ∧
+    (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
+    (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode = st.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel = st.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
+    (processnode ctx level numcells st).2.canong = st.canong ∧
+    (processnode ctx level numcells st).2.samerows = st.samerows := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc]
+
+/-- The frozen-downward fast arm: the comparison state is untouched
+and the shared prune tail decides the unwind level. -/
+theorem processnode_fast {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+    (processnode ctx level numcells st).1 =
+      pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
+    (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode = st.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel = st.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
+    (processnode ctx level numcells st).2.canong = st.canong ∧
+    (processnode ctx level numcells st).2.samerows = st.samerows := by
+  obtain ⟨hg1, hg2⟩ := hg
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg1, hg2, Int.not_lt.mpr, Int.lt_iff_add_one_le]
+
+/-- The short-leaf install: a code-tied leaf strictly above the
+incumbent's depth installs itself with no row comparison. -/
+theorem processnode_shortInstall {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hlt : level < st.canonlevel) :
+    (processnode ctx level numcells st).1 =
+      pruneReturn st.noncheaplevel st.allsamelevel (Int.ofNat level) ∧
+    (processnode ctx level numcells st).2.compCanon = 0 ∧
+    (processnode ctx level numcells st).2.eqlevCanon = Int.ofNat level ∧
+    (processnode ctx level numcells st).2.canoncode =
+      st.canoncode.set! (level + 1) codeSentinel ∧
+    (processnode ctx level numcells st).2.canonlevel = level ∧
+    (processnode ctx level numcells st).2.canonlab = st.lab ∧
+    (processnode ctx level numcells st).2.canong = st.canong ∧
+    (processnode ctx level numcells st).2.samerows = 0 := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]; exact fun h => absurd h.2 (by omega)
+  have hlt' : (level < st.canonlevel) := hlt
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc, hef, hcc, hlt', Int.lt_iff_add_one_le]
+
+/-- The upward-frozen install: a leaf reached with `compCanon = 1`
+installs itself directly. -/
+theorem processnode_upInstall {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 1) :
+    (processnode ctx level numcells st).1 =
+      pruneReturn st.noncheaplevel st.allsamelevel (Int.ofNat level) ∧
+    (processnode ctx level numcells st).2.compCanon = 0 ∧
+    (processnode ctx level numcells st).2.eqlevCanon = Int.ofNat level ∧
+    (processnode ctx level numcells st).2.canoncode =
+      st.canoncode.set! (level + 1) codeSentinel ∧
+    (processnode ctx level numcells st).2.canonlevel = level ∧
+    (processnode ctx level numcells st).2.canonlab = st.lab ∧
+    (processnode ctx level numcells st).2.canong = st.canong ∧
+    (processnode ctx level numcells st).2.samerows = 0 := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]; exact fun h => absurd h.2 (by omega)
+  have hne0 : ¬(st.compCanon = 0) := by rw [hcc]; omega
+  have hgt : (0 : Int) < st.compCanon := by rw [hcc]; omega
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc, hef, hcc, hne0, hgt, Int.lt_iff_add_one_le]
+
+/-- The row-decided install: a code-tied leaf at the incumbent's
+depth whose rows compare above installs itself. -/
+theorem processnode_rowInstall {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (hgt : (0 : Int) < (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) :
+    (processnode ctx level numcells st).1 =
+      pruneReturn st.noncheaplevel st.allsamelevel (Int.ofNat level) ∧
+    (processnode ctx level numcells st).2.compCanon = 0 ∧
+    (processnode ctx level numcells st).2.eqlevCanon = Int.ofNat level ∧
+    (processnode ctx level numcells st).2.canoncode =
+      st.canoncode.set! (level + 1) codeSentinel ∧
+    (processnode ctx level numcells st).2.canonlevel = level ∧
+    (processnode ctx level numcells st).2.canonlab = st.lab ∧
+    (processnode ctx level numcells st).2.canong =
+      updatecan ctx st.canong st.canonlab st.samerows ∧
+    (processnode ctx level numcells st).2.samerows =
+      (testcanlab ctx
+        (updatecan ctx st.canong st.canonlab st.samerows) st.lab).2 := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]; exact fun h => absurd h.2 (by omega)
+  have hne0 : ¬((testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) := by
+    omega
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc, hef, hcc, hge, hne0, hgt, Int.lt_iff_add_one_le]
+
+/-- The row-decided rejection: a code-tied leaf at the incumbent's
+depth whose rows compare below is discarded, freezing the downward
+comparison. -/
+theorem processnode_rowReject {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (hlt : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 < 0) :
+    (processnode ctx level numcells st).1 =
+      pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.compCanon =
+      (testcanlab ctx
+        (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 ∧
+    (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode = st.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel = st.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
+    (processnode ctx level numcells st).2.canong =
+      updatecan ctx st.canong st.canonlab st.samerows ∧
+    (processnode ctx level numcells st).2.samerows = ctx.n := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]; exact fun h => absurd h.2 (by omega)
+  have hne0 : ¬((testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) := by
+    omega
+  have hngt : ¬((0 : Int) < (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) := by
+    omega
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc, hef, hcc, hge, hne0, hngt]
+
 end Hex.GraphIso.Nauty
