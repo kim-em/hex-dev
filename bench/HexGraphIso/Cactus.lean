@@ -103,30 +103,35 @@ private def runInst (i : Inst) : IO Unit := do
 
 private def instances : List Inst := Id.run do
   let mut out : List Inst := []
-  for n in [8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64] do
+  for n in [8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 96, 128, 160,
+      192, 224, 255] do
     if h : 0 < n then
       out := inst "circulant-12" s!"circulant{n}-1-2"
         (Families.circulant n [1, 2]) h :: out
-  for n in [17, 25, 33, 41, 49, 57, 65] do
+  for n in [17, 25, 33, 41, 49, 57, 65, 97, 129, 161, 193, 225] do
     if h : 0 < n then
       out := inst "circulant-1248" s!"circulant{n}-1-2-4-8"
         (Families.circulant n [1, 2, 4, 8]) h :: out
-  for a in [3, 4, 5, 6, 7, 8] do
+  for a in [3, 4, 5, 6, 7, 8, 10, 12, 14, 15] do
     if h : 0 < a * a then
       out := inst "grid" s!"grid{a}x{a}" (Families.grid a a) h :: out
-  for d in [3, 4, 5, 6] do
+  for d in [3, 4, 5, 6, 7] do
     if h : 0 < 2 ^ d then
       out := inst "hypercube" s!"q{d}" (Families.hypercube d) h :: out
-  for m in [5, 6, 7, 8, 9] do
+  for m in [5, 6, 7, 8, 9, 12, 15, 17, 20, 22] do
     if h : 0 < Families.choose m 2 then
       out := inst "kneser" s!"kneser{m}-2" (Families.kneser m 2) h :: out
     if h : 0 < Families.choose m 2 then
       out := inst "johnson" s!"johnson{m}-2" (Families.johnson m 2) h :: out
-  for q in [13, 17, 29, 37, 41, 53, 61] do
+  for q in [13, 17, 29, 37, 41, 53, 61, 73, 89, 113, 149, 181, 229] do
     if h : 0 < q then
       out := inst "paley" s!"paley{q}" (Families.paley q) h :: out
+  for m in [5, 9, 13] do
+    if h : 0 < m * m then
+      out := inst "latin" s!"latin{m}" (Families.latinSquare m) h :: out
   let mut g : Random.Gen := ⟨Random.seed1⟩
-  for n in [10, 14, 18, 22, 26, 30, 36, 42, 48, 56, 64, 80, 96] do
+  for n in [10, 14, 18, 22, 26, 30, 36, 42, 48, 56, 64, 80, 96, 128,
+      160, 192, 224, 255] do
     let (mask, g') := Random.gnpMask g n
     g := g'
     if h : 0 < n then
@@ -236,6 +241,52 @@ private def pairInstances : List PairInst := Id.run do
       (Families.grid 4 6) (Families.copies 2 (Families.grid 3 4)) h
       "Families.plain (Families.grid 4 6)"
       "Families.plain (Families.copies 2 (Families.grid 3 4))" :: out
+  -- larger positives (corpus extension, series break 2)
+  for n in [64, 128] do
+    if h : 0 < n then
+      out := posPair "circulant-12" s!"pos-circulant{n}"
+        (Families.circulant n [1, 2]) h
+        s!"Families.plain (Families.circulant {n} [1, 2])" :: out
+  for d in [5, 6] do
+    if h : 0 < 2 ^ d then
+      out := posPair "hypercube" s!"pos-q{d}" (Families.hypercube d) h
+        s!"Families.plain (Families.hypercube {d})" :: out
+  if h : 0 < Families.choose 10 2 then
+    out := posPair "kneser" "pos-kneser10-2" (Families.kneser 10 2) h
+      "Families.plain (Families.kneser 10 2)" :: out
+  if h : 0 < (61 : Nat) then
+    out := posPair "paley" "pos-paley61" (Families.paley 61) h
+      "Families.plain (Families.paley 61)" :: out
+  -- strongly regular negative: same parameters (25, 12, 5, 6), never
+  -- isomorphic — vertex partitions stay uniform until deep in the search
+  if h : 0 < (25 : Nat) then
+    out := negPair "srg" "neg-paley25-vs-latin5"
+      (Families.paley 25) (Families.latinSquare 5) h
+      "Families.plain (Families.paley 25)"
+      "Families.plain (Families.latinSquare 5)" :: out
+  -- same-degree regular negatives at scale: connected circulant versus
+  -- two disjoint copies, both 4-regular, refinement-uniform at the root
+  for m in [24, 48] do
+    if h : 0 < 2 * m then
+      out := negPair "cycles-dense" s!"neg-circ{2*m}-vs-2circ{m}"
+        (Families.circulant (2 * m) [1, 2])
+        (Families.copies 2 (Families.circulant m [1, 2])) h
+        s!"Families.plain (Families.circulant {2 * m} [1, 2])"
+        s!"Families.plain (Families.copies 2 (Families.circulant {m} [1, 2]))"
+        :: out
+  -- 30-regular vertex-transitive negative: the Paley graph on 61
+  -- vertices against a circulant of equal degree whose connection set
+  -- mixes residues and non-residues (so no multiplier carries one to
+  -- the other, and by Turner's theorem for prime order they are not
+  -- isomorphic)
+  if h : 0 < (61 : Nat) then
+    out := negPair "srg" "neg-paley61-vs-circulant61"
+      (Families.paley 61)
+      (Families.circulant 61 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        13, 14, 15]) h
+      "Families.plain (Families.paley 61)"
+      ("Families.plain (Families.circulant 61 [1, 2, 3, 4, 5, 6, 7, " ++
+        "8, 9, 10, 11, 12, 13, 14, 15])") :: out
   return out.reverse
 
 private def escape (s : String) : String :=
