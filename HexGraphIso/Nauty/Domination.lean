@@ -366,4 +366,160 @@ theorem processnode_rowReject {ctx : Ctx} {level numcells : Nat}
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hge, hne0, hngt]
 
+/-! # Comparison-blind frames of `processnode` -/
+
+private theorem pushAuto_gcaCanon (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).gcaCanon = st.gcaCanon := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_firstcode (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).firstcode = st.firstcode := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_firstlab (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).firstlab = st.firstlab := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem pushAuto_firsttc (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).firsttc = st.firsttc := by
+  rw [pushAuto]; split <;> rfl
+
+private theorem processnode_lab (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.lab = st.lab := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.lab), pushAuto_lab,
+    ite_self]
+
+private theorem processnode_ptn (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.ptn = st.ptn := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.ptn), pushAuto_ptn,
+    ite_self]
+
+private theorem processnode_eqlevFirst (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.eqlevFirst =
+      st.eqlevFirst := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.eqlevFirst),
+    pushAuto_eqlevFirst, ite_self]
+
+private theorem processnode_firstcode (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.firstcode =
+      st.firstcode := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.firstcode),
+    pushAuto_firstcode, ite_self]
+
+private theorem processnode_firstlab (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.firstlab =
+      st.firstlab := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.firstlab),
+    pushAuto_firstlab, ite_self]
+
+private theorem processnode_firsttc (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.firsttc = st.firsttc := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.firsttc),
+    pushAuto_firsttc, ite_self]
+
+private theorem processnode_gcaFirst (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.gcaFirst = st.gcaFirst := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.gcaFirst),
+    pushAuto_gcaFirst, ite_self]
+
+private theorem processnode_noncheaplevel (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.noncheaplevel =
+      st.noncheaplevel := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.noncheaplevel),
+    pushAuto_noncheaplevel, ite_self]
+
+private theorem processnode_allsamelevel (ctx : Ctx)
+    (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.allsamelevel =
+      st.allsamelevel := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.allsamelevel),
+    pushAuto_allsamelevel, ite_self]
+
+/-- The fields `processnode` never writes: the labelling pair, the
+first-path data, and the level bookkeeping consumed by the child
+loops. -/
+theorem processnode_frames (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.lab = st.lab ∧
+    (processnode ctx level numcells st).2.ptn = st.ptn ∧
+    (processnode ctx level numcells st).2.eqlevFirst = st.eqlevFirst ∧
+    (processnode ctx level numcells st).2.firstcode = st.firstcode ∧
+    (processnode ctx level numcells st).2.firstlab = st.firstlab ∧
+    (processnode ctx level numcells st).2.firsttc = st.firsttc ∧
+    (processnode ctx level numcells st).2.gcaFirst = st.gcaFirst ∧
+    (processnode ctx level numcells st).2.noncheaplevel =
+      st.noncheaplevel ∧
+    (processnode ctx level numcells st).2.allsamelevel =
+      st.allsamelevel :=
+  ⟨processnode_lab ctx level numcells st,
+    processnode_ptn ctx level numcells st,
+    processnode_eqlevFirst ctx level numcells st,
+    processnode_firstcode ctx level numcells st,
+    processnode_firstlab ctx level numcells st,
+    processnode_firsttc ctx level numcells st,
+    processnode_gcaFirst ctx level numcells st,
+    processnode_noncheaplevel ctx level numcells st,
+    processnode_allsamelevel ctx level numcells st⟩
+
+/-- The row-tied arm: a code-tied leaf at the incumbent's depth whose
+rows equal the incumbent's is an automorphism candidate (nauty's code
+`2`); the incumbent survives unchanged and the unwind returns to one
+of the guiding ancestors. -/
+theorem processnode_rowTie {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    ((processnode ctx level numcells st).1 = Int.ofNat st.gcaFirst ∨
+      (processnode ctx level numcells st).1 = Int.ofNat st.gcaCanon) ∧
+    (processnode ctx level numcells st).2.compCanon = 0 ∧
+    (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
+    (processnode ctx level numcells st).2.canoncode = st.canoncode ∧
+    (processnode ctx level numcells st).2.canonlevel = st.canonlevel ∧
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
+    (processnode ctx level numcells st).2.canong =
+      updatecan ctx st.canong st.canonlab st.samerows ∧
+    (processnode ctx level numcells st).2.samerows = ctx.n := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]; exact fun h => absurd h.2 (by omega)
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  · rw [processnode]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp [pruneReturn, hg, hnc, hef, hcc, hge, htie, pushAuto_gcaCanon,
+      pushAuto_gcaFirst]
+    repeat' split
+    all_goals first
+    | exact Or.inl rfl
+    | exact Or.inr rfl
+    | rfl
+
 end Hex.GraphIso.Nauty
