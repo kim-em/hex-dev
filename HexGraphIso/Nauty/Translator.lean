@@ -373,60 +373,23 @@ theorem checkAutom_range {g : Array Nat}
 /-!
 # Inventory: the remaining layer-two and layer-three obligations
 
-Everything below is stated for the record and not yet proven; the
-statements were validated against the current definitions.
-
-**Store invariant (layer two, part b).** Every generator pair the
-producer stores satisfies `checkAutom` for both components. Two
-findings from validating this statement against `AutState.admit`:
-the admission filter checks size, bounds, and `isautom` but not
-injectivity, so the invariant is conditional on admitted candidates
-being permutations; and `isautom` (edge-preservation checked from the
-lesser endpoint) implies the row-image equality of `checkAutom` only
-through a finite-injection counting argument. The two missing
-bridges, as statements:
+The layer-two part-b chain is now proven at the end of this file:
+`checkAutom_of_isautom` (the counting bridge, consuming `isautom_iff`,
+the `rowsOf` dischargers above, and the `PopCount` comparison
+toolkit), the validated-store invariant (`GensOk.admit`,
+`GensOk.init`, `GensOk.foldl_admit`), and witness validity
+(`witness?_checkAutom`). What remains open:
 
 * `isPerm_of_trace`: every `γ` in `(runColoredTraced G).autos`, and
   every `composeOnto` of two leaf labellings of the certify walk, is
   a permutation of `[0, n)` — the former is a property of the
   transcription (layer-four-adjacent), the latter follows from
-  `LabOk` preservation along the walk.
-* `checkAutom_of_isautom`: for a permutation `γ` of `[0, n)` with
-  `isautom ctx γ = true`, `checkAutom ctx.g γ ctx.n = true` — the
-  edges-to-edges injection on a finite edge set is a bijection, so
-  rows map onto rows. Stated graph-agnostically it takes row-set
-  hypotheses (`γ` permutes and is bounded; `ctx.g` is symmetric,
-  loopless, and per-row `< 2 ^ n`) discharged for `rowsOf G` by
-  `rowsOf_symm`/`rowsOf_loopless`/`rowsOf_bounded` above.
-
-  Refined decomposition (this fork's findings — `checkAutom_of_isautom`
-  is itself directive-sized, not a session sub-step):
-
-  1. `isautom_sound`: the do-notation spec. `isautom` is a nested
-     `Std.Range.forIn` with early `return false` and there is no
-     spec-lemma precedent for that shape anywhere in the tree, so this
-     is a from-scratch loop-invariant proof yielding
-     `isautom ctx γ = true → ∀ i pos, i < n → pos < n → i < pos →
-     (g[i]!).testBit pos → (g[γ[i]!]!).testBit (γ[pos]!)`.
-  2. Forward inclusion (tractable given 1): `image (fun w => γ[w]!) n
-     g[v]! ⊆ g[γ[v]!]!` as a submask, from `isautom_sound` +
-     `rowsOf_symm` (to cover `pos < i`) + `rowsOf_loopless` (to rule
-     out `pos = i`) via `testBit_image`.
-  3. The counting core. Forward inclusion plus vertex-bijection does
-     NOT give the reverse inclusion; it needs the finite edge-set
-     cardinality argument, and none of its ingredients exist yet:
-     `popCount` monotonicity under submask, `submask + equal popCount
-     ⇒ equal` (both `< 2 ^ n`), and `∑_{v<n} popCount g[v]! =
-     ∑_{v<n} popCount g[γ[v]!]!` by reindexing `γ` over `[0, n)`. With
-     `popCount_image` (cardinality preserved by the `renamingOfArray`
-     of `γ`) these close the reverse inclusion. This sub-toolkit is
-     the bulk of the lemma and should be its own directive.
-
-With those, the store invariant follows by `foldl_preserves` over
-admissions, and witness validity (`witness?` returns only
-`checkAutom`-valid arrays) follows from `checkAutom_range`,
-`checkAutom_compose`, and `checkAutom_invPerm` by an invariant on the
-breadth-first queue.
+  `LabOk` preservation along the walk. The proven store invariant
+  consumes this as its open hypothesis (`hautos` in
+  `GensOk.foldl_admit`, `hγ` in `GensOk.admit`): each candidate that
+  passes the admission filter (`isautom`) must be a permutation of
+  `[0, n)`, phrased as the `checkAutom`-conjunct spelling
+  `((List.range ctx.n).map fun v => γ[v]!).isPerm (List.range ctx.n)`.
 
 **The conditional spine (layer two, part c).** The issue's
 unconditional claim is unsound: `certifyNodeAutom` emits
@@ -938,5 +901,225 @@ theorem GensOk.foldl_admit {ctx : Ctx} {st : AutState}
   foldl_preserves_mem (GensOk ctx) (fun st γ => st.admit ctx γ) autos
     (fun _ γ hγ hs => GensOk.admit hsymm hloop hb (hautos γ hγ) hs)
     st hst
+
+/-! # Layer two, part b: witness validity
+
+`witness?` composes filtered generators breadth-first from the
+identity; over a store of `checkAutom`-valid pairs every composed
+witness is `checkAutom`-valid, by a queue invariant over the closure
+toolkit (`checkAutom_range`, `checkAutom_compose`). The loop body is
+restated with the named core matchers (`witness?.match_*`), the same
+technique as `isautomOuter` above. -/
+
+/-- The state a `ForInStep` carries, whichever constructor. -/
+private def stepState {β : Type} : ForInStep β → β
+  | .done b => b
+  | .yield b => b
+
+/-- A `forIn` over `Id` preserves any invariant its body preserves on
+the list's elements. -/
+private theorem forIn_id_inv {α β : Type} {P : β → Prop}
+    {f : α → β → Id (ForInStep β)} :
+    ∀ (l : List α),
+      (∀ a ∈ l, ∀ b, P b → P (stepState (f a b))) →
+      ∀ (b : β), P b → P (forIn l b f : Id β)
+  | [], _, _, hb => hb
+  | a :: as, h, b, hb => by
+    rw [List.forIn_cons]
+    have hstep := h a (List.mem_cons_self ..) b hb
+    rcases hf : f a b with b' | b'
+    · rw [hf] at hstep
+      exact hstep
+    · rw [hf] at hstep
+      exact forIn_id_inv as
+        (fun a' ha' => h a' (List.mem_cons_of_mem a ha')) b' hstep
+
+/-- The outer loop body of `witness?`, spelled with the named core
+matchers so it is definitionally identical to the `do`-desugaring. -/
+private def witnessOuter (ctx : Ctx) (rsLab : Array Nat) (tc o : Nat)
+    (usable : Array (Array Nat × Array Nat)) (_x : Nat)
+    (__s : Option (Option (Nat × Array Nat)) ×
+      Array (Nat × Array Nat) × Nat × Nat) :
+    Id (ForInStep (Option (Option (Nat × Array Nat)) ×
+      Array (Nat × Array Nat) × Nat × Nat)) :=
+  have __s := __s.snd
+  have queue := __s.fst
+  have __s := __s.snd
+  have seen := __s.fst
+  have head := __s.snd
+  if head < queue.size then
+    witness?.match_5
+      (fun _ => Id (ForInStep (Option (Option (Nat × Array Nat)) ×
+        Array (Nat × Array Nat) × Nat × Nat)))
+      queue[head]! fun u π =>
+      have head := head + 1
+      have hit := none
+      do
+      let __s ←
+        forIn [0:o] hit fun j __s =>
+            have hit := __s
+            if (rsLab[tc + j]! == u) = true then
+              have hit := some j
+              pure (ForInStep.yield hit)
+            else pure (ForInStep.yield hit)
+      have hit : Option Nat := __s
+      witness?.match_1
+          (fun _ => Id (ForInStep (Option (Option (Nat × Array Nat)) ×
+            Array (Nat × Array Nat) × Nat × Nat)))
+          hit (fun o' => pure (ForInStep.done
+            (some (some (o', π)), queue, seen, head))) fun _ => do
+          let __s ←
+            forIn usable (queue, seen) fun x __s =>
+                have queue := __s.fst
+                have seen := __s.snd
+                witness?.match_3
+                  (fun _ => Id (ForInStep (Array (Nat × Array Nat) × Nat)))
+                  x fun γ γi => do
+                  let __s ←
+                    forIn [γ, γi] (queue, seen) fun f __s =>
+                        have queue := __s.fst
+                        have seen := __s.snd
+                        have w := f[u]!
+                        if elem seen w = true then
+                          pure (ForInStep.yield (queue, seen))
+                        else
+                          have seen := insert seen w
+                          have queue := queue.push (w, composePerm f π ctx.n)
+                          pure (ForInStep.yield (queue, seen))
+                  have queue : Array (Nat × Array Nat) := __s.fst
+                  have seen : Nat := __s.snd
+                  pure (ForInStep.yield (queue, seen))
+          have queue : Array (Nat × Array Nat) := __s.fst
+          have seen : Nat := __s.snd
+          pure (ForInStep.yield (none, queue, seen, head))
+  else pure (ForInStep.yield (none, queue, seen, head))
+
+private theorem witness?_eq (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
+    (usable : Array (Array Nat × Array Nat)) (o : Nat) :
+    witness? ctx rsLab tc usable o =
+      if (o == 0 || usable.isEmpty) = true then none
+      else
+        Break.runK.match_1 (fun _ => Id (Option (Nat × Array Nat)))
+          (forIn [0:ctx.n]
+            ((none : Option (Option (Nat × Array Nat))),
+              #[(rsLab[tc + o]!, Array.range ctx.n)],
+              insert 0 rsLab[tc + o]!, (0 : Nat))
+            (witnessOuter ctx rsLab tc o usable) :
+              Id (Option (Option (Nat × Array Nat)) ×
+                Array (Nat × Array Nat) × Nat × Nat)).fst
+          (fun r => pure r) (fun _ => pure none) := by
+  rw [witness?]
+  rfl
+
+private theorem id_bind_eq {α β : Type} (x : Id α) (f : α → Id β) :
+    x >>= f = f x := rfl
+
+/-- The witness-queue invariant: every queued composition, and any
+returned witness, passes `checkAutom`. -/
+private def WitnessInv (ctx : Ctx)
+    (s : Option (Option (Nat × Array Nat)) ×
+      Array (Nat × Array Nat) × Nat × Nat) : Prop :=
+  (∀ q ∈ s.2.1, checkAutom ctx.g q.2 ctx.n = true) ∧
+  (∀ a b, s.1 = some (some (a, b)) → checkAutom ctx.g b ctx.n = true)
+
+private theorem witnessOuter_inv {ctx : Ctx} {rsLab : Array Nat}
+    {tc o : Nat} {usable : Array (Array Nat × Array Nat)}
+    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 ctx.n = true ∧
+      checkAutom ctx.g p.2 ctx.n = true)
+    (x : Nat)
+    (s : Option (Option (Nat × Array Nat)) ×
+      Array (Nat × Array Nat) × Nat × Nat)
+    (hs : WitnessInv ctx s) :
+    WitnessInv ctx
+      (stepState (witnessOuter ctx rsLab tc o usable x s)) := by
+  rw [witnessOuter]
+  dsimp only
+  split
+  case isFalse => exact ⟨hs.1, fun a b h => nomatch h⟩
+  case isTrue hlt =>
+    have hπ : checkAutom ctx.g (s.2.1[s.2.2.2]!).2 ctx.n = true := by
+      have hq : s.2.1[s.2.2.2]! ∈ s.2.1 := by
+        rw [getElem!_pos s.2.1 s.2.2.2 hlt]
+        exact Array.getElem_mem hlt
+      exact hs.1 _ hq
+    simp only [id_bind_eq]
+    split
+    · exact ⟨hs.1, fun a b h => by
+        injection h with h1
+        injection h1 with h2
+        injection h2 with h3 h4
+        rw [← h4]
+        exact hπ⟩
+    · refine ⟨?_, fun a b h => nomatch h⟩
+      rw [← Array.forIn_toList]
+      refine forIn_id_inv
+        (P := fun qs : Array (Nat × Array Nat) × Nat =>
+          ∀ q ∈ qs.1, checkAutom ctx.g q.2 ctx.n = true)
+        usable.toList ?_ (s.2.1, s.2.2.1) hs.1
+      intro p hp qs hqs
+      refine forIn_id_inv
+        (P := fun qs : Array (Nat × Array Nat) × Nat =>
+          ∀ q ∈ qs.1, checkAutom ctx.g q.2 ctx.n = true)
+        [p.1, p.2] ?_ qs hqs
+      intro f hf qs2 hqs2
+      have hf' : checkAutom ctx.g f ctx.n = true := by
+        have hp' := hu p (Array.mem_toList_iff.mp hp)
+        rcases List.mem_cons.mp hf with rfl | hf2
+        · exact hp'.1
+        · have hfi : f = p.2 := by simpa using hf2
+          rw [hfi]
+          exact hp'.2
+      split
+      · exact hqs2
+      · intro q hq
+        rcases Array.mem_push.mp hq with hmem | rfl
+        · exact hqs2 q hmem
+        · exact checkAutom_compose hf' hπ
+
+/-- Layer two, part b, witness validity: over a store of
+`checkAutom`-valid generator pairs, every witness `witness?` returns
+passes `checkAutom` — the breadth-first queue holds only the identity
+and `checkAutom`-closed compositions. -/
+theorem witness?_checkAutom {ctx : Ctx} {rsLab : Array Nat}
+    {tc o : Nat} {usable : Array (Array Nat × Array Nat)}
+    {o' : Nat} {π : Array Nat}
+    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 ctx.n = true ∧
+      checkAutom ctx.g p.2 ctx.n = true)
+    (hw : witness? ctx rsLab tc usable o = some (o', π)) :
+    checkAutom ctx.g π ctx.n = true := by
+  rw [witness?_eq] at hw
+  by_cases h0 : (o == 0 || usable.isEmpty) = true
+  · rw [ite_eq_left h0] at hw
+    exact nomatch hw
+  · rw [ite_eq_right h0, forIn_range_eq] at hw
+    have hinit : WitnessInv ctx
+        ((none : Option (Option (Nat × Array Nat))),
+          #[(rsLab[tc + o]!, Array.range ctx.n)],
+          insert 0 rsLab[tc + o]!, (0 : Nat)) := by
+      constructor
+      · intro q hq
+        have hq' : q = (rsLab[tc + o]!, Array.range ctx.n) := by
+          simpa using hq
+        rw [hq']
+        exact checkAutom_range hb
+      · intro a b h
+        exact nomatch h
+    have hinv := forIn_id_inv (f := witnessOuter ctx rsLab tc o usable)
+      (List.range ctx.n)
+      (fun x _ s hs => witnessOuter_inv hu x s hs) _ hinit
+    rcases hfst : (forIn (List.range ctx.n)
+        ((none : Option (Option (Nat × Array Nat))),
+          #[(rsLab[tc + o]!, Array.range ctx.n)],
+          insert 0 rsLab[tc + o]!, (0 : Nat))
+        (witnessOuter ctx rsLab tc o usable) :
+          Id (Option (Option (Nat × Array Nat)) ×
+            Array (Nat × Array Nat) × Nat × Nat)).fst with _ | r
+    · rw [hfst] at hw
+      have hcon : (none : Option (Nat × Array Nat)) = some (o', π) := hw
+      exact nomatch hcon
+    · rw [hfst] at hw
+      have hr : r = some (o', π) := hw
+      exact hinv.2 o' π (by rw [hfst, hr])
 
 end Hex.GraphIso.Nauty
