@@ -576,4 +576,138 @@ theorem triple_flip_rows
 
 end TripleFlip
 
+/-! # Injective labellings are surjective
+
+The flip theorems consume a surjectivity hypothesis; at the search's
+nodes the labelling is injective and bounded, and on `n` positions
+that forces surjectivity by counting. -/
+
+private theorem sum_ind_zero {x : Nat} :
+    ∀ n, ¬ x < n →
+      ((List.range n).map fun v => if x = v then 1 else 0).sum = 0
+  | 0, _ => rfl
+  | n + 1, h => by
+    rw [sum_range_succ, sum_ind_zero n (by omega),
+      ite_eq_right (by omega)]
+
+private theorem sum_ind_one {x : Nat} :
+    ∀ n, x < n →
+      ((List.range n).map fun v => if x = v then 1 else 0).sum = 1
+  | 0, h => absurd h (by omega)
+  | n + 1, hx => by
+    rw [sum_range_succ]
+    rcases Decidable.em (x = n) with rfl | hne
+    · rw [sum_ind_zero x (by omega), ite_eq_left rfl]
+    · rw [sum_ind_one n (by omega), ite_eq_right hne]
+
+private theorem countP_zero_of_none {p : Nat → Bool} :
+    ∀ (l : List Nat), (∀ i ∈ l, ¬ p i = true) → l.countP p = 0
+  | [], _ => rfl
+  | i :: l, h => by
+    rw [List.countP_cons,
+      ite_eq_right (h i List.mem_cons_self),
+      countP_zero_of_none l fun i' hi' =>
+        h i' (List.mem_cons_of_mem _ hi')]
+
+private theorem sum_buckets {lab : Array Nat} {n : Nat} :
+    ∀ (l : List Nat), (∀ i ∈ l, lab[i]! < n) →
+      ((List.range n).map fun v =>
+        l.countP fun i => decide (lab[i]! = v)).sum = l.length
+  | [], _ => by
+    have hz : ∀ v ∈ List.range n,
+        ([] : List Nat).countP (fun i => decide (lab[i]! = v)) = 0 :=
+      fun v _ => rfl
+    rw [List.map_congr_left hz, sum_map_zero]
+    rfl
+  | i :: l, hb => by
+    have hcong : ∀ v ∈ List.range n,
+        ((i :: l).countP fun i' => decide (lab[i']! = v)) =
+          (l.countP fun i' => decide (lab[i']! = v)) +
+            (if lab[i]! = v then 1 else 0) := by
+      intro v _
+      rw [List.countP_cons]
+      rcases Decidable.em (lab[i]! = v) with h | h
+      · rw [ite_eq_left (decide_eq_true h), ite_eq_left h]
+      · rw [ite_eq_right (by simpa using h), ite_eq_right h]
+    rw [List.map_congr_left hcong,
+      sum_map_add (fun v => l.countP fun i' => decide (lab[i']! = v))
+        (fun v => if lab[i]! = v then 1 else 0),
+      sum_buckets l fun i' hi' => hb i' (List.mem_cons_of_mem _ hi'),
+      sum_ind_one n (hb i List.mem_cons_self), List.length_cons]
+
+private theorem bucket_le_one {lab : Array Nat} {n v : Nat}
+    (hinj : LabInj lab n) :
+    ∀ m, m ≤ n →
+      ((List.range m).countP fun i => decide (lab[i]! = v)) ≤ 1
+  | 0, _ => by
+    rw [List.range_zero, List.countP_nil]
+    omega
+  | m + 1, hm => by
+    rw [List.range_succ, List.countP_append, List.countP_cons,
+      List.countP_nil]
+    rcases Decidable.em (lab[m]! = v) with h | h
+    · rw [ite_eq_left (decide_eq_true h)]
+      have hz : ((List.range m).countP fun i =>
+          decide (lab[i]! = v)) = 0 := by
+        refine countP_zero_of_none _ fun i hi hp => ?_
+        have him := List.mem_range.mp hi
+        have hval : lab[i]! = v := of_decide_eq_true hp
+        have := hinj i m (by omega) (by omega) (hval.trans h.symm)
+        omega
+      omega
+    · rw [ite_eq_right (by simpa using h)]
+      have := bucket_le_one (v := v) hinj m (by omega)
+      omega
+
+private theorem sum_le_of_le_one {f : Nat → Nat} :
+    ∀ n, (∀ u, u < n → f u ≤ 1) → ((List.range n).map f).sum ≤ n
+  | 0, _ => by simp
+  | n + 1, hf => by
+    rw [sum_range_succ]
+    have h1 := sum_le_of_le_one n fun u hu => hf u (by omega)
+    have h2 := hf n (by omega)
+    omega
+
+private theorem sum_le_pred_of_zero_at {f : Nat → Nat} :
+    ∀ n v, v < n → f v = 0 → (∀ u, u < n → f u ≤ 1) →
+      ((List.range n).map f).sum ≤ n - 1
+  | 0, _, hv, _, _ => absurd hv (by omega)
+  | n + 1, v, hv, hz, hle => by
+    rw [sum_range_succ]
+    rcases Decidable.em (v = n) with heq | hne
+    · have hz' : f n = 0 := by
+        rw [← heq]
+        exact hz
+      have h1 := sum_le_of_le_one n fun u hu => hle u (by omega)
+      omega
+    · have h1 := sum_le_pred_of_zero_at n v (by omega) hz
+        fun u hu => hle u (by omega)
+      have h2 := hle n (by omega)
+      omega
+
+/-- An injective bounded labelling on `n` positions hits every
+vertex. -/
+theorem labInj_surj {lab : Array Nat} {n : Nat}
+    (hsz : n ≤ lab.size) (hlab : LabOk lab n) (hinj : LabInj lab n) :
+    ∀ v, v < n → ∃ i, i < n ∧ lab[i]! = v := by
+  intro v hv
+  rcases Classical.em (∃ i, i < n ∧ lab[i]! = v) with h | h
+  · exact h
+  · exfalso
+    have htotal : ((List.range n).map fun u =>
+        (List.range n).countP fun i => decide (lab[i]! = u)).sum = n := by
+      rw [sum_buckets (List.range n) fun i hi =>
+        hlab i (by
+          have := List.mem_range.mp hi
+          omega), List.length_range]
+    have hzero : ((List.range n).countP fun i =>
+        decide (lab[i]! = v)) = 0 := by
+      refine countP_zero_of_none _ fun i hi hp => ?_
+      exact h ⟨i, List.mem_range.mp hi, of_decide_eq_true hp⟩
+    have hbound := sum_le_pred_of_zero_at
+      (f := fun u => (List.range n).countP fun i =>
+        decide (lab[i]! = u)) n v hv hzero
+      fun u _ => bucket_le_one hinj n (Nat.le_refl _)
+    omega
+
 end Hex.GraphIso.Nauty
