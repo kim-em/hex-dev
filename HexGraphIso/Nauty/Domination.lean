@@ -65,27 +65,66 @@ isolations (`specNode_discrete`, `specNode_internal` with
 dispatch with the specification's `discreteAt` through
 `SearchOk.count`).
 
-What remains is the mutual quartet induction itself, on the
-`canonlab_cellsReach` skeleton (`SearchReach.lean`, whose composite
-helpers `recover_out`/`processnode_searchOk`/`canonlab_or_of` are
-now public for it): per quartet function, thread `DomOk` and
-conclude in the `searchNode_eq` shape
-`incKey ctx bs' out.canonlab =
-  keyMax (incKey ctx bs st.canonlab) (prefixKey cs (specNode …))`,
-with `specNode_internal` decomposing the spec side into the child
-sweep, the `keysMax` fold literally matching the loop's threading,
-`keysMax_eq_of_le` absorbing early-unwound sibling suffixes, the
-leaf arms discharged by `processnode_leaf`/`processnode_leafFirst`/
-`processnode_auto` + `auto_keyMax` through
-`specNode_discrete`/`prefixKey_leafKey`, and the orbit skips by
-`childKey_of_orbPruned` + `orbConn_of_ptr` + `cellStab_of_scatter`
-(on the branch carrying `OrbJoin.lean`). The two return-protocol
-soundness arguments — the `pruneReturn` unwind absorbing sibling
-ranges through the frozen machine, and the gca returns through the
-generator arguments — are the induction's genuinely open
-obligations; everything else is assembled shelf. At the root,
-`specNode_achieved` closes the achieved direction and the induction
-the domination direction, giving `canonSpecKey G = tracedKey G`.
+The return-protocol layer is now proven, and it fixes the
+induction's architecture per unwind mode:
+
+- **Frozen unwinds absorb locally.** After a code-4 leaf with the
+  machine frozen downward, `pruneReturn`'s `eqlevCanon` and
+  `allsamelevel - 1` forms never return below the recorded
+  divergence, so every abandoned loop's truncated path still
+  contains it: `frozen_take_keyLe` dominates each abandoned
+  sibling's whole subtree and `keysMax_absorb` collapses the
+  suffix, loop by loop, on the way up. In this mode every quartet
+  theorem still concludes the full `keyMax` equation.
+- **Generator returns absorb wholesale at the gca loop.** After a
+  code-1/code-2 admission, intermediate loops conclude nothing
+  locally; the quartet theorems hand up the payload (the admitted
+  scatter, its carry between the guiding sibling's and the current
+  child's individualized vertices, its cell stabilization at the
+  gca node), and the loop at the returned gca level identifies the
+  whole current child subtree with the guiding sibling's via
+  `childKey_of_carried`, whose key its own fold already absorbed
+  (`specChild_le_specNode` walks skipped positions up to the
+  child). The conclusion shape is therefore a disjunction: normal
+  exit or frozen unwind with the full equation, generator unwind
+  with the payload.
+- The in-loop orbit skips (`st.orbits[tv]! == tv` failing)
+  discharge by `orbConn_of_ptr` + `wordConn_symm` +
+  `cellStab_of_scatter` + `childKey_of_carried` at the loop's own
+  node.
+
+Three obligations remain genuinely open before the mutual
+induction can close unconditionally, all external to this file:
+
+1. The `noncheaplevel - 1` arm of `pruneReturn` (fired whenever
+   `noncheaplevel ≤ save`) abandons loops at levels where the
+   machine may have re-agreed; its justification is the cheapautom
+   subtree theorem of the small-cell programme (`SmallCell.lean`
+   lineage): every leaf below a cheapautom-passing node realizes
+   an automorphism with the first leaf.
+2. The scan-free code-1 gate (`gcaFirst ≥ noncheaplevel`) admits a
+   scatter whose `checkAutom` validity is store-validity arm 2 —
+   the same programme.
+3. The `shortprune`/`longprune` target-cell filtering drops
+   vertices via the `(fix, mcr)` pairs of the `autos` store
+   (`fmperm`/`fmptn`); dominating those skips needs a ledger tying
+   each stored pair to a generator word or a cheapautom implicit
+   automorphism whose mcr semantics justify the drop. No branch
+   has built this layer; it is the one piece of the induction with
+   no existing machinery.
+
+With those three supplied, the mutual quartet induction on the
+`canonlab_cellsReach` skeleton (whose composite helpers
+`recover_out`/`processnode_searchOk`/`canonlab_or_of` are public)
+threads `DomOk`, discharges leaf arms by `processnode_leaf`/
+`processnode_leafFirst`/`processnode_auto` + `auto_keyMax` through
+`specNode_discrete`/`prefixKey_leafKey`, internal arms by
+`specNode_internal` (the `keysMax` fold literally matching the
+loop), machines by `otherNodePrep_codeInv`/`recover_machines` and
+the frames, dispatch by `discreteAt_iff_bcount`, and unwinds by
+the mode analysis above. At the root, `specNode_achieved` closes
+the achieved direction and the induction the domination direction,
+giving `canonSpecKey G = tracedKey G`.
 -/
 
 namespace Hex.GraphIso.Nauty
