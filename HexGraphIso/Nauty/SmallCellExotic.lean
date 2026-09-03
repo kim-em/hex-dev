@@ -8,6 +8,10 @@ module
 
 public import HexGraphIso.Nauty.SmallCellLeaves
 import all HexGraphIso.Nauty.Equitable
+public import HexGraphIso.Nauty.EquitableStep
+import all HexGraphIso.Nauty.EquitableStep
+public import HexGraphIso.Nauty.EquitableFix
+import all HexGraphIso.Nauty.EquitableFix
 
 public section
 
