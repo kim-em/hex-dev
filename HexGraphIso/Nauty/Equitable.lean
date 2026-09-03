@@ -809,4 +809,582 @@ theorem refineTrivial_cell_adj {ctx : Ctx} {level split1 : Nat}
         omega
       · exact ⟨true, fun q hq1 hq2 => ht q (by omega) (by omega)⟩
 
+/-! # The nontrivial-splitter pass: group postconditions
+
+The window scan writes a boundary at the end of every nonempty count
+group whose end stays inside the cell, and the counting-sort
+redistribution lays the members out in ascending count-group order, so
+positions of the result connected by an open run carry equal counts
+into the captured splitter set. -/
+
+/-- The scan closes the junction after each nonempty group that ends
+inside the cell. -/
+theorem windowScan_junction {level cell1 cell2 : Nat} {counts : List Nat} :
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      cell1 ≤ c1 →
+      c1 + (vs.map (multOf counts)).sum = cell2 + 1 →
+      cell2 < st.ptn.size →
+      (∀ p, c1 ≤ p → p < cell2 → st.ptn[p]! > level) →
+      ∀ k, k < vs.length → 0 < multOf counts vs[k]! →
+        c1 + ((vs.take (k + 1)).map (multOf counts)).sum ≤ cell2 →
+        (windowScan level cell1 cell2 counts vs c1 maxcell st).ptn[
+          c1 + ((vs.take (k + 1)).map (multOf counts)).sum - 1]! = level
+  | [], _, _, _, _, _, _, _, k, hk, _, _ => absurd hk (by simp)
+  | v :: vs', c1, maxcell, st, hc1, htot, hsz, hfresh, k, hk, hmk, hend => by
+    rw [windowScan]
+    rw [List.map_cons, List.sum_cons] at htot
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · rw [ite_eq_left hm]
+      have hp1 := ptn_windowStep_eq level cell1 cell2 v c1
+        (c1 + multOf counts v) maxcell st
+      cases k with
+      | zero =>
+        rw [List.take_succ_cons, List.take_zero, List.map_cons,
+          List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero]
+          at hend ⊢
+        rw [List.getElem!_cons_zero] at hmk
+        have hwrite : (windowStep level cell1 cell2 v c1
+            (c1 + multOf counts v) maxcell st).ptn =
+            st.ptn.set! (c1 + multOf counts v - 1) level := by
+          rw [hp1, ite_eq_left (by omega)]
+        obtain ⟨_, _, hout, hsizes, _⟩ := windowScan_payload
+          (nn := cell2 + 1) (counts := counts)
+          (show cell2 < cell2 + 1 by omega) vs'
+          (c1 + multOf counts v)
+          (if Int.ofNat (multOf counts v) > maxcell then
+            Int.ofNat (multOf counts v) else maxcell)
+          (windowStep level cell1 cell2 v c1
+            (c1 + multOf counts v) maxcell st)
+          (show cell1 ≤ c1 + multOf counts v by omega)
+          (show c1 + multOf counts v +
+            (vs'.map (multOf counts)).sum = cell2 + 1 by omega)
+          (by rw [hwrite, Array.size_set!]; omega)
+          (by
+            intro p hp1' hp2'
+            rw [hwrite, Array.getElem!_set!_ne _ _ _ _ (by omega)]
+            exact hfresh p (by omega) hp2')
+        rw [hout (c1 + multOf counts v - 1) (Or.inl (by omega)), hwrite,
+          Array.getElem!_set!_self _ _ _ (by omega)]
+      | succ j =>
+        rw [List.take_succ_cons, List.map_cons, List.sum_cons] at hend ⊢
+        rw [List.getElem!_cons_succ] at hmk
+        have hidx : c1 + (multOf counts v +
+            ((vs'.take (j + 1)).map (multOf counts)).sum) =
+            (c1 + multOf counts v) +
+              ((vs'.take (j + 1)).map (multOf counts)).sum := by
+          omega
+        rw [hidx] at hend ⊢
+        refine windowScan_junction vs' (c1 + multOf counts v) _ _
+          (by omega) (by omega)
+          (by
+            rw [ptn_windowStep_eq]
+            split
+            · rw [Array.size_set!]
+              omega
+            · omega)
+          (by
+            intro p hp1' hp2'
+            rw [ptn_windowStep_eq]
+            split
+            · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+              exact hfresh p (by omega) hp2'
+            · exact hfresh p (by omega) hp2')
+          j (by simpa using hk) hmk hend
+    · rw [ite_eq_right hm]
+      cases k with
+      | zero =>
+        rw [List.getElem!_cons_zero] at hmk
+        omega
+      | succ j =>
+        rw [List.take_succ_cons, List.map_cons, List.sum_cons] at hend ⊢
+        rw [List.getElem!_cons_succ] at hmk
+        have hm0 : multOf counts v = 0 := by omega
+        rw [hm0] at hend ⊢
+        simp only [Nat.zero_add] at hend ⊢
+        exact windowScan_junction vs' c1 maxcell st hc1 (by omega) hsz
+          hfresh j (by simpa using hk) hmk hend
+
+/-! ## The counting-sort layout, block by block -/
+
+private theorem zipIdx_countP_fst' (w : Nat) :
+    ∀ (cs : List Nat) (s : Nat),
+      ((cs.zipIdx s).countP fun p => p.1 == w) = cs.countP (· == w)
+  | [], _ => rfl
+  | x :: xs, s => by
+    rw [List.zipIdx_cons, List.countP_cons, List.countP_cons,
+      zipIdx_countP_fst' w xs (s + 1)]
+
+/-- One value's chunk of the counting-sort layout. -/
+private def chunkOf (lab : Array Nat) (cell1 : Nat) (counts : List Nat)
+    (v : Nat) : List Nat :=
+  (counts.zipIdx.filter fun p => p.1 == v).map fun p => lab[cell1 + p.2]!
+
+private theorem chunkOf_length (lab : Array Nat) (cell1 : Nat)
+    (counts : List Nat) (v : Nat) :
+    (chunkOf lab cell1 counts v).length = multOf counts v := by
+  rw [chunkOf, List.length_map, ← List.countP_eq_length_filter,
+    zipIdx_countP_fst', multOf]
+
+theorem countsOf_getElem! {ctx : Ctx} {lab : Array Nat}
+    {workset cell1 cell2 j : Nat} (hj : j < cell2 + 1 - cell1) :
+    (countsOf ctx lab workset cell1 cell2)[j]! =
+      popCount (workset &&& ctx.g[lab[cell1 + j]!]!) := by
+  rw [countsOf_eq_map,
+    getElem!_pos _ j (by rw [List.length_map, segN_length]; exact hj),
+    List.getElem_map,
+    ← getElem!_pos (segN lab cell1 (cell2 + 1 - cell1)) j
+      (by rw [segN_length]; exact hj),
+    segN_getElem! lab cell1 (cell2 + 1 - cell1) j hj]
+
+/-- Every element of a chunk carries the chunk's count value. -/
+private theorem chunkOf_count {ctx : Ctx} {lab : Array Nat}
+    {workset cell1 cell2 : Nat} {v x : Nat}
+    (hx : x ∈ chunkOf lab cell1 (countsOf ctx lab workset cell1 cell2) v) :
+    popCount (workset &&& ctx.g[x]!) = v := by
+  rw [chunkOf] at hx
+  obtain ⟨p, hpf, rfl⟩ := List.mem_map.mp hx
+  have hpm := List.mem_filter.mp hpf
+  obtain ⟨c, j⟩ := p
+  obtain ⟨_, hjlt, hcv⟩ := List.mem_zipIdx hpm.1
+  rw [Nat.zero_add, countsOf_length] at hjlt
+  have hcv' : c = (countsOf ctx lab workset cell1 cell2)[j]! := by
+    rw [getElem!_pos _ j (by rw [countsOf_length]; exact hjlt), hcv]
+    rfl
+  have hbeq : c = v := by
+    have := hpm.2
+    simpa using this
+  dsimp only
+  rw [← countsOf_getElem! hjlt, ← hcv', hbeq]
+
+private theorem getElem!_append_left'' {β : Type} [Inhabited β]
+    {as bs : List β} {i : Nat} (h : i < as.length) :
+    (as ++ bs)[i]! = as[i]! := by
+  rw [getElem!_pos (as ++ bs) i (by rw [List.length_append]; omega),
+    getElem!_pos as i h, List.getElem_append_left h]
+
+private theorem getElem!_append_right'' {β : Type} [Inhabited β]
+    {as bs : List β} {i : Nat} (h : as.length ≤ i)
+    (hi : i - as.length < bs.length) :
+    (as ++ bs)[i]! = bs[i - as.length]! := by
+  rw [getElem!_pos (as ++ bs) i (by rw [List.length_append]; omega),
+    getElem!_pos bs (i - as.length) hi, List.getElem_append_right h]
+
+/-- Reading inside block `k` of a flat concatenation. -/
+private theorem flatMap_getElem!_chunk {α β : Type} [Inhabited α]
+    [Inhabited β] (g : α → List β) :
+    ∀ (vs : List α) (k o : Nat), k < vs.length → o < (g vs[k]!).length →
+      (vs.flatMap g)[((vs.take k).flatMap g).length + o]! = (g vs[k]!)[o]!
+  | [], k, _, hk, _ => absurd hk (by simp)
+  | x :: xs, 0, o, _, ho => by
+    rw [List.getElem!_cons_zero] at ho ⊢
+    rw [List.take_zero, List.flatMap_nil, List.length_nil, Nat.zero_add,
+      List.flatMap_cons, getElem!_append_left'' ho]
+  | x :: xs, k + 1, o, hk, ho => by
+    rw [List.getElem!_cons_succ] at ho ⊢
+    have hk' : k < xs.length := by
+      simp only [List.length_cons] at hk
+      omega
+    rw [List.take_succ_cons, List.flatMap_cons, List.flatMap_cons,
+      List.length_append]
+    have hbound : ((xs.take k).flatMap g).length + o <
+        (xs.flatMap g).length := by
+      have h1 : ((xs.take (k + 1)).flatMap g).length ≤
+          (xs.flatMap g).length := by
+        rw [List.length_flatMap, List.length_flatMap]
+        conv =>
+          rhs
+          rw [← List.take_append_drop (k + 1) xs]
+        rw [List.map_append, List.sum_append]
+        omega
+      have h2 : ((xs.take (k + 1)).flatMap g).length =
+          ((xs.take k).flatMap g).length + (g xs[k]!).length := by
+        rw [List.take_add_one, List.getElem?_eq_getElem hk',
+          Option.toList_some, List.flatMap_append, List.length_append,
+          List.flatMap_cons, List.flatMap_nil, List.append_nil,
+          getElem!_pos xs k hk']
+      omega
+    have hstep := getElem!_append_right'' (as := g x) (bs := xs.flatMap g)
+      (i := (g x).length + (((xs.take k).flatMap g).length + o))
+      (by omega) (by omega)
+    have harr1 : (g x).length + ((xs.take k).flatMap g).length + o =
+        (g x).length + (((xs.take k).flatMap g).length + o) := by omega
+    have harr2 : (g x).length + (((xs.take k).flatMap g).length + o) -
+        (g x).length = ((xs.take k).flatMap g).length + o := by omega
+    rw [harr1, hstep, harr2]
+    exact flatMap_getElem!_chunk g xs k o hk' ho
+
+/-- Every offset of a flat concatenation lies in a nonempty block. -/
+private theorem chunk_of_offset {α β : Type} [Inhabited α] (g : α → List β) :
+    ∀ (vs : List α) (o : Nat), o < (vs.flatMap g).length →
+      ∃ k, k < vs.length ∧ 0 < (g vs[k]!).length ∧
+        ((vs.take k).flatMap g).length ≤ o ∧
+        o < ((vs.take (k + 1)).flatMap g).length
+  | [], o, ho => absurd ho (by simp)
+  | x :: xs, o, ho => by
+    rw [List.flatMap_cons, List.length_append] at ho
+    rcases Nat.lt_or_ge o (g x).length with hlt | hge
+    · refine ⟨0, by simp, ?_, ?_, ?_⟩
+      · rw [List.getElem!_cons_zero]
+        omega
+      · rw [List.take_zero, List.flatMap_nil, List.length_nil]
+        omega
+      · rw [List.take_succ_cons, List.take_zero, List.flatMap_cons,
+          List.flatMap_nil, List.append_nil]
+        omega
+    · obtain ⟨k, hk, hne, hlo, hhi⟩ := chunk_of_offset g xs
+        (o - (g x).length) (by omega)
+      refine ⟨k + 1, by simp only [List.length_cons]; omega, ?_, ?_, ?_⟩
+      · rw [List.getElem!_cons_succ]
+        exact hne
+      · rw [List.take_succ_cons, List.flatMap_cons, List.length_append]
+        omega
+      · rw [List.take_succ_cons, List.flatMap_cons, List.length_append]
+        omega
+
+private theorem take_chunk_length {lab : Array Nat} {cell1 : Nat}
+    (counts : List Nat) (vs : List Nat) (k : Nat) :
+    ((vs.take k).flatMap (chunkOf lab cell1 counts)).length =
+      ((vs.take k).map (multOf counts)).sum := by
+  rw [List.length_flatMap]
+  congr 1
+  exact List.map_congr_left fun v _ => chunkOf_length lab cell1 counts v
+
+private theorem take_map_sum_mono (f : Nat → Nat) :
+    ∀ (vs : List Nat) (a b : Nat), a ≤ b →
+      ((vs.take a).map f).sum ≤ ((vs.take b).map f).sum
+  | [], _, _, _ => by simp
+  | v :: vs, 0, b, _ => by
+    rw [List.take_zero]
+    exact Nat.zero_le _
+  | v :: vs, a + 1, 0, hab => absurd hab (by omega)
+  | v :: vs, a + 1, b + 1, hab => by
+    rw [List.take_succ_cons, List.take_succ_cons, List.map_cons,
+      List.map_cons, List.sum_cons, List.sum_cons]
+    have := take_map_sum_mono f vs a b (by omega)
+    omega
+
+private theorem segmentOf_chunks (lab : Array Nat) (cell1 : Nat)
+    (counts values : List Nat) :
+    segmentOf lab cell1 counts values =
+      values.flatMap (chunkOf lab cell1 counts) := rfl
+
+private theorem take_flatMap_succ_length {α β : Type} [Inhabited α]
+    (g : α → List β) (vs : List α) (k : Nat) (hk : k < vs.length) :
+    ((vs.take (k + 1)).flatMap g).length =
+      ((vs.take k).flatMap g).length + (g vs[k]!).length := by
+  rw [List.take_add_one, List.getElem?_eq_getElem hk,
+    Option.toList_some, List.flatMap_append, List.length_append,
+    List.flatMap_cons, List.flatMap_nil, List.append_nil,
+    getElem!_pos vs k hk]
+
+/-- One processed cell of the nontrivial pass: sizes and the outside
+kept, and positions of the window connected by an open run of the
+result carry equal counts into the captured splitter set. -/
+theorem nontrivialCell_effect {ctx : Ctx} {level workset cell1 cell2 : Nat}
+    {st : RefineSt} (h12 : cell1 ≤ cell2) (hsz : cell2 < st.lab.size)
+    (hlp : st.ptn.size = st.lab.size)
+    (hfresh : ∀ p, cell1 ≤ p → p < cell2 → st.ptn[p]! > level) :
+    (nontrivialCell ctx level workset cell1 cell2 st).lab.size =
+      st.lab.size ∧
+    (∀ j, j < cell1 ∨ cell2 < j →
+      (nontrivialCell ctx level workset cell1 cell2 st).lab[j]! =
+        st.lab[j]!) ∧
+    (∀ q, q < cell1 ∨ cell2 ≤ q →
+      (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
+        st.ptn[q]!) ∧
+    (nontrivialCell ctx level workset cell1 cell2 st).ptn.size =
+      st.ptn.size ∧
+    (∀ q q', cell1 ≤ q → q ≤ q' → q' ≤ cell2 →
+      (∀ i, q ≤ i → i < q' →
+        (nontrivialCell ctx level workset cell1 cell2 st).ptn[i]! >
+          level) →
+      popCount (workset &&&
+        ctx.g[(nontrivialCell ctx level workset cell1 cell2 st).lab[q]!]!) =
+      popCount (workset &&&
+        ctx.g[(nontrivialCell ctx level workset cell1 cell2 st).lab[q']!]!)) := by
+  rcases hbeq : (cell1 == cell2) with _ | _
+  · rcases hmm : ((countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) ==
+        (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
+          ((countsOf ctx st.lab workset cell1 cell2).headD 0)) with _ | _
+    · -- the counting-sort branch
+      have hr : nontrivialCell ctx level workset cell1 cell2 st =
+          nontrivialFix cell1
+            { windowScan level cell1 cell2
+                (countsOf ctx st.lab workset cell1 cell2)
+                (countValues (countsOf ctx st.lab workset cell1 cell2))
+                cell1 (-1) st with
+              lab := writeSegment
+                  (windowScan level cell1 cell2
+                    (countsOf ctx st.lab workset cell1 cell2)
+                    (countValues (countsOf ctx st.lab workset cell1 cell2))
+                    cell1 (-1) st).lab cell1
+                  (segmentOf
+                    (windowScan level cell1 cell2
+                      (countsOf ctx st.lab workset cell1 cell2)
+                      (countValues (countsOf ctx st.lab workset cell1 cell2))
+                      cell1 (-1) st).lab cell1
+                    (countsOf ctx st.lab workset cell1 cell2)
+                    (countValues (countsOf ctx st.lab workset cell1
+                      cell2))) } := by
+        rw [nontrivialCell, ite_eq_right (by simp [hbeq]),
+          ite_eq_right (by simpa using hmm)]
+      have hne : cell1 < cell2 := by
+        have hnb : ¬(cell1 = cell2) := by simpa using hbeq
+        omega
+      have hlabscan : (windowScan level cell1 cell2
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st).lab = st.lab :=
+        windowScan_lab level cell1 cell2 _ _ _ _ _
+      rw [hr, nontrivialFix_lab, nontrivialFix_ptn]
+      dsimp only
+      rw [hlabscan]
+      obtain ⟨_, _, hout, hsizes, _⟩ := windowScan_payload
+        (nn := cell2 + 1)
+        (counts := countsOf ctx st.lab workset cell1 cell2)
+        (show cell2 < cell2 + 1 by omega)
+        (countValues (countsOf ctx st.lab workset cell1 cell2))
+        cell1 (-1) st (Nat.le_refl cell1)
+        (by rw [sum_multOf_countValues, countsOf_length]; omega)
+        (by omega) hfresh
+      have hseglen : (segmentOf st.lab cell1
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))).length =
+          cell2 + 1 - cell1 := by
+        rw [segmentOf_chunks, List.length_flatMap,
+          List.map_congr_left fun v _ =>
+            chunkOf_length st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2) v,
+          sum_multOf_countValues, countsOf_length]
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
+      · rw [writeSegment_size]
+      · intro j hj
+        rw [writeSegment_outside _ _ _ j (by
+          rw [hseglen]
+          omega)]
+      · intro q hq
+        exact hout q (by omega)
+      · exact hsizes
+      · intro q q' hq hqq hq' hopen
+        have hwr : segN (writeSegment st.lab cell1
+            (segmentOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1 cell2))))
+            cell1
+            (segmentOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1
+                cell2))).length =
+            segmentOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1 cell2)) :=
+          segN_writeSegment _ _ _ (by rw [hseglen]; omega)
+        have hpos : ∀ p : Nat, cell1 ≤ p → p ≤ cell2 →
+            (writeSegment st.lab cell1
+              (segmentOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2)
+                (countValues (countsOf ctx st.lab workset cell1
+                  cell2))))[p]! =
+            ((countValues (countsOf ctx st.lab workset cell1
+              cell2)).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2)))[p - cell1]! := by
+          intro p hp1 hp2
+          rw [← segmentOf_chunks]
+          have hsg := segN_getElem! (writeSegment st.lab cell1
+            (segmentOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1 cell2))))
+            cell1
+            (segmentOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2)
+              (countValues (countsOf ctx st.lab workset cell1
+                cell2))).length
+            (p - cell1) (by rw [hseglen]; omega)
+          rw [hwr] at hsg
+          have hpe : p = cell1 + (p - cell1) := by omega
+          conv =>
+            lhs
+            rw [hpe]
+          rw [← hsg]
+        have hval : ∀ (o k : Nat),
+            k < (countValues (countsOf ctx st.lab workset cell1
+              cell2)).length →
+            (((countValues (countsOf ctx st.lab workset cell1
+              cell2)).take k).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length ≤ o →
+            o < (((countValues (countsOf ctx st.lab workset cell1
+              cell2)).take (k + 1)).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length →
+            popCount (workset &&&
+              ctx.g[((countValues (countsOf ctx st.lab workset cell1
+                cell2)).flatMap
+                (chunkOf st.lab cell1
+                  (countsOf ctx st.lab workset cell1 cell2)))[o]!]!) =
+              (countValues (countsOf ctx st.lab workset cell1
+                cell2))[k]! := by
+          intro o k hk hlo hhi
+          have hsucc := take_flatMap_succ_length
+            (chunkOf st.lab cell1
+              (countsOf ctx st.lab workset cell1 cell2))
+            (countValues (countsOf ctx st.lab workset cell1 cell2)) k hk
+          have hoeq : o = (((countValues (countsOf ctx st.lab workset
+              cell1 cell2)).take k).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length +
+              (o - (((countValues (countsOf ctx st.lab workset cell1
+                cell2)).take k).flatMap
+                (chunkOf st.lab cell1
+                  (countsOf ctx st.lab workset cell1
+                    cell2))).length) := by
+            omega
+          rw [hoeq, flatMap_getElem!_chunk _ _ k _ hk (by omega)]
+          refine chunkOf_count (lab := st.lab) (cell1 := cell1)
+            (cell2 := cell2)
+            (x := (chunkOf st.lab cell1
+            (countsOf ctx st.lab workset cell1 cell2)
+            ((countValues (countsOf ctx st.lab workset cell1
+              cell2))[k]!))[o - (((countValues (countsOf ctx st.lab
+                workset cell1 cell2)).take k).flatMap
+                (chunkOf st.lab cell1
+                  (countsOf ctx st.lab workset cell1 cell2))).length]!)
+            ?_
+          rw [getElem!_pos (chunkOf st.lab cell1
+            (countsOf ctx st.lab workset cell1 cell2)
+            ((countValues (countsOf ctx st.lab workset cell1
+              cell2))[k]!))
+            (o - (((countValues (countsOf ctx st.lab workset cell1
+              cell2)).take k).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length)
+            (by omega)]
+          exact List.getElem_mem _
+        have hoq : q - cell1 <
+            ((countValues (countsOf ctx st.lab workset cell1
+              cell2)).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length := by
+          rw [← segmentOf_chunks, hseglen]
+          omega
+        have hoq' : q' - cell1 <
+            ((countValues (countsOf ctx st.lab workset cell1
+              cell2)).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length := by
+          rw [← segmentOf_chunks, hseglen]
+          omega
+        obtain ⟨k, hk, hkne, hklo, hkhi⟩ := chunk_of_offset _ _ _ hoq
+        obtain ⟨k', hk', hkne', hklo', hkhi'⟩ := chunk_of_offset _ _ _ hoq'
+        rw [hpos q hq (by omega), hpos q' (by omega) hq',
+          hval (q - cell1) k hk hklo hkhi,
+          hval (q' - cell1) k' hk' hklo' hkhi']
+        have hmono : ∀ a b : Nat, a ≤ b →
+            (((countValues (countsOf ctx st.lab workset cell1
+              cell2)).take a).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length ≤
+            (((countValues (countsOf ctx st.lab workset cell1
+              cell2)).take b).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length := by
+          intro a b hab
+          rw [take_chunk_length, take_chunk_length]
+          exact take_map_sum_mono _ _ a b hab
+        have hkk : k ≤ k' := by
+          rcases Nat.lt_or_ge k' k with h | h
+          · exfalso
+            have := hmono (k' + 1) k h
+            omega
+          · exact h
+        rcases Nat.eq_or_lt_of_le hkk with rfl | hklt
+        · rfl
+        · exfalso
+          have hjunc := windowScan_junction
+            (level := level) (cell1 := cell1) (cell2 := cell2)
+            (counts := countsOf ctx st.lab workset cell1 cell2)
+            (countValues (countsOf ctx st.lab workset cell1 cell2))
+            cell1 (-1) st (Nat.le_refl cell1)
+            (by rw [sum_multOf_countValues, countsOf_length]; omega)
+            (by omega) hfresh k hk
+            (by
+              rw [← chunkOf_length st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2)]
+              exact hkne)
+            (by
+              have h1 : (((countValues (countsOf ctx st.lab workset
+                  cell1 cell2)).take (k + 1)).flatMap
+                  (chunkOf st.lab cell1
+                    (countsOf ctx st.lab workset cell1 cell2))).length ≤
+                  q' - cell1 :=
+                Nat.le_trans (hmono (k + 1) k' hklt) hklo'
+              rw [take_chunk_length] at h1
+              omega)
+          have hmulteq := take_chunk_length (lab := st.lab)
+            (cell1 := cell1)
+            (countsOf ctx st.lab workset cell1 cell2)
+            (countValues (countsOf ctx st.lab workset cell1 cell2))
+            (k + 1)
+          have h1 : (((countValues (countsOf ctx st.lab workset
+              cell1 cell2)).take (k + 1)).flatMap
+              (chunkOf st.lab cell1
+                (countsOf ctx st.lab workset cell1 cell2))).length ≤
+              q' - cell1 :=
+            Nat.le_trans (hmono (k + 1) k' hklt) hklo'
+          have h2 := hopen (cell1 + (((countValues (countsOf ctx st.lab
+              workset cell1 cell2)).take (k + 1)).map
+              (multOf (countsOf ctx st.lab workset cell1
+                cell2))).sum - 1)
+            (by rw [← hmulteq]; omega)
+            (by rw [← hmulteq]; omega)
+          rw [hjunc] at h2
+          omega
+    · -- all counts equal: the window does not move
+      have hr : nontrivialCell ctx level workset cell1 cell2 st =
+          { st with
+            longcode := mash st.longcode
+              ((countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+                ((countsOf ctx st.lab workset cell1 cell2).headD 0) +
+                cell1) } := by
+        rw [nontrivialCell, ite_eq_right (by simp [hbeq]),
+          ite_eq_left hmm]
+      rw [hr]
+      dsimp only
+      refine ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, rfl, ?_⟩
+      intro q q' hq hqq hq' _
+      have hcnt : ∀ p : Nat, cell1 ≤ p → p ≤ cell2 →
+          popCount (workset &&& ctx.g[st.lab[p]!]!) ∈
+            countsOf ctx st.lab workset cell1 cell2 := by
+        intro p hp1 hp2
+        have hj : p - cell1 < cell2 + 1 - cell1 := by omega
+        have hcg := countsOf_getElem! (ctx := ctx) (lab := st.lab)
+          (workset := workset) (cell1 := cell1) (cell2 := cell2) hj
+        have heqp : cell1 + (p - cell1) = p := by omega
+        rw [heqp] at hcg
+        rw [← hcg, getElem!_pos _ _ (by rw [countsOf_length]; omega)]
+        exact List.getElem_mem _
+      have hminmax := (beq_iff_eq).mp hmm
+      have h1 := hcnt q hq (by omega)
+      have h2 := hcnt q' (by omega) hq'
+      have hle1 := foldl_min_le_mem _
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ h1
+      have hge1 := foldl_max_ge_mem _
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ h1
+      have hle2 := foldl_min_le_mem _
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ h2
+      have hge2 := foldl_max_ge_mem _
+        ((countsOf ctx st.lab workset cell1 cell2).headD 0) _ h2
+      omega
+  · -- singleton window
+    have hr : nontrivialCell ctx level workset cell1 cell2 st = st := by
+      rw [nontrivialCell, ite_eq_left hbeq]
+    have hc12 : cell1 = cell2 := beq_iff_eq.mp hbeq
+    rw [hr]
+    refine ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, rfl, ?_⟩
+    intro q q' hq hqq hq' _
+    have : q = q' := by omega
+    rw [this]
+
 end Hex.GraphIso.Nauty
