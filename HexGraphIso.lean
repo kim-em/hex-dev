@@ -36,6 +36,7 @@ public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.TraceAgree
 public import HexGraphIso.Nauty.StoreValid
 public import HexGraphIso.Nauty.SmallCell
+public import HexGraphIso.Nauty.SmallCellBranch
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.SearchReach
