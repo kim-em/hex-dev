@@ -19,19 +19,33 @@ public section
 The all-leaves node invariant (SPEC § Verified search refinement, the
 code-1 arm of the store-validity obligation).
 
-Below a first-branch cheapautom node every deviation is a pair or
-triple deviation, and both consume the same node facts: the iteration
-invariant, equitability, an accurate boundary count, and the
-first-branch shape (every cell a singleton, a pair, or one triple).
-This file packages those as `SubtreeOk` and proves the invariant
+Every deviation below a cheapautom node consumes the same node facts:
+the iteration invariant, equitability, an accurate boundary count, and
+the node's shape. A passing guard admits two shapes, and `NodeShape`
+carries their disjunction: the first-branch shape (every cell a
+singleton, a pair, or one triple), or a defect of at most four. The
+second is not a special case of the first. The four-vertex empty
+graph's root is one cell of size four, so it has a defect of three and
+no first-branch shape, and the instrumentation probe records it as a
+reachable admission witness.
+
+This file packages those facts as `SubtreeOk` and proves the invariant
 descends through one individualize-and-refine step
 (`subtreeOk_child`): the iteration invariant by `iterOk_child`,
 equitability by `equitable_breakout`, the count by
-`bcount_breakout_eq` + `refine_bcount`, and the shape by containment —
-every child cell sits inside a cell of the split partition
+`bcount_breakout_eq` + `refine_bcount`, and the shape by
+`nodeShape_child`. The first-branch shape descends by containment,
+every child cell sitting inside a cell of the split partition
 (`childSt_cell_parent`, via `subcell_of_grow` and `refine_frozen`), so
-sizes only shrink, and a child triple fills the unique parent triple's
-window exactly, keeping it unique.
+sizes only shrink and a child triple fills the unique parent triple's
+window exactly. A defect of at most four descends because
+individualization splits a cell while the vertex count stays fixed, so
+the cell count grows; `cells_length_eq_bcount` reads that count off
+the boundary count, where `bcount_breakout_eq` and `refine_frozen`
+already measure it.
+
+Turning either shape into flip data belongs to `SmallCellAll`, above
+the exotic layer where the defect-four analogues are proved.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -119,14 +133,24 @@ def SmallShape (ctx : Ctx) (level : Nat) (ptn : Array Nat) : Prop :=
     (q.2 + 1 - q.1 = 3 ∧
       ∀ q' ∈ cells ptn level ctx.n, q'.2 + 1 - q'.1 = 3 → q' = q)
 
-/-- The facts every deviation below a first-branch cheapautom node
-consumes, carried at each node of the subtree. -/
+/-- The two shapes a passing `cheapautom` guard admits: the
+first-branch shape, or a defect of at most four. Both yield flip data
+at every cell, and both descend through individualization, which is
+why the invariant carries the disjunction rather than either
+disjunct. A defect-four node need not have the first-branch shape:
+the four-vertex empty graph's root is a single cell of size four. -/
+def NodeShape (ctx : Ctx) (level : Nat) (ptn : Array Nat) : Prop :=
+  SmallShape ctx level ptn ∨
+    ctx.n - (cells ptn level ctx.n).length ≤ 4
+
+/-- The facts every deviation below a cheapautom node consumes,
+carried at each node of the subtree. -/
 structure SubtreeOk (ctx : Ctx) (level : Nat) (st : RefineSt) :
     Prop where
   it : IterOk ctx level st
   eqt : Equitable ctx level st.lab st.ptn
   acc : bcount st.ptn level ctx.n = st.numcells
-  small : SmallShape ctx level st.ptn
+  shape : NodeShape ctx level st.ptn
 
 /-- Every cell of the child partition sits inside a cell of the split
 partition: refinement only adds boundaries. -/
@@ -262,6 +286,62 @@ theorem smallShape_child {st : RefineSt} {level tc e o : Nat}
     simp only at h1 h2'
     rw [h1, h2']
 
+/-- The node shape descends: the first-branch shape by containment,
+and a defect of at most four because individualization splits a cell
+while the vertex count stays fixed, so the cell count strictly
+grows. -/
+theorem nodeShape_child {st : RefineSt} {level tc e o : Nat}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+    (ho : o ≤ e - tc) (hsh : NodeShape ctx level st.ptn) :
+    NodeShape ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + o]!).ptn := by
+  rcases hsh with hsmall | hdef
+  · exact Or.inl (smallShape_child hIt hlvl hcell hne ho hsmall)
+  refine Or.inr ?_
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hIt' := iterOk_child hIt hlvl hcell hne ho
+  have hcpsz := hIt'.ok.ptnSize
+  have hcend := hIt'.ok.ptnEnd
+  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hle : tc ≤ e := cells_le _ hcell
+  have htcopen : st.ptn[tc]! > level :=
+    target_open hpsz hend hcell tc (Nat.le_refl _) hne
+  have hssz : (st.ptn.set! tc (level + 1)).size = ctx.n := by
+    rw [Array.size_set!, hpsz]
+  have hsend : (st.ptn.set! tc (level + 1))[(st.ptn.set! tc
+      (level + 1)).size - 1]! ≤ level + 1 := by
+    rw [hssz]
+    rcases Decidable.em (tc = ctx.n - 1) with rfl | hx
+    · rw [← hpsz, Array.getElem!_set!_self _ _ _ (by omega)]
+      omega
+    · rw [← hpsz, Array.getElem!_set!_ne _ _ _ _ (by rw [hpsz]; omega)]
+      have : st.ptn[ctx.n - 1]! ≤ level := by
+        rw [← hpsz]
+        exact hend
+      omega
+  have hbsz : (breakout st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).1.size = (st.ptn.set! tc (level + 1)).size := by
+    rw [breakout_lab_size, hlsz, hssz]
+  have hsplit := bcount_breakout_eq (ptn := st.ptn) (level := level)
+    (tc := tc) hIt.valsWeak htcopen (by omega) ctx.n (Nat.le_refl _)
+  rw [ite_eq_left (by omega : tc < ctx.n)] at hsplit
+  -- refinement never reopens a closed position
+  have hb : ∀ q : Nat, (st.ptn.set! tc (level + 1))[q]! ≤ level + 1 →
+      (childSt ctx level st tc st.lab[tc + o]!).ptn[q]! ≤ level + 1 := by
+    intro q hq
+    show (refine ctx (level + 1) _ _ _ _).ptn[q]! ≤ level + 1
+    rw [refine_frozen (by rw [hssz]) hbsz hsend hq]
+    exact hq
+  have hmono : bcount (st.ptn.set! tc (level + 1)) (level + 1) ctx.n ≤
+      bcount (childSt ctx level st tc st.lab[tc + o]!).ptn
+        (level + 1) ctx.n := bcount_mono hb
+  rw [cells_length_eq_bcount hcpsz hcend]
+  rw [cells_length_eq_bcount hpsz hend] at hdef
+  omega
+
 /-- The node invariant descends through one subtree step. -/
 theorem subtreeOk_child {st : RefineSt} {level tc e o : Nat}
     (h : SubtreeOk ctx level st) (hlvl : level < ctx.n)
@@ -276,7 +356,7 @@ theorem subtreeOk_child {st : RefineSt} {level tc e o : Nat}
   have hend := h.it.ok.ptnEnd
   have hen : e < ctx.n := target_end_lt hpsz hend hcell
   refine ⟨iterOk_child h.it hlvl hcell hne ho, ?_, ?_,
-    smallShape_child h.it hlvl hcell hne ho h.small⟩
+    nodeShape_child h.it hlvl hcell hne ho h.shape⟩
   · show Equitable ctx (level + 1)
       (refine ctx (level + 1)
         (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
@@ -469,125 +549,5 @@ theorem descPath_deviation_self {σ : Renaming ctx.n} {st : RefineSt}
   have hsp' := stPerm_child hg hsp hIt hcell hne hoV hoU hvv
   have hU0 := iterOk_child hIt hlvl hcell hne hoU
   exact descPath_leafRows hg hdesc hU0 hsp' hdisc
-
-/-! # All leaves below a first-branch node have equal rows -/
-
-/-- Any two discrete descents below a first-branch node choosing the
-same target cells have equal leaf rows: equal choices recurse, and a
-differing choice is one pair or triple deviation glued to the
-transported deeper path. -/
-theorem descPath_leafRows_all
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (tcs : List Nat) :
-    ∀ {level : Nat} {st : RefineSt} {p₁ p₂ : List (Nat × Nat)}
-      {level₁ level₂ : Nat} {U V : RefineSt},
-      SubtreeOk ctx level st →
-      DescPath ctx level st p₁ level₁ U →
-      p₁.map Prod.fst = tcs →
-      (∀ q, q < ctx.n → U.ptn[q]! ≤ level₁) →
-      DescPath ctx level st p₂ level₂ V →
-      p₂.map Prod.fst = tcs →
-      (∀ q, q < ctx.n → V.ptn[q]! ≤ level₂) →
-      level₂ = level₁ ∧ leafRows ctx V.lab = leafRows ctx U.lab := by
-  induction tcs with
-  | nil =>
-    intro level st p₁ p₂ level₁ level₂ U V hS hU hp₁ hUd hV hp₂ hVd
-    have h1 : p₁ = [] := by
-      cases p₁ with
-      | nil => rfl
-      | cons a l => simp at hp₁
-    have h2 : p₂ = [] := by
-      cases p₂ with
-      | nil => rfl
-      | cons a l => simp at hp₂
-    subst h1
-    subst h2
-    obtain ⟨hl₁, hU'⟩ := descPath_nil hU
-    obtain ⟨hl₂, hV'⟩ := descPath_nil hV
-    subst hU'
-    subst hV'
-    exact ⟨by omega, rfl⟩
-  | cons tc tcs' ih =>
-    intro level st p₁ p₂ level₁ level₂ U V hS hU hp₁ hUd hV hp₂ hVd
-    cases p₁ with
-    | nil => exact absurd hp₁ (by simp)
-    | cons h₁ tl₁ =>
-    cases p₂ with
-    | nil => exact absurd hp₂ (by simp)
-    | cons h₂ tl₂ =>
-    obtain ⟨a₁, o₁⟩ := h₁
-    obtain ⟨a₂, o₂⟩ := h₂
-    rw [List.map_cons] at hp₁ hp₂
-    injection hp₁ with hh₁ ht₁
-    injection hp₂ with hh₂ ht₂
-    have ha₁ : tc = a₁ := hh₁.symm
-    subst ha₁
-    have ha₂ : tc = a₂ := hh₂.symm
-    subst ha₂
-    cases hU with
-    | step _ e₁ _ hlvl hcell₁ hne₁ ho₁ htail₁ =>
-    cases hV with
-    | step _ e₂ _ hlvl₂ hcell₂ hne₂ ho₂ htail₂ =>
-    have hpsz := hS.it.ok.ptnSize
-    have hend := hS.it.ok.ptnEnd
-    have hee : e₁ = e₂ := cells_eq_of_start (by omega) hend
-      hcell₁ hcell₂
-    subst hee
-    rcases Decidable.em (st.lab[tc + o₁]! = st.lab[tc + o₂]!) with
-      hval | hval
-    · -- the same child: recurse directly
-      rw [← hval] at htail₂
-      exact ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₁)
-        htail₁ ht₁ hUd htail₂ ht₂ hVd
-    · -- a deviation at this level, by the target's size
-      have hflip : ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
-          StPerm level st (mapSt σ st) ∧
-          st.lab[tc + o₂]! = σ.toFun st.lab[tc + o₁]! := by
-        have hone : o₁ ≠ o₂ := fun h => hval (by rw [h])
-        rcases hS.small _ hcell₁ with hsz2 | ⟨hsz3, huniq⟩
-        · -- a pair target
-          have hsz2' : e₁ + 1 - tc ≤ 2 := hsz2
-          have hne₁' : tc < e₁ := hne₁
-          have he : e₁ = tc + 1 := by omega
-          subst he
-          have hOdd : ∀ q ∈ cells st.ptn level ctx.n,
-              q.2 ≠ q.1 + 1 → (q.2 + 1 - q.1) % 2 = 1 := by
-            intro q hq hqne
-            have hqle := cells_le _ hq
-            rcases hS.small _ hq with h2 | ⟨h3, -⟩
-            · have h1 : q.2 + 1 - q.1 = 1 := by omega
-              omega
-            · omega
-          exact pair_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
-            hcell₁ hOdd (by omega) (by omega) hone
-        · -- the triple target
-          have hsz3' : e₁ + 1 - tc = 3 := hsz3
-          have hne₁' : tc < e₁ := hne₁
-          have he : e₁ = tc + 2 := by omega
-          subst he
-          have hsmall' : ∀ q ∈ cells st.ptn level ctx.n,
-              q ≠ (tc, tc + 2) → q.2 + 1 - q.1 ≤ 2 := by
-            intro q hq hqne
-            rcases hS.small _ hq with h2 | ⟨h3, -⟩
-            · exact h2
-            · exact absurd (huniq q hq h3) hqne
-          exact triple_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
-            hcell₁ hsmall' (by omega) (by omega) hone
-      obtain ⟨σ, hgm, hspσ, hvv⟩ := hflip
-      obtain ⟨W, qW, hdescW, hqW, hlrW, hptnW⟩ :=
-        descPath_deviation_self hS.it hlvl hgm hspσ hcell₁ hne₁
-          ho₁ ho₂ hvv htail₁ hUd
-      have hWd : ∀ q, q < ctx.n → W.ptn[q]! ≤ level₁ := by
-        intro q hq
-        rw [hptnW]
-        exact hUd q hq
-      obtain ⟨hlev, hlr₂⟩ :=
-        ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₂)
-          hdescW (by rw [hqW, ht₁]) hWd htail₂ ht₂ hVd
-      exact ⟨hlev, hlr₂.trans hlrW⟩
 
 end Hex.GraphIso.Nauty
