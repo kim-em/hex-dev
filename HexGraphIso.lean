@@ -62,6 +62,7 @@ public import HexGraphIso.Nauty.AutosLedger
 public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.QuartetStmt
 public import HexGraphIso.Nauty.QuartetLoop
+public import HexGraphIso.Nauty.QuartetNode
 public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
