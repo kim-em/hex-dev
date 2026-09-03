@@ -270,9 +270,9 @@ Otherwise the tactic:
 
 1. reifies both inputs with kernel-checked correspondence proofs;
 2. obtains executable non-isomorphism of the encodings from the shared
-   Mathlib-free negative engine, which selects by measured replay cost
-   between the certificate route and the verified pairwise decision
-   (per the core SPEC's tactic section);
+   Mathlib-free negative engine, which takes the certificate route whenever
+   it is available and retains the verified pairwise decision as the
+   exhaustion fallback (per the core SPEC's tactic section);
 3. transports that result through the `not_encode_iso` bridge
    theorems;
 4. constructs `IsEmpty` or the requested negated `Nonempty`

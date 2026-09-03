@@ -587,26 +587,21 @@ goal through replay-bounded `checkIso?` and its soundness theorem. It need not
 compute complete canonical certificates. Search or replay exhaustion leaves
 the goal unchanged.
 
-For a negative goal, the tactic selects between two kernel routes by
-measured cost. The certificate route has the compiled search produce a
-canonical-key certificate for each graph; the kernel replays the two
-Boolean certificate checks and their key comparison, closing the goal
-through `not_isomorphic_of_checkKeys` (`checkKey` twice plus
-`checkDiff`, with no achieving labelling reified), and its replay cost
-scales with the certificate record counts. The pairwise route replays
-the fully verified individualization-refinement decision
-(`decideIso?_not_isomorphic`), and its replay cost scales with the
-nodes that search visits — small when refinement refutes the pair
-almost immediately, large when genuine search is needed. After
-producing both certificates the tactic offers the pairwise decision a
-node budget equivalent to the certificate replay's cost (one pairwise
-node kernel-replays for roughly four certificate records); whichever
-route fits closes the goal. When certificate production fails or a
-certificate exceeds the configured budgets, the full-budget pairwise
-replay is the fallback and anchors the exhaustion semantics. No result
-relies on compiler trust. Both routes share an irreducible kernel cost
+For a negative goal, the tactic first tries the root separator. If that
+does not distinguish the graphs, the compiled search produces a
+canonical-key certificate for each graph and the tactic uses that route
+whenever both certificates fit the configured budgets. The kernel
+replays the two Boolean certificate checks and their key comparison,
+closing the goal through `not_isomorphic_of_checkKeys` (`checkKey`
+twice plus `checkDiff`, with no achieving labelling reified). When
+certificate production fails or a certificate exceeds the configured
+budgets, the tactic tries the two-code separator and then replays the
+full-budget verified individualization-refinement decision
+(`decideIso?_not_isomorphic`). That final pairwise route anchors the
+exhaustion semantics: `none` never proves non-isomorphism. No result
+relies on compiler trust. All routes share an irreducible kernel cost
 evaluating the goal's graph definitions themselves, so family-style
-definitions with expensive adjacency set a floor neither route can
+definitions with expensive adjacency set a floor no route can
 undercut. The certificate obligations replay only while their whole
 reduction closure stays exposed to the module-mode kernel; the
 regression ladder in `HexGraphIso/ModuleBoundaryTests.lean` pins that
