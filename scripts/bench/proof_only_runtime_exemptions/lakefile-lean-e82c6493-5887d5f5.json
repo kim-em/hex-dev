@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+  "current_blob": "5887d5f59ef1f7e817c9d27285a4cc501e0769d4",
+  "reason": "Combines the inherited HexPolyFp precompileModules transition with the independent NautyFFI library, fixture-test executable, and native archive registrations. These new targets do not change hexbz_factor_service, any library it imports, or its runtime call graph."
+}

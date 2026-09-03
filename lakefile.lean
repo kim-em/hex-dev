@@ -69,33 +69,51 @@ extern_lib hexlllffi (pkg) := do
   let oTarget ← hexlllProviderOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
--- Development-monorepo bench comparator against the vendored nauty
--- 2.9.3 (`vendor/nauty-2.9.3`, provenance in its README). Not part of
--- any released library.
 private def nautyVendorOTarget (pkg : Package) (src : String) : FetchM (Job FilePath) := do
   let stem := (src.dropEnd 2).toString
   let oFile := pkg.dir / defaultBuildDir / "vendor" / "nauty-2.9.3" / s!"{stem}.o"
   let srcTarget ← inputTextFile <| pkg.dir / "vendor" / "nauty-2.9.3" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString, "-fPIC", "-O2"]
+    let flags := #["-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
     compileO oFile srcFile flags
 
-private def nautyCanonOTarget (pkg : Package) : FetchM (Job FilePath) := do
-  let oFile := pkg.dir / defaultBuildDir / "Hex" / "BenchOracle" / "ffi" / "nauty_canon.o"
-  let srcTarget ← inputTextFile <| pkg.dir / "Hex" / "BenchOracle" / "ffi" / "nauty_canon.c"
+private def nautyBridgeOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "NautyFFI" / "ffi" / "lean_nauty.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "NautyFFI" / "ffi" / "lean_nauty.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString,
-      "-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString, "-fPIC", "-O2"]
+      "-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
+    compileO oFile srcFile flags
+
+private def nautyBenchOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.c"
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString,
+      "-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
     compileO oFile srcFile flags
 
 extern_lib hexnautyffi (pkg) := do
   let name := nameToStaticLib "hexnautyffi"
   let vendorTargets ← #["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
     "naurng.c"].mapM (nautyVendorOTarget pkg)
-  let shimTarget ← nautyCanonOTarget pkg
-  buildStaticLib (pkg.staticLibDir / name) (vendorTargets.push shimTarget)
+  let bridgeTarget ← nautyBridgeOTarget pkg
+  let benchTarget ← nautyBenchOTarget pkg
+  buildStaticLib (pkg.staticLibDir / name)
+    ((vendorTargets.push bridgeTarget).push benchTarget)
 
 lean_lib Hex where
+
+lean_lib NautyFFI where
+  precompileModules := true
+
+lean_exe nautyffi_tests where
+  root := `NautyFFI.Tests
 
 lean_lib HexBasic where
 

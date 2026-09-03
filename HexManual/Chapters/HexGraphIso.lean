@@ -47,6 +47,11 @@ kernel performing the decisive replay: positive goals through the
 checked transporter, negative goals through a fully verified
 individualization-refinement decision.
 
+The separate [`nauty-ffi`](https://github.com/leanprover/nauty-ffi) package is
+available for users who want direct access to the corresponding dense-nauty
+operations from Lean. It is an unverified native convenience package, not a
+dependency or part of the verified `HexGraphIso` library.
+
 {docstring Hex.GraphIso.Colored}
 
 {docstring Hex.GraphIso.canonicalize}

@@ -91,6 +91,24 @@ repos:
     pins: []
     lakefile: toml
 
+  # Unverified native convenience package. It is deliberately outside the Hex
+  # aggregate and is not a dependency or pin of hex-graph-iso.
+  - repo: leanprover/nauty-ffi
+    lib: NautyFFI
+    precompile_modules: true
+    aggregate: false
+    umbrella: true
+    spec: null
+    bench: false
+    conformance: false
+    fixtures: [HexGraphIso]
+    oracles: []
+    extra_paths:
+      - { src: "vendor/nauty-2.9.3", dest: "vendor/nauty-2.9.3" }
+    executables: {nautyffi_tests: NautyFFI.Tests}
+    pins: []
+    lakefile: lean
+
   - repo: leanprover/hex-arith
     component: Exact word arithmetic
     lib: HexArith
