@@ -139,10 +139,11 @@ the order of events, and the order of events influences the output, so
 the rules below are part of the specification.
 
 Refinement proceeds in passes. Each pass chooses one active cell,
-called the splitter, as follows: if the preferred position is the start
-of an active cell, that cell is the splitter; otherwise the active cell
-starting soonest after the preferred position is the splitter;
-otherwise the earliest active cell is the splitter. The splitter is
+called the splitter, by scanning forward from the preferred position:
+the splitter is the first active cell starting at or after the
+preferred position. When no active cell starts there or later, the scan
+wraps around, and the splitter is the first active cell in the
+partition. The splitter is
 removed from the active set, and every cell of the partition is then
 processed against it, in partition order. The list of cells to process
 is fixed at the start of the pass: when a cell splits during the pass,
