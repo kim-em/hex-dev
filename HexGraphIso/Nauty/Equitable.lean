@@ -2163,4 +2163,340 @@ theorem inactive_and_activeUnion {level : Nat} {st : RefineSt}
         at h3
       cases h3
 
+/-! # The trivial pass: active-set effect per processed cell -/
+
+private theorem trivialSplit_active_eq (level cell1 cell2 : Nat)
+    (c1 c2 : Int) (st : RefineSt) :
+    (trivialSplit level cell1 cell2 c1 c2 st).active =
+      if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
+        if elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
+          insert st.active c1.toNat
+        else
+          insert st.active cell1
+      else
+        st.active := by
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
+    hA | hA
+  · rw [ite_eq_left hA, ite_eq_left hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+      hB | hB
+    · rw [ite_eq_left hB, ite_eq_left hB]
+      rcases (c1.toNat == cell2) with _ | _ <;> rfl
+    · rw [ite_eq_right hB, ite_eq_right hB]
+      rcases (c2.toNat == cell1) with _ | _ <;> rfl
+  · rw [ite_eq_right hA, ite_eq_right hA]
+
+private theorem trivialSplit_numcells_eq (level cell1 cell2 : Nat)
+    (c1 c2 : Int) (st : RefineSt) :
+    (trivialSplit level cell1 cell2 c1 c2 st).numcells =
+      if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
+        st.numcells + 1
+      else
+        st.numcells := by
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
+    hA | hA
+  · rw [ite_eq_left hA, ite_eq_left hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+      hB | hB
+    · rw [ite_eq_left hB]
+      rcases (c1.toNat == cell2) with _ | _ <;> rfl
+    · rw [ite_eq_right hB]
+      rcases (c2.toNat == cell1) with _ | _ <;> rfl
+  · rw [ite_eq_right hA, ite_eq_right hA]
+
+private theorem trivialSplit_maxpos_eq (level cell1 cell2 : Nat)
+    (c1 c2 : Int) (st : RefineSt) :
+    (trivialSplit level cell1 cell2 c1 c2 st).maxpos = st.maxpos := by
+  rw [trivialSplit]
+  rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
+    hA | hA
+  · rw [ite_eq_left hA]
+    rcases Decidable.em
+        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+      hB | hB
+    · rw [ite_eq_left hB]
+      rcases (c1.toNat == cell2) with _ | _ <;> rfl
+    · rw [ite_eq_right hB]
+      rcases (c2.toNat == cell1) with _ | _ <;> rfl
+  · rw [ite_eq_right hA]
+
+/-- One processed cell of the trivial pass, the bookkeeping half:
+`maxpos` untouched, and either nothing changes or exactly one junction
+boundary is written together with one activation, the activated
+position being the junction successor whenever the cell was active. -/
+theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
+    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.lab.size) :
+    (trivialCell level gRow cell1 cell2 st).maxpos = st.maxpos ∧
+    (((trivialCell level gRow cell1 cell2 st).ptn = st.ptn ∧
+      (trivialCell level gRow cell1 cell2 st).active = st.active ∧
+      (trivialCell level gRow cell1 cell2 st).numcells = st.numcells) ∨
+     (∃ j x, cell1 ≤ j ∧ j < cell2 ∧
+       (trivialCell level gRow cell1 cell2 st).ptn = st.ptn.set! j level ∧
+       (trivialCell level gRow cell1 cell2 st).active =
+         insert st.active x ∧
+       (trivialCell level gRow cell1 cell2 st).numcells =
+         st.numcells + 1 ∧
+       (x = cell1 ∨ x = j + 1) ∧
+       (elem st.active cell1 = true → x = j + 1))) := by
+  rcases Decidable.em (cell1 = cell2) with rfl | hne
+  · have heq : trivialCell level gRow cell1 cell1 st = st := by
+      rw [trivialCell]
+      simp
+    rw [heq]
+    exact ⟨rfl, Or.inl ⟨rfl, rfl, rfl⟩⟩
+  · have heq : trivialCell level gRow cell1 cell2 st =
+        trivialSplit level cell1 cell2
+          (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+            (Int.ofNat cell1) (Int.ofNat cell2)).2.1
+          (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+            (Int.ofNat cell1) (Int.ofNat cell2)).2.2
+          { st with lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+              (Int.ofNat cell1) (Int.ofNat cell2)).1 } := by
+      rw [trivialCell]
+      simp [hne]
+    obtain ⟨hp1, hp2, _, _, _, _⟩ := splitCellLoop_spec
+      (gRow := gRow) (cell2 + 1 - cell1) (cell2 - cell1 + 2) st.lab
+      (Int.ofNat cell1) (Int.ofNat cell2)
+      (by simp only [Int.ofNat_eq_natCast]; omega)
+      (by
+        have : (cell2 : Int) < (st.lab.size : Int) := by
+          exact_mod_cast hsz
+        simpa using this)
+      (by
+        rw [show (Int.ofNat cell2 + 1 - Int.ofNat cell1) =
+          ((cell2 + 1 - cell1 : Nat) : Int) from by
+            simp only [Int.ofNat_eq_natCast]
+            omega])
+      (by omega)
+    obtain ⟨cnt, hcnt⟩ : ∃ c,
+        (segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) =
+          c := ⟨_, rfl⟩
+    have hcntle : cnt ≤ cell2 + 1 - cell1 := by
+      have := List.countP_le_length
+        (l := segN st.lab cell1 (cell2 + 1 - cell1))
+        (p := (elem gRow ·))
+      rw [segN_length, hcnt] at this
+      exact this
+    have htn : (Int.ofNat cell1).toNat = cell1 := rfl
+    rw [htn] at hp1 hp2
+    rw [hcnt] at hp1 hp2
+    rw [heq, trivialSplit_maxpos_eq]
+    refine ⟨rfl, ?_⟩
+    rw [trivialSplit_active_eq, trivialSplit_numcells_eq,
+      trivialSplit_ptn_eq]
+    dsimp only
+    rw [hp1, hp2]
+    rcases Decidable.em (1 ≤ cnt ∧ cnt ≤ cell2 - cell1) with hc | hc
+    · have hg : (Int.ofNat cell1 + (cnt : Int) - 1 ≥ Int.ofNat cell1 ∧
+          Int.ofNat cell1 + (cnt : Int) ≤ Int.ofNat cell2) := by
+        constructor
+        · simp only [Int.ofNat_eq_natCast]
+          omega
+        · simp only [Int.ofNat_eq_natCast]
+          omega
+      rw [ite_eq_left hg, ite_eq_left hg, ite_eq_left hg]
+      have htn2 : (Int.ofNat cell1 + (cnt : Int) - 1).toNat =
+          cell1 + cnt - 1 := by
+        simp only [Int.ofNat_eq_natCast]
+        omega
+      have htn3 : (Int.ofNat cell1 + (cnt : Int)).toNat = cell1 + cnt := by
+        simp only [Int.ofNat_eq_natCast]
+        omega
+      rw [htn2, htn3]
+      refine Or.inr ?_
+      rcases Decidable.em (elem st.active cell1 = true ∨
+          cell1 + cnt - 1 - cell1 ≥ cell2 - (cell1 + cnt)) with hB | hB
+      · exact ⟨cell1 + cnt - 1, cell1 + cnt, by omega, by omega, rfl,
+          by rw [ite_eq_left hB], rfl, Or.inr (by omega),
+          fun _ => by omega⟩
+      · exact ⟨cell1 + cnt - 1, cell1, by omega, by omega, rfl,
+          by rw [ite_eq_right hB], rfl, Or.inl rfl,
+          fun hact => absurd (Or.inl hact) hB⟩
+    · have hg : ¬(Int.ofNat cell1 + (cnt : Int) - 1 ≥ Int.ofNat cell1 ∧
+          Int.ofNat cell1 + (cnt : Int) ≤ Int.ofNat cell2) := by
+        intro ⟨hg1, hg2⟩
+        simp only [Int.ofNat_eq_natCast] at hg1 hg2
+        exact hc ⟨by omega, by omega⟩
+      rw [ite_eq_right hg, ite_eq_right hg, ite_eq_right hg]
+      exact Or.inl ⟨rfl, rfl, rfl⟩
+
+/-- The trivial pass over a window list, the bookkeeping half:
+`maxpos` kept, partition and active bits outside the windows kept,
+the potential ledger balanced, and per window either nothing or one
+junction with one activation. -/
+theorem refineTrivial_go_state {level gRow nb : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.lab.size) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      st.ptn.size = st.lab.size →
+      (refineTrivial.go level gRow cs st).maxpos = st.maxpos ∧
+      (∀ u, (∀ p ∈ cs, u < p.1 ∨ p.2 < u) →
+        elem (refineTrivial.go level gRow cs st).active u =
+          elem st.active u) ∧
+      (∀ q, (∀ p ∈ cs, q < p.1 ∨ p.2 < q) →
+        (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
+      bitCount nb (refineTrivial.go level gRow cs st).active +
+          2 * st.numcells ≤
+        bitCount nb st.active +
+          2 * (refineTrivial.go level gRow cs st).numcells ∧
+      st.numcells ≤ (refineTrivial.go level gRow cs st).numcells ∧
+      (∀ p ∈ cs,
+        ((∀ q, p.1 ≤ q → q ≤ p.2 →
+            (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
+         (∀ u, p.1 ≤ u → u ≤ p.2 →
+            elem (refineTrivial.go level gRow cs st).active u =
+              elem st.active u)) ∨
+        (∃ j x, p.1 ≤ j ∧ j < p.2 ∧
+          (refineTrivial.go level gRow cs st).ptn[j]! = level ∧
+          (∀ q, p.1 ≤ q → q ≤ p.2 → q ≠ j →
+            (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
+          (x = p.1 ∨ x = j + 1) ∧
+          (elem st.active p.1 = true → x = j + 1) ∧
+          elem (refineTrivial.go level gRow cs st).active x = true ∧
+          (∀ u, p.1 ≤ u → u ≤ p.2 → u ≠ x →
+            elem (refineTrivial.go level gRow cs st).active u =
+              elem st.active u)))
+  | [], st, _, _, _ => by
+    rw [refineTrivial.go]
+    exact ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, by omega, Nat.le_refl _,
+      fun p hp => absurd hp (by simp)⟩
+  | (c1, c2) :: rest, st, hw, hpw, hlp => by
+    rw [refineTrivial.go]
+    obtain ⟨h12, hsz⟩ := hw (c1, c2) (List.mem_cons_self ..)
+    dsimp only at h12 hsz
+    obtain ⟨hsize, _, _⟩ :=
+      trivialCell_effect (level := level) (gRow := gRow) (st := st)
+        h12 hsz
+    obtain ⟨hmax, hdisj⟩ :=
+      trivialCell_state (level := level) (gRow := gRow) (st := st)
+        h12 hsz
+    have hps1 : (trivialCell level gRow c1 c2 st).ptn.size =
+        st.ptn.size := by
+      rcases hdisj with ⟨he, _, _⟩ | ⟨j, x, _, _, he, _⟩
+      · rw [he]
+      · rw [he, Array.size_set!]
+    have hhead := (List.pairwise_cons.mp hpw).1
+    obtain ⟨ih1, ih2, ih3, ih4, ih5, ih6⟩ :=
+      refineTrivial_go_state (nb := nb) rest
+        (trivialCell level gRow c1 c2 st)
+        (fun p hp => by
+          obtain ⟨hp1, hp2⟩ := hw p (List.mem_cons_of_mem _ hp)
+          exact ⟨hp1, by rw [hsize]; exact hp2⟩)
+        (List.pairwise_cons.mp hpw).2
+        (by rw [hps1, hsize]; exact hlp)
+    have houtA : ∀ u, u < c1 ∨ c2 < u →
+        elem (trivialCell level gRow c1 c2 st).active u =
+          elem st.active u := by
+      intro u hu
+      rcases hdisj with ⟨_, he, _⟩ | ⟨j, x, hj1, hj2, _, he, _, hx, _⟩
+      · rw [he]
+      · rw [he, elem_insert,
+          show (x == u) = false from by
+            simp only [beq_eq_false_iff_ne]
+            rcases hx with rfl | rfl <;> omega,
+          Bool.or_false]
+    have houtP : ∀ q, q < c1 ∨ c2 < q →
+        (trivialCell level gRow c1 c2 st).ptn[q]! = st.ptn[q]! := by
+      intro q hq
+      rcases hdisj with ⟨he, _, _⟩ | ⟨j, x, hj1, hj2, he, _⟩
+      · rw [he]
+      · rw [he, Array.getElem!_set!_ne _ _ _ _ (by omega)]
+    have hkeepP : ∀ q, q ≤ c2 →
+        (refineTrivial.go level gRow rest
+          (trivialCell level gRow c1 c2 st)).ptn[q]! =
+          (trivialCell level gRow c1 c2 st).ptn[q]! := by
+      intro q hq
+      exact ih3 q fun pr hpr => Or.inl (by
+        have := hhead pr hpr
+        simp only at this
+        omega)
+    have hkeepA : ∀ u, u ≤ c2 →
+        elem (refineTrivial.go level gRow rest
+          (trivialCell level gRow c1 c2 st)).active u =
+          elem (trivialCell level gRow c1 c2 st).active u := by
+      intro u hu
+      exact ih2 u fun pr hpr => Or.inl (by
+        have := hhead pr hpr
+        simp only at this
+        omega)
+    refine ⟨ih1.trans hmax, ?_, ?_, ?_, ?_, ?_⟩
+    · intro u hu
+      rw [ih2 u fun p hp => hu p (List.mem_cons_of_mem _ hp),
+        houtA u (by
+          have := hu (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro q hq
+      rw [ih3 q fun pr hpr => hq pr (List.mem_cons_of_mem _ hpr),
+        houtP q (by
+          have := hq (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · have hcell : bitCount nb (trivialCell level gRow c1 c2 st).active +
+          2 * st.numcells ≤
+            bitCount nb st.active +
+              2 * (trivialCell level gRow c1 c2 st).numcells := by
+        rcases hdisj with ⟨_, he, hn⟩ | ⟨j, x, _, _, _, he, hn, _⟩
+        · rw [he, hn]
+          exact Nat.le_refl _
+        · rw [he, hn]
+          have := bitCount_insert_le nb st.active x
+          omega
+      omega
+    · have : st.numcells ≤
+          (trivialCell level gRow c1 c2 st).numcells := by
+        rcases hdisj with ⟨_, _, hn⟩ | ⟨j, x, _, _, _, _, hn, _⟩
+        · rw [hn]
+          exact Nat.le_refl _
+        · rw [hn]
+          omega
+      omega
+    · intro p hp
+      rcases List.mem_cons.mp hp with rfl | hmem
+      · rcases hdisj with ⟨heP, heA, _⟩ |
+          ⟨j, x, hj1, hj2, heP, heA, _, hx, himp⟩
+        · refine Or.inl ⟨?_, ?_⟩
+          · intro q hq1 hq2
+            rw [hkeepP q hq2, heP]
+          · intro u hu1 hu2
+            rw [hkeepA u hu2, heA]
+        · refine Or.inr ⟨j, x, hj1, hj2, ?_, ?_, hx, himp, ?_, ?_⟩
+          · rw [hkeepP j (by omega), heP,
+              Array.getElem!_set!_self _ _ _ (by
+                rw [hlp]
+                omega)]
+          · intro q hq1 hq2 hqj
+            rw [hkeepP q hq2, heP,
+              Array.getElem!_set!_ne _ _ _ _ (by omega)]
+          · rw [hkeepA x (by rcases hx with rfl | rfl <;> omega), heA,
+              elem_insert]
+            simp
+          · intro u hu1 hu2 hux
+            rw [hkeepA u hu2, heA, elem_insert,
+              show (x == u) = false from by
+                simp only [beq_eq_false_iff_ne]
+                omega,
+              Bool.or_false]
+      · have hout1 : c2 < p.1 := by
+          have := hhead p hmem
+          simpa using this
+        rcases ih6 p hmem with ⟨hP, hA⟩ |
+          ⟨j, x, hj1, hj2, hjl, hP, hx, himp, hax, hA⟩
+        · refine Or.inl ⟨?_, ?_⟩
+          · intro q hq1 hq2
+            rw [hP q hq1 hq2, houtP q (Or.inr (by omega))]
+          · intro u hu1 hu2
+            rw [hA u hu1 hu2, houtA u (Or.inr (by omega))]
+        · refine Or.inr ⟨j, x, hj1, hj2, hjl, ?_, hx, ?_, hax, ?_⟩
+          · intro q hq1 hq2 hqj
+            rw [hP q hq1 hq2 hqj, houtP q (Or.inr (by omega))]
+          · intro hact
+            exact himp (by
+              rw [houtA p.1 (Or.inr (by omega))]
+              exact hact)
+          · intro u hu1 hu2 hux
+            rw [hA u hu1 hu2 hux, houtA u (Or.inr (by omega))]
+
 end Hex.GraphIso.Nauty
