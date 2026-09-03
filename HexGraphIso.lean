@@ -48,6 +48,7 @@ public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
 public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Nauty.Domination
+public import HexGraphIso.Nauty.Equitable
 public import HexGraphIso.Ops
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
