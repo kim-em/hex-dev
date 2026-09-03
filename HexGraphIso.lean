@@ -44,6 +44,7 @@ public import HexGraphIso.Nauty.SmallCellLeaves
 public import HexGraphIso.Nauty.SmallCellTie
 public import HexGraphIso.Nauty.SmallCellExotic
 public import HexGraphIso.Nauty.SmallCellExotic2
+public import HexGraphIso.Nauty.SmallCellExotic3
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.SearchReach
