@@ -38,6 +38,30 @@ verdict lemmas translate the imperative comparison state into
 - `compCanon = 0` at the incumbent's depth: the code lists are equal
   outright and the rows decide (`tied_full_keyCmp`), which is the
   `testcanlab` outcome by `leafEvent_faithful`.
+
+The event layer is complete: `processnode_leaf` (the off-first-path
+leaf), `processnode_leafFirst` (the first-path-agreeing leaf failing
+the admission gate, via the gate-failure reduction
+`processnode_gateFail_eq`), `processnode_auto` with `auto_keyMax`
+(the gate-passing leaf: comparison state untouched, and the skip
+sound at key level once the induction supplies the code agreement
+`firstCodeInv_eq_of_tied`, the row transport through the admitted
+scatter, and the `firstterminal_firstKeyLe`-seeded
+first-key-dominated clause), `recover_machines` with the
+`recover_frames`/`otherNodePrep_frames` threading, and the
+`firstterminal_*` seeds for all four threads.
+
+What remains is the mutual quartet induction itself, on the
+`canonlab_cellsReach` skeleton (`SearchReach.lean`): a `DomOk`
+record bundling `SearchOk`, both machines, `CanongInv`, per-stored-
+generator `CellStab` (`Stabilize.lean`), the unwinding-correctness
+clause (consulting nodes sit above every joined generator's gca,
+driving `orbConn_of_ptr`/`childKey_of_orbPruned` at the two orbit
+prune sites, Search.lean:296 and :320), the first-key-dominated
+clause, and incumbent-maximality (`incKey` equals the `keysMax` of
+visited leaves; pruned subtrees dominated through the verdicts
+above), concluding at the root that the traced key is
+`canonSpecKey`.
 -/
 
 namespace Hex.GraphIso.Nauty
