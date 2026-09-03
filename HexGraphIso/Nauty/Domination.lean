@@ -1872,6 +1872,43 @@ theorem recover_firstDescOk {ctx : Ctx} {n inf level : Nat}
   refine h ?_
   rcases hlvl with hle | hle <;> split at hgate <;> omega
 
+/-- A recorded descent advances the level by its path length. -/
+theorem descPath_level {ctx : Ctx} {level level' : Nat}
+    {r U : RefineSt} {p : List (Nat × Nat)}
+    (h : DescPath ctx level r p level' U) :
+    level' = level + p.length := by
+  induction h with
+  | refl => simp
+  | step tc e o hlvl hcell hne ho htail ih =>
+    simp only [List.length_cons]
+    omega
+
+/-- What the descent bookkeeping forces where it is claimed: the two
+descents run to the same depth, so the current labelling is a leaf at
+the first leaf's level. A node partway down a branch has a shorter
+path than the first leaf, so this clause cannot hold there under a
+live gate. That is why it is derived where the code-one gate fires
+rather than carried as a field of `DomOk`: as a field it would be
+false at every interior node the search passes with the gate open,
+and the events above establish only that nothing between the seed and
+the gate disturbs it. -/
+theorem firstDescOk_depth {ctx : Ctx} {st : SearchSt}
+    (h : FirstDescOk ctx st) (hgate : st.noncheaplevel ≤ st.gcaFirst) :
+    ∃ (U V : RefineSt) (l : Nat),
+      (∀ q, q < ctx.n → U.ptn[q]! ≤ l) ∧
+      (∀ q, q < ctx.n → V.ptn[q]! ≤ l) ∧
+      U.lab = st.lab ∧ V.lab = st.firstlab := by
+  obtain ⟨r, U, V, p₁, p₂, l₁, l₂, hS, hU, hV, htcs, hUd, hVd,
+    hUl, hVl⟩ := h hgate
+  have h1 := descPath_level hU
+  have h2 := descPath_level hV
+  have hlen : p₂.length = p₁.length := by
+    simpa using congrArg List.length htcs
+  have hll : l₂ = l₁ := by omega
+  refine ⟨U, V, l₁, hUd, ?_, hUl, hVl⟩
+  rw [← hll]
+  exact hVd
+
 /-! # Labelling facts of a reached state
 
 The row obligations and the scatter exits are stated over `LabOk`
