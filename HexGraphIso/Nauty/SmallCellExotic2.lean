@@ -478,6 +478,385 @@ theorem twoTriple_sw1
   refine ⟨σ, hrm, hsp, ?_⟩
   rw [hat (tc + oU) (by omega), sw1_u]
 
+set_option maxHeartbeats 4000000 in
+/-- The flip data at a triple target beside a second triple, all other
+cells singletons: the constant cross-count is uniform (`0` or `3`,
+reducing to the bare transposition) or matched (`1` or `2`, pairing
+each chosen member with its unique minority partner and swapping the
+partners along). -/
+theorem twoTriple_flip_data
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hT1 : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
+    (hT2 : (d2, d2 + 2) ∈ cells st.ptn level ctx.n)
+    (hT12 : tc ≠ d2)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+      q ≠ (d2, d2 + 2) → q.2 = q.1)
+    (hoU : oU ≤ 2) (hoV : oV ≤ 2) (hne : oU ≠ oV) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have ht1n : tc + 2 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hT1
+    rw [hpsz] at this
+    omega
+  have ht2n : d2 + 2 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hT2
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  -- the forward rows: counts of target members into the other triple
+  have hBrow : ∀ o, o ≤ 2 →
+      popCount (worksetOf st.lab d2 (d2 + 2) &&&
+          ctx.g[st.lab[tc + o]!]!) =
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 2]! := by
+    intro o ho
+    have h := count_into_cell hpsz hend hinj hlb hT2
+      (hg _ (hlb (tc + o) (by omega)))
+    rw [show d2 + 2 + 1 - d2 = 3 by omega, sum_range_three'] at h
+    exact h
+  -- the reverse rows: counts of the other triple's members into the
+  -- target
+  have hRrow : ∀ q, q ≤ 2 →
+      popCount (worksetOf st.lab tc (tc + 2) &&&
+          ctx.g[st.lab[d2 + q]!]!) =
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 0]! +
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 1]! +
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 2]! := by
+    intro q hq
+    have h := count_into_cell hpsz hend hinj hlb hT1
+      (hg _ (hlb (d2 + q) (by omega)))
+    rw [show tc + 2 + 1 - tc = 3 by omega, sum_range_three'] at h
+    exact h
+  have hBc : ∀ o o', o ≤ 2 → o' ≤ 2 →
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 2]! =
+      bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + 2]! := by
+    intro o o' ho ho'
+    have h := hE _ hT1 _ hT2 o o' (by omega) (by omega)
+    rw [hBrow o ho, hBrow o' ho'] at h
+    exact h
+  have hRc : ∀ q q', q ≤ 2 → q' ≤ 2 →
+      bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 0]! +
+      bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 1]! +
+      bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 2]! =
+      bitCnt ctx.g[st.lab[d2 + q']!]! st.lab[tc + 0]! +
+      bitCnt ctx.g[st.lab[d2 + q']!]! st.lab[tc + 1]! +
+      bitCnt ctx.g[st.lab[d2 + q']!]! st.lab[tc + 2]! := by
+    intro q q' hq hq'
+    have h := hE _ hT2 _ hT1 q q' (by omega) (by omega)
+    rw [hRrow q hq, hRrow q' hq'] at h
+    exact h
+  -- symmetry between the atom bases
+  have hBR : ∀ o q, o ≤ 2 → q ≤ 2 →
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! =
+        bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + o]! := by
+    intro o q ho hq
+    exact bitCnt_inj.mpr (hsymm _ _ (hlb _ (by omega))
+      (hlb _ (by omega)))
+  have hble : ∀ o q : Nat,
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! ≤ 1 :=
+    fun o q => bitCnt_le_one _ _
+  have hrle : ∀ q o : Nat,
+      bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + o]! ≤ 1 :=
+    fun q o => bitCnt_le_one _ _
+  -- the target-row sum classifies the configuration
+  have hs4 : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 2]! = 0 ∨
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 2]! = 1 ∨
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 2]! = 2 ∨
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 1]! +
+      bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 2]! = 3 := by
+    have := hble oU 0
+    have := hble oU 1
+    have := hble oU 2
+    omega
+  have hVsum := hBc oU oV hoU hoV
+  rcases hs4 with hs | hs | hs | hs
+  · -- uniform empty
+    refine twoTriple_sw1 hIt hgsz hg hsymm hloop hE hT1 hT2 hT12
+      hsing hoU hoV hne ?_
+    intro q hq
+    have hq3 : q = 0 ∨ q = 1 ∨ q = 2 := by omega
+    have hu0 : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + q]! =
+        0 := by
+      rcases hq3 with rfl | rfl | rfl <;> omega
+    have hv0 : bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[d2 + q]! =
+        0 := by
+      have h1 := hble oV 0
+      have h2 := hble oV 1
+      have h3 := hble oV 2
+      rcases hq3 with rfl | rfl | rfl <;> omega
+    rw [bitCnt_eq_zero.mp hu0, bitCnt_eq_zero.mp hv0]
+  · -- matched with one neighbour each
+    obtain ⟨pu, hpu, hpu1, hpuz⟩ := three_one_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + oU]!]!
+        st.lab[d2 + q]!) (hble oU 0) (hble oU 1) (hble oU 2) hs
+    obtain ⟨pv, hpv, hpv1, hpvz⟩ := three_one_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + oV]!]!
+        st.lab[d2 + q]!) (hble oV 0) (hble oV 1) (hble oV 2)
+      (by omega)
+    -- distinct partners: a shared partner would overload its row
+    have hpuv : pu ≠ pv := by
+      intro hcon
+      have hq1 : (pu + 1) % 3 ≤ 2 := by omega
+      have hq1p : (pu + 1) % 3 ≠ pu := by omega
+      have hlow := two_le_sum3
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pu]!]!
+          st.lab[tc + w]!) hoU hoV hne
+      have hup := sum3_le_two_add
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + ((pu + 1) % 3)]!]!
+          st.lab[tc + w]!) (hrle _ 0) (hrle _ 1) (hrle _ 2)
+        hoU hoV hne
+      have e1 := hBR oU pu hoU hpu
+      have e2 := hBR oV pu hoV (by omega)
+      have e3 := hBR oU ((pu + 1) % 3) hoU hq1
+      have e4 := hBR oV ((pu + 1) % 3) hoV hq1
+      have hz1 := hpuz ((pu + 1) % 3) hq1 hq1p
+      have hz2 := hpvz ((pu + 1) % 3) hq1 (by omega)
+      have hrc := hRc pu ((pu + 1) % 3) hpu hq1
+      rw [← hcon] at hpv1
+      omega
+    -- the third member's partner avoids both
+    have hoW : 3 - oU - oV ≤ 2 := by omega
+    have hWu : 3 - oU - oV ≠ oU := by omega
+    have hWv : 3 - oU - oV ≠ oV := by omega
+    obtain ⟨pw, hpw, hpw1, hpwz⟩ := three_one_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + (3 - oU - oV)]!]!
+        st.lab[d2 + q]!) (hble _ 0) (hble _ 1) (hble _ 2)
+      (by have := hBc oU (3 - oU - oV) hoU hoW; omega)
+    have hq2 : 3 - pu - pv ≤ 2 := by omega
+    have hq2u : 3 - pu - pv ≠ pu := by omega
+    have hq2v : 3 - pu - pv ≠ pv := by omega
+    have hpwu : pw ≠ pu := by
+      intro hcon
+      have hlow := two_le_sum3
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pu]!]!
+          st.lab[tc + w]!) (a := oU) (b := 3 - oU - oV) hoU hoW
+        (fun h => hWu h.symm)
+      have hcover := sum3_eq_of_cover
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + (3 - pu - pv)]!]!
+          st.lab[tc + w]!) hoU hoV hoW hne (fun h => hWu h.symm)
+        (fun h => hWv h.symm)
+      have e1 := hBR oU pu hoU hpu
+      have e2 := hBR (3 - oU - oV) pu hoW hpu
+      have e3 := hBR oU (3 - pu - pv) hoU hq2
+      have e4 := hBR oV (3 - pu - pv) hoV hq2
+      have e5 := hBR (3 - oU - oV) (3 - pu - pv) hoW hq2
+      have hz1 := hpuz (3 - pu - pv) hq2 hq2u
+      have hz2 := hpvz (3 - pu - pv) hq2 hq2v
+      have hz3 := hpwz (3 - pu - pv) hq2 (by omega)
+      have hrc := hRc pu (3 - pu - pv) hpu hq2
+      rw [hcon] at hpw1
+      omega
+    have hpwv : pw ≠ pv := by
+      intro hcon
+      have hlow := two_le_sum3
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pv]!]!
+          st.lab[tc + w]!) (a := oV) (b := 3 - oU - oV) hoV hoW
+        (fun h => hWv h.symm)
+      have hcover := sum3_eq_of_cover
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + (3 - pu - pv)]!]!
+          st.lab[tc + w]!) hoU hoV hoW hne (fun h => hWu h.symm)
+        (fun h => hWv h.symm)
+      have e1 := hBR oV pv hoV hpv
+      have e2 := hBR (3 - oU - oV) pv hoW hpv
+      have e3 := hBR oU (3 - pu - pv) hoU hq2
+      have e4 := hBR oV (3 - pu - pv) hoV hq2
+      have e5 := hBR (3 - oU - oV) (3 - pu - pv) hoW hq2
+      have hz1 := hpuz (3 - pu - pv) hq2 hq2u
+      have hz2 := hpvz (3 - pu - pv) hq2 hq2v
+      have hz3 := hpwz (3 - pu - pv) hq2 (by omega)
+      have hrc := hRc pv (3 - pu - pv) hpv hq2
+      rw [hcon] at hpw1
+      omega
+    refine twoTriple_sw2 hIt hgsz hg hsymm hloop hE hT1 hT2 hT12
+      hsing hoU hoV hne hpu hpv hpuv ?_ ?_ ?_ ?_
+    · -- the third target member is blind to the partner pair
+      intro w hw hwu hwv
+      have hwW : w = 3 - oU - oV := by omega
+      constructor
+      · have h := triple_internal hE hpsz hend hinj hlb hg hsymm
+          hloop hT1 w oU w oV (by omega) (by omega) (by omega)
+          (by omega) hwu hwv
+        exact h
+      · rw [hwW]
+        have hz1 := hpwz pu hpu (fun h => hpwu h.symm)
+        have hz2 := hpwz pv hpv (fun h => hpwv h.symm)
+        rw [bitCnt_eq_zero.mp hz1, bitCnt_eq_zero.mp hz2]
+    · -- the third partner is blind to the chosen pair
+      intro w hw hwa hwb
+      constructor
+      · have hz1 := hpuz w hw hwa
+        have hz2 := hpvz w hw hwb
+        have e1 := hBR oU w hoU hw
+        have e2 := hBR oV w hoV hw
+        have hzz1 : bitCnt ctx.g[st.lab[d2 + w]!]!
+            st.lab[tc + oU]! = 0 := by omega
+        have hzz2 : bitCnt ctx.g[st.lab[d2 + w]!]!
+            st.lab[tc + oV]! = 0 := by omega
+        rw [bitCnt_eq_zero.mp hzz1, bitCnt_eq_zero.mp hzz2]
+      · exact triple_internal hE hpsz hend hinj hlb hg hsymm hloop
+          hT2 w pu w pv (by omega) (by omega) (by omega)
+          (by omega) (fun h => hwa h) (fun h => hwb h)
+    · -- the matched cross bits
+      have e1 := hBR oU pu hoU hpu
+      have hb1 : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + pu]! =
+          1 := hpu1
+      rw [bitCnt_eq_one.mp hb1, bitCnt_eq_one.mp hpv1]
+    · have hz1 := hpuz pv hpv hpuv.symm
+      have hz2 := hpvz pu hpu hpuv
+      rw [bitCnt_eq_zero.mp hz1, bitCnt_eq_zero.mp hz2]
+  · -- matched with one non-neighbour each
+    obtain ⟨pu, hpu, hpu1, hpuz⟩ := three_zero_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + oU]!]!
+        st.lab[d2 + q]!) (hble oU 0) (hble oU 1) (hble oU 2) hs
+    obtain ⟨pv, hpv, hpv1, hpvz⟩ := three_zero_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + oV]!]!
+        st.lab[d2 + q]!) (hble oV 0) (hble oV 1) (hble oV 2)
+      (by omega)
+    have hpuv : pu ≠ pv := by
+      intro hcon
+      have hq1 : (pu + 1) % 3 ≤ 2 := by omega
+      have hq1p : (pu + 1) % 3 ≠ pu := by omega
+      have hup := sum3_le_two_add
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pu]!]!
+          st.lab[tc + w]!) (hrle _ 0) (hrle _ 1) (hrle _ 2)
+        hoU hoV hne
+      have hlow := two_le_sum3
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + ((pu + 1) % 3)]!]!
+          st.lab[tc + w]!) hoU hoV hne
+      have e1 := hBR oU pu hoU hpu
+      have e2 := hBR oV pu hoV (by omega)
+      have e3 := hBR oU ((pu + 1) % 3) hoU hq1
+      have e4 := hBR oV ((pu + 1) % 3) hoV hq1
+      have hz1 := hpuz ((pu + 1) % 3) hq1 hq1p
+      have hz2 := hpvz ((pu + 1) % 3) hq1 (by omega)
+      have hrc := hRc pu ((pu + 1) % 3) hpu hq1
+      rw [← hcon] at hpv1
+      omega
+    have hoW : 3 - oU - oV ≤ 2 := by omega
+    have hWu : 3 - oU - oV ≠ oU := by omega
+    have hWv : 3 - oU - oV ≠ oV := by omega
+    obtain ⟨pw, hpw, hpw1, hpwz⟩ := three_zero_ex
+      (f := fun q => bitCnt ctx.g[st.lab[tc + (3 - oU - oV)]!]!
+        st.lab[d2 + q]!) (hble _ 0) (hble _ 1) (hble _ 2)
+      (by have := hBc oU (3 - oU - oV) hoU hoW; omega)
+    have hq2 : 3 - pu - pv ≤ 2 := by omega
+    have hq2u : 3 - pu - pv ≠ pu := by omega
+    have hq2v : 3 - pu - pv ≠ pv := by omega
+    have hpwu : pw ≠ pu := by
+      intro hcon
+      have hup := sum3_le_two_add
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pu]!]!
+          st.lab[tc + w]!) (hrle _ 0) (hrle _ 1) (hrle _ 2)
+        (a := oU) (b := 3 - oU - oV) hoU hoW (fun h => hWu h.symm)
+      have hcover := sum3_eq_of_cover
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + (3 - pu - pv)]!]!
+          st.lab[tc + w]!) hoU hoV hoW hne (fun h => hWu h.symm)
+        (fun h => hWv h.symm)
+      have e1 := hBR oU pu hoU hpu
+      have e2 := hBR (3 - oU - oV) pu hoW hpu
+      have e3 := hBR oU (3 - pu - pv) hoU hq2
+      have e4 := hBR oV (3 - pu - pv) hoV hq2
+      have e5 := hBR (3 - oU - oV) (3 - pu - pv) hoW hq2
+      have hz1 := hpuz (3 - pu - pv) hq2 hq2u
+      have hz2 := hpvz (3 - pu - pv) hq2 hq2v
+      have hz3 := hpwz (3 - pu - pv) hq2 (by omega)
+      have hrc := hRc pu (3 - pu - pv) hpu hq2
+      rw [hcon] at hpw1
+      omega
+    have hpwv : pw ≠ pv := by
+      intro hcon
+      have hup := sum3_le_two_add
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + pv]!]!
+          st.lab[tc + w]!) (hrle _ 0) (hrle _ 1) (hrle _ 2)
+        (a := oV) (b := 3 - oU - oV) hoV hoW (fun h => hWv h.symm)
+      have hcover := sum3_eq_of_cover
+        (f := fun w => bitCnt ctx.g[st.lab[d2 + (3 - pu - pv)]!]!
+          st.lab[tc + w]!) hoU hoV hoW hne (fun h => hWu h.symm)
+        (fun h => hWv h.symm)
+      have e1 := hBR oV pv hoV hpv
+      have e2 := hBR (3 - oU - oV) pv hoW hpv
+      have e3 := hBR oU (3 - pu - pv) hoU hq2
+      have e4 := hBR oV (3 - pu - pv) hoV hq2
+      have e5 := hBR (3 - oU - oV) (3 - pu - pv) hoW hq2
+      have hz1 := hpuz (3 - pu - pv) hq2 hq2u
+      have hz2 := hpvz (3 - pu - pv) hq2 hq2v
+      have hz3 := hpwz (3 - pu - pv) hq2 (by omega)
+      have hrc := hRc pv (3 - pu - pv) hpv hq2
+      rw [hcon] at hpw1
+      omega
+    refine twoTriple_sw2 hIt hgsz hg hsymm hloop hE hT1 hT2 hT12
+      hsing hoU hoV hne hpu hpv hpuv ?_ ?_ ?_ ?_
+    · intro w hw hwu hwv
+      have hwW : w = 3 - oU - oV := by omega
+      constructor
+      · exact triple_internal hE hpsz hend hinj hlb hg hsymm
+          hloop hT1 w oU w oV (by omega) (by omega) (by omega)
+          (by omega) hwu hwv
+      · rw [hwW]
+        have hz1 := hpwz pu hpu (fun h => hpwu h.symm)
+        have hz2 := hpwz pv hpv (fun h => hpwv h.symm)
+        rw [bitCnt_eq_one.mp hz1, bitCnt_eq_one.mp hz2]
+    · intro w hw hwa hwb
+      constructor
+      · have hz1 := hpuz w hw hwa
+        have hz2 := hpvz w hw hwb
+        have e1 := hBR oU w hoU hw
+        have e2 := hBR oV w hoV hw
+        have hzz1 : bitCnt ctx.g[st.lab[d2 + w]!]!
+            st.lab[tc + oU]! = 1 := by omega
+        have hzz2 : bitCnt ctx.g[st.lab[d2 + w]!]!
+            st.lab[tc + oV]! = 1 := by omega
+        rw [bitCnt_eq_one.mp hzz1, bitCnt_eq_one.mp hzz2]
+      · exact triple_internal hE hpsz hend hinj hlb hg hsymm hloop
+          hT2 w pu w pv (by omega) (by omega) (by omega)
+          (by omega) (fun h => hwa h) (fun h => hwb h)
+    · rw [bitCnt_eq_zero.mp hpu1, bitCnt_eq_zero.mp hpv1]
+    · have hz1 := hpuz pv hpv hpuv.symm
+      have hz2 := hpvz pu hpu hpuv
+      rw [bitCnt_eq_one.mp hz1, bitCnt_eq_one.mp hz2]
+  · -- uniform complete
+    refine twoTriple_sw1 hIt hgsz hg hsymm hloop hE hT1 hT2 hT12
+      hsing hoU hoV hne ?_
+    intro q hq
+    have hq3 : q = 0 ∨ q = 1 ∨ q = 2 := by omega
+    have hu1 : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + q]! =
+        1 := by
+      have h1 := hble oU 0
+      have h2 := hble oU 1
+      have h3 := hble oU 2
+      rcases hq3 with rfl | rfl | rfl <;> omega
+    have hv1 : bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[d2 + q]! =
+        1 := by
+      have h1 := hble oV 0
+      have h2 := hble oV 1
+      have h3 := hble oV 2
+      rcases hq3 with rfl | rfl | rfl <;> omega
+    rw [bitCnt_eq_one.mp hu1, bitCnt_eq_one.mp hv1]
+
 end TwoTriple
 
 end Hex.GraphIso.Nauty
