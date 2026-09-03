@@ -710,8 +710,9 @@ setup_fixed_benchmark runCoordinateMaps where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runToPrimitiveLadder` supplies mode-1
-performance coverage for the public closure. -/
+/- Expected-hash anchor only. `runToPrimitiveLadder` is a failed mode-1
+diagnostic; neither registration discharges performance coverage for the
+public closure. -/
 setup_fixed_benchmark runToPrimitive where {
   repeats := 5, maxSecondsPerCall := 5.0,
   expectedHash := some 0xb5d54195958fb61e,
@@ -1369,7 +1370,7 @@ registration is retained as a binding failed diagnostic: the prepared input
 height is bounded, but the flattening's primitive-basis images are not, and
 their exact-rational bit cost makes the wall-time verdict slower than this
 rational-operation model. -/
-setup_benchmark runToPrimitiveLadder n => (n * n)
+setup_benchmark runToPrimitiveLadder n => n * n
   with prep := prepMapLadderInput
   where {
     paramSchedule := .custom #[2, 3, 4, 5, 6, 9]

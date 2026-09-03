@@ -124,7 +124,6 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runTowerNegLadder \
   Hex.NumberTowerBench.runTowerInvLadder \
   Hex.NumberTowerBench.runTowerDivLadder \
-  Hex.NumberTowerBench.runToPrimitiveLadder \
   --outer-trials 5 --export-file <unresolved-diagnostics.json>
 
 taskset -c 1 .lake/build/bin/hexnumberfieldtower_bench run \
@@ -161,7 +160,9 @@ after measurement. The last row uses the quadratic model committed before its
 official run. Its per-call medians rise from 3.695 µs at `n = 2` to
 308.030 µs at `n = 9`; the +1.023 residual is one empirical power above the
 quadratic model over this schedule. It is reported only as the failed-model
-residual, not adopted as a replacement exponent.
+residual, not adopted as a replacement exponent. The nonmonotone medians at
+`n = 5` (45.118 µs) and `n = 6` (38.680 µs) further show that the exact
+primitive presentation, not dimension alone, affects the wall cost.
 
 ### Ordered-mode assessment
 
@@ -404,10 +405,12 @@ declared scope of fixed-family profile coverage.
 | `split-flatten` | `runSplit` (raw fixed capture) | 9,985 / n.a. | n.a. | Lean runtime 40.01%, allocation 37.91%, GMP 13.52%, own code 7.83% | 99.27% |
 | `split-flatten` | `runFlatten` (raw fixed capture) | 18,762 / n.a. | n.a. | allocation 37.74%, Lean runtime 37.06%, GMP 20.47%, own code 4.47% | 99.74% |
 
-The three retained filtered captures pass calibration (residuals 0.51 to 0.86 ms
+The three retained filtered captures pass calibration (residuals 0.51 to 0.87 ms
 against the 5 ms limit), retained-sample minimums, and the ±5 ms
 sensitivity check. The large rejected count on the multiplication capture is
-the untimed `m = 12` tower-fixture prelude, excluded by construction.
+the untimed `m = 12` tower-fixture prelude. Likewise, the dense
+`toPrimitive` capture's 124,055 rejected samples are its untimed dimension-18
+`flatten?` preparation. Both preludes are excluded by construction.
 
 ### `tower-coordinate-arithmetic`: attributes cleanly
 
@@ -513,7 +516,7 @@ captures.
 | [dense forward-map profile](bench-results/hex-number-field-tower-dense-to-primitive-profile-6a4911db-chungus2.json) | clean pre-rebase `6a4911dbb` (now `4d66f681f`); timed-region-filtered dimension-18 dense public map | unpinned shape capture | `5dadec1dfefc811addb7e7ae242f88d81ab3880f91a19570356e4e92402cd7f9` |
 | [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
-| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
+| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts, with its sparse `runToPrimitiveLadder` block superseded by the dense export | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [negation calibration](bench-results/hex-number-field-tower-opus-calibration-605abcb5-chungus2-cpu19.json) | clean pre-rebase `605abcb5` (same branch state now `2ed1aba5d`); registered linear diagnostic, β = −0.162 | CPU 19 | `360bcf931e5171183ae25ddba16d6ff3edbb820bab5d40fd4c0de1908919f5a8` |
 | [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | clean pre-rebase `b2ebf281b` (same patch now `eaa691fc9`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
 | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | final measurement protocol | sampled CPU and SMT sibling | `f8a9d1d8294f59cf1bce18e02a2baae57728c87db24f5e96cc1c5c0e884a5a76` |
