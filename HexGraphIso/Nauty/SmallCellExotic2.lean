@@ -263,6 +263,221 @@ theorem twoTriple_sw2 {pa pb : Nat}
   refine ⟨σ, hrm, hsp, ?_⟩
   rw [hat (tc + oU) (by omega), sw2_u]
 
+private theorem three_one_ex {f : Nat → Nat}
+    (h0 : f 0 ≤ 1) (h1 : f 1 ≤ 1) (h2 : f 2 ≤ 1)
+    (hs : f 0 + f 1 + f 2 = 1) :
+    ∃ p, p ≤ 2 ∧ f p = 1 ∧ ∀ q, q ≤ 2 → q ≠ p → f q = 0 := by
+  rcases Decidable.em (f 0 = 1) with ha | ha
+  · refine ⟨0, by omega, ha, fun q hq hqp => ?_⟩
+    have : q = 1 ∨ q = 2 := by omega
+    rcases this with rfl | rfl <;> omega
+  rcases Decidable.em (f 1 = 1) with hb | hb
+  · refine ⟨1, by omega, hb, fun q hq hqp => ?_⟩
+    have : q = 0 ∨ q = 2 := by omega
+    rcases this with rfl | rfl <;> omega
+  · refine ⟨2, by omega, by omega, fun q hq hqp => ?_⟩
+    have : q = 0 ∨ q = 1 := by omega
+    rcases this with rfl | rfl <;> omega
+
+private theorem three_zero_ex {f : Nat → Nat}
+    (h0 : f 0 ≤ 1) (h1 : f 1 ≤ 1) (h2 : f 2 ≤ 1)
+    (hs : f 0 + f 1 + f 2 = 2) :
+    ∃ p, p ≤ 2 ∧ f p = 0 ∧ ∀ q, q ≤ 2 → q ≠ p → f q = 1 := by
+  rcases Decidable.em (f 0 = 0) with ha | ha
+  · refine ⟨0, by omega, ha, fun q hq hqp => ?_⟩
+    have : q = 1 ∨ q = 2 := by omega
+    rcases this with rfl | rfl <;> omega
+  rcases Decidable.em (f 1 = 0) with hb | hb
+  · refine ⟨1, by omega, hb, fun q hq hqp => ?_⟩
+    have : q = 0 ∨ q = 2 := by omega
+    rcases this with rfl | rfl <;> omega
+  · refine ⟨2, by omega, by omega, fun q hq hqp => ?_⟩
+    have : q = 0 ∨ q = 1 := by omega
+    rcases this with rfl | rfl <;> omega
+
+private theorem two_le_sum3 {f : Nat → Nat} {a b : Nat}
+    (ha : a ≤ 2) (hb : b ≤ 2) (hne : a ≠ b) :
+    f a + f b ≤ f 0 + f 1 + f 2 := by
+  have h0 : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+  have h1 : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+  rcases h0 with rfl | rfl | rfl <;> rcases h1 with rfl | rfl | rfl <;>
+    omega
+
+private theorem sum3_le_two_add {f : Nat → Nat} {a b : Nat}
+    (hf0 : f 0 ≤ 1) (hf1 : f 1 ≤ 1) (hf2 : f 2 ≤ 1)
+    (ha : a ≤ 2) (hb : b ≤ 2) (hne : a ≠ b) :
+    f 0 + f 1 + f 2 ≤ f a + f b + 1 := by
+  have h0 : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+  have h1 : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+  rcases h0 with rfl | rfl | rfl <;> rcases h1 with rfl | rfl | rfl <;>
+    omega
+
+private theorem sum3_eq_of_cover {f : Nat → Nat} {a b c : Nat}
+    (ha : a ≤ 2) (hb : b ≤ 2) (hc : c ≤ 2)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) :
+    f 0 + f 1 + f 2 = f a + f b + f c := by
+  have h0 : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+  have h1 : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+  have h2 : c = 0 ∨ c = 1 ∨ c = 2 := by omega
+  rcases h0 with rfl | rfl | rfl <;> rcases h1 with rfl | rfl | rfl <;>
+    rcases h2 with rfl | rfl | rfl <;> omega
+
+set_option maxHeartbeats 4000000 in
+/-- The uniform cross-count route: the other triple's bits do not
+distinguish the two chosen members, so the bare transposition
+suffices. -/
+theorem twoTriple_sw1
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hT1 : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
+    (hT2 : (d2, d2 + 2) ∈ cells st.ptn level ctx.n)
+    (hT12 : tc ≠ d2)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+      q ≠ (d2, d2 + 2) → q.2 = q.1)
+    (hoU : oU ≤ 2) (hoV : oV ≤ 2) (hne : oU ≠ oV)
+    (huni : ∀ q, q ≤ 2 →
+      (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + q]! =
+        (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + q]!) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have ht1n : tc + 2 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hT1
+    rw [hpsz] at this
+    omega
+  have ht2n : d2 + 2 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hT2
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  have hI1 := cells_isCell (by rw [hpsz]; exact Nat.le_refl _)
+    hend _ hT1
+  have hI2 := cells_isCell (by rw [hpsz]; exact Nat.le_refl _)
+    hend _ hT2
+  rw [show tc + 2 + 1 - tc = 3 by omega] at hI1
+  rw [show d2 + 2 + 1 - d2 = 3 by omega] at hI2
+  have hdisj : tc + 3 ≤ d2 ∨ d2 + 3 ≤ tc := by
+    rcases isCell_disj_or_eq hI1 hI2 with ⟨h1, -⟩ | hd | hd
+    · exact absurd h1 hT12
+    · exact Or.inl hd
+    · exact Or.inr hd
+  have hcross : ∀ w w' : Nat, w ≤ 2 → w' ≤ 2 →
+      st.lab[tc + w]! ≠ st.lab[d2 + w']! := by
+    intro w w' hw hw' hcon
+    have := hinj (tc + w) (d2 + w') (by omega) (by omega) hcon
+    omega
+  have hin1 : ∀ w w' : Nat, w ≤ 2 → w' ≤ 2 → w ≠ w' →
+      st.lab[tc + w]! ≠ st.lab[tc + w']! := by
+    intro w w' hw hw' hne' hcon
+    have := hinj (tc + w) (tc + w') (by omega) (by omega) hcon
+    omega
+  have hun : st.lab[tc + oU]! < ctx.n := hlb _ (by omega)
+  have hvn : st.lab[tc + oV]! < ctx.n := hlb _ (by omega)
+  have huv := hin1 _ _ hoU hoV hne
+  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[tc + oU]! →
+      z ≠ st.lab[tc + oV]! →
+      (ctx.g[z]!).testBit st.lab[tc + oU]! =
+        (ctx.g[z]!).testBit st.lab[tc + oV]! := by
+    intro z hz hzu hzv
+    obtain ⟨j, hj, rfl⟩ := labInj_surj
+      (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
+    obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
+      (level := level) (nn := ctx.n) j (by omega)
+    rcases Decidable.em (p = (tc, tc + 2)) with rfl | hpT1
+    · have h1 : tc ≤ j := hj1
+      have h2 : j ≤ tc + 2 := hj2
+      have hw : j - tc ≤ 2 := by omega
+      have hwu : j - tc ≠ oU := fun hcon =>
+        hzu (by rw [show j = tc + oU by omega])
+      have hwv : j - tc ≠ oV := fun hcon =>
+        hzv (by rw [show j = tc + oV by omega])
+      have h := triple_internal hE hpsz hend hinj hlb hg hsymm hloop
+        hT1 (j - tc) oU (j - tc) oV (by omega) (by omega) (by omega)
+        (by omega) hwu hwv
+      rw [show tc + (j - tc) = j by omega] at h
+      exact h
+    rcases Decidable.em (p = (d2, d2 + 2)) with rfl | hpT2
+    · have h1 : d2 ≤ j := hj1
+      have h2 : j ≤ d2 + 2 := hj2
+      have hw : j - d2 ≤ 2 := by omega
+      have h := huni (j - d2) hw
+      rw [show d2 + (j - d2) = j by omega] at h
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn]
+      rw [hsymm _ _ hun hz, hsymm _ _ hvn hz] at h
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn] at h
+      exact h
+    · have hps : p.2 = p.1 := hsing p hp hpT1 hpT2
+      have hjp : j = p.1 := by omega
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+        have : p = (p.1, p.1) := by
+          obtain ⟨qa, qb⟩ := p
+          simp only at hps ⊢
+          rw [hps]
+        rw [← this]
+        exact hp
+      have hconst := cell_const_into_singleton hE hT1 hpmem
+        (o := oU) (o' := oV) (by omega) (by omega)
+      rw [← hjp] at hconst
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn]
+      rw [hsymm _ _ hun hz, hsymm _ _ hvn hz] at hconst
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn] at hconst
+      exact hconst
+  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        sw1 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[p.1 + o]! =
+          st.lab[p.1 + o']! := by
+    intro p hp o ho
+    rcases Decidable.em (p = (tc, tc + 2)) with rfl | hpT1
+    · have ho' : o < tc + 2 + 1 - tc := ho
+      rcases Decidable.em (o = oU) with rfl | hou
+      · refine ⟨oV, show oV < tc + 2 + 1 - tc by omega, ?_⟩
+        rw [sw1_u]
+      rcases Decidable.em (o = oV) with rfl | hov
+      · refine ⟨oU, show oU < tc + 2 + 1 - tc by omega, ?_⟩
+        rw [sw1_v huv]
+      · exact ⟨o, ho, sw1_fix (hin1 o oU (by omega) hoU hou)
+          (hin1 o oV (by omega) hoV hov)⟩
+    rcases Decidable.em (p = (d2, d2 + 2)) with rfl | hpT2
+    · have ho' : o < d2 + 2 + 1 - d2 := ho
+      exact ⟨o, ho, sw1_fix
+        (fun h => hcross oU o hoU (by omega) h.symm)
+        (fun h => hcross oV o hoV (by omega) h.symm)⟩
+    · have hps : p.2 = p.1 := hsing p hp hpT1 hpT2
+      have ho1 : o = 0 := by omega
+      have hbd : p.1 < ctx.n := by
+        have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
+          hend _ hp
+        have h2 := cells_le _ hp
+        rw [hpsz] at h1
+        omega
+      have hother1 : ∀ w' : Nat, w' ≤ 2 →
+          st.lab[p.1 + o]! ≠ st.lab[tc + w']! := by
+        intro w' hw' hcon
+        have := hinj (p.1 + o) (tc + w') (by rw [ho1]; omega)
+          (by omega) hcon
+        rw [ho1] at this
+        exact hpT1 (cells_eq_of_shared
+          (by rw [hpsz]; exact Nat.le_refl _) hend hp hT1
+          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
+      exact ⟨o, ho, sw1_fix (hother1 oU hoU) (hother1 oV hoV)⟩
+  obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
+    (f := sw1 st.lab[tc + oU]! st.lab[tc + oV]!) hIt hgsz hg
+    (sw1_lt hun hvn) (fun w _ => sw1_invol huv w)
+    (sw1_bits hsymm hloop hun hvn huv hfix) hset
+  refine ⟨σ, hrm, hsp, ?_⟩
+  rw [hat (tc + oU) (by omega), sw1_u]
+
 end TwoTriple
 
 end Hex.GraphIso.Nauty
