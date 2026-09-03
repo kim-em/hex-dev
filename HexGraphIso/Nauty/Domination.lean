@@ -11,6 +11,9 @@ public import HexGraphIso.Nauty.LeafFaithful
 public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.Stabilize
+public import HexGraphIso.Nauty.AutosLedger
+public import HexGraphIso.Nauty.SmallCellTie
+import all HexGraphIso.Nauty.SmallCellTie
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -93,27 +96,50 @@ induction's architecture per unwind mode:
   `cellStab_of_scatter` + `childKey_of_carried` at the loop's own
   node.
 
-Three obligations remain genuinely open before the mutual
-induction can close unconditionally, all external to this file:
+The three obligations this file once listed as external are all
+supplied now. The cheapautom subtree theorem is
+`descPath_leafRows_all` and its `leafRows_eq_of_descPaths` corollary;
+store-validity arm 2 is `genTraceOk_processnode` and
+`processnode_checkAutom`; the `(fix, mcr)` ledger is `AutosLedger`,
+whose `longprune_carried`/`shortprune_carried` meet
+`childKey_of_carried`'s hypotheses exactly. `DomOk` therefore carries
+both ledgers (`genTraceOk`, `autosOk`), both ride the internal steps
+by frame (`otherNodePrep_store`, `recover_store`,
+`firstterminal_store`, transported by `genTraceOk_of_eq` and
+`autosOk_of_eq`), and the admission event preserves store validity
+under the record outright
+(`genTraceOk_processnode_of_domOk`,`processnode_checkAutom_of_domOk`).
+Of the two row obligations those events leave, the row-tie one is
+local and proven (`rows_eq_of_testcanlab_tie`, from the record's
+store invariant), and the first-path one is reduced to a threadable
+clause: `FirstDescOk` records that a live gate comes with two
+same-target descents from one cheapautom-passing node, and
+`rows_eq_of_firstDescOk` turns that into the row equality.
 
-1. The `noncheaplevel - 1` arm of `pruneReturn` (fired whenever
-   `noncheaplevel ≤ save`) abandons loops at levels where the
-   machine may have re-agreed; its justification is the cheapautom
-   subtree theorem of the small-cell programme (`SmallCell.lean`
-   lineage): every leaf below a cheapautom-passing node realizes
-   an automorphism with the first leaf.
-2. The scan-free code-1 gate (`gcaFirst ≥ noncheaplevel`) admits a
-   scatter whose `checkAutom` validity is store-validity arm 2 —
-   the same programme.
-3. The `shortprune`/`longprune` target-cell filtering drops
-   vertices via the `(fix, mcr)` pairs of the `autos` store
-   (`fmperm`/`fmptn`); dominating those skips needs a ledger tying
-   each stored pair to a generator word or a cheapautom implicit
-   automorphism whose mcr semantics justify the drop. No branch
-   has built this layer; it is the one piece of the induction with
-   no existing machinery.
+Two obligations remain before the mutual induction can close, both
+now precisely located:
 
-With those three supplied, the mutual quartet induction on the
+1. **The code-1 depth clause.** `auto_keyMax` needs `cs = fs`, which
+   `firstCodeInv_eq_of_tied` supplies from a full agreement depth
+   plus `cs.length = fs.length`. `FirstCodeInv.elev_fs` gives
+   `cs.length ≤ fs.length` at a live gate; the reverse needs that
+   equal code prefixes force equal partitions, so a leaf discrete at
+   the current level makes the first path discrete there too. That
+   is path-determinism of the imperative descent, and no file builds
+   it: the spec side has `specNode_codes_head`, but nothing states
+   the transcription's descent as a function of its code path.
+2. **Seeding and preserving `FirstDescOk`.** The seed is the
+   degenerate descent at `firstterminal` (`firstlab` is the current
+   `lab`, both paths empty), which still needs `SubtreeOk` at that
+   node; a discrete node has `Equitable` by
+   `equitable_of_singletons` and `SmallShape` outright, so the seed
+   should follow from `IterOk` there. Preservation is the geometric
+   step: `childSt_eq_search_step` makes each imperative child step
+   definitionally a `DescPath.step`, and `maketargetcell_mem` gives
+   the step's cell hypotheses, so extending both descents in step is
+   bookkeeping rather than new mathematics.
+
+With those two supplied, the mutual quartet induction on the
 `canonlab_cellsReach` skeleton (whose composite helpers
 `recover_out`/`processnode_searchOk`/`canonlab_or_of` are public)
 threads `DomOk`, discharges leaf arms by `processnode_leaf`/
@@ -1260,6 +1286,44 @@ theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
   rw [recF_canong, recF_canonlab, recF_samerows]
   exact h
 
+private theorem prepF_genTrace (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).genTrace = st.genTrace := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.genTrace, ite_self]
+
+private theorem prepF_autos (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).autos = st.autos := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.autos, ite_self]
+
+private theorem recF_genTrace (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).genTrace = st.genTrace := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.genTrace, ite_self]
+
+private theorem recF_autos (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).autos = st.autos := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.autos, ite_self]
+
+/-- The store fields no internal step writes: the generator trace and
+the bounded autos workspace pass through `otherNodePrep` and
+`recover` untouched, so both ledger clauses ride the unwind and the
+comparison step by frame. -/
+theorem otherNodePrep_store (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).genTrace = st.genTrace ∧
+    (otherNodePrep level code st).autos = st.autos :=
+  ⟨prepF_genTrace level code st, prepF_autos level code st⟩
+
+theorem recover_store (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).genTrace = st.genTrace ∧
+    (recover n inf level st).autos = st.autos :=
+  ⟨recF_genTrace n inf level st, recF_autos n inf level st⟩
+
 end Frames
 
 /-! # The seed: `firstterminal` starts every thread -/
@@ -1359,6 +1423,23 @@ theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
   show keyCmp _ _ ≠ .gt
   rw [pathLeafKey, incKey, keyCmp_eq_iff.mpr rfl]
   decide
+
+private theorem ftF_genTrace (level : Nat) (st : SearchSt) :
+    (firstterminal level st).genTrace = st.genTrace := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_autos (level : Nat) (st : SearchSt) :
+    (firstterminal level st).autos = st.autos := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+/-- `firstterminal` installs the first leaf without touching either
+store, so both ledger clauses are carried across the seed. -/
+theorem firstterminal_store (level : Nat) (st : SearchSt) :
+    (firstterminal level st).genTrace = st.genTrace ∧
+    (firstterminal level st).autos = st.autos :=
+  ⟨ftF_genTrace level st, ftF_autos level st⟩
 
 end Seed
 
@@ -1562,10 +1643,18 @@ variable {n k : Nat}
 /-- The entry invariant of the maximality induction at a node about
 to refine at `level = cs.length + 1`: the search skeleton, both
 comparison machines, the store invariant, cell stabilization of every
-recorded generator at this node, and domination of the first leaf by
-the incumbent. -/
-structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
-    (numcells : Nat) (st : SearchSt) : Prop where
+recorded generator at this node, domination of the first leaf by the
+incumbent, and the two ledgers the pruning arms consume.
+
+`genTraceOk` is store validity: every recorded generator is a checked
+automorphism, which is what `childKey_of_carried` needs of the
+carriers the gca returns hand up. `autosOk` is the `(fix, mcr)`
+ledger of `AutosLedger`, anchored at the root partition `rptn`/`rlab`
+where it is unconditional; the `shortprune`/`longprune` arms move a
+single pair down the path with `pairOk_descend` at the point of
+use. -/
+structure DomOk (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
+    (cs bs fs : List Nat) (numcells : Nat) (st : SearchSt) : Prop where
   searchOk : SearchOk G (cs.length + 1) numcells st
   codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
     st.eqlevCanon st.compCanon
@@ -1575,6 +1664,189 @@ structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
     CellStab st.ptn (cs.length + 1) st.lab γ
   firstKeyLe : keyLe (pathLeafKey ctx fs st.firstlab)
     (incKey ctx bs st.canonlab)
+  genTraceOk : GenTraceOk ctx st
+  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+
+/-! # The ledgers ride the internal steps
+
+`processnode` is the only primitive that writes either store, so the
+two ledger clauses of `DomOk` cross every other event by frame. These
+are the transport forms the induction applies at the unwind and the
+comparison step. -/
+
+/-- Store validity crosses a frame-preserving step. -/
+theorem genTraceOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+    (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st) :
+    GenTraceOk ctx st' := by
+  intro γ hγ
+  exact hok γ (by rwa [h] at hγ)
+
+/-- The `(fix, mcr)` ledger crosses a frame-preserving step. -/
+theorem autosOk_of_eq {g rptn rlab : Array Nat} {nn : Nat}
+    {st st' : SearchSt} (h : st'.autos = st.autos)
+    (hok : AutosOk g rptn rlab 1 nn st.autos) :
+    AutosOk g rptn rlab 1 nn st'.autos := by
+  rw [h]; exact hok
+
+/-! # The leaf event's row obligations
+
+`processnode_checkAutom` and `genTraceOk_processnode` leave two row
+equalities to the induction. The row-tie one is local: a `testcanlab`
+tie against the updated store is exactly equality of the two leaf-row
+lists, by the store invariant the node already carries. The first-path
+one is the cheapautom descent and is discharged at the use site from
+the run's `gcaFirst`/`firsttc` bookkeeping. -/
+
+/-- A `testcanlab` tie against the updated store says the leaf's rows
+are the incumbent's: this is the `harm3` obligation of
+`genTraceOk_processnode`, discharged from `DomOk.canongInv`. -/
+theorem rows_eq_of_testcanlab_tie {ctx : Ctx} {st : SearchSt}
+    (hinv : CanongInv ctx st.canong st.canonlab st.samerows)
+    (h : (testcanlab ctx
+        (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1
+        = 0) :
+    leafRows ctx st.canonlab = leafRows ctx st.lab := by
+  rw [testcanlab_fst, rows_of_canongInv (updatecan_inv hinv)] at h
+  have hc : listCmp rowCmp (leafRows ctx st.lab)
+      (leafRows ctx st.canonlab) = .eq := by
+    rcases hcc : listCmp rowCmp (leafRows ctx st.lab)
+        (leafRows ctx st.canonlab) with _ | _ | _
+    · rw [hcc] at h; exact absurd h (by decide)
+    · rfl
+    · rw [hcc] at h; exact absurd h (by decide)
+  exact ((listCmp_eq_iff (fun _ _ => rowCmp_eq_iff) _ _).mp hc).symm
+
+/-- The first-path descent bookkeeping. When the scan-free gate is
+live (`noncheaplevel ≤ gcaFirst`), the guard passed at the gca, and
+the first leaf and the current node are two descents from that one
+node choosing the same target cell at every level. `childSt_eq_search_step`
+makes each imperative child step definitionally a `DescPath.step`, and
+`maketargetcell` is a position-level policy, so both descents pick the
+same cells; this clause records that the induction has kept them
+aligned. -/
+def FirstDescOk (ctx : Ctx) (st : SearchSt) : Prop :=
+  st.noncheaplevel ≤ st.gcaFirst →
+    ∃ (r U V : RefineSt) (p₁ p₂ : List (Nat × Nat)) (l₁ l₂ : Nat),
+      SubtreeOk ctx st.gcaFirst r ∧
+      DescPath ctx st.gcaFirst r p₁ l₁ U ∧
+      DescPath ctx st.gcaFirst r p₂ l₂ V ∧
+      p₂.map Prod.fst = p₁.map Prod.fst ∧
+      (∀ q, q < ctx.n → U.ptn[q]! ≤ l₁) ∧
+      (∀ q, q < ctx.n → V.ptn[q]! ≤ l₂) ∧
+      U.lab = st.lab ∧ V.lab = st.firstlab
+
+/-- The first-path discharge: under the descent bookkeeping, a live
+gate means the current leaf's rows are the first leaf's. This is the
+`harm2` obligation of `genTraceOk_processnode` and
+`processnode_checkAutom`, reduced to a clause the induction threads
+rather than a fact it must reprove at each arm. -/
+theorem rows_eq_of_firstDescOk {ctx : Ctx} {st : SearchSt}
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hdesc : FirstDescOk ctx st)
+    (hgate : st.noncheaplevel ≤ st.gcaFirst) :
+    leafRows ctx st.firstlab = leafRows ctx st.lab := by
+  obtain ⟨r, U, V, p₁, p₂, l₁, l₂, hS, hU, hV, htcs, hUd, hVd,
+    hUl, hVl⟩ := hdesc hgate
+  rw [← hUl, ← hVl]
+  exact leafRows_eq_of_descPaths hgsz hgb hsymm hloop hS hU hV htcs
+    hUd hVd
+
+/-! # Labelling facts of a reached state
+
+The row obligations and the scatter exits are stated over `LabOk`
+and `LabInj`; a reached labelling supplies both, so the induction
+never carries them separately from `SearchOk`. -/
+
+/-- A reached labelling lands in the vertex range. -/
+theorem labOk_of_reach {G : Colored n k} {lab : Array Nat}
+    (hsz : lab.size = n) (h : CellsReach G lab) : LabOk lab n := by
+  intro i hi
+  exact cellsReach_lt h i (by omega)
+
+/-- A reached labelling is injective: it is a permutation of the
+vertex range, hence duplicate-free. -/
+theorem labInj_of_reach {G : Colored n k} {lab : Array Nat}
+    (hsz : lab.size = n) (hn0 : 0 < n) (h : CellsReach G lab) :
+    LabInj lab n := by
+  have hp := isPerm_of_cellsReach hsz hn0 h
+  have hnd : lab.toList.Nodup := hp.nodup_iff.mpr List.nodup_range
+  intro i j hi hj he
+  have hi' : i < lab.toList.length := by simp [hsz]; omega
+  have hj' : j < lab.toList.length := by simp [hsz]; omega
+  rw [getElem!_pos lab i (by omega), getElem!_pos lab j (by omega)]
+    at he
+  have hg : lab.toList[i] = lab.toList[j] := by simpa using he
+  exact (List.Nodup.getElem_inj hnd).mp hg
+
+/-! # The admission event under the node invariant
+
+Packaging the two row obligations with the labelling facts of a
+reached state: at a node carrying `DomOk` and the descent
+bookkeeping, `processnode` preserves store validity outright. The two
+`reached` hypotheses are what the induction knows from having passed
+`firstterminal`, where both the first leaf and the incumbent are
+installed from a reached labelling. -/
+
+/-- Store validity survives the admission event under the node
+invariant: `harm3` comes from the record's store invariant and
+`harm2` from the descent bookkeeping. -/
+theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {cs bs fs : List Nat}
+    {numcells level nc : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
+    (hdesc : FirstDescOk ctx st)
+    (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
+    (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
+    GenTraceOk ctx (processnode ctx level nc st).2 := by
+  subst hn
+  exact genTraceOk_processnode hdom.genTraceOk hgb hsymm hloop
+    hfsz (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
+    hdom.searchOk.labSize
+    (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
+    (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
+    hcsz (labOk_of_reach hcsz hcre) (labInj_of_reach hcsz hn0 hcre)
+    (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
+      hgate)
+    (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie)
+
+/-- The same packaging for the scatter itself: the generator the
+admission records is a checked automorphism. -/
+theorem processnode_checkAutom_of_domOk {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {cs bs fs : List Nat}
+    {numcells level nc : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
+    (hdesc : FirstDescOk ctx st)
+    (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
+    (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
+    (processnode ctx level nc st).2.genTrace = st.genTrace ∨
+    ∃ γ, (processnode ctx level nc st).2.genTrace =
+        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true := by
+  subst hn
+  exact processnode_checkAutom hgb hsymm hloop
+    hfsz (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
+    hdom.searchOk.labSize
+    (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
+    (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
+    hcsz (labOk_of_reach hcsz hcre) (labInj_of_reach hcsz hn0 hcre)
+    (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
+      hgate)
+    (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie)
 
 /-! # Absorption of dominated sibling suffixes
 

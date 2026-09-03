@@ -6,13 +6,14 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCellLeaves
+public import HexGraphIso.Nauty.SmallCellAll
 import all HexGraphIso.Nauty.Equitable
 public import HexGraphIso.Nauty.EquitableStep
 import all HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
 import all HexGraphIso.Nauty.EquitableFix
 import all HexGraphIso.Nauty.SmallCellLeaves
+import all HexGraphIso.Nauty.SmallCellAll
 
 public section
 
@@ -34,12 +35,13 @@ common ancestor are same-target descents, and
 (`checkAutom_scatter_of_descPaths`).
 
 `subtreeOk_of_cheapautom` establishes the node invariant at the
-ancestor from the guard: the first branch of `cheapautom_iff` gives
-the small shape (`cheapautom_shape_or_exotic`); the second branch —
-a defect of at most four with a cell of size four or five, or two
-triples — is the exotic configuration, surfaced here as an explicit
-hypothesis and discharged by the defect-four flip analogues
-(`SmallCellExotic`).
+ancestor from the guard alone, with no residual hypothesis: the two
+branches of `cheapautom_iff` are exactly the two disjuncts of
+`NodeShape` (`cheapautom_shape_or_exotic`). The second branch, a
+defect of at most four with a cell of size four or five or with two
+triples, keeps its own shape rather than being forced into the first,
+which it need not have; `flipData_of_subtreeOk` hands it to the
+defect-four flip analogues (`SmallCellExotic3`).
 
 The run-level facts these theorems consume — the two descents from
 the ancestor with equal target paths, equitability and the boundary
@@ -117,21 +119,18 @@ theorem cheapautom_shape_or_exotic {ptn : Array Nat} {level : Nat}
     · exact Or.inr h3
   · exact Or.inr hb4
 
-/-- The node invariant at a guard-passing node, with the exotic arm as
-the explicit residual hypothesis. -/
+/-- The node invariant at a guard-passing node. The guard's two
+branches are exactly the invariant's two shapes, so nothing is left
+over: a defect-four node keeps its own shape rather than being forced
+into the first-branch one, which it need not have. -/
 theorem subtreeOk_of_cheapautom {r : RefineSt} {level : Nat}
     (hIt : IterOk ctx level r)
     (heqt : Equitable ctx level r.lab r.ptn)
     (hacc : bcount r.ptn level ctx.n = r.numcells)
-    (hch : cheapautom r.ptn level ctx.n = true)
-    (hexotic : ctx.n - (cells r.ptn level ctx.n).length ≤ 4 →
-      SmallShape ctx level r.ptn) :
-    SubtreeOk ctx level r := by
-  refine ⟨hIt, heqt, hacc, ?_⟩
-  rcases cheapautom_shape_or_exotic hIt.ok.ptnSize hIt.ok.ptnEnd hch
-    with hs | he
-  · exact hs
-  · exact hexotic he
+    (hch : cheapautom r.ptn level ctx.n = true) :
+    SubtreeOk ctx level r :=
+  ⟨hIt, heqt, hacc,
+    cheapautom_shape_or_exotic hIt.ok.ptnSize hIt.ok.ptnEnd hch⟩
 
 /-! # Permutation labellings -/
 
@@ -308,5 +307,47 @@ theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
           hsc hsymm hloop hgb haut
     · exact checkAutom_scatter_of_leafRows_eq hγsz hsz₂ hp₂ hszL hpL
         hsc hgb (harm3 htceq)
+
+/-! # The store-validity invariant -/
+
+/-- Every generator the run has recorded is a checked automorphism.
+This is the store-validity invariant, in the form the domination
+induction threads: `processnode` is the only primitive that writes
+`genTrace`, so every other event preserves it by its frame. -/
+def GenTraceOk (ctx : Ctx) (st : SearchSt) : Prop :=
+  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ ctx.n = true
+
+/-- The invariant survives the admission event. The two rows clauses
+are the run-level bookkeeping the induction carries: the first-path
+agreement behind the scan-free gate, and the row tie behind the
+`testcanlab` arm. -/
+theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
+    (hprev : GenTraceOk ctx st)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hok₁ : LabOk st.firstlab ctx.n) (hinj₁ : LabInj st.firstlab ctx.n)
+    (hszL : st.lab.size = ctx.n)
+    (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
+    (hsz₂ : st.canonlab.size = ctx.n)
+    (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
+    (harm2 : st.noncheaplevel ≤ st.gcaFirst →
+      leafRows ctx st.firstlab = leafRows ctx st.lab)
+    (harm3 : (testcanlab ctx
+        (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
+        0 →
+      leafRows ctx st.canonlab = leafRows ctx st.lab) :
+    GenTraceOk ctx (processnode ctx level numcells st).2 := by
+  intro γ hγ
+  rcases processnode_checkAutom hgb hsymm hloop hsz₁ hok₁ hinj₁ hszL
+      hokL hinjL hsz₂ hok₂ hinj₂ harm2 harm3 with heq | ⟨δ, hpush, hδ⟩
+  · rw [heq] at hγ
+    exact hprev γ hγ
+  · rw [hpush] at hγ
+    rcases Array.mem_push.mp hγ with hmem | rfl
+    · exact hprev γ hmem
+    · exact hδ
 
 end Hex.GraphIso.Nauty
