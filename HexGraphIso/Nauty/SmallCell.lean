@@ -513,4 +513,240 @@ theorem pair_odd_eq {lab ptn : Array Nat} {level : Nat}
       bitCnt_eq_one.mp (sum_range_eq_len _
         (fun o _ => bitCnt_le_one ..) hy o ho)]
 
+/-! # The flip theorem -/
+
+/-- Image bits under a bounded involution read off the preimage bit. -/
+theorem testBit_image_invol {f : Nat → Nat} {n s : Nat}
+    (hfb : ∀ v, v < n → f v < n) (hinvol : ∀ v, v < n → f (f v) = v)
+    {z : Nat} (hz : z < n) :
+    (image f n s).testBit z = s.testBit (f z) := by
+  rw [testBit_image]
+  rcases hb : s.testBit (f z) with _ | _
+  · refine List.any_eq_false.mpr fun u hu hcontra => ?_
+    have hun := List.mem_range.mp hu
+    rw [Bool.and_eq_true, beq_iff_eq] at hcontra
+    obtain ⟨hb1, hb2⟩ := hcontra
+    have huz : u = f z := by
+      rw [← hb2, hinvol u hun]
+    rw [huz, hb] at hb1
+    exact absurd hb1 (by simp)
+  · refine List.any_eq_true.mpr ⟨f z, List.mem_range.mpr (hfb z hz), ?_⟩
+    rw [hb, hinvol z hz]
+    simp
+
+section Flip
+
+variable {lab ptn : Array Nat} {level : Nat} {S : Nat → Prop}
+  {f : Nat → Nat}
+
+/-- The members of a flipped pair have identical bits at every member
+of an unflipped cell, given matching closure and odd unflipped
+sizes. -/
+private theorem flip_bit_aux
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
+      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+        PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
+        S q.1)
+    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1)
+    {c : Nat} (hP : (c, c + 1) ∈ cells ptn level ctx.n) (hSc : S c)
+    {q : Nat × Nat} (hq : q ∈ cells ptn level ctx.n) (hnq : ¬ S q.1)
+    {j : Nat} (hj1 : q.1 ≤ j) (hj2 : j ≤ q.2) :
+    (ctx.g[lab[c]!]!).testBit lab[j]! =
+      (ctx.g[lab[c + 1]!]!).testBit lab[j]! := by
+  rcases Classical.em (q.2 = q.1 + 1) with hqp | hqnp
+  · have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+      rw [← hqp]
+      exact hq
+    have hnm : ¬ PairMatch ctx.g lab[c]! lab[c + 1]!
+        lab[q.1]! lab[q.1 + 1]! :=
+      fun hm => hnq (hSclosed _ hP _ hq hSc hqp hm)
+    obtain ⟨h1, h2⟩ :=
+      pair_eq_of_not_match hE hps hend hinj hlb hg hsymm hP hq' hnm
+    rcases Decidable.em (j = q.1) with rfl | hne
+    · exact h1
+    · have : j = q.1 + 1 := by omega
+      rw [this]
+      exact h2
+  · have hodd := hOdd _ hq hqnp
+    have h := pair_odd_eq hE hps hend hinj hlb hg hsymm hP hq hodd
+      (j - q.1) (by omega)
+    rw [show q.1 + (j - q.1) = j by omega] at h
+    exact h
+
+/-- Bit invariance under a matching-closed flip: mapping both vertex
+arguments through the flip preserves every adjacency bit. -/
+private theorem flip_bit
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
+    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
+      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+        PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
+        S q.1)
+    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1) :
+    ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[f lab[i]!]!).testBit (f lab[j]!) =
+        (ctx.g[lab[i]!]!).testBit lab[j]! := by
+  intro i j hi hj
+  obtain ⟨p, hp, hpi1, hpi2⟩ := cells_cover (ptn := ptn)
+    (level := level) i hi
+  obtain ⟨q, hq, hqj1, hqj2⟩ := cells_cover (ptn := ptn)
+    (level := level) j hj
+  rcases Classical.em (S p.1) with hSp | hSp <;>
+    rcases Classical.em (S q.1) with hSq | hSq
+  · -- both flipped
+    have hpp := hSpair _ hp hSp
+    have hqp := hSpair _ hq hSq
+    have hp' : (p.1, p.1 + 1) ∈ cells ptn level ctx.n := by
+      rw [← hpp]; exact hp
+    have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+      rw [← hqp]; exact hq
+    obtain ⟨hswp1, hswp2⟩ := hSswap _ hp' hSp
+    obtain ⟨hswq1, hswq2⟩ := hSswap _ hq' hSq
+    have hp1n : p.1 + 1 < ctx.n := by
+      have := cells_bound (by omega) hend _ hp'
+      omega
+    have hq1n : q.1 + 1 < ctx.n := by
+      have := cells_bound (by omega) hend _ hq'
+      omega
+    rcases Classical.em (p.1 = q.1) with heq | hnepq
+    · -- same pair
+      have hiv : i = p.1 ∨ i = p.1 + 1 := by omega
+      have hjv : j = p.1 ∨ j = p.1 + 1 := by omega
+      rcases hiv with rfl | hiv <;> rcases hjv with rfl | hjv
+      · rw [hswp1, hloop _ (hlb _ hp1n), hloop _ (hlb _ (by omega))]
+      · rw [hjv, hswp1, hswp2,
+          hsymm _ _ (hlb _ hp1n) (hlb _ (by omega))]
+      · rw [hiv, hswp2, hswp1,
+          hsymm _ _ (hlb _ (by omega)) (hlb _ hp1n)]
+      · rw [hiv, hjv, hswp2, hloop _ (hlb _ (by omega)),
+          hloop _ (hlb _ hp1n)]
+    · -- distinct flipped pairs
+      obtain ⟨hsw1, hsw2⟩ :=
+        pair_swap_eq hE hps hend hinj hlb hg hsymm hp' hq'
+      have hiv : i = p.1 ∨ i = p.1 + 1 := by omega
+      have hjv : j = q.1 ∨ j = q.1 + 1 := by omega
+      rcases hiv with rfl | hiv <;> rcases hjv with rfl | hjv
+      · rw [hswp1, hswq1]
+        exact hsw1.symm
+      · rw [hjv, hswp1, hswq2]
+        exact hsw2.symm
+      · rw [hiv, hswp2, hswq1]
+        exact hsw2
+      · rw [hiv, hjv, hswp2, hswq2]
+        exact hsw1
+  · -- i flipped, j not
+    have hpp := hSpair _ hp hSp
+    have hp' : (p.1, p.1 + 1) ∈ cells ptn level ctx.n := by
+      rw [← hpp]; exact hp
+    obtain ⟨hswp1, hswp2⟩ := hSswap _ hp' hSp
+    have hfix := hSfix _ hq hSq (j - q.1) (by omega)
+    rw [show q.1 + (j - q.1) = j by omega] at hfix
+    have haux := flip_bit_aux hE hps hend hinj hlb hg hsymm
+      hSclosed hOdd hp' hSp hq hSq hqj1 hqj2
+    have hiv : i = p.1 ∨ i = p.1 + 1 := by omega
+    rcases hiv with rfl | hiv
+    · rw [hswp1, hfix]
+      exact haux.symm
+    · rw [hiv, hswp2, hfix]
+      exact haux
+  · -- j flipped, i not
+    have hqp := hSpair _ hq hSq
+    have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+      rw [← hqp]; exact hq
+    obtain ⟨hswq1, hswq2⟩ := hSswap _ hq' hSq
+    have hfix := hSfix _ hp hSp (i - p.1) (by omega)
+    rw [show p.1 + (i - p.1) = i by omega] at hfix
+    have haux := flip_bit_aux hE hps hend hinj hlb hg hsymm
+      hSclosed hOdd hq' hSq hp hSp hpi1 hpi2
+    have hq1n : q.1 + 1 < ctx.n := by
+      have := cells_bound (by omega) hend _ hq'
+      omega
+    have hjv : j = q.1 ∨ j = q.1 + 1 := by omega
+    rcases hjv with rfl | hjv
+    · rw [hswq1, hfix,
+        hsymm lab[i]! lab[q.1 + 1]! (hlb i hi) (hlb _ hq1n),
+        hsymm lab[i]! lab[q.1]! (hlb i hi) (hlb _ (by omega))]
+      exact haux.symm
+    · rw [hjv, hswq2, hfix,
+        hsymm lab[i]! lab[q.1]! (hlb i hi) (hlb _ (by omega)),
+        hsymm lab[i]! lab[q.1 + 1]! (hlb i hi) (hlb _ hq1n)]
+      exact haux
+  · -- neither flipped
+    have hfixi := hSfix _ hp hSp (i - p.1) (by omega)
+    rw [show p.1 + (i - p.1) = i by omega] at hfixi
+    have hfixj := hSfix _ hq hSq (j - q.1) (by omega)
+    rw [show q.1 + (j - q.1) = j by omega] at hfixj
+    rw [hfixi, hfixj]
+
+/-- The flip theorem: an involution swapping the vertices of a
+matching-closed set of pair cells and fixing every other vertex
+preserves the adjacency rows. -/
+theorem flip_rows
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
+    (hsurj : ∀ v, v < ctx.n → ∃ i, i < ctx.n ∧ lab[i]! = v)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
+    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
+      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+        PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
+        S q.1)
+    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1) :
+    ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]! := by
+  intro v hv
+  refine Nat.eq_of_testBit_eq fun z => ?_
+  rcases Decidable.em (z < ctx.n) with hz | hz
+  · rw [testBit_image_invol hfb hinvol hz]
+    obtain ⟨i, hi, rfl⟩ := hsurj v hv
+    obtain ⟨j, hj, hjz⟩ := hsurj (f z) (hfb z hz)
+    rw [← hjz]
+    have hkey := flip_bit hE hps hend hinj hlb hg hsymm hloop
+      hSpair hSswap hSfix hSclosed hOdd i j hi hj
+    rw [hjz, hinvol z hz] at hkey
+    rw [← hjz] at hkey
+    exact hkey
+  · have h1 : (ctx.g[f v]!).testBit z = false :=
+      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le (hg _ (hfb v hv))
+        (Nat.pow_le_pow_right (by omega) (by omega)))
+    rw [h1, testBit_image]
+    refine (List.any_eq_false.mpr fun u hu hcontra => ?_).symm
+    have hun := List.mem_range.mp hu
+    rw [Bool.and_eq_true, beq_iff_eq] at hcontra
+    have := hfb u hun
+    omega
+
+end Flip
+
 end Hex.GraphIso.Nauty
