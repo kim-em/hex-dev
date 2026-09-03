@@ -2135,4 +2135,228 @@ theorem isCell_no_cross {ptn : Array Nat} {level a len : Nat}
     have hop := hint (ptn.size - 1) (by omega) (by omega)
     omega
 
+/-! # The branch step: the two children of a pair target
+
+Individualizing either member of a pair target cell produces, before
+refinement, labellings that agree as cell contents of the split
+partition after composing the first child with the flip of the pair's
+matching component. -/
+
+section Branch
+
+variable {lab ptn : Array Nat} {level tc : Nat} {S : Nat → Prop}
+  {f : Nat → Nat}
+
+/-- The rotated labelling keeps every entry a vertex. -/
+theorem labOk_breakout {o n' : Nat}
+    (hinj : LabInj lab lab.size) (hto : tc + o < lab.size)
+    (hlab : LabOk lab n') :
+    LabOk (breakout lab ptn (level + 1) tc lab[tc + o]!).1 n' := by
+  intro i hi
+  rw [breakout_lab_size] at hi
+  rw [breakout_lab_at hinj hto i]
+  rcases Decidable.em (i < tc) with h1 | h1
+  · rw [ite_eq_left h1]
+    exact hlab i hi
+  · rcases Decidable.em (i = tc) with heq2 | h2
+    · rw [ite_eq_right h1, ite_eq_left heq2]
+      exact hlab _ hto
+    · rcases Decidable.em (i ≤ tc + o) with h3 | h3
+      · rw [ite_eq_right h1, ite_eq_right h2, ite_eq_left h3]
+        exact hlab _ (by omega)
+      · rw [ite_eq_right h1, ite_eq_right h2, ite_eq_right h3]
+        exact hlab i hi
+
+/-- Segments of a mapped array are mapped segments. -/
+private theorem segN_map {arr : Array Nat} {g : Nat → Nat}
+    {lo len : Nat} (h : lo + len ≤ arr.size) :
+    segN (arr.map g) lo len = (segN arr lo len).map g := by
+  rw [segN, segN, List.map_map]
+  exact List.map_congr_left fun o ho => by
+    have hor := List.mem_range.mp ho
+    show (arr.map g)[lo + o]! = g arr[lo + o]!
+    exact getElem!_map_of_lt g arr (by omega)
+
+/-- The second child's labelling is the first child's composed with a
+target-swapping flip, as cell contents of the split partition. -/
+theorem branch_cellsPerm
+    (hpsz : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hvals : ∀ q, q < ctx.n → ptn[q]! ≤ level ∨ level + 1 < ptn[q]!)
+    (hlab : LabOk lab ctx.n) (hinj : LabInj lab ctx.n)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hcell : (tc, tc + 1) ∈ cells ptn level ctx.n)
+    (hStc : S tc)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!) :
+    cellsPerm (ptn.set! tc (level + 1)) (level + 1)
+      (breakout lab ptn (level + 1) tc lab[tc + 1]!).1
+      (((breakout lab ptn (level + 1) tc lab[tc + 0]!).1).map
+        (renamingOfFlip f ctx.n hfb hinvol).toFun) := by
+  intro a len hIs
+  have hn0 : 0 < ctx.n := by
+    obtain ⟨h1, -, -⟩ := (mem_cells_iff (by omega) hend).mp hcell
+    omega
+  have htc1 : tc + 1 < ctx.n := target_end_lt hpsz hend hcell
+  have hinj' : LabInj lab lab.size := by rw [hlsz]; exact hinj
+  have hto1 : tc + 1 < lab.size := by omega
+  have hto0 : tc + 0 < lab.size := by omega
+  have hVat := breakout_lab_at (o := 1) (ptn := ptn) (level := level)
+    hinj' hto1
+  have hUat := breakout_lab_at (o := 0) (ptn := ptn) (level := level)
+    hinj' hto0
+  have hVsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 1]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hUsz : (breakout lab ptn (level + 1) tc
+      lab[tc + 0]!).1.size = ctx.n := by
+    rw [breakout_lab_size, hlsz]
+  have hsz' : (ptn.set! tc (level + 1)).size = ctx.n := by
+    rw [Array.size_set!, hpsz]
+  have hend' : (ptn.set! tc (level + 1))[(ptn.set! tc
+      (level + 1)).size - 1]! ≤ level + 1 := by
+    rw [hsz', ← hpsz]
+    rcases Decidable.em (tc = ptn.size - 1) with rfl | hx
+    · rw [Array.getElem!_set!_self _ _ _ (by omega)]
+      omega
+    · rw [Array.getElem!_set!_ne _ _ _ _ hx]
+      omega
+  have hσat : ∀ w, w < ctx.n →
+      (renamingOfFlip f ctx.n hfb hinvol).toFun w = f w :=
+    fun w hw => renamingOfFlip_at hfb hinvol hw
+  rcases Decidable.em (a < ctx.n) with han | han
+  · -- in range: classify against the split partition's cell list
+    have hcross : a + len ≤ ctx.n := by
+      have := isCell_no_cross hend' hIs (by omega)
+      omega
+    have hmem : (a, a + len - 1) ∈
+        cells (ptn.set! tc (level + 1)) (level + 1) ctx.n :=
+      mem_cells_of_isCell (by omega) hend' hIs han (by omega)
+    have hpos := hIs.1
+    have hcases := child_cells_cases hpsz hend hvals hcell
+      (by omega) hmem
+    have hswapT : f lab[tc]! = lab[tc + 1]! ∧
+        f lab[tc + 1]! = lab[tc]! := hSswap (tc, tc + 1) hcell hStc
+    rcases hcases with heq | heq | ⟨hmemP, hane⟩
+    · -- the split-off singleton
+      have h1 : a = tc := congrArg Prod.fst heq
+      have h2 : a + len - 1 = tc := congrArg Prod.snd heq
+      have hlen1 : len = 1 := by omega
+      subst h1
+      rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
+      rw [hVat a, ite_eq_right (by omega), ite_eq_left rfl]
+      rw [getElem!_map_of_lt _ _ (by rw [hUsz]; omega), hUat a,
+        ite_eq_right (by omega), ite_eq_left rfl,
+        hσat _ (hlab _ (by rw [hlsz]; omega))]
+      simp only [Nat.add_zero]
+      rw [hswapT.1]
+    · -- the remainder singleton
+      have h1 : a = tc + 1 := congrArg Prod.fst heq
+      have h2 : a + len - 1 = tc + 1 := congrArg Prod.snd heq
+      have hlen1 : len = 1 := by omega
+      subst h1
+      rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
+      rw [hVat (tc + 1), ite_eq_right (by omega),
+        ite_eq_right (by omega), ite_eq_left (by omega),
+        show tc + 1 - 1 = tc by omega]
+      rw [getElem!_map_of_lt _ _ (by rw [hUsz]; omega), hUat (tc + 1),
+        ite_eq_right (by omega), ite_eq_right (by omega),
+        ite_eq_right (by omega),
+        hσat _ (hlab _ (by rw [hlsz]; omega))]
+      rw [hswapT.2]
+    · -- an untouched parent cell
+      have hIsA : IsCell ptn level a len := by
+        have h := cells_isCell (by omega) hend _ hmemP
+        rw [show a + len - 1 + 1 - a = len by omega] at h
+        exact h
+      have hIsT : IsCell ptn level tc 2 := by
+        have h := cells_isCell (by omega) hend _ hcell
+        rw [show tc + 1 + 1 - tc = 2 by omega] at h
+        exact h
+      have hdisj : a + len ≤ tc ∨ tc + 2 ≤ a := by
+        rcases isCell_disj_or_eq hIsA hIsT with ⟨h1, -⟩ | h | h
+        · exact absurd h1 hane
+        · exact Or.inl h
+        · exact Or.inr h
+      have hVeq : ∀ o, o < len →
+          (breakout lab ptn (level + 1) tc
+            lab[tc + 1]!).1[a + o]! = lab[a + o]! := by
+        intro o ho
+        rw [hVat (a + o)]
+        rcases hdisj with hd | hd
+        · rw [ite_eq_left (by omega)]
+        · rw [ite_eq_right (by omega), ite_eq_right (by omega),
+            ite_eq_right (by omega)]
+      have hUeq : ∀ o, o < len →
+          (breakout lab ptn (level + 1) tc
+            lab[tc + 0]!).1[a + o]! = lab[a + o]! := by
+        intro o ho
+        rw [hUat (a + o)]
+        rcases hdisj with hd | hd
+        · rw [ite_eq_left (by omega)]
+        · rw [ite_eq_right (by omega), ite_eq_right (by omega),
+            ite_eq_right (by omega)]
+      have hMeq : ∀ o, o < len →
+          ((breakout lab ptn (level + 1) tc
+            lab[tc + 0]!).1.map
+              (renamingOfFlip f ctx.n hfb hinvol).toFun)[a + o]! =
+            f lab[a + o]! := by
+        intro o ho
+        rw [getElem!_map_of_lt _ _ (by rw [hUsz]; omega), hUeq o ho,
+          hσat _ (hlab _ (by rw [hlsz]; omega))]
+      rcases Classical.em (S a) with hSa | hSa
+      · -- a flipped pair: the segment swaps
+        have hpair := hSpair (a, a + len - 1) hmemP hSa
+        have hlen2 : len = 2 := by
+          have : a + len - 1 = a + 1 := hpair
+          omega
+        have hswapA : f lab[a]! = lab[a + 1]! ∧
+            f lab[a + 1]! = lab[a]! := hSswap (a, a + 1) (by
+          rw [show ((a : Nat), a + 1) = (a, a + len - 1) by
+            rw [Prod.mk.injEq]
+            omega]
+          exact hmemP) hSa
+        subst hlen2
+        have hV0 : (breakout lab ptn (level + 1) tc
+            lab[tc + 1]!).1[a]! = lab[a]! := hVeq 0 (by omega)
+        have hM0 : ((breakout lab ptn (level + 1) tc
+            lab[tc + 0]!).1.map
+              (renamingOfFlip f ctx.n hfb hinvol).toFun)[a]! =
+            f lab[a]! := hMeq 0 (by omega)
+        rw [segN_cons, segN_cons, segN_zero, segN_cons, segN_cons,
+          segN_zero]
+        rw [hV0, hVeq 1 (by omega), hM0, hMeq 1 (by omega),
+          hswapA.1, hswapA.2]
+        exact List.Perm.swap _ _ _
+      · -- a fixed cell: the segments agree
+        have hfix := hSfix (a, a + len - 1) hmemP hSa
+        rw [show a + len - 1 + 1 - a = len by omega] at hfix
+        have hfix' : ∀ o, o < len → f lab[a + o]! = lab[a + o]! :=
+          hfix
+        have hVs : segN (breakout lab ptn (level + 1) tc
+            lab[tc + 1]!).1 a len = segN lab a len :=
+          segN_congr fun o ho => hVeq o ho
+        have hMs : segN ((breakout lab ptn (level + 1) tc
+            lab[tc + 0]!).1.map
+              (renamingOfFlip f ctx.n hfb hinvol).toFun) a len =
+            segN lab a len :=
+          segN_congr fun o ho => (hMeq o ho).trans (hfix' o ho)
+        rw [hVs, hMs]
+  · -- beyond the bound: phantom singletons default on both sides
+    have hlen1 : len = 1 := isCell_oob hIs (by omega)
+    rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
+    rw [getElem!_oob (by omega : (breakout lab ptn (level + 1) tc
+        lab[tc + 1]!).1.size ≤ a)]
+    rw [getElem!_oob (by
+      rw [Array.size_map]
+      omega : ((breakout lab ptn (level + 1) tc
+        lab[tc + 0]!).1.map
+          (renamingOfFlip f ctx.n hfb hinvol).toFun).size ≤ a)]
+
+end Branch
+
 end Hex.GraphIso.Nauty
