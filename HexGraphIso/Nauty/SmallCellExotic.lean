@@ -1673,6 +1673,60 @@ theorem oneCell_flip_data
       simp only [List.length_cons] at hlenL
       omega
 
+/-- The deviation at a lone-small-cell target: descents below any two
+of its children reach leaves with the same rows. -/
+theorem oneCell_deviation_leafRows {level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hm : te + 1 - tc ≤ 5)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  obtain ⟨σ, hgmap, hsp, hvv⟩ := oneCell_flip_data hIt hgsz hg hsymm
+    hloop hE hC hm hsing hoU hoV hne
+  exact deviation_leafRows_self hIt hlvl hgmap hsp hC (by omega)
+    hoU hoV hvv hdesc hdisc
+
+/-- The path-preserving form of the lone-small-cell deviation. -/
+theorem oneCell_descPath_deviation {level' : Nat} {U' : RefineSt}
+    {p : List (Nat × Nat)}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hm : te + 1 - tc ≤ 5)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hdesc : DescPath ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) p level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V' q, DescPath ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) q level' V' ∧
+      q.map Prod.fst = p.map Prod.fst ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab ∧
+      V'.ptn = U'.ptn := by
+  obtain ⟨σ, hgmap, hsp, hvv⟩ := oneCell_flip_data hIt hgsz hg hsymm
+    hloop hE hC hm hsing hoU hoV hne
+  exact descPath_deviation_self hIt hlvl hgmap hsp hC (by omega)
+    hoU hoV hvv hdesc hdisc
+
 end OneCell
 
 end Hex.GraphIso.Nauty
