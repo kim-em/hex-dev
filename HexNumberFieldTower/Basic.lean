@@ -186,10 +186,24 @@ array. -/
 def ofCoeffs (T : NumberTower) (coefficients : Array Rat) : Elem T :=
   .mk (normalizeCoeffs T coefficients) (by simp [normalizeCoeffs])
 
+/-- Construct an element from coordinates whose exact tower width is already
+known. Arithmetic kernels use this internal boundary to avoid copying a fresh
+fixed-width result through `normalizeCoeffs` a second time. -/
+def Internal.ofCoeffs (T : NumberTower) (coefficients : Array Rat)
+    (hsize : coefficients.size = T.dim) : Elem T :=
+  .mk coefficients hsize
+
 /-- Canonical flattened rational coordinates. -/
 @[expose]
 def coeffs {T : NumberTower} (a : Elem T) : Array Rat :=
   a.data
+
+/-- Exact-width construction exposes its supplied coordinates unchanged. -/
+@[simp]
+theorem Internal.coeffs_ofCoeffs (T : NumberTower) (coefficients : Array Rat)
+    (hsize : coefficients.size = T.dim) :
+    coeffs (Internal.ofCoeffs T coefficients hsize) = coefficients := by
+  rfl
 
 /-- Every element exposes exactly the tower's mixed-radix width. -/
 @[simp]
