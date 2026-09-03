@@ -84,10 +84,10 @@ open Hex Hex.GraphIso
 namespace HexGraphIsoChapterExample
 
 def petersen : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 2)
+  Graph.singleColor (Families.gpetersen 5 2)
 
 def kneser52 : Colored 10 1 :=
-  Families.plain (Families.kneser 5 2)
+  Graph.singleColor (Families.kneser 5 2)
 
 -- The generalized Petersen numbering, concretely.
 #guard Graph.ofEdges
@@ -121,7 +121,7 @@ re-refines, and refutes every branch; the kernel replays that run.
 
 ```lean
 def prism5 : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 1)
+  Graph.singleColor (Families.gpetersen 5 1)
 
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 ```

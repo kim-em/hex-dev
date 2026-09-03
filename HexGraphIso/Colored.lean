@@ -79,6 +79,12 @@ set. -/
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
     simp [Hex.Vector.get_eq_getElem, this]⟩
 
+/-- Colour vectors into `Fin 1` are constant, so a one-cell colouring
+carries no information beyond its existence. -/
+@[simp] theorem cells_eq_zero (c : Coloring n 1) {i : Nat} (hi : i < n) :
+    c.cells[i] = 0 :=
+  Fin.ext (Nat.lt_one_iff.mp (c.cells[i]).isLt)
+
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
 @[expose] def mod (n k : Nat) (hk : 0 < k := by first | omega | decide)
     (hkn : k ≤ n := by first | omega | decide) : Coloring n k where
@@ -155,5 +161,16 @@ theorem relabel_relabel (G : Colored n k) (l m : Label n) :
   Colored.ext (fun i j => by simp) (fun i => by simp)
 
 end Colored
+
+/-- The one-cell coloured graph of a bare graph: every vertex takes the
+single colour zero, so a coloured isomorphism is exactly a graph
+isomorphism. `n = 0` would force `k = 0`, so this is defined for
+positive `n`. -/
+@[expose] def _root_.Hex.Graph.singleColor {n : Nat} (G : Graph n)
+    (h : 0 < n := by first | omega | decide) : Colored n 1 :=
+  { graph := G, coloring := Coloring.trivial n h }
+
+@[simp] theorem _root_.Hex.Graph.graph_singleColor {n : Nat} (G : Graph n)
+    (h : 0 < n) : (G.singleColor h).graph = G := rfl
 
 end Hex.GraphIso

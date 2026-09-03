@@ -71,7 +71,7 @@ def prepGraph (n : Nat) : GraphInput :=
 /-- Rebuild the typed coloured graph of an input. -/
 def graphOf (input : GraphInput) : Option ((n : Nat) × Colored n 1) :=
   if h : 0 < input.n then
-    some ⟨input.n, Families.plain (Families.circulant input.n [1, 2]) h⟩
+    some ⟨input.n, Graph.singleColor (Families.circulant input.n [1, 2]) h⟩
   else
     none
 

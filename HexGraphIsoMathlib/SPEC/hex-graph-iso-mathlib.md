@@ -65,7 +65,7 @@ and renumber the used colours explicitly, or use a checked helper returning
 reorders colours because that would change the canonical labelling
 convention.
 
-For uncoloured graphs, `Colored.plain` returns
+For uncoloured graphs, `Colored.singleColor` returns
 `Sigma fun k => Colored V k`. It uses `k = 0` for an empty vertex type and
 `k = 1` otherwise. Its result is independent of any ordering of the vertices.
 

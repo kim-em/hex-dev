@@ -44,7 +44,7 @@ private structure Inst (n : Nat) where
 
 private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
     Inst n :=
-  let g0 := Families.plain G h
+  let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
 private def countAutom : CertNode → Nat

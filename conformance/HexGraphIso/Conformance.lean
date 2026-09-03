@@ -272,7 +272,7 @@ where go : List Nauty.CertNode → Bool
 -- the Kneser graph K(5,2) is the Petersen graph
 #guard Families.choose 5 2 == 10
 #guard
-  (Nauty.runColored (Families.plain (Families.kneser 5 2))).canong ==
+  (Nauty.runColored (Graph.singleColor (Families.kneser 5 2))).canong ==
     (Nauty.runColored petersen).canong
 -- regularity spot checks: T(5) and Paley 13 are 6-regular, Q3 cubic
 #guard (Families.triangular 5).degree ⟨0, by decide⟩ == 6
@@ -285,8 +285,8 @@ where go : List Nauty.CertNode → Bool
 -- structured pair: C6 versus two triangles
 #guard
   Pairwise.decideIso? {}
-    (Families.plain (Families.cycle 6))
-    (Families.plain (Families.copies 2 (Families.cycle 3))) ==
+    (Graph.singleColor (Families.cycle 6))
+    (Graph.singleColor (Families.copies 2 (Families.cycle 3))) ==
     some false
 
 /-! # The empty graph -/
