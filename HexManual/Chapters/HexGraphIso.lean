@@ -230,7 +230,7 @@ itself and the `checked` column disappears. For breadth across the
 whole benchmark corpus, see the cactus plots in `reports/figures/` in
 the repository.
 
-# The Mathlib bridge
+# The Mathlib correspondence
 %%%
 tag := "hex-graph-iso-mathlib"
 %%%
