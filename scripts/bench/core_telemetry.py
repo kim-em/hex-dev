@@ -262,7 +262,7 @@ def main() -> int:
     child_env = os.environ.copy()
     child_env["LEAN_BENCH_TIMED_REGIONS_SIDECAR"] = sidecar_template
     process = subprocess.Popen(command, preexec_fn=pin_child, env=child_env)
-    while process.poll() is None:
+    while True:
         time.sleep(args.interval)
         current = cpu_counters()
         current_mono_ns = time.monotonic_ns()
@@ -301,6 +301,11 @@ def main() -> int:
         )
         previous = current
         previous_mono_ns = current_mono_ns
+        # Always take the sample that observes process completion. Otherwise a
+        # short final timed region can fall between the last sample and the
+        # next loop-condition poll and disappear from the graded interval set.
+        if process.poll() is not None:
+            break
 
     return_code = process.wait()
     sidecar_paths = sorted(
