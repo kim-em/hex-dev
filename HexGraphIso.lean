@@ -39,6 +39,7 @@ public import HexGraphIso.Nauty.SmallCell
 public import HexGraphIso.Nauty.SmallCellBranch
 public import HexGraphIso.Nauty.SmallCellIter
 public import HexGraphIso.Nauty.SmallCellTriple
+public import HexGraphIso.Nauty.SmallCellPair
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.SearchReach
