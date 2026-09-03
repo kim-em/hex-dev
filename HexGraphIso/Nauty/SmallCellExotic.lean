@@ -787,6 +787,180 @@ private theorem oneCell_sw1
   refine ⟨σ, hrm, hsp, ?_⟩
   rw [hat (tc + oU) (by omega), sw1_u]
 
+set_option maxHeartbeats 4000000 in
+/-- The crossed-pair route: the two chosen members swap together with
+the differ pair, every other window member having equal bits at both
+pairs. -/
+private theorem oneCell_sw2 {wa wb : Nat}
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hwa : wa ≤ te - tc) (hwb : wb ≤ te - tc) (hab : wa ≠ wb)
+    (hau : wa ≠ oU) (hav : wa ≠ oV) (hbu : wb ≠ oU) (hbv : wb ≠ oV)
+    (htau : (ctx.g[st.lab[tc + wa]!]!).testBit st.lab[tc + oU]! =
+      true)
+    (htav : (ctx.g[st.lab[tc + wa]!]!).testBit st.lab[tc + oV]! =
+      false)
+    (htbu : (ctx.g[st.lab[tc + wb]!]!).testBit st.lab[tc + oU]! =
+      false)
+    (htbv : (ctx.g[st.lab[tc + wb]!]!).testBit st.lab[tc + oV]! =
+      true)
+    (hRestEq : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV → w ≠ wa → w ≠ wb →
+      (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + oU]! =
+        (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + oV]!)
+    (hWfix : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV → w ≠ wa → w ≠ wb →
+      (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + wa]! =
+        (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + wb]!) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  have hvne : ∀ w w' : Nat, w ≤ te - tc → w' ≤ te - tc → w ≠ w' →
+      st.lab[tc + w]! ≠ st.lab[tc + w']! := by
+    intro w w' hw hw' hne' hcon
+    have := hinj (tc + w) (tc + w') (by omega) (by omega) hcon
+    omega
+  have hOk : Sw2Ok ctx.n st.lab[tc + oU]! st.lab[tc + oV]!
+      st.lab[tc + wa]! st.lab[tc + wb]! :=
+    ⟨hlb _ (by omega), hlb _ (by omega), hlb _ (by omega),
+      hlb _ (by omega), hvne _ _ hoU hoV hne,
+      hvne _ _ hoU hwa (fun h => hau h.symm),
+      hvne _ _ hoU hwb (fun h => hbu h.symm),
+      hvne _ _ hoV hwa (fun h => hav h.symm),
+      hvne _ _ hoV hwb (fun h => hbv h.symm),
+      hvne _ _ hwa hwb hab⟩
+  obtain ⟨hun, hvn, hxn, hyn, huv, hux, huy, hvx, hvy, hxy⟩ := hOk
+  have hOk2 : Sw2Ok ctx.n st.lab[tc + oU]! st.lab[tc + oV]!
+      st.lab[tc + wa]! st.lab[tc + wb]! :=
+    ⟨hun, hvn, hxn, hyn, huv, hux, huy, hvx, hvy, hxy⟩
+  -- fixed vertices have equal bits at both pairs
+  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[tc + oU]! →
+      z ≠ st.lab[tc + oV]! → z ≠ st.lab[tc + wa]! →
+      z ≠ st.lab[tc + wb]! →
+      (ctx.g[z]!).testBit st.lab[tc + oU]! =
+        (ctx.g[z]!).testBit st.lab[tc + oV]! ∧
+      (ctx.g[z]!).testBit st.lab[tc + wa]! =
+        (ctx.g[z]!).testBit st.lab[tc + wb]! := by
+    intro z hz hzu hzv hzx hzy
+    obtain ⟨j, hj, rfl⟩ := labInj_surj
+      (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
+    obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
+      (level := level) (nn := ctx.n) j (by omega)
+    rcases Decidable.em (p = (tc, te)) with rfl | hpC
+    · have h1 : tc ≤ j := hj1
+      have h2 : j ≤ te := hj2
+      have hw : j - tc ≤ te - tc := by omega
+      have hwneq : ∀ w' : Nat, w' ≤ te - tc →
+          st.lab[j]! ≠ st.lab[tc + w']! → j - tc ≠ w' := by
+        intro w' hw' hne' hcon
+        exact hne' (by rw [show j = tc + w' by omega])
+      have hwu := hwneq oU hoU hzu
+      have hwv := hwneq oV hoV hzv
+      have hwx := hwneq wa hwa hzx
+      have hwy := hwneq wb hwb hzy
+      have hr := hRestEq (j - tc) hw hwu hwv hwx hwy
+      have hf := hWfix (j - tc) hw hwu hwv hwx hwy
+      rw [show tc + (j - tc) = j by omega] at hr hf
+      exact ⟨hr, hf⟩
+    · have hps : p.2 = p.1 := hsing p hp hpC
+      have hjp : j = p.1 := by omega
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+        have : p = (p.1, p.1) := by
+          obtain ⟨pa, pb⟩ := p
+          simp only at hps ⊢
+          rw [hps]
+        rw [← this]
+        exact hp
+      constructor
+      · have hconst := cell_const_into_singleton hE hC hpmem hoU hoV
+        rw [← hjp] at hconst
+        rw [hsymm _ _ hz hun, hsymm _ _ hz hvn]
+        rw [hsymm _ _ hun hz, hsymm _ _ hvn hz] at hconst
+        rw [hsymm _ _ hz hun, hsymm _ _ hz hvn] at hconst
+        exact hconst
+      · have hconst := cell_const_into_singleton hE hC hpmem hwa hwb
+        rw [← hjp] at hconst
+        rw [hsymm _ _ hz hxn, hsymm _ _ hz hyn]
+        rw [hsymm _ _ hxn hz, hsymm _ _ hyn hz] at hconst
+        rw [hsymm _ _ hz hxn, hsymm _ _ hz hyn] at hconst
+        exact hconst
+  -- the cross bits between the two pairs match diagonally
+  have hc1 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + wa]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + wb]! := by
+    rw [hsymm _ _ hun hxn, hsymm _ _ hvn hyn, htau, htbv]
+  have hc2 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + wb]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + wa]! := by
+    rw [hsymm _ _ hun hyn, hsymm _ _ hvn hxn, htbu, htav]
+  -- the double swap permutes every cell within itself
+  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + wa]!
+          st.lab[tc + wb]! st.lab[p.1 + o]! = st.lab[p.1 + o']! := by
+    intro p hp o ho
+    rcases Decidable.em (p = (tc, te)) with rfl | hpC
+    · have ho' : o < te + 1 - tc := ho
+      rcases Decidable.em (o = oU) with rfl | hou
+      · refine ⟨oV, show oV < te + 1 - tc by omega, ?_⟩
+        rw [sw2_u]
+      rcases Decidable.em (o = oV) with rfl | hov
+      · refine ⟨oU, show oU < te + 1 - tc by omega, ?_⟩
+        rw [sw2_v hOk2]
+      rcases Decidable.em (o = wa) with rfl | hoa
+      · refine ⟨wb, show wb < te + 1 - tc by omega, ?_⟩
+        rw [sw2_x hOk2]
+      rcases Decidable.em (o = wb) with rfl | hob
+      · refine ⟨wa, show wa < te + 1 - tc by omega, ?_⟩
+        rw [sw2_y hOk2]
+      · refine ⟨o, ho, sw2_fix (hvne o oU (by omega) hoU hou)
+          (hvne o oV (by omega) hoV hov)
+          (hvne o wa (by omega) hwa hoa)
+          (hvne o wb (by omega) hwb hob)⟩
+    · have hps : p.2 = p.1 := hsing p hp hpC
+      have ho1 : o = 0 := by omega
+      have hbd : p.1 < ctx.n := by
+        have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
+          hend _ hp
+        have h2 := cells_le _ hp
+        rw [hpsz] at h1
+        omega
+      have hother : ∀ w' : Nat, w' ≤ te - tc →
+          st.lab[p.1 + o]! ≠ st.lab[tc + w']! := by
+        intro w' hw' hcon
+        have := hinj (p.1 + o) (tc + w') (by rw [ho1]; omega)
+          (by omega) hcon
+        rw [ho1] at this
+        exact hpC (cells_eq_of_shared
+          (by rw [hpsz]; exact Nat.le_refl _) hend hp hC
+          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
+      exact ⟨o, ho, sw2_fix (hother oU hoU) (hother oV hoV)
+        (hother wa hwa) (hother wb hwb)⟩
+  obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
+    (f := sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + wa]!
+      st.lab[tc + wb]!) hIt hgsz hg
+    (sw2_lt hOk2) (fun w _ => sw2_invol hOk2 w)
+    (sw2_bits hsymm hloop hOk2 hfix hc1 hc2) hset
+  refine ⟨σ, hrm, hsp, ?_⟩
+  rw [hat (tc + oU) (by omega), sw2_u]
+
 end OneCell
 
 end Hex.GraphIso.Nauty
