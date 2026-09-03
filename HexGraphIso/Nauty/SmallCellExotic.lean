@@ -540,4 +540,253 @@ private theorem sw2_bits
 
 end Sw2
 
+/-! # The flip-data assembly
+
+A raw bit-invariant involution permuting every cell's members within
+the cell packages into the renaming, rows map and state
+self-equivalence the deviation doors consume. -/
+
+private theorem flip_data_of_bits {st : RefineSt} {level : Nat}
+    {f : Nat → Nat}
+    (hIt : IterOk ctx level st) (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hfb : ∀ w, w < ctx.n → f w < ctx.n)
+    (hinvol : ∀ w, w < ctx.n → f (f w) = w)
+    (hbits : ∀ z z', z < ctx.n → z' < ctx.n →
+      (ctx.g[f z]!).testBit (f z') = (ctx.g[z]!).testBit z')
+    (hset : ∀ p ∈ cells st.ptn level ctx.n, ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        f st.lab[p.1 + o]! = st.lab[p.1 + o']!) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      ∀ i, i < ctx.n → σ.toFun st.lab[i]! = f st.lab[i]! := by
+  refine ⟨renamingOfFlip f ctx.n hfb hinvol, ?_, ?_, ?_⟩
+  · exact rowsMap_of_flip_rows hgsz hfb hinvol
+      (rows_of_bits hg hfb hinvol hbits)
+  · exact stPerm_self_setwise hIt.ok hIt.inj hfb hinvol hset
+  · intro i hi
+    exact renamingOfFlip_at hfb hinvol
+      (hIt.ok.labOk i (by rw [hIt.ok.labSize]; omega))
+
+/-! # Position and counting toolkit for the configurations -/
+
+private theorem mem_erase_nodup :
+    ∀ {l : List Nat}, l.Nodup → ∀ a w,
+      (w ∈ l.erase a ↔ w ∈ l ∧ w ≠ a)
+  | [], _, a, w => by simp
+  | b :: t, hnd, a, w => by
+    rw [List.nodup_cons] at hnd
+    rcases Decidable.em (b = a) with rfl | hba
+    · rw [List.erase_cons_head]
+      constructor
+      · intro hw
+        exact ⟨List.mem_cons_of_mem _ hw,
+          fun hcon => hnd.1 (hcon ▸ hw)⟩
+      · rintro ⟨hw, hne⟩
+        rcases List.mem_cons.mp hw with rfl | hmem
+        · exact absurd rfl hne
+        · exact hmem
+    · rw [List.erase_cons_tail (by simp only [beq_iff_eq]; exact hba)]
+      rw [List.mem_cons, List.mem_cons,
+        mem_erase_nodup hnd.2 a w]
+      constructor
+      · rintro (rfl | ⟨hw, hne⟩)
+        · exact ⟨Or.inl rfl, hba⟩
+        · exact ⟨Or.inr hw, hne⟩
+      · rintro ⟨rfl | hw, hne⟩
+        · exact Or.inl rfl
+        · exact Or.inr ⟨hw, hne⟩
+
+/-- Two cells of the partition list sharing a position coincide. -/
+private theorem cells_eq_of_shared {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    {p q : Nat × Nat} (hp : p ∈ cells ptn level nn)
+    (hq : q ∈ cells ptn level nn)
+    {j : Nat} (hjp1 : p.1 ≤ j) (hjp2 : j ≤ p.2)
+    (hjq1 : q.1 ≤ j) (hjq2 : j ≤ q.2) : p = q := by
+  have hIp := cells_isCell hnn hend _ hp
+  have hIq := cells_isCell hnn hend _ hq
+  have hple := cells_le _ hp
+  have hqle := cells_le _ hq
+  rcases isCell_disj_or_eq hIp hIq with ⟨h1, h2⟩ | hd | hd
+  · obtain ⟨pa, pb⟩ := p
+    obtain ⟨qa, qb⟩ := q
+    simp only at h1 h2 hple hqle
+    have : pb = qb := by omega
+    rw [h1, this]
+  · omega
+  · omega
+
+/-- The count of one row into a singleton cell is its bit there, so
+equitability makes the bits of all members of a cell agree at every
+singleton-cell vertex. -/
+private theorem cell_const_into_singleton {lab ptn : Array Nat}
+    {level : Nat}
+    (hE : Equitable ctx level lab ptn)
+    {tc te : Nat} (hC : (tc, te) ∈ cells ptn level ctx.n)
+    {s : Nat} (hS : (s, s) ∈ cells ptn level ctx.n)
+    {o o' : Nat} (ho : o ≤ te - tc) (ho' : o' ≤ te - tc) :
+    (ctx.g[lab[tc + o]!]!).testBit lab[s]! =
+      (ctx.g[lab[tc + o']!]!).testBit lab[s]! := by
+  have hle : tc ≤ te := cells_le _ hC
+  have h := hE _ hC _ hS o o' (by omega) (by omega)
+  rw [worksetOf_singleton, popCount_and_single,
+    popCount_and_single] at h
+  rcases hb : (ctx.g[lab[tc + o]!]!).testBit lab[s]! with _ | _ <;>
+    rcases hb' : (ctx.g[lab[tc + o']!]!).testBit lab[s]! with _ | _ <;>
+      rw [hb, hb'] at h <;> simp_all
+
+/-! # The single-nontrivial-cell configurations
+
+With every other cell a singleton, the flip at a target cell of size
+at most five is a transposition of the two chosen members, together
+with the crossed transposition of the differ pair when the counting
+classification produces one. -/
+
+section OneCell
+
+variable {st : RefineSt} {level tc te oU oV : Nat}
+
+/-- The transposition route: every other window member has equal bits
+at the two swapped ones. -/
+private theorem oneCell_sw1
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hAllEq : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV →
+      (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + oU]! =
+        (ctx.g[st.lab[tc + w]!]!).testBit st.lab[tc + oV]!) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  have hun : st.lab[tc + oU]! < ctx.n := hlb _ (by omega)
+  have hvn : st.lab[tc + oV]! < ctx.n := hlb _ (by omega)
+  have huv : st.lab[tc + oU]! ≠ st.lab[tc + oV]! := by
+    intro hcon
+    have := hinj (tc + oU) (tc + oV) (by omega) (by omega) hcon
+    omega
+  -- every other reachable vertex has equal bits at the pair
+  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[tc + oU]! →
+      z ≠ st.lab[tc + oV]! →
+      (ctx.g[z]!).testBit st.lab[tc + oU]! =
+        (ctx.g[z]!).testBit st.lab[tc + oV]! := by
+    intro z hz hzu hzv
+    obtain ⟨j, hj, rfl⟩ := labInj_surj
+      (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
+    obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
+      (level := level) (nn := ctx.n) j (by omega)
+    rcases Decidable.em (p = (tc, te)) with rfl | hpC
+    · -- j sits in the target window
+      have hw : j - tc ≤ te - tc := by
+        have h2 : j ≤ te := hj2
+        omega
+      have hwu : j - tc ≠ oU := by
+        intro hcon
+        refine hzu ?_
+        have h1 : tc ≤ j := hj1
+        have : j = tc + oU := by omega
+        rw [this]
+      have hwv : j - tc ≠ oV := by
+        intro hcon
+        refine hzv ?_
+        have h1 : tc ≤ j := hj1
+        have : j = tc + oV := by omega
+        rw [this]
+      have h := hAllEq (j - tc) hw hwu hwv
+      have h1 : tc ≤ j := hj1
+      rw [show tc + (j - tc) = j by omega] at h
+      exact h
+    · -- j sits in a singleton cell
+      have hps : p.2 = p.1 := hsing p hp hpC
+      have hjp : j = p.1 := by omega
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+        have : p = (p.1, p.1) := by
+          obtain ⟨pa, pb⟩ := p
+          simp only at hps ⊢
+          rw [hps]
+        rw [← this]
+        exact hp
+      have hconst := cell_const_into_singleton hE hC hpmem hoU hoV
+      rw [← hjp] at hconst
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn]
+      rw [hsymm _ _ hun hz, hsymm _ _ hvn hz] at hconst
+      rw [hsymm _ _ hz hun, hsymm _ _ hz hvn] at hconst
+      exact hconst
+  -- the swap permutes every cell within itself
+  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        sw1 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[p.1 + o]! =
+          st.lab[p.1 + o']! := by
+    intro p hp o ho
+    rcases Decidable.em (p = (tc, te)) with rfl | hpC
+    · have ho' : o < te + 1 - tc := ho
+      rcases Decidable.em (o = oU) with rfl | hou
+      · exact ⟨oV, show oV < te + 1 - tc by omega,
+          show sw1 _ _ st.lab[tc + o]! = st.lab[tc + oV]! by
+            rw [sw1_u]⟩
+      · rcases Decidable.em (o = oV) with rfl | hov
+        · exact ⟨oU, show oU < te + 1 - tc by omega,
+            show sw1 _ _ st.lab[tc + o]! = st.lab[tc + oU]! by
+              rw [sw1_v huv]⟩
+        · refine ⟨o, ho, sw1_fix ?_ ?_⟩
+          · intro hcon
+            have := hinj (tc + o) (tc + oU) (by omega) (by omega) hcon
+            omega
+          · intro hcon
+            have := hinj (tc + o) (tc + oV) (by omega) (by omega) hcon
+            omega
+    · -- a singleton cell: its member is fixed
+      have hps : p.2 = p.1 := hsing p hp hpC
+      have ho1 : o = 0 := by omega
+      refine ⟨o, ho, ?_⟩
+      have hbd : p.1 < ctx.n := by
+        have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
+          hend _ hp
+        have h2 := cells_le _ hp
+        rw [hpsz] at h1
+        omega
+      refine sw1_fix ?_ ?_
+      · intro hcon
+        have := hinj (p.1 + o) (tc + oU) (by rw [ho1]; omega)
+          (by omega) hcon
+        rw [ho1] at this
+        exact hpC (cells_eq_of_shared
+          (by rw [hpsz]; exact Nat.le_refl _) hend hp hC
+          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
+      · intro hcon
+        have := hinj (p.1 + o) (tc + oV) (by rw [ho1]; omega)
+          (by omega) hcon
+        rw [ho1] at this
+        exact hpC (cells_eq_of_shared
+          (by rw [hpsz]; exact Nat.le_refl _) hend hp hC
+          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
+  obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
+    (f := sw1 st.lab[tc + oU]! st.lab[tc + oV]!) hIt hgsz hg
+    (sw1_lt hun hvn) (fun w _ => sw1_invol huv w)
+    (sw1_bits hsymm hloop hun hvn huv hfix) hset
+  refine ⟨σ, hrm, hsp, ?_⟩
+  rw [hat (tc + oU) (by omega), sw1_u]
+
+end OneCell
+
 end Hex.GraphIso.Nauty
