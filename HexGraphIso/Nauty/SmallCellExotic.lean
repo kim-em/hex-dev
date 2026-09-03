@@ -1094,6 +1094,585 @@ private theorem oneCell_wfix {wa wb wf : Nat}
     hsymm _ _ (hlb (tc + wf) (by omega)) (hlb (tc + wb) (by omega))]
   exact hbit
 
+set_option maxHeartbeats 2000000 in
+/-- The crossed-pair combinator of the five-member window: chosen
+ordering, atom values, and the fixed member reduce to `oneCell_sw2`
+through `oneCell_wfix`. -/
+private theorem oneCell_pair {wa wb wf : Nat}
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hm : te + 1 - tc = 5)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hwa : wa ≤ te - tc) (hwb : wb ≤ te - tc) (hwf : wf ≤ te - tc)
+    (hau : wa ≠ oU) (hav : wa ≠ oV) (hbu : wb ≠ oU) (hbv : wb ≠ oV)
+    (hfu : wf ≠ oU) (hfv : wf ≠ oV)
+    (hab : wa ≠ wb) (haf : wa ≠ wf) (hbf : wb ≠ wf)
+    (hcov3 : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV →
+      w = wa ∨ w = wb ∨ w = wf)
+    (hAu : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + wa]! = 1)
+    (hAv : bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + wa]! = 0)
+    (hBu : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + wb]! = 0)
+    (hBv : bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + wb]! = 1)
+    (hFe : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + wf]! =
+      bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + wf]!) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
+      hIt.ok.ptnEnd _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have htau : (ctx.g[st.lab[tc + wa]!]!).testBit
+      st.lab[tc + oU]! = true := by
+    have h := bitCnt_eq_one.mp hAu
+    rw [hsymm _ _ (hlb (tc + wa) (by omega))
+      (hlb (tc + oU) (by omega))]
+    exact h
+  have htav : (ctx.g[st.lab[tc + wa]!]!).testBit
+      st.lab[tc + oV]! = false := by
+    have h := bitCnt_eq_zero.mp hAv
+    rw [hsymm _ _ (hlb (tc + wa) (by omega))
+      (hlb (tc + oV) (by omega))]
+    exact h
+  have htbu : (ctx.g[st.lab[tc + wb]!]!).testBit
+      st.lab[tc + oU]! = false := by
+    have h := bitCnt_eq_zero.mp hBu
+    rw [hsymm _ _ (hlb (tc + wb) (by omega))
+      (hlb (tc + oU) (by omega))]
+    exact h
+  have htbv : (ctx.g[st.lab[tc + wb]!]!).testBit
+      st.lab[tc + oV]! = true := by
+    have h := bitCnt_eq_one.mp hBv
+    rw [hsymm _ _ (hlb (tc + wb) (by omega))
+      (hlb (tc + oV) (by omega))]
+    exact h
+  have hwfx := oneCell_wfix hIt hg hsymm hloop hE hC hm hoU hoV
+    hne hwa hwb hwf hab haf hbf hau hav hbu hbv hfu hfv htau htav
+    htbu htbv
+  refine oneCell_sw2 (wa := wa) (wb := wb) hIt hgsz hg hsymm
+    hloop hE hC hsing hoU hoV hne hwa hwb hab hau hav hbu hbv
+    htau htav htbu htbv ?_ ?_
+  · intro w hw hwu hwv hwwa hwwb
+    have hwwf : w = wf := by
+      rcases hcov3 w hw hwu hwv with rfl | rfl | rfl
+      · exact absurd rfl hwwa
+      · exact absurd rfl hwwb
+      · rfl
+    rw [hwwf]
+    have hbit := bitCnt_inj.mp hFe
+    rw [hsymm _ _ (hlb (tc + wf) (by omega))
+        (hlb (tc + oU) (by omega)),
+      hsymm _ _ (hlb (tc + wf) (by omega))
+        (hlb (tc + oV) (by omega))]
+    exact hbit
+  · intro w hw hwu hwv hwwa hwwb
+    have hwwf : w = wf := by
+      rcases hcov3 w hw hwu hwv with rfl | rfl | rfl
+      · exact absurd rfl hwwa
+      · exact absurd rfl hwwb
+      · rfl
+    rw [hwwf]
+    exact hwfx
+
+set_option maxHeartbeats 4000000 in
+/-- The five-member window classification: the two other members
+beyond a crossed pair reduce to the fixed-member lemma, and the
+orientation case analysis is forced by the split row sums. -/
+private theorem oneCell_five {w1 w2 w3 : Nat}
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV)
+    (hL : ((List.range (te + 1 - tc)).erase oU).erase oV =
+      [w1, w2, w3])
+    (hmemL : ∀ w,
+      w ∈ ((List.range (te + 1 - tc)).erase oU).erase oV ↔
+        (w < te + 1 - tc ∧ w ≠ oU ∧ w ≠ oV))
+    (hlenL :
+      (((List.range (te + 1 - tc)).erase oU).erase oV).length + 2 =
+        te + 1 - tc)
+    (hndL : (((List.range (te + 1 - tc)).erase oU).erase oV).Nodup)
+    (hrest :
+      (((((List.range (te + 1 - tc)).erase oU).erase oV)).map
+          fun w => bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w]!).sum =
+      (((((List.range (te + 1 - tc)).erase oU).erase oV)).map
+          fun w => bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w]!).sum) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  rw [hL] at hrest hlenL hndL
+  simp only [List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil] at hrest
+  simp only [List.length_cons, List.length_nil] at hlenL
+  have hm : te + 1 - tc = 5 := by omega
+  have hw1p := (hmemL w1).mp (by rw [hL]; exact List.mem_cons_self)
+  have hw2p := (hmemL w2).mp (by
+    rw [hL]
+    exact List.mem_cons_of_mem _ List.mem_cons_self)
+  have hw3p := (hmemL w3).mp (by
+    rw [hL]
+    exact List.mem_cons_of_mem _ (List.mem_cons_of_mem _
+      List.mem_cons_self))
+  have hnd12 : w1 ≠ w2 := by
+    rw [List.nodup_cons] at hndL
+    intro hcon
+    exact hndL.1 (by rw [hcon]; exact List.mem_cons_self)
+  have hnd13 : w1 ≠ w3 := by
+    rw [List.nodup_cons] at hndL
+    intro hcon
+    exact hndL.1 (by
+      rw [hcon]
+      exact List.mem_cons_of_mem _ List.mem_cons_self)
+  have hnd23 : w2 ≠ w3 := by
+    rw [List.nodup_cons, List.nodup_cons] at hndL
+    intro hcon
+    exact hndL.2.1 (by rw [hcon]; exact List.mem_cons_self)
+  have hcov : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV →
+      w = w1 ∨ w = w2 ∨ w = w3 := by
+    intro w hw hwu hwv
+    have hmem := (hmemL w).mpr ⟨by omega, hwu, hwv⟩
+    rw [hL] at hmem
+    rcases List.mem_cons.mp hmem with rfl | hmem2
+    · exact Or.inl rfl
+    rcases List.mem_cons.mp hmem2 with rfl | hmem3
+    · exact Or.inr (Or.inl rfl)
+    rcases List.mem_cons.mp hmem3 with rfl | hmem4
+    · exact Or.inr (Or.inr rfl)
+    · exact absurd hmem4 (by simp)
+  have hb1u := bitCnt_le_one ctx.g[st.lab[tc + oU]!]!
+    st.lab[tc + w1]!
+  have hb1v := bitCnt_le_one ctx.g[st.lab[tc + oV]!]!
+    st.lab[tc + w1]!
+  have hb2u := bitCnt_le_one ctx.g[st.lab[tc + oU]!]!
+    st.lab[tc + w2]!
+  have hb2v := bitCnt_le_one ctx.g[st.lab[tc + oV]!]!
+    st.lab[tc + w2]!
+  have hb3u := bitCnt_le_one ctx.g[st.lab[tc + oU]!]!
+    st.lab[tc + w3]!
+  have hb3v := bitCnt_le_one ctx.g[st.lab[tc + oV]!]!
+    st.lab[tc + w3]!
+  -- the crossed-pair combinator over a chosen ordering
+  rcases Decidable.em
+    (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]! =
+      bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w1]!) with
+    he1 | he1 <;>
+  rcases Decidable.em
+    (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w2]! =
+      bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w2]!) with
+    he2 | he2 <;>
+  rcases Decidable.em
+    (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w3]! =
+      bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w3]!) with
+    he3 | he3
+  · -- all equal: transposition route
+    refine oneCell_sw1 hIt hgsz hg hsymm hloop hE hC hsing hoU hoV
+      hne ?_
+    intro w hw hwu hwv
+    have hcnt : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w]! =
+        bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w]! := by
+      rcases hcov w hw hwu hwv with rfl | rfl | rfl
+      · exact he1
+      · exact he2
+      · exact he3
+    have hbit := bitCnt_inj.mp hcnt
+    rw [hsymm _ _ (hlb (tc + w) (by omega))
+        (hlb (tc + oU) (by omega)),
+      hsymm _ _ (hlb (tc + w) (by omega))
+        (hlb (tc + oV) (by omega))]
+    exact hbit
+  · exact absurd hrest (by omega)
+  · exact absurd hrest (by omega)
+  · -- pair (w2, w3), w1 fixed
+    rcases Decidable.em
+      (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w2]! = 1) with
+      ho | ho
+    · exact oneCell_pair (wa := w2) (wb := w3) (wf := w1) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw2p.2.1 hw2p.2.2 hw3p.2.1 hw3p.2.2 hw1p.2.1 hw1p.2.2
+        hnd23 (fun h => hnd12 h.symm) (fun h => hnd13 h.symm)
+        (fun w hw hwu hwv => by
+          rcases hcov w hw hwu hwv with rfl | rfl | rfl
+          · exact Or.inr (Or.inr rfl)
+          · exact Or.inl rfl
+          · exact Or.inr (Or.inl rfl))
+        ho (by omega) (by omega) (by omega) he1
+    · exact oneCell_pair (wa := w3) (wb := w2) (wf := w1) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw3p.2.1 hw3p.2.2 hw2p.2.1 hw2p.2.2 hw1p.2.1 hw1p.2.2
+        (fun h => hnd23 h.symm) (fun h => hnd13 h.symm)
+        (fun h => hnd12 h.symm)
+        (fun w hw hwu hwv => by
+          rcases hcov w hw hwu hwv with rfl | rfl | rfl
+          · exact Or.inr (Or.inr rfl)
+          · exact Or.inr (Or.inl rfl)
+          · exact Or.inl rfl)
+        (by omega) (by omega) (by omega) (by omega) he1
+  · exact absurd hrest (by omega)
+  · -- pair (w1, w3), w2 fixed
+    rcases Decidable.em
+      (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]! = 1) with
+      ho | ho
+    · exact oneCell_pair (wa := w1) (wb := w3) (wf := w2) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw1p.2.1 hw1p.2.2 hw3p.2.1 hw3p.2.2 hw2p.2.1 hw2p.2.2
+        hnd13 hnd12 (fun h => hnd23 h.symm)
+        (fun w hw hwu hwv => by
+          rcases hcov w hw hwu hwv with rfl | rfl | rfl
+          · exact Or.inl rfl
+          · exact Or.inr (Or.inr rfl)
+          · exact Or.inr (Or.inl rfl))
+        ho (by omega) (by omega) (by omega) he2
+    · exact oneCell_pair (wa := w3) (wb := w1) (wf := w2) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw3p.2.1 hw3p.2.2 hw1p.2.1 hw1p.2.2 hw2p.2.1 hw2p.2.2
+        (fun h => hnd13 h.symm) (fun h => hnd23 h.symm) hnd12
+        (fun w hw hwu hwv => by
+          rcases hcov w hw hwu hwv with rfl | rfl | rfl
+          · exact Or.inr (Or.inl rfl)
+          · exact Or.inr (Or.inr rfl)
+          · exact Or.inl rfl)
+        (by omega) (by omega) (by omega) (by omega) he2
+  · -- pair (w1, w2), w3 fixed
+    rcases Decidable.em
+      (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]! = 1) with
+      ho | ho
+    · exact oneCell_pair (wa := w1) (wb := w2) (wf := w3) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw1p.2.1 hw1p.2.2 hw2p.2.1 hw2p.2.2 hw3p.2.1 hw3p.2.2
+        hnd12 hnd13 hnd23
+        (fun w hw hwu hwv => hcov w hw hwu hwv)
+        ho (by omega) (by omega) (by omega) he3
+    · exact oneCell_pair (wa := w2) (wb := w1) (wf := w3) hIt hgsz hg
+        hsymm hloop hE hC hsing hm hoU hoV hne
+        (by omega) (by omega) (by omega)
+        hw2p.2.1 hw2p.2.2 hw1p.2.1 hw1p.2.2 hw3p.2.1 hw3p.2.2
+        (fun h => hnd12 h.symm) hnd23 hnd13
+        (fun w hw hwu hwv => by
+          rcases hcov w hw hwu hwv with rfl | rfl | rfl
+          · exact Or.inr (Or.inl rfl)
+          · exact Or.inl rfl
+          · exact Or.inr (Or.inr rfl))
+        (by omega) (by omega) (by omega) (by omega) he3
+  · -- all three differ: parity impossible
+    exact absurd hrest (by omega)
+
+set_option maxHeartbeats 2000000 in
+/-- The flip data at a nontrivial cell of size at most five whose
+companions are all singletons: the differ classification of the two
+chosen members is forced by the window row sums, and the flip is the
+bare transposition or the crossed double swap. -/
+theorem oneCell_flip_data
+    (hIt : IterOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hm : te + 1 - tc ≤ 5)
+    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, te) →
+      q.2 = q.1)
+    (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV) :
+    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      StPerm level st (mapSt σ st) ∧
+      st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hcle : tc ≤ te := cells_le _ hC
+  have hten : te < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hinj := hIt.inj
+  -- the window row sums
+  have hcic : ∀ o : Nat, o ≤ te - tc →
+      popCount (worksetOf st.lab tc te &&&
+          ctx.g[st.lab[tc + o]!]!) =
+        ((List.range (te + 1 - tc)).map fun w =>
+          bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w]!).sum := by
+    intro o ho
+    exact count_into_cell hpsz hend hinj hlb hC
+      (hg _ (hlb _ (by omega)))
+  have hrow := hE _ hC _ hC oU oV (by omega) (by omega)
+  rw [hcic oU hoU, hcic oV hoV] at hrow
+  -- the remaining window offsets
+  have hnd1 := nodup_erase (List.nodup_range (n := te + 1 - tc)) oU
+  have hndL := nodup_erase hnd1 oV
+  have hoUm : oU ∈ List.range (te + 1 - tc) :=
+    List.mem_range.mpr (by omega)
+  have hoVm : oV ∈ (List.range (te + 1 - tc)).erase oU :=
+    (mem_erase_nodup (List.nodup_range) oU oV).mpr
+      ⟨List.mem_range.mpr (by omega), fun h => hne h.symm⟩
+  have hmemL : ∀ w,
+      w ∈ ((List.range (te + 1 - tc)).erase oU).erase oV ↔
+        (w < te + 1 - tc ∧ w ≠ oU ∧ w ≠ oV) := by
+    intro w
+    rw [mem_erase_nodup hnd1 oV w,
+      mem_erase_nodup (List.nodup_range) oU w, List.mem_range]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, h3⟩
+      exact ⟨h1, h2, h3⟩
+    · rintro ⟨h1, h2, h3⟩
+      exact ⟨⟨h1, h2⟩, h3⟩
+  have hlenL :
+      (((List.range (te + 1 - tc)).erase oU).erase oV).length + 2 =
+        te + 1 - tc := by
+    have l1 := (List.perm_cons_erase hoUm).length_eq
+    have l2 := (List.perm_cons_erase hoVm).length_eq
+    rw [List.length_range] at l1
+    simp only [List.length_cons] at l1 l2
+    omega
+  -- split the two row sums at the chosen offsets
+  have hsplit : ∀ F : Nat → Nat,
+      ((List.range (te + 1 - tc)).map F).sum =
+        F oU + F oV +
+          (((((List.range (te + 1 - tc)).erase oU).erase oV)).map
+            F).sum := by
+    intro F
+    have e1 := sum_of_perm ((List.perm_cons_erase hoUm).map F)
+    have e2 := sum_of_perm ((List.perm_cons_erase hoVm).map F)
+    simp only [List.map_cons, List.sum_cons] at e1 e2
+    omega
+  rw [hsplit, hsplit] at hrow
+  have hlu : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + oU]! = 0 :=
+    bitCnt_eq_zero.mpr (hloop _ (hlb _ (by omega)))
+  have hlv : bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + oV]! = 0 :=
+    bitCnt_eq_zero.mpr (hloop _ (hlb _ (by omega)))
+  have hsuv : bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + oV]! =
+      bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + oU]! :=
+    bitCnt_inj.mpr (hsymm _ _ (hlb _ (by omega)) (hlb _ (by omega)))
+  have hrest :
+      (((((List.range (te + 1 - tc)).erase oU).erase oV)).map
+          fun w => bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w]!).sum =
+      (((((List.range (te + 1 - tc)).erase oU).erase oV)).map
+          fun w => bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w]!).sum := by
+    omega
+  -- classify by the shape of the remaining offsets
+  rcases hL : ((List.range (te + 1 - tc)).erase oU).erase oV with
+    - | ⟨w1, tl1⟩
+  · -- size two: no other members
+    refine oneCell_sw1 hIt hgsz hg hsymm hloop hE hC hsing hoU hoV
+      hne ?_
+    intro w hw hwu hwv
+    have := (hmemL w).mpr ⟨by omega, hwu, hwv⟩
+    rw [hL] at this
+    exact absurd this (by simp)
+  rcases hL2 : tl1 with - | ⟨w2, tl2⟩
+  · -- size three: the single other member has equal bits
+    subst hL2
+    rw [hL] at hrest hlenL hndL
+    simp only [List.map_cons, List.map_nil, List.sum_cons,
+      List.sum_nil] at hrest
+    have hw1p := (hmemL w1).mp (by rw [hL]; exact List.mem_cons_self)
+    refine oneCell_sw1 hIt hgsz hg hsymm hloop hE hC hsing hoU hoV
+      hne ?_
+    intro w hw hwu hwv
+    have hmem := (hmemL w).mpr ⟨by omega, hwu, hwv⟩
+    rw [hL] at hmem
+    have hww1 : w = w1 := by
+      rcases List.mem_cons.mp hmem with rfl | hmem2
+      · rfl
+      · exact absurd hmem2 (by simp)
+    have hcnt : bitCnt ctx.g[st.lab[tc + oU]!]!
+          st.lab[tc + w1]! =
+        bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w1]! := by
+      omega
+    have hbit := bitCnt_inj.mp hcnt
+    rw [hww1, hsymm _ _ (hlb (tc + w1) (by omega))
+        (hlb (tc + oU) (by omega)),
+      hsymm _ _ (hlb (tc + w1) (by omega))
+        (hlb (tc + oV) (by omega))]
+    exact hbit
+  rcases hL3 : tl2 with - | ⟨w3, tl3⟩
+  · -- size four: the two other members are equal or a crossed pair
+    subst hL2 hL3
+    rw [hL] at hrest hlenL hndL
+    simp only [List.map_cons, List.map_nil, List.sum_cons,
+      List.sum_nil] at hrest
+    have hw1p := (hmemL w1).mp (by rw [hL]; exact List.mem_cons_self)
+    have hw2p := (hmemL w2).mp (by
+      rw [hL]
+      exact List.mem_cons_of_mem _ List.mem_cons_self)
+    have hw12 : w1 ≠ w2 := by
+      rw [List.nodup_cons] at hndL
+      intro hcon
+      exact hndL.1 (by rw [hcon]; exact List.mem_cons_self)
+    have hcov : ∀ w, w ≤ te - tc → w ≠ oU → w ≠ oV →
+        w = w1 ∨ w = w2 := by
+      intro w hw hwu hwv
+      have hmem := (hmemL w).mpr ⟨by omega, hwu, hwv⟩
+      rw [hL] at hmem
+      rcases List.mem_cons.mp hmem with rfl | hmem2
+      · exact Or.inl rfl
+      rcases List.mem_cons.mp hmem2 with rfl | hmem3
+      · exact Or.inr rfl
+      · exact absurd hmem3 (by simp)
+    have hb1 := bitCnt_le_one ctx.g[st.lab[tc + oU]!]!
+      st.lab[tc + w1]!
+    have hb2 := bitCnt_le_one ctx.g[st.lab[tc + oV]!]!
+      st.lab[tc + w1]!
+    have hb3 := bitCnt_le_one ctx.g[st.lab[tc + oU]!]!
+      st.lab[tc + w2]!
+    have hb4 := bitCnt_le_one ctx.g[st.lab[tc + oV]!]!
+      st.lab[tc + w2]!
+    rcases Decidable.em
+      (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]! =
+        bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w1]!) with
+      he1 | he1
+    · -- both equal: transposition route
+      refine oneCell_sw1 hIt hgsz hg hsymm hloop hE hC hsing hoU hoV
+        hne ?_
+      intro w hw hwu hwv
+      have hcnt : bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w]! =
+          bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w]! := by
+        rcases hcov w hw hwu hwv with rfl | rfl
+        · exact he1
+        · omega
+      have hbit := bitCnt_inj.mp hcnt
+      rw [hsymm _ _ (hlb (tc + w) (by omega))
+          (hlb (tc + oU) (by omega)),
+        hsymm _ _ (hlb (tc + w) (by omega))
+          (hlb (tc + oV) (by omega))]
+      exact hbit
+    · -- crossed: the double-swap route
+      rcases Decidable.em
+        (bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]! = 1) with
+        ho1 | ho1
+      · -- w1 adjacent to the first member
+        have hv1 : bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w1]! = 0 := by omega
+        have hu2 : bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w2]! = 0 := by omega
+        have hv2 : bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w2]! = 1 := by omega
+        refine oneCell_sw2 (wa := w1) (wb := w2) hIt hgsz hg hsymm
+          hloop hE hC hsing hoU hoV hne (by omega) (by omega) hw12
+          hw1p.2.1 hw1p.2.2 hw2p.2.1 hw2p.2.2 ?_ ?_ ?_ ?_
+          (fun w hw hwu hwv hwa hwb => absurd
+            (hcov w hw hwu hwv) (by rintro (rfl | rfl)
+                                    · exact hwa rfl
+                                    · exact hwb rfl))
+          (fun w hw hwu hwv hwa hwb => absurd
+            (hcov w hw hwu hwv) (by rintro (rfl | rfl)
+                                    · exact hwa rfl
+                                    · exact hwb rfl))
+        · have h := bitCnt_eq_one.mp ho1
+          rw [hsymm _ _ (hlb (tc + w1) (by omega))
+            (hlb (tc + oU) (by omega))]
+          exact h
+        · exact (by
+            have h := bitCnt_eq_zero.mp hv1
+            rw [hsymm _ _ (hlb (tc + w1) (by omega))
+              (hlb (tc + oV) (by omega))]
+            exact h)
+        · exact (by
+            have h := bitCnt_eq_zero.mp hu2
+            rw [hsymm _ _ (hlb (tc + w2) (by omega))
+              (hlb (tc + oU) (by omega))]
+            exact h)
+        · exact (by
+            have h := bitCnt_eq_one.mp hv2
+            rw [hsymm _ _ (hlb (tc + w2) (by omega))
+              (hlb (tc + oV) (by omega))]
+            exact h)
+      · -- w1 adjacent to the second member
+        have hu1 : bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w1]! = 0 := by omega
+        have hv1 : bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w1]! = 1 := by omega
+        have hu2 : bitCnt ctx.g[st.lab[tc + oU]!]!
+            st.lab[tc + w2]! = 1 := by omega
+        have hv2 : bitCnt ctx.g[st.lab[tc + oV]!]!
+            st.lab[tc + w2]! = 0 := by omega
+        refine oneCell_sw2 (wa := w2) (wb := w1) hIt hgsz hg hsymm
+          hloop hE hC hsing hoU hoV hne (by omega) (by omega)
+          (fun h => hw12 h.symm)
+          hw2p.2.1 hw2p.2.2 hw1p.2.1 hw1p.2.2 ?_ ?_ ?_ ?_
+          (fun w hw hwu hwv hwa hwb => absurd
+            (hcov w hw hwu hwv) (by rintro (rfl | rfl)
+                                    · exact hwb rfl
+                                    · exact hwa rfl))
+          (fun w hw hwu hwv hwa hwb => absurd
+            (hcov w hw hwu hwv) (by rintro (rfl | rfl)
+                                    · exact hwb rfl
+                                    · exact hwa rfl))
+        · exact (by
+            have h := bitCnt_eq_one.mp hu2
+            rw [hsymm _ _ (hlb (tc + w2) (by omega))
+              (hlb (tc + oU) (by omega))]
+            exact h)
+        · exact (by
+            have h := bitCnt_eq_zero.mp hv2
+            rw [hsymm _ _ (hlb (tc + w2) (by omega))
+              (hlb (tc + oV) (by omega))]
+            exact h)
+        · exact (by
+            have h := bitCnt_eq_zero.mp hu1
+            rw [hsymm _ _ (hlb (tc + w1) (by omega))
+              (hlb (tc + oU) (by omega))]
+            exact h)
+        · exact (by
+            have h := bitCnt_eq_one.mp hv1
+            rw [hsymm _ _ (hlb (tc + w1) (by omega))
+              (hlb (tc + oV) (by omega))]
+            exact h)
+  · -- size five
+    rcases hL4 : tl3 with - | ⟨w4, tl4⟩
+    · subst hL2 hL3 hL4
+      exact oneCell_five hIt hgsz hg hsymm hloop hE hC hsing hoU hoV
+        hne hL hmemL hlenL hndL hrest
+    · -- more than five members: impossible
+      exfalso
+      subst hL2 hL3 hL4
+      rw [hL] at hlenL
+      simp only [List.length_cons] at hlenL
+      omega
+
 end OneCell
 
 end Hex.GraphIso.Nauty
