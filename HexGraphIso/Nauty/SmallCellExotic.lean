@@ -297,10 +297,10 @@ The two-swap and three-swap forms take all participating values
 distinct; the smaller forms are separate to keep the case analyses
 readable. -/
 
-private def sw1 (u v z : Nat) : Nat :=
+@[expose] def sw1 (u v z : Nat) : Nat :=
   if z = u then v else if z = v then u else z
 
-private theorem sw1_lt {n u v : Nat} (hun : u < n) (hvn : v < n) :
+theorem sw1_lt {n u v : Nat} (hun : u < n) (hvn : v < n) :
     ∀ z, z < n → sw1 u v z < n := by
   intro z hz
   rw [sw1]
@@ -310,17 +310,17 @@ private theorem sw1_lt {n u v : Nat} (hun : u < n) (hvn : v < n) :
     · exact hun
     · exact hz
 
-private theorem sw1_u {u v : Nat} : sw1 u v u = v := by
+theorem sw1_u {u v : Nat} : sw1 u v u = v := by
   rw [sw1, ite_eq_left rfl]
 
-private theorem sw1_v {u v : Nat} (huv : u ≠ v) : sw1 u v v = u := by
+theorem sw1_v {u v : Nat} (huv : u ≠ v) : sw1 u v v = u := by
   rw [sw1, ite_eq_right (fun h => huv h.symm), ite_eq_left rfl]
 
-private theorem sw1_fix {u v z : Nat} (hzu : z ≠ u) (hzv : z ≠ v) :
+theorem sw1_fix {u v z : Nat} (hzu : z ≠ u) (hzv : z ≠ v) :
     sw1 u v z = z := by
   rw [sw1, ite_eq_right hzu, ite_eq_right hzv]
 
-private theorem sw1_invol {u v : Nat} (huv : u ≠ v) :
+theorem sw1_invol {u v : Nat} (huv : u ≠ v) :
     ∀ z, sw1 u v (sw1 u v z) = z := by
   intro z
   rcases Decidable.em (z = u) with rfl | hzu
@@ -331,7 +331,7 @@ private theorem sw1_invol {u v : Nat} (huv : u ≠ v) :
 
 /-- Bit invariance of a single swap: every other vertex has equal bits
 at the two swapped ones. -/
-private theorem sw1_bits {u v : Nat}
+theorem sw1_bits {u v : Nat}
     (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
       (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
     (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
@@ -369,7 +369,7 @@ private theorem sw1_bits {u v : Nat}
       exact hfix z hz hzu hzv
     · rw [sw1_fix hz'u hz'v]
 
-private def sw2 (u v x y z : Nat) : Nat :=
+@[expose] def sw2 (u v x y z : Nat) : Nat :=
   if z = u then v else if z = v then u
   else if z = x then y else if z = y then x else z
 
@@ -378,37 +378,37 @@ section Sw2
 variable {u v x y : Nat}
 
 /-- The distinctness bundle of an active double swap. -/
-private def Sw2Ok (n u v x y : Nat) : Prop :=
+@[expose] def Sw2Ok (n u v x y : Nat) : Prop :=
   u < n ∧ v < n ∧ x < n ∧ y < n ∧ u ≠ v ∧ u ≠ x ∧ u ≠ y ∧
     v ≠ x ∧ v ≠ y ∧ x ≠ y
 
-private theorem sw2_u : sw2 u v x y u = v := by
+theorem sw2_u : sw2 u v x y u = v := by
   rw [sw2, ite_eq_left rfl]
 
-private theorem sw2_v {n : Nat} (h : Sw2Ok n u v x y) :
+theorem sw2_v {n : Nat} (h : Sw2Ok n u v x y) :
     sw2 u v x y v = u := by
   obtain ⟨-, -, -, -, huv, -⟩ := h
   rw [sw2, ite_eq_right (fun hc => huv hc.symm), ite_eq_left rfl]
 
-private theorem sw2_x {n : Nat} (h : Sw2Ok n u v x y) :
+theorem sw2_x {n : Nat} (h : Sw2Ok n u v x y) :
     sw2 u v x y x = y := by
   obtain ⟨-, -, -, -, -, hux, -, hvx, -⟩ := h
   rw [sw2, ite_eq_right (fun hc => hux hc.symm),
     ite_eq_right (fun hc => hvx hc.symm), ite_eq_left rfl]
 
-private theorem sw2_y {n : Nat} (h : Sw2Ok n u v x y) :
+theorem sw2_y {n : Nat} (h : Sw2Ok n u v x y) :
     sw2 u v x y y = x := by
   obtain ⟨-, -, -, -, -, -, huy, -, hvy, hxy⟩ := h
   rw [sw2, ite_eq_right (fun hc => huy hc.symm),
     ite_eq_right (fun hc => hvy hc.symm),
     ite_eq_right (fun hc => hxy hc.symm), ite_eq_left rfl]
 
-private theorem sw2_fix {z : Nat} (hzu : z ≠ u) (hzv : z ≠ v)
+theorem sw2_fix {z : Nat} (hzu : z ≠ u) (hzv : z ≠ v)
     (hzx : z ≠ x) (hzy : z ≠ y) : sw2 u v x y z = z := by
   rw [sw2, ite_eq_right hzu, ite_eq_right hzv, ite_eq_right hzx,
     ite_eq_right hzy]
 
-private theorem sw2_lt {n : Nat} (h : Sw2Ok n u v x y) :
+theorem sw2_lt {n : Nat} (h : Sw2Ok n u v x y) :
     ∀ z, z < n → sw2 u v x y z < n := by
   obtain ⟨hun, hvn, hxn, hyn, -⟩ := h
   intro z hz
@@ -423,7 +423,7 @@ private theorem sw2_lt {n : Nat} (h : Sw2Ok n u v x y) :
   · exact hxn
   · exact hz
 
-private theorem sw2_invol {n : Nat} (h : Sw2Ok n u v x y) :
+theorem sw2_invol {n : Nat} (h : Sw2Ok n u v x y) :
     ∀ z, sw2 u v x y (sw2 u v x y z) = z := by
   intro z
   rcases Decidable.em (z = u) with rfl | hzu
@@ -439,7 +439,7 @@ private theorem sw2_invol {n : Nat} (h : Sw2Ok n u v x y) :
 /-- Bit invariance of a double swap: fixed vertices have equal bits at
 both swapped pairs, and the cross bits between the pairs match
 diagonally. -/
-private theorem sw2_bits
+theorem sw2_bits
     (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
       (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
     (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
@@ -546,7 +546,7 @@ A raw bit-invariant involution permuting every cell's members within
 the cell packages into the renaming, rows map and state
 self-equivalence the deviation doors consume. -/
 
-private theorem flip_data_of_bits {st : RefineSt} {level : Nat}
+theorem flip_data_of_bits {st : RefineSt} {level : Nat}
     {f : Nat → Nat}
     (hIt : IterOk ctx level st) (hgsz : ctx.g.size = ctx.n)
     (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
@@ -598,7 +598,7 @@ private theorem mem_erase_nodup :
         · exact Or.inr ⟨hw, hne⟩
 
 /-- Two cells of the partition list sharing a position coincide. -/
-private theorem cells_eq_of_shared {ptn : Array Nat} {level nn : Nat}
+theorem cells_eq_of_shared {ptn : Array Nat} {level nn : Nat}
     (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
     {p q : Nat × Nat} (hp : p ∈ cells ptn level nn)
     (hq : q ∈ cells ptn level nn)
@@ -620,7 +620,7 @@ private theorem cells_eq_of_shared {ptn : Array Nat} {level nn : Nat}
 /-- The count of one row into a singleton cell is its bit there, so
 equitability makes the bits of all members of a cell agree at every
 singleton-cell vertex. -/
-private theorem cell_const_into_singleton {lab ptn : Array Nat}
+theorem cell_const_into_singleton {lab ptn : Array Nat}
     {level : Nat}
     (hE : Equitable ctx level lab ptn)
     {tc te : Nat} (hC : (tc, te) ∈ cells ptn level ctx.n)
