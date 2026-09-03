@@ -1920,6 +1920,97 @@ theorem equitable_breakout
 
 end Package
 
+/-! # The guard's cell-size consequences
+
+In the first branch of `cheapautom`'s guard the defect is at most the
+nontrivial cell count plus one, which forces every nontrivial cell to
+a pair except at most one triple; in particular every non-pair cell
+has odd size, the `hOdd` hypothesis of the flip theorem. -/
+
+section Sizes
+
+variable {ptn : Array Nat} {level nn : Nat}
+
+private theorem sum_excess_ge_countP :
+    ∀ (l : List (Nat × Nat)), (∀ p ∈ l, p.1 ≤ p.2) →
+      ((l.map fun p => p.2 - p.1).sum ≥
+        l.countP fun p => decide (p.1 < p.2))
+  | [], _ => by simp
+  | a :: l, hwf => by
+    rw [List.map_cons, List.sum_cons, List.countP_cons]
+    have ih := sum_excess_ge_countP l
+      fun p hp => hwf p (List.mem_cons_of_mem _ hp)
+    rcases Decidable.em (a.1 < a.2) with h | h
+    · rw [ite_eq_left (decide_eq_true h)]
+      omega
+    · rw [ite_eq_right (by simpa using h)]
+      omega
+
+private theorem sum_excess_ge_countP_add {q : Nat × Nat} :
+    ∀ (l : List (Nat × Nat)), (∀ p ∈ l, p.1 ≤ p.2) → q ∈ l →
+      ((l.map fun p => p.2 - p.1).sum ≥
+        (l.countP fun p => decide (p.1 < p.2)) + (q.2 - q.1) - 1)
+  | [], _, hq => absurd hq (by simp)
+  | a :: l, hwf, hq => by
+    rw [List.map_cons, List.sum_cons, List.countP_cons]
+    rcases List.mem_cons.mp hq with rfl | hmem
+    · have ih := sum_excess_ge_countP l
+        fun p hp => hwf p (List.mem_cons_of_mem _ hp)
+      rcases Decidable.em (q.1 < q.2) with h | h
+      · rw [ite_eq_left (decide_eq_true h)]
+        omega
+      · rw [ite_eq_right (by simpa using h)]
+        omega
+    · have ih := sum_excess_ge_countP_add l
+        (fun p hp => hwf p (List.mem_cons_of_mem _ hp)) hmem
+      have ha := hwf a List.mem_cons_self
+      rcases Decidable.em (a.1 < a.2) with h | h
+      · rw [ite_eq_left (decide_eq_true h)]
+        omega
+      · rw [ite_eq_right (by simpa using h)]
+        omega
+
+private theorem sum_sizes_split :
+    ∀ (l : List (Nat × Nat)), (∀ p ∈ l, p.1 ≤ p.2) →
+      (l.map fun p => p.2 + 1 - p.1).sum =
+        (l.map fun p => p.2 - p.1).sum + l.length
+  | [], _ => rfl
+  | a :: l, hwf => by
+    rw [List.map_cons, List.sum_cons, List.map_cons, List.sum_cons,
+      List.length_cons,
+      sum_sizes_split l fun p hp => hwf p (List.mem_cons_of_mem _ hp)]
+    have := hwf a List.mem_cons_self
+    omega
+
+/-- The first guard branch forces non-pair cells to odd size: every
+nontrivial cell is a pair except at most one triple. -/
+theorem hOdd_of_defect_le
+    (hps : ptn.size = nn) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hguard : nn - (cells ptn level nn).length ≤
+      (cells ptn level nn).countP (fun p => decide (p.1 < p.2)) + 1) :
+    ∀ q ∈ cells ptn level nn, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1 := by
+  intro q hq hnp
+  have hwf : ∀ p ∈ cells ptn level nn, p.1 ≤ p.2 :=
+    fun p hp => cells_le p hp
+  have hsum : ((cells ptn level nn).map fun p =>
+      p.2 + 1 - p.1).sum = nn := by
+    rw [cells]
+    have h := cells_go_sizes_sum hps hend nn 0 (by omega)
+    rw [show nn - 0 = nn by omega] at h
+    exact h
+  have hsplit := sum_sizes_split (cells ptn level nn) hwf
+  have hmem := sum_excess_ge_countP_add (cells ptn level nn) hwf hq
+  have hq12 := hwf q hq
+  rcases Decidable.em (q.2 = q.1) with heq | hne2
+  · rw [heq]
+    omega
+  · have hge3 : q.1 + 2 ≤ q.2 := by omega
+    have hle3 : q.2 ≤ q.1 + 2 := by omega
+    rw [show q.2 + 1 - q.1 = 3 by omega]
+
+end Sizes
+
 end Descent
 
 end Hex.GraphIso.Nauty
