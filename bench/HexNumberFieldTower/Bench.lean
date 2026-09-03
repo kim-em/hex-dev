@@ -1369,7 +1369,7 @@ registration is retained as a binding failed diagnostic: the prepared input
 height is bounded, but the flattening's primitive-basis images are not, and
 their exact-rational bit cost makes the wall-time verdict slower than this
 rational-operation model. -/
-setup_benchmark runToPrimitiveLadder n => n * n
+setup_benchmark runToPrimitiveLadder n => (n * n)
   with prep := prepMapLadderInput
   where {
     paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
