@@ -105,7 +105,7 @@ outside the timed body; the exports retain the spawn floor and every trial.
 The original final exports were pinned to logical CPU 19, with SMT sibling 67.
 The dense `toPrimitive` export was pinned to logical CPU 1 (SMT sibling 49)
 and records clean pre-rebase preregistration commit `5f4bab2fc` (now
-`526c3edc3`). For the original CPU 19 protocol, a three-second `/proc/stat`
+`c60b65dce`). For the original CPU 19 protocol, a three-second `/proc/stat`
 postflight sample measured 1.33% busy on each sibling; load averages were 1.28,
 2.53, and 2.87 on a 96-logical-CPU host. This is a postflight protocol check,
 not a claim that the host was idle throughout.
@@ -351,7 +351,7 @@ oracle participates in any profiled route. Multiplication retains its earlier
 timed-region-filtered capture from binary `d9fc6d73f`; its algorithm code is
 unchanged. Recursive inversion was refreshed from clean binary `8ea8d6819`
 on the reordered genuine-recursion family. Dense `toPrimitive` was refreshed
-from clean pre-rebase commit `6a4911dbb` (now `4d66f681f`) after its quadratic
+from clean pre-rebase commit `6a4911dbb` (now `aad8c23bf`) after its quadratic
 model failed. The
 factorization family was refreshed from the
 pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
@@ -512,8 +512,8 @@ captures.
 | [e63 postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | host state paired with the constructor rerun | sampled CPU and SMT sibling | `79d70f64f57983dfed82d96732510106b5ae54aabe304c309d3e90c80f366738` |
 | [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean pre-rebase `db22ebe6c` (now `8c5e38f39`); original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
 | [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean pre-rebase `08c17a18c` (now `bcab4e402`); timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
-| [dense forward-map export](bench-results/hex-number-field-tower-dense-to-primitive-5f4bab2f-chungus2-cpu1.json) | clean pre-rebase preregistration commit `5f4bab2fc` (now `526c3edc3`); five trials at every `n = 2, 3, 4, 5, 6, 9` rung | CPU 1 | `4e6bdf834eb2e98ead56ac84f46da08eacd78c51ecd60ecf947af67b66df36f0` |
-| [dense forward-map profile](bench-results/hex-number-field-tower-dense-to-primitive-profile-6a4911db-chungus2.json) | clean pre-rebase `6a4911dbb` (now `4d66f681f`); timed-region-filtered dimension-18 dense public map | unpinned shape capture | `5dadec1dfefc811addb7e7ae242f88d81ab3880f91a19570356e4e92402cd7f9` |
+| [dense forward-map export](bench-results/hex-number-field-tower-dense-to-primitive-5f4bab2f-chungus2-cpu1.json) | clean pre-rebase preregistration commit `5f4bab2fc` (now `c60b65dce`); five trials at every `n = 2, 3, 4, 5, 6, 9` rung | CPU 1 | `4e6bdf834eb2e98ead56ac84f46da08eacd78c51ecd60ecf947af67b66df36f0` |
+| [dense forward-map profile](bench-results/hex-number-field-tower-dense-to-primitive-profile-6a4911db-chungus2.json) | clean pre-rebase `6a4911dbb` (now `aad8c23bf`); timed-region-filtered dimension-18 dense public map | unpinned shape capture | `5dadec1dfefc811addb7e7ae242f88d81ab3880f91a19570356e4e92402cd7f9` |
 | [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
 | [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts, with its sparse `runToPrimitiveLadder` block superseded by the dense export | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
