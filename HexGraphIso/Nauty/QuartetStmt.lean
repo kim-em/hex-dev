@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Domination
+public import HexGraphIso.Nauty.CertReplay
+import all HexGraphIso.Nauty.Search
 
 public section
 
@@ -58,6 +60,36 @@ variable {n k : Nat}
   prefixKey cs
     (specNode ctx tcLevel fuel level st.lab st.ptn st.active numcells)
 
+/-! # The incumbent, read off the state
+
+The incumbent has to be an `Option`, because before the first leaf is
+installed there is no incumbent and the state's degenerate contents do
+not stand in for one. That is not a stylistic choice: at the root
+`canonlevel` is `0`, so the code list is empty and `incKey` would read
+`⟨[codeSentinel], _⟩`. Every real refinement code is strictly below
+`codeSentinel` (`refine_longcode_lt`), so `listCmp` compares
+`codeSentinel` against a real first code and answers `.gt`. The
+degenerate reading therefore *outranks every reachable leaf key*, and
+`keyMax` keeps it. An absorption equation stated with it would assert
+that the final incumbent is the degenerate one, which is false as soon
+as the search installs anything.
+
+`SearchModel` already carries the fix: `incMax : Option Key → Key →
+Key` with `none` as the bottom, which is what `searchNode_eq` folds
+with. These definitions read the same `Option` off the imperative
+state, using `canonlevel = 0` as "nothing installed yet", so no ghost
+code list is needed and the root assembly below is direct. -/
+
+/-- The incumbent's code list, as `runTraced` reports it. -/
+@[expose] def bestCodesOf (st : SearchSt) : List Nat :=
+  (List.range' 1 st.canonlevel).map fun i => st.canoncode[i]!
+
+/-- The incumbent a state carries, or `none` before the first
+install. -/
+@[expose] def stInc (ctx : Ctx) (st : SearchSt) : Option Key :=
+  if st.canonlevel = 0 then none
+  else some ⟨bestCodesOf st ++ [codeSentinel], leafRows ctx st.canonlab⟩
+
 /-- The payload a generator return carries to its target level.
 
 `γ` is the generator `processnode` recorded, it is a checked
@@ -73,27 +105,24 @@ the return level's node onto another. -/
 
 /-- What one node call establishes.
 
-`mono` and `sound` hold on every return; `full` is the absorption
-equation, available exactly when the node ran to completion; and
-`carried` is the generator payload, available exactly when it did
-not. The two are stated as implications on the returned level rather
-than as a disjunction so that a caller which knows which case it is
-in can use the corresponding clause without a case split. -/
+`full` is the absorption equation, available exactly when the node ran
+to completion, and `carried` is the generator payload, available
+exactly when it did not. The two are stated as implications on the
+returned level rather than as a disjunction so that a caller which
+knows which case it is in can use the corresponding clause without a
+case split. `installed` records that a completed node leaves an
+incumbent, which is what makes the `full` equation's left side a
+`some`. -/
 structure NodeConcl (ctx : Ctx) (tcLevel fuel level : Nat)
-    (cs bs bs' : List Nat) (st out : SearchSt) (numcells : Nat)
+    (cs : List Nat) (st out : SearchSt) (numcells : Nat)
     (r : Int) : Prop where
-  /-- The incumbent never moves down. -/
-  mono : keyLe (incKey ctx bs st.canonlab) (incKey ctx bs' out.canonlab)
-  /-- The incumbent never exceeds what this subtree and the incoming
-  incumbent contain. -/
-  sound : keyLe (incKey ctx bs' out.canonlab)
-    (keyMax (incKey ctx bs st.canonlab)
-      (nodeKey ctx tcLevel fuel level cs st numcells))
+  /-- Something is installed on the way out of a completed node. -/
+  installed : r = Int.ofNat level - 1 → out.canonlevel ≠ 0
   /-- Ran to completion: the whole subtree is absorbed. -/
   full : r = Int.ofNat level - 1 →
-    incKey ctx bs' out.canonlab =
-      keyMax (incKey ctx bs st.canonlab)
-        (nodeKey ctx tcLevel fuel level cs st numcells)
+    stInc ctx out =
+      some (incMax (stInc ctx st)
+        (nodeKey ctx tcLevel fuel level cs st numcells))
   /-- Returned early: the return goes to the recorded ancestor and
   carries a generator that identifies this subtree with a sibling the
   search already explored. -/
@@ -107,27 +136,22 @@ The loop folds the children from `tv1` onward into the incumbent.
 is all of them, and on a `some` return the loop stopped early and the
 payload travels on. -/
 structure LoopConcl (ctx : Ctx) (tcLevel fuel level : Nat)
-    (cs bs bs' : List Nat) (st out : SearchSt)
+    (cs : List Nat) (st out : SearchSt)
     (rsLab rsPtn : Array Nat) (tc numcells : Nat)
     (explored : List Nat) (r : Option Int) : Prop where
-  mono : keyLe (incKey ctx bs st.canonlab) (incKey ctx bs' out.canonlab)
+  /-- Completed with a nonempty sweep: something is installed. -/
+  installed : r = none → explored ≠ [] → out.canonlevel ≠ 0
   /-- Completed: the incumbent absorbed exactly the children the loop
   visited, under the node's own code prefix. -/
   full : r = none →
-    incKey ctx bs' out.canonlab =
-      keysMax (incKey ctx bs st.canonlab)
-        (explored.map fun o =>
+    stInc ctx out =
+      (explored.map fun o =>
           prefixKey cs
-            (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o))
-  /-- Stopped early: the incumbent absorbed the children visited so
-  far, and the payload identifies the remainder. -/
+            (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o)).foldl
+        (fun acc kk => some (incMax acc kk)) (stInc ctx st)
+  /-- Stopped early: the payload identifies the remainder. -/
   carried : ∀ rr, r = some rr → rr < Int.ofNat level →
-    keyLe (incKey ctx bs' out.canonlab)
-        (keysMax (incKey ctx bs st.canonlab)
-          (explored.map fun o =>
-            prefixKey cs
-              (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o)))
-      ∧ rr = Int.ofNat out.gcaFirst ∧ CarrierOut ctx out
+    rr = Int.ofNat out.gcaFirst ∧ CarrierOut ctx out
 
 /-! # The carrier fact is free
 
@@ -232,5 +256,115 @@ theorem payloadAbsorbs_of_positions {ctx : Ctx} (hn : ctx.n = n)
     (hstab γ hAut hmap) hs hok hsp hend hvals hic hrange hoC hoF hlf ?_
   have h := hmap tc htc
   rwa [hfirst, hcur] at h
+
+/-! # The root assembly
+
+The corrected statement reaches the programme's target. The root call
+of `firstPathNode` starts from a state with `canonlevel = 0`, so its
+incoming incumbent is `none` and `incMax` discards it; what comes out
+is therefore the node key of the root, which is `canonSpec` by
+definition, and the state's own incumbent reading is `tracedKey` by
+definition. `certifyCanon?_isSome_of_dominated` then closes.
+
+The quartet's root instance is the hypothesis here, and it is the only
+thing these theorems assume: the induction that supplies it is the
+remaining work. -/
+
+/-- The root state `runTraced` starts from. -/
+@[expose] def rootSt (n : Nat) (lab0 : Array Nat)
+    (cellEnds : List Nat) : SearchSt :=
+  { lab := lab0, ptn := initPtn n (n + 2) cellEnds,
+    active := initActive cellEnds,
+    orbits := .ofFn (n := n) fun i => i.val,
+    firstcode := .replicate (n + 2) 0,
+    canoncode := .replicate (n + 2) 0,
+    firsttc := .replicate (n + 2) (-1),
+    firstlab := .replicate n 0,
+    canonlab := .replicate n 0,
+    canong := .replicate n 0,
+    numorbits := n }
+
+/-- The state the root call returns. -/
+@[expose] def rootOut (n : Nat) (g lab0 : Array Nat)
+    (cellEnds : List Nat) : SearchSt :=
+  (firstPathNode { n, g } (n + 2) 100 (n + 2) 1 cellEnds.length
+    (rootSt n lab0 cellEnds)).2
+
+/-- `runTraced`'s reported codes are the returned state's own
+reading. -/
+theorem bestCodes_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+    (hn0 : n ≠ 0) :
+    (runTraced n g lab0 cellEnds).bestCodes =
+      bestCodesOf (rootOut n g lab0 cellEnds) := by
+  rw [runTraced]
+  simp only [beq_iff_eq, hn0, ite_false]
+  rfl
+
+/-- `runTraced`'s reported labelling is the returned state's. -/
+theorem canonlab_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+    (hn0 : n ≠ 0) :
+    (runTraced n g lab0 cellEnds).result.canonlab =
+      (rootOut n g lab0 cellEnds).canonlab := by
+  rw [runTraced]
+  simp only [beq_iff_eq, hn0, ite_false]
+  rfl
+
+/-- The traced key is the final state's incumbent, once anything has
+been installed. -/
+theorem stInc_final {G : Colored n k} (hn0 : n ≠ 0)
+    (hinst : (rootOut n (rowsOf G) (initialPartition G).1
+      (initialPartition G).2).canonlevel ≠ 0) :
+    stInc { n := n, g := rowsOf G }
+        (rootOut n (rowsOf G) (initialPartition G).1
+          (initialPartition G).2) =
+      some (tracedKey G) := by
+  rw [stInc, if_neg hinst, tracedKey, runColoredTraced,
+    bestCodes_runTraced hn0, canonlab_runTraced hn0]
+
+/-- The root's node key is the specification's canonical key. -/
+theorem nodeKey_root {G : Colored n k} (hn0 : n ≠ 0) :
+    nodeKey { n := n, g := rowsOf G } 100 n 1 []
+        (rootSt n (initialPartition G).1 (initialPartition G).2)
+        (initialPartition G).2.length = canonSpecKey G := by
+  rw [nodeKey, prefixKey_nil, canonSpecKey, canonSpec]
+  simp only [beq_iff_eq, hn0, ite_false]
+  rfl
+
+/-- The root's incoming incumbent is the bottom: nothing is installed
+before the search starts. -/
+theorem stInc_rootSt {G : Colored n k} :
+    stInc { n := n, g := rowsOf G }
+      (rootSt n (initialPartition G).1 (initialPartition G).2) = none :=
+  rfl
+
+/-- **The root assembly.** Given the quartet's conclusion at the root
+call, the traced key is the specification's key. -/
+theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
+    (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
+      (rootSt n (initialPartition G).1 (initialPartition G).2)
+      (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2)
+      (initialPartition G).2.length r)
+    (hr : r = Int.ofNat 1 - 1) :
+    canonSpecKey G = tracedKey G := by
+  have hfull := hroot.full hr
+  have hinst := hroot.installed hr
+  rw [stInc_final hn0 hinst, stInc_rootSt, incMax, nodeKey_root hn0] at hfull
+  exact (Option.some.inj hfull).symm
+
+/-- **The programme's target**, modulo the quartet at the root and
+store validity. -/
+theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
+    {r : Int}
+    (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
+      (rootSt n (initialPartition G).1 (initialPartition G).2)
+      (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2)
+      (initialPartition G).2.length r)
+    (hr : r = Int.ofNat 1 - 1)
+    (hval : ∀ cert B, produceCand G none = some (cert, B) →
+      AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true) cert) :
+    (certifyCanon? G).isSome :=
+  certifyCanon?_isSome_of_dominated G (dominated_of_root hn0 hroot hr) hval
 
 end Hex.GraphIso.Nauty
