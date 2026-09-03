@@ -2078,4 +2078,61 @@ theorem rowsMap_of_flip_rows {f : Nat → Nat}
   exact image_congr _ fun w hw =>
     (renamingOfFlip_at hfb hinvol hw).symm
 
+/-! # Maximal runs and the cell list
+
+`cellsPerm` quantifies over `IsCell` runs; the branch-step
+classification works on the `cells` list. The conversion: an in-range
+maximal run is a member of the list, a run beyond the array bound is a
+phantom singleton, and no run crosses the bound. -/
+
+/-- Reads beyond the array bound default. -/
+private theorem getElem!_oob {arr : Array Nat} {q : Nat}
+    (h : arr.size ≤ q) : arr[q]! = 0 := by
+  rw [Array.getElem!_eq_getD, Array.getD]
+  split
+  · omega
+  · rfl
+
+/-- A maximal run's end from its start is what `cellEnd` computes. -/
+theorem cellEnd_of_isCell_start {ptn : Array Nat} {level a len : Nat}
+    (h : IsCell ptn level a len) (hin : a + len - 1 < ptn.size) :
+    cellEnd ptn level a = a + len - 1 := by
+  obtain ⟨hpos, -, hint, hcend⟩ := h
+  rw [cellEnd]
+  exact cellEnd_go_unique _ a (a + len - 1) (by omega)
+    (fun i h1 h2 => hint i h1 (by omega)) hcend (by omega)
+
+/-- An in-range maximal run is a cell of the partition list. -/
+theorem mem_cells_of_isCell {ptn : Array Nat} {level nn a len : Nat}
+    (hnn : nn ≤ ptn.size) (hpe : ptn[ptn.size - 1]! ≤ level)
+    (h : IsCell ptn level a len) (ha : a < nn)
+    (hlen : a + len ≤ ptn.size) :
+    (a, a + len - 1) ∈ cells ptn level nn := by
+  rw [mem_cells_iff hnn hpe]
+  have hpos := h.1
+  exact ⟨ha, h.2.1, (cellEnd_of_isCell_start h (by omega)).symm⟩
+
+/-- A maximal run beyond the array bound is a singleton. -/
+theorem isCell_oob {ptn : Array Nat} {level a len : Nat}
+    (h : IsCell ptn level a len) (ha : ptn.size ≤ a) : len = 1 := by
+  obtain ⟨hpos, -, hint, -⟩ := h
+  rcases Decidable.em (len = 1) with h1 | h1
+  · exact h1
+  · exfalso
+    have hop := hint a (Nat.le_refl _) (by omega)
+    rw [getElem!_oob ha] at hop
+    omega
+
+/-- No maximal run crosses the array bound. -/
+theorem isCell_no_cross {ptn : Array Nat} {level a len : Nat}
+    (hpe : ptn[ptn.size - 1]! ≤ level)
+    (h : IsCell ptn level a len) (ha : a < ptn.size) :
+    a + len ≤ ptn.size := by
+  obtain ⟨hpos, -, hint, -⟩ := h
+  rcases Decidable.em (a + len ≤ ptn.size) with hle | hgt
+  · exact hle
+  · exfalso
+    have hop := hint (ptn.size - 1) (by omega) (by omega)
+    omega
+
 end Hex.GraphIso.Nauty
