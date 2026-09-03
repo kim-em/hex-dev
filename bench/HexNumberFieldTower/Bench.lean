@@ -1006,13 +1006,25 @@ def runTowerDivLadder (input : ElemInput) : UInt64 :=
   elemChecksum (input.a / input.b)
 
 /- Cost model. Negation maps rational negation over the `D = n` dense
-coordinate array. The one-level presentation changes only untimed fixture
-construction: the timed implementation sees the same fixed-height coordinate
-representation and performs exactly `Θ(n)` work. -/
+coordinate array, reconstructs the public element through a second fixed-width
+array traversal, and hashes every result coordinate. The one-level presentation
+changes only untimed fixture construction: the timed implementation sees the
+same fixed-height coordinate representation and performs exactly `Θ(n)` work.
+
+The pre-registered schedule starts at 128 because each `Array.ofFn` result has
+a 24-byte header and `8n` bytes of object slots: Lean's mimalloc fast-small
+path ends at 1024 bytes, hence at dimension 125. It stops at 448, before Lean's
+4096-byte small-object ceiling at dimension 509. Every rung therefore uses the
+same allocation route, while the larger dimensions make the fixed call and
+checksum setup lower order. `X^n - 3` remains Eisenstein at 3 at every listed
+degree, so these are supported checked one-level tower dimensions rather than
+rungs selected from candidate timings. -/
 setup_benchmark runTowerNegLadder n => n
   with prep := prepLinearElemInput
   where {
-    paramSchedule := .custom #[4, 6, 8, 12, 16, 24, 32, 48]
+    paramFloor := 128
+    paramCeiling := 448
+    paramSchedule := .custom #[128, 160, 192, 256, 320, 384, 448]
     maxSecondsPerCall := 300.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
