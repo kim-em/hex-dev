@@ -38,6 +38,80 @@ namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx}
 
+/-! # The cell count as a boundary count -/
+
+/-- No boundary strictly inside a window leaves the count unmoved. -/
+private theorem bcount_stable {ptn : Array Nat} {level i e : Nat}
+    (hint : ∀ j, i ≤ j → j < e → level < ptn[j]!) :
+    ∀ m, i ≤ m → m ≤ e → bcount ptn level m = bcount ptn level i := by
+  intro m
+  induction m with
+  | zero =>
+    intro h1 _
+    have : i = 0 := by omega
+    rw [this]
+  | succ k ih =>
+    intro h1 h2
+    rcases Decidable.em (i = k + 1) with rfl | hne
+    · rfl
+    · have hik : i ≤ k := by omega
+      have hke : k < e := by omega
+      have hopen : level < ptn[k]! := hint k hik hke
+      rw [bcount_succ, ite_eq_right (by omega), ih hik (by omega)]
+      omega
+
+/-- A cell contributes exactly one boundary: its end. -/
+private theorem bcount_cell_window {ptn : Array Nat} {level i : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) (hi : i < ptn.size) :
+    bcount ptn level (cellEnd ptn level i + 1) =
+      bcount ptn level i + 1 := by
+  have hge : i ≤ cellEnd ptn level i := cellEnd_ge
+  have hstable : bcount ptn level (cellEnd ptn level i) =
+      bcount ptn level i :=
+    bcount_stable (fun j hj hlt => cellEnd_interior hj hlt) _ hge
+      (Nat.le_refl _)
+  rw [bcount_succ, hstable,
+    ite_eq_left (cellEnd_closed hend hi)]
+
+/-- The cells listed from `i` onwards, plus the boundaries below `i`,
+count every boundary. -/
+private theorem cells_go_length_bcount {ptn : Array Nat}
+    {level nn : Nat} (hps : ptn.size = nn)
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    ∀ (fuel i : Nat), nn ≤ fuel + i → i ≤ nn →
+      (cells.go ptn level nn fuel i).length + bcount ptn level i =
+        bcount ptn level nn
+  | 0, i, hf, hi => by
+    have : i = nn := by omega
+    rw [cells.go, this]
+    simp
+  | fuel + 1, i, hf, hi => by
+    rw [cells.go]
+    rcases Decidable.em (i < nn) with hlt | hge
+    · rw [ite_eq_left hlt]
+      have hilt : i < ptn.size := by omega
+      have hlt' : cellEnd ptn level i < nn := by
+        rw [← hps]
+        exact cellEnd_lt hilt hend
+      have hge' : i ≤ cellEnd ptn level i := cellEnd_ge
+      have hrec := cells_go_length_bcount hps hend fuel
+        (cellEnd ptn level i + 1) (by omega) (by omega)
+      rw [List.length_cons, bcount_cell_window hend hilt] at *
+      omega
+    · rw [ite_eq_right hge]
+      have : i = nn := by omega
+      rw [this]
+      simp
+
+/-- The number of cells is the number of boundaries. -/
+theorem cells_length_eq_bcount {ptn : Array Nat} {level nn : Nat}
+    (hps : ptn.size = nn) (hend : ptn[ptn.size - 1]! ≤ level) :
+    (cells ptn level nn).length = bcount ptn level nn := by
+  have h := cells_go_length_bcount hps hend nn 0 (by omega)
+    (by omega)
+  rw [cells]
+  simpa [bcount] using h
+
 /-- The first-branch shape: every cell is a singleton, a pair, or the
 unique triple. -/
 def SmallShape (ctx : Ctx) (level : Nat) (ptn : Array Nat) : Prop :=
