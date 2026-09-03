@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.CellPerm
+public import HexGraphIso.Nauty.Achieved
+public import HexGraphIso.Nauty.SearchInv
 
 public section
 
@@ -141,5 +143,142 @@ theorem splitDone_single_of_const {lab : Array Nat} {u lo len : Nat}
     SplitDone ctx lab (insert 0 u) lo len := by
   intro o o' ho ho'
   rw [popCount_and_single, popCount_and_single, hconst o ho, hconst o' ho']
+
+/-- The two-pointer pass separates a window: the first `cnt` positions
+hold splitter-adjacent vertices and the remainder non-adjacent ones,
+where `cnt` is the window's adjacency count. -/
+theorem splitCellLoop_memConst {gRow : Nat} {lab : Array Nat}
+    {cell1 cell2 : Nat} (h12 : cell1 ≤ cell2) (hsz : cell2 < lab.size) :
+    (∀ o, o < (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) →
+      elem gRow (splitCellLoop gRow (cell2 - cell1 + 2) lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).1[cell1 + o]! = true) ∧
+    (∀ o, (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) ≤ o →
+      o < cell2 + 1 - cell1 →
+      elem gRow (splitCellLoop gRow (cell2 - cell1 + 2) lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).1[cell1 + o]! = false) := by
+  obtain ⟨h1, h2, h3, h4, h5, h6⟩ := splitCellLoop_spec
+    (gRow := gRow) (cell2 + 1 - cell1) (cell2 - cell1 + 2) lab
+    (Int.ofNat cell1) (Int.ofNat cell2)
+    (by simp only [Int.ofNat_eq_natCast]; omega)
+    (by
+      have : (cell2 : Int) < (lab.size : Int) := by
+        exact_mod_cast hsz
+      simpa using this)
+    (by
+      rw [show (Int.ofNat cell2 + 1 - Int.ofNat cell1) =
+        ((cell2 + 1 - cell1 : Nat) : Int) from by
+          simp only [Int.ofNat_eq_natCast]
+          omega])
+    (by omega)
+  have htn : (Int.ofNat cell1).toNat = cell1 := rfl
+  rw [htn] at h5 h6
+  refine ⟨fun o ho => ?_, fun o hcnt ho => ?_⟩
+  · have hmem : (splitCellLoop gRow (cell2 - cell1 + 2) lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).1[cell1 + o]! ∈
+        segN (splitCellLoop gRow (cell2 - cell1 + 2) lab
+          (Int.ofNat cell1) (Int.ofNat cell2)).1 cell1
+          ((segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·)) :=
+      mem_segN_iff.mpr ⟨o, ho, rfl⟩
+    have hfil := h5.mem_iff.mp hmem
+    exact (List.mem_filter.mp hfil).2
+  · have hmem : (splitCellLoop gRow (cell2 - cell1 + 2) lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).1[cell1 + o]! ∈
+        segN (splitCellLoop gRow (cell2 - cell1 + 2) lab
+          (Int.ofNat cell1) (Int.ofNat cell2)).1
+          (cell1 + (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·))
+          ((cell2 + 1 - cell1) -
+            (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·)) := by
+      refine mem_segN_iff.mpr
+        ⟨o - (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·),
+          by omega, ?_⟩
+      congr 1
+      omega
+    have hfil := h6.mem_iff.mp hmem
+    have := (List.mem_filter.mp hfil).2
+    rcases hval : elem gRow (splitCellLoop gRow (cell2 - cell1 + 2) lab
+        (Int.ofNat cell1) (Int.ofNat cell2)).1[cell1 + o]! with _ | _
+    · rfl
+    · rw [hval] at this
+      cases this
+
+/-- A processed cell of the trivial-splitter pass: the labelling
+outside the cell is untouched, the cell keeps its contents as a
+multiset, and it is rearranged into the splitter-adjacent block
+followed by the non-adjacent block. -/
+theorem trivialCell_memConst {level gRow cell1 cell2 : Nat} {st : RefineSt}
+    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.lab.size) :
+    (trivialCell level gRow cell1 cell2 st).lab.size = st.lab.size ∧
+    (∀ j, j < cell1 ∨ cell2 < j →
+      (trivialCell level gRow cell1 cell2 st).lab[j]! = st.lab[j]!) ∧
+    ((segN (trivialCell level gRow cell1 cell2 st).lab cell1
+      (cell2 + 1 - cell1)).Perm
+      (segN st.lab cell1 (cell2 + 1 - cell1))) ∧
+    (∀ o, o < (segN st.lab cell1 (cell2 + 1 - cell1)).countP
+        (elem gRow ·) →
+      elem gRow (trivialCell level gRow cell1 cell2 st).lab[cell1 + o]! =
+        true) ∧
+    (∀ o, (segN st.lab cell1 (cell2 + 1 - cell1)).countP
+        (elem gRow ·) ≤ o →
+      o < cell2 + 1 - cell1 →
+      elem gRow (trivialCell level gRow cell1 cell2 st).lab[cell1 + o]! =
+        false) := by
+  rcases Decidable.em (cell1 = cell2) with rfl | hne
+  · have heq : trivialCell level gRow cell1 cell1 st = st := by
+      rw [trivialCell]
+      simp
+    rw [heq]
+    have hw : cell1 + 1 - cell1 = 1 := by omega
+    have hseg : segN st.lab cell1 (cell1 + 1 - cell1) =
+        [st.lab[cell1]!] := by
+      rw [hw, segN_cons, segN_zero]
+    refine ⟨rfl, fun j _ => rfl, List.Perm.refl _, fun o ho => ?_,
+      fun o hcnt ho => ?_⟩
+    · rw [hseg] at ho
+      rcases hval : elem gRow st.lab[cell1]! with _ | _
+      · simp [hval] at ho
+      · have ho0 : o = 0 := by
+          simp [hval] at ho
+          omega
+        rw [ho0, Nat.add_zero]
+        exact hval
+    · rw [hw] at ho
+      have ho0 : o = 0 := by omega
+      rw [hseg] at hcnt
+      rcases hval : elem gRow st.lab[cell1]! with _ | _
+      · rw [ho0, Nat.add_zero]
+        exact hval
+      · simp [hval] at hcnt
+        exact absurd ho (by omega)
+  · have heq : trivialCell level gRow cell1 cell2 st =
+        trivialSplit level cell1 cell2
+          (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+            (Int.ofNat cell1) (Int.ofNat cell2)).2.1
+          (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+            (Int.ofNat cell1) (Int.ofNat cell2)).2.2
+          { st with lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
+              (Int.ofNat cell1) (Int.ofNat cell2)).1 } := by
+      rw [trivialCell]
+      simp [hne]
+    obtain ⟨hs1, hs2, hs3, hs4, hs5, hs6⟩ := splitCellLoop_spec
+      (gRow := gRow) (cell2 + 1 - cell1) (cell2 - cell1 + 2) st.lab
+      (Int.ofNat cell1) (Int.ofNat cell2)
+      (by simp only [Int.ofNat_eq_natCast]; omega)
+      (by
+        have : (cell2 : Int) < (st.lab.size : Int) := by
+          exact_mod_cast hsz
+        simpa using this)
+      (by
+        rw [show (Int.ofNat cell2 + 1 - Int.ofNat cell1) =
+          ((cell2 + 1 - cell1 : Nat) : Int) from by
+            simp only [Int.ofNat_eq_natCast]
+            omega])
+      (by omega)
+    obtain ⟨hm1, hm2⟩ := splitCellLoop_memConst (gRow := gRow) h12 hsz
+    rw [heq, trivialSplit_lab]
+    refine ⟨hs3, fun j hj => ?_, splitCellLoop_region_perm h12 hsz,
+      hm1, hm2⟩
+    refine hs4 j ?_
+    simp only [Int.ofNat_eq_natCast]
+    omega
 
 end Hex.GraphIso.Nauty
