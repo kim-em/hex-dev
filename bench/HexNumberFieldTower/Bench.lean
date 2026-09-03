@@ -32,7 +32,8 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
   dimension with bounded coordinate height;
 * `runTower{Inv,Div}Ladder`: genuine recursive arithmetic in the height-two
   family `Q(3^{1/m}, sqrt(2))`, with checked fixtures outside the timed body;
-* the completed `toPrimitive` and `fromPrimitive` basis maps.
+* one dense `toPrimitive` application and the completed `fromPrimitive`
+  basis map.
 
 Negation, inversion, and division retain failed mode-1 registrations as
 binding diagnostics. They have no admissible fixed substitute, so the library
@@ -1340,34 +1341,31 @@ setup_fixed_benchmark runTowerCheckFactorization where {
 private structure MapLadderInput where
   tower : NumberTower
   result : Option (Flattening tower)
+  dense : Elem tower
 
 private instance : Hashable MapLadderInput where
   hash input := hash input.tower.dim
 
-private instance : Inhabited MapLadderInput := ⟨⟨rat, none⟩⟩
+private instance : Inhabited MapLadderInput := ⟨⟨rat, none, 0⟩⟩
 
 def prepMapLadderInput (n : Nat) : MapLadderInput :=
   match ladderTower? (max n 1) with
-  | some tower => ⟨tower, flatten? tower⟩
+  | some tower =>
+      ⟨tower, flatten? tower, ofCoeffs tower (ladderCoords tower.dim 3)⟩
   | none => panic! "prepMapLadderInput: tower fixture failed"
 
 def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
   match input.result with
-  | some result =>
-      (List.range input.tower.dim).foldl (fun checksum i =>
-        let basis := ofCoeffs input.tower
-          (Flatten.unitCoords input.tower.dim i)
-        mixHash checksum (qAdjoinChecksum (result.toPrimitive basis)))
-        (hash input.tower.dim)
+  | some result => qAdjoinChecksum (result.toPrimitive input.dense)
   | none => 0
 
-/- Diagnostic only. One dense `toPrimitive` call has the public `O(D²)`
-rational-operation bound from a length-`D` linear combination of degree-`D`
-primitive coordinates. This basis family becomes sparse after the executable
-zero-coordinate optimization, so its statistical cubic verdict cannot
-discharge mode 1; the registration is retained to expose that behavior and
-the structural checksum cost. -/
-setup_benchmark runToPrimitiveLadder n => n * n * n
+/- Cost model. Fixture construction prepares the flattening and one bounded-
+height element with all `D = 2n` tower coordinates nonzero. The timed public
+`toPrimitive` call therefore performs `D` rational scalar actions and
+additions on degree-`D` primitive coordinates, hence `Θ(D²) = Θ(n²)`
+bounded-height rational operations. `qAdjoinChecksum` then structurally walks
+the `D`-coordinate result, contributing only lower-order `Θ(D)` work. -/
+setup_benchmark runToPrimitiveLadder n => n * n
   with prep := prepMapLadderInput
   where {
     paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
