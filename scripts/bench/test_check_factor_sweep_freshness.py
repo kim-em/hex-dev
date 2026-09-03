@@ -95,6 +95,14 @@ class LakefileAffectsRuntime(unittest.TestCase):
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
 
 
+class SourcePaths(unittest.TestCase):
+    def test_prime_table_is_factorization_input(self):
+        self.assertTrue(guard.source_path("hex-factor", "HexPrimality/Table.lean"))
+
+    def test_sieve_proofs_are_not_factorization_input(self):
+        self.assertFalse(guard.source_path("hex-factor", "HexPrimality/Sieve.lean"))
+
+
 class Exemptions(unittest.TestCase):
     ENTRY = {
         "path": "lakefile.lean",

@@ -655,7 +655,7 @@ libraries:
         - name: odd-prime-constructor-projection
           description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the widest committed odd-prime entry, GFq 13 6, on deterministic dense representatives.
   HexBerlekampZassenhaus:
-    deps: [HexBerlekamp, HexHensel, HexLLL]
+    deps: [HexBerlekamp, HexHensel, HexLLL, HexPrimality]
     mathlib: false
     done_through: 7
     status: active

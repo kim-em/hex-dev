@@ -161,8 +161,8 @@ private def certCases : List (String × Nat × PrimeCert) :=
 
 /-- The `segment` surface: the SPEC's `[1, 100]` and `[1, 10^4]`, plus one
 segment straddling `primeTableBound` to check that the table and fallback
-agree across the boundary. The release-gated `hotPathCandidates` migration is
-tracked separately by issue #9849. -/
+agree across the boundary. The downstream hot-path view is checked by the
+`HexBerlekampZassenhaus` conformance target. -/
 private def segmentCases : List (String × Nat × Nat) :=
   [ ("edge/empty", 10, 10),
     ("basic/1-100", 1, 101),

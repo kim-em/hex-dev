@@ -2,8 +2,9 @@
 
 `hex-berlekamp-zassenhaus` factors dense univariate polynomials over
 the integers. It depends on finite-field Berlekamp factorization,
-Hensel lifting, and LLL reduction. The executable library has no
-Mathlib dependency.
+Hensel lifting, LLL reduction, and HexPrimality's certified prime table,
+whose ordered windows supply the deterministic modular-prime candidates.
+The executable library has no Mathlib dependency.
 
 ## Public API
 
