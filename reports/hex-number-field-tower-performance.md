@@ -13,7 +13,7 @@ mode, so the library remains at Phase 3.
 The compiled Mathlib-free driver is `bench/HexNumberFieldTower/Bench.lean`.
 It registers ten controlled parametric targets and 39 fixed targets (49 total).
 Six parametric models supply admissible mode-1 evidence. Negation, inversion,
-division, and the sparse full-basis `toPrimitive` registration remain
+division, and the dense single-call `toPrimitive` registration remain
 executable diagnostics without an admissible mode. Seven composite surfaces
 have independently justified mode-3 registrations.
 
@@ -26,10 +26,12 @@ have independently justified mode-3 registrations.
 
 One `fromPrimitive` Horner evaluation performs `D` tower operations of
 `Θ(D²)` each, hence `Θ(D³)` per vector and `Θ(D⁴)` for the full basis. A dense
-`toPrimitive` call has an `O(D²)` rational-operation bound, but the current
-full-basis diagnostic feeds it unit vectors. After the zero-coordinate repair,
-each call takes the sparse branch, so that diagnostic does not cover the dense
-public-operation bound and is not mode-1 evidence.
+`toPrimitive` call has an `O(D²)` rational-operation bound. The replacement
+registration prepares a bounded-height element with all `D` coordinates
+nonzero, then times one public call and its lower-order linear structural hash.
+Its preregistered quadratic wall model is nevertheless inconclusive because
+the flattening's primitive-basis images have dimension-dependent rational
+height; it remains a binding diagnostic rather than mode-1 evidence.
 
 The following seven registrations are mode-3 performance evidence. Their
 ceilings bound the inclusive child—startup, prepared/cached fixture, discarded
@@ -93,17 +95,22 @@ multiplication extends through `8, 12`. The failed negation family uses
 `4, 6, 8, 12, 16, 24, 32, 48`, and the failed recursive inversion/division
 family uses `2, 3, 4, 6, 8, 12`.
 Presentation construction uses `2, 3, 4, 6, 8, 12, 16, 24`, and the
-two full-basis map closures use `2, 3, 4, 5, 6, 9`. Every parametric
+dense `toPrimitive` and full-basis `fromPrimitive` closures use
+`2, 3, 4, 5, 6, 9`. Every parametric
 rung uses a warm child-side batch
 auto-tuned to 100 ms and five independent outer trials. The explicit
 `signalFloorMultiplier := 1.0` is appropriate because process spawn is
 outside the timed body; the exports retain the spawn floor and every trial.
 
-The final exports were pinned to logical CPU 19, with SMT sibling 67, and
-record clean source commits. A three-second
-`/proc/stat` postflight sample measured 1.33% busy on each sibling; load
-averages were 1.28, 2.53, and 2.87 on a 96-logical-CPU host. This is a
-postflight protocol check, not a claim that the host was idle throughout.
+The original final exports were pinned to logical CPU 19, with SMT sibling 67.
+Immediately before the dense `toPrimitive` export, `scripts/bench/idle_core.py`
+certified logical CPU 16 and its SMT sibling 64 idle; the run was pinned to CPU
+16 and records clean pre-rebase commit `85f9c303f` (now `27033e761`). For the
+original CPU 19 protocol, a
+three-second `/proc/stat`
+postflight sample measured 1.33% busy on each sibling; load averages were 1.28,
+2.53, and 2.87 on a 96-logical-CPU host. This is a postflight protocol check,
+not a claim that the host was idle throughout.
 
 ```sh
 taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
@@ -119,8 +126,12 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runTowerNegLadder \
   Hex.NumberTowerBench.runTowerInvLadder \
   Hex.NumberTowerBench.runTowerDivLadder \
-  Hex.NumberTowerBench.runToPrimitiveLadder \
   --outer-trials 5 --export-file <unresolved-diagnostics.json>
+
+taskset -c 16 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runToPrimitiveLadder \
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-number-field-tower-dense-to-primitive-85f9c303-chungus2-cpu16.json
 
 taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runAdjoin \
@@ -143,13 +154,18 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
 | `runTowerSMulLadder` | 1, 2, 3, 4, 6 | **consistent** | −0.046 | 300.38–316.54 | 2.69% | original mode-1 |
 | `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.096 | 3,866.98–4,394.58 | 3.96% | original mode-1 |
 | `runFromPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **consistent** | −0.026 | 8,393.62–8,775.98 | 11.89% | original mode-1 |
-| `runToPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | statistical pass, **inadmissible family** | +0.009 | 168.86–396.07 | 89.98% | repaired forward-map diagnostic |
+| `runToPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **inconclusive** | +0.996 | 1,067.20–3,785.42 | 67.57% | dense forward-map diagnostic |
 
 The first six rows use their original source-derived models with LeanBench's
 default slope tolerance. No intercept was added and no tolerance was widened
-after measurement. The last row is not counted as mode 1: its normalized cost
-falls through `n = 6` and then rises by 2.35× at `n = 9`, while the optimized
-unit-vector input skips the dense linear combination the public bound describes.
+after measurement. The last row uses the quadratic model committed before its
+official run. Its per-call medians rise from 6.902 µs at `n = 2` to
+306.619 µs at `n = 9`; the +0.996 residual is about one empirical power above the
+quadratic model over this schedule. It is reported only as the failed-model
+residual, not adopted as a replacement exponent. Several rungs have substantial
+between-trial spread, but the independently collected CPU-1 export gives the
+same failed-model residual (+1.023); the conclusion does not depend on choosing
+a replacement exponent from either noisy run.
 
 ### Ordered-mode assessment
 
@@ -161,7 +177,7 @@ natural degree/factor-count parameter for every composite surface:
 | negation | the certified one-level schedule through dimension 48 gives β = −0.162 against linear | sub-microsecond fixed overhead can explain the weak negative slope, but no honest corrected model or canonical hard input is established: mode 4 |
 | inversion | the reordered checked height-two family `ℚ(3^(1/n), √2)` completes through `n = 12` but gives β = +0.522 against `n² log n` | removing relative-factorization fixture growth does not repair the timed model: mode 4 |
 | division | the same genuine-recursion family completes through `n = 12` but gives β = +0.748 against `n² log n`; the earlier tower order gave +0.594 | stable contrary evidence on two certified families: mode 4 |
-| full-basis `toPrimitive` | the original implementation gives β = +0.548/+0.521 against cubic; after zero coordinates skip quotient-field arithmetic, the sparse unit-vector diagnostic gives β = +0.009 but its normalized cost spans 168.86–396.07 | source defect fixed, but the best-case sparse family does not cover the dense bound: mode 4 |
+| dense `toPrimitive` | one prepared all-nonzero input at each `D = 2n` rung rejects the preregistered quadratic model with β = +0.996 | `QAdjoin.add` and `QAdjoin.smul` perform the expected `Θ(D²)` rational operations, but the primitive-basis image heights vary with dimension and exact-rational normalization adds an unmodelled bit-cost term: mode 4 |
 | adjoin | degrees 2, 3, 4, 6, 8: 13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s; degree 12 hit 30 s | isolation, factor selection, and validation change dominance |
 | identity adjoin | degrees 2, 3, 4: 18.0 ms, 2.37 s, 1.68 s; degree 6 hit 30 s | branch-sensitive recovery is nonmonotone |
 | recursive relative factorization | Selmer degrees 2, 3, 4, 6 over a height-two tower take 7.598, 12.320, 18.591, and 46.578 ms, giving β = +0.636 against the attempted linear model | the recursive level changes the gcd/resultant/replay mixture |
@@ -337,9 +353,9 @@ x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
 oracle participates in any profiled route. Multiplication retains its earlier
 timed-region-filtered capture from binary `d9fc6d73f`; its algorithm code is
 unchanged. Recursive inversion was refreshed from clean binary `8ea8d6819`
-on the reordered genuine-recursion family. Full-basis `toPrimitive` was
-refreshed from clean pre-rebase binary `08c17a18c` (now `bcab4e402`) after its
-zero-coordinate repair. The
+on the reordered genuine-recursion family. Dense `toPrimitive` was refreshed
+from clean pre-rebase commit `6a4911dbb` (now `1c7dc9c1a`) after its quadratic
+model failed. The
 factorization family was refreshed from the
 pre-rebase binary `5d4cb88ad` (bench source byte-identical to `7ad34c201`) at
 its canonical mode-3 degree-24 input. The commands were:
@@ -386,16 +402,18 @@ declared scope of fixed-family profile coverage.
 |---|---|---:|---:|---|---:|
 | `tower-coordinate-arithmetic` | `runTowerMulLadder` n=12 | 4,957 / 237,605 | 0.700 ms | allocation 39.72%, Lean runtime 31.07%, GMP 23.56%, own code 4.80% | 99.15% |
 | `tower-coordinate-arithmetic` | `runTowerInvLadder` n=12 | 4,257 / 66 | 0.509 ms | GMP 58.73%, Lean runtime 20.74%, allocation 19.83%, own code 0.61% | 99.91% |
-| `split-flatten` | `runToPrimitiveLadder` n=9 | 4,775 / 69,390 | 0.863 ms | allocation 50.07%, GMP 33.24%, Lean runtime 15.08%, own code 1.42% | 99.81% |
+| `split-flatten` | `runToPrimitiveLadder` n=9 | 3,651 / 124,055 | 0.870 ms | GMP 44.67%, allocation 38.84%, Lean runtime 15.09%, own code 0.60% | 99.21% |
 | `trager-factorization` | `runTowerFactorLadder` degree 24 (raw fixed capture) | 16,325 / n.a. | n.a. | GMP 74.54%, Lean runtime 15.34%, allocation 9.21%, own code 0.78% | 99.87% |
 | `adjoin-extend` | `runAdjoin` (raw fixed capture) | 13,786 / n.a. | n.a. | allocation 46.44%, GMP 27.26%, Lean runtime 24.05%, own code 2.01% | 99.75% |
 | `split-flatten` | `runSplit` (raw fixed capture) | 9,985 / n.a. | n.a. | Lean runtime 40.01%, allocation 37.91%, GMP 13.52%, own code 7.83% | 99.27% |
 | `split-flatten` | `runFlatten` (raw fixed capture) | 18,762 / n.a. | n.a. | allocation 37.74%, Lean runtime 37.06%, GMP 20.47%, own code 4.47% | 99.74% |
 
-The three retained filtered captures pass calibration (residuals 0.51 to 0.86 ms
+The three retained filtered captures pass calibration (residuals 0.51 to 0.87 ms
 against the 5 ms limit), retained-sample minimums, and the ±5 ms
 sensitivity check. The large rejected count on the multiplication capture is
-the untimed `m = 12` tower-fixture prelude, excluded by construction.
+the untimed `m = 12` tower-fixture prelude. Likewise, the dense
+`toPrimitive` capture's 124,055 rejected samples are its untimed dimension-18
+`flatten?` preparation. Both preludes are excluded by construction.
 
 ### `tower-coordinate-arithmetic`: attributes cleanly
 
@@ -471,14 +489,15 @@ registered `runBasisImages`, `runCertifies`, `runCoordinateMaps`,
 `runRecoverPair`, and `runRecoverSearch` cases; the eliminant/exactification
 kernels are HexNumberField surfaces with their own registered evidence.
 
-The refreshed full-basis `toPrimitive` capture at dimension 18 retains 99.66%
-of samples in the target and 65.51% in `Flatten.toPrimitiveWith`; the exact
-result checksum accounts for 30.18%. Within the map, the remaining nonzero
-coordinates spend 36.98% in `QAdjoin.smul` and 26.87% in `QAdjoin.add`. This
-confirms that the repaired sparse path still measures the quotient-field map,
-while the eliminated zero-coordinate operations no longer dominate it. It
-also confirms why this unit-vector diagnostic is not dense mode-1 evidence:
-only one coordinate per call reaches the multiply/add path.
+The refreshed dense `toPrimitive` capture at dimension 18 retains 97.81% of
+samples in the target and 95.73% in `Flatten.toPrimitiveWith`.
+`QAdjoin.add`/`DensePoly.addImpl` account for 57.98%/56.86% inclusive and
+`QAdjoin.smul` for 37.63%; `Rat.add` and `Rat.mul` account for 51.88% and
+35.99%. GMP is 44.67% of leaf cost, led by rational-normalization gcd work,
+while the structural `ratChecksum` walk is only 1.89% inclusive. The profile
+therefore confirms that all coordinates take the intended multiply/add path
+and that the failed wall model comes from exact-rational bit cost in the
+primitive images, not fixture preparation or result hashing.
 No capture shows a dominant cost in a function the SPEC does not name as part
 of the measured operation, and no audit-found issue was filed from these
 captures.
@@ -496,9 +515,12 @@ captures.
 | [e63 postflight](bench-results/hex-number-field-tower-phase4-host-state-e63e3a589-chungus2-cpu19.json) | host state paired with the constructor rerun | sampled CPU and SMT sibling | `79d70f64f57983dfed82d96732510106b5ae54aabe304c309d3e90c80f366738` |
 | [repaired forward-map export](bench-results/hex-number-field-tower-phase4-to-primitive-db22ebe6-chungus2-cpu19.json) | clean pre-rebase `db22ebe6c` (now `8c5e38f39`); original cubic model after the executable zero-coordinate fix | CPU 19 | `1b835e4c87b65aa7e0c520178991ea8b6a0975a911d4c5a7b5bcc1d63c42661a` |
 | [repaired forward-map profile](bench-results/hex-number-field-tower-to-primitive-profile-08c17a18-chungus2.json) | clean pre-rebase `08c17a18c` (now `bcab4e402`); timed-region-filtered dimension-18 full-basis map | CPU 19 | `56739b12f292aad4085814d206730d0c67f4337949d8603b7faf5df810ff9f18` |
+| [dense forward-map export](bench-results/hex-number-field-tower-dense-to-primitive-85f9c303-chungus2-cpu16.json) | clean pre-rebase `85f9c303f` (now `27033e761`); five trials at every `n = 2, 3, 4, 5, 6, 9` rung | CPU 16, selected idle with sibling 64 | `b54946d132c1ff1d29895cbe77661b4d244dc5792716152b2c9cb664517f120b` |
+| [corroborating dense export](bench-results/hex-number-field-tower-dense-to-primitive-5f4bab2f-chungus2-cpu1.json) | clean pre-rebase preregistration commit `5f4bab2fc` (now `7d0624a33`); same inconclusive verdict and β = +1.023 | CPU 1; no paired idle-core sample | `4e6bdf834eb2e98ead56ac84f46da08eacd78c51ecd60ecf947af67b66df36f0` |
+| [dense forward-map profile](bench-results/hex-number-field-tower-dense-to-primitive-profile-6a4911db-chungus2.json) | clean pre-rebase `6a4911dbb` (now `1c7dc9c1a`); timed-region-filtered dimension-18 dense public map | unpinned shape capture | `5dadec1dfefc811addb7e7ae242f88d81ab3880f91a19570356e4e92402cd7f9` |
 | [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
-| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
+| [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts, with its sparse `runToPrimitiveLadder` block superseded by the dense export | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [negation calibration](bench-results/hex-number-field-tower-opus-calibration-605abcb5-chungus2-cpu19.json) | clean pre-rebase `605abcb5` (same branch state now `2ed1aba5d`); registered linear diagnostic, β = −0.162 | CPU 19 | `360bcf931e5171183ae25ddba16d6ff3edbb820bab5d40fd4c0de1908919f5a8` |
 | [ordered-mode diagnostics](bench-results/hex-number-field-tower-phase4-mode3-diagnostics-b2ebf281-chungus2-cpu1.json) | clean pre-rebase `b2ebf281b` (same patch now `eaa691fc9`); temporary executable diagnostics | CPU 1 | `6f3182498feec6f8b4d7fb121f5cd67fb5b1ba011117b1e72e3431217981270d` |
 | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | final measurement protocol | sampled CPU and SMT sibling | `f8a9d1d8294f59cf1bce18e02a2baae57728c87db24f5e96cc1c5c0e884a5a76` |
@@ -534,7 +556,8 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 ## Concerns
 
-These unresolved surfaces are tracked by #9665 and its parent #9815.
+These unresolved surfaces are tracked by #9665 and its focused follow-ups,
+including #9945; #9815 is the original ordered-mode audit parent.
 
 - Negation has no admissible evidence mode: the registered linear diagnostic
   gives β = −0.162, just outside the default two-sided gate. The
@@ -549,7 +572,10 @@ These unresolved surfaces are tracked by #9665 and its parent #9815.
   order. No independently derived executable bit-cost model accounting for
   exact-rational coefficient growth is currently recorded for either
   operation.
-- `toPrimitive` now skips zero coordinates, but the registered full-basis
-  family consists of unit vectors. Its statistical cubic pass is a sparse
-  best-case result with a 2.35× normalized-cost range, not evidence for the
-  dense public-operation bound.
+- Dense `toPrimitive` rejects its preregistered quadratic wall model with
+  β = +0.996. The implementation performs the expected quadratic count of
+  primitive-coordinate scalar/add operations, but their exact-rational
+  coefficients do not have bounded bit height across the family; the profile
+  attributes 44.67% of leaf cost to GMP and 95.73% inclusively to
+  `Flatten.toPrimitiveWith`. No replacement exponent has been selected from
+  the timings.
