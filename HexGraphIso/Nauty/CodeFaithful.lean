@@ -288,6 +288,24 @@ theorem codeInv_keyCmp_gt {nn : Nat} {cs bs : List Nat}
     | .gt => .gt) = .gt
   rw [codeInv_listCmp_gt hinv ext]
 
+/-- With `compCanon = 0` and the path at the incumbent's depth, the
+code lists are equal outright: the tied-leaf case hands the key
+comparison to the rows (`keyCmp_codes_eq`). -/
+theorem codeInv_eq_of_tied {nn : Nat} {cs bs : List Nat}
+    {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
+    (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon 0)
+    (hlen : cs.length = bs.length) : cs = bs := by
+  rcases hinv.tri with ⟨-, -, -, hmatch⟩ | ⟨j, -, -, -, -, -, hcase⟩
+  · refine List.ext_getElem hlen fun i h1 h2 => ?_
+    have h := hmatch (i + 1) (by omega) (by omega)
+    rw [bcode_of_le (by omega) (by omega)] at h
+    have h' : cs[i]! = bs[i]! := by simpa using h
+    rw [getElem!_pos cs i h1, getElem!_pos bs i h2] at h'
+    exact h'
+  · rcases hcase with ⟨hcc, -⟩ | ⟨hcc, -⟩
+    · cases hcc
+    · cases hcc
+
 /-! # Projections of the events -/
 
 private theorem otherNodePrep_canonlevel (level code : Nat)
@@ -868,5 +886,195 @@ theorem install_codeInv {nn : Nat} {cs bs : List Nat}
         hstore i h1 (by omega), bcode_of_le h1 (by omega)]
   · intro h
     cases h
+
+/-! # The first-path comparison thread
+
+The transcription threads a second lazy comparison: `eqlevFirst`
+records how deep the current path agrees with the leftmost (first)
+path, whose codes live in `firstcode`. Agreement here is what makes
+an off-path leaf a candidate automorphism (`processnode` code `1`),
+so the domination induction needs the same faithfulness clause: the
+recorded depth really is a code-prefix agreement with the first
+leaf's codes. Unlike the incumbent thread there is no overwrite
+window — `firstcode` is written only on the first path — and no
+trichotomy, only an agreement depth that steps forward on a match at
+the next level (`otherNodePrep`), is clamped by `recover` and the
+target-cell demotion in `othernode`, and is seeded at the first leaf
+by `firstterminal`. -/
+
+/-- The first-path comparison state: the current path's codes `cs`
+agree with the first leaf's codes `fs` through level `eqlevFirst`,
+and `firstcode` stores `fs` with the sentinel stamped above. -/
+structure FirstCodeInv (nn : Nat) (cs fs : List Nat)
+    (firstcode : Array Nat) (eqlevFirst : Nat) : Prop where
+  /-- The code store always has `nn + 2` slots. -/
+  size : firstcode.size = nn + 2
+  /-- The first leaf is at a real level. -/
+  fbound : fs.length ≤ nn
+  /-- First-path codes are real codes. -/
+  flt : ∀ f ∈ fs, f < codeSentinel
+  /-- The store holds the first leaf's codes. -/
+  fcontent : ∀ i, 1 ≤ i → i ≤ fs.length → firstcode[i]! = fs[i - 1]!
+  /-- The sentinel is stamped above the first leaf's codes. -/
+  fsent : firstcode[fs.length + 1]! = codeSentinel
+  /-- The agreement depth is within the current path. -/
+  elev_le : eqlevFirst ≤ cs.length
+  /-- The agreement depth is within the first path. -/
+  elev_fs : eqlevFirst ≤ fs.length
+  /-- Recorded agreement is code-prefix agreement. -/
+  agree : ∀ i, 1 ≤ i → i ≤ eqlevFirst → cs[i - 1]! = fs[i - 1]!
+
+/-- Lowering the agreement depth preserves the invariant: the clause
+for `othernode`'s target-cell demotion and any other clamp. -/
+theorem firstCodeInv_mono {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat} {eqlevFirst e' : Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode eqlevFirst)
+    (he : e' ≤ eqlevFirst) :
+    FirstCodeInv nn cs fs firstcode e' :=
+  ⟨hinv.size, hinv.fbound, hinv.flt, hinv.fcontent, hinv.fsent,
+    Nat.le_trans he hinv.elev_le, Nat.le_trans he hinv.elev_fs,
+    fun i h1 h2 => hinv.agree i h1 (by omega)⟩
+
+/-- Truncating the path above the agreement depth preserves the
+invariant: the clause for `recover`'s unwind together with its
+clamp. -/
+theorem firstCodeInv_take {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat} {eqlevFirst lvl : Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode eqlevFirst)
+    (hlvl : lvl ≤ cs.length) :
+    FirstCodeInv nn (cs.take lvl) fs firstcode
+      (min lvl eqlevFirst) := by
+  have hlen : (cs.take lvl).length = lvl := by
+    rw [List.length_take]
+    omega
+  refine ⟨hinv.size, hinv.fbound, hinv.flt, hinv.fcontent,
+    hinv.fsent, by omega, by
+      have := hinv.elev_fs
+      omega, fun i h1 h2 => ?_⟩
+  rw [getElem!_take' (by omega) (by omega)]
+  exact hinv.agree i h1 (by omega)
+
+/-- With the agreement depth at the full length of both paths, the
+code lists are equal outright: the code-`1` leaf case. -/
+theorem firstCodeInv_eq_of_tied {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode cs.length)
+    (hlen : cs.length = fs.length) : cs = fs := by
+  refine List.ext_getElem hlen fun i h1 h2 => ?_
+  have h := hinv.agree (i + 1) (by omega) (by omega)
+  have h' : cs[i]! = fs[i]! := by simpa using h
+  rw [getElem!_pos cs i h1, getElem!_pos fs i h2] at h'
+  exact h'
+
+private theorem otherNodePrep_firstcode (level code : Nat)
+    (st : SearchSt) :
+    (otherNodePrep level code st).firstcode = st.firstcode := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firstcode, ite_self]
+
+private theorem otherNodePrep_eqlevFirst (level code : Nat)
+    (st : SearchSt) :
+    (otherNodePrep level code st).eqlevFirst =
+      if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]!
+      then level else st.eqlevFirst := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.eqlevFirst, apply_ite SearchSt.firstcode,
+    ite_self]
+  all_goals repeat' split
+  all_goals rfl
+
+private theorem recover_eqlevFirst (n inf level : Nat)
+    (st : SearchSt) :
+    (recover n inf level st).eqlevFirst =
+      if level < st.eqlevFirst then level else st.eqlevFirst := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.eqlevFirst, ite_self]
+
+private theorem recover_firstcode (n inf level : Nat)
+    (st : SearchSt) :
+    (recover n inf level st).firstcode = st.firstcode := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firstcode, ite_self]
+
+/-- One `otherNodePrep` step at level `cs.length + 1` with fresh code
+`code` extends the first-path agreement by one level exactly when the
+depth had reached the path and the code matches the first path's next
+code. -/
+theorem otherNodePrep_firstCodeInv {nn : Nat} {cs fs : List Nat}
+    {st : SearchSt} {code : Nat}
+    (hinv : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
+    (hcode : code < codeSentinel) :
+    FirstCodeInv nn (cs ++ [code]) fs
+      (otherNodePrep (cs.length + 1) code st).firstcode
+      (otherNodePrep (cs.length + 1) code st).eqlevFirst := by
+  have hlast : (cs ++ [code])[cs.length]! = code := by
+    have hsz : cs.length < (cs ++ [code]).length := by
+      rw [List.length_append]
+      simp
+    rw [getElem!_pos (cs ++ [code]) cs.length hsz,
+      List.getElem_concat_length]
+    rfl
+  have hkeep : ∀ i, 1 ≤ i → i ≤ cs.length →
+      (cs ++ [code])[i - 1]! = cs[i - 1]! :=
+    fun i h1 h2 => getElem!_append_left' (by omega)
+  rw [otherNodePrep_firstcode, otherNodePrep_eqlevFirst]
+  rcases Decidable.em ((st.eqlevFirst == cs.length + 1 - 1) = true ∧
+      (code == st.firstcode[cs.length + 1]!) = true) with hc | hc
+  · have he : st.eqlevFirst = cs.length := by
+      have := beq_iff_eq.mp hc.1
+      omega
+    have hcodeeq : code = st.firstcode[cs.length + 1]! :=
+      beq_iff_eq.mp hc.2
+    have hfs : cs.length + 1 ≤ fs.length := by
+      rcases Nat.lt_or_ge cs.length fs.length with h | h
+      · omega
+      · exfalso
+        have hfse : cs.length = fs.length := by
+          have := hinv.elev_fs
+          omega
+        rw [hfse, hinv.fsent] at hcodeeq
+        omega
+    rw [ite_eq_left hc]
+    refine ⟨hinv.size, hinv.fbound, hinv.flt, hinv.fcontent,
+      hinv.fsent, by simp, hfs, fun i h1 h2 => ?_⟩
+    rcases Nat.lt_or_ge i (cs.length + 1) with hi | hi
+    · rw [hkeep i h1 (by omega)]
+      exact hinv.agree i h1 (by omega)
+    · have hie : i = cs.length + 1 := by omega
+      subst hie
+      rw [(by omega : cs.length + 1 - 1 = cs.length), hlast, hcodeeq,
+        hinv.fcontent (cs.length + 1) (by omega) hfs]
+      rfl
+  · rw [ite_eq_right hc]
+    refine ⟨hinv.size, hinv.fbound, hinv.flt, hinv.fcontent,
+      hinv.fsent, by
+        rw [List.length_append, List.length_singleton]
+        have := hinv.elev_le
+        omega, hinv.elev_fs, fun i h1 h2 => ?_⟩
+    have hle : i ≤ cs.length := by
+      have := hinv.elev_le
+      omega
+    rw [hkeep i h1 hle]
+    exact hinv.agree i h1 h2
+
+/-- `recover` clamps the agreement depth to the unwind level. -/
+theorem recover_firstCodeInv {nn N inf : Nat} {cs fs : List Nat}
+    {st : SearchSt} {lvl : Nat}
+    (hinv : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
+    (hlvl : lvl ≤ cs.length) :
+    FirstCodeInv nn (cs.take lvl) fs
+      (recover N inf lvl st).firstcode
+      (recover N inf lvl st).eqlevFirst := by
+  rw [recover_firstcode, recover_eqlevFirst]
+  have h := firstCodeInv_take hinv hlvl
+  rcases Decidable.em (lvl < st.eqlevFirst) with hc | hc
+  · rw [ite_eq_left hc]
+    exact firstCodeInv_mono h (by omega)
+  · rw [ite_eq_right hc]
+    exact firstCodeInv_mono h (by omega)
 
 end Hex.GraphIso.Nauty
