@@ -51,6 +51,12 @@ def busy_percent(
     return 100.0 * (busy_after - busy_before) / elapsed
 
 
+def busy_seconds(
+    before: tuple[int, int], after: tuple[int, int], tick_hz: int
+) -> float:
+    return (after[0] - before[0]) / tick_hz
+
+
 def process_snapshot() -> dict[int, tuple[int, str, int, str]]:
     result: dict[int, tuple[int, str, int, str]] = {}
     for stat_path in Path("/proc").glob("[0-9]*/stat"):
@@ -90,8 +96,7 @@ def main() -> int:
     parser.add_argument("--cpu", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--interval", type=float, default=0.25)
-    parser.add_argument("--max-sibling-busy-percent", type=float, default=5.0)
-    parser.add_argument("--max-foreign-runnable-samples", type=int, default=0)
+    parser.add_argument("--max-core-interference-ratio", type=float, default=0.002)
     parser.add_argument("--fail-on-contamination", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
@@ -112,6 +117,8 @@ def main() -> int:
     started = utc_now()
     started_mono = time.monotonic()
     previous = cpu_counters()
+    previous_mono = started_mono
+    tick_hz = os.sysconf("SC_CLK_TCK")
     samples: list[dict[str, object]] = []
 
     def pin_child() -> None:
@@ -121,6 +128,7 @@ def main() -> int:
     while process.poll() is None:
         time.sleep(args.interval)
         current = cpu_counters()
+        current_mono = time.monotonic()
         snapshot = process_snapshot()
         owned = descendants(process.pid, snapshot)
         foreign = [
@@ -137,27 +145,44 @@ def main() -> int:
                     )
                     for cpu in monitored
                 },
+                "busy_seconds": {
+                    str(cpu): round(
+                        busy_seconds(previous[cpu], current[cpu], tick_hz), 6
+                    )
+                    for cpu in monitored
+                },
+                "interval_wall_seconds": round(current_mono - previous_mono, 6),
                 "foreign_runnable": foreign,
                 "load_average": [round(value, 3) for value in os.getloadavg()],
             }
         )
         previous = current
+        previous_mono = current_mono
 
     return_code = process.wait()
     sibling_cpus = sorted(set(monitored) - {args.cpu})
-    sibling_busy = [
-        float(sample["busy_percent"][str(cpu)])
+    sibling_busy_seconds = sum(
+        float(sample["busy_seconds"][str(cpu)])
         for sample in samples
         for cpu in sibling_cpus
-    ]
+    )
+    foreign_measurement_seconds = sum(
+        float(sample["interval_wall_seconds"])
+        for sample in samples
+        if any(
+            int(process["cpu"]) == args.cpu
+            for process in sample["foreign_runnable"]
+        )
+    )
+    elapsed = time.monotonic() - started_mono
+    aggregate_interference_seconds = (
+        sibling_busy_seconds + foreign_measurement_seconds
+    )
+    aggregate_interference_ratio = (
+        aggregate_interference_seconds / elapsed if elapsed > 0 else 0.0
+    )
     foreign_samples = sum(bool(sample["foreign_runnable"]) for sample in samples)
-    mean_sibling_busy = (
-        sum(sibling_busy) / len(sibling_busy) if sibling_busy else 0.0
-    )
-    contaminated = (
-        mean_sibling_busy > args.max_sibling_busy_percent
-        or foreign_samples > args.max_foreign_runnable_samples
-    )
+    contaminated = aggregate_interference_ratio > args.max_core_interference_ratio
     document = {
         "schema": 1,
         "command": command,
@@ -166,16 +191,24 @@ def main() -> int:
         "interval_seconds": args.interval,
         "started_utc": started,
         "ended_utc": utc_now(),
-        "elapsed_seconds": round(time.monotonic() - started_mono, 3),
+        "elapsed_seconds": round(elapsed, 3),
         "command_return_code": return_code,
         "thresholds": {
-            "max_sibling_busy_percent": args.max_sibling_busy_percent,
-            "max_foreign_runnable_samples": args.max_foreign_runnable_samples,
+            "max_core_interference_ratio": args.max_core_interference_ratio,
         },
         "summary": {
             "sample_count": len(samples),
-            "mean_sibling_busy_percent": round(mean_sibling_busy, 3),
             "foreign_runnable_samples": foreign_samples,
+            "measurement_cpu_foreign_seconds_estimate": round(
+                foreign_measurement_seconds, 6
+            ),
+            "smt_sibling_busy_seconds": round(sibling_busy_seconds, 6),
+            "aggregate_core_interference_seconds": round(
+                aggregate_interference_seconds, 6
+            ),
+            "aggregate_core_interference_ratio": round(
+                aggregate_interference_ratio, 6
+            ),
             "contaminated": contaminated,
         },
         "samples": samples,

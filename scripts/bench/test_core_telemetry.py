@@ -10,6 +10,9 @@ class CoreTelemetryTest(unittest.TestCase):
         self.assertEqual(core_telemetry.busy_percent((2, 10), (4, 20)), 20.0)
         self.assertEqual(core_telemetry.busy_percent((2, 10), (2, 10)), 0.0)
 
+    def test_busy_seconds(self):
+        self.assertEqual(core_telemetry.busy_seconds((2, 10), (4, 20), 100), 0.02)
+
     def test_descendants(self):
         snapshot = {
             10: (1, "S", 0, "root"),
