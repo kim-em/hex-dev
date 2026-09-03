@@ -988,6 +988,28 @@ theorem firstCodeInv_len_of_sentinel {nn : Nat} {cs fs : List Nat}
   exact Nat.lt_irrefl _
     (hc ▸ hinv.flt _ (List.getElem_mem (by omega)))
 
+/-- The sentinel hypothesis above is load-bearing rather than a proof
+convenience. At a live gate whose path is strictly shorter than the
+first path, the current leaf's key strictly exceeds the first leaf's,
+because the sentinel outranks every real code, so the code-`1` skip
+would discard a candidate standing above the incumbent. -/
+theorem firstCodeInv_listCmp_gt_of_lt {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode cs.length)
+    (hlt : cs.length < fs.length) :
+    listCmp compare (cs ++ [codeSentinel]) (fs ++ [codeSentinel]) =
+      .gt := by
+  refine listCmp_gt_of_prefix cs.length _ _
+    (by rw [List.length_append]; simp)
+    (by rw [List.length_append]; simp; omega)
+    (fun i hi => ?_) ?_
+  · rw [getElem!_append_left' hi, getElem!_append_left' (by omega)]
+    simpa using hinv.agree (i + 1) (by omega) (by omega)
+  · rw [getElem!_append_sentinel (Nat.le_refl _),
+      bcode_sentinel (by omega), getElem!_append_left' hlt,
+      getElem!_pos fs cs.length (by omega)]
+    exact hinv.flt _ (List.getElem_mem _)
+
 /-- The code-`1` leaf case in the form the induction applies: at a
 live gate, with the first-path store showing the sentinel just above
 the current level, the two code paths are equal outright. -/
