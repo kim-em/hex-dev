@@ -3009,4 +3009,129 @@ theorem nontrivialCell_outcome {ctx : Ctx}
                 omega)
             · rw [h, Bool.true_or]
 
+/-- The nontrivial pass over a window list, the bookkeeping half. -/
+theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.ptn.size ∧ p.2 < nb) →
+      cs.Pairwise (fun p q => p.2 < q.1) →
+      (∀ p ∈ cs, ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level) →
+      (∀ u, (∀ p ∈ cs, u < p.1 ∨ p.2 < u) →
+        elem (refineNontrivial.go ctx level workset cs st).active u =
+          elem st.active u) ∧
+      (∀ q : Nat, (∀ p ∈ cs, q < p.1 ∨ p.2 ≤ q) →
+        (refineNontrivial.go ctx level workset cs st).ptn[q]! =
+          st.ptn[q]!) ∧
+      (refineNontrivial.go ctx level workset cs st).ptn.size =
+        st.ptn.size ∧
+      (bitCount nb (refineNontrivial.go ctx level workset cs
+          st).active + 2 * st.numcells ≤
+        bitCount nb st.active +
+          2 * (refineNontrivial.go ctx level workset cs st).numcells) ∧
+      st.numcells ≤
+        (refineNontrivial.go ctx level workset cs st).numcells ∧
+      (∀ p ∈ cs,
+        (elem st.active p.1 = true →
+          ∀ u, p.1 ≤ u → u ≤ p.2 →
+            (u = p.1 ∨ (refineNontrivial.go ctx level workset cs
+              st).ptn[u - 1]! ≤ level) →
+            elem (refineNontrivial.go ctx level workset cs
+              st).active u = true) ∧
+        (elem st.active p.1 = false →
+          ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
+            (u = p.1 ∨ (refineNontrivial.go ctx level workset cs
+              st).ptn[u - 1]! ≤ level) → u ≠ w →
+            elem (refineNontrivial.go ctx level workset cs
+              st).active u = true))
+  | [], st, _, _, _ => by
+    rw [refineNontrivial.go]
+    exact ⟨fun _ _ => rfl, fun _ _ => rfl, rfl, by omega, Nat.le_refl _,
+      fun p hp => absurd hp (by simp)⟩
+  | (c1, c2) :: rest, st, hw, hpw, hop => by
+    rw [refineNontrivial.go]
+    obtain ⟨h12, hsz, hnb⟩ := hw (c1, c2) (List.mem_cons_self ..)
+    dsimp only at h12 hsz hnb
+    obtain ⟨o1, o2, oS, o3, o4, o5, o6⟩ :=
+      nontrivialCell_outcome (ctx := ctx) (level := level)
+        (workset := workset) (nb := nb) (st := st) h12 hsz hnb
+        (fun q hq1 hq2 => hop (c1, c2) (List.mem_cons_self ..) q hq1 hq2)
+    have hhead := (List.pairwise_cons.mp hpw).1
+    obtain ⟨ih1, ih2, ih3, ih4, ih5, ih6⟩ :=
+      refineNontrivial_go_state (nb := nb) rest
+        (nontrivialCell ctx level workset c1 c2 st)
+        (fun p hp => by
+          obtain ⟨hp1, hp2, hp3⟩ := hw p (List.mem_cons_of_mem _ hp)
+          exact ⟨hp1, by rw [oS]; exact hp2, hp3⟩)
+        (List.pairwise_cons.mp hpw).2
+        (fun p hp q hq1 hq2 => by
+          rw [o2 q (Or.inr (by
+            have := hhead p hp
+            simp only at this
+            omega))]
+          exact hop p (List.mem_cons_of_mem _ hp) q hq1 hq2)
+    have hkeepP : ∀ q, q ≤ c2 →
+        (refineNontrivial.go ctx level workset rest
+          (nontrivialCell ctx level workset c1 c2 st)).ptn[q]! =
+          (nontrivialCell ctx level workset c1 c2 st).ptn[q]! := by
+      intro q hq
+      exact ih2 q fun pr hpr => Or.inl (by
+        have := hhead pr hpr
+        simp only at this
+        omega)
+    have hkeepA : ∀ u, u ≤ c2 →
+        elem (refineNontrivial.go ctx level workset rest
+          (nontrivialCell ctx level workset c1 c2 st)).active u =
+          elem (nontrivialCell ctx level workset c1 c2
+            st).active u := by
+      intro u hu
+      exact ih1 u fun pr hpr => Or.inl (by
+        have := hhead pr hpr
+        simp only at this
+        omega)
+    refine ⟨?_, ?_, by rw [ih3, oS], ?_, ?_, ?_⟩
+    · intro u hu
+      rw [ih1 u fun pr hpr => hu pr (List.mem_cons_of_mem _ hpr),
+        o1 u (by
+          have := hu (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · intro q hq
+      rw [ih2 q fun pr hpr => hq pr (List.mem_cons_of_mem _ hpr),
+        o2 q (by
+          have := hq (c1, c2) (List.mem_cons_self ..)
+          simpa using this)]
+    · omega
+    · omega
+    · intro p hp
+      rcases List.mem_cons.mp hp with rfl | hmem
+      · constructor
+        · intro hact u hu1 hu2 hu3
+          rw [hkeepA u hu2]
+          refine o5 hact u hu1 hu2 ?_
+          rcases hu3 with rfl | hb
+          · exact Or.inl rfl
+          · refine Or.inr ?_
+            rw [← hkeepP (u - 1) (by omega)]
+            exact hb
+        · intro hact
+          obtain ⟨w, hwc⟩ := o6 hact
+          refine ⟨w, fun u hu1 hu2 hu3 hne2 => ?_⟩
+          rw [hkeepA u hu2]
+          refine hwc u hu1 hu2 ?_ hne2
+          rcases hu3 with rfl | hb
+          · exact Or.inl rfl
+          · refine Or.inr ?_
+            rw [← hkeepP (u - 1) (by omega)]
+            exact hb
+      · have hout1 : c2 < p.1 := by
+          have := hhead p hmem
+          simpa using this
+        obtain ⟨hA, hI⟩ := ih6 p hmem
+        have hacteq : elem (nontrivialCell ctx level workset c1 c2
+            st).active p.1 = elem st.active p.1 :=
+          o1 p.1 (Or.inr (by omega))
+        constructor
+        · intro hact u hu1 hu2 hu3
+          exact hA (by rw [hacteq]; exact hact) u hu1 hu2 hu3
+        · intro hact
+          exact hI (by rw [hacteq]; exact hact)
+
 end Hex.GraphIso.Nauty
