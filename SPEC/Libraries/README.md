@@ -126,8 +126,7 @@ Each library with its immediate dependencies:
 - **hex-smith**: hex-hermite
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-invariant-factors**: hex-poly-smith
-- **hex-graph**: hex-basic
-- **hex-graph-iso**: hex-graph
+- **hex-graph-iso**: hex-basic, hex-matrix (the `HexGraph` graph representation is folded into this library)
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic

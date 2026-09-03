@@ -446,13 +446,8 @@ libraries:
           description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
-  HexGraph:
-    deps: [HexMatrix]
-    mathlib: false
-    done_through: 3
-    status: active
   HexGraphIso:
-    deps: [HexBasic, HexGraph]
+    deps: [HexBasic, HexMatrix]
     mathlib: false
     done_through: 3
     status: active
