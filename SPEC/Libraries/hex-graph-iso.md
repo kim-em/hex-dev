@@ -1058,6 +1058,17 @@ its own pull request whose frame label says so, and curve comparisons
 meaningful between sweeps on the same corpus. The first such break
 adds the irregular negative pairs, whose absence had made every
 corpus negative regular and the separator tiers invisible.
+The second break extends every deterministic family to large hard
+instances up to the nauty comparator's `n ≤ 255` bound (Paley to 229,
+Kneser/Johnson to `m = 22`, hypercube to `q7`, circulants and the
+random ladder to 255, grids to 15×15), adds the Latin-square family
+with the classic strongly regular negative `paley25` versus `latin5`
+at shared parameters `(25, 12, 5, 6)`, and adds same-degree regular
+and vertex-transitive negatives at scale; large negatives whose
+kernel replay exceeds the tactic timeout count as unsolved in the
+tactic curve, which is the honest frontier of that tier. nauty
+cross-checks for the new sizes run in the streamed campaign, not the
+committed fixture set, keeping merge-CI oracle time unchanged.
 Every pull request that improves the measured performance of any
 layer (fast, checked, or tactic) posts a before/after comparison as a
 pull-request comment: `scripts/plots/hexgraphiso-before-after.py`

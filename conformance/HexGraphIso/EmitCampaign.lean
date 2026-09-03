@@ -114,6 +114,18 @@ def main : IO Unit := do
   emitGraph "campaign/multipartite" (Families.completeMultipartite [3, 4, 5])
   emitGraph "campaign/copies5c5" (Families.copies 5 (Families.cycle 5))
   emitGraph "campaign/circulant17" (Families.circulant 17 [1, 2, 4, 8])
+  -- large hard instances matching the extended cactus corpus (series
+  -- break 2): the campaign is where nauty cross-checks these sizes
+  emitGraph "campaign/paley61" (Families.paley 61)
+  emitGraph "campaign/paley113" (Families.paley 113)
+  emitGraph "campaign/hypercube7" (Families.hypercube 7)
+  emitGraph "campaign/grid12" (Families.grid 12 12)
+  emitGraph "campaign/kneser15-2" (Families.kneser 15 2)
+  emitGraph "campaign/johnson15-2" (Families.johnson 15 2)
+  emitGraph "campaign/circulant255" (Families.circulant 255 [1, 2])
+  emitGraph "campaign/circulant193" (Families.circulant 193 [1, 2, 4, 8])
+  emitGraph "campaign/latin5" (Families.latinSquare 5)
+  emitGraph "campaign/latin13" (Families.latinSquare 13)
   -- pseudo-random corpus: G(n, 1/2) for both seeds at growing sizes
   let mut g : Random.Gen := ⟨Random.seed1⟩
   for n in [12, 14, 16] do

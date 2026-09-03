@@ -120,6 +120,19 @@ in colexicographic order, adjacent when the subsets are disjoint. -/
 @[expose] def triangular (m : Nat) : Graph (choose m 2) :=
   johnson m 2
 
+/-- The Latin-square graph `L₃(m)` of the cyclic Latin square
+`(r, c) ↦ (r + c) mod m`: vertices are the `m²` cells numbered
+`r * m + c`, adjacent when they share a row, a column, or a symbol.
+For `m ≥ 2` this is strongly regular with parameters
+`(m², 3(m−1), m, 6)`; at `m = 5` it shares its parameters
+`(25, 12, 5, 6)` with the Paley graph on 25 vertices while remaining
+non-isomorphic to it, the classic strongly regular negative pair. -/
+@[expose] def latinSquare (m : Nat) : Graph (m * m) :=
+  Graph.ofRel fun i j =>
+    (i.val != j.val) &&
+      (i.val / m == j.val / m || i.val % m == j.val % m ||
+        (i.val / m + i.val % m) % m == (j.val / m + j.val % m) % m)
+
 /-- The Paley graph on `q` vertices: `i` and `j` are adjacent when their
 difference is a nonzero quadratic residue modulo `q`, symmetrized. The
 intended domain is a prime `q ≡ 1 (mod 4)`, where the residue relation
