@@ -35,9 +35,9 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
 * one dense `toPrimitive` application and the completed `fromPrimitive`
   basis map.
 
-Negation, inversion, and division retain failed mode-1 registrations as
-binding diagnostics. They have no admissible fixed substitute, so the library
-remains at Phase 3 while those cost models are unresolved.
+Negation, inversion, division, and dense `toPrimitive` retain failed mode-1
+registrations as binding diagnostics. They have no admissible fixed substitute,
+so the library remains at Phase 3 while those cost models are unresolved.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,
@@ -1363,8 +1363,12 @@ def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
 height element with all `D = 2n` tower coordinates nonzero. The timed public
 `toPrimitive` call therefore performs `D` rational scalar actions and
 additions on degree-`D` primitive coordinates, hence `Θ(D²) = Θ(n²)`
-bounded-height rational operations. `qAdjoinChecksum` then structurally walks
-the `D`-coordinate result, contributing only lower-order `Θ(D)` work. -/
+rational operations. `qAdjoinChecksum` then structurally walks the
+`D`-coordinate result, contributing only lower-order `Θ(D)` work. The
+registration is retained as a binding failed diagnostic: the prepared input
+height is bounded, but the flattening's primitive-basis images are not, and
+their exact-rational bit cost makes the wall-time verdict slower than this
+rational-operation model. -/
 setup_benchmark runToPrimitiveLadder n => n * n
   with prep := prepMapLadderInput
   where {

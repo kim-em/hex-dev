@@ -356,9 +356,13 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   One dense flattening `toPrimitive` application costs `O(D²)` rational
   operations; one `fromPrimitive` application costs `O(D³)` with the current
   Horner/tower-arithmetic path. Applying `fromPrimitive` to all `D` basis
-  vectors gives the registered `O(D⁴)` family. The current full-basis
-  `toPrimitive` diagnostic uses sparse unit vectors and does not exercise its
-  dense `O(D²)` bound after zero coordinates are skipped.
+  vectors gives the registered `O(D⁴)` family. The dense `toPrimitive`
+  registration prepares one bounded-height, all-nonzero tower element and
+  times one public call plus its linear structural result hash. Its
+  preregistered quadratic wall model is inconclusive: the primitive-basis
+  images produced by flattening have dimension-dependent exact-rational
+  heights, so the `O(D²)` rational-operation count does not give a quadratic
+  bit-cost model for this family.
 
 The fixed canonical cases for adjoining, identity adjoining, one- and
 two-level factorization, checked replay, splitting, and flattening use
@@ -368,10 +372,11 @@ mode-3 regression ceilings for operations whose realised phase mixtures admit
 neither a tight family model nor a published bound covering the dominant
 executable phases.
 
-Full-basis `toPrimitive`, negation, inversion, and division have no admissible
-current mode. The forward-map optimization is valid, but its sparse unit-basis
-diagnostic no longer covers the dense public bound; its fixed registration and
-the dimension-four arithmetic registrations are hash anchors, not performance
+Dense `toPrimitive`, negation, inversion, and division have no admissible
+current mode. The forward-map optimization is valid, but the dense family
+rejects the preregistered quadratic wall model because primitive-coordinate
+height is not controlled. The fixed unit-basis registration and the
+dimension-four arithmetic registrations are hash anchors, not performance
 evidence. The headline report records the binding diagnostics, and the library
 therefore remains at Phase 3.
 
