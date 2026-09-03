@@ -245,4 +245,238 @@ theorem pairFlip_fix_cell (hpsz : ptn.size = ctx.n)
 
 end PairFlip
 
+/-! # The self-equivalence of a cell flip
+
+A renaming that swaps the labelling window of every `S`-cell (each a
+pair) and fixes every other cell pointwise is a cell-contents
+permutation of the labelling against itself. Stated for any renaming so
+the pair closure and any future flip shapes share it. -/
+
+section FlipSelf
+
+variable {lab ptn : Array Nat} {level : Nat}
+
+/-- The mapped labelling is cell-contents equivalent to the original
+when the map swaps `S`-pair windows and fixes every other cell
+pointwise. -/
+theorem cellsPerm_self_flip {σ : Renaming ctx.n} {S : Nat → Prop}
+    (hps : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+      σ.toFun lab[p.1]! = lab[p.1 + 1]! ∧
+        σ.toFun lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 →
+        σ.toFun lab[p.1 + o]! = lab[p.1 + o]!) :
+    cellsPerm ptn level lab (lab.map σ.toFun) := by
+  intro α len hIs
+  rcases Decidable.em (α < ctx.n) with han | han
+  · have hcross : α + len ≤ ctx.n := by
+      have := isCell_no_cross hend hIs (by omega)
+      omega
+    have hlen0 : 0 < len := hIs.1
+    have hmem : (α, α + len - 1) ∈ cells ptn level ctx.n :=
+      mem_cells_of_isCell (by omega) hend hIs han (by omega)
+    have hmapAt : ∀ o, o < len →
+        (lab.map σ.toFun)[α + o]! = σ.toFun lab[α + o]! := by
+      intro o ho
+      exact getElem!_map_of_lt _ _ (by rw [hlsz]; omega)
+    rcases Classical.em (S α) with hS | hS
+    · -- a closure pair: the window swaps in place
+      have hp2 : α + len - 1 = α + 1 := hSpair _ hmem hS
+      have hlen2 : len = 2 := by omega
+      subst hlen2
+      have hsw := hSswap _ hmem hS
+      have hs1 : σ.toFun lab[α]! = lab[α + 1]! := hsw.1
+      have hs2 : σ.toFun lab[α + 1]! = lab[α]! := hsw.2
+      have hseg : segN lab α 2 = lab[α]! :: lab[α + 1]! :: [] := by
+        rw [show (2 : Nat) = 1 + 1 from rfl, segN_cons,
+          show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_zero]
+      have hsegm : segN (lab.map σ.toFun) α 2 =
+          σ.toFun lab[α]! :: σ.toFun lab[α + 1]! :: [] := by
+        rw [show (2 : Nat) = 1 + 1 from rfl, segN_cons,
+          show (1 : Nat) = 0 + 1 from rfl, segN_cons, segN_zero,
+          getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega),
+          getElem!_map_of_lt σ.toFun lab (by rw [hlsz]; omega)]
+      rw [hseg, hsegm, hs1, hs2, Nat.add_zero]
+      exact List.Perm.swap _ _ _
+    · -- a fixed cell
+      have hfix := hSfix _ hmem hS
+      have hfixseg : segN (lab.map σ.toFun) α len =
+          segN lab α len := by
+        refine segN_congr fun o ho => ?_
+        rw [hmapAt o ho]
+        exact hfix o (by omega)
+      rw [hfixseg]
+  · -- beyond the bound: phantom singleton
+    have hlen1 : len = 1 := isCell_oob hIs (by omega)
+    rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
+    rw [getElem!_oob (by omega : lab.size ≤ α),
+      getElem!_oob (by rw [Array.size_map]; omega :
+        (lab.map σ.toFun).size ≤ α)]
+
+end FlipSelf
+
+/-- The flip packaged as a state self-equivalence, for a raw involution
+`f`: the `S`-hypotheses are stated on `f` and converted through
+`renamingOfFlip` internally. -/
+theorem stPerm_self_flip {f : Nat → Nat} {S : Nat → Prop}
+    {st : RefineSt} {level : Nat}
+    (hok : StOk ctx.n level st)
+    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
+    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
+    (hSpair : ∀ p ∈ cells st.ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells st.ptn level ctx.n, S p.1 →
+      f st.lab[p.1]! = st.lab[p.1 + 1]! ∧
+        f st.lab[p.1 + 1]! = st.lab[p.1]!)
+    (hSfix : ∀ p ∈ cells st.ptn level ctx.n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 →
+        f st.lab[p.1 + o]! = st.lab[p.1 + o]!) :
+    StPerm level st (mapSt (renamingOfFlip f ctx.n hfb hinvol) st) := by
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hok.labOk i (by rw [hok.labSize]; omega)
+  have hat : ∀ i, i < ctx.n →
+      (renamingOfFlip f ctx.n hfb hinvol).toFun st.lab[i]! =
+        f st.lab[i]! := fun i hi =>
+    renamingOfFlip_at hfb hinvol (hlb i hi)
+  refine ⟨rfl, rfl, rfl, rfl, rfl, rfl, ?_, ?_⟩
+  · show (st.lab.map _).size = st.lab.size
+    rw [Array.size_map]
+  · show cellsPerm st.ptn level st.lab
+      (st.lab.map (renamingOfFlip f ctx.n hfb hinvol).toFun)
+    refine cellsPerm_self_flip hok.ptnSize hok.labSize hok.ptnEnd
+      hSpair ?_ ?_
+    · intro p hp hS
+      have hpsz := hok.ptnSize
+      have hbd : p.2 < st.ptn.size :=
+        cells_bound (by omega) hok.ptnEnd _ hp
+      have hp2 : p.2 = p.1 + 1 := hSpair _ hp hS
+      obtain ⟨h1, h2⟩ := hSswap _ hp hS
+      rw [hok.ptnSize] at hbd
+      constructor
+      · rw [hat p.1 (by omega)]
+        exact h1
+      · rw [hat (p.1 + 1) (by omega)]
+        exact h2
+    · intro p hp hS o ho
+      have hpsz := hok.ptnSize
+      have hbd : p.2 < st.ptn.size :=
+        cells_bound (by omega) hok.ptnEnd _ hp
+      have hle := cells_le _ hp
+      rw [hok.ptnSize] at hbd
+      rw [hat (p.1 + o) (by omega)]
+      exact hSfix _ hp hS o ho
+
+/-! # The pair deviation -/
+
+/-- A deviation at a pair target under the first-branch shape: descents
+below its two children reach leaves with the same rows. -/
+theorem pair_deviation_leafRows {st : RefineSt}
+    {level tc level' : Nat} {U' : RefineSt}
+    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hP : (tc, tc + 1) ∈ cells st.ptn level ctx.n)
+    (hOdd : ∀ q ∈ cells st.ptn level ctx.n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1)
+    {a b : Nat} (ha : a < 2) (hb : b < 2) (hab : a ≠ b)
+    (hdesc : Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + a]!) level' U')
+    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    ∃ V', Descends ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
+      leafRows ctx V'.lab = leafRows ctx U'.lab := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hinjr : ∀ i j, i < ctx.n → j < ctx.n →
+      st.lab[i]! = st.lab[j]! → i = j := hIt.inj
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hfb : ∀ v, v < ctx.n →
+      pairFlip ctx st.lab st.ptn level tc v < ctx.n := fun v hv =>
+    pairFlip_lt hpsz hlsz hend hIt.ok.labOk hv
+  have hinvol : ∀ v, v < ctx.n →
+      pairFlip ctx st.lab st.ptn level tc
+        (pairFlip ctx st.lab st.ptn level tc v) = v := fun v _ =>
+    pairFlip_invol hpsz hend hIt.inj
+  have hSpair : ∀ p ∈ cells st.ptn level ctx.n,
+      PairReach ctx st.lab st.ptn level tc p.1 → p.2 = p.1 + 1 := by
+    intro p hp hS
+    have hcell := pairReach_pair hP hS
+    have hpm : (p.1, p.2) ∈ cells st.ptn level ctx.n := hp
+    exact cells_eq_of_start (by omega) hend hpm hcell
+  have hSswap : ∀ p ∈ cells st.ptn level ctx.n,
+      PairReach ctx st.lab st.ptn level tc p.1 →
+      pairFlip ctx st.lab st.ptn level tc st.lab[p.1]! =
+          st.lab[p.1 + 1]! ∧
+        pairFlip ctx st.lab st.ptn level tc st.lab[p.1 + 1]! =
+          st.lab[p.1]! := by
+    intro p hp hS
+    have hcell := pairReach_pair hP hS
+    exact ⟨pairFlip_first hpsz hend hIt.inj hS hcell,
+      pairFlip_second hpsz hend hIt.inj hS hcell⟩
+  have hSfix : ∀ p ∈ cells st.ptn level ctx.n,
+      ¬ PairReach ctx st.lab st.ptn level tc p.1 →
+      ∀ o, o < p.2 + 1 - p.1 →
+        pairFlip ctx st.lab st.ptn level tc st.lab[p.1 + o]! =
+          st.lab[p.1 + o]! := by
+    intro p hp hS o ho
+    exact pairFlip_fix_cell hpsz hend hIt.inj hp hS ho
+  have hSclosed : ∀ p ∈ cells st.ptn level ctx.n,
+      ∀ q ∈ cells st.ptn level ctx.n,
+      PairReach ctx st.lab st.ptn level tc p.1 → q.2 = q.1 + 1 →
+      PairMatch ctx.g st.lab[p.1]! st.lab[p.1 + 1]!
+        st.lab[q.1]! st.lab[q.1 + 1]! →
+      PairReach ctx st.lab st.ptn level tc q.1 := by
+    intro p hp q hq hS hq2 hm
+    have hqm : (q.1, q.1 + 1) ∈ cells st.ptn level ctx.n := by
+      have hqm' : (q.1, q.2) ∈ cells st.ptn level ctx.n := hq
+      rw [hq2] at hqm'
+      exact hqm'
+    exact PairReach.step hS (pairReach_pair hP hS) hqm hm
+  have hsurj := labInj_surj
+    (by rw [hlsz]; exact Nat.le_refl _ : ctx.n ≤ st.lab.size)
+    hIt.ok.labOk hIt.inj
+  have hrows := flip_rows hE hpsz hend hinjr hlb hsurj hg hsymm
+    hloop hfb hinvol hSpair hSswap hSfix hSclosed hOdd
+  have hgmap := rowsMap_of_flip_rows hgsz hfb hinvol hrows
+  have hsp := stPerm_self_flip hIt.ok hfb hinvol hSpair hSswap hSfix
+  have hbd : (tc, tc + 1).2 < st.ptn.size :=
+    cells_bound (by omega) hend _ hP
+  have hbase : PairReach ctx st.lab st.ptn level tc tc :=
+    PairReach.base
+  have hvv : st.lab[tc + b]! =
+      (renamingOfFlip (pairFlip ctx st.lab st.ptn level tc) ctx.n
+        hfb hinvol).toFun st.lab[tc + a]! := by
+    have hat : ∀ i, i < ctx.n →
+        (renamingOfFlip (pairFlip ctx st.lab st.ptn level tc) ctx.n
+          hfb hinvol).toFun st.lab[i]! =
+          pairFlip ctx st.lab st.ptn level tc st.lab[i]! := fun i hi =>
+      renamingOfFlip_at hfb hinvol (hlb i hi)
+    rcases Decidable.em (a = 0) with rfl | ha0
+    · have hb1 : b = 1 := by omega
+      subst hb1
+      show st.lab[tc + 1]! =
+        (renamingOfFlip (pairFlip ctx st.lab st.ptn level tc) ctx.n
+          hfb hinvol).toFun st.lab[tc]!
+      rw [hat tc (by rw [hpsz] at hbd; omega),
+        pairFlip_first hpsz hend hIt.inj hbase hP]
+    · have ha1 : a = 1 := by omega
+      have hb0 : b = 0 := by omega
+      subst ha1; subst hb0
+      show st.lab[tc]! =
+        (renamingOfFlip (pairFlip ctx st.lab st.ptn level tc) ctx.n
+          hfb hinvol).toFun st.lab[tc + 1]!
+      rw [hat (tc + 1) (by rw [hpsz] at hbd; omega),
+        pairFlip_second hpsz hend hIt.inj hbase hP]
+  exact deviation_leafRows_self hIt hlvl hgmap hsp hP (by omega)
+    (show a ≤ tc + 1 - tc by omega) (show b ≤ tc + 1 - tc by omega)
+    hvv hdesc hdisc
+
 end Hex.GraphIso.Nauty
