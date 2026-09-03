@@ -975,4 +975,338 @@ theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
   ⟨h.labSize, h.ptnSize, h.reach,
     fun q hq => h.low q (by omega), h.perm, h.canon⟩
 
+/-! # Quartet step helpers -/
+
+theorem elem_ne_zero {s v : Nat} (h : elem s v = true) :
+    s ≠ 0 := by
+  rintro rfl
+  rw [elem, Nat.zero_testBit] at h
+  cases h
+
+theorem mem_segN_iff {lab : Array Nat} {tc len v : Nat} :
+    v ∈ segN lab tc len ↔ ∃ o, o < len ∧ lab[tc + o]! = v := by
+  rw [segN]
+  constructor
+  · intro h
+    rcases List.mem_map.mp h with ⟨o, ho, rfl⟩
+    exact ⟨o, List.mem_range.mp ho, rfl⟩
+  · rintro ⟨o, ho, rfl⟩
+    exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
+
+theorem breakout_ptn (lab ptn : Array Nat)
+    (lev tc tv : Nat) :
+    (breakout lab ptn lev tc tv).2.1 = ptn.set! tc lev := rfl
+
+theorem breakout_lab_size (lab ptn : Array Nat)
+    (lev tc tv : Nat) :
+    (breakout lab ptn lev tc tv).1.size = lab.size := by
+  rw [breakout]
+  exact breakout_go_size _ _ _ _
+
+/-- The end of the partition stays closed: position `n - 1` is an
+initial boundary. -/
+theorem searchOk_end {G : Colored n k}
+    {level numcells : Nat} {st : SearchSt} (hn0 : 0 < n)
+    (hok : SearchOk G level numcells st) (h1 : 1 ≤ level) :
+    st.ptn[st.ptn.size - 1]! ≤ level := by
+  have hinitEnd := (initial_nodeOk G hn0).ptnEnd
+  rw [size_initPtn] at hinitEnd
+  rw [hok.ptnSize]
+  have := hok.init1 (n - 1) hinitEnd
+  omega
+
+/-- The invariant survives an iteration whose net effect preserves
+the closed positions, provided the final partition satisfies the
+level dichotomy (which `recover` restores unconditionally). -/
+theorem searchOk_of_out {G : Colored n k}
+    {level numcells : Nat} {st st' : SearchSt}
+    (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
+    (hout : SearchOut G level level st st')
+    (hvals : ∀ q : Nat, q < n →
+      st'.ptn[q]! ≤ level ∨ st'.ptn[q]! = n + 2) :
+    SearchOk G level numcells st' := by
+  refine ⟨hout.labSize.trans hok.labSize,
+    hout.ptnSize.trans hok.ptnSize, hout.reach, ?_, hvals, ?_, ?_, ?_⟩
+  · intro q hq
+    have h0 := hok.init1 q hq
+    rw [hout.low q (Or.inl (by omega))]
+    exact h0
+  · rw [hok.count, bcount_eq_of_low hout.low]
+  · rw [bcount_eq_of_low hout.low]
+    exact hok.bc
+  · rcases hout.canon with h | h
+    · rw [h]
+      exact hok.canon
+    · exact Or.inr h
+
+/-- Individualizing a target-cell vertex yields the child invariant
+one level down with one more cell. -/
+theorem breakout_searchOk {G : Colored n k}
+    {level numcells tc len o : Nat} {st st' : SearchSt} (hn0 : 0 < n)
+    (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
+    (hrange : tc + len ≤ n) (ho : o < len)
+    (hl : st'.lab =
+      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
+    (hp : st'.ptn = st.ptn.set! tc (level + 1))
+    (hc : st'.canonlab = st.canonlab) :
+    SearchOk G (level + 1) (numcells + 1) st' := by
+  have htcopen : st.ptn[tc]! > level :=
+    hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
+  have htcinf : st.ptn[tc]! = n + 2 := by
+    rcases hok.vals tc (by omega) with h | h
+    · omega
+    · exact h
+  have hlevn : level ≤ n := Nat.le_trans hok.bc (bcount_le _ _ _)
+  have hbsucc : bcount st.ptn (level + 1) n = bcount st.ptn level n :=
+    bcount_succ_of_vals hok.vals (by omega)
+  have hbnew : bcount (st.ptn.set! tc (level + 1)) (level + 1) n =
+      bcount st.ptn level n + 1 := by
+    rw [bcount_set!_open (by rw [hok.ptnSize]; omega) (by omega)
+      (by omega), hbsucc]
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hl, breakout_lab_size]
+    exact hok.labSize
+  · rw [hp, Array.size_set!]
+    exact hok.ptnSize
+  · rw [hl]
+    exact breakout_cellsReach hn0 hok.reach hcell
+      (by rw [hok.ptnSize]; exact hrange) hok.labSize hok.ptnSize ho
+      (searchOk_end hn0 hok h1)
+      (fun q hq => Nat.le_trans (hok.init1 q hq) h1)
+  · intro q hq
+    rw [hp]
+    have hne : tc ≠ q := by
+      intro he
+      have := hok.init1 q hq
+      rw [← he] at this
+      omega
+    rw [Array.getElem!_set!_ne _ _ _ _ hne]
+    exact hok.init1 q hq
+  · intro q hqn
+    rw [hp]
+    rcases Decidable.em (tc = q) with rfl | hne
+    · rw [Array.getElem!_set!_self _ _ _ (by rw [hok.ptnSize]; omega)]
+      exact Or.inl (Nat.le_refl _)
+    · rw [Array.getElem!_set!_ne _ _ _ _ hne]
+      rcases hok.vals q hqn with h | h
+      · exact Or.inl (by omega)
+      · exact Or.inr h
+  · rw [hp, hbnew, ← hok.count]
+  · rw [hp, hbnew]
+    have := hok.bc
+    omega
+  · rw [hc]
+    exact hok.canon
+
+/-- The effect of individualization followed by a child call, in the
+parent loop's frame. -/
+theorem breakout_child_out {G : Colored n k}
+    {level numcells tc len o : Nat} {st stC stD : SearchSt}
+    (hn0 : 0 < n) (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
+    (hrange : tc + len ≤ n) (ho : o < len)
+    (hCout : SearchOut G level (level + 1) stC stD)
+    (hl : stC.lab =
+      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
+    (hp : stC.ptn = st.ptn.set! tc (level + 1))
+    (hc : stC.canonlab = st.canonlab) :
+    SearchOut G level level st stD := by
+  have htcopen : st.ptn[tc]! > level :=
+    hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
+  have hCok := breakout_searchOk hn0 hok h1 hcell hlen2 hrange ho
+    hl hp hc
+  have hlowC : ∀ q : Nat, st.ptn[q]! ≤ level ∨ stC.ptn[q]! ≤ level →
+      stC.ptn[q]! = st.ptn[q]! := by
+    intro q hq
+    rw [hp]
+    rcases Decidable.em (tc = q) with rfl | hne
+    · exfalso
+      rcases hq with h | h
+      · omega
+      · rw [hp, Array.getElem!_set!_self _ _ _
+          (by rw [hok.ptnSize]; omega)] at h
+        omega
+    · rw [Array.getElem!_set!_ne _ _ _ _ hne]
+  refine ⟨?_, ?_, hCout.reach, ?_, ?_, ?_⟩
+  · rw [hCout.labSize, hl, breakout_lab_size]
+  · rw [hCout.ptnSize, hp, Array.size_set!]
+  · intro q hq
+    rcases hq with hq1 | hq1
+    · have hCq : stC.ptn[q]! = st.ptn[q]! := hlowC q (Or.inl hq1)
+      rw [hCout.low q (Or.inl (by rw [hCq]; omega)), hCq]
+    · have hDq := hCout.low q (Or.inr (by omega))
+      rw [hDq] at hq1 ⊢
+      exact hlowC q (Or.inr hq1)
+  · -- the labelling moves only within cells: individualize, then the
+    -- child's finer moves coarsen to this level
+    have hperm1 : cellsPerm st.ptn level st.lab stC.lab := by
+      rw [hl]
+      exact breakout_cellsPerm hcell
+        (by rw [hok.ptnSize]; exact hrange)
+        (by rw [hok.labSize, hok.ptnSize]) ho
+    have hperm2 : cellsPerm st.ptn level stC.lab stD.lab := by
+      refine cellsPerm_coarsen (ptnF := stC.ptn) (levF := level + 1)
+        (by rw [hCok.ptnSize, hok.ptnSize])
+        (by rw [hCok.labSize, hCok.ptnSize])
+        (by rw [hCout.labSize, hCok.labSize, hCok.ptnSize])
+        hCout.perm (searchOk_end hn0 hCok (by omega))
+        (searchOk_end hn0 hok h1) ?_
+      intro q hq
+      rw [hlowC q (Or.inl hq)]
+      omega
+    exact cellsPerm_trans hperm1 hperm2
+  · rcases hCout.canon with h | h
+    · rw [h, hc]
+      exact Or.inl rfl
+    · exact Or.inr h
+
+theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
+    {st st' st'' : SearchSt} (h : SearchOut G B lev st st')
+    (hl : st''.lab = st'.lab) (hp : st''.ptn = st'.ptn)
+    (hc : st''.canonlab = st'.canonlab) : SearchOut G B lev st st'' :=
+  ⟨by rw [hl]; exact h.labSize, by rw [hp]; exact h.ptnSize,
+    by rw [hl]; exact h.reach,
+    fun q hq => by
+      rw [hp]
+      exact h.low q (by rw [hp] at hq; exact hq),
+    by rw [hl]; exact h.perm,
+    by rw [hc]; exact h.canon⟩
+
+theorem searchOut_id {G : Colored n k} (B lev : Nat)
+    {stX : SearchSt} {labR : Array Nat} (hl : stX.lab = labR)
+    (hreach : CellsReach G labR) : SearchOut G B lev stX stX :=
+  SearchOut.refl G B lev (by rw [hl]; exact hreach)
+
+theorem match_option_or {α γ : Type} {P : γ → Prop}
+    (x : Option α) (f : α → γ) (g : γ)
+    (hf : ∀ a, P (f a)) (hg : P g) :
+    P (match x with | some a => f a | none => g) := by
+  rcases x with _ | a
+  · exact hg
+  · exact hf a
+
+/-- The invariant after `refine`, for any state carrying the refined
+labelling and partition. -/
+theorem refine_searchOk {G : Colored n k} {ctx : Ctx}
+    (hn : ctx.n = n) (hn0 : 0 < n) {level numcells : Nat}
+    {st st2 : SearchSt} (hok : SearchOk G level numcells st)
+    (h1 : 1 ≤ level)
+    (hl : st2.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab)
+    (hp : st2.ptn =
+      (refine ctx level st.lab st.ptn st.active numcells).ptn)
+    (hcanon : st2.canonlab = st.canonlab ∨
+      (st2.canonlab.size = n ∧ CellsReach G st2.canonlab)) :
+    SearchOk G level
+      (refine ctx level st.lab st.ptn st.active numcells).numcells
+      st2 := by
+  have hend := searchOk_end hn0 hok h1
+  have hnn : ctx.n ≤ st.ptn.size := by
+    rw [hok.ptnSize, hn]
+    exact Nat.le_refl n
+  have hnn' : ctx.n = st.ptn.size := by
+    rw [hok.ptnSize, hn]
+  have hls : st.lab.size = st.ptn.size := by
+    rw [hok.labSize, hok.ptnSize]
+  have hRinv := refine_refInv (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) hnn hls hend
+  have hcount := refine_bcount (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) hnn' hls hend
+  rw [hn] at hcount
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hl, hRinv.labSize, hok.labSize]
+  · rw [hp, hRinv.ptnSize, hok.ptnSize]
+  · rw [hl]
+    exact refine_cellsReach hn hn0 hok.reach hok.labSize hok.ptnSize
+      hend (fun q hq => Nat.le_trans (hok.init1 q hq) h1)
+  · intro q hq
+    rw [hp, refine_frozen hnn' hls hend
+      (Nat.le_trans (hok.init1 q hq) h1)]
+    exact hok.init1 q hq
+  · intro q hqn
+    rw [hp]
+    rcases ptn_refine_vals ctx level st.lab st.ptn st.active
+      numcells q with he | he
+    · rw [he]
+      exact hok.vals q hqn
+    · rw [he]
+      exact Or.inl (Nat.le_refl _)
+  · rw [hp]
+    have h0 := hok.count
+    omega
+  · rw [hp]
+    exact Nat.le_trans hok.bc (bcount_mono hRinv.grow)
+  · rcases hcanon with h | h
+    · rw [h]
+      exact hok.canon
+    · exact Or.inr h
+
+/-- Compose the refine step with the rest of a node's work. -/
+theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
+    (hn : ctx.n = n) (hn0 : 0 < n) {level numcells : Nat}
+    {st STL stX : SearchSt} (hok : SearchOk G level numcells st)
+    (h1 : 1 ≤ level)
+    (hl : STL.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab)
+    (hp : STL.ptn =
+      (refine ctx level st.lab st.ptn st.active numcells).ptn)
+    (hcanon : STL.canonlab = st.canonlab ∨
+      (STL.canonlab.size = n ∧ CellsReach G STL.canonlab))
+    (hXout : SearchOut G level level STL stX) :
+    SearchOut G (level - 1) level st stX := by
+  have hend := searchOk_end hn0 hok h1
+  have hnn : ctx.n ≤ st.ptn.size := by
+    rw [hok.ptnSize, hn]
+    exact Nat.le_refl n
+  have hnn' : ctx.n = st.ptn.size := by
+    rw [hok.ptnSize, hn]
+  have hls : st.lab.size = st.ptn.size := by
+    rw [hok.labSize, hok.ptnSize]
+  have hRinv := refine_refInv (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) hnn hls hend
+  have hfrz : ∀ q : Nat, st.ptn[q]! ≤ level → STL.ptn[q]! =
+      st.ptn[q]! := by
+    intro q hq
+    rw [hp, refine_frozen hnn' hls hend hq]
+  have hendL : STL.ptn[STL.ptn.size - 1]! ≤ level := by
+    have hsz : STL.ptn.size = st.ptn.size := by
+      rw [hp, hRinv.ptnSize]
+    rw [hsz, hfrz _ hend]
+    exact hend
+  refine ⟨?_, ?_, hXout.reach, ?_, ?_, ?_⟩
+  · rw [hXout.labSize, hl, hRinv.labSize]
+  · rw [hXout.ptnSize, hp, hRinv.ptnSize]
+  · intro q hq
+    rcases hq with hq1 | hq1
+    · have hLq : STL.ptn[q]! = st.ptn[q]! := hfrz q (by omega)
+      rw [hXout.low q (Or.inl (by rw [hLq]; omega)), hLq]
+    · have hXq := hXout.low q (Or.inr (by omega))
+      rw [hXq] at hq1 ⊢
+      rw [hp] at hq1 ⊢
+      rcases ptn_refine_vals ctx level st.lab st.ptn st.active
+        numcells q with he | he
+      · rw [he]
+      · rw [he] at hq1
+        omega
+  · refine cellsPerm_trans (hl ▸ hRinv.perm : cellsPerm st.ptn level
+      st.lab STL.lab) ?_
+    refine cellsPerm_coarsen (ptnF := STL.ptn) (levF := level)
+      (by rw [hp, hRinv.ptnSize]) ?_ ?_ hXout.perm hendL hend ?_
+    · rw [hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
+    · rw [hXout.labSize, hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
+    · intro q hq
+      rw [hfrz q hq]
+      exact hq
+  · rcases hXout.canon with h | h
+    · rw [h]
+      rcases hcanon with h2 | h2
+      · rw [h2]
+        exact Or.inl rfl
+      · exact Or.inr h2
+    · exact Or.inr h
+
 end Hex.GraphIso.Nauty

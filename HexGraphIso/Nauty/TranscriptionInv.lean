@@ -29,9 +29,9 @@ permutation-ness (`canonlab` is a bijection of `Fin n`, the label
 well-formedness `isPerm_of_trace` consumes) and
 `achieved_position_colors` turns it into `colorSortedCheck`.
 
-This file proves those two reductions in full; the remaining work is
-the quartet induction establishing the clause for the transcribed
-`canonlab` (`canonlab_cellsReach`), which is the shared B2 simulation
+This file proves those two reductions in full; the quartet induction
+establishing the clause for the transcribed `canonlab` lives in
+`SearchReach.lean` (`canonlab_cellsReach`), the shared B2 simulation
 clause of the layer-three programme.
 -/
 
