@@ -303,4 +303,113 @@ theorem sw3_bits
 
 end Sw3
 
+/-! # The four-cell's internal structure
+
+Equitability makes the four members of a four-cell equal in internal
+degree, and `reg4_comp` turns that into the three complementary-pair
+equalities. The four-cell's induced graph is empty, a perfect
+matching, a four-cycle or complete, and this one statement covers all
+four without naming them. -/
+
+section FourCell
+
+variable {st : RefineSt} {level tc d2 oU oV w1 w2 : Nat}
+
+/-- Complementary pairs of a four-cell are equally adjacent. -/
+theorem fourCell_comp
+    (hIt : IterOk ctx level st)
+    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
+    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
+      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
+    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hE : Equitable ctx level st.lab st.ptn)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
+    (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hw1 : w1 ≤ 3) (hw2 : w2 ≤ 3)
+    (hnd : ([oU, oV, w1, w2] : List Nat).Nodup) :
+    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + w1]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + w2]! ∧
+    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + w2]! =
+      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + w1]! ∧
+    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + oV]! =
+      (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[tc + w2]! := by
+  have hpsz := hIt.ok.ptnSize
+  have hlsz := hIt.ok.labSize
+  have hend := hIt.ok.ptnEnd
+  have hinj := hIt.inj
+  have htn : tc + 3 < ctx.n := by
+    have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
+    rw [hpsz] at this
+    omega
+  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+    hIt.ok.labOk i (by rw [hlsz]; omega)
+  have hbd : ∀ x ∈ ([oU, oV, w1, w2] : List Nat), x < 4 := by
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    rcases List.mem_cons.mp hx with rfl | hx
+    · omega
+    · have : x = w2 := by
+        rcases List.mem_cons.mp hx with rfl | hx
+        · rfl
+        · exact absurd hx (by simp)
+      omega
+  have hm : tc + 3 + 1 - tc = 4 := by omega
+  -- each member's count into the cell, reindexed by the four names
+  have hdeg : ∀ o, o ≤ 3 →
+      popCount (worksetOf st.lab tc (tc + 3) &&&
+          ctx.g[st.lab[tc + o]!]!) =
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + oU]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + oV]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w1]! +
+        bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w2]! := by
+    intro o ho
+    have h := count_into_cell hpsz hend hinj hlb hC
+      (hg _ (hlb (tc + o) (by omega)))
+    rw [hm] at h
+    rw [h, sum_range_of_distinct _ (by simp) hnd hbd]
+    simp only [List.map_cons, List.map_nil, List.sum_cons,
+      List.sum_nil]
+    omega
+  -- the diagonal terms vanish and the off-diagonal ones are symmetric
+  have hz : ∀ o, o ≤ 3 →
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + o]! = 0 := by
+    intro o ho
+    exact bitCnt_eq_zero.mpr (hloop _ (hlb _ (by omega)))
+  have hsy : ∀ o o', o ≤ 3 → o' ≤ 3 →
+      bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + o']! =
+        bitCnt ctx.g[st.lab[tc + o']!]! st.lab[tc + o]! := by
+    intro o o' ho ho'
+    exact bitCnt_inj.mpr
+      (hsymm _ _ (hlb _ (by omega)) (hlb _ (by omega)))
+  -- the four degrees agree
+  have hUV := hE _ hC _ hC oU oV (by omega) (by omega)
+  have hUw1 := hE _ hC _ hC oU w1 (by omega) (by omega)
+  have hUw2 := hE _ hC _ hC oU w2 (by omega) (by omega)
+  rw [hdeg oU hoU, hdeg oV hoV] at hUV
+  rw [hdeg oU hoU, hdeg w1 hw1] at hUw1
+  rw [hdeg oU hoU, hdeg w2 hw2] at hUw2
+  have e1 := hz oU hoU
+  have e2 := hz oV hoV
+  have e3 := hz w1 hw1
+  have e4 := hz w2 hw2
+  have s1 := hsy oV oU hoV hoU
+  have s2 := hsy w1 oU hw1 hoU
+  have s3 := hsy w1 oV hw1 hoV
+  have s4 := hsy w2 oU hw2 hoU
+  have s5 := hsy w2 oV hw2 hoV
+  have s6 := hsy w2 w1 hw2 hw1
+  obtain ⟨c1, c2, c3⟩ :=
+    reg4_comp (e01 := bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + oV]!)
+      (e02 := bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w1]!)
+      (e03 := bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[tc + w2]!)
+      (e12 := bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w1]!)
+      (e13 := bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[tc + w2]!)
+      (e23 := bitCnt ctx.g[st.lab[tc + w1]!]! st.lab[tc + w2]!)
+      (by omega) (by omega) (by omega)
+  exact ⟨bitCnt_inj.mp c2, bitCnt_inj.mp c3, bitCnt_inj.mp c1⟩
+
+end FourCell
+
 end Hex.GraphIso.Nauty
