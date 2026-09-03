@@ -9,6 +9,8 @@ module
 public import HexGraphIso.Nauty.CodeFaithful
 public import HexGraphIso.Nauty.LeafFaithful
 public import HexGraphIso.Nauty.SearchModel
+public import HexGraphIso.Nauty.SearchInv
+public import HexGraphIso.Nauty.Stabilize
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -1298,5 +1300,102 @@ theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
   decide
 
 end Seed
+
+/-! # The subtree key under a path prefix -/
+
+/-- The absolute key of a spec subtree below the path codes `cs`. -/
+@[expose] def prefixKey (cs : List Nat) (kk : Key) : Key :=
+  ⟨cs ++ kk.codes, kk.rows⟩
+
+theorem prefixKey_nil (kk : Key) : prefixKey [] kk = kk := rfl
+
+theorem prefixKey_append (cs ds : List Nat) (kk : Key) :
+    prefixKey (cs ++ ds) kk = prefixKey cs (prefixKey ds kk) := by
+  rw [prefixKey, prefixKey, prefixKey, List.append_assoc]
+
+/-- Prefixing by common path codes commutes with the key maximum. -/
+theorem prefixKey_keyMax :
+    ∀ (cs : List Nat) (k1 k2 : Key),
+      prefixKey cs (keyMax k1 k2) =
+        keyMax (prefixKey cs k1) (prefixKey cs k2)
+  | [], k1, k2 => by
+    rw [prefixKey_nil, prefixKey_nil, prefixKey_nil]
+  | c :: cs, k1, k2 => by
+    show (⟨c :: (cs ++ (keyMax k1 k2).codes),
+        (keyMax k1 k2).rows⟩ : Key) =
+      keyMax ⟨c :: (cs ++ k1.codes), k1.rows⟩
+        ⟨c :: (cs ++ k2.codes), k2.rows⟩
+    rw [keyMax_cons]
+    have ih := prefixKey_keyMax cs k1 k2
+    rw [prefixKey, prefixKey, prefixKey] at ih
+    rw [← ih]
+
+/-- A spec leaf's key under the path prefix is the path leaf key of
+the extended path. -/
+theorem prefixKey_leafKey (ctx : Ctx) (cs : List Nat) (code : Nat)
+    (r : Array Nat) :
+    prefixKey cs ⟨[code, codeSentinel], leafRows ctx r⟩ =
+      pathLeafKey ctx (cs ++ [code]) r := by
+  rw [prefixKey, pathLeafKey, List.append_assoc]
+  rfl
+
+/-- The discrete arm of `specNode`, isolated: at a node whose
+refinement is discrete, the subtree key is the leaf key. -/
+theorem specNode_discrete {ctx : Ctx} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active numcells : Nat}
+    (hdisc : discreteAt (refine ctx level lab ptn active
+      numcells).ptn level ctx.n = true) :
+    specNode ctx tcLevel (fuel + 1) level lab ptn active numcells =
+      ⟨[(refine ctx level lab ptn active numcells).longcode,
+          codeSentinel],
+        leafRows ctx (refine ctx level lab ptn active
+          numcells).lab⟩ := by
+  rw [specNode]
+  simp only [hdisc, ite_true]
+
+/-! # The `DomOk` record
+
+The per-node entry invariant of the maximality induction, at a node
+about to refine at `level = cs.length + 1`. Two deliberate design
+decisions, so the next sitting does not re-litigate them:
+
+- **Incumbent-maximality is a conclusion shape, not a record
+  clause.** Following `searchNode_eq`'s `incMax` contract, each
+  quartet theorem concludes
+  `incKey ctx bs' out.canonlab =
+    keyMax (incKey ctx bs st.canonlab) (prefixKey cs (specNode …))`
+  rather than storing a fold over visited leaves in the record; the
+  `keysMax` algebra composes the per-child equations across the
+  sweep, and pruned children contribute through the verdict lemmas
+  (`frozen_lt_keyCmp`, `auto_keyMax`, `childKey_of_orbPruned`).
+
+- **Unwinding-correctness is a loop obligation, not a record
+  clause.** The orbit consultation in `firstChildLoop` is justified
+  by the `stab` clause held at the loop's own node: a loop that
+  continues (return level ≥ its level) received only generators
+  whose carrier leaves lie inside its subtree, so
+  `cellStab_of_scatter` re-establishes `stab` for the newly admitted
+  generators; an early unwind exits the loop and discharges nothing.
+  The gca return levels enter through `processnode_leaf`'s return
+  disjunction, not through a stored clause. -/
+
+variable {n k : Nat}
+
+/-- The entry invariant of the maximality induction at a node about
+to refine at `level = cs.length + 1`: the search skeleton, both
+comparison machines, the store invariant, cell stabilization of every
+recorded generator at this node, and domination of the first leaf by
+the incumbent. -/
+structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
+    (numcells : Nat) (st : SearchSt) : Prop where
+  searchOk : SearchOk G (cs.length + 1) numcells st
+  codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
+    st.eqlevCanon st.compCanon
+  firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
+  canongInv : CanongInv ctx st.canong st.canonlab st.samerows
+  stab : ∀ γ ∈ st.genTrace,
+    CellStab st.ptn (cs.length + 1) st.lab γ
+  firstKeyLe : keyLe (pathLeafKey ctx fs st.firstlab)
+    (incKey ctx bs st.canonlab)
 
 end Hex.GraphIso.Nauty
