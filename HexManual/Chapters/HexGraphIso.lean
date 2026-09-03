@@ -268,14 +268,8 @@ def gpetersen (p q : Nat) :
           (w.2.val = (v.2.val + q) % p ∨
             v.2.val = (w.2.val + q) % p)) ∨
        (v.1 ≠ w.1 ∧ v.2 = w.2))
-  symm := ⟨by
-    intro v w h
-    refine ⟨h.1.symm, ?_⟩
-    rcases h.2 with ⟨a, b, c⟩ | ⟨a, b, c⟩ | ⟨a, b⟩
-    · exact Or.inl ⟨b, a, c.symm⟩
-    · exact Or.inr (Or.inl ⟨b, a, c.symm⟩)
-    · exact Or.inr (Or.inr ⟨fun e => a e.symm, b.symm⟩)⟩
-  loopless := ⟨by intro v h; exact h.1 rfl⟩
+  symm := ⟨by grind⟩
+  loopless := ⟨by grind⟩
 
 instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
   fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
@@ -283,8 +277,8 @@ instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
 def kneser (m r : Nat) :
     SimpleGraph {s : Finset (Fin m) // s.card = r} where
   Adj s t := Disjoint s.val t.val ∧ s ≠ t
-  symm := ⟨by intro s t h; exact ⟨h.1.symm, h.2.symm⟩⟩
-  loopless := ⟨by intro s h; exact h.2 rfl⟩
+  symm := ⟨by grind⟩
+  loopless := ⟨by grind⟩
 
 instance (m r : Nat) : DecidableRel (kneser m r).Adj :=
   fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
