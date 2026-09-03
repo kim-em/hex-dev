@@ -2499,4 +2499,514 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
           · intro u hu1 hu2 hux
             rw [hA u hu1 hu2 hux, houtA u (Or.inr (by omega))]
 
+/-! # The nontrivial pass: active-set effect of the window scan -/
+
+private theorem windowStep_maxpos (level cell1 cell2 v c1 c2 : Nat)
+    (maxcell : Int) (st : RefineSt) :
+    (windowStep level cell1 cell2 v c1 c2 maxcell st).maxpos =
+      if Int.ofNat (c2 - c1) > maxcell then c1 else st.maxpos := by
+  rw [windowStep]
+  dsimp only
+  rcases Decidable.em (Int.ofNat (c2 - c1) > maxcell) with h1 | h1 <;>
+  rcases hB : (c1 != cell1) with _ | _ <;>
+  rcases hC : (c2 - c1 == 1) with _ | _ <;>
+  rcases Decidable.em (c2 ≤ cell2) with h4 | h4 <;>
+    simp only [h1, h4, Bool.false_eq_true, ite_false, ite_true]
+
+/-- The window scan's active-set ledger: bits at or below the cell
+start and beyond the cell end are untouched, the active set only
+grows, every new bit sits just after a boundary, every boundary the
+scan writes gets its successor activated (the successor of the last
+write being pending exactly while mass remains), the potential ledger
+balances, and the running largest-fragment position stays justified. -/
+theorem windowScan_active_state {level cell1 cell2 nb : Nat}
+    {counts : List Nat} :
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+      cell1 ≤ c1 →
+      c1 + (vs.map (multOf counts)).sum = cell2 + 1 →
+      (c1 = cell1 ∨ st.ptn[c1 - 1]! ≤ level ∨ c1 = cell2 + 1) →
+      cell2 < st.ptn.size →
+      (∀ u, u ≤ cell1 ∨ cell2 < u →
+        elem (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active u = elem st.active u) ∧
+      (∀ u, elem st.active u = true →
+        elem (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active u = true) ∧
+      (∀ q : Nat, st.ptn[q]! ≤ level →
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).ptn[q]! ≤ level) ∧
+      (∀ q : Nat, q < c1 →
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).ptn[q]! = st.ptn[q]!) ∧
+      (∀ u, elem (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active u = true → elem st.active u = true ∨
+        (cell1 < u ∧ u ≤ cell2 ∧
+          (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).ptn[u - 1]! ≤ level)) ∧
+      (∀ u, c1 < u → u ≤ cell2 →
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).ptn[u - 1]! ≤ level →
+        st.ptn[u - 1]! ≤ level ∨
+          elem (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).active u = true) ∧
+      (0 < (vs.map (multOf counts)).sum → c1 = cell1 ∨
+        elem (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active c1 = true) ∧
+      (bitCount nb (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active + 2 * st.numcells ≤
+        bitCount nb st.active + 2 * (windowScan level cell1 cell2
+          counts vs c1 maxcell st).numcells) ∧
+      st.numcells ≤ (windowScan level cell1 cell2 counts vs c1 maxcell
+        st).numcells ∧
+      ((maxcell < 0 ∨ (cell1 ≤ st.maxpos ∧ st.maxpos ≤ cell2 ∧
+          (st.maxpos = cell1 ∨ elem st.active st.maxpos = true))) →
+        (0 < (vs.map (multOf counts)).sum ∨ 0 ≤ maxcell) →
+        (cell1 ≤ (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).maxpos ∧
+         (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).maxpos ≤ cell2 ∧
+         ((windowScan level cell1 cell2 counts vs c1 maxcell
+            st).maxpos = cell1 ∨
+          elem (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).active (windowScan level cell1 cell2 counts vs c1
+              maxcell st).maxpos = true)))
+  | [], c1, maxcell, st, hcw, htot, hbnd, hsz => by
+    rw [windowScan]
+    refine ⟨fun _ _ => rfl, fun _ h => h, fun _ h => h, fun _ _ => rfl,
+      fun u h => Or.inl h, fun u hu1 hu2 h => Or.inl h,
+      by simp, by omega, Nat.le_refl _, ?_⟩
+    intro hmc hf
+    rcases hmc with hmc | hmc
+    · rcases hf with hf | hf
+      · simp at hf
+      · omega
+    · exact hmc
+  | v :: vs, c1, maxcell, st, hcw, htot, hbnd, hsz => by
+    rw [windowScan]
+    have hsum : (List.map (multOf counts) (v :: vs)).sum =
+        multOf counts v + (List.map (multOf counts) vs).sum := by
+      rw [List.map_cons, List.sum_cons]
+    rcases Decidable.em (multOf counts v > 0) with hm | hm
+    · rw [ite_eq_left hm]
+      obtain ⟨m, hmv⟩ : ∃ m, multOf counts v = m := ⟨_, rfl⟩
+      rw [hmv] at hm ⊢
+      have hin : c1 + m ≤ cell2 + 1 := by
+        rw [hsum, hmv] at htot
+        omega
+      have hpe := ptn_windowStep_eq level cell1 cell2 v c1 (c1 + m)
+        maxcell st
+      have hae := active_windowStep_eq level cell1 cell2 v c1 (c1 + m)
+        maxcell st
+      have hne := nc_windowStep_eq level cell1 cell2 v c1 (c1 + m)
+        maxcell st
+      have hme := windowStep_maxpos level cell1 cell2 v c1 (c1 + m)
+        maxcell st
+      obtain ⟨w, hw⟩ : ∃ w, windowStep level cell1 cell2 v c1 (c1 + m)
+        maxcell st = w := ⟨_, rfl⟩
+      rw [hw] at hpe hae hne hme
+      rw [hw]
+      have hwps : w.ptn.size = st.ptn.size := by
+        rw [hpe]
+        rcases Decidable.em (c1 + m ≤ cell2) with h | h
+        · rw [ite_eq_left h, Array.size_set!]
+        · rw [ite_eq_right h]
+      obtain ⟨ih1, ih2, ih3, ihH, ih4, ih5, ih6, ih7, ih8, ih9⟩ :=
+        windowScan_active_state (level := level) (cell1 := cell1)
+          (cell2 := cell2) (nb := nb) (counts := counts) vs (c1 + m)
+          (if Int.ofNat m > maxcell then Int.ofNat m else maxcell) w
+          (by omega)
+          (by rw [hsum, hmv] at htot; omega)
+          (by
+            rcases Decidable.em (c1 + m ≤ cell2) with h | h
+            · refine Or.inr (Or.inl ?_)
+              rw [hpe, ite_eq_left h,
+                Array.getElem!_set!_self _ _ _ (by omega)]
+              exact Nat.le_refl _
+            · refine Or.inr (Or.inr (by omega)))
+          (by rw [hwps]; exact hsz)
+      have houtA : ∀ u, u ≤ cell1 ∨ cell2 < u →
+          elem w.active u = elem st.active u := by
+        intro u hu
+        rw [hae]
+        rcases Decidable.em (c1 = cell1) with h | h
+        · rw [ite_eq_right (by simp [h])]
+        · rw [ite_eq_left (by simp [h]), elem_insert,
+            show (c1 == u) = false from by
+              simp only [beq_eq_false_iff_ne]
+              omega,
+            Bool.or_false]
+      have hmonoA : ∀ u, elem st.active u = true →
+          elem w.active u = true := by
+        intro u hu
+        rw [hae]
+        rcases Decidable.em (c1 = cell1) with h | h
+        · rw [ite_eq_right (by simp [h])]
+          exact hu
+        · rw [ite_eq_left (by simp [h]), elem_insert, hu, Bool.true_or]
+      have hpersist : ∀ q : Nat, st.ptn[q]! ≤ level →
+          w.ptn[q]! ≤ level := by
+        intro q hq
+        rw [hpe]
+        rcases Decidable.em (c1 + m ≤ cell2) with h | h
+        · rw [ite_eq_left h]
+          rcases getElem!_set!_cases st.ptn (c1 + m - 1) level q with
+            he | he
+          · rw [he]
+            exact hq
+          · rw [he]
+            exact Nat.le_refl _
+        · rw [ite_eq_right h]
+          exact hq
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · intro u hu
+        rw [ih1 u hu, houtA u hu]
+      · intro u hu
+        exact ih2 u (hmonoA u hu)
+      · intro q hq
+        exact ih3 q (hpersist q hq)
+      · intro q hq
+        rw [ihH q (by omega), hpe]
+        rcases Decidable.em (c1 + m ≤ cell2) with h | h
+        · rw [ite_eq_left h,
+            Array.getElem!_set!_ne _ _ _ _ (by omega)]
+        · rw [ite_eq_right h]
+      · intro u hu
+        rcases ih4 u hu with h | h
+        · rw [hae] at h
+          rcases Decidable.em (c1 = cell1) with hc | hc
+          · rw [ite_eq_right (by simp [hc])] at h
+            exact Or.inl h
+          · rw [ite_eq_left (by simp [hc]), elem_insert] at h
+            rcases hb2 : elem st.active u with _ | _
+            · rw [hb2, Bool.false_or, beq_iff_eq] at h
+              subst h
+              refine Or.inr ⟨by omega, by omega, ?_⟩
+              rcases hbnd with hb | hb | hb
+              · exact absurd hb hc
+              · exact ih3 _ (hpersist _ hb)
+              · omega
+            · exact Or.inl rfl
+        · exact Or.inr h
+      · intro u hu1 hu2 hb
+        rcases Decidable.em (c1 + m < u) with hgt | hgt
+        · rcases ih5 u hgt hu2 hb with h | h
+          · rw [hpe] at h
+            rcases Decidable.em (c1 + m ≤ cell2) with hc | hc
+            · rw [ite_eq_left hc] at h
+              rcases Decidable.em (u - 1 = c1 + m - 1) with he | he
+              · omega
+              · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)] at h
+                exact Or.inl h
+            · rw [ite_eq_right hc] at h
+              exact Or.inl h
+          · exact Or.inr h
+        · rcases Decidable.em (u = c1 + m) with hu' | hu'
+          · subst hu'
+            rcases Decidable.em (0 < (vs.map (multOf counts)).sum) with
+              hf | hf
+            · rcases ih6 hf with h | h
+              · exact absurd h (by omega)
+              · exact Or.inr h
+            · rw [hsum, hmv] at htot
+              omega
+          · refine Or.inl ?_
+            rw [ihH (u - 1) (by omega), hpe] at hb
+            rcases Decidable.em (c1 + m ≤ cell2) with h | h
+            · rw [ite_eq_left h,
+                Array.getElem!_set!_ne _ _ _ _ (by omega)] at hb
+              exact hb
+            · rw [ite_eq_right h] at hb
+              exact hb
+      · intro _
+        rcases Decidable.em (c1 = cell1) with hc | hc
+        · exact Or.inl hc
+        · refine Or.inr (ih2 c1 ?_)
+          rw [hae, ite_eq_left (by simp [hc]), elem_insert]
+          simp
+      · have hstep : bitCount nb w.active + 2 * st.numcells ≤
+            bitCount nb st.active + 2 * w.numcells := by
+          rw [hae, hne]
+          rcases Decidable.em (c1 = cell1) with hc | hc
+          · rw [ite_eq_right (by simp [hc]), ite_eq_left hc]
+            exact Nat.le_refl _
+          · rw [ite_eq_left (by simp [hc]), ite_eq_right hc]
+            have := bitCount_insert_le nb st.active c1
+            omega
+        omega
+      · have hstep : st.numcells ≤ w.numcells := by
+          rw [hne]
+          rcases Decidable.em (c1 = cell1) with hc | hc
+          · rw [ite_eq_left hc]
+            exact Nat.le_refl _
+          · rw [ite_eq_right hc]
+            omega
+        omega
+      · intro hmc _
+        refine ih9 ?_ (Or.inr (by
+          rcases Decidable.em (Int.ofNat m > maxcell) with h | h
+          · rw [ite_eq_left h]
+            simp only [Int.ofNat_eq_natCast]
+            omega
+          · rw [ite_eq_right h]
+            simp only [Int.ofNat_eq_natCast] at h
+            omega))
+        refine Or.inr ?_
+        rw [hme]
+        rcases Decidable.em (Int.ofNat (c1 + m - c1) > maxcell) with
+          h | h
+        · rw [ite_eq_left h]
+          refine ⟨by omega, by omega, ?_⟩
+          rcases Decidable.em (c1 = cell1) with hc | hc
+          · exact Or.inl hc
+          · refine Or.inr ?_
+            rw [hae, ite_eq_left (by simp [hc]), elem_insert]
+            simp
+        · rw [ite_eq_right h]
+          have hmge : ¬((m : Int) > maxcell) := by
+            rw [show Int.ofNat (c1 + m - c1) = (m : Int) from by
+              simp only [Int.ofNat_eq_natCast]
+              omega] at h
+            exact h
+          have hmc0 : 0 ≤ maxcell := by
+            rcases Decidable.em (0 ≤ maxcell) with h0 | h0
+            · exact h0
+            · exfalso
+              have : (m : Int) ≥ 1 := by exact_mod_cast hm
+              omega
+          rcases hmc with hmc | hmc
+          · omega
+          · obtain ⟨hg1, hg2, hg3⟩ := hmc
+            refine ⟨hg1, hg2, ?_⟩
+            rcases hg3 with hg | hg
+            · exact Or.inl hg
+            · exact Or.inr (hmonoA _ hg)
+    · rw [ite_eq_right hm]
+      have hsum0 : (List.map (multOf counts) (v :: vs)).sum =
+          (List.map (multOf counts) vs).sum := by
+        rw [hsum]
+        omega
+      obtain ⟨ih1, ih2, ih3, ihH, ih4, ih5, ih6, ih7, ih8, ih9⟩ :=
+        windowScan_active_state (level := level) (cell1 := cell1)
+          (cell2 := cell2) (nb := nb) (counts := counts) vs c1 maxcell
+          st hcw (by rw [← hsum0]; exact htot) hbnd hsz
+      refine ⟨ih1, ih2, ih3, ihH, ih4, ih5, ?_, ih7, ih8, ?_⟩
+      · intro hf
+        rw [hsum0] at hf
+        exact ih6 hf
+      · intro hmc hf
+        refine ih9 hmc ?_
+        rcases hf with hf | hf
+        · rw [hsum0] at hf
+          exact Or.inl hf
+        · exact Or.inr hf
+
+private theorem nontrivialFix_active (cell1 : Nat) (st : RefineSt) :
+    (nontrivialFix cell1 st).active =
+      if elem st.active cell1 = true then st.active
+      else erase (insert st.active cell1) st.maxpos := by
+  rw [nontrivialFix]
+  rcases h : elem st.active cell1 with _ | _
+  · rw [ite_eq_left (by simp), ite_eq_right (by simp)]
+  · rw [ite_eq_right (by simp), ite_eq_left (by simp)]
+
+private theorem nontrivialFix_numcells (cell1 : Nat) (st : RefineSt) :
+    (nontrivialFix cell1 st).numcells = st.numcells := by
+  rw [nontrivialFix]
+  rcases h : elem st.active cell1 with _ | _
+  · rw [ite_eq_left (by simp)]
+  · rw [ite_eq_right (by simp)]
+
+/-- One processed cell of the nontrivial pass, the bookkeeping half:
+active bits and boundaries outside the window untouched, the
+potential ledger balanced, and the two activation clauses — an active
+cell activates every fragment start, an inactive one every fragment
+start but one. -/
+theorem nontrivialCell_outcome {ctx : Ctx}
+    {level workset cell1 cell2 nb : Nat} {st : RefineSt}
+    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.ptn.size) (hnb : cell2 < nb)
+    (hopen : ∀ q, cell1 ≤ q → q < cell2 → st.ptn[q]! > level) :
+    (∀ u, u < cell1 ∨ cell2 < u →
+      elem (nontrivialCell ctx level workset cell1 cell2 st).active u =
+        elem st.active u) ∧
+    (∀ q : Nat, q < cell1 ∨ cell2 ≤ q →
+      (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
+        st.ptn[q]!) ∧
+    (nontrivialCell ctx level workset cell1 cell2 st).ptn.size =
+      st.ptn.size ∧
+    (bitCount nb (nontrivialCell ctx level workset cell1 cell2
+        st).active + 2 * st.numcells ≤
+      bitCount nb st.active +
+        2 * (nontrivialCell ctx level workset cell1 cell2 st).numcells) ∧
+    st.numcells ≤
+      (nontrivialCell ctx level workset cell1 cell2 st).numcells ∧
+    (elem st.active cell1 = true →
+      ∀ u, cell1 ≤ u → u ≤ cell2 →
+        (u = cell1 ∨ (nontrivialCell ctx level workset cell1 cell2
+          st).ptn[u - 1]! ≤ level) →
+        elem (nontrivialCell ctx level workset cell1 cell2
+          st).active u = true) ∧
+    (elem st.active cell1 = false →
+      ∃ w, ∀ u, cell1 ≤ u → u ≤ cell2 →
+        (u = cell1 ∨ (nontrivialCell ctx level workset cell1 cell2
+          st).ptn[u - 1]! ≤ level) → u ≠ w →
+        elem (nontrivialCell ctx level workset cell1 cell2
+          st).active u = true) := by
+  rcases Decidable.em (cell1 = cell2) with heq | hne
+  · have he : nontrivialCell ctx level workset cell1 cell2 st = st := by
+      rw [nontrivialCell, ite_eq_left (by simp [heq])]
+    rw [he]
+    subst heq
+    refine ⟨fun _ _ => rfl, fun _ _ => rfl, rfl, by omega, Nat.le_refl _,
+      ?_, ?_⟩
+    · intro hact u hu1 hu2 _
+      rw [show u = cell1 from by omega]
+      exact hact
+    · intro hact
+      exact ⟨cell1, fun u hu1 hu2 _ hne =>
+        absurd (show u = cell1 from by omega) hne⟩
+  · rw [nontrivialCell, ite_eq_right (by simp [hne])]
+    rcases Decidable.em
+        ((countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
+          ((countsOf ctx st.lab workset cell1 cell2).headD 0) =
+        (countsOf ctx st.lab workset cell1 cell2).foldl Nat.max
+          ((countsOf ctx st.lab workset cell1 cell2).headD 0)) with
+      hmm | hmm
+    · rw [ite_eq_left (by simpa using hmm)]
+      refine ⟨fun _ _ => rfl, fun _ _ => rfl, rfl, by dsimp only; omega,
+        Nat.le_refl _, ?_, ?_⟩
+      · intro hact u hu1 hu2 hu3
+        rcases Decidable.em (u = cell1) with rfl | hne2
+        · exact hact
+        · have hb' : st.ptn[u - 1]! ≤ level := by
+            rcases hu3 with rfl | hb
+            · exact absurd rfl hne2
+            · exact hb
+          exact absurd hb' (by
+            have := hopen (u - 1) (by omega) (by omega)
+            omega)
+      · intro hact
+        refine ⟨cell1, fun u hu1 hu2 hu3 hne2 => ?_⟩
+        have hb' : st.ptn[u - 1]! ≤ level := by
+          rcases hu3 with rfl | hb
+          · exact absurd rfl hne2
+          · exact hb
+        exact absurd hb' (by
+          have := hopen (u - 1) (by omega) (by omega)
+          omega)
+    · rw [ite_eq_right (by simpa using hmm)]
+      obtain ⟨S, hS⟩ : ∃ S, windowScan level cell1 cell2
+          (countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st = S := ⟨_, rfl⟩
+      have hlen := countsOf_length ctx st.lab workset cell1 cell2
+      have htotS : cell1 + ((countValues (countsOf ctx st.lab workset
+          cell1 cell2)).map (multOf (countsOf ctx st.lab workset cell1
+            cell2))).sum = cell2 + 1 := by
+        rw [sum_multOf_countValues, hlen]
+        omega
+      have hfired : 0 < ((countValues (countsOf ctx st.lab workset
+          cell1 cell2)).map (multOf (countsOf ctx st.lab workset cell1
+            cell2))).sum := by
+        rw [sum_multOf_countValues, hlen]
+        omega
+      obtain ⟨sc1, sc2, sc3, scH, sc4, sc5, sc6, sc7, sc8, sc9⟩ :=
+        windowScan_active_state (level := level) (cell1 := cell1)
+          (cell2 := cell2) (nb := nb)
+          (counts := countsOf ctx st.lab workset cell1 cell2)
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st (Nat.le_refl _) htotS (Or.inl rfl) hsz
+      obtain ⟨_, _, scF, scS, _⟩ :=
+        windowScan_payload (level := level) (nn := nb) hnb
+          (countValues (countsOf ctx st.lab workset cell1 cell2))
+          cell1 (-1) st (Nat.le_refl _) htotS hsz
+          (fun p hp1 hp2 => hopen p hp1 hp2)
+      rw [hS] at sc1 sc2 sc3 scH sc4 sc5 sc6 sc7 sc8 sc9 scF scS
+      have hmp := sc9 (Or.inl (by omega)) (Or.inl hfired)
+      have hcell1A : elem S.active cell1 = elem st.active cell1 :=
+        sc1 cell1 (Or.inl (Nat.le_refl _))
+      have hax : (nontrivialFix cell1 { S with
+          lab := writeSegment S.lab cell1 (segmentOf S.lab cell1
+            (countsOf ctx st.lab workset cell1 cell2)
+            (countValues (countsOf ctx st.lab workset cell1
+              cell2))) }).active =
+          if elem S.active cell1 = true then S.active
+          else erase (insert S.active cell1) S.maxpos := by
+        rw [nontrivialFix_active]
+      have hpx : (nontrivialFix cell1 { S with
+          lab := writeSegment S.lab cell1 (segmentOf S.lab cell1
+            (countsOf ctx st.lab workset cell1 cell2)
+            (countValues (countsOf ctx st.lab workset cell1
+              cell2))) }).ptn = S.ptn := by
+        rw [nontrivialFix_ptn]
+      have hnx : (nontrivialFix cell1 { S with
+          lab := writeSegment S.lab cell1 (segmentOf S.lab cell1
+            (countsOf ctx st.lab workset cell1 cell2)
+            (countValues (countsOf ctx st.lab workset cell1
+              cell2))) }).numcells = S.numcells := by
+        rw [nontrivialFix_numcells]
+      rw [hS, hax, hpx, hnx]
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · intro u hu
+        rcases hb : elem st.active cell1 with _ | _
+        · rw [ite_eq_right (by simp [hcell1A, hb]), elem_erase,
+            elem_insert,
+            show (cell1 == u) = false from by
+              simp only [beq_eq_false_iff_ne]
+              omega,
+            Bool.or_false,
+            show (S.maxpos == u) = false from by
+              simp only [beq_eq_false_iff_ne]
+              omega,
+            Bool.not_false, Bool.and_true]
+          exact sc1 u (by omega)
+        · rw [ite_eq_left (by rw [hcell1A, hb])]
+          exact sc1 u (by omega)
+      · intro q hq
+        exact scF q (by omega)
+      · exact scS
+      · rcases hb : elem st.active cell1 with _ | _
+        · rw [ite_eq_right (by simp [hcell1A, hb])]
+          have h1 := bitCount_insert_le nb S.active cell1
+          have h2 : elem (insert S.active cell1) S.maxpos = true := by
+            rcases hmp.2.2 with hm | hm
+            · rw [hm, elem_insert]
+              simp
+            · rw [elem_insert, hm, Bool.true_or]
+          have h3 := bitCount_erase_of_elem
+            (show S.maxpos < nb from by omega) h2
+          omega
+        · rw [ite_eq_left (by rw [hcell1A, hb])]
+          exact sc7
+      · exact sc8
+      · intro hact u hu1 hu2 hu3
+        rw [ite_eq_left (by rw [hcell1A, hact])]
+        rcases Decidable.em (u = cell1) with rfl | hne2
+        · rw [hcell1A]
+          exact hact
+        · have hb : S.ptn[u - 1]! ≤ level := by
+            rcases hu3 with rfl | hb
+            · exact absurd rfl hne2
+            · exact hb
+          rcases sc5 u (by omega) hu2 hb with h | h
+          · exact absurd h (by
+              have := hopen (u - 1) (by omega) (by omega)
+              omega)
+          · exact h
+      · intro hact
+        refine ⟨S.maxpos, fun u hu1 hu2 hu3 hne2 => ?_⟩
+        rw [ite_eq_right (by simp [hcell1A, hact]), elem_erase,
+          show (S.maxpos == u) = false from by
+            simp only [beq_eq_false_iff_ne]
+            omega,
+          Bool.not_false, Bool.and_true, elem_insert]
+        rcases hu3 with rfl | hb
+        · simp
+        · rcases Decidable.em (u = cell1) with rfl | hne3
+          · simp
+          · rcases sc5 u (by omega) hu2 hb with h | h
+            · exact absurd h (by
+                have := hopen (u - 1) (by omega) (by omega)
+                omega)
+            · rw [h, Bool.true_or]
+
 end Hex.GraphIso.Nauty
