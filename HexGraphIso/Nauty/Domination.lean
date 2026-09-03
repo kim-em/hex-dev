@@ -548,11 +548,12 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       CanongInv ctx (processnode ctx cs.length numcells st).2.canong
         (processnode ctx cs.length numcells st).2.canonlab
         (processnode ctx cs.length numcells st).2.samerows ∧
-      (CodeCmpInv nn cs bs'
+      (((processnode ctx cs.length numcells st).2.compCanon ≤ 0 ∧
+        CodeCmpInv nn cs bs'
           (processnode ctx cs.length numcells st).2.canoncode
           (processnode ctx cs.length numcells st).2.canonlevel
           (processnode ctx cs.length numcells st).2.eqlevCanon
-          (processnode ctx cs.length numcells st).2.compCanon ∨
+          (processnode ctx cs.length numcells st).2.compCanon) ∨
         ((processnode ctx cs.length numcells st).2.compCanon < 0 ∧
           CodeCmpInv nn cs bs'
             (processnode ctx cs.length numcells st).2.canoncode
@@ -588,6 +589,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       · rw [hg2, hlab2, hs2]
         exact canongInv_zero st.lab (canongInv_size hginv)
       · left
+        refine ⟨by rw [hc2]; decide, ?_⟩
         rw [hcode2, hcl2, he2, hc2]
         exact install_codeInv hcinv0 (by decide) hcsn
     · -- the row-decided arms
@@ -647,6 +649,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
         · rw [hg2, hlab2, hs2]
           exact hcInc
         · left
+          refine ⟨by rw [hc2]; decide, ?_⟩
           rw [hcode2, hcl2, he2, hc2]
           exact hcinv0
         · rcases hrOr with h | h
@@ -666,6 +669,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
         · rw [hg2, hlab2, hs2]
           exact hcNew
         · left
+          refine ⟨by rw [hc2]; decide, ?_⟩
           rw [hcode2, hcl2, he2, hc2]
           exact install_codeInv hcinv0 (by decide) hcsn
   · -- the comparison is frozen
@@ -692,6 +696,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       · rw [hg2, hlab2, hs2]
         exact hginv
       · left
+        refine ⟨by rw [hc2, hcc]; decide, ?_⟩
         rw [hcode2, hcl2, he2, hc2]
         exact hcinv
     · -- frozen upward: the direct install
@@ -709,7 +714,36 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       · rw [hg2, hlab2, hs2]
         exact canongInv_zero st.lab (canongInv_size hginv)
       · left
+        refine ⟨by rw [hc2]; decide, ?_⟩
         rw [hcode2, hcl2, he2, hc2]
         exact install_codeInv hminv (by decide) hcsn
+
+/-! # The unwind carries both machines -/
+
+/-- One `recover` step after a node event: the comparison machine
+survives the unwind in whichever mode the event left it — live with
+`compCanon ≤ 0`, or the reset mode a row rejection leaves behind —
+and the first-path machine is clamped. The induction applies this at
+every return to a child loop. -/
+theorem recover_machines {nn N inf : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {lvl : Nat}
+    (hc : (st.compCanon ≤ 0 ∧
+        CodeCmpInv nn cs bs st.canoncode st.canonlevel st.eqlevCanon
+          st.compCanon) ∨
+      CodeCmpInv nn cs bs st.canoncode st.canonlevel st.eqlevCanon 0)
+    (hf : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
+    (hlvl : lvl ≤ cs.length) :
+    CodeCmpInv nn (cs.take lvl) bs
+        (recover N inf lvl st).canoncode
+        (recover N inf lvl st).canonlevel
+        (recover N inf lvl st).eqlevCanon
+        (recover N inf lvl st).compCanon ∧
+      FirstCodeInv nn (cs.take lvl) fs
+        (recover N inf lvl st).firstcode
+        (recover N inf lvl st).eqlevFirst := by
+  refine ⟨?_, recover_firstCodeInv hf hlvl⟩
+  rcases hc with ⟨hle, hinv⟩ | hinv
+  · exact recover_codeInv hinv hle hlvl
+  · exact recover_codeInv_reset hinv hlvl
 
 end Hex.GraphIso.Nauty
