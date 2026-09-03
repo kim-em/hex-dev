@@ -50,6 +50,8 @@ public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Nauty.SearchAutom
 public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
+public import HexGraphIso.Nauty.AutosLedger
+public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
