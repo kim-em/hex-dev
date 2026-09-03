@@ -7,7 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.SmallCellAll
+public import HexGraphIso.Nauty.CodeFaithful
 import all HexGraphIso.Nauty.SmallCellLeaves
+import all HexGraphIso.Nauty.CodeFaithful
+import all HexGraphIso.Nauty.Search
 
 public section
 
@@ -74,5 +77,48 @@ theorem descPath_det_lab {level : Nat} {st : RefineSt}
     (h₁ : DescPath ctx level st path l₁ st₁)
     (h₂ : DescPath ctx level st path l₂ st₂) : st₁.lab = st₂.lab := by
   rw [descPath_det_state h₁ h₂]
+
+/-! # What the sentinel position records
+
+`firstterminal` fires at the level where the first path went discrete,
+and it is the only writer of `codeSentinel` into `firstcode`. The
+sentinel's position therefore records the first path's depth, and
+nothing later moves it: `firstPathNode` writes only at the levels it
+descends through, and every event after `firstterminal` leaves
+`firstcode` alone.
+
+This is what turns the previous sitting's reduction into a statement
+about the search's geometry. `firstCodeInv_eq_of_live` asks for
+`firstcode[cs.length + 1]! = codeSentinel`; by the lemmas here that is
+exactly "the first path went discrete at the current leaf's depth",
+which is a fact about where two descents stop, not about an array
+cell. -/
+
+theorem firstterminal_firstcode (level : Nat) (st : SearchSt) :
+    (firstterminal level st).firstcode =
+      st.firstcode.set! (level + 1) codeSentinel := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+theorem firstterminal_firsttc (level : Nat) (st : SearchSt) :
+    (firstterminal level st).firsttc =
+      st.firsttc.set! (level + 1) (-1) := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+/-- The first path's depth is recorded by the sentinel: at the level
+where `firstterminal` fires, the next `firstcode` entry is the
+sentinel. -/
+theorem firstterminal_sentinel {level : Nat} {st : SearchSt}
+    (h : level + 1 < st.firstcode.size) :
+    (firstterminal level st).firstcode[level + 1]! = codeSentinel := by
+  rw [firstterminal_firstcode, Array.getElem!_set!_self _ _ _ h]
+
+/-- The first path's target-cell record is `-1` just past its last
+level, matching the discreteness that stopped it. -/
+theorem firstterminal_firsttc_neg {level : Nat} {st : SearchSt}
+    (h : level + 1 < st.firsttc.size) :
+    (firstterminal level st).firsttc[level + 1]! = -1 := by
+  rw [firstterminal_firsttc, Array.getElem!_set!_self _ _ _ h]
 
 end Hex.GraphIso.Nauty
