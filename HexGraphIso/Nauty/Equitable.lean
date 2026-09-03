@@ -281,4 +281,173 @@ theorem trivialCell_memConst {level gRow cell1 cell2 : Nat} {st : RefineSt}
     simp only [Int.ofNat_eq_natCast]
     omega
 
+/-! # Member-level constancy
+
+`ConstOn` restates `SplitDone` on the member list itself, which makes
+the transport lemmas the loop invariant needs (restriction to a
+subset, union and difference of splitter sets) one-line membership
+arguments instead of window index shuffles. -/
+
+/-- Constant neighbour counts into `W` over a member list. -/
+def ConstOn (ctx : Ctx) (W : Nat) (ms : List Nat) : Prop :=
+  ∀ x ∈ ms, ∀ y ∈ ms,
+    popCount (W &&& ctx.g[x]!) = popCount (W &&& ctx.g[y]!)
+
+theorem ConstOn.mono {W : Nat} {ms ms' : List Nat}
+    (h : ConstOn ctx W ms) (hsub : ∀ x ∈ ms', x ∈ ms) :
+    ConstOn ctx W ms' :=
+  fun x hx y hy => h x (hsub x hx) y (hsub y hy)
+
+theorem ConstOn.perm {W : Nat} {ms ms' : List Nat}
+    (h : ConstOn ctx W ms) (hp : ms'.Perm ms) : ConstOn ctx W ms' :=
+  h.mono fun _ hx => hp.mem_iff.mp hx
+
+theorem splitDone_iff_constOn {lab : Array Nat} {W lo len : Nat} :
+    SplitDone ctx lab W lo len ↔ ConstOn ctx W (segN lab lo len) := by
+  constructor
+  · intro h x hx y hy
+    obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hx
+    obtain ⟨o', ho', rfl⟩ := mem_segN_iff.mp hy
+    exact h o o' ho ho'
+  · intro h o o' ho ho'
+    exact h _ (mem_segN_iff.mpr ⟨o, ho, rfl⟩)
+      _ (mem_segN_iff.mpr ⟨o', ho', rfl⟩)
+
+/-! # Counts into disjoint unions -/
+
+private theorem countP_or_disjoint {p q : Nat → Bool} :
+    ∀ l : List Nat, (∀ i ∈ l, ¬(p i = true ∧ q i = true)) →
+      l.countP (fun i => p i || q i) = l.countP p + l.countP q
+  | [], _ => rfl
+  | x :: l, h => by
+    rw [List.countP_cons, List.countP_cons, List.countP_cons,
+      countP_or_disjoint l fun i hi => h i (List.mem_cons_of_mem x hi)]
+    rcases hp : p x with _ | _ <;> rcases hq : q x with _ | _
+    · simp
+    · simp; omega
+    · simp; omega
+    · exact absurd ⟨hp, hq⟩ (h x (List.mem_cons_self ..))
+
+/-- Populations add over a disjoint union. -/
+theorem popCount_or_disjoint {a b n : Nat} (hd : a &&& b = 0)
+    (ha : a < 2 ^ n) (hb : b < 2 ^ n) :
+    popCount (a ||| b) = popCount a + popCount b := by
+  have hor : a ||| b < 2 ^ n := by
+    have := Nat.or_lt_two_pow ha hb
+    exact this
+  rw [popCount_eq_bitCount n _ hor, popCount_eq_bitCount n a ha,
+    popCount_eq_bitCount n b hb]
+  unfold bitCount
+  rw [show (a ||| b).testBit = fun i => a.testBit i || b.testBit i from
+    funext fun i => Nat.testBit_or a b i]
+  refine countP_or_disjoint _ fun i _ hpq => ?_
+  have := congrArg (fun s => s.testBit i) hd
+  simp only [Nat.testBit_and, Nat.zero_testBit, hpq.1, hpq.2] at this
+  cases this
+
+/-- The intersection with any set keeps the submask relation on the
+left component. -/
+private theorem and_left_submask (a x : Nat) : (a &&& x) &&& a = a &&& x := by
+  rw [Nat.and_assoc, Nat.and_comm x a, ← Nat.and_assoc, Nat.and_self]
+
+private theorem and_lt_two_pow {a n : Nat} (ha : a < 2 ^ n) (x : Nat) :
+    a &&& x < 2 ^ n :=
+  Nat.lt_of_le_of_lt (Nat.and_le_left) ha
+
+/-- Neighbour counts add over a disjoint union of vertex sets. -/
+theorem count_or_disjoint {a b n : Nat} (hd : a &&& b = 0)
+    (ha : a < 2 ^ n) (hb : b < 2 ^ n) (x : Nat) :
+    popCount ((a ||| b) &&& x) =
+      popCount (a &&& x) + popCount (b &&& x) := by
+  have hdist : (a ||| b) &&& x = (a &&& x) ||| (b &&& x) := by
+    refine Nat.eq_of_testBit_eq fun i => ?_
+    simp only [Nat.testBit_and, Nat.testBit_or]
+    rcases a.testBit i <;> rcases b.testBit i <;> rcases x.testBit i <;> rfl
+  have hd' : (a &&& x) &&& (b &&& x) = 0 := by
+    refine Nat.eq_of_testBit_eq fun i => ?_
+    have := congrArg (fun s => s.testBit i) hd
+    simp only [Nat.testBit_and, Nat.zero_testBit] at this ⊢
+    rcases hax : a.testBit i with _ | _ <;>
+      rcases hbx : b.testBit i with _ | _ <;> simp_all
+  rw [hdist,
+    popCount_or_disjoint hd' (and_lt_two_pow ha x) (and_lt_two_pow hb x)]
+
+/-- Constancy into two disjoint sets gives constancy into the union. -/
+theorem ConstOn.or {a b n : Nat} {ms : List Nat} (hd : a &&& b = 0)
+    (ha : a < 2 ^ n) (hb : b < 2 ^ n)
+    (h1 : ConstOn ctx a ms) (h2 : ConstOn ctx b ms) :
+    ConstOn ctx (a ||| b) ms := by
+  intro x hx y hy
+  rw [count_or_disjoint hd ha hb, count_or_disjoint hd ha hb,
+    h1 x hx y hy, h2 x hx y hy]
+
+/-- Constancy into a disjoint union and into the right part gives
+constancy into the left part. -/
+theorem ConstOn.of_or {a b n : Nat} {ms : List Nat} (hd : a &&& b = 0)
+    (ha : a < 2 ^ n) (hb : b < 2 ^ n)
+    (h1 : ConstOn ctx (a ||| b) ms) (h2 : ConstOn ctx b ms) :
+    ConstOn ctx a ms := by
+  intro x hx y hy
+  have hx1 := h1 x hx y hy
+  have hx2 := h2 x hx y hy
+  rw [count_or_disjoint hd ha hb, count_or_disjoint hd ha hb] at hx1
+  omega
+
+/-! # Splitter sets of cells -/
+
+/-- Splitter sets of member-disjoint segments are disjoint. -/
+theorem worksetOf_disjoint {lab lab' : Array Nat} {lo hi lo' hi' : Nat}
+    (h : ∀ v, v ∈ segN lab lo (hi + 1 - lo) →
+      v ∈ segN lab' lo' (hi' + 1 - lo') → False) :
+    worksetOf lab lo hi &&& worksetOf lab' lo' hi' = 0 := by
+  refine Nat.eq_of_testBit_eq fun v => ?_
+  rw [Nat.testBit_and, Nat.zero_testBit, testBit_worksetOf,
+    testBit_worksetOf]
+  rcases h1 : (segN lab lo (hi + 1 - lo)).any (· == v) with _ | _
+  · rfl
+  · rcases h2 : (segN lab' lo' (hi' + 1 - lo')).any (· == v) with _ | _
+    · rfl
+    · obtain ⟨x, hx, hxv⟩ := List.any_eq_true.mp h1
+      obtain ⟨y, hy, hyv⟩ := List.any_eq_true.mp h2
+      simp only [beq_iff_eq] at hxv hyv
+      subst hxv
+      exact absurd (hyv ▸ hy) fun hm => h x hx hm
+
+/-- A splitter set splits at any interior junction of its window. -/
+theorem worksetOf_split {lab : Array Nat} {lo j hi : Nat}
+    (hlo : lo ≤ j) (hj : j < hi) :
+    worksetOf lab lo hi =
+      worksetOf lab lo j ||| worksetOf lab (j + 1) hi := by
+  refine Nat.eq_of_testBit_eq fun v => ?_
+  rw [Nat.testBit_or, testBit_worksetOf, testBit_worksetOf,
+    testBit_worksetOf,
+    show hi + 1 - lo = (j + 1 - lo) + (hi + 1 - (j + 1)) from by omega,
+    segN_append, List.any_append,
+    show lo + (j + 1 - lo) = j + 1 from by omega]
+
+/-- Membership in a splitter set is membership of the segment. -/
+theorem elem_worksetOf {lab : Array Nat} {lo hi v : Nat} :
+    elem (worksetOf lab lo hi) v = true ↔
+      v ∈ segN lab lo (hi + 1 - lo) := by
+  rw [elem, testBit_worksetOf, List.any_eq_true]
+  constructor
+  · rintro ⟨x, hx, hxv⟩
+    simp only [beq_iff_eq] at hxv
+    exact hxv ▸ hx
+  · intro hv
+    exact ⟨v, hv, by simp⟩
+
+/-- Adjacency to a vertex constant over a member list gives constant
+counts into its singleton set, through row symmetry. -/
+theorem constOn_single_of_adj {v : Nat} {ms : List Nat} {b : Bool}
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hv : v < ctx.n) (hms : ∀ x ∈ ms, x < ctx.n)
+    (hconst : ∀ x ∈ ms, (ctx.g[v]!).testBit x = b) :
+    ConstOn ctx (insert 0 v) ms := by
+  intro x hx y hy
+  rw [popCount_and_single, popCount_and_single,
+    hsymm x v (hms x hx) hv, hsymm y v (hms y hy) hv,
+    hconst x hx, hconst y hy]
+
 end Hex.GraphIso.Nauty
