@@ -118,15 +118,22 @@ postflight sample measured 1.33% busy on each sibling; load averages were 1.28,
 not a claim that the host was idle throughout.
 
 The negation export used logical CPU 3 with SMT sibling 51. A continuous
-250 ms `/proc/stat`/runnable-task trace was intersected with LeanBench's 481
+250 ms `/proc/stat`/runnable-process trace was intersected with LeanBench's 481
 timed-loop regions from 35 PID-specific sidecars. It retained 136.213 seconds
 of timed work, found no foreign runnable sample on CPU 3, and measured 0.257223
 seconds of sibling activity: aggregate ratio 0.001888, below the pre-registered
-0.002 ceiling. This monitor's numerator is precisely sampled sibling busy time
-plus the whole timed overlap of any sample in which a foreign runnable task is
-observed on the measurement CPU. It is deliberately conservative, but is not
+0.002 ceiling. The diagnostic's numerator is precisely sampled sibling busy
+time plus the whole timed overlap of any sample in which a foreign runnable
+process (any task in the current schema) is observed on the measurement CPU.
+It is deliberately conservative, but is not
 the process-CPU residual used by `fresh_module_sweep.py`; the shared numeric
 ceiling does not make those two diagnostics interchangeable.
+The committed schema-1 trace sampled process leaders; the current monitor now
+checks every `/proc/<pid>/task/<tid>/stat` worker thread and excludes Linux
+guest-time double counting. For the accepted historical trace, the raw CPU-3
+counters cover 136.067 of the 136.213 timed seconds, corroborating that almost
+the entire measurement-core capacity was occupied by the pinned benchmark;
+this corroboration is not represented as a stronger per-process attribution.
 
 The run series used a finite one-retry bound. The first attempt at the same
 committed implementation and schedule was rejected at 0.003274; its timing
