@@ -32,8 +32,10 @@ graph_iso (maxNodes := 200000) (maxCertNodes := 200000) (maxCheckerSteps := 1000
 
 For a positive goal, the compiled nauty-compatible search runs at
 elaboration time as untrusted code and produces a literal forward
-permutation; the goal closes through the replay-bounded `checkIso?` and
-its soundness theorem, so the kernel performs the decisive replay. For
+permutation; the goal closes through `checkIsoLit` and
+`isomorphic_of_checkIsoLit`, which check the permutation against
+list-literal adjacency data, so the kernel performs the decisive replay
+without unfolding the executable representation. For
 a negative goal, the tactic selects between two kernel routes by
 measured cost: certificate replay (two Boolean `checkKey` checks plus
 `checkDiff` through `Nauty.not_isomorphic_of_checkKeys`, cost
@@ -52,15 +54,15 @@ uses `native_decide` and no axiom is introduced.
 
 namespace Hex.GraphIso
 
+/-- Soundness of the replay-bounded isomorphism check: a permutation that
+replays successfully within the limits is an isomorphism. This is the
+API-level consequence of `checkIso?` for callers who hold a candidate
+permutation; the tactic itself takes the list-literal route through
+`isomorphic_of_checkIsoLit`. -/
 theorem isomorphic_of_checkIso? {n k : Nat} {G H : Colored n k}
     {replay : ReplayLimits} {p : Perm n}
     (h : checkIso? replay G H p = some true) : Isomorphic G H :=
   Isomorphic.intro p ((checkIso?_some h).mp rfl)
-
-theorem not_isomorphic_of_isIsoChecked_eq_false {n k : Nat}
-    {G H : Colored n k} (h : isIsoChecked G H = false) :
-    ¬ Isomorphic G H :=
-  (isIsoChecked_eq_false_iff G H).mp h
 
 /-- The non-dependent runtime image of a coloured graph, so elaboration-time
 meta code can evaluate closed `Colored n k` terms without knowing `n` and
@@ -89,8 +91,16 @@ open Lean Elab Lean.Elab.Tactic Meta
 
 /-- The parsed logical limits of one `graph_iso` call. -/
 meta structure Config where
+  /-- Node budget for the canonical search. Also gates the negative
+  separator routes, which need at least 4 nodes for the root separator and
+  at least `2 * (n + 1)` for the two-code separator. -/
   maxNodes : Nat := 100000
+  /-- Per-side cap on the number of certificate records the search may
+  produce. Exceeding it abandons the certificate route, not the tactic. -/
   maxCertNodes : Nat := 100000
+  /-- Budget for kernel replay steps. This is the limit that bounds the
+  work the kernel itself does, so it is the one to raise for a goal that
+  the elaborator solves but the kernel cannot finish. -/
   maxCheckerSteps : Nat := 5000000
 
 private meta unsafe def evalRawUnsafe (e : Expr) : MetaM Raw :=
@@ -166,11 +176,11 @@ meta def rawFindIso (a b : Raw) : Option (Array Nat) × Nat := Id.run do
   return (none, nodes)
 
 /-- Build the literal `Perm n` expression
-`(permOfNatArray? n #[...]).getD (Perm.id n)`. -/
+`(Perm.ofNatArray? n #[...]).getD (Perm.id n)`. -/
 meta def permExpr (n : Nat) (p : Array Nat) : MetaM Expr := do
   let listExpr ← mkListLit (mkConst ``Nat) (p.toList.map mkNatLit)
   let arrExpr ← mkAppM ``List.toArray #[listExpr]
-  let opt ← mkAppM ``permOfNatArray? #[mkNatLit n, arrExpr]
+  let opt ← mkAppM ``Perm.ofNatArray? #[mkNatLit n, arrExpr]
   let dflt ← mkAppM ``Perm.id #[mkNatLit n]
   mkAppM ``Option.getD #[opt, dflt]
 
@@ -542,10 +552,24 @@ end Tactic
 
 open Lean Elab Lean.Elab.Tactic Meta in
 /-- Close a closed `Isomorphic` or `¬ Isomorphic` goal over executable
-coloured graphs. See the module docstring for the limit syntax. -/
+coloured graphs.
+
+Three logical limits are optional, may appear in any order, and may appear
+at most once each:
+
+```
+graph_iso (maxNodes := 200000) (maxCertNodes := 200000) (maxCheckerSteps := 10000000)
+```
+
+They default to 100000, 100000, and 5000000. Importing `HexGraphIsoMathlib`
+extends this same tactic to Mathlib `SimpleGraph` goals. See the module
+docstring for the proof routes. -/
 syntax (name := graphIsoTac) "graph_iso" (" (" ident " := " num ")")* : tactic
 
 open Lean Elab Lean.Elab.Tactic Meta in
+/-- Elaborator for `graph_iso`: parse the optional limits, then dispatch to
+`proveGraphIso`, which tries the core `Colored` goal shapes and then each
+registered `Extension` in turn. -/
 @[tactic graphIsoTac] meta def evalGraphIsoTac : Tactic := fun stx => do
   let args := stx[1].getArgs
   let mut cfg : Tactic.Config := {}

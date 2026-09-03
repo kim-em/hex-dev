@@ -189,8 +189,8 @@ label, a checked isomorphism when one exists, and positive and negative
 `graph_iso` tactic proofs. The canonical-form theorem is for ordered-coloured
 graphs. Two such graphs are isomorphic exactly when their canonical forms are
 equal. The detailed computational and Mathlib-facing contracts are in
-[hex-graph-iso](Libraries/hex-graph-iso.md) and
-[hex-graph-iso-mathlib](Libraries/hex-graph-iso-mathlib.md).
+[hex-graph-iso](../HexGraphIso/SPEC/hex-graph-iso.md) and
+[hex-graph-iso-mathlib](../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
 
 Complete automorphism-group generators are a later extension. Rather than
 enumerate every isomorphism between two graphs, that extension returns one

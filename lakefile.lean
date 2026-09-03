@@ -874,7 +874,9 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
-    `HexSparsePoly.KernelTests]
+    `HexSparsePoly.KernelTests,
+    `HexGraphIso.TacticTests,
+    `HexGraphIsoMathlib.TacticTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
@@ -940,15 +942,6 @@ lean_lib HexSmithTests where
 lean_lib HexCharPolyTests where
   globs := #[`HexCharPoly.CharPolyElabTests,
     `HexCharPolyMathlib.CharPolyElabTests]
-
--- HexGraphIso is not yet a published split repository, so its
--- verification-only tactic regressions stay separate from the
--- release-manifest-backed target above; they rejoin HexReleaseTests (and
--- the manifest's test_modules) at publication.
-@[default_target]
-lean_lib HexGraphIsoTests where
-  globs := #[`HexGraphIso.TacticTests,
-    `HexGraphIsoMathlib.TacticTests].map Glob.one
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
@@ -1117,6 +1110,32 @@ lean_exe hexroots_demo where
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
+
+-- The graph_iso fresh-module probes (SPEC/hex-graph-iso § Benchmarks and
+-- SPEC/hex-graph-iso-mathlib § Tests): build-only structural checks of the
+-- four release probe cases on each tactic route. The scheduled-only CFI
+-- pair has its own target so the merge build stays inside its budget.
+lean_lib HexGraphIsoProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support,
+    `HexGraphIso.ProofProbe.Baseline,
+    `HexGraphIso.ProofProbe.Positive12,
+    `HexGraphIso.ProofProbe.Negative12,
+    `HexGraphIso.ProofProbe.Coloured10Pos,
+    `HexGraphIso.ProofProbe.Coloured10Neg]
+
+lean_lib HexGraphIsoCfiProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support, `HexGraphIso.ProofProbe.Cfi]
+
+lean_lib HexGraphIsoMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIsoMathlib.ProofProbe.Support,
+    `HexGraphIsoMathlib.ProofProbe.MathlibBaseline,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive12,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative12]
 
 lean_exe hexgraphiso_bench where
   srcDir := "bench"

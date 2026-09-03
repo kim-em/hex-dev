@@ -215,7 +215,7 @@ theorem checkKeyFlat_eq (G : Colored n k) (cert : Nauty.CertNode)
 differing keys prove non-isomorphism: the kernel evaluates each graph
 once into its literal, and both replays run on rebuilt literal
 rows. -/
-theorem not_isomorphic_of_checkKeysLit {G H : Colored n k}
+theorem not_isomorphic_of_checkKeysFlat {G H : Colored n k}
     {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
     {LA LB : List Bool}
     (hA : G.graph.adjMatrix.data.toList = LA)

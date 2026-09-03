@@ -242,7 +242,7 @@ end Perm
 /-- Checked permutation construction from raw entries, for literal data
 emitted by tactics: entries must be in range, duplicate-free, and
 complete. -/
-@[expose] def permOfNatArray? (n : Nat) (a : Array Nat) : Option (Perm n) :=
+@[expose] def Perm.ofNatArray? (n : Nat) (a : Array Nat) : Option (Perm n) :=
   if h : a.size = n ∧ ∀ i, (hi : i < a.size) → a[i] < n then
     Perm.ofVector? (Hex.Vector.ofFn' fun i : Fin n =>
       ⟨a[i.val]'(h.1.symm ▸ i.isLt), h.2 i.val (h.1.symm ▸ i.isLt)⟩)

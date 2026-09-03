@@ -3,7 +3,7 @@
 `hex-graph-iso` computes canonical forms and isomorphisms of finite simple
 undirected graphs with ordered vertex colours. It depends only on
 `hex-graph`. It does not depend on Mathlib or on an external graph program.
-The separate [hex-graph-iso-mathlib](hex-graph-iso-mathlib.md) library relates
+The separate [hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md) library relates
 these operations to `SimpleGraph` and provides the Mathlib-facing
 `graph_iso` tactic.
 
@@ -652,7 +652,7 @@ chapter or public graph operations. The example is compiled with the manual,
 records explicit logical limits, and does not depend on an external nauty
 installation. The Mathlib companion presents the same positive and negative
 claims through `SimpleGraph`. Its requirements are stated in
-[hex-graph-iso-mathlib.md](hex-graph-iso-mathlib.md#manual-example-with-mathlib).
+[hex-graph-iso-mathlib.md](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md#manual-example-with-mathlib).
 
 ## Manual chapter: the nauty canonical labelling algorithm
 
@@ -708,7 +708,7 @@ graph theory but knows nothing about this algorithm, Lean, or nauty.
 Every term is defined before its first use: no vocabulary from the
 implementation (splitter, hint, code chain, active cell, dominated)
 may appear before the sentence that defines it, and every word keeps
-its ordinary meaning, per [SPEC/writing-style.md](../writing-style.md).
+its ordinary meaning, per [SPEC/writing-style.md](../../SPEC/writing-style.md).
 The introduction previews the chapter in plain words only. The
 quality bar: a careful reader could reimplement the function from
 part one alone, and the reimplementation would agree with nauty 2.9.3
@@ -772,7 +772,7 @@ prose cannot drift from the code. Requirements:
 
 - Every declaration named in prose uses the `{name}` role, and the
   load-bearing definitions are included with `{docstring}`, per
-  [SPEC/writing-style.md](../writing-style.md). A rename or a
+  [SPEC/writing-style.md](../../SPEC/writing-style.md). A rename or a
   docstring change then fails `lake build HexManual`.
 - No hand-copied signatures or restated definition bodies. Where part
   two needs to show a definition, it quotes the declaration.
@@ -807,7 +807,7 @@ and the `{name}` roles are what keep the chapter honest.
   `HexGraphIso` chapter, whose subject it is.
 - No claim, anywhere, that agreement with nauty is a theorem.
 - No process narrative, per
-  [SPEC/writing-style.md](../writing-style.md) and the project style
+  [SPEC/writing-style.md](../../SPEC/writing-style.md) and the project style
   rules. The chapter describes the algorithm as it stands.
 
 ### Citations
@@ -879,7 +879,7 @@ nauty versions.
 
 ## Conformance
 
-The oracle follows [the project oracle protocol](../testing.md#adding-a-new-oracle).
+The oracle follows [the project oracle protocol](../../SPEC/testing.md#adding-a-new-oracle).
 A Python JSONL driver rebuilds each original graph and partition and calls a
 small project-owned C program compiled against the vendored nauty source in
 `vendor/nauty-2.9.3`: unmodified files from the pinned archive,
@@ -1013,14 +1013,14 @@ The Mathlib-free benchmark driver registers:
   `Hex/BenchOracle/ffi/nauty_canon.c`), statically linked against the
   vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` — the FFI
   pattern of
-  [benchmarking.md](../benchmarking.md#external-comparators). The
+  [benchmarking.md](../../SPEC/benchmarking.md#external-comparators). The
   vendored source and the comparator are development-monorepo tooling
   only and ship with no released library.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
 result agreement as well as timing. The nauty comparator is `gating` in the
-terminology of [benchmarking.md](../benchmarking.md#external-comparators), but
+terminology of [benchmarking.md](../../SPEC/benchmarking.md#external-comparators), but
 the first release sets no speed-ratio requirement. Its required result is
 exact output agreement.
 

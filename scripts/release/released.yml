@@ -483,6 +483,43 @@ repos:
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
     lakefile: lean
 
+  # `HexGraph` is a one-file graph representation with no SPEC surface of its
+  # own, and `hex-graph-iso` is its only consumer, so it rides into this
+  # repository through `extra_paths` rather than becoming a repository, a CI
+  # workflow, a token slot and an aggregate-README row of its own. The released
+  # skeleton declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
+  # mirroring the monorepo lakefile. A second consumer of `HexGraph` is the
+  # trigger to promote it to `leanprover/hex-graph`; the source must not be
+  # duplicated across two mirrors.
+  #
+  # The pins are the published part of the closure `HexGraphIso` reaches:
+  # `HexBasic` directly, and `HexMatrix` through `HexGraph.Basic`. The
+  # vendored nauty source and both nauty comparators -- the shim behind
+  # `scripts/oracle/graphiso_nauty.py` and the in-process
+  # `Hex.BenchOracle.Nauty` binding -- stay in this monorepo with every other
+  # development instrument, so no pin here can drag `vendor/nauty-2.9.3` into
+  # the mirror and `leanprover/nauty-ffi` never becomes a dependency of the
+  # shipped library.
+  - repo: leanprover/hex-graph-iso
+    component: Graph canonical labelling
+    lib: HexGraphIso
+    test_modules: [HexGraphIso.TacticTests]
+    umbrella: true
+    spec: hex-graph-iso
+    extra_paths:
+      - { src: "HexGraph", dest: "HexGraph" }
+      - { src: "HexGraph.lean", dest: "HexGraph.lean" }
+    pins: [hex-basic, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-graph-iso-mathlib
+    lib: HexGraphIsoMathlib
+    test_modules: [HexGraphIsoMathlib.TacticTests]
+    umbrella: true
+    spec: hex-graph-iso-mathlib
+    pins: [hex-basic, hex-matrix, hex-graph-iso]
+    lakefile: toml
+
   # Aggregate: re-pinned only, never regenerated from managed source (its
   # umbrella lakefile.toml and HexAll.lean live only in the released repo).
   # Its README is the one managed artifact: rendered from `readme_template`
@@ -492,5 +529,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-graph-iso, hex-graph-iso-mathlib]
     lakefile: toml

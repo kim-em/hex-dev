@@ -99,7 +99,7 @@ on malformed inputs; the result is only trusted through `checkIso`. -/
 /-- The candidate transporter at a discrete pair, through the checked
 permutation constructor. -/
 @[expose] def inducedPerm (P Q : Cells n) : Perm n :=
-  (permOfNatArray? n (Hex.Array.ofFn' fun v : Fin n => (inducedFun P Q v).val)).getD
+  (Perm.ofNatArray? n (Hex.Array.ofFn' fun v : Fin n => (inducedFun P Q v).val)).getD
     (Perm.id n)
 
 /-- One expansion of a node: the child pairs individualizing `v` in `P`

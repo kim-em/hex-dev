@@ -6,7 +6,7 @@
  * scripts/oracle/graphiso_nauty_shim.c: 64-bit dense densenauty,
  * m = SETWORDSNEEDED(n), DEFAULTOPTIONS_GRAPH changing only the fields
  * required for canonical labelling and a caller-supplied partition, per
- * SPEC/Libraries/hex-graph-iso.md section "nauty compatibility target".
+ * HexGraphIso/SPEC/hex-graph-iso.md section "nauty compatibility target".
  *
  * Marshalling (Lean binding: Hex/BenchOracle/Nauty.lean):
  *   in:  n, k as USize (1 <= n <= 255, k <= n);
