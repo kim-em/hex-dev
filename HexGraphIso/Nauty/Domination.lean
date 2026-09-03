@@ -11,6 +11,9 @@ public import HexGraphIso.Nauty.LeafFaithful
 public import HexGraphIso.Nauty.SearchModel
 public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.Stabilize
+public import HexGraphIso.Nauty.AutosLedger
+public import HexGraphIso.Nauty.SmallCellTie
+import all HexGraphIso.Nauty.SmallCellTie
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -1260,6 +1263,44 @@ theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
   rw [recF_canong, recF_canonlab, recF_samerows]
   exact h
 
+private theorem prepF_genTrace (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).genTrace = st.genTrace := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.genTrace, ite_self]
+
+private theorem prepF_autos (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).autos = st.autos := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.autos, ite_self]
+
+private theorem recF_genTrace (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).genTrace = st.genTrace := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.genTrace, ite_self]
+
+private theorem recF_autos (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).autos = st.autos := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.autos, ite_self]
+
+/-- The store fields no internal step writes: the generator trace and
+the bounded autos workspace pass through `otherNodePrep` and
+`recover` untouched, so both ledger clauses ride the unwind and the
+comparison step by frame. -/
+theorem otherNodePrep_store (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).genTrace = st.genTrace ∧
+    (otherNodePrep level code st).autos = st.autos :=
+  ⟨prepF_genTrace level code st, prepF_autos level code st⟩
+
+theorem recover_store (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).genTrace = st.genTrace ∧
+    (recover n inf level st).autos = st.autos :=
+  ⟨recF_genTrace n inf level st, recF_autos n inf level st⟩
+
 end Frames
 
 /-! # The seed: `firstterminal` starts every thread -/
@@ -1359,6 +1400,23 @@ theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
   show keyCmp _ _ ≠ .gt
   rw [pathLeafKey, incKey, keyCmp_eq_iff.mpr rfl]
   decide
+
+private theorem ftF_genTrace (level : Nat) (st : SearchSt) :
+    (firstterminal level st).genTrace = st.genTrace := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+private theorem ftF_autos (level : Nat) (st : SearchSt) :
+    (firstterminal level st).autos = st.autos := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
+/-- `firstterminal` installs the first leaf without touching either
+store, so both ledger clauses are carried across the seed. -/
+theorem firstterminal_store (level : Nat) (st : SearchSt) :
+    (firstterminal level st).genTrace = st.genTrace ∧
+    (firstterminal level st).autos = st.autos :=
+  ⟨ftF_genTrace level st, ftF_autos level st⟩
 
 end Seed
 
@@ -1562,10 +1620,18 @@ variable {n k : Nat}
 /-- The entry invariant of the maximality induction at a node about
 to refine at `level = cs.length + 1`: the search skeleton, both
 comparison machines, the store invariant, cell stabilization of every
-recorded generator at this node, and domination of the first leaf by
-the incumbent. -/
-structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
-    (numcells : Nat) (st : SearchSt) : Prop where
+recorded generator at this node, domination of the first leaf by the
+incumbent, and the two ledgers the pruning arms consume.
+
+`genTraceOk` is store validity: every recorded generator is a checked
+automorphism, which is what `childKey_of_carried` needs of the
+carriers the gca returns hand up. `autosOk` is the `(fix, mcr)`
+ledger of `AutosLedger`, anchored at the root partition `rptn`/`rlab`
+where it is unconditional; the `shortprune`/`longprune` arms move a
+single pair down the path with `pairOk_descend` at the point of
+use. -/
+structure DomOk (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
+    (cs bs fs : List Nat) (numcells : Nat) (st : SearchSt) : Prop where
   searchOk : SearchOk G (cs.length + 1) numcells st
   codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
     st.eqlevCanon st.compCanon
@@ -1575,6 +1641,29 @@ structure DomOk (G : Colored n k) (ctx : Ctx) (cs bs fs : List Nat)
     CellStab st.ptn (cs.length + 1) st.lab γ
   firstKeyLe : keyLe (pathLeafKey ctx fs st.firstlab)
     (incKey ctx bs st.canonlab)
+  genTraceOk : GenTraceOk ctx st
+  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+
+/-! # The ledgers ride the internal steps
+
+`processnode` is the only primitive that writes either store, so the
+two ledger clauses of `DomOk` cross every other event by frame. These
+are the transport forms the induction applies at the unwind and the
+comparison step. -/
+
+/-- Store validity crosses a frame-preserving step. -/
+theorem genTraceOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+    (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st) :
+    GenTraceOk ctx st' := by
+  intro γ hγ
+  exact hok γ (by rwa [h] at hγ)
+
+/-- The `(fix, mcr)` ledger crosses a frame-preserving step. -/
+theorem autosOk_of_eq {g rptn rlab : Array Nat} {nn : Nat}
+    {st st' : SearchSt} (h : st'.autos = st.autos)
+    (hok : AutosOk g rptn rlab 1 nn st.autos) :
+    AutosOk g rptn rlab 1 nn st'.autos := by
+  rw [h]; exact hok
 
 /-! # Absorption of dominated sibling suffixes
 
