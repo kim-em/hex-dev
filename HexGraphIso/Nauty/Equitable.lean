@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.CellPerm
 public import HexGraphIso.Nauty.Achieved
 public import HexGraphIso.Nauty.SearchInv
+public import HexGraphIso.Nauty.PopCount
 
 public section
 
@@ -42,25 +43,29 @@ argument: `popCount active + 2 * (n - numcells)` drops by at least
 one per pass, and starts at most `3 * n`, below the supplied
 `4 * n + 8`.
 
-Proven so far: the predicate layer; the member-level `ConstOn`
-toolkit (disjoint-union count additivity, union and difference
-transport, splitter-set disjointness and window splitting); both
-splitting passes' postconditions, culminating in
-`refineStep_cell_const` — after one `refineStep`, every cell of the
-result has constant counts into the retired splitter's captured
-vertex set, uniformly across trivial and nontrivial splitters; and
-the certificate interface `CertInv`/`activeUnion`/`Saturated` with
-its collapse at exit (`equitable_of_certInv_exit`,
-`active_eq_zero_of_pickSplit_none`).
+Proven: the predicate layer; the member-level `ConstOn` toolkit
+(disjoint-union count additivity, union and difference transport,
+splitter-set disjointness and window splitting); both splitting
+passes' postconditions, culminating in `refineStep_cell_const`; the
+active-set bookkeeping of both passes (`refineTrivial_go_state`,
+`windowScan_active_state`, `nontrivialCell_outcome`,
+`refineNontrivial_go_state`) assembled into `refineStep_state` — the
+strict potential drop and the per-cell activation clauses (an active
+non-splitter cell activates every fragment start, any other cell
+leaves at most one start inactive); the certificate interface
+`CertInv`/`activeUnion`/`Saturated` with its collapse at exit; the
+injectivity and splitter-set structure (`LabInj` transport across the
+pass, `worksetOf_cells_disjoint`, `isCell_disj_or_eq`); the
+preservation theorem `certInv_refineStep`; and the fixpoint theorem
+`refine_equitable` — entering `refine` with an injective labelling,
+an active set of cell starts, an accurate cell count and the
+certificate invariant, the output partition is equitable. The
+certificate seed is vacuous at the root (every cell active) and is
+discharged at descent from the parent's equitability joined with the
+individualized singleton's splitter set.
 
-Remaining for the fixpoint theorem: the preservation of `CertInv`
-across `refineStep` (consuming `refineStep_cell_const` for the
-retired splitter's subtraction, per-old-cell member permutations from
-the `RefInv` machinery for workset stability, and a characterization
-of the active set's evolution through the passes — the one piece with
-no existing machinery); the fuel potential
-`popCount active + 2 * (n - numcells)`; and on top of the fixpoint
-theorem the cheapautom small-cell lemma and the arm-2 assembly.
+Remaining for the cheapautom arm on top of this fixpoint: the
+small-cell subtree lemma and the arm-2 assembly in StoreValid.lean.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -69,14 +74,14 @@ variable {ctx : Ctx}
 
 /-- The window of `len` positions from `lo` has constant neighbour
 counts into the vertex set `workset`. -/
-def SplitDone (ctx : Ctx) (lab : Array Nat) (workset lo len : Nat) : Prop :=
+@[expose] def SplitDone (ctx : Ctx) (lab : Array Nat) (workset lo len : Nat) : Prop :=
   ∀ o o', o < len → o' < len →
     popCount (workset &&& ctx.g[lab[lo + o]!]!) =
       popCount (workset &&& ctx.g[lab[lo + o']!]!)
 
 /-- The partition at `level` is equitable: every cell has constant
 neighbour counts into every cell's vertex set. -/
-def Equitable (ctx : Ctx) (level : Nat) (lab ptn : Array Nat) : Prop :=
+@[expose] def Equitable (ctx : Ctx) (level : Nat) (lab ptn : Array Nat) : Prop :=
   ∀ cd ∈ cells ptn level ctx.n, ∀ de ∈ cells ptn level ctx.n,
     SplitDone ctx lab (worksetOf lab de.1 de.2) cd.1 (cd.2 + 1 - cd.1)
 
@@ -304,7 +309,7 @@ subset, union and difference of splitter sets) one-line membership
 arguments instead of window index shuffles. -/
 
 /-- Constant neighbour counts into `W` over a member list. -/
-def ConstOn (ctx : Ctx) (W : Nat) (ms : List Nat) : Prop :=
+@[expose] def ConstOn (ctx : Ctx) (W : Nat) (ms : List Nat) : Prop :=
   ∀ x ∈ ms, ∀ y ∈ ms,
     popCount (W &&& ctx.g[x]!) = popCount (W &&& ctx.g[y]!)
 
@@ -971,13 +976,13 @@ private theorem chunkOf_count {ctx : Ctx} {lab : Array Nat}
   dsimp only
   rw [← countsOf_getElem! hjlt, ← hcv', hbeq]
 
-private theorem getElem!_append_left'' {β : Type} [Inhabited β]
+theorem getElem!_append_left'' {β : Type} [Inhabited β]
     {as bs : List β} {i : Nat} (h : i < as.length) :
     (as ++ bs)[i]! = as[i]! := by
   rw [getElem!_pos (as ++ bs) i (by rw [List.length_append]; omega),
     getElem!_pos as i h, List.getElem_append_left h]
 
-private theorem getElem!_append_right'' {β : Type} [Inhabited β]
+theorem getElem!_append_right'' {β : Type} [Inhabited β]
     {as bs : List β} {i : Nat} (h : as.length ≤ i)
     (hi : i - as.length < bs.length) :
     (as ++ bs)[i]! = bs[i - as.length]! := by
@@ -1717,19 +1722,19 @@ frees the preservation argument from fragment bookkeeping. When
 zero, and the invariant is exactly equitability. -/
 
 /-- The union of the active cells' splitter sets. -/
-def activeUnion (ctx : Ctx) (level : Nat) (st : RefineSt) : Nat :=
+@[expose] def activeUnion (ctx : Ctx) (level : Nat) (st : RefineSt) : Nat :=
   (cells st.ptn level ctx.n).foldl
     (fun A p =>
       if elem st.active p.1 then A ||| worksetOf st.lab p.1 p.2 else A) 0
 
 /-- Every cell's splitter set lies inside `V` or misses it. -/
-def Saturated (ctx : Ctx) (level : Nat) (st : RefineSt) (V : Nat) : Prop :=
+@[expose] def Saturated (ctx : Ctx) (level : Nat) (st : RefineSt) (V : Nat) : Prop :=
   ∀ p ∈ cells st.ptn level ctx.n,
     worksetOf st.lab p.1 p.2 &&& V = 0 ∨
     worksetOf st.lab p.1 p.2 &&& V = worksetOf st.lab p.1 p.2
 
 /-- The refinement loop's certificate invariant. -/
-def CertInv (ctx : Ctx) (level : Nat) (st : RefineSt) : Prop :=
+@[expose] def CertInv (ctx : Ctx) (level : Nat) (st : RefineSt) : Prop :=
   ∀ p ∈ cells st.ptn level ctx.n, elem st.active p.1 = false →
   ∀ c ∈ cells st.ptn level ctx.n,
   ∃ V : Nat, V &&& activeUnion ctx level st = V ∧
