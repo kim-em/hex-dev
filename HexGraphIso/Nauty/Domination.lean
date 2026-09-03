@@ -978,4 +978,201 @@ theorem auto_keyMax {ctx : Ctx} {cs fs bs : List Nat}
   rw [hkey]
   exact keyMax_eq_left hfirst
 
+/-! # Frames of the internal-node steps -/
+
+section Frames
+
+private theorem prepF_canonlab (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).canonlab = st.canonlab := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canonlab, ite_self]
+private theorem prepF_canong (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).canong = st.canong := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canong, ite_self]
+private theorem prepF_samerows (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).samerows = st.samerows := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.samerows, ite_self]
+private theorem prepF_canonlevel (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).canonlevel = st.canonlevel := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canonlevel, ite_self]
+private theorem prepF_firstlab (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).firstlab = st.firstlab := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firstlab, ite_self]
+private theorem prepF_firsttc (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).firsttc = st.firsttc := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firsttc, ite_self]
+private theorem prepF_gcaFirst (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).gcaFirst = st.gcaFirst := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.gcaFirst, ite_self]
+private theorem prepF_gcaCanon (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).gcaCanon = st.gcaCanon := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.gcaCanon, ite_self]
+private theorem prepF_noncheaplevel (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).noncheaplevel = st.noncheaplevel := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.noncheaplevel, ite_self]
+private theorem prepF_allsamelevel (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).allsamelevel = st.allsamelevel := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.allsamelevel, ite_self]
+private theorem prepF_orbits (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).orbits = st.orbits := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.orbits, ite_self]
+private theorem prepF_lab (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).lab = st.lab := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.lab, ite_self]
+private theorem prepF_ptn (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).ptn = st.ptn := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.ptn, ite_self]
+
+/-- The fields `otherNodePrep` never writes: everything the store
+invariant, the first-path data, and the unwind bookkeeping read. -/
+theorem otherNodePrep_frames (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).canonlab = st.canonlab ∧
+    (otherNodePrep level code st).canong = st.canong ∧
+    (otherNodePrep level code st).samerows = st.samerows ∧
+    (otherNodePrep level code st).canonlevel = st.canonlevel ∧
+    (otherNodePrep level code st).firstlab = st.firstlab ∧
+    (otherNodePrep level code st).firsttc = st.firsttc ∧
+    (otherNodePrep level code st).gcaFirst = st.gcaFirst ∧
+    (otherNodePrep level code st).gcaCanon = st.gcaCanon ∧
+    (otherNodePrep level code st).noncheaplevel = st.noncheaplevel ∧
+    (otherNodePrep level code st).allsamelevel = st.allsamelevel ∧
+    (otherNodePrep level code st).orbits = st.orbits ∧
+    (otherNodePrep level code st).lab = st.lab ∧
+    (otherNodePrep level code st).ptn = st.ptn :=
+  ⟨prepF_canonlab level code st,
+    prepF_canong level code st,
+    prepF_samerows level code st,
+    prepF_canonlevel level code st,
+    prepF_firstlab level code st,
+    prepF_firsttc level code st,
+    prepF_gcaFirst level code st,
+    prepF_gcaCanon level code st,
+    prepF_noncheaplevel level code st,
+    prepF_allsamelevel level code st,
+    prepF_orbits level code st,
+    prepF_lab level code st,
+    prepF_ptn level code st⟩
+
+private theorem recF_canonlab (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).canonlab = st.canonlab := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canonlab, ite_self]
+private theorem recF_canong (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).canong = st.canong := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canong, ite_self]
+private theorem recF_samerows (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).samerows = st.samerows := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.samerows, ite_self]
+private theorem recF_canonlevel (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).canonlevel = st.canonlevel := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.canonlevel, ite_self]
+private theorem recF_firstlab (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).firstlab = st.firstlab := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firstlab, ite_self]
+private theorem recF_firsttc (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).firsttc = st.firsttc := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firsttc, ite_self]
+private theorem recF_gcaFirst (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).gcaFirst = st.gcaFirst := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.gcaFirst, ite_self]
+private theorem recF_allsamelevel (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).allsamelevel = st.allsamelevel := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.allsamelevel, ite_self]
+private theorem recF_orbits (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).orbits = st.orbits := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.orbits, ite_self]
+private theorem recF_lab (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).lab = st.lab := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.lab, ite_self]
+
+/-- The fields `recover` never writes: the store invariant's data,
+the first-path arrays, and the unwind targets. -/
+theorem recover_frames (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).canonlab = st.canonlab ∧
+    (recover n inf level st).canong = st.canong ∧
+    (recover n inf level st).samerows = st.samerows ∧
+    (recover n inf level st).canonlevel = st.canonlevel ∧
+    (recover n inf level st).firstlab = st.firstlab ∧
+    (recover n inf level st).firsttc = st.firsttc ∧
+    (recover n inf level st).gcaFirst = st.gcaFirst ∧
+    (recover n inf level st).allsamelevel = st.allsamelevel ∧
+    (recover n inf level st).orbits = st.orbits ∧
+    (recover n inf level st).lab = st.lab :=
+  ⟨recF_canonlab n inf level st,
+    recF_canong n inf level st,
+    recF_samerows n inf level st,
+    recF_canonlevel n inf level st,
+    recF_firstlab n inf level st,
+    recF_firsttc n inf level st,
+    recF_gcaFirst n inf level st,
+    recF_allsamelevel n inf level st,
+    recF_orbits n inf level st,
+    recF_lab n inf level st⟩
+
+/-- `CanongInv` passes through `otherNodePrep` untouched. -/
+theorem canongInv_otherNodePrep {ctx : Ctx} {level code : Nat}
+    {st : SearchSt}
+    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
+    CanongInv ctx (otherNodePrep level code st).canong
+      (otherNodePrep level code st).canonlab
+      (otherNodePrep level code st).samerows := by
+  rw [prepF_canong, prepF_canonlab, prepF_samerows]
+  exact h
+
+/-- `CanongInv` passes through `recover` untouched. -/
+theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
+    {st : SearchSt}
+    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
+    CanongInv ctx (recover n inf level st).canong
+      (recover n inf level st).canonlab
+      (recover n inf level st).samerows := by
+  rw [recF_canong, recF_canonlab, recF_samerows]
+  exact h
+
+end Frames
+
 end Hex.GraphIso.Nauty
