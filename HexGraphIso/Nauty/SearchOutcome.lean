@@ -618,18 +618,19 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
   | frozen (anchor : Anchor ctx tcLevel target out)
 
-/-- Every installed output key came from the incoming incumbent or this
-node's specification subtree. -/
+/-- An incumbent can only improve across a search fragment. -/
+@[expose] def IncGrows (ctx : Ctx) (st out : SearchSt) : Prop :=
+  ∀ b, stInc ctx st = some b →
+    ∃ b', stInc ctx out = some b' ∧ keyLe b b'
+
+/-- Every installed output came from the incoming incumbent or this
+node's specification subtree, and the incoming incumbent was not lost. -/
 structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (st out : SearchSt) (numcells : Nat) : Prop where
   upper : ∀ b, stInc ctx out = some b →
     keyLe b (incMax (stInc ctx st)
       (nodeKey ctx tcLevel specFuel level cs st numcells))
-
-/-- An incumbent can only improve across a search fragment. -/
-@[expose] def IncGrows (ctx : Ctx) (st out : SearchSt) : Prop :=
-  ∀ b, stInc ctx st = some b →
-    ∃ b', stInc ctx out = some b' ∧ keyLe b b'
+  grows : IncGrows ctx st out
 
 /-- The state component common to both successful loop outcomes.  The
 loop may stop early, but every incumbent it installs is still bounded by
@@ -640,18 +641,19 @@ structure LoopSound (ctx : Ctx) (bound : Key)
     keyLe b (incMax (stInc ctx st) bound)
   grows : IncGrows ctx st out
 
-theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
-    NodeSound ctx tcLevel specFuel level cs st st numcells := by
-  constructor
-  intro b hb
-  rw [hb, incMax]
-  exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
-
 theorem IncGrows.refl (ctx : Ctx) (st : SearchSt) :
     IncGrows ctx st st := by
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
+
+theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
+    NodeSound ctx tcLevel specFuel level cs st st numcells := by
+  constructor
+  · intro b hb
+    rw [hb, incMax]
+    exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
+  · exact IncGrows.refl ctx st
 
 theorem LoopSound.refl (ctx : Ctx) (bound : Key) (st : SearchSt) :
     LoopSound ctx bound st st := by
@@ -660,6 +662,63 @@ theorem LoopSound.refl (ctx : Ctx) (bound : Key) (st : SearchSt) :
     rw [hb, incMax]
     exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
   · exact IncGrows.refl ctx st
+
+theorem keyMax_le_of_le {a b c : Key} (ha : keyLe a c)
+    (hb : keyLe b c) : keyLe (keyMax a b) c := by
+  rcases keyMax_mem a b with h | h
+  · rwa [h]
+  · rwa [h]
+
+theorem keyLe_incMax_right (inc : Option Key) (b : Key) :
+    keyLe b (incMax inc b) := by
+  rcases inc with _ | a
+  · exact keyLe_refl b
+  · exact keyLe_iff.mpr (keyMax_not_lt_right a b)
+
+theorem incMax_mono_right (inc : Option Key) {a b : Key}
+    (h : keyLe a b) : keyLe (incMax inc a) (incMax inc b) := by
+  rcases inc with _ | x
+  · exact h
+  · apply keyMax_le_of_le
+    · exact keyLe_iff.mpr (keyMax_not_lt_left x b)
+    · exact keyLe_trans h (keyLe_iff.mpr (keyMax_not_lt_right x b))
+
+theorem IncGrows.trans {ctx : Ctx} {st mid out : SearchSt}
+    (h₁ : IncGrows ctx st mid) (h₂ : IncGrows ctx mid out) :
+    IncGrows ctx st out := by
+  intro b hb
+  obtain ⟨m, hm, hbm⟩ := h₁ b hb
+  obtain ⟨c, hc, hmc⟩ := h₂ m hm
+  exact ⟨c, hc, keyLe_trans hbm hmc⟩
+
+/-- A sound child step is sound against any larger fixed loop bound. -/
+theorem LoopSound.ofNode {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
+    {cs : List Nat} {st out : SearchSt} {bound : Key}
+    (h : NodeSound ctx tcLevel specFuel level cs st out numcells)
+    (hle : keyLe (nodeKey ctx tcLevel specFuel level cs st numcells)
+      bound) : LoopSound ctx bound st out := by
+  constructor
+  · intro b hb
+    exact keyLe_trans (h.upper b hb)
+      (incMax_mono_right (stInc ctx st) hle)
+  · exact h.grows
+
+/-- Consecutive fragments with the same fixed bound compose. -/
+theorem LoopSound.trans {ctx : Ctx} {bound : Key}
+    {st mid out : SearchSt} (h₁ : LoopSound ctx bound st mid)
+    (h₂ : LoopSound ctx bound mid out) : LoopSound ctx bound st out := by
+  constructor
+  · intro b hb
+    have hb₂ := h₂.upper b hb
+    rcases hm : stInc ctx mid with _ | m
+    · rw [hm, incMax] at hb₂
+      exact keyLe_trans hb₂ (keyLe_incMax_right (stInc ctx st) bound)
+    · rw [hm, incMax] at hb₂
+      apply keyLe_trans hb₂
+      apply keyMax_le_of_le
+      · exact h₁.upper m hm
+      · exact keyLe_incMax_right (stInc ctx st) bound
+  · exact h₁.grows.trans h₂.grows
 
 /-- The result of a node call, with logical and runtime fuel separated.
 
