@@ -24,39 +24,42 @@ namespace Hex.GraphIso.Nauty
 
 /-- A first-path node with no runtime fuel reports exhaustion. -/
 theorem firstPath_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
-    (cs : List Nat) (st : SearchSt) :
+    (cs : List Nat) (st : SearchSt) (best : Option Key) :
     NodeResult ctx tcLevel specFuel 0 level cs st
       (firstPathNode ctx inf tcLevel 0 level numcells st).2 numcells
+      best best
       (firstPathNode ctx inf tcLevel 0 level numcells st).1 := by
   rw [firstPathNode]
-  exact .exhausted rfl rfl rfl
+  exact .exhausted rfl rfl rfl rfl
 
 /-- An off-path node with no runtime fuel reports exhaustion. -/
 theorem otherNode_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
-    (cs : List Nat) (st : SearchSt) :
+    (cs : List Nat) (st : SearchSt) (best : Option Key) :
     NodeResult ctx tcLevel specFuel 0 level cs st
       (otherNode ctx inf tcLevel 0 level numcells st).2 numcells
+      best best
       (otherNode ctx inf tcLevel 0 level numcells st).1 := by
   rw [otherNode]
-  exact .exhausted rfl rfl rfl
+  exact .exhausted rfl rfl rfl rfl
 
 /-- First-path child-loop fuel exhaustion is not completion. -/
 theorem firstLoop_zero (ctx : Ctx)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
     (tv? cursor : Option Nat) (tcell index : Nat) (bound : Key)
-    (st : SearchSt)
+    (st : SearchSt) (best : Option Key)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor st)
+      numcells tcell cursor best)
     (hcursor : ∀ v, cursor = some v → v < ctx.n) :
     LoopResult ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn tc len
       numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell index st).2.2
+      best best
       (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell index st).1 := by
   rw [firstChildLoop]
-  exact .exhausted rfl (.refl ctx bound st) tcell cursor hcover
+  exact .exhausted rfl (.refl ctx bound best) tcell cursor hcover
     (by omega) hcursor
 
 /-- Off-path child-loop fuel exhaustion is not completion. -/
@@ -64,17 +67,19 @@ theorem otherLoop_zero (ctx : Ctx)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
     (tv? cursor : Option Nat) (tcell : Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor st)
+      numcells tcell cursor best)
     (hcursor : ∀ v, cursor = some v → v < ctx.n) :
     LoopResult ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn tc len
       numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell st).2
+      best best
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell st).1 := by
   rw [otherChildLoop]
-  exact .exhausted rfl (.refl ctx bound st) tcell cursor hcover
+  exact .exhausted rfl (.refl ctx bound best) tcell cursor hcover
     (by omega) hcursor
 
 /-- With positive loop fuel, an absent next child completes the first-path
@@ -83,19 +88,20 @@ theorem firstLoop_done (ctx : Ctx)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
     (tcell index : Nat) (cursor : Option Nat) (bound : Key)
-    (st : SearchSt)
+    (st : SearchSt) (best : Option Key)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor st)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = none) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
       rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell index st).2.2
+      best best
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell index st).1 := by
   rw [firstChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx bound st) tcell cursor hcover fun o ho =>
+  exact .complete rfl (.refl ctx bound best) tcell cursor hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- With positive loop fuel, an absent next child completes the off-path
@@ -104,18 +110,20 @@ theorem otherLoop_done (ctx : Ctx)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
     (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor st)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = none) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
       rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell st).2
+      best best
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell st).1 := by
   rw [otherChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx bound st) tcell cursor hcover fun o ho =>
+  exact .complete rfl (.refl ctx bound best) tcell cursor hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- A non-root orbit pointer skips the current first-path child and
@@ -124,9 +132,10 @@ theorem firstLoop_orbitSkip (ctx : Ctx)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index o : Nat)
     (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key)
     (gens : List (Array Nat))
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor st)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = some tv) (ho : o < len)
     (htv : rsLab[tc + o]! = tv)
     (hgsz : ctx.g.size = ctx.n)
@@ -144,17 +153,19 @@ theorem firstLoop_orbitSkip (ctx : Ctx)
     (horbit : (st.orbits[tv]! == tv) = false)
     (hrec : ∀ index',
       SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-        tcell (some tv) st →
+        tcell (some tv) best →
       LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
         tc len numcells tcell (some tv) bound st
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
           tv1 (nextElem tcell (some tv)) tcell index' st).2.2
+        best best
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
           tv1 (nextElem tcell (some tv)) tcell index' st).1) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
       rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 (some tv) tcell index st).2.2
+      best best
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 (some tv) tcell index st).1 := by
   have hne : st.orbits[tv]! ≠ tv := by

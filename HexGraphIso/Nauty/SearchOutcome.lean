@@ -119,11 +119,14 @@ theorem nodeKey_children {ctx : Ctx} {tcLevel fuel level numcells len : Nat}
   rw [nodeKey, specNode_internal cs hdisc hlen]
   rfl
 
-/-- Offset `o` has been absorbed by the incumbent in `out`. -/
+/-- Offset `o` has been absorbed by the semantic incumbent.  This is
+explicit rather than read from `SearchSt`: during an upward code
+comparison the executable overwrites `canoncode` before it installs the
+new leaf, so the state temporarily contains no faithful incumbent key. -/
 @[expose] def ChildDone (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (out : SearchSt) (o : Nat) : Prop :=
-  ∃ b, stInc ctx out = some b ∧
+    (best : Option Key) (o : Nat) : Prop :=
+  ∃ b, best = some b ∧
     keyLe (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
       numcells o) b
 
@@ -141,23 +144,23 @@ a live vertex backwards: every retained vertex at or before the cursor has
 already been absorbed. -/
 structure SweepCover (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (out : SearchSt) : Prop where
+    (cursor : Option Nat) (best : Option Key) : Prop where
   cover : ChildCover
     (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells)
     (fun o => rsLab[tc + o]!)
     (fun o => o < len)
-    (ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out)
+    (ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best)
     (ChildLive rsLab tc len tcell cursor)
   past : ∀ o, o < len → elem tcell rsLab[tc + o]! = true →
     ¬ After cursor rsLab[tc + o]! →
-    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o
 
 /-- Before the first iteration, the whole target-cell window is live. -/
 theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells : Nat)
-    (out : SearchSt) :
+    (best : Option Key) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      (windowSet rsLab tc len) none out := by
+      (windowSet rsLab tc len) none best := by
   constructor
   · intro o ho
     refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl, Nat.le_refl _⟩
@@ -172,43 +175,43 @@ key-equivalent new survivor. -/
 theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
     {tcell tcell' : Nat} {cursor cursor' : Option Nat}
-    {out out' : SearchSt}
+    {best best' : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
       (∀ j, sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
           numcells j =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
               numcells o →
           ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-            out' j) ∨
+            best' j) ∨
         ∃ j, ChildLive rsLab tc len tcell' cursor' j ∧
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
               numcells j ∧
           rsLab[tc + j]! ≤ rsLab[tc + o]!)
     (hd : ∀ o,
-      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-        out' o)
+        best' o)
     (hpast : ∀ o, o < len → elem tcell' rsLab[tc + o]! = true →
       ¬ After cursor' rsLab[tc + o]! →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-        out' o) :
+        best' o) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell' cursor' out' := by
+      tcell' cursor' best' := by
   exact ⟨ChildCover.step h.cover hs hd, hpast⟩
 
 /-- Previously covered children remain covered when the incumbent grows. -/
 theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
-    {out out' : SearchSt}
+    {best best' : Option Key}
     (h : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-      out o)
-    (hinc : ∀ b, stInc ctx out = some b →
-      ∃ b', stInc ctx out' = some b' ∧ keyLe b b') :
+      best o)
+    (hinc : ∀ b, best = some b →
+      ∃ b', best' = some b' ∧ keyLe b b') :
     ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-      out' o := by
+      best' o := by
   rcases h with ⟨b, hb, hkb⟩
   obtain ⟨b', hb', hbb'⟩ := hinc b hb
   exact ⟨b', hb', keyLe_trans hkb hbb'⟩
@@ -219,16 +222,16 @@ vertices.  A carried survivor before the cursor is discharged through
 `past`; it need not remain in the live suffix. -/
 theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
       (∀ j, sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
           numcells j =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
               numcells o →
           ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-            out j) ∨
+            best j) ∨
         ∃ j, ChildLive rsLab tc len tcell' cursor j ∧
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
@@ -236,7 +239,7 @@ theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
           rsLab[tc + j]! ≤ rsLab[tc + o]!)
     (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell' cursor out := by
+      tcell' cursor best := by
   refine ⟨ChildCover.step h.cover hs (fun _ hx => hx), ?_⟩
   intro o ho hm hpast
   exact h.past o ho (hsub _ hm) hpast
@@ -259,9 +262,9 @@ the cursor; `past` converts that case to completed coverage. -/
 theorem SweepCover.filterCarried {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
       ∃ j, j < len ∧ elem tcell' rsLab[tc + j]! = true ∧
         sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
@@ -270,7 +273,7 @@ theorem SweepCover.filterCarried {ctx : Ctx}
         rsLab[tc + j]! ≤ rsLab[tc + o]!)
     (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell' cursor out := by
+      tcell' cursor best := by
   apply h.filter _ hsub
   intro o ho
   obtain ⟨j, hj, hm, hkey, hrank⟩ := hs o ho
@@ -291,9 +294,9 @@ filters until it reaches an already-covered child or a new survivor. -/
 theorem SweepCover.filterDesc {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
       elem tcell' rsLab[tc + o]! = true ∨
         ∃ j, j < len ∧
@@ -303,7 +306,7 @@ theorem SweepCover.filterDesc {ctx : Ctx}
           rsLab[tc + j]! < rsLab[tc + o]!)
     (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell' cursor out := by
+      tcell' cursor best := by
   constructor
   · apply ChildCover.filterDesc h.cover
     · intro x y hkey hdone
@@ -323,9 +326,9 @@ descending-filter rule. -/
 theorem SweepCover.filterAutom {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
     (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
@@ -339,7 +342,7 @@ theorem SweepCover.filterAutom {ctx : Ctx}
         γ[rsLab[tc + o]!]! < rsLab[tc + o]!)
     (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell' cursor out := by
+      tcell' cursor best := by
   apply h.filterDesc _ hsub
   intro o ho
   rcases hm : elem tcell' rsLab[tc + o]! with _ | _
@@ -365,9 +368,9 @@ theorem SweepCover.filterAutom {ctx : Ctx}
 theorem SweepCover.longprune {ctx : Ctx}
     {tcLevel specFuel level fixedpts : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {out : SearchSt}
+    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
     (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
@@ -378,7 +381,7 @@ theorem SweepCover.longprune {ctx : Ctx}
       (fixedpts &&& p.1 == fixedpts) = true →
       PairOk ctx.g rsPtn rsLab level ctx.n p.1 p.2) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      (longprune tcell fixedpts out.autos) cursor out := by
+      (longprune tcell fixedpts out.autos) cursor best := by
   apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
   · intro o ho hm
     change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
@@ -390,9 +393,9 @@ theorem SweepCover.longprune {ctx : Ctx}
 theorem SweepCover.shortprune {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {out : SearchSt}
+    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
     (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
@@ -402,7 +405,7 @@ theorem SweepCover.shortprune {ctx : Ctx}
     (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
       PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      (shortprune tcell out) cursor out := by
+      (shortprune tcell out) cursor best := by
   apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
   · intro o ho hm
     change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
@@ -415,23 +418,23 @@ offset in the original target cell has been absorbed. -/
 theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len numcells tcell : Nat} {cursor : Option Nat}
-    {out : SearchSt}
+    {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hempty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o) :
     ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
-      tc numcells out o :=
+      tc numcells best o :=
   ChildCover.finish h.cover hempty
 
 /-- Completed child coverage bounds the maximum over the whole original
 target cell, not merely the final filtered set. -/
 theorem SweepCover.maxLe {ctx : Ctx} {tcLevel specFuel level tail : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc numcells tcell : Nat} {cursor : Option Nat} {out : SearchSt}
+    {tc numcells tcell : Nat} {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
-      (tail + 1) numcells tcell cursor out)
+      (tail + 1) numcells tcell cursor best)
     (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
-    {b : Key} (hout : stInc ctx out = some b) :
+    {b : Key} (hout : best = some b) :
     keyLe
       (keysMax
         (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
@@ -542,19 +545,19 @@ offset carrying the chosen vertex; callers normally discharge it from
 labelling injectivity. -/
 theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat}
-    {tcell : Nat} {cursor : Option Nat} {out out' : SearchSt}
+    {tcell : Nat} {cursor : Option Nat} {best best' : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = some tv)
     (hcur : ∀ o, o < len → rsLab[tc + o]! = tv →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-        out' o)
+        best' o)
     (hd : ∀ o,
-      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
-        out' o) :
+        best' o) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell (some tv) out' := by
+      tcell (some tv) best' := by
   refine SweepCover.step h ?_ hd ?_
   · intro o ho
     change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
@@ -589,16 +592,16 @@ and at least that least vertex, a contradiction. -/
 theorem SweepCover.done_of_smaller {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tv o j tcell : Nat}
-    {cursor : Option Nat} {out : SearchSt}
+    {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = some tv)
     (hj : j < len)
     (hkey : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
         numcells o =
       sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells j)
     (hrank : rsLab[tc + j]! < tv) :
-    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o := by
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o := by
   rcases h.cover j hj with hjd | ⟨z, hzl, hjz, hzr⟩
   · rcases hjd with ⟨b, hb, hle⟩
     refine ⟨b, hb, ?_⟩
@@ -615,10 +618,10 @@ shows it was already absorbed. -/
 theorem SweepCover.orbitSkip {ctx : Ctx}
     {tcLevel specFuel level tv o : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {out : SearchSt}
+    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
     {gens : List (Array Nat)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = some tv) (ho : o < len)
     (htv : rsLab[tc + o]! = tv)
     (hgsz : ctx.g.size = ctx.n)
@@ -635,7 +638,7 @@ theorem SweepCover.orbitSkip {ctx : Ctx}
     (hsound : OrbSound (OrbConn gens ctx.n) out.orbits ctx.n)
     (hne : out.orbits[tv]! ≠ tv) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      tcell (some tv) out := by
+      tcell (some tv) best := by
   have hvn : tv < ctx.n := by rw [← htv]; exact hok _ (by omega)
   obtain ⟨_, hconn⟩ := orbConn_of_ptr hsound hvn
   unfold WordConn at hconn
@@ -678,12 +681,12 @@ theorem SweepCover.orbitSkip {ctx : Ctx}
 theorem SweepCover.finish_of_nextElem {ctx : Ctx}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {out : SearchSt}
+    {cursor : Option Nat} {best : Option Key}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-      numcells tcell cursor out)
+      numcells tcell cursor best)
     (hnext : nextElem tcell cursor = none) :
     ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
-      tc numcells out o := by
+      tc numcells best o := by
   apply h.finish
   intro o ho
   exact no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
@@ -692,7 +695,7 @@ theorem SweepCover.finish_of_nextElem {ctx : Ctx}
 offset are stored explicitly because neither `gcaFirst` nor `gcaCanon`
 retains this path history. -/
 structure Anchor (ctx : Ctx) (tcLevel target : Nat)
-    (out : SearchSt) where
+    (best : Option Key) where
   positive : 1 ≤ target
   specFuel : Nat
   codes : List Nat
@@ -702,62 +705,60 @@ structure Anchor (ctx : Ctx) (tcLevel target : Nat)
   numcells : Nat
   offset : Nat
   done : ChildDone ctx tcLevel specFuel target codes rsLab rsPtn tc
-    numcells out offset
+    numcells best offset
 
 /-- Why an early return is sound.  Code one and code two retain their
 different reference labellings; comparison pruning has no generator. -/
 inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
-    (out : SearchSt) : Prop where
-  | first (anchor : Anchor ctx tcLevel target out)
+    (out : SearchSt) (best : Option Key) : Prop where
+  | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
-  | canon (anchor : Anchor ctx tcLevel target out)
+  | canon (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
-  | frozen (anchor : Anchor ctx tcLevel target out)
+  | frozen (anchor : Anchor ctx tcLevel target best)
 
-/-- An incumbent can only improve across a search fragment. -/
-@[expose] def IncGrows (ctx : Ctx) (st out : SearchSt) : Prop :=
-  ∀ b, stInc ctx st = some b →
-    ∃ b', stInc ctx out = some b' ∧ keyLe b b'
+/-- A semantic incumbent can only improve across a search fragment. -/
+@[expose] def IncGrows (best out : Option Key) : Prop :=
+  ∀ b, best = some b → ∃ b', out = some b' ∧ keyLe b b'
 
 /-- Every installed output came from the incoming incumbent or this
 node's specification subtree, and the incoming incumbent was not lost. -/
 structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st out : SearchSt) (numcells : Nat) : Prop where
-  upper : ∀ b, stInc ctx out = some b →
-    keyLe b (incMax (stInc ctx st)
+    (cs : List Nat) (st : SearchSt) (numcells : Nat)
+    (best out : Option Key) : Prop where
+  upper : ∀ b, out = some b →
+    keyLe b (incMax best
       (nodeKey ctx tcLevel specFuel level cs st numcells))
-  grows : IncGrows ctx st out
+  grows : IncGrows best out
 
 /-- The state component common to both successful loop outcomes.  The
 loop may stop early, but every incumbent it installs is still bounded by
 the incoming incumbent and the whole parent subtree. -/
 structure LoopSound (ctx : Ctx) (bound : Key)
-    (st out : SearchSt) : Prop where
-  upper : ∀ b, stInc ctx out = some b →
-    keyLe b (incMax (stInc ctx st) bound)
-  grows : IncGrows ctx st out
+    (best out : Option Key) : Prop where
+  upper : ∀ b, out = some b → keyLe b (incMax best bound)
+  grows : IncGrows best out
 
-theorem IncGrows.refl (ctx : Ctx) (st : SearchSt) :
-    IncGrows ctx st st := by
+theorem IncGrows.refl (best : Option Key) : IncGrows best best := by
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
 
 theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
-    NodeSound ctx tcLevel specFuel level cs st st numcells := by
+    (cs : List Nat) (st : SearchSt) (numcells : Nat) (best : Option Key) :
+    NodeSound ctx tcLevel specFuel level cs st numcells best best := by
   constructor
   · intro b hb
     rw [hb, incMax]
     exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
-  · exact IncGrows.refl ctx st
+  · exact IncGrows.refl best
 
-theorem LoopSound.refl (ctx : Ctx) (bound : Key) (st : SearchSt) :
-    LoopSound ctx bound st st := by
+theorem LoopSound.refl (ctx : Ctx) (bound : Key) (best : Option Key) :
+    LoopSound ctx bound best best := by
   constructor
   · intro b hb
     rw [hb, incMax]
     exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
-  · exact IncGrows.refl ctx st
+  · exact IncGrows.refl best
 
 theorem keyMax_le_of_le {a b c : Key} (ha : keyLe a c)
     (hb : keyLe b c) : keyLe (keyMax a b) c := by
@@ -779,9 +780,9 @@ theorem incMax_mono_right (inc : Option Key) {a b : Key}
     · exact keyLe_iff.mpr (keyMax_not_lt_left x b)
     · exact keyLe_trans h (keyLe_iff.mpr (keyMax_not_lt_right x b))
 
-theorem IncGrows.trans {ctx : Ctx} {st mid out : SearchSt}
-    (h₁ : IncGrows ctx st mid) (h₂ : IncGrows ctx mid out) :
-    IncGrows ctx st out := by
+theorem IncGrows.trans {best mid out : Option Key}
+    (h₁ : IncGrows best mid) (h₂ : IncGrows mid out) :
+    IncGrows best out := by
   intro b hb
   obtain ⟨m, hm, hbm⟩ := h₁ b hb
   obtain ⟨c, hc, hmc⟩ := h₂ m hm
@@ -789,42 +790,43 @@ theorem IncGrows.trans {ctx : Ctx} {st mid out : SearchSt}
 
 /-- A sound child step is sound against any larger fixed loop bound. -/
 theorem LoopSound.ofNode {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
-    {cs : List Nat} {st out : SearchSt} {bound : Key}
-    (h : NodeSound ctx tcLevel specFuel level cs st out numcells)
+    {cs : List Nat} {st : SearchSt} {bound : Key}
+    {best out : Option Key}
+    (h : NodeSound ctx tcLevel specFuel level cs st numcells best out)
     (hle : keyLe (nodeKey ctx tcLevel specFuel level cs st numcells)
-      bound) : LoopSound ctx bound st out := by
+      bound) : LoopSound ctx bound best out := by
   constructor
   · intro b hb
     exact keyLe_trans (h.upper b hb)
-      (incMax_mono_right (stInc ctx st) hle)
+      (incMax_mono_right best hle)
   · exact h.grows
 
 /-- Consecutive fragments with the same fixed bound compose. -/
 theorem LoopSound.trans {ctx : Ctx} {bound : Key}
-    {st mid out : SearchSt} (h₁ : LoopSound ctx bound st mid)
-    (h₂ : LoopSound ctx bound mid out) : LoopSound ctx bound st out := by
+    {best mid out : Option Key} (h₁ : LoopSound ctx bound best mid)
+    (h₂ : LoopSound ctx bound mid out) : LoopSound ctx bound best out := by
   constructor
   · intro b hb
     have hb₂ := h₂.upper b hb
-    rcases hm : stInc ctx mid with _ | m
+    rcases hm : mid with _ | m
     · rw [hm, incMax] at hb₂
-      exact keyLe_trans hb₂ (keyLe_incMax_right (stInc ctx st) bound)
+      exact keyLe_trans hb₂ (keyLe_incMax_right best bound)
     · rw [hm, incMax] at hb₂
       apply keyLe_trans hb₂
       apply keyMax_le_of_le
       · exact h₁.upper m hm
-      · exact keyLe_incMax_right (stInc ctx st) bound
+      · exact keyLe_incMax_right best bound
   · exact h₁.grows.trans h₂.grows
 
 /-- Matching upper and lower bounds turn loop soundness into the exact
 incumbent equation required when a parent node completes. -/
 theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
-    {st out : SearchSt} (h : LoopSound ctx bound st out)
-    (hout : stInc ctx out = some b) (hlower : keyLe bound b) :
-    stInc ctx out = some (incMax (stInc ctx st) bound) := by
+    {best out : Option Key} (h : LoopSound ctx bound best out)
+    (hout : out = some b) (hlower : keyLe bound b) :
+    out = some (incMax best bound) := by
   have hupper := h.upper b hout
-  have hlower' : keyLe (incMax (stInc ctx st) bound) b := by
-    rcases hin : stInc ctx st with _ | a
+  have hlower' : keyLe (incMax best bound) b := by
+    rcases hin : best with _ | a
     · rw [incMax]
       exact hlower
     · obtain ⟨b', hb', hab'⟩ := h.grows a hin
@@ -841,7 +843,7 @@ original children recovers the exact final incumbent. -/
 theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
     {tc numcells tcell : Nat} {cursor : Option Nat}
-    {st out : SearchSt} {b : Key}
+    {best out : Option Key} {b : Key}
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
       (tail + 1) numcells tcell cursor out)
     (hempty : ∀ o,
@@ -852,9 +854,9 @@ theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
           numcells 0)
         ((List.range tail).map fun o =>
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-            numcells (o + 1))) st out)
-    (hout : stInc ctx out = some b) :
-    stInc ctx out = some (incMax (stInc ctx st)
+          numcells (o + 1))) best out)
+    (hout : out = some b) :
+    out = some (incMax best
       (keysMax
         (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
           numcells 0)
@@ -869,18 +871,21 @@ theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
 therefore a constructor, not an inequality side condition. -/
 inductive NodeResult (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
     (cs : List Nat) (st out : SearchSt) (numcells : Nat)
-    (r : Int) : Prop where
-  | complete (sound : NodeSound ctx tcLevel specFuel level cs st out
-      numcells)
+    (best outBest : Option Key) (r : Int) : Prop where
+  | complete (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
       (returned : r = Int.ofNat level - 1)
       (installed : out.canonlevel ≠ 0)
-      (full : stInc ctx out = some (incMax (stInc ctx st)
+      (read : stInc ctx out = outBest)
+      (full : outBest = some (incMax best
         (nodeKey ctx tcLevel specFuel level cs st numcells)))
-  | unwind (sound : NodeSound ctx tcLevel specFuel level cs st out
-      numcells)
+  | unwind (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
       (target : Nat) (returned : r = Int.ofNat target)
-      (below : target < level) (payload : Unwind ctx tcLevel target out)
-  | exhausted (empty : runFuel = 0) (returned : r = 0) (unchanged : out = st)
+      (below : target < level)
+      (payload : Unwind ctx tcLevel target out outBest)
+  | exhausted (empty : runFuel = 0) (returned : r = 0)
+      (unchanged : out = st) (bestUnchanged : outBest = best)
 
 /-- The result of a child-loop call.  Exhaustion is distinct from a
 completed empty remainder, so a general theorem cannot accidentally treat
@@ -888,23 +893,24 @@ the `cfuel = 0` arm as coverage of every child. -/
 inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
     (cursor : Option Nat) (bound : Key) (st out : SearchSt)
-    (r : Option Int) : Prop where
+    (best outBest : Option Key) (r : Option Int) : Prop where
   | complete
       (returned : r = none)
-      (sound : LoopSound ctx bound st out)
+      (sound : LoopSound ctx bound best outBest)
       (finalSet : Nat) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-        numcells finalSet finalCursor out)
+        numcells finalSet finalCursor outBest)
       (empty : ∀ o, ¬ ChildLive rsLab tc len finalSet finalCursor o)
-  | unwind (sound : LoopSound ctx bound st out)
+  | unwind (sound : LoopSound ctx bound best outBest)
       (target : Nat) (returned : r = some (Int.ofNat target))
-      (below : target < level) (payload : Unwind ctx tcLevel target out)
+      (below : target < level)
+      (payload : Unwind ctx tcLevel target out outBest)
   | exhausted
       (returned : r = none)
-      (sound : LoopSound ctx bound st out)
+      (sound : LoopSound ctx bound best outBest)
       (finalSet : Nat) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-        numcells finalSet finalCursor out)
+        numcells finalSet finalCursor outBest)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
       (bounded : ∀ v, finalCursor = some v → v < ctx.n)
 
@@ -915,11 +921,12 @@ theorem LoopResult.reindexSet {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
     {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key}
     {r : Option Int}
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
-      rsPtn tc len numcells tcell cursor bound st out r) :
+      rsPtn tc len numcells tcell cursor bound st out best outBest r) :
     LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
-      tc len numcells tcell' cursor bound st out r := by
+      tc len numcells tcell' cursor bound st out best outBest r := by
   cases h with
   | complete returned sound finalSet finalCursor cover empty =>
       exact .complete returned sound finalSet finalCursor cover empty
@@ -935,12 +942,13 @@ theorem LoopResult.step {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
     {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key}
     {r : Option Int}
     (ha : After cursor tv)
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
-      rsPtn tc len numcells tcell (some tv) bound st out r) :
+      rsPtn tc len numcells tcell (some tv) bound st out best outBest r) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
-      rsPtn tc len numcells tcell cursor bound st out r := by
+      rsPtn tc len numcells tcell cursor bound st out best outBest r := by
   cases h with
   | complete returned sound finalSet finalCursor cover empty =>
       exact .complete returned sound finalSet finalCursor cover empty
@@ -957,20 +965,22 @@ is impossible with the root runtime fuel, and every unwind anchor has a
 positive target, so neither non-complete constructor survives at level
 one. -/
 theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
+    {best : Option Key}
     (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length
+      none best
       (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
     canonSpecKey G = tracedKey G := by
   cases hroot with
-  | complete sound returned installed full =>
-      rw [stInc_final hn0 installed, stInc_rootSt, incMax,
-        nodeKey_root hn0] at full
-      exact (Option.some.inj full).symm
+  | complete sound returned installed read full =>
+      rw [stInc_final hn0 installed] at read
+      rw [incMax, nodeKey_root hn0] at full
+      exact (Option.some.inj (read.trans full)).symm
   | unwind sound target returned below payload =>
       cases payload with
       | first anchor carrier =>
@@ -979,17 +989,18 @@ theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
       | frozen anchor =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
-  | exhausted empty returned unchanged => omega
+  | exhausted empty returned unchanged bestUnchanged => omega
 
 /-- Certificate-checked canonicalization is total once the corrected root
 node outcome has been established. -/
 theorem certifyCanon?_isSome_of_result {n k : Nat} {G : Colored n k}
-    (hn0 : n ≠ 0)
+    (hn0 : n ≠ 0) {best : Option Key}
     (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length
+      none best
       (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
