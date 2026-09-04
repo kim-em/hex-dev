@@ -53,4 +53,43 @@ theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
 
 end Live
 
+/-- A non-first leaf event whose branch does not append a generator
+produces the complete result-side package.  The caller supplies the strict
+return bound because `processnode` itself also has a non-unwinding result
+at the current level. -/
+theorem RunPrep.leafEvent {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {stem codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hbound : st.noncheaplevel ≤ level)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hreturn : (processnode ctx level numcells st).1 ≤
+      Int.ofNat level - 1)
+    (hgen : (processnode ctx level numcells st).2.genTrace = st.genTrace)
+    (hprep : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ bs',
+      EventOut G ctx tcLevel stem fs
+          (processnode ctx level numcells st).2
+          (some (incKey ctx bs'
+            (processnode ctx level numcells st).2.canonlab)) trail
+          (processnode ctx level numcells st).1 ∧
+        incKey ctx bs' (processnode ctx level numcells st).2.canonlab =
+          keyMax (incKey ctx bs st.canonlab)
+            (pathLeafKey ctx codes st.lab) := by
+  obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf hn hn0 hgb hsymm hloop
+    hlevel hpath hbound hef hnc
+  refine ⟨bs', ?_, hmax⟩
+  apply EventOut.intro level codes bs' hevent hpath hstem
+  · omega
+  · exact (hlive.stable.lower hreturn).ofGenTraceEq hgen
+  · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
+
 end Hex.GraphIso.Nauty
