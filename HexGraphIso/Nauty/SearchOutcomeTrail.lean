@@ -492,4 +492,47 @@ theorem Guide.canonLocated {ctx : Ctx} {tcLevel level numcells : Nat}
     exact hcarrier
   exact ⟨Unwind.canon anchor hout, .canon anchor hout hanchor⟩
 
+/-- A row-tied code-two event carries location evidence in both return
+arms: the canonical arm uses its stored guide, while the first-ancestor
+arm is the loop-local orbit return. -/
+theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (g : Guide ctx tcLevel st.gcaCanon best)
+    (href : g.ref = st.canonlab) (hloc : g.Located trail)
+    (htrail : TrailOk ctx level st trail)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hcanonBelow : st.gcaCanon < level)
+    (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (horbit : OrbSound
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
+      (processnode ctx level numcells st).2.orbits ctx.n) :
+    ∃ target,
+      (processnode ctx level numcells st).1 = Int.ofNat target ∧
+      target < level ∧
+      ∃ payload : Unwind ctx tcLevel target
+          (processnode ctx level numcells st).2 best,
+        payload.Located trail := by
+  rcases processnode_rowTie_orbit hef hnc hcc hge htie with hcanon |
+      ⟨hfirst, hsmaller⟩
+  · obtain ⟨payload, hpayload⟩ := g.canonLocated href hloc htrail
+      hcanonBelow hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows hef hnc hcc hge htie
+    exact ⟨st.gcaCanon, hcanon, hcanonBelow, payload, hpayload⟩
+  · let payload : Unwind ctx tcLevel st.gcaFirst
+        (processnode ctx level numcells st).2 best :=
+      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩
+    exact ⟨st.gcaFirst, hfirst, hfirstBelow, payload,
+      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
+
 end Hex.GraphIso.Nauty
