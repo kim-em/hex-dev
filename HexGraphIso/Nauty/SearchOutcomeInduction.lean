@@ -717,7 +717,7 @@ node entry. The loop supplies the two facts that depend on its history:
 the cheap-boundary state selected by the guard and the newly active guide
 store. Parent equitability seeds the child's refinement certificate. -/
 theorem RunInv.child {G : Colored n k} {ctx : Ctx}
-    {tcLevel level numcells tc len o : Nat}
+    {tcLevel level numcells tc len o coset : Nat}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail childTrail : FrameTrail}
     (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
@@ -736,7 +736,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
         active := (breakout st.lab st.ptn (level + 1) tc
           st.lab[tc + o]!).2.2
         fixedpts := insert st.fixedpts st.lab[tc + o]!
-        cosetindex := st.lab[tc + o]! }
+        cosetindex := coset }
       best childTrail)
     (htrail : TrailOk ctx (level + 1)
       { st with
@@ -747,7 +747,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
         active := (breakout st.lab st.ptn (level + 1) tc
           st.lab[tc + o]!).2.2
         fixedpts := insert st.fixedpts st.lab[tc + o]!
-        cosetindex := st.lab[tc + o]! }
+        cosetindex := coset }
       childTrail) :
     NodeInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
       { st with
@@ -758,7 +758,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
         active := (breakout st.lab st.ptn (level + 1) tc
           st.lab[tc + o]!).2.2
         fixedpts := insert st.fixedpts st.lab[tc + o]!
-        cosetindex := st.lab[tc + o]! }
+        cosetindex := coset }
       best childTrail := by
   subst n
   let child : SearchSt := { st with
@@ -769,7 +769,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
     active := (breakout st.lab st.ptn (level + 1) tc
       st.lab[tc + o]!).2.2
     fixedpts := insert st.fixedpts st.lab[tc + o]!
-    cosetindex := st.lab[tc + o]! }
+    cosetindex := coset }
   have hok : SearchOk G (level + 1) (numcells + 1) child := by
     apply breakout_searchOk hn0 h.searchOk hlevel hcell hlen hrange ho
     · rfl
