@@ -9,6 +9,9 @@ module
 public import HexGraphIso.Nauty.LoopCoverage
 public import HexGraphIso.Nauty.QuartetStmt
 public import HexGraphIso.Nauty.AutosLedger
+import all HexGraphIso.Nauty.OrbJoin
+import all HexGraphIso.Nauty.EquitableStep
+import HexGraphIso.Nauty.QuartetLoop
 
 public section
 
@@ -483,6 +486,97 @@ theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
       · exact hd o (h.past o ho hm (by
           dsimp only [After]
           omega))
+
+/-- A child whose key is carried to a strictly smaller target-cell vertex
+is already covered when the loop is about to visit the least eligible
+vertex.  Any live witness supplied by ranked coverage would be both below
+and at least that least vertex, a contradiction. -/
+theorem SweepCover.done_of_smaller {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv o j tcell : Nat}
+    {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hnext : nextElem tcell cursor = some tv)
+    (hj : j < len)
+    (hkey : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+        numcells o =
+      sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells j)
+    (hrank : rsLab[tc + j]! < tv) :
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o := by
+  rcases h.cover j hj with hjd | ⟨z, hzl, hjz, hzr⟩
+  · rcases hjd with ⟨b, hb, hle⟩
+    refine ⟨b, hb, ?_⟩
+    rw [hkey]
+    exact hle
+  · have htvz := nextElem_le hnext hzl.2.1 hzl.2.2
+    have : rsLab[tc + z]! < tv := Nat.lt_of_le_of_lt hzr hrank
+    omega
+
+/-- The non-root arm of the first-path orbit test is a covered skip.  Orbit
+soundness supplies a smaller word-connected pointer target; cell
+stabilization keeps that target in the sibling cell, and ranked coverage
+shows it was already absorbed. -/
+theorem SweepCover.orbitSkip {ctx : Ctx}
+    {tcLevel specFuel level tv o : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {out : SearchSt}
+    {gens : List (Array Nat)}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hnext : nextElem tcell cursor = some tv) (ho : o < len)
+    (htv : rsLab[tc + o]! = tv)
+    (hgsz : ctx.g.size = ctx.n)
+    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true)
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hsound : OrbSound (OrbConn gens ctx.n) out.orbits ctx.n)
+    (hne : out.orbits[tv]! ≠ tv) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell (some tv) out := by
+  have hvn : tv < ctx.n := by rw [← htv]; exact hok _ (by omega)
+  obtain ⟨_, hconn⟩ := orbConn_of_ptr hsound hvn
+  unfold WordConn at hconn
+  obtain ⟨w, hw, happ⟩ := hconn
+  obtain ⟨_, hwstab, hwpoint⟩ :=
+    wordPerm_spec hbg hok hsp hs hend hv hstab w hw
+  have hW : elem (windowSet rsLab tc len) out.orbits[tv]! = true := by
+    have := windowSet_carry hwstab hic (by rw [hs]; exact hrange)
+      (elem_windowSet.mpr (List.mem_map.mpr
+        ⟨o, List.mem_range.mpr ho, rfl⟩))
+    rw [htv, hwpoint _ hvn, happ] at this
+    exact this
+  obtain ⟨j, hj, hptr⟩ := List.mem_map.mp (elem_windowSet.mp hW)
+  have hjlt : j < len := List.mem_range.mp hj
+  have hptr' : out.orbits[rsLab[tc + o]!]! = rsLab[tc + j]! := by
+    rw [htv]
+    exact hptr.symm
+  have hkey : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells o =
+        sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells j := by
+    unfold sweepKey
+    rw [childKey_of_orbitPtr (n := ctx.n) (ctx := ctx) rfl hgsz hbg hv
+      tcLevel specFuel level hstab hs hok hsp hend hvals hic hrange ho
+      hjlt hlf hsound hptr']
+  have hjrank : rsLab[tc + j]! < tv := by
+    have hle := (hsound.2 tv hvn).1
+    rw [hptr]
+    omega
+  have hdone := h.done_of_smaller hnext hjlt hkey hjrank
+  apply h.advance hnext _ (fun _ hx => hx)
+  intro q hq hqtv
+  unfold LabInj at hinj
+  have hqo' : tc + q = tc + o := hinj (tc + q) (tc + o)
+    (by rw [hs]; omega) (by rw [hs]; omega) (hqtv.trans htv.symm)
+  have hqo : q = o := by omega
+  rwa [hqo]
 
 /-- The executable loop terminator discharges the live-set premise of
 `SweepCover.finish`. -/
