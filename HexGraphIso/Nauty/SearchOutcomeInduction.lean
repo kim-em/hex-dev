@@ -439,6 +439,15 @@ private theorem pushAuto_canonRef (st : SearchSt) (p : Nat × Nat) :
   rw [pushAuto]
   split <;> rfl
 
+private theorem pushAuto_canonLevel (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canonlevel = st.canonlevel := by
+  rw [pushAuto]
+  split <;> rfl
+
+private theorem ite_nonzero (p : Prop) [Decidable p] {a b : Nat}
+    (ha : a ≠ 0) (hb : b ≠ 0) : (if p then a else b) ≠ 0 := by
+  split <;> assumption
+
 private theorem ite_or' {α : Type} {P : α → Prop} {c : Prop}
     [Decidable c] {a b : α} (ha : P a) (hb : P b) :
     P (if c then a else b) := by
@@ -484,5 +493,20 @@ theorem LeafRefsOk.processnode {G : Colored n k} {ctx : Ctx}
       exact h.canonReach
     · rw [heq]
       exact hok.reach
+
+/-- Once an incumbent exists, `processnode` either retains its positive
+level or replaces it by the current positive level. -/
+theorem processnode_installed {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt} (hlevel : 0 < level) (hold : st.canonlevel ≠ 0) :
+    (processnode ctx level numcells st).2.canonlevel ≠ 0 := by
+  have hnew : level ≠ 0 := Nat.ne_of_gt hlevel
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.canonlevel),
+    pushAuto_canonLevel, ite_self]
+  repeat' first
+  | exact hold
+  | exact hnew
+  | apply ite_nonzero
 
 end Hex.GraphIso.Nauty
