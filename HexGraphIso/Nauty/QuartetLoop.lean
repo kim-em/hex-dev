@@ -383,4 +383,151 @@ theorem orbPruned_of_wordConn {nn : Nat} {gens : List (Array Nat)}
   refine List.any_eq_true.mpr ⟨o', List.mem_range.mpr ho', ?_⟩
   exact orbitClose_of_wordConn hb hv hconn
 
+/-! # Word-connected siblings have equal child keys
+
+`childKey_of_orbPruned` concludes with an existential `o' < o`, which
+is the shape `orbPruned` hands it and not the shape the loop needs: a
+skipped child must be matched with an offset the loop actually
+explored, and that offset need not come earlier in the labelling. The
+ordering is incidental to the mathematics. `childKey_of_carried` takes
+two offsets with no ordering at all, so composing the word first and
+applying that is both cleaner and stronger. -/
+
+/-- **Word-connected members of a target cell have equal child keys.**
+The word composes to a single checked, cell-stabilizing automorphism
+carrying one member onto the other, and `childKey_of_carried`
+transports the subtree key. No ordering of the two offsets is
+involved. -/
+theorem childKey_of_wordConn {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+    {gens : List (Array Nat)}
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
+    {tc lenT numcells o o' : Nat}
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) (ho' : o' < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hconn : WordConn gens rsLab[tc + o']! rsLab[tc + o]!) :
+    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
+  obtain ⟨w, hw, happ⟩ := hconn
+  obtain ⟨hAutC, hstabC, hpointC⟩ :=
+    wordPerm_spec hbg hok hsp hs hend hv hstab w hw
+  refine childKey_of_carried hn hgsz (by rwa [hn]) tcLevel fuel level
+    hstabC hs hok hsp hend hvals hic hrange ho ho' hlf ?_
+  rw [hpointC _ (hok _ (by omega)), happ]
+
+/-- The same, with the connection in the other direction. Forward
+words suffice because a checked automorphism's inverse is one of its
+own forward powers, which is what `wordConn_symm` records. -/
+theorem childKey_of_wordConn' {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+    {gens : List (Array Nat)}
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
+    {tc lenT numcells o o' : Nat}
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) (ho' : o' < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hconn : WordConn gens rsLab[tc + o]! rsLab[tc + o']!) :
+    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
+  refine childKey_of_wordConn hn hgsz hbg hv tcLevel fuel level hstab
+    hs hok hsp hend hvals hic hrange ho ho' hlf ?_
+  have hbnd : ∀ γ ∈ gens, ∀ v, v < n → γ[v]! < n := fun γ hγ v hv' =>
+    checkAutom_bound (hv γ hγ) v hv'
+  have hinj : ∀ γ ∈ gens, ∀ a b, a < n → b < n →
+      γ[a]! = γ[b]! → a = b := fun γ hγ => checkAutom_inj (hv γ hγ)
+  obtain ⟨w, hw, happ⟩ := hconn
+  exact wordConn_symm hbnd hinj w (hok _ (by omega)) hw happ
+
+/-! # The loop's orbit test
+
+The transcription does not consult a closure: it reads one entry of
+the `orbits` union-find array and compares it with the vertex. These
+are the two forms the child loop needs, one for a single pointer read
+and one for a chase, which is what reaches an orbit representative
+when the pointer's target was itself skipped. Both reduce to
+`childKey_of_wordConn'`: the pointer relation is word connectivity by
+`OrbJoin`'s soundness invariant, and word connectivity equates the
+child keys. -/
+
+/-- A pointer chase from a sound array stays in range and stays word
+connected. `orbSound_iter` wants an unconditionally reflexive
+relation, which `OrbConn` is not, so the chase is done directly. -/
+private theorem orbConn_ptrIter {gens : List (Array Nat)}
+    {orbits : Array Nat}
+    (hsound : OrbSound (OrbConn gens n) orbits n) :
+    ∀ (k v : Nat), v < n →
+      ptrIter orbits v k < n ∧ WordConn gens v (ptrIter orbits v k)
+  | 0, v, hv => ⟨hv, wordConn_refl gens v⟩
+  | k + 1, v, hv => by
+    obtain ⟨hlt, hconn⟩ := orbConn_ptrIter hsound k v hv
+    obtain ⟨hlt', hconn'⟩ := orbConn_of_ptr hsound hlt
+    rw [ptrIter]
+    exact ⟨hlt', wordConn_trans hconn hconn'⟩
+
+/-- **A skipped child repeats the key of its orbit pointer's target.**
+This is the domination fact for one step of the transcription's orbit
+test. -/
+theorem childKey_of_orbitPtr {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+    {gens : List (Array Nat)} {orbits : Array Nat}
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
+    {tc lenT numcells o o' : Nat}
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) (ho' : o' < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hsound : OrbSound (OrbConn gens n) orbits n)
+    (hptr : orbits[rsLab[tc + o]!]! = rsLab[tc + o']!) :
+    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
+  obtain ⟨-, hconn⟩ := orbConn_of_ptr hsound (hok (tc + o) (by omega))
+  rw [hptr] at hconn
+  exact childKey_of_wordConn' hn hgsz hbg hv tcLevel fuel level hstab
+    hs hok hsp hend hvals hic hrange ho ho' hlf hconn
+
+/-- **A skipped child repeats the key at the end of its pointer
+chase.** The chase is what reaches an orbit representative, which is
+the offset the loop actually explored, so this is the form the
+domination step applies. -/
+theorem childKey_of_ptrIter {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+    {gens : List (Array Nat)} {orbits : Array Nat}
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
+    {tc lenT numcells o o' k : Nat}
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
+    (ho : o < lenT) (ho' : o' < lenT)
+    (hlf : level + 1 + fuel ≤ n + 1)
+    (hsound : OrbSound (OrbConn gens n) orbits n)
+    (hptr : ptrIter orbits rsLab[tc + o]! k = rsLab[tc + o']!) :
+    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
+      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
+  have hbnd : ∀ γ ∈ gens, ∀ v, v < n → γ[v]! < n := fun γ hγ v hv' =>
+    checkAutom_bound (hv γ hγ) v hv'
+  have hinj : ∀ γ ∈ gens, ∀ a b, a < n → b < n →
+      γ[a]! = γ[b]! → a = b := fun γ hγ => checkAutom_inj (hv γ hγ)
+  obtain ⟨-, hconn⟩ := orbConn_ptrIter hsound k _ (hok (tc + o) (by omega))
+  rw [hptr] at hconn
+  exact childKey_of_wordConn' hn hgsz hbg hv tcLevel fuel level hstab
+    hs hok hsp hend hvals hic hrange ho ho' hlf hconn
+
 end Hex.GraphIso.Nauty
