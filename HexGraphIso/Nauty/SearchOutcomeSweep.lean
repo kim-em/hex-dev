@@ -1172,4 +1172,147 @@ theorem done {G : Colored n k} {ctx : Ctx}
 
 end OtherLoopRun
 
+namespace FirstLoopRun
+
+theorem reindexSet {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (h : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.proof.reindexSet, h.exit.reindexSet, h.short⟩
+
+theorem step {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
+    (h : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out best
+      outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r :=
+  ⟨h.proof.step ha, h.exit.step ha, h.short⟩
+
+theorem prepend {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st recSt out : SearchSt} {best mid outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (h : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
+      outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.proof.prepend hfixed hpre, h.exit.prepend hpre, h.short⟩
+
+/-- Zero cursor fuel is retained as exhaustion for the first-path sweep. -/
+theorem zero {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 index : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tv? cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n)
+    (hfirst : FirstTrail ctx (level + 1) st trail)
+    (hcanon : CanonTrail ctx level st trail)
+    (hguide : level ≤ st.gcaFirst) (horder : st.gcaFirst ≤ st.gcaCanon) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel 0 level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).1 := by
+  refine ⟨FirstLoopProof.zero hpath hstem hpast hnp hinv hlive hcursor
+    hfirst hcanon hguide horder, ?_, ?_⟩
+  · apply LoopExit.exhausted (finalCursor := cursor)
+    · unfold firstChildLoop
+      rfl
+    · omega
+    · exact hcursor
+  · intro hshort
+    unfold firstChildLoop at hshort
+    simp only at hshort
+    rw [hinv.shortClear] at hshort
+    cases hshort
+
+/-- An absent next vertex completes a positive-fuel first-path sweep. -/
+theorem done {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 index tail : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hfirst : FirstTrail ctx (level + 1) st trail)
+    (hcanon : CanonTrail ctx level st trail)
+    (hguide : level ≤ st.gcaFirst) (horder : st.gcaFirst ≤ st.gcaCanon) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).1 := by
+  have hproof := FirstLoopProof.done (inf := inf) (runFuel := runFuel)
+    (loopFuel := loopFuel) (tv1 := tv1) (index := index) (bound := bound)
+    hpath hstem hpast hnext hnp hbound hlen hinv hlive hfirst hcanon
+      hguide horder
+  have hread : stInc ctx st = best := hinv.run.read (by omega)
+  have hreadSome : stInc ctx st = some (incKey ctx bs st.canonlab) :=
+    hread.trans hinv.run.incumbent
+  have hinstalled : st.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc hreadSome
+  have hempty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o := by
+    intro o ho
+    exact no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+  have hexact : best = some (incMax best bound) := by
+    rw [hlen] at hinv hempty
+    exact hinv.cover.exact_of_read hbound hempty
+      (.refl ctx bound best) hinstalled hread
+  refine ⟨hproof, LoopExit.done ?_ hexact, ?_⟩
+  · unfold firstChildLoop
+    rfl
+  · intro hshort
+    unfold firstChildLoop at hshort
+    simp only at hshort
+    rw [hinv.shortClear] at hshort
+    cases hshort
+
+end FirstLoopRun
+
 end Hex.GraphIso.Nauty
