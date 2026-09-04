@@ -340,6 +340,73 @@ theorem CheapOk.refine {ctx : Ctx} {rlab rptn : Array Nat}
     rw [hlab, hptn, hncl, ← hfm]
     exact h.pair hlt
 
+/-- Individualizing inside a current cell does not change the implicit
+pair frozen at an older cheap boundary. -/
+theorem CheapOk.breakout {ctx : Ctx} {rlab rptn : Array Nat}
+    {level tc len o : Nat} {st out : SearchSt}
+    (h : CheapOk ctx rlab rptn (level + 1) st)
+    (hlevel : 1 ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len)
+    (hlab : out.lab =
+      (Nauty.breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).1)
+    (hptn : out.ptn = st.ptn.set! tc (level + 1))
+    (hncl : out.noncheaplevel = st.noncheaplevel) :
+    CheapOk ctx rlab rptn (level + 1) out := by
+  have hls : st.lab.size = st.ptn.size := h.labSize.trans h.ptnSize.symm
+  have hpos := h.positive
+  have hend : st.ptn[st.ptn.size - 1]! ≤ level :=
+    Nat.le_trans h.rootEnd hlevel
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · rw [hncl]
+    exact h.positive
+  · rw [hlab, breakout_lab_size]
+    exact h.labSize
+  · rw [hptn, Array.size_set!]
+    exact h.ptnSize
+  · rw [hptn, Array.size_set!]
+    rw [Array.getElem!_set!_ne _ _ _ _ (by rw [h.ptnSize]; omega)]
+    exact h.rootEnd
+  · intro hlt
+    rw [hncl] at hlt
+    have hsaved : st.noncheaplevel ≤ level := by omega
+    have hendSaved : st.ptn[st.ptn.size - 1]! ≤
+        st.noncheaplevel := Nat.le_trans h.rootEnd (by omega)
+    have hcells : cells st.ptn st.noncheaplevel ctx.n =
+        cells (st.ptn.set! tc (level + 1)) st.noncheaplevel ctx.n := by
+      apply Eq.symm
+      apply cells_eq_of_low (by rw [Array.size_set!])
+      intro q hq
+      rcases Decidable.em (q = tc) with heq | hne
+      · subst q
+        have hopen := hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
+        rw [Array.getElem!_set!_self _ _ _ (by rw [h.ptnSize]; omega)] at hq
+        rcases hq with hq | hq <;> omega
+      · rw [Array.getElem!_set!_ne _ _ _ _ (fun he => hne he.symm)]
+    have hperm : cellsPerm st.ptn st.noncheaplevel st.lab
+        (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1 := by
+      apply cellsPerm_coarsen (ptnC := st.ptn) (ptnF := st.ptn)
+          (levC := st.noncheaplevel) (levF := level)
+      · rfl
+      · exact hls
+      · rw [breakout_lab_size]
+        exact hls
+      · exact breakout_cellsPerm hcell (by rw [h.ptnSize]; exact hrange)
+          hls ho
+      · exact hend
+      · exact hendSaved
+      · intro q hq
+        exact Nat.le_trans hq hsaved
+    have hfm : fmptn st.lab st.ptn st.noncheaplevel ctx.n =
+        fmptn (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1 (st.ptn.set! tc (level + 1))
+          st.noncheaplevel ctx.n :=
+      fmptn_congr (Nat.le_of_eq h.ptnSize.symm) hendSaved hcells hperm
+    rw [hlab, hptn, hncl, ← hfm]
+    exact h.pair hlt
+
 /-- The initial search boundary is one, so its strict pair obligation is
 empty at the root. -/
 theorem CheapOk.root {G : Colored n k} {ctx : Ctx} {numcells : Nat}
