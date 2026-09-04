@@ -39,6 +39,7 @@ inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
       (payload : Unwind ctx tcLevel target out outBest)
       (located : payload.Located trail)
   | frozen
+      (below : r < Int.ofNat level)
       (exact : outBest = some (incMax best
         (nodeKey ctx tcLevel specFuel level codes st numcells)))
       (freeze : FrozenOut ctx codes out outBest r)
@@ -203,6 +204,7 @@ theorem toNodeSome {ctx : Ctx}
   | frozen value returned below exact freeze =>
       cases Option.some.inj returned
       apply NodeExit.frozen
+      · exact below
       · simpa only [← hbound] using exact
       · exact (freeze.shrink hprefix)
   | cheap boundary returned positive below exact =>
@@ -303,13 +305,14 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
       numcells best outBest trail
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
     rcases hmode with hfreeze | hjump
-    · apply NodeExit.frozen hexact
+    · rw [hout]
+      apply NodeExit.frozen hearly hexact
       have hreadOut : stInc ctx (processnode ctx level ctx.n leaf).2 =
           outBest := by
         rw [← hout]
         exact houtcome.event.read
       have hsame : best = outBest := hfreeze.read.symm.trans hreadOut
-      rw [hout, ← hsame]
+      rw [← hsame]
       simpa only [leaf] using hfreeze
     · apply NodeExit.cheap leaf.noncheaplevel
       · rw [hout]
