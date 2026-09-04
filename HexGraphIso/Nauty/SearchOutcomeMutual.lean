@@ -111,6 +111,50 @@ structure FirstLive (ctx : Ctx) (level : Nat) (st : SearchSt)
   frameStab : ∀ γ ∈ st.genTrace.toList,
     CellStab rsPtn level rsLab γ
 
+namespace OtherOutcome
+
+/-- Cleaning and recovering a completed off-path child reconstructs both
+the parent's stable run invariant and its off-path live package. -/
+theorem recover {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel childNumcells numcells level inf fixedpts : Nat}
+    {codes fs : List Nat} {child out : SearchSt}
+    {best outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
+    {r : Int}
+    (h : OtherOutcome G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      child out childNumcells best outBest receiptTrail eventTrail r)
+    (hreturn : r = Int.ofNat level) (hpath : codes.length = level)
+    (hlevel : 1 ≤ level) (hinf : level < inf)
+    (hfirst : child.gcaFirst < level)
+    (hok : SearchOk G level numcells
+      (Nauty.recover ctx.n inf level { out with fixedpts := fixedpts })) :
+    ∃ bs,
+      RunInv G ctx tcLevel level codes bs fs numcells
+          (Nauty.recover ctx.n inf level { out with fixedpts := fixedpts })
+          outBest eventTrail ∧
+        OtherLive ctx level
+          (Nauty.recover ctx.n inf level { out with fixedpts := fixedpts })
+          eventTrail := by
+  have hfirstOut : out.gcaFirst < level := by
+    rw [h.firstGuide]
+    exact hfirst
+  have hfirstClean : ({ out with fixedpts := fixedpts } : SearchSt).gcaFirst ≤
+      level := Nat.le_of_lt hfirstOut
+  obtain ⟨bs, hrun, hstable, hhistory⟩ :=
+    h.node.event.setFixed fixedpts |>.recoverRun hreturn hpath hlevel hinf
+      hfirstClean hok
+  refine ⟨bs, hrun, ?_⟩
+  constructor
+  · constructor
+    · exact hhistory
+    · exact RefTrail.recover_order (by simpa only using h.order)
+        hfirstClean
+    · exact hstable
+  · rw [(recover_frames ctx.n inf level
+      { out with fixedpts := fixedpts }).2.2.2.2.2.2.1]
+    exact hfirstOut
+
+end OtherOutcome
+
 /-- The bookkeeping between an off-path node's refinement and its fresh
 child sweep preserves the live package and the strict first-reference
 bound. -/

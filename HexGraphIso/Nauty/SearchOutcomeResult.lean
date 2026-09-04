@@ -151,7 +151,9 @@ theorem NodeOutcome.parentReturn {G : Colored n k} {ctx : Ctx}
   | exhausted empty => exact (hfuel empty).elim
 
 /-- An off-path node additionally leaves the first-path guide unchanged.
-This is the fact its parent needs before recovering a completed child. -/
+It also preserves live guide ordering; unlike a first-path node, it never
+raises `gcaFirst` while returning through its child loop.  These are the
+facts its parent needs before recovering a completed child. -/
 structure OtherOutcome (G : Colored n k) (ctx : Ctx)
     (tcLevel specFuel runFuel level : Nat) (cs fs : List Nat)
     (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
@@ -159,6 +161,7 @@ structure OtherOutcome (G : Colored n k) (ctx : Ctx)
   node : NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st out
     numcells best outBest receiptTrail eventTrail r
   firstGuide : out.gcaFirst = st.gcaFirst
+  order : out.gcaFirst ≤ out.gcaCanon
 
 /-- The integer return represented by a loop result.  Exhausting the
 sweep completes its parent node one level up. -/
