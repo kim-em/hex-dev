@@ -73,6 +73,14 @@ structure TrailOk (ctx : Ctx) (level : Nat) (st : SearchSt)
     trail target = some entry → ∀ q : Nat,
     entry.frame.rsPtn[q]! ≤ target →
     st.ptn[q]! = entry.frame.rsPtn[q]!
+  picked : ∀ target entry, target < level →
+    trail target = some entry →
+    ∃ len, IsCell entry.frame.rsPtn target entry.frame.tc len ∧
+      entry.offset < len ∧
+      st.ptn[entry.frame.tc]! = target + 1 ∧
+      IsCell st.ptn level entry.frame.tc 1 ∧
+      st.lab[entry.frame.tc]! =
+        entry.frame.rsLab[entry.frame.tc + entry.offset]!
 
 /-- No ancestor frame is present in the empty trail. -/
 theorem TrailOk.empty (ctx : Ctx) (level : Nat) (st : SearchSt) :
@@ -146,6 +154,39 @@ theorem Guide.reachAt {ctx : Ctx} {tcLevel target level : Nat}
   have hreach := hok.reach target entry hlt hentry
   rw [hframe] at hreach
   exact hreach
+
+/-- A located guide identifies the exact active ancestor child followed
+by the current descent. -/
+theorem Guide.active {ctx : Ctx} {tcLevel target level : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (g : Guide ctx tcLevel target best) (hloc : g.Located trail)
+    (hok : TrailOk ctx level st trail) (hlt : target < level) :
+    ∃ o, trail target = some ⟨g.frame, o⟩ ∧ o < g.len ∧
+      st.lab[g.tc]! = g.rsLab[g.tc + o]! := by
+  obtain ⟨entry, hentry, hframe⟩ := hloc
+  obtain ⟨len, hcell, hoff, _, _, hat⟩ :=
+    hok.picked target entry hlt hentry
+  rw [hframe] at hcell hat
+  change IsCell g.rsPtn target g.tc len at hcell
+  change st.lab[g.tc]! = g.rsLab[g.tc + entry.offset]! at hat
+  have hlen : len = g.len := by
+    rcases isCell_disjoint_or_eq hcell g.cell with hleft | hright | heq
+    · have := g.cell.1
+      omega
+    · have := hcell.1
+      omega
+    · exact heq.2
+  subst len
+  refine ⟨entry.offset, ?_, hoff, hat⟩
+  calc
+    trail target = some entry := hentry
+    _ = some ⟨g.frame, entry.offset⟩ := by
+      congr 1
+      cases entry with
+      | mk frame offset =>
+          simp only at hframe ⊢
+          subst frame
+          rfl
 
 /-- Location evidence follows a guide when a checked carrier turns it
 into an unwind anchor. -/
