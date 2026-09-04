@@ -569,4 +569,109 @@ theorem firstLoop_guideReceipt (ctx : Ctx)
   · rename_i hnot
     exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
 
+/-- After an ordinary child completes without either filter, an off-path
+loop continues while retaining every located recursive outcome. -/
+theorem otherLoop_nextReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
+    (hnext : nextElem tcell cursor = some tv)
+    (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1) best mid)
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1)) bound)
+    (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }).1 = r)
+    (hstay : ¬ r < Int.ofNat level)
+    (hshort : (otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }).2.needshortprune = false)
+    (hother : (tv == tv1) = false)
+    (hrec : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
+      cs rsLab rsPtn tc len numcells tcell (some tv) bound
+      (recover ctx.n inf level
+        { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+          { st with
+            lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+            ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+            active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+            fixedpts := insert st.fixedpts tv }).2 with
+          fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+            (numcells + 1)
+            { st with
+              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := insert st.fixedpts tv }).2.fixedpts tv })
+      (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem tcell (some tv)) tcell
+        (recover ctx.n inf level
+          { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+            { st with
+              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := insert st.fixedpts tv }).2 with
+            fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+              (numcells + 1)
+              { st with
+                lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+                ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+                active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+                fixedpts := insert st.fixedpts tv }).2.fixedpts tv })).2
+      mid outBest
+      (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem tcell (some tv)) tcell
+        (recover ctx.n inf level
+          { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+            { st with
+              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := insert st.fixedpts tv }).2 with
+            fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+              (numcells + 1)
+              { st with
+                lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+                ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+                active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+                fixedpts := insert st.fixedpts tv }).2.fixedpts tv })).1) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  unfold otherChildLoop
+  simp only [Id.run_pure, apply_ite Id.run]
+  rw [hreturn, ite_eq_right hstay]
+  split
+  · rename_i hyes
+    rw [hshort] at hyes
+    cases hyes
+  · simp only [hother, Bool.false_eq_true, ite_false]
+    exact (hrec.prefix (st := st) (LoopSound.ofNode hsound hkey)).step
+      (nextElem_after hnext)
+
 end Hex.GraphIso.Nauty
