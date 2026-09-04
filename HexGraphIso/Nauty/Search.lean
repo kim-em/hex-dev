@@ -139,10 +139,11 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
   if st.eqlevFirst ≠ level ∧ st.compCanon < 0 then
     code := 4
   else if numcells == n then
-    if st.eqlevFirst == level then
+    if st.eqlevFirst == level &&
+        st.firstcode[level + 1]! == codeSentinel then
       for i in [0 : n] do
         workperm := workperm.set! st.firstlab[i]! st.lab[i]!
-      if st.gcaFirst ≥ st.noncheaplevel ∨ isautom ctx workperm then
+      if isautom ctx workperm then
         code := 1
     if code == 0 then
       if st.compCanon == 0 then

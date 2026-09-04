@@ -48,10 +48,9 @@ The event layer is complete: `processnode_leaf` (the off-first-path
 leaf), `processnode_leafFirst` (the first-path-agreeing leaf failing
 the admission gate, via the gate-failure reduction
 `processnode_gateFail_eq`), `processnode_auto` with `auto_keyMax`
-(the gate-passing leaf: comparison state untouched, and the skip
-sound at key level once the induction supplies the code agreement
-`firstCodeInv_eq_of_tied` and the row transport through the admitted
-scatter), `recover_machines` with the
+(the gate-passing leaf: comparison state untouched, the sentinel guard
+supplies exact path depth, and the mandatory `isautom` scan validates the
+admitted scatter), `recover_machines` with the
 `recover_frames`/`otherNodePrep_frames` threading, and the
 `firstterminal_*` seeds for all four threads.
 
@@ -108,55 +107,17 @@ by frame (`otherNodePrep_store`, `recover_store`,
 `autosOk_of_eq`), and the admission event preserves store validity
 under the record outright
 (`genTraceOk_processnode_of_domOk`,`processnode_checkAutom_of_domOk`).
-Of the two row obligations those events leave, the row-tie one is
-local and proven (`rows_eq_of_testcanlab_tie`, from the record's
-store invariant), and the first-path one is reduced to a threadable
-clause: `FirstDescOk` records that a live gate comes with two
-same-target descents from one cheapautom-passing node, and
-`rows_eq_of_firstDescOk` turns that into the row equality.
+The only remaining row premise is the code-2 tie, which is local and
+proven by `rows_eq_of_testcanlab_tie`. Code 1 does not require a descent
+geometry invariant: `processnode` checks the first-path sentinel at
+`level + 1` and scans the scatter with `isautom` before admission.
+`firstCodeInv_eq_of_live` therefore supplies equal path codes, while
+`processnode_checkAutom` validates the generator directly.
 
-Two obligations remain before the mutual induction can close, both
-now precisely located:
-
-1. **The code-1 depth clause.** `auto_keyMax` needs `cs = fs`, which
-   `firstCodeInv_eq_of_tied` supplies from a full agreement depth
-   plus `cs.length = fs.length`. `FirstCodeInv.elev_fs` gives
-   `cs.length ≤ fs.length` at a live gate; the reverse needs that
-   equal code prefixes force equal partitions, so a leaf discrete at
-   the current level makes the first path discrete there too. That
-   is path-determinism of the imperative descent, and no file builds
-   it: the spec side has `specNode_codes_head`, but nothing states
-   the transcription's descent as a function of its code path.
-2. **Deriving `FirstDescOk` where the gate fires.** The seed is
-   proven (`firstterminal_firstDescOk`, on `subtreeOk_of_discrete`:
-   at a discrete node every cell is a singleton, which is
-   `SmallShape` outright and `Equitable` by
-   `equitable_of_singletons`, and every position carries a boundary,
-   so only `IterOk` is owed). The internal steps carry the clause:
-   the comparison step by frame (`otherNodePrep_firstDescOk`), and
-   the unwind whenever its clamp leaves the gate no wider than it
-   found it (`recover_firstDescOk`, whose side condition is the
-   unwind protocol's own bookkeeping).
-
-   What is *not* available is the clause as a `DomOk` field.
-   `firstDescOk_depth` shows why: same-target descents have equal
-   length, so a live gate forces the current labelling to be a leaf
-   at the first leaf's depth. An interior node the search passes with
-   the gate open has a strictly shorter path, so the clause is false
-   there. It must therefore be derived at the code-one gate, where
-   the arm's own discreteness supplies the depth, and that derivation
-   still owes the geometry: two descents from the gca whose target
-   projections agree. `flipData_of_subtreeOk` relates the gca's
-   children and `descPath_transport` carries a descent across that
-   relation preserving the projection, but concluding that the first
-   path's *actual* descent is the transported one is again the
-   path-determinism of obligation 1. The two obligations are one
-   piece of mathematics reached from two directions.
-
-With those two supplied, the mutual quartet induction on the
+The mutual quartet induction follows the
 `canonlab_cellsReach` skeleton (whose composite helpers
 `recover_out`/`processnode_searchOk`/`canonlab_or_of` are public)
-threads `DomOk`, discharges leaf arms by `processnode_leaf`/
+and threads `DomOk`, discharges leaf arms by `processnode_leaf`/
 `processnode_leafFirst`/`processnode_auto` + `auto_keyMax` through
 `specNode_discrete`/`prefixKey_leafKey`, internal arms by
 `specNode_internal` (the `keysMax` fold literally matching the
@@ -929,9 +890,9 @@ the whole comparison state untouched. -/
 theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     {st : SearchSt}
     (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
-    (hpass : st.gcaFirst ≥ st.noncheaplevel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
     (processnode ctx level numcells st).1 =
       Int.ofNat st.gcaFirst ∧
     (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
@@ -948,14 +909,7 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
   · rw [processnode]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
-    simp [pruneReturn, hg, hnc, heq]
-    intro h1 h2
-    rcases hpass with h | h
-    · omega
-    · have h2' : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
-          = false := h2
-      rw [h] at h2'
-      cases h2'
+    simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
 /-- A first-path-agreeing leaf failing the admission gate behaves,
 in the return level and the whole comparison state, exactly as the
@@ -964,8 +918,8 @@ skipped generator. -/
 theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
     {st : SearchSt}
     (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
-    (hfail1 : st.gcaFirst < st.noncheaplevel)
     (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
       = false) :
     ((processnode ctx level numcells st).1 =
@@ -999,12 +953,11 @@ theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
     exact h.1 (beq_iff_eq.mp heq)
-  have hge : ¬(st.gcaFirst ≥ st.noncheaplevel) := by omega
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode, processnode]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex, pushAuto_maxlevel, pushAuto_gcaCanon, ite_self]
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
-    simp [pruneReturn, hg, hnc, heq, hge, hfail2, id_run_eq,
+    simp [pruneReturn, hg, hnc, heq, hsent, hfail2, id_run_eq,
       pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex]
     repeat' split
     all_goals first
@@ -1032,8 +985,8 @@ theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
     (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcsn : cs.length ≤ nn)
     (heq : (st.eqlevFirst == cs.length) = true)
+    (hsent : st.firstcode[cs.length + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
-    (hfail1 : st.gcaFirst < st.noncheaplevel)
     (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
       = false) :
     ∃ bs' : List Nat,
@@ -1072,8 +1025,7 @@ theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
     (st := { st with eqlevFirst := cs.length + 1 })
     hcinv hginv hcsn hef' hnc
   obtain ⟨e1, e2, e3, e4, e5, e6, e7, e8⟩ :=
-    processnode_gateFail_eq (level := cs.length) heq hnc hfail1
-      hfail2
+    processnode_gateFail_eq (level := cs.length) heq hsent hnc hfail2
   refine ⟨bs', ?_, ?_, ?_, ?_⟩
   · rw [e6]
     exact h1
@@ -1728,14 +1680,9 @@ theorem rows_eq_of_testcanlab_tie {ctx : Ctx} {st : SearchSt}
     · rw [hcc] at h; exact absurd h (by decide)
   exact ((listCmp_eq_iff (fun _ _ => rowCmp_eq_iff) _ _).mp hc).symm
 
-/-- The first-path descent bookkeeping. When the scan-free gate is
-live (`noncheaplevel ≤ gcaFirst`), the guard passed at the gca, and
-the first leaf and the current node are two descents from that one
-node choosing the same target cell at every level. `childSt_eq_search_step`
-makes each imperative child step definitionally a `DescPath.step`, and
-`maketargetcell` is a position-level policy, so both descents pick the
-same cells; this clause records that the induction has kept them
-aligned. -/
+/-- Geometric bookkeeping relating a current leaf to the first leaf below
+their greatest common ancestor. This remains useful independently of the
+search admission rule, although code 1 now validates its scatter directly. -/
 def FirstDescOk (ctx : Ctx) (st : SearchSt) : Prop :=
   st.noncheaplevel ≤ st.gcaFirst →
     ∃ (r U V : RefineSt) (p₁ p₂ : List (Nat × Nat)) (l₁ l₂ : Nat),
@@ -1747,11 +1694,8 @@ def FirstDescOk (ctx : Ctx) (st : SearchSt) : Prop :=
       (∀ q, q < ctx.n → V.ptn[q]! ≤ l₂) ∧
       U.lab = st.lab ∧ V.lab = st.firstlab
 
-/-- The first-path discharge: under the descent bookkeeping, a live
-gate means the current leaf's rows are the first leaf's. This is the
-`harm2` obligation of `genTraceOk_processnode` and
-`processnode_checkAutom`, reduced to a clause the induction threads
-rather than a fact it must reprove at each arm. -/
+/-- Under the descent bookkeeping, a live cheap-cell gate identifies the
+current leaf's rows with the first leaf's rows. -/
 theorem rows_eq_of_firstDescOk {ctx : Ctx} {st : SearchSt}
     (hgsz : ctx.g.size = ctx.n)
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
@@ -1950,27 +1894,25 @@ theorem labInj_of_reach {G : Colored n k} {lab : Array Nat}
 
 /-! # The admission event under the node invariant
 
-Packaging the two row obligations with the labelling facts of a
-reached state: at a node carrying `DomOk` and the descent
-bookkeeping, `processnode` preserves store validity outright. The two
+Packaging the remaining row obligation with the labelling facts of a
+reached state: at a node carrying `DomOk`, `processnode` preserves store
+validity outright. The two
 `reached` hypotheses are what the induction knows from having passed
 `firstterminal`, where both the first leaf and the incumbent are
 installed from a reached labelling. -/
 
-/-- Store validity survives the admission event under the node
-invariant: `harm3` comes from the record's store invariant and
-`harm2` from the descent bookkeeping. -/
+/-- Store validity survives the admission event under the node invariant:
+the code-2 row tie comes from the record's canonical-row invariant, while
+code 1 is validated by its mandatory scan. -/
 theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
     {numcells level nc : Nat} {st : SearchSt}
     (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgsz : ctx.g.size = ctx.n)
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
       (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
-    (hdesc : FirstDescOk ctx st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
     GenTraceOk ctx (processnode ctx level nc st).2 := by
@@ -1981,8 +1923,6 @@ theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx}
     (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
     (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
     hcsz (labOk_of_reach hcsz hcre) (labInj_of_reach hcsz hn0 hcre)
-    (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
-      hgate)
     (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie)
 
 /-- The same packaging for the scatter itself: the generator the
@@ -1991,13 +1931,11 @@ theorem processnode_checkAutom_of_domOk {G : Colored n k} {ctx : Ctx}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
     {numcells level nc : Nat} {st : SearchSt}
     (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgsz : ctx.g.size = ctx.n)
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
       (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
-    (hdesc : FirstDescOk ctx st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
     (processnode ctx level nc st).2.genTrace = st.genTrace ∨
@@ -2010,8 +1948,6 @@ theorem processnode_checkAutom_of_domOk {G : Colored n k} {ctx : Ctx}
     (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
     (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
     hcsz (labOk_of_reach hcsz hcre) (labInj_of_reach hcsz hn0 hcre)
-    (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
-      hgate)
     (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie)
 
 /-! # Absorption of dominated sibling suffixes

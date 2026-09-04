@@ -44,10 +44,9 @@ lengths, or where the first path went discrete enters anywhere.
 
 `auto_keyMax` is therefore not applied by the induction under this
 architecture, and `cs = fs` is not among the quartet's obligations.
-First-path geometry is still required, but only by store validity:
-the scan-free admission arm of `processnode_checkAutom` needs
-`leafRows firstlab = leafRows lab`, which is the `harm2` obligation
-that `FirstDescOk` supplies.
+Store validity is local as well: code 1 requires the first-path sentinel
+at the current depth and validates its scatter with `isautom` before
+admission.
 -/
 
 namespace Hex.GraphIso.Nauty

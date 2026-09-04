@@ -299,7 +299,8 @@ private theorem pushAuto_genTrace (st : SearchSt) (pair : Nat × Nat) :
 
 /-- `processnode`'s effect on the admitted-generator trace: either
 nothing is pushed, or exactly one scatter is pushed, connecting the
-first-path labelling (code 1, under its two-way guard) or the
+first-path labelling (code 1, at the recorded first-leaf depth and after
+an automorphism scan) or the
 incumbent labelling (code 2, under the `testcanlab` equality on the
 freshly completed `canong`) to the current leaf labelling. The
 injectivity and bound hypotheses on the two base labellings are
@@ -319,7 +320,8 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
         st.genTrace.push γ ∧ γ.size = ctx.n ∧
       ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∧
-          (st.noncheaplevel ≤ st.gcaFirst ∨ isautom ctx γ = true) ∨
+          st.firstcode[level + 1]! = codeSentinel ∧
+          isautom ctx γ = true ∨
         (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!) ∧
           st.compCanon = 0 ∧ st.canonlevel ≤ level ∧
           (testcanlab ctx
@@ -338,15 +340,17 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
   rw [ite_eq_right h1]
   rcases Decidable.em ((numcells == ctx.n) = true) with h2 | h2
   · rw [ite_eq_left h2]
-    rcases Decidable.em ((st.eqlevFirst == level) = true) with h3 | h3
+    rcases Decidable.em (((st.eqlevFirst == level) &&
+        (st.firstcode[level + 1]! == codeSentinel)) = true) with h3 | h3
     · rw [ite_eq_left h3]
-      rcases Decidable.em (st.gcaFirst ≥ st.noncheaplevel ∨
-          isautom ctx ((List.range ctx.n).foldl
+      have hsent : st.firstcode[level + 1]! = codeSentinel := by
+        exact beq_iff_eq.mp ((Bool.and_eq_true _ _).mp h3).2
+      rcases Decidable.em (isautom ctx ((List.range ctx.n).foldl
             (fun r i => r.set! st.firstlab[i]! st.lab[i]!)
             (Array.replicate ctx.n 0)) = true) with h4 | h4
       · rw [ite_eq_left h4, ite_eq_right (by decide)]
         right
-        refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, h4⟩⟩
+        refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, hsent, h4⟩⟩
         · rw [foldl_scatter_size, Array.size_replicate]
         · refine foldl_scatter_getElem hinj₁ (fun j hj => ?_)
             (Nat.le_refl _) hi

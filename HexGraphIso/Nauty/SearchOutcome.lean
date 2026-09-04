@@ -44,13 +44,11 @@ theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
     {numcells level nc : Nat} {st : SearchSt}
     (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgsz : ctx.g.size = ctx.n)
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
       (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
-    (hdesc : FirstDescOk ctx st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
     (processnode ctx level nc st).2.genTrace = st.genTrace ∨
@@ -66,8 +64,6 @@ theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
       (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
       hcsz (labOk_of_reach hcsz hcre)
       (labInj_of_reach hcsz hn0 hcre)
-      (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
-        hgate)
       (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie) with
     h | ⟨γ, hpush, hcheck, hmap⟩
   · exact Or.inl h
