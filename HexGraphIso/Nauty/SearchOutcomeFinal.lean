@@ -268,6 +268,7 @@ structure OtherProof (G : Colored n k) (ctx : Ctx)
   outcome : OtherOutcome G ctx tcLevel specFuel runFuel level cs fs st out
     numcells best outBest receiptTrail eventTrail r
   fixed : out.fixedpts = st.fixedpts
+  coset : out.cosetindex = st.cosetindex
 
 /-- A semantic loop outcome together with restoration of the loop entry's
 fixed-point set. -/
@@ -812,6 +813,12 @@ end FirstInv
 
 namespace OtherProof
 
+theorem otherLeafSt_coset (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).cosetindex = st.cosetindex := by
+  unfold otherLeafSt
+  exact otherNodePrep_coset _ _ _
+
 /-- Package any early off-path leaf outcome with its fixed-frame
 equation. -/
 theorem ofLeafEarly {G : Colored n k} {ctx : Ctx}
@@ -829,9 +836,13 @@ theorem ofLeafEarly {G : Colored n k} {ctx : Ctx}
     OtherProof G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 numcells
       best outBest receiptTrail eventTrail
-      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 :=
-  ⟨hout, otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
-    numcells st hnum hearly⟩
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  refine ⟨hout, otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
+    numcells st hnum hearly, ?_⟩
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  exact (processnode_coset ctx level ctx.n _).trans
+    (otherLeafSt_coset ctx level numcells st)
 
 /-- Package any completed off-path leaf outcome with its fixed-frame
 equation. -/
@@ -850,9 +861,14 @@ theorem ofLeafDone {G : Colored n k} {ctx : Ctx}
     OtherProof G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 numcells
       best outBest receiptTrail eventTrail
-      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 :=
-  ⟨hout, otherNode_leaf_done_fixedpts ctx inf tcLevel fuel level numcells
-    st hnum hdone⟩
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  refine ⟨hout, otherNode_leaf_done_fixedpts ctx inf tcLevel fuel level
+    numcells st hnum hdone, ?_⟩
+  rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st
+    hnum hdone]
+  exact (leafFinish_coset ctx level _).trans
+    ((processnode_coset ctx level ctx.n _).trans
+      (otherLeafSt_coset ctx level numcells st))
 
 theorem node {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
