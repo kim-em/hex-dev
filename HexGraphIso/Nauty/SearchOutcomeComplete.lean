@@ -32,6 +32,10 @@ variable {n k : Nat}
     ctx.n = n → ctx.g = rowsOf G → inf = n + 2 → 0 < n →
     1 ≤ level → level = codes.length + 1 →
     level + specFuel = n + 1 → n + 2 < level + runFuel →
+    CheapDesc ctx level st.noncheaplevel
+      { lab := st.lab, ptn := st.ptn, active := st.active,
+        numcells := numcells, hint := 0, maxpos := 0,
+        longcode := numcells } →
     NodeInv G ctx tcLevel level codes bs fs numcells st best trail →
     Live ctx level st trail →
     PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
@@ -50,6 +54,10 @@ variable {n k : Nat}
     ctx.n = n → ctx.g = rowsOf G → inf = n + 2 → 0 < n →
     1 ≤ level → level = codes.length + 1 →
     level + specFuel = n + 1 → n + 2 < level + runFuel →
+    CheapDesc ctx level st.noncheaplevel
+      { lab := st.lab, ptn := st.ptn, active := st.active,
+        numcells := numcells, hint := 0, maxpos := 0,
+        longcode := numcells } →
     FirstInv G ctx level codes numcells st trail →
     PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level st →
@@ -69,7 +77,7 @@ branch before any operational case analysis is needed. -/
 theorem OtherTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
     OtherTotal G ctx inf tcLevel 0 := by
   intro specFuel level numcells codes bs fs st best trail hn _ _ _ _ _ _
-    hfuel hnode _ _
+    hfuel _ hnode _ _
   have hle : level ≤ n := hnode.run.searchOk.levelLe
   omega
 
@@ -77,7 +85,7 @@ theorem OtherTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
 descent. -/
 theorem FirstTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
     FirstTotal G ctx inf tcLevel 0 := by
-  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel
+  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel _
     hfirst _
   have hle : level ≤ n := hfirst.searchOk.levelLe
   omega
