@@ -53,6 +53,114 @@ theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
 
 end Live
 
+/-- The live state of an off-path sweep.  `gcaFirst` stays strictly above
+the divergence ancestor, so a child push introduces no new stabilization
+obligation at the current frame. -/
+structure OtherLive (ctx : Ctx) (level : Nat) (st : SearchSt)
+    (trail : FrameTrail) : Prop extends Live ctx level st trail where
+  firstBelow : st.gcaFirst < level
+
+/-- The live state of a first-path sweep.  Once generators exist, the
+guiding child has already been absorbed, and every recorded generator
+stabilizes this frozen frame; before that point the store is empty and the
+same clause is vacuous. -/
+structure FirstLive (ctx : Ctx) (level : Nat) (st : SearchSt)
+    (trail : FrameTrail) (rsLab rsPtn : Array Nat) : Prop
+    extends Live ctx level st trail where
+  frameStab : ∀ γ ∈ st.genTrace.toList,
+    CellStab rsPtn level rsLab γ
+
+/-- A loop child inherits reference history and stabilization through its
+live first-reference GCA.  The current frozen frame is required only when
+that GCA is exactly the loop level. -/
+theorem LoopInv.childLive {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell coset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) (offset currentOffset : Nat)
+    (hframe : st.gcaFirst = level → ∀ γ ∈ st.genTrace.toList,
+      CellStab rsPtn level rsLab γ) :
+    Live ctx (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+        cosetindex := coset }
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
+  let entry : TrailEntry :=
+    ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩
+  have hstable : ReturnStab (trail.push level entry)
+      (Int.ofNat st.gcaFirst) st := by
+    apply hlive.stable.push
+    intro hle γ hγ
+    have hbound := hinv.run.firstBound
+    have heq := Nat.le_antisymm hbound (Int.ofNat_le.mp hle)
+    exact hframe heq γ hγ
+  constructor
+  · simpa only [entry] using
+      RefTrail.LoopInv.childHistory hinv hlive.history offset currentOffset
+  · simpa only using hlive.order
+  · unfold ReturnStab at hstable ⊢
+    exact hstable
+
+/-- An off-path loop's strict first-reference bound discharges the only
+new-frame premise of `childLive`. -/
+theorem LoopInv.otherChildLive {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : OtherLive ctx level st trail) (offset currentOffset : Nat) :
+    Live ctx (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
+  apply hinv.childLive hlive.toLive offset currentOffset
+  intro heq
+  exact (Nat.ne_of_lt hlive.firstBelow heq).elim
+
+/-- A first-path loop carries stabilization of its frozen frame directly,
+including the initial empty-store phase. -/
+theorem LoopInv.firstChildLive {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell coset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : FirstLive ctx level st trail rsLab rsPtn)
+    (offset currentOffset : Nat) :
+    Live ctx (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+        cosetindex := coset }
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) :=
+  hinv.childLive hlive.toLive offset currentOffset fun _ => hlive.frameStab
+
 /-- A non-first leaf event whose branch does not append a generator
 produces the complete result-side package.  The caller supplies the strict
 return bound because `processnode` itself also has a non-unwinding result
