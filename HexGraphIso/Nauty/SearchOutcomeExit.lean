@@ -110,20 +110,50 @@ structure OtherRun (G : Colored n k) (ctx : Ctx)
       (level ≤ out.gcaCanon ∧ cellsPerm st.ptn level st.lab out.canonlab)
   coset : out.cosetindex = st.cosetindex
 
-/-- Concrete sibling-loop result paired with its corrected exit reason. -/
+/-- A sibling-loop proof paired with its corrected exit reason.  The
+established proof retains coverage, event, and recovery facts; `exit`
+separately records why an unfinished suffix is nevertheless absorbed. -/
 structure LoopRun (G : Colored n k) (ctx : Ctx)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
     (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
     (st out : SearchSt) (best outBest : Option Key)
     (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  proof : LoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+    fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail eventTrail r
   exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
     rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail r
-  event : EventOut G ctx tcLevel stem fs out outBest eventTrail
-    (loopReturn level r)
-  preserved : TrailExt level receiptTrail eventTrail
-  fixed : out.fixedpts = st.fixedpts
+
+/-- An off-path sibling sweep additionally retains its coset cursor. -/
+structure OtherLoopRun (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  proof : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+    codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+    outBest receiptTrail eventTrail r
+  exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+    rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail r
+
+/-- The first-path sibling sweep retains both reference histories in its
+established proof and the corrected reason for abandoning any suffix. -/
+structure FirstLoopRun (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  proof : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+    codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+    outBest receiptTrail eventTrail r
+  exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+    rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail r
 
 namespace NodeRun
 
