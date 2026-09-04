@@ -96,6 +96,49 @@ theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
       tc numcells out o :=
   ChildCover.finish h hempty
 
+/-- A `none` cursor result means that no set member remains after the
+cursor. -/
+theorem no_child_after {s : Nat} {cursor : Option Nat}
+    (hnext : nextElem s cursor = none) :
+    ∀ v, elem s v = true → After cursor v → False := by
+  intro v hv ha
+  rw [nextElem.eq_def] at hnext
+  rcases cursor with _ | p
+  · dsimp only at hnext ha
+    split at hnext
+    · next hz =>
+      rw [hz, elem, Nat.zero_testBit] at hv
+      cases hv
+    · cases hnext
+  · dsimp only at hnext ha
+    change p < v at ha
+    split at hnext
+    · next hz =>
+      have hbit : (((s >>> (p + 1)) <<< (p + 1)).testBit v) = true := by
+        rw [Nat.testBit_shiftLeft]
+        rw [show decide (p + 1 ≤ v) = true by simp; omega]
+        rw [Nat.testBit_shiftRight]
+        rw [show p + 1 + (v - (p + 1)) = v by omega]
+        exact hv
+      rw [hz, Nat.zero_testBit] at hbit
+      cases hbit
+    · cases hnext
+
+/-- The executable loop terminator discharges the live-set premise of
+`SweepCover.finish`. -/
+theorem SweepCover.finish_of_nextElem {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hnext : nextElem tcell cursor = none) :
+    ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
+      tc numcells out o := by
+  apply h.finish
+  intro o ho
+  exact no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+
 /-- A child at an ancestor has already been absorbed.  The arrays and
 offset are stored explicitly because neither `gcaFirst` nor `gcaCanon`
 retains this path history. -/
