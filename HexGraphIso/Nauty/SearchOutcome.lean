@@ -835,6 +835,33 @@ theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
   rw [hout]
   exact congrArg some (keyLe_antisym hupper hlower')
 
+/-- A completed sweep whose fixed loop bound is the maximum of its
+original children recovers the exact final incumbent. -/
+theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc numcells tcell : Nat} {cursor : Option Nat}
+    {st out : SearchSt} {b : Key}
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor out)
+    (hempty : ∀ o,
+      ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
+    (hsound : LoopSound ctx
+      (keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1))) st out)
+    (hout : stInc ctx out = some b) :
+    stInc ctx out = some (incMax (stInc ctx st)
+      (keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1)))) :=
+  hsound.exact hout (hcover.maxLe hempty hout)
+
 /-- The result of a node call, with logical and runtime fuel separated.
 
 `complete` and `unwind` may have the same return integer.  The latter is
