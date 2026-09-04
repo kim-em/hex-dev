@@ -55,4 +55,73 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
     change (Array.ofFn (n := n) fun i : Fin n => i.val)[v]! = v
     rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
 
+/-- Reaching a discrete node installs the first leaf and enters the stable
+post-incumbent invariant. -/
+theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {cs : List Nat} {st : SearchSt}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    (h : FirstInv G ctx level cs numcells st trail) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [rs.longcode]
+    RunInv G ctx tcLevel level full full full rs.numcells
+      (firstterminal level (firstLeafSt ctx level numcells st))
+      (some (pathLeafKey ctx full rs.lab)) trail := by
+  dsimp only
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let leaf := firstLeafSt ctx level numcells st
+  let full := cs ++ [rs.longcode]
+  have hlevelOne : 1 ≤ level := by omega
+  have hok : SearchOk G level rs.numcells leaf := by
+    apply refine_searchOk hn hn0 h.searchOk hlevelOne
+    · rfl
+    · rfl
+    · exact Or.inl rfl
+  have hfullLen : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hfullBound : full.length ≤ n := by
+    rw [← hfullLen]
+    rw [hlevel]
+    exact h.codes.bound
+  have hfullCodes : ∀ i, 1 ≤ i → i ≤ full.length →
+      leaf.firstcode[i]! = full[i - 1]! := by
+    simpa only [leaf, full, rs] using
+      (firstLeafSt_codes (ctx := ctx) (nn := n) (level := level)
+        (numcells := numcells) (cs := cs) (st := st) hlevel
+        h.codes.firstSize (by omega) h.codes.content)
+  have hfullLt : ∀ c ∈ full, c < codeSentinel := by
+    intro c hc
+    change c ∈ cs ++ [rs.longcode] at hc
+    rw [List.mem_append] at hc
+    rcases hc with hc | hc
+    · exact h.codes.lt c hc
+    · rw [List.mem_singleton.mp hc]
+      exact refine_longcode_lt ctx level st.lab st.ptn st.active numcells
+  have hcheap : CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) level leaf := by
+    apply h.cheap.refine hlevelOne <;> rfl
+  have htrail : TrailOk ctx level leaf trail := by
+    apply h.trailOk.refine
+    · rw [h.searchOk.labSize, ← hn]
+    · rw [h.searchOk.ptnSize, ← hn]
+    · exact searchOk_end hn0 h.searchOk hlevelOne
+    · rfl
+    · rfl
+  have hcheap' : CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) full.length leaf := by
+    rw [← hfullLen]
+    exact hcheap
+  apply RunInv.firstterminal (hpath := hfullLen)
+      (hok := hok) (hbound := hfullBound) (hcodes := hfullCodes)
+      (hlt := hfullLt) (hcheap := hcheap') (htrail := htrail)
+  · simp [leaf, firstLeafSt, h.codes.firstSize]
+  · simp [leaf, firstLeafSt, h.codes.canonSize]
+  · simpa [leaf, firstLeafSt] using h.canongSize
+  · simpa [leaf, firstLeafSt] using h.genEmpty
+  · simpa [leaf, firstLeafSt] using h.autosEmpty
+  · intro he
+    have := congrArg List.length he
+    simp [full] at this
+
 end Hex.GraphIso.Nauty
