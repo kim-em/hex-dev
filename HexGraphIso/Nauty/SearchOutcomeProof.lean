@@ -1483,6 +1483,57 @@ theorem otherLoop_done (ctx : Ctx)
   exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
     hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
+/-- An off-path child generator unwind strictly past this loop returns
+immediately after removing the child's temporary fixed vertex. -/
+theorem otherLoop_childUnwind (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best outBest : Option Key) (target : Nat)
+    (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1) best outBest)
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1)) bound)
+    (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (hpayload : Unwind ctx tcLevel target
+      (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).2 outBest) :
+    LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  rw [otherChildLoop]
+  simp only [Id.run_pure, apply_ite Id.run]
+  rw [hreturn]
+  split
+  · exact LoopResult.ofChildUnwind hsound hkey hbelow hpayload
+  · rename_i hnot
+    exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
+
 /-- A non-root orbit pointer skips the current first-path child and
 continues with ranked coverage advanced past that child. -/
 theorem firstLoop_orbitSkip (ctx : Ctx)
