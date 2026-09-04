@@ -17,6 +17,59 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- Below a saved cheap-cell boundary, the current refined node remains in
+the small-cell subtree generated at that boundary.  At the boundary itself
+the implication is dormant until the executable guard either validates the
+shape or parks the boundary at the child. -/
+@[expose] def CheapDesc (ctx : Ctx) (level boundary : Nat)
+    (st : RefineSt) : Prop :=
+  boundary < level → SubtreeOk ctx level st
+
+namespace CheapDesc
+
+/-- The executable cheap-cell boundary update carries the small-cell
+subtree invariant into every individualized child. -/
+theorem child {ctx : Ctx} {level boundary tc len o : Nat}
+    {st : RefineSt}
+    (h : CheapDesc ctx level boundary st)
+    (hit : IterOk ctx level st) (heq : Equitable ctx level st.lab st.ptn)
+    (hcount : bcount st.ptn level ctx.n = st.numcells)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hlvl : level < ctx.n)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    let boundary' := if boundary ≥ level ∧
+        ¬cheapautom st.ptn level ctx.n then level + 1 else boundary
+    CheapDesc ctx (level + 1) boundary'
+      (childSt ctx level st tc st.lab[tc + o]!) := by
+  dsimp only
+  let boundary' := if boundary ≥ level ∧
+      ¬cheapautom st.ptn level ctx.n then level + 1 else boundary
+  intro hbelow
+  have hparent : SubtreeOk ctx level st := by
+    rcases Nat.lt_or_ge boundary level with hold | hge
+    · exact h hold
+    · have hcheap : cheapautom st.ptn level ctx.n = true := by
+        rcases hc : cheapautom st.ptn level ctx.n with _ | _
+        · have hguard : boundary ≥ level ∧
+              ¬cheapautom st.ptn level ctx.n := ⟨hge, by simp [hc]⟩
+          change (if boundary ≥ level ∧
+            ¬cheapautom st.ptn level ctx.n then level + 1 else boundary) <
+              level + 1 at hbelow
+          rw [ite_eq_left hguard] at hbelow
+          exfalso
+          omega
+        · rfl
+      exact subtreeOk_of_cheapautom hit heq hcount hcheap
+  exact subtreeOk_child hparent hlvl hsymm
+    (mem_cells_of_isCell (by rw [hit.ok.ptnSize]; exact Nat.le_refl _)
+      hit.ok.ptnEnd hcell (by omega)
+      (by rw [hit.ok.ptnSize]; exact hrange))
+    (by omega) (by omega)
+
+end CheapDesc
+
 namespace RunPrep
 
 /-- A negative comparison branch whose prune tail stays below the recorded
