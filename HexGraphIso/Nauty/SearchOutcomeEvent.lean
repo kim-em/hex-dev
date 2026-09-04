@@ -144,7 +144,63 @@ theorem setFirst {G : Colored n k} {ctx : Ctx}
     h.trailOk.stateEq rfl rfl, hpositive,
     h.canonPositive, hbound, h.canonBound, h.bestCodes, h.incumbent⟩
 
+/-- Parking the cheap-automorphism boundary above the current event level
+preserves the event invariant. -/
+theorem park {G : Colored n k} {ctx : Ctx}
+    {tcLevel current boundary : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
+    (hpos : 0 < boundary) (hcurrent : current ≤ boundary) :
+    RunEvent G ctx tcLevel current cs bs fs
+      { st with noncheaplevel := boundary } best trail := by
+  let st' : SearchSt := { st with noncheaplevel := boundary }
+  have hrefs : LeafRefsOk G st' :=
+    ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+  exact ⟨h.machines, h.firstInv, h.canongInv,
+    genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
+    autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
+    h.cheap.park hpos hcurrent, hrefs,
+    h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
+    h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
+    h.bestCodes, h.incumbent⟩
+
+/-- The comparison-blind cleanup after an empty leaf sweep preserves an
+event state. -/
+theorem leafFinish {G : Colored n k} {ctx : Ctx}
+    {tcLevel level : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunEvent G ctx tcLevel level cs bs fs st best trail) :
+    RunEvent G ctx tcLevel level cs bs fs
+      (Nauty.leafFinish ctx level st) best trail := by
+  unfold Nauty.leafFinish
+  split
+  · simp only
+    split
+    · exact h.clearShort.park (by omega) (by omega)
+    · exact h.clearShort
+  · simp only
+    split
+    · exact h.park (by omega) (by omega)
+    · exact h
+
 end RunEvent
+
+namespace ReturnStab
+
+/-- Leaf cleanup leaves the recorded-generator store unchanged. -/
+theorem leafFinish {ctx : Ctx} {level : Nat} {st : SearchSt}
+    {trail : FrameTrail} {r : Int} (h : ReturnStab trail r st) :
+    ReturnStab trail r (Nauty.leafFinish ctx level st) := by
+  apply h.ofGenTraceEq
+  unfold Nauty.leafFinish
+  split
+  · simp only
+    split <;> rfl
+  · simp only
+    split <;> rfl
+
+end ReturnStab
 
 namespace EventOut
 

@@ -241,6 +241,18 @@ theorem processnode_order {ctx : Ctx} {level numcells : Nat}
   · rw [hnew.1]
     exact hfirstBound
 
+/-- Leaf cleanup changes neither installed reference nor its GCA
+control. -/
+theorem leafFinish {ctx : Ctx} {level current : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : RefTrail ctx current st trail) :
+    RefTrail ctx current (Nauty.leafFinish ctx level st) trail := by
+  unfold Nauty.leafFinish
+  split
+  · simp only
+    split <;> exact h.stateEq rfl rfl rfl rfl
+  · simp only
+    split <;> exact h.stateEq rfl rfl rfl rfl
+
 /-- Recovery preserves GCA ordering provided the first control is no
 deeper than the receiving frame. -/
 theorem recover_order {ctx : Ctx} {level inf : Nat} {st : SearchSt}

@@ -501,4 +501,102 @@ theorem NodeInv.plainLeaf {G : Colored n k} {ctx : Ctx}
     exact hevent
   · exact TrailExt.refl level trail
 
+/-- A non-generator leaf that does not unwind completes after the empty
+child sweep and returns the exact singleton-subtree maximum. -/
+theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hgen : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace =
+        (otherLeafSt ctx level numcells st).genTrace)
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level))
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ outBest,
+      NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+        numcells best outBest trail trail
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  subst n
+  let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hfull : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hstem : full.take codes.length = codes := by
+    simp only [full, List.take_left']
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf rfl hn0 hlevel hpath
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf rfl hn0 hgb hsymm
+    hloop hlevel hfull hlive'.cheapBound hef (by simp)
+  let outKey := incKey ctx bs'
+    (processnode ctx level ctx.n leaf).2.canonlab
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    simpa only [leaf, otherLeafSt, rs, base] using
+      (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.2.2.2.1
+  have hnodeKey : nodeKey ctx tcLevel (specFuel + 1) level codes st
+      numcells = pathLeafKey ctx full leaf.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey, hleafLab]
+  have houtFull : some outKey = some (incMax best
+      (nodeKey ctx tcLevel (specFuel + 1) level codes st numcells)) := by
+    rw [hprep.incumbent, incMax, hnodeKey]
+    exact congrArg some hmax
+  let final := leafFinish ctx level
+    (processnode ctx level ctx.n leaf).2
+  have hread : stInc ctx final = some outKey := by
+    change stInc ctx (leafFinish ctx level
+      (processnode ctx level ctx.n leaf).2) = some outKey
+    rw [stInc_leafFinish]
+    simpa only [outKey] using hevent.read
+  have hfinalEvent : EventOut G ctx tcLevel codes fs final
+      (some outKey) trail (Int.ofNat level - 1) := by
+    apply EventOut.intro level full bs' hevent.leafFinish hfull hstem
+    · omega
+    · exact (hlive'.stable.ofGenTraceEq hgen).leafFinish
+    · exact (hlive'.history.processnode hprep.trailOk).leafFinish
+  have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
+      (fuel + 1) level codes st final numcells best (some outKey)
+      (Int.ofNat level - 1) := by
+    apply NodeReceipt.complete (NodeSound.ofExact houtFull) rfl
+    · exact canonlevel_ne_zero_of_stInc hread
+    · exact hread
+    · exact houtFull
+  have hout := otherNode_leaf_done_state ctx inf tcLevel fuel level
+    numcells st hnum hdone
+  refine ⟨some outKey, ?_⟩
+  constructor
+  · rw [hout]
+    exact hreceipt
+  · rw [hout]
+    exact hfinalEvent
+  · exact TrailExt.refl level trail
+
 end Hex.GraphIso.Nauty
