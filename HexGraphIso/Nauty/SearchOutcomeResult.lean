@@ -18,6 +18,20 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- An output trail retains every frame that was active on entry.  A
+node may additionally replace deeper scratch entries used by its own
+recursive sweep. -/
+@[expose] def TrailExt (level : Nat) (before after : FrameTrail) : Prop :=
+  ∀ target, target < level → after target = before target
+
+theorem TrailExt.refl (level : Nat) (trail : FrameTrail) :
+    TrailExt level trail trail := fun _ _ => rfl
+
+theorem TrailExt.trans {level : Nat} {a b c : FrameTrail}
+    (hab : TrailExt level a b) (hbc : TrailExt level b c) :
+    TrailExt level a c := fun target htarget =>
+  (hbc target htarget).trans (hab target htarget)
+
 /-- The semantic node receipt and the concrete result state produced by
 one recursive node call. -/
 structure NodeOutcome (G : Colored n k) (ctx : Ctx)
@@ -27,6 +41,7 @@ structure NodeOutcome (G : Colored n k) (ctx : Ctx)
   receipt : NodeReceipt receiptTrail ctx tcLevel specFuel runFuel level cs st out
     numcells best outBest r
   event : EventOut G ctx tcLevel cs fs out outBest eventTrail r
+  preserved : TrailExt level receiptTrail eventTrail
 
 /-- Forgetting the concrete result invariant recovers the corrected
 semantic node result consumed by the root reduction. -/
@@ -72,6 +87,7 @@ structure LoopOutcome (G : Colored n k) (ctx : Ctx)
       outBest r
   event : EventOut G ctx tcLevel stem fs out outBest eventTrail
     (loopReturn level r)
+  preserved : TrailExt level receiptTrail eventTrail
 
 /-- A loop that returns an integer supplies its parent node outcome. -/
 theorem LoopOutcome.toNodeSome {G : Colored n k} {ctx : Ctx}
@@ -88,7 +104,7 @@ theorem LoopOutcome.toNodeSome {G : Colored n k} {ctx : Ctx}
       out best outBest receiptTrail eventTrail (some r)) :
     NodeOutcome G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs
       nodeSt out nodeNumcells best outBest receiptTrail eventTrail r := by
-  exact ⟨NodeReceipt.ofLoopSome hbound h.receipt, h.event⟩
+  exact ⟨NodeReceipt.ofLoopSome hbound h.receipt, h.event, h.preserved⟩
 
 /-- A completed loop with sufficient cursor fuel supplies its parent
 node's completed outcome. -/
@@ -117,7 +133,7 @@ theorem LoopOutcome.toNodeNone {G : Colored n k} {ctx : Ctx}
       nodeSt out nodeNumcells best outBest receiptTrail eventTrail
       (Int.ofNat level - 1) := by
   exact ⟨NodeReceipt.ofLoopNone hbound hchildren hlen hfuel h.receipt,
-    h.event⟩
+    h.event, h.preserved⟩
 
 /-- Prepending a semantic loop fragment leaves the concrete result
 package unchanged. -/
@@ -134,7 +150,7 @@ theorem LoopOutcome.prefix {G : Colored n k} {ctx : Ctx}
     LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.receipt.prefix hpre, h.event⟩
+  ⟨h.receipt.prefix hpre, h.event, h.preserved⟩
 
 /-- Changing the mutable entry workset does not affect a completed loop
 outcome. -/
@@ -150,7 +166,7 @@ theorem LoopOutcome.reindexSet {G : Colored n k} {ctx : Ctx}
     LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.receipt.reindexSet, h.event⟩
+  ⟨h.receipt.reindexSet, h.event, h.preserved⟩
 
 /-- One successful cursor step preserves the coupled loop outcome. -/
 theorem LoopOutcome.step {G : Colored n k} {ctx : Ctx}
@@ -166,7 +182,7 @@ theorem LoopOutcome.step {G : Colored n k} {ctx : Ctx}
     LoopOutcome G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
       outBest receiptTrail eventTrail r :=
-  ⟨h.receipt.step ha, h.event⟩
+  ⟨h.receipt.step ha, h.event, h.preserved⟩
 
 /-- First-path exit bookkeeping preserves a corrected node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
@@ -185,6 +201,7 @@ theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
     split
     · exact h.event.setAllsame
     · exact h.event
+  · exact h.preserved
 
 /-- The first discrete leaf closes the corrected result package.  Its
 generator store is still empty, so every return-frame stabilization
@@ -229,6 +246,7 @@ theorem FirstInv.terminalOutcome {G : Colored n k} {ctx : Ctx}
     · rw [(firstterminal_state level leaf).2.2.2.2]
       omega
     · exact ReturnStab.empty hempty
+  · exact TrailExt.refl level trail
 
 set_option maxHeartbeats 800000 in
 /-- A coupled child-loop outcome supplies the complete outcome of a
