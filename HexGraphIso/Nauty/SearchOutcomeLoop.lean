@@ -536,6 +536,66 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
   · rw [worksetOf_eq_windowSet r.lab tc len (by omega)]
     simpa only [hstartLab, hstartPtn] using hloop
 
+set_option maxHeartbeats 800000 in
+/-- The nonnegative internal branch with a failed cheap-automorphism test
+parks the boundary before entering its child loop. -/
+theorem otherNode_park_state (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells < ctx.n)
+    (hnonneg : let r := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level r.longcode { st with
+        lab := r.lab, ptn := r.ptn, active := r.active
+        numnodes := st.numnodes + 1 }
+      pre.compCanon ≥ 0)
+    (hshort : let r := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level r.longcode { st with
+        lab := r.lab, ptn := r.ptn, active := r.active
+        numnodes := st.numnodes + 1 }
+      let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+      let base := { pre with tctotal := pre.tctotal + mt.2.2 }
+      (processnode ctx level r.numcells base).2.needshortprune = false)
+    (hcheap : let r := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level r.longcode { st with
+        lab := r.lab, ptn := r.ptn, active := r.active
+        numnodes := st.numnodes + 1 }
+      let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+      let base := { pre with tctotal := pre.tctotal + mt.2.2 }
+      cheapautom (processnode ctx level r.numcells base).2.ptn
+        level ctx.n = false) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    let pre := otherNodePrep level r.longcode { st with
+      lab := r.lab, ptn := r.ptn, active := r.active
+      numnodes := st.numnodes + 1 }
+    let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+    let base := { pre with tctotal := pre.tctotal + mt.2.2 }
+    let pr := processnode ctx level r.numcells base
+    let parked := { pr.2 with noncheaplevel := level + 1 }
+    let L := otherChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+      r.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
+      (nextElem mt.2.1 none) mt.2.1 parked
+    otherNode ctx inf tcLevel (fuel + 1) level numcells st =
+      if pr.1 < Int.ofNat level then pr
+      else match L.1 with
+        | some rtn => (rtn, L.2)
+        | none => (Int.ofNat level - 1, L.2) := by
+  dsimp only at hnonneg hshort hcheap ⊢
+  rw [otherNode]
+  simp only [hnum, true_and, ne_eq, ite_eq_left (Or.inr hnonneg),
+    ite_eq_right (by omega : ¬((otherNodePrep level
+      (refine ctx level st.lab st.ptn st.active numcells).longcode
+      { st with
+        lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+        ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+        active := (refine ctx level st.lab st.ptn st.active numcells).active
+        numnodes := st.numnodes + 1 }).compCanon < 0)),
+    hshort, Bool.false_eq_true, ite_false, hcheap, Bool.not_false,
+    ite_true, Int.ofNat_eq_natCast, Int.toNat_natCast]
+  generalize hL : (otherChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+    level _ _ _ _ _ _) = L
+  rcases L with ⟨r, out⟩
+  cases r <;> simp only [Id.run_pure, apply_ite Id.run] <;> rfl
+
 end LoopInv
 
 end Hex.GraphIso.Nauty
