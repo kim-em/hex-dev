@@ -47,6 +47,40 @@ end EventOut
 
 namespace LoopInv
 
+/-- Replacing the mutable sweep set by a subset preserves the loop
+invariant once transitive coverage has been re-established for that set. -/
+theorem restrict {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell tcell' : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true)
+    (hcover : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell' cursor best) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
+      tc len tcell' cursor base st best trail := by
+  exact {
+    nodeCount := h.nodeCount
+    nonempty := h.nonempty
+    positive := h.positive
+    baseOk := h.baseOk
+    run := h.run
+    effect := h.effect
+    baseLab := h.baseLab
+    basePtn := h.basePtn
+    equitable := h.equitable
+    cell := h.cell
+    lenTwo := h.lenTwo
+    range := h.range
+    values := h.values
+    members := fun v hv => h.members v (hsub v hv)
+    cover := hcover
+    refs := h.refs
+    shortClear := h.shortClear
+    fuelBound := h.fuelBound }
+
 /-- The mutable child selected for a frozen offset has exactly that
 offset's specification key. -/
 theorem childKey {G : Colored n k} {ctx : Ctx}
