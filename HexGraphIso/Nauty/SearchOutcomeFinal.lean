@@ -980,6 +980,61 @@ end FirstLoopProof
 
 namespace FirstProof
 
+/-- After first-child cleanup and recovery, both reference leaves still
+lie below the selected guiding child.  Thus the one absorbed child backs
+both current-frame reference controls, whichever controls recover to the
+parent level. -/
+theorem recoverRefs {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len offset tv1 inf
+      fixedpts : Nat}
+    {cs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {child out : SearchSt} {outBest : Option Key}
+    {trail eventTrail : FrameTrail} {r : Int}
+    (h : FirstProof G ctx tcLevel specFuel runFuel (level + 1) cs fs child
+      out (numcells + 1) outBest
+      (trail.push level
+        ⟨sweepFrame specFuel cs rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hdone : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells outBest offset)
+    (hoff : offset < len) :
+    FrameRefs ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      (recover ctx.n inf level
+        { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 })
+      outBest := by
+  let entry : TrailEntry :=
+    ⟨sweepFrame specFuel cs rsLab rsPtn tc numcells, offset⟩
+  have hentry : eventTrail level = some entry :=
+    h.node.outcome.preserved.pushAt
+  have hfirstReach : cellsPerm rsPtn level rsLab out.firstlab := by
+    simpa only [entry, sweepFrame] using
+      h.trail.reach level entry (by omega) hentry
+  obtain ⟨_, _, _, hfirstAt⟩ :=
+    h.trail.picked level entry (by omega) hentry
+  have hcanonReach : cellsPerm rsPtn level rsLab out.canonlab := by
+    simpa only [entry, sweepFrame] using
+      h.canonTrail.reach level entry (by omega) hentry
+  obtain ⟨_, _, _, hcanonAt⟩ :=
+    h.canonTrail.picked level entry (by omega) hentry
+  let cleaned : SearchSt :=
+    { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 }
+  have hframes := recover_frames ctx.n inf level cleaned
+  have hfirstLab := hframes.2.2.2.2.1
+  have hcanonLab := hframes.1
+  constructor
+  · intro _
+    refine ⟨offset, hoff, hdone, ?_, ?_⟩
+    · rw [hfirstLab]
+      simpa only [entry, sweepFrame] using hfirstAt
+    · rw [hfirstLab]
+      exact hfirstReach
+  · intro _
+    refine ⟨offset, hoff, hdone, ?_, ?_⟩
+    · rw [hcanonLab]
+      simpa only [entry, sweepFrame] using hcanonAt
+    · rw [hcanonLab]
+      exact hcanonReach
+
 /-- A completed guiding child installs a located first-reference guide at
 its parent frame.  The unconditional first trail supplies both the exact
 selected vertex and the cell-permutation reachability that the mutable GCA
