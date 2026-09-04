@@ -968,6 +968,36 @@ theorem keyLe_incMax_right (inc : Option Key) (b : Key) :
   · exact keyLe_refl b
   · exact keyLe_iff.mpr (keyMax_not_lt_right a b)
 
+/-- An exactly completed child is covered in its parent sweep.  The three
+field equations identify the executable state after `breakout` with the
+specification child used by `sweepKey`. -/
+theorem ChildDone.ofExact {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
+    {child : SearchSt} {best out : Option Key}
+    (hfull : out = some (incMax best
+      (nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1))))
+    (hlab : child.lab =
+      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+    (hptn : child.ptn =
+      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1)
+    (hactive : child.active =
+      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2) :
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      out o := by
+  refine ⟨incMax best
+    (nodeKey ctx tcLevel specFuel (level + 1) cs child
+      (numcells + 1)), hfull, ?_⟩
+  have heq : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells o =
+      nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1) := by
+    unfold sweepKey nodeKey childKey
+    rw [hlab, hptn, hactive]
+  rw [heq]
+  exact keyLe_incMax_right best _
+
 theorem incMax_mono_right (inc : Option Key) {a b : Key}
     (h : keyLe a b) : keyLe (incMax inc a) (incMax inc b) := by
   rcases inc with _ | x
