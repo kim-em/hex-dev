@@ -1106,6 +1106,36 @@ theorem recoverRefs {G : Colored n k} {ctx : Ctx}
     · rw [hcanonLab]
       exact hcanonReach
 
+/-- Cleanup, first-control installation, and recovery change neither leaf
+reference.  The first trail therefore keeps the current frozen frame,
+while the canonical trail can be lowered to the older frames owned by the
+enclosing first-path node. -/
+theorem recoverTrails {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tv1 inf fixedpts : Nat}
+    {cs fs : List Nat} {child out : SearchSt} {outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (h : FirstProof G ctx tcLevel specFuel runFuel (level + 1) cs fs child
+      out (numcells + 1) outBest receiptTrail eventTrail r) :
+    FirstTrail ctx (level + 1)
+        (recover ctx.n inf level
+          { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 })
+        eventTrail ∧
+      CanonTrail ctx level
+        (recover ctx.n inf level
+          { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 })
+        eventTrail := by
+  let cleaned : SearchSt :=
+    { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 }
+  have hframes := recover_frames ctx.n inf level cleaned
+  have hfirst : (recover ctx.n inf level cleaned).firstlab = out.firstlab :=
+    hframes.2.2.2.2.1
+  have hcanon : (recover ctx.n inf level cleaned).canonlab = out.canonlab :=
+    hframes.1
+  constructor
+  · exact h.trail.retrail hfirst (TrailExt.refl (level + 1) eventTrail)
+  · exact (h.canonTrail.retrail hcanon
+      (TrailExt.refl (level + 1) eventTrail)).lower
+
 /-- A completed guiding child installs a located first-reference guide at
 its parent frame.  The unconditional first trail supplies both the exact
 selected vertex and the cell-permutation reachability that the mutable GCA
