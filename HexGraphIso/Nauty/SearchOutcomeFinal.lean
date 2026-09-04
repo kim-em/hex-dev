@@ -307,6 +307,7 @@ structure FirstProof (G : Colored n k) (ctx : Ctx)
   node : NodeProof G ctx tcLevel specFuel runFuel level cs fs st out
     numcells none outBest receiptTrail eventTrail r
   trail : FirstTrail ctx level out eventTrail
+  resumable : Int.ofNat level - 1 ≤ r → level - 1 ≤ out.gcaFirst
 
 /-- A first-path loop keeps the current frozen frame in the first leaf's
 history until the loop is converted back to its parent node result. -/
@@ -320,6 +321,7 @@ structure FirstLoopProof (G : Colored n k) (ctx : Ctx)
     fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail eventTrail r
   trail : FirstTrail ctx (level + 1) out eventTrail
+  guideLevel : level ≤ out.gcaFirst
 
 namespace FirstTrail
 
@@ -549,6 +551,11 @@ theorem terminalFirstProof {G : Colored n k} {ctx : Ctx}
       refine ⟨len, hcell, hoff, ?_⟩
       rw [firstterminal_firstlab]
       exact hat
+  · intro _
+    rw [hstate]
+    change level - 1 ≤ (firstterminal level leaf).gcaFirst
+    rw [(firstterminal_state level leaf).2.2.1]
+    omega
 
 /-- The executable first-child prefix preserves and extends the root path
 facts before the first incumbent exists. -/
@@ -810,7 +817,8 @@ theorem toNodeSome {G : Colored n k} {ctx : Ctx}
     FirstProof G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs nodeSt
       out nodeNumcells outBest receiptTrail eventTrail r :=
   ⟨⟨h.loop.outcome.toNodeSome hbound, h.loop.fixed.trans hfixed⟩,
-    h.trail.lower⟩
+    h.trail.lower, fun _ =>
+      Nat.le_trans (Nat.sub_le level 1) h.guideLevel⟩
 
 /-- A fully exhausted first-path loop supplies its enclosing node once
 cursor fuel proves that exhaustion means complete child coverage. -/
@@ -841,7 +849,8 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
       (Int.ofNat level - 1) :=
   ⟨⟨h.loop.outcome.toNodeNone hbound hchildren hlen hfuel,
       h.loop.fixed.trans hfixed⟩,
-    h.trail.lower⟩
+    h.trail.lower, fun _ =>
+      Nat.le_trans (Nat.sub_le level 1) h.guideLevel⟩
 
 theorem reindexSet {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -855,7 +864,7 @@ theorem reindexSet {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.reindexSet, h.trail⟩
+  ⟨h.loop.reindexSet, h.trail, h.guideLevel⟩
 
 theorem step {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat}
@@ -870,7 +879,7 @@ theorem step {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
       outBest receiptTrail eventTrail r :=
-  ⟨h.loop.step ha, h.trail⟩
+  ⟨h.loop.step ha, h.trail, h.guideLevel⟩
 
 theorem retrail {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -885,7 +894,7 @@ theorem retrail {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       dest eventTrail r :=
-  ⟨h.loop.retrail htrail, h.trail⟩
+  ⟨h.loop.retrail htrail, h.trail, h.guideLevel⟩
 
 theorem prepend {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -901,11 +910,94 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.prepend hfixed hpre, h.trail⟩
+  ⟨h.loop.prepend hfixed hpre, h.trail, h.guideLevel⟩
 
 end FirstLoopProof
 
 namespace FirstProof
+
+/-- A completed guiding child installs a located first-reference guide at
+its parent frame.  The unconditional first trail supplies both the exact
+selected vertex and the cell-permutation reachability that the mutable GCA
+control alone cannot recover. -/
+theorem setFirstEvent {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len offset tv1 : Nat}
+    {cs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {child out : SearchSt} {outBest : Option Key}
+    {trail eventTrail : FrameTrail} {r : Int}
+    (hn : ctx.n = n) (hpath : cs.length = level)
+    (hreturn : r = Int.ofNat level)
+    (h : FirstProof G ctx tcLevel specFuel runFuel (level + 1) cs fs child
+      out (numcells + 1) outBest
+      (trail.push level
+        ⟨sweepFrame specFuel cs rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hdone : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells outBest offset)
+    (hlevel : 1 ≤ level) (hls : rsLab.size = ctx.n)
+    (hlab : LabOk rsLab ctx.n) (hps : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hoff : offset < len) (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
+    EventOut G ctx tcLevel cs fs
+      { out with gcaFirst := level, stabvertex := tv1 }
+      outBest eventTrail r := by
+  let entry : TrailEntry :=
+    ⟨sweepFrame specFuel cs rsLab rsPtn tc numcells, offset⟩
+  have hentry : eventTrail level = some entry := by
+    exact h.node.outcome.preserved.pushAt
+  have hreach : cellsPerm rsPtn level rsLab out.firstlab := by
+    simpa only [entry, sweepFrame] using
+      h.trail.reach level entry (by omega) hentry
+  obtain ⟨_, _, _, hat⟩ := h.trail.picked level entry (by omega) hentry
+  have hat' : out.firstlab[tc]! = rsLab[tc + offset]! := by
+    simpa only [entry, sweepFrame] using hat
+  cases hevent : h.node.outcome.event with
+  | intro current codes bestCodes event depth stemEq past returned stable
+      history =>
+      have hcurrent : level < current := by omega
+      let g := Guide.ofSweep hlevel hdone hls hlab hps hend hvals hcell
+        hrange hoff hfuel hat' (by rw [hn]; exact event.leafRefs.firstSize)
+        hreach
+      have hlocated : g.Located eventTrail := by
+        refine ⟨entry, hentry, ?_⟩
+        simp only [g, Guide.ofSweep, Guide.frame, entry, sweepFrame]
+      have hguides : GuideStore ctx tcLevel current
+          { out with gcaFirst := level, stabvertex := tv1 }
+          outBest eventTrail := by
+        constructor
+        · intro hp hlt
+          change 0 < level at hp
+          change level < current at hlt
+          exact ⟨g, rfl, hlocated⟩
+        · intro hp hlt
+          exact event.guides.canon hp hlt
+      have event' := event.setFirst hguides (by omega) (by omega)
+      have hhistory : RefTrail ctx current
+          { out with gcaFirst := level, stabvertex := tv1 } eventTrail := by
+        constructor
+        · exact history.frameSize
+        · intro target found htarget hbound hfound
+          change target ≤ level at hbound
+          exact h.trail.reach target found (by omega) hfound
+        · exact history.canon
+      have hstable : ReturnStab eventTrail
+          (Int.ofNat level)
+          { out with gcaFirst := level, stabvertex := tv1 } := by
+        have hgca : level ≤ out.gcaFirst := by
+          apply h.resumable
+          rw [hreturn]
+          simp
+        have hmin : min r (Int.ofNat out.gcaFirst) =
+            Int.ofNat level := by
+          rw [hreturn]
+          exact Int.min_eq_left (Int.ofNat_le.mpr hgca)
+        rw [hmin] at stable
+        exact stable.setFirst level tv1
+      exact .intro current codes bestCodes event' depth stemEq past returned
+        (by simpa [hreturn, Int.min_self] using hstable) hhistory
 
 /-- The final first-path `allsamelevel` adjustment preserves both the
 semantic result and the stored first-leaf history. -/
@@ -921,7 +1013,10 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx}
       receiptTrail eventTrail r :=
   ⟨h.node.firstFinish hfuel,
     h.trail.retrail (firstFinish_firstlab level size index out)
-      (TrailExt.refl level eventTrail)⟩
+      (TrailExt.refl level eventTrail),
+    fun hr => by
+      rw [Nauty.firstFinish]
+      split <;> exact h.resumable hr⟩
 
 end FirstProof
 
