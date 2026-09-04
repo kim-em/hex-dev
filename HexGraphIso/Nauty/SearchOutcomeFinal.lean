@@ -288,4 +288,129 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
 
 end LoopProof
 
+namespace LoopInv
+
+/-- Exhausting first-path loop fuel retains both the semantic event and
+the unchanged fixed-point frame.  The outer node later rules this case
+out from the cursor-progress bound. -/
+theorem firstZero {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 index : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tv? cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    LoopProof G ctx tcLevel specFuel runFuel 0 level stem codes fs rsLab
+      rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).1 := by
+  constructor
+  · constructor
+    · exact firstLoop_zeroReceipt ctx inf tcLevel specFuel runFuel level
+        numcells tc tv1 codes rsLab rsPtn len tv? cursor tcell index bound
+        st best trail hinv.cover hcursor
+    · simpa only [firstChildLoop, loopReturn] using
+        (EventOut.ofRun hinv.run hpath hstem hpast (by omega) hnp
+          (hlive.stable.lower (by omega)) hlive.history)
+    · exact TrailExt.refl level trail
+  · rw [firstChildLoop]
+
+/-- Exhausting off-path loop fuel retains both the semantic event and the
+unchanged fixed-point frame. -/
+theorem otherZero {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tv? cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    LoopProof G ctx tcLevel specFuel runFuel 0 level stem codes fs rsLab
+      rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).2
+      best best trail trail
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).1 := by
+  constructor
+  · constructor
+    · exact otherLoop_zeroReceipt ctx inf tcLevel specFuel runFuel level
+        numcells tc tv1 codes rsLab rsPtn len tv? cursor tcell bound st best
+        trail hinv.cover hcursor
+    · simpa only [otherChildLoop, loopReturn] using
+        (EventOut.ofRun hinv.run hpath hstem hpast (by omega) hnp
+          (hlive.stable.lower (by omega)) hlive.history)
+    · exact TrailExt.refl level trail
+  · rw [otherChildLoop]
+
+/-- Completing a positive-fuel first-path sweep leaves its fixed-point
+frame unchanged. -/
+theorem firstDoneProof {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 index : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) :
+    LoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).1 := by
+  refine ⟨hinv.firstDone hpath hstem hpast hnext hnp hlive, ?_⟩
+  rw [firstChildLoop]
+  case x_1 => omega
+
+/-- Completing a positive-fuel off-path sweep leaves its fixed-point
+frame unchanged. -/
+theorem otherDoneProof {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) :
+    LoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).2
+      best best trail trail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).1 := by
+  refine ⟨hinv.otherDone hpath hstem hpast hnext hnp hlive, ?_⟩
+  rw [otherChildLoop]
+  case x_1 => omega
+
+end LoopInv
+
 end Hex.GraphIso.Nauty
