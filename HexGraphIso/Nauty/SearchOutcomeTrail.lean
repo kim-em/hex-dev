@@ -535,4 +535,65 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
     exact ⟨st.gcaFirst, hfirst, hfirstBelow, payload,
       .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
 
+/-- The located guide store discharges a code-one leaf return. -/
+theorem GuideStore.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hstore : GuideStore ctx tcLevel level st best trail)
+    (htrail : TrailOk ctx level st trail)
+    (hfirstPos : 0 < st.gcaFirst) (hbelow : st.gcaFirst < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    ∃ payload : Unwind ctx tcLevel st.gcaFirst
+        (processnode ctx level numcells st).2 best,
+      payload.Located trail := by
+  obtain ⟨g, href, hloc⟩ := hstore.first hfirstPos hbelow
+  exact g.firstLocated href hloc htrail hbelow hgsz hsz₁ hp₁ hsz₂ hp₂
+    hsymm hloop hbound heq hsent hnc hpass
+
+/-- The located guide store discharges either arm of a row-tied code-two
+leaf return. -/
+theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hstore : GuideStore ctx tcLevel level st best trail)
+    (htrail : TrailOk ctx level st trail)
+    (hcanonPos : 0 < st.gcaCanon) (hcanonBelow : st.gcaCanon < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (horbit : OrbSound
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
+      (processnode ctx level numcells st).2.orbits ctx.n) :
+    ∃ target,
+      (processnode ctx level numcells st).1 = Int.ofNat target ∧
+      target < level ∧
+      ∃ payload : Unwind ctx tcLevel target
+          (processnode ctx level numcells st).2 best,
+        payload.Located trail := by
+  obtain ⟨g, href, hloc⟩ := hstore.canon hcanonPos hcanonBelow
+  exact g.tiedLocated href hloc htrail hgsz hsz₁ hp₁ hsz₂ hp₂ hbound
+    hrows hef hnc hcc hge htie hcanonBelow hfirstPos hfirstBelow hcoset
+    horbit
+
 end Hex.GraphIso.Nauty
