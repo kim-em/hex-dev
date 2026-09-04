@@ -314,4 +314,88 @@ theorem otherLoop_childReceipt (ctx : Ctx)
   · rename_i hnot
     exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
 
+/-- First-path loop fuel exhaustion is retained as a distinct located
+receipt. -/
+theorem firstLoop_zeroReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
+    (tv? cursor : Option Nat) (tcell index : Nat) (bound : Key)
+    (st : SearchSt) (best : Option Key) (trail : FrameTrail)
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn
+      tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).2.2
+      best best
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).1 := by
+  unfold firstChildLoop
+  exact .exhausted rfl (.refl ctx bound best) tcell cursor hcover
+    (by omega) hcursor
+
+/-- Off-path loop fuel exhaustion is retained as a distinct located
+receipt. -/
+theorem otherLoop_zeroReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
+    (tv? cursor : Option Nat) (tcell : Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key) (trail : FrameTrail)
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn
+      tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).2
+      best best
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).1 := by
+  unfold otherChildLoop
+  exact .exhausted rfl (.refl ctx bound best) tcell cursor hcover
+    (by omega) hcursor
+
+/-- An absent next child completes a positive-fuel first-path loop. -/
+theorem firstLoop_doneReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
+    (tcell index : Nat) (cursor : Option Nat) (bound : Key)
+    (st : SearchSt) (best : Option Key) (trail : FrameTrail)
+    (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hnext : nextElem tcell cursor = none) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).2.2
+      best best
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).1 := by
+  unfold firstChildLoop
+  exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
+    hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+
+/-- An absent next child completes a positive-fuel off-path loop. -/
+theorem otherLoop_doneReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key) (trail : FrameTrail)
+    (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hnext : nextElem tcell cursor = none) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).2
+      best best
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).1 := by
+  unfold otherChildLoop
+  exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
+    hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+
 end Hex.GraphIso.Nauty
