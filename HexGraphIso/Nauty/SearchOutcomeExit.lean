@@ -553,6 +553,80 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
       numcells st hnum hearly }
   exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
 
+/-- A code-two row tie returns either its canonical guide or its
+first-ancestor orbit guide, retaining the chosen unwind explicitly. -/
+theorem tiedOther {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hcc : (otherLeafSt ctx level numcells st).compCanon = 0)
+    (hge : ¬(level < (otherLeafSt ctx level numcells st).canonlevel))
+    (htie : (testcanlab ctx (updatecan ctx
+      (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+      (otherLeafSt ctx level numcells st).lab).1 = 0)
+    (hcoset : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
+    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2.orbits ctx.n)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  obtain ⟨houtcome, target, hreturned, hbelow, payload, hloc⟩ :=
+    hnode.tiedLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
+      hn hn0 hgsz hgb hsymm hloop hlevel hpath hcheap hnum hef hcc hge
+      htie hcoset horbit hlive
+  let leaf := otherLeafSt ctx level numcells st
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hcanonBelow : leaf.gcaCanon < level := by
+    change (otherLeafSt ctx level numcells st).gcaCanon < level
+    rw [RefTrail.otherLeaf_gcaCanon]
+    exact hnode.canonBelow
+  have hfirstBelow : leaf.gcaFirst < level :=
+    Nat.lt_of_le_of_lt hlive'.order hcanonBelow
+  have hreturns := (processnode_rowTie (ctx := ctx) (level := level)
+    (numcells := ctx.n) (st := leaf) hef (by simp) hcc hge htie).1
+  have hearly : (processnode ctx level ctx.n leaf).1 <
+      Int.ofNat level := by
+    rcases hreturns with hfirst | hcanon
+    · rw [hfirst]
+      exact Int.ofNat_lt.mpr hfirstBelow
+    · rw [hcanon]
+      exact Int.ofNat_lt.mpr hcanonBelow
+  have hrun : NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level
+      codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := {
+    exit := NodeExit.unwind target hreturned hbelow
+      (NodeSound.refl ctx tcLevel (specFuel + 1) level codes st numcells
+        best)
+      payload hloc
+    event := houtcome.event
+    preserved := houtcome.preserved
+    fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
+      numcells st hnum hearly }
+  exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
+
 /-- The negative non-generator leaf, with the off-path fields needed by
 its parent loop retained. -/
 theorem negativeOther {G : Colored n k} {ctx : Ctx}

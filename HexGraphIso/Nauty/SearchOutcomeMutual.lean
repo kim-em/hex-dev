@@ -1473,7 +1473,14 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
     NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best trail trail
-      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 ∧
+    ∃ target,
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 =
+        Int.ofNat target ∧
+      target < level ∧
+      ∃ payload : Unwind ctx tcLevel target
+          (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 best,
+        payload.Located trail := by
   subst n
   let leaf := otherLeafSt ctx level numcells st
   let full := codes ++
@@ -1530,11 +1537,27 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
       exact Int.ofNat_lt.mpr hcanonBelow
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
+  obtain ⟨target, hreturn, hbelow, payload, hloc⟩ :=
+    hprep.guides.tiedUnwind (numcells := ctx.n) hprep.trailOk
+      hprep.canonPositive hcanonBelow hgsz hprep.leafRefs.canonSize
+      (isPerm_of_cellsReach hprep.leafRefs.canonSize hn0
+        hprep.leafRefs.canonReach)
+      hprep.searchOk.labSize
+      (isPerm_of_cellsReach hprep.searchOk.labSize hn0
+        hprep.searchOk.reach)
+      hgb hrows hef (by simp) hcc hge htie hprep.firstPositive
+      hfirstBelow hcoset horbit
   constructor
-  · exact hreceipt
-  · rw [hout]
-    exact hevent
-  · exact TrailExt.refl level trail
+  · constructor
+    · exact hreceipt
+    · rw [hout]
+      exact hevent
+    · exact TrailExt.refl level trail
+  · refine ⟨target, ?_, hbelow, ?_⟩
+    · rw [hout]
+      exact hreturn
+    · rw [hout]
+      exact ⟨payload, hloc⟩
 
 /-- An early non-generator leaf absorbs its singleton subtree and returns
 the explicit local-prune outcome. -/
