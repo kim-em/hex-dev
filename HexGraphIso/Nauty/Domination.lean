@@ -937,19 +937,11 @@ theorem processnode_auto_autos {ctx : Ctx} {level numcells : Nat}
 /-- The scatter built from the installed canonical leaf to the current
 leaf. -/
 @[expose] def canonScatter (n : Nat) (canonlab lab : Array Nat) :
-    Array Nat :=
-  (List.range n).foldl
-    (fun w i => w.setIfInBounds canonlab[i]! lab[i]!)
-    (Array.replicate n 0)
-
-private theorem canonScatter_fold (n : Nat) (canonlab lab : Array Nat) :
-    (List.range' 0 n).foldl
-      (fun w i => w.setIfInBounds canonlab[i]! lab[i]!)
-      (Array.replicate n 0) = canonScatter n canonlab lab := by
-  simp [canonScatter, List.range_eq_range']
-
-private theorem pure_id_eq {alpha : Type} (x : alpha) :
-    (pure x : Id alpha) = x := rfl
+    Array Nat := Id.run do
+  let mut workperm := Array.replicate n 0
+  for i in [0 : n] do
+    workperm := workperm.set! canonlab[i]! lab[i]!
+  return workperm
 
 /-- The bounded-ledger effect of the shared code-three/code-four tail. -/
 @[expose] def pruneAutos (ctx : Ctx) (level : Nat)
@@ -1167,9 +1159,7 @@ theorem processnode_rowTie_autos {ctx : Ctx} {level numcells : Nat}
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite (fun x : Int × SearchSt => x.2.autos)]
-  rw [forIn_range_eq3, forIn_scatter_eq]
-  simp [hg, hnc, hef, hcc, hge, htie, id_run_eq]
-  rw [pure_id_eq, canonScatter_fold]
+  simp [canonScatter, hg, hnc, hef, hcc, hge, htie, id_run_eq]
   by_cases hm : st.maxlevel < level
   all_goals by_cases hcap : st.autos.size = st.wsCap
   all_goals simp [hm, hcap, pushAuto, id_run_eq]
