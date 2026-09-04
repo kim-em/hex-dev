@@ -532,4 +532,138 @@ theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx}
   exact cellStab_of_scatter hroot.ptnSize hroot.labSize hs₁
     hroot.ptnEnd hr₁ hr₂ hsc
 
+/-- The finite array represented by a vertex renaming. -/
+@[expose] def renamingArray (n : Nat) (sigma : Renaming n) : Array Nat :=
+  .ofFn fun i : Fin n => sigma i
+
+theorem renamingArray_size (sigma : Renaming n) :
+    (renamingArray n sigma).size = n := by
+  simp [renamingArray]
+
+theorem renamingArray_get (sigma : Renaming n) {v : Nat} (hv : v < n) :
+    (renamingArray n sigma)[v]! = sigma v := by
+  rw [getElem!_pos _ _ (by rw [renamingArray_size]; exact hv)]
+  simp [renamingArray]
+
+private theorem map_range_get (a : Array Nat) (hs : a.size = n) :
+    (List.range n).map (fun i => a[i]!) = a.toList := by
+  refine List.ext_getElem (by simp [hs]) fun i h₁ h₂ => ?_
+  rw [List.getElem_map, List.getElem_range,
+    getElem!_pos a i (by simpa using h₂)]
+  simp
+
+/-- A row-preserving renaming passes the concrete automorphism checker. -/
+theorem checkAutom_renaming {ctx : Ctx} (sigma : Renaming ctx.n)
+    (hrows : RowsMap sigma ctx.g ctx.g) :
+    checkAutom ctx.g (renamingArray ctx.n sigma) ctx.n = true := by
+  have hs := renamingArray_size sigma
+  have hok : LabOk (renamingArray ctx.n sigma) ctx.n := by
+    intro i hi
+    rw [hs] at hi
+    rw [renamingArray_get sigma hi]
+    exact (sigma.maps i).mp hi
+  have hinj : LabInj (renamingArray ctx.n sigma) ctx.n := by
+    intro i j hi hj heq
+    rw [renamingArray_get sigma hi, renamingArray_get sigma hj] at heq
+    exact sigma.inj _ _ heq
+  rw [checkAutom]
+  simp only [Bool.and_eq_true]
+  refine ⟨⟨⟨by simpa using hs, ?_⟩, ?_⟩, ?_⟩
+  · exact List.all_eq_true.mpr fun v hv => by
+      have hvn := List.mem_range.mp hv
+      simpa using hok v (by rw [hs]; exact hvn)
+  · rw [List.isPerm_iff, map_range_get _ hs]
+    exact labInj_perm_range hs hok hinj
+  · refine List.all_eq_true.mpr fun v hv => ?_
+    have hvn := List.mem_range.mp hv
+    simp only [beq_iff_eq]
+    rw [renamingArray_get sigma hvn, hrows.2.2 v hvn]
+    exact image_congr _ fun w hw => (renamingArray_get sigma hw).symm
+
+/-- The implicit pair recorded at a small-cell node is valid at the root
+partition.  Its missing vertices are realized by the node's flip
+automorphisms, while singleton cells supply the fixed set. -/
+theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
+    {level : Nat} {r : RefineSt}
+    (hn0 : 0 < ctx.n) (hlevel : 1 <= level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : forall v, v < ctx.n -> ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : forall u v, u < ctx.n -> v < ctx.n ->
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : forall v, v < ctx.n -> (ctx.g[v]!).testBit v = false)
+    (hS : SubtreeOk ctx level r)
+    (hreach : CellsReach G r.lab)
+    (hinit : forall q : Nat,
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! <= 1 ->
+        r.ptn[q]! <= 1) :
+    PairOk ctx.g
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmptn r.lab r.ptn level ctx.n).1
+      (fmptn r.lab r.ptn level ctx.n).2 := by
+  have hroot := initial_nodeOk G hn0
+  apply pairOk_fmptn
+  · intro v hv
+    obtain ⟨p, hp, hpv⟩ := labInj_surj
+      (Nat.le_of_eq hS.it.ok.labSize.symm) hS.it.ok.labOk hS.it.inj v hv
+    obtain ⟨c, hc, hp1, hp2⟩ := cells_cover p hp
+    exact ⟨p, c.1, c.2, hc, hp1, hp2, hpv⟩
+  · intro v c1 c2 hv hcell hp hq
+    rcases hp with ⟨p, hp1, hp2, hpv⟩
+    rcases hq with ⟨q, hq1, hq2, hqlt⟩
+    have hoff : p - c1 ≠ q - c1 := by
+      intro heq
+      have : p = q := by omega
+      subst q
+      omega
+    obtain ⟨sigma, hrows, hperm, hmap⟩ :=
+      flipData_of_subtreeOk hS hgsz hgb hsymm hloop hcell
+        (by omega) (by omega) (by omega) hoff
+    let gamma := renamingArray ctx.n sigma
+    refine ⟨gamma, checkAutom_renaming sigma hrows, ?_, ?_, ?_⟩
+    · intro u hu hfix
+      obtain ⟨c, hcellc, hcu⟩ := fmptn_fix hfix
+      have hcb := cells_bound (Nat.le_of_eq hS.it.ok.ptnSize.symm)
+        hS.it.ok.ptnEnd (c, c) hcellc
+      have hc : c < r.lab.size := by
+        rw [hS.it.ok.labSize, ← hS.it.ok.ptnSize]
+        exact hcb
+      have hic := cells_isCell
+        (by rw [hS.it.ok.ptnSize]; exact Nat.le_refl _)
+        hS.it.ok.ptnEnd (c, c) hcellc
+      have heq := cellsPerm_singleton hperm.cells
+        (show IsCell r.ptn level c 1 by simpa using hic)
+      change r.lab[c]! = (r.lab.map sigma.toFun)[c]! at heq
+      rw [getElem!_map_of_lt _ _ hc] at heq
+      rw [renamingArray_get sigma hu]
+      rw [← hcu]
+      exact heq.symm
+    · have hrootperm : cellsPerm
+          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) 1
+          r.lab (mapSt sigma r).lab := by
+        apply cellsPerm_coarsen
+            (ptnC := initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+            (ptnF := r.ptn) (levC := 1) (levF := level)
+        · rw [size_initPtn, hS.it.ok.ptnSize]
+        · rw [hS.it.ok.labSize, hS.it.ok.ptnSize]
+        · simp [hS.it.ok.labSize, hS.it.ok.ptnSize]
+        · exact hperm.cells
+        · exact hS.it.ok.ptnEnd
+        · exact hroot.ptnEnd
+        · intro x hx
+          exact Nat.le_trans (hinit x hx) hlevel
+      apply cellStab_of_scatter hroot.ptnSize hroot.labSize
+        hS.it.ok.labSize hroot.ptnEnd hreach
+        (cellsPerm_trans hreach hrootperm)
+      intro i hi
+      have hil : i < r.lab.size := by rw [hS.it.ok.labSize]; exact hi
+      have hv' := hS.it.ok.labOk i hil
+      rw [renamingArray_get sigma hv']
+      exact (getElem!_map_of_lt sigma.toFun r.lab hil).symm
+    · have hσ := hmap
+      simp only [Nat.add_sub_of_le hp1, Nat.add_sub_of_le hq1] at hσ
+      rw [renamingArray_get sigma hv, ← hpv, ← hσ]
+      rw [hpv]
+      exact hqlt
+
 end Hex.GraphIso.Nauty
