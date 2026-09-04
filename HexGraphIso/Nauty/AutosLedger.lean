@@ -1110,6 +1110,78 @@ private theorem fmptn_eq_go (lab ptn : Array Nat) (level nn : Nat) :
   rw [forIn_cellF_eq lab nn]
   rfl
 
+/-- The structural minimum scan is the ordinary fold over the values at
+the listed positions. -/
+private theorem minScan_eq_foldl (lab : Array Nat) :
+    ∀ (l : List Nat) (m : Nat),
+      minScan lab l m = (l.map fun i => lab[i]!).foldl Nat.min m
+  | [], _ => rfl
+  | i :: l, m => by
+    rw [minScan, List.map_cons, List.foldl_cons]
+    rcases Decidable.em (lab[i]! < m) with h | h
+    · rw [ite_eq_left h, minScan_eq_foldl]
+      rw [show m.min lab[i]! = lab[i]! by
+        rw [Nat.min_eq_min]
+        omega]
+    · rw [ite_eq_right h, minScan_eq_foldl]
+      rw [show m.min lab[i]! = m by
+        rw [Nat.min_eq_min]
+        omega]
+
+/-- The minimum inserted for a cell is its permutation-invariant list
+minimum. -/
+private theorem minScan_cell {lab : Array Nat} {c1 len : Nat} :
+    minScan lab (List.range' (c1 + 1) len) lab[c1]! =
+      (segN lab c1 (len + 1)).foldl Nat.min
+        ((segN lab c1 (len + 1)).headD 0) := by
+  rw [segN_cons, minScan_eq_foldl]
+  simp only [List.headD_cons, List.foldl_cons, Nat.min_self]
+  congr 1
+  rw [segN]
+  simp only [List.range'_eq_map_range, List.map_map]
+  exact List.map_congr_left fun i _ => by
+    simp only [Function.comp_apply]
+
+private theorem fmptnGo_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
+    (hperm : cellsPerm ptn level lab lab') :
+    ∀ (cs : List (Nat × Nat)) (fix mcr : Nat),
+      (∀ p ∈ cs, IsCell ptn level p.1 (p.2 + 1 - p.1)) →
+      fmptnGo lab nn cs fix mcr = fmptnGo lab' nn cs fix mcr
+  | [], _, _, _ => rfl
+  | (c1, c2) :: rest, fix, mcr, hcells => by
+      rw [fmptnGo, fmptnGo]
+      have hcell := hcells (c1, c2) (by simp)
+      rcases hc : (c1 == c2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h),
+          ite_eq_right (fun h => Bool.noConfusion h)]
+        have hlen : c2 + 1 - c1 = (c2 - c1) + 1 := by
+          have := hcell.1
+          omega
+        have hp := hperm c1 (c2 + 1 - c1) hcell
+        rw [hlen] at hp
+        have hmin := foldl_min_headD_perm hp
+        rw [← minScan_cell, ← minScan_cell] at hmin
+        have hrange : c2 + 1 - (c1 + 1) = c2 - c1 := by omega
+        rw [hrange, hmin]
+        exact fmptnGo_cellsPerm hperm rest fix _
+          (fun p hp => hcells p (by simp [hp]))
+      · rw [ite_eq_left rfl, ite_eq_left rfl]
+        have heq : c1 = c2 := (beq_iff_eq ..).mp hc
+        subst c2
+        have hlab := cellsPerm_singleton hperm (by simpa using hcell)
+        rw [hlab]
+        exact fmptnGo_cellsPerm hperm rest _ _
+          (fun p hp => hcells p (by simp [hp]))
+
+/-- `fmptn` is unchanged when vertices are permuted within every cell
+at the level it reads. -/
+theorem fmptn_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hperm : cellsPerm ptn level lab lab') :
+    fmptn lab ptn level nn = fmptn lab' ptn level nn := by
+  rw [fmptn_eq_go, fmptn_eq_go]
+  exact fmptnGo_cellsPerm hperm _ 0 0 (cells_isCell hnn hend)
+
 /-- The minimum scan attains a window value at or below its seed. -/
 private theorem minScan_spec {lab : Array Nat} :
     ∀ (l : List Nat) (m : Nat),
