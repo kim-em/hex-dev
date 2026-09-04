@@ -21,6 +21,54 @@ GCA ordering is not a result-side invariant: the first-child loop raises
 
 namespace Hex.GraphIso.Nauty
 
+/-- Every vertex recorded as fixed occupies a singleton cell of the
+current partition.  This is the executable path fact that makes erasing a
+completed child's temporary fixed vertex restore its parent set exactly. -/
+@[expose] def FixedCells (ctx : Ctx) (level : Nat) (st : SearchSt) : Prop :=
+  ∀ v, v < ctx.n → elem st.fixedpts v = true →
+    ∃ q, q < ctx.n ∧ st.lab[q]! = v ∧ IsCell st.ptn level q 1
+
+namespace FixedCells
+
+/-- A vertex in a non-singleton target cell is not already fixed. -/
+theorem fresh {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
+    (h : FixedCells ctx level st) (hok : LabOk st.lab ctx.n)
+    (hinj : LabInj st.lab ctx.n) (hsize : st.lab.size = ctx.n)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    elem st.fixedpts st.lab[tc + o]! = false := by
+  rcases hm : elem st.fixedpts st.lab[tc + o]! with _ | _
+  · rfl
+  · have hv : st.lab[tc + o]! < ctx.n := by
+      exact hok (tc + o) (by omega)
+    obtain ⟨q, hq, hqv, hsingle⟩ := h _ hv hm
+    have heq : q = tc + o := by
+      apply LabInj.eq_of_getElem! hinj hq (by omega)
+      exact hqv
+    subst q
+    rcases isCell_disj_or_eq hsingle hcell with heq | hleft | hright
+    · omega
+    · omega
+    · omega
+
+/-- Reordering vertices within unchanged cells preserves fixed
+singletons. -/
+theorem ofCellsPerm {ctx : Ctx} {level : Nat} {st out : SearchSt}
+    (h : FixedCells ctx level st) (hfixed : out.fixedpts = st.fixedpts)
+    (hptn : out.ptn = st.ptn)
+    (hperm : cellsPerm st.ptn level st.lab out.lab) :
+    FixedCells ctx level out := by
+  intro v hv hm
+  rw [hfixed] at hm
+  obtain ⟨q, hq, hqv, hsingle⟩ := h v hv hm
+  refine ⟨q, hq, ?_, ?_⟩
+  · rw [← hqv]
+    exact (cellsPerm_singleton hperm hsingle).symm
+  · rw [hptn]
+    exact hsingle
+
+end FixedCells
+
 /-- Reference history, ordered live guides, and stabilization of every
 ancestor frame to which the current node may return. -/
 structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
