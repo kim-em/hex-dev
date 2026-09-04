@@ -357,6 +357,12 @@ theorem FirstInv.terminalOutcome {G : Colored n k} {ctx : Ctx}
     · rw [(firstterminal_state level leaf).2.2.2.2]
       omega
     · exact ReturnStab.empty hempty
+    · apply RefTrail.ofCurrent hrun.trailOk h.frameSize
+      · rw [firstterminal_firstlab, (firstterminal_state level leaf).1]
+      · rw [firstterminal_canonlab, (firstterminal_state level leaf).1]
+    · rw [(firstterminal_state level leaf).2.2.1,
+        (firstterminal_state level leaf).2.2.2.1]
+      exact Nat.le_refl _
   · exact TrailExt.refl level trail
 
 set_option maxHeartbeats 800000 in

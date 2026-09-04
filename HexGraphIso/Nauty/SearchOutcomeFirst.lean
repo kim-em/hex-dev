@@ -40,6 +40,8 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
   activeStarts : ∀ v : Nat, elem st.active v = true →
     v = 0 ∨ st.ptn[v - 1]! ≤ level
   trailOk : TrailOk ctx level st trail
+  frameSize : ∀ target entry, target < level →
+    trail target = some entry → entry.frame.rsLab.size = ctx.n
   genEmpty : st.genTrace = #[]
   autosEmpty : st.autos = #[]
   canongSize : st.canong.size = ctx.n
@@ -54,11 +56,13 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
   refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_, ?_,
-    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_⟩
+    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_⟩
   · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
   · simpa only [rootSt] using certInv_initial G hn0
   · simpa only [rootSt] using (initial_nodeOk G hn0).act
   · simpa only [rootSt] using (initial_nodeOk G hn0).starts
+  · intro target entry _ hentry
+    simp [FrameTrail.empty] at hentry
   · simp [rootSt]
   · simp [rootSt]
   · simp [rootSt]
@@ -320,7 +324,8 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
       · exact breakout_ptn pre.lab pre.ptn (level + 1) tc
           pre.lab[tc + o]!
     simpa only [hpreLab, hprePtn] using hpush
-  refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_, ?_⟩
+  refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_,
+    ?_, ?_⟩
   · apply h.codes.next
     · change child.firstcode =
         st.firstcode.set! (cs.length + 1) r.longcode
@@ -362,6 +367,16 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
         pre.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
     rw [breakout_ptn]
     exact split_starts hokPre.ptnSize hcellPre
+  · intro target entry hlt hentry
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | rfl
+    · rw [FrameTrail.push_of_ne _ _ (Nat.ne_of_lt hold)] at hentry
+      exact h.frameSize target entry hold hentry
+    · rw [FrameTrail.push_self] at hentry
+      have heq : entry =
+          ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩ :=
+        Option.some.inj hentry.symm
+      subst entry
+      simpa only [sweepFrame] using href.1.ok.labSize
   · rw [show child.genTrace = pre.genTrace by rfl, hpreGen]
     exact h.genEmpty
   · rw [show child.autos = pre.autos by rfl, hpreAutos]

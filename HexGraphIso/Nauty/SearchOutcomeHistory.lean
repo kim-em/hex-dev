@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeResult
+public import HexGraphIso.Nauty.SearchOutcomeLoop
+public import HexGraphIso.Nauty.SearchOutcomeReturn
 
 public section
 
@@ -49,6 +50,39 @@ theorem empty (ctx : Ctx) (current : Nat) (st : SearchSt) :
     simp [FrameTrail.empty] at hentry
   · intro target entry _ _ hentry
     simp [FrameTrail.empty] at hentry
+
+/-- Installing the first leaf seeds both reference histories from the
+current descent, while retaining the accumulated frozen-frame sizes. -/
+theorem firstterminal {ctx : Ctx} {level : Nat} {st : SearchSt}
+    {trail : FrameTrail} (htrail : TrailOk ctx level st trail)
+    (hsize : ∀ target entry, target < level →
+      trail target = some entry → entry.frame.rsLab.size = ctx.n) :
+    RefTrail ctx level (Nauty.firstterminal level st) trail := by
+  constructor
+  · exact hsize
+  · intro target entry hlt _ hentry
+    rw [firstterminal_firstlab]
+    exact htrail.reach target entry hlt hentry
+  · intro target entry hlt _ hentry
+    rw [firstterminal_canonlab]
+    exact htrail.reach target entry hlt hentry
+
+/-- When both installed references are the current labelling, the active
+trail itself supplies their complete history. -/
+theorem ofCurrent {ctx : Ctx} {current : Nat} {st : SearchSt}
+    {trail : FrameTrail} (htrail : TrailOk ctx current st trail)
+    (hsize : ∀ target entry, target < current →
+      trail target = some entry → entry.frame.rsLab.size = ctx.n)
+    (hfirst : st.firstlab = st.lab) (hcanon : st.canonlab = st.lab) :
+    RefTrail ctx current st trail := by
+  constructor
+  · exact hsize
+  · intro target entry hlt _ hentry
+    rw [hfirst]
+    exact htrail.reach target entry hlt hentry
+  · intro target entry hlt _ hentry
+    rw [hcanon]
+    exact htrail.reach target entry hlt hentry
 
 /-- Reference history depends only on the two references and their GCA
 controls. -/

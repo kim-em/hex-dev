@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeLoop
-public import HexGraphIso.Nauty.SearchOutcomeReturn
+public import HexGraphIso.Nauty.SearchOutcomeHistory
 
 public section
 
@@ -37,6 +36,8 @@ inductive EventOut (G : Colored n k) (ctx : Ctx) (tcLevel : Nat)
       (stemEq : codes.take stem.length = stem)
       (returned : r ≤ Int.ofNat current)
       (stable : ReturnStab trail r out)
+      (history : RefTrail ctx current out trail)
+      (order : out.gcaFirst ≤ out.gcaCanon)
 
 namespace RunEvent
 
@@ -140,7 +141,7 @@ theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     ReturnStab trail r out := by
   cases h with
-  | intro _ _ _ _ _ _ _ stable => exact stable
+  | intro _ _ _ _ _ _ _ stable _ _ => exact stable
 
 /-- Recovering an event that returned exactly to `level` produces the
 stable parent-loop state and retains its generator stabilization. -/
@@ -157,9 +158,13 @@ theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : N
       RunInv G ctx tcLevel level stem bs fs numcells
           (Nauty.recover ctx.n inf level out) best trail ∧
         ReturnStab trail (Int.ofNat level)
-          (Nauty.recover ctx.n inf level out) := by
+          (Nauty.recover ctx.n inf level out) ∧
+        RefTrail ctx level (Nauty.recover ctx.n inf level out) trail ∧
+        (Nauty.recover ctx.n inf level out).gcaFirst ≤
+          (Nauty.recover ctx.n inf level out).gcaCanon := by
   cases h with
-  | intro current codes bestCodes event depth stemEq returned stable =>
+  | intro current codes bestCodes event depth stemEq returned stable
+      history order =>
       rw [hreturn] at returned stable
       have hle : level ≤ current := Int.ofNat_le.mp returned
       have hpath : level ≤ codes.length := by omega
@@ -168,7 +173,8 @@ theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : N
         rw [← hstem]
         exact stemEq
       rw [htake] at hrun
-      exact ⟨bestCodes, hrun, stable.recover ctx.n inf level⟩
+      exact ⟨bestCodes, hrun, stable.recover ctx.n inf level,
+        history.recover hle, RefTrail.recover_order order hfirst⟩
 
 /-- A stable state with a nonpositive comparison sign is an event output
 at its own code depth. -/
@@ -179,9 +185,12 @@ theorem ofRun {G : Colored n k} {ctx : Ctx}
     (hdepth : level = codes.length)
     (hstem : codes.take stem.length = stem)
     (hreturn : r ≤ Int.ofNat level) (hnonpositive : st.compCanon ≤ 0)
-    (hstable : ReturnStab trail r st) :
+    (hstable : ReturnStab trail r st)
+    (hhistory : RefTrail ctx level st trail)
+    (horder : st.gcaFirst ≤ st.gcaCanon) :
     EventOut G ctx tcLevel stem fs st best trail r :=
   .intro level codes bs (h.event hnonpositive) hdepth hstem hreturn hstable
+    hhistory horder
 
 /-- Weakening the returned level preserves an event output. -/
 theorem lower {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
@@ -191,9 +200,10 @@ theorem lower {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
     (hle : r' ≤ r) :
     EventOut G ctx tcLevel stem fs out best trail r' := by
   cases h with
-  | intro current codes bestCodes event depth stemEq returned stable =>
+  | intro current codes bestCodes event depth stemEq returned stable
+      history order =>
       exact .intro current codes bestCodes event depth stemEq
-        (Int.le_trans hle returned) (stable.lower hle)
+        (Int.le_trans hle returned) (stable.lower hle) history order
 
 /-- Fixed-point cleanup preserves the full result-side package. -/
 theorem setFixed {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
@@ -204,9 +214,11 @@ theorem setFixed {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
     EventOut G ctx tcLevel stem fs { out with fixedpts := fixedpts }
       best trail r := by
   cases h with
-  | intro current codes bestCodes event depth stemEq returned stable =>
+  | intro current codes bestCodes event depth stemEq returned stable
+      history order =>
       exact .intro current codes bestCodes (event.setFixed fixedpts)
         depth stemEq returned (stable.setFixed fixedpts)
+        (history.stateEq rfl rfl rfl rfl) order
 
 /-- Clearing the short-prune request preserves the full result package. -/
 theorem clearShort {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
@@ -216,9 +228,10 @@ theorem clearShort {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
     EventOut G ctx tcLevel stem fs
       { out with needshortprune := false } best trail r := by
   cases h with
-  | intro current codes bestCodes event depth stemEq returned stable =>
+  | intro current codes bestCodes event depth stemEq returned stable
+      history order =>
       exact .intro current codes bestCodes event.clearShort depth stemEq
-        returned stable.clearShort
+        returned stable.clearShort (history.stateEq rfl rfl rfl rfl) order
 
 /-- Updating the first-path agreement counter preserves the full result
 package. -/
@@ -229,9 +242,11 @@ theorem setAllsame {G : Colored n k} {ctx : Ctx} {tcLevel allsamelevel : Nat}
     EventOut G ctx tcLevel stem fs
       { out with allsamelevel := allsamelevel } best trail r := by
   cases h with
-  | intro current codes bestCodes event depth stemEq returned stable =>
+  | intro current codes bestCodes event depth stemEq returned stable
+      history order =>
       exact .intro current codes bestCodes event.setAllsame depth stemEq
         returned (stable.setAllsame allsamelevel)
+        (history.stateEq rfl rfl rfl rfl) order
 
 end EventOut
 
