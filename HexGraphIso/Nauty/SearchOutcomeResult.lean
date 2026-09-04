@@ -49,6 +49,50 @@ theorem TrailExt.pushAt {level : Nat} {trail out : FrameTrail}
     out level = some entry := by
   rw [h level (by omega), FrameTrail.push_self]
 
+/-- Location evidence can be moved between trails that agree at the
+unwind target. -/
+theorem Unwind.Located.retrail {ctx : Ctx} {tcLevel target : Nat}
+    {out : SearchSt} {best : Option Key} {source dest : FrameTrail}
+    {payload : Unwind ctx tcLevel target out best}
+    (h : payload.Located source) (heq : source target = dest target) :
+    payload.Located dest := by
+  cases h with
+  | first anchor carrier located =>
+      apply Unwind.Located.first anchor carrier
+      unfold Anchor.Located at located ⊢
+      rw [← heq]
+      exact located
+  | canon anchor carrier located =>
+      apply Unwind.Located.canon anchor carrier
+      unfold Anchor.Located at located ⊢
+      rw [← heq]
+      exact located
+  | orbit payload => exact .orbit payload
+
+/-- A loop receipt depends on its trail only below the loop level. -/
+theorem LoopReceipt.retrail {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {source dest : FrameTrail} {r : Option Int}
+    (htrail : TrailExt level dest source)
+    (h : LoopReceipt source ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r) :
+    LoopReceipt dest ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
+  | unwind sound target returned below payload located =>
+      exact .unwind sound target returned below payload
+        (located.retrail (htrail target below))
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover progress
+        bounded
+
 /-- The semantic node receipt and the concrete result state produced by
 one recursive node call. -/
 structure NodeOutcome (G : Colored n k) (ctx : Ctx)
