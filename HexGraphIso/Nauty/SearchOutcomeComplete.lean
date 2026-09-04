@@ -38,13 +38,14 @@ structure FirstKeep (ctx : Ctx) (level : Nat) (st out : SearchSt)
   boundary : out.noncheaplevel < level → out.noncheaplevel = st.noncheaplevel
   guide : level ≤ out.gcaFirst
 
-/-- Totality of one off-path node at a fixed executable recursion fuel. -/
+/-- Totality of one off-path node at a fixed executable recursion fuel.
+Off-path nodes are never the root, so the level is at least two. -/
 @[expose] def OtherTotal (G : Colored n k) (ctx : Ctx)
     (inf tcLevel runFuel : Nat) : Prop :=
   ∀ (specFuel level numcells : Nat) (codes bs fs : List Nat)
     (st : SearchSt) (best : Option Key) (trail : FrameTrail),
     ctx.n = n → ctx.g = rowsOf G → inf = n + 2 → 0 < n →
-    1 ≤ level → level = codes.length + 1 →
+    2 ≤ level → level = codes.length + 1 →
     level + specFuel = n + 1 → n + 2 < level + runFuel →
     st.noncheaplevel ≤ level →
     CheapDesc ctx level st.noncheaplevel
