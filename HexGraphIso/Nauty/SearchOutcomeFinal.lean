@@ -1796,4 +1796,96 @@ theorem done {G : Colored n k} {ctx : Ctx}
 
 end OtherLoopProof
 
+namespace FirstLoopProof
+
+/-- A zero-fuel first-path loop is a pending tail and preserves all
+first-descent history literally. -/
+theorem zero {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 index : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tv? cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n)
+    (hfirst : FirstTrail ctx (level + 1) st trail)
+    (hcanon : CanonTrail ctx level st trail)
+    (hguide : level ≤ st.gcaFirst) (horder : st.gcaFirst ≤ st.gcaCanon) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel 0 level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell index st).1 := by
+  refine ⟨hinv.firstZero hpath hstem hpast hnp hlive hcursor, ?_, ?_, ?_,
+    ?_, ?_⟩
+  · exact .pending (by unfold firstChildLoop; rfl)
+  · simpa only [firstChildLoop] using hfirst
+  · simpa only [firstChildLoop] using hcanon
+  · simpa only [firstChildLoop] using hguide
+  · simpa only [firstChildLoop] using horder
+
+/-- A positive-fuel first-path loop with no next child has covered its
+fixed specification bound. -/
+theorem done {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 index tail : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hfirst : FirstTrail ctx (level + 1) st trail)
+    (hcanon : CanonTrail ctx level st trail)
+    (hguide : level ≤ st.gcaFirst) (horder : st.gcaFirst ≤ st.gcaCanon) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell index st).1 := by
+  have hloop := hinv.firstDoneProof (inf := inf) (runFuel := runFuel)
+    (loopFuel := loopFuel) (tv1 := tv1) (index := index)
+    (bound := bound)
+    hpath hstem hpast hnext hnp hlive
+  have hread : stInc ctx st = best := hinv.run.read (by omega)
+  have hreadSome : stInc ctx st = some (incKey ctx bs st.canonlab) :=
+    hread.trans hinv.run.incumbent
+  have hinstalled : st.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc hreadSome
+  have hempty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o := by
+    intro o ho
+    exact no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+  have hfull : best = some (incMax best bound) := by
+    rw [hlen] at hinv hempty
+    exact hinv.cover.exact_of_read hbound hempty
+      (.refl ctx bound best) hinstalled hread
+  refine ⟨hloop, .full hfull, ?_, ?_, ?_, ?_⟩
+  · simpa only [firstChildLoop] using hfirst
+  · simpa only [firstChildLoop] using hcanon
+  · simpa only [firstChildLoop] using hguide
+  · simpa only [firstChildLoop] using horder
+
+end FirstLoopProof
+
 end Hex.GraphIso.Nauty
