@@ -49,6 +49,7 @@ public import HexGraphIso.Nauty.SmallCellAll
 public import HexGraphIso.Nauty.FirstPath
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
+public import HexGraphIso.Nauty.CertStore
 public import HexGraphIso.Nauty.SearchReach
 public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon

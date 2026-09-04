@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Domination
-public import HexGraphIso.Nauty.CertReplay
+public import HexGraphIso.Nauty.CertStore
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -545,8 +545,7 @@ theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
   rw [stInc_final hn0 hinst, stInc_rootSt, incMax, nodeKey_root hn0] at hfull
   exact (Option.some.inj hfull).symm
 
-/-- **The programme's target**, modulo the quartet at the root and
-store validity. -/
+/-- **The programme's target**, modulo the quartet at the root. -/
 theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
     {r : Int}
     (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
@@ -554,10 +553,8 @@ theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length r)
-    (hr : r = Int.ofNat 1 - 1)
-    (hval : ∀ cert B, produceCand G none = some (cert, B) →
-      AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true) cert) :
+    (hr : r = Int.ofNat 1 - 1) :
     (certifyCanon? G).isSome :=
-  certifyCanon?_isSome_of_dominated G (dominated_of_root hn0 hroot hr) hval
+  certifyCanon?_isSome_of_keyEq G (dominated_of_root hn0 hroot hr)
 
 end Hex.GraphIso.Nauty
