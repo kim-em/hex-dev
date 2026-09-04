@@ -266,6 +266,27 @@ theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
     cellStab_breakout hstab hcell hrange hsize ho hlen hend hvals
       (hfixes _ hselectedBound hselected), hlt⟩
 
+/-- The conditional local ledger is preserved by equitable refinement. -/
+theorem refine {ctx : Ctx} {level active numcells : Nat} {st : SearchSt}
+    (h : LocalAutos ctx level st) (hgsz : ctx.g.size = ctx.n)
+    (hsize : st.lab.size = ctx.n) (hlab : LabOk st.lab ctx.n)
+    (hpsize : st.ptn.size = ctx.n) (hactive : active < 2 ^ ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hstarts : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ st.ptn[v - 1]! ≤ level) :
+    LocalAutos ctx level
+      { st with
+        lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
+        ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
+        active := (Nauty.refine ctx level st.lab st.ptn active numcells).active } := by
+  intro p hp hfix
+  have hpair := h p hp hfix
+  intro v hv hmcr
+  obtain ⟨gamma, hcheck, hfixes, hstab, hlt⟩ := hpair v hv hmcr
+  exact ⟨gamma, hcheck, hfixes,
+    cellStab_refine (n := ctx.n) rfl hstab hgsz hcheck hsize hlab
+      hpsize hactive hend hstarts, hlt⟩
+
 end LocalAutos
 
 /-- Reference history, ordered live guides, and stabilization of every
