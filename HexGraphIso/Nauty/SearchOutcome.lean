@@ -38,6 +38,32 @@ namespace Hex.GraphIso.Nauty
   ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
     ∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!
 
+/-- A checked carrier identifies the relabelled leaf rows of its two
+permutation labellings. -/
+theorem LabelCarrier.leafRows {ctx : Ctx} {ref cur : Array Nat}
+    {store : Array (Array Nat)}
+    (h : LabelCarrier ctx ref cur store)
+    (hgsz : ctx.g.size = ctx.n)
+    (hrefsz : ref.size = ctx.n) (hrefok : LabOk ref ctx.n)
+    (hcursz : cur.size = ctx.n) :
+    leafRows ctx cur = leafRows ctx ref := by
+  obtain ⟨γ, _, hcheck, hmap⟩ := h
+  obtain ⟨σ, hσ, hrows⟩ := checkAutom_sound hgsz hcheck
+  have hcur : cur = ref.map σ.toFun := by
+    refine Array.ext (by rw [Array.size_map, hrefsz, hcursz])
+      fun i hi hri => ?_
+    rw [Array.getElem_map]
+    have hrefi : i < ref.size := by omega
+    have hm : γ[ref[i]]! = cur[i] := by
+      simpa only [getElem!_pos ref i hrefi, getElem!_pos cur i hi] using
+        hmap i (by omega)
+    have hb : ref[i] < ctx.n := by
+      simpa only [getElem!_pos ref i hrefi] using hrefok i (by omega)
+    have hs := hσ ref[i] hb
+    exact hm.symm.trans hs.symm
+  rw [hcur]
+  exact leafRows_map σ rfl rfl hrows hrefok hrefsz
+
 /-- At a valid leaf event, either no generator is recorded or the output
 store contains a checked carrier from the first or incumbent leaf. -/
 theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
