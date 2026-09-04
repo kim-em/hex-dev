@@ -571,7 +571,7 @@ theorem reindexSet {G : Colored n k} {ctx : Ctx}
     OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.proof.reindexSet, h.exit.reindexSet⟩
+  ⟨h.proof.reindexSet, h.exit.reindexSet, h.short⟩
 
 theorem step {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat}
@@ -586,7 +586,7 @@ theorem step {G : Colored n k} {ctx : Ctx}
     OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
       outBest receiptTrail eventTrail r :=
-  ⟨h.proof.step ha, h.exit.step ha⟩
+  ⟨h.proof.step ha, h.exit.step ha, h.short⟩
 
 theorem prepend {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -603,7 +603,7 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
     OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.proof.prepend hfixed hcoset hpre, h.exit.prepend hpre⟩
+  ⟨h.proof.prepend hfixed hcoset hpre, h.exit.prepend hpre, h.short⟩
 
 /-- Compose an ordinary non-guiding child with the recursively proved
 tail of an off-path sweep. -/
@@ -827,7 +827,9 @@ theorem frozen {G : Colored n k} {ctx : Ctx}
     (hcoset : out.cosetindex = st.cosetindex)
     (hbelow : value < Int.ofNat level)
     (hexact : outBest = some (incMax best bound))
-    (hfreeze : FrozenOut ctx codes out outBest value) :
+    (hfreeze : FrozenOut ctx codes out outBest value)
+    (hsource : out.needshortprune = true →
+      ShortSource G ctx out eventTrail value) :
     OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -838,8 +840,8 @@ theorem frozen {G : Colored n k} {ctx : Ctx}
   have hinstalled : out.canonlevel ≠ 0 :=
     canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
   rw [hstate]
-  refine ⟨?_, LoopExit.frozen value rfl hbelow hexact hfreeze⟩
-  exact {
+  refine ⟨?_, LoopExit.frozen value rfl hbelow hexact hfreeze, ?_⟩
+  · exact {
     loop := {
       outcome := {
         receipt := .pruned value rfl hbelow (LoopSound.ofExact hexact)
@@ -848,6 +850,8 @@ theorem frozen {G : Colored n k} {ctx : Ctx}
         preserved := hpreserved }
       fixed := hfixed }
     coset := hcoset }
+  · intro hshort
+    exact ⟨value, rfl, hsource hshort⟩
 
 /-- Package an already established cheap-cell jump as a corrected
 off-path loop result. -/
@@ -866,7 +870,9 @@ theorem cheap {G : Colored n k} {ctx : Ctx}
     (hfixed : out.fixedpts = st.fixedpts)
     (hcoset : out.cosetindex = st.cosetindex)
     (hpositive : 1 ≤ boundary) (hbelow : boundary ≤ level)
-    (hexact : outBest = some (incMax best bound)) :
+    (hexact : outBest = some (incMax best bound))
+    (hsource : out.needshortprune = true →
+      ShortSource G ctx out eventTrail (Int.ofNat boundary - 1)) :
     OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -880,8 +886,8 @@ theorem cheap {G : Colored n k} {ctx : Ctx}
   have hinstalled : out.canonlevel ≠ 0 :=
     canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
   rw [hstate]
-  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexact⟩
-  exact {
+  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexact, ?_⟩
+  · exact {
     loop := {
       outcome := {
         receipt := .pruned (Int.ofNat boundary - 1) rfl hvalue
@@ -890,6 +896,8 @@ theorem cheap {G : Colored n k} {ctx : Ctx}
         preserved := hpreserved }
       fixed := hfixed }
     coset := hcoset }
+  · intro hshort
+    exact ⟨Int.ofNat boundary - 1, rfl, hsource hshort⟩
 
 /-- A generator unwind addressed strictly above this loop crosses the
 temporary fixed-vertex cleanup and returns immediately. -/
@@ -1014,10 +1022,16 @@ theorem unwind {G : Colored n k} {ctx : Ctx}
         exact hfixed
     · rw [hstate]
       exact hchild.coset
-  refine ⟨hproof, ?_⟩
-  rw [hstate, hreturn]
-  exact LoopExit.unwind target rfl hbelow (LoopSound.ofNode hsound hkey)
-    payload' hloc'
+  refine ⟨hproof, ?_, ?_⟩
+  · rw [hstate, hreturn]
+    exact LoopExit.unwind target rfl hbelow (LoopSound.ofNode hsound hkey)
+      payload' hloc'
+  · intro hshort
+    rw [hstate] at hshort ⊢
+    refine ⟨node.1, rfl, ?_⟩
+    apply ShortSource.setFixed
+    apply hchild.node.short
+    simpa only [cleaned] using hshort
 
 /-- Zero cursor fuel is retained as exhaustion, never mistaken for a
 completed sibling sweep. -/
@@ -1042,12 +1056,17 @@ theorem zero {G : Colored n k} {ctx : Ctx}
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell st).1 := by
   refine ⟨OtherLoopProof.zero hpath hstem hpast hnp hinv hlive hcursor,
-    ?_⟩
-  apply LoopExit.exhausted (finalCursor := cursor)
-  · unfold otherChildLoop
-    rfl
-  · omega
-  · exact hcursor
+    ?_, ?_⟩
+  · apply LoopExit.exhausted (finalCursor := cursor)
+    · unfold otherChildLoop
+      rfl
+    · omega
+    · exact hcursor
+  · intro hshort
+    unfold otherChildLoop at hshort
+    simp only at hshort
+    rw [hinv.shortClear] at hshort
+    cases hshort
 
 /-- A positive-fuel loop with no next vertex has genuinely covered the
 fixed original target cell and returns its exact maximum. -/
@@ -1094,9 +1113,14 @@ theorem done {G : Colored n k} {ctx : Ctx}
     rw [hlen] at hinv hempty
     exact hinv.cover.exact_of_read hbound hempty
       (.refl ctx bound best) hinstalled hread
-  refine ⟨hproof, LoopExit.done ?_ hexact⟩
-  unfold otherChildLoop
-  rfl
+  refine ⟨hproof, LoopExit.done ?_ hexact, ?_⟩
+  · unfold otherChildLoop
+    rfl
+  · intro hshort
+    unfold otherChildLoop at hshort
+    simp only at hshort
+    rw [hinv.shortClear] at hshort
+    cases hshort
 
 end OtherLoopRun
 

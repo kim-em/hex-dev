@@ -76,6 +76,22 @@ inductive ShortSource (G : Colored n k) (ctx : Ctx) (out : SearchSt)
         (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1
         (fmptn out.lab out.ptn out.noncheaplevel ctx.n).2)
 
+namespace ShortSource
+
+/-- Fixed-point cleanup after a child return does not affect the stored
+pair or its source evidence. -/
+theorem setFixed {G : Colored n k} {ctx : Ctx} {out : SearchSt}
+    {trail : FrameTrail} {r : Int}
+    (h : ShortSource G ctx out trail r) (fixedpts : Nat) :
+    ShortSource G ctx { out with fixedpts := fixedpts } trail r := by
+  cases h with
+  | explicit target fix mcr returned back valid =>
+      exact .explicit target fix mcr returned back valid
+  | implicit target returned below back root =>
+      exact .implicit target returned below back root
+
+end ShortSource
+
 namespace NodeExit
 
 /-- Every result of a positive-level node lies strictly below that node's
@@ -179,6 +195,8 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
   exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
     rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail r
+  short : out.needshortprune = true → ∃ value,
+    r = some value ∧ ShortSource G ctx out eventTrail value
 
 /-- An off-path sibling sweep additionally retains its coset cursor. -/
 structure OtherLoopRun (G : Colored n k) (ctx : Ctx)
@@ -193,6 +211,8 @@ structure OtherLoopRun (G : Colored n k) (ctx : Ctx)
   exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
     rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail r
+  short : out.needshortprune = true → ∃ value,
+    r = some value ∧ ShortSource G ctx out eventTrail value
 
 /-- The first-path sibling sweep retains both reference histories in its
 established proof and the corrected reason for abandoning any suffix. -/
@@ -208,6 +228,8 @@ structure FirstLoopRun (G : Colored n k) (ctx : Ctx)
   exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
     rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail r
+  short : out.needshortprune = true → ∃ value,
+    r = some value ∧ ShortSource G ctx out eventTrail value
 
 namespace NodeRun
 
