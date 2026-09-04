@@ -70,6 +70,32 @@ theorem child {ctx : Ctx} {level boundary tc len o : Nat}
 
 end CheapDesc
 
+namespace FrozenOut
+
+/-- Expose a shorter ancestor prefix while retaining the same frozen
+comparison.  This is the transport used as an early return crosses nested
+node and loop frames. -/
+theorem shrink {ctx : Ctx} {stem ancestor : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int}
+    (h : FrozenOut ctx stem out best r)
+    (hprefix : stem.take ancestor.length = ancestor) :
+    FrozenOut ctx ancestor out best r := by
+  rcases h with
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, hbest, hfloor⟩
+  apply FrozenOut.mk current codes bestCodes hcode hdepth
+  · have hlen := congrArg List.length hprefix
+    simp only [List.length_take] at hlen
+    have hle : ancestor.length ≤ stem.length := by omega
+    calc
+      codes.take ancestor.length =
+          (codes.take stem.length).take ancestor.length := by
+            rw [List.take_take, Nat.min_eq_left hle]
+      _ = ancestor := by rw [hstem, hprefix]
+  · exact hbest
+  · exact hfloor
+
+end FrozenOut
+
 namespace RunPrep
 
 /-- A negative comparison branch whose prune tail stays below the recorded
