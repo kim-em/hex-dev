@@ -146,6 +146,8 @@ structure NodeRun (G : Colored n k) (ctx : Ctx)
   event : EventOut G ctx tcLevel codes fs out outBest eventTrail r
   preserved : TrailExt level receiptTrail eventTrail
   fixed : out.fixedpts = st.fixedpts
+  short : out.needshortprune = true →
+    ShortSource G ctx out eventTrail r
 
 /-- Off-path nodes additionally preserve the first-path control and coset
 cursor needed by their enclosing sibling loop. -/
@@ -476,6 +478,45 @@ theorem toNodeNone {ctx : Ctx}
 
 end LoopExit
 
+namespace RunPrep
+
+/-- A fresh request from the frozen-downward `processnode` arm records
+the implicit pair admitted at the saved cheap-cell boundary. -/
+theorem fastSource {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hbound : st.noncheaplevel ≤ level)
+    (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
+    (hclear : st.needshortprune = false)
+    (hshort : (processnode ctx level numcells st).2.needshortprune = true) :
+    ShortSource G ctx (processnode ctx level numcells st).2 trail
+      (processnode ctx level numcells st).1 := by
+  let value := pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon
+  have hnonneg : 0 ≤ value :=
+    pruneReturn_nonneg h.cheap.positive h.codeInv.eqlev_nonneg
+  have hne : level ≠ st.noncheaplevel :=
+    processnode_fast_short_ne hg hclear hshort
+  apply ShortSource.implicit value.toNat
+  · rw [(processnode_fast hg).1]
+    exact (Int.toNat_of_nonneg hnonneg).symm
+  · rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1]
+    apply Int.ofNat_lt.mp
+    rw [Int.toNat_of_nonneg hnonneg]
+    exact pruneReturn_lt
+  · rw [processnode_fast_autos hg]
+    have hback := pruneAutos_back (ctx := ctx) h.workspace hne
+    rw [(processnode_frames ctx level numcells st).1,
+      (processnode_frames ctx level numcells st).2.1,
+      (processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1]
+    exact hback
+  · rw [(processnode_frames ctx level numcells st).1,
+      (processnode_frames ctx level numcells st).2.1,
+      (processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1]
+    exact h.cheap.ready hbound hne
+
+end RunPrep
+
 namespace NodeInv
 
 /-- A negative, non-generator discrete leaf produces the corrected exit:
@@ -563,7 +604,12 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     event := houtcome.event
     preserved := houtcome.preserved
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
-      numcells st hnum hearly }
+      numcells st hnum hearly
+    short := by
+      rw [hout]
+      intro hshort
+      apply hprep.fastSource hcheap' ⟨hfirstNe, hneg⟩
+        (by rw [otherLeafSt_short, hnode.shortClear]) hshort }
 
 /-- An early off-path leaf also preserves the guide and coset fields used
 when its unwind stops at the immediately enclosing sibling loop. -/
@@ -702,6 +748,8 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
       Int.ofNat level := by
     rw [hreturn]
     exact Int.ofNat_lt.mpr hfirstBelow
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
   have hrun : NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level
       codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
@@ -714,7 +762,15 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
     event := houtcome.event
     preserved := houtcome.preserved
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
-      numcells st hnum hearly }
+      numcells st hnum hearly
+    short := by
+      intro hshort
+      rw [hout] at hshort
+      have hleafClear : leaf.needshortprune = false := by
+        rw [otherLeafSt_short, hnode.shortClear]
+      rw [processnode_auto_short heq hsent (by simp) hpass,
+        hleafClear] at hshort
+      cases hshort }
   exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- A code-two row tie returns either its canonical guide or its
@@ -759,6 +815,12 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       hn hn0 hgsz hgb hsymm hloop hlevel hpath hcheap hnum hef hcc hge
       htie hcoset horbit hlive
   let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf hn hn0 hlevel hpath
   have hlive' : Live ctx level leaf trail := by
     simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
   have hcanonBelow : leaf.gcaCanon < level := by
@@ -776,6 +838,8 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       exact Int.ofNat_lt.mpr hfirstBelow
     · rw [hcanon]
       exact Int.ofNat_lt.mpr hcanonBelow
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
   have hrun : NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level
       codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
@@ -788,7 +852,20 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
     event := houtcome.event
     preserved := houtcome.preserved
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
-      numcells st hnum hearly }
+      numcells st hnum hearly
+    short := by
+      rw [hout]
+      intro hshort
+      have hleafClear : leaf.needshortprune = false := by
+        rw [otherLeafSt_short, hnode.shortClear]
+      apply ShortSource.explicit leaf.gcaCanon
+        (fmperm (canonScatter ctx.n leaf.canonlab leaf.lab) ctx.n).1
+        (fmperm (canonScatter ctx.n leaf.canonlab leaf.lab) ctx.n).2
+      · exact processnode_rowTie_short hef (by simp) hcc hge htie
+          hleafClear hshort
+      · exact hprep.rowTieBack hef (by simp) hcc hge htie
+      · intro entry hentry
+        exact hlive'.rowTiePair hn hn0 hgb hprep hcanonBelow htie hentry }
   exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- The negative non-generator leaf, with the off-path fields needed by
@@ -970,7 +1047,11 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
       exit := NodeExit.done (congrArg Prod.fst hout) hexact
       event := houtcome.event
       preserved := houtcome.preserved
-      fixed := hproof.fixed }
+      fixed := hproof.fixed
+      short := by
+        intro hshort
+        rw [hout, leafFinish_short] at hshort
+        cases hshort }
     firstGuide := hproof.outcome.firstGuide
     order := hproof.outcome.order
     canonGuide := hproof.outcome.canonGuide

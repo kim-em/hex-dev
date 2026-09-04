@@ -342,6 +342,17 @@ theorem root_result_of_discrete {G : Colored n k} (hn0 : 0 < n)
       active := rs.active
       numnodes := st.numnodes + 1 }
 
+/-- Refinement and comparison preparation do not alter the one-shot
+short-prune request carried into a leaf. -/
+theorem otherLeafSt_short (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).needshortprune =
+      st.needshortprune := by
+  unfold otherLeafSt
+  rw [otherNodePrep]
+  simp only [Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.needshortprune, ite_self]
+
 /-- If a discrete off-path leaf requests an early unwind, `otherNode`
 returns its `processnode` result verbatim. -/
 theorem otherNode_leaf_early (ctx : Ctx)
@@ -368,6 +379,20 @@ request an early unwind. -/
   if ¬ cheapautom st.ptn level ctx.n then
     { st with noncheaplevel := level + 1 }
   else st
+
+/-- Leaf cleanup always consumes a pending one-shot short-prune request. -/
+theorem leafFinish_short (ctx : Ctx) (level : Nat) (st : SearchSt) :
+    (leafFinish ctx level st).needshortprune = false := by
+  unfold leafFinish
+  split <;> rename_i hshort
+  · simp only
+    split <;> rfl
+  · have hfalse : st.needshortprune = false := by
+      cases heq : st.needshortprune
+      · rfl
+      · exact absurd heq hshort
+    simp only
+    split <;> exact hfalse
 
 /-- A discrete off-path leaf that does not unwind runs the empty child
 sweep and returns ordinary node completion. -/
