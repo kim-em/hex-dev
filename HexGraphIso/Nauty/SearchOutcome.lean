@@ -54,6 +54,27 @@ theorem cursorRank_step {cursor : Option Nat} {v : Nat}
     (h : After cursor v) : cursorRank cursor + 1 ≤ cursorRank (some v) := by
   cases cursor <;> simp only [After, cursorRank] at h ⊢ <;> omega
 
+/-- A bounded cursor has rank at most the vertex count. -/
+theorem cursorRank_le {cursor : Option Nat} {n : Nat}
+    (h : ∀ v, cursor = some v → v < n) : cursorRank cursor ≤ n := by
+  cases cursor with
+  | none => simp only [cursorRank]; omega
+  | some v =>
+      have := h v rfl
+      simp only [cursorRank]
+      omega
+
+/-- A loop cannot consume more fuel than the remaining bounded cursor
+range.  This is the contradiction used to rule out the exhaustion outcome
+of the executable root sweeps. -/
+theorem LoopResult.exhaustion_false {ctx : Ctx}
+    {cursor finalCursor : Option Nat} {loopFuel : Nat}
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hprogress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
+    (hbounded : ∀ v, finalCursor = some v → v < ctx.n) : False := by
+  have := cursorRank_le hbounded
+  omega
+
 /-- The prefixed specification key of offset `o` in a refined target
 cell. -/
 @[expose] def sweepKey (ctx : Ctx) (tcLevel specFuel level : Nat)
