@@ -434,4 +434,55 @@ theorem LeafRefsOk.processnodeCarrier {G : Colored n k} {ctx : Ctx}
     · exact Or.inr (Or.inl ⟨γ, hmem, hcheck, hfirst⟩)
     · exact Or.inr (Or.inr ⟨γ, hmem, hcheck, hcanon⟩)
 
+private theorem pushAuto_canonRef (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).canonlab = st.canonlab := by
+  rw [pushAuto]
+  split <;> rfl
+
+private theorem ite_or' {α : Type} {P : α → Prop} {c : Prop}
+    [Decidable c] {a b : α} (ha : P a) (hb : P b) :
+    P (if c then a else b) := by
+  split
+  · exact ha
+  · exact hb
+
+/-- `processnode` either retains the canonical reference or installs the
+current reached labelling. -/
+theorem processnode_canonRef (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.canonlab = st.canonlab ∨
+      (processnode ctx level numcells st).2.canonlab = st.lab := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.canonlab),
+    pushAuto_canonRef]
+  refine ite_or' (P := fun y => y = st.canonlab ∨ y = st.lab) ?_ ?_ <;>
+    repeat' first
+    | exact Or.inl rfl
+    | exact Or.inr rfl
+    | apply ite_or' (P := fun y => y = st.canonlab ∨ y = st.lab)
+
+/-- Leaf-reference validity crosses every `processnode` outcome. -/
+theorem LeafRefsOk.processnode {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (h : LeafRefsOk G st) (hok : SearchOk G level numcells st) :
+    LeafRefsOk G (Nauty.processnode ctx level numcells st).2 := by
+  obtain ⟨-, -, -, -, hfirst, -, -, -, -⟩ :=
+    processnode_frames ctx level numcells st
+  constructor
+  · rw [hfirst]
+    exact h.firstSize
+  · rw [hfirst]
+    exact h.firstReach
+  · rcases processnode_canonRef ctx level numcells st with heq | heq
+    · rw [heq]
+      exact h.canonSize
+    · rw [heq]
+      exact hok.labSize
+  · rcases processnode_canonRef ctx level numcells st with heq | heq
+    · rw [heq]
+      exact h.canonReach
+    · rw [heq]
+      exact hok.reach
+
 end Hex.GraphIso.Nauty
