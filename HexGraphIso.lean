@@ -52,6 +52,7 @@ public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.CertStore
 public import HexGraphIso.Nauty.LoopCoverage
 public import HexGraphIso.Nauty.SearchOutcome
+public import HexGraphIso.Nauty.SearchOutcomeProof
 public import HexGraphIso.Nauty.SearchReach
 public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon
