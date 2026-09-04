@@ -492,6 +492,59 @@ theorem processnode_leaf_read {nn : Nat} {ctx : Ctx}
   refine ⟨bs', ?_, hcanong, hcmp, hreturn⟩
   rw [hread, hmax]
 
+/-- The first-path-agreeing leaf whose guarded admission fails has the
+same exact incumbent read as the ordinary leaf comparison. -/
+theorem processnode_leafFirst_read {nn : Nat} {ctx : Ctx}
+    {cs bs : List Nat} {numcells : Nat} {st : SearchSt}
+    (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcsn : cs.length ≤ nn) (hbs : bs ≠ []) (hcs : cs ≠ [])
+    (heq : (st.eqlevFirst == cs.length) = true)
+    (hfail : st.firstcode[cs.length + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false)
+    (hnc : (numcells == ctx.n) = true) :
+    ∃ bs' : List Nat,
+      stInc ctx (processnode ctx cs.length numcells st).2 =
+        some (keyMax (incKey ctx bs st.canonlab)
+          (pathLeafKey ctx cs st.lab)) ∧
+      CanongInv ctx (processnode ctx cs.length numcells st).2.canong
+        (processnode ctx cs.length numcells st).2.canonlab
+        (processnode ctx cs.length numcells st).2.samerows ∧
+      (((processnode ctx cs.length numcells st).2.compCanon ≤ 0 ∧
+        CodeCmpInv nn cs bs'
+          (processnode ctx cs.length numcells st).2.canoncode
+          (processnode ctx cs.length numcells st).2.canonlevel
+          (processnode ctx cs.length numcells st).2.eqlevCanon
+          (processnode ctx cs.length numcells st).2.compCanon) ∨
+        ((processnode ctx cs.length numcells st).2.compCanon < 0 ∧
+          CodeCmpInv nn cs bs'
+            (processnode ctx cs.length numcells st).2.canoncode
+            (processnode ctx cs.length numcells st).2.canonlevel
+            (processnode ctx cs.length numcells st).2.eqlevCanon 0)) ∧
+      ((processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∨
+        (processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            (Int.ofNat cs.length) ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaFirst ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaCanon) := by
+  obtain ⟨bs', hmax, hcanong, hcmp, hreturn⟩ :=
+    processnode_leafFirst hcinv hginv hcsn heq hnc hfail
+  have hbs' := incKey_max_nonempty hbs hcs hmax
+  have hread : stInc ctx (processnode ctx cs.length numcells st).2 =
+      some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab) := by
+    rcases hcmp with hcmp | hcmp
+    · rw [stInc_eq_ghost hcmp.2 (by omega)]
+      simp only [ghostInc, hbs', ↓reduceIte]
+    · rw [stInc_eq_ghost hcmp.2 (by omega)]
+      simp only [ghostInc, hbs', ↓reduceIte]
+  refine ⟨bs', ?_, hcanong, hcmp, hreturn⟩
+  rw [hread, hmax]
+
 /-- Reading a present incumbent proves that a canonical leaf has been
 installed in the mutable state. -/
 theorem canonlevel_ne_zero_of_stInc {ctx : Ctx} {st : SearchSt} {B : Key}
