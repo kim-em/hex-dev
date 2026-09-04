@@ -1602,4 +1602,83 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
       h.searchOk h.canongInv h.genTraceOk
   · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
 
+/-- A first-path-agreeing leaf whose generator admission guard fails has
+the same exact event invariant as an ordinary compared leaf. -/
+theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = cs.length)
+    (hbound : st.noncheaplevel ≤ level)
+    (heq : (st.eqlevFirst == level) = true)
+    (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false)
+    (hnc : (numcells == ctx.n) = true)
+    (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
+    ∃ bs' : List Nat,
+      RunEvent G ctx tcLevel level cs bs' fs
+        (processnode ctx level numcells st).2
+        (some (incKey ctx bs'
+          (processnode ctx level numcells st).2.canonlab)) trail ∧
+      incKey ctx bs' (processnode ctx level numcells st).2.canonlab =
+        keyMax (incKey ctx bs st.canonlab) (pathLeafKey ctx cs st.lab) ∧
+      ((processnode ctx level numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∨
+        (processnode ctx level numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            (Int.ofNat cs.length) ∨
+        (processnode ctx level numcells st).1 =
+          Int.ofNat st.gcaFirst ∨
+        (processnode ctx level numcells st).1 =
+          Int.ofNat st.gcaCanon) := by
+  subst level
+  have hcsn : cs.length ≤ n := by
+    have hb := bcount_le st.ptn cs.length n
+    have hc := h.searchOk.bc
+    omega
+  obtain ⟨bs', hmax, hcanong, hmachines, hreturn⟩ :=
+    processnode_leafFirst h.codeInv h.canongInv hcsn heq hnc hfail
+  have hcs : cs ≠ [] := by
+    intro he
+    subst cs
+    simp at hlevel
+  have hbs' : bs' ≠ [] :=
+    incKey_max_nonempty h.bestCodes hcs hmax
+  have hinc : IncGrows best
+      (some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab)) := by
+    intro b hb
+    rw [h.incumbent] at hb
+    injection hb with hb
+    subst b
+    refine ⟨incKey ctx bs'
+      (processnode ctx cs.length numcells st).2.canonlab, rfl, ?_⟩
+    rw [hmax]
+    exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
+  obtain ⟨-, -, heqFirst, hfirstCode, hfirstlab, -, hgcaFirst,
+      -, -⟩ := processnode_frames ctx cs.length numcells st
+  have hguides : GuideStore ctx tcLevel cs.length
+      (processnode ctx cs.length numcells st).2
+      (some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab)) trail := by
+    apply h.guides.processnode hinc hgcaFirst hfirstlab
+    intro hlt
+    rcases processnode_canonGuide ctx cs.length numcells st with
+      hold | hnew
+    · exact hold
+    · rw [hnew] at hlt
+      omega
+  refine ⟨bs', ?_, hmax, hreturn⟩
+  refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
+    h.leafRefs.processnode h.searchOk, hguides, hbs', rfl⟩
+  · rw [hfirstCode, heqFirst]
+    exact h.firstInv
+  · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+      h.searchOk h.canongInv h.genTraceOk
+  · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
+
 end Hex.GraphIso.Nauty
