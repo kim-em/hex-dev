@@ -898,6 +898,12 @@ theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
     SearchOut G B lev st st :=
   ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _, Or.inl rfl⟩
 
+/-- A quartet call cannot move the entry of a singleton cell. -/
+theorem SearchOut.atSingleton {G : Colored n k} {B lev : Nat}
+    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    (hc : IsCell st.ptn lev a 1) : st'.lab[a]! = st.lab[a]! :=
+  (cellsPerm_singleton h.perm hc).symm
+
 /-- The exact-preservation clause fixes the boundary count. -/
 theorem bcount_eq_of_low {ptn ptn' : Array Nat} {lev : Nat}
     (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →

@@ -357,7 +357,7 @@ theorem canonlab_or_of {G : Colored n k} {ctx : Ctx}
 
 mutual
 
-private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
+theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel level numcells : Nat) (st : SearchSt)
@@ -674,7 +674,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
         ⟨hRsize, hRreach⟩⟩
 termination_by (fuel, 0, 0)
 
-private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
+theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel cfuel level numcells tc tv1 : Nat) (tv? : Option Nat)
@@ -1051,7 +1051,7 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                 first | rfl | exact fun v hv => shortprune_subset hv
 termination_by (fuel, 1, cfuel)
 
-private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
+theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel level numcells : Nat) (st : SearchSt)
@@ -1449,7 +1449,7 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               | exact rfl
 termination_by (fuel, 0, 0)
 
-private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
+theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel cfuel level numcells tc tv1 : Nat) (tv? : Option Nat)
