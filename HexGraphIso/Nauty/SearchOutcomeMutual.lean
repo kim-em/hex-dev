@@ -611,4 +611,89 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
     exact hfinalEvent
   · exact TrailExt.refl level trail
 
+/-! # Completed child sweeps -/
+
+/-- An empty positive-fuel first-path sweep closes the coupled loop
+outcome.  The comparison sign is explicit: a freshly prepared node may
+enter its first child with sign one, whereas every state that reaches the
+end of a real sweep has already absorbed a child and restored a
+nonpositive sign. -/
+theorem LoopInv.firstDone {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 index : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key}
+    {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) :
+    LoopOutcome G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor
+      bound
+      st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+        numcells tc tv1 none tcell index st).2.2
+      best best trail trail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+        numcells tc tv1 none tcell index st).1 := by
+  have hread : stInc ctx st = best := hinv.run.read (by omega)
+  have hreadSome : stInc ctx st =
+      some (incKey ctx bs st.canonlab) :=
+    hread.trans hinv.run.incumbent
+  have hinstalled : st.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc hreadSome
+  constructor
+  · exact firstLoop_doneReceipt ctx inf tcLevel specFuel runFuel
+      loopFuel level numcells tc tv1 codes rsLab rsPtn len tcell index
+      cursor _ st best trail hinstalled hread hinv.cover hnext
+  · simpa only [firstChildLoop, loopReturn] using
+      (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
+        hlive.stable hlive.history)
+  · exact TrailExt.refl level trail
+
+/-- An empty positive-fuel off-path sweep closes the coupled loop outcome
+with the same frozen-frame coverage and result event. -/
+theorem LoopInv.otherDone {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key}
+    {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) :
+    LoopOutcome G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor
+      bound
+      st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+        numcells tc tv1 none tcell st).2
+      best best trail trail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+        numcells tc tv1 none tcell st).1 := by
+  have hread : stInc ctx st = best := hinv.run.read (by omega)
+  have hreadSome : stInc ctx st =
+      some (incKey ctx bs st.canonlab) :=
+    hread.trans hinv.run.incumbent
+  have hinstalled : st.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc hreadSome
+  constructor
+  · exact otherLoop_doneReceipt ctx inf tcLevel specFuel runFuel
+      loopFuel level numcells tc tv1 codes rsLab rsPtn len tcell cursor _
+      st best trail hinstalled hread hinv.cover hnext
+  · simpa only [otherChildLoop, loopReturn] using
+      (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
+        hlive.stable hlive.history)
+  · exact TrailExt.refl level trail
+
 end Hex.GraphIso.Nauty
