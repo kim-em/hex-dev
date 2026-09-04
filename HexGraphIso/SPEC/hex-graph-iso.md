@@ -459,9 +459,9 @@ layers one and two, since the producer's walk *is* the transcription's.
 
 Unconditional agreement of the two public tiers is a refinement
 theorem: the pruned production search refines the declarative
-canonical form. This section records the decomposition. It is future
-work and not a release condition; no release waits on any layer of
-it.
+canonical form. This section records the decomposition. It is a
+release requirement: the first release waits on it, and release
+condition 4 below is discharged by completing it.
 
 The proven starting point is the conditional agreement theorem of the
 fast tier, `canonicalize_eq_canonicalizeChecked` above. Both tiers
