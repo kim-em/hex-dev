@@ -42,6 +42,20 @@ theorem leafFinish_fixedpts (ctx : Ctx) (level : Nat) (st : SearchSt) :
   rw [leafFinish]
   split <;> split <;> rfl
 
+/-- Clearing a freshly inserted bit restores the original set. -/
+theorem erase_insert_of_miss {s v : Nat} (h : elem s v = false) :
+    erase (insert s v) v = s := by
+  apply Nat.eq_of_testBit_eq
+  intro u
+  rw [testBit_erase, testBit_insert]
+  rcases Decidable.em (v = u) with rfl | hne
+  · simp only [beq_self_eq_true, Bool.not_true, Bool.or_true,
+      Bool.and_false]
+    exact h.symm
+  · have hb : (v == u) = false := by simp [hne]
+    rw [hb]
+    simp
+
 /-- The discrete first-path arm restores its entry fixed-point set. -/
 theorem firstPath_discrete_fixedpts (ctx : Ctx)
     (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
@@ -114,6 +128,70 @@ structure LoopProof (G : Colored n k) (ctx : Ctx)
     codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
     outBest receiptTrail eventTrail r
   fixed : out.fixedpts = st.fixedpts
+
+/-- A completed child, cleanup, and recovery restore both parent path
+facts.  The selected vertex is fresh because it lies in a non-singleton
+target cell while all older fixed vertices occupy singleton cells. -/
+theorem LoopInv.recoverPath {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab rsLab rsPtn : Array Nat}
+    {tcLevel specFuel level numcells tc len tcell currentOffset inf : Nat}
+    {codes bs fs : List Nat} {cursor : Option Nat}
+    {base st out : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx rootPtn rootLab level st)
+    (hout : SearchOut G level (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      out)
+    (hfixed : out.fixedpts =
+      insert st.fixedpts st.lab[tc + currentOffset]!)
+    (hinf : inf = n + 2) (hcurrent : currentOffset < len) :
+    let cleaned : SearchSt :=
+      { out with
+        fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
+    let recovered := Nauty.recover ctx.n inf level cleaned
+    PathOk ctx rootPtn rootLab level recovered ∧
+      recovered.fixedpts = st.fixedpts := by
+  dsimp only
+  let cleaned : SearchSt :=
+    { out with
+      fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
+  let recovered := Nauty.recover ctx.n inf level cleaned
+  have hn := hinv.nodeCount
+  subst n
+  have hok := hinv.run.searchOk
+  have hlab : LabOk st.lab ctx.n :=
+    labOk_of_reach hok.labSize hok.reach
+  have hinj : LabInj st.lab ctx.n :=
+    labInj_of_reach hok.labSize hinv.nonempty hok.reach
+  have hfresh : elem st.fixedpts st.lab[tc + currentOffset]! = false :=
+    hpath.fixed.fresh hlab hinj hok.labSize hinv.currentCell
+      hinv.lenTwo hinv.range hcurrent
+  have hcleaned : cleaned.fixedpts = st.fixedpts := by
+    change erase out.fixedpts st.lab[tc + currentOffset]! = st.fixedpts
+    rw [hfixed, erase_insert_of_miss hfresh]
+  have hparent : SearchOut G level level st out := by
+    apply breakout_child_out hinv.nonempty hok hinv.positive
+      hinv.currentCell hinv.lenTwo hinv.range hcurrent hout
+    · rfl
+    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!
+    · rfl
+    · rfl
+  have hclean : SearchOut G level level st cleaned :=
+    hparent.congr rfl rfl rfl rfl
+  have hrec := hclean.recoverOk rfl hinf hinv.positive hok
+  have hrecovered : recovered.fixedpts = st.fixedpts := by
+    exact (recover_fixedpts ctx.n inf level cleaned).trans hcleaned
+  exact ⟨hpath.ofSearchOut rfl hinv.nonempty hinv.positive hrecovered
+    hok hrec.2 hrec.1, hrecovered⟩
 
 namespace NodeProof
 
