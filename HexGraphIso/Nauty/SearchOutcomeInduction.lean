@@ -8,6 +8,8 @@ module
 
 public import HexGraphIso.Nauty.SearchOutcomeLocatedProof
 public import HexGraphIso.Nauty.QuartetNode
+import all HexGraphIso.Nauty.Search
+import all HexGraphIso.Nauty.SmallCellTie
 
 public section
 
@@ -141,5 +143,94 @@ theorem RunInv.read {G : Colored n k} {ctx : Ctx}
     omega
   rw [stInc_eq_ghost h.codeInv hne, ghostInc]
   simp only [h.bestCodes, ↓reduceIte, h.incumbent]
+
+/-! # First-leaf phase transition -/
+
+/-- The state fields needed to enter the stable induction immediately
+after `firstterminal`. -/
+theorem firstterminal_state (level : Nat) (st : SearchSt) :
+    (firstterminal level st).lab = st.lab ∧
+    (firstterminal level st).ptn = st.ptn ∧
+    (firstterminal level st).gcaFirst = level ∧
+    (firstterminal level st).gcaCanon = level ∧
+    (firstterminal level st).compCanon = 0 := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+  simp
+
+/-- Installing the first leaf preserves the search skeleton and records a
+reached canonical labelling. -/
+theorem SearchOk.firstterminal {G : Colored n k} {level numcells : Nat}
+    {st : SearchSt} (h : SearchOk G level numcells st) :
+    SearchOk G level numcells (Nauty.firstterminal level st) := by
+  obtain ⟨hlab, hptn, -, -, -⟩ := firstterminal_state level st
+  constructor
+  · rw [hlab]
+    exact h.labSize
+  · rw [hptn]
+    exact h.ptnSize
+  · rw [hlab]
+    exact h.reach
+  · intro q hq
+    rw [hptn]
+    exact h.init1 q hq
+  · intro q hq
+    rw [hptn]
+    exact h.vals q hq
+  · rw [hptn]
+    exact h.count
+  · rw [hptn]
+    exact h.bc
+  · rw [firstterminal_canonlab]
+    exact Or.inr ⟨h.labSize, h.reach⟩
+
+/-- The first leaf changes the pre-incumbent descent into the stable
+post-install invariant. Both mutable stores are still empty at this point;
+all later store growth is handled by the ordinary node induction. -/
+theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {tcLevel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
+    (hpath : level = cs.length) (hok : SearchOk G level numcells st)
+    (hfirstSize : st.firstcode.size = n + 2)
+    (hcanonSize : st.canoncode.size = n + 2)
+    (hbound : cs.length ≤ n)
+    (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length →
+      st.firstcode[i]! = cs[i - 1]!)
+    (hlt : ∀ c ∈ cs, c < codeSentinel)
+    (hcanong : st.canong.size = ctx.n)
+    (hgen : st.genTrace = #[]) (hautos : st.autos = #[])
+    (hne : cs ≠ []) :
+    RunInv G ctx rlab rptn tcLevel level cs cs cs numcells
+      (Nauty.firstterminal level st)
+      (some (pathLeafKey ctx cs st.lab)) trail := by
+  subst level
+  have hstate := firstterminal_state cs.length st
+  have hstore := firstterminal_store cs.length st
+  refine ⟨hok.firstterminal,
+    firstterminal_codeInv hcanonSize hbound hcodes hlt,
+    firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
+    firstterminal_canongInv hcanong, ?_, ?_, ?_,
+    LeafRefsOk.firstterminal hok, ?_, ?_, hne, ?_⟩
+  · intro γ hγ
+    rw [hstore.1, hgen] at hγ
+    simp at hγ
+  · unfold GenTraceOk
+    intro γ hγ
+    rw [hstore.1, hgen] at hγ
+    simp at hγ
+  · intro p hp
+    rw [hstore.2, hautos] at hp
+    simp at hp
+  · constructor
+    · intro _ hbelow
+      rw [hstate.2.2.1] at hbelow
+      omega
+    · intro _ hbelow
+      rw [hstate.2.2.2.1] at hbelow
+      omega
+  · rw [hstate.2.2.2.2]
+    exact Int.le_refl 0
+  · rw [firstterminal_canonlab]
+    rfl
 
 end Hex.GraphIso.Nauty
