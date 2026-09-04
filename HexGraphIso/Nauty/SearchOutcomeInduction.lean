@@ -89,6 +89,133 @@ theorem SearchOut.leafRefs {G : Colored n k} {B level numcells : Nat}
       exact hrefs.canonReach
     · exact hreach.2
 
+/-! # Cheap-automorphism ledger boundary -/
+
+/-- The implicit automorphism pair remains valid while search stays
+strictly below the level at which that pair was frozen.  At the frozen
+level itself the implication is deliberately dormant: `processnode` does
+not insert an implicit pair there, and a failed cheap-automorphism guard
+will move the boundary before the next descent. -/
+structure CheapOk (ctx : Ctx) (rlab rptn : Array Nat) (level : Nat)
+    (st : SearchSt) : Prop where
+  positive : 0 < st.noncheaplevel
+  ptnSize : ctx.n ≤ st.ptn.size
+  rootEnd : st.ptn[st.ptn.size - 1]! ≤ 1
+  pair : st.noncheaplevel < level →
+    PairOk ctx.g rptn rlab 1 ctx.n
+      (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+      (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2
+
+/-- At a node entry, the runtime bound turns the strict-boundary ledger
+invariant into the premise consumed by `processnode`. -/
+theorem CheapOk.ready {ctx : Ctx} {rlab rptn : Array Nat} {level : Nat}
+    {st : SearchSt} (h : CheapOk ctx rlab rptn level st)
+    (hbound : st.noncheaplevel ≤ level) (hne : level ≠ st.noncheaplevel) :
+    PairOk ctx.g rptn rlab 1 ctx.n
+      (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+      (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2 :=
+  h.pair (by omega)
+
+/-- The cheap-boundary invariant depends only on the current labelling,
+partition, and boundary level. -/
+theorem CheapOk.ofFrames {ctx : Ctx} {rlab rptn : Array Nat}
+    {level : Nat} {st out : SearchSt}
+    (h : CheapOk ctx rlab rptn level st)
+    (hlab : out.lab = st.lab) (hptn : out.ptn = st.ptn)
+    (hncl : out.noncheaplevel = st.noncheaplevel) :
+    CheapOk ctx rlab rptn level out := by
+  constructor
+  · rw [hncl]
+    exact h.positive
+  · rw [hptn]
+    exact h.ptnSize
+  · rw [hptn]
+    exact h.rootEnd
+  · intro hlt
+    rw [hncl] at hlt
+    rw [hlab, hptn, hncl]
+    exact h.pair hlt
+
+/-- Reopening below `level` preserves every `fmptn` frozen at or above
+the root and at or below `level`. -/
+theorem recover_fmptn {st : SearchSt} {n inf level saved : Nat}
+    (hsize : n ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ saved)
+    (hsaved : saved ≤ level) (hinf : level < inf) :
+    fmptn (Nauty.recover n inf level st).lab
+        (Nauty.recover n inf level st).ptn
+        saved n =
+      fmptn st.lab st.ptn saved n := by
+  have hcells : cells (Nauty.recover n inf level st).ptn saved n =
+      cells st.ptn saved n := by
+    apply cells_eq_of_low (recover_ptn_size n inf level st)
+    intro q hq
+    rw [recover_ptn]
+    rcases Decidable.em (q < n ∧ st.ptn[q]! > level) with hc | hc
+    · rw [ite_eq_left hc]
+      exfalso
+      rcases hq with hold | hnew
+      · omega
+      · rw [recover_ptn, ite_eq_left hc] at hnew
+        omega
+    · rw [ite_eq_right hc]
+  apply Eq.symm
+  apply fmptn_congr hsize hend hcells.symm
+  rw [recover_lab]
+  exact cellsPerm_refl _ _ _
+
+/-- Recovery either parks the boundary just below the next child, where
+the strict obligation is dormant, or retains an older frozen pair. -/
+theorem CheapOk.recover {ctx : Ctx} {rlab rptn : Array Nat}
+    {current level inf : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn current st) (hle : level ≤ current)
+    (hlevel : 1 ≤ level) (hinf : level < inf) :
+    CheapOk ctx rlab rptn level (Nauty.recover ctx.n inf level st) := by
+  have hncl : (Nauty.recover ctx.n inf level st).noncheaplevel =
+      if level < st.noncheaplevel then level + 1
+      else st.noncheaplevel := by
+    rw [Nauty.recover]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+      apply_ite SearchSt.noncheaplevel, ite_self]
+  constructor
+  · rw [hncl]
+    split
+    · omega
+    · exact h.positive
+  · rw [recover_ptn_size]
+    exact h.ptnSize
+  · rw [recover_ptn_size, recover_ptn]
+    rcases Decidable.em
+        (st.ptn.size - 1 < ctx.n ∧
+          st.ptn[st.ptn.size - 1]! > level) with hc | hc
+    · rw [ite_eq_left hc]
+      exfalso
+      have := h.rootEnd
+      omega
+    · rw [ite_eq_right hc]
+      exact h.rootEnd
+  · intro hlt
+    rcases Decidable.em (level < st.noncheaplevel) with hc | hc
+    · rw [hncl, ite_eq_left hc] at hlt
+      omega
+    · have heq : (Nauty.recover ctx.n inf level st).noncheaplevel =
+          st.noncheaplevel := by rw [hncl, ite_eq_right hc]
+      rw [heq] at hlt ⊢
+      have hpos := h.positive
+      rw [recover_fmptn h.ptnSize
+        (Nat.le_trans h.rootEnd (by omega : 1 ≤ st.noncheaplevel))
+        (by omega : st.noncheaplevel ≤ level) hinf]
+      exact h.pair (by omega)
+
+/-- Leaf processing does not move the frozen pair's defining fields. -/
+theorem CheapOk.processnode {ctx : Ctx} {rlab rptn : Array Nat}
+    {level numcells : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn level st) :
+    CheapOk ctx rlab rptn level (processnode ctx level numcells st).2 := by
+  obtain ⟨hlab, hptn, -, -, -, -, -, hncl, -⟩ :=
+    processnode_frames ctx level numcells st
+  exact h.ofFrames hlab hptn hncl
+
 /-! # Stable post-install state -/
 
 /-- The semantic state available after the first leaf has been installed.

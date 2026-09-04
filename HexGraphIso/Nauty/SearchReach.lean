@@ -151,7 +151,8 @@ private theorem ite_or {α : Type} {P : α → Prop} {c : Prop}
   · exact ha
   · exact hb
 
-private theorem recover_lab (n inf level : Nat) (st : SearchSt) :
+/-- `recover` never changes the current labelling. -/
+theorem recover_lab (n inf level : Nat) (st : SearchSt) :
     (recover n inf level st).lab = st.lab := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -181,13 +182,15 @@ private theorem recover_ptn_foldl (n inf level : Nat)
     rfl
   rw [h1, forIn_range_eq', forIn_reopen_eq]
 
-private theorem recover_ptn (n inf level : Nat) (st : SearchSt)
+/-- `recover` reopens exactly the entries above its receiving level. -/
+theorem recover_ptn (n inf level : Nat) (st : SearchSt)
     (q : Nat) :
     (recover n inf level st).ptn[q]! =
       if q < n ∧ st.ptn[q]! > level then inf else st.ptn[q]! := by
   rw [recover_ptn_foldl, foldl_reopen_getElem]
 
-private theorem recover_ptn_size (n inf level : Nat) (st : SearchSt) :
+/-- Reopening a partition preserves its array size. -/
+theorem recover_ptn_size (n inf level : Nat) (st : SearchSt) :
     (recover n inf level st).ptn.size = st.ptn.size := by
   rw [recover_ptn_foldl, foldl_reopen_size]
 
