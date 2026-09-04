@@ -1137,7 +1137,7 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
 
 /-- A guide's covered child remains covered when the incumbent grows. -/
-def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
+@[expose] def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
     {best best' : Option Key} (g : Guide ctx tcLevel target best)
     (hinc : IncGrows best best') : Guide ctx tcLevel target best' :=
   { g with done := g.done.mono hinc }
