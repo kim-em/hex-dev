@@ -724,4 +724,55 @@ theorem firstLoop_otherNext (ctx : Ctx)
   split <;>
     exact ((hrec _).prefix hpre).step (nextElem_after hnext)
 
+/-- After the guiding child completes without requesting a short prune,
+the first-path loop installs its return controls, recovers the parent
+frame, and continues with every recursive location intact. -/
+theorem firstLoop_guideNext (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
+    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
+    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
+    (hnext : nextElem tcell cursor = some tv)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hfirst : (tv == tv1) = true)
+    (hcall : firstPathNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv } = (r, child))
+    (hstay : ¬ r < Int.ofNat level)
+    (hshort : child.needshortprune = false)
+    (hrecover : recSt = recover ctx.n inf level
+      { child with
+        fixedpts := erase child.fixedpts tv
+        gcaFirst := level
+        stabvertex := tv1 })
+    (hpre : LoopSound ctx bound best mid)
+    (hrec : ∀ index',
+      LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+        rsLab rsPtn tc len numcells tcell (some tv) bound recSt
+        (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
+          tv1 (nextElem tcell (some tv)) tcell index' recSt).2.2
+        mid outBest
+        (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
+          tv1 (nextElem tcell (some tv)) tcell index' recSt).1) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  subst recSt
+  simp only [hshort] at hrec
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hfirst, Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, Bool.false_eq_true, ite_false]
+  split <;>
+    exact ((hrec _).prefix hpre).step (nextElem_after hnext)
+
 end Hex.GraphIso.Nauty
