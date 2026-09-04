@@ -720,6 +720,26 @@ theorem LoopSound.trans {ctx : Ctx} {bound : Key}
       · exact keyLe_incMax_right (stInc ctx st) bound
   · exact h₁.grows.trans h₂.grows
 
+/-- Matching upper and lower bounds turn loop soundness into the exact
+incumbent equation required when a parent node completes. -/
+theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
+    {st out : SearchSt} (h : LoopSound ctx bound st out)
+    (hout : stInc ctx out = some b) (hlower : keyLe bound b) :
+    stInc ctx out = some (incMax (stInc ctx st) bound) := by
+  have hupper := h.upper b hout
+  have hlower' : keyLe (incMax (stInc ctx st) bound) b := by
+    rcases hin : stInc ctx st with _ | a
+    · rw [incMax]
+      exact hlower
+    · obtain ⟨b', hb', hab'⟩ := h.grows a hin
+      have hbb' : b = b' := Option.some.inj (hout.symm.trans hb')
+      rw [incMax]
+      apply keyMax_le_of_le
+      · rwa [← hbb'] at hab'
+      · exact hlower
+  rw [hout]
+  exact congrArg some (keyLe_antisym hupper hlower')
+
 /-- The result of a node call, with logical and runtime fuel separated.
 
 `complete` and `unwind` may have the same return integer.  The latter is
