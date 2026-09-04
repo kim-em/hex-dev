@@ -601,6 +601,33 @@ theorem otherNode_leaf_pruned_of_read {ctx : Ctx}
   · exact hread
   · rw [incMax, hnode]
 
+/-- A leaf event returning a generator carrier to a strict ancestor lifts
+directly to the node's explicit unwind outcome. -/
+theorem otherNode_leaf_unwind_of_event {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells target : Nat}
+    {cs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hreturn : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (hsound : NodeSound ctx tcLevel (specFuel + 1) level cs st numcells
+      best outBest)
+    (hpayload : Unwind ctx tcLevel target
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2 outBest) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  have hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level := by
+    rw [hreturn]
+    exact Int.ofNat_lt.mpr hbelow
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  exact .unwind hsound target hreturn hbelow hpayload
+
 /-- A first-path-agreeing leaf whose sentinel or automorphism guard fails
 falls through the ordinary leaf comparison and yields the same exact local
 prune outcome. -/
