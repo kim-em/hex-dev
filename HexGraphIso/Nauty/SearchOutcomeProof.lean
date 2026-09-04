@@ -22,6 +22,165 @@ sweep.
 
 namespace Hex.GraphIso.Nauty
 
+/-! # First-path leaf seed -/
+
+/-- Once the first descent reaches a real leaf, `firstterminal` installs
+exactly that leaf as the semantic incumbent. -/
+theorem stInc_firstterminal {ctx : Ctx} {nn level : Nat} {cs : List Nat}
+    {st : SearchSt}
+    (hlevel : level = cs.length) (hne : cs ≠ [])
+    (hcanon : st.canoncode.size = nn + 2)
+    (hbound : cs.length ≤ nn)
+    (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length →
+      st.firstcode[i]! = cs[i - 1]!)
+    (hlt : ∀ c ∈ cs, c < codeSentinel) :
+    stInc ctx (firstterminal level st) =
+      some (pathLeafKey ctx cs st.lab) := by
+  subst level
+  have hinv := firstterminal_codeInv hcanon hbound hcodes hlt
+  have hcomp : (firstterminal cs.length st).compCanon ≠ 1 := by
+    rw [firstterminal]
+    simp only [Id.run_bind, Id.run_pure]
+    omega
+  rw [stInc_eq_ghost hinv hcomp]
+  simp only [ghostInc, hne, ↓reduceIte]
+  rfl
+
+/-- The state immediately before the first-path leaf is installed. -/
+@[expose] def firstLeafSt (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) : SearchSt :=
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  { st with
+    lab := rs.lab
+    ptn := rs.ptn
+    active := rs.active
+    firstcode := st.firstcode.set! level rs.longcode
+    firsttc := st.firsttc.set! level (-1)
+    numnodes := st.numnodes + 1 }
+
+/-- The discrete arm of `firstPathNode` is exactly `firstterminal` on the
+refined leaf state. -/
+theorem firstPath_discrete_state (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hdisc : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    firstPathNode ctx inf tcLevel (fuel + 1) level numcells st =
+      (Int.ofNat level - 1, firstterminal level
+        (firstLeafSt ctx level numcells st)) := by
+  rw [firstPathNode]
+  simp only [Id.run_pure, hdisc, ne_eq,
+    not_true_eq_false, ite_false,
+    beq_self_eq_true, ite_true, firstLeafSt]
+
+/-- Writing the current refinement code extends the stored first-path
+code sequence by one entry. -/
+theorem firstLeafSt_codes {ctx : Ctx} {nn level numcells : Nat}
+    {cs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1)
+    (hsize : st.firstcode.size = nn + 2) (hle : level ≤ nn)
+    (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length →
+      st.firstcode[i]! = cs[i - 1]!) :
+    ∀ i, 1 ≤ i → i ≤ (cs ++ [(refine ctx level st.lab st.ptn
+      st.active numcells).longcode]).length →
+      (firstLeafSt ctx level numcells st).firstcode[i]! =
+        (cs ++ [(refine ctx level st.lab st.ptn st.active
+          numcells).longcode])[i - 1]! := by
+  intro i hi hbound
+  rcases Decidable.em (i = level) with rfl | hne
+  · change (st.firstcode.set! i (refine ctx i st.lab st.ptn
+        st.active numcells).longcode)[i]! = _
+    rw [Array.getElem!_set!_self _ _ _ (by
+      rw [hsize]
+      omega)]
+    have hi1 : i - 1 = cs.length := by omega
+    rw [hi1]
+    rw [getElem!_append_right'' (Nat.le_refl _) (by
+      simp only [List.length_singleton]
+      omega)]
+    simp only [Nat.sub_self]
+    rfl
+  · change (st.firstcode.set! level (refine ctx level st.lab st.ptn
+        st.active numcells).longcode)[i]! = _
+    rw [Array.getElem!_set!_ne _ _ _ _ (fun h => hne h.symm)]
+    have hlen : (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]).length = cs.length + 1 := by simp
+    have hics : i ≤ cs.length := by
+      rw [hlen] at hbound
+      omega
+    rw [getElem!_append_left'' (by omega)]
+    exact hcodes i hi hics
+
+/-- A discrete first-path node installs the exact specification leaf and
+returns ordinary completion.  This is the phase transition from an absent
+incumbent to the stable off-path comparison state. -/
+theorem firstPath_discrete {ctx : Ctx} {nn inf tcLevel specFuel fuel
+    level numcells : Nat} {cs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1)
+    (hfirstSize : st.firstcode.size = nn + 2)
+    (hcanonSize : st.canoncode.size = nn + 2) (hle : level ≤ nn)
+    (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length →
+      st.firstcode[i]! = cs[i - 1]!)
+    (hlt : ∀ c ∈ cs, c < codeSentinel)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells none
+      (some (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells))
+      (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  rw [firstPath_discrete_state ctx inf tcLevel fuel level numcells st hnum]
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let leaf := firstLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hfullNe : full ≠ [] := by
+    intro he
+    have := congrArg List.length he
+    simp only [full, List.length_append, List.length_singleton,
+      List.length_nil] at this
+    omega
+  have hfullBound : full.length ≤ nn := by omega
+  have hfullCodes : ∀ i, 1 ≤ i → i ≤ full.length →
+      leaf.firstcode[i]! = full[i - 1]! := by
+    simpa only [leaf, full, code] using
+      (firstLeafSt_codes (ctx := ctx) (nn := nn) (level := level)
+        (numcells := numcells) (cs := cs) (st := st) hlevel
+        hfirstSize hle hcodes)
+  have hfullLt : ∀ c ∈ full, c < codeSentinel := by
+    intro c hc
+    change c ∈ cs ++ [code] at hc
+    rw [List.mem_append] at hc
+    rcases hc with hc | hc
+    · exact hlt c hc
+    · simp only [List.mem_singleton] at hc
+      subst c
+      exact refine_longcode_lt ctx level st.lab st.ptn st.active numcells
+  have hread : stInc ctx (firstterminal level leaf) =
+      some (pathLeafKey ctx full
+        (refine ctx level st.lab st.ptn st.active numcells).lab) := by
+    have h := stInc_firstterminal (ctx := ctx) (nn := nn)
+      (level := level) (cs := full) (st := leaf) hfullLen.symm hfullNe
+      (by simpa only [leaf, firstLeafSt] using hcanonSize)
+      hfullBound hfullCodes hfullLt
+    simpa only [leaf, firstLeafSt] using h
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full
+        (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  apply NodeResult.complete
+  · exact NodeSound.ofExact rfl
+  · rfl
+  · rw [firstterminal]
+    simp only [Id.run_bind, Id.run_pure]
+    omega
+  · rwa [hnode]
+  · rfl
+
 /-- A first-path node with no runtime fuel reports exhaustion. -/
 theorem firstPath_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
     (cs : List Nat) (st : SearchSt) (best : Option Key) :
