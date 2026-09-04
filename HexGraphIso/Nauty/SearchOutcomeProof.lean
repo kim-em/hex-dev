@@ -24,6 +24,68 @@ namespace Hex.GraphIso.Nauty
 
 /-! # First-path leaf seed -/
 
+/-- Code storage on the unique descent before the first leaf exists.
+Unlike `FirstCodeInv`, this phase has no stored first-leaf sentinel yet. -/
+structure DescentCodes (nn : Nat) (cs : List Nat) (st : SearchSt) : Prop where
+  firstSize : st.firstcode.size = nn + 2
+  canonSize : st.canoncode.size = nn + 2
+  bound : cs.length + 1 ≤ nn
+  content : ∀ i, 1 ≤ i → i ≤ cs.length →
+    st.firstcode[i]! = cs[i - 1]!
+  lt : ∀ c ∈ cs, c < codeSentinel
+
+/-- The nonempty root begins the pre-incumbent descent with no codes. -/
+theorem DescentCodes.root {n : Nat} (lab : Array Nat)
+    (cellEnds : List Nat) (hn0 : 0 < n) :
+    DescentCodes n [] (rootSt n lab cellEnds) := by
+  constructor
+  · simp [rootSt]
+  · simp [rootSt]
+  · simp only [List.length_nil]
+    omega
+  · intro i _ hi
+    simp only [List.length_nil] at hi
+    omega
+  · intro c hc
+    cases hc
+
+/-- Writing one real refinement code advances the pre-incumbent descent
+to its child. -/
+theorem DescentCodes.next {nn : Nat} {cs : List Nat} {st st' : SearchSt}
+    {code : Nat} (h : DescentCodes nn cs st)
+    (hfirst : st'.firstcode = st.firstcode.set! (cs.length + 1) code)
+    (hcanon : st'.canoncode = st.canoncode)
+    (hbound : cs.length + 2 ≤ nn) (hlt : code < codeSentinel) :
+    DescentCodes nn (cs ++ [code]) st' := by
+  constructor
+  · rw [hfirst, Array.size_set!, h.firstSize]
+  · rw [hcanon, h.canonSize]
+  · simp only [List.length_append, List.length_singleton]
+    exact hbound
+  · intro i hi hlast
+    rcases Decidable.em (i = cs.length + 1) with heq | hne
+    · subst i
+      rw [hfirst, Array.getElem!_set!_self _ _ _ (by
+        rw [h.firstSize]
+        omega)]
+      have hi : cs.length + 1 - 1 = cs.length := by omega
+      rw [hi, getElem!_append_right'' (Nat.le_refl _) (by simp)]
+      simp only [Nat.sub_self]
+      rfl
+    · rw [hfirst, Array.getElem!_set!_ne _ _ _ _
+          (fun he => hne he.symm)]
+      have hics : i ≤ cs.length := by
+        simp only [List.length_append, List.length_singleton] at hlast
+        omega
+      rw [getElem!_append_left'' (by omega)]
+      exact h.content i hi hics
+  · intro c hc
+    rw [List.mem_append] at hc
+    rcases hc with hc | hc
+    · exact h.lt c hc
+    · rw [List.mem_singleton.mp hc]
+      exact hlt
+
 /-- Once the first descent reaches a real leaf, `firstterminal` installs
 exactly that leaf as the semantic incumbent. -/
 theorem stInc_firstterminal {ctx : Ctx} {nn level : Nat} {cs : List Nat}
