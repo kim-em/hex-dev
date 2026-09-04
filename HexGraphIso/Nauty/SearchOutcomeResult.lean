@@ -32,6 +32,23 @@ theorem TrailExt.trans {level : Nat} {a b c : FrameTrail}
     TrailExt level a c := fun target htarget =>
   (hbc target htarget).trans (hab target htarget)
 
+/-- Retaining a pushed child trail retains every older parent frame. -/
+theorem TrailExt.ofPush {level : Nat} {trail out : FrameTrail}
+    {entry : TrailEntry}
+    (h : TrailExt (level + 1) (trail.push level entry) out) :
+    TrailExt level trail out := by
+  intro target htarget
+  rw [h target (by omega), FrameTrail.push_of_ne]
+  omega
+
+/-- Retaining a pushed child trail keeps the newly active parent frame
+at its exact level. -/
+theorem TrailExt.pushAt {level : Nat} {trail out : FrameTrail}
+    {entry : TrailEntry}
+    (h : TrailExt (level + 1) (trail.push level entry) out) :
+    out level = some entry := by
+  rw [h level (by omega), FrameTrail.push_self]
+
 /-- The semantic node receipt and the concrete result state produced by
 one recursive node call. -/
 structure NodeOutcome (G : Colored n k) (ctx : Ctx)
