@@ -169,6 +169,20 @@ theorem autosOk_pushAuto {g ptn lab : Array Nat} {level nn : Nat}
     · rw [List.mem_singleton.mp hlast]
       exact hp
 
+/-- With a positive bounded workspace, `pushAuto` leaves the admitted
+pair in the slot read by `shortprune`, both before and at capacity. -/
+theorem pushAuto_back {st : SearchSt} {pair : Nat × Nat}
+    (hcap : 0 < st.wsCap) (hsize : st.autos.size ≤ st.wsCap) :
+    (pushAuto st pair).autos.back? = some pair := by
+  unfold pushAuto
+  rcases hfull : (st.autos.size == st.wsCap) with _ | _
+  · simp only [Bool.false_eq_true, hfull, ite_false, Array.back?_push]
+  · have heq : st.autos.size = st.wsCap := beq_iff_eq.mp hfull
+    simp only [hfull, ite_true, Array.back?_eq_getElem?, Array.size_set!]
+    rw [heq, Array.set!_eq_setIfInBounds,
+      Array.getElem?_setIfInBounds_self_of_lt]
+    omega
+
 /-- The ledger moves down one individualize-and-refine step for any
 pair whose `fix` covers the individualized vertex: each realizer's
 cell stabilization is pushed through `breakout` (it fixes the split
