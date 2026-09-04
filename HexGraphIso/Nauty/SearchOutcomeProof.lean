@@ -757,6 +757,50 @@ theorem firstPath_internal_of_loop (ctx : Ctx)
       exact NodeResult.of_loop_some (ctx := ctx) (nodeRunFuel := fuel + 1)
         rfl hloop
 
+/-- Once the imperative prefix has exposed an off-path child loop, either
+loop return constructs the corresponding node result. -/
+theorem otherNode_of_loop {ctx : Ctx}
+    {inf tcLevel specFuel fuel level nodeNumcells loopNumcells tail : Nat}
+    {nodeCs loopCs : List Nat} {nodeSt loopSt : SearchSt}
+    {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
+    {best outBest : Option Key}
+    {L : Option Int × SearchSt}
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hstate : otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
+        nodeSt =
+      match L.1 with
+      | some r => (r, L.2)
+      | none => (Int.ofNat level - 1, L.2))
+    (hloop : LoopResult ctx tcLevel specFuel fuel (ctx.n + 1) level
+      loopCs rsLab rsPtn tc len loopNumcells tcell none
+      (nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells)
+      loopSt L.2 best outBest L.1) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level nodeCs nodeSt
+      (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells nodeSt).2
+      nodeNumcells best outBest
+      (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells nodeSt).1 := by
+  rw [hstate]
+  rcases L with ⟨r, out⟩
+  cases r with
+  | none =>
+      exact NodeResult.of_loop_none (ctx := ctx)
+        (nodeRunFuel := fuel + 1) (cursor := none)
+        (loopFuel := ctx.n + 1) rfl hchildren hlen
+        (by simp only [cursorRank]; omega)
+        hloop
+  | some r =>
+      exact NodeResult.of_loop_some (ctx := ctx) (nodeRunFuel := fuel + 1)
+        rfl hloop
+
 /-- The complementary off-path leaf case completes after its empty child
 sweep, retaining the exact leaf maximum installed by `processnode`. -/
 theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
