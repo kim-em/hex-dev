@@ -666,4 +666,49 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
       rw [hpv]
       exact hqlt
 
+/-- Admitting a checked scatter between reached labellings preserves the
+root automorphism ledger. -/
+theorem AutosOk.pushFmperm {ctx : Ctx} {G : Colored n k}
+    {st : SearchSt} {lab₁ lab₂ gamma : Array Nat}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
+    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hsc : ∀ i, i < n → gamma[lab₁[i]!]! = lab₂[i]!)
+    (hca : checkAutom ctx.g gamma ctx.n = true) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (pushAuto st (fmperm gamma ctx.n)).autos := by
+  apply autosOk_pushAuto hprev
+  exact pairOk_fmperm_of_reach hn hn0 hgb hs₁ hr₁ hs₂ hr₂ hsc hca
+
+/-- Recording the scan-free pair justified by a small-cell subtree
+preserves the root automorphism ledger. -/
+theorem AutosOk.pushFmptn {ctx : Ctx} {G : Colored ctx.n k}
+    {st : SearchSt} {level : Nat} {r : RefineSt}
+    (hn0 : 0 < ctx.n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hprev : AutosOk ctx.g
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hS : SubtreeOk ctx level r) (hreach : CellsReach G r.lab)
+    (hinit : ∀ q : Nat,
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! ≤ 1 →
+        r.ptn[q]! ≤ 1) :
+    AutosOk ctx.g
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (pushAuto st (fmptn r.lab r.ptn level ctx.n)).autos := by
+  apply autosOk_pushAuto hprev
+  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hgb hsymm hloop hS
+    hreach hinit
+
 end Hex.GraphIso.Nauty
