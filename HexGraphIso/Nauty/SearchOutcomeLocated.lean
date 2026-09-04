@@ -235,4 +235,181 @@ theorem LoopReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
       exact .exhausted returned sound finalSet finalCursor cover progress
         bounded
 
+/-- At a parent boundary, a located child receipt either supplies the
+exact child maximum or a located unwind addressed to that parent. -/
+theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    (h : NodeReceipt trail ctx tcLevel specFuel runFuel (level + 1) cs st
+      out numcells best outBest r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
+    outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel (level + 1) cs st numcells)) ∨
+      ∃ payload : Unwind ctx tcLevel level out outBest,
+        payload.Located trail := by
+  cases h with
+  | complete sound returned installed read full => exact Or.inl full
+  | unwind sound target returned below payload located =>
+      have hle : level ≤ target := by
+        apply Int.ofNat_le.mp
+        rw [returned] at hstay
+        exact Int.not_lt.mp hstay
+      have htarget : target = level := by omega
+      subst target
+      exact Or.inr ⟨payload, located⟩
+  | pruned sound target returned below installed read full => exact Or.inl full
+  | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
+
+/-- A located loop return carrying an integer lifts directly through its
+parent node. -/
+theorem NodeReceipt.ofLoopSome {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
+    {nodeCs loopCs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key} {r : Int}
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+      nodeNumcells)
+    (h : LoopReceipt trail ctx tcLevel loopSpecFuel runFuel loopFuel level
+      loopCs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out
+      best outBest (some r)) :
+    NodeReceipt trail ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs
+      nodeSt out nodeNumcells best outBest r := by
+  cases h with
+  | complete returned => simp at returned
+  | unwind sound target returned below payload located =>
+      have hsound : NodeSound ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+          nodeNumcells best outBest := by
+        constructor
+        · intro b hb
+          rw [← hbound]
+          exact sound.upper b hb
+        · exact sound.grows
+      exact .unwind hsound target (Option.some.inj returned) below payload
+        located
+  | pruned target returned below sound installed read full =>
+      have hsound : NodeSound ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+          nodeNumcells best outBest := by
+        constructor
+        · intro b hb
+          rw [← hbound]
+          exact sound.upper b hb
+        · exact sound.grows
+      have hfull : outBest = some (incMax best
+          (nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+            nodeNumcells)) := by
+        rwa [← hbound]
+      exact .pruned hsound target (Option.some.inj returned) below installed
+        read hfull
+  | exhausted returned => simp at returned
+
+/-- A located completed loop with enough cursor fuel lifts to node
+completion. -/
+theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
+    {nodeCs loopCs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key}
+    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs
+      nodeSt nodeNumcells)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
+      loopCs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out
+      best outBest none) :
+    NodeReceipt trail ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs
+      nodeSt out nodeNumcells best outBest (Int.ofNat level - 1) := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      rw [hbound] at sound
+      rw [hlen] at cover empty
+      have hfull := cover.exact_of_read hchildren empty sound installed read
+      exact .complete (NodeSound.ofExact hfull) rfl installed read hfull
+  | unwind sound target returned below payload located => cases returned
+  | pruned target returned below sound installed read full => cases returned
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
+
+/-- Prepending a sound child fragment preserves the location carried by
+every recursive loop outcome. -/
+theorem LoopReceipt.prefix {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st recSt out : SearchSt}
+    {best mid outBest : Option Key} {r : Option Int}
+    (hpre : LoopSound ctx bound best mid)
+    (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell cursor bound recSt out mid outBest r) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned (hpre.trans sound) installed read finalSet
+        finalCursor cover empty
+  | unwind sound target returned below payload located =>
+      exact .unwind (hpre.trans sound) target returned below payload located
+  | pruned target returned below sound installed read full =>
+      have hsound := hpre.trans sound
+      have hfull := hsound.exact full (keyLe_incMax_right mid bound)
+      exact .pruned target returned below hsound installed read hfull
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned (hpre.trans sound) finalSet finalCursor cover
+        progress bounded
+
+/-- Reindex the entry set of a located loop result. -/
+theorem LoopReceipt.reindexSet {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {r : Option Int}
+    (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell' cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
+  | unwind sound target returned below payload located =>
+      exact .unwind sound target returned below payload located
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover progress
+        bounded
+
+/-- One successful cursor step preserves located recursive outcomes. -/
+theorem LoopReceipt.step {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {r : Option Int}
+    (ha : After cursor tv)
+    (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell (some tv) bound st out best outBest r) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
+  | unwind sound target returned below payload located =>
+      exact .unwind sound target returned below payload located
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover
+        (Nat.le_trans (by
+          have := cursorRank_step ha
+          omega) progress) bounded
+
 end Hex.GraphIso.Nauty
