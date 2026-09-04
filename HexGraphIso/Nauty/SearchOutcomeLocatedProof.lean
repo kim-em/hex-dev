@@ -95,6 +95,132 @@ theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
   rw [hptn]
   exact hb
 
+/-- Splitting a nonempty cell start keeps the final partition position
+closed one level later. -/
+theorem split_end {ptn : Array Nat} {level tc : Nat}
+    (hend : ptn[ptn.size - 1]! ≤ level) (htc : tc < ptn.size) :
+    (ptn.set! tc (level + 1))[(ptn.set! tc
+      (level + 1)).size - 1]! ≤ level + 1 := by
+  rw [Array.size_set!]
+  rcases Decidable.em (tc = ptn.size - 1) with rfl | hx
+  · rw [Array.getElem!_set!_self _ _ _ (by omega)]
+    omega
+  · rw [Array.getElem!_set!_ne _ _ _ _ hx]
+    omega
+
+/-- The active singleton created by individualization is bounded by the
+vertex universe. -/
+theorem singleActive_lt {n tc : Nat} (htc : tc < n) :
+    insert 0 tc < 2 ^ n := by
+  rw [insert, Nat.zero_or, Nat.shiftLeft_eq, Nat.one_mul]
+  exact Nat.pow_lt_pow_right (by omega) htc
+
+/-- The active singleton created by individualization marks a cell start
+of the split partition. -/
+theorem split_starts {ptn : Array Nat} {level tc len : Nat}
+    (_hpsz : ptn.size = n) (hcell : IsCell ptn level tc len) :
+    ∀ v : Nat, elem (insert 0 tc) v = true →
+      v = 0 ∨ (ptn.set! tc (level + 1))[v - 1]! ≤ level + 1 := by
+  intro v hv
+  rw [elem_single] at hv
+  have hvtc : v = tc := of_decide_eq_true hv
+  subst v
+  rcases Decidable.em (tc = 0) with h0 | h0
+  · exact Or.inl h0
+  · rcases hcell.2.1 with hstart | hstart
+    · exact Or.inl hstart
+    · right
+      rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+      omega
+
+/-- Individualizing the same frozen vertex after a recovered within-cell
+permutation produces the same specification child key. This is the bridge
+from `SearchOut.breakoutPerm` to the exact key premise consumed by
+`SweepCover.receipt`. -/
+theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
+    (hn : ctx.n = n) {level numcells tc len o specFuel tcLevel : Nat}
+    {st out child : SearchSt}
+    (h : SearchOut G level level st out)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ n) (ho : o < len)
+    (hclab : child.lab = (breakout out.lab out.ptn (level + 1) tc
+      st.lab[tc + o]!).1)
+    (hcptn : child.ptn = (breakout out.lab out.ptn (level + 1) tc
+      st.lab[tc + o]!).2.1)
+    (hcactive : child.active = (breakout out.lab out.ptn (level + 1) tc
+      st.lab[tc + o]!).2.2)
+    (hcanon : child.canonlab = out.canonlab)
+    (hfuel : level + 1 + specFuel ≤ n + 1) :
+    sweepKey ctx tcLevel specFuel level codes st.lab st.ptn tc numcells o =
+      nodeKey ctx tcLevel specFuel (level + 1) codes child
+        (numcells + 1) := by
+  obtain ⟨oCur, hoCur, hat, hperm⟩ :=
+    h.breakoutPerm hok hout hn0 hlevel hcell hlen hrange ho
+  have hptn := h.ptnEq hok hout
+  have hcellOut : IsCell out.ptn level tc len := by
+    rw [hptn]
+    exact hcell
+  have hclab' : child.lab = (breakout out.lab out.ptn (level + 1) tc
+      out.lab[tc + oCur]!).1 := by
+    rw [hat]
+    exact hclab
+  have hcptn' : child.ptn = out.ptn.set! tc (level + 1) := by
+    rw [hcptn, breakout_ptn]
+  have hchildOk := breakout_searchOk (st' := child) hn0 hout hlevel
+    hcellOut hlen hrange hoCur hclab' hcptn' hcanon
+  let refChild : SearchSt :=
+    { st with
+      lab := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).1
+      ptn := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).2.1
+      active := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).2.2 }
+  have hrefOk : SearchOk G (level + 1) (numcells + 1) refChild := by
+    apply breakout_searchOk hn0 hok hlevel hcell hlen hrange ho
+    · rfl
+    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!
+    · rfl
+  change nodeKey ctx tcLevel specFuel (level + 1) codes refChild
+      (numcells + 1) =
+    nodeKey ctx tcLevel specFuel (level + 1) codes child
+      (numcells + 1)
+  apply nodeKey_perm hn tcLevel specFuel (level + 1) codes refChild child
+    (numcells + 1)
+  · change cellsPerm
+      (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).2.1 (level + 1)
+      (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).1 child.lab
+    rw [breakout_ptn, hclab]
+    exact hperm
+  · rw [hchildOk.labSize, hrefOk.labSize]
+  · exact hrefOk.labSize
+  · exact labOk_of_reach hrefOk.labSize hrefOk.reach
+  · exact labOk_of_reach hchildOk.labSize hchildOk.reach
+  · rw [hcptn', hptn]
+    rfl
+  · rw [hcactive]
+    rfl
+  · exact hrefOk.ptnSize
+  · apply singleActive_lt
+    omega
+  · exact split_end (searchOk_end hn0 hok hlevel) (by
+      rw [hok.ptnSize]
+      omega)
+  · exact split_starts hok.ptnSize hcell
+  · intro q
+    rcases Nat.lt_or_ge q n with hq | hq
+    · exact hrefOk.vals q hq
+    · left
+      rw [getElem!_neg _ _ (by rw [hrefOk.ptnSize]; omega)]
+      exact Nat.zero_le _
+  · exact hfuel
+
 /-- First-path exit bookkeeping preserves the location of a transported
 generator unwind. -/
 theorem Unwind.Located.firstFinish {ctx : Ctx}
