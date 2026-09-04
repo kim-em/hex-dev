@@ -379,6 +379,25 @@ theorem nextOffsets {G : Colored n k} {ctx : Ctx}
   exact ⟨offset, currentOffset, hoffset, hcurrent, hatFrozen,
     hatCurrent⟩
 
+/-- Every vertex returned by a verified sibling sweep lies in the graph
+vertex range.  This is the cursor bound threaded by the fuel induction;
+it is intentionally derived from the frozen target-cell membership rather
+than from the mutable bitset alone. -/
+theorem nextLt {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell tv : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hnext : nextElem tcell cursor = some tv) :
+    tv < ctx.n := by
+  obtain ⟨offset, _, hoffset, _, hatFrozen, _⟩ := h.nextOffsets hnext
+  rw [← hatFrozen]
+  apply h.frozenLabOk (tc + offset)
+  rw [h.frozenLabSize]
+  exact Nat.lt_of_lt_of_le (Nat.add_lt_add_left hoffset tc) h.range
+
 /-- The next mutable-loop selection enters a valid recursive node while
 recording the corresponding frozen specification offset in the trail. -/
 theorem child {G : Colored n k} {ctx : Ctx}
