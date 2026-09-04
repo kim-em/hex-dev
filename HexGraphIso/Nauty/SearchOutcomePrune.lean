@@ -96,6 +96,30 @@ theorem shrink {ctx : Ctx} {stem ancestor : List Nat} {out : SearchSt}
   · exact hbest
   · exact hfloor
 
+/-- Fixed-point cleanup changes none of a frozen comparison's fields. -/
+theorem setFixed {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r)
+    (fixedpts : Nat) :
+    FrozenOut ctx stem { out with fixedpts := fixedpts } best r := by
+  rcases h with
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
+      hfloor⟩
+  exact .mk current codes bestCodes hcode hdepth hstem hinstalled hbest
+    hfloor
+
+/-- Resetting first-path return controls changes none of a frozen
+comparison's fields. -/
+theorem setFirst {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r)
+    (gcaFirst stabvertex : Nat) :
+    FrozenOut ctx stem
+      { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best r := by
+  rcases h with
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
+      hfloor⟩
+  exact .mk current codes bestCodes hcode hdepth hstem hinstalled hbest
+    hfloor
+
 end FrozenOut
 
 namespace RunPrep

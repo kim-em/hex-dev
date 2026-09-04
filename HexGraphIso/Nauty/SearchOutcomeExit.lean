@@ -124,6 +124,39 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
   preserved : TrailExt level receiptTrail eventTrail
   fixed : out.fixedpts = st.fixedpts
 
+namespace LoopExit
+
+/-- An early frozen child absorbs both the explored prefix and every live
+suffix child, yielding the exact loop maximum while retaining the frozen
+payload for the next enclosing frame. -/
+theorem ofFrozen {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tail tc len numcells tcell
+      fixedpts : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {value : Int}
+    (hfreeze : FrozenOut ctx codes out outBest value)
+    (hlevel : level = codes.length) (hbelow : value < Int.ofNat level)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hcover : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc
+      len numcells tcell cursor outBest)
+    (hsound : LoopSound ctx bound best outBest) :
+    LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab rsPtn
+      tc len numcells tcell cursor bound st { out with fixedpts := fixedpts }
+      best outBest trail (some value) := by
+  have hfreeze' := hfreeze.setFixed fixedpts
+  apply LoopExit.frozen value rfl hbelow
+  · rw [hlen] at hcover
+    exact hfreeze.exactLoop hlevel hbelow hbound hcover hsound
+  · exact hfreeze'
+
+end LoopExit
+
 namespace NodeInv
 
 /-- A negative, non-generator discrete leaf produces the corrected exit:
