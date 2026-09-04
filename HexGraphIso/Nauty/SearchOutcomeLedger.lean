@@ -145,6 +145,78 @@ theorem childKey_eq_of_subtree {ctx : Ctx} {st : RefineSt}
   rw [renamingArray_get sigma (hS.it.ok.labOk _ hidxU)]
   exact hmap.symm
 
+/-- If refinement exposes a small-cell node, its unpruned maximum is the
+subtree below any chosen member of the specification target cell.  The
+target is non-singleton, and the flip theorem makes every entry in its
+finite maximum equal. -/
+theorem nodeKey_eq_child_of_subtree {ctx : Ctx} {st : SearchSt}
+    {tcLevel fuel level numcells tc len o : Nat} {codes : List Nat}
+    (hS : SubtreeOk ctx level
+      (refine ctx level st.lab st.ptn st.active numcells))
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hdisc : discreteAt
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level ctx.n = false)
+    (hsize : (specMaketargetcell ctx
+      (refine ctx level st.lab st.ptn st.active numcells).lab
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tcLevel).2.2 = len)
+    (htc : (specMaketargetcell ctx
+      (refine ctx level st.lab st.ptn st.active numcells).lab
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tcLevel).1 = tc)
+    (hcell : IsCell
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tc len)
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len)
+    (hfuel : level + 1 + fuel ≤ ctx.n + 1) :
+    nodeKey ctx tcLevel (fuel + 1) level codes st numcells =
+      sweepKey ctx tcLevel fuel level
+        (codes ++ [(refine ctx level st.lab st.ptn st.active
+          numcells).longcode])
+        (refine ctx level st.lab st.ptn st.active numcells).lab
+        (refine ctx level st.lab st.ptn st.active numcells).ptn tc
+        (refine ctx level st.lab st.ptn st.active numcells).numcells o := by
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  let full := codes ++ [r.longcode]
+  let key := fun j => sweepKey ctx tcLevel fuel level full r.lab r.ptn tc
+    r.numcells j
+  have hkey : ∀ j, j < len → key j = key o := by
+    intro j hj
+    apply congrArg (prefixKey full)
+    exact childKey_eq_of_subtree (tcLevel := tcLevel)
+      (numcells := r.numcells) (oU := o) (oV := j) hS hgsz hgb
+      hsymm hloop hcell hlen hrange ho hj hfuel
+  have hchildren : nodeKey ctx tcLevel (fuel + 1) level codes st numcells =
+      keysMax (key 0) ((List.range (len - 1)).map fun j => key (j + 1)) := by
+    have hlen' : len = len - 1 + 1 := by omega
+    have htarget : (specMaketargetcell ctx r.lab r.ptn level
+        tcLevel).2.2 = len - 1 + 1 := by
+      simpa only [r] using hsize.trans hlen'
+    have hn := nodeKey_children (ctx := ctx) (tcLevel := tcLevel)
+      (fuel := fuel) (level := level) (numcells := numcells)
+      (cs := codes) (st := st) hdisc htarget
+    simpa only [r, full, key, htc] using hn
+  rw [hchildren]
+  apply keysMax_eq_of_le
+  · rw [hkey 0 (by omega)]
+    exact keyLe_refl _
+  · intro y hy
+    obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hy
+    have hj' := List.mem_range.mp hj
+    rw [hkey (j + 1) (by omega)]
+    exact keyLe_refl _
+  · rcases Nat.eq_zero_or_pos o with rfl | hop
+    · exact Or.inl rfl
+    · right
+      apply List.mem_map.mpr
+      exact ⟨o - 1, List.mem_range.mpr (by omega),
+        congrArg key (by omega)⟩
+
 /-- The implicit pair recorded at a small-cell node is valid at the root
 partition.  Its missing vertices are realized by the node's flip
 automorphisms, while singleton cells supply the fixed set. -/
