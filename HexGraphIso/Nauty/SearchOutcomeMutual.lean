@@ -1647,7 +1647,9 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
       NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
         numcells best outBest trail trail
-        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 ∧
+      outBest = some (incMax best
+        (nodeKey ctx tcLevel (specFuel + 1) level codes st numcells)) := by
   subst n
   let leaf := otherLeafSt ctx level numcells st
   let full := codes ++
@@ -1720,7 +1722,7 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
     · exact houtFull
   have hout := otherNode_leaf_done_state ctx inf tcLevel fuel level
     numcells st hnum hdone
-  refine ⟨some outKey, ?_⟩
+  refine ⟨some outKey, ?_, houtFull⟩
   constructor
   · rw [hout]
     exact hreceipt

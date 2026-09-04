@@ -401,6 +401,153 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
       numcells st hnum hearly }
 
+/-- A non-generator leaf whose return remains at the current boundary is
+an ordinary exact off-path node run. -/
+theorem doneLeaf {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hgen : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace =
+        (otherLeafSt ctx level numcells st).genTrace)
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level))
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ outBest,
+      OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+        numcells best outBest trail trail
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  obtain ⟨outBest, houtcome, hexact⟩ := hnode.plainLeafDone
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb hsymm
+    hloop hlevel hpath hcheap hnum hdisc hef hgen hdone hlive
+  let leaf := otherLeafSt ctx level numcells st
+  let final := leafFinish ctx level (processnode ctx level ctx.n leaf).2
+  have hout := otherNode_leaf_done_state ctx inf tcLevel fuel level
+    numcells st hnum hdone
+  have hfirstProc : (processnode ctx level ctx.n leaf).2.gcaFirst =
+      leaf.gcaFirst :=
+    (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1
+  have hfirstLeaf : leaf.gcaFirst = st.gcaFirst := by
+    simpa only [leaf] using
+      (RefTrail.otherLeaf_gcaFirst ctx level numcells st)
+  have hfirst : final.gcaFirst = st.gcaFirst := by
+    have heq : final.gcaFirst =
+        (processnode ctx level ctx.n leaf).2.gcaFirst := by
+      unfold final
+      rw [leafFinish]
+      split <;> split <;> rfl
+    exact heq.trans (hfirstProc.trans hfirstLeaf)
+  have horderProc : (processnode ctx level ctx.n leaf).2.gcaFirst ≤
+      (processnode ctx level ctx.n leaf).2.gcaCanon :=
+    (hlive.otherLeaf (numcells := numcells) |>.processnode
+      (by simpa only [leaf] using
+        (hnode.run.otherLeaf hn hn0 hlevel hpath).trailOk)
+      (by simpa only [leaf] using
+        (hnode.run.otherLeaf hn hn0 hlevel hpath).firstBound)).2
+  have horder : final.gcaFirst ≤ final.gcaCanon := by
+    have hfirstEq : final.gcaFirst =
+        (processnode ctx level ctx.n leaf).2.gcaFirst := by
+      unfold final
+      rw [leafFinish]
+      split <;> split <;> rfl
+    have hcanonEq : final.gcaCanon =
+        (processnode ctx level ctx.n leaf).2.gcaCanon := by
+      unfold final
+      rw [leafFinish]
+      split <;> split <;> rfl
+    rw [hfirstEq, hcanonEq]
+    exact horderProc
+  have hcanonGca : final.gcaCanon =
+      (processnode ctx level ctx.n leaf).2.gcaCanon := by
+    unfold final
+    rw [leafFinish]
+    split <;> split <;> rfl
+  have hcanonLab : final.canonlab =
+      (processnode ctx level ctx.n leaf).2.canonlab := by
+    unfold final
+    rw [leafFinish]
+    split <;> split <;> rfl
+  have hleafCanonGca : leaf.gcaCanon = st.gcaCanon := by
+    simpa only [leaf] using
+      (RefTrail.otherLeaf_gcaCanon ctx level numcells st)
+  have hleafCanonLab : leaf.canonlab = st.canonlab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    change (otherNodePrep level rs.longcode base).canonlab = st.canonlab
+    rw [(otherNodePrep_frames level rs.longcode base).1]
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    change (otherNodePrep level rs.longcode base).lab = rs.lab
+    exact (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.2.2.2.1
+  have hcanon :
+      (final.gcaCanon = st.gcaCanon ∧ final.canonlab = st.canonlab) ∨
+        (level ≤ final.gcaCanon ∧
+          cellsPerm st.ptn level st.lab final.canonlab) := by
+    rcases processnode_canonGuide ctx level ctx.n leaf with hold | hnew
+    · left
+      exact ⟨hcanonGca.trans (hold.1.trans hleafCanonGca),
+        hcanonLab.trans (hold.2.trans hleafCanonLab)⟩
+    · right
+      constructor
+      · rw [hcanonGca, hnew.1]
+        exact Nat.le_refl level
+      · rw [hcanonLab, hnew.2, hleafLab]
+        exact (refine_refInv (ctx := ctx)
+          (by
+            rw [hnode.run.searchOk.ptnSize, ← hn]
+            exact Nat.le_refl ctx.n)
+          (hnode.run.searchOk.labSize.trans
+            hnode.run.searchOk.ptnSize.symm)
+          (searchOk_end hn0 hnode.run.searchOk hlevel)).perm
+  have hother : OtherOutcome G ctx tcLevel (specFuel + 1) (fuel + 1)
+      level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := {
+    node := houtcome
+    firstGuide := by rw [hout]; exact hfirst
+    order := by rw [hout]; exact horder
+    canonGuide := by rw [hout]; exact hcanon }
+  have hproof := OtherProof.ofLeafDone hnum hdone hother
+  refine ⟨outBest, ?_⟩
+  exact {
+    node := {
+      exit := NodeExit.done (congrArg Prod.fst hout) hexact
+      event := houtcome.event
+      preserved := houtcome.preserved
+      fixed := hproof.fixed }
+    firstGuide := hproof.outcome.firstGuide
+    order := hproof.outcome.order
+    canonGuide := hproof.outcome.canonGuide
+    coset := hproof.coset }
+
 end NodeInv
 
 end Hex.GraphIso.Nauty
