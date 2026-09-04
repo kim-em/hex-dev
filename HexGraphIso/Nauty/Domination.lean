@@ -943,6 +943,14 @@ leaf. -/
     workperm := workperm.set! canonlab[i]! lab[i]!
   return workperm
 
+theorem canonScatter_eq_firstScatter (n : Nat)
+    (canonlab lab : Array Nat) :
+    canonScatter n canonlab lab = firstScatter n canonlab lab := by
+  rw [canonScatter, firstScatter]
+  simp only [Id.run_bind, Id.run_pure]
+  rw [forIn_range_eq3, forIn_scatter_eq]
+  exact id_run_eq _
+
 /-- The bounded-ledger effect of the shared code-three/code-four tail. -/
 @[expose] def pruneAutos (ctx : Ctx) (level : Nat)
     (st : SearchSt) : Array (Nat × Nat) :=
