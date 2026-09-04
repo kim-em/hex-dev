@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.SearchOutcomeInduction
+public import HexGraphIso.Nauty.RootEquitable
 
 public section
 
@@ -31,6 +32,10 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
   codes : DescentCodes n cs st
   cheap : CheapOk ctx (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2) level st
+  cert : CertInv ctx level
+    { lab := st.lab, ptn := st.ptn, active := st.active,
+      numcells := numcells, hint := 0, maxpos := 0,
+      longcode := numcells }
   trailOk : TrailOk ctx level st trail
   genEmpty : st.genTrace = #[]
   autosEmpty : st.autos = #[]
@@ -45,9 +50,10 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
-  refine ⟨hok, DescentCodes.root _ _ hn0, ?_,
+  refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_,
     TrailOk.empty _ _ _, ?_, ?_, ?_, ?_⟩
   · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
+  · simpa only [rootSt] using certInv_initial G hn0
   · simp [rootSt]
   · simp [rootSt]
   · simp [rootSt]
