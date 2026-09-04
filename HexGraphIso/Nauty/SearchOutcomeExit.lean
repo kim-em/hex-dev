@@ -79,8 +79,9 @@ inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (positive : 1 ≤ boundary) (below : boundary ≤ level)
       (exact : outBest = some (incMax best bound))
   | exhausted
-      (returned : r = none) (state : out = st) (incumbent : outBest = best)
-      (emptyFuel : loopFuel = 0)
+      (returned : r = none) (finalCursor : Option Nat)
+      (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
+      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
 
 /-- Concrete node result paired with the corrected return classification.
 The event and trail clauses are independent of the semantic maximum and
@@ -325,7 +326,7 @@ theorem toNodeNone {ctx : Ctx}
     {best outBest : Option Key} {trail : FrameTrail}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
       nodeSt nodeNumcells)
-    (hfuel : loopFuel ≠ 0)
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
     (h : LoopExit ctx tcLevel loopSpecFuel runFuel loopFuel level loopCodes
       rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best
       outBest trail none) :
@@ -338,7 +339,8 @@ theorem toNodeNone {ctx : Ctx}
   | unwind _ returned => cases returned
   | frozen _ returned => cases returned
   | cheap _ returned => cases returned
-  | exhausted _ _ _ emptyFuel => exact (hfuel emptyFuel).elim
+  | exhausted _ finalCursor progress bounded =>
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
 end LoopExit
 

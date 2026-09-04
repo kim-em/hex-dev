@@ -361,13 +361,11 @@ theorem zero {G : Colored n k} {ctx : Ctx}
         tcell st).1 := by
   refine ⟨OtherLoopProof.zero hpath hstem hpast hnp hinv hlive hcursor,
     ?_⟩
-  apply LoopExit.exhausted
+  apply LoopExit.exhausted (finalCursor := cursor)
   · unfold otherChildLoop
     rfl
-  · unfold otherChildLoop
-    rfl
-  · rfl
-  · rfl
+  · omega
+  · exact hcursor
 
 /-- A positive-fuel loop with no next vertex has genuinely covered the
 fixed original target cell and returns its exact maximum. -/
