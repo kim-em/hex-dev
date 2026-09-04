@@ -70,6 +70,14 @@ theorem clearShort {trail : FrameTrail} {r : Int} {st : SearchSt}
   unfold ReturnStab at h ⊢
   exact h
 
+/-- Updating the first-path agreement counter does not affect generator
+stabilization. -/
+theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt}
+    (h : ReturnStab trail r st) (allsamelevel : Nat) :
+    ReturnStab trail r { st with allsamelevel := allsamelevel } := by
+  unfold ReturnStab at h ⊢
+  exact h
+
 /-- Pushing a child frame preserves all older return obligations.  The
 new frame is required only when the return reaches it. -/
 theorem push {trail : FrameTrail} {r : Int} {st : SearchSt}

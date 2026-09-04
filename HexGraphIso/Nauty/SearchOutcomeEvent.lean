@@ -83,6 +83,26 @@ theorem clearShort {G : Colored n k} {ctx : Ctx}
     h.canonPositive, h.firstBound, h.canonBound, h.bestCodes,
     h.incumbent⟩
 
+/-- Updating the first-path agreement counter changes none of an event
+state's logical fields. -/
+theorem setAllsame {G : Colored n k} {ctx : Ctx}
+    {tcLevel current allsamelevel : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunEvent G ctx tcLevel current cs bs fs st best trail) :
+    RunEvent G ctx tcLevel current cs bs fs
+      { st with allsamelevel := allsamelevel } best trail := by
+  let st' : SearchSt := { st with allsamelevel := allsamelevel }
+  have hrefs : LeafRefsOk G st' :=
+    ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+  exact ⟨h.machines, h.firstInv, h.canongInv,
+    genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
+    autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
+    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
+    h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
+    h.bestCodes, h.incumbent⟩
+
 /-- Installing the first-path return controls preserves an event state
 once the caller supplies the new guide and numeric bounds. -/
 theorem setFirst {G : Colored n k} {ctx : Ctx}
@@ -161,6 +181,19 @@ theorem clearShort {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   | intro current codes bestCodes event depth stemEq returned stable =>
       exact .intro current codes bestCodes event.clearShort depth stemEq
         returned stable.clearShort
+
+/-- Updating the first-path agreement counter preserves the full result
+package. -/
+theorem setAllsame {G : Colored n k} {ctx : Ctx} {tcLevel allsamelevel : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r) :
+    EventOut G ctx tcLevel stem fs
+      { out with allsamelevel := allsamelevel } best trail r := by
+  cases h with
+  | intro current codes bestCodes event depth stemEq returned stable =>
+      exact .intro current codes bestCodes event.setAllsame depth stemEq
+        returned (stable.setAllsame allsamelevel)
 
 end EventOut
 

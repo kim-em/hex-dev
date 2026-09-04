@@ -50,6 +50,23 @@ structure OtherOutcome (G : Colored n k) (ctx : Ctx)
     numcells best outBest trail r
   firstGuide : out.gcaFirst = st.gcaFirst
 
+/-- First-path exit bookkeeping preserves a corrected node outcome. -/
+theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells size index : Nat}
+    {cs fs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Int} (hfuel : runFuel ≠ 0)
+    (h : NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st out
+      numcells best outBest trail r) :
+    NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st
+      (Nauty.firstFinish level size index out) numcells best outBest trail
+      r := by
+  constructor
+  · exact h.receipt.firstFinish hfuel
+  · unfold Nauty.firstFinish
+    split
+    · exact h.event.setAllsame
+    · exact h.event
+
 /-- The first discrete leaf closes the corrected result package.  Its
 generator store is still empty, so every return-frame stabilization
 obligation is vacuous. -/
