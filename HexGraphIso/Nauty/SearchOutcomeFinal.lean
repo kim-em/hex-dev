@@ -833,6 +833,75 @@ theorem otherLeafSt_coset (ctx : Ctx) (level numcells : Nat)
   unfold otherLeafSt
   exact otherNodePrep_coset _ _ _
 
+/-- A completed off-path child of the first-path loop consumes its current
+sibling.  Here `cosetindex` is sound: the child record installs `tv`, and
+the whole `otherNode` result preserves it. -/
+theorem firstCover {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell tv offset
+      currentOffset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hg : ctx.g = rowsOf G)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (h : OtherProof G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+        cosetindex := tv }
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (hnext : nextElem tcell cursor = some tv)
+    (hoffset : offset < len) (htv : rsLab[tc + offset]! = tv)
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) codes
+          { st with
+            lab := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).1
+            ptn := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).2.1
+            active := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).2.2
+            fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+            cosetindex := tv }
+          (numcells + 1)) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) outBest := by
+  apply hinv.cover.receipt hnext h.outcome.node.receipt hfuel
+      (h.outcome.node.parentReturn hfuel hstay) heq hoffset htv
+  · exact h.coset
+  · rw [hg]
+    rw [hinv.nodeCount]
+    exact size_rowsOf G
+  · rw [hg]
+    rw [hinv.nodeCount]
+    exact rowsOf_bounded G
+  · intro γ hγ
+    cases h.outcome.node.event with
+    | intro current cs' bs' event depth stemEq past returned stable history =>
+        exact event.genTraceOk.check hγ
+  · exact hinv.frozenLabSize
+  · rw [← hinv.baseLab, hinv.baseOk.labSize]
+    exact labInj_of_reach hinv.baseOk.labSize hinv.nonempty
+      hinv.baseOk.reach
+  · exact hinv.frozenLabOk
+  · exact hinv.frozenPtnSize
+  · exact hinv.frozenEnd
+  · exact hinv.values
+  · exact hinv.cell
+  · exact hinv.range
+  · exact hinv.fuelBound
+
 /-- Package any early off-path leaf outcome with its fixed-frame
 equation. -/
 theorem ofLeafEarly {G : Colored n k} {ctx : Ctx}

@@ -337,6 +337,12 @@ induction threads: `processnode` is the only primitive that writes
 def GenTraceOk (ctx : Ctx) (st : SearchSt) : Prop :=
   ∀ γ ∈ st.genTrace, checkAutom ctx.g γ ctx.n = true
 
+/-- Read one checked-generator fact from the run-side store invariant. -/
+theorem GenTraceOk.check {ctx : Ctx} {st : SearchSt}
+    (h : GenTraceOk ctx st) {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
+    checkAutom ctx.g γ ctx.n = true :=
+  h γ (Array.mem_toList_iff.mp η)
+
 /-- The invariant survives the admission event. The only row clause is
 the incumbent tie behind the `testcanlab` arm; code 1 is scanned. -/
 theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
