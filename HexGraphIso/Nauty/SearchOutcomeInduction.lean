@@ -509,4 +509,27 @@ theorem processnode_installed {ctx : Ctx} {level numcells : Nat}
   | exact hnew
   | apply ite_nonzero
 
+/-! # Root-ledger entries -/
+
+/-- A checked scatter between two reached labellings yields a valid
+explicit autos-ledger entry at the initial coloured partition. -/
+theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx}
+    {lab₁ lab₂ γ : Array Nat}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
+    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hsc : ∀ i, i < n → γ[lab₁[i]!]! = lab₂[i]!)
+    (hca : checkAutom ctx.g γ ctx.n = true) :
+    PairOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmperm γ ctx.n).1 (fmperm γ ctx.n).2 := by
+  subst hn
+  have hroot := initial_nodeOk G hn0
+  apply pairOk_fmperm hbg hroot.labOk hroot.labSize hroot.ptnSize
+    hroot.ptnEnd hca
+  exact cellStab_of_scatter hroot.ptnSize hroot.labSize hs₁
+    hroot.ptnEnd hr₁ hr₂ hsc
+
 end Hex.GraphIso.Nauty
