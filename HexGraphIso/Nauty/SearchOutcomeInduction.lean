@@ -233,4 +233,62 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
   · rw [firstterminal_canonlab]
     rfl
 
+/-! # Unwind framing -/
+
+/-- `recover` clamps the canonical guide target to the receiving level. -/
+theorem recover_gcaCanon (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).gcaCanon =
+      if level < st.gcaCanon then level else st.gcaCanon := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.gcaCanon, ite_self]
+  repeat' split
+  all_goals rfl
+
+/-- Recovering a parent frame preserves both installed leaf references. -/
+theorem LeafRefsOk.recover {G : Colored n k} {n inf level : Nat}
+    {st : SearchSt} (h : LeafRefsOk G st) :
+    LeafRefsOk G (Nauty.recover n inf level st) := by
+  obtain ⟨hcanon, -, -, -, hfirst, -, -, -, -, -⟩ :=
+    recover_frames n inf level st
+  constructor
+  · rw [hfirst]
+    exact h.firstSize
+  · rw [hfirst]
+    exact h.firstReach
+  · rw [hcanon]
+    exact h.canonSize
+  · rw [hcanon]
+    exact h.canonReach
+
+/-- Recovering to an ancestor drops any guide aimed at the receiving
+frame and preserves every strictly older located guide. -/
+theorem GuideStore.recover {ctx : Ctx} {tcLevel current : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {n inf level : Nat}
+    (h : GuideStore ctx tcLevel current st best trail)
+    (hle : level ≤ current) :
+    GuideStore ctx tcLevel level (Nauty.recover n inf level st) best
+      trail := by
+  obtain ⟨hcanonlab, -, -, -, hfirstlab, -, hgcaFirst, -, -, -⟩ :=
+    recover_frames n inf level st
+  constructor
+  · intro hp hlt
+    rw [hgcaFirst] at hp hlt ⊢
+    obtain ⟨g, href, hloc⟩ := h.first hp
+      (Nat.lt_of_lt_of_le hlt hle)
+    exact ⟨g, href.trans hfirstlab.symm, hloc⟩
+  · intro hp hlt
+    have hgcaCanon : (Nauty.recover n inf level st).gcaCanon =
+        st.gcaCanon := by
+      rcases Decidable.em (level < st.gcaCanon) with hclamp | hkeep
+      · have hcontra := hlt
+        rw [recover_gcaCanon, ite_eq_left hclamp] at hcontra
+        omega
+      · rw [recover_gcaCanon, ite_eq_right hkeep]
+    rw [hgcaCanon] at hp hlt ⊢
+    obtain ⟨g, href, hloc⟩ := h.canon hp
+      (Nat.lt_of_lt_of_le hlt hle)
+    exact ⟨g, href.trans hcanonlab.symm, hloc⟩
+
 end Hex.GraphIso.Nauty
