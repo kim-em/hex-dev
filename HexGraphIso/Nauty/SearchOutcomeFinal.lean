@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeMutual
+public import HexGraphIso.Nauty.SearchCoset
 import all HexGraphIso.Nauty.Search
 
 public section
