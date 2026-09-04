@@ -65,6 +65,7 @@ public import HexGraphIso.Nauty.SearchOutcomeEvent
 public import HexGraphIso.Nauty.SearchOutcomeResult
 public import HexGraphIso.Nauty.SearchOutcomeHistory
 public import HexGraphIso.Nauty.SearchOutcomeMutual
+public import HexGraphIso.Nauty.SearchOutcomePrune
 public import HexGraphIso.Nauty.RootEquitable
 public import HexGraphIso.Nauty.SearchReach
 public import HexGraphIso.Nauty.Translator
