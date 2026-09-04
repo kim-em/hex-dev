@@ -1037,6 +1037,45 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
   rw [hcanon, hframes.1]
   exact hcarrier
 
+/-- A row-tied code-two event is either the direct canonical-guide unwind,
+or the special first-ancestor orbit unwind selected by a smaller pointer. -/
+theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key}
+    (g : Guide ctx tcLevel st.gcaCanon best)
+    (href : g.ref = st.canonlab)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hcanonBelow : st.gcaCanon < level)
+    (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
+    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
+      CellStab g.rsPtn st.gcaCanon g.rsLab γ)
+    {oCur : Nat} (hcur : oCur < g.len)
+    (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (horbit : OrbSound
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
+      (processnode ctx level numcells st).2.orbits ctx.n) :
+    ∃ target, (processnode ctx level numcells st).1 = Int.ofNat target ∧
+      target < level ∧
+      Unwind ctx tcLevel target (processnode ctx level numcells st).2 best := by
+  rcases processnode_rowTie_orbit hef hnc hcc hge htie with hcanon |
+      ⟨hfirst, hsmaller⟩
+  · exact ⟨st.gcaCanon, hcanon, hcanonBelow,
+      g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows
+        hef hnc hcc hge htie hstab hcur hatCur⟩
+  · exact ⟨st.gcaFirst, hfirst, hfirstBelow,
+      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
+
 /-- A guide's covered child remains covered when the incumbent grows. -/
 def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
     {best best' : Option Key} (g : Guide ctx tcLevel target best)
