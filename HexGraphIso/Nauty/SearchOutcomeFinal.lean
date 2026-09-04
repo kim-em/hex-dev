@@ -24,6 +24,64 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-! # Fixed-point equations for node prefixes -/
+
+theorem firstLeafSt_fixedpts (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (firstLeafSt ctx level numcells st).fixedpts = st.fixedpts := by
+  rfl
+
+theorem otherLeafSt_fixedpts (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).fixedpts = st.fixedpts := by
+  unfold otherLeafSt
+  exact otherNodePrep_fixedpts _ _ _
+
+theorem leafFinish_fixedpts (ctx : Ctx) (level : Nat) (st : SearchSt) :
+    (leafFinish ctx level st).fixedpts = st.fixedpts := by
+  rw [leafFinish]
+  split <;> split <;> rfl
+
+/-- The discrete first-path arm restores its entry fixed-point set. -/
+theorem firstPath_discrete_fixedpts (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2.fixedpts =
+      st.fixedpts := by
+  rw [firstPath_discrete_state ctx inf tcLevel fuel level numcells st hnum]
+  exact (firstterminal_fixedpts level _).trans
+    (firstLeafSt_fixedpts ctx level numcells st)
+
+/-- Every early off-path leaf return restores its entry fixed-point set. -/
+theorem otherNode_leaf_early_fixedpts (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level) :
+    (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2.fixedpts =
+      st.fixedpts := by
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  exact (processnode_fixedpts ctx level ctx.n _).trans
+    (otherLeafSt_fixedpts ctx level numcells st)
+
+/-- Every completed off-path leaf restores its entry fixed-point set. -/
+theorem otherNode_leaf_done_fixedpts (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)) :
+    (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2.fixedpts =
+      st.fixedpts := by
+  rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st
+    hnum hdone]
+  exact (leafFinish_fixedpts ctx level _).trans
+    ((processnode_fixedpts ctx level ctx.n _).trans
+      (otherLeafSt_fixedpts ctx level numcells st))
+
 /-- A semantic node outcome together with restoration of its entry
 fixed-point set. -/
 structure NodeProof (G : Colored n k) (ctx : Ctx)
