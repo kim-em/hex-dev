@@ -260,6 +260,25 @@ end PathOk
 
 namespace FirstInv
 
+/-- A discrete first-path leaf supplies the coupled node result and
+restores the fixed-point frame with which the node was entered. -/
+theorem terminalProof {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    (h : FirstInv G ctx level cs numcells st trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [rs.longcode]
+    let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
+    NodeProof G ctx tcLevel (specFuel + 1) (fuel + 1) level cs full st
+      out.2 numcells none (some (pathLeafKey ctx full rs.lab)) trail trail
+      out.1 := by
+  dsimp only
+  exact ⟨h.terminalOutcome hn hn0 hlevel hnum,
+    firstPath_discrete_fixedpts ctx inf tcLevel fuel level numcells st hnum⟩
+
 /-- The executable first-child prefix preserves and extends the root path
 facts before the first incumbent exists. -/
 theorem childPath {G : Colored n k} {ctx : Ctx}
@@ -382,6 +401,48 @@ theorem childPath {G : Colored n k} {ctx : Ctx}
 end FirstInv
 
 namespace OtherProof
+
+/-- Package any early off-path leaf outcome with its fixed-frame
+equation. -/
+theorem ofLeafEarly {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes fs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hout : OtherOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level
+      codes fs st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest receiptTrail eventTrail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1) :
+    OtherProof G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 numcells
+      best outBest receiptTrail eventTrail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 :=
+  ⟨hout, otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
+    numcells st hnum hearly⟩
+
+/-- Package any completed off-path leaf outcome with its fixed-frame
+equation. -/
+theorem ofLeafDone {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes fs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level))
+    (hout : OtherOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level
+      codes fs st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest receiptTrail eventTrail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1) :
+    OtherProof G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 numcells
+      best outBest receiptTrail eventTrail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 :=
+  ⟨hout, otherNode_leaf_done_fixedpts ctx inf tcLevel fuel level numcells
+    st hnum hdone⟩
 
 theorem node {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
