@@ -118,6 +118,35 @@ theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
     · rw [hnew.2]
       exact htrail.reach target entry hlt hentry
 
+/-- `processnode` preserves the ordering of the first and canonical GCA
+controls.  Installing a new canonical leaf parks its control at the
+current level, above the bounded first control. -/
+theorem processnode_order {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt} (horder : st.gcaFirst ≤ st.gcaCanon)
+    (hfirstBound : st.gcaFirst ≤ level) :
+    (Nauty.processnode ctx level numcells st).2.gcaFirst ≤
+      (Nauty.processnode ctx level numcells st).2.gcaCanon := by
+  have hfirst := (processnode_frames ctx level numcells st).2.2.2.2.2.2.1
+  rw [hfirst]
+  rcases processnode_canonGuide ctx level numcells st with hold | hnew
+  · rw [hold.1]
+    exact horder
+  · rw [hnew.1]
+    exact hfirstBound
+
+/-- Recovery preserves GCA ordering provided the first control is no
+deeper than the receiving frame. -/
+theorem recover_order {ctx : Ctx} {level inf : Nat} {st : SearchSt}
+    (horder : st.gcaFirst ≤ st.gcaCanon)
+    (hfirstBound : st.gcaFirst ≤ level) :
+    (Nauty.recover ctx.n inf level st).gcaFirst ≤
+      (Nauty.recover ctx.n inf level st).gcaCanon := by
+  have hfirst := (recover_frames ctx.n inf level st).2.2.2.2.2.2.1
+  rw [hfirst, recover_gcaCanon]
+  split
+  · exact hfirstBound
+  · exact horder
+
 /-- Pushing a child frame extends reference history.  At the new frame,
 the loop's two reference receipts discharge the cases whose GCA control
 is exactly the parent level. -/
@@ -214,6 +243,22 @@ theorem firstStab {ctx : Ctx} {current : Nat} {st : SearchSt}
     (h.first target entry hlt hnat hentry)
     (htrail.reach target entry hlt hentry) hmap
 
+/-- Appending a first-reference scatter preserves the complete
+return-stabilization obligation at `gcaFirst`. -/
+theorem firstPushStab {ctx : Ctx} {current : Nat} {st out : SearchSt}
+    {trail : FrameTrail} {gamma : Array Nat}
+    (h : RefTrail ctx current st trail)
+    (htrail : TrailOk ctx current st trail)
+    (hfirstSize : st.firstlab.size = ctx.n)
+    (hbelow : st.gcaFirst < current)
+    (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
+    (hpush : out.genTrace = st.genTrace.push gamma)
+    (hmap : ∀ i, i < ctx.n →
+      gamma[st.firstlab[i]!]! = st.lab[i]!) :
+    ReturnStab trail (Int.ofNat st.gcaFirst) out := by
+  exact hprev.pushGen hpush
+    (h.firstStab htrail hfirstSize hbelow hmap)
+
 /-- A scatter from the canonical reference onto the current labelling
 stabilizes every active frame through any bound no deeper than
 `gcaCanon`.  The smaller bound is needed by code two's orbit return to
@@ -239,6 +284,23 @@ theorem canonStabTo {ctx : Ctx} {current limit : Nat} {st : SearchSt}
     (htrail.endClosed target entry hlt hentry)
     (h.canon target entry hlt hnat hentry)
     (htrail.reach target entry hlt hentry) hmap
+
+/-- Appending a canonical-reference scatter preserves the complete
+return-stabilization obligation through any resumable bound below its
+GCA. -/
+theorem canonPushStabTo {ctx : Ctx} {current limit : Nat}
+    {st out : SearchSt} {trail : FrameTrail} {gamma : Array Nat}
+    (h : RefTrail ctx current st trail)
+    (htrail : TrailOk ctx current st trail)
+    (hcanonSize : st.canonlab.size = ctx.n)
+    (hle : limit ≤ st.gcaCanon) (hbelow : limit < current)
+    (hprev : ReturnStab trail (Int.ofNat limit) st)
+    (hpush : out.genTrace = st.genTrace.push gamma)
+    (hmap : ∀ i, i < ctx.n →
+      gamma[st.canonlab[i]!]! = st.lab[i]!) :
+    ReturnStab trail (Int.ofNat limit) out := by
+  exact hprev.pushGen hpush
+    (h.canonStabTo htrail hcanonSize hle hbelow hmap)
 
 /-- The exact canonical-GCA instance of `canonStabTo`. -/
 theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
