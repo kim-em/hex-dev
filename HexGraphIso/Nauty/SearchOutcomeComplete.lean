@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeSweep
-public import HexGraphIso.Nauty.SearchOutcomeTotal
+public import HexGraphIso.Nauty.SearchOutcomeStep
 
 public section
 
@@ -18,11 +17,26 @@ The logical fuel in `nodeKey`, the node recursion fuel, and a sibling
 loop's cursor fuel are deliberately kept distinct.  The strict node-fuel
 bound is preserved by descent and makes the executable zero-fuel branch
 unreachable at every well-formed node.
+
+Beyond the packaged run, each node statement carries the facts the
+enclosing loops thread through it: the saved cheap-cell boundary, the
+small-cell descent invariant at the refined frame, orbit soundness, the
+coset cursor, and domination of the first leaf by the incumbent.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
+
+/-- Facts a first-path node preserves or establishes beyond its packaged
+run. -/
+structure FirstKeep (ctx : Ctx) (level : Nat) (st out : SearchSt)
+    (fs : List Nat) (outBest : Option Key) : Prop where
+  dom : ∀ b, outBest = some b → keyLe (pathLeafKey ctx fs out.firstlab) b
+  orbits : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
+  coset : out.cosetindex < ctx.n
+  boundary : out.noncheaplevel < level → out.noncheaplevel = st.noncheaplevel
+  guide : level ≤ out.gcaFirst
 
 /-- Totality of one off-path node at a fixed executable recursion fuel. -/
 @[expose] def OtherTotal (G : Colored n k) (ctx : Ctx)
@@ -32,19 +46,23 @@ variable {n k : Nat}
     ctx.n = n → ctx.g = rowsOf G → inf = n + 2 → 0 < n →
     1 ≤ level → level = codes.length + 1 →
     level + specFuel = n + 1 → n + 2 < level + runFuel →
+    st.noncheaplevel ≤ level →
     CheapDesc ctx level st.noncheaplevel
-      { lab := st.lab, ptn := st.ptn, active := st.active,
-        numcells := numcells, hint := 0, maxpos := 0,
-        longcode := numcells } →
+      (refine ctx level st.lab st.ptn st.active numcells) →
     NodeInv G ctx tcLevel level codes bs fs numcells st best trail →
     Live ctx level st trail →
     PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level st →
+    OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n →
+    st.cosetindex < ctx.n →
+    (∀ b, best = some b → keyLe (pathLeafKey ctx fs st.firstlab) b) →
     ∃ outBest eventTrail,
       OtherRun G ctx tcLevel specFuel runFuel level codes fs st
-        (otherNode ctx inf tcLevel runFuel level numcells st).2 numcells
-        best outBest trail eventTrail
-        (otherNode ctx inf tcLevel runFuel level numcells st).1
+          (otherNode ctx inf tcLevel runFuel level numcells st).2 numcells
+          best outBest trail eventTrail
+          (otherNode ctx inf tcLevel runFuel level numcells st).1 ∧
+        OtherKeep ctx level st
+          (otherNode ctx inf tcLevel runFuel level numcells st).2
 
 /-- Totality of one node on the unique descent preceding the first leaf. -/
 @[expose] def FirstTotal (G : Colored n k) (ctx : Ctx)
@@ -54,18 +72,20 @@ variable {n k : Nat}
     ctx.n = n → ctx.g = rowsOf G → inf = n + 2 → 0 < n →
     1 ≤ level → level = codes.length + 1 →
     level + specFuel = n + 1 → n + 2 < level + runFuel →
+    st.noncheaplevel ≤ level →
     CheapDesc ctx level st.noncheaplevel
-      { lab := st.lab, ptn := st.ptn, active := st.active,
-        numcells := numcells, hint := 0, maxpos := 0,
-        longcode := numcells } →
+      (refine ctx level st.lab st.ptn st.active numcells) →
     FirstInv G ctx level codes numcells st trail →
     PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level st →
     ∃ fs outBest eventTrail,
       FirstRun G ctx tcLevel specFuel runFuel level codes fs st
-        (firstPathNode ctx inf tcLevel runFuel level numcells st).2
-        numcells outBest trail eventTrail
-        (firstPathNode ctx inf tcLevel runFuel level numcells st).1
+          (firstPathNode ctx inf tcLevel runFuel level numcells st).2
+          numcells outBest trail eventTrail
+          (firstPathNode ctx inf tcLevel runFuel level numcells st).1 ∧
+        FirstKeep ctx level st
+          (firstPathNode ctx inf tcLevel runFuel level numcells st).2 fs
+          outBest
 
 /-- A well-formed search node cannot occur deeper than the graph. -/
 theorem SearchOk.levelLe {G : Colored n k} {level numcells : Nat}
@@ -77,7 +97,7 @@ branch before any operational case analysis is needed. -/
 theorem OtherTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
     OtherTotal G ctx inf tcLevel 0 := by
   intro specFuel level numcells codes bs fs st best trail hn _ _ _ _ _ _
-    hfuel _ hnode _ _
+    hfuel _ _ hnode _ _ _ _ _
   have hle : level ≤ n := hnode.run.searchOk.levelLe
   omega
 
@@ -85,7 +105,7 @@ theorem OtherTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
 descent. -/
 theorem FirstTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
     FirstTotal G ctx inf tcLevel 0 := by
-  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel _
+  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel _ _
     hfirst _
   have hle : level ≤ n := hfirst.searchOk.levelLe
   omega
