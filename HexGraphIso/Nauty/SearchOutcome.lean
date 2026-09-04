@@ -626,6 +626,38 @@ structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
     keyLe b (incMax (stInc ctx st)
       (nodeKey ctx tcLevel specFuel level cs st numcells))
 
+/-- An incumbent can only improve across a search fragment. -/
+@[expose] def IncGrows (ctx : Ctx) (st out : SearchSt) : Prop :=
+  ∀ b, stInc ctx st = some b →
+    ∃ b', stInc ctx out = some b' ∧ keyLe b b'
+
+/-- The state component common to both successful loop outcomes.  The
+loop may stop early, but every incumbent it installs is still bounded by
+the incoming incumbent and the whole parent subtree. -/
+structure LoopSound (ctx : Ctx) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st out : SearchSt) (numcells : Nat) : Prop where
+  upper : NodeSound ctx tcLevel specFuel level cs st out numcells
+  grows : IncGrows ctx st out
+
+theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
+    NodeSound ctx tcLevel specFuel level cs st st numcells := by
+  constructor
+  intro b hb
+  rw [hb, incMax]
+  exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
+
+theorem IncGrows.refl (ctx : Ctx) (st : SearchSt) :
+    IncGrows ctx st st := by
+  intro b hb
+  exact ⟨b, hb, keyLe_refl b⟩
+
+theorem LoopSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
+    LoopSound ctx tcLevel specFuel level cs st st numcells :=
+  ⟨NodeSound.refl ctx tcLevel specFuel level cs st numcells,
+    IncGrows.refl ctx st⟩
+
 /-- The result of a node call, with logical and runtime fuel separated.
 
 `complete` and `unwind` may have the same return integer.  The latter is
@@ -653,10 +685,12 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
     (cursor : Option Nat) (st out : SearchSt) (r : Option Int) : Prop where
   | complete
       (returned : r = none)
+      (sound : LoopSound ctx tcLevel specFuel level cs st out numcells)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells tcell cursor out)
       (empty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o)
-  | unwind (target : Nat) (returned : r = some (Int.ofNat target))
+  | unwind (sound : LoopSound ctx tcLevel specFuel level cs st out numcells)
+      (target : Nat) (returned : r = some (Int.ofNat target))
       (below : target < level) (payload : Unwind ctx tcLevel target out)
   | exhausted (empty : loopFuel = 0) (returned : r = none)
       (unchanged : out = st)

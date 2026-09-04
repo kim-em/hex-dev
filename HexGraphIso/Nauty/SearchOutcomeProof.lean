@@ -85,7 +85,8 @@ theorem firstLoop_done (ctx : Ctx)
         tc tv1 none tcell index st).1 := by
   rw [firstChildLoop]
   case x_1 => omega
-  exact .complete rfl hcover fun o ho =>
+  exact .complete rfl (.refl ctx tcLevel specFuel level cs st numcells)
+    hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- With positive loop fuel, an absent next child completes the off-path
@@ -105,7 +106,8 @@ theorem otherLoop_done (ctx : Ctx)
         tc tv1 none tcell st).1 := by
   rw [otherChildLoop]
   case x_1 => omega
-  exact .complete rfl hcover fun o ho =>
+  exact .complete rfl (.refl ctx tcLevel specFuel level cs st numcells)
+    hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 end Hex.GraphIso.Nauty
