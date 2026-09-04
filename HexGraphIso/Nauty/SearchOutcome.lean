@@ -818,15 +818,15 @@ def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
   exact sweepKey_of_carrier hn hgsz hcarrier hstab hs hok hsp hend hvals
     hic hrange href hcur hlf hatRef hatCur
 
-/-- Why an early return is sound.  Code one and code two retain their
-different reference labellings; comparison pruning has no generator. -/
+/-- Why a generator return is sound.  Code one and code two retain their
+different reference labellings.  Non-generator pruning instead returns a
+locally complete maximum and therefore has its own result constructor. -/
 inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
     (out : SearchSt) (best : Option Key) : Prop where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
   | canon (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
-  | frozen (anchor : Anchor ctx tcLevel target best)
 
 /-- A semantic incumbent can only improve across a search fragment. -/
 @[expose] def IncGrows (best out : Option Key) : Prop :=
@@ -1110,6 +1110,14 @@ inductive NodeResult (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
       (target : Nat) (returned : r = Int.ofNat target)
       (below : target < level)
       (payload : Unwind ctx tcLevel target out outBest)
+  | pruned (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
+      (target : Nat) (returned : r = Int.ofNat target)
+      (below : target < level)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
+      (full : outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel level cs st numcells)))
   | exhausted (empty : runFuel = 0) (returned : r = 0)
       (unchanged : out = st) (bestUnchanged : outBest = best)
 
@@ -1131,6 +1139,10 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (target : Nat) (returned : r = some (Int.ofNat target))
       (below : target < level)
       (payload : Unwind ctx tcLevel target out outBest)
+  | pruned (target : Nat) (returned : r = some (Int.ofNat target))
+      (below : target < level)
+      (sound : LoopSound ctx bound best outBest)
+      (full : outBest = some (incMax best bound))
   | exhausted
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
@@ -1158,6 +1170,8 @@ theorem LoopResult.reindexSet {ctx : Ctx}
       exact .complete returned sound finalSet finalCursor cover empty
   | unwind sound target returned below payload =>
       exact .unwind sound target returned below payload
+  | pruned target returned below sound full =>
+      exact .pruned target returned below sound full
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
       exact .exhausted returned sound finalSet finalCursor cover progress bounded
 
@@ -1180,16 +1194,18 @@ theorem LoopResult.step {ctx : Ctx}
       exact .complete returned sound finalSet finalCursor cover empty
   | unwind sound target returned below payload =>
       exact .unwind sound target returned below payload
+  | pruned target returned below sound full =>
+      exact .pruned target returned below sound full
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
       exact .exhausted returned sound finalSet finalCursor cover
         (Nat.le_trans (by
           have := cursorRank_step ha
           omega) progress) bounded
 
-/-- The corrected node outcome closes domination at the root.  Exhaustion
-is impossible with the root runtime fuel, and every unwind anchor has a
-positive target, so neither non-complete constructor survives at level
-one. -/
+/-- The corrected node outcome closes domination at the root.  A local
+prune has the same exact maximum as ordinary completion.  Exhaustion is
+impossible with the root runtime fuel, and every generator anchor has a
+positive target, so a generator unwind cannot leave level one. -/
 theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
     {best : Option Key}
     (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
@@ -1213,8 +1229,10 @@ theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
       | canon anchor carrier =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
-      | frozen anchor =>
-          exact ((Nat.not_lt_of_ge anchor.positive) below).elim
+  | pruned sound target returned below installed read full =>
+      rw [stInc_final hn0 installed] at read
+      rw [incMax, nodeKey_root hn0] at full
+      exact (Option.some.inj (read.trans full)).symm
   | exhausted empty returned unchanged bestUnchanged => omega
 
 /-- Certificate-checked canonicalization is total once the corrected root
