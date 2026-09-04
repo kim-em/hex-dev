@@ -351,6 +351,24 @@ theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
   obtain ⟨b', hb', hbb'⟩ := hinc b hb
   exact ⟨b', hb', keyLe_trans hkb hbb'⟩
 
+/-- The evolving sweep remains valid when the semantic incumbent grows. -/
+theorem SweepCover.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {best best' : Option Key}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hinc : ∀ b, best = some b →
+      ∃ b', best' = some b' ∧ keyLe b b') :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell cursor best' := by
+  apply h.step
+  · intro o ho
+    exact Or.inr ⟨o, ho, rfl, Nat.le_refl _⟩
+  · intro o hdone
+    exact hdone.mono hinc
+  · intro o ho hm hpast
+    exact (h.past o ho hm hpast).mono hinc
+
 /-- Coverage transfers across equality of two child keys. -/
 theorem ChildDone.ofEq {ctx : Ctx} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells oRef oCur : Nat}
