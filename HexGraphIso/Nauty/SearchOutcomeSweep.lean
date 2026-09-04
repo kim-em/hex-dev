@@ -239,6 +239,59 @@ theorem restrict {G : Colored n k} {ctx : Ctx}
     shortClear := h.shortClear
     fuelBound := h.fuelBound }
 
+/-- The long-prune filter preserves the full mutable sweep invariant.
+The root ledger supplies valid pairs at the current ordering, and the
+frozen-frame permutation transports their cell stabilization back to the
+specification ordering. -/
+theorem longprune {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hgsz : ctx.g.size = ctx.n)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
+      tc len (Nauty.longprune tcell st.fixedpts st.autos) cursor base st
+      best trail := by
+  have hlocal : LocalAutos ctx level st := hpath.autos h.run
+  have hstSize : st.lab.size = ctx.n := by
+    rw [h.nodeCount]
+    exact h.run.searchOk.labSize
+  have haut : ∀ p ∈ st.autos.toList,
+      (st.fixedpts &&& p.1 == st.fixedpts) = true →
+      PairOk ctx.g rsPtn rsLab level ctx.n p.1 p.2 := by
+    intro p hp hfix
+    have hpair := hlocal p hp hfix
+    rw [h.ptnEq] at hpair
+    exact LocalAutos.reindexPair hpair (cellsPerm_symm h.labPerm)
+      h.frozenPtnSize hstSize h.frozenLabSize h.frozenEnd
+  apply h.restrict (fun _ hm => longprune_subset hm)
+  exact h.cover.longprune hgsz h.frozenLabSize h.frozenLabOk
+    h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound haut
+
+/-- The short-prune filter preserves the full mutable sweep invariant
+once the one-shot protocol identifies its newest workspace pair as valid
+at the frozen parent frame. -/
+theorem shortprune {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hgsz : ctx.g.size = ctx.n)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
+      PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
+      tc len (Nauty.shortprune tcell st) cursor base st best trail := by
+  apply h.restrict (fun _ hm => shortprune_subset hm)
+  exact h.cover.shortprune hgsz h.frozenLabSize h.frozenLabOk
+    h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound hlast
+
 /-- The mutable child selected for a frozen offset has exactly that
 offset's specification key. -/
 theorem childKey {G : Colored n k} {ctx : Ctx}
