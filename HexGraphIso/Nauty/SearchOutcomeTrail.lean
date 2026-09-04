@@ -596,4 +596,106 @@ theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     hrows hef hnc hcc hge htie hcanonBelow hfirstPos hfirstBelow hcoset
     horbit
 
+/-! # Direct leaf receipts -/
+
+/-- A code-one leaf return is a located node receipt.  Its incumbent is
+unchanged, so its `NodeSound` component needs no comparison with the
+first leaf. -/
+theorem otherNode_leaf_firstReceipt {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hstore : GuideStore ctx tcLevel level
+      (otherLeafSt ctx level numcells st) best trail)
+    (htrail : TrailOk ctx level (otherLeafSt ctx level numcells st) trail)
+    (hfirstPos : 0 < (otherLeafSt ctx level numcells st).gcaFirst)
+    (hbelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hfirstSize : (otherLeafSt ctx level numcells st).firstlab.size =
+      ctx.n)
+    (hfirstPerm : (otherLeafSt ctx level numcells st).firstlab.toList.Perm
+      (List.range ctx.n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+    (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
+      (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true)
+    (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
+      codeSentinel)
+    (hpass : isautom ctx (firstScatter ctx.n
+      (otherLeafSt ctx level numcells st).firstlab
+      (otherLeafSt ctx level numcells st).lab) = true) :
+    NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let leaf := otherLeafSt ctx level numcells st
+  obtain ⟨payload, hloc⟩ := hstore.firstUnwind (numcells := ctx.n)
+    htrail hfirstPos hbelow hgsz hfirstSize hfirstPerm hlabSize hlabPerm
+    hsymm hloop hbound heq hsent (by simp) hpass
+  have hreturn := (processnode_auto (level := level) (numcells := ctx.n)
+    (st := leaf) heq hsent (by simp) hpass).1
+  exact otherNode_leaf_receipt hnum hreturn hbelow
+    (NodeSound.refl ctx tcLevel (specFuel + 1) level cs st numcells best)
+    payload hloc
+
+/-- A row-tied code-two leaf return is a located node receipt in both the
+canonical-guide and first-ancestor orbit arms. -/
+theorem otherNode_leaf_tiedReceipt {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hstore : GuideStore ctx tcLevel level
+      (otherLeafSt ctx level numcells st) best trail)
+    (htrail : TrailOk ctx level (otherLeafSt ctx level numcells st) trail)
+    (hcanonPos : 0 < (otherLeafSt ctx level numcells st).gcaCanon)
+    (hcanonBelow : (otherLeafSt ctx level numcells st).gcaCanon < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hcanonSize : (otherLeafSt ctx level numcells st).canonlab.size =
+      ctx.n)
+    (hcanonPerm : (otherLeafSt ctx level numcells st).canonlab.toList.Perm
+      (List.range ctx.n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+    (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
+      (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx (otherLeafSt ctx level numcells st).canonlab =
+      leafRows ctx (otherLeafSt ctx level numcells st).lab)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hcc : (otherLeafSt ctx level numcells st).compCanon = 0)
+    (hge : ¬(level < (otherLeafSt ctx level numcells st).canonlevel))
+    (htie : (testcanlab ctx (updatecan ctx
+      (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+      (otherLeafSt ctx level numcells st).lab).1 = 0)
+    (hfirstPos : 1 ≤ (otherLeafSt ctx level numcells st).gcaFirst)
+    (hfirstBelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
+    (hcoset : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
+    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2.orbits ctx.n) :
+    NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  obtain ⟨target, hreturn, hbelow, payload, hloc⟩ :=
+    hstore.tiedUnwind (numcells := ctx.n) htrail hcanonPos hcanonBelow
+      hgsz hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
+      hcc hge htie hfirstPos hfirstBelow hcoset horbit
+  exact otherNode_leaf_receipt hnum hreturn hbelow
+    (NodeSound.refl ctx tcLevel (specFuel + 1) level cs st numcells best)
+    payload hloc
+
 end Hex.GraphIso.Nauty
