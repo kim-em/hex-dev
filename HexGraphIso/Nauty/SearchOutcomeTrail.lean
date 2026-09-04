@@ -338,6 +338,154 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
         rw [hlab]
         exact breakout_at_target hinj (by rw [hls]; omega)
 
+/-- Individualizing a recovered parent records the frozen specification
+frame rather than the current within-cell permutation of that frame. -/
+theorem TrailOk.pushFrame {ctx : Ctx}
+    {level specFuel numcells tc len offset currentOffset : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat}
+    {st child : SearchSt} {trail : FrameTrail}
+    (h : TrailOk ctx level st trail)
+    (hls : st.lab.size = ctx.n) (hps : st.ptn.size = ctx.n)
+    (hinj : LabInj st.lab st.lab.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hrsLab : rsLab.size = ctx.n) (hrsPtn : rsPtn.size = ctx.n)
+    (hrsEnd : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hperm : cellsPerm rsPtn level rsLab st.lab)
+    (hptnEq : st.ptn = rsPtn)
+    (hcell : IsCell rsPtn level tc len)
+    (hcurrent : IsCell st.ptn level tc len)
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n)
+    (hoffset : offset < len) (hcurrentOffset : currentOffset < len)
+    (hat : st.lab[tc + currentOffset]! = rsLab[tc + offset]!)
+    (hlab : child.lab =
+      (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).1)
+    (hptn : child.ptn = st.ptn.set! tc (level + 1)) :
+    TrailOk ctx (level + 1) child
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
+  let pushed : TrailEntry :=
+    ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩
+  constructor
+  · intro target entry hlt hentry
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
+    · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
+      rw [hlab]
+      apply breakout_reachAt (h.reach target entry hold hentry) hcurrent
+      · rw [hps]
+        exact hrange
+      · rw [h.ptnSize target entry hold hentry, hps]
+      · rw [hls, hps]
+      · exact hcurrentOffset
+      · exact hend
+      · exact h.endClosed target entry hold hentry
+      · intro q hq
+        rw [h.frozen target entry hold hentry q hq]
+        omega
+    · subst target
+      change (trail.push level pushed) level = some entry at hentry
+      rw [FrameTrail.push_self] at hentry
+      have he : pushed = entry := Option.some.inj hentry
+      subst entry
+      change cellsPerm rsPtn level rsLab child.lab
+      rw [hlab]
+      apply cellsPerm_trans hperm
+      rw [← hptnEq]
+      exact breakout_cellsPerm hcurrent (by rw [hps]; exact hrange)
+        (by rw [hls, hps]) hcurrentOffset
+  · intro target entry hlt hentry
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
+    · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
+      exact h.ptnSize target entry hold hentry
+    · subst target
+      change (trail.push level pushed) level = some entry at hentry
+      rw [FrameTrail.push_self] at hentry
+      have he : pushed = entry := Option.some.inj hentry
+      subst entry
+      simpa only [pushed, sweepFrame] using hrsPtn
+  · intro target entry hlt hentry
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
+    · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
+      exact h.endClosed target entry hold hentry
+    · subst target
+      change (trail.push level pushed) level = some entry at hentry
+      rw [FrameTrail.push_self] at hentry
+      have he : pushed = entry := Option.some.inj hentry
+      subst entry
+      simpa only [pushed, sweepFrame] using hrsEnd
+  · intro target entry hlt hentry q hq
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
+    · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
+      have hf := h.frozen target entry hold hentry q hq
+      have hne : tc ≠ q := by
+        intro heq
+        subst q
+        have hopen := hcurrent.2.2.1 tc (Nat.le_refl tc) (by omega)
+        have hclosed : st.ptn[tc]! ≤ level := calc
+          st.ptn[tc]! = entry.frame.rsPtn[tc]! := hf
+          _ ≤ target := hq
+          _ ≤ level := Nat.le_of_lt hold
+        omega
+      rw [hptn, Array.getElem!_set!_ne _ _ _ _ hne]
+      exact hf
+    · subst target
+      change (trail.push level pushed) level = some entry at hentry
+      rw [FrameTrail.push_self] at hentry
+      have he : pushed = entry := Option.some.inj hentry
+      subst entry
+      have hq' : rsPtn[q]! ≤ level := by
+        simpa only [pushed, sweepFrame] using hq
+      have hne : tc ≠ q := by
+        intro heq
+        subst q
+        have hopen := hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
+        omega
+      rw [hptn, Array.getElem!_set!_ne _ _ _ _ hne, hptnEq]
+      simpa only [pushed, sweepFrame]
+  · intro target entry hlt hentry
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
+    · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
+      obtain ⟨oldLen, holdCell, oldOffset, hsplit, hsingle, oldAt⟩ :=
+        h.picked target entry hold hentry
+      have hne : entry.frame.tc ≠ tc := by
+        intro heq
+        rcases isCell_disjoint_or_eq hsingle hcurrent with hleft | hright |
+            hequal
+        · rw [heq] at hleft
+          omega
+        · rw [heq] at hright
+          omega
+        · have hlenEq := hequal.2
+          omega
+      have houtside := singleton_outside_cell hsingle hcurrent hne
+        hcurrentOffset
+      refine ⟨oldLen, holdCell, oldOffset, ?_, ?_, ?_⟩
+      · rw [hptn, Array.getElem!_set!_ne _ _ _ _ hne.symm]
+        exact hsplit
+      · rw [hptn]
+        exact isCell_set_miss hsingle hcurrent hlen
+      · rw [hlab]
+        exact (breakout_misses_singleton hinj
+          (by rw [hls]; omega) houtside).trans oldAt
+    · subst target
+      change (trail.push level pushed) level = some entry at hentry
+      rw [FrameTrail.push_self] at hentry
+      have he : pushed = entry := Option.some.inj hentry
+      subst entry
+      refine ⟨len, ?_, hoffset, ?_, ?_, ?_⟩
+      · simpa only [pushed, sweepFrame] using hcell
+      · change child.ptn[tc]! = level + 1
+        rw [hptn, Array.getElem!_set!_self _ _ _]
+        rw [hps]
+        omega
+      · change IsCell child.ptn (level + 1) tc 1
+        rw [hptn]
+        exact isCell_breakout_target (lab := st.lab)
+          (tv := st.lab[tc + currentOffset]!)
+          (by rw [hps]; omega) hcurrent.2.1
+      · change child.lab[tc]! = rsLab[tc + offset]!
+        rw [hlab, breakout_at_target hinj (by rw [hls]; omega), hat]
+
 /-! # Child guide installation -/
 
 /-- Package one already-covered child of a frozen sweep as a generator
@@ -390,37 +538,38 @@ whose control is the current level is supplied by an already-covered
 child of that sweep; older guides are transported automatically. -/
 theorem GuideStore.pushSweep {ctx : Ctx}
     {tcLevel specFuel level numcells tc len activeOffset : Nat}
-    {codes : List Nat} {st : SearchSt} {best : Option Key}
+    {codes : List Nat} {rsLab rsPtn : Array Nat}
+    {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail)
     (hlevel : 1 ≤ level)
-    (hls : st.lab.size = ctx.n) (hlab : LabOk st.lab ctx.n)
-    (hps : st.ptn.size = ctx.n)
-    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
-    (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
-      st.ptn[q]! = ctx.n + 2)
-    (hcell : IsCell st.ptn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hls : rsLab.size = ctx.n) (hlab : LabOk rsLab ctx.n)
+    (hps : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
     (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
     (hfirstSize : st.firstlab.size = ctx.n)
     (hcanonSize : st.canonlab.size = ctx.n)
     (hfirst : st.gcaFirst = level →
       ∃ o, o < len ∧
-        ChildDone ctx tcLevel specFuel level codes st.lab st.ptn tc
+        ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
           numcells best o ∧
-        st.firstlab[tc]! = st.lab[tc + o]! ∧
-        cellsPerm st.ptn level st.lab st.firstlab)
+        st.firstlab[tc]! = rsLab[tc + o]! ∧
+        cellsPerm rsPtn level rsLab st.firstlab)
     (hcanon : st.gcaCanon = level →
       ∃ o, o < len ∧
-        ChildDone ctx tcLevel specFuel level codes st.lab st.ptn tc
+        ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
           numcells best o ∧
-        st.canonlab[tc]! = st.lab[tc + o]! ∧
-        cellsPerm st.ptn level st.lab st.canonlab) :
+        st.canonlab[tc]! = rsLab[tc + o]! ∧
+        cellsPerm rsPtn level rsLab st.canonlab) :
     GuideStore ctx tcLevel (level + 1) st best
       (trail.push level
-        ⟨sweepFrame specFuel codes st.lab st.ptn tc numcells,
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells,
           activeOffset⟩) := by
   let entry : TrailEntry :=
-    ⟨sweepFrame specFuel codes st.lab st.ptn tc numcells, activeOffset⟩
+    ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, activeOffset⟩
   apply h.push entry
   · intro heq _
     obtain ⟨o, ho, hdone, hat, hreach⟩ := hfirst heq
