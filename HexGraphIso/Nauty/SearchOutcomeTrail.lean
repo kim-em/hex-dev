@@ -771,6 +771,8 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
     ∃ target,
       (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
+      (target = (processnode ctx level numcells st).2.gcaFirst ∨
+        target = (processnode ctx level numcells st).2.gcaCanon) ∧
       ∃ payload : Unwind ctx tcLevel target
           (processnode ctx level numcells st).2 best,
         payload.Located trail := by
@@ -778,13 +780,17 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
       ⟨hfirst, hsmaller⟩
   · obtain ⟨payload, hpayload⟩ := g.canonLocated href hloc htrail
       hcanonBelow hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows hef hnc hcc hge htie
-    exact ⟨st.gcaCanon, hcanon, hcanonBelow, payload, hpayload⟩
+    exact ⟨st.gcaCanon, hcanon, hcanonBelow,
+      Or.inr (processnode_rowTie_gcaCanon hef hnc hcc hge htie).symm,
+      payload, hpayload⟩
   · let payload : Unwind ctx tcLevel st.gcaFirst
         (processnode ctx level numcells st).2 best :=
       .orbit ⟨hfirstPos, by
         rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
         exact Nat.le_refl _, hcoset, hsmaller, horbit⟩
-    exact ⟨st.gcaFirst, hfirst, hfirstBelow, payload,
+    exact ⟨st.gcaFirst, hfirst, hfirstBelow,
+      Or.inl (processnode_frames ctx level numcells st).2.2.2.2.2.2.1.symm,
+      payload,
       .orbit ⟨hfirstPos, by
         rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
         exact Nat.le_refl _, hcoset, hsmaller, horbit⟩⟩
@@ -842,6 +848,8 @@ theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     ∃ target,
       (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
+      (target = (processnode ctx level numcells st).2.gcaFirst ∨
+        target = (processnode ctx level numcells st).2.gcaCanon) ∧
       ∃ payload : Unwind ctx tcLevel target
           (processnode ctx level numcells st).2 best,
         payload.Located trail := by
@@ -944,7 +952,7 @@ theorem otherNode_leaf_tiedReceipt {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
-  obtain ⟨target, hreturn, hbelow, payload, hloc⟩ :=
+  obtain ⟨target, hreturn, hbelow, -, payload, hloc⟩ :=
     hstore.tiedUnwind (numcells := ctx.n) htrail hcanonPos hcanonBelow
       hgsz hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
       hcc hge htie hfirstPos hfirstBelow hcoset horbit

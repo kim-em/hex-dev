@@ -1262,6 +1262,20 @@ theorem unwind {G : Colored n k} {ctx : Ctx}
           fixedpts := insert st.fixedpts tv }).2 outBest)
     (hloc : payload.Located (trail.push level
       ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩))
+    (hcontrol : target = (otherNode ctx inf tcLevel runFuel (level + 1)
+        (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).2.gcaFirst ∨
+      target = (otherNode ctx inf tcLevel runFuel (level + 1)
+        (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).2.gcaCanon)
     (hchild : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs
       { st with
         lab := (breakout st.lab st.ptn (level + 1) tc tv).1
@@ -1347,7 +1361,7 @@ theorem unwind {G : Colored n k} {ctx : Ctx}
   refine ⟨hproof, ?_, ?_⟩
   · rw [hstate, hreturn]
     exact LoopExit.unwind target rfl hbelow (LoopSound.ofNode hsound hkey)
-      payload' hloc'
+      payload' hloc' (by simpa only [cleaned, node] using hcontrol)
   · intro hshort
     rw [hstate] at hshort ⊢
     refine ⟨node.1, rfl, ?_⟩

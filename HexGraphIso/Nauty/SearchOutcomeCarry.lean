@@ -357,7 +357,8 @@ theorem OtherRun.grows {G : Colored n k} {ctx : Ctx}
     (hfuel : runFuel ≠ 0) : IncGrows best outBest := by
   cases h.node.exit with
   | done returned exact => rw [exact]; exact IncGrows.incMax best _
-  | unwind target returned below sound payload located => exact sound.grows
+  | unwind target returned below sound payload located control =>
+      exact sound.grows
   | frozen below exact freeze => rw [exact]; exact IncGrows.incMax best _
   | cheap boundary returned positive atOrAbove saved exact =>
       rw [exact]; exact IncGrows.incMax best _

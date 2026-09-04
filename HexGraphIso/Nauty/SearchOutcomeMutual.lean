@@ -1482,6 +1482,10 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 =
         Int.ofNat target ∧
       target < level ∧
+      (target = (otherNode ctx inf tcLevel (fuel + 1) level numcells
+          st).2.gcaFirst ∨
+        target = (otherNode ctx inf tcLevel (fuel + 1) level numcells
+          st).2.gcaCanon) ∧
       ∃ payload : Unwind ctx tcLevel target
           (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 best,
         payload.Located trail := by
@@ -1546,8 +1550,10 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
     · rw [hout]
       exact hevent
     · exact TrailExt.refl level trail
-  · refine ⟨leaf.gcaFirst, ?_, hbelow, ?_⟩
+  · refine ⟨leaf.gcaFirst, ?_, hbelow, ?_, ?_⟩
     · rw [hout, hreturn]
+    · rw [hout]
+      exact Or.inl (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1.symm
     · rw [hout]
       exact ⟨payload, hloc⟩
 
@@ -1592,6 +1598,10 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 =
         Int.ofNat target ∧
       target < level ∧
+      (target = (otherNode ctx inf tcLevel (fuel + 1) level numcells
+          st).2.gcaFirst ∨
+        target = (otherNode ctx inf tcLevel (fuel + 1) level numcells
+          st).2.gcaCanon) ∧
       ∃ payload : Unwind ctx tcLevel target
           (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 best,
         payload.Located trail := by
@@ -1651,7 +1661,7 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
       exact Int.ofNat_lt.mpr hcanonBelow
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
-  obtain ⟨target, hreturn, hbelow, payload, hloc⟩ :=
+  obtain ⟨target, hreturn, hbelow, hcontrol, payload, hloc⟩ :=
     hprep.guides.tiedUnwind (numcells := ctx.n) hprep.trailOk
       hprep.canonPositive hcanonBelow hgsz hprep.leafRefs.canonSize
       (isPerm_of_cellsReach hprep.leafRefs.canonSize hn0
@@ -1667,9 +1677,11 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
     · rw [hout]
       exact hevent
     · exact TrailExt.refl level trail
-  · refine ⟨target, ?_, hbelow, ?_⟩
+  · refine ⟨target, ?_, hbelow, ?_, ?_⟩
     · rw [hout]
       exact hreturn
+    · rw [hout]
+      exact hcontrol
     · rw [hout]
       exact ⟨payload, hloc⟩
 

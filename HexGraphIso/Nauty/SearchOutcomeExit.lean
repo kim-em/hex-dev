@@ -109,6 +109,7 @@ inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
         best outBest)
       (payload : Unwind ctx tcLevel target out outBest)
       (located : payload.Located trail)
+      (control : target = out.gcaFirst ∨ target = out.gcaCanon)
   | frozen
       (below : r < Int.ofNat level)
       (exact : outBest = some (incMax best
@@ -192,7 +193,7 @@ theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
     r < Int.ofNat level := by
   cases h with
   | done returned exact => rw [returned]; omega
-  | unwind target returned below sound payload located =>
+  | unwind target returned below sound payload located control =>
       rw [returned]
       exact Int.ofNat_lt.mpr below
   | frozen below exact freeze => exact below
@@ -218,9 +219,11 @@ theorem firstFinish {ctx : Ctx}
       r := by
   cases h with
   | done returned exact => exact .done returned exact
-  | unwind target returned below sound payload located =>
-      exact .unwind target returned below sound payload.firstFinish
+  | unwind target returned below sound payload located control =>
+      apply NodeExit.unwind target returned below sound payload.firstFinish
         located.firstFinish
+      unfold Nauty.firstFinish
+      split <;> exact control
   | frozen below exact freeze =>
       apply NodeExit.frozen below exact
       rw [Nauty.firstFinish]
@@ -257,6 +260,7 @@ inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (sound : LoopSound ctx bound best outBest)
       (payload : Unwind ctx tcLevel target out outBest)
       (located : payload.Located trail)
+      (control : target = out.gcaFirst ∨ target = out.gcaCanon)
   | frozen (value : Int)
       (returned : r = some value)
       (below : value < Int.ofNat level)
@@ -376,7 +380,7 @@ theorem toOutcome {G : Colored n k} {ctx : Ctx}
         · exact canonlevel_ne_zero_of_stInc (h.event.read.trans exact)
         · exact h.event.read
         · exact exact
-    | unwind target returned below sound payload located =>
+    | unwind target returned below sound payload located control =>
         exact NodeReceipt.unwind sound target returned below payload located
     | frozen below exact freeze =>
         apply NodeReceipt.pruned (NodeSound.ofExact exact) r rfl below
@@ -452,8 +456,8 @@ theorem reindexSet {ctx : Ctx}
       tc len numcells tcell' cursor bound st out best outBest trail r := by
   cases h with
   | done returned exact => exact .done returned exact
-  | unwind target returned below sound payload located =>
-      exact .unwind target returned below sound payload located
+  | unwind target returned below sound payload located control =>
+      exact .unwind target returned below sound payload located control
   | frozen value returned below exact freeze =>
       exact .frozen value returned below exact freeze
   | cheap boundary returned positive below saved exact =>
@@ -476,8 +480,8 @@ theorem step {ctx : Ctx}
       rsPtn tc len numcells tcell cursor bound st out best outBest trail r := by
   cases h with
   | done returned exact => exact .done returned exact
-  | unwind target returned below sound payload located =>
-      exact .unwind target returned below sound payload located
+  | unwind target returned below sound payload located control =>
+      exact .unwind target returned below sound payload located control
   | frozen value returned below exact freeze =>
       exact .frozen value returned below exact freeze
   | cheap boundary returned positive below saved exact =>
@@ -506,8 +510,9 @@ theorem prepend {ctx : Ctx}
       exact .done returned
         ((hpre.trans (LoopSound.ofExact exact)).exact exact
           (keyLe_incMax_right mid bound))
-  | unwind target returned below sound payload located =>
+  | unwind target returned below sound payload located control =>
       exact .unwind target returned below (hpre.trans sound) payload located
+        control
   | frozen value returned below exact freeze =>
       exact .frozen value returned below
         ((hpre.trans (LoopSound.ofExact exact)).exact exact
@@ -586,10 +591,10 @@ theorem toNodeSome {ctx : Ctx}
       nodeNumcells best outBest trail value := by
   cases h with
   | done returned => cases returned
-  | unwind target returned below sound payload located =>
+  | unwind target returned below sound payload located control =>
       refine NodeExit.unwind (target := target)
         (returned := Option.some.inj returned) (below := below)
-        (sound := ?_) (payload := payload) located
+        (sound := ?_) (payload := payload) located control
       constructor
       · intro b hb
         rw [← hbound]
@@ -892,7 +897,7 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best trail trail
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
-  obtain ⟨houtcome, target, hreturned, hbelow, payload, hloc⟩ :=
+  obtain ⟨houtcome, target, hreturned, hbelow, hcontrol, payload, hloc⟩ :=
     hnode.firstLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
       hn hn0 hgsz hgb hsymm hloop hlevel hpath hnum hnp heq hsent hpass
       hlive
@@ -917,7 +922,7 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
     exit := NodeExit.unwind target hreturned hbelow
       (NodeSound.refl ctx tcLevel (specFuel + 1) level codes st numcells
         best)
-      payload hloc
+      payload hloc hcontrol
     event := houtcome.event
     preserved := houtcome.preserved
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
@@ -969,7 +974,7 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best trail trail
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
-  obtain ⟨houtcome, target, hreturned, hbelow, payload, hloc⟩ :=
+  obtain ⟨houtcome, target, hreturned, hbelow, hcontrol, payload, hloc⟩ :=
     hnode.tiedLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
       hn hn0 hgsz hgb hsymm hloop hlevel hpath hcheap hnum hef hcc hge
       htie hcoset horbit hlive
@@ -1007,7 +1012,7 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
     exit := NodeExit.unwind target hreturned hbelow
       (NodeSound.refl ctx tcLevel (specFuel + 1) level codes st numcells
         best)
-      payload hloc
+      payload hloc hcontrol
     event := houtcome.event
     preserved := houtcome.preserved
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level

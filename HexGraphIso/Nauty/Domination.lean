@@ -1369,6 +1369,26 @@ theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
   rw [if_neg hcount] at hshort
   omega
 
+/-- The code-two arm leaves the canonical guide untouched. -/
+theorem processnode_rowTie_gcaCanon {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    (processnode ctx level numcells st).2.gcaCanon = st.gcaCanon := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.gcaCanon),
+    pushAuto_gcaCanon, ite_self]
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+  simp [hg, hnc, hef, hcc, hge, htie, id_run_eq]
+
 /-- The code-two arm stores the same incumbent-to-current scatter that
 it appends to the generator trace. -/
 theorem processnode_rowTie_autos {ctx : Ctx} {level numcells : Nat}

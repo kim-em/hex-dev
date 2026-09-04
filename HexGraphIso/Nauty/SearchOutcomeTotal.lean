@@ -187,7 +187,7 @@ theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
       rw [stInc_final hn0 hinstalled] at hread
       rw [incMax, nodeKey_root hn0] at exact
       exact (Option.some.inj (hread.trans exact)).symm
-  | unwind target returned below sound payload located =>
+  | unwind target returned below sound payload located control =>
       cases payload with
       | first anchor carrier =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
