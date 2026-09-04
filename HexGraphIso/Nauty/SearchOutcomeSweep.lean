@@ -911,6 +911,183 @@ theorem nextBoth {G : Colored n k} {ctx : Ctx}
   exact ((hrec.prepend hfixed hcoset hpre).reindexSet).step
     (nextElem_after hnext)
 
+/-- A frozen child return below the receiving loop absorbs the live suffix,
+cleans the temporary fixed vertex, and exposes the ancestor event. -/
+theorem childFrozen {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv1
+      tv tail offset : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {value : Int}
+    {trail eventTrail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hshorter : stem.length < codes.length)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv } = (value, out))
+    (hchild : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail value)
+    (hbelow : value < Int.ofNat level)
+    (hfreeze : FrozenOut ctx codes out outBest value)
+    (hexactChild : outBest = some (incMax best
+      (nodeKey ctx tcLevel specFuel (level + 1) codes
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }
+        (numcells + 1))))
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) codes
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1)) bound)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hcover : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc
+      len numcells tcell (some tv) outBest)
+    (hfresh : elem st.fixedpts tv = false) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  let cleaned : SearchSt := { out with fixedpts := erase out.fixedpts tv }
+  have hfixed : cleaned.fixedpts = st.fixedpts := by
+    change erase out.fixedpts tv = st.fixedpts
+    rw [hchild.node.fixed, erase_insert_of_miss hfresh]
+  have hstate : otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1)
+      level numcells tc tv1 (some tv) tcell st = (some value, cleaned) := by
+    unfold otherChildLoop
+    simp only [Id.run_pure, apply_ite Id.run]
+    rw [hcall, ite_eq_left hbelow]
+  have hevent : EventOut G ctx tcLevel stem fs cleaned outBest eventTrail
+      value :=
+    (hchild.node.event.ancestor hstem hshorter).setFixed _
+  have hsound := LoopSound.ofNode (NodeSound.ofExact hexactChild) hkey
+  have hexact : outBest = some (incMax best bound) := by
+    rw [hlen] at hcover
+    exact hfreeze.exactLoop hpath hbelow hbound hcover hsound
+  have hinstalled : cleaned.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
+  rw [hstate]
+  refine ⟨?_, LoopExit.frozen value rfl hbelow hexact
+    (hfreeze.setFixed _), ?_⟩
+  · exact {
+      loop := {
+        outcome := {
+          receipt := .pruned value rfl hbelow (LoopSound.ofExact hexact)
+            hinstalled hevent.read hexact
+          event := by simpa only [loopReturn] using hevent
+          preserved := hchild.node.preserved.ofPush }
+        fixed := hfixed }
+      coset := hchild.coset }
+  · intro hshort
+    refine ⟨value, rfl, ?_⟩
+    apply ShortSource.setFixed
+    apply hchild.node.short
+    simpa only [cleaned] using hshort
+
+/-- A saved cheap-boundary child return below the receiving loop absorbs
+the whole verified small-cell sweep and cleans its temporary fixed vertex. -/
+theorem childCheap {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv1
+      tv boundary offset : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound childKey : Key} {st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail}
+    (hstem : codes.take stem.length = stem)
+    (hshorter : stem.length < codes.length)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv } =
+        (Int.ofNat boundary - 1, out))
+    (hchild : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail (Int.ofNat boundary - 1))
+    (hpositive : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hbound : bound = childKey)
+    (hexact : outBest = some (incMax best childKey))
+    (hfresh : elem st.fixedpts tv = false) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  let value := Int.ofNat boundary - 1
+  let cleaned : SearchSt := { out with fixedpts := erase out.fixedpts tv }
+  have hvalue : value < Int.ofNat level := by
+    simp only [value, Int.ofNat_eq_natCast]
+    omega
+  have hfixed : cleaned.fixedpts = st.fixedpts := by
+    change erase out.fixedpts tv = st.fixedpts
+    rw [hchild.node.fixed, erase_insert_of_miss hfresh]
+  have hstate : otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1)
+      level numcells tc tv1 (some tv) tcell st = (some value, cleaned) := by
+    unfold otherChildLoop
+    simp only [Id.run_pure, apply_ite Id.run]
+    rw [hcall, ite_eq_left hvalue]
+  have hevent : EventOut G ctx tcLevel stem fs cleaned outBest eventTrail
+      value :=
+    (hchild.node.event.ancestor hstem hshorter).setFixed _
+  have hexactBound : outBest = some (incMax best bound) := by
+    rwa [hbound]
+  have hinstalled : cleaned.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc (hevent.read.trans hexactBound)
+  rw [hstate]
+  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexactBound,
+    ?_⟩
+  · exact {
+      loop := {
+        outcome := {
+          receipt := .pruned value rfl hvalue
+            (LoopSound.ofExact hexactBound) hinstalled hevent.read
+            hexactBound
+          event := by simpa only [loopReturn] using hevent
+          preserved := hchild.node.preserved.ofPush }
+        fixed := hfixed }
+      coset := hchild.coset }
+  · intro hshort
+    refine ⟨value, rfl, ?_⟩
+    apply ShortSource.setFixed
+    apply hchild.node.short
+    simpa only [cleaned, value] using hshort
+
 /-- Package an already established frozen early return as a corrected
 off-path loop result. -/
 theorem frozen {G : Colored n k} {ctx : Ctx}
