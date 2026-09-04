@@ -125,6 +125,75 @@ theorem GuideStore.stateEq {ctx : Ctx} {tcLevel level : Nat}
     obtain ⟨g, href, hloc⟩ := h.canon hp hlt
     exact ⟨g, href.trans hcanonlab.symm, hloc⟩
 
+/-- Cell-equivalent node labellings with the same partition and active
+set have the same specification key. -/
+theorem nodeKey_perm {ctx : Ctx} (hn : ctx.n = n)
+    (tcLevel fuel level : Nat) (cs : List Nat)
+    (st st' : SearchSt) (numcells : Nat)
+    (hcp : cellsPerm st.ptn level st.lab st'.lab)
+    (hls : st'.lab.size = st.lab.size)
+    (hsl : st.lab.size = n)
+    (hlab : LabOk st.lab n) (hlab' : LabOk st'.lab n)
+    (hptn : st'.ptn = st.ptn) (hactive : st'.active = st.active)
+    (hsp : st.ptn.size = n) (hact : st.active < 2 ^ n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hstarts : ∀ v : Nat, elem st.active v = true →
+      v = 0 ∨ st.ptn[v - 1]! ≤ level)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
+      st.ptn[q]! = n + 2)
+    (hlf : level + fuel ≤ n + 1) :
+    nodeKey ctx tcLevel fuel level cs st numcells =
+      nodeKey ctx tcLevel fuel level cs st' numcells := by
+  unfold nodeKey
+  apply congrArg (prefixKey cs)
+  rw [hptn, hactive]
+  exact specNode_perm hn tcLevel fuel level st.lab st'.lab st.ptn
+    st.active numcells hcp hls hsl hlab hlab' hsp hact hend hstarts
+    hvals hlf
+
+/-- Exact completion of a key-equivalent executable child covers the
+corresponding frozen specification child. -/
+theorem ChildDone.ofKeyEq {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
+    {child : SearchSt} {best out : Option Key}
+    (hfull : out = some (incMax best
+      (nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1))))
+    (heq : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells o = nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1)) :
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      out o := by
+  refine ⟨incMax best
+    (nodeKey ctx tcLevel specFuel (level + 1) cs child
+      (numcells + 1)), hfull, ?_⟩
+  rw [heq]
+  exact keyLe_incMax_right best _
+
+/-- A key-equivalent completed child advances the mutable sweep. -/
+theorem SweepCover.advanceKey {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv tcell : Nat}
+    {cursor : Option Nat} {child : SearchSt} {best out : Option Key}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hnext : nextElem tcell cursor = some tv)
+    (hfull : out = some (incMax best
+      (nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1))))
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) cs child
+          (numcells + 1)) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell (some tv) out := by
+  apply h.advance hnext
+  · intro o ho hotv
+    exact ChildDone.ofKeyEq hfull (heq o ho hotv)
+  · intro o hdone
+    exact hdone.mono (hfull ▸ IncGrows.incMax best _)
+
 /-- A node outcome whose generator unwind, when present, is tied to the
 active frame trail.  The constructors mirror `NodeResult`; keeping the
 location in the unwind constructor prevents a caller from forgetting the
