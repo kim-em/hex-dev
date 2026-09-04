@@ -692,6 +692,71 @@ theorem firstPath_internal_state (ctx : Ctx)
     cases r <;> simp only [Id.run_pure, firstFinish] <;>
     repeat' split <;> rfl
 
+set_option maxHeartbeats 800000 in
+/-- A sound child-loop result supplies the complete outcome of a
+non-discrete first-path node.  The theorem keeps the node's runtime fuel,
+the recursive node fuel, and the loop fuel separate. -/
+theorem firstPath_internal_of_loop (ctx : Ctx)
+    (inf tcLevel specFuel fuel level numcells tail : Nat)
+    (cs : List Nat) (st : SearchSt) (best outBest : Option Key)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells ≠ ctx.n)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      let rs := refine ctx level st.lab st.ptn st.active numcells
+      let mt := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
+      keysMax
+        (sweepKey ctx tcLevel specFuel level (cs ++ [rs.longcode])
+          rs.lab rs.ptn mt.1 rs.numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level (cs ++ [rs.longcode])
+            rs.lab rs.ptn mt.1 rs.numcells (o + 1)))
+    (hlen : (maketargetcell ctx
+      (refine ctx level st.lab st.ptn st.active numcells).lab
+      (refine ctx level st.lab st.ptn st.active numcells).ptn level
+      tcLevel (-1)).2.2 = tail + 1) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let mt := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
+    let pre0 : SearchSt := { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      firstcode := st.firstcode.set! level rs.longcode
+      firsttc := st.firsttc.set! level (Int.ofNat mt.1)
+      numnodes := st.numnodes + 1
+      tctotal := st.tctotal + mt.2.2 }
+    let pre := if pre0.noncheaplevel ≥ level ∧
+        ¬ cheapautom pre0.ptn level ctx.n then
+      { pre0 with noncheaplevel := level + 1 }
+    else pre0
+    let L := firstChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+      rs.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
+      (nextElem mt.2.1 none) mt.2.1 0 pre
+    LoopResult ctx tcLevel specFuel fuel (ctx.n + 1) level
+      (cs ++ [rs.longcode]) rs.lab rs.ptn mt.1 mt.2.2 rs.numcells
+      mt.2.1 none
+      (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
+      pre L.2.2 best outBest L.1 →
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest
+      (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  dsimp only
+  intro hloop
+  rw [firstPath_internal_state ctx inf tcLevel fuel level numcells st hnum]
+  generalize hL : firstChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+      level _ _ _ _ _ _ _ = L at hloop ⊢
+  rcases L with ⟨r, index, out⟩
+  cases r with
+  | none =>
+      have hnode := NodeResult.of_loop_none (ctx := ctx)
+        (nodeRunFuel := fuel + 1)
+        (cursor := none) (loopFuel := ctx.n + 1) rfl hchildren hlen
+        (by simp only [cursorRank]; omega) hloop
+      exact hnode.firstFinish (by omega)
+  | some r =>
+      exact NodeResult.of_loop_some (ctx := ctx) (nodeRunFuel := fuel + 1)
+        rfl hloop
+
 /-- The complementary off-path leaf case completes after its empty child
 sweep, retaining the exact leaf maximum installed by `processnode`. -/
 theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
