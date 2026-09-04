@@ -73,6 +73,39 @@ theorem NodeOutcome.toResult {G : Colored n k} {ctx : Ctx}
       outBest r :=
   h.receipt.toResult
 
+/-- At a parent boundary, a child outcome either supplies its exact
+subtree maximum or a located unwind whose generator store stabilizes the
+receiving frozen frame. -/
+theorem NodeOutcome.parentReturn {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {trail eventTrail : FrameTrail} {entry : TrailEntry}
+    (h : NodeOutcome G ctx tcLevel specFuel runFuel (level + 1) cs fs st
+      out numcells best outBest (trail.push level entry) eventTrail r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
+    outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel (level + 1) cs st numcells)) ∨
+      ∃ payload : Unwind ctx tcLevel level out outBest,
+        payload.Located (trail.push level entry) ∧
+          payload.FrameStable entry.frame.rsPtn level entry.frame.rsLab := by
+  cases h.receipt with
+  | complete sound returned installed read full => exact Or.inl full
+  | unwind sound target returned below payload located =>
+      have hle : level ≤ target := by
+        apply Int.ofNat_le.mp
+        rw [returned] at hstay
+        exact Int.not_lt.mp hstay
+      have htarget : target = level := by omega
+      subst target
+      right
+      refine ⟨payload, located, ?_⟩
+      rw [returned] at h
+      apply h.event.returnStab.frameStable
+      exact h.preserved.pushAt
+  | pruned sound target returned below installed read full =>
+      exact Or.inl full
+  | exhausted empty => exact (hfuel empty).elim
+
 /-- An off-path node additionally leaves the first-path guide unchanged.
 This is the fact its parent needs before recovering a completed child. -/
 structure OtherOutcome (G : Colored n k) (ctx : Ctx)

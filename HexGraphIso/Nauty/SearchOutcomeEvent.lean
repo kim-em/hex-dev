@@ -132,6 +132,16 @@ end RunEvent
 
 namespace EventOut
 
+/-- Every event output exposes the return-indexed stabilization carried
+by its concrete state. -/
+theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r) :
+    ReturnStab trail r out := by
+  cases h with
+  | intro _ _ _ _ _ _ _ stable => exact stable
+
 /-- A stable state with a nonpositive comparison sign is an event output
 at its own code depth. -/
 theorem ofRun {G : Colored n k} {ctx : Ctx}
