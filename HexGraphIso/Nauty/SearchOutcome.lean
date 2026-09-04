@@ -884,15 +884,27 @@ def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
   exact sweepKey_of_carrier hn hgsz hcarrier hstab hs hok hsp hend hvals
     hic hrange href hcur hlf hatRef hatCur
 
-/-- Why a generator return is sound.  Code one and code two retain their
-different reference labellings.  Non-generator pruning instead returns a
-locally complete maximum and therefore has its own result constructor. -/
+/-- A code-two return to `gcaFirst` is justified by the updated orbit
+pointer rather than by the direct canonical carrier.  The receiving loop
+uses this sound pointer together with its own coverage frame. -/
+structure OrbitUnwind (ctx : Ctx) (target : Nat) (out : SearchSt) : Prop where
+  positive : 1 ≤ target
+  currentLt : out.cosetindex < ctx.n
+  smaller : out.orbits[out.cosetindex]! < out.cosetindex
+  sound : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
+
+/-- Why a generator return is sound.  Code one and the ordinary code-two
+return retain their different reference labellings.  Code two's special
+`gcaFirst` return retains the sound orbit pointer that selected an earlier
+child. Non-generator pruning instead returns a locally complete maximum and
+therefore has its own result constructor. -/
 inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
     (out : SearchSt) (best : Option Key) : Prop where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
   | canon (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+  | orbit (payload : OrbitUnwind ctx target out)
 
 /-- A semantic incumbent can only improve across a search fragment. -/
 @[expose] def IncGrows (best out : Option Key) : Prop :=
@@ -1595,6 +1607,8 @@ theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
       | canon anchor carrier =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
+      | orbit payload =>
+          exact ((Nat.not_lt_of_ge payload.positive) below).elim
   | pruned sound target returned below installed read full =>
       rw [stInc_final hn0 installed] at read
       rw [incMax, nodeKey_root hn0] at full

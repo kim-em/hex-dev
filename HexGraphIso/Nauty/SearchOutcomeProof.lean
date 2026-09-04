@@ -945,6 +945,12 @@ theorem Unwind.firstFinish {ctx : Ctx} {tcLevel target level size index : Nat}
       apply Unwind.canon anchor
       rw [Nauty.firstFinish]
       split <;> exact carrier
+  | orbit payload =>
+      apply Unwind.orbit
+      refine ⟨payload.positive, ?_, ?_, ?_⟩ <;>
+        rw [Nauty.firstFinish] <;> split <;>
+        first | exact payload.currentLt | exact payload.smaller |
+          exact payload.sound
 
 /-- Every node outcome crosses the first-path exit counter update. -/
 theorem NodeResult.firstFinish {ctx : Ctx}
