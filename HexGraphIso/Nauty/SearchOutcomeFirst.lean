@@ -130,6 +130,248 @@ theorem FirstInv.refined {G : Colored n k} {ctx : Ctx}
     omega
   exact ⟨hrit, heqt, hacc⟩
 
+/-- The selected target-cell child preserves the pre-incumbent invariant
+and records its exact parent sweep position in the active trail. -/
+theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
+    {specFuel level numcells tc len o : Nat} {cs : List Nat}
+    {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hpath : level = cs.length + 1) (hlt : level < n)
+    (h : FirstInv G ctx level cs numcells st trail)
+    (hcell : IsCell
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tc len)
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [r.longcode]
+    let pre0 : SearchSt := { st with
+      lab := r.lab
+      ptn := r.ptn
+      active := r.active
+      firstcode := st.firstcode.set! level r.longcode
+      firsttc := st.firsttc.set! level (Int.ofNat tc)
+      numnodes := st.numnodes + 1
+      tctotal := st.tctotal + len }
+    let pre := if pre0.noncheaplevel ≥ level ∧
+        ¬ cheapautom pre0.ptn level ctx.n then
+      { pre0 with noncheaplevel := level + 1 }
+    else pre0
+    let child : SearchSt := { pre with
+      lab := (breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).1
+      ptn := (breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.1
+      active := (breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.2
+      fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+      cosetindex := pre.lab[tc + o]! }
+    FirstInv G ctx (level + 1) full (r.numcells + 1) child
+      (trail.push level
+        ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩) := by
+  subst n
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  let full := cs ++ [r.longcode]
+  let pre0 : SearchSt := { st with
+    lab := r.lab
+    ptn := r.ptn
+    active := r.active
+    firstcode := st.firstcode.set! level r.longcode
+    firsttc := st.firsttc.set! level (Int.ofNat tc)
+    numnodes := st.numnodes + 1
+    tctotal := st.tctotal + len }
+  let pre := if pre0.noncheaplevel ≥ level ∧
+      ¬ cheapautom pre0.ptn level ctx.n then
+    { pre0 with noncheaplevel := level + 1 }
+  else pre0
+  let child : SearchSt := { pre with
+    lab := (breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).1
+    ptn := (breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).2.1
+    active := (breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).2.2
+    fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+    cosetindex := pre.lab[tc + o]! }
+  have hlevel : 1 ≤ level := by omega
+  have href := h.refined rfl hg hn0 hlevel
+  have hend := searchOk_end hn0 h.searchOk hlevel
+  have hpreLab : pre.lab = r.lab := by unfold pre; split <;> rfl
+  have hprePtn : pre.ptn = r.ptn := by unfold pre; split <;> rfl
+  have hpreFirst : pre.firstcode = st.firstcode.set! level r.longcode := by
+    unfold pre
+    split <;> rfl
+  have hpreCanon : pre.canoncode = st.canoncode := by
+    unfold pre
+    split <;> rfl
+  have hpreGen : pre.genTrace = st.genTrace := by
+    unfold pre
+    split <;> rfl
+  have hpreAutos : pre.autos = st.autos := by
+    unfold pre
+    split <;> rfl
+  have hpreCanong : pre.canong = st.canong := by
+    unfold pre
+    split <;> rfl
+  have hpreOrbits : pre.orbits = st.orbits := by
+    unfold pre
+    split <;> rfl
+  have hokPre : SearchOk G level r.numcells pre := by
+    apply refine_searchOk rfl hn0 h.searchOk hlevel
+    · simp only [pre, pre0]
+      split <;> rfl
+    · simp only [pre, pre0]
+      split <;> rfl
+    · exact Or.inl (by simp only [pre, pre0]; split <;> rfl)
+  have hcellPre : IsCell pre.ptn level tc len := by
+    rw [hprePtn]
+    exact hcell
+  have hokChild : SearchOk G (level + 1) (r.numcells + 1) child := by
+    apply breakout_searchOk hn0 hokPre hlevel hcellPre hlen hrange ho
+    · rfl
+    · exact breakout_ptn pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!
+    · rfl
+  have hcheap0 : CheapOk ctx (initialPartition G).1
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) level pre0 := by
+    apply h.cheap.refine hlevel <;> rfl
+  have hcheapPre : CheapOk ctx (initialPartition G).1
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (level + 1) pre := by
+    rcases Decidable.em (pre0.noncheaplevel ≥ level ∧
+        ¬ cheapautom pre0.ptn level ctx.n) with hguard | hguard
+    · have hpre : pre = { pre0 with noncheaplevel := level + 1 } := by
+        unfold pre
+        rw [ite_eq_left hguard]
+      rw [hpre]
+      exact hcheap0.park (by omega) (by omega)
+    · have hnext : CheapOk ctx (initialPartition G).1
+          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+          (level + 1) pre0 := by
+        apply hcheap0.next
+        intro heq
+        have heq' : st.noncheaplevel = level := by simpa [pre0] using heq
+        have hguard' : ¬(st.noncheaplevel ≥ level ∧
+            ¬ cheapautom r.ptn level ctx.n) := by
+          simpa [pre0] using hguard
+        have hca : cheapautom r.ptn level ctx.n = true := by
+          rcases hca0 : cheapautom r.ptn level ctx.n with _ | _
+          · exfalso
+            exact hguard' ⟨by omega, by simp [hca0]⟩
+          · rfl
+        have hS : SubtreeOk ctx level r :=
+          subtreeOk_of_cheapautom href.1 href.2.1 href.2.2 hca
+        have hpair : PairOk ctx.g
+            (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+            (initialPartition G).1 1 ctx.n
+            (fmptn r.lab r.ptn level ctx.n).1
+            (fmptn r.lab r.ptn level ctx.n).2 := by
+          apply pairOk_fmptn_of_subtree (ctx := ctx) (G := G)
+            (r := r) hn0 hlevel
+          · rw [hg]
+            exact size_rowsOf G
+          · rw [hg]
+            exact rowsOf_bounded G
+          · rw [hg]
+            exact rowsOf_symm G
+          · rw [hg]
+            exact rowsOf_loopless G
+          · exact hS
+          · rw [← hpreLab]
+            exact hokPre.reach
+          · intro q hq
+            rw [← hprePtn]
+            exact hokPre.init1 q hq
+        simpa [pre0, heq'] using hpair
+      have hpre : pre = pre0 := by
+        unfold pre
+        rw [ite_eq_right hguard]
+      rw [hpre]
+      exact hnext
+  have hcheapChild : CheapOk ctx (initialPartition G).1
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (level + 1) child := by
+    apply hcheapPre.breakout hlevel hcellPre hlen hrange ho <;> rfl
+  have htrail : TrailOk ctx (level + 1) child
+      (trail.push level
+        ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩) := by
+    have htrailPre : TrailOk ctx level pre trail := by
+      apply h.trailOk.refine
+          (by rw [h.searchOk.labSize]) (by rw [h.searchOk.ptnSize]) hend
+          (out := pre)
+      · exact hpreLab
+      · exact hprePtn
+    have hpush : TrailOk ctx (level + 1) child
+        (trail.push level
+          ⟨sweepFrame specFuel full pre.lab pre.ptn tc r.numcells, o⟩) := by
+      apply htrailPre.push (specFuel := specFuel) (codes := full)
+          (numcells := r.numcells) (tc := tc) (len := len) (o := o)
+          (st := pre) (out := child)
+      · exact hokPre.labSize
+      · exact hokPre.ptnSize
+      · rw [hokPre.labSize]
+        exact labInj_of_reach hokPre.labSize hn0 hokPre.reach
+      · exact searchOk_end hn0 hokPre hlevel
+      · exact hcellPre
+      · exact hlen
+      · exact hrange
+      · exact ho
+      · rfl
+      · exact breakout_ptn pre.lab pre.ptn (level + 1) tc
+          pre.lab[tc + o]!
+    simpa only [hpreLab, hprePtn] using hpush
+  refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_, ?_⟩
+  · apply h.codes.next
+    · change child.firstcode =
+        st.firstcode.set! (cs.length + 1) r.longcode
+      calc
+        child.firstcode = pre.firstcode := rfl
+        _ = st.firstcode.set! level r.longcode := hpreFirst
+        _ = st.firstcode.set! (cs.length + 1) r.longcode := by rw [hpath]
+    · rw [show child.canoncode = pre.canoncode by rfl, hpreCanon]
+    · omega
+    · exact refine_longcode_lt ctx level st.lab st.ptn st.active numcells
+  · have hmem : (tc, tc + len - 1) ∈ cells r.ptn level ctx.n := by
+      apply isCell_mem_cells hcell
+      · exact Nat.le_of_eq href.1.ok.ptnSize.symm
+      · exact href.1.ok.ptnEnd
+      · omega
+    have hcert := certInv_breakout (ctx := ctx) (level := level)
+      (lab := r.lab) (ptn := r.ptn) (tc := tc)
+      (e := tc + len - 1) (o := o) (numcells := r.numcells)
+      href.1.ok.labSize href.1.ok.ptnSize href.1.ok.ptnEnd
+      href.1.valsWeak href.1.inj hmem (by omega) (by omega) href.2.1
+    change CertInv ctx (level + 1)
+      { lab := (breakout pre.lab pre.ptn (level + 1) tc
+          pre.lab[tc + o]!).1,
+        ptn := (breakout pre.lab pre.ptn (level + 1) tc
+          pre.lab[tc + o]!).2.1,
+        active := (breakout pre.lab pre.ptn (level + 1) tc
+          pre.lab[tc + o]!).2.2,
+        numcells := r.numcells + 1, hint := 0, maxpos := 0,
+        longcode := r.numcells + 1 }
+    rw [hpreLab, hprePtn, breakout_ptn]
+    exact hcert
+  · change (breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).2.2 < 2 ^ ctx.n
+    exact singleActive_lt (by omega)
+  · change ∀ v : Nat,
+      elem (breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.2 v = true →
+      v = 0 ∨ (breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
+    rw [breakout_ptn]
+    exact split_starts hokPre.ptnSize hcellPre
+  · rw [show child.genTrace = pre.genTrace by rfl, hpreGen]
+    exact h.genEmpty
+  · rw [show child.autos = pre.autos by rfl, hpreAutos]
+    exact h.autosEmpty
+  · rw [show child.canong = pre.canong by rfl, hpreCanong]
+    exact h.canongSize
+  · intro v hv
+    rw [show child.orbits = pre.orbits by rfl, hpreOrbits]
+    exact h.orbitId v hv
+
 /-- Reaching a discrete node installs the first leaf and enters the stable
 post-incumbent invariant. -/
 theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
