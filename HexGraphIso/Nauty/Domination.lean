@@ -918,10 +918,9 @@ skipped generator. -/
 theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
     {st : SearchSt}
     (heq : (st.eqlevFirst == level) = true)
-    (hsent : st.firstcode[level + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
-    (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
-      = false) :
+    (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
     ((processnode ctx level numcells st).1 =
         (processnode ctx level numcells
           { st with eqlevFirst := level + 1 }).1 ∨
@@ -953,11 +952,12 @@ theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
     exact h.1 (beq_iff_eq.mp heq)
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+  rcases hfail with hfail | hfail <;>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode, processnode]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex, pushAuto_maxlevel, pushAuto_gcaCanon, ite_self]
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
-    simp [pruneReturn, hg, hnc, heq, hsent, hfail2, id_run_eq,
+    simp [pruneReturn, hg, hnc, heq, hfail, id_run_eq,
       pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex]
     repeat' split
     all_goals first
@@ -985,10 +985,9 @@ theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
     (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcsn : cs.length ≤ nn)
     (heq : (st.eqlevFirst == cs.length) = true)
-    (hsent : st.firstcode[cs.length + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
-    (hfail2 : isautom ctx (firstScatter ctx.n st.firstlab st.lab)
-      = false) :
+    (hfail : st.firstcode[cs.length + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
     ∃ bs' : List Nat,
       incKey ctx bs'
           (processnode ctx cs.length numcells st).2.canonlab =
@@ -1025,7 +1024,7 @@ theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
     (st := { st with eqlevFirst := cs.length + 1 })
     hcinv hginv hcsn hef' hnc
   obtain ⟨e1, e2, e3, e4, e5, e6, e7, e8⟩ :=
-    processnode_gateFail_eq (level := cs.length) heq hsent hnc hfail2
+    processnode_gateFail_eq (level := cs.length) heq hnc hfail
   refine ⟨bs', ?_, ?_, ?_, ?_⟩
   · rw [e6]
     exact h1
