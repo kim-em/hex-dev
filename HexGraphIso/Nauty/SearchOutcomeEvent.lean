@@ -73,7 +73,7 @@ theorem setFixed {G : Colored n k} {ctx : Ctx}
   exact ⟨h.machines, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.workspace.ofFields rfl rfl, h.cheap.ofFrames rfl rfl rfl, hrefs,
     h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
     h.firstPositive,
     h.canonPositive, h.firstBound, h.canonBound, h.bestCodes,
@@ -94,7 +94,7 @@ theorem clearShort {G : Colored n k} {ctx : Ctx}
   exact ⟨h.machines, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.workspace.ofFields rfl rfl, h.cheap.ofFrames rfl rfl rfl, hrefs,
     h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
     h.firstPositive,
     h.canonPositive, h.firstBound, h.canonBound, h.bestCodes,
@@ -115,7 +115,7 @@ theorem setAllsame {G : Colored n k} {ctx : Ctx}
   exact ⟨h.machines, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.workspace.ofFields rfl rfl, h.cheap.ofFrames rfl rfl rfl, hrefs,
     h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩
@@ -141,7 +141,8 @@ theorem setFirst {G : Colored n k} {ctx : Ctx}
   exact ⟨h.machines, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.ofFrames rfl rfl rfl, hrefs, hguides,
+    h.workspace.ofFields rfl rfl, h.cheap.ofFrames rfl rfl rfl,
+    hrefs, hguides,
     h.trailOk.stateEq rfl rfl, hpositive,
     h.canonPositive, hbound, h.canonBound, h.bestCodes, h.incumbent⟩
 
@@ -161,7 +162,7 @@ theorem park {G : Colored n k} {ctx : Ctx}
   exact ⟨h.machines, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.park hpos hcurrent, hrefs,
+    h.workspace.ofFields rfl rfl, h.cheap.park hpos hcurrent, hrefs,
     h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩

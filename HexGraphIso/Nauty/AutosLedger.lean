@@ -195,6 +195,27 @@ theorem processCap (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite (fun x : Int × SearchSt => x.2.wsCap), pushCap, ite_self]
 
+/-- Comparison preparation does not change workspace capacity. -/
+theorem prepCap (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).wsCap = st.wsCap := by
+  rw [otherNodePrep]
+  simp only [Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
+/-- Parent recovery does not change workspace capacity. -/
+theorem recoverCap (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).wsCap = st.wsCap := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
+/-- First-leaf installation does not change workspace capacity. -/
+theorem firstCap (level : Nat) (st : SearchSt) :
+    (firstterminal level st).wsCap = st.wsCap := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
 end WorkspaceOk
 
 /-- Recording a valid pair keeps the ledger, in both the push and the

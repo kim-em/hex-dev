@@ -496,6 +496,96 @@ private theorem processnode_plain_autos {ctx : Ctx}
     apply_ite (fun x : Int × SearchSt => x.2.autos)]
   simp [hfast, hnc]
 
+/-- A leaf branch that leaves the pair array alone preserves its bounded
+workspace. -/
+private theorem WorkspaceOk.processSame {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+    (hautos : (processnode ctx level numcells st).2.autos = st.autos) :
+    WorkspaceOk (processnode ctx level numcells st).2 := by
+  apply h.ofFields
+  · exact WorkspaceOk.processCap ctx level numcells st
+  · exact hautos
+
+/-- A leaf branch that records one pair preserves its bounded workspace. -/
+private theorem WorkspaceOk.processPush {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} {pair : Nat × Nat}
+    (h : WorkspaceOk st)
+    (hautos : (processnode ctx level numcells st).2.autos =
+      (pushAuto st pair).autos) :
+    WorkspaceOk (processnode ctx level numcells st).2 := by
+  apply (WorkspaceOk.push (pair := pair) h).ofFields
+  · rw [WorkspaceOk.processCap, WorkspaceOk.pushCap]
+  · exact hautos
+
+/-- A successful first-path generator admission preserves the bounded
+workspace. -/
+theorem WorkspaceOk.processAuto {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx
+      (firstScatter ctx.n st.firstlab st.lab) = true) :
+    WorkspaceOk (processnode ctx level numcells st).2 := by
+  apply h.processPush
+  exact processnode_auto_autos heq hsent hnc hpass
+
+/-- The optional pair admission in the shared prune tail stays within the
+configured workspace capacity. -/
+private theorem WorkspaceOk.processPrune {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+    (hautos : (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st) :
+    WorkspaceOk (processnode ctx level numcells st).2 := by
+  constructor
+  · rw [WorkspaceOk.processCap]
+    exact h.1
+  · rw [hautos, WorkspaceOk.processCap]
+    unfold pruneAutos
+    split
+    · exact h.2
+    · simpa only [WorkspaceOk.pushCap] using (WorkspaceOk.push
+        (pair := fmptn st.lab st.ptn st.noncheaplevel ctx.n) h).2
+
+/-- Off the first path, every comparison-machine leaf branch preserves
+the bounded workspace. -/
+theorem WorkspaceOk.processOff {ctx : Ctx} {n : Nat}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (h : WorkspaceOk st)
+    (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hef : ¬((st.eqlevFirst == level) = true)) :
+    WorkspaceOk (processnode ctx level numcells st).2 := by
+  have hef' : st.eqlevFirst ≠ level := fun he => hef (beq_iff_eq.mpr he)
+  rcases hcode.tri with hzero | ⟨j, hj1, hjc, hjb, heqlev, hpre, hcase⟩
+  · have hcc : st.compCanon = 0 := hzero.1
+    rcases hnc : (numcells == ctx.n) with _ | _
+    · apply h.processSame
+      exact processnode_plain_autos (by rw [hcc]; omega) (by simp [hnc])
+    · have hnc' : (numcells == ctx.n) = true := hnc
+      rcases Decidable.em (level < st.canonlevel) with hlt | hge
+      · apply h.processPrune
+        exact processnode_shortInstall_autos hef hnc' hcc hlt
+      · let row := (testcanlab ctx
+          (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1
+        rcases Int.lt_trichotomy row 0 with hrow | hrow | hrow
+        · apply h.processPrune
+          exact processnode_rowReject_autos hef hnc' hcc hge hrow
+        · apply h.processPush
+          exact processnode_rowTie_autos hef hnc' hcc hge hrow
+        · apply h.processPrune
+          exact processnode_rowInstall_autos hef hnc' hcc hge hrow
+  · rcases hcase with hdown | hup
+    · have hcc : st.compCanon = -1 := hdown.1
+      apply h.processPrune
+      exact processnode_fast_autos ⟨hef', by rw [hcc]; omega⟩
+    · have hcc : st.compCanon = 1 := hup.1
+      rcases hnc : (numcells == ctx.n) with _ | _
+      · apply h.processSame
+        exact processnode_plain_autos (by rw [hcc]; omega) (by simp [hnc])
+      · apply h.processPrune
+        exact processnode_upInstall_autos hef hnc hcc
+
 /-- On a non-discrete node admitted to its child sweep, `processnode`
 performs no state update. -/
 theorem processnode_internal {ctx : Ctx} {level numcells : Nat}
@@ -794,7 +884,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
     · rw [hnew.1] at hlt
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
-  refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
+  refine ⟨hmachines, ?_, hcanong, ?_, ?_, ?_, h.cheap.processnode,
     h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
     ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
@@ -802,6 +892,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
       h.searchOk h.canongInv h.genTraceOk
   · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
+  · exact h.workspace.processOff h.codeInv hef
   · rw [hgcaFirst]
     exact h.firstPositive
   · rcases processnode_canonGuide ctx cs.length numcells st with
@@ -890,7 +981,7 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
     · rw [hnew.1] at hlt
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
-  refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
+  refine ⟨hmachines, ?_, hcanong, ?_, ?_, ?_, h.cheap.processnode,
     h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
     ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
@@ -898,6 +989,29 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
       h.searchOk h.canongInv h.genTraceOk
   · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
+  · let off : SearchSt := { st with eqlevFirst := cs.length + 1 }
+    have hoff : WorkspaceOk off := h.workspace.ofFields rfl rfl
+    have hcodeOff : CodeCmpInv n cs bs off.canoncode off.canonlevel
+        off.eqlevCanon off.compCanon := by
+      simpa only [off] using h.codeInv
+    have hw : WorkspaceOk
+        (processnode ctx cs.length numcells off).2 := by
+      apply hoff.processOff hcodeOff
+      simp [off]
+    apply hw.ofFields
+    · rw [WorkspaceOk.processCap, WorkspaceOk.processCap]
+    · have hcanonSize : st.canonlab.size = ctx.n := by
+        rw [hn]
+        exact h.leafRefs.canonSize
+      have hcanonOk : LabOk st.canonlab ctx.n := by
+        rw [hn]
+        exact labOk_of_reach h.leafRefs.canonSize h.leafRefs.canonReach
+      have hcanonInj : LabInj st.canonlab ctx.n := by
+        rw [hn]
+        exact labInj_of_reach h.leafRefs.canonSize hn0
+          h.leafRefs.canonReach
+      exact processnode_gateFail_autos hcanonSize
+        hcanonOk hcanonInj heq hnc hfail
   · rw [hgcaFirst]
     exact h.firstPositive
   · rcases processnode_canonGuide ctx cs.length numcells st with

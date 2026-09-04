@@ -44,6 +44,7 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
     trail target = some entry → entry.frame.rsLab.size = ctx.n
   genEmpty : st.genTrace = #[]
   autosEmpty : st.autos = #[]
+  workspace : WorkspaceOk st
   canongSize : st.canong.size = ctx.n
   orbitId : ∀ v, v < ctx.n → st.orbits[v]! = v
 
@@ -56,7 +57,7 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
   refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_, ?_,
-    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_⟩
+    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
   · simpa only [rootSt] using certInv_initial G hn0
   · simpa only [rootSt] using (initial_nodeOk G hn0).act
@@ -65,6 +66,7 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
     simp [FrameTrail.empty] at hentry
   · simp [rootSt]
   · simp [rootSt]
+  · simp [WorkspaceOk, rootSt]
   · simp [rootSt]
   · intro v hv
     change (Array.ofFn (n := n) fun i : Fin n => i.val)[v]! = v
@@ -214,6 +216,9 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
   have hpreAutos : pre.autos = st.autos := by
     unfold pre
     split <;> rfl
+  have hpreCap : pre.wsCap = st.wsCap := by
+    unfold pre
+    split <;> rfl
   have hpreCanong : pre.canong = st.canong := by
     unfold pre
     split <;> rfl
@@ -325,7 +330,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
           pre.lab[tc + o]!
     simpa only [hpreLab, hprePtn] using hpush
   refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_,
-    ?_, ?_⟩
+    ?_, ?_, ?_⟩
   · apply h.codes.next
     · change child.firstcode =
         st.firstcode.set! (cs.length + 1) r.longcode
@@ -381,6 +386,9 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
     exact h.genEmpty
   · rw [show child.autos = pre.autos by rfl, hpreAutos]
     exact h.autosEmpty
+  · apply h.workspace.ofFields
+    · exact (show child.wsCap = pre.wsCap from rfl).trans hpreCap
+    · exact (show child.autos = pre.autos from rfl).trans hpreAutos
   · rw [show child.canong = pre.canong by rfl, hpreCanong]
     exact h.canongSize
   · intro v hv
@@ -452,6 +460,7 @@ theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
   · simpa [leaf, firstLeafSt] using h.canongSize
   · simpa [leaf, firstLeafSt] using h.genEmpty
   · simpa [leaf, firstLeafSt] using h.autosEmpty
+  · exact h.workspace.ofFields rfl rfl
   · intro he
     have := congrArg List.length he
     simp [full] at this

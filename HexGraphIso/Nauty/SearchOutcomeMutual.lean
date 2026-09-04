@@ -1224,7 +1224,7 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
   have hevent : RunEvent G ctx tcLevel level codes bs fs
       (processnode ctx level numcells st).2 best trail := by
     refine ⟨Or.inl ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-      ?_, ?_, ?_, ?_, hprep.bestCodes, ?_⟩
+      ?_, ?_, ?_, ?_, ?_, hprep.bestCodes, ?_⟩
     · rw [hcomp]
       exact hnp
     · rw [hcomp, heqCanon, hcode, hcanonlevel]
@@ -1237,6 +1237,7 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
         hprep.searchOk hprep.canongInv hprep.genTraceOk
     · exact hprep.autosOk.processnodeAuto hn hn0 hgb hsymm hloop
         hprep.searchOk hprep.leafRefs heq hsent hnc hpass
+    · exact hprep.workspace.processAuto heq hsent hnc hpass
     · exact hprep.cheap.processnode
     · exact hprep.leafRefs.processnode hprep.searchOk
     · apply hprep.guides.processnode (IncGrows.refl best)

@@ -453,6 +453,7 @@ structure RunInv (G : Colored n k) (ctx : Ctx)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 ctx.n st.autos
+  workspace : WorkspaceOk st
   cheap : CheapOk ctx (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2) level st
   leafRefs : LeafRefsOk G st
@@ -511,6 +512,7 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 ctx.n st.autos
+  workspace : WorkspaceOk st
   cheap : CheapOk ctx (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2) level st
   leafRefs : LeafRefsOk G st
@@ -532,7 +534,7 @@ theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
     (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
     RunInv G ctx tcLevel level cs bs fs numcells st best trail :=
   ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, h.genTraceOk,
-    h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
+    h.autosOk, h.workspace, h.cheap, h.leafRefs, h.guides, h.trailOk,
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩
 
@@ -792,8 +794,9 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
   have hrun : RunInv G ctx tcLevel (level + 1) cs bs fs
       (numcells + 1) child best childTrail := by
     refine ⟨hok, h.codeInv, h.firstInv, h.canongInv, h.genTraceOk,
-      h.autosOk, ?_, ?_, hguides, htrail, h.firstPositive,
+      h.autosOk, ?_, ?_, ?_, hguides, htrail, h.firstPositive,
       h.canonPositive, ?_, ?_, h.bestCodes, h.incumbent⟩
+    · exact h.workspace.ofFields rfl rfl
     · apply hcheap.breakout hlevel hcell hlen hrange ho <;> rfl
     · exact ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
         h.leafRefs.canonSize, h.leafRefs.canonReach⟩
@@ -917,7 +920,7 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
         numcells) ?_,
     otherNodePrep_firstCodeInv h.firstInv
       (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
-        numcells), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+        numcells), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
         h.bestCodes, ?_⟩
   · have hb := bcount_le st.ptn (cs.length + 1) n
     have hc := h.searchOk.bc
@@ -926,6 +929,7 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
     exact canongInv_otherNodePrep h.canongInv
   · exact genTraceOk_of_eq hgen h.genTraceOk
   · exact autosOk_of_eq hautos h.autosOk
+  · exact h.workspace.ofFields (WorkspaceOk.prepCap _ _ _) hautos
   · apply h.cheap.refine (by omega) hlab hptn hncl
   · exact ⟨by rw [hfirst]; exact h.leafRefs.firstSize,
       by rw [hfirst]; exact h.leafRefs.firstReach,
@@ -999,6 +1003,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     (hlt : ∀ c ∈ cs, c < codeSentinel)
     (hcanong : st.canong.size = ctx.n)
     (hgen : st.genTrace = #[]) (hautos : st.autos = #[])
+    (hworkspace : WorkspaceOk st)
     (hcheap : CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) cs.length st)
     (htrail : TrailOk ctx level st trail)
@@ -1017,7 +1022,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     firstterminal_codeInv hcanonSize hbound hcodes hlt,
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
     firstterminal_canongInv hcanong, ?_, ?_,
-    hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, ?_, ?_,
+    ?_, hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, ?_, ?_,
     ?_, ?_, hne, ?_⟩
   · unfold GenTraceOk
     intro γ hγ
@@ -1026,6 +1031,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
   · intro p hp
     rw [hstore.2, hautos] at hp
     simp at hp
+  · exact hworkspace.ofFields (WorkspaceOk.firstCap _ _) hstore.2
   · constructor
     · intro _ hbelow
       rw [hstate.2.2.1] at hbelow
@@ -1164,6 +1170,7 @@ structure RunEvent (G : Colored n k) (ctx : Ctx)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 ctx.n st.autos
+  workspace : WorkspaceOk st
   cheap : CheapOk ctx (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2) current st
   leafRefs : LeafRefsOk G st
@@ -1185,7 +1192,7 @@ theorem RunInv.event {G : Colored n k} {ctx : Ctx}
       trail) (hnp : st.compCanon ≤ 0) :
     RunEvent G ctx tcLevel level cs bs fs st best trail :=
   ⟨Or.inl ⟨hnp, h.codeInv⟩, h.firstInv, h.canongInv,
-    h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
+    h.genTraceOk, h.autosOk, h.workspace, h.cheap, h.leafRefs, h.guides, h.trailOk,
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩
 
@@ -1226,6 +1233,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
   refine ⟨hok, hm.1, hm.2, canongInv_recover h.canongInv,
     genTraceOk_of_eq hstore.1 h.genTraceOk,
     autosOk_of_eq hstore.2 h.autosOk,
+    h.workspace.ofFields (WorkspaceOk.recoverCap _ _ _ _) hstore.2,
     h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
     h.guides.recover hle, h.trailOk.recover hle, ?_, ?_, ?_, ?_,
     h.bestCodes, ?_⟩

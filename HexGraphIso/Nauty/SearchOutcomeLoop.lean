@@ -54,7 +54,7 @@ theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx}
   refine ⟨hok, h.codeInv, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.workspace.ofFields rfl rfl, h.cheap.ofFrames rfl rfl rfl, hrefs,
     h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩
@@ -81,7 +81,8 @@ theorem RunInv.park {G : Colored n k} {ctx : Ctx}
   refine ⟨hok, h.codeInv, h.firstInv, h.canongInv,
     genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
     autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
-    hcheap, hrefs, h.guides.stateEq rfl rfl rfl rfl,
+    h.workspace.ofFields rfl rfl, hcheap, hrefs,
+    h.guides.stateEq rfl rfl rfl rfl,
     h.trailOk.stateEq rfl rfl, h.firstPositive, h.canonPositive,
     h.firstBound, h.canonBound, h.bestCodes, h.incumbent⟩
 
