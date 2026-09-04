@@ -38,6 +38,46 @@ namespace Hex.GraphIso.Nauty
   ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
     ∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!
 
+/-- At a valid leaf event, either no generator is recorded or the output
+store contains a checked carrier from the first or incumbent leaf. -/
+theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {cs bs fs : List Nat}
+    {numcells level nc : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
+    (hdesc : FirstDescOk ctx st)
+    (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
+    (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
+    (processnode ctx level nc st).2.genTrace = st.genTrace ∨
+      LabelCarrier ctx st.firstlab st.lab
+        (processnode ctx level nc st).2.genTrace ∨
+      LabelCarrier ctx st.canonlab st.lab
+        (processnode ctx level nc st).2.genTrace := by
+  subst hn
+  rcases processnode_carrier hgb hsymm hloop hfsz
+      (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
+      hdom.searchOk.labSize
+      (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
+      (labInj_of_reach hdom.searchOk.labSize hn0 hdom.searchOk.reach)
+      hcsz (labOk_of_reach hcsz hcre)
+      (labInj_of_reach hcsz hn0 hcre)
+      (fun hgate => rows_eq_of_firstDescOk hgsz hgb hsymm hloop hdesc
+        hgate)
+      (fun htie => rows_eq_of_testcanlab_tie hdom.canongInv htie) with
+    h | ⟨γ, hpush, hcheck, hmap⟩
+  · exact Or.inl h
+  · have hmem : γ ∈ (processnode ctx level nc st).2.genTrace := by
+      rw [hpush]
+      exact Array.mem_push.mpr (Or.inr rfl)
+    rcases hmap with hfirst | hcanon
+    · exact Or.inr (Or.inl ⟨γ, hmem, hcheck, hfirst⟩)
+    · exact Or.inr (Or.inr ⟨γ, hmem, hcheck, hcanon⟩)
+
 /-- Vertices strictly after the loop cursor. -/
 @[expose] def After (cursor : Option Nat) (v : Nat) : Prop :=
   match cursor with
