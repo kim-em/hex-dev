@@ -123,6 +123,27 @@ theorem processnode_firstLabelCarrier {ctx : Ctx}
     (by simpa only [firstScatter] using hpass)
   exact ⟨γ, hmem, hcheck, hmap⟩
 
+/-- The guarded code-two event yields the incumbent-reference carrier
+directly, independently of its chosen return ancestor. -/
+theorem processnode_canonLabelCarrier {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    LabelCarrier ctx st.canonlab st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+  obtain ⟨γ, hmem, hcheck, hmap⟩ := processnode_canonCarrier
+    hsz₁ hp₁ hsz₂ hp₂ hbound hrows hef hnc hcc hge htie
+  exact ⟨γ, hmem, hcheck, hmap⟩
+
 /-- Vertices strictly after the loop cursor. -/
 @[expose] def After (cursor : Option Nat) (v : Nat) : Prop :=
   match cursor with
@@ -961,6 +982,47 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
   rcases hframes with ⟨hlab, _, _, _, hfirst, _, _, _, _⟩
   apply Unwind.first hanchor
   rw [hfirst, hlab]
+  exact hcarrier
+
+/-- A successful code-two leaf admission, paired with the selected
+canonical guide, produces the corresponding generator unwind payload. -/
+theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key}
+    (g : Guide ctx tcLevel st.gcaCanon best)
+    (href : g.ref = st.canonlab)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
+      CellStab g.rsPtn st.gcaCanon g.rsLab γ)
+    {oCur : Nat} (hcur : oCur < g.len)
+    (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
+    Unwind ctx tcLevel st.gcaCanon
+      (processnode ctx level numcells st).2 best := by
+  have hcarrier := processnode_canonLabelCarrier hsz₁ hp₁ hsz₂ hp₂
+    hbound hrows hef hnc hcc hge htie
+  have hcarrierG : LabelCarrier ctx g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [href]
+    exact hcarrier
+  have hinc : IncGrows best best := by
+    intro b hb
+    exact ⟨b, hb, keyLe_refl b⟩
+  have hanchor := g.anchor hgsz hinc hcarrierG hstab hcur hatCur
+  obtain ⟨_, _, _, _, _, hcanon, _, _⟩ :=
+    processnode_rowTie hef hnc hcc hge htie
+  have hframes := processnode_frames ctx level numcells st
+  apply Unwind.canon hanchor
+  rw [hcanon, hframes.1]
   exact hcarrier
 
 /-- A guide's covered child remains covered when the incumbent grows. -/
