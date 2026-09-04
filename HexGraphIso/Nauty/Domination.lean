@@ -911,6 +911,170 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
+/-- The bounded-ledger effect of the shared code-three/code-four tail. -/
+@[expose] def pruneAutos (ctx : Ctx) (level : Nat)
+    (st : SearchSt) : Array (Nat × Nat) :=
+  if level = st.noncheaplevel then st.autos
+  else (pushAuto st
+    (fmptn st.lab st.ptn st.noncheaplevel ctx.n)).autos
+
+/-- The frozen-downward fast arm has exactly the shared prune-tail ledger
+effect. -/
+theorem processnode_fast_autos {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+    (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [ite_eq_left hg]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [pruneAutos, hm, hncl, hcap, pushAuto]
+
+/-- The short-leaf install has exactly the shared prune-tail ledger
+effect. -/
+theorem processnode_shortInstall_autos {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hlt : level < st.canonlevel) :
+    (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st := by
+  have hef' : st.eqlevFirst ≠ level := fun he =>
+    hef (beq_iff_eq.mpr he)
+  have heqFalse : (st.eqlevFirst == level) = false := by
+    cases heq : (st.eqlevFirst == level)
+    · rfl
+    · exact absurd heq hef
+  have hgate : ¬(((st.eqlevFirst == level) &&
+      (st.firstcode[level + 1]! == codeSentinel)) = true) := by
+    simp [heqFalse]
+  have hltAt : level = st.noncheaplevel →
+      st.noncheaplevel < st.canonlevel := by omega
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [ite_eq_right hg]
+  rw [ite_eq_left hnc, ite_eq_right hgate]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [pruneAutos, hnc, hef, hef', hcc, hlt, hltAt, hm,
+    hncl, hcap, pushAuto]
+
+/-- The upward-frozen install has exactly the shared prune-tail ledger
+effect. -/
+theorem processnode_upInstall_autos {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 1) :
+    (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st := by
+  have hef' : st.eqlevFirst ≠ level := fun he =>
+    hef (beq_iff_eq.mpr he)
+  have heqFalse : (st.eqlevFirst == level) = false := by
+    cases heq : (st.eqlevFirst == level)
+    · rfl
+    · exact absurd heq hef
+  have hgate : ¬(((st.eqlevFirst == level) &&
+      (st.firstcode[level + 1]! == codeSentinel)) = true) := by
+    simp [heqFalse]
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [ite_eq_right hg]
+  rw [ite_eq_left hnc, ite_eq_right hgate]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [pruneAutos, hnc, hef, hef', hcc, hm, hncl, hcap,
+    pushAuto]
+
+/-- A row-decided install has exactly the shared prune-tail ledger
+effect. -/
+theorem processnode_rowInstall_autos {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (hgt : (0 : Int) < (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) :
+    (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st := by
+  have hef' : st.eqlevFirst ≠ level := fun he =>
+    hef (beq_iff_eq.mpr he)
+  have heqFalse : (st.eqlevFirst == level) = false := by
+    cases heq : (st.eqlevFirst == level)
+    · rfl
+    · exact absurd heq hef
+  have hgate : ¬(((st.eqlevFirst == level) &&
+      (st.firstcode[level + 1]! == codeSentinel)) = true) := by
+    simp [heqFalse]
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  have hne : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 ≠ 0 := by
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [ite_eq_right hg]
+  rw [ite_eq_left hnc, ite_eq_right hgate]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [pruneAutos, hnc, hef, hef', hcc, hge, hne, hgt, hm,
+    hncl, hcap, pushAuto]
+
+/-- A row-decided rejection has exactly the shared prune-tail ledger
+effect. -/
+theorem processnode_rowReject_autos {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (hlt : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 < 0) :
+    (processnode ctx level numcells st).2.autos =
+      pruneAutos ctx level st := by
+  have hef' : st.eqlevFirst ≠ level := fun he =>
+    hef (beq_iff_eq.mpr he)
+  have heqFalse : (st.eqlevFirst == level) = false := by
+    cases heq : (st.eqlevFirst == level)
+    · rfl
+    · exact absurd heq hef
+  have hgate : ¬(((st.eqlevFirst == level) &&
+      (st.firstcode[level + 1]! == codeSentinel)) = true) := by
+    simp [heqFalse]
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  have hne : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 ≠ 0 := by
+    omega
+  have hngt : ¬((0 : Int) < (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) := by
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [ite_eq_right hg]
+  rw [ite_eq_left hnc, ite_eq_right hgate]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [pruneAutos, hnc, hef, hef', hcc, hge, hne, hngt, hm,
+    hncl, hcap, pushAuto]
+
 /-- A row-tied code-two return either uses the canonical ancestor, or its
 special first-ancestor return is backed by a strictly smaller orbit
 pointer in the output state. -/
