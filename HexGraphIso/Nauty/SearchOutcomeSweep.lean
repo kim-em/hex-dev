@@ -419,6 +419,102 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
       receiptTrail eventTrail r :=
   ⟨h.proof.prepend hfixed hcoset hpre, h.exit.prepend hpre⟩
 
+/-- Compose an ordinary non-guiding child with the recursively proved
+tail of an off-path sweep. -/
+theorem next {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv1
+      tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = false)
+    (hother : (tv == tv1) = false)
+    (hrecover : recSt = recover ctx.n inf level
+      { child with fixedpts := erase child.fixedpts tv })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hcoset : recSt.cosetindex = st.cosetindex)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells
+      tc tv1 (nextElem tcell (some tv)) tcell recSt = (r, out))
+    (hrec : OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound recSt out
+      mid outBest receiptTrail eventTrail r) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest receiptTrail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  subst recSt
+  simp only [hshort] at hloop hrec hfixed hcoset
+  unfold otherChildLoop
+  simp only [Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, Bool.false_eq_true, ite_false, hother]
+  rw [hloop]
+  exact (hrec.prepend hfixed hcoset hpre).step (nextElem_after hnext)
+
+/-- Compose a guiding child with the long-pruned recursive tail of an
+off-path sweep. -/
+theorem nextLong {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      filtered tv1 tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = false)
+    (hfirst : (tv == tv1) = true)
+    (hfiltered : filtered = longprune tcell
+      (erase child.fixedpts tv) child.autos)
+    (hrecover : recSt = recover ctx.n inf level
+      { child with fixedpts := erase child.fixedpts tv })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hcoset : recSt.cosetindex = st.cosetindex)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells
+      tc tv1 (nextElem filtered (some tv)) filtered recSt = (r, out))
+    (hrec : OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells filtered (some tv) bound recSt out
+      mid outBest receiptTrail eventTrail r) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest receiptTrail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  subst filtered
+  subst recSt
+  simp only [hshort] at hloop hrec hfixed hcoset
+  unfold otherChildLoop
+  simp only [Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, Bool.false_eq_true, ite_false, hfirst, ite_true]
+  rw [hloop]
+  exact ((hrec.prepend hfixed hcoset hpre).reindexSet).step
+    (nextElem_after hnext)
+
 /-- Package an already established frozen early return as a corrected
 off-path loop result. -/
 theorem frozen {G : Colored n k} {ctx : Ctx}
