@@ -51,6 +51,43 @@ cell. -/
   prefixKey cs
     (childKey ctx tcLevel specFuel level rsLab rsPtn tc numcells o)
 
+/-- The key of a non-discrete node is the maximum of the keys swept by
+its child loop.  The loop prefix contains the node's refinement code. -/
+theorem nodeKey_children {ctx : Ctx} {tcLevel fuel level numcells len : Nat}
+    {cs : List Nat} {st : SearchSt}
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = false)
+    (hlen : (specMaketargetcell ctx
+      (refine ctx level st.lab st.ptn st.active numcells).lab
+      (refine ctx level st.lab st.ptn st.active numcells).ptn level
+      tcLevel).2.2 = len + 1) :
+    nodeKey ctx tcLevel (fuel + 1) level cs st numcells =
+      keysMax
+        (sweepKey ctx tcLevel fuel level
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab
+          (refine ctx level st.lab st.ptn st.active numcells).ptn
+          (specMaketargetcell ctx
+            (refine ctx level st.lab st.ptn st.active numcells).lab
+            (refine ctx level st.lab st.ptn st.active numcells).ptn level
+            tcLevel).1
+          (refine ctx level st.lab st.ptn st.active numcells).numcells 0)
+        ((List.range len).map fun o =>
+          sweepKey ctx tcLevel fuel level
+            (cs ++ [(refine ctx level st.lab st.ptn st.active
+              numcells).longcode])
+            (refine ctx level st.lab st.ptn st.active numcells).lab
+            (refine ctx level st.lab st.ptn st.active numcells).ptn
+            (specMaketargetcell ctx
+              (refine ctx level st.lab st.ptn st.active numcells).lab
+              (refine ctx level st.lab st.ptn st.active numcells).ptn level
+              tcLevel).1
+            (refine ctx level st.lab st.ptn st.active numcells).numcells
+            (o + 1)) := by
+  rw [nodeKey, specNode_internal cs hdisc hlen]
+  rfl
+
 /-- Offset `o` has been absorbed by the incumbent in `out`. -/
 @[expose] def ChildDone (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
@@ -354,6 +391,33 @@ theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
     ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
       tc numcells out o :=
   ChildCover.finish h.cover hempty
+
+/-- Completed child coverage bounds the maximum over the whole original
+target cell, not merely the final filtered set. -/
+theorem SweepCover.maxLe {ctx : Ctx} {tcLevel specFuel level tail : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc numcells tcell : Nat} {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor out)
+    (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
+    {b : Key} (hout : stInc ctx out = some b) :
+    keyLe
+      (keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1))) b := by
+  apply keysMax_le
+  · obtain ⟨b', hb', hle⟩ := h.finish hempty 0 (by omega)
+    have : b' = b := Option.some.inj (hb'.symm.trans hout)
+    rwa [this] at hle
+  · intro y hy
+    obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hy
+    obtain ⟨b', hb', hle⟩ := h.finish hempty (o + 1)
+      (by have := List.mem_range.mp ho; omega)
+    have : b' = b := Option.some.inj (hb'.symm.trans hout)
+    rwa [this] at hle
 
 /-- A `none` cursor result means that no set member remains after the
 cursor. -/
