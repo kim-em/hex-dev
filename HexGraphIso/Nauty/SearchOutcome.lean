@@ -833,9 +833,10 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | complete
       (returned : r = none)
       (sound : LoopSound ctx bound st out)
+      (finalSet : Nat) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
-        numcells tcell cursor out)
-      (empty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o)
+        numcells finalSet finalCursor out)
+      (empty : ∀ o, ¬ ChildLive rsLab tc len finalSet finalCursor o)
   | unwind (sound : LoopSound ctx bound st out)
       (target : Nat) (returned : r = some (Int.ofNat target))
       (below : target < level) (payload : Unwind ctx tcLevel target out)
