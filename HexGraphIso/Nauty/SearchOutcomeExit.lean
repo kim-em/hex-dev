@@ -231,6 +231,87 @@ end OtherRun
 
 namespace LoopExit
 
+/-- Changing only the mutable live set leaves an already classified loop
+exit unchanged. -/
+theorem reindexSet {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell tcell'
+      : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Option Int}
+    (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+      rsPtn tc len numcells tcell cursor bound st out best outBest trail r) :
+    LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab rsPtn
+      tc len numcells tcell' cursor bound st out best outBest trail r := by
+  cases h with
+  | done returned exact => exact .done returned exact
+  | unwind target returned below sound payload located =>
+      exact .unwind target returned below sound payload located
+  | frozen value returned below exact freeze =>
+      exact .frozen value returned below exact freeze
+  | cheap boundary returned positive below exact =>
+      exact .cheap boundary returned positive below exact
+  | exhausted returned finalCursor progress bounded =>
+      exact .exhausted returned finalCursor progress bounded
+
+/-- One processed cursor step increases both the loop fuel and its
+starting-rank budget. -/
+theorem step {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv tc len numcells tcell : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
+    (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+      rsPtn tc len numcells tcell (some tv) bound st out best outBest trail
+      r) :
+    LoopExit ctx tcLevel specFuel runFuel (loopFuel + 1) level codes rsLab
+      rsPtn tc len numcells tcell cursor bound st out best outBest trail r := by
+  cases h with
+  | done returned exact => exact .done returned exact
+  | unwind target returned below sound payload located =>
+      exact .unwind target returned below sound payload located
+  | frozen value returned below exact freeze =>
+      exact .frozen value returned below exact freeze
+  | cheap boundary returned positive below exact =>
+      exact .cheap boundary returned positive below exact
+  | exhausted returned finalCursor progress bounded =>
+      apply LoopExit.exhausted returned finalCursor
+      · have hrank := cursorRank_step ha
+        omega
+      · exact bounded
+
+/-- A sound processed child changes only the incoming incumbent of the
+classified recursive tail. -/
+theorem prepend {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound : Key} {st recSt out : SearchSt}
+    {best mid outBest : Option Key} {trail : FrameTrail} {r : Option Int}
+    (hpre : LoopSound ctx bound best mid)
+    (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+      rsPtn tc len numcells tcell cursor bound recSt out mid outBest trail
+      r) :
+    LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab rsPtn
+      tc len numcells tcell cursor bound st out best outBest trail r := by
+  cases h with
+  | done returned exact =>
+      exact .done returned
+        ((hpre.trans (LoopSound.ofExact exact)).exact exact
+          (keyLe_incMax_right mid bound))
+  | unwind target returned below sound payload located =>
+      exact .unwind target returned below (hpre.trans sound) payload located
+  | frozen value returned below exact freeze =>
+      exact .frozen value returned below
+        ((hpre.trans (LoopSound.ofExact exact)).exact exact
+          (keyLe_incMax_right mid bound)) freeze
+  | cheap boundary returned positive below exact =>
+      exact .cheap boundary returned positive below
+        ((hpre.trans (LoopSound.ofExact exact)).exact exact
+          (keyLe_incMax_right mid bound))
+  | exhausted returned finalCursor progress bounded =>
+      exact .exhausted returned finalCursor progress bounded
+
 /-- At a small-cell node, exactness of the selected child is exactness of
 the whole sibling sweep, so the saved-boundary return remains a cheap exit
 after fixed-point cleanup. -/

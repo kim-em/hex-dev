@@ -128,6 +128,52 @@ end LoopInv
 
 namespace OtherLoopRun
 
+theorem reindexSet {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (h : OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.proof.reindexSet, h.exit.reindexSet⟩
+
+theorem step {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
+    (h : OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out best
+      outBest receiptTrail eventTrail r) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r :=
+  ⟨h.proof.step ha, h.exit.step ha⟩
+
+theorem prepend {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st recSt out : SearchSt} {best mid outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hcoset : recSt.cosetindex = st.cosetindex)
+    (hpre : LoopSound ctx bound best mid)
+    (h : OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
+      outBest receiptTrail eventTrail r) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.proof.prepend hfixed hcoset hpre, h.exit.prepend hpre⟩
+
 /-- Package an already established frozen early return as a corrected
 off-path loop result. -/
 theorem frozen {G : Colored n k} {ctx : Ctx}
