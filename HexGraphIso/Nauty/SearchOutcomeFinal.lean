@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.SearchOutcomeMutual
+import all HexGraphIso.Nauty.Search
 
 public section
 
@@ -23,6 +24,158 @@ was entered.
 namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
+
+/-- At a loop boundary, an implicit small-cell pair is available even
+when `noncheaplevel` is exactly the loop level.  `CheapOk` deliberately
+omits this equality case at general node entries; the loop guards restore
+it before beginning a sibling sweep. -/
+@[expose] def BoundaryOk (G : Colored n k) (ctx : Ctx)
+    (level : Nat) (st : SearchSt) : Prop :=
+  st.noncheaplevel = level →
+    PairOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmptn st.lab st.ptn level ctx.n).1
+      (fmptn st.lab st.ptn level ctx.n).2
+
+namespace BoundaryOk
+
+/-- Parking strictly past a loop makes its equality obligation vacuous. -/
+theorem parked {G : Colored n k} {ctx : Ctx} {level : Nat}
+    {st : SearchSt} :
+    BoundaryOk G ctx level { st with noncheaplevel := level + 1 } := by
+  intro heq
+  simp only at heq
+  omega
+
+/-- A successful cheap-cell test supplies the implicit pair required at
+the loop boundary. -/
+theorem ofCheap {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hcheap : cheapautom st.ptn level ctx.n = true) :
+    BoundaryOk G ctx level st := by
+  have hn := hinv.nodeCount
+  subst n
+  intro hboundary
+  let r : RefineSt :=
+    { lab := st.lab, ptn := st.ptn, active := 0, numcells := numcells,
+      hint := 0, maxpos := 0, longcode := numcells }
+  have hlab : LabOk st.lab ctx.n :=
+    labOk_of_reach hinv.run.searchOk.labSize hinv.run.searchOk.reach
+  have hinj : LabInj st.lab ctx.n :=
+    labInj_of_reach hinv.run.searchOk.labSize hinv.nonempty
+      hinv.run.searchOk.reach
+  have hend := searchOk_end hinv.nonempty hinv.run.searchOk hinv.positive
+  have hit : IterOk ctx level r := by
+    constructor
+    · exact ⟨hinv.run.searchOk.labSize, hlab,
+        hinv.run.searchOk.ptnSize, Nat.two_pow_pos ctx.n, hend⟩
+    · exact hinj
+    · intro q hq
+      exact hinv.run.searchOk.vals q hq
+    · exact Nat.le_trans hinv.run.searchOk.bc
+        (bcount_le st.ptn level ctx.n)
+  have heq : Equitable ctx level r.lab r.ptn := by
+    simpa only [r] using hinv.currentEquitable
+  have hcount : bcount r.ptn level ctx.n = r.numcells := by
+    simpa only [r] using hinv.run.searchOk.count.symm
+  have hsub : SubtreeOk ctx level r :=
+    subtreeOk_of_cheapautom hit heq hcount (by simpa only [r] using hcheap)
+  have hpair : PairOk ctx.g
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmptn r.lab r.ptn level ctx.n).1
+      (fmptn r.lab r.ptn level ctx.n).2 := by
+    apply pairOk_fmptn_of_subtree (ctx := ctx) (G := G)
+      (r := r) hinv.nonempty hinv.positive
+    · rw [hg]
+      exact size_rowsOf G
+    · rw [hg]
+      exact rowsOf_bounded G
+    · rw [hg]
+      exact rowsOf_symm G
+    · rw [hg]
+      exact rowsOf_loopless G
+    · exact hsub
+    · exact hinv.run.searchOk.reach
+    · exact hinv.run.searchOk.init1
+  simpa only [r, hboundary] using hpair
+
+/-- The boundary pair advances the strict `CheapOk` ledger through the
+next child level. -/
+theorem nextCheap {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : BoundaryOk G ctx level st)
+    (hrun : RunInv G ctx tcLevel level codes bs fs numcells st best trail) :
+    CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) (level + 1) st := by
+  apply hrun.cheap.next
+  intro heq
+  simpa only [heq] using h heq
+
+end BoundaryOk
+
+namespace EventOut
+
+/-- Recovering a child event to its parent supplies the equality-boundary
+pair needed by the next sibling, even though ordinary `CheapOk` makes
+that equality case dormant. -/
+theorem recoverBoundary {G : Colored n k} {ctx : Ctx}
+    {tcLevel level inf fixedpts : Nat} {stem fs : List Nat}
+    {out : SearchSt} {best : Option Key} {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r)
+    (hstem : stem.length = level) (hlevel : 1 ≤ level)
+    (hinf : level < inf) :
+    BoundaryOk G ctx level
+      (Nauty.recover ctx.n inf level { out with fixedpts := fixedpts }) := by
+  cases h with
+  | intro current codes bestCodes event depth stemEq past returned stable
+      history =>
+    intro hboundary
+    let cleaned : SearchSt := { out with fixedpts := fixedpts }
+    have hevent : RunEvent G ctx tcLevel current codes bestCodes fs cleaned
+        best trail := event.setFixed fixedpts
+    have hcurrent : level < current := by
+      rw [← hstem]
+      exact past
+    have hncl : (Nauty.recover ctx.n inf level cleaned).noncheaplevel =
+        if level < cleaned.noncheaplevel then level + 1
+        else cleaned.noncheaplevel := by
+      unfold _root_.Hex.GraphIso.Nauty.recover
+      simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+        apply_ite SearchSt.noncheaplevel, ite_self]
+    have hsaved : cleaned.noncheaplevel = level := by
+      rw [hncl] at hboundary
+      rcases Decidable.em (level < cleaned.noncheaplevel) with hc | hc
+      · rw [ite_eq_left hc] at hboundary
+        omega
+      · rw [ite_eq_right hc] at hboundary
+        exact hboundary
+    have hpair := hevent.cheap.pair (by omega)
+    rw [hsaved] at hpair
+    have hfm := recover_fmptn (st := cleaned)
+      (n := ctx.n) (inf := inf) (level := level) (saved := level)
+      (Nat.le_of_eq hevent.cheap.ptnSize.symm)
+      (Nat.le_trans hevent.cheap.rootEnd hlevel)
+      (Nat.le_refl level) hinf
+    change PairOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmptn (Nauty.recover ctx.n inf level cleaned).lab
+        (Nauty.recover ctx.n inf level cleaned).ptn level ctx.n).1
+      (fmptn (Nauty.recover ctx.n inf level cleaned).lab
+        (Nauty.recover ctx.n inf level cleaned).ptn level ctx.n).2
+    rw [hfm]
+    exact hpair
+
+end EventOut
 
 /-! # Fixed-point equations for node prefixes -/
 
