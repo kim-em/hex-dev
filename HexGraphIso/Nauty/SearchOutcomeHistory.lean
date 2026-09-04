@@ -184,7 +184,32 @@ theorem firstStab {ctx : Ctx} {current : Nat} {st : SearchSt}
     (htrail.reach target entry hlt hentry) hmap
 
 /-- A scatter from the canonical reference onto the current labelling
-stabilizes every active frame to which `gcaCanon` permits a return. -/
+stabilizes every active frame through any bound no deeper than
+`gcaCanon`.  The smaller bound is needed by code two's orbit return to
+`gcaFirst`. -/
+theorem canonStabTo {ctx : Ctx} {current limit : Nat} {st : SearchSt}
+    {trail : FrameTrail} {gamma : Array Nat}
+    (h : RefTrail ctx current st trail)
+    (htrail : TrailOk ctx current st trail)
+    (hcanonSize : st.canonlab.size = ctx.n)
+    (hle : limit ≤ st.gcaCanon) (hbelow : limit < current)
+    (hmap : ∀ i, i < ctx.n →
+      gamma[st.canonlab[i]!]! = st.lab[i]!) :
+    ∀ target entry, Int.ofNat target ≤ Int.ofNat limit →
+      trail target = some entry →
+      CellStab entry.frame.rsPtn target entry.frame.rsLab gamma := by
+  intro target entry hbound hentry
+  have hlimit : target ≤ limit := Int.ofNat_le.mp hbound
+  have hnat : target ≤ st.gcaCanon := Nat.le_trans hlimit hle
+  have hlt : target < current := Nat.lt_of_le_of_lt hlimit hbelow
+  exact cellStab_of_scatter
+    (htrail.ptnSize target entry hlt hentry)
+    (h.frameSize target entry hlt hentry) hcanonSize
+    (htrail.endClosed target entry hlt hentry)
+    (h.canon target entry hlt hnat hentry)
+    (htrail.reach target entry hlt hentry) hmap
+
+/-- The exact canonical-GCA instance of `canonStabTo`. -/
 theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
@@ -196,15 +221,7 @@ theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
     ∀ target entry, Int.ofNat target ≤ Int.ofNat st.gcaCanon →
       trail target = some entry →
       CellStab entry.frame.rsPtn target entry.frame.rsLab gamma := by
-  intro target entry hbound hentry
-  have hnat : target ≤ st.gcaCanon := Int.ofNat_le.mp hbound
-  have hlt : target < current := Nat.lt_of_le_of_lt hnat hbelow
-  exact cellStab_of_scatter
-    (htrail.ptnSize target entry hlt hentry)
-    (h.frameSize target entry hlt hentry) hcanonSize
-    (htrail.endClosed target entry hlt hentry)
-    (h.canon target entry hlt hnat hentry)
-    (htrail.reach target entry hlt hentry) hmap
+  exact h.canonStabTo htrail hcanonSize (Nat.le_refl _) hbelow hmap
 
 end RefTrail
 
