@@ -601,6 +601,84 @@ theorem otherNode_leaf_pruned_of_read {ctx : Ctx}
   · exact hread
   · rw [incMax, hnode]
 
+/-- A first-path-agreeing leaf whose sentinel or automorphism guard fails
+falls through the ordinary leaf comparison and yields the same exact local
+prune outcome. -/
+theorem otherNode_leaf_firstFail {ctx : Ctx}
+    {nn inf tcLevel specFuel fuel level numcells : Nat}
+    {cs bs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1) (hlevelN : level ≤ nn)
+    (hbs : bs ≠ [])
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hcinv : CodeCmpInv nn
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) bs
+      (otherLeafSt ctx level numcells st).canoncode
+      (otherLeafSt ctx level numcells st).canonlevel
+      (otherLeafSt ctx level numcells st).eqlevCanon
+      (otherLeafSt ctx level numcells st).compCanon)
+    (hginv : CanongInv ctx (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+    (heq : (((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hfail : (otherLeafSt ctx level numcells st).firstcode[level + 1]! ≠
+        codeSentinel ∨
+      isautom ctx (firstScatter ctx.n
+        (otherLeafSt ctx level numcells st).firstlab
+        (otherLeafSt ctx level numcells st).lab) = false)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (keyMax (incKey ctx bs st.canonlab)
+        (pathLeafKey ctx
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab)))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let leaf := otherLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hfullNe : full ≠ [] := by
+    intro h
+    have := congrArg List.length h
+    simp only [full, List.length_append, List.length_singleton,
+      List.length_nil] at this
+    omega
+  have hleaf := processnode_leafFirst_read (ctx := ctx) (nn := nn)
+    (cs := full) (bs := bs) (numcells := ctx.n) (st := leaf)
+    (by simpa only [full, code, leaf] using hcinv) hginv
+    (by rw [hfullLen]; exact hlevelN) hbs hfullNe
+    (by simpa only [hfullLen, leaf] using heq)
+    (by simpa only [hfullLen, leaf] using hfail) (by simp)
+  obtain ⟨_, hread, _, _, _⟩ := hleaf
+  have hframes := otherNodePrep_frames level code
+    { st with
+      lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+      ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+      active := (refine ctx level st.lab st.ptn st.active numcells).active
+      numnodes := st.numnodes + 1 }
+  rcases hframes with
+    ⟨hcanon, _, _, _, _, _, _, _, _, _, _, hlab, _⟩
+  have hleafCanon : leaf.canonlab = st.canonlab := by
+    change (otherNodePrep level code _).canonlab = st.canonlab
+    rw [hcanon]
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    change (otherNodePrep level code _).lab = _
+    rw [hlab]
+  rw [hfullLen, hleafCanon, hleafLab] at hread
+  exact otherNode_leaf_pruned_of_read hnum hdisc hearly
+    (by simpa only [full, code, leaf] using hread)
+
 /-- An early non-first-path leaf return has already absorbed its whole
 (singleton) specification subtree.  Its signed comparison return is a
 local prune outcome; generator returns can subsequently be strengthened to
