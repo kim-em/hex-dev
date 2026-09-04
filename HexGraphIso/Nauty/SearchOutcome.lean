@@ -82,6 +82,35 @@ cell. -/
   prefixKey cs
     (childKey ctx tcLevel specFuel level rsLab rsPtn tc numcells o)
 
+/-- A checked label carrier identifies the two children selected at an
+ancestor, once the two leaf labellings are known at that ancestor's
+individualized position. -/
+theorem sweepKey_of_carrier {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) {ref cur : Array Nat}
+    {store : Array (Array Nat)} (hcarrier : LabelCarrier ctx ref cur store)
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells oRef oCur : Nat}
+    (hstab : ∀ γ ∈ store, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (href : oRef < len) (hcur : oCur < len)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hatRef : ref[tc]! = rsLab[tc + oRef]!)
+    (hatCur : cur[tc]! = rsLab[tc + oCur]!) :
+    sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oCur =
+      sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oRef := by
+  obtain ⟨γ, hγ, haut, hmap⟩ := hcarrier
+  apply congrArg (prefixKey cs)
+  apply childKey_of_carried hn hgsz haut tcLevel specFuel level
+    (hstab γ hγ) hs hok hsp hend hvals hic hrange hcur href hlf
+  have htc : tc < ctx.n := by
+    rw [hn]
+    omega
+  have hm := hmap tc htc
+  rwa [hatRef, hatCur] at hm
+
 /-- The key of a non-discrete node is the maximum of the keys swept by
 its child loop.  The loop prefix contains the node's refinement code. -/
 theorem nodeKey_children {ctx : Ctx} {tcLevel fuel level numcells len : Nat}
@@ -215,6 +244,23 @@ theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
   rcases h with ⟨b, hb, hkb⟩
   obtain ⟨b', hb', hbb'⟩ := hinc b hb
   exact ⟨b', hb', keyLe_trans hkb hbb'⟩
+
+/-- Coverage transfers across equality of two child keys. -/
+theorem ChildDone.ofEq {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells oRef oCur : Nat}
+    {best : Option Key}
+    (h : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      best oRef)
+    (heq : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+      numcells oCur =
+        sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells oRef) :
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      best oCur := by
+  obtain ⟨b, hb, hle⟩ := h
+  refine ⟨b, hb, ?_⟩
+  rw [heq]
+  exact hle
 
 /-- A filter preserves sweep coverage when every old live child is either
 absorbed or carried to a key-equivalent new survivor, and filtering adds no
