@@ -1631,6 +1631,33 @@ theorem NodeResult.of_loop_none {ctx : Ctx}
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
       exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
+/-- Prepending a sound child fragment transports every recursive loop
+outcome.  In the prune case, the recursive exact incumbent and the
+composed upper bound recover exactness relative to the original incumbent. -/
+theorem LoopResult.prefix {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st recSt out : SearchSt}
+    {best mid outBest : Option Key} {r : Option Int}
+    (hpre : LoopSound ctx bound best mid)
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell cursor bound recSt out mid outBest r) :
+    LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
+      tc len numcells tcell cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned (hpre.trans sound) installed read finalSet
+        finalCursor cover empty
+  | unwind sound target returned below payload =>
+      exact .unwind (hpre.trans sound) target returned below payload
+  | pruned target returned below sound installed read full =>
+      have hsound := hpre.trans sound
+      have hfull := hsound.exact full (keyLe_incMax_right mid bound)
+      exact .pruned target returned below hsound installed read hfull
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned (hpre.trans sound) finalSet finalCursor cover
+        progress bounded
+
 /-- The entry set only describes where the call begins.  Every constructor
 records the final set, so the result can cross a filter exposed in the
 caller. -/
