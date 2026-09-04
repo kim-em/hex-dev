@@ -418,6 +418,68 @@ theorem firstFinish_canonlab (level size index : Nat) (st : SearchSt) :
   rw [firstFinish]
   split <;> rfl
 
+namespace EventOut
+
+/-- Recovering a guiding-child event whose first control has been reset to
+the parent produces the live first-path loop package.  Return stabilization
+at that exact control is precisely the store-wide stabilization required
+for the frozen parent frame. -/
+theorem recoverFirst {G : Colored n k} {ctx : Ctx}
+    {tcLevel level inf numcells fixedpts tv1 : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int} {rsLab rsPtn : Array Nat}
+    (h : EventOut G ctx tcLevel stem fs
+      { out with gcaFirst := level, stabvertex := tv1 } best trail r)
+    (hreturn : r = Int.ofNat level) (hstem : stem.length = level)
+    (hlevel : 1 ≤ level) (hinf : level < inf)
+    (hok : SearchOk G level numcells
+      (recover ctx.n inf level
+        { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 }))
+    (horder : level ≤ out.gcaCanon)
+    (hframe : trail level = some
+      ⟨⟨specFuel, codes, rsLab, rsPtn, tc, frameNumcells⟩, offset⟩) :
+    ∃ bs,
+      RunInv G ctx tcLevel level stem bs fs numcells
+          (recover ctx.n inf level
+            { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 })
+          best trail ∧
+        FirstLive ctx level
+          (recover ctx.n inf level
+            { out with fixedpts := fixedpts, gcaFirst := level, stabvertex := tv1 })
+          trail rsLab rsPtn := by
+  let prepared : SearchSt :=
+    { out with gcaFirst := level, stabvertex := tv1 }
+  let cleaned : SearchSt := { prepared with fixedpts := fixedpts }
+  let recovered := recover ctx.n inf level cleaned
+  have hfirst : cleaned.gcaFirst ≤ level := by
+    simp only [cleaned, prepared]
+    exact Nat.le_refl level
+  obtain ⟨bs, hrun, hstable, hhistory⟩ :=
+    h.setFixed fixedpts |>.recoverRun hreturn hstem hlevel hinf hfirst
+      (by simpa only [cleaned, prepared, recovered] using hok)
+  have hfirstRec : recovered.gcaFirst = level := by
+    rw [show recovered = recover ctx.n inf level cleaned by rfl,
+      (recover_frames ctx.n inf level cleaned).2.2.2.2.2.2.1]
+  have hcanonRec : recovered.gcaCanon = level := by
+    rw [show recovered = recover ctx.n inf level cleaned by rfl,
+      recover_gcaCanon]
+    change (if level < out.gcaCanon then level else out.gcaCanon) = level
+    split <;> omega
+  refine ⟨bs, by simpa only [cleaned, prepared, recovered] using hrun, ?_⟩
+  constructor
+  · constructor
+    · simpa only [cleaned, prepared, recovered] using hhistory
+    · rw [hfirstRec, hcanonRec]
+      exact Nat.le_refl level
+    · simpa only [cleaned, prepared, recovered, hfirstRec] using hstable
+  · intro gamma hgamma
+    have hs := hstable level
+      ⟨⟨specFuel, codes, rsLab, rsPtn, tc, frameNumcells⟩, offset⟩
+      (by rw [hfirstRec]; exact Int.le_refl _) hframe gamma hgamma
+    exact hs
+
+end EventOut
+
 /-- A completed child, cleanup, and recovery restore both parent path
 facts.  The selected vertex is fresh because it lies in a non-singleton
 target cell while all older fixed vertices occupy singleton cells. -/
