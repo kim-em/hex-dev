@@ -1264,6 +1264,80 @@ theorem NodeResult.pruned_of_loop {ctx : Ctx}
   .pruned (NodeSound.ofExact hfull) target hreturn hbelow hinstalled hread
     hfull
 
+/-- A loop return carrying an integer lifts directly through its parent
+node.  The impossible completed and exhausted constructors are excluded by
+the loop's return option itself. -/
+theorem NodeResult.of_loop_some {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {r : Int}
+    (hbound : bound = nodeKey ctx tcLevel specFuel level cs st numcells)
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st out best outBest
+        (some r)) :
+    NodeResult ctx tcLevel specFuel runFuel level cs st out numcells
+      best outBest r := by
+  cases h with
+  | complete returned => simp at returned
+  | unwind sound target returned below payload =>
+      have hsound : NodeSound ctx tcLevel specFuel level cs st numcells
+          best outBest := by
+        constructor
+        · intro b hb
+          rw [← hbound]
+          exact sound.upper b hb
+        · exact sound.grows
+      exact .unwind hsound target (Option.some.inj returned) below payload
+  | pruned target returned below sound installed read full =>
+      have hsound : NodeSound ctx tcLevel specFuel level cs st numcells
+          best outBest := by
+        constructor
+        · intro b hb
+          rw [← hbound]
+          exact sound.upper b hb
+        · exact sound.grows
+      have hfull : outBest = some (incMax best
+          (nodeKey ctx tcLevel specFuel level cs st numcells)) := by
+        rwa [← hbound]
+      exact .pruned hsound target (Option.some.inj returned) below installed
+        read hfull
+  | exhausted returned => simp at returned
+
+/-- A completed loop with enough ranked cursor fuel lifts to ordinary node
+completion.  Cursor exhaustion is ruled out by the same finite-range bound
+used by the executable root search. -/
+theorem NodeResult.of_loop_none {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tail : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key}
+    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+        none) :
+    NodeResult ctx tcLevel (specFuel + 1) runFuel level cs st out numcells
+      best outBest (Int.ofNat level - 1) := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      rw [hbound] at sound
+      rw [hlen] at cover empty
+      exact NodeResult.complete_of_sweep hchildren sound installed read cover
+        empty rfl
+  | unwind sound target returned below payload => cases returned
+  | pruned target returned below sound installed read full => cases returned
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
+
 /-- The entry set only describes where the call begins.  Every constructor
 records the final set, so the result can cross a filter exposed in the
 caller. -/
