@@ -743,6 +743,17 @@ theorem IncGrows.refl (best : Option Key) : IncGrows best best := by
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
 
+/-- Folding one key into an incumbent preserves the old incumbent. -/
+theorem IncGrows.incMax (best : Option Key) (K : Key) :
+    IncGrows best (some (incMax best K)) := by
+  intro b hb
+  rcases best with _ | a
+  · cases hb
+  · injection hb with hab
+    subst hab
+    exact ⟨Nauty.incMax (some a) K, rfl,
+      keyLe_iff.mpr (keyMax_not_lt_left a K)⟩
+
 theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (st : SearchSt) (numcells : Nat) (best : Option Key) :
     NodeSound ctx tcLevel specFuel level cs st numcells best best := by
@@ -752,6 +763,21 @@ theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
     exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
   · exact IncGrows.refl best
 
+/-- An exact node maximum supplies both clauses of `NodeSound`. -/
+theorem NodeSound.ofExact {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {best out : Option Key}
+    (h : out = some (incMax best
+      (nodeKey ctx tcLevel specFuel level cs st numcells))) :
+    NodeSound ctx tcLevel specFuel level cs st numcells best out := by
+  constructor
+  · intro b hb
+    rw [h] at hb
+    injection hb with he
+    subst he
+    exact keyLe_refl _
+  · rw [h]
+    exact IncGrows.incMax best _
+
 theorem LoopSound.refl (ctx : Ctx) (bound : Key) (best : Option Key) :
     LoopSound ctx bound best best := by
   constructor
@@ -759,6 +785,20 @@ theorem LoopSound.refl (ctx : Ctx) (bound : Key) (best : Option Key) :
     rw [hb, incMax]
     exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
   · exact IncGrows.refl best
+
+/-- An exact loop maximum supplies both clauses of `LoopSound`. -/
+theorem LoopSound.ofExact {ctx : Ctx} {bound : Key}
+    {best out : Option Key}
+    (h : out = some (incMax best bound)) :
+    LoopSound ctx bound best out := by
+  constructor
+  · intro b hb
+    rw [h] at hb
+    injection hb with he
+    subst he
+    exact keyLe_refl _
+  · rw [h]
+    exact IncGrows.incMax best bound
 
 theorem keyMax_le_of_le {a b c : Key} (ha : keyLe a c)
     (hb : keyLe b c) : keyLe (keyMax a b) c := by
