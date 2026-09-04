@@ -406,4 +406,99 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
     exact hevent
   · exact TrailExt.refl level trail
 
+/-- An early non-generator leaf absorbs its singleton subtree and returns
+the explicit local-prune outcome. -/
+theorem NodeInv.plainLeaf {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hgen : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace =
+        (otherLeafSt ctx level numcells st).genTrace)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ outBest,
+      NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+        numcells best outBest trail trail
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  subst n
+  let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hfull : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hstem : full.take codes.length = codes := by
+    simp only [full, List.take_left']
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf rfl hn0 hlevel hpath
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hreturn : (processnode ctx level ctx.n leaf).1 ≤
+      Int.ofNat level - 1 := Int.le_sub_one_iff.mpr hearly
+  obtain ⟨bs', hevent, hmax⟩ := hprep.leafEvent rfl hn0 hgb hsymm
+    hloop hlevel hfull hstem hlive'.cheapBound hef (by simp) hreturn hgen
+    hlive'
+  let outKey := incKey ctx bs'
+    (processnode ctx level ctx.n leaf).2.canonlab
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    simpa only [leaf, otherLeafSt, rs, base] using
+      (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.2.2.2.1
+  have hnodeKey : nodeKey ctx tcLevel (specFuel + 1) level codes st
+      numcells = pathLeafKey ctx full leaf.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey, hleafLab]
+  have houtFull : some outKey = some (incMax best
+      (nodeKey ctx tcLevel (specFuel + 1) level codes st numcells)) := by
+    rw [hprep.incumbent, incMax, hnodeKey]
+    exact congrArg some hmax
+  have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
+      (fuel + 1) level codes st
+      (processnode ctx level ctx.n leaf).2 numcells best (some outKey)
+      (processnode ctx level ctx.n leaf).1 := by
+    apply NodeReceipt.pruned (NodeSound.ofExact houtFull)
+      (processnode ctx level ctx.n leaf).1 rfl hearly
+    · apply processnode_installed hlevel
+      apply Nat.ne_of_gt
+      rw [hprep.codeInv.blen]
+      cases bs with
+      | nil => exact (hprep.bestCodes rfl).elim
+      | cons _ _ => simp
+    · simpa only [outKey] using hevent.read
+    · exact houtFull
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
+  refine ⟨some outKey, ?_⟩
+  constructor
+  · rw [hout]
+    exact hreceipt
+  · rw [hout]
+    exact hevent
+  · exact TrailExt.refl level trail
+
 end Hex.GraphIso.Nauty

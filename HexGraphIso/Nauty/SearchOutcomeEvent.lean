@@ -40,6 +40,22 @@ inductive EventOut (G : Colored n k) (ctx : Ctx) (tcLevel : Nat)
 
 namespace RunEvent
 
+/-- Every event state reads back the semantic incumbent recorded by its
+comparison machine.  The row-rejection arm uses its deliberately reset
+zero-sign machine. -/
+theorem read {G : Colored n k} {ctx : Ctx}
+    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (h : RunEvent G ctx tcLevel current cs bs fs st best trail) :
+    stInc ctx st = best := by
+  have hread : stInc ctx st = ghostInc ctx bs st.canonlab := by
+    rcases h.machines with hplain | hreset
+    · apply stInc_eq_ghost hplain.2
+      omega
+    · exact stInc_eq_ghost hreset.2 (by decide)
+  rw [hread, ghostInc]
+  simp only [h.bestCodes, ↓reduceIte, h.incumbent]
+
 /-- Fixed-point bookkeeping changes none of an event state's logical
 fields. -/
 theorem setFixed {G : Colored n k} {ctx : Ctx}
@@ -131,6 +147,15 @@ theorem setFirst {G : Colored n k} {ctx : Ctx}
 end RunEvent
 
 namespace EventOut
+
+/-- A packaged event reads back its semantic incumbent. -/
+theorem read {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r) :
+    stInc ctx out = best := by
+  cases h with
+  | intro _ _ _ event _ _ _ _ _ => exact event.read
 
 /-- Every event output exposes the return-indexed stabilization carried
 by its concrete state. -/
