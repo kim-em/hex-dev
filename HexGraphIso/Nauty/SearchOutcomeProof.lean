@@ -217,6 +217,33 @@ theorem firstPath_discrete {ctx : Ctx} {nn inf tcLevel specFuel fuel
 
 /-! # Off-path leaf incumbent -/
 
+/-- The refined and compared state on entry to an off-path leaf event. -/
+@[expose] def otherLeafSt (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) : SearchSt :=
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  otherNodePrep level rs.longcode
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+
+/-- If a discrete off-path leaf requests an early unwind, `otherNode`
+returns its `processnode` result verbatim. -/
+theorem otherNode_leaf_early (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level) :
+    otherNode ctx inf tcLevel (fuel + 1) level numcells st =
+      processnode ctx level ctx.n (otherLeafSt ctx level numcells st) := by
+  unfold otherLeafSt at hearly ⊢
+  rw [otherNode]
+  simp only [hnum]
+  rw [ite_eq_right (by omega), ite_eq_left hearly]
+  rfl
+
 /-- The maximum of two installed leaf keys still has a nonempty path. -/
 theorem incKey_max_nonempty {ctx : Ctx} {bs cs bs' : List Nat}
     {canonlab canonlab' lab : Array Nat} (hbs : bs ≠ [])
@@ -293,6 +320,101 @@ theorem processnode_leaf_read {nn : Nat} {ctx : Ctx}
       simp only [ghostInc, hbs', ↓reduceIte]
   refine ⟨bs', ?_, hcanong, hcmp, hreturn⟩
   rw [hread, hmax]
+
+/-- Reading a present incumbent proves that a canonical leaf has been
+installed in the mutable state. -/
+theorem canonlevel_ne_zero_of_stInc {ctx : Ctx} {st : SearchSt} {B : Key}
+    (h : stInc ctx st = some B) : st.canonlevel ≠ 0 := by
+  intro hz
+  rw [stInc, ite_eq_left hz] at h
+  cases h
+
+/-- An early non-first-path leaf return has already absorbed its whole
+(singleton) specification subtree.  Its signed comparison return is a
+local prune outcome; generator returns can subsequently be strengthened to
+`unwind` by the carrier/guide layer. -/
+theorem otherNode_leaf_pruned {ctx : Ctx} {nn inf tcLevel specFuel fuel
+    level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1) (hlevelN : level ≤ nn)
+    (hbs : bs ≠ [])
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hcinv : CodeCmpInv nn
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) bs
+      (otherLeafSt ctx level numcells st).canoncode
+      (otherLeafSt ctx level numcells st).canonlevel
+      (otherLeafSt ctx level numcells st).eqlevCanon
+      (otherLeafSt ctx level numcells st).compCanon)
+    (hginv : CanongInv ctx (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (keyMax (incKey ctx bs st.canonlab)
+        (pathLeafKey ctx
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab)))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let pre : SearchSt :=
+    { st with
+      lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+      ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+      active := (refine ctx level st.lab st.ptn st.active numcells).active
+      numnodes := st.numnodes + 1 }
+  let leaf := otherLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hfullNe : full ≠ [] := by
+    intro he
+    have hl := congrArg List.length he
+    simp only [full, List.length_append, List.length_singleton,
+      List.length_nil] at hl
+    omega
+  have hleaf := processnode_leaf_read (ctx := ctx) (nn := nn)
+    (cs := full) (bs := bs) (numcells := ctx.n) (st := leaf)
+    (by simpa only [full, code, leaf] using hcinv) hginv
+    (by rw [hfullLen]; exact hlevelN) hbs hfullNe
+    (by simpa only [hfullLen, leaf] using hef) (by simp)
+  obtain ⟨bs', hread, _, _, _⟩ := hleaf
+  have hframes := otherNodePrep_frames level code pre
+  rcases hframes with
+    ⟨hcanon, _, _, _, _, _, _, _, _, _, _, hlab, _⟩
+  have hleafCanon : leaf.canonlab = st.canonlab := by
+    change (otherNodePrep level code pre).canonlab = st.canonlab
+    rw [hcanon]
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    change (otherNodePrep level code pre).lab = _
+    rw [hlab]
+  rw [hfullLen, hleafCanon, hleafLab] at hread
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full
+        (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  apply NodeResult.pruned (target :=
+    (processnode ctx level ctx.n leaf).1)
+  · apply NodeSound.ofExact
+    rw [incMax, hnode]
+  · rfl
+  · exact hearly
+  · exact canonlevel_ne_zero_of_stInc hread
+  · simpa only [leaf] using hread
+  · rw [incMax, hnode]
 
 /-- A first-path node with no runtime fuel reports exhaustion. -/
 theorem firstPath_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
