@@ -452,6 +452,8 @@ structure RunInv (G : Colored n k) (ctx : Ctx)
   trailOk : TrailOk ctx level st trail
   firstPositive : 0 < st.gcaFirst
   canonPositive : 0 < st.gcaCanon
+  firstBound : st.gcaFirst ≤ level
+  canonBound : st.gcaCanon ≤ level
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -508,6 +510,8 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
   trailOk : TrailOk ctx level st trail
   firstPositive : 0 < st.gcaFirst
   canonPositive : 0 < st.gcaCanon
+  firstBound : st.gcaFirst ≤ level
+  canonBound : st.gcaCanon ≤ level
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -521,7 +525,8 @@ theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
     RunInv G ctx tcLevel level cs bs fs numcells st best trail :=
   ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, h.genTraceOk,
     h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
-    h.firstPositive, h.canonPositive, h.bestCodes, h.incumbent⟩
+    h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
+    h.bestCodes, h.incumbent⟩
 
 /-- Individualization carries a stable loop state into its recursive
 child. The loop supplies the two facts that depend on its history: the
@@ -589,7 +594,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
   change RunInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
     child best childTrail
   refine ⟨hok, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hguides, htrail,
-    ?_, ?_, h.bestCodes, ?_⟩
+    ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
   · exact h.codeInv
   · exact h.firstInv
   · exact h.canongInv
@@ -600,6 +605,10 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
       h.leafRefs.canonSize, h.leafRefs.canonReach⟩
   · exact h.firstPositive
   · exact h.canonPositive
+  · change st.gcaFirst ≤ level + 1
+    exact Nat.le_trans h.firstBound (Nat.le_succ level)
+  · change st.gcaCanon ≤ level + 1
+    exact Nat.le_trans h.canonBound (Nat.le_succ level)
   · exact h.incumbent
 
 /-- Refinement followed by the off-path comparison step enters
@@ -670,7 +679,8 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
         numcells) ?_,
     otherNodePrep_firstCodeInv h.firstInv
       (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
-        numcells), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
+        numcells), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+        h.bestCodes, ?_⟩
   · have hb := bcount_le st.ptn (cs.length + 1) n
     have hc := h.searchOk.bc
     omega
@@ -689,6 +699,10 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
     exact h.firstPositive
   · rw [hgcaCanon]
     exact h.canonPositive
+  · rw [hgcaFirst]
+    exact h.firstBound
+  · rw [hgcaCanon]
+    exact h.canonBound
   · rw [hcanon]
     exact h.incumbent
 
@@ -766,7 +780,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
     firstterminal_canongInv hcanong, ?_, ?_,
     hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, ?_, ?_,
-    hne, ?_⟩
+    ?_, ?_, hne, ?_⟩
   · unfold GenTraceOk
     intro γ hγ
     rw [hstore.1, hgen] at hγ
@@ -786,6 +800,10 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     exact hpositive
   · rw [hstate.2.2.2.1]
     exact hpositive
+  · rw [hstate.2.2.1]
+    exact Nat.le_refl _
+  · rw [hstate.2.2.2.1]
+    exact Nat.le_refl _
   · rw [firstterminal_canonlab]
     rfl
 
@@ -899,6 +917,8 @@ structure RunEvent (G : Colored n k) (ctx : Ctx)
   trailOk : TrailOk ctx current st trail
   firstPositive : 0 < st.gcaFirst
   canonPositive : 0 < st.gcaCanon
+  firstBound : st.gcaFirst ≤ current
+  canonBound : st.gcaCanon ≤ current
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -912,7 +932,8 @@ theorem RunInv.event {G : Colored n k} {ctx : Ctx}
     RunEvent G ctx tcLevel level cs bs fs st best trail :=
   ⟨Or.inl ⟨hnp, h.codeInv⟩, h.firstInv, h.canongInv,
     h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
-    h.firstPositive, h.canonPositive, h.bestCodes, h.incumbent⟩
+    h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
+    h.bestCodes, h.incumbent⟩
 
 /-- A nonpositive comparison sign remains nonpositive when `recover`
 either leaves it alone or resets it to zero. -/
@@ -936,6 +957,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
     (hle : level ≤ current) (hlevel : 1 ≤ level) (hinf : level < inf)
     (hpath : level ≤ cs.length)
+    (hfirst : st.gcaFirst ≤ level)
     (hok : SearchOk G level numcells (Nauty.recover ctx.n inf level st)) :
     RunInv G ctx tcLevel level (cs.take level) bs fs numcells
       (Nauty.recover ctx.n inf level st) best trail := by
@@ -951,7 +973,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     genTraceOk_of_eq hstore.1 h.genTraceOk,
     autosOk_of_eq hstore.2 h.autosOk,
     h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
-    h.guides.recover hle, h.trailOk.recover hle, ?_, ?_,
+    h.guides.recover hle, h.trailOk.recover hle, ?_, ?_, ?_, ?_,
     h.bestCodes, ?_⟩
   · rw [hframes.2.2.2.2.2.2.1]
     exact h.firstPositive
@@ -961,6 +983,10 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
       omega
     · rw [if_neg hc]
       exact h.canonPositive
+  · rw [hframes.2.2.2.2.2.2.1]
+    exact hfirst
+  · rw [recover_gcaCanon]
+    split <;> omega
   rw [hframes.1]
   exact h.incumbent
 
@@ -1777,7 +1803,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
     h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
-    ?_, ?_, hbs', rfl⟩
+    ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
@@ -1791,6 +1817,14 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
       exact h.canonPositive
     · rw [hnew]
       exact hlevel
+  · rw [hgcaFirst]
+    exact h.firstBound
+  · rcases processnode_canonGuide ctx cs.length numcells st with
+      hold | hnew
+    · rw [hold.1]
+      exact h.canonBound
+    · rw [hnew]
+      exact Nat.le_refl _
 
 /-- A first-path-agreeing leaf whose generator admission guard fails has
 the same exact event invariant as an ordinary compared leaf. -/
@@ -1865,7 +1899,7 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
     h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
-    ?_, ?_, hbs', rfl⟩
+    ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
@@ -1879,5 +1913,13 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
       exact h.canonPositive
     · rw [hnew]
       exact hlevel
+  · rw [hgcaFirst]
+    exact h.firstBound
+  · rcases processnode_canonGuide ctx cs.length numcells st with
+      hold | hnew
+    · rw [hold.1]
+      exact h.canonBound
+    · rw [hnew]
+      exact Nat.le_refl _
 
 end Hex.GraphIso.Nauty
