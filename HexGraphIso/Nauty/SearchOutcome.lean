@@ -74,6 +74,29 @@ theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
     · exact Or.inr (Or.inl ⟨γ, hmem, hcheck, hfirst⟩)
     · exact Or.inr (Or.inr ⟨γ, hmem, hcheck, hcanon⟩)
 
+/-- The guarded code-one event yields the first-reference carrier directly,
+without routing through the event-wide carrier disjunction. -/
+theorem processnode_firstLabelCarrier {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    LabelCarrier ctx st.firstlab st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+  obtain ⟨γ, hmem, hcheck, hmap⟩ := processnode_firstCarrier
+    hsz₁ hp₁ hsz₂ hp₂ hsymm hloop hbound heq hsent hnc
+    (by simpa only [firstScatter] using hpass)
+  exact ⟨γ, hmem, hcheck, hmap⟩
+
 /-- Vertices strictly after the loop cursor. -/
 @[expose] def After (cursor : Option Nat) (v : Nat) : Prop :=
   match cursor with
