@@ -28,7 +28,6 @@ structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
   history : RefTrail ctx level st trail
   order : st.gcaFirst ≤ st.gcaCanon
   stable : ReturnStab trail (Int.ofNat level - 1) st
-  cheapBound : st.noncheaplevel ≤ level
 
 namespace Live
 
@@ -38,9 +37,7 @@ theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
     {trail : FrameTrail} (h : Live ctx level st trail) :
     Live ctx level (otherLeafSt ctx level numcells st) trail :=
   ⟨h.history.otherLeaf, RefTrail.otherLeaf_order h.order,
-    h.stable.otherLeaf, by
-      rw [RefTrail.otherLeaf_noncheaplevel]
-      exact h.cheapBound⟩
+    h.stable.otherLeaf⟩
 
 /-- A leaf event preserves reference history and live GCA ordering.  Its
 return-indexed generator stabilization is supplied separately by the
@@ -325,6 +322,7 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
       (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
       numcells).numcells = ctx.n)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
@@ -369,8 +367,12 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
     exact hnode.canonBelow
   have hfirstBelow : leaf.gcaFirst < level :=
     Nat.lt_of_le_of_lt hlive'.order hcanonBelow
+  have hcheap' : leaf.noncheaplevel ≤ level := by
+    change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
+    rw [RefTrail.otherLeaf_noncheaplevel]
+    exact hcheap
   obtain ⟨bs', hevent, -, houtBest⟩ := hprep.tiedEvent rfl hn0 hgb
-    hsymm hloop hlevel hfull hstem hlive'.cheapBound hef (by simp) hcc hge
+    hsymm hloop hlevel hfull hstem hcheap' hef (by simp) hcc hge
     htie hcanonBelow hlive'
   rw [houtBest] at hevent
   have hrows : leafRows ctx leaf.canonlab = leafRows ctx leaf.lab :=
@@ -418,6 +420,7 @@ theorem NodeInv.plainLeaf {G : Colored n k} {ctx : Ctx}
       (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
       numcells).numcells = ctx.n)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
@@ -451,10 +454,14 @@ theorem NodeInv.plainLeaf {G : Colored n k} {ctx : Ctx}
       hnode.run.otherLeaf rfl hn0 hlevel hpath
   have hlive' : Live ctx level leaf trail := by
     simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hcheap' : leaf.noncheaplevel ≤ level := by
+    change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
+    rw [RefTrail.otherLeaf_noncheaplevel]
+    exact hcheap
   have hreturn : (processnode ctx level ctx.n leaf).1 ≤
       Int.ofNat level - 1 := Int.le_sub_one_iff.mpr hearly
   obtain ⟨bs', hevent, hmax⟩ := hprep.leafEvent rfl hn0 hgb hsymm
-    hloop hlevel hfull hstem hlive'.cheapBound hef (by simp) hreturn hgen
+    hloop hlevel hfull hstem hcheap' hef (by simp) hreturn hgen
     hlive'
   let outKey := incKey ctx bs'
     (processnode ctx level ctx.n leaf).2.canonlab
@@ -513,6 +520,7 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
       (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
       numcells).numcells = ctx.n)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
@@ -546,8 +554,12 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
       hnode.run.otherLeaf rfl hn0 hlevel hpath
   have hlive' : Live ctx level leaf trail := by
     simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hcheap' : leaf.noncheaplevel ≤ level := by
+    change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
+    rw [RefTrail.otherLeaf_noncheaplevel]
+    exact hcheap
   obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf rfl hn0 hgb hsymm
-    hloop hlevel hfull hlive'.cheapBound hef (by simp)
+    hloop hlevel hfull hcheap' hef (by simp)
   let outKey := incKey ctx bs'
     (processnode ctx level ctx.n leaf).2.canonlab
   have hleafLab : leaf.lab =
