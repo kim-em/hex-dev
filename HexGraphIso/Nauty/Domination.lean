@@ -953,6 +953,25 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
+/-- A successful code-one admission does not change the canonical GCA
+control. -/
+theorem processnode_auto_gcaCanon {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (processnode ctx level numcells st).2.gcaCanon = st.gcaCanon := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.gcaCanon),
+    pushAuto_gcaCanon, ite_self]
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+  simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
+
 /-- The code-one arm stores the same first-to-current scatter that it
 appends to the generator trace. -/
 theorem processnode_auto_autos {ctx : Ctx} {level numcells : Nat}

@@ -92,4 +92,72 @@ theorem RunPrep.leafEvent {G : Colored n k} {ctx : Ctx}
   · exact (hlive.stable.lower hreturn).ofGenTraceEq hgen
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
+/-- A code-one admission with a nonpositive incumbent comparison is a
+fully verified generator event.  The semantic loop proof supplies the
+nonpositivity premise from coverage of the guiding child. -/
+theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {stem codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hbelow : st.gcaFirst < level) (hnp : st.compCanon ≤ 0)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx
+      (firstScatter ctx.n st.firstlab st.lab) = true)
+    (hprep : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    EventOut G ctx tcLevel stem fs
+      (processnode ctx level numcells st).2 best trail
+      (processnode ctx level numcells st).1 := by
+  obtain ⟨hreturn, hcomp, heqCanon, hcode, hcanonlevel, hcanonlab,
+      hcanong, hsamerows⟩ := processnode_auto heq hsent hnc hpass
+  have hframes := processnode_frames ctx level numcells st
+  have hgcaCanon := processnode_auto_gcaCanon heq hsent hnc hpass
+  have hevent : RunEvent G ctx tcLevel level codes bs fs
+      (processnode ctx level numcells st).2 best trail := by
+    refine ⟨Or.inl ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+      ?_, ?_, ?_, ?_, hprep.bestCodes, ?_⟩
+    · rw [hcomp]
+      exact hnp
+    · rw [hcomp, heqCanon, hcode, hcanonlevel]
+      exact hprep.codeInv
+    · rw [hframes.2.2.1, hframes.2.2.2.1]
+      exact hprep.firstInv
+    · rw [hcanong, hcanonlab, hsamerows]
+      exact hprep.canongInv
+    · exact hprep.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+        hprep.searchOk hprep.canongInv hprep.genTraceOk
+    · exact hprep.autosOk.processnodeAuto hn hn0 hgb hsymm hloop
+        hprep.searchOk hprep.leafRefs heq hsent hnc hpass
+    · exact hprep.cheap.processnode
+    · exact hprep.leafRefs.processnode hprep.searchOk
+    · apply hprep.guides.processnode (IncGrows.refl best)
+        hframes.2.2.2.2.2.2.1 hframes.2.2.2.2.1
+      intro _
+      exact ⟨hgcaCanon, hcanonlab⟩
+    · exact hprep.trailOk.processnode
+    · rw [hframes.2.2.2.2.2.2.1]
+      exact hprep.firstPositive
+    · rw [hgcaCanon]
+      exact hprep.canonPositive
+    · rw [hframes.2.2.2.2.2.2.1]
+      exact hprep.firstBound
+    · rw [hgcaCanon]
+      exact hprep.canonBound
+    · rw [hcanonlab]
+      exact hprep.incumbent
+  apply EventOut.intro level codes bs hevent hpath hstem
+  · rw [hreturn]
+    exact Int.ofNat_le.mpr (Nat.le_of_lt hbelow)
+  · exact hlive.history.processnodeFirstStab hn hn0 hprep.trailOk
+      hprep.leafRefs hlive.stable hbelow heq hsent hnc hpass
+  · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
+
 end Hex.GraphIso.Nauty
