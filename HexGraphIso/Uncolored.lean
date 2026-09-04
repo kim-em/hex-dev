@@ -143,23 +143,23 @@ theorem isomorphic_singleColor_iff (G H : Graph n) (h : 0 < n) :
 namespace Checked
 
 /-- The certificate-checked canonical form of a graph. -/
-@[expose] def canon (G : Graph n) (h : 0 < n := by first | omega | decide) :
+@[expose] def canon (G : Graph n) (h : 0 < n := by first | decide | omega) :
     Graph n :=
   (GraphIso.Checked.canon (G.singleColor h)).graph
 
 /-- The label producing the certificate-checked canonical form. -/
-@[expose] def label (G : Graph n) (h : 0 < n := by first | omega | decide) :
+@[expose] def label (G : Graph n) (h : 0 < n := by first | decide | omega) :
     GraphIso.Label n :=
   GraphIso.Checked.label (G.singleColor h)
 
 /-- Find one isomorphism from `G` to `H` when one exists. -/
 @[expose] def findIso (G H : Graph n)
-    (h : 0 < n := by first | omega | decide) : Option (GraphIso.Perm n) :=
+    (h : 0 < n := by first | decide | omega) : Option (GraphIso.Perm n) :=
   GraphIso.Checked.findIso (G.singleColor h) (H.singleColor h)
 
 /-- The certificate-checked Boolean isomorphism decision. -/
 @[expose] def isIso (G H : Graph n)
-    (h : 0 < n := by first | omega | decide) : Bool :=
+    (h : 0 < n := by first | decide | omega) : Bool :=
   GraphIso.Checked.isIso (G.singleColor h) (H.singleColor h)
 
 /-- Relabelling by the canonical label produces the canonical form. -/
@@ -223,25 +223,25 @@ end Checked
 
 /-- The canonical form of a graph, fast: the underlying graph of the
 one-cell coloured canonical form. -/
-@[expose] def canon (G : Graph n) (h : 0 < n := by first | omega | decide) :
+@[expose] def canon (G : Graph n) (h : 0 < n := by first | decide | omega) :
     Graph n :=
   (GraphIso.canon (G.singleColor h)).graph
 
 /-- The label producing the canonical form. -/
-@[expose] def label (G : Graph n) (h : 0 < n := by first | omega | decide) :
+@[expose] def label (G : Graph n) (h : 0 < n := by first | decide | omega) :
     GraphIso.Label n :=
   GraphIso.label (G.singleColor h)
 
 /-- Find one isomorphism when the fast canonical forms agree. -/
 @[expose] def findIso (G H : Graph n)
-    (h : 0 < n := by first | omega | decide) : Option (GraphIso.Perm n) :=
+    (h : 0 < n := by first | decide | omega) : Option (GraphIso.Perm n) :=
   GraphIso.findIso (G.singleColor h) (H.singleColor h)
 
 /-- The fast Boolean isomorphism decision. `false` is
 conformance-pinned, not proven: use `Graph.Checked.isIso` where a
 `false` answer must carry a proof. -/
 @[expose] def isIso (G H : Graph n)
-    (h : 0 < n := by first | omega | decide) : Bool :=
+    (h : 0 < n := by first | decide | omega) : Bool :=
   GraphIso.isIso (G.singleColor h) (H.singleColor h)
 
 /-- Relabelling by the label produces the form. -/

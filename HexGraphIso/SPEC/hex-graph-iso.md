@@ -317,7 +317,11 @@ def Graph.Isomorphic (G H : Graph n) : Prop :=
 
 `n = 0` forces `k = 0`, so `Graph.singleColor` and every operation
 below take `0 < n`. The hypothesis is an auto-parameter discharged by
-`omega` or `decide`, so it is invisible at a concrete size.
+`decide` or `omega`, so it is invisible at a concrete size. `decide`
+comes first because it closes a literal size with a self-contained
+term, where `omega` lifts an auxiliary theorem that is named in the
+root namespace when the call sits in a command with no enclosing
+declaration.
 
 One equivalence carries the whole surface:
 

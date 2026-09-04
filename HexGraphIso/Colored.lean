@@ -72,7 +72,14 @@ theorem isSome_ofVector? (v : Vector (Fin k) n) :
 
 /-- The constant zero colouring: the one-cell colouring of a nonempty vertex
 set. -/
-@[expose] def trivial (n : Nat) (h : 0 < n := by first | omega | decide) :
+-- The size side conditions here and below try `decide` before `omega`.
+-- At a literal size `decide` closes the goal with a self-contained term,
+-- whereas `omega` lifts an auxiliary theorem into the ambient namespace;
+-- at a command that has no enclosing declaration (a `#guard` or `#eval`,
+-- as in the manual chapters) that theorem is named in the root namespace
+-- and two modules that produce one cannot both be imported. `omega`
+-- remains the fallback, and is what runs at a symbolic size.
+@[expose] def trivial (n : Nat) (h : 0 < n := by first | decide | omega) :
     Coloring n 1 where
   cells := Hex.Vector.ofFn' fun _ => 0
   onto c := ⟨⟨0, h⟩, by
@@ -86,8 +93,8 @@ carries no information beyond its existence. -/
   Fin.ext (Nat.lt_one_iff.mp (c.cells[i]).isLt)
 
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
-@[expose] def mod (n k : Nat) (hk : 0 < k := by first | omega | decide)
-    (hkn : k ≤ n := by first | omega | decide) : Coloring n k where
+@[expose] def mod (n k : Nat) (hk : 0 < k := by first | decide | omega)
+    (hkn : k ≤ n := by first | decide | omega) : Coloring n k where
   cells := Hex.Vector.ofFn' fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
   onto c := by
     refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
@@ -167,7 +174,7 @@ single colour zero, so a coloured isomorphism is exactly a graph
 isomorphism. `n = 0` would force `k = 0`, so this is defined for
 positive `n`. -/
 @[expose] def _root_.Hex.Graph.singleColor {n : Nat} (G : Graph n)
-    (h : 0 < n := by first | omega | decide) : Colored n 1 :=
+    (h : 0 < n := by first | decide | omega) : Colored n 1 :=
   { graph := G, coloring := Coloring.trivial n h }
 
 @[simp] theorem _root_.Hex.Graph.graph_singleColor {n : Nat} (G : Graph n)
