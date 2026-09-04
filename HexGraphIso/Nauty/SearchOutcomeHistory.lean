@@ -104,6 +104,48 @@ theorem stateEq {ctx : Ctx} {current : Nat} {st st' : SearchSt}
     rw [hcanon]
     exact h.canon target entry hlt hle hentry
 
+/-- Refinement and the off-path comparison step retain both reference
+histories. -/
+theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : RefTrail ctx level st trail) :
+    RefTrail ctx level (otherLeafSt ctx level numcells st) trail := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  have hf := otherNodePrep_frames level rs.longcode base
+  apply h.stateEq
+  · simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.1
+  · simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.1
+  · simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.2.1
+  · simpa only [otherLeafSt, rs, base] using hf.1
+
+/-- The off-path comparison step preserves the ordering of the two GCA
+controls while search remains active. -/
+theorem otherLeaf_order {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt} (h : st.gcaFirst ≤ st.gcaCanon) :
+    (otherLeafSt ctx level numcells st).gcaFirst ≤
+      (otherLeafSt ctx level numcells st).gcaCanon := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  have hf := otherNodePrep_frames level rs.longcode base
+  have hfirst : (otherLeafSt ctx level numcells st).gcaFirst =
+      st.gcaFirst := by
+    simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.1
+  have hcanon : (otherLeafSt ctx level numcells st).gcaCanon =
+      st.gcaCanon := by
+    simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.2.1
+  rw [hfirst, hcanon]
+  exact h
+
 /-- Recovering an ancestor preserves both reference histories.  The
 canonical control may be clamped to the recovered level, which only
 weakens its reach obligation. -/
@@ -452,5 +494,25 @@ theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx}
       hcanonBelow (hprev.lower hreturnBound) hpush hmap
 
 end RefTrail
+
+namespace ReturnStab
+
+/-- Refinement and the off-path comparison step leave the generator
+store unchanged. -/
+theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
+    {trail : FrameTrail} {r : Int} (h : ReturnStab trail r st) :
+    ReturnStab trail r (otherLeafSt ctx level numcells st) := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  apply h.ofGenTraceEq
+  simpa only [otherLeafSt, rs, base] using
+    (otherNodePrep_store level rs.longcode base).1
+
+end ReturnStab
 
 end Hex.GraphIso.Nauty
