@@ -416,6 +416,127 @@ theorem RunInv.read {G : Colored n k} {ctx : Ctx}
   rw [stInc_eq_ghost h.codeInv hne, ghostInc]
   simp only [h.bestCodes, ↓reduceIte, h.incumbent]
 
+/-! # Post-refinement comparison state -/
+
+/-- The semantic state after refinement and `otherNodePrep`, before
+`processnode` restores the stable comparison sign.  This differs from
+`RunInv` only in omitting `compCanon ≤ 0`: comparing the freshly appended
+refinement code may set the sign to one. -/
+structure RunPrep (G : Colored n k) (ctx : Ctx)
+    (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
+    (st : SearchSt) (best : Option Key) (trail : FrameTrail) : Prop where
+  searchOk : SearchOk G level numcells st
+  codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
+    st.eqlevCanon st.compCanon
+  firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
+  canongInv : CanongInv ctx st.canong st.canonlab st.samerows
+  stab : ∀ γ ∈ st.genTrace,
+    CellStab st.ptn level st.lab γ
+  genTraceOk : GenTraceOk ctx st
+  autosOk : AutosOk ctx.g
+    (initPtn n (n + 2) (initialPartition G).2)
+    (initialPartition G).1 1 ctx.n st.autos
+  cheap : CheapOk ctx (initialPartition G).1
+    (initPtn n (n + 2) (initialPartition G).2) level st
+  leafRefs : LeafRefsOk G st
+  guides : GuideStore ctx tcLevel level st best trail
+  bestCodes : bs ≠ []
+  incumbent : best = some (incKey ctx bs st.canonlab)
+
+/-- Refinement followed by the off-path comparison step enters
+`RunPrep`.  The active-set facts needed to transport generator cell
+stabilization are local to a node entry; loops establish them afresh for
+each child with `childNodeOk`. -/
+theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = n)
+    (hpath : level = cs.length + 1)
+    (hnode : NodeOk n level st.lab st.ptn st.active)
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail) :
+    RunPrep G ctx tcLevel level
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) bs fs
+      (refine ctx level st.lab st.ptn st.active numcells).numcells
+      (otherLeafSt ctx level numcells st) best trail := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  have hout : otherLeafSt ctx level numcells st =
+      otherNodePrep level rs.longcode base := by
+    rfl
+  have hframes := otherNodePrep_frames level rs.longcode base
+  have hstore := otherNodePrep_store level rs.longcode base
+  have hlab : (otherLeafSt ctx level numcells st).lab = rs.lab := by
+    rw [hout, hframes.2.2.2.2.2.2.2.2.2.2.2.1]
+  have hptn : (otherLeafSt ctx level numcells st).ptn = rs.ptn := by
+    rw [hout, hframes.2.2.2.2.2.2.2.2.2.2.2.2]
+  have hcanon : (otherLeafSt ctx level numcells st).canonlab =
+      st.canonlab := by
+    rw [hout, hframes.1]
+  have hfirst : (otherLeafSt ctx level numcells st).firstlab =
+      st.firstlab := by
+    rw [hout, hframes.2.2.2.2.1]
+  have hgcaFirst : (otherLeafSt ctx level numcells st).gcaFirst =
+      st.gcaFirst := by
+    rw [hout, hframes.2.2.2.2.2.2.1]
+  have hgcaCanon : (otherLeafSt ctx level numcells st).gcaCanon =
+      st.gcaCanon := by
+    rw [hout, hframes.2.2.2.2.2.2.2.1]
+  have hncl : (otherLeafSt ctx level numcells st).noncheaplevel =
+      st.noncheaplevel := by
+    rw [hout, hframes.2.2.2.2.2.2.2.2.1]
+  have hgen : (otherLeafSt ctx level numcells st).genTrace =
+      st.genTrace := by
+    rw [hout, hstore.1]
+  have hautos : (otherLeafSt ctx level numcells st).autos = st.autos := by
+    rw [hout, hstore.2]
+  have hok : SearchOk G level rs.numcells
+      (otherLeafSt ctx level numcells st) :=
+    refine_searchOk hn hn0 h.searchOk hlevel hlab hptn (Or.inl hcanon)
+  have hstab : ∀ γ ∈ (otherLeafSt ctx level numcells st).genTrace,
+      CellStab (otherLeafSt ctx level numcells st).ptn level
+        (otherLeafSt ctx level numcells st).lab γ := by
+    intro γ hγ
+    rw [hgen] at hγ
+    rw [hlab, hptn]
+    apply cellStab_refine hn (h.stab γ hγ) hgsz
+    · simpa only [hn] using h.genTraceOk γ hγ
+    · exact hnode.labSize
+    · exact hnode.labOk
+    · exact hnode.ptnSize
+    · exact hnode.act
+    · exact hnode.ptnEnd
+    · exact hnode.starts
+  subst level
+  refine ⟨hok,
+    otherNodePrep_codeInv h.codeInv
+      (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
+        numcells) ?_,
+    otherNodePrep_firstCodeInv h.firstInv
+      (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
+        numcells), ?_, hstab, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
+  · have hb := bcount_le st.ptn (cs.length + 1) n
+    have hc := h.searchOk.bc
+    omega
+  · rw [hout]
+    exact canongInv_otherNodePrep h.canongInv
+  · exact genTraceOk_of_eq hgen h.genTraceOk
+  · exact autosOk_of_eq hautos h.autosOk
+  · apply h.cheap.refine (by omega) hlab hptn hncl
+  · exact ⟨by rw [hfirst]; exact h.leafRefs.firstSize,
+      by rw [hfirst]; exact h.leafRefs.firstReach,
+      by rw [hcanon]; exact h.leafRefs.canonSize,
+      by rw [hcanon]; exact h.leafRefs.canonReach⟩
+  · exact h.guides.stateEq hgcaFirst hfirst hgcaCanon hcanon
+  · rw [hcanon]
+    exact h.incumbent
+
 /-! # First-leaf phase transition -/
 
 /-- The state fields needed to enter the stable induction immediately
