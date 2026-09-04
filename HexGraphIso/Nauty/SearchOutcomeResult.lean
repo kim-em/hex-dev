@@ -50,6 +50,72 @@ structure OtherOutcome (G : Colored n k) (ctx : Ctx)
     numcells best outBest trail r
   firstGuide : out.gcaFirst = st.gcaFirst
 
+/-- The integer return represented by a loop result.  Exhausting the
+sweep completes its parent node one level up. -/
+@[expose] def loopReturn (level : Nat) : Option Int → Int
+  | some r => r
+  | none => Int.ofNat level - 1
+
+/-- A loop receipt coupled to the concrete result invariant ultimately
+returned by its parent node.  `stem` is the parent node's entry prefix;
+the loop's own `codes` include that node's refinement code. -/
+structure LoopOutcome (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key) (trail : FrameTrail)
+    (r : Option Int) : Prop where
+  receipt : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
+    codes rsLab rsPtn tc len numcells tcell cursor bound st out best
+    outBest r
+  event : EventOut G ctx tcLevel stem fs out outBest trail
+    (loopReturn level r)
+
+/-- A loop that returns an integer supplies its parent node outcome. -/
+theorem LoopOutcome.toNodeSome {G : Colored n k} {ctx : Ctx}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
+    {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key} {trail : FrameTrail} {r : Int}
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+      nodeNumcells)
+    (h : LoopOutcome G ctx tcLevel loopSpecFuel runFuel loopFuel level nodeCs
+      loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
+      out best outBest trail (some r)) :
+    NodeOutcome G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs
+      nodeSt out nodeNumcells best outBest trail r := by
+  exact ⟨NodeReceipt.ofLoopSome hbound h.receipt, h.event⟩
+
+/-- A completed loop with sufficient cursor fuel supplies its parent
+node's completed outcome. -/
+theorem LoopOutcome.toNodeNone {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
+    {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key} {trail : FrameTrail}
+    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs
+      nodeSt nodeNumcells)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level nodeCs
+      loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
+      out best outBest trail none) :
+    NodeOutcome G ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs fs
+      nodeSt out nodeNumcells best outBest trail
+      (Int.ofNat level - 1) := by
+  exact ⟨NodeReceipt.ofLoopNone hbound hchildren hlen hfuel h.receipt,
+    h.event⟩
+
 /-- First-path exit bookkeeping preserves a corrected node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells size index : Nat}
