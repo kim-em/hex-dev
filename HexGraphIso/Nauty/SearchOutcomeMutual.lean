@@ -67,6 +67,17 @@ theorem ofCellsPerm {ctx : Ctx} {level : Nat} {st out : SearchSt}
   · rw [hptn]
     exact hsingle
 
+/-- A parent-level search effect preserves fixed singletons when it
+preserves the fixed-point bitset. -/
+theorem ofSearchOut {G : Colored n k} {ctx : Ctx} {level numcells : Nat}
+    {st out : SearchSt} (h : FixedCells ctx level st)
+    (hfixed : out.fixedpts = st.fixedpts)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out)
+    (heffect : SearchOut G level level st out) :
+    FixedCells ctx level out :=
+  h.ofCellsPerm hfixed (heffect.ptnEq hok hout) heffect.perm
+
 /-- Individualizing a fresh target vertex adds exactly one fixed
 singleton and preserves every older fixed singleton. -/
 theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
