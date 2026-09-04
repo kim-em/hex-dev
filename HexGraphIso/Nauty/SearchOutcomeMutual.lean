@@ -192,6 +192,172 @@ theorem cover {G : Colored n k} {ctx : Ctx}
         hinv.baseOk.reach
     · exact hinv.range
 
+/-- After recovery, the first guide remains strictly older and the
+canonical guide names either an earlier covered child or the child just
+absorbed.  Thus both current-frame reference obligations are restored. -/
+theorem refs {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell tv offset
+      currentOffset inf fixedpts : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : OtherLive ctx level st trail)
+    (h : OtherOutcome G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hcover : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) outBest)
+    (hfuel : runFuel ≠ 0)
+    (hnext : nextElem tcell cursor = some tv)
+    (hoffset : offset < len) (hcurrent : currentOffset < len)
+    (htv : rsLab[tc + offset]! = tv)
+    (hat : st.lab[tc + currentOffset]! = tv) :
+    FrameRefs ctx tcLevel specFuel level codes rsLab rsPtn tc len numcells
+      (Nauty.recover ctx.n inf level { out with fixedpts := fixedpts })
+      outBest := by
+  let child : SearchSt :=
+    { st with
+      lab := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).1
+      ptn := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.1
+      active := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.2
+      fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+  let cleaned : SearchSt := { out with fixedpts := fixedpts }
+  have hinc : IncGrows best outBest :=
+    (h.node.receipt.sound hfuel).grows
+  constructor
+  · intro heq
+    have hfirstRec :=
+      (recover_frames ctx.n inf level cleaned).2.2.2.2.2.2.1
+    have hfirstChild : child.gcaFirst = st.gcaFirst := rfl
+    have hfirstOut : out.gcaFirst = st.gcaFirst := by
+      exact h.firstGuide.trans hfirstChild
+    rw [hfirstRec] at heq
+    change out.gcaFirst = level at heq
+    rw [hfirstOut] at heq
+    exact (Nat.ne_of_lt hlive.firstBelow heq).elim
+  · intro heq
+    have hcanonRec := recover_gcaCanon ctx.n inf level cleaned
+    have hcanonLab := (recover_frames ctx.n inf level cleaned).1
+    rcases h.canonGuide with hold | hnew
+    · have hcanonChild : child.gcaCanon = st.gcaCanon := rfl
+      have hcanonOut : out.gcaCanon = st.gcaCanon :=
+        hold.1.trans hcanonChild
+      have hcanonEq : st.gcaCanon = level := by
+        rw [hcanonRec] at heq
+        change (if level < out.gcaCanon then level else out.gcaCanon) =
+          level at heq
+        rw [hcanonOut] at heq
+        rw [ite_eq_right (Nat.not_lt_of_ge hinv.run.canonBound)] at heq
+        exact heq
+      obtain ⟨o, ho, hdone, hatRef, hperm⟩ :=
+        (hinv.refs.grow hinc).canon hcanonEq
+      refine ⟨o, ho, hdone, ?_, ?_⟩
+      · rw [hcanonLab]
+        change out.canonlab[tc]! = rsLab[tc + o]!
+        rw [hold.2]
+        exact hatRef
+      · rw [hcanonLab]
+        change cellsPerm rsPtn level rsLab out.canonlab
+        rw [hold.2]
+        exact hperm
+    · have hmem : elem tcell rsLab[tc + offset]! = true := by
+        rw [htv]
+        exact nextElem_mem hnext
+      have hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells outBest offset :=
+        hcover.past offset hoffset hmem (by
+          simp only [After, htv]
+          omega)
+      have hstSize : st.lab.size = ctx.n := by
+        rw [hinv.nodeCount]
+        exact hinv.run.searchOk.labSize
+      have hstPtnSize : st.ptn.size = ctx.n := by
+        rw [hinv.nodeCount]
+        exact hinv.run.searchOk.ptnSize
+      have hcurrentPos : tc + currentOffset < st.lab.size := by
+        rw [hstSize]
+        exact Nat.lt_of_lt_of_le (Nat.add_lt_add_left hcurrent tc)
+          hinv.range
+      have htcPtn : tc < st.ptn.size := by
+        rw [hstPtnSize]
+        exact Nat.lt_of_lt_of_le (by omega : tc < tc + len) hinv.range
+      have hrangePtn : tc + len ≤ st.ptn.size := by
+        rw [hstPtnSize]
+        exact hinv.range
+      have hstInj : LabInj st.lab st.lab.size := by
+        rw [hinv.run.searchOk.labSize]
+        exact labInj_of_reach hinv.run.searchOk.labSize hinv.nonempty
+          hinv.run.searchOk.reach
+      have hchildAt : child.lab[tc]! = tv := by
+        change (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1[tc]! = tv
+        rw [breakout_at_target hstInj hcurrentPos, hat]
+      have hchildPtn : child.ptn = st.ptn.set! tc (level + 1) := by
+        exact breakout_ptn st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!
+      have hchildCell : IsCell child.ptn (level + 1) tc 1 := by
+        rw [hchildPtn]
+        exact isCell_breakout_target (lab := st.lab)
+          (tv := st.lab[tc + currentOffset]!) htcPtn
+          hinv.currentCell.2.1
+      have houtAt : out.canonlab[tc]! = tv := by
+        rw [← hchildAt]
+        exact (cellsPerm_singleton hnew.2 hchildCell).symm
+      have hchildOk : SearchOk G (level + 1) (numcells + 1) child := by
+        apply breakout_searchOk hinv.nonempty hinv.run.searchOk hinv.positive
+          hinv.currentCell hinv.lenTwo
+          (by rw [← hinv.nodeCount]; exact hinv.range) hcurrent
+        · rfl
+        · exact hchildPtn
+        · rfl
+      have hfine : cellsPerm st.ptn level child.lab out.canonlab := by
+        apply cellsPerm_coarsen (ptnF := child.ptn) (levF := level + 1)
+        · rw [hchildPtn, Array.size_set!]
+        · exact hchildOk.labSize.trans hchildOk.ptnSize.symm
+        · rw [h.node.event.canonSize, hchildOk.ptnSize,
+            ← hinv.nodeCount]
+        · exact hnew.2
+        · exact searchOk_end hinv.nonempty hchildOk (by omega)
+        · exact searchOk_end hinv.nonempty hinv.run.searchOk hinv.positive
+        · intro q hq
+          rw [hchildPtn]
+          rcases Decidable.em (tc = q) with rfl | hne
+          · rw [Array.getElem!_set!_self _ _ _ htcPtn]
+            exact Nat.le_refl _
+          · rw [Array.getElem!_set!_ne _ _ _ _ hne]
+            omega
+      have hbreak : cellsPerm st.ptn level st.lab child.lab := by
+        change cellsPerm st.ptn level st.lab
+          (breakout st.lab st.ptn (level + 1) tc
+            st.lab[tc + currentOffset]!).1
+        exact breakout_cellsPerm hinv.currentCell hrangePtn
+          (by rw [hinv.run.searchOk.labSize, hinv.run.searchOk.ptnSize])
+          hcurrent
+      have hperm : cellsPerm rsPtn level rsLab out.canonlab := by
+        rw [hinv.ptnEq] at hbreak hfine
+        exact cellsPerm_trans hinv.labPerm (cellsPerm_trans hbreak hfine)
+      refine ⟨offset, hoffset, hdone, ?_, ?_⟩
+      · rw [hcanonLab]
+        change out.canonlab[tc]! = rsLab[tc + offset]!
+        rw [houtAt, htv]
+      · rw [hcanonLab]
+        exact hperm
+
 end OtherOutcome
 
 /-- The bookkeeping between an off-path node's refinement and its fresh

@@ -214,6 +214,15 @@ theorem read {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   cases h with
   | intro _ _ _ event _ _ _ _ _ _ => exact event.read
 
+/-- Every event output retains a full-size canonical reference. -/
+theorem canonSize {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r) :
+    out.canonlab.size = n := by
+  cases h with
+  | intro _ _ _ event _ _ _ _ _ _ => exact event.leafRefs.canonSize
+
 /-- Every event output exposes stabilization through the smaller of its
 return target and live first-reference GCA.  Direct carrier returns need
 no stronger statement, while the orbit-return arm targets this GCA. -/
