@@ -523,6 +523,97 @@ theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
     h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
     h.firstPositive, h.canonPositive, h.bestCodes, h.incumbent⟩
 
+/-- Individualization carries a stable loop state into its recursive
+child. The loop supplies the two facts that depend on its history: the
+cheap-boundary state selected by the guard and the newly active guide
+store. All structural and ledger fields follow from the parent state. -/
+theorem RunInv.child {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len o : Nat}
+    {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len)
+    (hcheap : CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) (level + 1) st)
+    (hguides : GuideStore ctx tcLevel (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]!
+        cosetindex := st.lab[tc + o]! }
+      best
+      (trail.push level
+        ⟨sweepFrame specFuel cs st.lab st.ptn tc numcells, o⟩)) :
+    RunInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]!
+        cosetindex := st.lab[tc + o]! }
+      best
+      (trail.push level
+        ⟨sweepFrame specFuel cs st.lab st.ptn tc numcells, o⟩) := by
+  subst n
+  let child : SearchSt := { st with
+    lab := (breakout st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).1
+    ptn := (breakout st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).2.1
+    active := (breakout st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).2.2
+    fixedpts := insert st.fixedpts st.lab[tc + o]!
+    cosetindex := st.lab[tc + o]! }
+  have hok : SearchOk G (level + 1) (numcells + 1) child := by
+    apply breakout_searchOk hn0 h.searchOk hlevel hcell hlen hrange ho
+    · rfl
+    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!
+    · rfl
+  have hinj : LabInj st.lab st.lab.size := by
+    intro i j hi hj heq
+    apply (labInj_of_reach h.searchOk.labSize hn0 h.searchOk.reach)
+      i j
+    · rw [h.searchOk.labSize] at hi
+      exact hi
+    · rw [h.searchOk.labSize] at hj
+      exact hj
+    · exact heq
+  have htrail : TrailOk ctx (level + 1) child
+      (trail.push level
+        ⟨sweepFrame specFuel cs st.lab st.ptn tc numcells, o⟩) := by
+    apply h.trailOk.push h.searchOk.labSize h.searchOk.ptnSize hinj
+      (searchOk_end hn0 h.searchOk hlevel) hcell hlen hrange ho
+    · rfl
+    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!
+  change RunInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
+    child best
+    (trail.push level
+      ⟨sweepFrame specFuel cs st.lab st.ptn tc numcells, o⟩)
+  refine ⟨hok, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hguides, htrail,
+    ?_, ?_, h.bestCodes, ?_⟩
+  · exact h.codeInv
+  · exact h.firstInv
+  · exact h.canongInv
+  · exact h.genTraceOk
+  · exact h.autosOk
+  · apply hcheap.breakout hlevel hcell hlen hrange ho <;> rfl
+  · exact ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+  · exact h.firstPositive
+  · exact h.canonPositive
+  · exact h.incumbent
+
 /-- Refinement followed by the off-path comparison step enters
 `RunPrep`.  Generator validity is global, while stabilization is proved
 only at the loop frame where a generator is consumed. -/
