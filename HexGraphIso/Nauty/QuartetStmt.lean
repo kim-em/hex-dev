@@ -100,9 +100,10 @@ code list. -/
 /-- Outside the upward overwrite window, `canoncode` contains exactly the
 ghost incumbent codes. -/
 theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt}
+    {compCanon : Int}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
-      st.eqlevCanon st.compCanon)
-    (hne : st.compCanon ≠ 1) :
+      st.eqlevCanon compCanon)
+    (hne : compCanon ≠ 1) :
     bestCodesOf st = bs := by
   unfold bestCodesOf
   refine List.ext_getElem (by simp [hinv.blen]) fun i hi hb => ?_
@@ -120,10 +121,10 @@ theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt}
 /-- At a stable comparison state, reading the mutable incumbent agrees
 with the semantic ghost incumbent. -/
 theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
-    {st : SearchSt}
+    {st : SearchSt} {compCanon : Int}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
-      st.eqlevCanon st.compCanon)
-    (hne : st.compCanon ≠ 1) :
+      st.eqlevCanon compCanon)
+    (hne : compCanon ≠ 1) :
     stInc ctx st = ghostInc ctx bs st.canonlab := by
   rw [stInc, ghostInc, bestCodesOf_eq hinv hne, hinv.blen]
   cases bs <;> simp [incKey]
