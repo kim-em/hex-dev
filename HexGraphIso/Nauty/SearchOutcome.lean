@@ -753,6 +753,31 @@ structure Anchor (ctx : Ctx) (tcLevel target : Nat)
   done : ChildDone ctx tcLevel specFuel target codes rsLab rsPtn tc
     numcells best offset
 
+/-- Turn an already-covered reference child into the current child's
+unwind anchor using a checked carrier between their leaf labellings. -/
+def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
+    {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
+    {store : Array (Array Nat)} {tc len numcells oRef oCur : Nat}
+    {best : Option Key} (hpos : 1 ≤ level)
+    (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells best oRef)
+    (hcarrier : LabelCarrier ctx ref cur store)
+    (hstab : ∀ γ ∈ store, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (href : oRef < len) (hcur : oCur < len)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hatRef : ref[tc]! = rsLab[tc + oRef]!)
+    (hatCur : cur[tc]! = rsLab[tc + oCur]!) :
+    Anchor ctx tcLevel level best := by
+  refine ⟨hpos, specFuel, codes, rsLab, rsPtn, tc, numcells, oCur, ?_⟩
+  apply hdone.ofEq
+  exact sweepKey_of_carrier hn hgsz hcarrier hstab hs hok hsp hend hvals
+    hic hrange href hcur hlf hatRef hatCur
+
 /-- Why an early return is sound.  Code one and code two retain their
 different reference labellings; comparison pruning has no generator. -/
 inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
