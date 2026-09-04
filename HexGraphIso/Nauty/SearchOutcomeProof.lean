@@ -739,6 +739,113 @@ theorem otherNode_leaf_firstAuto {ctx : Ctx}
     (st := leaf) heq hsent (by simp) hpass).1
   exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
 
+/-- A row-tied code-two leaf becomes either the canonical-guide unwind or
+the explicitly distinguished first-ancestor orbit unwind. -/
+theorem otherNode_leaf_rowTie {ctx : Ctx}
+    {nn inf tcLevel specFuel fuel level numcells : Nat}
+    {cs bs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hcinv : CodeCmpInv nn
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) bs
+      (otherLeafSt ctx level numcells st).canoncode
+      (otherLeafSt ctx level numcells st).canonlevel
+      (otherLeafSt ctx level numcells st).eqlevCanon 0)
+    (hginv : CanongInv ctx (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hcc : (otherLeafSt ctx level numcells st).compCanon = 0)
+    (hge : ¬(level < (otherLeafSt ctx level numcells st).canonlevel))
+    (htie : (testcanlab ctx (updatecan ctx
+      (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+      (otherLeafSt ctx level numcells st).lab).1 = 0)
+    (hgsz : ctx.g.size = ctx.n)
+    (hcanonSize : (otherLeafSt ctx level numcells st).canonlab.size =
+      ctx.n)
+    (hcanonPerm : (otherLeafSt ctx level numcells st).canonlab.toList.Perm
+      (List.range ctx.n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+    (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
+      (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hcanonBelow : (otherLeafSt ctx level numcells st).gcaCanon < level)
+    (hfirstPos : 1 ≤ (otherLeafSt ctx level numcells st).gcaFirst)
+    (hfirstBelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
+    (g : Guide ctx tcLevel
+      (otherLeafSt ctx level numcells st).gcaCanon
+      (some (incKey ctx bs st.canonlab)))
+    (href : g.ref = (otherLeafSt ctx level numcells st).canonlab)
+    (hstab : ∀ γ ∈ (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace,
+      CellStab g.rsPtn (otherLeafSt ctx level numcells st).gcaCanon
+        g.rsLab γ)
+    {oCur : Nat} (hcur : oCur < g.len)
+    (hatCur : (otherLeafSt ctx level numcells st).lab[g.tc]! =
+      g.rsLab[g.tc + oCur]!)
+    (hcoset : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
+    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2.orbits ctx.n) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (incKey ctx bs st.canonlab))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let leaf := otherLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hlen : full.length = bs.length := by
+    have hle := codeInv_tied_le hcinv
+    have hblen := hcinv.blen
+    rw [hfullLen] at hle
+    omega
+  have hcodes : full = bs := codeInv_eq_of_tied hcinv hlen
+  have hrows : leafRows ctx leaf.canonlab = leafRows ctx leaf.lab :=
+    rows_eq_of_testcanlab_tie hginv htie
+  have hframes := otherNodePrep_frames level code
+    { st with
+      lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+      ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+      active := (refine ctx level st.lab st.ptn st.active numcells).active
+      numnodes := st.numnodes + 1 }
+  rcases hframes with
+    ⟨hcanon, _, _, _, _, _, _, _, _, _, _, hlab, _⟩
+  have hleafCanon : leaf.canonlab = st.canonlab := hcanon
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := hlab
+  have hkey : pathLeafKey ctx full leaf.lab =
+      incKey ctx bs st.canonlab := by
+    unfold pathLeafKey incKey
+    rw [hcodes, ← hrows, hleafCanon]
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full leaf.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey, hleafLab]
+  have hsound : NodeSound ctx tcLevel (specFuel + 1) level cs st numcells
+      (some (incKey ctx bs st.canonlab))
+      (some (incKey ctx bs st.canonlab)) := by
+    apply NodeSound.ofExact
+    simp only [incMax]
+    rw [hnode, hkey, keyMax_eq_left (keyLe_refl _)]
+  obtain ⟨target, hreturn, hbelow, hpayload⟩ := g.tiedUnwind href hgsz
+    hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
+    hcc hge htie hcanonBelow hfirstPos hfirstBelow hstab hcur hatCur
+    hcoset horbit
+  exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
+
 /-- A first-path-agreeing leaf whose sentinel or automorphism guard fails
 falls through the ordinary leaf comparison and yields the same exact local
 prune outcome. -/
