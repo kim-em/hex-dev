@@ -793,6 +793,56 @@ end LoopProof
 
 namespace FirstLoopProof
 
+/-- An early-returning first-path loop supplies its enclosing first-path
+node while dropping the loop's own frozen frame from the active history. -/
+theorem toNodeSome {G : Colored n k} {ctx : Ctx}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
+    {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+      nodeNumcells)
+    (hfixed : loopSt.fixedpts = nodeSt.fixedpts)
+    (h : FirstLoopProof G ctx tcLevel loopSpecFuel runFuel loopFuel level
+      nodeCs loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound
+      loopSt out none outBest receiptTrail eventTrail (some r)) :
+    FirstProof G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs nodeSt
+      out nodeNumcells outBest receiptTrail eventTrail r :=
+  ⟨⟨h.loop.outcome.toNodeSome hbound, h.loop.fixed.trans hfixed⟩,
+    h.trail.lower⟩
+
+/-- A fully exhausted first-path loop supplies its enclosing node once
+cursor fuel proves that exhaustion means complete child coverage. -/
+theorem toNodeNone {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
+    {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len nodeNumcells loopNumcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
+    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs
+      nodeSt nodeNumcells)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfixed : loopSt.fixedpts = nodeSt.fixedpts)
+    (h : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level
+      nodeCs loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound
+      loopSt out none outBest receiptTrail eventTrail none) :
+    FirstProof G ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs fs
+      nodeSt out nodeNumcells outBest receiptTrail eventTrail
+      (Int.ofNat level - 1) :=
+  ⟨⟨h.loop.outcome.toNodeNone hbound hchildren hlen hfuel,
+      h.loop.fixed.trans hfixed⟩,
+    h.trail.lower⟩
+
 theorem reindexSet {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
@@ -854,6 +904,26 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
   ⟨h.loop.prepend hfixed hpre, h.trail⟩
 
 end FirstLoopProof
+
+namespace FirstProof
+
+/-- The final first-path `allsamelevel` adjustment preserves both the
+semantic result and the stored first-leaf history. -/
+theorem firstFinish {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells size index : Nat}
+    {cs fs : List Nat} {st out : SearchSt} {outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (hfuel : runFuel ≠ 0)
+    (h : FirstProof G ctx tcLevel specFuel runFuel level cs fs st out
+      numcells outBest receiptTrail eventTrail r) :
+    FirstProof G ctx tcLevel specFuel runFuel level cs fs st
+      (Nauty.firstFinish level size index out) numcells outBest
+      receiptTrail eventTrail r :=
+  ⟨h.node.firstFinish hfuel,
+    h.trail.retrail (firstFinish_firstlab level size index out)
+      (TrailExt.refl level eventTrail)⟩
+
+end FirstProof
 
 namespace LoopInv
 
