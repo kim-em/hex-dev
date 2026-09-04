@@ -1039,6 +1039,7 @@ theorem childCheap {G : Colored n k} {ctx : Ctx}
         ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
       eventTrail (Int.ofNat boundary - 1))
     (hpositive : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hsaved : out.noncheaplevel = boundary)
     (hbound : bound = childKey)
     (hexact : outBest = some (incMax best childKey))
     (hfresh : elem st.fixedpts tv = false) :
@@ -1070,8 +1071,8 @@ theorem childCheap {G : Colored n k} {ctx : Ctx}
   have hinstalled : cleaned.canonlevel ≠ 0 :=
     canonlevel_ne_zero_of_stInc (hevent.read.trans hexactBound)
   rw [hstate]
-  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexactBound,
-    ?_⟩
+  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow
+    (by simpa only [cleaned] using hsaved) hexactBound, ?_⟩
   · exact {
       loop := {
         outcome := {
@@ -1148,6 +1149,7 @@ theorem cheap {G : Colored n k} {ctx : Ctx}
     (hfixed : out.fixedpts = st.fixedpts)
     (hcoset : out.cosetindex = st.cosetindex)
     (hpositive : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hsaved : out.noncheaplevel = boundary)
     (hexact : outBest = some (incMax best bound))
     (hsource : out.needshortprune = true →
       ShortSource G ctx out eventTrail (Int.ofNat boundary - 1)) :
@@ -1164,7 +1166,8 @@ theorem cheap {G : Colored n k} {ctx : Ctx}
   have hinstalled : out.canonlevel ≠ 0 :=
     canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
   rw [hstate]
-  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexact, ?_⟩
+  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hsaved hexact,
+    ?_⟩
   · exact {
     loop := {
       outcome := {

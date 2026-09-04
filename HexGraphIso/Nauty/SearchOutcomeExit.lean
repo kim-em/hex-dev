@@ -46,6 +46,7 @@ inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
   | cheap (boundary : Nat)
       (returned : r = Int.ofNat boundary - 1)
       (positive : 1 ≤ boundary) (atOrAbove : boundary ≤ level)
+      (saved : out.noncheaplevel = boundary)
       (exact : outBest = some (incMax best
         (nodeKey ctx tcLevel specFuel level codes st numcells)))
   | exhausted
@@ -124,7 +125,7 @@ theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
       rw [returned]
       exact Int.ofNat_lt.mpr below
   | frozen below exact freeze => exact below
-  | cheap boundary returned positive atOrAbove exact =>
+  | cheap boundary returned positive atOrAbove saved exact =>
       rw [returned]
       simp only [Int.ofNat_eq_natCast]
       omega
@@ -158,8 +159,11 @@ theorem firstFinish {ctx : Ctx}
             exact .mk current cs bs codeInv depth stemEq installed incumbent
               floor
       · exact freeze
-  | cheap boundary returned positive atOrAbove exact =>
-      exact .cheap boundary returned positive atOrAbove exact
+  | cheap boundary returned positive atOrAbove saved exact =>
+      apply NodeExit.cheap boundary returned positive atOrAbove
+      · unfold Nauty.firstFinish
+        split <;> exact saved
+      · exact exact
   | exhausted returned state incumbent emptyFuel =>
       exact (hfuel emptyFuel).elim
 
@@ -190,6 +194,7 @@ inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | cheap (boundary : Nat)
       (returned : r = some (Int.ofNat boundary - 1))
       (positive : 1 ≤ boundary) (below : boundary ≤ level)
+      (saved : out.noncheaplevel = boundary)
       (exact : outBest = some (incMax best bound))
   | exhausted
       (returned : r = none) (finalCursor : Option Nat)
@@ -307,7 +312,7 @@ theorem toOutcome {G : Colored n k} {ctx : Ctx}
         · exact canonlevel_ne_zero_of_stInc (h.event.read.trans exact)
         · exact h.event.read
         · exact exact
-    | cheap boundary returned positive atOrAbove exact =>
+    | cheap boundary returned positive atOrAbove saved exact =>
         apply NodeReceipt.pruned (NodeSound.ofExact exact) r rfl
         · rw [returned]
           simp only [Int.ofNat_eq_natCast]
@@ -370,8 +375,8 @@ theorem reindexSet {ctx : Ctx}
       exact .unwind target returned below sound payload located
   | frozen value returned below exact freeze =>
       exact .frozen value returned below exact freeze
-  | cheap boundary returned positive below exact =>
-      exact .cheap boundary returned positive below exact
+  | cheap boundary returned positive below saved exact =>
+      exact .cheap boundary returned positive below saved exact
   | exhausted returned finalCursor progress bounded =>
       exact .exhausted returned finalCursor progress bounded
 
@@ -394,8 +399,8 @@ theorem step {ctx : Ctx}
       exact .unwind target returned below sound payload located
   | frozen value returned below exact freeze =>
       exact .frozen value returned below exact freeze
-  | cheap boundary returned positive below exact =>
-      exact .cheap boundary returned positive below exact
+  | cheap boundary returned positive below saved exact =>
+      exact .cheap boundary returned positive below saved exact
   | exhausted returned finalCursor progress bounded =>
       apply LoopExit.exhausted returned finalCursor
       · have hrank := cursorRank_step ha
@@ -426,8 +431,8 @@ theorem prepend {ctx : Ctx}
       exact .frozen value returned below
         ((hpre.trans (LoopSound.ofExact exact)).exact exact
           (keyLe_incMax_right mid bound)) freeze
-  | cheap boundary returned positive below exact =>
-      exact .cheap boundary returned positive below
+  | cheap boundary returned positive below saved exact =>
+      exact .cheap boundary returned positive below saved
         ((hpre.trans (LoopSound.ofExact exact)).exact exact
           (keyLe_incMax_right mid bound))
   | exhausted returned finalCursor progress bounded =>
@@ -443,12 +448,14 @@ theorem ofCheap {ctx : Ctx}
     {bound childKey : Key} {st out : SearchSt}
     {best outBest : Option Key} {trail : FrameTrail}
     (hboundary : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hsaved : out.noncheaplevel = boundary)
     (hbound : bound = childKey)
     (hexact : outBest = some (incMax best childKey)) :
     LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab rsPtn
       tc len numcells tcell cursor bound st { out with fixedpts := fixedpts }
       best outBest trail (some (Int.ofNat boundary - 1)) := by
   apply LoopExit.cheap boundary rfl hboundary hbelow
+  · simpa only using hsaved
   rwa [hbound]
 
 /-- An early frozen child absorbs both the explored prefix and every live
@@ -513,8 +520,9 @@ theorem toNodeSome {ctx : Ctx}
       · exact below
       · simpa only [← hbound] using exact
       · exact (freeze.shrink hprefix)
-  | cheap boundary returned positive below exact =>
+  | cheap boundary returned positive below saved exact =>
       apply NodeExit.cheap boundary (Option.some.inj returned) positive below
+      · exact saved
       simpa only [← hbound] using exact
   | exhausted returned => cases returned
 
@@ -665,6 +673,8 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
         exact hjump
       · exact hprep.cheap.positive
       · exact hcheap'
+      · rw [hout]
+        exact (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.2.1
       · exact hexact
   refine ⟨outBest, ?_⟩
   exact {

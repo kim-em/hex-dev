@@ -202,7 +202,7 @@ theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
       rw [stInc_final hn0 hinstalled] at hread
       rw [incMax, nodeKey_root hn0] at exact
       exact (Option.some.inj (hread.trans exact)).symm
-  | cheap boundary returned positive atOrAbove exact =>
+  | cheap boundary returned positive atOrAbove saved exact =>
       have hinstalled : (rootOut n (rowsOf G) (initialPartition G).1
           (initialPartition G).2).canonlevel ≠ 0 :=
         canonlevel_ne_zero_of_stInc (hread.trans exact)
