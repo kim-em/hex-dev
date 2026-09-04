@@ -843,4 +843,24 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | exhausted (empty : loopFuel = 0) (returned : r = none)
       (unchanged : out = st)
 
+/-- The entry set and cursor only describe where the call begins.  Every
+constructor records the final set and cursor (or an unwind), so a result
+can be reindexed after exposing one executable loop step. -/
+theorem LoopResult.reindex {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
+    {cursor cursor' : Option Nat} {bound : Key} {st out : SearchSt}
+    {r : Option Int}
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st out r) :
+    LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
+      tc len numcells tcell' cursor' bound st out r := by
+  cases h with
+  | complete returned sound finalSet finalCursor cover empty =>
+      exact .complete returned sound finalSet finalCursor cover empty
+  | unwind sound target returned below payload =>
+      exact .unwind sound target returned below payload
+  | exhausted empty returned unchanged =>
+      exact .exhausted empty returned unchanged
+
 end Hex.GraphIso.Nauty
