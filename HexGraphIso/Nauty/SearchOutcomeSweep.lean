@@ -128,6 +128,87 @@ end LoopInv
 
 namespace OtherLoopRun
 
+/-- Package an already established frozen early return as a corrected
+off-path loop result. -/
+theorem frozen {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv
+      tv1 : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail}
+    {value : Int}
+    (hstate : otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+      numcells tc tv1 (some tv) tcell st = (some value, out))
+    (hevent : EventOut G ctx tcLevel stem fs out outBest eventTrail value)
+    (hpreserved : TrailExt level trail eventTrail)
+    (hfixed : out.fixedpts = st.fixedpts)
+    (hcoset : out.cosetindex = st.cosetindex)
+    (hbelow : value < Int.ofNat level)
+    (hexact : outBest = some (incMax best bound))
+    (hfreeze : FrozenOut ctx codes out outBest value) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  have hinstalled : out.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
+  rw [hstate]
+  refine ⟨?_, LoopExit.frozen value rfl hbelow hexact hfreeze⟩
+  exact {
+    loop := {
+      outcome := {
+        receipt := .pruned value rfl hbelow (LoopSound.ofExact hexact)
+          hinstalled hevent.read hexact
+        event := by simpa only [loopReturn] using hevent
+        preserved := hpreserved }
+      fixed := hfixed }
+    coset := hcoset }
+
+/-- Package an already established cheap-cell jump as a corrected
+off-path loop result. -/
+theorem cheap {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv
+      tv1 boundary : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail}
+    (hstate : otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level
+      numcells tc tv1 (some tv) tcell st =
+        (some (Int.ofNat boundary - 1), out))
+    (hevent : EventOut G ctx tcLevel stem fs out outBest eventTrail
+      (Int.ofNat boundary - 1))
+    (hpreserved : TrailExt level trail eventTrail)
+    (hfixed : out.fixedpts = st.fixedpts)
+    (hcoset : out.cosetindex = st.cosetindex)
+    (hpositive : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hexact : outBest = some (incMax best bound)) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  have hvalue : Int.ofNat boundary - 1 < Int.ofNat level := by
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  have hinstalled : out.canonlevel ≠ 0 :=
+    canonlevel_ne_zero_of_stInc (hevent.read.trans hexact)
+  rw [hstate]
+  refine ⟨?_, LoopExit.cheap boundary rfl hpositive hbelow hexact⟩
+  exact {
+    loop := {
+      outcome := {
+        receipt := .pruned (Int.ofNat boundary - 1) rfl hvalue
+          (LoopSound.ofExact hexact) hinstalled hevent.read hexact
+        event := by simpa only [loopReturn] using hevent
+        preserved := hpreserved }
+      fixed := hfixed }
+    coset := hcoset }
+
 /-- A generator unwind addressed strictly above this loop crosses the
 temporary fixed-vertex cleanup and returns immediately. -/
 theorem unwind {G : Colored n k} {ctx : Ctx}
