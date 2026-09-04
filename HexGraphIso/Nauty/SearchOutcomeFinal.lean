@@ -355,6 +355,12 @@ theorem lower {ctx : Ctx} {current : Nat} {st : SearchSt}
 
 end FirstTrail
 
+/-- First-path sweep cleanup changes only `allsamelevel`. -/
+theorem firstFinish_firstlab (level size index : Nat) (st : SearchSt) :
+    (firstFinish level size index st).firstlab = st.firstlab := by
+  rw [firstFinish]
+  split <;> rfl
+
 /-- A completed child, cleanup, and recovery restore both parent path
 facts.  The selected vertex is fresh because it lies in a non-singleton
 target cell while all older fixed vertices occupy singleton cells. -/
@@ -784,6 +790,70 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
   ⟨h.outcome.prefix hpre, h.fixed.trans hfixed⟩
 
 end LoopProof
+
+namespace FirstLoopProof
+
+theorem reindexSet {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (h : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.loop.reindexSet, h.trail⟩
+
+theorem step {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
+    (h : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out
+      best outBest receiptTrail eventTrail r) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r :=
+  ⟨h.loop.step ha, h.trail⟩
+
+theorem retrail {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {source dest eventTrail : FrameTrail} {r : Option Int}
+    (htrail : TrailExt level dest source)
+    (h : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest source eventTrail r) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      dest eventTrail r :=
+  ⟨h.loop.retrail htrail, h.trail⟩
+
+theorem prepend {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st recSt out : SearchSt} {best mid outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (h : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
+      outBest receiptTrail eventTrail r) :
+    FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.loop.prepend hfixed hpre, h.trail⟩
+
+end FirstLoopProof
 
 namespace LoopInv
 
