@@ -23,19 +23,20 @@ one recursive node call. -/
 structure NodeOutcome (G : Colored n k) (ctx : Ctx)
     (tcLevel specFuel runFuel level : Nat) (cs fs : List Nat)
     (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
-    (trail : FrameTrail) (r : Int) : Prop where
-  receipt : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
+    (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
+  receipt : NodeReceipt receiptTrail ctx tcLevel specFuel runFuel level cs st out
     numcells best outBest r
-  event : EventOut G ctx tcLevel cs fs out outBest trail r
+  event : EventOut G ctx tcLevel cs fs out outBest eventTrail r
 
 /-- Forgetting the concrete result invariant recovers the corrected
 semantic node result consumed by the root reduction. -/
 theorem NodeOutcome.toResult {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {trail : FrameTrail}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail}
     {r : Int}
     (h : NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st out
-      numcells best outBest trail r) :
+      numcells best outBest receiptTrail eventTrail r) :
     NodeResult ctx tcLevel specFuel runFuel level cs st out numcells best
       outBest r :=
   h.receipt.toResult
@@ -45,9 +46,9 @@ This is the fact its parent needs before recovering a completed child. -/
 structure OtherOutcome (G : Colored n k) (ctx : Ctx)
     (tcLevel specFuel runFuel level : Nat) (cs fs : List Nat)
     (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
-    (trail : FrameTrail) (r : Int) : Prop where
+    (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
   node : NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st out
-    numcells best outBest trail r
+    numcells best outBest receiptTrail eventTrail r
   firstGuide : out.gcaFirst = st.gcaFirst
 
 /-- The integer return represented by a loop result.  Exhausting the
@@ -63,12 +64,13 @@ structure LoopOutcome (G : Colored n k) (ctx : Ctx)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
     (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
-    (st out : SearchSt) (best outBest : Option Key) (trail : FrameTrail)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail)
     (r : Option Int) : Prop where
-  receipt : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
+  receipt : LoopReceipt receiptTrail ctx tcLevel specFuel runFuel loopFuel level
     codes rsLab rsPtn tc len numcells tcell cursor bound st out best
-    outBest r
-  event : EventOut G ctx tcLevel stem fs out outBest trail
+      outBest r
+  event : EventOut G ctx tcLevel stem fs out outBest eventTrail
     (loopReturn level r)
 
 /-- A loop that returns an integer supplies its parent node outcome. -/
@@ -77,14 +79,15 @@ theorem LoopOutcome.toNodeSome {G : Colored n k} {ctx : Ctx}
     {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len nodeNumcells loopNumcells tcell : Nat}
     {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {trail : FrameTrail} {r : Int}
+    {best outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
+    {r : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
       nodeNumcells)
     (h : LoopOutcome G ctx tcLevel loopSpecFuel runFuel loopFuel level nodeCs
       loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
-      out best outBest trail (some r)) :
+      out best outBest receiptTrail eventTrail (some r)) :
     NodeOutcome G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs
-      nodeSt out nodeNumcells best outBest trail r := by
+      nodeSt out nodeNumcells best outBest receiptTrail eventTrail r := by
   exact ⟨NodeReceipt.ofLoopSome hbound h.receipt, h.event⟩
 
 /-- A completed loop with sufficient cursor fuel supplies its parent
@@ -94,7 +97,7 @@ theorem LoopOutcome.toNodeNone {G : Colored n k} {ctx : Ctx}
     {nodeCs loopCs fs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len nodeNumcells loopNumcells tcell : Nat}
     {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {trail : FrameTrail}
+    {best outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
     (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs
       nodeSt nodeNumcells)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
@@ -109,9 +112,9 @@ theorem LoopOutcome.toNodeNone {G : Colored n k} {ctx : Ctx}
     (hfuel : ctx.n < cursorRank cursor + loopFuel)
     (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level nodeCs
       loopCs fs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
-      out best outBest trail none) :
+      out best outBest receiptTrail eventTrail none) :
     NodeOutcome G ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs fs
-      nodeSt out nodeNumcells best outBest trail
+      nodeSt out nodeNumcells best outBest receiptTrail eventTrail
       (Int.ofNat level - 1) := by
   exact ⟨NodeReceipt.ofLoopNone hbound hchildren hlen hfuel h.receipt,
     h.event⟩
@@ -123,14 +126,14 @@ theorem LoopOutcome.prefix {G : Colored n k} {ctx : Ctx}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
     {st recSt out : SearchSt} {best mid outBest : Option Key}
-    {trail : FrameTrail} {r : Option Int}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
     (hpre : LoopSound ctx bound best mid)
     (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
-      outBest trail r) :
+      outBest receiptTrail eventTrail r) :
     LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
-      trail r :=
+      receiptTrail eventTrail r :=
   ⟨h.receipt.prefix hpre, h.event⟩
 
 /-- Changing the mutable entry workset does not affect a completed loop
@@ -140,13 +143,13 @@ theorem LoopOutcome.reindexSet {G : Colored n k} {ctx : Ctx}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
     {bound : Key} {st out : SearchSt} {best outBest : Option Key}
-    {trail : FrameTrail} {r : Option Int}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
     (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
-      outBest trail r) :
+      outBest receiptTrail eventTrail r) :
     LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
       rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
-      trail r :=
+      receiptTrail eventTrail r :=
   ⟨h.receipt.reindexSet, h.event⟩
 
 /-- One successful cursor step preserves the coupled loop outcome. -/
@@ -154,26 +157,28 @@ theorem LoopOutcome.step {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
     {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
-    {st out : SearchSt} {best outBest : Option Key} {trail : FrameTrail}
-    {r : Option Int} (ha : After cursor tv)
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
     (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
       codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out
-      best outBest trail r) :
+      best outBest receiptTrail eventTrail r) :
     LoopOutcome G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
-      outBest trail r :=
+      outBest receiptTrail eventTrail r :=
   ⟨h.receipt.step ha, h.event⟩
 
 /-- First-path exit bookkeeping preserves a corrected node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells size index : Nat}
     {cs fs : List Nat} {st out : SearchSt} {best outBest : Option Key}
-    {trail : FrameTrail} {r : Int} (hfuel : runFuel ≠ 0)
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (hfuel : runFuel ≠ 0)
     (h : NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st out
-      numcells best outBest trail r) :
+      numcells best outBest receiptTrail eventTrail r) :
     NodeOutcome G ctx tcLevel specFuel runFuel level cs fs st
-      (Nauty.firstFinish level size index out) numcells best outBest trail
-      r := by
+      (Nauty.firstFinish level size index out) numcells best outBest
+      receiptTrail eventTrail r := by
   constructor
   · exact h.receipt.firstFinish hfuel
   · unfold Nauty.firstFinish
@@ -195,7 +200,7 @@ theorem FirstInv.terminalOutcome {G : Colored n k} {ctx : Ctx}
     let full := cs ++ [rs.longcode]
     let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
     NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level cs full st
-      out.2 numcells none (some (pathLeafKey ctx full rs.lab)) trail
+      out.2 numcells none (some (pathLeafKey ctx full rs.lab)) trail trail
       out.1 := by
   dsimp only
   let rs := refine ctx level st.lab st.ptn st.active numcells
@@ -231,7 +236,7 @@ non-discrete first-path node. -/
 theorem firstPath_internal_outcome {G : Colored n k} (ctx : Ctx)
     (inf tcLevel specFuel fuel level numcells tail : Nat)
     (cs fs : List Nat) (st : SearchSt) (best outBest : Option Key)
-    (trail : FrameTrail)
+    (trail outTrail : FrameTrail)
     (hnum : (refine ctx level st.lab st.ptn st.active
       numcells).numcells ≠ ctx.n)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
@@ -268,10 +273,10 @@ theorem firstPath_internal_outcome {G : Colored n k} (ctx : Ctx)
       (cs ++ [rs.longcode]) fs rs.lab rs.ptn mt.1 mt.2.2 rs.numcells
       mt.2.1 none
       (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
-      pre L.2.2 best outBest trail L.1 →
+      pre L.2.2 best outBest trail outTrail L.1 →
     NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level cs fs st
       (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2
-      numcells best outBest trail
+      numcells best outBest trail outTrail
       (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   dsimp only
   intro hloop
@@ -294,7 +299,7 @@ theorem otherNode_outcome {G : Colored n k} {ctx : Ctx}
     {inf tcLevel specFuel fuel level nodeNumcells loopNumcells tail : Nat}
     {nodeCs loopCs fs : List Nat} {nodeSt loopSt : SearchSt}
     {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
-    {best outBest : Option Key} {trail : FrameTrail}
+    {best outBest : Option Key} {trail outTrail : FrameTrail}
     {L : Option Int × SearchSt}
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
         nodeNumcells =
@@ -314,11 +319,11 @@ theorem otherNode_outcome {G : Colored n k} {ctx : Ctx}
       nodeCs loopCs fs rsLab rsPtn tc len loopNumcells tcell none
       (nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
         nodeNumcells)
-      loopSt L.2 best outBest trail L.1) :
+      loopSt L.2 best outBest trail outTrail L.1) :
     NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level nodeCs fs
       nodeSt (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
         nodeSt).2
-      nodeNumcells best outBest trail
+      nodeNumcells best outBest trail outTrail
       (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
         nodeSt).1 := by
   rw [hstate]
