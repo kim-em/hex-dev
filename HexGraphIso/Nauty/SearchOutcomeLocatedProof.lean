@@ -242,14 +242,17 @@ theorem Unwind.Located.firstFinish {ctx : Ctx}
   | orbit orbitPayload =>
       exact .orbit {
         positive := orbitPayload.positive
+        bound := by
+          unfold Nauty.firstFinish
+          split <;> exact orbitPayload.bound
         currentLt := by
-          rw [Nauty.firstFinish]
+          unfold Nauty.firstFinish
           split <;> exact orbitPayload.currentLt
         smaller := by
-          rw [Nauty.firstFinish]
+          unfold Nauty.firstFinish
           split <;> exact orbitPayload.smaller
         sound := by
-          rw [Nauty.firstFinish]
+          unfold Nauty.firstFinish
           split <;> exact orbitPayload.sound }
 
 /-- Every located node receipt crosses the first-path exit-counter
@@ -684,7 +687,8 @@ theorem firstLoop_guideReceipt (ctx : Ctx)
       best outBest
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 (some tv) tcell index st).1 := by
-  obtain ⟨payload', hloc'⟩ := hloc.setFirst level tv1
+  obtain ⟨payload', hloc'⟩ :=
+    hloc.setFirst level tv1 (Nat.le_of_lt hbelow)
   unfold firstChildLoop
   simp only [hrep, ite_true, hfirst, Id.run_pure, apply_ite Id.run]
   rw [hreturn]

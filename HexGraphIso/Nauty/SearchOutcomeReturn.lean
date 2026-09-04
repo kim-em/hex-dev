@@ -138,7 +138,8 @@ unwinds are frame-stable without a store-wide premise. -/
 theorem frameStable {trail : FrameTrail} {ctx : Ctx}
     {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
     {payload : Unwind ctx tcLevel target out best} {entry : TrailEntry}
-    (hret : ReturnStab trail (Int.ofNat target) out)
+    (hret : ReturnStab trail
+      (min (Int.ofNat target) (Int.ofNat out.gcaFirst)) out)
     (hentry : trail target = some entry) :
     payload.FrameStable entry.frame.rsPtn target entry.frame.rsLab := by
   cases payload with
@@ -147,7 +148,10 @@ theorem frameStable {trail : FrameTrail} {ctx : Ctx}
   | orbit payload =>
       apply Unwind.FrameStable.orbit payload
       intro γ hγ
-      exact hret target entry (Int.le_refl _) hentry γ hγ
+      exact hret target entry (by
+        have hb : Int.ofNat target ≤ Int.ofNat out.gcaFirst :=
+          Int.ofNat_le.mpr payload.bound
+        omega) hentry γ hγ
 
 end ReturnStab
 

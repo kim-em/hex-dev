@@ -402,7 +402,8 @@ location of a generator unwind. -/
 theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}
     {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
     {payload : Unwind ctx tcLevel target out best}
-    (h : payload.Located trail) (gcaFirst stabvertex : Nat) :
+    (h : payload.Located trail) (gcaFirst stabvertex : Nat)
+    (hbound : target ≤ gcaFirst) :
     ∃ payload' : Unwind ctx tcLevel target
         { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best,
       payload'.Located trail := by
@@ -426,6 +427,7 @@ theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}
   | orbit orbitPayload =>
       let orbitPayload' : OrbitUnwind ctx target out' := {
         positive := orbitPayload.positive
+        bound := hbound
         currentLt := orbitPayload.currentLt
         smaller := orbitPayload.smaller
         sound := orbitPayload.sound }
@@ -459,6 +461,7 @@ theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx}
   | orbit orbitPayload =>
       let orbitPayload' : OrbitUnwind ctx target out' := {
         positive := orbitPayload.positive
+        bound := orbitPayload.bound
         currentLt := orbitPayload.currentLt
         smaller := orbitPayload.smaller
         sound := orbitPayload.sound }

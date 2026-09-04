@@ -35,7 +35,7 @@ inductive EventOut (G : Colored n k) (ctx : Ctx) (tcLevel : Nat)
       (depth : current = codes.length)
       (stemEq : codes.take stem.length = stem)
       (returned : r ≤ Int.ofNat current)
-      (stable : ReturnStab trail r out)
+      (stable : ReturnStab trail (min r (Int.ofNat out.gcaFirst)) out)
       (history : RefTrail ctx current out trail)
 
 namespace RunEvent
@@ -213,13 +213,14 @@ theorem read {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   cases h with
   | intro _ _ _ event _ _ _ _ _ => exact event.read
 
-/-- Every event output exposes the return-indexed stabilization carried
-by its concrete state. -/
+/-- Every event output exposes stabilization through the smaller of its
+return target and live first-reference GCA.  Direct carrier returns need
+no stronger statement, while the orbit-return arm targets this GCA. -/
 theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
     {stem fs : List Nat} {out : SearchSt} {best : Option Key}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
-    ReturnStab trail r out := by
+    ReturnStab trail (min r (Int.ofNat out.gcaFirst)) out := by
   cases h with
   | intro _ _ _ _ _ _ _ stable _ => exact stable
 
@@ -237,7 +238,8 @@ theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : N
     ∃ bs,
       RunInv G ctx tcLevel level stem bs fs numcells
           (Nauty.recover ctx.n inf level out) best trail ∧
-        ReturnStab trail (Int.ofNat level)
+        ReturnStab trail
+          (Int.ofNat (Nauty.recover ctx.n inf level out).gcaFirst)
           (Nauty.recover ctx.n inf level out) ∧
         RefTrail ctx level (Nauty.recover ctx.n inf level out) trail := by
   cases h with
@@ -251,6 +253,15 @@ theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : N
         rw [← hstem]
         exact stemEq
       rw [htake] at hrun
+      have hfirstEq : (Nauty.recover ctx.n inf level out).gcaFirst =
+          out.gcaFirst :=
+        (recover_frames ctx.n inf level out).2.2.2.2.2.2.1
+      have hfirst' : Int.ofNat out.gcaFirst ≤ Int.ofNat level :=
+        Int.ofNat_le.mpr hfirst
+      have hmin : min (Int.ofNat level) (Int.ofNat out.gcaFirst) =
+          Int.ofNat out.gcaFirst := by omega
+      rw [hmin] at stable
+      rw [hfirstEq]
       exact ⟨bestCodes, hrun, stable.recover ctx.n inf level,
         history.recover hle⟩
 
@@ -263,7 +274,7 @@ theorem ofRun {G : Colored n k} {ctx : Ctx}
     (hdepth : level = codes.length)
     (hstem : codes.take stem.length = stem)
     (hreturn : r ≤ Int.ofNat level) (hnonpositive : st.compCanon ≤ 0)
-    (hstable : ReturnStab trail r st)
+    (hstable : ReturnStab trail (min r (Int.ofNat st.gcaFirst)) st)
     (hhistory : RefTrail ctx level st trail) :
     EventOut G ctx tcLevel stem fs st best trail r :=
   .intro level codes bs (h.event hnonpositive) hdepth hstem hreturn hstable
@@ -279,8 +290,10 @@ theorem lower {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   cases h with
   | intro current codes bestCodes event depth stemEq returned stable
       history =>
+      have hmin : min r' (Int.ofNat out.gcaFirst) ≤
+          min r (Int.ofNat out.gcaFirst) := by omega
       exact .intro current codes bestCodes event depth stemEq
-        (Int.le_trans hle returned) (stable.lower hle) history
+        (Int.le_trans hle returned) (stable.lower hmin) history
 
 /-- Fixed-point cleanup preserves the full result-side package. -/
 theorem setFixed {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}

@@ -444,7 +444,7 @@ theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx}
     (hn : ctx.n = n) (hn0 : 0 < n)
     (h : RefTrail ctx level st trail)
     (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
-    (hprev : ReturnStab trail (Int.ofNat level - 1) st)
+    (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
     (hbelow : st.gcaFirst < level)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
@@ -475,11 +475,8 @@ theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx}
       st.genTrace.push gamma := by
     exact processnode_genTrace_first heq hsent hnc
       (by simpa only [firstScatter] using hpass)
-  have hreturnBound : Int.ofNat st.gcaFirst ≤ Int.ofNat level - 1 := by
-    apply Int.le_sub_one_iff.mpr
-    exact Int.ofNat_lt.mpr hbelow
   apply h.firstPushStab htrail hrefs.firstSize hbelow
-    (hprev.lower hreturnBound) hpush hmap
+    hprev hpush hmap
 
 /-- A code-two admission stabilizes either advertised return: the direct
 canonical return uses the full canonical history, while the special orbit
@@ -490,14 +487,14 @@ theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx}
     (h : RefTrail ctx level st trail)
     (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
     (horder : st.gcaFirst ≤ st.gcaCanon)
-    (hprev : ReturnStab trail (Int.ofNat level - 1) st)
+    (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
     (hcanonBelow : st.gcaCanon < level)
     (hef : ¬((st.eqlevFirst == level) = true))
     (hnc : (numcells == ctx.n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
-    ReturnStab trail (Nauty.processnode ctx level numcells st).1
+    ReturnStab trail (Int.ofNat st.gcaFirst)
       (Nauty.processnode ctx level numcells st).2 := by
   subst n
   let gamma := (List.range ctx.n).foldl
@@ -517,24 +514,8 @@ theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx}
   have hpush : (Nauty.processnode ctx level numcells st).2.genTrace =
       st.genTrace.push gamma := by
     exact processnode_genTrace_canon hef hnc hcc hge htie
-  rcases (processnode_rowTie hef hnc hcc hge htie).1 with
-    hfirst | hcanon
-  · rw [hfirst]
-    have hreturnBound :
-        Int.ofNat st.gcaFirst ≤ Int.ofNat level - 1 := by
-      have hi := Int.ofNat_lt.mpr
-        (Nat.lt_of_le_of_lt horder hcanonBelow)
-      exact Int.le_sub_one_iff.mpr hi
-    apply h.canonPushStabTo htrail hrefs.canonSize horder
-      (Nat.lt_of_le_of_lt horder hcanonBelow)
-      (hprev.lower hreturnBound) hpush hmap
-  · rw [hcanon]
-    have hreturnBound :
-        Int.ofNat st.gcaCanon ≤ Int.ofNat level - 1 := by
-      have hi := Int.ofNat_lt.mpr hcanonBelow
-      exact Int.le_sub_one_iff.mpr hi
-    apply h.canonPushStabTo htrail hrefs.canonSize (Nat.le_refl _)
-      hcanonBelow (hprev.lower hreturnBound) hpush hmap
+  apply h.canonPushStabTo htrail hrefs.canonSize horder
+    (Nat.lt_of_le_of_lt horder hcanonBelow) hprev hpush hmap
 
 end RefTrail
 

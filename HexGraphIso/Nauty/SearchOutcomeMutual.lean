@@ -27,7 +27,7 @@ structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
     (trail : FrameTrail) : Prop where
   history : RefTrail ctx level st trail
   order : st.gcaFirst ≤ st.gcaCanon
-  stable : ReturnStab trail (Int.ofNat level - 1) st
+  stable : ReturnStab trail (Int.ofNat st.gcaFirst) st
 
 namespace Live
 
@@ -36,8 +36,8 @@ package. -/
 theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
     {trail : FrameTrail} (h : Live ctx level st trail) :
     Live ctx level (otherLeafSt ctx level numcells st) trail :=
-  ⟨h.history.otherLeaf, RefTrail.otherLeaf_order h.order,
-    h.stable.otherLeaf⟩
+  ⟨h.history.otherLeaf, RefTrail.otherLeaf_order h.order, by
+    simpa only [RefTrail.otherLeaf_gcaFirst] using h.stable.otherLeaf⟩
 
 /-- A leaf event preserves reference history and live GCA ordering.  Its
 return-indexed generator stabilization is supplied separately by the
@@ -89,7 +89,9 @@ theorem RunPrep.leafEvent {G : Colored n k} {ctx : Ctx}
   refine ⟨bs', ?_, hmax⟩
   apply EventOut.intro level codes bs' hevent hpath hstem
   · omega
-  · exact (hlive.stable.lower hreturn).ofGenTraceEq hgen
+  · have hs := hlive.stable.ofGenTraceEq hgen
+    rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+    exact hs.lower (by omega)
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
 /-- A code-one admission with a nonpositive incumbent comparison is a
@@ -156,8 +158,10 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
   apply EventOut.intro level codes bs hevent hpath hstem
   · rw [hreturn]
     exact Int.ofNat_le.mpr (Nat.le_of_lt hbelow)
-  · exact hlive.history.processnodeFirstStab hn hn0 hprep.trailOk
-      hprep.leafRefs hlive.stable hbelow heq hsent hnc hpass
+  · have hs := hlive.history.processnodeFirstStab hn hn0
+      hprep.trailOk hprep.leafRefs hlive.stable hbelow heq hsent hnc hpass
+    rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+    exact hs.lower (by omega)
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
 /-- A code-two row tie produces a verified event for either its canonical
@@ -223,9 +227,11 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
       exact Int.ofNat_le.mpr hprep.canonBound
   refine ⟨bs', ?_, hmax, houtBest⟩
   apply EventOut.intro level codes bs' hevent hpath hstem hreturned
-  · exact hlive.history.processnodeTiedStab hn hn0 hprep.trailOk
+  · have hs := hlive.history.processnodeTiedStab hn hn0 hprep.trailOk
       hprep.leafRefs hlive.order hlive.stable hcanonBelow hef hnc hcc hge
       htie
+    rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+    exact hs.lower (by omega)
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
 /-- A discrete code-one branch closes the complete node outcome.  Its
@@ -592,7 +598,14 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
       (some outKey) trail (Int.ofNat level - 1) := by
     apply EventOut.intro level full bs' hevent.leafFinish hfull hstem
     · omega
-    · exact (hlive'.stable.ofGenTraceEq hgen).leafFinish
+    · have hs := ReturnStab.leafFinish (ctx := ctx) (level := level)
+        (hlive'.stable.ofGenTraceEq hgen)
+      have hfirst : final.gcaFirst = leaf.gcaFirst := by
+        unfold final Nauty.leafFinish
+        split <;> simp only <;> split <;>
+          exact (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1
+      rw [hfirst]
+      exact hs.lower (by omega)
     · exact (hlive'.history.processnode hprep.trailOk).leafFinish
   have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
       (fuel + 1) level codes st final numcells best (some outKey)
@@ -653,7 +666,7 @@ theorem LoopInv.firstDone {G : Colored n k} {ctx : Ctx}
       cursor _ st best trail hinstalled hread hinv.cover hnext
   · simpa only [firstChildLoop, loopReturn] using
       (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
-        hlive.stable hlive.history)
+        (hlive.stable.lower (by omega)) hlive.history)
   · exact TrailExt.refl level trail
 
 /-- An empty positive-fuel off-path sweep closes the coupled loop outcome
@@ -693,7 +706,7 @@ theorem LoopInv.otherDone {G : Colored n k} {ctx : Ctx}
       st best trail hinstalled hread hinv.cover hnext
   · simpa only [otherChildLoop, loopReturn] using
       (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
-        hlive.stable hlive.history)
+        (hlive.stable.lower (by omega)) hlive.history)
   · exact TrailExt.refl level trail
 
 end Hex.GraphIso.Nauty

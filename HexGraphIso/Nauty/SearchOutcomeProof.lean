@@ -1051,7 +1051,10 @@ theorem canonlevel_firstFinish (level tcellsize index : Nat)
       split <;> exact carrier
   | orbit payload =>
       apply Unwind.orbit
-      refine ⟨payload.positive, ?_, ?_, ?_⟩ <;>
+      refine ⟨payload.positive, ?_, ?_, ?_, ?_⟩
+      · rw [Nauty.firstFinish]
+        split <;> exact payload.bound
+      all_goals
         rw [Nauty.firstFinish] <;> split <;>
         first | exact payload.currentLt | exact payload.smaller |
           exact payload.sound
@@ -1750,7 +1753,7 @@ theorem firstLoop_guideUnwind (ctx : Ctx)
   rw [hreturn]
   split
   · exact LoopResult.ofChildUnwind hsound hkey hbelow
-      (hpayload.setFirst level tv1)
+      (hpayload.setFirst level tv1 (Nat.le_of_lt hbelow))
   · rename_i hnot
     exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
 

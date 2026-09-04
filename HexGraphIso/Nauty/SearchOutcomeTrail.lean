@@ -781,9 +781,13 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
     exact ⟨st.gcaCanon, hcanon, hcanonBelow, payload, hpayload⟩
   · let payload : Unwind ctx tcLevel st.gcaFirst
         (processnode ctx level numcells st).2 best :=
-      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩
+      .orbit ⟨hfirstPos, by
+        rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+        exact Nat.le_refl _, hcoset, hsmaller, horbit⟩
     exact ⟨st.gcaFirst, hfirst, hfirstBelow, payload,
-      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
+      .orbit ⟨hfirstPos, by
+        rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+        exact Nat.le_refl _, hcoset, hsmaller, horbit⟩⟩
 
 /-- The located guide store discharges a code-one leaf return. -/
 theorem GuideStore.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}

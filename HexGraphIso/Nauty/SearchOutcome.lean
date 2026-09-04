@@ -977,6 +977,7 @@ pointer rather than by the direct canonical carrier.  The receiving loop
 uses this sound pointer together with its own coverage frame. -/
 structure OrbitUnwind (ctx : Ctx) (target : Nat) (out : SearchSt) : Prop where
   positive : 1 ≤ target
+  bound : target ≤ out.gcaFirst
   currentLt : out.cosetindex < ctx.n
   smaller : out.orbits[out.cosetindex]! < out.cosetindex
   sound : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
@@ -998,7 +999,7 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
 carried by a generator unwind. -/
 @[expose] def Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
     {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
-    (gcaFirst stabvertex : Nat) :
+    (gcaFirst stabvertex : Nat) (hbound : target ≤ gcaFirst) :
     Unwind ctx tcLevel target
       { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best := by
   cases h with
@@ -1006,8 +1007,9 @@ carried by a generator unwind. -/
   | canon anchor carrier => exact .canon anchor carrier
   | orbit payload =>
       apply Unwind.orbit
-      refine ⟨?_, ?_, ?_, ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
       · exact payload.positive
+      · exact hbound
       · exact payload.currentLt
       · exact payload.smaller
       · exact payload.sound
@@ -1023,8 +1025,9 @@ carried by a generator unwind. -/
   | canon anchor carrier => exact .canon anchor carrier
   | orbit payload =>
       apply Unwind.orbit
-      refine ⟨?_, ?_, ?_, ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
       · exact payload.positive
+      · exact payload.bound
       · exact payload.currentLt
       · exact payload.smaller
       · exact payload.sound
@@ -1228,7 +1231,9 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows
         hef hnc hcc hge htie hcurReach hcur hatCur⟩
   · exact ⟨st.gcaFirst, hfirst, hfirstBelow,
-      ⟨.orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩⟩
+      ⟨.orbit ⟨hfirstPos, by
+        rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
+        exact Nat.le_refl _, hcoset, hsmaller, horbit⟩⟩⟩
 
 /-- A guide's covered child remains covered when the incumbent grows. -/
 @[expose] def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
