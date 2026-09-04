@@ -666,7 +666,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
     rcases processnode_canonGuide ctx cs.length numcells st with
       hold | hnew
     · exact hold
-    · rw [hnew] at hlt
+    · rw [hnew.1] at hlt
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
@@ -683,7 +683,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
       hold | hnew
     · rw [hold.1]
       exact h.canonPositive
-    · rw [hnew]
+    · rw [hnew.1]
       exact hlevel
   · rw [hgcaFirst]
     exact h.firstBound
@@ -691,7 +691,7 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
       hold | hnew
     · rw [hold.1]
       exact h.canonBound
-    · rw [hnew]
+    · rw [hnew.1]
       exact Nat.le_refl _
 
 /-- A first-path-agreeing leaf whose generator admission guard fails has
@@ -762,7 +762,7 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
     rcases processnode_canonGuide ctx cs.length numcells st with
       hold | hnew
     · exact hold
-    · rw [hnew] at hlt
+    · rw [hnew.1] at hlt
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
@@ -779,7 +779,7 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
       hold | hnew
     · rw [hold.1]
       exact h.canonPositive
-    · rw [hnew]
+    · rw [hnew.1]
       exact hlevel
   · rw [hgcaFirst]
     exact h.firstBound
@@ -787,8 +787,7 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
       hold | hnew
     · rw [hold.1]
       exact h.canonBound
-    · rw [hnew]
+    · rw [hnew.1]
       exact Nat.le_refl _
 
 end Hex.GraphIso.Nauty
-

@@ -1334,15 +1334,17 @@ theorem processnode_canonGuide (ctx : Ctx) (level numcells : Nat)
     (st : SearchSt) :
     ((processnode ctx level numcells st).2.gcaCanon = st.gcaCanon ∧
       (processnode ctx level numcells st).2.canonlab = st.canonlab) ∨
-    (processnode ctx level numcells st).2.gcaCanon = level := by
+    ((processnode ctx level numcells st).2.gcaCanon = level ∧
+      (processnode ctx level numcells st).2.canonlab = st.lab) := by
   show (fun x : Int × SearchSt =>
       (x.2.gcaCanon = st.gcaCanon ∧ x.2.canonlab = st.canonlab) ∨
-        x.2.gcaCanon = level) (processnode ctx level numcells st)
+        (x.2.gcaCanon = level ∧ x.2.canonlab = st.lab))
+      (processnode ctx level numcells st)
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite (fun x : Int × SearchSt =>
       (x.2.gcaCanon = st.gcaCanon ∧ x.2.canonlab = st.canonlab) ∨
-        x.2.gcaCanon = level),
+        (x.2.gcaCanon = level ∧ x.2.canonlab = st.lab)),
     pushAuto_gcaCanon', pushAuto_canonRef, ite_self]
   simp
 
