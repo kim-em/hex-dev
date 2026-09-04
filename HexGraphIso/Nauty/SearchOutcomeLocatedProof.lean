@@ -36,6 +36,65 @@ theorem SearchOut.ptnEq {G : Colored n k} {level numcells : Nat}
   simpa only [getElem!_pos out.ptn i hi, getElem!_pos st.ptn i hi']
     using heq
 
+/-- A recovered loop state individualizes the same vertex as its frozen
+entry frame, possibly at a different offset within the target cell.  The
+two resulting child labellings remain cell-equivalent. -/
+theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
+    {st out : SearchSt} (h : SearchOut G level level st out)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ n) (ho : o < len) :
+    ∃ oCur, oCur < len ∧ out.lab[tc + oCur]! = st.lab[tc + o]! ∧
+      cellsPerm (st.ptn.set! tc (level + 1)) (level + 1)
+        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (breakout out.lab out.ptn (level + 1) tc st.lab[tc + o]!).1 := by
+  have hend := searchOk_end hn0 hok hlevel
+  have hmem : st.lab[tc + o]! ∈ segN st.lab tc len :=
+    mem_segN_iff.mpr ⟨o, ho, rfl⟩
+  have hmem' : st.lab[tc + o]! ∈ segN out.lab tc len :=
+    (h.perm tc len hcell).mem_iff.mp hmem
+  obtain ⟨oCur, hoCur, hat⟩ := mem_segN_iff.mp hmem'
+  refine ⟨oCur, hoCur, hat, ?_⟩
+  have hptn := h.ptnEq hok hout
+  let σ : Renaming n := {
+    toFun := id
+    inj := fun _ _ heq => heq
+    maps := fun _ => Iff.rfl }
+  have hmap : out.lab.map σ.toFun = out.lab := by
+    apply Array.ext (by simp)
+    intro i hi hi'
+    simp [σ]
+  have hcp : cellsPerm st.ptn level st.lab (out.lab.map σ.toFun) := by
+    rw [hmap]
+    exact h.perm
+  have hvals : ∀ q, q < n →
+      st.ptn[q]! ≤ level ∨ level + 1 < st.ptn[q]! := by
+    have hleveln : level ≤ n :=
+      Nat.le_trans hok.bc (bcount_le st.ptn level n)
+    intro q hq
+    rcases hok.vals q hq with hq' | hq'
+    · exact Or.inl hq'
+    · exact Or.inr (by rw [hq']; omega)
+  have hcell' : (tc, tc + len - 1) ∈ cells st.ptn level n :=
+    isCell_mem_cells hcell (by rw [hok.ptnSize]; exact Nat.le_refl n)
+      hend (by omega)
+  have hb := breakout_cellsPerm_map (ctx := { n := n, g := #[] })
+    (σ := σ) (labV := st.lab) (labU := out.lab) (ptn := st.ptn)
+    (level := level) (tc := tc) (e := tc + len - 1)
+    (oV := o) (oU := oCur) hok.ptnSize hok.labSize hout.labSize hend
+    hvals hcp hcell' (by omega) (by omega) (by omega) (by
+      dsimp only [σ, id]
+      exact hat.symm)
+  have map_id (a : Array Nat) : a.map σ.toFun = a := by
+    apply Array.ext (by simp)
+    intro i hi hi'
+    simp [σ]
+  rw [map_id, hat] at hb
+  rw [hptn]
+  exact hb
+
 /-- First-path exit bookkeeping preserves the location of a transported
 generator unwind. -/
 theorem Unwind.Located.firstFinish {ctx : Ctx}
