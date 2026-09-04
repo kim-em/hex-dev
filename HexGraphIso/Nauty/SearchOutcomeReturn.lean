@@ -78,6 +78,16 @@ theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt}
   unfold ReturnStab at h ⊢
   exact h
 
+/-- Recovering a parent changes no recorded generator, so it preserves
+every return-indexed stabilization obligation. -/
+theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt}
+    (h : ReturnStab trail r st) (n inf level : Nat) :
+    ReturnStab trail r (Nauty.recover n inf level st) := by
+  intro target entry htarget hentry γ hγ
+  apply h target entry htarget hentry γ
+  have hstore := recover_store n inf level st
+  rwa [hstore.1] at hγ
+
 /-- Pushing a child frame preserves all older return obligations.  The
 new frame is required only when the return reaches it. -/
 theorem push {trail : FrameTrail} {r : Int} {st : SearchSt}

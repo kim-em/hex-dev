@@ -142,6 +142,34 @@ theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   cases h with
   | intro _ _ _ _ _ _ _ stable => exact stable
 
+/-- Recovering an event that returned exactly to `level` produces the
+stable parent-loop state and retains its generator stabilization. -/
+theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r)
+    (hreturn : r = Int.ofNat level) (hstem : stem.length = level)
+    (hlevel : 1 ≤ level) (hinf : level < inf)
+    (hfirst : out.gcaFirst ≤ level)
+    (hok : SearchOk G level numcells
+      (Nauty.recover ctx.n inf level out)) :
+    ∃ bs,
+      RunInv G ctx tcLevel level stem bs fs numcells
+          (Nauty.recover ctx.n inf level out) best trail ∧
+        ReturnStab trail (Int.ofNat level)
+          (Nauty.recover ctx.n inf level out) := by
+  cases h with
+  | intro current codes bestCodes event depth stemEq returned stable =>
+      rw [hreturn] at returned stable
+      have hle : level ≤ current := Int.ofNat_le.mp returned
+      have hpath : level ≤ codes.length := by omega
+      have hrun := event.recover hle hlevel hinf hpath hfirst hok
+      have htake : codes.take level = stem := by
+        rw [← hstem]
+        exact stemEq
+      rw [htake] at hrun
+      exact ⟨bestCodes, hrun, stable.recover ctx.n inf level⟩
+
 /-- A stable state with a nonpositive comparison sign is an event output
 at its own code depth. -/
 theorem ofRun {G : Colored n k} {ctx : Ctx}
