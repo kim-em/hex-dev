@@ -1205,6 +1205,33 @@ inductive NodeResult (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
   | exhausted (empty : runFuel = 0) (returned : r = 0)
       (unchanged : out = st) (bestUnchanged : outBest = best)
 
+/-- When a child does not return past its parent, it either completed its
+whole subtree (including a local comparison prune), or its generator
+payload is addressed exactly to that parent. -/
+theorem NodeResult.parentReturn {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat}
+    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {r : Int}
+    (h : NodeResult ctx tcLevel specFuel runFuel (level + 1) cs st out
+      numcells best outBest r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
+    outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel (level + 1) cs st numcells)) ∨
+      Unwind ctx tcLevel level out outBest := by
+  cases h with
+  | complete sound returned installed read full => exact Or.inl full
+  | unwind sound target returned below payload =>
+      have hle : level ≤ target := by
+        apply Int.ofNat_le.mp
+        rw [returned] at hstay
+        exact Int.not_lt.mp hstay
+      have htarget : target = level := by
+        omega
+      subst target
+      exact Or.inr payload
+  | pruned sound target returned below installed read full => exact Or.inl full
+  | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
+
 /-- The result of a child-loop call.  Exhaustion is distinct from a
 completed empty remainder, so a general theorem cannot accidentally treat
 the `cfuel = 0` arm as coverage of every child. -/
