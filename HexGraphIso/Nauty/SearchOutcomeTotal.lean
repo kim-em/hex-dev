@@ -33,6 +33,49 @@ structure FirstRun (G : Colored n k) (ctx : Ctx)
   exit : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
     none outBest receiptTrail r
 
+namespace FirstInv
+
+/-- The first discrete leaf is an ordinary exact return in the corrected
+classification. -/
+theorem terminalRun {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes : List Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = codes.length + 1)
+    (h : FirstInv G ctx level codes numcells st trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := codes ++ [rs.longcode]
+    let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
+    FirstRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes full st
+      out.2 numcells (some (pathLeafKey ctx full rs.lab)) trail trail
+      out.1 := by
+  dsimp only
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let full := codes ++ [rs.longcode]
+  let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
+  have hproof : FirstProof G ctx tcLevel (specFuel + 1) (fuel + 1)
+      level codes full st out.2 numcells
+      (some (pathLeafKey ctx full rs.lab)) trail trail out.1 := by
+    simpa only [rs, full, out] using
+      h.terminalFirstProof (inf := inf) (tcLevel := tcLevel)
+        (specFuel := specFuel) (fuel := fuel) hn hn0 hlevel hnum
+  have hstate := firstPath_discrete_state ctx inf tcLevel fuel level
+    numcells st hnum
+  have hdisc : discreteAt rs.ptn level ctx.n = true := by
+    rw [← refine_discrete_iff hn hn0 h.searchOk (by omega)]
+    exact hnum
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level codes st
+      numcells = pathLeafKey ctx full rs.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  refine ⟨hproof, ?_⟩
+  apply NodeExit.done
+  · exact congrArg Prod.fst hstate
+  · rw [hnode, incMax]
+
+end FirstInv
+
 /-- The corrected first-path root result proves equality between the
 unpruned specification key and the key installed by the transcription. -/
 theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
