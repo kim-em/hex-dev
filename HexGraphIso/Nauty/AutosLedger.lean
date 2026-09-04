@@ -275,7 +275,7 @@ theorem pruned_carried {g ptn lab : Array Nat} {level tc len : Nat}
 
 /-! # The two filters -/
 
-private theorem exists_all_false {α : Type} {f : α → Bool} :
+theorem exists_all_false {α : Type} {f : α → Bool} :
     ∀ {l : List α}, l.all f = false → ∃ x ∈ l, f x = false
   | [], h => absurd h (by simp)
   | x :: l, h => by
@@ -309,6 +309,69 @@ theorem elem_longprune (tcell fixedpts v : Nat)
         !(fixedpts &&& p.1 == fixedpts) || elem p.2 v) := by
   rw [longprune, ← Array.foldl_toList]
   exact elem_foldl_prune autos.toList tcell fixedpts v
+
+/-- If `longprune` removes a current member, one applicable ledger pair
+carries it strictly downward while stabilizing the node's cells. -/
+theorem longprune_drop {g ptn lab : Array Nat} {level fixedpts v tcell : Nat}
+    {autos : Array (Nat × Nat)}
+    (hv : v < n) (hmem : elem tcell v = true)
+    (hdrop : elem (longprune tcell fixedpts autos) v = false)
+    (haut : ∀ p ∈ autos.toList,
+      (fixedpts &&& p.1 == fixedpts) = true →
+      PairOk g ptn lab level n p.1 p.2) :
+    ∃ γ, checkAutom g γ n = true ∧ CellStab ptn level lab γ ∧
+      γ[v]! < v := by
+  rw [elem_longprune, hmem, Bool.true_and] at hdrop
+  obtain ⟨p, hp, hpf⟩ := exists_all_false hdrop
+  have hfix : (fixedpts &&& p.1 == fixedpts) = true := by
+    rcases h : (fixedpts &&& p.1 == fixedpts) with _ | _
+    · rw [h] at hpf
+      exact absurd hpf (by simp)
+    · rfl
+  have hmcr : elem p.2 v = false := by
+    rcases h : elem p.2 v with _ | _
+    · rfl
+    · rw [hfix, h] at hpf
+      exact absurd hpf (by simp)
+  obtain ⟨γ, hγ, _, hstab, hlt⟩ := haut p hp hfix v hv hmcr
+  exact ⟨γ, hγ, hstab, hlt⟩
+
+/-- `longprune` only removes set members. -/
+theorem longprune_subset {tcell fixedpts : Nat}
+    {autos : Array (Nat × Nat)} {v : Nat}
+    (h : elem (longprune tcell fixedpts autos) v = true) :
+    elem tcell v = true := by
+  rw [elem_longprune] at h
+  exact (Bool.and_eq_true _ _).mp h |>.1
+
+/-- `shortprune` only removes set members. -/
+theorem shortprune_subset {tcell : Nat} {st : SearchSt} {v : Nat}
+    (h : elem (shortprune tcell st) v = true) : elem tcell v = true := by
+  rw [shortprune] at h
+  split at h
+  · exact (Bool.and_eq_true _ _).mp (by simpa [elem_and] using h) |>.1
+  · exact h
+
+/-- If `shortprune` removes a current member, the last ledger pair carries
+it strictly downward while stabilizing the node's cells. -/
+theorem shortprune_drop {g ptn lab : Array Nat} {level v tcell : Nat}
+    {st : SearchSt}
+    (hv : v < n) (hmem : elem tcell v = true)
+    (hdrop : elem (shortprune tcell st) v = false)
+    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
+      PairOk g ptn lab level n fix mcr) :
+    ∃ γ, checkAutom g γ n = true ∧ CellStab ptn level lab γ ∧
+      γ[v]! < v := by
+  rw [shortprune] at hdrop
+  split at hdrop
+  · next fix mcr heq =>
+    have hmcr : elem mcr v = false := by
+      rw [elem_and, hmem, Bool.true_and] at hdrop
+      exact hdrop
+    obtain ⟨γ, hγ, _, hstab, hlt⟩ := hlast fix mcr heq v hv hmcr
+    exact ⟨γ, hγ, hstab, hlt⟩
+  · rw [hmem] at hdrop
+    cases hdrop
 
 /-- `longprune` soundness: under the ledger for fix-passing pairs,
 every vertex of the target cell is carried by a checked, base-fixing,

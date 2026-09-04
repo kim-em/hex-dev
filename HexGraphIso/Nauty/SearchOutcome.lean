@@ -73,6 +73,7 @@ structure SweepCover (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cursor : Option Nat) (out : SearchSt) : Prop where
   cover : ChildCover
     (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells)
+    (fun o => rsLab[tc + o]!)
     (fun o => o < len)
     (ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out)
     (ChildLive rsLab tc len tcell cursor)
@@ -88,7 +89,7 @@ theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
       (windowSet rsLab tc len) none out := by
   constructor
   · intro o ho
-    refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl⟩
+    refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl, Nat.le_refl _⟩
     rw [elem_windowSet, segN]
     exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
   · intro o ho hm hpast
@@ -113,7 +114,8 @@ theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
         ∃ j, ChildLive rsLab tc len tcell' cursor' j ∧
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-              numcells j)
+              numcells j ∧
+          rsLab[tc + j]! ≤ rsLab[tc + o]!)
     (hd : ∀ o,
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
@@ -159,13 +161,183 @@ theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
         ∃ j, ChildLive rsLab tc len tcell' cursor j ∧
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-              numcells j)
+              numcells j ∧
+          rsLab[tc + j]! ≤ rsLab[tc + o]!)
     (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell' cursor out := by
   refine ⟨ChildCover.step h.cover hs (fun _ hx => hx), ?_⟩
   intro o ho hm hpast
   exact h.past o ho (hsub _ hm) hpast
+
+/-- Cursor eligibility is decidable without asking typeclass search to
+reduce the opaque `After` definition. -/
+theorem after_or_not (cursor : Option Nat) (v : Nat) :
+    After cursor v ∨ ¬ After cursor v := by
+  rcases cursor with _ | u
+  · exact Or.inl trivial
+  · rcases Nat.lt_or_ge u v with h | h
+    · exact Or.inl h
+    · exact Or.inr (by
+        dsimp only [After]
+        omega)
+
+/-- A filter's natural preservation rule: every old live child is carried
+to a key-equivalent member of the filtered set.  The member may lie before
+the cursor; `past` converts that case to completed coverage. -/
+theorem SweepCover.filterCarried {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
+    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
+      ∃ j, j < len ∧ elem tcell' rsLab[tc + j]! = true ∧
+        sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells j ∧
+        rsLab[tc + j]! ≤ rsLab[tc + o]!)
+    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell' cursor out := by
+  apply h.filter _ hsub
+  intro o ho
+  obtain ⟨j, hj, hm, hkey, hrank⟩ := hs o ho
+  rcases after_or_not cursor rsLab[tc + j]! with ha | ha
+  · exact Or.inr ⟨j, ⟨hj, hm, ha⟩, hkey, hrank⟩
+  · left
+    have hdone := h.past j hj (hsub _ hm) ha
+    intro z hz
+    rcases hdone with ⟨b, hb, hle⟩
+    refine ⟨b, hb, ?_⟩
+    rw [hz, hkey]
+    exact hle
+
+/-- The form used by executable prune filters.  A current live child either
+survives unchanged or is carried to a strictly smaller child of the full
+target cell.  Ranked coverage follows the latter through any earlier
+filters until it reaches an already-covered child or a new survivor. -/
+theorem SweepCover.filterDesc {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
+    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
+      elem tcell' rsLab[tc + o]! = true ∨
+        ∃ j, j < len ∧
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
+            sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+              numcells j ∧
+          rsLab[tc + j]! < rsLab[tc + o]!)
+    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell' cursor out := by
+  constructor
+  · apply ChildCover.filterDesc h.cover
+    · intro x y hkey hdone
+      rcases hdone with ⟨b, hb, hle⟩
+      refine ⟨b, hb, ?_⟩
+      rw [hkey]
+      exact hle
+    · intro o ho
+      rcases hs o ho with hm | ⟨j, hj, hkey, hrank⟩
+      · exact Or.inl ⟨ho.1, hm, ho.2.2⟩
+      · exact Or.inr ⟨j, hj, hkey, hrank⟩
+  · intro o ho hm hpast
+    exact h.past o ho (hsub _ hm) hpast
+
+/-- Cell-stabilizing downward automorphism carriers discharge the abstract
+descending-filter rule. -/
+theorem SweepCover.filterAutom {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
+    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hdrop : ∀ o, ChildLive rsLab tc len tcell cursor o →
+      elem tcell' rsLab[tc + o]! = false →
+      ∃ γ, checkAutom ctx.g γ ctx.n = true ∧
+        CellStab rsPtn level rsLab γ ∧
+        γ[rsLab[tc + o]!]! < rsLab[tc + o]!)
+    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell' cursor out := by
+  apply h.filterDesc _ hsub
+  intro o ho
+  rcases hm : elem tcell' rsLab[tc + o]! with _ | _
+  · obtain ⟨γ, hγ, hstab, hlt⟩ := hdrop o ho hm
+    have hW : elem (windowSet rsLab tc len) γ[rsLab[tc + o]!]! = true :=
+      windowSet_carry hstab hic (by rw [hs]; exact hrange)
+        (elem_windowSet.mpr (List.mem_map.mpr
+          ⟨o, List.mem_range.mpr ho.1, rfl⟩))
+    obtain ⟨j, hj, hcarry⟩ := List.mem_map.mp (elem_windowSet.mp hW)
+    have hjlt : j < len := List.mem_range.mp hj
+    have hkey : childKey ctx tcLevel specFuel level rsLab rsPtn tc
+        numcells j = childKey ctx tcLevel specFuel level rsLab rsPtn tc
+          numcells o :=
+      childKey_of_carried (n := ctx.n) (ctx := ctx) rfl hgsz hγ
+        tcLevel specFuel level hstab hs hok hsp hend hvals hic hrange
+        hjlt ho.1 hlf hcarry.symm
+    exact Or.inr ⟨j, hjlt, by
+      unfold sweepKey
+      rw [hkey], by simpa [hcarry] using hlt⟩
+  · exact Or.inl rfl
+
+/-- `longprune` preserves the evolving sweep under the autos ledger. -/
+theorem SweepCover.longprune {ctx : Ctx}
+    {tcLevel specFuel level fixedpts : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (haut : ∀ p ∈ out.autos.toList,
+      (fixedpts &&& p.1 == fixedpts) = true →
+      PairOk ctx.g rsPtn rsLab level ctx.n p.1 p.2) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      (longprune tcell fixedpts out.autos) cursor out := by
+  apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
+  · intro o ho hm
+    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+      After cursor rsLab[tc + o]! at ho
+    exact longprune_drop (hok _ (by omega)) ho.2.1 hm haut
+  · exact fun _ hm => longprune_subset hm
+
+/-- `shortprune` preserves the evolving sweep under the last-pair ledger. -/
+theorem SweepCover.shortprune {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
+      PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      (shortprune tcell out) cursor out := by
+  apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
+  · intro o ho hm
+    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+      After cursor rsLab[tc + o]! at ho
+    exact shortprune_drop (hok _ (by omega)) ho.2.1 hm hlast
+  · exact fun _ hm => shortprune_subset hm
 
 /-- At loop completion the evolving coverage invariant says that every
 offset in the original target cell has been absorbed. -/
@@ -299,7 +471,7 @@ theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
       refine ⟨b, hb, ?_⟩
       rw [hj]
       exact hkb
-    · exact Or.inr ⟨o, ⟨ho, hm, hlt⟩, rfl⟩
+    · exact Or.inr ⟨o, ⟨ho, hm, hlt⟩, rfl, Nat.le_refl _⟩
   · intro o ho hm hpast
     change ¬ tv < rsLab[tc + o]! at hpast
     rcases cursor with _ | u
