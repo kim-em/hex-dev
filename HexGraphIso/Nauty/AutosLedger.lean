@@ -149,6 +149,41 @@ subtree theorem. -/
     (autos : Array (Nat × Nat)) : Prop :=
   ∀ p ∈ autos.toList, PairOk g ptn lab level nn p.1 p.2
 
+/-- The bounded automorphism workspace has a positive capacity and has
+not grown beyond it. -/
+@[expose] def WorkspaceOk (st : SearchSt) : Prop :=
+  0 < st.wsCap ∧ st.autos.size ≤ st.wsCap
+
+namespace WorkspaceOk
+
+/-- Workspace validity depends only on the capacity and pair array. -/
+theorem ofFields {st out : SearchSt} (h : WorkspaceOk st)
+    (hcap : out.wsCap = st.wsCap) (hautos : out.autos = st.autos) :
+    WorkspaceOk out := by
+  unfold WorkspaceOk at h ⊢
+  rw [hcap, hautos]
+  exact h
+
+/-- Admitting one pair preserves the bounded workspace invariant. -/
+theorem push {st : SearchSt} {pair : Nat × Nat} (h : WorkspaceOk st) :
+    WorkspaceOk (pushAuto st pair) := by
+  rcases h with ⟨hcap, hsize⟩
+  constructor
+  · unfold pushAuto
+    split <;> exact hcap
+  · unfold pushAuto
+    rcases hfull : (st.autos.size == st.wsCap) with _ | _
+    · simp only [hfull, Bool.false_eq_true, ite_false, Array.size_push]
+      have hne : st.autos.size ≠ st.wsCap := by
+        intro heq
+        rw [beq_iff_eq.mpr heq] at hfull
+        cases hfull
+      omega
+    · simp only [hfull, ite_true, Array.size_set!]
+      exact hsize
+
+end WorkspaceOk
+
 /-- Recording a valid pair keeps the ledger, in both the push and the
 cap-slot overwrite branch. -/
 theorem autosOk_pushAuto {g ptn lab : Array Nat} {level nn : Nat}
