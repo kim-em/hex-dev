@@ -81,4 +81,47 @@ inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (returned : r = none) (state : out = st) (incumbent : outBest = best)
       (emptyFuel : loopFuel = 0)
 
+/-- Concrete node result paired with the corrected return classification.
+The event and trail clauses are independent of the semantic maximum and
+remain reusable from the established leaf machinery. -/
+structure NodeRun (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
+    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
+  exit : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
+    best outBest receiptTrail r
+  event : EventOut G ctx tcLevel codes fs out outBest eventTrail r
+  preserved : TrailExt level receiptTrail eventTrail
+  fixed : out.fixedpts = st.fixedpts
+
+/-- Off-path nodes additionally preserve the first-path control and coset
+cursor needed by their enclosing sibling loop. -/
+structure OtherRun (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
+    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
+  node : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
+    numcells best outBest receiptTrail eventTrail r
+  firstGuide : out.gcaFirst = st.gcaFirst
+  order : out.gcaFirst ≤ out.gcaCanon
+  canonGuide :
+    (out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
+      (level ≤ out.gcaCanon ∧ cellsPerm st.ptn level st.lab out.canonlab)
+  coset : out.cosetindex = st.cosetindex
+
+/-- Concrete sibling-loop result paired with its corrected exit reason. -/
+structure LoopRun (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  exit : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
+    rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail r
+  event : EventOut G ctx tcLevel stem fs out outBest eventTrail
+    (loopReturn level r)
+  preserved : TrailExt level receiptTrail eventTrail
+  fixed : out.fixedpts = st.fixedpts
+
 end Hex.GraphIso.Nauty
